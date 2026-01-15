@@ -5,7 +5,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 
 void main() {
   group('Jump server', () {
-    test('genClient throws when injected chain misses jump server', () async {
+    test('resolveMergedJumpChain throws when injected chain misses jump server', () {
       const spi = Spi(
         name: 'target',
         ip: '10.0.0.10',
@@ -15,13 +15,8 @@ void main() {
         jumpId: 'missing',
       );
 
-      await expectLater(
-        () => genClient(
-          spi,
-          jumpChain: const <Spi>[],
-          jumpPrivateKeys: const <String?>[],
-          knownHostFingerprints: const <String, String>{},
-        ),
+      expect(
+        () => resolveMergedJumpChain(spi, jumpChain: const <Spi>[]),
         throwsA(
           isA<SSHErr>().having(
             (e) => e.type,
@@ -32,23 +27,58 @@ void main() {
       );
     });
 
-    test('genClient detects jump loop', () async {
-      const spi = Spi(
-        name: 'loop',
+    test('resolveMergedJumpChain merges and dedups', () {
+      const c = Spi(name: 'c', ip: '10.0.0.30', port: 22, user: 'root', id: 'c');
+      const d = Spi(name: 'd', ip: '10.0.0.40', port: 22, user: 'root', id: 'd');
+      const b = Spi(
+        name: 'b',
         ip: '10.0.0.20',
         port: 22,
         user: 'root',
-        id: 'loop_id',
-        jumpId: 'loop_id',
+        id: 'b',
+        jumpChainIds: ['c', 'd'],
+      );
+      const target = Spi(
+        name: 'target',
+        ip: '10.0.0.10',
+        port: 22,
+        user: 'root',
+        id: 't',
+        jumpChainIds: ['b', 'c'],
       );
 
-      await expectLater(
-        () => genClient(
-          spi,
-          jumpChain: const <Spi>[spi],
-          jumpPrivateKeys: const <String?>[null],
-          knownHostFingerprints: const <String, String>{},
-        ),
+      final chain = resolveMergedJumpChain(target, jumpChain: const <Spi>[b, c, d]);
+      expect(chain.map((e) => e.id).toList(), ['c', 'd', 'b']);
+    });
+
+    test('resolveMergedJumpChain detects jump loop', () {
+      const b = Spi(
+        name: 'b',
+        ip: '10.0.0.20',
+        port: 22,
+        user: 'root',
+        id: 'b',
+        jumpChainIds: ['c'],
+      );
+      const c = Spi(
+        name: 'c',
+        ip: '10.0.0.30',
+        port: 22,
+        user: 'root',
+        id: 'c',
+        jumpChainIds: ['b'],
+      );
+      const target = Spi(
+        name: 'target',
+        ip: '10.0.0.10',
+        port: 22,
+        user: 'root',
+        id: 't',
+        jumpChainIds: ['b'],
+      );
+
+      expect(
+        () => resolveMergedJumpChain(target, jumpChain: const <Spi>[b, c]),
         throwsA(
           isA<SSHErr>().having(
             (e) => e.type,

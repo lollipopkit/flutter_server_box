@@ -38,6 +38,75 @@ String getPrivateKey(String id) {
   return pki.key;
 }
 
+List<Spi> resolveMergedJumpChain(
+  Spi target, {
+  List<Spi>? jumpChain,
+}) {
+  final injectedSpiMap = <String, Spi>{};
+  if (jumpChain != null) {
+    for (final s in jumpChain) {
+      injectedSpiMap[s.id] = s;
+      injectedSpiMap[s.oldId] = s;
+    }
+  }
+
+  Spi resolveSpi(String id) {
+    final injected = injectedSpiMap[id];
+    if (injected != null) return injected;
+    if (jumpChain != null) {
+      throw SSHErr(type: SSHErrType.connect, message: 'Jump server not found in provided chain: $id');
+    }
+    final fromStore = Stores.server.box.get(id);
+    if (fromStore == null) {
+      throw SSHErr(type: SSHErrType.connect, message: 'Jump server not found: $id');
+    }
+    return fromStore;
+  }
+
+  return _resolveMergedJumpChainInternal(target, resolveSpi: resolveSpi);
+}
+
+List<Spi> _resolveMergedJumpChainInternal(
+  Spi target, {
+  required Spi Function(String id) resolveSpi,
+}) {
+  final roots = target.jumpChainIds ?? (target.jumpId == null ? const <String>[] : [target.jumpId!]);
+  if (roots.isEmpty) return const <Spi>[];
+
+  final seen = <String>{};
+  final stack = <String>{};
+  final out = <Spi>[];
+
+  String normId(Spi spi) => spi.id.isNotEmpty ? spi.id : spi.oldId;
+
+  void dfs(String id) {
+    final hop = resolveSpi(id);
+    final norm = normId(hop);
+
+    if (stack.contains(norm)) {
+      throw SSHErr(type: SSHErrType.connect, message: 'Jump loop detected at $norm');
+    }
+    if (seen.contains(norm)) return;
+
+    stack.add(norm);
+    final deps = hop.jumpChainIds ?? (hop.jumpId == null ? const <String>[] : [hop.jumpId!]);
+    for (final dep in deps) {
+      dfs(dep);
+    }
+    stack.remove(norm);
+
+    if (seen.add(norm)) {
+      out.add(hop);
+    }
+  }
+
+  for (final r in roots) {
+    dfs(r);
+  }
+
+  return out;
+}
+
 Future<SSHClient> genClient(
   Spi spi, {
   void Function(GenSSHClientStatus)? onStatus,
@@ -110,101 +179,53 @@ Future<SSHClient> _genClientInternal(
     if (socketOverride != null) return socketOverride;
 
     if (followJumpConfig) {
-      final hopIds = spi.jumpChainIds;
+      final injectedSpiMap = <String, Spi>{};
+      final injectedKeyMap = <String, String?>{};
 
-      // Explicit hop list on this node
-      if (hopIds != null && hopIds.isNotEmpty) {
-        SSHClient? currentClient;
-
-        for (var i = 0; i < hopIds.length; i++) {
-          final hopId = hopIds[i];
-          final hopSpi = jumpChain?.firstWhereOrNull((e) => e.id == hopId || e.oldId == hopId) ??
-              Stores.server.box.get(hopId);
-          if (hopSpi == null) {
-            throw SSHErr(type: SSHErrType.connect, message: 'Jump server not found: $hopId');
+      if (jumpChain != null) {
+        for (var i = 0; i < jumpChain.length; i++) {
+          final s = jumpChain[i];
+          injectedSpiMap[s.id] = s;
+          injectedSpiMap[s.oldId] = s;
+          if (jumpPrivateKeys != null && i < jumpPrivateKeys.length) {
+            injectedKeyMap[s.id] = jumpPrivateKeys[i];
+            injectedKeyMap[s.oldId] = jumpPrivateKeys[i];
           }
-
-          if (currentClient == null) {
-            // First hop: connect directly
-            final hopKeyId = hopSpi.keyId;
-            final hopPrivateKey = hopKeyId == null
-                ? null
-                : (jumpPrivateKeys != null && i < jumpPrivateKeys.length ? jumpPrivateKeys[i] : null) ??
-                    getPrivateKey(hopKeyId);
-
-            final hopSocket = await SSHSocket.connect(hopSpi.ip, hopSpi.port, timeout: timeout);
-            currentClient = await _genClientInternal(
-              hopSpi,
-              privateKey: hopPrivateKey,
-              jumpChain: jumpChain,
-              jumpPrivateKeys: jumpPrivateKeys,
-              timeout: timeout,
-              onKeyboardInteractive: onKeyboardInteractive,
-              knownHostFingerprints: hostKeyCache,
-              onHostKeyAccepted: hostKeyPersist,
-              onHostKeyPrompt: hostKeyPrompt,
-              visited: visited,
-              socketOverride: hopSocket,
-            );
-          } else {
-            final forwarded = await currentClient.forwardLocal(hopSpi.ip, hopSpi.port);
-
-            final hopKeyId = hopSpi.keyId;
-            final hopPrivateKey = hopKeyId == null
-                ? null
-                : (jumpPrivateKeys != null && i < jumpPrivateKeys.length ? jumpPrivateKeys[i] : null) ??
-                    getPrivateKey(hopKeyId);
-
-            currentClient = await _genClientInternal(
-              hopSpi,
-              privateKey: hopPrivateKey,
-              jumpChain: jumpChain,
-              jumpPrivateKeys: jumpPrivateKeys,
-              timeout: timeout,
-              onKeyboardInteractive: onKeyboardInteractive,
-              knownHostFingerprints: hostKeyCache,
-              onHostKeyAccepted: hostKeyPersist,
-              onHostKeyPrompt: hostKeyPrompt,
-              visited: visited,
-              socketOverride: forwarded,
-            );
-          }
-        }
-
-        if (currentClient != null) {
-          return await currentClient.forwardLocal(spi.ip, spi.port);
         }
       }
 
-      // Legacy single hop
-      final hopId = spi.jumpId;
-      Spi? hopSpi;
-      String? hopPrivateKey;
-
-      if (hopId != null) {
+      Spi resolveSpi(String id) {
+        final injected = injectedSpiMap[id];
+        if (injected != null) return injected;
         if (jumpChain != null) {
-          final idx = jumpChain.indexWhere((e) => e.id == hopId || e.oldId == hopId);
-          if (idx == -1) {
-            throw SSHErr(type: SSHErrType.connect, message: 'Jump server not found in provided chain: $hopId');
-          }
-          hopSpi = jumpChain[idx];
-          hopPrivateKey = jumpPrivateKeys != null && idx < jumpPrivateKeys.length ? jumpPrivateKeys[idx] : null;
-
-          if (hopSpi.keyId != null && hopPrivateKey == null) {
-            throw SSHErr(
-              type: SSHErrType.noPrivateKey,
-              message: l10n.privateKeyNotFoundFmt(hopSpi.keyId ?? ''),
-            );
-          }
-        } else {
-          hopSpi = Stores.server.box.get(hopId);
+          throw SSHErr(type: SSHErrType.connect, message: 'Jump server not found in provided chain: $id');
         }
+        final fromStore = Stores.server.box.get(id);
+        if (fromStore == null) {
+          throw SSHErr(type: SSHErrType.connect, message: 'Jump server not found: $id');
+        }
+        return fromStore;
       }
 
-      if (hopSpi != null) {
-        final hopClient = await _genClientInternal(
-          hopSpi,
-          privateKey: hopPrivateKey,
+      String? resolveHopPrivateKey(Spi hop) {
+        final keyId = hop.keyId;
+        if (keyId == null) return null;
+        final injected = injectedKeyMap[hop.id] ?? injectedKeyMap[hop.oldId];
+        return injected ?? getPrivateKey(keyId);
+      }
+
+      final hops = _resolveMergedJumpChainInternal(spi, resolveSpi: resolveSpi);
+      if (hops.isNotEmpty) {
+        // Build multi-hop forward chain with dedup/merge.
+        final firstHop = hops.first;
+        final firstKey = resolveHopPrivateKey(firstHop);
+        if (firstHop.keyId != null && firstKey == null) {
+          throw SSHErr(type: SSHErrType.noPrivateKey, message: l10n.privateKeyNotFoundFmt(firstHop.keyId ?? ''));
+        }
+
+        var currentClient = await _genClientInternal(
+          firstHop,
+          privateKey: firstKey,
           jumpChain: jumpChain,
           jumpPrivateKeys: jumpPrivateKeys,
           timeout: timeout,
@@ -213,9 +234,34 @@ Future<SSHClient> _genClientInternal(
           onHostKeyAccepted: hostKeyPersist,
           onHostKeyPrompt: hostKeyPrompt,
           visited: visited,
+          followJumpConfig: false,
         );
 
-        return await hopClient.forwardLocal(spi.ip, spi.port);
+        for (var i = 1; i < hops.length; i++) {
+          final hop = hops[i];
+          final forwarded = await currentClient.forwardLocal(hop.ip, hop.port);
+          final hopKey = resolveHopPrivateKey(hop);
+          if (hop.keyId != null && hopKey == null) {
+            throw SSHErr(type: SSHErrType.noPrivateKey, message: l10n.privateKeyNotFoundFmt(hop.keyId ?? ''));
+          }
+
+          currentClient = await _genClientInternal(
+            hop,
+            privateKey: hopKey,
+            jumpChain: jumpChain,
+            jumpPrivateKeys: jumpPrivateKeys,
+            timeout: timeout,
+            onKeyboardInteractive: onKeyboardInteractive,
+            knownHostFingerprints: hostKeyCache,
+            onHostKeyAccepted: hostKeyPersist,
+            onHostKeyPrompt: hostKeyPrompt,
+            visited: visited,
+            socketOverride: forwarded,
+            followJumpConfig: false,
+          );
+        }
+
+        return await currentClient.forwardLocal(spi.ip, spi.port);
       }
     }
 

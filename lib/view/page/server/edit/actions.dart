@@ -222,13 +222,28 @@ extension _Actions on _ServerEditPageState {
       return;
     }
 
-    if (this.spi != null) {
-      final ok = await context.showRoundDialog<bool>(
-        title: libL10n.attention,
-        child: Text(libL10n.askContinue('${l10n.jumpServer} ${libL10n.setting}')),
-        actions: Btnx.cancelOk,
-      );
-      if (ok != true) return;
+    final oldSpi = this.spi;
+    if (oldSpi != null) {
+      final originalJumpChain = oldSpi.jumpChainIds ?? (oldSpi.jumpId == null ? const <String>[] : [oldSpi.jumpId!]);
+      final currentJumpChain = _jumpChain.value;
+
+      final jumpChainChanged = () {
+        if (originalJumpChain.isEmpty && currentJumpChain.isEmpty) return false;
+        if (originalJumpChain.length != currentJumpChain.length) return true;
+        for (var i = 0; i < originalJumpChain.length; i++) {
+          if (originalJumpChain[i] != currentJumpChain[i]) return true;
+        }
+        return false;
+      }();
+
+      if (jumpChainChanged) {
+        final ok = await context.showRoundDialog<bool>(
+          title: libL10n.attention,
+          child: Text(libL10n.askContinue('${l10n.jumpServer} ${libL10n.setting}')),
+          actions: Btnx.cancelOk,
+        );
+        if (ok != true) return;
+      }
     }
 
     if (_keyIdx.value == null && _passwordController.text.isEmpty) {
