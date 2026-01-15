@@ -23,8 +23,10 @@ class SftpReq {
       final hopIds = spi.jumpChainIds ?? (spi.jumpId == null ? const <String>[] : [spi.jumpId!]);
       for (final hopId in hopIds) {
         final hopSpi = Stores.server.box.get(hopId);
-        if (hopSpi == null) break;
-
+        if (hopSpi == null) {
+          Loggers.app.warning('Jump server not found: $hopId, truncating chain');
+          break;
+        }
         final hopKey = hopSpi.id.isNotEmpty ? hopSpi.id : hopSpi.oldId;
         if (!visited.add(hopKey)) {
           throw SSHErr(

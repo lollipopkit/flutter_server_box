@@ -46,7 +46,9 @@ List<Spi> resolveMergedJumpChain(
   if (jumpChain != null) {
     for (final s in jumpChain) {
       injectedSpiMap[s.id] = s;
-      injectedSpiMap[s.oldId] = s;
+      if (s.oldId.isNotEmpty) {
+        injectedSpiMap[s.oldId] = s;
+      }
     }
   }
 
