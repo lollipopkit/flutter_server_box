@@ -480,40 +480,34 @@ Future<void> ensureKnownHostKey(
   Duration timeout = const Duration(seconds: 5),
   SSHUserInfoRequestHandler? onKeyboardInteractive,
 }) async {
-  return _ensureKnownHostKeyInternal(
+  var cache = _loadKnownHostFingerprints();
+
+  final hops = resolveMergedJumpChain(spi);
+  for (final hop in hops) {
+    cache = await _ensureKnownHostKeyForSingle(
+      hop,
+      cache: cache,
+      timeout: timeout,
+      onKeyboardInteractive: onKeyboardInteractive,
+    );
+  }
+
+  await _ensureKnownHostKeyForSingle(
     spi,
+    cache: cache,
     timeout: timeout,
     onKeyboardInteractive: onKeyboardInteractive,
-    visited: <String>{},
   );
 }
 
-Future<void> _ensureKnownHostKeyInternal(
+Future<Map<String, String>> _ensureKnownHostKeyForSingle(
   Spi spi, {
+  required Map<String, String> cache,
   Duration timeout = const Duration(seconds: 5),
   SSHUserInfoRequestHandler? onKeyboardInteractive,
-  required Set<String> visited,
 }) async {
-  final identifier = _hostIdentifier(spi);
-  if (!visited.add(identifier)) {
-    throw SSHErr(type: SSHErrType.connect, message: 'Jump loop detected at ${spi.name} ($identifier)');
-  }
-
-  final cache = _loadKnownHostFingerprints();
   if (_hasKnownHostFingerprintForSpi(spi, cache)) {
-    return;
-  }
-
-  final jumpSpi = spi.jumpId != null ? Stores.server.box.get(spi.jumpId) : null;
-  if (jumpSpi != null && !_hasKnownHostFingerprintForSpi(jumpSpi, cache)) {
-    await _ensureKnownHostKeyInternal(
-      jumpSpi,
-      timeout: timeout,
-      onKeyboardInteractive: onKeyboardInteractive,
-      visited: visited,
-    );
-    cache.addAll(_loadKnownHostFingerprints());
-    if (_hasKnownHostFingerprintForSpi(spi, cache)) return;
+    return cache;
   }
 
   final client = await genClient(
@@ -528,6 +522,9 @@ Future<void> _ensureKnownHostKeyInternal(
   } finally {
     client.close();
   }
+
+  cache.addAll(_loadKnownHostFingerprints());
+  return cache;
 }
 
 bool _hasKnownHostFingerprintForSpi(Spi spi, Map<String, String> cache) {

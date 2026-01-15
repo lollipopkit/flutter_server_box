@@ -35,16 +35,16 @@ extension _JumpChain on _ServerEditPageState {
     }
 
     bool containsCycleWithCandidate(String candidateId) {
-      final visited = <String>{selfId};
       final queue = [..._jumpChain.value, candidateId];
 
+      final directVisited = <String>{selfId};
       for (final hopId in queue) {
         if (hopId == selfId) return true;
-        if (!visited.add(hopId)) return true;
+        if (!directVisited.add(hopId)) return true;
       }
 
       for (final hopId in queue) {
-        final extra = flattenHopIds(hopId, visited: visited);
+        final extra = flattenHopIds(hopId, visited: <String>{selfId});
         for (final id in extra) {
           if (id == selfId) return true;
         }
