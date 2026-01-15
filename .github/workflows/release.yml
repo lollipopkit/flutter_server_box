@@ -146,11 +146,14 @@ jobs:
       - name: Build
         run: |
           dart run fl_build -p ios -- --no-codesign
-          IPA_FILE=$(find build/ios/ipa -name "*.ipa" | head -n 1)
-          if [ -z "$IPA_FILE" ]; then
-            echo "Error: No .ipa file found in build/ios/ipa"
+          shopt -s nullglob
+          IPA_FILES=(build/ios/ipa/*.ipa)
+          if [ ${#IPA_FILES[@]} -ne 1 ]; then
+            echo "Error: expected 1 IPA, found ${#IPA_FILES[@]}"
+            ls -la build/ios/ipa || true
             exit 1
           fi
+          IPA_FILE="${IPA_FILES[0]}"
           echo "Found IPA: $IPA_FILE"
           cp "$IPA_FILE" "${APP_NAME}_${RELEASE_TAG}_ios.ipa"
       - name: Create Release
@@ -190,7 +193,7 @@ jobs:
           fi
 
           cd "$RELEASE_DIR"
-          zip -r "$OUT_ZIP" "$APP_NAME.app"
+          zip -ry "$OUT_ZIP" "$APP_NAME.app"
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
