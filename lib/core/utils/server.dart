@@ -177,8 +177,8 @@ Future<SSHClient> _genClientInternal(
 
   String? alterUser;
 
-  final socket = await () async {
-    if (socketOverride != null) return socketOverride;
+  final (socket, hopClients) = await () async {
+    if (socketOverride != null) return (socketOverride, <SSHClient>[]);
 
     if (followJumpConfig) {
       final injectedSpiMap = <String, Spi>{};
@@ -269,7 +269,8 @@ Future<SSHClient> _genClientInternal(
             createdClients.add(currentClient);
           }
 
-          return await currentClient!.forwardLocal(spi.ip, spi.port);
+          final forwardedSocket = await currentClient!.forwardLocal(spi.ip, spi.port);
+          return (forwardedSocket, createdClients);
         } catch (e) {
           // Close all created clients on error to avoid leaks
           for (final client in createdClients) {
@@ -288,14 +289,14 @@ Future<SSHClient> _genClientInternal(
 
     // Direct
     try {
-      return await SSHSocket.connect(spi.ip, spi.port, timeout: timeout);
+      return (await SSHSocket.connect(spi.ip, spi.port, timeout: timeout), <SSHClient>[]);
     } catch (e) {
       Loggers.app.warning('genClient', e);
       if (spi.alterUrl == null) rethrow;
       try {
         final res = spi.parseAlterUrl();
         alterUser = res.$2;
-        return await SSHSocket.connect(res.$1, res.$3, timeout: timeout);
+        return (await SSHSocket.connect(res.$1, res.$3, timeout: timeout), <SSHClient>[]);
       } catch (e) {
         Loggers.app.warning('genClient alterUrl', e);
         rethrow;
@@ -339,7 +340,23 @@ Future<SSHClient> _genClientInternal(
     );
   }
 
-  return await buildClient(socket);
+  final client = await buildClient(socket);
+
+  // Tie hop clients' lifetime to the final client: close all hop clients
+  // when the target client disconnects to avoid leaking SSH connections.
+  if (hopClients.isNotEmpty) {
+    client.done.whenComplete(() {
+      for (final hopClient in hopClients) {
+        try {
+          hopClient.close();
+        } catch (_) {
+          // Ignore close errors during cleanup
+        }
+      }
+    });
+  }
+
+  return client;
 }
 
 typedef _HostKeyPersistCallback = void Function(String storageKey, String fingerprintHex);
