@@ -24,8 +24,10 @@ class SftpReq {
       for (final hopId in hopIds) {
         final hopSpi = Stores.server.box.get(hopId);
         if (hopSpi == null) {
-          Loggers.app.warning('Jump server not found: $hopId, truncating chain');
-          break;
+          throw SSHErr(
+            type: SSHErrType.connect,
+            message: 'Jump server not found: $hopId',
+          );
         }
         final hopKey = hopSpi.id.isNotEmpty ? hopSpi.id : hopSpi.oldId;
         if (!visited.add(hopKey)) {
