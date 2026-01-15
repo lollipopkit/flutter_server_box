@@ -217,37 +217,19 @@ Future<SSHClient> _genClientInternal(
       final hops = _resolveMergedJumpChainInternal(spi, resolveSpi: resolveSpi);
       if (hops.isNotEmpty) {
         // Build multi-hop forward chain with dedup/merge.
-        final firstHop = hops.first;
-        final firstKey = resolveHopPrivateKey(firstHop);
-        if (firstHop.keyId != null && firstKey == null) {
-          throw SSHErr(type: SSHErrType.noPrivateKey, message: l10n.privateKeyNotFoundFmt(firstHop.keyId ?? ''));
-        }
+        final createdClients = <SSHClient>[];
+        SSHClient? currentClient;
 
-        var currentClient = await _genClientInternal(
-          firstHop,
-          privateKey: firstKey,
-          jumpChain: jumpChain,
-          jumpPrivateKeys: jumpPrivateKeys,
-          timeout: timeout,
-          onKeyboardInteractive: onKeyboardInteractive,
-          knownHostFingerprints: hostKeyCache,
-          onHostKeyAccepted: hostKeyPersist,
-          onHostKeyPrompt: hostKeyPrompt,
-          visited: visited,
-          followJumpConfig: false,
-        );
-
-        for (var i = 1; i < hops.length; i++) {
-          final hop = hops[i];
-          final forwarded = await currentClient.forwardLocal(hop.ip, hop.port);
-          final hopKey = resolveHopPrivateKey(hop);
-          if (hop.keyId != null && hopKey == null) {
-            throw SSHErr(type: SSHErrType.noPrivateKey, message: l10n.privateKeyNotFoundFmt(hop.keyId ?? ''));
+        try {
+          final firstHop = hops.first;
+          final firstKey = resolveHopPrivateKey(firstHop);
+          if (firstHop.keyId != null && firstKey == null) {
+            throw SSHErr(type: SSHErrType.noPrivateKey, message: l10n.privateKeyNotFoundFmt(firstHop.keyId ?? ''));
           }
 
           currentClient = await _genClientInternal(
-            hop,
-            privateKey: hopKey,
+            firstHop,
+            privateKey: firstKey,
             jumpChain: jumpChain,
             jumpPrivateKeys: jumpPrivateKeys,
             timeout: timeout,
@@ -256,12 +238,49 @@ Future<SSHClient> _genClientInternal(
             onHostKeyAccepted: hostKeyPersist,
             onHostKeyPrompt: hostKeyPrompt,
             visited: visited,
-            socketOverride: forwarded,
             followJumpConfig: false,
           );
-        }
+          createdClients.add(currentClient);
 
-        return await currentClient.forwardLocal(spi.ip, spi.port);
+          for (var i = 1; i < hops.length; i++) {
+            final hop = hops[i];
+            final forwarded = await currentClient!.forwardLocal(hop.ip, hop.port);
+            final hopKey = resolveHopPrivateKey(hop);
+            if (hop.keyId != null && hopKey == null) {
+              throw SSHErr(type: SSHErrType.noPrivateKey, message: l10n.privateKeyNotFoundFmt(hop.keyId ?? ''));
+            }
+
+            currentClient = await _genClientInternal(
+              hop,
+              privateKey: hopKey,
+              jumpChain: jumpChain,
+              jumpPrivateKeys: jumpPrivateKeys,
+              timeout: timeout,
+              onKeyboardInteractive: onKeyboardInteractive,
+              knownHostFingerprints: hostKeyCache,
+              onHostKeyAccepted: hostKeyPersist,
+              onHostKeyPrompt: hostKeyPrompt,
+              visited: visited,
+              socketOverride: forwarded,
+              followJumpConfig: false,
+            );
+            createdClients.add(currentClient);
+          }
+
+          return await currentClient!.forwardLocal(spi.ip, spi.port);
+        } catch (e) {
+          // Close all created clients on error to avoid leaks
+          for (final client in createdClients) {
+            try {
+              client.close();
+            } catch (_) {
+              // Ignore close errors during cleanup
+            }
+          }
+          rethrow;
+        }
+        // Note: On success, all intermediate clients must remain open
+        // because the returned socket tunnels through them.
       }
     }
 
