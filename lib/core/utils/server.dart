@@ -504,20 +504,37 @@ Future<void> ensureKnownHostKey(
   var cache = _loadKnownHostFingerprints();
 
   final hops = resolveMergedJumpChain(spi);
-  for (final hop in hops) {
+
+  // Check each hop's host key, routing through preceding hops
+  for (var i = 0; i < hops.length; i++) {
+    final hop = hops[i];
+    // Preceding hops needed to reach this hop
+    final precedingHops = i > 0 ? hops.sublist(0, i) : null;
+    final precedingKeys = precedingHops?.map((h) =>
+      h.keyId != null ? getPrivateKey(h.keyId!) : null
+    ).toList();
+
     cache = await _ensureKnownHostKeyForSingle(
       hop,
       cache: cache,
       timeout: timeout,
       onKeyboardInteractive: onKeyboardInteractive,
+      jumpChain: precedingHops,
+      jumpPrivateKeys: precedingKeys,
     );
   }
 
+  // Check the target's host key, routing through all hops
+  final allKeys = hops.isNotEmpty
+    ? hops.map((h) => h.keyId != null ? getPrivateKey(h.keyId!) : null).toList()
+    : null;
   await _ensureKnownHostKeyForSingle(
     spi,
     cache: cache,
     timeout: timeout,
     onKeyboardInteractive: onKeyboardInteractive,
+    jumpChain: hops.isNotEmpty ? hops : null,
+    jumpPrivateKeys: allKeys,
   );
 }
 
@@ -526,6 +543,8 @@ Future<Map<String, String>> _ensureKnownHostKeyForSingle(
   required Map<String, String> cache,
   Duration timeout = const Duration(seconds: 5),
   SSHUserInfoRequestHandler? onKeyboardInteractive,
+  List<Spi>? jumpChain,
+  List<String?>? jumpPrivateKeys,
 }) async {
   if (_hasKnownHostFingerprintForSpi(spi, cache)) {
     return cache;
@@ -536,6 +555,8 @@ Future<Map<String, String>> _ensureKnownHostKeyForSingle(
     timeout: timeout,
     onKeyboardInteractive: onKeyboardInteractive,
     knownHostFingerprints: cache,
+    jumpChain: jumpChain,
+    jumpPrivateKeys: jumpPrivateKeys,
   );
 
   try {
