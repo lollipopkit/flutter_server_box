@@ -16,29 +16,11 @@ class SftpReq {
       privateKey = getPrivateKey(keyId);
     }
     if (spi.jumpChainIds != null || spi.jumpId != null) {
-      final chain = <Spi>[];
+      // Use resolveMergedJumpChain to recursively expand nested hop chains
+      final chain = resolveMergedJumpChain(spi);
       final keys = <String?>[];
-      final visited = <String>{spi.id.isNotEmpty ? spi.id : spi.oldId};
-
-      final hopIds = spi.jumpChainIds ?? (spi.jumpId == null ? const <String>[] : [spi.jumpId!]);
-      for (final hopId in hopIds) {
-        final hopSpi = Stores.server.box.get(hopId);
-        if (hopSpi == null) {
-          throw SSHErr(
-            type: SSHErrType.connect,
-            message: 'Jump server not found: $hopId',
-          );
-        }
-        final hopKey = hopSpi.id.isNotEmpty ? hopSpi.id : hopSpi.oldId;
-        if (!visited.add(hopKey)) {
-          throw SSHErr(
-            type: SSHErrType.connect,
-            message: 'Jump loop detected while building SFTP chain: ${hopSpi.name}',
-          );
-        }
-
-        chain.add(hopSpi);
-        keys.add(hopSpi.keyId != null ? getPrivateKey(hopSpi.keyId!) : null);
+      for (final hop in chain) {
+        keys.add(hop.keyId != null ? getPrivateKey(hop.keyId!) : null);
       }
 
       // Always set when a jump is configured so the isolate won't fallback to Stores.
