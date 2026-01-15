@@ -9,10 +9,9 @@ on:
 permissions:
   contents: write
 
-# Set by fl_build
-# env:
-#   APP_NAME: ServerBox
-#   BUILD_NUMBER: ${{ github.ref_name }}
+env:
+  APP_NAME: ServerBox
+  RELEASE_TAG: ${{ github.ref_name }}
 
 jobs:
   releaseAndroid:
@@ -21,11 +20,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          submodules: recursive
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          flutter-version: "3.38.0"
+          flutter-version: "3.38.7"
       - uses: actions/setup-java@v4
         with:
           distribution: "zulu"
@@ -37,17 +38,28 @@ jobs:
       - name: Build
         run: dart run fl_build -p android
       - name: Rename for fdroid
+        shell: bash
         run: |
-          mv build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_arm64.apk build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm64.apk
-          mv build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_arm.apk build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm.apk
-          mv build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.apk build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_amd64.apk
+          APK_DIR="build/app/outputs/flutter-apk"
+          shopt -s nullglob
+
+          for arch in arm64 arm amd64; do
+            matches=("$APK_DIR"/"${APP_NAME}"_*_"${arch}".apk)
+            if [ ${#matches[@]} -ne 1 ]; then
+              echo "Error: expected 1 APK for ${arch}, found ${#matches[@]}"
+              echo "APK_DIR: $APK_DIR"
+              ls -la "$APK_DIR" || true
+              exit 1
+            fi
+            mv "${matches[0]}" "$APK_DIR/${APP_NAME}_${RELEASE_TAG}_${arch}.apk"
+          done
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm64.apk
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm.apk
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_amd64.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_arm64.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_arm.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_amd64.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -57,6 +69,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          submodules: recursive
       - name: Install Flutter
         uses: subosito/flutter-action@v2
       - name: Install dependencies
@@ -69,11 +83,22 @@ jobs:
       - name: Build
         run: |
           dart run fl_build -p linux
+      - name: Rename for release
+        shell: bash
+        run: |
+          shopt -s nullglob
+          matches=("${APP_NAME}"_*_amd64.AppImage)
+          if [ ${#matches[@]} -ne 1 ]; then
+            echo "Error: expected 1 AppImage, found ${#matches[@]}"
+            ls -la || true
+            exit 1
+          fi
+          mv "${matches[0]}" "${APP_NAME}_${RELEASE_TAG}_amd64.AppImage"
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.AppImage
+            ${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_amd64.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -83,32 +108,96 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          submodules: recursive
       - name: Install Flutter
         uses: subosito/flutter-action@v2
       - name: Build
         run: dart run fl_build -p windows
+      - name: Rename for release
+        shell: bash
+        run: |
+          shopt -s nullglob
+          matches=("${APP_NAME}"_*_windows_amd64.zip)
+          if [ ${#matches[@]} -ne 1 ]; then
+            echo "Error: expected 1 zip, found ${#matches[@]}"
+            ls -la || true
+            exit 1
+          fi
+          mv "${matches[0]}" "${APP_NAME}_${RELEASE_TAG}_windows_amd64.zip"
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_windows_amd64.zip
+            ${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_windows_amd64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # releaseApple:
-  #   name: Release ios and macos
-  #   runs-on: macos-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v6
-  #     - name: Install Flutter
-  #       uses: subosito/flutter-action@v2
-  #     - name: Build
-  #       run: dart run fl_build -p ios
-  #     - name: Create Release
-  #       uses: softprops/action-gh-release@v2
-  #       with:
-  #         files: |
-  #           ${{ env.APP_NAME }}_universal.ipa
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  releaseIOS:
+    name: Release iOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+      - name: Build
+        run: |
+          dart run fl_build -p ios -- --no-codesign
+          shopt -s nullglob
+          IPA_FILES=(build/ios/ipa/*.ipa)
+          if [ ${#IPA_FILES[@]} -ne 1 ]; then
+            echo "Error: expected 1 IPA, found ${#IPA_FILES[@]}"
+            ls -la build/ios/ipa || true
+            exit 1
+          fi
+          IPA_FILE="${IPA_FILES[0]}"
+          echo "Found IPA: $IPA_FILE"
+          cp "$IPA_FILE" "${APP_NAME}_${RELEASE_TAG}_ios.ipa"
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_ios.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  releaseMacOS:
+    name: Release macOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+      - name: Build
+        run: |
+          dart run fl_build -p macos -- --no-codesign
+      - name: Package
+        run: |
+          RELEASE_DIR="$GITHUB_WORKSPACE/build/macos/Build/Products/Release"
+          APP_DIR="$RELEASE_DIR/$APP_NAME.app"
+          OUT_ZIP="$GITHUB_WORKSPACE/${APP_NAME}_${RELEASE_TAG}_macos.zip"
+
+          if [ ! -d "$RELEASE_DIR" ]; then
+            echo "Error: macOS release directory not found: $RELEASE_DIR"
+            exit 1
+          fi
+          if [ ! -d "$APP_DIR" ]; then
+            echo "Error: macOS app bundle not found: $APP_DIR"
+            exit 1
+          fi
+
+          cd "$RELEASE_DIR"
+          zip -ry "$OUT_ZIP" "$APP_NAME.app"
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_macos.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
