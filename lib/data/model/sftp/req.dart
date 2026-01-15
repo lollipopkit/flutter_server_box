@@ -15,31 +15,29 @@ class SftpReq {
     if (keyId != null) {
       privateKey = getPrivateKey(keyId);
     }
-    if (spi.jumpId != null) {
+    if (spi.jumpChainIds != null || spi.jumpId != null) {
       final chain = <Spi>[];
       final keys = <String?>[];
       final visited = <String>{spi.id.isNotEmpty ? spi.id : spi.oldId};
 
-      var currentJumpId = spi.jumpId;
-      while (currentJumpId != null) {
-        final jumpSpi = Stores.server.box.get(currentJumpId);
-        if (jumpSpi == null) break;
+      final hopIds = spi.jumpChainIds ?? (spi.jumpId == null ? const <String>[] : [spi.jumpId!]);
+      for (final hopId in hopIds) {
+        final hopSpi = Stores.server.box.get(hopId);
+        if (hopSpi == null) break;
 
-        // Prevent infinite loops if user mis-configured jump servers.
-        final jumpId = jumpSpi.id.isNotEmpty ? jumpSpi.id : jumpSpi.oldId;
-        if (!visited.add(jumpId)) {
+        final hopKey = hopSpi.id.isNotEmpty ? hopSpi.id : hopSpi.oldId;
+        if (!visited.add(hopKey)) {
           throw SSHErr(
             type: SSHErrType.connect,
-            message: 'Jump loop detected while building SFTP chain: ${jumpSpi.name}',
+            message: 'Jump loop detected while building SFTP chain: ${hopSpi.name}',
           );
         }
 
-        chain.add(jumpSpi);
-        keys.add(jumpSpi.keyId != null ? getPrivateKey(jumpSpi.keyId!) : null);
-        currentJumpId = jumpSpi.jumpId;
+        chain.add(hopSpi);
+        keys.add(hopSpi.keyId != null ? getPrivateKey(hopSpi.keyId!) : null);
       }
 
-      // Always set when `spi.jumpId != null` so the isolate won't fallback to Stores.
+      // Always set when a jump is configured so the isolate won't fallback to Stores.
       jumpChain = chain;
       jumpPrivateKeys = keys;
     }

@@ -107,6 +107,7 @@ class SpiAdapter extends TypeAdapter<Spi> {
       alterUrl: fields[7] as String?,
       autoConnect: fields[8] == null ? true : fields[8] as bool,
       jumpId: fields[9] as String?,
+      jumpChainIds: (fields[16] as List?)?.cast<String>(),
       custom: fields[10] as ServerCustom?,
       wolCfg: fields[11] as WakeOnLanCfg?,
       envs: (fields[12] as Map?)?.cast<String, String>(),
@@ -119,7 +120,7 @@ class SpiAdapter extends TypeAdapter<Spi> {
   @override
   void write(BinaryWriter writer, Spi obj) {
     writer
-      ..writeByte(16)
+      ..writeByte(17)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -151,7 +152,9 @@ class SpiAdapter extends TypeAdapter<Spi> {
       ..writeByte(14)
       ..write(obj.customSystemType)
       ..writeByte(15)
-      ..write(obj.disabledCmdTypes);
+      ..write(obj.disabledCmdTypes)
+      ..writeByte(16)
+      ..write(obj.jumpChainIds);
   }
 
   @override

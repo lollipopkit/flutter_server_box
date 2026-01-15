@@ -90,6 +90,8 @@ Future<SSHClient> _genClientInternal(
   void Function(String storageKey, String fingerprintHex)? onHostKeyAccepted,
   Future<bool> Function(HostKeyPromptInfo info)? onHostKeyPrompt,
   required Set<String> visited,
+  SSHSocket? socketOverride,
+  bool followJumpConfig = true,
 }) async {
   final identifier = _hostIdentifier(spi);
   if (!visited.add(identifier)) {
@@ -105,46 +107,116 @@ Future<SSHClient> _genClientInternal(
   String? alterUser;
 
   final socket = await () async {
-    // Proxy
-    final jumpId = spi.jumpId;
-    Spi? jumpSpi_;
-    String? jumpPrivateKey;
+    if (socketOverride != null) return socketOverride;
 
-    if (jumpId != null) {
-      if (jumpChain != null) {
-        final idx = jumpChain.indexWhere((e) => e.id == jumpId || e.oldId == jumpId);
-        if (idx == -1) {
-          throw SSHErr(type: SSHErrType.connect, message: 'Jump server not found in provided chain: $jumpId');
-        }
-        jumpSpi_ = jumpChain[idx];
-        jumpPrivateKey = jumpPrivateKeys != null && idx < jumpPrivateKeys.length ? jumpPrivateKeys[idx] : null;
+    if (followJumpConfig) {
+      final hopIds = spi.jumpChainIds;
 
-        if (jumpSpi_.keyId != null && jumpPrivateKey == null) {
-          throw SSHErr(
-            type: SSHErrType.noPrivateKey,
-            message: l10n.privateKeyNotFoundFmt(jumpSpi_.keyId ?? ''),
-          );
+      // Explicit hop list on this node
+      if (hopIds != null && hopIds.isNotEmpty) {
+        SSHClient? currentClient;
+
+        for (var i = 0; i < hopIds.length; i++) {
+          final hopId = hopIds[i];
+          final hopSpi = jumpChain?.firstWhereOrNull((e) => e.id == hopId || e.oldId == hopId) ??
+              Stores.server.box.get(hopId);
+          if (hopSpi == null) {
+            throw SSHErr(type: SSHErrType.connect, message: 'Jump server not found: $hopId');
+          }
+
+          if (currentClient == null) {
+            // First hop: connect directly
+            final hopKeyId = hopSpi.keyId;
+            final hopPrivateKey = hopKeyId == null
+                ? null
+                : (jumpPrivateKeys != null && i < jumpPrivateKeys.length ? jumpPrivateKeys[i] : null) ??
+                    getPrivateKey(hopKeyId);
+
+            final hopSocket = await SSHSocket.connect(hopSpi.ip, hopSpi.port, timeout: timeout);
+            currentClient = await _genClientInternal(
+              hopSpi,
+              privateKey: hopPrivateKey,
+              jumpChain: jumpChain,
+              jumpPrivateKeys: jumpPrivateKeys,
+              timeout: timeout,
+              onKeyboardInteractive: onKeyboardInteractive,
+              knownHostFingerprints: hostKeyCache,
+              onHostKeyAccepted: hostKeyPersist,
+              onHostKeyPrompt: hostKeyPrompt,
+              visited: visited,
+              socketOverride: hopSocket,
+            );
+          } else {
+            final forwarded = await currentClient.forwardLocal(hopSpi.ip, hopSpi.port);
+
+            final hopKeyId = hopSpi.keyId;
+            final hopPrivateKey = hopKeyId == null
+                ? null
+                : (jumpPrivateKeys != null && i < jumpPrivateKeys.length ? jumpPrivateKeys[i] : null) ??
+                    getPrivateKey(hopKeyId);
+
+            currentClient = await _genClientInternal(
+              hopSpi,
+              privateKey: hopPrivateKey,
+              jumpChain: jumpChain,
+              jumpPrivateKeys: jumpPrivateKeys,
+              timeout: timeout,
+              onKeyboardInteractive: onKeyboardInteractive,
+              knownHostFingerprints: hostKeyCache,
+              onHostKeyAccepted: hostKeyPersist,
+              onHostKeyPrompt: hostKeyPrompt,
+              visited: visited,
+              socketOverride: forwarded,
+            );
+          }
         }
-      } else {
-        jumpSpi_ = Stores.server.box.get(jumpId);
+
+        if (currentClient != null) {
+          return await currentClient.forwardLocal(spi.ip, spi.port);
+        }
       }
-    }
 
-    if (jumpSpi_ != null) {
-      final jumpClient = await _genClientInternal(
-        jumpSpi_,
-        privateKey: jumpPrivateKey,
-        jumpChain: jumpChain,
-        jumpPrivateKeys: jumpPrivateKeys,
-        timeout: timeout,
-        onKeyboardInteractive: onKeyboardInteractive,
-        knownHostFingerprints: hostKeyCache,
-        onHostKeyAccepted: hostKeyPersist,
-        onHostKeyPrompt: hostKeyPrompt,
-        visited: visited,
-      );
+      // Legacy single hop
+      final hopId = spi.jumpId;
+      Spi? hopSpi;
+      String? hopPrivateKey;
 
-      return await jumpClient.forwardLocal(spi.ip, spi.port);
+      if (hopId != null) {
+        if (jumpChain != null) {
+          final idx = jumpChain.indexWhere((e) => e.id == hopId || e.oldId == hopId);
+          if (idx == -1) {
+            throw SSHErr(type: SSHErrType.connect, message: 'Jump server not found in provided chain: $hopId');
+          }
+          hopSpi = jumpChain[idx];
+          hopPrivateKey = jumpPrivateKeys != null && idx < jumpPrivateKeys.length ? jumpPrivateKeys[idx] : null;
+
+          if (hopSpi.keyId != null && hopPrivateKey == null) {
+            throw SSHErr(
+              type: SSHErrType.noPrivateKey,
+              message: l10n.privateKeyNotFoundFmt(hopSpi.keyId ?? ''),
+            );
+          }
+        } else {
+          hopSpi = Stores.server.box.get(hopId);
+        }
+      }
+
+      if (hopSpi != null) {
+        final hopClient = await _genClientInternal(
+          hopSpi,
+          privateKey: hopPrivateKey,
+          jumpChain: jumpChain,
+          jumpPrivateKeys: jumpPrivateKeys,
+          timeout: timeout,
+          onKeyboardInteractive: onKeyboardInteractive,
+          knownHostFingerprints: hostKeyCache,
+          onHostKeyAccepted: hostKeyPersist,
+          onHostKeyPrompt: hostKeyPrompt,
+          visited: visited,
+        );
+
+        return await hopClient.forwardLocal(spi.ip, spi.port);
+      }
     }
 
     // Direct
@@ -171,32 +243,36 @@ Future<SSHClient> _genClientInternal(
     prompt: hostKeyPrompt,
   );
 
-  final keyId = spi.keyId;
-  if (keyId == null) {
-    onStatus?.call(GenSSHClientStatus.pwd);
+  Future<SSHClient> buildClient(SSHSocket socket) async {
+    final keyId = spi.keyId;
+    if (keyId == null) {
+      onStatus?.call(GenSSHClientStatus.pwd);
+      return SSHClient(
+        socket,
+        username: alterUser ?? spi.user,
+        onPasswordRequest: () => spi.pwd,
+        onUserInfoRequest: onKeyboardInteractive,
+        onVerifyHostKey: hostKeyVerifier.call,
+        // printDebug: debugPrint,
+        // printTrace: debugPrint,
+      );
+    }
+    privateKey ??= getPrivateKey(keyId);
+
+    onStatus?.call(GenSSHClientStatus.key);
     return SSHClient(
       socket,
-      username: alterUser ?? spi.user,
-      onPasswordRequest: () => spi.pwd,
+      username: spi.user,
+      // Must use [compute] here, instead of [Computer.shared.start]
+      identities: await compute(loadIndentity, privateKey!),
       onUserInfoRequest: onKeyboardInteractive,
       onVerifyHostKey: hostKeyVerifier.call,
       // printDebug: debugPrint,
       // printTrace: debugPrint,
     );
   }
-  privateKey ??= getPrivateKey(keyId);
 
-  onStatus?.call(GenSSHClientStatus.key);
-  return SSHClient(
-    socket,
-    username: spi.user,
-    // Must use [compute] here, instead of [Computer.shared.start]
-    identities: await compute(loadIndentity, privateKey),
-    onUserInfoRequest: onKeyboardInteractive,
-    onVerifyHostKey: hostKeyVerifier.call,
-    // printDebug: debugPrint,
-    // printTrace: debugPrint,
-  );
+  return await buildClient(socket);
 }
 
 typedef _HostKeyPersistCallback = void Function(String storageKey, String fingerprintHex);
