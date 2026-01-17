@@ -272,6 +272,10 @@ class ContainerNotifier extends _$ContainerNotifier {
   }
 
   Future<ContainerErr?> run(String cmd, {bool autoRefresh = true}) async {
+    if (client == null) {
+      return ContainerErr(type: ContainerErrType.noClient);
+    }
+
     cmd = switch (state.type) {
       ContainerType.docker => 'docker $cmd',
       ContainerType.podman => 'podman $cmd',
