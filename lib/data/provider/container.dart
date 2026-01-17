@@ -110,6 +110,17 @@ class ContainerNotifier extends _$ContainerNotifier {
       return;
     }
 
+    /// Pre-parse Podman detection
+    if (raw.contains(_podmanEmulationMsg)) {
+      state = state.copyWith(
+        error: ContainerErr(
+          type: ContainerErrType.podmanDetected,
+          message: l10n.podmanDockerEmulationDetected,
+        ),
+      );
+      return;
+    }
+
     // Check result segments count
     final segments = raw.split(ScriptConstants.separator);
     if (segments.length != ContainerCmdType.values.length) {
@@ -129,16 +140,6 @@ class ContainerNotifier extends _$ContainerNotifier {
       final version = json.decode(verRaw)['Client']['Version'];
       state = state.copyWith(version: version, error: null);
     } catch (e, trace) {
-      final errorMsg = '$e';
-      if (errorMsg.contains(_podmanEmulationMsg)) {
-        state = state.copyWith(
-          error: ContainerErr(
-            type: ContainerErrType.podmanDetected,
-            message: l10n.podmanDockerEmulationDetected,
-          ),
-        );
-        return;
-      }
       if (state.error == null) {
         state = state.copyWith(
           error: ContainerErr(type: ContainerErrType.invalidVersion, message: '$e'),
@@ -159,16 +160,6 @@ class ContainerNotifier extends _$ContainerNotifier {
       final items = lines.map((e) => ContainerPs.fromRaw(e, state.type)).toList();
       state = state.copyWith(items: items);
     } catch (e, trace) {
-      final errorMsg = '$e';
-      if (errorMsg.contains(_podmanEmulationMsg)) {
-        state = state.copyWith(
-          error: ContainerErr(
-            type: ContainerErrType.podmanDetected,
-            message: l10n.podmanDockerEmulationDetected,
-          ),
-        );
-        return;
-      }
       if (state.error == null) {
         state = state.copyWith(
           error: ContainerErr(type: ContainerErrType.parsePs, message: '$e'),
@@ -193,16 +184,6 @@ class ContainerNotifier extends _$ContainerNotifier {
       }
       state = state.copyWith(images: images);
     } catch (e, trace) {
-      final errorMsg = '$e';
-      if (errorMsg.contains(_podmanEmulationMsg)) {
-        state = state.copyWith(
-          error: ContainerErr(
-            type: ContainerErrType.podmanDetected,
-            message: l10n.podmanDockerEmulationDetected,
-          ),
-        );
-        return;
-      }
       if (state.error == null) {
         state = state.copyWith(
           error: ContainerErr(type: ContainerErrType.parseImages, message: '$e'),
