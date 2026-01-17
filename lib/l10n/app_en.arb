@@ -304,5 +304,6 @@
   "menuGitHubRepository": "GitHub Repository",
   "menuWiki": "Wiki",
     "menuHelp": "Help",
-  "logs": "Logs"
+  "logs": "Logs",
+  "podmanDockerEmulationDetected": "Podman Docker emulation detected. Please switch to Podman in settings."
 }

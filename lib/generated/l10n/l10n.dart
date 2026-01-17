@@ -1933,6 +1933,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Logs'**
   String get logs;
+
+  /// No description provided for @podmanDockerEmulationDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Podman Docker emulation detected. Please switch to Podman in settings.'**
+  String get podmanDockerEmulationDetected;
 }
 
 class _AppLocalizationsDelegate

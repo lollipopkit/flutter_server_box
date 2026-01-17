@@ -1023,4 +1023,8 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get logs => 'Günlükler';
+
+  @override
+  String get podmanDockerEmulationDetected =>
+      'Podman Docker emülasyonu tespit edildi. Lütfen ayarlarda Podman\'a geçin.';
 }

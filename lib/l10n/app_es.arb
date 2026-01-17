@@ -294,5 +294,6 @@
   "write": "Escribir",
   "writeScriptFailTip": "La escritura en el script falló, posiblemente por falta de permisos o porque el directorio no existe.",
   "writeScriptTip": "Después de conectarse al servidor, se escribirá un script en `~/.config/server_box` \n | `/tmp/server_box` para monitorear el estado del sistema. Puedes revisar el contenido del script.",
-  "logs": "Registros"
+  "logs": "Registros",
+  "podmanDockerEmulationDetected": "Detectada emulación de Podman Docker. Por favor, cambie a Podman en la configuración."
 }

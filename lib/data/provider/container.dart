@@ -6,6 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
@@ -18,6 +19,7 @@ part 'container.freezed.dart';
 part 'container.g.dart';
 
 final _dockerNotFound = RegExp(r"command not found|Unknown command|Command '\w+' not found");
+final _podmanEmulationMsg = 'Emulate Docker CLI using podman';
 
 @freezed
 abstract class ContainerState with _$ContainerState {
@@ -84,21 +86,51 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
     final includeStats = Stores.setting.containerParseStat.fetch();
 
-    var raw = '';
     final cmd = _wrap(ContainerCmdType.execAll(state.type, sudo: sudo, includeStats: includeStats));
-    final code = await client?.execWithPwd(
-      cmd,
-      context: context,
-      onStdout: (data, _) => raw = '$raw$data',
-      id: hostId,
-    );
+    int? code;
+    String raw = '';
+    final errs = <String>[];
+    if (client != null) {
+      (code, raw) = await client!.execWithPwd(cmd, context: context, id: hostId);
+    } else {
+      state = state.copyWith(
+        isBusy: false,
+        error: ContainerErr(type: ContainerErrType.noClient),
+      );
+      return;
+    }
 
+    if (!ref.mounted) return;
     state = state.copyWith(isBusy: false);
 
     if (!context.mounted) return;
 
     /// Code 127 means command not found
-    if (code == 127 || raw.contains(_dockerNotFound)) {
+    if (code == 127 || raw.contains(_dockerNotFound) || errs.join().contains(_dockerNotFound)) {
+      state = state.copyWith(error: ContainerErr(type: ContainerErrType.notInstalled));
+      return;
+    }
+
+    /// Pre-parse Podman detection
+    if (raw.contains(_podmanEmulationMsg)) {
+      state = state.copyWith(
+        error: ContainerErr(
+          type: ContainerErrType.podmanDetected,
+          message: l10n.podmanDockerEmulationDetected,
+        ),
+      );
+      return;
+    }
+
+    /// Filter out sudo password prompt from output
+    if (errs.any((e) => e.contains('[sudo] password'))) {
+      raw = raw.split('\n').where((line) => !line.contains('[sudo] password')).join('\n');
+    }
+
+    /// Detect Podman not installed when using Podman mode
+    if (state.type == ContainerType.podman &&
+        (errs.any((e) => e.contains('podman: not found')) ||
+            raw.contains('podman: not found'))) {
       state = state.copyWith(error: ContainerErr(type: ContainerErrType.notInstalled));
       return;
     }
@@ -122,9 +154,11 @@ class ContainerNotifier extends _$ContainerNotifier {
       final version = json.decode(verRaw)['Client']['Version'];
       state = state.copyWith(version: version, error: null);
     } catch (e, trace) {
-      state = state.copyWith(
-        error: ContainerErr(type: ContainerErrType.invalidVersion, message: '$e'),
-      );
+      if (state.error == null) {
+        state = state.copyWith(
+          error: ContainerErr(type: ContainerErrType.invalidVersion, message: '$e'),
+        );
+      }
       Loggers.app.warning('Container version failed', e, trace);
     }
 
@@ -140,9 +174,11 @@ class ContainerNotifier extends _$ContainerNotifier {
       final items = lines.map((e) => ContainerPs.fromRaw(e, state.type)).toList();
       state = state.copyWith(items: items);
     } catch (e, trace) {
-      state = state.copyWith(
-        error: ContainerErr(type: ContainerErrType.parsePs, message: '$e'),
-      );
+      if (state.error == null) {
+        state = state.copyWith(
+          error: ContainerErr(type: ContainerErrType.parsePs, message: '$e'),
+        );
+      }
       Loggers.app.warning('Container ps failed', e, trace);
     }
 
@@ -162,9 +198,11 @@ class ContainerNotifier extends _$ContainerNotifier {
       }
       state = state.copyWith(images: images);
     } catch (e, trace) {
-      state = state.copyWith(
-        error: ContainerErr(type: ContainerErrType.parseImages, message: '$e'),
-      );
+      if (state.error == null) {
+        state = state.copyWith(
+          error: ContainerErr(type: ContainerErrType.parseImages, message: '$e'),
+        );
+      }
       Loggers.app.warning('Container images failed', e, trace);
     }
 
@@ -189,9 +227,11 @@ class ContainerNotifier extends _$ContainerNotifier {
         item.parseStats(statsLine, state.version);
       }
     } catch (e, trace) {
-      state = state.copyWith(
-        error: ContainerErr(type: ContainerErrType.parseStats, message: '$e'),
-      );
+      if (state.error == null) {
+        state = state.copyWith(
+          error: ContainerErr(type: ContainerErrType.parseStats, message: '$e'),
+        );
+      }
       Loggers.app.warning('Parse docker stats: $statsRaw', e, trace);
     }
   }
@@ -227,6 +267,10 @@ class ContainerNotifier extends _$ContainerNotifier {
   }
 
   Future<ContainerErr?> run(String cmd, {bool autoRefresh = true}) async {
+    if (client == null) {
+      return ContainerErr(type: ContainerErrType.noClient);
+    }
+
     cmd = switch (state.type) {
       ContainerType.docker => 'docker $cmd',
       ContainerType.podman => 'podman $cmd',
@@ -234,7 +278,7 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     state = state.copyWith(runLog: '');
     final errs = <String>[];
-    final code = await client?.execWithPwd(
+    final (code, _) = await client?.execWithPwd(
       _wrap((await sudoCompleter.future) ? 'sudo -S $cmd' : cmd),
       context: context,
       onStdout: (data, _) {
@@ -242,7 +286,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       },
       onStderr: (data, _) => errs.add(data),
       id: hostId,
-    );
+    ) ?? (null, null);
     state = state.copyWith(runLog: null);
 
     if (code != 0) {

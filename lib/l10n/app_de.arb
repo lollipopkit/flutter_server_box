@@ -294,5 +294,6 @@
   "write": "Schreiben",
   "writeScriptFailTip": "Das Schreiben des Skripts ist fehlgeschlagen, möglicherweise aufgrund fehlender Berechtigungen oder das Verzeichnis existiert nicht.",
   "writeScriptTip": "Nach der Verbindung mit dem Server wird ein Skript in `~/.config/server_box` \n | `/tmp/server_box` geschrieben, um den Systemstatus zu überwachen. Sie können den Skriptinhalt überprüfen.",
-  "logs": "Protokolle"
+  "logs": "Protokolle",
+  "podmanDockerEmulationDetected": "Podman Docker-Emulation erkannt. Bitte wechseln Sie in den Einstellungen zu Podman."
 }

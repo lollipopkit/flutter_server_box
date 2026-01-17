@@ -294,5 +294,6 @@
   "write": "書き込み",
   "writeScriptFailTip": "スクリプトの書き込みに失敗しました。権限がないかディレクトリが存在しない可能性があります。",
   "writeScriptTip": "サーバーへの接続後、システムステータスを監視するスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。",
-  "logs": "ログ"
+  "logs": "ログ",
+  "podmanDockerEmulationDetected": "Podman Docker エミュレーションが検出されました。設定で Podman に切り替えてください。"
 }

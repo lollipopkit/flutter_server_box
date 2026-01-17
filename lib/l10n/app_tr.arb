@@ -294,5 +294,6 @@
   "write": "Yaz",
   "writeScriptFailTip": "Betik yazma başarısız oldu, muhtemelen izin eksikliği veya dizin mevcut değil.",
   "writeScriptTip": "Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.",
-  "logs": "Günlükler"
+  "logs": "Günlükler",
+  "podmanDockerEmulationDetected": "Podman Docker emülasyonu tespit edildi. Lütfen ayarlarda Podman'a geçin."
 }

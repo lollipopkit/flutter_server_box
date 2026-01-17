@@ -977,6 +977,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get logs => '日志';
+
+  @override
+  String get podmanDockerEmulationDetected =>
+      '检测到 Podman Docker 仿真。请在设置中切换到 Podman。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1931,4 +1935,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get logs => '日誌';
+
+  @override
+  String get podmanDockerEmulationDetected =>
+      '檢測到 Podman Docker 仿真。請在設定中切換到 Podman。';
 }
