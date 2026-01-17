@@ -355,7 +355,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       onTapUp: (_) => _virtKeyLongPressTimer?.cancel(),
       child: SizedBox(
         width: virtKeyWidth,
-        height: _virtKeysHeight / _virtKeysList.length,
+        height: _horizonVirtKeys ? _virtKeysHeight : _virtKeysHeight / _virtKeysList.length,
         child: Center(child: child),
       ),
     );
