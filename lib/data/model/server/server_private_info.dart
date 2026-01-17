@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/custom.dart';
@@ -35,8 +36,15 @@ abstract class Spi with _$Spi {
     String? alterUrl,
     @Default(true) bool autoConnect,
 
-    /// [id] of the jump server
+    /// [id] of the jump server (legacy, single hop)
+    ///
+    /// Migrated to [jumpChainIds].
     String? jumpId,
+
+    /// Jump chain hop ids (nearest -> farthest)
+    ///
+    /// Preferred over [jumpId].
+    @JsonKey(includeIfNull: false) List<String>? jumpChainIds,
     ServerCustom? custom,
     WakeOnLanCfg? wolCfg,
 
@@ -79,7 +87,10 @@ extension Spix on Spi {
   String? migrateId() {
     if (id.isNotEmpty) return null;
     ServerStore.instance.delete(oldId);
-    final newSpi = copyWith(id: ShortId.generate());
+    final newSpi = copyWith(
+      id: ShortId.generate(),
+      jumpChainIds: jumpChainIds ?? (jumpId == null ? null : [jumpId!]),
+    );
     newSpi.save();
     return newSpi.id;
   }
@@ -94,7 +105,8 @@ extension Spix on Spi {
         port == other.port &&
         pwd == other.pwd &&
         keyId == other.keyId &&
-        jumpId == other.jumpId;
+        jumpId == other.jumpId &&
+        listEquals(jumpChainIds, other.jumpChainIds);
   }
 
   /// Returns true if the connection should be re-established.
@@ -137,7 +149,7 @@ extension Spix on Spi {
     tags: ['tag1', 'tag2'],
     alterUrl: 'user@ip:port',
     autoConnect: true,
-    jumpId: 'jump_server_id',
+    jumpChainIds: ['jump_server_id'],
     custom: ServerCustom(
       pveAddr: 'http://localhost:8006',
       pveIgnoreCert: false,
