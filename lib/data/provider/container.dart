@@ -91,6 +91,12 @@ class ContainerNotifier extends _$ContainerNotifier {
     String raw = '';
     if (client != null) {
       (code, raw) = await client!.execWithPwd(cmd, context: context, id: hostId);
+    } else {
+      state = state.copyWith(
+        isBusy: false,
+        error: ContainerErr(type: ContainerErrType.noClient),
+      );
+      return;
     }
 
     if (!ref.mounted) return;

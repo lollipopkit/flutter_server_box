@@ -146,6 +146,7 @@ extension SSHClientX on SSHClient {
       },
       onStdout: onStdout,
       entry: entry,
+      stderr: false,
     );
     return (session.exitCode, output);
   }

@@ -53,7 +53,8 @@ extension _Operation on _ServerPageState {
           ShellFunc.suspend.exec(srv.spi.id, systemType: srv.status.system, customDir: null),
           context: context,
           id: srv.id,
-        );
+        ) ??
+            (null, '');
       },
       typ: l10n.suspend,
       name: srv.spi.name,
@@ -81,7 +82,8 @@ extension _Operation on _ServerPageState {
           ShellFunc.reboot.exec(srv.spi.id, systemType: srv.status.system, customDir: null),
           context: context,
           id: srv.id,
-        );
+        ) ??
+            (null, '');
       },
       typ: l10n.reboot,
       name: srv.spi.name,
