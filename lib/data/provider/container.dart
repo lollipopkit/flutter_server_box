@@ -89,6 +89,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     final cmd = _wrap(ContainerCmdType.execAll(state.type, sudo: sudo, includeStats: includeStats));
     int? code;
     String raw = '';
+    final errs = <String>[];
     if (client != null) {
       (code, raw) = await client!.execWithPwd(cmd, context: context, id: hostId);
     } else {
@@ -105,7 +106,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (!context.mounted) return;
 
     /// Code 127 means command not found
-    if (code == 127 || raw.contains(_dockerNotFound)) {
+    if (code == 127 || raw.contains(_dockerNotFound) || errs.join().contains(_dockerNotFound)) {
       state = state.copyWith(error: ContainerErr(type: ContainerErrType.notInstalled));
       return;
     }
@@ -118,6 +119,19 @@ class ContainerNotifier extends _$ContainerNotifier {
           message: l10n.podmanDockerEmulationDetected,
         ),
       );
+      return;
+    }
+
+    /// Filter out sudo password prompt from output
+    if (errs.any((e) => e.contains('[sudo] password'))) {
+      raw = raw.split('\n').where((line) => !line.contains('[sudo] password')).join('\n');
+    }
+
+    /// Detect Podman not installed when using Podman mode
+    if (state.type == ContainerType.podman &&
+        (errs.any((e) => e.contains('podman: not found')) ||
+            raw.contains('podman: not found'))) {
+      state = state.copyWith(error: ContainerErr(type: ContainerErrType.notInstalled));
       return;
     }
 
