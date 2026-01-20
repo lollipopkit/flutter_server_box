@@ -98,7 +98,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with SingleTickerPr
           ),
         ],
       ),
-      body: TabBarView(controller: _tabCtrl, children: SettingsTabs.pages),
+      body: SafeArea(child: TabBarView(controller: _tabCtrl, children: SettingsTabs.pages)),
     );
   }
 }
