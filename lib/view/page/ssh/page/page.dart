@@ -268,23 +268,26 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   Widget _buildBottom() {
-    return AnimatedPadding(
-      padding: _media.viewInsets,
-      duration: const Duration(milliseconds: 23),
-      curve: Curves.fastOutSlowIn,
-      child: Container(
-        color: _terminalTheme.background,
-        height: _virtKeysHeight + _media.padding.bottom,
-        child: Consumer(
-          builder: (context, ref, child) {
-            final virtKeyState = ref.watch(virtKeyboardProvider);
-            final virtKeyNotifier = ref.read(virtKeyboardProvider.notifier);
-            
-            // Set the terminal input handler
-            _terminal.inputHandler = virtKeyNotifier;
-            
-            return _buildVirtualKey(virtKeyState, virtKeyNotifier);
-          },
+    return SafeArea(
+      top: false,
+      child: AnimatedPadding(
+        padding: _media.viewInsets,
+        duration: const Duration(milliseconds: 23),
+        curve: Curves.fastOutSlowIn,
+        child: Container(
+          color: _terminalTheme.background,
+          height: _virtKeysHeight,
+          child: Consumer(
+            builder: (context, ref, child) {
+              final virtKeyState = ref.watch(virtKeyboardProvider);
+              final virtKeyNotifier = ref.read(virtKeyboardProvider.notifier);
+              
+              // Set the terminal input handler
+              _terminal.inputHandler = virtKeyNotifier;
+              
+              return _buildVirtualKey(virtKeyState, virtKeyNotifier);
+            },
+          ),
         ),
       ),
     );
