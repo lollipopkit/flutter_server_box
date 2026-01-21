@@ -76,8 +76,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
       if (!_checkedIncompleteData) {
         final isAnyProcDataNotComplete = _result.procs.any((e) => e.cpu == null || e.mem == null);
         if (isAnyProcDataNotComplete) {
-          _sortModes.removeWhere((e) => e == ProcSortMode.cpu);
-          _sortModes.removeWhere((e) => e == ProcSortMode.mem);
+          _sortModes.removeWhere((e) => e == ProcSortMode.cpu || e == ProcSortMode.mem);
         }
         _checkedIncompleteData = true;
       }
