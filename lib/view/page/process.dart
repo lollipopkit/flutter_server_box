@@ -29,13 +29,13 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
   SSHClient? _client;
 
   PsResult _result = const PsResult(procs: []);
-  int? _lastFocusId;
+  bool _checkedIncompleteData = false;
 
   // Issue #64
   // In cpu mode, the process list will change in a high frequency.
   // So user will easily know that the list is refreshed.
   ProcSortMode _procSortMode = ProcSortMode.cpu;
-  List<ProcSortMode> _sortModes = List.from(ProcSortMode.values);
+  final _sortModes = List<ProcSortMode>.from(ProcSortMode.values);
 
   late final _provider = serverProvider(widget.args.spi.id);
 
@@ -73,18 +73,14 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
       }
       _result = PsResult.parse(result, sort: _procSortMode);
 
-      // If there are any [Proc]'s data is not complete,
-      // the option to sort by cpu/mem will not be available.
-      final isAnyProcDataNotComplete = _result.procs.any((e) => e.cpu == null || e.mem == null);
-      if (isAnyProcDataNotComplete) {
-        _sortModes.removeWhere((e) => e == ProcSortMode.cpu);
-        _sortModes.removeWhere((e) => e == ProcSortMode.mem);
-      } else {
-        _sortModes = ProcSortMode.values;
+      if (!_checkedIncompleteData) {
+        final isAnyProcDataNotComplete = _result.procs.any((e) => e.cpu == null || e.mem == null);
+        if (isAnyProcDataNotComplete) {
+          _sortModes.removeWhere((e) => e == ProcSortMode.cpu || e == ProcSortMode.mem);
+        }
+        _checkedIncompleteData = true;
       }
       setState(() {});
-    } else {
-      _timer.cancel();
     }
   }
 
@@ -145,40 +141,41 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
         title: Text(proc.binary),
         subtitle: Text(proc.command, style: UIs.textGrey, maxLines: 3, overflow: TextOverflow.fade),
         trailing: _buildItemTrail(proc),
-        onTap: () => _lastFocusId = proc.pid,
-        onLongPress: () {
-          context.showRoundDialog(
-            title: libL10n.attention,
-            child: Text(libL10n.askContinue('${l10n.stop} ${l10n.process}(${proc.pid})')),
-            actions: Btn.ok(
-              onTap: () async {
-                context.pop();
-                await context.showLoadingDialog(
-                  fn: () async {
-                    await _client?.run('kill ${proc.pid}');
-                    await _refresh();
-                  },
-                );
-              },
-            ).toList,
-          );
-        },
-        selected: _lastFocusId == proc.pid,
-        autofocus: _lastFocusId == proc.pid,
       ),
     );
   }
 
-  Widget? _buildItemTrail(Proc proc) {
-    if (proc.cpu == null && proc.mem == null) {
-      return null;
-    }
+  Widget _buildItemTrail(Proc proc) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (proc.cpu != null) TwoLineText(up: proc.cpu!.toStringAsFixed(1), down: 'cpu'),
-        UIs.width13,
+        if (proc.cpu != null && proc.mem != null) UIs.width13,
         if (proc.mem != null) TwoLineText(up: proc.mem!.toStringAsFixed(1), down: 'mem'),
+        if (proc.cpu != null || proc.mem != null) UIs.width13,
+        IconButton(
+          icon: const Icon(Icons.stop),
+          onPressed: () {
+            context.showRoundDialog(
+              title: libL10n.attention,
+              child: Text(libL10n.askContinue('${l10n.stop} ${l10n.process}(${proc.pid})')),
+              actions: [
+                Btn.cancel(),
+                Btn.ok(
+                  onTap: () async {
+                    context.pop();
+                    await context.showLoadingDialog(
+                      fn: () async {
+                        await _client?.run('kill ${proc.pid}');
+                        await _refresh();
+                      },
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        ),
       ],
     );
   }
