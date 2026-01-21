@@ -30,12 +30,13 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
 
   PsResult _result = const PsResult(procs: []);
   int? _lastFocusId;
+  bool _checkedIncompleteData = false;
 
   // Issue #64
   // In cpu mode, the process list will change in a high frequency.
   // So user will easily know that the list is refreshed.
   ProcSortMode _procSortMode = ProcSortMode.cpu;
-  List<ProcSortMode> _sortModes = List.from(ProcSortMode.values);
+  final _sortModes = List<ProcSortMode>.from(ProcSortMode.values);
 
   late final _provider = serverProvider(widget.args.spi.id);
 
@@ -73,18 +74,15 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
       }
       _result = PsResult.parse(result, sort: _procSortMode);
 
-      // If there are any [Proc]'s data is not complete,
-      // the option to sort by cpu/mem will not be available.
-      final isAnyProcDataNotComplete = _result.procs.any((e) => e.cpu == null || e.mem == null);
-      if (isAnyProcDataNotComplete) {
-        _sortModes.removeWhere((e) => e == ProcSortMode.cpu);
-        _sortModes.removeWhere((e) => e == ProcSortMode.mem);
-      } else {
-        _sortModes = ProcSortMode.values;
+      if (!_checkedIncompleteData) {
+        final isAnyProcDataNotComplete = _result.procs.any((e) => e.cpu == null || e.mem == null);
+        if (isAnyProcDataNotComplete) {
+          _sortModes.removeWhere((e) => e == ProcSortMode.cpu);
+          _sortModes.removeWhere((e) => e == ProcSortMode.mem);
+        }
+        _checkedIncompleteData = true;
       }
       setState(() {});
-    } else {
-      _timer.cancel();
     }
   }
 
