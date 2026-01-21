@@ -132,6 +132,7 @@ extension _Widgets on _ServerEditPageState {
     return ExpandTile(
       title: Text(l10n.more),
       children: [
+        _buildJumpChain(),
         Input(
           controller: _logoUrlCtrl,
           type: TextInputType.url,
@@ -347,48 +348,6 @@ extension _Widgets on _ServerEditPageState {
     );
   }
 
-  Widget _buildJumpServer() {
-    const padding = EdgeInsets.only(left: 13, right: 13, bottom: 7);
-    final srvs = ref
-        .watch(serversProvider)
-        .servers
-        .values
-        .where((e) => e.jumpId == null)
-        .where((e) => e.id != spi?.id)
-        .toList();
-    final choice = _jumpServer.listenVal((val) {
-      final srv = srvs.firstWhereOrNull((e) => e.id == _jumpServer.value);
-      return Choice<Spi>(
-        multiple: false,
-        clearable: true,
-        value: srv != null ? [srv] : [],
-        builder: (state, _) => Wrap(
-          children: List<Widget>.generate(srvs.length, (index) {
-            final item = srvs[index];
-            return ChoiceChipX<Spi>(
-              label: item.name,
-              state: state,
-              value: item,
-              onSelected: (srv, on) {
-                if (on) {
-                  _jumpServer.value = srv.id;
-                } else {
-                  _jumpServer.value = null;
-                }
-              },
-            );
-          }),
-        ),
-      );
-    });
-    return ExpandTile(
-      leading: const Icon(Icons.map),
-      initiallyExpanded: _jumpServer.value != null,
-      childrenPadding: padding,
-      title: Text(l10n.jumpServer),
-      children: [choice],
-    ).cardx;
-  }
 
   Widget _buildWriteScriptTip() {
     return Btn.tile(

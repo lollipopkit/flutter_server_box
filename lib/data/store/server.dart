@@ -89,15 +89,12 @@ class ServerStore extends HiveStore {
       // Replace ids in jump server settings.
       final spi = get<Spi>(newId);
       if (spi != null) {
-        final jumpId = spi.jumpId; // This could be an oldId.
-        // Check if this jumpId corresponds to a server that was also migrated.
-        if (jumpId != null && idMap.containsKey(jumpId)) {
-          final newJumpId = idMap[jumpId];
-          if (spi.jumpId != newJumpId) {
-            final newSpi = spi.copyWith(jumpId: newJumpId);
-            update(spi, newSpi);
-          }
-        }
+        final jumpChainIds = spi.jumpChainIds ?? (spi.jumpId == null ? null : [spi.jumpId!]);
+        if (jumpChainIds == null || jumpChainIds.isEmpty) continue;
+
+        final newChain = jumpChainIds.map((e) => idMap[e] ?? e).toList();
+        final newSpi = spi.copyWith(jumpId: null, jumpChainIds: newChain);
+        update(spi, newSpi);
       }
 
       // Replace ids in [Snippet]

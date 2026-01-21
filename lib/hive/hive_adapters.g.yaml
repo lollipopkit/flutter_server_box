@@ -27,7 +27,7 @@ types:
         index: 4
   Spi:
     typeId: 3
-    nextIndex: 16
+    nextIndex: 17
     fields:
       name:
         index: 0
@@ -61,6 +61,8 @@ types:
         index: 14
       disabledCmdTypes:
         index: 15
+      jumpChainIds:
+        index: 16
   VirtKey:
     typeId: 4
     nextIndex: 45

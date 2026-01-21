@@ -63,11 +63,11 @@ Future<void> _download(SftpReq req, SendPort mainSendPort, SendErrorFunction sen
     final client = await genClient(
       req.spi,
       privateKey: req.privateKey,
-      jumpSpi: req.jumpSpi,
-      jumpPrivateKey: req.jumpPrivateKey,
+      jumpChain: req.jumpChain,
+      jumpPrivateKeys: req.jumpPrivateKeys,
       knownHostFingerprints: req.knownHostFingerprints,
     );
-    mainSendPort.send(SftpWorkerStatus.sshConnectted);
+    mainSendPort.send(SftpWorkerStatus.sshConnected);
 
     /// Create the directory if not exists
     final dirPath = req.localPath.substring(0, req.localPath.lastIndexOf(Pfs.seperator));
@@ -120,11 +120,11 @@ Future<void> _upload(SftpReq req, SendPort mainSendPort, SendErrorFunction sendE
     final client = await genClient(
       req.spi,
       privateKey: req.privateKey,
-      jumpSpi: req.jumpSpi,
-      jumpPrivateKey: req.jumpPrivateKey,
+      jumpChain: req.jumpChain,
+      jumpPrivateKeys: req.jumpPrivateKeys,
       knownHostFingerprints: req.knownHostFingerprints,
     );
-    mainSendPort.send(SftpWorkerStatus.sshConnectted);
+    mainSendPort.send(SftpWorkerStatus.sshConnected);
 
     final local = File(req.localPath);
     if (!await local.exists()) {

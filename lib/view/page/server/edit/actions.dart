@@ -222,6 +222,30 @@ extension _Actions on _ServerEditPageState {
       return;
     }
 
+    final oldSpi = this.spi;
+    if (oldSpi != null) {
+      final originalJumpChain = oldSpi.jumpChainIds ?? (oldSpi.jumpId == null ? const <String>[] : [oldSpi.jumpId!]);
+      final currentJumpChain = _jumpChain.value;
+
+      final jumpChainChanged = () {
+        if (originalJumpChain.isEmpty && currentJumpChain.isEmpty) return false;
+        if (originalJumpChain.length != currentJumpChain.length) return true;
+        for (var i = 0; i < originalJumpChain.length; i++) {
+          if (originalJumpChain[i] != currentJumpChain[i]) return true;
+        }
+        return false;
+      }();
+
+      if (jumpChainChanged) {
+        final ok = await context.showRoundDialog<bool>(
+          title: libL10n.attention,
+          child: Text(libL10n.askContinue('${l10n.jumpServer} ${libL10n.setting}')),
+          actions: Btnx.cancelOk,
+        );
+        if (ok != true) return;
+      }
+    }
+
     if (_keyIdx.value == null && _passwordController.text.isEmpty) {
       final ok = await context.showRoundDialog<bool>(
         title: libL10n.attention,
@@ -277,7 +301,8 @@ extension _Actions on _ServerEditPageState {
       tags: _tags.value.isEmpty ? null : _tags.value.toList(),
       alterUrl: _altUrlController.text.selfNotEmptyOrNull,
       autoConnect: _autoConnect.value,
-      jumpId: _jumpServer.value,
+      jumpId: null,
+      jumpChainIds: _jumpChain.value.isEmpty ? null : _jumpChain.value,
       custom: custom,
       wolCfg: wol,
       envs: _env.value.isEmpty ? null : _env.value,
@@ -421,7 +446,7 @@ extension _Utils on _ServerEditPageState {
 
     _altUrlController.text = spi.alterUrl ?? '';
     _autoConnect.value = spi.autoConnect;
-    _jumpServer.value = spi.jumpId;
+    _jumpChain.value = spi.jumpChainIds ?? (spi.jumpId == null ? const <String>[] : [spi.jumpId!]);
 
     final custom = spi.custom;
     if (custom != null) {

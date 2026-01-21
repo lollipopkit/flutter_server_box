@@ -6,8 +6,8 @@ class SftpReq {
   final String localPath;
   final SftpReqType type;
   String? privateKey;
-  Spi? jumpSpi;
-  String? jumpPrivateKey;
+  List<Spi>? jumpChain;
+  List<String?>? jumpPrivateKeys;
   Map<String, String>? knownHostFingerprints;
 
   SftpReq(this.spi, this.remotePath, this.localPath, this.type) {
@@ -15,9 +15,17 @@ class SftpReq {
     if (keyId != null) {
       privateKey = getPrivateKey(keyId);
     }
-    if (spi.jumpId != null) {
-      jumpSpi = Stores.server.box.get(spi.jumpId);
-      jumpPrivateKey = Stores.key.fetchOne(jumpSpi?.keyId)?.key;
+    if (spi.jumpChainIds != null || spi.jumpId != null) {
+      // Use resolveMergedJumpChain to recursively expand nested hop chains
+      final chain = resolveMergedJumpChain(spi);
+      final keys = <String?>[];
+      for (final hop in chain) {
+        keys.add(hop.keyId != null ? getPrivateKey(hop.keyId!) : null);
+      }
+
+      // Always set when a jump is configured so the isolate won't fallback to Stores.
+      jumpChain = chain;
+      jumpPrivateKeys = keys;
     }
     try {
       knownHostFingerprints = Map<String, String>.from(Stores.setting.sshKnownHostFingerprints.get());
@@ -90,4 +98,4 @@ class SftpReqStatus {
   }
 }
 
-enum SftpWorkerStatus { preparing, sshConnectted, loading, finished }
+enum SftpWorkerStatus { preparing, sshConnected, loading, finished }

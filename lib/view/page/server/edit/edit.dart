@@ -25,6 +25,7 @@ import 'package:server_box/view/page/private_key/edit.dart';
 import 'package:server_box/view/page/server/discovery/discovery.dart';
 
 part 'actions.dart';
+part 'jump_chain.dart';
 part 'widget.dart';
 
 class ServerEditPage extends ConsumerStatefulWidget {
@@ -66,7 +67,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
   /// -1: non selected, null: password, others: index of private key
   final _keyIdx = ValueNotifier<int?>(null);
   final _autoConnect = ValueNotifier(true);
-  final _jumpServer = nvn<String?>();
+  final _jumpChain = <String>[].vn;
   final _pveIgnoreCert = ValueNotifier(false);
   final _env = <String, String>{}.vn;
   final _customCmds = <String, String>{}.vn;
@@ -100,7 +101,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
 
     _keyIdx.dispose();
     _autoConnect.dispose();
-    _jumpServer.dispose();
+    _jumpChain.dispose();
     _pveIgnoreCert.dispose();
     _env.dispose();
     _customCmds.dispose();
@@ -199,7 +200,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
       ),
       _buildAuth(),
       _buildSystemType(),
-      _buildJumpServer(),
       _buildMore(),
     ];
     return AutoMultiList(children: children);
