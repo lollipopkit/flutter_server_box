@@ -23,7 +23,7 @@ class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage> with After
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _buildBody(),
+      body: SafeArea(child: _buildBody()),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () => PrivateKeyEditPage.route.go(context),

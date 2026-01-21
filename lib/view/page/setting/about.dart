@@ -11,9 +11,10 @@ final class _AppAboutPageState extends State<_AppAboutPage> with AutomaticKeepAl
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return ListView(
-      padding: const EdgeInsets.all(13),
-      children: [
+    return SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.all(13),
+        children: [
         UIs.height13,
         ConstrainedBox(constraints: const BoxConstraints(maxHeight: 47, maxWidth: 47), child: UIs.appIcon),
         const Text('${BuildData.name}\nv${BuildData.build}', textAlign: TextAlign.center, style: UIs.text15),
@@ -59,6 +60,7 @@ ${l10n.madeWithLove('[lollipopkit](${Urls.myGithub})')}
 ''',
         ).paddingAll(13).cardx,
       ],
+    ),
     );
   }
 

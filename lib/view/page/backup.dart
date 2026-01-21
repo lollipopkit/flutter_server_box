@@ -41,7 +41,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Scaffold(body: _buildBody);
+    return Scaffold(body: SafeArea(child: _buildBody));
   }
 
   Widget get _buildBody {
