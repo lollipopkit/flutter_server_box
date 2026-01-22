@@ -85,7 +85,7 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
     try {
       final homeResult = await _client.run('eval echo ~${widget.args.spi.user}');
       final homePath = homeResult.string.trim();
-      if (homePath.isNotEmpty && homePath != '~') {
+      if (homePath.isNotEmpty && homePath.startsWith('/')) {
         initPath = homePath;
       } else {
         final user = widget.args.spi.user;
