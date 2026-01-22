@@ -73,8 +73,7 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
   }
 
   Widget _buildUnitList() {
-    ref.watch(_pro.select((p) => p.units));
-    ref.watch(_pro.select((p) => p.scopeFilter));
+    ref.watch(_pro.select((p) => (p.units, p.scopeFilter)));
     final filteredUnits = _notifier.filteredUnits;
     if (filteredUnits.isEmpty) {
       return SliverToBoxAdapter(child: CenterGreyTitle(libL10n.empty).paddingSymmetric(horizontal: 13));
@@ -97,26 +96,40 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
   Widget _buildUnitFuncs(SystemdUnit unit) {
     return PopupMenu(
       items: unit.availableFuncs.map(_buildUnitFuncBtn).toList(),
-      onSelected: (val) async {
-        final cmd = unit.getCmd(func: val, isRoot: widget.args.spi.isRoot);
-        final sure = await context.showRoundDialog(
-          title: libL10n.attention,
-          child: SimpleMarkdown(data: '```shell\n$cmd\n```'),
-          actions: [
-            CountDownBtn(
-              seconds: 1,
-              onTap: () => context.pop(true),
-              text: libL10n.ok,
-              afterColor: Colors.red,
-            ),
-          ],
-        );
-        if (sure != true) return;
-
-        final args = SshPageArgs(spi: widget.args.spi, initCmd: cmd);
-        SSHPage.route.go(context, args);
-      },
+      onSelected: (val) => _handleUnitFuncSelected(unit, val),
     );
+  }
+
+  void _handleUnitFuncSelected(SystemdUnit unit, SystemdUnitFunc func) {
+    final cmd = unit.getCmd(func: func, isRoot: widget.args.spi.isRoot);
+
+    if (func == SystemdUnitFunc.stop || func == SystemdUnitFunc.restart) {
+      _showConfirmDialog(cmd);
+    } else {
+      _navigateToSsh(cmd);
+    }
+  }
+
+  void _showConfirmDialog(String cmd) async {
+    final sure = await context.showRoundDialog(
+      title: libL10n.attention,
+      child: SimpleMarkdown(data: '```shell\n$cmd\n```'),
+      actions: [
+        Btn.cancel(),
+        CountDownBtn(
+          seconds: 3,
+          onTap: () => context.pop(true),
+          text: libL10n.ok,
+          afterColor: Colors.red,
+        ),
+      ],
+    );
+    if (sure == true) _navigateToSsh(cmd);
+  }
+
+  void _navigateToSsh(String cmd) {
+    final args = SshPageArgs(spi: widget.args.spi, initCmd: cmd);
+    SSHPage.route.go(context, args);
   }
 
   PopupMenuEntry _buildUnitFuncBtn(SystemdUnitFunc func) {
