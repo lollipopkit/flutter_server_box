@@ -419,6 +419,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalid => 'Invalid';
 
   @override
+  String get invalidHostFormat =>
+      'Invalid host format. Only IPv4, IPv6, and domain characters are allowed.';
+
+  @override
   String get jumpServer => 'Jump server';
 
   @override

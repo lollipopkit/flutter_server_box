@@ -854,6 +854,12 @@ abstract class AppLocalizations {
   /// **'Invalid'**
   String get invalid;
 
+  /// No description provided for @invalidHostFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid host format. Only IPv4, IPv6, and domain characters are allowed.'**
+  String get invalidHostFormat;
+
   /// No description provided for @jumpServer.
   ///
   /// In en, this message translates to:

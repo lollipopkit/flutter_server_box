@@ -1,5 +1,8 @@
 part of 'edit.dart';
 
+/// Only permit ipv4 / ipv6 / domain chars (including IPv6 zone identifier like %en0)
+final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:%;]+$');
+
 extension _Actions on _ServerEditPageState {
   Future<void> _onTapSSHDiscovery() async {
     try {
@@ -219,6 +222,11 @@ extension _Actions on _ServerEditPageState {
   void _onSave() async {
     if (_ipController.text.isEmpty) {
       context.showSnackBar('${libL10n.empty} ${l10n.host}');
+      return;
+    }
+
+    if (!_hostReg.hasMatch(_ipController.text)) {
+      context.showSnackBar(l10n.invalidHostFormat);
       return;
     }
 

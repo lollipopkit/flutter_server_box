@@ -122,6 +122,7 @@
   "install": "install",
   "installDockerWithUrl": "Please https://docs.docker.com/engine/install docker first.",
   "invalid": "Invalid",
+  "invalidHostFormat": "Invalid host format. Only IPv4, IPv6, and domain characters are allowed.",
   "jumpServer": "Jump server",
   "keepForeground": "Keep app foreground!",
   "keepStatusWhenErr": "Preserve the last server state",
