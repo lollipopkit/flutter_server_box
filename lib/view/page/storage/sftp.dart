@@ -79,8 +79,23 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
   }
 
   @override
-  FutureOr<void> afterFirstLayout(BuildContext context) {
-    var initPath = '/';
+  FutureOr<void> afterFirstLayout(BuildContext context) async {
+    String initPath;
+
+    try {
+      final homeResult = await _client.run('eval echo ~${widget.args.spi.user}');
+      final homePath = homeResult.string.trim();
+      if (homePath.isNotEmpty && homePath.startsWith('/')) {
+        initPath = homePath;
+      } else {
+        final user = widget.args.spi.user;
+        initPath = user != 'root' ? '/home/$user' : '/root';
+      }
+    } catch (_) {
+      final user = widget.args.spi.user;
+      initPath = user != 'root' ? '/home/$user' : '/root';
+    }
+
     if (Stores.setting.sftpOpenLastPath.fetch()) {
       final history = Stores.history.sftpLastPath.fetch(widget.args.spi.id);
       if (history != null) {
@@ -89,7 +104,7 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
     }
 
     _status.path.path = widget.args.initPath ?? initPath;
-    _listDir();
+    unawaited(_listDir());
   }
 }
 
