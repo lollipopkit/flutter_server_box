@@ -80,7 +80,8 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
 
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) {
-    var initPath = '/';
+    final user = widget.args.spi.user;
+    var initPath = user != 'root' ? '/home/$user' : '/root';
     if (Stores.setting.sftpOpenLastPath.fetch()) {
       final history = Stores.history.sftpLastPath.fetch(widget.args.spi.id);
       if (history != null) {
