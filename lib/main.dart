@@ -106,6 +106,7 @@ Future<void> _initWindow() async {
   final windowStateProp = Stores.setting.windowState;
   final windowState = windowStateProp.fetch();
   final hideTitleBar = Stores.setting.hideTitleBar.fetch();
+  WindowFrameConfig.setShowCaption(hideTitleBar);
   await SystemUIs.initDesktopWindow(
     hideTitleBar: hideTitleBar,
     size: windowState?.size ?? Size(947, 487),
