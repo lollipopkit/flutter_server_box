@@ -122,6 +122,7 @@
   "install": "安裝",
   "installDockerWithUrl": "請先前往 https://docs.docker.com/engine/install 安裝 Docker",
   "invalid": "無效",
+  "invalidHostFormat": "主機格式無效，僅支援 IPv4、IPv6 和網域字元。",
   "jumpServer": "跳板伺服器",
   "keepForeground": "請讓 App 保持在前景執行",
   "keepStatusWhenErr": "保留上次的伺服器狀態",

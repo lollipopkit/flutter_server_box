@@ -419,6 +419,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get invalid => 'Tidak valid';
 
   @override
+  String get invalidHostFormat =>
+      'Invalid host format. Only IPv4, IPv6, and domain characters are allowed.';
+
+  @override
   String get jumpServer => 'Lompat server';
 
   @override

@@ -402,6 +402,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get invalid => '无效';
 
   @override
+  String get invalidHostFormat => '主机格式无效，仅支持 IPv4、IPv6 和域名字符。';
+
+  @override
   String get jumpServer => '跳板服务器';
 
   @override
@@ -1379,6 +1382,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get invalid => '無效';
+
+  @override
+  String get invalidHostFormat => '主機格式無效，僅支援 IPv4、IPv6 和網域字元。';
 
   @override
   String get jumpServer => '跳板伺服器';

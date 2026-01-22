@@ -420,6 +420,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get invalid => 'Inválido';
 
   @override
+  String get invalidHostFormat =>
+      'Invalid host format. Only IPv4, IPv6, and domain characters are allowed.';
+
+  @override
   String get jumpServer => 'Servidor de salto';
 
   @override

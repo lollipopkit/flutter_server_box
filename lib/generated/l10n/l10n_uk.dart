@@ -421,6 +421,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get invalid => 'Недійсний';
 
   @override
+  String get invalidHostFormat =>
+      'Недійсний формат хоста. Дозволено лише символи IPv4, IPv6 та домену.';
+
+  @override
   String get jumpServer => 'Стрибковий Сервер';
 
   @override

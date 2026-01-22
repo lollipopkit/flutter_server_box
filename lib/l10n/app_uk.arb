@@ -122,6 +122,7 @@
   "install": "Встановити",
   "installDockerWithUrl": "Будь ласка, спочатку встановіть Docker. (https://docs.docker.com/engine/install)",
   "invalid": "Недійсний",
+  "invalidHostFormat": "Недійсний формат хоста. Дозволено лише символи IPv4, IPv6 та домену.",
   "jumpServer": "Стрибковий Сервер",
   "keepForeground": "Тримати застосунок на передньому плані!",
   "keepStatusWhenErr": "Зберегати останній стан сервера",
