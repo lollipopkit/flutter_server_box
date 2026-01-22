@@ -1,7 +1,7 @@
 part of 'edit.dart';
 
-/// Only permit ipv4 / ipv6 / domain chars
-final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:]+$');
+/// Only permit ipv4 / ipv6 / domain chars (including IPv6 zone identifier like %en0)
+final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:%;]+$');
 
 extension _Actions on _ServerEditPageState {
   Future<void> _onTapSSHDiscovery() async {
