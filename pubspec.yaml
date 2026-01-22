@@ -66,7 +66,7 @@ dependencies:
   fl_lib:
     git:
       url: https://github.com/lppcg/fl_lib
-      ref: v1.0.358
+      ref: main
 
 dependency_overrides:
   # webdav_client_plus:
