@@ -78,8 +78,10 @@ class SystemdNotifier extends _$SystemdNotifier {
 
   Future<List<SystemdUnit>> _parseUnitObj(List<String> unitNames, SystemdUnitScope scope) async {
     final unitNames_ = unitNames.map((e) {
-      final name = e.trim().split('/').last.split('.').first;
-      return name.replaceAll(RegExp(r'[^a-zA-Z0-9\-_]'), '');
+      final fullName = e.trim().split('/').last;
+      final lastDot = fullName.lastIndexOf('.');
+      final name = lastDot > 0 ? fullName.substring(0, lastDot) : fullName;
+      return name.replaceAll(RegExp(r'[^a-zA-Z0-9\-_.@:]'), '');
     }).toList();
     final script =
         '''

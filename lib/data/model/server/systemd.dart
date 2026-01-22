@@ -96,7 +96,7 @@ final class SystemdUnit {
 
   String getCmd({required SystemdUnitFunc func, required bool isRoot}) {
     final prefix = scope.getCmdPrefix(isRoot);
-    return '$prefix ${func.name} ${name.replaceAll(RegExp(r'[^a-zA-Z0-9\-_.]'), '')}';
+    return '$prefix ${func.name} ${name.replaceAll(RegExp(r'[^a-zA-Z0-9\-_.@:]'), '')}';
   }
 
   List<SystemdUnitFunc> get availableFuncs {
