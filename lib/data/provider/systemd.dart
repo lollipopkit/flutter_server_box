@@ -77,11 +77,14 @@ class SystemdNotifier extends _$SystemdNotifier {
   }
 
   Future<List<SystemdUnit>> _parseUnitObj(List<String> unitNames, SystemdUnitScope scope) async {
-    final unitNames_ = unitNames.map((e) => e.trim().split('/').last.split('.').first).toList();
+    final unitNames_ = unitNames.map((e) {
+      final name = e.trim().split('/').last.split('.').first;
+      return name.replaceAll(RegExp(r'[^a-zA-Z0-9\-_]'), '');
+    }).toList();
     final script =
         '''
-for unit in ${unitNames_.join(' ')}; do
-  state=\$(systemctl show --no-pager \$unit)
+for unit in ${unitNames_.map((e) => '"$e"').join(' ')}; do
+  state=\$(systemctl show --no-pager "\$unit")
   echo "\$state"
   echo -n "\n${ScriptConstants.separator}\n"
 done
