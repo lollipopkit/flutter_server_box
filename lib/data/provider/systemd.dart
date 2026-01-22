@@ -86,7 +86,7 @@ class SystemdNotifier extends _$SystemdNotifier {
     final script =
         '''
 for unit in ${unitNames_.map((e) => '"$e"').join(' ')}; do
-  state=\$(systemctl show --no-pager "\$unit")
+  state=\$(systemctl show --no-pager -- "\$unit")
   echo "\$state"
   echo -n "\n${ScriptConstants.separator}\n"
 done
@@ -107,10 +107,15 @@ done
         if (part.startsWith('Id=')) {
           final val = _getIniVal(part);
           if (val == null) continue;
-          // Id=sshd.service
-          final vals = val.split('.');
-          name = vals.first;
-          type = vals.last;
+          // Id=org.cups.cupsd.service
+          final lastDot = val.lastIndexOf('.');
+          if (lastDot > 0) {
+            name = val.substring(0, lastDot);
+            type = val.substring(lastDot + 1);
+          } else {
+            name = val;
+            type = '';
+          }
           continue;
         }
         if (part.startsWith('ActiveState=')) {
