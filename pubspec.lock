@@ -544,22 +544,22 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_markdown:
+  flutter_markdown_plus:
     dependency: transitive
     description:
-      name: flutter_markdown
-      sha256: "08fb8315236099ff8e90cb87bb2b935e0a724a3af1623000a9cec930468e0f27"
+      name: flutter_markdown_plus
+      sha256: "039177906850278e8fb1cd364115ee0a46281135932fa8ecea8455522166d2de"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.7+1"
-  flutter_markdown_latex:
+    version: "1.0.7"
+  flutter_markdown_plus_latex:
     dependency: transitive
     description:
-      name: flutter_markdown_latex
-      sha256: "839e76a84abb3632ffcebbd450cf93c7e9894af65622527d23f0084cee1bfd04"
+      name: flutter_markdown_plus_latex
+      sha256: "2e7698b291f0657ca445efab730bb25a8c5851037e882cb7bf47d16a5c218de7"
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.4"
+    version: "1.0.5"
   flutter_math_fork:
     dependency: transitive
     description:
