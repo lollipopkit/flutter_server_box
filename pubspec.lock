@@ -189,10 +189,10 @@ packages:
     dependency: transitive
     description:
       name: camera_avfoundation
-      sha256: "087a9fadef20325cb246b4c13344a3ce8e408acfc3e0c665ebff0ec3144d7163"
+      sha256: a600b60a7752cc5fa9de476cd0055539d7a3b9d62662f4f446bae49eba2267df
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.22+8"
+    version: "0.9.22+9"
   camera_platform_interface:
     dependency: transitive
     description:
@@ -497,8 +497,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v1.0.359"
-      resolved-ref: "8201d47e3e9e6c5fcec186e7457151a36ea10b8e"
+      ref: "v1.0.361"
+      resolved-ref: "9905808dc033e0e626c792a895f80fb755d2eb03"
       url: "https://github.com/lppcg/fl_lib"
     source: git
     version: "0.0.1"
@@ -544,22 +544,22 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_markdown:
+  flutter_markdown_plus:
     dependency: transitive
     description:
-      name: flutter_markdown
-      sha256: "08fb8315236099ff8e90cb87bb2b935e0a724a3af1623000a9cec930468e0f27"
+      name: flutter_markdown_plus
+      sha256: "039177906850278e8fb1cd364115ee0a46281135932fa8ecea8455522166d2de"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.7+1"
-  flutter_markdown_latex:
+    version: "1.0.7"
+  flutter_markdown_plus_latex:
     dependency: transitive
     description:
-      name: flutter_markdown_latex
-      sha256: "839e76a84abb3632ffcebbd450cf93c7e9894af65622527d23f0084cee1bfd04"
+      name: flutter_markdown_plus_latex
+      sha256: "2e7698b291f0657ca445efab730bb25a8c5851037e882cb7bf47d16a5c218de7"
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.4"
+    version: "1.0.5"
   flutter_math_fork:
     dependency: transitive
     description:
@@ -1063,10 +1063,10 @@ packages:
     dependency: transitive
     description:
       name: objective_c
-      sha256: "9922a1ad59ac5afb154cc948aa6ded01987a75003651d0a2866afc23f4da624e"
+      sha256: "7fd0c4d8ac8980011753b9bdaed2bf15111365924cdeeeaeb596214ea2b03537"
       url: "https://pub.dev"
     source: hosted
-    version: "9.2.3"
+    version: "9.2.4"
   package_config:
     dependency: transitive
     description:
