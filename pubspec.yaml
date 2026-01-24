@@ -20,7 +20,6 @@ dependencies:
   extended_image: ^10.0.0
   file_picker: ^10.1.9
   flutter_gbk2utf8: ^1.0.1
-  flutter_markdown_plus: ^1.0.7
   flutter_riverpod: ^3.0.1
   flutter_highlight: ^0.7.0
   flutter_displaymode: ^0.7.0
