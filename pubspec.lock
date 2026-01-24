@@ -497,9 +497,9 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v1.0.359"
-      resolved-ref: "8201d47e3e9e6c5fcec186e7457151a36ea10b8e"
-      url: "https://github.com/lppcg/fl_lib"
+      ref: "v1.0.362"
+      resolved-ref: "3c75cfe1f07ee664a912d330e2a38bda51bee8d9"
+      url: "https://github.com/lollipopkit/fl_lib"
     source: git
     version: "0.0.1"
   flutter:
