@@ -35,12 +35,20 @@ class LocalFilePage extends ConsumerStatefulWidget {
 class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKeepAliveClientMixin {
   late final _path = LocalPath(widget.args?.initDir ?? Paths.file);
   final _sortType = _SortType.name.vn;
+  late Future<List<(FileSystemEntity, FileStat)>> _entitiesFuture = _getEntities();
   bool get isPickFile => widget.args?.isPickFile ?? false;
 
   @override
   void dispose() {
     super.dispose();
     _sortType.dispose();
+  }
+
+  Future<void> _refresh() async {
+    setStateSafe(() {
+      _entitiesFuture = _getEntities();
+    });
+    await _entitiesFuture;
   }
 
   @override
@@ -65,7 +73,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
                   await destinationDir.create(recursive: true);
                 }
                 await File(path).copy(_path.path.joinPath(name));
-                setState(() {});
+                _refresh();
               },
               icon: const Icon(Icons.add),
             ),
@@ -73,7 +81,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
             IconButton(
               icon: const Icon(Icons.refresh),
               tooltip: MaterialLocalizations.of(context).refreshIndicatorSemanticLabel,
-              onPressed: () => setState(() {}),
+              onPressed: _refresh,
             ),
           if (!isPickFile) _buildMissionBtn(),
           _buildSortBtn(),
@@ -81,9 +89,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
       ),
       body: isMobile
           ? RefreshIndicator(
-              onRefresh: () async {
-                setState(() {});
-              },
+              onRefresh: _refresh,
               child: _sortType.listen(_buildBody),
             )
           : _sortType.listen(_buildBody),
@@ -91,15 +97,8 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
   }
 
   Widget _buildBody() {
-    Future<List<(FileSystemEntity, FileStat)>> getEntities() async {
-      final files = await Directory(_path.path).list().toList();
-      final sorted = _sortType.value.sort(files);
-      final stats = await Future.wait(sorted.map((e) async => (e, await e.stat())));
-      return stats;
-    }
-
     return FutureWidget(
-      future: getEntities(),
+      future: _entitiesFuture,
       loading: UIs.placeholder,
       success: (items) {
         items ??= [];
@@ -114,7 +113,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
                 title: const Text('..'),
                 onTap: () {
                   _path.update('..');
-                  setState(() {});
+                  _refresh();
                 },
               ).cardx;
             }
@@ -171,7 +170,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
             return;
           }
           _path.update(fileName);
-          setState(() {});
+          _refresh();
         },
       ),
     );
@@ -182,6 +181,13 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
       icon: const Icon(Icons.downloading),
       onPressed: () => SftpMissionPage.route.go(context),
     );
+  }
+
+  Future<List<(FileSystemEntity, FileStat)>> _getEntities() async {
+    final files = await Directory(_path.path).list().toList();
+    final stats = await Future.wait(files.map((e) async => (e, await e.stat())));
+    stats.sort(_sortType.value.compareTuple);
+    return stats;
   }
 
   Widget _buildSortBtn() {
@@ -397,19 +403,12 @@ enum _SortType {
   size,
   time;
 
-  List<FileSystemEntity> sort(List<FileSystemEntity> files) {
-    switch (this) {
-      case _SortType.name:
-        files.sort((a, b) => a.path.compareTo(b.path));
-        break;
-      case _SortType.size:
-        files.sort((a, b) => a.statSync().size.compareTo(b.statSync().size));
-        break;
-      case _SortType.time:
-        files.sort((a, b) => a.statSync().modified.compareTo(b.statSync().modified));
-        break;
-    }
-    return files;
+  int compareTuple((FileSystemEntity, FileStat) a, (FileSystemEntity, FileStat) b) {
+    return switch (this) {
+      _SortType.name => a.$1.path.compareTo(b.$1.path),
+      _SortType.size => a.$2.size.compareTo(b.$2.size),
+      _SortType.time => a.$2.modified.compareTo(b.$2.modified),
+    };
   }
 
   String get i18n => switch (this) {

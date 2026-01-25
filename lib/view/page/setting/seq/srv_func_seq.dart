@@ -31,27 +31,10 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
         final disabled = ServerFuncBtn.values.map((e) => e.index).where((e) => !keys.contains(e)).toList();
         final allKeys = [...keys, ...disabled];
         return ReorderableListView.builder(
+          key: const PageStorageKey('srv_func_seq'),
           padding: const EdgeInsets.all(7),
-          itemBuilder: (_, idx) {
-            final key = allKeys[idx];
-            final funcBtn = ServerFuncBtn.values[key];
-            return CardX(
-              key: ValueKey(idx),
-              child: ListTile(
-                title: RichText(
-                  text: TextSpan(
-                    children: [
-                      WidgetSpan(child: Icon(funcBtn.icon)),
-                      const WidgetSpan(child: UIs.width13),
-                      TextSpan(text: funcBtn.toStr, style: UIs.textGrey),
-                    ],
-                  ),
-                ),
-                leading: _buildCheckBox(keys, key, idx, idx < keys.length),
-              ),
-            );
-          },
           itemCount: allKeys.length,
+          itemBuilder: (_, idx) => _buildListItem(allKeys[idx], idx, keys),
           onReorder: (o, n) {
             if (o >= keys.length || n >= keys.length) {
               context.showSnackBar(libL10n.disabled);
@@ -61,6 +44,25 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
           },
         );
       },
+    );
+  }
+
+  Widget _buildListItem(int key, int idx, List<int> keys) {
+    final funcBtn = ServerFuncBtn.values[key];
+    return CardX(
+      key: ValueKey(key),
+      child: ListTile(
+        title: RichText(
+          text: TextSpan(
+            children: [
+              WidgetSpan(child: Icon(funcBtn.icon)),
+              const WidgetSpan(child: UIs.width13),
+              TextSpan(text: funcBtn.toStr, style: UIs.textGrey),
+            ],
+          ),
+        ),
+        leading: _buildCheckBox(keys, key, idx, idx < keys.length),
+      ),
     );
   }
 

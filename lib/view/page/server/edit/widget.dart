@@ -59,6 +59,7 @@ extension _Widgets on _ServerEditPageState {
               children: List<Widget>.generate(pkis.length, (index) {
                 final item = pkis[index];
                 return ChoiceChipX<int>(
+                  key: ValueKey(index),
                   label: item.id,
                   state: state,
                   value: index,
@@ -366,6 +367,7 @@ extension _Widgets on _ServerEditPageState {
           children: List<Widget>.generate(srvs.length, (index) {
             final item = srvs[index];
             return ChoiceChipX<Spi>(
+              key: ValueKey(item),
               label: item.name,
               state: state,
               value: item,

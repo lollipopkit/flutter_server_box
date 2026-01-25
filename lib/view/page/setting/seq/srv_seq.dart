@@ -38,7 +38,7 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
 
     return Scaffold(
       appBar: CustomAppBar(title: Text(l10n.serverOrder)),
-      body: _buildBody(),
+      body: SafeArea(child: _buildBody()),
     );
   }
 

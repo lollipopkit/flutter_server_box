@@ -16,8 +16,14 @@ class IosSettingsPage extends StatefulWidget {
 
 class _IosSettingsPageState extends State<IosSettingsPage> {
   final _pushToken = ValueNotifier<String?>(null);
-
   final wc = WatchConnectivity();
+  late final _watchContextFuture = _loadWatchContext();
+  late final _pushTokenFuture = getToken();
+
+  Future<Map<String, dynamic>?> _loadWatchContext() async {
+    if (!await wc.isPaired) return null;
+    return await wc.applicationContext;
+  }
 
   @override
   void dispose() {
@@ -58,7 +64,7 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
         },
       ),
       subtitle: FutureWidget<String?>(
-        future: getToken(),
+        future: _pushTokenFuture,
         loading: const Text('...'),
         error: (error, trace) => Text('${libL10n.error}: $error'),
         success: (text) {
@@ -79,10 +85,7 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
 
   Widget _buildWatchApp() {
     return FutureWidget(
-      future: () async {
-        if (!await wc.isPaired) return null;
-        return await wc.applicationContext;
-      }(),
+      future: _watchContextFuture,
       loading: UIs.centerLoading,
       error: (e, trace) {
         Loggers.app.warning('WatchOS error', e, trace);
