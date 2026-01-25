@@ -39,14 +39,16 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(title: Text(l10n.editVirtKeys)),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(7),
-            child: _buildOneLineVirtKey().cardx,
-          ),
-          Expanded(child: _buildBody()),
-        ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(7),
+              child: _buildOneLineVirtKey().cardx,
+            ),
+            Expanded(child: _buildBody()),
+          ],
+        ),
       ),
     );
   }
