@@ -147,15 +147,15 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   }
 
   void _handleReorder(int oldIndex, int newIndex) {
-    setState(() {
-      var targetIndex = newIndex;
-      if (targetIndex > oldIndex) {
-        targetIndex -= 1;
-      }
-      if (targetIndex == oldIndex) {
-        return;
-      }
+    var targetIndex = newIndex;
+    if (targetIndex > oldIndex) {
+      targetIndex -= 1;
+    }
+    if (targetIndex == oldIndex) {
+      return;
+    }
 
+    setState(() {
       final item = _order.removeAt(oldIndex);
       _order.insert(targetIndex, item);
     });

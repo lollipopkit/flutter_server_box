@@ -397,21 +397,6 @@ enum _SortType {
   size,
   time;
 
-  List<FileSystemEntity> sort(List<FileSystemEntity> files) {
-    switch (this) {
-      case _SortType.name:
-        files.sort((a, b) => a.path.compareTo(b.path));
-        break;
-      case _SortType.size:
-        files.sort((a, b) => a.statSync().size.compareTo(b.statSync().size));
-        break;
-      case _SortType.time:
-        files.sort((a, b) => a.statSync().modified.compareTo(b.statSync().modified));
-        break;
-    }
-    return files;
-  }
-
   int compareTuple((FileSystemEntity, FileStat) a, (FileSystemEntity, FileStat) b) {
     return switch (this) {
       _SortType.name => a.$1.path.compareTo(b.$1.path),
