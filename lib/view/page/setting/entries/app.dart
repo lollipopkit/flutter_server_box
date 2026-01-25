@@ -2,6 +2,7 @@ part of '../entry.dart';
 
 extension _App on _AppSettingsPageState {
   Widget _buildApp() {
+    final androidSettings = isAndroid ? _buildAndroidSettings() : null;
     final specific = _buildPlatformSetting();
     final children = [
       _buildLocale(),
@@ -10,6 +11,7 @@ extension _App on _AppSettingsPageState {
       _buildCheckUpdate(),
       _buildHomeTabs(),
       PlatformPublicSettings.buildBioAuth,
+      if (androidSettings != null) androidSettings,
       if (specific != null) specific,
       _buildAppMore(),
     ];
@@ -17,18 +19,74 @@ extension _App on _AppSettingsPageState {
     return Column(children: children.map((e) => e.cardx).toList());
   }
 
-  Widget? _buildPlatformSetting() {
-    final func = switch (Pfs.type) {
-      Pfs.android => AndroidSettingsPage.route.go,
-      Pfs.ios => IosSettingsPage.route.go,
-      _ => null,
-    };
-    if (func == null) return null;
-    return ListTile(
+  Widget _buildAndroidSettings() {
+    return ExpandTile(
       leading: const Icon(Icons.phone_android),
-      title: Text('${Pfs.type} ${libL10n.setting}'),
+      title: Text('Android ${libL10n.setting}'),
+      children: [
+        _buildBgRun(),
+        _buildAndroidWidgetSharedPreference(),
+      ],
+    );
+  }
+
+  Widget _buildBgRun() {
+    return ListTile(
+      title: TipText(l10n.bgRun, l10n.bgRunTip),
+      trailing: StoreSwitch(prop: Stores.setting.bgRun),
+    );
+  }
+
+  Widget _buildAndroidWidgetSharedPreference() {
+    return ListTile(
+      title: Text(l10n.homeWidgetUrlConfig),
       trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => func(context),
+      onTap: () async {
+        const prefix = 'widget_';
+        final data = <String, String>{};
+        final keys = PrefStore.shared.keys();
+
+        for (final key in keys) {
+          final val = PrefStore.shared.get<String>(key);
+          if (val != null) {
+            data[key] = val;
+          }
+        }
+        final result = await KvEditor.route.go(
+          context,
+          KvEditorArgs(data: data, prefix: prefix),
+        );
+        if (result != null) {
+          _saveWidgetSP(result, data, prefix);
+        }
+      },
+    );
+  }
+
+  void _saveWidgetSP(Map<String, String> map, Map<String, String> old, String prefix) {
+    try {
+      final keysDel = old.keys.toSet().difference(map.keys.toSet());
+      for (final key in keysDel) {
+        if (!key.startsWith(prefix)) continue;
+        PrefStore.shared.remove(key);
+      }
+      for (final entry in map.entries) {
+        if (!entry.key.startsWith(prefix)) continue;
+        PrefStore.shared.set(entry.key, entry.value);
+      }
+      context.showSnackBar(libL10n.success);
+    } catch (e) {
+      context.showSnackBar(e.toString());
+    }
+  }
+
+  Widget? _buildPlatformSetting() {
+    if (!isIOS) return null;
+    return ListTile(
+      leading: const Icon(MingCute.apple_fill),
+      title: Text('iOS ${libL10n.setting}'),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () => IosSettingsPage.route.go(context),
     );
   }
 
