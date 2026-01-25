@@ -83,7 +83,8 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
   void initState() {
     super.initState();
     final order = _settings.detailCardOrder.fetch();
-    order.removeWhere((e) => !ServerDetailCards.names.contains(e));
+    final disabled = _settings.detailCardDisabled.fetch();
+    order.removeWhere((e) => !ServerDetailCards.names.contains(e) || disabled.contains(e));
     _cardsOrder.addAll(order);
   }
 

@@ -19,6 +19,7 @@ class SSHVirtKeySettingPage extends StatefulWidget {
 
 class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   final prop = Stores.setting.sshVirtKeys;
+  final disabledProp = Stores.setting.sshVirtKeysDisabled;
 
   late List<int> _order;
   late Set<int> _enabled;
@@ -31,8 +32,9 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
 
   void _loadData() {
     final keys = prop.fetch();
+    final disabled = disabledProp.fetch();
     _order = List<int>.from(keys);
-    _enabled = Set<int>.from(keys);
+    _enabled = Set<int>.from(keys.where((k) => !disabled.contains(k)));
   }
 
   @override
@@ -152,7 +154,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
       final item = _order.removeAt(oldIndex);
       _order.insert(targetIndex, item);
     });
-    prop.put(_order);
+    _saveChanges();
   }
 
   void _toggleEnabled(int key) {
@@ -163,6 +165,13 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
         _enabled.add(key);
       }
     });
-    prop.put(_order);
+    _saveChanges();
+  }
+
+  void _saveChanges() {
+    final enabledList = _order.where((k) => _enabled.contains(k)).toList();
+    prop.put(enabledList);
+    final disabledList = _order.where((k) => !_enabled.contains(k)).toList();
+    disabledProp.put(disabledList);
   }
 }

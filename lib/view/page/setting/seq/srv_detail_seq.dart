@@ -16,6 +16,7 @@ class ServerDetailOrderPage extends StatefulWidget {
 
 class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
   final prop = Stores.setting.detailCardOrder;
+  final disabledProp = Stores.setting.detailCardDisabled;
 
   late List<String> _order;
   late Set<String> _enabled;
@@ -28,8 +29,9 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
 
   void _loadData() {
     final keys = prop.fetch();
+    final disabled = disabledProp.fetch();
     _order = List<String>.from(keys);
-    _enabled = Set<String>.from(keys);
+    _enabled = Set<String>.from(keys.where((k) => !disabled.contains(k)));
   }
 
   @override
@@ -110,7 +112,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
       final item = _order.removeAt(oldIndex);
       _order.insert(targetIndex, item);
     });
-    prop.put(_order);
+    _saveChanges();
   }
 
   void _toggleEnabled(String key) {
@@ -121,6 +123,13 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
         _enabled.add(key);
       }
     });
-    prop.put(_order);
+    _saveChanges();
+  }
+
+  void _saveChanges() {
+    final enabledList = _order.where((k) => _enabled.contains(k)).toList();
+    prop.put(enabledList);
+    final disabledList = _order.where((k) => !_enabled.contains(k)).toList();
+    disabledProp.put(disabledList);
   }
 }

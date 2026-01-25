@@ -61,6 +61,12 @@ class SettingStore extends HiveStore {
     defaultValue: ServerDetailCards.values.map((e) => e.name).toList(),
   );
 
+  // Disabled detail cards (for persistence when toggling visibility)
+  late final detailCardDisabled = listProperty<String>('detailCardDisabled');
+
+  // Disabled SSH virtual keys (for persistence when toggling visibility)
+  late final sshVirtKeysDisabled = listProperty<int>('sshVirtKeysDisabled');
+
   // SSH term font size
   late final termFontSize = propertyDefault('termFontSize', 13.0);
 
