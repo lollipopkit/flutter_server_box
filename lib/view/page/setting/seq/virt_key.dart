@@ -169,8 +169,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
   }
 
   void _saveChanges() {
-    final enabledList = _order.where((k) => _enabled.contains(k)).toList();
-    prop.put(enabledList);
+    prop.put(_order);
     final disabledList = _order.where((k) => !_enabled.contains(k)).toList();
     disabledProp.put(disabledList);
   }

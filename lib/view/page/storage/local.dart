@@ -179,8 +179,8 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
 
   Future<List<(FileSystemEntity, FileStat)>> _getEntities() async {
     final files = await Directory(_path.path).list().toList();
-    final sorted = _sortType.value.sort(files);
-    final stats = await Future.wait(sorted.map((e) async => (e, await e.stat())));
+    final stats = await Future.wait(files.map((e) async => (e, await e.stat())));
+    stats.sort(_sortType.value.compareTuple);
     return stats;
   }
 
@@ -410,6 +410,14 @@ enum _SortType {
         break;
     }
     return files;
+  }
+
+  int compareTuple((FileSystemEntity, FileStat) a, (FileSystemEntity, FileStat) b) {
+    return switch (this) {
+      _SortType.name => a.$1.path.compareTo(b.$1.path),
+      _SortType.size => a.$2.size.compareTo(b.$2.size),
+      _SortType.time => a.$2.modified.compareTo(b.$2.modified),
+    };
   }
 
   String get i18n => switch (this) {
