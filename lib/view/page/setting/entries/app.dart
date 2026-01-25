@@ -134,7 +134,10 @@ extension _App on _AppSettingsPageState {
                 return Column(mainAxisSize: MainAxisSize.min, children: children);
               },
             ),
-            actions: Btn.ok(onTap: () => _onSaveColor(ctrl.text)).toList,
+            actions: [
+              Btn.cancel(),
+              Btn.ok(onTap: () => _onSaveColor(ctrl.text)),
+            ],
           );
         });
       },
