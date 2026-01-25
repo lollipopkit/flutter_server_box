@@ -45,9 +45,10 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
   }
 
   Future<void> _refresh() async {
-    setState(() {
+    setStateSafe(() {
       _entitiesFuture = _getEntities();
     });
+    await _entitiesFuture;
   }
 
   @override
