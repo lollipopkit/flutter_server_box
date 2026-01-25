@@ -91,15 +91,8 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
   }
 
   Widget _buildBody() {
-    Future<List<(FileSystemEntity, FileStat)>> getEntities() async {
-      final files = await Directory(_path.path).list().toList();
-      final sorted = _sortType.value.sort(files);
-      final stats = await Future.wait(sorted.map((e) async => (e, await e.stat())));
-      return stats;
-    }
-
     return FutureWidget(
-      future: getEntities(),
+      future: _getEntities(),
       loading: UIs.placeholder,
       success: (items) {
         items ??= [];
@@ -182,6 +175,13 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
       icon: const Icon(Icons.downloading),
       onPressed: () => SftpMissionPage.route.go(context),
     );
+  }
+
+  Future<List<(FileSystemEntity, FileStat)>> _getEntities() async {
+    final files = await Directory(_path.path).list().toList();
+    final sorted = _sortType.value.sort(files);
+    final stats = await Future.wait(sorted.map((e) async => (e, await e.stat())));
+    return stats;
   }
 
   Widget _buildSortBtn() {
