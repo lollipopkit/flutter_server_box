@@ -121,12 +121,15 @@ class BackupService {
     await context.showRoundDialog(
       title: libL10n.restore,
       child: Text(libL10n.askContinue('${libL10n.restore} ${libL10n.backup}(${backup.$2})')),
-      actions: Btn.ok(
-        onTap: () async {
-          await backup.$1.merge(force: true);
-          context.pop();
-        },
-      ).toList,
+      actions: [
+        Btn.cancel(),
+        Btn.ok(
+          onTap: () async {
+            await backup.$1.merge(force: true);
+            context.pop();
+          },
+        ),
+      ],
     );
   }
 
