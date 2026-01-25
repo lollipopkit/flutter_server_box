@@ -136,7 +136,9 @@ abstract final class GithubIds {
     'Bjups',
     '4061N',
     'itmagpro',
-    'atikattar1104'
+    'atikattar1104',
+    'coldboy404',
+    'puskyer'
   };
 }
 
