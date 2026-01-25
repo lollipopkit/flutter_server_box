@@ -47,10 +47,9 @@ extension _App on _AppSettingsPageState {
         final keys = PrefStore.shared.keys();
 
         for (final key in keys) {
+          if (!key.startsWith(prefix)) continue;
           final val = PrefStore.shared.get<String>(key);
-          if (val != null) {
-            data[key] = val;
-          }
+          if (val != null) data[key] = val;
         }
         final result = await KvEditor.route.go(
           context,

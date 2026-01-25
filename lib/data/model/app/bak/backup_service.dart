@@ -125,8 +125,13 @@ class BackupService {
         Btn.cancel(),
         Btn.ok(
           onTap: () async {
-            await backup.$1.merge(force: true);
-            context.pop();
+            try {
+              await backup.$1.merge(force: true);
+              context.pop();
+            } catch (e, s) {
+              context.pop();
+              context.showErrDialog(e, s, libL10n.restore);
+            }
           },
         ),
       ],
