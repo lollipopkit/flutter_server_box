@@ -65,8 +65,8 @@ dependencies:
       ref: v1.0.23
   fl_lib:
     git:
-      url: https://github.com/lppcg/fl_lib
-      ref: v1.0.361
+      url: https://github.com/lollipopkit/fl_lib
+      ref: v1.0.363
 
 dependency_overrides:
   # webdav_client_plus:
