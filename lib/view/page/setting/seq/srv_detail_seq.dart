@@ -31,6 +31,11 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
     final keys = prop.fetch();
     final disabled = disabledProp.fetch();
     _order = List<String>.from(keys);
+    for (final d in disabled) {
+      if (!_order.contains(d)) {
+        _order.add(d);
+      }
+    }
     _enabled = Set<String>.from(keys.where((k) => !disabled.contains(k)));
   }
 

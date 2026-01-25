@@ -56,26 +56,26 @@ extension _App on _AppSettingsPageState {
           KvEditorArgs(data: data, prefix: prefix),
         );
         if (result != null) {
-          _saveWidgetSP(result, data, prefix);
+          await _saveWidgetSP(result, data, prefix);
         }
       },
     );
   }
 
-  void _saveWidgetSP(Map<String, String> map, Map<String, String> old, String prefix) {
+  Future<void> _saveWidgetSP(Map<String, String> map, Map<String, String> old, String prefix) async {
     try {
       final keysDel = old.keys.toSet().difference(map.keys.toSet());
       for (final key in keysDel) {
         if (!key.startsWith(prefix)) continue;
-        PrefStore.shared.remove(key);
+        await PrefStore.shared.remove(key);
       }
       for (final entry in map.entries) {
         if (!entry.key.startsWith(prefix)) continue;
-        PrefStore.shared.set(entry.key, entry.value);
+        await PrefStore.shared.set(entry.key, entry.value);
       }
-      context.showSnackBar(libL10n.success);
+      if (mounted) context.showSnackBar(libL10n.success);
     } catch (e) {
-      context.showSnackBar(e.toString());
+      if (mounted) context.showSnackBar(e.toString());
     }
   }
 
