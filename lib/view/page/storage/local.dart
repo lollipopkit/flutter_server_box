@@ -35,12 +35,19 @@ class LocalFilePage extends ConsumerStatefulWidget {
 class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKeepAliveClientMixin {
   late final _path = LocalPath(widget.args?.initDir ?? Paths.file);
   final _sortType = _SortType.name.vn;
+  late Future<List<(FileSystemEntity, FileStat)>> _entitiesFuture = _getEntities();
   bool get isPickFile => widget.args?.isPickFile ?? false;
 
   @override
   void dispose() {
     super.dispose();
     _sortType.dispose();
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _entitiesFuture = _getEntities();
+    });
   }
 
   @override
@@ -65,7 +72,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
                   await destinationDir.create(recursive: true);
                 }
                 await File(path).copy(_path.path.joinPath(name));
-                setState(() {});
+                _refresh();
               },
               icon: const Icon(Icons.add),
             ),
@@ -73,7 +80,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
             IconButton(
               icon: const Icon(Icons.refresh),
               tooltip: MaterialLocalizations.of(context).refreshIndicatorSemanticLabel,
-              onPressed: () => setState(() {}),
+              onPressed: _refresh,
             ),
           if (!isPickFile) _buildMissionBtn(),
           _buildSortBtn(),
@@ -81,9 +88,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
       ),
       body: isMobile
           ? RefreshIndicator(
-              onRefresh: () async {
-                setState(() {});
-              },
+              onRefresh: _refresh,
               child: _sortType.listen(_buildBody),
             )
           : _sortType.listen(_buildBody),
@@ -92,7 +97,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
 
   Widget _buildBody() {
     return FutureWidget(
-      future: _getEntities(),
+      future: _entitiesFuture,
       loading: UIs.placeholder,
       success: (items) {
         items ??= [];
@@ -107,7 +112,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
                 title: const Text('..'),
                 onTap: () {
                   _path.update('..');
-                  setState(() {});
+                  _refresh();
                 },
               ).cardx;
             }
@@ -164,7 +169,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
             return;
           }
           _path.update(fileName);
-          setState(() {});
+          _refresh();
         },
       ),
     );
