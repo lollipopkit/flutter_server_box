@@ -46,6 +46,8 @@
   "clearServerStatsContent": "\"{serverName}\" sunucusu için bağlantı istatistiklerini temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
   "clearServerStatsTitle": "{serverName} İstatistiklerini Temizle",
   "clearThisServerStats": "Bu Sunucu İstatistiklerini Temizle",
+  "compactDatabase": "Veritabanını Sıkıştır",
+  "compactDatabaseContent": "Veritabanı boyutu: {size}\n\nBu, dosya boyutunu küçültmek için veritabanını yeniden oluşturacaktır.",
   "closeAfterSave": "Kaydet ve kapat",
   "cmd": "Komut",
   "collapseUITip": "Arayüzde uzun listelerin varsayılan olarak daraltılıp daraltılmayacağı",

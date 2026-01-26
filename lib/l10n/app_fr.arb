@@ -46,6 +46,8 @@
   "clearServerStatsContent": "Êtes-vous sûr de vouloir effacer les statistiques de connexion du serveur \"{serverName}\" ? Cette action ne peut pas être annulée.",
   "clearServerStatsTitle": "Effacer les statistiques de {serverName}",
   "clearThisServerStats": "Effacer les statistiques de ce serveur",
+  "compactDatabase": "Compacter la base de données",
+  "compactDatabaseContent": "Taille de la base de données : {size}\n\nCela reconstruira l'intégralité de la base de données pour réduire la taille du fichier.",
   "closeAfterSave": "Enregistrer et fermer",
   "cmd": "Commande",
   "collapseUITip": "Indique si les longues listes présentées dans l'interface utilisateur doivent être réduites par défaut.",

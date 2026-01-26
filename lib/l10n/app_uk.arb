@@ -46,6 +46,8 @@
   "clearServerStatsContent": "Ви впевнені, що хочете очистити статистику з'єднань для сервера \"{serverName}\"? Цю дію не можна скасувати.",
   "clearServerStatsTitle": "Очистити статистику {serverName}",
   "clearThisServerStats": "Очистити статистику цього сервера",
+  "compactDatabase": "Стиснути базу даних",
+  "compactDatabaseContent": "Розмір бази даних: {size}\n\nЦе перебудує всю базу даних, щоб зменшити розмір файлу.",
   "closeAfterSave": "Зберегти та закрити",
   "cmd": "Команда",
   "collapseUITip": "Сховати довгі списки, що є у UI за замовчуванням",

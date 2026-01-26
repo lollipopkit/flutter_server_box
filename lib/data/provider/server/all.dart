@@ -225,6 +225,9 @@ class ServersNotifier extends _$ServersNotifier {
     Stores.setting.serverOrder.put(newOrder);
     Stores.server.delete(id);
 
+    // Remove connection stats when server is deleted
+    Stores.connectionStats.clearServerStats(id);
+
     // Remove SSH session when server is deleted
     final sessionId = 'ssh_$id';
     TermSessionManager.remove(sessionId);
@@ -243,6 +246,7 @@ class ServersNotifier extends _$ServersNotifier {
 
     Stores.setting.serverOrder.put([]);
     Stores.server.clear();
+    Stores.connectionStats.clearAll();
     bakSync.sync(milliDelay: 1000);
   }
 

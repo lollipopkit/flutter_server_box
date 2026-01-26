@@ -46,6 +46,8 @@
   "clearServerStatsContent": "Weet u zeker dat u de verbindingsstatistieken voor server \"{serverName}\" wilt wissen? Deze actie kan niet ongedaan worden gemaakt.",
   "clearServerStatsTitle": "Statistieken van {serverName} wissen",
   "clearThisServerStats": "Statistieken van deze server wissen",
+  "compactDatabase": "Database comprimeren",
+  "compactDatabaseContent": "Databasgrootte: {size}\n\nDit zal de hele database herbouwen om de bestandsgrootte te verkleinen.",
   "closeAfterSave": "Opslaan en sluiten",
   "cmd": "Opdracht",
   "collapseUITip": "Of lange lijsten in de UI standaard moeten worden ingeklapt",

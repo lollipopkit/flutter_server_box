@@ -46,6 +46,8 @@
   "clearServerStatsContent": "Sind Sie sicher, dass Sie die Verbindungsstatistiken für Server \"{serverName}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
   "clearServerStatsTitle": "{serverName} Statistiken löschen",
   "clearThisServerStats": "Statistiken dieses Servers löschen",
+  "compactDatabase": "Datenbank komprimieren",
+  "compactDatabaseContent": "Datenbankgröße: {size}\n\nDies wird die gesamte Datenbank neu erstellen, um die Dateigröße zu reduzieren.",
   "closeAfterSave": "Speichern und schließen",
   "cmd": "Command",
   "collapseUITip": "Ob lange Listen in der Benutzeroberfläche standardmäßig eingeklappt werden sollen oder nicht",

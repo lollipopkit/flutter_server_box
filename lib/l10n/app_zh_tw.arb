@@ -46,6 +46,8 @@
   "clearServerStatsContent": "確定要清空伺服器 \"{serverName}\" 的連線統計資料嗎？此操作無法撤銷。",
   "clearServerStatsTitle": "清空 {serverName} 統計",
   "clearThisServerStats": "清空此伺服器統計",
+  "compactDatabase": "壓縮資料庫",
+  "compactDatabaseContent": "資料庫大小：{size}\n\n此操作將重建資料庫以減少體積。",
   "closeAfterSave": "儲存後關閉",
   "cmd": "指令",
   "collapseUITip": "是否預設折疊 UI 中存在的長列表",

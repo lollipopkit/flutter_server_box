@@ -395,6 +395,24 @@ abstract class AppLocalizations {
   /// **'Clear This Server Statistics'**
   String get clearThisServerStats;
 
+  /// No description provided for @compactDatabase.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact Database'**
+  String get compactDatabase;
+
+  /// No description provided for @compactDatabaseContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Database size: {size}\n\nThis will rebuild the shole database to reduce file size.'**
+  String compactDatabaseContent(Object size);
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
+
   /// No description provided for @closeAfterSave.
   ///
   /// In en, this message translates to:

@@ -162,6 +162,17 @@ class AppLocalizationsNl extends AppLocalizations {
   String get clearThisServerStats => 'Statistieken van deze server wissen';
 
   @override
+  String get compactDatabase => 'Database comprimeren';
+
+  @override
+  String compactDatabaseContent(Object size) {
+    return 'Databasgrootte: $size\n\nDit zal de hele database herbouwen om de bestandsgrootte te verkleinen.';
+  }
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
   String get closeAfterSave => 'Opslaan en sluiten';
 
   @override

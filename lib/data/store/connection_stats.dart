@@ -187,4 +187,10 @@ class ConnectionStatsStore extends HiveStore {
       remove(key);
     }
   }
+
+  Future<void> compact() async {
+    Loggers.app.info('Start compacting connection_stats database...');
+    await box.compact();
+    Loggers.app.info('Finished compacting connection_stats database');
+  }
 }

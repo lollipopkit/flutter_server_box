@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -16,6 +18,7 @@ class ConnectionStatsPage extends StatefulWidget {
 class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
   List<ServerConnectionStats> _serverStats = [];
   bool _isLoading = true;
+  bool _isCompacting = false;
 
   @override
   void initState() {
@@ -46,6 +49,13 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
             onPressed: _showClearAllDialog,
             icon: const Icon(Icons.clear_all, color: Colors.red),
             tooltip: libL10n.clear,
+          ),
+          IconButton(
+            onPressed: _showCompactDialog,
+            icon: _isCompacting
+                ? SizedLoading.small
+                : const Icon(Icons.compress),
+            tooltip: l10n.compactDatabase,
           ),
         ],
       ),
@@ -194,6 +204,35 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showCompactDialog() {
+    final path = '${Paths.doc}${Pfs.seperator}connection_stats_enc.hive';
+    final file = File(path);
+    final oldSize = file.existsSync() ? file.lengthSync() : 0;
+    final sizeStr = oldSize < 1000 ? '$oldSize B' : oldSize < 1000 * 1000 ? '${(oldSize / 1000).toStringAsFixed(1)} KB' : '${(oldSize / (1000 * 1000)).toStringAsFixed(1)} MB';
+
+    context.showRoundDialog(
+      title: l10n.compactDatabase,
+      child: Text(l10n.compactDatabaseContent(sizeStr)),
+      actions: [
+        TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
+        TextButton(
+          onPressed: () async {
+            context.pop();
+            setState(() => _isCompacting = true);
+            await Stores.connectionStats.compact();
+            final newSize = file.existsSync() ? file.lengthSync() : 0;
+            final newSizeStr = newSize < 1000 ? '$newSize B' : newSize < 1000 * 1000 ? '${(newSize / 1000).toStringAsFixed(1)} KB' : '${(newSize / (1000 * 1000)).toStringAsFixed(1)} MB';
+            if (mounted) {
+              setState(() => _isCompacting = false);
+              context.showSnackBar('${libL10n.success}: $sizeStr -> $newSizeStr');
+            }
+          },
+          child: Text(l10n.confirm),
+        ),
+      ],
     );
   }
 }

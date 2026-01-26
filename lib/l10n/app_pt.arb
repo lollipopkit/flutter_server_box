@@ -46,6 +46,8 @@
   "clearServerStatsContent": "Tem certeza de que deseja limpar as estatísticas de conexão para o servidor \"{serverName}\"? Esta ação não pode ser desfeita.",
   "clearServerStatsTitle": "Limpar estatísticas de {serverName}",
   "clearThisServerStats": "Limpar estatísticas deste servidor",
+  "compactDatabase": "Compactar banco de dados",
+  "compactDatabaseContent": "Tamanho do banco de dados: {size}\n\nIsso irá reconstruir todo o banco de dados para reduzir o tamanho do arquivo.",
   "closeAfterSave": "Salvar e fechar",
   "cmd": "Comando",
   "collapseUITip": "Deve colapsar listas longas na UI por padrão?",
