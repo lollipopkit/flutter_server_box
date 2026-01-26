@@ -163,6 +163,17 @@ class AppLocalizationsRu extends AppLocalizations {
   String get clearThisServerStats => 'Очистить статистику этого сервера';
 
   @override
+  String get compactDatabase => 'Сжать базу данных';
+
+  @override
+  String compactDatabaseContent(Object size) {
+    return 'Размер базы данных: $size\n\nЭто перестроит базу данных для уменьшения размера файла. Данные не будут удалены.';
+  }
+
+  @override
+  String get confirm => 'Подтвердить';
+
+  @override
   String get closeAfterSave => 'Сохранить и закрыть';
 
   @override

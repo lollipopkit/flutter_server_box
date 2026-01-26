@@ -182,9 +182,23 @@ class ConnectionStatsStore extends HiveStore {
   
   // Clear stats for a specific server
   void clearServerStats(String serverId) {
-    final keysToDelete = keys().where((key) => key.startsWith(serverId)).toList();
+    final keysToDelete = keys().where((key) {
+      if (key == serverId) return true;
+      return key.startsWith('${serverId}_');
+    }).toList();
     for (final key in keysToDelete) {
       remove(key);
+    }
+  }
+
+  Future<void> compact() async {
+    Loggers.app.info('Start compacting connection_stats database...');
+    try {
+      await box.compact();
+      Loggers.app.info('Finished compacting connection_stats database');
+    } catch (e, st) {
+      Loggers.app.warning('Failed compacting connection_stats database', e, st);
+      rethrow;
     }
   }
 }

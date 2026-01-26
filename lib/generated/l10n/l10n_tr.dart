@@ -161,6 +161,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get clearThisServerStats => 'Bu Sunucu İstatistiklerini Temizle';
 
   @override
+  String get compactDatabase => 'Veritabanını Sıkıştır';
+
+  @override
+  String compactDatabaseContent(Object size) {
+    return 'Veritabanı boyutu: $size\n\nBu, dosya boyutunu küçültmek için veritabanını yeniden düzenleyecektir. Veriler silinmeyecek.';
+  }
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
   String get closeAfterSave => 'Kaydet ve kapat';
 
   @override

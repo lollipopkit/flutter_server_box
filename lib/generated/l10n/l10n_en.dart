@@ -162,6 +162,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearThisServerStats => 'Clear This Server Statistics';
 
   @override
+  String get compactDatabase => 'Compact Database';
+
+  @override
+  String compactDatabaseContent(Object size) {
+    return 'Database size: $size\n\nThis will reorganize the database to reduce file size. No data will be deleted.';
+  }
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
   String get closeAfterSave => 'Save and close';
 
   @override

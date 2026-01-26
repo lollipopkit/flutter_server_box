@@ -161,6 +161,17 @@ class AppLocalizationsId extends AppLocalizations {
   String get clearThisServerStats => 'Hapus Statistik Server Ini';
 
   @override
+  String get compactDatabase => 'Kompres Database';
+
+  @override
+  String compactDatabaseContent(Object size) {
+    return 'Ukuran database: $size\n\nIni akan mengatur ulang database untuk mengurangi ukuran file. Tidak ada data yang akan dihapus.';
+  }
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
   String get closeAfterSave => 'Simpan dan tutup';
 
   @override

@@ -156,6 +156,17 @@ class AppLocalizationsJa extends AppLocalizations {
   String get clearThisServerStats => 'このサーバーの統計をクリア';
 
   @override
+  String get compactDatabase => 'データベースを圧縮';
+
+  @override
+  String compactDatabaseContent(Object size) {
+    return 'データベースサイズ: $size\n\nこれにより、ファイルサイズを小さくするためにデータベースが再編成されます。データは削除されません。';
+  }
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
   String get closeAfterSave => '保存して閉じる';
 
   @override

@@ -46,6 +46,8 @@
   "clearServerStatsContent": "Apakah Anda yakin ingin menghapus statistik koneksi untuk server \"{serverName}\"? Tindakan ini tidak dapat dibatalkan.",
   "clearServerStatsTitle": "Hapus Statistik {serverName}",
   "clearThisServerStats": "Hapus Statistik Server Ini",
+  "compactDatabase": "Kompres Database",
+  "compactDatabaseContent": "Ukuran database: {size}\n\nIni akan mengatur ulang database untuk mengurangi ukuran file. Tidak ada data yang akan dihapus.",
   "closeAfterSave": "Simpan dan tutup",
   "cmd": "Memerintah",
   "collapseUITip": "Apakah akan menciutkan daftar panjang yang ada di UI secara default atau tidak",
