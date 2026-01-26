@@ -47,7 +47,7 @@
   "clearServerStatsTitle": "Statistieken van {serverName} wissen",
   "clearThisServerStats": "Statistieken van deze server wissen",
   "compactDatabase": "Database comprimeren",
-  "compactDatabaseContent": "Databasgrootte: {size}\n\nDit zal de hele database herbouwen om de bestandsgrootte te verkleinen.",
+  "compactDatabaseContent": "Databasgrootte: {size}\n\nDit zal de database opnieuw organiseren om de bestandsgrootte te verkleinen. Geen gegevens worden verwijderd.",
   "closeAfterSave": "Opslaan en sluiten",
   "cmd": "Opdracht",
   "collapseUITip": "Of lange lijsten in de UI standaard moeten worden ingeklapt",

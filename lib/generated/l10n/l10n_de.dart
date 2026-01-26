@@ -167,11 +167,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String compactDatabaseContent(Object size) {
-    return 'Datenbankgröße: $size\n\nDies wird die gesamte Datenbank neu erstellen, um die Dateigröße zu reduzieren.';
+    return 'Datenbankgröße: $size\n\nDies wird die Datenbank neu organisieren, um die Dateigröße zu reduzieren. Es werden keine Daten gelöscht.';
   }
 
   @override
-  String get confirm => 'Confirm';
+  String get confirm => 'Bestätigen';
 
   @override
   String get closeAfterSave => 'Speichern und schließen';

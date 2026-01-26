@@ -47,7 +47,7 @@
   "clearServerStatsTitle": "Очистити статистику {serverName}",
   "clearThisServerStats": "Очистити статистику цього сервера",
   "compactDatabase": "Стиснути базу даних",
-  "compactDatabaseContent": "Розмір бази даних: {size}\n\nЦе перебудує всю базу даних, щоб зменшити розмір файлу.",
+  "compactDatabaseContent": "Розмір бази даних: {size}\n\nЦе перебудує базу даних, щоб зменшити розмір файлу. Дані не будуть видалені.",
   "closeAfterSave": "Зберегти та закрити",
   "cmd": "Команда",
   "collapseUITip": "Сховати довгі списки, що є у UI за замовчуванням",

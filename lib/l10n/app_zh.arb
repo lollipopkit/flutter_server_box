@@ -47,7 +47,7 @@
   "clearServerStatsTitle": "清空 {serverName} 统计",
   "clearThisServerStats": "清空此服务器统计",
   "compactDatabase": "压缩数据库",
-  "compactDatabaseContent": "数据库大小：{size}\n\n此操作将重建数据库以减少体积。",
+  "compactDatabaseContent": "数据库大小：{size}\n\n此操作将重新组织数据库以减少体积，数据不会丢失。",
   "confirm": "确认",
   "closeAfterSave": "保存后关闭",
   "cmd": "命令",

@@ -166,7 +166,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String compactDatabaseContent(Object size) {
-    return 'Database size: $size\n\nThis will rebuild the shole database to reduce file size.';
+    return 'Database size: $size\n\nThis will reorganize the database to reduce file size. No data will be deleted.';
   }
 
   @override

@@ -167,11 +167,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String compactDatabaseContent(Object size) {
-    return 'Размер базы данных: $size\n\nЭто перестроит всю базу данных для уменьшения размера файла.';
+    return 'Размер базы данных: $size\n\nЭто перестроит базу данных для уменьшения размера файла. Данные не будут удалены.';
   }
 
   @override
-  String get confirm => 'Confirm';
+  String get confirm => 'Подтвердить';
 
   @override
   String get closeAfterSave => 'Сохранить и закрыть';

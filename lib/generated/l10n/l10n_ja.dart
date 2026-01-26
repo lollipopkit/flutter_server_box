@@ -160,7 +160,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String compactDatabaseContent(Object size) {
-    return 'データベースサイズ: $size\n\nこれにより、ファイルサイズを小さくするためにデータベース全体が再構築されます。';
+    return 'データベースサイズ: $size\n\nこれにより、ファイルサイズを小さくするためにデータベースが再編成されます。データは削除されません。';
   }
 
   @override

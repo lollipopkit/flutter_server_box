@@ -166,7 +166,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String compactDatabaseContent(Object size) {
-    return 'Databasgrootte: $size\n\nDit zal de hele database herbouwen om de bestandsgrootte te verkleinen.';
+    return 'Databasgrootte: $size\n\nDit zal de database opnieuw organiseren om de bestandsgrootte te verkleinen. Geen gegevens worden verwijderd.';
   }
 
   @override

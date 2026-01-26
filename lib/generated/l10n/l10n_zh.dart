@@ -158,7 +158,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String compactDatabaseContent(Object size) {
-    return '数据库大小：$size\n\n此操作将重建数据库以减少体积。';
+    return '数据库大小：$size\n\n此操作将重新组织数据库以减少体积，数据不会丢失。';
   }
 
   @override
@@ -1151,7 +1151,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String compactDatabaseContent(Object size) {
-    return '資料庫大小：$size\n\n此操作將重建資料庫以減少體積。';
+    return '資料庫大小：$size\n\n此操作將重新組織資料庫以減少體積，資料不會遺失。';
   }
 
   @override

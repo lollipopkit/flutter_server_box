@@ -166,7 +166,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String compactDatabaseContent(Object size) {
-    return 'Tamanho do banco de dados: $size\n\nIsso irá reconstruir todo o banco de dados para reduzir o tamanho do arquivo.';
+    return 'Tamanho do banco de dados: $size\n\nIsso reorganizará o banco de dados para reduzir o tamanho do arquivo. Nenhum dado será excluído.';
   }
 
   @override

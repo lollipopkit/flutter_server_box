@@ -47,7 +47,7 @@
   "clearServerStatsTitle": "Limpiar estadísticas de {serverName}",
   "clearThisServerStats": "Limpiar estadísticas de este servidor",
   "compactDatabase": "Compactar base de datos",
-  "compactDatabaseContent": "Tamaño de la base de datos: {size}\n\nEsto reconstruirá toda la base de datos para reducir el tamaño del archivo.",
+  "compactDatabaseContent": "Tamaño de la base de datos: {size}\n\nEsto reorganizará la base de datos para reducir el tamaño del archivo. No se eliminará ningún dato.",
   "closeAfterSave": "Guardar y cerrar",
   "cmd": "Comando",
   "collapseUITip": "¿Colapsar por defecto las listas largas en la UI?",

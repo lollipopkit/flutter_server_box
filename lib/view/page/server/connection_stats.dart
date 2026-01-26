@@ -51,7 +51,7 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
             tooltip: libL10n.clear,
           ),
           IconButton(
-            onPressed: _showCompactDialog,
+            onPressed: _isCompacting ? null : _showCompactDialog,
             icon: _isCompacting
                 ? SizedLoading.small
                 : const Icon(Icons.compress),
@@ -222,13 +222,20 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
           onPressed: () async {
             context.pop();
             setState(() => _isCompacting = true);
-            await Stores.connectionStats.compact();
-            final newSize = file.existsSync() ? file.lengthSync() : 0;
-            final newSizeStr = newSize < 1000 ? '$newSize B' : newSize < 1000 * 1000 ? '${(newSize / 1000).toStringAsFixed(1)} KB' : '${(newSize / (1000 * 1000)).toStringAsFixed(1)} MB';
-            if (mounted) {
-              setState(() => _isCompacting = false);
-              context.showSnackBar('${libL10n.success}: $sizeStr -> $newSizeStr');
-            }
+            try {
+              await Stores.connectionStats.compact();
+              final newSize = file.existsSync() ? file.lengthSync() : 0;
+              final newSizeStr = newSize < 1000 ? '$newSize B' : newSize < 1000 * 1000 ? '${(newSize / 1000).toStringAsFixed(1)} KB' : '${(newSize / (1000 * 1000)).toStringAsFixed(1)} MB';
+              if (mounted) {
+                setState(() => _isCompacting = false);
+                context.showSnackBar('${libL10n.success}: $sizeStr -> $newSizeStr');
+              }
+            } catch (e) {
+               if (mounted) {
+                 setState(() => _isCompacting = false);
+                 context.showSnackBar('${libL10n.error}: $e');
+               }
+             }
           },
           child: Text(l10n.confirm),
         ),

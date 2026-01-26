@@ -47,7 +47,7 @@
   "clearServerStatsTitle": "{serverName}の統計をクリア",
   "clearThisServerStats": "このサーバーの統計をクリア",
   "compactDatabase": "データベースを圧縮",
-  "compactDatabaseContent": "データベースサイズ: {size}\n\nこれにより、ファイルサイズを小さくするためにデータベース全体が再構築されます。",
+  "compactDatabaseContent": "データベースサイズ: {size}\n\nこれにより、ファイルサイズを小さくするためにデータベースが再編成されます。データは削除されません。",
   "closeAfterSave": "保存して閉じる",
   "cmd": "コマンド",
   "collapseUITip": "UIの長いリストをデフォルトで折りたたむかどうか",

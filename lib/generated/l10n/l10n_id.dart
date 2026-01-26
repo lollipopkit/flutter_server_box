@@ -165,7 +165,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String compactDatabaseContent(Object size) {
-    return 'Ukuran database: $size\n\nIni akan membangun kembali seluruh database untuk mengurangi ukuran file.';
+    return 'Ukuran database: $size\n\nIni akan mengatur ulang database untuk mengurangi ukuran file. Tidak ada data yang akan dihapus.';
   }
 
   @override

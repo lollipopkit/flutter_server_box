@@ -165,7 +165,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String compactDatabaseContent(Object size) {
-    return 'Veritabanı boyutu: $size\n\nBu, dosya boyutunu küçültmek için veritabanını yeniden oluşturacaktır.';
+    return 'Veritabanı boyutu: $size\n\nBu, dosya boyutunu küçültmek için veritabanını yeniden düzenleyecektir. Veriler silinmeyecek.';
   }
 
   @override

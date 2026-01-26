@@ -404,7 +404,7 @@ abstract class AppLocalizations {
   /// No description provided for @compactDatabaseContent.
   ///
   /// In en, this message translates to:
-  /// **'Database size: {size}\n\nThis will rebuild the shole database to reduce file size.'**
+  /// **'Database size: {size}\n\nThis will reorganize the database to reduce file size. No data will be deleted.'**
   String compactDatabaseContent(Object size);
 
   /// No description provided for @confirm.

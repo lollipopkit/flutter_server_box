@@ -167,7 +167,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String compactDatabaseContent(Object size) {
-    return 'Taille de la base de données : $size\n\nCela reconstruira l\'intégralité de la base de données pour réduire la taille du fichier.';
+    return 'Taille de la base de données : $size\n\nCela réorganisera la base de données pour réduire la taille du fichier. Aucune donnée ne sera supprimée.';
   }
 
   @override
