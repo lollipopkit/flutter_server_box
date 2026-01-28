@@ -204,6 +204,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Por ejemplo: si configuras el usuario dentro de la app como aaa, pero Docker está instalado bajo el usuario root, entonces necesitarás habilitar esta opción';
 
   @override
+  String get containerSudoPasswordRequired =>
+      'Sudo password is required to access Docker. Please enter your password.';
+
+  @override
   String get convert => 'Convertir';
 
   @override

@@ -47,7 +47,7 @@ extension SSHClientX on SSHClient {
     session.stderr.listen(
       (e) {
         onStderr?.call(e.string, session);
-        if (stderr) result.add(e);
+        // Don't add stderr to result, only stdout
       },
       onDone: stderrDone.complete,
       onError: stderrDone.completeError,
@@ -126,7 +126,7 @@ extension SSHClientX on SSHClient {
         sess.stdin.add('$script\n'.uint8List);
         sess.stdin.close();
       },
-      onStderr: (data, session) async {
+      onStderr: (data, session) async { // stderr is in `data`
         onStderr?.call(data, session);
         if (isRequestingPwd) return;
 
@@ -146,7 +146,9 @@ extension SSHClientX on SSHClient {
       },
       onStdout: onStdout,
       entry: entry,
+      stderr: false, // `sudo -S` writes the password prompt to stderr and the actual output to stdout, so we only capture stdout for parsing
     );
+
     return (session.exitCode, output);
   }
 

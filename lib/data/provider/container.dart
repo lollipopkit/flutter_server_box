@@ -37,6 +37,7 @@ abstract class ContainerState with _$ContainerState {
 @riverpod
 class ContainerNotifier extends _$ContainerNotifier {
   var sudoCompleter = Completer<bool>();
+  String? _cachedPassword;
 
   @override
   ContainerState build(SSHClient? client, String userName, String hostId, BuildContext context) {
@@ -47,6 +48,18 @@ class ContainerNotifier extends _$ContainerNotifier {
     Future.microtask(() => refresh());
 
     return initialState;
+  }
+
+  Future<String?> _getSudoPassword() async {
+    if (_cachedPassword != null) return _cachedPassword;
+
+    if (!context.mounted) return null;
+    final pwd = await context.showPwdDialog(title: userName, id: hostId);
+
+    if (pwd != null && pwd.isNotEmpty) {
+      _cachedPassword = pwd;
+    }
+    return pwd;
   }
 
   Future<void> setType(ContainerType type) async {
@@ -84,12 +97,24 @@ class ContainerNotifier extends _$ContainerNotifier {
       state = state.copyWith(isBusy: false);
       return;
     }
+
+    String? password;
+    if (sudo) {
+      password = await _getSudoPassword();
+      if (password == null) {
+        state = state.copyWith(
+          isBusy: false,
+          error: ContainerErr(type: ContainerErrType.sudoPasswordRequired),
+        );
+        return;
+      }
+    }
+
     final includeStats = Stores.setting.containerParseStat.fetch();
 
-    final cmd = _wrap(ContainerCmdType.execAll(state.type, sudo: sudo, includeStats: includeStats));
+    final cmd = _wrap(ContainerCmdType.execAll(state.type, sudo: sudo, includeStats: includeStats, password: password));
     int? code;
     String raw = '';
-    final errs = <String>[];
     if (client != null) {
       (code, raw) = await client!.execWithPwd(cmd, context: context, id: hostId);
     } else {
@@ -106,7 +131,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (!context.mounted) return;
 
     /// Code 127 means command not found
-    if (code == 127 || raw.contains(_dockerNotFound) || errs.join().contains(_dockerNotFound)) {
+    if (code == 127 || raw.contains(_dockerNotFound)) {
       state = state.copyWith(error: ContainerErr(type: ContainerErrType.notInstalled));
       return;
     }
@@ -122,15 +147,8 @@ class ContainerNotifier extends _$ContainerNotifier {
       return;
     }
 
-    /// Filter out sudo password prompt from output
-    if (errs.any((e) => e.contains('[sudo] password'))) {
-      raw = raw.split('\n').where((line) => !line.contains('[sudo] password')).join('\n');
-    }
-
     /// Detect Podman not installed when using Podman mode
-    if (state.type == ContainerType.podman &&
-        (errs.any((e) => e.contains('podman: not found')) ||
-            raw.contains('podman: not found'))) {
+    if (state.type == ContainerType.podman && raw.contains('podman: not found')) {
       state = state.copyWith(error: ContainerErr(type: ContainerErrType.notInstalled));
       return;
     }
@@ -276,21 +294,35 @@ class ContainerNotifier extends _$ContainerNotifier {
       ContainerType.podman => 'podman $cmd',
     };
 
+    final needSudo = await sudoCompleter.future;
+    String? password;
+    if (needSudo) {
+      password = await _getSudoPassword();
+      if (password == null) {
+        return ContainerErr(type: ContainerErrType.sudoPasswordRequired);
+      }
+    }
+
+    if (needSudo && password != null) {
+      cmd = _buildSudoCmd(cmd, password);
+    } else if (needSudo) {
+      cmd = 'sudo -S $cmd';
+    }
+
     state = state.copyWith(runLog: '');
-    final errs = <String>[];
-    final (code, _) = await client?.execWithPwd(
-      _wrap((await sudoCompleter.future) ? 'sudo -S $cmd' : cmd),
+    final (code, _) = await client!.execWithPwd(
+      _wrap(cmd),
       context: context,
       onStdout: (data, _) {
         state = state.copyWith(runLog: '${state.runLog}$data');
       },
-      onStderr: (data, _) => errs.add(data),
       id: hostId,
-    ) ?? (null, null);
+    );
+
     state = state.copyWith(runLog: null);
 
     if (code != 0) {
-      return ContainerErr(type: ContainerErrType.unknown, message: errs.join('\n').trim());
+      return ContainerErr(type: ContainerErrType.unknown, message: 'Command execution failed');
     }
     if (autoRefresh) await refresh();
     return null;
@@ -310,6 +342,11 @@ class ContainerNotifier extends _$ContainerNotifier {
 
 const _jsonFmt = '--format "{{json .}}"';
 
+String _buildSudoCmd(String baseCmd, String password) {
+  final pwdBase64 = base64Encode(utf8.encode(password));
+  return 'echo "$pwdBase64" | base64 -d | sudo -S $baseCmd';
+}
+
 enum ContainerCmdType {
   version,
   ps,
@@ -319,29 +356,36 @@ enum ContainerCmdType {
   // and don't require splitting output with ScriptConstants.separator
   ;
 
-  String exec(ContainerType type, {bool sudo = false, bool includeStats = false}) {
-    final prefix = sudo ? 'sudo -S ${type.name}' : type.name;
-    return switch (this) {
-      ContainerCmdType.version => '$prefix version $_jsonFmt',
+  String exec(ContainerType type, {bool sudo = false, bool includeStats = false, String? password}) {
+    final baseCmd = switch (this) {
+      ContainerCmdType.version => '${type.name} version $_jsonFmt',
       ContainerCmdType.ps => switch (type) {
         /// TODO: Rollback to json format when performance recovers.
         /// Use [_jsonFmt] in Docker will cause the operation to slow down.
         ContainerType.docker =>
-          '$prefix ps -a --format "table {{printf \\"'
+          '${type.name} ps -a --format "table {{printf \\"'
               '%-15.15s '
               '%-30.30s '
               '${"%-50.50s " * 2}\\"'
               ' .ID .Status .Names .Image}}"',
-        ContainerType.podman => '$prefix ps -a $_jsonFmt',
+        ContainerType.podman => '${type.name} ps -a $_jsonFmt',
       },
-      ContainerCmdType.stats => includeStats ? '$prefix stats --no-stream $_jsonFmt' : 'echo PASS',
-      ContainerCmdType.images => '$prefix image ls $_jsonFmt',
+      ContainerCmdType.stats => includeStats ? '${type.name} stats --no-stream $_jsonFmt' : 'echo PASS',
+      ContainerCmdType.images => '${type.name} image ls $_jsonFmt',
     };
+
+    if (sudo && password != null) {
+      return _buildSudoCmd(baseCmd, password);
+    }
+    if (sudo) {
+      return 'sudo -S $baseCmd';
+    }
+    return baseCmd;
   }
 
-  static String execAll(ContainerType type, {bool sudo = false, bool includeStats = false}) {
+  static String execAll(ContainerType type, {bool sudo = false, bool includeStats = false, String? password}) {
     return ContainerCmdType.values
-        .map((e) => e.exec(type, sudo: sudo, includeStats: includeStats))
+        .map((e) => e.exec(type, sudo: sudo, includeStats: includeStats, password: password))
         .join('\necho ${ScriptConstants.separator}\n');
   }
 
