@@ -138,6 +138,7 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     /// Sudo password error (exitCode = 2)
     if (code == 2) {
+      _cachedPassword = null;
       state = state.copyWith(error: ContainerErr(type: ContainerErrType.sudoPasswordIncorrect));
       return;
     }
@@ -309,10 +310,8 @@ class ContainerNotifier extends _$ContainerNotifier {
       }
     }
 
-    if (needSudo && password != null) {
-      cmd = _buildSudoCmd(cmd, password);
-    } else if (needSudo) {
-      cmd = 'sudo -S $cmd';
+    if (needSudo) {
+      cmd = _buildSudoCmd(cmd, password!);
     }
 
     state = state.copyWith(runLog: '');
@@ -350,7 +349,7 @@ const _jsonFmt = '--format "{{json .}}"';
 
 String _buildSudoCmd(String baseCmd, String password) {
   final pwdBase64 = base64Encode(utf8.encode(password));
-  return 'echo "$pwdBase64" | base64 -d | sudo -S $baseCmd';
+  return 'echo "$pwdBase64" | base64 -d | sudo -S $baseCmd 2>/dev/null'; // Discard stderr to avoid password prompt
 }
 
 enum ContainerCmdType {

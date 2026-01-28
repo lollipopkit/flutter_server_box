@@ -144,7 +144,6 @@ extension SSHClientX on SSHClient {
       },
       onStdout: onStdout,
       entry: entry,
-      stderr: false, // `sudo -S` writes the password prompt to stderr and the actual output to stdout, so we only capture stdout for parsing
     );
 
     if (hasPasswordError) {
