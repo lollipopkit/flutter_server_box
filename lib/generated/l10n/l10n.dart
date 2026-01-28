@@ -467,6 +467,12 @@ abstract class AppLocalizations {
   /// **'For example: In the app, the user is set to aaa, but Docker is installed under the root user. In this case, you need to enable this option.'**
   String get containerTrySudoTip;
 
+  /// No description provided for @containerSudoPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sudo password is required to access Docker. Please enter your password.'**
+  String get containerSudoPasswordRequired;
+
   /// No description provided for @convert.
   ///
   /// In en, this message translates to:

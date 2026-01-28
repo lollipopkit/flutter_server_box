@@ -202,6 +202,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Örneğin: Uygulamada kullanıcı aaa olarak ayarlanmış, ancak Docker root kullanıcısı altında kurulmuş. Bu durumda bu seçeneği etkinleştirmeniz gerekir.';
 
   @override
+  String get containerSudoPasswordRequired =>
+      'Sudo password is required to access Docker. Please enter your password.';
+
+  @override
   String get convert => 'Dönüştür';
 
   @override

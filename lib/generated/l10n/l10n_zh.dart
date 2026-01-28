@@ -193,6 +193,9 @@ class AppLocalizationsZh extends AppLocalizations {
       '例如：在应用内将用户设置为 aaa，但是 Docker 安装在root用户下，这时就需要启用此选项';
 
   @override
+  String get containerSudoPasswordRequired => '需要 sudo 密码才能访问 Docker。请输入您的密码。';
+
+  @override
   String get convert => '转换';
 
   @override

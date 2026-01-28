@@ -203,6 +203,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Например: если пользователь в приложении установлен как aaa, но Docker установлен под пользователем root, тогда нужно включить эту опцию';
 
   @override
+  String get containerSudoPasswordRequired =>
+      'Sudo password is required to access Docker. Please enter your password.';
+
+  @override
   String get convert => 'Конвертировать';
 
   @override

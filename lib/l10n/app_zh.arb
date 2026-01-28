@@ -58,6 +58,7 @@
   "connectionStatsDesc": "查看服务器连接成功率和历史记录",
   "container": "容器",
   "containerTrySudoTip": "例如：在应用内将用户设置为 aaa，但是 Docker 安装在root用户下，这时就需要启用此选项",
+  "containerSudoPasswordRequired": "需要 sudo 密码才能访问 Docker。请输入您的密码。",
   "convert": "转换",
   "copyPath": "复制路径",
   "cpuViewAsProgressTip": "以进度条样式显示每个 CPU 的使用率（旧版样式）",
