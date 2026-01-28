@@ -59,6 +59,7 @@
   "container": "Container",
   "containerTrySudoTip": "For example: In the app, the user is set to aaa, but Docker is installed under the root user. In this case, you need to enable this option.",
   "containerSudoPasswordRequired": "Sudo password is required to access Docker. Please enter your password.",
+  "containerSudoPasswordIncorrect": "Incorrect sudo password. Please try again.",
   "convert": "Convert",
   "copyPath": "Copy path",
   "cpuViewAsProgressTip": "Display the usage of each CPU in a progress bar style (old style)",

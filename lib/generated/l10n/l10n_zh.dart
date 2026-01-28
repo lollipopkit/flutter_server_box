@@ -196,6 +196,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get containerSudoPasswordRequired => '需要 sudo 密码才能访问 Docker。请输入您的密码。';
 
   @override
+  String get containerSudoPasswordIncorrect => 'sudo 密码错误，请重试。';
+
+  @override
   String get convert => '转换';
 
   @override

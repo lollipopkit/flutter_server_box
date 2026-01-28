@@ -136,6 +136,12 @@ class ContainerNotifier extends _$ContainerNotifier {
       return;
     }
 
+    /// Sudo password error (exitCode = 2)
+    if (code == 2) {
+      state = state.copyWith(error: ContainerErr(type: ContainerErrType.sudoPasswordIncorrect));
+      return;
+    }
+
     /// Pre-parse Podman detection
     if (raw.contains(_podmanEmulationMsg)) {
       state = state.copyWith(

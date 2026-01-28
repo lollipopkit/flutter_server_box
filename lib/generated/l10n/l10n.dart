@@ -473,6 +473,12 @@ abstract class AppLocalizations {
   /// **'Sudo password is required to access Docker. Please enter your password.'**
   String get containerSudoPasswordRequired;
 
+  /// No description provided for @containerSudoPasswordIncorrect.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect sudo password. Please try again.'**
+  String get containerSudoPasswordIncorrect;
+
   /// No description provided for @convert.
   ///
   /// In en, this message translates to:

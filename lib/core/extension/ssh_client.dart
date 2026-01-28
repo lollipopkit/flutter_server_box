@@ -7,12 +7,8 @@ import 'package:flutter/widgets.dart';
 import 'package:server_box/data/helper/ssh_decoder.dart';
 import 'package:server_box/data/model/server/system.dart';
 
-import 'package:server_box/data/res/misc.dart';
-
 typedef OnStdout = void Function(String data, SSHSession session);
 typedef OnStdin = void Function(SSHSession session);
-
-typedef PwdRequestFunc = Future<String?> Function(String? user);
 
 extension SSHClientX on SSHClient {
   /// Create a persistent PowerShell session for Windows commands
@@ -112,6 +108,18 @@ extension SSHClientX on SSHClient {
     return (session, result.takeBytes().string);
   }
 
+  /// Executes a command.
+  ///
+  /// This method is used for executing commands where password has already been
+  /// handled beforehand (e.g., via base64 pipe in container commands).
+  ///
+  /// [stderr: false] ensures only stdout is included in the returned output,
+  /// keeping it clean from sudo password prompts that appear in stderr.
+  ///
+  /// Returns exitCode:
+  /// - 0: success
+  /// - 1: general error
+  /// - 2: sudo password error
   Future<(int?, String)> execWithPwd(
     String script, {
     String? entry,
@@ -120,7 +128,8 @@ extension SSHClientX on SSHClient {
     OnStdout? onStderr,
     required String id,
   }) async {
-    var isRequestingPwd = false;
+    var hasPasswordError = false;
+
     final (session, output) = await exec(
       (sess) {
         sess.stdin.add('$script\n'.uint8List);
@@ -128,20 +137,9 @@ extension SSHClientX on SSHClient {
       },
       onStderr: (data, session) async { // stderr is in `data`
         onStderr?.call(data, session);
-        if (isRequestingPwd) return;
-
-        if (data.contains('[sudo] password for ')) {
-          isRequestingPwd = true;
-          final user = Miscs.pwdRequestWithUserReg.firstMatch(data)?.group(1);
-          final ctx = context ?? WidgetsBinding.instance.focusManager.primaryFocus?.context;
-          if (ctx == null) return;
-          final pwd = ctx.mounted ? await ctx.showPwdDialog(title: user, id: id) : null;
-          if (pwd == null || pwd.isEmpty) {
-            session.stdin.close();
-          } else {
-            session.stdin.add('$pwd\n'.uint8List);
-          }
-          isRequestingPwd = false;
+        if (data.contains('Sorry, try again.') ||
+            data.contains('incorrect password attempt')) {
+          hasPasswordError = true;
         }
       },
       onStdout: onStdout,
@@ -149,6 +147,9 @@ extension SSHClientX on SSHClient {
       stderr: false, // `sudo -S` writes the password prompt to stderr and the actual output to stdout, so we only capture stdout for parsing
     );
 
+    if (hasPasswordError) {
+      return (2, output);
+    }
     return (session.exitCode, output);
   }
 
