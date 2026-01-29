@@ -48,7 +48,7 @@ Unix permissions editor:
 2. Edit in built-in editor
 3. Save → Upload back to server
 
-**Size limit:** ~1 MB for large files, use terminal instead.
+**Size limit:** Files up to 1 MB. For larger files, use the terminal with vim/nano instead.
 
 **Editor settings:** Settings → SFTP Editor
 - Preferred editor (vim, nano, etc.)
@@ -77,16 +77,18 @@ Settings → Show Hidden Files
 
 ## Archive Support
 
-Extract 30+ formats directly on server:
+Extract common archive formats directly on your server.
 
-| Format | Command Required |
-|--------|------------------|
-| .tar.gz | tar |
-| .zip | unzip |
-| .7z | 7z |
-| .rar | unrar |
+| Format | Variants | Command Required |
+|--------|----------|------------------|
+| .tar.gz | .tgz, .tar.Z | tar |
+| .tar.bz2 | .tbz2, .tar.bz2 | tar |
+| .tar.xz | .txz | tar |
+| .zip | .zipx | unzip |
+| .7z | - | 7z |
+| .rar | - | unrar |
 
-Must be installed on server.
+**Note:** The corresponding command (`tar`, `unzip`, `7z`, `unrar`) must be installed on your server. These tools handle many sub-formats not listed above.
 
 ## Quick Access
 
@@ -113,4 +115,4 @@ Large directories (1000+ items) use pagination for performance.
 
 ### Can't Edit File
 
-File too large (>1 MB)? Use terminal with vim/nano instead.
+File larger than 1 MB? Use terminal with vim/nano instead.

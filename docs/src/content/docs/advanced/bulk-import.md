@@ -7,6 +7,13 @@ Import multiple server configurations at once using a JSON file.
 
 ## JSON Format
 
+> [!WARNING] SECURITY WARNING
+> **Never store plaintext passwords in files!** This JSON example shows a password field for demonstration only, but you should:
+> - **Prefer SSH keys** (`keyId`) instead of `pwd` - they're more secure
+> - **Use secret managers** or environment variables if you must use passwords
+> - **Delete the file immediately** after import - don't leave credentials lying around
+> - **Add to .gitignore** - never commit credential files to version control
+
 ```json
 [
   {
@@ -30,8 +37,8 @@ Import multiple server configurations at once using a JSON file.
 | `ip` | Yes | Domain or IP address |
 | `port` | Yes | SSH port (usually 22) |
 | `user` | Yes | SSH username |
-| `pwd` | No | Password |
-| `keyId` | No | SSH key name (from Private Keys) |
+| `pwd` | No | Password (avoid - use SSH keys instead) |
+| `keyId` | No | SSH key name (from Private Keys - recommended) |
 | `tags` | No | Organization tags |
 | `autoConnect` | No | Auto-connect on startup |
 
@@ -59,7 +66,7 @@ Import multiple server configurations at once using a JSON file.
     "ip": "dev.example.com",
     "port": 2222,
     "user": "dev",
-    "pwd": "dev-password",
+    "keyId": "dev-key",
     "tags": ["development"]
   }
 ]
@@ -70,4 +77,5 @@ Import multiple server configurations at once using a JSON file.
 - **Use SSH keys** instead of passwords when possible
 - **Test connection** after import
 - **Organize with tags** for easier management
-- **Delete JSON file** after import (contains credentials)
+- **Delete JSON file** after import
+- **Never commit** JSON files with credentials to version control

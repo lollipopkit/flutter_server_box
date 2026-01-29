@@ -67,21 +67,9 @@ Example:
 
 ### Notes
 
-- May take a few minutes to update
 - Try restarting watch app if not updating
 - Verify phone and watch are connected
 
-## Authentication
-
-### Basic Auth
-
-```
-https://username:password@server.com/status
-```
-
-### Token Auth
-
-Check ServerBox Monitor documentation for token-based authentication.
 
 ## Troubleshooting
 
@@ -96,10 +84,8 @@ Check ServerBox Monitor documentation for token-based authentication.
 - Verify ServerBox Monitor is running
 - Test URL in browser
 - Check URL ends with `/status`
-- Verify authentication
 
 ## Security
 
-- Use HTTPS when possible
-- Enable authentication on ServerBox Monitor
-- Local IPs only on trusted networks
+- **Always use HTTPS** when possible
+- **Local IPs only** on trusted networks
