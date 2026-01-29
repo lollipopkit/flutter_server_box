@@ -57,6 +57,8 @@
   "connectionStatsDesc": "Bekijk server verbindingssucces ratio en geschiedenis",
   "container": "Container",
   "containerTrySudoTip": "Bijvoorbeeld: in de app is de gebruiker ingesteld op aaa, maar Docker is geïnstalleerd onder de rootgebruiker. In dit geval moet u deze optie inschakelen.",
+  "containerSudoPasswordRequired": "Een sudo-wachtwoord is vereist om toegang te krijgen tot Docker. Voer uw wachtwoord in.",
+  "containerSudoPasswordIncorrect": "Het sudo-wachtwoord is onjuist of niet toegestaan. Probeer het opnieuw.",
   "convert": "Converteren",
   "copyPath": "Pad kopiëren",
   "cpuViewAsProgressTip": "Toon het gebruik van elke CPU in een voortgangsbalkstijl (oude stijl)",

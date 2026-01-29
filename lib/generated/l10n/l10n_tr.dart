@@ -203,11 +203,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get containerSudoPasswordRequired =>
-      'Sudo password is required to access Docker. Please enter your password.';
+      'Docker\'e erişmek için sudo şifresi gereklidir. Lütfen şifrenizi girin.';
 
   @override
   String get containerSudoPasswordIncorrect =>
-      'Incorrect sudo password. Please try again.';
+      'Sudo şifresi yanlış veya izin verilmiyor. Lütfen tekrar deneyin.';
 
   @override
   String get convert => 'Dönüştür';

@@ -57,6 +57,8 @@
   "connectionStatsDesc": "Voir le taux de réussite de connexion du serveur et l'historique",
   "container": "Conteneur",
   "containerTrySudoTip": "Par exemple : Dans l'application, l'utilisateur est défini comme aaa, mais Docker est installé sous l'utilisateur root. Dans ce cas, vous devez activer cette option.",
+  "containerSudoPasswordRequired": "Un mot de passe sudo est requis pour accéder à Docker. Veuillez entrer votre mot de passe.",
+  "containerSudoPasswordIncorrect": "Le mot de passe sudo est incorrect ou non autorisé. Veuillez réessayer.",
   "convert": "Convertir",
   "copyPath": "Copier le chemin",
   "cpuViewAsProgressTip": "Afficher le taux d'utilisation de chaque CPU sous forme de barre de progression (ancien style)",

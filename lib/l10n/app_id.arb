@@ -57,6 +57,8 @@
   "connectionStatsDesc": "Lihat tingkat keberhasilan koneksi server dan riwayat",
   "container": "Wadah",
   "containerTrySudoTip": "Contohnya: Di dalam aplikasi, pengguna diatur sebagai aaa, tetapi Docker diinstal di bawah pengguna root. Dalam kasus ini, Anda perlu mengaktifkan opsi ini.",
+  "containerSudoPasswordRequired": "Kata sandi sudo diperlukan untuk mengakses Docker. Silakan masukkan kata sandi Anda.",
+  "containerSudoPasswordIncorrect": "Kata sandi sudo salah atau tidak diizinkan. Silakan coba lagi.",
   "convert": "Mengubah",
   "copyPath": "Path Copy",
   "cpuViewAsProgressTip": "Tampilkan tingkat penggunaan setiap CPU dalam gaya bilah kemajuan (gaya lama)",

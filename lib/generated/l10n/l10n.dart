@@ -476,7 +476,7 @@ abstract class AppLocalizations {
   /// No description provided for @containerSudoPasswordIncorrect.
   ///
   /// In en, this message translates to:
-  /// **'Incorrect sudo password. Please try again.'**
+  /// **'Sudo password is incorrect or not allowed. Please try again.'**
   String get containerSudoPasswordIncorrect;
 
   /// No description provided for @convert.

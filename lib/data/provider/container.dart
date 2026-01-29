@@ -104,7 +104,10 @@ class ContainerNotifier extends _$ContainerNotifier {
       if (password == null) {
         state = state.copyWith(
           isBusy: false,
-          error: ContainerErr(type: ContainerErrType.sudoPasswordRequired),
+          error: ContainerErr(
+            type: ContainerErrType.sudoPasswordRequired,
+            message: l10n.containerSudoPasswordRequired,
+          ),
         );
         return;
       }
@@ -149,7 +152,10 @@ class ContainerNotifier extends _$ContainerNotifier {
     /// Sudo password error (exitCode = 2)
     if (code == 2) {
       _cachedPassword = null;
-      state = state.copyWith(error: ContainerErr(type: ContainerErrType.sudoPasswordIncorrect));
+      state = state.copyWith(error: ContainerErr(
+        type: ContainerErrType.sudoPasswordIncorrect,
+        message: l10n.containerSudoPasswordIncorrect,
+      ));
       return;
     }
 
@@ -316,7 +322,10 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (needSudo) {
       password = await _getSudoPassword();
       if (password == null) {
-        return ContainerErr(type: ContainerErrType.sudoPasswordRequired);
+        return ContainerErr(
+          type: ContainerErrType.sudoPasswordRequired,
+          message: l10n.containerSudoPasswordRequired,
+        );
       }
     }
 
@@ -403,35 +412,28 @@ enum ContainerCmdType {
         .map((e) => e.exec(type, sudo: false, includeStats: includeStats))
         .join('\necho ${ScriptConstants.separator}\n');
 
-    print('[DEBUG] commands: $commands');
-
     final needsShWrapper = commands.contains('\n') || commands.contains('echo ${ScriptConstants.separator}');
 
     if (needsShWrapper) {
       if (sudo && password != null) {
         final pwdBase64 = base64Encode(utf8.encode(password));
         final cmd = 'echo "$pwdBase64" | base64 -d | sudo -S sh -c \'${commands.replaceAll("'", "'\\''")}\'';
-        print('[DEBUG] final sudo cmd (with sh): $cmd');
         return cmd;
       }
       if (sudo) {
         final cmd = 'sudo -S sh -c \'${commands.replaceAll("'", "'\\''")}\'';
-        print('[DEBUG] final sudo cmd: $cmd');
         return cmd;
       }
       final cmd = 'sh -c \'${commands.replaceAll("'", "'\\''")}\'';
-      print('[DEBUG] final sh cmd: $cmd');
       return cmd;
     }
 
     if (sudo && password != null) {
       final cmd = _buildSudoCmd(commands, password);
-      print('[DEBUG] final sudo cmd: $cmd');
       return cmd;
     }
     if (sudo) {
       final cmd = 'sudo -S $commands';
-      print('[DEBUG] final sudo cmd: $cmd');
       return cmd;
     }
     return commands;

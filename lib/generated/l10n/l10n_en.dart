@@ -208,7 +208,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get containerSudoPasswordIncorrect =>
-      'Incorrect sudo password. Please try again.';
+      'Sudo password is incorrect or not allowed. Please try again.';
 
   @override
   String get convert => 'Convert';

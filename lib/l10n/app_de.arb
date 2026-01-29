@@ -58,6 +58,8 @@
   "connectionStatsDesc": "Server-Verbindungserfolgsrate und Verlauf anzeigen",
   "container": "Container",
   "containerTrySudoTip": "Zum Beispiel: In der App ist der Benutzer auf aaa eingestellt, aber Docker ist unter dem Root-Benutzer installiert. In diesem Fall müssen Sie diese Option aktivieren",
+  "containerSudoPasswordRequired": "Ein sudo-Passwort ist erforderlich, um auf Docker zuzugreifen. Bitte geben Sie Ihr Passwort ein.",
+  "containerSudoPasswordIncorrect": "Das sudo-Passwort ist falsch oder nicht erlaubt. Bitte versuchen Sie es erneut.",
   "convert": "Konvertieren",
   "copyPath": "Pfad kopieren",
   "cpuViewAsProgressTip": "Zeigen Sie die Auslastung jedes CPUs in einem Fortschrittsbalken-Stil an (alter Stil)",

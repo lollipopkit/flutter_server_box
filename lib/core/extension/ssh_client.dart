@@ -113,8 +113,9 @@ extension SSHClientX on SSHClient {
   /// This method is used for executing commands where password has already been
   /// handled beforehand (e.g., via base64 pipe in container commands).
   /// It captures stderr via [onStderr] callback to detect sudo password errors
-  /// (e.g., "Sorry, try again." or "incorrect password attempt"), while
-  /// excluding stderr from the returned output via [stderr: false].
+  /// (e.g., "Sorry, try again.", "incorrect password attempt", or
+  /// "a password is required"), while excluding stderr from the returned
+  /// output via [stderr: false].
   ///
   /// Returns exitCode:
   /// - 0: success
@@ -136,10 +137,10 @@ extension SSHClientX on SSHClient {
         sess.stdin.close();
       },
       onStderr: (data, session) async {
-        print('[DEBUG] stderr: $data');
         onStderr?.call(data, session);
         if (data.contains('Sorry, try again.') ||
-            data.contains('incorrect password attempt')) {
+            data.contains('incorrect password attempt') ||
+            data.contains('a password is required')) {
           hasPasswordError = true;
         }
       },
@@ -147,10 +148,6 @@ extension SSHClientX on SSHClient {
       entry: entry,
       stderr: false,
     );
-
-    print('[DEBUG] output: $output');
-    print('[DEBUG] exitCode: ${session.exitCode}');
-    print('[DEBUG] hasPasswordError: $hasPasswordError');
 
     if (hasPasswordError) {
       return (2, output);

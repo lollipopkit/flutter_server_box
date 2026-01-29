@@ -203,11 +203,11 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get containerSudoPasswordRequired =>
-      'Sudo password is required to access Docker. Please enter your password.';
+      'Kata sandi sudo diperlukan untuk mengakses Docker. Silakan masukkan kata sandi Anda.';
 
   @override
   String get containerSudoPasswordIncorrect =>
-      'Incorrect sudo password. Please try again.';
+      'Kata sandi sudo salah atau tidak diizinkan. Silakan coba lagi.';
 
   @override
   String get convert => 'Mengubah';

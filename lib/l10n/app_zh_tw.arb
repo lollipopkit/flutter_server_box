@@ -57,6 +57,8 @@
   "connectionStatsDesc": "檢視伺服器連線成功率和歷史記錄",
   "container": "容器",
   "containerTrySudoTip": "例如：App 內設定使用者為 aaa，但是 Docker 安裝在 root 使用者，這時就需要開啟此選項",
+  "containerSudoPasswordRequired": "需要 sudo 密碼才能存取 Docker。請輸入您的密碼。",
+  "containerSudoPasswordIncorrect": "sudo 密碼錯誤或無權限。請重試。",
   "convert": "轉換",
   "copyPath": "複製路徑",
   "cpuViewAsProgressTip": "以進度條樣式顯示每個CPU的使用率（舊版樣式）",

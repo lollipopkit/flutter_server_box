@@ -57,6 +57,8 @@
   "connectionStatsDesc": "Ver taxa de sucesso de conexão do servidor e histórico",
   "container": "Contêiner",
   "containerTrySudoTip": "Por exemplo: se o usuário for definido como aaa dentro do app, mas o Docker estiver instalado sob o usuário root, esta opção precisará ser ativada",
+  "containerSudoPasswordRequired": "É necessária uma senha sudo para acessar o Docker. Por favor, insira sua senha.",
+  "containerSudoPasswordIncorrect": "A senha sudo está incorreta ou não é permitida. Por favor, tente novamente.",
   "convert": "Converter",
   "copyPath": "Copiar caminho",
   "cpuViewAsProgressTip": "Exiba a taxa de uso de cada CPU em estilo de barra de progresso (estilo antigo)",
