@@ -11,22 +11,12 @@ Long-press **Settings** in drawer to open JSON editor.
 
 ## Common Hidden Settings
 
-### serverTabUseOldUI
-
-Use old server tab UI.
-
-```json
-{"serverTabUseOldUI": true}
-```
-
-**Type:** boolean | **Default:** false
-
-### timeout
+### timeOut
 
 Connection timeout in seconds.
 
 ```json
-{"timeout": 10}
+{"timeOut": 10}
 ```
 
 **Type:** integer | **Default:** 5 | **Range:** 1-60

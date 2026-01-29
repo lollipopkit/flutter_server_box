@@ -3,7 +3,7 @@ title: Code Generation
 description: Using build_runner for code generation
 ---
 
-Flutter Server Box heavily uses code generation for models, state management, and serialization.
+Server Box heavily uses code generation for models, state management, and serialization.
 
 ## When to Run Code Generation
 

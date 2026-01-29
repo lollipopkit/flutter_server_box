@@ -3,7 +3,7 @@ title: Architecture
 description: Architecture patterns and design decisions
 ---
 
-Flutter Server Box follows clean architecture principles with clear separation between data, domain, and presentation layers.
+Server Box follows clean architecture principles with clear separation between data, domain, and presentation layers.
 
 ## Layered Architecture
 

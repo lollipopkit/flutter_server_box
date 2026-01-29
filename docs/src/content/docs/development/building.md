@@ -3,7 +3,7 @@ title: Building
 description: Build instructions for different platforms
 ---
 
-Flutter Server Box uses a custom build system (`fl_build`) for cross-platform builds.
+Server Box uses a custom build system (`fl_build`) for cross-platform builds.
 
 ## Prerequisites
 

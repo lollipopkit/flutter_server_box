@@ -3,7 +3,7 @@ title: State Management
 description: Riverpod-based state management patterns
 ---
 
-Flutter Server Box uses Riverpod with code generation for state management.
+Server Box uses Riverpod with code generation for state management.
 
 ## Provider Types
 

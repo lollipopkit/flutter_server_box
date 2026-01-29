@@ -3,7 +3,7 @@ title: SSH Connection
 description: How SSH connections are established and managed
 ---
 
-Understanding SSH connections in Flutter Server Box.
+Understanding SSH connections in Server Box.
 
 ## Connection Flow
 

@@ -3,7 +3,7 @@ title: State Management
 description: How state is managed with Riverpod
 ---
 
-Understanding the state management architecture in Flutter Server Box.
+Understanding the state management architecture in Server Box.
 
 ## Why Riverpod?
 

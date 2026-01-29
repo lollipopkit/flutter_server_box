@@ -3,7 +3,7 @@ title: Mobile Features
 description: iOS and Android specific features
 ---
 
-Flutter Server Box provides several mobile-specific features for iOS and Android devices.
+Server Box provides several mobile-specific features for iOS and Android devices.
 
 ## Biometric Authentication
 
@@ -22,7 +22,7 @@ Add server status widgets to your home screen for quick monitoring.
 
 - Long press on home screen
 - Tap **+** to add widget
-- Search for "Flutter Server Box"
+- Search for "Server Box"
 - Choose widget size:
   - Small: Single server status
   - Medium: Multiple servers
@@ -32,7 +32,7 @@ Add server status widgets to your home screen for quick monitoring.
 
 - Long press on home screen
 - Tap **Widgets**
-- Find "Flutter Server Box"
+- Find "Server Box"
 - Select widget type
 
 ## Background Running

@@ -3,7 +3,7 @@ title: Architecture Overview
 description: High-level application architecture
 ---
 
-Flutter Server Box follows a layered architecture with clear separation of concerns.
+Server Box follows a layered architecture with clear separation of concerns.
 
 ## Architecture Layers
 

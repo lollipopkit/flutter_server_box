@@ -3,7 +3,7 @@ title: Desktop Features
 description: macOS, Linux, and Windows specific features
 ---
 
-Flutter Server Box on desktop platforms provides additional productivity features.
+Server Box on desktop platforms provides additional productivity features.
 
 ## macOS
 
