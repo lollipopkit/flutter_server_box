@@ -3,7 +3,5 @@
 :root {
 	--sl-color-accent: #02569b;
 	--sl-color-accent-low: #02569b15;
+	--starlight-cards--border: var(--sl-color-accent-low);
 }
-
-/* Custom brand colors for Flutter */
---starlight-cards--border: var(--sl-color-accent-low);
