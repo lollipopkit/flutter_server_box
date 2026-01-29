@@ -202,6 +202,14 @@ class AppLocalizationsId extends AppLocalizations {
       'Contohnya: Di dalam aplikasi, pengguna diatur sebagai aaa, tetapi Docker diinstal di bawah pengguna root. Dalam kasus ini, Anda perlu mengaktifkan opsi ini.';
 
   @override
+  String get containerSudoPasswordRequired =>
+      'Kata sandi sudo diperlukan untuk mengakses Docker. Silakan masukkan kata sandi Anda.';
+
+  @override
+  String get containerSudoPasswordIncorrect =>
+      'Kata sandi sudo salah atau tidak diizinkan. Silakan coba lagi.';
+
+  @override
   String get convert => 'Mengubah';
 
   @override

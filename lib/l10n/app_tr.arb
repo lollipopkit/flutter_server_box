@@ -57,6 +57,8 @@
   "connectionStatsDesc": "Sunucu bağlantı başarı oranını ve geçmişi görüntüle",
   "container": "Konteyner",
   "containerTrySudoTip": "Örneğin: Uygulamada kullanıcı aaa olarak ayarlanmış, ancak Docker root kullanıcısı altında kurulmuş. Bu durumda bu seçeneği etkinleştirmeniz gerekir.",
+  "containerSudoPasswordRequired": "Docker'e erişmek için sudo şifresi gereklidir. Lütfen şifrenizi girin.",
+  "containerSudoPasswordIncorrect": "Sudo şifresi yanlış veya izin verilmiyor. Lütfen tekrar deneyin.",
   "convert": "Dönüştür",
   "copyPath": "Yolu kopyala",
   "cpuViewAsProgressTip": "Her CPU'nun kullanımını ilerleme çubuğu tarzında göster (eski tarz)",

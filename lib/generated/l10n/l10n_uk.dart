@@ -203,6 +203,14 @@ class AppLocalizationsUk extends AppLocalizations {
       'Наприклад: У застосунку користувач це aaa, але Docker встановлений під користувачем root. У цьому випадку вам потрібно активувати цю опцію.';
 
   @override
+  String get containerSudoPasswordRequired =>
+      'Для доступу до Docker потрібен пароль sudo. Будь ласка, введіть ваш пароль.';
+
+  @override
+  String get containerSudoPasswordIncorrect =>
+      'Пароль sudo неправильний або не дозволений. Будь ласка, спробуйте ще раз.';
+
+  @override
   String get convert => 'Конвертувати';
 
   @override

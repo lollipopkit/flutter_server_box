@@ -57,6 +57,8 @@
   "connectionStatsDesc": "サーバー接続成功率と履歴を表示",
   "container": "コンテナ",
   "containerTrySudoTip": "例：アプリ内でユーザーをaaaに設定しているが、Dockerがrootユーザーでインストールされている場合、このオプションを有効にする必要があります",
+  "containerSudoPasswordRequired": "Dockerにアクセスするにはsudoパスワードが必要です。パスワードを入力してください。",
+  "containerSudoPasswordIncorrect": "sudoパスワードが正しくないか、許可されていません。再試行してください。",
   "convert": "変換",
   "copyPath": "パスをコピー",
   "cpuViewAsProgressTip": "各CPUの使用率をプログレスバースタイルで表示する（旧スタイル）",
