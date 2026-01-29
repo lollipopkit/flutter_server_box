@@ -65,7 +65,6 @@ late final settingName = StoreProperty(box, 'settingKey', defaultValue);
 **在编辑之前：**
 - **创建备份** - 错误的设置可能导致应用无法打开
 - **谨慎编辑** - JSON 必须有效
-- **一次只改一个** - 测试每个设置
 
 ## 恢复方法
 

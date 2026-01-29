@@ -76,25 +76,6 @@ export default defineConfig({
 					],
 				},
 				{
-					label: 'Configuration',
-					translations: {
-						zh: '配置',
-						de: 'Konfiguration',
-						fr: 'Configuration',
-						es: 'Configuración',
-						ja: '設定',
-					},
-					items: [
-						{ label: 'Server Setup', translations: { zh: '服务器设置', de: 'Server-Einrichtung', fr: 'Configuration du serveur', es: 'Configuración del servidor', ja: 'サーバー設定' }, slug: 'configuration/server' },
-						{ label: 'Terminal & SSH', translations: { zh: '终端与 SSH', de: 'Terminal & SSH', fr: 'Terminal et SSH', es: 'Terminal y SSH', ja: 'ターミナルと SSH' }, slug: 'configuration/terminal' },
-						{ label: 'SFTP File Browser', translations: { zh: 'SFTP 文件浏览器', de: 'SFTP-Dateibrowser', fr: 'Navigateur de fichiers SFTP', es: 'Navegador de archivos SFTP', ja: 'SFTP ファイルブラウザ' }, slug: 'configuration/sftp' },
-						{ label: 'Jump Server', translations: { zh: '跳板机', de: 'Jump-Server', fr: 'Serveur de rebond', es: 'Servidor de salto', ja: 'ジャンプサーバー' }, slug: 'configuration/jump-server' },
-						{ label: 'Backup & Restore', translations: { zh: '备份与恢复', de: 'Sichern & Wiederherstellen', fr: 'Sauvegarde et restauration', es: 'Copia de seguridad y restauración', ja: 'バックアップと復元' }, slug: 'configuration/backup' },
-						{ label: 'Appearance', translations: { zh: '外观', de: 'Erscheinungsbild', fr: 'Apparence', es: 'Apariencia', ja: '外観' }, slug: 'configuration/appearance' },
-						{ label: 'Localizations', translations: { zh: '本地化', de: 'Lokalisierungen', fr: 'Localisations', es: 'Localizaciones', ja: 'ローカライズ' }, slug: 'configuration/localizations' },
-					],
-				},
-				{
 					label: 'Platform Features',
 					translations: {
 						zh: '平台特性',

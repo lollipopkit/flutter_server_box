@@ -65,7 +65,6 @@ late final settingName = StoreProperty(box, 'settingKey', defaultValue);
 **Vor dem Bearbeiten:**
 - **Backup erstellen** - Falsche Einstellungen können dazu führen, dass die App nicht mehr öffnet
 - **Sorgfältig bearbeiten** - JSON muss gültig sein
-- **Nur eins nach dem anderen ändern** - Testen Sie jede Einstellung
 
 ## Wiederherstellung
 

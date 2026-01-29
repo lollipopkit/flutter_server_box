@@ -65,7 +65,6 @@ late final settingName = StoreProperty(box, 'settingKey', defaultValue);
 **Avant d'éditer :**
 - **Créer une sauvegarde** - De mauvais paramètres peuvent empêcher l'ouverture de l'application
 - **Éditer avec soin** - Le JSON doit être valide
-- **Modifier un paramètre à la fois** - Testez chaque réglage
 
 ## Récupération
 
