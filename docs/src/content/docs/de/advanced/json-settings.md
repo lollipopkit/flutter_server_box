@@ -11,22 +11,12 @@ Halten Sie **Einstellungen** in der Seitenleiste lange gedrückt, um den JSON-Ed
 
 ## Gängige versteckte Einstellungen
 
-### serverTabUseOldUI
-
-Verwenden Sie die alte Benutzeroberfläche für den Server-Tab.
-
-```json
-{"serverTabUseOldUI": true}
-```
-
-**Typ:** Boolean | **Standard:** false
-
-### timeout
+### timeOut
 
 Verbindungs-Timeout in Sekunden.
 
 ```json
-{"timeout": 10}
+{"timeOut": 10}
 ```
 
 **Typ:** Integer | **Standard:** 5 | **Bereich:** 1-60

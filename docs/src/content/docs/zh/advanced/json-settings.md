@@ -11,22 +11,12 @@ description: 通过 JSON 编辑器访问高级设置
 
 ## 常用隐藏设置
 
-### serverTabUseOldUI
-
-使用旧版的服务器标签页 UI。
-
-```json
-{"serverTabUseOldUI": true}
-```
-
-**类型：** 布尔值 | **默认值：** false
-
-### timeout
+### timeOut
 
 连接超时时间（秒）。
 
 ```json
-{"timeout": 10}
+{"timeOut": 10}
 ```
 
 **类型：** 整数 | **默认值：** 5 | **范围：** 1-60

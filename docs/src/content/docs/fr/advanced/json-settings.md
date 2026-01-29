@@ -11,22 +11,12 @@ Appuyez longuement sur **Paramètres** dans le menu latéral pour ouvrir l'édit
 
 ## Paramètres cachés courants
 
-### serverTabUseOldUI
-
-Utiliser l'ancienne interface utilisateur pour l'onglet serveur.
-
-```json
-{"serverTabUseOldUI": true}
-```
-
-**Type :** booléen | **Par défaut :** false
-
-### timeout
+### timeOut
 
 Délai d'attente de connexion en secondes.
 
 ```json
-{"timeout": 10}
+{"timeOut": 10}
 ```
 
 **Type :** entier | **Par défaut :** 5 | **Plage :** 1-60

@@ -35,11 +35,15 @@ class Spi {
 ```dart
 Future<SSHClient> genClient(Spi spi) async {
   // 1. 建立 socket
-  final socket = await connect(spi.ip, spi.port);
+  var socket = await connect(spi.ip, spi.port);
 
   // 2. 如果失败，尝试备用 URL
   if (socket == null && spi.alterUrl != null) {
     socket = await connect(spi.alterUrl, spi.port);
+  }
+
+  if (socket == null) {
+    throw ConnectionException('Unable to connect');
   }
 
   // 3. 身份验证
@@ -149,10 +153,11 @@ SHA256:AbCdEf1234567890...=
 ```dart
 Future<void> verifyHostKey(SSHClient client, Spi spi) async {
   final key = await client.hostKey;
+  final keyType = key.type;
   final fingerprint = md5Hex(key); // 或 base64
 
   final stored = SettingStore.sshKnownHostsFingerprints
-      ['$keyId::$keyType'];
+      ['${spi.id}::$keyType'];
 
   if (stored == null) {
     // 新主机 - 提示用户
@@ -162,7 +167,7 @@ Future<void> verifyHostKey(SSHClient client, Spi spi) async {
     );
     if (trust) {
       SettingStore.sshKnownHostsFingerprints
-          ['$keyId::$keyType'] = fingerprint;
+          ['${spi.id}::$keyType'] = fingerprint;
     }
   } else if (stored != fingerprint) {
     // 已更改 - 警告用户

@@ -35,11 +35,15 @@ class Spi {
 ```dart
 Future<SSHClient> genClient(Spi spi) async {
   // 1. Socket aufbauen
-  final socket = await connect(spi.ip, spi.port);
+  var socket = await connect(spi.ip, spi.port);
 
   // 2. Alternative URL versuchen, falls fehlgeschlagen
   if (socket == null && spi.alterUrl != null) {
     socket = await connect(spi.alterUrl, spi.port);
+  }
+
+  if (socket == null) {
+    throw ConnectionException('Unable to connect');
   }
 
   // 3. Authentifizieren
@@ -149,10 +153,11 @@ SHA256:AbCdEf1234567890...=
 ```dart
 Future<void> verifyHostKey(SSHClient client, Spi spi) async {
   final key = await client.hostKey;
+  final keyType = key.type;
   final fingerprint = md5Hex(key); // oder base64
 
   final stored = SettingStore.sshKnownHostsFingerprints
-      ['$keyId::$keyType'];
+      ['${spi.id}::$keyType'];
 
   if (stored == null) {
     // Neuer Host - Benutzer fragen
@@ -162,7 +167,7 @@ Future<void> verifyHostKey(SSHClient client, Spi spi) async {
     );
     if (trust) {
       SettingStore.sshKnownHostsFingerprints
-          ['$keyId::$keyType'] = fingerprint;
+          ['${spi.id}::$keyType'] = fingerprint;
     }
   } else if (stored != fingerprint) {
     // Geändert - Benutzer warnen

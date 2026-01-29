@@ -11,22 +11,12 @@ description: JSON エディタ経由で詳細設定にアクセスする
 
 ## よく使われる隠し設定
 
-### serverTabUseOldUI
-
-サーバータブに古い UI を使用します。
-
-```json
-{"serverTabUseOldUI": true}
-```
-
-**型:** boolean | **デフォルト:** false
-
-### timeout
+### timeOut
 
 接続のタイムアウト時間（秒）。
 
 ```json
-{"timeout": 10}
+{"timeOut": 10}
 ```
 
 **型:** integer | **デフォルト:** 5 | **範囲:** 1-60

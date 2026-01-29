@@ -35,11 +35,15 @@ class Spi {
 ```dart
 Future<SSHClient> genClient(Spi spi) async {
   // 1. ソケットを確立
-  final socket = await connect(spi.ip, spi.port);
+  var socket = await connect(spi.ip, spi.port);
 
   // 2. 失敗した場合は代替 URL を試行
   if (socket == null && spi.alterUrl != null) {
     socket = await connect(spi.alterUrl, spi.port);
+  }
+
+  if (socket == null) {
+    throw ConnectionException('Unable to connect');
   }
 
   // 3. 認証
@@ -149,10 +153,11 @@ SHA256:AbCdEf1234567890...=
 ```dart
 Future<void> verifyHostKey(SSHClient client, Spi spi) async {
   final key = await client.hostKey;
+  final keyType = key.type;
   final fingerprint = md5Hex(key); // または base64
 
   final stored = SettingStore.sshKnownHostsFingerprints
-      ['$keyId::$keyType'];
+      ['${spi.id}::$keyType'];
 
   if (stored == null) {
     // 未知のホスト - ユーザーに確認
@@ -162,7 +167,7 @@ Future<void> verifyHostKey(SSHClient client, Spi spi) async {
     );
     if (trust) {
       SettingStore.sshKnownHostsFingerprints
-          ['$keyId::$keyType'] = fingerprint;
+          ['${spi.id}::$keyType'] = fingerprint;
     }
   } else if (stored != fingerprint) {
     // 変更されている - ユーザーに警告

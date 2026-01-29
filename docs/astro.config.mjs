@@ -6,7 +6,7 @@ import starlight from '@astrojs/starlight';
 export default defineConfig({
 	integrations: [
 		starlight({
-			title: 'Flutter Server Box',
+			title: 'Server Box',
 			description: 'A comprehensive cross-platform server management application built with Flutter',
 			defaultLocale: 'root',
 			locales: {

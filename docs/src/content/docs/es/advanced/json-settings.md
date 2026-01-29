@@ -11,22 +11,12 @@ Mantén pulsado **Ajustes** en el menú lateral para abrir el editor JSON.
 
 ## Ajustes Ocultos Comunes
 
-### serverTabUseOldUI
-
-Usar la interfaz antigua para la pestaña de servidores.
-
-```json
-{"serverTabUseOldUI": true}
-```
-
-**Tipo:** booleano | **Predeterminado:** false
-
-### timeout
+### timeOut
 
 Tiempo de espera de conexión en segundos.
 
 ```json
-{"timeout": 10}
+{"timeOut": 10}
 ```
 
 **Tipo:** entero | **Predeterminado:** 5 | **Rango:** 1-60
