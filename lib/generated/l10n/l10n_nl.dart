@@ -203,6 +203,14 @@ class AppLocalizationsNl extends AppLocalizations {
       'Bijvoorbeeld: in de app is de gebruiker ingesteld op aaa, maar Docker is geïnstalleerd onder de rootgebruiker. In dit geval moet u deze optie inschakelen.';
 
   @override
+  String get containerSudoPasswordRequired =>
+      'Sudo password is required to access Docker. Please enter your password.';
+
+  @override
+  String get containerSudoPasswordIncorrect =>
+      'Incorrect sudo password. Please try again.';
+
+  @override
   String get convert => 'Converteren';
 
   @override
