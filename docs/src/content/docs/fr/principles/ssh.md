@@ -7,7 +7,7 @@ Comprendre les connexions SSH dans Server Box.
 
 ## Flux de connexion
 
-```
+```text
 Entrée utilisateur → Configuration Spi → genClient() → Client SSH → Session
 ```
 
@@ -17,6 +17,7 @@ Le modèle `Spi` (Server Parameter Info) contient :
 
 ```dart
 class Spi {
+  String id;         // Identifiant unique
   String name;       // Nom du serveur
   String ip;         // Adresse IP
   int port;          // Port SSH (par défaut 22)
@@ -126,12 +127,12 @@ Empêche les attaques de type **Man-in-the-Middle (MITM)** en s'assurant que vou
 
 ### Format de stockage
 
-```
+```text
 {spi.id}::{keyType}
 ```
 
 Exemple :
-```
+```text
 mon-serveur::ssh-ed25519
 mon-serveur::ecdsa-sha2-nistp256
 ```
@@ -139,12 +140,12 @@ mon-serveur::ecdsa-sha2-nistp256
 ### Formats d'empreinte
 
 **MD5 Hex :**
-```
+```text
 aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99
 ```
 
 **Base64 :**
-```
+```text
 SHA256:AbCdEf1234567890...=
 ```
 
@@ -219,7 +220,7 @@ client.onError.listen((error) async {
 
 ## Cycle de vie de la connexion
 
-```
+```text
 ┌─────────────┐
 │   Initial   │
 └──────┬──────┘

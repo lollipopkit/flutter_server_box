@@ -7,7 +7,7 @@ Server Box における SSH 接続の仕組みについて解説します。
 
 ## 接続フロー
 
-```
+```text
 ユーザー入力 → Spi 構成 → genClient() → SSH クライアント → セッション
 ```
 
@@ -17,6 +17,7 @@ Server Box における SSH 接続の仕組みについて解説します。
 
 ```dart
 class Spi {
+  String id;         // ユーザー ID / 一意の識別子
   String name;       // サーバー名
   String ip;         // IP アドレス
   int port;          // SSH ポート (デフォルト 22)
@@ -126,12 +127,12 @@ onUserInfoRequest: (instructions) async {
 
 ### 保存形式
 
-```
+```text
 {spi.id}::{keyType}
 ```
 
 例:
-```
+```text
 my-server::ssh-ed25519
 my-server::ecdsa-sha2-nistp256
 ```
@@ -139,12 +140,12 @@ my-server::ecdsa-sha2-nistp256
 ### フィンガープリント形式
 
 **MD5 Hex:**
-```
+```text
 aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99
 ```
 
 **Base64:**
-```
+```text
 SHA256:AbCdEf1234567890...=
 ```
 
@@ -219,7 +220,7 @@ client.onError.listen((error) async {
 
 ## 接続ライフサイクル
 
-```
+```text
 ┌─────────────┐
 │    初期状態 │
 └──────┬──────┘

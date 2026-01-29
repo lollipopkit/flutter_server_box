@@ -7,7 +7,7 @@ description: SSH 连接是如何建立和管理的
 
 ## 连接流程
 
-```
+```text
 用户输入 → Spi 配置 → genClient() → SSH 客户端 → 会话 (Session)
 ```
 
@@ -17,6 +17,7 @@ description: SSH 连接是如何建立和管理的
 
 ```dart
 class Spi {
+  String id;         // 唯一标识
   String name;       // 服务器名称
   String ip;         // IP 地址
   int port;          // SSH 端口 (默认 22)
@@ -126,12 +127,12 @@ onUserInfoRequest: (instructions) async {
 
 ### 存储格式
 
-```
+```text
 {spi.id}::{keyType}
 ```
 
 示例：
-```
+```text
 my-server::ssh-ed25519
 my-server::ecdsa-sha2-nistp256
 ```
@@ -139,12 +140,12 @@ my-server::ecdsa-sha2-nistp256
 ### 指纹格式
 
 **MD5 十六进制：**
-```
+```text
 aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99
 ```
 
 **Base64：**
-```
+```text
 SHA256:AbCdEf1234567890...=
 ```
 
@@ -219,7 +220,7 @@ client.onError.listen((error) async {
 
 ## 连接生命周期
 
-```
+```text
 ┌─────────────┐
 │    初始化   │
 └──────┬──────┘
