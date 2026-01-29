@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Background Circle -->
+  <circle cx="32" cy="32" r="30" fill="#02569B"/>
+
+  <!-- Terminal Window -->
+  <rect x="14" y="16" width="36" height="32" rx="3" fill="#fff" opacity="0.9"/>
+
+  <!-- Terminal Header -->
+  <rect x="14" y="16" width="36" height="8" rx="3" fill="#02569B" opacity="0.3"/>
+  <circle cx="19" cy="20" r="1.5" fill="#ff5f57"/>
+  <circle cx="24" cy="20" r="1.5" fill="#ffbd2e"/>
+  <circle cx="29" cy="20" r="1.5" fill="#28c940"/>
+
+  <!-- Terminal Prompt -->
+  <text x="18" y="34" font-family="monospace" font-size="6" fill="#333">></text>
+
+  <!-- Terminal Cursor -->
+  <rect x="23" y="30" width="6" height="6" fill="#02569B" opacity="0.5">
+    <animate attributeName="opacity" values="0.5;1;0.5" dur="1s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Server Icon -->
+  <g transform="translate(38, 24)">
+    <rect x="0" y="0" width="8" height="12" rx="1" fill="#02569B"/>
+    <circle cx="2" cy="3" r="0.8" fill="#28c940"/>
+    <circle cx="4" cy="3" r="0.8" fill="#28c940"/>
+    <circle cx="6" cy="3" r="0.8" fill="#28c940"/>
+    <line x1="1" y1="8" x2="7" y2="8" stroke="#fff" stroke-width="0.5"/>
+  </g>
+</svg>
