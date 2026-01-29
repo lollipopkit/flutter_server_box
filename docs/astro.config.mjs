@@ -58,24 +58,6 @@ export default defineConfig({
 					],
 				},
 				{
-					label: 'Features',
-					translations: {
-						zh: '特性',
-						de: 'Funktionen',
-						fr: 'Fonctionnalités',
-						es: 'Características',
-						ja: '特徴',
-					},
-					items: [
-						{ label: 'Server Monitoring', translations: { zh: '服务器监控', de: 'Server-Überwachung', fr: 'Surveillance du serveur', es: 'Monitoreo de servidor', ja: 'サーバー監視' }, slug: 'features/monitoring' },
-						{ label: 'Docker Management', translations: { zh: 'Docker 管理', de: 'Docker-Verwaltung', fr: 'Gestion Docker', es: 'Gestión de Docker', ja: 'Docker 管理' }, slug: 'features/docker' },
-						{ label: 'Process & Services', translations: { zh: '进程与服务', de: 'Prozesse & Dienste', fr: 'Processus et services', es: 'Procesos y servicios', ja: 'プロセスとサービス' }, slug: 'features/process' },
-						{ label: 'Command Snippets', translations: { zh: '命令片段', de: 'Befehls-Snippets', fr: 'Extraits de commande', es: 'Fragmentos de comando', ja: 'コマンドスニペット' }, slug: 'features/snippets' },
-						{ label: 'Network Tools', translations: { zh: '网络工具', de: 'Netzwerk-Tools', fr: 'Outils réseau', es: 'Herramientas de red', ja: 'ネットワークツール' }, slug: 'features/network' },
-						{ label: 'PVE (Proxmox)', translations: { zh: 'PVE (Proxmox)', de: 'PVE (Proxmox)', fr: 'PVE (Proxmox)', es: 'PVE (Proxmox)', ja: 'PVE (Proxmox)' }, slug: 'features/pve' },
-					],
-				},
-				{
 					label: 'Platform Features',
 					translations: {
 						zh: '平台特性',
