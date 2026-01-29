@@ -138,7 +138,9 @@ abstract final class GithubIds {
     'itmagpro',
     'atikattar1104',
     'coldboy404',
-    'puskyer'
+    'puskyer',
+    'wanababy',
+    'toarujs'
   };
 }
 

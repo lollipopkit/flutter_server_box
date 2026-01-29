@@ -345,6 +345,13 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     state = state.copyWith(runLog: null);
 
+    if (code == 2) {
+      _cachedPassword = null;
+      return ContainerErr(
+        type: ContainerErrType.sudoPasswordIncorrect,
+        message: l10n.containerSudoPasswordIncorrect,
+      );
+    }
     if (code != 0) {
       return ContainerErr(type: ContainerErrType.unknown, message: 'Command execution failed');
     }
@@ -406,31 +413,15 @@ enum ContainerCmdType {
         .map((e) => e.exec(type, includeStats: includeStats))
         .join('\necho ${ScriptConstants.separator}\n');
 
-    final needsShWrapper = commands.contains('\n') || commands.contains('echo ${ScriptConstants.separator}');
-
-    if (needsShWrapper) {
-      if (sudo && password != null) {
-        final pwdBase64 = base64Encode(utf8.encode(password));
-        final cmd = 'echo "$pwdBase64" | base64 -d | sudo -S sh -c \'${commands.replaceAll("'", "'\\''")}\'';
-        return cmd;
-      }
-      if (sudo) {
-        final cmd = 'sudo -S sh -c \'${commands.replaceAll("'", "'\\''")}\'';
-        return cmd;
-      }
-      final cmd = 'sh -c \'${commands.replaceAll("'", "'\\''")}\'';
-      return cmd;
-    }
+    final wrappedCommands = 'sh -c \'${commands.replaceAll("'", "'\\''")}\'';
 
     if (sudo && password != null) {
-      final cmd = _buildSudoCmd(commands, password);
-      return cmd;
+      return _buildSudoCmd(wrappedCommands, password);
     }
     if (sudo) {
-      final cmd = 'sudo -S $commands';
-      return cmd;
+      return 'sudo -S $wrappedCommands';
     }
-    return commands;
+    return wrappedCommands;
   }
 
   /// Find out the required segment from [segments]
