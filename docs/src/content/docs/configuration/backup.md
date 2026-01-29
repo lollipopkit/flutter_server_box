@@ -7,176 +7,74 @@ Protect your server configurations and settings with built-in backup functionali
 
 ## What Gets Backed Up
 
-### Included in Backup
-
-- **Server Configurations**: All saved servers with connection details
+- **Server Configurations**: All saved servers
 - **SSH Keys**: Imported private keys (encrypted)
 - **Snippets**: Saved command snippets
-- **Settings**: App preferences and customization
-- **Known Hosts**: SSH fingerprint cache
+- **Settings**: App preferences
 
-### Not Included
+**Not included:** Passwords (for security)
 
-- Server passwords (for security)
-- External files
-- App state (active connections)
+## Creating Backups
 
-## Backup Methods
+### Manual Backup
 
-### Local Backup
-
-Save backup to local device storage:
-
-1. Go to **Settings > Backup**
+1. Settings → Backup
 2. Tap **Create Backup**
-3. Choose location (if prompted)
+3. Choose location
 4. Backup saved with timestamp
 
-### Cloud Backup
+### Auto Backup
 
-Sync backups to cloud storage:
+Settings → Backup → Auto Backup:
+- Daily / Weekly / Monthly / Off
 
-- **iCloud**: iOS/macOS automatic backup
-- **Google Drive**: Android integration
-- Requires cloud permissions
+### Cloud Sync
 
-### Manual Export
+- **iOS/macOS**: iCloud automatic backup
+- **Android**: Google Drive integration
 
-Export backup file:
-
-1. Settings > Backup > Export
-2. Choose format (JSON recommended)
-3. Save to preferred location
-4. Transfer to other devices or cloud storage
-
-## Backup Format
-
-### Encrypted JSON
-
-Backups stored as encrypted JSON:
-
-```json
-{
-  "version": "1.0",
-  "timestamp": "2024-01-15T10:30:00Z",
-  "servers": [...],
-  "snippets": [...],
-  "settings": {...}
-}
-```
-
-Encrypted with device-specific key.
-
-### Security
-
-- **Encryption**: AES-256 encryption
-- **Key**: Device-specific, not stored
-- **Protection**: Biometric authentication required
-- **No Cloud Keys**: Backups encrypted before upload
-
-## Restore Process
+## Restoring
 
 ### From Local Backup
 
-1. Go to **Settings > Backup**
-2. Tap **Restore Backup**
-3. Select backup file
-4. Authenticate (biometric/password)
-5. Confirm restore
-6. App restarts with restored data
+1. Settings → Backup → Restore Backup
+2. Select backup file
+3. Authenticate (biometric/password)
+4. Confirm restore
 
 ### From Cloud
 
 1. Sign in to same cloud account
-2. Open app on new device
-3. Go to **Settings > Backup**
-4. Tap **Restore from Cloud**
-5. Select backup from list
-6. Authenticate and confirm
+2. Settings → Backup → Restore from Cloud
+3. Select backup from list
+4. Authenticate and confirm
 
-### Selective Restore
+## Important Notes
 
-Choose what to restore:
+### Passwords Not Backed Up
 
-- **All**: Restore everything
-- **Servers Only**: Just server configurations
-- **Settings Only**: Just app preferences
-- **Snippets Only**: Just command snippets
+After restore, you'll need to re-enter passwords for each server.
 
-## Backup Schedule
+**Tip:** Use SSH keys instead - they ARE backed up.
 
-### Automatic Backups
+### Cross-Platform
 
-Configure automatic backups:
-
-**Settings > Backup > Auto Backup**
-
-Options:
-- **Daily**: Once per day
-- **Weekly**: Once per week
-- **Monthly**: Once per month
-- **Off**: Manual only
-
-### Retention Policy
-
-Number of backups to keep:
-
-**Settings > Backup > Keep Last**
-
-Options:
-- **3**: Keep last 3 backups
-- **5**: Keep last 5 backups
-- **10**: Keep last 10 backups
-- **All**: Keep all backups
-
-## Cross-Platform Restore
-
-### iOS to Android
-
-Backups are platform-independent:
-
-1. Export backup on iOS
-2. Transfer to Android device
-3. Import and restore
-
-### Desktop to Mobile
-
-Same process works across all platforms.
-
-## Troubleshooting
-
-### Restore Failed
-
-- Verify backup file integrity
-- Ensure sufficient storage space
-- Check app version compatibility
-- Try restarting app before restore
-
-### Missing Data
-
-- Check backup included all data
-- Verify restore completed successfully
-- Check selective restore settings
-
-### Password Required After Restore
-
-**This is normal behavior**: Passwords are not backed up for security.
-
-You'll need to:
-1. Re-enter passwords for each server
-2. Or use SSH keys (which are backed up)
+Backups work across all platforms (iOS ↔ Android ↔ Desktop).
 
 ## Best Practices
 
-1. **Regular Backups**: Enable automatic backups
-2. **Multiple Locations**: Keep backups on device and cloud
-3. **Test Restores**: Verify backup integrity periodically
-4. **Before Updates**: Backup before app updates
-5. **Before Device Changes**: Backup before switching devices
+1. **Enable auto backup** for peace of mind
+2. **Test restore** periodically to verify backups work
+3. **Backup before** updating app or switching devices
+4. **Use SSH keys** to avoid re-entering passwords
 
-## Security Tips
+## Troubleshooting
 
-- Use **biometric authentication** for backup access
-- Don't share backup files unencrypted
-- Securely delete old backup files
-- Use cloud backup with encryption enabled
+**Restore failed:**
+- Check backup file integrity
+- Ensure sufficient storage
+- Verify app version compatibility
+
+**Missing data after restore:**
+- Passwords are not backed up (re-enter them)
+- Check selective restore settings

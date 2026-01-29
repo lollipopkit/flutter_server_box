@@ -1,229 +1,118 @@
 ---
-title: Troubleshooting
-description: Common issues and solutions
+title: Common Issues
+description: Solutions to common problems
 ---
 
-## SSH Connection Issues
+## Connection Issues
 
-### SSH Cannot Connect
+### SSH Won't Connect
 
-**Symptoms:**
-- Connection timeout
-- Connection refused
-- Authentication failed
+**Symptoms:** Timeout, connection refused, auth failed
 
 **Solutions:**
 
-1. **Check System Support**
-   - Currently only Unix-like systems supported
-   - Supported: Linux, macOS, Android (Termux)
-   - Not supported: Windows servers
+1. **Verify server type:** Only Unix-like systems supported (Linux, macOS, Android/Termux)
+2. **Test manually:** `ssh user@server -p port`
+3. **Check firewall:** Port 22 must be open
+4. **Verify credentials:** Username and password/key correct
 
-2. **Verify SSH Version**
-   - Check server's OpenSSH version
-   - Update to latest OpenSSH version
-   ```bash
-   ssh -V
-   ```
+### Frequent Disconnections
 
-3. **Test Connection Manually**
-   ```bash
-   ssh user@server -p port
-   ```
-   If this fails, issue is with server/SSH config, not app.
-
-4. **Check Firewall**
-   - Verify SSH port (default 22) is open
-   - Check server firewall rules
-   - Test with: `telnet server 22`
-
-### SSH Terminal Disconnects
-
-**Symptoms:**
-- Terminal disconnects after inactivity
-- Frequent disconnections
+**Symptoms:** Terminal disconnects after inactivity
 
 **Solutions:**
 
-1. **Check Server Settings**
-   - Review SSH server keep-alive settings
-   - Check `ClientAliveInterval` in sshd_config
+1. **Server keep-alive:**
    ```bash
    # /etc/ssh/sshd_config
    ClientAliveInterval 60
    ClientAliveCountMax 3
    ```
 
-2. **Disable Battery Optimization**
-   - **MIUI:** Set battery strategy to "No limits"
-   - **Android:** Disable battery optimization for app
-   - **iOS:** Background refresh must be enabled
+2. **Disable battery optimization:**
+   - MIUI: Battery → "No limits"
+   - Android: Settings → Apps → Disable optimization
+   - iOS: Enable background refresh
 
-3. **Network Issues**
-   - Check network stability
-   - Try different network (Wi-Fi vs cellular)
-   - Verify VPN isn't interfering
+## Input Issues
 
-## Terminal Input Issues
+### Can't Type Certain Characters
 
-### Keyboard Type Problems
+**Solution:** Settings → Keyboard Type → Switch to `visiblePassword`
 
-**Symptoms:**
-- Cannot input certain characters
-- Chinese/Japanese input not working
-
-**Solution:**
-
-Change keyboard type:
-1. Go to **Settings**
-2. Find **Keyboard Type**
-3. Switch to `visiblePassword`
-
-**Note:** After this change, CJK input may not work, but terminal experience improves.
+Note: CJK input may not work after this change.
 
 ## App Issues
 
-### App Won't Open After Settings Change
+### App Crashes on Startup
 
-**Symptoms:**
-- App crashes on startup
-- Black screen
+**Symptoms:** App won't open, black screen
 
-**Solution:**
+**Causes:** Corrupted settings, especially from JSON editor
 
-1. **Clear App Data** (last resort)
-   - Android: Settings > Apps > ServerBox > Clear Data
-   - iOS: Delete and reinstall app
+**Solutions:**
 
-2. **Restore from Backup**
-   - Use backup created before changing settings
-   - Import backup file
+1. **Clear app data:**
+   - Android: Settings → Apps → ServerBox → Clear Data
+   - iOS: Delete and reinstall
 
-3. **Reset JSON Settings**
-   - If JSON settings were changed, restore defaults
+2. **Restore backup:** Import backup created before changing settings
 
 ### Backup/Restore Issues
 
-**Backup Not Working**
+**Backup not working:**
+- Check storage space
+- Verify app has storage permissions
+- Try different location
 
-1. Check available storage
-2. Verify app has storage permissions
-3. Try different location
-
-**Restore Fails**
-
-1. Verify backup file integrity
-2. Check app version compatibility
-3. Ensure sufficient storage
+**Restore fails:**
+- Verify backup file integrity
+- Check app version compatibility
 
 ## Widget Issues
 
 ### Widget Not Updating
 
 **iOS:**
-- Wait for automatic refresh (max 30 min)
+- Wait up to 30 minutes for automatic refresh
 - Remove and re-add widget
-- Check URL is correct
-- Verify network connectivity
+- Check URL ends with `/status`
 
 **Android:**
 - Tap widget to force refresh
-- Verify widget ID matches configuration
-- Check app settings for correct URL
+- Verify widget ID matches configuration in app settings
 
 **watchOS:**
 - Restart watch app
 - Wait a few minutes after config change
-- Verify URL format is correct
-- Check phone and watch are connected
+- Verify URL format
 
 ### Widget Shows Error
 
-- Verify ServerBox Monitor is running
+- Verify ServerBox Monitor is running on server
 - Test URL in browser
-- Check URL ends with `/status`
-- Verify authentication (if enabled)
+- Check authentication credentials
 
 ## Performance Issues
 
 ### App is Slow
 
 **Solutions:**
-
-1. **Reduce Refresh Rate**
-   - Lower status refresh frequency
-   - Disable auto-refresh for some features
-
-2. **Check Network**
-   - Test network speed
-   - Try different network
-   - Check server responsiveness
-
-3. **Reduce Server Count**
-   - Too many servers can slow app
-   - Disable servers not frequently used
+- Reduce refresh rate in settings
+- Check network speed
+- Disable unused servers
 
 ### High Battery Usage
 
 **Solutions:**
-
-1. **Adjust Refresh Intervals**
-   - Increase time between refreshes
-   - Disable background refresh
-
-2. **Enable Battery Optimization**
-   - Allow system to manage app
-   - Note: May affect background features
-
-3. **Reduce Active Connections**
-   - Close unused SSH sessions
-   - Disconnect servers not in use
-
-## Data Issues
-
-### Server Data Lost
-
-**Solutions:**
-
-1. **Restore from Backup**
-   - Use backup file
-   - Import via Settings > Backup
-
-2. **Check Cloud Sync**
-   - If cloud backup enabled, sync from cloud
-
-### Settings Reset
-
-**Solutions:**
-
-1. **Check for Updates**
-   - Update may have changed settings
-   - Reconfigure as needed
-
-2. **Restore Backup**
-   - Use settings backup
-   - Import previous configuration
+- Increase refresh intervals
+- Disable background refresh
+- Close unused SSH sessions
 
 ## Getting Help
 
 If issues persist:
 
-1. **Check GitHub Issues**
-   - Search for similar problems
-   - https://github.com/lollipopkit/flutter_server_box/issues
-
-2. **Create New Issue**
-   - Include:
-     - App version
-     - Platform (iOS/Android/Desktop)
-     - Detailed error description
-     - Steps to reproduce
-
-3. **Check Wiki**
-   - This documentation
-   - GitHub Wiki
-   - DeepWiki
-
-4. **Community**
-   - GitHub Discussions
-   - Check for existing solutions
+1. **Search GitHub Issues:** https://github.com/lollipopkit/flutter_server_box/issues
+2. **Create New Issue:** Include app version, platform, and steps to reproduce
+3. **Check Wiki:** This documentation and GitHub Wiki

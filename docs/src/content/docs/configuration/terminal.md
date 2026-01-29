@@ -1,125 +1,127 @@
 ---
-title: Terminal Settings
-description: Configure SSH terminal behavior and appearance
+title: Terminal & SSH
+description: SSH terminal setup and configuration
 ---
 
-The SSH terminal offers extensive customization options for optimal user experience.
+Complete SSH terminal access with full keyboard support and customizable interface.
 
-## Virtual Keyboard
+## Basic Setup
 
-### Auto Show/Hide
+### First Connection
 
-The virtual keyboard can automatically show or hide based on context:
+1. Add server with SSH credentials
+2. Tap server card to connect
+3. Accept host key fingerprint (first time only)
+4. Terminal opens automatically
 
-- **Enabled**: Keyboard appears when terminal is focused
-- **Disabled**: Manual toggle only via keyboard button
+### Virtual Keyboard (Mobile)
 
-Set in: **Settings > SSH > Virtual Keyboard Auto Off**
-
-### Virtual Keyboard Buttons
-
-The mobile virtual keyboard provides quick-access buttons:
+Customizable virtual keyboard for terminal access:
 
 | Button | Function |
 |--------|----------|
-| **Toggle Keyboard** | Show/hide system keyboard |
+| **Ctrl, Alt, Shift** | Modifier keys (tap before other key) |
+| **Esc, Tab** | Special characters |
+| **Arrows** | Navigation |
+| **F1-F12** | Function keys |
 | **SFTP** | Open current directory in file browser |
-| **Clipboard** | Copy selection OR paste clipboard (context-aware) |
-| **Snippets** | Execute saved command snippets |
+| **Clipboard** | Copy selection / Paste clipboard |
+| **Snippets** | Quick command execution |
 
-## Font Settings
+**Customize keyboard:** Settings → SSH Virtual Keys
+- Enable/disable keys
+- Reorder layout
+- Add/remove buttons
 
-### Font Size
+## Terminal Settings
 
-- **Global Setting**: `termFontSize` in Settings
-- Affects all new terminal sessions
-- Recalculates terminal dimensions (rows/columns)
-- Range: 8-24 pixels typical
+### Appearance
 
-### Per-Session Zoom
+**Font Size:** Settings → Terminal Font Size
+- Affects all new sessions
+- Typical range: 8-24 pixels
 
-- **Pinch Gesture**: Zoom in/out for individual session
-- Does not persist across session recreation
-- Temporary adjustment only
+**Colors:** Settings → Terminal Color
+- Text color
+- Background color & opacity
+- Blur effect (iOS/macOS)
+- Cursor color
 
-## Terminal Appearance
+### Keyboard Type
 
-### Colors
+If you can't input certain characters:
 
-- **Text Color**: Default text color
-- **Background Color**: Terminal background
-- **Background Opacity**: Transparency level
-- **Blur Effect**: Background blur (iOS/macOS)
-- **Cursor Color**: Cursor appearance
-- **Selection Color**: Text selection highlight
+1. Settings → Keyboard Type
+2. Switch to `visiblePassword`
+3. Note: CJK input may not work after this change
 
-### Session Management
+## Connection Management
 
-- **Multi-tab**: Independent SSH sessions per tab
-- **Tab Names**: Auto-generated (servername, servername(1), etc.)
-- **Session Persistence**: Maintained across navigation
-- **Keep-alive**: Connections maintained in background
+### Multi-Tab
 
-## Connection Settings
+- **Desktop**: Ctrl+T (new), Ctrl+W (close)
+- **Mobile**: Tap + button
+- Sessions persist between app launches
 
-### Timeout
+### Auto-Connect
 
-- **Connection Timeout**: How long to wait for connection
-- **Read Timeout**: How long to wait for data
-- Default: 30 seconds (configurable)
-
-### Host Key Verification
-
-- **Fingerprint Display**: MD5 (aa:bb:cc:...) and Base64 formats
-- **Storage**: `{spi.id}::{keyType}` format
-- **MITM Detection**: Warns on changed host keys
-- **Cache**: Known hosts stored securely
-
-## Advanced Settings
-
-### Environment Variables
-
-Set custom environment variables for SSH sessions:
-
-```bash
-EDITOR=vim
-LANG=en_US.UTF-8
-```
-
-### Initial Directory
-
-Set starting directory for new sessions:
-- Default: User's home directory
-- Custom: Any absolute path
+Set server to auto-connect on app open:
+1. Server settings → Auto-Connect
+2. Enable toggle
 
 ### Jump Server
 
-Route connections through intermediate servers:
+Route through intermediate server:
 
-1. Configure jump server first
-2. In target server, select jump server from list
+1. Add and configure jump server first
+2. Target server settings → Select jump server
 3. Connection routes through jump server automatically
 
-## Keyboard Shortcuts
+## SSH Keys (Recommended)
 
-### Desktop
+More secure than passwords:
 
-- **Ctrl+T**: New tab
-- **Ctrl+W**: Close tab
-- **Ctrl+Tab**: Next tab
-- **Ctrl+Shift+Tab**: Previous tab
+1. Generate key: Settings → Private Keys → Add
+2. Upload public key to server: `ssh-copy-id -i pubkey user@server`
+3. Server settings → Use key instead of password
 
-### Virtual Keys
+## Common Issues
 
-- **Ctrl, Alt, Shift**: Modifier keys
-- **Arrow Keys**: Navigation
-- **F1-F12**: Function keys
-- **Esc, Tab**: Special keys
-- **Home, End, Insert, Delete**: Editing keys
+### Can't Connect
 
-## Clipboard Integration
+**Timeout/Refused:**
+- Verify server is Unix-like (Linux, macOS, Android/Termux)
+- Check firewall allows SSH port (default 22)
+- Test manually: `ssh user@server -p port`
 
-- **Copy**: Drag to select text → auto-copy
-- **Paste**: Tap clipboard button
-- **Copy Selection**: Special button for copying selection
-- **Paste Clipboard**: Special button for pasting
+**Auth Failed:**
+- Verify username and password
+- Check SSH key is uploaded correctly
+- Ensure account is not locked
+
+### Terminal Disconnects
+
+**Frequent disconnections:**
+
+1. Check server keep-alive settings:
+   ```bash
+   # /etc/ssh/sshd_config
+   ClientAliveInterval 60
+   ClientAliveCountMax 3
+   ```
+
+2. Disable battery optimization:
+   - **MIUI**: Battery → "No limits"
+   - **Android**: Settings → Apps → Disable optimization
+   - **iOS**: Enable background refresh
+
+### Can't Input Characters
+
+Change keyboard type to `visiblePassword` in settings.
+
+## Tips
+
+- **Test connection** first with regular SSH client
+- **Use SSH keys** instead of passwords for security
+- **Save snippets** for frequently used commands
+- **Pinch to zoom** for temporary font size change (mobile)

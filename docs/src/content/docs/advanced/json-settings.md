@@ -1,30 +1,13 @@
 ---
-title: JSON Settings Editor
-description: Access hidden settings via JSON editor
+title: Hidden Settings (JSON)
+description: Access advanced settings via JSON editor
 ---
 
-Some settings are hidden from the UI but can be accessed via JSON editor for advanced customization.
+Some settings are hidden from the UI but accessible via JSON editor.
 
-## Accessing JSON Editor
+## Access
 
-1. Open the app
-2. Long press on **Settings** item in drawer
-3. JSON editor opens
-
-## Why Hidden Settings?
-
-- Keep main settings UI simple
-- Provide advanced options for power users
-- Allow experimental features
-- Enable debugging options
-
-## Important Warnings
-
-⚠️ **Before editing:**
-- **Create a backup** - Wrong settings can cause app to not open
-- **Note current values** - In case you need to revert
-- **Edit carefully** - JSON syntax must be valid
-- **Test incrementally** - Change one setting at a time
+Long-press **Settings** in drawer to open JSON editor.
 
 ## Common Hidden Settings
 
@@ -33,158 +16,60 @@ Some settings are hidden from the UI but can be accessed via JSON editor for adv
 Use old server tab UI.
 
 ```json
-{
-  "serverTabUseOldUI": true
-}
+{"serverTabUseOldUI": true}
 ```
 
-**Type:** boolean
-**Default:** false
+**Type:** boolean | **Default:** false
 
 ### timeout
 
 Connection timeout in seconds.
 
 ```json
-{
-  "timeout": 10
-}
+{"timeout": 10}
 ```
 
-**Type:** integer
-**Default:** 5
-**Range:** 1-60
+**Type:** integer | **Default:** 5 | **Range:** 1-60
 
 ### recordHistory
 
 Save history (SFTP paths, etc.).
 
 ```json
-{
-  "recordHistory": true
-}
+{"recordHistory": true}
 ```
 
-**Type:** boolean
-**Default:** true
+**Type:** boolean | **Default:** true
 
 ### textFactor
 
 Text scaling factor.
 
 ```json
-{
-  "textFactor": 1.2
-}
+{"textFactor": 1.2}
 ```
 
-**Type:** double
-**Default:** 1.0 (100%)
-**Range:** 0.8-1.5
+**Type:** double | **Default:** 1.0 | **Range:** 0.8-1.5
 
-## Finding Available Settings
+## Finding More Settings
 
-All settings are defined in [`setting.dart`](https://github.com/lollipopkit/flutter_server_box/blob/main/lib/data/store/setting.dart).
+All settings defined in [`setting.dart`](https://github.com/lollipopkit/flutter_server_box/blob/main/lib/data/store/setting.dart).
 
-Look for lines like:
-
+Look for:
 ```dart
-late final settingName = StoreProperty(
-  box,
-  'settingKey',
-  defaultValue,
-);
+late final settingName = StoreProperty(box, 'settingKey', defaultValue);
 ```
 
-## How to Add a Setting
+## ⚠️ Important
 
-### Example: Enable Old UI
-
-1. Find setting in source code:
-   ```dart
-   late final serverTabUseOldUI = StoreProperty(
-     box,
-     'serverTabUseOldUI',
-     false,
-   );
-   ```
-
-2. Note the details:
-   - Name: `serverTabUseOldUI`
-   - Type: `bool`
-   - Default: `false`
-
-3. Add to JSON editor:
-   ```json
-   {
-     "serverTabUseOldUI": true
-   }
-   ```
-
-4. Save and wait for app to reload
-
-## Type Examples
-
-### Boolean
-
-```json
-{
-  "settingName": true
-}
-```
-
-### Integer
-
-```json
-{
-  "settingName": 42
-}
-```
-
-### Double
-
-```json
-{
-  "settingName": 1.5
-}
-```
-
-### String
-
-```json
-{
-  "settingName": "value"
-}
-```
-
-### List
-
-```json
-{
-  "settingName": ["item1", "item2"]
-}
-```
+**Before editing:**
+- **Create backup** - Wrong settings can cause app to not open
+- **Edit carefully** - JSON must be valid
+- **Change one at a time** - Test each setting
 
 ## Recovery
 
-If app won't open after editing settings:
-
-1. **Clear app data** (last resort)
-2. **Reinstall app**
-3. **Restore from backup**
-
-## Best Practices
-
-1. **Document changes** - Keep note of what you changed
-2. **Test one at a time** - Don't change multiple settings
-3. **Use valid JSON** - Verify syntax before saving
-4. **Have backup ready** - Always backup before editing
-
-## Experimental Settings
-
-Some settings may be experimental and:
-- May not work as expected
-- Could change in future versions
-- Might cause instability
-
-Use with caution and report issues on GitHub.
+If app won't open after editing:
+1. Clear app data (last resort)
+2. Reinstall app
+3. Restore from backup

@@ -1,165 +1,88 @@
 ---
 title: Jump Server
-description: Configure jump servers for multi-hop connections
+description: Route connections through intermediate servers
 ---
 
-Jump servers allow you to route connections through intermediate servers, useful for:
+Connect to servers behind firewalls or in private networks by routing through an intermediate jump server.
 
-- Accessing private network resources
-- Multi-hop SSH connections
-- Bastion host configurations
-- Reduced attack surface
+## What is Jump Server?
 
-## Setting Up Jump Servers
+A jump server acts as a gateway to access other servers that:
+- Are behind firewalls
+- Don't have direct SSH access
+- Are in private networks
+- Require multi-hop connections
 
-### 1. Create Jump Server
+## Setup
 
-Add jump server as a normal server first:
+### Step 1: Configure Jump Server
 
-1. Add server with jump host details
-2. Ensure SSH key or password authentication works
-3. Test connection
+Add the jump server as a normal server first:
+1. Add server with SSH credentials
+2. Test connection to ensure it works
+3. This server will be your jump host
 
-### 2. Configure Target Server
+### Step 2: Configure Target Servers
 
-For servers reachable via jump host:
+For each server you want to access via jump:
+1. Add target server (credentials for target, not jump)
+2. Server settings → Jump Server
+3. Select your jump server from list
+4. Save
 
-1. Add or edit target server
-2. Find **Jump Server** option
-3. Select jump server from list
-4. Save configuration
+### Step 3: Connect
 
-## How It Works
+Connect to target server normally. The app automatically:
+1. Connects to jump server
+2. Tunnels through to target server
+3. Maintains connection
 
-```
-Your Device → Jump Server → Target Server
-```
+## Use Cases
 
-The connection flows through:
-
-1. **First Hop**: Connect to jump server
-2. **Tunnel**: Establish SSH tunnel through jump
-3. **Second Hop**: Connect to target via tunnel
-4. **Session**: Full SSH session to target
-
-## Authentication
-
-### Jump Server Authentication
-
-Jump server can use:
-
-- **Password**: Stored securely
-- **SSH Key**: Preferred for security
-- **Keyboard-Interactive**: Supported
-
-### Target Server Authentication
-
-Target server authentication same as direct connection:
-
-- **Password**: Authenticated through tunnel
-- **SSH Key**: Forwarded agent (optional)
-- **Same User**: Can use same or different credentials
-
-## Configuration Options
-
-### Jump Server Selection
-
-When adding/editing server:
-
-- **Jump Server**: Dropdown of available servers
-- **None**: Direct connection (default)
-- **Server Name**: Use as jump host
-
-### Alternative URL
-
-Fallback connection method:
-
-**Setting**: `alterUrl`
-
-If direct connection fails:
-1. Try primary URL/host
-2. On failure, try alternative URL
-3. Useful for:
-   - Multiple interfaces
-   - DNS fallback
-   - Backup connections
-
-## Advanced Scenarios
-
-### Nested Jump Servers
-
-Chain multiple jump servers:
+### Private Network Access
 
 ```
-Device → Jump1 → Jump2 → Target
+Your Device → Jump Server (public IP) → Private Server (10.0.0.x)
 ```
 
-1. Configure Jump2 with Jump1 as jump server
-2. Configure Target with Jump2 as jump server
-3. Each hop authenticates independently
-
-### Port Forwarding
-
-Jump servers support local port forwarding:
+### Behind Firewall
 
 ```
-Local Port → Jump Server → Remote Host:Port
+Your Device → Bastion Host → Internal Server
 ```
 
-Useful for:
-- Database access
-- Web interface access
-- Service tunneling
+### Multi-Hop
+
+You can chain multiple jump servers for complex networks.
+
+## Requirements
+
+- Jump server must be accessible from your device
+- Jump server must be able to reach target servers
+- SSH keys recommended for jump server (faster authentication)
+
+## Tips
+
+- **Use SSH keys** on jump server for faster connections
+- **Test direct access** to jump server first
+- **Check firewall rules** on both ends
+- **Monitor connection** - issues could be on jump or target
 
 ## Troubleshooting
 
-### Connection Refused
+### Connection Times Out
 
 - Verify jump server is accessible
-- Check jump server SSH service
-- Ensure firewall allows connection
+- Check jump server can reach target
+- Test manually: `ssh -J jump@jump-server user@target-server`
 
-### Authentication Failed
+### Authentication Fails
 
-- Verify credentials for jump server
-- Check jump server has permission to reach target
-- Ensure SSH agent forwarding (if using keys)
+- Verify credentials for target server (not jump)
+- Check SSH keys if using key authentication
 
-### Performance Issues
+### Slow Connection
 
-- Jump server adds latency
-- Consider direct connection if possible
-- Use jump server closer to target
-
-### Connection Timeouts
-
-Increase timeout values:
-**Settings > Connection Timeout**
-
-## Security Considerations
-
-### Trust
-
-- Jump server can see all traffic
-- Use trusted jump hosts only
-- Consider end-to-end encryption for sensitive data
-
-### Key Management
-
-- SSH keys on jump server are risk
-- Use agent forwarding cautiously
-- Consider certificate-based authentication
-
-### Access Control
-
-- Limit jump server access to authorized users
-- Monitor jump server logs
-- Use separate credentials for jump vs target
-
-## Best Practices
-
-1. **Dedicated Jump Host**: Use separate server as jump host
-2. **SSH Keys**: Prefer key-based authentication
-3. **Monitoring**: Log and monitor jump server access
-4. **Minimal Access**: Jump server should only route traffic
-5. **Keep Updated**: Regular security updates
+- Normal for jump connections (extra hop)
+- Consider using SSH keys for faster auth
+- Check network latency to jump server

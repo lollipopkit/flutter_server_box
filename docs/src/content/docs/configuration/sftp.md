@@ -1,147 +1,116 @@
 ---
-title: SFTP Settings
-description: Configure SFTP file browser behavior
+title: SFTP File Browser
+description: File transfer and management via SFTP
 ---
 
-Customize the SFTP file browser for your workflow.
+Browse, edit, and transfer files on your servers with a built-in SFTP client.
 
-## Display Options
+## Basic Usage
+
+### Opening SFTP
+
+1. Connect to server
+2. Tap **Files** button on server page
+3. Or from terminal: Tap **SFTP** button
+
+### Navigation
+
+- **Tap folder**: Enter directory
+- **Tap file**: View/Edit/Download options
+- **Back button**: Previous directory
+- **Home button**: User's home directory
+- **Goto button**: Jump to path with autocomplete
+
+## File Operations
+
+### Common Actions
+
+| Action | How |
+|--------|-----|
+| **Download** | Long-press file → Download |
+| **Upload** | Folder icon → Select file |
+| **Rename** | Long-press → Rename |
+| **Delete** | Long-press → Delete |
+| **Copy/Move** | Long-press → Select → Choose destination |
+| **Permissions** | Tap file info → Edit permissions |
+
+### Permission Editor
+
+Unix permissions editor:
+
+- **3x3 Grid**: User/Group/Other × Read/Write/Execute
+- **Numeric**: Direct input (755, 644, etc.)
+- **Symbolic**: rwxr-xr-x format
+
+### Edit Files
+
+1. Tap file → Edit
+2. Edit in built-in editor
+3. Save → Upload back to server
+
+**Size limit:** ~1 MB for large files, use terminal instead.
+
+**Editor settings:** Settings → SFTP Editor
+- Preferred editor (vim, nano, etc.)
+- Close after save
+- Soft wrap
+- Syntax highlighting
+
+## Display Settings
+
+### Sort Order
+
+Settings → Sort By:
+- Name (alphabetical)
+- Size (largest first)
+- Time (newest first)
 
 ### Folders First
 
-Display directories before files in listings:
-
-**Setting**: `sftpShowFoldersFirst`
-
-- **Enabled**: Folders appear at top
-- **Disabled**: Mixed sorting
-
-### Sorting Options
-
-Sort files by:
-
-- **Name**: Alphabetical (case-insensitive)
-- **Size**: File size in bytes
-- **Time**: Modification time (Unix timestamp)
+Show directories before files:
+Settings → Folders First
 
 ### Hidden Files
 
-Toggle visibility of dotfiles (files starting with `.`):
+Show dotfiles (`.git`, `.bashrc`, etc.):
+Settings → Show Hidden Files
 
-**Setting**: Show Hidden Files
+## Archive Support
 
-## Path Management
+Extract 30+ formats directly on server:
+
+| Format | Command Required |
+|--------|------------------|
+| .tar.gz | tar |
+| .zip | unzip |
+| .7z | 7z |
+| .rar | unrar |
+
+Must be installed on server.
+
+## Quick Access
+
+### From Terminal
+
+Tap **SFTP** button to open current terminal directory in file browser.
 
 ### Remember Last Path
 
 Automatically return to last visited directory:
-
-**Setting**: `sftpOpenLastPath`
-
-- **Enabled**: Saves last path per server
-- **Disabled**: Always start at home directory
-
-### Navigation Options
-
-- **Back**: Navigate to previous directory
-- **Home**: Go to user's home (`/home/$user` or `/root`)
-- **Goto**: Jump to specific path with autocomplete history
-
-## File Operations
-
-### Permission Editing
-
-Built-in Unix permission editor:
-
-- **3x3 Grid**: User/Group/Other × Read/Write/Execute
-- **Numeric Mode**: Direct octal input (755, 644, etc.)
-- **Symbolic Mode**: rwxr-xr-x format
-
-### Decompression
-
-Support for 30+ archive formats via SSH:
-
-| Format | Command |
-|--------|---------|
-| tar.gz | `tar -xzf` |
-| zip | `unzip` |
-| 7z | `7z x` |
-| rar | `unrar x` |
-
-Requires corresponding utilities installed on server.
-
-## Transfer Settings
-
-### Transfer Queue
-
-- **Concurrent Transfers**: Multiple simultaneous operations
-- **Progress Display**: Percentage and time elapsed
-- **Cancel**: Stop pending/in-progress transfers
-- **Auto-retry**: Resume interrupted transfers
-
-### Local Storage Pattern
-
-Downloaded files stored at:
-
-```
-Paths.file/{serverId}/{normalizedRemotePath}
-```
-
-## Editor Integration
-
-### External Editor
-
-Set preferred editor for remote file editing:
-
-**Setting**: `sftpEditor`
-
-Options:
-- `vim`
-- `nano`
-- `emacs`
-- Any editor available on server
-
-### Edit Workflow
-
-1. Download file to local cache
-2. Open in editor
-3. Save uploads back to server
-4. Size limit: ~1 MB (`Miscs.editorMaxSize`)
-
-### Editor Settings
-
-- **Close After Save**: `closeAfterSave`
-- **Soft Wrap**: `editorSoftWrap`
-- **Syntax Highlighting**: `editorHighlight`
-
-## Quick Access
-
-From terminal, tap **SFTP** button to open current directory in file browser.
-
-## Performance
-
-### Large Directories
-
-- Pagination for directories with 1000+ items
-- Lazy loading for better performance
-- Cache for recently accessed directories
-
-### Cache Settings
-
-- Directory listing cache
-- File metadata cache
-- Configurable cache duration
+Settings → SFTP Open Last Path
 
 ## Troubleshooting
 
 ### Permission Denied
 
-- Check user has read access
-- Verify directory permissions
-- Ensure SFTP subsystem enabled in sshd_config
+- Check user has read access to directory
+- Verify directory permissions: `ls -la`
+- Ensure SFTP is enabled in sshd_config
 
 ### Slow Listing
 
-- Reduce cache duration
-- Check network latency
-- Consider using jump server for remote locations
+Large directories (1000+ items) use pagination for performance.
+
+### Can't Edit File
+
+File too large (>1 MB)? Use terminal with vim/nano instead.
