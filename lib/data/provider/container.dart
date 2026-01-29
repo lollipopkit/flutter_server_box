@@ -115,8 +115,18 @@ class ContainerNotifier extends _$ContainerNotifier {
     final cmd = _wrap(ContainerCmdType.execAll(state.type, sudo: sudo, includeStats: includeStats, password: password));
     int? code;
     String raw = '';
+    var isPodmanEmulation = false;
     if (client != null) {
-      (code, raw) = await client!.execWithPwd(cmd, context: context, id: hostId);
+      (code, raw) = await client!.execWithPwd(
+        cmd,
+        context: context,
+        id: hostId,
+        onStderr: (data, _) {
+          if (data.contains(_podmanEmulationMsg)) {
+            isPodmanEmulation = true;
+          }
+        },
+      );
     } else {
       state = state.copyWith(
         isBusy: false,
@@ -144,7 +154,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
 
     /// Pre-parse Podman detection
-    if (raw.contains(_podmanEmulationMsg)) {
+    if (isPodmanEmulation) {
       state = state.copyWith(
         error: ContainerErr(
           type: ContainerErrType.podmanDetected,
@@ -349,7 +359,7 @@ const _jsonFmt = '--format "{{json .}}"';
 
 String _buildSudoCmd(String baseCmd, String password) {
   final pwdBase64 = base64Encode(utf8.encode(password));
-  return 'echo "$pwdBase64" | base64 -d | sudo -S $baseCmd 2>/dev/null'; // Discard stderr to avoid password prompt
+  return 'echo "$pwdBase64" | base64 -d | sudo -S $baseCmd';
 }
 
 enum ContainerCmdType {
@@ -389,9 +399,42 @@ enum ContainerCmdType {
   }
 
   static String execAll(ContainerType type, {bool sudo = false, bool includeStats = false, String? password}) {
-    return ContainerCmdType.values
-        .map((e) => e.exec(type, sudo: sudo, includeStats: includeStats, password: password))
+    final commands = ContainerCmdType.values
+        .map((e) => e.exec(type, sudo: false, includeStats: includeStats))
         .join('\necho ${ScriptConstants.separator}\n');
+
+    print('[DEBUG] commands: $commands');
+
+    final needsShWrapper = commands.contains('\n') || commands.contains('echo ${ScriptConstants.separator}');
+
+    if (needsShWrapper) {
+      if (sudo && password != null) {
+        final pwdBase64 = base64Encode(utf8.encode(password));
+        final cmd = 'echo "$pwdBase64" | base64 -d | sudo -S sh -c \'${commands.replaceAll("'", "'\\''")}\'';
+        print('[DEBUG] final sudo cmd (with sh): $cmd');
+        return cmd;
+      }
+      if (sudo) {
+        final cmd = 'sudo -S sh -c \'${commands.replaceAll("'", "'\\''")}\'';
+        print('[DEBUG] final sudo cmd: $cmd');
+        return cmd;
+      }
+      final cmd = 'sh -c \'${commands.replaceAll("'", "'\\''")}\'';
+      print('[DEBUG] final sh cmd: $cmd');
+      return cmd;
+    }
+
+    if (sudo && password != null) {
+      final cmd = _buildSudoCmd(commands, password);
+      print('[DEBUG] final sudo cmd: $cmd');
+      return cmd;
+    }
+    if (sudo) {
+      final cmd = 'sudo -S $commands';
+      print('[DEBUG] final sudo cmd: $cmd');
+      return cmd;
+    }
+    return commands;
   }
 
   /// Find out the required segment from [segments]
