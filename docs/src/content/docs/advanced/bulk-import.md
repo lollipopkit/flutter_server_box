@@ -7,12 +7,14 @@ Import multiple server configurations at once using a JSON file.
 
 ## JSON Format
 
-> [!WARNING] SECURITY WARNING
-> **Never store plaintext passwords in files!** This JSON example shows a password field for demonstration only, but you should:
-> - **Prefer SSH keys** (`keyId`) instead of `pwd` - they're more secure
-> - **Use secret managers** or environment variables if you must use passwords
-> - **Delete the file immediately** after import - don't leave credentials lying around
-> - **Add to .gitignore** - never commit credential files to version control
+:::danger[Security Warning]
+**Never store plaintext passwords in files!** This JSON example shows a password field for demonstration only, but you should:
+
+- **Prefer SSH keys** (`keyId`) instead of `pwd` - they're more secure
+- **Use secret managers** or environment variables if you must use passwords
+- **Delete the file immediately** after import - don't leave credentials lying around
+- **Add to .gitignore** - never commit credential files to version control
+:::
 
 ```json
 [
