@@ -1,0 +1,9 @@
+/* Flutter Server Box Custom Styles */
+
+:root {
+	--sl-color-accent: #02569b;
+	--sl-color-accent-low: #02569b15;
+}
+
+/* Custom brand colors for Flutter */
+--starlight-cards--border: var(--sl-color-accent-low);
