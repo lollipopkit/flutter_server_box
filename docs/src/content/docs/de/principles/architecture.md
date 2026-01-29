@@ -3,7 +3,7 @@ title: Architektur-Übersicht
 description: High-Level-Anwendungsarchitektur
 ---
 
-Flutter Server Box folgt einer Schichtarchitektur mit klarer Trennung der Belange (Separation of Concerns).
+Server Box folgt einer Schichtarchitektur mit klarer Trennung der Belange (Separation of Concerns).
 
 ## Architektur-Schichten
 

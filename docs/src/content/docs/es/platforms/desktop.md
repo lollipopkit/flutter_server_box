@@ -3,7 +3,7 @@ title: Funciones de Escritorio
 description: Funciones específicas para macOS, Linux y Windows
 ---
 
-Flutter Server Box en plataformas de escritorio ofrece funciones de productividad adicionales.
+Server Box en plataformas de escritorio ofrece funciones de productividad adicionales.
 
 ## macOS
 

@@ -3,7 +3,7 @@ title: デスクトップ版の機能
 description: macOS、Linux、Windows 特有の機能
 ---
 
-デスクトッププラットフォーム上の Flutter Server Box は、さらなる生産性向上機能を提供します。
+デスクトッププラットフォーム上の Server Box は、さらなる生産性向上機能を提供します。
 
 ## macOS
 

@@ -3,7 +3,7 @@ title: 桌面端功能
 description: macOS, Linux 和 Windows 的平台特定功能
 ---
 
-Flutter Server Box 在桌面平台上提供了额外的效率功能。
+Server Box 在桌面平台上提供了额外的效率功能。
 
 ## macOS
 

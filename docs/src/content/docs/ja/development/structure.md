@@ -1,9 +1,9 @@
 ---
 title: プロジェクト構造
-description: Flutter Server Box のコードベースを理解する
+description: Server Box のコードベースを理解する
 ---
 
-Flutter Server Box プロジェクトは、関心の分離を明確にしたモジュール式のアーキテクチャを採用しています。
+Server Box プロジェクトは、関心の分離を明確にしたモジュール式のアーキテクチャを採用しています。
 
 ## ディレクトリ構造
 

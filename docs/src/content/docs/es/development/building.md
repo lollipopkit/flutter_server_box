@@ -3,7 +3,7 @@ title: Compilación
 description: Instrucciones de compilación para diferentes plataformas
 ---
 
-Flutter Server Box utiliza un sistema de compilación personalizado (`fl_build`) para compilaciones multiplataforma.
+Server Box utiliza un sistema de compilación personalizado (`fl_build`) para compilaciones multiplataforma.
 
 ## Requisitos Previos
 

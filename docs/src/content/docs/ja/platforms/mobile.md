@@ -3,7 +3,7 @@ title: モバイル版の機能
 description: iOS および Android 特有の機能
 ---
 
-Flutter Server Box は、iOS および Android デバイス向けにいくつかのモバイル特有の機能を提供しています。
+Server Box は、iOS および Android デバイス向けにいくつかのモバイル特有の機能を提供しています。
 
 ## 生体認証
 
@@ -22,7 +22,7 @@ Flutter Server Box は、iOS および Android デバイス向けにいくつか
 
 - ホーム画面を長押し
 - **+** をタップしてウィジェットを追加
-- 「Flutter Server Box」を検索
+- 「Server Box」を検索
 - ウィジェットのサイズを選択:
   - 小: 単一サーバーの状態
   - 中: 複数サーバーの状態
@@ -32,7 +32,7 @@ Flutter Server Box は、iOS および Android デバイス向けにいくつか
 
 - ホーム画面を長押し
 - **ウィジェット**をタップ
-- 「Flutter Server Box」を見つける
+- 「Server Box」を見つける
 - ウィジェットの種類を選択
 
 ## バックグラウンド実行

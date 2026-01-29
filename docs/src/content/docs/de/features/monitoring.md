@@ -3,7 +3,7 @@ title: Server-Überwachung
 description: Echtzeit-Serverstatus-Überwachung mit schönen Diagrammen
 ---
 
-Flutter Server Box bietet eine umfassende Echtzeit-Überwachung der Gesundheit und Leistung Ihres Servers.
+Server Box bietet eine umfassende Echtzeit-Überwachung der Gesundheit und Leistung Ihres Servers.
 
 ## Status-Karten
 

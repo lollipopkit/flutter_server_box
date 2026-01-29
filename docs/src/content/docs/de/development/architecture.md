@@ -3,7 +3,7 @@ title: Architektur
 description: Architekturmuster und Designentscheidungen
 ---
 
-Flutter Server Box folgt den Prinzipien der Clean Architecture mit einer klaren Trennung zwischen Daten-, Domänen- und Präsentationsschicht.
+Server Box folgt den Prinzipien der Clean Architecture mit einer klaren Trennung zwischen Daten-, Domänen- und Präsentationsschicht.
 
 ## Schichtarchitektur
 

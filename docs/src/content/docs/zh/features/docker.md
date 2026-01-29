@@ -3,7 +3,7 @@ title: Docker 管理
 description: 监控和管理 Docker 容器
 ---
 
-Flutter Server Box 为管理服务器上的 Docker 容器提供了一个直观的界面。
+Server Box 为管理服务器上的 Docker 容器提供了一个直观的界面。
 
 ## 功能特性
 

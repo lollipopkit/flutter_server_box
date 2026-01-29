@@ -3,7 +3,7 @@ title: Zustandsverwaltung
 description: Wie der Zustand mit Riverpod verwaltet wird
 ---
 
-Verständnis der Architektur zur Zustandsverwaltung in Flutter Server Box.
+Verständnis der Architektur zur Zustandsverwaltung in Server Box.
 
 ## Warum Riverpod?
 

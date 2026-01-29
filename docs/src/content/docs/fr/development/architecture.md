@@ -3,7 +3,7 @@ title: Architecture
 description: Modèles d'architecture et décisions de conception
 ---
 
-Flutter Server Box suit les principes de la Clean Architecture avec une séparation claire entre les couches de données, de domaine et de présentation.
+Server Box suit les principes de la Clean Architecture avec une séparation claire entre les couches de données, de domaine et de présentation.
 
 ## Architecture en couches
 

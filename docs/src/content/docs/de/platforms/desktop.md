@@ -3,7 +3,7 @@ title: Desktop-Funktionen
 description: Spezifische Funktionen für macOS, Linux und Windows
 ---
 
-Flutter Server Box bietet auf Desktop-Plattformen zusätzliche Produktivitätsfunktionen.
+Server Box bietet auf Desktop-Plattformen zusätzliche Produktivitätsfunktionen.
 
 ## macOS
 

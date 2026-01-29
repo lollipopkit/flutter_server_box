@@ -3,7 +3,7 @@ title: 状态管理
 description: 如何使用 Riverpod 进行状态管理
 ---
 
-了解 Flutter Server Box 中的状态管理架构。
+了解 Server Box 中的状态管理架构。
 
 ## 为何选择 Riverpod？
 

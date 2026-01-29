@@ -3,7 +3,7 @@ title: Docker-Verwaltung
 description: Docker-Container überwachen und verwalten
 ---
 
-Flutter Server Box bietet eine intuitive Benutzeroberfläche zur Verwaltung von Docker-Containern auf Ihren Servern.
+Server Box bietet eine intuitive Benutzeroberfläche zur Verwaltung von Docker-Containern auf Ihren Servern.
 
 ## Funktionen
 

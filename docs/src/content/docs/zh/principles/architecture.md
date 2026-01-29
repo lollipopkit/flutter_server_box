@@ -3,7 +3,7 @@ title: 架构概览
 description: 应用程序的高层架构设计
 ---
 
-Flutter Server Box 采用分层架构，实现了清晰的关注点分离。
+Server Box 采用分层架构，实现了清晰的关注点分离。
 
 ## 架构分层
 

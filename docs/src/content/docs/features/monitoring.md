@@ -3,7 +3,7 @@ title: Server Monitoring
 description: Real-time server status monitoring with beautiful charts
 ---
 
-Flutter Server Box provides comprehensive real-time monitoring of your server's health and performance.
+Server Box provides comprehensive real-time monitoring of your server's health and performance.
 
 ## Status Cards
 

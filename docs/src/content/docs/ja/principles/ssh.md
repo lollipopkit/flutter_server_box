@@ -3,7 +3,7 @@ title: SSH 接続
 description: SSH 接続の確立と管理の仕組み
 ---
 
-Flutter Server Box における SSH 接続の仕組みについて解説します。
+Server Box における SSH 接続の仕組みについて解説します。
 
 ## 接続フロー
 

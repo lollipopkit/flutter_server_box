@@ -3,7 +3,7 @@ title: SSH 连接
 description: SSH 连接是如何建立和管理的
 ---
 
-了解 Flutter Server Box 中的 SSH 连接机制。
+了解 Server Box 中的 SSH 连接机制。
 
 ## 连接流程
 

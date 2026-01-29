@@ -3,7 +3,7 @@ title: 构建指南
 description: 不同平台的构建说明
 ---
 
-Flutter Server Box 使用自定义构建系统 (`fl_build`) 进行跨平台构建。
+Server Box 使用自定义构建系统 (`fl_build`) 进行跨平台构建。
 
 ## 前置条件
 

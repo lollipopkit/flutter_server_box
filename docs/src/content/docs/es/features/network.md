@@ -3,7 +3,7 @@ title: Herramientas de Red
 description: Herramientas de prueba y diagnóstico de red
 ---
 
-Flutter Server Box incluye varias herramientas de red para pruebas y diagnósticos.
+Server Box incluye varias herramientas de red para pruebas y diagnósticos.
 
 ## iPerf
 

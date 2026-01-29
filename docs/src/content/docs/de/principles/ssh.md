@@ -3,7 +3,7 @@ title: SSH-Verbindung
 description: Wie SSH-Verbindungen aufgebaut und verwaltet werden
 ---
 
-Verständnis der SSH-Verbindungen in Flutter Server Box.
+Verständnis der SSH-Verbindungen in Server Box.
 
 ## Verbindungsablauf
 

@@ -3,7 +3,7 @@ title: Netzwerk-Tools
 description: Netzwerk-Test- und Diagnose-Tools
 ---
 
-Flutter Server Box enthält verschiedene Netzwerk-Tools für Tests und Diagnosen.
+Server Box enthält verschiedene Netzwerk-Tools für Tests und Diagnosen.
 
 ## iPerf
 

@@ -1,9 +1,9 @@
 ---
 title: Projektstruktur
-description: Verständnis der Flutter Server Box Codebasis
+description: Verständnis der Server Box Codebasis
 ---
 
-Das Flutter Server Box-Projekt folgt einer modularen Architektur mit einer klaren Trennung der Belange.
+Das Server Box-Projekt folgt einer modularen Architektur mit einer klaren Trennung der Belange.
 
 ## Verzeichnisstruktur
 

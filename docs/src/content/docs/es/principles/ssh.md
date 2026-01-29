@@ -3,7 +3,7 @@ title: Conexión SSH
 description: Cómo se establecen y gestionan las conexiones SSH
 ---
 
-Entendiendo las conexiones SSH en Flutter Server Box.
+Entendiendo las conexiones SSH en Server Box.
 
 ## Flujo de Conexión
 

@@ -3,7 +3,7 @@ title: Codegenerierung
 description: Verwendung von build_runner für die Codegenerierung
 ---
 
-Flutter Server Box verwendet intensiv Codegenerierung für Modelle, Zustandsverwaltung und Serialisierung.
+Server Box verwendet intensiv Codegenerierung für Modelle, Zustandsverwaltung und Serialisierung.
 
 ## Wann sollte die Codegenerierung ausgeführt werden?
 

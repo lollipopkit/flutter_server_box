@@ -3,7 +3,7 @@ title: Bauen
 description: Bauanleitungen für verschiedene Plattformen
 ---
 
-Flutter Server Box verwendet ein benutzerdefiniertes Build-System (`fl_build`) für plattformübergreifende Builds.
+Server Box verwendet ein benutzerdefiniertes Build-System (`fl_build`) für plattformübergreifende Builds.
 
 ## Voraussetzungen
 

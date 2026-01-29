@@ -3,7 +3,7 @@ title: 状態管理
 description: Riverpod ベースの状態管理パターン
 ---
 
-Flutter Server Box は、状態管理のためにコード生成を伴う Riverpod を使用しています。
+Server Box は、状態管理のためにコード生成を伴う Riverpod を使用しています。
 
 ## Provider の種類
 

@@ -3,7 +3,7 @@ title: Gestión de Estado
 description: Cómo se gestiona el estado con Riverpod
 ---
 
-Entendiendo la arquitectura de gestión de estado en Flutter Server Box.
+Entendiendo la arquitectura de gestión de estado en Server Box.
 
 ## ¿Por qué Riverpod?
 

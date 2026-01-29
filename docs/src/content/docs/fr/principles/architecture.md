@@ -3,7 +3,7 @@ title: Présentation de l'architecture
 description: Architecture de haut niveau de l'application
 ---
 
-Flutter Server Box suit une architecture en couches avec une séparation claire des préoccupations.
+Server Box suit une architecture en couches avec une séparation claire des préoccupations.
 
 ## Couches architecturales
 

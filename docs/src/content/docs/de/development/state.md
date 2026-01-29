@@ -3,7 +3,7 @@ title: Zustandsverwaltung
 description: Riverpod-basierte Zustandsverwaltungsmuster
 ---
 
-Flutter Server Box verwendet Riverpod mit Codegenerierung für die Zustandsverwaltung.
+Server Box verwendet Riverpod mit Codegenerierung für die Zustandsverwaltung.
 
 ## Provider-Typen
 

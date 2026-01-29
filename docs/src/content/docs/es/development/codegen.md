@@ -3,7 +3,7 @@ title: Generación de Código
 description: Uso de build_runner para la generación de código
 ---
 
-Flutter Server Box utiliza intensivamente la generación de código para modelos, gestión de estado y serialización.
+Server Box utiliza intensivamente la generación de código para modelos, gestión de estado y serialización.
 
 ## Cuándo Ejecutar la Generación de Código
 

@@ -3,7 +3,7 @@ title: Proxmox (PVE)
 description: Proxmox 虚拟化环境管理
 ---
 
-Flutter Server Box 支持管理 Proxmox VE 虚拟化平台。
+Server Box 支持管理 Proxmox VE 虚拟化平台。
 
 ## 功能特性
 

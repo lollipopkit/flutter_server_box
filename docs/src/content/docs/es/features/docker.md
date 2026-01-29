@@ -3,7 +3,7 @@ title: Gestión de Docker
 description: Monitorear y gestionar contenedores Docker
 ---
 
-Flutter Server Box proporciona una interfaz intuitiva para gestionar contenedores Docker en sus servidores.
+Server Box proporciona una interfaz intuitiva para gestionar contenedores Docker en sus servidores.
 
 ## Características
 

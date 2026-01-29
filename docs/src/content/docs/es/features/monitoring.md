@@ -3,7 +3,7 @@ title: Monitoreo de Servidores
 description: Monitoreo del estado del servidor en tiempo real con hermosos gráficos
 ---
 
-Flutter Server Box proporciona un monitoreo integral en tiempo real de la salud y el rendimiento de su servidor.
+Server Box proporciona un monitoreo integral en tiempo real de la salud y el rendimiento de su servidor.
 
 ## Tarjetas de Estado
 

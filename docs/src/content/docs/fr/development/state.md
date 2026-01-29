@@ -3,7 +3,7 @@ title: Gestion de l'état
 description: Modèles de gestion de l'état basés sur Riverpod
 ---
 
-Flutter Server Box utilise Riverpod avec la génération de code pour la gestion de l'état.
+Server Box utilise Riverpod avec la génération de code pour la gestion de l'état.
 
 ## Types de Provider
 

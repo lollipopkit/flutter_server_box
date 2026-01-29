@@ -3,7 +3,7 @@ title: Construction (Building)
 description: Instructions de construction pour différentes plateformes
 ---
 
-Flutter Server Box utilise un système de construction personnalisé (`fl_build`) pour les constructions multiplateformes.
+Server Box utilise un système de construction personnalisé (`fl_build`) pour les constructions multiplateformes.
 
 ## Prérequis
 

@@ -3,7 +3,7 @@ title: Gestión de Estado
 description: Patrones de gestión de estado basados en Riverpod
 ---
 
-Flutter Server Box utiliza Riverpod con generación de código para la gestión de estado.
+Server Box utiliza Riverpod con generación de código para la gestión de estado.
 
 ## Tipos de Provider
 

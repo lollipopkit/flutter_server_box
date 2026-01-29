@@ -3,7 +3,7 @@ title: 网络工具
 description: 网络测试和诊断工具
 ---
 
-Flutter Server Box 包含多种用于测试和诊断的网络工具。
+Server Box 包含多种用于测试和诊断的网络工具。
 
 ## iPerf
 

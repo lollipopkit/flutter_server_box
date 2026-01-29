@@ -3,7 +3,7 @@ title: Docker 管理
 description: Docker コンテナの監視と管理
 ---
 
-Flutter Server Box は、サーバー上の Docker コンテナを管理するための直感的なインターフェースを提供します。
+Server Box は、サーバー上の Docker コンテナを管理するための直感的なインターフェースを提供します。
 
 ## 機能
 

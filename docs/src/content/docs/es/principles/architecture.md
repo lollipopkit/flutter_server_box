@@ -3,7 +3,7 @@ title: Descripción General de la Arquitectura
 description: Arquitectura de alto nivel de la aplicación
 ---
 
-Flutter Server Box sigue una arquitectura por capas con una clara separación de responsabilidades.
+Server Box sigue una arquitectura por capas con una clara separación de responsabilidades.
 
 ## Capas de la Arquitectura
 

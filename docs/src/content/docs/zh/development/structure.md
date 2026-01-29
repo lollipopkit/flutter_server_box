@@ -1,9 +1,9 @@
 ---
 title: 项目结构
-description: 了解 Flutter Server Box 的代码库结构
+description: 了解 Server Box 的代码库结构
 ---
 
-Flutter Server Box 项目遵循模块化架构，具有清晰的关注点分离。
+Server Box 项目遵循模块化架构，具有清晰的关注点分离。
 
 ## 目录结构
 

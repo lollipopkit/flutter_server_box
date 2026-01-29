@@ -3,7 +3,7 @@ title: Fonctionnalités de bureau
 description: Fonctionnalités spécifiques à macOS, Linux et Windows
 ---
 
-Flutter Server Box sur les plateformes de bureau offre des fonctionnalités de productivité supplémentaires.
+Server Box sur les plateformes de bureau offre des fonctionnalités de productivité supplémentaires.
 
 ## macOS
 

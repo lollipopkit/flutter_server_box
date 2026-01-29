@@ -1,9 +1,9 @@
 ---
 title: Estructura del Proyecto
-description: Comprendiendo la base de código de Flutter Server Box
+description: Comprendiendo la base de código de Server Box
 ---
 
-El proyecto Flutter Server Box sigue una arquitectura modular con una clara separación de responsabilidades.
+El proyecto Server Box sigue una arquitectura modular con una clara separación de responsabilidades.
 
 ## Estructura de Directorios
 

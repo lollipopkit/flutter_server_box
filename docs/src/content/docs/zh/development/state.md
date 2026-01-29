@@ -3,7 +3,7 @@ title: 状态管理
 description: 基于 Riverpod 的状态管理模式
 ---
 
-Flutter Server Box 使用 Riverpod 及其代码生成工具进行状态管理。
+Server Box 使用 Riverpod 及其代码生成工具进行状态管理。
 
 ## Provider 类型
 

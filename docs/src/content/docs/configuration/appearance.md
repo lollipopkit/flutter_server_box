@@ -3,7 +3,7 @@ title: Appearance
 description: Customize the look and feel
 ---
 
-Flutter Server Box offers extensive appearance customization.
+Server Box offers extensive appearance customization.
 
 ## Themes
 

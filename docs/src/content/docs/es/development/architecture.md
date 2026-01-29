@@ -3,7 +3,7 @@ title: Arquitectura
 description: Patrones de arquitectura y decisiones de diseño
 ---
 
-Flutter Server Box sigue los principios de Clean Architecture con una clara separación entre las capas de datos, dominio y presentación.
+Server Box sigue los principios de Clean Architecture con una clara separación entre las capas de datos, dominio y presentación.
 
 ## Arquitectura por Capas
 

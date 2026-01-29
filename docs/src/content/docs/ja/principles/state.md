@@ -3,7 +3,7 @@ title: 状態管理
 description: Riverpod を使用した状態管理の仕組み
 ---
 
-Flutter Server Box における状態管理アーキテクチャについて解説します。
+Server Box における状態管理アーキテクチャについて解説します。
 
 ## なぜ Riverpod なのか？
 

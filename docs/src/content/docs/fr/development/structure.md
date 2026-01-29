@@ -1,9 +1,9 @@
 ---
 title: Structure du projet
-description: Comprendre la base de code de Flutter Server Box
+description: Comprendre la base de code de Server Box
 ---
 
-Le projet Flutter Server Box suit une architecture modulaire avec une séparation claire des préoccupations.
+Le projet Server Box suit une architecture modulaire avec une séparation claire des préoccupations.
 
 ## Structure des répertoires
 

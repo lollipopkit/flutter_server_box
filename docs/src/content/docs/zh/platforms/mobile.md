@@ -3,7 +3,7 @@ title: 移动端功能
 description: iOS 和 Android 的平台特定功能
 ---
 
-Flutter Server Box 为 iOS 和 Android 设备提供了多项移动端特有功能。
+Server Box 为 iOS 和 Android 设备提供了多项移动端特有功能。
 
 ## 生物识别身份验证
 
@@ -22,7 +22,7 @@ Flutter Server Box 为 iOS 和 Android 设备提供了多项移动端特有功�
 
 - 长按主屏幕
 - 点击 **+** 添加小组件
-- 搜索 “Flutter Server Box”
+- 搜索 “Server Box”
 - 选择小组件尺寸：
   - 小号：单个服务器状态
   - 中号：多个服务器
@@ -32,7 +32,7 @@ Flutter Server Box 为 iOS 和 Android 设备提供了多项移动端特有功�
 
 - 长按主屏幕
 - 点击**小组件**
-- 找到 “Flutter Server Box”
+- 找到 “Server Box”
 - 选择小组件类型
 
 ## 后台运行

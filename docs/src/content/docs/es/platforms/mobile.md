@@ -3,7 +3,7 @@ title: Funciones Móviles
 description: Funciones específicas para iOS y Android
 ---
 
-Flutter Server Box proporciona varias funciones específicas para dispositivos móviles iOS y Android.
+Server Box proporciona varias funciones específicas para dispositivos móviles iOS y Android.
 
 ## Autenticación Biométrica
 
@@ -22,7 +22,7 @@ Añade widgets de estado del servidor a tu pantalla de inicio para una monitoriz
 
 - Mantén pulsada la pantalla de inicio
 - Toca en **+** para añadir un widget
-- Busca "Flutter Server Box"
+- Busca "Server Box"
 - Elige el tamaño del widget:
   - Pequeño: Estado de un solo servidor
   - Mediano: Múltiples servidores
@@ -32,7 +32,7 @@ Añade widgets de estado del servidor a tu pantalla de inicio para una monitoriz
 
 - Mantén pulsada la pantalla de inicio
 - Toca en **Widgets**
-- Busca "Flutter Server Box"
+- Busca "Server Box"
 - Selecciona el tipo de widget
 
 ## Ejecución en Segundo Plano

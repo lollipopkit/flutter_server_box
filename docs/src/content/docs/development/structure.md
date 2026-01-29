@@ -1,9 +1,9 @@
 ---
 title: Project Structure
-description: Understanding the Flutter Server Box codebase
+description: Understanding the Server Box codebase
 ---
 
-The Flutter Server Box project follows a modular architecture with clear separation of concerns.
+The Server Box project follows a modular architecture with clear separation of concerns.
 
 ## Directory Structure
 

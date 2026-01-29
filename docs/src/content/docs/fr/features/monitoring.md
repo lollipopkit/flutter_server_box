@@ -3,7 +3,7 @@ title: Surveillance du serveur
 description: Surveillance en temps réel de l'état du serveur avec de magnifiques graphiques
 ---
 
-Flutter Server Box offre une surveillance complète et en temps réel de la santé et des performances de votre serveur.
+Server Box offre une surveillance complète et en temps réel de la santé et des performances de votre serveur.
 
 ## Cartes d'état
 

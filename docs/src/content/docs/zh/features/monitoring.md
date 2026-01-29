@@ -3,7 +3,7 @@ title: 服务器监控
 description: 实时服务器状态监控，配有精美图表
 ---
 
-Flutter Server Box 提供对服务器健康状况和性能的全面实时监控。
+Server Box 提供对服务器健康状况和性能的全面实时监控。
 
 ## 状态卡片
 

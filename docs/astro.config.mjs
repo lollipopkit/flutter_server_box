@@ -16,7 +16,7 @@ export default defineConfig({
 				},
 				zh: {
 					label: '简体中文',
-					lang: 'zh-CN',
+					lang: 'zh',
 				},
 				de: {
 					label: 'Deutsch',
@@ -52,7 +52,7 @@ export default defineConfig({
 						ja: 'はじめに',
 					},
 					items: [
-						{ label: 'Introduction', translations: { zh: '介绍', de: 'Einführung', fr: 'Introduction', es: 'Introducción', ja: '紹介' }, slug: 'introduction' },
+						{ label: 'Introduction', translations: { zh: '介绍', de: 'Einführung', fr: 'Introduction', es: 'Introducción', ja: 'はじめに' }, slug: 'introduction' },
 						{ label: 'Installation', translations: { zh: '安装', de: 'Installation', fr: 'Installation', es: 'Instalación', ja: 'インストール' }, slug: 'installation' },
 						{ label: 'Quick Start', translations: { zh: '快速开始', de: 'Schnellstart', fr: 'Démarrage rapide', es: 'Inicio rápido', ja: 'クイックスタート' }, slug: 'quick-start' },
 					],

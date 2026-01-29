@@ -3,7 +3,7 @@ title: 代码生成
 description: 使用 build_runner 进行代码生成
 ---
 
-Flutter Server Box 大量使用代码生成技术来处理模型、状态管理和序列化。
+Server Box 大量使用代码生成技术来处理模型、状态管理和序列化。
 
 ## 何时运行代码生成
 

@@ -3,7 +3,7 @@ title: Outils réseau
 description: Outils de test et de diagnostic réseau
 ---
 
-Flutter Server Box comprend plusieurs outils réseau pour les tests et diagnostics.
+Server Box comprend plusieurs outils réseau pour les tests et diagnostics.
 
 ## iPerf
 

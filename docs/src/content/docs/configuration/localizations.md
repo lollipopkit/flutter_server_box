@@ -3,7 +3,7 @@ title: Localizations
 description: Language and region settings
 ---
 
-Flutter Server Box supports 12+ languages with full localization.
+Server Box supports 12+ languages with full localization.
 
 ## Supported Languages
 

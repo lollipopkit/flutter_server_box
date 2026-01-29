@@ -3,7 +3,7 @@ title: Proxmox (PVE)
 description: Gestión de Proxmox Virtual Environment
 ---
 
-Flutter Server Box incluye soporte para gestionar la plataforma de virtualización Proxmox VE.
+Server Box incluye soporte para gestionar la plataforma de virtualización Proxmox VE.
 
 ## Características
 

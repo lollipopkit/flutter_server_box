@@ -3,7 +3,7 @@ title: 架构
 description: 架构模式与设计决策
 ---
 
-Flutter Server Box 遵循整洁架构 (Clean Architecture) 原则，在数据层、领域层和表现层之间实现了清晰的分离。
+Server Box 遵循整洁架构 (Clean Architecture) 原则，在数据层、领域层和表现层之间实现了清晰的分离。
 
 ## 分层架构
 
