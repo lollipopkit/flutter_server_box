@@ -380,7 +380,7 @@ enum ContainerCmdType {
   // and don't require splitting output with ScriptConstants.separator
   ;
 
-  String exec(ContainerType type, {bool sudo = false, bool includeStats = false, String? password}) {
+  String exec(ContainerType type, {bool includeStats = false}) {
     final baseCmd = switch (this) {
       ContainerCmdType.version => '${type.name} version $_jsonFmt',
       ContainerCmdType.ps => switch (type) {
@@ -398,18 +398,12 @@ enum ContainerCmdType {
       ContainerCmdType.images => '${type.name} image ls $_jsonFmt',
     };
 
-    if (sudo && password != null) {
-      return _buildSudoCmd(baseCmd, password);
-    }
-    if (sudo) {
-      return 'sudo -S $baseCmd';
-    }
     return baseCmd;
   }
 
   static String execAll(ContainerType type, {bool sudo = false, bool includeStats = false, String? password}) {
     final commands = ContainerCmdType.values
-        .map((e) => e.exec(type, sudo: false, includeStats: includeStats))
+        .map((e) => e.exec(type, includeStats: includeStats))
         .join('\necho ${ScriptConstants.separator}\n');
 
     final needsShWrapper = commands.contains('\n') || commands.contains('echo ${ScriptConstants.separator}');
