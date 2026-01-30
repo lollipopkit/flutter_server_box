@@ -25,6 +25,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 
 part 'misc.dart';
@@ -125,6 +126,14 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
       ),
       actions: [
         QrShareBtn(data: si.spi.toJsonString(), tip: si.spi.name, tip2: '${l10n.server} ~ ServerBox'),
+        IconButton(
+          icon: const Icon(Icons.smart_toy_outlined),
+          tooltip: context.l10n.askAi,
+          onPressed: () {
+            final args = SshPageArgs(spi: si.spi);
+            SSHPage.route.go(context, args);
+          },
+        ),
         IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () async {

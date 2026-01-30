@@ -30,11 +30,27 @@ class AskAiCommand {
     required this.command,
     this.description = '',
     this.toolName,
+    this.risk,
+    this.needsConfirmation,
+    this.why,
+    this.prechecks,
   });
 
   final String command;
   final String description;
   final String? toolName;
+
+  /// Optional risk hint returned by the model/tool, e.g. `low|medium|high`.
+  final String? risk;
+
+  /// Optional explicit confirmation requirement returned by the model/tool.
+  final bool? needsConfirmation;
+
+  /// Optional explanation for why this command is suggested.
+  final String? why;
+
+  /// Optional pre-check commands / steps.
+  final List<String>? prechecks;
 }
 
 @immutable
