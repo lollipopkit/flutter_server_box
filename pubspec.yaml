@@ -1,7 +1,7 @@
 name: server_box
 description: server status & toolbox app.
 publish_to: "none"
-version: 1.0.1297+1297
+version: 1.0.1313+1313
 
 environment:
   sdk: ">=3.9.0"
