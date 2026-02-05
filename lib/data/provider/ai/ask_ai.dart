@@ -21,7 +21,8 @@ class AskAiRepository {
 
   /// Streams the AI response using the configured endpoint.
   Stream<AskAiEvent> ask({
-    required String selection,
+    required AskAiScenario scenario,
+    required List<String> contextBlocks,
     String? localeHint,
     List<AskAiMessage> conversation = const [],
   }) async* {
@@ -54,7 +55,8 @@ class AskAiRepository {
 
     final requestBody = _buildRequestBody(
       model: model,
-      selection: selection,
+      scenario: scenario,
+      contextBlocks: contextBlocks,
       localeHint: localeHint,
       conversation: conversation,
     );
@@ -202,20 +204,26 @@ class AskAiRepository {
 
   Map<String, dynamic> _buildRequestBody({
     required String model,
-    required String selection,
+    required AskAiScenario scenario,
+    required List<String> contextBlocks,
     required List<AskAiMessage> conversation,
     String? localeHint,
   }) {
     final promptBuffer = StringBuffer()
-      ..writeln('你是一个 SSH 终端助手。')
-      ..writeln('用户会提供一段终端输出或命令，请结合上下文给出解释。')
+      ..writeln('你是 ServerBox 内嵌的服务器运维助手。')
+      ..writeln('你会基于用户提供的上下文进行解释、诊断与建议。')
+      ..writeln('默认只建议，不自动执行任何命令。')
+      ..writeln('优先给出安全、可回滚、只读的排查步骤。')
       ..writeln('当需要给出可执行命令时，调用 `recommend_shell` 工具，并提供简短描述。')
-      ..writeln('仅在非常确定命令安全时才给出建议。');
+      ..writeln('不确定时先提出澄清问题。');
 
     if (localeHint != null && localeHint.isNotEmpty) {
-      promptBuffer
-        .writeln('请优先使用用户的语言输出：$localeHint。');
+      promptBuffer.writeln('请优先使用用户的语言输出：$localeHint。');
     }
+
+    promptBuffer.writeln(_scenarioPrompt(scenario));
+
+    final ctx = contextBlocks.isEmpty ? '(empty)' : contextBlocks.join('\n\n---\n\n');
 
     final messages = <Map<String, String>>[
       {
@@ -228,7 +236,7 @@ class AskAiRepository {
           }),
       {
         'role': 'user',
-        'content': '以下是终端选中的内容：\n$selection',
+        'content': '以下是当前页面/会话上下文（Markdown blocks）：\n\n$ctx',
       },
     ];
 
@@ -254,6 +262,24 @@ class AskAiRepository {
                   'type': 'string',
                   'description': '简述该命令的作用或注意事项。',
                 },
+                'risk': {
+                  'type': 'string',
+                  'description': '风险等级：low/medium/high。',
+                  'enum': ['low', 'medium', 'high'],
+                },
+                'needsConfirmation': {
+                  'type': 'boolean',
+                  'description': '是否需要更强确认（例如倒计时确认）。',
+                },
+                'why': {
+                  'type': 'string',
+                  'description': '为什么要执行该命令。',
+                },
+                'prechecks': {
+                  'type': 'array',
+                  'items': {'type': 'string'},
+                  'description': '建议先执行的只读预检查命令。',
+                },
               },
             },
           },
@@ -262,10 +288,50 @@ class AskAiRepository {
     };
   }
 
+  static String _scenarioPrompt(AskAiScenario scenario) {
+    return switch (scenario) {
+      AskAiScenario.general => '场景：通用。结合上下文回答，必要时给出命令建议。',
+      AskAiScenario.terminal => '场景：SSH 终端。解释输出/错误，给出排查命令与下一步建议。',
+      AskAiScenario.systemd => '场景：Systemd。围绕 unit 状态/日志/依赖给出诊断与建议。',
+      AskAiScenario.container => '场景：容器。围绕 docker/podman 的容器状态、镜像、日志给建议。',
+      AskAiScenario.process => '场景：进程。围绕进程异常、资源占用、kill/renice 等给建议。',
+      AskAiScenario.snippet => '场景：Snippet。生成或改写脚本，强调幂等、安全与可回滚。',
+      AskAiScenario.sftp => '场景：SFTP。围绕路径/权限/压缩包/传输错误等给操作与命令建议。',
+    };
+  }
+
   Uri _composeUri(String base, String path) {
     final sanitizedBase = base.replaceAll(RegExp(r'/+$'), '');
     final sanitizedPath = path.replaceFirst(RegExp(r'^/+'), '');
     return Uri.parse('$sanitizedBase/$sanitizedPath');
+  }
+}
+
+@immutable
+enum AskAiScenario {
+  general,
+  terminal,
+  systemd,
+  container,
+  process,
+  snippet,
+  sftp,
+}
+
+extension AskAiScenarioX on AskAiScenario {
+  static AskAiScenario? tryParse(Object? raw) {
+    if (raw is! String) return null;
+    final s = raw.trim().toLowerCase();
+    return switch (s) {
+      'general' => AskAiScenario.general,
+      'terminal' => AskAiScenario.terminal,
+      'systemd' => AskAiScenario.systemd,
+      'container' => AskAiScenario.container,
+      'process' => AskAiScenario.process,
+      'snippet' => AskAiScenario.snippet,
+      'sftp' => AskAiScenario.sftp,
+      _ => null,
+    };
   }
 }
 
@@ -289,11 +355,25 @@ class _ToolCallBuilder {
         return null;
       }
       final description = decoded['description'] as String? ?? decoded['explanation'] as String? ?? '';
+      final risk = decoded['risk'] as String?;
+      final needsConfirmation = decoded['needsConfirmation'] as bool?;
+      final why = decoded['why'] as String?;
+
+      List<String>? prechecks;
+      final preRaw = decoded['prechecks'];
+      if (preRaw is List) {
+        prechecks = preRaw.map((e) => e.toString()).where((e) => e.trim().isNotEmpty).toList();
+      }
+
       _emitted = true;
       return AskAiCommand(
         command: command.trim(),
         description: description.trim(),
         toolName: name,
+        risk: risk,
+        needsConfirmation: needsConfirmation,
+        why: why,
+        prechecks: prechecks,
       );
     } on FormatException {
       if (force) {
