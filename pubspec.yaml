@@ -40,17 +40,13 @@ dependencies:
   xml: ^6.4.2 # for parsing nvidia-smi
   url_launcher: ^6.2.6
   dartssh2:
-    git:
-      url: https://github.com/lollipopkit/dartssh2
-      ref: v1.0.293
+    path: dartssh2
   circle_chart:
     git:
       url: https://github.com/lollipopkit/circle_chart
       ref: main
   xterm:
-    git:
-      url: https://github.com/lollipopkit/xterm.dart
-      ref: v4.0.13
+    path: xterm
   computer:
     git:
       url: https://github.com/lollipopkit/dart_computer
@@ -64,9 +60,7 @@ dependencies:
       url: https://github.com/lollipopkit/plain_notification_token
       ref: v1.0.23
   fl_lib:
-    git:
-      url: https://github.com/lollipopkit/fl_lib
-      ref: v1.0.363
+    path: fl_lib
 
 dependency_overrides:
   # webdav_client_plus:
@@ -101,9 +95,7 @@ dev_dependencies:
   #     url: https://github.com/lollipopkit/riverpod_reg
   #     ref: v0.0.2
   fl_build:
-    git:
-      url: https://github.com/lppcg/fl_build.git
-      ref: v1.0.53
+    path: fl_build
 
 flutter:
   generate: true
