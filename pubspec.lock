@@ -366,7 +366,7 @@ packages:
   dartssh2:
     dependency: "direct main"
     description:
-      path: dartssh2
+      path: "packages/dartssh2"
       relative: true
     source: path
     version: "2.12.0"
@@ -477,7 +477,7 @@ packages:
   fl_build:
     dependency: "direct dev"
     description:
-      path: fl_build
+      path: "packages/fl_build"
       relative: true
     source: path
     version: "1.0.0"
@@ -492,7 +492,7 @@ packages:
   fl_lib:
     dependency: "direct main"
     description:
-      path: fl_lib
+      path: "packages/fl_lib"
       relative: true
     source: path
     version: "0.0.1"
@@ -1855,7 +1855,7 @@ packages:
   xterm:
     dependency: "direct main"
     description:
-      path: xterm
+      path: "packages/xterm"
       relative: true
     source: path
     version: "4.0.0"

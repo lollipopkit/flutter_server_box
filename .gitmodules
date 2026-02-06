@@ -1,20 +1,20 @@
 [submodule "dartssh2"]
-	path = dartssh2
+	path = packages/dartssh2
 	url = https://github.com/lollipopkit/dartssh2
 	branch = master
 [submodule "xterm"]
-	path = xterm
+	path = packages/xterm
 	url = https://github.com/lollipopkit/xterm.dart
 	branch = master
 [submodule "fl_lib"]
-	path = fl_lib
+	path = packages/fl_lib
 	url = https://github.com/lollipopkit/fl_lib
 	branch = main
 [submodule "fl_build"]
-	path = fl_build
+	path = packages/fl_build
 	url = https://github.com/lppcg/fl_build.git
 	branch = main
 [submodule "server_box_monitor"]
-	path = server_box_monitor
+	path = packages/server_box_monitor
 	url = https://github.com/lollipopkit/server_box_monitor
 	branch = main
