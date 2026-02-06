@@ -432,7 +432,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get installDockerWithUrl =>
-      'Per favore https://docs.docker.com/engine/install docker prima.';
+      'Installa prima docker da https://docs.docker.com/engine/install .';
 
   @override
   String get invalid => 'Non valido';
@@ -681,7 +681,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get second => 's';
 
   @override
-  String get sensors => 'Sensore';
+  String get sensors => 'Sensori';
 
   @override
   String get sequence => 'Sequenza';
