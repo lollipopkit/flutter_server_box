@@ -162,7 +162,7 @@ class _SshDiscoveryPageState extends ConsumerState<SshDiscoveryPage> {
         layoutBuilder: (currentChild, previousChildren) {
           return Stack(
             alignment: Alignment.centerRight,
-            children: <Widget>[...previousChildren, if (currentChild != null) currentChild],
+            children: <Widget>[...previousChildren, ?currentChild],
           );
         },
         child: selectedResults.isNotEmpty

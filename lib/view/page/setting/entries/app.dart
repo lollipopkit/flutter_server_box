@@ -11,8 +11,8 @@ extension _App on _AppSettingsPageState {
       _buildCheckUpdate(),
       _buildHomeTabs(),
       PlatformPublicSettings.buildBioAuth,
-      if (androidSettings != null) androidSettings,
-      if (specific != null) specific,
+      ?androidSettings,
+      ?specific,
       _buildAppMore(),
     ];
 
