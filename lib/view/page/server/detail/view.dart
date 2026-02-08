@@ -103,7 +103,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
   Widget _buildMainPage(ServerState si) {
     final buildFuncs = !_moveServerFuncs;
     final logo = _buildLogo(si);
-    final children = <Widget>[if (logo != null) logo, if (buildFuncs) ServerFuncBtns(spi: si.spi)];
+    final children = <Widget>[?logo, if (buildFuncs) ServerFuncBtns(spi: si.spi)];
     for (final card in _cardsOrder) {
       final child = _cardBuildMap[card]?.call(si);
       if (child != null) {
