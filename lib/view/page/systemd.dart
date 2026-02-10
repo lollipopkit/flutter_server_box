@@ -1,11 +1,14 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/systemd.dart';
+import 'package:server_box/data/provider/ai/ask_ai.dart';
 import 'package:server_box/data/provider/systemd.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
+import 'package:server_box/view/widget/ai/ai_assist_sheet.dart';
 
 final class SystemdPage extends ConsumerStatefulWidget {
   final SpiRequiredArgs args;
@@ -28,7 +31,29 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
     return Scaffold(
       appBar: CustomAppBar(
         title: const Text('Systemd'),
-        actions: isDesktop ? [Btn.icon(icon: const Icon(Icons.refresh), onTap: _notifier.getUnits)] : null,
+        actions: [
+          if (isDesktop) Btn.icon(icon: const Icon(Icons.refresh), onTap: _notifier.getUnits),
+          IconButton(
+            icon: const Icon(Icons.smart_toy_outlined),
+            tooltip: context.l10n.askAi,
+            onPressed: () {
+              final blocks = <String>[
+                '[Systemd]\nscopeFilter: ${ref.read(_pro).scopeFilter.displayName}\nitems: ${_notifier.filteredUnits.length}',
+              ];
+              showAiAssistSheet(
+                context,
+                AiAssistArgs(
+                  title: context.l10n.askAi,
+                  contextBlocks: blocks,
+                  scenario: AskAiScenario.systemd,
+                  applyLabel: libL10n.ok,
+                  applyBehavior: AiApplyBehavior.openSsh,
+                  onOpenSsh: _navigateToSsh,
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: RefreshIndicator(onRefresh: _notifier.getUnits, child: _buildBody()),
     );
