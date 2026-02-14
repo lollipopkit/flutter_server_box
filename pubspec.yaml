@@ -65,6 +65,12 @@ dependencies:
 dependency_overrides:
   # webdav_client_plus:
   #   path: ../webdav_client
+  # dartssh2:
+  #   path: ../dartssh2
+  # xterm:
+  #   path: ../xterm.dart
+  # fl_lib:
+  #   path: ../fl_lib
   # fl_build:
   #   path: ../fl_build
   gtk: # TODO: remove it after fixed in upstream
