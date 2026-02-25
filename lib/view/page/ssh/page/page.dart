@@ -8,7 +8,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -187,7 +186,6 @@ class SSHPageState extends ConsumerState<SSHPage>
             ? CustomAppBar(
                 leading: BackButton(onPressed: context.pop),
                 title: Text(widget.args.spi.name),
-                actions: [_buildCopyBtn],
                 centerTitle: false,
               )
             : null,
@@ -257,6 +255,9 @@ class SSHPageState extends ConsumerState<SSHPage>
           hideScrollBar: false,
           focusNode: widget.args.focusNode,
           toolbarBuilder: _buildTerminalToolbar,
+          onCopied: _onTerminalCopied,
+          onSelectAll: _onTerminalSelectAll,
+          onPaste: _onTerminalPaste,
         ),
       ),
     );
@@ -364,18 +365,26 @@ class SSHPageState extends ConsumerState<SSHPage>
     );
   }
 
-  Widget get _buildCopyBtn {
-    return IconButton(
-      icon: Icon(MingCute.copy_2_fill),
-      tooltip: libL10n.copy,
-      onPressed: () {
-        final selected = terminalSelected;
-        if (selected == null || selected.isEmpty) {
-          return;
-        }
-        Pfs.copy(selected);
-      },
-    );
+  void _onTerminalCopied() {
+    if (!mounted) return;
+    context.showSnackBar(libL10n.success);
+    _terminalController.clearSelection();
+  }
+
+  void _onTerminalSelectAll() {
+    if (!mounted) return;
+    _termKey.currentState?.renderTerminal.selectAll();
+  }
+
+  void _onTerminalPaste() {
+    if (!mounted) return;
+    Clipboard.getData(Clipboard.kTextPlain).then((value) {
+      final text = value?.text;
+      if (text != null) {
+        _terminal.textInput(text);
+        _terminalController.clearSelection();
+      }
+    });
   }
 
   @override

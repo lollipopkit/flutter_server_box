@@ -44,12 +44,7 @@ extension _VirtKey on SSHPageState {
         _terminal.keyInput(TerminalKey.backspace);
         break;
       case VirtualKeyFunc.clipboard:
-        final selected = terminalSelected;
-        if (selected != null) {
-          Pfs.copy(selected);
-        } else {
-          _paste();
-        }
+        _paste();
         break;
       case VirtualKeyFunc.snippet:
         final snippetState = ref.read(snippetProvider);
@@ -136,14 +131,6 @@ extension _VirtKey on SSHPageState {
         context.showRoundDialog(title: libL10n.error, child: Text(libL10n.empty));
       }
     });
-  }
-
-  String? get terminalSelected {
-    final range = _terminalController.selection;
-    if (range == null) {
-      return null;
-    }
-    return _terminal.buffer.getText(range);
   }
 
   void _initVirtKeys() {
