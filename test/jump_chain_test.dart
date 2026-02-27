@@ -61,6 +61,21 @@ void main() {
       expect(result, isTrue);
     });
 
+    test('wouldCreateJumpCycle validates new server with null current id', () {
+      final servers = <String, Spi>{
+        'A': _spi(id: 'A', name: 'a', jumpId: 'B'),
+        'B': _spi(id: 'B', name: 'b', jumpId: 'A'),
+      };
+
+      final result = wouldCreateJumpCycle(
+        currentServerId: null,
+        candidateJumpId: 'A',
+        serversById: servers,
+      );
+
+      expect(result, isTrue);
+    });
+
     test('collectJumpServers collects reachable jump servers', () {
       final target = _spi(id: 'T', name: 'target', jumpId: 'A');
       final servers = <String, Spi>{

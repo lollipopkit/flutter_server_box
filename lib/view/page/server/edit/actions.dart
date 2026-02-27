@@ -6,9 +6,8 @@ final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:%;]+$');
 extension _Actions on _ServerEditPageState {
   bool _isInvalidJumpSelection(String? candidateJumpId) {
     final currentServer = spi;
-    if (currentServer == null) return false;
     return wouldCreateJumpCycle(
-      currentServerId: currentServer.id,
+      currentServerId: currentServer?.id,
       candidateJumpId: candidateJumpId,
       serversById: ref.read(serversProvider).servers,
     );

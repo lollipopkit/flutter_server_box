@@ -3,7 +3,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 /// Returns `true` when assigning [candidateJumpId] to [currentServerId]
 /// would create a jump-server cycle.
 bool wouldCreateJumpCycle({
-  required String currentServerId,
+  required String? currentServerId,
   required String? candidateJumpId,
   required Map<String, Spi> serversById,
 }) {
@@ -15,7 +15,7 @@ bool wouldCreateJumpCycle({
   var checkingId = candidateJumpId;
 
   while (true) {
-    if (checkingId == currentServerId) {
+    if (currentServerId != null && checkingId == currentServerId) {
       return true;
     }
     if (!visited.add(checkingId)) {
