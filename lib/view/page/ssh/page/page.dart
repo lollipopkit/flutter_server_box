@@ -395,6 +395,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         _terminalController.clearSelection();
         return;
       }
+      return;
     }
     await _onTerminalPaste();
   }
