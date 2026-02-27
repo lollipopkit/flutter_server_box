@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:easy_isolate/easy_isolate.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/utils/jump_chain.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
@@ -28,7 +29,11 @@ class SftpWorker {
   /// the threads
   Future<void> init() async {
     if (worker.isInitialized) worker.dispose();
-    await worker.init(mainMessageHandler, isolateMessageHandler, errorHandler: print);
+    await worker.init(
+      mainMessageHandler,
+      isolateMessageHandler,
+      errorHandler: print,
+    );
     worker.sendMessage(req);
   }
 
@@ -39,7 +44,11 @@ class SftpWorker {
 }
 
 /// Handle the messages coming from the main
-Future<void> isolateMessageHandler(dynamic data, SendPort mainSendPort, SendErrorFunction sendError) async {
+Future<void> isolateMessageHandler(
+  dynamic data,
+  SendPort mainSendPort,
+  SendErrorFunction sendError,
+) async {
   switch (data) {
     case final SftpReq val:
       switch (val.type) {
@@ -56,7 +65,11 @@ Future<void> isolateMessageHandler(dynamic data, SendPort mainSendPort, SendErro
   }
 }
 
-Future<void> _download(SftpReq req, SendPort mainSendPort, SendErrorFunction sendError) async {
+Future<void> _download(
+  SftpReq req,
+  SendPort mainSendPort,
+  SendErrorFunction sendError,
+) async {
   try {
     mainSendPort.send(SftpWorkerStatus.preparing);
     final watch = Stopwatch()..start();
@@ -65,12 +78,17 @@ Future<void> _download(SftpReq req, SendPort mainSendPort, SendErrorFunction sen
       privateKey: req.privateKey,
       jumpSpi: req.jumpSpi,
       jumpPrivateKey: req.jumpPrivateKey,
+      privateKeysByKeyId: req.privateKeysByKeyId,
+      jumpSpisById: req.jumpSpisById,
       knownHostFingerprints: req.knownHostFingerprints,
     );
     mainSendPort.send(SftpWorkerStatus.sshConnectted);
 
     /// Create the directory if not exists
-    final dirPath = req.localPath.substring(0, req.localPath.lastIndexOf(Pfs.seperator));
+    final dirPath = req.localPath.substring(
+      0,
+      req.localPath.lastIndexOf(Pfs.seperator),
+    );
     await Directory(dirPath).create(recursive: true);
 
     /// Use [FileMode.write] to overwrite the file
@@ -92,7 +110,9 @@ Future<void> _download(SftpReq req, SendPort mainSendPort, SendErrorFunction sen
 
     while (totalRead < size) {
       final remaining = size - totalRead;
-      final chunkSize = remaining > defaultChunkSize ? defaultChunkSize : remaining;
+      final chunkSize = remaining > defaultChunkSize
+          ? defaultChunkSize
+          : remaining;
       dprint('Size: $size, Total Read: $totalRead, Chunk Size: $chunkSize');
 
       final fileData = file.read(offset: totalRead, length: chunkSize);
@@ -113,7 +133,11 @@ Future<void> _download(SftpReq req, SendPort mainSendPort, SendErrorFunction sen
   }
 }
 
-Future<void> _upload(SftpReq req, SendPort mainSendPort, SendErrorFunction sendError) async {
+Future<void> _upload(
+  SftpReq req,
+  SendPort mainSendPort,
+  SendErrorFunction sendError,
+) async {
   try {
     mainSendPort.send(SftpWorkerStatus.preparing);
     final watch = Stopwatch()..start();
@@ -122,6 +146,8 @@ Future<void> _upload(SftpReq req, SendPort mainSendPort, SendErrorFunction sendE
       privateKey: req.privateKey,
       jumpSpi: req.jumpSpi,
       jumpPrivateKey: req.jumpPrivateKey,
+      privateKeysByKeyId: req.privateKeysByKeyId,
+      jumpSpisById: req.jumpSpisById,
       knownHostFingerprints: req.knownHostFingerprints,
     );
     mainSendPort.send(SftpWorkerStatus.sshConnectted);
@@ -139,7 +165,10 @@ Future<void> _upload(SftpReq req, SendPort mainSendPort, SendErrorFunction sendE
     // If remote exists, overwrite it
     final file = await sftp.open(
       req.remotePath,
-      mode: SftpFileOpenMode.truncate | SftpFileOpenMode.create | SftpFileOpenMode.write,
+      mode:
+          SftpFileOpenMode.truncate |
+          SftpFileOpenMode.create |
+          SftpFileOpenMode.write,
     );
     final writer = file.write(
       localFile,

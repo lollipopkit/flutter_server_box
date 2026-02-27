@@ -33,7 +33,10 @@ enum GenSSHClientStatus { socket, key, pwd }
 String getPrivateKey(String id) {
   final pki = Stores.key.fetchOne(id);
   if (pki == null) {
-    throw SSHErr(type: SSHErrType.noPrivateKey, message: l10n.privateKeyNotFoundFmt(id));
+    throw SSHErr(
+      type: SSHErrType.noPrivateKey,
+      message: l10n.privateKeyNotFoundFmt(id),
+    );
   }
   return pki.key;
 }
@@ -47,6 +50,12 @@ Future<SSHClient> genClient(
 
   /// Only pass this param if using multi-threading and key login
   String? jumpPrivateKey,
+
+  /// Prefer this map in isolate mode, fallback to [Stores.key] otherwise.
+  Map<String, String>? privateKeysByKeyId,
+
+  /// Prefer this map in isolate mode, fallback to [Stores.server] otherwise.
+  Map<String, Spi>? jumpSpisById,
   Duration timeout = const Duration(seconds: 5),
 
   /// [Spi] of the jump server
@@ -59,10 +68,23 @@ Future<SSHClient> genClient(
   Map<String, String>? knownHostFingerprints,
   void Function(String storageKey, String fingerprintHex)? onHostKeyAccepted,
   Future<bool> Function(HostKeyPromptInfo info)? onHostKeyPrompt,
+  Set<String>? visitedServerIds,
 }) async {
+  final chainVisitedServerIds = visitedServerIds ?? <String>{};
+  final currentServerId = _hostIdentifier(spi);
+  if (!chainVisitedServerIds.add(currentServerId)) {
+    throw SSHErr(
+      type: SSHErrType.connect,
+      message:
+          'Invalid jump chain: cycle detected at ${spi.name} ($currentServerId)',
+    );
+  }
+
   onStatus?.call(GenSSHClientStatus.socket);
 
-  final hostKeyCache = Map<String, String>.from(knownHostFingerprints ?? _loadKnownHostFingerprints());
+  final hostKeyCache = Map<String, String>.from(
+    knownHostFingerprints ?? _loadKnownHostFingerprints(),
+  );
   final hostKeyPersist = onHostKeyAccepted ?? _persistHostKeyFingerprint;
   final hostKeyPrompt = onHostKeyPrompt ?? _defaultHostKeyPrompt;
 
@@ -74,16 +96,33 @@ Future<SSHClient> genClient(
       // Multi-thread or key login
       if (jumpSpi != null) return jumpSpi;
       // Main thread
-      if (spi.jumpId != null) return Stores.server.box.get(spi.jumpId);
+      final jumpId = spi.jumpId;
+      if (jumpId != null) {
+        return jumpSpisById?[jumpId] ?? Stores.server.box.get(jumpId);
+      }
     }();
     if (jumpSpi_ != null) {
+      String? nextJumpPrivateKey;
+      final jumpSpiKeyId = jumpSpi_.keyId;
+      if (jumpSpi != null &&
+          jumpSpi.id == jumpSpi_.id &&
+          jumpPrivateKey != null) {
+        // Isolate mode may preload first-hop key and pass it via [jumpPrivateKey].
+        nextJumpPrivateKey = jumpPrivateKey;
+      } else if (jumpSpiKeyId != null) {
+        nextJumpPrivateKey = privateKeysByKeyId?[jumpSpiKeyId];
+      }
+
       final jumpClient = await genClient(
         jumpSpi_,
-        privateKey: jumpPrivateKey,
+        privateKey: nextJumpPrivateKey,
+        privateKeysByKeyId: privateKeysByKeyId,
+        jumpSpisById: jumpSpisById,
         timeout: timeout,
         knownHostFingerprints: hostKeyCache,
         onHostKeyAccepted: hostKeyPersist,
-        onHostKeyPrompt: onHostKeyPrompt,
+        onHostKeyPrompt: hostKeyPrompt,
+        visitedServerIds: chainVisitedServerIds,
       );
 
       return await jumpClient.forwardLocal(spi.ip, spi.port);
@@ -126,7 +165,7 @@ Future<SSHClient> genClient(
       // printTrace: debugPrint,
     );
   }
-  privateKey ??= getPrivateKey(keyId);
+  privateKey ??= privateKeysByKeyId?[keyId] ?? getPrivateKey(keyId);
 
   onStatus?.call(GenSSHClientStatus.key);
   return SSHClient(
@@ -141,7 +180,8 @@ Future<SSHClient> genClient(
   );
 }
 
-typedef _HostKeyPersistCallback = void Function(String storageKey, String fingerprintHex);
+typedef _HostKeyPersistCallback =
+    void Function(String storageKey, String fingerprintHex);
 
 class HostKeyPromptInfo {
   HostKeyPromptInfo({
@@ -191,7 +231,9 @@ class _HostKeyVerifier {
         ),
       );
       if (!accepted) {
-        Loggers.app.warning('User rejected new SSH host key for ${spi.name} ($keyType).');
+        Loggers.app.warning(
+          'User rejected new SSH host key for ${spi.name} ($keyType).',
+        );
         return false;
       }
       _cache[storageKey] = fingerprintHex;
@@ -224,7 +266,9 @@ class _HostKeyVerifier {
 
     _cache[storageKey] = fingerprintHex;
     persistCallback?.call(storageKey, fingerprintHex);
-    Loggers.app.warning('Updated stored SSH host key for ${spi.name} ($keyType) after user confirmation.');
+    Loggers.app.warning(
+      'Updated stored SSH host key for ${spi.name} ($keyType) after user confirmation.',
+    );
     return true;
   }
 }
@@ -257,7 +301,9 @@ void _persistHostKeyFingerprint(String storageKey, String fingerprintHex) {
 Future<bool> _defaultHostKeyPrompt(HostKeyPromptInfo info) async {
   final ctx = AppNavigator.context;
   if (ctx == null) {
-    Loggers.app.warning('Host key prompt skipped: navigator context unavailable.');
+    Loggers.app.warning(
+      'Host key prompt skipped: navigator context unavailable.',
+    );
     return false;
   }
 
@@ -279,10 +325,14 @@ Future<bool> _defaultHostKeyPrompt(HostKeyPromptInfo info) async {
         SelectableText('${libL10n.addr}: $hostLine'),
         SelectableText('${l10n.sshHostKeyType}: ${info.keyType}'),
         SelectableText(l10n.sshHostKeyFingerprintMd5Hex(info.fingerprintHex)),
-        SelectableText(l10n.sshHostKeyFingerprintMd5Base64(info.fingerprintBase64)),
+        SelectableText(
+          l10n.sshHostKeyFingerprintMd5Base64(info.fingerprintBase64),
+        ),
         if (info.previousFingerprintHex != null) ...[
           const SizedBox(height: 12),
-          SelectableText(l10n.sshHostKeyStoredFingerprint(info.previousFingerprintHex!)),
+          SelectableText(
+            l10n.sshHostKeyStoredFingerprint(info.previousFingerprintHex!),
+          ),
         ],
       ],
     ),
@@ -299,18 +349,35 @@ Future<void> ensureKnownHostKey(
   Spi spi, {
   Duration timeout = const Duration(seconds: 5),
   SSHUserInfoRequestHandler? onKeyboardInteractive,
+  Map<String, Spi>? jumpSpisById,
+  Set<String>? visitedServerIds,
 }) async {
+  final chainVisitedServerIds = visitedServerIds ?? <String>{};
+  final currentServerId = _hostIdentifier(spi);
+  if (!chainVisitedServerIds.add(currentServerId)) {
+    throw SSHErr(
+      type: SSHErrType.connect,
+      message:
+          'Invalid jump chain: cycle detected at ${spi.name} ($currentServerId)',
+    );
+  }
+
   final cache = _loadKnownHostFingerprints();
   if (_hasKnownHostFingerprintForSpi(spi, cache)) {
     return;
   }
 
-  final jumpSpi = spi.jumpId != null ? Stores.server.box.get(spi.jumpId) : null;
+  final jumpId = spi.jumpId;
+  final jumpSpi = jumpId != null
+      ? (jumpSpisById?[jumpId] ?? Stores.server.box.get(jumpId))
+      : null;
   if (jumpSpi != null && !_hasKnownHostFingerprintForSpi(jumpSpi, cache)) {
     await ensureKnownHostKey(
       jumpSpi,
       timeout: timeout,
       onKeyboardInteractive: onKeyboardInteractive,
+      jumpSpisById: jumpSpisById,
+      visitedServerIds: chainVisitedServerIds,
     );
     cache.addAll(_loadKnownHostFingerprints());
     if (_hasKnownHostFingerprintForSpi(spi, cache)) return;
@@ -351,4 +418,5 @@ String _fingerprintToHex(Uint8List fingerprint) {
   return buffer.toString();
 }
 
-String _fingerprintToBase64(Uint8List fingerprint) => base64.encode(fingerprint);
+String _fingerprintToBase64(Uint8List fingerprint) =>
+    base64.encode(fingerprint);

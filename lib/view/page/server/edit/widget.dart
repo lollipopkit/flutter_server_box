@@ -354,8 +354,8 @@ extension _Widgets on _ServerEditPageState {
         .watch(serversProvider)
         .servers
         .values
-        .where((e) => e.jumpId == null)
         .where((e) => e.id != spi?.id)
+        .where((e) => !_isInvalidJumpSelection(e.id))
         .toList();
     final choice = _jumpServer.listenVal((val) {
       final srv = srvs.firstWhereOrNull((e) => e.id == _jumpServer.value);

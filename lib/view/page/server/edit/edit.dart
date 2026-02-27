@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/core/utils/jump_chain.dart';
 import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
@@ -32,13 +33,17 @@ class ServerEditPage extends ConsumerStatefulWidget {
 
   const ServerEditPage({super.key, this.args});
 
-  static const route = AppRoute<bool, SpiRequiredArgs>(page: ServerEditPage.new, path: '/servers/edit');
+  static const route = AppRoute<bool, SpiRequiredArgs>(
+    page: ServerEditPage.new,
+    path: '/servers/edit',
+  );
 
   @override
   ConsumerState<ServerEditPage> createState() => _ServerEditPageState();
 }
 
-class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayoutMixin {
+class _ServerEditPageState extends ConsumerState<ServerEditPage>
+    with AfterLayoutMixin {
   late final spi = widget.args?.spi;
   final _nameController = TextEditingController();
   final _ipController = TextEditingController();
@@ -140,7 +145,10 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage> with AfterLayou
     final children = [
       SizedBox(
         height: 50,
-        child: ListView(scrollDirection: Axis.horizontal, children: topItems.joinWith(UIs.width13).toList()),
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: topItems.joinWith(UIs.width13).toList(),
+        ),
       ),
       Input(
         autoFocus: true,

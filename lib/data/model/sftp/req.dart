@@ -8,19 +8,57 @@ class SftpReq {
   String? privateKey;
   Spi? jumpSpi;
   String? jumpPrivateKey;
+  Map<String, Spi>? jumpSpisById;
+  Map<String, String>? privateKeysByKeyId;
   Map<String, String>? knownHostFingerprints;
 
   SftpReq(this.spi, this.remotePath, this.localPath, this.type) {
+    privateKeysByKeyId = {};
+
     final keyId = spi.keyId;
     if (keyId != null) {
       privateKey = getPrivateKey(keyId);
+      privateKeysByKeyId![keyId] = privateKey!;
     }
+
+    final allServers = {
+      for (final server in Stores.server.fetch()) server.id: server,
+    };
+    jumpSpisById = collectJumpServers(spi: spi, serversById: allServers);
+
     if (spi.jumpId != null) {
-      jumpSpi = Stores.server.box.get(spi.jumpId);
+      jumpSpi = jumpSpisById?[spi.jumpId];
       jumpPrivateKey = Stores.key.fetchOne(jumpSpi?.keyId)?.key;
+      if (jumpSpi?.keyId case final jumpKeyId?) {
+        if (jumpPrivateKey != null) {
+          privateKeysByKeyId![jumpKeyId] = jumpPrivateKey!;
+        }
+      }
     }
+
+    for (final jump in jumpSpisById?.values ?? const <Spi>[]) {
+      final jumpKeyId = jump.keyId;
+      if (jumpKeyId == null || privateKeysByKeyId!.containsKey(jumpKeyId)) {
+        continue;
+      }
+      final key = Stores.key.fetchOne(jumpKeyId)?.key;
+      if (key == null) {
+        continue;
+      }
+      privateKeysByKeyId![jumpKeyId] = key;
+    }
+
+    if (jumpSpisById != null && jumpSpisById!.isEmpty) {
+      jumpSpisById = null;
+    }
+    if (privateKeysByKeyId != null && privateKeysByKeyId!.isEmpty) {
+      privateKeysByKeyId = null;
+    }
+
     try {
-      knownHostFingerprints = Map<String, String>.from(Stores.setting.sshKnownHostFingerprints.get());
+      knownHostFingerprints = Map<String, String>.from(
+        Stores.setting.sshKnownHostFingerprints.get(),
+      );
     } catch (e, s) {
       Loggers.app.warning('Failed to load SSH known host fingerprints', e, s);
       knownHostFingerprints = null;
@@ -46,8 +84,11 @@ class SftpReqStatus {
   Exception? error;
   Duration? spentTime;
 
-  SftpReqStatus({required this.req, required this.notifyListeners, this.completer})
-    : id = DateTime.now().microsecondsSinceEpoch {
+  SftpReqStatus({
+    required this.req,
+    required this.notifyListeners,
+    this.completer,
+  }) : id = DateTime.now().microsecondsSinceEpoch {
     worker = SftpWorker(onNotify: onNotify, req: req)..init();
   }
 
