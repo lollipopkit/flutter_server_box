@@ -19,7 +19,7 @@ class _SftpMissionPageState extends ConsumerState<SftpMissionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: Text(l10n.mission, style: UIs.text18)),
+      appBar: CustomAppBar(title: Text(libL10n.mission, style: UIs.text18)),
       body: _buildBody(),
     );
   }
@@ -140,7 +140,7 @@ class _SftpMissionPageState extends ConsumerState<SftpMissionPage> {
     return IconButton(
       onPressed: () => context.showRoundDialog(
         title: libL10n.attention,
-        child: Text(libL10n.askContinue('${libL10n.delete} ${l10n.mission}($name)')),
+        child: Text(libL10n.askContinue('${libL10n.delete} ${libL10n.mission}($name)')),
         actions: Btn.ok(
           onTap: () {
             ref.read(sftpProvider.notifier).cancel(id);

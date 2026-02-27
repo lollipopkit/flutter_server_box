@@ -64,9 +64,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiInsertTerminal => 'Terminale ekle';
 
   @override
-  String get askAiModel => 'Model';
-
-  @override
   String get askAiNoResponse => 'Yanıt yok';
 
   @override
@@ -131,9 +128,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get backupVersionNotMatch => 'Yedekleme sürümü eşleşmiyor.';
 
   @override
-  String get battery => 'Pil';
-
-  @override
   String get bgRun => 'Arka planda çalıştır';
 
   @override
@@ -169,20 +163,11 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get confirm => 'Confirm';
-
-  @override
   String get closeAfterSave => 'Kaydet ve kapat';
-
-  @override
-  String get cmd => 'Komut';
 
   @override
   String get collapseUITip =>
       'Arayüzde uzun listelerin varsayılan olarak daraltılıp daraltılmayacağı';
-
-  @override
-  String get conn => 'Bağlantı';
 
   @override
   String get connectionDetails => 'Bağlantı Detayları';
@@ -193,9 +178,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get connectionStatsDesc =>
       'Sunucu bağlantı başarı oranını ve geçmişi görüntüle';
-
-  @override
-  String get container => 'Konteyner';
 
   @override
   String get containerTrySudoTip =>
@@ -226,17 +208,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get customCmd => 'Özel komutlar';
 
   @override
-  String get customCmdDocUrl =>
-      'https://github.com/lollipopkit/flutter_server_box/wiki#özel-komutlar';
-
-  @override
   String get customCmdHint => '\"Komut Adı\": \"Komut\"';
-
-  @override
-  String get decode => 'Çöz';
-
-  @override
-  String get decompress => 'Sıkıştırmayı aç';
 
   @override
   String get deleteServers => 'Sunucuları toplu sil';
@@ -249,9 +221,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dirEmpty => 'Klasörün boş olduğundan emin olun.';
 
   @override
-  String get disconnected => 'Bağlantı kesildi';
-
-  @override
   String get discoverSshServers => 'SSH Sunucularını Keşfet';
 
   @override
@@ -262,9 +231,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get discoverySummary => 'Keşif Özeti';
-
-  @override
-  String get disk => 'Disk';
 
   @override
   String get diskHealth => 'Disk sağlığı';
@@ -320,17 +286,11 @@ class AppLocalizationsTr extends AppLocalizations {
       'Mevcut kod vurgulama performansı ideal değil ve isteğe bağlı olarak kapatılabilir.';
 
   @override
-  String get emulator => 'Emülatör';
-
-  @override
   String get enableMdns => 'mDNS\'yi Etkinleştir';
 
   @override
   String get enableMdnsDesc =>
       'SSH hizmetlerini keşfetmek için mDNS/Bonjour kullan';
-
-  @override
-  String get encode => 'Kodla';
 
   @override
   String get envVars => 'Ortam değişkeni';
@@ -370,9 +330,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fontSize => 'Yazı tipi boyutu';
 
   @override
-  String get force => 'Zorla';
-
-  @override
   String get fullScreen => 'Tam ekran modu';
 
   @override
@@ -408,9 +365,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeWidgetUrlConfig => 'Ana ekran bileşeni URL\'sini yapılandır';
 
   @override
-  String get host => 'Ana bilgisayar';
-
-  @override
   String httpFailedWithCode(Object code) {
     return 'İstek başarısız oldu, durum kodu: $code';
   }
@@ -423,12 +377,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get imagesList => 'Görüntü listesi';
-
-  @override
-  String get inner => 'İç';
-
-  @override
-  String get install => 'Kur';
 
   @override
   String get installDockerWithUrl =>
@@ -471,12 +419,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Devre dışı bırakılması önerilir, ancak devre dışı bırakıldığında CJK karakterlerini girmek mümkün olmayacaktır.';
 
   @override
-  String get location => 'Konum';
-
-  @override
-  String get loss => 'Kayıp';
-
-  @override
   String madeWithLove(Object myGithub) {
     return '$myGithub tarafından ❤️ ile yapıldı';
   }
@@ -497,9 +439,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get min => 'min';
 
   @override
-  String get mission => 'Görev';
-
-  @override
   String get more => 'Daha fazla';
 
   @override
@@ -507,17 +446,11 @@ class AppLocalizationsTr extends AppLocalizations {
       'Açık: Sunucu Sekmesi sayfasındaki her kartın altında görüntülenebilir. Kapalı: Sunucu Ayrıntıları sayfasının üstünde görüntülenebilir.';
 
   @override
-  String get ms => 'ms';
-
-  @override
   String get needHomeDir =>
       'Synology kullanıcısıysanız, [buraya bakın](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Diğer sistem kullanıcılarının bir ana dizin oluşturma yöntemini araması gerekir.';
 
   @override
   String get needRestart => 'Uygulamanın yeniden başlatılması gerekiyor';
-
-  @override
-  String get net => 'Ağ';
 
   @override
   String get netViewType => 'Ağ görüntüleme türü';
@@ -540,12 +473,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get noPromptAgain => 'Tekrar sorma';
-
-  @override
-  String get node => 'Düğüm';
-
-  @override
-  String get notAvailable => 'Kullanılamaz';
 
   @override
   String get onServerDetailPage => 'Sunucu ayrıntı sayfasında';
@@ -577,9 +504,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get permission => 'İzinler';
 
   @override
-  String get pingAvg => 'Ort:';
-
-  @override
   String get pingInputIP => 'Lütfen bir hedef IP / alan adı girin.';
 
   @override
@@ -587,13 +511,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Ping yapılacak sunucu yok.\nLütfen sunucu sekmesinde bir sunucu ekleyin.';
 
   @override
-  String get pkg => 'Paket';
-
-  @override
   String get plugInType => 'Eklenti Türü';
-
-  @override
-  String get port => 'Port';
 
   @override
   String get preferDiskAmount => 'Disk kapasitesini öncelikli olarak göster';
@@ -605,12 +523,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String privateKeyNotFoundFmt(Object keyId) {
     return 'Özel anahtar [$keyId] bulunamadı.';
   }
-
-  @override
-  String get process => 'İşlem';
-
-  @override
-  String get prune => 'Budamak';
 
   @override
   String get pushToken => 'Push belirteci';
@@ -631,9 +543,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get read => 'Oku';
 
   @override
-  String get reboot => 'Yeniden başlat';
-
-  @override
   String get recentConnections => 'Son Bağlantılar';
 
   @override
@@ -650,22 +559,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get remotePath => 'Uzak yol';
 
   @override
-  String get restart => 'Yeniden başlat';
-
-  @override
   String get result => 'Sonuç';
 
   @override
   String get rotateAngel => 'Dönüş açısı';
-
-  @override
-  String get route => 'Yönlendirme';
-
-  @override
-  String get run => 'Çalıştır';
-
-  @override
-  String get running => 'Çalışıyor';
 
   @override
   String get sameIdServerExist => 'Aynı kimliğe sahip bir sunucu zaten mevcut';
@@ -674,19 +571,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get save => 'Kaydet';
 
   @override
-  String get saved => 'Kaydedildi';
-
-  @override
   String get second => 's';
-
-  @override
-  String get sensors => 'Sensör';
-
-  @override
-  String get sequence => 'Sıra';
-
-  @override
-  String get server => 'Sunucu';
 
   @override
   String get serverDetailOrder => 'Ayrıntı sayfası bileşen sırası';
@@ -699,9 +584,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get serverTabRequired => 'Sunucu sekmesi kaldırılamaz';
-
-  @override
-  String get servers => 'sunucu';
 
   @override
   String get sftpDlPrepare => 'Bağlantı hazırlanıyor...';
@@ -724,13 +606,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get showDistLogo => 'Dağıtım logosunu göster';
 
   @override
-  String get shutdown => 'Kapat';
-
-  @override
   String get size => 'Boyut';
-
-  @override
-  String get snippet => 'Kod parçacığı';
 
   @override
   String get softWrap => 'Yumuşak kaydırma';
@@ -845,29 +721,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sshVirtualKeyAutoOff => 'Sanal tuşların otomatik geçişi';
 
   @override
-  String get start => 'Başlat';
-
-  @override
   String get stat => 'İstatistik';
-
-  @override
-  String get stats => 'İstatistikler';
-
-  @override
-  String get stop => 'Durdur';
-
-  @override
-  String get stopped => 'Durduruldu';
-
-  @override
-  String get storage => 'Depolama';
 
   @override
   String get supportFmtArgs =>
       'Aşağıdaki biçimlendirme parametreleri desteklenir:';
-
-  @override
-  String get suspend => 'Askıya al';
 
   @override
   String get suspendTip =>
@@ -893,17 +751,8 @@ class AppLocalizationsTr extends AppLocalizations {
       'Ağınızdaki SSH sunucularını keşfetmek için arama düğmesine dokunun';
 
   @override
-  String get temperature => 'Sıcaklık';
-
-  @override
   String get termFontSizeTip =>
       'Bu ayar terminal boyutunu (genişlik ve yükseklik) etkiler. Terminal sayfasında yakınlaştırarak mevcut oturumun yazı tipi boyutunu ayarlayabilirsiniz.';
-
-  @override
-  String get terminal => 'Terminal';
-
-  @override
-  String get test => 'Test';
 
   @override
   String get textScaler => 'Metin ölçekleyici';
@@ -913,28 +762,13 @@ class AppLocalizationsTr extends AppLocalizations {
       '1.0 => %100 (orijinal boyut), yalnızca sunucu sayfasındaki yazı tipinin bir kısmı üzerinde çalışır, değiştirilmesi önerilmez.';
 
   @override
-  String get theme => 'Tema';
-
-  @override
   String get time => 'Zaman';
 
   @override
   String get times => 'Kez';
 
   @override
-  String get total => 'Toplam';
-
-  @override
-  String get totalAttempts => 'Toplam';
-
-  @override
-  String get traffic => 'Trafik';
-
-  @override
   String get trySudo => 'Sudo ile dene';
-
-  @override
-  String get ttl => 'TTL';
 
   @override
   String get unknown => 'Bilinmeyen';
@@ -954,9 +788,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get upsideDown => 'Başaşağı';
-
-  @override
-  String get uptime => 'Çalışma süresi';
 
   @override
   String get useCdn => 'CDN kullan';
@@ -1024,28 +855,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.';
 
   @override
-  String get menuSettings => 'Setting';
-
-  @override
-  String get menuQuit => 'Quit';
-
-  @override
-  String get menuNavigate => 'Navigate';
-
-  @override
-  String get menuInfo => 'Info';
-
-  @override
   String get menuGitHubRepository => 'GitHub Repository';
-
-  @override
-  String get menuWiki => 'Wiki';
-
-  @override
-  String get menuHelp => 'Help';
-
-  @override
-  String get logs => 'Günlükler';
 
   @override
   String get podmanDockerEmulationDetected =>

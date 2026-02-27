@@ -65,9 +65,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get askAiInsertTerminal => 'Inserisci nel terminale';
 
   @override
-  String get askAiModel => 'Modello';
-
-  @override
   String get askAiNoResponse => 'Nessuna risposta';
 
   @override
@@ -132,9 +129,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get backupVersionNotMatch => 'La versione del backup non corrisponde.';
 
   @override
-  String get battery => 'Batteria';
-
-  @override
   String get bgRun => 'Esegui in background';
 
   @override
@@ -170,20 +164,11 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get confirm => 'Conferma';
-
-  @override
   String get closeAfterSave => 'Salva e chiudi';
-
-  @override
-  String get cmd => 'Comando';
 
   @override
   String get collapseUITip =>
       'Se comprimere le liste lunghe presenti nell\'interfaccia utente per impostazione predefinita';
-
-  @override
-  String get conn => 'Connessione';
 
   @override
   String get connectionDetails => 'Dettagli connessione';
@@ -194,9 +179,6 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get connectionStatsDesc =>
       'Visualizza il tasso di successo della connessione al server e la cronologia';
-
-  @override
-  String get container => 'Container';
 
   @override
   String get containerTrySudoTip =>
@@ -227,17 +209,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get customCmd => 'Comandi personalizzati';
 
   @override
-  String get customCmdDocUrl =>
-      'https://github.com/lollipopkit/flutter_server_box/wiki#custom-commands';
-
-  @override
   String get customCmdHint => '\"Nome comando\": \"Comando\"';
-
-  @override
-  String get decode => 'Decodifica';
-
-  @override
-  String get decompress => 'Decomprimi';
 
   @override
   String get deleteServers => 'Elimina server in blocco';
@@ -250,9 +222,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get dirEmpty => 'Assicurati che la cartella sia vuota.';
 
   @override
-  String get disconnected => 'Disconnesso';
-
-  @override
   String get discoverSshServers => 'Scopri server SSH';
 
   @override
@@ -263,9 +232,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get discoverySummary => 'Riepilogo scoperta';
-
-  @override
-  String get disk => 'Disco';
 
   @override
   String get diskHealth => 'Salute disco';
@@ -321,16 +287,10 @@ class AppLocalizationsIt extends AppLocalizations {
       'Le attuali prestazioni di evidenziazione del codice non sono ideali e possono essere disabilitate opzionalmente per migliorare.';
 
   @override
-  String get emulator => 'Emulatore';
-
-  @override
   String get enableMdns => 'Abilita mDNS';
 
   @override
   String get enableMdnsDesc => 'Usa mDNS/Bonjour per scoprire servizi SSH';
-
-  @override
-  String get encode => 'Codifica';
 
   @override
   String get envVars => 'Variabile d\'ambiente';
@@ -370,9 +330,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get fontSize => 'Dimensione carattere';
 
   @override
-  String get force => 'Forza';
-
-  @override
   String get fullScreen => 'Modalità schermo intero';
 
   @override
@@ -408,9 +365,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get homeWidgetUrlConfig => 'Configura url widget home';
 
   @override
-  String get host => 'Host';
-
-  @override
   String httpFailedWithCode(Object code) {
     return 'richiesta fallita, codice stato: $code';
   }
@@ -423,12 +377,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get imagesList => 'Elenco immagini';
-
-  @override
-  String get inner => 'Interno';
-
-  @override
-  String get install => 'installa';
 
   @override
   String get installDockerWithUrl =>
@@ -471,12 +419,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'Si consiglia di disabilitare, ma dopo aver disabilitato, non sarà possibile inserire caratteri CJK.';
 
   @override
-  String get location => 'Posizione';
-
-  @override
-  String get loss => 'perdita';
-
-  @override
   String madeWithLove(Object myGithub) {
     return 'Realizzato con ❤️ da $myGithub';
   }
@@ -497,9 +439,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get min => 'min';
 
   @override
-  String get mission => 'Missione';
-
-  @override
   String get more => 'Altro';
 
   @override
@@ -507,17 +446,11 @@ class AppLocalizationsIt extends AppLocalizations {
       'Attivo: può essere visualizzato sotto ogni carta nella pagina Scheda Server. Disattivato: può essere visualizzato nella parte superiore della pagina Dettagli Server.';
 
   @override
-  String get ms => 'ms';
-
-  @override
   String get needHomeDir =>
       'Se sei un utente Synology, [vedi qui](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Gli utenti di altri sistemi devono cercare come creare una directory home.';
 
   @override
   String get needRestart => 'L\'app deve essere riavviata';
-
-  @override
-  String get net => 'Rete';
 
   @override
   String get netViewType => 'Tipo di visualizzazione rete';
@@ -541,12 +474,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get noPromptAgain => 'Non chiedere di nuovo';
-
-  @override
-  String get node => 'Nodo';
-
-  @override
-  String get notAvailable => 'Non disponibile';
 
   @override
   String get onServerDetailPage => 'Nella pagina dettagli server';
@@ -578,9 +505,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get permission => 'Permessi';
 
   @override
-  String get pingAvg => 'Media:';
-
-  @override
   String get pingInputIP => 'Inserisci un IP / dominio di destinazione.';
 
   @override
@@ -588,13 +512,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Nessun server da pingare.\nAggiungi un server nella scheda server.';
 
   @override
-  String get pkg => 'Pkg';
-
-  @override
   String get plugInType => 'Tipo di inserimento';
-
-  @override
-  String get port => 'Porta';
 
   @override
   String get preferDiskAmount => 'Priorità visualizzazione capacità disco';
@@ -606,12 +524,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String privateKeyNotFoundFmt(Object keyId) {
     return 'Chiave privata [$keyId] non trovata.';
   }
-
-  @override
-  String get process => 'Processo';
-
-  @override
-  String get prune => 'Potatura';
 
   @override
   String get pushToken => 'Token push';
@@ -632,9 +544,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get read => 'Leggi';
 
   @override
-  String get reboot => 'Riavvia';
-
-  @override
   String get recentConnections => 'Connessioni recenti';
 
   @override
@@ -651,22 +560,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get remotePath => 'Percorso remoto';
 
   @override
-  String get restart => 'Riavvia';
-
-  @override
   String get result => 'Risultato';
 
   @override
   String get rotateAngel => 'Angolo di rotazione';
-
-  @override
-  String get route => 'Routing';
-
-  @override
-  String get run => 'Esegui';
-
-  @override
-  String get running => 'In esecuzione';
 
   @override
   String get sameIdServerExist => 'Esiste già un server con lo stesso ID';
@@ -675,19 +572,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get save => 'Salva';
 
   @override
-  String get saved => 'Salvato';
-
-  @override
   String get second => 's';
-
-  @override
-  String get sensors => 'Sensori';
-
-  @override
-  String get sequence => 'Sequenza';
-
-  @override
-  String get server => 'Server';
 
   @override
   String get serverDetailOrder => 'Ordine widget pagina dettagli';
@@ -700,9 +585,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get serverTabRequired => 'La scheda server non può essere rimossa';
-
-  @override
-  String get servers => 'server';
 
   @override
   String get sftpDlPrepare => 'Preparazione alla connessione...';
@@ -725,13 +607,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get showDistLogo => 'Mostra logo distribuzione';
 
   @override
-  String get shutdown => 'Spegni';
-
-  @override
   String get size => 'Dimensione';
-
-  @override
-  String get snippet => 'Snippet';
 
   @override
   String get softWrap => 'A capo automatico';
@@ -849,29 +725,11 @@ class AppLocalizationsIt extends AppLocalizations {
       'Commutazione automatica dei tasti virtuali';
 
   @override
-  String get start => 'Avvia';
-
-  @override
   String get stat => 'Statistiche';
-
-  @override
-  String get stats => 'Statistiche';
-
-  @override
-  String get stop => 'Ferma';
-
-  @override
-  String get stopped => 'Fermato';
-
-  @override
-  String get storage => 'Archiviazione';
 
   @override
   String get supportFmtArgs =>
       'Sono supportati i seguenti parametri di formattazione:';
-
-  @override
-  String get suspend => 'Sospendi';
 
   @override
   String get suspendTip =>
@@ -897,17 +755,8 @@ class AppLocalizationsIt extends AppLocalizations {
       'Tocca il pulsante di ricerca per scoprire i server SSH sulla tua rete';
 
   @override
-  String get temperature => 'Temperatura';
-
-  @override
   String get termFontSizeTip =>
       'Questa impostazione influirà sulla dimensione del terminale (larghezza e altezza). Puoi ingrandire la pagina del terminale per regolare la dimensione del carattere della sessione corrente.';
-
-  @override
-  String get terminal => 'Terminale';
-
-  @override
-  String get test => 'Test';
 
   @override
   String get textScaler => 'Scalatore testo';
@@ -917,28 +766,13 @@ class AppLocalizationsIt extends AppLocalizations {
       '1.0 => 100% (dimensione originale), funziona solo su parte del carattere della pagina server, non si consiglia di cambiare.';
 
   @override
-  String get theme => 'Tema';
-
-  @override
   String get time => 'Tempo';
 
   @override
   String get times => 'Volte';
 
   @override
-  String get total => 'Totale';
-
-  @override
-  String get totalAttempts => 'Totale';
-
-  @override
-  String get traffic => 'Traffico';
-
-  @override
   String get trySudo => 'Prova a usare sudo';
-
-  @override
-  String get ttl => 'TTL';
 
   @override
   String get unknown => 'Sconosciuto';
@@ -959,9 +793,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get upsideDown => 'Capovolto';
-
-  @override
-  String get uptime => 'Tempo di attività';
 
   @override
   String get useCdn => 'Utilizzo CDN';
@@ -1029,28 +860,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Dopo essersi connessi al server, uno script verrà scritto in `~/.config/server_box` \n | `/tmp/server_box` per monitorare lo stato del sistema. Puoi rivedere il contenuto dello script.';
 
   @override
-  String get menuSettings => 'Impostazioni';
-
-  @override
-  String get menuQuit => 'Esci';
-
-  @override
-  String get menuNavigate => 'Naviga';
-
-  @override
-  String get menuInfo => 'Info';
-
-  @override
   String get menuGitHubRepository => 'Repository GitHub';
-
-  @override
-  String get menuWiki => 'Wiki';
-
-  @override
-  String get menuHelp => 'Aiuto';
-
-  @override
-  String get logs => 'Log';
 
   @override
   String get podmanDockerEmulationDetected =>

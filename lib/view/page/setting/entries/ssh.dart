@@ -114,7 +114,7 @@ extension _SSH on _AppSettingsPageState {
     return _setting.desktopTerminal.listenable().listenVal((val) {
       return ListTile(
         leading: const Icon(Icons.terminal),
-        title: TipText(l10n.terminal, l10n.desktopTerminalTip),
+        title: TipText(libL10n.terminal, l10n.desktopTerminalTip),
         trailing: Text(val, style: UIs.text15, maxLines: 1, overflow: TextOverflow.ellipsis),
         onTap: () {
           withTextFieldController((ctrl) async {
@@ -129,7 +129,7 @@ extension _SSH on _AppSettingsPageState {
               child: Input(
                 controller: ctrl,
                 autoFocus: true,
-                label: l10n.terminal,
+                label: libL10n.terminal,
                 hint: 'x-terminal-emulator / gnome-terminal',
                 icon: Icons.edit,
                 suggestion: false,
@@ -159,14 +159,14 @@ extension _SSH on _AppSettingsPageState {
 
     return ListTile(
       leading: const Icon(MingCute.moon_stars_fill, size: _kIconSize),
-      title: Text(l10n.theme),
+      title: Text(libL10n.theme),
       trailing: ValBuilder(
         listenable: _setting.termTheme.listenable(),
         builder: (val) => Text(index2Str(val), style: UIs.text15),
       ),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
-          title: l10n.theme,
+          title: libL10n.theme,
           items: List.generate(3, (index) => index),
           display: (p0) => index2Str(p0),
           initial: _setting.termTheme.fetch(),

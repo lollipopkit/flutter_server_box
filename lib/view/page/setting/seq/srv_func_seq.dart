@@ -1,6 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -19,7 +18,7 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: Text(l10n.sequence)),
+      appBar: CustomAppBar(title: Text(libL10n.sequence)),
       body: _buildBody(),
     );
   }

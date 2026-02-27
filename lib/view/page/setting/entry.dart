@@ -71,9 +71,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with SingleTickerPr
         ),
         actions: [
           Btn.text(
-            text: context.l10n.logs,
+            text: context.libL10n.logs,
             onTap: () =>
-                DebugPage.route.go(context, args: DebugPageArgs(title: '${context.l10n.logs}(${BuildData.build})')),
+                DebugPage.route.go(context, args: DebugPageArgs(title: '${context.libL10n.logs}(${BuildData.build})')),
           ),
           Btn.icon(
             icon: const Icon(Icons.delete),
@@ -122,9 +122,9 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
     return MultiList(
       children: [
         [const CenterGreyTitle('App'), _buildApp(), const CenterGreyTitle('AI'), _buildAskAiConfig()],
-        [CenterGreyTitle(l10n.server), _buildServer()],
+        [CenterGreyTitle(libL10n.server), _buildServer()],
         [const CenterGreyTitle('SSH'), _buildSSH(), const CenterGreyTitle('SFTP'), _buildSFTP()],
-        [CenterGreyTitle(l10n.container), _buildContainer(), CenterGreyTitle(libL10n.editor), _buildEditor()],
+        [CenterGreyTitle(libL10n.container), _buildContainer(), CenterGreyTitle(libL10n.editor), _buildEditor()],
 
         /// Fullscreen Mode is designed for old mobile phone which can be
         /// used as a status screen.

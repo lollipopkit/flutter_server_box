@@ -56,7 +56,7 @@ extension _Operation on _ServerPageState {
         ) ??
             (null, '');
       },
-      typ: l10n.suspend,
+      typ: libL10n.suspend,
       name: srv.spi.name,
     );
   }
@@ -70,7 +70,7 @@ extension _Operation on _ServerPageState {
           id: srv.id,
         );
       },
-      typ: l10n.shutdown,
+      typ: libL10n.shutdown,
       name: srv.spi.name,
     );
   }
@@ -85,7 +85,7 @@ extension _Operation on _ServerPageState {
         ) ??
             (null, '');
       },
-      typ: l10n.reboot,
+      typ: libL10n.reboot,
       name: srv.spi.name,
     );
   }
@@ -127,7 +127,7 @@ extension _Utils on _ServerPageState {
   void _askFor({required void Function() func, required String typ, required String name}) {
     context.showRoundDialog(
       title: libL10n.attention,
-      child: Text(libL10n.askContinue('$typ ${l10n.server}($name)')),
+      child: Text(libL10n.askContinue('$typ ${libL10n.server}($name)')),
       actions: Btn.ok(
         onTap: () {
           context.pop();

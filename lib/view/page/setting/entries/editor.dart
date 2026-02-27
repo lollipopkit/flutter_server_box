@@ -35,14 +35,14 @@ extension _Editor on _AppSettingsPageState {
   Widget _buildEditorTheme() {
     return ListTile(
       leading: const Icon(MingCute.sun_fill),
-      title: Text('${libL10n.bright} ${l10n.theme.toLowerCase()}'),
+      title: Text('${libL10n.bright} ${libL10n.theme.toLowerCase()}'),
       trailing: ValBuilder(
         listenable: _setting.editorTheme.listenable(),
         builder: (val) => Text(val, style: UIs.text15),
       ),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
-          title: l10n.theme,
+          title: libL10n.theme,
           items: themeMap.keys.toList(),
           display: (p0) => p0,
           initial: _setting.editorTheme.fetch(),
@@ -57,14 +57,14 @@ extension _Editor on _AppSettingsPageState {
   Widget _buildEditorDarkTheme() {
     return ListTile(
       leading: const Icon(MingCute.moon_stars_fill),
-      title: Text('${libL10n.dark} ${l10n.theme.toLowerCase()}'),
+      title: Text('${libL10n.dark} ${libL10n.theme.toLowerCase()}'),
       trailing: ValBuilder(
         listenable: _setting.editorDarkTheme.listenable(),
         builder: (val) => Text(val, style: UIs.text15),
       ),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
-          title: l10n.theme,
+          title: libL10n.theme,
           items: themeMap.keys.toList(),
           display: (p0) => p0,
           initial: _setting.editorDarkTheme.fetch(),

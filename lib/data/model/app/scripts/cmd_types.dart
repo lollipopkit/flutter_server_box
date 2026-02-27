@@ -1,3 +1,4 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -306,11 +307,11 @@ enum WindowsStatusCmdType implements ShellCmdType {
 extension StatusCmdTypeX on StatusCmdType {
   String get i18n => switch (this) {
     StatusCmdType.sys => l10n.system,
-    StatusCmdType.host => l10n.host,
-    StatusCmdType.uptime => l10n.uptime,
-    StatusCmdType.battery => l10n.battery,
-    StatusCmdType.sensors => l10n.sensors,
-    StatusCmdType.disk => l10n.disk,
+    StatusCmdType.host => libL10n.host,
+    StatusCmdType.uptime => libL10n.uptime,
+    StatusCmdType.battery => libL10n.battery,
+    StatusCmdType.sensors => libL10n.sensors,
+    StatusCmdType.disk => libL10n.disk,
     final val => val.name,
   };
 }

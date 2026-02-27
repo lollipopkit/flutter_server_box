@@ -23,34 +23,34 @@ class MacOSMenuBarManager {
             onSelected: () => _showAboutDialog(context),
           ),
           PlatformMenuItem(
-            label: l10n.menuSettings,
+            label: libL10n.menuSettings,
             shortcut: const SingleActivator(LogicalKeyboardKey.comma, meta: true),
             onSelected: () => _openSettings(context),
           ),
           PlatformMenuItem(
-            label: l10n.menuQuit,
+            label: libL10n.menuQuit,
             shortcut: const SingleActivator(LogicalKeyboardKey.keyQ, meta: true),
             onSelected: () => SystemNavigator.pop(),
           ),
         ],
       ),
       PlatformMenu(
-        label: l10n.menuNavigate,
+        label: libL10n.menuNavigate,
         menus: _buildNavigateMenuItems(l10n, homeTabs, onTabChanged),
       ),
       PlatformMenu(
-        label: l10n.menuInfo,
+        label: libL10n.menuInfo,
         menus: [
           PlatformMenuItem(
             label: l10n.menuGitHubRepository,
             onSelected: () => _openURL(Urls.thisRepo),
           ),
           PlatformMenuItem(
-            label: l10n.menuWiki,
+            label: libL10n.menuWiki,
             onSelected: () => _openURL(Urls.appWiki),
           ),
           PlatformMenuItem(
-            label: l10n.menuHelp,
+            label: libL10n.menuHelp,
             onSelected: () => _openURL(Urls.appHelp),
           ),
         ],
@@ -65,10 +65,10 @@ class MacOSMenuBarManager {
   ) {
     final menuItems = <PlatformMenuItem>[];
     final tabLabels = {
-      AppTab.server: l10n.server,
+      AppTab.server: libL10n.server,
       AppTab.ssh: 'SSH',
       AppTab.file: libL10n.file,
-      AppTab.snippet: l10n.snippet,
+      AppTab.snippet: libL10n.snippet,
     };
     for (var i = 0; i < homeTabs.length; i++) {
       final tab = homeTabs[i];

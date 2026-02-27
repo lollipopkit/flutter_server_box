@@ -24,11 +24,11 @@ extension _AI on _AppSettingsPageState {
           final display = val.isEmpty ? libL10n.empty : val;
           return ListTile(
             leading: const Icon(Icons.view_module),
-            title: Text(l10n.askAiModel),
+            title: Text(libL10n.askAiModel),
             subtitle: Text(display, style: UIs.textGrey),
             onTap: () => _showAskAiFieldDialog(
               prop: _setting.askAiModel,
-              title: l10n.askAiModel,
+              title: libL10n.askAiModel,
               hint: 'gpt-4o-mini',
             ),
           );

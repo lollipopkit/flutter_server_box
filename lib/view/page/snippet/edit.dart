@@ -59,7 +59,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
         onPressed: () {
           context.showRoundDialog(
             title: libL10n.attention,
-            child: Text(libL10n.askContinue('${libL10n.delete} ${l10n.snippet}(${snippet.name})')),
+            child: Text(libL10n.askContinue('${libL10n.delete} ${libL10n.snippet}(${snippet.name})')),
             actions: Btn.ok(
               onTap: () {
                 ref.read(snippetProvider.notifier).del(snippet);
@@ -140,7 +140,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
           minLines: 3,
           maxLines: 10,
           type: TextInputType.multiline,
-          label: l10n.snippet,
+          label: libL10n.snippet,
           icon: Icons.code,
           suggestion: false,
         ),

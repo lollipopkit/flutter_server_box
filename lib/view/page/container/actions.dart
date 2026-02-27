@@ -58,7 +58,7 @@ extension on _ContainerPageState {
   }) async {
     await context.showRoundDialog(
       title: title,
-      child: Text(message ?? libL10n.askContinue('${l10n.prune} $title')),
+      child: Text(message ?? libL10n.askContinue('${libL10n.prune} $title')),
       actions: Btn.ok(
         onTap: () async {
           context.pop();
@@ -91,7 +91,7 @@ extension on _ContainerPageState {
               context.showRoundDialog(title: libL10n.error, child: Text(e.toString()));
             }
           },
-          child: Text(l10n.run),
+          child: Text(libL10n.run),
         ),
       ],
     );
@@ -160,7 +160,7 @@ extension on _ContainerPageState {
                       return Checkbox(value: force, onChanged: (val) => setState(() => force = val ?? false));
                     },
                   ),
-                  Text(l10n.force),
+                  Text(libL10n.force),
                 ],
               ),
             ],

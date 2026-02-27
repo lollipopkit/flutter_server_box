@@ -296,7 +296,7 @@ extension _Actions on _SftpPageState {
         if (_canDecompress(file.filename))
           ListTile(
             leading: const Icon(Icons.folder_zip),
-            title: Text(l10n.decompress),
+            title: Text(libL10n.decompress),
             onTap: () => _decompress(file),
           ),
       ]);
@@ -692,7 +692,7 @@ extension _Actions on _SftpPageState {
             mainAxisSize: MainAxisSize.min,
             children: [
               Btn.tile(icon: const Icon(Icons.open_in_new), text: l10n.system, onTap: () => context.pop(1)),
-              Btn.tile(icon: const Icon(Icons.folder), text: l10n.inner, onTap: () => context.pop(0)),
+              Btn.tile(icon: const Icon(Icons.folder), text: libL10n.inner, onTap: () => context.pop(0)),
             ],
           ),
         );

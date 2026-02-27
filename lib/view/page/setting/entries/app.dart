@@ -346,7 +346,7 @@ extension _App on _AppSettingsPageState {
 
   Widget _buildCupertinoRoute() {
     return ListTile(
-      title: Text('Cupertino ${l10n.route}'),
+      title: Text('Cupertino ${libL10n.route}'),
       trailing: StoreSwitch(prop: _setting.cupertinoRoute),
     );
   }

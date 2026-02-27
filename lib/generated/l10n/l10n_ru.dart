@@ -64,9 +64,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get askAiInsertTerminal => 'Вставить в терминал';
 
   @override
-  String get askAiModel => 'Модель';
-
-  @override
   String get askAiNoResponse => 'Нет ответа';
 
   @override
@@ -133,9 +130,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Версия резервной копии не совпадает, восстановление невозможно';
 
   @override
-  String get battery => 'Батарея';
-
-  @override
   String get bgRun => 'Работа в фоновом режиме';
 
   @override
@@ -171,19 +165,10 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get confirm => 'Подтвердить';
-
-  @override
   String get closeAfterSave => 'Сохранить и закрыть';
 
   @override
-  String get cmd => 'Команда';
-
-  @override
   String get collapseUITip => 'Свернуть длинные списки в UI по умолчанию';
-
-  @override
-  String get conn => 'Подключение';
 
   @override
   String get connectionDetails => 'Детали соединения';
@@ -194,9 +179,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get connectionStatsDesc =>
       'Просмотр коэффициента успешности подключения к серверу и истории';
-
-  @override
-  String get container => 'Контейнер';
 
   @override
   String get containerTrySudoTip =>
@@ -227,17 +209,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get customCmd => 'Пользовательские команды';
 
   @override
-  String get customCmdDocUrl =>
-      'https://github.com/lollipopkit/flutter_server_box/wiki#custom-commands';
-
-  @override
   String get customCmdHint => '\"Имя команды\": \"Команда\"';
-
-  @override
-  String get decode => 'Декодировать';
-
-  @override
-  String get decompress => 'Разархивировать';
 
   @override
   String get deleteServers => 'Удалить серверы пакетно';
@@ -250,9 +222,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dirEmpty => 'Пожалуйста, убедитесь, что папка пуста';
 
   @override
-  String get disconnected => 'Отключено';
-
-  @override
   String get discoverSshServers => 'Обнаружить SSH серверы';
 
   @override
@@ -263,9 +232,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get discoverySummary => 'Сводка обнаружения';
-
-  @override
-  String get disk => 'Диск';
 
   @override
   String get diskHealth => 'Состояние диска';
@@ -321,17 +287,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Текущая производительность подсветки кода неудовлетворительна, можно отключить для улучшения.';
 
   @override
-  String get emulator => 'Эмулятор';
-
-  @override
   String get enableMdns => 'Включить mDNS';
 
   @override
   String get enableMdnsDesc =>
       'Использовать mDNS/Bonjour для обнаружения SSH служб';
-
-  @override
-  String get encode => 'Кодировать';
 
   @override
   String get envVars => 'Переменная окружения';
@@ -371,9 +331,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get fontSize => 'Размер шрифта';
 
   @override
-  String get force => 'Принудительно';
-
-  @override
   String get fullScreen => 'Полноэкранный режим';
 
   @override
@@ -409,9 +366,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get homeWidgetUrlConfig => 'Конфигурация URL виджета домашнего экрана';
 
   @override
-  String get host => 'Хост';
-
-  @override
   String httpFailedWithCode(Object code) {
     return 'ошибка запроса, код: $code';
   }
@@ -424,12 +378,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get imagesList => 'Список образов';
-
-  @override
-  String get inner => 'Встроенный';
-
-  @override
-  String get install => 'установить';
 
   @override
   String get installDockerWithUrl =>
@@ -472,12 +420,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Рекомендуется отключить, но после отключения будет невозможно вводить символы CJK.';
 
   @override
-  String get location => 'Местоположение';
-
-  @override
-  String get loss => 'Потери пакетов';
-
-  @override
   String madeWithLove(Object myGithub) {
     return 'Создано с ❤️ by $myGithub';
   }
@@ -500,9 +442,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get min => 'минимум';
 
   @override
-  String get mission => 'Задача';
-
-  @override
   String get more => 'Больше';
 
   @override
@@ -510,17 +449,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Включено: кнопки функций сервера отображаются под каждой карточкой на вкладке сервера. Выключено: отображается в верхней части страницы деталей сервера.';
 
   @override
-  String get ms => 'мс';
-
-  @override
   String get needHomeDir =>
       'Если вы пользователь Synology, [смотрите здесь](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Пользователям других систем нужно искать, как создать домашний каталог.';
 
   @override
   String get needRestart => 'Требуется перезапуск приложения';
-
-  @override
-  String get net => 'Сеть';
 
   @override
   String get netViewType => 'Тип визуализации сети';
@@ -543,12 +476,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get noPromptAgain => 'Больше не спрашивать';
-
-  @override
-  String get node => 'Узел';
-
-  @override
-  String get notAvailable => 'Недоступно';
 
   @override
   String get onServerDetailPage => 'На странице деталей сервера';
@@ -580,9 +507,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get permission => 'Разрешения';
 
   @override
-  String get pingAvg => 'В среднем:';
-
-  @override
   String get pingInputIP => 'Пожалуйста, введите целевой IP или домен';
 
   @override
@@ -590,13 +514,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Нет доступных серверов для Ping\nПожалуйста, добавьте их на вкладке «Сервер» и попробуйте снова';
 
   @override
-  String get pkg => 'Менеджер пакетов';
-
-  @override
   String get plugInType => 'Тип вставки';
-
-  @override
-  String get port => 'Порт';
 
   @override
   String get preferDiskAmount => 'Приоритетное отображение объёма диска';
@@ -608,12 +526,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String privateKeyNotFoundFmt(Object keyId) {
     return 'Закрытый ключ [$keyId] не найден.';
   }
-
-  @override
-  String get process => 'Процесс';
-
-  @override
-  String get prune => 'Обрезать';
 
   @override
   String get pushToken => 'Токен уведомлений';
@@ -634,9 +546,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get read => 'Чтение';
 
   @override
-  String get reboot => 'Перезагрузка';
-
-  @override
   String get recentConnections => 'Недавние соединения';
 
   @override
@@ -653,22 +562,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get remotePath => 'Удаленный путь';
 
   @override
-  String get restart => 'Перезапустить';
-
-  @override
   String get result => 'Результат';
 
   @override
   String get rotateAngel => 'Угол поворота';
-
-  @override
-  String get route => 'Маршрутизация';
-
-  @override
-  String get run => 'Запустить';
-
-  @override
-  String get running => 'Запущено';
 
   @override
   String get sameIdServerExist => 'Сервер с таким ID уже существует';
@@ -677,19 +574,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get save => 'Сохранить';
 
   @override
-  String get saved => 'Сохранено';
-
-  @override
   String get second => 'с';
-
-  @override
-  String get sensors => 'Датчики';
-
-  @override
-  String get sequence => 'Последовательность';
-
-  @override
-  String get server => 'Сервер';
 
   @override
   String get serverDetailOrder =>
@@ -703,9 +588,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get serverTabRequired => 'Вкладку сервера нельзя удалить';
-
-  @override
-  String get servers => 'серверов';
 
   @override
   String get sftpDlPrepare => 'Подготовка подключения...';
@@ -728,13 +610,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get showDistLogo => 'Показать лого дистрибутива';
 
   @override
-  String get shutdown => 'Выключение';
-
-  @override
   String get size => 'Размер';
-
-  @override
-  String get snippet => 'Фрагмент';
 
   @override
   String get softWrap => 'Мягкий перенос';
@@ -850,28 +726,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Автоматическое переключение виртуальных клавиш';
 
   @override
-  String get start => 'Старт';
-
-  @override
   String get stat => 'Статистика';
 
   @override
-  String get stats => 'Статистика';
-
-  @override
-  String get stop => 'Остановить';
-
-  @override
-  String get stopped => 'Остановлено';
-
-  @override
-  String get storage => 'Хранение';
-
-  @override
   String get supportFmtArgs => 'Поддерживаются следующие форматы аргументов:';
-
-  @override
-  String get suspend => 'Приостановить';
 
   @override
   String get suspendTip =>
@@ -897,17 +755,8 @@ class AppLocalizationsRu extends AppLocalizations {
       'Нажмите кнопку поиска, чтобы обнаружить SSH серверы в вашей сети';
 
   @override
-  String get temperature => 'Температура';
-
-  @override
   String get termFontSizeTip =>
       'Эта настройка повлияет на размер терминала (ширина и высота). Вы можете масштабировать страницу терминала, чтобы调整 размер шрифта текущей сессии.';
-
-  @override
-  String get terminal => 'Терминал';
-
-  @override
-  String get test => 'Тест';
 
   @override
   String get textScaler => 'Масштабирование текста';
@@ -917,28 +766,13 @@ class AppLocalizationsRu extends AppLocalizations {
       '1.0 => 100% (исходный размер), применяется только к части шрифтов на странице сервера, изменение не рекомендуется.';
 
   @override
-  String get theme => 'Тема';
-
-  @override
   String get time => 'Время';
 
   @override
   String get times => 'Раз';
 
   @override
-  String get total => 'Всего';
-
-  @override
-  String get totalAttempts => 'Общее';
-
-  @override
-  String get traffic => 'Трафик';
-
-  @override
   String get trySudo => 'Попробовать использовать sudo';
-
-  @override
-  String get ttl => 'TTL';
 
   @override
   String get unknown => 'Неизвестно';
@@ -959,9 +793,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get upsideDown => 'Перевернуть';
-
-  @override
-  String get uptime => 'Время работы';
 
   @override
   String get useCdn => 'Использование CDN';
@@ -1029,28 +860,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'После подключения к серверу скрипт будет записан в `~/.config/server_box` \n | `/tmp/server_box` для мониторинга состояния системы. Вы можете проверить содержимое скрипта.';
 
   @override
-  String get menuSettings => 'Setting';
-
-  @override
-  String get menuQuit => 'Quit';
-
-  @override
-  String get menuNavigate => 'Navigate';
-
-  @override
-  String get menuInfo => 'Info';
-
-  @override
   String get menuGitHubRepository => 'GitHub Repository';
-
-  @override
-  String get menuWiki => 'Wiki';
-
-  @override
-  String get menuHelp => 'Help';
-
-  @override
-  String get logs => 'Журналы';
 
   @override
   String get podmanDockerEmulationDetected =>

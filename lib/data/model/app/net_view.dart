@@ -14,8 +14,8 @@ enum NetViewType {
   };
 
   String get toStr => switch (this) {
-    NetViewType.conn => l10n.conn,
-    NetViewType.traffic => l10n.traffic,
+    NetViewType.conn => libL10n.conn,
+    NetViewType.traffic => libL10n.traffic,
     NetViewType.speed => l10n.speed,
   };
 
@@ -26,7 +26,7 @@ enum NetViewType {
     try {
       switch (this) {
         case NetViewType.conn:
-          return ('${l10n.conn}:\n${ss.tcp.maxConn}', '${libL10n.fail}:\n${ss.tcp.fail}');
+          return ('${libL10n.conn}:\n${ss.tcp.maxConn}', '${libL10n.fail}:\n${ss.tcp.fail}');
         case NetViewType.speed:
           if (notSepcifyDev) {
             return ('↓:\n${ss.netSpeed.cachedVals.speedIn}', '↑:\n${ss.netSpeed.cachedVals.speedOut}');

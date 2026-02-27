@@ -270,19 +270,19 @@ class _ServerPageState extends ConsumerState<ServerPage>
       Btn.column(
         onTap: () => _onTapSuspend(srv),
         icon: const Icon(Icons.stop, color: color),
-        text: l10n.suspend,
+        text: libL10n.suspend,
         textStyle: textStyle,
       ),
       Btn.column(
         onTap: () => _onTapShutdown(srv),
         icon: const Icon(Icons.power_off, color: color),
-        text: l10n.shutdown,
+        text: libL10n.shutdown,
         textStyle: textStyle,
       ),
       Btn.column(
         onTap: () => _onTapReboot(srv),
         icon: const Icon(Icons.restart_alt, color: color),
-        text: l10n.reboot,
+        text: libL10n.reboot,
         textStyle: textStyle,
       ),
       Btn.column(

@@ -213,7 +213,7 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
             (field) => switch (field) {
               AskAiConfigField.baseUrl => l10n.askAiBaseUrl,
               AskAiConfigField.apiKey => l10n.askAiApiKey,
-              AskAiConfigField.model => l10n.askAiModel,
+              AskAiConfigField.model => libL10n.askAiModel,
             },
           )
           .join(separator);

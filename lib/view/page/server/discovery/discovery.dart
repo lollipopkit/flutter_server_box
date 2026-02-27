@@ -75,7 +75,7 @@ class _SshDiscoveryPageState extends ConsumerState<SshDiscoveryPage> {
               children: [
                 Text(l10n.discoverySummary, style: const TextStyle(fontWeight: FontWeight.bold)),
                 UIs.height7,
-                Text('${libL10n.found}: ${report.count} ${l10n.servers}'),
+                Text('${libL10n.found}: ${report.count} ${libL10n.servers}'),
                 Text('${libL10n.duration}: ${report.durationMs}ms'),
                 Text(
                   '${l10n.finishedAt}: ${DateTime.parse(report.generatedAt).toLocal().toString().substring(0, 16)}',

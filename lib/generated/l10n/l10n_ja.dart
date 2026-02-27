@@ -63,9 +63,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAiInsertTerminal => 'ターミナルに挿入';
 
   @override
-  String get askAiModel => 'モデル';
-
-  @override
   String get askAiNoResponse => '応答なし';
 
   @override
@@ -127,9 +124,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get backupVersionNotMatch => 'バックアップバージョンが一致しないため、復元できません';
 
   @override
-  String get battery => 'バッテリー';
-
-  @override
   String get bgRun => 'バックグラウンド実行';
 
   @override
@@ -164,19 +158,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get confirm => 'Confirm';
-
-  @override
   String get closeAfterSave => '保存して閉じる';
 
   @override
-  String get cmd => 'コマンド';
-
-  @override
   String get collapseUITip => 'UIの長いリストをデフォルトで折りたたむかどうか';
-
-  @override
-  String get conn => '接続';
 
   @override
   String get connectionDetails => '接続の詳細';
@@ -186,9 +171,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get connectionStatsDesc => 'サーバー接続成功率と履歴を表示';
-
-  @override
-  String get container => 'コンテナ';
 
   @override
   String get containerTrySudoTip =>
@@ -218,17 +200,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get customCmd => 'カスタムコマンド';
 
   @override
-  String get customCmdDocUrl =>
-      'https://github.com/lollipopkit/flutter_server_box/wiki#custom-commands';
-
-  @override
   String get customCmdHint => '\"コマンド名\": \"コマンド\"';
-
-  @override
-  String get decode => 'デコード';
-
-  @override
-  String get decompress => '解凍';
 
   @override
   String get deleteServers => 'サーバーを一括削除';
@@ -238,9 +210,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get dirEmpty => 'フォルダーが空であることを確認してください';
-
-  @override
-  String get disconnected => '接続が切断されました';
 
   @override
   String get discoverSshServers => 'SSHサーバーの発見';
@@ -253,9 +222,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get discoverySummary => '発見の概要';
-
-  @override
-  String get disk => 'ディスク';
 
   @override
   String get diskHealth => 'ディスクの健康状態';
@@ -311,16 +277,10 @@ class AppLocalizationsJa extends AppLocalizations {
       '現在のコードハイライトのパフォーマンスはかなり悪いため、改善するために無効にすることを選択できます。';
 
   @override
-  String get emulator => 'エミュレーター';
-
-  @override
   String get enableMdns => 'mDNSを有効化';
 
   @override
   String get enableMdnsDesc => 'mDNS/BonjourでSSHサービスを発見';
-
-  @override
-  String get encode => 'エンコード';
 
   @override
   String get envVars => '環境変数';
@@ -360,9 +320,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get fontSize => 'フォントサイズ';
 
   @override
-  String get force => '強制';
-
-  @override
   String get fullScreen => 'フルスクリーンモード';
 
   @override
@@ -397,9 +354,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeWidgetUrlConfig => 'ホームウィジェットURL設定';
 
   @override
-  String get host => 'ホスト';
-
-  @override
   String httpFailedWithCode(Object code) {
     return 'リクエスト失敗、ステータスコード: $code';
   }
@@ -412,12 +366,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get imagesList => 'イメージリスト';
-
-  @override
-  String get inner => '内蔵';
-
-  @override
-  String get install => 'インストール';
 
   @override
   String get installDockerWithUrl =>
@@ -458,12 +406,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get letterCacheTip => '無効にすることを推奨しますが、無効にした後はCJK文字を入力することができなくなります。';
 
   @override
-  String get location => '場所';
-
-  @override
-  String get loss => 'パケットロス';
-
-  @override
   String madeWithLove(Object myGithub) {
     return '$myGithubによって❤️で作成済み';
   }
@@ -484,9 +426,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get min => '最小';
 
   @override
-  String get mission => 'ミッション';
-
-  @override
   String get more => 'もっと';
 
   @override
@@ -494,17 +433,11 @@ class AppLocalizationsJa extends AppLocalizations {
       '有効にする：サーバータブの各カードの下に表示されます。無効にする：サーバーの詳細ページの上部に表示されます。';
 
   @override
-  String get ms => 'ミリ秒';
-
-  @override
   String get needHomeDir =>
       'Synologyユーザーの場合は、[こちらをご覧ください](https://kb.synology.com/DSM/tutorial/user_enable_home_service)。他のシステムのユーザーは、ホームディレクトリの作成方法を検索する必要があります。';
 
   @override
   String get needRestart => 'アプリを再起動する必要があります';
-
-  @override
-  String get net => 'ネットワーク';
 
   @override
   String get netViewType => 'ネットワークビュータイプ';
@@ -526,12 +459,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get noPromptAgain => '再度確認しない';
-
-  @override
-  String get node => 'ノード';
-
-  @override
-  String get notAvailable => '利用不可';
 
   @override
   String get onServerDetailPage => 'サーバーの詳細ページで';
@@ -560,22 +487,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get permission => '権限';
 
   @override
-  String get pingAvg => '平均:';
-
-  @override
   String get pingInputIP => '対象のIPまたはドメインを入力してください';
 
   @override
   String get pingNoServer => 'Pingに使用するサーバーがありません\nサーバータブでサーバーを追加してから再試行してください';
 
   @override
-  String get pkg => 'パッケージ管理';
-
-  @override
   String get plugInType => '挿入タイプ';
-
-  @override
-  String get port => 'ポート';
 
   @override
   String get preferDiskAmount => 'ディスク容量を優先的に表示';
@@ -587,12 +505,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String privateKeyNotFoundFmt(Object keyId) {
     return '秘密鍵 [$keyId] が見つかりません。';
   }
-
-  @override
-  String get process => 'プロセス';
-
-  @override
-  String get prune => '剪定する';
 
   @override
   String get pushToken => 'プッシュトークン';
@@ -612,9 +524,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get read => '読み取り';
 
   @override
-  String get reboot => '再起動';
-
-  @override
   String get recentConnections => '最近の接続';
 
   @override
@@ -630,22 +539,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get remotePath => 'リモートパス';
 
   @override
-  String get restart => '再開';
-
-  @override
   String get result => '結果';
 
   @override
   String get rotateAngel => '回転角度';
-
-  @override
-  String get route => 'ルーティング';
-
-  @override
-  String get run => '実行';
-
-  @override
-  String get running => '実行中';
 
   @override
   String get sameIdServerExist => '同じIDのサーバーが既に存在します';
@@ -654,19 +551,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get save => '保存';
 
   @override
-  String get saved => '保存されました';
-
-  @override
   String get second => '秒';
-
-  @override
-  String get sensors => 'センサー';
-
-  @override
-  String get sequence => '順序';
-
-  @override
-  String get server => 'サーバー';
 
   @override
   String get serverDetailOrder => '詳細ページのウィジェット順序';
@@ -679,9 +564,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get serverTabRequired => 'サーバータブは削除できません';
-
-  @override
-  String get servers => 'サーバー';
 
   @override
   String get sftpDlPrepare => 'サーバーへの接続を準備中...';
@@ -703,13 +585,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get showDistLogo => 'ディストリビューションのロゴを表示';
 
   @override
-  String get shutdown => 'シャットダウン';
-
-  @override
   String get size => 'サイズ';
-
-  @override
-  String get snippet => 'スニペット';
 
   @override
   String get softWrap => 'ソフトラップ';
@@ -820,28 +696,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshVirtualKeyAutoOff => '仮想キーの自動オフ';
 
   @override
-  String get start => '開始';
-
-  @override
   String get stat => '統計';
 
   @override
-  String get stats => '統計';
-
-  @override
-  String get stop => '停止';
-
-  @override
-  String get stopped => '停止しました';
-
-  @override
-  String get storage => 'ストレージ';
-
-  @override
   String get supportFmtArgs => '以下のフォーマット引数がサポートされています：';
-
-  @override
-  String get suspend => '中断';
 
   @override
   String get suspendTip => 'suspend機能はroot権限とsystemdのサポートが必要です。';
@@ -864,17 +722,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tapToStartDiscovery => '検索ボタンをタップしてネットワーク上のSSHサーバーを発見';
 
   @override
-  String get temperature => '温度';
-
-  @override
   String get termFontSizeTip =>
       'この設定は端末のサイズ（幅と高さ）に影響します。現在のセッションのフォントサイズを調整するために、端末ページを拡大縮小できます。';
-
-  @override
-  String get terminal => 'ターミナル';
-
-  @override
-  String get test => 'テスト';
 
   @override
   String get textScaler => 'テキストスケーラー';
@@ -884,28 +733,13 @@ class AppLocalizationsJa extends AppLocalizations {
       '1.0 => 100%（デフォルトサイズ）。サーバーページの一部のテキストにのみ適用されます。変更をお勧めしません。';
 
   @override
-  String get theme => 'テーマ';
-
-  @override
   String get time => '時間';
 
   @override
   String get times => '回';
 
   @override
-  String get total => '合計';
-
-  @override
-  String get totalAttempts => '総計';
-
-  @override
-  String get traffic => 'トラフィック';
-
-  @override
   String get trySudo => 'sudoを試みる';
-
-  @override
-  String get ttl => 'TTL';
 
   @override
   String get unknown => '不明';
@@ -925,9 +759,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get upsideDown => '上下逆転';
-
-  @override
-  String get uptime => '稼働時間';
 
   @override
   String get useCdn => 'CDNの使用';
@@ -993,28 +824,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'サーバーへの接続後、システムステータスを監視するスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。';
 
   @override
-  String get menuSettings => 'Setting';
-
-  @override
-  String get menuQuit => 'Quit';
-
-  @override
-  String get menuNavigate => 'Navigate';
-
-  @override
-  String get menuInfo => 'Info';
-
-  @override
   String get menuGitHubRepository => 'GitHub Repository';
-
-  @override
-  String get menuWiki => 'Wiki';
-
-  @override
-  String get menuHelp => 'Help';
-
-  @override
-  String get logs => 'ログ';
 
   @override
   String get podmanDockerEmulationDetected =>

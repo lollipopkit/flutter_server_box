@@ -363,7 +363,7 @@ extension _OnTapFile on _LocalFilePageState {
       args: EditorPageArgs(
         path: file.absolute.path,
         onSave: (_) {
-          context.showSnackBar(l10n.saved);
+          context.showSnackBar(libL10n.saved);
           setStateSafe(() {});
         },
         closeAfterSave: SettingStore.instance.closeAfterSave.fetch(),

@@ -67,7 +67,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   CustomAppBar _buildAppBar() {
     return CustomAppBar(
       centerTitle: true,
-      title: TwoLineText(up: l10n.container, down: widget.args.spi.name),
+      title: TwoLineText(up: libL10n.container, down: widget.args.spi.name),
       actions: [
         IconButton(
           onPressed: () => context.showLoadingDialog(fn: () => _containerNotifier.refresh()),
@@ -195,7 +195,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
         : l10n.dockerStatusRunningFmt(running);
     return ExpandTile(
       leading: const Icon(OctIcons.container, size: 22),
-      title: Text(l10n.container),
+      title: Text(libL10n.container),
       subtitle: Text(subtitle, style: UIs.textGrey),
       initiallyExpanded: items.length < 7,
       children: items.map(_buildPsItem).toList(),
@@ -307,7 +307,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     if (len == 0) return UIs.placeholder;
     return ExpandTile(
       leading: const Icon(Icons.delete),
-      title: Text(l10n.prune),
+      title: Text(libL10n.prune),
       children: _PruneTypes.values.map(_buildPruneBtn).toList(),
     ).cardx;
   }

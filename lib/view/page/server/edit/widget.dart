@@ -157,7 +157,7 @@ extension _Widgets on _ServerEditPageState {
     return Input(
       controller: _scriptDirCtrl,
       type: TextInputType.text,
-      label: '${l10n.remotePath} (Shell ${l10n.install})',
+      label: '${l10n.remotePath} (Shell ${libL10n.install})',
       icon: Icons.folder,
       hint: '~/.config/server_box',
       suggestion: false,
@@ -176,7 +176,7 @@ extension _Widgets on _ServerEditPageState {
         Input(
           controller: _preferTempDevCtrl,
           type: TextInputType.text,
-          label: l10n.temperature,
+          label: libL10n.temperature,
           icon: MingCute.low_temperature_line,
           hint: 'nvme-pci-0400',
           suggestion: false,
@@ -184,7 +184,7 @@ extension _Widgets on _ServerEditPageState {
         Input(
           controller: _netDevCtrl,
           type: TextInputType.text,
-          label: l10n.net,
+          label: libL10n.net,
           icon: ZondIcons.network,
           hint: 'eth0',
           suggestion: false,
@@ -278,7 +278,7 @@ extension _Widgets on _ServerEditPageState {
           leading: const Icon(MingCute.doc_line),
           title: Text(libL10n.doc),
           trailing: const Icon(Icons.open_in_new, size: 17),
-          onTap: l10n.customCmdDocUrl.launchUrl,
+          onTap: libL10n.customCmdDocUrl.launchUrl,
         ).cardx,
       ],
     );
@@ -288,11 +288,11 @@ extension _Widgets on _ServerEditPageState {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        CenterGreyTitle('${libL10n.disabled} ${l10n.cmd}'),
+        CenterGreyTitle('${libL10n.disabled} ${libL10n.cmd}'),
         _disabledCmdTypes.listenVal((disabled) {
           return ListTile(
             leading: const Icon(Icons.disabled_by_default),
-            title: Text('${libL10n.disabled} ${l10n.cmd}'),
+            title: Text('${libL10n.disabled} ${libL10n.cmd}'),
             subtitle: disabled.isEmpty
                 ? null
                 : Text(disabled.join(', '), style: UIs.textGrey),
@@ -458,7 +458,7 @@ extension _Widgets on _ServerEditPageState {
           title: libL10n.attention,
           child: Text(
             libL10n.askContinue(
-              '${libL10n.delete} ${l10n.server}(${spi!.name})',
+              '${libL10n.delete} ${libL10n.server}(${spi!.name})',
             ),
           ),
           actions: Btn.ok(

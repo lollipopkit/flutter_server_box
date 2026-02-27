@@ -130,16 +130,16 @@ extension _Server on _AppSettingsPageState {
 
   Widget _buildServerFuncBtnsSwitch() {
     return ListTile(
-      // title: Text(l10n.location),
+      // title: Text(libL10n.location),
       // subtitle: Text(l10n.moveOutServerFuncBtnsHelp, style: UIs.text13Grey),
-      title: TipText(l10n.location, l10n.moveOutServerFuncBtnsHelp),
+      title: TipText(libL10n.location, l10n.moveOutServerFuncBtnsHelp),
       trailing: StoreSwitch(prop: _setting.moveServerFuncs),
     );
   }
 
   Widget _buildServerFuncBtnsOrder() {
     return ListTile(
-      title: Text(l10n.sequence),
+      title: Text(libL10n.sequence),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => ServerFuncBtnsOrderPage.route.go(context),
     );

@@ -18,10 +18,10 @@ enum PveResType {
   };
 
   String get toStr => switch (this) {
-    PveResType.node => l10n.node,
+    PveResType.node => libL10n.node,
     PveResType.qemu => 'QEMU',
     PveResType.lxc => 'LXC',
-    PveResType.storage => l10n.storage,
+    PveResType.storage => libL10n.storage,
     PveResType.sdn => 'SDN',
   };
 }
@@ -131,7 +131,7 @@ final class PveLxc extends PveResIface implements PveCtrlIface {
     if (available) {
       return uptime.secondsToDuration().toAgoStr;
     }
-    return l10n.stopped;
+    return libL10n.stopped;
   }
 }
 
@@ -209,7 +209,7 @@ final class PveQemu extends PveResIface implements PveCtrlIface {
     if (available) {
       return uptime.secondsToDuration().toAgoStr;
     }
-    return l10n.stopped;
+    return libL10n.stopped;
   }
 }
 
@@ -259,7 +259,7 @@ final class PveNode extends PveResIface {
     if (isRunning) {
       return uptime.secondsToDuration().toAgoStr;
     }
-    return l10n.stopped;
+    return libL10n.stopped;
   }
 }
 
@@ -316,9 +316,9 @@ final class PveStorage extends PveResIface implements PveCtrlIface {
   @override
   String get summary {
     if (available) {
-      return '${l10n.used}: ${disk.bytes2Str} / ${l10n.total}: ${maxdisk.bytes2Str}';
+      return '${l10n.used}: ${disk.bytes2Str} / ${libL10n.total}: ${maxdisk.bytes2Str}';
     }
-    return l10n.notAvailable;
+    return libL10n.notAvailable;
   }
 }
 
@@ -352,7 +352,7 @@ final class PveSdn extends PveResIface implements PveCtrlIface {
   String get name => sdn;
 
   @override
-  String get summary => available ? status : l10n.notAvailable;
+  String get summary => available ? status : libL10n.notAvailable;
 }
 
 final class PveRes {

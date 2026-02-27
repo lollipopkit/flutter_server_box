@@ -335,7 +335,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
     if (!item.available) {
       return Btn.icon(
         icon: const Icon(Icons.play_arrow, color: Colors.grey),
-        onTap: () => _onCtrl(l10n.start, item, () => _notifier.start(item.node, item.id)),
+        onTap: () => _onCtrl(libL10n.start, item, () => _notifier.start(item.node, item.id)),
       );
     }
     return Row(
@@ -343,17 +343,17 @@ final class _PvePageState extends ConsumerState<PvePage> {
         Btn.icon(
           icon: const Icon(Icons.stop, color: Colors.grey, size: 20),
           padding: pad,
-          onTap: () => _onCtrl(l10n.stop, item, () => _notifier.stop(item.node, item.id)),
+          onTap: () => _onCtrl(libL10n.stop, item, () => _notifier.stop(item.node, item.id)),
         ),
         Btn.icon(
           icon: const Icon(Icons.refresh, color: Colors.grey, size: 20),
           padding: pad,
-          onTap: () => _onCtrl(l10n.reboot, item, () => _notifier.reboot(item.node, item.id)),
+          onTap: () => _onCtrl(libL10n.reboot, item, () => _notifier.reboot(item.node, item.id)),
         ),
         Btn.icon(
           icon: const Icon(Icons.power_off, color: Colors.grey, size: 20),
           padding: pad,
-          onTap: () => _onCtrl(l10n.shutdown, item, () => _notifier.shutdown(item.node, item.id)),
+          onTap: () => _onCtrl(libL10n.shutdown, item, () => _notifier.shutdown(item.node, item.id)),
         ),
       ],
     );

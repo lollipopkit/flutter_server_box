@@ -49,7 +49,7 @@ extension _VirtKey on SSHPageState {
       case VirtualKeyFunc.snippet:
         final snippetState = ref.read(snippetProvider);
         final snippets = await context.showPickWithTagDialog<Snippet>(
-          title: l10n.snippet,
+          title: libL10n.snippet,
           tags: snippetState.tags.vn,
           itemsBuilder: (e) {
             if (e == TagSwitcher.kDefaultTag) {

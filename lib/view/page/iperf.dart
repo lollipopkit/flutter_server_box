@@ -1,6 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 
@@ -57,10 +56,10 @@ class _IPerfPageState extends State<IPerfPage> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 17),
       children: [
-        Input(controller: _hostCtrl, label: l10n.host, icon: Icons.computer, suggestion: false),
+        Input(controller: _hostCtrl, label: libL10n.host, icon: Icons.computer, suggestion: false),
         Input(
           controller: _portCtrl,
-          label: l10n.port,
+          label: libL10n.port,
           type: TextInputType.number,
           icon: Icons.numbers,
           suggestion: false,

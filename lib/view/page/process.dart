@@ -4,7 +4,6 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/proc.dart';
@@ -123,7 +122,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
     return Scaffold(
       appBar: CustomAppBar(
         centerTitle: true,
-        title: TwoLineText(up: widget.args.spi.name, down: l10n.process),
+        title: TwoLineText(up: widget.args.spi.name, down: libL10n.process),
         actions: actions,
       ),
       body: child,
@@ -158,7 +157,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
           onPressed: () {
             context.showRoundDialog(
               title: libL10n.attention,
-              child: Text(libL10n.askContinue('${l10n.stop} ${l10n.process}(${proc.pid})')),
+              child: Text(libL10n.askContinue('${libL10n.stop} ${libL10n.process}(${proc.pid})')),
               actions: [
                 Btn.cancel(),
                 Btn.ok(

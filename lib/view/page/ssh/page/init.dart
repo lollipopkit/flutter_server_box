@@ -169,7 +169,7 @@ extension _Init on SSHPageState {
   Future<void> _showDisconnectDialog() async {
     final shouldLeave = await context.showRoundDialog<bool>(
       title: libL10n.attention,
-      child: Text('${l10n.disconnected}\n${l10n.goBackQ}'),
+      child: Text('${libL10n.disconnected}\n${l10n.goBackQ}'),
       barrierDismiss: false,
       actions: [
         TextButton(onPressed: () => context.pop(false), child: Text(libL10n.cancel)),

@@ -63,9 +63,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiInsertTerminal => '터미널에 삽입';
 
   @override
-  String get askAiModel => '모델';
-
-  @override
   String get askAiNoResponse => '응답 없음';
 
   @override
@@ -127,9 +124,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get backupVersionNotMatch => '백업 버전이 일치하지 않습니다.';
 
   @override
-  String get battery => '배터리';
-
-  @override
   String get bgRun => '백그라운드 실행';
 
   @override
@@ -164,19 +158,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get confirm => '확인';
-
-  @override
   String get closeAfterSave => '저장 후 닫기';
 
   @override
-  String get cmd => '명령어';
-
-  @override
   String get collapseUITip => 'UI의 긴 목록을 기본적으로 접을지 여부';
-
-  @override
-  String get conn => '연결';
 
   @override
   String get connectionDetails => '연결 상세 정보';
@@ -186,9 +171,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get connectionStatsDesc => '서버 연결 성공률 및 기록 보기';
-
-  @override
-  String get container => '컨테이너';
 
   @override
   String get containerTrySudoTip =>
@@ -218,17 +200,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get customCmd => '사용자 정의 명령어';
 
   @override
-  String get customCmdDocUrl =>
-      'https://github.com/lollipopkit/flutter_server_box/wiki#custom-commands';
-
-  @override
   String get customCmdHint => '\"명령어 이름\": \"명령어\"';
-
-  @override
-  String get decode => '디코딩';
-
-  @override
-  String get decompress => '압축 해제';
 
   @override
   String get deleteServers => '서버 일괄 삭제';
@@ -238,9 +210,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get dirEmpty => '폴더가 비어 있는지 확인해 주세요.';
-
-  @override
-  String get disconnected => '연결이 끊어졌습니다';
 
   @override
   String get discoverSshServers => 'SSH 서버 검색';
@@ -253,9 +222,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get discoverySummary => '검색 요약';
-
-  @override
-  String get disk => '디스크';
 
   @override
   String get diskHealth => '디스크 상태';
@@ -310,16 +276,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '현재 코드 하이라이팅 성능이 이상적이지 않습니다. 성능 향상을 위해 선택적으로 끌 수 있습니다.';
 
   @override
-  String get emulator => '에뮬레이터';
-
-  @override
   String get enableMdns => 'mDNS 활성화';
 
   @override
   String get enableMdnsDesc => 'mDNS/Bonjour를 사용하여 SSH 서비스 검색';
-
-  @override
-  String get encode => '인코딩';
 
   @override
   String get envVars => '환경 변수';
@@ -358,9 +318,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fontSize => '글꼴 크기';
 
   @override
-  String get force => '강제';
-
-  @override
   String get fullScreen => '전체 화면 모드';
 
   @override
@@ -395,9 +352,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeWidgetUrlConfig => '홈 위젯 URL 설정';
 
   @override
-  String get host => '호스트';
-
-  @override
   String httpFailedWithCode(Object code) {
     return '요청 실패, 상태 코드: $code';
   }
@@ -410,12 +364,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get imagesList => '이미지 목록';
-
-  @override
-  String get inner => '내장';
-
-  @override
-  String get install => '설치';
 
   @override
   String get installDockerWithUrl =>
@@ -455,12 +403,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get letterCacheTip => '비활성화를 권장하지만, 비활성화하면 CJK 문자를 입력할 수 없습니다.';
 
   @override
-  String get location => '위치';
-
-  @override
-  String get loss => '손실';
-
-  @override
   String madeWithLove(Object myGithub) {
     return '$myGithub이(가) ❤️로 만들었습니다';
   }
@@ -481,9 +423,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get min => '최소';
 
   @override
-  String get mission => '작업';
-
-  @override
   String get more => '더 보기';
 
   @override
@@ -491,17 +430,11 @@ class AppLocalizationsKo extends AppLocalizations {
       '켜기: 서버 탭의 각 카드 아래에 표시됩니다. 끄기: 서버 상세 페이지 상단에 표시됩니다.';
 
   @override
-  String get ms => 'ms';
-
-  @override
   String get needHomeDir =>
       'Synology 사용자는 [여기를 참조하세요](https://kb.synology.com/DSM/tutorial/user_enable_home_service). 다른 시스템 사용자는 홈 디렉토리 생성 방법을 검색해야 합니다.';
 
   @override
   String get needRestart => '앱을 다시 시작해야 합니다';
-
-  @override
-  String get net => '네트워크';
 
   @override
   String get netViewType => '네트워크 뷰 유형';
@@ -523,12 +456,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get noPromptAgain => '다시 묻지 않기';
-
-  @override
-  String get node => '노드';
-
-  @override
-  String get notAvailable => '사용 불가';
 
   @override
   String get onServerDetailPage => '서버 상세 페이지에서';
@@ -557,22 +484,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get permission => '권한';
 
   @override
-  String get pingAvg => '평균:';
-
-  @override
   String get pingInputIP => '대상 IP / 도메인을 입력해 주세요.';
 
   @override
   String get pingNoServer => 'Ping할 서버가 없습니다.\n서버 탭에서 서버를 추가해 주세요.';
 
   @override
-  String get pkg => '패키지';
-
-  @override
   String get plugInType => '삽입 유형';
-
-  @override
-  String get port => '포트';
 
   @override
   String get preferDiskAmount => '디스크 용량 우선 표시';
@@ -584,12 +502,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String privateKeyNotFoundFmt(Object keyId) {
     return '개인 키 [$keyId]을(를) 찾을 수 없습니다.';
   }
-
-  @override
-  String get process => '프로세스';
-
-  @override
-  String get prune => '정리';
 
   @override
   String get pushToken => '푸시 토큰';
@@ -610,9 +522,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get read => '읽기';
 
   @override
-  String get reboot => '재부팅';
-
-  @override
   String get recentConnections => '최근 연결';
 
   @override
@@ -628,22 +537,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get remotePath => '원격 경로';
 
   @override
-  String get restart => '다시 시작';
-
-  @override
   String get result => '결과';
 
   @override
   String get rotateAngel => '회전 각도';
-
-  @override
-  String get route => '라우팅';
-
-  @override
-  String get run => '실행';
-
-  @override
-  String get running => '실행 중';
 
   @override
   String get sameIdServerExist => '동일한 ID의 서버가 이미 존재합니다';
@@ -652,19 +549,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get save => '저장';
 
   @override
-  String get saved => '저장됨';
-
-  @override
   String get second => '초';
-
-  @override
-  String get sensors => '센서';
-
-  @override
-  String get sequence => '순서';
-
-  @override
-  String get server => '서버';
 
   @override
   String get serverDetailOrder => '상세 페이지 위젯 순서';
@@ -677,9 +562,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get serverTabRequired => '서버 탭은 제거할 수 없습니다';
-
-  @override
-  String get servers => '서버';
 
   @override
   String get sftpDlPrepare => '연결 준비 중...';
@@ -701,13 +583,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get showDistLogo => '배포판 로고 표시';
 
   @override
-  String get shutdown => '종료';
-
-  @override
   String get size => '크기';
-
-  @override
-  String get snippet => '스니펫';
 
   @override
   String get softWrap => '자동 줄바꿈';
@@ -819,28 +695,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshVirtualKeyAutoOff => '가상 키 자동 전환';
 
   @override
-  String get start => '시작';
-
-  @override
   String get stat => '통계';
 
   @override
-  String get stats => '통계';
-
-  @override
-  String get stop => '중지';
-
-  @override
-  String get stopped => '중지됨';
-
-  @override
-  String get storage => '저장소';
-
-  @override
   String get supportFmtArgs => '다음 형식 매개변수가 지원됩니다:';
-
-  @override
-  String get suspend => '일시 중지';
 
   @override
   String get suspendTip => '일시 중지 기능은 root 권한과 systemd 지원이 필요합니다.';
@@ -863,17 +721,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get tapToStartDiscovery => '검색 버튼을 눌러 네트워크에서 SSH 서버를 검색하세요';
 
   @override
-  String get temperature => '온도';
-
-  @override
   String get termFontSizeTip =>
       '이 설정은 터미널 크기(너비 및 높이)에 영향을 줍니다. 현재 세션의 글꼴 크기를 조정하려면 터미널 페이지에서 확대/축소할 수 있습니다.';
-
-  @override
-  String get terminal => '터미널';
-
-  @override
-  String get test => '테스트';
 
   @override
   String get textScaler => '텍스트 배율';
@@ -883,28 +732,13 @@ class AppLocalizationsKo extends AppLocalizations {
       '1.0 => 100% (원래 크기), 서버 페이지의 일부 글꼴에만 적용되며 변경을 권장하지 않습니다.';
 
   @override
-  String get theme => '테마';
-
-  @override
   String get time => '시간';
 
   @override
   String get times => '회';
 
   @override
-  String get total => '전체';
-
-  @override
-  String get totalAttempts => '총계';
-
-  @override
-  String get traffic => '트래픽';
-
-  @override
   String get trySudo => 'sudo 사용 시도';
-
-  @override
-  String get ttl => 'TTL';
 
   @override
   String get unknown => '알 수 없음';
@@ -924,9 +758,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get upsideDown => '상하 반전';
-
-  @override
-  String get uptime => '가동 시간';
 
   @override
   String get useCdn => 'CDN 사용';
@@ -992,28 +823,7 @@ class AppLocalizationsKo extends AppLocalizations {
       '서버 연결 후 시스템 상태를 모니터링하기 위한 스크립트가 `~/.config/server_box` \n | `/tmp/server_box`에 작성됩니다. 스크립트 내용을 확인할 수 있습니다.';
 
   @override
-  String get menuSettings => '설정';
-
-  @override
-  String get menuQuit => '종료';
-
-  @override
-  String get menuNavigate => '탐색';
-
-  @override
-  String get menuInfo => '정보';
-
-  @override
   String get menuGitHubRepository => 'GitHub 저장소';
-
-  @override
-  String get menuWiki => '위키';
-
-  @override
-  String get menuHelp => '도움말';
-
-  @override
-  String get logs => '로그';
 
   @override
   String get podmanDockerEmulationDetected =>

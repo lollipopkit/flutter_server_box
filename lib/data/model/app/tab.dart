@@ -2,7 +2,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/adapters.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 // import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/page/snippet/list.dart';
@@ -38,7 +37,7 @@ enum AppTab {
     return switch (this) {
       server => NavigationDestination(
         icon: const Icon(BoxIcons.bx_server),
-        label: l10n.server,
+        label: libL10n.server,
         selectedIcon: const Icon(BoxIcons.bxs_server),
       ),
       // settings => NavigationDestination(
@@ -53,7 +52,7 @@ enum AppTab {
       ),
       snippet => NavigationDestination(
         icon: const Icon(Icons.code),
-        label: l10n.snippet,
+        label: libL10n.snippet,
         selectedIcon: const Icon(Icons.code),
       ),
       file => NavigationDestination(
@@ -68,7 +67,7 @@ enum AppTab {
     return switch (this) {
       server => NavigationRailDestination(
         icon: const Icon(BoxIcons.bx_server),
-        label: Text(l10n.server),
+        label: Text(libL10n.server),
         selectedIcon: const Icon(BoxIcons.bxs_server),
       ),
       // settings => NavigationRailDestination(
@@ -83,7 +82,7 @@ enum AppTab {
       ),
       snippet => NavigationRailDestination(
         icon: const Icon(Icons.code),
-        label: Text(l10n.snippet),
+        label: Text(libL10n.snippet),
         selectedIcon: const Icon(Icons.code),
       ),
       file => NavigationRailDestination(

@@ -1,5 +1,4 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 
 /// Represents the various states a container can be in.
 /// Supports both Docker and Podman container status parsing.
@@ -57,7 +56,7 @@ enum ContainerStatus {
   /// Get display string for the status
   String get displayName {
     return switch (this) {
-      ContainerStatus.running => l10n.running,
+      ContainerStatus.running => libL10n.running,
       ContainerStatus.exited => libL10n.exit,
       ContainerStatus.created => 'Created',
       ContainerStatus.paused => 'Paused',

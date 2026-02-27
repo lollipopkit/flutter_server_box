@@ -43,7 +43,7 @@ extension _SFTP on _AppSettingsPageState {
       return ListTile(
         leading: const Icon(MingCute.edit_fill),
         title: TipText(libL10n.editor, l10n.sftpEditorTip),
-        trailing: Text(val.isEmpty ? l10n.inner : val, style: UIs.text15),
+        trailing: Text(val.isEmpty ? libL10n.inner : val, style: UIs.text15),
         onTap: () {
           withTextFieldController((ctrl) async {
             void onSave() {

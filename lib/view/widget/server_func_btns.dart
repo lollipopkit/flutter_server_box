@@ -127,7 +127,7 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context, WidgetRe
         return;
       }
       final snippets = await context.showPickWithTagDialog<Snippet>(
-        title: l10n.snippet,
+        title: libL10n.snippet,
         tags: snippetState.tags.vn,
         itemsBuilder: (e) {
           if (e == TagSwitcher.kDefaultTag) {
@@ -146,7 +146,7 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context, WidgetRe
       final sure = await context.showRoundDialog<bool>(
         title: libL10n.attention,
         child: SingleChildScrollView(child: SimpleMarkdown(data: '```shell\n$fmted\n```')),
-        actions: [CountDownBtn(onTap: () => context.pop(true), text: l10n.run, afterColor: Colors.red)],
+        actions: [CountDownBtn(onTap: () => context.pop(true), text: libL10n.run, afterColor: Colors.red)],
       );
       if (sure != true) return;
       if (!_checkClient(context, spi.id, ref)) return;
@@ -257,7 +257,7 @@ void _gotoSSH(Spi spi, BuildContext context) async {
 
         await Process.start(scriptFile.path, [terminal, ...sshCommand]);
       } catch (e, s) {
-        context.showErrDialog(e, s, l10n.emulator);
+        context.showErrDialog(e, s, libL10n.emulator);
       } finally {
         await scriptFile.delete();
       }

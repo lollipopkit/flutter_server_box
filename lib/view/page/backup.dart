@@ -344,7 +344,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
   Widget get _buildBulkImportServers {
     return CardX(
       child: ListTile(
-        title: Text(l10n.server),
+        title: Text(libL10n.server),
         leading: const Icon(BoxIcons.bx_server),
         onTap: () => _onBulkImportServers(context),
         trailing: const Icon(Icons.keyboard_arrow_right),
@@ -354,11 +354,11 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
 
   Widget get _buildImportSnippet {
     return ListTile(
-      title: Text(l10n.snippet),
+      title: Text(libL10n.snippet),
       leading: const Icon(MingCute.code_line),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () async {
-        final data = await context.showImportDialog(title: l10n.snippet, modelDef: Snippet.example.toJson());
+        final data = await context.showImportDialog(title: libL10n.snippet, modelDef: Snippet.example.toJson());
         if (data == null) return;
         String str;
         try {
@@ -592,7 +592,7 @@ extension on _BackupPageState {
   }
 
   void _onBulkImportServers(BuildContext context) async {
-    final data = await context.showImportDialog(title: l10n.server, modelDef: Spix.example.toJson());
+    final data = await context.showImportDialog(title: libL10n.server, modelDef: Spix.example.toJson());
     if (data == null) return;
     String text;
     try {
@@ -612,7 +612,7 @@ extension on _BackupPageState {
       if (err != null || spis == null) return;
       final sure = await context.showRoundDialog<bool>(
         title: libL10n.import,
-        child: Text(libL10n.askContinue('${spis.length} ${l10n.server}')),
+        child: Text(libL10n.askContinue('${spis.length} ${libL10n.server}')),
         actions: Btnx.oks,
       );
       if (sure == true) {

@@ -36,14 +36,14 @@ enum ServerDetailCards {
     mem => 'RAM',
     swap => 'Swap',
     gpu => 'GPU',
-    disk => l10n.disk,
+    disk => libL10n.disk,
     smart => l10n.diskHealth,
-    net => l10n.net,
-    sensor => l10n.sensors,
-    temp => l10n.temperature,
-    battery => l10n.battery,
+    net => libL10n.net,
+    sensor => libL10n.sensors,
+    temp => libL10n.temperature,
+    battery => libL10n.battery,
     pve => 'PVE',
-    custom => l10n.cmd,
+    custom => libL10n.cmd,
   };
 
   /// If:

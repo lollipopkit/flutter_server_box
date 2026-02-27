@@ -93,7 +93,7 @@ class _PingPageState extends ConsumerState<PingPage> with AutomaticKeepAliveClie
 
   Widget _buildResultItem(PingResult result) {
     final unknown = l10n.unknown;
-    final ms = l10n.ms;
+    final ms = libL10n.ms;
     return CardX(
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(vertical: 7, horizontal: 17),
@@ -103,7 +103,7 @@ class _PingPageState extends ConsumerState<PingPage> with AutomaticKeepAliveClie
         ),
         subtitle: Text(_buildPingSummary(result, unknown, ms), style: UIs.text11),
         trailing: Text(
-          '${l10n.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? l10n.unknown} $ms',
+          '${libL10n.pingAvg}${result.statistic?.avg?.toStringAsFixed(2) ?? l10n.unknown} $ms',
           style: TextStyle(fontSize: 14, color: UIs.primaryColor),
         ),
       ),
@@ -119,7 +119,7 @@ class _PingPageState extends ConsumerState<PingPage> with AutomaticKeepAliveClie
     final loss = result.statistic?.loss ?? unknown;
     final min = result.statistic?.min ?? unknown;
     final max = result.statistic?.max ?? unknown;
-    return '$ip\n${l10n.ttl}: $ttl, ${l10n.loss}: $loss%\n${l10n.min}: $min $ms, ${l10n.max}: $max $ms';
+    return '$ip\n${libL10n.ttl}: $ttl, ${libL10n.loss}: $loss%\n${l10n.min}: $min $ms, ${l10n.max}: $max $ms';
   }
 
   Future<void> doPing() async {

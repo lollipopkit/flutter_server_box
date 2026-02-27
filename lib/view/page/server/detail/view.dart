@@ -124,7 +124,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
         style: TextStyle(fontSize: 20, color: context.isDark ? Colors.white : Colors.black),
       ),
       actions: [
-        QrShareBtn(data: si.spi.toJsonString(), tip: si.spi.name, tip2: '${l10n.server} ~ ServerBox'),
+        QrShareBtn(data: si.spi.toJsonString(), tip: si.spi.name, tip2: '${libL10n.server} ~ ServerBox'),
         IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () async {
@@ -551,7 +551,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     if (children.isEmpty) return null;
 
     return ExpandTile(
-      title: Text(l10n.disk),
+      title: Text(libL10n.disk),
       childrenPadding: const EdgeInsets.only(bottom: 7),
       leading: Icon(ServerDetailCards.disk.icon, size: 17),
       initiallyExpanded: _getInitExpand(children.length),
@@ -790,7 +790,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
       leading: Icon(ServerDetailCards.net.icon, size: 17),
       title: Row(
         children: [
-          Text(l10n.net),
+          Text(libL10n.net),
           UIs.width13,
           _netSortType.listenVal(
             (val) => InkWell(
@@ -859,7 +859,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
 
     return CardX(
       child: ExpandTile(
-        title: Text(l10n.temperature),
+        title: Text(libL10n.temperature),
         leading: const Icon(Icons.ac_unit, size: 20),
         initiallyExpanded: _getInitExpand(ss.temps.devices.length),
         childrenPadding: const EdgeInsets.only(bottom: 7),
@@ -891,7 +891,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
 
     return CardX(
       child: ExpandTile(
-        title: Text(l10n.battery),
+        title: Text(libL10n.battery),
         leading: const Icon(Icons.battery_charging_full, size: 17),
         childrenPadding: const EdgeInsets.only(bottom: 7),
         initiallyExpanded: _getInitExpand(ss.batteries.length, 2),
@@ -925,7 +925,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
     if (ss.sensors.isEmpty) return UIs.placeholder;
     return CardX(
       child: ExpandTile(
-        title: Text(l10n.sensors),
+        title: Text(libL10n.sensors),
         leading: const Icon(Icons.thermostat, size: 17),
         childrenPadding: const EdgeInsets.only(bottom: 7),
         initiallyExpanded: _getInitExpand(ss.sensors.length, 2),

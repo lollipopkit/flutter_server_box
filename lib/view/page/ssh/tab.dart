@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
@@ -137,7 +136,7 @@ extension on _SSHTabPageState {
   void _onTapClose(String name) async {
     final confirm = await contextSafe?.showRoundDialog(
       title: libL10n.attention,
-      child: Text('${libL10n.close} SSH ${l10n.conn}($name) ?'),
+      child: Text('${libL10n.close} SSH ${libL10n.conn}($name) ?'),
       actions: Btnx.okReds,
     );
     Future.delayed(Durations.short1, FocusScope.of(context).unfocus);

@@ -64,9 +64,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAiInsertTerminal => 'Masukkan ke terminal';
 
   @override
-  String get askAiModel => 'Model';
-
-  @override
   String get askAiNoResponse => 'Tidak ada respons';
 
   @override
@@ -131,9 +128,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get backupVersionNotMatch => 'Versi cadangan tidak cocok.';
 
   @override
-  String get battery => 'Baterai';
-
-  @override
   String get bgRun => 'Jalankan di Backgroud';
 
   @override
@@ -169,20 +163,11 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get confirm => 'Confirm';
-
-  @override
   String get closeAfterSave => 'Simpan dan tutup';
-
-  @override
-  String get cmd => 'Memerintah';
 
   @override
   String get collapseUITip =>
       'Apakah akan menciutkan daftar panjang yang ada di UI secara default atau tidak';
-
-  @override
-  String get conn => 'Koneksi';
 
   @override
   String get connectionDetails => 'Detail Koneksi';
@@ -193,9 +178,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get connectionStatsDesc =>
       'Lihat tingkat keberhasilan koneksi server dan riwayat';
-
-  @override
-  String get container => 'Wadah';
 
   @override
   String get containerTrySudoTip =>
@@ -226,17 +208,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get customCmd => 'Perintah kustom';
 
   @override
-  String get customCmdDocUrl =>
-      'https://github.com/lollipopkit/flutter_server_box/wiki#custom-commands';
-
-  @override
   String get customCmdHint => '\"Nama Perintah\": \"Perintah\"';
-
-  @override
-  String get decode => 'Membaca sandi';
-
-  @override
-  String get decompress => 'Dekompresi';
 
   @override
   String get deleteServers => 'Penghapusan server secara batch';
@@ -249,9 +221,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get dirEmpty => 'Pastikan dir kosong.';
 
   @override
-  String get disconnected => 'Terputus';
-
-  @override
   String get discoverSshServers => 'Temukan Server SSH';
 
   @override
@@ -262,9 +231,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get discoverySummary => 'Ringkasan Penemuan';
-
-  @override
-  String get disk => 'Disk';
 
   @override
   String get diskHealth => 'Kesehatan disk';
@@ -320,17 +286,11 @@ class AppLocalizationsId extends AppLocalizations {
       'Performa penyorotan kode saat ini lebih buruk, dan dapat dimatikan secara opsional untuk perbaikan.';
 
   @override
-  String get emulator => 'Emulator';
-
-  @override
   String get enableMdns => 'Aktifkan mDNS';
 
   @override
   String get enableMdnsDesc =>
       'Gunakan mDNS/Bonjour untuk menemukan layanan SSH';
-
-  @override
-  String get encode => 'Menyandi';
 
   @override
   String get envVars => 'Variabel lingkungan';
@@ -370,9 +330,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get fontSize => 'Ukuran huruf';
 
   @override
-  String get force => 'sukarela';
-
-  @override
   String get fullScreen => 'Mode Layar Penuh';
 
   @override
@@ -408,9 +365,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get homeWidgetUrlConfig => 'Konfigurasi URL Widget Rumah';
 
   @override
-  String get host => 'Host';
-
-  @override
   String httpFailedWithCode(Object code) {
     return 'Permintaan gagal, kode status: $code';
   }
@@ -423,12 +377,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get imagesList => 'Daftar gambar';
-
-  @override
-  String get inner => 'Batin';
-
-  @override
-  String get install => 'Install';
 
   @override
   String get installDockerWithUrl =>
@@ -471,12 +419,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Direkomendasikan untuk menonaktifkan, tetapi setelah dinonaktifkan, tidak mungkin untuk memasukkan karakter CJK.';
 
   @override
-  String get location => 'Lokasi';
-
-  @override
-  String get loss => 'kehilangan';
-
-  @override
   String madeWithLove(Object myGithub) {
     return 'Dibuat dengan ❤️ oleh $myGithub';
   }
@@ -497,9 +439,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get min => 'Min';
 
   @override
-  String get mission => 'Misi';
-
-  @override
   String get more => 'Lebih Banyak';
 
   @override
@@ -507,17 +446,11 @@ class AppLocalizationsId extends AppLocalizations {
       'Aktif: dapat ditampilkan di bawah setiap kartu pada halaman Tab Server. Nonaktif: dapat ditampilkan di bagian atas halaman Rincian Server.';
 
   @override
-  String get ms => 'MS';
-
-  @override
   String get needHomeDir =>
       'Jika Anda pengguna Synology, [lihat di sini](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Pengguna sistem lain perlu mencari cara membuat direktori home.';
 
   @override
   String get needRestart => 'Perlu memulai ulang aplikasi';
-
-  @override
-  String get net => 'Jaringan';
 
   @override
   String get netViewType => 'Jenis tampilan bersih';
@@ -540,12 +473,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get noPromptAgain => 'Jangan tanya lagi';
-
-  @override
-  String get node => 'Node';
-
-  @override
-  String get notAvailable => 'Tidak tersedia';
 
   @override
   String get onServerDetailPage => 'Di halaman detail server';
@@ -577,9 +504,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get permission => 'Izin';
 
   @override
-  String get pingAvg => 'Rata -rata:';
-
-  @override
   String get pingInputIP => 'Harap masukkan IP / domain target.';
 
   @override
@@ -587,13 +511,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Tidak ada server untuk melakukan ping.\nHarap tambahkan server di tab Server.';
 
   @override
-  String get pkg => 'Pkg';
-
-  @override
   String get plugInType => 'Jenis Penyisipan';
-
-  @override
-  String get port => 'Port';
 
   @override
   String get preferDiskAmount => 'Prioritaskan tampilan kapasitas disk';
@@ -605,12 +523,6 @@ class AppLocalizationsId extends AppLocalizations {
   String privateKeyNotFoundFmt(Object keyId) {
     return 'Kunci privat [$keyId] tidak ditemukan.';
   }
-
-  @override
-  String get process => 'Proses';
-
-  @override
-  String get prune => 'Pangkas';
 
   @override
   String get pushToken => 'Dorong token';
@@ -631,9 +543,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get read => 'Baca';
 
   @override
-  String get reboot => 'Reboot';
-
-  @override
   String get recentConnections => 'Koneksi Terkini';
 
   @override
@@ -650,22 +559,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get remotePath => 'Jalur jarak jauh';
 
   @override
-  String get restart => 'Mengulang kembali';
-
-  @override
   String get result => 'Hasil';
 
   @override
   String get rotateAngel => 'Sudut rotasi';
-
-  @override
-  String get route => 'Routing';
-
-  @override
-  String get run => 'Berlari';
-
-  @override
-  String get running => 'berlari';
 
   @override
   String get sameIdServerExist => 'Server dengan ID yang sama sudah ada';
@@ -674,19 +571,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get save => 'Menyimpan';
 
   @override
-  String get saved => 'Diselamatkan';
-
-  @override
   String get second => 'S';
-
-  @override
-  String get sensors => 'Sensor';
-
-  @override
-  String get sequence => 'Urutan';
-
-  @override
-  String get server => 'Server';
 
   @override
   String get serverDetailOrder => 'Detail pesanan widget halaman';
@@ -699,9 +584,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get serverTabRequired => 'Tab server tidak dapat dihapus';
-
-  @override
-  String get servers => 'server';
 
   @override
   String get sftpDlPrepare => 'Bersiap untuk terhubung ...';
@@ -723,13 +605,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get showDistLogo => 'Tampilkan logo distribusi';
 
   @override
-  String get shutdown => 'Matikan';
-
-  @override
   String get size => 'Ukuran';
-
-  @override
-  String get snippet => 'Snippet';
 
   @override
   String get softWrap => 'Pembungkus lembut';
@@ -845,28 +721,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get sshVirtualKeyAutoOff => 'Switching Otomatis Kunci Virtual';
 
   @override
-  String get start => 'Awal';
-
-  @override
   String get stat => 'Statistik';
 
   @override
-  String get stats => 'Statistik';
-
-  @override
-  String get stop => 'Berhenti';
-
-  @override
-  String get stopped => 'dihentikan';
-
-  @override
-  String get storage => 'Penyimpanan';
-
-  @override
   String get supportFmtArgs => 'Parameter pemformatan berikut ini didukung:';
-
-  @override
-  String get suspend => 'Suspend';
 
   @override
   String get suspendTip =>
@@ -892,17 +750,8 @@ class AppLocalizationsId extends AppLocalizations {
       'Tekan tombol pencarian untuk menemukan server SSH di jaringan Anda';
 
   @override
-  String get temperature => 'Suhu';
-
-  @override
   String get termFontSizeTip =>
       'Pengaturan ini akan memengaruhi ukuran terminal (lebar dan tinggi). Anda dapat melakukan zoom pada halaman terminal untuk menyesuaikan ukuran font sesi saat ini.';
-
-  @override
-  String get terminal => 'Terminal';
-
-  @override
-  String get test => 'pengujian';
 
   @override
   String get textScaler => 'Penskalaan font';
@@ -912,28 +761,13 @@ class AppLocalizationsId extends AppLocalizations {
       '1.0 => 100% (ukuran asli), hanya berfungsi pada bagian halaman server font, tidak disarankan untuk diubah.';
 
   @override
-  String get theme => ' Tema';
-
-  @override
   String get time => 'Waktu';
 
   @override
   String get times => 'Waktu';
 
   @override
-  String get total => 'Total';
-
-  @override
-  String get totalAttempts => 'Total';
-
-  @override
-  String get traffic => 'Lalu lintas';
-
-  @override
   String get trySudo => 'Cobalah menggunakan sudo';
-
-  @override
-  String get ttl => 'TTL';
 
   @override
   String get unknown => 'Tidak dikenal';
@@ -953,9 +787,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get upsideDown => 'Terbalik';
-
-  @override
-  String get uptime => 'Uptime';
 
   @override
   String get useCdn => 'Menggunakan CDN';
@@ -1023,28 +854,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.';
 
   @override
-  String get menuSettings => 'Setting';
-
-  @override
-  String get menuQuit => 'Quit';
-
-  @override
-  String get menuNavigate => 'Navigate';
-
-  @override
-  String get menuInfo => 'Info';
-
-  @override
   String get menuGitHubRepository => 'GitHub Repository';
-
-  @override
-  String get menuWiki => 'Wiki';
-
-  @override
-  String get menuHelp => 'Help';
-
-  @override
-  String get logs => 'Log';
 
   @override
   String get podmanDockerEmulationDetected =>

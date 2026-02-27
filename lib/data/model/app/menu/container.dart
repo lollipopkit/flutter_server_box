@@ -1,6 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 
 enum ContainerMenu {
   start,
@@ -37,12 +36,12 @@ enum ContainerMenu {
   };
 
   String get toStr => switch (this) {
-    ContainerMenu.start => l10n.start,
-    ContainerMenu.stop => l10n.stop,
-    ContainerMenu.restart => l10n.restart,
+    ContainerMenu.start => libL10n.start,
+    ContainerMenu.stop => libL10n.stop,
+    ContainerMenu.restart => libL10n.restart,
     ContainerMenu.rm => libL10n.delete,
     ContainerMenu.logs => libL10n.log,
-    ContainerMenu.terminal => l10n.terminal,
+    ContainerMenu.terminal => libL10n.terminal,
     // DockerMenuType.stats => s.stats,
   };
 }

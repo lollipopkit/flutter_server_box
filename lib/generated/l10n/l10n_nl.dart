@@ -64,9 +64,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get askAiInsertTerminal => 'In terminal invoegen';
 
   @override
-  String get askAiModel => 'Model';
-
-  @override
   String get askAiNoResponse => 'Geen reactie';
 
   @override
@@ -132,9 +129,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get backupVersionNotMatch => 'Back-upversie komt niet overeen.';
 
   @override
-  String get battery => 'Batterij';
-
-  @override
   String get bgRun => 'Uitvoeren op de achtergrond';
 
   @override
@@ -170,20 +164,11 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String get confirm => 'Confirm';
-
-  @override
   String get closeAfterSave => 'Opslaan en sluiten';
-
-  @override
-  String get cmd => 'Opdracht';
 
   @override
   String get collapseUITip =>
       'Of lange lijsten in de UI standaard moeten worden ingeklapt';
-
-  @override
-  String get conn => 'Verbinding';
 
   @override
   String get connectionDetails => 'Verbindingsdetails';
@@ -194,9 +179,6 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get connectionStatsDesc =>
       'Bekijk server verbindingssucces ratio en geschiedenis';
-
-  @override
-  String get container => 'Container';
 
   @override
   String get containerTrySudoTip =>
@@ -227,17 +209,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get customCmd => 'Aangepaste opdrachten';
 
   @override
-  String get customCmdDocUrl =>
-      'https://github.com/lollipopkit/flutter_server_box/wiki#custom-commands';
-
-  @override
   String get customCmdHint => '\"Opdrachtnaam\": \"Opdracht\"';
-
-  @override
-  String get decode => 'Decoderen';
-
-  @override
-  String get decompress => 'Decomprimeren';
 
   @override
   String get deleteServers => 'Servers batchgewijs verwijderen';
@@ -250,9 +222,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get dirEmpty => 'Zorg ervoor dat de map leeg is.';
 
   @override
-  String get disconnected => 'Verbroken';
-
-  @override
   String get discoverSshServers => 'SSH-servers ontdekken';
 
   @override
@@ -263,9 +232,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get discoverySummary => 'Ontdekkingssamenvatting';
-
-  @override
-  String get disk => 'Schijf';
 
   @override
   String get diskHealth => 'Schijfgezondheid';
@@ -321,17 +287,11 @@ class AppLocalizationsNl extends AppLocalizations {
       'De huidige codehighlighting-prestaties zijn slechter en kunnen optioneel worden uitgeschakeld om te verbeteren.';
 
   @override
-  String get emulator => 'Emulator';
-
-  @override
   String get enableMdns => 'mDNS inschakelen';
 
   @override
   String get enableMdnsDesc =>
       'Gebruik mDNS/Bonjour om SSH-services te ontdekken';
-
-  @override
-  String get encode => 'Coderen';
 
   @override
   String get envVars => 'Omgevingsvariabele';
@@ -371,9 +331,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get fontSize => 'Lettergrootte';
 
   @override
-  String get force => 'Forceer';
-
-  @override
   String get fullScreen => 'Volledig schermmodus';
 
   @override
@@ -409,9 +366,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get homeWidgetUrlConfig => 'Home-widget-url configureren';
 
   @override
-  String get host => 'Host';
-
-  @override
   String httpFailedWithCode(Object code) {
     return 'verzoek mislukt, statuscode: $code';
   }
@@ -424,12 +378,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get imagesList => 'Lijst met afbeeldingen';
-
-  @override
-  String get inner => 'Intern';
-
-  @override
-  String get install => 'Installeren';
 
   @override
   String get installDockerWithUrl =>
@@ -472,12 +420,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Aanbevolen om uit te schakelen, maar na het uitschakelen is het niet mogelijk om CJK-tekens in te voeren.';
 
   @override
-  String get location => 'Locatie';
-
-  @override
-  String get loss => 'verlies';
-
-  @override
   String madeWithLove(Object myGithub) {
     return 'Gemaakt met ❤️ door $myGithub';
   }
@@ -498,9 +440,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get min => 'min';
 
   @override
-  String get mission => 'Missie';
-
-  @override
   String get more => 'Meer';
 
   @override
@@ -508,17 +447,11 @@ class AppLocalizationsNl extends AppLocalizations {
       'Aan: kan worden weergegeven onder elke kaart op de Server-tabbladpagina. Uit: kan worden weergegeven bovenaan de Serverdetails-pagina.';
 
   @override
-  String get ms => 'ms';
-
-  @override
   String get needHomeDir =>
       'Als u een Synology-gebruiker bent, [zie hier](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Gebruikers van andere systemen moeten zoeken hoe ze een home directory kunnen creëren.';
 
   @override
   String get needRestart => 'App moet opnieuw worden gestart';
-
-  @override
-  String get net => 'Netwerk';
 
   @override
   String get netViewType => 'Netweergavetype';
@@ -541,12 +474,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get noPromptAgain => 'Niet meer vragen';
-
-  @override
-  String get node => 'Node';
-
-  @override
-  String get notAvailable => 'Niet beschikbaar';
 
   @override
   String get onServerDetailPage => 'Op serverdetailspagina';
@@ -578,9 +505,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get permission => 'Machtigingen';
 
   @override
-  String get pingAvg => 'Gem:';
-
-  @override
   String get pingInputIP => 'Voer een doel-IP / domein in.';
 
   @override
@@ -588,13 +512,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Geen server om te pingen.\nVoeg een server toe in het servertabblad.';
 
   @override
-  String get pkg => 'Pkg';
-
-  @override
   String get plugInType => 'Invoegingstype';
-
-  @override
-  String get port => 'Poort';
 
   @override
   String get preferDiskAmount =>
@@ -607,12 +525,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String privateKeyNotFoundFmt(Object keyId) {
     return 'Privésleutel [$keyId] niet gevonden.';
   }
-
-  @override
-  String get process => 'Proces';
-
-  @override
-  String get prune => 'Snoeien';
 
   @override
   String get pushToken => 'Push-token';
@@ -633,9 +545,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get read => 'Lezen';
 
   @override
-  String get reboot => 'Herstart';
-
-  @override
   String get recentConnections => 'Recente verbindingen';
 
   @override
@@ -652,22 +561,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get remotePath => 'Extern pad';
 
   @override
-  String get restart => 'Herstarten';
-
-  @override
   String get result => 'Resultaat';
 
   @override
   String get rotateAngel => 'Rotatiehoek';
-
-  @override
-  String get route => 'Route';
-
-  @override
-  String get run => 'Uitvoeren';
-
-  @override
-  String get running => 'Uitgevoerd';
 
   @override
   String get sameIdServerExist => 'Er bestaat al een server met dezelfde ID';
@@ -676,19 +573,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get save => 'Opslaan';
 
   @override
-  String get saved => 'Opgeslagen';
-
-  @override
   String get second => 's';
-
-  @override
-  String get sensors => 'Sensor';
-
-  @override
-  String get sequence => 'Volgorde';
-
-  @override
-  String get server => 'Server';
 
   @override
   String get serverDetailOrder => 'Volgorde van widget op detailpagina';
@@ -701,9 +586,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get serverTabRequired => 'Servertabblad kan niet worden verwijderd';
-
-  @override
-  String get servers => 'servers';
 
   @override
   String get sftpDlPrepare => 'Voorbereiden om verbinding te maken...';
@@ -726,13 +608,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get showDistLogo => 'Distributielogo weergeven';
 
   @override
-  String get shutdown => 'Afsluiten';
-
-  @override
   String get size => 'Grootte';
-
-  @override
-  String get snippet => 'Fragment';
 
   @override
   String get softWrap => 'Zachte wrap';
@@ -849,29 +725,11 @@ class AppLocalizationsNl extends AppLocalizations {
       'Automatisch schakelen van virtuele toetsen';
 
   @override
-  String get start => 'Starten';
-
-  @override
   String get stat => 'Statistieken';
-
-  @override
-  String get stats => 'Statistieken';
-
-  @override
-  String get stop => 'Stoppen';
-
-  @override
-  String get stopped => 'Gestopt';
-
-  @override
-  String get storage => 'Opslag';
 
   @override
   String get supportFmtArgs =>
       'De volgende opmaakparameters worden ondersteund:';
-
-  @override
-  String get suspend => 'Ophangen';
 
   @override
   String get suspendTip =>
@@ -897,17 +755,8 @@ class AppLocalizationsNl extends AppLocalizations {
       'Tik op de zoekknop om SSH-servers op uw netwerk te ontdekken';
 
   @override
-  String get temperature => 'Temperatuur';
-
-  @override
   String get termFontSizeTip =>
       'Deze instelling heeft invloed op de terminalgrootte (breedte en hoogte). U kunt inzoomen op de terminalpagina om de lettergrootte van de huidige sessie aan te passen.';
-
-  @override
-  String get terminal => 'Terminal';
-
-  @override
-  String get test => 'Testen';
 
   @override
   String get textScaler => 'Tekstschaler';
@@ -917,28 +766,13 @@ class AppLocalizationsNl extends AppLocalizations {
       '1.0 => 100% (oorspronkelijke grootte), werkt alleen op het gedeelte van de serverpagina van het lettertype, niet aanbevolen om te wijzigen.';
 
   @override
-  String get theme => 'Thema';
-
-  @override
   String get time => 'Tijd';
 
   @override
   String get times => 'Keer';
 
   @override
-  String get total => 'Totaal';
-
-  @override
-  String get totalAttempts => 'Totaal';
-
-  @override
-  String get traffic => 'Verkeer';
-
-  @override
   String get trySudo => 'Probeer sudo te gebruiken';
-
-  @override
-  String get ttl => 'TTL';
 
   @override
   String get unknown => 'Onbekend';
@@ -959,9 +793,6 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get upsideDown => 'Ondersteboven';
-
-  @override
-  String get uptime => 'Uptime';
 
   @override
   String get useCdn => 'Gebruikt CDN';
@@ -1030,28 +861,7 @@ class AppLocalizationsNl extends AppLocalizations {
       'Na het verbinden met de server wordt een script geschreven naar `~/.config/server_box` \n | `/tmp/server_box` om de systeemstatus te monitoren. U kunt de inhoud van het script controleren.';
 
   @override
-  String get menuSettings => 'Setting';
-
-  @override
-  String get menuQuit => 'Quit';
-
-  @override
-  String get menuNavigate => 'Navigate';
-
-  @override
-  String get menuInfo => 'Info';
-
-  @override
   String get menuGitHubRepository => 'GitHub Repository';
-
-  @override
-  String get menuWiki => 'Wiki';
-
-  @override
-  String get menuHelp => 'Help';
-
-  @override
-  String get logs => 'Logboeken';
 
   @override
   String get podmanDockerEmulationDetected =>

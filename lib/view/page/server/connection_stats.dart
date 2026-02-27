@@ -116,7 +116,7 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatItem(l10n.totalAttempts, stats.totalAttempts.toString(), Icons.all_inclusive),
+              _buildStatItem(libL10n.totalAttempts, stats.totalAttempts.toString(), Icons.all_inclusive),
               _buildStatItem(
                 libL10n.success,
                 stats.successCount.toString(),
@@ -237,7 +237,7 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
                }
              }
           },
-          child: Text(l10n.confirm),
+          child: Text(libL10n.confirm),
         ),
       ],
     );

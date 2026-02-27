@@ -59,7 +59,7 @@ final class PodmanPs implements ContainerPs {
     final stats = json.decode(s);
     final cpuD = (stats['CPU'] as double? ?? 0).toStringAsFixed(1);
     final cpuAvgD = (stats['AvgCPU'] as double? ?? 0).toStringAsFixed(1);
-    cpu = '$cpuD% / ${l10n.pingAvg} $cpuAvgD%';
+    cpu = '$cpuD% / ${libL10n.pingAvg} $cpuAvgD%';
     final memLimit = (stats['MemLimit'] as int? ?? 0).bytes2Str;
     final memUsage = (stats['MemUsage'] as int? ?? 0).bytes2Str;
     mem = '$memUsage / $memLimit';

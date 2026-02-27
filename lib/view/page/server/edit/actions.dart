@@ -25,12 +25,12 @@ extension _Actions on _ServerEditPageState {
       if (_nameController.text.isEmpty) {
         _nameController.text = server.ip;
       }
-      context.showSnackBar('${libL10n.found} 1 ${l10n.server}');
+      context.showSnackBar('${libL10n.found} 1 ${libL10n.server}');
     } else {
       // Multiple servers - show import dialog
       final shouldImport = await context.showRoundDialog<bool>(
         title: libL10n.import,
-        child: Text(libL10n.askContinue('${libL10n.found} ${discoveredServers.length} ${l10n.servers}')),
+        child: Text(libL10n.askContinue('${libL10n.found} ${discoveredServers.length} ${libL10n.servers}')),
         actions: Btnx.cancelOk,
       );
 
@@ -46,7 +46,7 @@ extension _Actions on _ServerEditPageState {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('${libL10n.found} ${discoveredServers.length} ${l10n.servers}.'),
+              Text('${libL10n.found} ${discoveredServers.length} ${libL10n.servers}.'),
               const SizedBox(height: 8),
               Text(libL10n.setting),
               const SizedBox(height: 8),
@@ -99,7 +99,7 @@ extension _Actions on _ServerEditPageState {
         dprint('Failed to import server ${server.name}: $e');
       }
     }
-    context.showSnackBar('${libL10n.success}: $imported ${l10n.servers}');
+    context.showSnackBar('${libL10n.success}: $imported ${libL10n.servers}');
     if (mounted) context.pop(true);
   }
 
@@ -221,7 +221,7 @@ extension _Actions on _ServerEditPageState {
 
   void _onSave() async {
     if (_ipController.text.isEmpty) {
-      context.showSnackBar('${libL10n.empty} ${l10n.host}');
+      context.showSnackBar('${libL10n.empty} ${libL10n.host}');
       return;
     }
 
@@ -369,7 +369,7 @@ extension _Utils on _ServerEditPageState {
 
   Future<void> _showCmdTypesDialog(Set<ShellCmdType> allCmdTypes) {
     return context.showRoundDialog(
-      title: '${libL10n.disabled} ${l10n.cmd}',
+      title: '${libL10n.disabled} ${libL10n.cmd}',
       child: SizedBox(
         width: 270,
         child: _disabledCmdTypes.listenVal((disabled) {

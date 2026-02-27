@@ -1,6 +1,6 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 
 enum ServerFuncBtn {
@@ -52,11 +52,11 @@ enum ServerFuncBtn {
 
   String get toStr => switch (this) {
     sftp => 'SFTP',
-    snippet => l10n.snippet,
-    //pkg => l10n.pkg,
-    container => l10n.container,
-    process => l10n.process,
-    terminal => l10n.terminal,
+    snippet => libL10n.snippet,
+    //pkg => libL10n.pkg,
+    container => libL10n.container,
+    process => libL10n.process,
+    terminal => libL10n.terminal,
     iperf => 'iperf',
     systemd => 'Systemd',
   };

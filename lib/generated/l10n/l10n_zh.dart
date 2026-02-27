@@ -62,9 +62,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiInsertTerminal => '插入终端';
 
   @override
-  String get askAiModel => '模型';
-
-  @override
   String get askAiNoResponse => '无回复内容';
 
   @override
@@ -125,9 +122,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupVersionNotMatch => '备份版本不兼容，无法恢复';
 
   @override
-  String get battery => '电池';
-
-  @override
   String get bgRun => '后台运行';
 
   @override
@@ -162,19 +156,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get confirm => '确认';
-
-  @override
   String get closeAfterSave => '保存后关闭';
 
   @override
-  String get cmd => '命令';
-
-  @override
   String get collapseUITip => '是否默认折叠 UI 中的长列表';
-
-  @override
-  String get conn => '连接';
 
   @override
   String get connectionDetails => '连接详情';
@@ -184,9 +169,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get connectionStatsDesc => '查看服务器连接成功率和历史记录';
-
-  @override
-  String get container => '容器';
 
   @override
   String get containerTrySudoTip =>
@@ -214,17 +196,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get customCmd => '自定义命令';
 
   @override
-  String get customCmdDocUrl =>
-      'https://github.com/lollipopkit/flutter_server_box/wiki/主页#自定义命令';
-
-  @override
   String get customCmdHint => '\"命令名称\": \"命令\"';
-
-  @override
-  String get decode => '解码';
-
-  @override
-  String get decompress => '解压缩';
 
   @override
   String get deleteServers => '批量删除服务器';
@@ -234,9 +206,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dirEmpty => '请确保目录为空';
-
-  @override
-  String get disconnected => '已断开连接';
 
   @override
   String get discoverSshServers => '发现SSH服务器';
@@ -249,9 +218,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get discoverySummary => '发现摘要';
-
-  @override
-  String get disk => '磁盘';
 
   @override
   String get diskHealth => '磁盘健康';
@@ -305,16 +271,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editorHighlightTip => '代码高亮功能可能影响性能，可选择关闭。';
 
   @override
-  String get emulator => '模拟器';
-
-  @override
   String get enableMdns => '启用mDNS';
 
   @override
   String get enableMdnsDesc => '使用mDNS/Bonjour发现SSH服务';
-
-  @override
-  String get encode => '编码';
 
   @override
   String get envVars => '环境变量';
@@ -353,9 +313,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fontSize => '字体大小';
 
   @override
-  String get force => '强制';
-
-  @override
   String get fullScreen => '全屏模式';
 
   @override
@@ -389,9 +346,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeWidgetUrlConfig => '桌面部件链接配置';
 
   @override
-  String get host => '主机';
-
-  @override
   String httpFailedWithCode(Object code) {
     return '请求失败，状态码: $code';
   }
@@ -404,12 +358,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get imagesList => '镜像列表';
-
-  @override
-  String get inner => '内置';
-
-  @override
-  String get install => '安装';
 
   @override
   String get installDockerWithUrl =>
@@ -449,12 +397,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get letterCacheTip => '推荐关闭，但是关闭后无法输入 CJK 等文字';
 
   @override
-  String get location => '位置';
-
-  @override
-  String get loss => '丢包率';
-
-  @override
   String madeWithLove(Object myGithub) {
     return '用❤️制作 by $myGithub';
   }
@@ -475,9 +417,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get min => '最小';
 
   @override
-  String get mission => '任务';
-
-  @override
   String get more => '更多';
 
   @override
@@ -485,17 +424,11 @@ class AppLocalizationsZh extends AppLocalizations {
       '开启：可以在服务器 Tab 页的每个卡片下方显示。关闭：在服务器详情页顶部显示。';
 
   @override
-  String get ms => '毫秒';
-
-  @override
   String get needHomeDir =>
       '如果你是群晖用户，[看这里](https://kb.synology.cn/zh-cn/DSM/tutorial/ssh_could_not_chdir_to_home_directory)。其他系统用户，需搜索如何创建家目录（home directory）.';
 
   @override
   String get needRestart => '需要重启 App';
-
-  @override
-  String get net => '网络';
 
   @override
   String get netViewType => '网络视图类型';
@@ -517,12 +450,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noPromptAgain => '不再提示';
-
-  @override
-  String get node => '节点';
-
-  @override
-  String get notAvailable => '不可用';
 
   @override
   String get onServerDetailPage => '在服务器详情页';
@@ -551,22 +478,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get permission => '权限';
 
   @override
-  String get pingAvg => '平均:';
-
-  @override
   String get pingInputIP => '请输入目标IP或域名';
 
   @override
   String get pingNoServer => '没有服务器可用于 Ping\n请在服务器 tab 添加服务器后再试';
 
   @override
-  String get pkg => '包管理';
-
-  @override
   String get plugInType => '插入类型';
-
-  @override
-  String get port => '端口';
 
   @override
   String get preferDiskAmount => '优先显示硬盘容量';
@@ -578,12 +496,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String privateKeyNotFoundFmt(Object keyId) {
     return '未找到私钥 [$keyId]。';
   }
-
-  @override
-  String get process => '进程';
-
-  @override
-  String get prune => '修剪';
 
   @override
   String get pushToken => '消息推送 Token';
@@ -601,9 +513,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get read => '读';
 
   @override
-  String get reboot => '重启';
-
-  @override
   String get recentConnections => '最近连接记录';
 
   @override
@@ -619,22 +528,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remotePath => '远端路径';
 
   @override
-  String get restart => '重启';
-
-  @override
   String get result => '结果';
 
   @override
   String get rotateAngel => '旋转角度';
-
-  @override
-  String get route => '路由';
-
-  @override
-  String get run => '运行';
-
-  @override
-  String get running => '运行中';
 
   @override
   String get sameIdServerExist => '已存在相同 id 的服务器';
@@ -643,19 +540,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get save => '保存';
 
   @override
-  String get saved => '已保存';
-
-  @override
   String get second => '秒';
-
-  @override
-  String get sensors => '传感器';
-
-  @override
-  String get sequence => '顺序';
-
-  @override
-  String get server => '服务器';
 
   @override
   String get serverDetailOrder => '详情页部件顺序';
@@ -668,9 +553,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get serverTabRequired => '服务器标签不能被移除';
-
-  @override
-  String get servers => '服务器';
 
   @override
   String get sftpDlPrepare => '准备连接至服务器...';
@@ -692,13 +574,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get showDistLogo => '显示发行版 Logo';
 
   @override
-  String get shutdown => '关机';
-
-  @override
   String get size => '大小';
-
-  @override
-  String get snippet => '代码片段';
 
   @override
   String get softWrap => '自动换行';
@@ -807,28 +683,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshVirtualKeyAutoOff => '虚拟按键自动切换';
 
   @override
-  String get start => '开始';
-
-  @override
   String get stat => '统计';
 
   @override
-  String get stats => '统计';
-
-  @override
-  String get stop => '停止';
-
-  @override
-  String get stopped => '已停止';
-
-  @override
-  String get storage => '存储';
-
-  @override
   String get supportFmtArgs => '支持以下格式化参数：';
-
-  @override
-  String get suspend => '挂起';
 
   @override
   String get suspendTip => 'suspend 功能需要 root 权限及 systemd 支持。';
@@ -851,16 +709,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tapToStartDiscovery => '点击搜索按钮发现网络中的SSH服务器';
 
   @override
-  String get temperature => '温度';
-
-  @override
   String get termFontSizeTip => '此设置会影响终端大小（宽和高）。可以在终端页面缩放来调整当前会话的字体大小';
-
-  @override
-  String get terminal => '终端';
-
-  @override
-  String get test => '测试';
 
   @override
   String get textScaler => '字体缩放';
@@ -869,28 +718,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get textScalerTip => '1.0 => 100%（原大小），仅作用于服务器页面部分字体，不建议修改。';
 
   @override
-  String get theme => '主题';
-
-  @override
   String get time => '时间';
 
   @override
   String get times => '次';
 
   @override
-  String get total => '总共';
-
-  @override
-  String get totalAttempts => '总次数';
-
-  @override
-  String get traffic => '流量';
-
-  @override
   String get trySudo => '尝试使用 sudo';
-
-  @override
-  String get ttl => 'TTL';
 
   @override
   String get unknown => '未知';
@@ -909,9 +743,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get upsideDown => '上下交换';
-
-  @override
-  String get uptime => '启动时长';
 
   @override
   String get useCdn => '使用 CDN';
@@ -975,28 +806,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '在连接服务器后，会向 `~/.config/server_box` \n | `/tmp/server_box` 写入脚本来监测系统状态，你可以审查脚本内容。';
 
   @override
-  String get menuSettings => '设置';
-
-  @override
-  String get menuQuit => '退出';
-
-  @override
-  String get menuNavigate => '导航';
-
-  @override
-  String get menuInfo => '信息';
-
-  @override
   String get menuGitHubRepository => 'GitHub 仓库';
-
-  @override
-  String get menuWiki => 'Wiki';
-
-  @override
-  String get menuHelp => '帮助';
-
-  @override
-  String get logs => '日志';
 
   @override
   String get podmanDockerEmulationDetected =>
@@ -1061,9 +871,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiInsertTerminal => '插入終端機';
 
   @override
-  String get askAiModel => '模型';
-
-  @override
   String get askAiNoResponse => '無回覆內容';
 
   @override
@@ -1124,9 +931,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get backupVersionNotMatch => '備份版本不相容，無法還原';
 
   @override
-  String get battery => '電池';
-
-  @override
   String get bgRun => '背景執行';
 
   @override
@@ -1164,13 +968,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get closeAfterSave => '儲存後關閉';
 
   @override
-  String get cmd => '指令';
-
-  @override
   String get collapseUITip => '是否預設折疊 UI 中存在的長列表';
-
-  @override
-  String get conn => '連線';
 
   @override
   String get connectionDetails => '連線詳情';
@@ -1180,9 +978,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get connectionStatsDesc => '檢視伺服器連線成功率和歷史記錄';
-
-  @override
-  String get container => '容器';
 
   @override
   String get containerTrySudoTip =>
@@ -1210,17 +1005,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get customCmd => '自訂指令';
 
   @override
-  String get customCmdDocUrl =>
-      'https://github.com/lollipopkit/flutter_server_box/wiki/主页#自定义指令';
-
-  @override
   String get customCmdHint => '\"指令名稱\": \"指令\"';
-
-  @override
-  String get decode => '解碼';
-
-  @override
-  String get decompress => '解壓縮';
 
   @override
   String get deleteServers => '大量刪除伺服器';
@@ -1230,9 +1015,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get dirEmpty => '請確保目錄為空';
-
-  @override
-  String get disconnected => '已中斷連線';
 
   @override
   String get discoverSshServers => '發現SSH服務器';
@@ -1245,9 +1027,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get discoverySummary => '發現摘要';
-
-  @override
-  String get disk => '磁碟';
 
   @override
   String get diskHealth => '磁碟健康';
@@ -1301,16 +1080,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get editorHighlightTip => '程式碼高亮功能可能影響效能，可選擇性關閉。';
 
   @override
-  String get emulator => '模擬器';
-
-  @override
   String get enableMdns => '啟用mDNS';
 
   @override
   String get enableMdnsDesc => '使用mDNS/Bonjour發現SSH服務';
-
-  @override
-  String get encode => '編碼';
 
   @override
   String get envVars => '環境變數';
@@ -1349,9 +1122,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get fontSize => '字型大小';
 
   @override
-  String get force => '強制';
-
-  @override
   String get fullScreen => '全螢幕模式';
 
   @override
@@ -1385,9 +1155,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get homeWidgetUrlConfig => '桌面小工具連結配置';
 
   @override
-  String get host => '主機';
-
-  @override
   String httpFailedWithCode(Object code) {
     return '請求失敗，狀態碼：$code';
   }
@@ -1400,12 +1167,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get imagesList => '映像檔列表';
-
-  @override
-  String get inner => '內建';
-
-  @override
-  String get install => '安裝';
 
   @override
   String get installDockerWithUrl =>
@@ -1445,12 +1206,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get letterCacheTip => '建議關閉，但關閉後將無法輸入 CJK 等文字。';
 
   @override
-  String get location => '位置';
-
-  @override
-  String get loss => '逾時';
-
-  @override
   String madeWithLove(Object myGithub) {
     return '用❤️製作 by $myGithub';
   }
@@ -1471,9 +1226,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get min => '最小';
 
   @override
-  String get mission => '任務';
-
-  @override
   String get more => '更多';
 
   @override
@@ -1481,17 +1233,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '開啟：可以在伺服器 Tab 頁的每個卡片下方顯示。關閉：在伺服器詳情頁頂部顯示。';
 
   @override
-  String get ms => '毫秒';
-
-  @override
   String get needHomeDir =>
       '如果你是群暉使用者，[看這裡](https://kb.synology.com/DSM/tutorial/user_enable_home_service)。其他系統使用者，需搜尋如何建立家目錄（home directory）。';
 
   @override
   String get needRestart => '需要重開 App';
-
-  @override
-  String get net => '網路';
 
   @override
   String get netViewType => '網路檢視類型';
@@ -1513,12 +1259,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get noPromptAgain => '不再提示';
-
-  @override
-  String get node => '節點';
-
-  @override
-  String get notAvailable => '不可用';
 
   @override
   String get onServerDetailPage => '在伺服器詳情頁';
@@ -1547,22 +1287,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get permission => '權限';
 
   @override
-  String get pingAvg => '平均:';
-
-  @override
   String get pingInputIP => '請輸入目標 IP 或域名';
 
   @override
   String get pingNoServer => '沒有伺服器可用於 Ping\n請在伺服器 Tab 新增伺服器後再試';
 
   @override
-  String get pkg => '套件管理';
-
-  @override
   String get plugInType => '插入類型';
-
-  @override
-  String get port => '埠';
 
   @override
   String get preferDiskAmount => '優先顯示硬碟容量';
@@ -1574,12 +1305,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String privateKeyNotFoundFmt(Object keyId) {
     return '未找到私鑰 [$keyId]。';
   }
-
-  @override
-  String get process => '處理程序';
-
-  @override
-  String get prune => '修剪';
 
   @override
   String get pushToken => '消息推送 Token';
@@ -1597,9 +1322,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get read => '讀取';
 
   @override
-  String get reboot => '重開';
-
-  @override
   String get recentConnections => '最近連線記錄';
 
   @override
@@ -1615,22 +1337,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get remotePath => '遠端路徑';
 
   @override
-  String get restart => '重開';
-
-  @override
   String get result => '結果';
 
   @override
   String get rotateAngel => '旋轉角度';
-
-  @override
-  String get route => '路由';
-
-  @override
-  String get run => '執行';
-
-  @override
-  String get running => '運作中';
 
   @override
   String get sameIdServerExist => '已存在相同 ID 的伺服器';
@@ -1639,19 +1349,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get save => '儲存';
 
   @override
-  String get saved => '已儲存';
-
-  @override
   String get second => '秒';
-
-  @override
-  String get sensors => '感應器';
-
-  @override
-  String get sequence => '順序';
-
-  @override
-  String get server => '伺服器';
 
   @override
   String get serverDetailOrder => '詳情頁部件順序';
@@ -1664,9 +1362,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get serverTabRequired => '服務器標籤不能被移除';
-
-  @override
-  String get servers => '服務器';
 
   @override
   String get sftpDlPrepare => '準備連線至伺服器...';
@@ -1688,13 +1383,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get showDistLogo => '顯示發行版 Logo';
 
   @override
-  String get shutdown => '關機';
-
-  @override
   String get size => '大小';
-
-  @override
-  String get snippet => '程式片段';
 
   @override
   String get softWrap => '軟換行';
@@ -1803,28 +1492,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshVirtualKeyAutoOff => '虛擬按鍵自動切換';
 
   @override
-  String get start => '開始';
-
-  @override
   String get stat => '統計';
 
   @override
-  String get stats => '統計';
-
-  @override
-  String get stop => '停止';
-
-  @override
-  String get stopped => '已停止';
-
-  @override
-  String get storage => '存儲';
-
-  @override
   String get supportFmtArgs => '支援以下格式化參數：';
-
-  @override
-  String get suspend => '當機';
 
   @override
   String get suspendTip => 'suspend 功能需要 root 權限及 systemd 支援。';
@@ -1847,16 +1518,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get tapToStartDiscovery => '點擊搜尋按鈕發現網路中的SSH服務器';
 
   @override
-  String get temperature => '溫度';
-
-  @override
   String get termFontSizeTip => '此設定將影響終端機大小（寬度和高度）。您可以在終端機頁面縮放，來調整目前會話的字型大小。';
-
-  @override
-  String get terminal => '终端機';
-
-  @override
-  String get test => '測試';
 
   @override
   String get textScaler => '字型縮放';
@@ -1865,28 +1527,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get textScalerTip => '1.0 => 100%（原大小），僅作用於伺服器頁面部分字型，不建議修改。';
 
   @override
-  String get theme => '主題';
-
-  @override
   String get time => '時間';
 
   @override
   String get times => '次';
 
   @override
-  String get total => '總共';
-
-  @override
-  String get totalAttempts => '總次數';
-
-  @override
-  String get traffic => '流量';
-
-  @override
   String get trySudo => '嘗試使用 sudo';
-
-  @override
-  String get ttl => 'TTL';
 
   @override
   String get unknown => '未知';
@@ -1905,9 +1552,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get upsideDown => '上下交換';
-
-  @override
-  String get uptime => '運作時間';
 
   @override
   String get useCdn => '使用 CDN';
@@ -1969,9 +1613,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get writeScriptTip =>
       '連線到伺服器後，將會在 `~/.config/server_box` \n | `/tmp/server_box` 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。';
-
-  @override
-  String get logs => '日誌';
 
   @override
   String get podmanDockerEmulationDetected =>
