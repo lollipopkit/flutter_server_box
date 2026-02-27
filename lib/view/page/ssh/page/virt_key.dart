@@ -44,7 +44,7 @@ extension _VirtKey on SSHPageState {
         _terminal.keyInput(TerminalKey.backspace);
         break;
       case VirtualKeyFunc.clipboard:
-        _onClipboardAction();
+        await _onClipboardAction();
         break;
       case VirtualKeyFunc.snippet:
         final snippetState = ref.read(snippetProvider);
