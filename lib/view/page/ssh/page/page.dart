@@ -385,6 +385,20 @@ class SSHPageState extends ConsumerState<SSHPage>
     _terminalController.clearSelection();
   }
 
+  Future<void> _onClipboardAction() async {
+    if (_terminalController.selection != null) {
+      final selectedText = _termKey.currentState?.renderTerminal.selectedText;
+      if (selectedText != null && selectedText.isNotEmpty) {
+        await Clipboard.setData(ClipboardData(text: selectedText));
+        if (!mounted) return;
+        context.showSnackBar(libL10n.success);
+        _terminalController.clearSelection();
+        return;
+      }
+    }
+    await _onTerminalPaste();
+  }
+
   @override
   bool get wantKeepAlive => true;
 
