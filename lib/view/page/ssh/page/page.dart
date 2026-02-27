@@ -376,15 +376,13 @@ class SSHPageState extends ConsumerState<SSHPage>
     _termKey.currentState?.renderTerminal.selectAll();
   }
 
-  void _onTerminalPaste() {
+  Future<void> _onTerminalPaste() async {
+    final value = await Clipboard.getData(Clipboard.kTextPlain);
     if (!mounted) return;
-    Clipboard.getData(Clipboard.kTextPlain).then((value) {
-      final text = value?.text;
-      if (text != null) {
-        _terminal.textInput(text);
-        _terminalController.clearSelection();
-      }
-    });
+    final text = value?.text;
+    if (text == null) return;
+    _terminal.textInput(text);
+    _terminalController.clearSelection();
   }
 
   @override

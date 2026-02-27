@@ -44,7 +44,7 @@ extension _VirtKey on SSHPageState {
         _terminal.keyInput(TerminalKey.backspace);
         break;
       case VirtualKeyFunc.clipboard:
-        _paste();
+        _onTerminalPaste();
         break;
       case VirtualKeyFunc.snippet:
         final snippetState = ref.read(snippetProvider);
@@ -120,17 +120,6 @@ extension _VirtKey on SSHPageState {
         SftpPage.route.go(context, args);
         break;
     }
-  }
-
-  void _paste() {
-    Clipboard.getData(Clipboard.kTextPlain).then((value) {
-      final text = value?.text;
-      if (text != null) {
-        _terminal.textInput(text);
-      } else {
-        context.showRoundDialog(title: libL10n.error, child: Text(libL10n.empty));
-      }
-    });
   }
 
   void _initVirtKeys() {
