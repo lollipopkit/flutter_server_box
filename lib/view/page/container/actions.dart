@@ -223,6 +223,30 @@ extension on _ContainerPageState {
         );
         SSHPage.route.go(context, args);
         break;
+      case ContainerMenu.askAi:
+        final runtime = switch (_containerState.type) {
+          ContainerType.podman => 'podman',
+          ContainerType.docker => 'docker',
+        };
+        final blocks = <String>[
+          '[Container]\nruntime: $runtime',
+          '[Container Item]\nid: ${dItem.id}\nname: ${dItem.name}\nimage: ${dItem.image}\nstatus: ${dItem.status.displayName}',
+        ];
+        showAiAssistSheet(
+          context,
+          AiAssistArgs(
+            title: context.l10n.askAi,
+            contextBlocks: blocks,
+            scenario: AskAiScenario.container,
+            applyLabel: libL10n.ok,
+            applyBehavior: AiApplyBehavior.openSsh,
+            onOpenSsh: (cmd) {
+              final args = SshPageArgs(spi: widget.args.spi, initCmd: cmd);
+              SSHPage.route.go(context, args);
+            },
+          ),
+        );
+        break;
     }
   }
 

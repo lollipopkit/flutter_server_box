@@ -9,6 +9,7 @@ import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/home.dart';
+import 'package:server_box/view/widget/ai/ai_fab_overlay.dart';
 
 part 'intro.dart';
 
@@ -108,7 +109,10 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       key: ValueKey(locale),
       navigatorKey: AppNavigator.key,
-      builder: ResponsivePoints.builder,
+      builder: (context, child) {
+        final responsiveChild = ResponsivePoints.builder(context, child);
+        return AiFabOverlay(child: responsiveChild);
+      },
       locale: locale,
       localizationsDelegates: const [LibLocalizations.delegate, ...AppLocalizations.localizationsDelegates],
       supportedLocales: AppLocalizations.supportedLocales,

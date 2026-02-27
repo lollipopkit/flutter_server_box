@@ -165,6 +165,10 @@ class SettingStore extends HiveStore {
   late final askAiApiKey = propertyDefault('askAiApiKey', '');
   late final askAiModel = propertyDefault('askAiModel', 'gpt-4o-mini');
 
+  /// Global AI floating action button position as normalized (0..1) ratios.
+  late final aiFabOffsetX = propertyDefault('aiFabOffsetX', 0.92);
+  late final aiFabOffsetY = propertyDefault('aiFabOffsetY', 0.55);
+
   late final serverFuncBtns = listProperty('serverBtns', defaultValue: ServerFuncBtn.defaultIdxs);
 
   /// Docker is more popular than podman, set to `false` to use docker

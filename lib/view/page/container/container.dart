@@ -12,10 +12,12 @@ import 'package:server_box/data/model/app/menu/container.dart';
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
+import 'package:server_box/data/provider/ai/ask_ai.dart';
 import 'package:server_box/data/provider/container.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
+import 'package:server_box/view/widget/ai/ai_assist_sheet.dart';
 
 part 'actions.dart';
 part 'types.dart';
