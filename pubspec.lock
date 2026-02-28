@@ -244,11 +244,9 @@ packages:
   circle_chart:
     dependency: "direct main"
     description:
-      path: "."
-      ref: main
-      resolved-ref: "449a3fa7e886869e87ea10ab56f99be3f16f2c1f"
-      url: "https://github.com/lollipopkit/circle_chart"
-    source: git
+      path: "packages/circle_chart"
+      relative: true
+    source: path
     version: "0.0.3"
   cli_config:
     dependency: transitive
@@ -1168,11 +1166,9 @@ packages:
   plain_notification_token:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "v1.0.23"
-      resolved-ref: "5f56dc56a6670e2533b0caa7d09d31d16e6c7663"
-      url: "https://github.com/lollipopkit/plain_notification_token"
-    source: git
+      path: "packages/plain_notification_token"
+      relative: true
+    source: path
     version: "0.0.4"
   platform:
     dependency: transitive
@@ -1766,11 +1762,9 @@ packages:
   watch_connectivity:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "v1.0.85"
-      resolved-ref: "13e42750a8f8dbf9a6c7890198b0dd18283a0692"
-      url: "https://github.com/lollipopkit/watch_connectivity"
-    source: git
+      path: "packages/watch_connectivity"
+      relative: true
+    source: path
     version: "0.1.5"
   watcher:
     dependency: transitive

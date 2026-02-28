@@ -42,9 +42,7 @@ dependencies:
   dartssh2:
     path: packages/dartssh2
   circle_chart:
-    git:
-      url: https://github.com/lollipopkit/circle_chart
-      ref: main
+    path: packages/circle_chart
   xterm:
     path: packages/xterm
   computer:
@@ -52,21 +50,15 @@ dependencies:
       url: https://github.com/lollipopkit/dart_computer
       ref: v1.0.88
   watch_connectivity:
-    git:
-      url: https://github.com/lollipopkit/watch_connectivity
-      ref: v1.0.85
+    path: packages/watch_connectivity
   plain_notification_token:
-    git:
-      url: https://github.com/lollipopkit/plain_notification_token
-      ref: v1.0.23
+    path: packages/plain_notification_token
   fl_lib:
     path: packages/fl_lib
 
 dependency_overrides:
   # webdav_client_plus:
   #   path: ../webdav_client
-  # fl_build:
-  #   path: ../fl_build
   gtk: # TODO: remove it after fixed in upstream
     git:
       url: https://github.com/lollipopkit/gtk.dart
