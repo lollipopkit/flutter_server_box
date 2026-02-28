@@ -13,9 +13,12 @@ class SnippetStore extends SqliteStore {
 
   List<Snippet> fetch() {
     final ss = <Snippet>{};
-    for (final key in keys()) {
+    for (final key in keys().toList()) {
       final s = get<Snippet>(key, fromObj: _fromObj);
       if (s != null) {
+        if (s.name != key) {
+          remove(key);
+        }
         put(s);
         ss.add(s);
       }

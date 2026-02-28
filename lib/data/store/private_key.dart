@@ -13,9 +13,12 @@ class PrivateKeyStore extends SqliteStore {
 
   List<PrivateKeyInfo> fetch() {
     final ps = <PrivateKeyInfo>[];
-    for (final key in keys()) {
+    for (final key in keys().toList()) {
       final s = get<PrivateKeyInfo>(key, fromObj: _parsePrivateKeyInfo);
       if (s != null) {
+        if (s.id != key) {
+          remove(key);
+        }
         put(s);
         ps.add(s);
       }

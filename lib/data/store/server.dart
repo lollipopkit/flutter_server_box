@@ -16,9 +16,12 @@ class ServerStore extends SqliteStore {
 
   List<Spi> fetch() {
     final List<Spi> ss = [];
-    for (final id in keys()) {
+    for (final id in keys().toList()) {
       final s = get<Spi>(id, fromObj: _fromObj);
       if (s != null) {
+        if (s.id != id) {
+          remove(id);
+        }
         put(s);
         ss.add(s);
       }
