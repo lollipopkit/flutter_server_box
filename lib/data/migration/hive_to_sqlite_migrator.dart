@@ -135,7 +135,7 @@ abstract final class HiveToSqliteMigrator {
       for (final rawKey in box.keys) {
         if (rawKey is! String) continue;
         final normalized = normalize(box.get(rawKey));
-        if (normalized is! Object) continue;
+        if (normalized == null) continue;
         target.set(rawKey, normalized);
       }
       await target.flush();
