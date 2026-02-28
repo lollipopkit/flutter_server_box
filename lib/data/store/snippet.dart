@@ -14,25 +14,9 @@ class SnippetStore extends SqliteStore {
   List<Snippet> fetch() {
     final ss = <Snippet>{};
     for (final key in keys()) {
-      final s = get<Snippet>(
-        key,
-        fromObj: (val) {
-          if (val is Snippet) return val;
-          if (val is Map<dynamic, dynamic>) {
-            final map = val.toStrDynMap;
-            if (map == null) return null;
-            try {
-              final snippet = Snippet.fromJson(map as Map<String, dynamic>);
-              put(snippet);
-              return snippet;
-            } catch (e) {
-              dprint('Parsing Snippet from JSON', e);
-            }
-          }
-          return null;
-        },
-      );
+      final s = get<Snippet>(key, fromObj: _fromObj);
       if (s != null) {
+        put(s);
         ss.add(s);
       }
     }

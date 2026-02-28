@@ -23,81 +23,89 @@ abstract final class HiveToSqliteMigrator {
     final migrated = PrefStore.shared.get<bool>(_migratedFlagKey) ?? false;
     if (migrated) return;
 
-    final path = await _legacyHivePath();
-    final hasLegacy = _hasLegacyFiles(path);
-    if (!hasLegacy) {
+    try {
+      final path = await _legacyHivePath();
+      final hasLegacy = _hasLegacyFiles(path);
+      if (!hasLegacy) {
+        await PrefStore.shared.set(_migratedFlagKey, true);
+        await PrefStore.shared.set(_migratedBuildKey, BuildData.build);
+        return;
+      }
+
+      await Hive.initFlutter();
+      Hive.registerAdapters();
+
+      final allSucceeded = [
+        await _migrateOne(
+          boxName: 'setting',
+          target: Stores.setting,
+          path: path,
+          normalize: _normalizeGeneric,
+        ),
+        await _migrateOne(
+          boxName: 'server',
+          target: Stores.server,
+          path: path,
+          normalize: _normalizeSpi,
+        ),
+        await _migrateOne(
+          boxName: 'docker',
+          target: Stores.container,
+          path: path,
+          normalize: _normalizeGeneric,
+        ),
+        await _migrateOne(
+          boxName: 'key',
+          target: Stores.key,
+          path: path,
+          normalize: _normalizePrivateKey,
+        ),
+        await _migrateOne(
+          boxName: 'snippet',
+          target: Stores.snippet,
+          path: path,
+          normalize: _normalizeSnippet,
+        ),
+        await _migrateOne(
+          boxName: 'history',
+          target: Stores.history,
+          path: path,
+          normalize: _normalizeGeneric,
+        ),
+        await _migrateOne(
+          boxName: 'connection_stats',
+          target: Stores.connectionStats,
+          path: path,
+          normalize: _normalizeConnectionStat,
+        ),
+      ].every((ok) => ok);
+
+      await Stores.setting.flush();
+      await Stores.server.flush();
+      await Stores.container.flush();
+      await Stores.key.flush();
+      await Stores.snippet.flush();
+      await Stores.history.flush();
+      await Stores.connectionStats.flush();
+
+      if (!allSucceeded) {
+        Loggers.app.warning(
+          'Hive to SQLite migration was partially completed. '
+          'Will retry next launch without archiving legacy hive files.',
+        );
+        return;
+      }
+
       await PrefStore.shared.set(_migratedFlagKey, true);
       await PrefStore.shared.set(_migratedBuildKey, BuildData.build);
-      return;
-    }
-
-    await Hive.initFlutter();
-    Hive.registerAdapters();
-
-    final allSucceeded = [
-      await _migrateOne(
-        boxName: 'setting',
-        target: Stores.setting,
-        path: path,
-        normalize: _normalizeGeneric,
-      ),
-      await _migrateOne(
-        boxName: 'server',
-        target: Stores.server,
-        path: path,
-        normalize: _normalizeSpi,
-      ),
-      await _migrateOne(
-        boxName: 'docker',
-        target: Stores.container,
-        path: path,
-        normalize: _normalizeGeneric,
-      ),
-      await _migrateOne(
-        boxName: 'key',
-        target: Stores.key,
-        path: path,
-        normalize: _normalizePrivateKey,
-      ),
-      await _migrateOne(
-        boxName: 'snippet',
-        target: Stores.snippet,
-        path: path,
-        normalize: _normalizeSnippet,
-      ),
-      await _migrateOne(
-        boxName: 'history',
-        target: Stores.history,
-        path: path,
-        normalize: _normalizeGeneric,
-      ),
-      await _migrateOne(
-        boxName: 'connection_stats',
-        target: Stores.connectionStats,
-        path: path,
-        normalize: _normalizeConnectionStat,
-      ),
-    ].every((ok) => ok);
-
-    await Stores.setting.flush();
-    await Stores.server.flush();
-    await Stores.container.flush();
-    await Stores.key.flush();
-    await Stores.snippet.flush();
-    await Stores.history.flush();
-    await Stores.connectionStats.flush();
-
-    if (!allSucceeded) {
+      await _archiveLegacyFiles(path);
+    } catch (e, s) {
       Loggers.app.warning(
-        'Hive to SQLite migration was partially completed. '
-        'Will retry next launch without archiving legacy hive files.',
+        'Hive to SQLite migration aborted due to unexpected error',
+        e,
+        s,
       );
-      return;
     }
-
-    await PrefStore.shared.set(_migratedFlagKey, true);
-    await PrefStore.shared.set(_migratedBuildKey, BuildData.build);
-    await _archiveLegacyFiles(path);
   }
 
   static Future<bool> _migrateOne({
@@ -295,7 +303,12 @@ abstract final class HiveToSqliteMigrator {
       final dynamic obj = raw;
       final jsonObj = obj.toJson();
       return _normalizeRaw(jsonObj);
-    } catch (_) {
+    } catch (e, s) {
+      Loggers.app.warning(
+        'Normalize migration value failed(type: ${raw.runtimeType})',
+        e,
+        s,
+      );
       return null;
     }
   }

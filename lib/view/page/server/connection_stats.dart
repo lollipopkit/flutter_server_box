@@ -273,11 +273,7 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
     final path = '${Paths.doc}${Pfs.seperator}connection_stats.db';
     final file = File(path);
     final oldSize = file.existsSync() ? file.lengthSync() : 0;
-    final sizeStr = oldSize < 1000
-        ? '$oldSize B'
-        : oldSize < 1000 * 1000
-        ? '${(oldSize / 1000).toStringAsFixed(1)} KB'
-        : '${(oldSize / (1000 * 1000)).toStringAsFixed(1)} MB';
+    final sizeStr = _formatSize(oldSize);
 
     context.showRoundDialog(
       title: l10n.compactDatabase,
@@ -291,11 +287,7 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
             try {
               await Stores.connectionStats.compact();
               final newSize = file.existsSync() ? file.lengthSync() : 0;
-              final newSizeStr = newSize < 1000
-                  ? '$newSize B'
-                  : newSize < 1000 * 1000
-                  ? '${(newSize / 1000).toStringAsFixed(1)} KB'
-                  : '${(newSize / (1000 * 1000)).toStringAsFixed(1)} MB';
+              final newSizeStr = _formatSize(newSize);
               if (mounted) {
                 setState(() => _isCompacting = false);
                 context.showSnackBar(
@@ -313,6 +305,12 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
         ),
       ],
     );
+  }
+
+  String _formatSize(int bytes) {
+    if (bytes < 1000) return '$bytes B';
+    if (bytes < 1000 * 1000) return '${(bytes / 1000).toStringAsFixed(1)} KB';
+    return '${(bytes / (1000 * 1000)).toStringAsFixed(1)} MB';
   }
 }
 

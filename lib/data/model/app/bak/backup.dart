@@ -78,16 +78,24 @@ class Backup implements Mergeable {
       return;
     }
 
-    final snippetBackup = _withTs(Stores.snippet.lastUpdateTsKey, <String, Object?>{
-      for (final item in snippets) item.name: item.toJson(),
-    }, bakTime);
-    final serverBackup = _withTs(Stores.server.lastUpdateTsKey, <String, Object?>{
-      for (final item in spis) item.id: item.toJson(),
-    }, bakTime);
+    final snippetBackup = _withTs(
+      Stores.snippet.lastUpdateTsKey,
+      <String, Object?>{for (final item in snippets) item.name: item.toJson()},
+      bakTime,
+    );
+    final serverBackup = _withTs(
+      Stores.server.lastUpdateTsKey,
+      <String, Object?>{for (final item in spis) item.id: item.toJson()},
+      bakTime,
+    );
     final keyBackup = _withTs(Stores.key.lastUpdateTsKey, <String, Object?>{
       for (final item in keys) item.id: item.toJson(),
     }, bakTime);
-    final historyBackup = _withTs(Stores.history.lastUpdateTsKey, history.cast<String, Object?>(), bakTime);
+    final historyBackup = _withTs(
+      Stores.history.lastUpdateTsKey,
+      history.cast<String, Object?>(),
+      bakTime,
+    );
     final containerBackup = _withTs(
       Stores.container.lastUpdateTsKey,
       container.cast<String, Object?>(),
@@ -99,12 +107,36 @@ class Backup implements Mergeable {
       bakTime,
     );
 
-    await Mergeable.mergeStore(backupData: snippetBackup, store: Stores.snippet, force: force);
-    await Mergeable.mergeStore(backupData: serverBackup, store: Stores.server, force: force);
-    await Mergeable.mergeStore(backupData: keyBackup, store: Stores.key, force: force);
-    await Mergeable.mergeStore(backupData: historyBackup, store: Stores.history, force: force);
-    await Mergeable.mergeStore(backupData: containerBackup, store: Stores.container, force: force);
-    await Mergeable.mergeStore(backupData: settingsBackup, store: Stores.setting, force: force);
+    await Mergeable.mergeStore(
+      backupData: snippetBackup,
+      store: Stores.snippet,
+      force: force,
+    );
+    await Mergeable.mergeStore(
+      backupData: serverBackup,
+      store: Stores.server,
+      force: force,
+    );
+    await Mergeable.mergeStore(
+      backupData: keyBackup,
+      store: Stores.key,
+      force: force,
+    );
+    await Mergeable.mergeStore(
+      backupData: historyBackup,
+      store: Stores.history,
+      force: force,
+    );
+    await Mergeable.mergeStore(
+      backupData: containerBackup,
+      store: Stores.container,
+      force: force,
+    );
+    await Mergeable.mergeStore(
+      backupData: settingsBackup,
+      store: Stores.setting,
+      force: force,
+    );
 
     Provider.reload();
     RNodes.app.notify();
@@ -112,16 +144,22 @@ class Backup implements Mergeable {
     _logger.info('Restore success');
   }
 
-  Map<String, Object?> _withTs(String tsKey, Map<String, Object?> data, int ts) {
+  static Map<String, Object?> _withTs(
+    String tsKey,
+    Map<String, Object?> data,
+    int ts,
+  ) {
     final map = <String, Object?>{...data};
     map[tsKey] = ts;
     return map;
   }
 
-  factory Backup.fromJsonString(String raw) => Backup.fromJson(json.decode(_diyDecrypt(raw)));
+  factory Backup.fromJsonString(String raw) =>
+      Backup.fromJson(json.decode(_diyDecrypt(raw)));
 }
 
-String _diyEncrypt(String raw) => json.encode(raw.codeUnits.map((e) => e * 2 + 1).toList(growable: false));
+String _diyEncrypt(String raw) =>
+    json.encode(raw.codeUnits.map((e) => e * 2 + 1).toList(growable: false));
 
 String _diyDecrypt(String raw) {
   try {

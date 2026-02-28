@@ -73,10 +73,9 @@ extension on _PrivateKeyListState {
       if (home == null) return;
       final idRsaFile = File(home.joinPath('.ssh/id_rsa'));
       if (!idRsaFile.existsSync()) return;
-      final sysPk = PrivateKeyInfo(
-        id: 'system',
-        key: await idRsaFile.readAsString(),
-      );
+      final key = await idRsaFile.readAsString();
+      if (!context.mounted) return;
+      final sysPk = PrivateKeyInfo(id: 'system', key: key);
       context.showRoundDialog(
         title: libL10n.attention,
         child: Text(l10n.addSystemPrivateKeyTip),

@@ -11,7 +11,7 @@ class ConnectionStatsStore extends SqliteStore {
 
   // Record a connection attempt
   void recordConnection(ConnectionStat stat) {
-    final key = '${stat.serverId}_${ShortId.generate()}';
+    final key = '${stat.serverId}$_keySep${ShortId.generate()}';
     set(key, stat, toObj: (val) => val?.toJson());
     _cleanOldRecords(stat.serverId);
   }
@@ -50,7 +50,11 @@ class ConnectionStatsStore extends SqliteStore {
       );
     }
 
-    return _buildServerStats(serverId: serverId, serverName: serverName, sortedStats: sortedStats);
+    return _buildServerStats(
+      serverId: serverId,
+      serverName: serverName,
+      sortedStats: sortedStats,
+    );
   }
 
   ServerConnectionStats _buildServerStats({
@@ -61,22 +65,22 @@ class ConnectionStatsStore extends SqliteStore {
     final totalAttempts = sortedStats.length;
     final successCount = sortedStats.where((s) => s.result.isSuccess).length;
     final failureCount = totalAttempts - successCount;
-    final successRate = totalAttempts > 0 ? (successCount / totalAttempts) : 0.0;
-
-    final successTimes = sortedStats.where((s) => s.result.isSuccess).map((s) => s.timestamp).toList();
-    final failureTimes = sortedStats.where((s) => !s.result.isSuccess).map((s) => s.timestamp).toList();
+    final successRate = totalAttempts > 0
+        ? (successCount / totalAttempts)
+        : 0.0;
 
     DateTime? lastSuccessTime;
     DateTime? lastFailureTime;
-
-    if (successTimes.isNotEmpty) {
-      successTimes.sort((a, b) => b.compareTo(a));
-      lastSuccessTime = successTimes.first;
-    }
-
-    if (failureTimes.isNotEmpty) {
-      failureTimes.sort((a, b) => b.compareTo(a));
-      lastFailureTime = failureTimes.first;
+    for (final stat in sortedStats) {
+      if (lastSuccessTime == null && stat.result.isSuccess) {
+        lastSuccessTime = stat.timestamp;
+      }
+      if (lastFailureTime == null && !stat.result.isSuccess) {
+        lastFailureTime = stat.timestamp;
+      }
+      if (lastSuccessTime != null && lastFailureTime != null) {
+        break;
+      }
     }
 
     // Get recent connections (last 20)
@@ -97,7 +101,9 @@ class ConnectionStatsStore extends SqliteStore {
 
   // Get connection history for a specific server
   List<ConnectionStat> getConnectionHistory(String serverId) {
-    final allKeys = keys().where((key) => _isServerRecordKey(key, serverId)).toList();
+    final allKeys = keys()
+        .where((key) => _isServerRecordKey(key, serverId))
+        .toList();
     final stats = <ConnectionStat>[];
 
     for (final key in allKeys) {
@@ -135,7 +141,13 @@ class ConnectionStatsStore extends SqliteStore {
       final serverName = serverNames[serverId] ?? serverId;
       final stats = entry.value;
       stats.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-      allStats.add(_buildServerStats(serverId: serverId, serverName: serverName, sortedStats: stats));
+      allStats.add(
+        _buildServerStats(
+          serverId: serverId,
+          serverName: serverName,
+          sortedStats: stats,
+        ),
+      );
     }
 
     allStats.sort((a, b) {

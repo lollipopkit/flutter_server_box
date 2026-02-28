@@ -14,25 +14,9 @@ class PrivateKeyStore extends SqliteStore {
   List<PrivateKeyInfo> fetch() {
     final ps = <PrivateKeyInfo>[];
     for (final key in keys()) {
-      final s = get<PrivateKeyInfo>(
-        key,
-        fromObj: (val) {
-          if (val is PrivateKeyInfo) return val;
-          if (val is Map<dynamic, dynamic>) {
-            final map = val.toStrDynMap;
-            if (map == null) return null;
-            try {
-              final pki = PrivateKeyInfo.fromJson(map as Map<String, dynamic>);
-              put(pki);
-              return pki;
-            } catch (e) {
-              dprint('Parsing PrivateKeyInfo from JSON', e);
-            }
-          }
-          return null;
-        },
-      );
+      final s = get<PrivateKeyInfo>(key, fromObj: _parsePrivateKeyInfo);
       if (s != null) {
+        put(s);
         ps.add(s);
       }
     }
@@ -49,6 +33,10 @@ class PrivateKeyStore extends SqliteStore {
   }
 
   static PrivateKeyInfo? _fromObj(Object? val) {
+    return _parsePrivateKeyInfo(val);
+  }
+
+  static PrivateKeyInfo? _parsePrivateKeyInfo(Object? val) {
     if (val is PrivateKeyInfo) return val;
     if (val is Map<dynamic, dynamic>) {
       final map = val.toStrDynMap;

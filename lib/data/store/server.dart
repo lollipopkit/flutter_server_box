@@ -17,25 +17,9 @@ class ServerStore extends SqliteStore {
   List<Spi> fetch() {
     final List<Spi> ss = [];
     for (final id in keys()) {
-      final s = get<Spi>(
-        id,
-        fromObj: (val) {
-          if (val is Spi) return val;
-          if (val is Map<dynamic, dynamic>) {
-            final map = val.toStrDynMap;
-            if (map == null) return null;
-            try {
-              final spi = Spi.fromJson(map as Map<String, dynamic>);
-              put(spi);
-              return spi;
-            } catch (e) {
-              dprint('Parsing Spi from JSON', e);
-            }
-          }
-          return null;
-        },
-      );
+      final s = get<Spi>(id, fromObj: _fromObj);
       if (s != null) {
+        put(s);
         ss.add(s);
       }
     }

@@ -139,13 +139,22 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
   );
 
   @override
+  void dispose() {
+    _sshOpacityCtrl.dispose();
+    _sshBlurCtrl.dispose();
+    _textScalerCtrl.dispose();
+    _serverLogoCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MultiList(
       children: [
         [
-          const CenterGreyTitle('App'),
+          CenterGreyTitle(libL10n.app),
           _buildApp(),
-          const CenterGreyTitle('AI'),
+          CenterGreyTitle(l10n.askAi),
           _buildAskAiConfig(),
         ],
         [CenterGreyTitle(libL10n.server), _buildServer()],
