@@ -15,9 +15,19 @@ import 'package:server_box/hive/hive_registrar.g.dart';
 abstract final class HiveToSqliteMigrator {
   static const _migratedFlagKey = 'sqlite_migrated_v1';
   static const _migratedBuildKey = 'sqlite_migrated_build';
+  static const _migratedBoxFlagPrefix = 'sqlite_migrated_box_';
   static const _legacySuffix = '.legacy.bak';
   static const _legacyHiveEncKey = 'hive_key';
   static const _legacyHiveEncKeyCompat = 'flutter.$_legacyHiveEncKey';
+  static const _boxNames = <String>[
+    'setting',
+    'server',
+    'docker',
+    'key',
+    'snippet',
+    'history',
+    'connection_stats',
+  ];
 
   static Future<void> migrateIfNeeded() async {
     final migrated = PrefStore.shared.get<bool>(_migratedFlagKey) ?? false;
@@ -27,68 +37,58 @@ abstract final class HiveToSqliteMigrator {
       final path = await _legacyHivePath();
       final hasLegacy = _hasLegacyFiles(path);
       if (!hasLegacy) {
-        await PrefStore.shared.set(_migratedFlagKey, true);
-        await PrefStore.shared.set(_migratedBuildKey, BuildData.build);
+        await _markAllBoxesMigrated();
+        await _setMigratedFlag();
         return;
       }
 
       await Hive.initFlutter();
       Hive.registerAdapters();
 
-      final allSucceeded = [
-        await _migrateOne(
-          boxName: 'setting',
-          target: Stores.setting,
-          path: path,
-          normalize: _normalizeGeneric,
-        ),
-        await _migrateOne(
-          boxName: 'server',
-          target: Stores.server,
-          path: path,
-          normalize: _normalizeSpi,
-        ),
-        await _migrateOne(
-          boxName: 'docker',
-          target: Stores.container,
-          path: path,
-          normalize: _normalizeGeneric,
-        ),
-        await _migrateOne(
-          boxName: 'key',
-          target: Stores.key,
-          path: path,
-          normalize: _normalizePrivateKey,
-        ),
-        await _migrateOne(
-          boxName: 'snippet',
-          target: Stores.snippet,
-          path: path,
-          normalize: _normalizeSnippet,
-        ),
-        await _migrateOne(
-          boxName: 'history',
-          target: Stores.history,
-          path: path,
-          normalize: _normalizeGeneric,
-        ),
-        await _migrateOne(
-          boxName: 'connection_stats',
-          target: Stores.connectionStats,
-          path: path,
-          normalize: _normalizeConnectionStat,
-        ),
-      ].every((ok) => ok);
+      await _migrateOne(
+        boxName: 'setting',
+        target: Stores.setting,
+        path: path,
+        normalize: _normalizeGeneric,
+      );
+      await _migrateOne(
+        boxName: 'server',
+        target: Stores.server,
+        path: path,
+        normalize: _normalizeSpi,
+      );
+      await _migrateOne(
+        boxName: 'docker',
+        target: Stores.container,
+        path: path,
+        normalize: _normalizeGeneric,
+      );
+      await _migrateOne(
+        boxName: 'key',
+        target: Stores.key,
+        path: path,
+        normalize: _normalizePrivateKey,
+      );
+      await _migrateOne(
+        boxName: 'snippet',
+        target: Stores.snippet,
+        path: path,
+        normalize: _normalizeSnippet,
+      );
+      await _migrateOne(
+        boxName: 'history',
+        target: Stores.history,
+        path: path,
+        normalize: _normalizeGeneric,
+      );
+      await _migrateOne(
+        boxName: 'connection_stats',
+        target: Stores.connectionStats,
+        path: path,
+        normalize: _normalizeConnectionStat,
+      );
 
-      await Stores.setting.flush();
-      await Stores.server.flush();
-      await Stores.container.flush();
-      await Stores.key.flush();
-      await Stores.snippet.flush();
-      await Stores.history.flush();
-      await Stores.connectionStats.flush();
-
-      if (!allSucceeded) {
+      if (!_allBoxesMigrated()) {
         Loggers.app.warning(
           'Hive to SQLite migration was partially completed. '
           'Will retry next launch without archiving legacy hive files.',
@@ -96,9 +96,8 @@ abstract final class HiveToSqliteMigrator {
         return;
       }
 
-      await PrefStore.shared.set(_migratedFlagKey, true);
-      await PrefStore.shared.set(_migratedBuildKey, BuildData.build);
       await _archiveLegacyFiles(path);
+      await _setMigratedFlag();
     } catch (e, s) {
       Loggers.app.warning(
         'Hive to SQLite migration aborted due to unexpected error',
@@ -114,9 +113,16 @@ abstract final class HiveToSqliteMigrator {
     required String path,
     required Object? Function(Object?) normalize,
   }) async {
+    final migratedBoxKey = _migratedBoxFlagKey(boxName);
+    final migrated = PrefStore.shared.get<bool>(migratedBoxKey) ?? false;
+    if (migrated) return true;
+
     final hasEnc = File(path.joinPath('${boxName}_enc.hive')).existsSync();
     final hasPlain = File(path.joinPath('$boxName.hive')).existsSync();
-    if (!hasEnc && !hasPlain) return true;
+    if (!hasEnc && !hasPlain) {
+      await PrefStore.shared.set(migratedBoxKey, true);
+      return true;
+    }
 
     Box<dynamic>? box;
     try {
@@ -132,6 +138,8 @@ abstract final class HiveToSqliteMigrator {
         if (normalized is! Object) continue;
         target.set(rawKey, normalized);
       }
+      await target.flush();
+      await PrefStore.shared.set(migratedBoxKey, true);
       return true;
     } catch (e, s) {
       Loggers.app.warning('Migrate hive box `$boxName` failed', e, s);
@@ -190,16 +198,7 @@ abstract final class HiveToSqliteMigrator {
   }
 
   static bool _hasLegacyFiles(String path) {
-    const boxNames = <String>[
-      'setting',
-      'server',
-      'docker',
-      'key',
-      'snippet',
-      'history',
-      'connection_stats',
-    ];
-    for (final box in boxNames) {
+    for (final box in _boxNames) {
       final enc = File(path.joinPath('${box}_enc.hive'));
       final plain = File(path.joinPath('$box.hive'));
       if (enc.existsSync() || plain.existsSync()) {
@@ -210,21 +209,36 @@ abstract final class HiveToSqliteMigrator {
   }
 
   static Future<void> _archiveLegacyFiles(String path) async {
-    const names = <String>[
-      'setting',
-      'server',
-      'docker',
-      'key',
-      'snippet',
-      'history',
-      'connection_stats',
-    ];
-    for (final name in names) {
+    for (final name in _boxNames) {
       await _archiveOne(File(path.joinPath('${name}_enc.hive')));
       await _archiveOne(File(path.joinPath('${name}_enc.lock')));
       await _archiveOne(File(path.joinPath('$name.hive')));
       await _archiveOne(File(path.joinPath('$name.lock')));
     }
+  }
+
+  static String _migratedBoxFlagKey(String boxName) {
+    return '$_migratedBoxFlagPrefix$boxName';
+  }
+
+  static bool _allBoxesMigrated() {
+    for (final boxName in _boxNames) {
+      final migrated = PrefStore.shared.get<bool>(_migratedBoxFlagKey(boxName));
+      if (migrated != true) return false;
+    }
+    return true;
+  }
+
+  static Future<void> _markAllBoxesMigrated() async {
+    for (final boxName in _boxNames) {
+      await PrefStore.shared.set(_migratedBoxFlagKey(boxName), true);
+    }
+  }
+
+  static Future<void> _setMigratedFlag() async {
+    if (!_allBoxesMigrated()) return;
+    await PrefStore.shared.set(_migratedFlagKey, true);
+    await PrefStore.shared.set(_migratedBuildKey, BuildData.build);
   }
 
   static Future<void> _archiveOne(File file) async {
