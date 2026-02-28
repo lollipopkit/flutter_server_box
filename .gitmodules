@@ -18,3 +18,15 @@
 	path = packages/server_box_monitor
 	url = https://github.com/lollipopkit/server_box_monitor
 	branch = main
+[submodule "circle_chart"]
+	path = packages/circle_chart
+	url = https://github.com/lollipopkit/circle_chart
+	branch = main
+[submodule "plain_notification_token"]
+	path = packages/plain_notification_token
+	url = https://github.com/lollipopkit/plain_notification_token
+	branch = master
+[submodule "watch_connectivity"]
+	path = packages/watch_connectivity
+	url = https://github.com/lollipopkit/watch_connectivity
+	branch = master
