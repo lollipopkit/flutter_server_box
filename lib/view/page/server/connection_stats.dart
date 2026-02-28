@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/res/store.dart';
@@ -270,8 +272,12 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
   }
 
   void _showCompactDialog() {
-    final path = '${Paths.doc}${Pfs.seperator}connection_stats.db';
-    final file = File(path);
+    unawaited(_showCompactDialogAsync());
+  }
+
+  Future<void> _showCompactDialogAsync() async {
+    final file = await _connectionStatsDbFile();
+    if (!mounted) return;
     final oldSize = file.existsSync() ? file.lengthSync() : 0;
     final sizeStr = _formatSize(oldSize);
 
@@ -311,6 +317,14 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
     if (bytes < 1000) return '$bytes B';
     if (bytes < 1000 * 1000) return '${(bytes / 1000).toStringAsFixed(1)} KB';
     return '${(bytes / (1000 * 1000)).toStringAsFixed(1)} MB';
+  }
+
+  Future<File> _connectionStatsDbFile() async {
+    final path = switch (Pfs.type) {
+      Pfs.linux || Pfs.windows => Paths.doc,
+      _ => (await getApplicationDocumentsDirectory()).path,
+    };
+    return File(path.joinPath('${Stores.connectionStats.dbName}.db'));
   }
 }
 
