@@ -18,8 +18,8 @@ class PrivateKeyStore extends SqliteStore {
       if (s != null) {
         if (s.id != key) {
           remove(key);
+          put(s);
         }
-        put(s);
         ps.add(s);
       }
     }
@@ -28,15 +28,11 @@ class PrivateKeyStore extends SqliteStore {
 
   PrivateKeyInfo? fetchOne(String? id) {
     if (id == null) return null;
-    return get<PrivateKeyInfo>(id, fromObj: _fromObj);
+    return get<PrivateKeyInfo>(id, fromObj: _parsePrivateKeyInfo);
   }
 
   void delete(PrivateKeyInfo s) {
     remove(s.id);
-  }
-
-  static PrivateKeyInfo? _fromObj(Object? val) {
-    return _parsePrivateKeyInfo(val);
   }
 
   static PrivateKeyInfo? _parsePrivateKeyInfo(Object? val) {
