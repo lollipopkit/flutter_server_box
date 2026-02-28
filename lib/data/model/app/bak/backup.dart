@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:logging/logging.dart';
+import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -46,14 +47,14 @@ class Backup implements Mergeable {
   Map<String, dynamic> toJson() => _$BackupToJson(this);
 
   static Future<Backup> loadFromStore() async {
-    final lastModTime = Stores.lastModTime;
+    final lastModTime = await Stores.lastModTime();
     return Backup(
       version: backupFormatVersion,
       date: DateTime.now().toString().split('.').firstOrNull ?? '',
-      spis: Stores.server.fetch(),
-      snippets: Stores.snippet.fetch(),
-      keys: Stores.key.fetch(),
-      container: Stores.container.getAllMap(),
+      spis: await Stores.server.fetch(),
+      snippets: await Stores.snippet.fetch(),
+      keys: await Stores.key.fetch(),
+      container: await Stores.container.getAllMap(),
       lastModTime: lastModTime,
       history: Stores.history.getAllMap(),
       settings: Stores.setting.getAllMap(),
@@ -70,7 +71,7 @@ class Backup implements Mergeable {
 
   @override
   Future<void> merge({bool force = false}) async {
-    final curTime = Stores.lastModTime;
+    final curTime = await Stores.lastModTime();
     final bakTime = lastModTime ?? 0;
     final shouldRestore = force || curTime < bakTime;
     if (!shouldRestore) {
@@ -78,64 +79,13 @@ class Backup implements Mergeable {
       return;
     }
 
-    final snippetBackup = _withTs(
-      Stores.snippet.lastUpdateTsKey,
-      <String, Object?>{for (final item in snippets) item.name: item.toJson()},
-      bakTime,
-    );
-    final serverBackup = _withTs(
-      Stores.server.lastUpdateTsKey,
-      <String, Object?>{for (final item in spis) item.id: item.toJson()},
-      bakTime,
-    );
-    final keyBackup = _withTs(Stores.key.lastUpdateTsKey, <String, Object?>{
-      for (final item in keys) item.id: item.toJson(),
-    }, bakTime);
-    final historyBackup = _withTs(
-      Stores.history.lastUpdateTsKey,
-      history.cast<String, Object?>(),
-      bakTime,
-    );
-    final containerBackup = _withTs(
-      Stores.container.lastUpdateTsKey,
-      container.cast<String, Object?>(),
-      bakTime,
-    );
-    final settingsBackup = _withTs(
-      Stores.setting.lastUpdateTsKey,
+    await _restoreSnippets(snippets);
+    await _restoreServers(spis);
+    await _restoreKeys(keys);
+    await _restoreHistory(history.cast<String, Object?>());
+    await _restoreContainer(container.cast<String, Object?>());
+    await _restoreSettings(
       settings?.cast<String, Object?>() ?? <String, Object?>{},
-      bakTime,
-    );
-
-    await Mergeable.mergeStore(
-      backupData: snippetBackup,
-      store: Stores.snippet,
-      force: force,
-    );
-    await Mergeable.mergeStore(
-      backupData: serverBackup,
-      store: Stores.server,
-      force: force,
-    );
-    await Mergeable.mergeStore(
-      backupData: keyBackup,
-      store: Stores.key,
-      force: force,
-    );
-    await Mergeable.mergeStore(
-      backupData: historyBackup,
-      store: Stores.history,
-      force: force,
-    );
-    await Mergeable.mergeStore(
-      backupData: containerBackup,
-      store: Stores.container,
-      force: force,
-    );
-    await Mergeable.mergeStore(
-      backupData: settingsBackup,
-      store: Stores.setting,
-      force: force,
     );
 
     Provider.reload();
@@ -144,18 +94,69 @@ class Backup implements Mergeable {
     _logger.info('Restore success');
   }
 
-  static Map<String, Object?> _withTs(
-    String tsKey,
-    Map<String, Object?> data,
-    int ts,
-  ) {
-    final map = <String, Object?>{...data};
-    map[tsKey] = ts;
-    return map;
-  }
-
   factory Backup.fromJsonString(String raw) =>
       Backup.fromJson(json.decode(_diyDecrypt(raw)));
+
+  static Future<void> _restoreServers(List<Spi> servers) async {
+    await Stores.server.clear();
+    for (final spi in servers) {
+      await Stores.server.put(spi);
+    }
+  }
+
+  static Future<void> _restoreSnippets(List<Snippet> snippets) async {
+    await Stores.snippet.clear();
+    for (final snippet in snippets) {
+      await Stores.snippet.put(snippet);
+    }
+  }
+
+  static Future<void> _restoreKeys(List<PrivateKeyInfo> keys) async {
+    await Stores.key.clear();
+    for (final key in keys) {
+      await Stores.key.put(key);
+    }
+  }
+
+  static Future<void> _restoreHistory(Map<String, Object?> history) async {
+    await Stores.history.clear();
+    for (final entry in history.entries) {
+      final value = entry.value;
+      if (value == null) continue;
+      await Stores.history.set<Object>(entry.key, value);
+    }
+  }
+
+  static Future<void> _restoreSettings(Map<String, Object?> settings) async {
+    await Stores.setting.clear();
+    for (final entry in settings.entries) {
+      final value = entry.value;
+      if (value == null) continue;
+      await Stores.setting.set<Object>(entry.key, value);
+    }
+  }
+
+  static Future<void> _restoreContainer(Map<String, Object?> container) async {
+    await Stores.container.clear();
+    for (final entry in container.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      if (value == null) continue;
+
+      if (key.startsWith('providerConfig')) {
+        final id = key.substring('providerConfig'.length);
+        final type = ContainerType.values.firstWhereOrNull(
+          (e) => e.toString() == value.toString(),
+        );
+        if (type != null) {
+          await Stores.container.setType(type, id);
+        }
+        continue;
+      }
+
+      await Stores.container.put(key, value.toString());
+    }
+  }
 }
 
 String _diyEncrypt(String raw) =>

@@ -4,6 +4,10 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
+import 'package:server_box/data/model/container/type.dart';
+import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
@@ -41,19 +45,25 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     required Map<String, Object?> settings,
   }) = _BackupV2;
 
-  factory BackupV2.fromJson(Map<String, dynamic> json) => _$BackupV2FromJson(json);
+  factory BackupV2.fromJson(Map<String, dynamic> json) =>
+      _$BackupV2FromJson(json);
 
   @override
   Future<void> merge({bool force = false}) async {
     _loggerV2.info('Merging...');
 
-    // Merge each store and check if changes were made
-    final serverChanged = await Mergeable.mergeStore(backupData: spis, store: Stores.server, force: force);
-    final snippetChanged = await Mergeable.mergeStore(backupData: snippets, store: Stores.snippet, force: force);
-    final keyChanged = await Mergeable.mergeStore(backupData: keys, store: Stores.key, force: force);
-    await Mergeable.mergeStore(backupData: container, store: Stores.container, force: force);
-    await Mergeable.mergeStore(backupData: history, store: Stores.history, force: force);
-    await Mergeable.mergeStore(backupData: settings, store: Stores.setting, force: force);
+    final curTime = await Stores.lastModTime();
+    if (!force && date <= curTime) {
+      _loggerV2.info('Skip merge, local data is newer');
+      return;
+    }
+
+    final serverChanged = await _restoreServers(spis);
+    final snippetChanged = await _restoreSnippets(snippets);
+    final keyChanged = await _restoreKeys(keys);
+    await _restoreContainer(container);
+    await _restoreHistory(history);
+    await _restoreSettings(settings);
 
     if (serverChanged) GlobalRef.gRef?.read(serversProvider.notifier).reload();
     if (snippetChanged) GlobalRef.gRef?.read(snippetProvider.notifier).reload();
@@ -65,13 +75,19 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   static const formatVer = 2;
 
   static Future<BackupV2> loadFromStore() async {
+    final serverRows = await Stores.server.fetch();
+    final snippetRows = await Stores.snippet.fetch();
+    final keyRows = await Stores.key.fetch();
+
     return BackupV2(
       version: formatVer,
       date: DateTimeX.timestamp,
-      spis: Stores.server.getAllMap(includeInternalKeys: true),
-      snippets: Stores.snippet.getAllMap(includeInternalKeys: true),
-      keys: Stores.key.getAllMap(includeInternalKeys: true),
-      container: Stores.container.getAllMap(includeInternalKeys: true),
+      spis: {for (final spi in serverRows) spi.id: spi.toJson()},
+      snippets: {
+        for (final snippet in snippetRows) snippet.name: snippet.toJson(),
+      },
+      keys: {for (final key in keyRows) key.id: key.toJson()},
+      container: await Stores.container.getAllMap(includeInternalKeys: true),
       history: Stores.history.getAllMap(includeInternalKeys: true),
       settings: Stores.setting.getAllMap(includeInternalKeys: true),
     );
@@ -100,5 +116,133 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
 
     final map = json.decode(jsonString) as Map<String, dynamic>;
     return BackupV2.fromJson(map);
+  }
+
+  static bool _isInternalKey(String key) {
+    return key.startsWith(StoreDefaults.prefixKey) ||
+        key.startsWith(StoreDefaults.prefixKeyOld);
+  }
+
+  static Map<String, dynamic>? _toJsonMap(Object? val) {
+    if (val == null) return null;
+    if (val is Map) {
+      return val.map((key, value) => MapEntry(key.toString(), value));
+    }
+    if (val is String) {
+      try {
+        final decoded = json.decode(val);
+        if (decoded is Map) {
+          return decoded.map((key, value) => MapEntry(key.toString(), value));
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  static Future<bool> _restoreServers(Map<String, Object?> map) async {
+    var restored = false;
+    await Stores.server.clear();
+    for (final entry in map.entries) {
+      if (_isInternalKey(entry.key)) continue;
+      final jsonMap = _toJsonMap(entry.value);
+      if (jsonMap == null) continue;
+      if ((jsonMap['id'] as String?)?.isEmpty ?? true) {
+        jsonMap['id'] = entry.key;
+      }
+      try {
+        final spi = Spi.fromJson(jsonMap);
+        await Stores.server.put(spi);
+        restored = true;
+      } catch (e, s) {
+        _loggerV2.warning('Restore server `${entry.key}` failed', e, s);
+      }
+    }
+    return restored;
+  }
+
+  static Future<bool> _restoreSnippets(Map<String, Object?> map) async {
+    var restored = false;
+    await Stores.snippet.clear();
+    for (final entry in map.entries) {
+      if (_isInternalKey(entry.key)) continue;
+      final jsonMap = _toJsonMap(entry.value);
+      if (jsonMap == null) continue;
+      if ((jsonMap['name'] as String?)?.isEmpty ?? true) {
+        jsonMap['name'] = entry.key;
+      }
+      try {
+        final snippet = Snippet.fromJson(jsonMap);
+        await Stores.snippet.put(snippet);
+        restored = true;
+      } catch (e, s) {
+        _loggerV2.warning('Restore snippet `${entry.key}` failed', e, s);
+      }
+    }
+    return restored;
+  }
+
+  static Future<bool> _restoreKeys(Map<String, Object?> map) async {
+    var restored = false;
+    await Stores.key.clear();
+    for (final entry in map.entries) {
+      if (_isInternalKey(entry.key)) continue;
+      final jsonMap = _toJsonMap(entry.value);
+      if (jsonMap == null) continue;
+      if ((jsonMap['id'] as String?)?.isEmpty ?? true) {
+        jsonMap['id'] = entry.key;
+      }
+      if ((jsonMap['private_key'] as String?)?.isEmpty ?? true) continue;
+      try {
+        final info = PrivateKeyInfo.fromJson(jsonMap);
+        await Stores.key.put(info);
+        restored = true;
+      } catch (e, s) {
+        _loggerV2.warning('Restore private key `${entry.key}` failed', e, s);
+      }
+    }
+    return restored;
+  }
+
+  static Future<void> _restoreContainer(Map<String, Object?> map) async {
+    await Stores.container.clear();
+    for (final entry in map.entries) {
+      if (_isInternalKey(entry.key)) continue;
+      final key = entry.key;
+      final value = entry.value;
+      if (value == null) continue;
+
+      if (key.startsWith('providerConfig')) {
+        final id = key.substring('providerConfig'.length);
+        final type = ContainerType.values.firstWhereOrNull(
+          (e) => e.toString() == value.toString(),
+        );
+        if (type != null) {
+          await Stores.container.setType(type, id);
+        }
+        continue;
+      }
+
+      await Stores.container.put(key, value.toString());
+    }
+  }
+
+  static Future<void> _restoreHistory(Map<String, Object?> map) async {
+    await Stores.history.clear();
+    for (final entry in map.entries) {
+      if (_isInternalKey(entry.key)) continue;
+      final value = entry.value;
+      if (value == null) continue;
+      await Stores.history.set<Object>(entry.key, value);
+    }
+  }
+
+  static Future<void> _restoreSettings(Map<String, Object?> map) async {
+    await Stores.setting.clear();
+    for (final entry in map.entries) {
+      if (_isInternalKey(entry.key)) continue;
+      final value = entry.value;
+      if (value == null) continue;
+      await Stores.setting.set<Object>(entry.key, value);
+    }
   }
 }

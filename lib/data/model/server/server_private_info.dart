@@ -69,18 +69,18 @@ extension Spix on Spi {
   String get oldId => '$user@$ip:$port';
 
   /// Save the [Spi] to the local storage.
-  void save() => ServerStore.instance.put(this);
+  Future<void> save() => ServerStore.instance.put(this);
 
   /// Migrate the [oldId] to the new generated [id] by [ShortId.generate].
   ///
   /// Returns:
   /// - `null` if the [id] is not empty.
   /// - The new [id] if the [id] is empty.
-  String? migrateId() {
+  Future<String?> migrateId() async {
     if (id.isNotEmpty) return null;
-    ServerStore.instance.delete(oldId);
+    await ServerStore.instance.delete(oldId);
     final newSpi = copyWith(id: ShortId.generate());
-    newSpi.save();
+    await newSpi.save();
     return newSpi.id;
   }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -20,27 +22,30 @@ abstract class SnippetState with _$SnippetState {
 class SnippetNotifier extends _$SnippetNotifier {
   @override
   SnippetState build() {
-    return _load();
+    unawaited(reload());
+    return const SnippetState();
   }
 
-  void reload() {
-    final newState = _load();
+  Future<void> reload() async {
+    final newState = await _load();
     if (newState == state) return;
     state = newState;
   }
 
-  SnippetState _load() {
-    final snippets = Stores.snippet.fetch();
+  Future<SnippetState> _load() async {
+    final snippets = await Stores.snippet.fetch();
     final order = Stores.setting.snippetOrder.fetch();
 
-    List<Snippet> orderedSnippets = snippets;
+    final orderedSnippets = List<Snippet>.from(snippets);
     if (order.isNotEmpty) {
-      final surplus = snippets.reorder(order: order, finder: (n, name) => n.name == name);
+      final surplus = orderedSnippets.reorder(
+        order: order,
+        finder: (n, name) => n.name == name,
+      );
       order.removeWhere((e) => surplus.any((ele) => ele == e));
       if (order != Stores.setting.snippetOrder.fetch()) {
-        Stores.setting.snippetOrder.put(order);
+        await Stores.setting.snippetOrder.put(order);
       }
-      orderedSnippets = snippets;
     }
 
     final newTags = _computeTags(orderedSnippets);
@@ -63,7 +68,7 @@ class SnippetNotifier extends _$SnippetNotifier {
     final newSnippets = [...state.snippets, snippet];
     final newTags = _computeTags(newSnippets);
     state = state.copyWith(snippets: newSnippets, tags: newTags);
-    Stores.snippet.put(snippet);
+    unawaited(Stores.snippet.put(snippet));
     bakSync.sync(milliDelay: 1000);
   }
 
@@ -71,16 +76,18 @@ class SnippetNotifier extends _$SnippetNotifier {
     final newSnippets = state.snippets.where((s) => s != snippet).toList();
     final newTags = _computeTags(newSnippets);
     state = state.copyWith(snippets: newSnippets, tags: newTags);
-    Stores.snippet.delete(snippet);
+    unawaited(Stores.snippet.delete(snippet));
     bakSync.sync(milliDelay: 1000);
   }
 
   void update(Snippet old, Snippet newOne) {
-    final newSnippets = state.snippets.map((s) => s == old ? newOne : s).toList();
+    final newSnippets = state.snippets
+        .map((s) => s == old ? newOne : s)
+        .toList();
     final newTags = _computeTags(newSnippets);
     state = state.copyWith(snippets: newSnippets, tags: newTags);
-    Stores.snippet.delete(old);
-    Stores.snippet.put(newOne);
+    unawaited(Stores.snippet.delete(old));
+    unawaited(Stores.snippet.put(newOne));
     bakSync.sync(milliDelay: 1000);
   }
 
@@ -93,7 +100,7 @@ class SnippetNotifier extends _$SnippetNotifier {
         newTags.add(newOne);
         final updatedSnippet = s.copyWith(tags: newTags.toList());
         updatedSnippets.add(updatedSnippet);
-        Stores.snippet.put(updatedSnippet);
+        unawaited(Stores.snippet.put(updatedSnippet));
       } else {
         updatedSnippets.add(s);
       }

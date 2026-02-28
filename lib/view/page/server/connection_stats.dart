@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/db/app_db.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -28,15 +28,17 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
   @override
   void initState() {
     super.initState();
-    _loadStats();
+    unawaited(_loadStats());
   }
 
-  void _loadStats() {
+  Future<void> _loadStats() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
 
-    final stats = Stores.connectionStats.getAllServerStats();
+    final stats = await Stores.connectionStats.getAllServerStats();
+    if (!mounted) return;
     setState(() {
       _serverStats = stats;
       _isLoading = false;
@@ -50,7 +52,7 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
         title: Text(l10n.connectionStats),
         actions: [
           IconButton(
-            onPressed: _loadStats,
+            onPressed: () => unawaited(_loadStats()),
             icon: const Icon(Icons.refresh),
             tooltip: libL10n.refresh,
           ),
@@ -320,11 +322,7 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
   }
 
   Future<File> _connectionStatsDbFile() async {
-    final path = switch (Pfs.type) {
-      Pfs.linux || Pfs.windows => Paths.doc,
-      _ => (await getApplicationDocumentsDirectory()).path,
-    };
-    return File(path.joinPath('${Stores.connectionStats.dbName}.db'));
+    return AppDb.resolveDbFile();
   }
 }
 
@@ -397,10 +395,11 @@ extension on _ConnectionStatsPageState {
       actions: [
         TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
         CountDownBtn(
-          onTap: () {
+          onTap: () async {
             context.pop();
-            Stores.connectionStats.clearAll();
-            _loadStats();
+            await Stores.connectionStats.clearAll();
+            if (!mounted) return;
+            await _loadStats();
           },
           text: libL10n.ok,
           afterColor: Colors.red,
@@ -416,10 +415,11 @@ extension on _ConnectionStatsPageState {
       actions: [
         TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
         CountDownBtn(
-          onTap: () {
+          onTap: () async {
             context.pop();
-            Stores.connectionStats.clearServerStats(stats.serverId);
-            _loadStats();
+            await Stores.connectionStats.clearServerStats(stats.serverId);
+            if (!mounted) return;
+            await _loadStats();
           },
           text: libL10n.ok,
           afterColor: Colors.red,

@@ -82,7 +82,7 @@ void _doPlatformRelated() async {
     FlutterDisplayMode.setHighRefreshRate();
   }
 
-  final serversCount = Stores.server.keys().length;
+  final serversCount = (await Stores.server.keys()).length;
   Computer.shared.turnOn(
     workersCount: (serversCount / 3).round() + 1,
   ); // Plus 1 to avoid 0.
@@ -101,7 +101,7 @@ Future<void> _doDbMigrate() async {
   }
 
   // Migrate the old id to new id.
-  ServerStore.instance.migrateIds();
+  await ServerStore.instance.migrateIds();
 }
 
 Future<void> _initWindow() async {

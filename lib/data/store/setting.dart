@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -8,10 +9,113 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 
-class SettingStore extends SqliteStore {
-  SettingStore._() : super('setting');
+class SettingStore {
+  SettingStore._();
 
   static final instance = SettingStore._();
+  final PrefStore _store = PrefStore(name: 'setting', prefix: 'setting');
+
+  Future<void> init() => _store.init();
+
+  PrefStore get rawStore => _store;
+
+  String get lastUpdateTsKey => _store.lastUpdateTsKey;
+
+  Map<String, int>? get lastUpdateTs => _store.lastUpdateTs;
+
+  FutureOr<bool> updateLastUpdateTs({int? ts, required String? key}) {
+    return _store.updateLastUpdateTs(ts: ts, key: key);
+  }
+
+  bool isInternalKey(String key) => _store.isInternalKey(key);
+
+  T? get<T extends Object>(String key, {StoreFromObj<T>? fromObj}) {
+    return _store.get<T>(key, fromObj: fromObj);
+  }
+
+  Future<bool> set<T extends Object>(
+    String key,
+    T val, {
+    StoreToObj<T>? toObj,
+    bool? updateLastUpdateTsOnSet,
+  }) {
+    return _store.set(
+      key,
+      val,
+      toObj: toObj,
+      updateLastUpdateTsOnSet: updateLastUpdateTsOnSet,
+    );
+  }
+
+  Set<String> keys({
+    bool includeInternalKeys = StoreDefaults.defaultIncludeInternalKeys,
+  }) {
+    return _store.keys(includeInternalKeys: includeInternalKeys);
+  }
+
+  Future<bool> remove(String key, {bool? updateLastUpdateTsOnRemove}) {
+    return _store.remove(
+      key,
+      updateLastUpdateTsOnRemove: updateLastUpdateTsOnRemove,
+    );
+  }
+
+  Future<bool> clear({bool? updateLastUpdateTsOnClear}) {
+    return _store.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
+  }
+
+  Map<String, Object?> getAllMap({
+    bool includeInternalKeys = StoreDefaults.defaultIncludeInternalKeys,
+  }) {
+    final keys = this.keys(includeInternalKeys: includeInternalKeys);
+    return Map.fromIterables(keys, keys.map((key) => get(key)));
+  }
+
+  PrefProp<T> property<T extends Object>(
+    String key, {
+    bool updateLastModified = true,
+    StoreFromObj<T>? fromObj,
+    StoreToObj<T>? toObj,
+  }) {
+    return _store.property(
+      key,
+      updateLastModified: updateLastModified,
+      fromObj: fromObj,
+      toObj: toObj,
+    );
+  }
+
+  PrefPropDefault<T> propertyDefault<T extends Object>(
+    String key,
+    T defaultValue, {
+    bool updateLastModified = StoreDefaults.defaultUpdateLastUpdateTs,
+    StoreFromObj<T>? fromObj,
+    StoreToObj<T>? toObj,
+  }) {
+    return _store.propertyDefault(
+      key,
+      defaultValue,
+      updateLastModified: updateLastModified,
+      fromObj: fromObj,
+      toObj: toObj,
+    );
+  }
+
+  PrefPropDefault<List<T>> listProperty<T extends Object>(
+    String key, {
+    List<T> defaultValue = const [],
+    bool updateLastModified = StoreDefaults.defaultUpdateLastUpdateTs,
+    StoreFromObj<List<T>>? fromObj,
+    StoreToObj<List<T>>? toObj,
+  }) {
+    return _store.listProperty(
+      key,
+      defaultValue: defaultValue,
+      updateLastModified: updateLastModified,
+      fromObj: fromObj,
+      toObj: toObj,
+    );
+  }
 
   /// Time out for server connect and more...
   late final timeout = propertyDefault('timeOut', 5);

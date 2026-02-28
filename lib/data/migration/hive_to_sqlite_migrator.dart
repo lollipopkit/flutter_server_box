@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -19,6 +20,7 @@ abstract final class HiveToSqliteMigrator {
   static const _legacySuffix = '.legacy.bak';
   static const _legacyHiveEncKey = 'hive_key';
   static const _legacyHiveEncKeyCompat = 'flutter.$_legacyHiveEncKey';
+  static const _containerConfigKeyPrefix = 'providerConfig';
   static const _boxNames = <String>[
     'setting',
     'server',
@@ -47,45 +49,45 @@ abstract final class HiveToSqliteMigrator {
 
       await _migrateOne(
         boxName: 'setting',
-        target: Stores.setting,
         path: path,
         normalize: _normalizeGeneric,
+        write: _writeSetting,
       );
       await _migrateOne(
         boxName: 'server',
-        target: Stores.server,
         path: path,
         normalize: _normalizeSpi,
+        write: _writeServer,
       );
       await _migrateOne(
         boxName: 'docker',
-        target: Stores.container,
         path: path,
         normalize: _normalizeGeneric,
+        write: _writeContainer,
       );
       await _migrateOne(
         boxName: 'key',
-        target: Stores.key,
         path: path,
         normalize: _normalizePrivateKey,
+        write: _writePrivateKey,
       );
       await _migrateOne(
         boxName: 'snippet',
-        target: Stores.snippet,
         path: path,
         normalize: _normalizeSnippet,
+        write: _writeSnippet,
       );
       await _migrateOne(
         boxName: 'history',
-        target: Stores.history,
         path: path,
         normalize: _normalizeGeneric,
+        write: _writeHistory,
       );
       await _migrateOne(
         boxName: 'connection_stats',
-        target: Stores.connectionStats,
         path: path,
         normalize: _normalizeConnectionStat,
+        write: _writeConnectionStats,
       );
 
       if (!_allBoxesMigrated()) {
@@ -109,9 +111,9 @@ abstract final class HiveToSqliteMigrator {
 
   static Future<bool> _migrateOne({
     required String boxName,
-    required SqliteStore target,
     required String path,
     required Object? Function(Object?) normalize,
+    required Future<void> Function(String key, Object value) write,
   }) async {
     final migratedBoxKey = _migratedBoxFlagKey(boxName);
     final migrated = PrefStore.shared.get<bool>(migratedBoxKey) ?? false;
@@ -134,11 +136,11 @@ abstract final class HiveToSqliteMigrator {
       );
       for (final rawKey in box.keys) {
         if (rawKey is! String) continue;
+        if (_isInternalKey(rawKey)) continue;
         final normalized = normalize(box.get(rawKey));
         if (normalized == null) continue;
-        target.set(rawKey, normalized);
+        await write(rawKey, normalized);
       }
-      await target.flush();
       await PrefStore.shared.set(migratedBoxKey, true);
       return true;
     } catch (e, s) {
@@ -324,6 +326,113 @@ abstract final class HiveToSqliteMigrator {
         s,
       );
       return null;
+    }
+  }
+
+  static bool _isInternalKey(String key) {
+    return key.startsWith(StoreDefaults.prefixKey) ||
+        key.startsWith(StoreDefaults.prefixKeyOld);
+  }
+
+  static Map<String, dynamic>? _toJsonMap(Object? val) {
+    if (val == null) return null;
+    if (val is Map) {
+      return val.map((key, value) => MapEntry(key.toString(), value));
+    }
+    if (val is String) {
+      try {
+        final decoded = json.decode(val);
+        if (decoded is Map) {
+          return decoded.map((key, value) => MapEntry(key.toString(), value));
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  static Future<void> _writeSetting(String key, Object value) async {
+    await Stores.setting.set<Object>(key, value);
+  }
+
+  static Future<void> _writeHistory(String key, Object value) async {
+    await Stores.history.set<Object>(key, value);
+  }
+
+  static Future<void> _writeServer(String key, Object value) async {
+    final map = _toJsonMap(value);
+    if (map == null) return;
+    if ((map['id'] as String?)?.isEmpty ?? true) {
+      map['id'] = key;
+    }
+    try {
+      final spi = Spi.fromJson(map);
+      await Stores.server.put(spi);
+    } catch (e, s) {
+      Loggers.app.warning('Migrate server entry `$key` failed', e, s);
+    }
+  }
+
+  static Future<void> _writePrivateKey(String key, Object value) async {
+    final map = _toJsonMap(value);
+    if (map == null) return;
+    if ((map['id'] as String?)?.isEmpty ?? true) {
+      map['id'] = key;
+    }
+    if ((map['private_key'] as String?)?.isEmpty ?? true) return;
+    try {
+      final info = PrivateKeyInfo.fromJson(map);
+      await Stores.key.put(info);
+    } catch (e, s) {
+      Loggers.app.warning('Migrate private key entry `$key` failed', e, s);
+    }
+  }
+
+  static Future<void> _writeSnippet(String key, Object value) async {
+    final map = _toJsonMap(value);
+    if (map == null) return;
+    if ((map['name'] as String?)?.isEmpty ?? true) {
+      map['name'] = key;
+    }
+    try {
+      final snippet = Snippet.fromJson(map);
+      await Stores.snippet.put(snippet);
+    } catch (e, s) {
+      Loggers.app.warning('Migrate snippet entry `$key` failed', e, s);
+    }
+  }
+
+  static Future<void> _writeContainer(String key, Object value) async {
+    if (key.startsWith(_containerConfigKeyPrefix)) {
+      final id = key.substring(_containerConfigKeyPrefix.length);
+      final cfg = value.toString();
+      final type = ContainerType.values.firstWhereOrNull(
+        (e) => e.toString() == cfg,
+      );
+      if (type != null) {
+        await Stores.container.setType(type, id);
+      }
+      return;
+    }
+
+    if (value is String) {
+      await Stores.container.put(key, value);
+      return;
+    }
+
+    final host = value.toString();
+    if (host.isNotEmpty) {
+      await Stores.container.put(key, host);
+    }
+  }
+
+  static Future<void> _writeConnectionStats(String key, Object value) async {
+    final map = _toJsonMap(value);
+    if (map == null) return;
+    try {
+      final stat = ConnectionStat.fromJson(map);
+      await Stores.connectionStats.recordConnection(stat);
+    } catch (e, s) {
+      Loggers.app.warning('Migrate connection stat entry `$key` failed', e, s);
     }
   }
 }

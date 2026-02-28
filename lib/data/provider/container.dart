@@ -18,7 +18,9 @@ import 'package:server_box/data/res/store.dart';
 part 'container.freezed.dart';
 part 'container.g.dart';
 
-final _dockerNotFound = RegExp(r"command not found|Unknown command|Command '\w+' not found");
+final _dockerNotFound = RegExp(
+  r"command not found|Unknown command|Command '\w+' not found",
+);
 final _podmanEmulationMsg = 'Emulate Docker CLI using podman';
 
 @freezed
@@ -40,7 +42,12 @@ class ContainerNotifier extends _$ContainerNotifier {
   String? _cachedPassword;
 
   @override
-  ContainerState build(SSHClient? client, String userName, String hostId, BuildContext context) {
+  ContainerState build(
+    SSHClient? client,
+    String userName,
+    String hostId,
+    BuildContext context,
+  ) {
     final type = Stores.container.getType(hostId);
     final initialState = ContainerState(type: type);
 
@@ -63,20 +70,30 @@ class ContainerNotifier extends _$ContainerNotifier {
   }
 
   Future<void> setType(ContainerType type) async {
-    state = state.copyWith(type: type, error: null, runLog: null, items: null, images: null, version: null);
-    Stores.container.setType(type, hostId);
+    state = state.copyWith(
+      type: type,
+      error: null,
+      runLog: null,
+      items: null,
+      images: null,
+      version: null,
+    );
+    await Stores.container.setType(type, hostId);
     sudoCompleter = Completer<bool>();
     await refresh();
   }
 
   void _requiresSudo() async {
     /// Podman is rootless
-    if (state.type == ContainerType.podman) return sudoCompleter.complete(false);
+    if (state.type == ContainerType.podman) {
+      return sudoCompleter.complete(false);
+    }
     if (!Stores.setting.containerTrySudo.fetch()) {
       return sudoCompleter.complete(false);
     }
 
-    final res = await client?.run(_wrap(ContainerCmdType.images.exec(state.type)));
+    final probeCmd = await _wrap(ContainerCmdType.images.exec(state.type));
+    final res = await client?.run(probeCmd);
     if (res?.string.toLowerCase().contains('permission denied') ?? false) {
       return sudoCompleter.complete(true);
     }
@@ -115,7 +132,14 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     final includeStats = Stores.setting.containerParseStat.fetch();
 
-    final cmd = _wrap(ContainerCmdType.execAll(state.type, sudo: sudo, includeStats: includeStats, password: password));
+    final cmd = await _wrap(
+      ContainerCmdType.execAll(
+        state.type,
+        sudo: sudo,
+        includeStats: includeStats,
+        password: password,
+      ),
+    );
     int? code;
     String raw = '';
     var isPodmanEmulation = false;
@@ -145,17 +169,21 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     /// Code 127 means command not found
     if (code == 127 || raw.contains(_dockerNotFound)) {
-      state = state.copyWith(error: ContainerErr(type: ContainerErrType.notInstalled));
+      state = state.copyWith(
+        error: ContainerErr(type: ContainerErrType.notInstalled),
+      );
       return;
     }
 
     /// Sudo password error (exitCode = 2)
     if (code == 2) {
       _cachedPassword = null;
-      state = state.copyWith(error: ContainerErr(
-        type: ContainerErrType.sudoPasswordIncorrect,
-        message: l10n.containerSudoPasswordIncorrect,
-      ));
+      state = state.copyWith(
+        error: ContainerErr(
+          type: ContainerErrType.sudoPasswordIncorrect,
+          message: l10n.containerSudoPasswordIncorrect,
+        ),
+      );
       return;
     }
 
@@ -171,8 +199,11 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
 
     /// Detect Podman not installed when using Podman mode
-    if (state.type == ContainerType.podman && raw.contains('podman: not found')) {
-      state = state.copyWith(error: ContainerErr(type: ContainerErrType.notInstalled));
+    if (state.type == ContainerType.podman &&
+        raw.contains('podman: not found')) {
+      state = state.copyWith(
+        error: ContainerErr(type: ContainerErrType.notInstalled),
+      );
       return;
     }
 
@@ -197,7 +228,10 @@ class ContainerNotifier extends _$ContainerNotifier {
     } catch (e, trace) {
       if (state.error == null) {
         state = state.copyWith(
-          error: ContainerErr(type: ContainerErrType.invalidVersion, message: '$e'),
+          error: ContainerErr(
+            type: ContainerErrType.invalidVersion,
+            message: '$e',
+          ),
         );
       }
       Loggers.app.warning('Container version failed', e, trace);
@@ -212,7 +246,9 @@ class ContainerNotifier extends _$ContainerNotifier {
         lines.removeWhere((element) => element.contains('CONTAINER ID'));
       }
       lines.removeWhere((element) => element.isEmpty);
-      final items = lines.map((e) => ContainerPs.fromRaw(e, state.type)).toList();
+      final items = lines
+          .map((e) => ContainerPs.fromRaw(e, state.type))
+          .toList();
       state = state.copyWith(items: items);
     } catch (e, trace) {
       if (state.error == null) {
@@ -235,13 +271,18 @@ class ContainerNotifier extends _$ContainerNotifier {
       } else {
         final lines = imageRaw.split('\n');
         lines.removeWhere((element) => element.isEmpty);
-        images = lines.map((e) => ContainerImg.fromRawJson(e, state.type)).toList();
+        images = lines
+            .map((e) => ContainerImg.fromRawJson(e, state.type))
+            .toList();
       }
       state = state.copyWith(images: images);
     } catch (e, trace) {
       if (state.error == null) {
         state = state.copyWith(
-          error: ContainerErr(type: ContainerErrType.parseImages, message: '$e'),
+          error: ContainerErr(
+            type: ContainerErrType.parseImages,
+            message: '$e',
+          ),
         );
       }
       Loggers.app.warning('Container images failed', e, trace);
@@ -335,7 +376,7 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     state = state.copyWith(runLog: '');
     final (code, _) = await client!.execWithPwd(
-      _wrap(cmd),
+      await _wrap(cmd),
       context: context,
       onStdout: (data, _) {
         state = state.copyWith(runLog: '${state.runLog}$data');
@@ -353,15 +394,18 @@ class ContainerNotifier extends _$ContainerNotifier {
       );
     }
     if (code != 0) {
-      return ContainerErr(type: ContainerErrType.unknown, message: 'Command execution failed');
+      return ContainerErr(
+        type: ContainerErrType.unknown,
+        message: 'Command execution failed',
+      );
     }
     if (autoRefresh) await refresh();
     return null;
   }
 
   /// wrap cmd with `docker host`
-  String _wrap(String cmd) {
-    final dockerHost = Stores.container.fetch(hostId);
+  Future<String> _wrap(String cmd) async {
+    final dockerHost = await Stores.container.fetch(hostId);
     cmd = 'export LANG=en_US.UTF-8 && $cmd';
     final noDockerHost = dockerHost?.isEmpty ?? true;
     if (!noDockerHost) {
@@ -401,14 +445,20 @@ enum ContainerCmdType {
               ' .ID .Status .Names .Image}}"',
         ContainerType.podman => '${type.name} ps -a $_jsonFmt',
       },
-      ContainerCmdType.stats => includeStats ? '${type.name} stats --no-stream $_jsonFmt' : 'echo PASS',
+      ContainerCmdType.stats =>
+        includeStats ? '${type.name} stats --no-stream $_jsonFmt' : 'echo PASS',
       ContainerCmdType.images => '${type.name} image ls $_jsonFmt',
     };
 
     return baseCmd;
   }
 
-  static String execAll(ContainerType type, {bool sudo = false, bool includeStats = false, String? password}) {
+  static String execAll(
+    ContainerType type, {
+    bool sudo = false,
+    bool includeStats = false,
+    String? password,
+  }) {
     final commands = ContainerCmdType.values
         .map((e) => e.exec(type, includeStats: includeStats))
         .join('\necho ${ScriptConstants.separator}\n');

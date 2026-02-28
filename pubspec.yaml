@@ -68,6 +68,7 @@ dependency_overrides:
 
 dev_dependencies:
   analyzer: ^8.1.1
+  drift_dev: ^2.29.0
   flutter_native_splash: ^2.1.6
   hive_ce_generator: ^1.9.2
   build_runner: ^2.4.15

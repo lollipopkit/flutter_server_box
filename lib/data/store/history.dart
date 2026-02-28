@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 
 /// index from 0 -> n : latest -> oldest
@@ -16,7 +18,7 @@ class _ListHistory {
   void add(String path) {
     _history.remove(path);
     _history.insert(0, path);
-    _store.set(_name, _history);
+    unawaited(_store.set(_name, _history));
   }
 
   List<String> get all => _history;
@@ -36,16 +38,103 @@ class _MapHistory {
 
   void put(String id, String val) {
     _history[id] = val;
-    _store.set(_name, _history);
+    unawaited(_store.set(_name, _history));
   }
 
   String? fetch(String id) => _history[id];
 }
 
-class HistoryStore extends SqliteStore {
-  HistoryStore._() : super('history');
+class HistoryStore {
+  HistoryStore._();
 
   static final instance = HistoryStore._();
+  final PrefStore _store = PrefStore(name: 'history', prefix: 'history');
+
+  Future<void> init() => _store.init();
+
+  PrefStore get rawStore => _store;
+
+  String get lastUpdateTsKey => _store.lastUpdateTsKey;
+
+  Map<String, int>? get lastUpdateTs => _store.lastUpdateTs;
+
+  FutureOr<bool> updateLastUpdateTs({int? ts, required String? key}) {
+    return _store.updateLastUpdateTs(ts: ts, key: key);
+  }
+
+  bool isInternalKey(String key) => _store.isInternalKey(key);
+
+  T? get<T extends Object>(String key, {StoreFromObj<T>? fromObj}) {
+    return _store.get<T>(key, fromObj: fromObj);
+  }
+
+  Future<bool> set<T extends Object>(
+    String key,
+    T val, {
+    StoreToObj<T>? toObj,
+    bool? updateLastUpdateTsOnSet,
+  }) {
+    return _store.set(
+      key,
+      val,
+      toObj: toObj,
+      updateLastUpdateTsOnSet: updateLastUpdateTsOnSet,
+    );
+  }
+
+  Set<String> keys({
+    bool includeInternalKeys = StoreDefaults.defaultIncludeInternalKeys,
+  }) {
+    return _store.keys(includeInternalKeys: includeInternalKeys);
+  }
+
+  Future<bool> remove(String key, {bool? updateLastUpdateTsOnRemove}) {
+    return _store.remove(
+      key,
+      updateLastUpdateTsOnRemove: updateLastUpdateTsOnRemove,
+    );
+  }
+
+  Future<bool> clear({bool? updateLastUpdateTsOnClear}) {
+    return _store.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
+  }
+
+  Map<String, Object?> getAllMap({
+    bool includeInternalKeys = StoreDefaults.defaultIncludeInternalKeys,
+  }) {
+    final keys = this.keys(includeInternalKeys: includeInternalKeys);
+    return Map.fromIterables(keys, keys.map((key) => get(key)));
+  }
+
+  PrefProp<T> property<T extends Object>(
+    String key, {
+    bool updateLastModified = true,
+    StoreFromObj<T>? fromObj,
+    StoreToObj<T>? toObj,
+  }) {
+    return _store.property(
+      key,
+      updateLastModified: updateLastModified,
+      fromObj: fromObj,
+      toObj: toObj,
+    );
+  }
+
+  PrefPropDefault<T> propertyDefault<T extends Object>(
+    String key,
+    T defaultValue, {
+    bool updateLastModified = StoreDefaults.defaultUpdateLastUpdateTs,
+    StoreFromObj<T>? fromObj,
+    StoreToObj<T>? toObj,
+  }) {
+    return _store.propertyDefault(
+      key,
+      defaultValue,
+      updateLastModified: updateLastModified,
+      fromObj: fromObj,
+      toObj: toObj,
+    );
+  }
 
   /// Paths that user has visited by 'Locate' button
   late final sftpGoPath = _ListHistory(store: this, name: 'sftpPath');

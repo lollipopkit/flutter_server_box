@@ -1,5 +1,5 @@
-import 'package:fl_lib/fl_lib.dart';
 import 'package:get_it/get_it.dart';
+import 'package:server_box/data/db/app_db.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/container.dart';
 import 'package:server_box/data/store/history.dart';
@@ -17,49 +17,66 @@ abstract final class Stores {
   static PrivateKeyStore get key => getIt<PrivateKeyStore>();
   static SnippetStore get snippet => getIt<SnippetStore>();
   static HistoryStore get history => getIt<HistoryStore>();
-  static ConnectionStatsStore get connectionStats => getIt<ConnectionStatsStore>();
-
-  /// All stores that need backup
-  static List<SqliteStore> get _allBackup => [
-    setting,
-    server,
-    container,
-    key,
-    snippet,
-    history,
-    connectionStats,
-  ];
+  static ConnectionStatsStore get connectionStats =>
+      getIt<ConnectionStatsStore>();
 
   static Future<void> init() async {
-    getIt.registerLazySingleton<SettingStore>(() => SettingStore.instance);
-    getIt.registerLazySingleton<ServerStore>(() => ServerStore.instance);
-    getIt.registerLazySingleton<ContainerStore>(() => ContainerStore.instance);
-    getIt.registerLazySingleton<PrivateKeyStore>(() => PrivateKeyStore.instance);
-    getIt.registerLazySingleton<SnippetStore>(() => SnippetStore.instance);
-    getIt.registerLazySingleton<HistoryStore>(() => HistoryStore.instance);
-    getIt.registerLazySingleton<ConnectionStatsStore>(() => ConnectionStatsStore.instance);
+    if (!getIt.isRegistered<SettingStore>()) {
+      getIt.registerLazySingleton<SettingStore>(() => SettingStore.instance);
+      getIt.registerLazySingleton<ServerStore>(() => ServerStore.instance);
+      getIt.registerLazySingleton<ContainerStore>(
+        () => ContainerStore.instance,
+      );
+      getIt.registerLazySingleton<PrivateKeyStore>(
+        () => PrivateKeyStore.instance,
+      );
+      getIt.registerLazySingleton<SnippetStore>(() => SnippetStore.instance);
+      getIt.registerLazySingleton<HistoryStore>(() => HistoryStore.instance);
+      getIt.registerLazySingleton<ConnectionStatsStore>(
+        () => ConnectionStatsStore.instance,
+      );
+    }
 
-    await Future.wait(_allBackup.map((store) => store.init()));
+    // Warm up app database.
+    await AppDb.instance.customSelect('SELECT 1').getSingleOrNull();
+
+    await setting.init();
+    await history.init();
+    await container.init();
   }
 
-  static int get lastModTime {
-    var lastModTime = 0;
-    for (final store in _allBackup) {
-      final last = store.lastUpdateTs;
-      if (last == null) {
-        continue;
-      }
-      var lastModTimeTs = 0;
-      for (final item in last.entries) {
-        final ts = item.value;
-        if (ts > lastModTimeTs) {
-          lastModTimeTs = ts;
-        }
-      }
-      if (lastModTimeTs > lastModTime) {
-        lastModTime = lastModTimeTs;
+  static Future<int> lastModTime() async {
+    var last = 0;
+
+    void mergeMap(Map<String, int>? map) {
+      if (map == null) return;
+      for (final ts in map.values) {
+        if (ts > last) last = ts;
       }
     }
-    return lastModTime;
+
+    Future<void> mergeTable(String tableName) async {
+      final row = await AppDb.instance
+          .customSelect('SELECT MAX(updated_at) AS max_ts FROM $tableName')
+          .getSingleOrNull();
+      final ts = row?.read<int>('max_ts') ?? 0;
+      if (ts > last) {
+        last = ts;
+      }
+    }
+
+    mergeMap(setting.lastUpdateTs);
+    mergeMap(history.lastUpdateTs);
+    mergeMap(container.lastUpdateTs);
+
+    await mergeTable('servers');
+    await mergeTable('server_customs');
+    await mergeTable('server_wol_cfgs');
+    await mergeTable('snippets');
+    await mergeTable('private_keys');
+    await mergeTable('container_hosts');
+    await mergeTable('connection_stats_records');
+
+    return last;
   }
 }

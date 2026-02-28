@@ -29,18 +29,19 @@ abstract class ServersState with _$ServersState {
 class ServersNotifier extends _$ServersNotifier {
   @override
   ServersState build() {
-    return _load();
+    unawaited(reload());
+    return const ServersState();
   }
 
   Future<void> reload() async {
-    final newState = _load();
+    final newState = await _load();
     if (newState == state) return;
     state = newState;
     await refresh();
   }
 
-  ServersState _load() {
-    final spis = Stores.server.fetch();
+  Future<ServersState> _load() async {
+    final spis = await Stores.server.fetch();
     final newServers = <String, Spi>{};
     final newServerOrder = <String>[];
 
@@ -58,13 +59,21 @@ class ServersNotifier extends _$ServersNotifier {
 
     // Must use [equals] to compare [Order] here.
     if (!newServerOrder.equals(serverOrder_)) {
-      Stores.setting.serverOrder.put(newServerOrder);
+      await Stores.setting.serverOrder.put(newServerOrder);
     }
 
     final newTags = _calculateTags(newServers);
 
-    return stateOrNull?.copyWith(servers: newServers, serverOrder: newServerOrder, tags: newTags) ??
-        ServersState(servers: newServers, serverOrder: newServerOrder, tags: newTags);
+    return stateOrNull?.copyWith(
+          servers: newServers,
+          serverOrder: newServerOrder,
+          tags: newTags,
+        ) ??
+        ServersState(
+          servers: newServers,
+          serverOrder: newServerOrder,
+          tags: newTags,
+        );
   }
 
   Set<String> _calculateTags(Map<String, Spi> servers) {
@@ -96,7 +105,9 @@ class ServersNotifier extends _$ServersNotifier {
   /// [onlyFailed] only refresh failed servers
   Future<void> refresh({Spi? spi, bool onlyFailed = false}) async {
     if (spi != null) {
-      final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)..remove(spi.id);
+      final newManualDisconnected = Set<String>.from(
+        state.manualDisconnectedIds,
+      )..remove(spi.id);
       state = state.copyWith(manualDisconnectedIds: newManualDisconnected);
       final serverNotifier = ref.read(serverProvider(spi.id).notifier);
       await serverNotifier.refresh();
@@ -119,7 +130,9 @@ class ServersNotifier extends _$ServersNotifier {
         idsToResetLimiter.add(serverId);
       }
 
-      if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) continue;
+      if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) {
+        continue;
+      }
 
       serversToRefresh.add(entry);
     }
@@ -165,7 +178,10 @@ class ServersNotifier extends _$ServersNotifier {
 
       // Update SSH session status to disconnected
       final sessionId = 'ssh_$serverId';
-      TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
+      TermSessionManager.updateStatus(
+        sessionId,
+        TermSessionStatus.disconnected,
+      );
     }
     //TryLimiter.clear();
   }
@@ -190,7 +206,8 @@ class ServersNotifier extends _$ServersNotifier {
     final serverNotifier = ref.read(serverProvider(id).notifier);
     serverNotifier.closeConnection();
 
-    final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)..add(id);
+    final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)
+      ..add(id);
     state = state.copyWith(manualDisconnectedIds: newManualDisconnected);
 
     // Remove SSH session when server is manually closed
@@ -205,11 +222,15 @@ class ServersNotifier extends _$ServersNotifier {
     final newOrder = List<String>.from(state.serverOrder)..add(spi.id);
     final newTags = _calculateTags(newServers);
 
-    state = state.copyWith(servers: newServers, serverOrder: newOrder, tags: newTags);
+    state = state.copyWith(
+      servers: newServers,
+      serverOrder: newOrder,
+      tags: newTags,
+    );
 
-    Stores.server.put(spi);
+    unawaited(Stores.server.put(spi));
     Stores.setting.serverOrder.put(newOrder);
-    refresh(spi: spi);
+    unawaited(refresh(spi: spi));
     bakSync.sync(milliDelay: 1000);
   }
 
@@ -220,13 +241,17 @@ class ServersNotifier extends _$ServersNotifier {
     final newOrder = List<String>.from(state.serverOrder)..remove(id);
     final newTags = _calculateTags(newServers);
 
-    state = state.copyWith(servers: newServers, serverOrder: newOrder, tags: newTags);
+    state = state.copyWith(
+      servers: newServers,
+      serverOrder: newOrder,
+      tags: newTags,
+    );
 
     Stores.setting.serverOrder.put(newOrder);
-    Stores.server.delete(id);
+    unawaited(Stores.server.delete(id));
 
     // Remove connection stats when server is deleted
-    Stores.connectionStats.clearServerStats(id);
+    unawaited(Stores.connectionStats.clearServerStats(id));
 
     // Remove SSH session when server is deleted
     final sessionId = 'ssh_$id';
@@ -245,8 +270,8 @@ class ServersNotifier extends _$ServersNotifier {
     state = const ServersState();
 
     Stores.setting.serverOrder.put([]);
-    Stores.server.clear();
-    Stores.connectionStats.clearAll();
+    unawaited(Stores.server.clear());
+    unawaited(Stores.connectionStats.clearAll());
     bakSync.sync(milliDelay: 1000);
   }
 
@@ -296,7 +321,7 @@ class ServersNotifier extends _$ServersNotifier {
 
   Future<void> updateServer(Spi old, Spi newSpi) async {
     if (old != newSpi) {
-      Stores.server.update(old, newSpi);
+      await Stores.server.update(old, newSpi);
 
       final newServers = Map<String, Spi>.from(state.servers);
       final newOrder = List<String>.from(state.serverOrder);
@@ -305,7 +330,7 @@ class ServersNotifier extends _$ServersNotifier {
         newServers[newSpi.id] = newSpi;
         newServers.remove(old.id);
         newOrder.update(old.id, newSpi.id);
-        Stores.setting.serverOrder.put(newOrder);
+        await Stores.setting.serverOrder.put(newOrder);
 
         // Update SSH session ID when server ID changes
         final oldSessionId = 'ssh_${old.id}';
@@ -319,13 +344,17 @@ class ServersNotifier extends _$ServersNotifier {
       }
 
       final newTags = _calculateTags(newServers);
-      state = state.copyWith(servers: newServers, serverOrder: newOrder, tags: newTags);
+      state = state.copyWith(
+        servers: newServers,
+        serverOrder: newOrder,
+        tags: newTags,
+      );
 
       // Only reconnect if neccessary
       if (newSpi.shouldReconnect(old)) {
         // Use [newSpi.id] instead of [old.id] because [old.id] may be changed
         TryLimiter.reset(newSpi.id);
-        refresh(spi: newSpi);
+        unawaited(refresh(spi: newSpi));
       }
     }
     bakSync.sync(milliDelay: 1000);

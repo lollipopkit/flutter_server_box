@@ -1,51 +1,59 @@
-import 'package:fl_lib/fl_lib.dart';
-
+import 'package:server_box/data/db/app_db.dart' as adb;
 import 'package:server_box/data/model/server/private_key_info.dart';
 
-class PrivateKeyStore extends SqliteStore {
-  PrivateKeyStore._() : super('key');
+class PrivateKeyStore {
+  PrivateKeyStore._();
 
   static final instance = PrivateKeyStore._();
 
-  void put(PrivateKeyInfo info) {
-    set(info.id, info, toObj: (val) => val?.toJson());
+  adb.AppDb get _db => adb.AppDb.instance;
+
+  Future<void> put(PrivateKeyInfo info) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _db
+        .into(_db.privateKeys)
+        .insertOnConflictUpdate(
+          adb.PrivateKeysCompanion.insert(
+            id: info.id,
+            privateKey: info.key,
+            updatedAt: now,
+          ),
+        );
   }
 
-  List<PrivateKeyInfo> fetch() {
-    final ps = <PrivateKeyInfo>[];
-    for (final key in keys().toList()) {
-      final s = get<PrivateKeyInfo>(key, fromObj: _parsePrivateKeyInfo);
-      if (s != null) {
-        if (s.id != key) {
-          remove(key);
-          put(s);
-        }
-        ps.add(s);
-      }
-    }
-    return ps;
+  Future<List<PrivateKeyInfo>> fetch() async {
+    final rows = await _db.select(_db.privateKeys).get();
+    return rows
+        .map((row) => PrivateKeyInfo(id: row.id, key: row.privateKey))
+        .toList(growable: false);
   }
 
-  PrivateKeyInfo? fetchOne(String? id) {
+  Future<PrivateKeyInfo?> fetchOne(String? id) async {
     if (id == null) return null;
-    return get<PrivateKeyInfo>(id, fromObj: _parsePrivateKeyInfo);
+    final row = await (_db.select(
+      _db.privateKeys,
+    )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+    if (row == null) return null;
+    return PrivateKeyInfo(id: row.id, key: row.privateKey);
   }
 
-  void delete(PrivateKeyInfo s) {
-    remove(s.id);
+  Future<void> delete(PrivateKeyInfo s) async {
+    await (_db.delete(
+      _db.privateKeys,
+    )..where((tbl) => tbl.id.equals(s.id))).go();
   }
 
-  static PrivateKeyInfo? _parsePrivateKeyInfo(Object? val) {
-    if (val is PrivateKeyInfo) return val;
-    if (val is Map<dynamic, dynamic>) {
-      final map = val.toStrDynMap;
-      if (map == null) return null;
-      try {
-        return PrivateKeyInfo.fromJson(map as Map<String, dynamic>);
-      } catch (e) {
-        dprint('Parsing PrivateKeyInfo from JSON', e);
-      }
-    }
-    return null;
+  Future<Set<String>> keys() async {
+    final query = _db.selectOnly(_db.privateKeys)
+      ..addColumns([_db.privateKeys.id]);
+    final rows = await query.get();
+    return rows
+        .map((row) => row.read(_db.privateKeys.id))
+        .whereType<String>()
+        .toSet();
+  }
+
+  Future<void> clear() async {
+    await _db.delete(_db.privateKeys).go();
   }
 }

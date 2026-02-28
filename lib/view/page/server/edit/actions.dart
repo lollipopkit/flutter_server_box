@@ -170,8 +170,10 @@ extension _Actions on _ServerEditPageState {
   }
 
   Future<void> _processSSHServers(List<Spi> servers) async {
-    final deduplicated = ServerDeduplication.deduplicateServers(servers);
-    final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
+    final deduplicated = await ServerDeduplication.deduplicateServers(servers);
+    final resolved = await ServerDeduplication.resolveNameConflicts(
+      deduplicated,
+    );
     final summary = ServerDeduplication.getImportSummary(servers, resolved);
 
     if (!summary.hasItemsToImport) {
@@ -343,7 +345,7 @@ extension _Actions on _ServerEditPageState {
     );
 
     if (this.spi == null) {
-      final existsIds = ServerStore.instance.keys();
+      final existsIds = await ServerStore.instance.keys();
       if (existsIds.contains(spi.id)) {
         context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
         return;
@@ -395,8 +397,12 @@ extension _Utils on _ServerEditPageState {
           return;
         }
 
-        final deduplicated = ServerDeduplication.deduplicateServers(servers);
-        final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
+        final deduplicated = await ServerDeduplication.deduplicateServers(
+          servers,
+        );
+        final resolved = await ServerDeduplication.resolveNameConflicts(
+          deduplicated,
+        );
         final summary = ServerDeduplication.getImportSummary(servers, resolved);
 
         if (!summary.hasItemsToImport) {

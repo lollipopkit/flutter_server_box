@@ -30,8 +30,8 @@ String decyptPem(List<String> args) {
 
 enum GenSSHClientStatus { socket, key, pwd }
 
-String getPrivateKey(String id) {
-  final pki = Stores.key.fetchOne(id);
+Future<String> getPrivateKey(String id) async {
+  final pki = await Stores.key.fetchOne(id);
   if (pki == null) {
     throw SSHErr(
       type: SSHErrType.noPrivateKey,
@@ -92,14 +92,17 @@ Future<SSHClient> genClient(
 
   final socket = await () async {
     // Proxy
-    final jumpSpi_ = () {
+    final jumpSpi_ = await () async {
       // Multi-thread or key login
       if (jumpSpi != null) return jumpSpi;
       // Main thread
       final jumpId = spi.jumpId;
       if (jumpId != null) {
-        return jumpSpisById?[jumpId] ?? Stores.server.fetchOne(jumpId);
+        final cached = jumpSpisById?[jumpId];
+        if (cached != null) return cached;
+        return await Stores.server.fetchOne(jumpId);
       }
+      return null;
     }();
     if (jumpSpi_ != null) {
       String? nextJumpPrivateKey;
@@ -165,7 +168,7 @@ Future<SSHClient> genClient(
       // printTrace: debugPrint,
     );
   }
-  privateKey ??= privateKeysByKeyId?[keyId] ?? getPrivateKey(keyId);
+  privateKey ??= privateKeysByKeyId?[keyId] ?? await getPrivateKey(keyId);
 
   onStatus?.call(GenSSHClientStatus.key);
   return SSHClient(
@@ -368,9 +371,9 @@ Future<void> ensureKnownHostKey(
   }
 
   final jumpId = spi.jumpId;
-  final jumpSpi = jumpId != null
-      ? (jumpSpisById?[jumpId] ?? Stores.server.fetchOne(jumpId))
-      : null;
+  final jumpSpi = jumpId == null
+      ? null
+      : (jumpSpisById?[jumpId] ?? await Stores.server.fetchOne(jumpId));
   if (jumpSpi != null && !_hasKnownHostFingerprintForSpi(jumpSpi, cache)) {
     await ensureKnownHostKey(
       jumpSpi,

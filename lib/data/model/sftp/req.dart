@@ -12,23 +12,35 @@ class SftpReq {
   Map<String, String>? privateKeysByKeyId;
   Map<String, String>? knownHostFingerprints;
 
-  SftpReq(this.spi, this.remotePath, this.localPath, this.type) {
+  SftpReq._(this.spi, this.remotePath, this.localPath, this.type);
+
+  static Future<SftpReq> create(
+    Spi spi,
+    String remotePath,
+    String localPath,
+    SftpReqType type,
+  ) async {
+    final req = SftpReq._(spi, remotePath, localPath, type);
+    await req._init();
+    return req;
+  }
+
+  Future<void> _init() async {
     privateKeysByKeyId = {};
 
     final keyId = spi.keyId;
     if (keyId != null) {
-      privateKey = getPrivateKey(keyId);
+      privateKey = await getPrivateKey(keyId);
       privateKeysByKeyId![keyId] = privateKey!;
     }
 
-    final allServers = {
-      for (final server in Stores.server.fetch()) server.id: server,
-    };
+    final servers = await Stores.server.fetch();
+    final allServers = {for (final server in servers) server.id: server};
     jumpSpisById = collectJumpServers(spi: spi, serversById: allServers);
 
     if (spi.jumpId != null) {
       jumpSpi = jumpSpisById?[spi.jumpId];
-      jumpPrivateKey = Stores.key.fetchOne(jumpSpi?.keyId)?.key;
+      jumpPrivateKey = (await Stores.key.fetchOne(jumpSpi?.keyId))?.key;
       if (jumpSpi?.keyId case final jumpKeyId?) {
         if (jumpPrivateKey != null) {
           privateKeysByKeyId![jumpKeyId] = jumpPrivateKey!;
@@ -41,7 +53,7 @@ class SftpReq {
       if (jumpKeyId == null || privateKeysByKeyId!.containsKey(jumpKeyId)) {
         continue;
       }
-      final key = Stores.key.fetchOne(jumpKeyId)?.key;
+      final key = (await Stores.key.fetchOne(jumpKeyId))?.key;
       if (key == null) {
         continue;
       }

@@ -44,7 +44,11 @@ extension on _ContainerPageState {
         onTap: () async {
           context.pop();
           await _showAddCmdPreview(
-            _buildAddCmd(imageCtrl.text.trim(), nameCtrl.text.trim(), argsCtrl.text.trim()),
+            _buildAddCmd(
+              imageCtrl.text.trim(),
+              nameCtrl.text.trim(),
+              argsCtrl.text.trim(),
+            ),
           );
         },
       ).toList,
@@ -65,7 +69,10 @@ extension on _ContainerPageState {
           final (result, err) = await context.showLoadingDialog(fn: onConfirm);
           if (err != null || result != null) {
             final e = result?.message ?? err?.toString();
-            context.showRoundDialog(title: libL10n.error, child: Text(e.toString()));
+            context.showRoundDialog(
+              title: libL10n.error,
+              child: Text(e.toString()),
+            );
           } else {
             context.showSnackBar(libL10n.success);
           }
@@ -85,10 +92,15 @@ extension on _ContainerPageState {
           onPressed: () async {
             context.pop();
 
-            final (result, err) = await context.showLoadingDialog(fn: () => _containerNotifier.run(cmd));
+            final (result, err) = await context.showLoadingDialog(
+              fn: () => _containerNotifier.run(cmd),
+            );
             if (err != null || result != null) {
               final e = result?.message ?? err?.toString();
-              context.showRoundDialog(title: libL10n.error, child: Text(e.toString()));
+              context.showRoundDialog(
+                title: libL10n.error,
+                child: Text(e.toString()),
+              );
             }
           },
           child: Text(libL10n.run),
@@ -99,7 +111,7 @@ extension on _ContainerPageState {
 
   Future<void> _showEditHostDialog() async {
     final id = widget.args.spi.id;
-    final host = Stores.container.fetch(id);
+    final host = await Stores.container.fetch(id);
     final ctrl = TextEditingController(text: host);
     await context.showRoundDialog(
       title: libL10n.edit,
@@ -114,16 +126,18 @@ extension on _ContainerPageState {
     );
   }
 
-  void _onSaveDockerHost(String val) {
+  Future<void> _onSaveDockerHost(String val) async {
     context.pop();
-    Stores.container.put(widget.args.spi.id, val.trim());
-    _containerNotifier.refresh();
+    await Stores.container.put(widget.args.spi.id, val.trim());
+    await _containerNotifier.refresh();
   }
 
   void _showImageRmDialog(ContainerImg e) {
     context.showRoundDialog(
       title: libL10n.attention,
-      child: Text(libL10n.askContinue('${libL10n.delete} Image(${e.repository})')),
+      child: Text(
+        libL10n.askContinue('${libL10n.delete} Image(${e.repository})'),
+      ),
       actions: Btn.ok(
         onTap: () async {
           context.pop();
@@ -151,13 +165,21 @@ extension on _ContainerPageState {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(libL10n.askContinue('${libL10n.delete} Container(${dItem.name})')),
+              Text(
+                libL10n.askContinue(
+                  '${libL10n.delete} Container(${dItem.name})',
+                ),
+              ),
               UIs.height13,
               Row(
                 children: [
                   StatefulBuilder(
                     builder: (_, setState) {
-                      return Checkbox(value: force, onChanged: (val) => setState(() => force = val ?? false));
+                      return Checkbox(
+                        value: force,
+                        onChanged: (val) =>
+                            setState(() => force = val ?? false),
+                      );
                     },
                   ),
                   Text(libL10n.force),
@@ -174,31 +196,49 @@ extension on _ContainerPageState {
               );
               if (err != null || result != null) {
                 final e = result?.message ?? err?.toString();
-                context.showRoundDialog(title: libL10n.error, child: Text(e ?? 'null'));
+                context.showRoundDialog(
+                  title: libL10n.error,
+                  child: Text(e ?? 'null'),
+                );
               }
             },
           ).toList,
         );
         break;
       case ContainerMenu.start:
-        final (result, err) = await context.showLoadingDialog(fn: () => _containerNotifier.start(id));
+        final (result, err) = await context.showLoadingDialog(
+          fn: () => _containerNotifier.start(id),
+        );
         if (err != null || result != null) {
           final e = result?.message ?? err?.toString();
-          context.showRoundDialog(title: libL10n.error, child: Text(e ?? 'null'));
+          context.showRoundDialog(
+            title: libL10n.error,
+            child: Text(e ?? 'null'),
+          );
         }
         break;
       case ContainerMenu.stop:
-        final (result, err) = await context.showLoadingDialog(fn: () => _containerNotifier.stop(id));
+        final (result, err) = await context.showLoadingDialog(
+          fn: () => _containerNotifier.stop(id),
+        );
         if (err != null || result != null) {
           final e = result?.message ?? err?.toString();
-          context.showRoundDialog(title: libL10n.error, child: Text(e ?? 'null'));
+          context.showRoundDialog(
+            title: libL10n.error,
+            child: Text(e ?? 'null'),
+          );
         }
         break;
       case ContainerMenu.restart:
-        final (result, err) = await context.showLoadingDialog(fn: () => _containerNotifier.restart(id));
+        final (result, err) = await context.showLoadingDialog(
+          fn: () => _containerNotifier.restart(id),
+        );
         if (err != null || result != null) {
           final e = result?.message ?? err?.toString();
-          context.showRoundDialog(title: libL10n.error, child: Text(e ?? 'null'));
+          context.showRoundDialog(
+            title: libL10n.error,
+            child: Text(e ?? 'null'),
+          );
         }
         break;
       case ContainerMenu.logs:
@@ -228,13 +268,16 @@ extension on _ContainerPageState {
 
   void _initAutoRefresh() {
     if (Stores.setting.containerAutoRefresh.fetch()) {
-      Timer.periodic(Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch()), (timer) {
-        if (mounted) {
-          _containerNotifier.refresh(isAuto: true);
-        } else {
-          timer.cancel();
-        }
-      });
+      Timer.periodic(
+        Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch()),
+        (timer) {
+          if (mounted) {
+            _containerNotifier.refresh(isAuto: true);
+          } else {
+            timer.cancel();
+          }
+        },
+      );
     }
   }
 }

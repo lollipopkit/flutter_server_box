@@ -1,43 +1,47 @@
+import 'package:drift/drift.dart' as d;
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/data/db/app_db.dart' as adb;
 import 'package:server_box/data/model/server/connection_stat.dart';
 
-class ConnectionStatsStore extends SqliteStore {
-  ConnectionStatsStore._() : super('connection_stats');
+class ConnectionStatsStore {
+  ConnectionStatsStore._();
 
   static final instance = ConnectionStatsStore._();
 
-  static const _keySep = '_';
   static const _retention = Duration(days: 30);
 
-  // Record a connection attempt
-  void recordConnection(ConnectionStat stat) {
-    final key = '${stat.serverId}$_keySep${ShortId.generate()}';
-    set(key, stat, toObj: (val) => val?.toJson());
-    _cleanOldRecords(stat.serverId);
+  adb.AppDb get _db => adb.AppDb.instance;
+
+  Future<void> recordConnection(ConnectionStat stat) async {
+    await _db.into(_db.connectionStatsRecords).insert(
+          adb.ConnectionStatsRecordsCompanion.insert(
+            serverId: stat.serverId,
+            serverName: stat.serverName,
+            timestampMs: stat.timestamp.millisecondsSinceEpoch,
+            result: stat.result.name,
+            errorMessage: stat.errorMessage,
+            durationMs: stat.durationMs,
+            updatedAt: DateTimeX.timestamp,
+          ),
+        );
+    await _cleanOldRecords(stat.serverId);
   }
 
-  // Clean records older than 30 days for a specific server
-  void _cleanOldRecords(String serverId) {
-    final cutoffTime = DateTime.now().subtract(_retention);
-    final allKeys = keys().toList();
-    final keysToDelete = <String>[];
-
-    for (final key in allKeys) {
-      if (!_isServerRecordKey(key, serverId)) continue;
-      final recordTime = _extractRecordTimeFromKey(key);
-      if (recordTime != null && recordTime.isBefore(cutoffTime)) {
-        keysToDelete.add(key);
-      }
-    }
-
-    for (final key in keysToDelete) {
-      remove(key);
-    }
+  Future<void> _cleanOldRecords(String serverId) async {
+    final cutoff = DateTime.now().subtract(_retention).millisecondsSinceEpoch;
+    await (_db.delete(_db.connectionStatsRecords)
+          ..where(
+            (tbl) =>
+                tbl.serverId.equals(serverId) & tbl.timestampMs.isSmallerThanValue(cutoff),
+          ))
+        .go();
   }
 
-  // Get connection stats for a specific server
-  ServerConnectionStats getServerStats(String serverId, String serverName) {
-    final sortedStats = getConnectionHistory(serverId);
+  Future<ServerConnectionStats> getServerStats(
+    String serverId,
+    String serverName,
+  ) async {
+    final sortedStats = await getConnectionHistory(serverId);
     if (sortedStats.isEmpty) {
       return ServerConnectionStats(
         serverId: serverId,
@@ -45,8 +49,8 @@ class ConnectionStatsStore extends SqliteStore {
         totalAttempts: 0,
         successCount: 0,
         failureCount: 0,
-        recentConnections: [],
-        successRate: 0.0,
+        recentConnections: const [],
+        successRate: 0,
       );
     }
 
@@ -57,82 +61,24 @@ class ConnectionStatsStore extends SqliteStore {
     );
   }
 
-  ServerConnectionStats _buildServerStats({
-    required String serverId,
-    required String serverName,
-    required List<ConnectionStat> sortedStats,
-  }) {
-    final totalAttempts = sortedStats.length;
-    final successCount = sortedStats.where((s) => s.result.isSuccess).length;
-    final failureCount = totalAttempts - successCount;
-    final successRate = totalAttempts > 0
-        ? (successCount / totalAttempts)
-        : 0.0;
+  Future<List<ConnectionStat>> getConnectionHistory(String serverId) async {
+    final query = _db.select(_db.connectionStatsRecords)
+      ..where((tbl) => tbl.serverId.equals(serverId))
+      ..orderBy([(tbl) => d.OrderingTerm.desc(tbl.timestampMs)]);
 
-    DateTime? lastSuccessTime;
-    DateTime? lastFailureTime;
-    for (final stat in sortedStats) {
-      if (lastSuccessTime == null && stat.result.isSuccess) {
-        lastSuccessTime = stat.timestamp;
-      }
-      if (lastFailureTime == null && !stat.result.isSuccess) {
-        lastFailureTime = stat.timestamp;
-      }
-      if (lastSuccessTime != null && lastFailureTime != null) {
-        break;
-      }
-    }
-
-    // Get recent connections (last 20)
-    final recentConnections = sortedStats.take(20).toList();
-
-    return ServerConnectionStats(
-      serverId: serverId,
-      serverName: serverName,
-      totalAttempts: totalAttempts,
-      successCount: successCount,
-      failureCount: failureCount,
-      lastSuccessTime: lastSuccessTime,
-      lastFailureTime: lastFailureTime,
-      recentConnections: recentConnections,
-      successRate: successRate,
-    );
+    final rows = await query.get();
+    return rows.map(_fromRow).toList(growable: false);
   }
 
-  // Get connection history for a specific server
-  List<ConnectionStat> getConnectionHistory(String serverId) {
-    final allKeys = keys()
-        .where((key) => _isServerRecordKey(key, serverId))
-        .toList();
-    final stats = <ConnectionStat>[];
-
-    for (final key in allKeys) {
-      final stat = _readStat(key);
-      if (stat != null) {
-        stats.add(stat);
-      }
-    }
-
-    // Sort by timestamp, newest first
-    stats.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-    return stats;
-  }
-
-  // Get all servers' stats
-  List<ServerConnectionStats> getAllServerStats() {
+  Future<List<ServerConnectionStats>> getAllServerStats() async {
+    final rows = await _db.select(_db.connectionStatsRecords).get();
     final groupedStats = <String, List<ConnectionStat>>{};
     final serverNames = <String, String>{};
 
-    for (final key in keys()) {
-      final parsed = _parseRecordKey(key);
-      if (parsed == null) continue;
-
-      final serverId = parsed.$1;
-      final stat = _readStat(key);
-      if (stat == null) continue;
-
-      groupedStats.putIfAbsent(serverId, () => []).add(stat);
-      serverNames[serverId] ??= stat.serverName;
+    for (final row in rows) {
+      final stat = _fromRow(row);
+      groupedStats.putIfAbsent(stat.serverId, () => []).add(stat);
+      serverNames[stat.serverId] ??= stat.serverName;
     }
 
     final allStats = <ServerConnectionStats>[];
@@ -159,77 +105,83 @@ class ConnectionStatsStore extends SqliteStore {
           : b.recentConnections.first.timestamp;
       return bTs.compareTo(aTs);
     });
+
     return allStats;
   }
 
-  // Clear all connection stats
-  void clearAll() {
-    clear();
+  Future<void> clearAll() async {
+    await _db.delete(_db.connectionStatsRecords).go();
   }
 
-  // Clear stats for a specific server
-  void clearServerStats(String serverId) {
-    final keysToDelete = keys().where((key) {
-      return _isServerRecordKey(key, serverId);
-    }).toList();
-    for (final key in keysToDelete) {
-      remove(key);
-    }
+  Future<void> clearServerStats(String serverId) async {
+    await (_db.delete(_db.connectionStatsRecords)
+          ..where((tbl) => tbl.serverId.equals(serverId)))
+        .go();
   }
 
   Future<void> compact() async {
-    Loggers.app.info('Start compacting connection_stats database...');
+    Loggers.app.info('Start compacting app database...');
     try {
-      await vacuum();
-      Loggers.app.info('Finished compacting connection_stats database');
+      await _db.customStatement('VACUUM');
+      Loggers.app.info('Finished compacting app database');
     } catch (e, st) {
-      Loggers.app.warning('Failed compacting connection_stats database', e, st);
+      Loggers.app.warning('Failed compacting app database', e, st);
       rethrow;
     }
   }
 
-  ConnectionStat? _readStat(String key) {
-    return get<ConnectionStat>(
-      key,
-      fromObj: (val) {
-        if (val is ConnectionStat) return val;
-        if (val is Map<dynamic, dynamic>) {
-          final map = val.toStrDynMap;
-          if (map == null) return null;
-          try {
-            return ConnectionStat.fromJson(map as Map<String, dynamic>);
-          } catch (e) {
-            dprint('Parsing ConnectionStat from JSON', e);
-          }
-        }
-        return null;
-      },
+  ServerConnectionStats _buildServerStats({
+    required String serverId,
+    required String serverName,
+    required List<ConnectionStat> sortedStats,
+  }) {
+    final totalAttempts = sortedStats.length;
+    final successCount = sortedStats.where((s) => s.result.isSuccess).length;
+    final failureCount = totalAttempts - successCount;
+    final successRate = totalAttempts > 0 ? (successCount / totalAttempts) : 0.0;
+
+    DateTime? lastSuccessTime;
+    DateTime? lastFailureTime;
+    for (final stat in sortedStats) {
+      if (lastSuccessTime == null && stat.result.isSuccess) {
+        lastSuccessTime = stat.timestamp;
+      }
+      if (lastFailureTime == null && !stat.result.isSuccess) {
+        lastFailureTime = stat.timestamp;
+      }
+      if (lastSuccessTime != null && lastFailureTime != null) {
+        break;
+      }
+    }
+
+    final recentConnections = sortedStats.take(20).toList(growable: false);
+
+    return ServerConnectionStats(
+      serverId: serverId,
+      serverName: serverName,
+      totalAttempts: totalAttempts,
+      successCount: successCount,
+      failureCount: failureCount,
+      lastSuccessTime: lastSuccessTime,
+      lastFailureTime: lastFailureTime,
+      recentConnections: recentConnections,
+      successRate: successRate,
     );
   }
 
-  bool _isServerRecordKey(String key, String serverId) {
-    final parsed = _parseRecordKey(key);
-    return parsed != null && parsed.$1 == serverId;
-  }
+  ConnectionStat _fromRow(adb.ConnectionStatsRecord row) {
+    final result = ConnectionResult.values.firstWhere(
+      (e) => e.name == row.result,
+      orElse: () => ConnectionResult.unknownError,
+    );
 
-  (String, String)? _parseRecordKey(String key) {
-    final idx = key.lastIndexOf(_keySep);
-    if (idx <= 0 || idx >= key.length - 1) return null;
-    return (key.substring(0, idx), key.substring(idx + 1));
-  }
-
-  DateTime? _extractRecordTimeFromKey(String key) {
-    final parsed = _parseRecordKey(key);
-    if (parsed == null) return null;
-
-    // Backward compatibility for potential old decimal timestamp suffix.
-    final raw = parsed.$2;
-    final legacyTs = int.tryParse(raw);
-    if (legacyTs != null) {
-      return DateTime.fromMillisecondsSinceEpoch(legacyTs);
-    }
-
-    final decoded = ShortId.decode(raw);
-    return decoded?.$1;
+    return ConnectionStat(
+      serverId: row.serverId,
+      serverName: row.serverName,
+      timestamp: DateTime.fromMillisecondsSinceEpoch(row.timestampMs),
+      result: result,
+      errorMessage: row.errorMessage,
+      durationMs: row.durationMs,
+    );
   }
 }
