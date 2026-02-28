@@ -343,7 +343,7 @@ extension _Actions on _ServerEditPageState {
     );
 
     if (this.spi == null) {
-      final existsIds = ServerStore.instance.box.keys;
+      final existsIds = ServerStore.instance.keys();
       if (existsIds.contains(spi.id)) {
         context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
         return;

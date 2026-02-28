@@ -7,16 +7,15 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/app.dart';
+import 'package:server_box/data/migration/hive_to_sqlite_migrator.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/store/server.dart';
-import 'package:server_box/hive/hive_registrar.g.dart';
 
 Future<void> main() async {
   _runInZone(() async {
@@ -32,7 +31,11 @@ void _runInZone(void Function() body) {
     },
   );
 
-  runZonedGuarded(body, (e, s) => print('[ZONE] $e\n$s'), zoneSpecification: zoneSpec);
+  runZonedGuarded(
+    body,
+    (e, s) => print('[ZONE] $e\n$s'),
+    zoneSpecification: zoneSpec,
+  );
 }
 
 Future<void> _initApp() async {
@@ -51,11 +54,9 @@ Future<void> _initApp() async {
 Future<void> _initData() async {
   await Paths.init(BuildData.name, bakName: 'srvbox_bak.json');
 
-  await Hive.initFlutter();
-  Hive.registerAdapters();
-
   await PrefStore.shared.init(); // Call this before accessing any store
   await Stores.init();
+  await HiveToSqliteMigrator.migrateIfNeeded();
 
   // It may effect the following logic, so await it.
   // DO DB migration before load any provider.
@@ -82,7 +83,9 @@ void _doPlatformRelated() async {
   }
 
   final serversCount = Stores.server.keys().length;
-  Computer.shared.turnOn(workersCount: (serversCount / 3).round() + 1); // Plus 1 to avoid 0.
+  Computer.shared.turnOn(
+    workersCount: (serversCount / 3).round() + 1,
+  ); // Plus 1 to avoid 0.
 }
 
 // It may contains some async heavy funcs.

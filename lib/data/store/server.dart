@@ -5,13 +5,13 @@ import 'package:server_box/data/store/container.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/snippet.dart';
 
-class ServerStore extends HiveStore {
+class ServerStore extends SqliteStore {
   ServerStore._() : super('server');
 
   static final instance = ServerStore._();
 
   void put(Spi info) {
-    set(info.id, info);
+    set(info.id, info, toObj: (val) => val?.toJson());
   }
 
   List<Spi> fetch() {
@@ -42,6 +42,10 @@ class ServerStore extends HiveStore {
     return ss;
   }
 
+  Spi? fetchOne(String id) {
+    return get<Spi>(id, fromObj: _fromObj);
+  }
+
   void delete(String id) {
     remove(id);
   }
@@ -54,7 +58,7 @@ class ServerStore extends HiveStore {
     put(newInfo);
   }
 
-  bool have(Spi s) => get(s.id) != null;
+  bool have(Spi s) => fetchOne(s.id) != null;
 
   void migrateIds() {
     final ss = fetch();
@@ -87,7 +91,7 @@ class ServerStore extends HiveStore {
       }
 
       // Replace ids in jump server settings.
-      final spi = get<Spi>(newId);
+      final spi = fetchOne(newId);
       if (spi != null) {
         final jumpId = spi.jumpId; // This could be an oldId.
         // Check if this jumpId corresponds to a server that was also migrated.
@@ -123,5 +127,19 @@ class ServerStore extends HiveStore {
     if (srvOrderChanged) {
       SettingStore.instance.serverOrder.put(srvOrder);
     }
+  }
+
+  static Spi? _fromObj(Object? val) {
+    if (val is Spi) return val;
+    if (val is Map<dynamic, dynamic>) {
+      final map = val.toStrDynMap;
+      if (map == null) return null;
+      try {
+        return Spi.fromJson(map as Map<String, dynamic>);
+      } catch (e) {
+        dprint('Parsing Spi from JSON', e);
+      }
+    }
+    return null;
   }
 }

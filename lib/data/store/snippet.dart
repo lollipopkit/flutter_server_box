@@ -2,13 +2,13 @@ import 'package:fl_lib/fl_lib.dart';
 
 import 'package:server_box/data/model/server/snippet.dart';
 
-class SnippetStore extends HiveStore {
+class SnippetStore extends SqliteStore {
   SnippetStore._() : super('snippet');
 
   static final instance = SnippetStore._();
 
   void put(Snippet snippet) {
-    set(snippet.name, snippet);
+    set(snippet.name, snippet, toObj: (val) => val?.toJson());
   }
 
   List<Snippet> fetch() {
@@ -39,6 +39,10 @@ class SnippetStore extends HiveStore {
     return ss.toList();
   }
 
+  Snippet? fetchOne(String name) {
+    return get<Snippet>(name, fromObj: _fromObj);
+  }
+
   void delete(Snippet s) {
     remove(s.name);
   }
@@ -51,5 +55,19 @@ class SnippetStore extends HiveStore {
     put(newInfo);
   }
 
-  bool have(Snippet s) => get(s.name) != null;
+  bool have(Snippet s) => fetchOne(s.name) != null;
+
+  static Snippet? _fromObj(Object? val) {
+    if (val is Snippet) return val;
+    if (val is Map<dynamic, dynamic>) {
+      final map = val.toStrDynMap;
+      if (map == null) return null;
+      try {
+        return Snippet.fromJson(map as Map<String, dynamic>);
+      } catch (e) {
+        dprint('Parsing Snippet from JSON', e);
+      }
+    }
+    return null;
+  }
 }

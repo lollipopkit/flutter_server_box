@@ -2,13 +2,13 @@ import 'package:fl_lib/fl_lib.dart';
 
 import 'package:server_box/data/model/server/private_key_info.dart';
 
-class PrivateKeyStore extends HiveStore {
+class PrivateKeyStore extends SqliteStore {
   PrivateKeyStore._() : super('key');
 
   static final instance = PrivateKeyStore._();
 
   void put(PrivateKeyInfo info) {
-    set(info.id, info);
+    set(info.id, info, toObj: (val) => val?.toJson());
   }
 
   List<PrivateKeyInfo> fetch() {
@@ -41,10 +41,24 @@ class PrivateKeyStore extends HiveStore {
 
   PrivateKeyInfo? fetchOne(String? id) {
     if (id == null) return null;
-    return box.get(id);
+    return get<PrivateKeyInfo>(id, fromObj: _fromObj);
   }
 
   void delete(PrivateKeyInfo s) {
     remove(s.id);
+  }
+
+  static PrivateKeyInfo? _fromObj(Object? val) {
+    if (val is PrivateKeyInfo) return val;
+    if (val is Map<dynamic, dynamic>) {
+      final map = val.toStrDynMap;
+      if (map == null) return null;
+      try {
+        return PrivateKeyInfo.fromJson(map as Map<String, dynamic>);
+      } catch (e) {
+        dprint('Parsing PrivateKeyInfo from JSON', e);
+      }
+    }
+    return null;
   }
 }

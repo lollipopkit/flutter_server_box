@@ -98,7 +98,7 @@ Future<SSHClient> genClient(
       // Main thread
       final jumpId = spi.jumpId;
       if (jumpId != null) {
-        return jumpSpisById?[jumpId] ?? Stores.server.box.get(jumpId);
+        return jumpSpisById?[jumpId] ?? Stores.server.fetchOne(jumpId);
       }
     }();
     if (jumpSpi_ != null) {
@@ -369,7 +369,7 @@ Future<void> ensureKnownHostKey(
 
   final jumpId = spi.jumpId;
   final jumpSpi = jumpId != null
-      ? (jumpSpisById?[jumpId] ?? Stores.server.box.get(jumpId))
+      ? (jumpSpisById?[jumpId] ?? Stores.server.fetchOne(jumpId))
       : null;
   if (jumpSpi != null && !_hasKnownHostFingerprintForSpi(jumpSpi, cache)) {
     await ensureKnownHostKey(
@@ -388,6 +388,8 @@ Future<void> ensureKnownHostKey(
     timeout: timeout,
     onKeyboardInteractive: onKeyboardInteractive,
     knownHostFingerprints: cache,
+    jumpSpisById: jumpSpisById,
+    visitedServerIds: chainVisitedServerIds,
   );
 
   try {

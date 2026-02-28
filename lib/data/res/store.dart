@@ -20,15 +20,15 @@ abstract final class Stores {
   static ConnectionStatsStore get connectionStats => getIt<ConnectionStatsStore>();
 
   /// All stores that need backup
-  static List<HiveStore> get _allBackup => [
-        setting,
-        server,
-        container,
-        key,
-        snippet,
-        history,
-        connectionStats,
-      ];
+  static List<SqliteStore> get _allBackup => [
+    setting,
+    server,
+    container,
+    key,
+    snippet,
+    history,
+    connectionStats,
+  ];
 
   static Future<void> init() async {
     getIt.registerLazySingleton<SettingStore>(() => SettingStore.instance);
@@ -38,7 +38,7 @@ abstract final class Stores {
     getIt.registerLazySingleton<SnippetStore>(() => SnippetStore.instance);
     getIt.registerLazySingleton<HistoryStore>(() => HistoryStore.instance);
     getIt.registerLazySingleton<ConnectionStatsStore>(() => ConnectionStatsStore.instance);
-    
+
     await Future.wait(_allBackup.map((store) => store.init()));
   }
 

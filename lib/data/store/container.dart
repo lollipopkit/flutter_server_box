@@ -4,13 +4,14 @@ import 'package:server_box/data/res/store.dart';
 
 const _keyConfig = 'providerConfig';
 
-class ContainerStore extends HiveStore {
+class ContainerStore extends SqliteStore {
   ContainerStore._() : super('docker');
 
   static final instance = ContainerStore._();
 
   String? fetch(String? id) {
-    return box.get(id);
+    if (id == null) return null;
+    return get<String>(id);
   }
 
   void put(String id, String host) {
@@ -18,9 +19,11 @@ class ContainerStore extends HiveStore {
   }
 
   ContainerType getType([String id = '']) {
-    final cfg = box.get(_keyConfig + id);
+    final cfg = get<String>(_keyConfig + id);
     if (cfg != null) {
-      final type = ContainerType.values.firstWhereOrNull((e) => e.toString() == cfg);
+      final type = ContainerType.values.firstWhereOrNull(
+        (e) => e.toString() == cfg,
+      );
       if (type != null) return type;
     }
 
