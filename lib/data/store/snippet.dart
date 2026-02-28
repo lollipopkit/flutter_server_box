@@ -18,8 +18,8 @@ class SnippetStore extends SqliteStore {
       if (s != null) {
         if (s.name != key) {
           remove(key);
+          put(s);
         }
-        put(s);
         ss.add(s);
       }
     }
