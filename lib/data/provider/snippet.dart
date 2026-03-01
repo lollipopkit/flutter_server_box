@@ -86,9 +86,17 @@ class SnippetNotifier extends _$SnippetNotifier {
         .toList();
     final newTags = _computeTags(newSnippets);
     state = state.copyWith(snippets: newSnippets, tags: newTags);
-    unawaited(Stores.snippet.delete(old));
-    unawaited(Stores.snippet.put(newOne));
+    if (old.name == newOne.name) {
+      unawaited(Stores.snippet.put(newOne));
+    } else {
+      unawaited(_renameAndUpdate(old, newOne));
+    }
     bakSync.sync(milliDelay: 1000);
+  }
+
+  Future<void> _renameAndUpdate(Snippet old, Snippet newOne) async {
+    await Stores.snippet.delete(old);
+    await Stores.snippet.put(newOne);
   }
 
   void renameTag(String old, String newOne) {

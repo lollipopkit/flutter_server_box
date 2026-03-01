@@ -116,7 +116,7 @@ extension _Actions on _ServerEditPageState {
     int imported = 0;
     for (final server in servers) {
       try {
-        store.put(server);
+        await store.put(server);
         imported++;
       } catch (e) {
         dprint('Failed to import server ${server.name}: $e');
