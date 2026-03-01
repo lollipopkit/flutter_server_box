@@ -1,3 +1,4 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -16,10 +17,21 @@ Future<void> restoreContainerFromMap(
 
     if (key.startsWith(_containerProviderConfigKey)) {
       final id = key.substring(_containerProviderConfigKey.length);
+      if (id.isEmpty) {
+        Loggers.app.warning(
+          'Skip restoring container provider config with empty id (key=`$key`)',
+        );
+        continue;
+      }
       final raw = value.toString();
       final type = _resolveContainerType(raw);
       if (type != null) {
         await Stores.container.setType(type, id);
+      } else {
+        Loggers.app.warning(
+          'Skip restoring unknown container provider type '
+          '(key=`$key`, id=`$id`, raw=`$raw`)',
+        );
       }
       continue;
     }

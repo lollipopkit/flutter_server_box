@@ -11,11 +11,13 @@ class ConnectionStatsStore {
   static const _retention = Duration(days: 30);
   static const _cleanupInsertThreshold = 50;
   static const _cleanupMinInterval = Duration(minutes: 5);
+  static const _connectionStatsTable = 'connection_stats_records';
+  static const _recentHistoryLimit = 20;
 
   adb.AppDb get _db => adb.AppDb.instance;
   int _pendingSinceCleanup = 0;
   DateTime? _lastCleanupAt;
-  bool _cleanupRunning = false;
+  Future<void>? _cleanupFuture;
 
   Future<void> recordConnection(ConnectionStat stat) async {
     await _db
@@ -38,16 +40,29 @@ class ConnectionStatsStore {
     final shouldCleanupByInterval =
         _lastCleanupAt == null ||
         now.difference(_lastCleanupAt!) >= _cleanupMinInterval;
-    if ((shouldCleanupByCount || shouldCleanupByInterval) && !_cleanupRunning) {
-      _cleanupRunning = true;
+    if (shouldCleanupByCount || shouldCleanupByInterval) {
+      final inFlight = _cleanupFuture;
+      if (inFlight != null) {
+        await inFlight;
+        return;
+      }
+
+      final cleanupFuture = () async {
+        try {
+          await _cleanOldRecords();
+          _pendingSinceCleanup = 0;
+          _lastCleanupAt = now;
+        } catch (e, s) {
+          Loggers.app.warning('Cleanup old connection stats failed', e, s);
+        }
+      }();
+      _cleanupFuture = cleanupFuture;
       try {
-        await _cleanOldRecords();
-        _pendingSinceCleanup = 0;
-        _lastCleanupAt = now;
-      } catch (e, s) {
-        Loggers.app.warning('Cleanup old connection stats failed', e, s);
+        await cleanupFuture;
       } finally {
-        _cleanupRunning = false;
+        if (identical(_cleanupFuture, cleanupFuture)) {
+          _cleanupFuture = null;
+        }
       }
     }
   }
@@ -72,7 +87,7 @@ SELECT
   SUM(CASE WHEN result = ? THEN 1 ELSE 0 END) AS success_count,
   MAX(CASE WHEN result = ? THEN timestamp_ms ELSE NULL END) AS last_success_ts,
   MAX(CASE WHEN result <> ? THEN timestamp_ms ELSE NULL END) AS last_failure_ts
-FROM connection_stats_records
+FROM $_connectionStatsTable
 WHERE server_id = ?
       ''',
           variables: [
@@ -148,7 +163,7 @@ SELECT
   MAX(CASE WHEN result = ? THEN timestamp_ms ELSE NULL END) AS last_success_ts,
   MAX(CASE WHEN result <> ? THEN timestamp_ms ELSE NULL END) AS last_failure_ts,
   MAX(timestamp_ms) AS latest_ts
-FROM connection_stats_records
+FROM $_connectionStatsTable
 GROUP BY server_id
 ORDER BY latest_ts DESC
       ''',
@@ -169,20 +184,50 @@ ORDER BY latest_ts DESC
     }
     if (serverIds.isEmpty) return const <ServerConnectionStats>[];
 
-    final historyRows =
-        await (_db.select(_db.connectionStatsRecords)
-              ..where((tbl) => tbl.serverId.isIn(serverIds))
-              ..orderBy([(tbl) => d.OrderingTerm.desc(tbl.timestampMs)]))
-            .get();
+    final placeholders = List<String>.filled(serverIds.length, '?').join(', ');
+    final historyRows = await _db
+        .customSelect(
+          '''
+SELECT
+  server_id,
+  server_name,
+  timestamp_ms,
+  result,
+  error_message,
+  duration_ms
+FROM (
+  SELECT
+    server_id,
+    server_name,
+    timestamp_ms,
+    result,
+    error_message,
+    duration_ms,
+    ROW_NUMBER() OVER (
+      PARTITION BY server_id
+      ORDER BY timestamp_ms DESC
+    ) AS rn
+  FROM $_connectionStatsTable
+  WHERE server_id IN ($placeholders)
+)
+WHERE rn <= ?
+ORDER BY server_id, timestamp_ms DESC
+      ''',
+          variables: [
+            for (final serverId in serverIds) d.Variable.withString(serverId),
+            d.Variable.withInt(_recentHistoryLimit),
+          ],
+        )
+        .get();
     final recentConnectionsByServer = <String, List<ConnectionStat>>{};
     for (final row in historyRows) {
+      final serverId = row.data['server_id'] as String?;
+      if (serverId == null || serverId.isEmpty) continue;
       final list = recentConnectionsByServer.putIfAbsent(
-        row.serverId,
+        serverId,
         () => <ConnectionStat>[],
       );
-      if (list.length < 20) {
-        list.add(_fromRow(row));
-      }
+      list.add(_fromDataMap(row.data));
     }
 
     final allStats = <ServerConnectionStats>[];
@@ -257,6 +302,26 @@ ORDER BY latest_ts DESC
       result: result,
       errorMessage: row.errorMessage,
       durationMs: row.durationMs,
+    );
+  }
+
+  ConnectionStat _fromDataMap(Map<String, Object?> data) {
+    final serverId = data['server_id'] as String? ?? '';
+    final resultRaw = data['result'] as String? ?? '';
+    final result = ConnectionResult.values.firstWhere(
+      (e) => e.name == resultRaw,
+      orElse: () => ConnectionResult.unknownError,
+    );
+    final timestampMs = (data['timestamp_ms'] as num?)?.toInt() ?? 0;
+    final durationMs = (data['duration_ms'] as num?)?.toInt() ?? 0;
+
+    return ConnectionStat(
+      serverId: serverId,
+      serverName: (data['server_name'] as String?) ?? serverId,
+      timestamp: DateTime.fromMillisecondsSinceEpoch(timestampMs),
+      result: result,
+      errorMessage: (data['error_message'] as String?) ?? '',
+      durationMs: durationMs,
     );
   }
 }

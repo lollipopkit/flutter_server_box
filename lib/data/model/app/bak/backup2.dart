@@ -58,16 +58,16 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       return;
     }
 
-    final serverChanged = await _restoreServers(spis);
-    final snippetChanged = await _restoreSnippets(snippets);
-    final keyChanged = await _restoreKeys(keys);
+    await _restoreServers(spis);
+    await _restoreSnippets(snippets);
+    await _restoreKeys(keys);
     await _restoreContainer(container);
     await _restoreHistory(history);
     await _restoreSettings(settings);
 
-    if (serverChanged) GlobalRef.gRef?.read(serversProvider.notifier).reload();
-    if (snippetChanged) GlobalRef.gRef?.read(snippetProvider.notifier).reload();
-    if (keyChanged) GlobalRef.gRef?.read(privateKeyProvider.notifier).reload();
+    GlobalRef.gRef?.read(serversProvider.notifier).reload();
+    GlobalRef.gRef?.read(snippetProvider.notifier).reload();
+    GlobalRef.gRef?.read(privateKeyProvider.notifier).reload();
 
     _loggerV2.info('Merge completed');
   }
@@ -135,14 +135,18 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
           return decoded.map((key, value) => MapEntry(key.toString(), value));
         }
       } catch (e, s) {
-        _loggerV2.warning('Decode backup object map failed: $val', e, s);
+        _loggerV2.warning(
+          'Decode backup object map failed '
+          '(type=${val.runtimeType}, length=${val.length})',
+          e,
+          s,
+        );
       }
     }
     return null;
   }
 
-  static Future<bool> _restoreServers(Map<String, Object?> map) async {
-    var restored = false;
+  static Future<void> _restoreServers(Map<String, Object?> map) async {
     await Stores.server.clear();
     for (final entry in map.entries) {
       if (_isInternalKey(entry.key)) continue;
@@ -154,16 +158,13 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       try {
         final spi = Spi.fromJson(jsonMap);
         await Stores.server.put(spi);
-        restored = true;
       } catch (e, s) {
         _loggerV2.warning('Restore server `${entry.key}` failed', e, s);
       }
     }
-    return restored;
   }
 
-  static Future<bool> _restoreSnippets(Map<String, Object?> map) async {
-    var restored = false;
+  static Future<void> _restoreSnippets(Map<String, Object?> map) async {
     await Stores.snippet.clear();
     for (final entry in map.entries) {
       if (_isInternalKey(entry.key)) continue;
@@ -175,16 +176,13 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       try {
         final snippet = Snippet.fromJson(jsonMap);
         await Stores.snippet.put(snippet);
-        restored = true;
       } catch (e, s) {
         _loggerV2.warning('Restore snippet `${entry.key}` failed', e, s);
       }
     }
-    return restored;
   }
 
-  static Future<bool> _restoreKeys(Map<String, Object?> map) async {
-    var restored = false;
+  static Future<void> _restoreKeys(Map<String, Object?> map) async {
     await Stores.key.clear();
     for (final entry in map.entries) {
       if (_isInternalKey(entry.key)) continue;
@@ -197,12 +195,10 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       try {
         final info = PrivateKeyInfo.fromJson(jsonMap);
         await Stores.key.put(info);
-        restored = true;
       } catch (e, s) {
         _loggerV2.warning('Restore private key `${entry.key}` failed', e, s);
       }
     }
-    return restored;
   }
 
   static Future<void> _restoreContainer(Map<String, Object?> map) async {

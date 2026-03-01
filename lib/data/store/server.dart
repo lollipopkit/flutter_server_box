@@ -113,21 +113,28 @@ class ServerStore {
         }
       }
 
-      for (final snippet in snippets) {
-        final autoRunsOn = snippet.autoRunOn;
-        final idx = autoRunsOn?.indexOf(oldId);
-        if (idx != null && idx != -1) {
-          final newAutoRunsOn = List<String>.from(autoRunsOn ?? []);
-          newAutoRunsOn[idx] = newId;
-          final newSnippet = snippet.copyWith(autoRunOn: newAutoRunsOn);
-          await SnippetStore.instance.update(snippet, newSnippet);
-        }
-      }
-
       final dockerHost = await container.fetch(oldId);
       if (dockerHost != null) {
         await container.remove(oldId);
         await container.set(newId, dockerHost);
+      }
+    }
+
+    for (final snippet in snippets) {
+      final autoRunsOn = snippet.autoRunOn;
+      if (autoRunsOn == null || autoRunsOn.isEmpty) continue;
+      final newAutoRunsOn = List<String>.from(autoRunsOn);
+      var changed = false;
+      for (var i = 0; i < newAutoRunsOn.length; i++) {
+        final mappedId = idMap[newAutoRunsOn[i]];
+        if (mappedId == null) continue;
+        if (mappedId == newAutoRunsOn[i]) continue;
+        newAutoRunsOn[i] = mappedId;
+        changed = true;
+      }
+      if (changed) {
+        final newSnippet = snippet.copyWith(autoRunOn: newAutoRunsOn);
+        await SnippetStore.instance.update(snippet, newSnippet);
       }
     }
 
