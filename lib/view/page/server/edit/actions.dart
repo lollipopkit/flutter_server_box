@@ -171,9 +171,11 @@ extension _Actions on _ServerEditPageState {
 
   Future<void> _processSSHServers(List<Spi> servers) async {
     final deduplicated = await ServerDeduplication.deduplicateServers(servers);
+    if (!mounted) return;
     final resolved = await ServerDeduplication.resolveNameConflicts(
       deduplicated,
     );
+    if (!mounted) return;
     final summary = ServerDeduplication.getImportSummary(servers, resolved);
 
     if (!summary.hasItemsToImport) {
@@ -204,6 +206,7 @@ extension _Actions on _ServerEditPageState {
       ),
       actions: Btnx.cancelOk,
     );
+    if (!mounted) return;
 
     if (shouldImport == true) {
       for (final server in resolved) {
@@ -270,6 +273,7 @@ extension _Actions on _ServerEditPageState {
         child: Text(libL10n.askContinue(l10n.useNoPwd)),
         actions: Btnx.cancelRedOk,
       );
+      if (!mounted) return;
       if (ok != true) return;
     }
 
@@ -346,6 +350,7 @@ extension _Actions on _ServerEditPageState {
 
     if (this.spi == null) {
       final existsIds = await ServerStore.instance.keys();
+      if (!mounted) return;
       if (existsIds.contains(spi.id)) {
         context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
         return;
@@ -386,12 +391,14 @@ extension _Utils on _ServerEditPageState {
         ),
         actions: Btnx.cancelOk,
       );
+      if (!mounted) return;
 
       prop.put(false);
 
       if (hasPermission == true) {
         // Parse and import SSH config
         final servers = await SSHConfig.parseConfig();
+        if (!mounted) return;
         if (servers.isEmpty) {
           context.showSnackBar(l10n.sshConfigNoServers);
           return;
@@ -400,9 +407,11 @@ extension _Utils on _ServerEditPageState {
         final deduplicated = await ServerDeduplication.deduplicateServers(
           servers,
         );
+        if (!mounted) return;
         final resolved = await ServerDeduplication.resolveNameConflicts(
           deduplicated,
         );
+        if (!mounted) return;
         final summary = ServerDeduplication.getImportSummary(servers, resolved);
 
         if (!summary.hasItemsToImport) {

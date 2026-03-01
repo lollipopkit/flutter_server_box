@@ -377,8 +377,16 @@ abstract final class HiveToSqliteMigrator {
 
   static Future<void> _writeServer(String key, Object value) async {
     final map = _toJsonMap(value);
-    if (map == null) return;
+    if (map == null) {
+      Loggers.app.info(
+        'Skip server entry `$key` during migration: _toJsonMap returned null',
+      );
+      return;
+    }
     if ((map['id'] as String?)?.isEmpty ?? true) {
+      Loggers.app.info(
+        'Server entry `$key` has empty id, fallback to hive key',
+      );
       map['id'] = key;
     }
     final spi = Spi.fromJson(map);
@@ -387,19 +395,40 @@ abstract final class HiveToSqliteMigrator {
 
   static Future<void> _writePrivateKey(String key, Object value) async {
     final map = _toJsonMap(value);
-    if (map == null) return;
+    if (map == null) {
+      Loggers.app.info(
+        'Skip private key entry `$key` during migration: _toJsonMap returned null',
+      );
+      return;
+    }
     if ((map['id'] as String?)?.isEmpty ?? true) {
+      Loggers.app.info(
+        'Private key entry `$key` has empty id, fallback to hive key',
+      );
       map['id'] = key;
     }
-    if ((map['private_key'] as String?)?.isEmpty ?? true) return;
+    if ((map['private_key'] as String?)?.isEmpty ?? true) {
+      Loggers.app.warning(
+        'Skip private key entry `$key` during migration: private_key missing',
+      );
+      return;
+    }
     final info = PrivateKeyInfo.fromJson(map);
     await Stores.key.put(info);
   }
 
   static Future<void> _writeSnippet(String key, Object value) async {
     final map = _toJsonMap(value);
-    if (map == null) return;
+    if (map == null) {
+      Loggers.app.info(
+        'Skip snippet entry `$key` during migration: _toJsonMap returned null',
+      );
+      return;
+    }
     if ((map['name'] as String?)?.isEmpty ?? true) {
+      Loggers.app.info(
+        'Snippet entry `$key` has empty name, fallback to hive key',
+      );
       map['name'] = key;
     }
     final snippet = Snippet.fromJson(map);

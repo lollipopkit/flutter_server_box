@@ -9,8 +9,13 @@ class ConnectionStatsStore {
   static final instance = ConnectionStatsStore._();
 
   static const _retention = Duration(days: 30);
+  static const _cleanupInsertThreshold = 50;
+  static const _cleanupMinInterval = Duration(minutes: 5);
 
   adb.AppDb get _db => adb.AppDb.instance;
+  int _pendingSinceCleanup = 0;
+  DateTime? _lastCleanupAt;
+  bool _cleanupRunning = false;
 
   Future<void> recordConnection(ConnectionStat stat) async {
     await _db.into(_db.connectionStatsRecords).insert(
@@ -24,16 +29,28 @@ class ConnectionStatsStore {
             updatedAt: DateTimeX.timestamp,
           ),
         );
-    await _cleanOldRecords(stat.serverId);
+    _pendingSinceCleanup++;
+    final now = DateTime.now();
+    final shouldCleanupByCount = _pendingSinceCleanup >= _cleanupInsertThreshold;
+    final shouldCleanupByInterval =
+        _lastCleanupAt == null ||
+        now.difference(_lastCleanupAt!) >= _cleanupMinInterval;
+    if ((shouldCleanupByCount || shouldCleanupByInterval) && !_cleanupRunning) {
+      _cleanupRunning = true;
+      try {
+        await _cleanOldRecords();
+        _pendingSinceCleanup = 0;
+        _lastCleanupAt = now;
+      } finally {
+        _cleanupRunning = false;
+      }
+    }
   }
 
-  Future<void> _cleanOldRecords(String serverId) async {
+  Future<void> _cleanOldRecords() async {
     final cutoff = DateTime.now().subtract(_retention).millisecondsSinceEpoch;
     await (_db.delete(_db.connectionStatsRecords)
-          ..where(
-            (tbl) =>
-                tbl.serverId.equals(serverId) & tbl.timestampMs.isSmallerThanValue(cutoff),
-          ))
+          ..where((tbl) => tbl.timestampMs.isSmallerThanValue(cutoff)))
         .go();
   }
 
@@ -100,6 +117,29 @@ ORDER BY latest_ts DESC
     ).get();
     if (rows.isEmpty) return const <ServerConnectionStats>[];
 
+    final serverIds = <String>[];
+    for (final row in rows) {
+      final id = row.data['server_id'] as String?;
+      if (id == null || id.isEmpty) continue;
+      serverIds.add(id);
+    }
+    if (serverIds.isEmpty) return const <ServerConnectionStats>[];
+
+    final historyRows = await (_db.select(_db.connectionStatsRecords)
+          ..where((tbl) => tbl.serverId.isIn(serverIds))
+          ..orderBy([(tbl) => d.OrderingTerm.desc(tbl.timestampMs)]))
+        .get();
+    final recentConnectionsByServer = <String, List<ConnectionStat>>{};
+    for (final row in historyRows) {
+      final list = recentConnectionsByServer.putIfAbsent(
+        row.serverId,
+        () => <ConnectionStat>[],
+      );
+      if (list.length < 20) {
+        list.add(_fromRow(row));
+      }
+    }
+
     final allStats = <ServerConnectionStats>[];
     for (final row in rows) {
       final data = row.data;
@@ -112,7 +152,8 @@ ORDER BY latest_ts DESC
       final successRate = totalAttempts > 0 ? (successCount / totalAttempts) : 0.0;
       final lastSuccessTs = (data['last_success_ts'] as num?)?.toInt();
       final lastFailureTs = (data['last_failure_ts'] as num?)?.toInt();
-      final recentConnections = await getConnectionHistory(serverId, limit: 20);
+      final recentConnections =
+          recentConnectionsByServer[serverId] ?? const <ConnectionStat>[];
 
       allStats.add(
         ServerConnectionStats(

@@ -57,8 +57,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
 
   @override
   void dispose() {
-    super.dispose();
     _tabCtrl.dispose();
+    super.dispose();
   }
 
   @override

@@ -22,7 +22,8 @@ class ConnectionStatsPage extends StatefulWidget {
 
 class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
   List<ServerConnectionStats> _serverStats = [];
-  bool _isLoading = true;
+  bool _isLoading = false;
+  bool _hasLoaded = false;
   bool _isCompacting = false;
 
   @override
@@ -33,18 +34,17 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
 
   Future<void> _loadStats() async {
     if (!mounted) return;
-    if (_isLoading && _serverStats.isNotEmpty) return;
-    if (!_isLoading) {
-      setState(() {
-        _isLoading = true;
-      });
-    }
+    if (_isLoading) return;
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       final stats = await Stores.connectionStats.getAllServerStats();
       if (!mounted) return;
       setState(() {
         _serverStats = stats;
+        _hasLoaded = true;
       });
     } catch (e, s) {
       Loggers.app.warning('Load connection stats failed', e, s);
@@ -52,6 +52,7 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _hasLoaded = true;
         });
       }
     }
@@ -92,7 +93,7 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
   }
 
   Widget get _buildBody {
-    if (_isLoading) {
+    if (_isLoading || !_hasLoaded) {
       return const Center(child: SizedLoading.large);
     }
     if (_serverStats.isEmpty) {
@@ -412,7 +413,14 @@ extension _Actions on _ConnectionStatsPageState {
         CountDownBtn(
           onTap: () async {
             context.pop();
-            await Stores.connectionStats.clearAll();
+            try {
+              await Stores.connectionStats.clearAll();
+            } catch (e, s) {
+              Loggers.app.warning('Clear all connection stats failed', e, s);
+              if (!mounted) return;
+              context.showSnackBar('${libL10n.error}: $e');
+              return;
+            }
             if (!mounted) return;
             await _loadStats();
           },
@@ -432,7 +440,18 @@ extension _Actions on _ConnectionStatsPageState {
         CountDownBtn(
           onTap: () async {
             context.pop();
-            await Stores.connectionStats.clearServerStats(stats.serverId);
+            try {
+              await Stores.connectionStats.clearServerStats(stats.serverId);
+            } catch (e, s) {
+              Loggers.app.warning(
+                'Clear server connection stats failed(${stats.serverId})',
+                e,
+                s,
+              );
+              if (!mounted) return;
+              context.showSnackBar('${libL10n.error}: $e');
+              return;
+            }
             if (!mounted) return;
             await _loadStats();
           },

@@ -95,8 +95,9 @@ class SnippetNotifier extends _$SnippetNotifier {
     bakSync.sync(milliDelay: 1000);
   }
 
-  void renameTag(String old, String newOne) {
+  Future<void> renameTag(String old, String newOne) async {
     final updatedSnippets = <Snippet>[];
+    final writeFutures = <Future<void>>[];
     for (final s in state.snippets) {
       if (s.tags?.contains(old) ?? false) {
         final newTags = Set<String>.from(s.tags!);
@@ -104,13 +105,20 @@ class SnippetNotifier extends _$SnippetNotifier {
         newTags.add(newOne);
         final updatedSnippet = s.copyWith(tags: newTags.toList());
         updatedSnippets.add(updatedSnippet);
-        unawaited(Stores.snippet.put(updatedSnippet));
+        writeFutures.add(Stores.snippet.put(updatedSnippet));
       } else {
         updatedSnippets.add(s);
       }
     }
     final newTags = _computeTags(updatedSnippets);
     state = state.copyWith(snippets: updatedSnippets, tags: newTags);
+    try {
+      await Future.wait(writeFutures);
+    } catch (e, s) {
+      Loggers.app.warning('Rename snippet tag persist failed', e, s);
+      await reload();
+      return;
+    }
     bakSync.sync(milliDelay: 1000);
   }
 }
