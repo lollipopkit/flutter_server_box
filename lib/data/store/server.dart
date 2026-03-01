@@ -41,10 +41,18 @@ class ServerStore {
       throw Exception('Old spi: $old not found');
     }
 
-    if (old.id != newInfo.id) {
-      await delete(old.id);
+    if (old.id == newInfo.id) {
+      await put(newInfo);
+      return;
     }
+
+    final existing = await fetchOne(newInfo.id);
+    if (existing != null) {
+      throw Exception('Target spi id `${newInfo.id}` already exists');
+    }
+
     await put(newInfo);
+    await delete(old.id);
   }
 
   Future<bool> have(Spi s) async => await fetchOne(s.id) != null;
@@ -121,8 +129,8 @@ class ServerStore {
 
       final dockerHost = containerHostsToMigrate[oldId];
       if (dockerHost != null) {
-        await container.remove(oldId);
         await container.set(newId, dockerHost);
+        await container.remove(oldId);
       }
     }
 
@@ -441,7 +449,12 @@ class ServerStore {
         (key, value) => MapEntry(key.toString(), value.toString()),
       );
     } catch (e, st) {
-      dprint('Failed to decode server custom map: $raw', e, st);
+      dprint(
+        'Failed to decode server custom map '
+        '(type=${raw.runtimeType}, length=${raw.length})',
+        e,
+        st,
+      );
       return null;
     }
   }

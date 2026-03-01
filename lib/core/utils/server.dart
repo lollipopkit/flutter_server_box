@@ -392,7 +392,6 @@ Future<void> ensureKnownHostKey(
     onKeyboardInteractive: onKeyboardInteractive,
     knownHostFingerprints: cache,
     jumpSpisById: jumpSpisById,
-    visitedServerIds: chainVisitedServerIds,
   );
 
   try {
