@@ -128,7 +128,11 @@ class SnippetNotifier extends _$SnippetNotifier {
       await Stores.snippet.delete(snippet);
       _scheduleBackupSync();
     } catch (e, s) {
-      Loggers.app.warning('Delete snippet persist failed(${snippet.name})', e, s);
+      Loggers.app.warning(
+        'Delete snippet persist failed(${snippet.name})',
+        e,
+        s,
+      );
       if (state == optimistic) {
         state = prev;
       }
@@ -143,12 +147,14 @@ class SnippetNotifier extends _$SnippetNotifier {
     final newTags = _computeTags(newSnippets);
     final optimistic = prev.copyWith(snippets: newSnippets, tags: newTags);
     state = optimistic;
+    var wroteNewForRename = false;
     try {
       if (old.name == newOne.name) {
         await Stores.snippet.put(newOne);
       } else {
-        await Stores.snippet.delete(old);
         await Stores.snippet.put(newOne);
+        wroteNewForRename = true;
+        await Stores.snippet.delete(old);
       }
       _scheduleBackupSync();
     } catch (e, s) {
@@ -157,6 +163,17 @@ class SnippetNotifier extends _$SnippetNotifier {
         e,
         s,
       );
+      if (old.name != newOne.name && wroteNewForRename) {
+        try {
+          await Stores.snippet.delete(newOne);
+        } catch (rollbackErr, rollbackSt) {
+          Loggers.app.warning(
+            'Rollback snippet rename failed(${newOne.name})',
+            rollbackErr,
+            rollbackSt,
+          );
+        }
+      }
       if (state == optimistic) {
         state = prev;
       }

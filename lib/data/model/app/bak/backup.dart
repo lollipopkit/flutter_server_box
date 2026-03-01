@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:logging/logging.dart';
-import 'package:server_box/data/model/container/type.dart';
+import 'package:server_box/data/model/app/bak/container_restore.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -137,35 +137,14 @@ class Backup implements Mergeable {
   }
 
   static Future<void> _restoreContainer(Map<String, Object?> container) async {
-    await Stores.container.clear();
-    for (final entry in container.entries) {
-      final key = entry.key;
-      final value = entry.value;
-      if (value == null) continue;
-
-      if (key.startsWith('providerConfig')) {
-        final id = key.substring('providerConfig'.length);
-        final raw = value.toString();
-        ContainerType? type;
-        try {
-          type = ContainerType.values.byName(raw);
-        } catch (_) {
-          type = null;
-        }
-        type ??= ContainerType.values.firstWhereOrNull(
-          (e) => e.toString() == raw,
-        );
-        if (type != null) {
-          await Stores.container.setType(type, id);
-        }
-        continue;
-      }
-
-      await Stores.container.put(key, value.toString());
-    }
+    await restoreContainerFromMap(container);
   }
 }
 
+/// Legacy v1 backup obfuscation only.
+///
+/// This is **not** cryptographic encryption and remains only for backward
+/// compatibility with historical v1 backup files.
 String _diyEncrypt(String raw) =>
     json.encode(raw.codeUnits.map((e) => e * 2 + 1).toList(growable: false));
 

@@ -84,20 +84,32 @@ class ContainerNotifier extends _$ContainerNotifier {
   }
 
   Future<void> _requiresSudo() async {
-    /// Podman is rootless
-    if (state.type == ContainerType.podman) {
-      return sudoCompleter.complete(false);
-    }
-    if (!Stores.setting.containerTrySudo.fetch()) {
-      return sudoCompleter.complete(false);
+    void completeSudo(bool needSudo) {
+      if (!sudoCompleter.isCompleted) {
+        sudoCompleter.complete(needSudo);
+      }
     }
 
-    final probeCmd = await _wrap(ContainerCmdType.images.exec(state.type));
-    final res = await client?.run(probeCmd);
-    if (res?.string.toLowerCase().contains('permission denied') ?? false) {
-      return sudoCompleter.complete(true);
+    try {
+      /// Podman is rootless
+      if (state.type == ContainerType.podman) {
+        completeSudo(false);
+        return;
+      }
+      if (!Stores.setting.containerTrySudo.fetch()) {
+        completeSudo(false);
+        return;
+      }
+
+      final probeCmd = await _wrap(ContainerCmdType.images.exec(state.type));
+      final res = await client?.run(probeCmd);
+      final needSudo =
+          res?.string.toLowerCase().contains('permission denied') ?? false;
+      completeSudo(needSudo);
+    } catch (e, s) {
+      Loggers.app.warning('Detect container sudo requirement failed', e, s);
+      completeSudo(false);
     }
-    return sudoCompleter.complete(false);
   }
 
   Future<void> refresh({bool isAuto = false}) async {

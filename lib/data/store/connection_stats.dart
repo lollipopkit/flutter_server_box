@@ -18,7 +18,9 @@ class ConnectionStatsStore {
   bool _cleanupRunning = false;
 
   Future<void> recordConnection(ConnectionStat stat) async {
-    await _db.into(_db.connectionStatsRecords).insert(
+    await _db
+        .into(_db.connectionStatsRecords)
+        .insert(
           adb.ConnectionStatsRecordsCompanion.insert(
             serverId: stat.serverId,
             serverName: stat.serverName,
@@ -31,7 +33,8 @@ class ConnectionStatsStore {
         );
     _pendingSinceCleanup++;
     final now = DateTime.now();
-    final shouldCleanupByCount = _pendingSinceCleanup >= _cleanupInsertThreshold;
+    final shouldCleanupByCount =
+        _pendingSinceCleanup >= _cleanupInsertThreshold;
     final shouldCleanupByInterval =
         _lastCleanupAt == null ||
         now.difference(_lastCleanupAt!) >= _cleanupMinInterval;
@@ -51,17 +54,38 @@ class ConnectionStatsStore {
 
   Future<void> _cleanOldRecords() async {
     final cutoff = DateTime.now().subtract(_retention).millisecondsSinceEpoch;
-    await (_db.delete(_db.connectionStatsRecords)
-          ..where((tbl) => tbl.timestampMs.isSmallerThanValue(cutoff)))
-        .go();
+    await (_db.delete(
+      _db.connectionStatsRecords,
+    )..where((tbl) => tbl.timestampMs.isSmallerThanValue(cutoff))).go();
   }
 
   Future<ServerConnectionStats> getServerStats(
     String serverId,
     String serverName,
   ) async {
-    final sortedStats = await getConnectionHistory(serverId);
-    if (sortedStats.isEmpty) {
+    const successName = 'success';
+    final row = await _db
+        .customSelect(
+          '''
+SELECT
+  COUNT(*) AS total_attempts,
+  SUM(CASE WHEN result = ? THEN 1 ELSE 0 END) AS success_count,
+  MAX(CASE WHEN result = ? THEN timestamp_ms ELSE NULL END) AS last_success_ts,
+  MAX(CASE WHEN result <> ? THEN timestamp_ms ELSE NULL END) AS last_failure_ts
+FROM connection_stats_records
+WHERE server_id = ?
+      ''',
+          variables: [
+            d.Variable.withString(successName),
+            d.Variable.withString(successName),
+            d.Variable.withString(successName),
+            d.Variable.withString(serverId),
+          ],
+        )
+        .getSingleOrNull();
+    final data = row?.data ?? const <String, Object?>{};
+    final totalAttempts = (data['total_attempts'] as num?)?.toInt() ?? 0;
+    if (totalAttempts == 0) {
       return ServerConnectionStats(
         serverId: serverId,
         serverName: serverName,
@@ -72,11 +96,27 @@ class ConnectionStatsStore {
         successRate: 0,
       );
     }
+    final successCount = (data['success_count'] as num?)?.toInt() ?? 0;
+    final failureCount = totalAttempts - successCount;
+    final successRate = successCount / totalAttempts;
+    final lastSuccessTs = (data['last_success_ts'] as num?)?.toInt();
+    final lastFailureTs = (data['last_failure_ts'] as num?)?.toInt();
+    final recentConnections = await getConnectionHistory(serverId, limit: 20);
 
-    return _buildServerStats(
+    return ServerConnectionStats(
       serverId: serverId,
       serverName: serverName,
-      sortedStats: sortedStats,
+      totalAttempts: totalAttempts,
+      successCount: successCount,
+      failureCount: failureCount,
+      lastSuccessTime: lastSuccessTs == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(lastSuccessTs),
+      lastFailureTime: lastFailureTs == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(lastFailureTs),
+      recentConnections: recentConnections,
+      successRate: successRate,
     );
   }
 
@@ -97,8 +137,9 @@ class ConnectionStatsStore {
 
   Future<List<ServerConnectionStats>> getAllServerStats() async {
     const successName = 'success';
-    final rows = await _db.customSelect(
-      '''
+    final rows = await _db
+        .customSelect(
+          '''
 SELECT
   server_id,
   MAX(server_name) AS server_name,
@@ -111,12 +152,13 @@ FROM connection_stats_records
 GROUP BY server_id
 ORDER BY latest_ts DESC
       ''',
-      variables: [
-        d.Variable.withString(successName),
-        d.Variable.withString(successName),
-        d.Variable.withString(successName),
-      ],
-    ).get();
+          variables: [
+            d.Variable.withString(successName),
+            d.Variable.withString(successName),
+            d.Variable.withString(successName),
+          ],
+        )
+        .get();
     if (rows.isEmpty) return const <ServerConnectionStats>[];
 
     final serverIds = <String>[];
@@ -127,10 +169,11 @@ ORDER BY latest_ts DESC
     }
     if (serverIds.isEmpty) return const <ServerConnectionStats>[];
 
-    final historyRows = await (_db.select(_db.connectionStatsRecords)
-          ..where((tbl) => tbl.serverId.isIn(serverIds))
-          ..orderBy([(tbl) => d.OrderingTerm.desc(tbl.timestampMs)]))
-        .get();
+    final historyRows =
+        await (_db.select(_db.connectionStatsRecords)
+              ..where((tbl) => tbl.serverId.isIn(serverIds))
+              ..orderBy([(tbl) => d.OrderingTerm.desc(tbl.timestampMs)]))
+            .get();
     final recentConnectionsByServer = <String, List<ConnectionStat>>{};
     for (final row in historyRows) {
       final list = recentConnectionsByServer.putIfAbsent(
@@ -151,7 +194,9 @@ ORDER BY latest_ts DESC
       final totalAttempts = (data['total_attempts'] as num?)?.toInt() ?? 0;
       final successCount = (data['success_count'] as num?)?.toInt() ?? 0;
       final failureCount = totalAttempts - successCount;
-      final successRate = totalAttempts > 0 ? (successCount / totalAttempts) : 0.0;
+      final successRate = totalAttempts > 0
+          ? (successCount / totalAttempts)
+          : 0.0;
       final lastSuccessTs = (data['last_success_ts'] as num?)?.toInt();
       final lastFailureTs = (data['last_failure_ts'] as num?)?.toInt();
       final recentConnections =
@@ -183,9 +228,9 @@ ORDER BY latest_ts DESC
   }
 
   Future<void> clearServerStats(String serverId) async {
-    await (_db.delete(_db.connectionStatsRecords)
-          ..where((tbl) => tbl.serverId.equals(serverId)))
-        .go();
+    await (_db.delete(
+      _db.connectionStatsRecords,
+    )..where((tbl) => tbl.serverId.equals(serverId))).go();
   }
 
   Future<void> compact() async {
@@ -197,45 +242,6 @@ ORDER BY latest_ts DESC
       Loggers.app.warning('Failed compacting app database', e, st);
       rethrow;
     }
-  }
-
-  ServerConnectionStats _buildServerStats({
-    required String serverId,
-    required String serverName,
-    required List<ConnectionStat> sortedStats,
-  }) {
-    final totalAttempts = sortedStats.length;
-    final successCount = sortedStats.where((s) => s.result.isSuccess).length;
-    final failureCount = totalAttempts - successCount;
-    final successRate = totalAttempts > 0 ? (successCount / totalAttempts) : 0.0;
-
-    DateTime? lastSuccessTime;
-    DateTime? lastFailureTime;
-    for (final stat in sortedStats) {
-      if (lastSuccessTime == null && stat.result.isSuccess) {
-        lastSuccessTime = stat.timestamp;
-      }
-      if (lastFailureTime == null && !stat.result.isSuccess) {
-        lastFailureTime = stat.timestamp;
-      }
-      if (lastSuccessTime != null && lastFailureTime != null) {
-        break;
-      }
-    }
-
-    final recentConnections = sortedStats.take(20).toList(growable: false);
-
-    return ServerConnectionStats(
-      serverId: serverId,
-      serverName: serverName,
-      totalAttempts: totalAttempts,
-      successCount: successCount,
-      failureCount: failureCount,
-      lastSuccessTime: lastSuccessTime,
-      lastFailureTime: lastFailureTime,
-      recentConnections: recentConnections,
-      successRate: successRate,
-    );
   }
 
   ConnectionStat _fromRow(adb.ConnectionStatsRecord row) {

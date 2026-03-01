@@ -1,3 +1,4 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:get_it/get_it.dart';
 import 'package:server_box/data/db/app_db.dart';
 import 'package:server_box/data/store/connection_stats.dart';
@@ -65,18 +66,20 @@ abstract final class Stores {
       }
     }
 
-    Future<void> mergeTable(String tableName) async {
-      final row = await AppDb.instance
-          .customSelect('SELECT MAX(updated_at) AS max_ts FROM $tableName')
-          .getSingleOrNull();
-      final rawTs = row?.data['max_ts'];
-      final ts = switch (rawTs) {
-        final int v => v,
-        final num v => v.toInt(),
-        _ => 0,
-      };
-      if (ts > last) {
-        last = ts;
+    Future<int> mergeTable(String tableName) async {
+      try {
+        final row = await AppDb.instance
+            .customSelect('SELECT MAX(updated_at) AS max_ts FROM $tableName')
+            .getSingleOrNull();
+        final rawTs = row?.data['max_ts'];
+        return switch (rawTs) {
+          final int v => v,
+          final num v => v.toInt(),
+          _ => 0,
+        };
+      } catch (e, s) {
+        Loggers.app.warning('Read MAX(updated_at) failed for $tableName', e, s);
+        return 0;
       }
     }
 
@@ -84,8 +87,13 @@ abstract final class Stores {
     mergeMap(history.lastUpdateTs);
     mergeMap(container.lastUpdateTs);
 
-    for (final table in _timestampedTables) {
-      await mergeTable(table);
+    final tableTimestamps = await Future.wait(
+      _timestampedTables.map(mergeTable),
+    );
+    for (final ts in tableTimestamps) {
+      if (ts > last) {
+        last = ts;
+      }
     }
 
     return last;

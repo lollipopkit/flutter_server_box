@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
-import 'package:server_box/data/model/container/type.dart';
+import 'package:server_box/data/model/app/bak/container_restore.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -134,7 +134,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
         if (decoded is Map) {
           return decoded.map((key, value) => MapEntry(key.toString(), value));
         }
-      } catch (_) {}
+      } catch (e, s) {
+        _loggerV2.warning('Decode backup object map failed: $val', e, s);
+      }
     }
     return null;
   }
@@ -204,33 +206,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
   }
 
   static Future<void> _restoreContainer(Map<String, Object?> map) async {
-    await Stores.container.clear();
-    for (final entry in map.entries) {
-      if (_isInternalKey(entry.key)) continue;
-      final key = entry.key;
-      final value = entry.value;
-      if (value == null) continue;
-
-      if (key.startsWith('providerConfig')) {
-        final id = key.substring('providerConfig'.length);
-        final raw = value.toString();
-        ContainerType? type;
-        try {
-          type = ContainerType.values.byName(raw);
-        } catch (_) {
-          type = null;
-        }
-        type ??= ContainerType.values.firstWhereOrNull(
-          (e) => e.toString() == raw,
-        );
-        if (type != null) {
-          await Stores.container.setType(type, id);
-        }
-        continue;
-      }
-
-      await Stores.container.put(key, value.toString());
-    }
+    await restoreContainerFromMap(map, shouldSkipKey: _isInternalKey);
   }
 
   static Future<void> _restoreHistory(Map<String, Object?> map) async {
