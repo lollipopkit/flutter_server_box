@@ -123,6 +123,11 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
         key.startsWith(StoreDefaults.prefixKeyOld);
   }
 
+  static String? _toNullableString(Object? value) {
+    if (value == null) return null;
+    return value.toString();
+  }
+
   static Map<String, dynamic>? _toJsonMap(Object? val) {
     if (val == null) return null;
     if (val is Map) {
@@ -152,8 +157,11 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       if (_isInternalKey(entry.key)) continue;
       final jsonMap = _toJsonMap(entry.value);
       if (jsonMap == null) continue;
-      if ((jsonMap['id'] as String?)?.isEmpty ?? true) {
+      final id = _toNullableString(jsonMap['id']);
+      if (id == null || id.isEmpty) {
         jsonMap['id'] = entry.key;
+      } else {
+        jsonMap['id'] = id;
       }
       try {
         final spi = Spi.fromJson(jsonMap);
@@ -170,8 +178,11 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       if (_isInternalKey(entry.key)) continue;
       final jsonMap = _toJsonMap(entry.value);
       if (jsonMap == null) continue;
-      if ((jsonMap['name'] as String?)?.isEmpty ?? true) {
+      final name = _toNullableString(jsonMap['name']);
+      if (name == null || name.isEmpty) {
         jsonMap['name'] = entry.key;
+      } else {
+        jsonMap['name'] = name;
       }
       try {
         final snippet = Snippet.fromJson(jsonMap);
@@ -188,10 +199,15 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       if (_isInternalKey(entry.key)) continue;
       final jsonMap = _toJsonMap(entry.value);
       if (jsonMap == null) continue;
-      if ((jsonMap['id'] as String?)?.isEmpty ?? true) {
+      final id = _toNullableString(jsonMap['id']);
+      if (id == null || id.isEmpty) {
         jsonMap['id'] = entry.key;
+      } else {
+        jsonMap['id'] = id;
       }
-      if ((jsonMap['private_key'] as String?)?.isEmpty ?? true) continue;
+      final privateKey = _toNullableString(jsonMap['private_key']);
+      if (privateKey == null || privateKey.isEmpty) continue;
+      jsonMap['private_key'] = privateKey;
       try {
         final info = PrivateKeyInfo.fromJson(jsonMap);
         await Stores.key.put(info);

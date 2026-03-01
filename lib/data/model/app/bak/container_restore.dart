@@ -9,6 +9,7 @@ Future<void> restoreContainerFromMap(
   bool Function(String key)? shouldSkipKey,
 }) async {
   await Stores.container.clear();
+  final serverIds = await Stores.server.keys();
   for (final entry in container.entries) {
     final key = entry.key;
     if (shouldSkipKey?.call(key) ?? false) continue;
@@ -36,7 +37,22 @@ Future<void> restoreContainerFromMap(
       continue;
     }
 
-    await Stores.container.put(key, value.toString());
+    if (!serverIds.contains(key)) {
+      Loggers.app.warning(
+        'Skip restoring container host for missing server id (id=`$key`)',
+      );
+      continue;
+    }
+
+    try {
+      await Stores.container.put(key, value.toString());
+    } catch (e, s) {
+      Loggers.app.warning(
+        'Restore container host failed for server id `$key`',
+        e,
+        s,
+      );
+    }
   }
 }
 

@@ -116,7 +116,10 @@ WHERE server_id = ?
     final successRate = successCount / totalAttempts;
     final lastSuccessTs = (data['last_success_ts'] as num?)?.toInt();
     final lastFailureTs = (data['last_failure_ts'] as num?)?.toInt();
-    final recentConnections = await getConnectionHistory(serverId, limit: 20);
+    final recentConnections = await getConnectionHistory(
+      serverId,
+      limit: _recentHistoryLimit,
+    );
 
     return ServerConnectionStats(
       serverId: serverId,
@@ -142,7 +145,7 @@ WHERE server_id = ?
     final query = _db.select(_db.connectionStatsRecords)
       ..where((tbl) => tbl.serverId.equals(serverId))
       ..orderBy([(tbl) => d.OrderingTerm.desc(tbl.timestampMs)]);
-    if (limit != null) {
+    if (limit != null && limit > 0) {
       query.limit(limit);
     }
 
@@ -156,15 +159,21 @@ WHERE server_id = ?
         .customSelect(
           '''
 SELECT
-  server_id,
-  MAX(server_name) AS server_name,
+  t.server_id,
+  (
+    SELECT t2.server_name
+    FROM $_connectionStatsTable t2
+    WHERE t2.server_id = t.server_id
+    ORDER BY t2.timestamp_ms DESC, t2.id DESC
+    LIMIT 1
+  ) AS server_name,
   COUNT(*) AS total_attempts,
-  SUM(CASE WHEN result = ? THEN 1 ELSE 0 END) AS success_count,
-  MAX(CASE WHEN result = ? THEN timestamp_ms ELSE NULL END) AS last_success_ts,
-  MAX(CASE WHEN result <> ? THEN timestamp_ms ELSE NULL END) AS last_failure_ts,
-  MAX(timestamp_ms) AS latest_ts
-FROM $_connectionStatsTable
-GROUP BY server_id
+  SUM(CASE WHEN t.result = ? THEN 1 ELSE 0 END) AS success_count,
+  MAX(CASE WHEN t.result = ? THEN t.timestamp_ms ELSE NULL END) AS last_success_ts,
+  MAX(CASE WHEN t.result <> ? THEN t.timestamp_ms ELSE NULL END) AS last_failure_ts,
+  MAX(t.timestamp_ms) AS latest_ts
+FROM $_connectionStatsTable t
+GROUP BY t.server_id
 ORDER BY latest_ts DESC
       ''',
           variables: [

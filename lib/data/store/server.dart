@@ -144,77 +144,79 @@ class ServerStore {
   }
 
   Future<Spi?> _readSpi(String id) async {
-    final server = await (_db.select(
-      _db.servers,
-    )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
-    if (server == null) return null;
+    return _db.transaction(() async {
+      final server = await (_db.select(
+        _db.servers,
+      )..where((tbl) => tbl.id.equals(id))).getSingleOrNull();
+      if (server == null) return null;
 
-    final custom = await (_db.select(
-      _db.serverCustoms,
-    )..where((tbl) => tbl.serverId.equals(id))).getSingleOrNull();
+      final custom = await (_db.select(
+        _db.serverCustoms,
+      )..where((tbl) => tbl.serverId.equals(id))).getSingleOrNull();
 
-    final wol = await (_db.select(
-      _db.serverWolCfgs,
-    )..where((tbl) => tbl.serverId.equals(id))).getSingleOrNull();
+      final wol = await (_db.select(
+        _db.serverWolCfgs,
+      )..where((tbl) => tbl.serverId.equals(id))).getSingleOrNull();
 
-    final tags = await (_db.select(
-      _db.serverTags,
-    )..where((tbl) => tbl.serverId.equals(id))).get();
+      final tags = await (_db.select(
+        _db.serverTags,
+      )..where((tbl) => tbl.serverId.equals(id))).get();
 
-    final envs = await (_db.select(
-      _db.serverEnvs,
-    )..where((tbl) => tbl.serverId.equals(id))).get();
+      final envs = await (_db.select(
+        _db.serverEnvs,
+      )..where((tbl) => tbl.serverId.equals(id))).get();
 
-    final disabledCmds = await (_db.select(
-      _db.serverDisabledCmdTypes,
-    )..where((tbl) => tbl.serverId.equals(id))).get();
+      final disabledCmds = await (_db.select(
+        _db.serverDisabledCmdTypes,
+      )..where((tbl) => tbl.serverId.equals(id))).get();
 
-    final mapEnvs = envs.isEmpty
-        ? null
-        : <String, String>{for (final e in envs) e.envKey: e.envVal};
-
-    final cmdMap = _decodeStringMap(custom?.cmdsJson);
-
-    final serverCustom = custom == null
-        ? null
-        : ServerCustom(
-            pveAddr: custom.pveAddr,
-            pveIgnoreCert: custom.pveIgnoreCert,
-            cmds: cmdMap,
-            preferTempDev: custom.preferTempDev,
-            logoUrl: custom.logoUrl,
-            netDev: custom.netDev,
-            scriptDir: custom.scriptDir,
-          );
-
-    final wolCfg = wol == null
-        ? null
-        : WakeOnLanCfg(mac: wol.mac, ip: wol.ip, pwd: wol.pwd);
-
-    return Spi(
-      id: server.id,
-      name: server.name,
-      ip: server.ip,
-      port: server.port,
-      user: server.user,
-      pwd: server.pwd,
-      keyId: server.keyId,
-      tags: tags.map((e) => e.tag).toList(growable: false),
-      alterUrl: server.alterUrl,
-      autoConnect: server.autoConnect,
-      jumpId: server.jumpId,
-      custom: serverCustom,
-      wolCfg: wolCfg,
-      envs: mapEnvs,
-      customSystemType: server.customSystemType == null
+      final mapEnvs = envs.isEmpty
           ? null
-          : SystemType.values.firstWhereOrNull(
-              (e) => e.name == server.customSystemType,
-            ),
-      disabledCmdTypes: disabledCmds
-          .map((e) => e.cmdType)
-          .toList(growable: false),
-    );
+          : <String, String>{for (final e in envs) e.envKey: e.envVal};
+
+      final cmdMap = _decodeStringMap(custom?.cmdsJson);
+
+      final serverCustom = custom == null
+          ? null
+          : ServerCustom(
+              pveAddr: custom.pveAddr,
+              pveIgnoreCert: custom.pveIgnoreCert,
+              cmds: cmdMap,
+              preferTempDev: custom.preferTempDev,
+              logoUrl: custom.logoUrl,
+              netDev: custom.netDev,
+              scriptDir: custom.scriptDir,
+            );
+
+      final wolCfg = wol == null
+          ? null
+          : WakeOnLanCfg(mac: wol.mac, ip: wol.ip, pwd: wol.pwd);
+
+      return Spi(
+        id: server.id,
+        name: server.name,
+        ip: server.ip,
+        port: server.port,
+        user: server.user,
+        pwd: server.pwd,
+        keyId: server.keyId,
+        tags: tags.map((e) => e.tag).toList(growable: false),
+        alterUrl: server.alterUrl,
+        autoConnect: server.autoConnect,
+        jumpId: server.jumpId,
+        custom: serverCustom,
+        wolCfg: wolCfg,
+        envs: mapEnvs,
+        customSystemType: server.customSystemType == null
+            ? null
+            : SystemType.values.firstWhereOrNull(
+                (e) => e.name == server.customSystemType,
+              ),
+        disabledCmdTypes: disabledCmds
+            .map((e) => e.cmdType)
+            .toList(growable: false),
+      );
+    });
   }
 
   Future<List<Spi>> _composeSpis(List<adb.Server> servers) async {
@@ -432,7 +434,8 @@ class ServerStore {
       return decoded.map(
         (key, value) => MapEntry(key.toString(), value.toString()),
       );
-    } catch (_) {
+    } catch (e, st) {
+      dprint('Failed to decode server custom map: $raw', e, st);
       return null;
     }
   }
