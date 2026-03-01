@@ -39,6 +39,9 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
   }
 
   @override
+  /// keepAlive provider starts with an empty [PrivateKeyState] and asynchronously
+  /// hydrates via [reload()]. Consumers should listen for state updates after
+  /// initialization.
   PrivateKeyState build() {
     unawaited(reload());
     return const PrivateKeyState();

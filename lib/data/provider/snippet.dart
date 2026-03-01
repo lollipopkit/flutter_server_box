@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/sync.dart';
@@ -20,6 +21,21 @@ abstract class SnippetState with _$SnippetState {
 
 @Riverpod(keepAlive: true)
 class SnippetNotifier extends _$SnippetNotifier {
+  void _scheduleBackupSync() {
+    try {
+      final maybe = bakSync.sync(milliDelay: 1000);
+      if (maybe is Future<void>) {
+        unawaited(
+          maybe.catchError((Object e, StackTrace s) {
+            Loggers.app.warning('bakSync.sync(snippet) failed', e, s);
+          }),
+        );
+      }
+    } catch (e, s) {
+      Loggers.app.warning('bakSync.sync(snippet) failed', e, s);
+    }
+  }
+
   @override
   SnippetState build() {
     unawaited(reload());
@@ -27,14 +43,19 @@ class SnippetNotifier extends _$SnippetNotifier {
   }
 
   Future<void> reload() async {
-    final newState = await _load();
-    if (newState == state) return;
-    state = newState;
+    try {
+      final newState = await _load();
+      if (newState == state) return;
+      state = newState;
+    } catch (e, s) {
+      Loggers.app.warning('Reload snippets failed', e, s);
+    }
   }
 
   Future<SnippetState> _load() async {
     final snippets = await Stores.snippet.fetch();
-    final order = Stores.setting.snippetOrder.fetch();
+    final persistedOrder = Stores.setting.snippetOrder.fetch();
+    final order = List<String>.from(persistedOrder);
 
     final orderedSnippets = List<Snippet>.from(snippets);
     if (order.isNotEmpty) {
@@ -43,7 +64,7 @@ class SnippetNotifier extends _$SnippetNotifier {
         finder: (n, name) => n.name == name,
       );
       order.removeWhere((e) => surplus.any((ele) => ele == e));
-      if (order != Stores.setting.snippetOrder.fetch()) {
+      if (!listEquals(persistedOrder, order)) {
         await Stores.setting.snippetOrder.put(order);
       }
     }
@@ -65,34 +86,81 @@ class SnippetNotifier extends _$SnippetNotifier {
   }
 
   void add(Snippet snippet) {
-    final newSnippets = [...state.snippets, snippet];
+    final prev = state;
+    final newSnippets = [...prev.snippets, snippet];
     final newTags = _computeTags(newSnippets);
-    state = state.copyWith(snippets: newSnippets, tags: newTags);
-    unawaited(Stores.snippet.put(snippet));
-    bakSync.sync(milliDelay: 1000);
+    final optimistic = prev.copyWith(snippets: newSnippets, tags: newTags);
+    state = optimistic;
+    unawaited(_persistAdd(snippet, prev, optimistic));
+  }
+
+  Future<void> _persistAdd(
+    Snippet snippet,
+    SnippetState prev,
+    SnippetState optimistic,
+  ) async {
+    try {
+      await Stores.snippet.put(snippet);
+      _scheduleBackupSync();
+    } catch (e, s) {
+      Loggers.app.warning('Add snippet persist failed(${snippet.name})', e, s);
+      if (state == optimistic) {
+        state = prev;
+      }
+    }
   }
 
   void del(Snippet snippet) {
-    final newSnippets = state.snippets.where((s) => s != snippet).toList();
+    final prev = state;
+    final newSnippets = prev.snippets.where((s) => s != snippet).toList();
     final newTags = _computeTags(newSnippets);
-    state = state.copyWith(snippets: newSnippets, tags: newTags);
-    unawaited(Stores.snippet.delete(snippet));
-    bakSync.sync(milliDelay: 1000);
+    final optimistic = prev.copyWith(snippets: newSnippets, tags: newTags);
+    state = optimistic;
+    unawaited(_persistDelete(snippet, prev, optimistic));
+  }
+
+  Future<void> _persistDelete(
+    Snippet snippet,
+    SnippetState prev,
+    SnippetState optimistic,
+  ) async {
+    try {
+      await Stores.snippet.delete(snippet);
+      _scheduleBackupSync();
+    } catch (e, s) {
+      Loggers.app.warning('Delete snippet persist failed(${snippet.name})', e, s);
+      if (state == optimistic) {
+        state = prev;
+      }
+    }
   }
 
   Future<void> update(Snippet old, Snippet newOne) async {
-    final newSnippets = state.snippets
+    final prev = state;
+    final newSnippets = prev.snippets
         .map((s) => s == old ? newOne : s)
         .toList();
     final newTags = _computeTags(newSnippets);
-    state = state.copyWith(snippets: newSnippets, tags: newTags);
-    if (old.name == newOne.name) {
-      await Stores.snippet.put(newOne);
-    } else {
-      await Stores.snippet.delete(old);
-      await Stores.snippet.put(newOne);
+    final optimistic = prev.copyWith(snippets: newSnippets, tags: newTags);
+    state = optimistic;
+    try {
+      if (old.name == newOne.name) {
+        await Stores.snippet.put(newOne);
+      } else {
+        await Stores.snippet.delete(old);
+        await Stores.snippet.put(newOne);
+      }
+      _scheduleBackupSync();
+    } catch (e, s) {
+      Loggers.app.warning(
+        'Update snippet persist failed(${old.name} -> ${newOne.name})',
+        e,
+        s,
+      );
+      if (state == optimistic) {
+        state = prev;
+      }
     }
-    bakSync.sync(milliDelay: 1000);
   }
 
   Future<void> renameTag(String old, String newOne) async {
@@ -119,6 +187,6 @@ class SnippetNotifier extends _$SnippetNotifier {
       await reload();
       return;
     }
-    bakSync.sync(milliDelay: 1000);
+    _scheduleBackupSync();
   }
 }

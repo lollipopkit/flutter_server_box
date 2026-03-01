@@ -41,6 +41,8 @@ class ConnectionStatsStore {
         await _cleanOldRecords();
         _pendingSinceCleanup = 0;
         _lastCleanupAt = now;
+      } catch (e, s) {
+        Loggers.app.warning('Cleanup old connection stats failed', e, s);
       } finally {
         _cleanupRunning = false;
       }

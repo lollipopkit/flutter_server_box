@@ -467,8 +467,21 @@ abstract final class HiveToSqliteMigrator {
 
   static Future<void> _writeConnectionStats(String key, Object value) async {
     final map = _toJsonMap(value);
-    if (map == null) return;
-    final stat = ConnectionStat.fromJson(map);
-    await Stores.connectionStats.recordConnection(stat);
+    if (map == null) {
+      Loggers.app.info(
+        'Skip connection stat entry `$key` during migration: _toJsonMap returned null',
+      );
+      return;
+    }
+    try {
+      final stat = ConnectionStat.fromJson(map);
+      await Stores.connectionStats.recordConnection(stat);
+    } catch (e, s) {
+      Loggers.app.warning(
+        'Skip connection stat entry `$key` during migration: invalid payload $map',
+        e,
+        s,
+      );
+    }
   }
 }

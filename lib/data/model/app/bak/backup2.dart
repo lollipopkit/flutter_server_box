@@ -213,8 +213,15 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
 
       if (key.startsWith('providerConfig')) {
         final id = key.substring('providerConfig'.length);
-        final type = ContainerType.values.firstWhereOrNull(
-          (e) => e.toString() == value.toString(),
+        final raw = value.toString();
+        ContainerType? type;
+        try {
+          type = ContainerType.values.byName(raw);
+        } catch (_) {
+          type = null;
+        }
+        type ??= ContainerType.values.firstWhereOrNull(
+          (e) => e.toString() == raw,
         );
         if (type != null) {
           await Stores.container.setType(type, id);
