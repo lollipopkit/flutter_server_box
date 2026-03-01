@@ -79,8 +79,8 @@ class Backup implements Mergeable {
       return;
     }
 
-    await _restoreSnippets(snippets);
     await _restoreServers(spis);
+    await _restoreSnippets(snippets);
     await _restoreKeys(keys);
     await _restoreHistory(history.cast<String, Object?>());
     await _restoreContainer(container.cast<String, Object?>());
