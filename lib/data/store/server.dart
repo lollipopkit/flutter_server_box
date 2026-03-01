@@ -93,10 +93,10 @@ class ServerStore {
       final newId = ShortId.generate();
       final migrated = s.copyWith(id: newId);
 
+      await put(migrated);
       if (legacyId != newId) {
         await delete(legacyId);
       }
-      await put(migrated);
       idMap[legacyId] = newId;
     }
 

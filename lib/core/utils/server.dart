@@ -16,12 +16,12 @@ import 'package:server_box/data/res/store.dart';
 /// Because of this function is called by [compute].
 ///
 /// https://stackoverflow.com/questions/51998995/invalid-arguments-illegal-argument-in-isolate-message-object-is-a-closure
-List<SSHKeyPair> loadIndentity(String key) {
+List<SSHKeyPair> loadIdentity(String key) {
   return SSHKeyPair.fromPem(key);
 }
 
 /// [args] : [key, pwd]
-String decyptPem(List<String> args) {
+String decryptPem(List<String> args) {
   /// skip when the key is not encrypted, or will throw exception
   if (!SSHKeyPair.isEncryptedPem(args[0])) return args[0];
   final sshKey = SSHKeyPair.fromPem(args[0], args[1]);
@@ -92,18 +92,12 @@ Future<SSHClient> genClient(
 
   final socket = await () async {
     // Proxy
-    final jumpSpi_ = await () async {
-      // Multi-thread or key login
-      if (jumpSpi != null) return jumpSpi;
-      // Main thread
-      final jumpId = spi.jumpId;
-      if (jumpId != null) {
-        final cached = jumpSpisById?[jumpId];
-        if (cached != null) return cached;
-        return await Stores.server.fetchOne(jumpId);
-      }
-      return null;
-    }();
+    final jumpSpi_ = await _resolveJumpSpi(
+      spi,
+      jumpSpisById: jumpSpisById,
+      explicitJumpSpi: jumpSpi,
+      context: 'genClient',
+    );
     if (jumpSpi_ != null) {
       String? nextJumpPrivateKey;
       final jumpSpiKeyId = jumpSpi_.keyId;
@@ -175,7 +169,7 @@ Future<SSHClient> genClient(
     socket,
     username: spi.user,
     // Must use [compute] here, instead of [Computer.shared.start]
-    identities: await compute(loadIndentity, privateKey),
+    identities: await compute(loadIdentity, privateKey),
     onUserInfoRequest: onKeyboardInteractive,
     onVerifyHostKey: hostKeyVerifier.call,
     // printDebug: debugPrint,
@@ -370,10 +364,11 @@ Future<void> ensureKnownHostKey(
     return;
   }
 
-  final jumpId = spi.jumpId;
-  final jumpSpi = jumpId == null
-      ? null
-      : (jumpSpisById?[jumpId] ?? await Stores.server.fetchOne(jumpId));
+  final jumpSpi = await _resolveJumpSpi(
+    spi,
+    jumpSpisById: jumpSpisById,
+    context: 'ensureKnownHostKey',
+  );
   if (jumpSpi != null && !_hasKnownHostFingerprintForSpi(jumpSpi, cache)) {
     await ensureKnownHostKey(
       jumpSpi,
@@ -399,6 +394,30 @@ Future<void> ensureKnownHostKey(
   } finally {
     client.close();
   }
+}
+
+Future<Spi?> _resolveJumpSpi(
+  Spi spi, {
+  Map<String, Spi>? jumpSpisById,
+  Spi? explicitJumpSpi,
+  required String context,
+}) async {
+  if (explicitJumpSpi != null) return explicitJumpSpi;
+  final jumpId = spi.jumpId;
+  if (jumpId == null) return null;
+
+  final cached = jumpSpisById?[jumpId];
+  if (cached != null) return cached;
+
+  final resolved = await Stores.server.fetchOne(jumpId);
+  if (resolved != null) return resolved;
+
+  throw SSHErr(
+    type: SSHErrType.connect,
+    message:
+        'Jump server `$jumpId` not found for ${spi.name} (${_hostIdentifier(spi)}) '
+        'while resolving in $context',
+  );
 }
 
 bool _hasKnownHostFingerprintForSpi(Spi spi, Map<String, String> cache) {
