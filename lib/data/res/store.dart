@@ -69,7 +69,12 @@ abstract final class Stores {
       final row = await AppDb.instance
           .customSelect('SELECT MAX(updated_at) AS max_ts FROM $tableName')
           .getSingleOrNull();
-      final ts = row?.read<int>('max_ts') ?? 0;
+      final rawTs = row?.data['max_ts'];
+      final ts = switch (rawTs) {
+        final int v => v,
+        final num v => v.toInt(),
+        _ => 0,
+      };
       if (ts > last) {
         last = ts;
       }
