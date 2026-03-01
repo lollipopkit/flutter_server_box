@@ -67,12 +67,20 @@ class ServerStore {
     final ss = await fetch();
     if (ss.isEmpty) return;
 
+    final snippets = await SnippetStore.instance.fetch();
+    final container = ContainerStore.instance;
+    final containerHostsToMigrate = <String, String>{};
     final idMap = <String, String>{};
     for (final s in ss) {
       final currentId = s.id;
       final legacyId = currentId.isEmpty ? s.oldId : currentId;
       final shouldMigrate = currentId.isEmpty || currentId == s.oldId;
       if (!shouldMigrate) continue;
+
+      final dockerHost = await container.fetch(legacyId);
+      if (dockerHost != null) {
+        containerHostsToMigrate[legacyId] = dockerHost;
+      }
 
       final newId = ShortId.generate();
       final migrated = s.copyWith(id: newId);
@@ -87,8 +95,6 @@ class ServerStore {
     if (idMap.isEmpty) return;
 
     final srvOrder = SettingStore.instance.serverOrder.fetch();
-    final snippets = await SnippetStore.instance.fetch();
-    final container = ContainerStore.instance;
 
     var srvOrderChanged = false;
     for (final e in idMap.entries) {
@@ -113,7 +119,7 @@ class ServerStore {
         }
       }
 
-      final dockerHost = await container.fetch(oldId);
+      final dockerHost = containerHostsToMigrate[oldId];
       if (dockerHost != null) {
         await container.remove(oldId);
         await container.set(newId, dockerHost);
