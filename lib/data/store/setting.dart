@@ -377,8 +377,16 @@ class SettingStore {
   /// Record the position and size of the window.
   late final windowState = property<WindowState>(
     'windowState',
-    fromObj: (raw) =>
-        WindowState.fromJson(jsonDecode(raw as String) as Map<String, dynamic>),
+    fromObj: (raw) {
+      try {
+        return WindowState.fromJson(
+          jsonDecode(raw as String) as Map<String, dynamic>,
+        );
+      } catch (e, s) {
+        Loggers.app.warning('Parse windowState failed', e, s);
+        return null;
+      }
+    },
     toObj: (state) => state == null ? null : jsonEncode(state.toJson()),
   );
 

@@ -80,7 +80,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
     return FloatingActionButton(
       heroTag: 'snippet',
       child: const Icon(Icons.save),
-      onPressed: () {
+      onPressed: () async {
         final name = _nameController.text;
         final script = _scriptController.text;
         if (name.isEmpty || script.isEmpty) {
@@ -98,10 +98,11 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
         final oldSnippet = widget.args?.snippet;
         final notifier = ref.read(snippetProvider.notifier);
         if (oldSnippet != null) {
-          notifier.update(oldSnippet, snippet);
+          await notifier.update(oldSnippet, snippet);
         } else {
           notifier.add(snippet);
         }
+        if (!context.mounted) return;
         context.pop();
       },
     );

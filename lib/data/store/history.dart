@@ -18,7 +18,18 @@ class _ListHistory {
   void add(String path) {
     _history.remove(path);
     _history.insert(0, path);
-    unawaited(_store.set(_name, _history));
+    unawaited(
+      _store
+          .set(_name, _history)
+          .then((ok) {
+            if (!ok) {
+              Loggers.app.warning('Save history `$_name` failed');
+            }
+          })
+          .catchError((e, s) {
+            Loggers.app.warning('Save history `$_name` failed', e, s);
+          }),
+    );
   }
 
   List<String> get all => _history;
@@ -38,7 +49,18 @@ class _MapHistory {
 
   void put(String id, String val) {
     _history[id] = val;
-    unawaited(_store.set(_name, _history));
+    unawaited(
+      _store
+          .set(_name, _history)
+          .then((ok) {
+            if (!ok) {
+              Loggers.app.warning('Save history `$_name` failed');
+            }
+          })
+          .catchError((e, s) {
+            Loggers.app.warning('Save history `$_name` failed', e, s);
+          }),
+    );
   }
 
   String? fetch(String id) => _history[id];

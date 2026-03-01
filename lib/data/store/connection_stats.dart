@@ -61,51 +61,77 @@ class ConnectionStatsStore {
     );
   }
 
-  Future<List<ConnectionStat>> getConnectionHistory(String serverId) async {
+  Future<List<ConnectionStat>> getConnectionHistory(
+    String serverId, {
+    int? limit,
+  }) async {
     final query = _db.select(_db.connectionStatsRecords)
       ..where((tbl) => tbl.serverId.equals(serverId))
       ..orderBy([(tbl) => d.OrderingTerm.desc(tbl.timestampMs)]);
+    if (limit != null) {
+      query.limit(limit);
+    }
 
     final rows = await query.get();
     return rows.map(_fromRow).toList(growable: false);
   }
 
   Future<List<ServerConnectionStats>> getAllServerStats() async {
-    final rows = await _db.select(_db.connectionStatsRecords).get();
-    final groupedStats = <String, List<ConnectionStat>>{};
-    final serverNames = <String, String>{};
-
-    for (final row in rows) {
-      final stat = _fromRow(row);
-      groupedStats.putIfAbsent(stat.serverId, () => []).add(stat);
-      serverNames[stat.serverId] ??= stat.serverName;
-    }
+    const successName = 'success';
+    final rows = await _db.customSelect(
+      '''
+SELECT
+  server_id,
+  MAX(server_name) AS server_name,
+  COUNT(*) AS total_attempts,
+  SUM(CASE WHEN result = ? THEN 1 ELSE 0 END) AS success_count,
+  MAX(CASE WHEN result = ? THEN timestamp_ms ELSE NULL END) AS last_success_ts,
+  MAX(CASE WHEN result <> ? THEN timestamp_ms ELSE NULL END) AS last_failure_ts,
+  MAX(timestamp_ms) AS latest_ts
+FROM connection_stats_records
+GROUP BY server_id
+ORDER BY latest_ts DESC
+      ''',
+      variables: [
+        d.Variable.withString(successName),
+        d.Variable.withString(successName),
+        d.Variable.withString(successName),
+      ],
+    ).get();
+    if (rows.isEmpty) return const <ServerConnectionStats>[];
 
     final allStats = <ServerConnectionStats>[];
-    for (final entry in groupedStats.entries) {
-      final serverId = entry.key;
-      final serverName = serverNames[serverId] ?? serverId;
-      final stats = entry.value;
-      stats.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    for (final row in rows) {
+      final data = row.data;
+      final serverId = data['server_id'] as String?;
+      if (serverId == null || serverId.isEmpty) continue;
+      final serverName = (data['server_name'] as String?) ?? serverId;
+      final totalAttempts = (data['total_attempts'] as num?)?.toInt() ?? 0;
+      final successCount = (data['success_count'] as num?)?.toInt() ?? 0;
+      final failureCount = totalAttempts - successCount;
+      final successRate = totalAttempts > 0 ? (successCount / totalAttempts) : 0.0;
+      final lastSuccessTs = (data['last_success_ts'] as num?)?.toInt();
+      final lastFailureTs = (data['last_failure_ts'] as num?)?.toInt();
+      final recentConnections = await getConnectionHistory(serverId, limit: 20);
+
       allStats.add(
-        _buildServerStats(
+        ServerConnectionStats(
           serverId: serverId,
           serverName: serverName,
-          sortedStats: stats,
+          totalAttempts: totalAttempts,
+          successCount: successCount,
+          failureCount: failureCount,
+          lastSuccessTime: lastSuccessTs == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(lastSuccessTs),
+          lastFailureTime: lastFailureTs == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(lastFailureTs),
+          recentConnections: recentConnections,
+          successRate: successRate,
         ),
       );
     }
-
-    allStats.sort((a, b) {
-      final aTs = a.recentConnections.isEmpty
-          ? DateTime.fromMillisecondsSinceEpoch(0)
-          : a.recentConnections.first.timestamp;
-      final bTs = b.recentConnections.isEmpty
-          ? DateTime.fromMillisecondsSinceEpoch(0)
-          : b.recentConnections.first.timestamp;
-      return bTs.compareTo(aTs);
-    });
-
     return allStats;
   }
 

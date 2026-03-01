@@ -229,7 +229,7 @@ class ServersNotifier extends _$ServersNotifier {
     );
 
     unawaited(Stores.server.put(spi));
-    Stores.setting.serverOrder.put(newOrder);
+    _saveServerOrder(newOrder);
     unawaited(refresh(spi: spi));
     bakSync.sync(milliDelay: 1000);
   }
@@ -247,7 +247,7 @@ class ServersNotifier extends _$ServersNotifier {
       tags: newTags,
     );
 
-    Stores.setting.serverOrder.put(newOrder);
+    _saveServerOrder(newOrder);
     unawaited(Stores.server.delete(id));
 
     // Remove connection stats when server is deleted
@@ -269,7 +269,7 @@ class ServersNotifier extends _$ServersNotifier {
 
     state = const ServersState();
 
-    Stores.setting.serverOrder.put([]);
+    _saveServerOrder(const <String>[]);
     unawaited(Stores.server.clear());
     unawaited(Stores.connectionStats.clearAll());
     bakSync.sync(milliDelay: 1000);
@@ -300,8 +300,15 @@ class ServersNotifier extends _$ServersNotifier {
     }
 
     state = state.copyWith(serverOrder: newOrder);
-    Stores.setting.serverOrder.put(newOrder);
+    _saveServerOrder(newOrder);
     bakSync.sync(milliDelay: 1000);
+  }
+
+  void _saveServerOrder(List<String> order) {
+    final maybeFuture = Stores.setting.serverOrder.put(order);
+    if (maybeFuture is Future<void>) {
+      unawaited(maybeFuture);
+    }
   }
 
   bool _isSameOrder(List<String> a, List<String> b) {

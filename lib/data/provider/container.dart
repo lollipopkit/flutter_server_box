@@ -83,7 +83,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     await refresh();
   }
 
-  void _requiresSudo() async {
+  Future<void> _requiresSudo() async {
     /// Podman is rootless
     if (state.type == ContainerType.podman) {
       return sudoCompleter.complete(false);
@@ -104,7 +104,9 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (state.isBusy) return;
     state = state.copyWith(isBusy: true);
 
-    if (!sudoCompleter.isCompleted) _requiresSudo();
+    if (!sudoCompleter.isCompleted) {
+      unawaited(_requiresSudo());
+    }
 
     final sudo = await sudoCompleter.future;
 

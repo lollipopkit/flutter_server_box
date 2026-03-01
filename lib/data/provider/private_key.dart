@@ -55,7 +55,9 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
     if (idx == -1) {
       keys.add(newInfo);
       unawaited(Stores.key.put(newInfo));
-      unawaited(Stores.key.delete(old));
+      if (old.id != newInfo.id) {
+        unawaited(Stores.key.delete(old));
+      }
     } else {
       keys[idx] = newInfo;
       unawaited(Stores.key.put(newInfo));

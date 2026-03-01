@@ -58,6 +58,7 @@ extension _Server on _AppSettingsPageState {
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () async {
         final keys = (await Stores.server.keys()).toList();
+        if (!context.mounted) return;
         final names = Map.fromEntries(
           keys.map(
             (e) => MapEntry(e, ref.read(serversProvider).servers[e]?.name ?? e),
@@ -68,6 +69,7 @@ extension _Server on _AppSettingsPageState {
           items: keys,
           display: (p0) => names[p0] ?? p0,
         );
+        if (!context.mounted) return;
         if (deleteKeys == null || deleteKeys.isEmpty) return;
 
         final md = deleteKeys.map((e) => '- ${names[e] ?? e}').join('\n');
@@ -76,12 +78,15 @@ extension _Server on _AppSettingsPageState {
           child: SimpleMarkdown(data: md),
           actions: Btnx.cancelRedOk,
         );
+        if (!context.mounted) return;
 
         if (sure != true) return;
         for (final key in deleteKeys) {
           await Stores.server.delete(key);
         }
+        if (!context.mounted) return;
         await ref.read(serversProvider.notifier).reload();
+        if (!context.mounted) return;
         context.showSnackBar(libL10n.success);
       },
     );

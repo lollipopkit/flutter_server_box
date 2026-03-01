@@ -78,9 +78,9 @@ extension Spix on Spi {
   /// - The new [id] if the [id] is empty.
   Future<String?> migrateId() async {
     if (id.isNotEmpty) return null;
-    await ServerStore.instance.delete(oldId);
     final newSpi = copyWith(id: ShortId.generate());
     await newSpi.save();
+    await ServerStore.instance.delete(oldId);
     return newSpi.id;
   }
 

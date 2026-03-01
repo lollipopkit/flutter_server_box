@@ -2893,6 +2893,7 @@ class $SnippetAutoRunsTable extends SnippetAutoRuns
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES servers(id) ON DELETE CASCADE',
   );
   @override
   List<GeneratedColumn> get $columns => [snippetName, serverId];
@@ -3368,6 +3369,7 @@ class $ContainerHostsTable extends ContainerHosts
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES servers(id) ON DELETE CASCADE',
   );
   static const VerificationMeta _hostMeta = const VerificationMeta('host');
   @override
@@ -4224,6 +4226,20 @@ abstract class _$AppDb extends GeneratedDatabase {
       ),
       result: [TableUpdate('snippet_auto_runs', kind: UpdateKind.delete)],
     ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'servers',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('snippet_auto_runs', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'servers',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('container_hosts', kind: UpdateKind.delete)],
+    ),
   ]);
 }
 
@@ -4358,6 +4374,44 @@ final class $$ServersTableReferences
     final cache = $_typedResult.readTableOrNull(
       _serverDisabledCmdTypesRefsTable($_db),
     );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$SnippetAutoRunsTable, List<SnippetAutoRun>>
+  _snippetAutoRunsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.snippetAutoRuns,
+    aliasName: $_aliasNameGenerator(db.servers.id, db.snippetAutoRuns.serverId),
+  );
+
+  $$SnippetAutoRunsTableProcessedTableManager get snippetAutoRunsRefs {
+    final manager = $$SnippetAutoRunsTableTableManager(
+      $_db,
+      $_db.snippetAutoRuns,
+    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _snippetAutoRunsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ContainerHostsTable, List<ContainerHost>>
+  _containerHostsRefsTable(_$AppDb db) => MultiTypedResultKey.fromTable(
+    db.containerHosts,
+    aliasName: $_aliasNameGenerator(db.servers.id, db.containerHosts.serverId),
+  );
+
+  $$ContainerHostsTableProcessedTableManager get containerHostsRefs {
+    final manager = $$ContainerHostsTableTableManager(
+      $_db,
+      $_db.containerHosts,
+    ).filter((f) => f.serverId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_containerHostsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -4555,6 +4609,56 @@ class $$ServersTableFilterComposer extends Composer<_$AppDb, $ServersTable> {
                     $removeJoinBuilderFromRootComposer,
               ),
         );
+    return f(composer);
+  }
+
+  Expression<bool> snippetAutoRunsRefs(
+    Expression<bool> Function($$SnippetAutoRunsTableFilterComposer f) f,
+  ) {
+    final $$SnippetAutoRunsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.snippetAutoRuns,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SnippetAutoRunsTableFilterComposer(
+            $db: $db,
+            $table: $db.snippetAutoRuns,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> containerHostsRefs(
+    Expression<bool> Function($$ContainerHostsTableFilterComposer f) f,
+  ) {
+    final $$ContainerHostsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.containerHosts,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ContainerHostsTableFilterComposer(
+            $db: $db,
+            $table: $db.containerHosts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
     return f(composer);
   }
 }
@@ -4802,6 +4906,56 @@ class $$ServersTableAnnotationComposer
         );
     return f(composer);
   }
+
+  Expression<T> snippetAutoRunsRefs<T extends Object>(
+    Expression<T> Function($$SnippetAutoRunsTableAnnotationComposer a) f,
+  ) {
+    final $$SnippetAutoRunsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.snippetAutoRuns,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SnippetAutoRunsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.snippetAutoRuns,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> containerHostsRefs<T extends Object>(
+    Expression<T> Function($$ContainerHostsTableAnnotationComposer a) f,
+  ) {
+    final $$ContainerHostsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.containerHosts,
+      getReferencedColumn: (t) => t.serverId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ContainerHostsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.containerHosts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ServersTableTableManager
@@ -4823,6 +4977,8 @@ class $$ServersTableTableManager
             bool serverTagsRefs,
             bool serverEnvsRefs,
             bool serverDisabledCmdTypesRefs,
+            bool snippetAutoRunsRefs,
+            bool containerHostsRefs,
           })
         > {
   $$ServersTableTableManager(_$AppDb db, $ServersTable table)
@@ -4911,6 +5067,8 @@ class $$ServersTableTableManager
                 serverTagsRefs = false,
                 serverEnvsRefs = false,
                 serverDisabledCmdTypesRefs = false,
+                snippetAutoRunsRefs = false,
+                containerHostsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -4920,6 +5078,8 @@ class $$ServersTableTableManager
                     if (serverTagsRefs) db.serverTags,
                     if (serverEnvsRefs) db.serverEnvs,
                     if (serverDisabledCmdTypesRefs) db.serverDisabledCmdTypes,
+                    if (snippetAutoRunsRefs) db.snippetAutoRuns,
+                    if (containerHostsRefs) db.containerHosts,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -5029,6 +5189,48 @@ class $$ServersTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (snippetAutoRunsRefs)
+                        await $_getPrefetchedData<
+                          Server,
+                          $ServersTable,
+                          SnippetAutoRun
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ServersTableReferences
+                              ._snippetAutoRunsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ServersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).snippetAutoRunsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.serverId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (containerHostsRefs)
+                        await $_getPrefetchedData<
+                          Server,
+                          $ServersTable,
+                          ContainerHost
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ServersTableReferences
+                              ._containerHostsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ServersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).containerHostsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.serverId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -5055,6 +5257,8 @@ typedef $$ServersTableProcessedTableManager =
         bool serverTagsRefs,
         bool serverEnvsRefs,
         bool serverDisabledCmdTypesRefs,
+        bool snippetAutoRunsRefs,
+        bool containerHostsRefs,
       })
     >;
 typedef $$ServerCustomsTableCreateCompanionBuilder =
@@ -7293,6 +7497,24 @@ final class $$SnippetAutoRunsTableReferences
       manager.$state.copyWith(prefetchedData: [item]),
     );
   }
+
+  static $ServersTable _serverIdTable(_$AppDb db) => db.servers.createAlias(
+    $_aliasNameGenerator(db.snippetAutoRuns.serverId, db.servers.id),
+  );
+
+  $$ServersTableProcessedTableManager get serverId {
+    final $_column = $_itemColumn<String>('server_id')!;
+
+    final manager = $$ServersTableTableManager(
+      $_db,
+      $_db.servers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
 }
 
 class $$SnippetAutoRunsTableFilterComposer
@@ -7304,11 +7526,6 @@ class $$SnippetAutoRunsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get serverId => $composableBuilder(
-    column: $table.serverId,
-    builder: (column) => ColumnFilters(column),
-  );
-
   $$SnippetsTableFilterComposer get snippetName {
     final $$SnippetsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -7331,6 +7548,29 @@ class $$SnippetAutoRunsTableFilterComposer
     );
     return composer;
   }
+
+  $$ServersTableFilterComposer get serverId {
+    final $$ServersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableFilterComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$SnippetAutoRunsTableOrderingComposer
@@ -7342,11 +7582,6 @@ class $$SnippetAutoRunsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get serverId => $composableBuilder(
-    column: $table.serverId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   $$SnippetsTableOrderingComposer get snippetName {
     final $$SnippetsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -7369,6 +7604,29 @@ class $$SnippetAutoRunsTableOrderingComposer
     );
     return composer;
   }
+
+  $$ServersTableOrderingComposer get serverId {
+    final $$ServersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableOrderingComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$SnippetAutoRunsTableAnnotationComposer
@@ -7380,9 +7638,6 @@ class $$SnippetAutoRunsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get serverId =>
-      $composableBuilder(column: $table.serverId, builder: (column) => column);
-
   $$SnippetsTableAnnotationComposer get snippetName {
     final $$SnippetsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -7397,6 +7652,29 @@ class $$SnippetAutoRunsTableAnnotationComposer
           }) => $$SnippetsTableAnnotationComposer(
             $db: $db,
             $table: $db.snippets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$ServersTableAnnotationComposer get serverId {
+    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.servers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -7420,7 +7698,7 @@ class $$SnippetAutoRunsTableTableManager
           $$SnippetAutoRunsTableUpdateCompanionBuilder,
           (SnippetAutoRun, $$SnippetAutoRunsTableReferences),
           SnippetAutoRun,
-          PrefetchHooks Function({bool snippetName})
+          PrefetchHooks Function({bool snippetName, bool serverId})
         > {
   $$SnippetAutoRunsTableTableManager(_$AppDb db, $SnippetAutoRunsTable table)
     : super(
@@ -7461,7 +7739,7 @@ class $$SnippetAutoRunsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({snippetName = false}) {
+          prefetchHooksCallback: ({snippetName = false, serverId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -7496,6 +7774,21 @@ class $$SnippetAutoRunsTableTableManager
                               )
                               as T;
                     }
+                    if (serverId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.serverId,
+                                referencedTable:
+                                    $$SnippetAutoRunsTableReferences
+                                        ._serverIdTable(db),
+                                referencedColumn:
+                                    $$SnippetAutoRunsTableReferences
+                                        ._serverIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
 
                     return state;
                   },
@@ -7520,7 +7813,7 @@ typedef $$SnippetAutoRunsTableProcessedTableManager =
       $$SnippetAutoRunsTableUpdateCompanionBuilder,
       (SnippetAutoRun, $$SnippetAutoRunsTableReferences),
       SnippetAutoRun,
-      PrefetchHooks Function({bool snippetName})
+      PrefetchHooks Function({bool snippetName, bool serverId})
     >;
 typedef $$PrivateKeysTableCreateCompanionBuilder =
     PrivateKeysCompanion Function({
@@ -7695,6 +7988,33 @@ typedef $$ContainerHostsTableUpdateCompanionBuilder =
       Value<int> rowid,
     });
 
+final class $$ContainerHostsTableReferences
+    extends BaseReferences<_$AppDb, $ContainerHostsTable, ContainerHost> {
+  $$ContainerHostsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ServersTable _serverIdTable(_$AppDb db) => db.servers.createAlias(
+    $_aliasNameGenerator(db.containerHosts.serverId, db.servers.id),
+  );
+
+  $$ServersTableProcessedTableManager get serverId {
+    final $_column = $_itemColumn<String>('server_id')!;
+
+    final manager = $$ServersTableTableManager(
+      $_db,
+      $_db.servers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_serverIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
 class $$ContainerHostsTableFilterComposer
     extends Composer<_$AppDb, $ContainerHostsTable> {
   $$ContainerHostsTableFilterComposer({
@@ -7704,11 +8024,6 @@ class $$ContainerHostsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get serverId => $composableBuilder(
-    column: $table.serverId,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<String> get host => $composableBuilder(
     column: $table.host,
     builder: (column) => ColumnFilters(column),
@@ -7718,6 +8033,29 @@ class $$ContainerHostsTableFilterComposer
     column: $table.updatedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  $$ServersTableFilterComposer get serverId {
+    final $$ServersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableFilterComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ContainerHostsTableOrderingComposer
@@ -7729,11 +8067,6 @@ class $$ContainerHostsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get serverId => $composableBuilder(
-    column: $table.serverId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get host => $composableBuilder(
     column: $table.host,
     builder: (column) => ColumnOrderings(column),
@@ -7743,6 +8076,29 @@ class $$ContainerHostsTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  $$ServersTableOrderingComposer get serverId {
+    final $$ServersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableOrderingComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ContainerHostsTableAnnotationComposer
@@ -7754,14 +8110,34 @@ class $$ContainerHostsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get serverId =>
-      $composableBuilder(column: $table.serverId, builder: (column) => column);
-
   GeneratedColumn<String> get host =>
       $composableBuilder(column: $table.host, builder: (column) => column);
 
   GeneratedColumn<int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$ServersTableAnnotationComposer get serverId {
+    final $$ServersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.serverId,
+      referencedTable: $db.servers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ServersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.servers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ContainerHostsTableTableManager
@@ -7775,12 +8151,9 @@ class $$ContainerHostsTableTableManager
           $$ContainerHostsTableAnnotationComposer,
           $$ContainerHostsTableCreateCompanionBuilder,
           $$ContainerHostsTableUpdateCompanionBuilder,
-          (
-            ContainerHost,
-            BaseReferences<_$AppDb, $ContainerHostsTable, ContainerHost>,
-          ),
+          (ContainerHost, $$ContainerHostsTableReferences),
           ContainerHost,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool serverId})
         > {
   $$ContainerHostsTableTableManager(_$AppDb db, $ContainerHostsTable table)
     : super(
@@ -7818,9 +8191,55 @@ class $$ContainerHostsTableTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ContainerHostsTableReferences(db, table, e),
+                ),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({serverId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (serverId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.serverId,
+                                referencedTable: $$ContainerHostsTableReferences
+                                    ._serverIdTable(db),
+                                referencedColumn:
+                                    $$ContainerHostsTableReferences
+                                        ._serverIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
@@ -7835,12 +8254,9 @@ typedef $$ContainerHostsTableProcessedTableManager =
       $$ContainerHostsTableAnnotationComposer,
       $$ContainerHostsTableCreateCompanionBuilder,
       $$ContainerHostsTableUpdateCompanionBuilder,
-      (
-        ContainerHost,
-        BaseReferences<_$AppDb, $ContainerHostsTable, ContainerHost>,
-      ),
+      (ContainerHost, $$ContainerHostsTableReferences),
       ContainerHost,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool serverId})
     >;
 typedef $$ConnectionStatsRecordsTableCreateCompanionBuilder =
     ConnectionStatsRecordsCompanion Function({

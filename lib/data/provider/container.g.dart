@@ -58,7 +58,7 @@ final class ContainerNotifierProvider
   }
 }
 
-String _$containerNotifierHash() => r'2f8eb969f0e66e28f60b6fc11169e8f28315ed32';
+String _$containerNotifierHash() => r'0c9f7c9ea67d769115d71880569d6063c7e112d8';
 
 final class ContainerNotifierFamily extends $Family
     with

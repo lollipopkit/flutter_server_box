@@ -15,12 +15,37 @@ class SnippetStore {
 
   Future<List<Snippet>> fetch() async {
     final rows = await _db.select(_db.snippets).get();
-    final list = <Snippet>[];
-    for (final row in rows) {
-      final s = await fetchOne(row.name);
-      if (s != null) list.add(s);
+    if (rows.isEmpty) return const <Snippet>[];
+
+    final names = rows.map((e) => e.name).toList(growable: false);
+
+    final tagRows = await (_db.select(
+      _db.snippetTags,
+    )..where((tbl) => tbl.snippetName.isIn(names))).get();
+    final tagsMap = <String, List<String>>{};
+    for (final row in tagRows) {
+      tagsMap.putIfAbsent(row.snippetName, () => <String>[]).add(row.tag);
     }
-    return list;
+
+    final autoRunRows = await (_db.select(
+      _db.snippetAutoRuns,
+    )..where((tbl) => tbl.snippetName.isIn(names))).get();
+    final autoRunMap = <String, List<String>>{};
+    for (final row in autoRunRows) {
+      autoRunMap.putIfAbsent(row.snippetName, () => <String>[]).add(row.serverId);
+    }
+
+    return rows
+        .map(
+          (row) => Snippet(
+            name: row.name,
+            script: row.script,
+            note: row.note,
+            tags: tagsMap[row.name],
+            autoRunOn: autoRunMap[row.name],
+          ),
+        )
+        .toList(growable: false);
   }
 
   Future<Snippet?> fetchOne(String name) async {

@@ -11,6 +11,16 @@ import 'package:server_box/data/store/snippet.dart';
 final GetIt getIt = GetIt.instance;
 
 abstract final class Stores {
+  static const List<String> _timestampedTables = <String>[
+    'servers',
+    'server_customs',
+    'server_wol_cfgs',
+    'snippets',
+    'private_keys',
+    'container_hosts',
+    'connection_stats_records',
+  ];
+
   static SettingStore get setting => getIt<SettingStore>();
   static ServerStore get server => getIt<ServerStore>();
   static ContainerStore get container => getIt<ContainerStore>();
@@ -69,13 +79,9 @@ abstract final class Stores {
     mergeMap(history.lastUpdateTs);
     mergeMap(container.lastUpdateTs);
 
-    await mergeTable('servers');
-    await mergeTable('server_customs');
-    await mergeTable('server_wol_cfgs');
-    await mergeTable('snippets');
-    await mergeTable('private_keys');
-    await mergeTable('container_hosts');
-    await mergeTable('connection_stats_records');
+    for (final table in _timestampedTables) {
+      await mergeTable(table);
+    }
 
     return last;
   }

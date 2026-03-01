@@ -33,16 +33,33 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
 
   Future<void> _loadStats() async {
     if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-    });
+    if (_isLoading && _serverStats.isNotEmpty) return;
+    if (!_isLoading) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
-    final stats = await Stores.connectionStats.getAllServerStats();
+    try {
+      final stats = await Stores.connectionStats.getAllServerStats();
+      if (!mounted) return;
+      setState(() {
+        _serverStats = stats;
+      });
+    } catch (e, s) {
+      Loggers.app.warning('Load connection stats failed', e, s);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _setCompacting(bool compacting) {
     if (!mounted) return;
-    setState(() {
-      _serverStats = stats;
-      _isLoading = false;
-    });
+    setState(() => _isCompacting = compacting);
   }
 
   @override
@@ -52,7 +69,7 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
         title: Text(l10n.connectionStats),
         actions: [
           IconButton(
-            onPressed: () => unawaited(_loadStats()),
+            onPressed: _isLoading ? null : () => unawaited(_loadStats()),
             icon: const Icon(Icons.refresh),
             tooltip: libL10n.refresh,
           ),
@@ -272,61 +289,59 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
       ),
     );
   }
+}
 
+extension _Actions on _ConnectionStatsPageState {
   void _showCompactDialog() {
     unawaited(_showCompactDialogAsync());
   }
 
   Future<void> _showCompactDialogAsync() async {
-    final file = await _connectionStatsDbFile();
-    if (!mounted) return;
-    final oldSize = file.existsSync() ? file.lengthSync() : 0;
-    final sizeStr = _formatSize(oldSize);
+    try {
+      final file = await _connectionStatsDbFile();
+      final oldSize = await _safeFileSize(file);
+      if (!mounted) return;
+      final sizeStr = _formatSize(oldSize);
 
-    context.showRoundDialog(
-      title: l10n.compactDatabase,
-      child: Text(l10n.compactDatabaseContent(sizeStr)),
-      actions: [
-        TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
-        TextButton(
-          onPressed: () async {
-            context.pop();
-            setState(() => _isCompacting = true);
-            try {
-              await Stores.connectionStats.compact();
-              final newSize = file.existsSync() ? file.lengthSync() : 0;
-              final newSizeStr = _formatSize(newSize);
-              if (mounted) {
-                setState(() => _isCompacting = false);
-                context.showSnackBar(
-                  '${libL10n.success}: $sizeStr -> $newSizeStr',
-                );
+      context.showRoundDialog(
+        title: l10n.compactDatabase,
+        child: Text(l10n.compactDatabaseContent(sizeStr)),
+        actions: [
+          TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
+          TextButton(
+            onPressed: () async {
+              context.pop();
+              if (!mounted) return;
+              _setCompacting(true);
+              try {
+                await Stores.connectionStats.compact();
+                final newSize = await _safeFileSize(file);
+                final newSizeStr = _formatSize(newSize);
+                if (mounted) {
+                  context.showSnackBar(
+                    '${libL10n.success}: $sizeStr -> $newSizeStr',
+                  );
+                }
+              } catch (e, s) {
+                Loggers.app.warning('Compact connection stats failed', e, s);
+                if (mounted) {
+                  context.showSnackBar('${libL10n.error}: $e');
+                }
+              } finally {
+                _setCompacting(false);
               }
-            } catch (e) {
-              if (mounted) {
-                setState(() => _isCompacting = false);
-                context.showSnackBar('${libL10n.error}: $e');
-              }
-            }
-          },
-          child: Text(libL10n.confirm),
-        ),
-      ],
-    );
+            },
+            child: Text(libL10n.confirm),
+          ),
+        ],
+      );
+    } catch (e, s) {
+      Loggers.app.warning('Prepare compact dialog failed', e, s);
+      if (!mounted) return;
+      context.showSnackBar('${libL10n.error}: $e');
+    }
   }
 
-  String _formatSize(int bytes) {
-    if (bytes < 1000) return '$bytes B';
-    if (bytes < 1000 * 1000) return '${(bytes / 1000).toStringAsFixed(1)} KB';
-    return '${(bytes / (1000 * 1000)).toStringAsFixed(1)} MB';
-  }
-
-  Future<File> _connectionStatsDbFile() async {
-    return AppDb.resolveDbFile();
-  }
-}
-
-extension on _ConnectionStatsPageState {
   void _showServerDetailsDialog(ServerConnectionStats stats) {
     context.showRoundDialog(
       title: '${stats.serverName} - ${l10n.connectionDetails}',
@@ -426,5 +441,23 @@ extension on _ConnectionStatsPageState {
         ),
       ],
     );
+  }
+}
+
+extension _Utils on _ConnectionStatsPageState {
+  String _formatSize(int bytes) {
+    if (bytes < 1000) return '$bytes B';
+    if (bytes < 1000 * 1000) return '${(bytes / 1000).toStringAsFixed(1)} KB';
+    return '${(bytes / (1000 * 1000)).toStringAsFixed(1)} MB';
+  }
+
+  Future<File> _connectionStatsDbFile() async {
+    return AppDb.resolveDbFile();
+  }
+
+  Future<int> _safeFileSize(File file) async {
+    final exists = await file.exists();
+    if (!exists) return 0;
+    return file.length();
   }
 }

@@ -96,10 +96,21 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
               ),
               actions: [
                 CountDownBtn(
-                  onTap: () {
+                  onTap: () async {
                     context.pop();
-                    SettingStore.instance.clear();
-                    context.showSnackBar(libL10n.success);
+                    try {
+                      final ok = await SettingStore.instance.clear();
+                      if (!context.mounted) return;
+                      if (ok) {
+                        context.showSnackBar(libL10n.success);
+                      } else {
+                        context.showSnackBar(libL10n.fail);
+                      }
+                    } catch (e, s) {
+                      Loggers.app.warning('Clear settings failed', e, s);
+                      if (!context.mounted) return;
+                      context.showSnackBar('${libL10n.error}: $e');
+                    }
                   },
                   afterColor: Colors.red,
                 ),

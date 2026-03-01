@@ -155,7 +155,9 @@ class SnippetAutoRuns extends Table {
         'NOT NULL REFERENCES snippets(name) ON DELETE CASCADE',
       )();
 
-  TextColumn get serverId => text().named('server_id')();
+  TextColumn get serverId => text()
+      .named('server_id')
+      .customConstraint('NOT NULL REFERENCES servers(id) ON DELETE CASCADE')();
 
   @override
   Set<Column<Object>> get primaryKey => {snippetName, serverId};
@@ -173,7 +175,9 @@ class PrivateKeys extends Table {
 }
 
 class ContainerHosts extends Table {
-  TextColumn get serverId => text().named('server_id')();
+  TextColumn get serverId => text()
+      .named('server_id')
+      .customConstraint('NOT NULL REFERENCES servers(id) ON DELETE CASCADE')();
 
   TextColumn get host => text()();
 
@@ -267,9 +271,7 @@ class AppDb extends _$AppDb {
     },
     onUpgrade: (m, from, to) async {
       // Reserved for future migrations.
-      if (from < 1) {
-        await m.createAll();
-      }
+      await m.createAll();
       await customStatement(
         'CREATE INDEX IF NOT EXISTS idx_connection_stats_server_time ON connection_stats_records(server_id, timestamp_ms DESC)',
       );

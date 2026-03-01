@@ -24,14 +24,8 @@ class ServerStore {
 
   Future<List<Spi>> fetch() async {
     final rows = await _db.select(_db.servers).get();
-    final ss = <Spi>[];
-    for (final row in rows) {
-      final s = await _readSpi(row.id);
-      if (s != null) {
-        ss.add(s);
-      }
-    }
-    return ss;
+    if (rows.isEmpty) return const <Spi>[];
+    return _composeSpis(rows);
   }
 
   Future<Spi?> fetchOne(String id) async {
@@ -214,6 +208,100 @@ class ServerStore {
           .map((e) => e.cmdType)
           .toList(growable: false),
     );
+  }
+
+  Future<List<Spi>> _composeSpis(List<adb.Server> servers) async {
+    if (servers.isEmpty) return const <Spi>[];
+
+    final ids = servers.map((e) => e.id).toList(growable: false);
+
+    final customRows = await (_db.select(
+      _db.serverCustoms,
+    )..where((tbl) => tbl.serverId.isIn(ids))).get();
+    final customById = <String, adb.ServerCustom>{
+      for (final row in customRows) row.serverId: row,
+    };
+
+    final wolRows = await (_db.select(
+      _db.serverWolCfgs,
+    )..where((tbl) => tbl.serverId.isIn(ids))).get();
+    final wolById = <String, adb.ServerWolCfg>{
+      for (final row in wolRows) row.serverId: row,
+    };
+
+    final tagRows = await (_db.select(
+      _db.serverTags,
+    )..where((tbl) => tbl.serverId.isIn(ids))).get();
+    final tagsById = <String, List<String>>{};
+    for (final row in tagRows) {
+      tagsById.putIfAbsent(row.serverId, () => <String>[]).add(row.tag);
+    }
+
+    final envRows = await (_db.select(
+      _db.serverEnvs,
+    )..where((tbl) => tbl.serverId.isIn(ids))).get();
+    final envsById = <String, Map<String, String>>{};
+    for (final row in envRows) {
+      envsById.putIfAbsent(row.serverId, () => <String, String>{})[row.envKey] =
+          row.envVal;
+    }
+
+    final disabledRows = await (_db.select(
+      _db.serverDisabledCmdTypes,
+    )..where((tbl) => tbl.serverId.isIn(ids))).get();
+    final disabledById = <String, List<String>>{};
+    for (final row in disabledRows) {
+      disabledById.putIfAbsent(row.serverId, () => <String>[]).add(row.cmdType);
+    }
+
+    final list = <Spi>[];
+    for (final server in servers) {
+      final id = server.id;
+      final custom = customById[id];
+      final wol = wolById[id];
+
+      final cmdMap = _decodeStringMap(custom?.cmdsJson);
+      final serverCustom = custom == null
+          ? null
+          : ServerCustom(
+              pveAddr: custom.pveAddr,
+              pveIgnoreCert: custom.pveIgnoreCert,
+              cmds: cmdMap,
+              preferTempDev: custom.preferTempDev,
+              logoUrl: custom.logoUrl,
+              netDev: custom.netDev,
+              scriptDir: custom.scriptDir,
+            );
+      final wolCfg = wol == null
+          ? null
+          : WakeOnLanCfg(mac: wol.mac, ip: wol.ip, pwd: wol.pwd);
+
+      list.add(
+        Spi(
+          id: server.id,
+          name: server.name,
+          ip: server.ip,
+          port: server.port,
+          user: server.user,
+          pwd: server.pwd,
+          keyId: server.keyId,
+          tags: tagsById[id] ?? const <String>[],
+          alterUrl: server.alterUrl,
+          autoConnect: server.autoConnect,
+          jumpId: server.jumpId,
+          custom: serverCustom,
+          wolCfg: wolCfg,
+          envs: envsById[id],
+          customSystemType: server.customSystemType == null
+              ? null
+              : SystemType.values.firstWhereOrNull(
+                  (e) => e.name == server.customSystemType,
+                ),
+          disabledCmdTypes: disabledById[id] ?? const <String>[],
+        ),
+      );
+    }
+    return list;
   }
 
   Future<void> _upsert(Spi info) async {

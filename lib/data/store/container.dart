@@ -12,10 +12,7 @@ class ContainerStore {
 
   adb.AppDb get _db => adb.AppDb.instance;
 
-  final PrefStore _cfg = PrefStore(
-    name: 'container_cfg',
-    prefix: 'container_cfg',
-  );
+  final PrefStore _cfg = PrefStore(name: 'container_cfg');
 
   Map<String, int>? get lastUpdateTs => _cfg.lastUpdateTs;
 
@@ -55,9 +52,13 @@ class ContainerStore {
   ContainerType getType([String id = '']) {
     final cfg = _cfg.get<String>('$_keyConfig$id');
     if (cfg != null) {
-      final type = ContainerType.values.firstWhereOrNull(
-        (e) => e.toString() == cfg,
-      );
+      ContainerType? type;
+      try {
+        type = ContainerType.values.byName(cfg);
+      } catch (_) {
+        type = null;
+      }
+      type ??= ContainerType.values.firstWhereOrNull((e) => e.toString() == cfg);
       if (type != null) return type;
     }
 
@@ -73,7 +74,7 @@ class ContainerStore {
     if (type == defaultType) {
       await _cfg.remove('$_keyConfig$id');
     } else {
-      await _cfg.set('$_keyConfig$id', type.toString());
+      await _cfg.set('$_keyConfig$id', type.name);
     }
   }
 

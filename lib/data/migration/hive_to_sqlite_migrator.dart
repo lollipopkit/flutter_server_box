@@ -134,12 +134,29 @@ abstract final class HiveToSqliteMigrator {
         hasEnc: hasEnc,
         hasPlain: hasPlain,
       );
+      var hasEntryFailure = false;
       for (final rawKey in box.keys) {
         if (rawKey is! String) continue;
         if (_isInternalKey(rawKey)) continue;
         final normalized = normalize(box.get(rawKey));
         if (normalized == null) continue;
-        await write(rawKey, normalized);
+        try {
+          await write(rawKey, normalized);
+        } catch (e, s) {
+          hasEntryFailure = true;
+          Loggers.app.warning(
+            'Migrate hive box `$boxName` entry `$rawKey` failed',
+            e,
+            s,
+          );
+        }
+      }
+      if (hasEntryFailure) {
+        Loggers.app.warning(
+          'Migrate hive box `$boxName` is partially failed, '
+          'will retry this box next launch',
+        );
+        return false;
       }
       await PrefStore.shared.set(migratedBoxKey, true);
       return true;
@@ -364,12 +381,8 @@ abstract final class HiveToSqliteMigrator {
     if ((map['id'] as String?)?.isEmpty ?? true) {
       map['id'] = key;
     }
-    try {
-      final spi = Spi.fromJson(map);
-      await Stores.server.put(spi);
-    } catch (e, s) {
-      Loggers.app.warning('Migrate server entry `$key` failed', e, s);
-    }
+    final spi = Spi.fromJson(map);
+    await Stores.server.put(spi);
   }
 
   static Future<void> _writePrivateKey(String key, Object value) async {
@@ -379,12 +392,8 @@ abstract final class HiveToSqliteMigrator {
       map['id'] = key;
     }
     if ((map['private_key'] as String?)?.isEmpty ?? true) return;
-    try {
-      final info = PrivateKeyInfo.fromJson(map);
-      await Stores.key.put(info);
-    } catch (e, s) {
-      Loggers.app.warning('Migrate private key entry `$key` failed', e, s);
-    }
+    final info = PrivateKeyInfo.fromJson(map);
+    await Stores.key.put(info);
   }
 
   static Future<void> _writeSnippet(String key, Object value) async {
@@ -393,23 +402,25 @@ abstract final class HiveToSqliteMigrator {
     if ((map['name'] as String?)?.isEmpty ?? true) {
       map['name'] = key;
     }
-    try {
-      final snippet = Snippet.fromJson(map);
-      await Stores.snippet.put(snippet);
-    } catch (e, s) {
-      Loggers.app.warning('Migrate snippet entry `$key` failed', e, s);
-    }
+    final snippet = Snippet.fromJson(map);
+    await Stores.snippet.put(snippet);
   }
 
   static Future<void> _writeContainer(String key, Object value) async {
     if (key.startsWith(_containerConfigKeyPrefix)) {
       final id = key.substring(_containerConfigKeyPrefix.length);
       final cfg = value.toString();
-      final type = ContainerType.values.firstWhereOrNull(
-        (e) => e.toString() == cfg,
-      );
+      ContainerType? type;
+      try {
+        type = ContainerType.values.byName(cfg);
+      } catch (_) {
+        type = null;
+      }
+      type ??= ContainerType.values.firstWhereOrNull((e) => e.toString() == cfg);
       if (type != null) {
         await Stores.container.setType(type, id);
+      } else {
+        Loggers.app.warning('Migrate container config `$key` unknown type: $cfg');
       }
       return;
     }
@@ -428,11 +439,7 @@ abstract final class HiveToSqliteMigrator {
   static Future<void> _writeConnectionStats(String key, Object value) async {
     final map = _toJsonMap(value);
     if (map == null) return;
-    try {
-      final stat = ConnectionStat.fromJson(map);
-      await Stores.connectionStats.recordConnection(stat);
-    } catch (e, s) {
-      Loggers.app.warning('Migrate connection stat entry `$key` failed', e, s);
-    }
+    final stat = ConnectionStat.fromJson(map);
+    await Stores.connectionStats.recordConnection(stat);
   }
 }
