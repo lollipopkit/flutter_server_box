@@ -260,27 +260,25 @@ Future<SystemInfo> systemInfo(SystemInfoRef ref, Server server) async {
 
 ## State Persistence
 
-### Hive Integration
+### Store Integration
 
 ```dart
 @riverpod
-class ServerStoreNotifier extends _$ServerStoreNotifier {
+class ServersNotifier extends _$ServersNotifier {
   @override
-  List<Server> build() {
-    // Load from Hive
-    return Hive.box<Server>('servers').values.toList();
+  Future<List<Spi>> build() async {
+    // Load from the store layer
+    return Stores.server.fetch();
   }
 
-  void addServer(Server server) {
-    state = [...state, server];
-    // Persist to Hive
-    Hive.box<Server>('servers').put(server.id, server);
+  Future<void> addServer(Spi server) async {
+    await Stores.server.put(server);
+    state = AsyncData(await Stores.server.fetch());
   }
 
-  void removeServer(String id) {
-    state = state.where((s) => s.id != id).toList();
-    // Remove from Hive
-    Hive.box<Server>('servers').delete(id);
+  Future<void> removeServer(String id) async {
+    await Stores.server.delete(id);
+    state = AsyncData(await Stores.server.fetch());
   }
 }
 ```

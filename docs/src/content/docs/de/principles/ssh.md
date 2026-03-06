@@ -85,7 +85,7 @@ if (spi.jumpId != null) {
 onPasswordRequest: () => spi.pwd
 ```
 
-- Passwort verschlüsselt in Hive gespeichert
+- Passwort verschlüsselt im lokalen Speicher abgelegt
 - Bei Verbindung entschlüsselt
 - Zur Verifizierung an den Server gesendet
 

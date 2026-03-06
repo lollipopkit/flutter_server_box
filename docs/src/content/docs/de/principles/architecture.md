@@ -23,7 +23,7 @@ Server Box folgt einer Schichtarchitektur mit klarer Trennung der Belange (Separ
 ┌─────────────────────────────────────────────────┐
 │           Datenzugriffsschicht                  │
 │         lib/data/store/, lib/data/model/        │
-│  - Hive Stores, Datenmodelle                     │
+│  - Store-Abstraktionen, Datenmodelle            │
 └─────────────────────────────────────────────────┘
                       ↓
 ┌─────────────────────────────────────────────────┐
@@ -79,19 +79,22 @@ void main() {
 - `StreamProvider`: Echtzeit-Datenströme
 - Future Provider: Einmalige asynchrone Operationen
 
-### Datenpersistenz: Hive CE
+### Datenpersistenz: Store-Schicht
 
-**Warum Hive CE?**
-- Keine Abhängigkeiten von nativem Code
-- Schneller Key-Value-Speicher
-- Typsicher durch Codegenerierung
-- Keine manuellen Feld-Annotationen erforderlich
+**Warum diese Store-Schicht?**
+- `AppDb` + Drift verarbeiten relationale und abfrageintensive Daten
+- `PrefStore` deckt leichte Key-Value-Persistenz ab
+- `SQLCipher` schützt sensible Einträge in der lokalen Datenbank
+- Store-APIs halten Persistenzdetails aus UI und Geschäftslogik heraus
 
 **Stores:**
 - `SettingStore`: App-Einstellungen
+- `HistoryStore`: Befehls- und Navigationsverlauf
 - `ServerStore`: Server-Konfigurationen
+- `ContainerStore`: Container-Host-Zuordnungen und Präferenzen
 - `SnippetStore`: Befehls-Snippets
-- `KeyStore`: SSH-Schlüssel
+- `PrivateKeyStore`: SSH-Schlüssel
+- `ConnectionStatsStore`: Verbindungs-Telemetrie und Aggregate
 
 ### Immutable Modelle: Freezed
 

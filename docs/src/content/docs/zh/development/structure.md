@@ -13,7 +13,7 @@ lib/
 ├── data/              # 数据层
 │   ├── model/         # 按功能划分的数据模型
 │   ├── provider/      # Riverpod provider
-│   └── store/         # 本地存储 (SqliteStore/SQLCipher)
+│   └── store/         # 本地存储抽象 (AppDb/SQLCipher + PrefStore)
 ├── view/              # UI 层
 │   ├── page/          # 主要页面
 │   └── widget/        # 可复用组件
@@ -52,7 +52,7 @@ lib/
 
 ### 存储 (`lib/data/store/`)
 
-基于 SqliteStore（SQLCipher）的本地存储：
+基于 AppDb/SQLCipher 与 PrefStore 的本地存储抽象：
 
 - 服务器存储
 - 设置存储

@@ -23,7 +23,7 @@ Server Box 采用分层架构，实现了清晰的关注点分离。
 ┌─────────────────────────────────────────────────┐
 │           数据访问层                            │
 │         lib/data/store/, lib/data/model/        │
-│  - Hive 存储, 数据模型                          │
+│  - Store 抽象, 数据模型                         │
 └─────────────────────────────────────────────────┘
                       ↓
 ┌─────────────────────────────────────────────────┐
@@ -79,19 +79,22 @@ void main() {
 - `StreamProvider`：实时数据流
 - Future providers：一次性异步操作
 
-### 数据持久化：Hive CE
+### 数据持久化：Store 层
 
-**为何选择 Hive CE？**
-- 无原生代码依赖
-- 快速的键值存储
-- 通过代码生成实现类型安全
-- 无需手动添加字段注解
+**为何采用这套 Store 层？**
+- `AppDb` + Drift 负责关系型和查询密集型数据
+- `PrefStore` 负责轻量级键值持久化
+- `SQLCipher` 保护本地数据库中的敏感记录
+- Store API 将持久化细节隔离在 UI 和业务逻辑之外
 
 **存储类：**
 - `SettingStore`：应用偏好设置
+- `HistoryStore`：最近命令与导航历史
 - `ServerStore`：服务器配置
+- `ContainerStore`：容器主机映射与偏好
 - `SnippetStore`：命令脚本
-- `KeyStore`：SSH 密钥
+- `PrivateKeyStore`：SSH 密钥
+- `ConnectionStatsStore`：连接遥测与聚合统计
 
 ### 不可变模型：Freezed
 

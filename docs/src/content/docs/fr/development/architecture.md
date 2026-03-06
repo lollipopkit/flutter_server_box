@@ -44,12 +44,12 @@ Server Box suit les principes de la Clean Architecture avec une séparation clai
 - Sérialisation JSON intégrée
 - Extensions CopyWith pour les mises à jour
 
-### Stockage local : Hive
+### Stockage local : AppDb/SQLCipher + PrefStore
 
-- **hive_ce** : Édition communautaire de Hive
-- Pas de `@HiveField` ou `@HiveType` manuel requis
-- Adaptateurs de type auto-générés
-- Stockage clé-valeur persistant
+- **AppDb + Drift** : Persistance locale relationnelle pour les données structurées
+- **SQLCipher** : Chiffre au repos les tables sensibles de la base locale
+- **PrefStore** : Gère les réglages et l'historique légers en clé-valeur
+- **Store APIs** : Masquent les détails du backend derrière une interface cohérente
 
 ## Injection de dépendances
 

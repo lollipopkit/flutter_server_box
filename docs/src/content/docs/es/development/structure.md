@@ -13,7 +13,7 @@ lib/
 ├── data/              # Capa de datos
 │   ├── model/         # Modelos de datos por función
 │   ├── provider/      # Riverpod providers
-│   └── store/         # Almacenamiento local (Hive)
+│   └── store/         # Abstracciones de almacenamiento local (AppDb/SQLCipher + PrefStore)
 ├── view/              # Capa de UI
 │   ├── page/          # Páginas principales
 │   └── widget/        # Widgets reutilizables
@@ -52,7 +52,7 @@ Providers de Riverpod para inyección de dependencias y gestión de estado:
 
 ### Almacenes (`lib/data/store/`)
 
-Almacenamiento local basado en Hive:
+Almacenamiento local basado en AppDb/SQLCipher y PrefStore:
 
 - Almacén de servidores
 - Almacén de ajustes

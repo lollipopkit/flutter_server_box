@@ -23,7 +23,7 @@ Server Box follows a layered architecture with clear separation of concerns.
 ┌─────────────────────────────────────────────────┐
 │           Data Access Layer                     │
 │         lib/data/store/, lib/data/model/        │
-│  - Hive Stores, Data Models                     │
+│  - Store abstractions, Data Models              │
 └─────────────────────────────────────────────────┘
                       ↓
 ┌─────────────────────────────────────────────────┐
@@ -79,19 +79,22 @@ void main() {
 - `StreamProvider`: Real-time data streams
 - Future providers: One-time async operations
 
-### Data Persistence: Hive CE
+### Data Persistence: Store Layer
 
-**Why Hive CE?**
-- No native code dependencies
-- Fast key-value storage
-- Type-safe with code generation
-- No manual field annotations needed
+**Why this store layer?**
+- `AppDb` + Drift handle relational and query-heavy data
+- `PrefStore` covers lightweight key-value persistence
+- `SQLCipher` protects sensitive local database records
+- Store APIs keep persistence details out of UI and business logic
 
 **Stores:**
 - `SettingStore`: App preferences
+- `HistoryStore`: Recent commands and navigation history
 - `ServerStore`: Server configurations
+- `ContainerStore`: Container host mappings and preferences
 - `SnippetStore`: Command snippets
-- `KeyStore`: SSH keys
+- `PrivateKeyStore`: SSH keys
+- `ConnectionStatsStore`: Connection telemetry and aggregates
 
 ### Immutable Models: Freezed
 
