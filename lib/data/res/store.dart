@@ -17,6 +17,7 @@ abstract final class Stores {
   static PrivateKeyStore get key => getIt<PrivateKeyStore>();
   static SnippetStore get snippet => getIt<SnippetStore>();
   static HistoryStore get history => getIt<HistoryStore>();
+  // Keep the legacy box registered so existing connection stats DB files remain intact.
   static ConnectionStatsStore get connectionStats => getIt<ConnectionStatsStore>();
 
   /// All stores that need backup
