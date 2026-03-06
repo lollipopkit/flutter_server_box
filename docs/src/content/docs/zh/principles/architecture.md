@@ -96,6 +96,8 @@ void main() {
 - `PrivateKeyStore`：SSH 密钥
 - `ConnectionStatsStore`：连接遥测与聚合统计
 
+这套设计替代了旧的 Hive 持久化；如需了解 Hive → Drift migration 的迁移路径与原因，可参阅 `HiveToSqliteMigrator`（`lib/data/migration/hive_to_sqlite_migrator.dart`），其中涵盖了 AppDb、PrefStore、SQLCipher 与 Store API 的协作方式。
+
 ### 不可变模型：Freezed
 
 **优势：**

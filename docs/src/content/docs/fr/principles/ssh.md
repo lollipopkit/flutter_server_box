@@ -85,7 +85,7 @@ if (spi.jumpId != null) {
 onPasswordRequest: () => spi.pwd
 ```
 
-- Mot de passe stocké chiffré dans le stockage local
+- Mot de passe stocké chiffré dans AppDb (SQLite + SQLCipher)
 - Déchiffré lors de la connexion
 - Envoyé au serveur pour vérification
 

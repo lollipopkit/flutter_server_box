@@ -273,12 +273,12 @@ class ServersNotifier extends _$ServersNotifier {
 
   Future<void> addServer(Spi server) async {
     await Stores.server.put(server);
-    state = AsyncData(await Stores.server.fetch());
+    state = await AsyncValue.guard(() => Stores.server.fetch());
   }
 
   Future<void> removeServer(String id) async {
     await Stores.server.delete(id);
-    state = AsyncData(await Stores.server.fetch());
+    state = await AsyncValue.guard(() => Stores.server.fetch());
   }
 }
 ```

@@ -52,7 +52,7 @@ Providers Riverpod pour l'injection de dépendances et la gestion de l'état :
 
 ### Stores (`lib/data/store/`)
 
-Stockage local basé sur AppDb/SQLCipher et PrefStore :
+Stockage local avec AppDb/SQLCipher et PrefStore :
 
 - Stockage des serveurs
 - Stockage des paramètres

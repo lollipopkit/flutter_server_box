@@ -85,7 +85,7 @@ void main() {
 - `AppDb` + Drift gèrent les données relationnelles et les requêtes lourdes
 - `PrefStore` couvre la persistance clé-valeur légère
 - `SQLCipher` protège les enregistrements sensibles de la base locale
-- Les Store APIs gardent les détails de persistance hors de l'UI et de la logique métier
+- Les API de Store gardent les détails de persistance hors de l'UI et de la logique métier
 
 **Stores :**
 - `SettingStore` : Préférences de l'application

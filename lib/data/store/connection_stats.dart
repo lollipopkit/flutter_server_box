@@ -1,15 +1,5 @@
-// Policy exception: ConnectionStatsStore uses Drift instead of Hive.
-//
-// Rationale: Connection stats require complex SQL queries (aggregation,
-// window functions, grouping) that are impractical to implement efficiently
-// with Hive key-value storage. The data is non-sensitive telemetry (success
-// rates, timestamps, error messages) and does not require encryption.
-//
-// Migration to Hive would require significant refactoring of query logic
-// and may impact performance for stats aggregation.
-//
-// See: fix(restore): harden backup parsing and stats store safety
-//
+// Connection stats are stored in AppDb because the feature depends on SQL
+// aggregation, ordering, and retention cleanup that fit relational storage.
 import 'package:drift/drift.dart' as d;
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/db/app_db.dart' as adb;

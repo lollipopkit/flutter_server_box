@@ -79,7 +79,7 @@ void main() {
 - `StreamProvider`: Flujos de datos en tiempo real
 - Future providers: Operaciones asíncronas únicas
 
-### Persistencia de Datos: Capa de Stores
+### Persistencia de Datos: Capa de stores
 
 **¿Por qué esta capa de stores?**
 - `AppDb` + Drift gestionan datos relacionales y consultas pesadas
@@ -87,7 +87,7 @@ void main() {
 - `SQLCipher` protege los registros sensibles de la base local
 - Las Store APIs mantienen los detalles de persistencia fuera de la UI y la lógica de negocio
 
-**Almacenes (Stores):**
+**Almacenes (stores):**
 - `SettingStore`: Preferencias de la app
 - `HistoryStore`: Historial de comandos y navegación reciente
 - `ServerStore`: Configuraciones de servidores
