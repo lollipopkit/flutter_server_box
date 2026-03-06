@@ -13,7 +13,7 @@ lib/
 ├── data/              # データ層
 │   ├── model/         # 機能別のデータモデル
 │   ├── provider/      # Riverpod Provider
-│   └── store/         # ローカルストレージ (Hive)
+│   └── store/         # ローカルストレージ抽象 (AppDb/SQLCipher + PrefStore)
 ├── view/              # UI 層
 │   ├── page/          # 主要なページ
 │   └── widget/        # 再利用可能なウィジェット
@@ -52,7 +52,7 @@ lib/
 
 ### ストア (`lib/data/store/`)
 
-Hive ベースのローカルストレージ。
+AppDb/SQLCipher と PrefStore によるローカルストレージ抽象。
 
 - サーバー情報の保存
 - 設定情報の保存

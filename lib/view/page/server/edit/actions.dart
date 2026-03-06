@@ -116,14 +116,15 @@ extension _Actions on _ServerEditPageState {
     int imported = 0;
     for (final server in servers) {
       try {
-        store.put(server);
+        await store.put(server);
         imported++;
       } catch (e) {
         dprint('Failed to import server ${server.name}: $e');
       }
     }
+    if (!mounted) return;
     context.showSnackBar('${libL10n.success}: $imported ${libL10n.servers}');
-    if (mounted) context.pop(true);
+    context.pop(true);
   }
 
   void _onTapSSHImport() async {
@@ -170,8 +171,12 @@ extension _Actions on _ServerEditPageState {
   }
 
   Future<void> _processSSHServers(List<Spi> servers) async {
-    final deduplicated = ServerDeduplication.deduplicateServers(servers);
-    final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
+    final deduplicated = await ServerDeduplication.deduplicateServers(servers);
+    if (!mounted) return;
+    final resolved = await ServerDeduplication.resolveNameConflicts(
+      deduplicated,
+    );
+    if (!mounted) return;
     final summary = ServerDeduplication.getImportSummary(servers, resolved);
 
     if (!summary.hasItemsToImport) {
@@ -202,6 +207,7 @@ extension _Actions on _ServerEditPageState {
       ),
       actions: Btnx.cancelOk,
     );
+    if (!mounted) return;
 
     if (shouldImport == true) {
       for (final server in resolved) {
@@ -268,6 +274,7 @@ extension _Actions on _ServerEditPageState {
         child: Text(libL10n.askContinue(l10n.useNoPwd)),
         actions: Btnx.cancelRedOk,
       );
+      if (!mounted) return;
       if (ok != true) return;
     }
 
@@ -343,7 +350,8 @@ extension _Actions on _ServerEditPageState {
     );
 
     if (this.spi == null) {
-      final existsIds = ServerStore.instance.box.keys;
+      final existsIds = await ServerStore.instance.keys();
+      if (!mounted) return;
       if (existsIds.contains(spi.id)) {
         context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
         return;
@@ -384,19 +392,27 @@ extension _Utils on _ServerEditPageState {
         ),
         actions: Btnx.cancelOk,
       );
+      if (!mounted) return;
 
       prop.put(false);
 
       if (hasPermission == true) {
         // Parse and import SSH config
         final servers = await SSHConfig.parseConfig();
+        if (!mounted) return;
         if (servers.isEmpty) {
           context.showSnackBar(l10n.sshConfigNoServers);
           return;
         }
 
-        final deduplicated = ServerDeduplication.deduplicateServers(servers);
-        final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
+        final deduplicated = await ServerDeduplication.deduplicateServers(
+          servers,
+        );
+        if (!mounted) return;
+        final resolved = await ServerDeduplication.resolveNameConflicts(
+          deduplicated,
+        );
+        if (!mounted) return;
         final summary = ServerDeduplication.getImportSummary(servers, resolved);
 
         if (!summary.hasItemsToImport) {

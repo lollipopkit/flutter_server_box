@@ -12,7 +12,12 @@ extension _AI on _AppSettingsPageState {
           return ListTile(
             leading: const Icon(MingCute.link_2_line),
             title: Text(l10n.askAiBaseUrl),
-            subtitle: Text(display, style: UIs.textGrey, maxLines: 2, overflow: TextOverflow.ellipsis),
+            subtitle: Text(
+              display,
+              style: UIs.textGrey,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
             onTap: () => _showAskAiFieldDialog(
               prop: _setting.askAiBaseUrl,
               title: l10n.askAiBaseUrl,
@@ -38,7 +43,10 @@ extension _AI on _AppSettingsPageState {
           return ListTile(
             leading: const Icon(MingCute.key_2_line),
             title: Text(l10n.askAiApiKey),
-            subtitle: Text(hasKey ? '••••••••' : libL10n.empty, style: UIs.textGrey),
+            subtitle: Text(
+              hasKey ? '••••••••' : libL10n.empty,
+              style: UIs.textGrey,
+            ),
             onTap: () => _showAskAiFieldDialog(
               prop: _setting.askAiApiKey,
               title: l10n.askAiApiKey,
@@ -51,19 +59,18 @@ extension _AI on _AppSettingsPageState {
     ).cardx;
   }
 
-
   Future<void> _showAskAiFieldDialog({
-    required HiveProp<String> prop,
+    required StoreProp<String> prop,
     required String title,
     required String hint,
     bool obscure = false,
   }) async {
     return withTextFieldController((ctrl) async {
-      final fetched = prop.fetch();
+      final fetched = prop.get();
       if (fetched != null && fetched.isNotEmpty) ctrl.text = fetched;
 
       void onSave() {
-        prop.put(ctrl.text.trim());
+        prop.set(ctrl.text.trim());
         context.pop();
       }
 
@@ -82,7 +89,7 @@ extension _AI on _AppSettingsPageState {
         actions: [
           TextButton(
             onPressed: () {
-              prop.delete();
+              prop.remove();
               context.pop();
             },
             child: Text(libL10n.clear),

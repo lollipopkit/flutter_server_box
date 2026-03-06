@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:logging/logging.dart';
+import 'package:server_box/data/model/app/bak/container_restore.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -46,14 +47,14 @@ class Backup implements Mergeable {
   Map<String, dynamic> toJson() => _$BackupToJson(this);
 
   static Future<Backup> loadFromStore() async {
-    final lastModTime = Stores.lastModTime;
+    final lastModTime = await Stores.lastModTime();
     return Backup(
       version: backupFormatVersion,
       date: DateTime.now().toString().split('.').firstOrNull ?? '',
-      spis: Stores.server.fetch(),
-      snippets: Stores.snippet.fetch(),
-      keys: Stores.key.fetch(),
-      container: Stores.container.getAllMap(),
+      spis: await Stores.server.fetch(),
+      snippets: await Stores.snippet.fetch(),
+      keys: await Stores.key.fetch(),
+      container: await Stores.container.getAllMap(),
       lastModTime: lastModTime,
       history: Stores.history.getAllMap(),
       settings: Stores.setting.getAllMap(),
@@ -70,7 +71,7 @@ class Backup implements Mergeable {
 
   @override
   Future<void> merge({bool force = false}) async {
-    final curTime = Stores.lastModTime;
+    final curTime = await Stores.lastModTime();
     final bakTime = lastModTime ?? 0;
     final shouldRestore = force || curTime < bakTime;
     if (!shouldRestore) {
@@ -78,134 +79,14 @@ class Backup implements Mergeable {
       return;
     }
 
-    // Snippets
-    if (force) {
-      for (final s in snippets) {
-        Stores.snippet.box.put(s.name, s);
-      }
-    } else {
-      final nowSnippets = Stores.snippet.box.keys.toSet();
-      final bakSnippets = snippets.map((e) => e.name).toSet();
-      final newSnippets = bakSnippets.difference(nowSnippets);
-      final delSnippets = nowSnippets.difference(bakSnippets);
-      final updateSnippets = nowSnippets.intersection(bakSnippets);
-      for (final s in newSnippets) {
-        Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
-      }
-      for (final s in delSnippets) {
-        Stores.snippet.box.delete(s);
-      }
-      for (final s in updateSnippets) {
-        Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
-      }
-    }
-
-    // ServerPrivateInfo
-    if (force) {
-      for (final s in spis) {
-        Stores.server.box.put(s.id, s);
-      }
-    } else {
-      final nowSpis = Stores.server.box.keys.toSet();
-      final bakSpis = spis.map((e) => e.id).toSet();
-      final newSpis = bakSpis.difference(nowSpis);
-      final delSpis = nowSpis.difference(bakSpis);
-      final updateSpis = nowSpis.intersection(bakSpis);
-      for (final s in newSpis) {
-        Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
-      }
-      for (final s in delSpis) {
-        Stores.server.box.delete(s);
-      }
-      for (final s in updateSpis) {
-        Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
-      }
-    }
-
-    // PrivateKeyInfo
-    if (force) {
-      for (final s in keys) {
-        Stores.key.box.put(s.id, s);
-      }
-    } else {
-      final nowKeys = Stores.key.box.keys.toSet();
-      final bakKeys = keys.map((e) => e.id).toSet();
-      final newKeys = bakKeys.difference(nowKeys);
-      final delKeys = nowKeys.difference(bakKeys);
-      final updateKeys = nowKeys.intersection(bakKeys);
-      for (final s in newKeys) {
-        Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
-      }
-      for (final s in delKeys) {
-        Stores.key.box.delete(s);
-      }
-      for (final s in updateKeys) {
-        Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
-      }
-    }
-
-    // History
-    if (force) {
-      Stores.history.box.putAll(history);
-    } else {
-      final nowHistory = Stores.history.box.keys.toSet();
-      final bakHistory = history.keys.toSet();
-      final newHistory = bakHistory.difference(nowHistory);
-      final delHistory = nowHistory.difference(bakHistory);
-      final updateHistory = nowHistory.intersection(bakHistory);
-      for (final s in newHistory) {
-        Stores.history.box.put(s, history[s]);
-      }
-      for (final s in delHistory) {
-        Stores.history.box.delete(s);
-      }
-      for (final s in updateHistory) {
-        Stores.history.box.put(s, history[s]);
-      }
-    }
-
-    // Container
-    if (force) {
-      Stores.container.box.putAll(container);
-    } else {
-      final nowContainer = Stores.container.box.keys.toSet();
-      final bakContainer = container.keys.toSet();
-      final newContainer = bakContainer.difference(nowContainer);
-      final delContainer = nowContainer.difference(bakContainer);
-      final updateContainer = nowContainer.intersection(bakContainer);
-      for (final s in newContainer) {
-        Stores.container.box.put(s, container[s]);
-      }
-      for (final s in delContainer) {
-        Stores.container.box.delete(s);
-      }
-      for (final s in updateContainer) {
-        Stores.container.box.put(s, container[s]);
-      }
-    }
-
-    // Settings
-    final settings_ = settings;
-    if (settings_ != null) {
-      if (force) {
-        Stores.setting.box.putAll(settings_);
-      } else {
-        final nowSettings = Stores.setting.box.keys.toSet();
-        final bakSettings = settings_.keys.toSet();
-        final newSettings = bakSettings.difference(nowSettings);
-        final delSettings = nowSettings.difference(bakSettings);
-        final updateSettings = nowSettings.intersection(bakSettings);
-        for (final s in newSettings) {
-          Stores.setting.box.put(s, settings_[s]);
-        }
-        for (final s in delSettings) {
-          Stores.setting.box.delete(s);
-        }
-        for (final s in updateSettings) {
-          Stores.setting.box.put(s, settings_[s]);
-        }
-      }
-    }
+    await _restoreServers(spis);
+    await _restoreSnippets(snippets);
+    await _restoreKeys(keys);
+    await _restoreHistory(history.cast<String, Object?>());
+    await _restoreContainer(container.cast<String, Object?>());
+    await _restoreSettings(
+      settings?.cast<String, Object?>() ?? <String, Object?>{},
+    );
 
     Provider.reload();
     RNodes.app.notify();
@@ -213,10 +94,59 @@ class Backup implements Mergeable {
     _logger.info('Restore success');
   }
 
-  factory Backup.fromJsonString(String raw) => Backup.fromJson(json.decode(_diyDecrypt(raw)));
+  factory Backup.fromJsonString(String raw) =>
+      Backup.fromJson(json.decode(_diyDecrypt(raw)));
+
+  static Future<void> _restoreServers(List<Spi> servers) async {
+    await Stores.server.clear();
+    for (final spi in servers) {
+      await Stores.server.put(spi);
+    }
+  }
+
+  static Future<void> _restoreSnippets(List<Snippet> snippets) async {
+    await Stores.snippet.clear();
+    for (final snippet in snippets) {
+      await Stores.snippet.put(snippet);
+    }
+  }
+
+  static Future<void> _restoreKeys(List<PrivateKeyInfo> keys) async {
+    await Stores.key.clear();
+    for (final key in keys) {
+      await Stores.key.put(key);
+    }
+  }
+
+  static Future<void> _restoreHistory(Map<String, Object?> history) async {
+    await Stores.history.clear();
+    for (final entry in history.entries) {
+      final value = entry.value;
+      if (value == null) continue;
+      await Stores.history.set<Object>(entry.key, value);
+    }
+  }
+
+  static Future<void> _restoreSettings(Map<String, Object?> settings) async {
+    await Stores.setting.clear();
+    for (final entry in settings.entries) {
+      final value = entry.value;
+      if (value == null) continue;
+      await Stores.setting.set<Object>(entry.key, value);
+    }
+  }
+
+  static Future<void> _restoreContainer(Map<String, Object?> container) async {
+    await restoreContainerFromMap(container);
+  }
 }
 
-String _diyEncrypt(String raw) => json.encode(raw.codeUnits.map((e) => e * 2 + 1).toList(growable: false));
+/// Legacy v1 backup obfuscation only.
+///
+/// This is **not** cryptographic encryption and remains only for backward
+/// compatibility with historical v1 backup files.
+String _diyEncrypt(String raw) =>
+    json.encode(raw.codeUnits.map((e) => e * 2 + 1).toList(growable: false));
 
 String _diyDecrypt(String raw) {
   try {

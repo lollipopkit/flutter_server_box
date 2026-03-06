@@ -195,7 +195,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     FocusScope.of(context).unfocus();
     _loading.value = SizedLoading.medium;
     try {
-      final decrypted = await Computer.shared.start(decyptPem, [key, pwd]);
+      final decrypted = await Computer.shared.start(decryptPem, [key, pwd]);
       final pki = PrivateKeyInfo(id: name, key: decrypted);
       final originPki = this.pki;
       if (originPki != null) {

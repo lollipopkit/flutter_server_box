@@ -13,7 +13,7 @@ lib/
 ├── data/              # Datenschicht
 │   ├── model/         # Datenmodelle nach Funktionen
 │   ├── provider/      # Riverpod Provider
-│   └── store/         # Lokale Speicherung (Hive)
+│   └── store/         # Abstraktionen für lokale Speicherung (AppDb/SQLCipher + PrefStore)
 ├── view/              # UI-Schicht
 │   ├── page/          # Hauptseiten
 │   └── widget/        # Wiederverwendbare Widgets
@@ -52,7 +52,7 @@ Riverpod Provider für Dependency Injection und Zustandsverwaltung:
 
 ### Stores (`lib/data/store/`)
 
-Hive-basierte lokale Speicherung:
+Lokale Speicherung auf Basis von AppDb/SQLCipher und PrefStore:
 
 - Server-Speicher
 - Einstellungs-Speicher

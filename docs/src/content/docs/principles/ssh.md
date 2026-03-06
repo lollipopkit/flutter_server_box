@@ -80,7 +80,7 @@ if (spi.jumpId != null) {
 onPasswordRequest: () => spi.pwd
 ```
 
-- Password stored encrypted in Hive
+- Password stored in encrypted local storage
 - Decrypted on connection
 - Sent to server for verification
 

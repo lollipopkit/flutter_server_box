@@ -96,8 +96,8 @@ extension _Editor on _AppSettingsPageState {
     );
   }
 
-  void _showFontSizeDialog(HiveProp<double> property) {
-    final ctrl = TextEditingController(text: property.fetch().toString());
+  void _showFontSizeDialog(StoreProp<double> property) {
+    final ctrl = TextEditingController(text: property.get().toString());
     void onSave() {
       context.pop();
       final fontSize = double.tryParse(ctrl.text);

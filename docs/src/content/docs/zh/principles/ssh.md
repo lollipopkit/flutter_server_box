@@ -85,7 +85,7 @@ if (spi.jumpId != null) {
 onPasswordRequest: () => spi.pwd
 ```
 
-- 密码以加密形式存储在 Hive 中
+- 密码以加密形式存储在本地存储中
 - 连接时解密
 - 发送到服务器进行验证
 

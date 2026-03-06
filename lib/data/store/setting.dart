@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -8,10 +9,113 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/default.dart';
 
-class SettingStore extends HiveStore {
-  SettingStore._() : super('setting');
+class SettingStore {
+  SettingStore._();
 
   static final instance = SettingStore._();
+  final PrefStore _store = PrefStore(name: 'setting', prefix: 'setting');
+
+  Future<void> init() => _store.init();
+
+  PrefStore get rawStore => _store;
+
+  String get lastUpdateTsKey => _store.lastUpdateTsKey;
+
+  Map<String, int>? get lastUpdateTs => _store.lastUpdateTs;
+
+  FutureOr<bool> updateLastUpdateTs({int? ts, required String? key}) {
+    return _store.updateLastUpdateTs(ts: ts, key: key);
+  }
+
+  bool isInternalKey(String key) => _store.isInternalKey(key);
+
+  T? get<T extends Object>(String key, {StoreFromObj<T>? fromObj}) {
+    return _store.get<T>(key, fromObj: fromObj);
+  }
+
+  Future<bool> set<T extends Object>(
+    String key,
+    T val, {
+    StoreToObj<T>? toObj,
+    bool? updateLastUpdateTsOnSet,
+  }) {
+    return _store.set(
+      key,
+      val,
+      toObj: toObj,
+      updateLastUpdateTsOnSet: updateLastUpdateTsOnSet,
+    );
+  }
+
+  Set<String> keys({
+    bool includeInternalKeys = StoreDefaults.defaultIncludeInternalKeys,
+  }) {
+    return _store.keys(includeInternalKeys: includeInternalKeys);
+  }
+
+  Future<bool> remove(String key, {bool? updateLastUpdateTsOnRemove}) {
+    return _store.remove(
+      key,
+      updateLastUpdateTsOnRemove: updateLastUpdateTsOnRemove,
+    );
+  }
+
+  Future<bool> clear({bool? updateLastUpdateTsOnClear}) {
+    return _store.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
+  }
+
+  Map<String, Object?> getAllMap({
+    bool includeInternalKeys = StoreDefaults.defaultIncludeInternalKeys,
+  }) {
+    final keys = this.keys(includeInternalKeys: includeInternalKeys);
+    return Map.fromIterables(keys, keys.map((key) => get(key)));
+  }
+
+  PrefProp<T> property<T extends Object>(
+    String key, {
+    bool updateLastModified = true,
+    StoreFromObj<T>? fromObj,
+    StoreToObj<T>? toObj,
+  }) {
+    return _store.property(
+      key,
+      updateLastModified: updateLastModified,
+      fromObj: fromObj,
+      toObj: toObj,
+    );
+  }
+
+  PrefPropDefault<T> propertyDefault<T extends Object>(
+    String key,
+    T defaultValue, {
+    bool updateLastModified = StoreDefaults.defaultUpdateLastUpdateTs,
+    StoreFromObj<T>? fromObj,
+    StoreToObj<T>? toObj,
+  }) {
+    return _store.propertyDefault(
+      key,
+      defaultValue,
+      updateLastModified: updateLastModified,
+      fromObj: fromObj,
+      toObj: toObj,
+    );
+  }
+
+  PrefPropDefault<List<T>> listProperty<T extends Object>(
+    String key, {
+    List<T> defaultValue = const [],
+    bool updateLastModified = StoreDefaults.defaultUpdateLastUpdateTs,
+    StoreFromObj<List<T>>? fromObj,
+    StoreToObj<List<T>>? toObj,
+  }) {
+    return _store.listProperty(
+      key,
+      defaultValue: defaultValue,
+      updateLastModified: updateLastModified,
+      fromObj: fromObj,
+      toObj: toObj,
+    );
+  }
 
   /// Time out for server connect and more...
   late final timeout = propertyDefault('timeOut', 5);
@@ -23,7 +127,10 @@ class SettingStore extends HiveStore {
   // late final launchPage = property('launchPage', Defaults.launchPageIdx);
 
   /// Disk view: amount / IO
-  late final serverTabPreferDiskAmount = propertyDefault('serverTabPreferDiskAmount', false);
+  late final serverTabPreferDiskAmount = propertyDefault(
+    'serverTabPreferDiskAmount',
+    false,
+  );
 
   /// Bigger for bigger font size
   /// 1.0 means 100%
@@ -74,7 +181,10 @@ class SettingStore extends HiveStore {
   late final locale = propertyDefault('locale', '');
 
   // SSH virtual key (ctrl | alt) auto turn off
-  late final sshVirtualKeyAutoOff = propertyDefault('sshVirtualKeyAutoOff', true);
+  late final sshVirtualKeyAutoOff = propertyDefault(
+    'sshVirtualKeyAutoOff',
+    true,
+  );
 
   late final editorFontSize = propertyDefault('editorFontSize', 12.5);
 
@@ -84,7 +194,9 @@ class SettingStore extends HiveStore {
     const {},
     fromObj: (raw) {
       if (raw is Map) {
-        return raw.map((key, value) => MapEntry(key.toString(), value.toString()));
+        return raw.map(
+          (key, value) => MapEntry(key.toString(), value.toString()),
+        );
       }
       return <String, String>{};
     },
@@ -93,7 +205,10 @@ class SettingStore extends HiveStore {
   // Editor theme
   late final editorTheme = propertyDefault('editorTheme', Defaults.editorTheme);
 
-  late final editorDarkTheme = propertyDefault('editorDarkTheme', Defaults.editorDarkTheme);
+  late final editorDarkTheme = propertyDefault(
+    'editorDarkTheme',
+    Defaults.editorDarkTheme,
+  );
 
   late final fullScreen = propertyDefault('fullScreen', false);
 
@@ -123,20 +238,29 @@ class SettingStore extends HiveStore {
   );
 
   // Only valid on iOS
-  late final autoUpdateHomeWidget = propertyDefault('autoUpdateHomeWidget', isIOS);
+  late final autoUpdateHomeWidget = propertyDefault(
+    'autoUpdateHomeWidget',
+    isIOS,
+  );
 
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 
   /// Display server tab function buttons on the bottom of each server card if [true]
   ///
   /// Otherwise, display them on the top of server detail page
-  late final moveServerFuncs = propertyDefault('moveOutServerTabFuncBtns', false);
+  late final moveServerFuncs = propertyDefault(
+    'moveOutServerTabFuncBtns',
+    false,
+  );
 
   /// Whether use `rm -r` to delete directory on SFTP
   late final sftpRmrDir = propertyDefault('sftpRmrDir', false);
 
   /// Whether use system's primary color as the app's primary color
-  late final useSystemPrimaryColor = propertyDefault('useSystemPrimaryColor', false);
+  late final useSystemPrimaryColor = propertyDefault(
+    'useSystemPrimaryColor',
+    false,
+  );
 
   /// Only valid on iOS / Android / Windows
   late final useBioAuth = propertyDefault('useBioAuth', false);
@@ -152,7 +276,10 @@ class SettingStore extends HiveStore {
   late final sftpOpenLastPath = propertyDefault('sftpOpenLastPath', true);
 
   /// Show folders first in SFTP file browser
-  late final sftpShowFoldersFirst = propertyDefault('sftpShowFoldersFirst', true);
+  late final sftpShowFoldersFirst = propertyDefault(
+    'sftpShowFoldersFirst',
+    true,
+  );
 
   /// Show tip of suspend
   late final showSuspendTip = propertyDefault('showSuspendTip', true);
@@ -161,11 +288,17 @@ class SettingStore extends HiveStore {
   late final collapseUIDefault = propertyDefault('collapseUIDefault', true);
 
   /// Terminal AI helper configuration
-  late final askAiBaseUrl = propertyDefault('askAiBaseUrl', 'https://api.openai.com');
+  late final askAiBaseUrl = propertyDefault(
+    'askAiBaseUrl',
+    'https://api.openai.com',
+  );
   late final askAiApiKey = propertyDefault('askAiApiKey', '');
   late final askAiModel = propertyDefault('askAiModel', 'gpt-4o-mini');
 
-  late final serverFuncBtns = listProperty('serverBtns', defaultValue: ServerFuncBtn.defaultIdxs);
+  late final serverFuncBtns = listProperty(
+    'serverBtns',
+    defaultValue: ServerFuncBtn.defaultIdxs,
+  );
 
   /// Docker is more popular than podman, set to `false` to use docker
   late final usePodman = propertyDefault('usePodman', false);
@@ -180,10 +313,16 @@ class SettingStore extends HiveStore {
   late final containerParseStat = propertyDefault('containerParseStat', true);
 
   /// Auto refresh container status
-  late final containerAutoRefresh = propertyDefault('containerAutoRefresh', true);
+  late final containerAutoRefresh = propertyDefault(
+    'containerAutoRefresh',
+    true,
+  );
 
   /// Use double column servers page on Desktop
-  late final doubleColumnServersPage = propertyDefault('doubleColumnServersPage', true);
+  late final doubleColumnServersPage = propertyDefault(
+    'doubleColumnServersPage',
+    true,
+  );
 
   /// Ignore local network device (eg: br-xxx, ovs-system...)
   /// when building traffic view on server tab
@@ -238,7 +377,16 @@ class SettingStore extends HiveStore {
   /// Record the position and size of the window.
   late final windowState = property<WindowState>(
     'windowState',
-    fromObj: (raw) => WindowState.fromJson(jsonDecode(raw as String) as Map<String, dynamic>),
+    fromObj: (raw) {
+      try {
+        return WindowState.fromJson(
+          jsonDecode(raw as String) as Map<String, dynamic>,
+        );
+      } catch (e, s) {
+        Loggers.app.warning('Parse windowState failed', e, s);
+        return null;
+      }
+    },
     toObj: (state) => state == null ? null : jsonEncode(state.toJson()),
   );
 
@@ -251,7 +399,10 @@ class SettingStore extends HiveStore {
   late final sftpEditor = propertyDefault('sftpEditor', '');
 
   /// Preferred terminal emulator command on desktop
-  late final desktopTerminal = propertyDefault('desktopTerminal', 'x-terminal-emulator');
+  late final desktopTerminal = propertyDefault(
+    'desktopTerminal',
+    'x-terminal-emulator',
+  );
 
   /// Run foreground service on Android, if the SSH terminal is running
   late final fgService = propertyDefault('fgService', false);

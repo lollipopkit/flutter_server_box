@@ -13,7 +13,7 @@ lib/
 ├── data/              # Couche de données
 │   ├── model/         # Modèles de données par fonctionnalité
 │   ├── provider/      # Providers Riverpod
-│   └── store/         # Stockage local (Hive)
+│   └── store/         # Abstractions de stockage local (AppDb/SQLCipher + PrefStore)
 ├── view/              # Couche UI
 │   ├── page/          # Pages principales
 │   └── widget/        # Widgets réutilisables
@@ -52,7 +52,7 @@ Providers Riverpod pour l'injection de dépendances et la gestion de l'état :
 
 ### Stores (`lib/data/store/`)
 
-Stockage local basé sur Hive :
+Stockage local avec AppDb/SQLCipher et PrefStore :
 
 - Stockage des serveurs
 - Stockage des paramètres

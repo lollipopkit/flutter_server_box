@@ -28,7 +28,9 @@ class ServerFuncBtnsTopRight extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return PopupMenu<ServerFuncBtn>(
-      items: ServerFuncBtn.values.map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
+      items: ServerFuncBtn.values
+          .map((e) => PopMenu.build(e, e.icon, e.toStr))
+          .toList(),
       padding: const EdgeInsets.symmetric(horizontal: 10),
       onSelected: (val) => _onTapMoreBtns(val, spi, context, ref),
     );
@@ -53,7 +55,9 @@ class ServerFuncBtns extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 13),
         itemBuilder: (context, index) {
           final value = btns[index];
-          final item = Consumer(builder: (_, ref, _) => _buildItem(context, value, ref));
+          final item = Consumer(
+            builder: (_, ref, _) => _buildItem(context, value, ref),
+          );
           return item.paddingSymmetric(horizontal: 7);
         },
       ),
@@ -102,7 +106,12 @@ class ServerFuncBtns extends StatelessWidget {
   }
 }
 
-void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context, WidgetRef ref) async {
+void _onTapMoreBtns(
+  ServerFuncBtn value,
+  Spi spi,
+  BuildContext context,
+  WidgetRef ref,
+) async {
   // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
   switch (value) {
     // case ServerFuncBtn.pkg:
@@ -145,8 +154,16 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context, WidgetRe
       final fmted = snippet.fmtWithSpi(spi);
       final sure = await context.showRoundDialog<bool>(
         title: libL10n.attention,
-        child: SingleChildScrollView(child: SimpleMarkdown(data: '```shell\n$fmted\n```')),
-        actions: [CountDownBtn(onTap: () => context.pop(true), text: libL10n.run, afterColor: Colors.red)],
+        child: SingleChildScrollView(
+          child: SimpleMarkdown(data: '```shell\n$fmted\n```'),
+        ),
+        actions: [
+          CountDownBtn(
+            onTap: () => context.pop(true),
+            text: libL10n.run,
+            afterColor: Colors.red,
+          ),
+        ],
       );
       if (sure != true) return;
       if (!_checkClient(context, spi.id, ref)) return;
@@ -233,7 +250,8 @@ void _gotoSSH(Spi spi, BuildContext context) async {
     if (await file.exists()) {
       await file.delete();
     }
-    await file.writeAsString(getPrivateKey(spi.keyId!));
+    final privateKey = await getPrivateKey(spi.keyId!);
+    await file.writeAsString(privateKey);
     extraArgs.addAll(['-i', path]);
   }
 
@@ -244,7 +262,9 @@ void _gotoSSH(Spi spi, BuildContext context) async {
       await Process.start('cmd', ['/c', 'start'] + sshCommand);
       break;
     case Pfs.linux:
-      final scriptFile = File('${Directory.systemTemp.path}/srvbox_launch_term.sh');
+      final scriptFile = File(
+        '${Directory.systemTemp.path}/srvbox_launch_term.sh',
+      );
       await scriptFile.writeAsString(_runEmulatorShell);
 
       if (Platform.isLinux || Platform.isMacOS) {

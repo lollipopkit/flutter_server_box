@@ -85,7 +85,7 @@ if (spi.jumpId != null) {
 onPasswordRequest: () => spi.pwd
 ```
 
-- Contraseña almacenada cifrada en Hive
+- Contraseña almacenada de forma cifrada en el almacenamiento local
 - Descifrada al conectar
 - Enviada al servidor para verificación
 

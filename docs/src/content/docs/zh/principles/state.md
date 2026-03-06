@@ -260,27 +260,25 @@ Future<SystemInfo> systemInfo(SystemInfoRef ref, Server server) async {
 
 ## 状态持久化
 
-### Hive 集成
+### Store 集成
 
 ```dart
 @riverpod
-class ServerStoreNotifier extends _$ServerStoreNotifier {
+class ServersNotifier extends _$ServersNotifier {
   @override
-  List<Server> build() {
-    // 从 Hive 加载
-    return Hive.box<Server>('servers').values.toList();
+  Future<List<Spi>> build() async {
+    // 从 Store 层加载
+    return Stores.server.fetch();
   }
 
-  void addServer(Server server) {
-    state = [...state, server];
-    // 持久化到 Hive
-    Hive.box<Server>('servers').put(server.id, server);
+  Future<void> addServer(Spi server) async {
+    await Stores.server.put(server);
+    state = await AsyncValue.guard(() => Stores.server.fetch());
   }
 
-  void removeServer(String id) {
-    state = state.where((s) => s.id != id).toList();
-    // 从 Hive 中删除
-    Hive.box<Server>('servers').delete(id);
+  Future<void> removeServer(String id) async {
+    await Stores.server.delete(id);
+    state = await AsyncValue.guard(() => Stores.server.fetch());
   }
 }
 ```

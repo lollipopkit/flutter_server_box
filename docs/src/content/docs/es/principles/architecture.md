@@ -23,7 +23,7 @@ Server Box sigue una arquitectura por capas con una clara separación de respons
 ┌─────────────────────────────────────────────────┐
 │            Capa de Acceso a Datos               │
 │         lib/data/store/, lib/data/model/        │
-│  - Hive Stores, Modelos de Datos                │
+│  - Abstracciones de Store, Modelos de Datos     │
 └─────────────────────────────────────────────────┘
                       ↓
 ┌─────────────────────────────────────────────────┐
@@ -79,19 +79,22 @@ void main() {
 - `StreamProvider`: Flujos de datos en tiempo real
 - Future providers: Operaciones asíncronas únicas
 
-### Persistencia de Datos: Hive CE
+### Persistencia de Datos: Capa de stores
 
-**¿Por qué Hive CE?**
-- Sin dependencias de código nativo
-- Almacenamiento clave-valor rápido
-- Tipado seguro con generación de código
-- Sin necesidad de anotaciones manuales de campos
+**¿Por qué esta capa de stores?**
+- `AppDb` + Drift gestionan datos relacionales y consultas pesadas
+- `PrefStore` cubre la persistencia ligera de clave-valor
+- `SQLCipher` protege los registros sensibles de la base local
+- Las Store APIs mantienen los detalles de persistencia fuera de la UI y la lógica de negocio
 
-**Almacenes (Stores):**
+**Almacenes (stores):**
 - `SettingStore`: Preferencias de la app
+- `HistoryStore`: Historial de comandos y navegación reciente
 - `ServerStore`: Configuraciones de servidores
+- `ContainerStore`: Mapeos y preferencias de hosts de contenedores
 - `SnippetStore`: Fragmentos de comandos
-- `KeyStore`: Claves SSH
+- `PrivateKeyStore`: Claves SSH
+- `ConnectionStatsStore`: Telemetría y agregados de conexión
 
 ### Modelos Inmutables: Freezed
 

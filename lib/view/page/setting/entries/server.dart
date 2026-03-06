@@ -9,6 +9,7 @@ extension _Server on _AppSettingsPageState {
         _buildNetViewType(),
         _buildServerSeq(),
         _buildServerDetailCardSeq(),
+        _buildConnectionStats(),
         _buildDeleteServers(),
         _buildCpuView(),
         _buildServerMore(),
@@ -38,21 +39,37 @@ extension _Server on _AppSettingsPageState {
     );
   }
 
+  Widget _buildConnectionStats() {
+    return ListTile(
+      leading: const Icon(Icons.analytics, size: _kIconSize),
+      title: Text(l10n.connectionStats),
+      subtitle: Text(l10n.connectionStatsDesc),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () {
+        ConnectionStatsPage.route.go(context);
+      },
+    );
+  }
+
   Widget _buildDeleteServers() {
     return ListTile(
       title: Text(l10n.deleteServers),
       leading: const Icon(Icons.delete_forever),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () async {
-        final keys = Stores.server.keys();
+        final keys = (await Stores.server.keys()).toList();
+        if (!context.mounted) return;
         final names = Map.fromEntries(
-          keys.map((e) => MapEntry(e, ref.read(serversProvider).servers[e]?.name ?? e)),
+          keys.map(
+            (e) => MapEntry(e, ref.read(serversProvider).servers[e]?.name ?? e),
+          ),
         );
         final deleteKeys = await context.showPickDialog<String>(
           clearable: true,
-          items: keys.toList(),
+          items: keys,
           display: (p0) => names[p0] ?? p0,
         );
+        if (!context.mounted) return;
         if (deleteKeys == null || deleteKeys.isEmpty) return;
 
         final md = deleteKeys.map((e) => '- ${names[e] ?? e}').join('\n');
@@ -61,11 +78,15 @@ extension _Server on _AppSettingsPageState {
           child: SimpleMarkdown(data: md),
           actions: Btnx.cancelRedOk,
         );
+        if (!context.mounted) return;
 
         if (sure != true) return;
         for (final key in deleteKeys) {
-          Stores.server.remove(key);
+          await Stores.server.delete(key);
         }
+        if (!context.mounted) return;
+        await ref.read(serversProvider.notifier).reload();
+        if (!context.mounted) return;
         context.showSnackBar(libL10n.success);
       },
     );
@@ -91,7 +112,9 @@ extension _Server on _AppSettingsPageState {
           onSubmitted: _onSaveTextScaler,
           suggestion: false,
         ),
-        actions: Btn.ok(onTap: () => _onSaveTextScaler(_textScalerCtrl.text)).toList,
+        actions: Btn.ok(
+          onTap: () => _onSaveTextScaler(_textScalerCtrl.text),
+        ).toList,
       ),
     );
   }
@@ -215,7 +238,11 @@ extension _Server on _AppSettingsPageState {
   Widget _buildServerLogoUrl() {
     void onSave(String url) {
       if (url.isEmpty || !url.startsWith('http')) {
-        context.showRoundDialog(title: libL10n.fail, child: Text('${l10n.invalid} URL'), actions: Btnx.oks);
+        context.showRoundDialog(
+          title: libL10n.fail,
+          child: Text('${l10n.invalid} URL'),
+          actions: Btnx.oks,
+        );
         return;
       }
       _setting.serverLogoUrl.put(url);

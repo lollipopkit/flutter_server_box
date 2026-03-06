@@ -1,26 +1,64 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/data/db/app_db.dart' as adb;
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/res/store.dart';
 
 const _keyConfig = 'providerConfig';
 
-class ContainerStore extends HiveStore {
-  ContainerStore._() : super('docker');
+class ContainerStore {
+  ContainerStore._();
 
   static final instance = ContainerStore._();
 
-  String? fetch(String? id) {
-    return box.get(id);
+  adb.AppDb get _db => adb.AppDb.instance;
+
+  final PrefStore _cfg = PrefStore(name: 'container_cfg');
+
+  Map<String, int>? get lastUpdateTs => _cfg.lastUpdateTs;
+
+  Future<void> init() async {
+    await _cfg.init();
   }
 
-  void put(String id, String host) {
-    set(id, host);
+  Future<String?> fetch(String? id) async {
+    if (id == null) return null;
+    final row = await (_db.select(
+      _db.containerHosts,
+    )..where((tbl) => tbl.serverId.equals(id))).getSingleOrNull();
+    return row?.host;
+  }
+
+  Future<void> put(String id, String host) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _db
+        .into(_db.containerHosts)
+        .insertOnConflictUpdate(
+          adb.ContainerHostsCompanion.insert(
+            serverId: id,
+            host: host,
+            updatedAt: now,
+          ),
+        );
+  }
+
+  Future<void> set(String id, String host) => put(id, host);
+
+  Future<void> remove(String id) async {
+    await (_db.delete(
+      _db.containerHosts,
+    )..where((tbl) => tbl.serverId.equals(id))).go();
   }
 
   ContainerType getType([String id = '']) {
-    final cfg = box.get(_keyConfig + id);
+    final cfg = _cfg.get<String>('$_keyConfig$id');
     if (cfg != null) {
-      final type = ContainerType.values.firstWhereOrNull((e) => e.toString() == cfg);
+      ContainerType? type;
+      try {
+        type = ContainerType.values.byName(cfg);
+      } catch (_) {
+        type = null;
+      }
+      type ??= ContainerType.values.firstWhereOrNull((e) => e.toString() == cfg);
       if (type != null) return type;
     }
 
@@ -28,17 +66,38 @@ class ContainerStore extends HiveStore {
   }
 
   ContainerType get defaultType {
-    if (Stores.setting.usePodman.get()) return ContainerType.podman;
+    if (Stores.setting.usePodman.fetch()) return ContainerType.podman;
     return ContainerType.docker;
   }
 
-  void setType(ContainerType type, [String id = '']) {
+  Future<void> setType(ContainerType type, [String id = '']) async {
     if (type == defaultType) {
-      // box.delete(_keyConfig + id);
-      remove(_keyConfig + id);
+      await _cfg.remove('$_keyConfig$id');
     } else {
-      // box.put(_keyConfig + id, type.toString());
-      set(_keyConfig + id, type.toString());
+      await _cfg.set('$_keyConfig$id', type.name);
     }
+  }
+
+  Future<Map<String, Object?>> getAllMap({
+    bool includeInternalKeys = StoreDefaults.defaultIncludeInternalKeys,
+  }) async {
+    final map = <String, Object?>{};
+
+    final hosts = await _db.select(_db.containerHosts).get();
+    for (final row in hosts) {
+      map[row.serverId] = row.host;
+    }
+
+    final cfgKeys = _cfg.keys(includeInternalKeys: includeInternalKeys);
+    for (final key in cfgKeys) {
+      map[key] = _cfg.get(key);
+    }
+
+    return map;
+  }
+
+  Future<void> clear() async {
+    await _db.delete(_db.containerHosts).go();
+    await _cfg.clear();
   }
 }

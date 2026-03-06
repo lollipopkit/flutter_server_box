@@ -26,16 +26,21 @@ class LocalFilePage extends ConsumerStatefulWidget {
 
   const LocalFilePage({super.key, this.args});
 
-  static const route = AppRoute<String, LocalFilePageArgs>(page: LocalFilePage.new, path: '/files/local');
+  static const route = AppRoute<String, LocalFilePageArgs>(
+    page: LocalFilePage.new,
+    path: '/files/local',
+  );
 
   @override
   ConsumerState<LocalFilePage> createState() => _LocalFilePageState();
 }
 
-class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKeepAliveClientMixin {
+class _LocalFilePageState extends ConsumerState<LocalFilePage>
+    with AutomaticKeepAliveClientMixin {
   late final _path = LocalPath(widget.args?.initDir ?? Paths.file);
   final _sortType = _SortType.name.vn;
-  late Future<List<(FileSystemEntity, FileStat)>> _entitiesFuture = _getEntities();
+  late Future<List<(FileSystemEntity, FileStat)>> _entitiesFuture =
+      _getEntities();
   bool get isPickFile => widget.args?.isPickFile ?? false;
 
   @override
@@ -80,7 +85,9 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
           if (!isMobile)
             IconButton(
               icon: const Icon(Icons.refresh),
-              tooltip: MaterialLocalizations.of(context).refreshIndicatorSemanticLabel,
+              tooltip: MaterialLocalizations.of(
+                context,
+              ).refreshIndicatorSemanticLabel,
               onPressed: _refresh,
             ),
           if (!isPickFile) _buildMissionBtn(),
@@ -126,7 +133,12 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
             final stat = item.$2;
             final isDir = stat.type == FileSystemEntityType.directory;
 
-            return _buildItem(file: file, fileName: fileName, stat: stat, isDir: isDir);
+            return _buildItem(
+              file: file,
+              fileName: fileName,
+              stat: stat,
+              isDir: isDir,
+            );
           },
         );
       },
@@ -151,7 +163,9 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
 
     return CardX(
       child: ListTile(
-        leading: isDir ? const Icon(Icons.folder_open) : const Icon(Icons.insert_drive_file),
+        leading: isDir
+            ? const Icon(Icons.folder_open)
+            : const Icon(Icons.insert_drive_file),
         title: Text(serverName ?? fileName),
         subtitle: isDir
             ? (serverName != null ? Text(fileName, style: UIs.textGrey) : null)
@@ -185,7 +199,9 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> with AutomaticKee
 
   Future<List<(FileSystemEntity, FileStat)>> _getEntities() async {
     final files = await Directory(_path.path).list().toList();
-    final stats = await Future.wait(files.map((e) async => (e, await e.stat())));
+    final stats = await Future.wait(
+      files.map((e) async => (e, await e.stat())),
+    );
     stats.sort(_sortType.value.compareTuple);
     return stats;
   }
@@ -393,7 +409,13 @@ extension _OnTapFile on _LocalFilePageState {
       return;
     }
 
-    ref.read(sftpProvider.notifier).add(SftpReq(spi, '$remotePath/$fileName', file.absolute.path, SftpReqType.upload));
+    final req = await SftpReq.create(
+      spi,
+      '$remotePath/$fileName',
+      file.absolute.path,
+      SftpReqType.upload,
+    );
+    ref.read(sftpProvider.notifier).add(req);
     context.showSnackBar(l10n.added2List);
   }
 }
@@ -403,7 +425,10 @@ enum _SortType {
   size,
   time;
 
-  int compareTuple((FileSystemEntity, FileStat) a, (FileSystemEntity, FileStat) b) {
+  int compareTuple(
+    (FileSystemEntity, FileStat) a,
+    (FileSystemEntity, FileStat) b,
+  ) {
     return switch (this) {
       _SortType.name => a.$1.path.compareTo(b.$1.path),
       _SortType.size => a.$2.size.compareTo(b.$2.size),
@@ -426,7 +451,10 @@ enum _SortType {
   PopupMenuItem<_SortType> get menuItem {
     return PopupMenuItem(
       value: this,
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [Icon(icon), Text(i18n)]),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [Icon(icon), Text(i18n)],
+      ),
     );
   }
 }

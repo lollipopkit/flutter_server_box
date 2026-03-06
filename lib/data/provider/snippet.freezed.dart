@@ -12,7 +12,7 @@ part of 'snippet.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
-mixin _$SnippetState {
+mixin _$SnippetState implements DiagnosticableTreeMixin {
 
  List<Snippet> get snippets; Set<String> get tags;
 /// Create a copy of SnippetState
@@ -22,6 +22,12 @@ mixin _$SnippetState {
 $SnippetStateCopyWith<SnippetState> get copyWith => _$SnippetStateCopyWithImpl<SnippetState>(this as SnippetState, _$identity);
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'SnippetState'))
+    ..add(DiagnosticsProperty('snippets', snippets))..add(DiagnosticsProperty('tags', tags));
+}
 
 @override
 bool operator ==(Object other) {
@@ -33,7 +39,7 @@ bool operator ==(Object other) {
 int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(snippets),const DeepCollectionEquality().hash(tags));
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'SnippetState(snippets: $snippets, tags: $tags)';
 }
 
@@ -206,7 +212,7 @@ return $default(_that.snippets,_that.tags);case _:
 /// @nodoc
 
 
-class _SnippetState implements SnippetState {
+class _SnippetState with DiagnosticableTreeMixin implements SnippetState {
   const _SnippetState({final  List<Snippet> snippets = const <Snippet>[], final  Set<String> tags = const <String>{}}): _snippets = snippets,_tags = tags;
   
 
@@ -232,6 +238,12 @@ class _SnippetState implements SnippetState {
 _$SnippetStateCopyWith<_SnippetState> get copyWith => __$SnippetStateCopyWithImpl<_SnippetState>(this, _$identity);
 
 
+@override
+void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  properties
+    ..add(DiagnosticsProperty('type', 'SnippetState'))
+    ..add(DiagnosticsProperty('snippets', snippets))..add(DiagnosticsProperty('tags', tags));
+}
 
 @override
 bool operator ==(Object other) {
@@ -243,7 +255,7 @@ bool operator ==(Object other) {
 int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_snippets),const DeepCollectionEquality().hash(_tags));
 
 @override
-String toString() {
+String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
   return 'SnippetState(snippets: $snippets, tags: $tags)';
 }
 
