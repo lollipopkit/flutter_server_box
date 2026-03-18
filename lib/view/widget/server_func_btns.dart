@@ -238,10 +238,13 @@ void _gotoSSH(Spi spi, BuildContext context) async {
     final keyContent = getPrivateKey(spi.keyId!);
     final keyContentWithNewline = keyContent.endsWith('\n') ? keyContent : '$keyContent\n';
     await file.writeAsString(keyContentWithNewline);
+    if (!Platform.isWindows) {
+      await Process.run('chmod', ['600', path]);
+    }
     extraArgs.addAll(['-i', path]);
   }
 
-  final sshCommand = ['ssh', '${spi.user}@${spi.ip}'] + extraArgs;
+  final sshCommand = ['ssh'] + extraArgs + ['${spi.user}@${spi.ip}'];
 
   final system = Pfs.type;
   switch (system) {
