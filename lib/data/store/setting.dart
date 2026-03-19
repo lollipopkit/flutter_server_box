@@ -203,9 +203,6 @@ class SettingStore extends HiveStore {
 
   late final lastVer = propertyDefault('lastVer', 0);
 
-  /// Use CupertinoPageRoute for all routes
-  late final cupertinoRoute = propertyDefault('cupertinoRoute', isIOS);
-
   /// Hide title bar on desktop
   late final hideTitleBar = propertyDefault('hideTitleBar', isDesktop);
 

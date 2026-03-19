@@ -316,7 +316,6 @@ extension _App on _AppSettingsPageState {
         _buildBeta(),
         if (isMobile) _buildWakeLock(),
         _buildCollapseUI(),
-        _buildCupertinoRoute(),
         if (isDesktop) _buildHideTitleBar(),
         _buildEditRawSettings(),
       ],
@@ -341,13 +340,6 @@ extension _App on _AppSettingsPageState {
     return ListTile(
       title: TipText('UI ${libL10n.fold}', l10n.collapseUITip),
       trailing: StoreSwitch(prop: _setting.collapseUIDefault),
-    );
-  }
-
-  Widget _buildCupertinoRoute() {
-    return ListTile(
-      title: Text('Cupertino ${libL10n.route}'),
-      trailing: StoreSwitch(prop: _setting.cupertinoRoute),
     );
   }
 
