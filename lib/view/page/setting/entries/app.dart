@@ -472,9 +472,12 @@ extension _App on _AppSettingsPageState {
         lang: ProgLang.json,
         title: libL10n.setting,
         onSave: onSave,
-        closeAfterSave: SettingStore.instance.closeAfterSave.fetch(),
-        softWrap: SettingStore.instance.editorSoftWrap.fetch(),
-        enableHighlight: SettingStore.instance.editorHighlight.fetch(),
+        closeAfterSave: _setting.closeAfterSave.fetch(),
+        softWrap: _setting.editorSoftWrap.fetch(),
+        enableHighlight: _setting.editorHighlight.fetch(),
+        fontFamily: _setting.editorFontFamily.fetch().isEmpty
+            ? null
+            : _setting.editorFontFamily.fetch(),
       ),
     );
   }

@@ -5,6 +5,7 @@ extension _Editor on _AppSettingsPageState {
     return Column(
       children: [
         _buildEditorWrap(),
+        _buildEditorFontFamily(),
         _buildEditorFontSize(),
         _buildEditorTheme(),
         _buildEditorDarkTheme(),
@@ -93,6 +94,43 @@ extension _Editor on _AppSettingsPageState {
         builder: (val) => Text(val.toString(), style: UIs.text15),
       ),
       onTap: () => _showFontSizeDialog(_setting.editorFontSize),
+    );
+  }
+
+  Widget _buildEditorFontFamily() {
+    return ListTile(
+      leading: const Icon(MingCute.font_fill),
+      title: Text(libL10n.font),
+      trailing: ValBuilder(
+        listenable: _setting.editorFontFamily.listenable(),
+        builder: (val) => Text(
+          val.isEmpty ? libL10n.auto.toLowerCase() : val,
+          style: UIs.text15,
+        ),
+      ),
+      onTap: () => _showFontFamilyDialog(_setting.editorFontFamily),
+    );
+  }
+
+  void _showFontFamilyDialog(HiveProp<String> property) {
+    final ctrl = TextEditingController(text: property.fetch());
+    void onSave() {
+      context.pop();
+      property.put(ctrl.text.trim());
+    }
+
+    context.showRoundDialog(
+      title: libL10n.font,
+      child: Input(
+        controller: ctrl,
+        autoFocus: true,
+        type: TextInputType.text,
+        icon: Icons.font_download,
+        hint: 'monospace / Consolas / Fira Code ...',
+        suggestion: false,
+        onSubmitted: (_) => onSave(),
+      ),
+      actions: Btn.ok(onTap: onSave).toList,
     );
   }
 

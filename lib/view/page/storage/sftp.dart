@@ -360,9 +360,12 @@ extension _Actions on _SftpPageState {
               .add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
           context.showSnackBar(l10n.added2List);
         },
-        closeAfterSave: SettingStore.instance.closeAfterSave.fetch(),
-        softWrap: SettingStore.instance.editorSoftWrap.fetch(),
-        enableHighlight: SettingStore.instance.editorHighlight.fetch(),
+        closeAfterSave: Stores.setting.closeAfterSave.fetch(),
+        softWrap: Stores.setting.editorSoftWrap.fetch(),
+        enableHighlight: Stores.setting.editorHighlight.fetch(),
+        fontFamily: Stores.setting.editorFontFamily.fetch().isEmpty
+            ? null
+            : Stores.setting.editorFontFamily.fetch(),
       ),
     );
   }
