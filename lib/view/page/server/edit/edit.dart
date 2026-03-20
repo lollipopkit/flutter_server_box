@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:choice/choice.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,7 +12,6 @@ import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/custom.dart';
-import 'package:server_box/data/model/server/discovery_result.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
@@ -23,7 +20,6 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
-import 'package:server_box/view/page/server/discovery/discovery.dart';
 
 part 'actions.dart';
 part 'widget.dart';
@@ -138,9 +134,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   Widget _buildForm() {
     final topItems = [
       _buildWriteScriptTip(),
-      if (isMobile) _buildQrScan(),
-      if (isDesktop) _buildSSHImport(),
-      _buildSSHDiscovery(),
     ];
     final children = [
       SizedBox(
@@ -217,8 +210,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   void afterFirstLayout(BuildContext context) {
     if (spi != null) {
       _initWithSpi(spi!);
-    } else {
-      // Only for new servers, check SSH config import on first time
+    } else if (isDesktop && Stores.setting.firstTimeReadSSHCfg.fetch()) {
       _checkSSHConfigImport();
     }
   }

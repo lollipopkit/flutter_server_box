@@ -13,226 +13,6 @@ extension _Actions on _ServerEditPageState {
     );
   }
 
-  Future<void> _onTapSSHDiscovery() async {
-    try {
-      final result = await SshDiscoveryPage.route.go(context);
-
-      if (result != null && result.isNotEmpty) {
-        await _processDiscoveredServers(result);
-      }
-    } catch (e, s) {
-      context.showErrDialog(e, s);
-    }
-  }
-
-  Future<void> _processDiscoveredServers(
-    List<SshDiscoveryResult> discoveredServers,
-  ) async {
-    if (discoveredServers.length == 1) {
-      // Single server - populate the current form
-      final server = discoveredServers.first;
-      _ipController.text = server.ip;
-      _portController.text = server.port.toString();
-      if (_nameController.text.isEmpty) {
-        _nameController.text = server.ip;
-      }
-      context.showSnackBar('${libL10n.found} 1 ${libL10n.server}');
-    } else {
-      // Multiple servers - show import dialog
-      final shouldImport = await context.showRoundDialog<bool>(
-        title: libL10n.import,
-        child: Text(
-          libL10n.askContinue(
-            '${libL10n.found} ${discoveredServers.length} ${libL10n.servers}',
-          ),
-        ),
-        actions: Btnx.cancelOk,
-      );
-
-      if (shouldImport == true) {
-        // Prompt user to configure default values before importing
-        final defaultUsername = 'root';
-        final defaultKeyId = _keyIdx.value?.toString() ?? '';
-        final usernameController = TextEditingController(text: defaultUsername);
-        final keyIdController = TextEditingController(text: defaultKeyId);
-
-        final shouldProceed = await context.showRoundDialog<bool>(
-          title: libL10n.import,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '${libL10n.found} ${discoveredServers.length} ${libL10n.servers}.',
-              ),
-              const SizedBox(height: 8),
-              Text(libL10n.setting),
-              const SizedBox(height: 8),
-              TextField(
-                controller: usernameController,
-                decoration: InputDecoration(labelText: libL10n.user),
-              ),
-              TextField(
-                controller: keyIdController,
-                decoration: InputDecoration(labelText: l10n.privateKey),
-              ),
-            ],
-          ),
-          actions: Btnx.cancelOk,
-        );
-
-        if (shouldProceed == true) {
-          final username = usernameController.text.isNotEmpty
-              ? usernameController.text
-              : defaultUsername;
-          final keyId = keyIdController.text.isNotEmpty
-              ? keyIdController.text
-              : null;
-          final servers = discoveredServers
-              .map(
-                (result) => Spi(
-                  name: result.ip,
-                  ip: result.ip,
-                  port: result.port,
-                  user: username,
-                  keyId: keyId,
-                  pwd: _passwordController.text.isEmpty
-                      ? null
-                      : _passwordController.text,
-                ),
-              )
-              .toList();
-
-          await _batchImportServers(servers);
-        }
-
-        usernameController.dispose();
-        keyIdController.dispose();
-      }
-    }
-  }
-
-  Future<void> _batchImportServers(List<Spi> servers) async {
-    final store = Stores.server;
-    int imported = 0;
-    for (final server in servers) {
-      try {
-        store.put(server);
-        imported++;
-      } catch (e) {
-        dprint('Failed to import server ${server.name}: $e');
-      }
-    }
-    context.showSnackBar('${libL10n.success}: $imported ${libL10n.servers}');
-    if (mounted) context.pop(true);
-  }
-
-  void _onTapSSHImport() async {
-    try {
-      final servers = await SSHConfig.parseConfig();
-      if (servers.isEmpty) {
-        context.showSnackBar(l10n.sshConfigNoServers);
-        return;
-      }
-
-      dprint('Parsed ${servers.length} servers from SSH config');
-      await _processSSHServers(servers);
-      dprint('Finished processing SSH config servers');
-    } catch (e, s) {
-      _handleImportSSHCfgPermissionIssue(e, s);
-    }
-  }
-
-  void _handleImportSSHCfgPermissionIssue(Object e, StackTrace s) async {
-    dprint('Error importing SSH config: $e');
-    // Check if it's a permission error and offer file picker as fallback
-    if (e is PathAccessException ||
-        e.toString().contains('Operation not permitted')) {
-      final useFilePicker = await context.showRoundDialog<bool>(
-        title: l10n.sshConfigImport,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.sshConfigPermissionDenied),
-            const SizedBox(height: 8),
-            Text(l10n.sshConfigManualSelect),
-          ],
-        ),
-        actions: Btnx.cancelOk,
-      );
-
-      if (useFilePicker == true) {
-        await _onTapSSHImportWithFilePicker();
-      }
-    } else {
-      context.showErrDialog(e, s);
-    }
-  }
-
-  Future<void> _processSSHServers(List<Spi> servers) async {
-    final deduplicated = ServerDeduplication.deduplicateServers(servers);
-    final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
-    final summary = ServerDeduplication.getImportSummary(servers, resolved);
-
-    if (!summary.hasItemsToImport) {
-      context.showSnackBar(l10n.sshConfigAllExist('${summary.duplicates}'));
-      return;
-    }
-
-    final shouldImport = await context.showRoundDialog<bool>(
-      title: l10n.sshConfigImport,
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.sshConfigFoundServers('${summary.total}')),
-            if (summary.hasDuplicates)
-              Text(
-                l10n.sshConfigDuplicatesSkipped('${summary.duplicates}'),
-                style: UIs.textGrey,
-              ),
-            Text(l10n.sshConfigServersToImport('${summary.toImport}')),
-            const SizedBox(height: 16),
-            ...resolved.map(
-              (s) => Text('• ${s.name} (${s.user}@${s.ip}:${s.port})'),
-            ),
-          ],
-        ),
-      ),
-      actions: Btnx.cancelOk,
-    );
-
-    if (shouldImport == true) {
-      for (final server in resolved) {
-        ref.read(serversProvider.notifier).addServer(server);
-      }
-      context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
-    }
-  }
-
-  Future<void> _onTapSSHImportWithFilePicker() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.any,
-        allowMultiple: false,
-        dialogTitle: 'SSH ${libL10n.select}',
-      );
-
-      if (result?.files.single.path case final path?) {
-        final servers = await SSHConfig.parseConfig(path);
-        if (servers.isEmpty) {
-          context.showSnackBar(l10n.sshConfigNoServers);
-          return;
-        }
-
-        await _processSSHServers(servers);
-      }
-    } catch (e, s) {
-      context.showErrDialog(e, s);
-    }
-  }
-
   void _onTapCustomItem() async {
     final res = await KvEditor.route.go(
       context,
@@ -358,60 +138,60 @@ extension _Actions on _ServerEditPageState {
 }
 
 extension _Utils on _ServerEditPageState {
-  void _checkSSHConfigImport() async {
-    final prop = Stores.setting.firstTimeReadSSHCfg;
-    // Only check if it's first time and user hasn't disabled it
-    if (!prop.fetch()) return;
+  Future<void> _checkSSHConfigImport() async {
+    final hasExistingServers = ref.read(serversProvider).servers.isNotEmpty;
+    if (hasExistingServers) {
+      Stores.setting.firstTimeReadSSHCfg.put(false);
+      return;
+    }
 
     try {
-      // Check if SSH config exists
-      final (_, configExists) = SSHConfig.configExists();
-      if (!configExists) return;
+      final servers = await SSHConfig.parseConfig();
+      if (!mounted) return;
+      if (servers.isEmpty) {
+        Stores.setting.firstTimeReadSSHCfg.put(false);
+        return;
+      }
 
-      // Ask for permission
-      final hasPermission = await context.showRoundDialog<bool>(
+      final shouldImport = await context.showRoundDialog<bool>(
         title: l10n.sshConfigImport,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.sshConfigFound),
-            UIs.height7,
+            const SizedBox(height: 8),
             Text(l10n.sshConfigImportPermission),
-            UIs.height7,
-            Text(l10n.sshConfigImportHelp, style: UIs.textGrey),
           ],
         ),
         actions: Btnx.cancelOk,
       );
 
-      prop.put(false);
+      if (!mounted) return;
 
-      if (hasPermission == true) {
-        // Parse and import SSH config
-        final servers = await SSHConfig.parseConfig();
-        if (servers.isEmpty) {
-          context.showSnackBar(l10n.sshConfigNoServers);
-          return;
-        }
+      Stores.setting.firstTimeReadSSHCfg.put(false);
 
-        final deduplicated = ServerDeduplication.deduplicateServers(servers);
-        final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
-        final summary = ServerDeduplication.getImportSummary(servers, resolved);
-
-        if (!summary.hasItemsToImport) {
-          context.showSnackBar(l10n.sshConfigAllExist('${summary.duplicates}'));
-          return;
-        }
-
-        // Import without asking again since user already gave permission
-        for (final server in resolved) {
-          ref.read(serversProvider.notifier).addServer(server);
-        }
-        context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
+      if (shouldImport == true) {
+        await ServerDeduplication.importServersWithNotification(
+          servers: servers,
+          ref: ref,
+          context: context,
+          allExistMessage: l10n.sshConfigAllExist,
+          importedMessage: l10n.sshConfigImported,
+        );
       }
-    } catch (e, s) {
-      _handleImportSSHCfgPermissionIssue(e, s);
+    } catch (e) {
+      if (!mounted) return;
+      if (e is PathAccessException ||
+          e.toString().contains('Operation not permitted')) {
+        Stores.setting.firstTimeReadSSHCfg.put(false);
+        context.showSnackBar(
+          '${l10n.sshConfigPermissionDenied} ${l10n.sshConfigManualSelect}',
+        );
+      } else {
+        dprint('Error checking SSH config: $e');
+        Stores.setting.firstTimeReadSSHCfg.put(false);
+      }
     }
   }
 

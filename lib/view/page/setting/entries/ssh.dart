@@ -4,6 +4,9 @@ extension _SSH on _AppSettingsPageState {
   Widget _buildSSH() {
     return Column(
       children: [
+        if (isDesktop) _buildSSHConfigImport(),
+        if (isMobile) _buildQrScan(),
+        _buildSSHDiscovery(),
         _buildLetterCache(),
         _buildSSHWakeLock(),
         _buildTermTheme(),
@@ -15,6 +18,246 @@ extension _SSH on _AppSettingsPageState {
         if (isMobile) _buildSSHVirtKeys(),
       ].map((e) => CardX(child: e)).toList(),
     );
+  }
+
+  Widget _buildSSHConfigImport() {
+    return ListTile(
+      leading: const Icon(MingCute.file_import_line),
+      title: Text(l10n.sshConfigImport),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: _onTapSSHConfigImport,
+    );
+  }
+
+  Widget _buildQrScan() {
+    return ListTile(
+      leading: const Icon(Icons.qr_code),
+      title: Text(libL10n.import),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: _onTapQrScan,
+    );
+  }
+
+  Future<void> _onTapQrScan() async {
+    final ret = await BarcodeScannerPage.route.go(
+      context,
+      args: const BarcodeScannerPageArgs(),
+    );
+    final code = ret?.text;
+    if (code == null) return;
+    if (!mounted) return;
+
+    try {
+      final spi = Spi.fromJson(json.decode(code));
+      final existingIds = ref.read(serversProvider).servers.keys;
+      if (existingIds.contains(spi.id)) {
+        context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
+        return;
+      }
+      final resolvedList = ServerDeduplication.resolveNameConflicts([spi]);
+      final resolvedSpi = resolvedList.first;
+      ref.read(serversProvider.notifier).addServer(resolvedSpi);
+      context.showSnackBar(libL10n.success);
+    } catch (e, s) {
+      context.showErrDialog(e, s);
+    }
+  }
+
+  Widget _buildSSHDiscovery() {
+    return ListTile(
+      leading: const Icon(BoxIcons.bx_search),
+      title: Text(l10n.discoverSshServers),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: _onTapSSHDiscovery,
+    );
+  }
+
+  Future<void> _onTapSSHDiscovery() async {
+    try {
+      final result = await SshDiscoveryPage.route.go(context);
+      if (!mounted) return;
+
+      if (result != null && result.isNotEmpty) {
+        await _processDiscoveredServers(result);
+      }
+    } catch (e, s) {
+      if (!mounted) return;
+      context.showErrDialog(e, s);
+    }
+  }
+
+  Future<void> _processDiscoveredServers(
+    List<SshDiscoveryResult> discoveredServers,
+  ) async {
+    final defaultUsername = 'root';
+    final usernameController = TextEditingController(text: defaultUsername);
+
+    try {
+      final shouldImport = await context.showRoundDialog<bool>(
+        title: libL10n.import,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.sshConfigFoundServers('${discoveredServers.length}')),
+            const SizedBox(height: 8),
+            Input(
+              controller: usernameController,
+              label: libL10n.user,
+            ),
+          ],
+        ),
+        actions: Btnx.cancelOk,
+      );
+
+      if (!mounted) return;
+
+      if (shouldImport == true) {
+        final username = usernameController.text.isNotEmpty
+            ? usernameController.text
+            : defaultUsername;
+        final servers = discoveredServers
+            .map(
+              (result) => Spi(
+                id: ShortId.generate(),
+                name: result.ip,
+                ip: result.ip,
+                port: result.port,
+                user: username,
+              ),
+            )
+            .toList();
+
+        await ServerDeduplication.importServersWithNotification(
+          servers: servers,
+          ref: ref,
+          context: context,
+          allExistMessage: l10n.sshConfigAllExist,
+          importedMessage: (count) => '${libL10n.success}: $count ${libL10n.servers}',
+        );
+      }
+    } finally {
+      usernameController.dispose();
+    }
+  }
+
+  Future<void> _onTapSSHConfigImport() async {
+    try {
+      final servers = await SSHConfig.parseConfig();
+      if (!mounted) return;
+      if (servers.isEmpty) {
+        context.showSnackBar(l10n.sshConfigNoServers);
+        return;
+      }
+
+      await _processSSHServers(servers);
+    } catch (e, s) {
+      if (!mounted) return;
+      await _handleImportSSHCfgPermissionIssue(e, s);
+    }
+  }
+
+  Future<void> _processSSHServers(List<Spi> servers) async {
+    final deduplicated = ServerDeduplication.deduplicateServers(servers);
+    final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
+    final summary = ServerDeduplication.getImportSummary(servers, resolved);
+
+    if (!summary.hasItemsToImport) {
+      if (!mounted) return;
+      context.showSnackBar(l10n.sshConfigAllExist('${summary.duplicates}'));
+      return;
+    }
+
+    final shouldImport = await context.showRoundDialog<bool>(
+      title: l10n.sshConfigImport,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.sshConfigFoundServers('${summary.total}')),
+            if (summary.hasDuplicates)
+              Text(
+                l10n.sshConfigDuplicatesSkipped('${summary.duplicates}'),
+                style: UIs.textGrey,
+              ),
+            Text(l10n.sshConfigServersToImport('${summary.toImport}')),
+            const SizedBox(height: 16),
+            ...resolved.map(
+              (s) => Text('• ${s.name} (${s.user}@${s.ip}:${s.port})'),
+            ),
+          ],
+        ),
+      ),
+      actions: Btnx.cancelOk,
+    );
+
+    if (!mounted) return;
+
+    if (shouldImport == true) {
+      await ServerDeduplication.importServersWithNotification(
+        ref: ref,
+        context: context,
+        resolvedServers: resolved,
+        originalCount: summary.total,
+        allExistMessage: l10n.sshConfigAllExist,
+        importedMessage: l10n.sshConfigImported,
+      );
+    }
+  }
+
+  Future<void> _handleImportSSHCfgPermissionIssue(Object e, StackTrace s) async {
+    dprint('Error importing SSH config: $e');
+    if (e is PathAccessException ||
+        e.toString().contains('Operation not permitted')) {
+      final useFilePicker = await context.showRoundDialog<bool>(
+        title: l10n.sshConfigImport,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.sshConfigPermissionDenied),
+            const SizedBox(height: 8),
+            Text(l10n.sshConfigManualSelect),
+          ],
+        ),
+        actions: Btnx.cancelOk,
+      );
+
+      if (!mounted) return;
+
+      if (useFilePicker == true) {
+        await _onTapSSHImportWithFilePicker();
+      }
+    } else {
+      if (!mounted) return;
+      context.showErrDialog(e, s);
+    }
+  }
+
+  Future<void> _onTapSSHImportWithFilePicker() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
+        dialogTitle: l10n.sshConfigImport,
+      );
+
+      if (!mounted) return;
+
+      if (result?.files.single.path case final path?) {
+        final servers = await SSHConfig.parseConfig(path);
+        if (!mounted) return;
+        if (servers.isEmpty) {
+          context.showSnackBar(l10n.sshConfigNoServers);
+          return;
+        }
+
+        await _processSSHServers(servers);
+      }
+    } catch (e, s) {
+      if (!mounted) return;
+      context.showErrDialog(e, s);
+    }
   }
 
   Widget _buildSSHVirtKeys() {

@@ -180,7 +180,7 @@ extension _Server on _AppSettingsPageState {
         _buildDoubleColumnServersPage(),
         _buildUpdateInterval(),
         _buildMaxRetry(),
-        _buildSSHConfigImport(),
+        if (isDesktop) _buildSSHConfigAutoImportToggle(),
       ],
     );
   }
@@ -261,7 +261,7 @@ extension _Server on _AppSettingsPageState {
     );
   }
 
-  Widget _buildSSHConfigImport() {
+  Widget _buildSSHConfigAutoImportToggle() {
     return ListTile(
       title: Text(l10n.sshConfigImport),
       subtitle: Text(l10n.sshConfigImportTip, style: UIs.textGrey),

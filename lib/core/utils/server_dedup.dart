@@ -1,4 +1,8 @@
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/store/server.dart';
 
 class ServerDeduplication {
@@ -65,6 +69,45 @@ class ServerDeduplication {
       duplicates: duplicateCount,
       toImport: deduplicatedList.length,
     );
+  }
+
+  /// Import servers with deduplication and show appropriate notifications
+  /// Returns the number of servers actually imported
+  /// Note: Caller must check mounted before calling this method
+  /// If resolvedServers is provided, it should be pre-filtered (non-empty)
+  /// [originalCount] should be provided when passing resolvedServers to show
+  /// the true pre-dedup count in messages
+  static Future<int> importServersWithNotification({
+    List<Spi>? servers,
+    required WidgetRef ref,
+    required BuildContext context,
+    List<Spi>? resolvedServers,
+    int? originalCount,
+    required String Function(String) allExistMessage,
+    required String Function(String) importedMessage,
+  }) async {
+    assert(servers != null || resolvedServers != null, 
+        'Either servers or resolvedServers must be provided');
+    
+    final count = originalCount ?? servers?.length ?? resolvedServers!.length;
+    final resolved = resolvedServers ?? _resolveServers(servers!);
+
+    if (resolved.isEmpty) {
+      context.showSnackBar(allExistMessage('$count'));
+      return 0;
+    }
+
+    for (final server in resolved) {
+      ref.read(serversProvider.notifier).addServer(server);
+    }
+    context.showSnackBar(importedMessage('${resolved.length}'));
+    return resolved.length;
+  }
+
+  static List<Spi> _resolveServers(List<Spi> servers) {
+    final deduplicated = deduplicateServers(servers);
+    final resolved = resolveNameConflicts(deduplicated);
+    return resolved;
   }
 }
 
