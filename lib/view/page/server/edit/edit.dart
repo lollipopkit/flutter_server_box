@@ -8,6 +8,8 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/jump_chain.dart';
+import 'package:server_box/core/utils/server_dedup.dart';
+import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -15,6 +17,7 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
 
@@ -208,6 +211,62 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   void afterFirstLayout(BuildContext context) {
     if (spi != null) {
       _initWithSpi(spi!);
+    } else if (isDesktop && Stores.setting.firstTimeReadSSHCfg.fetch()) {
+      _checkSSHConfigImport();
     }
+  }
+
+  Future<void> _checkSSHConfigImport() async {
+    try {
+      final servers = await SSHConfig.parseConfig();
+      if (!mounted) return;
+      if (servers.isEmpty) return;
+
+      final hasExistingServers = ref.read(serversProvider).servers.isNotEmpty;
+      if (hasExistingServers) return;
+
+      final shouldImport = await context.showRoundDialog<bool>(
+        title: l10n.sshConfigImport,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.sshConfigFound),
+            const SizedBox(height: 8),
+            Text(l10n.sshConfigImportPermission),
+          ],
+        ),
+        actions: Btnx.cancelOk,
+      );
+
+      if (!mounted) return;
+
+      if (shouldImport == true) {
+        await _importServers(servers);
+        Stores.setting.firstTimeReadSSHCfg.put(false);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      dprint('Error checking SSH config: $e');
+    }
+  }
+
+  Future<void> _importServers(List<Spi> servers) async {
+    final deduplicated = ServerDeduplication.deduplicateServers(servers);
+    final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
+    final summary = ServerDeduplication.getImportSummary(servers, resolved);
+
+    if (!summary.hasItemsToImport) {
+      if (!mounted) return;
+      context.showSnackBar(l10n.sshConfigAllExist('${summary.duplicates}'));
+      return;
+    }
+
+    if (!mounted) return;
+
+    for (final server in resolved) {
+      ref.read(serversProvider.notifier).addServer(server);
+    }
+    context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
   }
 }

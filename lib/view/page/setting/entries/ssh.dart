@@ -4,7 +4,7 @@ extension _SSH on _AppSettingsPageState {
   Widget _buildSSH() {
     return Column(
       children: [
-        _buildSSHConfigImport(),
+        if (isDesktop) _buildSSHConfigImport(),
         _buildSSHDiscovery(),
         _buildLetterCache(),
         _buildSSHWakeLock(),
@@ -40,11 +40,13 @@ extension _SSH on _AppSettingsPageState {
   Future<void> _onTapSSHDiscovery() async {
     try {
       final result = await SshDiscoveryPage.route.go(context);
+      if (!mounted) return;
 
       if (result != null && result.isNotEmpty) {
         await _processDiscoveredServers(result);
       }
     } catch (e, s) {
+      if (!mounted) return;
       context.showErrDialog(e, s);
     }
   }
@@ -66,14 +68,16 @@ extension _SSH on _AppSettingsPageState {
           const SizedBox(height: 8),
           Text(libL10n.setting),
           const SizedBox(height: 8),
-          TextField(
+          Input(
             controller: usernameController,
-            decoration: InputDecoration(labelText: libL10n.user),
+            label: libL10n.user,
           ),
         ],
       ),
       actions: Btnx.cancelOk,
     );
+
+    if (!mounted) return;
 
     if (shouldImport == true) {
       final username = usernameController.text.isNotEmpty
@@ -82,6 +86,7 @@ extension _SSH on _AppSettingsPageState {
       final servers = discoveredServers
           .map(
             (result) => Spi(
+              id: ShortId.generate(),
               name: result.ip,
               ip: result.ip,
               port: result.port,
@@ -96,15 +101,16 @@ extension _SSH on _AppSettingsPageState {
     usernameController.dispose();
   }
 
-  Future<void> _importServers(List<Spi> servers) async {
-    final deduplicated = ServerDeduplication.deduplicateServers(servers);
-    final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
-    final summary = ServerDeduplication.getImportSummary(servers, resolved);
+  Future<void> _importServers(List<Spi> servers, {List<Spi>? resolvedServers}) async {
+    final resolved = resolvedServers ?? _resolveServers(servers);
 
-    if (!summary.hasItemsToImport) {
-      context.showSnackBar(l10n.sshConfigAllExist('${summary.duplicates}'));
+    if (resolved.isEmpty) {
+      if (!mounted) return;
+      context.showSnackBar(l10n.sshConfigAllExist(''));
       return;
     }
+
+    if (!mounted) return;
 
     for (final server in resolved) {
       ref.read(serversProvider.notifier).addServer(server);
@@ -112,9 +118,17 @@ extension _SSH on _AppSettingsPageState {
     context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
   }
 
+  List<Spi> _resolveServers(List<Spi> servers) {
+    final deduplicated = ServerDeduplication.deduplicateServers(servers);
+    final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
+    final summary = ServerDeduplication.getImportSummary(servers, resolved);
+    return summary.hasItemsToImport ? resolved : [];
+  }
+
   Future<void> _onTapSSHConfigImport() async {
     try {
       final servers = await SSHConfig.parseConfig();
+      if (!mounted) return;
       if (servers.isEmpty) {
         context.showSnackBar(l10n.sshConfigNoServers);
         return;
@@ -122,7 +136,8 @@ extension _SSH on _AppSettingsPageState {
 
       await _processSSHServers(servers);
     } catch (e, s) {
-      _handleImportSSHCfgPermissionIssue(e, s);
+      if (!mounted) return;
+      await _handleImportSSHCfgPermissionIssue(e, s);
     }
   }
 
@@ -132,6 +147,7 @@ extension _SSH on _AppSettingsPageState {
     final summary = ServerDeduplication.getImportSummary(servers, resolved);
 
     if (!summary.hasItemsToImport) {
+      if (!mounted) return;
       context.showSnackBar(l10n.sshConfigAllExist('${summary.duplicates}'));
       return;
     }
@@ -160,12 +176,14 @@ extension _SSH on _AppSettingsPageState {
       actions: Btnx.cancelOk,
     );
 
+    if (!mounted) return;
+
     if (shouldImport == true) {
-      await _importServers(servers);
+      await _importServers(resolved);
     }
   }
 
-  void _handleImportSSHCfgPermissionIssue(Object e, StackTrace s) async {
+  Future<void> _handleImportSSHCfgPermissionIssue(Object e, StackTrace s) async {
     dprint('Error importing SSH config: $e');
     if (e is PathAccessException ||
         e.toString().contains('Operation not permitted')) {
@@ -183,10 +201,13 @@ extension _SSH on _AppSettingsPageState {
         actions: Btnx.cancelOk,
       );
 
+      if (!mounted) return;
+
       if (useFilePicker == true) {
         await _onTapSSHImportWithFilePicker();
       }
     } else {
+      if (!mounted) return;
       context.showErrDialog(e, s);
     }
   }
@@ -199,8 +220,11 @@ extension _SSH on _AppSettingsPageState {
         dialogTitle: 'SSH ${libL10n.select}',
       );
 
+      if (!mounted) return;
+
       if (result?.files.single.path case final path?) {
         final servers = await SSHConfig.parseConfig(path);
+        if (!mounted) return;
         if (servers.isEmpty) {
           context.showSnackBar(l10n.sshConfigNoServers);
           return;
@@ -209,6 +233,7 @@ extension _SSH on _AppSettingsPageState {
         await _processSSHServers(servers);
       }
     } catch (e, s) {
+      if (!mounted) return;
       context.showErrDialog(e, s);
     }
   }
