@@ -45,9 +45,15 @@ extension _SSH on _AppSettingsPageState {
     );
     final code = ret?.text;
     if (code == null) return;
+    if (!mounted) return;
 
     try {
       final spi = Spi.fromJson(json.decode(code));
+      final existingIds = ref.read(serversProvider).servers.keys;
+      if (existingIds.contains(spi.id)) {
+        context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
+        return;
+      }
       ref.read(serversProvider.notifier).addServer(spi);
       context.showSnackBar(libL10n.success);
     } catch (e, s) {
@@ -92,8 +98,6 @@ extension _SSH on _AppSettingsPageState {
           children: [
             Text(l10n.sshConfigFoundServers('${discoveredServers.length}')),
             const SizedBox(height: 8),
-            Text(libL10n.setting),
-            const SizedBox(height: 8),
             Input(
               controller: usernameController,
               label: libL10n.user,
@@ -121,35 +125,18 @@ extension _SSH on _AppSettingsPageState {
             )
             .toList();
 
-        await _importServers(servers);
+        await ServerDeduplication.importServersWithNotification(
+          servers: servers,
+          ref: ref,
+          context: context,
+          mounted: mounted,
+          allExistMessage: l10n.sshConfigAllExist,
+          importedMessage: l10n.sshConfigImported,
+        );
       }
     } finally {
       usernameController.dispose();
     }
-  }
-
-  Future<void> _importServers(List<Spi> servers, {List<Spi>? resolvedServers}) async {
-    final resolved = resolvedServers ?? _resolveServers(servers);
-
-    if (resolved.isEmpty) {
-      if (!mounted) return;
-      context.showSnackBar(l10n.sshConfigAllExist(''));
-      return;
-    }
-
-    if (!mounted) return;
-
-    for (final server in resolved) {
-      ref.read(serversProvider.notifier).addServer(server);
-    }
-    context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
-  }
-
-  List<Spi> _resolveServers(List<Spi> servers) {
-    final deduplicated = ServerDeduplication.deduplicateServers(servers);
-    final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
-    final summary = ServerDeduplication.getImportSummary(servers, resolved);
-    return summary.hasItemsToImport ? resolved : [];
   }
 
   Future<void> _onTapSSHConfigImport() async {
@@ -206,7 +193,15 @@ extension _SSH on _AppSettingsPageState {
     if (!mounted) return;
 
     if (shouldImport == true) {
-      await _importServers(resolved, resolvedServers: resolved);
+      await ServerDeduplication.importServersWithNotification(
+        servers: resolved,
+        ref: ref,
+        context: context,
+        mounted: mounted,
+        resolvedServers: resolved,
+        allExistMessage: l10n.sshConfigAllExist,
+        importedMessage: l10n.sshConfigImported,
+      );
     }
   }
 

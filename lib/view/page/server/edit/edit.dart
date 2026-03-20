@@ -247,31 +247,19 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
       Stores.setting.firstTimeReadSSHCfg.put(false);
 
       if (shouldImport == true) {
-        await _importServers(servers);
+        await ServerDeduplication.importServersWithNotification(
+          servers: servers,
+          ref: ref,
+          context: context,
+          mounted: mounted,
+          allExistMessage: l10n.sshConfigAllExist,
+          importedMessage: l10n.sshConfigImported,
+        );
       }
     } catch (e) {
       if (!mounted) return;
       Stores.setting.firstTimeReadSSHCfg.put(false);
       dprint('Error checking SSH config: $e');
     }
-  }
-
-  Future<void> _importServers(List<Spi> servers) async {
-    final deduplicated = ServerDeduplication.deduplicateServers(servers);
-    final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
-    final summary = ServerDeduplication.getImportSummary(servers, resolved);
-
-    if (!summary.hasItemsToImport) {
-      if (!mounted) return;
-      context.showSnackBar(l10n.sshConfigAllExist('${summary.duplicates}'));
-      return;
-    }
-
-    if (!mounted) return;
-
-    for (final server in resolved) {
-      ref.read(serversProvider.notifier).addServer(server);
-    }
-    context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
   }
 }
