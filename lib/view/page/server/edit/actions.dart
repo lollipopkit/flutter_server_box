@@ -139,15 +139,16 @@ extension _Actions on _ServerEditPageState {
 
 extension _Utils on _ServerEditPageState {
   Future<void> _checkSSHConfigImport() async {
+    final hasExistingServers = ref.read(serversProvider).servers.isNotEmpty;
+    if (hasExistingServers) {
+      Stores.setting.firstTimeReadSSHCfg.put(false);
+      return;
+    }
+
     try {
       final servers = await SSHConfig.parseConfig();
       if (!mounted) return;
       if (servers.isEmpty) {
-        return;
-      }
-
-      final hasExistingServers = ref.read(serversProvider).servers.isNotEmpty;
-      if (hasExistingServers) {
         Stores.setting.firstTimeReadSSHCfg.put(false);
         return;
       }
