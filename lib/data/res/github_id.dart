@@ -149,6 +149,7 @@ abstract final class GithubIds {
     'jjyou-github',
     'yeluonight',
     'Yinhono',
+    'kuvaldini',
   };
 }
 

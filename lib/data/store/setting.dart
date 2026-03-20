@@ -78,6 +78,8 @@ class SettingStore extends HiveStore {
 
   late final editorFontSize = propertyDefault('editorFontSize', 12.5);
 
+  late final editorFontFamily = propertyDefault('editorFontFamily', '');
+
   /// Trusted SSH host key fingerprints keyed by `serverId::keyType`.
   late final sshKnownHostFingerprints = propertyDefault<Map<String, String>>(
     'sshKnownHostFingerprints',

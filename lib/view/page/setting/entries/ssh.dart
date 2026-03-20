@@ -69,10 +69,12 @@ extension _SSH on _AppSettingsPageState {
     // iOS can't copy file to app dir, so we need to use the original path
     if (isIOS) {
       _setting.fontPath.put(path);
+      await FontUtils.loadFrom(path);
     } else {
       final fontFile = File(path);
       await fontFile.copy(Paths.font);
       _setting.fontPath.put(Paths.font);
+      await FontUtils.loadFrom(Paths.font);
     }
 
     context.pop();
