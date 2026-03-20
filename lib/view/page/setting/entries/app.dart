@@ -465,6 +465,7 @@ extension _App on _AppSettingsPageState {
 
     /// Encode [map] to String with indent `\t`
     final text = jsonIndentEncoder.convert(mapForEditor);
+    final editorFont = _setting.editorFontFamily.fetch();
     await EditorPage.route.go(
       context,
       args: EditorPageArgs(
@@ -475,9 +476,7 @@ extension _App on _AppSettingsPageState {
         closeAfterSave: _setting.closeAfterSave.fetch(),
         softWrap: _setting.editorSoftWrap.fetch(),
         enableHighlight: _setting.editorHighlight.fetch(),
-        fontFamily: _setting.editorFontFamily.fetch().isEmpty
-            ? null
-            : _setting.editorFontFamily.fetch(),
+        fontFamily: editorFont.isEmpty ? null : editorFont,
       ),
     );
   }

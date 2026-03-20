@@ -17,7 +17,6 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/sftp_mission.dart';
@@ -363,9 +362,10 @@ extension _Actions on _SftpPageState {
         closeAfterSave: Stores.setting.closeAfterSave.fetch(),
         softWrap: Stores.setting.editorSoftWrap.fetch(),
         enableHighlight: Stores.setting.editorHighlight.fetch(),
-        fontFamily: Stores.setting.editorFontFamily.fetch().isEmpty
-            ? null
-            : Stores.setting.editorFontFamily.fetch(),
+        fontFamily: () {
+          final font = Stores.setting.editorFontFamily.fetch();
+          return font.isEmpty ? null : font;
+        }(),
       ),
     );
   }
