@@ -143,7 +143,6 @@ extension _Utils on _ServerEditPageState {
       final servers = await SSHConfig.parseConfig();
       if (!mounted) return;
       if (servers.isEmpty) {
-        Stores.setting.firstTimeReadSSHCfg.put(false);
         return;
       }
 
@@ -182,7 +181,6 @@ extension _Utils on _ServerEditPageState {
       }
     } catch (e) {
       if (!mounted) return;
-      Stores.setting.firstTimeReadSSHCfg.put(false);
       if (e is PathAccessException ||
           e.toString().contains('Operation not permitted')) {
         context.showSnackBar(
@@ -190,6 +188,7 @@ extension _Utils on _ServerEditPageState {
         );
       } else {
         dprint('Error checking SSH config: $e');
+        Stores.setting.firstTimeReadSSHCfg.put(false);
       }
     }
   }

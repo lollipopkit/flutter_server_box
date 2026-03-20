@@ -198,6 +198,7 @@ extension _SSH on _AppSettingsPageState {
         ref: ref,
         context: context,
         resolvedServers: resolved,
+        originalCount: summary.total,
         allExistMessage: l10n.sshConfigAllExist,
         importedMessage: l10n.sshConfigImported,
       );

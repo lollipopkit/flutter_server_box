@@ -75,22 +75,25 @@ class ServerDeduplication {
   /// Returns the number of servers actually imported
   /// Note: Caller must check mounted before calling this method
   /// If resolvedServers is provided, it should be pre-filtered (non-empty)
+  /// [originalCount] should be provided when passing resolvedServers to show
+  /// the true pre-dedup count in messages
   static Future<int> importServersWithNotification({
     List<Spi>? servers,
     required WidgetRef ref,
     required BuildContext context,
     List<Spi>? resolvedServers,
+    int? originalCount,
     required String Function(String) allExistMessage,
     required String Function(String) importedMessage,
   }) async {
     assert(servers != null || resolvedServers != null, 
         'Either servers or resolvedServers must be provided');
     
-    final originalCount = servers?.length ?? resolvedServers!.length;
+    final count = originalCount ?? servers?.length ?? resolvedServers!.length;
     final resolved = resolvedServers ?? _resolveServers(servers!);
 
     if (resolved.isEmpty) {
-      context.showSnackBar(allExistMessage('$originalCount'));
+      context.showSnackBar(allExistMessage('$count'));
       return 0;
     }
 
