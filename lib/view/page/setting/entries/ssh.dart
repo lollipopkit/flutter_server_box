@@ -132,7 +132,7 @@ extension _SSH on _AppSettingsPageState {
           ref: ref,
           context: context,
           allExistMessage: l10n.sshConfigAllExist,
-          importedMessage: l10n.sshConfigImported,
+          importedMessage: (count) => '${libL10n.success}: $count ${libL10n.servers}',
         );
       }
     } finally {

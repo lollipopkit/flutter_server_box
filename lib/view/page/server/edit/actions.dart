@@ -185,7 +185,9 @@ extension _Utils on _ServerEditPageState {
       Stores.setting.firstTimeReadSSHCfg.put(false);
       if (e is PathAccessException ||
           e.toString().contains('Operation not permitted')) {
-        context.showSnackBar(l10n.sshConfigPermissionDenied);
+        context.showSnackBar(
+          '${l10n.sshConfigPermissionDenied} ${l10n.sshConfigManualSelect}',
+        );
       } else {
         dprint('Error checking SSH config: $e');
       }

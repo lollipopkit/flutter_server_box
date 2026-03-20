@@ -74,6 +74,7 @@ class ServerDeduplication {
   /// Import servers with deduplication and show appropriate notifications
   /// Returns the number of servers actually imported
   /// Note: Caller must check mounted before calling this method
+  /// If resolvedServers is provided, it should be pre-filtered (non-empty)
   static Future<int> importServersWithNotification({
     List<Spi>? servers,
     required WidgetRef ref,
@@ -85,11 +86,11 @@ class ServerDeduplication {
     assert(servers != null || resolvedServers != null, 
         'Either servers or resolvedServers must be provided');
     
-    final source = servers ?? resolvedServers!;
-    final resolved = resolvedServers ?? _resolveServers(source);
+    final originalCount = servers?.length ?? resolvedServers!.length;
+    final resolved = resolvedServers ?? _resolveServers(servers!);
 
     if (resolved.isEmpty) {
-      context.showSnackBar(allExistMessage('${source.length}'));
+      context.showSnackBar(allExistMessage('$originalCount'));
       return 0;
     }
 
