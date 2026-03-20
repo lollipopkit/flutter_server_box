@@ -138,6 +138,60 @@ extension _Actions on _ServerEditPageState {
 }
 
 extension _Utils on _ServerEditPageState {
+  Future<void> _checkSSHConfigImport() async {
+    try {
+      final servers = await SSHConfig.parseConfig();
+      if (!mounted) return;
+      if (servers.isEmpty) {
+        Stores.setting.firstTimeReadSSHCfg.put(false);
+        return;
+      }
+
+      final hasExistingServers = ref.read(serversProvider).servers.isNotEmpty;
+      if (hasExistingServers) {
+        Stores.setting.firstTimeReadSSHCfg.put(false);
+        return;
+      }
+
+      final shouldImport = await context.showRoundDialog<bool>(
+        title: l10n.sshConfigImport,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.sshConfigFound),
+            const SizedBox(height: 8),
+            Text(l10n.sshConfigImportPermission),
+          ],
+        ),
+        actions: Btnx.cancelOk,
+      );
+
+      if (!mounted) return;
+
+      Stores.setting.firstTimeReadSSHCfg.put(false);
+
+      if (shouldImport == true) {
+        await ServerDeduplication.importServersWithNotification(
+          servers: servers,
+          ref: ref,
+          context: context,
+          allExistMessage: l10n.sshConfigAllExist,
+          importedMessage: l10n.sshConfigImported,
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      Stores.setting.firstTimeReadSSHCfg.put(false);
+      if (e is PathAccessException ||
+          e.toString().contains('Operation not permitted')) {
+        context.showSnackBar(l10n.sshConfigPermissionDenied);
+      } else {
+        dprint('Error checking SSH config: $e');
+      }
+    }
+  }
+
   Future<void> _showCmdTypesDialog(Set<ShellCmdType> allCmdTypes) {
     return context.showRoundDialog(
       title: '${libL10n.disabled} ${libL10n.cmd}',

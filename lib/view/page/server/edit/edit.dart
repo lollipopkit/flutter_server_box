@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:choice/choice.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
@@ -210,56 +212,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
       _initWithSpi(spi!);
     } else if (isDesktop && Stores.setting.firstTimeReadSSHCfg.fetch()) {
       _checkSSHConfigImport();
-    }
-  }
-
-  Future<void> _checkSSHConfigImport() async {
-    try {
-      final servers = await SSHConfig.parseConfig();
-      if (!mounted) return;
-      if (servers.isEmpty) {
-        Stores.setting.firstTimeReadSSHCfg.put(false);
-        return;
-      }
-
-      final hasExistingServers = ref.read(serversProvider).servers.isNotEmpty;
-      if (hasExistingServers) {
-        Stores.setting.firstTimeReadSSHCfg.put(false);
-        return;
-      }
-
-      final shouldImport = await context.showRoundDialog<bool>(
-        title: l10n.sshConfigImport,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.sshConfigFound),
-            const SizedBox(height: 8),
-            Text(l10n.sshConfigImportPermission),
-          ],
-        ),
-        actions: Btnx.cancelOk,
-      );
-
-      if (!mounted) return;
-
-      Stores.setting.firstTimeReadSSHCfg.put(false);
-
-      if (shouldImport == true) {
-        await ServerDeduplication.importServersWithNotification(
-          servers: servers,
-          ref: ref,
-          context: context,
-          mounted: mounted,
-          allExistMessage: l10n.sshConfigAllExist,
-          importedMessage: l10n.sshConfigImported,
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      Stores.setting.firstTimeReadSSHCfg.put(false);
-      dprint('Error checking SSH config: $e');
     }
   }
 }

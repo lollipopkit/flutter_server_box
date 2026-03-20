@@ -73,24 +73,25 @@ class ServerDeduplication {
 
   /// Import servers with deduplication and show appropriate notifications
   /// Returns the number of servers actually imported
+  /// Note: Caller must check mounted before calling this method
   static Future<int> importServersWithNotification({
-    required List<Spi> servers,
+    List<Spi>? servers,
     required WidgetRef ref,
     required BuildContext context,
-    required bool mounted,
     List<Spi>? resolvedServers,
     required String Function(String) allExistMessage,
     required String Function(String) importedMessage,
   }) async {
-    final resolved = resolvedServers ?? _resolveServers(servers);
+    assert(servers != null || resolvedServers != null, 
+        'Either servers or resolvedServers must be provided');
+    
+    final source = servers ?? resolvedServers!;
+    final resolved = resolvedServers ?? _resolveServers(source);
 
     if (resolved.isEmpty) {
-      if (!mounted) return 0;
-      context.showSnackBar(allExistMessage(''));
+      context.showSnackBar(allExistMessage('${source.length}'));
       return 0;
     }
-
-    if (!mounted) return 0;
 
     for (final server in resolved) {
       ref.read(serversProvider.notifier).addServer(server);

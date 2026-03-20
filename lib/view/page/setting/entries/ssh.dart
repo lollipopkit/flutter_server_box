@@ -54,7 +54,9 @@ extension _SSH on _AppSettingsPageState {
         context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
         return;
       }
-      ref.read(serversProvider.notifier).addServer(spi);
+      final resolvedList = ServerDeduplication.resolveNameConflicts([spi]);
+      final resolvedSpi = resolvedList.first;
+      ref.read(serversProvider.notifier).addServer(resolvedSpi);
       context.showSnackBar(libL10n.success);
     } catch (e, s) {
       context.showErrDialog(e, s);
@@ -129,7 +131,6 @@ extension _SSH on _AppSettingsPageState {
           servers: servers,
           ref: ref,
           context: context,
-          mounted: mounted,
           allExistMessage: l10n.sshConfigAllExist,
           importedMessage: l10n.sshConfigImported,
         );
@@ -194,10 +195,8 @@ extension _SSH on _AppSettingsPageState {
 
     if (shouldImport == true) {
       await ServerDeduplication.importServersWithNotification(
-        servers: resolved,
         ref: ref,
         context: context,
-        mounted: mounted,
         resolvedServers: resolved,
         allExistMessage: l10n.sshConfigAllExist,
         importedMessage: l10n.sshConfigImported,
