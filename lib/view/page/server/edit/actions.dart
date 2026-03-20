@@ -183,6 +183,7 @@ extension _Utils on _ServerEditPageState {
       if (!mounted) return;
       if (e is PathAccessException ||
           e.toString().contains('Operation not permitted')) {
+        Stores.setting.firstTimeReadSSHCfg.put(false);
         context.showSnackBar(
           '${l10n.sshConfigPermissionDenied} ${l10n.sshConfigManualSelect}',
         );
