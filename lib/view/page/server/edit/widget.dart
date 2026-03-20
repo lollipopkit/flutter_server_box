@@ -408,29 +408,6 @@ extension _Widgets on _ServerEditPageState {
     );
   }
 
-  Widget _buildQrScan() {
-    return Btn.tile(
-      text: libL10n.import,
-      icon: const Icon(Icons.qr_code, color: Colors.grey),
-      onTap: () async {
-        final ret = await BarcodeScannerPage.route.go(
-          context,
-          args: const BarcodeScannerPageArgs(),
-        );
-        final code = ret?.text;
-        if (code == null) return;
-        try {
-          final spi = Spi.fromJson(json.decode(code));
-          _initWithSpi(spi);
-        } catch (e, s) {
-          context.showErrDialog(e, s);
-        }
-      },
-      textStyle: UIs.textGrey,
-      mainAxisSize: MainAxisSize.min,
-    );
-  }
-
   Widget _buildDelBtn() {
     return IconButton(
       onPressed: () {

@@ -5,6 +5,7 @@ extension _SSH on _AppSettingsPageState {
     return Column(
       children: [
         if (isDesktop) _buildSSHConfigImport(),
+        if (isMobile) _buildQrScan(),
         _buildSSHDiscovery(),
         _buildLetterCache(),
         _buildSSHWakeLock(),
@@ -26,6 +27,32 @@ extension _SSH on _AppSettingsPageState {
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: _onTapSSHConfigImport,
     );
+  }
+
+  Widget _buildQrScan() {
+    return ListTile(
+      leading: const Icon(Icons.qr_code),
+      title: Text(libL10n.import),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: _onTapQrScan,
+    );
+  }
+
+  Future<void> _onTapQrScan() async {
+    final ret = await BarcodeScannerPage.route.go(
+      context,
+      args: const BarcodeScannerPageArgs(),
+    );
+    final code = ret?.text;
+    if (code == null) return;
+
+    try {
+      final spi = Spi.fromJson(json.decode(code));
+      ref.read(serversProvider.notifier).addServer(spi);
+      context.showSnackBar(libL10n.success);
+    } catch (e, s) {
+      context.showErrDialog(e, s);
+    }
   }
 
   Widget _buildSSHDiscovery() {
@@ -57,48 +84,48 @@ extension _SSH on _AppSettingsPageState {
     final defaultUsername = 'root';
     final usernameController = TextEditingController(text: defaultUsername);
 
-    final shouldImport = await context.showRoundDialog<bool>(
-      title: libL10n.import,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            '${libL10n.found} ${discoveredServers.length} ${libL10n.servers}.',
-          ),
-          const SizedBox(height: 8),
-          Text(libL10n.setting),
-          const SizedBox(height: 8),
-          Input(
-            controller: usernameController,
-            label: libL10n.user,
-          ),
-        ],
-      ),
-      actions: Btnx.cancelOk,
-    );
-
-    if (!mounted) return;
-
-    if (shouldImport == true) {
-      final username = usernameController.text.isNotEmpty
-          ? usernameController.text
-          : defaultUsername;
-      final servers = discoveredServers
-          .map(
-            (result) => Spi(
-              id: ShortId.generate(),
-              name: result.ip,
-              ip: result.ip,
-              port: result.port,
-              user: username,
+    try {
+      final shouldImport = await context.showRoundDialog<bool>(
+        title: libL10n.import,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.sshConfigFoundServers('${discoveredServers.length}')),
+            const SizedBox(height: 8),
+            Text(libL10n.setting),
+            const SizedBox(height: 8),
+            Input(
+              controller: usernameController,
+              label: libL10n.user,
             ),
-          )
-          .toList();
+          ],
+        ),
+        actions: Btnx.cancelOk,
+      );
 
-      await _importServers(servers);
+      if (!mounted) return;
+
+      if (shouldImport == true) {
+        final username = usernameController.text.isNotEmpty
+            ? usernameController.text
+            : defaultUsername;
+        final servers = discoveredServers
+            .map(
+              (result) => Spi(
+                id: ShortId.generate(),
+                name: result.ip,
+                ip: result.ip,
+                port: result.port,
+                user: username,
+              ),
+            )
+            .toList();
+
+        await _importServers(servers);
+      }
+    } finally {
+      usernameController.dispose();
     }
-
-    usernameController.dispose();
   }
 
   Future<void> _importServers(List<Spi> servers, {List<Spi>? resolvedServers}) async {
@@ -179,7 +206,7 @@ extension _SSH on _AppSettingsPageState {
     if (!mounted) return;
 
     if (shouldImport == true) {
-      await _importServers(resolved);
+      await _importServers(resolved, resolvedServers: resolved);
     }
   }
 
@@ -217,7 +244,7 @@ extension _SSH on _AppSettingsPageState {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.any,
         allowMultiple: false,
-        dialogTitle: 'SSH ${libL10n.select}',
+        dialogTitle: l10n.sshConfigImport,
       );
 
       if (!mounted) return;

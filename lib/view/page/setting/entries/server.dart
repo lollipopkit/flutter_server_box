@@ -180,7 +180,7 @@ extension _Server on _AppSettingsPageState {
         _buildDoubleColumnServersPage(),
         _buildUpdateInterval(),
         _buildMaxRetry(),
-        _buildSSHConfigImport(),
+        if (isDesktop) _buildSSHConfigImport(),
       ],
     );
   }

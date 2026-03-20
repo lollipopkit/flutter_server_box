@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:choice/choice.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
@@ -134,7 +132,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   Widget _buildForm() {
     final topItems = [
       _buildWriteScriptTip(),
-      if (isMobile) _buildQrScan(),
     ];
     final children = [
       SizedBox(
@@ -220,10 +217,16 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     try {
       final servers = await SSHConfig.parseConfig();
       if (!mounted) return;
-      if (servers.isEmpty) return;
+      if (servers.isEmpty) {
+        Stores.setting.firstTimeReadSSHCfg.put(false);
+        return;
+      }
 
       final hasExistingServers = ref.read(serversProvider).servers.isNotEmpty;
-      if (hasExistingServers) return;
+      if (hasExistingServers) {
+        Stores.setting.firstTimeReadSSHCfg.put(false);
+        return;
+      }
 
       final shouldImport = await context.showRoundDialog<bool>(
         title: l10n.sshConfigImport,
@@ -241,12 +244,14 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
 
       if (!mounted) return;
 
+      Stores.setting.firstTimeReadSSHCfg.put(false);
+
       if (shouldImport == true) {
         await _importServers(servers);
-        Stores.setting.firstTimeReadSSHCfg.put(false);
       }
     } catch (e) {
       if (!mounted) return;
+      Stores.setting.firstTimeReadSSHCfg.put(false);
       dprint('Error checking SSH config: $e');
     }
   }
