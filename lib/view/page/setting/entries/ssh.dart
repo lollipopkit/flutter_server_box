@@ -4,6 +4,8 @@ extension _SSH on _AppSettingsPageState {
   Widget _buildSSH() {
     return Column(
       children: [
+        _buildSSHConfigImport(),
+        _buildSSHDiscovery(),
         _buildLetterCache(),
         _buildSSHWakeLock(),
         _buildTermTheme(),
@@ -15,6 +17,200 @@ extension _SSH on _AppSettingsPageState {
         if (isMobile) _buildSSHVirtKeys(),
       ].map((e) => CardX(child: e)).toList(),
     );
+  }
+
+  Widget _buildSSHConfigImport() {
+    return ListTile(
+      leading: const Icon(MingCute.file_import_line),
+      title: Text(l10n.sshConfigImport),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: _onTapSSHConfigImport,
+    );
+  }
+
+  Widget _buildSSHDiscovery() {
+    return ListTile(
+      leading: const Icon(BoxIcons.bx_search),
+      title: Text(l10n.discoverSshServers),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: _onTapSSHDiscovery,
+    );
+  }
+
+  Future<void> _onTapSSHDiscovery() async {
+    try {
+      final result = await SshDiscoveryPage.route.go(context);
+
+      if (result != null && result.isNotEmpty) {
+        await _processDiscoveredServers(result);
+      }
+    } catch (e, s) {
+      context.showErrDialog(e, s);
+    }
+  }
+
+  Future<void> _processDiscoveredServers(
+    List<SshDiscoveryResult> discoveredServers,
+  ) async {
+    final defaultUsername = 'root';
+    final usernameController = TextEditingController(text: defaultUsername);
+
+    final shouldImport = await context.showRoundDialog<bool>(
+      title: libL10n.import,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${libL10n.found} ${discoveredServers.length} ${libL10n.servers}.',
+          ),
+          const SizedBox(height: 8),
+          Text(libL10n.setting),
+          const SizedBox(height: 8),
+          TextField(
+            controller: usernameController,
+            decoration: InputDecoration(labelText: libL10n.user),
+          ),
+        ],
+      ),
+      actions: Btnx.cancelOk,
+    );
+
+    if (shouldImport == true) {
+      final username = usernameController.text.isNotEmpty
+          ? usernameController.text
+          : defaultUsername;
+      final servers = discoveredServers
+          .map(
+            (result) => Spi(
+              name: result.ip,
+              ip: result.ip,
+              port: result.port,
+              user: username,
+            ),
+          )
+          .toList();
+
+      await _importServers(servers);
+    }
+
+    usernameController.dispose();
+  }
+
+  Future<void> _importServers(List<Spi> servers) async {
+    final deduplicated = ServerDeduplication.deduplicateServers(servers);
+    final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
+    final summary = ServerDeduplication.getImportSummary(servers, resolved);
+
+    if (!summary.hasItemsToImport) {
+      context.showSnackBar(l10n.sshConfigAllExist('${summary.duplicates}'));
+      return;
+    }
+
+    for (final server in resolved) {
+      ref.read(serversProvider.notifier).addServer(server);
+    }
+    context.showSnackBar(l10n.sshConfigImported('${resolved.length}'));
+  }
+
+  Future<void> _onTapSSHConfigImport() async {
+    try {
+      final servers = await SSHConfig.parseConfig();
+      if (servers.isEmpty) {
+        context.showSnackBar(l10n.sshConfigNoServers);
+        return;
+      }
+
+      await _processSSHServers(servers);
+    } catch (e, s) {
+      _handleImportSSHCfgPermissionIssue(e, s);
+    }
+  }
+
+  Future<void> _processSSHServers(List<Spi> servers) async {
+    final deduplicated = ServerDeduplication.deduplicateServers(servers);
+    final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
+    final summary = ServerDeduplication.getImportSummary(servers, resolved);
+
+    if (!summary.hasItemsToImport) {
+      context.showSnackBar(l10n.sshConfigAllExist('${summary.duplicates}'));
+      return;
+    }
+
+    final shouldImport = await context.showRoundDialog<bool>(
+      title: l10n.sshConfigImport,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.sshConfigFoundServers('${summary.total}')),
+            if (summary.hasDuplicates)
+              Text(
+                l10n.sshConfigDuplicatesSkipped('${summary.duplicates}'),
+                style: UIs.textGrey,
+              ),
+            Text(l10n.sshConfigServersToImport('${summary.toImport}')),
+            const SizedBox(height: 16),
+            ...resolved.map(
+              (s) => Text('• ${s.name} (${s.user}@${s.ip}:${s.port})'),
+            ),
+          ],
+        ),
+      ),
+      actions: Btnx.cancelOk,
+    );
+
+    if (shouldImport == true) {
+      await _importServers(servers);
+    }
+  }
+
+  void _handleImportSSHCfgPermissionIssue(Object e, StackTrace s) async {
+    dprint('Error importing SSH config: $e');
+    if (e is PathAccessException ||
+        e.toString().contains('Operation not permitted')) {
+      final useFilePicker = await context.showRoundDialog<bool>(
+        title: l10n.sshConfigImport,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.sshConfigPermissionDenied),
+            const SizedBox(height: 8),
+            Text(l10n.sshConfigManualSelect),
+          ],
+        ),
+        actions: Btnx.cancelOk,
+      );
+
+      if (useFilePicker == true) {
+        await _onTapSSHImportWithFilePicker();
+      }
+    } else {
+      context.showErrDialog(e, s);
+    }
+  }
+
+  Future<void> _onTapSSHImportWithFilePicker() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
+        dialogTitle: 'SSH ${libL10n.select}',
+      );
+
+      if (result?.files.single.path case final path?) {
+        final servers = await SSHConfig.parseConfig(path);
+        if (servers.isEmpty) {
+          context.showSnackBar(l10n.sshConfigNoServers);
+          return;
+        }
+
+        await _processSSHServers(servers);
+      }
+    } catch (e, s) {
+      context.showErrDialog(e, s);
+    }
   }
 
   Widget _buildSSHVirtKeys() {

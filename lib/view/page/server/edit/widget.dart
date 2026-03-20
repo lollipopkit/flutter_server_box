@@ -431,26 +431,6 @@ extension _Widgets on _ServerEditPageState {
     );
   }
 
-  Widget _buildSSHImport() {
-    return Btn.tile(
-      text: l10n.sshConfigImport,
-      icon: const Icon(Icons.settings, color: Colors.grey),
-      onTap: _onTapSSHImport,
-      textStyle: UIs.textGrey,
-      mainAxisSize: MainAxisSize.min,
-    );
-  }
-
-  Widget _buildSSHDiscovery() {
-    return Btn.tile(
-      text: l10n.discoverSshServers,
-      icon: const Icon(BoxIcons.bx_search, color: Colors.grey),
-      onTap: _onTapSSHDiscovery,
-      textStyle: UIs.textGrey,
-      mainAxisSize: MainAxisSize.min,
-    );
-  }
-
   Widget _buildDelBtn() {
     return IconButton(
       onPressed: () {
