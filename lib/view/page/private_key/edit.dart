@@ -116,6 +116,37 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     return value.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
   }
 
+  /// Normalizes the private key format:
+  /// - Removes whitespace from Base64 content (spaces, tabs, etc.)
+  /// - Ensures the key ends with a newline
+  String _normalizePrivateKey(String key) {
+    final lines = key.split('\n');
+    if (lines.isEmpty) return key;
+
+    final header = lines.first;
+    final footer = lines.last;
+
+    // Extract Base64 content (everything between header and footer)
+    final bodyLines = lines.sublist(1, lines.length - 1);
+    // Remove all whitespace from Base64 content
+    final cleanBody = bodyLines.join('').replaceAll(RegExp(r'\s+'), '');
+
+    // Rebuild the key with standard formatting (64 chars per line)
+    final buffer = StringBuffer();
+    buffer.writeln(header);
+    for (var i = 0; i < cleanBody.length; i += 64) {
+      final end = (i + 64 < cleanBody.length) ? i + 64 : cleanBody.length;
+      buffer.writeln(cleanBody.substring(i, end));
+    }
+    buffer.write(footer);
+    // Ensure trailing newline
+    if (!key.endsWith('\n')) {
+      buffer.writeln();
+    }
+
+    return buffer.toString();
+  }
+
   Widget _buildFAB() {
     return FloatingActionButton(tooltip: l10n.save, onPressed: _onTapSave, child: const Icon(Icons.save));
   }
@@ -186,7 +217,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
 
   void _onTapSave() async {
     final name = _nameController.text;
-    final key = _standardizeLineSeparators(_keyController.text.trim());
+    final key = _normalizePrivateKey(_standardizeLineSeparators(_keyController.text.trim()));
     final pwd = _pwdController.text;
     if (name.isEmpty || key.isEmpty) {
       context.showSnackBar(libL10n.empty);
