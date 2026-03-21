@@ -12,6 +12,7 @@ import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/res/misc.dart';
 
 const _format = 'text/plain';
+final _whitespaceRegex = RegExp(r'\s+');
 
 final class PrivateKeyEditPageArgs {
   final PrivateKeyInfo? pki;
@@ -121,15 +122,31 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
   /// - Ensures the key ends with a newline
   String _normalizePrivateKey(String key) {
     final lines = key.split('\n');
-    if (lines.isEmpty) return key;
+    // Guard: need at least header + body + footer (3 lines) for valid PEM
+    if (lines.length < 3) return key;
 
     final header = lines.first;
     final footer = lines.last;
 
     // Extract Base64 content (everything between header and footer)
     final bodyLines = lines.sublist(1, lines.length - 1);
+
+    // Check for RFC 1421 metadata headers (e.g., Proc-Type, DEK-Info)
+    // These appear in encrypted PEM keys and must be preserved
+    final hasMetadataHeaders = bodyLines.any(
+      (line) => line.contains(':') && !line.startsWith('-----'),
+    );
+
+    if (hasMetadataHeaders) {
+      // For encrypted keys, preserve structure and just ensure trailing newline
+      if (!key.endsWith('\n')) {
+        return '$key\n';
+      }
+      return key;
+    }
+
     // Remove all whitespace from Base64 content
-    final cleanBody = bodyLines.join('').replaceAll(RegExp(r'\s+'), '');
+    final cleanBody = bodyLines.join('').replaceAll(_whitespaceRegex, '');
 
     // Rebuild the key with standard formatting (64 chars per line)
     final buffer = StringBuffer();
@@ -138,11 +155,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       final end = (i + 64 < cleanBody.length) ? i + 64 : cleanBody.length;
       buffer.writeln(cleanBody.substring(i, end));
     }
-    buffer.write(footer);
-    // Ensure trailing newline
-    if (!key.endsWith('\n')) {
-      buffer.writeln();
-    }
+    buffer.writeln(footer);
 
     return buffer.toString();
   }
