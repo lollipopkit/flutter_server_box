@@ -13,6 +13,8 @@ import 'package:server_box/data/res/misc.dart';
 
 const _format = 'text/plain';
 final _whitespaceRegex = RegExp(r'\s+');
+final _pemBeginRegex = RegExp(r'^-----BEGIN [A-Z0-9 ]+-----$');
+final _pemEndRegex = RegExp(r'^-----END [A-Z0-9 ]+-----$');
 
 final class PrivateKeyEditPageArgs {
   final PrivateKeyInfo? pki;
@@ -127,6 +129,11 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
 
     final header = lines.first;
     final footer = lines.last;
+
+    // Validate PEM boundaries before mutating input
+    if (!_pemBeginRegex.hasMatch(header) || !_pemEndRegex.hasMatch(footer)) {
+      return key;
+    }
 
     // Extract Base64 content (everything between header and footer)
     final bodyLines = lines.sublist(1, lines.length - 1);
