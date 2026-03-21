@@ -13,8 +13,8 @@ import 'package:server_box/data/res/misc.dart';
 
 const _format = 'text/plain';
 final _whitespaceRegex = RegExp(r'\s+');
-final _pemBeginRegex = RegExp(r'^-----BEGIN [A-Z0-9 ]+-----$');
-final _pemEndRegex = RegExp(r'^-----END [A-Z0-9 ]+-----$');
+final _pemBeginRegex = RegExp(r'^-----BEGIN ([A-Z0-9 ]+)-----$');
+final _pemEndRegex = RegExp(r'^-----END ([A-Z0-9 ]+)-----$');
 
 final class PrivateKeyEditPageArgs {
   final PrivateKeyInfo? pki;
@@ -131,7 +131,16 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     final footer = lines.last;
 
     // Validate PEM boundaries before mutating input
-    if (!_pemBeginRegex.hasMatch(header) || !_pemEndRegex.hasMatch(footer)) {
+    final headerMatch = _pemBeginRegex.firstMatch(header);
+    final footerMatch = _pemEndRegex.firstMatch(footer);
+    if (headerMatch == null || footerMatch == null) {
+      return key;
+    }
+
+    // Ensure header and footer labels match
+    final headerLabel = headerMatch.group(1);
+    final footerLabel = footerMatch.group(1);
+    if (headerLabel != footerLabel) {
       return key;
     }
 
