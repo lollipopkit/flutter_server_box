@@ -513,6 +513,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pveVersionLow => '当前该功能处于测试阶段，仅在 PVE 8+ 上测试过，请谨慎使用';
 
   @override
+  String get pveLoadingForwarding => '正在建立 SSH 隧道...';
+
+  @override
+  String get pveLoadingLogin => '正在认证 PVE...';
+
+  @override
+  String get pveLoadingData => '正在获取集群数据...';
+
+  @override
+  String get pveLoadingConnect => '正在连接...';
+
+  @override
+  String get pvePassword => 'PVE 密码';
+
+  @override
+  String get pvePasswordHint => '使用密钥认证时需要填写';
+
+  @override
   String get read => '读';
 
   @override
@@ -1323,6 +1341,24 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pveVersionLow => '此功能目前處於測試階段，僅在 PVE 8+ 上進行過測試。請謹慎使用。';
+
+  @override
+  String get pveLoadingForwarding => '正在建立 SSH 隧道...';
+
+  @override
+  String get pveLoadingLogin => '正在認證 PVE...';
+
+  @override
+  String get pveLoadingData => '正在獲取集群數據...';
+
+  @override
+  String get pveLoadingConnect => '正在連接...';
+
+  @override
+  String get pvePassword => 'PVE 密碼';
+
+  @override
+  String get pvePasswordHint => '使用密鑰認證時需要填寫';
 
   @override
   String get read => '讀取';

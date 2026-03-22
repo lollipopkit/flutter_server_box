@@ -74,7 +74,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
               : Btn.icon(
                   icon: const Icon(Icons.refresh),
                   onTap: () {
-                    _notifier.list();
+                    _notifier.reconnect();
                     _initRefreshTimer();
                   },
                 ),
@@ -141,10 +141,10 @@ final class _PvePageState extends ConsumerState<PvePage> {
 
   Widget _buildLoading(PveLoadingStep step) {
     final String message = switch (step) {
-      PveLoadingStep.forwarding => 'Establishing SSH tunnel...',
-      PveLoadingStep.loggingIn => 'Authenticating with PVE...',
-      PveLoadingStep.fetchingData => 'Fetching cluster data...',
-      _ => 'Connecting...',
+      PveLoadingStep.forwarding => l10n.pveLoadingForwarding,
+      PveLoadingStep.loggingIn => l10n.pveLoadingLogin,
+      PveLoadingStep.fetchingData => l10n.pveLoadingData,
+      _ => l10n.pveLoadingConnect,
     };
     return Center(
       child: Column(

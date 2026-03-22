@@ -1062,6 +1062,42 @@ abstract class AppLocalizations {
   /// **'This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.'**
   String get pveVersionLow;
 
+  /// No description provided for @pveLoadingForwarding.
+  ///
+  /// In en, this message translates to:
+  /// **'Establishing SSH tunnel...'**
+  String get pveLoadingForwarding;
+
+  /// No description provided for @pveLoadingLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Authenticating with PVE...'**
+  String get pveLoadingLogin;
+
+  /// No description provided for @pveLoadingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetching cluster data...'**
+  String get pveLoadingData;
+
+  /// No description provided for @pveLoadingConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting...'**
+  String get pveLoadingConnect;
+
+  /// No description provided for @pvePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'PVE Password'**
+  String get pvePassword;
+
+  /// No description provided for @pvePasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Required when using key-based SSH authentication'**
+  String get pvePasswordHint;
+
   /// No description provided for @read.
   ///
   /// In en, this message translates to:

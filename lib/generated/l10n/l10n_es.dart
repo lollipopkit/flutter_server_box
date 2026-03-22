@@ -549,6 +549,25 @@ class AppLocalizationsEs extends AppLocalizations {
       'Esta función está actualmente en fase de prueba y solo se ha probado en PVE 8+. Úsela con precaución.';
 
   @override
+  String get pveLoadingForwarding => 'Establishing SSH tunnel...';
+
+  @override
+  String get pveLoadingLogin => 'Authenticating with PVE...';
+
+  @override
+  String get pveLoadingData => 'Fetching cluster data...';
+
+  @override
+  String get pveLoadingConnect => 'Connecting...';
+
+  @override
+  String get pvePassword => 'PVE Password';
+
+  @override
+  String get pvePasswordHint =>
+      'Required when using key-based SSH authentication';
+
+  @override
   String get read => 'Leer';
 
   @override

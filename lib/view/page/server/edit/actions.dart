@@ -71,6 +71,7 @@ extension _Actions on _ServerEditPageState {
     final custom = ServerCustom(
       pveAddr: _pveAddrCtrl.text.selfNotEmptyOrNull,
       pveIgnoreCert: _pveIgnoreCert.value,
+      pvePwd: _pvePwdCtrl.text.selfNotEmptyOrNull,
       cmds: customCmds.isEmpty ? null : customCmds,
       preferTempDev: _preferTempDevCtrl.text.selfNotEmptyOrNull,
       logoUrl: _logoUrlCtrl.text.selfNotEmptyOrNull,
@@ -266,6 +267,7 @@ extension _Utils on _ServerEditPageState {
     if (custom != null) {
       _pveAddrCtrl.text = custom.pveAddr ?? '';
       _pveIgnoreCert.value = custom.pveIgnoreCert;
+      _pvePwdCtrl.text = custom.pvePwd ?? '';
       _customCmds.value = custom.cmds ?? {};
       _preferTempDevCtrl.text = custom.preferTempDev ?? '';
       _logoUrlCtrl.text = custom.logoUrl ?? '';

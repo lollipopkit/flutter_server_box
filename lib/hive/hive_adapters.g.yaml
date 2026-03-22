@@ -185,7 +185,7 @@ types:
         index: 8
   ServerCustom:
     typeId: 7
-    nextIndex: 8
+    nextIndex: 9
     fields:
       pveAddr:
         index: 1
@@ -201,6 +201,8 @@ types:
         index: 6
       scriptDir:
         index: 7
+      pvePwd:
+        index: 8
   WakeOnLanCfg:
     typeId: 8
     nextIndex: 3

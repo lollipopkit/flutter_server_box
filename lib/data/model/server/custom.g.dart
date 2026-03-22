@@ -9,6 +9,7 @@ part of 'custom.dart';
 ServerCustom _$ServerCustomFromJson(Map<String, dynamic> json) => ServerCustom(
   pveAddr: json['pveAddr'] as String?,
   pveIgnoreCert: json['pveIgnoreCert'] as bool? ?? false,
+  pvePwd: json['pvePwd'] as String?,
   cmds: (json['cmds'] as Map<String, dynamic>?)?.map(
     (k, e) => MapEntry(k, e as String),
   ),
@@ -22,6 +23,7 @@ Map<String, dynamic> _$ServerCustomToJson(ServerCustom instance) =>
     <String, dynamic>{
       'pveAddr': ?instance.pveAddr,
       'pveIgnoreCert': instance.pveIgnoreCert,
+      'pvePwd': ?instance.pvePwd,
       'cmds': ?instance.cmds,
       'preferTempDev': ?instance.preferTempDev,
       'logoUrl': ?instance.logoUrl,

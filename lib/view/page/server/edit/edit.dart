@@ -48,6 +48,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _pveAddrCtrl = TextEditingController();
+  final _pvePwdCtrl = TextEditingController();
   final _preferTempDevCtrl = TextEditingController();
   final _logoUrlCtrl = TextEditingController();
   final _wolMacCtrl = TextEditingController();
@@ -98,6 +99,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _portFocus.dispose();
     _usernameFocus.dispose();
     _pveAddrCtrl.dispose();
+    _pvePwdCtrl.dispose();
 
     _keyIdx.dispose();
     _autoConnect.dispose();

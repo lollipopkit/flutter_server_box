@@ -8,7 +8,6 @@ import 'package:dio/io.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -40,12 +39,15 @@ abstract class PveState with _$PveState {
 
 @riverpod
 class PveNotifier extends _$PveNotifier {
-  late String addr;
-  late final ServerSocket _serverSocket;
+  String? addr;
+  ServerSocket? _serverSocket;
   final List<SSHForwardChannel> _forwards = [];
   int _localPort = 0;
-  late final Dio session;
-  late final bool _ignoreCert;
+  Dio? _session;
+  bool _ignoreCert = false;
+
+  Dio get session => _session!;
+  String get addrValue => addr!;
 
   SSHClient get _client {
     final serverState = ref.read(serverProvider(spiParam.id));
@@ -59,15 +61,15 @@ class PveNotifier extends _$PveNotifier {
   @override
   PveState build(Spi spiParam) {
     ref.onDispose(() => dispose());
-    final serverState = ref.read(serverProvider(spiParam.id));
+    final serverState = ref.watch(serverProvider(spiParam.id));
     if (serverState.client == null) {
-      return const PveState(error: PveErr(type: PveErrType.net, message: 'Server client is null'));
+      return const PveState(loadingStep: PveLoadingStep.forwarding);
     }
-    final addr = spiParam.custom?.pveAddr;
-    if (addr == null) {
+    final pveAddr = spiParam.custom?.pveAddr;
+    if (pveAddr == null) {
       return PveState(error: PveErr(type: PveErrType.net, message: 'PVE address is null'));
     }
-    this.addr = addr;
+    addr = pveAddr;
     _ignoreCert = spiParam.custom?.pveIgnoreCert ?? false;
     _initSession();
     Future.microtask(() => _init());
@@ -75,7 +77,7 @@ class PveNotifier extends _$PveNotifier {
   }
 
   void _initSession() {
-    session = Dio()
+    _session = Dio()
       ..httpClientAdapter = IOHttpClientAdapter(
         createHttpClient: () {
           final client = HttpClient();
@@ -90,6 +92,11 @@ class PveNotifier extends _$PveNotifier {
   }
 
   bool get onlyOneNode => state.data?.nodes.length == 1;
+
+  Future<void> reconnect() async {
+    state = state.copyWith(error: null, isConnected: false, loadingStep: PveLoadingStep.forwarding);
+    await _init();
+  }
 
   Future<void> _init() async {
     try {
@@ -118,11 +125,11 @@ class PveNotifier extends _$PveNotifier {
   }
 
   Future<void> _forward() async {
-    final url = Uri.parse(addr);
+    final url = Uri.parse(addrValue);
     if (_localPort == 0) {
       _serverSocket = await ServerSocket.bind('localhost', 0);
-      _localPort = _serverSocket.port;
-      _serverSocket.listen((socket) async {
+      _localPort = _serverSocket!.port;
+      _serverSocket!.listen((socket) async {
         try {
           final forward = await _client.forwardLocal(url.host, url.port);
           _forwards.add(forward);
@@ -133,9 +140,6 @@ class PveNotifier extends _$PveNotifier {
           socket.destroy();
         }
       });
-      final newUrl = Uri.parse(
-        addr,
-      ).replace(host: 'localhost', port: _localPort).toString();
     }
   }
 
@@ -156,11 +160,16 @@ class PveNotifier extends _$PveNotifier {
   }
 
   Future<void> _login() async {
+    final useKeyAuth = spiParam.keyId != null;
+    final password = useKeyAuth ? spiParam.custom?.pvePwd : spiParam.pwd;
+    if (password == null) {
+      throw PveErr(type: PveErrType.loginFailed, message: 'PVE password is required. Please set it in server settings.');
+    }
     final resp = await session.post(
-      '$addr/api2/extjs/access/ticket',
+      '$addrValue/api2/extjs/access/ticket',
       data: {
         'username': spiParam.user,
-        'password': spiParam.pwd,
+        'password': password,
         'realm': 'pam',
         'new-format': '1',
       },
@@ -185,7 +194,7 @@ class PveNotifier extends _$PveNotifier {
 
   /// Returns true if the PVE version is 8.0 or later
   Future<void> _getRelease() async {
-    final resp = await session.get('$addr/api2/extjs/version');
+    final resp = await session.get('$addrValue/api2/extjs/version');
     final version = resp.data['data']['release'] as String?;
     if (version != null && ref.mounted) {
       state = state.copyWith(release: version);
@@ -196,7 +205,7 @@ class PveNotifier extends _$PveNotifier {
     if (!state.isConnected || state.isBusy) return;
     state = state.copyWith(isBusy: true);
     try {
-      final resp = await session.get('$addr/api2/json/cluster/resources');
+      final resp = await session.get('$addrValue/api2/json/cluster/resources');
       final res = resp.data['data'] as List;
       final result = await Computer.shared.start(PveRes.parse, (
         res,
@@ -218,7 +227,7 @@ class PveNotifier extends _$PveNotifier {
   Future<bool> reboot(String node, String id) async {
     if (!state.isConnected) return false;
     final resp = await session.post(
-      '$addr/api2/json/nodes/$node/$id/status/reboot',
+      '$addrValue/api2/json/nodes/$node/$id/status/reboot',
     );
     final success = _isCtrlSuc(resp);
     if (success) await list(); // Refresh data
@@ -228,7 +237,7 @@ class PveNotifier extends _$PveNotifier {
   Future<bool> start(String node, String id) async {
     if (!state.isConnected) return false;
     final resp = await session.post(
-      '$addr/api2/json/nodes/$node/$id/status/start',
+      '$addrValue/api2/json/nodes/$node/$id/status/start',
     );
     final success = _isCtrlSuc(resp);
     if (success) await list(); // Refresh data
@@ -238,7 +247,7 @@ class PveNotifier extends _$PveNotifier {
   Future<bool> stop(String node, String id) async {
     if (!state.isConnected) return false;
     final resp = await session.post(
-      '$addr/api2/json/nodes/$node/$id/status/stop',
+      '$addrValue/api2/json/nodes/$node/$id/status/stop',
     );
     final success = _isCtrlSuc(resp);
     if (success) await list(); // Refresh data
@@ -248,7 +257,7 @@ class PveNotifier extends _$PveNotifier {
   Future<bool> shutdown(String node, String id) async {
     if (!state.isConnected) return false;
     final resp = await session.post(
-      '$addr/api2/json/nodes/$node/$id/status/shutdown',
+      '$addrValue/api2/json/nodes/$node/$id/status/shutdown',
     );
     final success = _isCtrlSuc(resp);
     if (success) await list(); // Refresh data
@@ -261,7 +270,7 @@ class PveNotifier extends _$PveNotifier {
 
   Future<void> dispose() async {
     try {
-      await _serverSocket.close();
+      await _serverSocket?.close();
     } catch (e, s) {
       Loggers.app.warning('Failed to close server socket', e, s);
     }
