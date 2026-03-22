@@ -518,6 +518,10 @@ class AppLocalizationsJa extends AppLocalizations {
       'ログインに失敗しました。Linux PAMログインのためにサーバー構成からのユーザー名/パスワードで認証できません。';
 
   @override
+  String get pveOtpRequired =>
+      'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.';
+
+  @override
   String get pveVersionLow => 'この機能は現在テスト段階にあり、PVE 8+でのみテストされています。ご利用の際は慎重に。';
 
   @override

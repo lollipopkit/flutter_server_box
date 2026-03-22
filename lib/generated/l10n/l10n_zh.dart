@@ -507,6 +507,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pveLoginFailed => '登录失败。无法使用服务器配置中的用户名或密码通过 Linux PAM 方式认证。';
 
   @override
+  String get pveOtpRequired => '此 PVE 服务器已启用双因素认证，请输入 OTP 验证码。';
+
+  @override
   String get pveVersionLow => '当前该功能处于测试阶段，仅在 PVE 8+ 上测试过，请谨慎使用';
 
   @override
@@ -1314,6 +1317,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pveLoginFailed => '登入失敗。無法使用伺服器設定中的使用者名稱或密碼透過 Linux PAM 方式認證。';
+
+  @override
+  String get pveOtpRequired => '此 PVE 伺服器已啟用雙因素認證，請輸入 OTP 驗證碼。';
 
   @override
   String get pveVersionLow => '此功能目前處於測試階段，僅在 PVE 8+ 上進行過測試。請謹慎使用。';

@@ -1050,6 +1050,12 @@ abstract class AppLocalizations {
   /// **'Login failed. Unable to authenticate with username/password from server configuration for Linux PAM login.'**
   String get pveLoginFailed;
 
+  /// No description provided for @pveOtpRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.'**
+  String get pveOtpRequired;
+
   /// No description provided for @pveVersionLow.
   ///
   /// In en, this message translates to:

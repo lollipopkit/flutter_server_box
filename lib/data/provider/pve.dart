@@ -107,9 +107,9 @@ class PveNotifier extends _$PveNotifier {
       await list();
       if (!ref.mounted) return;
       state = state.copyWith(loadingStep: PveLoadingStep.none);
-    } on PveErr {
+    } on PveErr catch (e) {
       if (!ref.mounted) return;
-      state = state.copyWith(error: PveErr(type: PveErrType.loginFailed, message: l10n.pveLoginFailed), loadingStep: PveLoadingStep.none);
+      state = state.copyWith(error: e, loadingStep: PveLoadingStep.none);
     } catch (e, s) {
       if (!ref.mounted) return;
       Loggers.app.warning('PVE init failed', e, s);
@@ -136,7 +136,6 @@ class PveNotifier extends _$PveNotifier {
       final newUrl = Uri.parse(
         addr,
       ).replace(host: 'localhost', port: _localPort).toString();
-      dprint('Forwarding $newUrl to $addr');
     }
   }
 
@@ -169,14 +168,19 @@ class PveNotifier extends _$PveNotifier {
         headers: {HttpHeaders.contentTypeHeader: Headers.jsonContentType},
       ),
     );
-    try {
-      final ticket = resp.data['data']['ticket'];
-      session.options.headers['CSRFPreventionToken'] =
-          resp.data['data']['CSRFPreventionToken'];
-      session.options.headers['Cookie'] = 'PVEAuthCookie=$ticket';
-    } catch (e) {
-      throw PveErr(type: PveErrType.loginFailed, message: e.toString());
+
+    final data = resp.data['data'];
+    if (data['NeedTFA'] == 1) {
+      throw PveErr(type: PveErrType.needTfa, message: 'Two-factor authentication is not supported yet. Please disable OTP on the PVE server and try again.');
     }
+
+    _setAuthHeaders(data);
+  }
+
+  void _setAuthHeaders(Map<String, dynamic> data) {
+    final ticket = data['ticket'];
+    session.options.headers['CSRFPreventionToken'] = data['CSRFPreventionToken'];
+    session.options.headers['Cookie'] = 'PVEAuthCookie=$ticket';
   }
 
   /// Returns true if the PVE version is 8.0 or later

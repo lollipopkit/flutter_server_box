@@ -541,6 +541,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'Fallo al iniciar sesión. No se puede autenticar con el nombre de usuario/contraseña de la configuración del servidor para el inicio de sesión de Linux PAM.';
 
   @override
+  String get pveOtpRequired =>
+      'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.';
+
+  @override
   String get pveVersionLow =>
       'Esta función está actualmente en fase de prueba y solo se ha probado en PVE 8+. Úsela con precaución.';
 

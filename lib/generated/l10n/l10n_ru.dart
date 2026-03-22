@@ -539,6 +539,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Ошибка входа. Невозможно аутентифицироваться с помощью имени пользователя/пароля из конфигурации сервера для входа в Linux PAM.';
 
   @override
+  String get pveOtpRequired =>
+      'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.';
+
+  @override
   String get pveVersionLow =>
       'Эта функция в настоящее время находится на стадии тестирования и была протестирована только на PVE 8+. Используйте ее с осторожностью.';
 

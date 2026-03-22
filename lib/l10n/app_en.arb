@@ -154,6 +154,7 @@
   "pushToken": "Push token",
   "pveIgnoreCertTip": "Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.",
   "pveLoginFailed": "Login failed. Unable to authenticate with username/password from server configuration for Linux PAM login.",
+  "pveOtpRequired": "Two-factor authentication is enabled on this PVE server. Please enter the OTP code.",
   "pveVersionLow": "This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.",
   "read": "Read",
   "recentConnections": "Recent Connections",

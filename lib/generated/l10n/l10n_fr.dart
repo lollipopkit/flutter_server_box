@@ -543,6 +543,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Échec de la connexion. Impossible d\'authentifier avec le nom d\'utilisateur / mot de passe de la configuration du serveur pour la connexion Linux PAM.';
 
   @override
+  String get pveOtpRequired =>
+      'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.';
+
+  @override
   String get pveVersionLow =>
       'Cette fonctionnalité est actuellement en phase de test et n\'a été testée que sur PVE 8+. Veuillez l\'utiliser avec prudence.';
 

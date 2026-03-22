@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/pve.dart';
@@ -80,11 +81,15 @@ final class _PvePageState extends ConsumerState<PvePage> {
         ],
       ),
       body: pveState.error != null
-          ? Padding(
-              padding: const EdgeInsets.all(13),
-              child: Center(child: Text(pveState.error.toString())),
-            )
+          ? _buildError(pveState.error!)
           : _buildBody(pveState.data, pveState.loadingStep),
+    );
+  }
+
+  Widget _buildError(PveErr error) {
+    return Padding(
+      padding: const EdgeInsets.all(13),
+      child: Center(child: Text(error.toString())),
     );
   }
 
