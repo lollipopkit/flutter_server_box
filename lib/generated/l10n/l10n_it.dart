@@ -537,8 +537,31 @@ class AppLocalizationsIt extends AppLocalizations {
       'Accesso fallito. Impossibile autenticarsi con nome utente/password dalla configurazione del server per l\'accesso Linux PAM.';
 
   @override
+  String get pveOtpRequired =>
+      'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.';
+
+  @override
   String get pveVersionLow =>
       'Questa funzionalità è attualmente nella fase di test ed è stata testata solo su PVE 8+. Usala con cautela.';
+
+  @override
+  String get pveLoadingForwarding => 'Establishing SSH tunnel...';
+
+  @override
+  String get pveLoadingLogin => 'Authenticating with PVE...';
+
+  @override
+  String get pveLoadingData => 'Fetching cluster data...';
+
+  @override
+  String get pveLoadingConnect => 'Connecting...';
+
+  @override
+  String get pvePassword => 'PVE Password';
+
+  @override
+  String get pvePasswordHint =>
+      'Required when using key-based SSH authentication';
 
   @override
   String get read => 'Leggi';

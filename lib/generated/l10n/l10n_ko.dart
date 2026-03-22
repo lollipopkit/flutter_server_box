@@ -515,8 +515,31 @@ class AppLocalizationsKo extends AppLocalizations {
       '로그인에 실패했습니다. 서버 설정의 사용자 이름/비밀번호로 Linux PAM 인증을 할 수 없습니다.';
 
   @override
+  String get pveOtpRequired =>
+      'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.';
+
+  @override
   String get pveVersionLow =>
       '이 기능은 현재 테스트 단계이며 PVE 8+에서만 테스트되었습니다. 주의하여 사용해 주세요.';
+
+  @override
+  String get pveLoadingForwarding => 'Establishing SSH tunnel...';
+
+  @override
+  String get pveLoadingLogin => 'Authenticating with PVE...';
+
+  @override
+  String get pveLoadingData => 'Fetching cluster data...';
+
+  @override
+  String get pveLoadingConnect => 'Connecting...';
+
+  @override
+  String get pvePassword => 'PVE Password';
+
+  @override
+  String get pvePasswordHint =>
+      'Required when using key-based SSH authentication';
 
   @override
   String get read => '읽기';

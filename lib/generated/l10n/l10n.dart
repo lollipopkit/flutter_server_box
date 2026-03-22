@@ -1050,11 +1050,53 @@ abstract class AppLocalizations {
   /// **'Login failed. Unable to authenticate with username/password from server configuration for Linux PAM login.'**
   String get pveLoginFailed;
 
+  /// No description provided for @pveOtpRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.'**
+  String get pveOtpRequired;
+
   /// No description provided for @pveVersionLow.
   ///
   /// In en, this message translates to:
   /// **'This feature is currently in the testing phase and has only been tested on PVE 8+. Please use it with caution.'**
   String get pveVersionLow;
+
+  /// No description provided for @pveLoadingForwarding.
+  ///
+  /// In en, this message translates to:
+  /// **'Establishing SSH tunnel...'**
+  String get pveLoadingForwarding;
+
+  /// No description provided for @pveLoadingLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Authenticating with PVE...'**
+  String get pveLoadingLogin;
+
+  /// No description provided for @pveLoadingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetching cluster data...'**
+  String get pveLoadingData;
+
+  /// No description provided for @pveLoadingConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting...'**
+  String get pveLoadingConnect;
+
+  /// No description provided for @pvePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'PVE Password'**
+  String get pvePassword;
+
+  /// No description provided for @pvePasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Required when using key-based SSH authentication'**
+  String get pvePasswordHint;
 
   /// No description provided for @read.
   ///

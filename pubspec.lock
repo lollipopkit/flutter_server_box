@@ -125,10 +125,10 @@ packages:
     dependency: transitive
     description:
       name: build
-      sha256: "275bf6bb2a00a9852c28d4e0b410da1d833a734d57d39d44f94bfc895a484ec3"
+      sha256: aadd943f4f8cc946882c954c187e6115a84c98c81ad1d9c6cbf0895a8c85da9c
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.4"
+    version: "4.0.5"
   build_config:
     dependency: transitive
     description:
@@ -149,10 +149,10 @@ packages:
     dependency: "direct dev"
     description:
       name: build_runner
-      sha256: "3552e5c2874ed47cf9ed9d6813ac71b2276ee07622f48530468b8013f1767e3f"
+      sha256: "521daf8d189deb79ba474e43a696b41c49fb3987818dbacf3308f1e03673a75e"
       url: "https://pub.dev"
     source: hosted
-    version: "2.13.0"
+    version: "2.13.1"
   built_collection:
     dependency: transitive
     description:
@@ -189,10 +189,10 @@ packages:
     dependency: transitive
     description:
       name: camera_avfoundation
-      sha256: "4e47c2796dab3f21fdfe1d15151bf628519093b171307cb64a71ba8e451697b5"
+      sha256: "11b4aee2f5e5e038982e152b4a342c749b414aa27857899d20f4323e94cb5f0b"
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.23"
+    version: "0.9.23+2"
   camera_platform_interface:
     dependency: transitive
     description:
@@ -460,10 +460,10 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: d974b6ba2606371ac71dd94254beefb6fa81185bde0b59bdc1df09885da85fde
+      sha256: "57d9a1dd5063f85fa3107fb42d1faffda52fdc948cefd5fe5ea85267a5fc7343"
       url: "https://pub.dev"
     source: hosted
-    version: "10.3.8"
+    version: "10.3.10"
   fixnum:
     dependency: transitive
     description:
@@ -927,10 +927,10 @@ packages:
     dependency: transitive
     description:
       name: local_auth_android
-      sha256: dc9663a7bc8ac33d7d988e63901974f63d527ebef260eabd19c479447cc9c911
+      sha256: b41970749c2d43791790724b76917eeee1e90de76e6b0eec3edca03a329bf44c
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.5"
+    version: "2.0.7"
   local_auth_darwin:
     dependency: transitive
     description:
@@ -975,10 +975,10 @@ packages:
     dependency: transitive
     description:
       name: markdown
-      sha256: "935e23e1ff3bc02d390bad4d4be001208ee92cc217cb5b5a6c19bc14aaa318c1"
+      sha256: ee85086ad7698b42522c6ad42fe195f1b9898e4d974a1af4576c1a3a176cada9
       url: "https://pub.dev"
     source: hosted
-    version: "7.3.0"
+    version: "7.3.1"
   matcher:
     dependency: transitive
     description:
@@ -1491,10 +1491,10 @@ packages:
     dependency: transitive
     description:
       name: source_gen
-      sha256: adc962c96fffb2de1728ef396a995aaedcafbe635abdca13d2a987ce17e57751
+      sha256: "732792cfd197d2161a65bb029606a46e0a18ff30ef9e141a7a82172b05ea8ecd"
       url: "https://pub.dev"
     source: hosted
-    version: "4.2.1"
+    version: "4.2.2"
   source_helper:
     dependency: transitive
     description:

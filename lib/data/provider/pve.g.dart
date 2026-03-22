@@ -58,7 +58,7 @@ final class PveNotifierProvider
   }
 }
 
-String _$pveNotifierHash() => r'1e71faadee074b9c07bee731ef4ae6505e791967';
+String _$pveNotifierHash() => r'a66699f64eae680064a1904f475d0a241d6cb3f8';
 
 final class PveNotifierFamily extends $Family
     with $ClassFamilyOverride<PveNotifier, PveState, PveState, PveState, Spi> {

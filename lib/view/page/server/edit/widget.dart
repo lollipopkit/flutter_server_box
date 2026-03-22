@@ -230,32 +230,45 @@ extension _Widgets on _ServerEditPageState {
 
   Widget _buildPVEs() {
     const addr = 'https://127.0.0.1:8006';
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const CenterGreyTitle('PVE'),
-        Input(
-          controller: _pveAddrCtrl,
-          type: TextInputType.url,
-          icon: MingCute.web_line,
-          label: 'URL',
-          hint: addr,
-          suggestion: false,
-        ),
-        ListTile(
-          leading: const Icon(MingCute.certificate_line),
-          title: TipText('PVE ${l10n.ignoreCert}', l10n.pveIgnoreCertTip),
-          trailing: _pveIgnoreCert.listenVal(
-            (v) => Switch(
-              value: v,
-              onChanged: (val) {
-                _pveIgnoreCert.value = val;
-              },
-            ),
+    return _keyIdx.listenVal((v) {
+      final useKeyAuth = v != null && v >= 0;
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CenterGreyTitle('PVE'),
+          Input(
+            controller: _pveAddrCtrl,
+            type: TextInputType.url,
+            icon: MingCute.web_line,
+            label: 'URL',
+            hint: addr,
+            suggestion: false,
           ),
-        ).cardx,
-      ],
-    );
+          if (useKeyAuth)
+            Input(
+              controller: _pvePwdCtrl,
+              type: TextInputType.visiblePassword,
+              icon: MingCute.lock_line,
+              label: l10n.pvePassword,
+              hint: l10n.pvePasswordHint,
+              obscureText: true,
+              suggestion: false,
+            ),
+          ListTile(
+            leading: const Icon(MingCute.certificate_line),
+            title: TipText('PVE ${l10n.ignoreCert}', l10n.pveIgnoreCertTip),
+            trailing: _pveIgnoreCert.listenVal(
+              (v) => Switch(
+                value: v,
+                onChanged: (val) {
+                  _pveIgnoreCert.value = val;
+                },
+              ),
+            ),
+          ).cardx,
+        ],
+      );
+    });
   }
 
   Widget _buildCustomCmds() {

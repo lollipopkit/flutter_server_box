@@ -11,6 +11,8 @@ final class ServerCustom {
 
   final bool pveIgnoreCert;
 
+  final String? pvePwd;
+
   /// {"title": "cmd"}
   final Map<String, String>? cmds;
 
@@ -28,6 +30,7 @@ final class ServerCustom {
     //this.temperature,
     this.pveAddr,
     this.pveIgnoreCert = false,
+    this.pvePwd,
     this.cmds,
     this.preferTempDev,
     this.logoUrl,
@@ -45,6 +48,7 @@ final class ServerCustom {
         //other.temperature == temperature &&
         other.pveAddr == pveAddr &&
         other.pveIgnoreCert == pveIgnoreCert &&
+        other.pvePwd == pvePwd &&
         other.cmds == cmds &&
         other.preferTempDev == preferTempDev &&
         other.logoUrl == logoUrl &&
@@ -57,6 +61,7 @@ final class ServerCustom {
       //temperature.hashCode ^
       pveAddr.hashCode ^
       pveIgnoreCert.hashCode ^
+      pvePwd.hashCode ^
       cmds.hashCode ^
       preferTempDev.hashCode ^
       logoUrl.hashCode ^
