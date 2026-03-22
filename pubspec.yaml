@@ -56,14 +56,6 @@ dependencies:
   fl_lib:
     path: packages/fl_lib
 
-dependency_overrides:
-  # webdav_client_plus:
-  #   path: ../webdav_client
-  gtk: # TODO: remove it after fixed in upstream
-    git:
-      url: https://github.com/lollipopkit/gtk.dart
-      ref: v0.0.36
-
 dev_dependencies:
   analyzer: ^8.1.1
   flutter_native_splash: ^2.1.6
