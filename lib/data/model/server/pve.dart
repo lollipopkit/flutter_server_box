@@ -293,6 +293,10 @@ final class PveStorage extends PveResIface implements PveCtrlIface {
   });
 
   static PveStorage fromJson(Map<String, dynamic> json) {
+    final rawContent = json['content'] as String?;
+    final contentParts = rawContent?.split(',');
+    contentParts?.sort();
+    final content = contentParts?.join(',') ?? rawContent ?? '';
     return PveStorage(
       id: json['id'],
       type: PveResType.storage,
@@ -300,7 +304,7 @@ final class PveStorage extends PveResIface implements PveCtrlIface {
       node: json['node'],
       status: json['status'],
       plugintype: json['plugintype'],
-      content: json['content'],
+      content: content,
       shared: json['shared'],
       disk: json['disk'],
       maxdisk: json['maxdisk'],

@@ -19,6 +19,13 @@ part 'pve.g.dart';
 
 typedef PveCtrlFunc = Future<bool> Function(String node, String id);
 
+enum PveLoadingStep {
+  none,
+  forwarding,
+  loggingIn,
+  fetchingData,
+}
+
 @freezed
 abstract class PveState with _$PveState {
   const factory PveState({
@@ -27,39 +34,44 @@ abstract class PveState with _$PveState {
     @Default(null) String? release,
     @Default(false) bool isBusy,
     @Default(false) bool isConnected,
+    @Default(PveLoadingStep.none) PveLoadingStep loadingStep,
   }) = _PveState;
 }
 
 @riverpod
 class PveNotifier extends _$PveNotifier {
-  late final Spi spi;
   late String addr;
-  late final SSHClient _client;
   late final ServerSocket _serverSocket;
   final List<SSHForwardChannel> _forwards = [];
   int _localPort = 0;
   late final Dio session;
   late final bool _ignoreCert;
 
-  @override
-  PveState build(Spi spiParam) {
-    spi = spiParam;
-    final serverState = ref.watch(serverProvider(spi.id));
+  SSHClient get _client {
+    final serverState = ref.read(serverProvider(spiParam.id));
     final client = serverState.client;
     if (client == null) {
+      throw PveErr(type: PveErrType.net, message: 'Server client is null');
+    }
+    return client;
+  }
+
+  @override
+  PveState build(Spi spiParam) {
+    ref.onDispose(() => dispose());
+    final serverState = ref.read(serverProvider(spiParam.id));
+    if (serverState.client == null) {
       return const PveState(error: PveErr(type: PveErrType.net, message: 'Server client is null'));
     }
-    _client = client;
-    final addr = spi.custom?.pveAddr;
+    final addr = spiParam.custom?.pveAddr;
     if (addr == null) {
       return PveState(error: PveErr(type: PveErrType.net, message: 'PVE address is null'));
     }
     this.addr = addr;
-    _ignoreCert = spi.custom?.pveIgnoreCert ?? false;
+    _ignoreCert = spiParam.custom?.pveIgnoreCert ?? false;
     _initSession();
-    // Async initialization
     Future.microtask(() => _init());
-    return const PveState();
+    return const PveState(loadingStep: PveLoadingStep.forwarding);
   }
 
   void _initSession() {
@@ -81,15 +93,27 @@ class PveNotifier extends _$PveNotifier {
 
   Future<void> _init() async {
     try {
+      if (!ref.mounted) return;
+      state = state.copyWith(loadingStep: PveLoadingStep.forwarding);
       await _forward();
+      if (!ref.mounted) return;
+      state = state.copyWith(loadingStep: PveLoadingStep.loggingIn);
       await _login();
+      if (!ref.mounted) return;
+      state = state.copyWith(loadingStep: PveLoadingStep.fetchingData);
       await _getRelease();
+      if (!ref.mounted) return;
       state = state.copyWith(isConnected: true);
+      await list();
+      if (!ref.mounted) return;
+      state = state.copyWith(loadingStep: PveLoadingStep.none);
     } on PveErr {
-      state = state.copyWith(error: PveErr(type: PveErrType.loginFailed, message: l10n.pveLoginFailed));
+      if (!ref.mounted) return;
+      state = state.copyWith(error: PveErr(type: PveErrType.loginFailed, message: l10n.pveLoginFailed), loadingStep: PveLoadingStep.none);
     } catch (e, s) {
+      if (!ref.mounted) return;
       Loggers.app.warning('PVE init failed', e, s);
-      state = state.copyWith(error: PveErr(type: PveErrType.unknown, message: e.toString()));
+      state = state.copyWith(error: PveErr(type: PveErrType.unknown, message: e.toString()), loadingStep: PveLoadingStep.none);
     }
   }
 
@@ -99,10 +123,15 @@ class PveNotifier extends _$PveNotifier {
       _serverSocket = await ServerSocket.bind('localhost', 0);
       _localPort = _serverSocket.port;
       _serverSocket.listen((socket) async {
-        final forward = await _client.forwardLocal(url.host, url.port);
-        _forwards.add(forward);
-        forward.stream.cast<List<int>>().pipe(socket);
-        socket.cast<List<int>>().pipe(forward.sink);
+        try {
+          final forward = await _client.forwardLocal(url.host, url.port);
+          _forwards.add(forward);
+          forward.stream.cast<List<int>>().pipe(socket);
+          socket.cast<List<int>>().pipe(forward.sink);
+        } catch (e, s) {
+          Loggers.app.warning('PVE forward failed', e, s);
+          socket.destroy();
+        }
       });
       final newUrl = Uri.parse(
         addr,
@@ -116,15 +145,6 @@ class PveNotifier extends _$PveNotifier {
     String? proxyHost,
     int? proxyPort,
   ) async {
-    /* final serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, 0);
-    final _localPort = serverSocket.port;
-    serverSocket.listen((socket) async {
-      final forward = await _client.forwardLocal(url.host, url.port);
-      forwards.add(forward);
-      forward.stream.cast<List<int>>().pipe(socket);
-      socket.cast<List<int>>().pipe(forward.sink);
-    });*/
-
     if (url.isScheme('https')) {
       return SecureSocket.startConnect(
         'localhost',
@@ -140,8 +160,8 @@ class PveNotifier extends _$PveNotifier {
     final resp = await session.post(
       '$addr/api2/extjs/access/ticket',
       data: {
-        'username': spi.user,
-        'password': spi.pwd,
+        'username': spiParam.user,
+        'password': spiParam.pwd,
         'realm': 'pam',
         'new-format': '1',
       },
@@ -163,7 +183,7 @@ class PveNotifier extends _$PveNotifier {
   Future<void> _getRelease() async {
     final resp = await session.get('$addr/api2/extjs/version');
     final version = resp.data['data']['release'] as String?;
-    if (version != null) {
+    if (version != null && ref.mounted) {
       state = state.copyWith(release: version);
     }
   }
@@ -178,12 +198,16 @@ class PveNotifier extends _$PveNotifier {
         res,
         state.data,
       ));
+      if (!ref.mounted) return;
       state = state.copyWith(data: result, error: null);
     } catch (e) {
+      if (!ref.mounted) return;
       Loggers.app.warning('PVE list failed', e);
       state = state.copyWith(error: PveErr(type: PveErrType.unknown, message: e.toString()));
     } finally {
-      state = state.copyWith(isBusy: false);
+      if (ref.mounted) {
+        state = state.copyWith(isBusy: false);
+      }
     }
   }
 

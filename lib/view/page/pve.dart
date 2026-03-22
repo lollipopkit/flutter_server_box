@@ -84,13 +84,13 @@ final class _PvePageState extends ConsumerState<PvePage> {
               padding: const EdgeInsets.all(13),
               child: Center(child: Text(pveState.error.toString())),
             )
-          : _buildBody(pveState.data),
+          : _buildBody(pveState.data, pveState.loadingStep),
     );
   }
 
-  Widget _buildBody(PveRes? data) {
+  Widget _buildBody(PveRes? data, PveLoadingStep loadingStep) {
     if (data == null) {
-      return UIs.centerLoading;
+      return _buildLoading(loadingStep);
     }
 
     PveResType? lastType;
@@ -131,6 +131,25 @@ final class _PvePageState extends ConsumerState<PvePage> {
           final PveSdn _ => _buildSdn(item),
         };
       },
+    );
+  }
+
+  Widget _buildLoading(PveLoadingStep step) {
+    final String message = switch (step) {
+      PveLoadingStep.forwarding => 'Establishing SSH tunnel...',
+      PveLoadingStep.loggingIn => 'Authenticating with PVE...',
+      PveLoadingStep.fetchingData => 'Fetching cluster data...',
+      _ => 'Connecting...',
+    };
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 17),
+          Text(message, style: UIs.text13Grey),
+        ],
+      ),
     );
   }
 
