@@ -125,16 +125,11 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   }
 
   Future<void> toggleForward(String id) async {
-    if (!_inFlight.add(id)) return;
-    try {
-      final isActive = state.activeForwards[id]?.isActive ?? false;
-      if (isActive) {
-        await stopForward(id);
-      } else {
-        await startForward(id);
-      }
-    } finally {
-      _inFlight.remove(id);
+    final isActive = state.activeForwards[id]?.isActive ?? false;
+    if (isActive) {
+      await stopForward(id);
+    } else {
+      await startForward(id);
     }
   }
 
