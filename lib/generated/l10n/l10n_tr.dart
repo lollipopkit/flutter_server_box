@@ -885,18 +885,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Podman Docker emülasyonu tespit edildi. Lütfen ayarlarda Podman\'a geçin.';
 
   @override
-  String get localHost => 'Local Host';
-
-  @override
-  String get localPort => 'Local Port';
-
-  @override
-  String get remoteHost => 'Remote Host';
-
-  @override
-  String get remotePort => 'Remote Port';
-
-  @override
   String get portForwardBeta =>
       'This feature is still in beta testing. Functionality is not guaranteed.';
 

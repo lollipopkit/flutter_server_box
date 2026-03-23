@@ -1644,30 +1644,6 @@ abstract class AppLocalizations {
   /// **'Podman Docker emulation detected. Please switch to Podman in settings.'**
   String get podmanDockerEmulationDetected;
 
-  /// No description provided for @localHost.
-  ///
-  /// In en, this message translates to:
-  /// **'Local Host'**
-  String get localHost;
-
-  /// No description provided for @localPort.
-  ///
-  /// In en, this message translates to:
-  /// **'Local Port'**
-  String get localPort;
-
-  /// No description provided for @remoteHost.
-  ///
-  /// In en, this message translates to:
-  /// **'Remote Host'**
-  String get remoteHost;
-
-  /// No description provided for @remotePort.
-  ///
-  /// In en, this message translates to:
-  /// **'Remote Port'**
-  String get remotePort;
-
   /// No description provided for @portForwardBeta.
   ///
   /// In en, this message translates to:

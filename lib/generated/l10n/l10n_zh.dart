@@ -834,18 +834,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '检测到 Podman Docker 仿真。请在设置中切换到 Podman。';
 
   @override
-  String get localHost => '本地主机';
-
-  @override
-  String get localPort => '本地端口';
-
-  @override
-  String get remoteHost => '远端主机';
-
-  @override
-  String get remotePort => '远端端口';
-
-  @override
   String get portForwardBeta => '此功能仍在测试阶段，不保证功能可用性。';
 
   @override

@@ -890,18 +890,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Виявлено емуляцію Podman Docker. Будь ласка, переключіться на Podman у налаштуваннях.';
 
   @override
-  String get localHost => 'Local Host';
-
-  @override
-  String get localPort => 'Local Port';
-
-  @override
-  String get remoteHost => 'Remote Host';
-
-  @override
-  String get remotePort => 'Remote Port';
-
-  @override
   String get portForwardBeta =>
       'This feature is still in beta testing. Functionality is not guaranteed.';
 

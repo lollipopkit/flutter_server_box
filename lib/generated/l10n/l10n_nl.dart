@@ -891,18 +891,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Podman Docker-emulatie gedetecteerd. Schakel over naar Podman in de instellingen.';
 
   @override
-  String get localHost => 'Local Host';
-
-  @override
-  String get localPort => 'Local Port';
-
-  @override
-  String get remoteHost => 'Remote Host';
-
-  @override
-  String get remotePort => 'Remote Port';
-
-  @override
   String get portForwardBeta =>
       'This feature is still in beta testing. Functionality is not guaranteed.';
 
