@@ -298,7 +298,7 @@ as String?,
 /// @nodoc
 mixin _$PortForwardState {
 
- List<PortForwardConfig> get configs; Map<String, PortForwardStatus> get activeForwards;
+ String get serverId; List<PortForwardConfig> get configs; Map<String, PortForwardStatus> get activeForwards;
 /// Create a copy of PortForwardState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -309,16 +309,16 @@ $PortForwardStateCopyWith<PortForwardState> get copyWith => _$PortForwardStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PortForwardState&&const DeepCollectionEquality().equals(other.configs, configs)&&const DeepCollectionEquality().equals(other.activeForwards, activeForwards));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PortForwardState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&const DeepCollectionEquality().equals(other.configs, configs)&&const DeepCollectionEquality().equals(other.activeForwards, activeForwards));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(configs),const DeepCollectionEquality().hash(activeForwards));
+int get hashCode => Object.hash(runtimeType,serverId,const DeepCollectionEquality().hash(configs),const DeepCollectionEquality().hash(activeForwards));
 
 @override
 String toString() {
-  return 'PortForwardState(configs: $configs, activeForwards: $activeForwards)';
+  return 'PortForwardState(serverId: $serverId, configs: $configs, activeForwards: $activeForwards)';
 }
 
 
@@ -329,7 +329,7 @@ abstract mixin class $PortForwardStateCopyWith<$Res>  {
   factory $PortForwardStateCopyWith(PortForwardState value, $Res Function(PortForwardState) _then) = _$PortForwardStateCopyWithImpl;
 @useResult
 $Res call({
- List<PortForwardConfig> configs, Map<String, PortForwardStatus> activeForwards
+ String serverId, List<PortForwardConfig> configs, Map<String, PortForwardStatus> activeForwards
 });
 
 
@@ -346,9 +346,10 @@ class _$PortForwardStateCopyWithImpl<$Res>
 
 /// Create a copy of PortForwardState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? configs = null,Object? activeForwards = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? serverId = null,Object? configs = null,Object? activeForwards = null,}) {
   return _then(_self.copyWith(
-configs: null == configs ? _self.configs : configs // ignore: cast_nullable_to_non_nullable
+serverId: null == serverId ? _self.serverId : serverId // ignore: cast_nullable_to_non_nullable
+as String,configs: null == configs ? _self.configs : configs // ignore: cast_nullable_to_non_nullable
 as List<PortForwardConfig>,activeForwards: null == activeForwards ? _self.activeForwards : activeForwards // ignore: cast_nullable_to_non_nullable
 as Map<String, PortForwardStatus>,
   ));
@@ -435,10 +436,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<PortForwardConfig> configs,  Map<String, PortForwardStatus> activeForwards)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String serverId,  List<PortForwardConfig> configs,  Map<String, PortForwardStatus> activeForwards)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PortForwardState() when $default != null:
-return $default(_that.configs,_that.activeForwards);case _:
+return $default(_that.serverId,_that.configs,_that.activeForwards);case _:
   return orElse();
 
 }
@@ -456,10 +457,10 @@ return $default(_that.configs,_that.activeForwards);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<PortForwardConfig> configs,  Map<String, PortForwardStatus> activeForwards)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String serverId,  List<PortForwardConfig> configs,  Map<String, PortForwardStatus> activeForwards)  $default,) {final _that = this;
 switch (_that) {
 case _PortForwardState():
-return $default(_that.configs,_that.activeForwards);case _:
+return $default(_that.serverId,_that.configs,_that.activeForwards);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -476,10 +477,10 @@ return $default(_that.configs,_that.activeForwards);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<PortForwardConfig> configs,  Map<String, PortForwardStatus> activeForwards)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String serverId,  List<PortForwardConfig> configs,  Map<String, PortForwardStatus> activeForwards)?  $default,) {final _that = this;
 switch (_that) {
 case _PortForwardState() when $default != null:
-return $default(_that.configs,_that.activeForwards);case _:
+return $default(_that.serverId,_that.configs,_that.activeForwards);case _:
   return null;
 
 }
@@ -491,9 +492,10 @@ return $default(_that.configs,_that.activeForwards);case _:
 
 
 class _PortForwardState implements PortForwardState {
-  const _PortForwardState({final  List<PortForwardConfig> configs = const [], final  Map<String, PortForwardStatus> activeForwards = const {}}): _configs = configs,_activeForwards = activeForwards;
+  const _PortForwardState({required this.serverId, final  List<PortForwardConfig> configs = const [], final  Map<String, PortForwardStatus> activeForwards = const {}}): _configs = configs,_activeForwards = activeForwards;
   
 
+@override final  String serverId;
  final  List<PortForwardConfig> _configs;
 @override@JsonKey() List<PortForwardConfig> get configs {
   if (_configs is EqualUnmodifiableListView) return _configs;
@@ -519,16 +521,16 @@ _$PortForwardStateCopyWith<_PortForwardState> get copyWith => __$PortForwardStat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PortForwardState&&const DeepCollectionEquality().equals(other._configs, _configs)&&const DeepCollectionEquality().equals(other._activeForwards, _activeForwards));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PortForwardState&&(identical(other.serverId, serverId) || other.serverId == serverId)&&const DeepCollectionEquality().equals(other._configs, _configs)&&const DeepCollectionEquality().equals(other._activeForwards, _activeForwards));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_configs),const DeepCollectionEquality().hash(_activeForwards));
+int get hashCode => Object.hash(runtimeType,serverId,const DeepCollectionEquality().hash(_configs),const DeepCollectionEquality().hash(_activeForwards));
 
 @override
 String toString() {
-  return 'PortForwardState(configs: $configs, activeForwards: $activeForwards)';
+  return 'PortForwardState(serverId: $serverId, configs: $configs, activeForwards: $activeForwards)';
 }
 
 
@@ -539,7 +541,7 @@ abstract mixin class _$PortForwardStateCopyWith<$Res> implements $PortForwardSta
   factory _$PortForwardStateCopyWith(_PortForwardState value, $Res Function(_PortForwardState) _then) = __$PortForwardStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<PortForwardConfig> configs, Map<String, PortForwardStatus> activeForwards
+ String serverId, List<PortForwardConfig> configs, Map<String, PortForwardStatus> activeForwards
 });
 
 
@@ -556,9 +558,10 @@ class __$PortForwardStateCopyWithImpl<$Res>
 
 /// Create a copy of PortForwardState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? configs = null,Object? activeForwards = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? serverId = null,Object? configs = null,Object? activeForwards = null,}) {
   return _then(_PortForwardState(
-configs: null == configs ? _self._configs : configs // ignore: cast_nullable_to_non_nullable
+serverId: null == serverId ? _self.serverId : serverId // ignore: cast_nullable_to_non_nullable
+as String,configs: null == configs ? _self._configs : configs // ignore: cast_nullable_to_non_nullable
 as List<PortForwardConfig>,activeForwards: null == activeForwards ? _self._activeForwards : activeForwards // ignore: cast_nullable_to_non_nullable
 as Map<String, PortForwardStatus>,
   ));

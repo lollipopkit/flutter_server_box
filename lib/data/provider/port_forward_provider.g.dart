@@ -16,7 +16,7 @@ final class PortForwardNotifierProvider
     extends $NotifierProvider<PortForwardNotifier, PortForwardState> {
   const PortForwardNotifierProvider._({
     required PortForwardNotifierFamily super.from,
-    required Spi super.argument,
+    required String super.argument,
   }) : super(
          retry: null,
          name: r'portForwardProvider',
@@ -59,7 +59,7 @@ final class PortForwardNotifierProvider
 }
 
 String _$portForwardNotifierHash() =>
-    r'6f598fc27998d702254ed2ed03fda433b5e3ef5d';
+    r'e9a93e4e4ee526d334eaaba0e3e0093de7a337fd';
 
 final class PortForwardNotifierFamily extends $Family
     with
@@ -68,7 +68,7 @@ final class PortForwardNotifierFamily extends $Family
           PortForwardState,
           PortForwardState,
           PortForwardState,
-          Spi
+          String
         > {
   const PortForwardNotifierFamily._()
     : super(
@@ -79,18 +79,18 @@ final class PortForwardNotifierFamily extends $Family
         isAutoDispose: false,
       );
 
-  PortForwardNotifierProvider call(Spi spiParam) =>
-      PortForwardNotifierProvider._(argument: spiParam, from: this);
+  PortForwardNotifierProvider call(String serverId) =>
+      PortForwardNotifierProvider._(argument: serverId, from: this);
 
   @override
   String toString() => r'portForwardProvider';
 }
 
 abstract class _$PortForwardNotifier extends $Notifier<PortForwardState> {
-  late final _$args = ref.$arg as Spi;
-  Spi get spiParam => _$args;
+  late final _$args = ref.$arg as String;
+  String get serverId => _$args;
 
-  PortForwardState build(Spi spiParam);
+  PortForwardState build(String serverId);
   @$mustCallSuper
   @override
   void runBuild() {

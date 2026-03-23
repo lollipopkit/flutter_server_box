@@ -5,7 +5,6 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -14,15 +13,15 @@ part 'port_forward_provider.g.dart';
 @Riverpod(keepAlive: true)
 class PortForwardNotifier extends _$PortForwardNotifier {
   final Map<String, _LocalForwardEntry> _forwards = {};
-  late final String _serverId;
 
   @override
-  PortForwardState build(Spi spiParam) {
-    _serverId = spiParam.id;
+  PortForwardState build(String serverId) {
     ref.onDispose(() => dispose());
-    final configs = Stores.portForward.fetch(_serverId);
-    return PortForwardState(configs: configs);
+    final configs = Stores.portForward.fetch(serverId);
+    return PortForwardState(serverId: serverId, configs: configs);
   }
+
+  String get _serverId => state.serverId;
 
   SSHClient get _client {
     final serverState = ref.read(serverProvider(_serverId));

@@ -26,6 +26,7 @@ abstract class PortForwardConfig with _$PortForwardConfig {
 @freezed
 abstract class PortForwardState with _$PortForwardState {
   const factory PortForwardState({
+    required String serverId,
     @Default([]) List<PortForwardConfig> configs,
     @Default({}) Map<String, PortForwardStatus> activeForwards,
   }) = _PortForwardState;

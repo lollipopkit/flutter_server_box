@@ -18,7 +18,7 @@ final class PortForwardPage extends ConsumerStatefulWidget {
 }
 
 final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
-  late final _notifier = ref.read(portForwardProvider(widget.args.spi).notifier);
+  late final _notifier = ref.read(portForwardProvider(widget.args.spi.id).notifier);
 
   @override
   void initState() {
@@ -54,7 +54,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
   }
 
   Widget _buildBody() {
-    final state = ref.watch(portForwardProvider(widget.args.spi));
+    final state = ref.watch(portForwardProvider(widget.args.spi.id));
     final configs = state.configs;
 
     if (configs.isEmpty) {
@@ -180,7 +180,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
           if (existing == null) {
             await _notifier.addConfig(config);
           } else {
-            final wasActive = ref.read(portForwardProvider(widget.args.spi)).activeForwards[existing.id]?.isActive ?? false;
+            final wasActive = ref.read(portForwardProvider(widget.args.spi.id)).activeForwards[existing.id]?.isActive ?? false;
             await _notifier.updateConfig(existing, config);
             if (wasActive) {
               await _notifier.startForward(config.id);
