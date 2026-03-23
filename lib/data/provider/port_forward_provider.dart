@@ -75,7 +75,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
     final existing = _forwards[id];
     if (existing != null) {
-      await existing.close();
+      await existing.close().catchError((_) {});
       _forwards.remove(id);
     }
 
@@ -98,7 +98,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   Future<void> stopForward(String id) async {
     final entry = _forwards[id];
     if (entry != null) {
-      await entry.close();
+      await entry.close().catchError((_) {});
       _forwards.remove(id);
       Loggers.app.info('Port forward stopped: $id');
     }
