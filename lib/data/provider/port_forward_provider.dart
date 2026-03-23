@@ -73,6 +73,12 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       return;
     }
 
+    final existing = _forwards[id];
+    if (existing != null) {
+      await existing.close();
+      _forwards.remove(id);
+    }
+
     try {
       final serverSocket = await ServerSocket.bind(config.localHost, config.localPort);
 
@@ -90,9 +96,10 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   }
 
   Future<void> stopForward(String id) async {
-    final entry = _forwards.remove(id);
+    final entry = _forwards[id];
     if (entry != null) {
       await entry.close();
+      _forwards.remove(id);
       Loggers.app.info('Port forward stopped: $id');
     }
     _updateStatus(id, PortForwardStatus(id: id, isActive: false));
