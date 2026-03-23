@@ -15,6 +15,7 @@ import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/container/container.dart';
 import 'package:server_box/view/page/iperf.dart';
+import 'package:server_box/view/page/port_forward.dart';
 import 'package:server_box/view/page/process.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
@@ -205,6 +206,11 @@ void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context, WidgetRe
       //     SystemdPage.route.toWidget(args: args),
       //   );
       // }
+      break;
+    case ServerFuncBtn.portForward:
+      if (!_checkClient(context, spi.id, ref)) return;
+      final args = SpiRequiredArgs(spi);
+      PortForwardPage.route.go(context, args);
       break;
   }
 }

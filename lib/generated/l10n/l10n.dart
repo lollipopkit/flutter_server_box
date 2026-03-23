@@ -1643,6 +1643,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Podman Docker emulation detected. Please switch to Podman in settings.'**
   String get podmanDockerEmulationDetected;
+
+  /// No description provided for @portForwardBeta.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature is still in beta testing. Functionality is not guaranteed.'**
+  String get portForwardBeta;
+
+  /// No description provided for @portForward_startPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a port forward rule to get started'**
+  String get portForward_startPrompt;
+
+  /// No description provided for @portForward_localHost.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Host'**
+  String get portForward_localHost;
+
+  /// No description provided for @portForward_localPort.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Port'**
+  String get portForward_localPort;
+
+  /// No description provided for @portForward_remoteHost.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote Host'**
+  String get portForward_remoteHost;
+
+  /// No description provided for @portForward_remotePort.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote Port'**
+  String get portForward_remotePort;
+
+  /// No description provided for @portForward_deleteConfirmFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}?'**
+  String portForward_deleteConfirmFmt(Object name);
 }
 
 class _AppLocalizationsDelegate

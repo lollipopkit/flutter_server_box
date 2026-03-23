@@ -255,5 +255,12 @@
   "writeScriptFailTip": "Writing to the script failed, possibly due to lack of permissions or the directory does not exist.",
   "writeScriptTip": "After connecting to the server, a script will be written to `~/.config/server_box` \n | `/tmp/server_box` to monitor the system status. You can review the script content.",
   "menuGitHubRepository": "GitHub Repository",
-  "podmanDockerEmulationDetected": "Podman Docker emulation detected. Please switch to Podman in settings."
+  "podmanDockerEmulationDetected": "Podman Docker emulation detected. Please switch to Podman in settings.",
+  "portForwardBeta": "This feature is still in beta testing. Functionality is not guaranteed.",
+  "portForward_startPrompt": "Add a port forward rule to get started",
+  "portForward_localHost": "Local Host",
+  "portForward_localPort": "Local Port",
+  "portForward_remoteHost": "Remote Host",
+  "portForward_remotePort": "Remote Port",
+  "portForward_deleteConfirmFmt": "Delete {name}?"
 }

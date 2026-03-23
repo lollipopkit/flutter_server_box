@@ -12,20 +12,32 @@ enum ServerFuncBtn {
   snippet(),
   iperf(),
   // pve(),
-  systemd(1058);
+  systemd(1058),
+  portForward(1340);
 
   final int? addedVersion;
 
   const ServerFuncBtn([this.addedVersion]);
 
   static void autoAddNewFuncs(int cur) {
-    if (cur >= systemd.addedVersion!) {
-      final prop = Stores.setting.serverFuncBtns;
-      final list = prop.fetch();
+    final prop = Stores.setting.serverFuncBtns;
+    final list = prop.fetch();
+    final originalLength = list.length;
+
+    if (systemd.addedVersion != null && cur >= systemd.addedVersion!) {
       if (!list.contains(systemd.index)) {
         list.add(systemd.index);
-        prop.put(list);
       }
+    }
+
+    if (portForward.addedVersion != null && cur >= portForward.addedVersion!) {
+      if (!list.contains(portForward.index)) {
+        list.add(portForward.index);
+      }
+    }
+
+    if (list.length > originalLength) {
+      prop.put(list);
     }
   }
 
@@ -48,6 +60,7 @@ enum ServerFuncBtn {
     terminal => Icons.terminal,
     iperf => Icons.speed,
     systemd => MingCute.plugin_2_fill,
+    portForward => Icons.compare_arrows,
   };
 
   String get toStr => switch (this) {
@@ -59,5 +72,6 @@ enum ServerFuncBtn {
     terminal => libL10n.terminal,
     iperf => 'iperf',
     systemd => 'Systemd',
+    portForward => libL10n.portForward,
   };
 }

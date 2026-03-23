@@ -152,6 +152,8 @@ abstract final class GithubIds {
     'kuvaldini',
     'aliferne',
     'canronglan',
+    'nickgirga',
+    'xxnuo'
   };
 }
 
