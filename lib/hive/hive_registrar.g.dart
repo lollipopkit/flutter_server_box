@@ -2,7 +2,7 @@
 // Do not modify
 // Check in to version control
 
-import 'package:hive_ce/hive.dart';
+import 'package:hive_ce/hive_ce.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/hive/hive_adapters.dart';

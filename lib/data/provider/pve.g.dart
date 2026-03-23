@@ -10,11 +10,11 @@ part of 'pve.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(PveNotifier)
-const pveProvider = PveNotifierFamily._();
+final pveProvider = PveNotifierFamily._();
 
 final class PveNotifierProvider
     extends $NotifierProvider<PveNotifier, PveState> {
-  const PveNotifierProvider._({
+  PveNotifierProvider._({
     required PveNotifierFamily super.from,
     required Spi super.argument,
   }) : super(
@@ -62,7 +62,7 @@ String _$pveNotifierHash() => r'1f80a27896013a275e5222f19e5ee3c3a68e2f84';
 
 final class PveNotifierFamily extends $Family
     with $ClassFamilyOverride<PveNotifier, PveState, PveState, PveState, Spi> {
-  const PveNotifierFamily._()
+  PveNotifierFamily._()
     : super(
         retry: null,
         name: r'pveProvider',
@@ -86,7 +86,6 @@ abstract class _$PveNotifier extends $Notifier<PveState> {
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build(_$args);
     final ref = this.ref as $Ref<PveState, PveState>;
     final element =
         ref.element
@@ -96,6 +95,6 @@ abstract class _$PveNotifier extends $Notifier<PveState> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, () => build(_$args));
   }
 }
