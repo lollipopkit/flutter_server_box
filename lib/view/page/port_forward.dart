@@ -90,18 +90,19 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
   Widget _buildConfigTile(PortForwardConfig config, PortForwardStatus? status) {
     final isActive = status?.isActive ?? false;
     final hasError = status?.error != null;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return ListTile(
       leading: Icon(
         isActive ? Icons.link : Icons.link_off,
-        color: isActive ? Colors.green : (hasError ? Colors.red : Colors.grey),
+        color: isActive ? colorScheme.primary : (hasError ? colorScheme.error : colorScheme.onSurfaceVariant),
       ),
       title: Text(config.name),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(config.displayAddr, style: UIs.text13Grey),
-          if (hasError) Text(status!.error!, style: TextStyle(color: Colors.red, fontSize: 12)),
+          if (hasError) Text(status!.error!, style: TextStyle(color: colorScheme.error, fontSize: 12)),
         ],
       ),
       trailing: Row(
@@ -299,8 +300,13 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
               description: desc.isEmpty ? null : desc,
             );
 
-            await widget.onSave(config);
-            if (mounted) Navigator.of(context).pop();
+            try {
+              await widget.onSave(config);
+              if (mounted) Navigator.of(context).pop();
+            } catch (e, s) {
+              Loggers.app.warning('Failed to save port forward config', e, s);
+              if (mounted) context.showSnackBar(libL10n.error);
+            }
           },
         ),
       ],

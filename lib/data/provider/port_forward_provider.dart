@@ -143,7 +143,8 @@ class _LocalForwardEntry {
   Future<void> close() async {
     await _subscription?.cancel();
     await serverSocket.close();
-    for (final conn in _connections) {
+    final connections = _connections.toList();
+    for (final conn in connections) {
       await conn.close();
     }
     _connections.clear();
