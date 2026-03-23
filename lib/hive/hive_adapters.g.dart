@@ -436,6 +436,8 @@ class ServerFuncBtnAdapter extends TypeAdapter<ServerFuncBtn> {
         return ServerFuncBtn.iperf;
       case 8:
         return ServerFuncBtn.systemd;
+      case 9:
+        return ServerFuncBtn.portForward;
       default:
         return ServerFuncBtn.terminal;
     }
@@ -458,6 +460,8 @@ class ServerFuncBtnAdapter extends TypeAdapter<ServerFuncBtn> {
         writer.writeByte(6);
       case ServerFuncBtn.systemd:
         writer.writeByte(8);
+      case ServerFuncBtn.portForward:
+        writer.writeByte(9);
     }
   }
 
@@ -604,6 +608,61 @@ class SystemTypeAdapter extends TypeAdapter<SystemType> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is SystemTypeAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class PortForwardConfigAdapter extends TypeAdapter<PortForwardConfig> {
+  @override
+  final typeId = 10;
+
+  @override
+  PortForwardConfig read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return PortForwardConfig(
+      id: fields[0] as String,
+      serverId: fields[7] as String,
+      name: fields[1] as String,
+      localHost: fields[2] == null ? 'localhost' : fields[2] as String,
+      localPort: (fields[3] as num).toInt(),
+      remoteHost: fields[4] as String,
+      remotePort: (fields[5] as num).toInt(),
+      description: fields[6] as String?,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, PortForwardConfig obj) {
+    writer
+      ..writeByte(8)
+      ..writeByte(0)
+      ..write(obj.id)
+      ..writeByte(1)
+      ..write(obj.name)
+      ..writeByte(2)
+      ..write(obj.localHost)
+      ..writeByte(3)
+      ..write(obj.localPort)
+      ..writeByte(4)
+      ..write(obj.remoteHost)
+      ..writeByte(5)
+      ..write(obj.remotePort)
+      ..writeByte(6)
+      ..write(obj.description)
+      ..writeByte(7)
+      ..write(obj.serverId);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PortForwardConfigAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

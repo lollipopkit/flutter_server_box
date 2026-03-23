@@ -12,7 +12,8 @@ enum ServerFuncBtn {
   snippet(),
   iperf(),
   // pve(),
-  systemd(1058);
+  systemd(1058),
+  portForward();
 
   final int? addedVersion;
 
@@ -48,6 +49,7 @@ enum ServerFuncBtn {
     terminal => Icons.terminal,
     iperf => Icons.speed,
     systemd => MingCute.plugin_2_fill,
+    portForward => Icons.compare_arrows,
   };
 
   String get toStr => switch (this) {
@@ -59,5 +61,6 @@ enum ServerFuncBtn {
     terminal => libL10n.terminal,
     iperf => 'iperf',
     systemd => 'Systemd',
+    portForward => libL10n.portForward,
   };
 }

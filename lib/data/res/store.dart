@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/container.dart';
 import 'package:server_box/data/store/history.dart';
+import 'package:server_box/data/store/port_forward.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
@@ -19,6 +20,7 @@ abstract final class Stores {
   static HistoryStore get history => getIt<HistoryStore>();
   // Keep the legacy box registered so existing connection stats DB files remain intact.
   static ConnectionStatsStore get connectionStats => getIt<ConnectionStatsStore>();
+  static PortForwardStore get portForward => getIt<PortForwardStore>();
 
   /// All stores that need backup
   static List<HiveStore> get _allBackup => [
@@ -29,6 +31,7 @@ abstract final class Stores {
         snippet,
         history,
         connectionStats,
+        portForward,
       ];
 
   static Future<void> init() async {
@@ -39,6 +42,7 @@ abstract final class Stores {
     getIt.registerLazySingleton<SnippetStore>(() => SnippetStore.instance);
     getIt.registerLazySingleton<HistoryStore>(() => HistoryStore.instance);
     getIt.registerLazySingleton<ConnectionStatsStore>(() => ConnectionStatsStore.instance);
+    getIt.registerLazySingleton<PortForwardStore>(() => PortForwardStore.instance);
     
     await Future.wait(_allBackup.map((store) => store.init()));
   }
