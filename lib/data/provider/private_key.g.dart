@@ -10,11 +10,11 @@ part of 'private_key.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(PrivateKeyNotifier)
-const privateKeyProvider = PrivateKeyNotifierProvider._();
+final privateKeyProvider = PrivateKeyNotifierProvider._();
 
 final class PrivateKeyNotifierProvider
     extends $NotifierProvider<PrivateKeyNotifier, PrivateKeyState> {
-  const PrivateKeyNotifierProvider._()
+  PrivateKeyNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -49,7 +49,6 @@ abstract class _$PrivateKeyNotifier extends $Notifier<PrivateKeyState> {
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build();
     final ref = this.ref as $Ref<PrivateKeyState, PrivateKeyState>;
     final element =
         ref.element
@@ -59,6 +58,6 @@ abstract class _$PrivateKeyNotifier extends $Notifier<PrivateKeyState> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, build);
   }
 }

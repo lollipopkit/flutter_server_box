@@ -10,11 +10,11 @@ part of 'systemd.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(SystemdNotifier)
-const systemdProvider = SystemdNotifierFamily._();
+final systemdProvider = SystemdNotifierFamily._();
 
 final class SystemdNotifierProvider
     extends $NotifierProvider<SystemdNotifier, SystemdState> {
-  const SystemdNotifierProvider._({
+  SystemdNotifierProvider._({
     required SystemdNotifierFamily super.from,
     required Spi super.argument,
   }) : super(
@@ -69,7 +69,7 @@ final class SystemdNotifierFamily extends $Family
           SystemdState,
           Spi
         > {
-  const SystemdNotifierFamily._()
+  SystemdNotifierFamily._()
     : super(
         retry: null,
         name: r'systemdProvider',
@@ -93,7 +93,6 @@ abstract class _$SystemdNotifier extends $Notifier<SystemdState> {
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build(_$args);
     final ref = this.ref as $Ref<SystemdState, SystemdState>;
     final element =
         ref.element
@@ -103,6 +102,6 @@ abstract class _$SystemdNotifier extends $Notifier<SystemdState> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, () => build(_$args));
   }
 }

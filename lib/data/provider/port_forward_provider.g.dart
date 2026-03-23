@@ -10,11 +10,11 @@ part of 'port_forward_provider.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(PortForwardNotifier)
-const portForwardProvider = PortForwardNotifierFamily._();
+final portForwardProvider = PortForwardNotifierFamily._();
 
 final class PortForwardNotifierProvider
     extends $NotifierProvider<PortForwardNotifier, PortForwardState> {
-  const PortForwardNotifierProvider._({
+  PortForwardNotifierProvider._({
     required PortForwardNotifierFamily super.from,
     required String super.argument,
   }) : super(
@@ -59,7 +59,7 @@ final class PortForwardNotifierProvider
 }
 
 String _$portForwardNotifierHash() =>
-    r'e9a93e4e4ee526d334eaaba0e3e0093de7a337fd';
+    r'c56425252253c276b6202f478d3475e8fe0c1c64';
 
 final class PortForwardNotifierFamily extends $Family
     with
@@ -70,7 +70,7 @@ final class PortForwardNotifierFamily extends $Family
           PortForwardState,
           String
         > {
-  const PortForwardNotifierFamily._()
+  PortForwardNotifierFamily._()
     : super(
         retry: null,
         name: r'portForwardProvider',
@@ -94,7 +94,6 @@ abstract class _$PortForwardNotifier extends $Notifier<PortForwardState> {
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build(_$args);
     final ref = this.ref as $Ref<PortForwardState, PortForwardState>;
     final element =
         ref.element
@@ -104,6 +103,6 @@ abstract class _$PortForwardNotifier extends $Notifier<PortForwardState> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, () => build(_$args));
   }
 }

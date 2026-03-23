@@ -10,11 +10,11 @@ part of 'virtual_keyboard.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(VirtKeyboard)
-const virtKeyboardProvider = VirtKeyboardProvider._();
+final virtKeyboardProvider = VirtKeyboardProvider._();
 
 final class VirtKeyboardProvider
     extends $NotifierProvider<VirtKeyboard, VirtKeyState> {
-  const VirtKeyboardProvider._()
+  VirtKeyboardProvider._()
     : super(
         from: null,
         argument: null,
@@ -48,7 +48,6 @@ abstract class _$VirtKeyboard extends $Notifier<VirtKeyState> {
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build();
     final ref = this.ref as $Ref<VirtKeyState, VirtKeyState>;
     final element =
         ref.element
@@ -58,6 +57,6 @@ abstract class _$VirtKeyboard extends $Notifier<VirtKeyState> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, build);
   }
 }

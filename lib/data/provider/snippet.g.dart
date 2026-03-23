@@ -10,11 +10,11 @@ part of 'snippet.dart';
 // ignore_for_file: type=lint, type=warning
 
 @ProviderFor(SnippetNotifier)
-const snippetProvider = SnippetNotifierProvider._();
+final snippetProvider = SnippetNotifierProvider._();
 
 final class SnippetNotifierProvider
     extends $NotifierProvider<SnippetNotifier, SnippetState> {
-  const SnippetNotifierProvider._()
+  SnippetNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -48,7 +48,6 @@ abstract class _$SnippetNotifier extends $Notifier<SnippetState> {
   @$mustCallSuper
   @override
   void runBuild() {
-    final created = build();
     final ref = this.ref as $Ref<SnippetState, SnippetState>;
     final element =
         ref.element
@@ -58,6 +57,6 @@ abstract class _$SnippetNotifier extends $Notifier<SnippetState> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    element.handleCreate(ref, build);
   }
 }
