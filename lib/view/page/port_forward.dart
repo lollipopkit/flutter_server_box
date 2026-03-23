@@ -169,16 +169,77 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
   }
 
   void _showConfigDialog(PortForwardConfig? existing) {
-    final nameController = TextEditingController(text: existing?.name ?? '');
-    final localHostController = TextEditingController(text: existing?.localHost ?? 'localhost');
-    final localPortController = TextEditingController(text: existing?.localPort.toString() ?? '');
-    final remoteHostController = TextEditingController(text: existing?.remoteHost ?? '');
-    final remotePortController = TextEditingController(text: existing?.remotePort.toString() ?? '');
-    final descController = TextEditingController(text: existing?.description ?? '');
+    showDialog(
+      context: context,
+      builder: (ctx) => _PortForwardConfigDialog(
+        existing: existing,
+        serverId: widget.args.spi.id,
+        onSave: (config) async {
+          if (existing == null) {
+            await _notifier.addConfig(config);
+          } else {
+            final wasActive = ref.read(portForwardProvider(widget.args.spi)).activeForwards[existing.id]?.isActive ?? false;
+            await _notifier.updateConfig(existing, config);
+            if (wasActive) {
+              await _notifier.startForward(config.id);
+            }
+          }
+        },
+      ),
+    );
+  }
+}
 
-    context.showRoundDialog(
-      title: existing == null ? libL10n.add : libL10n.edit,
-      child: Column(
+class _PortForwardConfigDialog extends StatefulWidget {
+  final PortForwardConfig? existing;
+  final String serverId;
+  final Future<void> Function(PortForwardConfig config) onSave;
+
+  const _PortForwardConfigDialog({
+    required this.existing,
+    required this.serverId,
+    required this.onSave,
+  });
+
+  @override
+  State<_PortForwardConfigDialog> createState() => _PortForwardConfigDialogState();
+}
+
+class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
+  late final TextEditingController nameController;
+  late final TextEditingController localHostController;
+  late final TextEditingController localPortController;
+  late final TextEditingController remoteHostController;
+  late final TextEditingController remotePortController;
+  late final TextEditingController descController;
+
+  @override
+  void initState() {
+    super.initState();
+    nameController = TextEditingController(text: widget.existing?.name ?? '');
+    localHostController = TextEditingController(text: widget.existing?.localHost ?? 'localhost');
+    localPortController = TextEditingController(text: widget.existing?.localPort.toString() ?? '');
+    remoteHostController = TextEditingController(text: widget.existing?.remoteHost ?? '');
+    remotePortController = TextEditingController(text: widget.existing?.remotePort.toString() ?? '');
+    descController = TextEditingController(text: widget.existing?.description ?? '');
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    localHostController.dispose();
+    localPortController.dispose();
+    remoteHostController.dispose();
+    remotePortController.dispose();
+    descController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.existing == null ? libL10n.add : libL10n.edit),
+      content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Input(controller: nameController, hint: libL10n.name),
@@ -213,14 +274,20 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
             final remotePort = int.tryParse(remotePortController.text.trim()) ?? 0;
             final desc = descController.text.trim();
 
-            if (name.isEmpty || localHost.isEmpty || localPort == 0 || remoteHost.isEmpty || remotePort == 0) {
-              context.showSnackBar(libL10n.invalid);
+            if (name.isEmpty ||
+                localHost.isEmpty ||
+                localPort <= 0 ||
+                localPort > 65535 ||
+                remoteHost.isEmpty ||
+                remotePort <= 0 ||
+                remotePort > 65535) {
+              if (mounted) context.showSnackBar(libL10n.invalid);
               return;
             }
 
             final config = PortForwardConfig(
-              id: existing?.id ?? ShortId.generate(),
-              serverId: '',
+              id: widget.existing?.id ?? ShortId.generate(),
+              serverId: widget.serverId,
               name: name,
               localHost: localHost,
               localPort: localPort,
@@ -229,17 +296,8 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
               description: desc.isEmpty ? null : desc,
             );
 
-            if (existing == null) {
-              await _notifier.addConfig(config);
-            } else {
-              final wasActive = ref.read(portForwardProvider(widget.args.spi)).activeForwards[existing.id]?.isActive ?? false;
-              await _notifier.updateConfig(existing, config);
-              if (wasActive) {
-                await _notifier.startForward(config.id);
-              }
-            }
-
-            if (context.mounted) context.pop();
+            await widget.onSave(config);
+            if (mounted) Navigator.of(context).pop();
           },
         ),
       ],

@@ -35,7 +35,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
   void dispose() {
     for (final entry in _forwards.values) {
-      entry.close();
+      entry.close().catchError((_) {});
     }
     _forwards.clear();
   }
@@ -126,8 +126,8 @@ class _LocalForwardEntry {
       try {
         final forward = await client.forwardLocal(remoteHost, remotePort);
         _connections.add(_ActiveConnection(socket: socket, forward: forward));
-        forward.stream.cast<List<int>>().pipe(socket);
-        socket.cast<List<int>>().pipe(forward.sink);
+        forward.stream.cast<List<int>>().pipe(socket).catchError((_) {});
+        socket.cast<List<int>>().pipe(forward.sink).catchError((_) {});
       } catch (e, s) {
         Loggers.app.warning('Port forward connection failed', e, s);
         socket.destroy();
