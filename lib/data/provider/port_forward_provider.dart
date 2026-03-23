@@ -13,10 +13,20 @@ part 'port_forward_provider.g.dart';
 @Riverpod(keepAlive: true)
 class PortForwardNotifier extends _$PortForwardNotifier {
   final Map<String, _LocalForwardEntry> _forwards = {};
+  final Set<String> _inFlight = {};
 
   @override
   PortForwardState build(String serverId) {
     ref.onDispose(() => dispose());
+    ref.listen(serverProvider(serverId), (prev, next) {
+      if (next.client == null && prev?.client != null) {
+        for (final entry in _forwards.values) {
+          entry.close().catchError((_) {});
+        }
+        _forwards.clear();
+        state = state.copyWith(activeForwards: {});
+      }
+    });
     final configs = Stores.portForward.fetch(serverId);
     return PortForwardState(serverId: serverId, configs: configs);
   }
@@ -66,50 +76,65 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   }
 
   Future<void> startForward(String id) async {
-    final config = state.configs.firstWhereOrNull((c) => c.id == id);
-    if (config == null) {
-      Loggers.app.warning('Port forward config not found: $id');
-      return;
-    }
-
-    final existing = _forwards[id];
-    if (existing != null) {
-      await existing.close().catchError((_) {});
-      _forwards.remove(id);
-    }
-
+    if (!_inFlight.add(id)) return;
     try {
-      final serverSocket = await ServerSocket.bind(config.localHost, config.localPort);
+      final config = state.configs.firstWhereOrNull((c) => c.id == id);
+      if (config == null) {
+        Loggers.app.warning('Port forward config not found: $id');
+        return;
+      }
 
-      Loggers.app.info('Port forward started: ${config.localHost}:${config.localPort} -> ${config.remoteHost}:${config.remotePort}');
+      final existing = _forwards[id];
+      if (existing != null) {
+        await existing.close().catchError((_) {});
+        _forwards.remove(id);
+      }
 
-      final entry = _LocalForwardEntry(serverSocket: serverSocket);
-      entry.start(config.remoteHost, config.remotePort, () => _client);
-      _forwards[id] = entry;
+      try {
+        final serverSocket = await ServerSocket.bind(config.localHost, config.localPort);
 
-      _updateStatus(id, PortForwardStatus(id: id, isActive: true));
-    } catch (e) {
-      Loggers.app.warning('Port forward failed to start: $e');
-      _updateStatus(id, PortForwardStatus(id: id, isActive: false, error: e.toString()));
+        Loggers.app.info('Port forward started: ${config.localHost}:${config.localPort} -> ${config.remoteHost}:${config.remotePort}');
+
+        final entry = _LocalForwardEntry(serverSocket: serverSocket);
+        entry.start(config.remoteHost, config.remotePort, () => _client);
+        _forwards[id] = entry;
+
+        _updateStatus(id, PortForwardStatus(id: id, isActive: true));
+      } catch (e) {
+        Loggers.app.warning('Port forward failed to start: $e');
+        _updateStatus(id, PortForwardStatus(id: id, isActive: false, error: e.toString()));
+      }
+    } finally {
+      _inFlight.remove(id);
     }
   }
 
   Future<void> stopForward(String id) async {
-    final entry = _forwards[id];
-    if (entry != null) {
-      await entry.close().catchError((_) {});
-      _forwards.remove(id);
-      Loggers.app.info('Port forward stopped: $id');
+    if (!_inFlight.add(id)) return;
+    try {
+      final entry = _forwards[id];
+      if (entry != null) {
+        await entry.close().catchError((_) {});
+        _forwards.remove(id);
+        Loggers.app.info('Port forward stopped: $id');
+      }
+      _updateStatus(id, PortForwardStatus(id: id, isActive: false));
+    } finally {
+      _inFlight.remove(id);
     }
-    _updateStatus(id, PortForwardStatus(id: id, isActive: false));
   }
 
   Future<void> toggleForward(String id) async {
-    final isActive = state.activeForwards[id]?.isActive ?? false;
-    if (isActive) {
-      await stopForward(id);
-    } else {
-      await startForward(id);
+    if (!_inFlight.add(id)) return;
+    try {
+      final isActive = state.activeForwards[id]?.isActive ?? false;
+      if (isActive) {
+        await stopForward(id);
+      } else {
+        await startForward(id);
+      }
+    } finally {
+      _inFlight.remove(id);
     }
   }
 

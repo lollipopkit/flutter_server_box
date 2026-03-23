@@ -18,11 +18,12 @@ final class PortForwardPage extends ConsumerStatefulWidget {
 }
 
 final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
-  late final _notifier = ref.read(portForwardProvider(widget.args.spi.id).notifier);
+  late final PortForwardNotifier _notifier;
 
   @override
   void initState() {
     super.initState();
+    _notifier = ref.read(portForwardProvider(widget.args.spi.id).notifier);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _showBetaWarning();
@@ -214,6 +215,7 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
   late final TextEditingController remoteHostController;
   late final TextEditingController remotePortController;
   late final TextEditingController descController;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -271,41 +273,45 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
         Btn.cancel(),
         Btn.ok(
           onTap: () async {
-            final name = nameController.text.trim();
-            final localHost = localHostController.text.trim();
-            final localPort = int.tryParse(localPortController.text.trim()) ?? 0;
-            final remoteHost = remoteHostController.text.trim();
-            final remotePort = int.tryParse(remotePortController.text.trim()) ?? 0;
-            final desc = descController.text.trim();
-
-            if (name.isEmpty ||
-                localHost.isEmpty ||
-                localPort <= 0 ||
-                localPort > 65535 ||
-                remoteHost.isEmpty ||
-                remotePort <= 0 ||
-                remotePort > 65535) {
-              if (mounted) context.showSnackBar(libL10n.invalid);
-              return;
-            }
-
-            final config = PortForwardConfig(
-              id: widget.existing?.id ?? ShortId.generate(),
-              serverId: widget.serverId,
-              name: name,
-              localHost: localHost,
-              localPort: localPort,
-              remoteHost: remoteHost,
-              remotePort: remotePort,
-              description: desc.isEmpty ? null : desc,
-            );
-
+            if (_saving) return;
+            setState(() => _saving = true);
             try {
+              final name = nameController.text.trim();
+              final localHost = localHostController.text.trim();
+              final localPort = int.tryParse(localPortController.text.trim()) ?? 0;
+              final remoteHost = remoteHostController.text.trim();
+              final remotePort = int.tryParse(remotePortController.text.trim()) ?? 0;
+              final desc = descController.text.trim();
+
+              if (name.isEmpty ||
+                  localHost.isEmpty ||
+                  localPort <= 0 ||
+                  localPort > 65535 ||
+                  remoteHost.isEmpty ||
+                  remotePort <= 0 ||
+                  remotePort > 65535) {
+                if (mounted) context.showSnackBar(libL10n.invalid);
+                return;
+              }
+
+              final config = PortForwardConfig(
+                id: widget.existing?.id ?? ShortId.generate(),
+                serverId: widget.serverId,
+                name: name,
+                localHost: localHost,
+                localPort: localPort,
+                remoteHost: remoteHost,
+                remotePort: remotePort,
+                description: desc.isEmpty ? null : desc,
+              );
+
               await widget.onSave(config);
               if (mounted) Navigator.of(context).pop();
             } catch (e, s) {
               Loggers.app.warning('Failed to save port forward config', e, s);
               if (mounted) context.showSnackBar(libL10n.error);
+            } finally {
+              if (mounted) setState(() => _saving = false);
             }
           },
         ),
