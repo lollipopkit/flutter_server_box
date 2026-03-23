@@ -8,7 +8,7 @@
 	branch = master
 [submodule "fl_lib"]
 	path = packages/fl_lib
-	url = https://github.com/GT-610/fl_lib
+	url = https://github.com/lollipopkit/fl_lib
 	branch = before-sqlite
 [submodule "fl_build"]
 	path = packages/fl_build

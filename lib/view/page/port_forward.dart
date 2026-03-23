@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/provider/port_forward_provider.dart';
@@ -30,7 +31,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
   void _showBetaWarning() {
     context.showRoundDialog(
       title: libL10n.attention,
-      child: Text('This feature is still in beta testing. Functionality is not guaranteed.'),
+      child: Text(context.l10n.portForwardBeta),
       actions: [Btnx.ok],
     );
   }
@@ -79,7 +80,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
           const SizedBox(height: 16),
           Text(libL10n.empty, style: UIs.textGrey),
           const SizedBox(height: 8),
-          Text('Add a port forward rule to get started', style: UIs.text13Grey),
+          Text(context.l10n.portForward_startPrompt, style: UIs.text13Grey),
         ],
       ),
     );
@@ -159,7 +160,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
   void _onDelete(PortForwardConfig config) async {
     final sure = await context.showRoundDialog<bool>(
       title: libL10n.attention,
-      child: Text('Delete ${config.name}?'),
+      child: Text(context.l10n.portForward_deleteConfirmFmt(config.name)),
       actions: Btnx.cancelOk,
     );
     if (sure == true) {
@@ -184,21 +185,21 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: Input(controller: localHostController, hint: 'Local Host')),
+              Expanded(child: Input(controller: localHostController, hint: context.l10n.portForward_localHost)),
               const SizedBox(width: 8),
-              Expanded(child: Input(controller: localPortController, hint: 'Local Port', type: TextInputType.number)),
+              Expanded(child: Input(controller: localPortController, hint: context.l10n.portForward_localPort, type: TextInputType.number)),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: Input(controller: remoteHostController, hint: 'Remote Host')),
+              Expanded(child: Input(controller: remoteHostController, hint: context.l10n.portForward_remoteHost)),
               const SizedBox(width: 8),
-              Expanded(child: Input(controller: remotePortController, hint: 'Remote Port', type: TextInputType.number)),
+              Expanded(child: Input(controller: remotePortController, hint: context.l10n.portForward_remotePort, type: TextInputType.number)),
             ],
           ),
           const SizedBox(height: 8),
-          Input(controller: descController, hint: 'Description'),
+          Input(controller: descController, hint: libL10n.note),
         ],
       ),
       actions: [
@@ -231,8 +232,11 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
             if (existing == null) {
               await _notifier.addConfig(config);
             } else {
-              await _notifier.removeConfig(existing.id);
-              await _notifier.addConfig(config);
+              final wasActive = ref.read(portForwardProvider(widget.args.spi)).activeForwards[existing.id]?.isActive ?? false;
+              await _notifier.updateConfig(existing, config);
+              if (wasActive) {
+                await _notifier.startForward(config.id);
+              }
             }
 
             if (context.mounted) context.pop();

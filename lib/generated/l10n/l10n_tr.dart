@@ -883,4 +883,41 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get podmanDockerEmulationDetected =>
       'Podman Docker emülasyonu tespit edildi. Lütfen ayarlarda Podman\'a geçin.';
+
+  @override
+  String get localHost => 'Local Host';
+
+  @override
+  String get localPort => 'Local Port';
+
+  @override
+  String get remoteHost => 'Remote Host';
+
+  @override
+  String get remotePort => 'Remote Port';
+
+  @override
+  String get portForwardBeta =>
+      'This feature is still in beta testing. Functionality is not guaranteed.';
+
+  @override
+  String get portForward_startPrompt =>
+      'Add a port forward rule to get started';
+
+  @override
+  String get portForward_localHost => 'Local Host';
+
+  @override
+  String get portForward_localPort => 'Local Port';
+
+  @override
+  String get portForward_remoteHost => 'Remote Host';
+
+  @override
+  String get portForward_remotePort => 'Remote Port';
+
+  @override
+  String portForward_deleteConfirmFmt(Object name) {
+    return 'Delete $name?';
+  }
 }

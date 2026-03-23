@@ -13,20 +13,31 @@ enum ServerFuncBtn {
   iperf(),
   // pve(),
   systemd(1058),
-  portForward();
+  portForward(1340);
 
   final int? addedVersion;
 
   const ServerFuncBtn([this.addedVersion]);
 
   static void autoAddNewFuncs(int cur) {
-    if (cur >= systemd.addedVersion!) {
-      final prop = Stores.setting.serverFuncBtns;
-      final list = prop.fetch();
+    final prop = Stores.setting.serverFuncBtns;
+    final list = prop.fetch();
+    final originalLength = list.length;
+
+    if (systemd.addedVersion != null && cur >= systemd.addedVersion!) {
       if (!list.contains(systemd.index)) {
         list.add(systemd.index);
-        prop.put(list);
       }
+    }
+
+    if (portForward.addedVersion != null && cur >= portForward.addedVersion!) {
+      if (!list.contains(portForward.index)) {
+        list.add(portForward.index);
+      }
+    }
+
+    if (list.length > originalLength) {
+      prop.put(list);
     }
   }
 

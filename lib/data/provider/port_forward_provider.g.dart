@@ -20,7 +20,7 @@ final class PortForwardNotifierProvider
   }) : super(
          retry: null,
          name: r'portForwardProvider',
-         isAutoDispose: true,
+         isAutoDispose: false,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -59,7 +59,7 @@ final class PortForwardNotifierProvider
 }
 
 String _$portForwardNotifierHash() =>
-    r'd21e94778ae6ced2da52d31f4299b6bc4c462316';
+    r'6f598fc27998d702254ed2ed03fda433b5e3ef5d';
 
 final class PortForwardNotifierFamily extends $Family
     with
@@ -76,7 +76,7 @@ final class PortForwardNotifierFamily extends $Family
         name: r'portForwardProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: true,
+        isAutoDispose: false,
       );
 
   PortForwardNotifierProvider call(Spi spiParam) =>

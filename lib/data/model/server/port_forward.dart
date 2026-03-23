@@ -45,12 +45,14 @@ class PortForwardStatus {
   PortForwardStatus copyWith({
     String? id,
     bool? isActive,
-    String? error,
+    Object? error = _sentinel,
   }) {
     return PortForwardStatus(
       id: id ?? this.id,
       isActive: isActive ?? this.isActive,
-      error: error ?? this.error,
+      error: error == _sentinel ? this.error : error as String?,
     );
   }
 }
+
+const _sentinel = Object();

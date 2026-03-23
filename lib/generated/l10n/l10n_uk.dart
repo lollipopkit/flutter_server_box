@@ -888,4 +888,41 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get podmanDockerEmulationDetected =>
       'Виявлено емуляцію Podman Docker. Будь ласка, переключіться на Podman у налаштуваннях.';
+
+  @override
+  String get localHost => 'Local Host';
+
+  @override
+  String get localPort => 'Local Port';
+
+  @override
+  String get remoteHost => 'Remote Host';
+
+  @override
+  String get remotePort => 'Remote Port';
+
+  @override
+  String get portForwardBeta =>
+      'This feature is still in beta testing. Functionality is not guaranteed.';
+
+  @override
+  String get portForward_startPrompt =>
+      'Add a port forward rule to get started';
+
+  @override
+  String get portForward_localHost => 'Local Host';
+
+  @override
+  String get portForward_localPort => 'Local Port';
+
+  @override
+  String get portForward_remoteHost => 'Remote Host';
+
+  @override
+  String get portForward_remotePort => 'Remote Port';
+
+  @override
+  String portForward_deleteConfirmFmt(Object name) {
+    return 'Delete $name?';
+  }
 }
