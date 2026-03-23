@@ -79,7 +79,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       Loggers.app.info('Port forward started: ${config.localHost}:${config.localPort} -> ${config.remoteHost}:${config.remotePort}');
 
       final entry = _LocalForwardEntry(serverSocket: serverSocket);
-      entry.start(config.remoteHost, config.remotePort, _client);
+      entry.start(config.remoteHost, config.remotePort, () => _client);
       _forwards[id] = entry;
 
       _updateStatus(id, PortForwardStatus(id: id, isActive: true));
@@ -121,13 +121,18 @@ class _LocalForwardEntry {
 
   _LocalForwardEntry({required this.serverSocket});
 
-  void start(String remoteHost, int remotePort, SSHClient client) {
+  void start(String remoteHost, int remotePort, SSHClient Function() clientGetter) {
     _subscription = serverSocket.listen((socket) async {
       try {
-        final forward = await client.forwardLocal(remoteHost, remotePort);
-        _connections.add(_ActiveConnection(socket: socket, forward: forward));
-        forward.stream.cast<List<int>>().pipe(socket).catchError((_) {});
-        socket.cast<List<int>>().pipe(forward.sink).catchError((_) {});
+        final forward = await clientGetter().forwardLocal(remoteHost, remotePort);
+        final conn = _ActiveConnection(socket: socket, forward: forward);
+        _connections.add(conn);
+        final pipe1 = forward.stream.cast<List<int>>().pipe(socket).catchError((_) {});
+        final pipe2 = socket.cast<List<int>>().pipe(forward.sink).catchError((_) {});
+        Future.wait([pipe1, pipe2]).whenComplete(() {
+          _connections.remove(conn);
+          conn.close();
+        });
       } catch (e, s) {
         Loggers.app.warning('Port forward connection failed', e, s);
         socket.destroy();

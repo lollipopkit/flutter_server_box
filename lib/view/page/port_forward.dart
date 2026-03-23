@@ -24,6 +24,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       _showBetaWarning();
     });
   }
@@ -239,29 +240,31 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.existing == null ? libL10n.add : libL10n.edit),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Input(controller: nameController, hint: libL10n.name),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(child: Input(controller: localHostController, hint: context.l10n.portForward_localHost)),
-              const SizedBox(width: 8),
-              Expanded(child: Input(controller: localPortController, hint: context.l10n.portForward_localPort, type: TextInputType.number)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(child: Input(controller: remoteHostController, hint: context.l10n.portForward_remoteHost)),
-              const SizedBox(width: 8),
-              Expanded(child: Input(controller: remotePortController, hint: context.l10n.portForward_remotePort, type: TextInputType.number)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Input(controller: descController, hint: libL10n.note),
-        ],
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Input(controller: nameController, hint: libL10n.name),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: Input(controller: localHostController, hint: context.l10n.portForward_localHost)),
+                const SizedBox(width: 8),
+                Expanded(child: Input(controller: localPortController, hint: context.l10n.portForward_localPort, type: TextInputType.number)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: Input(controller: remoteHostController, hint: context.l10n.portForward_remoteHost)),
+                const SizedBox(width: 8),
+                Expanded(child: Input(controller: remotePortController, hint: context.l10n.portForward_remotePort, type: TextInputType.number)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Input(controller: descController, hint: libL10n.note),
+          ],
+        ),
       ),
       actions: [
         Btn.cancel(),
