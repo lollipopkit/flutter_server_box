@@ -59,7 +59,7 @@ dependencies:
 dev_dependencies:
   analyzer: ^9.0.0
   flutter_native_splash: ^2.1.6
-  hive_ce_generator: ^1.9.2
+  hive_ce_generator: ^1.11.0
   build_runner: ^2.4.15
   flutter_lints: ^6.0.0
   json_serializable: ^6.8.0
