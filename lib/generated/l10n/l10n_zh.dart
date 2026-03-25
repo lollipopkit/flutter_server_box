@@ -858,13 +858,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sponsor => '赞助';
-
-  @override
-  String get sponsorDialogTitle => '喜欢 ServerBox 吗？';
-
-  @override
-  String get sponsorDialogContent =>
-      '如果您觉得这个应用对您有帮助，欢迎赞助支持开发者继续维护这个项目。\n\n您的支持是我持续开发的最大动力！💝\n\n您也可以在关于页面找到赞助入口。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1695,11 +1688,4 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sponsor => '贊助';
-
-  @override
-  String get sponsorDialogTitle => '喜歡 ServerBox 嗎？';
-
-  @override
-  String get sponsorDialogContent =>
-      '如果您覺得這個應用對您有幫助，歡迎贊助支持開發者繼續維護這個項目。\n\n您的支持是我持續開發的最大動力！💝\n\n您也可以在關於頁面找到贊助入口。';
 }

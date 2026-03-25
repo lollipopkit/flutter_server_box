@@ -260,7 +260,5 @@
   "portForward_remoteHost": "远端主机",
   "portForward_remotePort": "远端端口",
   "portForward_deleteConfirmFmt": "删除 {name}？",
-  "sponsor": "赞助",
-  "sponsorDialogTitle": "喜欢 ServerBox 吗？",
-  "sponsorDialogContent": "如果您觉得这个应用对您有帮助，欢迎赞助支持开发者继续维护这个项目。\n\n您的支持是我持续开发的最大动力！💝\n\n您也可以在关于页面找到赞助入口。"
+  "sponsor": "赞助"
 }

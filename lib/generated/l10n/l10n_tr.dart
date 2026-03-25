@@ -911,11 +911,4 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sponsor => 'Sponsor';
-
-  @override
-  String get sponsorDialogTitle => 'ServerBox\'u beğendiniz mi?';
-
-  @override
-  String get sponsorDialogContent =>
-      'Bu uygulamayı faydalı buluyorsanız, devam eden geliştirmeyi desteklemek için sponsor olmayı düşünün.\n\nDesteğiniz beni geliştirmeye devam etmem için en büyük motivasyon! 💝\n\nSponsor bağlantısını Hakkında sayfasında da bulabilirsiniz.';
 }

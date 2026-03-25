@@ -249,7 +249,5 @@
   "writeScriptTip": "Dopo essersi connessi al server, uno script verrà scritto in `~/.config/server_box` \n | `/tmp/server_box` per monitorare lo stato del sistema. Puoi rivedere il contenuto dello script.",
   "menuGitHubRepository": "Repository GitHub",
   "podmanDockerEmulationDetected": "Rilevata emulazione Docker Podman. Passa a Podman nelle impostazioni.",
-  "sponsor": "Sponsor",
-  "sponsorDialogTitle": "ServerBox ti piace?",
-  "sponsorDialogContent": "Se trovi questa app utile, considera di sponsorizzarla per supportare lo sviluppo continuo.\n\nIl tuo supporto è la mia più grande motivazione per continuare a migliorare! 💝\n\nPuoi anche trovare il link per sponsorizzare nella pagina Info."
+  "sponsor": "Sponsor"
 }

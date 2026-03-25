@@ -917,11 +917,4 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get sponsor => 'Sponsor';
-
-  @override
-  String get sponsorDialogTitle => 'Geniet je van ServerBox?';
-
-  @override
-  String get sponsorDialogContent =>
-      'Als je deze app nuttig vindt, overweeg dan om te sponsoren om doorontwikkeling te ondersteunen.\n\nJouw ondersteuning is mijn grootste motivatie om te blijven verbeteren! 💝\n\nJe kunt de sponsorlink ook vinden op de Over pagina.';
 }

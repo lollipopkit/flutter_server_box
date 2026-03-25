@@ -244,7 +244,5 @@
   "writeScriptFailTip": "Falha ao escrever no script, possivelmente devido à falta de permissões ou o diretório não existe.",
   "writeScriptTip": "Após conectar ao servidor, um script será escrito em `~/.config/server_box` \n | `/tmp/server_box` para monitorar o status do sistema. Você pode revisar o conteúdo do script.",
   "podmanDockerEmulationDetected": "Emulação Podman Docker detectada. Por favor, alterne para Podman nas configurações.",
-  "sponsor": "Patrocinador",
-  "sponsorDialogTitle": "Você está gostando do ServerBox?",
-  "sponsorDialogContent": "Se você acha este aplicativo útil, considere patrociná-lo para apoiar o desenvolvimento contínuo.\n\nSeu apoio é minha maior motivação para continuar melhorando! 💝\n\nVocê também pode encontrar o link de patrocínio na página Sobre."
+  "sponsor": "Patrocinador"
 }

@@ -239,8 +239,6 @@ class _HomePageState extends ConsumerState<HomePage>
     await _notifier.refresh();
 
     bakSync.sync(milliDelay: 1000);
-
-    await showSponsorDialog(context);
   }
 
   // Future<void> _reqNotiPerm() async {

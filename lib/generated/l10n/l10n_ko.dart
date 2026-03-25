@@ -879,11 +879,4 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get sponsor => '후원';
-
-  @override
-  String get sponsorDialogTitle => 'ServerBox가 마음에 드시나요?';
-
-  @override
-  String get sponsorDialogContent =>
-      '이 앱이 도움이 되셨다면, 지속적인 개발을 지원하기 위해 후원을 고려해 주세요.\n\n당신의 지원이 저의 가장 큰 개발 동기입니다! 💝\n\n후원 페이지는 정보 페이지에서도 찾을 수 있습니다.';
 }

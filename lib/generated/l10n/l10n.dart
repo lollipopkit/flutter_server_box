@@ -1691,18 +1691,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sponsor'**
   String get sponsor;
-
-  /// No description provided for @sponsorDialogTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Enjoying ServerBox?'**
-  String get sponsorDialogTitle;
-
-  /// No description provided for @sponsorDialogContent.
-  ///
-  /// In en, this message translates to:
-  /// **'If you find this app helpful, please consider sponsoring to support continued development.\n\nYour support is the biggest motivation for me to keep improving! 💝\n\nYou can also find the sponsor link on the About page.'**
-  String get sponsorDialogContent;
 }
 
 class _AppLocalizationsDelegate

@@ -244,7 +244,5 @@
   "writeScriptFailTip": "Betik yazma başarısız oldu, muhtemelen izin eksikliği veya dizin mevcut değil.",
   "writeScriptTip": "Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.",
   "podmanDockerEmulationDetected": "Podman Docker emülasyonu tespit edildi. Lütfen ayarlarda Podman'a geçin.",
-  "sponsor": "Sponsor",
-  "sponsorDialogTitle": "ServerBox'u beğendiniz mi?",
-  "sponsorDialogContent": "Bu uygulamayı faydalı buluyorsanız, devam eden geliştirmeyi desteklemek için sponsor olmayı düşünün.\n\nDesteğiniz beni geliştirmeye devam etmem için en büyük motivasyon! 💝\n\nSponsor bağlantısını Hakkında sayfasında da bulabilirsiniz."
+  "sponsor": "Sponsor"
 }

@@ -279,10 +279,4 @@ class SettingStore extends HiveStore {
       return val?.map((e) => e.name).toList() ?? [];
     },
   );
-
-  /// Whether the sponsor dialog has been dismissed by user
-  late final sponsorDialogDismissed = propertyDefault('sponsorDialogDismissed', false);
-
-  /// Last version where sponsor dialog was shown
-  late final sponsorDialogLastShownVersion = propertyDefault('sponsorDialogLastShownVersion', 0);
 }
