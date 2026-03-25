@@ -248,5 +248,6 @@
   "writeScriptFailTip": "Scrittura dello script fallita, forse a causa di mancanza di permessi o la directory non esiste.",
   "writeScriptTip": "Dopo essersi connessi al server, uno script verrà scritto in `~/.config/server_box` \n | `/tmp/server_box` per monitorare lo stato del sistema. Puoi rivedere il contenuto dello script.",
   "menuGitHubRepository": "Repository GitHub",
-  "podmanDockerEmulationDetected": "Rilevata emulazione Docker Podman. Passa a Podman nelle impostazioni."
+  "podmanDockerEmulationDetected": "Rilevata emulazione Docker Podman. Passa a Podman nelle impostazioni.",
+  "sponsor": "Sponsor"
 }

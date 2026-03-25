@@ -1,5 +1,7 @@
 part of 'entry.dart';
 
+const _sponsorUrl = 'https://cdn.lpkt.cn/donate';
+
 final class _AppAboutPage extends StatefulWidget {
   const _AppAboutPage();
 
@@ -39,6 +41,11 @@ final class _AppAboutPageState extends State<_AppAboutPage> with AutomaticKeepAl
                 icon: const Icon(MingCute.question_fill),
                 text: libL10n.license,
                 onTap: () => showLicensePage(context: context),
+              ),
+              Btn.elevated(
+                icon: const Icon(MingCute.heart_fill),
+                text: l10n.sponsor,
+                onTap: () => _sponsorUrl.launchUrl(),
               ),
             ].joinWith(UIs.width13),
           ),

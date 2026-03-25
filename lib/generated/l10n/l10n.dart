@@ -1685,6 +1685,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete {name}?'**
   String portForward_deleteConfirmFmt(Object name);
+
+  /// No description provided for @sponsor.
+  ///
+  /// In en, this message translates to:
+  /// **'Sponsor'**
+  String get sponsor;
 }
 
 class _AppLocalizationsDelegate

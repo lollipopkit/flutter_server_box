@@ -855,6 +855,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String portForward_deleteConfirmFmt(Object name) {
     return '删除 $name？';
   }
+
+  @override
+  String get sponsor => '赞助';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1682,4 +1685,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get podmanDockerEmulationDetected =>
       '檢測到 Podman Docker 仿真。請在設定中切換到 Podman。';
+
+  @override
+  String get sponsor => '贊助';
 }

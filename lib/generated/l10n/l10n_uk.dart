@@ -913,4 +913,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String portForward_deleteConfirmFmt(Object name) {
     return 'Delete $name?';
   }
+
+  @override
+  String get sponsor => 'Спонсор';
 }

@@ -262,5 +262,6 @@
   "portForward_localPort": "Local Port",
   "portForward_remoteHost": "Remote Host",
   "portForward_remotePort": "Remote Port",
-  "portForward_deleteConfirmFmt": "Delete {name}?"
+  "portForward_deleteConfirmFmt": "Delete {name}?",
+  "sponsor": "Sponsor"
 }

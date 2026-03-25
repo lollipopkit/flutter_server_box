@@ -248,5 +248,6 @@
   "writeScriptFailTip": "스크립트 작성에 실패했습니다. 권한이 부족하거나 디렉토리가 존재하지 않을 수 있습니다.",
   "writeScriptTip": "서버 연결 후 시스템 상태를 모니터링하기 위한 스크립트가 `~/.config/server_box` \n | `/tmp/server_box`에 작성됩니다. 스크립트 내용을 확인할 수 있습니다.",
   "menuGitHubRepository": "GitHub 저장소",
-  "podmanDockerEmulationDetected": "Podman Docker 에뮬레이션이 감지되었습니다. 설정에서 Podman으로 전환해 주세요."
+  "podmanDockerEmulationDetected": "Podman Docker 에뮬레이션이 감지되었습니다. 설정에서 Podman으로 전환해 주세요.",
+  "sponsor": "후원"
 }
