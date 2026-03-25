@@ -921,4 +921,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String portForward_deleteConfirmFmt(Object name) {
     return 'Delete $name?';
   }
+
+  @override
+  String get sponsor => 'Sponsor';
+
+  @override
+  String get sponsorDialogTitle =>
+      'Vous utilisez ServerBox avec satisfaction ?';
+
+  @override
+  String get sponsorDialogContent =>
+      'Si vous trouvez cette application utile, veuillez envisager de sponsoriser pour soutenir le développement continu.\n\nVotre soutien est ma plus grande motivation pour continuer à améliorer ! 💝\n\nVous pouvez également trouver le lien de sponsor sur la page À propos.';
 }

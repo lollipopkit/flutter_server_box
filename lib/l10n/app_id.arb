@@ -243,5 +243,8 @@
   "write": "Tulis",
   "writeScriptFailTip": "Penulisan ke skrip gagal, mungkin karena tidak ada izin atau direktori tidak ada.",
   "writeScriptTip": "Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.",
-  "podmanDockerEmulationDetected": "Emulasi Podman Docker terdeteksi. Silakan beralih ke Podman di pengaturan."
+  "podmanDockerEmulationDetected": "Emulasi Podman Docker terdeteksi. Silakan beralih ke Podman di pengaturan.",
+  "sponsor": "Sponsor",
+  "sponsorDialogTitle": "Apakah Anda menyukai ServerBox?",
+  "sponsorDialogContent": "Jika Anda merasa aplikasi ini berguna, silakan pertimbangkan untuk mensponsori pengembangan berkelanjutan.\n\nDukungan Anda adalah motivasi terbesar bagi saya untuk terus meningkatkan! 💝\n\nAnda juga dapat menemukan tautan sponsor di halaman Tentang."
 }

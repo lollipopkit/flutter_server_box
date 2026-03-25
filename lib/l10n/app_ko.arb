@@ -248,5 +248,8 @@
   "writeScriptFailTip": "스크립트 작성에 실패했습니다. 권한이 부족하거나 디렉토리가 존재하지 않을 수 있습니다.",
   "writeScriptTip": "서버 연결 후 시스템 상태를 모니터링하기 위한 스크립트가 `~/.config/server_box` \n | `/tmp/server_box`에 작성됩니다. 스크립트 내용을 확인할 수 있습니다.",
   "menuGitHubRepository": "GitHub 저장소",
-  "podmanDockerEmulationDetected": "Podman Docker 에뮬레이션이 감지되었습니다. 설정에서 Podman으로 전환해 주세요."
+  "podmanDockerEmulationDetected": "Podman Docker 에뮬레이션이 감지되었습니다. 설정에서 Podman으로 전환해 주세요.",
+  "sponsor": "후원",
+  "sponsorDialogTitle": "ServerBox가 마음에 드시나요?",
+  "sponsorDialogContent": "이 앱이 도움이 되셨다면, 지속적인 개발을 지원하기 위해 후원을 고려해 주세요.\n\n당신의 지원이 저의 가장 큰 개발 동기입니다! 💝\n\n후원 페이지는 정보 페이지에서도 찾을 수 있습니다."
 }

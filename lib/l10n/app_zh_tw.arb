@@ -251,5 +251,8 @@
   "write": "寫入",
   "writeScriptFailTip": "寫入腳本失敗，可能是沒有權限/目錄不存在等。",
   "writeScriptTip": "連線到伺服器後，將會在 `~/.config/server_box` \n | `/tmp/server_box` 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。",
-  "podmanDockerEmulationDetected": "檢測到 Podman Docker 仿真。請在設定中切換到 Podman。"
+  "podmanDockerEmulationDetected": "檢測到 Podman Docker 仿真。請在設定中切換到 Podman。",
+  "sponsor": "贊助",
+  "sponsorDialogTitle": "喜歡 ServerBox 嗎？",
+  "sponsorDialogContent": "如果您覺得這個應用對您有幫助，歡迎贊助支持開發者繼續維護這個項目。\n\n您的支持是我持續開發的最大動力！💝\n\n您也可以在關於頁面找到贊助入口。"
 }

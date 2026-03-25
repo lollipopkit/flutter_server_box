@@ -243,5 +243,8 @@
   "write": "書き込み",
   "writeScriptFailTip": "スクリプトの書き込みに失敗しました。権限がないかディレクトリが存在しない可能性があります。",
   "writeScriptTip": "サーバーへの接続後、システムステータスを監視するスクリプトが `~/.config/server_box` \n | `/tmp/server_box` に書き込まれます。スクリプトの内容を確認できます。",
-  "podmanDockerEmulationDetected": "Podman Docker エミュレーションが検出されました。設定で Podman に切り替えてください。"
+  "podmanDockerEmulationDetected": "Podman Docker エミュレーションが検出されました。設定で Podman に切り替えてください。",
+  "sponsor": "赞助",
+  "sponsorDialogTitle": "ServerBoxはお気に入りですか？",
+  "sponsorDialogContent": "このアプリが役に立っているなら、開発者の継続的な開発をサポートするためにスポンサーになることを検討してください。\n\nあなたのサポートが私の一番の開発の動力です！💝\n\nスポンサーページは概要ページにもあります。"
 }

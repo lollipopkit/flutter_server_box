@@ -1,5 +1,53 @@
 part of 'entry.dart';
 
+const _sponsorUrl = 'https://cdn.lpkt.cn/donate';
+
+Future<void> showSponsorDialog(BuildContext context) async {
+  final dismissed = Stores.setting.sponsorDialogDismissed.fetch();
+  if (dismissed) return;
+
+  final lastVersion = Stores.setting.sponsorDialogLastShownVersion.fetch();
+  if (lastVersion == BuildData.build) return;
+
+  await context.showRoundDialog(
+    barrierDismiss: true,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(MingCute.heart_fill, size: 47, color: Colors.red),
+        UIs.height13,
+        Text(
+          l10n.sponsorDialogTitle,
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+        ),
+        UIs.height13,
+        Flexible(
+          child: SingleChildScrollView(
+            child: SimpleMarkdown(data: l10n.sponsorDialogContent),
+          ),
+        ),
+      ],
+    ),
+    actions: [
+      TextButton(
+        onPressed: () {
+          Stores.setting.sponsorDialogDismissed.put(true);
+          context.pop();
+        },
+        child: Text(l10n.noPromptAgain),
+      ),
+      Btn.elevated(
+        onTap: () {
+          Stores.setting.sponsorDialogLastShownVersion.put(BuildData.build);
+          context.pop();
+          _sponsorUrl.launchUrl();
+        },
+        text: l10n.sponsor,
+      ),
+    ],
+  );
+}
+
 final class _AppAboutPage extends StatefulWidget {
   const _AppAboutPage();
 
@@ -39,6 +87,11 @@ final class _AppAboutPageState extends State<_AppAboutPage> with AutomaticKeepAl
                 icon: const Icon(MingCute.question_fill),
                 text: libL10n.license,
                 onTap: () => showLicensePage(context: context),
+              ),
+              Btn.elevated(
+                icon: const Icon(MingCute.heart_fill),
+                text: l10n.sponsor,
+                onTap: () => showSponsorDialog(context),
               ),
             ].joinWith(UIs.width13),
           ),
