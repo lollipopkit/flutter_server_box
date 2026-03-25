@@ -923,5 +923,5 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get sponsor => 'Sponsor';
+  String get sponsor => 'Soutenir';
 }
