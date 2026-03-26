@@ -209,11 +209,11 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
     );
   }
 
-  void _showCompactDialog() {
-    final oldSize = Stores.connectionStats.dbSize;
-    final oldIndexSize = Stores.connectionStats.indexDbSize;
+  Future<void> _showCompactDialog() async {
+    final oldSize = await Stores.connectionStats.dbSizeAsync();
+    final oldIndexSize = await Stores.connectionStats.indexDbSizeAsync();
     final totalSize = oldSize + oldIndexSize;
-    
+
     final sizeStr = _formatSize(totalSize);
 
     context.showRoundDialog(
@@ -227,8 +227,8 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
             setState(() => _isCompacting = true);
             try {
               await Stores.connectionStats.compact();
-              final newSize = Stores.connectionStats.dbSize;
-              final newIndexSize = Stores.connectionStats.indexDbSize;
+              final newSize = await Stores.connectionStats.dbSizeAsync();
+              final newIndexSize = await Stores.connectionStats.indexDbSizeAsync();
               final newTotalSize = newSize + newIndexSize;
               final newSizeStr = _formatSize(newTotalSize);
               if (mounted) {
@@ -303,7 +303,7 @@ extension on _ConnectionStatsPageState {
         TextButton(onPressed: context.pop, child: Text(libL10n.close)),
         TextButton(
           onPressed: () {
-            Navigator.of(context).pop();
+            context.pop();
             _showClearServerStatsDialog(stats);
           },
           child: Text(l10n.clearThisServerStats, style: TextStyle(color: Colors.red)),

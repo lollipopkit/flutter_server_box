@@ -52,14 +52,18 @@ class ConnectionStatsStore extends HiveStore {
     for (final entry in serverIdToKeys.entries) {
       final keys = entry.value;
       if (keys.length > _maxRecordsPerServer) {
-        final records = <ConnectionStat>[];
+        final keyStatPairs = <(String, ConnectionStat)>[];
         for (final key in keys) {
           final stat = get<ConnectionStat>(key);
-          if (stat != null) records.add(stat);
+          if (stat != null) keyStatPairs.add((key, stat));
         }
-        records.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-        final cappedKeys = records.take(_maxRecordsPerServer).map((s) => '${s.serverId}_${s.timestamp.millisecondsSinceEpoch}').toList();
-        _indexBox.put('idx_${entry.key}', cappedKeys);
+        keyStatPairs.sort((a, b) => b.$2.timestamp.compareTo(a.$2.timestamp));
+        final toKeep = keyStatPairs.take(_maxRecordsPerServer).map((p) => p.$1).toList();
+        final toRemove = keyStatPairs.skip(_maxRecordsPerServer);
+        for (final pair in toRemove) {
+          remove(pair.$1);
+        }
+        _indexBox.put('idx_${entry.key}', toKeep);
       } else {
         _indexBox.put('idx_${entry.key}', keys);
       }
@@ -252,17 +256,17 @@ class ConnectionStatsStore extends HiveStore {
 
   String? get indexDbPath => _indexBox.path;
 
-  int get dbSize {
+  Future<int> dbSizeAsync() async {
     final path = dbPath;
     if (path == null) return 0;
     final file = File(path);
-    return file.existsSync() ? file.lengthSync() : 0;
+    return await file.exists() ? await file.length() : 0;
   }
 
-  int get indexDbSize {
+  Future<int> indexDbSizeAsync() async {
     final path = indexDbPath;
     if (path == null) return 0;
     final file = File(path);
-    return file.existsSync() ? file.lengthSync() : 0;
+    return await file.exists() ? await file.length() : 0;
   }
 }
