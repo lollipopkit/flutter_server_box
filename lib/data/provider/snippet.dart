@@ -24,6 +24,7 @@ class SnippetNotifier extends _$SnippetNotifier {
   }
 
   void reload() {
+    Stores.snippet.invalidateCache();
     final newState = _load();
     if (newState == state) return;
     state = newState;

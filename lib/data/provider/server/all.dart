@@ -33,6 +33,7 @@ class ServersNotifier extends _$ServersNotifier {
   }
 
   Future<void> reload() async {
+    Stores.server.invalidateCache();
     final newState = _load();
     if (newState == state) return;
     state = newState;

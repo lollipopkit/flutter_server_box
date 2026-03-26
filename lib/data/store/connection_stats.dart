@@ -21,6 +21,9 @@ class ConnectionStatsStore extends HiveStore {
       _indexBoxName,
       path: box.path?.substring(0, box.path!.lastIndexOf(Pfs.seperator)),
     );
+  }
+
+  Future<void> rebuildIndexAndCompact() async {
     await _cleanAllOldAndRebuildIndex();
   }
 
@@ -28,7 +31,7 @@ class ConnectionStatsStore extends HiveStore {
     final cutoffTime = DateTime.now().subtract(const Duration(days: 30));
     final serverIdToKeys = <String, List<String>>{};
 
-    for (final key in keys()) {
+    for (final key in keys().toList()) {
       final stat = get<ConnectionStat>(key);
       if (stat == null) continue;
 
@@ -41,8 +44,25 @@ class ConnectionStatsStore extends HiveStore {
       serverIdToKeys.putIfAbsent(serverId, () => []).add(key);
     }
 
+    final idxKeysToDelete = _indexBox.keys.where((k) => k.toString().startsWith('idx_')).toList();
+    for (final k in idxKeysToDelete) {
+      _indexBox.delete(k);
+    }
+
     for (final entry in serverIdToKeys.entries) {
-      _indexBox.put('idx_${entry.key}', entry.value);
+      final keys = entry.value;
+      if (keys.length > _maxRecordsPerServer) {
+        final records = <ConnectionStat>[];
+        for (final key in keys) {
+          final stat = get<ConnectionStat>(key);
+          if (stat != null) records.add(stat);
+        }
+        records.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        final cappedKeys = records.take(_maxRecordsPerServer).map((s) => '${s.serverId}_${s.timestamp.millisecondsSinceEpoch}').toList();
+        _indexBox.put('idx_${entry.key}', cappedKeys);
+      } else {
+        _indexBox.put('idx_${entry.key}', keys);
+      }
     }
 
     await _compactIfNeeded();
@@ -184,7 +204,7 @@ class ConnectionStatsStore extends HiveStore {
       if (keys.isEmpty) continue;
 
       String? serverName;
-      for (final key in keys) {
+      for (final key in keys.reversed) {
         final stat = get<ConnectionStat>(key);
         if (stat != null) {
           serverName = stat.serverName;

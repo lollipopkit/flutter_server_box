@@ -124,8 +124,8 @@ class ServerNotifier extends _$ServerNotifier {
         }
       }
 
+      final time1 = DateTime.now();
       try {
-        final time1 = DateTime.now();
         final client = await genClient(
           spi,
           timeout: Duration(seconds: Stores.setting.timeout.fetch()),
@@ -161,6 +161,8 @@ class ServerNotifier extends _$ServerNotifier {
       } catch (e) {
         TryLimiter.inc(sid);
 
+        final durationMs = DateTime.now().difference(time1).inMilliseconds;
+
         ConnectionResult failureResult;
         if (e.toString().contains('timeout') || e.toString().contains('Timeout')) {
           failureResult = ConnectionResult.timeout;
@@ -175,10 +177,10 @@ class ServerNotifier extends _$ServerNotifier {
         Stores.connectionStats.recordConnection(ConnectionStat(
           serverId: spi.id,
           serverName: spi.name,
-          timestamp: DateTime.now(),
+          timestamp: time1,
           result: failureResult,
           errorMessage: e.toString(),
-          durationMs: 0,
+          durationMs: durationMs,
         ));
 
         final newStatus = state.status..err = SSHErr(type: SSHErrType.connect, message: e.toString());

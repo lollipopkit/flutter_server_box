@@ -9,13 +9,25 @@ class PrivateKeyStore extends HiveStore {
 
   List<PrivateKeyInfo>? _cache;
 
+  @override
+  Future<void> init() async {
+    await super.init();
+    box.watch().listen((_) {
+      _cache = null;
+    });
+  }
+
+  void invalidateCache() {
+    _cache = null;
+  }
+
   void put(PrivateKeyInfo info) {
     set(info.id, info);
     _cache = null;
   }
 
   List<PrivateKeyInfo> fetch() {
-    return _cache ??= _loadAll();
+    return List<PrivateKeyInfo>.from(_cache ??= _loadAll());
   }
 
   List<PrivateKeyInfo> _loadAll() {

@@ -12,13 +12,25 @@ class ServerStore extends HiveStore {
 
   List<Spi>? _cache;
 
+  @override
+  Future<void> init() async {
+    await super.init();
+    box.watch().listen((_) {
+      _cache = null;
+    });
+  }
+
+  void invalidateCache() {
+    _cache = null;
+  }
+
   void put(Spi info) {
     set(info.id, info);
     _cache = null;
   }
 
   List<Spi> fetch() {
-    return _cache ??= _loadAll();
+    return List<Spi>.from(_cache ??= _loadAll());
   }
 
   List<Spi> _loadAll() {

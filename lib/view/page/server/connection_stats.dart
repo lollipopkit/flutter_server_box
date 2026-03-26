@@ -24,10 +24,11 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
     _loadStats();
   }
 
-  void _loadStats() {
+  Future<void> _loadStats() async {
     setState(() {
       _isLoading = true;
     });
+    await Future.delayed(Duration.zero);
 
     final stats = Stores.connectionStats.getAllServerStats();
     setState(() {
@@ -57,11 +58,11 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
           ),
         ],
       ),
-      body: _buildBody,
+      body: _buildBody(),
     );
   }
 
-  Widget get _buildBody {
+  Widget _buildBody() {
     if (_isLoading) {
       return const Center(child: SizedLoading.large);
     }
@@ -70,10 +71,13 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
     }
 
     return ListView.builder(
+      cacheExtent: 200,
       itemCount: _serverStats.length,
       itemBuilder: (context, index) {
         final stats = _serverStats[index];
-        return _buildServerStatsCard(stats);
+        return RepaintBoundary(
+          child: _buildServerStatsCard(stats),
+        );
       },
     );
   }

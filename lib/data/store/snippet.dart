@@ -9,13 +9,25 @@ class SnippetStore extends HiveStore {
 
   List<Snippet>? _cache;
 
+  @override
+  Future<void> init() async {
+    await super.init();
+    box.watch().listen((_) {
+      _cache = null;
+    });
+  }
+
+  void invalidateCache() {
+    _cache = null;
+  }
+
   void put(Snippet snippet) {
     set(snippet.name, snippet);
     _cache = null;
   }
 
   List<Snippet> fetch() {
-    return _cache ??= _loadAll();
+    return List<Snippet>.from(_cache ??= _loadAll());
   }
 
   List<Snippet> _loadAll() {
