@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
@@ -19,10 +21,10 @@ class ConnectionStatsStore extends HiveStore {
       _indexBoxName,
       path: box.path?.substring(0, box.path!.lastIndexOf(Pfs.seperator)),
     );
-    _cleanAllOldAndRebuildIndex();
+    await _cleanAllOldAndRebuildIndex();
   }
 
-  void _cleanAllOldAndRebuildIndex() {
+  Future<void> _cleanAllOldAndRebuildIndex() async {
     final cutoffTime = DateTime.now().subtract(const Duration(days: 30));
     final serverIdToKeys = <String, List<String>>{};
 
@@ -41,6 +43,17 @@ class ConnectionStatsStore extends HiveStore {
 
     for (final entry in serverIdToKeys.entries) {
       _indexBox.put('idx_${entry.key}', entry.value);
+    }
+
+    await _compactIfNeeded();
+  }
+
+  Future<void> _compactIfNeeded() async {
+    try {
+      await box.compact();
+      await _indexBox.compact();
+    } catch (e, st) {
+      Loggers.app.warning('Auto compact failed during init', e, st);
     }
   }
 
@@ -213,5 +226,23 @@ class ConnectionStatsStore extends HiveStore {
       Loggers.app.warning('Failed compacting connection_stats database', e, st);
       rethrow;
     }
+  }
+
+  String? get dbPath => box.path;
+
+  String? get indexDbPath => _indexBox.path;
+
+  int get dbSize {
+    final path = dbPath;
+    if (path == null) return 0;
+    final file = File(path);
+    return file.existsSync() ? file.lengthSync() : 0;
+  }
+
+  int get indexDbSize {
+    final path = indexDbPath;
+    if (path == null) return 0;
+    final file = File(path);
+    return file.existsSync() ? file.lengthSync() : 0;
   }
 }

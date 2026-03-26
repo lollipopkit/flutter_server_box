@@ -7,11 +7,18 @@ class PrivateKeyStore extends HiveStore {
 
   static final instance = PrivateKeyStore._();
 
+  List<PrivateKeyInfo>? _cache;
+
   void put(PrivateKeyInfo info) {
     set(info.id, info);
+    _cache = null;
   }
 
   List<PrivateKeyInfo> fetch() {
+    return _cache ??= _loadAll();
+  }
+
+  List<PrivateKeyInfo> _loadAll() {
     final ps = <PrivateKeyInfo>[];
     for (final key in keys()) {
       final s = get<PrivateKeyInfo>(
@@ -46,5 +53,6 @@ class PrivateKeyStore extends HiveStore {
 
   void delete(PrivateKeyInfo s) {
     remove(s.id);
+    _cache = null;
   }
 }

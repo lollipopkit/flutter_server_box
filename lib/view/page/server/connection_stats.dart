@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -208,10 +206,11 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
   }
 
   void _showCompactDialog() {
-    final path = '${Paths.doc}${Pfs.seperator}connection_stats_enc.hive';
-    final file = File(path);
-    final oldSize = file.existsSync() ? file.lengthSync() : 0;
-    final sizeStr = oldSize < 1000 ? '$oldSize B' : oldSize < 1000 * 1000 ? '${(oldSize / 1000).toStringAsFixed(1)} KB' : '${(oldSize / (1000 * 1000)).toStringAsFixed(1)} MB';
+    final oldSize = Stores.connectionStats.dbSize;
+    final oldIndexSize = Stores.connectionStats.indexDbSize;
+    final totalSize = oldSize + oldIndexSize;
+    
+    final sizeStr = _formatSize(totalSize);
 
     context.showRoundDialog(
       title: l10n.compactDatabase,
@@ -224,8 +223,10 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
             setState(() => _isCompacting = true);
             try {
               await Stores.connectionStats.compact();
-              final newSize = file.existsSync() ? file.lengthSync() : 0;
-              final newSizeStr = newSize < 1000 ? '$newSize B' : newSize < 1000 * 1000 ? '${(newSize / 1000).toStringAsFixed(1)} KB' : '${(newSize / (1000 * 1000)).toStringAsFixed(1)} MB';
+              final newSize = Stores.connectionStats.dbSize;
+              final newIndexSize = Stores.connectionStats.indexDbSize;
+              final newTotalSize = newSize + newIndexSize;
+              final newSizeStr = _formatSize(newTotalSize);
               if (mounted) {
                 setState(() => _isCompacting = false);
                 context.showSnackBar('${libL10n.success}: $sizeStr -> $newSizeStr');
@@ -241,6 +242,12 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
         ),
       ],
     );
+  }
+
+  String _formatSize(int bytes) {
+    if (bytes < 1000) return '$bytes B';
+    if (bytes < 1000 * 1000) return '${(bytes / 1000).toStringAsFixed(1)} KB';
+    return '${(bytes / (1000 * 1000)).toStringAsFixed(1)} MB';
   }
 }
 
