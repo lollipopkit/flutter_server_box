@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_use_of_protected_member
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -24,19 +26,6 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
     _loadStats();
   }
 
-  Future<void> _loadStats() async {
-    setState(() {
-      _isLoading = true;
-    });
-    await Future.delayed(Duration.zero);
-
-    final stats = Stores.connectionStats.getAllServerStats();
-    setState(() {
-      _serverStats = stats;
-      _isLoading = false;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,7 +50,9 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
       body: _buildBody(),
     );
   }
+}
 
+extension _Builds on _ConnectionStatsPageState {
   Widget _buildBody() {
     if (_isLoading) {
       return const Center(child: SizedLoading.large);
@@ -83,7 +74,7 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
   }
 
   Widget _buildServerStatsCard(ServerConnectionStats stats) {
-    final successRate = stats.totalAttempts == 0 ? 'N/A' : '${(stats.successRate * 100).toStringAsFixed(1)}%';
+    final successRate = stats.totalAttempts == 0 ? libL10n.notAvailable : '${(stats.successRate * 100).toStringAsFixed(1)}%';
     final lastSuccessTime = stats.lastSuccessTime;
     final lastFailureTime = stats.lastFailureTime;
 
@@ -208,10 +199,29 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
       ),
     );
   }
+}
+
+extension _Actions on _ConnectionStatsPageState {
+  Future<void> _loadStats() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await Future.delayed(Duration.zero);
+    if (!mounted) return;
+
+    final stats = Stores.connectionStats.getAllServerStats();
+    if (!mounted) return;
+    setState(() {
+      _serverStats = stats;
+      _isLoading = false;
+    });
+  }
 
   Future<void> _showCompactDialog() async {
     final oldSize = await Stores.connectionStats.dbSizeAsync();
+    if (!mounted) return;
     final oldIndexSize = await Stores.connectionStats.indexDbSizeAsync();
+    if (!mounted) return;
     final totalSize = oldSize + oldIndexSize;
 
     final sizeStr = _formatSize(totalSize);
@@ -248,14 +258,6 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
     );
   }
 
-  String _formatSize(int bytes) {
-    if (bytes < 1000) return '$bytes B';
-    if (bytes < 1000 * 1000) return '${(bytes / 1000).toStringAsFixed(1)} KB';
-    return '${(bytes / (1000 * 1000)).toStringAsFixed(1)} MB';
-  }
-}
-
-extension on _ConnectionStatsPageState {
   void _showServerDetailsDialog(ServerConnectionStats stats) {
     context.showRoundDialog(
       title: '${stats.serverName} - ${l10n.connectionDetails}',
@@ -348,5 +350,13 @@ extension on _ConnectionStatsPageState {
         ),
       ],
     );
+  }
+}
+
+extension _Utils on _ConnectionStatsPageState {
+  String _formatSize(int bytes) {
+    if (bytes < 1000) return '$bytes B';
+    if (bytes < 1000 * 1000) return '${(bytes / 1000).toStringAsFixed(1)} KB';
+    return '${(bytes / (1000 * 1000)).toStringAsFixed(1)} MB';
   }
 }

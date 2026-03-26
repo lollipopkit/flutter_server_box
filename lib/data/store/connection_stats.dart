@@ -25,9 +25,10 @@ class ConnectionStatsStore extends HiveStore {
 
   Future<void> rebuildIndexAndCompact() async {
     await _cleanAllOldAndRebuildIndex();
+    await _compactIfNeeded();
   }
 
-  Future<void> _cleanAllOldAndRebuildIndex() async {
+  Future<void> _rebuildIndexCore() async {
     final cutoffTime = DateTime.now().subtract(const Duration(days: 30));
     final serverIdToKeys = <String, List<String>>{};
 
@@ -68,8 +69,10 @@ class ConnectionStatsStore extends HiveStore {
         _indexBox.put('idx_${entry.key}', keys);
       }
     }
+  }
 
-    await _compactIfNeeded();
+  Future<void> _cleanAllOldAndRebuildIndex() async {
+    await _rebuildIndexCore();
   }
 
   Future<void> _compactIfNeeded() async {
@@ -97,21 +100,20 @@ class ConnectionStatsStore extends HiveStore {
   void _pruneExcessRecords(String serverId, List<String> keys) {
     if (keys.length <= _maxRecordsPerServer) return;
 
-    final records = <ConnectionStat>[];
+    final keyStatPairs = <(String, ConnectionStat)>[];
     for (final key in keys) {
       final stat = get<ConnectionStat>(key);
       if (stat != null) {
-        records.add(stat);
+        keyStatPairs.add((key, stat));
       }
     }
 
-    records.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    keyStatPairs.sort((a, b) => b.$2.timestamp.compareTo(a.$2.timestamp));
 
-    final toRemove = records.skip(_maxRecordsPerServer).toList();
-    for (final stat in toRemove) {
-      final key = '${stat.serverId}_${stat.timestamp.millisecondsSinceEpoch}';
-      remove(key);
-      keys.remove(key);
+    final toRemove = keyStatPairs.skip(_maxRecordsPerServer);
+    for (final pair in toRemove) {
+      remove(pair.$1);
+      keys.remove(pair.$1);
     }
   }
 
@@ -255,6 +257,8 @@ class ConnectionStatsStore extends HiveStore {
   String? get dbPath => box.path;
 
   String? get indexDbPath => _indexBox.path;
+
+  Iterable<dynamic> get indexDbKeys => _indexBox.keys.where((k) => k.toString().startsWith('idx_'));
 
   Future<int> dbSizeAsync() async {
     final path = dbPath;
