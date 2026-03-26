@@ -7,11 +7,18 @@ class SnippetStore extends HiveStore {
 
   static final instance = SnippetStore._();
 
+  List<Snippet>? _cache;
+
   void put(Snippet snippet) {
     set(snippet.name, snippet);
+    _cache = null;
   }
 
   List<Snippet> fetch() {
+    return _cache ??= _loadAll();
+  }
+
+  List<Snippet> _loadAll() {
     final ss = <Snippet>{};
     for (final key in keys()) {
       final s = get<Snippet>(
@@ -41,6 +48,7 @@ class SnippetStore extends HiveStore {
 
   void delete(Snippet s) {
     remove(s.name);
+    _cache = null;
   }
 
   void update(Snippet old, Snippet newInfo) {

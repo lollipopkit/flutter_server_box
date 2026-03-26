@@ -10,11 +10,18 @@ class ServerStore extends HiveStore {
 
   static final instance = ServerStore._();
 
+  List<Spi>? _cache;
+
   void put(Spi info) {
     set(info.id, info);
+    _cache = null;
   }
 
   List<Spi> fetch() {
+    return _cache ??= _loadAll();
+  }
+
+  List<Spi> _loadAll() {
     final List<Spi> ss = [];
     for (final id in keys()) {
       final s = get<Spi>(
@@ -44,6 +51,7 @@ class ServerStore extends HiveStore {
 
   void delete(String id) {
     remove(id);
+    _cache = null;
   }
 
   void update(Spi old, Spi newInfo) {
@@ -60,12 +68,9 @@ class ServerStore extends HiveStore {
     final ss = fetch();
     final idMap = <String, String>{};
 
-    // Collect all old to new ID mappings
     for (final s in ss) {
       final newId = s.migrateId();
       if (newId == null) continue;
-      // Use s.oldId as the key, because s.id would be empty for a server being migrated.
-      // s.oldId represents the identifier used before migration.
       idMap[s.oldId] = newId;
     }
 
@@ -74,23 +79,19 @@ class ServerStore extends HiveStore {
     final container = ContainerStore.instance;
 
     bool srvOrderChanged = false;
-    // Update all references to the servers
     for (final e in idMap.entries) {
       final oldId = e.key;
       final newId = e.value;
 
-      // Replace ids in ordering settings.
       final srvIdx = srvOrder.indexOf(oldId);
       if (srvIdx != -1) {
         srvOrder[srvIdx] = newId;
         srvOrderChanged = true;
       }
 
-      // Replace ids in jump server settings.
       final spi = get<Spi>(newId);
       if (spi != null) {
-        final jumpId = spi.jumpId; // This could be an oldId.
-        // Check if this jumpId corresponds to a server that was also migrated.
+        final jumpId = spi.jumpId;
         if (jumpId != null && idMap.containsKey(jumpId)) {
           final newJumpId = idMap[jumpId];
           if (spi.jumpId != newJumpId) {
@@ -100,7 +101,6 @@ class ServerStore extends HiveStore {
         }
       }
 
-      // Replace ids in [Snippet]
       for (final snippet in snippets) {
         final autoRunsOn = snippet.autoRunOn;
         final idx = autoRunsOn?.indexOf(oldId);
@@ -112,7 +112,6 @@ class ServerStore extends HiveStore {
         }
       }
 
-      // Replace ids in [Container]
       final dockerHost = container.fetch(oldId);
       if (dockerHost != null) {
         container.remove(oldId);

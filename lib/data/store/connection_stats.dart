@@ -1,48 +1,92 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 
 class ConnectionStatsStore extends HiveStore {
   ConnectionStatsStore._() : super('connection_stats');
-  
+
   static final instance = ConnectionStatsStore._();
-  
-  // Record a connection attempt
-  void recordConnection(ConnectionStat stat) {
-    final key = '${stat.serverId}_${ShortId.generate()}';
-    set(key, stat);
-    _cleanOldRecords(stat.serverId);
+
+  static const _indexBoxName = 'conn_stats_index';
+  static const _maxRecordsPerServer = 100;
+
+  late final Box<dynamic> _indexBox;
+
+  @override
+  Future<void> init() async {
+    await super.init();
+    _indexBox = await Hive.openBox(
+      _indexBoxName,
+      path: box.path?.substring(0, box.path!.lastIndexOf(Pfs.seperator)),
+    );
+    _cleanAllOldAndRebuildIndex();
   }
-  
-  // Clean records older than 30 days for a specific server
-  void _cleanOldRecords(String serverId) {
+
+  void _cleanAllOldAndRebuildIndex() {
     final cutoffTime = DateTime.now().subtract(const Duration(days: 30));
-    final allKeys = keys().toList();
-    final keysToDelete = <String>[];
-    
-    for (final key in allKeys) {
-      if (key.startsWith(serverId)) {
-        final parts = key.split('_');
-        if (parts.length >= 2) {
-          final timestamp = int.tryParse(parts.last);
-          if (timestamp != null) {
-            final recordTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
-            if (recordTime.isBefore(cutoffTime)) {
-              keysToDelete.add(key);
-            }
-          }
-        }
+    final serverIdToKeys = <String, List<String>>{};
+
+    for (final key in keys()) {
+      final stat = get<ConnectionStat>(key);
+      if (stat == null) continue;
+
+      if (stat.timestamp.isBefore(cutoffTime)) {
+        remove(key);
+        continue;
+      }
+
+      final serverId = stat.serverId;
+      serverIdToKeys.putIfAbsent(serverId, () => []).add(key);
+    }
+
+    for (final entry in serverIdToKeys.entries) {
+      _indexBox.put('idx_${entry.key}', entry.value);
+    }
+  }
+
+  void _updateIndex(String serverId, String recordKey) {
+    final indexKey = 'idx_$serverId';
+    final keys = (_indexBox.get(indexKey) as List?)?.cast<String>() ?? [];
+
+    if (!keys.contains(recordKey)) {
+      keys.add(recordKey);
+      if (keys.length > _maxRecordsPerServer) {
+        _pruneExcessRecords(serverId, keys);
+      }
+      _indexBox.put(indexKey, keys);
+    }
+  }
+
+  void _pruneExcessRecords(String serverId, List<String> keys) {
+    if (keys.length <= _maxRecordsPerServer) return;
+
+    final records = <ConnectionStat>[];
+    for (final key in keys) {
+      final stat = get<ConnectionStat>(key);
+      if (stat != null) {
+        records.add(stat);
       }
     }
-    
-    for (final key in keysToDelete) {
+
+    records.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+    final toRemove = records.skip(_maxRecordsPerServer).toList();
+    for (final stat in toRemove) {
+      final key = '${stat.serverId}_${stat.timestamp.millisecondsSinceEpoch}';
       remove(key);
+      keys.remove(key);
     }
   }
-  
-  // Get connection stats for a specific server
+
+  void recordConnection(ConnectionStat stat) {
+    final key = '${stat.serverId}_${stat.timestamp.millisecondsSinceEpoch}';
+    set(key, stat);
+    _updateIndex(stat.serverId, key);
+  }
+
   ServerConnectionStats getServerStats(String serverId, String serverName) {
     final allStats = getConnectionHistory(serverId);
-    
+
     if (allStats.isEmpty) {
       return ServerConnectionStats(
         serverId: serverId,
@@ -54,12 +98,12 @@ class ConnectionStatsStore extends HiveStore {
         successRate: 0.0,
       );
     }
-    
+
     final totalAttempts = allStats.length;
     final successCount = allStats.where((s) => s.result.isSuccess).length;
     final failureCount = totalAttempts - successCount;
     final successRate = totalAttempts > 0 ? (successCount / totalAttempts) : 0.0;
-    
+
     final successTimes = allStats
         .where((s) => s.result.isSuccess)
         .map((s) => s.timestamp)
@@ -68,23 +112,22 @@ class ConnectionStatsStore extends HiveStore {
         .where((s) => !s.result.isSuccess)
         .map((s) => s.timestamp)
         .toList();
-    
+
     DateTime? lastSuccessTime;
     DateTime? lastFailureTime;
-    
+
     if (successTimes.isNotEmpty) {
       successTimes.sort((a, b) => b.compareTo(a));
       lastSuccessTime = successTimes.first;
     }
-    
+
     if (failureTimes.isNotEmpty) {
       failureTimes.sort((a, b) => b.compareTo(a));
       lastFailureTime = failureTimes.first;
     }
-    
-    // Get recent connections (last 20)
+
     final recentConnections = allStats.take(20).toList();
-    
+
     return ServerConnectionStats(
       serverId: serverId,
       serverName: serverName,
@@ -97,104 +140,74 @@ class ConnectionStatsStore extends HiveStore {
       successRate: successRate,
     );
   }
-  
-  // Get connection history for a specific server
+
   List<ConnectionStat> getConnectionHistory(String serverId) {
-    final allKeys = keys().where((key) => key.startsWith(serverId)).toList();
+    final indexKey = 'idx_$serverId';
+    final keys = (_indexBox.get(indexKey) as List?)?.cast<String>() ?? [];
+
     final stats = <ConnectionStat>[];
-    
-    for (final key in allKeys) {
-      final stat = get<ConnectionStat>(
-        key,
-        fromObj: (val) {
-          if (val is ConnectionStat) return val;
-          if (val is Map<dynamic, dynamic>) {
-            final map = val.toStrDynMap;
-            if (map == null) return null;
-            try {
-              return ConnectionStat.fromJson(map as Map<String, dynamic>);
-            } catch (e) {
-              dprint('Parsing ConnectionStat from JSON', e);
-            }
-          }
-          return null;
-        },
-      );
+    for (final key in keys) {
+      final stat = get<ConnectionStat>(key);
       if (stat != null) {
         stats.add(stat);
       }
     }
-    
-    // Sort by timestamp, newest first
+
     stats.sort((a, b) => b.timestamp.compareTo(a.timestamp));
     return stats;
   }
-  
-  // Get all servers' stats
+
   List<ServerConnectionStats> getAllServerStats() {
-    final serverIds = <String>{};
-    final serverNames = <String, String>{};
-    
-    // Get all unique server IDs
-    for (final key in keys()) {
-      final parts = key.split('_');
-      if (parts.length >= 2) {
-        final serverId = parts[0];
-        serverIds.add(serverId);
-        
-        // Try to get server name from the stored stat
-        final stat = get<ConnectionStat>(
-          key,
-          fromObj: (val) {
-            if (val is ConnectionStat) return val;
-            if (val is Map<dynamic, dynamic>) {
-              final map = val.toStrDynMap;
-              if (map == null) return null;
-              try {
-                return ConnectionStat.fromJson(map as Map<String, dynamic>);
-              } catch (e) {
-                dprint('Parsing ConnectionStat from JSON', e);
-              }
-            }
-            return null;
-          },
-        );
+    final indexKeys = _indexBox.keys
+        .where((k) => k is String && k.startsWith('idx_'))
+        .cast<String>()
+        .toList();
+
+    final allStats = <ServerConnectionStats>[];
+    for (final indexKey in indexKeys) {
+      final serverId = indexKey.substring(4);
+      final keys = (_indexBox.get(indexKey) as List?)?.cast<String>() ?? [];
+
+      if (keys.isEmpty) continue;
+
+      String? serverName;
+      for (final key in keys) {
+        final stat = get<ConnectionStat>(key);
         if (stat != null) {
-          serverNames[serverId] = stat.serverName;
+          serverName = stat.serverName;
+          break;
         }
       }
-    }
-    
-    final allStats = <ServerConnectionStats>[];
-    for (final serverId in serverIds) {
-      final serverName = serverNames[serverId] ?? serverId;
+
+      if (serverName == null) continue;
+
       final stats = getServerStats(serverId, serverName);
       allStats.add(stats);
     }
-    
+
     return allStats;
   }
-  
-  // Clear all connection stats
+
   void clearAll() {
     box.clear();
+    _indexBox.clear();
   }
-  
-  // Clear stats for a specific server
+
   void clearServerStats(String serverId) {
-    final keysToDelete = keys().where((key) {
-      if (key == serverId) return true;
-      return key.startsWith('${serverId}_');
-    }).toList();
-    for (final key in keysToDelete) {
+    final indexKey = 'idx_$serverId';
+    final keys = (_indexBox.get(indexKey) as List?)?.cast<String>() ?? [];
+
+    for (final key in keys) {
       remove(key);
     }
+    _indexBox.delete(indexKey);
   }
 
   Future<void> compact() async {
     Loggers.app.info('Start compacting connection_stats database...');
     try {
       await box.compact();
+      await _indexBox.compact();
       Loggers.app.info('Finished compacting connection_stats database');
     } catch (e, st) {
       Loggers.app.warning('Failed compacting connection_stats database', e, st);
