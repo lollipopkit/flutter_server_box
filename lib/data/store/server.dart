@@ -105,7 +105,7 @@ class ServerStore extends HiveStore {
     _suppressWatch = true;
     try {
       remove(old.id);
-      box.put(newInfo.id, newInfo);
+      set(newInfo.id, newInfo);
       _cache = null;
     } finally {
       _suppressWatch = false;
@@ -166,6 +166,16 @@ class ServerStore extends HiveStore {
       if (dockerHost != null) {
         container.remove(oldId);
         container.set(newId, dockerHost);
+      }
+    }
+
+    for (final spi in ss) {
+      if (spi.jumpId != null && idMap.containsKey(spi.jumpId)) {
+        final newJumpId = idMap[spi.jumpId];
+        if (spi.jumpId != newJumpId) {
+          final newSpi = spi.copyWith(jumpId: newJumpId);
+          update(spi, newSpi);
+        }
       }
     }
 

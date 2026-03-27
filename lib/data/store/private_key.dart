@@ -62,27 +62,31 @@ class PrivateKeyStore extends HiveStore {
     for (final key in keys()) {
       final s = get<PrivateKeyInfo>(
         key,
-        fromObj: (val) {
-          if (val is PrivateKeyInfo) return val;
-          if (val is Map<dynamic, dynamic>) {
-            final map = val.toStrDynMap;
-            if (map == null) return null;
-            try {
-              final pki = PrivateKeyInfo.fromJson(map as Map<String, dynamic>);
-              _putWithoutInvalidatingCache(pki);
-              return pki;
-            } catch (e) {
-              dprint('Parsing PrivateKeyInfo from JSON', e);
-            }
-          }
-          return null;
-        },
+        fromObj: (val) => _decodePrivateKeyInfo(val, persist: true),
       );
       if (s != null) {
         ps.add(s);
       }
     }
     return ps;
+  }
+
+  PrivateKeyInfo? _decodePrivateKeyInfo(dynamic val, {bool persist = false}) {
+    if (val is PrivateKeyInfo) return val;
+    if (val is Map<dynamic, dynamic>) {
+      final map = val.toStrDynMap;
+      if (map == null) return null;
+      try {
+        final pki = PrivateKeyInfo.fromJson(map as Map<String, dynamic>);
+        if (persist) {
+          _putWithoutInvalidatingCache(pki);
+        }
+        return pki;
+      } catch (e) {
+        dprint('Parsing PrivateKeyInfo from JSON', e);
+      }
+    }
+    return null;
   }
 
   PrivateKeyInfo? fetchOne(String? id) {
@@ -92,7 +96,7 @@ class PrivateKeyStore extends HiveStore {
         if (pki.id == id) return pki;
       }
     }
-    return box.get(id);
+    return _decodePrivateKeyInfo(box.get(id));
   }
 
   void delete(PrivateKeyInfo s) {

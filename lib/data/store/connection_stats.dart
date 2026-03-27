@@ -86,7 +86,7 @@ class ConnectionStatsStore extends HiveStore {
 
   void _updateIndex(String serverId, String recordKey) {
     final indexKey = 'idx_$serverId';
-    final keys = (_indexBox.get(indexKey) as List?)?.cast<String>() ?? [];
+    final keys = (_indexBox.get(indexKey) as List?)?.cast<String>().toList() ?? [];
 
     if (!keys.contains(recordKey)) {
       keys.add(recordKey);

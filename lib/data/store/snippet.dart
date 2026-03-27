@@ -50,7 +50,12 @@ class SnippetStore extends HiveStore {
   }
 
   void _putWithoutInvalidatingCache(Snippet snippet) {
-    box.put(snippet.name, snippet);
+    _suppressWatch = true;
+    try {
+      box.put(snippet.name, snippet);
+    } finally {
+      _suppressWatch = false;
+    }
   }
 
   List<Snippet> fetch() {
@@ -102,7 +107,7 @@ class SnippetStore extends HiveStore {
     _suppressWatch = true;
     try {
       remove(old.name);
-      box.put(newInfo.name, newInfo);
+      set(newInfo.name, newInfo);
       _cache = null;
     } finally {
       _suppressWatch = false;
