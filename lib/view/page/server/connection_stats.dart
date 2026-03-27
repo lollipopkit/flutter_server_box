@@ -340,9 +340,9 @@ extension _Actions on _ConnectionStatsPageState {
       actions: [
         TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
         CountDownBtn(
-          onTap: () {
+          onTap: () async {
             context.pop();
-            Stores.connectionStats.clearServerStats(stats.serverId);
+            await Stores.connectionStats.clearServerStats(stats.serverId);
             _loadStats();
           },
           text: libL10n.ok,

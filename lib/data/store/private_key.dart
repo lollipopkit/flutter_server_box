@@ -16,7 +16,7 @@ class PrivateKeyStore extends HiveStore {
   @override
   Future<void> init() async {
     await super.init();
-    _boxWatchSub?.cancel();
+    await _boxWatchSub?.cancel();
     _boxWatchSub = box.watch().listen((_) {
       if (!_suppressWatch) {
         _cache = null;
@@ -49,10 +49,10 @@ class PrivateKeyStore extends HiveStore {
     }
   }
 
-  void _putWithoutInvalidatingCache(PrivateKeyInfo info) {
+  Future<void> _putWithoutInvalidatingCache(PrivateKeyInfo info) async {
     _suppressWatch = true;
     try {
-      box.put(info.id, info);
+      await box.put(info.id, info);
     } finally {
       _suppressWatch = false;
     }
@@ -64,27 +64,31 @@ class PrivateKeyStore extends HiveStore {
 
   List<PrivateKeyInfo> _loadAll() {
     final ps = <PrivateKeyInfo>[];
+    final toPersist = <PrivateKeyInfo>[];
     for (final key in keys()) {
       final s = get<PrivateKeyInfo>(
         key,
-        fromObj: (val) => _decodePrivateKeyInfo(val, persist: true),
+        fromObj: (val) => _decodePrivateKeyInfo(val, toPersist: toPersist),
       );
       if (s != null) {
         ps.add(s);
       }
     }
+    for (final pki in toPersist) {
+      _putWithoutInvalidatingCache(pki);
+    }
     return ps;
   }
 
-  PrivateKeyInfo? _decodePrivateKeyInfo(dynamic val, {bool persist = false}) {
+  PrivateKeyInfo? _decodePrivateKeyInfo(dynamic val, {List<PrivateKeyInfo>? toPersist}) {
     if (val is PrivateKeyInfo) return val;
     if (val is Map<dynamic, dynamic>) {
       final map = val.toStrDynMap;
       if (map == null) return null;
       try {
         final pki = PrivateKeyInfo.fromJson(map as Map<String, dynamic>);
-        if (persist) {
-          _putWithoutInvalidatingCache(pki);
+        if (toPersist != null) {
+          toPersist.add(pki);
         }
         return pki;
       } catch (e) {

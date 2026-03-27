@@ -435,6 +435,7 @@ extension _Widgets on _ServerEditPageState {
             onTap: () async {
               context.pop();
               await ref.read(serversProvider.notifier).delServer(spi!.id);
+              if (!mounted) return;
               context.pop(true);
             },
             red: true,
