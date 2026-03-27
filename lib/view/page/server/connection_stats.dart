@@ -203,6 +203,7 @@ extension _Builds on _ConnectionStatsPageState {
 
 extension _Actions on _ConnectionStatsPageState {
   Future<void> _loadStats() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });

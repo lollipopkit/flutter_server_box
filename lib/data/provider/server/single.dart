@@ -141,13 +141,17 @@ class ServerNotifier extends _$ServerNotifier {
           Loggers.app.info('Jump to ${spi.name} in $spentTime ms.');
         }
 
-        await Stores.connectionStats.recordConnection(ConnectionStat(
-          serverId: spi.id,
-          serverName: spi.name,
-          timestamp: time1,
-          result: ConnectionResult.success,
-          durationMs: spentTime,
-        ));
+        try {
+          await Stores.connectionStats.recordConnection(ConnectionStat(
+            serverId: spi.id,
+            serverName: spi.name,
+            timestamp: time1,
+            result: ConnectionResult.success,
+            durationMs: spentTime,
+          ));
+        } catch (e) {
+          Loggers.app.warning('Failed to record connection success', e);
+        }
 
         final sessionId = 'ssh_${spi.id}';
         TermSessionManager.add(
@@ -175,14 +179,18 @@ class ServerNotifier extends _$ServerNotifier {
           failureResult = ConnectionResult.unknownError;
         }
 
-        await Stores.connectionStats.recordConnection(ConnectionStat(
-          serverId: spi.id,
-          serverName: spi.name,
-          timestamp: time1,
-          result: failureResult,
-          errorMessage: e.toString(),
-          durationMs: durationMs,
-        ));
+        try {
+          await Stores.connectionStats.recordConnection(ConnectionStat(
+            serverId: spi.id,
+            serverName: spi.name,
+            timestamp: time1,
+            result: failureResult,
+            errorMessage: e.toString(),
+            durationMs: durationMs,
+          ));
+        } catch (recErr) {
+          Loggers.app.warning('Failed to record connection failure', recErr);
+        }
 
         final newStatus = state.status..err = SSHErr(type: SSHErrType.connect, message: e.toString());
         updateStatus(newStatus);
