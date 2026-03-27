@@ -14,34 +14,49 @@ class ServerStore extends HiveStore {
 
   List<Spi>? _cache;
   StreamSubscription<dynamic>? _boxWatchSub;
+  bool _suppressWatch = false;
 
   @override
   Future<void> init() async {
     await super.init();
     _boxWatchSub?.cancel();
     _boxWatchSub = box.watch().listen((_) {
-      _cache = null;
+      if (!_suppressWatch) {
+        _cache = null;
+      }
     });
   }
 
   void close() {
     _boxWatchSub?.cancel();
     _boxWatchSub = null;
+    _cache = null;
   }
 
   @override
   bool clear({bool? updateLastUpdateTsOnClear}) {
+    _suppressWatch = true;
     _cache = null;
-    return super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
+    final result = super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
+    _suppressWatch = false;
+    return result;
   }
 
   void invalidateCache() {
+    _suppressWatch = true;
     _cache = null;
+    _suppressWatch = false;
   }
 
   void put(Spi info) {
+    _suppressWatch = true;
     set(info.id, info);
     _cache = null;
+    _suppressWatch = false;
+  }
+
+  void _putWithoutInvalidatingCache(Spi info) {
+    box.put(info.id, info);
   }
 
   List<Spi> fetch() {
@@ -60,7 +75,7 @@ class ServerStore extends HiveStore {
             if (map == null) return null;
             try {
               final spi = Spi.fromJson(map as Map<String, dynamic>);
-              put(spi);
+              _putWithoutInvalidatingCache(spi);
               return spi;
             } catch (e) {
               dprint('Parsing Spi from JSON', e);
@@ -77,8 +92,10 @@ class ServerStore extends HiveStore {
   }
 
   void delete(String id) {
+    _suppressWatch = true;
     remove(id);
     _cache = null;
+    _suppressWatch = false;
   }
 
   void update(Spi old, Spi newInfo) {

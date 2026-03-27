@@ -11,34 +11,49 @@ class SnippetStore extends HiveStore {
 
   List<Snippet>? _cache;
   StreamSubscription<dynamic>? _boxWatchSub;
+  bool _suppressWatch = false;
 
   @override
   Future<void> init() async {
     await super.init();
     _boxWatchSub?.cancel();
     _boxWatchSub = box.watch().listen((_) {
-      _cache = null;
+      if (!_suppressWatch) {
+        _cache = null;
+      }
     });
   }
 
   void close() {
     _boxWatchSub?.cancel();
     _boxWatchSub = null;
+    _cache = null;
   }
 
   @override
   bool clear({bool? updateLastUpdateTsOnClear}) {
+    _suppressWatch = true;
     _cache = null;
-    return super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
+    final result = super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
+    _suppressWatch = false;
+    return result;
   }
 
   void invalidateCache() {
+    _suppressWatch = true;
     _cache = null;
+    _suppressWatch = false;
   }
 
   void put(Snippet snippet) {
+    _suppressWatch = true;
     set(snippet.name, snippet);
     _cache = null;
+    _suppressWatch = false;
+  }
+
+  void _putWithoutInvalidatingCache(Snippet snippet) {
+    box.put(snippet.name, snippet);
   }
 
   List<Snippet> fetch() {
@@ -57,7 +72,7 @@ class SnippetStore extends HiveStore {
             if (map == null) return null;
             try {
               final snippet = Snippet.fromJson(map as Map<String, dynamic>);
-              put(snippet);
+              _putWithoutInvalidatingCache(snippet);
               return snippet;
             } catch (e) {
               dprint('Parsing Snippet from JSON', e);
@@ -74,8 +89,10 @@ class SnippetStore extends HiveStore {
   }
 
   void delete(Snippet s) {
+    _suppressWatch = true;
     remove(s.name);
     _cache = null;
+    _suppressWatch = false;
   }
 
   void update(Snippet old, Snippet newInfo) {

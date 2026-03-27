@@ -11,34 +11,49 @@ class PrivateKeyStore extends HiveStore {
 
   List<PrivateKeyInfo>? _cache;
   StreamSubscription<dynamic>? _boxWatchSub;
+  bool _suppressWatch = false;
 
   @override
   Future<void> init() async {
     await super.init();
     _boxWatchSub?.cancel();
     _boxWatchSub = box.watch().listen((_) {
-      _cache = null;
+      if (!_suppressWatch) {
+        _cache = null;
+      }
     });
   }
 
   void close() {
     _boxWatchSub?.cancel();
     _boxWatchSub = null;
+    _cache = null;
   }
 
   @override
   bool clear({bool? updateLastUpdateTsOnClear}) {
+    _suppressWatch = true;
     _cache = null;
-    return super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
+    final result = super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
+    _suppressWatch = false;
+    return result;
   }
 
   void invalidateCache() {
+    _suppressWatch = true;
     _cache = null;
+    _suppressWatch = false;
   }
 
   void put(PrivateKeyInfo info) {
+    _suppressWatch = true;
     set(info.id, info);
     _cache = null;
+    _suppressWatch = false;
+  }
+
+  void _putWithoutInvalidatingCache(PrivateKeyInfo info) {
+    box.put(info.id, info);
   }
 
   List<PrivateKeyInfo> fetch() {
@@ -57,7 +72,7 @@ class PrivateKeyStore extends HiveStore {
             if (map == null) return null;
             try {
               final pki = PrivateKeyInfo.fromJson(map as Map<String, dynamic>);
-              put(pki);
+              _putWithoutInvalidatingCache(pki);
               return pki;
             } catch (e) {
               dprint('Parsing PrivateKeyInfo from JSON', e);
@@ -79,7 +94,9 @@ class PrivateKeyStore extends HiveStore {
   }
 
   void delete(PrivateKeyInfo s) {
+    _suppressWatch = true;
     remove(s.id);
     _cache = null;
+    _suppressWatch = false;
   }
 }
