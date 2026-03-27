@@ -49,10 +49,10 @@ class PrivateKeyStore extends HiveStore {
     }
   }
 
-  Future<void> _putWithoutInvalidatingCache(PrivateKeyInfo info) async {
+  void _putWithoutInvalidatingCache(PrivateKeyInfo info) {
     _suppressWatch = true;
     try {
-      await box.put(info.id, info);
+      box.put(info.id, info);
     } finally {
       _suppressWatch = false;
     }
