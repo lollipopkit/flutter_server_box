@@ -9,6 +9,7 @@ extension _Server on _AppSettingsPageState {
         _buildNetViewType(),
         _buildServerSeq(),
         _buildServerDetailCardSeq(),
+        _buildConnectionStats(),
         _buildDeleteServers(),
         _buildCpuView(),
         _buildServerMore(),
@@ -34,6 +35,18 @@ extension _Server on _AppSettingsPageState {
         if (selected != null) {
           _setting.netViewType.put(selected);
         }
+      },
+    );
+  }
+
+  Widget _buildConnectionStats() {
+    return ListTile(
+      leading: const Icon(Icons.analytics, size: _kIconSize),
+      title: Text(l10n.connectionStats),
+      subtitle: Text(l10n.connectionStatsDesc),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () {
+        ConnectionStatsPage.route.go(context);
       },
     );
   }

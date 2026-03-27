@@ -13,6 +13,7 @@ import 'package:server_box/data/helper/system_detector.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
+import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/server_status_update_req.dart';
@@ -123,8 +124,8 @@ class ServerNotifier extends _$ServerNotifier {
         }
       }
 
+      final time1 = DateTime.now();
       try {
-        final time1 = DateTime.now();
         final client = await genClient(
           spi,
           timeout: Duration(seconds: Stores.setting.timeout.fetch()),
@@ -140,6 +141,18 @@ class ServerNotifier extends _$ServerNotifier {
           Loggers.app.info('Jump to ${spi.name} in $spentTime ms.');
         }
 
+        try {
+          await Stores.connectionStats.recordConnection(ConnectionStat(
+            serverId: spi.id,
+            serverName: spi.name,
+            timestamp: time1,
+            result: ConnectionResult.success,
+            durationMs: spentTime,
+          ));
+        } catch (e) {
+          Loggers.app.warning('Failed to record connection success', e);
+        }
+
         final sessionId = 'ssh_${spi.id}';
         TermSessionManager.add(
           id: sessionId,
@@ -151,6 +164,33 @@ class ServerNotifier extends _$ServerNotifier {
         TermSessionManager.setActive(sessionId, hasTerminal: false);
       } catch (e) {
         TryLimiter.inc(sid);
+
+        final durationMs = DateTime.now().difference(time1).inMilliseconds;
+
+        ConnectionResult failureResult;
+        final errStr = e.toString().toLowerCase();
+        if (errStr.contains('timed out') || errStr.contains('timeout')) {
+          failureResult = ConnectionResult.timeout;
+        } else if (errStr.contains('auth') || errStr.contains('authentication') || errStr.contains('permission denied') || errStr.contains('access denied')) {
+          failureResult = ConnectionResult.authFailed;
+        } else if (errStr.contains('connection refused') || errStr.contains('no route to host') || errStr.contains('network') || errStr.contains('socket')) {
+          failureResult = ConnectionResult.networkError;
+        } else {
+          failureResult = ConnectionResult.unknownError;
+        }
+
+        try {
+          await Stores.connectionStats.recordConnection(ConnectionStat(
+            serverId: spi.id,
+            serverName: spi.name,
+            timestamp: time1,
+            result: failureResult,
+            errorMessage: e.toString(),
+            durationMs: durationMs,
+          ));
+        } catch (recErr) {
+          Loggers.app.warning('Failed to record connection failure', recErr);
+        }
 
         final newStatus = state.status..err = SSHErr(type: SSHErrType.connect, message: e.toString());
         updateStatus(newStatus);

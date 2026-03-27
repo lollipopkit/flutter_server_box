@@ -33,6 +33,7 @@ class ServersNotifier extends _$ServersNotifier {
   }
 
   Future<void> reload() async {
+    Stores.server.invalidateCache();
     final newState = _load();
     if (newState == state) return;
     state = newState;
@@ -213,7 +214,7 @@ class ServersNotifier extends _$ServersNotifier {
     bakSync.sync(milliDelay: 1000);
   }
 
-  void delServer(String id) {
+  Future<void> delServer(String id) async {
     final newServers = Map<String, Spi>.from(state.servers);
     newServers.remove(id);
 
@@ -225,6 +226,8 @@ class ServersNotifier extends _$ServersNotifier {
     Stores.setting.serverOrder.put(newOrder);
     Stores.server.delete(id);
 
+    await Stores.connectionStats.clearServerStats(id);
+
     // Remove SSH session when server is deleted
     final sessionId = 'ssh_$id';
     TermSessionManager.remove(sessionId);
@@ -232,7 +235,7 @@ class ServersNotifier extends _$ServersNotifier {
     bakSync.sync(milliDelay: 1000);
   }
 
-  void deleteAll() {
+  Future<void> deleteAll() async {
     // Remove all SSH sessions before clearing servers
     for (final id in state.servers.keys) {
       final sessionId = 'ssh_$id';
@@ -243,6 +246,7 @@ class ServersNotifier extends _$ServersNotifier {
 
     Stores.setting.serverOrder.put([]);
     Stores.server.clear();
+    await Stores.connectionStats.clearAll();
     bakSync.sync(milliDelay: 1000);
   }
 

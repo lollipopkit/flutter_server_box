@@ -45,6 +45,10 @@ abstract final class Stores {
     getIt.registerLazySingleton<PortForwardStore>(() => PortForwardStore.instance);
     
     await Future.wait(_allBackup.map((store) => store.init()));
+
+    if (connectionStats.indexDbKeys.isEmpty) {
+      await connectionStats.rebuildIndexAndCompact();
+    }
   }
 
   static int get lastModTime {
