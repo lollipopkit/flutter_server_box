@@ -49,6 +49,7 @@ enum ServerFuncBtn {
     //pkg,
     snippet,
     systemd,
+    portForward,
   ].map((e) => e.index).toList();
 
   IconData get icon => switch (this) {
