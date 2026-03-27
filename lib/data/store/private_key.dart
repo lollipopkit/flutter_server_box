@@ -24,32 +24,29 @@ class PrivateKeyStore extends HiveStore {
     });
   }
 
-  void close() {
-    _boxWatchSub?.cancel();
-    _boxWatchSub = null;
-    _cache = null;
-  }
-
   @override
   bool clear({bool? updateLastUpdateTsOnClear}) {
     _suppressWatch = true;
-    _cache = null;
-    final result = super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
-    _suppressWatch = false;
-    return result;
+    try {
+      _cache = null;
+      return super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
+    } finally {
+      _suppressWatch = false;
+    }
   }
 
   void invalidateCache() {
-    _suppressWatch = true;
     _cache = null;
-    _suppressWatch = false;
   }
 
   void put(PrivateKeyInfo info) {
     _suppressWatch = true;
-    set(info.id, info);
-    _cache = null;
-    _suppressWatch = false;
+    try {
+      set(info.id, info);
+      _cache = null;
+    } finally {
+      _suppressWatch = false;
+    }
   }
 
   void _putWithoutInvalidatingCache(PrivateKeyInfo info) {
@@ -90,13 +87,21 @@ class PrivateKeyStore extends HiveStore {
 
   PrivateKeyInfo? fetchOne(String? id) {
     if (id == null) return null;
+    if (_cache != null) {
+      for (final pki in _cache!) {
+        if (pki.id == id) return pki;
+      }
+    }
     return box.get(id);
   }
 
   void delete(PrivateKeyInfo s) {
     _suppressWatch = true;
-    remove(s.id);
-    _cache = null;
-    _suppressWatch = false;
+    try {
+      remove(s.id);
+      _cache = null;
+    } finally {
+      _suppressWatch = false;
+    }
   }
 }

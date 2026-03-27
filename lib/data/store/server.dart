@@ -27,32 +27,29 @@ class ServerStore extends HiveStore {
     });
   }
 
-  void close() {
-    _boxWatchSub?.cancel();
-    _boxWatchSub = null;
-    _cache = null;
-  }
-
   @override
   bool clear({bool? updateLastUpdateTsOnClear}) {
     _suppressWatch = true;
-    _cache = null;
-    final result = super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
-    _suppressWatch = false;
-    return result;
+    try {
+      _cache = null;
+      return super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
+    } finally {
+      _suppressWatch = false;
+    }
   }
 
   void invalidateCache() {
-    _suppressWatch = true;
     _cache = null;
-    _suppressWatch = false;
   }
 
   void put(Spi info) {
     _suppressWatch = true;
-    set(info.id, info);
-    _cache = null;
-    _suppressWatch = false;
+    try {
+      set(info.id, info);
+      _cache = null;
+    } finally {
+      _suppressWatch = false;
+    }
   }
 
   void _putWithoutInvalidatingCache(Spi info) {
@@ -93,17 +90,26 @@ class ServerStore extends HiveStore {
 
   void delete(String id) {
     _suppressWatch = true;
-    remove(id);
-    _cache = null;
-    _suppressWatch = false;
+    try {
+      remove(id);
+      _cache = null;
+    } finally {
+      _suppressWatch = false;
+    }
   }
 
   void update(Spi old, Spi newInfo) {
     if (!have(old)) {
       throw Exception('Old spi: $old not found');
     }
-    delete(old.id);
-    put(newInfo);
+    _suppressWatch = true;
+    try {
+      remove(old.id);
+      box.put(newInfo.id, newInfo);
+      _cache = null;
+    } finally {
+      _suppressWatch = false;
+    }
   }
 
   bool have(Spi s) => get(s.id) != null;

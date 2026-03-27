@@ -24,32 +24,29 @@ class SnippetStore extends HiveStore {
     });
   }
 
-  void close() {
-    _boxWatchSub?.cancel();
-    _boxWatchSub = null;
-    _cache = null;
-  }
-
   @override
   bool clear({bool? updateLastUpdateTsOnClear}) {
     _suppressWatch = true;
-    _cache = null;
-    final result = super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
-    _suppressWatch = false;
-    return result;
+    try {
+      _cache = null;
+      return super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
+    } finally {
+      _suppressWatch = false;
+    }
   }
 
   void invalidateCache() {
-    _suppressWatch = true;
     _cache = null;
-    _suppressWatch = false;
   }
 
   void put(Snippet snippet) {
     _suppressWatch = true;
-    set(snippet.name, snippet);
-    _cache = null;
-    _suppressWatch = false;
+    try {
+      set(snippet.name, snippet);
+      _cache = null;
+    } finally {
+      _suppressWatch = false;
+    }
   }
 
   void _putWithoutInvalidatingCache(Snippet snippet) {
@@ -90,17 +87,26 @@ class SnippetStore extends HiveStore {
 
   void delete(Snippet s) {
     _suppressWatch = true;
-    remove(s.name);
-    _cache = null;
-    _suppressWatch = false;
+    try {
+      remove(s.name);
+      _cache = null;
+    } finally {
+      _suppressWatch = false;
+    }
   }
 
   void update(Snippet old, Snippet newInfo) {
     if (!have(old)) {
       throw Exception('Old snippet: $old not found');
     }
-    delete(old);
-    put(newInfo);
+    _suppressWatch = true;
+    try {
+      remove(old.name);
+      box.put(newInfo.name, newInfo);
+      _cache = null;
+    } finally {
+      _suppressWatch = false;
+    }
   }
 
   bool have(Snippet s) => get(s.name) != null;
