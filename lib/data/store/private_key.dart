@@ -17,6 +17,12 @@ class PrivateKeyStore extends HiveStore {
     });
   }
 
+  @override
+  bool clear({bool? updateLastUpdateTsOnClear}) {
+    _cache = null;
+    return super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
+  }
+
   void invalidateCache() {
     _cache = null;
   }
