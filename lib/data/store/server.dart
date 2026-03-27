@@ -175,7 +175,7 @@ class ServerStore extends HiveStore {
     }
 
     for (final spi in ss) {
-      if (idMap.containsKey(spi.oldId)) continue;
+      if (spi.id == spi.oldId) continue;
       if (spi.jumpId != null && idMap.containsKey(spi.jumpId)) {
         final newJumpId = idMap[spi.jumpId]!;
         final newSpi = spi.copyWith(jumpId: newJumpId);
