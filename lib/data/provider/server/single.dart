@@ -164,11 +164,12 @@ class ServerNotifier extends _$ServerNotifier {
         final durationMs = DateTime.now().difference(time1).inMilliseconds;
 
         ConnectionResult failureResult;
-        if (e.toString().contains('timeout') || e.toString().contains('Timeout')) {
+        final errStr = e.toString().toLowerCase();
+        if (errStr.contains('timed out') || errStr.contains('timeout')) {
           failureResult = ConnectionResult.timeout;
-        } else if (e.toString().contains('auth') || e.toString().contains('Authentication')) {
+        } else if (errStr.contains('auth') || errStr.contains('authentication') || errStr.contains('permission denied') || errStr.contains('access denied')) {
           failureResult = ConnectionResult.authFailed;
-        } else if (e.toString().contains('network') || e.toString().contains('Network')) {
+        } else if (errStr.contains('connection refused') || errStr.contains('no route to host') || errStr.contains('network') || errStr.contains('socket')) {
           failureResult = ConnectionResult.networkError;
         } else {
           failureResult = ConnectionResult.unknownError;
