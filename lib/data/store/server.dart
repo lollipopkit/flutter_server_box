@@ -53,7 +53,12 @@ class ServerStore extends HiveStore {
   }
 
   void _putWithoutInvalidatingCache(Spi info) {
-    box.put(info.id, info);
+    _suppressWatch = true;
+    try {
+      box.put(info.id, info);
+    } finally {
+      _suppressWatch = false;
+    }
   }
 
   List<Spi> fetch() {
@@ -171,11 +176,9 @@ class ServerStore extends HiveStore {
 
     for (final spi in ss) {
       if (spi.jumpId != null && idMap.containsKey(spi.jumpId)) {
-        final newJumpId = idMap[spi.jumpId];
-        if (spi.jumpId != newJumpId) {
-          final newSpi = spi.copyWith(jumpId: newJumpId);
-          update(spi, newSpi);
-        }
+        final newJumpId = idMap[spi.jumpId]!;
+        final newSpi = spi.copyWith(jumpId: newJumpId);
+        update(spi, newSpi);
       }
     }
 

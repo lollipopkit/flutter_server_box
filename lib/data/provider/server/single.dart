@@ -141,7 +141,7 @@ class ServerNotifier extends _$ServerNotifier {
           Loggers.app.info('Jump to ${spi.name} in $spentTime ms.');
         }
 
-        Stores.connectionStats.recordConnection(ConnectionStat(
+        await Stores.connectionStats.recordConnection(ConnectionStat(
           serverId: spi.id,
           serverName: spi.name,
           timestamp: time1,
@@ -175,7 +175,7 @@ class ServerNotifier extends _$ServerNotifier {
           failureResult = ConnectionResult.unknownError;
         }
 
-        Stores.connectionStats.recordConnection(ConnectionStat(
+        await Stores.connectionStats.recordConnection(ConnectionStat(
           serverId: spi.id,
           serverName: spi.name,
           timestamp: time1,

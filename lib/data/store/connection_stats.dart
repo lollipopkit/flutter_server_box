@@ -47,7 +47,7 @@ class ConnectionStatsStore extends HiveStore {
 
     final idxKeysToDelete = _indexBox.keys.where((k) => k.toString().startsWith('idx_')).toList();
     for (final k in idxKeysToDelete) {
-      _indexBox.delete(k);
+      await _indexBox.delete(k);
     }
 
     for (final entry in serverIdToKeys.entries) {
@@ -59,14 +59,14 @@ class ConnectionStatsStore extends HiveStore {
           if (stat != null) keyStatPairs.add((key, stat));
         }
         keyStatPairs.sort((a, b) => b.$2.timestamp.compareTo(a.$2.timestamp));
-        final toKeep = keyStatPairs.take(_maxRecordsPerServer).map((p) => p.$1).toList();
+        final toKeep = keyStatPairs.take(_maxRecordsPerServer).map((p) => p.$1).toList().reversed.toList();
         final toRemove = keyStatPairs.skip(_maxRecordsPerServer);
         for (final pair in toRemove) {
           remove(pair.$1);
         }
-        _indexBox.put('idx_${entry.key}', toKeep);
+        await _indexBox.put('idx_${entry.key}', toKeep);
       } else {
-        _indexBox.put('idx_${entry.key}', keys);
+        await _indexBox.put('idx_${entry.key}', keys);
       }
     }
   }
@@ -84,20 +84,20 @@ class ConnectionStatsStore extends HiveStore {
     }
   }
 
-  void _updateIndex(String serverId, String recordKey) {
+  Future<void> _updateIndex(String serverId, String recordKey) async {
     final indexKey = 'idx_$serverId';
     final keys = (_indexBox.get(indexKey) as List?)?.cast<String>().toList() ?? [];
 
     if (!keys.contains(recordKey)) {
       keys.add(recordKey);
       if (keys.length > _maxRecordsPerServer) {
-        _pruneExcessRecords(serverId, keys);
+        await _pruneExcessRecords(serverId, keys);
       }
-      _indexBox.put(indexKey, keys);
+      await _indexBox.put(indexKey, keys);
     }
   }
 
-  void _pruneExcessRecords(String serverId, List<String> keys) {
+  Future<void> _pruneExcessRecords(String serverId, List<String> keys) async {
     if (keys.length <= _maxRecordsPerServer) return;
 
     final keyStatPairs = <(String, ConnectionStat)>[];
@@ -117,10 +117,10 @@ class ConnectionStatsStore extends HiveStore {
     }
   }
 
-  void recordConnection(ConnectionStat stat) {
+  Future<void> recordConnection(ConnectionStat stat) async {
     final key = '${stat.serverId}_${stat.timestamp.millisecondsSinceEpoch}';
     set(key, stat);
-    _updateIndex(stat.serverId, key);
+    await _updateIndex(stat.serverId, key);
   }
 
   ServerConnectionStats getServerStats(String serverId, String serverName) {
@@ -227,19 +227,19 @@ class ConnectionStatsStore extends HiveStore {
     return allStats;
   }
 
-  void clearAll() {
-    box.clear();
-    _indexBox.clear();
+  Future<void> clearAll() async {
+    await box.clear();
+    await _indexBox.clear();
   }
 
-  void clearServerStats(String serverId) {
+  Future<void> clearServerStats(String serverId) async {
     final indexKey = 'idx_$serverId';
     final keys = (_indexBox.get(indexKey) as List?)?.cast<String>() ?? [];
 
     for (final key in keys) {
       remove(key);
     }
-    _indexBox.delete(indexKey);
+    await _indexBox.delete(indexKey);
   }
 
   Future<void> compact() async {

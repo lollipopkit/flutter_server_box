@@ -50,7 +50,12 @@ class PrivateKeyStore extends HiveStore {
   }
 
   void _putWithoutInvalidatingCache(PrivateKeyInfo info) {
-    box.put(info.id, info);
+    _suppressWatch = true;
+    try {
+      box.put(info.id, info);
+    } finally {
+      _suppressWatch = false;
+    }
   }
 
   List<PrivateKeyInfo> fetch() {
