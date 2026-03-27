@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -11,13 +13,26 @@ class ServerStore extends HiveStore {
   static final instance = ServerStore._();
 
   List<Spi>? _cache;
+  StreamSubscription<dynamic>? _boxWatchSub;
 
   @override
   Future<void> init() async {
     await super.init();
-    box.watch().listen((_) {
+    _boxWatchSub?.cancel();
+    _boxWatchSub = box.watch().listen((_) {
       _cache = null;
     });
+  }
+
+  void close() {
+    _boxWatchSub?.cancel();
+    _boxWatchSub = null;
+  }
+
+  @override
+  bool clear({bool? updateLastUpdateTsOnClear}) {
+    _cache = null;
+    return super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
   }
 
   void invalidateCache() {
