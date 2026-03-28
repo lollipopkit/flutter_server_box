@@ -292,9 +292,10 @@ extension _SSH on _AppSettingsPageState {
           actions: [
             TextButton(onPressed: () async => await _pickFontFile(), child: Text(libL10n.file)),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                await _clearCachedFont();
                 _setting.fontPath.delete();
-                context.pop();
+                if (mounted) context.pop();
                 RNodes.app.notify();
               },
               child: Text(libL10n.clear),
@@ -303,6 +304,15 @@ extension _SSH on _AppSettingsPageState {
         );
       },
     );
+  }
+
+  Future<void> _clearCachedFont() async {
+    final oldFontPath = _setting.fontPath.fetch();
+    if (oldFontPath.isEmpty || !oldFontPath.startsWith(Paths.font)) return;
+    final oldFile = File(oldFontPath);
+    if (await oldFile.exists()) {
+      await oldFile.delete();
+    }
   }
 
   Future<void> _pickFontFile() async {
@@ -314,6 +324,8 @@ extension _SSH on _AppSettingsPageState {
       _setting.fontPath.put(path);
       await FontUtils.loadFrom(path);
     } else {
+      await _clearCachedFont();
+
       final fontFile = File(path);
       final fontName = path.getFileName();
       final fontPath = Paths.font.joinPath(fontName ?? 'font.ttf');
