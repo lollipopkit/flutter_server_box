@@ -283,7 +283,7 @@ extension _SSH on _AppSettingsPageState {
       leading: const Icon(MingCute.font_fill),
       title: Text(libL10n.font),
       trailing: _setting.fontPath.listenable().listenVal((val) {
-        final fontName = val.getFileName();
+        final fontName = val.getFileName(withoutExtension: true);
         return Text(fontName ?? libL10n.empty, style: UIs.text15);
       }),
       onTap: () {
@@ -292,9 +292,10 @@ extension _SSH on _AppSettingsPageState {
           actions: [
             TextButton(onPressed: () async => await _pickFontFile(), child: Text(libL10n.file)),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                await _clearCachedFont();
                 _setting.fontPath.delete();
-                context.pop();
+                if (mounted) context.pop();
                 RNodes.app.notify();
               },
               child: Text(libL10n.clear),
@@ -303,6 +304,15 @@ extension _SSH on _AppSettingsPageState {
         );
       },
     );
+  }
+
+  Future<void> _clearCachedFont() async {
+    final oldFontPath = _setting.fontPath.fetch();
+    if (oldFontPath.isEmpty || !oldFontPath.startsWith(Paths.font)) return;
+    final oldFile = File(oldFontPath);
+    if (await oldFile.exists()) {
+      await oldFile.delete();
+    }
   }
 
   Future<void> _pickFontFile() async {
@@ -314,13 +324,17 @@ extension _SSH on _AppSettingsPageState {
       _setting.fontPath.put(path);
       await FontUtils.loadFrom(path);
     } else {
+      await _clearCachedFont();
+
       final fontFile = File(path);
-      await fontFile.copy(Paths.font);
-      _setting.fontPath.put(Paths.font);
-      await FontUtils.loadFrom(Paths.font);
+      final fontName = path.getFileName();
+      final fontPath = Paths.font.joinPath(fontName ?? 'font.ttf');
+      await fontFile.copy(fontPath);
+      _setting.fontPath.put(fontPath);
+      await FontUtils.loadFrom(fontPath);
     }
 
-    context.pop();
+    if (mounted) context.pop();
     RNodes.app.notify();
   }
 

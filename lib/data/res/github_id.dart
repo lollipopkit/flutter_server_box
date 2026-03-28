@@ -155,6 +155,8 @@ abstract final class GithubIds {
     'nickgirga',
     'xxnuo',
     'sunnysu0608',
+    'Staten-Wang',
+    'alterkeyy'
   };
 }
 
