@@ -9,7 +9,7 @@
 [submodule "fl_lib"]
 	path = packages/fl_lib
 	url = https://github.com/lollipopkit/fl_lib
-	branch = before-sqlite
+	branch = main
 [submodule "fl_build"]
 	path = packages/fl_build
 	url = https://github.com/lppcg/fl_build.git

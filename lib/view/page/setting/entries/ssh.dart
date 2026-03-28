@@ -283,7 +283,7 @@ extension _SSH on _AppSettingsPageState {
       leading: const Icon(MingCute.font_fill),
       title: Text(libL10n.font),
       trailing: _setting.fontPath.listenable().listenVal((val) {
-        final fontName = val.getFileName();
+        final fontName = val.getFileName(withoutExtension: true);
         return Text(fontName ?? libL10n.empty, style: UIs.text15);
       }),
       onTap: () {
@@ -315,9 +315,11 @@ extension _SSH on _AppSettingsPageState {
       await FontUtils.loadFrom(path);
     } else {
       final fontFile = File(path);
-      await fontFile.copy(Paths.font);
-      _setting.fontPath.put(Paths.font);
-      await FontUtils.loadFrom(Paths.font);
+      final fontName = path.getFileName();
+      final fontPath = Paths.font.joinPath(fontName ?? 'font.ttf');
+      await fontFile.copy(fontPath);
+      _setting.fontPath.put(fontPath);
+      await FontUtils.loadFrom(fontPath);
     }
 
     context.pop();
