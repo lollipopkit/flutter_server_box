@@ -334,7 +334,7 @@ extension _SSH on _AppSettingsPageState {
       await FontUtils.loadFrom(fontPath);
     }
 
-    context.pop();
+    if (mounted) context.pop();
     RNodes.app.notify();
   }
 
