@@ -84,47 +84,43 @@ Future<void> _download(
     );
     mainSendPort.send(SftpWorkerStatus.sshConnectted);
 
-    /// Create the directory if not exists
     final dirPath = req.localPath.substring(
       0,
       req.localPath.lastIndexOf(Pfs.seperator),
     );
     await Directory(dirPath).create(recursive: true);
 
-    /// Use [FileMode.write] to overwrite the file
-    final localFile = File(req.localPath).openWrite(mode: FileMode.write);
-    final file = await (await client.sftp()).open(req.remotePath);
-    final size = (await file.stat()).size;
+    final sftp = await client.sftp();
+
+    final remoteFile = await sftp.open(req.remotePath);
+    final size = (await remoteFile.stat()).size;
     if (size == null) {
       mainSendPort.send(Exception('can\'t get file size: ${req.remotePath}'));
       return;
     }
+    await remoteFile.close();
 
     mainSendPort.send(size);
     mainSendPort.send(SftpWorkerStatus.loading);
 
-    // Issue #161
-    // Due to single core performance, limit the chunk size
-    const defaultChunkSize = 1024 * 1024 * 5;
-    var totalRead = 0;
+    const chunkSize = 1024 * 1024 * 5;
+    var lastProgress = 0;
+    final localFile = File(req.localPath).openWrite(mode: FileMode.write);
 
-    while (totalRead < size) {
-      final remaining = size - totalRead;
-      final chunkSize = remaining > defaultChunkSize
-          ? defaultChunkSize
-          : remaining;
-      dprint('Size: $size, Total Read: $totalRead, Chunk Size: $chunkSize');
-
-      final fileData = file.read(offset: totalRead, length: chunkSize);
-      await for (var chunk in fileData) {
-        localFile.add(chunk);
-        totalRead += chunk.length;
-        mainSendPort.send(totalRead / size * 100);
-      }
-    }
+    await sftp.download(
+      req.remotePath,
+      localFile,
+      onProgress: (bytesRead) {
+        final progress = (bytesRead / size * 100).round();
+        if (progress != lastProgress) {
+          lastProgress = progress;
+          mainSendPort.send(progress);
+        }
+      },
+      chunkSize: chunkSize,
+    );
 
     await localFile.close();
-    await file.close();
 
     mainSendPort.send(watch.elapsed);
     mainSendPort.send(SftpWorkerStatus.finished);
