@@ -304,49 +304,15 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
     );
   }
 
-  String get _localHostHint {
-    switch (_selectedType) {
-      case PortForwardType.local:
-        return context.l10n.portForward_localHost;
-      case PortForwardType.remote:
-        return context.l10n.portForward_localHost;
-      case PortForwardType.dynamic:
-        return context.l10n.portForward_localHost;
-    }
-  }
+  String get _localHostHint => context.l10n.portForward_localHost;
 
-  String get _localPortHint {
-    switch (_selectedType) {
-      case PortForwardType.local:
-        return context.l10n.portForward_localPort;
-      case PortForwardType.remote:
-        return context.l10n.portForward_localPort;
-      case PortForwardType.dynamic:
-        return context.l10n.portForward_localPort;
-    }
-  }
+  String get _localPortHint => context.l10n.portForward_localPort;
 
-  String get _remoteHostHint {
-    switch (_selectedType) {
-      case PortForwardType.local:
-        return context.l10n.portForward_remoteHost;
-      case PortForwardType.remote:
-        return context.l10n.portForward_remoteHost;
-      case PortForwardType.dynamic:
-        return '';
-    }
-  }
+  String get _remoteHostHint =>
+      _selectedType == PortForwardType.dynamic ? '' : context.l10n.portForward_remoteHost;
 
-  String get _remotePortHint {
-    switch (_selectedType) {
-      case PortForwardType.local:
-        return context.l10n.portForward_remotePort;
-      case PortForwardType.remote:
-        return context.l10n.portForward_remotePort;
-      case PortForwardType.dynamic:
-        return '';
-    }
-  }
+  String get _remotePortHint =>
+      _selectedType == PortForwardType.dynamic ? '' : context.l10n.portForward_remotePort;
 
   Widget _buildTypeSelector() {
     return SegmentedButton<PortForwardType>(
@@ -376,9 +342,9 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
     );
   }
 
-  String get _localTypeLabel => 'Local';
+  String get _localTypeLabel => context.l10n.portForward_type_local;
 
-  String get _remoteTypeLabel => 'Remote';
+  String get _remoteTypeLabel => context.l10n.portForward_type_remote;
 
   String get _dynamicTypeLabel => 'SOCKS5';
 

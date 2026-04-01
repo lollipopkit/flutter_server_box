@@ -263,6 +263,8 @@
   "portForward_localPort": "Local Port",
   "portForward_remoteHost": "Remote Host",
   "portForward_remotePort": "Remote Port",
+  "portForward_type_local": "Local",
+  "portForward_type_remote": "Remote",
   "portForward_deleteConfirmFmt": "Delete {name}?",
   "sponsor": "Sponsor"
 }

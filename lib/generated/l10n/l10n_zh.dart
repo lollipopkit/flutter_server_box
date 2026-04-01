@@ -856,6 +856,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portForward_remotePort => '远端端口';
 
   @override
+  String get portForward_type_local => '本地';
+
+  @override
+  String get portForward_type_remote => '远程';
+
+  @override
   String portForward_deleteConfirmFmt(Object name) {
     return '删除 $name？';
   }

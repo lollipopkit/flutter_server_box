@@ -148,11 +148,12 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   }
 
   Future<void> _startDynamicForward(PortForwardConfig config) async {
+    final bindHost = config.localHost ?? 'localhost';
     final dynamicForward = await _client.forwardDynamic(
-      bindHost: config.localHost ?? 'localhost',
+      bindHost: bindHost,
       bindPort: config.localPort,
     );
-    Loggers.app.info('Dynamic port forward (SOCKS5) started: ${config.localHost}:${config.localPort}');
+    Loggers.app.info('Dynamic port forward (SOCKS5) started: $bindHost:${config.localPort}');
     final entry = _DynamicForwardEntry(dynamicForward: dynamicForward);
     _forwards[config.id] = entry;
     _updateStatus(config.id, PortForwardStatus(id: config.id, isActive: true));

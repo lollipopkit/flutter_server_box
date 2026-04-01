@@ -260,6 +260,8 @@
   "portForward_localPort": "本地端口",
   "portForward_remoteHost": "远端主机",
   "portForward_remotePort": "远端端口",
+  "portForward_type_local": "本地",
+  "portForward_type_remote": "远程",
   "portForward_deleteConfirmFmt": "删除 {name}？",
   "sponsor": "赞助"
 }
