@@ -37,15 +37,20 @@ extension SSHClientX on SSHClient {
         if (stdout) result.add(e);
       },
       onDone: stdoutDone.complete,
-      onError: stderrDone.completeError,
+      onError: (e) {
+        if (!stdoutDone.isCompleted) stdoutDone.completeError(e);
+      },
     );
 
     session.stderr.listen(
       (e) {
         onStderr?.call(utf8.decode(e));
+        if (stderr) result.add(e);
       },
       onDone: stderrDone.complete,
-      onError: stderrDone.completeError,
+      onError: (e) {
+        if (!stderrDone.isCompleted) stderrDone.completeError(e);
+      },
     );
 
     onStdin(session);
@@ -149,12 +154,43 @@ extension SSHClientX on SSHClient {
     String? entry,
     Map<String, String>? env,
   }) async {
-    final result = await run(
+    final session = await execute(
       entry ?? 'cat | sh',
-      runInPty: pty != null,
+      pty: pty,
       environment: env,
     );
-    return utf8.decode(result);
+
+    final result = BytesBuilder(copy: false);
+    final stdoutDone = Completer<void>();
+    final stderrDone = Completer<void>();
+
+    session.stdout.listen(
+      (e) {
+        if (stdout) result.add(e);
+      },
+      onDone: stdoutDone.complete,
+      onError: (e) {
+        if (!stdoutDone.isCompleted) stdoutDone.completeError(e);
+      },
+    );
+
+    session.stderr.listen(
+      (e) {
+        if (stderr) result.add(e);
+      },
+      onDone: stderrDone.complete,
+      onError: (e) {
+        if (!stderrDone.isCompleted) stderrDone.completeError(e);
+      },
+    );
+
+    session.stdin.add(Uint8List.fromList(utf8.encode('$script\n')));
+    session.stdin.close();
+
+    await stdoutDone.future;
+    await stderrDone.future;
+
+    return utf8.decode(result.takeBytes());
   }
 
   Future<String> runSafe(

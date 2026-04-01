@@ -93,12 +93,16 @@ Future<void> _download(
     final sftp = await client.sftp();
 
     final remoteFile = await sftp.open(req.remotePath);
-    final size = (await remoteFile.stat()).size;
-    if (size == null) {
-      mainSendPort.send(Exception('can\'t get file size: ${req.remotePath}'));
-      return;
+    int? size;
+    try {
+      size = (await remoteFile.stat()).size;
+      if (size == null) {
+        mainSendPort.send(Exception('can\'t get file size: ${req.remotePath}'));
+        return;
+      }
+    } finally {
+      await remoteFile.close();
     }
-    await remoteFile.close();
 
     mainSendPort.send(size);
     mainSendPort.send(SftpWorkerStatus.loading);
@@ -107,20 +111,24 @@ Future<void> _download(
     var lastProgress = 0;
     final localFile = File(req.localPath).openWrite(mode: FileMode.write);
 
-    await sftp.download(
-      req.remotePath,
-      localFile,
-      onProgress: (bytesRead) {
-        final progress = (bytesRead / size * 100).round();
-        if (progress != lastProgress) {
-          lastProgress = progress;
-          mainSendPort.send(progress);
-        }
-      },
-      chunkSize: chunkSize,
-    );
-
-    await localFile.close();
+    try {
+      await sftp.download(
+        req.remotePath,
+        localFile,
+        onProgress: (bytesRead) {
+          final s = size;
+          if (s == null || s == 0) return;
+          final progress = (bytesRead / s * 100).round();
+          if (progress != lastProgress) {
+            lastProgress = progress;
+            mainSendPort.send(progress);
+          }
+        },
+        chunkSize: chunkSize,
+      );
+    } finally {
+      await localFile.close();
+    }
 
     mainSendPort.send(watch.elapsed);
     mainSendPort.send(SftpWorkerStatus.finished);
