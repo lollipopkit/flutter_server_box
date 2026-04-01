@@ -11,11 +11,11 @@ _PortForwardConfig _$PortForwardConfigFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       serverId: json['serverId'] as String,
       name: json['name'] as String,
-      localHost: json['localHost'] as String? ?? 'localhost',
-      localPort: (json['localPort'] as num).toInt(),
-      remoteHost: json['remoteHost'] as String,
-      remotePort: (json['remotePort'] as num).toInt(),
-      description: json['description'] as String?,
+      type: $enumDecode(_$PortForwardTypeEnumMap, json['type']),
+      localHost: json['localHost'] as String?,
+      localPort: (json['localPort'] as num?)?.toInt() ?? 0,
+      remoteHost: json['remoteHost'] as String?,
+      remotePort: (json['remotePort'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$PortForwardConfigToJson(_PortForwardConfig instance) =>
@@ -23,9 +23,15 @@ Map<String, dynamic> _$PortForwardConfigToJson(_PortForwardConfig instance) =>
       'id': instance.id,
       'serverId': instance.serverId,
       'name': instance.name,
+      'type': _$PortForwardTypeEnumMap[instance.type]!,
       'localHost': instance.localHost,
       'localPort': instance.localPort,
       'remoteHost': instance.remoteHost,
       'remotePort': instance.remotePort,
-      'description': instance.description,
     };
+
+const _$PortForwardTypeEnumMap = {
+  PortForwardType.local: 'local',
+  PortForwardType.remote: 'remote',
+  PortForwardType.dynamic: 'dynamic',
+};

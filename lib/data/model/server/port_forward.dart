@@ -3,24 +3,38 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'port_forward.freezed.dart';
 part 'port_forward.g.dart';
 
+enum PortForwardType {
+  @JsonValue('local')
+  local,
+  @JsonValue('remote')
+  remote,
+  @JsonValue('dynamic')
+  dynamic,
+}
+
 @freezed
 abstract class PortForwardConfig with _$PortForwardConfig {
   const factory PortForwardConfig({
     required String id,
     required String serverId,
     required String name,
-    @Default('localhost') String localHost,
-    required int localPort,
-    required String remoteHost,
-    required int remotePort,
-    String? description,
+    required PortForwardType type,
+    String? localHost,
+    @Default(0) int localPort,
+    String? remoteHost,
+    int? remotePort,
   }) = _PortForwardConfig;
 
   factory PortForwardConfig.fromJson(Map<String, dynamic> json) => _$PortForwardConfigFromJson(json);
 
   const PortForwardConfig._();
 
-  String get displayAddr => '$localHost:$localPort → $remoteHost:$remotePort';
+  String get displayAddr {
+    if (type == PortForwardType.dynamic) {
+      return '$localHost:$localPort (SOCKS5)';
+    }
+    return '$localHost:$localPort → ${remoteHost ?? "?"}:${remotePort ?? "?"}';
+  }
 }
 
 @freezed

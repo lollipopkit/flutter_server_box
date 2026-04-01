@@ -14,6 +14,7 @@ extension HiveRegistrar on HiveInterface {
     registerAdapter(ConnectionStatAdapter());
     registerAdapter(NetViewTypeAdapter());
     registerAdapter(PortForwardConfigAdapter());
+    registerAdapter(PortForwardTypeAdapter());
     registerAdapter(PrivateKeyInfoAdapter());
     registerAdapter(ServerConnectionStatsAdapter());
     registerAdapter(ServerCustomAdapter());
@@ -33,6 +34,7 @@ extension IsolatedHiveRegistrar on IsolatedHiveInterface {
     registerAdapter(ConnectionStatAdapter());
     registerAdapter(NetViewTypeAdapter());
     registerAdapter(PortForwardConfigAdapter());
+    registerAdapter(PortForwardTypeAdapter());
     registerAdapter(PrivateKeyInfoAdapter());
     registerAdapter(ServerConnectionStatsAdapter());
     registerAdapter(ServerCustomAdapter());

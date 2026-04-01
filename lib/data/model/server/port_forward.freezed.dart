@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PortForwardConfig {
 
- String get id; String get serverId; String get name; String get localHost; int get localPort; String get remoteHost; int get remotePort; String? get description;
+ String get id; String get serverId; String get name; PortForwardType get type; String? get localHost; int get localPort; String? get remoteHost; int? get remotePort;
 /// Create a copy of PortForwardConfig
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $PortForwardConfigCopyWith<PortForwardConfig> get copyWith => _$PortForwardConfi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PortForwardConfig&&(identical(other.id, id) || other.id == id)&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.name, name) || other.name == name)&&(identical(other.localHost, localHost) || other.localHost == localHost)&&(identical(other.localPort, localPort) || other.localPort == localPort)&&(identical(other.remoteHost, remoteHost) || other.remoteHost == remoteHost)&&(identical(other.remotePort, remotePort) || other.remotePort == remotePort)&&(identical(other.description, description) || other.description == description));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PortForwardConfig&&(identical(other.id, id) || other.id == id)&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&(identical(other.localHost, localHost) || other.localHost == localHost)&&(identical(other.localPort, localPort) || other.localPort == localPort)&&(identical(other.remoteHost, remoteHost) || other.remoteHost == remoteHost)&&(identical(other.remotePort, remotePort) || other.remotePort == remotePort));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,serverId,name,localHost,localPort,remoteHost,remotePort,description);
+int get hashCode => Object.hash(runtimeType,id,serverId,name,type,localHost,localPort,remoteHost,remotePort);
 
 @override
 String toString() {
-  return 'PortForwardConfig(id: $id, serverId: $serverId, name: $name, localHost: $localHost, localPort: $localPort, remoteHost: $remoteHost, remotePort: $remotePort, description: $description)';
+  return 'PortForwardConfig(id: $id, serverId: $serverId, name: $name, type: $type, localHost: $localHost, localPort: $localPort, remoteHost: $remoteHost, remotePort: $remotePort)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $PortForwardConfigCopyWith<$Res>  {
   factory $PortForwardConfigCopyWith(PortForwardConfig value, $Res Function(PortForwardConfig) _then) = _$PortForwardConfigCopyWithImpl;
 @useResult
 $Res call({
- String id, String serverId, String name, String localHost, int localPort, String remoteHost, int remotePort, String? description
+ String id, String serverId, String name, PortForwardType type, String? localHost, int localPort, String? remoteHost, int? remotePort
 });
 
 
@@ -65,17 +65,17 @@ class _$PortForwardConfigCopyWithImpl<$Res>
 
 /// Create a copy of PortForwardConfig
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? serverId = null,Object? name = null,Object? localHost = null,Object? localPort = null,Object? remoteHost = null,Object? remotePort = null,Object? description = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? serverId = null,Object? name = null,Object? type = null,Object? localHost = freezed,Object? localPort = null,Object? remoteHost = freezed,Object? remotePort = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,serverId: null == serverId ? _self.serverId : serverId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,localHost: null == localHost ? _self.localHost : localHost // ignore: cast_nullable_to_non_nullable
-as String,localPort: null == localPort ? _self.localPort : localPort // ignore: cast_nullable_to_non_nullable
-as int,remoteHost: null == remoteHost ? _self.remoteHost : remoteHost // ignore: cast_nullable_to_non_nullable
-as String,remotePort: null == remotePort ? _self.remotePort : remotePort // ignore: cast_nullable_to_non_nullable
-as int,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String?,
+as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as PortForwardType,localHost: freezed == localHost ? _self.localHost : localHost // ignore: cast_nullable_to_non_nullable
+as String?,localPort: null == localPort ? _self.localPort : localPort // ignore: cast_nullable_to_non_nullable
+as int,remoteHost: freezed == remoteHost ? _self.remoteHost : remoteHost // ignore: cast_nullable_to_non_nullable
+as String?,remotePort: freezed == remotePort ? _self.remotePort : remotePort // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -160,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String serverId,  String name,  String localHost,  int localPort,  String remoteHost,  int remotePort,  String? description)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String serverId,  String name,  PortForwardType type,  String? localHost,  int localPort,  String? remoteHost,  int? remotePort)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PortForwardConfig() when $default != null:
-return $default(_that.id,_that.serverId,_that.name,_that.localHost,_that.localPort,_that.remoteHost,_that.remotePort,_that.description);case _:
+return $default(_that.id,_that.serverId,_that.name,_that.type,_that.localHost,_that.localPort,_that.remoteHost,_that.remotePort);case _:
   return orElse();
 
 }
@@ -181,10 +181,10 @@ return $default(_that.id,_that.serverId,_that.name,_that.localHost,_that.localPo
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String serverId,  String name,  String localHost,  int localPort,  String remoteHost,  int remotePort,  String? description)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String serverId,  String name,  PortForwardType type,  String? localHost,  int localPort,  String? remoteHost,  int? remotePort)  $default,) {final _that = this;
 switch (_that) {
 case _PortForwardConfig():
-return $default(_that.id,_that.serverId,_that.name,_that.localHost,_that.localPort,_that.remoteHost,_that.remotePort,_that.description);case _:
+return $default(_that.id,_that.serverId,_that.name,_that.type,_that.localHost,_that.localPort,_that.remoteHost,_that.remotePort);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -201,10 +201,10 @@ return $default(_that.id,_that.serverId,_that.name,_that.localHost,_that.localPo
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String serverId,  String name,  String localHost,  int localPort,  String remoteHost,  int remotePort,  String? description)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String serverId,  String name,  PortForwardType type,  String? localHost,  int localPort,  String? remoteHost,  int? remotePort)?  $default,) {final _that = this;
 switch (_that) {
 case _PortForwardConfig() when $default != null:
-return $default(_that.id,_that.serverId,_that.name,_that.localHost,_that.localPort,_that.remoteHost,_that.remotePort,_that.description);case _:
+return $default(_that.id,_that.serverId,_that.name,_that.type,_that.localHost,_that.localPort,_that.remoteHost,_that.remotePort);case _:
   return null;
 
 }
@@ -216,17 +216,17 @@ return $default(_that.id,_that.serverId,_that.name,_that.localHost,_that.localPo
 @JsonSerializable()
 
 class _PortForwardConfig extends PortForwardConfig {
-  const _PortForwardConfig({required this.id, required this.serverId, required this.name, this.localHost = 'localhost', required this.localPort, required this.remoteHost, required this.remotePort, this.description}): super._();
+  const _PortForwardConfig({required this.id, required this.serverId, required this.name, required this.type, this.localHost, this.localPort = 0, this.remoteHost, this.remotePort}): super._();
   factory _PortForwardConfig.fromJson(Map<String, dynamic> json) => _$PortForwardConfigFromJson(json);
 
 @override final  String id;
 @override final  String serverId;
 @override final  String name;
-@override@JsonKey() final  String localHost;
-@override final  int localPort;
-@override final  String remoteHost;
-@override final  int remotePort;
-@override final  String? description;
+@override final  PortForwardType type;
+@override final  String? localHost;
+@override@JsonKey() final  int localPort;
+@override final  String? remoteHost;
+@override final  int? remotePort;
 
 /// Create a copy of PortForwardConfig
 /// with the given fields replaced by the non-null parameter values.
@@ -241,16 +241,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PortForwardConfig&&(identical(other.id, id) || other.id == id)&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.name, name) || other.name == name)&&(identical(other.localHost, localHost) || other.localHost == localHost)&&(identical(other.localPort, localPort) || other.localPort == localPort)&&(identical(other.remoteHost, remoteHost) || other.remoteHost == remoteHost)&&(identical(other.remotePort, remotePort) || other.remotePort == remotePort)&&(identical(other.description, description) || other.description == description));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PortForwardConfig&&(identical(other.id, id) || other.id == id)&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&(identical(other.localHost, localHost) || other.localHost == localHost)&&(identical(other.localPort, localPort) || other.localPort == localPort)&&(identical(other.remoteHost, remoteHost) || other.remoteHost == remoteHost)&&(identical(other.remotePort, remotePort) || other.remotePort == remotePort));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,serverId,name,localHost,localPort,remoteHost,remotePort,description);
+int get hashCode => Object.hash(runtimeType,id,serverId,name,type,localHost,localPort,remoteHost,remotePort);
 
 @override
 String toString() {
-  return 'PortForwardConfig(id: $id, serverId: $serverId, name: $name, localHost: $localHost, localPort: $localPort, remoteHost: $remoteHost, remotePort: $remotePort, description: $description)';
+  return 'PortForwardConfig(id: $id, serverId: $serverId, name: $name, type: $type, localHost: $localHost, localPort: $localPort, remoteHost: $remoteHost, remotePort: $remotePort)';
 }
 
 
@@ -261,7 +261,7 @@ abstract mixin class _$PortForwardConfigCopyWith<$Res> implements $PortForwardCo
   factory _$PortForwardConfigCopyWith(_PortForwardConfig value, $Res Function(_PortForwardConfig) _then) = __$PortForwardConfigCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String serverId, String name, String localHost, int localPort, String remoteHost, int remotePort, String? description
+ String id, String serverId, String name, PortForwardType type, String? localHost, int localPort, String? remoteHost, int? remotePort
 });
 
 
@@ -278,17 +278,17 @@ class __$PortForwardConfigCopyWithImpl<$Res>
 
 /// Create a copy of PortForwardConfig
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? serverId = null,Object? name = null,Object? localHost = null,Object? localPort = null,Object? remoteHost = null,Object? remotePort = null,Object? description = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? serverId = null,Object? name = null,Object? type = null,Object? localHost = freezed,Object? localPort = null,Object? remoteHost = freezed,Object? remotePort = freezed,}) {
   return _then(_PortForwardConfig(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,serverId: null == serverId ? _self.serverId : serverId // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,localHost: null == localHost ? _self.localHost : localHost // ignore: cast_nullable_to_non_nullable
-as String,localPort: null == localPort ? _self.localPort : localPort // ignore: cast_nullable_to_non_nullable
-as int,remoteHost: null == remoteHost ? _self.remoteHost : remoteHost // ignore: cast_nullable_to_non_nullable
-as String,remotePort: null == remotePort ? _self.remotePort : remotePort // ignore: cast_nullable_to_non_nullable
-as int,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String?,
+as String,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as PortForwardType,localHost: freezed == localHost ? _self.localHost : localHost // ignore: cast_nullable_to_non_nullable
+as String?,localPort: null == localPort ? _self.localPort : localPort // ignore: cast_nullable_to_non_nullable
+as int,remoteHost: freezed == remoteHost ? _self.remoteHost : remoteHost // ignore: cast_nullable_to_non_nullable
+as String?,remotePort: freezed == remotePort ? _self.remotePort : remotePort // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

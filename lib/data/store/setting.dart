@@ -279,4 +279,7 @@ class SettingStore extends HiveStore {
       return val?.map((e) => e.name).toList() ?? [];
     },
   );
+
+  /// Hide port forward beta warning
+  late final portForwardBetaWarned = propertyDefault('portForwardBetaWarned', false);
 }

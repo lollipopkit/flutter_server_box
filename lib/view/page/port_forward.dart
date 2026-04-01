@@ -5,6 +5,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
 import 'package:server_box/data/provider/port_forward_provider.dart';
+import 'package:server_box/data/res/store.dart';
 
 final class PortForwardPage extends ConsumerStatefulWidget {
   final SpiRequiredArgs args;
@@ -31,9 +32,35 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
   }
 
   void _showBetaWarning() {
+    if (Stores.setting.portForwardBetaWarned.fetch()) return;
+    var noMore = false;
     context.showRoundDialog(
       title: libL10n.attention,
-      child: Text(context.l10n.portForwardBeta),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(child: Text(context.l10n.portForwardBeta)),
+          UIs.height13,
+          StatefulBuilder(
+            builder: (context, setState) {
+              return Row(
+                children: [
+                  Checkbox(
+                    value: noMore,
+                    onChanged: (v) {
+                      setState(() => noMore = v ?? false);
+                      if (v == true) {
+                        Stores.setting.portForwardBetaWarned.put(true);
+                      }
+                    },
+                  ),
+                  Text(l10n.noPromptAgain),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
       actions: [Btnx.ok],
     );
   }
@@ -42,7 +69,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text(libL10n.portForward),
+        title: Text('${libL10n.portForward} (Beta)'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -214,18 +241,18 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
   late final TextEditingController localPortController;
   late final TextEditingController remoteHostController;
   late final TextEditingController remotePortController;
-  late final TextEditingController descController;
+  late PortForwardType _selectedType;
   bool _saving = false;
 
   @override
   void initState() {
     super.initState();
     nameController = TextEditingController(text: widget.existing?.name ?? '');
-    localHostController = TextEditingController(text: widget.existing?.localHost ?? 'localhost');
+    localHostController = TextEditingController(text: widget.existing?.localHost ?? '');
     localPortController = TextEditingController(text: widget.existing?.localPort.toString() ?? '');
     remoteHostController = TextEditingController(text: widget.existing?.remoteHost ?? '');
     remotePortController = TextEditingController(text: widget.existing?.remotePort.toString() ?? '');
-    descController = TextEditingController(text: widget.existing?.description ?? '');
+    _selectedType = widget.existing?.type ?? PortForwardType.local;
   }
 
   @override
@@ -235,7 +262,6 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
     localPortController.dispose();
     remoteHostController.dispose();
     remotePortController.dispose();
-    descController.dispose();
     super.dispose();
   }
 
@@ -249,73 +275,155 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
           children: [
             Input(controller: nameController, hint: libL10n.name),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(child: Input(controller: localHostController, hint: context.l10n.portForward_localHost)),
-                const SizedBox(width: 8),
-                Expanded(child: Input(controller: localPortController, hint: context.l10n.portForward_localPort, type: TextInputType.number)),
-              ],
-            ),
+            _buildTypeSelector(),
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(child: Input(controller: remoteHostController, hint: context.l10n.portForward_remoteHost)),
+                Expanded(child: Input(controller: localHostController, hint: _localHostHint)),
                 const SizedBox(width: 8),
-                Expanded(child: Input(controller: remotePortController, hint: context.l10n.portForward_remotePort, type: TextInputType.number)),
+                Expanded(child: Input(controller: localPortController, hint: _localPortHint, type: TextInputType.number)),
               ],
             ),
-            const SizedBox(height: 8),
-            Input(controller: descController, hint: libL10n.note),
+            if (_selectedType != PortForwardType.dynamic) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(child: Input(controller: remoteHostController, hint: _remoteHostHint)),
+                  const SizedBox(width: 8),
+                  Expanded(child: Input(controller: remotePortController, hint: _remotePortHint, type: TextInputType.number)),
+                ],
+              ),
+            ],
           ],
         ),
       ),
       actions: [
         Btn.cancel(),
         Btn.ok(
-          onTap: () async {
-            if (_saving) return;
-            setState(() => _saving = true);
-            try {
-              final name = nameController.text.trim();
-              final localHost = localHostController.text.trim();
-              final localPort = int.tryParse(localPortController.text.trim()) ?? 0;
-              final remoteHost = remoteHostController.text.trim();
-              final remotePort = int.tryParse(remotePortController.text.trim()) ?? 0;
-              final desc = descController.text.trim();
-
-              if (name.isEmpty ||
-                  localHost.isEmpty ||
-                  localPort <= 0 ||
-                  localPort > 65535 ||
-                  remoteHost.isEmpty ||
-                  remotePort <= 0 ||
-                  remotePort > 65535) {
-                if (mounted) context.showSnackBar(libL10n.invalid);
-                return;
-              }
-
-              final config = PortForwardConfig(
-                id: widget.existing?.id ?? ShortId.generate(),
-                serverId: widget.serverId,
-                name: name,
-                localHost: localHost,
-                localPort: localPort,
-                remoteHost: remoteHost,
-                remotePort: remotePort,
-                description: desc.isEmpty ? null : desc,
-              );
-
-              await widget.onSave(config);
-              if (mounted) Navigator.of(context).pop();
-            } catch (e, s) {
-              Loggers.app.warning('Failed to save port forward config', e, s);
-              if (mounted) context.showSnackBar(libL10n.error);
-            } finally {
-              if (mounted) setState(() => _saving = false);
-            }
-          },
+          onTap: _onSave,
         ),
       ],
     );
+  }
+
+  String get _localHostHint {
+    switch (_selectedType) {
+      case PortForwardType.local:
+        return context.l10n.portForward_localHost;
+      case PortForwardType.remote:
+        return context.l10n.portForward_remoteHost;
+      case PortForwardType.dynamic:
+        return context.l10n.portForward_localHost;
+    }
+  }
+
+  String get _localPortHint {
+    switch (_selectedType) {
+      case PortForwardType.local:
+        return context.l10n.portForward_localPort;
+      case PortForwardType.remote:
+        return context.l10n.portForward_remotePort;
+      case PortForwardType.dynamic:
+        return context.l10n.portForward_localPort;
+    }
+  }
+
+  String get _remoteHostHint {
+    switch (_selectedType) {
+      case PortForwardType.local:
+        return context.l10n.portForward_remoteHost;
+      case PortForwardType.remote:
+        return context.l10n.portForward_localHost;
+      case PortForwardType.dynamic:
+        return '';
+    }
+  }
+
+  String get _remotePortHint {
+    switch (_selectedType) {
+      case PortForwardType.local:
+        return context.l10n.portForward_remotePort;
+      case PortForwardType.remote:
+        return context.l10n.portForward_localPort;
+      case PortForwardType.dynamic:
+        return '';
+    }
+  }
+
+  Widget _buildTypeSelector() {
+    return SegmentedButton<PortForwardType>(
+      segments: [
+        ButtonSegment(
+          value: PortForwardType.local,
+          label: Text(_localTypeLabel),
+          icon: const Icon(Icons.arrow_forward, size: 16),
+        ),
+        ButtonSegment(
+          value: PortForwardType.remote,
+          label: Text(_remoteTypeLabel),
+          icon: const Icon(Icons.arrow_back, size: 16),
+        ),
+        ButtonSegment(
+          value: PortForwardType.dynamic,
+          label: Text(_dynamicTypeLabel),
+          icon: const Icon(Icons.hub, size: 16),
+        ),
+      ],
+      selected: {_selectedType},
+      onSelectionChanged: (selection) {
+        setState(() {
+          _selectedType = selection.first;
+        });
+      },
+    );
+  }
+
+  String get _localTypeLabel => 'Local';
+
+  String get _remoteTypeLabel => 'Remote';
+
+  String get _dynamicTypeLabel => 'SOCKS5';
+
+  void _onSave() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      final name = nameController.text.trim();
+      final localHost = localHostController.text.trim();
+      final localPort = int.tryParse(localPortController.text.trim()) ?? 0;
+      final remoteHost = remoteHostController.text.trim();
+      final remotePort = int.tryParse(remotePortController.text.trim()) ?? 0;
+
+      if (name.isEmpty || localHost.isEmpty || localPort < 0 || localPort > 65535) {
+        if (mounted) context.showSnackBar(libL10n.invalid);
+        return;
+      }
+
+      if (_selectedType != PortForwardType.dynamic) {
+        if (remoteHost.isEmpty || remotePort <= 0 || remotePort > 65535) {
+          if (mounted) context.showSnackBar(libL10n.invalid);
+          return;
+        }
+      }
+
+      final config = PortForwardConfig(
+        id: widget.existing?.id ?? ShortId.generate(),
+        serverId: widget.serverId,
+        name: name,
+        type: _selectedType,
+        localHost: localHost,
+        localPort: localPort,
+        remoteHost: _selectedType == PortForwardType.dynamic ? null : remoteHost,
+        remotePort: _selectedType == PortForwardType.dynamic ? null : remotePort,
+      );
+
+      await widget.onSave(config);
+      if (mounted) Navigator.of(context).pop();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to save port forward config', e, s);
+      if (mounted) context.showSnackBar(libL10n.error);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 }
