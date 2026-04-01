@@ -45,9 +45,14 @@ abstract class PortForwardConfig with _$PortForwardConfig {
 
   String get displayAddr {
     final localBindHost =
-        localHost ?? (type == PortForwardType.dynamic ? '127.0.0.1' : 'localhost');
+        localHost ??
+        (type == PortForwardType.dynamic ? '127.0.0.1' : 'localhost');
     if (type == PortForwardType.dynamic) {
       return '$localBindHost:$localPort (SOCKS5)';
+    }
+    if (type == PortForwardType.remote) {
+      final remoteBindHost = remoteHost ?? '?';
+      return '$remoteBindHost:${remotePort ?? "?"} → $localBindHost:$localPort';
     }
     return '$localBindHost:$localPort → ${remoteHost ?? "?"}:${remotePort ?? "?"}';
   }
