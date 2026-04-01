@@ -361,6 +361,7 @@ class ServerNotifier extends _$ServerNotifier {
         parsedOutput: parsedOutput,
         system: state.status.system,
         customCmds: spi.custom?.cmds ?? {},
+        tempDivisor: spi.custom?.tempIsCelsius == true ? 1.0 : 1000.0,
       );
       final newStatus = await Computer.shared.start(getStatus, req, taskName: 'StatusUpdateReq<${spi.id}>');
       updateStatus(newStatus);

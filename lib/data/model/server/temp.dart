@@ -1,7 +1,7 @@
 class Temperatures {
   final Map<String, double> _map = {};
 
-  void parse(String type, String value) {
+  void parse(String type, String value, {double divisor = 1000.0}) {
     final typeSplited = type.split('\n');
     final valueSplited = value.split('\n');
     for (var i = 0; i < typeSplited.length && i < valueSplited.length; i++) {
@@ -15,7 +15,7 @@ class Temperatures {
       if (temp == null) {
         continue;
       }
-      _map[name] = temp / 1000;
+      _map[name] = temp / divisor;
     }
   }
 

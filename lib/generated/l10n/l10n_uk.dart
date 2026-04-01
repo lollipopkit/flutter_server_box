@@ -646,6 +646,10 @@ class AppLocalizationsUk extends AppLocalizations {
       'Наприклад, статистика мережевого трафіку за замовчуванням є для всіх пристроїв. Ви можете вказати певний пристрій тут.';
 
   @override
+  String get tempIsCelsiusTip =>
+      'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).';
+
+  @override
   String get speed => 'Швидкість';
 
   @override

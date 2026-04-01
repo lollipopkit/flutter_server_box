@@ -1,22 +1,22 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
 import 'package:server_box/data/helper/ssh_decoder.dart';
 import 'package:server_box/data/model/server/system.dart';
 
 typedef OnStdout = void Function(String data, SSHSession session);
+typedef OnStderr = void Function(String data, SSHSession session);
 typedef OnStdin = void Function(SSHSession session);
 
 extension SSHClientX on SSHClient {
-  /// Create a persistent PowerShell session for Windows commands
   Future<(SSHSession, String)> execPowerShell(
     OnStdin onStdin, {
     SSHPtyConfig? pty,
     OnStdout? onStdout,
-    OnStdout? onStderr,
+    void Function(String data)? onStderr,
     bool stdout = true,
     bool stderr = true,
     Map<String, String>? env,
@@ -33,20 +33,24 @@ extension SSHClientX on SSHClient {
 
     session.stdout.listen(
       (e) {
-        onStdout?.call(e.string, session);
+        onStdout?.call(utf8.decode(e), session);
         if (stdout) result.add(e);
       },
       onDone: stdoutDone.complete,
-      onError: stderrDone.completeError,
+      onError: (e) {
+        if (!stdoutDone.isCompleted) stdoutDone.completeError(e);
+      },
     );
 
     session.stderr.listen(
       (e) {
-        onStderr?.call(e.string, session);
-        // Don't add stderr to result, only stdout
+        onStderr?.call(utf8.decode(e));
+        if (stderr) result.add(e);
       },
       onDone: stderrDone.complete,
-      onError: stderrDone.completeError,
+      onError: (e) {
+        if (!stderrDone.isCompleted) stderrDone.completeError(e);
+      },
     );
 
     onStdin(session);
@@ -54,7 +58,7 @@ extension SSHClientX on SSHClient {
     await stdoutDone.future;
     await stderrDone.future;
 
-    return (session, result.takeBytes().string);
+    return (session, utf8.decode(result.takeBytes()));
   }
 
   Future<(SSHSession, String)> exec(
@@ -62,7 +66,7 @@ extension SSHClientX on SSHClient {
     String? entry,
     SSHPtyConfig? pty,
     OnStdout? onStdout,
-    OnStdout? onStderr,
+    OnStderr? onStderr,
     bool stdout = true,
     bool stderr = true,
     Map<String, String>? env,
@@ -84,16 +88,16 @@ extension SSHClientX on SSHClient {
 
     session.stdout.listen(
       (e) {
-        onStdout?.call(e.string, session);
+        onStdout?.call(utf8.decode(e), session);
         if (stdout) result.add(e);
       },
       onDone: stdoutDone.complete,
-      onError: stderrDone.completeError,
+      onError: stdoutDone.completeError,
     );
 
     session.stderr.listen(
       (e) {
-        onStderr?.call(e.string, session);
+        onStderr?.call(utf8.decode(e), session);
         if (stderr) result.add(e);
       },
       onDone: stderrDone.complete,
@@ -105,39 +109,26 @@ extension SSHClientX on SSHClient {
     await stdoutDone.future;
     await stderrDone.future;
 
-    return (session, result.takeBytes().string);
+    return (session, utf8.decode(result.takeBytes()));
   }
 
-  /// Executes a command with password error detection.
-  ///
-  /// This method is used for executing commands where password has already been
-  /// handled beforehand (e.g., via base64 pipe in container commands).
-  /// It captures stderr via [onStderr] callback to detect sudo password errors
-  /// (e.g., "Sorry, try again.", "incorrect password attempt", or
-  /// "a password is required"), while excluding stderr from the returned
-  /// output via [stderr: false].
-  ///
-  /// Returns exitCode:
-  /// - 0: success
-  /// - 1: general error
-  /// - 2: sudo password error
   Future<(int?, String)> execWithPwd(
     String script, {
     String? entry,
     BuildContext? context,
     OnStdout? onStdout,
-    OnStdout? onStderr,
+    OnStderr? onStderr,
     required String id,
   }) async {
     var hasPasswordError = false;
 
     final (session, output) = await exec(
       (sess) {
-        sess.stdin.add('$script\n'.uint8List);
+        sess.stdin.add(Uint8List.fromList(utf8.encode('$script\n')));
         sess.stdin.close();
       },
-      onStderr: (data, session) async {
-        onStderr?.call(data, session);
+      onStderr: (data, sess) {
+        onStderr?.call(data, sess);
         if (data.contains('Sorry, try again.') ||
             data.contains('incorrect password attempt') ||
             data.contains('a password is required')) {
@@ -163,33 +154,52 @@ extension SSHClientX on SSHClient {
     String? entry,
     Map<String, String>? env,
   }) async {
-    final ret = await exec(
-      (session) {
-        session.stdin.add('$script\n'.uint8List);
-        session.stdin.close();
-      },
+    final session = await execute(
+      entry ?? 'cat | sh',
       pty: pty,
-      env: env,
-      stdout: stdout,
-      stderr: stderr,
-      entry: entry,
+      environment: env,
     );
-    return ret.$2;
+
+    final result = BytesBuilder(copy: false);
+    final stdoutDone = Completer<void>();
+    final stderrDone = Completer<void>();
+
+    session.stdout.listen(
+      (e) {
+        if (stdout) result.add(e);
+      },
+      onDone: stdoutDone.complete,
+      onError: (e) {
+        if (!stdoutDone.isCompleted) stdoutDone.completeError(e);
+      },
+    );
+
+    session.stderr.listen(
+      (e) {
+        if (stderr) result.add(e);
+      },
+      onDone: stderrDone.complete,
+      onError: (e) {
+        if (!stderrDone.isCompleted) stderrDone.completeError(e);
+      },
+    );
+
+    session.stdin.add(Uint8List.fromList(utf8.encode('$script\n')));
+    session.stdin.close();
+
+    await stdoutDone.future;
+    await stderrDone.future;
+
+    return utf8.decode(result.takeBytes());
   }
 
-  /// Runs a command and decodes output safely with encoding fallback
-  ///
-  /// [systemType] - The system type (affects encoding choice)
-  /// Runs a command and safely decodes the result
   Future<String> runSafe(
     String command, {
     SystemType? systemType,
     String? context,
   }) async {
-    // Let SSH errors propagate with their original type (e.g., SSHError subclasses)
     final result = await run(command);
-    
-    // Only catch decoding failures and add context
+
     try {
       return SSHDecoder.decode(
         result,
@@ -198,12 +208,11 @@ extension SSHClientX on SSHClient {
       );
     } on FormatException catch (e) {
       throw Exception(
-        'Failed to decode command output${context != null ? " [$context]" : ""}: $e',
+        'Failed to decode command output${context != null ? ' [$context]' : ''}: $e',
       );
     }
   }
 
-  /// Executes a command with stdin and safely decodes stdout/stderr
   Future<(String stdout, String stderr)> execSafe(
     void Function(SSHSession session) callback, {
     required String entry,
@@ -241,7 +250,6 @@ extension SSHClientX on SSHClient {
     final stdoutBytes = stdoutBuilder.takeBytes();
     final stderrBytes = stderrBuilder.takeBytes();
 
-    // Only catch decoding failures, let other errors propagate
     String stdout;
     try {
       stdout = SSHDecoder.decode(
@@ -251,7 +259,7 @@ extension SSHClientX on SSHClient {
       );
     } on FormatException catch (e) {
       throw Exception(
-        'Failed to decode stdout${context != null ? " [$context]" : ""}: $e',
+        'Failed to decode stdout${context != null ? ' [$context]' : ''}: $e',
       );
     }
 
@@ -264,7 +272,7 @@ extension SSHClientX on SSHClient {
       );
     } on FormatException catch (e) {
       throw Exception(
-        'Failed to decode stderr${context != null ? " [$context]" : ""}: $e',
+        'Failed to decode stderr${context != null ? ' [$context]' : ''}: $e',
       );
     }
 

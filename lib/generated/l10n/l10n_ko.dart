@@ -619,6 +619,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '예를 들어, 네트워크 트래픽 통계는 기본적으로 모든 장치를 대상으로 합니다. 여기서 특정 장치를 지정할 수 있습니다.';
 
   @override
+  String get tempIsCelsiusTip =>
+      'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).';
+
+  @override
   String get speed => '속도';
 
   @override

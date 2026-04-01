@@ -187,6 +187,7 @@
   "softWrap": "Soft wrap",
   "specifyDev": "Specify device",
   "specifyDevTip": "For example, network traffic statistics are by default for all devices. You can specify a particular device here.",
+  "tempIsCelsiusTip": "When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).",
   "speed": "Speed",
   "spentTime": "Spent time: {time}",
   "sshConfigAllExist": "All servers already exist ({duplicateCount} duplicates found)",
