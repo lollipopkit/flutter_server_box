@@ -109,6 +109,9 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   }
 
   Future<void> _startLocalForward(PortForwardConfig config) async {
+    if (config.remoteHost == null || config.remotePort == null) {
+      throw Exception('Invalid local port forward: remote destination not set');
+    }
     final serverSocket = await ServerSocket.bind(config.localHost ?? 'localhost', config.localPort);
     Loggers.app.info('Local port forward started: ${config.localHost ?? "localhost"}:${config.localPort} -> ${config.remoteHost}:${config.remotePort}');
     final entry = _LocalForwardEntry(
@@ -123,14 +126,17 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   }
 
   Future<void> _startRemoteForward(PortForwardConfig config) async {
+    if (config.remoteHost == null || config.remotePort == null) {
+      throw Exception('Invalid remote port forward: remote destination not set');
+    }
     final forward = await _client.forwardRemote(
-      host: config.localHost ?? '',
-      port: config.localPort,
+      host: config.remoteHost!,
+      port: config.remotePort!,
     );
     if (forward == null) {
       throw Exception('Failed to start remote port forward: server rejected');
     }
-    Loggers.app.info('Remote port forward started: ${config.localHost}:${config.localPort} -> ${config.remoteHost}:${config.remotePort}');
+    Loggers.app.info('Remote port forward started: ${config.remoteHost}:${config.remotePort}');
     final entry = _RemoteForwardEntry(forward: forward);
     _forwards[config.id] = entry;
     _updateStatus(config.id, PortForwardStatus(id: config.id, isActive: true));

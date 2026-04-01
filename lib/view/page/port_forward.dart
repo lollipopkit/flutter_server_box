@@ -49,9 +49,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
                     value: noMore,
                     onChanged: (v) {
                       setState(() => noMore = v ?? false);
-                      if (v == true) {
-                        Stores.setting.portForwardBetaWarned.put(true);
-                      }
+                      Stores.setting.portForwardBetaWarned.put(noMore);
                     },
                   ),
                   Text(l10n.noPromptAgain),
@@ -251,7 +249,7 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
     localHostController = TextEditingController(text: widget.existing?.localHost ?? '');
     localPortController = TextEditingController(text: widget.existing?.localPort.toString() ?? '');
     remoteHostController = TextEditingController(text: widget.existing?.remoteHost ?? '');
-    remotePortController = TextEditingController(text: widget.existing?.remotePort.toString() ?? '');
+    remotePortController = TextEditingController(text: widget.existing?.remotePort?.toString() ?? '');
     _selectedType = widget.existing?.type ?? PortForwardType.local;
   }
 

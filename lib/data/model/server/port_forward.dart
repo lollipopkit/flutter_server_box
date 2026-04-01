@@ -25,15 +25,18 @@ abstract class PortForwardConfig with _$PortForwardConfig {
     int? remotePort,
   }) = _PortForwardConfig;
 
-  factory PortForwardConfig.fromJson(Map<String, dynamic> json) => _$PortForwardConfigFromJson(json);
+  factory PortForwardConfig.fromJson(Map<String, dynamic> json) =>
+      _$PortForwardConfigFromJson(json);
 
   const PortForwardConfig._();
 
   String get displayAddr {
+    final localBindHost =
+        localHost ?? (type == PortForwardType.dynamic ? '127.0.0.1' : '0.0.0.0');
     if (type == PortForwardType.dynamic) {
-      return '$localHost:$localPort (SOCKS5)';
+      return '$localBindHost:$localPort (SOCKS5)';
     }
-    return '$localHost:$localPort → ${remoteHost ?? "?"}:${remotePort ?? "?"}';
+    return '$localBindHost:$localPort → ${remoteHost ?? "?"}:${remotePort ?? "?"}';
   }
 }
 
