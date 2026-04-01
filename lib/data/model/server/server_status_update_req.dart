@@ -23,12 +23,14 @@ class ServerStatusUpdateReq {
   final Map<String, String> parsedOutput;
   final SystemType system;
   final Map<String, String> customCmds;
+  final double tempDivisor;
 
   const ServerStatusUpdateReq({
     required this.system,
     required this.ss,
     required this.parsedOutput,
     required this.customCmds,
+    this.tempDivisor = 1000.0,
   });
 }
 
@@ -88,6 +90,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
     req.ss.temps.parse(
       StatusCmdType.tempType.findInMap(parsedOutput),
       StatusCmdType.tempVal.findInMap(parsedOutput),
+      divisor: req.tempDivisor,
     );
   } catch (e, s) {
     Loggers.app.warning(e, s);
@@ -495,7 +498,7 @@ void _parseWindowsTemperatureData(ServerStatusUpdateReq req, Map<String, String>
   try {
     final tempRaw = WindowsStatusCmdType.temp.findInMap(parsedOutput);
     if (tempRaw.isNotEmpty && tempRaw != 'null') {
-      _parseWindowsTemperatures(req.ss.temps, tempRaw);
+      _parseWindowsTemperatures(req.ss.temps, tempRaw, divisor: req.tempDivisor);
     }
   } catch (e, s) {
     Loggers.app.warning('Windows temperature parsing failed: $e', s);
@@ -648,7 +651,7 @@ List<DiskIOPiece> _parseWindowsDiskIO(String raw, int currentTime) {
   }
 }
 
-void _parseWindowsTemperatures(Temperatures temps, String raw) {
+void _parseWindowsTemperatures(Temperatures temps, String raw, {double divisor = 1000.0}) {
   try {
     // Handle error output
     if (raw.contains('Error') || raw.contains('Exception') || raw.contains('The term')) {
@@ -677,7 +680,7 @@ void _parseWindowsTemperatures(Temperatures temps, String raw) {
     }
 
     if (typeLines.isNotEmpty && valueLines.isNotEmpty) {
-      temps.parse(typeLines.join('\n'), valueLines.join('\n'));
+      temps.parse(typeLines.join('\n'), valueLines.join('\n'), divisor: divisor);
     }
   } catch (e, s) {
     Loggers.app.warning('Failed to parse Windows temperature data', e, s);

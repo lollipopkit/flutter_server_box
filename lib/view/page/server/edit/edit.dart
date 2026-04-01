@@ -70,6 +70,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _autoConnect = ValueNotifier(true);
   final _jumpServer = nvn<String?>();
   final _pveIgnoreCert = ValueNotifier(false);
+  final _tempIsCelsius = ValueNotifier(false);
   final _env = <String, String>{}.vn;
   final _customCmds = <String, String>{}.vn;
   final _tags = <String>{}.vn;
@@ -105,6 +106,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _autoConnect.dispose();
     _jumpServer.dispose();
     _pveIgnoreCert.dispose();
+    _tempIsCelsius.dispose();
     _env.dispose();
     _customCmds.dispose();
     _tags.dispose();

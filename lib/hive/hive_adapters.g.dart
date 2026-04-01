@@ -492,6 +492,7 @@ class ServerCustomAdapter extends TypeAdapter<ServerCustom> {
       pvePwd: fields[8] as String?,
       cmds: (fields[3] as Map?)?.cast<String, String>(),
       preferTempDev: fields[4] as String?,
+      tempIsCelsius: fields[9] == null ? false : fields[9] as bool,
       logoUrl: fields[5] as String?,
       netDev: fields[6] as String?,
       scriptDir: fields[7] as String?,
@@ -501,7 +502,7 @@ class ServerCustomAdapter extends TypeAdapter<ServerCustom> {
   @override
   void write(BinaryWriter writer, ServerCustom obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(1)
       ..write(obj.pveAddr)
       ..writeByte(2)
@@ -517,7 +518,9 @@ class ServerCustomAdapter extends TypeAdapter<ServerCustom> {
       ..writeByte(7)
       ..write(obj.scriptDir)
       ..writeByte(8)
-      ..write(obj.pvePwd);
+      ..write(obj.pvePwd)
+      ..writeByte(9)
+      ..write(obj.tempIsCelsius);
   }
 
   @override

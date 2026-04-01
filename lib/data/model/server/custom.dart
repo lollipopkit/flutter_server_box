@@ -18,6 +18,8 @@ final class ServerCustom {
 
   final String? preferTempDev;
 
+  final bool tempIsCelsius;
+
   final String? logoUrl;
 
   /// The device name of the network interface displayed in the home server card.
@@ -33,6 +35,7 @@ final class ServerCustom {
     this.pvePwd,
     this.cmds,
     this.preferTempDev,
+    this.tempIsCelsius = false,
     this.logoUrl,
     this.netDev,
     this.scriptDir,
@@ -51,6 +54,7 @@ final class ServerCustom {
         other.pvePwd == pvePwd &&
         other.cmds == cmds &&
         other.preferTempDev == preferTempDev &&
+        other.tempIsCelsius == tempIsCelsius &&
         other.logoUrl == logoUrl &&
         other.netDev == netDev &&
         other.scriptDir == scriptDir;
@@ -64,6 +68,7 @@ final class ServerCustom {
       pvePwd.hashCode ^
       cmds.hashCode ^
       preferTempDev.hashCode ^
+      tempIsCelsius.hashCode ^
       logoUrl.hashCode ^
       netDev.hashCode ^
       scriptDir.hashCode;

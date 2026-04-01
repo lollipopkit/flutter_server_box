@@ -640,6 +640,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'For example, network traffic statistics are by default for all devices. You can specify a particular device here.';
 
   @override
+  String get tempIsCelsiusTip =>
+      'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).';
+
+  @override
   String get speed => 'Speed';
 
   @override

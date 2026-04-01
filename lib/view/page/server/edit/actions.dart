@@ -74,6 +74,7 @@ extension _Actions on _ServerEditPageState {
       pvePwd: _pvePwdCtrl.text.selfNotEmptyOrNull,
       cmds: customCmds.isEmpty ? null : customCmds,
       preferTempDev: _preferTempDevCtrl.text.selfNotEmptyOrNull,
+      tempIsCelsius: _tempIsCelsius.value,
       logoUrl: _logoUrlCtrl.text.selfNotEmptyOrNull,
       netDev: _netDevCtrl.text.selfNotEmptyOrNull,
       scriptDir: _scriptDirCtrl.text.selfNotEmptyOrNull,
@@ -270,6 +271,7 @@ extension _Utils on _ServerEditPageState {
       _pvePwdCtrl.text = custom.pvePwd ?? '';
       _customCmds.value = custom.cmds ?? {};
       _preferTempDevCtrl.text = custom.preferTempDev ?? '';
+      _tempIsCelsius.value = custom.tempIsCelsius;
       _logoUrlCtrl.text = custom.logoUrl ?? '';
     }
 

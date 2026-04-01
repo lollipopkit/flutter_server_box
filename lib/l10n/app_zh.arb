@@ -187,6 +187,7 @@
   "softWrap": "自动换行",
   "specifyDev": "指定设备",
   "specifyDevTip": "例如网络流量统计默认是所有设备，你可以在这里指定特定的设备",
+  "tempIsCelsiusTip": "开启后，温度值将被视为摄氏度而非毫摄氏度。仅在温度显示不正确时开启（例如显示0.1°C而非58°C）。",
   "speed": "速度",
   "spentTime": "耗时：{time}",
   "sshConfigAllExist": "所有服务器已存在（发现 {duplicateCount} 个重复项）",

@@ -621,6 +621,10 @@ class AppLocalizationsJa extends AppLocalizations {
       '例えば、ネットワークトラフィック統計はデフォルトですべてのデバイスに対するものです。ここで特定のデバイスを指定できます。';
 
   @override
+  String get tempIsCelsiusTip =>
+      'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).';
+
+  @override
   String get speed => '速度';
 
   @override

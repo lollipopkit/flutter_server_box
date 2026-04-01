@@ -181,6 +181,18 @@ extension _Widgets on _ServerEditPageState {
           hint: 'nvme-pci-0400',
           suggestion: false,
         ),
+        ListTile(
+          leading: const Icon(MingCute.question_line),
+          title: TipText('${libL10n.temperature} (°C)', l10n.tempIsCelsiusTip),
+          trailing: _tempIsCelsius.listenVal(
+            (v) => Switch(
+              value: v,
+              onChanged: (val) {
+                _tempIsCelsius.value = val;
+              },
+            ),
+          ),
+        ).cardx,
         Input(
           controller: _netDevCtrl,
           type: TextInputType.text,

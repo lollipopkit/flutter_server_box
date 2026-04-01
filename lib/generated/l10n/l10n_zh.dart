@@ -607,6 +607,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get specifyDevTip => '例如网络流量统计默认是所有设备，你可以在这里指定特定的设备';
 
   @override
+  String get tempIsCelsiusTip =>
+      '开启后，温度值将被视为摄氏度而非毫摄氏度。仅在温度显示不正确时开启（例如显示0.1°C而非58°C）。';
+
+  @override
   String get speed => '速度';
 
   @override

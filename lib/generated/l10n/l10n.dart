@@ -1248,6 +1248,12 @@ abstract class AppLocalizations {
   /// **'For example, network traffic statistics are by default for all devices. You can specify a particular device here.'**
   String get specifyDevTip;
 
+  /// No description provided for @tempIsCelsiusTip.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).'**
+  String get tempIsCelsiusTip;
+
   /// No description provided for @speed.
   ///
   /// In en, this message translates to:
