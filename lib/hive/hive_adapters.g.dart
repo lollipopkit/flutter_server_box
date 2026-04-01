@@ -629,7 +629,7 @@ class PortForwardConfigAdapter extends TypeAdapter<PortForwardConfig> {
       id: fields[0] as String,
       serverId: fields[7] as String,
       name: fields[1] as String,
-      type: fields[8] as PortForwardType? ?? PortForwardType.local,
+      type: fields[8] as PortForwardType,
       localHost: fields[2] as String?,
       localPort: fields[3] == null ? 0 : (fields[3] as num).toInt(),
       remoteHost: fields[4] as String?,

@@ -11,7 +11,6 @@ part of 'port_forward.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$PortForwardConfig {
 
@@ -22,8 +21,6 @@ mixin _$PortForwardConfig {
 @pragma('vm:prefer-inline')
 $PortForwardConfigCopyWith<PortForwardConfig> get copyWith => _$PortForwardConfigCopyWithImpl<PortForwardConfig>(this as PortForwardConfig, _$identity);
 
-  /// Serializes this PortForwardConfig to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -31,7 +28,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is PortForwardConfig&&(identical(other.id, id) || other.id == id)&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&(identical(other.localHost, localHost) || other.localHost == localHost)&&(identical(other.localPort, localPort) || other.localPort == localPort)&&(identical(other.remoteHost, remoteHost) || other.remoteHost == remoteHost)&&(identical(other.remotePort, remotePort) || other.remotePort == remotePort));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,id,serverId,name,type,localHost,localPort,remoteHost,remotePort);
 
@@ -213,11 +210,11 @@ return $default(_that.id,_that.serverId,_that.name,_that.type,_that.localHost,_t
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _PortForwardConfig extends PortForwardConfig {
   const _PortForwardConfig({required this.id, required this.serverId, required this.name, required this.type, this.localHost, this.localPort = 0, this.remoteHost, this.remotePort}): super._();
-  factory _PortForwardConfig.fromJson(Map<String, dynamic> json) => _$PortForwardConfigFromJson(json);
+  
 
 @override final  String id;
 @override final  String serverId;
@@ -234,17 +231,14 @@ class _PortForwardConfig extends PortForwardConfig {
 @pragma('vm:prefer-inline')
 _$PortForwardConfigCopyWith<_PortForwardConfig> get copyWith => __$PortForwardConfigCopyWithImpl<_PortForwardConfig>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$PortForwardConfigToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _PortForwardConfig&&(identical(other.id, id) || other.id == id)&&(identical(other.serverId, serverId) || other.serverId == serverId)&&(identical(other.name, name) || other.name == name)&&(identical(other.type, type) || other.type == type)&&(identical(other.localHost, localHost) || other.localHost == localHost)&&(identical(other.localPort, localPort) || other.localPort == localPort)&&(identical(other.remoteHost, remoteHost) || other.remoteHost == remoteHost)&&(identical(other.remotePort, remotePort) || other.remotePort == remotePort));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,id,serverId,name,type,localHost,localPort,remoteHost,remotePort);
 

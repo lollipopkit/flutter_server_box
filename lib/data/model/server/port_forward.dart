@@ -1,7 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'port_forward.freezed.dart';
-part 'port_forward.g.dart';
 
 enum PortForwardType {
   @JsonValue('local')
@@ -26,9 +25,16 @@ abstract class PortForwardConfig with _$PortForwardConfig {
   }) = _PortForwardConfig;
 
   factory PortForwardConfig.fromJson(Map<String, dynamic> json) {
-    final type = json['type'] == null
-        ? PortForwardType.local
-        : $enumDecode(_$PortForwardTypeEnumMap, json['type']);
+    PortForwardType type;
+    if (json['type'] == null) {
+      type = PortForwardType.local;
+    } else {
+      final typeStr = json['type'] as String;
+      type = PortForwardType.values.firstWhere(
+        (e) => e.name == typeStr,
+        orElse: () => PortForwardType.local,
+      );
+    }
     return PortForwardConfig(
       id: json['id'] as String,
       serverId: json['serverId'] as String,
@@ -45,8 +51,7 @@ abstract class PortForwardConfig with _$PortForwardConfig {
 
   String get displayAddr {
     final localBindHost =
-        localHost ??
-        (type == PortForwardType.dynamic ? '127.0.0.1' : 'localhost');
+        localHost ?? 'localhost';
     if (type == PortForwardType.dynamic) {
       return '$localBindHost:$localPort (SOCKS5)';
     }
