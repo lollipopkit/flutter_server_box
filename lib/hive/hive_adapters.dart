@@ -20,6 +20,7 @@ import 'package:server_box/data/model/ssh/virtual_key.dart';
   AdapterSpec<ServerCustom>(),
   AdapterSpec<WakeOnLanCfg>(),
   AdapterSpec<SystemType>(),
+  AdapterSpec<PortForwardType>(),
   AdapterSpec<PortForwardConfig>(),
 ])
 part 'hive_adapters.g.dart';

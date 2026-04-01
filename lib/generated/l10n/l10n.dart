@@ -1686,6 +1686,18 @@ abstract class AppLocalizations {
   /// **'Remote Port'**
   String get portForward_remotePort;
 
+  /// No description provided for @portForward_type_local.
+  ///
+  /// In en, this message translates to:
+  /// **'Local'**
+  String get portForward_type_local;
+
+  /// No description provided for @portForward_type_remote.
+  ///
+  /// In en, this message translates to:
+  /// **'Remote'**
+  String get portForward_type_remote;
+
   /// No description provided for @portForward_deleteConfirmFmt.
   ///
   /// In en, this message translates to:

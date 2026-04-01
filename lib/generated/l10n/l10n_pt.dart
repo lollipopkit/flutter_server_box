@@ -910,6 +910,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get portForward_remotePort => 'Remote Port';
 
   @override
+  String get portForward_type_local => 'Local';
+
+  @override
+  String get portForward_type_remote => 'Remote';
+
+  @override
   String portForward_deleteConfirmFmt(Object name) {
     return 'Delete $name?';
   }

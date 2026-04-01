@@ -629,11 +629,11 @@ class PortForwardConfigAdapter extends TypeAdapter<PortForwardConfig> {
       id: fields[0] as String,
       serverId: fields[7] as String,
       name: fields[1] as String,
-      localHost: fields[2] == null ? 'localhost' : fields[2] as String,
-      localPort: (fields[3] as num).toInt(),
-      remoteHost: fields[4] as String,
-      remotePort: (fields[5] as num).toInt(),
-      description: fields[6] as String?,
+      type: fields[8] as PortForwardType,
+      localHost: fields[2] as String?,
+      localPort: fields[3] == null ? 0 : (fields[3] as num).toInt(),
+      remoteHost: fields[4] as String?,
+      remotePort: (fields[5] as num?)?.toInt(),
     );
   }
 
@@ -653,10 +653,10 @@ class PortForwardConfigAdapter extends TypeAdapter<PortForwardConfig> {
       ..write(obj.remoteHost)
       ..writeByte(5)
       ..write(obj.remotePort)
-      ..writeByte(6)
-      ..write(obj.description)
       ..writeByte(7)
-      ..write(obj.serverId);
+      ..write(obj.serverId)
+      ..writeByte(8)
+      ..write(obj.type);
   }
 
   @override
@@ -666,6 +666,47 @@ class PortForwardConfigAdapter extends TypeAdapter<PortForwardConfig> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is PortForwardConfigAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class PortForwardTypeAdapter extends TypeAdapter<PortForwardType> {
+  @override
+  final typeId = 12;
+
+  @override
+  PortForwardType read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return PortForwardType.local;
+      case 1:
+        return PortForwardType.remote;
+      case 2:
+        return PortForwardType.dynamic;
+      default:
+        return PortForwardType.local;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, PortForwardType obj) {
+    switch (obj) {
+      case PortForwardType.local:
+        writer.writeByte(0);
+      case PortForwardType.remote:
+        writer.writeByte(1);
+      case PortForwardType.dynamic:
+        writer.writeByte(2);
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PortForwardTypeAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

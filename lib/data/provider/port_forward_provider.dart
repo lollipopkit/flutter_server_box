@@ -12,7 +12,7 @@ part 'port_forward_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 class PortForwardNotifier extends _$PortForwardNotifier {
-  final Map<String, _LocalForwardEntry> _forwards = {};
+  final Map<String, _ForwardEntry> _forwards = {};
   final Set<String> _inFlight = {};
 
   @override
@@ -56,11 +56,16 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     state = state.copyWith(configs: configs);
   }
 
-  Future<void> updateConfig(PortForwardConfig oldConfig, PortForwardConfig newConfig) async {
+  Future<void> updateConfig(
+    PortForwardConfig oldConfig,
+    PortForwardConfig newConfig,
+  ) async {
     await stopForward(oldConfig.id);
     final configWithServerId = newConfig.copyWith(serverId: _serverId);
     Stores.portForward.update(oldConfig, configWithServerId);
-    final configs = state.configs.map((c) => c.id == oldConfig.id ? configWithServerId : c).toList();
+    final configs = state.configs
+        .map((c) => c.id == oldConfig.id ? configWithServerId : c)
+        .toList();
     state = state.copyWith(configs: configs);
   }
 
@@ -71,7 +76,9 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       Stores.portForward.delete(config);
     }
     final configs = state.configs.where((c) => c.id != id).toList();
-    final activeForwards = Map<String, PortForwardStatus>.from(state.activeForwards)..remove(id);
+    final activeForwards = Map<String, PortForwardStatus>.from(
+      state.activeForwards,
+    )..remove(id);
     state = state.copyWith(configs: configs, activeForwards: activeForwards);
   }
 
@@ -91,22 +98,86 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       }
 
       try {
-        final serverSocket = await ServerSocket.bind(config.localHost, config.localPort);
-
-        Loggers.app.info('Port forward started: ${config.localHost}:${config.localPort} -> ${config.remoteHost}:${config.remotePort}');
-
-        final entry = _LocalForwardEntry(serverSocket: serverSocket);
-        entry.start(config.remoteHost, config.remotePort, () => _client);
-        _forwards[id] = entry;
-
-        _updateStatus(id, PortForwardStatus(id: id, isActive: true));
+        switch (config.type) {
+          case PortForwardType.local:
+            await _startLocalForward(config);
+          case PortForwardType.remote:
+            await _startRemoteForward(config);
+          case PortForwardType.dynamic:
+            await _startDynamicForward(config);
+        }
       } catch (e) {
         Loggers.app.warning('Port forward failed to start: $e');
-        _updateStatus(id, PortForwardStatus(id: id, isActive: false, error: e.toString()));
+        _updateStatus(
+          id,
+          PortForwardStatus(id: id, isActive: false, error: e.toString()),
+        );
       }
     } finally {
       _inFlight.remove(id);
     }
+  }
+
+  Future<void> _startLocalForward(PortForwardConfig config) async {
+    if (config.remoteHost == null || config.remotePort == null) {
+      throw Exception('Invalid local port forward: remote destination not set');
+    }
+    final serverSocket = await ServerSocket.bind(
+      config.localHost ?? 'localhost',
+      config.localPort,
+    );
+    Loggers.app.info(
+      'Local port forward started: ${config.localHost ?? "localhost"}:${config.localPort} -> ${config.remoteHost}:${config.remotePort}',
+    );
+    final entry = _LocalForwardEntry(
+      serverSocket: serverSocket,
+      remoteHost: config.remoteHost!,
+      remotePort: config.remotePort!,
+      clientGetter: () => _client,
+    );
+    entry.start();
+    _forwards[config.id] = entry;
+    _updateStatus(config.id, PortForwardStatus(id: config.id, isActive: true));
+  }
+
+  Future<void> _startRemoteForward(PortForwardConfig config) async {
+    if (config.remoteHost == null || config.remotePort == null) {
+      throw Exception(
+        'Invalid remote port forward: remote destination not set',
+      );
+    }
+    final forward = await _client.forwardRemote(
+      host: config.remoteHost!,
+      port: config.remotePort!,
+    );
+    if (forward == null) {
+      throw Exception('Failed to start remote port forward: server rejected');
+    }
+    Loggers.app.info(
+      'Remote port forward started: ${config.remoteHost}:${config.remotePort}',
+    );
+    final entry = _RemoteForwardEntry(
+      forward: forward,
+      remoteHost: config.localHost ?? 'localhost',
+      remotePort: config.localPort,
+    );
+    entry.start();
+    _forwards[config.id] = entry;
+    _updateStatus(config.id, PortForwardStatus(id: config.id, isActive: true));
+  }
+
+  Future<void> _startDynamicForward(PortForwardConfig config) async {
+    final bindHost = config.localHost ?? 'localhost';
+    final dynamicForward = await _client.forwardDynamic(
+      bindHost: bindHost,
+      bindPort: config.localPort,
+    );
+    Loggers.app.info(
+      'Dynamic port forward (SOCKS5) started: $bindHost:${config.localPort}',
+    );
+    final entry = _DynamicForwardEntry(dynamicForward: dynamicForward);
+    _forwards[config.id] = entry;
+    _updateStatus(config.id, PortForwardStatus(id: config.id, isActive: true));
   }
 
   Future<void> stopForward(String id) async {
@@ -134,27 +205,50 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   }
 
   void _updateStatus(String id, PortForwardStatus status) {
-    final activeForwards = Map<String, PortForwardStatus>.from(state.activeForwards);
+    final activeForwards = Map<String, PortForwardStatus>.from(
+      state.activeForwards,
+    );
     activeForwards[id] = status;
     state = state.copyWith(activeForwards: activeForwards);
   }
 }
 
-class _LocalForwardEntry {
+abstract class _ForwardEntry {
+  Future<void> close();
+}
+
+class _LocalForwardEntry extends _ForwardEntry {
   final ServerSocket serverSocket;
+  final String remoteHost;
+  final int remotePort;
+  final SSHClient Function() clientGetter;
   final List<_ActiveConnection> _connections = [];
   StreamSubscription<Socket>? _subscription;
 
-  _LocalForwardEntry({required this.serverSocket});
+  _LocalForwardEntry({
+    required this.serverSocket,
+    required this.remoteHost,
+    required this.remotePort,
+    required this.clientGetter,
+  });
 
-  void start(String remoteHost, int remotePort, SSHClient Function() clientGetter) {
+  void start() {
     _subscription = serverSocket.listen((socket) async {
       try {
-        final forward = await clientGetter().forwardLocal(remoteHost, remotePort);
+        final forward = await clientGetter().forwardLocal(
+          remoteHost,
+          remotePort,
+        );
         final conn = _ActiveConnection(socket: socket, forward: forward);
         _connections.add(conn);
-        final pipe1 = forward.stream.cast<List<int>>().pipe(socket).catchError((_) {});
-        final pipe2 = socket.cast<List<int>>().pipe(forward.sink).catchError((_) {});
+        final pipe1 = forward.stream
+            .cast<List<int>>()
+            .pipe(socket)
+            .catchError((_) {});
+        final pipe2 = socket
+            .cast<List<int>>()
+            .pipe(forward.sink)
+            .catchError((_) {});
         Future.wait([pipe1, pipe2]).whenComplete(() {
           _connections.remove(conn);
           conn.close();
@@ -166,6 +260,7 @@ class _LocalForwardEntry {
     });
   }
 
+  @override
   Future<void> close() async {
     await _subscription?.cancel();
     await serverSocket.close();
@@ -177,14 +272,72 @@ class _LocalForwardEntry {
   }
 }
 
+class _RemoteForwardEntry extends _ForwardEntry {
+  final SSHRemoteForward forward;
+  final String remoteHost;
+  final int remotePort;
+  final List<_ActiveConnection> _connections = [];
+  StreamSubscription<SSHForwardChannel>? _subscription;
+
+  _RemoteForwardEntry({
+    required this.forward,
+    required this.remoteHost,
+    required this.remotePort,
+  });
+
+  void start() {
+    _subscription = forward.connections.listen((channel) async {
+      try {
+        final socket = await Socket.connect(remoteHost, remotePort);
+        final conn = _ActiveConnection(socket: socket, forward: channel);
+        _connections.add(conn);
+        final pipe1 = channel.stream
+            .cast<List<int>>()
+            .pipe(socket)
+            .catchError((_) {});
+        final pipe2 = socket
+            .cast<List<int>>()
+            .pipe(channel.sink)
+            .catchError((_) {});
+        Future.wait([pipe1, pipe2]).whenComplete(() {
+          _connections.remove(conn);
+          conn.close();
+        });
+      } catch (e, s) {
+        Loggers.app.warning('Remote forward connection failed', e, s);
+        channel.close();
+      }
+    });
+  }
+
+  @override
+  Future<void> close() async {
+    await _subscription?.cancel();
+    final connections = _connections.toList();
+    for (final conn in connections) {
+      await conn.close().catchError((_) {});
+    }
+    _connections.clear();
+    try {
+      await Future.microtask(() => forward.close());
+    } catch (_) {}
+  }
+}
+
+class _DynamicForwardEntry extends _ForwardEntry {
+  final SSHDynamicForward dynamicForward;
+
+  _DynamicForwardEntry({required this.dynamicForward});
+
+  @override
+  Future<void> close() => dynamicForward.close();
+}
+
 class _ActiveConnection {
   final Socket socket;
   final SSHForwardChannel forward;
 
-  _ActiveConnection({
-    required this.socket,
-    required this.forward,
-  });
+  _ActiveConnection({required this.socket, required this.forward});
 
   Future<void> close() async {
     try {
