@@ -25,8 +25,21 @@ abstract class PortForwardConfig with _$PortForwardConfig {
     int? remotePort,
   }) = _PortForwardConfig;
 
-  factory PortForwardConfig.fromJson(Map<String, dynamic> json) =>
-      _$PortForwardConfigFromJson(json);
+  factory PortForwardConfig.fromJson(Map<String, dynamic> json) {
+    final type = json['type'] == null
+        ? PortForwardType.local
+        : $enumDecode(_$PortForwardTypeEnumMap, json['type']);
+    return PortForwardConfig(
+      id: json['id'] as String,
+      serverId: json['serverId'] as String,
+      name: json['name'] as String,
+      type: type,
+      localHost: json['localHost'] as String?,
+      localPort: (json['localPort'] as num?)?.toInt() ?? 0,
+      remoteHost: json['remoteHost'] as String?,
+      remotePort: (json['remotePort'] as num?)?.toInt(),
+    );
+  }
 
   const PortForwardConfig._();
 

@@ -137,7 +137,12 @@ class PortForwardNotifier extends _$PortForwardNotifier {
       throw Exception('Failed to start remote port forward: server rejected');
     }
     Loggers.app.info('Remote port forward started: ${config.remoteHost}:${config.remotePort}');
-    final entry = _RemoteForwardEntry(forward: forward);
+    final entry = _RemoteForwardEntry(
+      forward: forward,
+      remoteHost: config.localHost ?? 'localhost',
+      remotePort: config.localPort,
+    );
+    entry.start();
     _forwards[config.id] = entry;
     _updateStatus(config.id, PortForwardStatus(id: config.id, isActive: true));
   }
@@ -236,11 +241,47 @@ class _LocalForwardEntry extends _ForwardEntry {
 
 class _RemoteForwardEntry extends _ForwardEntry {
   final SSHRemoteForward forward;
+  final String remoteHost;
+  final int remotePort;
+  final List<_ActiveConnection> _connections = [];
+  StreamSubscription<SSHForwardChannel>? _subscription;
 
-  _RemoteForwardEntry({required this.forward});
+  _RemoteForwardEntry({
+    required this.forward,
+    required this.remoteHost,
+    required this.remotePort,
+  });
+
+  void start() {
+    _subscription = forward.connections.listen((channel) async {
+      try {
+        final socket = await Socket.connect(remoteHost, remotePort);
+        final conn = _ActiveConnection(socket: socket, forward: channel);
+        _connections.add(conn);
+        final pipe1 = channel.stream.cast<List<int>>().pipe(socket).catchError((_) {});
+        final pipe2 = socket.cast<List<int>>().pipe(channel.sink).catchError((_) {});
+        Future.wait([pipe1, pipe2]).whenComplete(() {
+          _connections.remove(conn);
+          conn.close();
+        });
+      } catch (e, s) {
+        Loggers.app.warning('Remote forward connection failed', e, s);
+        channel.close();
+      }
+    });
+  }
 
   @override
-  Future<void> close() async => forward.close();
+  Future<void> close() async {
+    await _subscription?.cancel();
+    for (final conn in _connections) {
+      await conn.close().catchError((_) {});
+    }
+    _connections.clear();
+    try {
+      forward.close();
+    } catch (_) {}
+  }
 }
 
 class _DynamicForwardEntry extends _ForwardEntry {

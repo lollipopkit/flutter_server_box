@@ -309,7 +309,7 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
       case PortForwardType.local:
         return context.l10n.portForward_localHost;
       case PortForwardType.remote:
-        return context.l10n.portForward_remoteHost;
+        return context.l10n.portForward_localHost;
       case PortForwardType.dynamic:
         return context.l10n.portForward_localHost;
     }
@@ -320,7 +320,7 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
       case PortForwardType.local:
         return context.l10n.portForward_localPort;
       case PortForwardType.remote:
-        return context.l10n.portForward_remotePort;
+        return context.l10n.portForward_localPort;
       case PortForwardType.dynamic:
         return context.l10n.portForward_localPort;
     }
@@ -331,7 +331,7 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
       case PortForwardType.local:
         return context.l10n.portForward_remoteHost;
       case PortForwardType.remote:
-        return context.l10n.portForward_localHost;
+        return context.l10n.portForward_remoteHost;
       case PortForwardType.dynamic:
         return '';
     }
@@ -342,7 +342,7 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
       case PortForwardType.local:
         return context.l10n.portForward_remotePort;
       case PortForwardType.remote:
-        return context.l10n.portForward_localPort;
+        return context.l10n.portForward_remotePort;
       case PortForwardType.dynamic:
         return '';
     }
@@ -392,7 +392,7 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
       final remoteHost = remoteHostController.text.trim();
       final remotePort = int.tryParse(remotePortController.text.trim()) ?? 0;
 
-      if (name.isEmpty || localHost.isEmpty || localPort < 0 || localPort > 65535) {
+      if (name.isEmpty || localHost.isEmpty || localPort <= 0 || localPort > 65535) {
         if (mounted) context.showSnackBar(libL10n.invalid);
         return;
       }
