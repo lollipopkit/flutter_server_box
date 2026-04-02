@@ -1709,6 +1709,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sponsor'**
   String get sponsor;
+
+  /// No description provided for @sort.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get sort;
+
+  /// No description provided for @sortByName.
+  ///
+  /// In en, this message translates to:
+  /// **'By name'**
+  String get sortByName;
+
+  /// No description provided for @sortByJoinTime.
+  ///
+  /// In en, this message translates to:
+  /// **'By join time'**
+  String get sortByJoinTime;
+
+  /// No description provided for @ascending.
+  ///
+  /// In en, this message translates to:
+  /// **'Ascending'**
+  String get ascending;
+
+  /// No description provided for @descending.
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get descending;
+
+  /// No description provided for @searchServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Search server'**
+  String get searchServer;
+
+  /// No description provided for @serverHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Server history'**
+  String get serverHistory;
+
+  /// No description provided for @clearHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear history'**
+  String get clearHistory;
 }
 
 class _AppLocalizationsDelegate

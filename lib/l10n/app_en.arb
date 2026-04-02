@@ -266,5 +266,13 @@
   "portForward_type_local": "Local",
   "portForward_type_remote": "Remote",
   "portForward_deleteConfirmFmt": "Delete {name}?",
-  "sponsor": "Sponsor"
+  "sponsor": "Sponsor",
+  "sort": "Sort",
+  "sortByName": "By name",
+  "sortByJoinTime": "By join time",
+  "ascending": "Ascending",
+  "descending": "Descending",
+  "searchServer": "Search server",
+  "serverHistory": "Server history",
+  "clearHistory": "Clear history"
 }

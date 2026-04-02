@@ -19,6 +19,11 @@ class _ListHistory {
   }
 
   List get all => _history;
+
+  void clear() {
+    _history.clear();
+    _box.put(_name, _history);
+  }
 }
 
 class _MapHistory {
@@ -44,13 +49,13 @@ class HistoryStore extends HiveStore {
 
   static final instance = HistoryStore._();
 
-  /// Paths that user has visited by 'Locate' button
   late final sftpGoPath = _ListHistory(box: box, name: 'sftpPath');
 
   late final sftpLastPath = _MapHistory(box: box, name: 'sftpLastPath');
 
   late final sshCmds = _ListHistory(box: box, name: 'sshCmds');
 
-  /// Notify users that this app will write script to server to works properly
+  late final sshServerHistory = _ListHistory(box: box, name: 'sshServerHistory');
+
   late final writeScriptTipShown = propertyDefault('writeScriptTipShown', false);
 }

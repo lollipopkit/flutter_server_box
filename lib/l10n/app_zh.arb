@@ -263,5 +263,13 @@
   "portForward_type_local": "本地",
   "portForward_type_remote": "远程",
   "portForward_deleteConfirmFmt": "删除 {name}？",
-  "sponsor": "赞助"
+  "sponsor": "赞助",
+  "sort": "排序",
+  "sortByName": "按名称",
+  "sortByJoinTime": "按加入时间",
+  "ascending": "升序",
+  "descending": "降序",
+  "searchServer": "搜索服务器",
+  "serverHistory": "服务器历史",
+  "clearHistory": "清空历史"
 }
