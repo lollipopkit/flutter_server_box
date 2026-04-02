@@ -38,6 +38,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     _pageCtrl.dispose();
     _tabRN.dispose();
     _fabVN.dispose();
+    _sortVersionVN.dispose();
   }
 
   @override
@@ -314,6 +315,8 @@ extension on _SSHTabPageState {
                 context.pop();
                 if (spi != null) {
                   _onTapInitCard(spi);
+                } else {
+                  context.showSnackBar(libL10n.error);
                 }
               },
             );
@@ -373,13 +376,13 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
                 itemBuilder: (_, idx) => _buildItem(idx),
                 separatorBuilder: (_, _) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 17),
-                  child: Container(color: const Color.fromARGB(61, 158, 158, 158), width: 3),
+                  child: Container(color: Theme.of(context).dividerColor.withAlpha(61), width: 3),
                 ),
               ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 17),
-              child: Container(color: const Color.fromARGB(61, 158, 158, 158), width: 3),
+              child: Container(color: Theme.of(context).dividerColor.withAlpha(61), width: 3),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 7),
@@ -503,9 +506,13 @@ class _AddPageState extends ConsumerState<_AddPage> {
         return sortAsc ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
       });
     } else if (sortBy == 1) {
+      final indexMap = <String, int>{};
+      for (var i = 0; i < serverState.serverOrder.length; i++) {
+        indexMap[serverState.serverOrder[i]] = i;
+      }
       order.sort((a, b) {
-        final idxA = serverState.serverOrder.indexOf(a);
-        final idxB = serverState.serverOrder.indexOf(b);
+        final idxA = indexMap[a] ?? -1;
+        final idxB = indexMap[b] ?? -1;
         return sortAsc ? idxA.compareTo(idxB) : idxB.compareTo(idxA);
       });
     }
@@ -523,53 +530,47 @@ class _AddPageState extends ConsumerState<_AddPage> {
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 
-    return Column(
-      children: [
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.all(viewPadding),
-            children: List.generate(
-              mainCount,
-              (rowIndex) => Row(
-                children: List.generate(crossCount, (columnIndex) {
-                  final idx = rowIndex * crossCount + columnIndex;
-                  final id = order.elementAtOrNull(idx);
-                  final spi = serverState.servers[id];
-                  if (spi == null) return _placeholder;
+    return ListView(
+      padding: const EdgeInsets.all(viewPadding),
+      children: List.generate(
+        mainCount,
+        (rowIndex) => Row(
+          children: List.generate(crossCount, (columnIndex) {
+            final idx = rowIndex * crossCount + columnIndex;
+            final id = order.elementAtOrNull(idx);
+            final spi = serverState.servers[id];
+            if (spi == null) return _placeholder;
 
-                  return Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(itemPadding),
-                      child: InkWell(
-                        onTap: () => widget.onTapInitCard(spi),
-                        onLongPress: () => widget.onLongPressInitCard(spi),
-                        child: Container(
-                          height: itemHeight,
-                          alignment: Alignment.centerLeft,
-                          padding: const EdgeInsets.only(left: 17, right: 7),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  spi.name,
-                                  style: UIs.text18,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const Icon(Icons.chevron_right),
-                            ],
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(itemPadding),
+                child: InkWell(
+                  onTap: () => widget.onTapInitCard(spi),
+                  onLongPress: () => widget.onLongPressInitCard(spi),
+                  child: Container(
+                    height: itemHeight,
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.only(left: 17, right: 7),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            spi.name,
+                            style: UIs.text18,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      ).cardx,
+                        const Icon(Icons.chevron_right),
+                      ],
                     ),
-                  );
-                }),
+                  ),
+                ).cardx,
               ),
-            ),
-          ),
+            );
+          }),
         ),
-      ],
+      ),
     );
   }
 }
@@ -589,9 +590,10 @@ class _SortOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
     return ListTile(
-      leading: Icon(icon, color: selected ? Colors.blue : null),
-      title: Text(label, style: TextStyle(color: selected ? Colors.blue : null)),
+      leading: Icon(icon, color: selected ? primaryColor : null),
+      title: Text(label, style: TextStyle(color: selected ? primaryColor : null)),
       onTap: onTap,
     );
   }
