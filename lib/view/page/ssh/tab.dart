@@ -5,8 +5,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/history.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 
@@ -23,7 +27,7 @@ typedef _TabMap = Map<String, ({Widget page, FocusNode? focus})>;
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  late final _TabMap _tabMap = {libL10n.add: (page: _AddPage(onTapInitCard: _onTapInitCard), focus: null)};
+  late final _TabMap _tabMap = {libL10n.add: (page: _AddPage(onTapInitCard: _onTapInitCard, onLongPressInitCard: _onLongPressInitCard), focus: null)};
   final _pageCtrl = PageController();
   final _fabVN = 0.vn;
   final _tabRN = RNode();
@@ -43,7 +47,15 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       appBar: PreferredSizeListenBuilder(
         listenable: _tabRN,
         builder: () {
-          return _TabBar(idxVN: _fabVN, map: _tabMap, onTap: _onTapTab, onClose: _onTapClose);
+          return _TabBar(
+            idxVN: _fabVN,
+            map: _tabMap,
+            onTap: _onTapTab,
+            onClose: _onTapClose,
+            sortBtn: buildSortBtn(context),
+            searchBtn: buildSearchBtn(context),
+            historyBtn: buildHistoryBtn(context),
+          );
         },
       ),
       body: _buildBody(),
@@ -115,10 +127,15 @@ extension on _SSHTabPageState {
       focus: FocusNode(),
     );
     _tabRN.notify();
+    HistoryStore.instance.sshServerHistory.add(spi.id);
     // Wait for the page to be built
     await Future.delayed(Durations.short3);
     final idx = _tabMap.keys.toList().indexOf(name);
     await _toPage(idx);
+  }
+
+  void _onLongPressInitCard(Spi spi) {
+    ServerEditPage.route.go(context, args: SpiRequiredArgs(spi));
   }
 
   Future<void> _toPage(int idx) async {
@@ -146,15 +163,187 @@ extension on _SSHTabPageState {
     _tabRN.notify();
     _pageCtrl.previousPage(duration: Durations.medium1, curve: Curves.fastEaseInToSlowEaseOut);
   }
+
+  Widget buildSortBtn(BuildContext context) {
+    final sortBy = Stores.setting.sshPageSortBy.fetch();
+    final sortAsc = Stores.setting.sshPageSortAsc.fetch();
+    final sortIcon = sortBy == 0
+        ? (sortAsc ? Icons.sort_by_alpha : Icons.sort)
+        : (sortAsc ? Icons.arrow_upward : Icons.arrow_downward);
+
+    return Btn.icon(
+      icon: Icon(sortIcon, size: 18),
+      onTap: () => showSortMenu(context),
+    );
+  }
+
+  void showSortMenu(BuildContext context) {
+    final sortBy = Stores.setting.sshPageSortBy.fetch();
+    final sortAsc = Stores.setting.sshPageSortAsc.fetch();
+
+    context.showRoundDialog(
+      title: l10n.sort,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _SortOption(
+            icon: Icons.sort_by_alpha,
+            label: '${l10n.sortByName} (A-Z)',
+            selected: sortBy == 0 && sortAsc,
+            onTap: () {
+              Stores.setting.sshPageSortBy.put(0);
+              Stores.setting.sshPageSortAsc.put(true);
+              context.pop();
+            },
+          ),
+          _SortOption(
+            icon: Icons.sort,
+            label: '${l10n.sortByName} (Z-A)',
+            selected: sortBy == 0 && !sortAsc,
+            onTap: () {
+              Stores.setting.sshPageSortBy.put(0);
+              Stores.setting.sshPageSortAsc.put(false);
+              context.pop();
+            },
+          ),
+          _SortOption(
+            icon: Icons.arrow_upward,
+            label: '${l10n.sortByJoinTime} (${l10n.ascending})',
+            selected: sortBy == 1 && sortAsc,
+            onTap: () {
+              Stores.setting.sshPageSortBy.put(1);
+              Stores.setting.sshPageSortAsc.put(true);
+              context.pop();
+            },
+          ),
+          _SortOption(
+            icon: Icons.arrow_downward,
+            label: '${l10n.sortByJoinTime} (${l10n.descending})',
+            selected: sortBy == 1 && !sortAsc,
+            onTap: () {
+              Stores.setting.sshPageSortBy.put(1);
+              Stores.setting.sshPageSortAsc.put(false);
+              context.pop();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildSearchBtn(BuildContext context) {
+    return Btn.icon(
+      icon: const Icon(Icons.search, size: 18),
+      onTap: () => showSearchDialog(context),
+    );
+  }
+
+  void showSearchDialog(BuildContext context) {
+    final serverState = ref.read(serversProvider);
+    final allServers = serverState.serverOrder
+        .map((id) => serverState.servers[id])
+        .whereType<Spi>()
+        .toList();
+
+    showSearch(
+      context: context,
+      delegate: SearchPage<Spi>(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        future: (q) async {
+          if (q.isEmpty) return [];
+          return allServers.where((spi) =>
+            spi.name.toLowerCase().contains(q.toLowerCase()) ||
+            spi.user.toLowerCase().contains(q.toLowerCase()) ||
+            spi.ip.contains(q)
+          ).toList();
+        },
+        builder: (ctx, spi) => ListTile(
+          title: Text(spi.name),
+          subtitle: Text('${spi.user}@${spi.ip}:${spi.port}'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            ctx.pop();
+            _onTapInitCard(spi);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget buildHistoryBtn(BuildContext context) {
+    return Btn.icon(
+      icon: const Icon(Icons.history, size: 18),
+      onTap: () => showHistoryDialog(context),
+    );
+  }
+
+  void showHistoryDialog(BuildContext context) {
+    final history = HistoryStore.instance.sshServerHistory.all.cast<String>();
+    if (history.isEmpty) {
+      context.showRoundDialog(
+        title: l10n.serverHistory,
+        child: Text(libL10n.empty),
+        actions: [Btn.ok(onTap: context.pop)],
+      );
+      return;
+    }
+
+    final serverState = ref.read(serversProvider);
+    context.showRoundDialog(
+      title: l10n.serverHistory,
+      child: SizedBox(
+        height: 300,
+        child: ListView.builder(
+          itemCount: history.length,
+          itemBuilder: (_, idx) {
+            final id = history[idx];
+            final spi = serverState.servers[id];
+            return ListTile(
+              title: Text(spi?.name ?? id),
+              subtitle: spi != null ? Text('${spi.user}@${spi.ip}:${spi.port}') : null,
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                context.pop();
+                if (spi != null) {
+                  _onTapInitCard(spi);
+                }
+              },
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            HistoryStore.instance.sshServerHistory.clear();
+            context.pop();
+          },
+          child: Text(l10n.clearHistory),
+        ),
+        Btn.ok(onTap: context.pop),
+      ],
+    );
+  }
 }
 
-final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
-  const _TabBar({required this.idxVN, required this.map, required this.onTap, required this.onClose});
+final class _TabBar extends ConsumerWidget implements PreferredSizeWidget {
+  const _TabBar({
+    required this.idxVN,
+    required this.map,
+    required this.onTap,
+    required this.onClose,
+    required this.sortBtn,
+    required this.searchBtn,
+    required this.historyBtn,
+  });
 
   final ValueListenable<int> idxVN;
   final _TabMap map;
   final void Function(int idx) onTap;
   final void Function(String name) onClose;
+  final Widget sortBtn;
+  final Widget searchBtn;
+  final Widget historyBtn;
 
   List<String> get names => map.keys.toList();
 
@@ -162,19 +351,42 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(48);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ListenBuilder(
       listenable: idxVN,
       builder: () {
-        return ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
-          itemCount: names.length,
-          itemBuilder: (_, idx) => _buildItem(idx),
-          separatorBuilder: (_, _) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 17),
-            child: Container(color: const Color.fromARGB(61, 158, 158, 158), width: 3),
-          ),
+        return Row(
+          children: [
+            Expanded(
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+                itemCount: names.length,
+                itemBuilder: (_, idx) => _buildItem(idx),
+                separatorBuilder: (_, _) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 17),
+                  child: Container(color: const Color.fromARGB(61, 158, 158, 158), width: 3),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 17),
+              child: Container(color: const Color.fromARGB(61, 158, 158, 158), width: 3),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 7),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  sortBtn,
+                  const SizedBox(width: 7),
+                  searchBtn,
+                  const SizedBox(width: 7),
+                  historyBtn,
+                ],
+              ),
+            ),
+          ],
         );
       },
     );
@@ -237,9 +449,10 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class _AddPage extends ConsumerWidget {
-  const _AddPage({required this.onTapInitCard});
+  const _AddPage({required this.onTapInitCard, required this.onLongPressInitCard});
 
   final void Function(Spi spi) onTapInitCard;
+  final void Function(Spi spi) onLongPressInitCard;
 
   Widget get _placeholder => const Expanded(child: UIs.placeholder);
 
@@ -249,7 +462,19 @@ class _AddPage extends ConsumerWidget {
     final viewWidth = context.windowSize.width - 2 * viewPadding;
 
     final serverState = ref.watch(serversProvider);
-    final itemCount = serverState.servers.length;
+    final sortBy = Stores.setting.sshPageSortBy.fetch();
+    final sortAsc = Stores.setting.sshPageSortAsc.fetch();
+
+    final order = serverState.serverOrder.toList();
+    if (sortBy == 0) {
+      order.sort((a, b) {
+        final nameA = serverState.servers[a]?.name ?? '';
+        final nameB = serverState.servers[b]?.name ?? '';
+        return sortAsc ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
+      });
+    }
+
+    final itemCount = order.length;
     const itemPadding = 1.0;
     const itemWidth = 150.0;
     const itemHeight = 50.0;
@@ -258,53 +483,80 @@ class _AddPage extends ConsumerWidget {
     final crossCount = max(viewWidth ~/ (visualCrossCount * itemPadding + itemWidth), 1);
     final mainCount = itemCount ~/ crossCount + 1;
 
-    final order = serverState.serverOrder;
-    
     if (order.isEmpty) {
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 
-    // Custom grid
-    return ListView(
-      padding: const EdgeInsets.all(viewPadding),
-      children: List.generate(
-        mainCount,
-        (rowIndex) => Row(
-          children: List.generate(crossCount, (columnIndex) {
-            final idx = rowIndex * crossCount + columnIndex;
-            final id = order.elementAtOrNull(idx);
-            final spi = serverState.servers[id];
-            if (spi == null) return _placeholder;
+    return Column(
+      children: [
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(viewPadding),
+            children: List.generate(
+              mainCount,
+              (rowIndex) => Row(
+                children: List.generate(crossCount, (columnIndex) {
+                  final idx = rowIndex * crossCount + columnIndex;
+                  final id = order.elementAtOrNull(idx);
+                  final spi = serverState.servers[id];
+                  if (spi == null) return _placeholder;
 
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(itemPadding),
-                child: InkWell(
-                  onTap: () => onTapInitCard(spi),
-                  child: Container(
-                    height: itemHeight,
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.only(left: 17, right: 7),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            spi.name,
-                            style: UIs.text18,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(itemPadding),
+                      child: InkWell(
+                        onTap: () => onTapInitCard(spi),
+                        onLongPress: () => onLongPressInitCard(spi),
+                        child: Container(
+                          height: itemHeight,
+                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.only(left: 17, right: 7),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  spi.name,
+                                  style: UIs.text18,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const Icon(Icons.chevron_right),
+                            ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right),
-                      ],
+                      ).cardx,
                     ),
-                  ),
-                ).cardx,
+                  );
+                }),
               ),
-            );
-          }),
+            ),
+          ),
         ),
-      ),
+      ],
+    );
+  }
+}
+
+class _SortOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _SortOption({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: selected ? Colors.blue : null),
+      title: Text(label, style: TextStyle(color: selected ? Colors.blue : null)),
+      onTap: onTap,
     );
   }
 }

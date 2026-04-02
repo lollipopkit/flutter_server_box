@@ -868,6 +868,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sponsor => '赞助';
+
+  @override
+  String get sort => '排序';
+
+  @override
+  String get sortByName => '按名称';
+
+  @override
+  String get sortByJoinTime => '按加入时间';
+
+  @override
+  String get ascending => '升序';
+
+  @override
+  String get descending => '降序';
+
+  @override
+  String get searchServer => '搜索服务器';
+
+  @override
+  String get serverHistory => '服务器历史';
+
+  @override
+  String get clearHistory => '清空历史';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).

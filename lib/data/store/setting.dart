@@ -282,4 +282,7 @@ class SettingStore extends HiveStore {
 
   /// Hide port forward beta warning
   late final portForwardBetaWarned = propertyDefault('portForwardBetaWarned', false);
+
+  late final sshPageSortBy = propertyDefault('sshPageSortBy', 0);
+  late final sshPageSortAsc = propertyDefault('sshPageSortAsc', true);
 }
