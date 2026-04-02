@@ -193,6 +193,7 @@ extension on _SSHTabPageState {
             onTap: () {
               Stores.setting.sshPageSortBy.put(0);
               Stores.setting.sshPageSortAsc.put(true);
+              _tabRN.notify();
               context.pop();
             },
           ),
@@ -203,6 +204,7 @@ extension on _SSHTabPageState {
             onTap: () {
               Stores.setting.sshPageSortBy.put(0);
               Stores.setting.sshPageSortAsc.put(false);
+              _tabRN.notify();
               context.pop();
             },
           ),
@@ -213,6 +215,7 @@ extension on _SSHTabPageState {
             onTap: () {
               Stores.setting.sshPageSortBy.put(1);
               Stores.setting.sshPageSortAsc.put(true);
+              _tabRN.notify();
               context.pop();
             },
           ),
@@ -223,6 +226,7 @@ extension on _SSHTabPageState {
             onTap: () {
               Stores.setting.sshPageSortBy.put(1);
               Stores.setting.sshPageSortAsc.put(false);
+              _tabRN.notify();
               context.pop();
             },
           ),
@@ -326,7 +330,7 @@ extension on _SSHTabPageState {
   }
 }
 
-final class _TabBar extends ConsumerWidget implements PreferredSizeWidget {
+final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
   const _TabBar({
     required this.idxVN,
     required this.map,
@@ -351,7 +355,7 @@ final class _TabBar extends ConsumerWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(48);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return ListenBuilder(
       listenable: idxVN,
       builder: () {
@@ -471,6 +475,12 @@ class _AddPage extends ConsumerWidget {
         final nameA = serverState.servers[a]?.name ?? '';
         final nameB = serverState.servers[b]?.name ?? '';
         return sortAsc ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
+      });
+    } else if (sortBy == 1) {
+      order.sort((a, b) {
+        final idxA = serverState.serverOrder.indexOf(a);
+        final idxB = serverState.serverOrder.indexOf(b);
+        return sortAsc ? idxA.compareTo(idxB) : idxB.compareTo(idxA);
       });
     }
 
