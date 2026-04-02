@@ -10,7 +10,6 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/store/history.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 
@@ -27,10 +26,11 @@ typedef _TabMap = Map<String, ({Widget page, FocusNode? focus})>;
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  late final _TabMap _tabMap = {libL10n.add: (page: _AddPage(onTapInitCard: _onTapInitCard, onLongPressInitCard: _onLongPressInitCard), focus: null)};
+  late final _TabMap _tabMap = {libL10n.add: (page: _AddPage(sortVersionVN: _sortVersionVN, onTapInitCard: _onTapInitCard, onLongPressInitCard: _onLongPressInitCard), focus: null)};
   final _pageCtrl = PageController();
   final _fabVN = 0.vn;
   final _tabRN = RNode();
+  final _sortVersionVN = 0.vn;
 
   @override
   void dispose() {
@@ -127,7 +127,7 @@ extension on _SSHTabPageState {
       focus: FocusNode(),
     );
     _tabRN.notify();
-    HistoryStore.instance.sshServerHistory.add(spi.id);
+    Stores.history.sshServerHistory.add(spi.id);
     // Wait for the page to be built
     await Future.delayed(Durations.short3);
     final idx = _tabMap.keys.toList().indexOf(name);
@@ -194,6 +194,7 @@ extension on _SSHTabPageState {
               Stores.setting.sshPageSortBy.put(0);
               Stores.setting.sshPageSortAsc.put(true);
               _tabRN.notify();
+              _sortVersionVN.notify();
               context.pop();
             },
           ),
@@ -205,6 +206,7 @@ extension on _SSHTabPageState {
               Stores.setting.sshPageSortBy.put(0);
               Stores.setting.sshPageSortAsc.put(false);
               _tabRN.notify();
+              _sortVersionVN.notify();
               context.pop();
             },
           ),
@@ -216,6 +218,7 @@ extension on _SSHTabPageState {
               Stores.setting.sshPageSortBy.put(1);
               Stores.setting.sshPageSortAsc.put(true);
               _tabRN.notify();
+              _sortVersionVN.notify();
               context.pop();
             },
           ),
@@ -227,6 +230,7 @@ extension on _SSHTabPageState {
               Stores.setting.sshPageSortBy.put(1);
               Stores.setting.sshPageSortAsc.put(false);
               _tabRN.notify();
+              _sortVersionVN.notify();
               context.pop();
             },
           ),
@@ -282,7 +286,7 @@ extension on _SSHTabPageState {
   }
 
   void showHistoryDialog(BuildContext context) {
-    final history = HistoryStore.instance.sshServerHistory.all.cast<String>();
+    final history = Stores.history.sshServerHistory.all.cast<String>();
     if (history.isEmpty) {
       context.showRoundDialog(
         title: l10n.serverHistory,
@@ -319,7 +323,7 @@ extension on _SSHTabPageState {
       actions: [
         TextButton(
           onPressed: () {
-            HistoryStore.instance.sshServerHistory.clear();
+            Stores.history.sshServerHistory.clear();
             context.pop();
           },
           child: Text(l10n.clearHistory),
@@ -452,16 +456,38 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-class _AddPage extends ConsumerWidget {
-  const _AddPage({required this.onTapInitCard, required this.onLongPressInitCard});
+class _AddPage extends ConsumerStatefulWidget {
+  const _AddPage({required this.sortVersionVN, required this.onTapInitCard, required this.onLongPressInitCard});
 
+  final ValueListenable<int> sortVersionVN;
   final void Function(Spi spi) onTapInitCard;
   final void Function(Spi spi) onLongPressInitCard;
+
+  @override
+  ConsumerState<_AddPage> createState() => _AddPageState();
+}
+
+class _AddPageState extends ConsumerState<_AddPage> {
+  @override
+  void initState() {
+    super.initState();
+    widget.sortVersionVN.addListener(_onSortVersionChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.sortVersionVN.removeListener(_onSortVersionChanged);
+    super.dispose();
+  }
+
+  void _onSortVersionChanged() {
+    if (mounted) setState(() {});
+  }
 
   Widget get _placeholder => const Expanded(child: UIs.placeholder);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     const viewPadding = 7.0;
     final viewWidth = context.windowSize.width - 2 * viewPadding;
 
@@ -515,8 +541,8 @@ class _AddPage extends ConsumerWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(itemPadding),
                       child: InkWell(
-                        onTap: () => onTapInitCard(spi),
-                        onLongPress: () => onLongPressInitCard(spi),
+                        onTap: () => widget.onTapInitCard(spi),
+                        onLongPress: () => widget.onLongPressInitCard(spi),
                         child: Container(
                           height: itemHeight,
                           alignment: Alignment.centerLeft,
