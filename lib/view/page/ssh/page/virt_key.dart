@@ -1,6 +1,12 @@
 part of 'page.dart';
 
 extension _VirtKey on SSHPageState {
+  void _reloadVirtKeys() {
+    _horizonVirtKeys = Stores.setting.horizonVirtKey.fetch();
+    _initVirtKeys();
+    _updateVirtKeysHeight();
+  }
+
   void _doVirtualKey(VirtKey item, VirtKeyboard virtKeyNotifier) {
     if (item.func != null) {
       HapticFeedback.mediumImpact();
@@ -123,7 +129,9 @@ extension _VirtKey on SSHPageState {
   }
 
   void _initVirtKeys() {
-    final virtKeys = VirtKeyX.loadFromStore();
+    _virtKeysList.clear();
+    final disabled = Stores.setting.sshVirtKeysDisabled.fetch().toSet();
+    final virtKeys = VirtKeyX.loadFromStore().where((key) => !disabled.contains(key.index)).toList();
     for (int len = 0; len < virtKeys.length; len += 7) {
       if (len + 7 > virtKeys.length) {
         _virtKeysList.add(virtKeys.sublist(len));
