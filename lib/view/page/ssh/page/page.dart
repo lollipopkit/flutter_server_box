@@ -162,7 +162,9 @@ class SSHPageState extends ConsumerState<SSHPage>
 
     // Because the virtual keyboard only displayed on mobile devices
     if (isMobile) {
-      if (_horizonVirtKeys) {
+      if (_virtKeysList.isEmpty) {
+        _virtKeysHeight = 0;
+      } else if (_horizonVirtKeys) {
         _virtKeysHeight = 37;
       } else {
         _virtKeysHeight = 37.0 * _virtKeysList.length;
@@ -269,6 +271,9 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   Widget _buildBottom() {
+    if (_virtKeysHeight == 0) {
+      return const SizedBox.shrink();
+    }
     return SafeArea(
       top: false,
       child: AnimatedPadding(
