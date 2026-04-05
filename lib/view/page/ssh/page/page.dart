@@ -77,7 +77,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   late TerminalStyle _terminalStyle;
   late TerminalTheme _terminalTheme;
   double _virtKeysHeight = 0;
-  late final _horizonVirtKeys = Stores.setting.horizonVirtKey.fetch();
+  bool _horizonVirtKeys = false;
 
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
@@ -102,6 +102,9 @@ class SSHPageState extends ConsumerState<SSHPage>
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
+    Stores.setting.horizonVirtKey.listenable().removeListener(_handleVirtKeySettingsChanged);
+    Stores.setting.sshVirtKeys.listenable().removeListener(_handleVirtKeySettingsChanged);
+    Stores.setting.sshVirtKeysDisabled.listenable().removeListener(_handleVirtKeySettingsChanged);
 
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
 
@@ -122,7 +125,10 @@ class SSHPageState extends ConsumerState<SSHPage>
   void initState() {
     super.initState();
     _initStoredCfg();
-    _initVirtKeys();
+    _reloadVirtKeys();
+    Stores.setting.horizonVirtKey.listenable().addListener(_handleVirtKeySettingsChanged);
+    Stores.setting.sshVirtKeys.listenable().addListener(_handleVirtKeySettingsChanged);
+    Stores.setting.sshVirtKeysDisabled.listenable().addListener(_handleVirtKeySettingsChanged);
     _setupDiscontinuityTimer();
     
     // Initialize client from provider
@@ -161,15 +167,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _terminalTheme = _terminalTheme.copyWith(selectionCursor: UIs.primaryColor);
 
     // Because the virtual keyboard only displayed on mobile devices
-    if (isMobile) {
-      if (_virtKeysList.isEmpty) {
-        _virtKeysHeight = 0;
-      } else if (_horizonVirtKeys) {
-        _virtKeysHeight = 37;
-      } else {
-        _virtKeysHeight = 37.0 * _virtKeysList.length;
-      }
-    }
+    _updateVirtKeysHeight();
   }
 
   @override
@@ -407,6 +405,25 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   @override
   bool get wantKeepAlive => true;
+
+  void _handleVirtKeySettingsChanged() {
+    if (!mounted) return;
+    setState(_reloadVirtKeys);
+  }
+
+  void _updateVirtKeysHeight() {
+    if (!isMobile) {
+      _virtKeysHeight = 0;
+      return;
+    }
+    if (_virtKeysList.isEmpty) {
+      _virtKeysHeight = 0;
+    } else if (_horizonVirtKeys) {
+      _virtKeysHeight = 37;
+    } else {
+      _virtKeysHeight = 37.0 * _virtKeysList.length;
+    }
+  }
 
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) async {
