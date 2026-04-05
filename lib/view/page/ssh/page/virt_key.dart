@@ -123,7 +123,8 @@ extension _VirtKey on SSHPageState {
   }
 
   void _initVirtKeys() {
-    final virtKeys = VirtKeyX.loadFromStore();
+    final disabled = Stores.setting.sshVirtKeysDisabled.fetch().toSet();
+    final virtKeys = VirtKeyX.loadFromStore().where((key) => !disabled.contains(key.index)).toList();
     for (int len = 0; len < virtKeys.length; len += 7) {
       if (len + 7 > virtKeys.length) {
         _virtKeysList.add(virtKeys.sublist(len));

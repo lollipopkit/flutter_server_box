@@ -295,7 +295,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   Widget _buildVirtualKey(VirtKeyState virtKeyState, VirtKeyboard virtKeyNotifier) {
-    final count = _horizonVirtKeys ? _virtKeysList.length : _virtKeysList.firstOrNull?.length ?? 0;
+    final count = _virtKeysList.firstOrNull?.length ?? 0;
     if (count == 0) return UIs.placeholder;
     return LayoutBuilder(
       builder: (_, cons) {
