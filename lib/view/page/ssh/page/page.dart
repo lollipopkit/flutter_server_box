@@ -53,7 +53,10 @@ final class SshPageArgs {
     this.terminalKey,
     this.focusNode,
     this.visibleListenable,
-  });
+  }) : assert(
+         notFromTab || visibleListenable != null,
+         'visibleListenable is required when notFromTab is false',
+       );
 }
 
 class SSHPage extends ConsumerStatefulWidget {
@@ -155,7 +158,9 @@ class SSHPageState extends ConsumerState<SSHPage>
       disconnect: _disconnectFromNotification,
       status: TermSessionStatus.connecting,
     );
-    TermSessionManager.setActive(_sessionId, hasTerminal: true);
+    if (_shouldActivateSessionOnInit) {
+      TermSessionManager.setActive(_sessionId, hasTerminal: true);
+    }
   }
 
   @override
@@ -438,6 +443,11 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   @override
   bool get wantKeepAlive => true;
+
+  bool get _shouldActivateSessionOnInit {
+    if (widget.args.notFromTab) return true;
+    return widget.args.visibleListenable?.value ?? false;
+  }
 
   bool get _isVisibleSessionPage {
     if (widget.args.notFromTab) {
