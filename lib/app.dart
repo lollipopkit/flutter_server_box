@@ -21,11 +21,21 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   late final Future<List<IntroPageBuilder>> _introFuture = _IntroPage.builders;
+  bool _transparentNavBarConfigured = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_transparentNavBarConfigured) return;
+    _transparentNavBarConfigured = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      SystemUIs.setTransparentNavigationBar(context);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    _setup(context);
-
     return ListenableBuilder(
       listenable: RNodes.app,
       builder: (context, _) {
@@ -142,8 +152,4 @@ class _MyAppState extends State<MyApp> {
       ),
     );
   }
-}
-
-void _setup(BuildContext context) async {
-  SystemUIs.setTransparentNavigationBar(context);
 }

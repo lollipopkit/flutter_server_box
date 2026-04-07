@@ -282,6 +282,7 @@ class ServerNotifier extends _$ServerNotifier {
 
         final sessionId = 'ssh_${spi.id}';
         TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
+        return;
       }
     }
 
