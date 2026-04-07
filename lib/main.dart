@@ -19,20 +19,20 @@ import 'package:server_box/data/store/server.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 
 Future<void> main() async {
-  _runInZone(() async {
+  await _runInZone(() async {
     await _initApp();
     runApp(ProviderScope(child: const MyApp()));
   });
 }
 
-void _runInZone(void Function() body) {
+Future<void> _runInZone(Future<void> Function() body) async {
   final zoneSpec = ZoneSpecification(
     print: (Zone self, ZoneDelegate parent, Zone zone, String line) {
       parent.print(zone, line);
     },
   );
 
-  runZonedGuarded(body, (e, s) => print('[ZONE] $e\n$s'), zoneSpecification: zoneSpec);
+  await runZonedGuarded(body, (e, s) => print('[ZONE] $e\n$s'), zoneSpecification: zoneSpec);
 }
 
 Future<void> _initApp() async {
@@ -42,7 +42,7 @@ Future<void> _initApp() async {
   _setupDebug();
   await _initWindow();
 
-  _doPlatformRelated();
+  await _doPlatformRelated();
 
   // Initialize Android session notification channel/handler
   TermSessionManager.init();
@@ -75,10 +75,14 @@ void _setupDebug() {
   });
 }
 
-void _doPlatformRelated() async {
+Future<void> _doPlatformRelated() async {
   if (isAndroid) {
     // try switch to highest refresh rate
-    FlutterDisplayMode.setHighRefreshRate();
+    try {
+      await FlutterDisplayMode.setHighRefreshRate();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to set high refresh rate', e, s);
+    }
   }
 
   final serversCount = Stores.server.keys().length;

@@ -17,6 +17,7 @@ import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/temp.dart';
 import 'package:server_box/data/model/server/windows_parser.dart';
+import 'package:server_box/data/res/status.dart';
 
 class ServerStatusUpdateReq {
   final ServerStatus ss;
@@ -35,11 +36,41 @@ class ServerStatusUpdateReq {
 }
 
 Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
-  return switch (req.system) {
-    SystemType.linux => _getLinuxStatus(req),
-    SystemType.bsd => _getBsdStatus(req),
-    SystemType.windows => _getWindowsStatus(req),
+  final nextReq = ServerStatusUpdateReq(
+    system: req.system,
+    ss: _createWorkingStatus(req.ss, req.system),
+    parsedOutput: req.parsedOutput,
+    customCmds: req.customCmds,
+    tempDivisor: req.tempDivisor,
+  );
+  return switch (nextReq.system) {
+    SystemType.linux => _getLinuxStatus(nextReq),
+    SystemType.bsd => _getBsdStatus(nextReq),
+    SystemType.windows => _getWindowsStatus(nextReq),
   };
+}
+
+/// Creates a per-refresh working snapshot.
+///
+/// `cpu`, `netSpeed`, and `diskIO` intentionally reuse the source references
+/// because their parsers update rolling/history state needed for deltas and rate
+/// calculations across refreshes. Callers should treat those fields as shared
+/// mutable state for the duration of parsing; the other stale-prone fields are
+/// reset here so failed/empty parsing does not leak old values forward.
+ServerStatus _createWorkingStatus(ServerStatus source, SystemType system) {
+  return ServerStatus(
+    cpu: source.cpu,
+    mem: InitStatus.mem,
+    disk: const [],
+    tcp: const Conn(maxConn: 0, active: 0, passive: 0, fail: 0),
+    netSpeed: source.netSpeed,
+    swap: const Swap(total: 0, free: 0, cached: 0),
+    temps: Temperatures(),
+    system: system,
+    diskIO: source.diskIO,
+    diskSmart: const [],
+    err: source.err,
+  );
 }
 
 // Wrap each operation with a try-catch, so that if one operation fails,
@@ -112,7 +143,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    req.ss.diskUsage = DiskUsage.parse(req.ss.disk);
+    req.ss.diskUsage = req.ss.disk.isEmpty ? null : DiskUsage.parse(req.ss.disk);
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }
@@ -241,6 +272,12 @@ Future<ServerStatus> _getBsdStatus(ServerStatusUpdateReq req) async {
 
   try {
     req.ss.disk = Disk.parse(BSDStatusCmdType.disk.findInMap(parsedOutput));
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+
+  try {
+    req.ss.diskUsage = req.ss.disk.isEmpty ? null : DiskUsage.parse(req.ss.disk);
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }
@@ -429,7 +466,7 @@ void _parseWindowsDiskData(ServerStatusUpdateReq req, Map<String, String> parsed
     if (diskRaw.isNotEmpty && diskRaw != 'null') {
       final disks = WindowsParser.parseDisks(diskRaw);
       req.ss.disk = disks;
-      req.ss.diskUsage = DiskUsage.parse(disks);
+      req.ss.diskUsage = disks.isEmpty ? null : DiskUsage.parse(disks);
     }
   } catch (e, s) {
     Loggers.app.warning('Windows disk parsing failed: $e', s);
