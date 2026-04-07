@@ -17,11 +17,21 @@ def keystorePropertiesFile = rootProject.file('key.properties')
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 } else {
-    System.err.printf(" [!] key.properties not found in %s (%s). Build will fail. \n", rootProject, rootProject.file('.'))
+    System.err.printf(" [!] key.properties not found in %s (%s). \n", rootProject, rootProject.file('.'))
 }
 
-if (keystoreProperties['storeFile'] == null || !file(keystoreProperties['storeFile']).exists()) {
-    System.err.printf(" [!] storeFile defined in key.properties does not exist in %s. Build will fail. \n", file('.'))
+def hasReleaseSigning = keystoreProperties['storeFile'] != null && file(keystoreProperties['storeFile']).exists()
+def allowDebugReleaseSigning = project.findProperty('allowDebugReleaseSigning') == 'true'
+
+if (!hasReleaseSigning) {
+    if (allowDebugReleaseSigning) {
+        System.err.printf(" [!] Release signing is unavailable. Falling back to debug signing because -PallowDebugReleaseSigning=true was provided. \n")
+    } else {
+        throw new GradleException(
+            'Release signing is not configured. Add key.properties with a valid storeFile, ' +
+            'or build with -PallowDebugReleaseSigning=true for local verification only.'
+        )
+    }
 }
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
@@ -79,7 +89,7 @@ android {
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
