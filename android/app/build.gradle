@@ -33,7 +33,10 @@ def hasReleaseSigning =
     keyPassword
 
 def allowDebugReleaseSigning = project.findProperty('allowDebugReleaseSigning') == 'true'
-def requestedTaskNames = gradle.startParameter.taskNames.collect { it.toLowerCase() }
+def requestedTaskNames = gradle.startParameter.taskNames.collect {
+    def normalizedTaskName = it.contains(':') ? it.substring(it.lastIndexOf(':') + 1) : it
+    normalizedTaskName.toLowerCase()
+}
 def aggregateSigningTasks = ['assemble', 'build', 'bundle', 'install']
 def requiresReleaseSigning = requestedTaskNames.any {
     aggregateSigningTasks.contains(it) ||
