@@ -119,7 +119,7 @@
   "lastFailure": "Last Failure",
   "lastSuccess": "Last Success",
   "letterCache": "Normal keyboard input",
-  "letterCacheTip": "Enable this to avoid secure keyboards in the terminal on some systems, but input will go through the regular IME.",
+  "letterCacheTip": "When enabled, input goes through the regular IME, which can avoid secure keyboard prompts in the terminal on some systems.",
   "madeWithLove": "Made with ❤️ by {myGithub}",
   "max": "max",
   "maxConcurrency": "Max Concurrency",

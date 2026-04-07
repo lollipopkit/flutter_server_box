@@ -397,10 +397,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get lastSuccess => '마지막 성공';
 
   @override
-  String get letterCache => '문자 캐싱';
+  String get letterCache => '일반 키보드 입력';
 
   @override
-  String get letterCacheTip => '비활성화를 권장하지만, 비활성화하면 CJK 문자를 입력할 수 없습니다.';
+  String get letterCacheTip =>
+      '이 옵션을 켜면 입력 내용이 일반 IME를 거치며, 일부 시스템에서는 터미널의 보안 키보드 안내를 피할 수 있습니다.';
 
   @override
   String madeWithLove(Object myGithub) {

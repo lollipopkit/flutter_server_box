@@ -416,7 +416,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get letterCacheTip =>
-      'Enable this to avoid secure keyboards in the terminal on some systems, but input will go through the regular IME.';
+      'When enabled, input goes through the regular IME, which can avoid secure keyboard prompts in the terminal on some systems.';
 
   @override
   String madeWithLove(Object myGithub) {

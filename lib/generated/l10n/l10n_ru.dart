@@ -413,11 +413,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get lastSuccess => 'Последний успех';
 
   @override
-  String get letterCache => 'Кэширование букв';
+  String get letterCache => 'Обычный ввод с клавиатуры';
 
   @override
   String get letterCacheTip =>
-      'Рекомендуется отключить, но после отключения будет невозможно вводить символы CJK.';
+      'Когда параметр включен, ввод проходит через обычный IME, что на некоторых системах позволяет избежать запросов защищенной клавиатуры в терминале.';
 
   @override
   String madeWithLove(Object myGithub) {

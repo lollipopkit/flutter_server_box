@@ -414,11 +414,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get lastSuccess => 'Letzter Erfolg';
 
   @override
-  String get letterCache => 'Buchstaben-Caching';
+  String get letterCache => 'Normale Tastatureingabe';
 
   @override
   String get letterCacheTip =>
-      'Empfohlen, zu deaktivieren, aber nach dem Deaktivieren können keine CJK-Zeichen eingegeben werden.';
+      'Wenn aktiviert, läuft die Eingabe über die normale IME. Dadurch lassen sich auf manchen Systemen sichere Tastaturhinweise im Terminal vermeiden.';
 
   @override
   String madeWithLove(Object myGithub) {

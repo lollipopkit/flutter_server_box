@@ -414,11 +414,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get lastSuccess => 'Dernier succès';
 
   @override
-  String get letterCache => 'Mise en cache des lettres';
+  String get letterCache => 'Saisie clavier normale';
 
   @override
   String get letterCacheTip =>
-      'Recommandé de désactiver, mais après désactivation, il sera impossible de saisir des caractères CJK.';
+      'Lorsqu\'elle est activée, la saisie passe par l\'IME normal, ce qui peut éviter les invites de clavier sécurisé dans le terminal sur certains systèmes.';
 
   @override
   String madeWithLove(Object myGithub) {

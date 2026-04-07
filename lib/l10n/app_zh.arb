@@ -119,7 +119,7 @@
   "lastFailure": "最后失败",
   "lastSuccess": "最后成功",
   "letterCache": "普通键盘输入",
-  "letterCacheTip": "开启后可避免部分系统在终端弹出安全键盘，但输入内容会经过普通输入法",
+  "letterCacheTip": "开启后，输入内容会经过普通输入法，这样可避免部分系统在终端弹出安全键盘",
   "madeWithLove": "用❤️制作 by {myGithub}",
   "max": "最大",
   "maxConcurrency": "最大并发数",

@@ -119,7 +119,7 @@
   "lastFailure": "最後失敗",
   "lastSuccess": "最後成功",
   "letterCache": "一般鍵盤輸入",
-  "letterCacheTip": "開啟後可避免部分系統在終端彈出安全鍵盤，但輸入內容會經過一般輸入法。",
+  "letterCacheTip": "開啟後，輸入內容會經過一般輸入法，這樣可避免部分系統在終端彈出安全鍵盤。",
   "madeWithLove": "用❤️製作 by {myGithub}",
   "max": "最大",
   "maxConcurrency": "最大並發數",

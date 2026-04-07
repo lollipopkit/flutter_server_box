@@ -414,11 +414,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get lastSuccess => 'Останній успіх';
 
   @override
-  String get letterCache => 'Кешування букв';
+  String get letterCache => 'Звичайне введення з клавіатури';
 
   @override
   String get letterCacheTip =>
-      'Рекомендується відключити, але після вимкнення стане неможливим введення CJK (китайських, японських, корейських) символів.';
+      'Коли параметр увімкнено, введення проходить через звичайний IME, що на деяких системах дає змогу уникнути запитів захищеної клавіатури в терміналі.';
 
   @override
   String madeWithLove(Object myGithub) {

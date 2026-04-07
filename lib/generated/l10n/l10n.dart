@@ -843,7 +843,7 @@ abstract class AppLocalizations {
   /// No description provided for @letterCacheTip.
   ///
   /// In en, this message translates to:
-  /// **'Enable this to avoid secure keyboards in the terminal on some systems, but input will go through the regular IME.'**
+  /// **'When enabled, input goes through the regular IME, which can avoid secure keyboard prompts in the terminal on some systems.'**
   String get letterCacheTip;
 
   /// No description provided for @madeWithLove.

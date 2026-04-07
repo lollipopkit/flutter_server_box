@@ -394,7 +394,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get letterCache => '普通键盘输入';
 
   @override
-  String get letterCacheTip => '开启后可避免部分系统在终端弹出安全键盘，但输入内容会经过普通输入法';
+  String get letterCacheTip => '开启后，输入内容会经过普通输入法，这样可避免部分系统在终端弹出安全键盘';
 
   @override
   String madeWithLove(Object myGithub) {
@@ -1284,7 +1284,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get letterCache => '一般鍵盤輸入';
 
   @override
-  String get letterCacheTip => '開啟後可避免部分系統在終端彈出安全鍵盤，但輸入內容會經過一般輸入法。';
+  String get letterCacheTip => '開啟後，輸入內容會經過一般輸入法，這樣可避免部分系統在終端彈出安全鍵盤。';
 
   @override
   String madeWithLove(Object myGithub) {
