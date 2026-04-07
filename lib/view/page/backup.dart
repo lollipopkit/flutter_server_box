@@ -60,7 +60,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
         ],
         [CenterGreyTitle(libL10n.import), _buildBulkImportServers, _buildImportSnippet],
       ],
-      );
+    );
   }
 
   Widget get _buildBakPwd {
@@ -165,26 +165,33 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
 
   Widget get _buildIcloud {
     return CardX(
-      child: ListTile(
+      child: ExpandTile(
         leading: const Icon(Icons.cloud),
         title: const Text('iCloud'),
-        trailing: StoreSwitch(
-          prop: PrefProps.icloudSync,
-          validator: (p0) async {
-            if (p0 && PrefProps.webdavSync.get()) {
-              context.showSnackBar(l10n.autoBackupConflict);
-              return false;
-            }
-            if (p0) {
-              final ok = await _ensureBakPwd(context);
-              if (!ok) return false;
-            }
-            if (p0) {
-              await bakSync.sync(rs: icloud);
-            }
-            return true;
-          },
-        ),
+        initiallyExpanded: false,
+        children: [
+          _buildSyncSettingsTile(),
+          ListTile(
+            title: Text(libL10n.auto),
+            trailing: StoreSwitch(
+              prop: PrefProps.icloudSync,
+              validator: (p0) async {
+                if (p0 && (PrefProps.webdavSync.get() || PrefProps.gistSync.get())) {
+                  context.showSnackBar(l10n.autoBackupConflict);
+                  return false;
+                }
+                if (p0) {
+                  final ok = await _ensureBakPwd(context);
+                  if (!ok) return false;
+                }
+                if (p0) {
+                  await bakSync.sync(rs: icloud);
+                }
+                return true;
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -196,6 +203,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
         title: const Text('WebDAV'),
         initiallyExpanded: false,
         children: [
+          _buildSyncSettingsTile(),
           ListTile(
             title: Text(libL10n.setting),
             trailing: const Icon(Icons.settings),
@@ -266,6 +274,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
         title: const Text('GitHub Gist'),
         initiallyExpanded: false,
         children: [
+          _buildSyncSettingsTile(),
           ListTile(
             title: Text(libL10n.setting),
             trailing: const Icon(Icons.settings),
@@ -338,6 +347,14 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSyncSettingsTile() {
+    return ListTile(
+      title: Text(l10n.syncAppSettings),
+      subtitle: Text(l10n.syncAppSettingsTip, style: UIs.textGrey),
+      trailing: StoreSwitch(prop: PrefProps.syncAppSettings),
     );
   }
 

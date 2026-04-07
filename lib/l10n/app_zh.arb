@@ -216,6 +216,8 @@
   "supportFmtArgs": "支持以下格式化参数：",
   "suspendTip": "suspend 功能需要 root 权限及 systemd 支持。",
   "switchTo": "切换到 {val}",
+  "syncAppSettings": "同步应用设置",
+  "syncAppSettingsTip": "在自动同步中包含主题、布局、编辑器、终端等设备偏好设置。",
   "syncTip": "可能需要重新启动，某些更改才能生效。",
   "system": "系统",
   "tag": "标签",

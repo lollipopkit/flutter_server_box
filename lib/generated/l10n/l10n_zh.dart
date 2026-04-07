@@ -722,6 +722,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get syncAppSettings => '同步应用设置';
+
+  @override
+  String get syncAppSettingsTip => '在自动同步中包含主题、布局、编辑器、终端等设备偏好设置。';
+
+  @override
   String get syncTip => '可能需要重新启动，某些更改才能生效。';
 
   @override

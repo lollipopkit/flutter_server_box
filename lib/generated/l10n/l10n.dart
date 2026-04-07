@@ -1422,6 +1422,18 @@ abstract class AppLocalizations {
   /// **'Switch to {val}'**
   String switchTo(Object val);
 
+  /// No description provided for @syncAppSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync app settings'**
+  String get syncAppSettings;
+
+  /// No description provided for @syncAppSettingsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Include theme, layout, editor, terminal and other device preferences in automatic sync.'**
+  String get syncAppSettingsTip;
+
   /// No description provided for @syncTip.
   ///
   /// In en, this message translates to:
