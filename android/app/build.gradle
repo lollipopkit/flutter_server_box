@@ -20,10 +20,24 @@ if (keystorePropertiesFile.exists()) {
     System.err.printf(" [!] key.properties not found in %s (%s). \n", rootProject, rootProject.file('.'))
 }
 
-def hasReleaseSigning = keystoreProperties['storeFile'] != null && file(keystoreProperties['storeFile']).exists()
+def storeFilePath = keystoreProperties['storeFile']?.toString()?.trim()
+def storePassword = keystoreProperties['storePassword']?.toString()?.trim()
+def keyAlias = keystoreProperties['keyAlias']?.toString()?.trim()
+def keyPassword = keystoreProperties['keyPassword']?.toString()?.trim()
+
+def hasReleaseSigning =
+    storeFilePath &&
+    file(storeFilePath).exists() &&
+    storePassword &&
+    keyAlias &&
+    keyPassword
+
 def allowDebugReleaseSigning = project.findProperty('allowDebugReleaseSigning') == 'true'
 def requestedTaskNames = gradle.startParameter.taskNames.collect { it.toLowerCase() }
-def requiresReleaseSigning = requestedTaskNames.any { it.contains('release') }
+def aggregateSigningTasks = ['assemble', 'build', 'bundle', 'install']
+def requiresReleaseSigning = requestedTaskNames.any {
+    it.contains('release') || aggregateSigningTasks.any { aggregate -> it == aggregate || it.endsWith(aggregate) }
+}
 
 if (requiresReleaseSigning && !hasReleaseSigning) {
     if (allowDebugReleaseSigning) {
@@ -82,10 +96,10 @@ android {
 
     signingConfigs {
         release {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-            storePassword keystoreProperties['storePassword']
+            keyAlias keyAlias
+            keyPassword keyPassword
+            storeFile storeFilePath ? file(storeFilePath) : null
+            storePassword storePassword
         }
     }
 
