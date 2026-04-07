@@ -34,6 +34,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
   bool _switchingPage = false;
   bool _shouldAuth = false;
+  bool? _lastFullscreenMode;
   DateTime? _pausedTime;
 
   late final _notifier = ref.read(serversProvider.notifier);
@@ -41,6 +42,9 @@ class _HomePageState extends ConsumerState<HomePage>
 
   @override
   void dispose() {
+    if (isMobile) {
+      SystemUIs.switchStatusBar(hide: false);
+    }
     super.dispose();
     WidgetsBinding.instance.removeObserver(this);
     Stores.setting.homeTabs.listenable().removeListener(_handleHomeTabsChanged);
@@ -82,6 +86,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
     switch (state) {
       case AppLifecycleState.resumed:
+        _lastFullscreenMode = null;
         if (_shouldAuth) {
           final delay = Stores.setting.delayBioAuthLock.fetch();
           if (delay > 0 && _pausedTime != null) {
@@ -100,8 +105,10 @@ class _HomePageState extends ConsumerState<HomePage>
         unawaited(serverNotifier.startAutoRefresh());
         unawaited(serverNotifier.refresh());
         MethodChans.updateHomeWidget();
+        _syncFullscreenSystemUi();
         break;
       case AppLifecycleState.paused:
+        _lastFullscreenMode = null;
         _pausedTime = DateTime.now();
         _shouldAuth = true;
         // Keep running in background on Android device
@@ -124,6 +131,7 @@ class _HomePageState extends ConsumerState<HomePage>
   Widget build(BuildContext context) {
     super.build(context);
     final isMobile = ResponsiveBreakpoints.of(context).isMobile;
+    _syncFullscreenSystemUi();
 
     final Widget mainContent = Scaffold(
       appBar: _AppBar(MediaQuery.paddingOf(context).top),
@@ -141,6 +149,7 @@ class _HomePageState extends ConsumerState<HomePage>
                 if (!_switchingPage) {
                   _selectIndex.value = value;
                 }
+                _syncFullscreenSystemUi();
               },
             ),
           ),
@@ -161,50 +170,59 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   Widget _buildBottomBar() {
-    if (Stores.setting.fullScreen.fetch()) return UIs.placeholder;
     return ListenableBuilder(
       listenable: _selectIndex,
-      builder: (context, child) => NavigationBar(
-        selectedIndex: _selectIndex.value,
-        height: kBottomNavigationBarHeight * 1.1,
-        animationDuration: const Duration(milliseconds: 250),
-        onDestinationSelected: _onDestinationSelected,
-        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-        destinations: _tabs.map((tab) => tab.navDestination).toList(),
-      ),
+      builder: (context, child) {
+        if (_isServerFullscreenMode) return UIs.placeholder;
+        return NavigationBar(
+          selectedIndex: _selectIndex.value,
+          height: kBottomNavigationBarHeight * 1.1,
+          animationDuration: const Duration(milliseconds: 250),
+          onDestinationSelected: _onDestinationSelected,
+          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+          destinations: _tabs.map((tab) => tab.navDestination).toList(),
+        );
+      },
     );
   }
 
   Widget _buildRailBar({bool extended = false}) {
-    final fullscreen = Stores.setting.fullScreen.fetch();
-    if (fullscreen) return UIs.placeholder;
-
     return Stack(
       children: [
-        _selectIndex.listenVal(
-          (idx) => NavigationRail(
-            extended: extended,
-            minExtendedWidth: 150,
-            leading: extended ? const SizedBox(height: 20) : null,
-            trailing: extended ? const SizedBox(height: 20) : null,
-            labelType: extended ? NavigationRailLabelType.none : NavigationRailLabelType.all,
-            selectedIndex: idx,
-            destinations: _tabs.map((tab) => tab.navRailDestination).toList(),
-            onDestinationSelected: _onDestinationSelected,
-          ),
+        ListenableBuilder(
+          listenable: _selectIndex,
+          builder: (context, _) {
+            if (_isServerFullscreenMode) return UIs.placeholder;
+            return NavigationRail(
+              extended: extended,
+              minExtendedWidth: 150,
+              leading: extended ? const SizedBox(height: 20) : null,
+              trailing: extended ? const SizedBox(height: 20) : null,
+              labelType: extended ? NavigationRailLabelType.none : NavigationRailLabelType.all,
+              selectedIndex: _selectIndex.value,
+              destinations: _tabs.map((tab) => tab.navRailDestination).toList(),
+              onDestinationSelected: _onDestinationSelected,
+            );
+          },
         ),
         // Settings Btn
-        Positioned(
-          bottom: 10,
-          left: 0,
-          right: 0,
-          child: IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: libL10n.setting,
-            onPressed: () {
-              SettingsPage.route.go(context);
-            },
-          ),
+        ListenableBuilder(
+          listenable: _selectIndex,
+          builder: (context, _) {
+            if (_isServerFullscreenMode) return UIs.placeholder;
+            return Positioned(
+              bottom: 10,
+              left: 0,
+              right: 0,
+              child: IconButton(
+                icon: const Icon(Icons.settings),
+                tooltip: libL10n.setting,
+                onPressed: () {
+                  SettingsPage.route.go(context);
+                },
+              ),
+            );
+          },
         ),
       ],
     );
@@ -270,6 +288,26 @@ class _HomePageState extends ConsumerState<HomePage>
     );
     Future.delayed(const Duration(milliseconds: 677), () {
       _switchingPage = false;
+    });
+  }
+
+  bool get _isServerFullscreenMode {
+    if (!Stores.setting.fullScreen.fetch()) return false;
+    if (_tabs.isEmpty) return false;
+    final selectedIndex = _selectIndex.value;
+    if (selectedIndex < 0 || selectedIndex >= _tabs.length) return false;
+    final isLandscape = MediaQuery.orientationOf(context) == Orientation.landscape;
+    return isLandscape && _tabs[selectedIndex] == AppTab.server;
+  }
+
+  void _syncFullscreenSystemUi({bool? forceHide}) {
+    if (!isMobile) return;
+    final hide = forceHide ?? _isServerFullscreenMode;
+    if (_lastFullscreenMode == hide) return;
+    _lastFullscreenMode = hide;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      SystemUIs.switchStatusBar(hide: hide);
     });
   }
 }
