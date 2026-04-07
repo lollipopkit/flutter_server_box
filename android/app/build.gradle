@@ -36,7 +36,12 @@ def allowDebugReleaseSigning = project.findProperty('allowDebugReleaseSigning') 
 def requestedTaskNames = gradle.startParameter.taskNames.collect { it.toLowerCase() }
 def aggregateSigningTasks = ['assemble', 'build', 'bundle', 'install']
 def requiresReleaseSigning = requestedTaskNames.any {
-    it.contains('release') || aggregateSigningTasks.any { aggregate -> it == aggregate || it.endsWith(aggregate) }
+    aggregateSigningTasks.contains(it) ||
+    it == 'release' ||
+    (it.startsWith('assemble') && it.contains('release')) ||
+    (it.startsWith('bundle') && it.contains('release')) ||
+    (it.startsWith('install') && it.contains('release')) ||
+    (it.startsWith('build') && it.contains('release'))
 }
 
 if (requiresReleaseSigning && !hasReleaseSigning) {
