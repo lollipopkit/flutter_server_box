@@ -50,10 +50,17 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   };
 }
 
+/// Creates a per-refresh working snapshot.
+///
+/// `cpu`, `netSpeed`, and `diskIO` intentionally reuse the source references
+/// because their parsers update rolling/history state needed for deltas and rate
+/// calculations across refreshes. Callers should treat those fields as shared
+/// mutable state for the duration of parsing; the other stale-prone fields are
+/// reset here so failed/empty parsing does not leak old values forward.
 ServerStatus _createWorkingStatus(ServerStatus source, SystemType system) {
   return ServerStatus(
     cpu: source.cpu,
-    mem: InitStatus.status.mem,
+    mem: InitStatus.mem,
     disk: const [],
     tcp: const Conn(maxConn: 0, active: 0, passive: 0, fail: 0),
     netSpeed: source.netSpeed,

@@ -10,6 +10,7 @@ import 'package:server_box/data/model/server/temp.dart';
 abstract final class InitStatus {
   static SingleCpuCore get _initOneTimeCpuStatus =>
       SingleCpuCore('cpu', 0, 0, 0, 0, 0, 0, 0);
+  static const Memory mem = Memory(total: 1, free: 1, avail: 1);
   static Cpus get cpus =>
       Cpus([_initOneTimeCpuStatus], [_initOneTimeCpuStatus]);
   static NetSpeedPart get _initNetSpeedPart =>
@@ -18,7 +19,7 @@ abstract final class InitStatus {
       NetSpeed([_initNetSpeedPart], [_initNetSpeedPart]);
   static ServerStatus get status => ServerStatus(
     cpu: cpus,
-    mem: const Memory(total: 1, free: 1, avail: 1),
+    mem: mem,
     disk: [
       Disk(
         path: '/',

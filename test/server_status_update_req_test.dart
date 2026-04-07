@@ -27,7 +27,7 @@ void main() {
       );
 
       _expectClearedResult(result);
-      _expectPreviousStatusUnchanged(previous);
+      _expectPreviousStatusImmutableFields(previous);
     });
 
     test('invalid bsd payload does not reuse previous disk and metadata state', () async {
@@ -46,8 +46,8 @@ void main() {
         ),
       );
 
-      _expectClearedResult(result);
-      _expectPreviousStatusUnchanged(previous);
+      _expectBsdClearedResult(result);
+      _expectPreviousStatusImmutableFields(previous);
     });
 
     test('invalid windows payload does not reuse previous disk and metadata state', () async {
@@ -61,14 +61,14 @@ void main() {
             WindowsStatusCmdType.time.name: '1710000000',
             WindowsStatusCmdType.disk.name: 'not a valid disk payload',
             WindowsStatusCmdType.host.name: '',
-            WindowsStatusCmdType.sensors.name: '',
+            WindowsStatusCmdType.temp.name: '',
           },
           customCmds: const {},
         ),
       );
 
       _expectClearedResult(result);
-      _expectPreviousStatusUnchanged(previous);
+      _expectPreviousStatusImmutableFields(previous);
     });
 
     test('valid bsd disk payload computes disk usage summary', () async {
@@ -94,6 +94,8 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
   });
 }
 
+// These tests rely on `InitStatus.status` returning a fresh `ServerStatus`
+// instance on each call so this helper can safely seed per-test state.
 ServerStatus _createPreviousStatus() {
   final previous = InitStatus.status;
   previous.disk = [
@@ -125,7 +127,13 @@ void _expectClearedResult(ServerStatus result) {
   expect(result.sensors, isEmpty);
 }
 
-void _expectPreviousStatusUnchanged(ServerStatus previous) {
+void _expectBsdClearedResult(ServerStatus result) {
+  expect(result.disk, isEmpty);
+  expect(result.diskUsage, isNull);
+  expect(result.sensors, isEmpty);
+}
+
+void _expectPreviousStatusImmutableFields(ServerStatus previous) {
   expect(previous.disk, hasLength(1));
   expect(previous.disk.single.path, '/dev/old');
   expect(previous.diskUsage, isNotNull);

@@ -78,7 +78,11 @@ void _setupDebug() {
 Future<void> _doPlatformRelated() async {
   if (isAndroid) {
     // try switch to highest refresh rate
-    await FlutterDisplayMode.setHighRefreshRate();
+    try {
+      await FlutterDisplayMode.setHighRefreshRate();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to set high refresh rate', e, s);
+    }
   }
 
   final serversCount = Stores.server.keys().length;

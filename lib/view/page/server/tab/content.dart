@@ -83,6 +83,9 @@ ${ss.err?.message ?? 'null'}
     final cardNoti = _getCardNoti(id);
     return cardNoti.listenVal((v) {
       final isSpeed = v.diskIO ?? !Stores.setting.serverTabPreferDiskAmount.fetch();
+      final diskUsage = ss.diskUsage;
+      final total = diskUsage == null ? BigInt.zero.kb2Str : diskUsage.size.kb2Str;
+      final used = diskUsage == null ? BigInt.zero.kb2Str : diskUsage.used.kb2Str;
 
       final (r, w) = ss.diskIO.cachedAllSpeed;
 
@@ -92,8 +95,8 @@ ${ss.err?.message ?? 'null'}
           return FadeTransition(opacity: animation, child: child);
         },
         child: _buildIOData(
-          isSpeed ? '${l10n.read}:\n$r' : 'Total:\n${ss.diskUsage?.size.kb2Str}',
-          isSpeed ? '${l10n.write}:\n$w' : 'Used:\n${ss.diskUsage?.used.kb2Str}',
+          isSpeed ? '${l10n.read}:\n$r' : 'Total:\n$total',
+          isSpeed ? '${l10n.write}:\n$w' : 'Used:\n$used',
           onTap: () {
             cardNoti.value = v.copyWith(diskIO: !isSpeed);
           },
