@@ -83,6 +83,7 @@ abstract final class TermSessionManager {
     required int startTimeMs,
     required VoidCallback disconnect,
     TermSessionStatus status = TermSessionStatus.connecting,
+    bool setAsActive = false,
   }) {
     final info = TermSessionInfo(
       id: id,
@@ -92,7 +93,9 @@ abstract final class TermSessionManager {
       status: status,
     );
     _entries[id] = _Entry(info, disconnect, hasTerminalUI: true);
-    _activeId = id; // most recent as active
+    if (setAsActive) {
+      _activeId = id;
+    }
     _sync();
   }
 
@@ -196,6 +199,18 @@ abstract final class TermSessionManager {
       _entries[id] = _Entry(old.info, old.disconnect, hasTerminalUI: hasTerminal);
       _sync();
     }
+  }
+
+  /// Mark a session's terminal UI as hidden without promoting it to active.
+  static void hideTerminal(String id) {
+    final old = _entries[id];
+    if (old == null) return;
+
+    _entries[id] = _Entry(old.info, old.disconnect, hasTerminalUI: false);
+    if (_activeId == id) {
+      _activeId = null;
+    }
+    _sync();
   }
 
   /// Stop Live Activity when app is closed/terminated (iOS only).
