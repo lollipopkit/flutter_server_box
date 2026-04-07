@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Development
 
 - `flutter run` - Run the app in development mode
+- `flutter run --release -PallowDebugReleaseSigning=true` - Run Android release locally with explicit debug-signing fallback for verification only
 - `dart run fl_build -p PLATFORM` - Build the app for specific platform (see fl_build package)
 - `dart run build_runner build --delete-conflicting-outputs` - Generate code for models with annotations (json_serializable, freezed, hive, riverpod)
   - Every time you change model files, run this command to regenerate code (Hive adapters, Riverpod providers, etc.)
@@ -93,3 +94,11 @@ This is a Flutter application for managing Linux servers with the following key 
   - Before adding new strings, check if it already exists in `libL10n`.
   - Prioritize using strings from `libL10n` to avoid duplication, even if the meaning is not 100% exact, just use the substitution of `libL10n`.
 - Split UI into Widget build, Actions, Utils. use `extension on` to achieve this
+- Android release signing:
+  - Normal release builds must use the real release keystore from `key.properties`.
+  - Debug-signing fallback is for local verification only and must be enabled explicitly with `-PallowDebugReleaseSigning=true`.
+  - Do not use debug-signing fallback for formal release artifacts.
+- Android release artifacts:
+  - CI release builds for Android are split per ABI, not a single fat APK.
+  - Do not judge release size from a local `flutter build apk --release` fat APK.
+  - To reproduce CI-style Android artifacts locally, use `dart run fl_build -p android` or `flutter build apk --release --split-per-abi`.

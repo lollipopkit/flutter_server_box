@@ -17,11 +17,55 @@ def keystorePropertiesFile = rootProject.file('key.properties')
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 } else {
-    System.err.printf(" [!] key.properties not found in %s (%s). Build will fail. \n", rootProject, rootProject.file('.'))
+    System.err.printf(" [!] key.properties not found in %s (%s). \n", rootProject, rootProject.file('.'))
 }
 
-if (keystoreProperties['storeFile'] == null || !file(keystoreProperties['storeFile']).exists()) {
-    System.err.printf(" [!] storeFile defined in key.properties does not exist in %s. Build will fail. \n", file('.'))
+def storeFilePath = keystoreProperties['storeFile']?.toString()?.trim()
+def storePassword = keystoreProperties['storePassword']?.toString()?.trim()
+def keyAlias = keystoreProperties['keyAlias']?.toString()?.trim()
+def keyPassword = keystoreProperties['keyPassword']?.toString()?.trim()
+
+def hasReleaseSigning =
+    storeFilePath &&
+    file(storeFilePath).exists() &&
+    storePassword &&
+    keyAlias &&
+    keyPassword
+
+def allowDebugReleaseSigning = project.findProperty('allowDebugReleaseSigning') == 'true'
+def requestedTaskNames = gradle.startParameter.taskNames
+    .findAll {
+        !it.contains(':') ||
+        (it.startsWith(':') && it.indexOf(':', 1) == -1) ||
+        it.startsWith("${project.path}:") ||
+        it.startsWith(":${project.name}:")
+    }
+    .collect {
+        def normalizedTaskName =
+            (it.startsWith("${project.path}:") || it.startsWith(":${project.name}:"))
+                ? it.substring(it.lastIndexOf(':') + 1)
+                : it.startsWith(':') ? it.substring(1) : it
+        normalizedTaskName.toLowerCase()
+    }
+def aggregateSigningTasks = ['assemble', 'build', 'bundle', 'install']
+def requiresReleaseSigning = requestedTaskNames.any {
+    aggregateSigningTasks.contains(it) ||
+    it == 'release' ||
+    (it.startsWith('assemble') && it.contains('release')) ||
+    (it.startsWith('bundle') && it.contains('release')) ||
+    (it.startsWith('install') && it.contains('release')) ||
+    (it.startsWith('build') && it.contains('release'))
+}
+
+if (requiresReleaseSigning && !hasReleaseSigning) {
+    if (allowDebugReleaseSigning) {
+        System.err.printf(" [!] Release signing is unavailable. Falling back to debug signing because -PallowDebugReleaseSigning=true was provided. \n")
+    } else {
+        throw new GradleException(
+            'Release signing is not configured. Add key.properties with a valid storeFile, ' +
+            'or build with -PallowDebugReleaseSigning=true for local verification only.'
+        )
+    }
 }
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
@@ -70,16 +114,16 @@ android {
 
     signingConfigs {
         release {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-            storePassword keystoreProperties['storePassword']
+            keyAlias keyAlias
+            keyPassword keyPassword
+            storeFile storeFilePath ? file(storeFilePath) : null
+            storePassword storePassword
         }
     }
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
