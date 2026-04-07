@@ -837,13 +837,13 @@ abstract class AppLocalizations {
   /// No description provided for @letterCache.
   ///
   /// In en, this message translates to:
-  /// **'Letter caching'**
+  /// **'Normal keyboard input'**
   String get letterCache;
 
   /// No description provided for @letterCacheTip.
   ///
   /// In en, this message translates to:
-  /// **'Recommended to disable, but after disabling, it will be impossible to input CJK characters.'**
+  /// **'Enable this to avoid secure keyboards in the terminal on some systems, but input will go through the regular IME.'**
   String get letterCacheTip;
 
   /// No description provided for @madeWithLove.
