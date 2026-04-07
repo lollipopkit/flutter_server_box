@@ -97,6 +97,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   bool _isCheckingConnection = false;
   bool _disconnectDialogOpen = false;
   bool _reportedDisconnected = false;
+  VoidCallback? _visibilityListener;
 
   /// Used for (de)activate the wake lock and forground service
   static var _sshConnCount = 0;
@@ -109,6 +110,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
+    _removeVisibilityListener();
     Stores.setting.horizonVirtKey.listenable().removeListener(_handleVirtKeySettingsChanged);
     Stores.setting.sshVirtKeys.listenable().removeListener(_handleVirtKeySettingsChanged);
     Stores.setting.sshVirtKeysDisabled.listenable().removeListener(_handleVirtKeySettingsChanged);
@@ -137,6 +139,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     Stores.setting.horizonVirtKey.listenable().addListener(_handleVirtKeySettingsChanged);
     Stores.setting.sshVirtKeys.listenable().addListener(_handleVirtKeySettingsChanged);
     Stores.setting.sshVirtKeysDisabled.listenable().addListener(_handleVirtKeySettingsChanged);
+    _bindVisibilityListener();
     _setupDiscontinuityTimer();
     
     // Initialize client from provider
@@ -157,6 +160,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       startTimeMs: _sessionStartMs,
       disconnect: _disconnectFromNotification,
       status: TermSessionStatus.connecting,
+      setAsActive: _shouldActivateSessionOnInit,
     );
     if (_shouldActivateSessionOnInit) {
       TermSessionManager.setActive(_sessionId, hasTerminal: true);
@@ -455,6 +459,29 @@ class SSHPageState extends ConsumerState<SSHPage>
       return route?.isCurrent ?? true;
     }
     return widget.args.visibleListenable?.value ?? false;
+  }
+
+  void _bindVisibilityListener() {
+    final visibleListenable = widget.args.visibleListenable;
+    if (widget.args.notFromTab || visibleListenable == null || _visibilityListener != null) {
+      return;
+    }
+    void listener() {
+      if (!mounted || !visibleListenable.value) return;
+      TermSessionManager.setActive(_sessionId, hasTerminal: true);
+    }
+
+    _visibilityListener = listener;
+    visibleListenable.addListener(listener);
+  }
+
+  void _removeVisibilityListener() {
+    final visibleListenable = widget.args.visibleListenable;
+    final listener = _visibilityListener;
+    if (visibleListenable != null && listener != null) {
+      visibleListenable.removeListener(listener);
+    }
+    _visibilityListener = null;
   }
 
   void _handleVirtKeySettingsChanged() {

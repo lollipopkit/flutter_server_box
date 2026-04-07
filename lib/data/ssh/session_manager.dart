@@ -83,6 +83,7 @@ abstract final class TermSessionManager {
     required int startTimeMs,
     required VoidCallback disconnect,
     TermSessionStatus status = TermSessionStatus.connecting,
+    bool setAsActive = false,
   }) {
     final info = TermSessionInfo(
       id: id,
@@ -92,7 +93,9 @@ abstract final class TermSessionManager {
       status: status,
     );
     _entries[id] = _Entry(info, disconnect, hasTerminalUI: true);
-    _activeId = id; // most recent as active
+    if (setAsActive) {
+      _activeId = id;
+    }
     _sync();
   }
 

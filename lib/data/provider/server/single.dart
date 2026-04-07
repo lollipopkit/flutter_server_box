@@ -160,6 +160,7 @@ class ServerNotifier extends _$ServerNotifier {
           startTimeMs: time1.millisecondsSinceEpoch,
           disconnect: () => ref.read(serversProvider.notifier).closeOneServer(spi.id),
           status: TermSessionStatus.connecting,
+          setAsActive: false,
         );
         TermSessionManager.setActive(sessionId, hasTerminal: false);
       } catch (e) {
