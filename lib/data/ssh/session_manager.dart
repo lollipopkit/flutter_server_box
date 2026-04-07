@@ -201,6 +201,18 @@ abstract final class TermSessionManager {
     }
   }
 
+  /// Mark a session's terminal UI as hidden without promoting it to active.
+  static void hideTerminal(String id) {
+    final old = _entries[id];
+    if (old == null) return;
+
+    _entries[id] = _Entry(old.info, old.disconnect, hasTerminalUI: false);
+    if (_activeId == id) {
+      _activeId = null;
+    }
+    _sync();
+  }
+
   /// Stop Live Activity when app is closed/terminated (iOS only).
   static Future<void> stopLiveActivityOnAppClose() async {
     if (!isIOS) return;

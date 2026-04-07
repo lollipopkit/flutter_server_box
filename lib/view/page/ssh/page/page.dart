@@ -467,8 +467,12 @@ class SSHPageState extends ConsumerState<SSHPage>
       return;
     }
     void listener() {
-      if (!mounted || !visibleListenable.value) return;
-      TermSessionManager.setActive(_sessionId, hasTerminal: true);
+      if (!mounted) return;
+      if (visibleListenable.value) {
+        TermSessionManager.setActive(_sessionId, hasTerminal: true);
+      } else {
+        TermSessionManager.hideTerminal(_sessionId);
+      }
     }
 
     _visibilityListener = listener;
