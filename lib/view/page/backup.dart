@@ -176,7 +176,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
             trailing: StoreSwitch(
               prop: PrefProps.icloudSync,
               validator: (p0) async {
-                if (p0 && PrefProps.webdavSync.get()) {
+                if (p0 && (PrefProps.webdavSync.get() || PrefProps.gistSync.get())) {
                   context.showSnackBar(l10n.autoBackupConflict);
                   return false;
                 }
