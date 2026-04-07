@@ -391,10 +391,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lastSuccess => '最后成功';
 
   @override
-  String get letterCache => '输入法字符缓存';
+  String get letterCache => '普通键盘输入';
 
   @override
-  String get letterCacheTip => '推荐关闭，但是关闭后无法输入 CJK 等文字';
+  String get letterCacheTip => '开启后，输入内容会经过普通输入法，这样可避免部分系统在终端弹出安全键盘';
 
   @override
   String madeWithLove(Object myGithub) {
@@ -1281,10 +1281,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get lastSuccess => '最後成功';
 
   @override
-  String get letterCache => '輸入法字符快取';
+  String get letterCache => '一般鍵盤輸入';
 
   @override
-  String get letterCacheTip => '建議關閉，但關閉後將無法輸入 CJK 等文字。';
+  String get letterCacheTip => '開啟後，輸入內容會經過一般輸入法，這樣可避免部分系統在終端彈出安全鍵盤。';
 
   @override
   String madeWithLove(Object myGithub) {

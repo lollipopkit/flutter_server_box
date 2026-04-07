@@ -413,11 +413,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get lastSuccess => 'Laatst succesvol';
 
   @override
-  String get letterCache => 'Lettercaching';
+  String get letterCache => 'Normale toetsenbordinvoer';
 
   @override
   String get letterCacheTip =>
-      'Aanbevolen om uit te schakelen, maar na het uitschakelen is het niet mogelijk om CJK-tekens in te voeren.';
+      'Wanneer dit is ingeschakeld, gaat invoer via de normale IME, wat op sommige systemen beveiligde toetsenbordmeldingen in de terminal kan vermijden.';
 
   @override
   String madeWithLove(Object myGithub) {

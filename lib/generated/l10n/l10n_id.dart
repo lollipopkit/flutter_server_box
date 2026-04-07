@@ -412,11 +412,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get lastSuccess => 'Sukses Terakhir';
 
   @override
-  String get letterCache => 'Caching huruf';
+  String get letterCache => 'Input keyboard biasa';
 
   @override
   String get letterCacheTip =>
-      'Direkomendasikan untuk menonaktifkan, tetapi setelah dinonaktifkan, tidak mungkin untuk memasukkan karakter CJK.';
+      'Saat diaktifkan, input akan melalui IME biasa, yang dapat menghindari prompt keyboard aman di terminal pada beberapa sistem.';
 
   @override
   String madeWithLove(Object myGithub) {

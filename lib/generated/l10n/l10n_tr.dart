@@ -412,11 +412,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get lastSuccess => 'Son Başarı';
 
   @override
-  String get letterCache => 'Harf önbelleği';
+  String get letterCache => 'Normal klavye girişi';
 
   @override
   String get letterCacheTip =>
-      'Devre dışı bırakılması önerilir, ancak devre dışı bırakıldığında CJK karakterlerini girmek mümkün olmayacaktır.';
+      'Etkinleştirildiğinde giriş normal IME üzerinden yapılır; bu da bazı sistemlerde terminalde güvenli klavye istemlerini önleyebilir.';
 
   @override
   String madeWithLove(Object myGithub) {

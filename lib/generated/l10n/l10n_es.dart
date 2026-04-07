@@ -413,11 +413,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get lastSuccess => 'Último éxito';
 
   @override
-  String get letterCache => 'Caché de letras';
+  String get letterCache => 'Entrada normal del teclado';
 
   @override
   String get letterCacheTip =>
-      'Recomendado desactivar, pero después de desactivarlo, no se podrán ingresar caracteres CJK.';
+      'Cuando está activado, la entrada pasa por el IME normal, lo que puede evitar avisos de teclado seguro en el terminal en algunos sistemas.';
 
   @override
   String madeWithLove(Object myGithub) {

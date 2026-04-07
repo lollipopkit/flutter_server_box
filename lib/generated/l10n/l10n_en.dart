@@ -412,11 +412,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lastSuccess => 'Last Success';
 
   @override
-  String get letterCache => 'Letter caching';
+  String get letterCache => 'Normal keyboard input';
 
   @override
   String get letterCacheTip =>
-      'Recommended to disable, but after disabling, it will be impossible to input CJK characters.';
+      'When enabled, input goes through the regular IME, which can avoid secure keyboard prompts in the terminal on some systems.';
 
   @override
   String madeWithLove(Object myGithub) {

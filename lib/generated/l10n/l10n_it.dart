@@ -412,11 +412,11 @@ class AppLocalizationsIt extends AppLocalizations {
   String get lastSuccess => 'Ultimo successo';
 
   @override
-  String get letterCache => 'Cache lettere';
+  String get letterCache => 'Input da tastiera normale';
 
   @override
   String get letterCacheTip =>
-      'Si consiglia di disabilitare, ma dopo aver disabilitato, non sarà possibile inserire caratteri CJK.';
+      'Quando è attiva, l\'input passa attraverso l\'IME normale, il che può evitare i prompt della tastiera sicura nel terminale su alcuni sistemi.';
 
   @override
   String madeWithLove(Object myGithub) {
