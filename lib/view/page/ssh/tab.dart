@@ -22,11 +22,17 @@ class SSHTabPage extends ConsumerStatefulWidget {
   static const route = AppRouteNoArg(page: SSHTabPage.new, path: '/ssh');
 }
 
-typedef _TabMap = Map<String, ({Widget page, FocusNode? focus})>;
+typedef _TabMap = Map<String, ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})>;
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  late final _TabMap _tabMap = {libL10n.add: (page: _AddPage(sortVersionVN: _sortVersionVN, onTapInitCard: _onTapInitCard, onLongPressInitCard: _onLongPressInitCard), focus: null)};
+  late final _TabMap _tabMap = {
+    libL10n.add: (
+      page: _AddPage(sortVersionVN: _sortVersionVN, onTapInitCard: _onTapInitCard, onLongPressInitCard: _onLongPressInitCard),
+      focus: null,
+      visible: null,
+    ),
+  };
   final _pageCtrl = PageController();
   final _fabVN = 0.vn;
   final _tabRN = RNode();
@@ -34,6 +40,11 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
 
   @override
   void dispose() {
+    final entries = _tabMap.values.toList(growable: false);
+    _tabMap.clear();
+    for (final entry in entries) {
+      _disposeTabEntry(entry);
+    }
     super.dispose();
     _pageCtrl.dispose();
     _tabRN.dispose();
@@ -87,7 +98,10 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
             final name = _tabMap.keys.elementAt(idx);
             return _tabMap[name]?.page ?? UIs.placeholder;
           },
-          onPageChanged: (value) => _fabVN.value = value,
+          onPageChanged: (value) {
+            _fabVN.value = value;
+            _syncVisibleTabs(value);
+          },
         );
       },
     );
@@ -98,6 +112,68 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
 }
 
 extension on _SSHTabPageState {
+  void _disposeTabEntry(({Widget page, FocusNode? focus, ValueNotifier<bool>? visible}) entry) {
+    entry.focus?.dispose();
+    entry.visible?.dispose();
+  }
+
+  ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})? _detachTabEntry(String name) {
+    return _tabMap.remove(name);
+  }
+
+  void _disposeTabEntryAfterFrame(({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})? entry) {
+    if (entry == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _disposeTabEntry(entry);
+    });
+  }
+
+  Future<void> _handleTabRemoved(
+    String name, {
+    Duration duration = Durations.medium1,
+    Curve curve = Curves.fastEaseInToSlowEaseOut,
+  }) async {
+    final removedIndex = _tabMap.keys.toList().indexOf(name);
+    final currentIndex = _fabVN.value;
+    final removed = _detachTabEntry(name);
+    if (!mounted) {
+      if (removed != null) {
+        _disposeTabEntry(removed);
+      }
+      return;
+    }
+
+    _tabRN.notify();
+    _disposeTabEntryAfterFrame(removed);
+    if (_tabMap.isEmpty) {
+      _fabVN.value = 0;
+      return;
+    }
+
+    final maxIndex = _tabMap.length - 1;
+    final nextIndex = () {
+      if (removedIndex == -1) {
+        return currentIndex.clamp(0, maxIndex);
+      }
+      if (currentIndex > removedIndex) {
+        return (currentIndex - 1).clamp(0, maxIndex);
+      }
+      return currentIndex.clamp(0, maxIndex);
+    }();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted || !_pageCtrl.hasClients) return;
+      await _toPage(nextIndex, duration: duration, curve: curve);
+    });
+  }
+
+  void _syncVisibleTabs(int activeIndex) {
+    for (var i = 0; i < _tabMap.length; i++) {
+      final entry = _tabMap.values.elementAt(i);
+      entry.visible?.value = i == activeIndex;
+    }
+  }
+
   void _onTapInitCard(Spi spi) async {
     final name = () {
       final reg = RegExp('${spi.name}\\((\\d+)\\)');
@@ -113,19 +189,24 @@ extension on _SSHTabPageState {
       return spi.name;
     }();
     final key = Key(name);
+    final focusNode = FocusNode();
+    final visibleVN = ValueNotifier(false);
     final args = SshPageArgs(
       spi: spi,
       notFromTab: false,
       onSessionEnd: () {
-        _tabMap.remove(name);
+        _handleTabRemoved(name).ignore();
       },
+      focusNode: focusNode,
+      visibleListenable: visibleVN,
     );
     _tabMap[name] = (
       page: SSHPage(
         key: key, // Keep it, or the Flutter will works unexpectedly
         args: args,
       ),
-      focus: FocusNode(),
+      focus: focusNode,
+      visible: visibleVN,
     );
     _tabRN.notify();
     Stores.history.sshServerHistory.add(spi.id);
@@ -139,8 +220,14 @@ extension on _SSHTabPageState {
     ServerEditPage.route.go(context, args: SpiRequiredArgs(spi));
   }
 
-  Future<void> _toPage(int idx) async {
-    await _pageCtrl.animateToPage(idx, duration: Durations.short3, curve: Curves.fastEaseInToSlowEaseOut);
+  Future<void> _toPage(
+    int idx, {
+    Duration duration = Durations.short3,
+    Curve curve = Curves.fastEaseInToSlowEaseOut,
+  }) async {
+    _fabVN.value = idx;
+    await _pageCtrl.animateToPage(idx, duration: duration, curve: curve);
+    _syncVisibleTabs(idx);
     final focus = _tabMap.values.elementAt(idx).focus;
     if (focus != null) {
       FocusScope.of(context).requestFocus(focus);
@@ -159,10 +246,7 @@ extension on _SSHTabPageState {
     );
     Future.delayed(Durations.short1, FocusScope.of(context).unfocus);
     if (confirm != true) return;
-
-    _tabMap.remove(name);
-    _tabRN.notify();
-    _pageCtrl.previousPage(duration: Durations.medium1, curve: Curves.fastEaseInToSlowEaseOut);
+    await _handleTabRemoved(name);
   }
 
   Widget buildSortBtn(BuildContext context) {

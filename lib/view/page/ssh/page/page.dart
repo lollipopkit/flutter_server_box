@@ -5,6 +5,7 @@ import 'dart:ui';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,6 +42,7 @@ final class SshPageArgs {
   final Function()? onSessionEnd;
   final GlobalKey<TerminalViewState>? terminalKey;
   final FocusNode? focusNode;
+  final ValueListenable<bool>? visibleListenable;
 
   const SshPageArgs({
     required this.spi,
@@ -50,6 +52,7 @@ final class SshPageArgs {
     this.onSessionEnd,
     this.terminalKey,
     this.focusNode,
+    this.visibleListenable,
   });
 }
 
@@ -67,7 +70,7 @@ class SSHPage extends ConsumerStatefulWidget {
 const _horizonPadding = 7.0;
 
 class SSHPageState extends ConsumerState<SSHPage>
-    with AutomaticKeepAliveClientMixin, AfterLayoutMixin, TickerProviderStateMixin {
+    with AutomaticKeepAliveClientMixin, AfterLayoutMixin, TickerProviderStateMixin, WidgetsBindingObserver {
   late final _terminal = Terminal();
   late final TerminalController _terminalController = TerminalController(vsync: this);
   final List<List<VirtKey>> _virtKeysList = [];
@@ -99,6 +102,7 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
@@ -124,6 +128,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initStoredCfg();
     _reloadVirtKeys();
     Stores.setting.horizonVirtKey.listenable().addListener(_handleVirtKeySettingsChanged);
@@ -151,6 +156,34 @@ class SSHPageState extends ConsumerState<SSHPage>
       status: TermSessionStatus.connecting,
     );
     TermSessionManager.setActive(_sessionId, hasTerminal: true);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (!mounted) return;
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        if (!_isVisibleSessionPage) return;
+        TermSessionManager.setActive(_sessionId, hasTerminal: true);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || !_isVisibleSessionPage) return;
+          widget.args.focusNode?.requestFocus();
+          _termKey.currentState?.requestKeyboard();
+        });
+        unawaited(_checkConnectionHealth());
+        if (_discontinuityTimer == null || !_discontinuityTimer!.isActive) {
+          _setupDiscontinuityTimer();
+        }
+        break;
+      case AppLifecycleState.paused:
+        if (!_isVisibleSessionPage) return;
+        TermSessionManager.setActive(_sessionId, hasTerminal: false);
+        break;
+      default:
+        break;
+    }
   }
 
   @override
@@ -405,6 +438,14 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   @override
   bool get wantKeepAlive => true;
+
+  bool get _isVisibleSessionPage {
+    if (widget.args.notFromTab) {
+      final route = ModalRoute.of(context);
+      return route?.isCurrent ?? true;
+    }
+    return widget.args.visibleListenable?.value ?? false;
+  }
 
   void _handleVirtKeySettingsChanged() {
     if (!mounted) return;
