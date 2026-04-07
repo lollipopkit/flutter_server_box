@@ -268,6 +268,12 @@ Future<ServerStatus> _getBsdStatus(ServerStatusUpdateReq req) async {
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }
+
+  try {
+    req.ss.diskUsage = req.ss.disk.isEmpty ? null : DiskUsage.parse(req.ss.disk);
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
   return req.ss;
 }
 
@@ -453,7 +459,7 @@ void _parseWindowsDiskData(ServerStatusUpdateReq req, Map<String, String> parsed
     if (diskRaw.isNotEmpty && diskRaw != 'null') {
       final disks = WindowsParser.parseDisks(diskRaw);
       req.ss.disk = disks;
-      req.ss.diskUsage = DiskUsage.parse(disks);
+      req.ss.diskUsage = disks.isEmpty ? null : DiskUsage.parse(disks);
     }
   } catch (e, s) {
     Loggers.app.warning('Windows disk parsing failed: $e', s);
