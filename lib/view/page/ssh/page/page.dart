@@ -67,7 +67,7 @@ class SSHPage extends ConsumerStatefulWidget {
 const _horizonPadding = 7.0;
 
 class SSHPageState extends ConsumerState<SSHPage>
-    with AutomaticKeepAliveClientMixin, AfterLayoutMixin, TickerProviderStateMixin {
+    with AutomaticKeepAliveClientMixin, AfterLayoutMixin, TickerProviderStateMixin, WidgetsBindingObserver {
   late final _terminal = Terminal();
   late final TerminalController _terminalController = TerminalController(vsync: this);
   final List<List<VirtKey>> _virtKeysList = [];
@@ -99,6 +99,7 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
@@ -124,6 +125,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initStoredCfg();
     _reloadVirtKeys();
     Stores.setting.horizonVirtKey.listenable().addListener(_handleVirtKeySettingsChanged);
@@ -151,6 +153,32 @@ class SSHPageState extends ConsumerState<SSHPage>
       status: TermSessionStatus.connecting,
     );
     TermSessionManager.setActive(_sessionId, hasTerminal: true);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (!mounted) return;
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        TermSessionManager.setActive(_sessionId, hasTerminal: true);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          widget.args.focusNode?.requestFocus();
+          _termKey.currentState?.requestKeyboard();
+        });
+        unawaited(_checkConnectionHealth());
+        if (_discontinuityTimer == null || !_discontinuityTimer!.isActive) {
+          _setupDiscontinuityTimer();
+        }
+        break;
+      case AppLifecycleState.paused:
+        TermSessionManager.setActive(_sessionId, hasTerminal: true);
+        break;
+      default:
+        break;
+    }
   }
 
   @override

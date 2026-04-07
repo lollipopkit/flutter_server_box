@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -36,13 +37,38 @@ class _HomePageState extends ConsumerState<HomePage>
   DateTime? _pausedTime;
 
   late final _notifier = ref.read(serversProvider.notifier);
-  late final _provider = ref.read(serversProvider);
   late List<AppTab> _tabs = Stores.setting.homeTabs.fetch();
+ 
+  void _handleHomeTabsChanged() {
+    final newTabs = Stores.setting.homeTabs.fetch();
+    if (mounted && newTabs != _tabs) {
+      setState(() {
+        _tabs = newTabs;
+        // Ensure current page index is valid
+        if (_selectIndex.value >= _tabs.length) {
+          _selectIndex.value = _tabs.length - 1;
+        }
+        if (_selectIndex.value < 0 && _tabs.isNotEmpty) {
+          _selectIndex.value = 0;
+        }
+      });
+    }
+  }
+
+  void _handleRefreshIntervalChanged() {
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (isDesktop || lifecycle == null || lifecycle == AppLifecycleState.resumed) {
+      unawaited(_notifier.startAutoRefresh());
+      unawaited(_notifier.refresh());
+    }
+  }
 
   @override
   void dispose() {
     super.dispose();
     WidgetsBinding.instance.removeObserver(this);
+    Stores.setting.homeTabs.listenable().removeListener(_handleHomeTabsChanged);
+    Stores.setting.serverStatusUpdateInterval.listenable().removeListener(_handleRefreshIntervalChanged);
     // In release builds (real app exit), close connections.
     // In debug (hot reload), avoid forcing disconnects.
     if (kReleaseMode) {
@@ -69,21 +95,8 @@ class _HomePageState extends ConsumerState<HomePage>
     }
 
     // Listen to homeTabs changes
-    Stores.setting.homeTabs.listenable().addListener(() {
-      final newTabs = Stores.setting.homeTabs.fetch();
-      if (mounted && newTabs != _tabs) {
-        setState(() {
-          _tabs = newTabs;
-          // Ensure current page index is valid
-          if (_selectIndex.value >= _tabs.length) {
-            _selectIndex.value = _tabs.length - 1;
-          }
-          if (_selectIndex.value < 0 && _tabs.isNotEmpty) {
-            _selectIndex.value = 0;
-          }
-        });
-      }
-    });
+    Stores.setting.homeTabs.listenable().addListener(_handleHomeTabsChanged);
+    Stores.setting.serverStatusUpdateInterval.listenable().addListener(_handleRefreshIntervalChanged);
   }
 
   @override
@@ -108,9 +121,8 @@ class _HomePageState extends ConsumerState<HomePage>
           }
         }
         final serverNotifier = _notifier;
-        if (_provider.autoRefreshTimer == null) {
-          serverNotifier.startAutoRefresh();
-        }
+        unawaited(serverNotifier.startAutoRefresh());
+        unawaited(serverNotifier.refresh());
         MethodChans.updateHomeWidget();
         break;
       case AppLifecycleState.paused:
