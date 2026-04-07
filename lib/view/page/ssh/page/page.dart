@@ -5,6 +5,7 @@ import 'dart:ui';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,6 +42,7 @@ final class SshPageArgs {
   final Function()? onSessionEnd;
   final GlobalKey<TerminalViewState>? terminalKey;
   final FocusNode? focusNode;
+  final ValueListenable<bool>? visibleListenable;
 
   const SshPageArgs({
     required this.spi,
@@ -50,6 +52,7 @@ final class SshPageArgs {
     this.onSessionEnd,
     this.terminalKey,
     this.focusNode,
+    this.visibleListenable,
   });
 }
 
@@ -162,9 +165,10 @@ class SSHPageState extends ConsumerState<SSHPage>
 
     switch (state) {
       case AppLifecycleState.resumed:
+        if (!_isVisibleSessionPage) return;
         TermSessionManager.setActive(_sessionId, hasTerminal: true);
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
+          if (!mounted || !_isVisibleSessionPage) return;
           widget.args.focusNode?.requestFocus();
           _termKey.currentState?.requestKeyboard();
         });
@@ -174,6 +178,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         }
         break;
       case AppLifecycleState.paused:
+        if (!_isVisibleSessionPage) return;
         TermSessionManager.setActive(_sessionId, hasTerminal: true);
         break;
       default:
@@ -433,6 +438,14 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   @override
   bool get wantKeepAlive => true;
+
+  bool get _isVisibleSessionPage {
+    if (widget.args.notFromTab) {
+      final route = ModalRoute.of(context);
+      return route?.isCurrent ?? true;
+    }
+    return widget.args.visibleListenable?.value ?? false;
+  }
 
   void _handleVirtKeySettingsChanged() {
     if (!mounted) return;

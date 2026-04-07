@@ -38,30 +38,6 @@ class _HomePageState extends ConsumerState<HomePage>
 
   late final _notifier = ref.read(serversProvider.notifier);
   late List<AppTab> _tabs = Stores.setting.homeTabs.fetch();
- 
-  void _handleHomeTabsChanged() {
-    final newTabs = Stores.setting.homeTabs.fetch();
-    if (mounted && newTabs != _tabs) {
-      setState(() {
-        _tabs = newTabs;
-        // Ensure current page index is valid
-        if (_selectIndex.value >= _tabs.length) {
-          _selectIndex.value = _tabs.length - 1;
-        }
-        if (_selectIndex.value < 0 && _tabs.isNotEmpty) {
-          _selectIndex.value = 0;
-        }
-      });
-    }
-  }
-
-  void _handleRefreshIntervalChanged() {
-    final lifecycle = WidgetsBinding.instance.lifecycleState;
-    if (isDesktop || lifecycle == null || lifecycle == AppLifecycleState.resumed) {
-      unawaited(_notifier.startAutoRefresh());
-      unawaited(_notifier.refresh());
-    }
-  }
 
   @override
   void dispose() {
@@ -311,5 +287,33 @@ final class _AppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize {
     return Size.fromHeight(paddingTop);
+  }
+}
+
+extension _HomePageStateActions on _HomePageState {
+  void _handleHomeTabsChanged() {
+    final newTabs = Stores.setting.homeTabs.fetch();
+    if (!mounted || newTabs == _tabs) return;
+
+    final previousIndex = _selectIndex.value;
+    final clampedIndex = newTabs.isEmpty ? 0 : previousIndex.clamp(0, newTabs.length - 1);
+
+    // ignore: invalid_use_of_protected_member
+    setState(() {
+      _tabs = newTabs;
+      _selectIndex.value = clampedIndex;
+    });
+
+    if (clampedIndex != previousIndex && _pageController.hasClients) {
+      _pageController.jumpToPage(clampedIndex);
+    }
+  }
+
+  void _handleRefreshIntervalChanged() {
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (isDesktop || lifecycle == null || lifecycle == AppLifecycleState.resumed) {
+      unawaited(_notifier.startAutoRefresh());
+      unawaited(_notifier.refresh());
+    }
   }
 }

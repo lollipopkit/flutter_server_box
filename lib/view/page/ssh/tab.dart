@@ -22,11 +22,17 @@ class SSHTabPage extends ConsumerStatefulWidget {
   static const route = AppRouteNoArg(page: SSHTabPage.new, path: '/ssh');
 }
 
-typedef _TabMap = Map<String, ({Widget page, FocusNode? focus})>;
+typedef _TabMap = Map<String, ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})>;
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  late final _TabMap _tabMap = {libL10n.add: (page: _AddPage(sortVersionVN: _sortVersionVN, onTapInitCard: _onTapInitCard, onLongPressInitCard: _onLongPressInitCard), focus: null)};
+  late final _TabMap _tabMap = {
+    libL10n.add: (
+      page: _AddPage(sortVersionVN: _sortVersionVN, onTapInitCard: _onTapInitCard, onLongPressInitCard: _onLongPressInitCard),
+      focus: null,
+      visible: null,
+    ),
+  };
   final _pageCtrl = PageController();
   final _fabVN = 0.vn;
   final _tabRN = RNode();
@@ -34,6 +40,10 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
 
   @override
   void dispose() {
+    for (final entry in _tabMap.values) {
+      entry.focus?.dispose();
+      entry.visible?.dispose();
+    }
     super.dispose();
     _pageCtrl.dispose();
     _tabRN.dispose();
@@ -87,7 +97,10 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
             final name = _tabMap.keys.elementAt(idx);
             return _tabMap[name]?.page ?? UIs.placeholder;
           },
-          onPageChanged: (value) => _fabVN.value = value,
+          onPageChanged: (value) {
+            _fabVN.value = value;
+            _syncVisibleTabs(value);
+          },
         );
       },
     );
@@ -98,6 +111,13 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
 }
 
 extension on _SSHTabPageState {
+  void _syncVisibleTabs(int activeIndex) {
+    for (var i = 0; i < _tabMap.length; i++) {
+      final entry = _tabMap.values.elementAt(i);
+      entry.visible?.value = i == activeIndex;
+    }
+  }
+
   void _onTapInitCard(Spi spi) async {
     final name = () {
       final reg = RegExp('${spi.name}\\((\\d+)\\)');
@@ -113,19 +133,27 @@ extension on _SSHTabPageState {
       return spi.name;
     }();
     final key = Key(name);
+    final focusNode = FocusNode();
+    final visibleVN = ValueNotifier(false);
     final args = SshPageArgs(
       spi: spi,
       notFromTab: false,
       onSessionEnd: () {
-        _tabMap.remove(name);
+        final removed = _tabMap.remove(name);
+        removed?.focus?.dispose();
+        removed?.visible?.dispose();
+        _syncVisibleTabs(_fabVN.value.clamp(0, _tabMap.length - 1));
       },
+      focusNode: focusNode,
+      visibleListenable: visibleVN,
     );
     _tabMap[name] = (
       page: SSHPage(
         key: key, // Keep it, or the Flutter will works unexpectedly
         args: args,
       ),
-      focus: FocusNode(),
+      focus: focusNode,
+      visible: visibleVN,
     );
     _tabRN.notify();
     Stores.history.sshServerHistory.add(spi.id);
@@ -141,6 +169,7 @@ extension on _SSHTabPageState {
 
   Future<void> _toPage(int idx) async {
     await _pageCtrl.animateToPage(idx, duration: Durations.short3, curve: Curves.fastEaseInToSlowEaseOut);
+    _syncVisibleTabs(idx);
     final focus = _tabMap.values.elementAt(idx).focus;
     if (focus != null) {
       FocusScope.of(context).requestFocus(focus);
@@ -160,9 +189,16 @@ extension on _SSHTabPageState {
     Future.delayed(Durations.short1, FocusScope.of(context).unfocus);
     if (confirm != true) return;
 
-    _tabMap.remove(name);
+    final removedIndex = _tabMap.keys.toList().indexOf(name);
+    final removed = _tabMap.remove(name);
+    removed?.visible?.dispose();
+    removed?.focus?.dispose();
     _tabRN.notify();
-    _pageCtrl.previousPage(duration: Durations.medium1, curve: Curves.fastEaseInToSlowEaseOut);
+    if (_tabMap.isEmpty) return;
+
+    final nextIndex = removedIndex.clamp(0, _tabMap.length - 1);
+    _syncVisibleTabs(nextIndex);
+    _pageCtrl.animateToPage(nextIndex, duration: Durations.medium1, curve: Curves.fastEaseInToSlowEaseOut);
   }
 
   Widget buildSortBtn(BuildContext context) {
