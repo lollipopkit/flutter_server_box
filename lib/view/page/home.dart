@@ -305,7 +305,10 @@ extension _HomePageStateActions on _HomePageState {
     });
 
     if (clampedIndex != previousIndex && _pageController.hasClients) {
-      _pageController.jumpToPage(clampedIndex);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_pageController.hasClients) return;
+        _pageController.jumpToPage(clampedIndex);
+      });
     }
   }
 

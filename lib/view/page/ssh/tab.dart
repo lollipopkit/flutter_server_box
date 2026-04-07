@@ -40,9 +40,10 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
 
   @override
   void dispose() {
-    for (final entry in _tabMap.values) {
-      entry.focus?.dispose();
-      entry.visible?.dispose();
+    final entries = _tabMap.values.toList(growable: false);
+    _tabMap.clear();
+    for (final entry in entries) {
+      _disposeTabEntry(entry);
     }
     super.dispose();
     _pageCtrl.dispose();
@@ -111,6 +112,61 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
 }
 
 extension on _SSHTabPageState {
+  void _disposeTabEntry(({Widget page, FocusNode? focus, ValueNotifier<bool>? visible}) entry) {
+    entry.focus?.dispose();
+    entry.visible?.dispose();
+  }
+
+  ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})? _detachTabEntry(String name) {
+    return _tabMap.remove(name);
+  }
+
+  void _disposeTabEntryAfterFrame(({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})? entry) {
+    if (entry == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _disposeTabEntry(entry);
+    });
+  }
+
+  Future<void> _handleTabRemoved(
+    String name, {
+    Duration duration = Durations.medium1,
+    Curve curve = Curves.fastEaseInToSlowEaseOut,
+  }) async {
+    final removedIndex = _tabMap.keys.toList().indexOf(name);
+    final currentIndex = _fabVN.value;
+    final removed = _detachTabEntry(name);
+    if (!mounted) {
+      if (removed != null) {
+        _disposeTabEntry(removed);
+      }
+      return;
+    }
+
+    _tabRN.notify();
+    _disposeTabEntryAfterFrame(removed);
+    if (_tabMap.isEmpty) {
+      _fabVN.value = 0;
+      return;
+    }
+
+    final maxIndex = _tabMap.length - 1;
+    final nextIndex = () {
+      if (removedIndex == -1) {
+        return currentIndex.clamp(0, maxIndex);
+      }
+      if (currentIndex > removedIndex) {
+        return (currentIndex - 1).clamp(0, maxIndex);
+      }
+      return currentIndex.clamp(0, maxIndex);
+    }();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted || !_pageCtrl.hasClients) return;
+      await _toPage(nextIndex, duration: duration, curve: curve);
+    });
+  }
+
   void _syncVisibleTabs(int activeIndex) {
     for (var i = 0; i < _tabMap.length; i++) {
       final entry = _tabMap.values.elementAt(i);
@@ -139,10 +195,7 @@ extension on _SSHTabPageState {
       spi: spi,
       notFromTab: false,
       onSessionEnd: () {
-        final removed = _tabMap.remove(name);
-        removed?.focus?.dispose();
-        removed?.visible?.dispose();
-        _syncVisibleTabs(_fabVN.value.clamp(0, _tabMap.length - 1));
+        _handleTabRemoved(name).ignore();
       },
       focusNode: focusNode,
       visibleListenable: visibleVN,
@@ -167,8 +220,13 @@ extension on _SSHTabPageState {
     ServerEditPage.route.go(context, args: SpiRequiredArgs(spi));
   }
 
-  Future<void> _toPage(int idx) async {
-    await _pageCtrl.animateToPage(idx, duration: Durations.short3, curve: Curves.fastEaseInToSlowEaseOut);
+  Future<void> _toPage(
+    int idx, {
+    Duration duration = Durations.short3,
+    Curve curve = Curves.fastEaseInToSlowEaseOut,
+  }) async {
+    _fabVN.value = idx;
+    await _pageCtrl.animateToPage(idx, duration: duration, curve: curve);
     _syncVisibleTabs(idx);
     final focus = _tabMap.values.elementAt(idx).focus;
     if (focus != null) {
@@ -188,17 +246,7 @@ extension on _SSHTabPageState {
     );
     Future.delayed(Durations.short1, FocusScope.of(context).unfocus);
     if (confirm != true) return;
-
-    final removedIndex = _tabMap.keys.toList().indexOf(name);
-    final removed = _tabMap.remove(name);
-    removed?.visible?.dispose();
-    removed?.focus?.dispose();
-    _tabRN.notify();
-    if (_tabMap.isEmpty) return;
-
-    final nextIndex = removedIndex.clamp(0, _tabMap.length - 1);
-    _syncVisibleTabs(nextIndex);
-    _pageCtrl.animateToPage(nextIndex, duration: Durations.medium1, curve: Curves.fastEaseInToSlowEaseOut);
+    await _handleTabRemoved(name);
   }
 
   Widget buildSortBtn(BuildContext context) {

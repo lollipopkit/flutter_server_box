@@ -179,7 +179,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         break;
       case AppLifecycleState.paused:
         if (!_isVisibleSessionPage) return;
-        TermSessionManager.setActive(_sessionId, hasTerminal: true);
+        TermSessionManager.setActive(_sessionId, hasTerminal: false);
         break;
       default:
         break;
