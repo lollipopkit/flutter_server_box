@@ -250,7 +250,8 @@ Future<ServerStatus> _getBsdStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    req.ss.cpu = parseBsdCpu(BSDStatusCmdType.cpu.findInMap(parsedOutput));
+    final cpu = parseBsdCpu(BSDStatusCmdType.cpu.findInMap(parsedOutput));
+    req.ss.cpu.update(cpu.now);
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }

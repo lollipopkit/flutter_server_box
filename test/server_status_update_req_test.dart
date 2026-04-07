@@ -91,6 +91,24 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
       expect(result.diskUsage!.size, greaterThan(BigInt.zero));
       expect(result.diskUsage!.used, greaterThan(BigInt.zero));
     });
+
+    test('bsd refresh preserves shared cpu history object', () async {
+      final previous = InitStatus.status;
+      final sharedCpu = previous.cpu;
+
+      final result = await getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.bsd,
+          ss: previous,
+          parsedOutput: {
+            BSDStatusCmdType.cpu.name: 'CPU usage: 14.70% user, 12.76% sys, 72.52% idle',
+          },
+          customCmds: const {},
+        ),
+      );
+
+      expect(identical(result.cpu, sharedCpu), isTrue);
+    });
   });
 }
 
