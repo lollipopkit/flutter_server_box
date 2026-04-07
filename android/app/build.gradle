@@ -22,8 +22,10 @@ if (keystorePropertiesFile.exists()) {
 
 def hasReleaseSigning = keystoreProperties['storeFile'] != null && file(keystoreProperties['storeFile']).exists()
 def allowDebugReleaseSigning = project.findProperty('allowDebugReleaseSigning') == 'true'
+def requestedTaskNames = gradle.startParameter.taskNames.collect { it.toLowerCase() }
+def requiresReleaseSigning = requestedTaskNames.any { it.contains('release') }
 
-if (!hasReleaseSigning) {
+if (requiresReleaseSigning && !hasReleaseSigning) {
     if (allowDebugReleaseSigning) {
         System.err.printf(" [!] Release signing is unavailable. Falling back to debug signing because -PallowDebugReleaseSigning=true was provided. \n")
     } else {
