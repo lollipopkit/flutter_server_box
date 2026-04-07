@@ -775,6 +775,13 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get syncAppSettings => 'Sync app settings';
+
+  @override
+  String get syncAppSettingsTip =>
+      'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
+
+  @override
   String get syncTip =>
       'Un redémarrage peut être nécessaire pour que certains changements prennent effet.';
 

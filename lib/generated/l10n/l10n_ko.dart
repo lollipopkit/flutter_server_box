@@ -737,6 +737,13 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get syncAppSettings => 'Sync app settings';
+
+  @override
+  String get syncAppSettingsTip =>
+      'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
+
+  @override
   String get syncTip => '일부 변경 사항은 재시작해야 적용될 수 있습니다.';
 
   @override

@@ -53,7 +53,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     final keyChanged = await Mergeable.mergeStore(backupData: keys, store: Stores.key, force: force);
     await Mergeable.mergeStore(backupData: container, store: Stores.container, force: force);
     await Mergeable.mergeStore(backupData: history, store: Stores.history, force: force);
-    await Mergeable.mergeStore(backupData: settings, store: Stores.setting, force: force);
+    if (settings.isNotEmpty) {
+      await Mergeable.mergeStore(backupData: settings, store: Stores.setting, force: force);
+    }
 
     if (serverChanged) GlobalRef.gRef?.read(serversProvider.notifier).reload();
     if (snippetChanged) GlobalRef.gRef?.read(snippetProvider.notifier).reload();
@@ -64,7 +66,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
 
   static const formatVer = 2;
 
-  static Future<BackupV2> loadFromStore() async {
+  static Future<BackupV2> loadFromStore({bool includeSettings = true}) async {
     return BackupV2(
       version: formatVer,
       date: DateTimeX.timestamp,
@@ -73,12 +75,12 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       keys: Stores.key.getAllMap(includeInternalKeys: true),
       container: Stores.container.getAllMap(includeInternalKeys: true),
       history: Stores.history.getAllMap(includeInternalKeys: true),
-      settings: Stores.setting.getAllMap(includeInternalKeys: true),
+      settings: includeSettings ? Stores.setting.getAllMap(includeInternalKeys: true) : const {},
     );
   }
 
-  static Future<String> backup([String? name, String? password]) async {
-    final bak = await BackupV2.loadFromStore();
+  static Future<String> backup([String? name, String? password, bool includeSettings = true]) async {
+    final bak = await BackupV2.loadFromStore(includeSettings: includeSettings);
     var result = json.encode(bak.toJson());
 
     if (password != null && password.isNotEmpty) {

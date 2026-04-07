@@ -219,6 +219,8 @@
   "supportFmtArgs": "The following formatting parameters are supported:",
   "suspendTip": "The suspend function requires root permission and systemd support.",
   "switchTo": "Switch to {val}",
+  "syncAppSettings": "Sync app settings",
+  "syncAppSettingsTip": "Include theme, layout, editor, terminal and other device preferences in automatic sync.",
   "syncTip": "A restart may be required for some changes to take effect.",
   "system": "System",
   "tag": "Tags",
