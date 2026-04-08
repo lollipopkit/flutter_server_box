@@ -20,17 +20,17 @@ if (keystorePropertiesFile.exists()) {
     System.err.printf(" [!] key.properties not found in %s (%s). \n", rootProject, rootProject.file('.'))
 }
 
-def storeFilePath = keystoreProperties['storeFile']?.toString()?.trim()
-def storePassword = keystoreProperties['storePassword']?.toString()?.trim()
-def keyAlias = keystoreProperties['keyAlias']?.toString()?.trim()
-def keyPassword = keystoreProperties['keyPassword']?.toString()?.trim()
+def releaseStoreFilePath = keystoreProperties['storeFile']?.toString()?.trim()
+def releaseStorePassword = keystoreProperties['storePassword']?.toString()?.trim()
+def releaseKeyAlias = keystoreProperties['keyAlias']?.toString()?.trim()
+def releaseKeyPassword = keystoreProperties['keyPassword']?.toString()?.trim()
 
 def hasReleaseSigning =
-    storeFilePath &&
-    file(storeFilePath).exists() &&
-    storePassword &&
-    keyAlias &&
-    keyPassword
+    releaseStoreFilePath &&
+    file(releaseStoreFilePath).exists() &&
+    releaseStorePassword &&
+    releaseKeyAlias &&
+    releaseKeyPassword
 
 def allowDebugReleaseSigning = project.findProperty('allowDebugReleaseSigning') == 'true'
 def requestedTaskNames = gradle.startParameter.taskNames
@@ -114,10 +114,10 @@ android {
 
     signingConfigs {
         release {
-            keyAlias keyAlias
-            keyPassword keyPassword
-            storeFile storeFilePath ? file(storeFilePath) : null
-            storePassword storePassword
+            keyAlias releaseKeyAlias
+            keyPassword releaseKeyPassword
+            storeFile releaseStoreFilePath ? file(releaseStoreFilePath) : null
+            storePassword releaseStorePassword
         }
     }
 
