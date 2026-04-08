@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
@@ -148,12 +149,11 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
           if (logoUrl == null) {
             return UIs.placeholder;
           }
-          return ExtendedImage.network(
-            logoUrl,
-            cache: true,
-            height: cons.maxWidth * 0.3,
-            width: cons.maxWidth,
-          );
+          final height = cons.maxWidth * 0.3;
+          if (logoUrl.isSvgUrl) {
+            return SvgPicture.network(logoUrl, height: height, width: cons.maxWidth, fit: BoxFit.contain);
+          }
+          return ExtendedImage.network(logoUrl, cache: true, height: height, width: cons.maxWidth);
         },
       ),
     );

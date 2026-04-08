@@ -108,6 +108,14 @@ extension on _ServerDetailPageState {
   }
 }
 
+extension _ViewUtils on String {
+  bool get isSvgUrl {
+    final uri = Uri.tryParse(this);
+    final path = uri?.path.toLowerCase() ?? toLowerCase();
+    return path.endsWith('.svg');
+  }
+}
+
 enum _NetSortType {
   device,
   trans,
