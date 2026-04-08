@@ -150,19 +150,13 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage> with Single
             return UIs.placeholder;
           }
           final height = cons.maxWidth * 0.3;
-          if (_isSvgUrl(logoUrl)) {
+          if (logoUrl.isSvgUrl) {
             return SvgPicture.network(logoUrl, height: height, width: cons.maxWidth, fit: BoxFit.contain);
           }
           return ExtendedImage.network(logoUrl, cache: true, height: height, width: cons.maxWidth);
         },
       ),
     );
-  }
-
-  bool _isSvgUrl(String url) {
-    final uri = Uri.tryParse(url);
-    final path = uri?.path.toLowerCase() ?? url.toLowerCase();
-    return path.endsWith('.svg');
   }
 
   Widget? _buildAbout(ServerState si) {
