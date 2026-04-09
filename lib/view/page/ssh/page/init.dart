@@ -34,16 +34,12 @@ extension _Init on SSHPageState {
       onStatus: (p0) {
         _writeLn(p0.toString());
       },
-      onKeyboardInteractive: (_) =>
-          KeybordInteractive.defaultHandle(widget.args.spi, ctx: context),
+      onKeyboardInteractive: (_) => KeybordInteractive.defaultHandle(widget.args.spi, ctx: context),
     );
 
     _writeLn('${libL10n.execute}: Shell');
     final session = await _client?.shell(
-      pty: SSHPtyConfig(
-        width: _terminal.viewWidth,
-        height: _terminal.viewHeight,
-      ),
+      pty: SSHPtyConfig(width: _terminal.viewWidth, height: _terminal.viewHeight),
       environment: widget.args.spi.envs,
     );
 
@@ -126,22 +122,20 @@ extension _Init on SSHPageState {
   void _scheduleTerminalFlush() {
     _terminalFlushTimer ??= Timer(
       SSHPageState._terminalFlushInterval,
-      _flushPendingTerminalOutput,
+      () => _flushPendingTerminalOutput(),
     );
   }
 
-  void _flushPendingTerminalOutput() {
+  void _flushPendingTerminalOutput({bool scheduleNext = true}) {
     _terminalFlushTimer = null;
     if (!_terminalOutputBuffer.hasPending) {
       return;
     }
-    final output = _terminalOutputBuffer.take(
-      SSHPageState._terminalFlushCharLimit,
-    );
+    final output = _terminalOutputBuffer.take(SSHPageState._terminalFlushCharLimit);
     if (output.isNotEmpty) {
       _terminal.write(output);
     }
-    if (_terminalOutputBuffer.hasPending) {
+    if (scheduleNext && _terminalOutputBuffer.hasPending) {
       _scheduleTerminalFlush();
     }
   }
@@ -150,7 +144,7 @@ extension _Init on SSHPageState {
     _terminalFlushTimer?.cancel();
     _terminalFlushTimer = null;
     while (_terminalOutputBuffer.hasPending) {
-      _flushPendingTerminalOutput();
+      _flushPendingTerminalOutput(scheduleNext: false);
     }
   }
 
@@ -174,10 +168,7 @@ extension _Init on SSHPageState {
       _missedKeepAliveCount = 0;
       if (_reportedDisconnected) {
         _reportedDisconnected = false;
-        TermSessionManager.updateStatus(
-          _sessionId,
-          TermSessionStatus.connected,
-        );
+        TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connected);
       }
     } on TimeoutException catch (error) {
       _handleConnectionCheckFailure(error);
@@ -217,10 +208,7 @@ extension _Init on SSHPageState {
       child: Text('${libL10n.disconnected}\n${l10n.goBackQ}'),
       barrierDismiss: false,
       actions: [
-        TextButton(
-          onPressed: () => context.pop(false),
-          child: Text(libL10n.cancel),
-        ),
+        TextButton(onPressed: () => context.pop(false), child: Text(libL10n.cancel)),
         TextButton(onPressed: () => context.pop(true), child: Text(libL10n.ok)),
       ],
     );

@@ -24,5 +24,34 @@ void main() {
       expect(buffer.pendingChars, 0);
       expect(buffer.hasPending, isFalse);
     });
+
+    test('does not split surrogate pairs when taking a prefix', () {
+      final buffer = TerminalOutputBuffer()..add('a😀b');
+
+      expect(buffer.take(2), 'a');
+      expect(buffer.take(10), '😀b');
+      expect(buffer.hasPending, isFalse);
+    });
+
+    test('caps buffered output and drops oldest data', () {
+      final prefix = 'a' * (TerminalOutputBuffer.maxBufferedChars - 2);
+      final buffer = TerminalOutputBuffer()
+        ..add(prefix)
+        ..add('bc')
+        ..add('def');
+
+      expect(buffer.pendingChars, TerminalOutputBuffer.maxBufferedChars);
+      expect(buffer.droppedChars, 3);
+      expect(buffer.drainAll(), '${prefix.substring(3)}bcdef');
+    });
+
+    test('preserves surrogate pairs when trimming oversized input', () {
+      final oversized = 'a' * (TerminalOutputBuffer.maxBufferedChars - 1) + '😀';
+      final buffer = TerminalOutputBuffer()..add(oversized);
+
+      expect(buffer.pendingChars, TerminalOutputBuffer.maxBufferedChars);
+      expect(buffer.droppedChars, 1);
+      expect(buffer.drainAll(), 'a' * (TerminalOutputBuffer.maxBufferedChars - 2) + '😀');
+    });
   });
 }
