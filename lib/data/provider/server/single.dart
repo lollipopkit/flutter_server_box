@@ -93,10 +93,6 @@ class ServerNotifier extends _$ServerNotifier {
 
   // Update SSH client
   void updateClient(SSHClient? client) {
-    final previousClient = state.client;
-    if (previousClient != null && !identical(previousClient, client)) {
-      previousClient.close();
-    }
     state = state.copyWith(client: client);
   }
 
@@ -363,8 +359,7 @@ class ServerNotifier extends _$ServerNotifier {
           err: SSHErr(type: SSHErrType.segements, message: 'Empty response from server'),
           setErr: true,
         );
-        updateStatus(newStatus);
-        updateConnection(ServerConn.failed);
+        _setFailedState(newStatus);
 
         final sessionId = 'ssh_${spi.id}';
         TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
@@ -385,8 +380,7 @@ class ServerNotifier extends _$ServerNotifier {
           err: SSHErr(type: SSHErrType.segements, message: 'Separate segments failed, raw:\n$raw'),
           setErr: true,
         );
-        updateStatus(newStatus);
-        updateConnection(ServerConn.failed);
+        _setFailedState(newStatus);
 
         final sessionId = 'ssh_${spi.id}';
         TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
@@ -399,8 +393,7 @@ class ServerNotifier extends _$ServerNotifier {
         err: SSHErr(type: SSHErrType.getStatus, message: e.toString()),
         setErr: true,
       );
-      updateStatus(newStatus);
-      updateConnection(ServerConn.failed);
+      _setFailedState(newStatus);
       Loggers.app.warning('Get status from ${spi.name} failed', e);
 
       final sessionId = 'ssh_${spi.id}';
@@ -428,8 +421,7 @@ class ServerNotifier extends _$ServerNotifier {
         err: SSHErr(type: SSHErrType.getStatus, message: 'Parse failed: $e\n\n$raw'),
         setErr: true,
       );
-      updateStatus(newStatus);
-      updateConnection(ServerConn.failed);
+      _setFailedState(newStatus);
       Loggers.app.warning('Server status', e, trace);
 
       final sessionId = 'ssh_${spi.id}';
