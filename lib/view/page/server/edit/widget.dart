@@ -142,6 +142,7 @@ extension _Widgets on _ServerEditPageState {
           suggestion: false,
         ),
         _buildAltUrl(),
+        _buildProxyCommand(),
         _buildScriptDir(),
         _buildEnvs(),
         _buildPVEs(),
@@ -233,10 +234,24 @@ extension _Widgets on _ServerEditPageState {
       controller: _altUrlController,
       type: TextInputType.url,
       node: _alterUrlFocus,
+      onSubmitted: (_) => _focusScope.requestFocus(_proxyCommandFocus),
       label: l10n.fallbackSshDest,
       icon: MingCute.link_line,
       hint: 'user@ip:port',
       suggestion: false,
+    );
+  }
+
+  Widget _buildProxyCommand() {
+    return Input(
+      controller: _proxyCommandCtrl,
+      type: TextInputType.multiline,
+      node: _proxyCommandFocus,
+      label: 'ProxyCommand',
+      icon: MingCute.command_line,
+      hint: 'socat - PROXY:x.x.x.x:%h:%p,proxyport=5002',
+      suggestion: false,
+      maxLines: 3,
     );
   }
 

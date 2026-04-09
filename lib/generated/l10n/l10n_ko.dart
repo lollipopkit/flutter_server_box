@@ -379,6 +379,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get jumpServer => '점프 서버';
 
   @override
+  String get jumpServerAndProxyCommandCannotBeUsedTogether =>
+      'Jump server and ProxyCommand cannot be used together.';
+
+  @override
   String get keepForeground => '앱을 포그라운드에 유지해 주세요!';
 
   @override
@@ -506,6 +510,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get pushToken => '푸시 토큰';
+
+  @override
+  String get proxyCommandOnlySupportedOnDesktop =>
+      'ProxyCommand is only supported on desktop platforms.';
 
   @override
   String get pveIgnoreCertTip =>

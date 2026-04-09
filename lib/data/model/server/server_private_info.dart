@@ -11,6 +11,8 @@ import 'package:server_box/data/store/server.dart';
 part 'server_private_info.freezed.dart';
 part 'server_private_info.g.dart';
 
+enum SpiValidationError { jumpServerAndProxyCommandConflict }
+
 /// In the first version, it's called `ServerPrivateInfo` which was designed to
 /// store the private information of a server.
 ///
@@ -37,6 +39,7 @@ abstract class Spi with _$Spi {
 
     /// [id] of the jump server
     String? jumpId,
+    String? proxyCommand,
     ServerCustom? custom,
     WakeOnLanCfg? wolCfg,
 
@@ -64,6 +67,27 @@ abstract class Spi with _$Spi {
 }
 
 extension Spix on Spi {
+  SpiValidationError? validate() {
+    final hasJumpServer = jumpId != null && jumpId!.isNotEmpty;
+    final hasProxyCommand =
+        proxyCommand != null && proxyCommand!.trim().isNotEmpty;
+    if (hasJumpServer && hasProxyCommand) {
+      return SpiValidationError.jumpServerAndProxyCommandConflict;
+    }
+    return null;
+  }
+
+  void validateOrThrow() {
+    final validationError = validate();
+    if (validationError == null) return;
+    switch (validationError) {
+      case SpiValidationError.jumpServerAndProxyCommandConflict:
+        throw ArgumentError(
+          'Jump server and ProxyCommand cannot be used together.',
+        );
+    }
+  }
+
   /// After upgrading to >= 1155, this field is only recommended to be used
   /// for displaying the server name.
   String get oldId => '$user@$ip:$port';
@@ -94,12 +118,15 @@ extension Spix on Spi {
         port == other.port &&
         pwd == other.pwd &&
         keyId == other.keyId &&
-        jumpId == other.jumpId;
+        jumpId == other.jumpId &&
+        proxyCommand == other.proxyCommand;
   }
 
   /// Returns true if the connection should be re-established.
   bool shouldReconnect(Spi old) {
-    return !isSameAs(old) || alterUrl != old.alterUrl || custom?.cmds != old.custom?.cmds;
+    return !isSameAs(old) ||
+        alterUrl != old.alterUrl ||
+        custom?.cmds != old.custom?.cmds;
   }
 
   /// Parse the [alterUrl] to (ip, user, port).
@@ -137,7 +164,7 @@ extension Spix on Spi {
     tags: ['tag1', 'tag2'],
     alterUrl: 'user@ip:port',
     autoConnect: true,
-    jumpId: 'jump_server_id',
+    proxyCommand: 'socat - PROXY:proxy.example.com:%h:%p,proxyport=8080',
     custom: ServerCustom(
       pveAddr: 'http://localhost:8006',
       pveIgnoreCert: false,

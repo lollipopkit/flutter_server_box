@@ -59,6 +59,7 @@ abstract final class SSHConfig {
     int port = 22;
     String? identityFile;
     String? jumpHost;
+    String? proxyCommand;
 
     void addServer() {
       if (currentHost != null && currentHost != '*' && hostname != null) {
@@ -70,7 +71,9 @@ abstract final class SSHConfig {
           user: user ?? 'root', // Default user is 'root'
           keyId: identityFile,
           jumpId: jumpHost,
+          proxyCommand: proxyCommand,
         );
+        spi.validateOrThrow();
         servers.add(spi);
       }
     }
@@ -116,6 +119,7 @@ abstract final class SSHConfig {
           port = 22;
           identityFile = null;
           jumpHost = null;
+          proxyCommand = null;
           break;
 
         case 'hostname':
@@ -135,8 +139,10 @@ abstract final class SSHConfig {
           break;
 
         case 'proxyjump':
-        case 'proxycommand':
           jumpHost = _extractJumpHost(value);
+          break;
+        case 'proxycommand':
+          proxyCommand = value;
           break;
       }
     }

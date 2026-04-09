@@ -200,6 +200,8 @@ class ServersNotifier extends _$ServersNotifier {
   }
 
   void addServer(Spi spi) {
+    spi.validateOrThrow();
+
     final newServers = Map<String, Spi>.from(state.servers);
     newServers[spi.id] = spi;
 
@@ -307,6 +309,8 @@ class ServersNotifier extends _$ServersNotifier {
   }
 
   Future<void> updateServer(Spi old, Spi newSpi) async {
+    newSpi.validateOrThrow();
+
     if (old != newSpi) {
       Stores.server.update(old, newSpi);
 

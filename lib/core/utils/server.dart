@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/proxy_command_socket.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
@@ -126,6 +127,17 @@ Future<SSHClient> genClient(
       );
 
       return await jumpClient.forwardLocal(spi.ip, spi.port);
+    }
+
+    final proxyCommand = spi.proxyCommand;
+    if (proxyCommand != null && proxyCommand.trim().isNotEmpty) {
+      return await ProxyCommandSocket.connect(
+        command: proxyCommand,
+        host: spi.ip,
+        port: spi.port,
+        user: spi.user,
+        timeout: timeout,
+      );
     }
 
     // Direct

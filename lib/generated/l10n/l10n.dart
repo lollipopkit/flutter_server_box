@@ -798,6 +798,12 @@ abstract class AppLocalizations {
   /// **'Jump server'**
   String get jumpServer;
 
+  /// No description provided for @jumpServerAndProxyCommandCannotBeUsedTogether.
+  ///
+  /// In en, this message translates to:
+  /// **'Jump server and ProxyCommand cannot be used together.'**
+  String get jumpServerAndProxyCommandCannotBeUsedTogether;
+
   /// No description provided for @keepForeground.
   ///
   /// In en, this message translates to:
@@ -1037,6 +1043,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Push token'**
   String get pushToken;
+
+  /// No description provided for @proxyCommandOnlySupportedOnDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'ProxyCommand is only supported on desktop platforms.'**
+  String get proxyCommandOnlySupportedOnDesktop;
 
   /// No description provided for @pveIgnoreCertTip.
   ///

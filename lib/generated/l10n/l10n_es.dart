@@ -394,6 +394,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get jumpServer => 'Servidor de salto';
 
   @override
+  String get jumpServerAndProxyCommandCannotBeUsedTogether =>
+      'Jump server and ProxyCommand cannot be used together.';
+
+  @override
   String get keepForeground => '¡Por favor, mantén la app en primer plano!';
 
   @override
@@ -531,6 +535,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get pushToken => 'Token de notificaciones';
+
+  @override
+  String get proxyCommandOnlySupportedOnDesktop =>
+      'ProxyCommand is only supported on desktop platforms.';
 
   @override
   String get pveIgnoreCertTip =>
