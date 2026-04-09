@@ -87,6 +87,7 @@ extension _Init on SSHPageState {
     widget.args.focusNode?.requestFocus();
 
     await session.done;
+    _drainPendingTerminalOutput();
     if (mounted && widget.args.notFromTab) {
       context.pop();
     }
@@ -99,17 +100,52 @@ extension _Init on SSHPageState {
       return;
     }
 
-    stream
+    final subscription = stream
         .cast<List<int>>()
         .transform(const Utf8Decoder())
         .listen(
-          _terminal.write,
+          _queueTerminalOutput,
           onError: (Object error, StackTrace stack) {
             // _terminal.write('Stream error: $error\n');
             Loggers.root.warning('Error in SSH stream', error, stack);
           },
           cancelOnError: false,
         );
+    _terminalOutputSubscriptions.add(subscription);
+  }
+
+  void _queueTerminalOutput(String data) {
+    _terminalOutputBuffer.add(data);
+    _scheduleTerminalFlush();
+  }
+
+  void _scheduleTerminalFlush() {
+    _terminalFlushTimer ??= Timer(
+      SSHPageState._terminalFlushInterval,
+      () => _flushPendingTerminalOutput(),
+    );
+  }
+
+  void _flushPendingTerminalOutput({bool scheduleNext = true}) {
+    _terminalFlushTimer = null;
+    if (!_terminalOutputBuffer.hasPending) {
+      return;
+    }
+    final output = _terminalOutputBuffer.take(SSHPageState._terminalFlushCharLimit);
+    if (output.isNotEmpty) {
+      _terminal.write(output);
+    }
+    if (scheduleNext && _terminalOutputBuffer.hasPending) {
+      _scheduleTerminalFlush();
+    }
+  }
+
+  void _drainPendingTerminalOutput() {
+    _terminalFlushTimer?.cancel();
+    _terminalFlushTimer = null;
+    while (_terminalOutputBuffer.hasPending) {
+      _flushPendingTerminalOutput(scheduleNext: false);
+    }
   }
 
   void _setupDiscontinuityTimer() {

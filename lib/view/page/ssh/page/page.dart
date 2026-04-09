@@ -24,6 +24,7 @@ import 'package:server_box/data/provider/virtual_keyboard.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/data/ssh/terminal_output_buffer.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
@@ -90,8 +91,13 @@ class SSHPageState extends ConsumerState<SSHPage>
   SSHClient? _client;
   SSHSession? _session;
   Timer? _discontinuityTimer;
+  Timer? _terminalFlushTimer;
+  final _terminalOutputBuffer = TerminalOutputBuffer();
+  final List<StreamSubscription<String>> _terminalOutputSubscriptions = [];
   static const _connectionCheckInterval = Duration(seconds: 60);
   static const _connectionCheckTimeout = Duration(seconds: 30);
+  static const _terminalFlushInterval = Duration(milliseconds: 16);
+  static const _terminalFlushCharLimit = 32768;
   static const _maxKeepAliveFailures = 3;
   int _missedKeepAliveCount = 0;
   bool _isCheckingConnection = false;
@@ -110,6 +116,10 @@ class SSHPageState extends ConsumerState<SSHPage>
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
+    _terminalFlushTimer?.cancel();
+    for (final subscription in _terminalOutputSubscriptions) {
+      subscription.cancel();
+    }
     _removeVisibilityListener();
     Stores.setting.horizonVirtKey.listenable().removeListener(_handleVirtKeySettingsChanged);
     Stores.setting.sshVirtKeys.listenable().removeListener(_handleVirtKeySettingsChanged);
