@@ -164,7 +164,6 @@ extension Spix on Spi {
     tags: ['tag1', 'tag2'],
     alterUrl: 'user@ip:port',
     autoConnect: true,
-    jumpId: 'jump_server_id',
     proxyCommand: 'socat - PROXY:proxy.example.com:%h:%p,proxyport=8080',
     custom: ServerCustom(
       pveAddr: 'http://localhost:8006',

@@ -188,7 +188,7 @@ class ProxyCommandSocket implements SSHSocket {
       await _done.catchError((_) {});
       return;
     }
-    await _done;
+    await _done.catchError((_) {});
   }
 
   @override

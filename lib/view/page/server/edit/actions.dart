@@ -66,7 +66,8 @@ extension _Actions on _ServerEditPageState {
       context.showSnackBar('${l10n.invalid}: ${l10n.jumpServer}');
       return;
     }
-    if (!isDesktop && _proxyCommandCtrl.text.isNotEmpty) {
+    final proxyCommandText = _proxyCommandCtrl.text.trim();
+    if (!isDesktop && proxyCommandText.isNotEmpty) {
       context.showSnackBar(l10n.proxyCommandOnlySupportedOnDesktop);
       return;
     }
@@ -117,7 +118,7 @@ extension _Actions on _ServerEditPageState {
       alterUrl: _altUrlController.text.selfNotEmptyOrNull,
       autoConnect: _autoConnect.value,
       jumpId: _jumpServer.value,
-      proxyCommand: _proxyCommandCtrl.text.selfNotEmptyOrNull,
+      proxyCommand: proxyCommandText.selfNotEmptyOrNull,
       custom: custom,
       wolCfg: wol,
       envs: _env.value.isEmpty ? null : _env.value,
