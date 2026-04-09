@@ -24,6 +24,7 @@ import 'package:server_box/data/provider/virtual_keyboard.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/data/ssh/terminal_output_buffer.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
@@ -67,17 +68,27 @@ class SSHPage extends ConsumerStatefulWidget {
   @override
   ConsumerState<SSHPage> createState() => SSHPageState();
 
-  static const route = AppRouteArg<void, SshPageArgs>(page: SSHPage.new, path: '/ssh/page');
+  static const route = AppRouteArg<void, SshPageArgs>(
+    page: SSHPage.new,
+    path: '/ssh/page',
+  );
 }
 
 const _horizonPadding = 7.0;
 
 class SSHPageState extends ConsumerState<SSHPage>
-    with AutomaticKeepAliveClientMixin, AfterLayoutMixin, TickerProviderStateMixin, WidgetsBindingObserver {
+    with
+        AutomaticKeepAliveClientMixin,
+        AfterLayoutMixin,
+        TickerProviderStateMixin,
+        WidgetsBindingObserver {
   late final _terminal = Terminal();
-  late final TerminalController _terminalController = TerminalController(vsync: this);
+  late final TerminalController _terminalController = TerminalController(
+    vsync: this,
+  );
   final List<List<VirtKey>> _virtKeysList = [];
-  late final _termKey = widget.args.terminalKey ?? GlobalKey<TerminalViewState>();
+  late final _termKey =
+      widget.args.terminalKey ?? GlobalKey<TerminalViewState>();
 
   late MediaQueryData _media;
   late TerminalStyle _terminalStyle;
@@ -90,8 +101,13 @@ class SSHPageState extends ConsumerState<SSHPage>
   SSHClient? _client;
   SSHSession? _session;
   Timer? _discontinuityTimer;
+  Timer? _terminalFlushTimer;
+  final _terminalOutputBuffer = TerminalOutputBuffer();
+  final List<StreamSubscription<String>> _terminalOutputSubscriptions = [];
   static const _connectionCheckInterval = Duration(seconds: 60);
   static const _connectionCheckTimeout = Duration(seconds: 30);
+  static const _terminalFlushInterval = Duration(milliseconds: 16);
+  static const _terminalFlushCharLimit = 32768;
   static const _maxKeepAliveFailures = 3;
   int _missedKeepAliveCount = 0;
   bool _isCheckingConnection = false;
@@ -110,10 +126,20 @@ class SSHPageState extends ConsumerState<SSHPage>
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
+    _terminalFlushTimer?.cancel();
+    for (final subscription in _terminalOutputSubscriptions) {
+      subscription.cancel();
+    }
     _removeVisibilityListener();
-    Stores.setting.horizonVirtKey.listenable().removeListener(_handleVirtKeySettingsChanged);
-    Stores.setting.sshVirtKeys.listenable().removeListener(_handleVirtKeySettingsChanged);
-    Stores.setting.sshVirtKeysDisabled.listenable().removeListener(_handleVirtKeySettingsChanged);
+    Stores.setting.horizonVirtKey.listenable().removeListener(
+      _handleVirtKeySettingsChanged,
+    );
+    Stores.setting.sshVirtKeys.listenable().removeListener(
+      _handleVirtKeySettingsChanged,
+    );
+    Stores.setting.sshVirtKeysDisabled.listenable().removeListener(
+      _handleVirtKeySettingsChanged,
+    );
 
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
 
@@ -136,12 +162,18 @@ class SSHPageState extends ConsumerState<SSHPage>
     WidgetsBinding.instance.addObserver(this);
     _initStoredCfg();
     _reloadVirtKeys();
-    Stores.setting.horizonVirtKey.listenable().addListener(_handleVirtKeySettingsChanged);
-    Stores.setting.sshVirtKeys.listenable().addListener(_handleVirtKeySettingsChanged);
-    Stores.setting.sshVirtKeysDisabled.listenable().addListener(_handleVirtKeySettingsChanged);
+    Stores.setting.horizonVirtKey.listenable().addListener(
+      _handleVirtKeySettingsChanged,
+    );
+    Stores.setting.sshVirtKeys.listenable().addListener(
+      _handleVirtKeySettingsChanged,
+    );
+    Stores.setting.sshVirtKeysDisabled.listenable().addListener(
+      _handleVirtKeySettingsChanged,
+    );
     _bindVisibilityListener();
     _setupDiscontinuityTimer();
-    
+
     // Initialize client from provider
     final serverState = ref.read(serverProvider(widget.args.spi.id));
     _client = serverState.client;
@@ -253,12 +285,18 @@ class SSHPageState extends ConsumerState<SSHPage>
     final blur = Stores.setting.sshBlurRadius.fetch();
     final file = File(bgImage);
     final hasBg = bgImage.isNotEmpty && file.existsSync();
-    final theme = hasBg ? _terminalTheme.copyWith(background: Colors.transparent) : _terminalTheme;
+    final theme = hasBg
+        ? _terminalTheme.copyWith(background: Colors.transparent)
+        : _terminalTheme;
     final children = <Widget>[];
     if (hasBg) {
       children.add(
         Positioned.fill(
-          child: Image.file(file, fit: BoxFit.cover, errorBuilder: (_, _, _) => const SizedBox()),
+          child: Image.file(
+            file,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const SizedBox(),
+          ),
         ),
       );
       if (blur > 0) {
@@ -273,7 +311,9 @@ class SSHPageState extends ConsumerState<SSHPage>
       }
       children.add(
         Positioned.fill(
-          child: ColoredBox(color: _terminalTheme.background.withValues(alpha: opacity)),
+          child: ColoredBox(
+            color: _terminalTheme.background.withValues(alpha: opacity),
+          ),
         ),
       );
     }
@@ -293,7 +333,10 @@ class SSHPageState extends ConsumerState<SSHPage>
           autofocus: false,
           keyboardAppearance: _isDark ? Brightness.dark : Brightness.light,
           showToolbar: true,
-          viewOffset: Offset(2 * _horizonPadding, CustomAppBar.sysStatusBarHeight),
+          viewOffset: Offset(
+            2 * _horizonPadding,
+            CustomAppBar.sysStatusBarHeight,
+          ),
           hideScrollBar: false,
           focusNode: widget.args.focusNode,
           toolbarBuilder: _buildTerminalToolbar,
@@ -305,7 +348,11 @@ class SSHPageState extends ConsumerState<SSHPage>
     );
 
     return SizedBox(
-      height: _media.size.height - _virtKeysHeight - _media.padding.bottom - _media.padding.top,
+      height:
+          _media.size.height -
+          _virtKeysHeight -
+          _media.padding.bottom -
+          _media.padding.top,
       child: Stack(children: children),
     );
   }
@@ -327,10 +374,10 @@ class SSHPageState extends ConsumerState<SSHPage>
             builder: (context, ref, child) {
               final virtKeyState = ref.watch(virtKeyboardProvider);
               final virtKeyNotifier = ref.read(virtKeyboardProvider.notifier);
-              
+
               // Set the terminal input handler
               _terminal.inputHandler = virtKeyNotifier;
-              
+
               return _buildVirtualKey(virtKeyState, virtKeyNotifier);
             },
           ),
@@ -339,7 +386,10 @@ class SSHPageState extends ConsumerState<SSHPage>
     );
   }
 
-  Widget _buildVirtualKey(VirtKeyState virtKeyState, VirtKeyboard virtKeyNotifier) {
+  Widget _buildVirtualKey(
+    VirtKeyState virtKeyState,
+    VirtKeyboard virtKeyNotifier,
+  ) {
     final count = _virtKeysList.firstOrNull?.length ?? 0;
     if (count == 0) return UIs.placeholder;
     return LayoutBuilder(
@@ -351,20 +401,45 @@ class SSHPageState extends ConsumerState<SSHPage>
             child: Row(
               children: _virtKeysList
                   .expand((e) => e)
-                  .map((e) => _buildVirtKeyItem(e, virtKeyWidth, virtKeyState, virtKeyNotifier))
+                  .map(
+                    (e) => _buildVirtKeyItem(
+                      e,
+                      virtKeyWidth,
+                      virtKeyState,
+                      virtKeyNotifier,
+                    ),
+                  )
                   .toList(),
             ),
           );
         }
         final rows = _virtKeysList
-            .map((e) => Row(children: e.map((e) => _buildVirtKeyItem(e, virtKeyWidth, virtKeyState, virtKeyNotifier)).toList()))
+            .map(
+              (e) => Row(
+                children: e
+                    .map(
+                      (e) => _buildVirtKeyItem(
+                        e,
+                        virtKeyWidth,
+                        virtKeyState,
+                        virtKeyNotifier,
+                      ),
+                    )
+                    .toList(),
+              ),
+            )
             .toList();
         return Column(mainAxisSize: MainAxisSize.min, children: rows);
       },
     );
   }
 
-  Widget _buildVirtKeyItem(VirtKey item, double virtKeyWidth, VirtKeyState virtKeyState, VirtKeyboard virtKeyNotifier) {
+  Widget _buildVirtKeyItem(
+    VirtKey item,
+    double virtKeyWidth,
+    VirtKeyState virtKeyState,
+    VirtKeyboard virtKeyNotifier,
+  ) {
     var selected = false;
     switch (item.key) {
       case TerminalKey.control:
@@ -381,11 +456,17 @@ class SSHPageState extends ConsumerState<SSHPage>
     }
 
     final child = item.icon != null
-        ? Icon(item.icon, size: 17, color: _isDark ? Colors.white : Colors.black)
+        ? Icon(
+            item.icon,
+            size: 17,
+            color: _isDark ? Colors.white : Colors.black,
+          )
         : Text(
             item.text,
             style: TextStyle(
-              color: selected ? UIs.primaryColor : (_isDark ? Colors.white : Colors.black),
+              color: selected
+                  ? UIs.primaryColor
+                  : (_isDark ? Colors.white : Colors.black),
               fontSize: 15,
             ),
           );
@@ -404,7 +485,9 @@ class SSHPageState extends ConsumerState<SSHPage>
       onTapUp: (_) => _virtKeyLongPressTimer?.cancel(),
       child: SizedBox(
         width: virtKeyWidth,
-        height: _horizonVirtKeys ? _virtKeysHeight : _virtKeysHeight / _virtKeysList.length,
+        height: _horizonVirtKeys
+            ? _virtKeysHeight
+            : _virtKeysHeight / _virtKeysList.length,
         child: Center(child: child),
       ),
     );
@@ -463,7 +546,9 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   void _bindVisibilityListener() {
     final visibleListenable = widget.args.visibleListenable;
-    if (widget.args.notFromTab || visibleListenable == null || _visibilityListener != null) {
+    if (widget.args.notFromTab ||
+        visibleListenable == null ||
+        _visibilityListener != null) {
       return;
     }
     void listener() {

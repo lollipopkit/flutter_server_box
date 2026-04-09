@@ -34,12 +34,16 @@ extension _Init on SSHPageState {
       onStatus: (p0) {
         _writeLn(p0.toString());
       },
-      onKeyboardInteractive: (_) => KeybordInteractive.defaultHandle(widget.args.spi, ctx: context),
+      onKeyboardInteractive: (_) =>
+          KeybordInteractive.defaultHandle(widget.args.spi, ctx: context),
     );
 
     _writeLn('${libL10n.execute}: Shell');
     final session = await _client?.shell(
-      pty: SSHPtyConfig(width: _terminal.viewWidth, height: _terminal.viewHeight),
+      pty: SSHPtyConfig(
+        width: _terminal.viewWidth,
+        height: _terminal.viewHeight,
+      ),
       environment: widget.args.spi.envs,
     );
 
@@ -87,6 +91,7 @@ extension _Init on SSHPageState {
     widget.args.focusNode?.requestFocus();
 
     await session.done;
+    _drainPendingTerminalOutput();
     if (mounted && widget.args.notFromTab) {
       context.pop();
     }
@@ -99,17 +104,54 @@ extension _Init on SSHPageState {
       return;
     }
 
-    stream
+    final subscription = stream
         .cast<List<int>>()
         .transform(const Utf8Decoder())
         .listen(
-          _terminal.write,
+          _queueTerminalOutput,
           onError: (Object error, StackTrace stack) {
             // _terminal.write('Stream error: $error\n');
             Loggers.root.warning('Error in SSH stream', error, stack);
           },
           cancelOnError: false,
         );
+    _terminalOutputSubscriptions.add(subscription);
+  }
+
+  void _queueTerminalOutput(String data) {
+    _terminalOutputBuffer.add(data);
+    _scheduleTerminalFlush();
+  }
+
+  void _scheduleTerminalFlush() {
+    _terminalFlushTimer ??= Timer(
+      SSHPageState._terminalFlushInterval,
+      _flushPendingTerminalOutput,
+    );
+  }
+
+  void _flushPendingTerminalOutput() {
+    _terminalFlushTimer = null;
+    if (!_terminalOutputBuffer.hasPending) {
+      return;
+    }
+    final output = _terminalOutputBuffer.take(
+      SSHPageState._terminalFlushCharLimit,
+    );
+    if (output.isNotEmpty) {
+      _terminal.write(output);
+    }
+    if (_terminalOutputBuffer.hasPending) {
+      _scheduleTerminalFlush();
+    }
+  }
+
+  void _drainPendingTerminalOutput() {
+    _terminalFlushTimer?.cancel();
+    _terminalFlushTimer = null;
+    while (_terminalOutputBuffer.hasPending) {
+      _flushPendingTerminalOutput();
+    }
   }
 
   void _setupDiscontinuityTimer() {
@@ -132,7 +174,10 @@ extension _Init on SSHPageState {
       _missedKeepAliveCount = 0;
       if (_reportedDisconnected) {
         _reportedDisconnected = false;
-        TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connected);
+        TermSessionManager.updateStatus(
+          _sessionId,
+          TermSessionStatus.connected,
+        );
       }
     } on TimeoutException catch (error) {
       _handleConnectionCheckFailure(error);
@@ -172,7 +217,10 @@ extension _Init on SSHPageState {
       child: Text('${libL10n.disconnected}\n${l10n.goBackQ}'),
       barrierDismiss: false,
       actions: [
-        TextButton(onPressed: () => context.pop(false), child: Text(libL10n.cancel)),
+        TextButton(
+          onPressed: () => context.pop(false),
+          child: Text(libL10n.cancel),
+        ),
         TextButton(onPressed: () => context.pop(true), child: Text(libL10n.ok)),
       ],
     );
