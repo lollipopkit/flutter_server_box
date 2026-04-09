@@ -395,6 +395,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get jumpServer => 'Стрибковий Сервер';
 
   @override
+  String get jumpServerAndProxyCommandCannotBeUsedTogether =>
+      'Jump server and ProxyCommand cannot be used together.';
+
+  @override
   String get keepForeground => 'Тримати застосунок на передньому плані!';
 
   @override
@@ -530,6 +534,10 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get pushToken => 'Надіслати токен';
+
+  @override
+  String get proxyCommandOnlySupportedOnDesktop =>
+      'ProxyCommand is only supported on desktop platforms.';
 
   @override
   String get pveIgnoreCertTip =>

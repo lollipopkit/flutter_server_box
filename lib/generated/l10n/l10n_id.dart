@@ -393,6 +393,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get jumpServer => 'Lompat server';
 
   @override
+  String get jumpServerAndProxyCommandCannotBeUsedTogether =>
+      'Jump server and ProxyCommand cannot be used together.';
+
+  @override
   String get keepForeground => 'Simpan Aplikasi Foreground!';
 
   @override
@@ -526,6 +530,10 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get pushToken => 'Dorong token';
+
+  @override
+  String get proxyCommandOnlySupportedOnDesktop =>
+      'ProxyCommand is only supported on desktop platforms.';
 
   @override
   String get pveIgnoreCertTip =>

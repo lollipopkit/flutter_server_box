@@ -28,6 +28,7 @@ class ProxyCommandSocket implements SSHSocket {
     required String host,
     required int port,
     required String user,
+    Duration? timeout,
   }) async {
     if (!isDesktop) {
       throw SSHErr(
@@ -51,11 +52,84 @@ class ProxyCommandSocket implements SSHSocket {
       shellCommand.arguments,
       mode: ProcessStartMode.normal,
     );
+    final connectionReady = Completer<void>();
+    final stdoutController = StreamController<Uint8List>();
+
+    process.stdout.listen(
+      (data) {
+        final chunk = Uint8List.fromList(data);
+        if (chunk.isNotEmpty && !connectionReady.isCompleted) {
+          connectionReady.complete();
+        }
+        stdoutController.add(chunk);
+      },
+      onError: (error, stackTrace) {
+        if (!connectionReady.isCompleted) {
+          connectionReady.completeError(error, stackTrace);
+        }
+        stdoutController.addError(error, stackTrace);
+      },
+      onDone: () {
+        if (!connectionReady.isCompleted) {
+          connectionReady.completeError(
+            SSHErr(
+              type: SSHErrType.connect,
+              message: 'ProxyCommand exited before connection was established.',
+            ),
+          );
+        }
+        stdoutController.close();
+      },
+    );
 
     process.stderr
         .transform(utf8.decoder)
         .transform(const LineSplitter())
-        .listen((line) => Loggers.app.warning('ProxyCommand stderr: $line'));
+        .listen(
+          (line) => Loggers.app.warning('ProxyCommand stderr: $line'),
+          onError: (error, stackTrace) {
+            Loggers.app.warning(
+              'ProxyCommand stderr stream error',
+              error,
+              stackTrace,
+            );
+          },
+        );
+
+    unawaited(
+      process.exitCode.then((code) {
+        if (connectionReady.isCompleted) return;
+        if (code == 0) {
+          connectionReady.completeError(
+            SSHErr(
+              type: SSHErrType.connect,
+              message: 'ProxyCommand exited before connection was established.',
+            ),
+          );
+          return;
+        }
+        connectionReady.completeError(
+          SSHErr(
+            type: SSHErrType.connect,
+            message: 'ProxyCommand exited with code $code.',
+          ),
+        );
+      }),
+    );
+
+    if (timeout != null) {
+      try {
+        await connectionReady.future.timeout(timeout);
+      } on TimeoutException {
+        process.kill();
+        throw SSHErr(
+          type: SSHErrType.connect,
+          message: 'ProxyCommand timed out after ${timeout.inSeconds}s.',
+        );
+      }
+    } else {
+      await connectionReady.future;
+    }
 
     final done = process.exitCode.then((code) {
       if (code != 0) {
@@ -68,7 +142,7 @@ class ProxyCommandSocket implements SSHSocket {
 
     return ProxyCommandSocket._(
       process: process,
-      stream: process.stdout.map(Uint8List.fromList),
+      stream: stdoutController.stream,
       sink: process.stdin,
       done: done,
     );
@@ -80,11 +154,13 @@ class ProxyCommandSocket implements SSHSocket {
     required int port,
     required String user,
   }) {
+    const percentPlaceholder = '\u0000PERCENT\u0000';
     return command
+        .replaceAll('%%', percentPlaceholder)
         .replaceAll('%h', host)
         .replaceAll('%p', port.toString())
         .replaceAll('%r', user)
-        .replaceAll('%%', '%');
+        .replaceAll(percentPlaceholder, '%');
   }
 
   static ({String executable, List<String> arguments}) _buildShellCommand(

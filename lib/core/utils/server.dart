@@ -136,6 +136,7 @@ Future<SSHClient> genClient(
         host: spi.ip,
         port: spi.port,
         user: spi.user,
+        timeout: timeout,
       );
     }
 

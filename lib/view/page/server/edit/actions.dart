@@ -66,11 +66,10 @@ extension _Actions on _ServerEditPageState {
       context.showSnackBar('${l10n.invalid}: ${l10n.jumpServer}');
       return;
     }
-    if (_jumpServer.value != null && _proxyCommandCtrl.text.isNotEmpty) {
-      context.showSnackBar('Jump server and ProxyCommand cannot be used together');
+    if (!isDesktop && _proxyCommandCtrl.text.isNotEmpty) {
+      context.showSnackBar(l10n.proxyCommandOnlySupportedOnDesktop);
       return;
     }
-
     final customCmds = _customCmds.value;
     final custom = ServerCustom(
       pveAddr: _pveAddrCtrl.text.selfNotEmptyOrNull,
@@ -128,6 +127,14 @@ extension _Actions on _ServerEditPageState {
           ? null
           : _disabledCmdTypes.value.toList(),
     );
+    final validationError = spi.validate();
+    if (validationError ==
+        SpiValidationError.jumpServerAndProxyCommandConflict) {
+      context.showSnackBar(
+        l10n.jumpServerAndProxyCommandCannotBeUsedTogether,
+      );
+      return;
+    }
 
     if (this.spi == null) {
       final existsIds = ServerStore.instance.box.keys;
@@ -198,6 +205,9 @@ extension _Utils on _ServerEditPageState {
       } else {
         dprint('Error checking SSH config: $e');
         Stores.setting.firstTimeReadSSHCfg.put(false);
+        if (e is ArgumentError) {
+          context.showSnackBar(e.message?.toString() ?? e.toString());
+        }
       }
     }
   }

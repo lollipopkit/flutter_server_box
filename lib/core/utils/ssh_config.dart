@@ -73,6 +73,7 @@ abstract final class SSHConfig {
           jumpId: jumpHost,
           proxyCommand: proxyCommand,
         );
+        spi.validateOrThrow();
         servers.add(spi);
       }
     }

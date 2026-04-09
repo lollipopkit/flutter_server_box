@@ -11,6 +11,8 @@ import 'package:server_box/data/store/server.dart';
 part 'server_private_info.freezed.dart';
 part 'server_private_info.g.dart';
 
+enum SpiValidationError { jumpServerAndProxyCommandConflict }
+
 /// In the first version, it's called `ServerPrivateInfo` which was designed to
 /// store the private information of a server.
 ///
@@ -65,6 +67,27 @@ abstract class Spi with _$Spi {
 }
 
 extension Spix on Spi {
+  SpiValidationError? validate() {
+    final hasJumpServer = jumpId != null && jumpId!.isNotEmpty;
+    final hasProxyCommand =
+        proxyCommand != null && proxyCommand!.trim().isNotEmpty;
+    if (hasJumpServer && hasProxyCommand) {
+      return SpiValidationError.jumpServerAndProxyCommandConflict;
+    }
+    return null;
+  }
+
+  void validateOrThrow() {
+    final validationError = validate();
+    if (validationError == null) return;
+    switch (validationError) {
+      case SpiValidationError.jumpServerAndProxyCommandConflict:
+        throw ArgumentError(
+          'Jump server and ProxyCommand cannot be used together.',
+        );
+    }
+  }
+
   /// After upgrading to >= 1155, this field is only recommended to be used
   /// for displaying the server name.
   String get oldId => '$user@$ip:$port';
