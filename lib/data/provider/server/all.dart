@@ -205,8 +205,14 @@ class ServersNotifier extends _$ServersNotifier {
 
     final newOrder = List<String>.from(state.serverOrder)..add(spi.id);
     final newTags = _calculateTags(newServers);
+    final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)..remove(spi.id);
 
-    state = state.copyWith(servers: newServers, serverOrder: newOrder, tags: newTags);
+    state = state.copyWith(
+      servers: newServers,
+      serverOrder: newOrder,
+      tags: newTags,
+      manualDisconnectedIds: newManualDisconnected,
+    );
 
     Stores.server.put(spi);
     Stores.setting.serverOrder.put(newOrder);
@@ -220,8 +226,14 @@ class ServersNotifier extends _$ServersNotifier {
 
     final newOrder = List<String>.from(state.serverOrder)..remove(id);
     final newTags = _calculateTags(newServers);
+    final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)..remove(id);
 
-    state = state.copyWith(servers: newServers, serverOrder: newOrder, tags: newTags);
+    state = state.copyWith(
+      servers: newServers,
+      serverOrder: newOrder,
+      tags: newTags,
+      manualDisconnectedIds: newManualDisconnected,
+    );
 
     Stores.setting.serverOrder.put(newOrder);
     Stores.server.delete(id);
@@ -300,11 +312,15 @@ class ServersNotifier extends _$ServersNotifier {
 
       final newServers = Map<String, Spi>.from(state.servers);
       final newOrder = List<String>.from(state.serverOrder);
+      final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds);
 
       if (newSpi.id != old.id) {
         newServers[newSpi.id] = newSpi;
         newServers.remove(old.id);
         newOrder.update(old.id, newSpi.id);
+        if (newManualDisconnected.remove(old.id)) {
+          newManualDisconnected.add(newSpi.id);
+        }
         Stores.setting.serverOrder.put(newOrder);
 
         // Update SSH session ID when server ID changes
@@ -319,7 +335,12 @@ class ServersNotifier extends _$ServersNotifier {
       }
 
       final newTags = _calculateTags(newServers);
-      state = state.copyWith(servers: newServers, serverOrder: newOrder, tags: newTags);
+      state = state.copyWith(
+        servers: newServers,
+        serverOrder: newOrder,
+        tags: newTags,
+        manualDisconnectedIds: newManualDisconnected,
+      );
 
       // Only reconnect if neccessary
       if (newSpi.shouldReconnect(old)) {
