@@ -66,6 +66,10 @@ extension _Actions on _ServerEditPageState {
       context.showSnackBar('${l10n.invalid}: ${l10n.jumpServer}');
       return;
     }
+    if (_jumpServer.value != null && _proxyCommandCtrl.text.isNotEmpty) {
+      context.showSnackBar('Jump server and ProxyCommand cannot be used together');
+      return;
+    }
 
     final customCmds = _customCmds.value;
     final custom = ServerCustom(
@@ -114,6 +118,7 @@ extension _Actions on _ServerEditPageState {
       alterUrl: _altUrlController.text.selfNotEmptyOrNull,
       autoConnect: _autoConnect.value,
       jumpId: _jumpServer.value,
+      proxyCommand: _proxyCommandCtrl.text.selfNotEmptyOrNull,
       custom: custom,
       wolCfg: wol,
       envs: _env.value.isEmpty ? null : _env.value,
@@ -263,6 +268,7 @@ extension _Utils on _ServerEditPageState {
     _altUrlController.text = spi.alterUrl ?? '';
     _autoConnect.value = spi.autoConnect;
     _jumpServer.value = spi.jumpId;
+    _proxyCommandCtrl.text = spi.proxyCommand ?? '';
 
     final custom = spi.custom;
     if (custom != null) {

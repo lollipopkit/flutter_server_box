@@ -37,6 +37,7 @@ abstract class Spi with _$Spi {
 
     /// [id] of the jump server
     String? jumpId,
+    String? proxyCommand,
     ServerCustom? custom,
     WakeOnLanCfg? wolCfg,
 
@@ -94,12 +95,15 @@ extension Spix on Spi {
         port == other.port &&
         pwd == other.pwd &&
         keyId == other.keyId &&
-        jumpId == other.jumpId;
+        jumpId == other.jumpId &&
+        proxyCommand == other.proxyCommand;
   }
 
   /// Returns true if the connection should be re-established.
   bool shouldReconnect(Spi old) {
-    return !isSameAs(old) || alterUrl != old.alterUrl || custom?.cmds != old.custom?.cmds;
+    return !isSameAs(old) ||
+        alterUrl != old.alterUrl ||
+        custom?.cmds != old.custom?.cmds;
   }
 
   /// Parse the [alterUrl] to (ip, user, port).
@@ -138,6 +142,7 @@ extension Spix on Spi {
     alterUrl: 'user@ip:port',
     autoConnect: true,
     jumpId: 'jump_server_id',
+    proxyCommand: 'socat - PROXY:proxy.example.com:%h:%p,proxyport=8080',
     custom: ServerCustom(
       pveAddr: 'http://localhost:8006',
       pveIgnoreCert: false,

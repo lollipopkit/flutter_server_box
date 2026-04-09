@@ -44,6 +44,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _nameController = TextEditingController();
   final _ipController = TextEditingController();
   final _altUrlController = TextEditingController();
+  final _proxyCommandCtrl = TextEditingController();
   final _portController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -60,6 +61,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _nameFocus = FocusNode();
   final _ipFocus = FocusNode();
   final _alterUrlFocus = FocusNode();
+  final _proxyCommandFocus = FocusNode();
   final _portFocus = FocusNode();
   final _usernameFocus = FocusNode();
 
@@ -83,6 +85,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _nameController.dispose();
     _ipController.dispose();
     _altUrlController.dispose();
+    _proxyCommandCtrl.dispose();
     _portController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
@@ -97,6 +100,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _nameFocus.dispose();
     _ipFocus.dispose();
     _alterUrlFocus.dispose();
+    _proxyCommandFocus.dispose();
     _portFocus.dispose();
     _usernameFocus.dispose();
     _pveAddrCtrl.dispose();

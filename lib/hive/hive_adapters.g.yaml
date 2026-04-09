@@ -27,7 +27,7 @@ types:
         index: 4
   Spi:
     typeId: 3
-    nextIndex: 16
+    nextIndex: 17
     fields:
       name:
         index: 0
@@ -49,6 +49,8 @@ types:
         index: 8
       jumpId:
         index: 9
+      proxyCommand:
+        index: 16
       custom:
         index: 10
       wolCfg:
