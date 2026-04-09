@@ -62,6 +62,35 @@ class ServerNotifier extends _$ServerNotifier {
     state = state.copyWith(status: status);
   }
 
+  ServerStatus _copyStatus(
+    ServerStatus source, {
+    Err? err,
+    bool setErr = false,
+    SystemType? system,
+  }) {
+    final status = ServerStatus(
+      cpu: source.cpu,
+      mem: source.mem,
+      disk: source.disk,
+      tcp: source.tcp,
+      netSpeed: source.netSpeed,
+      swap: source.swap,
+      temps: source.temps,
+      system: system ?? source.system,
+      diskIO: source.diskIO,
+      diskSmart: source.diskSmart,
+      err: setErr ? err : source.err,
+      nvidia: source.nvidia,
+      diskUsage: source.diskUsage,
+    );
+    status.amd = source.amd;
+    status.batteries.addAll(source.batteries);
+    status.more.addAll(source.more);
+    status.sensors.addAll(source.sensors);
+    status.customCmds.addAll(source.customCmds);
+    return status;
+  }
+
   // Update SSH client
   void updateClient(SSHClient? client) {
     state = state.copyWith(client: client);
@@ -72,10 +101,17 @@ class ServerNotifier extends _$ServerNotifier {
     state = state.copyWith(spi: spi);
   }
 
-  // Close connection
-  void closeConnection() {
+  void _disposeCurrentClient() {
     final client = state.client;
     client?.close();
+    if (client != null) {
+      updateClient(null);
+    }
+  }
+
+  // Close connection
+  void closeConnection() {
+    _disposeCurrentClient();
     state = state.copyWith(client: null, conn: ServerConn.disconnected);
   }
 
@@ -108,7 +144,7 @@ class ServerNotifier extends _$ServerNotifier {
       return;
     }
 
-    final newStatus = state.status..err = null; // Clear previous error
+    final newStatus = _copyStatus(state.status, err: null, setErr: true); // Clear previous error
     updateStatus(newStatus);
 
     if (state.conn < ServerConn.connecting || (state.client?.isClosed ?? true)) {
@@ -193,8 +229,13 @@ class ServerNotifier extends _$ServerNotifier {
           Loggers.app.warning('Failed to record connection failure', recErr);
         }
 
-        final newStatus = state.status..err = SSHErr(type: SSHErrType.connect, message: e.toString());
+        final newStatus = _copyStatus(
+          state.status,
+          err: SSHErr(type: SSHErrType.connect, message: e.toString()),
+          setErr: true,
+        );
         updateStatus(newStatus);
+        _disposeCurrentClient();
         updateConnection(ServerConn.failed);
 
         // Remove SSH session when connection fails
@@ -214,7 +255,7 @@ class ServerNotifier extends _$ServerNotifier {
       try {
         // Detect system type
         final detectedSystemType = await SystemDetector.detect(state.client!, spi);
-        final newStatus = state.status..system = detectedSystemType;
+        final newStatus = _copyStatus(state.status, system: detectedSystemType);
         updateStatus(newStatus);
 
         Loggers.app.info('Writing script for ${spi.name} (${detectedSystemType.name})');
@@ -254,9 +295,10 @@ class ServerNotifier extends _$ServerNotifier {
       } on SSHAuthAbortError catch (e) {
         TryLimiter.inc(sid);
         final err = SSHErr(type: SSHErrType.auth, message: e.toString());
-        final newStatus = state.status..err = err;
+        final newStatus = _copyStatus(state.status, err: err, setErr: true);
         updateStatus(newStatus);
         Loggers.app.warning(err);
+        _disposeCurrentClient();
         updateConnection(ServerConn.failed);
 
         final sessionId = 'ssh_${spi.id}';
@@ -265,9 +307,10 @@ class ServerNotifier extends _$ServerNotifier {
       } on SSHAuthFailError catch (e) {
         TryLimiter.inc(sid);
         final err = SSHErr(type: SSHErrType.auth, message: e.toString());
-        final newStatus = state.status..err = err;
+        final newStatus = _copyStatus(state.status, err: err, setErr: true);
         updateStatus(newStatus);
         Loggers.app.warning(err);
+        _disposeCurrentClient();
         updateConnection(ServerConn.failed);
 
         final sessionId = 'ssh_${spi.id}';
@@ -275,9 +318,10 @@ class ServerNotifier extends _$ServerNotifier {
         return;
       } catch (e) {
         final err = SSHErr(type: SSHErrType.writeScript, message: e.toString());
-        final newStatus = state.status..err = err;
+        final newStatus = _copyStatus(state.status, err: err, setErr: true);
         updateStatus(newStatus);
         Loggers.app.warning(err);
+        _disposeCurrentClient();
         updateConnection(ServerConn.failed);
 
         final sessionId = 'ssh_${spi.id}';
@@ -314,9 +358,13 @@ class ServerNotifier extends _$ServerNotifier {
 
       if (raw.isEmpty) {
         TryLimiter.inc(sid);
-        final newStatus = state.status
-          ..err = SSHErr(type: SSHErrType.segements, message: 'Empty response from server');
+        final newStatus = _copyStatus(
+          state.status,
+          err: SSHErr(type: SSHErrType.segements, message: 'Empty response from server'),
+          setErr: true,
+        );
         updateStatus(newStatus);
+        _disposeCurrentClient();
         updateConnection(ServerConn.failed);
 
         final sessionId = 'ssh_${spi.id}';
@@ -333,9 +381,13 @@ class ServerNotifier extends _$ServerNotifier {
           }
         }
         TryLimiter.inc(sid);
-        final newStatus = state.status
-          ..err = SSHErr(type: SSHErrType.segements, message: 'Separate segments failed, raw:\n$raw');
+        final newStatus = _copyStatus(
+          state.status,
+          err: SSHErr(type: SSHErrType.segements, message: 'Separate segments failed, raw:\n$raw'),
+          setErr: true,
+        );
         updateStatus(newStatus);
+        _disposeCurrentClient();
         updateConnection(ServerConn.failed);
 
         final sessionId = 'ssh_${spi.id}';
@@ -344,8 +396,13 @@ class ServerNotifier extends _$ServerNotifier {
       }
     } catch (e) {
       TryLimiter.inc(sid);
-      final newStatus = state.status..err = SSHErr(type: SSHErrType.getStatus, message: e.toString());
+      final newStatus = _copyStatus(
+        state.status,
+        err: SSHErr(type: SSHErrType.getStatus, message: e.toString()),
+        setErr: true,
+      );
       updateStatus(newStatus);
+      _disposeCurrentClient();
       updateConnection(ServerConn.failed);
       Loggers.app.warning('Get status from ${spi.name} failed', e);
 
@@ -369,9 +426,13 @@ class ServerNotifier extends _$ServerNotifier {
       updateStatus(newStatus);
     } catch (e, trace) {
       TryLimiter.inc(sid);
-      final newStatus = state.status
-        ..err = SSHErr(type: SSHErrType.getStatus, message: 'Parse failed: $e\n\n$raw');
+      final newStatus = _copyStatus(
+        state.status,
+        err: SSHErr(type: SSHErrType.getStatus, message: 'Parse failed: $e\n\n$raw'),
+        setErr: true,
+      );
       updateStatus(newStatus);
+      _disposeCurrentClient();
       updateConnection(ServerConn.failed);
       Loggers.app.warning('Server status', e, trace);
 
