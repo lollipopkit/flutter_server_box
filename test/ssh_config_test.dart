@@ -378,6 +378,13 @@ Host internal-server
         );
       });
 
+      test('preserves hash without preceding whitespace', () {
+        expect(
+          SSHConfig.stripInlineCommentForTest('foo#bar'),
+          'foo#bar',
+        );
+      });
+
       test('handles combined escapes and quotes', () {
         expect(
           SSHConfig.stripInlineCommentForTest(
