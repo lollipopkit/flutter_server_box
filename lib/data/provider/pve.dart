@@ -173,7 +173,7 @@ class PveNotifier extends _$PveNotifier {
       'new-format': '1',
     });
 
-    final data = resp.data['data'];
+    final data = _readTicketData(resp);
     if (data['NeedTFA'] == 1 || data['TFA'] != null) {
       _pendingTfaChallenge = data['ticket'] as String?;
       throw PveErr(type: PveErrType.needTfa, message: 'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.');
@@ -224,7 +224,7 @@ class PveNotifier extends _$PveNotifier {
         'tfa-challenge': challenge,
         'new-format': '1',
       });
-      final data = resp.data['data'];
+      final data = _readTicketData(resp);
       _pendingTfaChallenge = null;
       _setAuthHeaders(data);
     } on DioException catch (e) {
@@ -241,6 +241,18 @@ class PveNotifier extends _$PveNotifier {
       data: data,
       options: Options(contentType: Headers.formUrlEncodedContentType),
     );
+  }
+
+  Map<String, dynamic> _readTicketData(Response<dynamic> resp) {
+    final body = resp.data;
+    if (body is! Map<String, dynamic>) {
+      throw PveErr(type: PveErrType.invalidResponse, message: 'PVE login returned an invalid response body.');
+    }
+    final data = body['data'];
+    if (data is! Map<String, dynamic>) {
+      throw PveErr(type: PveErrType.invalidResponse, message: 'PVE login response did not contain a valid data payload.');
+    }
+    return data;
   }
 
   void _setAuthHeaders(Map<String, dynamic> data) {

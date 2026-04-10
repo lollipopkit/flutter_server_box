@@ -164,6 +164,8 @@
   "pveIgnoreCertTip": "不推荐开启，注意安全隐患！如果你使用的 PVE 默认证书，需要开启该选项",
   "pveLoginFailed": "登录失败。无法使用服务器配置中的用户名或密码通过 Linux PAM 方式认证。",
   "pveOtpRequired": "此 PVE 服务器已启用双因素认证，请输入 OTP 验证码。",
+  "pveOtpTitle": "OTP 验证",
+  "pveOtpLabel": "OTP 验证码",
   "pveVersionLow": "当前该功能处于测试阶段，仅在 PVE 8+ 上测试过，请谨慎使用",
   "pveLoadingForwarding": "正在建立 SSH 隧道...",
   "pveLoadingLogin": "正在认证 PVE...",

@@ -56,7 +56,7 @@ class WebdavErr extends Err<WebdavErrType> {
   String? get solution => null;
 }
 
-enum PveErrType { unknown, net, loginFailed, needTfa }
+enum PveErrType { unknown, net, loginFailed, needTfa, invalidResponse }
 
 class PveErr extends Err<PveErrType> {
   const PveErr({required super.type, super.message});

@@ -582,6 +582,12 @@ class AppLocalizationsEs extends AppLocalizations {
       'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.';
 
   @override
+  String get pveOtpTitle => 'OTP Verification';
+
+  @override
+  String get pveOtpLabel => 'OTP Code';
+
+  @override
   String get pveVersionLow =>
       'Esta función está actualmente en fase de prueba y solo se ha probado en PVE 8+. Úsela con precaución.';
 

@@ -546,6 +546,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pveOtpRequired => '此 PVE 服务器已启用双因素认证，请输入 OTP 验证码。';
 
   @override
+  String get pveOtpTitle => 'OTP 验证';
+
+  @override
+  String get pveOtpLabel => 'OTP 验证码';
+
+  @override
   String get pveVersionLow => '当前该功能处于测试阶段，仅在 PVE 8+ 上测试过，请谨慎使用';
 
   @override
@@ -1469,6 +1475,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pveOtpRequired => '此 PVE 伺服器已啟用雙因素認證，請輸入 OTP 驗證碼。';
+
+  @override
+  String get pveOtpTitle => 'OTP 驗證';
+
+  @override
+  String get pveOtpLabel => 'OTP 驗證碼';
 
   @override
   String get pveVersionLow => '此功能目前處於測試階段，僅在 PVE 8+ 上進行過測試。請謹慎使用。';

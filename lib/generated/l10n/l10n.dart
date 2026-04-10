@@ -1122,6 +1122,18 @@ abstract class AppLocalizations {
   /// **'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.'**
   String get pveOtpRequired;
 
+  /// No description provided for @pveOtpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'OTP Verification'**
+  String get pveOtpTitle;
+
+  /// No description provided for @pveOtpLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'OTP Code'**
+  String get pveOtpLabel;
+
   /// No description provided for @pveVersionLow.
   ///
   /// In en, this message translates to:

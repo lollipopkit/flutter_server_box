@@ -69,7 +69,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
       if (error.type == PveErrType.needTfa &&
           !_isPromptingForTfa &&
           error.message != _lastHandledTfaMessage) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => _promptForTfa(pveState.error!));
+        WidgetsBinding.instance.addPostFrameCallback((_) => _promptForTfa(error));
       }
     }
 
@@ -401,7 +401,7 @@ extension on _PvePageState {
 
     final otpController = TextEditingController();
     final submitted = await context.showRoundDialog<bool>(
-      title: 'OTP',
+      title: l10n.pveOtpTitle,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -410,7 +410,7 @@ extension on _PvePageState {
           const SizedBox(height: 13),
           Input(
             controller: otpController,
-            label: 'OTP',
+            label: l10n.pveOtpLabel,
             hint: '123456',
             icon: Icons.password,
             type: TextInputType.number,
