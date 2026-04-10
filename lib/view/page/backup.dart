@@ -30,6 +30,13 @@ class BackupPage extends ConsumerStatefulWidget {
 final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKeepAliveClientMixin {
   final webdavLoading = false.vn;
   final gistLoading = false.vn;
+  late Future<_ICloudBackupStatus?> _icloudStatusFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshIcloudStatus(notify: false);
+  }
 
   @override
   void dispose() {
@@ -171,6 +178,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
         initiallyExpanded: false,
         children: [
           _buildSyncSettingsTile(),
+          _buildIcloudStatus,
           ListTile(
             title: Text(libL10n.auto),
             trailing: StoreSwitch(
@@ -186,6 +194,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
                 }
                 if (p0) {
                   await bakSync.sync(rs: icloud);
+                  if (mounted) _refreshIcloudStatus();
                 }
                 return true;
               },
@@ -358,6 +367,70 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
     );
   }
 
+  void _refreshIcloudStatus({bool notify = true}) {
+    final future = _loadIcloudStatus();
+    if (!notify) {
+      _icloudStatusFuture = future;
+      return;
+    }
+
+    setState(() {
+      _icloudStatusFuture = future;
+    });
+  }
+
+  Widget get _buildIcloudStatus {
+    return FutureBuilder<_ICloudBackupStatus?>(
+      future: _icloudStatusFuture,
+      builder: (context, snapshot) {
+        String subtitle;
+        IconData icon;
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          subtitle = l10n.icloudBackupStatusLoading;
+          icon = Icons.sync;
+        } else if (snapshot.hasError) {
+          subtitle = l10n.icloudBackupStatusError;
+          icon = Icons.error_outline;
+        } else {
+          final status = snapshot.data;
+          if (status == null) {
+            subtitle = l10n.icloudBackupStatusEmpty;
+            icon = Icons.cloud_off;
+          } else {
+            final lastModified = status.lastModified.toLocal().ymdhms();
+            final remoteState = switch ((status.isUploading, status.isUploaded, status.hasConflict)) {
+              (_, _, true) => l10n.icloudBackupStateConflict,
+              (true, _, _) => l10n.icloudBackupStateUploading,
+              (_, true, _) => l10n.icloudBackupStateUploaded,
+              _ => l10n.icloudBackupStateWaiting,
+            };
+            subtitle = l10n.icloudBackupStatusSummary(lastModified, remoteState);
+            icon = switch ((status.hasConflict, status.isUploading, status.isUploaded)) {
+              (true, _, _) => Icons.warning,
+              (_, true, _) => Icons.cloud_upload,
+              (_, _, true) => Icons.cloud_done,
+              _ => Icons.cloud_queue,
+            };
+          }
+        }
+
+        return ListTile(
+          leading: Icon(icon),
+          title: Text(l10n.icloudBackupStatusTitle),
+          subtitle: Text(subtitle, style: UIs.textGrey),
+          trailing: IconButton(
+            onPressed: () {
+              _refreshIcloudStatus();
+            },
+            icon: const Icon(Icons.refresh),
+            tooltip: libL10n.refresh,
+          ),
+        );
+      },
+    );
+  }
+
   Widget get _buildBulkImportServers {
     return CardX(
       child: ListTile(
@@ -435,6 +508,22 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
 }
 
 extension on _BackupPageState {
+  Future<_ICloudBackupStatus?> _loadIcloudStatus() async {
+    final files = await icloud.list();
+    final matches = files.where((file) => file.relativePath == Paths.bakName);
+    if (matches.isEmpty) return null;
+
+    final file = matches.reduce(
+      (latest, current) => current.contentChangeDate.isAfter(latest.contentChangeDate) ? current : latest,
+    );
+    return _ICloudBackupStatus(
+      lastModified: file.contentChangeDate,
+      isUploading: file.isUploading,
+      isUploaded: file.isUploaded,
+      hasConflict: file.hasUnresolvedConflicts,
+    );
+  }
+
   Future<void> _onTapWebdavDl(BuildContext context) async {
     webdavLoading.value = true;
     try {
@@ -682,4 +771,18 @@ extension on _BackupPageState {
 
     return false; // User cancelled the dialog
   }
+}
+
+final class _ICloudBackupStatus {
+  const _ICloudBackupStatus({
+    required this.lastModified,
+    required this.isUploading,
+    required this.isUploaded,
+    required this.hasConflict,
+  });
+
+  final DateTime lastModified;
+  final bool isUploading;
+  final bool isUploaded;
+  final bool hasConflict;
 }

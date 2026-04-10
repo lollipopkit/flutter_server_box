@@ -345,6 +345,60 @@ abstract class AppLocalizations {
   /// **'Backup version is not match.'**
   String get backupVersionNotMatch;
 
+  /// No description provided for @icloudBackupStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup status'**
+  String get icloudBackupStatusTitle;
+
+  /// No description provided for @icloudBackupStatusLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading iCloud backup status...'**
+  String get icloudBackupStatusLoading;
+
+  /// No description provided for @icloudBackupStatusError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to read iCloud backup metadata'**
+  String get icloudBackupStatusError;
+
+  /// No description provided for @icloudBackupStatusEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No iCloud backup file found yet'**
+  String get icloudBackupStatusEmpty;
+
+  /// No description provided for @icloudBackupStateUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading'**
+  String get icloudBackupStateUploading;
+
+  /// No description provided for @icloudBackupStateConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Conflict detected'**
+  String get icloudBackupStateConflict;
+
+  /// No description provided for @icloudBackupStateUploaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded'**
+  String get icloudBackupStateUploaded;
+
+  /// No description provided for @icloudBackupStateWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for iCloud'**
+  String get icloudBackupStateWaiting;
+
+  /// No description provided for @icloudBackupStatusSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Last backup: {lastModified}\nStatus: {remoteState}'**
+  String icloudBackupStatusSummary(Object lastModified, Object remoteState);
+
   /// No description provided for @bgRun.
   ///
   /// In en, this message translates to:

@@ -122,6 +122,35 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupVersionNotMatch => '备份版本不兼容，无法恢复';
 
   @override
+  String get icloudBackupStatusTitle => '备份状态';
+
+  @override
+  String get icloudBackupStatusLoading => '正在读取 iCloud 备份状态...';
+
+  @override
+  String get icloudBackupStatusError => '无法读取 iCloud 备份元数据';
+
+  @override
+  String get icloudBackupStatusEmpty => '尚未发现 iCloud 备份文件';
+
+  @override
+  String get icloudBackupStateUploading => '上传中';
+
+  @override
+  String get icloudBackupStateConflict => '检测到冲突';
+
+  @override
+  String get icloudBackupStateUploaded => '已上传';
+
+  @override
+  String get icloudBackupStateWaiting => '等待 iCloud 同步';
+
+  @override
+  String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
+    return '最后备份：$lastModified\n状态：$remoteState';
+  }
+
+  @override
   String get bgRun => '后台运行';
 
   @override
@@ -1023,6 +1052,35 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get backupVersionNotMatch => '備份版本不相容，無法還原';
+
+  @override
+  String get icloudBackupStatusTitle => '備份狀態';
+
+  @override
+  String get icloudBackupStatusLoading => '正在讀取 iCloud 備份狀態...';
+
+  @override
+  String get icloudBackupStatusError => '無法讀取 iCloud 備份中繼資料';
+
+  @override
+  String get icloudBackupStatusEmpty => '尚未找到 iCloud 備份檔案';
+
+  @override
+  String get icloudBackupStateUploading => '上傳中';
+
+  @override
+  String get icloudBackupStateConflict => '偵測到衝突';
+
+  @override
+  String get icloudBackupStateUploaded => '已上傳';
+
+  @override
+  String get icloudBackupStateWaiting => '等待 iCloud 同步';
+
+  @override
+  String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
+    return '最後備份：$lastModified\n狀態：$remoteState';
+  }
 
   @override
   String get bgRun => '背景執行';
