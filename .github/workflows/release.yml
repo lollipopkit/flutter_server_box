@@ -65,7 +65,15 @@ jobs:
 
   releaseLinux:
     name: Release linux
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runs_on: ubuntu-latest
+            artifact_suffix: ""
+          - runs_on: ubuntu-22.04
+            artifact_suffix: "_legacy"
+    runs-on: ${{ matrix.runs_on }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -93,12 +101,12 @@ jobs:
             ls -la || true
             exit 1
           fi
-          mv "${matches[0]}" "${APP_NAME}_${RELEASE_TAG}_amd64.AppImage"
+          mv "${matches[0]}" "${APP_NAME}_${RELEASE_TAG}${{ matrix.artifact_suffix }}_amd64.AppImage"
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_amd64.AppImage
+            ${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}${{ matrix.artifact_suffix }}_amd64.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
