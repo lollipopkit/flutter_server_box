@@ -543,13 +543,40 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pveLoginFailed => '登录失败。无法使用服务器配置中的用户名或密码通过 Linux PAM 方式认证。';
 
   @override
+  String get pveServerClientMissing => '当前服务器的 SSH 客户端不可用。';
+
+  @override
+  String get pveAddressMissing => '未配置 PVE 地址，请在服务器设置中填写。';
+
+  @override
+  String get pvePasswordRequired => '需要提供 PVE 密码，请在服务器设置中填写。';
+
+  @override
   String get pveOtpRequired => '此 PVE 服务器已启用双因素认证，请输入 OTP 验证码。';
+
+  @override
+  String get pveOtpChallengeExpired => 'OTP 验证挑战已过期，请刷新后重试。';
+
+  @override
+  String get pveOtpCodeRequired => '请输入 OTP 验证码。';
+
+  @override
+  String get pveOtpVerificationFailed => 'OTP 验证失败，请使用最新验证码重试。';
 
   @override
   String get pveOtpTitle => 'OTP 验证';
 
   @override
   String get pveOtpLabel => 'OTP 验证码';
+
+  @override
+  String get pveInvalidResponseBody => 'PVE 登录返回了无效的响应内容。';
+
+  @override
+  String get pveInvalidResponseData => 'PVE 登录响应中缺少有效的 data 数据。';
+
+  @override
+  String get pveMissingAuthTicket => 'PVE 登录成功，但未返回认证票据。';
 
   @override
   String get pveVersionLow => '当前该功能处于测试阶段，仅在 PVE 8+ 上测试过，请谨慎使用';
@@ -1474,13 +1501,40 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get pveLoginFailed => '登入失敗。無法使用伺服器設定中的使用者名稱或密碼透過 Linux PAM 方式認證。';
 
   @override
+  String get pveServerClientMissing => '目前伺服器的 SSH 用戶端不可用。';
+
+  @override
+  String get pveAddressMissing => '未設定 PVE 位址，請在伺服器設定中填寫。';
+
+  @override
+  String get pvePasswordRequired => '需要提供 PVE 密碼，請在伺服器設定中填寫。';
+
+  @override
   String get pveOtpRequired => '此 PVE 伺服器已啟用雙因素認證，請輸入 OTP 驗證碼。';
+
+  @override
+  String get pveOtpChallengeExpired => 'OTP 驗證挑戰已過期，請重新整理後再試一次。';
+
+  @override
+  String get pveOtpCodeRequired => '請輸入 OTP 驗證碼。';
+
+  @override
+  String get pveOtpVerificationFailed => 'OTP 驗證失敗，請使用最新驗證碼重試。';
 
   @override
   String get pveOtpTitle => 'OTP 驗證';
 
   @override
   String get pveOtpLabel => 'OTP 驗證碼';
+
+  @override
+  String get pveInvalidResponseBody => 'PVE 登入返回了無效的回應內容。';
+
+  @override
+  String get pveInvalidResponseData => 'PVE 登入回應中缺少有效的 data 資料。';
+
+  @override
+  String get pveMissingAuthTicket => 'PVE 登入成功，但未返回認證票據。';
 
   @override
   String get pveVersionLow => '此功能目前處於測試階段，僅在 PVE 8+ 上進行過測試。請謹慎使用。';
