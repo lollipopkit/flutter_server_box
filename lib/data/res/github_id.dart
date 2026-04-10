@@ -167,6 +167,7 @@ abstract final class GithubIds {
     'uniquePWD',
     'ChirmyRam',
     'Utaoki-henji',
+    'smtdev'
   };
 }
 
