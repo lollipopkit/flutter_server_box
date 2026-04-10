@@ -505,8 +505,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pushToken => '消息推送 Token';
 
   @override
-  String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand 仅支持桌面平台。';
+  String get proxyCommandOnlySupportedOnDesktop => 'ProxyCommand 仅支持桌面平台。';
 
   @override
   String get pveIgnoreCertTip => '不推荐开启，注意安全隐患！如果你使用的 PVE 默认证书，需要开启该选项';

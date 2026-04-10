@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:meta/meta.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 /// Utility class to parse SSH config files under `~/.ssh/config`
@@ -63,6 +64,18 @@ abstract final class SSHConfig {
 
     void addServer() {
       if (currentHost != null && currentHost != '*' && hostname != null) {
+        final normalizedProxyCommand = proxyCommand?.trim();
+        final resolvedProxyCommand =
+            normalizedProxyCommand == null || normalizedProxyCommand.isEmpty
+            ? null
+            : normalizedProxyCommand;
+        final resolvedJumpHost = resolvedProxyCommand != null ? null : jumpHost;
+        if (resolvedProxyCommand != null && jumpHost != null) {
+          Loggers.app.info(
+            'SSH config host $currentHost defines both ProxyJump and '
+            'ProxyCommand; preferring ProxyCommand.',
+          );
+        }
         final spi = Spi(
           id: ShortId.generate(),
           name: currentHost,
@@ -70,10 +83,16 @@ abstract final class SSHConfig {
           port: port,
           user: user ?? 'root', // Default user is 'root'
           keyId: identityFile,
-          jumpId: jumpHost,
-          proxyCommand: proxyCommand,
+          jumpId: resolvedJumpHost,
+          proxyCommand: resolvedProxyCommand,
         );
-        spi.validateOrThrow();
+        final validationError = spi.validate();
+        if (validationError != null) {
+          Loggers.app.warning(
+            'Skipping invalid SSH config host $currentHost: $validationError',
+          );
+          return;
+        }
         servers.add(spi);
       }
     }
@@ -83,8 +102,7 @@ abstract final class SSHConfig {
       if (trimmed.isEmpty || trimmed.startsWith('#')) continue;
 
       // Handle inline comments
-      final commentIndex = trimmed.indexOf('#');
-      final cleanLine = commentIndex != -1 ? trimmed.substring(0, commentIndex).trim() : trimmed;
+      final cleanLine = _stripInlineComment(trimmed);
       if (cleanLine.isEmpty) continue;
 
       final parts = cleanLine.split(RegExp(r'\s+'));
@@ -163,6 +181,45 @@ abstract final class SSHConfig {
       return parts.isNotEmpty ? parts[0] : null;
     }
     return null;
+  }
+
+  static String _stripInlineComment(String line) {
+    var inSingleQuotes = false;
+    var inDoubleQuotes = false;
+    var escaped = false;
+
+    for (var i = 0; i < line.length; i++) {
+      final char = line[i];
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char == r'\') {
+        escaped = true;
+        continue;
+      }
+      if (char == "'" && !inDoubleQuotes) {
+        inSingleQuotes = !inSingleQuotes;
+        continue;
+      }
+      if (char == '"' && !inSingleQuotes) {
+        inDoubleQuotes = !inDoubleQuotes;
+        continue;
+      }
+      if (char == '#' &&
+          !inSingleQuotes &&
+          !inDoubleQuotes &&
+          (i == 0 || line[i - 1].trim().isEmpty)) {
+        return line.substring(0, i).trim();
+      }
+    }
+
+    return line.trim();
+  }
+
+  @visibleForTesting
+  static String stripInlineCommentForTest(String line) {
+    return _stripInlineComment(line);
   }
 
   /// Check if SSH config file exists, trying multiple possible paths

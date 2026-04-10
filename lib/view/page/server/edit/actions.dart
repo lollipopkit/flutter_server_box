@@ -4,6 +4,13 @@ part of 'edit.dart';
 final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:%;]+$');
 
 extension _Actions on _ServerEditPageState {
+  String _validationErrorMessage(SpiValidationError error) {
+    switch (error) {
+      case SpiValidationError.jumpServerAndProxyCommandConflict:
+        return l10n.jumpServerAndProxyCommandCannotBeUsedTogether;
+    }
+  }
+
   bool _isInvalidJumpSelection(String? candidateJumpId) {
     final currentServer = spi;
     return wouldCreateJumpCycle(
@@ -129,11 +136,8 @@ extension _Actions on _ServerEditPageState {
           : _disabledCmdTypes.value.toList(),
     );
     final validationError = spi.validate();
-    if (validationError ==
-        SpiValidationError.jumpServerAndProxyCommandConflict) {
-      context.showSnackBar(
-        l10n.jumpServerAndProxyCommandCannotBeUsedTogether,
-      );
+    if (validationError != null) {
+      context.showSnackBar(_validationErrorMessage(validationError));
       return;
     }
 
@@ -206,8 +210,8 @@ extension _Utils on _ServerEditPageState {
       } else {
         dprint('Error checking SSH config: $e');
         Stores.setting.firstTimeReadSSHCfg.put(false);
-        if (e is ArgumentError) {
-          context.showSnackBar(e.message?.toString() ?? e.toString());
+        if (e is SpiValidationException) {
+          context.showSnackBar(_validationErrorMessage(e.error));
         }
       }
     }
