@@ -163,8 +163,8 @@ class PveNotifier extends _$PveNotifier {
 
   Future<void> _login() async {
     final useKeyAuth = spiParam.keyId != null;
-    final password = useKeyAuth ? spiParam.custom?.pvePwd : spiParam.pwd;
-    if (password == null) {
+    final password = (useKeyAuth ? spiParam.custom?.pvePwd : spiParam.pwd)?.trim();
+    if (password == null || password.isEmpty) {
       throw PveErr(type: PveErrType.loginFailed, message: l10n.pvePasswordRequired);
     }
     final resp = await _requestTicket({
@@ -176,7 +176,11 @@ class PveNotifier extends _$PveNotifier {
 
     final data = _readTicketData(resp);
     if (data['NeedTFA'] == 1 || data['TFA'] != null) {
-      _pendingTfaChallenge = data['ticket'] as String?;
+      final ticket = data['ticket'];
+      if (ticket is! String || ticket.isEmpty) {
+        throw PveErr(type: PveErrType.invalidResponse, message: l10n.pveInvalidResponseData);
+      }
+      _pendingTfaChallenge = ticket;
       throw PveErr(type: PveErrType.needTfa, message: l10n.pveOtpRequired);
     }
 
@@ -205,7 +209,11 @@ class PveNotifier extends _$PveNotifier {
       state = state.copyWith(isConnected: true);
       await list();
       if (!ref.mounted) return;
-      state = state.copyWith(error: null, loadingStep: PveLoadingStep.none);
+      if (state.error == null) {
+        state = state.copyWith(error: null, loadingStep: PveLoadingStep.none);
+      } else {
+        state = state.copyWith(loadingStep: PveLoadingStep.none);
+      }
     } on PveErr catch (e) {
       if (!ref.mounted) return;
       state = state.copyWith(error: e, loadingStep: PveLoadingStep.none);
@@ -220,6 +228,8 @@ class PveNotifier extends _$PveNotifier {
 
   Future<void> _loginWithTfaChallenge(String challenge, String otp) async {
     try {
+      // The current OTP dialog only collects a code, so this flow supports
+      // Proxmox TOTP challenges for now.
       final resp = await _requestTicket({
         'username': spiParam.user,
         'password': 'totp:$otp',
