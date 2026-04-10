@@ -9,6 +9,8 @@ import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
 
+final _octalPermReg = RegExp(r'^[0-7]{3,4}$');
+
 final class SftpSudoHelper {
   final SSHClient client;
   final Spi spi;
@@ -89,6 +91,9 @@ final class SftpSudoHelper {
     String remotePath, {
     String? password,
   }) async {
+    if (!_octalPermReg.hasMatch(perm)) {
+      throw ArgumentError.value(perm, 'perm', 'Permission must be a 3 or 4 digit octal string');
+    }
     await _runAndRead(
       'chmod $perm ${_shellQuote(remotePath)}',
       password: password,
@@ -157,7 +162,7 @@ final class SftpSudoHelper {
       '[ -f "\$path" ] && type=f; '
       'size=\$(stat -c %s "\$path"); '
       'mtime=\$(stat -c %Y "\$path"); '
-      'printf "%s\\t%s\\t%s\\t%s\\t%s\\n" "\$name" "\$perm" "\$type" "\$size" "\$mtime"; '
+      'printf "%s\\0%s\\0%s\\0%s\\0%s\\0" "\$name" "\$perm" "\$type" "\$size" "\$mtime"; '
       'done'
       '\' sh {} +',
       password: password,
@@ -175,17 +180,13 @@ final class SftpSudoHelper {
       ),
     ];
 
-    for (final rawLine in output.split('\n')) {
-      final line = rawLine.trimRight();
-      if (line.isEmpty) continue;
-      final parts = line.split('\t');
-      if (parts.length < 5) continue;
-
-      final filename = parts[0];
-      final permOct = int.tryParse(parts[1], radix: 8) ?? 0x1A4;
-      final typeChar = parts[2];
-      final size = int.tryParse(parts[3]) ?? 0;
-      final modifyTime = double.tryParse(parts[4])?.toInt() ?? 0;
+    final parts = output.split('\u0000').where((e) => e.isNotEmpty).toList();
+    for (var i = 0; i + 4 < parts.length; i += 5) {
+      final filename = parts[i];
+      final permOct = int.tryParse(parts[i + 1], radix: 8) ?? 0x1A4;
+      final typeChar = parts[i + 2];
+      final size = int.tryParse(parts[i + 3]) ?? 0;
+      final modifyTime = double.tryParse(parts[i + 4])?.toInt() ?? 0;
       final mode = _buildMode(typeChar, permOct);
 
       items.add(
