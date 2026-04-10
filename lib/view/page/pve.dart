@@ -436,7 +436,11 @@ extension on _PvePageState {
           return true;
         },
       );
-      if (!mounted || err != null) return;
+      if (!mounted) return;
+      if (err != null) {
+        _lastHandledTfaMessage = null;
+        return;
+      }
 
       _lastHandledTfaMessage = null;
       _initRefreshTimer();
