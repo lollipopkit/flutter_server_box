@@ -1116,11 +1116,77 @@ abstract class AppLocalizations {
   /// **'Login failed. Unable to authenticate with username/password from server configuration for Linux PAM login.'**
   String get pveLoginFailed;
 
+  /// No description provided for @pveServerClientMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The SSH client for this server is not available.'**
+  String get pveServerClientMissing;
+
+  /// No description provided for @pveAddressMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'The PVE address is missing. Please configure it in server settings.'**
+  String get pveAddressMissing;
+
+  /// No description provided for @pvePasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'PVE password is required. Please set it in server settings.'**
+  String get pvePasswordRequired;
+
   /// No description provided for @pveOtpRequired.
   ///
   /// In en, this message translates to:
   /// **'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.'**
   String get pveOtpRequired;
+
+  /// No description provided for @pveOtpChallengeExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'The OTP challenge has expired. Please refresh and try again.'**
+  String get pveOtpChallengeExpired;
+
+  /// No description provided for @pveOtpCodeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'OTP code is required.'**
+  String get pveOtpCodeRequired;
+
+  /// No description provided for @pveOtpVerificationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'OTP verification failed. Please try again with a fresh code.'**
+  String get pveOtpVerificationFailed;
+
+  /// No description provided for @pveOtpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'OTP Verification'**
+  String get pveOtpTitle;
+
+  /// No description provided for @pveOtpLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'OTP Code'**
+  String get pveOtpLabel;
+
+  /// No description provided for @pveInvalidResponseBody.
+  ///
+  /// In en, this message translates to:
+  /// **'PVE login returned an invalid response body.'**
+  String get pveInvalidResponseBody;
+
+  /// No description provided for @pveInvalidResponseData.
+  ///
+  /// In en, this message translates to:
+  /// **'PVE login response did not contain a valid data payload.'**
+  String get pveInvalidResponseData;
+
+  /// No description provided for @pveMissingAuthTicket.
+  ///
+  /// In en, this message translates to:
+  /// **'PVE login succeeded but no authentication ticket was returned.'**
+  String get pveMissingAuthTicket;
 
   /// No description provided for @pveVersionLow.
   ///

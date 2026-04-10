@@ -8,6 +8,7 @@ import 'package:dio/io.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -45,6 +46,7 @@ class PveNotifier extends _$PveNotifier {
   int _localPort = 0;
   Dio? _session;
   bool _ignoreCert = false;
+  String? _pendingTfaChallenge;
 
   Dio get session => _session!;
   String get addrValue => addr!;
@@ -53,7 +55,7 @@ class PveNotifier extends _$PveNotifier {
     final serverState = ref.read(serverProvider(spiParam.id));
     final client = serverState.client;
     if (client == null) {
-      throw PveErr(type: PveErrType.net, message: 'Server client is null');
+      throw PveErr(type: PveErrType.net, message: l10n.pveServerClientMissing);
     }
     return client;
   }
@@ -67,7 +69,7 @@ class PveNotifier extends _$PveNotifier {
     }
     final pveAddr = spiParam.custom?.pveAddr;
     if (pveAddr == null) {
-      return PveState(error: PveErr(type: PveErrType.net, message: 'PVE address is null'));
+      return PveState(error: PveErr(type: PveErrType.net, message: l10n.pveAddressMissing));
     }
     addr = pveAddr;
     _ignoreCert = spiParam.custom?.pveIgnoreCert ?? false;
@@ -161,33 +163,116 @@ class PveNotifier extends _$PveNotifier {
 
   Future<void> _login() async {
     final useKeyAuth = spiParam.keyId != null;
-    final password = useKeyAuth ? spiParam.custom?.pvePwd : spiParam.pwd;
-    if (password == null) {
-      throw PveErr(type: PveErrType.loginFailed, message: 'PVE password is required. Please set it in server settings.');
+    final password = (useKeyAuth ? spiParam.custom?.pvePwd : spiParam.pwd)?.trim();
+    if (password == null || password.isEmpty) {
+      throw PveErr(type: PveErrType.loginFailed, message: l10n.pvePasswordRequired);
     }
-    final resp = await session.post(
-      '$addrValue/api2/extjs/access/ticket',
-      data: {
-        'username': spiParam.user,
-        'password': password,
-        'realm': 'pam',
-        'new-format': '1',
-      },
-      options: Options(
-        headers: {HttpHeaders.contentTypeHeader: Headers.jsonContentType},
-      ),
-    );
+    final resp = await _requestTicket({
+      'username': spiParam.user,
+      'password': password,
+      'realm': 'pam',
+      'new-format': '1',
+    });
 
-    final data = resp.data['data'];
-    if (data['NeedTFA'] == 1) {
-      throw PveErr(type: PveErrType.needTfa, message: 'Two-factor authentication is not supported yet. Please disable OTP on the PVE server and try again.');
+    final data = _readTicketData(resp);
+    if (data['NeedTFA'] == 1 || data['TFA'] != null) {
+      final ticket = data['ticket'];
+      if (ticket is! String || ticket.isEmpty) {
+        throw PveErr(type: PveErrType.invalidResponse, message: l10n.pveInvalidResponseData);
+      }
+      _pendingTfaChallenge = ticket;
+      throw PveErr(type: PveErrType.needTfa, message: l10n.pveOtpRequired);
     }
 
+    _pendingTfaChallenge = null;
     _setAuthHeaders(data);
+  }
+
+  Future<void> submitTfaCode(String otp) async {
+    final challenge = _pendingTfaChallenge;
+    if (challenge == null) {
+      throw PveErr(type: PveErrType.needTfa, message: l10n.pveOtpChallengeExpired);
+    }
+    if (otp.trim().isEmpty) {
+      throw PveErr(type: PveErrType.needTfa, message: l10n.pveOtpCodeRequired);
+    }
+
+    if (!ref.mounted) return;
+    state = state.copyWith(error: null, loadingStep: PveLoadingStep.loggingIn);
+
+    try {
+      await _loginWithTfaChallenge(challenge, otp.trim());
+      if (!ref.mounted) return;
+      state = state.copyWith(loadingStep: PveLoadingStep.fetchingData);
+      await _getRelease();
+      if (!ref.mounted) return;
+      state = state.copyWith(isConnected: true);
+      await list();
+      if (!ref.mounted) return;
+      if (state.error == null) {
+        state = state.copyWith(error: null, loadingStep: PveLoadingStep.none);
+      } else {
+        state = state.copyWith(loadingStep: PveLoadingStep.none);
+      }
+    } on PveErr catch (e) {
+      if (!ref.mounted) return;
+      state = state.copyWith(error: e, loadingStep: PveLoadingStep.none);
+      rethrow;
+    } catch (e, s) {
+      if (!ref.mounted) return;
+      Loggers.app.warning('PVE TFA login failed', e, s);
+      state = state.copyWith(error: PveErr(type: PveErrType.unknown, message: e.toString()), loadingStep: PveLoadingStep.none);
+      rethrow;
+    }
+  }
+
+  Future<void> _loginWithTfaChallenge(String challenge, String otp) async {
+    try {
+      // The current OTP dialog only collects a code, so this flow supports
+      // Proxmox TOTP challenges for now.
+      final resp = await _requestTicket({
+        'username': spiParam.user,
+        'password': 'totp:$otp',
+        'realm': 'pam',
+        'tfa-challenge': challenge,
+        'new-format': '1',
+      });
+      final data = _readTicketData(resp);
+      _pendingTfaChallenge = null;
+      _setAuthHeaders(data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw PveErr(type: PveErrType.needTfa, message: l10n.pveOtpVerificationFailed);
+      }
+      rethrow;
+    }
+  }
+
+  Future<Response<dynamic>> _requestTicket(Map<String, dynamic> data) {
+    return session.post(
+      '$addrValue/api2/json/access/ticket',
+      data: data,
+      options: Options(contentType: Headers.formUrlEncodedContentType),
+    );
+  }
+
+  Map<String, dynamic> _readTicketData(Response<dynamic> resp) {
+    final body = resp.data;
+    if (body is! Map<String, dynamic>) {
+      throw PveErr(type: PveErrType.invalidResponse, message: l10n.pveInvalidResponseBody);
+    }
+    final data = body['data'];
+    if (data is! Map<String, dynamic>) {
+      throw PveErr(type: PveErrType.invalidResponse, message: l10n.pveInvalidResponseData);
+    }
+    return data;
   }
 
   void _setAuthHeaders(Map<String, dynamic> data) {
     final ticket = data['ticket'];
+    if (ticket == null) {
+      throw PveErr(type: PveErrType.loginFailed, message: l10n.pveMissingAuthTicket);
+    }
     session.options.headers['CSRFPreventionToken'] = data['CSRFPreventionToken'];
     session.options.headers['Cookie'] = 'PVEAuthCookie=$ticket';
   }
@@ -269,6 +354,7 @@ class PveNotifier extends _$PveNotifier {
   }
 
   Future<void> dispose() async {
+    _pendingTfaChallenge = null;
     try {
       await _serverSocket?.close();
     } catch (e, s) {
