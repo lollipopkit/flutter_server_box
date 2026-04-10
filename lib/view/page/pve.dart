@@ -33,6 +33,8 @@ const _kHorziPadding = 11.0;
 final class _PvePageState extends ConsumerState<PvePage> {
   late MediaQueryData _media;
   Timer? _timer;
+  bool _isPromptingForTfa = false;
+  String? _lastHandledTfaMessage;
 
   late final _provider = pveProvider(widget.args.spi);
   late final _notifier = ref.read(_provider.notifier);
@@ -63,6 +65,12 @@ final class _PvePageState extends ConsumerState<PvePage> {
     // If there is an error, stop the timer
     if (pveState.error != null) {
       _timer?.cancel();
+      final error = pveState.error!;
+      if (error.type == PveErrType.needTfa &&
+          !_isPromptingForTfa &&
+          error.message != _lastHandledTfaMessage) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _promptForTfa(pveState.error!));
+      }
     }
 
     return Scaffold(
@@ -74,6 +82,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
               : Btn.icon(
                   icon: const Icon(Icons.refresh),
                   onTap: () {
+                    _lastHandledTfaMessage = null;
                     _notifier.reconnect();
                     _initRefreshTimer();
                   },
@@ -385,6 +394,60 @@ final class _PvePageState extends ConsumerState<PvePage> {
 }
 
 extension on _PvePageState {
+  Future<void> _promptForTfa(PveErr error) async {
+    if (!mounted || _isPromptingForTfa) return;
+    _isPromptingForTfa = true;
+    _lastHandledTfaMessage = error.message;
+
+    final otpController = TextEditingController();
+    final submitted = await context.showRoundDialog<bool>(
+      title: 'OTP',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(error.message ?? l10n.pveOtpRequired),
+          const SizedBox(height: 13),
+          Input(
+            controller: otpController,
+            label: 'OTP',
+            hint: '123456',
+            icon: Icons.password,
+            type: TextInputType.number,
+            suggestion: false,
+            autoFocus: true,
+          ),
+        ],
+      ),
+      actions: Btnx.cancelOk,
+    );
+    final otp = otpController.text.trim();
+    otpController.dispose();
+    _isPromptingForTfa = false;
+
+    if (!mounted || submitted != true) return;
+    if (otp.isEmpty) {
+      context.showSnackBar(l10n.pveOtpRequired);
+      return;
+    }
+
+    final (_, err) = await context.showLoadingDialog(
+      fn: () async {
+        await _notifier.submitTfaCode(otp);
+        return true;
+      },
+    );
+    if (!mounted || err != null) {
+      if (mounted && err != null) {
+        context.showSnackBar(err.toString());
+      }
+      return;
+    }
+
+    _lastHandledTfaMessage = null;
+    _initRefreshTimer();
+  }
+
   void _onCtrl(String action, PveCtrlIface item, Future<bool> Function() func) async {
     final sure = await context.showRoundDialog<bool>(
       title: libL10n.attention,

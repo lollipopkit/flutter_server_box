@@ -45,6 +45,7 @@ class PveNotifier extends _$PveNotifier {
   int _localPort = 0;
   Dio? _session;
   bool _ignoreCert = false;
+  String? _pendingTfaChallenge;
 
   Dio get session => _session!;
   String get addrValue => addr!;
@@ -165,29 +166,88 @@ class PveNotifier extends _$PveNotifier {
     if (password == null) {
       throw PveErr(type: PveErrType.loginFailed, message: 'PVE password is required. Please set it in server settings.');
     }
-    final resp = await session.post(
-      '$addrValue/api2/extjs/access/ticket',
-      data: {
-        'username': spiParam.user,
-        'password': password,
-        'realm': 'pam',
-        'new-format': '1',
-      },
-      options: Options(
-        headers: {HttpHeaders.contentTypeHeader: Headers.jsonContentType},
-      ),
-    );
+    final resp = await _requestTicket({
+      'username': spiParam.user,
+      'password': password,
+      'realm': 'pam',
+      'new-format': '1',
+    });
 
     final data = resp.data['data'];
-    if (data['NeedTFA'] == 1) {
-      throw PveErr(type: PveErrType.needTfa, message: 'Two-factor authentication is not supported yet. Please disable OTP on the PVE server and try again.');
+    if (data['NeedTFA'] == 1 || data['TFA'] != null) {
+      _pendingTfaChallenge = data['ticket'] as String?;
+      throw PveErr(type: PveErrType.needTfa, message: 'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.');
     }
 
+    _pendingTfaChallenge = null;
     _setAuthHeaders(data);
+  }
+
+  Future<void> submitTfaCode(String otp) async {
+    final challenge = _pendingTfaChallenge;
+    if (challenge == null) {
+      throw PveErr(type: PveErrType.needTfa, message: 'The OTP challenge has expired. Please refresh and try again.');
+    }
+    if (otp.trim().isEmpty) {
+      throw PveErr(type: PveErrType.needTfa, message: 'OTP code is required.');
+    }
+
+    if (!ref.mounted) return;
+    state = state.copyWith(error: null, loadingStep: PveLoadingStep.loggingIn);
+
+    try {
+      await _loginWithTfaChallenge(challenge, otp.trim());
+      if (!ref.mounted) return;
+      state = state.copyWith(loadingStep: PveLoadingStep.fetchingData);
+      await _getRelease();
+      if (!ref.mounted) return;
+      state = state.copyWith(isConnected: true);
+      await list();
+      if (!ref.mounted) return;
+      state = state.copyWith(error: null, loadingStep: PveLoadingStep.none);
+    } on PveErr catch (e) {
+      if (!ref.mounted) return;
+      state = state.copyWith(error: e, loadingStep: PveLoadingStep.none);
+    } catch (e, s) {
+      if (!ref.mounted) return;
+      Loggers.app.warning('PVE TFA login failed', e, s);
+      state = state.copyWith(error: PveErr(type: PveErrType.unknown, message: e.toString()), loadingStep: PveLoadingStep.none);
+    }
+  }
+
+  Future<void> _loginWithTfaChallenge(String challenge, String otp) async {
+    try {
+      final resp = await _requestTicket({
+        'username': spiParam.user,
+        'password': 'totp:$otp',
+        'realm': 'pam',
+        'tfa-challenge': challenge,
+        'new-format': '1',
+      });
+      final data = resp.data['data'];
+      _pendingTfaChallenge = null;
+      _setAuthHeaders(data);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw PveErr(type: PveErrType.needTfa, message: 'OTP verification failed. Please try again with a fresh code.');
+      }
+      rethrow;
+    }
+  }
+
+  Future<Response<dynamic>> _requestTicket(Map<String, dynamic> data) {
+    return session.post(
+      '$addrValue/api2/json/access/ticket',
+      data: data,
+      options: Options(contentType: Headers.formUrlEncodedContentType),
+    );
   }
 
   void _setAuthHeaders(Map<String, dynamic> data) {
     final ticket = data['ticket'];
+    if (ticket == null) {
+      throw PveErr(type: PveErrType.loginFailed, message: 'PVE login succeeded but no auth ticket was returned.');
+    }
     session.options.headers['CSRFPreventionToken'] = data['CSRFPreventionToken'];
     session.options.headers['Cookie'] = 'PVEAuthCookie=$ticket';
   }
@@ -269,6 +329,7 @@ class PveNotifier extends _$PveNotifier {
   }
 
   Future<void> dispose() async {
+    _pendingTfaChallenge = null;
     try {
       await _serverSocket?.close();
     } catch (e, s) {
