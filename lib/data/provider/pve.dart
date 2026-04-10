@@ -208,10 +208,12 @@ class PveNotifier extends _$PveNotifier {
     } on PveErr catch (e) {
       if (!ref.mounted) return;
       state = state.copyWith(error: e, loadingStep: PveLoadingStep.none);
+      rethrow;
     } catch (e, s) {
       if (!ref.mounted) return;
       Loggers.app.warning('PVE TFA login failed', e, s);
       state = state.copyWith(error: PveErr(type: PveErrType.unknown, message: e.toString()), loadingStep: PveLoadingStep.none);
+      rethrow;
     }
   }
 
