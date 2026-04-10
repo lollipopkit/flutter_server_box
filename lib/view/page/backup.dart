@@ -30,6 +30,7 @@ class BackupPage extends ConsumerStatefulWidget {
 final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKeepAliveClientMixin {
   final webdavLoading = false.vn;
   final gistLoading = false.vn;
+  var _icloudStatusVersion = 0;
 
   @override
   void dispose() {
@@ -171,6 +172,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
         initiallyExpanded: false,
         children: [
           _buildSyncSettingsTile(),
+          _buildIcloudStatus,
           ListTile(
             title: Text(libL10n.auto),
             trailing: StoreSwitch(
@@ -186,6 +188,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
                 }
                 if (p0) {
                   await bakSync.sync(rs: icloud);
+                  if (mounted) setState(() => _icloudStatusVersion++);
                 }
                 return true;
               },
@@ -358,6 +361,52 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
     );
   }
 
+  Widget get _buildIcloudStatus {
+    return FutureBuilder<_ICloudBackupStatus?>(
+      future: _loadIcloudStatus(_icloudStatusVersion),
+      builder: (context, snapshot) {
+        String subtitle;
+        IconData icon;
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          subtitle = 'Loading iCloud backup status...';
+          icon = Icons.sync;
+        } else if (snapshot.hasError) {
+          subtitle = 'Unable to read iCloud backup metadata';
+          icon = Icons.error_outline;
+        } else {
+          final status = snapshot.data;
+          if (status == null) {
+            subtitle = 'No iCloud backup file found yet';
+            icon = Icons.cloud_off;
+          } else {
+            final lastModified = status.lastModified.toLocal().ymdhms();
+            final remoteState = switch ((status.isUploading, status.isUploaded, status.hasConflict)) {
+              (true, _, _) => 'Uploading',
+              (_, _, true) => 'Conflict detected',
+              (_, true, _) => 'Uploaded',
+              _ => 'Waiting for iCloud',
+            };
+            subtitle = 'Last backup: $lastModified\nStatus: $remoteState';
+            icon = status.isUploading ? Icons.cloud_upload : Icons.cloud_done;
+          }
+        }
+
+        return ListTile(
+          leading: Icon(icon),
+          title: const Text('Backup status'),
+          subtitle: Text(subtitle, style: UIs.textGrey),
+          trailing: IconButton(
+            onPressed: () {
+              setState(() => _icloudStatusVersion++);
+            },
+            icon: const Icon(Icons.refresh),
+          ),
+        );
+      },
+    );
+  }
+
   Widget get _buildBulkImportServers {
     return CardX(
       child: ListTile(
@@ -435,6 +484,22 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
 }
 
 extension on _BackupPageState {
+  Future<_ICloudBackupStatus?> _loadIcloudStatus(int _) async {
+    final files = await icloud.list();
+    final matches = files.where((file) => file.relativePath == Paths.bakName);
+    if (matches.isEmpty) return null;
+
+    final file = matches.reduce(
+      (latest, current) => current.contentChangeDate.isAfter(latest.contentChangeDate) ? current : latest,
+    );
+    return _ICloudBackupStatus(
+      lastModified: file.contentChangeDate,
+      isUploading: file.isUploading,
+      isUploaded: file.isUploaded,
+      hasConflict: file.hasUnresolvedConflicts,
+    );
+  }
+
   Future<void> _onTapWebdavDl(BuildContext context) async {
     webdavLoading.value = true;
     try {
@@ -682,4 +747,18 @@ extension on _BackupPageState {
 
     return false; // User cancelled the dialog
   }
+}
+
+final class _ICloudBackupStatus {
+  const _ICloudBackupStatus({
+    required this.lastModified,
+    required this.isUploading,
+    required this.isUploaded,
+    required this.hasConflict,
+  });
+
+  final DateTime lastModified;
+  final bool isUploading;
+  final bool isUploaded;
+  final bool hasConflict;
 }
