@@ -8,8 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/sftpfile.dart';
+import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/utils/comparator.dart';
 import 'package:server_box/core/utils/host_key_helper.dart';
+import 'package:server_box/core/utils/sftp_sudo.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/browser_status.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
@@ -22,6 +24,8 @@ import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/sftp_mission.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
 import 'package:server_box/view/widget/unix_perm.dart';
+
+final _sftpPermissionDeniedReg = RegExp(r'permission denied', caseSensitive: false);
 
 final class SftpPageArgs {
   final Spi spi;
@@ -45,7 +49,11 @@ class SftpPage extends ConsumerStatefulWidget {
 class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
   late final SftpBrowserStatus _status;
   late final SSHClient _client;
+  late final SftpSudoHelper _sudoHelper;
   final _sortOption = _SortOption().vn;
+  final _sudoMode = false.vn;
+
+  bool get _useSudo => _sudoHelper.enabled && _sudoMode.value;
 
   @override
   void initState() {
@@ -53,12 +61,14 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
     final serverState = ref.read(serverProvider(widget.args.spi.id));
     _client = serverState.client!;
     _status = SftpBrowserStatus(_client);
+    _sudoHelper = SftpSudoHelper(client: _client, spi: widget.args.spi, context: context);
   }
 
   @override
   void dispose() {
     super.dispose();
     _sortOption.dispose();
+    _sudoMode.dispose();
   }
 
   @override
@@ -67,6 +77,7 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
       Btn.icon(icon: const Icon(Icons.downloading), onTap: () => SftpMissionPage.route.go(context)),
       _buildSortMenu(),
       _buildSearchBtn(),
+      if (_sudoHelper.enabled) _buildSudoBtn(),
     ];
     if (isDesktop) children.add(_buildRefreshBtn());
 
@@ -168,12 +179,32 @@ extension _UI on _SftpPageState {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            OmitStartText(_status.path.path),
+            _sudoMode.listenVal((enabled) {
+              return Row(
+                children: [
+                  Expanded(child: OmitStartText(_status.path.path)),
+                  if (enabled) ...[
+                    UIs.width7,
+                    Icon(Icons.security, size: 16, color: UIs.primaryColor),
+                  ],
+                ],
+              );
+            }),
             Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: children),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildSudoBtn() {
+    return _sudoMode.listenVal((enabled) {
+      return IconButton(
+        tooltip: l10n.trySudo,
+        onPressed: () => _sudoMode.value = !enabled,
+        icon: Icon(Icons.security, color: enabled ? UIs.primaryColor : null),
+      );
+    });
   }
 
   Widget _buildFileView() {
@@ -254,6 +285,120 @@ extension _UI on _SftpPageState {
 }
 
 extension _Actions on _SftpPageState {
+  bool _isPermissionDeniedErr(Object? err) {
+    final msg = '$err'.toLowerCase();
+    return msg.contains('permission denied') ||
+        msg.contains('access denied') ||
+        msg.contains('code 3') ||
+        msg.contains('failure');
+  }
+
+  Future<bool> _askRetryWithSudo() async {
+    if (_useSudo || !_sudoHelper.enabled) return false;
+
+    final retry = await context.showRoundDialog<bool>(
+      title: l10n.trySudo,
+      child: Text('Permission denied.\n${libL10n.askContinue(l10n.trySudo)}'),
+      actions: Btnx.cancelRedOk,
+    );
+    if (retry != true) return false;
+
+    _sudoMode.value = true;
+    return true;
+  }
+
+  Future<void> _runShellCommand(String command) async {
+    final (code, output) = await _client.execWithPwd(
+      command,
+      context: context,
+      id: '${widget.args.spi.id}_sftp_cmd',
+    );
+    if (code != 0) {
+      throw Exception(output.trim().isEmpty ? 'Command failed' : output.trim());
+    }
+  }
+
+  Future<bool> _runWithSudoRetry({
+    required Future<void> Function() normal,
+    required Future<void> Function(String pwd) sudo,
+  }) async {
+    if (_useSudo) {
+      final pwd = await _sudoHelper.ensurePassword();
+      if (pwd == null) return false;
+      final (suc, err) = await context.showLoadingDialog(
+        fn: () async {
+          await sudo(pwd);
+          return true;
+        },
+      );
+      return suc != null && err == null;
+    }
+
+    final (suc, err) = await context.showLoadingDialog(
+      fn: () async {
+        await normal();
+        return true;
+      },
+    );
+    if (suc != null && err == null) return true;
+    if (!_isPermissionDeniedErr(err)) return false;
+
+    final shouldRetry = await _askRetryWithSudo();
+    if (!shouldRetry) return false;
+
+    final pwd = await _sudoHelper.ensurePassword();
+    if (pwd == null) return false;
+    final (sudoSuc, sudoErr) = await context.showLoadingDialog(
+      fn: () async {
+        await sudo(pwd);
+        return true;
+      },
+    );
+    return sudoSuc != null && sudoErr == null;
+  }
+
+  Future<bool> _canWriteRemotePath(String remoteDir) async {
+    final (code, _) = await _client.execWithPwd(
+      'test -w "$remoteDir"',
+      context: context,
+      id: '${widget.args.spi.id}_sftp_write_probe',
+    );
+    return code == 0;
+  }
+
+  Future<bool> _uploadViaSudo({
+    required String localPath,
+    required String remotePath,
+    required String fileName,
+  }) async {
+    final pwd = await _sudoHelper.ensurePassword();
+    if (pwd == null) return false;
+
+    final tmpPath = '/tmp/serverbox-upload-${DateTime.now().microsecondsSinceEpoch}-$fileName';
+    final completer = Completer();
+    final req = SftpReq(widget.args.spi, tmpPath, localPath, SftpReqType.upload);
+    final reqId = ref.read(sftpProvider.notifier).add(req, completer: completer);
+
+    final (uploaded, uploadErr) = await context.showLoadingDialog(
+      fn: () async {
+        await completer.future;
+        final status = ref.read(sftpProvider.notifier).get(reqId);
+        if (status?.error != null) {
+          throw status!.error!;
+        }
+        await _sudoHelper.rename(tmpPath, remotePath, password: pwd);
+        return true;
+      },
+    );
+
+    if (uploaded != null && uploadErr == null) return true;
+
+    try {
+      await _runShellCommand('rm -f "$tmpPath"');
+    } catch (_) {}
+    return false;
+  }
+
   void _onItemPress(SftpName file, bool notDir) {
     final children = [
       ListTile(leading: const Icon(Icons.delete), title: Text(libL10n.delete), onTap: () => _delete(file)),
@@ -282,12 +427,13 @@ extension _Actions on _SftpPageState {
 
           final permStr = newPerm.perm;
           if (ok == true && permStr != perm.perm) {
-            await context.showLoadingDialog(
-              fn: () async {
-                await _client.run('chmod $permStr "${_getRemotePath(file)}"');
-                await _listDir();
-              },
+            final remotePath = _getRemotePath(file);
+            final suc = await _runWithSudoRetry(
+              normal: () => _runShellCommand('chmod $permStr "$remotePath"'),
+              sudo: (pwd) => _sudoHelper.chmod(permStr, remotePath, password: pwd),
             );
+            if (!suc) return;
+            await _listDir();
           }
         },
       ),
@@ -317,46 +463,86 @@ extension _Actions on _SftpPageState {
   Future<void> _edit(SftpName name) async {
     context.pop();
 
+    final remotePath = _getRemotePath(name);
+    final useSudoForEdit = _useSudo;
+
     // #489
     final editor = Stores.setting.sftpEditor.fetch();
     if (editor.isNotEmpty) {
+      final sudoPrefix = useSudoForEdit ? 'sudo ' : '';
       // Use single quote to avoid escape
-      final cmd = "$editor '${_getRemotePath(name)}'";
+      final cmd = "$sudoPrefix$editor '$remotePath'";
       final args = SshPageArgs(spi: widget.args.spi, initCmd: cmd);
       await SSHPage.route.go(context, args);
       await _listDir();
       return;
     }
 
-    final size = name.attr.size;
+    int? size = name.attr.size;
+    if (useSudoForEdit) {
+      final pwd = await _sudoHelper.ensurePassword();
+      if (pwd == null) return;
+      final (ret, err) = await context.showLoadingDialog(
+        fn: () => _sudoHelper.getFileSize(remotePath, password: pwd),
+      );
+      if (ret == null || err != null) return;
+      size = ret;
+    }
+
     if (size == null || size > Miscs.editorMaxSize) {
       context.showSnackBar(l10n.fileTooLarge(name.filename, size ?? 0, Miscs.editorMaxSize));
       return;
     }
 
-    if (!await ensureHostKeyAcceptedForSftp(context, widget.args.spi)) {
-      return;
-    }
-
-    final remotePath = _getRemotePath(name);
     final localPath = _getLocalPath(remotePath);
-    final completer = Completer();
-    final req = SftpReq(widget.args.spi, remotePath, localPath, SftpReqType.download);
-    ref.read(sftpProvider.notifier).add(req, completer: completer);
-    final (suc, err) = await context.showLoadingDialog(fn: () => completer.future);
-    if (suc == null || err != null) return;
+    if (useSudoForEdit) {
+      final pwd = await _sudoHelper.ensurePassword();
+      if (pwd == null) return;
+      final (suc, err) = await context.showLoadingDialog(
+        fn: () async {
+          await _sudoHelper.downloadTextFile(remotePath, localPath, password: pwd);
+          return true;
+        },
+      );
+      if (suc == null || err != null) return;
+    } else {
+      if (!await ensureHostKeyAcceptedForSftp(context, widget.args.spi)) {
+        return;
+      }
+
+      final completer = Completer();
+      final req = SftpReq(widget.args.spi, remotePath, localPath, SftpReqType.download);
+      ref.read(sftpProvider.notifier).add(req, completer: completer);
+      final (suc, err) = await context.showLoadingDialog(fn: () => completer.future);
+      if (suc == null || err != null) return;
+    }
 
     await EditorPage.route.go(
       context,
       args: EditorPageArgs(
         path: localPath,
         onSave: (_) async {
-          if (!await ensureHostKeyAcceptedForSftp(context, req.spi)) {
+          if (useSudoForEdit) {
+            final pwd = await _sudoHelper.ensurePassword();
+            if (pwd == null) return;
+            final (suc, err) = await context.showLoadingDialog(
+              fn: () async {
+                await _sudoHelper.uploadTextFile(localPath, remotePath, password: pwd);
+                return true;
+              },
+            );
+            if (suc == null || err != null) return;
+            if (context.mounted) context.showSnackBar(libL10n.success);
+            await _listDir();
+            return;
+          }
+
+          if (!await ensureHostKeyAcceptedForSftp(context, widget.args.spi)) {
             return;
           }
           ref
               .read(sftpProvider.notifier)
-              .add(SftpReq(req.spi, remotePath, localPath, SftpReqType.upload));
+              .add(SftpReq(widget.args.spi, remotePath, localPath, SftpReqType.upload));
           context.showSnackBar(l10n.added2List);
         },
         closeAfterSave: Stores.setting.closeAfterSave.fetch(),
@@ -438,21 +624,25 @@ extension _Actions on _SftpPageState {
         TextButton(
           onPressed: () async {
             context.pop();
-
-            final (suc, err) = await context.showLoadingDialog(
-              fn: () async {
-                final remotePath = _getRemotePath(file);
+            final remotePath = _getRemotePath(file);
+            final suc = await _runWithSudoRetry(
+              normal: () async {
                 if (useRmr) {
-                  await _client.run('rm -r "$remotePath"');
+                  await _runShellCommand('rm -r "$remotePath"');
                 } else if (file.attr.isDirectory) {
                   await _status.client!.rmdir(remotePath);
                 } else {
                   await _status.client!.remove(remotePath);
                 }
-                return true;
               },
+              sudo: (pwd) => _sudoHelper.delete(
+                remotePath,
+                isDir: file.attr.isDirectory,
+                recursive: useRmr,
+                password: pwd,
+              ),
             );
-            if (suc == null || err != null) return;
+            if (!suc) return;
 
             _listDir();
           },
@@ -473,15 +663,12 @@ extension _Actions on _SftpPageState {
         return;
       }
       context.pop();
-
-      final (suc, err) = await context.showLoadingDialog(
-        fn: () async {
-          final dir = '${_status.path.path}/$text';
-          await _status.client!.mkdir(dir);
-          return true;
-        },
+      final dir = '${_status.path.path}/$text';
+      final suc = await _runWithSudoRetry(
+        normal: () => _status.client!.mkdir(dir),
+        sudo: (pwd) => _sudoHelper.mkdir(dir, password: pwd),
       );
-      if (suc == null || err != null) return;
+      if (!suc) return;
 
       _listDir();
     }
@@ -511,15 +698,12 @@ extension _Actions on _SftpPageState {
         return;
       }
       context.pop();
-
-      final (suc, err) = await context.showLoadingDialog(
-        fn: () async {
-          final path = '${_status.path.path}/$text';
-          await _client.run('touch "$path"');
-          return true;
-        },
+      final path = '${_status.path.path}/$text';
+      final suc = await _runWithSudoRetry(
+        normal: () => _runShellCommand('touch "$path"'),
+        sudo: (pwd) => _sudoHelper.touch(path, password: pwd),
       );
-      if (suc == null || err != null) return;
+      if (!suc) return;
 
       _listDir();
     }
@@ -549,15 +733,16 @@ extension _Actions on _SftpPageState {
         return;
       }
       context.pop();
-
-      final (suc, err) = await context.showLoadingDialog(
-        fn: () async {
-          final newName = textController.text;
-          await _status.client?.rename(file.filename, newName);
-          return true;
-        },
+      final newName = textController.text;
+      final suc = await _runWithSudoRetry(
+        normal: () => _status.client!.rename(file.filename, newName),
+        sudo: (pwd) => _sudoHelper.rename(
+          _getRemotePath(file),
+          _status.path.path.joinPath(newName, separator: '/'),
+          password: pwd,
+        ),
       );
-      if (suc == null || err != null) return;
+      if (!suc) return;
 
       _listDir();
     }
@@ -623,9 +808,8 @@ extension _Actions on _SftpPageState {
   Future<bool?> _listDir() async {
     final (ret, err) = await context.showLoadingDialog(
       fn: () async {
-        _status.client ??= await _client.sftp();
         final listPath = _status.path.path;
-        final fs = await _status.client?.listdir(listPath);
+        final fs = await _listDirWithFallback(listPath);
         if (fs == null) {
           return false;
         }
@@ -662,6 +846,28 @@ extension _Actions on _SftpPageState {
       barrierDismiss: true,
     );
     return ret ?? err == null;
+  }
+
+  Future<List<SftpName>?> _listDirWithFallback(String listPath) async {
+    if (_useSudo) {
+      final pwd = await _sudoHelper.ensurePassword();
+      if (pwd == null) return null;
+      return _sudoHelper.listDir(listPath, password: pwd);
+    }
+
+    try {
+      _status.client ??= await _client.sftp();
+      return await _status.client?.listdir(listPath);
+    } on SftpStatusError catch (e) {
+      final canFallback = _sudoHelper.enabled &&
+          (e.code == 3 || _sftpPermissionDeniedReg.hasMatch(e.message));
+      if (!canFallback) rethrow;
+
+      final pwd = await _sudoHelper.ensurePassword();
+      if (pwd == null) return null;
+      _sudoMode.value = true;
+      return _sudoHelper.listDir(listPath, password: pwd);
+    }
   }
 
   Future<void> _backward() async {
@@ -718,14 +924,32 @@ extension _Actions on _SftpPageState {
 
         final remoteDir = _status.path.path;
         final fileName = path.split(Platform.pathSeparator).lastOrNull;
+        if (fileName == null || fileName.isEmpty) return;
         final remotePath = '$remoteDir/$fileName';
         Loggers.app.info('SFTP upload local: $path, remote: $remotePath');
         if (!await ensureHostKeyAcceptedForSftp(context, widget.args.spi)) {
           return;
         }
-        ref
-            .read(sftpProvider.notifier)
-            .add(SftpReq(widget.args.spi, remotePath, path, SftpReqType.upload));
+
+        if (_useSudo) {
+          await _uploadViaSudo(localPath: path, remotePath: remotePath, fileName: fileName);
+          await _listDir();
+          return;
+        }
+
+        final writable = await _canWriteRemotePath(remoteDir);
+        if (!writable) {
+          final shouldRetry = await _askRetryWithSudo();
+          if (shouldRetry) {
+            final suc = await _uploadViaSudo(localPath: path, remotePath: remotePath, fileName: fileName);
+            if (suc) {
+              await _listDir();
+            }
+          }
+          return;
+        }
+
+        ref.read(sftpProvider.notifier).add(SftpReq(widget.args.spi, remotePath, path, SftpReqType.upload));
       },
       icon: const Icon(Icons.upload_file),
     );
