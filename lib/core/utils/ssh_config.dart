@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:meta/meta.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 /// Utility class to parse SSH config files under `~/.ssh/config`
@@ -214,6 +215,11 @@ abstract final class SSHConfig {
     }
 
     return line.trim();
+  }
+
+  @visibleForTesting
+  static String stripInlineCommentForTest(String line) {
+    return _stripInlineComment(line);
   }
 
   /// Check if SSH config file exists, trying multiple possible paths

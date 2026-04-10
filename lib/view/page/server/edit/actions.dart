@@ -136,11 +136,8 @@ extension _Actions on _ServerEditPageState {
           : _disabledCmdTypes.value.toList(),
     );
     final validationError = spi.validate();
-    if (validationError ==
-        SpiValidationError.jumpServerAndProxyCommandConflict) {
-      context.showSnackBar(
-        l10n.jumpServerAndProxyCommandCannotBeUsedTogether,
-      );
+    if (validationError != null) {
+      context.showSnackBar(_validationErrorMessage(validationError));
       return;
     }
 
