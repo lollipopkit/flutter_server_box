@@ -285,6 +285,10 @@ extension _UI on _SftpPageState {
 }
 
 extension _Actions on _SftpPageState {
+  String _shellQuote(String value) {
+    return "'${value.replaceAll("'", "'\\''")}'";
+  }
+
   bool _isPermissionDeniedErr(Object? err) {
     final msg = '$err'.toLowerCase();
     return msg.contains('permission denied') ||
@@ -301,10 +305,7 @@ extension _Actions on _SftpPageState {
       child: Text('Permission denied.\n${libL10n.askContinue(l10n.trySudo)}'),
       actions: Btnx.cancelRedOk,
     );
-    if (retry != true) return false;
-
-    _sudoMode.value = true;
-    return true;
+    return retry == true;
   }
 
   Future<void> _runShellCommand(String command) async {
@@ -354,12 +355,15 @@ extension _Actions on _SftpPageState {
         return true;
       },
     );
+    if (sudoSuc != null && sudoErr == null) {
+      _sudoMode.value = true;
+    }
     return sudoSuc != null && sudoErr == null;
   }
 
   Future<bool> _canWriteRemotePath(String remoteDir) async {
     final (code, _) = await _client.execWithPwd(
-      'test -w "$remoteDir"',
+      'test -w ${_shellQuote(remoteDir)}',
       context: context,
       id: '${widget.args.spi.id}_sftp_write_probe',
     );
@@ -391,10 +395,13 @@ extension _Actions on _SftpPageState {
       },
     );
 
-    if (uploaded != null && uploadErr == null) return true;
+    if (uploaded != null && uploadErr == null) {
+      _sudoMode.value = true;
+      return true;
+    }
 
     try {
-      await _runShellCommand('rm -f "$tmpPath"');
+      await _runShellCommand('rm -f ${_shellQuote(tmpPath)}');
     } catch (_) {}
     return false;
   }
@@ -429,7 +436,9 @@ extension _Actions on _SftpPageState {
           if (ok == true && permStr != perm.perm) {
             final remotePath = _getRemotePath(file);
             final suc = await _runWithSudoRetry(
-              normal: () => _runShellCommand('chmod $permStr "$remotePath"'),
+              normal: () => _runShellCommand(
+                'chmod ${_shellQuote(permStr)} ${_shellQuote(remotePath)}',
+              ),
               sudo: (pwd) => _sudoHelper.chmod(permStr, remotePath, password: pwd),
             );
             if (!suc) return;
@@ -628,7 +637,7 @@ extension _Actions on _SftpPageState {
             final suc = await _runWithSudoRetry(
               normal: () async {
                 if (useRmr) {
-                  await _runShellCommand('rm -r "$remotePath"');
+                  await _runShellCommand('rm -r ${_shellQuote(remotePath)}');
                 } else if (file.attr.isDirectory) {
                   await _status.client!.rmdir(remotePath);
                 } else {
@@ -700,7 +709,7 @@ extension _Actions on _SftpPageState {
       context.pop();
       final path = '${_status.path.path}/$text';
       final suc = await _runWithSudoRetry(
-        normal: () => _runShellCommand('touch "$path"'),
+        normal: () => _runShellCommand('touch ${_shellQuote(path)}'),
         sudo: (pwd) => _sudoHelper.touch(path, password: pwd),
       );
       if (!suc) return;
@@ -852,7 +861,9 @@ extension _Actions on _SftpPageState {
     if (_useSudo) {
       final pwd = await _sudoHelper.ensurePassword();
       if (pwd == null) return null;
-      return _sudoHelper.listDir(listPath, password: pwd);
+      final items = await _sudoHelper.listDir(listPath, password: pwd);
+      _sudoMode.value = true;
+      return items;
     }
 
     try {
@@ -865,8 +876,9 @@ extension _Actions on _SftpPageState {
 
       final pwd = await _sudoHelper.ensurePassword();
       if (pwd == null) return null;
+      final items = await _sudoHelper.listDir(listPath, password: pwd);
       _sudoMode.value = true;
-      return _sudoHelper.listDir(listPath, password: pwd);
+      return items;
     }
   }
 

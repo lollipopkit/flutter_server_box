@@ -147,7 +147,19 @@ final class SftpSudoHelper {
     final output = await _runAndRead(
       'find ${_shellQuote(remotePath)} '
       '-mindepth 1 -maxdepth 1 '
-      '-printf \'%f\\t%m\\t%y\\t%s\\t%T@\\n\'',
+      '-exec sh -c \''
+      'for path do '
+      'name=\${path##*/}; '
+      'perm=\$(stat -c %a "\$path"); '
+      'type=u; '
+      '[ -d "\$path" ] && type=d; '
+      '[ -L "\$path" ] && type=l; '
+      '[ -f "\$path" ] && type=f; '
+      'size=\$(stat -c %s "\$path"); '
+      'mtime=\$(stat -c %Y "\$path"); '
+      'printf "%s\\t%s\\t%s\\t%s\\t%s\\n" "\$name" "\$perm" "\$type" "\$size" "\$mtime"; '
+      'done'
+      '\' sh {} +',
       password: password,
     );
 
