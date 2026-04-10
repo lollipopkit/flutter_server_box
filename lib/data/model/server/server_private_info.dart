@@ -13,6 +13,15 @@ part 'server_private_info.g.dart';
 
 enum SpiValidationError { jumpServerAndProxyCommandConflict }
 
+class SpiValidationException implements Exception {
+  const SpiValidationException(this.error);
+
+  final SpiValidationError error;
+
+  @override
+  String toString() => 'SpiValidationException($error)';
+}
+
 /// In the first version, it's called `ServerPrivateInfo` which was designed to
 /// store the private information of a server.
 ///
@@ -80,12 +89,7 @@ extension Spix on Spi {
   void validateOrThrow() {
     final validationError = validate();
     if (validationError == null) return;
-    switch (validationError) {
-      case SpiValidationError.jumpServerAndProxyCommandConflict:
-        throw ArgumentError(
-          'Jump server and ProxyCommand cannot be used together.',
-        );
-    }
+    throw SpiValidationException(validationError);
   }
 
   /// After upgrading to >= 1155, this field is only recommended to be used
