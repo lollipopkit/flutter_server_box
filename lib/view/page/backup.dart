@@ -30,7 +30,13 @@ class BackupPage extends ConsumerStatefulWidget {
 final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKeepAliveClientMixin {
   final webdavLoading = false.vn;
   final gistLoading = false.vn;
-  var _icloudStatusVersion = 0;
+  late Future<_ICloudBackupStatus?> _icloudStatusFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshIcloudStatus(notify: false);
+  }
 
   @override
   void dispose() {
@@ -188,7 +194,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
                 }
                 if (p0) {
                   await bakSync.sync(rs: icloud);
-                  if (mounted) setState(() => _icloudStatusVersion++);
+                  if (mounted) _refreshIcloudStatus();
                 }
                 return true;
               },
@@ -361,46 +367,64 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
     );
   }
 
+  void _refreshIcloudStatus({bool notify = true}) {
+    final future = _loadIcloudStatus();
+    if (!notify) {
+      _icloudStatusFuture = future;
+      return;
+    }
+
+    setState(() {
+      _icloudStatusFuture = future;
+    });
+  }
+
   Widget get _buildIcloudStatus {
     return FutureBuilder<_ICloudBackupStatus?>(
-      future: _loadIcloudStatus(_icloudStatusVersion),
+      future: _icloudStatusFuture,
       builder: (context, snapshot) {
         String subtitle;
         IconData icon;
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          subtitle = 'Loading iCloud backup status...';
+          subtitle = l10n.icloudBackupStatusLoading;
           icon = Icons.sync;
         } else if (snapshot.hasError) {
-          subtitle = 'Unable to read iCloud backup metadata';
+          subtitle = l10n.icloudBackupStatusError;
           icon = Icons.error_outline;
         } else {
           final status = snapshot.data;
           if (status == null) {
-            subtitle = 'No iCloud backup file found yet';
+            subtitle = l10n.icloudBackupStatusEmpty;
             icon = Icons.cloud_off;
           } else {
             final lastModified = status.lastModified.toLocal().ymdhms();
             final remoteState = switch ((status.isUploading, status.isUploaded, status.hasConflict)) {
-              (true, _, _) => 'Uploading',
-              (_, _, true) => 'Conflict detected',
-              (_, true, _) => 'Uploaded',
-              _ => 'Waiting for iCloud',
+              (_, _, true) => l10n.icloudBackupStateConflict,
+              (true, _, _) => l10n.icloudBackupStateUploading,
+              (_, true, _) => l10n.icloudBackupStateUploaded,
+              _ => l10n.icloudBackupStateWaiting,
             };
-            subtitle = 'Last backup: $lastModified\nStatus: $remoteState';
-            icon = status.isUploading ? Icons.cloud_upload : Icons.cloud_done;
+            subtitle = l10n.icloudBackupStatusSummary(lastModified, remoteState);
+            icon = switch ((status.hasConflict, status.isUploading, status.isUploaded)) {
+              (true, _, _) => Icons.warning,
+              (_, true, _) => Icons.cloud_upload,
+              (_, _, true) => Icons.cloud_done,
+              _ => Icons.cloud_queue,
+            };
           }
         }
 
         return ListTile(
           leading: Icon(icon),
-          title: const Text('Backup status'),
+          title: Text(l10n.icloudBackupStatusTitle),
           subtitle: Text(subtitle, style: UIs.textGrey),
           trailing: IconButton(
             onPressed: () {
-              setState(() => _icloudStatusVersion++);
+              _refreshIcloudStatus();
             },
             icon: const Icon(Icons.refresh),
+            tooltip: libL10n.refresh,
           ),
         );
       },
@@ -484,7 +508,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
 }
 
 extension on _BackupPageState {
-  Future<_ICloudBackupStatus?> _loadIcloudStatus(int _) async {
+  Future<_ICloudBackupStatus?> _loadIcloudStatus() async {
     final files = await icloud.list();
     final matches = files.where((file) => file.relativePath == Paths.bakName);
     if (matches.isEmpty) return null;

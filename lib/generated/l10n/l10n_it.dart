@@ -129,6 +129,35 @@ class AppLocalizationsIt extends AppLocalizations {
   String get backupVersionNotMatch => 'La versione del backup non corrisponde.';
 
   @override
+  String get icloudBackupStatusTitle => 'Backup status';
+
+  @override
+  String get icloudBackupStatusLoading => 'Loading iCloud backup status...';
+
+  @override
+  String get icloudBackupStatusError => 'Unable to read iCloud backup metadata';
+
+  @override
+  String get icloudBackupStatusEmpty => 'No iCloud backup file found yet';
+
+  @override
+  String get icloudBackupStateUploading => 'Uploading';
+
+  @override
+  String get icloudBackupStateConflict => 'Conflict detected';
+
+  @override
+  String get icloudBackupStateUploaded => 'Uploaded';
+
+  @override
+  String get icloudBackupStateWaiting => 'Waiting for iCloud';
+
+  @override
+  String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
+    return 'Last backup: $lastModified\nStatus: $remoteState';
+  }
+
+  @override
   String get bgRun => 'Esegui in background';
 
   @override
