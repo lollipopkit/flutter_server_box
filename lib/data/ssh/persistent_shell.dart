@@ -103,7 +103,10 @@ final class PersistentShell {
       } catch (error, stackTrace) {
         _pending = null;
         _pendingCommandId = null;
-        completer.completeError(error, stackTrace);
+        await _disposeSession();
+        return _StartedCommand(
+          Future<PersistentShellCommandResult>.error(error, stackTrace),
+        );
       }
 
       return _StartedCommand(completer.future);
@@ -115,27 +118,9 @@ final class PersistentShell {
   Future<void> close() async {
     _closed = true;
     await _withStateLock(() async {
-      final session = _session;
-      _session = null;
-
-      await _stdoutSub?.cancel();
-      await _stderrSub?.cancel();
-      _stdoutSub = null;
-      _stderrSub = null;
-
-      if (session != null) {
-        try {
-          session.close();
-        } catch (error, stackTrace) {
-          Loggers.app.warning(
-            'Failed to close persistent shell',
-            error,
-            stackTrace,
-          );
-        }
-      }
-
-      _failPending(StateError('Persistent shell closed'));
+      await _disposeSession(
+        pendingError: StateError('Persistent shell closed'),
+      );
     });
   }
 
@@ -228,26 +213,59 @@ printf '\\n$_donePrefix$commandId:%s\\n' "\$__server_box_exit"
   }
 
   void _handleStreamDone() {
-    _session = null;
-    _stdoutSub = null;
-    _stderrSub = null;
-    _failPending(StateError('Persistent shell session ended unexpectedly'));
+    unawaited(
+      _disposeSession(
+        pendingError: StateError('Persistent shell session ended unexpectedly'),
+      ),
+    );
   }
 
   void _handleStreamError(Object error, StackTrace stackTrace) {
     Loggers.app.warning('Persistent shell stream error', error, stackTrace);
-    _session = null;
-    _failPending(error, stackTrace);
+    unawaited(
+      _disposeSession(pendingError: error, pendingStackTrace: stackTrace),
+    );
   }
 
-  void _failPending(Object error, [StackTrace? stackTrace]) {
+  Future<void> _disposeSession({
+    Object? pendingError,
+    StackTrace? pendingStackTrace,
+  }) async {
+    final session = _session;
+    final stdoutSub = _stdoutSub;
+    final stderrSub = _stderrSub;
     final pending = _pending;
+
+    _session = null;
+    _stdoutSub = null;
+    _stderrSub = null;
     _pending = null;
     _pendingCommandId = null;
+
     if (pending != null && !pending.isCompleted) {
-      pending.completeError(error, stackTrace ?? StackTrace.current);
+      if (pendingError != null) {
+        pending.completeError(
+          pendingError,
+          pendingStackTrace ?? StackTrace.current,
+        );
+      }
     }
     _buffer.clear();
+
+    await stdoutSub?.cancel();
+    await stderrSub?.cancel();
+
+    if (session != null) {
+      try {
+        session.close();
+      } catch (error, stackTrace) {
+        Loggers.app.warning(
+          'Failed to close persistent shell',
+          error,
+          stackTrace,
+        );
+      }
+    }
   }
 
   static PersistentShellCommandResult? tryParseCompletedOutput(

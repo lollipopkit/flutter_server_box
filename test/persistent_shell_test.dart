@@ -117,7 +117,50 @@ void main() {
     await factory.session.stdoutController.close();
     await factory.session.stderrController.close();
     await expectation;
+    expect(factory.session.isClosed, isTrue);
   });
+
+  test(
+    'PersistentShell disposes a broken session when stdin.add throws',
+    () async {
+      var createIndex = 0;
+      final brokenSession = _FakePersistentShellSession()..throwOnAdd = true;
+      final factory = _FakeSessionFactory(
+        createSession: () {
+          createIndex += 1;
+          return createIndex == 1
+              ? brokenSession
+              : _FakePersistentShellSession();
+        },
+      );
+      final shell = PersistentShell(null, sessionFactory: factory.call);
+
+      final brokenFuture = shell.run('echo broken');
+      await expectLater(
+        brokenFuture,
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('stdin add failed'),
+          ),
+        ),
+      );
+
+      expect(brokenSession.isClosed, isTrue);
+
+      final nextRun = shell.run('echo recovered');
+      await Future<void>.delayed(Duration.zero);
+      final recoveredSession = factory.sessions[1];
+      recoveredSession.stdoutController.add(
+        Uint8List.fromList(utf8.encode('recovered\n__SERVER_BOX_DONE__2:0\n')),
+      );
+
+      final result = await nextRun;
+      expect(factory.createCount, 2);
+      expect(result.output, 'recovered');
+    },
+  );
 
   test(
     'PersistentShell does not allow a concurrent run to overwrite pending state during async session creation',
@@ -194,15 +237,24 @@ void main() {
 
 final class _FakeSessionFactory {
   final Future<void> Function()? beforeCreate;
+  final PersistentShellSession Function()? createSession;
   int createCount = 0;
-  final session = _FakePersistentShellSession();
+  late final _defaultSession = _FakePersistentShellSession();
+  final sessions = <_FakePersistentShellSession>[];
 
-  _FakeSessionFactory({this.beforeCreate});
+  _FakePersistentShellSession get session =>
+      sessions.isNotEmpty ? sessions.first : _defaultSession;
+
+  _FakeSessionFactory({this.beforeCreate, this.createSession});
 
   Future<PersistentShellSession> call() async {
     await beforeCreate?.call();
     createCount += 1;
-    return session;
+    final created =
+        (createSession?.call() ?? _defaultSession)
+            as _FakePersistentShellSession;
+    sessions.add(created);
+    return created;
   }
 }
 
@@ -211,9 +263,13 @@ final class _FakePersistentShellSession implements PersistentShellSession {
   final stderrController = StreamController<Uint8List>();
   final writes = <String>[];
   bool isClosed = false;
+  bool throwOnAdd = false;
 
   @override
   StreamSink<Uint8List> get stdin => _FakeSink((data) {
+    if (throwOnAdd) {
+      throw StateError('stdin add failed');
+    }
     writes.add(utf8.decode(data));
   });
 
