@@ -86,6 +86,32 @@ void main() {
     expect(result.output, 'stdout line\nstderr line');
   });
 
+  test(
+    'PersistentShell tolerates malformed UTF-8 from stdout and stderr',
+    () async {
+      final factory = _FakeSessionFactory();
+      final shell = PersistentShell(null, sessionFactory: factory.call);
+
+      final future = shell.run('echo malformed');
+      await Future<void>.delayed(Duration.zero);
+      factory.session.stdoutController.add(
+        Uint8List.fromList([0x66, 0x6f, 0x80, 0x6f, 0x0a]),
+      );
+      factory.session.stderrController.add(
+        Uint8List.fromList([0x62, 0x61, 0xff, 0x64, 0x0a]),
+      );
+      factory.session.stdoutController.add(
+        Uint8List.fromList(utf8.encode('__SERVER_BOX_DONE__1:0\n')),
+      );
+
+      final result = await future;
+
+      expect(result.output, contains('fo'));
+      expect(result.output, contains('\uFFFD'));
+      expect(result.output, contains('ba'));
+    },
+  );
+
   test('PersistentShell rejects commands after close', () async {
     final shell = PersistentShell(
       null,
@@ -159,6 +185,21 @@ void main() {
       final result = await nextRun;
       expect(factory.createCount, 2);
       expect(result.output, 'recovered');
+    },
+  );
+
+  test(
+    'PersistentShell times out a hanging command and disposes the session',
+    () async {
+      final factory = _FakeSessionFactory();
+      final shell = PersistentShell(null, sessionFactory: factory.call);
+
+      await expectLater(
+        shell.run('echo hanging', timeout: const Duration(milliseconds: 20)),
+        throwsA(isA<TimeoutException>()),
+      );
+
+      expect(factory.session.isClosed, isTrue);
     },
   );
 

@@ -69,7 +69,10 @@ final class PersistentShell {
 
   static const _donePrefix = '__SERVER_BOX_DONE__';
 
-  Future<PersistentShellCommandResult> run(String command) async {
+  Future<PersistentShellCommandResult> run(
+    String command, {
+    Duration? timeout,
+  }) async {
     final started = await _withStateLock(() async {
       if (_closed) {
         throw StateError('Persistent shell already closed');
@@ -106,13 +109,31 @@ final class PersistentShell {
         await _disposeSession();
         return _StartedCommand(
           Future<PersistentShellCommandResult>.error(error, stackTrace),
+          commandId,
         );
       }
 
-      return _StartedCommand(completer.future);
+      return _StartedCommand(completer.future, commandId);
     });
 
-    return started.future;
+    if (timeout == null) {
+      return started.future;
+    }
+
+    try {
+      return await started.future.timeout(timeout);
+    } on TimeoutException {
+      final error = TimeoutException(
+        'Persistent shell command timed out',
+        timeout,
+      );
+      await _withStateLock(() async {
+        if (_pendingCommandId == started.commandId) {
+          await _disposeSession(pendingError: error);
+        }
+      });
+      throw error;
+    }
   }
 
   Future<void> close() async {
@@ -142,7 +163,7 @@ final class PersistentShell {
 
     _stdoutSub = session.stdout
         .cast<List<int>>()
-        .transform(const Utf8Decoder())
+        .transform(const Utf8Decoder(allowMalformed: true))
         .listen(
           _handleStdout,
           onError: _handleStreamError,
@@ -151,7 +172,7 @@ final class PersistentShell {
 
     _stderrSub = session.stderr
         .cast<List<int>>()
-        .transform(const Utf8Decoder())
+        .transform(const Utf8Decoder(allowMalformed: true))
         .listen(
           _handleStderr,
           onError: _handleStreamError,
@@ -243,12 +264,10 @@ printf '\\n$_donePrefix$commandId:%s\\n' "\$__server_box_exit"
     _pendingCommandId = null;
 
     if (pending != null && !pending.isCompleted) {
-      if (pendingError != null) {
-        pending.completeError(
-          pendingError,
-          pendingStackTrace ?? StackTrace.current,
-        );
-      }
+      pending.completeError(
+        pendingError ?? StateError('Persistent shell session disposed'),
+        pendingStackTrace ?? StackTrace.current,
+      );
     }
     _buffer.clear();
 
@@ -325,6 +344,7 @@ final class _ParsedCompletedOutput {
 
 final class _StartedCommand {
   final Future<PersistentShellCommandResult> future;
+  final String commandId;
 
-  const _StartedCommand(this.future);
+  const _StartedCommand(this.future, this.commandId);
 }

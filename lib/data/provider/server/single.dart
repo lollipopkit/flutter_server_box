@@ -406,7 +406,11 @@ class ServerNotifier extends _$ServerNotifier {
         }
       } else {
         final shell = await _getPersistentShell();
-        final result = await shell.run(statusCmd);
+        final statusTimeoutSeconds = Stores.setting.timeout.fetch();
+        final statusTimeout = Duration(
+          seconds: statusTimeoutSeconds <= 0 ? 5 : statusTimeoutSeconds,
+        );
+        final result = await shell.run(statusCmd, timeout: statusTimeout);
         raw = result.output;
       }
 
