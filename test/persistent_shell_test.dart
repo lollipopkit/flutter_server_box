@@ -9,7 +9,10 @@ void main() {
   test('PersistentShell parses completed output marker', () {
     const raw = 'cpu:10%\nmem:20%\n__SERVER_BOX_DONE__7:0\n';
 
-    final result = PersistentShell.tryParseCompletedOutput(raw);
+    final result = PersistentShell.tryParseCompletedOutput(
+      raw,
+      expectedCommandId: '7',
+    );
 
     expect(result, isNotNull);
     expect(result!.output, 'cpu:10%\nmem:20%');
@@ -19,7 +22,21 @@ void main() {
   test('PersistentShell waits for full completion marker', () {
     const raw = 'cpu:10%\n__SERVER_BOX_DONE__7:';
 
-    final result = PersistentShell.tryParseCompletedOutput(raw);
+    final result = PersistentShell.tryParseCompletedOutput(
+      raw,
+      expectedCommandId: '7',
+    );
+
+    expect(result, isNull);
+  });
+
+  test('PersistentShell ignores markers for another command id', () {
+    const raw = 'cpu:10%\n__SERVER_BOX_DONE__999:0\n';
+
+    final result = PersistentShell.tryParseCompletedOutput(
+      raw,
+      expectedCommandId: '7',
+    );
 
     expect(result, isNull);
   });
@@ -101,13 +118,89 @@ void main() {
     await factory.session.stderrController.close();
     await expectation;
   });
+
+  test(
+    'PersistentShell does not allow a concurrent run to overwrite pending state during async session creation',
+    () async {
+      final gate = Completer<void>();
+      final factory = _FakeSessionFactory(beforeCreate: () => gate.future);
+      final shell = PersistentShell(null, sessionFactory: factory.call);
+
+      final firstFuture = shell.run('echo first');
+      final secondFuture = shell.run('echo second');
+      final secondExpectation = expectLater(
+        secondFuture,
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('Another command is already running'),
+          ),
+        ),
+      );
+
+      gate.complete();
+      await Future<void>.delayed(Duration.zero);
+
+      factory.session.stdoutController.add(
+        Uint8List.fromList(utf8.encode('first\n__SERVER_BOX_DONE__1:0\n')),
+      );
+
+      final first = await firstFuture;
+
+      expect(first.output, 'first');
+      expect(factory.createCount, 1);
+      await secondExpectation;
+    },
+  );
+
+  test(
+    'PersistentShell rejects a run closed during async session creation',
+    () async {
+      final entered = Completer<void>();
+      final gate = Completer<void>();
+      final factory = _FakeSessionFactory(
+        beforeCreate: () {
+          if (!entered.isCompleted) {
+            entered.complete();
+          }
+          return gate.future;
+        },
+      );
+      final shell = PersistentShell(null, sessionFactory: factory.call);
+
+      final runFuture = shell.run('echo delayed');
+      await entered.future;
+      final runExpectation = expectLater(
+        runFuture,
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('already closed'),
+          ),
+        ),
+      );
+      final closeFuture = shell.close();
+
+      gate.complete();
+      await closeFuture;
+
+      expect(factory.session.isClosed, isTrue);
+      await runExpectation;
+    },
+  );
 }
 
 final class _FakeSessionFactory {
+  final Future<void> Function()? beforeCreate;
   int createCount = 0;
   final session = _FakePersistentShellSession();
 
+  _FakeSessionFactory({this.beforeCreate});
+
   Future<PersistentShellSession> call() async {
+    await beforeCreate?.call();
     createCount += 1;
     return session;
   }

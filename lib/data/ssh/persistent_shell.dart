@@ -64,70 +64,95 @@ final class PersistentShell {
   final StringBuffer _buffer = StringBuffer();
   int _commandId = 0;
   bool _closed = false;
+  Future<void> _stateLock = Future<void>.value();
+  String? _pendingCommandId;
 
   static const _donePrefix = '__SERVER_BOX_DONE__';
 
   Future<PersistentShellCommandResult> run(String command) async {
-    if (_closed) {
-      throw StateError('Persistent shell already closed');
-    }
-    if (_pending != null) {
-      throw StateError(
-        'Another command is already running in the persistent shell',
-      );
-    }
+    final started = await _withStateLock(() async {
+      if (_closed) {
+        throw StateError('Persistent shell already closed');
+      }
+      if (_pending != null) {
+        throw StateError(
+          'Another command is already running in the persistent shell',
+        );
+      }
 
-    await _ensureSession();
+      final session = await _ensureSessionLocked();
 
-    final completer = Completer<PersistentShellCommandResult>();
-    _pending = completer;
-    _buffer.clear();
-    final commandId = (++_commandId).toString();
-    final wrappedCommand = _wrapCommand(command, commandId);
+      if (_closed) {
+        throw StateError('Persistent shell already closed');
+      }
+      if (_pending != null) {
+        throw StateError(
+          'Another command is already running in the persistent shell',
+        );
+      }
 
-    try {
-      _session!.stdin.add(Uint8List.fromList(utf8.encode(wrappedCommand)));
-    } catch (error, stackTrace) {
-      _pending = null;
-      completer.completeError(error, stackTrace);
-    }
+      final completer = Completer<PersistentShellCommandResult>();
+      _pending = completer;
+      _buffer.clear();
+      final commandId = (++_commandId).toString();
+      _pendingCommandId = commandId;
+      final wrappedCommand = _wrapCommand(command, commandId);
 
-    return completer.future;
+      try {
+        session.stdin.add(Uint8List.fromList(utf8.encode(wrappedCommand)));
+      } catch (error, stackTrace) {
+        _pending = null;
+        _pendingCommandId = null;
+        completer.completeError(error, stackTrace);
+      }
+
+      return _StartedCommand(completer.future);
+    });
+
+    return started.future;
   }
 
   Future<void> close() async {
     _closed = true;
-    final session = _session;
-    _session = null;
+    await _withStateLock(() async {
+      final session = _session;
+      _session = null;
 
-    await _stdoutSub?.cancel();
-    await _stderrSub?.cancel();
-    _stdoutSub = null;
-    _stderrSub = null;
+      await _stdoutSub?.cancel();
+      await _stderrSub?.cancel();
+      _stdoutSub = null;
+      _stderrSub = null;
 
-    if (session != null) {
-      try {
-        session.close();
-      } catch (error, stackTrace) {
-        Loggers.app.warning(
-          'Failed to close persistent shell',
-          error,
-          stackTrace,
-        );
+      if (session != null) {
+        try {
+          session.close();
+        } catch (error, stackTrace) {
+          Loggers.app.warning(
+            'Failed to close persistent shell',
+            error,
+            stackTrace,
+          );
+        }
       }
-    }
 
-    _failPending(StateError('Persistent shell closed'));
+      _failPending(StateError('Persistent shell closed'));
+    });
   }
 
-  Future<void> _ensureSession() async {
+  Future<PersistentShellSession> _ensureSessionLocked() async {
     if (_session != null) {
-      return;
+      return _session!;
     }
 
     final session =
         await _sessionFactory?.call() ??
         SshPersistentShellSession(await _client!.execute('sh'));
+
+    if (_closed) {
+      session.close();
+      throw StateError('Persistent shell already closed');
+    }
+
     _session = session;
 
     _stdoutSub = session.stdout
@@ -147,6 +172,8 @@ final class PersistentShell {
           onError: _handleStreamError,
           onDone: _handleStreamDone,
         );
+
+    return session;
   }
 
   String _wrapCommand(String command, String commandId) {
@@ -161,24 +188,34 @@ printf '\\n$_donePrefix$commandId:%s\\n' "\$__server_box_exit"
 
   void _handleStdout(String data) {
     final pending = _pending;
-    if (pending == null) {
+    final pendingCommandId = _pendingCommandId;
+    if (pending == null || pendingCommandId == null) {
       return;
     }
 
     _buffer.write(data);
-    final parsed = tryParseCompletedOutput(_buffer.toString());
+    final raw = _buffer.toString();
+    final parsed = _parseCompletedOutput(
+      raw,
+      expectedCommandId: pendingCommandId,
+    );
     if (parsed == null) {
       return;
     }
 
     _pending = null;
+    _pendingCommandId = null;
     pending.complete(
       PersistentShellCommandResult(
-        output: parsed.output,
-        exitCode: parsed.exitCode,
+        output: parsed.result.output,
+        exitCode: parsed.result.exitCode,
       ),
     );
     _buffer.clear();
+    final remaining = raw.substring(parsed.consumedLength);
+    if (remaining.isNotEmpty) {
+      _buffer.write(remaining);
+    }
   }
 
   void _handleStderr(String data) {
@@ -206,25 +243,70 @@ printf '\\n$_donePrefix$commandId:%s\\n' "\$__server_box_exit"
   void _failPending(Object error, [StackTrace? stackTrace]) {
     final pending = _pending;
     _pending = null;
+    _pendingCommandId = null;
     if (pending != null && !pending.isCompleted) {
       pending.completeError(error, stackTrace ?? StackTrace.current);
     }
     _buffer.clear();
   }
 
-  static PersistentShellCommandResult? tryParseCompletedOutput(String raw) {
+  static PersistentShellCommandResult? tryParseCompletedOutput(
+    String raw, {
+    required String expectedCommandId,
+  }) {
+    return _parseCompletedOutput(
+      raw,
+      expectedCommandId: expectedCommandId,
+    )?.result;
+  }
+
+  static _ParsedCompletedOutput? _parseCompletedOutput(
+    String raw, {
+    required String expectedCommandId,
+  }) {
     final match = RegExp(
-      '(?:^|\\n)${RegExp.escape(_donePrefix)}(\\d+):(\\d+)(?:\\r?\\n|\$)',
+      '(?:^|\\n)${RegExp.escape(_donePrefix)}${RegExp.escape(expectedCommandId)}:(\\d+)(?:\\r?\\n|\$)',
     ).firstMatch(raw);
     if (match == null) {
       return null;
     }
 
     final output = raw.substring(0, match.start);
-    final exitCode = int.tryParse(match.group(2)!);
-    return PersistentShellCommandResult(
-      output: output.trimRight(),
-      exitCode: exitCode,
+    final exitCode = int.tryParse(match.group(1)!);
+    return _ParsedCompletedOutput(
+      result: PersistentShellCommandResult(
+        output: output.trimRight(),
+        exitCode: exitCode,
+      ),
+      consumedLength: match.end,
     );
   }
+
+  Future<T> _withStateLock<T>(Future<T> Function() fn) async {
+    final previous = _stateLock;
+    final release = Completer<void>();
+    _stateLock = release.future;
+    await previous;
+    try {
+      return await fn();
+    } finally {
+      release.complete();
+    }
+  }
+}
+
+final class _ParsedCompletedOutput {
+  final PersistentShellCommandResult result;
+  final int consumedLength;
+
+  const _ParsedCompletedOutput({
+    required this.result,
+    required this.consumedLength,
+  });
+}
+
+final class _StartedCommand {
+  final Future<PersistentShellCommandResult> future;
+
+  const _StartedCommand(this.future);
 }
