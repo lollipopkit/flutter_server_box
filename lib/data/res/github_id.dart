@@ -23,7 +23,7 @@ abstract final class GithubIds {
     'MasedMSD',
     'GitGitro',
     'Shin-suechtig',
-    'hypn4'
+    'hypn4',
   };
 
   static const participants = <GhId>{
@@ -168,7 +168,7 @@ abstract final class GithubIds {
     'ChirmyRam',
     'Utaoki-henji',
     'smtdev',
-    'tetsuya-ops'
+    'tetsuya-ops',
   };
 }
 
@@ -176,4 +176,6 @@ typedef GhId = String;
 
 extension GhIdX on GhId {
   String get url => 'https://github.com/$this';
+
+  String get markdownLink => '[$this]($url)';
 }

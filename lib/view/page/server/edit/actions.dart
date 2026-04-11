@@ -4,6 +4,15 @@ part of 'edit.dart';
 final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:%;]+$');
 
 extension _Actions on _ServerEditPageState {
+  void _setCmdTypeDisabled(String display, bool disabled) {
+    if (disabled) {
+      _disabledCmdTypes.value.add(display);
+    } else {
+      _disabledCmdTypes.value.remove(display);
+    }
+    _disabledCmdTypes.notify();
+  }
+
   String _validationErrorMessage(SpiValidationError error) {
     switch (error) {
       case SpiValidationError.jumpServerAndProxyCommandConflict:
@@ -157,10 +166,14 @@ extension _Actions on _ServerEditPageState {
 }
 
 extension _Utils on _ServerEditPageState {
+  void _markSSHConfigImportHandled() {
+    Stores.setting.firstTimeReadSSHCfg.put(false);
+  }
+
   Future<void> _checkSSHConfigImport() async {
     final hasExistingServers = ref.read(serversProvider).servers.isNotEmpty;
     if (hasExistingServers) {
-      Stores.setting.firstTimeReadSSHCfg.put(false);
+      _markSSHConfigImportHandled();
       return;
     }
 
@@ -168,7 +181,7 @@ extension _Utils on _ServerEditPageState {
       final servers = await SSHConfig.parseConfig();
       if (!mounted) return;
       if (servers.isEmpty) {
-        Stores.setting.firstTimeReadSSHCfg.put(false);
+        _markSSHConfigImportHandled();
         return;
       }
 
@@ -188,7 +201,7 @@ extension _Utils on _ServerEditPageState {
 
       if (!mounted) return;
 
-      Stores.setting.firstTimeReadSSHCfg.put(false);
+      _markSSHConfigImportHandled();
 
       if (shouldImport == true) {
         await ServerDeduplication.importServersWithNotification(
@@ -203,13 +216,13 @@ extension _Utils on _ServerEditPageState {
       if (!mounted) return;
       if (e is PathAccessException ||
           e.toString().contains('Operation not permitted')) {
-        Stores.setting.firstTimeReadSSHCfg.put(false);
+        _markSSHConfigImportHandled();
         context.showSnackBar(
           '${l10n.sshConfigPermissionDenied} ${l10n.sshConfigManualSelect}',
         );
       } else {
         dprint('Error checking SSH config: $e');
-        Stores.setting.firstTimeReadSSHCfg.put(false);
+        _markSSHConfigImportHandled();
         if (e is SpiValidationException) {
           context.showSnackBar(_validationErrorMessage(e.error));
         }
@@ -237,22 +250,11 @@ extension _Utils on _ServerEditPageState {
                   value: disabled.contains(display),
                   onChanged: (value) {
                     if (value == null) return;
-                    if (value) {
-                      _disabledCmdTypes.value.add(display);
-                    } else {
-                      _disabledCmdTypes.value.remove(display);
-                    }
-                    _disabledCmdTypes.notify();
+                    _setCmdTypeDisabled(display, value);
                   },
                 ),
                 onTap: () {
-                  final isDisabled = disabled.contains(display);
-                  if (isDisabled) {
-                    _disabledCmdTypes.value.remove(display);
-                  } else {
-                    _disabledCmdTypes.value.add(display);
-                  }
-                  _disabledCmdTypes.notify();
+                  _setCmdTypeDisabled(display, !disabled.contains(display));
                 },
               );
             },
