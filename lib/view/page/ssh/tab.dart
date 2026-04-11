@@ -22,13 +22,21 @@ class SSHTabPage extends ConsumerStatefulWidget {
   static const route = AppRouteNoArg(page: SSHTabPage.new, path: '/ssh');
 }
 
-typedef _TabMap = Map<String, ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})>;
+typedef _TabMap =
+    Map<
+      String,
+      ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})
+    >;
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late final _TabMap _tabMap = {
     libL10n.add: (
-      page: _AddPage(sortVersionVN: _sortVersionVN, onTapInitCard: _onTapInitCard, onLongPressInitCard: _onLongPressInitCard),
+      page: _AddPage(
+        sortVersionVN: _sortVersionVN,
+        onTapInitCard: _onTapInitCard,
+        onLongPressInitCard: _onLongPressInitCard,
+      ),
       focus: null,
       visible: null,
     ),
@@ -112,16 +120,28 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
 }
 
 extension on _SSHTabPageState {
-  void _disposeTabEntry(({Widget page, FocusNode? focus, ValueNotifier<bool>? visible}) entry) {
+  void _applySort({required int sortBy, required bool sortAsc}) {
+    Stores.setting.sshPageSortBy.put(sortBy);
+    Stores.setting.sshPageSortAsc.put(sortAsc);
+    _tabRN.notify();
+    _sortVersionVN.notify();
+  }
+
+  void _disposeTabEntry(
+    ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible}) entry,
+  ) {
     entry.focus?.dispose();
     entry.visible?.dispose();
   }
 
-  ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})? _detachTabEntry(String name) {
+  ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})?
+  _detachTabEntry(String name) {
     return _tabMap.remove(name);
   }
 
-  void _disposeTabEntryAfterFrame(({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})? entry) {
+  void _disposeTabEntryAfterFrame(
+    ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})? entry,
+  ) {
     if (entry == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _disposeTabEntry(entry);
@@ -177,7 +197,10 @@ extension on _SSHTabPageState {
   void _onTapInitCard(Spi spi) async {
     final name = () {
       final reg = RegExp('${spi.name}\\((\\d+)\\)');
-      final idxs = _tabMap.keys.map((e) => reg.firstMatch(e)).map((e) => e?.group(1)).whereType<String>();
+      final idxs = _tabMap.keys
+          .map((e) => reg.firstMatch(e))
+          .map((e) => e?.group(1))
+          .whereType<String>();
       if (idxs.isEmpty) {
         return _tabMap.keys.contains(spi.name) ? '${spi.name}(1)' : spi.name;
       }
@@ -276,10 +299,7 @@ extension on _SSHTabPageState {
             label: '${l10n.sortByName} (A-Z)',
             selected: sortBy == 0 && sortAsc,
             onTap: () {
-              Stores.setting.sshPageSortBy.put(0);
-              Stores.setting.sshPageSortAsc.put(true);
-              _tabRN.notify();
-              _sortVersionVN.notify();
+              _applySort(sortBy: 0, sortAsc: true);
               context.pop();
             },
           ),
@@ -288,10 +308,7 @@ extension on _SSHTabPageState {
             label: '${l10n.sortByName} (Z-A)',
             selected: sortBy == 0 && !sortAsc,
             onTap: () {
-              Stores.setting.sshPageSortBy.put(0);
-              Stores.setting.sshPageSortAsc.put(false);
-              _tabRN.notify();
-              _sortVersionVN.notify();
+              _applySort(sortBy: 0, sortAsc: false);
               context.pop();
             },
           ),
@@ -300,10 +317,7 @@ extension on _SSHTabPageState {
             label: '${l10n.sortByJoinTime} (${l10n.ascending})',
             selected: sortBy == 1 && sortAsc,
             onTap: () {
-              Stores.setting.sshPageSortBy.put(1);
-              Stores.setting.sshPageSortAsc.put(true);
-              _tabRN.notify();
-              _sortVersionVN.notify();
+              _applySort(sortBy: 1, sortAsc: true);
               context.pop();
             },
           ),
@@ -312,10 +326,7 @@ extension on _SSHTabPageState {
             label: '${l10n.sortByJoinTime} (${l10n.descending})',
             selected: sortBy == 1 && !sortAsc,
             onTap: () {
-              Stores.setting.sshPageSortBy.put(1);
-              Stores.setting.sshPageSortAsc.put(false);
-              _tabRN.notify();
-              _sortVersionVN.notify();
+              _applySort(sortBy: 1, sortAsc: false);
               context.pop();
             },
           ),
@@ -344,11 +355,14 @@ extension on _SSHTabPageState {
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
         future: (q) async {
           if (q.isEmpty) return [];
-          return allServers.where((spi) =>
-            spi.name.toLowerCase().contains(q.toLowerCase()) ||
-            spi.user.toLowerCase().contains(q.toLowerCase()) ||
-            spi.ip.contains(q)
-          ).toList();
+          return allServers
+              .where(
+                (spi) =>
+                    spi.name.toLowerCase().contains(q.toLowerCase()) ||
+                    spi.user.toLowerCase().contains(q.toLowerCase()) ||
+                    spi.ip.contains(q),
+              )
+              .toList();
         },
         builder: (ctx, spi) => ListTile(
           title: Text(spi.name),
@@ -393,7 +407,9 @@ extension on _SSHTabPageState {
             final spi = serverState.servers[id];
             return ListTile(
               title: Text(spi?.name ?? id),
-              subtitle: spi != null ? Text('${spi.user}@${spi.ip}:${spi.port}') : null,
+              subtitle: spi != null
+                  ? Text('${spi.user}@${spi.ip}:${spi.port}')
+                  : null,
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
                 context.pop();
@@ -460,13 +476,19 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
                 itemBuilder: (_, idx) => _buildItem(idx),
                 separatorBuilder: (_, _) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 17),
-                  child: Container(color: Theme.of(context).dividerColor.withAlpha(61), width: 3),
+                  child: Container(
+                    color: Theme.of(context).dividerColor.withAlpha(61),
+                    width: 3,
+                  ),
                 ),
               ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 17),
-              child: Container(color: Theme.of(context).dividerColor.withAlpha(61), width: 3),
+              child: Container(
+                color: Theme.of(context).dividerColor.withAlpha(61),
+                width: 3,
+              ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 7),
@@ -544,7 +566,11 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class _AddPage extends ConsumerStatefulWidget {
-  const _AddPage({required this.sortVersionVN, required this.onTapInitCard, required this.onLongPressInitCard});
+  const _AddPage({
+    required this.sortVersionVN,
+    required this.onTapInitCard,
+    required this.onLongPressInitCard,
+  });
 
   final ValueListenable<int> sortVersionVN;
   final void Function(Spi spi) onTapInitCard;
@@ -607,7 +633,10 @@ class _AddPageState extends ConsumerState<_AddPage> {
     const itemHeight = 50.0;
 
     final visualCrossCount = viewWidth / itemWidth;
-    final crossCount = max(viewWidth ~/ (visualCrossCount * itemPadding + itemWidth), 1);
+    final crossCount = max(
+      viewWidth ~/ (visualCrossCount * itemPadding + itemWidth),
+      1,
+    );
     final mainCount = itemCount ~/ crossCount + 1;
 
     if (order.isEmpty) {
@@ -677,7 +706,10 @@ class _SortOption extends StatelessWidget {
     final primaryColor = Theme.of(context).colorScheme.primary;
     return ListTile(
       leading: Icon(icon, color: selected ? primaryColor : null),
-      title: Text(label, style: TextStyle(color: selected ? primaryColor : null)),
+      title: Text(
+        label,
+        style: TextStyle(color: selected ? primaryColor : null),
+      ),
       onTap: onTap,
     );
   }
