@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
@@ -250,6 +251,9 @@ void _gotoSSH(Spi spi, BuildContext context) async {
     extraArgs.addAll(['-i', path]);
   }
 
+  final copied = await _copyDesktopSshPasswordIfNeeded(spi, context);
+  if (!copied) return;
+
   final sshCommand = ['ssh'] + extraArgs + ['${spi.user}@${spi.ip}'];
 
   final system = Pfs.type;
@@ -284,6 +288,33 @@ void _gotoSSH(Spi spi, BuildContext context) async {
     if (!await file.exists()) return;
     await Future.delayed(const Duration(seconds: 2), file.delete);
   }
+}
+
+Future<bool> _copyDesktopSshPasswordIfNeeded(
+  Spi spi,
+  BuildContext context,
+) async {
+  if (!isDesktop) return true;
+  if (!Stores.setting.desktopSshAutoCopyPassword.fetch()) return true;
+
+  final pwd = spi.pwd;
+  if (pwd == null || pwd.isEmpty) return true;
+
+  if (Stores.setting.useBioAuth.fetch()) {
+    final result = await LocalAuth.goWithResult();
+    if (result != AuthResult.success) {
+      if (context.mounted) {
+        context.showSnackBar(libL10n.fail);
+      }
+      return false;
+    }
+  }
+
+  await Clipboard.setData(ClipboardData(text: pwd));
+  if (context.mounted) {
+    context.showSnackBar(libL10n.success);
+  }
+  return true;
 }
 
 bool _checkClient(BuildContext context, String id, WidgetRef ref) {

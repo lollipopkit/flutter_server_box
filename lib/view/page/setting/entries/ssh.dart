@@ -21,6 +21,7 @@ extension _SSH on _AppSettingsPageState {
         _buildTermFontSize(),
         _buildSshBg(),
         if (isDesktop) _buildDesktopTerminal(),
+        if (isDesktop) _buildDesktopSshAutoCopyPassword(),
         _buildSSHVirtualKeyAutoOff(),
         if (isMobile) _buildSSHVirtKeys(),
       ].map((e) => CardX(child: e)).toList(),
@@ -413,6 +414,18 @@ extension _SSH on _AppSettingsPageState {
         },
       );
     });
+  }
+
+  Widget _buildDesktopSshAutoCopyPassword() {
+    return ListTile(
+      leading: const Icon(Icons.password),
+      title: Text('${libL10n.copy} ${libL10n.pwd}'),
+      subtitle: Text(
+        'SSH',
+        style: UIs.textGrey,
+      ),
+      trailing: StoreSwitch(prop: _setting.desktopSshAutoCopyPassword),
+    );
   }
 
   Widget _buildTermTheme() {
