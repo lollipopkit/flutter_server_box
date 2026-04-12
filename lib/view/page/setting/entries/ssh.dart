@@ -1,6 +1,13 @@
 part of '../entry.dart';
 
 extension _SSH on _AppSettingsPageState {
+  void _refreshApp({bool closeDialog = false}) {
+    if (closeDialog && mounted) {
+      context.pop();
+    }
+    RNodes.app.notify();
+  }
+
   Widget _buildSSH() {
     return Column(
       children: [
@@ -100,10 +107,7 @@ extension _SSH on _AppSettingsPageState {
           children: [
             Text(l10n.sshConfigFoundServers('${discoveredServers.length}')),
             const SizedBox(height: 8),
-            Input(
-              controller: usernameController,
-              label: libL10n.user,
-            ),
+            Input(controller: usernameController, label: libL10n.user),
           ],
         ),
         actions: Btnx.cancelOk,
@@ -132,7 +136,8 @@ extension _SSH on _AppSettingsPageState {
           ref: ref,
           context: context,
           allExistMessage: l10n.sshConfigAllExist,
-          importedMessage: (count) => '${libL10n.success}: $count ${libL10n.servers}',
+          importedMessage: (count) =>
+              '${libL10n.success}: $count ${libL10n.servers}',
         );
       }
     } finally {
@@ -205,7 +210,10 @@ extension _SSH on _AppSettingsPageState {
     }
   }
 
-  Future<void> _handleImportSSHCfgPermissionIssue(Object e, StackTrace s) async {
+  Future<void> _handleImportSSHCfgPermissionIssue(
+    Object e,
+    StackTrace s,
+  ) async {
     dprint('Error importing SSH config: $e');
     if (e is PathAccessException ||
         e.toString().contains('Operation not permitted')) {
@@ -290,13 +298,15 @@ extension _SSH on _AppSettingsPageState {
         context.showRoundDialog(
           title: libL10n.font,
           actions: [
-            TextButton(onPressed: () async => await _pickFontFile(), child: Text(libL10n.file)),
+            TextButton(
+              onPressed: () async => await _pickFontFile(),
+              child: Text(libL10n.file),
+            ),
             TextButton(
               onPressed: () async {
                 await _clearCachedFont();
                 _setting.fontPath.delete();
-                if (mounted) context.pop();
-                RNodes.app.notify();
+                _refreshApp(closeDialog: true);
               },
               child: Text(libL10n.clear),
             ),
@@ -334,8 +344,7 @@ extension _SSH on _AppSettingsPageState {
       await FontUtils.loadFrom(fontPath);
     }
 
-    if (mounted) context.pop();
-    RNodes.app.notify();
+    _refreshApp(closeDialog: true);
   }
 
   Widget _buildTermFontSize() {
@@ -365,8 +374,7 @@ extension _SSH on _AppSettingsPageState {
     await file.copy(newPath);
     _setting.sshBgImage.put(newPath);
 
-    context.pop();
-    RNodes.app.notify();
+    _refreshApp(closeDialog: true);
   }
 
   Widget _buildDesktopTerminal() {
@@ -374,7 +382,12 @@ extension _SSH on _AppSettingsPageState {
       return ListTile(
         leading: const Icon(Icons.terminal),
         title: TipText(libL10n.terminal, l10n.desktopTerminalTip),
-        trailing: Text(val, style: UIs.text15, maxLines: 1, overflow: TextOverflow.ellipsis),
+        trailing: Text(
+          val,
+          style: UIs.text15,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         onTap: () {
           withTextFieldController((ctrl) async {
             ctrl.text = val;
@@ -453,7 +466,10 @@ extension _SSH on _AppSettingsPageState {
       //   '${l10n.letterCacheTip}\n${l10n.needRestart}',
       //   style: UIs.textGrey,
       // ),
-      title: TipText(l10n.letterCache, '${l10n.letterCacheTip}\n${l10n.needRestart}'),
+      title: TipText(
+        l10n.letterCache,
+        '${l10n.letterCacheTip}\n${l10n.needRestart}',
+      ),
       trailing: StoreSwitch(prop: _setting.letterCache),
     );
   }
@@ -462,7 +478,11 @@ extension _SSH on _AppSettingsPageState {
     return ExpandTile(
       leading: const Icon(MingCute.background_fill),
       title: Text(libL10n.background),
-      children: [_buildSshBgImage(), _buildSshBgOpacity(), _buildSshBlurRadius()],
+      children: [
+        _buildSshBgImage(),
+        _buildSshBgOpacity(),
+        _buildSshBlurRadius(),
+      ],
     );
   }
 
@@ -478,12 +498,14 @@ extension _SSH on _AppSettingsPageState {
         context.showRoundDialog(
           title: libL10n.image,
           actions: [
-            TextButton(onPressed: () async => await _pickBgImage(), child: Text(libL10n.file)),
+            TextButton(
+              onPressed: () async => await _pickBgImage(),
+              child: Text(libL10n.file),
+            ),
             TextButton(
               onPressed: () {
                 _setting.sshBgImage.delete();
-                context.pop();
-                RNodes.app.notify();
+                _refreshApp(closeDialog: true);
               },
               child: Text(libL10n.clear),
             ),

@@ -31,6 +31,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get askAi => 'Preguntar a la IA';
 
   @override
+  String get ai => 'AI';
+
+  @override
   String get askAiApiKey => 'Clave API';
 
   @override
@@ -236,6 +239,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get cursorType => 'Tipo de cursor';
 
   @override
+  String get configured => 'Configured';
+
+  @override
   String get customCmd => 'Comandos personalizados';
 
   @override
@@ -414,6 +420,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get invalid => 'Inválido';
+
+  @override
+  String get invalidUrl => 'Invalid URL';
 
   @override
   String get invalidHostFormat =>
@@ -708,6 +717,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sftpSSHConnected => 'SFTP conectado...';
 
   @override
+  String get sftp => 'SFTP';
+
+  @override
   String get sftpShowFoldersFirst => 'Mostrar carpetas primero';
 
   @override
@@ -742,6 +754,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String sshConfigAllExist(Object duplicateCount) {
     return 'Todos los servidores ya existen (se encontraron $duplicateCount duplicados)';
   }
+
+  @override
+  String get ssh => 'SSH';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
@@ -960,6 +975,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get whenOpenApp => 'Al abrir la App';
+
+  @override
+  String get wiki => 'Wiki';
 
   @override
   String get wolTip =>

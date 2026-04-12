@@ -1,46 +1,60 @@
 part of 'view.dart';
 
 extension on _ServerDetailPageState {
-  void _onTapNvidiaGpuItem(NvidiaSmiItem item) {
-    final processes = item.memory.processes;
-    final displayCount = processes.length > 5 ? 5 : processes.length;
-    final height = displayCount * 47.0;
+  void _showClosableDetailDialog({
+    required String title,
+    required Widget child,
+  }) {
     context.showRoundDialog(
-      title: item.name,
+      title: title,
+      child: child,
+      actions: [
+        TextButton(onPressed: () => context.pop(), child: Text(libL10n.close)),
+      ],
+    );
+  }
+
+  void _showGpuProcessesDialog({
+    required String title,
+    required int itemCount,
+    required IndexedWidgetBuilder itemBuilder,
+  }) {
+    final displayCount = itemCount > 5 ? 5 : itemCount;
+    final height = (displayCount > 0 ? displayCount : 1) * 47.0;
+    context.showRoundDialog(
+      title: title,
       child: SizedBox(
         width: double.maxFinite,
         height: height,
-        child: ListView.builder(
-          itemCount: processes.length,
-          itemBuilder: (_, idx) => _buildGpuProcessItem(processes[idx]),
-        ),
+        child: itemCount == 0
+            ? Center(child: Text(libL10n.empty))
+            : ListView.builder(itemCount: itemCount, itemBuilder: itemBuilder),
       ),
       actions: Btnx.oks,
+    );
+  }
+
+  void _onTapNvidiaGpuItem(NvidiaSmiItem item) {
+    final processes = item.memory.processes;
+    _showGpuProcessesDialog(
+      title: item.name,
+      itemCount: processes.length,
+      itemBuilder: (_, idx) => _buildGpuProcessItem(processes[idx]),
     );
   }
 
   void _onTapAmdGpuItem(AmdSmiItem item) {
     final processes = item.memory.processes;
-    final displayCount = processes.length > 5 ? 5 : processes.length;
-    final height = displayCount * 47.0;
-    context.showRoundDialog(
+    _showGpuProcessesDialog(
       title: item.name,
-      child: SizedBox(
-        width: double.maxFinite,
-        height: height,
-        child: ListView.builder(
-          itemCount: processes.length,
-          itemBuilder: (_, idx) => _buildAmdGpuProcessItem(processes[idx]),
-        ),
-      ),
-      actions: Btnx.oks,
+      itemCount: processes.length,
+      itemBuilder: (_, idx) => _buildAmdGpuProcessItem(processes[idx]),
     );
   }
 
   void _onTapGpuProcessItem(NvidiaSmiMemProcess process) {
-    context.showRoundDialog(
+    _showClosableDetailDialog(
       title: '${process.pid}',
-      titleMaxLines: 1,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,33 +65,31 @@ extension on _ServerDetailPageState {
           Text('Process: ${process.name}'),
         ],
       ),
-      actions: [TextButton(onPressed: () => context.pop(), child: Text(libL10n.close))],
     );
   }
 
   void _onTapAmdGpuProcessItem(AmdSmiMemProcess process) {
-    context.showRoundDialog(
+    _showClosableDetailDialog(
       title: '${process.pid}',
-      titleMaxLines: 1,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           UIs.height13,
-          Text('Memory: ${process.memory} ${process.memory > 1024 ? 'MB' : 'KB'}'),
+          Text('Memory: ${_formatAmdGpuProcessMemory(process.memory)}'),
           UIs.height13,
           Text('Process: ${process.name}'),
         ],
       ),
-      actions: [TextButton(onPressed: () => context.pop(), child: Text(libL10n.close))],
     );
   }
 
   void _onTapCustomItem(MapEntry<String, String> cmd) {
-    context.showRoundDialog(
+    _showClosableDetailDialog(
       title: cmd.key,
-      child: SingleChildScrollView(child: Text(cmd.value, style: UIs.text13Grey)),
-      actions: [TextButton(onPressed: () => context.pop(), child: Text(libL10n.close))],
+      child: SingleChildScrollView(
+        child: Text(cmd.value, style: UIs.text13Grey),
+      ),
     );
   }
 
@@ -106,6 +118,14 @@ extension on _ServerDetailPageState {
     if (_size.width > UIs.columnWidth) return true;
     return len > 0 && len <= (max ?? 3);
   }
+}
+
+String _formatAmdGpuProcessMemory(int rawMemory) {
+  final valueInMiB = rawMemory / 1024;
+  final formatted = valueInMiB.truncateToDouble() == valueInMiB
+      ? valueInMiB.toStringAsFixed(0)
+      : valueInMiB.toStringAsFixed(1);
+  return '$formatted MiB';
 }
 
 extension _ViewUtils on String {
@@ -141,9 +161,13 @@ enum _NetSortType {
       case _NetSortType.device:
         return (b, a) => a.compareTo(b);
       case _NetSortType.recv:
-        return (b, a) => ns.speedInBytes(ns.deviceIdx(a)).compareTo(ns.speedInBytes(ns.deviceIdx(b)));
+        return (b, a) => ns
+            .speedInBytes(ns.deviceIdx(a))
+            .compareTo(ns.speedInBytes(ns.deviceIdx(b)));
       case _NetSortType.trans:
-        return (b, a) => ns.speedOutBytes(ns.deviceIdx(a)).compareTo(ns.speedOutBytes(ns.deviceIdx(b)));
+        return (b, a) => ns
+            .speedOutBytes(ns.deviceIdx(a))
+            .compareTo(ns.speedOutBytes(ns.deviceIdx(b)));
     }
   }
 }
@@ -176,14 +200,21 @@ Widget _buildLineChart(
         drawVerticalLine: false,
         horizontalInterval: verticalInterval.toDouble(),
         getDrawingHorizontalLine: (value) {
-          return const FlLine(color: Color.fromARGB(43, 88, 91, 94), strokeWidth: 1);
+          return const FlLine(
+            color: Color.fromARGB(43, 88, 91, 94),
+            strokeWidth: 1,
+          );
         },
       ),
       titlesData: FlTitlesData(
         show: true,
-        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
+        ),
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        bottomTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
+        ),
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,

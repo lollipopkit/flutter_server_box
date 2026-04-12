@@ -31,6 +31,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAi => 'AI に質問';
 
   @override
+  String get ai => 'AI';
+
+  @override
   String get askAiApiKey => 'API キー';
 
   @override
@@ -226,6 +229,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get cursorType => 'カーソルタイプ';
 
   @override
+  String get configured => 'Configured';
+
+  @override
   String get customCmd => 'カスタムコマンド';
 
   @override
@@ -402,6 +408,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get invalid => '無効';
+
+  @override
+  String get invalidUrl => 'Invalid URL';
 
   @override
   String get invalidHostFormat =>
@@ -681,6 +690,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sftpSSHConnected => 'SFTPに接続されました...';
 
   @override
+  String get sftp => 'SFTP';
+
+  @override
   String get sftpShowFoldersFirst => 'フォルダーを先に表示';
 
   @override
@@ -715,6 +727,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String sshConfigAllExist(Object duplicateCount) {
     return 'すべてのサーバーがすでに存在します（$duplicateCount個の重複が見つかりました）';
   }
+
+  @override
+  String get ssh => 'SSH';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
@@ -921,6 +936,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get whenOpenApp => 'アプリを開くとき';
+
+  @override
+  String get wiki => 'Wiki';
 
   @override
   String get wolTip => 'WOL（Wake-on-LAN）を設定した後、サーバーに接続するたびにWOLリクエストが送信されます。';

@@ -11,7 +11,10 @@ class IosSettingsPage extends StatefulWidget {
   @override
   State<IosSettingsPage> createState() => _IosSettingsPageState();
 
-  static const route = AppRouteNoArg(page: IosSettingsPage.new, path: '/settings/ios');
+  static const route = AppRouteNoArg(
+    page: IosSettingsPage.new,
+    path: '/settings/ios',
+  );
 }
 
 class _IosSettingsPageState extends State<IosSettingsPage> {
@@ -19,6 +22,10 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
   final wc = WatchConnectivity();
   late final _watchContextFuture = _loadWatchContext();
   late final _pushTokenFuture = getToken();
+
+  void _showCopyResult(bool success) {
+    context.showSnackBar(success ? libL10n.success : libL10n.fail);
+  }
 
   Future<Map<String, dynamic>?> _loadWatchContext() async {
     if (!await wc.isPaired) return null;
@@ -57,9 +64,9 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
           final val = _pushToken.value;
           if (val != null) {
             Pfs.copy(val);
-            context.showSnackBar(libL10n.success);
+            _showCopyResult(true);
           } else {
-            context.showSnackBar(libL10n.fail);
+            _showCopyResult(false);
           }
         },
       ),
@@ -69,7 +76,12 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
         error: (error, trace) => Text('${libL10n.error}: $error'),
         success: (text) {
           _pushToken.value = text;
-          return Text(text ?? 'null', style: UIs.textGrey, overflow: TextOverflow.ellipsis, maxLines: 1);
+          return Text(
+            text ?? 'null',
+            style: UIs.textGrey,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          );
         },
       ),
     );
@@ -112,7 +124,10 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
 
   void _onTapWatchApp(Map<String, dynamic> map) async {
     final cfgs = List<String>.from(map['urls'] as List? ?? []);
-    final result = await JsonListEditor.route.go(context, JsonListEditorArgs(data: cfgs));
+    final result = await JsonListEditor.route.go(
+      context,
+      JsonListEditorArgs(data: cfgs),
+    );
     if (result == null) return;
 
     final (_, err) = await context.showLoadingDialog(
@@ -133,7 +148,7 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
       },
     );
     if (err == null) {
-      context.showSnackBar(libL10n.success);
+      _showCopyResult(true);
     }
   }
 }

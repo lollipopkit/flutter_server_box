@@ -1,6 +1,14 @@
 part of '../entry.dart';
 
 extension _Server on _AppSettingsPageState {
+  void _showInvalidUrlDialog() {
+    context.showRoundDialog(
+      title: libL10n.fail,
+      child: Text(l10n.invalidUrl),
+      actions: Btnx.oks,
+    );
+  }
+
   Widget _buildServer() {
     return Column(
       children: [
@@ -59,7 +67,9 @@ extension _Server on _AppSettingsPageState {
       onTap: () async {
         final keys = Stores.server.keys();
         final names = Map.fromEntries(
-          keys.map((e) => MapEntry(e, ref.read(serversProvider).servers[e]?.name ?? e)),
+          keys.map(
+            (e) => MapEntry(e, ref.read(serversProvider).servers[e]?.name ?? e),
+          ),
         );
         final deleteKeys = await context.showPickDialog<String>(
           clearable: true,
@@ -104,7 +114,9 @@ extension _Server on _AppSettingsPageState {
           onSubmitted: _onSaveTextScaler,
           suggestion: false,
         ),
-        actions: Btn.ok(onTap: () => _onSaveTextScaler(_textScalerCtrl.text)).toList,
+        actions: Btn.ok(
+          onTap: () => _onSaveTextScaler(_textScalerCtrl.text),
+        ).toList,
       ),
     );
   }
@@ -228,7 +240,7 @@ extension _Server on _AppSettingsPageState {
   Widget _buildServerLogoUrl() {
     void onSave(String url) {
       if (url.isEmpty || !url.startsWith('http')) {
-        context.showRoundDialog(title: libL10n.fail, child: Text('${l10n.invalid} URL'), actions: Btnx.oks);
+        _showInvalidUrlDialog();
         return;
       }
       _setting.serverLogoUrl.put(url);

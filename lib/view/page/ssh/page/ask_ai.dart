@@ -33,7 +33,11 @@ extension _AskAi on SSHPageState {
       isScrollControlled: true,
       useSafeArea: true,
       builder: (ctx) {
-        return _AskAiSheet(selection: selection, localeHint: localeHint, onCommandApply: _applyAiCommand);
+        return _AskAiSheet(
+          selection: selection,
+          localeHint: localeHint,
+          onCommandApply: _applyAiCommand,
+        );
       },
     );
   }
@@ -43,12 +47,18 @@ extension _AskAi on SSHPageState {
       return;
     }
     _terminal.textInput(command);
-    (widget.args.focusNode?.requestFocus ?? _termKey.currentState?.requestKeyboard)?.call();
+    (widget.args.focusNode?.requestFocus ??
+            _termKey.currentState?.requestKeyboard)
+        ?.call();
   }
 }
 
 class _AskAiSheet extends ConsumerStatefulWidget {
-  const _AskAiSheet({required this.selection, required this.localeHint, required this.onCommandApply});
+  const _AskAiSheet({
+    required this.selection,
+    required this.localeHint,
+    required this.onCommandApply,
+  });
 
   final String selection;
   final String? localeHint;
@@ -63,11 +73,14 @@ enum _ChatEntryType { user, assistant, command }
 class _ChatEntry {
   const _ChatEntry._({required this.type, this.content, this.command});
 
-  const _ChatEntry.user(String content) : this._(type: _ChatEntryType.user, content: content);
+  const _ChatEntry.user(String content)
+    : this._(type: _ChatEntryType.user, content: content);
 
-  const _ChatEntry.assistant(String content) : this._(type: _ChatEntryType.assistant, content: content);
+  const _ChatEntry.assistant(String content)
+    : this._(type: _ChatEntryType.assistant, content: content);
 
-  const _ChatEntry.command(AskAiCommand command) : this._(type: _ChatEntryType.command, command: command);
+  const _ChatEntry.command(AskAiCommand command)
+    : this._(type: _ChatEntryType.command, command: command);
 
   final _ChatEntryType type;
   final String? content;
@@ -120,7 +133,11 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
 
     _subscription = ref
         .read(askAiRepositoryProvider)
-        .ask(selection: widget.selection, localeHint: widget.localeHint, conversation: messages)
+        .ask(
+          selection: widget.selection,
+          localeHint: widget.localeHint,
+          conversation: messages,
+        )
         .listen(
           _handleEvent,
           onError: (error, stack) {
@@ -154,9 +171,14 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
           shouldScroll = true;
         }
       } else if (event is AskAiCompleted) {
-        final fullText = event.fullText.isNotEmpty ? event.fullText : (_streamingContent ?? '');
+        final fullText = event.fullText.isNotEmpty
+            ? event.fullText
+            : (_streamingContent ?? '');
         if (fullText.trim().isNotEmpty) {
-          final message = AskAiMessage(role: AskAiMessageRole.assistant, content: fullText);
+          final message = AskAiMessage(
+            role: AskAiMessageRole.assistant,
+            content: fullText,
+          );
           _history.add(message);
           _chatEntries.add(_ChatEntry.assistant(fullText));
         }
@@ -229,10 +251,21 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
     return error.toString();
   }
 
-  Future<void> _handleApplyCommand(BuildContext context, AskAiCommand command) async {
+  void _showSuccessSnackBar([String? message]) {
+    if (!mounted) return;
+    context.showSnackBar(message ?? libL10n.success);
+  }
+
+  Future<void> _handleApplyCommand(
+    BuildContext context,
+    AskAiCommand command,
+  ) async {
     final confirmed = await context.showRoundDialog<bool>(
       title: context.l10n.askAiConfirmExecute,
-      child: SelectableText(command.command, style: const TextStyle(fontFamily: 'monospace')),
+      child: SelectableText(
+        command.command,
+        style: const TextStyle(fontFamily: 'monospace'),
+      ),
       actions: [
         TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
         TextButton(onPressed: () => context.pop(true), child: Text(libL10n.ok)),
@@ -240,22 +273,19 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
     );
     if (confirmed == true) {
       widget.onCommandApply(command.command);
-      if (!mounted) return;
-      context.showSnackBar(context.l10n.askAiCommandInserted);
+      _showSuccessSnackBar(context.l10n.askAiCommandInserted);
     }
   }
 
   Future<void> _copyCommand(BuildContext context, AskAiCommand command) async {
     await Clipboard.setData(ClipboardData(text: command.command));
-    if (!mounted) return;
-    context.showSnackBar(libL10n.success);
+    _showSuccessSnackBar();
   }
 
   Future<void> _copyText(BuildContext context, String text) async {
     if (text.trim().isEmpty) return;
     await Clipboard.setData(ClipboardData(text: text));
-    if (!mounted) return;
-    context.showSnackBar(libL10n.success);
+    _showSuccessSnackBar();
   }
 
   void _sendMessage() {
@@ -272,7 +302,10 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
     _scheduleAutoScroll();
   }
 
-  List<Widget> _buildConversationWidgets(BuildContext context, ThemeData theme) {
+  List<Widget> _buildConversationWidgets(
+    BuildContext context,
+    ThemeData theme,
+  ) {
     final widgets = <Widget>[];
     for (final entry in _chatEntries) {
       widgets.add(_buildChatItem(context, theme, entry));
@@ -280,7 +313,13 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
     }
 
     if (_streamingContent != null) {
-      widgets.add(_buildAssistantBubble(theme, content: _streamingContent!, streaming: true));
+      widgets.add(
+        _buildAssistantBubble(
+          theme,
+          content: _streamingContent!,
+          streaming: true,
+        ),
+      );
       widgets.add(const SizedBox(height: 12));
     } else if (_chatEntries.isEmpty && _error == null) {
       widgets.add(_buildAssistantBubble(theme, content: '', streaming: true));
@@ -293,13 +332,20 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
     return widgets;
   }
 
-  Widget _buildChatItem(BuildContext context, ThemeData theme, _ChatEntry entry) {
+  Widget _buildChatItem(
+    BuildContext context,
+    ThemeData theme,
+    _ChatEntry entry,
+  ) {
     switch (entry.type) {
       case _ChatEntryType.user:
         return Align(
           alignment: Alignment.centerRight,
           child: CardX(
-            child: Padding(padding: const EdgeInsets.all(12), child: SelectableText(entry.content ?? '')),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: SelectableText(entry.content ?? ''),
+            ),
           ),
         );
       case _ChatEntryType.assistant:
@@ -310,7 +356,11 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
     }
   }
 
-  Widget _buildAssistantBubble(ThemeData theme, {required String content, bool streaming = false}) {
+  Widget _buildAssistantBubble(
+    ThemeData theme, {
+    required String content,
+    bool streaming = false,
+  }) {
     final trimmed = content.trim();
     final l10n = context.l10n;
     final child = trimmed.isEmpty
@@ -343,7 +393,11 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
     );
   }
 
-  Widget _buildCommandBubble(BuildContext context, ThemeData theme, AskAiCommand command) {
+  Widget _buildCommandBubble(
+    BuildContext context,
+    ThemeData theme,
+    AskAiCommand command,
+  ) {
     final l10n = context.l10n;
     return Align(
       alignment: Alignment.centerLeft,
@@ -353,9 +407,15 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l10n.askAiRecommendedCommand, style: theme.textTheme.labelMedium),
+              Text(
+                l10n.askAiRecommendedCommand,
+                style: theme.textTheme.labelMedium,
+              ),
               const SizedBox(height: 8),
-              SelectableText(command.command, style: const TextStyle(fontFamily: 'monospace')),
+              SelectableText(
+                command.command,
+                style: const TextStyle(fontFamily: 'monospace'),
+              ),
               if (command.description.isNotEmpty) ...[
                 const SizedBox(height: 6),
                 Text(command.description, style: theme.textTheme.bodySmall),
@@ -403,8 +463,8 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
         );
       },
       child: SafeArea(
-            child: Column(
-              children: [
+        child: Column(
+          children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Row(
@@ -412,10 +472,16 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                   Text(context.l10n.askAi, style: theme.textTheme.titleLarge),
                   const SizedBox(width: 8),
                   if (_isStreaming)
-                    const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                    const SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                   const Spacer(),
                   IconButton(
-                    icon: Icon(_isMinimized ? Icons.unfold_more : Icons.unfold_less),
+                    icon: Icon(
+                      _isMinimized ? Icons.unfold_more : Icons.unfold_less,
+                    ),
                     tooltip: libL10n.fold,
                     onPressed: () {
                       FocusManager.instance.primaryFocus?.unfocus();
@@ -424,7 +490,10 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                       });
                     },
                   ),
-                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.of(context).pop()),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
                 ],
               ),
             ),
@@ -436,7 +505,10 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                     controller: _scrollController,
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                     children: [
-                      Text(context.l10n.askAiSelectedContent, style: theme.textTheme.titleMedium),
+                      Text(
+                        context.l10n.askAiSelectedContent,
+                        style: theme.textTheme.titleMedium,
+                      ),
                       const SizedBox(height: 6),
                       CardX(
                         child: Padding(
@@ -448,7 +520,10 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Text(context.l10n.askAiConversation, style: theme.textTheme.titleMedium),
+                      Text(
+                        context.l10n.askAiConversation,
+                        style: theme.textTheme.titleMedium,
+                      ),
                       const SizedBox(height: 6),
                       ..._buildConversationWidgets(context, theme),
                       if (_error != null) ...[
@@ -456,11 +531,17 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                         CardX(
                           child: Padding(
                             padding: const EdgeInsets.all(12),
-                            child: Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
+                            child: Text(
+                              _error!,
+                              style: TextStyle(color: theme.colorScheme.error),
+                            ),
                           ),
                         ),
                       ],
-                      if (_isStreaming) ...[const SizedBox(height: 16), const LinearProgressIndicator()],
+                      if (_isStreaming) ...[
+                        const SizedBox(height: 16),
+                        const LinearProgressIndicator(),
+                      ],
                       const SizedBox(height: 16),
                     ],
                   ),
@@ -471,9 +552,9 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                 child: Text(
                   context.l10n.askAiDisclaimer,
                   style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.error,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    color: theme.colorScheme.error,
+                    fontWeight: FontWeight.bold,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -493,7 +574,10 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
                     ),
                     const SizedBox(width: 12),
                     Btn.icon(
-                      onTap: _isStreaming || _inputController.text.trim().isEmpty ? null : _sendMessage,
+                      onTap:
+                          _isStreaming || _inputController.text.trim().isEmpty
+                          ? null
+                          : _sendMessage,
                       icon: const Icon(Icons.send, size: 18),
                     ),
                   ],
@@ -501,9 +585,9 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
               ),
             ] else
               const SizedBox(height: 8),
-              ],
-            ),
-          ),
+          ],
+        ),
+      ),
     );
   }
 }

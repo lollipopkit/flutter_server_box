@@ -9,7 +9,10 @@ import 'package:server_box/data/res/store.dart';
 class ConnectionStatsPage extends StatefulWidget {
   const ConnectionStatsPage({super.key});
 
-  static const route = AppRouteNoArg(page: ConnectionStatsPage.new, path: '/server/conn_stats');
+  static const route = AppRouteNoArg(
+    page: ConnectionStatsPage.new,
+    path: '/server/conn_stats',
+  );
 
   @override
   State<ConnectionStatsPage> createState() => _ConnectionStatsPageState();
@@ -32,7 +35,11 @@ class _ConnectionStatsPageState extends State<ConnectionStatsPage> {
       appBar: CustomAppBar(
         title: Text(l10n.connectionStats),
         actions: [
-          IconButton(onPressed: _loadStats, icon: const Icon(Icons.refresh), tooltip: libL10n.refresh),
+          IconButton(
+            onPressed: _loadStats,
+            icon: const Icon(Icons.refresh),
+            tooltip: libL10n.refresh,
+          ),
           IconButton(
             onPressed: _showClearAllDialog,
             icon: const Icon(Icons.clear_all, color: Colors.red),
@@ -66,15 +73,15 @@ extension _Builds on _ConnectionStatsPageState {
       itemCount: _serverStats.length,
       itemBuilder: (context, index) {
         final stats = _serverStats[index];
-        return RepaintBoundary(
-          child: _buildServerStatsCard(stats),
-        );
+        return RepaintBoundary(child: _buildServerStatsCard(stats));
       },
     );
   }
 
   Widget _buildServerStatsCard(ServerConnectionStats stats) {
-    final successRate = stats.totalAttempts == 0 ? libL10n.notAvailable : '${(stats.successRate * 100).toStringAsFixed(1)}%';
+    final successRate = stats.totalAttempts == 0
+        ? libL10n.notAvailable
+        : '${(stats.successRate * 100).toStringAsFixed(1)}%';
     final lastSuccessTime = stats.lastSuccessTime;
     final lastFailureTime = stats.lastFailureTime;
 
@@ -88,7 +95,10 @@ extension _Builds on _ConnectionStatsPageState {
               Expanded(
                 child: Text(
                   stats.serverName,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               Text(
@@ -109,14 +119,23 @@ extension _Builds on _ConnectionStatsPageState {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatItem(libL10n.totalAttempts, stats.totalAttempts.toString(), Icons.all_inclusive),
+              _buildStatItem(
+                libL10n.totalAttempts,
+                stats.totalAttempts.toString(),
+                Icons.all_inclusive,
+              ),
               _buildStatItem(
                 libL10n.success,
                 stats.successCount.toString(),
                 Icons.check_circle,
                 Colors.green,
               ),
-              _buildStatItem(libL10n.fail, stats.failureCount.toString(), Icons.error, Colors.red),
+              _buildStatItem(
+                libL10n.fail,
+                stats.failureCount.toString(),
+                Icons.error,
+                Colors.red,
+              ),
             ],
           ),
           if (lastSuccessTime != null || lastFailureTime != null) ...[
@@ -124,16 +143,35 @@ extension _Builds on _ConnectionStatsPageState {
             const Divider(),
             const SizedBox(height: 8),
             if (lastSuccessTime != null)
-              _buildTimeItem(l10n.lastSuccess, lastSuccessTime, Icons.check_circle, Colors.green),
+              _buildTimeItem(
+                l10n.lastSuccess,
+                lastSuccessTime,
+                Icons.check_circle,
+                Colors.green,
+              ),
             if (lastFailureTime != null)
-              _buildTimeItem(l10n.lastFailure, lastFailureTime, Icons.error, Colors.red),
+              _buildTimeItem(
+                l10n.lastFailure,
+                lastFailureTime,
+                Icons.error,
+                Colors.red,
+              ),
           ],
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(l10n.recentConnections, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-              TextButton(onPressed: () => _showServerDetailsDialog(stats), child: Text(l10n.viewDetails)),
+              Text(
+                l10n.recentConnections,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              TextButton(
+                onPressed: () => _showServerDetailsDialog(stats),
+                child: Text(l10n.viewDetails),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -143,21 +181,35 @@ extension _Builds on _ConnectionStatsPageState {
     ).cardx;
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, [Color? color]) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    IconData icon, [
+    Color? color,
+  ]) {
     return Column(
       children: [
         Icon(icon, size: 24, color: color ?? Colors.grey),
         const SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
         ),
         Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
       ],
     );
   }
 
-  Widget _buildTimeItem(String label, DateTime time, IconData icon, Color color) {
+  Widget _buildTimeItem(
+    String label,
+    DateTime time,
+    IconData icon,
+    Color color,
+  ) {
     final timeStr = time.simple();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -165,7 +217,10 @@ extension _Builds on _ConnectionStatsPageState {
         children: [
           Icon(icon, size: 16, color: color),
           UIs.width7,
-          Text('$label: ', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+          Text(
+            '$label: ',
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          ),
           Text(timeStr, style: const TextStyle(fontSize: 12)),
         ],
       ),
@@ -190,8 +245,13 @@ extension _Builds on _ConnectionStatsPageState {
           UIs.width7,
           Expanded(
             child: Text(
-              isSuccess ? '${libL10n.success} (${stat.durationMs}ms)' : stat.result.displayName,
-              style: TextStyle(fontSize: 12, color: isSuccess ? Colors.green : Colors.red),
+              isSuccess
+                  ? '${libL10n.success} (${stat.durationMs}ms)'
+                  : stat.result.displayName,
+              style: TextStyle(
+                fontSize: 12,
+                color: isSuccess ? Colors.green : Colors.red,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -202,6 +262,14 @@ extension _Builds on _ConnectionStatsPageState {
 }
 
 extension _Actions on _ConnectionStatsPageState {
+  void _finishCompacting([String? message]) {
+    if (!mounted) return;
+    setState(() => _isCompacting = false);
+    if (message != null) {
+      context.showSnackBar(message);
+    }
+  }
+
   Future<void> _loadStats() async {
     if (!mounted) return;
     setState(() {
@@ -239,19 +307,14 @@ extension _Actions on _ConnectionStatsPageState {
             try {
               await Stores.connectionStats.compact();
               final newSize = await Stores.connectionStats.dbSizeAsync();
-              final newIndexSize = await Stores.connectionStats.indexDbSizeAsync();
+              final newIndexSize = await Stores.connectionStats
+                  .indexDbSizeAsync();
               final newTotalSize = newSize + newIndexSize;
               final newSizeStr = _formatSize(newTotalSize);
-              if (mounted) {
-                setState(() => _isCompacting = false);
-                context.showSnackBar('${libL10n.success}: $sizeStr -> $newSizeStr');
-              }
+              _finishCompacting('${libL10n.success}: $sizeStr -> $newSizeStr');
             } catch (e) {
-               if (mounted) {
-                 setState(() => _isCompacting = false);
-                 context.showSnackBar('${libL10n.error}: $e');
-               }
-             }
+              _finishCompacting('${libL10n.error}: $e');
+            }
           },
           child: Text(libL10n.confirm),
         ),
@@ -287,7 +350,9 @@ extension _Actions on _ConnectionStatsPageState {
                     isSuccess
                         ? '${libL10n.success} (${stat.durationMs}ms)'
                         : '${libL10n.fail}: ${stat.result.displayName}',
-                    style: TextStyle(color: isSuccess ? Colors.green : Colors.red),
+                    style: TextStyle(
+                      color: isSuccess ? Colors.green : Colors.red,
+                    ),
                   ),
                   if (!isSuccess && stat.errorMessage.isNotEmpty)
                     Text(
@@ -309,42 +374,53 @@ extension _Actions on _ConnectionStatsPageState {
             context.pop();
             _showClearServerStatsDialog(stats);
           },
-          child: Text(l10n.clearThisServerStats, style: TextStyle(color: Colors.red)),
+          child: Text(
+            l10n.clearThisServerStats,
+            style: TextStyle(color: Colors.red),
+          ),
         ),
       ],
     );
   }
 
   void _showClearAllDialog() {
-    context.showRoundDialog(
+    _showClearStatsDialog(
       title: l10n.clearAllStatsTitle,
-      child: Text(l10n.clearAllStatsContent),
-      actions: [
-        TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
-        CountDownBtn(
-          onTap: () async {
-            context.pop();
-            await Stores.connectionStats.clearAll();
-            _loadStats();
-          },
-          text: libL10n.ok,
-          afterColor: Colors.red,
-        ),
-      ],
+      content: l10n.clearAllStatsContent,
+      onConfirm: Stores.connectionStats.clearAll,
     );
   }
 
   void _showClearServerStatsDialog(ServerConnectionStats stats) {
-    context.showRoundDialog(
+    _showClearStatsDialog(
       title: l10n.clearServerStatsTitle(stats.serverName),
-      child: Text(l10n.clearServerStatsContent(stats.serverName)),
+      content: l10n.clearServerStatsContent(stats.serverName),
+      onConfirm: () => Stores.connectionStats.clearServerStats(stats.serverId),
+    );
+  }
+
+  void _showClearStatsDialog({
+    required String title,
+    required String content,
+    required Future<void> Function() onConfirm,
+  }) {
+    context.showRoundDialog(
+      title: title,
+      child: Text(content),
       actions: [
         TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
         CountDownBtn(
           onTap: () async {
-            context.pop();
-            await Stores.connectionStats.clearServerStats(stats.serverId);
-            _loadStats();
+            try {
+              await onConfirm();
+              await _loadStats();
+              if (mounted) {
+                context.pop();
+              }
+            } catch (e, s) {
+              if (!mounted) return;
+              context.showErrDialog(e, s);
+            }
           },
           text: libL10n.ok,
           afterColor: Colors.red,
