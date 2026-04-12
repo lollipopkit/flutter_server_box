@@ -5,19 +5,27 @@ final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:%;]+$');
 
 extension _Actions on _ServerEditPageState {
   Future<void> _refreshStoredSudoPasswordState() async {
-    final hasValue = await SudoPassword.hasOverride(_serverId);
+    final storedValue = await SudoPassword.readOverride(_serverId);
     if (!mounted) return;
-    _hasStoredSudoPassword.value = hasValue;
+    _pendingSudoPassword ??= storedValue;
+    _hasStoredSudoPassword.value =
+        _pendingSudoPassword != null && _pendingSudoPassword!.isNotEmpty;
+  }
+
+  Future<void> _setPendingSudoPassword(String? value) async {
+    _pendingSudoPassword = value;
+    _sudoPasswordDirty = true;
+    _hasStoredSudoPassword.value = value != null && value.isNotEmpty;
   }
 
   Future<void> _onTapSudoPassword() async {
     final controller = TextEditingController();
     try {
-      controller.text = await SudoPassword.readOverride(_serverId) ?? '';
+      controller.text = _pendingSudoPassword ?? '';
       if (!mounted) return;
 
       await context.showRoundDialog(
-        title: 'sudo ${libL10n.pwd}',
+        title: libL10n.sudoPwdTitle(libL10n.pwd),
         child: Input(
           controller: controller,
           type: TextInputType.visiblePassword,
@@ -31,11 +39,10 @@ extension _Actions on _ServerEditPageState {
           if (_hasStoredSudoPassword.value == true)
             TextButton(
               onPressed: () async {
-                await SudoPassword.clearOverride(_serverId);
-                await _refreshStoredSudoPasswordState();
+                await _setPendingSudoPassword(null);
                 if (!mounted) return;
                 context.pop();
-                context.showSnackBar(libL10n.success);
+                context.showSnackBar(libL10n.saved);
               },
               child: Text(libL10n.clear),
             ),
@@ -55,15 +62,36 @@ extension _Actions on _ServerEditPageState {
   }
 
   Future<void> _saveSudoPassword(String value) async {
-    if (value.isEmpty) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) {
       context.showSnackBar(libL10n.empty);
       return;
     }
-    await SudoPassword.writeOverride(_serverId, value);
-    await _refreshStoredSudoPasswordState();
+    await _setPendingSudoPassword(normalized);
     if (!mounted) return;
     context.pop();
     context.showSnackBar(libL10n.saved);
+  }
+
+  Future<bool> _persistPendingSudoPassword() async {
+    if (!_sudoPasswordDirty) return true;
+    try {
+      final pending = _pendingSudoPassword;
+      if (pending == null || pending.isEmpty) {
+        await SudoPassword.clearOverride(_serverId);
+      } else {
+        await SudoPassword.writeOverride(_serverId, pending);
+      }
+      await _refreshStoredSudoPasswordState();
+      _sudoPasswordDirty = false;
+      return true;
+    } catch (e, s) {
+      Loggers.app.warning('Failed to persist sudo password override', e, s);
+      if (mounted) {
+        context.showSnackBar(libL10n.saveFailed);
+      }
+      return false;
+    }
   }
 
   void _setCmdTypeDisabled(String display, bool disabled) {
@@ -218,11 +246,11 @@ extension _Actions on _ServerEditPageState {
         context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
         return;
       }
+      if (!await _persistPendingSudoPassword()) return;
       ref.read(serversProvider.notifier).addServer(spi);
-      _didSaveServer = true;
     } else {
+      if (!await _persistPendingSudoPassword()) return;
       ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
-      _didSaveServer = true;
     }
 
     context.pop();

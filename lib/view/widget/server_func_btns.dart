@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -229,6 +230,8 @@ void _gotoSSH(Spi spi, BuildContext context) async {
     extraArgs.addAll(['-p', '${spi.port}']);
   }
 
+  await _copyDesktopSshPasswordIfNeeded(spi, context);
+
   final path = await () async {
     final tempKeyFileName = 'srvbox_pk_${spi.keyId}';
 
@@ -251,54 +254,62 @@ void _gotoSSH(Spi spi, BuildContext context) async {
     extraArgs.addAll(['-i', path]);
   }
 
-  final copied = await _copyDesktopSshPasswordIfNeeded(spi, context);
-  if (!copied) return;
-
   final sshCommand = ['ssh'] + extraArgs + ['${spi.user}@${spi.ip}'];
 
-  final system = Pfs.type;
-  switch (system) {
-    case Pfs.windows:
-      await Process.start('cmd', ['/c', 'start'] + sshCommand);
-      break;
-    case Pfs.linux:
-      final scriptFile = File('${Directory.systemTemp.path}/srvbox_launch_term.sh');
-      await scriptFile.writeAsString(_runEmulatorShell);
+  try {
+    final system = Pfs.type;
+    switch (system) {
+      case Pfs.windows:
+        await Process.start('cmd', ['/c', 'start'] + sshCommand);
+        break;
+      case Pfs.linux:
+        final scriptFile = File('${Directory.systemTemp.path}/srvbox_launch_term.sh');
+        await scriptFile.writeAsString(_runEmulatorShell);
 
-      if (Platform.isLinux || Platform.isMacOS) {
-        await Process.run('chmod', ['+x', scriptFile.path]);
-      }
+        if (Platform.isLinux || Platform.isMacOS) {
+          await Process.run('chmod', ['+x', scriptFile.path]);
+        }
 
-      try {
-        var terminal = Stores.setting.desktopTerminal.fetch();
-        if (terminal.isEmpty) terminal = 'x-terminal-emulator';
+        try {
+          var terminal = Stores.setting.desktopTerminal.fetch();
+          if (terminal.isEmpty) terminal = 'x-terminal-emulator';
 
-        await Process.start(scriptFile.path, [terminal, ...sshCommand]);
-      } catch (e, s) {
-        context.showErrDialog(e, s, libL10n.emulator);
-      } finally {
-        await scriptFile.delete();
-      }
-      break;
-    default:
-      context.showSnackBar('Mismatch system: $system');
-  }
-
-  if (shouldGenKey) {
-    if (!await file.exists()) return;
-    await Future.delayed(const Duration(seconds: 2), file.delete);
+          await Process.start(scriptFile.path, [terminal, ...sshCommand]);
+        } catch (e, s) {
+          context.showErrDialog(e, s, libL10n.emulator);
+        } finally {
+          await scriptFile.delete();
+        }
+        break;
+      default:
+        context.showSnackBar('Mismatch system: $system');
+    }
+  } finally {
+    if (shouldGenKey && await file.exists()) {
+      unawaited(
+        Future.delayed(const Duration(seconds: 2), () async {
+          try {
+            if (await file.exists()) {
+              await file.delete();
+            }
+          } catch (e, s) {
+            Loggers.app.warning('Failed to delete temporary SSH key file', e, s);
+          }
+        }),
+      );
+    }
   }
 }
 
-Future<bool> _copyDesktopSshPasswordIfNeeded(
+Future<void> _copyDesktopSshPasswordIfNeeded(
   Spi spi,
   BuildContext context,
 ) async {
-  if (!isDesktop) return true;
-  if (!Stores.setting.desktopSshAutoCopyPassword.fetch()) return true;
+  if (!isDesktop) return;
+  if (!Stores.setting.desktopSshAutoCopyPassword.fetch()) return;
 
   final pwd = spi.pwd;
-  if (pwd == null || pwd.isEmpty) return true;
+  if (pwd == null || pwd.isEmpty) return;
 
   if (Stores.setting.useBioAuth.fetch()) {
     final result = await LocalAuth.goWithResult();
@@ -306,15 +317,26 @@ Future<bool> _copyDesktopSshPasswordIfNeeded(
       if (context.mounted) {
         context.showSnackBar(libL10n.fail);
       }
-      return false;
+      return;
     }
   }
 
   await Clipboard.setData(ClipboardData(text: pwd));
+  unawaited(
+    Future.delayed(const Duration(seconds: 25), () async {
+      try {
+        final current = await Clipboard.getData(Clipboard.kTextPlain);
+        if (current?.text != pwd) return;
+        if (!context.mounted) return;
+        await Clipboard.setData(const ClipboardData(text: ''));
+      } catch (e, s) {
+        Loggers.app.warning('Failed to clear copied SSH password from clipboard', e, s);
+      }
+    }),
+  );
   if (context.mounted) {
     context.showSnackBar(libL10n.success);
   }
-  return true;
 }
 
 bool _checkClient(BuildContext context, String id, WidgetRef ref) {

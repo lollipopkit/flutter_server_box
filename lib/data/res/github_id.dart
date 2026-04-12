@@ -169,6 +169,8 @@ abstract final class GithubIds {
     'Utaoki-henji',
     'smtdev',
     'tetsuya-ops',
+    'maxpeyn10',
+    'agczsz',
   };
 }
 

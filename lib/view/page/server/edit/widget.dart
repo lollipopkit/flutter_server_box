@@ -160,11 +160,11 @@ extension _Widgets on _ServerEditPageState {
       final subtitle = switch (hasValue) {
         true => Text(l10n.configured, style: UIs.textGrey),
         false => Text(libL10n.empty, style: UIs.textGrey),
-        null => const Text('...', style: UIs.textGrey),
+        null => Text(libL10n.loadingEllipsis, style: UIs.textGrey),
       };
       return ListTile(
         leading: const Icon(Icons.password),
-        title: const Text('sudo password'),
+        title: Text(libL10n.sudoPassword),
         subtitle: subtitle,
         trailing: const Icon(Icons.keyboard_arrow_right),
         onTap: _onTapSudoPassword,

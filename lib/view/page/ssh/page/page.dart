@@ -610,10 +610,13 @@ class SSHPageState extends ConsumerState<SSHPage>
       return;
     }
 
-    _terminal.textInput(password);
-    if (_hasPendingSudoPrompt()) {
-      _terminal.keyInput(TerminalKey.enter);
+    if (!_hasPendingSudoPrompt()) {
+      if (!mounted) return;
+      context.showSnackBar(libL10n.fail);
+      return;
     }
+    _terminal.textInput(password);
+    _terminal.keyInput(TerminalKey.enter);
     if (!mounted) return;
     widget.args.focusNode?.requestFocus();
     _termKey.currentState?.requestKeyboard();

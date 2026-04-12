@@ -82,7 +82,8 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _systemType = ValueNotifier<SystemType?>(null);
   final _disabledCmdTypes = <String>{}.vn;
   final _hasStoredSudoPassword = ValueNotifier<bool?>(null);
-  var _didSaveServer = false;
+  String? _pendingSudoPassword;
+  bool _sudoPasswordDirty = false;
 
   @override
   void initState() {
@@ -93,9 +94,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
 
   @override
   void dispose() {
-    if (spi == null && !_didSaveServer) {
-      unawaited(SudoPassword.clearOverride(_serverId));
-    }
     super.dispose();
     _nameController.dispose();
     _ipController.dispose();
