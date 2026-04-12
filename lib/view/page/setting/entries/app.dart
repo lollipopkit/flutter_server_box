@@ -1,6 +1,10 @@
 part of '../entry.dart';
 
 extension _App on _AppSettingsPageState {
+  void _showInvalidDialog() {
+    context.showRoundDialog(title: libL10n.fail, child: Text(l10n.invalid));
+  }
+
   Widget _buildApp() {
     final androidSettings = isAndroid ? _buildAndroidSettings() : null;
     final specific = _buildPlatformSetting();
@@ -23,10 +27,7 @@ extension _App on _AppSettingsPageState {
     return ExpandTile(
       leading: const Icon(Icons.phone_android),
       title: Text('Android ${libL10n.setting}'),
-      children: [
-        _buildBgRun(),
-        _buildAndroidWidgetSharedPreference(),
-      ],
+      children: [_buildBgRun(), _buildAndroidWidgetSharedPreference()],
     );
   }
 
@@ -62,7 +63,11 @@ extension _App on _AppSettingsPageState {
     );
   }
 
-  Future<void> _saveWidgetSP(Map<String, String> map, Map<String, String> old, String prefix) async {
+  Future<void> _saveWidgetSP(
+    Map<String, String> map,
+    Map<String, String> old,
+    String prefix,
+  ) async {
     try {
       final keysDel = old.keys.toSet().difference(map.keys.toSet());
       for (final key in keysDel) {
@@ -147,7 +152,9 @@ extension _App on _AppSettingsPageState {
       leading: const Icon(Icons.colorize),
       title: Text(libL10n.primaryColorSeed),
       trailing: _setting.colorSeed.listenable().listenVal((_) {
-        return ClipOval(child: Container(color: UIs.primaryColor, height: 27, width: 27));
+        return ClipOval(
+          child: Container(color: UIs.primaryColor, height: 27, width: 27),
+        );
       }),
       onTap: () {
         withTextFieldController((ctrl) async {
@@ -188,7 +195,10 @@ extension _App on _AppSettingsPageState {
                     ),
                   );
                 }
-                return Column(mainAxisSize: MainAxisSize.min, children: children);
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: children,
+                );
               },
             ),
             actions: [
@@ -393,8 +403,14 @@ extension _App on _AppSettingsPageState {
             onSubmitted: (_) => context.pop(controller.text.trim()),
           ),
           actions: [
-            TextButton(onPressed: () => context.pop(null), child: Text(libL10n.cancel)),
-            TextButton(onPressed: () => context.pop(controller.text.trim()), child: Text(libL10n.ok)),
+            TextButton(
+              onPressed: () => context.pop(null),
+              child: Text(libL10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => context.pop(controller.text.trim()),
+              child: Text(libL10n.ok),
+            ),
           ],
         );
         return result?.trim();
@@ -420,11 +436,13 @@ extension _App on _AppSettingsPageState {
             passwordUsed = password;
             break;
           } else {
-            context.showRoundDialog(title: libL10n.fail, child: Text(l10n.invalid));
+            _showInvalidDialog();
             return;
           }
         } catch (e, stack) {
-          final msg = e.toString().contains('Failed to decrypt') || e.toString().contains('incorrect password')
+          final msg =
+              e.toString().contains('Failed to decrypt') ||
+                  e.toString().contains('incorrect password')
               ? l10n.backupPasswordWrong
               : '${libL10n.error}:\n$e';
           context.showRoundDialog(title: libL10n.fail, child: Text(msg));
@@ -436,7 +454,7 @@ extension _App on _AppSettingsPageState {
 
     void onSave(EditorPageRet ret) {
       if (ret.typ != EditorPageRetType.text) {
-        context.showRoundDialog(title: libL10n.fail, child: Text(l10n.invalid));
+        _showInvalidDialog();
         return;
       }
       try {
@@ -444,7 +462,7 @@ extension _App on _AppSettingsPageState {
         if (encryptedKey != null) {
           final pwd = passwordUsed;
           if (pwd == null || pwd.isEmpty) {
-            context.showRoundDialog(title: libL10n.fail, child: Text(l10n.invalid));
+            _showInvalidDialog();
             return;
           }
           final encrypted = Cryptor.encrypt(json.encode(newSettings), pwd);
@@ -458,7 +476,10 @@ extension _App on _AppSettingsPageState {
           }
         }
       } catch (e, trace) {
-        context.showRoundDialog(title: libL10n.error, child: Text('${l10n.save}:\n$e'));
+        context.showRoundDialog(
+          title: libL10n.error,
+          child: Text('${l10n.save}:\n$e'),
+        );
         Loggers.app.warning('Update json settings failed', e, trace);
       }
     }
