@@ -125,6 +125,12 @@
   "maxRetryCount": "Sunucu yeniden bağlantı sayısı",
   "maxRetryCountEqual0": "Tekrar tekrar deneyecek.",
   "min": "min",
+  "mismatchSystem": "Eşleşmeyen sistem: {system}",
+  "@mismatchSystem": {
+    "placeholders": {
+      "system": {}
+    }
+  },
   "more": "Daha fazla",
   "moveOutServerFuncBtnsHelp": "Açık: Sunucu Sekmesi sayfasındaki her kartın altında görüntülenebilir. Kapalı: Sunucu Ayrıntıları sayfasının üstünde görüntülenebilir.",
   "needHomeDir": "Synology kullanıcısıysanız, [buraya bakın](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Diğer sistem kullanıcılarının bir ana dizin oluşturma yöntemini araması gerekir.",

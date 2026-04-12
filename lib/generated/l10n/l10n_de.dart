@@ -484,6 +484,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get min => 'min';
 
   @override
+  String mismatchSystem(Object system) {
+    return 'Nicht übereinstimmendes System: $system';
+  }
+
+  @override
   String get more => 'Mehr';
 
   @override

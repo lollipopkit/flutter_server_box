@@ -484,6 +484,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get min => 'минимум';
 
   @override
+  String mismatchSystem(Object system) {
+    return 'Несоответствующая система: $system';
+  }
+
+  @override
   String get more => 'Больше';
 
   @override

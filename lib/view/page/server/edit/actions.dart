@@ -5,7 +5,13 @@ final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:%;]+$');
 
 extension _Actions on _ServerEditPageState {
   Future<void> _refreshStoredSudoPasswordState() async {
-    final storedValue = await SudoPassword.readOverride(_serverId);
+    String? storedValue;
+    try {
+      storedValue = await SudoPassword.readOverride(_serverId);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to read sudo password override', e, s);
+      return;
+    }
     if (!mounted) return;
     _pendingSudoPassword ??= storedValue;
     _hasStoredSudoPassword.value =
@@ -42,7 +48,6 @@ extension _Actions on _ServerEditPageState {
                 await _setPendingSudoPassword(null);
                 if (!mounted) return;
                 context.pop();
-                context.showSnackBar(libL10n.saved);
               },
               child: Text(libL10n.clear),
             ),
@@ -62,15 +67,13 @@ extension _Actions on _ServerEditPageState {
   }
 
   Future<void> _saveSudoPassword(String value) async {
-    final normalized = value.trim();
-    if (normalized.isEmpty) {
+    if (value.isEmpty) {
       context.showSnackBar(libL10n.empty);
       return;
     }
-    await _setPendingSudoPassword(normalized);
+    await _setPendingSudoPassword(value);
     if (!mounted) return;
     context.pop();
-    context.showSnackBar(libL10n.saved);
   }
 
   Future<bool> _persistPendingSudoPassword() async {

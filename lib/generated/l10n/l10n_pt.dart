@@ -481,6 +481,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get min => 'Mínimo';
 
   @override
+  String mismatchSystem(Object system) {
+    return 'Sistema incompatível: $system';
+  }
+
+  @override
   String get more => 'Mais';
 
   @override

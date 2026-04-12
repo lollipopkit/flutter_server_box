@@ -459,6 +459,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get min => '最小';
 
   @override
+  String mismatchSystem(Object system) {
+    return '系统不匹配：$system';
+  }
+
+  @override
   String get more => '更多';
 
   @override
@@ -1427,6 +1432,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get min => '最小';
+
+  @override
+  String mismatchSystem(Object system) {
+    return '系統不匹配：$system';
+  }
 
   @override
   String get more => '更多';

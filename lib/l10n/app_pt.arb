@@ -125,6 +125,12 @@
   "maxRetryCount": "Número de tentativas de reconexão com o servidor",
   "maxRetryCountEqual0": "Irá tentar indefinidamente",
   "min": "Mínimo",
+  "mismatchSystem": "Sistema incompatível: {system}",
+  "@mismatchSystem": {
+    "placeholders": {
+      "system": {}
+    }
+  },
   "more": "Mais",
   "moveOutServerFuncBtnsHelp": "Ativado: Mostra abaixo de cada cartão na aba do servidor. Desativado: Mostra no topo da página de detalhes do servidor.",
   "needHomeDir": "Se você é usuário de Synology, [veja aqui](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Usuários de outros sistemas precisam pesquisar como criar um diretório home.",

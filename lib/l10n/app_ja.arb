@@ -125,6 +125,12 @@
   "maxRetryCount": "サーバーの再接続試行回数",
   "maxRetryCountEqual0": "無限に再試行します",
   "min": "最小",
+  "mismatchSystem": "システムが一致しません: {system}",
+  "@mismatchSystem": {
+    "placeholders": {
+      "system": {}
+    }
+  },
   "more": "もっと",
   "moveOutServerFuncBtnsHelp": "有効にする：サーバータブの各カードの下に表示されます。無効にする：サーバーの詳細ページの上部に表示されます。",
   "needHomeDir": "Synologyユーザーの場合は、[こちらをご覧ください](https://kb.synology.com/DSM/tutorial/user_enable_home_service)。他のシステムのユーザーは、ホームディレクトリの作成方法を検索する必要があります。",

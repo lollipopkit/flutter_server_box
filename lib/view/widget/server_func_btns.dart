@@ -232,31 +232,32 @@ void _gotoSSH(Spi spi, BuildContext context) async {
 
   await _copyDesktopSshPasswordIfNeeded(spi, context);
 
-  final path = await () async {
-    final tempKeyFileName = 'srvbox_pk_${spi.keyId}';
-
-    /// For security reason, save the private key file to app doc path
-    return Paths.doc.joinPath(tempKeyFileName);
-  }();
-
-  final file = File(path);
+  File? tempKeyFile;
   final shouldGenKey = spi.keyId != null;
-  if (shouldGenKey) {
-    if (await file.exists()) {
-      await file.delete();
-    }
-    final keyContent = getPrivateKey(spi.keyId!);
-    final keyContentWithNewline = keyContent.endsWith('\n') ? keyContent : '$keyContent\n';
-    await file.writeAsString(keyContentWithNewline);
-    if (!Platform.isWindows) {
-      await Process.run('chmod', ['600', path]);
-    }
-    extraArgs.addAll(['-i', path]);
-  }
-
-  final sshCommand = ['ssh'] + extraArgs + ['${spi.user}@${spi.ip}'];
 
   try {
+    if (shouldGenKey) {
+      final path = await () async {
+        final tempKeyFileName = 'srvbox_pk_${spi.keyId}';
+
+        /// For security reason, save the private key file to app doc path
+        return Paths.doc.joinPath(tempKeyFileName);
+      }();
+      final file = File(path);
+      tempKeyFile = file;
+      if (await file.exists()) {
+        await file.delete();
+      }
+      final keyContent = getPrivateKey(spi.keyId!);
+      final keyContentWithNewline = keyContent.endsWith('\n') ? keyContent : '$keyContent\n';
+      await file.writeAsString(keyContentWithNewline);
+      if (!Platform.isWindows) {
+        await Process.run('chmod', ['600', path]);
+      }
+      extraArgs.addAll(['-i', path]);
+    }
+
+    final sshCommand = ['ssh'] + extraArgs + ['${spi.user}@${spi.ip}'];
     final system = Pfs.type;
     switch (system) {
       case Pfs.windows:
@@ -282,10 +283,11 @@ void _gotoSSH(Spi spi, BuildContext context) async {
         }
         break;
       default:
-        context.showSnackBar('Mismatch system: $system');
+        context.showSnackBar(l10n.mismatchSystem(system));
     }
   } finally {
-    if (shouldGenKey && await file.exists()) {
+    final file = tempKeyFile;
+    if (file != null && await file.exists()) {
       unawaited(
         Future.delayed(const Duration(seconds: 2), () async {
           try {
@@ -312,7 +314,13 @@ Future<void> _copyDesktopSshPasswordIfNeeded(
   if (pwd == null || pwd.isEmpty) return;
 
   if (Stores.setting.useBioAuth.fetch()) {
-    final result = await LocalAuth.goWithResult();
+    late final AuthResult result;
+    try {
+      result = await LocalAuth.goWithResult();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to authenticate before copying SSH password', e, s);
+      return;
+    }
     if (result != AuthResult.success) {
       if (context.mounted) {
         context.showSnackBar(libL10n.fail);
@@ -321,13 +329,17 @@ Future<void> _copyDesktopSshPasswordIfNeeded(
     }
   }
 
-  await Clipboard.setData(ClipboardData(text: pwd));
+  try {
+    await Clipboard.setData(ClipboardData(text: pwd));
+  } catch (e, s) {
+    Loggers.app.warning('Failed to copy SSH password to clipboard', e, s);
+    return;
+  }
   unawaited(
     Future.delayed(const Duration(seconds: 25), () async {
       try {
         final current = await Clipboard.getData(Clipboard.kTextPlain);
         if (current?.text != pwd) return;
-        if (!context.mounted) return;
         await Clipboard.setData(const ClipboardData(text: ''));
       } catch (e, s) {
         Loggers.app.warning('Failed to clear copied SSH password from clipboard', e, s);

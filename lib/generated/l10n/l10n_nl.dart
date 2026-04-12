@@ -482,6 +482,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get min => 'min';
 
   @override
+  String mismatchSystem(Object system) {
+    return 'Niet-overeenkomend systeem: $system';
+  }
+
+  @override
   String get more => 'Meer';
 
   @override

@@ -466,6 +466,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get min => '최소';
 
   @override
+  String mismatchSystem(Object system) {
+    return '시스템이 일치하지 않습니다: $system';
+  }
+
+  @override
   String get more => '더 보기';
 
   @override
