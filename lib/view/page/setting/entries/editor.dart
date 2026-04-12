@@ -1,6 +1,18 @@
 part of '../entry.dart';
 
 extension _Editor on _AppSettingsPageState {
+  Future<void> _pickEditorTheme(HiveProp<String> property) async {
+    final selected = await context.showPickSingleDialog(
+      title: libL10n.theme,
+      items: themeMap.keys.toList(),
+      display: (p0) => p0,
+      initial: property.fetch(),
+    );
+    if (selected != null) {
+      property.put(selected);
+    }
+  }
+
   Widget _buildEditor() {
     return Column(
       children: [
@@ -41,17 +53,7 @@ extension _Editor on _AppSettingsPageState {
         listenable: _setting.editorTheme.listenable(),
         builder: (val) => Text(val, style: UIs.text15),
       ),
-      onTap: () async {
-        final selected = await context.showPickSingleDialog(
-          title: libL10n.theme,
-          items: themeMap.keys.toList(),
-          display: (p0) => p0,
-          initial: _setting.editorTheme.fetch(),
-        );
-        if (selected != null) {
-          _setting.editorTheme.put(selected);
-        }
-      },
+      onTap: () => _pickEditorTheme(_setting.editorTheme),
     );
   }
 
@@ -63,17 +65,7 @@ extension _Editor on _AppSettingsPageState {
         listenable: _setting.editorDarkTheme.listenable(),
         builder: (val) => Text(val, style: UIs.text15),
       ),
-      onTap: () async {
-        final selected = await context.showPickSingleDialog(
-          title: libL10n.theme,
-          items: themeMap.keys.toList(),
-          display: (p0) => p0,
-          initial: _setting.editorDarkTheme.fetch(),
-        );
-        if (selected != null) {
-          _setting.editorDarkTheme.put(selected);
-        }
-      },
+      onTap: () => _pickEditorTheme(_setting.editorDarkTheme),
     );
   }
 
