@@ -65,7 +65,7 @@ types:
         index: 15
   VirtKey:
     typeId: 4
-    nextIndex: 45
+    nextIndex: 46
     fields:
       esc:
         index: 0
@@ -157,6 +157,8 @@ types:
         index: 43
       shift:
         index: 44
+      sudo:
+        index: 45
   NetViewType:
     typeId: 5
     nextIndex: 3

@@ -4,6 +4,68 @@ part of 'edit.dart';
 final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:%;]+$');
 
 extension _Actions on _ServerEditPageState {
+  Future<void> _refreshStoredSudoPasswordState() async {
+    final hasValue = await SudoPassword.hasOverride(_serverId);
+    if (!mounted) return;
+    _hasStoredSudoPassword.value = hasValue;
+  }
+
+  Future<void> _onTapSudoPassword() async {
+    final controller = TextEditingController();
+    try {
+      controller.text = await SudoPassword.readOverride(_serverId) ?? '';
+      if (!mounted) return;
+
+      await context.showRoundDialog(
+        title: 'sudo ${libL10n.pwd}',
+        child: Input(
+          controller: controller,
+          type: TextInputType.visiblePassword,
+          obscureText: true,
+          label: libL10n.pwd,
+          icon: Icons.password,
+          suggestion: false,
+          onSubmitted: (_) async => await _saveSudoPassword(controller.text),
+        ),
+        actions: [
+          if (_hasStoredSudoPassword.value == true)
+            TextButton(
+              onPressed: () async {
+                await SudoPassword.clearOverride(_serverId);
+                await _refreshStoredSudoPasswordState();
+                if (!mounted) return;
+                context.pop();
+                context.showSnackBar(libL10n.success);
+              },
+              child: Text(libL10n.clear),
+            ),
+          TextButton(
+            onPressed: context.pop,
+            child: Text(libL10n.cancel),
+          ),
+          TextButton(
+            onPressed: () async => await _saveSudoPassword(controller.text),
+            child: Text(libL10n.save),
+          ),
+        ],
+      );
+    } finally {
+      controller.dispose();
+    }
+  }
+
+  Future<void> _saveSudoPassword(String value) async {
+    if (value.isEmpty) {
+      context.showSnackBar(libL10n.empty);
+      return;
+    }
+    await SudoPassword.writeOverride(_serverId, value);
+    await _refreshStoredSudoPasswordState();
+    if (!mounted) return;
+    context.pop();
+    context.showSnackBar(libL10n.saved);
+  }
+
   void _setCmdTypeDisabled(String display, bool disabled) {
     if (disabled) {
       _disabledCmdTypes.value.add(display);
@@ -138,7 +200,7 @@ extension _Actions on _ServerEditPageState {
       custom: custom,
       wolCfg: wol,
       envs: _env.value.isEmpty ? null : _env.value,
-      id: widget.args?.spi.id ?? ShortId.generate(),
+      id: _serverId,
       customSystemType: _systemType.value,
       disabledCmdTypes: _disabledCmdTypes.value.isEmpty
           ? null
@@ -157,8 +219,10 @@ extension _Actions on _ServerEditPageState {
         return;
       }
       ref.read(serversProvider.notifier).addServer(spi);
+      _didSaveServer = true;
     } else {
       ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
+      _didSaveServer = true;
     }
 
     context.pop();

@@ -4,7 +4,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:xterm/core.dart';
 
-enum VirtualKeyFunc { toggleIME, backspace, clipboard, snippet, file }
+enum VirtualKeyFunc { toggleIME, backspace, clipboard, snippet, file, sudoPassword }
 
 enum VirtKey {
   esc,
@@ -52,6 +52,7 @@ enum VirtKey {
   f10,
   f11,
   f12,
+  sudo,
 }
 
 extension VirtKeyX on VirtKey {
@@ -105,6 +106,7 @@ extension VirtKeyX on VirtKey {
     VirtKey.down,
     VirtKey.right,
     VirtKey.clipboard,
+    VirtKey.sudo,
     VirtKey.ime,
     VirtKey.shift,
   ];
@@ -148,6 +150,7 @@ extension VirtKeyX on VirtKey {
     VirtKey.sftp => Icons.file_open,
     VirtKey.snippet => Icons.code,
     VirtKey.clipboard => Icons.paste,
+    VirtKey.sudo => Icons.password,
     VirtKey.ime => Icons.keyboard,
     _ => null,
   };
@@ -159,6 +162,7 @@ extension VirtKeyX on VirtKey {
     VirtKey.sftp => VirtualKeyFunc.file,
     VirtKey.snippet => VirtualKeyFunc.snippet,
     VirtKey.clipboard => VirtualKeyFunc.clipboard,
+    VirtKey.sudo => VirtualKeyFunc.sudoPassword,
     VirtKey.ime => VirtualKeyFunc.toggleIME,
     _ => null,
   };
@@ -176,6 +180,7 @@ extension VirtKeyX on VirtKey {
   String? get help => switch (this) {
     VirtKey.sftp => l10n.virtKeyHelpSFTP,
     VirtKey.clipboard => l10n.virtKeyHelpClipboard,
+    VirtKey.sudo => l10n.trySudo,
     VirtKey.ime => l10n.virtKeyHelpIME,
     _ => null,
   };
