@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/sync.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
@@ -239,6 +240,7 @@ class ServersNotifier extends _$ServersNotifier {
 
     Stores.setting.serverOrder.put(newOrder);
     Stores.server.delete(id);
+    await SudoPassword.clearOverride(id);
 
     await Stores.connectionStats.clearServerStats(id);
 
@@ -250,8 +252,10 @@ class ServersNotifier extends _$ServersNotifier {
   }
 
   Future<void> deleteAll() async {
+    final serverIds = state.servers.keys.toList();
+
     // Remove all SSH sessions before clearing servers
-    for (final id in state.servers.keys) {
+    for (final id in serverIds) {
       final sessionId = 'ssh_$id';
       TermSessionManager.remove(sessionId);
     }
@@ -260,6 +264,7 @@ class ServersNotifier extends _$ServersNotifier {
 
     Stores.setting.serverOrder.put([]);
     Stores.server.clear();
+    await Future.wait(serverIds.map(SudoPassword.clearOverride));
     await Stores.connectionStats.clearAll();
     bakSync.sync(milliDelay: 1000);
   }
