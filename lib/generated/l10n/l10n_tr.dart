@@ -31,6 +31,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAi => 'Yapay zekaya sor';
 
   @override
+  String get ai => 'AI';
+
+  @override
   String get askAiApiKey => 'API anahtarı';
 
   @override
@@ -234,6 +237,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cursorType => 'İmleç türü';
 
   @override
+  String get configured => 'Configured';
+
+  @override
   String get customCmd => 'Özel komutlar';
 
   @override
@@ -413,6 +419,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get invalid => 'Geçersiz';
+
+  @override
+  String get invalidUrl => 'Invalid URL';
 
   @override
   String get invalidHostFormat =>
@@ -701,6 +710,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sftpSSHConnected => 'SFTP Bağlandı';
 
   @override
+  String get sftp => 'SFTP';
+
+  @override
   String get sftpShowFoldersFirst => 'Önce klasörleri göster';
 
   @override
@@ -735,6 +747,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String sshConfigAllExist(Object duplicateCount) {
     return 'Tüm sunucular zaten mevcut ($duplicateCount kopya bulundu)';
   }
+
+  @override
+  String get ssh => 'SSH';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
@@ -950,6 +965,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get whenOpenApp => 'Uygulama açıldığında';
+
+  @override
+  String get wiki => 'Wiki';
 
   @override
   String get wolTip =>

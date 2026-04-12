@@ -546,7 +546,8 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   Widget _buildAmdGpuProcessItem(AmdSmiMemProcess process) {
     return _buildGpuProcessTile(
       name: process.name,
-      subtitle: 'PID: ${process.pid} - ${process.memory} MiB',
+      subtitle:
+          'PID: ${process.pid} - ${_formatAmdGpuProcessMemory(process.memory)}',
       onTap: () => _onTapAmdGpuProcessItem(process),
     );
   }

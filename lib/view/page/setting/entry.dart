@@ -154,16 +154,16 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
     return MultiList(
       children: [
         [
-          const CenterGreyTitle('App'),
+          CenterGreyTitle(libL10n.app),
           _buildApp(),
-          const CenterGreyTitle('AI'),
+          CenterGreyTitle(l10n.ai),
           _buildAskAiConfig(),
         ],
         [CenterGreyTitle(libL10n.server), _buildServer()],
         [
-          const CenterGreyTitle('SSH'),
+          CenterGreyTitle(l10n.ssh),
           _buildSSH(),
-          const CenterGreyTitle('SFTP'),
+          CenterGreyTitle(l10n.sftp),
           _buildSFTP(),
         ],
         [

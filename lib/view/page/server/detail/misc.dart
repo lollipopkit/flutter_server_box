@@ -20,13 +20,15 @@ extension on _ServerDetailPageState {
     required IndexedWidgetBuilder itemBuilder,
   }) {
     final displayCount = itemCount > 5 ? 5 : itemCount;
-    final height = displayCount * 47.0;
+    final height = (displayCount > 0 ? displayCount : 1) * 47.0;
     context.showRoundDialog(
       title: title,
       child: SizedBox(
         width: double.maxFinite,
         height: height,
-        child: ListView.builder(itemCount: itemCount, itemBuilder: itemBuilder),
+        child: itemCount == 0
+            ? Center(child: Text(libL10n.empty))
+            : ListView.builder(itemCount: itemCount, itemBuilder: itemBuilder),
       ),
       actions: Btnx.oks,
     );
@@ -74,9 +76,7 @@ extension on _ServerDetailPageState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           UIs.height13,
-          Text(
-            'Memory: ${process.memory} ${process.memory > 1024 ? 'MB' : 'KB'}',
-          ),
+          Text('Memory: ${_formatAmdGpuProcessMemory(process.memory)}'),
           UIs.height13,
           Text('Process: ${process.name}'),
         ],
@@ -118,6 +118,14 @@ extension on _ServerDetailPageState {
     if (_size.width > UIs.columnWidth) return true;
     return len > 0 && len <= (max ?? 3);
   }
+}
+
+String _formatAmdGpuProcessMemory(int rawMemory) {
+  final valueInMiB = rawMemory / 1024;
+  final formatted = valueInMiB.truncateToDouble() == valueInMiB
+      ? valueInMiB.toStringAsFixed(0)
+      : valueInMiB.toStringAsFixed(1);
+  return '$formatted MiB';
 }
 
 extension _ViewUtils on String {

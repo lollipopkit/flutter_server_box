@@ -30,6 +30,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAi => '问 AI';
 
   @override
+  String get ai => 'AI';
+
+  @override
   String get askAiApiKey => 'API 密钥';
 
   @override
@@ -222,6 +225,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cursorType => '光标类型';
 
   @override
+  String get configured => 'Configured';
+
+  @override
   String get customCmd => '自定义命令';
 
   @override
@@ -394,6 +400,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get invalid => '无效';
+
+  @override
+  String get invalidUrl => 'Invalid URL';
 
   @override
   String get invalidHostFormat => '主机格式无效，仅支持 IPv4、IPv6 和域名字符。';
@@ -658,6 +667,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sftpSSHConnected => 'SFTP 已连接';
 
   @override
+  String get sftp => 'SFTP';
+
+  @override
   String get sftpShowFoldersFirst => '文件夹显示在前';
 
   @override
@@ -691,6 +703,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String sshConfigAllExist(Object duplicateCount) {
     return '所有服务器已存在（发现 $duplicateCount 个重复项）';
   }
+
+  @override
+  String get ssh => 'SSH';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
@@ -891,6 +906,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get whenOpenApp => '当打开 App 时';
+
+  @override
+  String get wiki => 'Wiki';
 
   @override
   String get wolTip => '配置 WOL 后，每次连接服务器时将自动发送唤醒请求';

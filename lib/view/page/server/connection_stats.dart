@@ -411,9 +411,16 @@ extension _Actions on _ConnectionStatsPageState {
         TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
         CountDownBtn(
           onTap: () async {
-            context.pop();
-            await onConfirm();
-            _loadStats();
+            try {
+              await onConfirm();
+              await _loadStats();
+              if (mounted) {
+                context.pop();
+              }
+            } catch (e, s) {
+              if (!mounted) return;
+              context.showErrDialog(e, s);
+            }
           },
           text: libL10n.ok,
           afterColor: Colors.red,

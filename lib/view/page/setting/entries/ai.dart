@@ -58,7 +58,7 @@ extension _AI on _AppSettingsPageState {
           hint: 'sk-...',
           obscure: true,
           displayBuilder: (val) =>
-              val?.isNotEmpty == true ? 'Configured' : libL10n.empty,
+              val?.isNotEmpty == true ? l10n.configured : libL10n.empty,
         ),
       ],
     ).cardx;

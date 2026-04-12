@@ -32,6 +32,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAi => 'Tanya AI';
 
   @override
+  String get ai => 'AI';
+
+  @override
   String get askAiApiKey => 'Kunci API';
 
   @override
@@ -234,6 +237,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get cursorType => 'Jenis kursor';
 
   @override
+  String get configured => 'Configured';
+
+  @override
   String get customCmd => 'Perintah kustom';
 
   @override
@@ -413,6 +419,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get invalid => 'Tidak valid';
+
+  @override
+  String get invalidUrl => 'Invalid URL';
 
   @override
   String get invalidHostFormat =>
@@ -700,6 +709,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get sftpSSHConnected => 'Sftp terhubung';
 
   @override
+  String get sftp => 'SFTP';
+
+  @override
   String get sftpShowFoldersFirst => 'Folder ditampilkan lebih dulu';
 
   @override
@@ -734,6 +746,9 @@ class AppLocalizationsId extends AppLocalizations {
   String sshConfigAllExist(Object duplicateCount) {
     return 'Semua server sudah ada (ditemukan $duplicateCount duplikat)';
   }
+
+  @override
+  String get ssh => 'SSH';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
@@ -949,6 +964,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get whenOpenApp => 'Saat membuka aplikasi';
+
+  @override
+  String get wiki => 'Wiki';
 
   @override
   String get wolTip =>

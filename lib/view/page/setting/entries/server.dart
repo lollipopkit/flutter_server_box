@@ -4,7 +4,7 @@ extension _Server on _AppSettingsPageState {
   void _showInvalidUrlDialog() {
     context.showRoundDialog(
       title: libL10n.fail,
-      child: Text('${l10n.invalid} URL'),
+      child: Text(l10n.invalidUrl),
       actions: Btnx.oks,
     );
   }

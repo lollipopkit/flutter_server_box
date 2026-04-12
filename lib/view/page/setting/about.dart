@@ -37,7 +37,7 @@ final class _AppAboutPageState extends State<_AppAboutPage>
               children: <Widget>[
                 Btn.elevated(
                   icon: const Icon(Icons.edit_document),
-                  text: 'Wiki',
+                  text: l10n.wiki,
                   onTap: Urls.appWiki.launchUrl,
                 ),
                 Btn.elevated(

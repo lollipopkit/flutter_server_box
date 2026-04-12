@@ -31,6 +31,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAi => 'AI에게 질문';
 
   @override
+  String get ai => 'AI';
+
+  @override
   String get askAiApiKey => 'API 키';
 
   @override
@@ -226,6 +229,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get cursorType => '커서 유형';
 
   @override
+  String get configured => 'Configured';
+
+  @override
   String get customCmd => '사용자 정의 명령어';
 
   @override
@@ -400,6 +406,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get invalid => '유효하지 않음';
+
+  @override
+  String get invalidUrl => 'Invalid URL';
 
   @override
   String get invalidHostFormat => '잘못된 호스트 형식입니다. IPv4, IPv6, 도메인 문자만 허용됩니다.';
@@ -679,6 +688,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sftpSSHConnected => 'SFTP 연결됨';
 
   @override
+  String get sftp => 'SFTP';
+
+  @override
   String get sftpShowFoldersFirst => '폴더 우선 표시';
 
   @override
@@ -713,6 +725,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String sshConfigAllExist(Object duplicateCount) {
     return '모든 서버가 이미 존재합니다 (중복 $duplicateCount개 발견)';
   }
+
+  @override
+  String get ssh => 'SSH';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
@@ -920,6 +935,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get whenOpenApp => '앱을 열 때';
+
+  @override
+  String get wiki => 'Wiki';
 
   @override
   String get wolTip => 'WOL (Wake-on-LAN)을 설정하면 서버에 연결할 때마다 WOL 요청이 전송됩니다.';

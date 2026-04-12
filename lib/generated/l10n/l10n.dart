@@ -165,6 +165,12 @@ abstract class AppLocalizations {
   /// **'Ask AI'**
   String get askAi;
 
+  /// No description provided for @ai.
+  ///
+  /// In en, this message translates to:
+  /// **'AI'**
+  String get ai;
+
   /// No description provided for @askAiApiKey.
   ///
   /// In en, this message translates to:
@@ -525,6 +531,12 @@ abstract class AppLocalizations {
   /// **'Cursor type'**
   String get cursorType;
 
+  /// No description provided for @configured.
+  ///
+  /// In en, this message translates to:
+  /// **'Configured'**
+  String get configured;
+
   /// No description provided for @customCmd.
   ///
   /// In en, this message translates to:
@@ -839,6 +851,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invalid'**
   String get invalid;
+
+  /// No description provided for @invalidUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid URL'**
+  String get invalidUrl;
 
   /// No description provided for @invalidHostFormat.
   ///
@@ -1344,6 +1362,12 @@ abstract class AppLocalizations {
   /// **'SFTP Connected'**
   String get sftpSSHConnected;
 
+  /// No description provided for @sftp.
+  ///
+  /// In en, this message translates to:
+  /// **'SFTP'**
+  String get sftp;
+
   /// No description provided for @sftpShowFoldersFirst.
   ///
   /// In en, this message translates to:
@@ -1403,6 +1427,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All servers already exist ({duplicateCount} duplicates found)'**
   String sshConfigAllExist(Object duplicateCount);
+
+  /// No description provided for @ssh.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH'**
+  String get ssh;
 
   /// No description provided for @sshConfigDuplicatesSkipped.
   ///
@@ -1757,6 +1787,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'When opening the app'**
   String get whenOpenApp;
+
+  /// No description provided for @wiki.
+  ///
+  /// In en, this message translates to:
+  /// **'Wiki'**
+  String get wiki;
 
   /// No description provided for @wolTip.
   ///

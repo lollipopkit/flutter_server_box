@@ -61,6 +61,7 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
   int _filesVersion = 0;
   int _sortedFilesVersion = -1;
   _SortOption? _sortedFilesOption;
+  bool? _sortedFilesShowFoldersFirst;
   List<SftpName>? _sortedFilesCache;
 
   bool get _useSudo => _sudoHelper.enabled && _sudoMode.value;
@@ -114,9 +115,10 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
 
     try {
       final homeResult = await _client.run(
-        'eval echo ~${widget.args.spi.user}',
+        'getent passwd -- ${_shellQuote(widget.args.spi.user)}',
       );
-      final homePath = homeResult.string.trim();
+      final passwdEntry = homeResult.string.trim();
+      final homePath = passwdEntry.split(':').elementAtOrNull(5)?.trim() ?? '';
       if (homePath.isNotEmpty && homePath.startsWith('/')) {
         initPath = homePath;
       } else {
@@ -333,10 +335,12 @@ extension _UI on _SftpPageState {
   }
 
   List<SftpName> _getSortedFiles(_SortOption sortOption) {
+    final showFoldersFirst = Stores.setting.sftpShowFoldersFirst.fetch();
     final cachedFiles = _sortedFilesCache;
     if (cachedFiles != null &&
         _sortedFilesVersion == _filesVersion &&
-        _sortedFilesOption == sortOption) {
+        _sortedFilesOption == sortOption &&
+        _sortedFilesShowFoldersFirst == showFoldersFirst) {
       return cachedFiles;
     }
 
@@ -346,6 +350,7 @@ extension _UI on _SftpPageState {
     );
     _sortedFilesVersion = _filesVersion;
     _sortedFilesOption = sortOption;
+    _sortedFilesShowFoldersFirst = showFoldersFirst;
     _sortedFilesCache = sortedFiles;
     return sortedFiles;
   }
@@ -971,6 +976,7 @@ extension _Actions on _SftpPageState {
               ..addAll(fs);
             _filesVersion++;
             _sortedFilesCache = null;
+            _sortedFilesShowFoldersFirst = null;
           });
 
           // Only update history when success
