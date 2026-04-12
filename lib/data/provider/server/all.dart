@@ -81,6 +81,14 @@ class ServersNotifier extends _$ServersNotifier {
     return tags;
   }
 
+  Future<void> _clearSudoPasswordOverrideBestEffort(String id) async {
+    try {
+      await SudoPassword.clearOverride(id);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to clear sudo password override for server $id', e, s);
+    }
+  }
+
   /// Get a [Spi] by [spi] or [id].
   ///
   /// Priority: [spi] > [id]
@@ -240,7 +248,7 @@ class ServersNotifier extends _$ServersNotifier {
 
     Stores.setting.serverOrder.put(newOrder);
     Stores.server.delete(id);
-    await SudoPassword.clearOverride(id);
+    await _clearSudoPasswordOverrideBestEffort(id);
 
     await Stores.connectionStats.clearServerStats(id);
 
@@ -264,7 +272,7 @@ class ServersNotifier extends _$ServersNotifier {
 
     Stores.setting.serverOrder.put([]);
     Stores.server.clear();
-    await Future.wait(serverIds.map(SudoPassword.clearOverride));
+    await Future.wait(serverIds.map(_clearSudoPasswordOverrideBestEffort));
     await Stores.connectionStats.clearAll();
     bakSync.sync(milliDelay: 1000);
   }
