@@ -105,24 +105,13 @@ extension _Editor on _AppSettingsPageState {
   }
 
   void _showFontFamilyDialog(HiveProp<String> property) {
-    final ctrl = TextEditingController(text: property.fetch());
-    void onSave() {
-      context.pop();
-      property.put(ctrl.text.trim());
-    }
-
-    context.showRoundDialog(
+    showTextSettingDialog(
       title: libL10n.font,
-      child: Input(
-        controller: ctrl,
-        autoFocus: true,
-        type: TextInputType.text,
-        icon: Icons.font_download,
-        hint: 'monospace / Consolas / Fira Code ...',
-        suggestion: false,
-        onSubmitted: (_) => onSave(),
-      ),
-      actions: Btn.ok(onTap: onSave).toList,
+      initialValue: property.fetch() ?? '',
+      label: libL10n.font,
+      hint: 'monospace / Consolas / Fira Code ...',
+      icon: Icons.font_download,
+      onSave: property.put,
     );
   }
 

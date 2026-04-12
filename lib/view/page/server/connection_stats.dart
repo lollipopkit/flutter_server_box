@@ -384,34 +384,35 @@ extension _Actions on _ConnectionStatsPageState {
   }
 
   void _showClearAllDialog() {
-    context.showRoundDialog(
+    _showClearStatsDialog(
       title: l10n.clearAllStatsTitle,
-      child: Text(l10n.clearAllStatsContent),
-      actions: [
-        TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
-        CountDownBtn(
-          onTap: () async {
-            context.pop();
-            await Stores.connectionStats.clearAll();
-            _loadStats();
-          },
-          text: libL10n.ok,
-          afterColor: Colors.red,
-        ),
-      ],
+      content: l10n.clearAllStatsContent,
+      onConfirm: Stores.connectionStats.clearAll,
     );
   }
 
   void _showClearServerStatsDialog(ServerConnectionStats stats) {
-    context.showRoundDialog(
+    _showClearStatsDialog(
       title: l10n.clearServerStatsTitle(stats.serverName),
-      child: Text(l10n.clearServerStatsContent(stats.serverName)),
+      content: l10n.clearServerStatsContent(stats.serverName),
+      onConfirm: () => Stores.connectionStats.clearServerStats(stats.serverId),
+    );
+  }
+
+  void _showClearStatsDialog({
+    required String title,
+    required String content,
+    required Future<void> Function() onConfirm,
+  }) {
+    context.showRoundDialog(
+      title: title,
+      child: Text(content),
       actions: [
         TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
         CountDownBtn(
           onTap: () async {
             context.pop();
-            await Stores.connectionStats.clearServerStats(stats.serverId);
+            await onConfirm();
             _loadStats();
           },
           text: libL10n.ok,

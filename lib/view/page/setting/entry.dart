@@ -179,6 +179,41 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
       ],
     );
   }
+
+  Future<void> showTextSettingDialog({
+    required String title,
+    required String initialValue,
+    required String label,
+    required String hint,
+    required IconData icon,
+    required ValueChanged<String> onSave,
+    bool suggestion = false,
+  }) {
+    return Future<void>.sync(
+      () => withTextFieldController((ctrl) async {
+        ctrl.text = initialValue;
+
+        void save() {
+          onSave(ctrl.text.trim());
+          context.pop();
+        }
+
+        await context.showRoundDialog<bool>(
+          title: title,
+          child: Input(
+            controller: ctrl,
+            autoFocus: true,
+            label: label,
+            hint: hint,
+            icon: icon,
+            suggestion: suggestion,
+            onSubmitted: (_) => save(),
+          ),
+          actions: Btn.ok(onTap: save).toList,
+        );
+      }),
+    );
+  }
 }
 
 enum SettingsTabs {
