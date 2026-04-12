@@ -1,56 +1,68 @@
 part of '../entry.dart';
 
 extension _AI on _AppSettingsPageState {
+  Widget _buildAskAiTextTile({
+    required HiveProp<String> prop,
+    required Widget leading,
+    required String title,
+    required String hint,
+    required String Function(String? value) displayBuilder,
+    bool obscure = false,
+  }) {
+    return prop.listenable().listenVal((val) {
+      return ListTile(
+        leading: leading,
+        title: Text(title),
+        subtitle: Text(
+          displayBuilder(val),
+          style: UIs.textGrey,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        onTap: () => _showAskAiFieldDialog(
+          prop: prop,
+          title: title,
+          hint: hint,
+          obscure: obscure,
+        ),
+      );
+    });
+  }
+
   Widget _buildAskAiConfig() {
     final l10n = context.l10n;
     return ExpandTile(
       leading: const Icon(LineAwesome.robot_solid, size: _kIconSize),
       title: TipText(l10n.askAi, l10n.askAiUsageHint),
       children: [
-        _setting.askAiBaseUrl.listenable().listenVal((val) {
-          final display = val.isEmpty ? libL10n.empty : val;
-          return ListTile(
-            leading: const Icon(MingCute.link_2_line),
-            title: Text(l10n.askAiBaseUrl),
-            subtitle: Text(display, style: UIs.textGrey, maxLines: 2, overflow: TextOverflow.ellipsis),
-            onTap: () => _showAskAiFieldDialog(
-              prop: _setting.askAiBaseUrl,
-              title: l10n.askAiBaseUrl,
-              hint: 'https://api.openai.com',
-            ),
-          );
-        }),
-        _setting.askAiModel.listenable().listenVal((val) {
-          final display = val.isEmpty ? libL10n.empty : val;
-          return ListTile(
-            leading: const Icon(Icons.view_module),
-            title: Text(libL10n.askAiModel),
-            subtitle: Text(display, style: UIs.textGrey),
-            onTap: () => _showAskAiFieldDialog(
-              prop: _setting.askAiModel,
-              title: libL10n.askAiModel,
-              hint: 'gpt-4o-mini',
-            ),
-          );
-        }),
-        _setting.askAiApiKey.listenable().listenVal((val) {
-          final hasKey = val.isNotEmpty;
-          return ListTile(
-            leading: const Icon(MingCute.key_2_line),
-            title: Text(l10n.askAiApiKey),
-            subtitle: Text(hasKey ? '••••••••' : libL10n.empty, style: UIs.textGrey),
-            onTap: () => _showAskAiFieldDialog(
-              prop: _setting.askAiApiKey,
-              title: l10n.askAiApiKey,
-              hint: 'sk-...',
-              obscure: true,
-            ),
-          );
-        }),
+        _buildAskAiTextTile(
+          prop: _setting.askAiBaseUrl,
+          leading: const Icon(MingCute.link_2_line),
+          title: l10n.askAiBaseUrl,
+          hint: 'https://api.openai.com',
+          displayBuilder: (val) =>
+              (val == null || val.isEmpty) ? libL10n.empty : val,
+        ),
+        _buildAskAiTextTile(
+          prop: _setting.askAiModel,
+          leading: const Icon(Icons.view_module),
+          title: libL10n.askAiModel,
+          hint: 'gpt-4o-mini',
+          displayBuilder: (val) =>
+              (val == null || val.isEmpty) ? libL10n.empty : val,
+        ),
+        _buildAskAiTextTile(
+          prop: _setting.askAiApiKey,
+          leading: const Icon(MingCute.key_2_line),
+          title: l10n.askAiApiKey,
+          hint: 'sk-...',
+          obscure: true,
+          displayBuilder: (val) =>
+              val?.isNotEmpty == true ? 'Configured' : libL10n.empty,
+        ),
       ],
     ).cardx;
   }
-
 
   Future<void> _showAskAiFieldDialog({
     required HiveProp<String> prop,

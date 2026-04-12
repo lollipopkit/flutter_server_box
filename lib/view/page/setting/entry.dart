@@ -54,8 +54,18 @@ class SettingsPage extends ConsumerStatefulWidget {
   ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends ConsumerState<SettingsPage> with SingleTickerProviderStateMixin {
-  late final _tabCtrl = TabController(length: SettingsTabs.values.length, vsync: this);
+class _SettingsPageState extends ConsumerState<SettingsPage>
+    with SingleTickerProviderStateMixin {
+  late final _tabCtrl = TabController(
+    length: SettingsTabs.values.length,
+    vsync: this,
+  );
+
+  void _clearAllSettings() {
+    final keys = SettingStore.instance.box.keys;
+    SettingStore.instance.box.deleteAll(keys);
+    context.showSnackBar(libL10n.success);
+  }
 
   @override
   void dispose() {
@@ -73,28 +83,34 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with SingleTickerPr
           dividerHeight: 0,
           tabAlignment: TabAlignment.center,
           isScrollable: true,
-          tabs: SettingsTabs.values.map((e) => Tab(text: e.i18n)).toList(growable: false),
+          tabs: SettingsTabs.values
+              .map((e) => Tab(text: e.i18n))
+              .toList(growable: false),
         ),
         actions: [
           Btn.text(
             text: context.libL10n.logs,
-            onTap: () =>
-                DebugPage.route.go(context, args: DebugPageArgs(title: '${context.libL10n.logs}(${BuildData.build})')),
+            onTap: () => DebugPage.route.go(
+              context,
+              args: DebugPageArgs(
+                title: '${context.libL10n.logs}(${BuildData.build})',
+              ),
+            ),
           ),
           Btn.icon(
             icon: const Icon(Icons.delete),
             onTap: () => context.showRoundDialog(
               title: libL10n.attention,
               child: SimpleMarkdown(
-                data: libL10n.askContinue('${libL10n.delete} **${libL10n.all}** ${libL10n.setting}'),
+                data: libL10n.askContinue(
+                  '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
+                ),
               ),
               actions: [
                 CountDownBtn(
                   onTap: () {
                     context.pop();
-                    final keys = SettingStore.instance.box.keys;
-                    SettingStore.instance.box.deleteAll(keys);
-                    context.showSnackBar(libL10n.success);
+                    _clearAllSettings();
                   },
                   afterColor: Colors.red,
                 ),
@@ -103,7 +119,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> with SingleTickerPr
           ),
         ],
       ),
-      body: SafeArea(child: TabBarView(controller: _tabCtrl, children: SettingsTabs.pages)),
+      body: SafeArea(
+        child: TabBarView(controller: _tabCtrl, children: SettingsTabs.pages),
+      ),
     );
   }
 }
@@ -118,19 +136,42 @@ final class AppSettingsPage extends ConsumerStatefulWidget {
 final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
   final _setting = Stores.setting;
 
-  late final _sshOpacityCtrl = TextEditingController(text: _setting.sshBgOpacity.fetch().toString());
-  late final _sshBlurCtrl = TextEditingController(text: _setting.sshBlurRadius.fetch().toString());
-  late final _textScalerCtrl = TextEditingController(text: _setting.textFactor.toString());
-  late final _serverLogoCtrl = TextEditingController(text: _setting.serverLogoUrl.fetch());
+  late final _sshOpacityCtrl = TextEditingController(
+    text: _setting.sshBgOpacity.fetch().toString(),
+  );
+  late final _sshBlurCtrl = TextEditingController(
+    text: _setting.sshBlurRadius.fetch().toString(),
+  );
+  late final _textScalerCtrl = TextEditingController(
+    text: _setting.textFactor.toString(),
+  );
+  late final _serverLogoCtrl = TextEditingController(
+    text: _setting.serverLogoUrl.fetch(),
+  );
 
   @override
   Widget build(BuildContext context) {
     return MultiList(
       children: [
-        [const CenterGreyTitle('App'), _buildApp(), const CenterGreyTitle('AI'), _buildAskAiConfig()],
+        [
+          const CenterGreyTitle('App'),
+          _buildApp(),
+          const CenterGreyTitle('AI'),
+          _buildAskAiConfig(),
+        ],
         [CenterGreyTitle(libL10n.server), _buildServer()],
-        [const CenterGreyTitle('SSH'), _buildSSH(), const CenterGreyTitle('SFTP'), _buildSFTP()],
-        [CenterGreyTitle(libL10n.container), _buildContainer(), CenterGreyTitle(libL10n.editor), _buildEditor()],
+        [
+          const CenterGreyTitle('SSH'),
+          _buildSSH(),
+          const CenterGreyTitle('SFTP'),
+          _buildSFTP(),
+        ],
+        [
+          CenterGreyTitle(libL10n.container),
+          _buildContainer(),
+          CenterGreyTitle(libL10n.editor),
+          _buildEditor(),
+        ],
 
         /// Fullscreen Mode is designed for old mobile phone which can be
         /// used as a status screen.
@@ -160,5 +201,7 @@ enum SettingsTabs {
     SettingsTabs.about => const _AppAboutPage(),
   };
 
-  static final List<Widget> pages = SettingsTabs.values.map((e) => e.page).toList();
+  static final List<Widget> pages = SettingsTabs.values
+      .map((e) => e.page)
+      .toList();
 }
