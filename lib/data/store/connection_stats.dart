@@ -45,7 +45,9 @@ class ConnectionStatsStore extends HiveStore {
       serverIdToKeys.putIfAbsent(serverId, () => []).add(key);
     }
 
-    final idxKeysToDelete = _indexBox.keys.where((k) => k.toString().startsWith('idx_')).toList();
+    final idxKeysToDelete = _indexBox.keys
+        .where((k) => k.toString().startsWith('idx_'))
+        .toList();
     for (final k in idxKeysToDelete) {
       await _indexBox.delete(k);
     }
@@ -59,7 +61,12 @@ class ConnectionStatsStore extends HiveStore {
           if (stat != null) keyStatPairs.add((key, stat));
         }
         keyStatPairs.sort((a, b) => b.$2.timestamp.compareTo(a.$2.timestamp));
-        final toKeep = keyStatPairs.take(_maxRecordsPerServer).map((p) => p.$1).toList().reversed.toList();
+        final toKeep = keyStatPairs
+            .take(_maxRecordsPerServer)
+            .map((p) => p.$1)
+            .toList()
+            .reversed
+            .toList();
         final toRemove = keyStatPairs.skip(_maxRecordsPerServer);
         for (final pair in toRemove) {
           remove(pair.$1);
@@ -86,7 +93,8 @@ class ConnectionStatsStore extends HiveStore {
 
   Future<void> _updateIndex(String serverId, String recordKey) async {
     final indexKey = 'idx_$serverId';
-    final keys = (_indexBox.get(indexKey) as List?)?.cast<String>().toList() ?? [];
+    final keys =
+        (_indexBox.get(indexKey) as List?)?.cast<String>().toList() ?? [];
 
     if (!keys.contains(recordKey)) {
       keys.add(recordKey);
@@ -139,33 +147,28 @@ class ConnectionStatsStore extends HiveStore {
     }
 
     final totalAttempts = allStats.length;
-    final successCount = allStats.where((s) => s.result.isSuccess).length;
-    final failureCount = totalAttempts - successCount;
-    final successRate = totalAttempts > 0 ? (successCount / totalAttempts) : 0.0;
-
-    final successTimes = allStats
-        .where((s) => s.result.isSuccess)
-        .map((s) => s.timestamp)
-        .toList();
-    final failureTimes = allStats
-        .where((s) => !s.result.isSuccess)
-        .map((s) => s.timestamp)
-        .toList();
-
+    var successCount = 0;
     DateTime? lastSuccessTime;
     DateTime? lastFailureTime;
+    final recentConnections = <ConnectionStat>[];
 
-    if (successTimes.isNotEmpty) {
-      successTimes.sort((a, b) => b.compareTo(a));
-      lastSuccessTime = successTimes.first;
+    for (final stat in allStats) {
+      final isSuccess = stat.result.isSuccess;
+      if (isSuccess) {
+        successCount += 1;
+        lastSuccessTime ??= stat.timestamp;
+      } else {
+        lastFailureTime ??= stat.timestamp;
+      }
+      if (recentConnections.length < 20) {
+        recentConnections.add(stat);
+      }
     }
 
-    if (failureTimes.isNotEmpty) {
-      failureTimes.sort((a, b) => b.compareTo(a));
-      lastFailureTime = failureTimes.first;
-    }
-
-    final recentConnections = allStats.take(20).toList();
+    final failureCount = totalAttempts - successCount;
+    final successRate = totalAttempts > 0
+        ? (successCount / totalAttempts)
+        : 0.0;
 
     return ServerConnectionStats(
       serverId: serverId,
@@ -185,14 +188,12 @@ class ConnectionStatsStore extends HiveStore {
     final keys = (_indexBox.get(indexKey) as List?)?.cast<String>() ?? [];
 
     final stats = <ConnectionStat>[];
-    for (final key in keys) {
+    for (final key in keys.reversed) {
       final stat = get<ConnectionStat>(key);
       if (stat != null) {
         stats.add(stat);
       }
     }
-
-    stats.sort((a, b) => b.timestamp.compareTo(a.timestamp));
     return stats;
   }
 
@@ -258,7 +259,8 @@ class ConnectionStatsStore extends HiveStore {
 
   String? get indexDbPath => _indexBox.path;
 
-  Iterable<dynamic> get indexDbKeys => _indexBox.keys.where((k) => k.toString().startsWith('idx_'));
+  Iterable<dynamic> get indexDbKeys =>
+      _indexBox.keys.where((k) => k.toString().startsWith('idx_'));
 
   Future<int> dbSizeAsync() async {
     final path = dbPath;
