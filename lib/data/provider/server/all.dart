@@ -344,6 +344,7 @@ class ServersNotifier extends _$ServersNotifier {
         final oldSessionId = 'ssh_${old.id}';
         TermSessionManager.remove(oldSessionId);
         // Session will be re-added when reconnecting if necessary
+        await _clearSudoPasswordOverrideBestEffort(old.id);
       } else {
         newServers[old.id] = newSpi;
         // Update SPI in the corresponding IndividualServerNotifier
