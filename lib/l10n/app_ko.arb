@@ -126,6 +126,12 @@
   "maxRetryCount": "서버 재연결 횟수",
   "maxRetryCountEqual0": "계속해서 재시도합니다.",
   "min": "최소",
+  "mismatchSystem": "시스템이 일치하지 않습니다: {system}",
+  "@mismatchSystem": {
+    "placeholders": {
+      "system": {}
+    }
+  },
   "more": "더 보기",
   "moveOutServerFuncBtnsHelp": "켜기: 서버 탭의 각 카드 아래에 표시됩니다. 끄기: 서버 상세 페이지 상단에 표시됩니다.",
   "needHomeDir": "Synology 사용자는 [여기를 참조하세요](https://kb.synology.com/DSM/tutorial/user_enable_home_service). 다른 시스템 사용자는 홈 디렉토리 생성 방법을 검색해야 합니다.",

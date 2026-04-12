@@ -4,6 +4,99 @@ part of 'edit.dart';
 final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:%;]+$');
 
 extension _Actions on _ServerEditPageState {
+  Future<void> _refreshStoredSudoPasswordState() async {
+    String? storedValue;
+    try {
+      storedValue = await SudoPassword.readOverride(_serverId);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to read sudo password override', e, s);
+      return;
+    }
+    if (!mounted) return;
+    _pendingSudoPassword ??= storedValue;
+    _hasStoredSudoPassword.value =
+        _pendingSudoPassword != null && _pendingSudoPassword!.isNotEmpty;
+  }
+
+  Future<void> _setPendingSudoPassword(String? value) async {
+    _pendingSudoPassword = value;
+    _sudoPasswordDirty = true;
+    _hasStoredSudoPassword.value = value != null && value.isNotEmpty;
+  }
+
+  Future<void> _onTapSudoPassword() async {
+    final controller = TextEditingController();
+    try {
+      controller.text = _pendingSudoPassword ?? '';
+      if (!mounted) return;
+
+      await context.showRoundDialog(
+        title: libL10n.sudoPwdTitle(libL10n.pwd),
+        child: Input(
+          controller: controller,
+          type: TextInputType.visiblePassword,
+          obscureText: true,
+          label: libL10n.pwd,
+          icon: Icons.password,
+          suggestion: false,
+          onSubmitted: (_) async => await _saveSudoPassword(controller.text),
+        ),
+        actions: [
+          if (_hasStoredSudoPassword.value == true)
+            TextButton(
+              onPressed: () async {
+                await _setPendingSudoPassword(null);
+                if (!mounted) return;
+                context.pop();
+              },
+              child: Text(libL10n.clear),
+            ),
+          TextButton(
+            onPressed: context.pop,
+            child: Text(libL10n.cancel),
+          ),
+          TextButton(
+            onPressed: () async => await _saveSudoPassword(controller.text),
+            child: Text(libL10n.save),
+          ),
+        ],
+      );
+    } finally {
+      controller.dispose();
+    }
+  }
+
+  Future<void> _saveSudoPassword(String value) async {
+    if (value.isEmpty) {
+      context.showSnackBar(libL10n.empty);
+      return;
+    }
+    await _setPendingSudoPassword(value);
+    if (!mounted) return;
+    context.pop();
+  }
+
+  Future<bool> _persistPendingSudoPassword() async {
+    if (!_sudoPasswordDirty) return true;
+    try {
+      final pending = _pendingSudoPassword;
+      if (pending == null || pending.isEmpty) {
+        await SudoPassword.clearOverride(_serverId);
+      } else {
+        await SudoPassword.writeOverride(_serverId, pending);
+      }
+      await _refreshStoredSudoPasswordState();
+      _sudoPasswordDirty = false;
+      return true;
+    } catch (e, s) {
+      Loggers.app.warning('Failed to persist sudo password override', e, s);
+      if (mounted) {
+        context.showSnackBar(libL10n.saveFailed);
+      }
+      return false;
+    }
+  }
+
   void _setCmdTypeDisabled(String display, bool disabled) {
     if (disabled) {
       _disabledCmdTypes.value.add(display);
@@ -138,7 +231,7 @@ extension _Actions on _ServerEditPageState {
       custom: custom,
       wolCfg: wol,
       envs: _env.value.isEmpty ? null : _env.value,
-      id: widget.args?.spi.id ?? ShortId.generate(),
+      id: _serverId,
       customSystemType: _systemType.value,
       disabledCmdTypes: _disabledCmdTypes.value.isEmpty
           ? null
@@ -156,8 +249,10 @@ extension _Actions on _ServerEditPageState {
         context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
         return;
       }
+      if (!await _persistPendingSudoPassword()) return;
       ref.read(serversProvider.notifier).addServer(spi);
     } else {
+      if (!await _persistPendingSudoPassword()) return;
       ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
     }
 

@@ -133,6 +133,7 @@ extension _Widgets on _ServerEditPageState {
     return ExpandTile(
       title: Text(l10n.more),
       children: [
+        _buildSudoPassword(),
         Input(
           controller: _logoUrlCtrl,
           type: TextInputType.url,
@@ -152,6 +153,23 @@ extension _Widgets on _ServerEditPageState {
         _buildWOLs(),
       ],
     );
+  }
+
+  Widget _buildSudoPassword() {
+    return _hasStoredSudoPassword.listenVal((hasValue) {
+      final subtitle = switch (hasValue) {
+        true => Text(l10n.configured, style: UIs.textGrey),
+        false => Text(libL10n.empty, style: UIs.textGrey),
+        null => Text(libL10n.loadingEllipsis, style: UIs.textGrey),
+      };
+      return ListTile(
+        leading: const Icon(Icons.password),
+        title: Text(libL10n.sudoPassword),
+        subtitle: subtitle,
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: _onTapSudoPassword,
+      ).cardx;
+    });
   }
 
   Widget _buildScriptDir() {

@@ -13,6 +13,7 @@ import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -21,6 +22,7 @@ import 'package:server_box/data/provider/ai/ask_ai.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
+import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
@@ -261,6 +263,7 @@ class SSHPageState extends ConsumerState<SSHPage>
                 leading: BackButton(onPressed: context.pop),
                 title: Text(widget.args.spi.name),
                 centerTitle: false,
+                actions: _buildAppBarActions(),
               )
             : null,
         backgroundColor: hasBg ? Colors.transparent : _terminalTheme.background,
@@ -384,6 +387,17 @@ class SSHPageState extends ConsumerState<SSHPage>
         ),
       ),
     );
+  }
+
+  List<Widget> _buildAppBarActions() {
+    if (widget.args.spi.isRoot) return const [];
+    return [
+      IconButton(
+        onPressed: _insertSudoPassword,
+        tooltip: l10n.trySudo,
+        icon: const Icon(Icons.password),
+      ),
+    ];
   }
 
   Widget _buildVirtualKey(
@@ -579,6 +593,47 @@ class SSHPageState extends ConsumerState<SSHPage>
   void _showClipboardSuccess() {
     if (!mounted) return;
     context.showSnackBar(libL10n.success);
+  }
+
+  Future<void> _insertSudoPassword() async {
+    final authed = await SudoPassword.authenticateIfNeeded();
+    if (!authed) {
+      if (!mounted) return;
+      context.showSnackBar(libL10n.fail);
+      return;
+    }
+
+    final password = await SudoPassword.resolveForTerminal(widget.args.spi);
+    if (password == null || password.isEmpty) {
+      if (!mounted) return;
+      context.showSnackBar(libL10n.empty);
+      return;
+    }
+
+    if (!_hasPendingSudoPrompt()) {
+      if (!mounted) return;
+      context.showSnackBar(libL10n.fail);
+      return;
+    }
+    _terminal.textInput(password);
+    _terminal.keyInput(TerminalKey.enter);
+    if (!mounted) return;
+    widget.args.focusNode?.requestFocus();
+    _termKey.currentState?.requestKeyboard();
+    context.showSnackBar(libL10n.success);
+  }
+
+  bool _hasPendingSudoPrompt() {
+    final lines = _terminal.buffer.lines.toList().reversed.take(8);
+    for (final line in lines) {
+      final raw = line.toString().trim();
+      if (raw.isEmpty) continue;
+      final lower = raw.toLowerCase();
+      if (Miscs.pwdRequestWithUserReg.hasMatch(raw)) return true;
+      if (lower.contains('[sudo] password')) return true;
+      if (lower.contains('password') && lower.endsWith(':')) return true;
+    }
+    return false;
   }
 
   void _updateVirtKeysHeight() {

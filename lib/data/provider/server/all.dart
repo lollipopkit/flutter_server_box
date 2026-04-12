@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/sync.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
@@ -78,6 +79,14 @@ class ServersNotifier extends _$ServersNotifier {
       }
     }
     return tags;
+  }
+
+  Future<void> _clearSudoPasswordOverrideBestEffort(String id) async {
+    try {
+      await SudoPassword.clearOverride(id);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to clear sudo password override for server $id', e, s);
+    }
   }
 
   /// Get a [Spi] by [spi] or [id].
@@ -239,6 +248,7 @@ class ServersNotifier extends _$ServersNotifier {
 
     Stores.setting.serverOrder.put(newOrder);
     Stores.server.delete(id);
+    await _clearSudoPasswordOverrideBestEffort(id);
 
     await Stores.connectionStats.clearServerStats(id);
 
@@ -250,8 +260,10 @@ class ServersNotifier extends _$ServersNotifier {
   }
 
   Future<void> deleteAll() async {
+    final serverIds = state.servers.keys.toList();
+
     // Remove all SSH sessions before clearing servers
-    for (final id in state.servers.keys) {
+    for (final id in serverIds) {
       final sessionId = 'ssh_$id';
       TermSessionManager.remove(sessionId);
     }
@@ -260,6 +272,7 @@ class ServersNotifier extends _$ServersNotifier {
 
     Stores.setting.serverOrder.put([]);
     Stores.server.clear();
+    await Future.wait(serverIds.map(_clearSudoPasswordOverrideBestEffort));
     await Stores.connectionStats.clearAll();
     bakSync.sync(milliDelay: 1000);
   }
@@ -331,6 +344,7 @@ class ServersNotifier extends _$ServersNotifier {
         final oldSessionId = 'ssh_${old.id}';
         TermSessionManager.remove(oldSessionId);
         // Session will be re-added when reconnecting if necessary
+        await _clearSudoPasswordOverrideBestEffort(old.id);
       } else {
         newServers[old.id] = newSpi;
         // Update SPI in the corresponding IndividualServerNotifier

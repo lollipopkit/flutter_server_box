@@ -135,6 +135,12 @@
   "maxRetryCount": "伺服器嘗試重連次數",
   "maxRetryCountEqual0": "將無限次重試",
   "min": "最小",
+  "mismatchSystem": "系統不匹配：{system}",
+  "@mismatchSystem": {
+    "placeholders": {
+      "system": {}
+    }
+  },
   "more": "更多",
   "moveOutServerFuncBtnsHelp": "開啟：可以在伺服器 Tab 頁的每個卡片下方顯示。關閉：在伺服器詳情頁頂部顯示。",
   "needHomeDir": "如果你是群暉使用者，[看這裡](https://kb.synology.com/DSM/tutorial/user_enable_home_service)。其他系統使用者，需搜尋如何建立家目錄（home directory）。",

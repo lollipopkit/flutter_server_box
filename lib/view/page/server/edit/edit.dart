@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:choice/choice.dart';
@@ -10,6 +11,7 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/jump_chain.dart';
 import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -41,6 +43,7 @@ class ServerEditPage extends ConsumerStatefulWidget {
 class _ServerEditPageState extends ConsumerState<ServerEditPage>
     with AfterLayoutMixin {
   late final spi = widget.args?.spi;
+  late final String _serverId;
   final _nameController = TextEditingController();
   final _ipController = TextEditingController();
   final _altUrlController = TextEditingController();
@@ -78,6 +81,16 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _tags = <String>{}.vn;
   final _systemType = ValueNotifier<SystemType?>(null);
   final _disabledCmdTypes = <String>{}.vn;
+  final _hasStoredSudoPassword = ValueNotifier<bool?>(null);
+  String? _pendingSudoPassword;
+  bool _sudoPasswordDirty = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _serverId = widget.args?.spi.id ?? ShortId.generate();
+    unawaited(_refreshStoredSudoPasswordState());
+  }
 
   @override
   void dispose() {
@@ -116,6 +129,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _tags.dispose();
     _systemType.dispose();
     _disabledCmdTypes.dispose();
+    _hasStoredSudoPassword.dispose();
   }
 
   @override

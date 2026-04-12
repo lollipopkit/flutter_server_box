@@ -481,6 +481,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get min => 'Min';
 
   @override
+  String mismatchSystem(Object system) {
+    return 'Sistem tidak cocok: $system';
+  }
+
+  @override
   String get more => 'Lebih Banyak';
 
   @override

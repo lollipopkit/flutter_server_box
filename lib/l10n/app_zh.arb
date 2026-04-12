@@ -135,6 +135,12 @@
   "maxRetryCount": "服务器尝试重连次数",
   "maxRetryCountEqual0": "将无限次重试",
   "min": "最小",
+  "mismatchSystem": "系统不匹配：{system}",
+  "@mismatchSystem": {
+    "placeholders": {
+      "system": {}
+    }
+  },
   "more": "更多",
   "moveOutServerFuncBtnsHelp": "开启：可以在服务器 Tab 页的每个卡片下方显示。关闭：在服务器详情页顶部显示。",
   "needHomeDir": "如果你是群晖用户，[看这里](https://kb.synology.cn/zh-cn/DSM/tutorial/ssh_could_not_chdir_to_home_directory)。其他系统用户，需搜索如何创建家目录（home directory）.",

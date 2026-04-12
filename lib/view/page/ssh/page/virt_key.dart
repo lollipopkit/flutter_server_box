@@ -125,6 +125,9 @@ extension _VirtKey on SSHPageState {
         final args = SftpPageArgs(spi: widget.args.spi, initPath: initPath);
         SftpPage.route.go(context, args);
         break;
+      case VirtualKeyFunc.sudoPassword:
+        await _insertSudoPassword();
+        break;
     }
   }
 

@@ -125,6 +125,12 @@
   "maxRetryCount": "Anzahl an Verbindungsversuchen",
   "maxRetryCountEqual0": "Unbegrenzte Verbindungsversuche zum Server",
   "min": "min",
+  "mismatchSystem": "Nicht übereinstimmendes System: {system}",
+  "@mismatchSystem": {
+    "placeholders": {
+      "system": {}
+    }
+  },
   "more": "Mehr",
   "moveOutServerFuncBtnsHelp": "Ein: kann unter jeder Karte auf der Registerkarte \"Server\" angezeigt werden. Aus: kann oben auf der Seite \"Serverdetails\" angezeigt werden.",
   "needHomeDir": "Wenn Sie ein Synology-Benutzer sind, [sehen Sie hier](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Benutzer anderer Systeme müssen suchen, wie man ein Home-Verzeichnis erstellt.",

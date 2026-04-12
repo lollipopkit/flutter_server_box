@@ -139,6 +139,12 @@
   "maxRetryCount": "Number of server reconnections",
   "maxRetryCountEqual0": "Will retry again and again.",
   "min": "min",
+  "mismatchSystem": "Mismatch system: {system}",
+  "@mismatchSystem": {
+    "placeholders": {
+      "system": {}
+    }
+  },
   "more": "More",
   "moveOutServerFuncBtnsHelp": "On: can be displayed below each card on the Server Tab page. Off: can be displayed at the top of the Server Details page.",
   "needHomeDir": "If you are a Synology user, [see here](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Users of other systems need to search for how to create a home directory.",

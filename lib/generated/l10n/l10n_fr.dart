@@ -483,6 +483,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get min => 'min';
 
   @override
+  String mismatchSystem(Object system) {
+    return 'Système non correspondant : $system';
+  }
+
+  @override
   String get more => 'Plus';
 
   @override

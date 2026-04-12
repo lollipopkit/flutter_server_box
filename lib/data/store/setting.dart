@@ -252,6 +252,9 @@ class SettingStore extends HiveStore {
   /// Preferred terminal emulator command on desktop
   late final desktopTerminal = propertyDefault('desktopTerminal', 'x-terminal-emulator');
 
+  /// Copy the login password to clipboard before launching desktop SSH terminal
+  late final desktopSshAutoCopyPassword = propertyDefault('desktopSshAutoCopyPassword', false);
+
   /// Run foreground service on Android, if the SSH terminal is running
   late final fgService = propertyDefault('fgService', false);
 

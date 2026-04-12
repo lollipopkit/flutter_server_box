@@ -960,6 +960,12 @@ abstract class AppLocalizations {
   /// **'min'**
   String get min;
 
+  /// No description provided for @mismatchSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Mismatch system: {system}'**
+  String mismatchSystem(Object system);
+
   /// No description provided for @more.
   ///
   /// In en, this message translates to:

@@ -469,6 +469,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get min => '最小';
 
   @override
+  String mismatchSystem(Object system) {
+    return 'システムが一致しません: $system';
+  }
+
+  @override
   String get more => 'もっと';
 
   @override

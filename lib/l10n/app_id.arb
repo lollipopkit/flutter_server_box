@@ -125,6 +125,12 @@
   "maxRetryCount": "Jumlah penyambungan kembali server",
   "maxRetryCountEqual0": "Akan mencoba lagi lagi dan lagi.",
   "min": "Min",
+  "mismatchSystem": "Sistem tidak cocok: {system}",
+  "@mismatchSystem": {
+    "placeholders": {
+      "system": {}
+    }
+  },
   "more": "Lebih Banyak",
   "moveOutServerFuncBtnsHelp": "Aktif: dapat ditampilkan di bawah setiap kartu pada halaman Tab Server. Nonaktif: dapat ditampilkan di bagian atas halaman Rincian Server.",
   "needHomeDir": "Jika Anda pengguna Synology, [lihat di sini](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Pengguna sistem lain perlu mencari cara membuat direktori home.",
