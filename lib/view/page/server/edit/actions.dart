@@ -105,13 +105,19 @@ extension _Actions on _ServerEditPageState {
     }
   }
 
-  void _setCmdTypeDisabled(String display, bool disabled) {
+  void _setCmdTypeDisabled(
+    String display,
+    bool disabled, {
+    bool notify = true,
+  }) {
     if (disabled) {
       _disabledCmdTypes.value.add(display);
     } else {
       _disabledCmdTypes.value.remove(display);
     }
-    _disabledCmdTypes.notify();
+    if (notify) {
+      _disabledCmdTypes.notify();
+    }
   }
 
   bool _isCmdGroupDisabled(Iterable<ShellCmdType> cmdTypes) {
@@ -121,8 +127,9 @@ extension _Actions on _ServerEditPageState {
 
   void _setCmdGroupDisabled(Iterable<ShellCmdType> cmdTypes, bool disabled) {
     for (final cmdType in cmdTypes) {
-      _setCmdTypeDisabled(cmdType.displayName, disabled);
+      _setCmdTypeDisabled(cmdType.displayName, disabled, notify: false);
     }
+    _disabledCmdTypes.notify();
   }
 
   String _cmdTypeTitle(ShellCmdType cmdType) {
@@ -363,7 +370,7 @@ extension _Utils on _ServerEditPageState {
         child: _disabledCmdTypes.listenVal((disabled) {
           return ListView.builder(
             itemCount: allCmdTypes.length,
-            itemExtent: 50,
+            itemExtent: 72,
             itemBuilder: (context, index) {
               final cmdType = allCmdTypes.elementAtOrNull(index);
               if (cmdType == null) return UIs.placeholder;
