@@ -4,6 +4,17 @@ part of 'edit.dart';
 final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:%;]+$');
 
 extension _Actions on _ServerEditPageState {
+  Iterable<ShellCmdType> get _diskInfoCmdTypes => const [
+    StatusCmdType.disk,
+    BSDStatusCmdType.disk,
+    WindowsStatusCmdType.disk,
+  ];
+
+  Iterable<ShellCmdType> get _diskHealthCmdTypes => const [
+    StatusCmdType.diskSmart,
+    WindowsStatusCmdType.diskSmart,
+  ];
+
   Future<void> _refreshStoredSudoPasswordState() async {
     String? storedValue;
     try {
@@ -51,10 +62,7 @@ extension _Actions on _ServerEditPageState {
               },
               child: Text(libL10n.clear),
             ),
-          TextButton(
-            onPressed: context.pop,
-            child: Text(libL10n.cancel),
-          ),
+          TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
           TextButton(
             onPressed: () async => await _saveSudoPassword(controller.text),
             child: Text(libL10n.save),
@@ -97,13 +105,42 @@ extension _Actions on _ServerEditPageState {
     }
   }
 
-  void _setCmdTypeDisabled(String display, bool disabled) {
+  void _setCmdTypeDisabled(
+    String display,
+    bool disabled, {
+    bool notify = true,
+  }) {
     if (disabled) {
       _disabledCmdTypes.value.add(display);
     } else {
       _disabledCmdTypes.value.remove(display);
     }
+    if (notify) {
+      _disabledCmdTypes.notify();
+    }
+  }
+
+  bool _isCmdGroupDisabled(Iterable<ShellCmdType> cmdTypes) {
+    final disabled = _disabledCmdTypes.value;
+    return cmdTypes.every((cmdType) => disabled.contains(cmdType.displayName));
+  }
+
+  void _setCmdGroupDisabled(Iterable<ShellCmdType> cmdTypes, bool disabled) {
+    for (final cmdType in cmdTypes) {
+      _setCmdTypeDisabled(cmdType.displayName, disabled, notify: false);
+    }
     _disabledCmdTypes.notify();
+  }
+
+  String _cmdTypeTitle(ShellCmdType cmdType) {
+    return switch (cmdType) {
+      StatusCmdType.disk ||
+      BSDStatusCmdType.disk ||
+      WindowsStatusCmdType.disk => libL10n.disk,
+      StatusCmdType.diskSmart ||
+      WindowsStatusCmdType.diskSmart => l10n.diskHealth,
+      _ => cmdType.name,
+    };
   }
 
   String _validationErrorMessage(SpiValidationError error) {
@@ -333,14 +370,18 @@ extension _Utils on _ServerEditPageState {
         child: _disabledCmdTypes.listenVal((disabled) {
           return ListView.builder(
             itemCount: allCmdTypes.length,
-            itemExtent: 50,
+            itemExtent: 72,
             itemBuilder: (context, index) {
               final cmdType = allCmdTypes.elementAtOrNull(index);
               if (cmdType == null) return UIs.placeholder;
               final display = cmdType.displayName;
               return ListTile(
                 leading: Icon(cmdType.sysType.icon, size: 20),
-                title: Text(cmdType.name, style: const TextStyle(fontSize: 16)),
+                title: Text(
+                  _cmdTypeTitle(cmdType),
+                  style: const TextStyle(fontSize: 16),
+                ),
+                subtitle: Text(cmdType.displayName, style: UIs.text12Grey),
                 trailing: Checkbox(
                   value: disabled.contains(display),
                   onChanged: (value) {

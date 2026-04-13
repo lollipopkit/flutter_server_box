@@ -148,6 +148,7 @@ extension _Widgets on _ServerEditPageState {
         _buildEnvs(),
         _buildPVEs(),
         _buildCustomCmds(),
+        _buildStorageCollection(),
         _buildDisabledCmdTypes(),
         _buildCustomDev(),
         _buildWOLs(),
@@ -338,6 +339,58 @@ extension _Widgets on _ServerEditPageState {
           trailing: const Icon(Icons.open_in_new, size: 17),
           onTap: libL10n.customCmdDocUrl.launchUrl,
         ).cardx,
+      ],
+    );
+  }
+
+  Widget _buildStorageCollection() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CenterGreyTitle(libL10n.disk),
+        _disabledCmdTypes.listenVal((_) {
+          final diskInfoEnabled = !_isCmdGroupDisabled(_diskInfoCmdTypes);
+          final diskHealthEnabled = !_isCmdGroupDisabled(_diskHealthCmdTypes);
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.storage),
+                title: Text(libL10n.disk),
+                subtitle: Text(
+                  _diskInfoCmdTypes.map((e) => e.displayName).join(', '),
+                  style: UIs.textGrey,
+                ),
+                trailing: Switch(
+                  value: diskInfoEnabled,
+                  onChanged: (value) {
+                    _setCmdGroupDisabled(_diskInfoCmdTypes, !value);
+                  },
+                ),
+                onTap: () {
+                  _setCmdGroupDisabled(_diskInfoCmdTypes, diskInfoEnabled);
+                },
+              ).cardx,
+              ListTile(
+                leading: const Icon(MingCute.heartbeat_line),
+                title: Text(l10n.diskHealth),
+                subtitle: Text(
+                  _diskHealthCmdTypes.map((e) => e.displayName).join(', '),
+                  style: UIs.textGrey,
+                ),
+                trailing: Switch(
+                  value: diskHealthEnabled,
+                  onChanged: (value) {
+                    _setCmdGroupDisabled(_diskHealthCmdTypes, !value);
+                  },
+                ),
+                onTap: () {
+                  _setCmdGroupDisabled(_diskHealthCmdTypes, diskHealthEnabled);
+                },
+              ).cardx,
+            ],
+          );
+        }),
       ],
     );
   }
