@@ -25,7 +25,12 @@ class SSHTabPage extends ConsumerStatefulWidget {
 typedef _TabMap =
     Map<
       String,
-      ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})
+      ({
+        Widget page,
+        FocusNode? focus,
+        ValueNotifier<bool>? visible,
+        GlobalKey<SSHPageState>? sshPageKey,
+      })
     >;
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
@@ -39,6 +44,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       ),
       focus: null,
       visible: null,
+      sshPageKey: null,
     ),
   };
   final _pageCtrl = PageController();
@@ -72,6 +78,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
             map: _tabMap,
             onTap: _onTapTab,
             onClose: _onTapClose,
+            snippetBtn: buildSnippetBtn(context),
             sortBtn: buildSortBtn(context),
             searchBtn: buildSearchBtn(context),
             historyBtn: buildHistoryBtn(context),
@@ -128,19 +135,36 @@ extension on _SSHTabPageState {
   }
 
   void _disposeTabEntry(
-    ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible}) entry,
+    ({
+      Widget page,
+      FocusNode? focus,
+      ValueNotifier<bool>? visible,
+      GlobalKey<SSHPageState>? sshPageKey,
+    })
+    entry,
   ) {
     entry.focus?.dispose();
     entry.visible?.dispose();
   }
 
-  ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})?
+  ({
+    Widget page,
+    FocusNode? focus,
+    ValueNotifier<bool>? visible,
+    GlobalKey<SSHPageState>? sshPageKey,
+  })?
   _detachTabEntry(String name) {
     return _tabMap.remove(name);
   }
 
   void _disposeTabEntryAfterFrame(
-    ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})? entry,
+    ({
+      Widget page,
+      FocusNode? focus,
+      ValueNotifier<bool>? visible,
+      GlobalKey<SSHPageState>? sshPageKey,
+    })?
+    entry,
   ) {
     if (entry == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -211,7 +235,7 @@ extension on _SSHTabPageState {
       }
       return spi.name;
     }();
-    final key = Key(name);
+    final key = GlobalKey<SSHPageState>(debugLabel: name);
     final focusNode = FocusNode();
     final visibleVN = ValueNotifier(false);
     final args = SshPageArgs(
@@ -230,6 +254,7 @@ extension on _SSHTabPageState {
       ),
       focus: focusNode,
       visible: visibleVN,
+      sshPageKey: key,
     );
     _tabRN.notify();
     Stores.history.sshServerHistory.add(spi.id);
@@ -384,6 +409,18 @@ extension on _SSHTabPageState {
     );
   }
 
+  Widget buildSnippetBtn(BuildContext context) {
+    return Btn.icon(
+      icon: const Icon(Icons.code, size: 18),
+      onTap: () {
+        final idx = _fabVN.value;
+        if (idx == 0) return;
+        final entry = _tabMap.values.elementAtOrNull(idx);
+        entry?.sshPageKey?.currentState?.pickSnippetFromToolbar();
+      },
+    );
+  }
+
   void showHistoryDialog(BuildContext context) {
     final history = Stores.history.sshServerHistory.all.cast<String>();
     if (history.isEmpty) {
@@ -443,6 +480,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
     required this.map,
     required this.onTap,
     required this.onClose,
+    required this.snippetBtn,
     required this.sortBtn,
     required this.searchBtn,
     required this.historyBtn,
@@ -452,11 +490,13 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
   final _TabMap map;
   final void Function(int idx) onTap;
   final void Function(String name) onClose;
+  final Widget snippetBtn;
   final Widget sortBtn;
   final Widget searchBtn;
   final Widget historyBtn;
 
   List<String> get names => map.keys.toList();
+  List<String> get connectionNames => names.skip(1).toList();
 
   @override
   Size get preferredSize => const Size.fromHeight(48);
@@ -466,23 +506,11 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
     return ListenBuilder(
       listenable: idxVN,
       builder: () {
+        final showHomeActions = idxVN.value == 0;
+        final showSnippetAction = idxVN.value != 0;
         return Row(
           children: [
-            Expanded(
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
-                itemCount: names.length,
-                itemBuilder: (_, idx) => _buildItem(idx),
-                separatorBuilder: (_, _) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 17),
-                  child: Container(
-                    color: Theme.of(context).dividerColor.withAlpha(61),
-                    width: 3,
-                  ),
-                ),
-              ),
-            ),
+            _buildAddItem(context),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 17),
               child: Container(
@@ -490,19 +518,61 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
                 width: 3,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 7),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  sortBtn,
-                  const SizedBox(width: 7),
-                  searchBtn,
-                  const SizedBox(width: 7),
-                  historyBtn,
-                ],
+            Expanded(
+              child: ClipRect(
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 5,
+                  ),
+                  itemCount: connectionNames.length,
+                  itemBuilder: (_, idx) => _buildItem(idx + 1),
+                  separatorBuilder: (_, _) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 17),
+                    child: Container(
+                      color: Theme.of(context).dividerColor.withAlpha(61),
+                      width: 3,
+                    ),
+                  ),
+                ),
               ),
             ),
+            if (showSnippetAction) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 17),
+                child: Container(
+                  color: Theme.of(context).dividerColor.withAlpha(61),
+                  width: 3,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 7),
+                child: snippetBtn,
+              ),
+            ],
+            if (showHomeActions) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 17),
+                child: Container(
+                  color: Theme.of(context).dividerColor.withAlpha(61),
+                  width: 3,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 7),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    sortBtn,
+                    const SizedBox(width: 7),
+                    searchBtn,
+                    const SizedBox(width: 7),
+                    historyBtn,
+                  ],
+                ),
+              ),
+            ],
           ],
         );
       },
@@ -512,50 +582,59 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
   static const kWideWidth = 90.0;
   static const kNarrowWidth = 60.0;
 
+  Widget _buildAddItem(BuildContext context) {
+    final color = idxVN.value == 0 ? null : Colors.grey;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(13),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(13),
+        onTap: () => onTap(0),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Icon(MingCute.add_circle_fill, size: 17, color: color),
+        ),
+      ),
+    );
+  }
+
   Widget _buildItem(int idx) {
     final name = names[idx];
     final selected = idxVN.value == idx;
     final color = selected ? null : Colors.grey;
 
-    final Widget child;
-    if (idx == 0) {
-      child = Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 13),
-        child: Icon(MingCute.add_circle_fill, size: 17, color: color),
+    final text = Text(
+      name,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(color: color),
+      softWrap: false,
+      textAlign: TextAlign.right,
+      textWidthBasis: TextWidthBasis.parent,
+    );
+    final Widget btn;
+    if (selected) {
+      btn = Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Btn.icon(
+            icon: Icon(MingCute.close_circle_fill, color: color, size: 17),
+            onTap: () => onClose(name),
+            padding: null,
+          ),
+          SizedBox(width: kNarrowWidth - 15, child: text),
+        ],
       );
     } else {
-      final text = Text(
-        name,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: color),
-        softWrap: false,
-        textAlign: TextAlign.right,
-        textWidthBasis: TextWidthBasis.parent,
-      );
-      final Widget btn;
-      if (selected) {
-        btn = Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Btn.icon(
-              icon: Icon(MingCute.close_circle_fill, color: color, size: 17),
-              onTap: () => onClose(name),
-              padding: null,
-            ),
-            SizedBox(width: kNarrowWidth - 15, child: text),
-          ],
-        );
-      } else {
-        btn = Center(child: text);
-      }
-      child = AnimatedContainer(
-        width: selected ? kWideWidth : kNarrowWidth,
-        duration: Durations.medium3,
-        curve: Curves.fastEaseInToSlowEaseOut,
-        child: OverflowBox(maxWidth: selected ? kWideWidth : null, child: btn),
-      );
+      btn = Center(child: text);
     }
+    final child = AnimatedContainer(
+      width: selected ? kWideWidth : kNarrowWidth,
+      duration: Durations.medium3,
+      curve: Curves.fastEaseInToSlowEaseOut,
+      child: OverflowBox(maxWidth: selected ? kWideWidth : null, child: btn),
+    );
 
     return InkWell(
       borderRadius: BorderRadius.circular(13),
