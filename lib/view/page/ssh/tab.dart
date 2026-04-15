@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -405,7 +406,12 @@ extension on _SSHTabPageState {
   Widget buildHistoryBtn(BuildContext context) {
     return Btn.icon(
       icon: const Icon(Icons.history, size: 18),
-      onTap: () => showHistoryDialog(context),
+      onTap: () {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) return;
+          showHistoryDialog(context);
+        });
+      },
     );
   }
 
@@ -436,6 +442,7 @@ extension on _SSHTabPageState {
     context.showRoundDialog(
       title: l10n.serverHistory,
       child: SizedBox(
+        width: 420,
         height: 300,
         child: ListView.builder(
           itemCount: history.length,
@@ -443,6 +450,7 @@ extension on _SSHTabPageState {
             final id = history[idx];
             final spi = serverState.servers[id];
             return ListTile(
+              contentPadding: EdgeInsets.zero,
               title: Text(spi?.name ?? id),
               subtitle: spi != null
                   ? Text('${spi.user}@${spi.ip}:${spi.port}')
@@ -472,6 +480,7 @@ extension on _SSHTabPageState {
       ],
     );
   }
+
 }
 
 final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
@@ -527,7 +536,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
                     vertical: 5,
                   ),
                   itemCount: connectionNames.length,
-                  itemBuilder: (_, idx) => _buildItem(idx + 1),
+                  itemBuilder: (_, idx) => _buildItem(context, idx + 1),
                   separatorBuilder: (_, _) => Padding(
                     padding: const EdgeInsets.symmetric(vertical: 17),
                     child: Container(
@@ -579,9 +588,6 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  static const kWideWidth = 90.0;
-  static const kNarrowWidth = 60.0;
-
   Widget _buildAddItem(BuildContext context) {
     final color = idxVN.value == 0 ? null : Colors.grey;
     return Material(
@@ -599,7 +605,10 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _buildItem(int idx) {
+  Widget _buildItem(BuildContext context, int idx) {
+    final isMobile = ResponsiveBreakpoints.of(context).isMobile;
+    final wideWidth = isMobile ? 90.0 : 130.0;
+    final narrowWidth = isMobile ? 60.0 : 90.0;
     final name = names[idx];
     final selected = idxVN.value == idx;
     final color = selected ? null : Colors.grey;
@@ -623,24 +632,32 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
             onTap: () => onClose(name),
             padding: null,
           ),
-          SizedBox(width: kNarrowWidth - 15, child: text),
+          Expanded(child: text),
         ],
       );
     } else {
       btn = Center(child: text);
     }
     final child = AnimatedContainer(
-      width: selected ? kWideWidth : kNarrowWidth,
+      width: selected ? wideWidth : narrowWidth,
       duration: Durations.medium3,
       curve: Curves.fastEaseInToSlowEaseOut,
-      child: OverflowBox(maxWidth: selected ? kWideWidth : null, child: btn),
+      child: btn,
     );
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(13),
-      onTap: () => onTap(idx),
-      child: child,
-    ).paddingSymmetric(horizontal: 7);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 7),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(13),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(13),
+          onTap: () => onTap(idx),
+          child: child,
+        ),
+      ),
+    );
   }
 }
 
@@ -681,7 +698,7 @@ class _AddPageState extends ConsumerState<_AddPage> {
   @override
   Widget build(BuildContext context) {
     const viewPadding = 7.0;
-    final viewWidth = context.windowSize.width - 2 * viewPadding;
+    final isMobile = ResponsiveBreakpoints.of(context).isMobile;
 
     final serverState = ref.watch(serversProvider);
     final sortBy = Stores.setting.sshPageSortBy.fetch();
@@ -708,61 +725,97 @@ class _AddPageState extends ConsumerState<_AddPage> {
 
     final itemCount = order.length;
     const itemPadding = 1.0;
-    const itemWidth = 150.0;
-    const itemHeight = 50.0;
-
-    final visualCrossCount = viewWidth / itemWidth;
-    final crossCount = max(
-      viewWidth ~/ (visualCrossCount * itemPadding + itemWidth),
-      1,
-    );
-    final mainCount = itemCount ~/ crossCount + 1;
+    final isDesktopWide = !isMobile;
+    const desktopMinItemWidth = 280.0;
+    const desktopMaxItemWidth = 320.0;
 
     if (order.isEmpty) {
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(viewPadding),
-      children: List.generate(
-        mainCount,
-        (rowIndex) => Row(
-          children: List.generate(crossCount, (columnIndex) {
-            final idx = rowIndex * crossCount + columnIndex;
-            final id = order.elementAtOrNull(idx);
-            final spi = serverState.servers[id];
-            if (spi == null) return _placeholder;
+    return LayoutBuilder(
+      builder: (_, cons) {
+        final availableWidth = max(cons.maxWidth - 2 * viewPadding, 0.0);
+        final canUseTwoColumns =
+            availableWidth >= 2 * (desktopMinItemWidth + itemPadding);
+        final crossCount = isDesktopWide
+            ? max(
+                availableWidth ~/ (desktopMinItemWidth + itemPadding),
+                canUseTwoColumns ? 2 : 1,
+              )
+            : 1;
+        final mainCount = itemCount ~/ crossCount + 1;
+        final desktopItemWidth = isDesktopWide
+            ? max(
+                0.0,
+                min(
+                  desktopMaxItemWidth,
+                  (availableWidth - crossCount * itemPadding * 2) / crossCount,
+                ),
+              )
+            : null;
 
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(itemPadding),
-                child: InkWell(
-                  onTap: () => widget.onTapInitCard(spi),
-                  onLongPress: () => widget.onLongPressInitCard(spi),
-                  child: Container(
-                    height: itemHeight,
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.only(left: 17, right: 7),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            spi.name,
-                            style: UIs.text18,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+        return ListView(
+          padding: const EdgeInsets.all(viewPadding),
+          children: List.generate(
+            mainCount,
+            (rowIndex) => Row(
+              mainAxisAlignment: isDesktopWide
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.start,
+              children: List.generate(crossCount, (columnIndex) {
+                final idx = rowIndex * crossCount + columnIndex;
+                final id = order.elementAtOrNull(idx);
+                final spi = serverState.servers[id];
+                if (spi == null) {
+                  return isDesktopWide
+                      ? SizedBox(width: desktopItemWidth)
+                      : _placeholder;
+                }
+
+                final child = Padding(
+                  padding: const EdgeInsets.all(itemPadding),
+                  child: InkWell(
+                    onTap: () => widget.onTapInitCard(spi),
+                    onLongPress: () => widget.onLongPressInitCard(spi),
+                    child: Container(
+                      alignment: Alignment.centerLeft,
+                      constraints: BoxConstraints(
+                        minHeight: isDesktopWide ? 58.0 : 50.0,
+                      ),
+                      padding: const EdgeInsets.only(left: 17, right: 7),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              spi.name,
+                              style: UIs.text18,
+                              maxLines: isDesktopWide ? null : 2,
+                              overflow: isDesktopWide
+                                  ? null
+                                  : TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                        const Icon(Icons.chevron_right),
-                      ],
+                          const Icon(Icons.chevron_right),
+                        ],
+                      ),
                     ),
-                  ),
-                ).cardx,
-              ),
-            );
-          }),
-        ),
-      ),
+                  ).cardx,
+                );
+
+                if (isDesktopWide) {
+                  return SizedBox(width: desktopItemWidth, child: child);
+                }
+
+                return Expanded(
+                  child: Padding(padding: EdgeInsets.zero, child: child),
+                );
+              }),
+            ),
+          ),
+        );
+      },
     );
   }
 }
