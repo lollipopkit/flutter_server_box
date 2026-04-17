@@ -30,12 +30,14 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: "zulu"
-          java-version: "17"
+          java-version: "21"
       - name: Fetch secrets
         run: |
           curl -u ${{ secrets.BASIC_AUTH }} -o android/app/app.key ${{ secrets.URL_PREFIX }}app.key
           curl -u ${{ secrets.BASIC_AUTH }} -o android/key.properties ${{ secrets.URL_PREFIX }}key.properties
       - name: Build
+        env:
+          LDFLAGS: -Wl,--build-id=none
         run: dart run fl_build -p android
       - name: Rename for fdroid
         shell: bash
