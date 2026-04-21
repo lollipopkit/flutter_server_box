@@ -21,7 +21,6 @@ class SnippetListPage extends ConsumerStatefulWidget {
 class _SnippetListPageState extends ConsumerState<SnippetListPage>
     with AutomaticKeepAliveClientMixin {
   final _tag = ''.vn;
-  final _splitViewCtrl = SplitViewController();
 
   static const _desiredItemHeight = 85.0;
 
@@ -29,7 +28,6 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
   void dispose() {
     super.dispose();
     _tag.dispose();
-    _splitViewCtrl.dispose();
   }
 
   @override
@@ -39,23 +37,11 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
   }
 
   Widget _buildBody() {
-    // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
     final snippetState = ref.watch(snippetProvider);
     final snippets = snippetState.snippets;
 
     return _tag.listenVal((tag) {
-      final child = _buildScaffold(snippets, tag);
-      // if (isMobile) {
-      return child;
-      // }
-
-      // return SplitView(
-      //   controller: _splitViewCtrl,
-      //   leftWeight: 1,
-      //   rightWeight: 1.3,
-      //   initialRight: Center(child: Text(libL10n.empty)),
-      //   leftBuilder: (_, __) => child,
-      // );
+      return _buildScaffold(snippets, tag);
     });
   }
 
@@ -73,11 +59,7 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
         heroTag: 'snippetAdd',
         child: const Icon(Icons.add),
         onPressed: () {
-          // if (ResponsiveBreakpoints.of(context).isMobile) {
           SnippetEditPage.route.go(context);
-          // } else {
-          //   _splitViewCtrl.replace(const SnippetEditPage());
-          // }
         },
       ),
     );

@@ -406,12 +406,7 @@ extension on _SSHTabPageState {
   Widget buildHistoryBtn(BuildContext context) {
     return Btn.icon(
       icon: const Icon(Icons.history, size: 18),
-      onTap: () {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!context.mounted) return;
-          showHistoryDialog(context);
-        });
-      },
+      onTap: () => showHistoryDialog(context),
     );
   }
 
@@ -744,7 +739,7 @@ class _AddPageState extends ConsumerState<_AddPage> {
                 canUseTwoColumns ? 2 : 1,
               )
             : 1;
-        final mainCount = itemCount ~/ crossCount + 1;
+        final mainCount = (itemCount + crossCount - 1) ~/ crossCount;
         final desktopItemWidth = isDesktopWide
             ? max(
                 0.0,
@@ -808,9 +803,7 @@ class _AddPageState extends ConsumerState<_AddPage> {
                   return SizedBox(width: desktopItemWidth, child: child);
                 }
 
-                return Expanded(
-                  child: Padding(padding: EdgeInsets.zero, child: child),
-                );
+                return Expanded(child: child);
               }),
             ),
           ),
