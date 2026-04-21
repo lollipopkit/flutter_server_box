@@ -12,20 +12,22 @@ class SnippetListPage extends ConsumerStatefulWidget {
   @override
   ConsumerState<SnippetListPage> createState() => _SnippetListPageState();
 
-  static const route = AppRouteNoArg(page: SnippetListPage.new, path: '/snippets');
+  static const route = AppRouteNoArg(
+    page: SnippetListPage.new,
+    path: '/snippets',
+  );
 }
 
-class _SnippetListPageState extends ConsumerState<SnippetListPage> with AutomaticKeepAliveClientMixin {
+class _SnippetListPageState extends ConsumerState<SnippetListPage>
+    with AutomaticKeepAliveClientMixin {
   final _tag = ''.vn;
-  final _splitViewCtrl = SplitViewController();
 
-  static const _desiredItemHeight = 77.0;
+  static const _desiredItemHeight = 85.0;
 
   @override
   void dispose() {
     super.dispose();
     _tag.dispose();
-    _splitViewCtrl.dispose();
   }
 
   @override
@@ -35,23 +37,11 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage> with Automati
   }
 
   Widget _buildBody() {
-    // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
     final snippetState = ref.watch(snippetProvider);
     final snippets = snippetState.snippets;
-    
-    return _tag.listenVal((tag) {
-      final child = _buildScaffold(snippets, tag);
-      // if (isMobile) {
-      return child;
-      // }
 
-        // return SplitView(
-        //   controller: _splitViewCtrl,
-        //   leftWeight: 1,
-        //   rightWeight: 1.3,
-        //   initialRight: Center(child: Text(libL10n.empty)),
-        //   leftBuilder: (_, __) => child,
-        // );
+    return _tag.listenVal((tag) {
+      return _buildScaffold(snippets, tag);
     });
   }
 
@@ -69,11 +59,7 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage> with Automati
         heroTag: 'snippetAdd',
         child: const Icon(Icons.add),
         onPressed: () {
-          // if (ResponsiveBreakpoints.of(context).isMobile) {
           SnippetEditPage.route.go(context);
-          // } else {
-          //   _splitViewCtrl.replace(const SnippetEditPage());
-          // }
         },
       ),
     );
@@ -101,26 +87,48 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage> with Automati
   }
 
   Widget _buildSnippetItem(Snippet snippet) {
-    return ListTile(
-      contentPadding: const EdgeInsets.only(left: 23, right: 17),
-      title: Text(snippet.name, overflow: TextOverflow.ellipsis, maxLines: 1),
-      subtitle: Text(
-        snippet.note ?? snippet.script,
-        overflow: TextOverflow.ellipsis,
-        maxLines: 3,
-        style: UIs.textGrey,
-      ),
-      trailing: const Icon(Icons.keyboard_arrow_right),
+    return InkWell(
       onTap: () {
-        // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
-        // if (isMobile) {
-        SnippetEditPage.route.go(context, args: SnippetEditPageArgs(snippet: snippet));
-        // } else {
-        //   _splitViewCtrl.replace(SnippetEditPage(
-        //     args: SnippetEditPageArgs(snippet: snippet),
-        //   ));
-        // }
+        SnippetEditPage.route.go(
+          context,
+          args: SnippetEditPageArgs(snippet: snippet),
+        );
       },
+      child: SizedBox(
+        height: _desiredItemHeight,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 23, right: 45),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      snippet.name,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                    Text(
+                      snippet.note ?? snippet.script,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                      style: UIs.textGrey,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const Positioned(
+              top: 0,
+              right: 17,
+              bottom: 0,
+              child: Center(child: Icon(Icons.keyboard_arrow_right)),
+            ),
+          ],
+        ),
+      ),
     ).cardx;
   }
 
