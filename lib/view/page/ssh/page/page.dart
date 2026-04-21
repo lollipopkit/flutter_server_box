@@ -431,7 +431,13 @@ class SSHPageState extends ConsumerState<SSHPage>
       );
       if (selected == null) return;
 
-      await selected.runInTerm(_terminal, widget.args.spi);
+      try {
+        await selected.runInTerm(_terminal, widget.args.spi);
+      } catch (e, s) {
+        if (!mounted) return;
+        context.showErrDialog(e, s, '${libL10n.snippet}: ${selected.name}');
+        return;
+      }
       if (!mounted) return;
       widget.args.focusNode?.requestFocus();
       _termKey.currentState?.requestKeyboard();
