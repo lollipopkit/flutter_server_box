@@ -73,6 +73,17 @@ If I forgot to add your name to the contributors list, please add a comment in t
 2. Clone this repo, run `flutter run` to start the app.
 3. Run `dart run fl_build -p PLATFORM` to build the app.
 
+### Release macOS notarized DMG
+
+1. Copy `.env.release.example` to `.env.release`.
+2. Fill in `APPLE_TEAM_ID` and `APPLE_NOTARY_KEYCHAIN_PROFILE`.
+3. Make sure the `Developer ID Application` certificate is already installed in Keychain.
+4. Make sure notarization credentials are already stored via `xcrun notarytool store-credentials`.
+5. Install the provisioning profile used for DMG packaging. The script defaults to `ServerBox DMG Profile`, and you can override it with `APP_PROFILE_NAME`.
+6. Run `bash scripts/release/release-macos-dmg.sh`.
+
+This flow does not modify the default Xcode Release signing config. It injects a temporary `xcconfig` only for archive/export, builds a signed `.app`, packages a DMG, submits it to notarization, staples the result, and optionally uploads the DMG to the GitHub Release for `v<version>`.
+
 ### Translation
 
 - [Guide](https://blog.lpkt.cn/posts/faq/) can be found in my blog.
