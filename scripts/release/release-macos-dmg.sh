@@ -87,6 +87,10 @@ PUBLISH_GITHUB_RELEASE="${PUBLISH_GITHUB_RELEASE:-1}"
 APP_REPO_SLUG="${APP_REPO_SLUG:-lollipopkit/flutter_server_box}"
 RELEASE_TITLE="${RELEASE_TITLE:-}"
 
+if [[ "$PUBLISH_GITHUB_RELEASE" == "1" ]]; then
+  require_cmd gh
+fi
+
 require_file "$WORKSPACE_PATH"
 
 read -r DEFAULT_MARKETING_VERSION DEFAULT_CURRENT_PROJECT_VERSION <<<"$(read_pubspec_versions)"
@@ -165,8 +169,6 @@ xcrun stapler staple "$DMG_PATH"
 xcrun stapler validate "$DMG_PATH"
 
 if [[ "$PUBLISH_GITHUB_RELEASE" == "1" ]]; then
-  require_cmd gh
-
   if gh release view "$RELEASE_TAG" --repo "$APP_REPO_SLUG" >/dev/null 2>&1; then
     gh release edit "$RELEASE_TAG" \
       --repo "$APP_REPO_SLUG" \
