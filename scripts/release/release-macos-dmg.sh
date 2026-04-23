@@ -3,7 +3,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-DEFAULT_ENV_FILE=""
 if [[ -n "${SERVERBOX_RELEASE_ENV_FILE:-}" ]]; then
   ENV_FILE="$SERVERBOX_RELEASE_ENV_FILE"
 elif [[ -f "$REPO_ROOT/.env" ]]; then
