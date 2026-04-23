@@ -71,25 +71,79 @@ normalize_abs_path() {
   printf '%s\n' "$normalized"
 }
 
+resolve_path_for_validation() {
+  local path="$1"
+  local normalized
+  local existing
+  local remainder=''
+  local name
+  local parent
+  local resolved
+
+  normalized="$(normalize_abs_path "$path")"
+  existing="$normalized"
+
+  while [[ ! -e "$existing" ]]; do
+    if [[ "$existing" == "/" ]]; then
+      echo "unable to canonicalize path: $path" >&2
+      exit 1
+    fi
+
+    name="${existing##*/}"
+    parent="${existing%/*}"
+    if [[ -z "$parent" ]]; then
+      parent='/'
+    fi
+
+    remainder="/$name$remainder"
+    existing="$parent"
+  done
+
+  if [[ -n "$remainder" && ! -d "$existing" ]]; then
+    echo "path parent is not a directory: $existing" >&2
+    exit 1
+  fi
+
+  if ! resolved="$(realpath "$existing" 2>/dev/null)"; then
+    echo "unable to canonicalize path: $path" >&2
+    exit 1
+  fi
+
+  if [[ -z "$remainder" ]]; then
+    printf '%s\n' "$resolved"
+  elif [[ "$resolved" == "/" ]]; then
+    printf '/%s\n' "${remainder#/}"
+  else
+    printf '%s%s\n' "$resolved" "$remainder"
+  fi
+}
+
 validate_allowed_path() {
   local label="$1"
   local path="$2"
-  local normalized
-  normalized="$(normalize_abs_path "$path")"
+  local resolved_path
+  local resolved_repo_build
+  local resolved_tmp
+  local resolved_var_folders
 
-  case "$normalized" in
-    /tmp | /var/folders)
-      echo "$label must not be the temp root directory: $normalized" >&2
+  resolved_path="$(resolve_path_for_validation "$path")"
+  resolved_repo_build="$(resolve_path_for_validation "$REPO_ROOT/build")"
+  resolved_tmp="$(resolve_path_for_validation '/tmp')"
+  resolved_var_folders="$(resolve_path_for_validation '/var/folders')"
+
+  case "$resolved_path" in
+    "$resolved_tmp" | "$resolved_var_folders")
+      echo "$label must not be the temp root directory: $resolved_path" >&2
       exit 1
       ;;
   esac
 
-  case "$normalized" in
-    "$REPO_ROOT/build" | "$REPO_ROOT/build/"* | /tmp/* | /var/folders/*)
-      printf '%s\n' "$normalized"
+  case "$resolved_path" in
+    "$resolved_repo_build" | "$resolved_repo_build/"* | "$resolved_tmp"/* | "$resolved_var_folders"/*)
+      printf '%s\n' "$resolved_path"
       ;;
     *)
-      echo "$label must be under $REPO_ROOT/build, /tmp, or /var/folders: $normalized" >&2
+      echo "$label must be under $resolved_repo_build, $resolved_tmp, or $resolved_var_folders: $resolved_path" >&2
       exit 1
       ;;
   esac
@@ -99,18 +153,18 @@ validate_path_within_base() {
   local label="$1"
   local path="$2"
   local base="$3"
-  local normalized_path
-  local normalized_base
+  local resolved_path
+  local resolved_base
 
-  normalized_path="$(normalize_abs_path "$path")"
-  normalized_base="$(validate_allowed_path "$label base" "$base")"
+  resolved_path="$(resolve_path_for_validation "$path")"
+  resolved_base="$(validate_allowed_path "$label base" "$base")"
 
-  case "$normalized_path" in
-    "$normalized_base" | "$normalized_base/"*)
-      printf '%s\n' "$normalized_path"
+  case "$resolved_path" in
+    "$resolved_base" | "$resolved_base/"*)
+      printf '%s\n' "$resolved_path"
       ;;
     *)
-      echo "$label must be within $normalized_base: $normalized_path" >&2
+      echo "$label must be within $resolved_base: $resolved_path" >&2
       exit 1
       ;;
   esac
@@ -150,6 +204,7 @@ require_cmd codesign
 require_cmd xcrun
 require_cmd hdiutil
 require_cmd spctl
+require_cmd realpath
 require_file /usr/libexec/PlistBuddy
 
 WORKSPACE_PATH="${WORKSPACE_PATH:-$REPO_ROOT/macos/Runner.xcworkspace}"
@@ -195,7 +250,12 @@ validate_path_within_base 'EXPORT_OPTIONS_PATH' "$EXPORT_OPTIONS_PATH" "$BUILD_R
 validate_path_within_base 'OVERRIDE_XCCONFIG_PATH' "$OVERRIDE_XCCONFIG_PATH" "$BUILD_ROOT" >/dev/null
 validate_path_within_base 'DMG_PATH' "$DMG_PATH" "$ARTIFACTS_PATH" >/dev/null
 
-mkdir -p "$ARTIFACTS_PATH" "$(dirname "$ARCHIVE_PATH")" "$(dirname "$EXPORT_PATH")"
+mkdir -p \
+  "$ARTIFACTS_PATH" \
+  "$(dirname "$ARCHIVE_PATH")" \
+  "$(dirname "$EXPORT_PATH")" \
+  "$(dirname "$EXPORT_OPTIONS_PATH")" \
+  "$(dirname "$OVERRIDE_XCCONFIG_PATH")"
 
 safe_remove -rf 'ARCHIVE_PATH' "$ARCHIVE_PATH" "$BUILD_ROOT"
 safe_remove -rf 'EXPORT_PATH' "$EXPORT_PATH" "$BUILD_ROOT"
