@@ -5,10 +5,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 if [[ -n "${SERVERBOX_RELEASE_ENV_FILE:-}" ]]; then
   ENV_FILE="$SERVERBOX_RELEASE_ENV_FILE"
-elif [[ -f "$REPO_ROOT/.env" ]]; then
-  ENV_FILE="$REPO_ROOT/.env"
 elif [[ -f "$REPO_ROOT/.env.release" ]]; then
   ENV_FILE="$REPO_ROOT/.env.release"
+elif [[ -f "$REPO_ROOT/.env" ]]; then
+  ENV_FILE="$REPO_ROOT/.env"
 else
   ENV_FILE=""
 fi
@@ -45,6 +45,84 @@ require_cmd() {
     echo "command not found: $name" >&2
     exit 1
   fi
+}
+
+normalize_abs_path() {
+  local path="$1"
+  if [[ -z "$path" ]]; then
+    echo 'path must not be empty' >&2
+    exit 1
+  fi
+  if [[ "$path" != /* ]]; then
+    echo "path must be absolute: $path" >&2
+    exit 1
+  fi
+
+  local normalized="${path%/}"
+  if [[ -z "$normalized" ]]; then
+    normalized='/'
+  fi
+
+  case "$normalized" in
+    *$'\n'* | *'//'*) echo "path contains invalid characters: $path" >&2; exit 1 ;;
+    ../* | */../* | */.. | .. | . | */./* | */.) echo "path must not contain traversal segments: $path" >&2; exit 1 ;;
+  esac
+
+  printf '%s\n' "$normalized"
+}
+
+validate_allowed_path() {
+  local label="$1"
+  local path="$2"
+  local normalized
+  normalized="$(normalize_abs_path "$path")"
+
+  case "$normalized" in
+    "$REPO_ROOT/build" | "$REPO_ROOT/build/"* | /tmp | /tmp/* | /var/folders | /var/folders/*)
+      printf '%s\n' "$normalized"
+      ;;
+    *)
+      echo "$label must be under $REPO_ROOT/build, /tmp, or /var/folders: $normalized" >&2
+      exit 1
+      ;;
+  esac
+}
+
+validate_path_within_base() {
+  local label="$1"
+  local path="$2"
+  local base="$3"
+  local normalized_path
+  local normalized_base
+
+  normalized_path="$(normalize_abs_path "$path")"
+  normalized_base="$(validate_allowed_path "$label base" "$base")"
+
+  case "$normalized_path" in
+    "$normalized_base" | "$normalized_base/"*)
+      printf '%s\n' "$normalized_path"
+      ;;
+    *)
+      echo "$label must be within $normalized_base: $normalized_path" >&2
+      exit 1
+      ;;
+  esac
+}
+
+safe_remove() {
+  local mode="$1"
+  local label="$2"
+  local path="$3"
+  local base="${4:-}"
+  local normalized_path
+
+  if [[ -n "$base" ]]; then
+    normalized_path="$(validate_path_within_base "$label" "$path" "$base")"
+  else
+    normalized_path="$(validate_allowed_path "$label" "$path")"
+  fi
+
+  rm "$mode" "$normalized_path"
 }
 
 read_pubspec_versions() {
@@ -101,10 +179,23 @@ RELEASE_TITLE="${RELEASE_TITLE:-$RELEASE_TAG}"
 DMG_BASENAME="${DMG_BASENAME:-${APP_ASSET_NAME}-${MARKETING_VERSION}-${CURRENT_PROJECT_VERSION}}"
 DMG_PATH="${DMG_PATH:-$ARTIFACTS_PATH/${DMG_BASENAME}.dmg}"
 
+validate_allowed_path 'BUILD_ROOT' "$BUILD_ROOT" >/dev/null
+validate_allowed_path 'ARTIFACTS_PATH' "$ARTIFACTS_PATH" >/dev/null
+validate_allowed_path 'DMG_STAGING_PATH' "$DMG_STAGING_PATH" >/dev/null
+validate_path_within_base 'ARCHIVE_PATH' "$ARCHIVE_PATH" "$BUILD_ROOT" >/dev/null
+validate_path_within_base 'EXPORT_PATH' "$EXPORT_PATH" "$BUILD_ROOT" >/dev/null
+validate_path_within_base 'EXPORT_OPTIONS_PATH' "$EXPORT_OPTIONS_PATH" "$BUILD_ROOT" >/dev/null
+validate_path_within_base 'OVERRIDE_XCCONFIG_PATH' "$OVERRIDE_XCCONFIG_PATH" "$BUILD_ROOT" >/dev/null
+validate_path_within_base 'DMG_PATH' "$DMG_PATH" "$ARTIFACTS_PATH" >/dev/null
+
 mkdir -p "$ARTIFACTS_PATH" "$(dirname "$ARCHIVE_PATH")" "$(dirname "$EXPORT_PATH")"
 
-rm -rf "$ARCHIVE_PATH" "$EXPORT_PATH" "$DMG_STAGING_PATH"
-rm -f "$EXPORT_OPTIONS_PATH" "$OVERRIDE_XCCONFIG_PATH" "$DMG_PATH"
+safe_remove -rf 'ARCHIVE_PATH' "$ARCHIVE_PATH" "$BUILD_ROOT"
+safe_remove -rf 'EXPORT_PATH' "$EXPORT_PATH" "$BUILD_ROOT"
+safe_remove -rf 'DMG_STAGING_PATH' "$DMG_STAGING_PATH"
+safe_remove -f 'EXPORT_OPTIONS_PATH' "$EXPORT_OPTIONS_PATH" "$BUILD_ROOT"
+safe_remove -f 'OVERRIDE_XCCONFIG_PATH' "$OVERRIDE_XCCONFIG_PATH" "$BUILD_ROOT"
+safe_remove -f 'DMG_PATH' "$DMG_PATH" "$ARTIFACTS_PATH"
 
 cat >"$OVERRIDE_XCCONFIG_PATH" <<EOF
 CODE_SIGN_STYLE = Manual
