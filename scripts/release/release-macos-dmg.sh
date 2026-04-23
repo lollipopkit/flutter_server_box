@@ -191,4 +191,6 @@ echo "Build number: $CURRENT_PROJECT_VERSION"
 echo "Archive: $ARCHIVE_PATH"
 echo "Exported app: $APP_PATH"
 echo "DMG: $DMG_PATH"
-echo "GitHub release: $APP_REPO_SLUG $RELEASE_TAG"
+if [[ "$PUBLISH_GITHUB_RELEASE" == "1" ]]; then
+  echo "GitHub release: $APP_REPO_SLUG $RELEASE_TAG"
+fi
