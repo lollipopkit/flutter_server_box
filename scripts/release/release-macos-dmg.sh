@@ -78,7 +78,14 @@ validate_allowed_path() {
   normalized="$(normalize_abs_path "$path")"
 
   case "$normalized" in
-    "$REPO_ROOT/build" | "$REPO_ROOT/build/"* | /tmp | /tmp/* | /var/folders | /var/folders/*)
+    /tmp | /var/folders)
+      echo "$label must not be the temp root directory: $normalized" >&2
+      exit 1
+      ;;
+  esac
+
+  case "$normalized" in
+    "$REPO_ROOT/build" | "$REPO_ROOT/build/"* | /tmp/* | /var/folders/*)
       printf '%s\n' "$normalized"
       ;;
     *)
