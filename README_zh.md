@@ -75,6 +75,17 @@ Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/rel
 2. 克隆这个仓库, 运行 `flutter run` 启动应用
 3. 运行 `dart run fl_build -p PLATFORM` 构建应用
 
+### 发布 macOS 公证 DMG
+
+1. 复制 `.env.release.example` 为 `.env.release`
+2. 填入 `APPLE_TEAM_ID` 和 `APPLE_NOTARY_KEYCHAIN_PROFILE`
+3. 确保 `Developer ID Application` 证书已经安装到 Keychain
+4. 确保已经通过 `xcrun notarytool store-credentials` 存好了公证凭据
+5. 安装用于 DMG 打包的 provisioning profile。脚本默认使用 `ServerBox DMG Profile`，也可以通过 `APP_PROFILE_NAME` 覆盖
+6. 运行 `bash scripts/release/release-macos-dmg.sh`
+
+这套流程不会修改工程默认的 Xcode Release 签名配置。脚本只会在归档和导出时注入临时 `xcconfig`，生成已签名 `.app`、打包 DMG、提交公证、回填 stapler，并可选把 DMG 上传到 `v<version>` 对应的 GitHub Release。
+
 ### 翻译
 
 [指南](https://blog.lpkt.cn/faq/) 可在我的博客中找到。
