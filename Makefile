@@ -10,10 +10,12 @@ PLATFORM ?=
 ENV_FILE ?=
 XCARCHIVE_PATH ?=
 APP_PATH ?=
+TAP_REPO_PATH ?=
 
 .PHONY: help deps pub-get run run-device analyze test test-one coverage \
 	gen gen-build gen-build-clean gen-l10n build build-android build-ios \
-	build-macos build-linux build-windows clean release-macos-dmg package-dmg
+	build-macos build-linux build-windows clean release-macos-dmg package-dmg \
+	sync-homebrew-cask
 
 help:
 	@printf '%s\n' \
@@ -48,7 +50,11 @@ help:
 		'                     Optional: make release-macos-dmg ENV_FILE=.env.release' \
 		'  package-dmg        Run scripts/release/package-dmg-from-xcarchive.sh' \
 		'                     Example: make package-dmg APP_PATH="/path/Server Box.app"' \
-		'                     Example: make package-dmg XCARCHIVE_PATH=/path/Runner.xcarchive'
+		'                     Example: make package-dmg XCARCHIVE_PATH=/path/Runner.xcarchive' \
+		'  sync-homebrew-cask Generate ~/proj/homebrew-taps/Casks/serverbox.rb from a built DMG' \
+		'                     Example: make sync-homebrew-cask APP_PATH="/path/Server Box.app"' \
+		'                     Example: make sync-homebrew-cask XCARCHIVE_PATH=/path/Runner.xcarchive' \
+		'                     Example: make sync-homebrew-cask DMG_PATH=build/artifacts/ServerBox-1.0.1365.dmg'
 
 deps pub-get:
 	$(FLUTTER) pub get
@@ -133,4 +139,20 @@ package-dmg:
 		APP_PATH="$(APP_PATH)" bash scripts/release/package-dmg-from-xcarchive.sh; \
 	else \
 		XCARCHIVE_PATH="$(XCARCHIVE_PATH)" bash scripts/release/package-dmg-from-xcarchive.sh; \
+	fi
+
+sync-homebrew-cask:
+	@if [ -z "$(APP_PATH)" ] && [ -z "$(XCARCHIVE_PATH)" ] && [ -z "$(DMG_PATH)" ]; then \
+		echo 'APP_PATH, XCARCHIVE_PATH, or DMG_PATH is required.'; \
+		echo 'Example: make sync-homebrew-cask APP_PATH="/path/Server Box.app"'; \
+		echo 'Example: make sync-homebrew-cask XCARCHIVE_PATH=/path/Runner.xcarchive'; \
+		echo 'Example: make sync-homebrew-cask DMG_PATH=build/artifacts/ServerBox-1.0.1365.dmg'; \
+		exit 1; \
+	fi
+	@if [ -n "$(APP_PATH)" ]; then \
+		APP_PATH="$(APP_PATH)" DMG_PATH="$(DMG_PATH)" TAP_REPO_PATH="$(TAP_REPO_PATH)" bash scripts/release/sync-homebrew-cask.sh; \
+	elif [ -n "$(XCARCHIVE_PATH)" ]; then \
+		XCARCHIVE_PATH="$(XCARCHIVE_PATH)" DMG_PATH="$(DMG_PATH)" TAP_REPO_PATH="$(TAP_REPO_PATH)" bash scripts/release/sync-homebrew-cask.sh; \
+	else \
+		DMG_PATH="$(DMG_PATH)" TAP_REPO_PATH="$(TAP_REPO_PATH)" bash scripts/release/sync-homebrew-cask.sh; \
 	fi
