@@ -225,11 +225,12 @@ body {
 
 .screenshot-stack {
   position: relative;
-  width: min(860px, 92vw);
-  height: clamp(340px, 44vw, 520px);
+  width: min(1040px, 92vw);
+  height: clamp(430px, 58vw, 620px);
   margin-top: clamp(2rem, 5vw, 4rem);
   perspective: 1200px;
   outline: none;
+  --spread: clamp(148px, 24vw, 250px);
 }
 
 .screenshot-stack:focus-visible {
@@ -243,12 +244,12 @@ body {
   left: 50%;
   top: 50%;
   z-index: var(--z);
-  width: min(250px, 34vw);
-  aspect-ratio: 512 / 833;
-  border-radius: 22px;
-  border: 1px solid var(--light-gray);
-  background: var(--snow);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.12);
+  width: min(220px, 21vw);
+  aspect-ratio: 9 / 20;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.14);
   object-fit: cover;
   transform:
     translate3d(calc(-50% + var(--base-x) + var(--move-x)), calc(-50% + var(--base-y) + var(--move-y)), 0)
@@ -258,13 +259,18 @@ body {
   transform-style: preserve-3d;
   will-change: transform;
   transition:
+    transform 520ms cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 0.2s ease,
-    border-color 0.2s ease;
+    opacity 0.2s ease;
 }
 
 .screenshot-stack:hover .screenshot-card {
-  border-color: var(--border-light);
   box-shadow: 0 22px 54px rgba(0, 0, 0, 0.16);
+  transform:
+    translate3d(calc(-50% + (var(--hover-slot) * var(--spread)) + var(--move-x)), calc(-50% + var(--move-y)), 0)
+    rotateZ(var(--hover-r))
+    rotateX(var(--tilt-x))
+    rotateY(var(--tilt-y));
 }
 
 .btn {
@@ -484,79 +490,69 @@ body {
   padding: clamp(5rem, 12vw, 9rem) 0;
 }
 
-.download-grid {
+.download-list {
+  border-top: 1px solid var(--light-gray);
+}
+
+.download-platform {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: minmax(190px, 0.8fr) minmax(0, 1.4fr);
+  gap: 1.5rem;
+  padding: 1.35rem 0;
+  border-bottom: 1px solid var(--light-gray);
 }
 
-.download-card {
-  border-radius: var(--radius-container);
-  border: 1px solid var(--light-gray);
-  background: var(--white);
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  transition: border-color 0.2s ease;
-}
-
-.download-card:hover {
-  border-color: var(--border-light);
-}
-
-.download-card-head h3 {
+.download-platform-copy h3 {
   font-family: var(--font-display);
   font-size: 1.05rem;
   font-weight: 500;
   color: var(--black);
 }
 
-.download-card-head p {
+.download-platform-copy p {
   margin-top: 0.45rem;
   color: var(--stone);
   font-size: 0.9rem;
   line-height: 1.55;
 }
 
-.download-links {
-  display: grid;
-  gap: 0.5rem;
-  margin-top: auto;
-}
-
-.download-links a {
-  text-decoration: none;
-  border-radius: var(--radius-container);
-  border: 1px solid var(--light-gray);
-  background: var(--snow);
-  color: var(--near-black);
-  padding: 0.75rem 0.9rem;
+.download-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.download-icon-btn {
+  text-decoration: none;
+  font: inherit;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--light-gray);
+  background: var(--white);
+  color: var(--near-black);
+  min-height: 42px;
+  padding: 0.55rem 0.72rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  cursor: pointer;
   transition:
+    opacity 0.2s ease,
     background 0.2s ease,
     border-color 0.2s ease;
 }
 
-.download-links a:hover {
-  background: var(--white);
+.download-icon-btn:hover {
+  background: var(--snow);
   border-color: var(--border-light);
+  opacity: 0.9;
 }
 
-.download-links span {
+.download-icon-btn span {
   font-weight: 500;
   font-size: 0.92rem;
-}
-
-.download-links small {
-  color: var(--stone);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  text-align: right;
-  white-space: nowrap;
 }
 
 .download-note {
@@ -651,8 +647,13 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .download-grid {
+  .download-platform {
     grid-template-columns: 1fr;
+    gap: 0.9rem;
+  }
+
+  .download-actions {
+    justify-content: flex-start;
   }
 
   .hero h1 {
@@ -688,28 +689,22 @@ body {
 
   .screenshot-stack {
     width: min(100%, 92vw);
-    height: 330px;
+    height: 390px;
     margin-top: 1.75rem;
+    --spread: clamp(88px, 28vw, 124px);
   }
 
   .screenshot-card {
-    width: min(176px, 42vw);
-    border-radius: 18px;
+    width: min(104px, 24vw);
   }
 
   .protocol-badges {
     gap: 0.4rem;
   }
 
-  .download-links a {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-
-  .download-links small {
-    text-align: left;
-    white-space: normal;
+  .download-icon-btn {
+    min-height: 40px;
+    padding-inline: 0.68rem;
   }
 
   .site-footer {

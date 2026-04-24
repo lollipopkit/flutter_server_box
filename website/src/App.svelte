@@ -1,4 +1,12 @@
 <script>
+  import {
+    Apple,
+    Archive,
+    Download,
+    ExternalLink,
+    Package,
+    Store,
+  } from '@lucide/svelte'
   import { spring } from 'svelte/motion'
   import { onMount } from 'svelte'
   import LL, { setLocale } from './i18n/i18n-svelte'
@@ -20,47 +28,42 @@
     { key: 'platforms', icon: '⬡', wide: false },
   ]
 
-  const testimonials = [
-    { key: 'admin', name: 'Papercube' },
-    { key: 'infra', name: 'wyy' },
-    { key: 'student', name: 'Eurafat45' },
-  ]
-
   const screenshots = [
-    { src: 'https://cdn.lpkt.cn/serverbox/screenshot/1.jpg', key: 'one', x: -18, y: 8, rotate: -7, motion: 18 },
-    { src: 'https://cdn.lpkt.cn/serverbox/screenshot/2.jpg', key: 'two', x: -6, y: -4, rotate: -2, motion: 12 },
-    { src: 'https://cdn.lpkt.cn/serverbox/screenshot/3.jpg', key: 'three', x: 7, y: 4, rotate: 3, motion: 14 },
-    { src: 'https://cdn.lpkt.cn/serverbox/screenshot/4.jpg', key: 'four', x: 18, y: -2, rotate: 8, motion: 20 },
+    { src: 'https://cdn.lpkt.cn/serverbox/screenshot/1.jpg', key: 'one', x: -18, y: 8, hoverSlot: -1.5, rotate: -7, hoverRotate: -1.8, motion: 18 },
+    { src: 'https://cdn.lpkt.cn/serverbox/screenshot/2.jpg', key: 'two', x: -6, y: -4, hoverSlot: -0.5, rotate: -2, hoverRotate: -0.6, motion: 12 },
+    { src: 'https://cdn.lpkt.cn/serverbox/screenshot/3.jpg', key: 'three', x: 7, y: 4, hoverSlot: 0.5, rotate: 3, hoverRotate: 0.6, motion: 14 },
+    { src: 'https://cdn.lpkt.cn/serverbox/screenshot/4.jpg', key: 'four', x: 18, y: -2, hoverSlot: 1.5, rotate: 8, hoverRotate: 1.8, motion: 20 },
   ]
 
   const downloadGroups = [
     {
       key: 'iosMacos',
       sources: [
-        { key: 'appStore', href: 'https://apps.apple.com/app/id1586449703' },
+        { key: 'appStore', href: 'https://apps.apple.com/app/id1586449703', Icon: Apple },
+        { key: 'homebrew', command: 'brew install --cask server-box', Icon: Package },
       ],
     },
     {
       key: 'android',
       sources: [
-        { key: 'github', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
-        { key: 'cdn', href: 'https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid' },
-        { key: 'fdroid', href: 'https://f-droid.org/packages/tech.lolli.toolbox' },
-        { key: 'openapk', href: 'https://www.openapk.net/serverbox/tech.lolli.toolbox/' },
+        { key: 'github', href: 'https://github.com/lollipopkit/flutter_server_box/releases', Icon: Download },
+        { key: 'cdn', href: 'https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid', Icon: Archive },
+        { key: 'fdroid', href: 'https://f-droid.org/packages/tech.lolli.toolbox', Icon: Store },
+        { key: 'openapk', href: 'https://www.openapk.net/serverbox/tech.lolli.toolbox/', Icon: Package },
       ],
     },
     {
       key: 'linux',
       sources: [
-        { key: 'github', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
-        { key: 'cdn', href: 'https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid' },
+        { key: 'github', href: 'https://github.com/lollipopkit/flutter_server_box/releases', Icon: Download },
+        { key: 'cdn', href: 'https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid', Icon: Archive },
       ],
     },
     {
       key: 'windows',
       sources: [
-        { key: 'github', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
-        { key: 'cdn', href: 'https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid' },
+        { key: 'github', href: 'https://github.com/lollipopkit/flutter_server_box/releases', Icon: Download },
+        { key: 'cdn', href: 'https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid', Icon: Archive },
       ],
     },
   ]
@@ -88,6 +91,7 @@
 
   let locale = $state(initialLocale)
   let isMounted = $state(false)
+  let copiedCommand = $state(undefined)
 
   function applyLocale(nextLocale) {
     locale = nextLocale
@@ -131,6 +135,18 @@
   function resetStack() {
     stackMotion.set({ x: 0, y: 0 })
   }
+
+  async function copyCommand(command) {
+    try {
+      await navigator.clipboard.writeText(command)
+      copiedCommand = command
+      window.setTimeout(() => {
+        if (copiedCommand === command) copiedCommand = undefined
+      }, 1800)
+    } catch {
+      copiedCommand = undefined
+    }
+  }
 </script>
 
 {#if locale && isMounted}
@@ -140,7 +156,6 @@
       <nav>
         <a href="#features">{$LL.nav.features()}</a>
         <a href="#capabilities">{$LL.nav.capabilities()}</a>
-        <a href="#testimonials">{$LL.nav.testimonials()}</a>
       </nav>
       <div class="nav-actions">
         <label class="language-switcher">
@@ -157,7 +172,6 @@
             {/each}
           </select>
         </label>
-        <a class="nav-cta" href="#download">{$LL.nav.download()}</a>
       </div>
     </header>
 
@@ -185,7 +199,7 @@
             alt={$LL.screenshots[shot.key]()}
             loading={index === 0 ? 'eager' : 'lazy'}
             referrerpolicy="no-referrer"
-            style={`--base-x:${shot.x}%; --base-y:${shot.y}%; --base-r:${shot.rotate}deg; --move-x:${$stackMotion.x * shot.motion}px; --move-y:${$stackMotion.y * shot.motion}px; --tilt-x:${-$stackMotion.y * 6}deg; --tilt-y:${$stackMotion.x * 8}deg; --z:${index + 1};`}
+            style={`--base-x:${shot.x}%; --base-y:${shot.y}%; --hover-slot:${shot.hoverSlot}; --base-r:${shot.rotate}deg; --hover-r:${shot.hoverRotate}deg; --move-x:${$stackMotion.x * shot.motion}px; --move-y:${$stackMotion.y * shot.motion}px; --tilt-x:${-$stackMotion.y * 6}deg; --tilt-y:${$stackMotion.x * 8}deg; --z:${index + 1};`}
           />
         {/each}
       </div>
@@ -223,13 +237,6 @@
           <span class="protocol-badge">{item}</span>
         {/each}
       </div>
-
-      <div class="code-block">
-        <span class="prompt">{$LL.capabilities.installIosPrompt()}</span>
-        <span class="command">App Store: apps.apple.com/app/id1586449703</span>
-        <span class="prompt">{$LL.capabilities.installReleasePrompt()}</span>
-        <span class="command">github.com/lollipopkit/flutter_server_box/releases</span>
-      </div>
     </section>
 
     <section class="download-section" id="download">
@@ -240,19 +247,32 @@
         </p>
       </div>
 
-      <div class="download-grid">
+      <div class="download-list">
         {#each downloadGroups as group}
-          <article class="download-card">
-            <div class="download-card-head">
+          <article class="download-platform">
+            <div class="download-platform-copy">
               <h3>{$LL.download.platforms[group.key].title()}</h3>
               <p>{$LL.download.platforms[group.key].description()}</p>
             </div>
-            <div class="download-links">
+            <div class="download-actions">
               {#each group.sources as source}
-                <a href={source.href}>
-                  <span>{$LL.download.sources[source.key].name()}</span>
-                  <small>{$LL.download.sources[source.key].note()}</small>
-                </a>
+                {#if source.command}
+                  <button
+                    class="download-icon-btn"
+                    type="button"
+                    aria-label={`${$LL.download.platforms[group.key].title()} ${$LL.download.sources[source.key].name()}`}
+                    onclick={() => copyCommand(source.command)}
+                  >
+                    <source.Icon size={17} strokeWidth={1.8} aria-hidden="true" />
+                    <span>{copiedCommand === source.command ? $LL.download.copied() : $LL.download.sources[source.key].name()}</span>
+                  </button>
+                {:else}
+                  <a class="download-icon-btn" href={source.href} aria-label={`${$LL.download.platforms[group.key].title()} ${$LL.download.sources[source.key].name()}`}>
+                    <source.Icon size={17} strokeWidth={1.8} aria-hidden="true" />
+                    <span>{$LL.download.sources[source.key].name()}</span>
+                    <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
+                  </a>
+                {/if}
               {/each}
             </div>
           </article>
@@ -260,24 +280,6 @@
       </div>
 
       <p class="download-note">{$LL.download.note()}</p>
-    </section>
-
-    <section class="page-section" id="testimonials">
-      <div class="section-head">
-        <h2>{$LL.testimonials.title()}</h2>
-      </div>
-
-      <div class="testimonial-grid">
-        {#each testimonials as t}
-          <article class="testimonial-card">
-            <p class="quote">&ldquo;{$LL.testimonials[t.key].quote()}&rdquo;</p>
-            <div class="author">
-              <p class="name">{t.name}</p>
-              <p class="role">{$LL.testimonials[t.key].role()}</p>
-            </div>
-          </article>
-        {/each}
-      </div>
     </section>
 
     <section class="cta-section">

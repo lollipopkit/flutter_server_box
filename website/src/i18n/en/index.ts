@@ -10,7 +10,6 @@ const en: BaseTranslation = {
   nav: {
     features: 'Features',
     capabilities: 'Capabilities',
-    testimonials: 'Testimonials',
     download: 'Download',
     languageLabel: 'Language',
   },
@@ -67,14 +66,15 @@ const en: BaseTranslation = {
     installReleasePrompt: '# Android, Linux, and Windows',
   },
   download: {
-    title: 'Every platform, every official source.',
+    title: 'Every platform, every source.',
     subtitle:
       'Choose the channel that matches your device and trust model. iOS and macOS use the App Store; Android, Linux, and Windows also have direct package downloads.',
+    copied: 'Install command copied',
     platforms: {
       iosMacos: {
         title: 'iOS / macOS',
         description:
-          'Use the App Store build for Apple platforms, including automatic updates through your Apple account.',
+          'Use the App Store build for Apple platforms, or install the macOS-only Homebrew cask.',
       },
       android: {
         title: 'Android',
@@ -95,45 +95,25 @@ const en: BaseTranslation = {
     sources: {
       appStore: {
         name: 'App Store',
-        note: 'Apple platforms',
+      },
+      homebrew: {
+        name: 'Homebrew Cask',
       },
       github: {
         name: 'GitHub Releases',
-        note: 'release builds',
       },
       cdn: {
         name: 'Project CDN',
-        note: 'package mirror',
       },
       fdroid: {
         name: 'F-Droid',
-        note: 'Android repo',
       },
       openapk: {
         name: 'OpenAPK',
-        note: 'Android listing',
       },
     },
     note:
-      'Only download packages from a source you trust. For server-side push, widgets, and companion monitoring, install ServerBoxMonitor separately on your servers.',
-  },
-  testimonials: {
-    title: 'Trusted by people who maintain real machines.',
-    admin: {
-      quote:
-        'ServerBox keeps the quick server checks I do every day in one place, without forcing me back to a laptop.',
-      role: 'Server Administrator',
-    },
-    infra: {
-      quote:
-        'The jump from metrics to SSH and SFTP is direct. It removes a lot of small context switches during incidents.',
-      role: 'Infrastructure Maintainer',
-    },
-    student: {
-      quote:
-        'It is lightweight enough for my personal servers, but still covers Docker, systemd, and health checks.',
-      role: 'Homelab User',
-    },
+      'Homebrew supports macOS only: brew install --cask server-box. Only download packages from a source you trust. For server-side push, widgets, and companion monitoring, install ServerBoxMonitor separately on your servers.',
   },
   cta: {
     title: 'ServerBox is free and open source under AGPLv3.',

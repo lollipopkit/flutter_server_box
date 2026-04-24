@@ -38,10 +38,6 @@ type RootTranslation = {
 		 */
 		capabilities: string
 		/**
-		 * T​e​s​t​i​m​o​n​i​a​l​s
-		 */
-		testimonials: string
-		/**
 		 * D​o​w​n​l​o​a​d
 		 */
 		download: string
@@ -174,13 +170,17 @@ type RootTranslation = {
 	}
 	download: {
 		/**
-		 * E​v​e​r​y​ ​p​l​a​t​f​o​r​m​,​ ​e​v​e​r​y​ ​o​f​f​i​c​i​a​l​ ​s​o​u​r​c​e​.
+		 * E​v​e​r​y​ ​p​l​a​t​f​o​r​m​,​ ​e​v​e​r​y​ ​s​o​u​r​c​e​.
 		 */
 		title: string
 		/**
 		 * C​h​o​o​s​e​ ​t​h​e​ ​c​h​a​n​n​e​l​ ​t​h​a​t​ ​m​a​t​c​h​e​s​ ​y​o​u​r​ ​d​e​v​i​c​e​ ​a​n​d​ ​t​r​u​s​t​ ​m​o​d​e​l​.​ ​i​O​S​ ​a​n​d​ ​m​a​c​O​S​ ​u​s​e​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​;​ ​A​n​d​r​o​i​d​,​ ​L​i​n​u​x​,​ ​a​n​d​ ​W​i​n​d​o​w​s​ ​a​l​s​o​ ​h​a​v​e​ ​d​i​r​e​c​t​ ​p​a​c​k​a​g​e​ ​d​o​w​n​l​o​a​d​s​.
 		 */
 		subtitle: string
+		/**
+		 * I​n​s​t​a​l​l​ ​c​o​m​m​a​n​d​ ​c​o​p​i​e​d
+		 */
+		copied: string
 		platforms: {
 			iosMacos: {
 				/**
@@ -188,7 +188,7 @@ type RootTranslation = {
 				 */
 				title: string
 				/**
-				 * U​s​e​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​b​u​i​l​d​ ​f​o​r​ ​A​p​p​l​e​ ​p​l​a​t​f​o​r​m​s​,​ ​i​n​c​l​u​d​i​n​g​ ​a​u​t​o​m​a​t​i​c​ ​u​p​d​a​t​e​s​ ​t​h​r​o​u​g​h​ ​y​o​u​r​ ​A​p​p​l​e​ ​a​c​c​o​u​n​t​.
+				 * U​s​e​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​b​u​i​l​d​ ​f​o​r​ ​A​p​p​l​e​ ​p​l​a​t​f​o​r​m​s​,​ ​o​r​ ​i​n​s​t​a​l​l​ ​t​h​e​ ​m​a​c​O​S​-​o​n​l​y​ ​H​o​m​e​b​r​e​w​ ​c​a​s​k​.
 				 */
 				description: string
 			}
@@ -229,92 +229,42 @@ type RootTranslation = {
 				 * A​p​p​ ​S​t​o​r​e
 				 */
 				name: string
+			}
+			homebrew: {
 				/**
-				 * A​p​p​l​e​ ​p​l​a​t​f​o​r​m​s
+				 * H​o​m​e​b​r​e​w​ ​C​a​s​k
 				 */
-				note: string
+				name: string
 			}
 			github: {
 				/**
 				 * G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s
 				 */
 				name: string
-				/**
-				 * r​e​l​e​a​s​e​ ​b​u​i​l​d​s
-				 */
-				note: string
 			}
 			cdn: {
 				/**
 				 * P​r​o​j​e​c​t​ ​C​D​N
 				 */
 				name: string
-				/**
-				 * p​a​c​k​a​g​e​ ​m​i​r​r​o​r
-				 */
-				note: string
 			}
 			fdroid: {
 				/**
 				 * F​-​D​r​o​i​d
 				 */
 				name: string
-				/**
-				 * A​n​d​r​o​i​d​ ​r​e​p​o
-				 */
-				note: string
 			}
 			openapk: {
 				/**
 				 * O​p​e​n​A​P​K
 				 */
 				name: string
-				/**
-				 * A​n​d​r​o​i​d​ ​l​i​s​t​i​n​g
-				 */
-				note: string
 			}
 		}
 		/**
-		 * O​n​l​y​ ​d​o​w​n​l​o​a​d​ ​p​a​c​k​a​g​e​s​ ​f​r​o​m​ ​a​ ​s​o​u​r​c​e​ ​y​o​u​ ​t​r​u​s​t​.​ ​F​o​r​ ​s​e​r​v​e​r​-​s​i​d​e​ ​p​u​s​h​,​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​c​o​m​p​a​n​i​o​n​ ​m​o​n​i​t​o​r​i​n​g​,​ ​i​n​s​t​a​l​l​ ​S​e​r​v​e​r​B​o​x​M​o​n​i​t​o​r​ ​s​e​p​a​r​a​t​e​l​y​ ​o​n​ ​y​o​u​r​ ​s​e​r​v​e​r​s​.
+		 * H​o​m​e​b​r​e​w​ ​s​u​p​p​o​r​t​s​ ​m​a​c​O​S​ ​o​n​l​y​:​ ​b​r​e​w​ ​i​n​s​t​a​l​l​ ​-​-​c​a​s​k​ ​s​e​r​v​e​r​-​b​o​x​.​ ​O​n​l​y​ ​d​o​w​n​l​o​a​d​ ​p​a​c​k​a​g​e​s​ ​f​r​o​m​ ​a​ ​s​o​u​r​c​e​ ​y​o​u​ ​t​r​u​s​t​.​ ​F​o​r​ ​s​e​r​v​e​r​-​s​i​d​e​ ​p​u​s​h​,​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​c​o​m​p​a​n​i​o​n​ ​m​o​n​i​t​o​r​i​n​g​,​ ​i​n​s​t​a​l​l​ ​S​e​r​v​e​r​B​o​x​M​o​n​i​t​o​r​ ​s​e​p​a​r​a​t​e​l​y​ ​o​n​ ​y​o​u​r​ ​s​e​r​v​e​r​s​.
 		 */
 		note: string
-	}
-	testimonials: {
-		/**
-		 * T​r​u​s​t​e​d​ ​b​y​ ​p​e​o​p​l​e​ ​w​h​o​ ​m​a​i​n​t​a​i​n​ ​r​e​a​l​ ​m​a​c​h​i​n​e​s​.
-		 */
-		title: string
-		admin: {
-			/**
-			 * S​e​r​v​e​r​B​o​x​ ​k​e​e​p​s​ ​t​h​e​ ​q​u​i​c​k​ ​s​e​r​v​e​r​ ​c​h​e​c​k​s​ ​I​ ​d​o​ ​e​v​e​r​y​ ​d​a​y​ ​i​n​ ​o​n​e​ ​p​l​a​c​e​,​ ​w​i​t​h​o​u​t​ ​f​o​r​c​i​n​g​ ​m​e​ ​b​a​c​k​ ​t​o​ ​a​ ​l​a​p​t​o​p​.
-			 */
-			quote: string
-			/**
-			 * S​e​r​v​e​r​ ​A​d​m​i​n​i​s​t​r​a​t​o​r
-			 */
-			role: string
-		}
-		infra: {
-			/**
-			 * T​h​e​ ​j​u​m​p​ ​f​r​o​m​ ​m​e​t​r​i​c​s​ ​t​o​ ​S​S​H​ ​a​n​d​ ​S​F​T​P​ ​i​s​ ​d​i​r​e​c​t​.​ ​I​t​ ​r​e​m​o​v​e​s​ ​a​ ​l​o​t​ ​o​f​ ​s​m​a​l​l​ ​c​o​n​t​e​x​t​ ​s​w​i​t​c​h​e​s​ ​d​u​r​i​n​g​ ​i​n​c​i​d​e​n​t​s​.
-			 */
-			quote: string
-			/**
-			 * I​n​f​r​a​s​t​r​u​c​t​u​r​e​ ​M​a​i​n​t​a​i​n​e​r
-			 */
-			role: string
-		}
-		student: {
-			/**
-			 * I​t​ ​i​s​ ​l​i​g​h​t​w​e​i​g​h​t​ ​e​n​o​u​g​h​ ​f​o​r​ ​m​y​ ​p​e​r​s​o​n​a​l​ ​s​e​r​v​e​r​s​,​ ​b​u​t​ ​s​t​i​l​l​ ​c​o​v​e​r​s​ ​D​o​c​k​e​r​,​ ​s​y​s​t​e​m​d​,​ ​a​n​d​ ​h​e​a​l​t​h​ ​c​h​e​c​k​s​.
-			 */
-			quote: string
-			/**
-			 * H​o​m​e​l​a​b​ ​U​s​e​r
-			 */
-			role: string
-		}
 	}
 	cta: {
 		/**
@@ -374,10 +324,6 @@ export type TranslationFunctions = {
 		 * Capabilities
 		 */
 		capabilities: () => LocalizedString
-		/**
-		 * Testimonials
-		 */
-		testimonials: () => LocalizedString
 		/**
 		 * Download
 		 */
@@ -511,13 +457,17 @@ export type TranslationFunctions = {
 	}
 	download: {
 		/**
-		 * Every platform, every official source.
+		 * Every platform, every source.
 		 */
 		title: () => LocalizedString
 		/**
 		 * Choose the channel that matches your device and trust model. iOS and macOS use the App Store; Android, Linux, and Windows also have direct package downloads.
 		 */
 		subtitle: () => LocalizedString
+		/**
+		 * Install command copied
+		 */
+		copied: () => LocalizedString
 		platforms: {
 			iosMacos: {
 				/**
@@ -525,7 +475,7 @@ export type TranslationFunctions = {
 				 */
 				title: () => LocalizedString
 				/**
-				 * Use the App Store build for Apple platforms, including automatic updates through your Apple account.
+				 * Use the App Store build for Apple platforms, or install the macOS-only Homebrew cask.
 				 */
 				description: () => LocalizedString
 			}
@@ -566,92 +516,42 @@ export type TranslationFunctions = {
 				 * App Store
 				 */
 				name: () => LocalizedString
+			}
+			homebrew: {
 				/**
-				 * Apple platforms
+				 * Homebrew Cask
 				 */
-				note: () => LocalizedString
+				name: () => LocalizedString
 			}
 			github: {
 				/**
 				 * GitHub Releases
 				 */
 				name: () => LocalizedString
-				/**
-				 * release builds
-				 */
-				note: () => LocalizedString
 			}
 			cdn: {
 				/**
 				 * Project CDN
 				 */
 				name: () => LocalizedString
-				/**
-				 * package mirror
-				 */
-				note: () => LocalizedString
 			}
 			fdroid: {
 				/**
 				 * F-Droid
 				 */
 				name: () => LocalizedString
-				/**
-				 * Android repo
-				 */
-				note: () => LocalizedString
 			}
 			openapk: {
 				/**
 				 * OpenAPK
 				 */
 				name: () => LocalizedString
-				/**
-				 * Android listing
-				 */
-				note: () => LocalizedString
 			}
 		}
 		/**
-		 * Only download packages from a source you trust. For server-side push, widgets, and companion monitoring, install ServerBoxMonitor separately on your servers.
+		 * Homebrew supports macOS only: brew install --cask server-box. Only download packages from a source you trust. For server-side push, widgets, and companion monitoring, install ServerBoxMonitor separately on your servers.
 		 */
 		note: () => LocalizedString
-	}
-	testimonials: {
-		/**
-		 * Trusted by people who maintain real machines.
-		 */
-		title: () => LocalizedString
-		admin: {
-			/**
-			 * ServerBox keeps the quick server checks I do every day in one place, without forcing me back to a laptop.
-			 */
-			quote: () => LocalizedString
-			/**
-			 * Server Administrator
-			 */
-			role: () => LocalizedString
-		}
-		infra: {
-			/**
-			 * The jump from metrics to SSH and SFTP is direct. It removes a lot of small context switches during incidents.
-			 */
-			quote: () => LocalizedString
-			/**
-			 * Infrastructure Maintainer
-			 */
-			role: () => LocalizedString
-		}
-		student: {
-			/**
-			 * It is lightweight enough for my personal servers, but still covers Docker, systemd, and health checks.
-			 */
-			quote: () => LocalizedString
-			/**
-			 * Homelab User
-			 */
-			role: () => LocalizedString
-		}
 	}
 	cta: {
 		/**

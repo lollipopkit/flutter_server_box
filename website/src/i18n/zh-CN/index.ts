@@ -10,7 +10,6 @@ const zhCN: Translation = {
   nav: {
     features: '特性',
     capabilities: '能力',
-    testimonials: '用户评价',
     download: '下载',
     languageLabel: '语言',
   },
@@ -66,14 +65,15 @@ const zhCN: Translation = {
     installReleasePrompt: '# Android、Linux 与 Windows',
   },
   download: {
-    title: '所有平台，所有官方来源。',
+    title: '所有平台，所有来源。',
     subtitle:
       '根据设备和信任模型选择下载渠道。iOS 与 macOS 使用 App Store；Android、Linux 和 Windows 也提供直接安装包。',
+    copied: '已复制安装命令',
     platforms: {
       iosMacos: {
         title: 'iOS / macOS',
         description:
-          'Apple 平台使用 App Store 构建，并可通过 Apple 账号获得自动更新。',
+          'Apple 平台可使用 App Store 构建，也可在 macOS 上使用 Homebrew cask 安装。',
       },
       android: {
         title: 'Android',
@@ -94,45 +94,25 @@ const zhCN: Translation = {
     sources: {
       appStore: {
         name: 'App Store',
-        note: 'Apple 平台',
+      },
+      homebrew: {
+        name: 'Homebrew Cask',
       },
       github: {
         name: 'GitHub Releases',
-        note: '发布构建',
       },
       cdn: {
         name: '项目 CDN',
-        note: '安装包镜像',
       },
       fdroid: {
         name: 'F-Droid',
-        note: 'Android 仓库',
       },
       openapk: {
         name: 'OpenAPK',
-        note: 'Android 页面',
       },
     },
     note:
-      '请只从你信任的来源下载安装包。若需要服务器端推送、小组件和 companion 监控，请在服务器上单独安装 ServerBoxMonitor。',
-  },
-  testimonials: {
-    title: '受到真实机器维护者信任。',
-    admin: {
-      quote:
-        'ServerBox 把我每天要做的快速服务器检查放在一个地方，不必总是回到电脑前。',
-      role: '服务器管理员',
-    },
-    infra: {
-      quote:
-        '从指标跳到 SSH 和 SFTP 很直接，事故处理中少了很多细碎的上下文切换。',
-      role: '基础设施维护者',
-    },
-    student: {
-      quote:
-        '它对个人服务器足够轻量，但依然覆盖 Docker、systemd 和健康检查。',
-      role: 'Homelab 用户',
-    },
+      'Homebrew 仅支持 macOS：brew install --cask server-box。请只从你信任的来源下载安装包。若需要服务器端推送、小组件和独立监控，请在服务器上单独安装 ServerBoxMonitor。',
   },
   cta: {
     title: 'ServerBox 是基于 AGPLv3 的免费开源软件。',
