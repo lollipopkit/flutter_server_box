@@ -69,6 +69,10 @@ body {
   max-width: 100%;
 }
 
+[id] {
+  scroll-margin-top: 6rem;
+}
+
 .site-nav {
   position: sticky;
   top: 1.5rem;
@@ -496,9 +500,10 @@ body {
 
 .download-platform {
   display: grid;
-  grid-template-columns: minmax(190px, 0.8fr) minmax(0, 1.4fr);
-  gap: 1.5rem;
-  padding: 1.35rem 0;
+  grid-template-columns: minmax(130px, 0.45fr) minmax(0, 1.55fr);
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
   border-bottom: 1px solid var(--light-gray);
 }
 
@@ -507,13 +512,6 @@ body {
   font-size: 1.05rem;
   font-weight: 500;
   color: var(--black);
-}
-
-.download-platform-copy p {
-  margin-top: 0.45rem;
-  color: var(--stone);
-  font-size: 0.9rem;
-  line-height: 1.55;
 }
 
 .download-actions {

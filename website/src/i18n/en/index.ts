@@ -70,50 +70,8 @@ const en: BaseTranslation = {
     subtitle:
       'Choose the channel that matches your device and trust model. iOS and macOS use the App Store; Android, Linux, and Windows also have direct package downloads.',
     copied: 'Install command copied',
-    platforms: {
-      iosMacos: {
-        title: 'iOS / macOS',
-        description:
-          'Use the App Store build for Apple platforms, or install the macOS-only Homebrew cask.',
-      },
-      android: {
-        title: 'Android',
-        description:
-          'Install from GitHub Releases, the project CDN, F-Droid, or OpenAPK depending on how you manage Android packages.',
-      },
-      linux: {
-        title: 'Linux',
-        description:
-          'Download desktop packages from GitHub Releases or the project CDN.',
-      },
-      windows: {
-        title: 'Windows',
-        description:
-          'Download Windows packages from GitHub Releases or the project CDN.',
-      },
-    },
-    sources: {
-      appStore: {
-        name: 'App Store',
-      },
-      homebrew: {
-        name: 'Homebrew Cask',
-      },
-      github: {
-        name: 'GitHub Releases',
-      },
-      cdn: {
-        name: 'Project CDN',
-      },
-      fdroid: {
-        name: 'F-Droid',
-      },
-      openapk: {
-        name: 'OpenAPK',
-      },
-    },
     note:
-      'Homebrew supports macOS only: brew install --cask server-box. Only download packages from a source you trust. For server-side push, widgets, and companion monitoring, install ServerBoxMonitor separately on your servers.',
+      'Only download packages from a source you trust. For server-side push, widgets, and companion monitoring, install ServerBoxMonitor separately on your servers.',
   },
   cta: {
     title: 'ServerBox is free and open source under AGPLv3.',

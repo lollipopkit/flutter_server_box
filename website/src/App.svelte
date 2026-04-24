@@ -1,11 +1,6 @@
 <script>
   import {
-    Apple,
-    Archive,
-    Download,
     ExternalLink,
-    Package,
-    Store,
   } from '@lucide/svelte'
   import { spring } from 'svelte/motion'
   import { onMount } from 'svelte'
@@ -38,32 +33,36 @@
   const downloadGroups = [
     {
       key: 'iosMacos',
+      label: 'iOS / macOS',
       sources: [
-        { key: 'appStore', href: 'https://apps.apple.com/app/id1586449703', Icon: Apple },
-        { key: 'homebrew', command: 'brew install --cask server-box', Icon: Package },
+        { label: 'App Store', href: 'https://apps.apple.com/app/id1586449703' },
+        { label: 'Homebrew Cask', command: 'brew install --cask server-box' },
       ],
     },
     {
       key: 'android',
+      label: 'Android',
       sources: [
-        { key: 'github', href: 'https://github.com/lollipopkit/flutter_server_box/releases', Icon: Download },
-        { key: 'cdn', href: 'https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid', Icon: Archive },
-        { key: 'fdroid', href: 'https://f-droid.org/packages/tech.lolli.toolbox', Icon: Store },
-        { key: 'openapk', href: 'https://www.openapk.net/serverbox/tech.lolli.toolbox/', Icon: Package },
+        { label: 'GitHub Releases', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
+        { label: 'CDN', href: 'https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid' },
+        { label: 'F-Droid', href: 'https://f-droid.org/packages/tech.lolli.toolbox' },
+        { label: 'OpenAPK', href: 'https://www.openapk.net/serverbox/tech.lolli.toolbox/' },
       ],
     },
     {
       key: 'linux',
+      label: 'Linux',
       sources: [
-        { key: 'github', href: 'https://github.com/lollipopkit/flutter_server_box/releases', Icon: Download },
-        { key: 'cdn', href: 'https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid', Icon: Archive },
+        { label: 'GitHub Releases', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
+        { label: 'CDN', href: 'https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid' },
       ],
     },
     {
       key: 'windows',
+      label: 'Windows',
       sources: [
-        { key: 'github', href: 'https://github.com/lollipopkit/flutter_server_box/releases', Icon: Download },
-        { key: 'cdn', href: 'https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid', Icon: Archive },
+        { label: 'GitHub Releases', href: 'https://github.com/lollipopkit/flutter_server_box/releases' },
+        { label: 'CDN', href: 'https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid' },
       ],
     },
   ]
@@ -136,6 +135,14 @@
     stackMotion.set({ x: 0, y: 0 })
   }
 
+  function scrollToSection(event, id) {
+    event.preventDefault()
+    document.getElementById(id)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }
+
   async function copyCommand(command) {
     try {
       await navigator.clipboard.writeText(command)
@@ -152,10 +159,11 @@
 {#if locale && isMounted}
   <main class="site">
     <header class="site-nav" id="top">
-      <a class="brand" href="#top">ServerBox</a>
+      <a class="brand" href="#top" onclick={(event) => scrollToSection(event, 'top')}>ServerBox</a>
       <nav>
-        <a href="#features">{$LL.nav.features()}</a>
-        <a href="#capabilities">{$LL.nav.capabilities()}</a>
+        <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.nav.features()}</a>
+        <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.nav.capabilities()}</a>
+        <a href="#download" onclick={(event) => scrollToSection(event, 'download')}>{$LL.nav.download()}</a>
       </nav>
       <div class="nav-actions">
         <label class="language-switcher">
@@ -181,8 +189,8 @@
         {$LL.hero.subtitle()}
       </p>
       <div class="hero-actions">
-        <a class="btn btn-primary" href="#download">{$LL.hero.primaryAction()}</a>
-        <a class="btn btn-secondary" href="#features">{$LL.hero.secondaryAction()}</a>
+        <a class="btn btn-primary" href="#download" onclick={(event) => scrollToSection(event, 'download')}>{$LL.hero.primaryAction()}</a>
+        <a class="btn btn-secondary" href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.hero.secondaryAction()}</a>
       </div>
 
       <div
@@ -251,8 +259,7 @@
         {#each downloadGroups as group}
           <article class="download-platform">
             <div class="download-platform-copy">
-              <h3>{$LL.download.platforms[group.key].title()}</h3>
-              <p>{$LL.download.platforms[group.key].description()}</p>
+              <h3>{group.label}</h3>
             </div>
             <div class="download-actions">
               {#each group.sources as source}
@@ -260,16 +267,14 @@
                   <button
                     class="download-icon-btn"
                     type="button"
-                    aria-label={`${$LL.download.platforms[group.key].title()} ${$LL.download.sources[source.key].name()}`}
+                    aria-label={`${group.label} ${source.label}`}
                     onclick={() => copyCommand(source.command)}
                   >
-                    <source.Icon size={17} strokeWidth={1.8} aria-hidden="true" />
-                    <span>{copiedCommand === source.command ? $LL.download.copied() : $LL.download.sources[source.key].name()}</span>
+                    <span>{copiedCommand === source.command ? $LL.download.copied() : source.label}</span>
                   </button>
                 {:else}
-                  <a class="download-icon-btn" href={source.href} aria-label={`${$LL.download.platforms[group.key].title()} ${$LL.download.sources[source.key].name()}`}>
-                    <source.Icon size={17} strokeWidth={1.8} aria-hidden="true" />
-                    <span>{$LL.download.sources[source.key].name()}</span>
+                  <a class="download-icon-btn" href={source.href} aria-label={`${group.label} ${source.label}`}>
+                    <span>{source.label}</span>
                     <ExternalLink size={14} strokeWidth={1.8} aria-hidden="true" />
                   </a>
                 {/if}
@@ -298,8 +303,8 @@
     <footer class="site-footer">
       <span>© 2026 ServerBox</span>
       <div class="footer-links">
-        <a href="#features">{$LL.footer.features()}</a>
-        <a href="#capabilities">{$LL.footer.capabilities()}</a>
+        <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.footer.features()}</a>
+        <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.footer.capabilities()}</a>
         <a href="https://github.com/lollipopkit/flutter_server_box">GitHub</a>
         <a href="https://github.com/lollipopkit/flutter_server_box/releases">{$LL.footer.releases()}</a>
       </div>

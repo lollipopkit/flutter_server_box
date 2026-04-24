@@ -69,55 +69,13 @@ const zhCN: Translation = {
     subtitle:
       '根据设备和信任模型选择下载渠道。iOS 与 macOS 使用 App Store；Android、Linux 和 Windows 也提供直接安装包。',
     copied: '已复制安装命令',
-    platforms: {
-      iosMacos: {
-        title: 'iOS / macOS',
-        description:
-          'Apple 平台可使用 App Store 构建，也可在 macOS 上使用 Homebrew cask 安装。',
-      },
-      android: {
-        title: 'Android',
-        description:
-          '可从 GitHub Releases、项目 CDN、F-Droid 或 OpenAPK 安装，取决于你的 Android 包管理方式。',
-      },
-      linux: {
-        title: 'Linux',
-        description:
-          '可从 GitHub Releases 或项目 CDN 下载桌面端安装包。',
-      },
-      windows: {
-        title: 'Windows',
-        description:
-          '可从 GitHub Releases 或项目 CDN 下载 Windows 安装包。',
-      },
-    },
-    sources: {
-      appStore: {
-        name: 'App Store',
-      },
-      homebrew: {
-        name: 'Homebrew Cask',
-      },
-      github: {
-        name: 'GitHub Releases',
-      },
-      cdn: {
-        name: '项目 CDN',
-      },
-      fdroid: {
-        name: 'F-Droid',
-      },
-      openapk: {
-        name: 'OpenAPK',
-      },
-    },
     note:
-      'Homebrew 仅支持 macOS：brew install --cask server-box。请只从你信任的来源下载安装包。若需要服务器端推送、小组件和独立监控，请在服务器上单独安装 ServerBoxMonitor。',
+      '请只从你信任的来源下载安装包。若需要服务器端推送、小组件和独立监控，请在服务器上单独安装 ServerBoxMonitor。',
   },
   cta: {
     title: 'ServerBox 是基于 AGPLv3 的免费开源软件。',
     subtitle:
-      '可从 App Store、GitHub Releases、F-Droid、OpenAPK 或项目 CDN 安装。请只从你信任的来源下载安装包。',
+      '可从 App Store、GitHub Releases、F-Droid、OpenAPK 或项目 CDN 安装。',
     appStoreAction: '打开 App Store',
     githubAction: '从 GitHub Releases 下载',
   },

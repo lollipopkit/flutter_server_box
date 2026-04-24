@@ -181,88 +181,8 @@ type RootTranslation = {
 		 * I​n​s​t​a​l​l​ ​c​o​m​m​a​n​d​ ​c​o​p​i​e​d
 		 */
 		copied: string
-		platforms: {
-			iosMacos: {
-				/**
-				 * i​O​S​ ​/​ ​m​a​c​O​S
-				 */
-				title: string
-				/**
-				 * U​s​e​ ​t​h​e​ ​A​p​p​ ​S​t​o​r​e​ ​b​u​i​l​d​ ​f​o​r​ ​A​p​p​l​e​ ​p​l​a​t​f​o​r​m​s​,​ ​o​r​ ​i​n​s​t​a​l​l​ ​t​h​e​ ​m​a​c​O​S​-​o​n​l​y​ ​H​o​m​e​b​r​e​w​ ​c​a​s​k​.
-				 */
-				description: string
-			}
-			android: {
-				/**
-				 * A​n​d​r​o​i​d
-				 */
-				title: string
-				/**
-				 * I​n​s​t​a​l​l​ ​f​r​o​m​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​,​ ​t​h​e​ ​p​r​o​j​e​c​t​ ​C​D​N​,​ ​F​-​D​r​o​i​d​,​ ​o​r​ ​O​p​e​n​A​P​K​ ​d​e​p​e​n​d​i​n​g​ ​o​n​ ​h​o​w​ ​y​o​u​ ​m​a​n​a​g​e​ ​A​n​d​r​o​i​d​ ​p​a​c​k​a​g​e​s​.
-				 */
-				description: string
-			}
-			linux: {
-				/**
-				 * L​i​n​u​x
-				 */
-				title: string
-				/**
-				 * D​o​w​n​l​o​a​d​ ​d​e​s​k​t​o​p​ ​p​a​c​k​a​g​e​s​ ​f​r​o​m​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​ ​o​r​ ​t​h​e​ ​p​r​o​j​e​c​t​ ​C​D​N​.
-				 */
-				description: string
-			}
-			windows: {
-				/**
-				 * W​i​n​d​o​w​s
-				 */
-				title: string
-				/**
-				 * D​o​w​n​l​o​a​d​ ​W​i​n​d​o​w​s​ ​p​a​c​k​a​g​e​s​ ​f​r​o​m​ ​G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s​ ​o​r​ ​t​h​e​ ​p​r​o​j​e​c​t​ ​C​D​N​.
-				 */
-				description: string
-			}
-		}
-		sources: {
-			appStore: {
-				/**
-				 * A​p​p​ ​S​t​o​r​e
-				 */
-				name: string
-			}
-			homebrew: {
-				/**
-				 * H​o​m​e​b​r​e​w​ ​C​a​s​k
-				 */
-				name: string
-			}
-			github: {
-				/**
-				 * G​i​t​H​u​b​ ​R​e​l​e​a​s​e​s
-				 */
-				name: string
-			}
-			cdn: {
-				/**
-				 * P​r​o​j​e​c​t​ ​C​D​N
-				 */
-				name: string
-			}
-			fdroid: {
-				/**
-				 * F​-​D​r​o​i​d
-				 */
-				name: string
-			}
-			openapk: {
-				/**
-				 * O​p​e​n​A​P​K
-				 */
-				name: string
-			}
-		}
 		/**
-		 * H​o​m​e​b​r​e​w​ ​s​u​p​p​o​r​t​s​ ​m​a​c​O​S​ ​o​n​l​y​:​ ​b​r​e​w​ ​i​n​s​t​a​l​l​ ​-​-​c​a​s​k​ ​s​e​r​v​e​r​-​b​o​x​.​ ​O​n​l​y​ ​d​o​w​n​l​o​a​d​ ​p​a​c​k​a​g​e​s​ ​f​r​o​m​ ​a​ ​s​o​u​r​c​e​ ​y​o​u​ ​t​r​u​s​t​.​ ​F​o​r​ ​s​e​r​v​e​r​-​s​i​d​e​ ​p​u​s​h​,​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​c​o​m​p​a​n​i​o​n​ ​m​o​n​i​t​o​r​i​n​g​,​ ​i​n​s​t​a​l​l​ ​S​e​r​v​e​r​B​o​x​M​o​n​i​t​o​r​ ​s​e​p​a​r​a​t​e​l​y​ ​o​n​ ​y​o​u​r​ ​s​e​r​v​e​r​s​.
+		 * O​n​l​y​ ​d​o​w​n​l​o​a​d​ ​p​a​c​k​a​g​e​s​ ​f​r​o​m​ ​a​ ​s​o​u​r​c​e​ ​y​o​u​ ​t​r​u​s​t​.​ ​F​o​r​ ​s​e​r​v​e​r​-​s​i​d​e​ ​p​u​s​h​,​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​c​o​m​p​a​n​i​o​n​ ​m​o​n​i​t​o​r​i​n​g​,​ ​i​n​s​t​a​l​l​ ​S​e​r​v​e​r​B​o​x​M​o​n​i​t​o​r​ ​s​e​p​a​r​a​t​e​l​y​ ​o​n​ ​y​o​u​r​ ​s​e​r​v​e​r​s​.
 		 */
 		note: string
 	}
@@ -468,88 +388,8 @@ export type TranslationFunctions = {
 		 * Install command copied
 		 */
 		copied: () => LocalizedString
-		platforms: {
-			iosMacos: {
-				/**
-				 * iOS / macOS
-				 */
-				title: () => LocalizedString
-				/**
-				 * Use the App Store build for Apple platforms, or install the macOS-only Homebrew cask.
-				 */
-				description: () => LocalizedString
-			}
-			android: {
-				/**
-				 * Android
-				 */
-				title: () => LocalizedString
-				/**
-				 * Install from GitHub Releases, the project CDN, F-Droid, or OpenAPK depending on how you manage Android packages.
-				 */
-				description: () => LocalizedString
-			}
-			linux: {
-				/**
-				 * Linux
-				 */
-				title: () => LocalizedString
-				/**
-				 * Download desktop packages from GitHub Releases or the project CDN.
-				 */
-				description: () => LocalizedString
-			}
-			windows: {
-				/**
-				 * Windows
-				 */
-				title: () => LocalizedString
-				/**
-				 * Download Windows packages from GitHub Releases or the project CDN.
-				 */
-				description: () => LocalizedString
-			}
-		}
-		sources: {
-			appStore: {
-				/**
-				 * App Store
-				 */
-				name: () => LocalizedString
-			}
-			homebrew: {
-				/**
-				 * Homebrew Cask
-				 */
-				name: () => LocalizedString
-			}
-			github: {
-				/**
-				 * GitHub Releases
-				 */
-				name: () => LocalizedString
-			}
-			cdn: {
-				/**
-				 * Project CDN
-				 */
-				name: () => LocalizedString
-			}
-			fdroid: {
-				/**
-				 * F-Droid
-				 */
-				name: () => LocalizedString
-			}
-			openapk: {
-				/**
-				 * OpenAPK
-				 */
-				name: () => LocalizedString
-			}
-		}
 		/**
-		 * Homebrew supports macOS only: brew install --cask server-box. Only download packages from a source you trust. For server-side push, widgets, and companion monitoring, install ServerBoxMonitor separately on your servers.
+		 * Only download packages from a source you trust. For server-side push, widgets, and companion monitoring, install ServerBoxMonitor separately on your servers.
 		 */
 		note: () => LocalizedString
 	}
