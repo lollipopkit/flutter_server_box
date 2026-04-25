@@ -11,7 +11,7 @@ const fr: Translation = {
     features: 'Fonctions',
     capabilities: 'Capacités',
     download: 'Télécharger',
-    docs: 'Docs',
+    docs: 'Documentation',
     languageLabel: 'Langue',
   },
   hero: {

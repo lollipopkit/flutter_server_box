@@ -11,7 +11,7 @@
     locales,
     localeStorageKey,
     syncLocaleToUrl,
-  } from './lib/i18n.js'
+  } from './lib/i18n'
 
   const capabilities = ['Status chart', 'SSH Terminal', 'SFTP', 'Docker', 'Process', 'Systemd', 'S.M.A.R.T', 'GPU', 'Sensors', 'Push', 'Home Widget', 'watchOS']
 
@@ -172,7 +172,7 @@
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.nav.features()}</a>
         <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.nav.capabilities()}</a>
         <a href="#download" onclick={(event) => scrollToSection(event, 'download')}>{$LL.nav.download()}</a>
-        <a href="/docs/">Docs</a>
+        <a href="/docs/">{$LL.nav.docs()}</a>
       </nav>
       <div class="nav-actions">
         <label class="language-switcher">
