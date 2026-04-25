@@ -24,18 +24,28 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
 failures=()
-apks=(
-  "$APK_DIR"/"${APP_NAME}"_*_arm64.apk
-  "$APK_DIR"/"${APP_NAME}"_*_arm.apk
-  "$APK_DIR"/"${APP_NAME}"_*_amd64.apk
+apks=()
+patterns=(
+  "${APP_NAME}_*_arm64.apk"
+  "${APP_NAME}_*_arm.apk"
+  "${APP_NAME}_*_amd64.apk"
 )
 
-if [[ ${#apks[@]} -ne 3 ]]; then
-  echo "expected 3 generated APKs, found ${#apks[@]}" >&2
-  echo "APK_DIR: $APK_DIR" >&2
-  ls -la "$APK_DIR" || true
-  exit 1
-fi
+for pattern in "${patterns[@]}"; do
+  matches=("$APK_DIR"/$pattern)
+  if [[ ${#matches[@]} -ne 1 ]]; then
+    echo "expected exactly 1 APK for pattern: $pattern" >&2
+    echo "found ${#matches[@]} matches" >&2
+    echo "APK_DIR: $APK_DIR" >&2
+    if [[ ${#matches[@]} -gt 0 ]]; then
+      printf '  %s\n' "${matches[@]}" >&2
+    else
+      ls -la "$APK_DIR" || true
+    fi
+    exit 1
+  fi
+  apks+=("${matches[0]}")
+done
 
 for apk in "${apks[@]}"; do
   apk_name="$(basename "$apk")"
