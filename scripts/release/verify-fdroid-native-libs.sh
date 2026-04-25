@@ -190,7 +190,7 @@ for apk in "${apks[@]}"; do
 
   while IFS= read -r so_file; do
     if has_build_id "$so_file"; then
-      rel_path="${so_file#$extract_dir/}"
+      rel_path="${so_file#"$extract_dir"/}"
       tmp_so="$so_file.tmp"
       "$OBJCOPY" --remove-section=.note.gnu.build-id "$so_file" "$tmp_so"
       mv "$tmp_so" "$so_file"
@@ -232,7 +232,7 @@ for apk in "${apks[@]}"; do
 
   while IFS= read -r so_file; do
     if has_build_id "$so_file"; then
-      rel_path="${so_file#$verify_dir/}"
+      rel_path="${so_file#"$verify_dir"/}"
       echo "native library still contains ELF build-id note: $apk_name:$rel_path" >&2
       exit 1
     fi
