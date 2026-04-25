@@ -672,7 +672,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
 				PRODUCT_NAME = "Server Box";
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = srvbox_lkmm;
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "ServerBox AppStore Profile";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
