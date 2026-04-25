@@ -18,17 +18,7 @@ flutter test --coverage
 
 ## Test Structure
 
-Tests are located in the `test/` directory mirroring the lib structure:
-
-```
-test/
-├── data/
-│   ├── model/
-│   └── provider/
-├── view/
-│   └── widget/
-└── test_helpers.dart
-```
+Tests are located in the `test/` directory. The current suite is mostly flat and grouped by parser, model, and utility behavior, for example `cpu_test.dart`, `container_test.dart`, and `ssh_config_test.dart`.
 
 ## Unit Tests
 
@@ -71,38 +61,13 @@ test('serverStatusProvider returns status', () async {
 });
 ```
 
-## Mocking
+## External Dependencies
 
-Use mocks for external dependencies:
-
-```dart
-class MockSshService extends Mock implements SshService {}
-
-test('connects to server', () async {
-  final mockSsh = MockSshService();
-  when(mockSsh.connect(any)).thenAnswer((_) async => true);
-
-  // Test with mock
-});
-```
+Avoid tests that depend on real SSH servers. Keep parser, model, and command-builder tests deterministic; add targeted fakes or fixtures when a feature introduces a service boundary.
 
 ## Integration Tests
 
-Test complete user flows (in `integration_test/`):
-
-```dart
-testWidgets('add server flow', (tester) async {
-  await tester.pumpWidget(MyApp());
-
-  // Tap add button
-  await tester.tap(find.byIcon(Icons.add));
-  await tester.pumpAndSettle();
-
-  // Fill form
-  await tester.enterText(find.byKey(Key('name')), 'Test Server');
-  // ...
-});
-```
+There is no `integration_test/` suite in the current repository. Add integration tests only when a feature needs end-to-end device or app-flow coverage.
 
 ## Best Practices
 

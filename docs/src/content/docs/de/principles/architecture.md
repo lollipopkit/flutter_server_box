@@ -85,7 +85,7 @@ void main() {
 - Keine Abhängigkeiten von nativem Code
 - Schneller Key-Value-Speicher
 - Typsicher durch Codegenerierung
-- Keine manuellen Feld-Annotationen erforderlich
+- Folgen Sie dem bestehenden Modellmuster; einige verfolgte Modelle verwenden weiterhin explizite Feld-Annotationen
 
 **Stores:**
 - `SettingStore`: App-Einstellungen

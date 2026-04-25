@@ -17,12 +17,21 @@ Server Box 大量使用代码生成技术来处理模型、状态管理和序列
 
 ## 运行代码生成
 
-```bash
-# 生成所有代码
-dart run build_runner build --delete-conflicting-outputs
+### 普通构建
 
-# 清理并重新生成
-dart run build_runner build --delete-conflicting-outputs --clean
+用于常规代码生成：
+
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
+
+### 清理后重建
+
+仅在生成缓存异常或生成结果不一致时使用。先清理，再重新生成：
+
+```bash
+dart run build_runner clean
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 ## 生成的文件类型
@@ -94,5 +103,5 @@ flutter gen-l10n
 ## 提示
 
 - 使用 `--delete-conflicting-outputs` 避免冲突
-- 将生成的文件添加到 `.gitignore`
+- 如果生成文件已被本仓库跟踪，请继续提交这些生成文件
 - **切勿**手动编辑生成的文件

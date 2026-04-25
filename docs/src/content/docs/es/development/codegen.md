@@ -21,8 +21,11 @@ Ejecutar tras modificar:
 # Generar todo el código
 dart run build_runner build --delete-conflicting-outputs
 
-# Limpiar y regenerar
-dart run build_runner build --delete-conflicting-outputs --clean
+# Limpiar la caché de generación
+dart run build_runner clean
+
+# Luego regenerar
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 ## Archivos Generados
@@ -94,5 +97,5 @@ Genera `lib/generated/l10n/` a partir de los archivos `lib/l10n/*.arb`.
 ## Consejos
 
 - Usa `--delete-conflicting-outputs` para evitar conflictos
-- Añade los archivos generados al `.gitignore`
+- Mantén los archivos generados en el control de versiones cuando este repositorio ya los sigue
 - Nunca edites manualmente los archivos generados

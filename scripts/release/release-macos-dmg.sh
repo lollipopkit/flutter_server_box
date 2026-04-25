@@ -47,6 +47,39 @@ require_cmd() {
   fi
 }
 
+warn_pre_notary_spctl_rejection() {
+  local app_path="$1"
+
+  echo "Skipping pre-notarization spctl enforcement for $app_path"
+  echo 'Developer ID signed apps can be rejected by Gatekeeper before notarization with source=Unnotarized Developer ID'
+}
+
+ensure_macos_pods_synced() {
+  local macos_dir="$REPO_ROOT/macos"
+  local podfile_lock="$macos_dir/Podfile.lock"
+  local manifest_lock="$macos_dir/Pods/Manifest.lock"
+  local pods_project="$macos_dir/Pods/Pods.xcodeproj"
+
+  require_cmd pod
+
+  if [[ ! -f "$manifest_lock" || ! -d "$pods_project" ]]; then
+    echo 'CocoaPods sandbox is incomplete, running pod install'
+    (
+      cd "$macos_dir"
+      pod install
+    )
+    return
+  fi
+
+  if [[ -f "$podfile_lock" ]] && ! cmp -s "$podfile_lock" "$manifest_lock"; then
+    echo 'CocoaPods sandbox is out of sync, running pod install'
+    (
+      cd "$macos_dir"
+      pod install
+    )
+  fi
+}
+
 normalize_abs_path() {
   local path="$1"
   if [[ -z "$path" ]]; then
@@ -232,13 +265,14 @@ if [[ "$PUBLISH_GITHUB_RELEASE" == "1" ]]; then
 fi
 
 require_file "$WORKSPACE_PATH"
+ensure_macos_pods_synced
 
 read -r DEFAULT_MARKETING_VERSION DEFAULT_CURRENT_PROJECT_VERSION <<<"$(read_pubspec_versions)"
 MARKETING_VERSION="${MARKETING_VERSION_OVERRIDE:-$DEFAULT_MARKETING_VERSION}"
 CURRENT_PROJECT_VERSION="${CURRENT_PROJECT_VERSION_OVERRIDE:-$DEFAULT_CURRENT_PROJECT_VERSION}"
 RELEASE_TAG="${RELEASE_TAG:-v${MARKETING_VERSION}}"
 RELEASE_TITLE="${RELEASE_TITLE:-$RELEASE_TAG}"
-DMG_BASENAME="${DMG_BASENAME:-${APP_ASSET_NAME}-${MARKETING_VERSION}-${CURRENT_PROJECT_VERSION}}"
+DMG_BASENAME="${DMG_BASENAME:-${APP_ASSET_NAME}-${MARKETING_VERSION}}"
 DMG_PATH="${DMG_PATH:-$ARTIFACTS_PATH/${DMG_BASENAME}.dmg}"
 
 validate_allowed_path 'BUILD_ROOT' "$BUILD_ROOT" >/dev/null
@@ -303,7 +337,7 @@ if [[ ! -d "$APP_PATH" ]]; then
 fi
 
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"
-spctl -a -t exec -vv "$APP_PATH"
+warn_pre_notary_spctl_rejection "$APP_PATH"
 
 APP_PATH="$APP_PATH" \
 APP_NAME="$APP_NAME" \
@@ -313,7 +347,7 @@ ARTIFACTS_PATH="$ARTIFACTS_PATH" \
 DMG_STAGING_PATH="$DMG_STAGING_PATH" \
 DMG_BASENAME="$DMG_BASENAME" \
 DMG_PATH="$DMG_PATH" \
-REQUIRE_SPCTL=1 \
+REQUIRE_SPCTL=0 \
 bash "$SCRIPT_DIR/package-dmg-from-xcarchive.sh"
 
 codesign --force --sign "$SIGNING_IDENTITY" --timestamp "$DMG_PATH"
@@ -325,6 +359,7 @@ xcrun notarytool submit "$DMG_PATH" \
 
 xcrun stapler staple "$DMG_PATH"
 xcrun stapler validate "$DMG_PATH"
+spctl -a -t open --context context:primary-signature -vv "$DMG_PATH"
 
 if [[ "$PUBLISH_GITHUB_RELEASE" == "1" ]]; then
   if gh release view "$RELEASE_TAG" --repo "$APP_REPO_SLUG" >/dev/null 2>&1; then
@@ -343,6 +378,13 @@ if [[ "$PUBLISH_GITHUB_RELEASE" == "1" ]]; then
     --clobber
 fi
 
+if [[ "${SYNC_HOMEBREW_CASK:-1}" == "1" ]]; then
+  APP_PATH="$APP_PATH" \
+  DMG_PATH="$DMG_PATH" \
+  TAP_REPO_PATH="${TAP_REPO_PATH:-$HOME/proj/homebrew-taps}" \
+  bash "$SCRIPT_DIR/sync-homebrew-cask.sh"
+fi
+
 echo "Release complete"
 echo "Marketing version: $MARKETING_VERSION"
 echo "Build number: $CURRENT_PROJECT_VERSION"
@@ -351,4 +393,7 @@ echo "Exported app: $APP_PATH"
 echo "DMG: $DMG_PATH"
 if [[ "$PUBLISH_GITHUB_RELEASE" == "1" ]]; then
   echo "GitHub release: $APP_REPO_SLUG $RELEASE_TAG"
+fi
+if [[ "${SYNC_HOMEBREW_CASK:-1}" == "1" ]]; then
+  echo "Homebrew cask: ${TAP_REPO_PATH:-$HOME/proj/homebrew-taps}/Casks/server-box.rb"
 fi

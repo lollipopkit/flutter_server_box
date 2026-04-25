@@ -21,8 +21,11 @@ Server Box utilise intensivement la génération de code pour les modèles, la g
 # Générer tout le code
 dart run build_runner build --delete-conflicting-outputs
 
-# Nettoyer et régénérer
-dart run build_runner build --delete-conflicting-outputs --clean
+# Nettoyer le cache de génération
+dart run build_runner clean
+
+# Puis régénérer
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 ## Fichiers générés
@@ -94,5 +97,5 @@ Génère `lib/generated/l10n/` à partir des fichiers `lib/l10n/*.arb`.
 ## Conseils
 
 - Utilisez `--delete-conflicting-outputs` pour éviter les conflits
-- Ajoutez les fichiers générés au `.gitignore`
+- Conservez les fichiers générés dans le contrôle de version lorsqu'ils sont déjà suivis par ce dépôt
 - Ne modifiez jamais manuellement les fichiers générés

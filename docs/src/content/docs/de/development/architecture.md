@@ -47,7 +47,7 @@ Server Box folgt den Prinzipien der Clean Architecture mit einer klaren Trennung
 ### Lokale Speicherung: Hive
 
 - **hive_ce**: Community-Edition von Hive
-- Keine manuellen `@HiveField` oder `@HiveType` erforderlich
+- Folgen Sie dem bestehenden Modellmuster: Die meisten Stores verwenden `hive_ce`, einige verfolgte Modelle deklarieren weiterhin explizit `@HiveType` und `@HiveField`
 - Typ-Adapter werden automatisch generiert
 - Persistenter Key-Value-Speicher
 

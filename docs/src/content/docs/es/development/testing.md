@@ -18,17 +18,7 @@ flutter test --coverage
 
 ## Estructura de las Pruebas
 
-Las pruebas se encuentran en el directorio `test/` reflejando la estructura de lib:
-
-```
-test/
-├── data/
-│   ├── model/
-│   └── provider/
-├── view/
-│   └── widget/
-└── test_helpers.dart
-```
+Las pruebas se encuentran en el directorio `test/`. La suite actual es mayormente plana y se agrupa por comportamiento de parsers, modelos y utilidades, por ejemplo `cpu_test.dart`, `container_test.dart` y `ssh_config_test.dart`.
 
 ## Pruebas Unitarias
 
@@ -71,38 +61,13 @@ test('serverStatusProvider devuelve el estado', () async {
 });
 ```
 
-## Mocking (Simulaciones)
+## Dependencias externas
 
-Utilizar mocks para dependencias externas:
-
-```dart
-class MockSshService extends Mock implements SshService {}
-
-test('se conecta al servidor', () async {
-  final mockSsh = MockSshService();
-  when(mockSsh.connect(any)).thenAnswer((_) async => true);
-
-  // Probar con el mock
-});
-```
+Evita pruebas que dependan de servidores SSH reales. Las pruebas de parsers, modelos y constructores de comandos deben ser deterministas; añade fakes o fixtures dirigidos cuando una función introduzca una frontera de servicio.
 
 ## Pruebas de Integración
 
-Probar flujos de usuario completos (en `integration_test/`):
-
-```dart
-testWidgets('flujo de agregar servidor', (tester) async {
-  await tester.pumpWidget(MyApp());
-
-  // Tocar el botón de agregar
-  await tester.tap(find.byIcon(Icons.add));
-  await tester.pumpAndSettle();
-
-  // Completar el formulario
-  await tester.enterText(find.byKey(Key('name')), 'Test Server');
-  // ...
-});
-```
+El repositorio actual no contiene una suite `integration_test/`. Añade pruebas de integración solo cuando una función necesite cobertura end-to-end de dispositivo o flujo completo de la app.
 
 ## Buenas Prácticas
 

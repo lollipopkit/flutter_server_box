@@ -85,7 +85,7 @@ void main() {
 - No native code dependencies
 - Fast key-value storage
 - Type-safe with code generation
-- No manual field annotations needed
+- Follow the existing model pattern; some tracked models still use explicit field annotations
 
 **Stores:**
 - `SettingStore`: App preferences

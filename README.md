@@ -30,9 +30,10 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 
 |Platform| From|
 |--|--|
-| iOS / macOS     | [AppStore](https://apps.apple.com/app/id1586449703)                                                                                                                                                                                                                               |
-| Android         | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/) |
-| Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid)                                                                                                                                 |
+| iOS | [AppStore](https://apps.apple.com/app/id1586449703) |
+| macOS | [AppStore](https://apps.apple.com/app/id1586449703) / brew install --cask server-box |
+| Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/) |
+| Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid) |
 
 Please only download pkgs from the source that **you trust**!  
 
@@ -72,17 +73,6 @@ If I forgot to add your name to the contributors list, please add a comment in t
 1. Setup [Flutter](https://flutter.dev/docs/get-started/install) environment.
 2. Clone this repo, run `flutter run` to start the app.
 3. Run `dart run fl_build -p PLATFORM` to build the app.
-
-### Release macOS notarized DMG
-
-1. Copy `.env.release.example` to `.env.release`.
-2. Fill in `APPLE_TEAM_ID` and `APPLE_NOTARY_KEYCHAIN_PROFILE`.
-3. Make sure the `Developer ID Application` certificate is already installed in Keychain.
-4. Make sure notarization credentials are already stored via `xcrun notarytool store-credentials`.
-5. Install the provisioning profile used for DMG packaging. The script defaults to `ServerBox DMG Profile`, and you can override it with `APP_PROFILE_NAME`.
-6. Run `bash scripts/release/release-macos-dmg.sh`.
-
-This flow does not modify the default Xcode Release signing config. It injects a temporary `xcconfig` only for archive/export, builds a signed `.app`, packages a DMG, submits it to notarization, staples the result, and optionally uploads the DMG to the GitHub Release for `v<version>`.
 
 ### Translation
 

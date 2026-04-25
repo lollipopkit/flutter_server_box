@@ -10,7 +10,7 @@ description: 从 JSON 文件中导入多个服务器
 :::danger[安全警告]
 **切勿在文件中存储明文密码！** 此 JSON 示例仅为了演示显示了密码字段，但你应该：
 
-- **优先使用 SSH 密钥** (`keyId`) 而不是 `pwd` - 它们更安全
+- **优先使用 SSH 密钥** (`pubKeyId`) 而不是 `pwd` - 它们更安全
 - 如果必须使用密码，请使用**密码管理器**或环境变量
 - 导入后**立即删除文件** - 不要让凭据散落在各处
 - **添加到 .gitignore** - 切勿将凭证文件提交到版本控制
@@ -24,7 +24,7 @@ description: 从 JSON 文件中导入多个服务器
     "port": 22,
     "user": "root",
     "pwd": "password",
-    "keyId": "",
+    "pubKeyId": "",
     "tags": ["production"],
     "autoConnect": false
   }
@@ -40,9 +40,10 @@ description: 从 JSON 文件中导入多个服务器
 | `port` | 是 | SSH 端口 (通常为 22) |
 | `user` | 是 | SSH 用户名 |
 | `pwd` | 否 | 密码 (不建议使用 - 请改用 SSH 密钥) |
-| `keyId` | 否 | SSH 密钥名称 (来自“私钥” - 推荐) |
+| `pubKeyId` | 否 | 私钥记录 id（来自“私钥” - 推荐） |
 | `tags` | 否 | 组织标签 |
 | `autoConnect` | 否 | 启动时自动连接 |
+| `id` | 否 | 稳定的服务器 id；省略或为空时会在导入时生成 |
 
 ## 导入步骤
 
@@ -60,7 +61,7 @@ description: 从 JSON 文件中导入多个服务器
     "ip": "prod.example.com",
     "port": 22,
     "user": "admin",
-    "keyId": "my-key",
+    "pubKeyId": "my-key",
     "tags": ["production", "web"]
   },
   {
@@ -68,7 +69,7 @@ description: 从 JSON 文件中导入多个服务器
     "ip": "dev.example.com",
     "port": 2222,
     "user": "dev",
-    "keyId": "dev-key",
+    "pubKeyId": "dev-key",
     "tags": ["development"]
   }
 ]

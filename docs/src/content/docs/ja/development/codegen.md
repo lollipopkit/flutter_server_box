@@ -21,8 +21,11 @@ Server Box では、モデル、状態管理、シリアライズのためにコ
 # すべてのコードを生成
 dart run build_runner build --delete-conflicting-outputs
 
-# クリーンアップして再生成
-dart run build_runner build --delete-conflicting-outputs --clean
+# 生成キャッシュをクリーン
+dart run build_runner clean
+
+# その後再生成
+dart run build_runner build --delete-conflicting-outputs
 ```
 
 ## 生成されるファイル
@@ -94,5 +97,5 @@ flutter gen-l10n
 ## ヒント
 
 - 競合を避けるために `--delete-conflicting-outputs` を使用してください。
-- 生成されたファイルを `.gitignore` に追加してください。
+- このリポジトリで既に追跡されている生成ファイルは、引き続きバージョン管理に含めてください。
 - 生成されたファイルを手動で編集しないでください。

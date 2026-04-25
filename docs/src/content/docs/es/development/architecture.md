@@ -47,7 +47,7 @@ Server Box sigue los principios de Clean Architecture con una clara separación 
 ### Almacenamiento Local: Hive
 
 - **hive_ce**: Edición comunitaria de Hive
-- No se requiere `@HiveField` o `@HiveType` manual
+- Sigue el patrón existente: la mayoría de los stores usan `hive_ce`, mientras algunos modelos versionados aún declaran explícitamente `@HiveType` y `@HiveField`
 - Adaptadores de tipo generados automáticamente
 - Almacenamiento persistente clave-valor
 
