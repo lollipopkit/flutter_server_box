@@ -15,7 +15,7 @@ require_cmd() {
   fi
 }
 
-android_sdk_root() {
+android_sdk_roots() {
   local candidates=(
     "${ANDROID_HOME:-}"
     "${ANDROID_SDK_ROOT:-}"
@@ -24,51 +24,142 @@ android_sdk_root() {
     "/opt/android-sdk"
     "/usr/local/lib/android/sdk"
   )
+  local roots=''
+  local candidate
 
   for candidate in "${candidates[@]}"; do
-    if [[ -n "$candidate" && -d "$candidate" ]]; then
-      printf '%s\n' "$candidate"
-      return
+    if [[ -z "$candidate" || ! -d "$candidate" ]]; then
+      continue
     fi
+
+    if printf '%s' "$roots" | grep -Fxq "$candidate"; then
+      continue
+    fi
+    roots+="$candidate"$'\n'
   done
+
+  printf '%s' "$roots"
+}
+
+android_tool_version() {
+  local path="$1"
+  local version='0'
+  case "$path" in
+    */build-tools/*)
+      version="${path#*/build-tools/}"
+      version="${version%%/*}"
+      ;;
+    */ndk/*)
+      version="${path#*/ndk/}"
+      version="${version%%/*}"
+      ;;
+  esac
+
+  printf '%s\n' "$version"
+}
+
+version_sort_key() {
+  local version="$1"
+  local part
+  local padded
+  local key=''
+
+  IFS='.' read -ra parts <<< "$version"
+  for part in "${parts[@]}"; do
+    if [[ "$part" =~ ^[0-9]+$ ]]; then
+      printf -v padded '%010d' "$part"
+    else
+      padded="$part"
+    fi
+    key+="$padded."
+  done
+
+  printf '%s\n' "$key"
+}
+
+select_latest_android_path() {
+  local path
+  local version
+  local key
+
+  while IFS= read -r path; do
+    if [[ -z "$path" ]]; then
+      continue
+    fi
+    version="$(android_tool_version "$path")"
+    key="$(version_sort_key "$version")"
+    printf '%s\t%s\n' "$key" "$path"
+  done |
+    sort |
+    tail -n 1 |
+    while IFS=$'\t' read -r _ path; do
+      printf '%s\n' "$path"
+    done
 }
 
 find_latest_android_tool() {
   local name="$1"
   local sdk_root
-  sdk_root="$(android_sdk_root)"
-  if [[ -z "$sdk_root" || ! -d "$sdk_root/build-tools" ]]; then
+  local matches=()
+  local path
+
+  while IFS= read -r sdk_root; do
+    if [[ -z "$sdk_root" || ! -d "$sdk_root/build-tools" ]]; then
+      continue
+    fi
+    while IFS= read -r path; do
+      matches+=("$path")
+    done < <(find "$sdk_root/build-tools" -type f -name "$name")
+  done < <(android_sdk_roots)
+
+  if [[ ${#matches[@]} -eq 0 ]]; then
     return 1
   fi
 
-  find "$sdk_root/build-tools" -type f -name "$name" | sort | tail -n 1
+  printf '%s\n' "${matches[@]}" | select_latest_android_path
 }
 
 find_llvm_objcopy() {
   local sdk_root
-  local found=''
-  sdk_root="$(android_sdk_root)"
-  if [[ -n "$sdk_root" && -d "$sdk_root/ndk" ]]; then
-    found="$(find "$sdk_root/ndk" -type f -path '*/toolchains/llvm/prebuilt/*/bin/llvm-objcopy' | sort | tail -n 1)"
-  fi
-  if [[ -n "$found" ]]; then
-    printf '%s\n' "$found"
+  local matches=()
+  local path
+
+  while IFS= read -r sdk_root; do
+    if [[ -z "$sdk_root" || ! -d "$sdk_root/ndk" ]]; then
+      continue
+    fi
+    while IFS= read -r path; do
+      matches+=("$path")
+    done < <(find "$sdk_root/ndk" -type f -path '*/toolchains/llvm/prebuilt/*/bin/llvm-objcopy')
+  done < <(android_sdk_roots)
+
+  if [[ ${#matches[@]} -ne 0 ]]; then
+    printf '%s\n' "${matches[@]}" | select_latest_android_path
     return
   fi
+
   command -v llvm-objcopy || command -v objcopy
 }
 
 find_readelf() {
   local sdk_root
-  local found=''
-  sdk_root="$(android_sdk_root)"
-  if [[ -n "$sdk_root" && -d "$sdk_root/ndk" ]]; then
-    found="$(find "$sdk_root/ndk" -type f -path '*/toolchains/llvm/prebuilt/*/bin/llvm-readelf' | sort | tail -n 1)"
-  fi
-  if [[ -n "$found" ]]; then
-    printf '%s\n' "$found"
+  local matches=()
+  local path
+
+  while IFS= read -r sdk_root; do
+    if [[ -z "$sdk_root" || ! -d "$sdk_root/ndk" ]]; then
+      continue
+    fi
+    while IFS= read -r path; do
+      matches+=("$path")
+    done < <(find "$sdk_root/ndk" -type f -path '*/toolchains/llvm/prebuilt/*/bin/llvm-readelf')
+  done < <(android_sdk_roots)
+
+  if [[ ${#matches[@]} -ne 0 ]]; then
+    printf '%s\n' "${matches[@]}" | select_latest_android_path
     return
   fi
+
   command -v readelf || command -v llvm-readelf
 }
 
