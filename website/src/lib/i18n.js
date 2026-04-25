@@ -5,6 +5,11 @@ export const defaultLocale = baseLocale
 export const locales = [
   { code: 'en', label: 'English' },
   { code: 'zh-CN', label: '简体中文' },
+  { code: 'fr', label: 'Français' },
+  { code: 'it', label: 'Italiano' },
+  { code: 'kr', label: '한국어' },
+  { code: 'ja', label: '日本語' },
+  { code: 'es', label: 'Español' },
 ].filter((locale) => generatedLocales.includes(locale.code))
 
 export const localeStorageKey = 'mfuse.website.locale'
@@ -15,6 +20,11 @@ export function normalizeLocale(locale) {
 
   const lowerLocale = locale.toLowerCase()
   if (lowerLocale.startsWith('zh')) return 'zh-CN'
+  if (lowerLocale.startsWith('fr')) return 'fr'
+  if (lowerLocale.startsWith('it')) return 'it'
+  if (lowerLocale.startsWith('ko') || lowerLocale.startsWith('kr')) return 'kr'
+  if (lowerLocale.startsWith('ja')) return 'ja'
+  if (lowerLocale.startsWith('es')) return 'es'
   if (lowerLocale.startsWith('en')) return 'en'
 
   return defaultLocale

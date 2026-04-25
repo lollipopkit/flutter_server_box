@@ -6,10 +6,20 @@ import type { Locales, Translations } from './i18n-types.js'
 import { loadedFormatters, loadedLocales, locales } from './i18n-util.js'
 
 import en from './en/index.js'
+import es from './es/index.js'
+import fr from './fr/index.js'
+import it from './it/index.js'
+import ja from './ja/index.js'
+import kr from './kr/index.js'
 import zh_CN from './zh-CN/index.js'
 
 const localeTranslations = {
 	en,
+	es,
+	fr,
+	it,
+	ja,
+	kr,
 	'zh-CN': zh_CN,
 }
 
