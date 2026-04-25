@@ -36,8 +36,6 @@ jobs:
           curl -u ${{ secrets.BASIC_AUTH }} -o android/app/app.key ${{ secrets.URL_PREFIX }}app.key
           curl -u ${{ secrets.BASIC_AUTH }} -o android/key.properties ${{ secrets.URL_PREFIX }}key.properties
       - name: Build
-        env:
-          LDFLAGS: -Wl,--build-id=none
         run: dart run fl_build -p android
       - name: Verify F-Droid native libraries
         run: scripts/release/verify-fdroid-native-libs.sh
