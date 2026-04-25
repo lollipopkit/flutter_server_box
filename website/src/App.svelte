@@ -89,8 +89,8 @@
   }
 
   let locale = $state(initialLocale)
-  let isMounted = $state(false)
   let copiedCommand = $state(undefined)
+  let copyFallbackCommand = $state(undefined)
 
   function applyLocale(nextLocale) {
     locale = nextLocale
@@ -103,12 +103,10 @@
     const nextLocale = locale || getInitialLocale()
     applyLocale(nextLocale)
     syncLocaleToUrl(nextLocale)
-
-    isMounted = true
   })
 
   $effect(() => {
-    if (!isMounted) return
+    if (!locale) return
 
     document.documentElement.lang = $LL.meta.lang()
     document.title = $LL.meta.title()
@@ -144,19 +142,22 @@
   }
 
   async function copyCommand(command) {
+    copiedCommand = command
+    copyFallbackCommand = undefined
+
     try {
       await navigator.clipboard.writeText(command)
-      copiedCommand = command
       window.setTimeout(() => {
         if (copiedCommand === command) copiedCommand = undefined
       }, 1800)
     } catch {
-      copiedCommand = undefined
+      copyFallbackCommand = command
+      window.prompt($LL.download.copyPrompt(), command)
     }
   }
 </script>
 
-{#if locale && isMounted}
+{#if locale}
   <main class="site">
     <header class="site-nav" id="top">
       <a class="brand" href="#top" onclick={(event) => scrollToSection(event, 'top')}>ServerBox</a>
@@ -164,6 +165,7 @@
         <a href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.nav.features()}</a>
         <a href="#capabilities" onclick={(event) => scrollToSection(event, 'capabilities')}>{$LL.nav.capabilities()}</a>
         <a href="#download" onclick={(event) => scrollToSection(event, 'download')}>{$LL.nav.download()}</a>
+        <a href="/docs/">Docs</a>
       </nav>
       <div class="nav-actions">
         <label class="language-switcher">
@@ -270,7 +272,15 @@
                     aria-label={`${group.label} ${source.label}`}
                     onclick={() => copyCommand(source.command)}
                   >
-                    <span>{copiedCommand === source.command ? $LL.download.copied() : source.label}</span>
+                    <span>
+                      {#if copyFallbackCommand === source.command}
+                        {source.command}
+                      {:else if copiedCommand === source.command}
+                        {$LL.download.copied()}
+                      {:else}
+                        {source.label}
+                      {/if}
+                    </span>
                   </button>
                 {:else}
                   <a class="download-icon-btn" href={source.href} aria-label={`${group.label} ${source.label}`}>

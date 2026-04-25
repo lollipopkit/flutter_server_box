@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 APP_NAME="${APP_NAME:-Server Box}"
-CASK_NAME="${CASK_NAME:-serverbox}"
+CASK_NAME="${CASK_NAME:-server-box}"
 CASK_DISPLAY_NAME="${CASK_DISPLAY_NAME:-ServerBox}"
 CASK_DESC="${CASK_DESC:-App for monitoring server status with SSH terminal, SFTP, Container management}"
 APP_REPO_SLUG="${APP_REPO_SLUG:-lollipopkit/flutter_server_box}"

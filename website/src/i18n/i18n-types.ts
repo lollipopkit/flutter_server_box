@@ -182,6 +182,10 @@ type RootTranslation = {
 		 */
 		copied: string
 		/**
+		 * C​o​p​y​ ​t​h​i​s​ ​i​n​s​t​a​l​l​ ​c​o​m​m​a​n​d​:
+		 */
+		copyPrompt: string
+		/**
 		 * O​n​l​y​ ​d​o​w​n​l​o​a​d​ ​p​a​c​k​a​g​e​s​ ​f​r​o​m​ ​a​ ​s​o​u​r​c​e​ ​y​o​u​ ​t​r​u​s​t​.​ ​F​o​r​ ​s​e​r​v​e​r​-​s​i​d​e​ ​p​u​s​h​,​ ​w​i​d​g​e​t​s​,​ ​a​n​d​ ​c​o​m​p​a​n​i​o​n​ ​m​o​n​i​t​o​r​i​n​g​,​ ​i​n​s​t​a​l​l​ ​S​e​r​v​e​r​B​o​x​M​o​n​i​t​o​r​ ​s​e​p​a​r​a​t​e​l​y​ ​o​n​ ​y​o​u​r​ ​s​e​r​v​e​r​s​.
 		 */
 		note: string
@@ -388,6 +392,10 @@ export type TranslationFunctions = {
 		 * Install command copied
 		 */
 		copied: () => LocalizedString
+		/**
+		 * Copy this install command:
+		 */
+		copyPrompt: () => LocalizedString
 		/**
 		 * Only download packages from a source you trust. For server-side push, widgets, and companion monitoring, install ServerBoxMonitor separately on your servers.
 		 */

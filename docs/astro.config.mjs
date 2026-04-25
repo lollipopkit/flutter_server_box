@@ -4,6 +4,7 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
+	base: '/docs',
 	integrations: [
 		starlight({
 			title: 'Server Box',

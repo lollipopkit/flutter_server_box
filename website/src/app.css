@@ -1,4 +1,4 @@
-@import 'https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800&display=swap';
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
 
 :root {
   color-scheme: light;
@@ -18,8 +18,8 @@
   --radius-container: 12px;
   --radius-pill: 9999px;
 
-  --font-display: 'Cabinet Grotesk', 'SF Pro Rounded', system-ui, -apple-system, sans-serif;
-  --font-body: 'Cabinet Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'SF Pro Rounded', system-ui, -apple-system, sans-serif;
+  --font-body: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace;
 }
 

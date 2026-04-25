@@ -70,6 +70,7 @@ const en: BaseTranslation = {
     subtitle:
       'Choose the channel that matches your device and trust model. iOS and macOS use the App Store; Android, Linux, and Windows also have direct package downloads.',
     copied: 'Install command copied',
+    copyPrompt: 'Copy this install command:',
     note:
       'Only download packages from a source you trust. For server-side push, widgets, and companion monitoring, install ServerBoxMonitor separately on your servers.',
   },

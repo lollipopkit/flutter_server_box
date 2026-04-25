@@ -69,6 +69,7 @@ const zhCN: Translation = {
     subtitle:
       '根据设备和信任模型选择下载渠道。iOS 与 macOS 使用 App Store；Android、Linux 和 Windows 也提供直接安装包。',
     copied: '已复制安装命令',
+    copyPrompt: '复制此安装命令：',
     note:
       '请只从你信任的来源下载安装包。若需要服务器端推送、小组件和独立监控，请在服务器上单独安装 ServerBoxMonitor。',
   },

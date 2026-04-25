@@ -10,6 +10,7 @@ PLATFORM ?=
 ENV_FILE ?=
 XCARCHIVE_PATH ?=
 APP_PATH ?=
+DMG_PATH ?=
 TAP_REPO_PATH ?=
 
 .PHONY: help deps pub-get run run-device analyze test test-one coverage \
@@ -51,10 +52,10 @@ help:
 		'  package-dmg        Run scripts/release/package-dmg-from-xcarchive.sh' \
 		'                     Example: make package-dmg APP_PATH="/path/Server Box.app"' \
 		'                     Example: make package-dmg XCARCHIVE_PATH=/path/Runner.xcarchive' \
-		'  sync-homebrew-cask Generate ~/proj/homebrew-taps/Casks/serverbox.rb from a built DMG' \
+		'  sync-homebrew-cask Generate ~/proj/homebrew-taps/Casks/server-box.rb from a built DMG' \
 		'                     Example: make sync-homebrew-cask APP_PATH="/path/Server Box.app"' \
 		'                     Example: make sync-homebrew-cask XCARCHIVE_PATH=/path/Runner.xcarchive' \
-		'                     Example: make sync-homebrew-cask DMG_PATH=build/artifacts/ServerBox-1.0.1365.dmg'
+		'                     Example: make sync-homebrew-cask DMG_PATH=build/artifacts/ServerBox-1.0.1.dmg'
 
 deps pub-get:
 	$(FLUTTER) pub get
@@ -146,7 +147,7 @@ sync-homebrew-cask:
 		echo 'APP_PATH, XCARCHIVE_PATH, or DMG_PATH is required.'; \
 		echo 'Example: make sync-homebrew-cask APP_PATH="/path/Server Box.app"'; \
 		echo 'Example: make sync-homebrew-cask XCARCHIVE_PATH=/path/Runner.xcarchive'; \
-		echo 'Example: make sync-homebrew-cask DMG_PATH=build/artifacts/ServerBox-1.0.1365.dmg'; \
+		echo 'Example: make sync-homebrew-cask DMG_PATH=build/artifacts/ServerBox-1.0.1.dmg'; \
 		exit 1; \
 	fi
 	@if [ -n "$(APP_PATH)" ]; then \

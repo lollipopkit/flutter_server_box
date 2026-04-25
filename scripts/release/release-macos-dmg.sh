@@ -395,5 +395,5 @@ if [[ "$PUBLISH_GITHUB_RELEASE" == "1" ]]; then
   echo "GitHub release: $APP_REPO_SLUG $RELEASE_TAG"
 fi
 if [[ "${SYNC_HOMEBREW_CASK:-1}" == "1" ]]; then
-  echo "Homebrew cask: ${TAP_REPO_PATH:-$HOME/proj/homebrew-taps}/Casks/serverbox.rb"
+  echo "Homebrew cask: ${TAP_REPO_PATH:-$HOME/proj/homebrew-taps}/Casks/server-box.rb"
 fi
