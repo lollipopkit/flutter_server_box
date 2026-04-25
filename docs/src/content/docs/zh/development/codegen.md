@@ -17,14 +17,20 @@ Server Box 大量使用代码生成技术来处理模型、状态管理和序列
 
 ## 运行代码生成
 
+### 普通构建
+
+用于常规代码生成：
+
 ```bash
-# 生成所有代码
 dart run build_runner build --delete-conflicting-outputs
+```
 
-# 清理生成缓存
+### 清理后重建
+
+仅在生成缓存异常或生成结果不一致时使用。先清理，再重新生成：
+
+```bash
 dart run build_runner clean
-
-# 然后重新生成
 dart run build_runner build --delete-conflicting-outputs
 ```
 

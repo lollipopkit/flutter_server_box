@@ -11,6 +11,7 @@ const en: BaseTranslation = {
     features: 'Features',
     capabilities: 'Capabilities',
     download: 'Download',
+    docs: 'Docs',
     languageLabel: 'Language',
   },
   hero: {
@@ -64,6 +65,20 @@ const en: BaseTranslation = {
       'ServerBox keeps terminal access, file transfer, service checks, hardware health, and device-native alerts in the same workflow.',
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android, Linux, and Windows',
+    items: {
+      statusChart: 'Status chart',
+      sshTerminal: 'SSH Terminal',
+      sftp: 'SFTP',
+      docker: 'Docker',
+      process: 'Process',
+      systemd: 'Systemd',
+      smart: 'S.M.A.R.T',
+      gpu: 'GPU',
+      sensors: 'Sensors',
+      push: 'Push',
+      homeWidget: 'Home Widget',
+      watchos: 'watchOS',
+    },
   },
   download: {
     title: 'Every platform, every source.',

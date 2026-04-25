@@ -67,19 +67,7 @@ Evita pruebas que dependan de servidores SSH reales. Las pruebas de parsers, mod
 
 ## Pruebas de Integración
 
-El repositorio actual no contiene una suite `integration_test/`. Añade pruebas de integración solo cuando una función necesite cobertura end-to-end de dispositivo o flujo completo de la app.dart
-testWidgets('flujo de agregar servidor', (tester) async {
-  await tester.pumpWidget(MyApp());
-
-  // Tocar el botón de agregar
-  await tester.tap(find.byIcon(Icons.add));
-  await tester.pumpAndSettle();
-
-  // Completar el formulario
-  await tester.enterText(find.byKey(Key('name')), 'Test Server');
-  // ...
-});
-```
+El repositorio actual no contiene una suite `integration_test/`. Añade pruebas de integración solo cuando una función necesite cobertura end-to-end de dispositivo o flujo completo de la app.
 
 ## Buenas Prácticas
 

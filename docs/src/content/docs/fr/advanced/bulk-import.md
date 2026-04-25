@@ -43,7 +43,7 @@ Importez plusieurs configurations de serveur en une seule fois à l'aide d'un fi
 | `pubKeyId` | Non | ID de clé privée (à partir des clés privées - recommandé) |
 | `tags` | Non | Tags d'organisation |
 | `autoConnect` | Non | Connexion automatique au démarrage |
-| `id` | Non | ID serveur stable ; les valeurs absentes ou vides sont générées à l’import |
+| `id` | Non | ID serveur stable ; les valeurs absentes ou vides sont générées à l'import |
 
 ## Étapes d'importation
 

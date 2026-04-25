@@ -11,6 +11,7 @@ const zhCN: Translation = {
     features: '特性',
     capabilities: '能力',
     download: '下载',
+    docs: '文档',
     languageLabel: '语言',
   },
   hero: {
@@ -63,6 +64,20 @@ const zhCN: Translation = {
       'ServerBox 将终端访问、文件传输、服务检查、硬件健康和设备原生提醒放在同一个工作流中。',
     installIosPrompt: '# iOS',
     installReleasePrompt: '# Android、Linux 与 Windows',
+    items: {
+      statusChart: '状态图表',
+      sshTerminal: 'SSH 终端',
+      sftp: 'SFTP',
+      docker: 'Docker',
+      process: '进程',
+      systemd: 'Systemd',
+      smart: 'S.M.A.R.T',
+      gpu: 'GPU',
+      sensors: '传感器',
+      push: '推送',
+      homeWidget: '桌面小组件',
+      watchos: 'watchOS',
+    },
   },
   download: {
     title: '所有平台，所有来源。',
