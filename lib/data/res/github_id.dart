@@ -24,6 +24,7 @@ abstract final class GithubIds {
     'GitGitro',
     'Shin-suechtig',
     'hypn4',
+    'barkure',
   };
 
   static const participants = <GhId>{

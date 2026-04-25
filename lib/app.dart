@@ -12,6 +12,10 @@ import 'package:server_box/view/page/home.dart';
 
 part 'intro.dart';
 
+Widget _buildHomeWithWindowFrame() {
+  return VirtualWindowFrame(title: BuildData.name, child: const HomePage());
+}
+
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -136,6 +140,7 @@ class _MyAppState extends State<MyApp> {
           if (appL10n != null) l10n = appL10n;
 
           Widget child;
+          var hasWindowFrame = false;
           if (snapshot.connectionState == ConnectionState.waiting) {
             child = const Scaffold(body: Center(child: CircularProgressIndicator()));
           } else {
@@ -143,10 +148,12 @@ class _MyAppState extends State<MyApp> {
             if (intros.isNotEmpty) {
               child = _IntroPage(intros);
             } else {
-              child = const HomePage();
+              child = _buildHomeWithWindowFrame();
+              hasWindowFrame = true;
             }
           }
 
+          if (hasWindowFrame) return child;
           return VirtualWindowFrame(title: BuildData.name, child: child);
         },
       ),

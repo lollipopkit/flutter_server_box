@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -25,7 +26,12 @@ class SSHTabPage extends ConsumerStatefulWidget {
 typedef _TabMap =
     Map<
       String,
-      ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})
+      ({
+        Widget page,
+        FocusNode? focus,
+        ValueNotifier<bool>? visible,
+        GlobalKey<SSHPageState>? sshPageKey,
+      })
     >;
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
@@ -39,6 +45,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       ),
       focus: null,
       visible: null,
+      sshPageKey: null,
     ),
   };
   final _pageCtrl = PageController();
@@ -72,6 +79,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
             map: _tabMap,
             onTap: _onTapTab,
             onClose: _onTapClose,
+            snippetBtn: buildSnippetBtn(context),
             sortBtn: buildSortBtn(context),
             searchBtn: buildSearchBtn(context),
             historyBtn: buildHistoryBtn(context),
@@ -128,19 +136,36 @@ extension on _SSHTabPageState {
   }
 
   void _disposeTabEntry(
-    ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible}) entry,
+    ({
+      Widget page,
+      FocusNode? focus,
+      ValueNotifier<bool>? visible,
+      GlobalKey<SSHPageState>? sshPageKey,
+    })
+    entry,
   ) {
     entry.focus?.dispose();
     entry.visible?.dispose();
   }
 
-  ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})?
+  ({
+    Widget page,
+    FocusNode? focus,
+    ValueNotifier<bool>? visible,
+    GlobalKey<SSHPageState>? sshPageKey,
+  })?
   _detachTabEntry(String name) {
     return _tabMap.remove(name);
   }
 
   void _disposeTabEntryAfterFrame(
-    ({Widget page, FocusNode? focus, ValueNotifier<bool>? visible})? entry,
+    ({
+      Widget page,
+      FocusNode? focus,
+      ValueNotifier<bool>? visible,
+      GlobalKey<SSHPageState>? sshPageKey,
+    })?
+    entry,
   ) {
     if (entry == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -211,7 +236,7 @@ extension on _SSHTabPageState {
       }
       return spi.name;
     }();
-    final key = Key(name);
+    final key = GlobalKey<SSHPageState>(debugLabel: name);
     final focusNode = FocusNode();
     final visibleVN = ValueNotifier(false);
     final args = SshPageArgs(
@@ -230,6 +255,7 @@ extension on _SSHTabPageState {
       ),
       focus: focusNode,
       visible: visibleVN,
+      sshPageKey: key,
     );
     _tabRN.notify();
     Stores.history.sshServerHistory.add(spi.id);
@@ -384,6 +410,18 @@ extension on _SSHTabPageState {
     );
   }
 
+  Widget buildSnippetBtn(BuildContext context) {
+    return Btn.icon(
+      icon: const Icon(Icons.code, size: 18),
+      onTap: () {
+        final idx = _fabVN.value;
+        if (idx == 0) return;
+        final entry = _tabMap.values.elementAtOrNull(idx);
+        entry?.sshPageKey?.currentState?.pickSnippetFromToolbar();
+      },
+    );
+  }
+
   void showHistoryDialog(BuildContext context) {
     final history = Stores.history.sshServerHistory.all.cast<String>();
     if (history.isEmpty) {
@@ -399,6 +437,7 @@ extension on _SSHTabPageState {
     context.showRoundDialog(
       title: l10n.serverHistory,
       child: SizedBox(
+        width: 420,
         height: 300,
         child: ListView.builder(
           itemCount: history.length,
@@ -406,6 +445,7 @@ extension on _SSHTabPageState {
             final id = history[idx];
             final spi = serverState.servers[id];
             return ListTile(
+              contentPadding: EdgeInsets.zero,
               title: Text(spi?.name ?? id),
               subtitle: spi != null
                   ? Text('${spi.user}@${spi.ip}:${spi.port}')
@@ -435,6 +475,7 @@ extension on _SSHTabPageState {
       ],
     );
   }
+
 }
 
 final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
@@ -443,6 +484,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
     required this.map,
     required this.onTap,
     required this.onClose,
+    required this.snippetBtn,
     required this.sortBtn,
     required this.searchBtn,
     required this.historyBtn,
@@ -452,11 +494,13 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
   final _TabMap map;
   final void Function(int idx) onTap;
   final void Function(String name) onClose;
+  final Widget snippetBtn;
   final Widget sortBtn;
   final Widget searchBtn;
   final Widget historyBtn;
 
   List<String> get names => map.keys.toList();
+  List<String> get connectionNames => names.skip(1).toList();
 
   @override
   Size get preferredSize => const Size.fromHeight(48);
@@ -466,23 +510,11 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
     return ListenBuilder(
       listenable: idxVN,
       builder: () {
+        final showHomeActions = idxVN.value == 0;
+        final showSnippetAction = idxVN.value != 0;
         return Row(
           children: [
-            Expanded(
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
-                itemCount: names.length,
-                itemBuilder: (_, idx) => _buildItem(idx),
-                separatorBuilder: (_, _) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 17),
-                  child: Container(
-                    color: Theme.of(context).dividerColor.withAlpha(61),
-                    width: 3,
-                  ),
-                ),
-              ),
-            ),
+            _buildAddItem(context),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 17),
               child: Container(
@@ -490,78 +522,137 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
                 width: 3,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 7),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  sortBtn,
-                  const SizedBox(width: 7),
-                  searchBtn,
-                  const SizedBox(width: 7),
-                  historyBtn,
-                ],
+            Expanded(
+              child: ClipRect(
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 5,
+                  ),
+                  itemCount: connectionNames.length,
+                  itemBuilder: (_, idx) => _buildItem(context, idx + 1),
+                  separatorBuilder: (_, _) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 17),
+                    child: Container(
+                      color: Theme.of(context).dividerColor.withAlpha(61),
+                      width: 3,
+                    ),
+                  ),
+                ),
               ),
             ),
+            if (showSnippetAction) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 17),
+                child: Container(
+                  color: Theme.of(context).dividerColor.withAlpha(61),
+                  width: 3,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 7),
+                child: snippetBtn,
+              ),
+            ],
+            if (showHomeActions) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 17),
+                child: Container(
+                  color: Theme.of(context).dividerColor.withAlpha(61),
+                  width: 3,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 7),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    sortBtn,
+                    const SizedBox(width: 7),
+                    searchBtn,
+                    const SizedBox(width: 7),
+                    historyBtn,
+                  ],
+                ),
+              ),
+            ],
           ],
         );
       },
     );
   }
 
-  static const kWideWidth = 90.0;
-  static const kNarrowWidth = 60.0;
+  Widget _buildAddItem(BuildContext context) {
+    final color = idxVN.value == 0 ? null : Colors.grey;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(13),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(13),
+        onTap: () => onTap(0),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Icon(MingCute.add_circle_fill, size: 17, color: color),
+        ),
+      ),
+    );
+  }
 
-  Widget _buildItem(int idx) {
+  Widget _buildItem(BuildContext context, int idx) {
+    final isMobile = ResponsiveBreakpoints.of(context).isMobile;
+    final wideWidth = isMobile ? 90.0 : 130.0;
+    final narrowWidth = isMobile ? 60.0 : 90.0;
     final name = names[idx];
     final selected = idxVN.value == idx;
     final color = selected ? null : Colors.grey;
 
-    final Widget child;
-    if (idx == 0) {
-      child = Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 13),
-        child: Icon(MingCute.add_circle_fill, size: 17, color: color),
+    final text = Text(
+      name,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(color: color),
+      softWrap: false,
+      textAlign: TextAlign.right,
+      textWidthBasis: TextWidthBasis.parent,
+    );
+    final Widget btn;
+    if (selected) {
+      btn = Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Btn.icon(
+            icon: Icon(MingCute.close_circle_fill, color: color, size: 17),
+            onTap: () => onClose(name),
+            padding: null,
+          ),
+          Expanded(child: text),
+        ],
       );
     } else {
-      final text = Text(
-        name,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: color),
-        softWrap: false,
-        textAlign: TextAlign.right,
-        textWidthBasis: TextWidthBasis.parent,
-      );
-      final Widget btn;
-      if (selected) {
-        btn = Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Btn.icon(
-              icon: Icon(MingCute.close_circle_fill, color: color, size: 17),
-              onTap: () => onClose(name),
-              padding: null,
-            ),
-            SizedBox(width: kNarrowWidth - 15, child: text),
-          ],
-        );
-      } else {
-        btn = Center(child: text);
-      }
-      child = AnimatedContainer(
-        width: selected ? kWideWidth : kNarrowWidth,
-        duration: Durations.medium3,
-        curve: Curves.fastEaseInToSlowEaseOut,
-        child: OverflowBox(maxWidth: selected ? kWideWidth : null, child: btn),
-      );
+      btn = Center(child: text);
     }
+    final child = AnimatedContainer(
+      width: selected ? wideWidth : narrowWidth,
+      duration: Durations.medium3,
+      curve: Curves.fastEaseInToSlowEaseOut,
+      child: btn,
+    );
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(13),
-      onTap: () => onTap(idx),
-      child: child,
-    ).paddingSymmetric(horizontal: 7);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 7),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(13),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(13),
+          onTap: () => onTap(idx),
+          child: child,
+        ),
+      ),
+    );
   }
 }
 
@@ -602,7 +693,7 @@ class _AddPageState extends ConsumerState<_AddPage> {
   @override
   Widget build(BuildContext context) {
     const viewPadding = 7.0;
-    final viewWidth = context.windowSize.width - 2 * viewPadding;
+    final isMobile = ResponsiveBreakpoints.of(context).isMobile;
 
     final serverState = ref.watch(serversProvider);
     final sortBy = Stores.setting.sshPageSortBy.fetch();
@@ -629,61 +720,95 @@ class _AddPageState extends ConsumerState<_AddPage> {
 
     final itemCount = order.length;
     const itemPadding = 1.0;
-    const itemWidth = 150.0;
-    const itemHeight = 50.0;
-
-    final visualCrossCount = viewWidth / itemWidth;
-    final crossCount = max(
-      viewWidth ~/ (visualCrossCount * itemPadding + itemWidth),
-      1,
-    );
-    final mainCount = itemCount ~/ crossCount + 1;
+    final isDesktopWide = !isMobile;
+    const desktopMinItemWidth = 280.0;
+    const desktopMaxItemWidth = 320.0;
 
     if (order.isEmpty) {
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(viewPadding),
-      children: List.generate(
-        mainCount,
-        (rowIndex) => Row(
-          children: List.generate(crossCount, (columnIndex) {
-            final idx = rowIndex * crossCount + columnIndex;
-            final id = order.elementAtOrNull(idx);
-            final spi = serverState.servers[id];
-            if (spi == null) return _placeholder;
+    return LayoutBuilder(
+      builder: (_, cons) {
+        final availableWidth = max(cons.maxWidth - 2 * viewPadding, 0.0);
+        final canUseTwoColumns =
+            availableWidth >= 2 * (desktopMinItemWidth + itemPadding);
+        final crossCount = isDesktopWide
+            ? max(
+                availableWidth ~/ (desktopMinItemWidth + itemPadding),
+                canUseTwoColumns ? 2 : 1,
+              )
+            : 1;
+        final mainCount = (itemCount + crossCount - 1) ~/ crossCount;
+        final desktopItemWidth = isDesktopWide
+            ? max(
+                0.0,
+                min(
+                  desktopMaxItemWidth,
+                  (availableWidth - crossCount * itemPadding * 2) / crossCount,
+                ),
+              )
+            : null;
 
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(itemPadding),
-                child: InkWell(
-                  onTap: () => widget.onTapInitCard(spi),
-                  onLongPress: () => widget.onLongPressInitCard(spi),
-                  child: Container(
-                    height: itemHeight,
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.only(left: 17, right: 7),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            spi.name,
-                            style: UIs.text18,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+        return ListView(
+          padding: const EdgeInsets.all(viewPadding),
+          children: List.generate(
+            mainCount,
+            (rowIndex) => Row(
+              mainAxisAlignment: isDesktopWide
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.start,
+              children: List.generate(crossCount, (columnIndex) {
+                final idx = rowIndex * crossCount + columnIndex;
+                final id = order.elementAtOrNull(idx);
+                final spi = serverState.servers[id];
+                if (spi == null) {
+                  return isDesktopWide
+                      ? SizedBox(width: desktopItemWidth)
+                      : _placeholder;
+                }
+
+                final child = Padding(
+                  padding: const EdgeInsets.all(itemPadding),
+                  child: InkWell(
+                    onTap: () => widget.onTapInitCard(spi),
+                    onLongPress: () => widget.onLongPressInitCard(spi),
+                    child: Container(
+                      alignment: Alignment.centerLeft,
+                      constraints: BoxConstraints(
+                        minHeight: isDesktopWide ? 58.0 : 50.0,
+                      ),
+                      padding: const EdgeInsets.only(left: 17, right: 7),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              spi.name,
+                              style: UIs.text18,
+                              maxLines: isDesktopWide ? null : 2,
+                              overflow: isDesktopWide
+                                  ? null
+                                  : TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                        const Icon(Icons.chevron_right),
-                      ],
+                          const Icon(Icons.chevron_right),
+                        ],
+                      ),
                     ),
-                  ),
-                ).cardx,
-              ),
-            );
-          }),
-        ),
-      ),
+                  ).cardx,
+                );
+
+                if (isDesktopWide) {
+                  return SizedBox(width: desktopItemWidth, child: child);
+                }
+
+                return Expanded(child: child);
+              }),
+            ),
+          ),
+        );
+      },
     );
   }
 }

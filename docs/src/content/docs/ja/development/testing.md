@@ -18,17 +18,7 @@ flutter test --coverage
 
 ## テスト構造
 
-テストは `test/` ディレクトリにあり、lib の構造を反映しています：
-
-```
-test/
-├── data/
-│   ├── model/
-│   └── provider/
-├── view/
-│   └── widget/
-└── test_helpers.dart
-```
+テストは `test/` ディレクトリにあります。現在のテストスイートは主にフラットな構成で、パーサー、モデル、ユーティリティの挙動ごとに分かれています。例: `cpu_test.dart`、`container_test.dart`、`ssh_config_test.dart`。
 
 ## ユニットテスト
 
@@ -71,26 +61,13 @@ test('serverStatusProvider がステータスを返すこと', () async {
 });
 ```
 
-## モック (Mocking)
+## 外部依存
 
-外部依存関係にモックを使用する：
-
-```dart
-class MockSshService extends Mock implements SshService {}
-
-test('サーバーに接続すること', () async {
-  final mockSsh = MockSshService();
-  when(mockSsh.connect(any)).thenAnswer((_) async => true);
-
-  // モックを使用してテスト
-});
-```
+実際の SSH サーバーに依存するテストは避けてください。パーサー、モデル、コマンドビルダーのテストは決定的に保ち、機能がサービス境界を導入する場合にのみ対象を絞った fake や fixture を追加してください。
 
 ## 統合テスト
 
-完全なユーザーフローのテスト (`integration_test/` 内)：
-
-```dart
+現在のリポジトリには `integration_test/` スイートはありません。デバイス上の end-to-end やアプリ全体のフロー確認が必要な機能でのみ追加してください。dart
 testWidgets('サーバー追加フロー', (tester) async {
   await tester.pumpWidget(MyApp());
 

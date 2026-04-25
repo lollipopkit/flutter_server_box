@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "target": "ESNext",
+    "module": "ESNext",
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "$lib": ["src/lib"],
+      "$lib/*": ["src/lib/*"]
+    },
+    "types": ["vite/client"],
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.d.ts", "src/**/*.svelte", "src/**/*.ts"]
+}

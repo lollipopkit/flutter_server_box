@@ -47,7 +47,7 @@ Server Box follows clean architecture principles with clear separation between d
 ### Local Storage: Hive
 
 - **hive_ce**: Community edition of Hive
-- No manual `@HiveField` or `@HiveType` needed
+- Follow the existing model pattern: most stores use `hive_ce`, while some tracked models still declare `@HiveType` and `@HiveField` explicitly
 - Type adapters auto-generated
 - Persistent key-value storage
 

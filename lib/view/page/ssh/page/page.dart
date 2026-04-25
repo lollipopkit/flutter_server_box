@@ -116,11 +116,14 @@ class SSHPageState extends ConsumerState<SSHPage>
   bool _disconnectDialogOpen = false;
   bool _reportedDisconnected = false;
   VoidCallback? _visibilityListener;
+  bool _isPickingSnippet = false;
 
   /// Used for (de)activate the wake lock and forground service
   static var _sshConnCount = 0;
   late final String _sessionId = ShortId.generate();
   late final int _sessionStartMs = DateTime.now().millisecondsSinceEpoch;
+
+  Future<void> pickSnippetFromToolbar() => _pickSnippet();
 
   @override
   void dispose() {
@@ -390,14 +393,57 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   List<Widget> _buildAppBarActions() {
-    if (widget.args.spi.isRoot) return const [];
-    return [
+    final actions = <Widget>[
       IconButton(
-        onPressed: _insertSudoPassword,
-        tooltip: l10n.trySudo,
-        icon: const Icon(Icons.password),
+        onPressed: _pickSnippet,
+        tooltip: libL10n.snippet,
+        icon: const Icon(Icons.code),
       ),
     ];
+    if (!widget.args.spi.isRoot) {
+      actions.add(
+        IconButton(
+          onPressed: _insertSudoPassword,
+          tooltip: l10n.trySudo,
+          icon: const Icon(Icons.password),
+        ),
+      );
+    }
+    return actions;
+  }
+
+  Future<void> _pickSnippet() async {
+    if (_isPickingSnippet) return;
+    _isPickingSnippet = true;
+
+    try {
+      final snippets = ref.read(snippetProvider.select((p) => p.snippets));
+      if (snippets.isEmpty) {
+        if (!mounted) return;
+        context.showSnackBar(libL10n.empty);
+        return;
+      }
+
+      final selected = await context.showPickSingleDialog<Snippet>(
+        title: libL10n.snippet,
+        items: snippets,
+        display: (snippet) => snippet.name,
+      );
+      if (selected == null) return;
+
+      try {
+        await selected.runInTerm(_terminal, widget.args.spi);
+      } catch (e, s) {
+        if (!mounted) return;
+        context.showErrDialog(e, s, '${libL10n.snippet}: ${selected.name}');
+        return;
+      }
+      if (!mounted) return;
+      widget.args.focusNode?.requestFocus();
+      _termKey.currentState?.requestKeyboard();
+    } finally {
+      _isPickingSnippet = false;
+    }
   }
 
   Widget _buildVirtualKey(

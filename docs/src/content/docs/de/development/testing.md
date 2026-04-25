@@ -18,17 +18,7 @@ flutter test --coverage
 
 ## Teststruktur
 
-Tests befinden sich im Verzeichnis `test/` und spiegeln die Struktur von `lib/` wider:
-
-```
-test/
-├── data/
-│   ├── model/
-│   └── provider/
-├── view/
-│   └── widget/
-└── test_helpers.dart
-```
+Tests befinden sich im Verzeichnis `test/`. Die aktuelle Suite ist überwiegend flach und nach Parser-, Modell- und Utility-Verhalten gruppiert, zum Beispiel `cpu_test.dart`, `container_test.dart` und `ssh_config_test.dart`.
 
 ## Unit-Tests
 
@@ -71,26 +61,13 @@ test('serverStatusProvider gibt Status zurück', () async {
 });
 ```
 
-## Mocking
+## Externe Abhängigkeiten
 
-Mocks für externe Abhängigkeiten verwenden:
-
-```dart
-class MockSshService extends Mock implements SshService {}
-
-test('verbindet zum Server', () async {
-  final mockSsh = MockSshService();
-  when(mockSsh.connect(any)).thenAnswer((_) async => true);
-
-  // Test mit Mock
-});
-```
+Vermeiden Sie Tests, die von echten SSH-Servern abhängen. Parser-, Modell- und Command-Builder-Tests sollten deterministisch bleiben; fügen Sie gezielte Fakes oder Fixtures hinzu, wenn eine Funktion eine Service-Grenze einführt.
 
 ## Integrationstests
 
-Komplette Benutzerabläufe testen (in `integration_test/`):
-
-```dart
+Im aktuellen Repository gibt es keine `integration_test/`-Suite. Fügen Sie Integrationstests nur hinzu, wenn eine Funktion End-to-End-Geräte- oder App-Flow-Abdeckung benötigt.dart
 testWidgets('Server hinzufügen Ablauf', (tester) async {
   await tester.pumpWidget(MyApp());
 

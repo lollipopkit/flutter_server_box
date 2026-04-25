@@ -10,7 +10,7 @@ Import multiple server configurations at once using a JSON file.
 :::danger[Security Warning]
 **Never store plaintext passwords in files!** This JSON example shows a password field for demonstration only, but you should:
 
-- **Prefer SSH keys** (`keyId`) instead of `pwd` - they're more secure
+- **Prefer SSH keys** (`pubKeyId`) instead of `pwd` - they're more secure
 - **Use secret managers** or environment variables if you must use passwords
 - **Delete the file immediately** after import - don't leave credentials lying around
 - **Add to .gitignore** - never commit credential files to version control
@@ -24,7 +24,7 @@ Import multiple server configurations at once using a JSON file.
     "port": 22,
     "user": "root",
     "pwd": "password",
-    "keyId": "",
+    "pubKeyId": "",
     "tags": ["production"],
     "autoConnect": false
   }
@@ -40,9 +40,10 @@ Import multiple server configurations at once using a JSON file.
 | `port` | Yes | SSH port (usually 22) |
 | `user` | Yes | SSH username |
 | `pwd` | No | Password (avoid - use SSH keys instead) |
-| `keyId` | No | SSH key name (from Private Keys - recommended) |
+| `pubKeyId` | No | Private key id (from Private Keys - recommended) |
 | `tags` | No | Organization tags |
 | `autoConnect` | No | Auto-connect on startup |
+| `id` | No | Stable server id; omitted or empty values are generated on import |
 
 ## Import Steps
 
@@ -60,7 +61,7 @@ Import multiple server configurations at once using a JSON file.
     "ip": "prod.example.com",
     "port": 22,
     "user": "admin",
-    "keyId": "my-key",
+    "pubKeyId": "my-key",
     "tags": ["production", "web"]
   },
   {
@@ -68,7 +69,7 @@ Import multiple server configurations at once using a JSON file.
     "ip": "dev.example.com",
     "port": 2222,
     "user": "dev",
-    "keyId": "dev-key",
+    "pubKeyId": "dev-key",
     "tags": ["development"]
   }
 ]
