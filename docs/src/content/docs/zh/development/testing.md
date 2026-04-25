@@ -18,17 +18,7 @@ flutter test --coverage
 
 ## 测试结构
 
-测试文件位于 `test/` 目录中，其结构与 `lib` 目录保持一致：
-
-```
-test/
-├── data/
-│   ├── model/
-│   └── provider/
-├── view/
-│   └── widget/
-└── test_helpers.dart
-```
+测试位于 `test/` 目录中。当前测试套件基本是扁平结构，按解析器、模型和工具行为分组，例如 `cpu_test.dart`、`container_test.dart` 和 `ssh_config_test.dart`。
 
 ## 单元测试
 
@@ -71,26 +61,13 @@ test('serverStatusProvider 应当返回状态', () async {
 });
 ```
 
-## Mock 模拟
+## 外部依赖
 
-对外部依赖使用 Mock 模拟：
-
-```dart
-class MockSshService extends Mock implements SshService {}
-
-test('应当能连接到服务器', () async {
-  final mockSsh = MockSshService();
-  when(mockSsh.connect(any)).thenAnswer((_) async => true);
-
-  // 使用 mock 进行测试
-});
-```
+避免让测试依赖真实 SSH 服务器。解析器、模型和命令构建测试应保持确定性；当功能引入服务边界时，再添加有针对性的 fake 或 fixture。
 
 ## 集成测试
 
-测试完整的用户流程（位于 `integration_test/`）：
-
-```dart
+当前仓库没有 `integration_test/` 测试套件。只有当功能需要端到端设备或完整应用流程覆盖时，再新增集成测试。dart
 testWidgets('添加服务器流程', (tester) async {
   await tester.pumpWidget(MyApp());
 

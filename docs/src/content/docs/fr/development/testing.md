@@ -18,17 +18,7 @@ flutter test --coverage
 
 ## Structure des tests
 
-Les tests sont situés dans le répertoire `test/`, reflétant la structure de `lib/` :
-
-```
-test/
-├── data/
-│   ├── model/
-│   └── provider/
-├── view/
-│   └── widget/
-└── test_helpers.dart
-```
+Les tests se trouvent dans le répertoire `test/`. La suite actuelle est principalement plate et regroupée par comportement de parseur, de modèle et d’utilitaire, par exemple `cpu_test.dart`, `container_test.dart` et `ssh_config_test.dart`.
 
 ## Tests unitaires
 
@@ -71,26 +61,13 @@ test('serverStatusProvider retourne le statut', () async {
 });
 ```
 
-## Mocking (Simulations)
+## Dépendances externes
 
-Utiliser des mocks pour les dépendances externes :
-
-```dart
-class MockSshService extends Mock implements SshService {}
-
-test('se connecte au serveur', () async {
-  final mockSsh = MockSshService();
-  when(mockSsh.connect(any)).thenAnswer((_) async => true);
-
-  // Tester avec le mock
-});
-```
+Évitez les tests qui dépendent de vrais serveurs SSH. Les tests de parseurs, modèles et constructeurs de commandes doivent rester déterministes ; ajoutez des fakes ou fixtures ciblés lorsqu’une fonctionnalité introduit une frontière de service.
 
 ## Tests d'intégration
 
-Tester des flux utilisateurs complets (dans `integration_test/`) :
-
-```dart
+Le dépôt actuel ne contient pas de suite `integration_test/`. Ajoutez des tests d’intégration seulement lorsqu’une fonctionnalité nécessite une couverture end-to-end sur appareil ou flux applicatif complet.dart
 testWidgets('flux d\'ajout de serveur', (tester) async {
   await tester.pumpWidget(MyApp());
 

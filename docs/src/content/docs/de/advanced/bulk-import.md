@@ -10,7 +10,7 @@ Importieren Sie mehrere Serverkonfigurationen gleichzeitig mithilfe einer JSON-D
 :::danger[Sicherheitswarnung]
 **Speichern Sie niemals Klartext-Passwörter in Dateien!** Dieses JSON-Beispiel zeigt ein Passwort-Feld nur zur Demonstration, aber Sie sollten:
 
-- **SSH-Schlüssel bevorzugen** (`keyId`) anstelle von `pwd` - diese sind sicherer
+- **SSH-Schlüssel bevorzugen** (`pubKeyId`) anstelle von `pwd` - diese sind sicherer
 - **Passwort-Manager** oder Umgebungsvariablen verwenden, wenn Sie Passwörter verwenden müssen
 - **Löschen Sie die Datei sofort** nach dem Import - lassen Sie keine Anmeldedaten herumliegen
 - **Fügen Sie sie zur .gitignore hinzu** - checken Sie niemals Anmeldedatendateien in die Versionsverwaltung ein
@@ -24,7 +24,7 @@ Importieren Sie mehrere Serverkonfigurationen gleichzeitig mithilfe einer JSON-D
     "port": 22,
     "user": "root",
     "pwd": "password",
-    "keyId": "",
+    "pubKeyId": "",
     "tags": ["production"],
     "autoConnect": false
   }
@@ -40,7 +40,7 @@ Importieren Sie mehrere Serverkonfigurationen gleichzeitig mithilfe einer JSON-D
 | `port` | Ja | SSH-Port (normalerweise 22) |
 | `user` | Ja | SSH-Benutzername |
 | `pwd` | Nein | Passwort (vermeiden - stattdessen SSH-Schlüssel verwenden) |
-| `keyId` | Nein | SSH-Schlüsselname (aus Private Keys - empfohlen) |
+| `pubKeyId` | Nein | Private-Key-ID (aus Private Keys - empfohlen) |
 | `tags` | Nein | Organisations-Tags |
 | `autoConnect` | Nein | Automatische Verbindung beim Start |
 
@@ -60,7 +60,7 @@ Importieren Sie mehrere Serverkonfigurationen gleichzeitig mithilfe einer JSON-D
     "ip": "prod.example.com",
     "port": 22,
     "user": "admin",
-    "keyId": "my-key",
+    "pubKeyId": "my-key",
     "tags": ["production", "web"]
   },
   {
@@ -68,7 +68,7 @@ Importieren Sie mehrere Serverkonfigurationen gleichzeitig mithilfe einer JSON-D
     "ip": "dev.example.com",
     "port": 2222,
     "user": "dev",
-    "keyId": "dev-key",
+    "pubKeyId": "dev-key",
     "tags": ["development"]
   }
 ]

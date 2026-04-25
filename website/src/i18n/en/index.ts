@@ -62,13 +62,13 @@ const en: BaseTranslation = {
     title: 'All the tools. One app.',
     subtitle:
       'ServerBox keeps terminal access, file transfer, service checks, hardware health, and device-native alerts in the same workflow.',
-    installIosPrompt: '# iOS and macOS',
+    installIosPrompt: '# iOS',
     installReleasePrompt: '# Android, Linux, and Windows',
   },
   download: {
     title: 'Every platform, every source.',
     subtitle:
-      'Choose the channel that matches your device and trust model. iOS and macOS use the App Store; Android, Linux, and Windows also have direct package downloads.',
+      'Choose the channel that matches your device and trust model. iOS uses the App Store; macOS uses the App Store or Homebrew; Android, Linux, and Windows also have direct package downloads.',
     copied: 'Install command copied',
     copyPrompt: 'Copy this install command:',
     note:

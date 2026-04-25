@@ -10,7 +10,7 @@ Importa múltiples configuraciones de servidor a la vez utilizando un archivo JS
 :::danger[Advertencia de Seguridad]
 **¡Nunca guardes contraseñas en texto plano en archivos!** Este ejemplo JSON muestra un campo de contraseña solo con fines demostrativos, pero deberías:
 
-- **Preferir claves SSH** (`keyId`) en lugar de `pwd`; son más seguras
+- **Preferir claves SSH** (`pubKeyId`) en lugar de `pwd`; son más seguras
 - **Usar gestores de secretos** o variables de entorno si debes usar contraseñas
 - **Eliminar el archivo inmediatamente** después de la importación; no dejes credenciales tiradas
 - **Añadir a .gitignore**: nunca subas archivos de credenciales al control de versiones
@@ -24,7 +24,7 @@ Importa múltiples configuraciones de servidor a la vez utilizando un archivo JS
     "port": 22,
     "user": "root",
     "pwd": "password",
-    "keyId": "",
+    "pubKeyId": "",
     "tags": ["production"],
     "autoConnect": false
   }
@@ -40,7 +40,7 @@ Importa múltiples configuraciones de servidor a la vez utilizando un archivo JS
 | `port` | Sí | Puerto SSH (usualmente 22) |
 | `user` | Sí | Usuario SSH |
 | `pwd` | No | Contraseña (evitar - usar claves SSH en su lugar) |
-| `keyId` | No | Nombre de la clave SSH (de Claves Privadas - recomendado) |
+| `pubKeyId` | No | ID de clave privada (de Claves Privadas - recomendado) |
 | `tags` | No | Etiquetas de organización |
 | `autoConnect` | No | Autoconexión al iniciar |
 
@@ -60,7 +60,7 @@ Importa múltiples configuraciones de servidor a la vez utilizando un archivo JS
     "ip": "prod.example.com",
     "port": 22,
     "user": "admin",
-    "keyId": "mi-clave",
+    "pubKeyId": "mi-clave",
     "tags": ["production", "web"]
   },
   {
@@ -68,7 +68,7 @@ Importa múltiples configuraciones de servidor a la vez utilizando un archivo JS
     "ip": "dev.example.com",
     "port": 2222,
     "user": "dev",
-    "keyId": "dev-clave",
+    "pubKeyId": "dev-clave",
     "tags": ["development"]
   }
 ]

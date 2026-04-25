@@ -32,8 +32,15 @@
 
   const downloadGroups = [
     {
-      key: 'iosMacos',
-      label: 'iOS / macOS',
+      key: 'ios',
+      label: 'iOS',
+      sources: [
+        { label: 'App Store', href: 'https://apps.apple.com/app/id1586449703' },
+      ],
+    },
+    {
+      key: 'macos',
+      label: 'macOS',
       sources: [
         { label: 'App Store', href: 'https://apps.apple.com/app/id1586449703' },
         { label: 'Homebrew Cask', command: 'brew install --cask server-box' },

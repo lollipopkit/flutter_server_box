@@ -10,7 +10,7 @@ Importez plusieurs configurations de serveur en une seule fois à l'aide d'un fi
 :::danger[Avertissement de sécurité]
 **Ne stockez jamais de mots de passe en clair dans des fichiers !** Cet exemple JSON montre un champ de mot de passe à des fins de démonstration uniquement, mais vous devriez :
 
-- **Préférer les clés SSH** (`keyId`) au lieu de `pwd` - elles sont plus sûres
+- **Préférer les clés SSH** (`pubKeyId`) au lieu de `pwd` - elles sont plus sûres
 - **Utiliser des gestionnaires de mots de passe** ou des variables d'environnement si vous devez utiliser des mots de passe
 - **Supprimer le fichier immédiatement** après l'importation - ne laissez pas traîner des identifiants
 - **Ajouter au .gitignore** - ne validez jamais de fichiers d'identifiants dans le contrôle de version
@@ -24,7 +24,7 @@ Importez plusieurs configurations de serveur en une seule fois à l'aide d'un fi
     "port": 22,
     "user": "root",
     "pwd": "password",
-    "keyId": "",
+    "pubKeyId": "",
     "tags": ["production"],
     "autoConnect": false
   }
@@ -40,9 +40,10 @@ Importez plusieurs configurations de serveur en une seule fois à l'aide d'un fi
 | `port` | Oui | Port SSH (généralement 22) |
 | `user` | Oui | Nom d'utilisateur SSH |
 | `pwd` | Non | Mot de passe (à éviter - utilisez plutôt des clés SSH) |
-| `keyId` | Non | Nom de la clé SSH (à partir des clés privées - recommandé) |
+| `pubKeyId` | Non | ID de clé privée (à partir des clés privées - recommandé) |
 | `tags` | Non | Tags d'organisation |
 | `autoConnect` | Non | Connexion automatique au démarrage |
+| `id` | Non | ID serveur stable ; les valeurs absentes ou vides sont générées à l’import |
 
 ## Étapes d'importation
 
@@ -60,7 +61,7 @@ Importez plusieurs configurations de serveur en une seule fois à l'aide d'un fi
     "ip": "prod.example.com",
     "port": 22,
     "user": "admin",
-    "keyId": "my-key",
+    "pubKeyId": "my-key",
     "tags": ["production", "web"]
   },
   {
@@ -68,7 +69,7 @@ Importez plusieurs configurations de serveur en une seule fois à l'aide d'un fi
     "ip": "dev.example.com",
     "port": 2222,
     "user": "dev",
-    "keyId": "dev-key",
+    "pubKeyId": "dev-key",
     "tags": ["development"]
   }
 ]

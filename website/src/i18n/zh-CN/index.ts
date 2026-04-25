@@ -61,13 +61,13 @@ const zhCN: Translation = {
     title: '所有工具，一个应用。',
     subtitle:
       'ServerBox 将终端访问、文件传输、服务检查、硬件健康和设备原生提醒放在同一个工作流中。',
-    installIosPrompt: '# iOS 与 macOS',
+    installIosPrompt: '# iOS',
     installReleasePrompt: '# Android、Linux 与 Windows',
   },
   download: {
     title: '所有平台，所有来源。',
     subtitle:
-      '根据设备和信任模型选择下载渠道。iOS 与 macOS 使用 App Store；Android、Linux 和 Windows 也提供直接安装包。',
+      '根据设备和信任模型选择下载渠道。iOS 使用 App Store；macOS 使用 App Store 或 Homebrew；Android、Linux 和 Windows 也提供直接安装包。',
     copied: '已复制安装命令',
     copyPrompt: '复制此安装命令：',
     note:
