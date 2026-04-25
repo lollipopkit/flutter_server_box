@@ -39,6 +39,8 @@ jobs:
         env:
           LDFLAGS: -Wl,--build-id=none
         run: dart run fl_build -p android
+      - name: Verify F-Droid native libraries
+        run: scripts/release/verify-fdroid-native-libs.sh
       - name: Rename for fdroid
         shell: bash
         run: |
