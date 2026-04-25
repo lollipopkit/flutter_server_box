@@ -74,7 +74,7 @@ find_readelf() {
 
 property_value() {
   local name="$1"
-  grep -E "^[[:space:]]*$name[[:space:]]*=" "$KEY_PROPERTIES" |
+  grep -E "^[[:space:]]*${name}[[:space:]]*=" "$KEY_PROPERTIES" |
     tail -n 1 |
     sed -E 's/^[^=]*=[[:space:]]*//; s/[[:space:]]*$//' || true
 }
