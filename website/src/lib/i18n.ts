@@ -20,6 +20,14 @@ export const locales: LocaleOption[] = [
 
 export const localeStorageKey = 'serverbox.website.locale'
 
+function readStoredLocale(): string | undefined {
+  try {
+    return localStorage.getItem(localeStorageKey) || undefined
+  } catch {
+    return undefined
+  }
+}
+
 export function normalizeLocale(locale: string | null | undefined): Locales {
   if (!locale) return defaultLocale
   if (isLocale(locale)) return locale
@@ -41,7 +49,7 @@ export function getInitialLocale(): Locales {
   const queryLocale = normalizeLocale(params.get('lang'))
   if (params.has('lang')) return queryLocale
 
-  const storedLocale = localStorage.getItem(localeStorageKey)
+  const storedLocale = readStoredLocale()
   if (storedLocale) return normalizeLocale(storedLocale)
 
   return normalizeLocale(navigator.languages?.[0] || navigator.language)
