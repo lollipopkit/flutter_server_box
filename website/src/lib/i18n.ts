@@ -1,4 +1,4 @@
-import { baseLocale, locales as generatedLocales } from '../i18n/i18n-util'
+import { baseLocale, isLocale, locales as generatedLocales } from '../i18n/i18n-util'
 import type { Locales } from '../i18n/i18n-types'
 
 type LocaleOption = {
@@ -22,7 +22,7 @@ export const localeStorageKey = 'serverbox.website.locale'
 
 export function normalizeLocale(locale: string | null | undefined): Locales {
   if (!locale) return defaultLocale
-  if (generatedLocales.includes(locale as Locales)) return locale as Locales
+  if (isLocale(locale)) return locale
 
   const lowerLocale = locale.toLowerCase()
   if (lowerLocale.startsWith('zh')) return 'zh-CN'

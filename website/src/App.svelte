@@ -149,15 +149,16 @@
   }
 
   async function copyCommand(command) {
-    copiedCommand = command
     copyFallbackCommand = undefined
 
     try {
       await navigator.clipboard.writeText(command)
+      copiedCommand = command
       window.setTimeout(() => {
         if (copiedCommand === command) copiedCommand = undefined
       }, 1800)
     } catch {
+      copiedCommand = undefined
       copyFallbackCommand = command
       window.prompt($LL.download.copyPrompt(), command)
     }
