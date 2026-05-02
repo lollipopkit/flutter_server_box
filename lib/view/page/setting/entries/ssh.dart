@@ -432,7 +432,7 @@ extension _SSH on _AppSettingsPageState {
     String index2Str(int index) {
       switch (index) {
         case 0:
-          return l10n.system;
+          return libL10n.auto;
         case 1:
           return libL10n.bright;
         case 2:

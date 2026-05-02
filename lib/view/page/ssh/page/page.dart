@@ -238,7 +238,11 @@ class SSHPageState extends ConsumerState<SSHPage>
     _isDark = switch (Stores.setting.termTheme.fetch()) {
       1 => false,
       2 => true,
-      _ => context.isDark,
+      _ => switch (Stores.setting.themeMode.fetch()) {
+        1 => false,
+        2 || 3 => true,
+        _ => context.isDark,
+      },
     };
     _media = context.mediaQuery;
 
