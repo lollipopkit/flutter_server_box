@@ -71,6 +71,32 @@ void main() {
       expect(usage.used, BigInt.from(1500));
     });
 
+    test('DiskUsage does not double-count parent and child filesystems', () {
+      final usage = DiskUsage.parse([
+        Disk(
+          path: '/dev/sda1',
+          mount: '/',
+          usedPercent: 50,
+          used: BigInt.from(100),
+          size: BigInt.from(200),
+          avail: BigInt.from(100),
+          children: [
+            Disk(
+              path: '/dev/sda1-child',
+              mount: '/child',
+              usedPercent: 50,
+              used: BigInt.from(1000),
+              size: BigInt.from(2000),
+              avail: BigInt.from(1000),
+            ),
+          ],
+        ),
+      ]);
+
+      expect(usage.used, BigInt.from(100));
+      expect(usage.size, BigInt.from(200));
+    });
+
     test('DiskUsage handles zero size correctly', () {
       final usage = DiskUsage(used: BigInt.from(1000), size: BigInt.zero);
       expect(usage.usedPercent, 0); // Should return 0 instead of throwing

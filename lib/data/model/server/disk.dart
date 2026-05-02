@@ -468,6 +468,7 @@ class DiskUsage {
         used += disk.used;
         size += disk.size;
       }
+      if (disk.used != BigInt.zero || disk.size != BigInt.zero) return;
       for (final child in disk.children) {
         visit(child);
       }
