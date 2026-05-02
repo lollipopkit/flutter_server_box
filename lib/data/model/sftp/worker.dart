@@ -13,6 +13,10 @@ import 'package:server_box/data/res/store.dart';
 
 part 'req.dart';
 
+const _sftpTransferChunkSize = 64 * 1024;
+const _sftpDownloadMaxPendingRequests = 16;
+const _sftpUploadMaxBytesOnTheWire = _sftpTransferChunkSize * 4;
+
 class SftpWorker {
   final Function(Object event) onNotify;
   final SftpReq req;
@@ -107,7 +111,6 @@ Future<void> _download(
     mainSendPort.send(size);
     mainSendPort.send(SftpWorkerStatus.loading);
 
-    const chunkSize = 1024 * 1024 * 5;
     var lastProgress = 0;
     final localFile = File(req.localPath).openWrite(mode: FileMode.write);
 
@@ -124,7 +127,8 @@ Future<void> _download(
             mainSendPort.send(progress);
           }
         },
-        chunkSize: chunkSize,
+        chunkSize: _sftpTransferChunkSize,
+        maxPendingRequests: _sftpDownloadMaxPendingRequests,
       );
     } finally {
       await localFile.close();
@@ -179,6 +183,8 @@ Future<void> _upload(
       onProgress: (total) {
         mainSendPort.send(total / localLen * 100);
       },
+      chunkSize: _sftpTransferChunkSize,
+      maxBytesOnTheWire: _sftpUploadMaxBytesOnTheWire,
     );
     await writer.done;
     await file.close();
