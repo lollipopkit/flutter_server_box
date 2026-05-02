@@ -108,6 +108,7 @@
   "ignoreCert": "Abaikan sertifikat",
   "image": "Gambar",
   "imagesList": "Daftar gambar",
+  "pull": "Tarik",
   "installDockerWithUrl": "Silakan https://docs.docker.com/engine/install Docker pertama.",
   "invalid": "Tidak valid",
   "jumpServer": "Lompat server",

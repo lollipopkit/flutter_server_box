@@ -108,6 +108,7 @@
   "ignoreCert": "Sertifikayı yok say",
   "image": "Görüntü",
   "imagesList": "Görüntü listesi",
+  "pull": "Çek",
   "installDockerWithUrl": "Lütfen önce https://docs.docker.com/engine/install adresinden Docker'ı kurun.",
   "invalid": "Geçersiz",
   "jumpServer": "Atlama sunucusu",

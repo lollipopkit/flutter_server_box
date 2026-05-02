@@ -137,6 +137,41 @@ extension on _ContainerPageState {
     );
   }
 
+  void _onTapImageMenu(ImageMenu item, ContainerImg e) {
+    switch (item) {
+      case ImageMenu.pull:
+        final repo = e.repository;
+        if (repo == null) {
+          context.showSnackBar(libL10n.empty);
+          return;
+        }
+        final tag = e.tag ?? 'latest';
+        final imageRef = '$repo:$tag';
+        context.showRoundDialog(
+          title: libL10n.attention,
+          child: Text(libL10n.askContinue('${l10n.pull} ${l10n.image}($imageRef)')),
+          actions: Btn.ok(
+            onTap: () async {
+              context.pop();
+
+              final (result, err) = await context.showLoadingDialog(
+                fn: () => _containerNotifier.run('pull $imageRef'),
+                timeout: null,
+              );
+              if (err != null || result != null) {
+                final e = result?.message ?? err?.toString();
+                context.showRoundDialog(title: libL10n.error, child: Text(e ?? 'null'));
+              }
+            },
+          ).toList,
+        );
+        break;
+      case ImageMenu.rm:
+        _showImageRmDialog(e);
+        break;
+    }
+  }
+
   void _onTapMoreBtn(ContainerMenu item, ContainerPs dItem) async {
     final id = dItem.id;
     if (id == null) {

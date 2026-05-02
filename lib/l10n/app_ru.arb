@@ -108,6 +108,7 @@
   "ignoreCert": "Игнорировать сертификат",
   "image": "Образ",
   "imagesList": "Список образов",
+  "pull": "Pull",
   "installDockerWithUrl": "Пожалуйста, сначала установите Docker по адресу https://docs.docker.com/engine/install",
   "invalid": "Недействительный",
   "jumpServer": "прыжковый сервер",

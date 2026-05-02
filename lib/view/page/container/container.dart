@@ -9,6 +9,7 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/menu/base.dart';
 import 'package:server_box/data/model/app/menu/container.dart';
+import 'package:server_box/data/model/app/menu/image.dart';
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
@@ -151,10 +152,9 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     return ListTile(
       title: Text(title ?? l10n.unknown, style: UIs.text15),
       subtitle: Text('${reg ?? ''} - ${e.tag} - ${e.sizeMB}', style: UIs.text13Grey),
-      trailing: Btn.icon(
-        padding: EdgeInsets.zero,
-        icon: const Icon(Icons.delete),
-        onTap: () => _showImageRmDialog(e),
+      trailing: PopupMenu<ImageMenu>(
+        items: ImageMenu.items.map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
+        onSelected: (item) => _onTapImageMenu(item, e),
       ),
     );
   }

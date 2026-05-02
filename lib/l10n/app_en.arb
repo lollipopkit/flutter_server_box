@@ -119,6 +119,7 @@
   "ignoreCert": "Ignore certificate",
   "image": "Image",
   "imagesList": "Images list",
+  "pull": "Pull",
   "installDockerWithUrl": "Please https://docs.docker.com/engine/install docker first.",
   "invalid": "Invalid",
   "invalidUrl": "Invalid URL",

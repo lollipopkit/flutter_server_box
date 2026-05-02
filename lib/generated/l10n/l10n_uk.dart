@@ -416,6 +416,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get imagesList => 'Список зображень';
 
   @override
+  String get pull => 'Pull';
+
+  @override
   String get installDockerWithUrl =>
       'Будь ласка, спочатку встановіть Docker. (https://docs.docker.com/engine/install)';
 

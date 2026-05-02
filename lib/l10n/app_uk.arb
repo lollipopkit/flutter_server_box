@@ -108,6 +108,7 @@
   "ignoreCert": "Ігнорувати сертифікат",
   "image": "Зображення",
   "imagesList": "Список зображень",
+  "pull": "Pull",
   "installDockerWithUrl": "Будь ласка, спочатку встановіть Docker. (https://docs.docker.com/engine/install)",
   "invalid": "Недійсний",
   "invalidHostFormat": "Недійсний формат хоста. Дозволено лише символи IPv4, IPv6 та домену.",

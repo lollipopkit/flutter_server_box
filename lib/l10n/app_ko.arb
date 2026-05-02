@@ -108,6 +108,7 @@
   "ignoreCert": "인증서 무시",
   "image": "이미지",
   "imagesList": "이미지 목록",
+  "pull": "풀",
   "installDockerWithUrl": "먼저 https://docs.docker.com/engine/install 에서 Docker를 설치해 주세요.",
   "invalid": "유효하지 않음",
   "invalidHostFormat": "잘못된 호스트 형식입니다. IPv4, IPv6, 도메인 문자만 허용됩니다.",

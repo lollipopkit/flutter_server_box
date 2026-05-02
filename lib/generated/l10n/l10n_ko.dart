@@ -401,6 +401,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get imagesList => '이미지 목록';
 
   @override
+  String get pull => '풀';
+
+  @override
   String get installDockerWithUrl =>
       '먼저 https://docs.docker.com/engine/install 에서 Docker를 설치해 주세요.';
 
