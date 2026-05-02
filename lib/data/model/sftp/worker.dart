@@ -111,7 +111,7 @@ Future<void> _download(
     mainSendPort.send(size);
     mainSendPort.send(SftpWorkerStatus.loading);
 
-    var lastProgress = 0;
+    var lastProgress = -1.0;
     final localFile = File(req.localPath).openWrite(mode: FileMode.write);
 
     try {
@@ -121,7 +121,7 @@ Future<void> _download(
         onProgress: (bytesRead) {
           final s = size;
           if (s == null || s == 0) return;
-          final progress = (bytesRead / s * 100).round();
+          final progress = (bytesRead / s * 100).roundToDouble();
           if (progress != lastProgress) {
             lastProgress = progress;
             mainSendPort.send(progress);
