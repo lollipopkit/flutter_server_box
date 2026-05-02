@@ -414,6 +414,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get imagesList => 'Görüntü listesi';
 
   @override
+  String get pull => 'Çek';
+
+  @override
   String get installDockerWithUrl =>
       'Lütfen önce https://docs.docker.com/engine/install adresinden Docker\'ı kurun.';
 

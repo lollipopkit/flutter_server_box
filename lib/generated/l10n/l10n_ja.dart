@@ -403,6 +403,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get imagesList => 'イメージリスト';
 
   @override
+  String get pull => 'プル';
+
+  @override
   String get installDockerWithUrl =>
       '最初に https://docs.docker.com/engine/install dockerをインストールしてください';
 

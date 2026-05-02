@@ -414,6 +414,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get imagesList => 'Lista de imagens';
 
   @override
+  String get pull => 'Puxar';
+
+  @override
   String get installDockerWithUrl =>
       'Por favor, instale o Docker primeiro em https://docs.docker.com/engine/install';
 

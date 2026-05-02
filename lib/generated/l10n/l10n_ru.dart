@@ -415,6 +415,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get imagesList => 'Список образов';
 
   @override
+  String get pull => 'Pull';
+
+  @override
   String get installDockerWithUrl =>
       'Пожалуйста, сначала установите Docker по адресу https://docs.docker.com/engine/install';
 

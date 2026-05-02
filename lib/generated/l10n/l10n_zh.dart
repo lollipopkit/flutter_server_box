@@ -395,6 +395,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagesList => '镜像列表';
 
   @override
+  String get pull => '拉取';
+
+  @override
   String get installDockerWithUrl =>
       '请先前往 https://docs.docker.com/engine/install 安装 Docker';
 
@@ -1375,6 +1378,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get imagesList => '映像檔列表';
+
+  @override
+  String get pull => '拉取';
 
   @override
   String get installDockerWithUrl =>

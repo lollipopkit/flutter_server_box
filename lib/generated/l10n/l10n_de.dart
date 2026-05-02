@@ -416,6 +416,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get imagesList => 'Images';
 
   @override
+  String get pull => 'Pull';
+
+  @override
   String get installDockerWithUrl =>
       'Bitte installiere docker zuerst. https://docs.docker.com/engine/install';
 

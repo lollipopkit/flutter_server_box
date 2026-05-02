@@ -414,6 +414,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get imagesList => 'Daftar gambar';
 
   @override
+  String get pull => 'Tarik';
+
+  @override
   String get installDockerWithUrl =>
       'Silakan https://docs.docker.com/engine/install Docker pertama.';
 

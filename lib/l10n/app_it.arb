@@ -108,6 +108,7 @@
   "ignoreCert": "Ignora certificato",
   "image": "Immagine",
   "imagesList": "Elenco immagini",
+  "pull": "Pull",
   "installDockerWithUrl": "Installa prima docker da https://docs.docker.com/engine/install .",
   "invalid": "Non valido",
   "invalidHostFormat": "Formato host non valido. Sono consentiti solo caratteri IPv4, IPv6 e di dominio.",

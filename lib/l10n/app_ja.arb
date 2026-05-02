@@ -108,6 +108,7 @@
   "ignoreCert": "証明書を無視する",
   "image": "イメージ",
   "imagesList": "イメージリスト",
+  "pull": "プル",
   "installDockerWithUrl": "最初に https://docs.docker.com/engine/install dockerをインストールしてください",
   "invalid": "無効",
   "jumpServer": "ジャンプサーバー",

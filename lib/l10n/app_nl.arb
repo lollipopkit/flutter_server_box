@@ -108,6 +108,7 @@
   "ignoreCert": "Certificaat negeren",
   "image": "Afbeelding",
   "imagesList": "Lijst met afbeeldingen",
+  "pull": "Pull",
   "installDockerWithUrl": "Installeer eerst docker via https://docs.docker.com/engine/install.",
   "invalid": "Ongeldig",
   "jumpServer": "Spring naar server",

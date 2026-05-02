@@ -117,6 +117,7 @@
   "ignoreCert": "忽略憑證",
   "image": "映像檔",
   "imagesList": "映像檔列表",
+  "pull": "拉取",
   "installDockerWithUrl": "請先前往 https://docs.docker.com/engine/install 安裝 Docker",
   "invalid": "無效",
   "invalidHostFormat": "主機格式無效，僅支援 IPv4、IPv6 和網域字元。",

@@ -108,6 +108,7 @@
   "ignoreCert": "Ignorer le certificat",
   "image": "Image",
   "imagesList": "Liste des images",
+  "pull": "Tirer",
   "installDockerWithUrl": "Veuillez d'abord installer docker depuis https://docs.docker.com/engine/install.",
   "invalid": "Invalide",
   "jumpServer": "Aller au serveur",

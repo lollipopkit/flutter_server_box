@@ -840,6 +840,12 @@ abstract class AppLocalizations {
   /// **'Images list'**
   String get imagesList;
 
+  /// No description provided for @pull.
+  ///
+  /// In en, this message translates to:
+  /// **'Pull'**
+  String get pull;
+
   /// No description provided for @installDockerWithUrl.
   ///
   /// In en, this message translates to:
