@@ -109,6 +109,7 @@
   "githubGist": "GitHub Gist",
   "githubGistIdOptional": "Gist ID（可选）",
   "githubGistToken": "GitHub Gist Token",
+  "githubGistTokenEmpty": "Token 为空",
   "goBackQ": "返回？",
   "goto": "前往",
   "hideTitleBar": "隐藏标题栏",

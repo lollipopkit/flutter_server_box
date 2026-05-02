@@ -111,6 +111,7 @@
   "githubGist": "GitHub Gist",
   "githubGistIdOptional": "Gist ID (optional)",
   "githubGistToken": "GitHub Gist token",
+  "githubGistTokenEmpty": "Token is empty",
   "goBackQ": "Go back?",
   "goto": "Go to",
   "hideTitleBar": "Hide title bar",

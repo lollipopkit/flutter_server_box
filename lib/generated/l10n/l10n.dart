@@ -792,6 +792,12 @@ abstract class AppLocalizations {
   /// **'GitHub Gist token'**
   String get githubGistToken;
 
+  /// No description provided for @githubGistTokenEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Token is empty'**
+  String get githubGistTokenEmpty;
+
   /// No description provided for @goBackQ.
   ///
   /// In en, this message translates to:

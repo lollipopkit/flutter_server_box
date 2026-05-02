@@ -387,6 +387,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get githubGistToken => 'GitHub Gist token';
 
   @override
+  String get githubGistTokenEmpty => 'Token is empty';
+
+  @override
   String get goBackQ => 'Tornare indietro?';
 
   @override

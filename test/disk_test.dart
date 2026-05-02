@@ -54,6 +54,23 @@ void main() {
       expect(bootPartition.uuid, '12345678-abcd-1234-abcd-1234567890ab');
     });
 
+    test('preserves all descendants for intermediate containers', () {
+      final disks = Disk.parse(_nestedContainerJsonLsblkOutput);
+      expect(disks, hasLength(1));
+
+      final vg = disks.first;
+      expect(vg.path, '/dev/mapper/vg-root');
+      expect(vg.children, hasLength(2));
+      expect(
+        vg.children.map((disk) => disk.mount),
+        containsAll(['/', '/home']),
+      );
+
+      final usage = DiskUsage.parse(disks);
+      expect(usage.size, BigInt.from(3000));
+      expect(usage.used, BigInt.from(1500));
+    });
+
     test('DiskUsage handles zero size correctly', () {
       final usage = DiskUsage(used: BigInt.from(1000), size: BigInt.zero);
       expect(usage.usedPercent, 0); // Should return 0 instead of throwing
@@ -328,6 +345,61 @@ const _nestedJsonLsblkOutput = '''
           "fsavail": "500000000",
           "fsuse%": "50%",
           "uuid": "12345678-abcd-1234-abcd-1234567890ab"
+        }
+      ]
+    }
+  ]
+}
+''';
+
+const _nestedContainerJsonLsblkOutput = '''
+{
+  "blockdevices": [
+    {
+      "name": "sda",
+      "kname": "sda",
+      "path": "/dev/sda",
+      "fstype": null,
+      "mountpoint": null,
+      "fssize": null,
+      "fsused": null,
+      "fsavail": null,
+      "fsuse%": null,
+      "children": [
+        {
+          "name": "vg-root",
+          "kname": "dm-0",
+          "path": "/dev/mapper/vg-root",
+          "fstype": null,
+          "mountpoint": null,
+          "fssize": null,
+          "fsused": null,
+          "fsavail": null,
+          "fsuse%": null,
+          "children": [
+            {
+              "name": "root",
+              "kname": "dm-1",
+              "path": "/dev/mapper/root",
+              "fstype": "ext4",
+              "mountpoint": "/",
+              "fssize": "1024000",
+              "fsused": "512000",
+              "fsavail": "512000",
+              "fsuse%": "50%"
+            },
+            {
+              "name": "home",
+              "kname": "dm-2",
+              "path": "/dev/mapper/home",
+              "fstype": "ext4",
+              "mountpoint": "/home",
+              "fssize": "2048000",
+              "fsused": "1024000",
+              "fsavail": "1024000",
+              "fsuse%": "50%"
+            }
+          ]
         }
       ]
     }

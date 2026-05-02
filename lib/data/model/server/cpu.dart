@@ -173,7 +173,7 @@ final class CpuBrand {
   }
 }
 
-final _bsdCpuPercentReg = RegExp(r'(\d+\.\d+)%');
+final _bsdCpuPercentReg = RegExp(r'(-?\d+(?:\.\d+)?)%');
 final _macCpuPercentReg = RegExp(
   r'CPU usage: ([\d.]+)% user, ([\d.]+)% sys, ([\d.]+)% idle',
 );

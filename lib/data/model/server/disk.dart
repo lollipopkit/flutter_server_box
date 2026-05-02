@@ -231,10 +231,31 @@ class Disk with EquatableMixin {
           fsFields.size != BigInt.zero ||
           fsFields.used != BigInt.zero ||
           fsFields.avail != BigInt.zero;
+
+      final name = device['name']?.toString();
+      final kname = device['kname']?.toString();
+      final uuid = device['uuid']?.toString();
+      final disk = Disk(
+        path: path,
+        fsTyp: fstype,
+        mount: mount,
+        usedPercent: fsFields.usedPercent,
+        used: fsFields.used,
+        size: fsFields.size,
+        avail: fsFields.avail,
+        name: name,
+        kname: kname,
+        uuid: uuid,
+        children: childDisks,
+      );
+
       if (!hasFilesystemStats && childDisks.isNotEmpty) {
-        return childDisks.first;
+        return disk;
       }
 
+      return disk;
+    } else if (childDisks.isNotEmpty) {
+      final fsFields = _parseFilesystemFields(device);
       final name = device['name']?.toString();
       final kname = device['kname']?.toString();
       final uuid = device['uuid']?.toString();
@@ -252,8 +273,6 @@ class Disk with EquatableMixin {
         uuid: uuid,
         children: childDisks,
       );
-    } else if (childDisks.isNotEmpty) {
-      return childDisks.first;
     }
 
     return null;
@@ -438,15 +457,24 @@ class DiskUsage {
     final devs = <String>{};
     var used = BigInt.zero;
     var size = BigInt.zero;
-    for (var disk in disks) {
-      if (!_shouldCalc(disk.path, disk.mount)) continue;
+
+    void visit(Disk disk) {
+      if (!_shouldCalc(disk.path, disk.mount)) return;
       // Use a combination of path and kernel name to uniquely identify disks
       // This helps distinguish between multiple physical disks in BTRFS RAID setups
       final uniqueId = '${disk.path}:${disk.kname ?? "unknown"}';
-      if (devs.contains(uniqueId)) continue;
-      devs.add(uniqueId);
-      used += disk.used;
-      size += disk.size;
+      if (!devs.contains(uniqueId)) {
+        devs.add(uniqueId);
+        used += disk.used;
+        size += disk.size;
+      }
+      for (final child in disk.children) {
+        visit(child);
+      }
+    }
+
+    for (var disk in disks) {
+      visit(disk);
     }
     return DiskUsage(used: used, size: size);
   }

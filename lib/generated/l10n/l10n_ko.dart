@@ -375,6 +375,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get githubGistToken => 'GitHub Gist token';
 
   @override
+  String get githubGistTokenEmpty => 'Token is empty';
+
+  @override
   String get goBackQ => '돌아가시겠습니까?';
 
   @override

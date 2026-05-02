@@ -330,7 +330,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                   // Allow empty gistId (will create one on first upload)
                   final hasToken = token != null && token.isNotEmpty;
                   if (!hasToken) {
-                    context.showSnackBar('Token or Gist ID is empty');
+                    context.showSnackBar(context.l10n.githubGistTokenEmpty);
                     return false;
                   }
                   gistLoading.value = true;

@@ -369,6 +369,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get githubGistToken => 'GitHub Gist Token';
 
   @override
+  String get githubGistTokenEmpty => 'Token 为空';
+
+  @override
   String get goBackQ => '返回？';
 
   @override
@@ -1361,6 +1364,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get githubGistToken => 'GitHub Gist Token';
+
+  @override
+  String get githubGistTokenEmpty => 'Token 為空';
 
   @override
   String get goBackQ => '返回？';
