@@ -1,3 +1,4 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 
@@ -13,9 +14,11 @@ void main() {
     });
     test('Test Cpus calculation', () {
       final pre = SingleCpuCore.parse(
-          'cpu 18232538 52837 5772391 334460731 247294 0 134107 0 0 0');
+        'cpu 18232538 52837 5772391 334460731 247294 0 134107 0 0 0',
+      );
       final now = SingleCpuCore.parse(
-          'cpu 18232638 52937 5772491 334460831 247294 0 134107 0 0 0');
+        'cpu 18232638 52937 5772491 334460831 247294 0 134107 0 0 0',
+      );
       final cpus = Cpus(pre, now);
       cpus.onUpdate();
       expect(cpus.usedPercent(), closeTo(75.0, 0.1));
@@ -42,6 +45,31 @@ void main() {
       expect(status.sys, 3);
       expect(status.irq, 0);
       expect(status.idle, 91);
+    });
+
+    test('Test parseBsdCpu fallback clamps invalid percentages', () async {
+      final records = [];
+      final sub = Loggers.app.onRecord.listen(records.add);
+      addTearDown(sub.cancel);
+
+      const raw = 'CPU fallback: -5.5% user, 150.2% sys, 101.9% idle';
+      final cpus = parseBsdCpu(raw);
+      await Future<void>.delayed(Duration.zero);
+
+      final status = cpus.now.first;
+      expect(status.user, 0);
+      expect(status.sys, 100);
+      expect(status.idle, 100);
+      expect(
+        records.any(
+          (record) =>
+              record.level.name == 'WARNING' &&
+              record.message.contains(
+                'BSD CPU fallback parsing found invalid percentages',
+              ),
+        ),
+        isTrue,
+      );
     });
   });
 }

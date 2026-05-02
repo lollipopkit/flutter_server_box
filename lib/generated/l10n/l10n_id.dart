@@ -378,6 +378,18 @@ class AppLocalizationsId extends AppLocalizations {
       'Apakah mode layar penuh diaktifkan ketika perangkat diputar ke modus lanskap? Opsi ini hanya berlaku untuk tab server.';
 
   @override
+  String get githubGist => 'GitHub Gist';
+
+  @override
+  String get githubGistIdOptional => 'Gist ID (optional)';
+
+  @override
+  String get githubGistToken => 'GitHub Gist token';
+
+  @override
+  String get githubGistTokenEmpty => 'Token is empty';
+
+  @override
   String get goBackQ => 'Datang kembali?';
 
   @override

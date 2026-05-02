@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/data/model/app/menu/base.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -22,21 +21,6 @@ import 'package:server_box/view/page/process.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/page/systemd.dart';
-
-class ServerFuncBtnsTopRight extends ConsumerWidget {
-  final Spi spi;
-
-  const ServerFuncBtnsTopRight({super.key, required this.spi});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return PopupMenu<ServerFuncBtn>(
-      items: ServerFuncBtn.values.map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      onSelected: (val) => _onTapMoreBtns(val, spi, context, ref),
-    );
-  }
-}
 
 class ServerFuncBtns extends StatelessWidget {
   const ServerFuncBtns({super.key, required this.spi});
@@ -56,18 +40,22 @@ class ServerFuncBtns extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 13),
         itemBuilder: (context, index) {
           final value = btns[index];
-          final item = Consumer(builder: (_, ref, _) => _buildItem(context, value, ref));
+          final item = Consumer(
+            builder: (_, ref, _) => _buildItem(context, value, ref),
+          );
           return item.paddingSymmetric(horizontal: 7);
         },
       ),
     );
   }
+}
 
+extension ServerFuncBtnsBuild on ServerFuncBtns {
   Widget _buildItem(BuildContext context, ServerFuncBtn e, WidgetRef ref) {
     final move = Stores.setting.moveServerFuncs.fetch();
     if (move) {
       return IconButton(
-        onPressed: () => _onTapMoreBtns(e, spi, context, ref),
+        onPressed: () => _onTapMoreBtns(e, context, ref),
         padding: EdgeInsets.zero,
         tooltip: e.toStr,
         icon: Icon(e.icon, size: 15),
@@ -80,7 +68,7 @@ class ServerFuncBtns extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            onPressed: () => _onTapMoreBtns(e, spi, context, ref),
+            onPressed: () => _onTapMoreBtns(e, context, ref),
             padding: EdgeInsets.zero,
             icon: Icon(e.icon, size: 17),
           ),
@@ -89,7 +77,9 @@ class ServerFuncBtns extends StatelessWidget {
       ),
     );
   }
+}
 
+extension ServerFuncBtnsUtils on ServerFuncBtns {
   List<ServerFuncBtn> get btns {
     try {
       final vals = <ServerFuncBtn>[];
@@ -105,115 +95,89 @@ class ServerFuncBtns extends StatelessWidget {
   }
 }
 
-void _onTapMoreBtns(ServerFuncBtn value, Spi spi, BuildContext context, WidgetRef ref) async {
-  // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
-  switch (value) {
-    // case ServerFuncBtn.pkg:
-    //   _onPkg(context, spi);
-    //   break;
-    case ServerFuncBtn.sftp:
-      if (!_checkClient(context, spi.id, ref)) return;
-      final args = SftpPageArgs(spi: spi);
-      // if (isMobile) {
-      SftpPage.route.go(context, args);
-      // } else {
-      //   SplitViewNavigator.of(context)?.replace(
-      //     SftpPage.route.toWidget(args: args),
-      //   );
-      // }
+extension ServerFuncBtnsActions on ServerFuncBtns {
+  void _onTapMoreBtns(
+    ServerFuncBtn value,
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    switch (value) {
+      case ServerFuncBtn.sftp:
+        if (!_checkClient(context, spi.id, ref)) return;
+        final args = SftpPageArgs(spi: spi);
+        SftpPage.route.go(context, args);
 
-      break;
-    case ServerFuncBtn.snippet:
-      final snippetState = ref.read(snippetProvider);
-      if (snippetState.snippets.isEmpty) {
-        context.showSnackBar(libL10n.empty);
-        return;
-      }
-      final snippets = await context.showPickWithTagDialog<Snippet>(
-        title: libL10n.snippet,
-        tags: snippetState.tags.vn,
-        itemsBuilder: (e) {
-          if (e == TagSwitcher.kDefaultTag) {
-            return snippetState.snippets;
-          }
-          return snippetState.snippets
-              .where((element) => element.tags?.contains(e) ?? false)
-              .toList();
-        },
-        display: (e) => e.name,
-      );
-      if (snippets == null || snippets.isEmpty) return;
-      final snippet = snippets.firstOrNull;
-      if (snippet == null) return;
-      final fmted = snippet.fmtWithSpi(spi);
-      final sure = await context.showRoundDialog<bool>(
-        title: libL10n.attention,
-        child: SingleChildScrollView(child: SimpleMarkdown(data: '```shell\n$fmted\n```')),
-        actions: [CountDownBtn(onTap: () => context.pop(true), text: libL10n.run, afterColor: Colors.red)],
-      );
-      if (sure != true) return;
-      if (!_checkClient(context, spi.id, ref)) return;
-      final args = SshPageArgs(spi: spi, initSnippet: snippet);
-      // if (isMobile) {
-      SSHPage.route.go(context, args);
-      // } else {
-      //   SplitViewNavigator.of(context)?.replace(
-      //     SSHPage.route.toWidget(args: args),
-      //   );
-      // }
-      break;
-    case ServerFuncBtn.container:
-      if (!_checkClient(context, spi.id, ref)) return;
-      final args = SpiRequiredArgs(spi);
-      // if (isMobile) {
-      ContainerPage.route.go(context, args);
-      // } else {
-      //   SplitViewNavigator.of(
-      //     context,
-      //   )?.replace(ContainerPage.route.toWidget(args: args));
-      // }
-      break;
-    case ServerFuncBtn.process:
-      if (!_checkClient(context, spi.id, ref)) return;
-      final args = SpiRequiredArgs(spi);
-      // if (isMobile) {
-      ProcessPage.route.go(context, args);
-      // } else {
-      //   SplitViewNavigator.of(context)?.replace(
-      //     ProcessPage.route.toWidget(args: args),
-      //   );
-      // }
-      break;
-    case ServerFuncBtn.terminal:
-      _gotoSSH(spi, context);
-      break;
-    case ServerFuncBtn.iperf:
-      if (!_checkClient(context, spi.id, ref)) return;
-      final args = SpiRequiredArgs(spi);
-      // if (isMobile) {
-      IPerfPage.route.go(context, args);
-      // } else {
-      //   SplitViewNavigator.of(context)?.replace(
-      //     IPerfPage.route.toWidget(args: args),
-      //   );
-      // }
-      break;
-    case ServerFuncBtn.systemd:
-      if (!_checkClient(context, spi.id, ref)) return;
-      final args = SpiRequiredArgs(spi);
-      // if (isMobile) {
-      SystemdPage.route.go(context, args);
-      // } else {
-      //   SplitViewNavigator.of(context)?.replace(
-      //     SystemdPage.route.toWidget(args: args),
-      //   );
-      // }
-      break;
-    case ServerFuncBtn.portForward:
-      if (!_checkClient(context, spi.id, ref)) return;
-      final args = SpiRequiredArgs(spi);
-      PortForwardPage.route.go(context, args);
-      break;
+        break;
+      case ServerFuncBtn.snippet:
+        final snippetState = ref.read(snippetProvider);
+        if (snippetState.snippets.isEmpty) {
+          context.showSnackBar(libL10n.empty);
+          return;
+        }
+        final snippets = await context.showPickWithTagDialog<Snippet>(
+          title: libL10n.snippet,
+          tags: snippetState.tags.vn,
+          itemsBuilder: (e) {
+            if (e == TagSwitcher.kDefaultTag) {
+              return snippetState.snippets;
+            }
+            return snippetState.snippets
+                .where((element) => element.tags?.contains(e) ?? false)
+                .toList();
+          },
+          display: (e) => e.name,
+        );
+        if (snippets == null || snippets.isEmpty) return;
+        final snippet = snippets.firstOrNull;
+        if (snippet == null) return;
+        final fmted = snippet.fmtWithSpi(spi);
+        final sure = await context.showRoundDialog<bool>(
+          title: libL10n.attention,
+          child: SingleChildScrollView(
+            child: SimpleMarkdown(data: '```shell\n$fmted\n```'),
+          ),
+          actions: [
+            CountDownBtn(
+              onTap: () => context.pop(true),
+              text: libL10n.run,
+              afterColor: Colors.red,
+            ),
+          ],
+        );
+        if (sure != true) return;
+        if (!_checkClient(context, spi.id, ref)) return;
+        final args = SshPageArgs(spi: spi, initSnippet: snippet);
+        SSHPage.route.go(context, args);
+        break;
+      case ServerFuncBtn.container:
+        if (!_checkClient(context, spi.id, ref)) return;
+        final args = SpiRequiredArgs(spi);
+        ContainerPage.route.go(context, args);
+        break;
+      case ServerFuncBtn.process:
+        if (!_checkClient(context, spi.id, ref)) return;
+        final args = SpiRequiredArgs(spi);
+        ProcessPage.route.go(context, args);
+        break;
+      case ServerFuncBtn.terminal:
+        _gotoSSH(spi, context);
+        break;
+      case ServerFuncBtn.iperf:
+        if (!_checkClient(context, spi.id, ref)) return;
+        final args = SpiRequiredArgs(spi);
+        IPerfPage.route.go(context, args);
+        break;
+      case ServerFuncBtn.systemd:
+        if (!_checkClient(context, spi.id, ref)) return;
+        final args = SpiRequiredArgs(spi);
+        SystemdPage.route.go(context, args);
+        break;
+      case ServerFuncBtn.portForward:
+        if (!_checkClient(context, spi.id, ref)) return;
+        final args = SpiRequiredArgs(spi);
+        PortForwardPage.route.go(context, args);
+        break;
+    }
   }
 }
 
@@ -249,7 +213,9 @@ void _gotoSSH(Spi spi, BuildContext context) async {
         await file.delete();
       }
       final keyContent = getPrivateKey(spi.keyId!);
-      final keyContentWithNewline = keyContent.endsWith('\n') ? keyContent : '$keyContent\n';
+      final keyContentWithNewline = keyContent.endsWith('\n')
+          ? keyContent
+          : '$keyContent\n';
       await file.writeAsString(keyContentWithNewline);
       if (!Platform.isWindows) {
         await Process.run('chmod', ['600', path]);
@@ -264,7 +230,11 @@ void _gotoSSH(Spi spi, BuildContext context) async {
         await Process.start('cmd', ['/c', 'start'] + sshCommand);
         break;
       case Pfs.linux:
-        final scriptFile = File('${Directory.systemTemp.path}/srvbox_launch_term.sh');
+        final scriptDir = await Directory.systemTemp.createTemp(
+          'srvbox_launch_term_',
+        );
+        final scriptFile = File(scriptDir.path.joinPath('launch_term.sh'));
+        await scriptFile.create(exclusive: true);
         await scriptFile.writeAsString(_runEmulatorShell);
 
         if (Platform.isLinux || Platform.isMacOS) {
@@ -279,7 +249,9 @@ void _gotoSSH(Spi spi, BuildContext context) async {
         } catch (e, s) {
           context.showErrDialog(e, s, libL10n.emulator);
         } finally {
-          await scriptFile.delete();
+          if (await scriptDir.exists()) {
+            await scriptDir.delete(recursive: true);
+          }
         }
         break;
       default:
@@ -295,7 +267,11 @@ void _gotoSSH(Spi spi, BuildContext context) async {
               await file.delete();
             }
           } catch (e, s) {
-            Loggers.app.warning('Failed to delete temporary SSH key file', e, s);
+            Loggers.app.warning(
+              'Failed to delete temporary SSH key file',
+              e,
+              s,
+            );
           }
         }),
       );
@@ -318,7 +294,11 @@ Future<void> _copyDesktopSshPasswordIfNeeded(
     try {
       result = await LocalAuth.goWithResult();
     } catch (e, s) {
-      Loggers.app.warning('Failed to authenticate before copying SSH password', e, s);
+      Loggers.app.warning(
+        'Failed to authenticate before copying SSH password',
+        e,
+        s,
+      );
       return;
     }
     if (result != AuthResult.success) {
@@ -342,7 +322,11 @@ Future<void> _copyDesktopSshPasswordIfNeeded(
         if (current?.text != pwd) return;
         await Clipboard.setData(const ClipboardData(text: ''));
       } catch (e, s) {
-        Loggers.app.warning('Failed to clear copied SSH password from clipboard', e, s);
+        Loggers.app.warning(
+          'Failed to clear copied SSH password from clipboard',
+          e,
+          s,
+        );
       }
     }),
   );

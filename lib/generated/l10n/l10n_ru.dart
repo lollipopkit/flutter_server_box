@@ -379,6 +379,18 @@ class AppLocalizationsRu extends AppLocalizations {
       'Следует ли включить полноэкранный режим, когда устройство поворачивается в альбомный режим? Эта опция применяется только к вкладке сервера.';
 
   @override
+  String get githubGist => 'GitHub Gist';
+
+  @override
+  String get githubGistIdOptional => 'Gist ID (optional)';
+
+  @override
+  String get githubGistToken => 'GitHub Gist token';
+
+  @override
+  String get githubGistTokenEmpty => 'Token is empty';
+
+  @override
   String get goBackQ => 'Вернуться?';
 
   @override

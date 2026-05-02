@@ -379,6 +379,18 @@ class AppLocalizationsNl extends AppLocalizations {
       'Moet de volledig schermmodus worden ingeschakeld wanneer het apparaat naar de liggende modus wordt gedraaid? Deze optie is alleen van toepassing op het servertabblad.';
 
   @override
+  String get githubGist => 'GitHub Gist';
+
+  @override
+  String get githubGistIdOptional => 'Gist ID (optional)';
+
+  @override
+  String get githubGistToken => 'GitHub Gist token';
+
+  @override
+  String get githubGistTokenEmpty => 'Token is empty';
+
+  @override
   String get goBackQ => 'Terug gaan?';
 
   @override

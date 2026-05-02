@@ -360,6 +360,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fullScreenTip => '当设备旋转为横屏时，是否开启全屏模式。此选项仅作用于服务器 Tab 页。';
 
   @override
+  String get githubGist => 'GitHub Gist';
+
+  @override
+  String get githubGistIdOptional => 'Gist ID（可选）';
+
+  @override
+  String get githubGistToken => 'GitHub Gist Token';
+
+  @override
+  String get githubGistTokenEmpty => 'Token 为空';
+
+  @override
   String get goBackQ => '返回？';
 
   @override
@@ -1343,6 +1355,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get fullScreenTip => '當設備旋轉為橫向時，是否開啟全螢幕模式？此選項僅適用於伺服器分頁。';
+
+  @override
+  String get githubGist => 'GitHub Gist';
+
+  @override
+  String get githubGistIdOptional => 'Gist ID（選填）';
+
+  @override
+  String get githubGistToken => 'GitHub Gist Token';
+
+  @override
+  String get githubGistTokenEmpty => 'Token 為空';
 
   @override
   String get goBackQ => '返回？';

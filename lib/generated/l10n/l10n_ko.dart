@@ -366,6 +366,18 @@ class AppLocalizationsKo extends AppLocalizations {
       '기기를 가로 모드로 회전할 때 전체 화면 모드를 활성화하시겠습니까? 이 옵션은 서버 탭에만 적용됩니다.';
 
   @override
+  String get githubGist => 'GitHub Gist';
+
+  @override
+  String get githubGistIdOptional => 'Gist ID (optional)';
+
+  @override
+  String get githubGistToken => 'GitHub Gist token';
+
+  @override
+  String get githubGistTokenEmpty => 'Token is empty';
+
+  @override
   String get goBackQ => '돌아가시겠습니까?';
 
   @override

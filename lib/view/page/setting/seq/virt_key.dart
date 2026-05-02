@@ -1,9 +1,9 @@
-import 'dart:ui';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/setting/seq/reorder_proxy_decorator.dart';
 
 class SSHVirtKeySettingPage extends StatefulWidget {
   const SSHVirtKeySettingPage({super.key});
@@ -67,29 +67,13 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
     );
   }
 
-  Widget _proxyDecorator(Widget child, int _, Animation<double> animation) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (BuildContext context, Widget? child) {
-        final double animValue = Curves.easeInOut.transform(animation.value);
-        final double elevation = lerpDouble(1, 6, animValue)!;
-        final double scale = lerpDouble(1, 1.02, animValue)!;
-        return Transform.scale(
-          scale: scale,
-          child: Card(elevation: elevation, child: child),
-        );
-      },
-      child: child,
-    );
-  }
-
   Widget _buildBody() {
     return ReorderableListView.builder(
       key: const PageStorageKey('virt_key'),
       padding: const EdgeInsets.all(7),
       buildDefaultDragHandles: false,
       itemCount: _order.length,
-      proxyDecorator: _proxyDecorator,
+      proxyDecorator: reorderProxyDecorator,
       itemBuilder: (_, idx) => _buildListItem(_order[idx], idx),
       onReorder: _handleReorder,
     );
@@ -112,7 +96,10 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
               _buildCheckBox(key, isEnabled),
               if (!isDesktop) ...[
                 const SizedBox(width: 7),
-                ReorderableDragStartListener(index: idx, child: const Icon(Icons.drag_handle)),
+                ReorderableDragStartListener(
+                  index: idx,
+                  child: const Icon(Icons.drag_handle),
+                ),
               ],
             ],
           ),
@@ -132,18 +119,12 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
             ],
           );
     return IgnorePointer(
-      child: Opacity(
-        opacity: isEnabled ? 1.0 : 0.5,
-        child: text,
-      ),
+      child: Opacity(opacity: isEnabled ? 1.0 : 0.5, child: text),
     );
   }
 
   Widget _buildCheckBox(int key, bool isEnabled) {
-    return Checkbox(
-      value: isEnabled,
-      onChanged: (_) => _toggleEnabled(key),
-    );
+    return Checkbox(value: isEnabled, onChanged: (_) => _toggleEnabled(key));
   }
 
   void _handleReorder(int oldIndex, int newIndex) {

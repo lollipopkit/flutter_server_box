@@ -379,6 +379,18 @@ class AppLocalizationsEs extends AppLocalizations {
       '¿Debe habilitarse el modo de pantalla completa cuando el dispositivo se rote al modo horizontal? Esta opción solo se aplica a la pestaña del servidor.';
 
   @override
+  String get githubGist => 'GitHub Gist';
+
+  @override
+  String get githubGistIdOptional => 'Gist ID (optional)';
+
+  @override
+  String get githubGistToken => 'GitHub Gist token';
+
+  @override
+  String get githubGistTokenEmpty => 'Token is empty';
+
+  @override
   String get goBackQ => '¿Regresar?';
 
   @override

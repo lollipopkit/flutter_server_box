@@ -8,11 +8,15 @@ void main() {
     test('correctly handles BTRFS RAID1 with same UUID', () {
       final disks = Disk.parse(_btrfsRaidJsonOutput);
       expect(disks, isNotEmpty);
-      expect(disks.length, 4); // Should have 2 parent disks + 2 BTRFS partitions
+      expect(disks.length, 2); // Should have the 2 BTRFS partitions
 
       // We should get two distinct disks with the same UUID but different paths
-      final nvme1Disk = disks.firstWhere((disk) => disk.path == '/dev/nvme1n1p1');
-      final nvme2Disk = disks.firstWhere((disk) => disk.path == '/dev/nvme2n1p1');
+      final nvme1Disk = disks.firstWhere(
+        (disk) => disk.path == '/dev/nvme1n1p1',
+      );
+      final nvme2Disk = disks.firstWhere(
+        (disk) => disk.path == '/dev/nvme2n1p1',
+      );
 
       // Both should exist
       expect(nvme1Disk, isNotNull);

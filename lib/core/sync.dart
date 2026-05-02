@@ -9,6 +9,8 @@ const bakSync = BakSyncer._();
 
 final icloud = ICloud(containerId: 'iCloud.tech.lolli.serverbox');
 
+bool get isICloudSupported => isMacOS || isIOS;
+
 final class BakSyncer extends SyncIface {
   const BakSyncer._() : super();
 
@@ -16,7 +18,11 @@ final class BakSyncer extends SyncIface {
   Future<void> saveToFile() async {
     final pwd = await SecureStoreProps.bakPwd.read();
     final includeSettings = PrefProps.syncAppSettings.get();
-    await BackupV2.backup(null, pwd?.isEmpty == true ? null : pwd, includeSettings);
+    await BackupV2.backup(
+      null,
+      pwd?.isEmpty == true ? null : pwd,
+      includeSettings,
+    );
   }
 
   @override
@@ -27,19 +33,29 @@ final class BakSyncer extends SyncIface {
     try {
       if (Cryptor.isEncrypted(content)) {
         final mergeable = MergeableUtils.fromJsonString(content, pwd).$1;
-        return _normalizeSyncPayload(mergeable, includeSettings: includeSettings);
+        return _normalizeSyncPayload(
+          mergeable,
+          includeSettings: includeSettings,
+        );
       }
       final mergeable = MergeableUtils.fromJsonString(content).$1;
       return _normalizeSyncPayload(mergeable, includeSettings: includeSettings);
     } catch (e, s) {
-      Loggers.app.warning('Failed to parse backup file with password, trying without password', e, s);
+      Loggers.app.warning(
+        'Failed to parse backup file with password, trying without password',
+        e,
+        s,
+      );
       // Fallback: try without password if detection failed
       final mergeable = MergeableUtils.fromJsonString(content).$1;
       return _normalizeSyncPayload(mergeable, includeSettings: includeSettings);
     }
   }
 
-  Mergeable _normalizeSyncPayload(Mergeable mergeable, {required bool includeSettings}) {
+  Mergeable _normalizeSyncPayload(
+    Mergeable mergeable, {
+    required bool includeSettings,
+  }) {
     if (includeSettings) return mergeable;
 
     return switch (mergeable) {
@@ -62,7 +78,7 @@ final class BakSyncer extends SyncIface {
   @override
   RemoteStorage? get remoteStorage {
     final icloudEnabled = PrefProps.icloudSync.get();
-    if (icloudEnabled) return icloud;
+    if (icloudEnabled && isICloudSupported) return icloud;
 
     final webdavEnabled = PrefProps.webdavSync.get();
     if (webdavEnabled) return Webdav.shared;

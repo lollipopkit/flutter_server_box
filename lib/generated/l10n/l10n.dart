@@ -774,6 +774,30 @@ abstract class AppLocalizations {
   /// **'Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.'**
   String get fullScreenTip;
 
+  /// No description provided for @githubGist.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub Gist'**
+  String get githubGist;
+
+  /// No description provided for @githubGistIdOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Gist ID (optional)'**
+  String get githubGistIdOptional;
+
+  /// No description provided for @githubGistToken.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub Gist token'**
+  String get githubGistToken;
+
+  /// No description provided for @githubGistTokenEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Token is empty'**
+  String get githubGistTokenEmpty;
+
   /// No description provided for @goBackQ.
   ///
   /// In en, this message translates to:

@@ -378,6 +378,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Should full-screen mode be enabled when the device is rotated to landscape mode? This option only applies to the server tab.';
 
   @override
+  String get githubGist => 'GitHub Gist';
+
+  @override
+  String get githubGistIdOptional => 'Gist ID (optional)';
+
+  @override
+  String get githubGistToken => 'GitHub Gist token';
+
+  @override
+  String get githubGistTokenEmpty => 'Token is empty';
+
+  @override
   String get goBackQ => 'Go back?';
 
   @override
