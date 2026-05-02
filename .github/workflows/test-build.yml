@@ -1,0 +1,113 @@
+name: Flutter Test Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  APP_NAME: ServerBox
+  BUILD_TAG: test-build-${{ github.run_number }}-${{ github.sha }}
+
+jobs:
+  buildAndroid:
+    name: Build android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version: "3.41.4"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "21"
+      - name: Fetch secrets
+        run: |
+          curl --fail --show-error --location -u ${{ secrets.BASIC_AUTH }} -o android/app/app.key ${{ secrets.URL_PREFIX }}app.key
+          curl --fail --show-error --location -u ${{ secrets.BASIC_AUTH }} -o android/key.properties ${{ secrets.URL_PREFIX }}key.properties
+      - name: Build
+        run: dart run fl_build -p android
+      - name: Verify F-Droid native libraries
+        run: scripts/release/verify-fdroid-native-libs.sh
+      - name: Collect artifacts
+        shell: bash
+        run: |
+          mkdir -p artifacts/android
+          cp build/app/outputs/flutter-apk/*.apk artifacts/android/
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-android
+          path: artifacts/android/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  buildLinux:
+    name: Build linux
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runs_on: ubuntu-latest
+            artifact_suffix: ""
+          - runs_on: ubuntu-22.04
+            artifact_suffix: "-legacy"
+    runs-on: ${{ matrix.runs_on }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev mesa-utils libvulkan-dev desktop-file-utils wget
+          sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev libsecret-1-dev
+      - name: Build
+        run: dart run fl_build -p linux
+      - name: Collect artifacts
+        shell: bash
+        run: |
+          mkdir -p artifacts/linux
+          cp *.AppImage artifacts/linux/
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-linux${{ matrix.artifact_suffix }}
+          path: artifacts/linux/*.AppImage
+          if-no-files-found: error
+          retention-days: 14
+
+  buildWindows:
+    name: Build windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+      - name: Build
+        run: dart run fl_build -p windows
+      - name: Collect artifacts
+        shell: bash
+        run: |
+          mkdir -p artifacts/windows
+          cp *_windows_amd64.zip artifacts/windows/
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows
+          path: artifacts/windows/*_windows_amd64.zip
+          if-no-files-found: error
+          retention-days: 14
