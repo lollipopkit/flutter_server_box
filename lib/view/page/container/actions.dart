@@ -142,14 +142,14 @@ extension on _ContainerPageState {
       case ImageMenu.pull:
         final repo = e.repository;
         if (repo == null) {
-          context.showSnackBar('Repository is null');
+          context.showSnackBar(libL10n.empty);
           return;
         }
         final tag = e.tag ?? 'latest';
         final imageRef = '$repo:$tag';
         context.showRoundDialog(
           title: libL10n.attention,
-          child: Text(libL10n.askContinue('${l10n.pull} Image($imageRef)')),
+          child: Text(libL10n.askContinue('${l10n.pull} ${l10n.image}($imageRef)')),
           actions: Btn.ok(
             onTap: () async {
               context.pop();
@@ -160,8 +160,10 @@ extension on _ContainerPageState {
             },
           ).toList,
         );
+        break;
       case ImageMenu.rm:
         _showImageRmDialog(e);
+        break;
     }
   }
 
