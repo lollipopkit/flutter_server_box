@@ -153,9 +153,14 @@ extension on _ContainerPageState {
           actions: Btn.ok(
             onTap: () async {
               context.pop();
-              final result = await _containerNotifier.run('pull $imageRef');
-              if (result != null) {
-                context.showSnackBar(result.message ?? 'null');
+
+              final (result, err) = await context.showLoadingDialog(
+                fn: () => _containerNotifier.run('pull $imageRef'),
+                timeout: null,
+              );
+              if (err != null || result != null) {
+                final e = result?.message ?? err?.toString();
+                context.showRoundDialog(title: libL10n.error, child: Text(e ?? 'null'));
               }
             },
           ).toList,
