@@ -49,7 +49,6 @@ class _HomePageState extends ConsumerState<HomePage>
     if (isMobile) {
       SystemUIs.switchStatusBar(hide: false);
     }
-    super.dispose();
     WidgetsBinding.instance.removeObserver(this);
     Stores.setting.homeTabs.listenable().removeListener(_handleHomeTabsChanged);
     Stores.setting.serverStatusUpdateInterval.listenable().removeListener(
@@ -64,6 +63,7 @@ class _HomePageState extends ConsumerState<HomePage>
     WakelockPlus.disable();
 
     _selectIndex.dispose();
+    super.dispose();
   }
 
   @override

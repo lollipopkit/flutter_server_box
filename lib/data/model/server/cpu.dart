@@ -249,9 +249,11 @@ Cpus parseBsdCpu(String raw) {
   }).toList();
 
   if (percents.length >= 3) {
-    // Validate that percentages are reasonable (0-100 range)
-    final validPercents = percents.where((p) => p >= 0 && p <= 100).toList();
-    if (validPercents.length != percents.length) {
+    final clampedPercents = percents.map((p) => p.clamp(0.0, 100.0)).toList();
+    if (!List.generate(
+      percents.length,
+      (i) => percents[i] == clampedPercents[i],
+    ).every((e) => e)) {
       Loggers.app.warning(
         'BSD CPU fallback parsing found invalid percentages in: $raw',
       );
@@ -260,10 +262,10 @@ Cpus parseBsdCpu(String raw) {
     init.add([
       SingleCpuCore(
         'cpu0',
-        percents[0].toInt(), // user
-        percents.length > 1 ? percents[1].toInt() : 0, // sys
+        clampedPercents[0].toInt(), // user
+        clampedPercents[1].toInt(), // sys
         0, // nice
-        percents.length > 2 ? percents[2].toInt() : 0, // idle
+        clampedPercents[2].toInt(), // idle
         0, // iowait
         0, // irq
         0, // softirq

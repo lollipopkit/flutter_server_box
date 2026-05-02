@@ -37,23 +37,20 @@ void main() {
       expect(bootFs.usedPercent, 34);
     });
 
-    test('parse nested lsblk JSON output with parent/child relationships', () {
+    test('parse nested lsblk JSON output falls back to child filesystems', () {
       final disks = Disk.parse(_nestedJsonLsblkOutput);
       expect(disks, isNotEmpty);
 
-      // Check parent device with children
-      final parentDisk = disks.firstWhere((disk) => disk.path == '/dev/nvme0n1');
-      expect(parentDisk.children, isNotEmpty);
-      expect(parentDisk.children.length, 3);
+      expect(disks.any((disk) => disk.path == '/dev/nvme0n1'), isFalse);
 
-      // Check one of the children
-      final rootPartition = parentDisk.children.firstWhere((disk) => disk.mount == '/');
+      // Check first valid child filesystem
+      final rootPartition = disks.firstWhere((disk) => disk.mount == '/');
       expect(rootPartition.fsTyp, 'ext4');
       expect(rootPartition.path, '/dev/nvme0n1p2');
       expect(rootPartition.usedPercent, 45);
 
       // Verify we have a child partition with UUID
-      final bootPartition = parentDisk.children.firstWhere((disk) => disk.mount == '/boot');
+      final bootPartition = disks.firstWhere((disk) => disk.mount == '/boot');
       expect(bootPartition.uuid, '12345678-abcd-1234-abcd-1234567890ab');
     });
 
@@ -85,13 +82,19 @@ void main() {
     test('parse df -k output (fallback mode)', () {
       final disks = Disk.parse(_dfOutput);
       expect(disks, isNotEmpty);
-      expect(disks.length, 3); // Should find 3 valid filesystems: udev, /dev/vda3, /dev/vda2
+      expect(
+        disks.length,
+        3,
+      ); // Should find 3 valid filesystems: udev, /dev/vda3, /dev/vda2
 
       // Verify root filesystem
       final rootFs = disks.firstWhere((disk) => disk.mount == '/');
       expect(rootFs.path, '/dev/vda3');
       expect(rootFs.usedPercent, 47);
-      expect(rootFs.size, BigInt.from(40910528 ~/ 1024)); // df -k output divided by 1024 = MB
+      expect(
+        rootFs.size,
+        BigInt.from(40910528 ~/ 1024),
+      ); // df -k output divided by 1024 = MB
       expect(rootFs.used, BigInt.from(18067948 ~/ 1024));
       expect(rootFs.avail, BigInt.from(20951380 ~/ 1024));
 
@@ -100,7 +103,7 @@ void main() {
       expect(efiFs.path, '/dev/vda2');
       expect(efiFs.usedPercent, 7);
       expect(efiFs.size, BigInt.from(192559 ~/ 1024));
-      
+
       // Verify udev filesystem is included (virtual filesystem)
       final udevFs = disks.firstWhere((disk) => disk.path == 'udev');
       expect(udevFs.mount, '/dev');
@@ -121,7 +124,7 @@ void main() {
     test('handle JSON with null filesystem fields', () {
       final disks = Disk.parse(_jsonWithNullFields);
       expect(disks, isNotEmpty);
-      
+
       // Should handle null filesystem fields gracefully
       final disk = disks.firstWhere((disk) => disk.mount == '/');
       expect(disk.size, BigInt.zero);
@@ -133,7 +136,7 @@ void main() {
     test('handle JSON with string "null" values', () {
       final disks = Disk.parse(_jsonWithStringNulls);
       expect(disks, isNotEmpty);
-      
+
       // Should handle string "null" filesystem fields gracefully
       final disk = disks.firstWhere((disk) => disk.mount == '/');
       expect(disk.size, BigInt.zero);
@@ -145,7 +148,7 @@ void main() {
     test('handle JSON with empty string values', () {
       final disks = Disk.parse(_jsonWithEmptyStrings);
       expect(disks, isNotEmpty);
-      
+
       // Should handle empty string filesystem fields gracefully
       final disk = disks.firstWhere((disk) => disk.mount == '/');
       expect(disk.size, BigInt.zero);
@@ -157,7 +160,7 @@ void main() {
     test('handle JSON with invalid percentage format', () {
       final disks = Disk.parse(_jsonWithInvalidPercent);
       expect(disks, isNotEmpty);
-      
+
       // Should handle invalid percentage gracefully
       final disk = disks.firstWhere((disk) => disk.mount == '/');
       expect(disk.usedPercent, 0);
@@ -166,7 +169,7 @@ void main() {
     test('handle JSON with malformed numbers', () {
       final disks = Disk.parse(_jsonWithMalformedNumbers);
       expect(disks, isNotEmpty);
-      
+
       // Should handle malformed numbers gracefully
       final disk = disks.firstWhere((disk) => disk.mount == '/');
       expect(disk.size, BigInt.zero);
@@ -176,13 +179,16 @@ void main() {
 
     test('handle JSON parsing errors gracefully', () {
       final disks = Disk.parse(_malformedJson);
-      expect(disks, isEmpty); // Should fallback to legacy method, which also fails
+      expect(
+        disks,
+        isEmpty,
+      ); // Should fallback to legacy method, which also fails
     });
 
     test('handle df output with missing fields', () {
       final disks = Disk.parse(_dfWithMissingFields);
       expect(disks, isNotEmpty);
-      
+
       // Should handle missing fields gracefully
       final disk = disks.firstWhere((disk) => disk.mount == '/');
       expect(disk.usedPercent, 47);
@@ -191,7 +197,7 @@ void main() {
     test('handle df output with inconsistent formatting', () {
       final disks = Disk.parse(_dfWithInconsistentFormatting);
       expect(disks, isNotEmpty);
-      
+
       // Should handle inconsistent formatting
       expect(disks.length, greaterThan(0));
     });
@@ -199,7 +205,7 @@ void main() {
     test('handle lsblk with success marker', () {
       final disks = Disk.parse(_lsblkWithSuccessMarker);
       expect(disks, isNotEmpty);
-      
+
       // Should parse JSON and ignore success marker
       final rootFs = disks.firstWhere((disk) => disk.mount == '/');
       expect(rootFs.fsTyp, 'ext4');
@@ -209,7 +215,7 @@ void main() {
     test('handle malformed lsblk output fallback', () {
       final disks = Disk.parse(_malformedLsblkWithDfFallback);
       expect(disks, isNotEmpty);
-      
+
       // Should fallback to df -k parsing when lsblk output is malformed
       expect(disks.length, 3);
     });

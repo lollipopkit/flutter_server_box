@@ -48,12 +48,14 @@ class ServerFuncBtns extends StatelessWidget {
       ),
     );
   }
+}
 
+extension ServerFuncBtnsBuild on ServerFuncBtns {
   Widget _buildItem(BuildContext context, ServerFuncBtn e, WidgetRef ref) {
     final move = Stores.setting.moveServerFuncs.fetch();
     if (move) {
       return IconButton(
-        onPressed: () => _onTapMoreBtns(e, spi, context, ref),
+        onPressed: () => _onTapMoreBtns(e, context, ref),
         padding: EdgeInsets.zero,
         tooltip: e.toStr,
         icon: Icon(e.icon, size: 15),
@@ -66,7 +68,7 @@ class ServerFuncBtns extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            onPressed: () => _onTapMoreBtns(e, spi, context, ref),
+            onPressed: () => _onTapMoreBtns(e, context, ref),
             padding: EdgeInsets.zero,
             icon: Icon(e.icon, size: 17),
           ),
@@ -75,7 +77,9 @@ class ServerFuncBtns extends StatelessWidget {
       ),
     );
   }
+}
 
+extension ServerFuncBtnsUtils on ServerFuncBtns {
   List<ServerFuncBtn> get btns {
     try {
       final vals = <ServerFuncBtn>[];
@@ -91,88 +95,89 @@ class ServerFuncBtns extends StatelessWidget {
   }
 }
 
-void _onTapMoreBtns(
-  ServerFuncBtn value,
-  Spi spi,
-  BuildContext context,
-  WidgetRef ref,
-) async {
-  switch (value) {
-    case ServerFuncBtn.sftp:
-      if (!_checkClient(context, spi.id, ref)) return;
-      final args = SftpPageArgs(spi: spi);
-      SftpPage.route.go(context, args);
+extension ServerFuncBtnsActions on ServerFuncBtns {
+  void _onTapMoreBtns(
+    ServerFuncBtn value,
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    switch (value) {
+      case ServerFuncBtn.sftp:
+        if (!_checkClient(context, spi.id, ref)) return;
+        final args = SftpPageArgs(spi: spi);
+        SftpPage.route.go(context, args);
 
-      break;
-    case ServerFuncBtn.snippet:
-      final snippetState = ref.read(snippetProvider);
-      if (snippetState.snippets.isEmpty) {
-        context.showSnackBar(libL10n.empty);
-        return;
-      }
-      final snippets = await context.showPickWithTagDialog<Snippet>(
-        title: libL10n.snippet,
-        tags: snippetState.tags.vn,
-        itemsBuilder: (e) {
-          if (e == TagSwitcher.kDefaultTag) {
-            return snippetState.snippets;
-          }
-          return snippetState.snippets
-              .where((element) => element.tags?.contains(e) ?? false)
-              .toList();
-        },
-        display: (e) => e.name,
-      );
-      if (snippets == null || snippets.isEmpty) return;
-      final snippet = snippets.firstOrNull;
-      if (snippet == null) return;
-      final fmted = snippet.fmtWithSpi(spi);
-      final sure = await context.showRoundDialog<bool>(
-        title: libL10n.attention,
-        child: SingleChildScrollView(
-          child: SimpleMarkdown(data: '```shell\n$fmted\n```'),
-        ),
-        actions: [
-          CountDownBtn(
-            onTap: () => context.pop(true),
-            text: libL10n.run,
-            afterColor: Colors.red,
+        break;
+      case ServerFuncBtn.snippet:
+        final snippetState = ref.read(snippetProvider);
+        if (snippetState.snippets.isEmpty) {
+          context.showSnackBar(libL10n.empty);
+          return;
+        }
+        final snippets = await context.showPickWithTagDialog<Snippet>(
+          title: libL10n.snippet,
+          tags: snippetState.tags.vn,
+          itemsBuilder: (e) {
+            if (e == TagSwitcher.kDefaultTag) {
+              return snippetState.snippets;
+            }
+            return snippetState.snippets
+                .where((element) => element.tags?.contains(e) ?? false)
+                .toList();
+          },
+          display: (e) => e.name,
+        );
+        if (snippets == null || snippets.isEmpty) return;
+        final snippet = snippets.firstOrNull;
+        if (snippet == null) return;
+        final fmted = snippet.fmtWithSpi(spi);
+        final sure = await context.showRoundDialog<bool>(
+          title: libL10n.attention,
+          child: SingleChildScrollView(
+            child: SimpleMarkdown(data: '```shell\n$fmted\n```'),
           ),
-        ],
-      );
-      if (sure != true) return;
-      if (!_checkClient(context, spi.id, ref)) return;
-      final args = SshPageArgs(spi: spi, initSnippet: snippet);
-      SSHPage.route.go(context, args);
-      break;
-    case ServerFuncBtn.container:
-      if (!_checkClient(context, spi.id, ref)) return;
-      final args = SpiRequiredArgs(spi);
-      ContainerPage.route.go(context, args);
-      break;
-    case ServerFuncBtn.process:
-      if (!_checkClient(context, spi.id, ref)) return;
-      final args = SpiRequiredArgs(spi);
-      ProcessPage.route.go(context, args);
-      break;
-    case ServerFuncBtn.terminal:
-      _gotoSSH(spi, context);
-      break;
-    case ServerFuncBtn.iperf:
-      if (!_checkClient(context, spi.id, ref)) return;
-      final args = SpiRequiredArgs(spi);
-      IPerfPage.route.go(context, args);
-      break;
-    case ServerFuncBtn.systemd:
-      if (!_checkClient(context, spi.id, ref)) return;
-      final args = SpiRequiredArgs(spi);
-      SystemdPage.route.go(context, args);
-      break;
-    case ServerFuncBtn.portForward:
-      if (!_checkClient(context, spi.id, ref)) return;
-      final args = SpiRequiredArgs(spi);
-      PortForwardPage.route.go(context, args);
-      break;
+          actions: [
+            CountDownBtn(
+              onTap: () => context.pop(true),
+              text: libL10n.run,
+              afterColor: Colors.red,
+            ),
+          ],
+        );
+        if (sure != true) return;
+        if (!_checkClient(context, spi.id, ref)) return;
+        final args = SshPageArgs(spi: spi, initSnippet: snippet);
+        SSHPage.route.go(context, args);
+        break;
+      case ServerFuncBtn.container:
+        if (!_checkClient(context, spi.id, ref)) return;
+        final args = SpiRequiredArgs(spi);
+        ContainerPage.route.go(context, args);
+        break;
+      case ServerFuncBtn.process:
+        if (!_checkClient(context, spi.id, ref)) return;
+        final args = SpiRequiredArgs(spi);
+        ProcessPage.route.go(context, args);
+        break;
+      case ServerFuncBtn.terminal:
+        _gotoSSH(spi, context);
+        break;
+      case ServerFuncBtn.iperf:
+        if (!_checkClient(context, spi.id, ref)) return;
+        final args = SpiRequiredArgs(spi);
+        IPerfPage.route.go(context, args);
+        break;
+      case ServerFuncBtn.systemd:
+        if (!_checkClient(context, spi.id, ref)) return;
+        final args = SpiRequiredArgs(spi);
+        SystemdPage.route.go(context, args);
+        break;
+      case ServerFuncBtn.portForward:
+        if (!_checkClient(context, spi.id, ref)) return;
+        final args = SpiRequiredArgs(spi);
+        PortForwardPage.route.go(context, args);
+        break;
+    }
   }
 }
 
@@ -225,9 +230,11 @@ void _gotoSSH(Spi spi, BuildContext context) async {
         await Process.start('cmd', ['/c', 'start'] + sshCommand);
         break;
       case Pfs.linux:
-        final scriptFile = File(
-          '${Directory.systemTemp.path}/srvbox_launch_term.sh',
+        final scriptDir = await Directory.systemTemp.createTemp(
+          'srvbox_launch_term_',
         );
+        final scriptFile = File(scriptDir.path.joinPath('launch_term.sh'));
+        await scriptFile.create(exclusive: true);
         await scriptFile.writeAsString(_runEmulatorShell);
 
         if (Platform.isLinux || Platform.isMacOS) {
@@ -242,7 +249,9 @@ void _gotoSSH(Spi spi, BuildContext context) async {
         } catch (e, s) {
           context.showErrDialog(e, s, libL10n.emulator);
         } finally {
-          await scriptFile.delete();
+          if (await scriptDir.exists()) {
+            await scriptDir.delete(recursive: true);
+          }
         }
         break;
       default:

@@ -182,11 +182,6 @@ abstract final class SnippetFuncs {
     r'${enter': SnippetFuncs.enter,
   };
 
-  static const help = {
-    'sleep': 'Sleep for a few seconds',
-    'enter': 'Enter a few times',
-  };
-
   static FutureOr<void> sleep(SnippetFuncCtx ctx) async {
     final seconds = int.tryParse(ctx.raw);
     if (seconds == null) return;

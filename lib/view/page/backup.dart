@@ -673,19 +673,20 @@ extension on _BackupPageState {
     final tokenCtrl = TextEditingController(text: PrefProps.githubToken.get());
     final gistIdCtrl = TextEditingController(text: PrefProps.gistId.get());
     final nodeToken = FocusNode();
+    final appL10n = context.l10n;
     final result = await context.showRoundDialog<bool>(
-      title: 'GitHub Gist',
+      title: appL10n.githubGist,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Input(
-            label: 'Token',
+            label: appL10n.githubGistToken,
             controller: tokenCtrl,
             suggestion: false,
             node: nodeToken,
           ),
           Input(
-            label: 'Gist ID (optional)',
+            label: appL10n.githubGistIdOptional,
             controller: gistIdCtrl,
             suggestion: false,
             onSubmitted: (_) => context.pop(true),
@@ -811,7 +812,7 @@ extension on _BackupPageState {
               // Ensure each server has a unique ID
 
               // Only generate a new ID if the imported one is empty or already used in importing stage
-              final isIdUsed = spi.id.isNotEmpty || usedIds.contains(spi.id);
+              final isIdUsed = spi.id.isEmpty || usedIds.contains(spi.id);
               final spiWithId = isIdUsed
                   ? spi.copyWith(id: ShortId.generate())
                   : spi;
@@ -856,7 +857,8 @@ extension on _BackupPageState {
     } else if (result == false) {
       // User wants to set password
       await _onTapSetBakPwd(context);
-      return true; // Allow continuing even if password setting was cancelled
+      final savedAfterSetting = await SecureStoreProps.bakPwd.read();
+      return savedAfterSetting != null && savedAfterSetting.isNotEmpty;
     }
 
     return false; // User cancelled the dialog

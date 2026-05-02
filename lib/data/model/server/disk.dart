@@ -100,6 +100,26 @@ class Disk with EquatableMixin {
     Map<String, dynamic> device,
     List<Disk> list,
   ) {
+    final fstype = device['fstype']?.toString();
+    final mount = device['mountpoint']?.toString() ?? '';
+    final childDevices = device['children'] ?? [];
+    final fsFields = _parseFilesystemFields(device);
+    final hasFilesystemStats =
+        fsFields.size != BigInt.zero ||
+        fsFields.used != BigInt.zero ||
+        fsFields.avail != BigInt.zero;
+    final hasOwnFilesystem = fstype != null && _shouldCalc(fstype, mount);
+
+    if (!hasFilesystemStats && !hasOwnFilesystem && childDevices.isNotEmpty) {
+      for (final childDevice in childDevices) {
+        final childDisk = _processDiskDevice(childDevice);
+        if (childDisk != null) {
+          list.add(childDisk);
+        }
+      }
+      return;
+    }
+
     final disk = _processDiskDevice(device);
     if (disk != null) {
       list.add(disk);
@@ -107,7 +127,6 @@ class Disk with EquatableMixin {
 
     // For devices with children (like physical disks with partitions),
     // also process each child individually to ensure BTRFS RAID disks are properly handled
-    final List<dynamic> childDevices = device['children'] ?? [];
     for (final childDevice in childDevices) {
       final String childPath = childDevice['path']?.toString() ?? '';
       final String childFsType = childDevice['fstype']?.toString() ?? '';
@@ -208,6 +227,14 @@ class Disk with EquatableMixin {
     if ((fstype != null && _shouldCalc(fstype, mount)) ||
         (childDisks.isNotEmpty && path.isNotEmpty)) {
       final fsFields = _parseFilesystemFields(device);
+      final hasFilesystemStats =
+          fsFields.size != BigInt.zero ||
+          fsFields.used != BigInt.zero ||
+          fsFields.avail != BigInt.zero;
+      if (!hasFilesystemStats && childDisks.isNotEmpty) {
+        return childDisks.first;
+      }
+
       final name = device['name']?.toString();
       final kname = device['kname']?.toString();
       final uuid = device['uuid']?.toString();
@@ -226,11 +253,7 @@ class Disk with EquatableMixin {
         children: childDisks,
       );
     } else if (childDisks.isNotEmpty) {
-      // If this is a parent device with no filesystem but has children,
-      // return the first valid child instead
-      if (childDisks.isNotEmpty) {
-        return childDisks.first;
-      }
+      return childDisks.first;
     }
 
     return null;
