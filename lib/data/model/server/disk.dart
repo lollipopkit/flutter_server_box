@@ -227,15 +227,11 @@ class Disk with EquatableMixin {
     if ((fstype != null && _shouldCalc(fstype, mount)) ||
         (childDisks.isNotEmpty && path.isNotEmpty)) {
       final fsFields = _parseFilesystemFields(device);
-      final hasFilesystemStats =
-          fsFields.size != BigInt.zero ||
-          fsFields.used != BigInt.zero ||
-          fsFields.avail != BigInt.zero;
 
       final name = device['name']?.toString();
       final kname = device['kname']?.toString();
       final uuid = device['uuid']?.toString();
-      final disk = Disk(
+      return Disk(
         path: path,
         fsTyp: fstype,
         mount: mount,
@@ -248,12 +244,6 @@ class Disk with EquatableMixin {
         uuid: uuid,
         children: childDisks,
       );
-
-      if (!hasFilesystemStats && childDisks.isNotEmpty) {
-        return disk;
-      }
-
-      return disk;
     } else if (childDisks.isNotEmpty) {
       final fsFields = _parseFilesystemFields(device);
       final name = device['name']?.toString();
