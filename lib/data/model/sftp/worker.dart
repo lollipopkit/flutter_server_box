@@ -178,10 +178,16 @@ Future<void> _upload(
           SftpFileOpenMode.create |
           SftpFileOpenMode.write,
     );
+    var lastProgress = -1;
     final writer = file.write(
       localFile,
       onProgress: (total) {
-        mainSendPort.send(total / localLen * 100);
+        if (localLen == 0) return;
+        final progress = (total / localLen * 100).round();
+        if (progress != lastProgress) {
+          lastProgress = progress;
+          mainSendPort.send(progress.toDouble());
+        }
       },
       chunkSize: _sftpTransferChunkSize,
       maxBytesOnTheWire: _sftpUploadMaxBytesOnTheWire,
