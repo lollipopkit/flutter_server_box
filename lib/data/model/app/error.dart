@@ -1,7 +1,16 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 
-enum SSHErrType { unknown, connect, auth, noPrivateKey, chdir, segements, writeScript, getStatus }
+enum SSHErrType {
+  unknown,
+  connect,
+  auth,
+  noPrivateKey,
+  chdir,
+  segements,
+  writeScript,
+  getStatus,
+}
 
 class SSHErr extends Err<SSHErrType> {
   const SSHErr({required super.type, super.message});
@@ -33,24 +42,6 @@ enum ContainerErrType {
 
 class ContainerErr extends Err<ContainerErrType> {
   const ContainerErr({required super.type, super.message});
-
-  @override
-  String? get solution => null;
-}
-
-enum ICloudErrType { generic, notFound, multipleFiles }
-
-class ICloudErr extends Err<ICloudErrType> {
-  const ICloudErr({required super.type, super.message});
-
-  @override
-  String? get solution => null;
-}
-
-enum WebdavErrType { generic, notFound }
-
-class WebdavErr extends Err<WebdavErrType> {
-  const WebdavErr({required super.type, super.message});
 
   @override
   String? get solution => null;

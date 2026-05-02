@@ -27,7 +27,8 @@ class BackupPage extends ConsumerStatefulWidget {
   static const route = AppRouteNoArg(page: BackupPage.new, path: '/backup');
 }
 
-final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKeepAliveClientMixin {
+final class _BackupPageState extends ConsumerState<BackupPage>
+    with AutomaticKeepAliveClientMixin {
   final webdavLoading = false.vn;
   final gistLoading = false.vn;
   late Future<_ICloudBackupStatus?> _icloudStatusFuture;
@@ -35,7 +36,10 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
   @override
   void initState() {
     super.initState();
-    _refreshIcloudStatus(notify: false);
+    _icloudStatusFuture = Future.value(null);
+    if (isICloudSupported) {
+      _refreshIcloudStatus(notify: false);
+    }
   }
 
   @override
@@ -59,13 +63,17 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
           CenterGreyTitle(libL10n.sync),
           _buildTip,
           _buildBakPwd,
-          if (isMacOS || isIOS) _buildIcloud,
+          if (isICloudSupported) _buildIcloud,
           _buildWebdav,
           _buildGist,
           _buildFile,
           _buildClipboard,
         ],
-        [CenterGreyTitle(libL10n.import), _buildBulkImportServers, _buildImportSnippet],
+        [
+          CenterGreyTitle(libL10n.import),
+          _buildBulkImportServers,
+          _buildImportSnippet,
+        ],
       ],
     );
   }
@@ -79,11 +87,17 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
           child: ListTile(
             leading: const Icon(Icons.lock),
             title: Text(l10n.backupPassword),
-            subtitle: Text(hasPwd ? l10n.backupEncrypted : l10n.backupNotEncrypted, style: UIs.textGrey),
+            subtitle: Text(
+              hasPwd ? l10n.backupEncrypted : l10n.backupNotEncrypted,
+              style: UIs.textGrey,
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextButton(onPressed: () async => _onTapSetBakPwd(context), child: Text(libL10n.setting)),
+                TextButton(
+                  onPressed: () async => _onTapSetBakPwd(context),
+                  child: Text(libL10n.setting),
+                ),
                 if (hasPwd) ...[
                   UIs.width7,
                   TextButton(
@@ -184,7 +198,8 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
             trailing: StoreSwitch(
               prop: PrefProps.icloudSync,
               validator: (p0) async {
-                if (p0 && (PrefProps.webdavSync.get() || PrefProps.gistSync.get())) {
+                if (p0 &&
+                    (PrefProps.webdavSync.get() || PrefProps.gistSync.get())) {
                   context.showSnackBar(l10n.autoBackupConflict);
                   return false;
                 }
@@ -223,7 +238,7 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
             trailing: StoreSwitch(
               prop: PrefProps.webdavSync,
               validator: (p0) async {
-                if (p0 && PrefProps.icloudSync.get()) {
+                if (p0 && isICloudSupported && PrefProps.icloudSync.get()) {
                   context.showSnackBar(l10n.autoBackupConflict);
                   return false;
                 }
@@ -264,9 +279,15 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
               return Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextButton(onPressed: () async => _onTapWebdavDl(context), child: Text(libL10n.restore)),
+                  TextButton(
+                    onPressed: () async => _onTapWebdavDl(context),
+                    child: Text(libL10n.restore),
+                  ),
                   UIs.width7,
-                  TextButton(onPressed: () async => _onTapWebdavUp(context), child: Text(libL10n.backup)),
+                  TextButton(
+                    onPressed: () async => _onTapWebdavUp(context),
+                    child: Text(libL10n.backup),
+                  ),
                 ],
               );
             }),
@@ -294,7 +315,9 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
             trailing: StoreSwitch(
               prop: PrefProps.gistSync,
               validator: (p0) async {
-                if (p0 && (PrefProps.icloudSync.get() || PrefProps.webdavSync.get())) {
+                if (p0 &&
+                    ((isICloudSupported && PrefProps.icloudSync.get()) ||
+                        PrefProps.webdavSync.get())) {
                   context.showSnackBar(l10n.autoBackupConflict);
                   return false;
                 }
@@ -326,9 +349,15 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
               return Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextButton(onPressed: () async => _onTapGistDl(context), child: Text(libL10n.restore)),
+                  TextButton(
+                    onPressed: () async => _onTapGistDl(context),
+                    child: Text(libL10n.restore),
+                  ),
                   UIs.width7,
-                  TextButton(onPressed: () async => _onTapGistUp(context), child: Text(libL10n.backup)),
+                  TextButton(
+                    onPressed: () async => _onTapGistUp(context),
+                    child: Text(libL10n.backup),
+                  ),
                 ],
               );
             }),
@@ -352,7 +381,8 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
           ListTile(
             trailing: const Icon(Icons.restore),
             title: Text(libL10n.restore),
-            onTap: () => BackupService.restore(context, ClipboardBackupSource()),
+            onTap: () =>
+                BackupService.restore(context, ClipboardBackupSource()),
           ),
         ],
       ),
@@ -368,6 +398,8 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
   }
 
   void _refreshIcloudStatus({bool notify = true}) {
+    if (!isICloudSupported) return;
+
     final future = _loadIcloudStatus();
     if (!notify) {
       _icloudStatusFuture = future;
@@ -399,14 +431,25 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
             icon = Icons.cloud_off;
           } else {
             final lastModified = status.lastModified.toLocal().ymdhms();
-            final remoteState = switch ((status.isUploading, status.isUploaded, status.hasConflict)) {
+            final remoteState = switch ((
+              status.isUploading,
+              status.isUploaded,
+              status.hasConflict,
+            )) {
               (_, _, true) => l10n.icloudBackupStateConflict,
               (true, _, _) => l10n.icloudBackupStateUploading,
               (_, true, _) => l10n.icloudBackupStateUploaded,
               _ => l10n.icloudBackupStateWaiting,
             };
-            subtitle = l10n.icloudBackupStatusSummary(lastModified, remoteState);
-            icon = switch ((status.hasConflict, status.isUploading, status.isUploaded)) {
+            subtitle = l10n.icloudBackupStatusSummary(
+              lastModified,
+              remoteState,
+            );
+            icon = switch ((
+              status.hasConflict,
+              status.isUploading,
+              status.isUploaded,
+            )) {
               (true, _, _) => Icons.warning,
               (_, true, _) => Icons.cloud_upload,
               (_, _, true) => Icons.cloud_done,
@@ -448,7 +491,10 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
       leading: const Icon(MingCute.code_line),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () async {
-        final data = await context.showImportDialog(title: libL10n.snippet, modelDef: Snippet.example.toJson());
+        final data = await context.showImportDialog(
+          title: libL10n.snippet,
+          modelDef: Snippet.example.toJson(),
+        );
         if (data == null) return;
         String str;
         try {
@@ -487,7 +533,11 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
         final snippetNames = snippets.map((e) => e.name).join(', ');
         context.showRoundDialog(
           title: libL10n.attention,
-          child: SingleChildScrollView(child: Text(libL10n.askContinue('${libL10n.import} [$snippetNames]'))),
+          child: SingleChildScrollView(
+            child: Text(
+              libL10n.askContinue('${libL10n.import} [$snippetNames]'),
+            ),
+          ),
           actions: Btn.ok(
             onTap: () {
               final notifier = ref.read(snippetProvider.notifier);
@@ -509,12 +559,17 @@ final class _BackupPageState extends ConsumerState<BackupPage> with AutomaticKee
 
 extension on _BackupPageState {
   Future<_ICloudBackupStatus?> _loadIcloudStatus() async {
+    if (!isICloudSupported) return null;
+
     final files = await icloud.list();
     final matches = files.where((file) => file.relativePath == Paths.bakName);
     if (matches.isEmpty) return null;
 
     final file = matches.reduce(
-      (latest, current) => current.contentChangeDate.isAfter(latest.contentChangeDate) ? current : latest,
+      (latest, current) =>
+          current.contentChangeDate.isAfter(latest.contentChangeDate)
+          ? current
+          : latest,
     );
     return _ICloudBackupStatus(
       lastModified: file.contentChangeDate,
@@ -530,7 +585,10 @@ extension on _BackupPageState {
       final files = await Webdav.shared.list();
       if (files.isEmpty) return context.showSnackBar(l10n.dirEmpty);
 
-      final fileName = await context.showPickSingleDialog(title: libL10n.restore, items: files);
+      final fileName = await context.showPickSingleDialog(
+        title: libL10n.restore,
+        items: files,
+      );
       if (fileName == null) return;
 
       await Webdav.shared.download(relativePath: fileName);
@@ -552,7 +610,10 @@ extension on _BackupPageState {
       final ok = await _ensureBakPwd(context);
       if (!ok) return;
       final savedPassword = await SecureStoreProps.bakPwd.read();
-      await BackupV2.backup(bakName, savedPassword?.isEmpty == true ? null : savedPassword);
+      await BackupV2.backup(
+        bakName,
+        savedPassword?.isEmpty == true ? null : savedPassword,
+      );
       await Webdav.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload webdav backup success');
     } catch (e, s) {
@@ -569,7 +630,10 @@ extension on _BackupPageState {
       final files = await GistRs.shared.list();
       if (files.isEmpty) return context.showSnackBar(l10n.dirEmpty);
 
-      final fileName = await context.showPickSingleDialog(title: libL10n.restore, items: files);
+      final fileName = await context.showPickSingleDialog(
+        title: libL10n.restore,
+        items: files,
+      );
       if (fileName == null) return;
 
       await GistRs.shared.download(relativePath: fileName);
@@ -591,7 +655,10 @@ extension on _BackupPageState {
       final ok = await _ensureBakPwd(context);
       if (!ok) return;
       final savedPassword = await SecureStoreProps.bakPwd.read();
-      await BackupV2.backup(bakName, savedPassword?.isEmpty == true ? null : savedPassword);
+      await BackupV2.backup(
+        bakName,
+        savedPassword?.isEmpty == true ? null : savedPassword,
+      );
       await GistRs.shared.upload(relativePath: bakName);
       Loggers.app.info('Upload gist backup success');
     } catch (e, s) {
@@ -611,7 +678,12 @@ extension on _BackupPageState {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Input(label: 'Token', controller: tokenCtrl, suggestion: false, node: nodeToken),
+          Input(
+            label: 'Token',
+            controller: tokenCtrl,
+            suggestion: false,
+            node: nodeToken,
+          ),
           Input(
             label: 'Gist ID (optional)',
             controller: gistIdCtrl,
@@ -627,7 +699,10 @@ extension on _BackupPageState {
         final token_ = tokenCtrl.text.trim();
         final gistId_ = gistIdCtrl.text.trim();
 
-        await GistRs.test(token: token_, gistId: gistId_.isEmpty ? null : gistId_);
+        await GistRs.test(
+          token: token_,
+          gistId: gistId_.isEmpty ? null : gistId_,
+        );
         context.showSnackBar(libL10n.success);
 
         await PrefProps.githubToken.set(token_);
@@ -687,7 +762,11 @@ extension on _BackupPageState {
         await Webdav.test(url_, user_, pwd_);
         context.showSnackBar(libL10n.success);
 
-        Webdav.shared.client = WebdavClient.basicAuth(url: url_, user: user_, pwd: pwd_);
+        Webdav.shared.client = WebdavClient.basicAuth(
+          url: url_,
+          user: user_,
+          pwd: pwd_,
+        );
         PrefProps.webdavUrl.set(url_);
         PrefProps.webdavUser.set(user_);
         PrefProps.webdavPwd.set(pwd_);
@@ -698,7 +777,10 @@ extension on _BackupPageState {
   }
 
   void _onBulkImportServers(BuildContext context) async {
-    final data = await context.showImportDialog(title: libL10n.server, modelDef: Spix.example.toJson());
+    final data = await context.showImportDialog(
+      title: libL10n.server,
+      modelDef: Spix.example.toJson(),
+    );
     if (data == null) return;
     String text;
     try {
@@ -730,7 +812,9 @@ extension on _BackupPageState {
 
               // Only generate a new ID if the imported one is empty or already used in importing stage
               final isIdUsed = spi.id.isNotEmpty || usedIds.contains(spi.id);
-              final spiWithId = isIdUsed ? spi.copyWith(id: ShortId.generate()) : spi;
+              final spiWithId = isIdUsed
+                  ? spi.copyWith(id: ShortId.generate())
+                  : spi;
               Stores.server.put(spiWithId);
               usedIds.add(spiWithId.id);
             }
@@ -755,8 +839,14 @@ extension on _BackupPageState {
       title: l10n.backupPassword,
       child: Text(l10n.backupPasswordTip, style: UIs.textGrey),
       actions: [
-        TextButton(onPressed: () => context.pop(true), child: Text(libL10n.cancel)),
-        TextButton(onPressed: () => context.pop(false), child: Text(libL10n.setting)),
+        TextButton(
+          onPressed: () => context.pop(true),
+          child: Text(libL10n.cancel),
+        ),
+        TextButton(
+          onPressed: () => context.pop(false),
+          child: Text(libL10n.setting),
+        ),
       ],
     );
 

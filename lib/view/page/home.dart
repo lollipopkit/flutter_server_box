@@ -27,7 +27,11 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage>
-    with AutomaticKeepAliveClientMixin, AfterLayoutMixin, WidgetsBindingObserver, GlobalRef {
+    with
+        AutomaticKeepAliveClientMixin,
+        AfterLayoutMixin,
+        WidgetsBindingObserver,
+        GlobalRef {
   late final PageController _pageController;
 
   final _selectIndex = ValueNotifier(0);
@@ -48,7 +52,9 @@ class _HomePageState extends ConsumerState<HomePage>
     super.dispose();
     WidgetsBinding.instance.removeObserver(this);
     Stores.setting.homeTabs.listenable().removeListener(_handleHomeTabsChanged);
-    Stores.setting.serverStatusUpdateInterval.listenable().removeListener(_handleRefreshIntervalChanged);
+    Stores.setting.serverStatusUpdateInterval.listenable().removeListener(
+      _handleRefreshIntervalChanged,
+    );
     // In release builds (real app exit), close connections.
     // In debug (hot reload), avoid forcing disconnects.
     if (kReleaseMode) {
@@ -76,7 +82,9 @@ class _HomePageState extends ConsumerState<HomePage>
 
     // Listen to homeTabs changes
     Stores.setting.homeTabs.listenable().addListener(_handleHomeTabsChanged);
-    Stores.setting.serverStatusUpdateInterval.listenable().addListener(_handleRefreshIntervalChanged);
+    Stores.setting.serverStatusUpdateInterval.listenable().addListener(
+      _handleRefreshIntervalChanged,
+    );
   }
 
   @override
@@ -111,14 +119,7 @@ class _HomePageState extends ConsumerState<HomePage>
         _lastFullscreenMode = null;
         _pausedTime = DateTime.now();
         _shouldAuth = true;
-        // Keep running in background on Android device
-        if (isAndroid && Stores.setting.bgRun.fetch()) {
-          // Keep this if statement single
-          // if (Pros.app.moveBg) {
-          //   BgRunMC.moveToBg();
-          // }
-        } else {
-          //Pros.server.setDisconnected();
+        if (!(isAndroid && Stores.setting.bgRun.fetch())) {
           _notifier.stopAutoRefresh();
         }
         break;
@@ -198,7 +199,9 @@ class _HomePageState extends ConsumerState<HomePage>
               minExtendedWidth: 150,
               leading: extended ? const SizedBox(height: 20) : null,
               trailing: extended ? const SizedBox(height: 20) : null,
-              labelType: extended ? NavigationRailLabelType.none : NavigationRailLabelType.all,
+              labelType: extended
+                  ? NavigationRailLabelType.none
+                  : NavigationRailLabelType.all,
               selectedIndex: _selectIndex.value,
               destinations: _tabs.map((tab) => tab.navRailDestination).toList(),
               onDestinationSelected: _onDestinationSelected,
@@ -239,7 +242,11 @@ class _HomePageState extends ConsumerState<HomePage>
     //_reqNotiPerm();
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
-      AppUpdateIface.doUpdate(build: BuildData.build, url: Urls.updateCfg, context: context);
+      AppUpdateIface.doUpdate(
+        build: BuildData.build,
+        url: Urls.updateCfg,
+        context: context,
+      );
     }
     MethodChans.updateHomeWidget();
     await _notifier.refresh();
@@ -247,32 +254,13 @@ class _HomePageState extends ConsumerState<HomePage>
     bakSync.sync(milliDelay: 1000);
   }
 
-  // Future<void> _reqNotiPerm() async {
-  //   if (!isAndroid) return;
-  //   final suc = await PermUtils.request(Permission.notification);
-  //   if (!suc) {
-  //     final noNotiPerm = Stores.setting.noNotiPerm;
-  //     context.showRoundDialog(
-  //       title: l10n.error,
-  //       child: Text(l10n.noNotiPerm),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () {
-  //             noNotiPerm.put(true);
-  //             context.pop();
-  //           },
-  //     if (noNotiPerm.fetch()) return;
-  //           child: Text(l10n.ok),
-  //         ),
-  //       ],
-  //     );
-  //   }
-  // }
-
   void _goAuth() {
     if (Stores.setting.useBioAuth.fetch()) {
       if (LocalAuthPage.route.alreadyIn) return;
-      LocalAuthPage.route.go(context, args: LocalAuthPageArgs(onAuthSuccess: () => _shouldAuth = false));
+      LocalAuthPage.route.go(
+        context,
+        args: LocalAuthPageArgs(onAuthSuccess: () => _shouldAuth = false),
+      );
     }
   }
 
@@ -296,7 +284,8 @@ class _HomePageState extends ConsumerState<HomePage>
     if (_tabs.isEmpty) return false;
     final selectedIndex = _selectIndex.value;
     if (selectedIndex < 0 || selectedIndex >= _tabs.length) return false;
-    final isLandscape = MediaQuery.orientationOf(context) == Orientation.landscape;
+    final isLandscape =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
     return isLandscape && _tabs[selectedIndex] == AppTab.server;
   }
 
@@ -334,7 +323,9 @@ extension _HomePageStateActions on _HomePageState {
     if (!mounted || newTabs == _tabs) return;
 
     final previousIndex = _selectIndex.value;
-    final clampedIndex = newTabs.isEmpty ? 0 : previousIndex.clamp(0, newTabs.length - 1);
+    final clampedIndex = newTabs.isEmpty
+        ? 0
+        : previousIndex.clamp(0, newTabs.length - 1);
 
     // ignore: invalid_use_of_protected_member
     setState(() {
@@ -352,7 +343,9 @@ extension _HomePageStateActions on _HomePageState {
 
   void _handleRefreshIntervalChanged() {
     final lifecycle = WidgetsBinding.instance.lifecycleState;
-    if (isDesktop || lifecycle == null || lifecycle == AppLifecycleState.resumed) {
+    if (isDesktop ||
+        lifecycle == null ||
+        lifecycle == AppLifecycleState.resumed) {
       unawaited(_notifier.startAutoRefresh());
       unawaited(_notifier.refresh());
     }

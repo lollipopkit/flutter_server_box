@@ -1,9 +1,9 @@
-import 'dart:ui';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/setting/seq/reorder_proxy_decorator.dart';
 
 class ServerDetailOrderPage extends StatefulWidget {
   const ServerDetailOrderPage({super.key});
@@ -11,7 +11,10 @@ class ServerDetailOrderPage extends StatefulWidget {
   @override
   State<ServerDetailOrderPage> createState() => _ServerDetailOrderPageState();
 
-  static const route = AppRouteNoArg(page: ServerDetailOrderPage.new, path: '/settings/order/server_detail');
+  static const route = AppRouteNoArg(
+    page: ServerDetailOrderPage.new,
+    path: '/settings/order/server_detail',
+  );
 }
 
 class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
@@ -47,29 +50,13 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
     );
   }
 
-  Widget _proxyDecorator(Widget child, int _, Animation<double> animation) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (BuildContext context, Widget? child) {
-        final double animValue = Curves.easeInOut.transform(animation.value);
-        final double elevation = lerpDouble(1, 6, animValue)!;
-        final double scale = lerpDouble(1, 1.02, animValue)!;
-        return Transform.scale(
-          scale: scale,
-          child: Card(elevation: elevation, child: child),
-        );
-      },
-      child: child,
-    );
-  }
-
   Widget _buildBody() {
     return ReorderableListView.builder(
       key: const PageStorageKey('srv_detail_seq'),
       padding: const EdgeInsets.all(7),
       buildDefaultDragHandles: false,
       itemCount: _order.length,
-      proxyDecorator: _proxyDecorator,
+      proxyDecorator: reorderProxyDecorator,
       itemBuilder: (_, idx) => _buildListItem(_order[idx], idx),
       onReorder: _handleReorder,
     );
@@ -84,12 +71,18 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
         child: ListTile(
           contentPadding: const EdgeInsets.only(left: 23, right: 11),
           leading: Icon(ServerDetailCards.fromName(key)?.icon),
-          title: Text(key, style: isEnabled ? null : TextStyle(color: Colors.grey)),
+          title: Text(
+            key,
+            style: isEnabled ? null : TextStyle(color: Colors.grey),
+          ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildCheckBox(key, isEnabled),
-              ReorderableDragStartListener(index: idx, child: const Icon(Icons.drag_handle)),
+              ReorderableDragStartListener(
+                index: idx,
+                child: const Icon(Icons.drag_handle),
+              ),
             ],
           ),
         ),
@@ -98,10 +91,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
   }
 
   Widget _buildCheckBox(String key, bool isEnabled) {
-    return Checkbox(
-      value: isEnabled,
-      onChanged: (_) => _toggleEnabled(key),
-    );
+    return Checkbox(value: isEnabled, onChanged: (_) => _toggleEnabled(key));
   }
 
   void _handleReorder(int oldIndex, int newIndex) {

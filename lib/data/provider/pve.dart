@@ -17,14 +17,7 @@ import 'package:server_box/data/provider/server/single.dart';
 part 'pve.freezed.dart';
 part 'pve.g.dart';
 
-typedef PveCtrlFunc = Future<bool> Function(String node, String id);
-
-enum PveLoadingStep {
-  none,
-  forwarding,
-  loggingIn,
-  fetchingData,
-}
+enum PveLoadingStep { none, forwarding, loggingIn, fetchingData }
 
 @freezed
 abstract class PveState with _$PveState {
@@ -69,7 +62,9 @@ class PveNotifier extends _$PveNotifier {
     }
     final pveAddr = spiParam.custom?.pveAddr;
     if (pveAddr == null) {
-      return PveState(error: PveErr(type: PveErrType.net, message: l10n.pveAddressMissing));
+      return PveState(
+        error: PveErr(type: PveErrType.net, message: l10n.pveAddressMissing),
+      );
     }
     addr = pveAddr;
     _ignoreCert = spiParam.custom?.pveIgnoreCert ?? false;
@@ -96,7 +91,11 @@ class PveNotifier extends _$PveNotifier {
   bool get onlyOneNode => state.data?.nodes.length == 1;
 
   Future<void> reconnect() async {
-    state = state.copyWith(error: null, isConnected: false, loadingStep: PveLoadingStep.forwarding);
+    state = state.copyWith(
+      error: null,
+      isConnected: false,
+      loadingStep: PveLoadingStep.forwarding,
+    );
     await _init();
   }
 
@@ -122,7 +121,10 @@ class PveNotifier extends _$PveNotifier {
     } catch (e, s) {
       if (!ref.mounted) return;
       Loggers.app.warning('PVE init failed', e, s);
-      state = state.copyWith(error: PveErr(type: PveErrType.unknown, message: e.toString()), loadingStep: PveLoadingStep.none);
+      state = state.copyWith(
+        error: PveErr(type: PveErrType.unknown, message: e.toString()),
+        loadingStep: PveLoadingStep.none,
+      );
     }
   }
 
@@ -163,9 +165,13 @@ class PveNotifier extends _$PveNotifier {
 
   Future<void> _login() async {
     final useKeyAuth = spiParam.keyId != null;
-    final password = (useKeyAuth ? spiParam.custom?.pvePwd : spiParam.pwd)?.trim();
+    final password = (useKeyAuth ? spiParam.custom?.pvePwd : spiParam.pwd)
+        ?.trim();
     if (password == null || password.isEmpty) {
-      throw PveErr(type: PveErrType.loginFailed, message: l10n.pvePasswordRequired);
+      throw PveErr(
+        type: PveErrType.loginFailed,
+        message: l10n.pvePasswordRequired,
+      );
     }
     final resp = await _requestTicket({
       'username': spiParam.user,
@@ -178,7 +184,10 @@ class PveNotifier extends _$PveNotifier {
     if (data['NeedTFA'] == 1 || data['TFA'] != null) {
       final ticket = data['ticket'];
       if (ticket is! String || ticket.isEmpty) {
-        throw PveErr(type: PveErrType.invalidResponse, message: l10n.pveInvalidResponseData);
+        throw PveErr(
+          type: PveErrType.invalidResponse,
+          message: l10n.pveInvalidResponseData,
+        );
       }
       _pendingTfaChallenge = ticket;
       throw PveErr(type: PveErrType.needTfa, message: l10n.pveOtpRequired);
@@ -191,7 +200,10 @@ class PveNotifier extends _$PveNotifier {
   Future<void> submitTfaCode(String otp) async {
     final challenge = _pendingTfaChallenge;
     if (challenge == null) {
-      throw PveErr(type: PveErrType.needTfa, message: l10n.pveOtpChallengeExpired);
+      throw PveErr(
+        type: PveErrType.needTfa,
+        message: l10n.pveOtpChallengeExpired,
+      );
     }
     if (otp.trim().isEmpty) {
       throw PveErr(type: PveErrType.needTfa, message: l10n.pveOtpCodeRequired);
@@ -221,7 +233,10 @@ class PveNotifier extends _$PveNotifier {
     } catch (e, s) {
       if (!ref.mounted) return;
       Loggers.app.warning('PVE TFA login failed', e, s);
-      state = state.copyWith(error: PveErr(type: PveErrType.unknown, message: e.toString()), loadingStep: PveLoadingStep.none);
+      state = state.copyWith(
+        error: PveErr(type: PveErrType.unknown, message: e.toString()),
+        loadingStep: PveLoadingStep.none,
+      );
       rethrow;
     }
   }
@@ -242,7 +257,10 @@ class PveNotifier extends _$PveNotifier {
       _setAuthHeaders(data);
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
-        throw PveErr(type: PveErrType.needTfa, message: l10n.pveOtpVerificationFailed);
+        throw PveErr(
+          type: PveErrType.needTfa,
+          message: l10n.pveOtpVerificationFailed,
+        );
       }
       rethrow;
     }
@@ -259,11 +277,17 @@ class PveNotifier extends _$PveNotifier {
   Map<String, dynamic> _readTicketData(Response<dynamic> resp) {
     final body = resp.data;
     if (body is! Map<String, dynamic>) {
-      throw PveErr(type: PveErrType.invalidResponse, message: l10n.pveInvalidResponseBody);
+      throw PveErr(
+        type: PveErrType.invalidResponse,
+        message: l10n.pveInvalidResponseBody,
+      );
     }
     final data = body['data'];
     if (data is! Map<String, dynamic>) {
-      throw PveErr(type: PveErrType.invalidResponse, message: l10n.pveInvalidResponseData);
+      throw PveErr(
+        type: PveErrType.invalidResponse,
+        message: l10n.pveInvalidResponseData,
+      );
     }
     return data;
   }
@@ -271,9 +295,13 @@ class PveNotifier extends _$PveNotifier {
   void _setAuthHeaders(Map<String, dynamic> data) {
     final ticket = data['ticket'];
     if (ticket == null) {
-      throw PveErr(type: PveErrType.loginFailed, message: l10n.pveMissingAuthTicket);
+      throw PveErr(
+        type: PveErrType.loginFailed,
+        message: l10n.pveMissingAuthTicket,
+      );
     }
-    session.options.headers['CSRFPreventionToken'] = data['CSRFPreventionToken'];
+    session.options.headers['CSRFPreventionToken'] =
+        data['CSRFPreventionToken'];
     session.options.headers['Cookie'] = 'PVEAuthCookie=$ticket';
   }
 
@@ -301,7 +329,9 @@ class PveNotifier extends _$PveNotifier {
     } catch (e) {
       if (!ref.mounted) return;
       Loggers.app.warning('PVE list failed', e);
-      state = state.copyWith(error: PveErr(type: PveErrType.unknown, message: e.toString()));
+      state = state.copyWith(
+        error: PveErr(type: PveErrType.unknown, message: e.toString()),
+      );
     } finally {
       if (ref.mounted) {
         state = state.copyWith(isBusy: false);

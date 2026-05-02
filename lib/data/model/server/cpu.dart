@@ -84,13 +84,6 @@ class Cpus extends TimeSeq<SingleCpuCore> {
   double _getIdle() => 100 - usedPercent();
 
   void _coresLoop(void Function(int i) callback) {
-    /// Only update the entire cpu when [coresCount] > 4, or the chart will be too crowded
-    // final onlyCalcSingle = coresCount > 4;
-    // final maxIdx = onlyCalcSingle ? 1 : coresCount;
-    // for (var i = onlyCalcSingle ? 0 : 1; i < maxIdx; i++) {
-    //   callback(i);
-    // }
-
     /// Only use cpu0
     callback(0);
   }
@@ -110,35 +103,6 @@ class Cpus extends TimeSeq<SingleCpuCore> {
       }
     });
   }
-
-  // var _rangeX = Range<double>(0.0, _kCap.toDouble());
-  // Range<double> get rangeX => _rangeX;
-  // // var _rangeY = Range<double>(0.0, 100.0);
-  // // Range<double> get rangeY => _rangeY;
-  // void _updateRange() {
-  //   double minX = 0;
-  //   double maxX = 0;
-  //   _coresLoop((i) {
-  //     final fifo = _spots[i];
-  //     if (fifo.isEmpty) return;
-  //     final first = fifo.first.x;
-  //     final last = fifo.last.x;
-  //     if (first > minX) minX = first;
-  //     if (last > maxX) maxX = last;
-  //   });
-  //   _rangeX = Range(minX, maxX);
-
-  //   // double? minY, maxY;
-  //   // for (var i = 1; i < now.length; i++) {
-  //   //   final item = _spots[i];
-  //   //   if (item.isEmpty) continue;
-  //   //   final first = item.first.y;
-  //   //   final last = item.last.y;
-  //   //   if (minY == null || first < minY) minY = first;
-  //   //   if (maxY == null || last > maxY) maxY = last;
-  //   // }
-  //   // if (minY != null && maxY != null) _rangeY = Range(minY, maxY);
-  // }
 }
 
 class SingleCpuCore extends TimeSeqIface<SingleCpuCore> {
@@ -151,7 +115,16 @@ class SingleCpuCore extends TimeSeqIface<SingleCpuCore> {
   final int irq;
   final int softirq;
 
-  SingleCpuCore(this.id, this.user, this.sys, this.nice, this.idle, this.iowait, this.irq, this.softirq);
+  SingleCpuCore(
+    this.id,
+    this.user,
+    this.sys,
+    this.nice,
+    this.idle,
+    this.iowait,
+    this.irq,
+    this.softirq,
+  );
 
   int get total => user + sys + nice + idle + iowait + irq + softirq;
 
@@ -201,7 +174,9 @@ final class CpuBrand {
 }
 
 final _bsdCpuPercentReg = RegExp(r'(\d+\.\d+)%');
-final _macCpuPercentReg = RegExp(r'CPU usage: ([\d.]+)% user, ([\d.]+)% sys, ([\d.]+)% idle');
+final _macCpuPercentReg = RegExp(
+  r'CPU usage: ([\d.]+)% user, ([\d.]+)% sys, ([\d.]+)% idle',
+);
 final _freebsdCpuPercentReg = RegExp(
   r'CPU: ([\d.]+)% user, ([\d.]+)% nice, ([\d.]+)% system, '
   r'([\d.]+)% interrupt, ([\d.]+)% idle',
@@ -263,24 +238,23 @@ Cpus parseBsdCpu(String raw) {
   }
 
   // Fallback to generic percentage extraction
-  final percents = _bsdCpuPercentReg
-      .allMatches(raw)
-      .map((e) {
-        final valueStr = e.group(1) ?? '0';
-        final value = double.tryParse(valueStr);
-        if (value == null) {
-          dprint('Warning: Failed to parse CPU percentage from "$valueStr"');
-          return 0.0;
-        }
-        return value;
-      })
-      .toList();
+  final percents = _bsdCpuPercentReg.allMatches(raw).map((e) {
+    final valueStr = e.group(1) ?? '0';
+    final value = double.tryParse(valueStr);
+    if (value == null) {
+      dprint('Warning: Failed to parse CPU percentage from "$valueStr"');
+      return 0.0;
+    }
+    return value;
+  }).toList();
 
   if (percents.length >= 3) {
     // Validate that percentages are reasonable (0-100 range)
     final validPercents = percents.where((p) => p >= 0 && p <= 100).toList();
     if (validPercents.length != percents.length) {
-      Loggers.app.warning('BSD CPU fallback parsing found invalid percentages in: $raw');
+      Loggers.app.warning(
+        'BSD CPU fallback parsing found invalid percentages in: $raw',
+      );
     }
 
     init.add([
@@ -301,7 +275,9 @@ Cpus parseBsdCpu(String raw) {
       'BSD CPU fallback parsing found ${percents.length} percentages (expected at least 3) in: $raw',
     );
   } else {
-    Loggers.app.warning('BSD CPU fallback parsing found no percentages in: $raw');
+    Loggers.app.warning(
+      'BSD CPU fallback parsing found no percentages in: $raw',
+    );
   }
 
   return init;
