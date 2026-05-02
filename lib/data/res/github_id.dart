@@ -172,7 +172,9 @@ abstract final class GithubIds {
     'tetsuya-ops',
     'maxpeyn10',
     'agczsz',
-    'kuilei0926'
+    'kuilei0926',
+    'ci-sourcerer',
+    'misaki258'
   };
 }
 
