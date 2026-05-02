@@ -225,26 +225,7 @@ class Disk with EquatableMixin {
 
     // Handle common filesystem cases or parent devices with children
     if ((fstype != null && _shouldCalc(fstype, mount)) ||
-        (childDisks.isNotEmpty && path.isNotEmpty)) {
-      final fsFields = _parseFilesystemFields(device);
-
-      final name = device['name']?.toString();
-      final kname = device['kname']?.toString();
-      final uuid = device['uuid']?.toString();
-      return Disk(
-        path: path,
-        fsTyp: fstype,
-        mount: mount,
-        usedPercent: fsFields.usedPercent,
-        used: fsFields.used,
-        size: fsFields.size,
-        avail: fsFields.avail,
-        name: name,
-        kname: kname,
-        uuid: uuid,
-        children: childDisks,
-      );
-    } else if (childDisks.isNotEmpty) {
+        childDisks.isNotEmpty) {
       final fsFields = _parseFilesystemFields(device);
       final name = device['name']?.toString();
       final kname = device['kname']?.toString();
