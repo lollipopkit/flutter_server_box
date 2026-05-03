@@ -463,6 +463,21 @@ class ServerNotifier extends _$ServerNotifier {
         );
         return;
       }
+    } on TimeoutException catch (e, s) {
+      final newStatus = _copyStatus(
+        state.status,
+        err: SSHErr(type: SSHErrType.getStatus, message: e.toString()),
+        setErr: true,
+      );
+      updateStatus(newStatus);
+      if (state.client != null && state.conn != ServerConn.finished) {
+        updateConnection(ServerConn.connected);
+      }
+      Loggers.app.warning('Get status from ${spi.name} timed out', e, s);
+
+      final sessionId = 'ssh_${spi.id}';
+      TermSessionManager.updateStatus(sessionId, TermSessionStatus.connected);
+      return;
     } catch (e) {
       TryLimiter.inc(sid);
       final newStatus = _copyStatus(

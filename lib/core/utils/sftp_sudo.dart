@@ -14,14 +14,14 @@ final _octalPermReg = RegExp(r'^[0-7]{3,4}$');
 final class SftpSudoHelper {
   final SSHClient client;
   final Spi spi;
-  final BuildContext context;
+  final BuildContext? Function() contextProvider;
 
   String? _cachedPassword;
 
   SftpSudoHelper({
     required this.client,
     required this.spi,
-    required this.context,
+    required this.contextProvider,
   });
 
   bool get enabled => !spi.isRoot;
@@ -36,6 +36,9 @@ final class SftpSudoHelper {
     } else if (_rememberPwd && _cachedPassword != null) {
       return _cachedPassword;
     }
+
+    final context = contextProvider();
+    if (context == null || !context.mounted) return null;
 
     final pwd = await context.showPwdDialog(
       title: l10n.trySudo,
@@ -86,13 +89,13 @@ final class SftpSudoHelper {
     );
   }
 
-  Future<void> chmod(
-    String perm,
-    String remotePath, {
-    String? password,
-  }) async {
+  Future<void> chmod(String perm, String remotePath, {String? password}) async {
     if (!_octalPermReg.hasMatch(perm)) {
-      throw ArgumentError.value(perm, 'perm', 'Permission must be a 3 or 4 digit octal string');
+      throw ArgumentError.value(
+        perm,
+        'perm',
+        'Permission must be a 3 or 4 digit octal string',
+      );
     }
     await _runAndRead(
       'chmod $perm ${_shellQuote(remotePath)}',
@@ -100,24 +103,12 @@ final class SftpSudoHelper {
     );
   }
 
-  Future<void> mkdir(
-    String remotePath, {
-    String? password,
-  }) async {
-    await _runAndRead(
-      'mkdir ${_shellQuote(remotePath)}',
-      password: password,
-    );
+  Future<void> mkdir(String remotePath, {String? password}) async {
+    await _runAndRead('mkdir ${_shellQuote(remotePath)}', password: password);
   }
 
-  Future<void> touch(
-    String remotePath, {
-    String? password,
-  }) async {
-    await _runAndRead(
-      'touch ${_shellQuote(remotePath)}',
-      password: password,
-    );
+  Future<void> touch(String remotePath, {String? password}) async {
+    await _runAndRead('touch ${_shellQuote(remotePath)}', password: password);
   }
 
   Future<void> rename(
@@ -145,10 +136,7 @@ final class SftpSudoHelper {
     await _runAndRead(cmd, password: password);
   }
 
-  Future<List<SftpName>> listDir(
-    String remotePath, {
-    String? password,
-  }) async {
+  Future<List<SftpName>> listDir(String remotePath, {String? password}) async {
     final output = await _runAndRead(
       'find ${_shellQuote(remotePath)} '
       '-mindepth 1 -maxdepth 1 '
@@ -193,11 +181,7 @@ final class SftpSudoHelper {
         SftpName(
           filename: filename,
           longname: filename,
-          attr: SftpFileAttrs(
-            size: size,
-            mode: mode,
-            modifyTime: modifyTime,
-          ),
+          attr: SftpFileAttrs(size: size, mode: mode, modifyTime: modifyTime),
         ),
       );
     }
@@ -205,12 +189,11 @@ final class SftpSudoHelper {
     return items;
   }
 
-  Future<String> _runAndRead(
-    String innerCommand, {
-    String? password,
-  }) async {
+  Future<String> _runAndRead(String innerCommand, {String? password}) async {
     final pwd = password ?? await ensurePassword();
     if (pwd == null) throw const _SftpSudoCancelled();
+    final context = contextProvider();
+    if (context == null || !context.mounted) throw const _SftpSudoCancelled();
 
     final (code, output) = await client.execWithPwd(
       _buildSudoCommand(innerCommand, pwd),
@@ -222,10 +205,14 @@ final class SftpSudoHelper {
       _cachedPassword = null;
       final retryPwd = await ensurePassword(force: true);
       if (retryPwd == null) throw const _SftpSudoCancelled();
+      final retryContext = contextProvider();
+      if (retryContext == null || !retryContext.mounted) {
+        throw const _SftpSudoCancelled();
+      }
 
       final retry = await client.execWithPwd(
         _buildSudoCommand(innerCommand, retryPwd),
-        context: context,
+        context: retryContext,
         id: '${spi.id}_sftp_sudo',
       );
       if (retry.$1 == 2) {
@@ -233,13 +220,17 @@ final class SftpSudoHelper {
         throw Exception('Incorrect sudo password');
       }
       if (retry.$1 != 0) {
-        throw Exception(retry.$2.trim().isEmpty ? 'Sudo command failed' : retry.$2.trim());
+        throw Exception(
+          retry.$2.trim().isEmpty ? 'Sudo command failed' : retry.$2.trim(),
+        );
       }
       return retry.$2;
     }
 
     if (code != 0) {
-      throw Exception(output.trim().isEmpty ? 'Sudo command failed' : output.trim());
+      throw Exception(
+        output.trim().isEmpty ? 'Sudo command failed' : output.trim(),
+      );
     }
     return output;
   }
