@@ -13,9 +13,29 @@ import 'package:server_box/data/res/store.dart';
 
 part 'req.dart';
 
-const _sftpTransferChunkSize = 64 * 1024;
-const _sftpDownloadMaxPendingRequests = 16;
-const _sftpUploadMaxBytesOnTheWire = _sftpTransferChunkSize * 4;
+const _sftpTransferChunkSize = 32 * 1024;
+const _sftpDownloadMaxPendingRequests = 64;
+const _sftpUploadMaxBytesOnTheWire = _sftpTransferChunkSize * 64;
+
+Duration _sftpPrepareTimeout(SftpReq req) {
+  final seconds = req.timeoutSeconds;
+  return Duration(seconds: seconds <= 0 ? 5 : seconds);
+}
+
+Future<T> _withSftpPrepareTimeout<T>(
+  SftpReq req,
+  String operation,
+  Future<T> future,
+) async {
+  final timeout = _sftpPrepareTimeout(req);
+  try {
+    return await future.timeout(timeout);
+  } on TimeoutException catch (e, s) {
+    final error = TimeoutException('SFTP $operation timed out', timeout);
+    Loggers.app.warning(error.message, e, s);
+    throw error;
+  }
+}
 
 class SftpWorker {
   final Function(Object event) onNotify;
@@ -87,6 +107,7 @@ Future<void> _download(
       knownHostFingerprints: req.knownHostFingerprints,
     );
     mainSendPort.send(SftpWorkerStatus.sshConnectted);
+    Loggers.app.info('SFTP download SSH connected: ${req.remotePath}');
 
     final dirPath = req.localPath.substring(
       0,
@@ -94,34 +115,48 @@ Future<void> _download(
     );
     await Directory(dirPath).create(recursive: true);
 
-    final sftp = await client.sftp();
+    Loggers.app.info('SFTP download opening session: ${req.remotePath}');
+    final sftp = await _withSftpPrepareTimeout(
+      req,
+      'open download session',
+      client.sftp(),
+    );
 
-    final remoteFile = await sftp.open(req.remotePath);
-    int? size;
-    try {
-      size = (await remoteFile.stat()).size;
-      if (size == null) {
-        mainSendPort.send(Exception('can\'t get file size: ${req.remotePath}'));
-        return;
-      }
-    } finally {
+    Loggers.app.info('SFTP download opening remote file: ${req.remotePath}');
+    final remoteFile = await _withSftpPrepareTimeout(
+      req,
+      'open remote file for download',
+      sftp.open(req.remotePath),
+    );
+    Loggers.app.info('SFTP download reading remote size: ${req.remotePath}');
+    final size = (await _withSftpPrepareTimeout(
+      req,
+      'stat remote file',
+      remoteFile.stat(),
+    )).size;
+    if (size == null) {
       await remoteFile.close();
+      mainSendPort.send(Exception('can\'t get file size: ${req.remotePath}'));
+      return;
     }
 
     mainSendPort.send(size);
     mainSendPort.send(SftpWorkerStatus.loading);
+    Loggers.app.info(
+      'SFTP download started: ${req.remotePath}, '
+      'chunk=$_sftpTransferChunkSize, pending=$_sftpDownloadMaxPendingRequests',
+    );
 
     var lastProgress = -1.0;
     final localFile = File(req.localPath).openWrite(mode: FileMode.write);
 
     try {
-      await sftp.download(
-        req.remotePath,
+      await remoteFile.downloadTo(
         localFile,
+        length: size,
         onProgress: (bytesRead) {
-          final s = size;
-          if (s == null || s == 0) return;
-          final progress = (bytesRead / s * 100).roundToDouble();
+          if (size == 0) return;
+          final progress = (bytesRead / size * 100).roundToDouble();
           if (progress != lastProgress) {
             lastProgress = progress;
             mainSendPort.send(progress);
@@ -132,11 +167,13 @@ Future<void> _download(
       );
     } finally {
       await localFile.close();
+      await remoteFile.close();
     }
 
     mainSendPort.send(watch.elapsed);
     mainSendPort.send(SftpWorkerStatus.finished);
-  } catch (e) {
+  } catch (e, s) {
+    Loggers.app.warning('SFTP download failed: ${req.remotePath}', e, s);
     mainSendPort.send(e);
   }
 }
@@ -159,6 +196,7 @@ Future<void> _upload(
       knownHostFingerprints: req.knownHostFingerprints,
     );
     mainSendPort.send(SftpWorkerStatus.sshConnectted);
+    Loggers.app.info('SFTP upload SSH connected: ${req.remotePath}');
 
     final local = File(req.localPath);
     if (!await local.exists()) {
@@ -167,36 +205,54 @@ Future<void> _upload(
     }
     final localLen = await local.length();
     mainSendPort.send(localLen);
-    mainSendPort.send(SftpWorkerStatus.loading);
     final localFile = local.openRead().cast<Uint8List>();
-    final sftp = await client.sftp();
+    Loggers.app.info('SFTP upload opening session: ${req.remotePath}');
+    final sftp = await _withSftpPrepareTimeout(
+      req,
+      'open upload session',
+      client.sftp(),
+    );
     // If remote exists, overwrite it
-    final file = await sftp.open(
-      req.remotePath,
-      mode:
-          SftpFileOpenMode.truncate |
-          SftpFileOpenMode.create |
-          SftpFileOpenMode.write,
+    Loggers.app.info('SFTP upload opening remote file: ${req.remotePath}');
+    final file = await _withSftpPrepareTimeout(
+      req,
+      'open remote file for upload',
+      sftp.open(
+        req.remotePath,
+        mode:
+            SftpFileOpenMode.truncate |
+            SftpFileOpenMode.create |
+            SftpFileOpenMode.write,
+      ),
+    );
+    mainSendPort.send(SftpWorkerStatus.loading);
+    Loggers.app.info(
+      'SFTP upload started: ${req.remotePath}, '
+      'chunk=$_sftpTransferChunkSize, maxBytes=$_sftpUploadMaxBytesOnTheWire',
     );
     var lastProgress = -1;
-    final writer = file.write(
-      localFile,
-      onProgress: (total) {
-        if (localLen == 0) return;
-        final progress = (total / localLen * 100).round();
-        if (progress != lastProgress) {
-          lastProgress = progress;
-          mainSendPort.send(progress.toDouble());
-        }
-      },
-      chunkSize: _sftpTransferChunkSize,
-      maxBytesOnTheWire: _sftpUploadMaxBytesOnTheWire,
-    );
-    await writer.done;
-    await file.close();
+    try {
+      final writer = file.write(
+        localFile,
+        onProgress: (total) {
+          if (localLen == 0) return;
+          final progress = (total / localLen * 100).round();
+          if (progress != lastProgress) {
+            lastProgress = progress;
+            mainSendPort.send(progress.toDouble());
+          }
+        },
+        chunkSize: _sftpTransferChunkSize,
+        maxBytesOnTheWire: _sftpUploadMaxBytesOnTheWire,
+      );
+      await writer.done;
+    } finally {
+      await file.close();
+    }
     mainSendPort.send(watch.elapsed);
     mainSendPort.send(SftpWorkerStatus.finished);
-  } catch (e) {
+  } catch (e, s) {
+    Loggers.app.warning('SFTP upload failed: ${req.remotePath}', e, s);
     mainSendPort.send(e);
   }
 }

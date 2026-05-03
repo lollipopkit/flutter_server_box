@@ -9,9 +9,7 @@ class SftpBrowserStatus {
   final path = _AbsolutePath(_sep);
   SftpClient? client;
 
-  SftpBrowserStatus(SSHClient client) {
-    client.sftp().then((value) => this.client = value);
-  }
+  SftpBrowserStatus();
 }
 
 class _AbsolutePath {

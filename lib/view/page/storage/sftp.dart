@@ -71,11 +71,11 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
     super.initState();
     final serverState = ref.read(serverProvider(widget.args.spi.id));
     _client = serverState.client!;
-    _status = SftpBrowserStatus(_client);
+    _status = SftpBrowserStatus();
     _sudoHelper = SftpSudoHelper(
       client: _client,
       spi: widget.args.spi,
-      context: context,
+      contextProvider: () => mounted ? context : null,
     );
   }
 
@@ -136,8 +136,14 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
         SftpClient? sftp;
         try {
           final normalizedHistory = _normalizeSftpPath(history);
-          sftp = await _client.sftp();
-          await sftp.listdir(normalizedHistory);
+          sftp = await _withSftpOpTimeout(
+            'open session for last path',
+            _client.sftp(),
+          );
+          await _withSftpOpTimeout(
+            'list last path',
+            sftp!.listdir(normalizedHistory),
+          );
           initPath = normalizedHistory;
         } catch (_) {
         } finally {
@@ -147,7 +153,7 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
     }
 
     _status.path.path = widget.args.initPath ?? initPath;
-    unawaited(_listDir());
+    unawaited(_listDir(context));
   }
 }
 
@@ -946,7 +952,27 @@ extension _Actions on _SftpPageState {
   }
 
   /// Only return true if the path is changed
-  Future<bool?> _listDir() async {
+  Duration get _sftpOpTimeout {
+    final seconds = Stores.setting.timeout.fetch();
+    return Duration(seconds: seconds <= 0 ? 5 : seconds);
+  }
+
+  Future<T> _withSftpOpTimeout<T>(String operation, Future<T> future) async {
+    final timeout = _sftpOpTimeout;
+    try {
+      return await future.timeout(timeout);
+    } on TimeoutException catch (e, s) {
+      final error = TimeoutException('SFTP $operation timed out', timeout);
+      Loggers.app.warning(error.message, e, s);
+      throw error;
+    }
+  }
+
+  Future<bool?> _listDir([BuildContext? dialogContext]) async {
+    if (dialogContext == null && !mounted) return false;
+    final context = dialogContext ?? this.context;
+    if (!context.mounted) return false;
+
     final (ret, err) = await context.showLoadingDialog(
       fn: () async {
         final listPath = _status.path.path;
@@ -1004,8 +1030,16 @@ extension _Actions on _SftpPageState {
     }
 
     try {
-      _status.client ??= await _client.sftp();
-      return await _status.client?.listdir(listPath);
+      _status.client ??= await _withSftpOpTimeout(
+        'open browser session',
+        _client.sftp(),
+      );
+      final client = _status.client;
+      if (client == null) return null;
+      return await _withSftpOpTimeout(
+        'list directory',
+        client.listdir(listPath),
+      );
     } on SftpStatusError catch (e) {
       final canFallback =
           _sudoHelper.enabled &&

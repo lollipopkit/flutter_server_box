@@ -11,8 +11,10 @@ class SftpReq {
   Map<String, Spi>? jumpSpisById;
   Map<String, String>? privateKeysByKeyId;
   Map<String, String>? knownHostFingerprints;
+  late final int timeoutSeconds;
 
   SftpReq(this.spi, this.remotePath, this.localPath, this.type) {
+    timeoutSeconds = Stores.setting.timeout.fetch();
     privateKeysByKeyId = {};
 
     final keyId = spi.keyId;
