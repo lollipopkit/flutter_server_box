@@ -462,13 +462,13 @@ class PveNotifier extends _$PveNotifier {
     _initFuture = null;
     _session?.close(force: true);
     _session = null;
+    final serverSocket = _serverSocket;
+    _serverSocket = null;
+    _localPort = 0;
     try {
-      await _serverSocket?.close();
+      await serverSocket?.close();
     } catch (e, s) {
       Loggers.app.warning('Failed to close server socket', e, s);
-    } finally {
-      _serverSocket = null;
-      _localPort = 0;
     }
     final forwards = _forwards.toList();
     _forwards.clear();
