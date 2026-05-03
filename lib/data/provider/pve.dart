@@ -202,7 +202,17 @@ class PveNotifier extends _$PveNotifier {
       _localPort = serverSocket.port;
       serverSocket.listen((socket) async {
         try {
+          final generationAtAccept = _sessionGeneration;
           final forward = await _client.forwardLocal(url.host, url.port);
+          if (!_isActiveInit(generationAtAccept)) {
+            socket.destroy();
+            try {
+              await forward.close();
+            } catch (e, s) {
+              Loggers.app.warning('Failed to close stale PVE forward', e, s);
+            }
+            return;
+          }
           _forwards.add(forward);
           forward.stream.cast<List<int>>().pipe(socket);
           socket.cast<List<int>>().pipe(forward.sink);
