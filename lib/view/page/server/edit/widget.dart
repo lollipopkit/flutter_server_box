@@ -468,12 +468,12 @@ extension _Widgets on _ServerEditPageState {
         .where((e) => e.id != spi?.id)
         .where((e) => !_isInvalidJumpSelection(e.id))
         .toList();
-    final choice = _jumpServer.listenVal((val) {
-      final srv = srvs.firstWhereOrNull((e) => e.id == _jumpServer.value);
+    final choice = _jumpServers.listenVal((val) {
+      final selectedSrvs = srvs.where((e) => val.contains(e.id)).toList();
       return Choice<Spi>(
-        multiple: false,
+        multiple: true,
         clearable: true,
-        value: srv != null ? [srv] : [],
+        value: selectedSrvs,
         builder: (state, _) => Wrap(
           children: List<Widget>.generate(srvs.length, (index) {
             final item = srvs[index];
@@ -483,11 +483,17 @@ extension _Widgets on _ServerEditPageState {
               state: state,
               value: item,
               onSelected: (srv, on) {
+                final next = Set<String>.from(_jumpServers.value);
                 if (on) {
-                  _jumpServer.value = srv.id;
+                  if (next.length >= 2) {
+                    context.showSnackBar('${l10n.jumpServer}: 2');
+                    return;
+                  }
+                  next.add(srv.id);
                 } else {
-                  _jumpServer.value = null;
+                  next.remove(srv.id);
                 }
+                _jumpServers.value = next;
               },
             );
           }),
@@ -496,7 +502,7 @@ extension _Widgets on _ServerEditPageState {
     });
     return ExpandTile(
       leading: const Icon(Icons.map),
-      initiallyExpanded: _jumpServer.value != null,
+      initiallyExpanded: _jumpServers.value.isNotEmpty,
       childrenPadding: padding,
       title: Text(l10n.jumpServer),
       children: [choice],

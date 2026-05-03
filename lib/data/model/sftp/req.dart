@@ -28,8 +28,9 @@ class SftpReq {
     };
     jumpSpisById = collectJumpServers(spi: spi, serversById: allServers);
 
-    if (spi.jumpId != null) {
-      jumpSpi = jumpSpisById?[spi.jumpId];
+    final firstJumpId = spi.firstJumpId;
+    if (firstJumpId != null) {
+      jumpSpi = jumpSpisById?[firstJumpId];
       jumpPrivateKey = Stores.key.fetchOne(jumpSpi?.keyId)?.key;
       if (jumpSpi?.keyId case final jumpKeyId?) {
         if (jumpPrivateKey != null) {

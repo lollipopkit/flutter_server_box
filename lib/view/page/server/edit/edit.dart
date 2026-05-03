@@ -73,7 +73,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   /// -1: non selected, null: password, others: index of private key
   final _keyIdx = ValueNotifier<int?>(null);
   final _autoConnect = ValueNotifier(true);
-  final _jumpServer = nvn<String?>();
+  final _jumpServers = <String>{}.vn;
   final _pveIgnoreCert = ValueNotifier(false);
   final _tempIsCelsius = ValueNotifier(false);
   final _env = <String, String>{}.vn;
@@ -121,7 +121,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
 
     _keyIdx.dispose();
     _autoConnect.dispose();
-    _jumpServer.dispose();
+    _jumpServers.dispose();
     _pveIgnoreCert.dispose();
     _tempIsCelsius.dispose();
     _env.dispose();
@@ -154,9 +154,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   }
 
   Widget _buildForm() {
-    final topItems = [
-      _buildWriteScriptTip(),
-    ];
+    final topItems = [_buildWriteScriptTip()];
     final children = [
       SizedBox(
         height: 50,

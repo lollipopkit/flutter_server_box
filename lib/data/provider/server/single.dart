@@ -192,7 +192,7 @@ class ServerNotifier extends _$ServerNotifier {
 
         final time2 = DateTime.now();
         final spentTime = time2.difference(time1).inMilliseconds;
-        if (spi.jumpId == null) {
+        if (spi.resolvedJumpIds.isEmpty) {
           Loggers.app.info('Connected to ${spi.name} in $spentTime ms.');
         } else {
           Loggers.app.info('Jump to ${spi.name} in $spentTime ms.');

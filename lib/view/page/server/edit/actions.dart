@@ -151,10 +151,16 @@ extension _Actions on _ServerEditPageState {
   }
 
   bool _isInvalidJumpSelection(String? candidateJumpId) {
+    return _areInvalidJumpSelections(
+      candidateJumpId == null ? const [] : [candidateJumpId],
+    );
+  }
+
+  bool _areInvalidJumpSelections(Iterable<String> candidateJumpIds) {
     final currentServer = spi;
-    return wouldCreateJumpCycle(
+    return wouldCreateJumpCycleForCandidates(
       currentServerId: currentServer?.id,
-      candidateJumpId: candidateJumpId,
+      candidateJumpIds: candidateJumpIds,
       serversById: ref.read(serversProvider).servers,
     );
   }
@@ -208,7 +214,7 @@ extension _Actions on _ServerEditPageState {
     if (_portController.text.isEmpty) {
       _portController.text = '22';
     }
-    if (_isInvalidJumpSelection(_jumpServer.value)) {
+    if (_areInvalidJumpSelections(_jumpServers.value)) {
       context.showSnackBar('${l10n.invalid}: ${l10n.jumpServer}');
       return;
     }
@@ -263,7 +269,8 @@ extension _Actions on _ServerEditPageState {
       tags: _tags.value.isEmpty ? null : _tags.value.toList(),
       alterUrl: _altUrlController.text.selfNotEmptyOrNull,
       autoConnect: _autoConnect.value,
-      jumpId: _jumpServer.value,
+      jumpId: _jumpServers.value.isEmpty ? null : _jumpServers.value.first,
+      jumpIds: _jumpServers.value.isEmpty ? null : _jumpServers.value.toList(),
       proxyCommand: proxyCommandText.selfNotEmptyOrNull,
       custom: custom,
       wolCfg: wol,
@@ -420,7 +427,7 @@ extension _Utils on _ServerEditPageState {
 
     _altUrlController.text = spi.alterUrl ?? '';
     _autoConnect.value = spi.autoConnect;
-    _jumpServer.value = spi.jumpId;
+    _jumpServers.value = spi.resolvedJumpIds.toSet();
     _proxyCommandCtrl.text = spi.proxyCommand ?? '';
 
     final custom = spi.custom;
