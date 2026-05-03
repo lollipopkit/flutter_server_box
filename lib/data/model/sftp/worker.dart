@@ -94,10 +94,16 @@ Future<void> _download(
   SendPort mainSendPort,
   SendErrorFunction sendError,
 ) async {
+  SSHClient? client;
+  SftpClient? sftp;
+  SftpFile? remoteFile;
+  Object? error;
+  StackTrace? stackTrace;
+
   try {
     mainSendPort.send(SftpWorkerStatus.preparing);
     final watch = Stopwatch()..start();
-    final client = await genClient(
+    client = await genClient(
       req.spi,
       privateKey: req.privateKey,
       jumpSpi: req.jumpSpi,
@@ -116,28 +122,28 @@ Future<void> _download(
     await Directory(dirPath).create(recursive: true);
 
     Loggers.app.info('SFTP download opening session: ${req.remotePath}');
-    final sftp = await _withSftpPrepareTimeout(
+    final openedSftp = await _withSftpPrepareTimeout(
       req,
       'open download session',
       client.sftp(),
     );
+    sftp = openedSftp;
 
     Loggers.app.info('SFTP download opening remote file: ${req.remotePath}');
-    final remoteFile = await _withSftpPrepareTimeout(
+    final openedRemoteFile = await _withSftpPrepareTimeout(
       req,
       'open remote file for download',
-      sftp.open(req.remotePath),
+      openedSftp.open(req.remotePath),
     );
+    remoteFile = openedRemoteFile;
     Loggers.app.info('SFTP download reading remote size: ${req.remotePath}');
     final size = (await _withSftpPrepareTimeout(
       req,
       'stat remote file',
-      remoteFile.stat(),
+      openedRemoteFile.stat(),
     )).size;
     if (size == null) {
-      await remoteFile.close();
-      mainSendPort.send(Exception('can\'t get file size: ${req.remotePath}'));
-      return;
+      throw Exception('can\'t get file size: ${req.remotePath}');
     }
 
     mainSendPort.send(size);
@@ -151,7 +157,7 @@ Future<void> _download(
     final localFile = File(req.localPath).openWrite(mode: FileMode.write);
 
     try {
-      await remoteFile.downloadTo(
+      await openedRemoteFile.downloadTo(
         localFile,
         length: size,
         onProgress: (bytesRead) {
@@ -167,14 +173,28 @@ Future<void> _download(
       );
     } finally {
       await localFile.close();
-      await remoteFile.close();
     }
 
     mainSendPort.send(watch.elapsed);
     mainSendPort.send(SftpWorkerStatus.finished);
   } catch (e, s) {
-    Loggers.app.warning('SFTP download failed: ${req.remotePath}', e, s);
-    mainSendPort.send(e);
+    error = e;
+    stackTrace = s;
+  } finally {
+    await _closeSftpResources(
+      remoteFile: remoteFile,
+      sftp: sftp,
+      client: client,
+    );
+  }
+
+  if (error != null) {
+    Loggers.app.warning(
+      'SFTP download failed: ${req.remotePath}',
+      error,
+      stackTrace,
+    );
+    mainSendPort.send(error);
   }
 }
 
@@ -183,10 +203,16 @@ Future<void> _upload(
   SendPort mainSendPort,
   SendErrorFunction sendError,
 ) async {
+  SSHClient? client;
+  SftpClient? sftp;
+  SftpFile? remoteFile;
+  Object? error;
+  StackTrace? stackTrace;
+
   try {
     mainSendPort.send(SftpWorkerStatus.preparing);
     final watch = Stopwatch()..start();
-    final client = await genClient(
+    client = await genClient(
       req.spi,
       privateKey: req.privateKey,
       jumpSpi: req.jumpSpi,
@@ -207,17 +233,18 @@ Future<void> _upload(
     mainSendPort.send(localLen);
     final localFile = local.openRead().cast<Uint8List>();
     Loggers.app.info('SFTP upload opening session: ${req.remotePath}');
-    final sftp = await _withSftpPrepareTimeout(
+    final openedSftp = await _withSftpPrepareTimeout(
       req,
       'open upload session',
       client.sftp(),
     );
+    sftp = openedSftp;
     // If remote exists, overwrite it
     Loggers.app.info('SFTP upload opening remote file: ${req.remotePath}');
-    final file = await _withSftpPrepareTimeout(
+    final openedRemoteFile = await _withSftpPrepareTimeout(
       req,
       'open remote file for upload',
-      sftp.open(
+      openedSftp.open(
         req.remotePath,
         mode:
             SftpFileOpenMode.truncate |
@@ -225,34 +252,76 @@ Future<void> _upload(
             SftpFileOpenMode.write,
       ),
     );
+    remoteFile = openedRemoteFile;
     mainSendPort.send(SftpWorkerStatus.loading);
     Loggers.app.info(
       'SFTP upload started: ${req.remotePath}, '
       'chunk=$_sftpTransferChunkSize, maxBytes=$_sftpUploadMaxBytesOnTheWire',
     );
     var lastProgress = -1;
-    try {
-      final writer = file.write(
-        localFile,
-        onProgress: (total) {
-          if (localLen == 0) return;
-          final progress = (total / localLen * 100).round();
-          if (progress != lastProgress) {
-            lastProgress = progress;
-            mainSendPort.send(progress.toDouble());
-          }
-        },
-        chunkSize: _sftpTransferChunkSize,
-        maxBytesOnTheWire: _sftpUploadMaxBytesOnTheWire,
-      );
-      await writer.done;
-    } finally {
-      await file.close();
-    }
+    final writer = openedRemoteFile.write(
+      localFile,
+      onProgress: (total) {
+        if (localLen == 0) return;
+        final progress = (total / localLen * 100).round();
+        if (progress != lastProgress) {
+          lastProgress = progress;
+          mainSendPort.send(progress.toDouble());
+        }
+      },
+      chunkSize: _sftpTransferChunkSize,
+      maxBytesOnTheWire: _sftpUploadMaxBytesOnTheWire,
+    );
+    await writer.done;
     mainSendPort.send(watch.elapsed);
     mainSendPort.send(SftpWorkerStatus.finished);
   } catch (e, s) {
-    Loggers.app.warning('SFTP upload failed: ${req.remotePath}', e, s);
-    mainSendPort.send(e);
+    error = e;
+    stackTrace = s;
+  } finally {
+    await _closeSftpResources(
+      remoteFile: remoteFile,
+      sftp: sftp,
+      client: client,
+    );
+  }
+
+  if (error != null) {
+    Loggers.app.warning(
+      'SFTP upload failed: ${req.remotePath}',
+      error,
+      stackTrace,
+    );
+    mainSendPort.send(error);
+  }
+}
+
+Future<void> _closeSftpResources({
+  required SftpFile? remoteFile,
+  required SftpClient? sftp,
+  required SSHClient? client,
+}) async {
+  if (remoteFile != null && !remoteFile.isClosed) {
+    try {
+      await remoteFile.close();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to close SFTP remote file', e, s);
+    }
+  }
+
+  if (sftp != null) {
+    try {
+      sftp.close();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to close SFTP session', e, s);
+    }
+  }
+
+  if (client != null) {
+    try {
+      client.close();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to close SSH client', e, s);
+    }
   }
 }
