@@ -16,6 +16,17 @@ part 'req.dart';
 const _sftpTransferChunkSize = 64 * 1024;
 const _sftpDownloadMaxPendingRequests = 16;
 const _sftpUploadMaxBytesOnTheWire = _sftpTransferChunkSize * 4;
+const _sftpOperationTimeout = Duration(seconds: 30);
+
+Future<T> _withSftpTimeout<T>(Future<T> future, String operation) {
+  return future.timeout(
+    _sftpOperationTimeout,
+    onTimeout: () => throw TimeoutException(
+      'SFTP $operation timed out',
+      _sftpOperationTimeout,
+    ),
+  );
+}
 
 class SftpWorker {
   final Function(Object event) onNotify;
@@ -94,12 +105,18 @@ Future<void> _download(
     );
     await Directory(dirPath).create(recursive: true);
 
-    final sftp = await client.sftp();
+    final sftp = await _withSftpTimeout(client.sftp(), 'open session');
 
-    final remoteFile = await sftp.open(req.remotePath);
+    final remoteFile = await _withSftpTimeout(
+      sftp.open(req.remotePath),
+      'open remote file',
+    );
     int? size;
     try {
-      size = (await remoteFile.stat()).size;
+      size = (await _withSftpTimeout(
+        remoteFile.stat(),
+        'stat remote file',
+      )).size;
       if (size == null) {
         mainSendPort.send(Exception('can\'t get file size: ${req.remotePath}'));
         return;
@@ -169,14 +186,17 @@ Future<void> _upload(
     mainSendPort.send(localLen);
     mainSendPort.send(SftpWorkerStatus.loading);
     final localFile = local.openRead().cast<Uint8List>();
-    final sftp = await client.sftp();
+    final sftp = await _withSftpTimeout(client.sftp(), 'open session');
     // If remote exists, overwrite it
-    final file = await sftp.open(
-      req.remotePath,
-      mode:
-          SftpFileOpenMode.truncate |
-          SftpFileOpenMode.create |
-          SftpFileOpenMode.write,
+    final file = await _withSftpTimeout(
+      sftp.open(
+        req.remotePath,
+        mode:
+            SftpFileOpenMode.truncate |
+            SftpFileOpenMode.create |
+            SftpFileOpenMode.write,
+      ),
+      'open remote file',
     );
     var lastProgress = -1;
     final writer = file.write(
