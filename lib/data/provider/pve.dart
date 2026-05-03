@@ -40,6 +40,8 @@ class PveNotifier extends _$PveNotifier {
   Dio? _session;
   bool _ignoreCert = false;
   String? _pendingTfaChallenge;
+  Future<void>? _initFuture;
+  int _sessionGeneration = 0;
 
   Dio get session => _session!;
   String get addrValue => addr!;
@@ -55,11 +57,6 @@ class PveNotifier extends _$PveNotifier {
 
   @override
   PveState build(Spi spiParam) {
-    ref.onDispose(() => dispose());
-    final serverState = ref.watch(serverProvider(spiParam.id));
-    if (serverState.client == null) {
-      return const PveState(loadingStep: PveLoadingStep.forwarding);
-    }
     final pveAddr = spiParam.custom?.pveAddr;
     if (pveAddr == null) {
       return PveState(
@@ -68,12 +65,52 @@ class PveNotifier extends _$PveNotifier {
     }
     addr = pveAddr;
     _ignoreCert = spiParam.custom?.pveIgnoreCert ?? false;
-    _initSession();
-    Future.microtask(() => _init());
+
+    ref.onDispose(() => dispose());
+    ref.listen(serverProvider(spiParam.id), (prev, next) {
+      final prevClient = prev?.client;
+      final nextClient = next.client;
+      if (nextClient == null) {
+        if (prevClient != null) {
+          unawaited(_closeSession(clearPendingTfa: true));
+          state = state.copyWith(
+            isConnected: false,
+            isBusy: false,
+            loadingStep: PveLoadingStep.forwarding,
+          );
+        }
+        return;
+      }
+
+      if (prevClient == null) {
+        Future.microtask(() => _init());
+        return;
+      }
+
+      if (!identical(prevClient, nextClient)) {
+        Future.microtask(() async {
+          await _closeSession(clearPendingTfa: true);
+          if (!ref.mounted) return;
+          state = state.copyWith(
+            error: null,
+            isConnected: false,
+            isBusy: false,
+            loadingStep: PveLoadingStep.forwarding,
+          );
+          await _init();
+        });
+      }
+    });
+
+    final serverState = ref.read(serverProvider(spiParam.id));
+    if (serverState.client != null) {
+      Future.microtask(() => _init());
+    }
     return const PveState(loadingStep: PveLoadingStep.forwarding);
   }
 
   void _initSession() {
+    _session?.close(force: true);
     _session = Dio()
       ..httpClientAdapter = IOHttpClientAdapter(
         createHttpClient: () {
@@ -91,35 +128,56 @@ class PveNotifier extends _$PveNotifier {
   bool get onlyOneNode => state.data?.nodes.length == 1;
 
   Future<void> reconnect() async {
+    await _closeSession(clearPendingTfa: true);
+    if (!ref.mounted) return;
     state = state.copyWith(
       error: null,
+      data: null,
+      release: null,
       isConnected: false,
+      isBusy: false,
       loadingStep: PveLoadingStep.forwarding,
     );
     await _init();
   }
 
   Future<void> _init() async {
+    final existing = _initFuture;
+    if (existing != null) return existing;
+    final future = _initImpl();
+    _initFuture = future;
+    try {
+      await future;
+    } finally {
+      if (identical(_initFuture, future)) {
+        _initFuture = null;
+      }
+    }
+  }
+
+  Future<void> _initImpl() async {
+    final generation = _sessionGeneration;
     try {
       if (!ref.mounted) return;
+      _initSession();
       state = state.copyWith(loadingStep: PveLoadingStep.forwarding);
-      await _forward();
-      if (!ref.mounted) return;
+      await _forward(generation);
+      if (!_isActiveInit(generation)) return;
       state = state.copyWith(loadingStep: PveLoadingStep.loggingIn);
       await _login();
-      if (!ref.mounted) return;
+      if (!_isActiveInit(generation)) return;
       state = state.copyWith(loadingStep: PveLoadingStep.fetchingData);
       await _getRelease();
-      if (!ref.mounted) return;
+      if (!_isActiveInit(generation)) return;
       state = state.copyWith(isConnected: true);
       await list();
-      if (!ref.mounted) return;
+      if (!_isActiveInit(generation)) return;
       state = state.copyWith(loadingStep: PveLoadingStep.none);
     } on PveErr catch (e) {
-      if (!ref.mounted) return;
+      if (!_isActiveInit(generation)) return;
       state = state.copyWith(error: e, loadingStep: PveLoadingStep.none);
     } catch (e, s) {
-      if (!ref.mounted) return;
+      if (!_isActiveInit(generation)) return;
       Loggers.app.warning('PVE init failed', e, s);
       state = state.copyWith(
         error: PveErr(type: PveErrType.unknown, message: e.toString()),
@@ -128,14 +186,33 @@ class PveNotifier extends _$PveNotifier {
     }
   }
 
-  Future<void> _forward() async {
+  bool _isActiveInit(int generation) {
+    return ref.mounted && generation == _sessionGeneration;
+  }
+
+  Future<void> _forward(int generation) async {
     final url = Uri.parse(addrValue);
     if (_localPort == 0) {
-      _serverSocket = await ServerSocket.bind('localhost', 0);
-      _localPort = _serverSocket!.port;
-      _serverSocket!.listen((socket) async {
+      final serverSocket = await ServerSocket.bind('localhost', 0);
+      if (!_isActiveInit(generation)) {
+        await serverSocket.close();
+        return;
+      }
+      _serverSocket = serverSocket;
+      _localPort = serverSocket.port;
+      serverSocket.listen((socket) async {
         try {
+          final generationAtAccept = _sessionGeneration;
           final forward = await _client.forwardLocal(url.host, url.port);
+          if (!_isActiveInit(generationAtAccept)) {
+            socket.destroy();
+            try {
+              await forward.close();
+            } catch (e, s) {
+              Loggers.app.warning('Failed to close stale PVE forward', e, s);
+            }
+            return;
+          }
           _forwards.add(forward);
           forward.stream.cast<List<int>>().pipe(socket);
           socket.cast<List<int>>().pipe(forward.sink);
@@ -384,15 +461,30 @@ class PveNotifier extends _$PveNotifier {
   }
 
   Future<void> dispose() async {
-    _pendingTfaChallenge = null;
+    await _closeSession(clearPendingTfa: true);
+  }
+
+  Future<void> _closeSession({required bool clearPendingTfa}) async {
+    if (clearPendingTfa) {
+      _pendingTfaChallenge = null;
+    }
+    _sessionGeneration++;
+    _initFuture = null;
+    _session?.close(force: true);
+    _session = null;
+    final serverSocket = _serverSocket;
+    _serverSocket = null;
+    _localPort = 0;
     try {
-      await _serverSocket?.close();
+      await serverSocket?.close();
     } catch (e, s) {
       Loggers.app.warning('Failed to close server socket', e, s);
     }
-    for (final forward in _forwards) {
+    final forwards = _forwards.toList();
+    _forwards.clear();
+    for (final forward in forwards) {
       try {
-        forward.close();
+        await forward.close();
       } catch (e, s) {
         Loggers.app.warning('Failed to close forward', e, s);
       }
