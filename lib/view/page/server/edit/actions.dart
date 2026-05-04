@@ -270,7 +270,7 @@ extension _Actions on _ServerEditPageState {
       alterUrl: _altUrlController.text.selfNotEmptyOrNull,
       autoConnect: _autoConnect.value,
       jumpId: _jumpServers.value.isEmpty ? null : _jumpServers.value.first,
-      jumpIds: _jumpServers.value.isEmpty ? null : _jumpServers.value.toList(),
+      jumpIds: _jumpServers.value.isEmpty ? null : _jumpServers.value,
       proxyCommand: proxyCommandText.selfNotEmptyOrNull,
       custom: custom,
       wolCfg: wol,
@@ -427,7 +427,7 @@ extension _Utils on _ServerEditPageState {
 
     _altUrlController.text = spi.alterUrl ?? '';
     _autoConnect.value = spi.autoConnect;
-    _jumpServers.value = spi.resolvedJumpIds.toSet();
+    _jumpServers.value = spi.resolvedJumpIds;
     _proxyCommandCtrl.text = spi.proxyCommand ?? '';
 
     final custom = spi.custom;

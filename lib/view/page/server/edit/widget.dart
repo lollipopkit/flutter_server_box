@@ -469,7 +469,11 @@ extension _Widgets on _ServerEditPageState {
         .where((e) => !_isInvalidJumpSelection(e.id))
         .toList();
     final choice = _jumpServers.listenVal((val) {
-      final selectedSrvs = srvs.where((e) => val.contains(e.id)).toList();
+      final selectedSrvs = <Spi>[];
+      for (final id in val) {
+        final srv = srvs.firstWhereOrNull((e) => e.id == id);
+        if (srv != null) selectedSrvs.add(srv);
+      }
       return Choice<Spi>(
         multiple: true,
         clearable: true,
@@ -477,14 +481,18 @@ extension _Widgets on _ServerEditPageState {
         builder: (state, _) => Wrap(
           children: List<Widget>.generate(srvs.length, (index) {
             final item = srvs[index];
+            final selectedIndex = val.indexOf(item.id);
             return ChoiceChipX<Spi>(
               key: ValueKey(item),
-              label: item.name,
+              label: selectedIndex == -1
+                  ? item.name
+                  : '${selectedIndex + 1}. ${item.name}',
               state: state,
               value: item,
               onSelected: (srv, on) {
-                final next = Set<String>.from(_jumpServers.value);
+                final next = List<String>.from(_jumpServers.value);
                 if (on) {
+                  if (next.contains(srv.id)) return;
                   if (next.length >= 2) {
                     context.showSnackBar('${l10n.jumpServer}: 2');
                     return;

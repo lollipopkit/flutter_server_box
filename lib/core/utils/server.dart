@@ -98,6 +98,13 @@ Future<SSHClient> genClient(
       preloadedJumpSpi: jumpSpi,
       jumpSpisById: jumpSpisById,
     );
+    final jumpIds = spi.resolvedJumpIds;
+    if (jumpIds.isNotEmpty && jumpSpis.isEmpty) {
+      final message =
+          'Jump servers not found for ${spi.name}: ${jumpIds.join(', ')}';
+      Loggers.app.warning(message);
+      throw SSHErr(type: SSHErrType.connect, message: message);
+    }
     if (jumpSpis.isNotEmpty) {
       Object? lastNetworkError;
       StackTrace? lastNetworkStack;
@@ -122,6 +129,7 @@ Future<SSHClient> genClient(
             privateKeysByKeyId: privateKeysByKeyId,
             jumpSpisById: jumpSpisById,
             timeout: timeout,
+            onKeyboardInteractive: onKeyboardInteractive,
             knownHostFingerprints: hostKeyCache,
             onHostKeyAccepted: hostKeyPersist,
             onHostKeyPrompt: hostKeyPrompt,
@@ -437,9 +445,6 @@ Future<void> ensureKnownHostKey(
   }
 
   final cache = _loadKnownHostFingerprints();
-  if (_hasKnownHostFingerprintForSpi(spi, cache)) {
-    return;
-  }
 
   for (final jumpSpi in _resolveJumpCandidates(
     spi: spi,
@@ -455,8 +460,11 @@ Future<void> ensureKnownHostKey(
         visitedServerIds: {...chainVisitedServerIds},
       );
       cache.addAll(_loadKnownHostFingerprints());
-      if (_hasKnownHostFingerprintForSpi(spi, cache)) return;
     }
+  }
+
+  if (_hasKnownHostFingerprintForSpi(spi, cache)) {
+    return;
   }
 
   final client = await genClient(

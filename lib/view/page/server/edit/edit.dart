@@ -73,7 +73,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   /// -1: non selected, null: password, others: index of private key
   final _keyIdx = ValueNotifier<int?>(null);
   final _autoConnect = ValueNotifier(true);
-  final _jumpServers = <String>{}.vn;
+  final _jumpServers = <String>[].vn;
   final _pveIgnoreCert = ValueNotifier(false);
   final _tempIsCelsius = ValueNotifier(false);
   final _env = <String, String>{}.vn;
