@@ -12,6 +12,7 @@ import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/utils/comparator.dart';
 import 'package:server_box/core/utils/host_key_helper.dart';
 import 'package:server_box/core/utils/sftp_sudo.dart';
+import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/browser_status.dart';
 import 'package:server_box/data/model/sftp/worker.dart';

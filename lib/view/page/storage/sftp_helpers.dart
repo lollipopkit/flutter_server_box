@@ -3,9 +3,10 @@ part of 'sftp.dart';
 String _normalizeSftpPath(String path) => path.replaceAll(RegExp(r'/+'), '/');
 
 String? _getDecompressCmd(String filename) {
+  final quotedFilename = shellSingleQuote(filename);
   for (final ext in _extCmdMap.keys) {
     if (filename.endsWith('.$ext')) {
-      return _extCmdMap[ext]?.replaceAll('FILE', '"$filename"');
+      return _extCmdMap[ext]?.replaceAll('FILE', quotedFilename);
     }
   }
   return null;
