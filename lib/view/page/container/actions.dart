@@ -7,6 +7,11 @@ extension on _ContainerPageState {
   /// Watch the current state of the container.
   ContainerState get _containerState => ref.watch(_provider);
 
+  String _errorMessage(String? message) {
+    final trimmed = message?.trim();
+    return trimmed?.isNotEmpty == true ? trimmed! : libL10n.fail;
+  }
+
   Future<void> _showAddFAB() async {
     final imageCtrl = TextEditingController();
     final nameCtrl = TextEditingController();
@@ -71,7 +76,7 @@ extension on _ContainerPageState {
             final e = result?.message ?? err?.toString();
             context.showRoundDialog(
               title: libL10n.error,
-              child: Text(e?.isNotEmpty == true ? e! : libL10n.fail),
+              child: Text(_errorMessage(e)),
             );
           } else {
             context.showSnackBar(libL10n.success);
@@ -99,7 +104,7 @@ extension on _ContainerPageState {
               final e = result?.message ?? err?.toString();
               context.showRoundDialog(
                 title: libL10n.error,
-                child: Text(e?.isNotEmpty == true ? e! : libL10n.fail),
+                child: Text(_errorMessage(e)),
               );
             }
           },
@@ -143,7 +148,7 @@ extension on _ContainerPageState {
           context.pop();
           final result = await _containerNotifier.run('rmi ${e.id} -f');
           if (result != null) {
-            context.showSnackBar(result.message ?? 'null');
+            context.showSnackBar(_errorMessage(result.message));
           }
         },
         red: true,
@@ -178,7 +183,7 @@ extension on _ContainerPageState {
                 final e = result?.message ?? err?.toString();
                 context.showRoundDialog(
                   title: libL10n.error,
-                  child: Text(e ?? libL10n.fail),
+                  child: Text(_errorMessage(e)),
                 );
               }
             },
@@ -238,7 +243,7 @@ extension on _ContainerPageState {
                 final e = result?.message ?? err?.toString();
                 context.showRoundDialog(
                   title: libL10n.error,
-                  child: Text(e ?? libL10n.fail),
+                  child: Text(_errorMessage(e)),
                 );
               }
             },
@@ -253,7 +258,7 @@ extension on _ContainerPageState {
           final e = result?.message ?? err?.toString();
           context.showRoundDialog(
             title: libL10n.error,
-            child: Text(e ?? libL10n.fail),
+            child: Text(_errorMessage(e)),
           );
         }
         break;
@@ -265,7 +270,7 @@ extension on _ContainerPageState {
           final e = result?.message ?? err?.toString();
           context.showRoundDialog(
             title: libL10n.error,
-            child: Text(e ?? libL10n.fail),
+            child: Text(_errorMessage(e)),
           );
         }
         break;
@@ -277,7 +282,7 @@ extension on _ContainerPageState {
           final e = result?.message ?? err?.toString();
           context.showRoundDialog(
             title: libL10n.error,
-            child: Text(e ?? libL10n.fail),
+            child: Text(_errorMessage(e)),
           );
         }
         break;
