@@ -178,7 +178,7 @@ extension on _ContainerPageState {
                 final e = result?.message ?? err?.toString();
                 context.showRoundDialog(
                   title: libL10n.error,
-                  child: Text(e ?? 'null'),
+                  child: Text(e ?? libL10n.fail),
                 );
               }
             },
@@ -238,7 +238,7 @@ extension on _ContainerPageState {
                 final e = result?.message ?? err?.toString();
                 context.showRoundDialog(
                   title: libL10n.error,
-                  child: Text(e ?? 'null'),
+                  child: Text(e ?? libL10n.fail),
                 );
               }
             },
@@ -253,7 +253,7 @@ extension on _ContainerPageState {
           final e = result?.message ?? err?.toString();
           context.showRoundDialog(
             title: libL10n.error,
-            child: Text(e ?? 'null'),
+            child: Text(e ?? libL10n.fail),
           );
         }
         break;
@@ -265,7 +265,7 @@ extension on _ContainerPageState {
           final e = result?.message ?? err?.toString();
           context.showRoundDialog(
             title: libL10n.error,
-            child: Text(e ?? 'null'),
+            child: Text(e ?? libL10n.fail),
           );
         }
         break;
@@ -277,7 +277,7 @@ extension on _ContainerPageState {
           final e = result?.message ?? err?.toString();
           context.showRoundDialog(
             title: libL10n.error,
-            child: Text(e ?? 'null'),
+            child: Text(e ?? libL10n.fail),
           );
         }
         break;
@@ -307,10 +307,11 @@ extension on _ContainerPageState {
   }
 
   void _initAutoRefresh() {
+    _autoRefreshTimer?.cancel();
+    _autoRefreshTimer = null;
     if (!Stores.setting.containerAutoRefresh.fetch()) return;
     final duration = serverStatusRefreshInterval();
     if (duration == null) return;
-    _autoRefreshTimer?.cancel();
     _autoRefreshTimer = Timer.periodic(duration, (timer) {
       if (mounted) {
         _containerNotifier.refresh(isAuto: true);

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
+import 'package:server_box/core/utils/version.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -554,8 +555,8 @@ extension on _PvePageState {
     while (mounted) {
       final pveState = ref.read(_provider);
       if (pveState.isConnected) {
-        if (pveState.release != null &&
-            pveState.release!.compareTo('8.0') < 0) {
+        final release = pveState.release;
+        if (release != null && isVersionLessThan(release, const [8, 0])) {
           if (mounted) {
             context.showSnackBar(l10n.pveVersionLow);
           }
