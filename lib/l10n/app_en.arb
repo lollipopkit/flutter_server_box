@@ -129,6 +129,14 @@
   "invalidUrl": "Invalid URL",
   "invalidHostFormat": "Invalid host format. Only IPv4, IPv6, and domain characters are allowed.",
   "jumpServer": "Jump server",
+  "jumpServersNotFoundFmt": "Jump servers not found for {serverName}: {jumpIds}",
+  "@jumpServersNotFoundFmt": {
+    "placeholders": {
+      "serverName": {},
+      "jumpIds": {}
+    }
+  },
+  "noJumpServerAvailable": "No jump server available.",
   "jumpServerAndProxyCommandCannotBeUsedTogether": "Jump server and ProxyCommand cannot be used together.",
   "keepForeground": "Keep app foreground!",
   "keepStatusWhenErr": "Preserve the last server state",

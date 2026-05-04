@@ -426,6 +426,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get jumpServer => '跳板服务器';
 
   @override
+  String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
+    return '未找到 $serverName 配置的跳板服务器：$jumpIds';
+  }
+
+  @override
+  String get noJumpServerAvailable => '没有可用的跳板服务器。';
+
+  @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       '跳板服务器与 ProxyCommand 不能同时使用。';
 
@@ -1418,6 +1426,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get jumpServer => '跳板伺服器';
+
+  @override
+  String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
+    return '未找到 $serverName 配置的跳板伺服器：$jumpIds';
+  }
+
+  @override
+  String get noJumpServerAvailable => '沒有可用的跳板伺服器。';
 
   @override
   String get keepForeground => '請讓 App 保持在前景執行';

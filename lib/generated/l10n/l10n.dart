@@ -900,6 +900,18 @@ abstract class AppLocalizations {
   /// **'Jump server'**
   String get jumpServer;
 
+  /// No description provided for @jumpServersNotFoundFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'Jump servers not found for {serverName}: {jumpIds}'**
+  String jumpServersNotFoundFmt(Object serverName, Object jumpIds);
+
+  /// No description provided for @noJumpServerAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No jump server available.'**
+  String get noJumpServerAvailable;
+
   /// No description provided for @jumpServerAndProxyCommandCannotBeUsedTogether.
   ///
   /// In en, this message translates to:

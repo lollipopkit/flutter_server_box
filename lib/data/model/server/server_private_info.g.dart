@@ -17,6 +17,9 @@ _Spi _$SpiFromJson(Map<String, dynamic> json) => _Spi(
   alterUrl: json['alterUrl'] as String?,
   autoConnect: json['autoConnect'] as bool? ?? true,
   jumpId: json['jumpId'] as String?,
+  jumpIds: (json['jumpIds'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
   proxyCommand: json['proxyCommand'] as String?,
   custom: json['custom'] == null
       ? null
@@ -48,6 +51,7 @@ Map<String, dynamic> _$SpiToJson(_Spi instance) => <String, dynamic>{
   'alterUrl': ?instance.alterUrl,
   'autoConnect': instance.autoConnect,
   'jumpId': ?instance.jumpId,
+  'jumpIds': ?instance.jumpIds,
   'proxyCommand': ?instance.proxyCommand,
   'custom': ?instance.custom,
   'wolCfg': ?instance.wolCfg,

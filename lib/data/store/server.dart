@@ -146,13 +146,9 @@ class ServerStore extends HiveStore {
 
       final spi = get<Spi>(newId);
       if (spi != null) {
-        final jumpId = spi.jumpId;
-        if (jumpId != null && idMap.containsKey(jumpId)) {
-          final newJumpId = idMap[jumpId];
-          if (spi.jumpId != newJumpId) {
-            final newSpi = spi.copyWith(jumpId: newJumpId);
-            update(spi, newSpi);
-          }
+        final newSpi = _replaceJumpIds(spi, idMap);
+        if (newSpi != null) {
+          update(spi, newSpi);
         }
       }
 
@@ -176,9 +172,8 @@ class ServerStore extends HiveStore {
 
     for (final spi in ss) {
       if (get(spi.id) == null) continue;
-      if (spi.jumpId != null && idMap.containsKey(spi.jumpId)) {
-        final newJumpId = idMap[spi.jumpId]!;
-        final newSpi = spi.copyWith(jumpId: newJumpId);
+      final newSpi = _replaceJumpIds(spi, idMap);
+      if (newSpi != null) {
         update(spi, newSpi);
       }
     }
@@ -187,4 +182,26 @@ class ServerStore extends HiveStore {
       SettingStore.instance.serverOrder.put(srvOrder);
     }
   }
+}
+
+Spi? _replaceJumpIds(Spi spi, Map<String, String> idMap) {
+  var changed = false;
+  final resolvedJumpIds = spi.resolvedJumpIds;
+  final newJumpIds = resolvedJumpIds.map((id) {
+    final newId = idMap[id];
+    if (newId == null) return id;
+    changed = true;
+    return newId;
+  }).toList();
+
+  final newJumpId = spi.jumpId != null && idMap.containsKey(spi.jumpId)
+      ? idMap[spi.jumpId]
+      : spi.jumpId;
+  changed = changed || newJumpId != spi.jumpId;
+
+  if (!changed) return null;
+  return spi.copyWith(
+    jumpId: newJumpIds.isEmpty ? newJumpId : newJumpIds.first,
+    jumpIds: newJumpIds.isEmpty ? null : newJumpIds,
+  );
 }

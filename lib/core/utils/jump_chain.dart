@@ -7,47 +7,99 @@ bool wouldCreateJumpCycle({
   required String? candidateJumpId,
   required Map<String, Spi> serversById,
 }) {
-  if (candidateJumpId == null || candidateJumpId.isEmpty) {
+  return wouldCreateJumpCycleForCandidates(
+    currentServerId: currentServerId,
+    candidateJumpIds: candidateJumpId == null ? const [] : [candidateJumpId],
+    serversById: serversById,
+  );
+}
+
+/// Returns `true` when assigning [candidateJumpIds] to [currentServerId]
+/// would create a jump-server cycle.
+bool wouldCreateJumpCycleForCandidates({
+  required String? currentServerId,
+  required Iterable<String> candidateJumpIds,
+  required Map<String, Spi> serversById,
+}) {
+  for (final candidateJumpId in _normalizeJumpIds(candidateJumpIds)) {
+    if (_hasJumpCycleFrom(
+      currentServerId: currentServerId,
+      checkingId: candidateJumpId,
+      serversById: serversById,
+      path: <String>{},
+    )) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool _hasJumpCycleFrom({
+  required String? currentServerId,
+  required String checkingId,
+  required Map<String, Spi> serversById,
+  required Set<String> path,
+}) {
+  if (currentServerId != null && checkingId == currentServerId) {
+    return true;
+  }
+  if (!path.add(checkingId)) {
+    // Existing malformed cycle is treated as invalid to prevent linking into it.
+    return true;
+  }
+
+  final jumpSpi = serversById[checkingId];
+  if (jumpSpi == null) {
+    path.remove(checkingId);
     return false;
   }
 
-  final visited = <String>{};
-  var checkingId = candidateJumpId;
-
-  while (true) {
-    if (currentServerId != null && checkingId == currentServerId) {
+  for (final nextId in jumpSpi.resolvedJumpIds) {
+    if (_hasJumpCycleFrom(
+      currentServerId: currentServerId,
+      checkingId: nextId,
+      serversById: serversById,
+      path: path,
+    )) {
       return true;
     }
-    if (!visited.add(checkingId)) {
-      // Existing malformed cycle is treated as invalid to prevent linking into it.
-      return true;
-    }
-
-    final nextId = serversById[checkingId]?.jumpId;
-    if (nextId == null || nextId.isEmpty) {
-      return false;
-    }
-    checkingId = nextId;
   }
+
+  path.remove(checkingId);
+  return false;
 }
 
-/// Collects all reachable jump servers from [spi.jumpId], keyed by server id.
+/// Collects all reachable jump servers from [spi.resolvedJumpIds], keyed by server id.
 Map<String, Spi> collectJumpServers({
   required Spi spi,
   required Map<String, Spi> serversById,
 }) {
   final chain = <String, Spi>{};
   final visited = <String>{};
-  var jumpId = spi.jumpId;
+  final pending = <String>[...spi.resolvedJumpIds];
 
-  while (jumpId != null && jumpId.isNotEmpty && visited.add(jumpId)) {
+  while (pending.isNotEmpty) {
+    final jumpId = pending.removeAt(0);
+    if (jumpId.isEmpty || !visited.add(jumpId)) {
+      continue;
+    }
     final jumpSpi = serversById[jumpId];
     if (jumpSpi == null) {
-      break;
+      continue;
     }
     chain[jumpSpi.id] = jumpSpi;
-    jumpId = jumpSpi.jumpId;
+    pending.addAll(jumpSpi.resolvedJumpIds);
   }
 
   return chain;
+}
+
+List<String> _normalizeJumpIds(Iterable<String> ids) {
+  final normalized = <String>[];
+  for (final id in ids) {
+    if (id.isEmpty || normalized.contains(id)) continue;
+    normalized.add(id);
+    if (normalized.length >= 2) break;
+  }
+  return normalized;
 }

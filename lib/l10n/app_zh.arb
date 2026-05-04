@@ -126,6 +126,8 @@
   "invalid": "无效",
   "invalidHostFormat": "主机格式无效，仅支持 IPv4、IPv6 和域名字符。",
   "jumpServer": "跳板服务器",
+  "jumpServersNotFoundFmt": "未找到 {serverName} 配置的跳板服务器：{jumpIds}",
+  "noJumpServerAvailable": "没有可用的跳板服务器。",
   "keepForeground": "请将应用保持在前台运行",
   "keepStatusWhenErr": "保留上次的服务器状态",
   "keepStatusWhenErrTip": "仅限于执行脚本出错",

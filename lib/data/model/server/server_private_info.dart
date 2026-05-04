@@ -46,8 +46,14 @@ abstract class Spi with _$Spi {
     String? alterUrl,
     @Default(true) bool autoConnect,
 
-    /// [id] of the jump server
+    /// [id] of the first jump server.
+    ///
+    /// Kept for compatibility with old storage and imports. New code should
+    /// read [resolvedJumpIds] so failover candidates are included.
     String? jumpId,
+
+    /// Ordered jump-server candidates. At most the first two are used.
+    List<String>? jumpIds,
     String? proxyCommand,
     ServerCustom? custom,
     WakeOnLanCfg? wolCfg,
@@ -76,8 +82,28 @@ abstract class Spi with _$Spi {
 }
 
 extension Spix on Spi {
+  List<String> get resolvedJumpIds {
+    final ids = <String>[];
+    void add(String? id) {
+      if (id == null || id.isEmpty || ids.contains(id)) return;
+      ids.add(id);
+    }
+
+    for (final id in jumpIds ?? const <String>[]) {
+      add(id);
+      if (ids.length >= 2) break;
+    }
+    if (ids.isEmpty) add(jumpId);
+    return ids;
+  }
+
+  String? get firstJumpId {
+    final ids = resolvedJumpIds;
+    return ids.isEmpty ? null : ids.first;
+  }
+
   SpiValidationError? validate() {
-    final hasJumpServer = jumpId != null && jumpId!.isNotEmpty;
+    final hasJumpServer = resolvedJumpIds.isNotEmpty;
     final hasProxyCommand =
         proxyCommand != null && proxyCommand!.trim().isNotEmpty;
     if (hasJumpServer && hasProxyCommand) {
@@ -122,7 +148,7 @@ extension Spix on Spi {
         port == other.port &&
         pwd == other.pwd &&
         keyId == other.keyId &&
-        jumpId == other.jumpId &&
+        _sameStringList(resolvedJumpIds, other.resolvedJumpIds) &&
         proxyCommand == other.proxyCommand;
   }
 
@@ -181,4 +207,12 @@ extension Spix on Spi {
 
   /// Returns true if the user is 'root'.
   bool get isRoot => user == 'root';
+}
+
+bool _sameStringList(List<String> a, List<String> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
 }

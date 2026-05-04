@@ -93,40 +93,72 @@ Future<SSHClient> genClient(
 
   final socket = await () async {
     // Proxy
-    final jumpSpi_ = () {
-      // Multi-thread or key login
-      if (jumpSpi != null) return jumpSpi;
-      // Main thread
-      final jumpId = spi.jumpId;
-      if (jumpId != null) {
-        return jumpSpisById?[jumpId] ?? Stores.server.box.get(jumpId);
-      }
-    }();
-    if (jumpSpi_ != null) {
-      String? nextJumpPrivateKey;
-      final jumpSpiKeyId = jumpSpi_.keyId;
-      if (jumpSpi != null &&
-          jumpSpi.id == jumpSpi_.id &&
-          jumpPrivateKey != null) {
-        // Isolate mode may preload first-hop key and pass it via [jumpPrivateKey].
-        nextJumpPrivateKey = jumpPrivateKey;
-      } else if (jumpSpiKeyId != null) {
-        nextJumpPrivateKey = privateKeysByKeyId?[jumpSpiKeyId];
+    final jumpSpis = _resolveJumpCandidates(
+      spi: spi,
+      preloadedJumpSpi: jumpSpi,
+      jumpSpisById: jumpSpisById,
+    );
+    final jumpIds = spi.resolvedJumpIds;
+    if (jumpIds.isNotEmpty && jumpSpis.isEmpty) {
+      final message = l10n.jumpServersNotFoundFmt(spi.name, jumpIds.join(', '));
+      Loggers.app.warning(message);
+      throw SSHErr(type: SSHErrType.connect, message: message);
+    }
+    if (jumpSpis.isNotEmpty) {
+      Object? lastNetworkError;
+      StackTrace? lastNetworkStack;
+
+      for (final jumpSpi_ in jumpSpis) {
+        SSHClient? jumpClient;
+        try {
+          String? nextJumpPrivateKey;
+          final jumpSpiKeyId = jumpSpi_.keyId;
+          if (jumpSpi != null &&
+              jumpSpi.id == jumpSpi_.id &&
+              jumpPrivateKey != null) {
+            // Isolate mode may preload first-hop key and pass it via [jumpPrivateKey].
+            nextJumpPrivateKey = jumpPrivateKey;
+          } else if (jumpSpiKeyId != null) {
+            nextJumpPrivateKey = privateKeysByKeyId?[jumpSpiKeyId];
+          }
+
+          jumpClient = await genClient(
+            jumpSpi_,
+            privateKey: nextJumpPrivateKey,
+            privateKeysByKeyId: privateKeysByKeyId,
+            jumpSpisById: jumpSpisById,
+            timeout: timeout,
+            onKeyboardInteractive: onKeyboardInteractive,
+            knownHostFingerprints: hostKeyCache,
+            onHostKeyAccepted: hostKeyPersist,
+            onHostKeyPrompt: hostKeyPrompt,
+            visitedServerIds: {...chainVisitedServerIds},
+          );
+
+          return await jumpClient.forwardLocal(spi.ip, spi.port);
+        } catch (e, stack) {
+          jumpClient?.close();
+          if (!_isJumpFailoverError(e)) {
+            rethrow;
+          }
+          lastNetworkError = e;
+          lastNetworkStack = stack;
+          Loggers.app.warning(
+            'Jump server ${jumpSpi_.name} failed, trying next candidate',
+            e,
+            stack,
+          );
+        }
       }
 
-      final jumpClient = await genClient(
-        jumpSpi_,
-        privateKey: nextJumpPrivateKey,
-        privateKeysByKeyId: privateKeysByKeyId,
-        jumpSpisById: jumpSpisById,
-        timeout: timeout,
-        knownHostFingerprints: hostKeyCache,
-        onHostKeyAccepted: hostKeyPersist,
-        onHostKeyPrompt: hostKeyPrompt,
-        visitedServerIds: chainVisitedServerIds,
+      Error.throwWithStackTrace(
+        lastNetworkError ??
+            SSHErr(
+              type: SSHErrType.connect,
+              message: l10n.noJumpServerAvailable,
+            ),
+        lastNetworkStack ?? StackTrace.current,
       );
-
-      return await jumpClient.forwardLocal(spi.ip, spi.port);
     }
 
     final proxyCommand = spi.proxyCommand;
@@ -194,6 +226,43 @@ Future<SSHClient> genClient(
 
 typedef _HostKeyPersistCallback =
     void Function(String storageKey, String fingerprintHex);
+
+List<Spi> _resolveJumpCandidates({
+  required Spi spi,
+  required Spi? preloadedJumpSpi,
+  required Map<String, Spi>? jumpSpisById,
+}) {
+  final candidates = <Spi>[];
+  for (final jumpId in spi.resolvedJumpIds) {
+    final candidate = preloadedJumpSpi?.id == jumpId
+        ? preloadedJumpSpi
+        : jumpSpisById?[jumpId] ?? Stores.server.box.get(jumpId);
+    if (candidate == null || candidates.any((e) => e.id == candidate.id)) {
+      continue;
+    }
+    candidates.add(candidate);
+  }
+  return candidates;
+}
+
+bool _isJumpFailoverError(Object error) {
+  final errStr = error.toString().toLowerCase();
+  return errStr.contains('timed out') ||
+      errStr.contains('timeout') ||
+      errStr.contains('connection refused') ||
+      errStr.contains('connection reset') ||
+      errStr.contains('connection closed') ||
+      errStr.contains('no route to host') ||
+      errStr.contains('network') ||
+      errStr.contains('socket') ||
+      errStr.contains('failed host lookup') ||
+      errStr.contains('forward') ||
+      errStr.contains('proxycommand exited') ||
+      errStr.contains('proxycommand timed out');
+}
+
+@visibleForTesting
+bool isJumpFailoverErrorForTest(Object error) => _isJumpFailoverError(error);
 
 class HostKeyPromptInfo {
   HostKeyPromptInfo({
@@ -375,24 +444,26 @@ Future<void> ensureKnownHostKey(
   }
 
   final cache = _loadKnownHostFingerprints();
-  if (_hasKnownHostFingerprintForSpi(spi, cache)) {
-    return;
+
+  for (final jumpSpi in _resolveJumpCandidates(
+    spi: spi,
+    preloadedJumpSpi: null,
+    jumpSpisById: jumpSpisById,
+  )) {
+    if (!_hasKnownHostFingerprintForSpi(jumpSpi, cache)) {
+      await ensureKnownHostKey(
+        jumpSpi,
+        timeout: timeout,
+        onKeyboardInteractive: onKeyboardInteractive,
+        jumpSpisById: jumpSpisById,
+        visitedServerIds: {...chainVisitedServerIds},
+      );
+      cache.addAll(_loadKnownHostFingerprints());
+    }
   }
 
-  final jumpId = spi.jumpId;
-  final jumpSpi = jumpId != null
-      ? (jumpSpisById?[jumpId] ?? Stores.server.box.get(jumpId))
-      : null;
-  if (jumpSpi != null && !_hasKnownHostFingerprintForSpi(jumpSpi, cache)) {
-    await ensureKnownHostKey(
-      jumpSpi,
-      timeout: timeout,
-      onKeyboardInteractive: onKeyboardInteractive,
-      jumpSpisById: jumpSpisById,
-      visitedServerIds: chainVisitedServerIds,
-    );
-    cache.addAll(_loadKnownHostFingerprints());
-    if (_hasKnownHostFingerprintForSpi(spi, cache)) return;
+  if (_hasKnownHostFingerprintForSpi(spi, cache)) {
+    return;
   }
 
   final client = await genClient(
