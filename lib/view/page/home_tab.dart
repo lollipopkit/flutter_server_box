@@ -30,7 +30,7 @@ extension AppTabViewX on AppTab {
         selectedIcon: Icon(Icons.terminal),
       ),
       AppTab.snippet => NavigationDestination(
-        icon: const Icon(Icons.code),
+        icon: const Icon(Icons.code_outlined),
         label: libL10n.snippet,
         selectedIcon: const Icon(Icons.code),
       ),
@@ -55,7 +55,7 @@ extension AppTabViewX on AppTab {
         selectedIcon: Icon(Icons.terminal),
       ),
       AppTab.snippet => NavigationRailDestination(
-        icon: const Icon(Icons.code),
+        icon: const Icon(Icons.code_outlined),
         label: Text(libL10n.snippet),
         selectedIcon: const Icon(Icons.code),
       ),

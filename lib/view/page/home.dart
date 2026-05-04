@@ -162,9 +162,10 @@ class _HomePageState extends ConsumerState<HomePage>
 
     if (Platform.isMacOS) {
       return PlatformMenuBar(
-        menus: MacOSMenuBarManager.buildMenuBar(context, (int index) {
-          _onDestinationSelected(index);
-        }),
+        menus: MacOSMenuBarManager.buildMenuBar(
+          context,
+          _onDestinationSelected,
+        ),
         child: mainContent,
       );
     }
