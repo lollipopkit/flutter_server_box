@@ -4,11 +4,11 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/pve.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/pve.dart';
-import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
 
 final class PvePageArgs {
@@ -25,7 +25,10 @@ final class PvePage extends ConsumerStatefulWidget {
   @override
   ConsumerState<PvePage> createState() => _PvePageState();
 
-  static const route = AppRouteArg<void, PvePageArgs>(page: PvePage.new, path: '/pve');
+  static const route = AppRouteArg<void, PvePageArgs>(
+    page: PvePage.new,
+    path: '/pve',
+  );
 }
 
 const _kHorziPadding = 11.0;
@@ -69,7 +72,9 @@ final class _PvePageState extends ConsumerState<PvePage> {
       if (error.type == PveErrType.needTfa &&
           !_isPromptingForTfa &&
           error.message != _lastHandledTfaMessage) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => _promptForTfa(error));
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _promptForTfa(error),
+        );
       }
     }
 
@@ -109,7 +114,10 @@ final class _PvePageState extends ConsumerState<PvePage> {
 
     PveResType? lastType;
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: _kHorziPadding, vertical: 7),
+      padding: const EdgeInsets.symmetric(
+        horizontal: _kHorziPadding,
+        vertical: 7,
+      ),
       itemCount: data.length * 2,
       itemBuilder: (context, index) {
         final item = data[index ~/ 2];
@@ -131,7 +139,10 @@ final class _PvePageState extends ConsumerState<PvePage> {
               alignment: Alignment.center,
               child: Text(
                 type.toStr,
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
                 textAlign: TextAlign.start,
               ),
             ),
@@ -195,11 +206,18 @@ final class _PvePageState extends ConsumerState<PvePage> {
               UIs.width7,
               const Text('CPU', style: UIs.text12Grey),
               const Spacer(),
-              Text('${(item.cpu * 100).toStringAsFixed(1)} %', style: UIs.text12Grey),
+              Text(
+                '${(item.cpu * 100).toStringAsFixed(1)} %',
+                style: UIs.text12Grey,
+              ),
             ],
           ),
           const SizedBox(height: 3),
-          LinearProgressIndicator(value: item.cpu / item.maxcpu, minHeight: 7, valueColor: valueAnim),
+          LinearProgressIndicator(
+            value: item.cpu / item.maxcpu,
+            minHeight: 7,
+            valueColor: valueAnim,
+          ),
           UIs.height7,
           Row(
             children: [
@@ -207,11 +225,18 @@ final class _PvePageState extends ConsumerState<PvePage> {
               UIs.width7,
               const Text('RAM', style: UIs.text12Grey),
               const Spacer(),
-              Text('${item.mem.bytes2Str} / ${item.maxmem.bytes2Str}', style: UIs.text12Grey),
+              Text(
+                '${item.mem.bytes2Str} / ${item.maxmem.bytes2Str}',
+                style: UIs.text12Grey,
+              ),
             ],
           ),
           const SizedBox(height: 3),
-          LinearProgressIndicator(value: item.mem / item.maxmem, minHeight: 7, valueColor: valueAnim),
+          LinearProgressIndicator(
+            value: item.mem / item.maxmem,
+            minHeight: 7,
+            valueColor: valueAnim,
+          ),
         ],
       ),
     ).cardx;
@@ -265,9 +290,17 @@ final class _PvePageState extends ConsumerState<PvePage> {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('↓:\n${item.netin.bytes2Str}', style: UIs.text11Grey, textAlign: TextAlign.center),
+              Text(
+                '↓:\n${item.netin.bytes2Str}',
+                style: UIs.text11Grey,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 3),
-              Text('↑:\n${item.netout.bytes2Str}', style: UIs.text11Grey, textAlign: TextAlign.center),
+              Text(
+                '↑:\n${item.netout.bytes2Str}',
+                style: UIs.text11Grey,
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         ],
@@ -325,9 +358,17 @@ final class _PvePageState extends ConsumerState<PvePage> {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('↓:\n${item.netin.bytes2Str}', style: UIs.text11Grey, textAlign: TextAlign.center),
+              Text(
+                '↓:\n${item.netin.bytes2Str}',
+                style: UIs.text11Grey,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 3),
-              Text('↑:\n${item.netout.bytes2Str}', style: UIs.text11Grey, textAlign: TextAlign.center),
+              Text(
+                '↑:\n${item.netout.bytes2Str}',
+                style: UIs.text11Grey,
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         ],
@@ -360,7 +401,10 @@ final class _PvePageState extends ConsumerState<PvePage> {
   }
 
   Widget _buildSdn(PveSdn item) {
-    return ListTile(title: Text(_wrapNodeName(item)), trailing: Text(item.summary)).cardx;
+    return ListTile(
+      title: Text(_wrapNodeName(item)),
+      trailing: Text(item.summary),
+    ).cardx;
   }
 
   Widget _buildCtrlBtns(PveCtrlIface item) {
@@ -368,7 +412,11 @@ final class _PvePageState extends ConsumerState<PvePage> {
     if (!item.available) {
       return Btn.icon(
         icon: const Icon(Icons.play_arrow, color: Colors.grey),
-        onTap: () => _onCtrl(libL10n.start, item, () => _notifier.start(item.node, item.id)),
+        onTap: () => _onCtrl(
+          libL10n.start,
+          item,
+          () => _notifier.start(item.node, item.id),
+        ),
       );
     }
     return Row(
@@ -376,17 +424,29 @@ final class _PvePageState extends ConsumerState<PvePage> {
         Btn.icon(
           icon: const Icon(Icons.stop, color: Colors.grey, size: 20),
           padding: pad,
-          onTap: () => _onCtrl(libL10n.stop, item, () => _notifier.stop(item.node, item.id)),
+          onTap: () => _onCtrl(
+            libL10n.stop,
+            item,
+            () => _notifier.stop(item.node, item.id),
+          ),
         ),
         Btn.icon(
           icon: const Icon(Icons.refresh, color: Colors.grey, size: 20),
           padding: pad,
-          onTap: () => _onCtrl(libL10n.reboot, item, () => _notifier.reboot(item.node, item.id)),
+          onTap: () => _onCtrl(
+            libL10n.reboot,
+            item,
+            () => _notifier.reboot(item.node, item.id),
+          ),
         ),
         Btn.icon(
           icon: const Icon(Icons.power_off, color: Colors.grey, size: 20),
           padding: pad,
-          onTap: () => _onCtrl(libL10n.shutdown, item, () => _notifier.shutdown(item.node, item.id)),
+          onTap: () => _onCtrl(
+            libL10n.shutdown,
+            item,
+            () => _notifier.shutdown(item.node, item.id),
+          ),
         ),
       ],
     );
@@ -449,7 +509,11 @@ extension on _PvePageState {
     }
   }
 
-  void _onCtrl(String action, PveCtrlIface item, Future<bool> Function() func) async {
+  void _onCtrl(
+    String action,
+    PveCtrlIface item,
+    Future<bool> Function() func,
+  ) async {
     final sure = await context.showRoundDialog<bool>(
       title: libL10n.attention,
       child: Text(libL10n.askContinue('$action ${item.id}')),
@@ -476,7 +540,9 @@ extension on _PvePageState {
 
   void _initRefreshTimer() {
     _timer?.cancel();
-    _timer = Timer.periodic(Duration(seconds: Stores.setting.serverStatusUpdateInterval.fetch()), (_) {
+    final duration = serverStatusRefreshInterval();
+    if (duration == null) return;
+    _timer = Timer.periodic(duration, (_) {
       if (mounted) {
         _notifier.list();
       }
@@ -488,7 +554,8 @@ extension on _PvePageState {
     while (mounted) {
       final pveState = ref.read(_provider);
       if (pveState.isConnected) {
-        if (pveState.release != null && pveState.release!.compareTo('8.0') < 0) {
+        if (pveState.release != null &&
+            pveState.release!.compareTo('8.0') < 0) {
           if (mounted) {
             context.showSnackBar(l10n.pveVersionLow);
           }

@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/sync.dart';
+import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -65,8 +66,16 @@ class ServersNotifier extends _$ServersNotifier {
 
     final newTags = _calculateTags(newServers);
 
-    return stateOrNull?.copyWith(servers: newServers, serverOrder: newServerOrder, tags: newTags) ??
-        ServersState(servers: newServers, serverOrder: newServerOrder, tags: newTags);
+    return stateOrNull?.copyWith(
+          servers: newServers,
+          serverOrder: newServerOrder,
+          tags: newTags,
+        ) ??
+        ServersState(
+          servers: newServers,
+          serverOrder: newServerOrder,
+          tags: newTags,
+        );
   }
 
   Set<String> _calculateTags(Map<String, Spi> servers) {
@@ -85,7 +94,11 @@ class ServersNotifier extends _$ServersNotifier {
     try {
       await SudoPassword.clearOverride(id);
     } catch (e, s) {
-      Loggers.app.warning('Failed to clear sudo password override for server $id', e, s);
+      Loggers.app.warning(
+        'Failed to clear sudo password override for server $id',
+        e,
+        s,
+      );
     }
   }
 
@@ -106,7 +119,9 @@ class ServersNotifier extends _$ServersNotifier {
   /// [onlyFailed] only refresh failed servers
   Future<void> refresh({Spi? spi, bool onlyFailed = false}) async {
     if (spi != null) {
-      final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)..remove(spi.id);
+      final newManualDisconnected = Set<String>.from(
+        state.manualDisconnectedIds,
+      )..remove(spi.id);
       state = state.copyWith(manualDisconnectedIds: newManualDisconnected);
       final serverNotifier = ref.read(serverProvider(spi.id).notifier);
       await serverNotifier.refresh();
@@ -125,11 +140,15 @@ class ServersNotifier extends _$ServersNotifier {
       final serverState = ref.read(serverProvider(serverId));
 
       if (onlyFailed) {
-        if (serverState.conn != ServerConn.failed) continue;
+        if (serverState.conn != ServerConn.failed) {
+          continue;
+        }
         idsToResetLimiter.add(serverId);
       }
 
-      if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) continue;
+      if (serverState.conn == ServerConn.disconnected && !spi.autoConnect) {
+        continue;
+      }
 
       serversToRefresh.add(entry);
     }
@@ -145,12 +164,16 @@ class ServersNotifier extends _$ServersNotifier {
   }
 
   Future<void> startAutoRefresh() async {
-    var duration = Stores.setting.serverStatusUpdateInterval.fetch();
     stopAutoRefresh();
-    if (duration == 0) return;
-    if (duration <= 1 || duration > 10) {
-      Loggers.app.warning('Invalid duration: $duration, use default 3');
-      duration = 3;
+    final rawDuration = Stores.setting.serverStatusUpdateInterval.fetch();
+    final duration = normalizeServerStatusRefreshSeconds(rawDuration);
+    if (duration == null) {
+      return;
+    }
+    if (duration != rawDuration) {
+      Loggers.app.warning(
+        'Invalid duration: $rawDuration, use default $duration',
+      );
     }
     final timer = Timer.periodic(Duration(seconds: duration), (_) async {
       await refresh();
@@ -175,7 +198,10 @@ class ServersNotifier extends _$ServersNotifier {
 
       // Update SSH session status to disconnected
       final sessionId = 'ssh_$serverId';
-      TermSessionManager.updateStatus(sessionId, TermSessionStatus.disconnected);
+      TermSessionManager.updateStatus(
+        sessionId,
+        TermSessionStatus.disconnected,
+      );
     }
     //TryLimiter.clear();
   }
@@ -200,7 +226,8 @@ class ServersNotifier extends _$ServersNotifier {
     final serverNotifier = ref.read(serverProvider(id).notifier);
     serverNotifier.closeConnection();
 
-    final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)..add(id);
+    final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)
+      ..add(id);
     state = state.copyWith(manualDisconnectedIds: newManualDisconnected);
 
     // Remove SSH session when server is manually closed
@@ -216,7 +243,8 @@ class ServersNotifier extends _$ServersNotifier {
 
     final newOrder = List<String>.from(state.serverOrder)..add(spi.id);
     final newTags = _calculateTags(newServers);
-    final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)..remove(spi.id);
+    final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)
+      ..remove(spi.id);
 
     state = state.copyWith(
       servers: newServers,
@@ -237,7 +265,8 @@ class ServersNotifier extends _$ServersNotifier {
 
     final newOrder = List<String>.from(state.serverOrder)..remove(id);
     final newTags = _calculateTags(newServers);
-    final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)..remove(id);
+    final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)
+      ..remove(id);
 
     state = state.copyWith(
       servers: newServers,
@@ -329,7 +358,9 @@ class ServersNotifier extends _$ServersNotifier {
 
       final newServers = Map<String, Spi>.from(state.servers);
       final newOrder = List<String>.from(state.serverOrder);
-      final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds);
+      final newManualDisconnected = Set<String>.from(
+        state.manualDisconnectedIds,
+      );
 
       if (newSpi.id != old.id) {
         newServers[newSpi.id] = newSpi;
