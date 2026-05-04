@@ -9,9 +9,11 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// macOS Menu Bar
 class MacOSMenuBarManager {
-  static List<PlatformMenu> buildMenuBar(BuildContext context, Function(int) onTabChanged) {
+  static List<PlatformMenu> buildMenuBar(
+    BuildContext context,
+    void Function(int) onTabChanged,
+  ) {
     final l10n = context.l10n;
     final homeTabs = Stores.setting.homeTabs.fetch();
     return [
@@ -20,17 +22,23 @@ class MacOSMenuBarManager {
         menus: [
           PlatformMenuItem(
             label: libL10n.about,
-            onSelected: () => _showAboutDialog(context),
+            onSelected: () => _showAboutDialog(),
           ),
           PlatformMenuItem(
             label: libL10n.menuSettings,
-            shortcut: const SingleActivator(LogicalKeyboardKey.comma, meta: true),
-            onSelected: () => _openSettings(context),
+            shortcut: const SingleActivator(
+              LogicalKeyboardKey.comma,
+              meta: true,
+            ),
+            onSelected: () => SettingsPage.route.go(context),
           ),
           PlatformMenuItem(
             label: libL10n.menuQuit,
-            shortcut: const SingleActivator(LogicalKeyboardKey.keyQ, meta: true),
-            onSelected: () => SystemNavigator.pop(),
+            shortcut: const SingleActivator(
+              LogicalKeyboardKey.keyQ,
+              meta: true,
+            ),
+            onSelected: SystemNavigator.pop,
           ),
         ],
       ),
@@ -61,7 +69,7 @@ class MacOSMenuBarManager {
   static List<PlatformMenuItem> _buildNavigateMenuItems(
     AppLocalizations l10n,
     List<AppTab> homeTabs,
-    Function(int) onTabChanged,
+    void Function(int) onTabChanged,
   ) {
     final menuItems = <PlatformMenuItem>[];
     final tabLabels = {
@@ -75,13 +83,15 @@ class MacOSMenuBarManager {
       final label = tabLabels[tab];
       if (label == null) continue;
       final shortcutKey = _getShortcutKeyForIndex(i);
-      menuItems.add(PlatformMenuItem(
-        label: label,
-        shortcut: shortcutKey != null
-            ? SingleActivator(shortcutKey, meta: true)
-            : null,
-        onSelected: () => onTabChanged(i),
-      ));
+      menuItems.add(
+        PlatformMenuItem(
+          label: label,
+          shortcut: shortcutKey != null
+              ? SingleActivator(shortcutKey, meta: true)
+              : null,
+          onSelected: () => onTabChanged(i),
+        ),
+      );
     }
     return menuItems;
   }
@@ -101,13 +111,9 @@ class MacOSMenuBarManager {
     return index < keys.length ? keys[index] : null;
   }
 
-  static Future<void> _showAboutDialog(BuildContext context) async {
+  static Future<void> _showAboutDialog() async {
     const channel = MethodChannel('about');
     await channel.invokeMethod('showAboutPanel');
-  }
-
-  static void _openSettings(BuildContext context) {
-    SettingsPage.route.go(context);
   }
 
   static Future<void> _openURL(String url) async {
