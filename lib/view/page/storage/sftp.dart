@@ -298,7 +298,7 @@ extension _UI on _SftpPageState {
               _status.path.path = file.filename;
               _listDir();
             } else {
-              _onItemPress(file, true);
+              _edit(file, popMenu: false);
             }
           },
           onLongPress: () {
@@ -328,7 +328,7 @@ extension _UI on _SftpPageState {
               _status.path.path = file.filename;
               _listDir();
             } else {
-              _onItemPress(file, true);
+              _edit(file, popMenu: false);
             }
           },
           onLongPress: () {
@@ -568,8 +568,8 @@ extension _Actions on _SftpPageState {
     );
   }
 
-  Future<void> _edit(SftpName name) async {
-    context.pop();
+  Future<void> _edit(SftpName name, {bool popMenu = true}) async {
+    if (popMenu) context.pop();
 
     final remotePath = _getRemotePath(name);
     final useSudoForEdit = _useSudo;
