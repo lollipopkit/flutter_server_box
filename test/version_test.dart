@@ -13,6 +13,10 @@ void main() {
       expect(parseVersionParts('unknown'), isNull);
       expect(parseVersionParts(''), isNull);
     });
+
+    test('returns null for oversized numeric parts', () {
+      expect(parseVersionParts('999999999999999999999999999999.0'), isNull);
+    });
   });
 
   group('isVersionLessThan', () {

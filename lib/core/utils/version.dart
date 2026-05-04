@@ -1,8 +1,10 @@
 List<int>? parseVersionParts(String raw) {
   final match = RegExp(r'(\d+)(?:\.(\d+))?(?:\.(\d+))?').firstMatch(raw);
   if (match == null) return null;
+  final major = int.tryParse(match.group(1)!);
+  if (major == null) return null;
   return [
-    int.parse(match.group(1)!),
+    major,
     int.tryParse(match.group(2) ?? '') ?? 0,
     int.tryParse(match.group(3) ?? '') ?? 0,
   ];

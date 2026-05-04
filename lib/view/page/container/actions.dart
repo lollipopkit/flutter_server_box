@@ -71,7 +71,7 @@ extension on _ContainerPageState {
             final e = result?.message ?? err?.toString();
             context.showRoundDialog(
               title: libL10n.error,
-              child: Text(e.toString()),
+              child: Text(e?.isNotEmpty == true ? e! : libL10n.fail),
             );
           } else {
             context.showSnackBar(libL10n.success);
@@ -99,7 +99,7 @@ extension on _ContainerPageState {
               final e = result?.message ?? err?.toString();
               context.showRoundDialog(
                 title: libL10n.error,
-                child: Text(e.toString()),
+                child: Text(e?.isNotEmpty == true ? e! : libL10n.fail),
               );
             }
           },
