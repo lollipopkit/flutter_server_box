@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/menu/base.dart';
 import 'package:server_box/data/model/app/menu/container.dart';
@@ -34,10 +35,12 @@ class ContainerPage extends ConsumerStatefulWidget {
 class _ContainerPageState extends ConsumerState<ContainerPage> {
   final _textController = TextEditingController();
   late final ContainerNotifierProvider _provider;
+  Timer? _autoRefreshTimer;
 
   @override
   void dispose() {
     super.dispose();
+    _autoRefreshTimer?.cancel();
     _textController.dispose();
   }
 
@@ -71,7 +74,8 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
       title: TwoLineText(up: libL10n.container, down: widget.args.spi.name),
       actions: [
         IconButton(
-          onPressed: () => context.showLoadingDialog(fn: () => _containerNotifier.refresh()),
+          onPressed: () =>
+              context.showLoadingDialog(fn: () => _containerNotifier.refresh()),
           icon: const Icon(Icons.refresh),
         ),
       ],
@@ -79,7 +83,10 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   }
 
   Widget _buildFAB() {
-    return FloatingActionButton(onPressed: () async => await _showAddFAB(), child: const Icon(Icons.add));
+    return FloatingActionButton(
+      onPressed: () async => await _showAddFAB(),
+      child: const Icon(Icons.add),
+    );
   }
 
   Widget _buildMain() {
@@ -138,7 +145,10 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     return ExpandTile(
       leading: const Icon(MingCute.clapperboard_line),
       title: Text(l10n.imagesList),
-      subtitle: Text(l10n.dockerImagesFmt(containerState.images?.length ?? 'null'), style: UIs.textGrey),
+      subtitle: Text(
+        l10n.dockerImagesFmt(containerState.images?.length ?? 'null'),
+        style: UIs.textGrey,
+      ),
       initiallyExpanded: (containerState.images?.length ?? 0) <= 3,
       children: containerState.images?.map(_buildImageItem).toList() ?? [],
     ).cardx;
@@ -151,9 +161,14 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     final reg = repoSplited?.join('/');
     return ListTile(
       title: Text(title ?? l10n.unknown, style: UIs.text15),
-      subtitle: Text('${reg ?? ''} - ${e.tag} - ${e.sizeMB}', style: UIs.text13Grey),
+      subtitle: Text(
+        '${reg ?? ''} - ${e.tag} - ${e.sizeMB}',
+        style: UIs.text13Grey,
+      ),
       trailing: PopupMenu<ImageMenu>(
-        items: ImageMenu.items.map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
+        items: ImageMenu.items
+            .map((e) => PopMenu.build(e, e.icon, e.toStr))
+            .toList(),
         onSelected: (item) => _onTapImageMenu(item, e),
       ),
     );
@@ -179,7 +194,10 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
         padding: const EdgeInsets.all(17),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [Text(containerState.type.name.capitalize), Text(containerState.version ?? l10n.unknown)],
+          children: [
+            Text(containerState.type.name.capitalize),
+            Text(containerState.version ?? l10n.unknown),
+          ],
         ),
       ),
     );
@@ -240,16 +258,36 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
             UIs.height13,
             Row(
               children: [
-                _buildPsItemStatsItem('CPU', item.cpu, Icons.memory, width: width),
+                _buildPsItemStatsItem(
+                  'CPU',
+                  item.cpu,
+                  Icons.memory,
+                  width: width,
+                ),
                 UIs.width13,
-                _buildPsItemStatsItem('Net', item.net, Icons.network_cell, width: width),
+                _buildPsItemStatsItem(
+                  'Net',
+                  item.net,
+                  Icons.network_cell,
+                  width: width,
+                ),
               ],
             ),
             Row(
               children: [
-                _buildPsItemStatsItem('Mem', item.mem, Icons.settings_input_component, width: width),
+                _buildPsItemStatsItem(
+                  'Mem',
+                  item.mem,
+                  Icons.settings_input_component,
+                  width: width,
+                ),
                 UIs.width13,
-                _buildPsItemStatsItem('Disk', item.disk, Icons.storage, width: width),
+                _buildPsItemStatsItem(
+                  'Disk',
+                  item.disk,
+                  Icons.storage,
+                  width: width,
+                ),
               ],
             ),
           ],
@@ -258,7 +296,12 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     );
   }
 
-  Widget _buildPsItemStatsItem(String title, String? value, IconData icon, {required double width}) {
+  Widget _buildPsItemStatsItem(
+    String title,
+    String? value,
+    IconData icon, {
+    required double width,
+  }) {
     return SizedBox(
       width: width,
       child: Column(
@@ -284,7 +327,9 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
 
   Widget _buildMoreBtn(ContainerPs dItem) {
     return PopupMenu(
-      items: ContainerMenu.items(dItem.status.isRunning).map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
+      items: ContainerMenu.items(
+        dItem.status.isRunning,
+      ).map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
       onSelected: (item) => _onTapMoreBtn(item, dItem),
     );
   }
@@ -342,11 +387,16 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
       leading: const Icon(Icons.settings),
       title: Text(libL10n.setting),
       initiallyExpanded: containerState.error != null,
-      children: _SettingsMenuItems.values.map((item) => _buildSettingTile(item, containerState)).toList(),
+      children: _SettingsMenuItems.values
+          .map((item) => _buildSettingTile(item, containerState))
+          .toList(),
     ).cardx;
   }
 
-  Widget _buildSettingTile(_SettingsMenuItems item, ContainerState containerState) {
+  Widget _buildSettingTile(
+    _SettingsMenuItems item,
+    ContainerState containerState,
+  ) {
     final String title;
     switch (item) {
       case _SettingsMenuItems.editDockerHost:
@@ -368,7 +418,9 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
             ref
                 .read(_provider.notifier)
                 .setType(
-                  containerState.type == ContainerType.docker ? ContainerType.podman : ContainerType.docker,
+                  containerState.type == ContainerType.docker
+                      ? ContainerType.podman
+                      : ContainerType.docker,
                 );
             break;
         }
