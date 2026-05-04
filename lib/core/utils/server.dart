@@ -100,8 +100,7 @@ Future<SSHClient> genClient(
     );
     final jumpIds = spi.resolvedJumpIds;
     if (jumpIds.isNotEmpty && jumpSpis.isEmpty) {
-      final message =
-          'Jump servers not found for ${spi.name}: ${jumpIds.join(', ')}';
+      final message = l10n.jumpServersNotFoundFmt(spi.name, jumpIds.join(', '));
       Loggers.app.warning(message);
       throw SSHErr(type: SSHErrType.connect, message: message);
     }
@@ -138,10 +137,10 @@ Future<SSHClient> genClient(
 
           return await jumpClient.forwardLocal(spi.ip, spi.port);
         } catch (e, stack) {
+          jumpClient?.close();
           if (!_isJumpFailoverError(e)) {
             rethrow;
           }
-          jumpClient?.close();
           lastNetworkError = e;
           lastNetworkStack = stack;
           Loggers.app.warning(
@@ -156,7 +155,7 @@ Future<SSHClient> genClient(
         lastNetworkError ??
             SSHErr(
               type: SSHErrType.connect,
-              message: 'No jump server available.',
+              message: l10n.noJumpServerAvailable,
             ),
         lastNetworkStack ?? StackTrace.current,
       );

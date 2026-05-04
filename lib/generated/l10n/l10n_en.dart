@@ -446,6 +446,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get jumpServer => 'Jump server';
 
   @override
+  String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
+    return 'Jump servers not found for $serverName: $jumpIds';
+  }
+
+  @override
+  String get noJumpServerAvailable => 'No jump server available.';
+
+  @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
       'Jump server and ProxyCommand cannot be used together.';
 
