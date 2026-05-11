@@ -186,8 +186,14 @@ abstract class AppLocalizations {
   /// No description provided for @askAiBaseUrl.
   ///
   /// In en, this message translates to:
-  /// **'Base URL'**
+  /// **'API Endpoint'**
   String get askAiBaseUrl;
+
+  /// No description provided for @askAiEndpointTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the full Chat Completions endpoint, or a service base URL. If the address ends with /v1, the app will append /chat/completions.'**
+  String get askAiEndpointTip;
 
   /// No description provided for @askAiCommandInserted.
   ///

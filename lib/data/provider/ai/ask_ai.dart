@@ -44,7 +44,7 @@ class AskAiRepository {
       throw AskAiConfigException(invalidBaseUrl: baseUrl);
     }
 
-    final uri = _composeUri(baseUrl, '/v1/chat/completions');
+    final uri = composeChatCompletionsUri(baseUrl);
     final authHeader = apiKey.startsWith('Bearer ') ? apiKey : 'Bearer $apiKey';
     final headers = <String, String>{
       Headers.acceptHeader: 'text/event-stream',
@@ -72,7 +72,10 @@ class AskAiRepository {
         ),
       );
     } on DioException catch (e) {
-      throw AskAiNetworkException(message: e.message ?? 'Request failed', cause: e);
+      throw AskAiNetworkException(
+        message: e.message ?? 'Request failed',
+        cause: e,
+      );
     }
 
     final body = response.data;
@@ -153,7 +156,10 @@ class AskAiRepository {
                   for (final toolCall in toolCalls) {
                     if (toolCall is! Map<String, dynamic>) continue;
                     final index = toolCall['index'] as int? ?? 0;
-                    final builder = toolBuilders.putIfAbsent(index, _ToolCallBuilder.new);
+                    final builder = toolBuilders.putIfAbsent(
+                      index,
+                      _ToolCallBuilder.new,
+                    );
                     final function = toolCall['function'];
                     if (function is Map<String, dynamic>) {
                       builder.name ??= function['name'] as String?;
@@ -213,23 +219,15 @@ class AskAiRepository {
       ..writeln('仅在非常确定命令安全时才给出建议。');
 
     if (localeHint != null && localeHint.isNotEmpty) {
-      promptBuffer
-        .writeln('请优先使用用户的语言输出：$localeHint。');
+      promptBuffer.writeln('请优先使用用户的语言输出：$localeHint。');
     }
 
     final messages = <Map<String, String>>[
-      {
-        'role': 'system',
-        'content': promptBuffer.toString(),
-      },
-      ...conversation.map((message) => {
-            'role': message.apiRole,
-            'content': message.content,
-          }),
-      {
-        'role': 'user',
-        'content': '以下是终端选中的内容：\n$selection',
-      },
+      {'role': 'system', 'content': promptBuffer.toString()},
+      ...conversation.map(
+        (message) => {'role': message.apiRole, 'content': message.content},
+      ),
+      {'role': 'user', 'content': '以下是终端选中的内容：\n$selection'},
     ];
 
     return {
@@ -262,10 +260,23 @@ class AskAiRepository {
     };
   }
 
-  Uri _composeUri(String base, String path) {
-    final sanitizedBase = base.replaceAll(RegExp(r'/+$'), '');
-    final sanitizedPath = path.replaceFirst(RegExp(r'^/+'), '');
-    return Uri.parse('$sanitizedBase/$sanitizedPath');
+  @visibleForTesting
+  static Uri composeChatCompletionsUri(String endpoint) {
+    final uri = Uri.parse(endpoint.replaceAll(RegExp(r'/+$'), ''));
+    final segments = uri.pathSegments;
+    final hasChatCompletionsPath =
+        segments.length >= 2 &&
+        segments[segments.length - 2] == 'chat' &&
+        segments.last == 'completions';
+
+    if (hasChatCompletionsPath) {
+      return uri;
+    }
+
+    final appendSegments = segments.isNotEmpty && segments.last == 'v1'
+        ? ['chat', 'completions']
+        : ['v1', 'chat', 'completions'];
+    return uri.replace(pathSegments: [...segments, ...appendSegments]);
   }
 }
 
@@ -288,7 +299,10 @@ class _ToolCallBuilder {
         }
         return null;
       }
-      final description = decoded['description'] as String? ?? decoded['explanation'] as String? ?? '';
+      final description =
+          decoded['description'] as String? ??
+          decoded['explanation'] as String? ??
+          '';
       _emitted = true;
       return AskAiCommand(
         command: command.trim(),
@@ -308,7 +322,10 @@ class _ToolCallBuilder {
 enum AskAiConfigField { baseUrl, apiKey, model }
 
 class AskAiConfigException implements Exception {
-  const AskAiConfigException({this.missingFields = const [], this.invalidBaseUrl});
+  const AskAiConfigException({
+    this.missingFields = const [],
+    this.invalidBaseUrl,
+  });
 
   final List<AskAiConfigField> missingFields;
   final String? invalidBaseUrl;

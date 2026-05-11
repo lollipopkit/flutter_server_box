@@ -43,6 +43,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get askAiBaseUrl => 'URL de base';
 
   @override
+  String get askAiEndpointTip =>
+      'Enter the full Chat Completions endpoint, or a service base URL. If the address ends with /v1, the app will append /chat/completions.';
+
+  @override
   String get askAiCommandInserted => 'Commande insérée dans le terminal';
 
   @override

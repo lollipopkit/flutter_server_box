@@ -41,7 +41,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get askAiAwaitingResponse => 'Waiting for AI response...';
 
   @override
-  String get askAiBaseUrl => 'Base URL';
+  String get askAiBaseUrl => 'API Endpoint';
+
+  @override
+  String get askAiEndpointTip =>
+      'Enter the full Chat Completions endpoint, or a service base URL. If the address ends with /v1, the app will append /chat/completions.';
 
   @override
   String get askAiCommandInserted => 'Command inserted into terminal';

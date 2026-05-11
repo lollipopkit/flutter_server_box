@@ -43,6 +43,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiBaseUrl => '기본 URL';
 
   @override
+  String get askAiEndpointTip =>
+      'Enter the full Chat Completions endpoint, or a service base URL. If the address ends with /v1, the app will append /chat/completions.';
+
+  @override
   String get askAiCommandInserted => '명령어가 터미널에 삽입되었습니다';
 
   @override

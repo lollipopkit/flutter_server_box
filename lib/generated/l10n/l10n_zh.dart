@@ -39,7 +39,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiAwaitingResponse => '等待 AI 响应...';
 
   @override
-  String get askAiBaseUrl => '基础 URL';
+  String get askAiBaseUrl => 'API 接口地址';
+
+  @override
+  String get askAiEndpointTip =>
+      '填写完整的 Chat Completions 地址，或填写服务根地址。若地址以 /v1 结尾，应用会自动补全 /chat/completions。';
 
   @override
   String get askAiCommandInserted => '命令已插入终端';
@@ -1047,7 +1051,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiAwaitingResponse => '等待 AI 回應...';
 
   @override
-  String get askAiBaseUrl => '基礎 URL';
+  String get askAiBaseUrl => 'API 介面位址';
+
+  @override
+  String get askAiEndpointTip =>
+      '填寫完整的 Chat Completions 位址，或填寫服務根位址。若位址以 /v1 結尾，應用程式會自動補上 /chat/completions。';
 
   @override
   String get askAiCommandInserted => '指令已插入終端機';

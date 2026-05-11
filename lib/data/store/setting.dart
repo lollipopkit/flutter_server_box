@@ -165,7 +165,7 @@ class SettingStore extends HiveStore {
   /// Terminal AI helper configuration
   late final askAiBaseUrl = propertyDefault('askAiBaseUrl', 'https://api.openai.com');
   late final askAiApiKey = propertyDefault('askAiApiKey', '');
-  late final askAiModel = propertyDefault('askAiModel', 'gpt-4o-mini');
+  late final askAiModel = propertyDefault('askAiModel', 'gpt-5.4-mini');
 
   late final serverFuncBtns = listProperty('serverBtns', defaultValue: ServerFuncBtn.defaultIdxs);
 
