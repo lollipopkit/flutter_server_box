@@ -10,7 +10,7 @@ final class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final breakpoints = ResponsiveBreakpoints.of(context);
-    final isMobile = breakpoints.isMobile;
+    final isMobile = breakpoints.isMobile || breakpoints.isTablet;
     final padding = EdgeInsets.only(left: isMobile ? 10 : 16, right: isMobile ? 0 : 16);
 
     final Widget leading;
