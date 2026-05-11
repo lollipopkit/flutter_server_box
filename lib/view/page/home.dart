@@ -190,36 +190,36 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   Widget _buildRailBar({bool extended = false}) {
-    return Stack(
-      children: [
-        ListenableBuilder(
-          listenable: _selectIndex,
-          builder: (context, _) {
-            if (_isServerFullscreenMode) return UIs.placeholder;
-            return NavigationRail(
-              extended: extended,
-              minExtendedWidth: 150,
-              leading: extended ? const SizedBox(height: 20) : null,
-              trailing: extended ? const SizedBox(height: 20) : null,
-              labelType: extended
-                  ? NavigationRailLabelType.none
-                  : NavigationRailLabelType.all,
-              selectedIndex: _selectIndex.value,
-              destinations: _tabs.map((tab) => tab.navRailDestination).toList(),
-              onDestinationSelected: _onDestinationSelected,
-            );
-          },
-        ),
-        // Settings Btn
-        ListenableBuilder(
-          listenable: _selectIndex,
-          builder: (context, _) {
-            if (_isServerFullscreenMode) return UIs.placeholder;
-            return Positioned(
-              bottom: 10,
-              left: 0,
-              right: 0,
-              child: SafeArea(
+    return SafeArea(
+      child: Stack(
+        children: [
+          ListenableBuilder(
+            listenable: _selectIndex,
+            builder: (context, _) {
+              if (_isServerFullscreenMode) return UIs.placeholder;
+              return NavigationRail(
+                extended: extended,
+                minExtendedWidth: 150,
+                leading: extended ? const SizedBox(height: 20) : null,
+                trailing: extended ? const SizedBox(height: 20) : null,
+                labelType: extended
+                    ? NavigationRailLabelType.none
+                    : NavigationRailLabelType.all,
+                selectedIndex: _selectIndex.value,
+                destinations: _tabs.map((tab) => tab.navRailDestination).toList(),
+                onDestinationSelected: _onDestinationSelected,
+              );
+            },
+          ),
+          // Settings Btn
+          ListenableBuilder(
+            listenable: _selectIndex,
+            builder: (context, _) {
+              if (_isServerFullscreenMode) return UIs.placeholder;
+              return Positioned(
+                bottom: 10,
+                left: 0,
+                right: 0,
                 child: IconButton(
                   icon: const Icon(Icons.settings),
                   tooltip: libL10n.setting,
@@ -227,11 +227,11 @@ class _HomePageState extends ConsumerState<HomePage>
                     SettingsPage.route.go(context);
                   },
                 ),
-              ),
-            );
-          },
-        ),
-      ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
