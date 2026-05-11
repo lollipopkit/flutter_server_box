@@ -219,12 +219,14 @@ class _HomePageState extends ConsumerState<HomePage>
               bottom: 10,
               left: 0,
               right: 0,
-              child: IconButton(
-                icon: const Icon(Icons.settings),
-                tooltip: libL10n.setting,
-                onPressed: () {
-                  SettingsPage.route.go(context);
-                },
+              child: SafeArea(
+                child: IconButton(
+                  icon: const Icon(Icons.settings),
+                  tooltip: libL10n.setting,
+                  onPressed: () {
+                    SettingsPage.route.go(context);
+                  },
+                ),
               ),
             );
           },
