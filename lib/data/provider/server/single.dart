@@ -527,7 +527,9 @@ class ServerNotifier extends _$ServerNotifier {
     final spi = state.spi;
 
     if (client == null) {
-      Loggers.app.warning('No status result from ${spi.name}');
+      Loggers.app.warning(
+        'Client for ${spi.name} is null, skipping status fetch',
+      );
       return '';
     }
 
