@@ -43,6 +43,7 @@ abstract class ServerState with _$ServerState {
 @Riverpod(keepAlive: true)
 class ServerNotifier extends _$ServerNotifier {
   PersistentShell? _persistentShell;
+  bool _usePersistentShellForStatus = true;
 
   @override
   ServerState build(String serverId) {
@@ -102,6 +103,7 @@ class ServerNotifier extends _$ServerNotifier {
   void updateClient(SSHClient? client) {
     if (!identical(state.client, client)) {
       unawaited(_disposePersistentShell());
+      _usePersistentShellForStatus = true;
     }
     state = state.copyWith(client: client);
   }
@@ -392,27 +394,7 @@ class ServerNotifier extends _$ServerNotifier {
         customDir: spi.custom?.scriptDir,
       );
       // Loggers.app.info('Running status command for ${spi.name} (${state.status.system.name}): $statusCmd');
-      if (state.status.system == SystemType.windows) {
-        final execResult = await state.client?.run(statusCmd);
-        if (execResult != null) {
-          raw = SSHDecoder.decode(
-            execResult,
-            isWindows: true,
-            context: 'GetStatus<${spi.name}>',
-          );
-        } else {
-          raw = '';
-          Loggers.app.warning('No status result from ${spi.name}');
-        }
-      } else {
-        final shell = await _getPersistentShell();
-        final statusTimeoutSeconds = Stores.setting.timeout.fetch();
-        final statusTimeout = Duration(
-          seconds: statusTimeoutSeconds <= 0 ? 5 : statusTimeoutSeconds,
-        );
-        final result = await shell.run(statusCmd, timeout: statusTimeout);
-        raw = result.output;
-      }
+      raw = await _runStatusCommand(statusCmd);
 
       if (raw.isEmpty) {
         TryLimiter.inc(sid);
@@ -538,6 +520,57 @@ class ServerNotifier extends _$ServerNotifier {
     updateConnection(ServerConn.finished);
     // Reset retry count only after successful preparation
     TryLimiter.reset(sid);
+  }
+
+  Future<String> _runStatusCommand(String statusCmd) async {
+    final client = state.client;
+    final spi = state.spi;
+
+    if (client == null) {
+      Loggers.app.warning('No status result from ${spi.name}');
+      return '';
+    }
+
+    if (state.status.system == SystemType.windows) {
+      return _runStatusCommandWithExec(client, statusCmd, isWindows: true);
+    }
+
+    if (!_usePersistentShellForStatus) {
+      return _runStatusCommandWithExec(client, statusCmd);
+    }
+
+    try {
+      final shell = await _getPersistentShell();
+      final statusTimeoutSeconds = Stores.setting.timeout.fetch();
+      final statusTimeout = Duration(
+        seconds: statusTimeoutSeconds <= 0 ? 5 : statusTimeoutSeconds,
+      );
+      final result = await shell.run(statusCmd, timeout: statusTimeout);
+      return result.output;
+    } on TimeoutException catch (e, s) {
+      _usePersistentShellForStatus = false;
+      await _disposePersistentShell();
+      Loggers.app.warning(
+        'Persistent shell status command timed out for ${spi.name}; fallback to exec for this connection',
+        e,
+        s,
+      );
+      return _runStatusCommandWithExec(client, statusCmd);
+    }
+  }
+
+  Future<String> _runStatusCommandWithExec(
+    SSHClient client,
+    String statusCmd, {
+    bool isWindows = false,
+  }) async {
+    final spi = state.spi;
+    final execResult = await client.run(statusCmd);
+    return SSHDecoder.decode(
+      execResult,
+      isWindows: isWindows,
+      context: 'GetStatus<${spi.name}>',
+    );
   }
 
   Future<PersistentShell> _getPersistentShell() async {
