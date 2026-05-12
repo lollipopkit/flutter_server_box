@@ -217,7 +217,25 @@ void _gotoSSH(Spi spi, BuildContext context) async {
           ? keyContent
           : '$keyContent\n';
       await file.writeAsString(keyContentWithNewline);
-      await _restrictPrivateKeyFile(path);
+      try {
+        await _restrictPrivateKeyFile(path);
+      } on ProcessException catch (e, s) {
+        Loggers.app.warning(
+          'Failed to restrict temporary SSH key file permissions',
+          e,
+          s,
+        );
+        if (context.mounted) {
+          context.showErrDialog(e, s, libL10n.error);
+        }
+        return;
+      } on Exception catch (e, s) {
+        Loggers.app.warning('Failed to prepare temporary SSH key file', e, s);
+        if (context.mounted) {
+          context.showErrDialog(e, s, libL10n.error);
+        }
+        return;
+      }
       extraArgs.addAll(['-i', path]);
     }
 
