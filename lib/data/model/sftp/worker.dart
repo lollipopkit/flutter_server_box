@@ -168,9 +168,14 @@ Future<void> _download(
       final dlWatch = Stopwatch()..start();
       Loggers.app.info('SFTP download start size=$size');
 
+      final timeout = Duration(
+        seconds: req.timeoutSeconds <= 0 ? 60 : req.timeoutSeconds,
+      );
+
       while (offset < size) {
         final remaining = size - offset;
         final length = remaining < segmentSize ? remaining : segmentSize;
+        var segmentBytes = 0;
 
         try {
           await for (final chunk
@@ -181,8 +186,9 @@ Future<void> _download(
                     chunkSize: _sftpDownloadChunkSize,
                     maxPendingRequests: _sftpDownloadMaxPendingRequests,
                   )
-                  .timeout(Duration(seconds: 30))) {
+                  .timeout(timeout)) {
             localFile.add(chunk);
+            segmentBytes += chunk.length;
             totalBytes += chunk.length;
             chunkCount++;
 
@@ -198,7 +204,13 @@ Future<void> _download(
         } on TimeoutException {
           throw SftpError('Download timed out at offset=$offset');
         }
-        offset += length;
+
+        if (segmentBytes == 0) {
+          throw SftpError(
+            'Download returned 0 bytes at offset=$offset',
+          );
+        }
+        offset += segmentBytes;
       }
 
       Loggers.app.info(

@@ -567,7 +567,9 @@ class ServerNotifier extends _$ServerNotifier {
     bool isWindows = false,
   }) async {
     final spi = state.spi;
-    final execResult = await client.run(statusCmd);
+    final execResult = await client
+        .run(statusCmd)
+        .timeout(const Duration(seconds: 30));
     return SSHDecoder.decode(
       execResult,
       isWindows: isWindows,
