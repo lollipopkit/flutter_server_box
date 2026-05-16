@@ -6,7 +6,13 @@ class OmitStartText extends StatelessWidget {
   final TextStyle? style;
   final TextOverflow? overflow;
 
-  const OmitStartText(this.text, {super.key, this.maxLines, this.style, this.overflow});
+  const OmitStartText(
+    this.text, {
+    super.key,
+    this.maxLines,
+    this.style,
+    this.overflow,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +28,11 @@ class OmitStartText extends StatelessWidget {
           );
 
           // Use a textpainter to determine if it will exceed max lines
-          final tp = TextPainter(maxLines: maxLines ?? 1, textDirection: TextDirection.ltr, text: span);
+          final tp = TextPainter(
+            maxLines: maxLines ?? 1,
+            textDirection: TextDirection.ltr,
+            text: span,
+          );
 
           // trigger it to layout
           tp.layout(maxWidth: size.maxWidth);

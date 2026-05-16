@@ -37,9 +37,13 @@ class SystemdNotifier extends _$SystemdNotifier {
       case SystemdScopeFilter.all:
         return state.units;
       case SystemdScopeFilter.system:
-        return state.units.where((unit) => unit.scope == SystemdUnitScope.system).toList();
+        return state.units
+            .where((unit) => unit.scope == SystemdUnitScope.system)
+            .toList();
       case SystemdScopeFilter.user:
-        return state.units.where((unit) => unit.scope == SystemdUnitScope.user).toList();
+        return state.units
+            .where((unit) => unit.scope == SystemdUnitScope.user)
+            .toList();
     }
   }
 
@@ -67,16 +71,28 @@ class SystemdNotifier extends _$SystemdNotifier {
         }
       }
 
-      final parsedUserUnits = await _parseUnitObj(userUnits, SystemdUnitScope.user);
-      final parsedSystemUnits = await _parseUnitObj(systemUnits, SystemdUnitScope.system);
-      state = state.copyWith(units: [...parsedUserUnits, ...parsedSystemUnits], isBusy: false);
+      final parsedUserUnits = await _parseUnitObj(
+        userUnits,
+        SystemdUnitScope.user,
+      );
+      final parsedSystemUnits = await _parseUnitObj(
+        systemUnits,
+        SystemdUnitScope.system,
+      );
+      state = state.copyWith(
+        units: [...parsedUserUnits, ...parsedSystemUnits],
+        isBusy: false,
+      );
     } catch (e, s) {
       dprint('Parse systemd', e, s);
       state = state.copyWith(isBusy: false);
     }
   }
 
-  Future<List<SystemdUnit>> _parseUnitObj(List<String> unitNames, SystemdUnitScope scope) async {
+  Future<List<SystemdUnit>> _parseUnitObj(
+    List<String> unitNames,
+    SystemdUnitScope scope,
+  ) async {
     final unitNames_ = unitNames.map((e) {
       final fullName = e.trim().split('/').last;
       final lastDot = fullName.lastIndexOf('.');
@@ -142,7 +158,13 @@ done
       }
 
       parsedUnits.add(
-        SystemdUnit(name: name, type: unitType, scope: scope, state: unitState, description: description),
+        SystemdUnit(
+          name: name,
+          type: unitType,
+          scope: scope,
+          state: unitState,
+          description: description,
+        ),
       );
     }
 

@@ -80,7 +80,10 @@ class PrivateKeyStore extends HiveStore {
     return ps;
   }
 
-  PrivateKeyInfo? _decodePrivateKeyInfo(dynamic val, {List<PrivateKeyInfo>? toPersist}) {
+  PrivateKeyInfo? _decodePrivateKeyInfo(
+    dynamic val, {
+    List<PrivateKeyInfo>? toPersist,
+  }) {
     if (val is PrivateKeyInfo) return val;
     if (val is Map<dynamic, dynamic>) {
       final map = val.toStrDynMap;

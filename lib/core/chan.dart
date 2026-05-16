@@ -47,7 +47,11 @@ abstract final class MethodChans {
       final res = await _channel.invokeMethod('isServiceRunning');
       return res == true;
     } catch (e, s) {
-      Loggers.app.warning('Failed to check if Android service is running', e, s);
+      Loggers.app.warning(
+        'Failed to check if Android service is running',
+        e,
+        s,
+      );
       return false;
     }
   }
@@ -84,10 +88,13 @@ abstract final class MethodChans {
   }
 
   /// Register a handler for native -> Flutter callbacks.
-  /// Currently handles: 
+  /// Currently handles:
   /// - `disconnectSession` with argument map {id: string}
   /// - `stopAllConnections` with no arguments
-  static void registerHandler(Future<void> Function(String id) onDisconnect, [VoidCallback? onStopAll]) {
+  static void registerHandler(
+    Future<void> Function(String id) onDisconnect, [
+    VoidCallback? onStopAll,
+  ]) {
     _channel.setMethodCallHandler((call) async {
       switch (call.method) {
         case 'disconnectSession':

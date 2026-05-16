@@ -28,7 +28,10 @@ class PrivateKeyEditPage extends ConsumerStatefulWidget {
   @override
   ConsumerState<PrivateKeyEditPage> createState() => _PrivateKeyEditPageState();
 
-  static const route = AppRoute(page: PrivateKeyEditPage.new, path: '/private_key/edit');
+  static const route = AppRoute(
+    page: PrivateKeyEditPage.new,
+    path: '/private_key/edit',
+  );
 }
 
 class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
@@ -85,7 +88,11 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: _buildAppBar(), body: _buildBody(), floatingActionButton: _buildFAB());
+    return Scaffold(
+      appBar: _buildAppBar(),
+      body: _buildBody(),
+      floatingActionButton: _buildFAB(),
+    );
   }
 
   CustomAppBar _buildAppBar() {
@@ -97,7 +104,11 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
               onPressed: () {
                 context.showRoundDialog(
                   title: libL10n.attention,
-                  child: Text(libL10n.askContinue('${libL10n.delete} ${l10n.privateKey}(${pki.id})')),
+                  child: Text(
+                    libL10n.askContinue(
+                      '${libL10n.delete} ${l10n.privateKey}(${pki.id})',
+                    ),
+                  ),
                   actions: Btn.ok(
                     onTap: () {
                       _notifier.delete(pki);
@@ -177,7 +188,11 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
   }
 
   Widget _buildFAB() {
-    return FloatingActionButton(tooltip: l10n.save, onPressed: _onTapSave, child: const Icon(Icons.save));
+    return FloatingActionButton(
+      tooltip: l10n.save,
+      onPressed: _onTapSave,
+      child: const Icon(Icons.save),
+    );
   }
 
   Widget _buildBody() {
@@ -217,7 +232,11 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
             final size = (await file.stat()).size;
             if (size > Miscs.privateKeyMaxSize) {
               context.showSnackBar(
-                l10n.fileTooLarge(path, size.bytes2Str, Miscs.privateKeyMaxSize.bytes2Str),
+                l10n.fileTooLarge(
+                  path,
+                  size.bytes2Str,
+                  Miscs.privateKeyMaxSize.bytes2Str,
+                ),
               );
               return;
             }
@@ -239,14 +258,19 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
           onSubmitted: (_) => _onTapSave(),
         ),
         SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-        ValBuilder(listenable: _loading, builder: (val) => val ?? UIs.placeholder),
+        ValBuilder(
+          listenable: _loading,
+          builder: (val) => val ?? UIs.placeholder,
+        ),
       ],
     );
   }
 
   void _onTapSave() async {
     final name = _nameController.text;
-    final key = _normalizePrivateKey(_standardizeLineSeparators(_keyController.text.trim()));
+    final key = _normalizePrivateKey(
+      _standardizeLineSeparators(_keyController.text.trim()),
+    );
     final pwd = _pwdController.text;
     if (name.isEmpty || key.isEmpty) {
       context.showSnackBar(libL10n.empty);

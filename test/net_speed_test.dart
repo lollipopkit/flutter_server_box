@@ -4,10 +4,25 @@ import 'package:server_box/data/model/server/net_speed.dart';
 void main() {
   group('NetSpeedPart Tests', () {
     test('NetSpeedPart.same method', () {
-      final part1 = NetSpeedPart('eth0', BigInt.from(1000), BigInt.from(500), 1000);
-      final part2 = NetSpeedPart('eth0', BigInt.from(2000), BigInt.from(1000), 2000);
-      final part3 = NetSpeedPart('eth1', BigInt.from(1000), BigInt.from(500), 1000);
-      
+      final part1 = NetSpeedPart(
+        'eth0',
+        BigInt.from(1000),
+        BigInt.from(500),
+        1000,
+      );
+      final part2 = NetSpeedPart(
+        'eth0',
+        BigInt.from(2000),
+        BigInt.from(1000),
+        2000,
+      );
+      final part3 = NetSpeedPart(
+        'eth1',
+        BigInt.from(1000),
+        BigInt.from(500),
+        1000,
+      );
+
       expect(part1.same(part2), isTrue);
       expect(part1.same(part3), isFalse);
     });
@@ -28,7 +43,7 @@ Inter-|   Receive                                                |  Transmit
       expect(parts[0].device, equals('lo'));
       expect(parts[0].bytesIn, equals(BigInt.from(45929941)));
       expect(parts[0].bytesOut, equals(BigInt.from(45929941)));
-      
+
       expect(parts[1].device, equals('eth0'));
       expect(parts[1].bytesIn, equals(BigInt.from(48481023)));
       expect(parts[1].bytesOut, equals(BigInt.from(36002262)));
@@ -47,11 +62,11 @@ en1        1500  <Link#5>    88:d8:xx:xx:xx:1d        0     0          0        
       expect(parts[0].device, equals('lo0'));
       expect(parts[0].bytesIn, equals(BigInt.from(2524959720)));
       expect(parts[0].bytesOut, equals(BigInt.from(2524959720)));
-      
+
       expect(parts[1].device, equals('en0'));
       expect(parts[1].bytesIn, equals(BigInt.from(693997876)));
       expect(parts[1].bytesOut, equals(BigInt.from(79008877)));
-      
+
       expect(parts[2].device, equals('en1'));
       expect(parts[2].bytesIn, equals(BigInt.from(0)));
       expect(parts[2].bytesOut, equals(BigInt.from(0)));
@@ -80,10 +95,10 @@ en0        1500  <Link#4>    22:20:xx:xx:xx:e6   739447     0  693997876   53560
         NetSpeedPart('eth0', BigInt.from(2000000), BigInt.from(1000000), 2000),
         NetSpeedPart('lo', BigInt.from(3000000), BigInt.from(2000000), 2000),
       ];
-      
+
       final netSpeed = NetSpeed(oldData, newData);
       netSpeed.onUpdate();
-      
+
       expect(netSpeed.devices, contains('eth0'));
       expect(netSpeed.devices, contains('lo'));
       expect(netSpeed.realIfaces, contains('eth0'));
@@ -97,15 +112,15 @@ en0        1500  <Link#4>    22:20:xx:xx:xx:e6   739447     0  693997876   53560
       final newData = [
         NetSpeedPart('eth0', BigInt.from(2000000), BigInt.from(1000000), 2000),
       ];
-      
+
       final netSpeed = NetSpeed(oldData, newData);
       netSpeed.onUpdate();
-      
+
       final speedIn = netSpeed.speedIn(device: 'eth0');
       final speedOut = netSpeed.speedOut(device: 'eth0');
       final sizeIn = netSpeed.sizeIn(device: 'eth0');
       final sizeOut = netSpeed.sizeOut(device: 'eth0');
-      
+
       expect(speedIn, equals('1000 B/s'));
       expect(speedOut, equals('500 B/s'));
       expect(sizeIn, equals('1.9 MB'));
@@ -115,7 +130,7 @@ en0        1500  <Link#4>    22:20:xx:xx:xx:e6   739447     0  693997876   53560
     test('NetSpeed handles empty data gracefully', () {
       final netSpeed = NetSpeed([], []);
       netSpeed.onUpdate();
-      
+
       expect(netSpeed.speedIn(), equals('N/A'));
       expect(netSpeed.speedOut(), equals('N/A'));
       expect(netSpeed.sizeIn(), equals('N/A'));
@@ -130,10 +145,10 @@ en0        1500  <Link#4>    22:20:xx:xx:xx:e6   739447     0  693997876   53560
         NetSpeedPart('lo', BigInt.from(1000), BigInt.from(500), 1000),
         NetSpeedPart('docker0', BigInt.from(1000), BigInt.from(500), 1000),
       ];
-      
+
       final netSpeed = NetSpeed([], parts);
       netSpeed.onUpdate();
-      
+
       expect(netSpeed.realIfaces, contains('eth0'));
       expect(netSpeed.realIfaces, contains('wlan0'));
       expect(netSpeed.realIfaces, contains('en0'));
@@ -146,10 +161,10 @@ en0        1500  <Link#4>    22:20:xx:xx:xx:e6   739447     0  693997876   53560
         NetSpeedPart('eth0', BigInt.from(1000), BigInt.from(500), 1000),
         NetSpeedPart('eth1', BigInt.from(1000), BigInt.from(500), 1000),
       ];
-      
+
       final netSpeed = NetSpeed([], parts);
       netSpeed.onUpdate();
-      
+
       expect(netSpeed.deviceIdx('eth0'), equals(0));
       expect(netSpeed.deviceIdx('eth1'), equals(1));
       expect(netSpeed.deviceIdx('nonexistent'), equals(0));
@@ -174,10 +189,10 @@ en0        1500  <Link#4>    22:20:xx:xx:xx:e6   739447     0  693997876   53560
       final newData = [
         NetSpeedPart('eth0', BigInt.from(2000000), BigInt.from(1000000), 2000),
       ];
-      
+
       final netSpeed = NetSpeed(oldData, newData);
       expect(netSpeed.cachedVals.speedIn, equals('0kb/s'));
-      
+
       netSpeed.onUpdate();
       expect(netSpeed.cachedVals.speedIn, isNot(equals('0kb/s')));
       expect(netSpeed.cachedVals.speedOut, isNot(equals('0kb/s')));

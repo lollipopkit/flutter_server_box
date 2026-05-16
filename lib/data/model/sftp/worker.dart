@@ -14,7 +14,11 @@ import 'package:server_box/data/res/store.dart';
 part 'req.dart';
 
 const _sftpTransferChunkSize = 32 * 1024;
-const _sftpDownloadMaxPendingRequests = 64;
+
+const _sftpDownloadChunkSize = 16 * 1024;
+
+const _sftpDownloadMaxPendingRequests = 1;
+
 const _sftpUploadMaxBytesOnTheWire = _sftpTransferChunkSize * 64;
 
 Duration _sftpPrepareTimeout(SftpReq req) {
@@ -150,26 +154,56 @@ Future<void> _download(
     mainSendPort.send(SftpWorkerStatus.loading);
     Loggers.app.info(
       'SFTP download started: ${req.remotePath}, '
-      'chunk=$_sftpTransferChunkSize, pending=$_sftpDownloadMaxPendingRequests',
+      'chunk=$_sftpDownloadChunkSize, pending=$_sftpDownloadMaxPendingRequests',
     );
 
     var lastProgress = -1.0;
     final localFile = File(req.localPath).openWrite(mode: FileMode.write);
 
     try {
-      await openedRemoteFile.downloadTo(
-        localFile,
-        length: size,
-        onProgress: (bytesRead) {
-          if (size == 0) return;
-          final progress = (bytesRead / size * 100).roundToDouble();
-          if (progress != lastProgress) {
-            lastProgress = progress;
-            mainSendPort.send(progress);
+      const segmentSize = 5 * 1024 * 1024; // 5MB per segment
+      var offset = 0;
+      var totalBytes = 0;
+      var chunkCount = 0;
+      final dlWatch = Stopwatch()..start();
+      Loggers.app.info('SFTP download start size=$size');
+
+      while (offset < size) {
+        final remaining = size - offset;
+        final length = remaining < segmentSize ? remaining : segmentSize;
+
+        try {
+          await for (final chunk
+              in openedRemoteFile
+                  .read(
+                    length: length,
+                    offset: offset,
+                    chunkSize: _sftpDownloadChunkSize,
+                    maxPendingRequests: _sftpDownloadMaxPendingRequests,
+                  )
+                  .timeout(Duration(seconds: 30))) {
+            localFile.add(chunk);
+            totalBytes += chunk.length;
+            chunkCount++;
+
+            if (size > 0) {
+              final progress =
+                  (totalBytes / size * 100 * 10).roundToDouble() / 10;
+              if (progress != lastProgress) {
+                lastProgress = progress;
+                mainSendPort.send(progress);
+              }
+            }
           }
-        },
-        chunkSize: _sftpTransferChunkSize,
-        maxPendingRequests: _sftpDownloadMaxPendingRequests,
+        } on TimeoutException {
+          throw SftpError('Download timed out at offset=$offset');
+        }
+        offset += length;
+      }
+
+      Loggers.app.info(
+        'SFTP download done total=$totalBytes chunks=$chunkCount '
+        'time=${dlWatch.elapsedMilliseconds}ms',
       );
     } finally {
       await localFile.close();

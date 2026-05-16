@@ -21,7 +21,9 @@ class PortForwardStore extends HiveStore {
             final map = val.toStrDynMap;
             if (map == null) return null;
             try {
-              final config = PortForwardConfig.fromJson(map as Map<String, dynamic>);
+              final config = PortForwardConfig.fromJson(
+                map as Map<String, dynamic>,
+              );
               put(config);
               return config;
             } catch (e) {

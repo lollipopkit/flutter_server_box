@@ -18,7 +18,9 @@ class SystemDetector {
     // First, check if custom system type is defined
     SystemType? detectedSystemType = spi.customSystemType;
     if (detectedSystemType != null) {
-      dprint('Using custom system type ${detectedSystemType.name} for ${spi.oldId}');
+      dprint(
+        'Using custom system type ${detectedSystemType.name} for ${spi.oldId}',
+      );
       return detectedSystemType;
     }
 
@@ -45,13 +47,16 @@ class SystemDetector {
         context: 'ver detection for ${spi.oldId}',
       );
       if (powershellResult.isNotEmpty &&
-          (powershellResult.contains('Windows') || powershellResult.contains('NT'))) {
+          (powershellResult.contains('Windows') ||
+              powershellResult.contains('NT'))) {
         detectedSystemType = SystemType.windows;
         dprint('Detected Windows system type for ${spi.oldId}');
         return detectedSystemType;
       }
     } catch (e, stackTrace) {
-      Loggers.app.warning('System detection failed for ${spi.oldId}: $e\n$stackTrace');
+      Loggers.app.warning(
+        'System detection failed for ${spi.oldId}: $e\n$stackTrace',
+      );
     }
 
     // Default fallback

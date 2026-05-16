@@ -420,10 +420,7 @@ extension _SSH on _AppSettingsPageState {
     return ListTile(
       leading: const Icon(Icons.password),
       title: Text('${libL10n.copy} ${libL10n.pwd}'),
-      subtitle: Text(
-        'SSH',
-        style: UIs.textGrey,
-      ),
+      subtitle: Text('SSH', style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.desktopSshAutoCopyPassword),
     );
   }

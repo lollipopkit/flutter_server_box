@@ -17,7 +17,8 @@ Future<bool> ensureHostKeyAcceptedForSftp(BuildContext context, Spi spi) async {
     fn: () async {
       await ensureKnownHostKey(
         spi,
-        onKeyboardInteractive: (_) => KeybordInteractive.defaultHandle(spi, ctx: context),
+        onKeyboardInteractive: (_) =>
+            KeybordInteractive.defaultHandle(spi, ctx: context),
       );
       return true;
     },

@@ -47,14 +47,16 @@ abstract final class TermSessionManager {
   static final Map<String, _Entry> _entries = {};
   static String? _activeId; // For iOS Live Activity
   static Timer? _updateTimer; // Timer for iOS Live Activity updates
-  static const _updateInterval = Duration(seconds: 5); // 5-second update interval
+  static const _updateInterval = Duration(
+    seconds: 5,
+  ); // 5-second update interval
 
   static void init() {
     if (isAndroid) {
       MethodChans.registerHandler(
         (id) async {
           _entries[id]?.disconnect?.call();
-        }, 
+        },
         () {
           // Stop all connections when notification "Stop All" is pressed
           stopAllConnections();
@@ -66,7 +68,10 @@ abstract final class TermSessionManager {
   /// Called when Android notification "Stop All" button is pressed
   static void stopAllConnections() {
     // Disconnect all sessions
-    final disconnectCallbacks = _entries.values.map((e) => e.disconnect).where((cb) => cb != null).toList();
+    final disconnectCallbacks = _entries.values
+        .map((e) => e.disconnect)
+        .where((cb) => cb != null)
+        .toList();
     for (final disconnect in disconnectCallbacks) {
       disconnect!();
     }
@@ -137,7 +142,9 @@ abstract final class TermSessionManager {
         if (!isRunning) {
           MethodChans.startService();
         }
-        final payload = jsonEncode({'sessions': _entries.values.map((e) => e.info.toJson()).toList()});
+        final payload = jsonEncode({
+          'sessions': _entries.values.map((e) => e.info.toJson()).toList(),
+        });
         await MethodChans.updateSessions(payload);
       }
     }
@@ -150,7 +157,10 @@ abstract final class TermSessionManager {
         await MethodChans.stopLiveActivity();
       } else {
         // Start timer if not already running
-        _updateTimer ??= Timer.periodic(_updateInterval, (_) => _updateLiveActivity());
+        _updateTimer ??= Timer.periodic(
+          _updateInterval,
+          (_) => _updateLiveActivity(),
+        );
         // Immediately update for immediate feedback
         await _updateLiveActivity();
       }
@@ -196,7 +206,11 @@ abstract final class TermSessionManager {
     _activeId = id;
     final old = _entries[id];
     if (old != null) {
-      _entries[id] = _Entry(old.info, old.disconnect, hasTerminalUI: hasTerminal);
+      _entries[id] = _Entry(
+        old.info,
+        old.disconnect,
+        hasTerminalUI: hasTerminal,
+      );
       _sync();
     }
   }

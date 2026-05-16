@@ -10,7 +10,8 @@ class PrivateKeyInfo {
 
   const PrivateKeyInfo({required this.id, required this.key});
 
-  factory PrivateKeyInfo.fromJson(Map<String, dynamic> json) => _$PrivateKeyInfoFromJson(json);
+  factory PrivateKeyInfo.fromJson(Map<String, dynamic> json) =>
+      _$PrivateKeyInfoFromJson(json);
 
   Map<String, dynamic> toJson() => _$PrivateKeyInfoToJson(this);
 

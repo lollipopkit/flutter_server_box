@@ -6,8 +6,13 @@ class ChainComparator<T> {
   ChainComparator.empty() : this._create(null, (a, b) => 0);
   ChainComparator.create() : this._create(null, (a, b) => 0);
 
-  static ChainComparator<T> comparing<T, F extends Comparable<F>>(F Function(T) extractor) {
-    return ChainComparator._create(null, (a, b) => extractor(a).compareTo(extractor(b)));
+  static ChainComparator<T> comparing<T, F extends Comparable<F>>(
+    F Function(T) extractor,
+  ) {
+    return ChainComparator._create(
+      null,
+      (a, b) => extractor(a).compareTo(extractor(b)),
+    );
   }
 
   int compare(T a, T b) {
@@ -35,12 +40,23 @@ class ChainComparator<T> {
     );
   }
 
-  ChainComparator<T> thenWithComparator(Comparator<T> comparator, {bool reversed = false}) {
-    return ChainComparator._create(this, !reversed ? comparator : (a, b) => comparator(b, a));
+  ChainComparator<T> thenWithComparator(
+    Comparator<T> comparator, {
+    bool reversed = false,
+  }) {
+    return ChainComparator._create(
+      this,
+      !reversed ? comparator : (a, b) => comparator(b, a),
+    );
   }
 
-  ChainComparator<T> thenCompareByReversed<F extends Comparable<F>>(F Function(T) extractor) {
-    return ChainComparator._create(this, (a, b) => -extractor(a).compareTo(extractor(b)));
+  ChainComparator<T> thenCompareByReversed<F extends Comparable<F>>(
+    F Function(T) extractor,
+  ) {
+    return ChainComparator._create(
+      this,
+      (a, b) => -extractor(a).compareTo(extractor(b)),
+    );
   }
 
   ChainComparator<T> thenTrueFirst(bool Function(T) f) {
@@ -56,7 +72,9 @@ class ChainComparator<T> {
 }
 
 class Comparators {
-  static Comparator<String> compareStringCaseInsensitive({bool uppercaseFirst = false}) {
+  static Comparator<String> compareStringCaseInsensitive({
+    bool uppercaseFirst = false,
+  }) {
     return (String a, String b) {
       final r = a.toLowerCase().compareTo(b.toLowerCase());
       if (r != 0) return r;

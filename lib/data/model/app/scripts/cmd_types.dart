@@ -37,7 +37,11 @@ sealed class ShellCmdType implements Enum {
   CmdTypeSys get sysType;
 
   static Set<ShellCmdType> get all {
-    return {...StatusCmdType.values, ...BSDStatusCmdType.values, ...WindowsStatusCmdType.values};
+    return {
+      ...StatusCmdType.values,
+      ...BSDStatusCmdType.values,
+      ...WindowsStatusCmdType.values,
+    };
   }
 }
 
@@ -57,7 +61,7 @@ enum StatusCmdType implements ShellCmdType {
   conn('cat /proc/net/snmp'),
   disk(
     '(lsblk --bytes --json --output '
-    'FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID 2>/dev/null && echo "LSBLK_SUCCESS") || df -k'
+    'FSTYPE,PATH,NAME,KNAME,MOUNTPOINT,FSSIZE,FSUSED,FSAVAIL,FSUSE%,UUID 2>/dev/null && echo "LSBLK_SUCCESS") || df -k',
   ),
   mem("cat /proc/meminfo | grep -E 'Mem|Swap'"),
   tempType('cat /sys/class/thermal/thermal_zone*/type'),
@@ -74,7 +78,9 @@ enum StatusCmdType implements ShellCmdType {
   /// - Works with laptops, UPS devices, and other power supplies
   /// - Adds echo after each file to separate multiple power supplies
   /// - Returns empty if no power supplies are detected (e.g., desktop systems)
-  battery('for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done'),
+  battery(
+    'for f in /sys/class/power_supply/*/uevent; do cat "\$f"; echo; done',
+  ),
 
   /// Get NVIDIA GPU information using nvidia-smi in XML format
   /// Requires NVIDIA drivers and nvidia-smi utility to be installed
@@ -116,7 +122,9 @@ enum StatusCmdType implements ShellCmdType {
   /// - Adds echo after each device to separate output blocks
   /// - May require elevated privileges for some drives
   /// - smartctl must be installed (part of smartmontools package)
-  diskSmart('for d in \$(lsblk -dn -o KNAME); do smartctl -a -j /dev/\$d; echo; done'),
+  diskSmart(
+    'for d in \$(lsblk -dn -o KNAME); do smartctl -a -j /dev/\$d; echo; done',
+  ),
   cpuBrand('cat /proc/cpuinfo | grep "model name"');
 
   @override
@@ -142,7 +150,9 @@ enum BSDStatusCmdType implements ShellCmdType {
   sys('uname -or'),
   cpu('top -l 1 | grep "CPU usage"'),
   uptime('uptime'),
-  disk('df -k'), // Keep df -k for BSD systems as lsblk is not available on macOS/BSD
+  disk(
+    'df -k',
+  ), // Keep df -k for BSD systems as lsblk is not available on macOS/BSD
   mem('top -l 1 | grep PhysMem'),
   host('hostname'),
   cpuBrand('sysctl -n machdep.cpu.brand_string');

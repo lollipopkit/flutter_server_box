@@ -45,8 +45,13 @@ class AmdSmi {
 
   static AmdSmiItem? _parseGpuItem(Map<String, dynamic> gpu) {
     try {
-      final name = gpu['name'] ?? gpu['card_model'] ?? gpu['device_name'] ?? 'Unknown AMD GPU';
-      final deviceId = gpu['device_id']?.toString() ?? gpu['gpu_id']?.toString() ?? '0';
+      final name =
+          gpu['name'] ??
+          gpu['card_model'] ??
+          gpu['device_name'] ??
+          'Unknown AMD GPU';
+      final deviceId =
+          gpu['device_id']?.toString() ?? gpu['gpu_id']?.toString() ?? '0';
 
       // Temperature parsing
       final tempRaw = gpu['temperature'] ?? gpu['temp'] ?? gpu['gpu_temp'];
@@ -54,20 +59,25 @@ class AmdSmi {
 
       // Power parsing
       final powerDraw = gpu['power_draw'] ?? gpu['current_power'];
-      final powerCap = gpu['power_cap'] ?? gpu['power_limit'] ?? gpu['max_power'];
+      final powerCap =
+          gpu['power_cap'] ?? gpu['power_limit'] ?? gpu['max_power'];
       final power = _formatPower(powerDraw, powerCap);
 
       // Memory parsing
       final memory = _parseMemory(gpu['memory'] ?? gpu['vram'] ?? {});
 
       // Utilization parsing
-      final utilization = _parseIntValue(gpu['utilization'] ?? gpu['gpu_util'] ?? gpu['activity']);
+      final utilization = _parseIntValue(
+        gpu['utilization'] ?? gpu['gpu_util'] ?? gpu['activity'],
+      );
 
       // Fan speed parsing
       final fanSpeed = _parseIntValue(gpu['fan_speed'] ?? gpu['fan_rpm']);
 
       // Clock speed parsing
-      final clockSpeed = _parseIntValue(gpu['clock_speed'] ?? gpu['gpu_clock'] ?? gpu['sclk']);
+      final clockSpeed = _parseIntValue(
+        gpu['clock_speed'] ?? gpu['gpu_clock'] ?? gpu['sclk'],
+      );
 
       return AmdSmiItem(
         deviceId: deviceId,
@@ -125,8 +135,13 @@ class AmdSmi {
 
   static AmdSmiMemProcess? _parseProcess(Map<String, dynamic> procData) {
     final pid = _parseIntValue(procData['pid']);
-    final name = procData['name']?.toString() ?? procData['process_name']?.toString() ?? 'Unknown';
-    final memory = _parseIntValue(procData['memory'] ?? procData['used_memory']);
+    final name =
+        procData['name']?.toString() ??
+        procData['process_name']?.toString() ??
+        'Unknown';
+    final memory = _parseIntValue(
+      procData['memory'] ?? procData['used_memory'],
+    );
 
     if (pid == 0) return null;
     return AmdSmiMemProcess(pid, name, memory);

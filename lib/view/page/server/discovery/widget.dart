@@ -10,12 +10,17 @@ class _DiscoverySettingsDialog extends StatefulWidget {
   });
 
   @override
-  State<_DiscoverySettingsDialog> createState() => _DiscoverySettingsDialogState();
+  State<_DiscoverySettingsDialog> createState() =>
+      _DiscoverySettingsDialogState();
 }
 
 class _DiscoverySettingsDialogState extends State<_DiscoverySettingsDialog> {
-  late final _timeoutController = TextEditingController(text: widget.config.timeoutMs.toString());
-  late final _concurrencyController = TextEditingController(text: widget.config.maxConcurrency.toString());
+  late final _timeoutController = TextEditingController(
+    text: widget.config.timeoutMs.toString(),
+  );
+  late final _concurrencyController = TextEditingController(
+    text: widget.config.maxConcurrency.toString(),
+  );
   late bool _enableMdns = widget.config.enableMdns;
 
   @override
@@ -30,10 +35,7 @@ class _DiscoverySettingsDialogState extends State<_DiscoverySettingsDialog> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          l10n.discoverySettings,
-          style: const TextStyle(fontSize: 18),
-        ),
+        Text(l10n.discoverySettings, style: const TextStyle(fontSize: 18)),
         UIs.height13,
         Input(
           controller: _timeoutController,

@@ -3,9 +3,12 @@ import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
 // Mock functions to test the deduplication logic without relying on ServerStore
-List<Spi> _mockDeduplicateServers(List<Spi> importedServers, List<Spi> existingServers) {
+List<Spi> _mockDeduplicateServers(
+  List<Spi> importedServers,
+  List<Spi> existingServers,
+) {
   final deduplicated = <Spi>[];
-  
+
   for (final imported in importedServers) {
     // Check against existing servers
     if (!_mockIsDuplicate(imported, existingServers)) {
@@ -15,47 +18,51 @@ List<Spi> _mockDeduplicateServers(List<Spi> importedServers, List<Spi> existingS
       }
     }
   }
-  
+
   return deduplicated;
 }
 
 bool _mockIsDuplicate(Spi imported, List<Spi> existing) {
   for (final existingSpi in existing) {
     // Check for exact match on ip:port@user combination
-    if (existingSpi.ip == imported.ip && 
-        existingSpi.port == imported.port && 
+    if (existingSpi.ip == imported.ip &&
+        existingSpi.port == imported.port &&
         existingSpi.user == imported.user) {
       return true;
     }
   }
-  
+
   return false;
 }
 
-List<Spi> _mockResolveNameConflicts(List<Spi> importedServers, List<String> existingNames) {
+List<Spi> _mockResolveNameConflicts(
+  List<Spi> importedServers,
+  List<String> existingNames,
+) {
   final existingNamesSet = existingNames.toSet();
   final processedNames = <String>{};
   final result = <Spi>[];
-  
+
   for (final server in importedServers) {
     String newName = server.name;
     int suffix = 2;
-    
+
     // Check against both existing servers and already processed servers
-    while (existingNamesSet.contains(newName) || processedNames.contains(newName)) {
+    while (existingNamesSet.contains(newName) ||
+        processedNames.contains(newName)) {
       newName = '${server.name} ($suffix)';
       suffix++;
     }
-    
+
     processedNames.add(newName);
-    
+
     if (newName != server.name) {
       result.add(server.copyWith(name: newName));
     } else {
       result.add(server);
     }
   }
-  
+
   return result;
 }
 
@@ -113,7 +120,10 @@ void main() {
         ),
       ];
 
-      final deduplicated = _mockDeduplicateServers(importedServers, existingServers);
+      final deduplicated = _mockDeduplicateServers(
+        importedServers,
+        existingServers,
+      );
 
       expect(deduplicated, hasLength(1));
       expect(deduplicated.first.name, 'new-server-2');
@@ -142,7 +152,10 @@ void main() {
         ),
       ];
 
-      final deduplicated = _mockDeduplicateServers(importedServers, existingServers);
+      final deduplicated = _mockDeduplicateServers(
+        importedServers,
+        existingServers,
+      );
 
       expect(deduplicated, hasLength(2));
       expect(deduplicated.any((s) => s.name == 'same-ip-diff-port'), isTrue);
@@ -152,12 +165,7 @@ void main() {
 
     test('deduplicateServers handles empty existing servers list', () {
       importedServers = [
-        const Spi(
-          name: 'server1',
-          ip: '192.168.1.100',
-          port: 22,
-          user: 'root',
-        ),
+        const Spi(name: 'server1', ip: '192.168.1.100', port: 22, user: 'root'),
         const Spi(
           name: 'server2',
           ip: '192.168.1.200',
@@ -211,39 +219,48 @@ void main() {
       expect(resolved[2].name, 'unique-name');
     });
 
-    test('resolveNameConflicts handles multiple conflicts with same base name', () {
-      importedServers = [
-        const Spi(
-          name: 'server',
-          ip: '192.168.1.100',
-          port: 22,
-          user: 'root',
-        ),
-        const Spi(
-          name: 'server',
-          ip: '192.168.1.200',
-          port: 22,
-          user: 'admin',
-        ),
-        const Spi(
-          name: 'server',
-          ip: '192.168.1.300',
-          port: 2222,
-          user: 'root',
-        ),
-      ];
+    test(
+      'resolveNameConflicts handles multiple conflicts with same base name',
+      () {
+        importedServers = [
+          const Spi(
+            name: 'server',
+            ip: '192.168.1.100',
+            port: 22,
+            user: 'root',
+          ),
+          const Spi(
+            name: 'server',
+            ip: '192.168.1.200',
+            port: 22,
+            user: 'admin',
+          ),
+          const Spi(
+            name: 'server',
+            ip: '192.168.1.300',
+            port: 2222,
+            user: 'root',
+          ),
+        ];
 
-      final existingNames = ['server', 'server (2)'];
-      final resolved = _mockResolveNameConflicts(importedServers, existingNames);
+        final existingNames = ['server', 'server (2)'];
+        final resolved = _mockResolveNameConflicts(
+          importedServers,
+          existingNames,
+        );
 
-      expect(resolved, hasLength(3));
-      expect(resolved[0].name, 'server (3)');
-      expect(resolved[1].name, 'server (4)');
-      expect(resolved[2].name, 'server (5)');
-    });
+        expect(resolved, hasLength(3));
+        expect(resolved[0].name, 'server (3)');
+        expect(resolved[1].name, 'server (4)');
+        expect(resolved[2].name, 'server (5)');
+      },
+    );
 
     test('resolveNameConflicts handles empty input', () {
-      final resolved = _mockResolveNameConflicts([], ['existing1', 'existing2']);
+      final resolved = _mockResolveNameConflicts([], [
+        'existing1',
+        'existing2',
+      ]);
 
       expect(resolved, isEmpty);
     });
@@ -251,13 +268,28 @@ void main() {
     test('getImportSummary calculates correct statistics', () {
       final originalList = [
         const Spi(name: 'server1', ip: '192.168.1.100', port: 22, user: 'root'),
-        const Spi(name: 'server2', ip: '192.168.1.200', port: 22, user: 'admin'),
+        const Spi(
+          name: 'server2',
+          ip: '192.168.1.200',
+          port: 22,
+          user: 'admin',
+        ),
         const Spi(name: 'server3', ip: '192.168.1.300', port: 22, user: 'root'),
-        const Spi(name: 'duplicate', ip: '192.168.1.100', port: 22, user: 'root'), // Duplicate of server1
+        const Spi(
+          name: 'duplicate',
+          ip: '192.168.1.100',
+          port: 22,
+          user: 'root',
+        ), // Duplicate of server1
       ];
 
       final deduplicatedList = [
-        const Spi(name: 'server2', ip: '192.168.1.200', port: 22, user: 'admin'),
+        const Spi(
+          name: 'server2',
+          ip: '192.168.1.200',
+          port: 22,
+          user: 'admin',
+        ),
         const Spi(name: 'server3', ip: '192.168.1.300', port: 22, user: 'root'),
       ];
 
@@ -274,7 +306,12 @@ void main() {
     test('getImportSummary handles case with no duplicates', () {
       final originalList = [
         const Spi(name: 'server1', ip: '192.168.1.100', port: 22, user: 'root'),
-        const Spi(name: 'server2', ip: '192.168.1.200', port: 22, user: 'admin'),
+        const Spi(
+          name: 'server2',
+          ip: '192.168.1.200',
+          port: 22,
+          user: 'admin',
+        ),
       ];
 
       final summary = ServerDeduplication.getImportSummary(
@@ -290,13 +327,15 @@ void main() {
     test('getImportSummary handles case with all duplicates', () {
       final originalList = [
         const Spi(name: 'server1', ip: '192.168.1.100', port: 22, user: 'root'),
-        const Spi(name: 'server2', ip: '192.168.1.200', port: 22, user: 'admin'),
+        const Spi(
+          name: 'server2',
+          ip: '192.168.1.200',
+          port: 22,
+          user: 'admin',
+        ),
       ];
 
-      final summary = ServerDeduplication.getImportSummary(
-        originalList,
-        [],
-      );
+      final summary = ServerDeduplication.getImportSummary(originalList, []);
 
       expect(summary.total, 2);
       expect(summary.duplicates, 2);
@@ -335,7 +374,10 @@ void main() {
       ];
 
       // Step 1: Remove duplicates
-      final deduplicated = _mockDeduplicateServers(importedServers, existingServers);
+      final deduplicated = _mockDeduplicateServers(
+        importedServers,
+        existingServers,
+      );
 
       expect(deduplicated, hasLength(2)); // new-staging should be removed
 
@@ -386,11 +428,26 @@ void main() {
     test('ImportSummary properties work correctly', () {
       final summary = ServerDeduplication.getImportSummary(
         [
-          const Spi(name: 'server1', ip: '192.168.1.100', port: 22, user: 'root'),
-          const Spi(name: 'server2', ip: '192.168.1.200', port: 22, user: 'admin'),
+          const Spi(
+            name: 'server1',
+            ip: '192.168.1.100',
+            port: 22,
+            user: 'root',
+          ),
+          const Spi(
+            name: 'server2',
+            ip: '192.168.1.200',
+            port: 22,
+            user: 'admin',
+          ),
         ],
         [
-          const Spi(name: 'server2', ip: '192.168.1.200', port: 22, user: 'admin'),
+          const Spi(
+            name: 'server2',
+            ip: '192.168.1.200',
+            port: 22,
+            user: 'admin',
+          ),
         ],
       );
 

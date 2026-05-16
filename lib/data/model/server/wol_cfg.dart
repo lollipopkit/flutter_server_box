@@ -17,12 +17,18 @@ final class WakeOnLanCfg {
     final macValidation = MACAddress.validate(mac);
     final ipValidation = IPAddress.validate(
       ip,
-      type: ip.contains(':') ? InternetAddressType.IPv6 : InternetAddressType.IPv4,
+      type: ip.contains(':')
+          ? InternetAddressType.IPv6
+          : InternetAddressType.IPv4,
     );
-    final pwdValidation = pwd != null ? SecureONPassword.validate(pwd) : (state: true, error: null);
+    final pwdValidation = pwd != null
+        ? SecureONPassword.validate(pwd)
+        : (state: true, error: null);
 
-    final valid = macValidation.state && ipValidation.state && pwdValidation.state;
-    final err = macValidation.error ?? ipValidation.error ?? pwdValidation.error;
+    final valid =
+        macValidation.state && ipValidation.state && pwdValidation.state;
+    final err =
+        macValidation.error ?? ipValidation.error ?? pwdValidation.error;
     return (err, valid);
   }
 
@@ -38,7 +44,8 @@ final class WakeOnLanCfg {
     return obj.wake(repeat: 3, repeatDelay: const Duration(milliseconds: 500));
   }
 
-  factory WakeOnLanCfg.fromJson(Map<String, dynamic> json) => _$WakeOnLanCfgFromJson(json);
+  factory WakeOnLanCfg.fromJson(Map<String, dynamic> json) =>
+      _$WakeOnLanCfgFromJson(json);
 
   Map<String, dynamic> toJson() => _$WakeOnLanCfgToJson(this);
 }

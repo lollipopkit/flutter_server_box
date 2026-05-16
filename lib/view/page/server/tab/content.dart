@@ -7,7 +7,12 @@ extension on _ServerPageState {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(s.spi.name, style: UIs.text13Bold, maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(
+            s.spi.name,
+            style: UIs.text13Bold,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           const Icon(Icons.keyboard_arrow_right, size: 17, color: Colors.grey),
           const Spacer(),
           _buildTopRightText(s),
@@ -46,9 +51,17 @@ extension on _ServerPageState {
     // Or the loading icon will be rescaled.
     final wrapped = child is SizedBox
         ? child
-        : SizedBox(height: _ServerPageState._kCardHeightMin, width: 27, child: child);
+        : SizedBox(
+            height: _ServerPageState._kCardHeightMin,
+            width: 27,
+            child: child,
+          );
     if (onTap == null) return wrapped.paddingOnly(left: 10);
-    return InkWell(borderRadius: BorderRadius.circular(7), onTap: onTap, child: wrapped).paddingOnly(left: 5);
+    return InkWell(
+      borderRadius: BorderRadius.circular(7),
+      onTap: onTap,
+      child: wrapped,
+    ).paddingOnly(left: 5);
   }
 
   Widget _buildTopRightText(ServerState s) {
@@ -75,17 +88,24 @@ ${ss.err?.message ?? 'null'}
     context.showRoundDialog(
       title: libL10n.error,
       child: SingleChildScrollView(child: SimpleMarkdown(data: md)),
-      actions: [TextButton(onPressed: () => Pfs.copy(md), child: Text(libL10n.copy))],
+      actions: [
+        TextButton(onPressed: () => Pfs.copy(md), child: Text(libL10n.copy)),
+      ],
     );
   }
 
   Widget _buildDisk(ServerStatus ss, String id) {
     final cardNoti = _getCardNoti(id);
     return cardNoti.listenVal((v) {
-      final isSpeed = v.diskIO ?? !Stores.setting.serverTabPreferDiskAmount.fetch();
+      final isSpeed =
+          v.diskIO ?? !Stores.setting.serverTabPreferDiskAmount.fetch();
       final diskUsage = ss.diskUsage;
-      final total = diskUsage == null ? BigInt.zero.kb2Str : diskUsage.size.kb2Str;
-      final used = diskUsage == null ? BigInt.zero.kb2Str : diskUsage.used.kb2Str;
+      final total = diskUsage == null
+          ? BigInt.zero.kb2Str
+          : diskUsage.size.kb2Str;
+      final used = diskUsage == null
+          ? BigInt.zero.kb2Str
+          : diskUsage.used.kb2Str;
 
       final (r, w) = ss.diskIO.cachedAllSpeed;
 
@@ -123,7 +143,13 @@ ${ss.err?.message ?? 'null'}
     );
   }
 
-  Widget _buildIOData(String up, String down, {void Function()? onTap, Key? key, int maxLines = 2}) {
+  Widget _buildIOData(
+    String up,
+    String down, {
+    void Function()? onTap,
+    Key? key,
+    int maxLines = 2,
+  }) {
     final child = Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,

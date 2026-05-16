@@ -110,7 +110,9 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   try {
     final cpus = SingleCpuCore.parse(StatusCmdType.cpu.findInMap(parsedOutput));
     req.ss.cpu.update(cpus);
-    final brand = CpuBrand.parse(StatusCmdType.cpuBrand.findInMap(parsedOutput));
+    final brand = CpuBrand.parse(
+      StatusCmdType.cpuBrand.findInMap(parsedOutput),
+    );
     req.ss.cpu.brand.clear();
     req.ss.cpu.brand.addAll(brand);
   } catch (e, s) {
@@ -143,7 +145,9 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    req.ss.diskUsage = req.ss.disk.isEmpty ? null : DiskUsage.parse(req.ss.disk);
+    req.ss.diskUsage = req.ss.disk.isEmpty
+        ? null
+        : DiskUsage.parse(req.ss.disk);
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }
@@ -170,21 +174,28 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    final diskio = DiskIO.parse(StatusCmdType.diskio.findInMap(parsedOutput), time);
+    final diskio = DiskIO.parse(
+      StatusCmdType.diskio.findInMap(parsedOutput),
+      time,
+    );
     req.ss.diskIO.update(diskio);
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }
 
   try {
-    final smarts = DiskSmart.parse(StatusCmdType.diskSmart.findInMap(parsedOutput));
+    final smarts = DiskSmart.parse(
+      StatusCmdType.diskSmart.findInMap(parsedOutput),
+    );
     req.ss.diskSmart = smarts;
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }
 
   try {
-    req.ss.nvidia = NvidiaSmi.fromXml(StatusCmdType.nvidia.findInMap(parsedOutput));
+    req.ss.nvidia = NvidiaSmi.fromXml(
+      StatusCmdType.nvidia.findInMap(parsedOutput),
+    );
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }
@@ -209,7 +220,9 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    final sensors = SensorItem.parse(StatusCmdType.sensors.findInMap(parsedOutput));
+    final sensors = SensorItem.parse(
+      StatusCmdType.sensors.findInMap(parsedOutput),
+    );
     if (sensors.isNotEmpty) {
       req.ss.sensors.clear();
       req.ss.sensors.addAll(sensors);
@@ -237,14 +250,19 @@ Future<ServerStatus> _getBsdStatus(ServerStatusUpdateReq req) async {
 
   try {
     final time = int.parse(BSDStatusCmdType.time.findInMap(parsedOutput));
-    final net = NetSpeed.parseBsd(BSDStatusCmdType.net.findInMap(parsedOutput), time);
+    final net = NetSpeed.parseBsd(
+      BSDStatusCmdType.net.findInMap(parsedOutput),
+      time,
+    );
     req.ss.netSpeed.update(net);
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }
 
   try {
-    req.ss.more[StatusCmdType.sys] = BSDStatusCmdType.sys.findInMap(parsedOutput);
+    req.ss.more[StatusCmdType.sys] = BSDStatusCmdType.sys.findInMap(
+      parsedOutput,
+    );
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }
@@ -263,7 +281,9 @@ Future<ServerStatus> _getBsdStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    final uptime = _parseUpTime(BSDStatusCmdType.uptime.findInMap(parsedOutput));
+    final uptime = _parseUpTime(
+      BSDStatusCmdType.uptime.findInMap(parsedOutput),
+    );
     if (uptime != null) {
       req.ss.more[StatusCmdType.uptime] = uptime;
     }
@@ -278,7 +298,9 @@ Future<ServerStatus> _getBsdStatus(ServerStatusUpdateReq req) async {
   }
 
   try {
-    req.ss.diskUsage = req.ss.disk.isEmpty ? null : DiskUsage.parse(req.ss.disk);
+    req.ss.diskUsage = req.ss.disk.isEmpty
+        ? null
+        : DiskUsage.parse(req.ss.disk);
   } catch (e, s) {
     Loggers.app.warning(e, s);
   }
@@ -306,7 +328,9 @@ String? _parseUpTime(String raw) {
       if (splitedComma.length >= 2) {
         final timePart = splitedComma[1].trim();
         // Check if it's in HH:MM format
-        if (timePart.contains(':') && !timePart.contains('user') && !timePart.contains('load')) {
+        if (timePart.contains(':') &&
+            !timePart.contains('user') &&
+            !timePart.contains('load')) {
           return '$firstPart, $timePart';
         }
       }
@@ -314,7 +338,9 @@ String? _parseUpTime(String raw) {
     }
 
     // Case 2: "2:34" (hours:minutes) - already in good format
-    if (firstPart.contains(':') && !firstPart.contains('user') && !firstPart.contains('load')) {
+    if (firstPart.contains(':') &&
+        !firstPart.contains('user') &&
+        !firstPart.contains('load')) {
       return firstPart;
     }
 
@@ -371,7 +397,11 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
 }
 
 /// Parse Windows network data
-void _parseWindowsNetworkData(ServerStatusUpdateReq req, Map<String, String> parsedOutput, int time) {
+void _parseWindowsNetworkData(
+  ServerStatusUpdateReq req,
+  Map<String, String> parsedOutput,
+  int time,
+) {
   try {
     final netRaw = WindowsStatusCmdType.net.findInMap(parsedOutput);
     if (netRaw.isNotEmpty &&
@@ -390,7 +420,10 @@ void _parseWindowsNetworkData(ServerStatusUpdateReq req, Map<String, String> par
 }
 
 /// Parse Windows system information
-void _parseWindowsSystemData(ServerStatusUpdateReq req, Map<String, String> parsedOutput) {
+void _parseWindowsSystemData(
+  ServerStatusUpdateReq req,
+  Map<String, String> parsedOutput,
+) {
   try {
     final sys = WindowsStatusCmdType.sys.findInMap(parsedOutput);
     if (sys.isNotEmpty) {
@@ -402,9 +435,14 @@ void _parseWindowsSystemData(ServerStatusUpdateReq req, Map<String, String> pars
 }
 
 /// Parse Windows host information
-void _parseWindowsHostData(ServerStatusUpdateReq req, Map<String, String> parsedOutput) {
+void _parseWindowsHostData(
+  ServerStatusUpdateReq req,
+  Map<String, String> parsedOutput,
+) {
   try {
-    final host = _parseHostName(WindowsStatusCmdType.host.findInMap(parsedOutput));
+    final host = _parseHostName(
+      WindowsStatusCmdType.host.findInMap(parsedOutput),
+    );
     if (host != null) {
       req.ss.more[StatusCmdType.host] = host;
     }
@@ -414,11 +452,17 @@ void _parseWindowsHostData(ServerStatusUpdateReq req, Map<String, String> parsed
 }
 
 /// Parse Windows CPU data and brand information
-void _parseWindowsCpuData(ServerStatusUpdateReq req, Map<String, String> parsedOutput) {
+void _parseWindowsCpuData(
+  ServerStatusUpdateReq req,
+  Map<String, String> parsedOutput,
+) {
   try {
     // Windows CPU parsing - JSON format from PowerShell
     final cpuRaw = WindowsStatusCmdType.cpu.findInMap(parsedOutput);
-    if (cpuRaw.isNotEmpty && cpuRaw != 'null' && !cpuRaw.contains('error') && !cpuRaw.contains('Exception')) {
+    if (cpuRaw.isNotEmpty &&
+        cpuRaw != 'null' &&
+        !cpuRaw.contains('error') &&
+        !cpuRaw.contains('Exception')) {
       final cpuResult = WindowsParser.parseCpu(cpuRaw, req.ss);
       if (cpuResult.cores.isNotEmpty) {
         req.ss.cpu.update(cpuResult.cores);
@@ -446,10 +490,16 @@ void _parseWindowsCpuData(ServerStatusUpdateReq req, Map<String, String> parsedO
 }
 
 /// Parse Windows memory data
-void _parseWindowsMemoryData(ServerStatusUpdateReq req, Map<String, String> parsedOutput) {
+void _parseWindowsMemoryData(
+  ServerStatusUpdateReq req,
+  Map<String, String> parsedOutput,
+) {
   try {
     final memRaw = WindowsStatusCmdType.mem.findInMap(parsedOutput);
-    if (memRaw.isNotEmpty && memRaw != 'null' && !memRaw.contains('error') && !memRaw.contains('Exception')) {
+    if (memRaw.isNotEmpty &&
+        memRaw != 'null' &&
+        !memRaw.contains('error') &&
+        !memRaw.contains('Exception')) {
       final memory = WindowsParser.parseMemory(memRaw);
       if (memory != null) {
         req.ss.mem = memory;
@@ -461,7 +511,10 @@ void _parseWindowsMemoryData(ServerStatusUpdateReq req, Map<String, String> pars
 }
 
 /// Parse Windows disk data
-void _parseWindowsDiskData(ServerStatusUpdateReq req, Map<String, String> parsedOutput) {
+void _parseWindowsDiskData(
+  ServerStatusUpdateReq req,
+  Map<String, String> parsedOutput,
+) {
   try {
     final diskRaw = WindowsStatusCmdType.disk.findInMap(parsedOutput);
     if (diskRaw.isNotEmpty && diskRaw != 'null') {
@@ -475,7 +528,10 @@ void _parseWindowsDiskData(ServerStatusUpdateReq req, Map<String, String> parsed
 }
 
 /// Parse Windows uptime data
-void _parseWindowsUptimeData(ServerStatusUpdateReq req, Map<String, String> parsedOutput) {
+void _parseWindowsUptimeData(
+  ServerStatusUpdateReq req,
+  Map<String, String> parsedOutput,
+) {
   try {
     final uptimeRaw = WindowsStatusCmdType.uptime.findInMap(parsedOutput);
     if (uptimeRaw.isNotEmpty && uptimeRaw != 'null') {
@@ -490,7 +546,11 @@ void _parseWindowsUptimeData(ServerStatusUpdateReq req, Map<String, String> pars
 }
 
 /// Parse Windows disk I/O data
-void _parseWindowsDiskIOData(ServerStatusUpdateReq req, Map<String, String> parsedOutput, int time) {
+void _parseWindowsDiskIOData(
+  ServerStatusUpdateReq req,
+  Map<String, String> parsedOutput,
+  int time,
+) {
   try {
     final diskIOraw = WindowsStatusCmdType.diskio.findInMap(parsedOutput);
     if (diskIOraw.isNotEmpty && diskIOraw != 'null') {
@@ -503,7 +563,10 @@ void _parseWindowsDiskIOData(ServerStatusUpdateReq req, Map<String, String> pars
 }
 
 /// Parse Windows connection data
-void _parseWindowsConnectionData(ServerStatusUpdateReq req, Map<String, String> parsedOutput) {
+void _parseWindowsConnectionData(
+  ServerStatusUpdateReq req,
+  Map<String, String> parsedOutput,
+) {
   try {
     final connStr = WindowsStatusCmdType.conn.findInMap(parsedOutput);
     final connCount = int.tryParse(connStr.trim());
@@ -516,7 +579,10 @@ void _parseWindowsConnectionData(ServerStatusUpdateReq req, Map<String, String> 
 }
 
 /// Parse Windows battery data
-void _parseWindowsBatteryData(ServerStatusUpdateReq req, Map<String, String> parsedOutput) {
+void _parseWindowsBatteryData(
+  ServerStatusUpdateReq req,
+  Map<String, String> parsedOutput,
+) {
   try {
     final batteryRaw = WindowsStatusCmdType.battery.findInMap(parsedOutput);
     if (batteryRaw.isNotEmpty && batteryRaw != 'null') {
@@ -532,11 +598,18 @@ void _parseWindowsBatteryData(ServerStatusUpdateReq req, Map<String, String> par
 }
 
 /// Parse Windows temperature data
-void _parseWindowsTemperatureData(ServerStatusUpdateReq req, Map<String, String> parsedOutput) {
+void _parseWindowsTemperatureData(
+  ServerStatusUpdateReq req,
+  Map<String, String> parsedOutput,
+) {
   try {
     final tempRaw = WindowsStatusCmdType.temp.findInMap(parsedOutput);
     if (tempRaw.isNotEmpty && tempRaw != 'null') {
-      _parseWindowsTemperatures(req.ss.temps, tempRaw, divisor: req.tempDivisor);
+      _parseWindowsTemperatures(
+        req.ss.temps,
+        tempRaw,
+        divisor: req.tempDivisor,
+      );
     }
   } catch (e, s) {
     Loggers.app.warning('Windows temperature parsing failed: $e', s);
@@ -544,15 +617,22 @@ void _parseWindowsTemperatureData(ServerStatusUpdateReq req, Map<String, String>
 }
 
 /// Parse Windows GPU data (NVIDIA/AMD)
-void _parseWindowsGpuData(ServerStatusUpdateReq req, Map<String, String> parsedOutput) {
+void _parseWindowsGpuData(
+  ServerStatusUpdateReq req,
+  Map<String, String> parsedOutput,
+) {
   try {
-    req.ss.nvidia = NvidiaSmi.fromXml(WindowsStatusCmdType.nvidia.findInMap(parsedOutput));
+    req.ss.nvidia = NvidiaSmi.fromXml(
+      WindowsStatusCmdType.nvidia.findInMap(parsedOutput),
+    );
   } catch (e, s) {
     Loggers.app.warning('Windows NVIDIA GPU parsing failed: $e', s);
   }
 
   try {
-    req.ss.amd = AmdSmi.fromJson(WindowsStatusCmdType.amd.findInMap(parsedOutput));
+    req.ss.amd = AmdSmi.fromJson(
+      WindowsStatusCmdType.amd.findInMap(parsedOutput),
+    );
   } catch (e, s) {
     Loggers.app.warning('Windows AMD GPU parsing failed: $e', s);
   }
@@ -566,19 +646,23 @@ List<Battery> _parseWindowsBatteries(String raw) {
     final batteryList = jsonData is List ? jsonData : [jsonData];
 
     for (final batteryData in batteryList) {
-      final chargeRemaining = batteryData['EstimatedChargeRemaining'] as int? ?? 0;
+      final chargeRemaining =
+          batteryData['EstimatedChargeRemaining'] as int? ?? 0;
       final batteryStatus = batteryData['BatteryStatus'] as int? ?? 0;
 
       // Windows battery status: 1=Other, 2=Unknown, 3=Full, 4=Low,
       // 5=Critical, 6=Charging, 7=ChargingAndLow, 8=ChargingAndCritical,
       // 9=Undefined, 10=PartiallyCharged
-      final isCharging = batteryStatus == 6 || batteryStatus == 7 || batteryStatus == 8;
+      final isCharging =
+          batteryStatus == 6 || batteryStatus == 7 || batteryStatus == 8;
 
       batteries.add(
         Battery(
           name: 'Battery',
           percent: chargeRemaining,
-          status: isCharging ? BatteryStatus.charging : BatteryStatus.discharging,
+          status: isCharging
+              ? BatteryStatus.charging
+              : BatteryStatus.discharging,
         ),
       );
     }
@@ -603,7 +687,9 @@ List<NetSpeedPart> _parseWindowsNetwork(String raw, int currentTime) {
       if (sample2 is Map && sample2.containsKey('value')) {
         sample2 = sample2['value'];
       }
-      if (sample1 is List && sample2 is List && sample1.length == sample2.length) {
+      if (sample1 is List &&
+          sample2 is List &&
+          sample1.length == sample2.length) {
         for (int i = 0; i < sample1.length; i++) {
           final s1 = sample1[i];
           final s2 = sample2[i];
@@ -623,7 +709,12 @@ List<NetSpeedPart> _parseWindowsNetwork(String raw, int currentTime) {
           final rxSpeed = rxDelta / timeDelta;
           final txSpeed = txDelta / timeDelta;
           netParts.add(
-            NetSpeedPart(name, BigInt.from(rxSpeed.toInt()), BigInt.from(txSpeed.toInt()), currentTime),
+            NetSpeedPart(
+              name,
+              BigInt.from(rxSpeed.toInt()),
+              BigInt.from(txSpeed.toInt()),
+              currentTime,
+            ),
           );
         }
       }
@@ -649,7 +740,9 @@ List<DiskIOPiece> _parseWindowsDiskIO(String raw, int currentTime) {
       if (sample2 is Map && sample2.containsKey('value')) {
         sample2 = sample2['value'];
       }
-      if (sample1 is List && sample2 is List && sample1.length == sample2.length) {
+      if (sample1 is List &&
+          sample2 is List &&
+          sample1.length == sample2.length) {
         for (int i = 0; i < sample1.length; i++) {
           final s1 = sample1[i];
           final s2 = sample2[i];
@@ -689,10 +782,16 @@ List<DiskIOPiece> _parseWindowsDiskIO(String raw, int currentTime) {
   }
 }
 
-void _parseWindowsTemperatures(Temperatures temps, String raw, {double divisor = 1000.0}) {
+void _parseWindowsTemperatures(
+  Temperatures temps,
+  String raw, {
+  double divisor = 1000.0,
+}) {
   try {
     // Handle error output
-    if (raw.contains('Error') || raw.contains('Exception') || raw.contains('The term')) {
+    if (raw.contains('Error') ||
+        raw.contains('Exception') ||
+        raw.contains('The term')) {
       return;
     }
 
@@ -718,7 +817,11 @@ void _parseWindowsTemperatures(Temperatures temps, String raw, {double divisor =
     }
 
     if (typeLines.isNotEmpty && valueLines.isNotEmpty) {
-      temps.parse(typeLines.join('\n'), valueLines.join('\n'), divisor: divisor);
+      temps.parse(
+        typeLines.join('\n'),
+        valueLines.join('\n'),
+        divisor: divisor,
+      );
     }
   } catch (e, s) {
     Loggers.app.warning('Failed to parse Windows temperature data', e, s);

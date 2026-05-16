@@ -5,7 +5,10 @@ final class _IntroPage extends StatelessWidget {
 
   const _IntroPage(this.pages);
 
-  static const _builders = {1: _buildAppSettings, 2: _buildBackupPasswordMigration};
+  static const _builders = {
+    1: _buildAppSettings,
+    2: _buildBackupPasswordMigration,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +21,9 @@ final class _IntroPage extends StatelessWidget {
             pages: pages_,
             onDone: (ctx) {
               Stores.setting.introVer.put(BuildData.build);
-              Navigator.of(ctx).pushReplacement(MaterialPageRoute(builder: (_) => _buildHomeWithWindowFrame()));
+              Navigator.of(ctx).pushReplacement(
+                MaterialPageRoute(builder: (_) => _buildHomeWithWindowFrame()),
+              );
             },
           ),
         );
@@ -48,12 +53,17 @@ final class _IntroPage extends StatelessWidget {
               RNodes.app.notify();
             }
           },
-          trailing: Text(ctx.localeNativeName, style: const TextStyle(fontSize: 15, color: Colors.grey)),
+          trailing: Text(
+            ctx.localeNativeName,
+            style: const TextStyle(fontSize: 15, color: Colors.grey),
+          ),
         ).cardx,
         ListTile(
           leading: const Icon(Icons.update),
           title: Text(libL10n.checkUpdate),
-          subtitle: isAndroid ? Text(l10n.fdroidReleaseTip, style: UIs.textGrey) : null,
+          subtitle: isAndroid
+              ? Text(l10n.fdroidReleaseTip, style: UIs.textGrey)
+              : null,
           trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
         ).cardx,
         ListTile(
@@ -139,8 +149,10 @@ final class _IntroPage extends StatelessWidget {
 
     // If user is upgrading from older version and doesn't have backup password set,
     // show the backup password migration page
-    final hasBackupPwd = (await SecureStoreProps.bakPwd.read())?.isNotEmpty == true;
-    final isUpgrading = lastVer > 0 && storedVer < 2; // lastVer > 0 means not first install
+    final hasBackupPwd =
+        (await SecureStoreProps.bakPwd.read())?.isNotEmpty == true;
+    final isUpgrading =
+        lastVer > 0 && storedVer < 2; // lastVer > 0 means not first install
 
     final builders = _builders.entries
         .where((e) {

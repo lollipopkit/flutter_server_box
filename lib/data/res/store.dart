@@ -19,31 +19,38 @@ abstract final class Stores {
   static SnippetStore get snippet => getIt<SnippetStore>();
   static HistoryStore get history => getIt<HistoryStore>();
   // Keep the legacy box registered so existing connection stats DB files remain intact.
-  static ConnectionStatsStore get connectionStats => getIt<ConnectionStatsStore>();
+  static ConnectionStatsStore get connectionStats =>
+      getIt<ConnectionStatsStore>();
   static PortForwardStore get portForward => getIt<PortForwardStore>();
 
   /// All stores that need backup
   static List<HiveStore> get _allBackup => [
-        setting,
-        server,
-        container,
-        key,
-        snippet,
-        history,
-        connectionStats,
-        portForward,
-      ];
+    setting,
+    server,
+    container,
+    key,
+    snippet,
+    history,
+    connectionStats,
+    portForward,
+  ];
 
   static Future<void> init() async {
     getIt.registerLazySingleton<SettingStore>(() => SettingStore.instance);
     getIt.registerLazySingleton<ServerStore>(() => ServerStore.instance);
     getIt.registerLazySingleton<ContainerStore>(() => ContainerStore.instance);
-    getIt.registerLazySingleton<PrivateKeyStore>(() => PrivateKeyStore.instance);
+    getIt.registerLazySingleton<PrivateKeyStore>(
+      () => PrivateKeyStore.instance,
+    );
     getIt.registerLazySingleton<SnippetStore>(() => SnippetStore.instance);
     getIt.registerLazySingleton<HistoryStore>(() => HistoryStore.instance);
-    getIt.registerLazySingleton<ConnectionStatsStore>(() => ConnectionStatsStore.instance);
-    getIt.registerLazySingleton<PortForwardStore>(() => PortForwardStore.instance);
-    
+    getIt.registerLazySingleton<ConnectionStatsStore>(
+      () => ConnectionStatsStore.instance,
+    );
+    getIt.registerLazySingleton<PortForwardStore>(
+      () => PortForwardStore.instance,
+    );
+
     await Future.wait(_allBackup.map((store) => store.init()));
 
     if (connectionStats.indexDbKeys.isEmpty) {

@@ -26,17 +26,32 @@ enum NetViewType {
     try {
       switch (this) {
         case NetViewType.conn:
-          return ('${libL10n.conn}:\n${ss.tcp.maxConn}', '${libL10n.fail}:\n${ss.tcp.fail}');
+          return (
+            '${libL10n.conn}:\n${ss.tcp.maxConn}',
+            '${libL10n.fail}:\n${ss.tcp.fail}',
+          );
         case NetViewType.speed:
           if (notSepcifyDev) {
-            return ('↓:\n${ss.netSpeed.cachedVals.speedIn}', '↑:\n${ss.netSpeed.cachedVals.speedOut}');
+            return (
+              '↓:\n${ss.netSpeed.cachedVals.speedIn}',
+              '↑:\n${ss.netSpeed.cachedVals.speedOut}',
+            );
           }
-          return ('↓:\n${ss.netSpeed.speedIn(device: dev)}', '↑:\n${ss.netSpeed.speedOut(device: dev)}');
+          return (
+            '↓:\n${ss.netSpeed.speedIn(device: dev)}',
+            '↑:\n${ss.netSpeed.speedOut(device: dev)}',
+          );
         case NetViewType.traffic:
           if (notSepcifyDev) {
-            return ('↓:\n${ss.netSpeed.cachedVals.sizeIn}', '↑:\n${ss.netSpeed.cachedVals.sizeOut}');
+            return (
+              '↓:\n${ss.netSpeed.cachedVals.sizeIn}',
+              '↑:\n${ss.netSpeed.cachedVals.sizeOut}',
+            );
           }
-          return ('↓:\n${ss.netSpeed.sizeIn(device: dev)}', '↑:\n${ss.netSpeed.sizeOut(device: dev)}');
+          return (
+            '↓:\n${ss.netSpeed.sizeIn(device: dev)}',
+            '↑:\n${ss.netSpeed.sizeOut(device: dev)}',
+          );
       }
     } catch (e, s) {
       Loggers.app.warning('NetViewType.build', e, s);

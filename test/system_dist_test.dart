@@ -167,7 +167,8 @@ void main() {
     });
 
     test('String.dist extension prioritizes exact matches over substring', () {
-      const input = 'kali linux'; // Contains 'linux' but 'kali' is more specific
+      const input =
+          'kali linux'; // Contains 'linux' but 'kali' is more specific
       final result = input.dist;
       expect(result, equals(Dist.kali));
     });
@@ -180,7 +181,8 @@ void main() {
 
     test('Distribution detection order follows enum order', () {
       // This test ensures that the first match in the enum is returned
-      const input = 'ubuntu'; // This could match both 'ubuntu' and 'kali' (contains 'u')
+      const input =
+          'ubuntu'; // This could match both 'ubuntu' and 'kali' (contains 'u')
       final result = input.dist;
       expect(result, equals(Dist.ubuntu)); // ubuntu comes before kali in enum
     });

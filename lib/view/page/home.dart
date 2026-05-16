@@ -206,7 +206,9 @@ class _HomePageState extends ConsumerState<HomePage>
                     ? NavigationRailLabelType.none
                     : NavigationRailLabelType.all,
                 selectedIndex: _selectIndex.value,
-                destinations: _tabs.map((tab) => tab.navRailDestination).toList(),
+                destinations: _tabs
+                    .map((tab) => tab.navRailDestination)
+                    .toList(),
                 onDestinationSelected: _onDestinationSelected,
               );
             },

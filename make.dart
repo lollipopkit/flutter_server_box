@@ -28,6 +28,13 @@ Future<int> getScriptCommitCount() async {
     print('File not found: $shellScriptPath');
     exit(1);
   }
-  final result = await Process.run('git', ['log', '--format=format:%h', shellScriptPath]);
-  return (result.stdout as String).split('\n').where((line) => line.isNotEmpty).length;
+  final result = await Process.run('git', [
+    'log',
+    '--format=format:%h',
+    shellScriptPath,
+  ]);
+  return (result.stdout as String)
+      .split('\n')
+      .where((line) => line.isNotEmpty)
+      .length;
 }

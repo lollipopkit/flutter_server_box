@@ -36,9 +36,7 @@ class SftpNotifier extends _$SftpNotifier {
       completer: completer,
       req: req,
     );
-    state = state.copyWith(
-      requests: [...state.requests, reqStat],
-    );
+    state = state.copyWith(requests: [...state.requests, reqStat]);
     return reqStat.id;
   }
 
@@ -57,8 +55,7 @@ class SftpNotifier extends _$SftpNotifier {
     }
     final item = state.requests[idx];
     item.dispose();
-    final newRequests = List<SftpReqStatus>.from(state.requests)
-      ..removeAt(idx);
+    final newRequests = List<SftpReqStatus>.from(state.requests)..removeAt(idx);
     state = state.copyWith(requests: newRequests);
   }
 

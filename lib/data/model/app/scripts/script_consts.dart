@@ -24,13 +24,16 @@ class ScriptConstants {
   static String getCmdSeparator(String cmdName) => '$separator.$cmdName';
 
   /// Generate command-specific divider for custom commands
-  static String getCustomCmdSeparator(String cmdName) => '$customCmdSep.$cmdName';
+  static String getCustomCmdSeparator(String cmdName) =>
+      '$customCmdSep.$cmdName';
 
   /// Generate command-specific divider
-  static String getCmdDivider(String cmdName) => '\necho ${getCmdSeparator(cmdName)}\n\t';
+  static String getCmdDivider(String cmdName) =>
+      '\necho ${getCmdSeparator(cmdName)}\n\t';
 
   /// Generate command-specific divider for Windows PowerShell
-  static String getWindowsCmdDivider(String cmdName) => '\n    Write-Host "${getCmdSeparator(cmdName)}"\n    ';
+  static String getWindowsCmdDivider(String cmdName) =>
+      '\n    Write-Host "${getCmdSeparator(cmdName)}"\n    ';
 
   /// Parse script output into command-specific map
   static Map<String, String> parseScriptOutput(String raw) {
@@ -122,7 +125,9 @@ class ScriptPaths {
   /// if this path is not accessible, it will be changed to
   /// [ScriptConstants.scriptDirHome]/[ScriptConstants.scriptFile].
   static String getScriptDir(String id, {bool isWindows = false}) {
-    final defaultTmpDir = isWindows ? ScriptConstants.scriptDirTmpWindows : ScriptConstants.scriptDirTmp;
+    final defaultTmpDir = isWindows
+        ? ScriptConstants.scriptDirTmpWindows
+        : ScriptConstants.scriptDirTmp;
     _scriptDirMap[id] ??= defaultTmpDir;
     return _scriptDirMap[id]!;
   }
@@ -130,20 +135,30 @@ class ScriptPaths {
   /// Switch between tmp and home directories for script storage
   static String switchScriptDir(String id, {bool isWindows = false}) {
     return switch (_scriptDirMap[id]) {
-      ScriptConstants.scriptDirTmp => _scriptDirMap[id] = ScriptConstants.scriptDirHome,
-      ScriptConstants.scriptDirTmpWindows => _scriptDirMap[id] = ScriptConstants.scriptDirHomeWindows,
-      ScriptConstants.scriptDirHome => _scriptDirMap[id] = ScriptConstants.scriptDirTmp,
-      ScriptConstants.scriptDirHomeWindows => _scriptDirMap[id] = ScriptConstants.scriptDirTmpWindows,
+      ScriptConstants.scriptDirTmp =>
+        _scriptDirMap[id] = ScriptConstants.scriptDirHome,
+      ScriptConstants.scriptDirTmpWindows =>
+        _scriptDirMap[id] = ScriptConstants.scriptDirHomeWindows,
+      ScriptConstants.scriptDirHome =>
+        _scriptDirMap[id] = ScriptConstants.scriptDirTmp,
+      ScriptConstants.scriptDirHomeWindows =>
+        _scriptDirMap[id] = ScriptConstants.scriptDirTmpWindows,
       _ =>
-        _scriptDirMap[id] = isWindows ? ScriptConstants.scriptDirHomeWindows : ScriptConstants.scriptDirHome,
+        _scriptDirMap[id] = isWindows
+            ? ScriptConstants.scriptDirHomeWindows
+            : ScriptConstants.scriptDirHome,
     };
   }
 
   /// Get the full script path for the given [id]
   static String getScriptPath(String id, {bool isWindows = false}) {
     final dir = getScriptDir(id, isWindows: isWindows);
-    final fileName = isWindows ? ScriptConstants.scriptFileWindows : ScriptConstants.scriptFile;
-    final separator = isWindows ? ScriptConstants.windowsPathSeparator : ScriptConstants.unixPathSeparator;
+    final fileName = isWindows
+        ? ScriptConstants.scriptFileWindows
+        : ScriptConstants.scriptFile;
+    final separator = isWindows
+        ? ScriptConstants.windowsPathSeparator
+        : ScriptConstants.unixPathSeparator;
     return '$dir$separator$fileName';
   }
 

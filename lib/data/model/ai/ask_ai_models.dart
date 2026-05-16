@@ -5,10 +5,7 @@ enum AskAiMessageRole { user, assistant }
 
 @immutable
 class AskAiMessage {
-  const AskAiMessage({
-    required this.role,
-    required this.content,
-  });
+  const AskAiMessage({required this.role, required this.content});
 
   final AskAiMessageRole role;
   final String content;
@@ -56,10 +53,7 @@ class AskAiToolSuggestion extends AskAiEvent {
 
 /// Signals that the stream finished successfully.
 class AskAiCompleted extends AskAiEvent {
-  const AskAiCompleted({
-    required this.fullText,
-    required this.commands,
-  });
+  const AskAiCompleted({required this.fullText, required this.commands});
 
   final String fullText;
   final List<AskAiCommand> commands;

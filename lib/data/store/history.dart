@@ -55,7 +55,13 @@ class HistoryStore extends HiveStore {
 
   late final sshCmds = _ListHistory(box: box, name: 'sshCmds');
 
-  late final sshServerHistory = _ListHistory(box: box, name: 'sshServerHistory');
+  late final sshServerHistory = _ListHistory(
+    box: box,
+    name: 'sshServerHistory',
+  );
 
-  late final writeScriptTipShown = propertyDefault('writeScriptTipShown', false);
+  late final writeScriptTipShown = propertyDefault(
+    'writeScriptTipShown',
+    false,
+  );
 }

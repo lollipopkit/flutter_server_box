@@ -90,7 +90,10 @@ extension _VirtKey on SSHPageState {
         while (initPath == null) {
           // Check if we've exceeded timeout
           if (DateTime.now().difference(startTime) > timeout) {
-            contextSafe?.showRoundDialog(title: libL10n.error, child: Text(libL10n.empty));
+            contextSafe?.showRoundDialog(
+              title: libL10n.error,
+              child: Text(libL10n.empty),
+            );
             return;
           }
 
@@ -100,7 +103,8 @@ extension _VirtKey on SSHPageState {
             final lineStr = line.toString();
             if (lineStr.contains(marker) && lineStr.contains(markerEnd)) {
               // Extract path between markers
-              final start = lineStr.indexOf(marker) + marker.length + 1; // +1 for ':'
+              final start =
+                  lineStr.indexOf(marker) + marker.length + 1; // +1 for ':'
               final end = lineStr.indexOf(markerEnd) - 1; // -1 for ':'
               if (start < end) {
                 initPath = lineStr.substring(start, end);
@@ -118,7 +122,10 @@ extension _VirtKey on SSHPageState {
         }
 
         if (!initPath.startsWith('/')) {
-          context.showRoundDialog(title: libL10n.error, child: Text('${l10n.remotePath}: $initPath'));
+          context.showRoundDialog(
+            title: libL10n.error,
+            child: Text('${l10n.remotePath}: $initPath'),
+          );
           return;
         }
 
@@ -134,7 +141,9 @@ extension _VirtKey on SSHPageState {
   void _initVirtKeys() {
     _virtKeysList.clear();
     final disabled = Stores.setting.sshVirtKeysDisabled.fetch().toSet();
-    final virtKeys = VirtKeyX.loadFromStore().where((key) => !disabled.contains(key.index)).toList();
+    final virtKeys = VirtKeyX.loadFromStore()
+        .where((key) => !disabled.contains(key.index))
+        .toList();
     for (int len = 0; len < virtKeys.length; len += 7) {
       if (len + 7 > virtKeys.length) {
         _virtKeysList.add(virtKeys.sublist(len));

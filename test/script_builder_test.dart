@@ -11,15 +11,27 @@ void main() {
         final script = builder.buildScript(null);
 
         // Basic validation
-        expect(script, isNotEmpty, reason: 'Script should not be empty for ${builder.runtimeType}');
+        expect(
+          script,
+          isNotEmpty,
+          reason: 'Script should not be empty for ${builder.runtimeType}',
+        );
 
         // Should contain all required functions
         for (final func in ShellFunc.values) {
-          expect(script, contains(func.name), reason: 'Script should contain function ${func.name}');
+          expect(
+            script,
+            contains(func.name),
+            reason: 'Script should contain function ${func.name}',
+          );
         }
 
         // Should contain proper headers
-        expect(script, contains(builder.scriptHeader), reason: 'Script should contain proper header');
+        expect(
+          script,
+          contains(builder.scriptHeader),
+          reason: 'Script should contain proper header',
+        );
 
         // Should be well-formed
         if (builder is WindowsScriptBuilder) {
@@ -34,14 +46,25 @@ void main() {
             reason: 'Windows script should have PowerShell header',
           );
         } else if (builder is UnixScriptBuilder) {
-          expect(script, contains('#!/bin/sh'), reason: 'Unix script should have shebang');
-          expect(script, contains('case \$1 in'), reason: 'Unix script should contain case statement');
+          expect(
+            script,
+            contains('#!/bin/sh'),
+            reason: 'Unix script should have shebang',
+          );
+          expect(
+            script,
+            contains('case \$1 in'),
+            reason: 'Unix script should contain case statement',
+          );
         }
       }
     });
 
     test('script generation with custom commands works correctly', () {
-      final customCmds = {'custom_test': 'echo "Custom test command"', 'another_cmd': 'whoami'};
+      final customCmds = {
+        'custom_test': 'echo "Custom test command"',
+        'another_cmd': 'whoami',
+      };
 
       for (final builder in ScriptBuilderFactory.getAllBuilders()) {
         final script = builder.buildScript(customCmds);
@@ -66,7 +89,10 @@ void main() {
       final windowsBuilder = ScriptBuilderFactory.getBuilder(true);
       final unixBuilder = ScriptBuilderFactory.getBuilder(false);
 
-      expect(windowsBuilder.scriptFileName, equals(ScriptConstants.scriptFileWindows));
+      expect(
+        windowsBuilder.scriptFileName,
+        equals(ScriptConstants.scriptFileWindows),
+      );
       expect(windowsBuilder.scriptFileName, endsWith('.ps1'));
 
       expect(unixBuilder.scriptFileName, equals(ScriptConstants.scriptFile));
@@ -88,7 +114,10 @@ void main() {
       const testPathWindows = 'C:\\temp\\test\\script.ps1';
 
       final windowsBuilder = ScriptBuilderFactory.getBuilder(true);
-      final installCmdWindows = windowsBuilder.getInstallCommand(testDirWindows, testPathWindows);
+      final installCmdWindows = windowsBuilder.getInstallCommand(
+        testDirWindows,
+        testPathWindows,
+      );
 
       expect(installCmdWindows, contains('New-Item'));
       expect(installCmdWindows, contains('Set-Content'));
@@ -107,7 +136,10 @@ void main() {
         expect(unixExec, contains(testPath));
         expect(unixExec, contains(func.flag));
 
-        final windowsExec = windowsBuilder.getExecCommand(testPathWindows, func);
+        final windowsExec = windowsBuilder.getExecCommand(
+          testPathWindows,
+          func,
+        );
         expect(windowsExec, contains('powershell'));
         expect(windowsExec, contains('-ExecutionPolicy Bypass'));
         expect(windowsExec, contains(func.flag));
@@ -118,9 +150,15 @@ void main() {
       final windowsBuilder = ScriptBuilderFactory.getBuilder(true);
       final unixBuilder = ScriptBuilderFactory.getBuilder(false);
 
-      expect(windowsBuilder.scriptHeader, contains('PowerShell script for ServerBox'));
+      expect(
+        windowsBuilder.scriptHeader,
+        contains('PowerShell script for ServerBox'),
+      );
       expect(windowsBuilder.scriptHeader, contains('DO NOT delete this file'));
-      expect(windowsBuilder.scriptHeader, contains('\$ErrorActionPreference = "SilentlyContinue"'));
+      expect(
+        windowsBuilder.scriptHeader,
+        contains('\$ErrorActionPreference = "SilentlyContinue"'),
+      );
 
       expect(unixBuilder.scriptHeader, contains('#!/bin/sh'));
       expect(unixBuilder.scriptHeader, contains('Script for ServerBox'));
@@ -130,9 +168,18 @@ void main() {
 
     test('scripts handle all system types properly', () {
       // Test that system type detection is properly handled
-      final unixScript = ShellFuncManager.allScript(null, systemType: SystemType.linux);
-      final bsdScript = ShellFuncManager.allScript(null, systemType: SystemType.bsd);
-      final windowsScript = ShellFuncManager.allScript(null, systemType: SystemType.windows);
+      final unixScript = ShellFuncManager.allScript(
+        null,
+        systemType: SystemType.linux,
+      );
+      final bsdScript = ShellFuncManager.allScript(
+        null,
+        systemType: SystemType.bsd,
+      );
+      final windowsScript = ShellFuncManager.allScript(
+        null,
+        systemType: SystemType.windows,
+      );
 
       expect(unixScript, contains('#!/bin/sh'));
       expect(bsdScript, contains('#!/bin/sh')); // BSD uses same script as Linux
@@ -146,11 +193,20 @@ void main() {
 
     test('error handling in script generation', () {
       // Test that script generation doesn't throw with edge cases
-      expect(() => ShellFuncManager.allScript({}, systemType: SystemType.linux), returnsNormally);
-      expect(() => ShellFuncManager.allScript(null, systemType: SystemType.windows), returnsNormally);
+      expect(
+        () => ShellFuncManager.allScript({}, systemType: SystemType.linux),
+        returnsNormally,
+      );
+      expect(
+        () => ShellFuncManager.allScript(null, systemType: SystemType.windows),
+        returnsNormally,
+      );
 
       // Test with empty custom commands
-      expect(() => ShellFuncManager.allScript({}, systemType: SystemType.bsd), returnsNormally);
+      expect(
+        () => ShellFuncManager.allScript({}, systemType: SystemType.bsd),
+        returnsNormally,
+      );
 
       // Test with null system type (should default to something)
       expect(() => ShellFuncManager.allScript(null), returnsNormally);

@@ -40,7 +40,12 @@ class _SshDiscoveryPageState extends ConsumerState<SshDiscoveryPage> {
     return Scaffold(
       appBar: CustomAppBar(
         title: Text(l10n.discoverSshServers),
-        actions: [IconButton(icon: const Icon(Icons.settings), onPressed: _showSettings)],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: _showSettings,
+          ),
+        ],
       ),
       body: _buildBody(),
       floatingActionButton: _isDiscovering.listenVal((discovering) {
@@ -73,7 +78,10 @@ class _SshDiscoveryPageState extends ConsumerState<SshDiscoveryPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.discoverySummary, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  l10n.discoverySummary,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 UIs.height7,
                 Text('${libL10n.found}: ${report.count} ${libL10n.servers}'),
                 Text('${libL10n.duration}: ${report.durationMs}ms'),
@@ -96,7 +104,11 @@ class _SshDiscoveryPageState extends ConsumerState<SshDiscoveryPage> {
             return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [CircularProgressIndicator(), UIs.height13, Text('Discovering SSH servers...')],
+                children: [
+                  CircularProgressIndicator(),
+                  UIs.height13,
+                  Text('Discovering SSH servers...'),
+                ],
               ),
             );
           }
@@ -136,7 +148,9 @@ class _SshDiscoveryPageState extends ConsumerState<SshDiscoveryPage> {
       trailing: const Icon(BoxIcons.bx_server),
       onTap: () {
         final updated = result.copyWith(isSelected: !result.isSelected);
-        final newResults = List<SshDiscoveryResult>.from(_discoveryResults.value);
+        final newResults = List<SshDiscoveryResult>.from(
+          _discoveryResults.value,
+        );
         newResults[index] = updated;
         _discoveryResults.value = newResults;
       },
@@ -152,10 +166,16 @@ class _SshDiscoveryPageState extends ConsumerState<SshDiscoveryPage> {
         switchOutCurve: Curves.easeInOut,
         transitionBuilder: (child, animation) {
           return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.3),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(parent: animation, curve: Curves.easeInOutBack)),
+            position:
+                Tween<Offset>(
+                  begin: const Offset(0, 0.3),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeInOutBack,
+                  ),
+                ),
             child: FadeTransition(opacity: animation, child: child),
           );
         },
@@ -204,13 +224,18 @@ class _SshDiscoveryPageState extends ConsumerState<SshDiscoveryPage> {
 
   void _showSettings() {
     context.showRoundDialog(
-      child: _DiscoverySettingsDialog(config: _config.value, onChanged: (config) => _config.value = config),
+      child: _DiscoverySettingsDialog(
+        config: _config.value,
+        onChanged: (config) => _config.value = config,
+      ),
       actions: Btnx.oks,
     );
   }
 
   void _importSelected() {
-    final selected = _discoveryResults.value.where((r) => r.isSelected).toList();
+    final selected = _discoveryResults.value
+        .where((r) => r.isSelected)
+        .toList();
     if (selected.isEmpty) return;
 
     context.pop(selected);

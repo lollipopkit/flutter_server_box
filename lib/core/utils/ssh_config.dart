@@ -8,7 +8,9 @@ abstract final class SSHConfig {
   static const String _defaultPath = '~/.ssh/config';
 
   static String? get _homePath {
-    final homePath = isWindows ? Platform.environment['USERPROFILE'] : Platform.environment['HOME'];
+    final homePath = isWindows
+        ? Platform.environment['USERPROFILE']
+        : Platform.environment['HOME'];
     if (homePath == null || homePath.isEmpty) {
       return null;
     }
@@ -41,7 +43,9 @@ abstract final class SSHConfig {
   static Future<List<Spi>> parseConfig([String? configPath]) async {
     final (file, exists) = configExists(configPath);
     if (!exists || file == null) {
-      Loggers.app.info('SSH config file does not exist at path: ${configPath ?? _defaultPath}');
+      Loggers.app.info(
+        'SSH config file does not exist at path: ${configPath ?? _defaultPath}',
+      );
       return [];
     }
 
@@ -112,7 +116,8 @@ abstract final class SSHConfig {
       var value = parts.sublist(1).join(' ');
 
       // Remove quotes from values
-      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      if ((value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))) {
         value = value.substring(1, value.length - 1);
       }
 
@@ -228,7 +233,9 @@ abstract final class SSHConfig {
       // If specific path is provided, use it directly
       final homePath = _homePath;
       if (homePath == null) {
-        Loggers.app.warning('Cannot determine home directory for SSH config parsing.');
+        Loggers.app.warning(
+          'Cannot determine home directory for SSH config parsing.',
+        );
         return (null, false);
       }
       final expandedPath = configPath.replaceFirst('~', homePath);

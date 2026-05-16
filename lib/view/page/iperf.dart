@@ -11,7 +11,10 @@ class IPerfPage extends StatefulWidget {
   @override
   State<IPerfPage> createState() => _IPerfPageState();
 
-  static const route = AppRouteArg<void, SpiRequiredArgs>(page: IPerfPage.new, path: '/iperf');
+  static const route = AppRouteArg<void, SpiRequiredArgs>(
+    page: IPerfPage.new,
+    path: '/iperf',
+  );
 }
 
 class _IPerfPageState extends State<IPerfPage> {
@@ -56,7 +59,12 @@ class _IPerfPageState extends State<IPerfPage> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 17),
       children: [
-        Input(controller: _hostCtrl, label: libL10n.host, icon: Icons.computer, suggestion: false),
+        Input(
+          controller: _hostCtrl,
+          label: libL10n.host,
+          icon: Icons.computer,
+          suggestion: false,
+        ),
         Input(
           controller: _portCtrl,
           label: libL10n.port,

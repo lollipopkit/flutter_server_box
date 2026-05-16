@@ -12,7 +12,10 @@ final class PortForwardPage extends ConsumerStatefulWidget {
 
   const PortForwardPage({super.key, required this.args});
 
-  static const route = AppRouteArg<void, SpiRequiredArgs>(page: PortForwardPage.new, path: '/port_forward');
+  static const route = AppRouteArg<void, SpiRequiredArgs>(
+    page: PortForwardPage.new,
+    path: '/port_forward',
+  );
 
   @override
   ConsumerState<PortForwardPage> createState() => _PortForwardPageState();
@@ -68,12 +71,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
     return Scaffold(
       appBar: CustomAppBar(
         title: Text('${libL10n.portForward} (Beta)'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _onAdd,
-          ),
-        ],
+        actions: [IconButton(icon: const Icon(Icons.add), onPressed: _onAdd)],
       ),
       body: _buildBody(),
     );
@@ -121,14 +119,20 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
     return ListTile(
       leading: Icon(
         isActive ? Icons.link : Icons.link_off,
-        color: isActive ? colorScheme.primary : (hasError ? colorScheme.error : colorScheme.onSurfaceVariant),
+        color: isActive
+            ? colorScheme.primary
+            : (hasError ? colorScheme.error : colorScheme.onSurfaceVariant),
       ),
       title: Text(config.name),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(config.displayAddr, style: UIs.text13Grey),
-          if (hasError) Text(status!.error!, style: TextStyle(color: colorScheme.error, fontSize: 12)),
+          if (hasError)
+            Text(
+              status!.error!,
+              style: TextStyle(color: colorScheme.error, fontSize: 12),
+            ),
         ],
       ),
       trailing: Row(
@@ -206,7 +210,12 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
           if (existing == null) {
             await _notifier.addConfig(config);
           } else {
-            final wasActive = ref.read(portForwardProvider(widget.args.spi.id)).activeForwards[existing.id]?.isActive ?? false;
+            final wasActive =
+                ref
+                    .read(portForwardProvider(widget.args.spi.id))
+                    .activeForwards[existing.id]
+                    ?.isActive ??
+                false;
             await _notifier.updateConfig(existing, config);
             if (wasActive) {
               await _notifier.startForward(config.id);
@@ -230,7 +239,8 @@ class _PortForwardConfigDialog extends StatefulWidget {
   });
 
   @override
-  State<_PortForwardConfigDialog> createState() => _PortForwardConfigDialogState();
+  State<_PortForwardConfigDialog> createState() =>
+      _PortForwardConfigDialogState();
 }
 
 class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
@@ -246,10 +256,18 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
   void initState() {
     super.initState();
     nameController = TextEditingController(text: widget.existing?.name ?? '');
-    localHostController = TextEditingController(text: widget.existing?.localHost ?? '');
-    localPortController = TextEditingController(text: widget.existing?.localPort.toString() ?? '');
-    remoteHostController = TextEditingController(text: widget.existing?.remoteHost ?? '');
-    remotePortController = TextEditingController(text: widget.existing?.remotePort?.toString() ?? '');
+    localHostController = TextEditingController(
+      text: widget.existing?.localHost ?? '',
+    );
+    localPortController = TextEditingController(
+      text: widget.existing?.localPort.toString() ?? '',
+    );
+    remoteHostController = TextEditingController(
+      text: widget.existing?.remoteHost ?? '',
+    );
+    remotePortController = TextEditingController(
+      text: widget.existing?.remotePort?.toString() ?? '',
+    );
     _selectedType = widget.existing?.type ?? PortForwardType.local;
   }
 
@@ -277,18 +295,40 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(child: Input(controller: localHostController, hint: _localHostHint)),
+                Expanded(
+                  child: Input(
+                    controller: localHostController,
+                    hint: _localHostHint,
+                  ),
+                ),
                 const SizedBox(width: 8),
-                Expanded(child: Input(controller: localPortController, hint: _localPortHint, type: TextInputType.number)),
+                Expanded(
+                  child: Input(
+                    controller: localPortController,
+                    hint: _localPortHint,
+                    type: TextInputType.number,
+                  ),
+                ),
               ],
             ),
             if (_selectedType != PortForwardType.dynamic) ...[
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Expanded(child: Input(controller: remoteHostController, hint: _remoteHostHint)),
+                  Expanded(
+                    child: Input(
+                      controller: remoteHostController,
+                      hint: _remoteHostHint,
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(child: Input(controller: remotePortController, hint: _remotePortHint, type: TextInputType.number)),
+                  Expanded(
+                    child: Input(
+                      controller: remotePortController,
+                      hint: _remotePortHint,
+                      type: TextInputType.number,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -297,9 +337,7 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
       ),
       actions: [
         Btn.cancel(),
-        Btn.ok(
-          onTap: _onSave,
-        ),
+        Btn.ok(onTap: _onSave),
       ],
     );
   }
@@ -308,11 +346,13 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
 
   String get _localPortHint => context.l10n.portForward_localPort;
 
-  String get _remoteHostHint =>
-      _selectedType == PortForwardType.dynamic ? '' : context.l10n.portForward_remoteHost;
+  String get _remoteHostHint => _selectedType == PortForwardType.dynamic
+      ? ''
+      : context.l10n.portForward_remoteHost;
 
-  String get _remotePortHint =>
-      _selectedType == PortForwardType.dynamic ? '' : context.l10n.portForward_remotePort;
+  String get _remotePortHint => _selectedType == PortForwardType.dynamic
+      ? ''
+      : context.l10n.portForward_remotePort;
 
   Widget _buildTypeSelector() {
     return SegmentedButton<PortForwardType>(
@@ -358,7 +398,10 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
       final remoteHost = remoteHostController.text.trim();
       final remotePort = int.tryParse(remotePortController.text.trim()) ?? 0;
 
-      if (name.isEmpty || localHost.isEmpty || localPort <= 0 || localPort > 65535) {
+      if (name.isEmpty ||
+          localHost.isEmpty ||
+          localPort <= 0 ||
+          localPort > 65535) {
         if (mounted) context.showSnackBar(libL10n.invalid);
         return;
       }
@@ -377,8 +420,12 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
         type: _selectedType,
         localHost: localHost,
         localPort: localPort,
-        remoteHost: _selectedType == PortForwardType.dynamic ? null : remoteHost,
-        remotePort: _selectedType == PortForwardType.dynamic ? null : remotePort,
+        remoteHost: _selectedType == PortForwardType.dynamic
+            ? null
+            : remoteHost,
+        remotePort: _selectedType == PortForwardType.dynamic
+            ? null
+            : remotePort,
       );
 
       await widget.onSave(config);

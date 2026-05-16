@@ -25,7 +25,9 @@ abstract final class PlatformPublicSettings {
       success: (can) {
         return ListTile(
           title: Text('${libL10n.delay} (${libL10n.second})'),
-          trailing: can == true ? Stores.setting.delayBioAuthLock.fieldWidget() : null,
+          trailing: can == true
+              ? Stores.setting.delayBioAuthLock.fieldWidget()
+              : null,
         );
       },
     );
@@ -46,7 +48,9 @@ abstract final class PlatformPublicSettings {
         can ??= false;
         return ListTile(
           title: Text(libL10n.switch_),
-          subtitle: can ? null : Text(libL10n.notExistFmt(libL10n.bioAuth), style: UIs.textGrey),
+          subtitle: can
+              ? null
+              : Text(libL10n.notExistFmt(libL10n.bioAuth), style: UIs.textGrey),
           trailing: can
               ? StoreSwitch(
                   prop: Stores.setting.useBioAuth,

@@ -4,7 +4,14 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:xterm/core.dart';
 
-enum VirtualKeyFunc { toggleIME, backspace, clipboard, snippet, file, sudoPassword }
+enum VirtualKeyFunc {
+  toggleIME,
+  backspace,
+  clipboard,
+  snippet,
+  file,
+  sudoPassword,
+}
 
 enum VirtKey {
   esc,

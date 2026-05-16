@@ -5,13 +5,20 @@ final class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
   final void Function(String) onTagChanged;
   final String initTag;
 
-  const _TopBar({required this.initTag, required this.onTagChanged, required this.tags});
+  const _TopBar({
+    required this.initTag,
+    required this.onTagChanged,
+    required this.tags,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final breakpoints = ResponsiveBreakpoints.of(context);
     final isMobile = breakpoints.isMobile;
-    final padding = EdgeInsets.only(left: isMobile ? 10 : 16, right: isMobile ? 0 : 16);
+    final padding = EdgeInsets.only(
+      left: isMobile ? 10 : 16,
+      right: isMobile ? 0 : 16,
+    );
 
     final Widget leading;
     if (isMobile) {
@@ -37,7 +44,9 @@ final class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
       final order = servers.serverOrder;
       var connected = 0;
       for (final id in order) {
-        final conn = ref.watch(serverProvider(id).select((value) => value.conn));
+        final conn = ref.watch(
+          serverProvider(id).select((value) => value.conn),
+        );
         if (conn.index >= ServerConn.connected.index) connected++;
       }
       final total = order.length;
@@ -48,7 +57,10 @@ final class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
           message: context.l10n.connectionStats,
           child: InkWell(
             onTap: () => ConnectionStatsPage.route.go(context),
-            child: Text(connectionText, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            child: Text(
+              connectionText,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
           ),
         ),
       );

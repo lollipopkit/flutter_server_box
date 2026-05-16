@@ -174,7 +174,7 @@ abstract final class GithubIds {
     'agczsz',
     'kuilei0926',
     'ci-sourcerer',
-    'misaki258'
+    'misaki258',
   };
 }
 

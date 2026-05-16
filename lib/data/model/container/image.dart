@@ -24,7 +24,14 @@ final class PodmanImg implements ContainerImg {
   final int? size;
   final int? containers;
 
-  PodmanImg({this.repository, this.tag, this.id, this.created, this.size, this.containers});
+  PodmanImg({
+    this.repository,
+    this.tag,
+    this.id,
+    this.created,
+    this.size,
+    this.containers,
+  });
 
   @override
   String? get sizeMB => size?.bytes2Str;
@@ -32,7 +39,8 @@ final class PodmanImg implements ContainerImg {
   @override
   int? get containersCount => containers;
 
-  factory PodmanImg.fromRawJson(String str) => PodmanImg.fromJson(json.decode(str));
+  factory PodmanImg.fromRawJson(String str) =>
+      PodmanImg.fromJson(json.decode(str));
 
   String toRawJson() => json.encode(toJson());
 
@@ -79,9 +87,11 @@ final class DockerImg implements ContainerImg {
   String? get sizeMB => size;
 
   @override
-  int? get containersCount => containers == 'N/A' ? 0 : int.tryParse(containers);
+  int? get containersCount =>
+      containers == 'N/A' ? 0 : int.tryParse(containers);
 
-  factory DockerImg.fromRawJson(String str) => DockerImg.fromJson(json.decode(str));
+  factory DockerImg.fromRawJson(String str) =>
+      DockerImg.fromJson(json.decode(str));
 
   String toRawJson() => json.encode(toJson());
 

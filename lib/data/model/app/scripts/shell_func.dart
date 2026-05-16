@@ -26,7 +26,11 @@ enum ShellFunc {
 
   /// Execute this shell function on the specified server
   String exec(String id, {SystemType? systemType, required String? customDir}) {
-    final scriptPath = ShellFuncManager.getScriptPath(id, systemType: systemType, customDir: customDir);
+    final scriptPath = ShellFuncManager.getScriptPath(
+      id,
+      systemType: systemType,
+      customDir: customDir,
+    );
     final isWindows = systemType == SystemType.windows;
     final builder = ScriptBuilderFactory.getBuilder(isWindows);
 
@@ -40,7 +44,9 @@ class ShellFuncManager {
 
   /// Normalize a directory path to ensure it doesn't end with trailing separators
   static String _normalizeDir(String dir, bool isWindows) {
-    final separator = isWindows ? ScriptConstants.windowsPathSeparator : ScriptConstants.unixPathSeparator;
+    final separator = isWindows
+        ? ScriptConstants.windowsPathSeparator
+        : ScriptConstants.unixPathSeparator;
 
     // Remove all trailing separators
     final pattern = RegExp('${RegExp.escape(separator)}+\$');
@@ -50,7 +56,11 @@ class ShellFuncManager {
   /// Get the script directory for the given [id].
   ///
   /// Checks for custom script directory first, then falls back to default.
-  static String getScriptDir(String id, {SystemType? systemType, required String? customDir}) {
+  static String getScriptDir(
+    String id, {
+    SystemType? systemType,
+    required String? customDir,
+  }) {
     final isWindows = systemType == SystemType.windows;
 
     if (customDir != null) return _normalizeDir(customDir, isWindows);
@@ -64,12 +74,20 @@ class ShellFuncManager {
   }
 
   /// Get the full script path for the given [id]
-  static String getScriptPath(String id, {SystemType? systemType, required String? customDir}) {
+  static String getScriptPath(
+    String id, {
+    SystemType? systemType,
+    required String? customDir,
+  }) {
     if (customDir != null) {
       final isWindows = systemType == SystemType.windows;
       final normalizedDir = _normalizeDir(customDir, isWindows);
-      final fileName = isWindows ? ScriptConstants.scriptFileWindows : ScriptConstants.scriptFile;
-      final separator = isWindows ? ScriptConstants.windowsPathSeparator : ScriptConstants.unixPathSeparator;
+      final fileName = isWindows
+          ? ScriptConstants.scriptFileWindows
+          : ScriptConstants.scriptFile;
+      final separator = isWindows
+          ? ScriptConstants.windowsPathSeparator
+          : ScriptConstants.unixPathSeparator;
       return '$normalizedDir$separator$fileName';
     }
 
@@ -78,12 +96,22 @@ class ShellFuncManager {
   }
 
   /// Get the installation shell command for the script
-  static String getInstallShellCmd(String id, {SystemType? systemType, required String? customDir}) {
-    final scriptDir = getScriptDir(id, systemType: systemType, customDir: customDir);
+  static String getInstallShellCmd(
+    String id, {
+    SystemType? systemType,
+    required String? customDir,
+  }) {
+    final scriptDir = getScriptDir(
+      id,
+      systemType: systemType,
+      customDir: customDir,
+    );
     final isWindows = systemType == SystemType.windows;
     final normalizedDir = _normalizeDir(scriptDir, isWindows);
     final builder = ScriptBuilderFactory.getBuilder(isWindows);
-    final separator = isWindows ? ScriptConstants.windowsPathSeparator : ScriptConstants.unixPathSeparator;
+    final separator = isWindows
+        ? ScriptConstants.windowsPathSeparator
+        : ScriptConstants.unixPathSeparator;
     final scriptPath = '$normalizedDir$separator${builder.scriptFileName}';
 
     return builder.getInstallCommand(normalizedDir, scriptPath);

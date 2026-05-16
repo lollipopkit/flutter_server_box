@@ -14,7 +14,10 @@ class BackupService {
       final saved = await SecureStoreProps.bakPwd.read();
       final password = saved?.isEmpty == true ? null : saved;
 
-      final path = await BackupV2.backup(null, password?.isEmpty == true ? null : password);
+      final path = await BackupV2.backup(
+        null,
+        password?.isEmpty == true ? null : password,
+      );
       await source.saveContent(path);
 
       if (source is ClipboardBackupSource) {
@@ -65,44 +68,59 @@ class BackupService {
     if (savedPassword != null && savedPassword.isNotEmpty) {
       try {
         final (backup, err) = await context.showLoadingDialog(
-          fn: () => Computer.shared.start((args) => MergeableUtils.fromJsonString(args.$1, args.$2), (
-            text,
-            savedPassword,
-          )),
+          fn: () => Computer.shared.start(
+            (args) => MergeableUtils.fromJsonString(args.$1, args.$2),
+            (text, savedPassword),
+          ),
         );
         if (err == null && backup != null) {
           await _confirmAndRestore(context, backup);
           return;
         }
       } catch (e, s) {
-        Loggers.app.warning('Failed to restore with saved password, will prompt for manual input', e, s);
+        Loggers.app.warning(
+          'Failed to restore with saved password, will prompt for manual input',
+          e,
+          s,
+        );
       }
     }
 
     // Prompt for password with retry logic
     while (true) {
-      password = await _showPasswordDialog(context, title: libL10n.pwd, hint: l10n.backupEncrypted);
+      password = await _showPasswordDialog(
+        context,
+        title: libL10n.pwd,
+        hint: l10n.backupEncrypted,
+      );
       if (password == null) return; // User cancelled
 
       try {
         final (backup, err) = await context.showLoadingDialog(
-          fn: () => Computer.shared.start((args) => MergeableUtils.fromJsonString(args.$1, args.$2), (
-            text,
-            password,
-          )),
+          fn: () => Computer.shared.start(
+            (args) => MergeableUtils.fromJsonString(args.$1, args.$2),
+            (text, password),
+          ),
         );
         if (err != null || backup == null) continue;
 
         await _confirmAndRestore(context, backup);
         return;
       } catch (e) {
-        if (e.toString().contains('incorrect password') || e.toString().contains('Failed to decrypt')) {
+        if (e.toString().contains('incorrect password') ||
+            e.toString().contains('Failed to decrypt')) {
           final retry = await context.showRoundDialog<bool>(
             title: l10n.backupPasswordWrong,
             child: Text(l10n.backupPasswordWrong),
             actions: [
-              TextButton(onPressed: () => context.pop(false), child: Text(libL10n.cancel)),
-              TextButton(onPressed: () => context.pop(true), child: Text(libL10n.retry)),
+              TextButton(
+                onPressed: () => context.pop(false),
+                child: Text(libL10n.cancel),
+              ),
+              TextButton(
+                onPressed: () => context.pop(true),
+                child: Text(libL10n.retry),
+              ),
             ],
           );
           if (retry != true) return;
@@ -117,10 +135,17 @@ class BackupService {
   }
 
   /// Confirm and execute restore operation
-  static Future<void> _confirmAndRestore(BuildContext context, (dynamic, String) backup) async {
+  static Future<void> _confirmAndRestore(
+    BuildContext context,
+    (dynamic, String) backup,
+  ) async {
     await context.showRoundDialog(
       title: libL10n.restore,
-      child: Text(libL10n.askContinue('${libL10n.restore} ${libL10n.backup}(${backup.$2})')),
+      child: Text(
+        libL10n.askContinue(
+          '${libL10n.restore} ${libL10n.backup}(${backup.$2})',
+        ),
+      ),
       actions: [
         Btn.cancel(),
         Btn.ok(
@@ -163,7 +188,10 @@ class BackupService {
       ),
       actions: [
         Btn.cancel(),
-        TextButton(onPressed: () => context.pop(controller.text), child: Text(libL10n.ok)),
+        TextButton(
+          onPressed: () => context.pop(controller.text),
+          child: Text(libL10n.ok),
+        ),
       ],
     );
     controller.dispose();

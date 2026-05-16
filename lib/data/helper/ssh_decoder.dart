@@ -31,7 +31,9 @@ class SSHDecoder {
       // For Windows with replacement chars, log and try GBK fallback
       if (isWindows && result.contains('�')) {
         final contextInfo = context != null ? ' [$context]' : '';
-        Loggers.app.info('UTF-8 decode has replacement chars$contextInfo, trying GBK fallback');
+        Loggers.app.info(
+          'UTF-8 decode has replacement chars$contextInfo, trying GBK fallback',
+        );
       }
     } catch (e) {
       final contextInfo = context != null ? ' [$context]' : '';

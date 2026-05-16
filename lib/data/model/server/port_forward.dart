@@ -50,8 +50,7 @@ abstract class PortForwardConfig with _$PortForwardConfig {
   const PortForwardConfig._();
 
   String get displayAddr {
-    final localBindHost =
-        localHost ?? 'localhost';
+    final localBindHost = localHost ?? 'localhost';
     if (type == PortForwardType.dynamic) {
       return '$localBindHost:$localPort (SOCKS5)';
     }

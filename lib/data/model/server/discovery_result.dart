@@ -12,7 +12,8 @@ abstract class SshDiscoveryResult with _$SshDiscoveryResult {
     @Default(false) bool isSelected,
   }) = _SshDiscoveryResult;
 
-  factory SshDiscoveryResult.fromJson(Map<String, dynamic> json) => _$SshDiscoveryResultFromJson(json);
+  factory SshDiscoveryResult.fromJson(Map<String, dynamic> json) =>
+      _$SshDiscoveryResultFromJson(json);
 }
 
 @freezed
@@ -24,7 +25,8 @@ abstract class SshDiscoveryReport with _$SshDiscoveryReport {
     required List<SshDiscoveryResult> items,
   }) = _SshDiscoveryReport;
 
-  factory SshDiscoveryReport.fromJson(Map<String, dynamic> json) => _$SshDiscoveryReportFromJson(json);
+  factory SshDiscoveryReport.fromJson(Map<String, dynamic> json) =>
+      _$SshDiscoveryReportFromJson(json);
 }
 
 @freezed

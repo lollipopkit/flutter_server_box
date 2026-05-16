@@ -85,7 +85,6 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _updateOffset();
   }
 
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -108,7 +107,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   Widget _buildScaffold(Widget child) {
     return Scaffold(
-      appBar: _TopBar(tags: _tags, onTagChanged: (p0) => _tag.value = p0, initTag: _tag.value),
+      appBar: _TopBar(
+        tags: _tags,
+        onTagChanged: (p0) => _tag.value = p0,
+        initTag: _tag.value,
+      ),
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _autoHideCtrl.show,
@@ -160,7 +163,10 @@ class _ServerPageState extends ConsumerState<ServerPage>
     return LayoutBuilder(
       builder: (_, cons) {
         // Calculate number of columns based on available width
-        final columnsCount = math.max(1, (cons.maxWidth / UIs.columnWidth).floor());
+        final columnsCount = math.max(
+          1,
+          (cons.maxWidth / UIs.columnWidth).floor(),
+        );
         final padding = columnsCount > 1
             ? const EdgeInsets.fromLTRB(0, 0, 5, 7)
             : const EdgeInsets.fromLTRB(7, 0, 7, 7);
@@ -184,7 +190,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
                   // Last item is just spacing
                   if (index == lens) return SizedBox(height: 77);
 
-                  final individualState = ref.watch(serverProvider(serversInThisColumn[index]));
+                  final individualState = ref.watch(
+                    serverProvider(serversInThisColumn[index]),
+                  );
 
                   return _buildEachServerCard(individualState);
                 },
@@ -217,7 +225,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   /// The child's width mat not equal to 1/4 of the screen width,
   /// so we need to wrap it with a SizedBox.
-  Widget _wrapWithSizedbox(Widget child, double maxWidth, [bool circle = false]) {
+  Widget _wrapWithSizedbox(
+    Widget child,
+    double maxWidth, [
+    bool circle = false,
+  ]) {
     return LayoutBuilder(
       builder: (_, cons) {
         final width = (maxWidth - _cardPad) / 4;
@@ -321,14 +333,23 @@ class _ServerPageState extends ConsumerState<ServerPage>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _wrapWithSizedbox(PercentCircle(percent: ss.cpu.usedPercent()), maxWidth, true),
-                _wrapWithSizedbox(PercentCircle(percent: ss.mem.usedPercent * 100), maxWidth, true),
+                _wrapWithSizedbox(
+                  PercentCircle(percent: ss.cpu.usedPercent()),
+                  maxWidth,
+                  true,
+                ),
+                _wrapWithSizedbox(
+                  PercentCircle(percent: ss.mem.usedPercent * 100),
+                  maxWidth,
+                  true,
+                ),
                 _wrapWithSizedbox(_buildNet(ss, spi.id), maxWidth),
                 _wrapWithSizedbox(_buildDisk(ss, spi.id), maxWidth),
               ],
             ),
             UIs.height13,
-            if (Stores.setting.moveServerFuncs.fetch()) SizedBox(height: 27, child: ServerFuncBtns(spi: spi)),
+            if (Stores.setting.moveServerFuncs.fetch())
+              SizedBox(height: 27, child: ServerFuncBtns(spi: spi)),
           ],
         );
       },

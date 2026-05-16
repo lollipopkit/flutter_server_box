@@ -9,67 +9,76 @@ import 'package:server_box/data/res/status.dart';
 
 void main() {
   group('Server status snapshot parsing', () {
-    test('invalid linux payload does not reuse previous disk and metadata state', () async {
-      final previous = _createPreviousStatus();
+    test(
+      'invalid linux payload does not reuse previous disk and metadata state',
+      () async {
+        final previous = _createPreviousStatus();
 
-      final result = await getStatus(
-        ServerStatusUpdateReq(
-          system: SystemType.linux,
-          ss: previous,
-          parsedOutput: {
-            StatusCmdType.time.name: '1710000000',
-            StatusCmdType.disk.name: 'not a valid disk payload',
-            StatusCmdType.host.name: '',
-            StatusCmdType.sensors.name: '',
-          },
-          customCmds: const {},
-        ),
-      );
+        final result = await getStatus(
+          ServerStatusUpdateReq(
+            system: SystemType.linux,
+            ss: previous,
+            parsedOutput: {
+              StatusCmdType.time.name: '1710000000',
+              StatusCmdType.disk.name: 'not a valid disk payload',
+              StatusCmdType.host.name: '',
+              StatusCmdType.sensors.name: '',
+            },
+            customCmds: const {},
+          ),
+        );
 
-      _expectClearedResult(result);
-      _expectPreviousStatusImmutableFields(previous);
-    });
+        _expectClearedResult(result);
+        _expectPreviousStatusImmutableFields(previous);
+      },
+    );
 
-    test('invalid bsd payload does not reuse previous disk and metadata state', () async {
-      final previous = _createPreviousStatus();
+    test(
+      'invalid bsd payload does not reuse previous disk and metadata state',
+      () async {
+        final previous = _createPreviousStatus();
 
-      final result = await getStatus(
-        ServerStatusUpdateReq(
-          system: SystemType.bsd,
-          ss: previous,
-          parsedOutput: {
-            BSDStatusCmdType.time.name: '1710000000',
-            BSDStatusCmdType.disk.name: 'not a valid disk payload',
-            BSDStatusCmdType.host.name: '',
-          },
-          customCmds: const {},
-        ),
-      );
+        final result = await getStatus(
+          ServerStatusUpdateReq(
+            system: SystemType.bsd,
+            ss: previous,
+            parsedOutput: {
+              BSDStatusCmdType.time.name: '1710000000',
+              BSDStatusCmdType.disk.name: 'not a valid disk payload',
+              BSDStatusCmdType.host.name: '',
+            },
+            customCmds: const {},
+          ),
+        );
 
-      _expectBsdClearedResult(result);
-      _expectPreviousStatusImmutableFields(previous);
-    });
+        _expectBsdClearedResult(result);
+        _expectPreviousStatusImmutableFields(previous);
+      },
+    );
 
-    test('invalid windows payload does not reuse previous disk and metadata state', () async {
-      final previous = _createPreviousStatus();
+    test(
+      'invalid windows payload does not reuse previous disk and metadata state',
+      () async {
+        final previous = _createPreviousStatus();
 
-      final result = await getStatus(
-        ServerStatusUpdateReq(
-          system: SystemType.windows,
-          ss: previous,
-          parsedOutput: {
-            WindowsStatusCmdType.time.name: '1710000000',
-            WindowsStatusCmdType.disk.name: 'not a valid disk payload',
-            WindowsStatusCmdType.host.name: '',
-            WindowsStatusCmdType.temp.name: '',
-          },
-          customCmds: const {},
-        ),
-      );
+        final result = await getStatus(
+          ServerStatusUpdateReq(
+            system: SystemType.windows,
+            ss: previous,
+            parsedOutput: {
+              WindowsStatusCmdType.time.name: '1710000000',
+              WindowsStatusCmdType.disk.name: 'not a valid disk payload',
+              WindowsStatusCmdType.host.name: '',
+              WindowsStatusCmdType.temp.name: '',
+            },
+            customCmds: const {},
+          ),
+        );
 
-      _expectClearedResult(result);
-      _expectPreviousStatusImmutableFields(previous);
-    });
+        _expectClearedResult(result);
+        _expectPreviousStatusImmutableFields(previous);
+      },
+    );
 
     test('valid bsd disk payload computes disk usage summary', () async {
       final result = await getStatus(
@@ -101,7 +110,8 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
           system: SystemType.bsd,
           ss: previous,
           parsedOutput: {
-            BSDStatusCmdType.cpu.name: 'CPU usage: 14.70% user, 12.76% sys, 72.52% idle',
+            BSDStatusCmdType.cpu.name:
+                'CPU usage: 14.70% user, 12.76% sys, 72.52% idle',
           },
           customCmds: const {},
         ),

@@ -9,7 +9,9 @@ part 'private_key.g.dart';
 
 @freezed
 abstract class PrivateKeyState with _$PrivateKeyState {
-  const factory PrivateKeyState({@Default(<PrivateKeyInfo>[]) List<PrivateKeyInfo> keys}) = _PrivateKeyState;
+  const factory PrivateKeyState({
+    @Default(<PrivateKeyInfo>[]) List<PrivateKeyInfo> keys,
+  }) = _PrivateKeyState;
 }
 
 @Riverpod(keepAlive: true)

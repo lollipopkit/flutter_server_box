@@ -41,7 +41,8 @@ final class ServerCustom {
     this.scriptDir,
   });
 
-  factory ServerCustom.fromJson(Map<String, dynamic> json) => _$ServerCustomFromJson(json);
+  factory ServerCustom.fromJson(Map<String, dynamic> json) =>
+      _$ServerCustomFromJson(json);
 
   Map<String, dynamic> toJson() => _$ServerCustomToJson(this);
 

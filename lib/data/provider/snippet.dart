@@ -36,7 +36,10 @@ class SnippetNotifier extends _$SnippetNotifier {
 
     List<Snippet> orderedSnippets = snippets;
     if (order.isNotEmpty) {
-      final surplus = snippets.reorder(order: order, finder: (n, name) => n.name == name);
+      final surplus = snippets.reorder(
+        order: order,
+        finder: (n, name) => n.name == name,
+      );
       order.removeWhere((e) => surplus.any((ele) => ele == e));
       if (order != Stores.setting.snippetOrder.fetch()) {
         Stores.setting.snippetOrder.put(order);
@@ -77,7 +80,9 @@ class SnippetNotifier extends _$SnippetNotifier {
   }
 
   void update(Snippet old, Snippet newOne) {
-    final newSnippets = state.snippets.map((s) => s == old ? newOne : s).toList();
+    final newSnippets = state.snippets
+        .map((s) => s == old ? newOne : s)
+        .toList();
     final newTags = _computeTags(newSnippets);
     state = state.copyWith(snippets: newSnippets, tags: newTags);
     Stores.snippet.delete(old);

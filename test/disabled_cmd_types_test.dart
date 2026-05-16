@@ -19,7 +19,10 @@ void main() {
 
       // Linux-specific commands should be removed
       expect(script, isNot(contains('cat /proc/net/dev'))); // net
-      expect(script, isNot(contains('cat /etc/*-release | grep ^PRETTY_NAME'))); // sys
+      expect(
+        script,
+        isNot(contains('cat /etc/*-release | grep ^PRETTY_NAME')),
+      ); // sys
 
       // Other commands should remain
       expect(script, contains('uptime'));
@@ -116,4 +119,3 @@ void main() {
     });
   });
 }
-

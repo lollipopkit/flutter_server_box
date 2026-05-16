@@ -32,7 +32,11 @@ Future<void> _runInZone(Future<void> Function() body) async {
     },
   );
 
-  await runZonedGuarded(body, (e, s) => print('[ZONE] $e\n$s'), zoneSpecification: zoneSpec);
+  await runZonedGuarded(
+    body,
+    (e, s) => print('[ZONE] $e\n$s'),
+    zoneSpecification: zoneSpec,
+  );
 }
 
 Future<void> _initApp() async {
@@ -86,7 +90,9 @@ Future<void> _doPlatformRelated() async {
   }
 
   final serversCount = Stores.server.keys().length;
-  await Computer.shared.turnOn(workersCount: (serversCount / 3).round() + 1); // Plus 1 to avoid 0.
+  await Computer.shared.turnOn(
+    workersCount: (serversCount / 3).round() + 1,
+  ); // Plus 1 to avoid 0.
 }
 
 // It may contains some async heavy funcs.

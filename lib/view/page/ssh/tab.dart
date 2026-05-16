@@ -475,7 +475,6 @@ extension on _SSHTabPageState {
       ],
     );
   }
-
 }
 
 final class _TabBar extends StatelessWidget implements PreferredSizeWidget {

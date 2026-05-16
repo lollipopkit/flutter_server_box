@@ -7,7 +7,9 @@ import 'package:server_box/data/res/store.dart';
 
 extension LogoExt on ServerState {
   String? getLogoUrl(BuildContext context) {
-    var logoUrl = spi.custom?.logoUrl ?? Stores.setting.serverLogoUrl.fetch().selfNotEmptyOrNull;
+    var logoUrl =
+        spi.custom?.logoUrl ??
+        Stores.setting.serverLogoUrl.fetch().selfNotEmptyOrNull;
     if (logoUrl == null) {
       return null;
     }
@@ -15,7 +17,10 @@ extension LogoExt on ServerState {
     if (dist != null) {
       logoUrl = logoUrl.replaceFirst('{DIST}', dist.name);
     }
-    logoUrl = logoUrl.replaceFirst('{BRIGHT}', context.isDark ? 'dark' : 'light');
+    logoUrl = logoUrl.replaceFirst(
+      '{BRIGHT}',
+      context.isDark ? 'dark' : 'light',
+    );
     return logoUrl;
   }
 }

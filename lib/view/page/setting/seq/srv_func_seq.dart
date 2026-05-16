@@ -9,7 +9,10 @@ class ServerFuncBtnsOrderPage extends StatefulWidget {
   @override
   State<ServerFuncBtnsOrderPage> createState() => _ServerDetailOrderPageState();
 
-  static const route = AppRouteNoArg(page: ServerFuncBtnsOrderPage.new, path: '/setting/seq/srv_func');
+  static const route = AppRouteNoArg(
+    page: ServerFuncBtnsOrderPage.new,
+    path: '/setting/seq/srv_func',
+  );
 }
 
 class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
@@ -27,7 +30,10 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
     return ValBuilder(
       listenable: prop.listenable(),
       builder: (keys) {
-        final disabled = ServerFuncBtn.values.map((e) => e.index).where((e) => !keys.contains(e)).toList();
+        final disabled = ServerFuncBtn.values
+            .map((e) => e.index)
+            .where((e) => !keys.contains(e))
+            .toList();
         final allKeys = [...keys, ...disabled];
         return ReorderableListView.builder(
           key: const PageStorageKey('srv_func_seq'),

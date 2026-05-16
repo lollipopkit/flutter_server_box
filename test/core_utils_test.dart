@@ -12,8 +12,9 @@ void main() {
     test('thenCompareBy sorts correctly', () {
       final list = [('b', '2'), ('a', '3'), ('b', '1')];
       list.sort(
-        ChainComparator.comparing<(String, String), String>((t) => t.$1)
-            .thenCompareBy<String>((t) => t.$2, reversed: false).call,
+        ChainComparator.comparing<(String, String), String>(
+          (t) => t.$1,
+        ).thenCompareBy<String>((t) => t.$2, reversed: false).call,
       );
       expect(list, equals([('a', '3'), ('b', '1'), ('b', '2')]));
     });
@@ -21,24 +22,29 @@ void main() {
     test('thenCompareBy with reversed sorts correctly', () {
       final list = [('b', '2'), ('a', '3'), ('b', '1')];
       list.sort(
-        ChainComparator.comparing<(String, String), String>((t) => t.$1)
-            .thenCompareBy<String>((t) => t.$2, reversed: true).call,
+        ChainComparator.comparing<(String, String), String>(
+          (t) => t.$1,
+        ).thenCompareBy<String>((t) => t.$2, reversed: true).call,
       );
       expect(list, equals([('a', '3'), ('b', '2'), ('b', '1')]));
     });
 
     test('thenWithComparator sorts correctly', () {
       final list = ['b', 'c', 'a'];
-      list.sort(ChainComparator.comparing<String, String>((s) => s)
-          .thenWithComparator((a, b) => a.length.compareTo(b.length)).call);
+      list.sort(
+        ChainComparator.comparing<String, String>(
+          (s) => s,
+        ).thenWithComparator((a, b) => a.length.compareTo(b.length)).call,
+      );
       expect(list, equals(['a', 'b', 'c']));
     });
 
     test('thenCompareByReversed sorts correctly', () {
       final list = [('b', '2'), ('a', '3'), ('b', '1')];
       list.sort(
-        ChainComparator.comparing<(String, String), String>((t) => t.$1)
-            .thenCompareByReversed<String>((t) => t.$2).call,
+        ChainComparator.comparing<(String, String), String>(
+          (t) => t.$1,
+        ).thenCompareByReversed<String>((t) => t.$2).call,
       );
       expect(list, equals([('a', '3'), ('b', '2'), ('b', '1')]));
     });
@@ -46,7 +52,10 @@ void main() {
     test('thenTrueFirst sorts correctly', () {
       final list = [('a', false), ('b', true), ('c', false)];
       list.sort(
-        ChainComparator.empty().thenTrueFirst((t) => t.$2).thenWithComparator((a, b) => a.$1.compareTo(b.$1)).call,
+        ChainComparator.empty()
+            .thenTrueFirst((t) => t.$2)
+            .thenWithComparator((a, b) => a.$1.compareTo(b.$1))
+            .call,
       );
       expect(list, equals([('b', true), ('a', false), ('c', false)]));
     });
@@ -66,10 +75,15 @@ void main() {
       expect(list, equals(['a', 'b', 'C']));
     });
 
-    test('compareStringCaseInsensitive with uppercaseFirst sorts correctly', () {
-      final list = ['b', 'C', 'a', 'B'];
-      list.sort(Comparators.compareStringCaseInsensitive(uppercaseFirst: true));
-      expect(list, equals(['a', 'B', 'b', 'C']));
-    });
+    test(
+      'compareStringCaseInsensitive with uppercaseFirst sorts correctly',
+      () {
+        final list = ['b', 'C', 'a', 'B'];
+        list.sort(
+          Comparators.compareStringCaseInsensitive(uppercaseFirst: true),
+        );
+        expect(list, equals(['a', 'B', 'b', 'C']));
+      },
+    );
   });
 }

@@ -46,12 +46,16 @@ void main() {
     });
 
     test('preserves surrogate pairs when trimming oversized input', () {
-      final oversized = 'a' * (TerminalOutputBuffer.maxBufferedChars - 1) + '😀';
+      final oversized =
+          'a' * (TerminalOutputBuffer.maxBufferedChars - 1) + '😀';
       final buffer = TerminalOutputBuffer()..add(oversized);
 
       expect(buffer.pendingChars, TerminalOutputBuffer.maxBufferedChars);
       expect(buffer.droppedChars, 1);
-      expect(buffer.drainAll(), 'a' * (TerminalOutputBuffer.maxBufferedChars - 2) + '😀');
+      expect(
+        buffer.drainAll(),
+        'a' * (TerminalOutputBuffer.maxBufferedChars - 2) + '😀',
+      );
     });
   });
 }

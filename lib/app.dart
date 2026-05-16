@@ -109,7 +109,11 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  Widget _buildApp(BuildContext ctx, {required ThemeData light, required ThemeData dark}) {
+  Widget _buildApp(
+    BuildContext ctx, {
+    required ThemeData light,
+    required ThemeData dark,
+  }) {
     final tMode = Stores.setting.themeMode.fetch();
     // Issue #57
     final themeMode = switch (tMode) {
@@ -124,7 +128,10 @@ class _MyAppState extends State<MyApp> {
       navigatorKey: AppNavigator.key,
       builder: ResponsivePoints.builder,
       locale: locale,
-      localizationsDelegates: const [LibLocalizations.delegate, ...AppLocalizations.localizationsDelegates],
+      localizationsDelegates: const [
+        LibLocalizations.delegate,
+        ...AppLocalizations.localizationsDelegates,
+      ],
       supportedLocales: AppLocalizations.supportedLocales,
       localeListResolutionCallback: LocaleUtil.resolve,
       navigatorObservers: [AppRouteObserver.instance],
@@ -142,7 +149,9 @@ class _MyAppState extends State<MyApp> {
           Widget child;
           var hasWindowFrame = false;
           if (snapshot.connectionState == ConnectionState.waiting) {
-            child = const Scaffold(body: Center(child: CircularProgressIndicator()));
+            child = const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
           } else {
             final intros = snapshot.data ?? [];
             if (intros.isNotEmpty) {

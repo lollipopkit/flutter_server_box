@@ -20,14 +20,20 @@ enum SystemType {
   /// it defaults to Linux but logs the detection failure for debugging.
   static SystemType parse(String value) {
     // Log the raw value for debugging purposes (truncated to avoid spam)
-    final truncatedValue = value.length > 100 ? '${value.substring(0, 100)}...' : value;
+    final truncatedValue = value.length > 100
+        ? '${value.substring(0, 100)}...'
+        : value;
 
     if (value.contains(windowsSign)) {
-      Loggers.app.info('System detected as Windows from signature in: $truncatedValue');
+      Loggers.app.info(
+        'System detected as Windows from signature in: $truncatedValue',
+      );
       return SystemType.windows;
     }
     if (value.contains(bsdSign)) {
-      Loggers.app.info('System detected as BSD from signature in: $truncatedValue');
+      Loggers.app.info(
+        'System detected as BSD from signature in: $truncatedValue',
+      );
       return SystemType.bsd;
     }
 
@@ -44,7 +50,9 @@ enum SystemType {
         'Defaulting to Linux, but this may cause incorrect parsing.',
       );
     } else {
-      Loggers.app.info('System detected as Linux from signature in: $truncatedValue');
+      Loggers.app.info(
+        'System detected as Linux from signature in: $truncatedValue',
+      );
     }
 
     return SystemType.linux;

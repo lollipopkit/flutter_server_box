@@ -75,7 +75,8 @@ extension SSHClientX on SSHClient {
     final session = await execute(
       entry ??
           switch (systemType) {
-            SystemType.windows => 'powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass',
+            SystemType.windows =>
+              'powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass',
             _ => 'cat | sh',
           },
       pty: pty,

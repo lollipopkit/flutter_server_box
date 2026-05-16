@@ -41,20 +41,45 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     required Map<String, Object?> settings,
   }) = _BackupV2;
 
-  factory BackupV2.fromJson(Map<String, dynamic> json) => _$BackupV2FromJson(json);
+  factory BackupV2.fromJson(Map<String, dynamic> json) =>
+      _$BackupV2FromJson(json);
 
   @override
   Future<void> merge({bool force = false}) async {
     _loggerV2.info('Merging...');
 
     // Merge each store and check if changes were made
-    final serverChanged = await Mergeable.mergeStore(backupData: spis, store: Stores.server, force: force);
-    final snippetChanged = await Mergeable.mergeStore(backupData: snippets, store: Stores.snippet, force: force);
-    final keyChanged = await Mergeable.mergeStore(backupData: keys, store: Stores.key, force: force);
-    await Mergeable.mergeStore(backupData: container, store: Stores.container, force: force);
-    await Mergeable.mergeStore(backupData: history, store: Stores.history, force: force);
+    final serverChanged = await Mergeable.mergeStore(
+      backupData: spis,
+      store: Stores.server,
+      force: force,
+    );
+    final snippetChanged = await Mergeable.mergeStore(
+      backupData: snippets,
+      store: Stores.snippet,
+      force: force,
+    );
+    final keyChanged = await Mergeable.mergeStore(
+      backupData: keys,
+      store: Stores.key,
+      force: force,
+    );
+    await Mergeable.mergeStore(
+      backupData: container,
+      store: Stores.container,
+      force: force,
+    );
+    await Mergeable.mergeStore(
+      backupData: history,
+      store: Stores.history,
+      force: force,
+    );
     if (settings.isNotEmpty) {
-      await Mergeable.mergeStore(backupData: settings, store: Stores.setting, force: force);
+      await Mergeable.mergeStore(
+        backupData: settings,
+        store: Stores.setting,
+        force: force,
+      );
     }
 
     if (serverChanged) GlobalRef.gRef?.read(serversProvider.notifier).reload();
@@ -75,11 +100,17 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
       keys: Stores.key.getAllMap(includeInternalKeys: true),
       container: Stores.container.getAllMap(includeInternalKeys: true),
       history: Stores.history.getAllMap(includeInternalKeys: true),
-      settings: includeSettings ? Stores.setting.getAllMap(includeInternalKeys: true) : const {},
+      settings: includeSettings
+          ? Stores.setting.getAllMap(includeInternalKeys: true)
+          : const {},
     );
   }
 
-  static Future<String> backup([String? name, String? password, bool includeSettings = true]) async {
+  static Future<String> backup([
+    String? name,
+    String? password,
+    bool includeSettings = true,
+  ]) async {
     final bak = await BackupV2.loadFromStore(includeSettings: includeSettings);
     var result = json.encode(bak.toJson());
 

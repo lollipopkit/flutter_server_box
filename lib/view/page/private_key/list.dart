@@ -16,10 +16,14 @@ class PrivateKeysListPage extends ConsumerStatefulWidget {
   @override
   ConsumerState<PrivateKeysListPage> createState() => _PrivateKeyListState();
 
-  static const route = AppRouteNoArg(page: PrivateKeysListPage.new, path: '/private_key');
+  static const route = AppRouteNoArg(
+    page: PrivateKeysListPage.new,
+    path: '/private_key',
+  );
 }
 
-class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage> with AfterLayoutMixin {
+class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage>
+    with AfterLayoutMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,7 +38,7 @@ class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage> with After
   Widget _buildBody() {
     final privateKeyState = ref.watch(privateKeyProvider);
     final pkis = privateKeyState.keys;
-    
+
     if (pkis.isEmpty) {
       return Center(child: Text(libL10n.empty));
     }
@@ -47,7 +51,10 @@ class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage> with After
     return ListTile(
       title: Text(item.id),
       subtitle: Text(item.type ?? l10n.unknown, style: UIs.textGrey),
-      onTap: () => PrivateKeyEditPage.route.go(context, args: PrivateKeyEditPageArgs(pki: item)),
+      onTap: () => PrivateKeyEditPage.route.go(
+        context,
+        args: PrivateKeyEditPageArgs(pki: item),
+      ),
       trailing: const Icon(Icons.edit),
     ).cardx;
   }
@@ -66,14 +73,20 @@ extension on _PrivateKeyListState {
       if (home == null) return;
       final idRsaFile = File(home.joinPath('.ssh/id_rsa'));
       if (!idRsaFile.existsSync()) return;
-      final sysPk = PrivateKeyInfo(id: 'system', key: await idRsaFile.readAsString());
+      final sysPk = PrivateKeyInfo(
+        id: 'system',
+        key: await idRsaFile.readAsString(),
+      );
       context.showRoundDialog(
         title: libL10n.attention,
         child: Text(l10n.addSystemPrivateKeyTip),
         actions: Btn.ok(
           onTap: () {
             context.pop();
-            PrivateKeyEditPage.route.go(context, args: PrivateKeyEditPageArgs(pki: sysPk));
+            PrivateKeyEditPage.route.go(
+              context,
+              args: PrivateKeyEditPageArgs(pki: sysPk),
+            );
           },
         ).toList,
       );

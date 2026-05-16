@@ -15,7 +15,7 @@ void main() {
     test('should generate Windows PowerShell script correctly', () {
       final builder = ScriptBuilderFactory.getBuilder(true);
       final script = builder.buildScript(null);
-      
+
       expect(script, contains('PowerShell script for ServerBox'));
       expect(script, contains('switch (\$args[0])'));
       expect(script, contains('-${ShellFunc.status.flag}'));
@@ -61,7 +61,7 @@ void main() {
         customCmds: {},
       );
 
-      // Should not throw exceptions  
+      // Should not throw exceptions
       expect(() async => await getStatus(req), returnsNormally);
     });
 
@@ -113,7 +113,7 @@ void main() {
       final req = ServerStatusUpdateReq(
         system: SystemType.windows,
         ss: serverStatus,
-        parsedOutput: {}, // Empty for legacy tests  
+        parsedOutput: {}, // Empty for legacy tests
         customCmds: {},
       );
 
@@ -122,8 +122,12 @@ void main() {
     });
 
     test('should handle Windows script path generation', () {
-      final scriptPath = ShellFunc.status.exec('test-server', systemType: SystemType.windows, customDir: null);
-      
+      final scriptPath = ShellFunc.status.exec(
+        'test-server',
+        systemType: SystemType.windows,
+        customDir: null,
+      );
+
       expect(scriptPath, contains('powershell'));
       expect(scriptPath, contains('-ExecutionPolicy Bypass'));
       expect(scriptPath, contains('-${ShellFunc.status.flag}'));
@@ -131,7 +135,11 @@ void main() {
 
     test('should execute Windows commands correctly', () {
       for (final func in ShellFunc.values) {
-        final command = func.exec('test-server', systemType: SystemType.windows, customDir: null);
+        final command = func.exec(
+          'test-server',
+          systemType: SystemType.windows,
+          customDir: null,
+        );
         expect(command, isNotEmpty);
         expect(command, contains('powershell'));
       }

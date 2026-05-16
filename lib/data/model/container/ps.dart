@@ -43,7 +43,15 @@ final class PodmanPs implements ContainerPs {
   @override
   String? disk;
 
-  PodmanPs({this.command, this.created, this.exited, this.id, this.image, this.names, this.startedAt});
+  PodmanPs({
+    this.command,
+    this.created,
+    this.exited,
+    this.id,
+    this.image,
+    this.names,
+    this.startedAt,
+  });
 
   @override
   String? get name => names?.firstOrNull;
@@ -67,7 +75,9 @@ final class PodmanPs implements ContainerPs {
     int netIn = 0;
     int netOut = 0;
     final majorVersion = version?.split('.').firstOrNull;
-    final majorVersionNum = majorVersion != null ? int.tryParse(majorVersion) : null;
+    final majorVersionNum = majorVersion != null
+        ? int.tryParse(majorVersion)
+        : null;
 
     // Podman 4.x and earlier use top-level NetInput/NetOutput fields.
     // Podman 5.x changed network backend (Netavark) and uses nested
@@ -91,22 +101,29 @@ final class PodmanPs implements ContainerPs {
     disk = '${l10n.read} $diskIn / ${l10n.write} $diskOut';
   }
 
-  factory PodmanPs.fromRawJson(String str) => PodmanPs.fromJson(json.decode(str));
+  factory PodmanPs.fromRawJson(String str) =>
+      PodmanPs.fromJson(json.decode(str));
 
   String toRawJson() => json.encode(toJson());
 
   factory PodmanPs.fromJson(Map<String, dynamic> json) => PodmanPs(
-    command: json['Command'] == null ? [] : List<String>.from(json['Command']!.map((x) => x)),
+    command: json['Command'] == null
+        ? []
+        : List<String>.from(json['Command']!.map((x) => x)),
     created: json['Created'] == null ? null : DateTime.parse(json['Created']),
     exited: json['Exited'],
     id: json['Id'],
     image: json['Image'],
-    names: json['Names'] == null ? [] : List<String>.from(json['Names']!.map((x) => x)),
+    names: json['Names'] == null
+        ? []
+        : List<String>.from(json['Names']!.map((x) => x)),
     startedAt: json['StartedAt'],
   );
 
   Map<String, dynamic> toJson() => {
-    'Command': command == null ? [] : List<dynamic>.from(command!.map((x) => x)),
+    'Command': command == null
+        ? []
+        : List<dynamic>.from(command!.map((x) => x)),
     'Created': created?.toIso8601String(),
     'Exited': exited,
     'Id': id,
@@ -152,17 +169,24 @@ final class DockerPs implements ContainerPs {
 
     final netIO = stats['NetIO'] as String? ?? '0B / 0B';
     final netParts = netIO.split(' / ');
-    net = '↓ ${netParts.firstOrNull ?? '0B'} / ↑ ${netParts.length > 1 ? netParts[1] : '0B'}';
+    net =
+        '↓ ${netParts.firstOrNull ?? '0B'} / ↑ ${netParts.length > 1 ? netParts[1] : '0B'}';
 
     final blockIO = stats['BlockIO'] as String? ?? '0B / 0B';
     final blockParts = blockIO.split(' / ');
-    disk = '${l10n.read} ${blockParts.firstOrNull ?? '0B'} / ${l10n.write} ${blockParts.length > 1 ? blockParts[1] : '0B'}';
+    disk =
+        '${l10n.read} ${blockParts.firstOrNull ?? '0B'} / ${l10n.write} ${blockParts.length > 1 ? blockParts[1] : '0B'}';
   }
 
   /// CONTAINER ID                   NAMES                          IMAGE                          STATUS
   /// a049d689e7a1                   aria2-pro                      p3terx/aria2-pro               Up 3 weeks
   factory DockerPs.parse(String raw) {
     final parts = raw.split(Miscs.multiBlankreg);
-    return DockerPs(id: parts[0], state: parts[1], names: parts[2], image: parts[3].trim());
+    return DockerPs(
+      id: parts[0],
+      state: parts[1],
+      names: parts[2],
+      image: parts[3].trim(),
+    );
   }
 }

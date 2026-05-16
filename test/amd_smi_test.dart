@@ -267,13 +267,18 @@ void main() {
     test('_parseIntValue handles various input types', () {
       expect(AmdSmi.fromJson('[{"name":"test","temp":42}]')[0].temp, 42);
       expect(AmdSmi.fromJson('[{"name":"test","temp":"45°C"}]')[0].temp, 45);
-      expect(AmdSmi.fromJson('[{"name":"test","temp":"1200 RPM"}]')[0].temp, 1200);
+      expect(
+        AmdSmi.fromJson('[{"name":"test","temp":"1200 RPM"}]')[0].temp,
+        1200,
+      );
       expect(AmdSmi.fromJson('[{"name":"test","temp":"N/A"}]')[0].temp, 0);
       expect(AmdSmi.fromJson('[{"name":"test","temp":null}]')[0].temp, 0);
     });
 
     test('_formatPower handles different power scenarios', () {
-      final gpu1 = AmdSmi.fromJson('[{"name":"test","power_draw":100,"power_cap":200}]')[0];
+      final gpu1 = AmdSmi.fromJson(
+        '[{"name":"test","power_draw":100,"power_cap":200}]',
+      )[0];
       expect(gpu1.power, '100W / 200W');
 
       final gpu2 = AmdSmi.fromJson('[{"name":"test","power_draw":50}]')[0];

@@ -20,10 +20,14 @@ class SnippetEditPage extends ConsumerStatefulWidget {
   @override
   ConsumerState<SnippetEditPage> createState() => _SnippetEditPageState();
 
-  static const route = AppRoute(page: SnippetEditPage.new, path: '/snippets/edit');
+  static const route = AppRoute(
+    page: SnippetEditPage.new,
+    path: '/snippets/edit',
+  );
 }
 
-class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLayoutMixin {
+class _SnippetEditPageState extends ConsumerState<SnippetEditPage>
+    with AfterLayoutMixin {
   final _nameController = TextEditingController();
   final _scriptController = TextEditingController();
   final _noteController = TextEditingController();
@@ -45,7 +49,10 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: Text(libL10n.edit), actions: _buildAppBarActions()),
+      appBar: CustomAppBar(
+        title: Text(libL10n.edit),
+        actions: _buildAppBarActions(),
+      ),
       body: _buildBody(),
       floatingActionButton: _buildFAB(),
     );
@@ -59,7 +66,11 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
         onPressed: () {
           context.showRoundDialog(
             title: libL10n.attention,
-            child: Text(libL10n.askContinue('${libL10n.delete} ${libL10n.snippet}(${snippet.name})')),
+            child: Text(
+              libL10n.askContinue(
+                '${libL10n.delete} ${libL10n.snippet}(${snippet.name})',
+              ),
+            ),
             actions: Btn.ok(
               onTap: () {
                 ref.read(snippetProvider.notifier).del(snippet);
@@ -157,7 +168,9 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
         builder: (vals) {
           final subtitle = vals.isEmpty
               ? null
-              : vals.map((e) => ref.read(serversProvider).servers[e]?.name ?? e).join(', ');
+              : vals
+                    .map((e) => ref.read(serversProvider).servers[e]?.name ?? e)
+                    .join(', ');
           return ListTile(
             leading: const Padding(
               padding: EdgeInsets.only(left: 5),
@@ -167,10 +180,19 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> with AfterLay
             trailing: const Icon(Icons.keyboard_arrow_right),
             subtitle: subtitle == null
                 ? null
-                : Text(subtitle, maxLines: 1, style: UIs.textGrey, overflow: TextOverflow.ellipsis),
+                : Text(
+                    subtitle,
+                    maxLines: 1,
+                    style: UIs.textGrey,
+                    overflow: TextOverflow.ellipsis,
+                  ),
             onTap: () async {
               // Create a filtered copy for the dialog, don't modify the original
-              final validServerIds = vals.where((e) => ref.read(serversProvider).serverOrder.contains(e)).toList();
+              final validServerIds = vals
+                  .where(
+                    (e) => ref.read(serversProvider).serverOrder.contains(e),
+                  )
+                  .toList();
               final serverIds = await context.showPickDialog(
                 title: l10n.autoRun,
                 items: ref.read(serversProvider).serverOrder,
@@ -203,7 +225,9 @@ ${libL10n.example}:
 - `\${ctrl+c}` (Control + C)
 - `\${ctrl+b}d` (Tmux Detach)
 ''',
-          styleSheet: MarkdownStyleSheet(codeblockDecoration: const BoxDecoration(color: Colors.transparent)),
+          styleSheet: MarkdownStyleSheet(
+            codeblockDecoration: const BoxDecoration(color: Colors.transparent),
+          ),
         ),
       ),
     );

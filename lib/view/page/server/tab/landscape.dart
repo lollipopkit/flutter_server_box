@@ -28,7 +28,7 @@ extension on _ServerPageState {
   Widget _buildLandscapeBody() {
     final serverState = ref.watch(serversProvider);
     final order = serverState.serverOrder;
-    
+
     if (order.isEmpty) {
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
@@ -40,7 +40,10 @@ extension on _ServerPageState {
         final srv = ref.watch(serverProvider(id));
 
         final title = _buildServerCardTitle(srv);
-        final List<Widget> children = [title, _buildNormalCard(srv.status, srv.spi)];
+        final List<Widget> children = [
+          title,
+          _buildNormalCard(srv.status, srv.spi),
+        ];
 
         return _getCardNoti(id).listenVal((_) {
           return Column(

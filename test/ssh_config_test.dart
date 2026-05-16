@@ -53,10 +53,10 @@ Host myserver
   User admin
   Port 2222
 ''');
-      
+
       final servers = await SSHConfig.parseConfig(configFile.path);
       expect(servers, hasLength(1));
-      
+
       final server = servers.first;
       expect(server.name, 'myserver');
       expect(server.ip, '192.168.1.100');
@@ -70,7 +70,7 @@ Host myserver
   User admin
   Port 2222
 ''');
-      
+
       final servers = await SSHConfig.parseConfig(configFile.path);
       expect(servers, isEmpty); // Should skip hosts without HostName
     });
@@ -80,15 +80,15 @@ Host myserver
 Host simple
   HostName example.com
 ''');
-      
+
       final servers = await SSHConfig.parseConfig(configFile.path);
       expect(servers, hasLength(1));
-      
+
       final server = servers.first;
       expect(server.name, 'simple');
       expect(server.ip, 'example.com');
       expect(server.user, 'root'); // default user
-      expect(server.port, 22);     // default port
+      expect(server.port, 22); // default port
     });
 
     test('parseConfig handles multiple hosts', () async {
@@ -107,20 +107,20 @@ Host server3
   HostName example.com
   User charlie
 ''');
-      
+
       final servers = await SSHConfig.parseConfig(configFile.path);
       expect(servers, hasLength(3));
-      
+
       expect(servers[0].name, 'server1');
       expect(servers[0].ip, '192.168.1.100');
       expect(servers[0].user, 'alice');
       expect(servers[0].port, 22);
-      
+
       expect(servers[1].name, 'server2');
       expect(servers[1].ip, '192.168.1.200');
       expect(servers[1].user, 'bob');
       expect(servers[1].port, 2222);
-      
+
       expect(servers[2].name, 'server3');
       expect(servers[2].ip, 'example.com');
       expect(servers[2].user, 'charlie');
@@ -134,10 +134,10 @@ host myserver
   user admin
   port 2222
 ''');
-      
+
       final servers = await SSHConfig.parseConfig(configFile.path);
       expect(servers, hasLength(1));
-      
+
       final server = servers.first;
       expect(server.name, 'myserver');
       expect(server.ip, '192.168.1.100');
@@ -163,14 +163,14 @@ Host prodserver
   HostName 10.0.0.100
   User production
 ''');
-      
+
       final servers = await SSHConfig.parseConfig(configFile.path);
       expect(servers, hasLength(2));
-      
+
       expect(servers[0].name, 'devserver');
       expect(servers[0].ip, '192.168.1.50');
       expect(servers[0].user, 'developer');
-      
+
       expect(servers[1].name, 'prodserver');
       expect(servers[1].ip, '10.0.0.100');
       expect(servers[1].user, 'production');
@@ -186,10 +186,10 @@ Host myserver
   HostName 192.168.1.100
   User admin
 ''');
-      
+
       final servers = await SSHConfig.parseConfig(configFile.path);
       expect(servers, hasLength(1)); // Only named hosts, not wildcards
-      
+
       final server = servers.first;
       expect(server.name, 'myserver');
       expect(server.ip, '192.168.1.100');
@@ -204,10 +204,10 @@ Host keyserver
   User admin
   IdentityFile ~/.ssh/special_key
 ''');
-      
+
       final servers = await SSHConfig.parseConfig(configFile.path);
       expect(servers, hasLength(1));
-      
+
       final server = servers.first;
       expect(server.keyId, '~/.ssh/special_key');
     });
@@ -219,10 +219,10 @@ Host "server with spaces"
   User "admin user"
   IdentityFile "~/.ssh/key with spaces"
 ''');
-      
+
       final servers = await SSHConfig.parseConfig(configFile.path);
       expect(servers, hasLength(1));
-      
+
       final server = servers.first;
       expect(server.name, 'server with spaces');
       expect(server.ip, '192.168.1.100');
@@ -240,14 +240,14 @@ Host goodserver
   HostName 192.168.1.200
   Port 2222
 ''');
-      
+
       final servers = await SSHConfig.parseConfig(configFile.path);
       expect(servers, hasLength(2));
-      
+
       // First server should use default port due to invalid port
       expect(servers[0].name, 'badport');
       expect(servers[0].port, 22); // default port
-      
+
       // Second server should use specified port
       expect(servers[1].name, 'goodserver');
       expect(servers[1].port, 2222);
@@ -261,10 +261,10 @@ Host server1 server2
 Host singleserver
   HostName 192.168.1.200
 ''');
-      
+
       final servers = await SSHConfig.parseConfig(configFile.path);
       expect(servers, hasLength(1)); // Only single host patterns
-      
+
       expect(servers[0].name, 'singleserver');
     });
 
@@ -275,10 +275,10 @@ Host jumpserver
   User admin
   ProxyJump bastion.example.com
 ''');
-      
+
       final servers = await SSHConfig.parseConfig(configFile.path);
       expect(servers, hasLength(1));
-      
+
       final server = servers.first;
       expect(server.name, 'jumpserver');
       expect(server.ip, '192.168.1.100');
@@ -329,22 +329,22 @@ Host internal-server
     User admin
     ProxyJump bastion
 ''');
-      
+
       final servers = await SSHConfig.parseConfig(configFile.path);
       expect(servers, hasLength(5));
-      
+
       // Check specific servers
       final prodWeb = servers.firstWhere((s) => s.name == 'prod-web-01');
       expect(prodWeb.ip, '10.0.1.100');
       expect(prodWeb.user, 'deploy');
       expect(prodWeb.port, 22);
       expect(prodWeb.keyId, '~/.ssh/production.pem');
-      
+
       final prodDb = servers.firstWhere((s) => s.name == 'prod-db-01');
       expect(prodDb.ip, '10.0.1.200');
       expect(prodDb.user, 'ubuntu');
       expect(prodDb.port, 2222);
-      
+
       final dev = servers.firstWhere((s) => s.name == 'dev');
       expect(dev.ip, 'dev.example.com');
       expect(dev.user, 'developer');
@@ -379,10 +379,7 @@ Host internal-server
       });
 
       test('preserves hash without preceding whitespace', () {
-        expect(
-          SSHConfig.stripInlineCommentForTest('foo#bar'),
-          'foo#bar',
-        );
+        expect(SSHConfig.stripInlineCommentForTest('foo#bar'), 'foo#bar');
       });
 
       test('handles combined escapes and quotes', () {
