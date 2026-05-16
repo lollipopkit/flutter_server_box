@@ -85,8 +85,9 @@ class ContainerNotifier extends _$ContainerNotifier {
 
   void _requiresSudo() async {
     /// Podman is rootless
-    if (state.type == ContainerType.podman)
+    if (state.type == ContainerType.podman) {
       return sudoCompleter.complete(false);
+    }
     if (!Stores.setting.containerTrySudo.fetch()) {
       return sudoCompleter.complete(false);
     }

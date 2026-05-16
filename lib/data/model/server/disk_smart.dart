@@ -116,8 +116,9 @@ abstract class DiskSmart with _$DiskSmart {
     // smart_status
     final rootSmartStatus = data['smart_status']?.toString().toLowerCase();
     if (rootSmartStatus != null) {
-      if (rootSmartStatus.contains('pass') || rootSmartStatus.contains('ok'))
+      if (rootSmartStatus.contains('pass') || rootSmartStatus.contains('ok')) {
         return true;
+      }
       if (rootSmartStatus.contains('fail')) return false;
     }
 
