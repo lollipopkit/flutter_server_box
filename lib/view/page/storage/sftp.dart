@@ -66,6 +66,7 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
   _SortOption? _sortedFilesOption;
   bool? _sortedFilesShowFoldersFirst;
   List<SftpName>? _sortedFilesCache;
+  Future<SftpClient>? _openingClientFuture;
 
   bool get _useSudo => _sudoHelper.enabled && _sudoMode.value;
 
@@ -84,9 +85,11 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
 
   @override
   void dispose() {
-    super.dispose();
+    _status.client?.close();
+    _openingClientFuture = null;
     _sortOption.dispose();
     _sudoMode.dispose();
+    super.dispose();
   }
 
   @override
@@ -1033,10 +1036,15 @@ extension _Actions on _SftpPageState {
     }
 
     try {
-      _status.client ??= await _withSftpOpTimeout(
-        'open browser session',
-        _client.sftp(),
-      );
+      if (_status.client == null && _openingClientFuture == null) {
+        _openingClientFuture = _withSftpOpTimeout(
+          'open browser session',
+          _client.sftp(),
+        );
+      }
+      _status.client ??= await _openingClientFuture;
+      _openingClientFuture = null;
+      if (!mounted) return null;
       final client = _status.client;
       if (client == null) return null;
       return await _withSftpOpTimeout(
@@ -1044,6 +1052,7 @@ extension _Actions on _SftpPageState {
         client.listdir(listPath),
       );
     } on SftpStatusError catch (e) {
+      _openingClientFuture = null;
       final canFallback =
           _sudoHelper.enabled &&
           (e.code == 3 || _sftpPermissionDeniedReg.hasMatch(e.message));
@@ -1054,6 +1063,13 @@ extension _Actions on _SftpPageState {
       final items = await _sudoHelper.listDir(listPath, password: pwd);
       _sudoMode.value = true;
       return items;
+    } catch (e) {
+      if (e is! SftpStatusError) {
+        _status.client?.close();
+        _status.client = null;
+      }
+      _openingClientFuture = null;
+      rethrow;
     }
   }
 
