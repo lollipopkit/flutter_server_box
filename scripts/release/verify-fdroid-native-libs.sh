@@ -6,6 +6,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 APK_DIR="${APK_DIR:-$REPO_ROOT/build/app/outputs/flutter-apk}"
 APP_NAME="${APP_NAME:-ServerBox}"
 KEY_PROPERTIES="${KEY_PROPERTIES:-$REPO_ROOT/android/key.properties}"
+RESIGN_APKS="${RESIGN_APKS:-true}"
 
 require_cmd() {
   local name="$1"
@@ -187,13 +188,26 @@ READELF="${READELF:-}"
 APKSIGNER="${APKSIGNER:-}"
 ZIPALIGN="${ZIPALIGN:-}"
 
+case "$RESIGN_APKS" in
+  true | 1 | yes)
+    RESIGN_APKS=true
+    ;;
+  false | 0 | no)
+    RESIGN_APKS=false
+    ;;
+  *)
+    echo "RESIGN_APKS must be true or false, got: $RESIGN_APKS" >&2
+    exit 1
+    ;;
+esac
+
 if [[ -z "$OBJCOPY" ]]; then
   OBJCOPY="$(find_llvm_objcopy || true)"
 fi
 if [[ -z "$READELF" ]]; then
   READELF="$(find_readelf || true)"
 fi
-if [[ -z "$APKSIGNER" ]]; then
+if [[ "$RESIGN_APKS" == true && -z "$APKSIGNER" ]]; then
   APKSIGNER="$(find_latest_android_tool apksigner || true)"
 fi
 if [[ -z "$ZIPALIGN" ]]; then
@@ -210,7 +224,7 @@ if [[ -z "$READELF" || ! -x "$READELF" ]]; then
   exit 1
 fi
 
-if [[ -z "$APKSIGNER" || ! -x "$APKSIGNER" ]]; then
+if [[ "$RESIGN_APKS" == true && ( -z "$APKSIGNER" || ! -x "$APKSIGNER" ) ]]; then
   echo 'Android build-tools apksigner is required to re-sign patched APKs' >&2
   exit 1
 fi
@@ -220,28 +234,35 @@ if [[ -z "$ZIPALIGN" || ! -x "$ZIPALIGN" ]]; then
   exit 1
 fi
 
-if [[ ! -f "$KEY_PROPERTIES" ]]; then
+if [[ "$RESIGN_APKS" == true && ! -f "$KEY_PROPERTIES" ]]; then
   echo "key.properties not found: $KEY_PROPERTIES" >&2
   exit 1
 fi
 
-store_file="$(property_value storeFile)"
-store_password="$(property_value storePassword)"
-key_alias="$(property_value keyAlias)"
-key_password="$(property_value keyPassword)"
+store_file=''
+store_password=''
+key_alias=''
+key_password=''
 
-if [[ -z "$store_file" || -z "$store_password" || -z "$key_alias" || -z "$key_password" ]]; then
-  echo "storeFile, storePassword, keyAlias, and keyPassword are required in $KEY_PROPERTIES" >&2
-  exit 1
-fi
+if [[ "$RESIGN_APKS" == true ]]; then
+  store_file="$(property_value storeFile)"
+  store_password="$(property_value storePassword)"
+  key_alias="$(property_value keyAlias)"
+  key_password="$(property_value keyPassword)"
 
-if [[ "$store_file" != /* ]]; then
-  store_file="$REPO_ROOT/android/app/$store_file"
-fi
+  if [[ -z "$store_file" || -z "$store_password" || -z "$key_alias" || -z "$key_password" ]]; then
+    echo "storeFile, storePassword, keyAlias, and keyPassword are required in $KEY_PROPERTIES" >&2
+    exit 1
+  fi
 
-if [[ ! -f "$store_file" ]]; then
-  echo "signing store file not found: $store_file" >&2
-  exit 1
+  if [[ "$store_file" != /* ]]; then
+    store_file="$REPO_ROOT/android/app/$store_file"
+  fi
+
+  if [[ ! -f "$store_file" ]]; then
+    echo "signing store file not found: $store_file" >&2
+    exit 1
+  fi
 fi
 
 shopt -s nullglob
@@ -307,12 +328,14 @@ for apk in "${apks[@]}"; do
   "$ZIPALIGN" -f -p 4 "$apk" "$aligned_apk"
   mv "$aligned_apk" "$apk"
 
-  "$APKSIGNER" sign \
-    --ks "$store_file" \
-    --ks-key-alias "$key_alias" \
-    --ks-pass "pass:$store_password" \
-    --key-pass "pass:$key_password" \
-    "$apk"
+  if [[ "$RESIGN_APKS" == true ]]; then
+    "$APKSIGNER" sign \
+      --ks "$store_file" \
+      --ks-key-alias "$key_alias" \
+      --ks-pass "pass:$store_password" \
+      --key-pass "pass:$key_password" \
+      "$apk"
+  fi
 done
 
 for apk in "${apks[@]}"; do
@@ -329,7 +352,9 @@ for apk in "${apks[@]}"; do
     fi
   done < <(find "$verify_dir" -type f -name '*.so' | sort)
 
-  "$APKSIGNER" verify "$apk"
+  if [[ "$RESIGN_APKS" == true ]]; then
+    "$APKSIGNER" verify "$apk"
+  fi
 done
 
 echo 'F-Droid native library verification passed.'
