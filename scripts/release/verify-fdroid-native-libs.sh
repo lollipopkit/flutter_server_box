@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 APK_DIR="${APK_DIR:-$REPO_ROOT/build/app/outputs/flutter-apk}"
 APP_NAME="${APP_NAME:-ServerBox}"
+APK_PATTERNS="${APK_PATTERNS:-}"
 KEY_PROPERTIES="${KEY_PROPERTIES:-$REPO_ROOT/android/key.properties}"
 RESIGN_APKS="${RESIGN_APKS:-true}"
 
@@ -142,28 +143,6 @@ find_llvm_objcopy() {
   command -v llvm-objcopy || command -v objcopy
 }
 
-find_readelf() {
-  local sdk_root
-  local matches=()
-  local path
-
-  while IFS= read -r sdk_root; do
-    if [[ -z "$sdk_root" || ! -d "$sdk_root/ndk" ]]; then
-      continue
-    fi
-    while IFS= read -r path; do
-      matches+=("$path")
-    done < <(find "$sdk_root/ndk" -type f -path '*/toolchains/llvm/prebuilt/*/bin/llvm-readelf')
-  done < <(android_sdk_roots)
-
-  if [[ ${#matches[@]} -ne 0 ]]; then
-    printf '%s\n' "${matches[@]}" | select_latest_android_path
-    return
-  fi
-
-  command -v readelf || command -v llvm-readelf
-}
-
 property_value() {
   local name="$1"
   grep -E "^[[:space:]]*${name}[[:space:]]*=" "$KEY_PROPERTIES" |
@@ -173,7 +152,16 @@ property_value() {
 
 has_build_id() {
   local so_file="$1"
-  "$READELF" -n "$so_file" 2>/dev/null | grep -q 'Build ID'
+  local note_file
+  note_file="$(mktemp "$tmp_dir/build-id-note.XXXXXX")"
+
+  if "$OBJCOPY" --dump-section ".note.gnu.build-id=$note_file" "$so_file" >/dev/null 2>&1; then
+    rm -f "$note_file"
+    return 0
+  fi
+
+  rm -f "$note_file"
+  return 1
 }
 
 require_cmd find
@@ -184,7 +172,6 @@ require_cmd unzip
 require_cmd zip
 
 OBJCOPY="${OBJCOPY:-}"
-READELF="${READELF:-}"
 APKSIGNER="${APKSIGNER:-}"
 ZIPALIGN="${ZIPALIGN:-}"
 
@@ -204,9 +191,6 @@ esac
 if [[ -z "$OBJCOPY" ]]; then
   OBJCOPY="$(find_llvm_objcopy || true)"
 fi
-if [[ -z "$READELF" ]]; then
-  READELF="$(find_readelf || true)"
-fi
 if [[ "$RESIGN_APKS" == true && -z "$APKSIGNER" ]]; then
   APKSIGNER="$(find_latest_android_tool apksigner || true)"
 fi
@@ -216,11 +200,6 @@ fi
 
 if [[ -z "$OBJCOPY" || ! -x "$OBJCOPY" ]]; then
   echo 'llvm-objcopy or objcopy is required to remove ELF build-id notes' >&2
-  exit 1
-fi
-
-if [[ -z "$READELF" || ! -x "$READELF" ]]; then
-  echo 'readelf or llvm-readelf is required to inspect ELF build-id notes' >&2
   exit 1
 fi
 
@@ -271,11 +250,17 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
 apks=()
-patterns=(
-  "${APP_NAME}_*_arm64.apk"
-  "${APP_NAME}_*_arm.apk"
-  "${APP_NAME}_*_amd64.apk"
-)
+patterns=()
+
+if [[ -n "$APK_PATTERNS" ]]; then
+  read -ra patterns <<< "$APK_PATTERNS"
+else
+  patterns=(
+    "${APP_NAME}_*_arm64.apk"
+    "${APP_NAME}_*_arm.apk"
+    "${APP_NAME}_*_amd64.apk"
+  )
+fi
 
 for pattern in "${patterns[@]}"; do
   matches=("$APK_DIR"/$pattern)
