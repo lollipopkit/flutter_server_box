@@ -84,9 +84,10 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
 
   @override
   void dispose() {
-    super.dispose();
+    _status.client?.close();
     _sortOption.dispose();
     _sudoMode.dispose();
+    super.dispose();
   }
 
   @override
@@ -1033,10 +1034,13 @@ extension _Actions on _SftpPageState {
     }
 
     try {
-      _status.client ??= await _withSftpOpTimeout(
-        'open browser session',
-        _client.sftp(),
-      );
+      // ignore: prefer_conditional_assignment
+      if (_status.client == null) {
+        _status.client = await _withSftpOpTimeout(
+          'open browser session',
+          _client.sftp(),
+        );
+      }
       final client = _status.client;
       if (client == null) return null;
       return await _withSftpOpTimeout(
@@ -1054,6 +1058,12 @@ extension _Actions on _SftpPageState {
       final items = await _sudoHelper.listDir(listPath, password: pwd);
       _sudoMode.value = true;
       return items;
+    } catch (e) {
+      if (e is! SftpStatusError) {
+        _status.client?.close();
+        _status.client = null;
+      }
+      rethrow;
     }
   }
 
