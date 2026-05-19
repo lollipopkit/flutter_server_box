@@ -199,7 +199,7 @@ packages:
       path: "packages/circle_chart"
       relative: true
     source: path
-    version: "1.0.0"
+    version: "1.1.0"
   cli_config:
     dependency: transitive
     description:
@@ -1821,5 +1821,5 @@ packages:
     source: hosted
     version: "1.1.4"
 sdks:
-  dart: ">=3.11.0 <4.0.0"
-  flutter: ">=3.41.0"
+  dart: ">=3.12.0 <4.0.0"
+  flutter: ">=3.44.0"
