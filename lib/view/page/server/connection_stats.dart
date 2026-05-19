@@ -2,6 +2,7 @@
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/res/store.dart';
@@ -69,7 +70,7 @@ extension _Builds on _ConnectionStatsPageState {
     }
 
     return ListView.builder(
-      cacheExtent: 200,
+      scrollCacheExtent: const ScrollCacheExtent.pixels(200),
       itemCount: _serverStats.length,
       itemBuilder: (context, index) {
         final stats = _serverStats[index];
