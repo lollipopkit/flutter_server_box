@@ -32,6 +32,10 @@ jobs:
         run: |
           curl --fail --show-error --location -u ${{ secrets.BASIC_AUTH }} -o android/app/app.key ${{ secrets.URL_PREFIX }}app.key
           curl --fail --show-error --location -u ${{ secrets.BASIC_AUTH }} -o android/key.properties ${{ secrets.URL_PREFIX }}key.properties
+      - name: Patch JNI build-id
+        run: |
+          flutter pub get
+          scripts/release/patch-jni-build-id.sh
       - name: Build
         run: dart run fl_build -p android
       - name: Verify F-Droid native libraries
