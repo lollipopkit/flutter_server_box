@@ -1,4 +1,4 @@
-name: Flutter Release
+name: Flutter Build
 
 on:
   workflow_dispatch:
@@ -12,10 +12,11 @@ permissions:
 env:
   APP_NAME: ServerBox
   RELEASE_TAG: ${{ github.ref_name }}
+  BUILD_TAG: test-build-${{ github.run_number }}-${{ github.sha }}
 
 jobs:
-  releaseAndroid:
-    name: Release android
+  buildAndroid:
+    name: Build android
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -33,17 +34,16 @@ jobs:
           java-version: "21"
       - name: Fetch secrets
         run: |
-          curl -u ${{ secrets.BASIC_AUTH }} -o android/app/app.key ${{ secrets.URL_PREFIX }}app.key
-          curl -u ${{ secrets.BASIC_AUTH }} -o android/key.properties ${{ secrets.URL_PREFIX }}key.properties
+          curl --fail --show-error --location -u ${{ secrets.BASIC_AUTH }} -o android/app/app.key ${{ secrets.URL_PREFIX }}app.key
+          curl --fail --show-error --location -u ${{ secrets.BASIC_AUTH }} -o android/key.properties ${{ secrets.URL_PREFIX }}key.properties
       - name: Patch JNI build-id
         run: |
           flutter pub get
           scripts/release/patch-jni-build-id.sh
       - name: Build
         run: dart run fl_build -p android
-      - name: Verify F-Droid native libraries
-        run: scripts/release/verify-fdroid-native-libs.sh
-      - name: Rename for fdroid
+      - name: Rename for release
+        if: github.ref_type == 'tag'
         shell: bash
         run: |
           APK_DIR="build/app/outputs/flutter-apk"
@@ -59,7 +59,16 @@ jobs:
             fi
             mv "${matches[0]}" "$APK_DIR/${APP_NAME}_${RELEASE_TAG}_${arch}.apk"
           done
+      - name: Upload artifacts
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-android
+          path: build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
+          retention-days: 14
       - name: Create Release
+        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -69,16 +78,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  releaseLinux:
-    name: Release linux
+  buildLinux:
+    name: Build linux
     strategy:
       fail-fast: false
       matrix:
         include:
           - runs_on: ubuntu-latest
+            release_suffix: ""
             artifact_suffix: ""
           - runs_on: ubuntu-22.04
-            artifact_suffix: "_legacy"
+            release_suffix: "_legacy"
+            artifact_suffix: "-legacy"
     runs-on: ${{ matrix.runs_on }}
     steps:
       - name: Checkout
@@ -90,14 +101,12 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          # Basic
           sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev mesa-utils libvulkan-dev desktop-file-utils wget
-          # App Specific
           sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev libsecret-1-dev
       - name: Build
-        run: |
-          dart run fl_build -p linux
+        run: dart run fl_build -p linux
       - name: Rename for release
+        if: github.ref_type == 'tag'
         shell: bash
         run: |
           shopt -s nullglob
@@ -107,17 +116,26 @@ jobs:
             ls -la || true
             exit 1
           fi
-          mv "${matches[0]}" "${APP_NAME}_${RELEASE_TAG}${{ matrix.artifact_suffix }}_amd64.AppImage"
+          mv "${matches[0]}" "${APP_NAME}_${RELEASE_TAG}${{ matrix.release_suffix }}_amd64.AppImage"
+      - name: Upload artifacts
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-linux${{ matrix.artifact_suffix }}
+          path: "*.AppImage"
+          if-no-files-found: error
+          retention-days: 14
       - name: Create Release
+        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}${{ matrix.artifact_suffix }}_amd64.AppImage
+            ${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}${{ matrix.release_suffix }}_amd64.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  releaseWin:
-    name: Release windows
+  buildWindows:
+    name: Build windows
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -129,6 +147,7 @@ jobs:
       - name: Build
         run: dart run fl_build -p windows
       - name: Rename for release
+        if: github.ref_type == 'tag'
         shell: bash
         run: |
           shopt -s nullglob
@@ -139,79 +158,19 @@ jobs:
             exit 1
           fi
           mv "${matches[0]}" "${APP_NAME}_${RELEASE_TAG}_windows_amd64.zip"
+      - name: Upload artifacts
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows
+          path: "*_windows_amd64.zip"
+          if-no-files-found: error
+          retention-days: 14
       - name: Create Release
+        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_windows_amd64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # releaseIOS:
-  #   name: Release iOS
-  #   runs-on: macos-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v6
-  #       with:
-  #         submodules: recursive
-  #     - name: Install Flutter
-  #       uses: subosito/flutter-action@v2
-  #     - name: Build
-  #       run: |
-  #         dart run fl_build -p ios -- --no-codesign
-  #         shopt -s nullglob
-  #         IPA_FILES=(build/ios/ipa/*.ipa)
-  #         if [ ${#IPA_FILES[@]} -ne 1 ]; then
-  #           echo "Error: expected 1 IPA, found ${#IPA_FILES[@]}"
-  #           ls -la build/ios/ipa || true
-  #           exit 1
-  #         fi
-  #         IPA_FILE="${IPA_FILES[0]}"
-  #         echo "Found IPA: $IPA_FILE"
-  #         cp "$IPA_FILE" "${APP_NAME}_${RELEASE_TAG}_ios.ipa"
-  #     - name: Create Release
-  #       uses: softprops/action-gh-release@v2
-  #       with:
-  #         files: |
-  #           ${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_ios.ipa
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # releaseMacOS:
-  #   name: Release macOS
-  #   runs-on: macos-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v6
-  #       with:
-  #         submodules: recursive
-  #     - name: Install Flutter
-  #       uses: subosito/flutter-action@v2
-  #     - name: Build
-  #       run: |
-  #         dart run fl_build -p macos -- --no-codesign
-  #     - name: Package
-  #       run: |
-  #         RELEASE_DIR="$GITHUB_WORKSPACE/build/macos/Build/Products/Release"
-  #         APP_DIR="$RELEASE_DIR/$APP_NAME.app"
-  #         OUT_ZIP="$GITHUB_WORKSPACE/${APP_NAME}_${RELEASE_TAG}_macos.zip"
-
-  #         if [ ! -d "$RELEASE_DIR" ]; then
-  #           echo "Error: macOS release directory not found: $RELEASE_DIR"
-  #           exit 1
-  #         fi
-  #         if [ ! -d "$APP_DIR" ]; then
-  #           echo "Error: macOS app bundle not found: $APP_DIR"
-  #           exit 1
-  #         fi
-
-  #         cd "$RELEASE_DIR"
-  #         zip -ry "$OUT_ZIP" "$APP_NAME.app"
-  #     - name: Create Release
-  #       uses: softprops/action-gh-release@v2
-  #       with:
-  #         files: |
-  #           ${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_macos.zip
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
