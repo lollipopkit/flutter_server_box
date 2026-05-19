@@ -723,12 +723,13 @@ packages:
     source: hosted
     version: "2.2.0"
   icons_plus:
-    dependency: transitive
+    dependency: "direct main"
     description:
-      name: icons_plus
-      sha256: "8e2f601b8605d45dd55b106a0da084a1809125077a49574ca22e8bcd5b6e86f0"
-      url: "https://pub.dev"
-    source: hosted
+      path: "."
+      ref: main
+      resolved-ref: "42670d29c8c1cffb7203dd110e0009ba98709667"
+      url: "https://github.com/lollipopkit/icons_plus"
+    source: git
     version: "5.0.0"
   image:
     dependency: transitive
@@ -1212,10 +1213,11 @@ packages:
   re_editor:
     dependency: "direct main"
     description:
-      name: re_editor
-      sha256: dd4e6ca7350a8fa0cda4e425b82a0c3c010f0f6b3f618c74223e05b8129ab629
-      url: "https://pub.dev"
-    source: hosted
+      path: "."
+      ref: main
+      resolved-ref: d5d70020da74082d182301a49e2bb87d30f0ab66
+      url: "https://github.com/lollipopkit/re-editor"
+    source: git
     version: "0.8.0"
   re_highlight:
     dependency: transitive

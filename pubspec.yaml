@@ -30,7 +30,10 @@ dependencies:
   hive_ce_flutter: ^2.3.1
   intl: ^0.20.2
   json_annotation: ^4.9.0
-  re_editor: ^0.8.0
+  re_editor:
+    git:
+      url: https://github.com/lollipopkit/re-editor
+      ref: main
   responsive_framework: ^1.5.1
   riverpod_annotation: ^4.0.2
   shared_preferences: ^2.1.1
@@ -43,6 +46,10 @@ dependencies:
     path: packages/dartssh2
   circle_chart:
     path: packages/circle_chart
+  icons_plus:
+    git:
+      url: https://github.com/lollipopkit/icons_plus
+      ref: main
   xterm:
     path: packages/xterm
   computer:
