@@ -48,7 +48,7 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
           Expanded(
             child: ReorderableListView.builder(
               itemCount: _selectedTabs.length,
-              onReorder: _onReorder,
+              onReorderItem: _onReorder,
               buildDefaultDragHandles: false,
               itemBuilder: (context, index) {
                 final tab = _selectedTabs[index];

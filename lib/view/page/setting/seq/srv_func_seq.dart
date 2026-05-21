@@ -40,7 +40,7 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
           padding: const EdgeInsets.all(7),
           itemCount: allKeys.length,
           itemBuilder: (_, idx) => _buildListItem(allKeys[idx], idx, keys),
-          onReorder: (o, n) {
+          onReorderItem: (o, n) {
             if (o >= keys.length || n >= keys.length) {
               context.showSnackBar(libL10n.disabled);
               return;

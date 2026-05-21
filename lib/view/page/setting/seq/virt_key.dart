@@ -75,7 +75,7 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
       itemCount: _order.length,
       proxyDecorator: reorderProxyDecorator,
       itemBuilder: (_, idx) => _buildListItem(_order[idx], idx),
-      onReorder: _handleReorder,
+      onReorderItem: _handleReorder,
     );
   }
 

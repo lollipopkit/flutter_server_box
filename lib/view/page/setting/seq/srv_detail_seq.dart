@@ -58,7 +58,7 @@ class _ServerDetailOrderPageState extends State<ServerDetailOrderPage> {
       itemCount: _order.length,
       proxyDecorator: reorderProxyDecorator,
       itemBuilder: (_, idx) => _buildListItem(_order[idx], idx),
-      onReorder: _handleReorder,
+      onReorderItem: _handleReorder,
     );
   }
 
