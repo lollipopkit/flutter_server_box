@@ -163,7 +163,7 @@ final class PersistentShell {
 
     _stdoutSub = session.stdout
         .cast<List<int>>()
-        .transform(const Utf8Decoder(_allowMalformed: true))
+        .transform(const Utf8Decoder(allowMalformed: true))
         .listen(
           _handleStdout,
           onError: _handleStreamError,
@@ -172,7 +172,7 @@ final class PersistentShell {
 
     _stderrSub = session.stderr
         .cast<List<int>>()
-        .transform(const Utf8Decoder(_allowMalformed: true))
+        .transform(const Utf8Decoder(allowMalformed: true))
         .listen(
           _handleStderr,
           onError: _handleStreamError,
