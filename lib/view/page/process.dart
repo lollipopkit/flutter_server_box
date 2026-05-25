@@ -79,7 +79,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
         context.showSnackBar(libL10n.empty);
         return;
       }
-      _result = PsResult.parse(result, sort: _procSortMode);
+      _result = PsResult.parse(result, sort: _procSortMode, previous: _result);
 
       if (!_checkedIncompleteData) {
         final isAnyProcDataNotComplete = _result.procs.any(
@@ -89,6 +89,17 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
           _sortModes.removeWhere(
             (e) => e == ProcSortMode.cpu || e == ProcSortMode.mem,
           );
+        }
+        final hasAnyProcIoData = _result.procs.any(
+          (e) => e.readBytes != null || e.writeBytes != null,
+        );
+        if (!hasAnyProcIoData) {
+          _sortModes.removeWhere(
+            (e) => e == ProcSortMode.read || e == ProcSortMode.write,
+          );
+        }
+        if (!_sortModes.contains(_procSortMode)) {
+          _procSortMode = _sortModes.first;
         }
         _checkedIncompleteData = true;
       }
@@ -168,17 +179,28 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
       ),
     );
   }
+}
 
+extension _ProcessPageStateWidgets on _ProcessPageState {
   Widget _buildItemTrail(Proc proc) {
+    final items = <Widget>[
+      if (proc.cpu != null)
+        TwoLineText(up: proc.cpu!.toStringAsFixed(1), down: 'cpu'),
+      if (proc.mem != null)
+        TwoLineText(up: proc.mem!.toStringAsFixed(1), down: 'mem'),
+      if (proc.readSpeed != null)
+        TwoLineText(up: _formatSpeed(proc.readSpeed!), down: 'R'),
+      if (proc.writeSpeed != null)
+        TwoLineText(up: _formatSpeed(proc.writeSpeed!), down: 'W'),
+    ];
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (proc.cpu != null)
-          TwoLineText(up: proc.cpu!.toStringAsFixed(1), down: 'cpu'),
-        if (proc.cpu != null && proc.mem != null) UIs.width13,
-        if (proc.mem != null)
-          TwoLineText(up: proc.mem!.toStringAsFixed(1), down: 'mem'),
-        if (proc.cpu != null || proc.mem != null) UIs.width13,
+        for (final (idx, item) in items.indexed) ...[
+          if (idx > 0) UIs.width13,
+          item,
+        ],
+        if (items.isNotEmpty) UIs.width13,
         IconButton(
           icon: const Icon(Icons.stop),
           onPressed: () {
@@ -209,4 +231,8 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
       ],
     );
   }
+}
+
+extension _ProcessPageStateUtils on _ProcessPageState {
+  String _formatSpeed(double bytes) => '${bytes.bytes2Str}/s';
 }
