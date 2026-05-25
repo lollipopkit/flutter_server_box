@@ -258,7 +258,9 @@ if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \telse
 \t\tprintf 'PID USER %%CPU %%MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND\\n'
 \t\tps -axo pid=,user=,%cpu=,%mem=,vsz=,rss=,tty=,stat=,start=,time=,args= | while IFS= read -r line; do
+\t\t\tset -f
 \t\t\tset -- \$line
+\t\t\tset +f
 \t\t\tpid=\$1; user=\$2; cpu=\$3; mem=\$4; vsz=\$5; rss=\$6; tty=\$7; stat=\$8; start=\$9; time=\${10}
 \t\t\tshift 10
 \t\t\tcmd=\$*

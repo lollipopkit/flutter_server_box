@@ -179,7 +179,9 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
       ),
     );
   }
+}
 
+extension _ProcessPageStateWidgets on _ProcessPageState {
   Widget _buildItemTrail(Proc proc) {
     final items = <Widget>[
       if (proc.cpu != null)
@@ -229,6 +231,8 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
       ],
     );
   }
+}
 
+extension _ProcessPageStateUtils on _ProcessPageState {
   String _formatSpeed(double bytes) => '${bytes.bytes2Str}/s';
 }
