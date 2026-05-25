@@ -175,6 +175,8 @@ abstract final class GithubIds {
     'kuilei0926',
     'ci-sourcerer',
     'misaki258',
+    'Muska-Ami',
+    'wu4339'
   };
 }
 
