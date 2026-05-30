@@ -660,7 +660,19 @@ class SSHPageState extends ConsumerState<SSHPage>
       return;
     }
 
-    if (!_hasPendingSudoPrompt()) {
+    // Retry detection up to 3 times with 200ms intervals
+    bool detected = false;
+    for (int i = 0; i < 3; i++) {
+      if (_hasPendingSudoPrompt()) {
+        detected = true;
+        break;
+      }
+      if (i < 2) {
+        await Future.delayed(const Duration(milliseconds: 200));
+      }
+    }
+
+    if (!detected) {
       if (!mounted) return;
       context.showSnackBar(libL10n.fail);
       return;
@@ -674,14 +686,17 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   bool _hasPendingSudoPrompt() {
-    final lines = _terminal.buffer.lines.toList().reversed.take(8);
+    final lines = _terminal.buffer.lines.toList().reversed.take(15);
     for (final line in lines) {
       final raw = line.toString().trim();
       if (raw.isEmpty) continue;
       final lower = raw.toLowerCase();
       if (Miscs.pwdRequestWithUserReg.hasMatch(raw)) return true;
       if (lower.contains('[sudo] password')) return true;
-      if (lower.contains('password') && lower.endsWith(':')) return true;
+      if (lower.endsWith(':') &&
+          (lower.contains('password') || lower.contains('密码'))) {
+        return true;
+      }
     }
     return false;
   }
