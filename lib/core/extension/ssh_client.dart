@@ -12,55 +12,6 @@ typedef OnStderr = void Function(String data, SSHSession session);
 typedef OnStdin = void Function(SSHSession session);
 
 extension SSHClientX on SSHClient {
-  Future<(SSHSession, String)> execPowerShell(
-    OnStdin onStdin, {
-    SSHPtyConfig? pty,
-    OnStdout? onStdout,
-    void Function(String data)? onStderr,
-    bool stdout = true,
-    bool stderr = true,
-    Map<String, String>? env,
-  }) async {
-    final session = await execute(
-      'powershell -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass',
-      pty: pty,
-      environment: env,
-    );
-
-    final result = BytesBuilder(copy: false);
-    final stdoutDone = Completer<void>();
-    final stderrDone = Completer<void>();
-
-    session.stdout.listen(
-      (e) {
-        onStdout?.call(utf8.decode(e), session);
-        if (stdout) result.add(e);
-      },
-      onDone: stdoutDone.complete,
-      onError: (e) {
-        if (!stdoutDone.isCompleted) stdoutDone.completeError(e);
-      },
-    );
-
-    session.stderr.listen(
-      (e) {
-        onStderr?.call(utf8.decode(e));
-        if (stderr) result.add(e);
-      },
-      onDone: stderrDone.complete,
-      onError: (e) {
-        if (!stderrDone.isCompleted) stderrDone.completeError(e);
-      },
-    );
-
-    onStdin(session);
-
-    await stdoutDone.future;
-    await stderrDone.future;
-
-    return (session, utf8.decode(result.takeBytes()));
-  }
-
   Future<(SSHSession, String)> exec(
     OnStdin onStdin, {
     String? entry,
