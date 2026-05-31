@@ -203,7 +203,6 @@ class ServersNotifier extends _$ServersNotifier {
         TermSessionStatus.disconnected,
       );
     }
-    //TryLimiter.clear();
   }
 
   void closeServer({String? id}) {

@@ -109,16 +109,6 @@ class SettingStore extends HiveStore {
 
   late final fullScreenJitter = propertyDefault('fullScreenJitter', true);
 
-  // late final fullScreenRotateQuarter = property(
-  //   'fullScreenRotateQuarter',
-  //   1,
-  // );
-
-  // late final keyboardType = property(
-  //   'keyboardType',
-  //   TextInputType.text.index,
-  // );
-
   late final sshVirtKeys = listProperty<int>(
     'sshVirtKeys',
     defaultValue: VirtKeyX.defaultOrder.map((e) => e.index).toList(),
@@ -219,10 +209,6 @@ class SettingStore extends HiveStore {
     true,
   );
 
-  /// Ignore local network device (eg: br-xxx, ovs-system...)
-  /// when building traffic view on server tab
-  //late final ignoreLocalNet = propertyDefault('ignoreLocalNet', true);
-
   /// Remerber pwd in memory
   /// Used for [DialogX.showPwdDialog]
   late final rememberPwdInMem = propertyDefault('rememberPwdInMem', true);
@@ -230,10 +216,6 @@ class SettingStore extends HiveStore {
   /// SSH Term Theme
   /// 0: follow app theme, 1: light, 2: dark
   late final termTheme = propertyDefault('termTheme', 0);
-
-  /// Compatiablity for Chinese Android.
-  /// Set it to true, if you use Safe Keyboard on Chinese Android
-  // late final cnKeyboardComp = propertyDefault('cnKeyboardComp', false);
 
   late final lastVer = propertyDefault('lastVer', 0);
 

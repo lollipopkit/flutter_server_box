@@ -4,9 +4,6 @@ part 'custom.g.dart';
 
 @JsonSerializable(includeIfNull: false)
 final class ServerCustom {
-  // @HiveField(0)
-  // final String? temperature;
-
   final String? pveAddr;
 
   final bool pveIgnoreCert;
@@ -29,7 +26,6 @@ final class ServerCustom {
   final String? scriptDir;
 
   const ServerCustom({
-    //this.temperature,
     this.pveAddr,
     this.pveIgnoreCert = false,
     this.pvePwd,
@@ -49,7 +45,6 @@ final class ServerCustom {
   @override
   bool operator ==(Object other) {
     return other is ServerCustom &&
-        //other.temperature == temperature &&
         other.pveAddr == pveAddr &&
         other.pveIgnoreCert == pveIgnoreCert &&
         other.pvePwd == pvePwd &&
@@ -63,7 +58,6 @@ final class ServerCustom {
 
   @override
   int get hashCode =>
-      //temperature.hashCode ^
       pveAddr.hashCode ^
       pveIgnoreCert.hashCode ^
       pvePwd.hashCode ^

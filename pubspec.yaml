@@ -68,10 +68,6 @@ dev_dependencies:
   test: ^1.29.0
   flutter_test:
     sdk: flutter
-  # riverpod_reg:
-  #   git:
-  #     url: https://github.com/lollipopkit/riverpod_reg
-  #     ref: v0.0.2
   fl_build:
     path: packages/fl_build
 
@@ -96,10 +92,6 @@ flutter:
   #       - asset: fonts/TrajanPro.ttf
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
-
-riverpod_reg:
-  class_name: Riverpods
-  gen_path: lib/generated/riverpod_reg.dart
 
 flutter_native_splash:
   color: "#ffffff"
