@@ -275,7 +275,7 @@ class ServersNotifier extends _$ServersNotifier {
     );
 
     Stores.setting.serverOrder.put(newOrder);
-    Stores.server.delete(id);
+    Stores.server.deleteById(id);
     await _clearSudoPasswordOverrideBestEffort(id);
 
     await Stores.connectionStats.clearServerStats(id);
