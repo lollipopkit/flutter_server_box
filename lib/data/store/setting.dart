@@ -19,9 +19,6 @@ class SettingStore extends HiveStore {
   /// Record history of SFTP path and etc.
   late final recordHistory = propertyDefault('recordHistory', true);
 
-  /// Lanch page idx
-  // late final launchPage = property('launchPage', Defaults.launchPageIdx);
-
   /// Disk view: amount / IO
   late final serverTabPreferDiskAmount = propertyDefault(
     'serverTabPreferDiskAmount',
