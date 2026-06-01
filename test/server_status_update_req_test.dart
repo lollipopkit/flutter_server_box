@@ -141,7 +141,7 @@ ServerStatus _createPreviousStatus() {
   previous.sensors.add(
     const SensorItem(
       device: 'old-sensor',
-      adapter: SensorAdaptor.isa,
+      adapter: SensorAdaptor(SensorAdaptor.isaRaw),
       details: {'temp1': '+40.0C'},
     ),
   );

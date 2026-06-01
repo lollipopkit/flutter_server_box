@@ -13,9 +13,6 @@ abstract final class Miscs {
   /// Editor max allowed size is 1mb
   static const editorMaxSize = 1024 * 1024;
 
-  /// Max debug log lines
-  static const maxDebugLogLines = 100;
-
   static const pkgName = 'tech.lolli.toolbox';
 
   static const jsonEncoder = JsonEncoder.withIndent('  ');

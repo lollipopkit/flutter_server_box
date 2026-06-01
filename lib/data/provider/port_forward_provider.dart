@@ -62,7 +62,8 @@ class PortForwardNotifier extends _$PortForwardNotifier {
   ) async {
     await stopForward(oldConfig.id);
     final configWithServerId = newConfig.copyWith(serverId: _serverId);
-    Stores.portForward.update(oldConfig, configWithServerId);
+    Stores.portForward.delete(oldConfig);
+    Stores.portForward.put(configWithServerId);
     final configs = state.configs
         .map((c) => c.id == oldConfig.id ? configWithServerId : c)
         .toList();

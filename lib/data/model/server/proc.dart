@@ -52,7 +52,9 @@ class Proc {
   final double? writeSpeed;
   final String command;
 
-  const Proc({
+  late final binary = _parseBinary();
+
+  Proc({
     this.user,
     required this.pid,
     this.cpu,
@@ -162,7 +164,7 @@ class Proc {
     return Miscs.jsonEncoder.convert(toJson());
   }
 
-  String get binary {
+  String _parseBinary() {
     final parts = command.trim().split(' ').where((e) => e.isNotEmpty).toList();
     return parts.isNotEmpty ? parts[0] : '';
   }

@@ -43,27 +43,4 @@ class PortForwardStore extends HiveStore {
   void delete(PortForwardConfig config) {
     remove(config.id);
   }
-
-  void deleteByServer(String serverId) {
-    final keysToDelete = <dynamic>[];
-    for (final key in keys()) {
-      final config = get<PortForwardConfig>(key);
-      if (config?.serverId == serverId) {
-        keysToDelete.add(key);
-      }
-    }
-    for (final key in keysToDelete) {
-      remove(key);
-    }
-  }
-
-  void update(PortForwardConfig old, PortForwardConfig newConfig) {
-    if (!have(old)) {
-      throw Exception('Old config: $old not found');
-    }
-    delete(old);
-    put(newConfig);
-  }
-
-  bool have(PortForwardConfig config) => get(config.id) != null;
 }

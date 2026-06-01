@@ -121,7 +121,7 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
 
     try {
       final homeResult = await _client.run(
-        'getent passwd -- ${_shellQuote(widget.args.spi.user)}',
+        'getent passwd -- ${shellSingleQuote(widget.args.spi.user)}',
       );
       final passwdEntry = homeResult.string.trim();
       final homePath = passwdEntry.split(':').elementAtOrNull(5)?.trim() ?? '';
@@ -369,10 +369,6 @@ extension _UI on _SftpPageState {
 }
 
 extension _Actions on _SftpPageState {
-  String _shellQuote(String value) {
-    return "'${value.replaceAll("'", "'\\''")}'";
-  }
-
   bool _isPermissionDeniedErr(Object? err) {
     final msg = '$err'.toLowerCase();
     return msg.contains('permission denied') ||
@@ -447,7 +443,7 @@ extension _Actions on _SftpPageState {
 
   Future<bool> _canWriteRemotePath(String remoteDir) async {
     final (code, _) = await _client.execWithPwd(
-      'test -w ${_shellQuote(remoteDir)}',
+      'test -w ${shellSingleQuote(remoteDir)}',
       context: context,
       id: '${widget.args.spi.id}_sftp_write_probe',
     );
@@ -493,7 +489,7 @@ extension _Actions on _SftpPageState {
     }
 
     try {
-      await _runShellCommand('rm -f ${_shellQuote(tmpPath)}');
+      await _runShellCommand('rm -f ${shellSingleQuote(tmpPath)}');
     } catch (_) {}
     return false;
   }
@@ -537,7 +533,7 @@ extension _Actions on _SftpPageState {
             final remotePath = _getRemotePath(file);
             final suc = await _runWithSudoRetry(
               normal: () => _runShellCommand(
-                'chmod ${_shellQuote(permStr)} ${_shellQuote(remotePath)}',
+                'chmod ${shellSingleQuote(permStr)} ${shellSingleQuote(remotePath)}',
               ),
               sudo: (pwd) =>
                   _sudoHelper.chmod(permStr, remotePath, password: pwd),
@@ -584,8 +580,8 @@ extension _Actions on _SftpPageState {
     final editor = Stores.setting.sftpEditor.fetch();
     if (editor.isNotEmpty) {
       final sudoPrefix = useSudoForEdit ? 'sudo ' : '';
-      // Use single quote to avoid escape
-      final cmd = "$sudoPrefix$editor '$remotePath'";
+      final cmd =
+          '$sudoPrefix$editor ${shellSingleQuote(remotePath)}';
       final args = SshPageArgs(spi: widget.args.spi, initCmd: cmd);
       await SSHPage.route.go(context, args);
       await _listDir();
@@ -773,7 +769,7 @@ extension _Actions on _SftpPageState {
             final suc = await _runWithSudoRetry(
               normal: () async {
                 if (useRmr) {
-                  await _runShellCommand('rm -r ${_shellQuote(remotePath)}');
+                  await _runShellCommand('rm -r ${shellSingleQuote(remotePath)}');
                 } else if (file.attr.isDirectory) {
                   await _status.client!.rmdir(remotePath);
                 } else {
@@ -849,7 +845,7 @@ extension _Actions on _SftpPageState {
       context.pop();
       final path = '${_status.path.path}/$text';
       final suc = await _runWithSudoRetry(
-        normal: () => _runShellCommand('touch ${_shellQuote(path)}'),
+        normal: () => _runShellCommand('touch ${shellSingleQuote(path)}'),
         sudo: (pwd) => _sudoHelper.touch(path, password: pwd),
       );
       if (!suc) return;

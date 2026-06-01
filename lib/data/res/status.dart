@@ -30,7 +30,7 @@ abstract final class InitStatus {
         avail: BigInt.zero,
       ),
     ],
-    tcp: const Conn(maxConn: 0, active: 0, passive: 0, fail: 0),
+    tcp: const Conn(maxConn: 0, fail: 0),
     netSpeed: netSpeed,
     swap: const Swap(total: 0, free: 0, cached: 0),
     system: SystemType.linux,

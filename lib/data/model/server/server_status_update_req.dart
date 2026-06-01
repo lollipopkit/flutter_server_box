@@ -62,7 +62,7 @@ ServerStatus _createWorkingStatus(ServerStatus source, SystemType system) {
     cpu: source.cpu,
     mem: InitStatus.mem,
     disk: const [],
-    tcp: const Conn(maxConn: 0, active: 0, passive: 0, fail: 0),
+    tcp: const Conn(maxConn: 0, fail: 0),
     netSpeed: source.netSpeed,
     swap: const Swap(total: 0, free: 0, cached: 0),
     temps: Temperatures(),
@@ -71,6 +71,14 @@ ServerStatus _createWorkingStatus(ServerStatus source, SystemType system) {
     diskSmart: const [],
     err: source.err,
   );
+}
+
+void _updateDiskUsage(ServerStatus ss) {
+  try {
+    ss.diskUsage = ss.disk.isEmpty ? null : DiskUsage.parse(ss.disk);
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
 }
 
 // Wrap each operation with a try-catch, so that if one operation fails,
@@ -144,13 +152,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
     Loggers.app.warning(e, s);
   }
 
-  try {
-    req.ss.diskUsage = req.ss.disk.isEmpty
-        ? null
-        : DiskUsage.parse(req.ss.disk);
-  } catch (e, s) {
-    Loggers.app.warning(e, s);
-  }
+  _updateDiskUsage(req.ss);
 
   try {
     req.ss.mem = Memory.parse(StatusCmdType.mem.findInMap(parsedOutput));
@@ -297,13 +299,7 @@ Future<ServerStatus> _getBsdStatus(ServerStatusUpdateReq req) async {
     Loggers.app.warning(e, s);
   }
 
-  try {
-    req.ss.diskUsage = req.ss.disk.isEmpty
-        ? null
-        : DiskUsage.parse(req.ss.disk);
-  } catch (e, s) {
-    Loggers.app.warning(e, s);
-  }
+  _updateDiskUsage(req.ss);
   return req.ss;
 }
 
@@ -571,7 +567,7 @@ void _parseWindowsConnectionData(
     final connStr = WindowsStatusCmdType.conn.findInMap(parsedOutput);
     final connCount = int.tryParse(connStr.trim());
     if (connCount != null) {
-      req.ss.tcp = Conn(maxConn: 0, active: connCount, passive: 0, fail: 0);
+      req.ss.tcp = Conn(maxConn: connCount, fail: 0);
     }
   } catch (e, s) {
     Loggers.app.warning('Windows connection parsing failed: $e', s);
