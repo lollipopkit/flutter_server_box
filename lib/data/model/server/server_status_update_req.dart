@@ -73,6 +73,14 @@ ServerStatus _createWorkingStatus(ServerStatus source, SystemType system) {
   );
 }
 
+void _updateDiskUsage(ServerStatus ss) {
+  try {
+    ss.diskUsage = ss.disk.isEmpty ? null : DiskUsage.parse(ss.disk);
+  } catch (e, s) {
+    Loggers.app.warning(e, s);
+  }
+}
+
 // Wrap each operation with a try-catch, so that if one operation fails,
 // the following operations can still be executed.
 Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
@@ -144,13 +152,7 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
     Loggers.app.warning(e, s);
   }
 
-  try {
-    req.ss.diskUsage = req.ss.disk.isEmpty
-        ? null
-        : DiskUsage.parse(req.ss.disk);
-  } catch (e, s) {
-    Loggers.app.warning(e, s);
-  }
+  _updateDiskUsage(req.ss);
 
   try {
     req.ss.mem = Memory.parse(StatusCmdType.mem.findInMap(parsedOutput));
@@ -297,13 +299,7 @@ Future<ServerStatus> _getBsdStatus(ServerStatusUpdateReq req) async {
     Loggers.app.warning(e, s);
   }
 
-  try {
-    req.ss.diskUsage = req.ss.disk.isEmpty
-        ? null
-        : DiskUsage.parse(req.ss.disk);
-  } catch (e, s) {
-    Loggers.app.warning(e, s);
-  }
+  _updateDiskUsage(req.ss);
   return req.ss;
 }
 

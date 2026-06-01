@@ -293,7 +293,7 @@ extension _Actions on _ConnectionStatsPageState {
     if (!mounted) return;
     final totalSize = oldSize + oldIndexSize;
 
-    final sizeStr = _formatSize(totalSize);
+    final sizeStr = totalSize.bytes2Str;
 
     context.showRoundDialog(
       title: l10n.compactDatabase,
@@ -310,7 +310,7 @@ extension _Actions on _ConnectionStatsPageState {
               final newIndexSize = await Stores.connectionStats
                   .indexDbSizeAsync();
               final newTotalSize = newSize + newIndexSize;
-              final newSizeStr = _formatSize(newTotalSize);
+              final newSizeStr = newTotalSize.bytes2Str;
               _finishCompacting('${libL10n.success}: $sizeStr -> $newSizeStr');
             } catch (e) {
               _finishCompacting('${libL10n.error}: $e');
@@ -427,13 +427,5 @@ extension _Actions on _ConnectionStatsPageState {
         ),
       ],
     );
-  }
-}
-
-extension _Utils on _ConnectionStatsPageState {
-  String _formatSize(int bytes) {
-    if (bytes < 1000) return '$bytes B';
-    if (bytes < 1000 * 1000) return '${(bytes / 1000).toStringAsFixed(1)} KB';
-    return '${(bytes / (1000 * 1000)).toStringAsFixed(1)} MB';
   }
 }
