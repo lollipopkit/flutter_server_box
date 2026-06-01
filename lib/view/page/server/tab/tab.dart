@@ -136,22 +136,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
   }
 
   Widget _buildPortrait() {
-    // final isMobile = ResponsiveBreakpoints.of(context).isMobile;
     final serverState = ref.watch(serversProvider);
     return _tag.listenVal((val) {
       final filtered = _filterServers(serverState.serverOrder);
       final child = _buildScaffold(_buildBodySmall(filtered: filtered));
-      // if (isMobile) {
       return child;
-      // }
-
-      // return SplitView(
-      //   controller: _splitViewCtrl,
-      //   leftWeight: 1,
-      //   rightWeight: 1.3,
-      //   initialRight: Center(child: CircularProgressIndicator()),
-      //   leftBuilder: (_, __) => child,
-      // );
     });
   }
 

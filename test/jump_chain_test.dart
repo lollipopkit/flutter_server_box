@@ -21,61 +21,61 @@ Spi _spi({
 
 void main() {
   group('JumpChain', () {
-    test('wouldCreateJumpCycle returns false for valid chain', () {
+    test('wouldCreateJumpCycleForCandidates returns false for valid chain', () {
       final servers = <String, Spi>{
         'A': _spi(id: 'A', name: 'a'),
         'B': _spi(id: 'B', name: 'b', jumpId: 'A'),
       };
 
-      final result = wouldCreateJumpCycle(
+      final result = wouldCreateJumpCycleForCandidates(
         currentServerId: 'C',
-        candidateJumpId: 'B',
+        candidateJumpIds: ['B'],
         serversById: servers,
       );
 
       expect(result, isFalse);
     });
 
-    test('wouldCreateJumpCycle detects cycle back to current server', () {
+    test('wouldCreateJumpCycleForCandidates detects cycle back to current server', () {
       final servers = <String, Spi>{
         'A': _spi(id: 'A', name: 'a', jumpId: 'B'),
         'B': _spi(id: 'B', name: 'b', jumpId: 'C'),
         'C': _spi(id: 'C', name: 'c'),
       };
 
-      final result = wouldCreateJumpCycle(
+      final result = wouldCreateJumpCycleForCandidates(
         currentServerId: 'C',
-        candidateJumpId: 'A',
+        candidateJumpIds: ['A'],
         serversById: servers,
       );
 
       expect(result, isTrue);
     });
 
-    test('wouldCreateJumpCycle treats existing malformed loop as invalid', () {
+    test('wouldCreateJumpCycleForCandidates treats existing malformed loop as invalid', () {
       final servers = <String, Spi>{
         'A': _spi(id: 'A', name: 'a', jumpId: 'B'),
         'B': _spi(id: 'B', name: 'b', jumpId: 'A'),
       };
 
-      final result = wouldCreateJumpCycle(
+      final result = wouldCreateJumpCycleForCandidates(
         currentServerId: 'C',
-        candidateJumpId: 'A',
+        candidateJumpIds: ['A'],
         serversById: servers,
       );
 
       expect(result, isTrue);
     });
 
-    test('wouldCreateJumpCycle validates new server with null current id', () {
+    test('wouldCreateJumpCycleForCandidates validates new server with null current id', () {
       final servers = <String, Spi>{
         'A': _spi(id: 'A', name: 'a', jumpId: 'B'),
         'B': _spi(id: 'B', name: 'b', jumpId: 'A'),
       };
 
-      final result = wouldCreateJumpCycle(
+      final result = wouldCreateJumpCycleForCandidates(
         currentServerId: null,
-        candidateJumpId: 'A',
+        candidateJumpIds: ['A'],
         serversById: servers,
       );
 

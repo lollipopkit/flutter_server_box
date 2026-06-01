@@ -14,7 +14,7 @@ enum Dist {
   coreelec,
 }
 
-extension StringX on String {
+extension DistStringX on String {
   Dist? get dist {
     final lower = toLowerCase();
     for (final dist in Dist.values) {
