@@ -53,6 +53,7 @@ abstract class CachedHiveStore<T extends Object> extends HiveStore {
     _suppressWatch = true;
     try {
       box.put(getKey(item), item);
+      _cache = null;
     } finally {
       _suppressWatch = false;
     }

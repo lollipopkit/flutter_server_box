@@ -91,10 +91,10 @@ extension SSHClientX on SSHClient {
       stdoutBuilder: stdout ? result : null,
       stderrBuilder: stderr ? result : null,
       onStdoutData: onStdout != null
-          ? (e) => onStdout(utf8.decode(e), session)
+          ? (e) => onStdout(utf8.decode(e, allowMalformed: true), session)
           : null,
       onStderrData: onStderr != null
-          ? (e) => onStderr(utf8.decode(e), session)
+          ? (e) => onStderr(utf8.decode(e, allowMalformed: true), session)
           : null,
     );
 
