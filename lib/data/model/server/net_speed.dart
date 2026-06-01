@@ -86,6 +86,7 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
         for (final prefix in realIfacePrefixs) {
           if (devices[i].startsWith(prefix)) {
             speed += speedInBytes(i);
+            break;
           }
         }
       }
@@ -104,6 +105,7 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
         for (final prefix in realIfacePrefixs) {
           if (devices[i].startsWith(prefix)) {
             size += sizeInBytes(i);
+            break;
           }
         }
       }
@@ -122,6 +124,7 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
         for (final prefix in realIfacePrefixs) {
           if (devices[i].startsWith(prefix)) {
             speed += speedOutBytes(i);
+            break;
           }
         }
       }
@@ -140,6 +143,7 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
         for (final prefix in realIfacePrefixs) {
           if (devices[i].startsWith(prefix)) {
             size += sizeOutBytes(i);
+            break;
           }
         }
       }

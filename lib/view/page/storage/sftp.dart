@@ -580,8 +580,8 @@ extension _Actions on _SftpPageState {
     final editor = Stores.setting.sftpEditor.fetch();
     if (editor.isNotEmpty) {
       final sudoPrefix = useSudoForEdit ? 'sudo ' : '';
-      // Use single quote to avoid escape
-      final cmd = "$sudoPrefix$editor '$remotePath'";
+      final cmd =
+          '$sudoPrefix$editor ${shellSingleQuote(remotePath)}';
       final args = SshPageArgs(spi: widget.args.spi, initCmd: cmd);
       await SSHPage.route.go(context, args);
       await _listDir();
