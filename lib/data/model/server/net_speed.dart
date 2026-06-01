@@ -82,10 +82,10 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     if (pre.length != now.length) return 'N/A';
     if (device == null) {
       var speed = 0.0;
-      for (final device in devices) {
+      for (var i = 0; i < devices.length; i++) {
         for (final prefix in realIfacePrefixs) {
-          if (device.startsWith(prefix)) {
-            speed += speedInBytes(devices.indexOf(device));
+          if (devices[i].startsWith(prefix)) {
+            speed += speedInBytes(i);
           }
         }
       }
@@ -100,10 +100,10 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     if (pre.length != now.length) return 'N/A';
     if (device == null) {
       var size = BigInt.from(0);
-      for (final device in devices) {
+      for (var i = 0; i < devices.length; i++) {
         for (final prefix in realIfacePrefixs) {
-          if (device.startsWith(prefix)) {
-            size += sizeInBytes(devices.indexOf(device));
+          if (devices[i].startsWith(prefix)) {
+            size += sizeInBytes(i);
           }
         }
       }
@@ -118,10 +118,10 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     if (pre.length != now.length) return 'N/A';
     if (device == null) {
       var speed = 0.0;
-      for (final device in devices) {
+      for (var i = 0; i < devices.length; i++) {
         for (final prefix in realIfacePrefixs) {
-          if (device.startsWith(prefix)) {
-            speed += speedOutBytes(devices.indexOf(device));
+          if (devices[i].startsWith(prefix)) {
+            speed += speedOutBytes(i);
           }
         }
       }
@@ -136,10 +136,10 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     if (pre.length != now.length) return 'N/A';
     if (device == null) {
       var size = BigInt.from(0);
-      for (final device in devices) {
+      for (var i = 0; i < devices.length; i++) {
         for (final prefix in realIfacePrefixs) {
-          if (device.startsWith(prefix)) {
-            size += sizeOutBytes(devices.indexOf(device));
+          if (devices[i].startsWith(prefix)) {
+            size += sizeOutBytes(i);
           }
         }
       }
@@ -151,10 +151,8 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
 
   int deviceIdx(String? device) {
     if (device != null) {
-      for (var item in now) {
-        if (item.device == device) {
-          return now.indexOf(item);
-        }
+      for (var i = 0; i < now.length; i++) {
+        if (now[i].device == device) return i;
       }
     }
     return 0;
