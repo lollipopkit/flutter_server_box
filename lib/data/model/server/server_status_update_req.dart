@@ -62,7 +62,7 @@ ServerStatus _createWorkingStatus(ServerStatus source, SystemType system) {
     cpu: source.cpu,
     mem: InitStatus.mem,
     disk: const [],
-    tcp: const Conn(maxConn: 0, active: 0, passive: 0, fail: 0),
+    tcp: const Conn(maxConn: 0, fail: 0),
     netSpeed: source.netSpeed,
     swap: const Swap(total: 0, free: 0, cached: 0),
     temps: Temperatures(),
@@ -571,7 +571,7 @@ void _parseWindowsConnectionData(
     final connStr = WindowsStatusCmdType.conn.findInMap(parsedOutput);
     final connCount = int.tryParse(connStr.trim());
     if (connCount != null) {
-      req.ss.tcp = Conn(maxConn: 0, active: connCount, passive: 0, fail: 0);
+      req.ss.tcp = Conn(maxConn: connCount, fail: 0);
     }
   } catch (e, s) {
     Loggers.app.warning('Windows connection parsing failed: $e', s);

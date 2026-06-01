@@ -84,7 +84,6 @@ class NvidiaSmi {
       if (name != null && temp != null) {
         return NvidiaSmiItem(
           name: name,
-          uuid: gpu.findElements('uuid').firstOrNull?.innerText ?? '',
           temp: int.tryParse(temp.split(' ').firstOrNull ?? '0') ?? 0,
           percent: int.tryParse(percent?.split(' ').firstOrNull ?? '0') ?? 0,
           power: '$powerDraw / $powerLimit',
@@ -105,7 +104,6 @@ class NvidiaSmi {
 }
 
 class NvidiaSmiItem {
-  final String uuid;
   final String name;
   final int temp;
   final String power;
@@ -114,7 +112,6 @@ class NvidiaSmiItem {
   final int fanSpeed;
 
   const NvidiaSmiItem({
-    required this.uuid,
     required this.name,
     required this.temp,
     required this.power,

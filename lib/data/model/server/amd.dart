@@ -50,8 +50,6 @@ class AmdSmi {
           gpu['card_model'] ??
           gpu['device_name'] ??
           'Unknown AMD GPU';
-      final deviceId =
-          gpu['device_id']?.toString() ?? gpu['gpu_id']?.toString() ?? '0';
 
       // Temperature parsing
       final tempRaw = gpu['temperature'] ?? gpu['temp'] ?? gpu['gpu_temp'];
@@ -80,7 +78,6 @@ class AmdSmi {
       );
 
       return AmdSmiItem(
-        deviceId: deviceId,
         name: name,
         temp: temp,
         power: power,
@@ -149,7 +146,6 @@ class AmdSmi {
 }
 
 class AmdSmiItem {
-  final String deviceId;
   final String name;
   final int temp;
   final String power;
@@ -159,7 +155,6 @@ class AmdSmiItem {
   final int clockSpeed;
 
   const AmdSmiItem({
-    required this.deviceId,
     required this.name,
     required this.temp,
     required this.power,

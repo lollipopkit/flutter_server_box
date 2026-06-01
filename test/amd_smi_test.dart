@@ -146,7 +146,6 @@ void main() {
 
       final gpu1 = gpus[0];
       expect(gpu1.name, 'AMD Radeon RX 7900 XTX');
-      expect(gpu1.deviceId, '0');
       expect(gpu1.temp, 45);
       expect(gpu1.power, '120W / 355W');
       expect(gpu1.memory.total, 24576);
@@ -165,7 +164,6 @@ void main() {
 
       final gpu2 = gpus[1];
       expect(gpu2.name, 'AMD Radeon RX 6800 XT');
-      expect(gpu2.deviceId, '1');
       expect(gpu2.temp, 38);
       expect(gpu2.power, '85W / 300W');
       expect(gpu2.memory.total, 16384);
@@ -183,7 +181,6 @@ void main() {
 
       final gpu = gpus[0];
       expect(gpu.name, 'AMD Radeon RX 6700 XT');
-      expect(gpu.deviceId, 'card0');
       expect(gpu.temp, 42);
       expect(gpu.power, '95W / 230W');
       expect(gpu.memory.total, 12288);
@@ -204,7 +201,6 @@ void main() {
 
       final gpu = gpus[0];
       expect(gpu.name, 'Radeon RX 580');
-      expect(gpu.deviceId, '0');
       expect(gpu.temp, 55);
       expect(gpu.power, '150W / 185W');
       expect(gpu.memory.total, 8192);
@@ -222,7 +218,6 @@ void main() {
 
       final gpu1 = gpus[0];
       expect(gpu1.name, 'Unknown AMD GPU');
-      expect(gpu1.deviceId, '');
       expect(gpu1.temp, 0);
       expect(gpu1.power, 'N/A');
       expect(gpu1.memory.total, 0);
@@ -235,7 +230,6 @@ void main() {
 
       final gpu2 = gpus[1];
       expect(gpu2.name, 'AMD Test GPU');
-      expect(gpu2.deviceId, 'test');
       expect(gpu2.temp, 50);
       expect(gpu2.power, '100W');
       expect(gpu2.memory.total, 16384);
@@ -330,7 +324,6 @@ void main() {
     test('AmdSmiItem toString', () {
       final memory = AmdSmiMem(8192, 2048, 'MB', []);
       final item = AmdSmiItem(
-        deviceId: '0',
         name: 'Test GPU',
         temp: 45,
         power: '100W / 200W',
@@ -406,7 +399,6 @@ void main() {
       final gpus = AmdSmi.fromJson(minimalGpuJson);
       expect(gpus.length, 1);
       expect(gpus[0].name, 'Unknown AMD GPU');
-      expect(gpus[0].deviceId, '0');
       expect(gpus[0].temp, 0);
       expect(gpus[0].power, 'N/A');
       expect(gpus[0].utilization, 0);
