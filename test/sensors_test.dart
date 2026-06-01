@@ -108,10 +108,10 @@ void main() {
       'nvme-pci-0400',
     ]);
     expect(sensors.map((e) => e.adapter), [
-      SensorAdaptor.isa,
-      SensorAdaptor.acpi,
-      SensorAdaptor.virtual,
-      SensorAdaptor.pci,
+      const SensorAdaptor(SensorAdaptor.isaRaw),
+      const SensorAdaptor(SensorAdaptor.acpiRaw),
+      const SensorAdaptor(SensorAdaptor.virtualRaw),
+      const SensorAdaptor(SensorAdaptor.pciRaw),
     ]);
     expect(sensors.map((e) => e.summary), [
       '+56.0°C  (high = +105.0°C, crit = +105.0°C)',
@@ -130,10 +130,10 @@ void main() {
       'k10temp-pci-00c3',
     ]);
     expect(sensors.map((e) => e.adapter), [
-      SensorAdaptor.isa,
-      SensorAdaptor.isa,
-      SensorAdaptor.pci,
-      SensorAdaptor.pci,
+      const SensorAdaptor(SensorAdaptor.isaRaw),
+      const SensorAdaptor(SensorAdaptor.isaRaw),
+      const SensorAdaptor(SensorAdaptor.pciRaw),
+      const SensorAdaptor(SensorAdaptor.pciRaw),
     ]);
     expect(sensors.map((e) => e.summary), [
       '1.26 V',

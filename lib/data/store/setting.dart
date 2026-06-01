@@ -282,9 +282,6 @@ class SettingStore extends HiveStore {
   /// Close the editor after saving
   late final closeAfterSave = propertyDefault('closeAfterSave', false);
 
-  /// Version of store db
-  late final storeVersion = propertyDefault('storeVersion', 0);
-
   /// Have notified user for notificaiton permission or not
   late final noNotiPerm = propertyDefault('noNotiPerm', false);
 

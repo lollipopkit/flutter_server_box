@@ -3,7 +3,6 @@ class ChainComparator<T> {
   final Comparator<T> _comparator;
 
   ChainComparator._create(this._parent, this._comparator);
-  ChainComparator.empty() : this._create(null, (a, b) => 0);
   ChainComparator.create() : this._create(null, (a, b) => 0);
 
   static ChainComparator<T> comparing<T, F extends Comparable<F>>(

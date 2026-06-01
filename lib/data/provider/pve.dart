@@ -125,8 +125,6 @@ class PveNotifier extends _$PveNotifier {
       );
   }
 
-  bool get onlyOneNode => state.data?.nodes.length == 1;
-
   Future<void> reconnect() async {
     await _closeSession(clearPendingTfa: true);
     if (!ref.mounted) return;
