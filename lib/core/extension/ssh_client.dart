@@ -11,6 +11,56 @@ typedef OnStdout = void Function(String data, SSHSession session);
 typedef OnStderr = void Function(String data, SSHSession session);
 typedef OnStdin = void Function(SSHSession session);
 
+Future<void> _collectOutput(
+  SSHSession session, {
+  BytesBuilder? stdoutBuilder,
+  BytesBuilder? stderrBuilder,
+  void Function(List<int> data)? onStdoutData,
+  void Function(List<int> data)? onStderrData,
+}) {
+  final stdoutDone = Completer<void>();
+  final stderrDone = Completer<void>();
+
+  session.stdout.listen(
+    (e) {
+      onStdoutData?.call(e);
+      stdoutBuilder?.add(e);
+    },
+    onDone: stdoutDone.complete,
+    onError: stdoutDone.completeError,
+  );
+
+  session.stderr.listen(
+    (e) {
+      onStderrData?.call(e);
+      stderrBuilder?.add(e);
+    },
+    onDone: stderrDone.complete,
+    onError: stderrDone.completeError,
+  );
+
+  return Future.wait([stdoutDone.future, stderrDone.future]);
+}
+
+String _decodeOutput(
+  List<int> bytes, {
+  required bool isWindows,
+  String? context,
+  String label = 'output',
+}) {
+  try {
+    return SSHDecoder.decode(
+      bytes,
+      isWindows: isWindows,
+      context: context != null ? '$context ($label)' : label,
+    );
+  } on FormatException catch (e) {
+    throw Exception(
+      'Failed to decode $label${context != null ? ' [$context]' : ''}: $e',
+    );
+  }
+}
+
 extension SSHClientX on SSHClient {
   Future<(SSHSession, String)> exec(
     OnStdin onStdin, {
@@ -35,31 +85,21 @@ extension SSHClientX on SSHClient {
     );
 
     final result = BytesBuilder(copy: false);
-    final stdoutDone = Completer<void>();
-    final stderrDone = Completer<void>();
 
-    session.stdout.listen(
-      (e) {
-        onStdout?.call(utf8.decode(e), session);
-        if (stdout) result.add(e);
-      },
-      onDone: stdoutDone.complete,
-      onError: stdoutDone.completeError,
-    );
-
-    session.stderr.listen(
-      (e) {
-        onStderr?.call(utf8.decode(e), session);
-        if (stderr) result.add(e);
-      },
-      onDone: stderrDone.complete,
-      onError: stderrDone.completeError,
+    final done = _collectOutput(
+      session,
+      stdoutBuilder: stdout ? result : null,
+      stderrBuilder: stderr ? result : null,
+      onStdoutData: onStdout != null
+          ? (e) => onStdout(utf8.decode(e), session)
+          : null,
+      onStderrData: onStderr != null
+          ? (e) => onStderr(utf8.decode(e), session)
+          : null,
     );
 
     onStdin(session);
-
-    await stdoutDone.future;
-    await stderrDone.future;
+    await done;
 
     return (session, utf8.decode(result.takeBytes()));
   }
@@ -113,34 +153,16 @@ extension SSHClientX on SSHClient {
     );
 
     final result = BytesBuilder(copy: false);
-    final stdoutDone = Completer<void>();
-    final stderrDone = Completer<void>();
 
-    session.stdout.listen(
-      (e) {
-        if (stdout) result.add(e);
-      },
-      onDone: stdoutDone.complete,
-      onError: (e) {
-        if (!stdoutDone.isCompleted) stdoutDone.completeError(e);
-      },
-    );
-
-    session.stderr.listen(
-      (e) {
-        if (stderr) result.add(e);
-      },
-      onDone: stderrDone.complete,
-      onError: (e) {
-        if (!stderrDone.isCompleted) stderrDone.completeError(e);
-      },
+    final done = _collectOutput(
+      session,
+      stdoutBuilder: stdout ? result : null,
+      stderrBuilder: stderr ? result : null,
     );
 
     session.stdin.add(Uint8List.fromList(utf8.encode('$script\n')));
     session.stdin.close();
-
-    await stdoutDone.future;
-    await stderrDone.future;
+    await done;
 
     return utf8.decode(result.takeBytes());
   }
@@ -151,18 +173,11 @@ extension SSHClientX on SSHClient {
     String? context,
   }) async {
     final result = await run(command);
-
-    try {
-      return SSHDecoder.decode(
-        result,
-        isWindows: systemType == SystemType.windows,
-        context: context,
-      );
-    } on FormatException catch (e) {
-      throw Exception(
-        'Failed to decode command output${context != null ? ' [$context]' : ''}: $e',
-      );
-    }
+    return _decodeOutput(
+      result,
+      isWindows: systemType == SystemType.windows,
+      context: context,
+    );
   }
 
   Future<(String stdout, String stderr)> execSafe(
@@ -173,60 +188,31 @@ extension SSHClientX on SSHClient {
   }) async {
     final stdoutBuilder = BytesBuilder(copy: false);
     final stderrBuilder = BytesBuilder(copy: false);
-    final stdoutDone = Completer<void>();
-    final stderrDone = Completer<void>();
 
     final session = await execute(entry);
 
-    session.stdout.listen(
-      (e) {
-        stdoutBuilder.add(e);
-      },
-      onDone: stdoutDone.complete,
-      onError: stdoutDone.completeError,
-    );
-
-    session.stderr.listen(
-      (e) {
-        stderrBuilder.add(e);
-      },
-      onDone: stderrDone.complete,
-      onError: stderrDone.completeError,
+    final done = _collectOutput(
+      session,
+      stdoutBuilder: stdoutBuilder,
+      stderrBuilder: stderrBuilder,
     );
 
     callback(session);
+    await done;
 
-    await stdoutDone.future;
-    await stderrDone.future;
-
-    final stdoutBytes = stdoutBuilder.takeBytes();
-    final stderrBytes = stderrBuilder.takeBytes();
-
-    String stdout;
-    try {
-      stdout = SSHDecoder.decode(
-        stdoutBytes,
-        isWindows: systemType == SystemType.windows,
-        context: context != null ? '$context (stdout)' : 'stdout',
-      );
-    } on FormatException catch (e) {
-      throw Exception(
-        'Failed to decode stdout${context != null ? ' [$context]' : ''}: $e',
-      );
-    }
-
-    String stderr;
-    try {
-      stderr = SSHDecoder.decode(
-        stderrBytes,
-        isWindows: systemType == SystemType.windows,
-        context: context != null ? '$context (stderr)' : 'stderr',
-      );
-    } on FormatException catch (e) {
-      throw Exception(
-        'Failed to decode stderr${context != null ? ' [$context]' : ''}: $e',
-      );
-    }
+    final isWindows = systemType == SystemType.windows;
+    final stdout = _decodeOutput(
+      stdoutBuilder.takeBytes(),
+      isWindows: isWindows,
+      context: context,
+      label: 'stdout',
+    );
+    final stderr = _decodeOutput(
+      stderrBuilder.takeBytes(),
+      isWindows: isWindows,
+      context: context,
+      label: 'stderr',
+    );
 
     return (stdout, stderr);
   }
