@@ -562,17 +562,19 @@ extension on _BackupPageState {
     if (!isICloudSupported) return null;
 
     final files = await icloud.list();
-    final matches = files.where((file) => file.relativePath == Paths.bakName);
+    final matches = files.where(
+      (file) => file.relativePath == Paths.bakName && file.contentChangeDate != null,
+    );
     if (matches.isEmpty) return null;
 
     final file = matches.reduce(
       (latest, current) =>
-          current.contentChangeDate.isAfter(latest.contentChangeDate)
+          current.contentChangeDate!.isAfter(latest.contentChangeDate!)
           ? current
           : latest,
     );
     return _ICloudBackupStatus(
-      lastModified: file.contentChangeDate,
+      lastModified: file.contentChangeDate!,
       isUploading: file.isUploading,
       isUploaded: file.isUploaded,
       hasConflict: file.hasUnresolvedConflicts,

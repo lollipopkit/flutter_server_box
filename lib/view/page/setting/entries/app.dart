@@ -497,6 +497,12 @@ extension _App on _AppSettingsPageState {
         closeAfterSave: _setting.closeAfterSave.fetch(),
         softWrap: _setting.editorSoftWrap.fetch(),
         enableHighlight: _setting.editorHighlight.fetch(),
+        lightTheme: HighlightTheme.fromThemeMapKey(
+          _setting.editorTheme.fetch(),
+        ),
+        darkTheme: HighlightTheme.fromThemeMapKey(
+          _setting.editorDarkTheme.fetch(),
+        ),
         fontFamily: editorFont.isEmpty ? null : editorFont,
       ),
     );

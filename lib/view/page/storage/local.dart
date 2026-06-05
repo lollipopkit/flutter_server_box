@@ -393,6 +393,12 @@ extension _OnTapFile on _LocalFilePageState {
         closeAfterSave: Stores.setting.closeAfterSave.fetch(),
         softWrap: Stores.setting.editorSoftWrap.fetch(),
         enableHighlight: Stores.setting.editorHighlight.fetch(),
+        lightTheme: HighlightTheme.fromThemeMapKey(
+          Stores.setting.editorTheme.fetch(),
+        ),
+        darkTheme: HighlightTheme.fromThemeMapKey(
+          Stores.setting.editorDarkTheme.fetch(),
+        ),
         fontFamily: () {
           final font = Stores.setting.editorFontFamily.fetch();
           return font.isEmpty ? null : font;

@@ -17,6 +17,7 @@
 		7538AEC32BB83FAB002AB82A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7538AEC22BB83FAB002AB82A /* PrivacyInfo.xcprivacy */; };
 		7538AEC52BB83FC8002AB82A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7538AEC42BB83FC8002AB82A /* PrivacyInfo.xcprivacy */; };
 		7538AEC72BB83FD3002AB82A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7538AEC62BB83FD3002AB82A /* PrivacyInfo.xcprivacy */; };
+		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
 		9234EA956D1225D388A01660 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 278C1EB3935F9285537B0516 /* Pods_Runner.framework */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
@@ -40,9 +41,8 @@
 		E3AE8AEB2AB601DB000A6459 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AE8AE92AB601DB000A6459 /* Utils.swift */; };
 		E3AE8AEC2AB601DB000A6459 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3AE8AE92AB601DB000A6459 /* Utils.swift */; };
 		E3DB67ED2A31FE200027B8CB /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E3DB67EB2A31FE200027B8CB /* LaunchScreen.storyboard */; };
-        F0A1B2C31A2B3C4D5E6F0005 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F0A1B2C31A2B3C4D5E6F0001 /* Localizable.strings */; };
-        F0A1B2C31A2B3C4D5E6F1005 /* Localizable.strings (StatusWidget) in Resources */ = {isa = PBXBuildFile; fileRef = F0A1B2C31A2B3C4D5E6F1001 /* Localizable.strings */; };
-		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
+		F0A1B2C31A2B3C4D5E6F0005 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F0A1B2C31A2B3C4D5E6F0001 /* Localizable.strings */; };
+		F0A1B2C31A2B3C4D5E6F1005 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F0A1B2C31A2B3C4D5E6F1001 /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -112,6 +112,7 @@
 		7538AEC22BB83FAB002AB82A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		7538AEC42BB83FC8002AB82A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		7538AEC62BB83FD3002AB82A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		78E0A7A72DC9AD7400C4905E /* FlutterGeneratedPluginSwiftPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FlutterGeneratedPluginSwiftPackage; path = Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
@@ -167,27 +168,26 @@
 		E3D26BD22B9966EC00D83425 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Main.strings; sourceTree = "<group>"; };
 		E3D26BD32B9966EC00D83425 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/LaunchScreen.strings; sourceTree = "<group>"; };
 		E3DB67EC2A31FE200027B8CB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F0002 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F0003 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F0004 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F0006 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F0007 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F0008 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F0009 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F000A /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F000B /* id */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = id; path = id.lproj/Localizable.strings; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F000C /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F1002 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F1003 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F1004 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F1006 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F1007 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F1008 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F1009 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F100A /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F100B /* id */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = id; path = id.lproj/Localizable.strings; sourceTree = "<group>"; };
-        F0A1B2C31A2B3C4D5E6F100C /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
-		78E0A7A72DC9AD7400C4905E /* FlutterGeneratedPluginSwiftPackage */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = FlutterGeneratedPluginSwiftPackage; path = Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F0002 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F0003 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F0004 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F0006 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F0007 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F0008 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F0009 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F000A /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F000B /* id */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = id; path = id.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F000C /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F1002 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F1003 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F1004 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F1006 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F1007 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F1008 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F1009 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F100A /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F100B /* id */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = id; path = id.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F0A1B2C31A2B3C4D5E6F100C /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -267,7 +267,7 @@
 		97C146F01CF9000F007C117D /* Runner */ = {
 			isa = PBXGroup;
 			children = (
-                F0A1B2C31A2B3C4D5E6F0001 /* Localizable.strings */,
+				F0A1B2C31A2B3C4D5E6F0001 /* Localizable.strings */,
 				7538AEC22BB83FAB002AB82A /* PrivacyInfo.xcprivacy */,
 				E398BF6A29BDB34500FE4FD5 /* Runner.entitlements */,
 				97C146FA1CF9000F007C117D /* Main.storyboard */,
@@ -300,7 +300,7 @@
 		E33A3E3A2A626DCE009744AB /* StatusWidget */ = {
 			isa = PBXGroup;
 			children = (
-                F0A1B2C31A2B3C4D5E6F1001 /* Localizable.strings */,
+				F0A1B2C31A2B3C4D5E6F1001 /* Localizable.strings */,
 				7538AEC42BB83FC8002AB82A /* PrivacyInfo.xcprivacy */,
 				E33A3E3B2A626DCE009744AB /* StatusWidgetBundle.swift */,
 				4A2DCD6D2E4B128100CF68B7 /* TerminalLiveActivity.swift */,
@@ -329,9 +329,6 @@
 
 /* Begin PBXNativeTarget section */
 		97C146ED1CF9000F007C117D /* Runner */ = {
-			packageProductDependencies = (
-				78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */,
-			);
 			isa = PBXNativeTarget;
 			buildConfigurationList = 97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */;
 			buildPhases = (
@@ -341,7 +338,6 @@
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
-				AA0A1FF2F3246F84EB0D91F2 /* [CP] Embed Pods Frameworks */,
 				E33A3E4A2A626DD0009744AB /* Embed Foundation Extensions */,
 				E39515D52AB5AD64003602C1 /* Embed Watch Content */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
@@ -354,6 +350,9 @@
 				E39515D32AB5AD64003602C1 /* PBXTargetDependency */,
 			);
 			name = Runner;
+			packageProductDependencies = (
+				78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */,
+			);
 			productName = Runner;
 			productReference = 97C146EE1CF9000F007C117D /* Runner.app */;
 			productType = "com.apple.product-type.application";
@@ -396,9 +395,6 @@
 
 /* Begin PBXProject section */
 		97C146E61CF9000F007C117D /* Project object */ = {
-			packageReferences = (
-				781AD8BC2B33823900A9FFBB /* XCLocalSwiftPackageReference "Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage" */,
-			);
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 1430;
@@ -435,6 +431,9 @@
 				ja,
 			);
 			mainGroup = 97C146E51CF9000F007C117D;
+			packageReferences = (
+				781AD8BC2B33823900A9FFBB /* XCLocalSwiftPackageReference "FlutterGeneratedPluginSwiftPackage" */,
+			);
 			productRefGroup = 97C146EF1CF9000F007C117D /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -459,7 +458,7 @@
 				E39A76B02AB9A2F70067C641 /* Info-Profile.plist in Resources */,
 				7538AEC32BB83FAB002AB82A /* PrivacyInfo.xcprivacy in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
-                F0A1B2C31A2B3C4D5E6F0005 /* Localizable.strings in Resources */,
+				F0A1B2C31A2B3C4D5E6F0005 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -468,7 +467,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7538AEC52BB83FC8002AB82A /* PrivacyInfo.xcprivacy in Resources */,
-                F0A1B2C31A2B3C4D5E6F1005 /* Localizable.strings (StatusWidget) in Resources */,
+				F0A1B2C31A2B3C4D5E6F1005 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -515,37 +514,6 @@
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
 		};
-		F3A15C782F6E1D8B00A1C001 /* Generate Missing Framework dSYMs */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Generate Missing Framework dSYMs";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"${PROJECT_DIR}/scripts/generate_missing_framework_dsyms.sh\"\n";
-		};
-		AA0A1FF2F3246F84EB0D91F2 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		D539DA9CBCC9FFF884ED67C9 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -567,6 +535,20 @@
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
+		};
+		F3A15C782F6E1D8B00A1C001 /* Generate Missing Framework dSYMs */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Generate Missing Framework dSYMs";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/sh \"${PROJECT_DIR}/scripts/generate_missing_framework_dsyms.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -677,40 +659,40 @@
 			name = LaunchScreen.storyboard;
 			sourceTree = "<group>";
 		};
-        F0A1B2C31A2B3C4D5E6F0001 /* Localizable.strings */ = {
-            isa = PBXVariantGroup;
-            children = (
-                F0A1B2C31A2B3C4D5E6F0002 /* en */,
-                F0A1B2C31A2B3C4D5E6F0003 /* zh-Hans */,
-                F0A1B2C31A2B3C4D5E6F0004 /* zh-Hant */,
-                F0A1B2C31A2B3C4D5E6F0006 /* fr */,
-                F0A1B2C31A2B3C4D5E6F0007 /* ru */,
-                F0A1B2C31A2B3C4D5E6F0008 /* es */,
-                F0A1B2C31A2B3C4D5E6F0009 /* de */,
-                F0A1B2C31A2B3C4D5E6F000A /* pt-BR */,
-                F0A1B2C31A2B3C4D5E6F000B /* id */,
-                F0A1B2C31A2B3C4D5E6F000C /* ja */,
-            );
-            name = Localizable.strings;
-            sourceTree = "<group>";
-        };
-        F0A1B2C31A2B3C4D5E6F1001 /* Localizable.strings */ = {
-            isa = PBXVariantGroup;
-            children = (
-                F0A1B2C31A2B3C4D5E6F1002 /* en */,
-                F0A1B2C31A2B3C4D5E6F1003 /* zh-Hans */,
-                F0A1B2C31A2B3C4D5E6F1004 /* zh-Hant */,
-                F0A1B2C31A2B3C4D5E6F1006 /* fr */,
-                F0A1B2C31A2B3C4D5E6F1007 /* ru */,
-                F0A1B2C31A2B3C4D5E6F1008 /* es */,
-                F0A1B2C31A2B3C4D5E6F1009 /* de */,
-                F0A1B2C31A2B3C4D5E6F100A /* pt-BR */,
-                F0A1B2C31A2B3C4D5E6F100B /* id */,
-                F0A1B2C31A2B3C4D5E6F100C /* ja */,
-            );
-            name = Localizable.strings;
-            sourceTree = "<group>";
-        };
+		F0A1B2C31A2B3C4D5E6F0001 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F0A1B2C31A2B3C4D5E6F0002 /* en */,
+				F0A1B2C31A2B3C4D5E6F0003 /* zh-Hans */,
+				F0A1B2C31A2B3C4D5E6F0004 /* zh-Hant */,
+				F0A1B2C31A2B3C4D5E6F0006 /* fr */,
+				F0A1B2C31A2B3C4D5E6F0007 /* ru */,
+				F0A1B2C31A2B3C4D5E6F0008 /* es */,
+				F0A1B2C31A2B3C4D5E6F0009 /* de */,
+				F0A1B2C31A2B3C4D5E6F000A /* pt-BR */,
+				F0A1B2C31A2B3C4D5E6F000B /* id */,
+				F0A1B2C31A2B3C4D5E6F000C /* ja */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		F0A1B2C31A2B3C4D5E6F1001 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F0A1B2C31A2B3C4D5E6F1002 /* en */,
+				F0A1B2C31A2B3C4D5E6F1003 /* zh-Hans */,
+				F0A1B2C31A2B3C4D5E6F1004 /* zh-Hant */,
+				F0A1B2C31A2B3C4D5E6F1006 /* fr */,
+				F0A1B2C31A2B3C4D5E6F1007 /* ru */,
+				F0A1B2C31A2B3C4D5E6F1008 /* es */,
+				F0A1B2C31A2B3C4D5E6F1009 /* de */,
+				F0A1B2C31A2B3C4D5E6F100A /* pt-BR */,
+				F0A1B2C31A2B3C4D5E6F100B /* id */,
+				F0A1B2C31A2B3C4D5E6F100C /* ja */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
@@ -1228,16 +1210,18 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
 /* Begin XCLocalSwiftPackageReference section */
-		781AD8BC2B33823900A9FFBB /* XCLocalSwiftPackageReference "Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage" */ = {
+		781AD8BC2B33823900A9FFBB /* XCLocalSwiftPackageReference "FlutterGeneratedPluginSwiftPackage" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage;
 		};
 /* End XCLocalSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 781AD8BC2B33823900A9FFBB /* XCLocalSwiftPackageReference "Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage" */;
+			package = 781AD8BC2B33823900A9FFBB /* XCLocalSwiftPackageReference "FlutterGeneratedPluginSwiftPackage" */;
 			productName = FlutterGeneratedPluginSwiftPackage;
 		};
 /* End XCSwiftPackageProductDependency section */
