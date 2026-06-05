@@ -402,7 +402,7 @@ fi
 if [[ "${SYNC_HOMEBREW_CASK:-1}" == "1" ]]; then
   APP_PATH="$APP_PATH" \
   DMG_PATH="$DMG_PATH" \
-  TAP_REPO_PATH="${TAP_REPO_PATH:-$HOME/proj/homebrew-taps}" \
+  TAP_REPO_PATH="${TAP_REPO_PATH:-$HOME/proj/homebrew-cask}" \
   bash "$SCRIPT_DIR/sync-homebrew-cask.sh"
 fi
 
@@ -416,5 +416,5 @@ if [[ "$PUBLISH_GITHUB_RELEASE" == "1" ]]; then
   echo "GitHub release: $APP_REPO_SLUG $RELEASE_TAG"
 fi
 if [[ "${SYNC_HOMEBREW_CASK:-1}" == "1" ]]; then
-  echo "Homebrew cask: ${TAP_REPO_PATH:-$HOME/proj/homebrew-taps}/Casks/server-box.rb"
+  echo "Homebrew cask: ${TAP_CASK_PATH:-${TAP_REPO_PATH:-$HOME/proj/homebrew-cask}/Casks/s/server-box.rb}"
 fi

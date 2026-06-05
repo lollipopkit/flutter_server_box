@@ -5,10 +5,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 APP_NAME="${APP_NAME:-Server Box}"
 CASK_NAME="${CASK_NAME:-server-box}"
+CASK_SUBDIR="${CASK_SUBDIR:-${CASK_NAME:0:1}}"
 CASK_DISPLAY_NAME="${CASK_DISPLAY_NAME:-ServerBox}"
 CASK_DESC="${CASK_DESC:-App for monitoring server status with SSH terminal, SFTP, Container management}"
 APP_REPO_SLUG="${APP_REPO_SLUG:-lollipopkit/flutter_server_box}"
-TAP_REPO_PATH="${TAP_REPO_PATH:-$HOME/proj/homebrew-taps}"
+TAP_REPO_PATH="${TAP_REPO_PATH:-$HOME/proj/homebrew-cask}"
 TAP_CASK_PATH="${TAP_CASK_PATH:-}"
 EXPLICIT_TAP_CASK_PATH="${TAP_CASK_PATH:-}"
 XCARCHIVE_PATH="${1:-${XCARCHIVE_PATH:-}}"
@@ -71,7 +72,7 @@ RELEASE_TAG="${RELEASE_TAG:-v${APP_VERSION}}"
 DMG_BASENAME="${DMG_BASENAME:-ServerBox-${APP_VERSION}}"
 
 if [[ -z "$TAP_CASK_PATH" && -n "$TAP_REPO_PATH" ]]; then
-  TAP_CASK_PATH="$TAP_REPO_PATH/Casks/${CASK_NAME}.rb"
+  TAP_CASK_PATH="$TAP_REPO_PATH/Casks/${CASK_SUBDIR}/${CASK_NAME}.rb"
 fi
 
 if [[ -z "$TAP_CASK_PATH" ]]; then
