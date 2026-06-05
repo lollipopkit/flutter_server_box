@@ -4,26 +4,34 @@ import Flutter
 import ActivityKit
 
 @main
-@objc class AppDelegate: FlutterAppDelegate {
+@objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
     override func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
-        GeneratedPluginRegistrant.register(with: self)
-    
-        let controller : FlutterViewController = window?.rootViewController as! FlutterViewController
-        // Home widget channel (legacy)
-        let homeWidgetChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/home_widget", binaryMessenger: controller.binaryMessenger)
+        return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    }
+
+    func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
+        GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+        setupMethodChannels(binaryMessenger: engineBridge.applicationRegistrar.messenger())
+    }
+
+    private func setupMethodChannels(binaryMessenger: FlutterBinaryMessenger) {
+        let homeWidgetChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/home_widget", binaryMessenger: binaryMessenger)
         homeWidgetChannel.setMethodCallHandler({(call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
-            if call.method == "update" {
+            switch call.method {
+            case "update":
                 if #available(iOS 14.0, *) {
                     WidgetCenter.shared.reloadTimelines(ofKind: "StatusWidget")
                 }
+                result(nil)
+            default:
+                result(FlutterMethodNotImplemented)
             }
         })
 
-        // Main channel for cross-platform calls (incl. Live Activities)
-        let mainChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/main_chan", binaryMessenger: controller.binaryMessenger)
+        let mainChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/main_chan", binaryMessenger: binaryMessenger)
         mainChannel.setMethodCallHandler({(call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
             switch call.method {
             case "updateHomeWidget":
@@ -54,7 +62,6 @@ import ActivityKit
                 result(FlutterMethodNotImplemented)
             }
         })
-        return super.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
 
     override func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {

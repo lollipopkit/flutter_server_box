@@ -48,7 +48,7 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
           Expanded(
             child: ReorderableListView.builder(
               itemCount: _selectedTabs.length,
-              onReorder: _onReorder,
+              onReorderItem: _onReorder,
               buildDefaultDragHandles: false,
               itemBuilder: (context, index) {
                 final tab = _selectedTabs[index];
@@ -117,9 +117,6 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
 
   void _onReorder(int oldIndex, int newIndex) {
     setState(() {
-      if (newIndex > oldIndex) {
-        newIndex -= 1;
-      }
       final tab = _selectedTabs.removeAt(oldIndex);
       _selectedTabs.insert(newIndex, tab);
     });

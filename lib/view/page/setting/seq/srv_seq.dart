@@ -54,11 +54,8 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
     }
     return ReorderableListView.builder(
       footer: const SizedBox(height: 77),
-      onReorder: (oldIndex, newIndex) {
-        var targetIndex = newIndex;
-        if (targetIndex > oldIndex) {
-          targetIndex -= 1;
-        }
+      onReorderItem: (oldIndex, newIndex) {
+        final targetIndex = newIndex;
         if (targetIndex == oldIndex) {
           return;
         }

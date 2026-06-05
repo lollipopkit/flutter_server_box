@@ -1,96 +1,15 @@
 PODS:
-  - camera_avfoundation (0.0.1):
-    - Flutter
-  - file_picker (0.0.1):
-    - Flutter
   - Flutter (1.0.0)
-  - flutter_native_splash (2.4.3):
-    - Flutter
-  - flutter_secure_storage_darwin (10.0.0):
-    - Flutter
-    - FlutterMacOS
-  - icloud_storage (0.0.1):
-    - Flutter
-  - local_auth_darwin (0.0.1):
-    - Flutter
-    - FlutterMacOS
-  - package_info_plus (0.4.5):
-    - Flutter
-  - plain_notification_token (0.0.1):
-    - Flutter
-  - share_plus (0.0.1):
-    - Flutter
-  - shared_preferences_foundation (0.0.1):
-    - Flutter
-    - FlutterMacOS
-  - url_launcher_ios (0.0.1):
-    - Flutter
-  - wakelock_plus (0.0.1):
-    - Flutter
-  - watch_connectivity (0.0.1):
-    - Flutter
 
 DEPENDENCIES:
-  - camera_avfoundation (from `.symlinks/plugins/camera_avfoundation/ios`)
-  - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - Flutter (from `Flutter`)
-  - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
-  - flutter_secure_storage_darwin (from `.symlinks/plugins/flutter_secure_storage_darwin/darwin`)
-  - icloud_storage (from `.symlinks/plugins/icloud_storage/ios`)
-  - local_auth_darwin (from `.symlinks/plugins/local_auth_darwin/darwin`)
-  - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
-  - plain_notification_token (from `.symlinks/plugins/plain_notification_token/ios`)
-  - share_plus (from `.symlinks/plugins/share_plus/ios`)
-  - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
-  - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
-  - wakelock_plus (from `.symlinks/plugins/wakelock_plus/ios`)
-  - watch_connectivity (from `.symlinks/plugins/watch_connectivity/ios`)
 
 EXTERNAL SOURCES:
-  camera_avfoundation:
-    :path: ".symlinks/plugins/camera_avfoundation/ios"
-  file_picker:
-    :path: ".symlinks/plugins/file_picker/ios"
   Flutter:
     :path: Flutter
-  flutter_native_splash:
-    :path: ".symlinks/plugins/flutter_native_splash/ios"
-  flutter_secure_storage_darwin:
-    :path: ".symlinks/plugins/flutter_secure_storage_darwin/darwin"
-  icloud_storage:
-    :path: ".symlinks/plugins/icloud_storage/ios"
-  local_auth_darwin:
-    :path: ".symlinks/plugins/local_auth_darwin/darwin"
-  package_info_plus:
-    :path: ".symlinks/plugins/package_info_plus/ios"
-  plain_notification_token:
-    :path: ".symlinks/plugins/plain_notification_token/ios"
-  share_plus:
-    :path: ".symlinks/plugins/share_plus/ios"
-  shared_preferences_foundation:
-    :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
-  url_launcher_ios:
-    :path: ".symlinks/plugins/url_launcher_ios/ios"
-  wakelock_plus:
-    :path: ".symlinks/plugins/wakelock_plus/ios"
-  watch_connectivity:
-    :path: ".symlinks/plugins/watch_connectivity/ios"
 
 SPEC CHECKSUMS:
-  camera_avfoundation: 5675ca25298b6f81fa0a325188e7df62cc217741
-  file_picker: fb04e739ae6239a76ce1f571863a196a922c87d4
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  flutter_native_splash: c32d145d68aeda5502d5f543ee38c192065986cf
-  flutter_secure_storage_darwin: acdb3f316ed05a3e68f856e0353b133eec373a23
-  icloud_storage: e55639f0c0d7cb2b0ba9c0b3d5968ccca9cd9aa2
-  local_auth_darwin: c3ee6cce0a8d56be34c8ccb66ba31f7f180aaebb
-  package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
-  plain_notification_token: 047876b9d80a5b93565ddcc13a487a7e7b906f7d
-  share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
-  shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
-  url_launcher_ios: 7a95fa5b60cc718a708b8f2966718e93db0cef1b
-  wakelock_plus: e29112ab3ef0b318e58cfa5c32326458be66b556
-  watch_connectivity: 88e5bea25b473e66ef8d3f960954d154ed0356d6
 
 PODFILE CHECKSUM: 5a0fb6438066e44ab2c77bd223668d351b8d8461
 

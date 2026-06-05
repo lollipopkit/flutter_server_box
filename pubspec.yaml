@@ -5,7 +5,7 @@ version: 1.0.1409+1409
 
 environment:
   sdk: ">=3.11.0"
-  flutter: ">=3.41.0"
+  flutter: ">=3.44.0"
 
 dependencies:
   flutter:
@@ -40,6 +40,14 @@ dependencies:
     path: packages/dartssh2
   circle_chart:
     path: packages/circle_chart
+  re_editor:
+    git:
+      url: https://github.com/lollipopkit/re-editor
+      ref: main
+  icons_plus:
+    git:
+      url: https://github.com/lollipopkit/icons_plus
+      ref: main
   xterm:
     path: packages/xterm
   computer:
