@@ -100,7 +100,6 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.41.9'
       - name: Install dependencies
         run: |
           sudo apt update
@@ -149,7 +148,6 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.41.9'
       - name: Build
         run: dart run fl_build -p windows
       - name: Rename for release

@@ -255,6 +255,8 @@ EXPORT_PATH="${EXPORT_PATH:-$BUILD_ROOT/export/${APP_ASSET_NAME}}"
 ARTIFACTS_PATH="${ARTIFACTS_PATH:-$REPO_ROOT/build/artifacts}"
 EXPORT_OPTIONS_PATH="${EXPORT_OPTIONS_PATH:-$BUILD_ROOT/ExportOptions-${APP_ASSET_NAME}.plist}"
 OVERRIDE_XCCONFIG_PATH="${OVERRIDE_XCCONFIG_PATH:-$BUILD_ROOT/${APP_ASSET_NAME}-release-overrides.xcconfig}"
+RUNNER_PROJECT_FILE="${RUNNER_PROJECT_FILE:-$REPO_ROOT/macos/Runner.xcodeproj/project.pbxproj}"
+RUNNER_PROJECT_BACKUP="${RUNNER_PROJECT_BACKUP:-$BUILD_ROOT/Runner.project.pbxproj.backup}"
 DMG_STAGING_PATH="${DMG_STAGING_PATH:-$REPO_ROOT/build/dmg-root}"
 PUBLISH_GITHUB_RELEASE="${PUBLISH_GITHUB_RELEASE:-1}"
 APP_REPO_SLUG="${APP_REPO_SLUG:-lollipopkit/flutter_server_box}"
@@ -282,6 +284,7 @@ validate_path_within_base 'ARCHIVE_PATH' "$ARCHIVE_PATH" "$BUILD_ROOT" >/dev/nul
 validate_path_within_base 'EXPORT_PATH' "$EXPORT_PATH" "$BUILD_ROOT" >/dev/null
 validate_path_within_base 'EXPORT_OPTIONS_PATH' "$EXPORT_OPTIONS_PATH" "$BUILD_ROOT" >/dev/null
 validate_path_within_base 'OVERRIDE_XCCONFIG_PATH' "$OVERRIDE_XCCONFIG_PATH" "$BUILD_ROOT" >/dev/null
+validate_path_within_base 'RUNNER_PROJECT_BACKUP' "$RUNNER_PROJECT_BACKUP" "$BUILD_ROOT" >/dev/null
 validate_path_within_base 'DMG_PATH' "$DMG_PATH" "$ARTIFACTS_PATH" >/dev/null
 
 mkdir -p \
@@ -289,20 +292,36 @@ mkdir -p \
   "$(dirname "$ARCHIVE_PATH")" \
   "$(dirname "$EXPORT_PATH")" \
   "$(dirname "$EXPORT_OPTIONS_PATH")" \
-  "$(dirname "$OVERRIDE_XCCONFIG_PATH")"
+  "$(dirname "$OVERRIDE_XCCONFIG_PATH")" \
+  "$(dirname "$RUNNER_PROJECT_BACKUP")"
 
 safe_remove -rf 'ARCHIVE_PATH' "$ARCHIVE_PATH" "$BUILD_ROOT"
 safe_remove -rf 'EXPORT_PATH' "$EXPORT_PATH" "$BUILD_ROOT"
 safe_remove -rf 'DMG_STAGING_PATH' "$DMG_STAGING_PATH"
 safe_remove -f 'EXPORT_OPTIONS_PATH' "$EXPORT_OPTIONS_PATH" "$BUILD_ROOT"
 safe_remove -f 'OVERRIDE_XCCONFIG_PATH' "$OVERRIDE_XCCONFIG_PATH" "$BUILD_ROOT"
+safe_remove -f 'RUNNER_PROJECT_BACKUP' "$RUNNER_PROJECT_BACKUP" "$BUILD_ROOT"
 safe_remove -f 'DMG_PATH' "$DMG_PATH" "$ARTIFACTS_PATH"
+
+restore_runner_project() {
+  if [[ -f "$RUNNER_PROJECT_BACKUP" ]]; then
+    cp "$RUNNER_PROJECT_BACKUP" "$RUNNER_PROJECT_FILE"
+  fi
+}
+
+cp "$RUNNER_PROJECT_FILE" "$RUNNER_PROJECT_BACKUP"
+trap restore_runner_project EXIT
+
+APP_PROFILE_NAME="$APP_PROFILE_NAME" perl -0pi -e '
+  my $profile = $ENV{"APP_PROFILE_NAME"};
+  s/"PROVISIONING_PROFILE_SPECIFIER\[sdk=macosx\*\]" = "[^"]*";/"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "$profile";/
+    or die "macOS Runner Release provisioning profile setting not found\n";
+' "$RUNNER_PROJECT_FILE"
 
 cat >"$OVERRIDE_XCCONFIG_PATH" <<EOF
 CODE_SIGN_STYLE = Manual
 CODE_SIGN_IDENTITY[sdk=macosx*] = $SIGNING_IDENTITY
 DEVELOPMENT_TEAM[sdk=macosx*] = $APPLE_TEAM_ID
-PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*] = $APP_PROFILE_NAME
 OTHER_CODE_SIGN_FLAGS = --timestamp --options runtime
 EOF
 
@@ -324,6 +343,8 @@ xcodebuild \
   FLUTTER_BUILD_NAME="$MARKETING_VERSION" \
   FLUTTER_BUILD_NUMBER="$CURRENT_PROJECT_VERSION" \
   archive
+
+restore_runner_project
 
 xcodebuild -exportArchive \
   -archivePath "$ARCHIVE_PATH" \
