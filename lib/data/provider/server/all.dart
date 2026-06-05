@@ -203,7 +203,6 @@ class ServersNotifier extends _$ServersNotifier {
         TermSessionStatus.disconnected,
       );
     }
-    //TryLimiter.clear();
   }
 
   void closeServer({String? id}) {
@@ -276,7 +275,7 @@ class ServersNotifier extends _$ServersNotifier {
     );
 
     Stores.setting.serverOrder.put(newOrder);
-    Stores.server.delete(id);
+    Stores.server.deleteById(id);
     await _clearSudoPasswordOverrideBestEffort(id);
 
     await Stores.connectionStats.clearServerStats(id);

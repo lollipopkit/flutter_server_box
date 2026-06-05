@@ -635,7 +635,7 @@ packages:
     source: hosted
     version: "2.3.2"
   highlight:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: highlight
       sha256: "5353a83ffe3e3eca7df0abfb72dcf3fa66cc56b953728e7113ad4ad88497cf21"
@@ -1203,7 +1203,7 @@ packages:
     source: hosted
     version: "3.2.2"
   re_editor:
-    dependency: "direct main"
+    dependency: transitive
     description:
       path: "."
       ref: main
@@ -1324,7 +1324,7 @@ packages:
     source: hosted
     version: "6.1.0"
   shared_preferences:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: shared_preferences
       sha256: c3025c5534b01739267eb7d76959bbc25a6d10f6988e1c2a3036940133dd10bf

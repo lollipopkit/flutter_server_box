@@ -6,18 +6,12 @@ enum SystemdUnitFunc {
   start,
   stop,
   restart,
-  reload,
-  enable,
-  disable,
   status;
 
   IconData get icon => switch (this) {
     start => Icons.play_arrow,
     stop => Icons.stop,
     restart => Icons.refresh,
-    reload => Icons.refresh,
-    enable => Icons.check,
-    disable => Icons.close,
     status => Icons.info,
   };
 }

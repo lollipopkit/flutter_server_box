@@ -26,17 +26,11 @@ dependencies:
   fl_chart: ^1.2.0
   freezed_annotation: ^3.0.0
   get_it: ^9.0.5
-  highlight: ^0.7.0
   hive_ce_flutter: ^2.3.1
   intl: ^0.20.2
   json_annotation: ^4.9.0
-  re_editor:
-    git:
-      url: https://github.com/lollipopkit/re-editor
-      ref: main
   responsive_framework: ^1.5.1
   riverpod_annotation: ^4.0.2
-  shared_preferences: ^2.1.1
   wakelock_plus: ^1.2.4
   wake_on_lan: ^4.1.1+3
   webdav_client_plus: ^1.0.2
@@ -46,6 +40,10 @@ dependencies:
     path: packages/dartssh2
   circle_chart:
     path: packages/circle_chart
+  re_editor:
+    git:
+      url: https://github.com/lollipopkit/re-editor
+      ref: main
   icons_plus:
     git:
       url: https://github.com/lollipopkit/icons_plus
@@ -75,10 +73,6 @@ dev_dependencies:
   test: ^1.29.0
   flutter_test:
     sdk: flutter
-  # riverpod_reg:
-  #   git:
-  #     url: https://github.com/lollipopkit/riverpod_reg
-  #     ref: v0.0.2
   fl_build:
     path: packages/fl_build
 
@@ -103,10 +97,6 @@ flutter:
   #       - asset: fonts/TrajanPro.ttf
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
-
-riverpod_reg:
-  class_name: Riverpods
-  gen_path: lib/generated/riverpod_reg.dart
 
 flutter_native_splash:
   color: "#ffffff"

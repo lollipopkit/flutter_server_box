@@ -19,9 +19,6 @@ class SettingStore extends HiveStore {
   /// Record history of SFTP path and etc.
   late final recordHistory = propertyDefault('recordHistory', true);
 
-  /// Lanch page idx
-  // late final launchPage = property('launchPage', Defaults.launchPageIdx);
-
   /// Disk view: amount / IO
   late final serverTabPreferDiskAmount = propertyDefault(
     'serverTabPreferDiskAmount',
@@ -111,16 +108,6 @@ class SettingStore extends HiveStore {
   late final fullScreen = propertyDefault('fullScreen', false);
 
   late final fullScreenJitter = propertyDefault('fullScreenJitter', true);
-
-  // late final fullScreenRotateQuarter = property(
-  //   'fullScreenRotateQuarter',
-  //   1,
-  // );
-
-  // late final keyboardType = property(
-  //   'keyboardType',
-  //   TextInputType.text.index,
-  // );
 
   late final sshVirtKeys = listProperty<int>(
     'sshVirtKeys',
@@ -222,10 +209,6 @@ class SettingStore extends HiveStore {
     true,
   );
 
-  /// Ignore local network device (eg: br-xxx, ovs-system...)
-  /// when building traffic view on server tab
-  //late final ignoreLocalNet = propertyDefault('ignoreLocalNet', true);
-
   /// Remerber pwd in memory
   /// Used for [DialogX.showPwdDialog]
   late final rememberPwdInMem = propertyDefault('rememberPwdInMem', true);
@@ -233,10 +216,6 @@ class SettingStore extends HiveStore {
   /// SSH Term Theme
   /// 0: follow app theme, 1: light, 2: dark
   late final termTheme = propertyDefault('termTheme', 0);
-
-  /// Compatiablity for Chinese Android.
-  /// Set it to true, if you use Safe Keyboard on Chinese Android
-  // late final cnKeyboardComp = propertyDefault('cnKeyboardComp', false);
 
   late final lastVer = propertyDefault('lastVer', 0);
 
@@ -302,9 +281,6 @@ class SettingStore extends HiveStore {
 
   /// Close the editor after saving
   late final closeAfterSave = propertyDefault('closeAfterSave', false);
-
-  /// Version of store db
-  late final storeVersion = propertyDefault('storeVersion', 0);
 
   /// Have notified user for notificaiton permission or not
   late final noNotiPerm = propertyDefault('noNotiPerm', false);

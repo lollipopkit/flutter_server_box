@@ -1,5 +1,8 @@
 import 'package:xml/xml.dart';
 
+int _parseFirstInt(String? s) =>
+    int.tryParse(s?.split(' ').firstOrNull ?? '0') ?? 0;
+
 /// [
 ///   {
 ///     "name": "GeForce RTX 3090",
@@ -67,7 +70,7 @@ class NvidiaSmi {
             return NvidiaSmiMemProcess(
               int.tryParse(pid) ?? 0,
               name,
-              int.tryParse(memory.split(' ').firstOrNull ?? '0') ?? 0,
+              _parseFirstInt(memory),
             );
           }
           return null;
@@ -84,17 +87,16 @@ class NvidiaSmi {
       if (name != null && temp != null) {
         return NvidiaSmiItem(
           name: name,
-          uuid: gpu.findElements('uuid').firstOrNull?.innerText ?? '',
-          temp: int.tryParse(temp.split(' ').firstOrNull ?? '0') ?? 0,
-          percent: int.tryParse(percent?.split(' ').firstOrNull ?? '0') ?? 0,
+          temp: _parseFirstInt(temp),
+          percent: _parseFirstInt(percent),
           power: '$powerDraw / $powerLimit',
           memory: NvidiaSmiMem(
-            int.tryParse(memoryTotal?.split(' ').firstOrNull ?? '0') ?? 0,
-            int.tryParse(memoryUsed?.split(' ').firstOrNull ?? '0') ?? 0,
+            _parseFirstInt(memoryTotal),
+            _parseFirstInt(memoryUsed),
             'MiB',
             List.from(memoryProcesses),
           ),
-          fanSpeed: int.tryParse(fanSpeed?.split(' ').firstOrNull ?? '0') ?? 0,
+          fanSpeed: _parseFirstInt(fanSpeed),
         );
       }
       return null;
@@ -105,7 +107,6 @@ class NvidiaSmi {
 }
 
 class NvidiaSmiItem {
-  final String uuid;
   final String name;
   final int temp;
   final String power;
@@ -114,7 +115,6 @@ class NvidiaSmiItem {
   final int fanSpeed;
 
   const NvidiaSmiItem({
-    required this.uuid,
     required this.name,
     required this.temp,
     required this.power,

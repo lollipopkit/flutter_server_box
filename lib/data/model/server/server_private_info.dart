@@ -132,7 +132,7 @@ extension Spix on Spi {
   /// - The new [id] if the [id] is empty.
   String? migrateId() {
     if (id.isNotEmpty) return null;
-    ServerStore.instance.delete(oldId);
+    ServerStore.instance.deleteById(oldId);
     final newSpi = copyWith(id: ShortId.generate());
     newSpi.save();
     return newSpi.id;

@@ -1,19 +1,5 @@
 import 'package:server_box/data/model/server/server_private_info.dart';
 
-/// Returns `true` when assigning [candidateJumpId] to [currentServerId]
-/// would create a jump-server cycle.
-bool wouldCreateJumpCycle({
-  required String? currentServerId,
-  required String? candidateJumpId,
-  required Map<String, Spi> serversById,
-}) {
-  return wouldCreateJumpCycleForCandidates(
-    currentServerId: currentServerId,
-    candidateJumpIds: candidateJumpId == null ? const [] : [candidateJumpId],
-    serversById: serversById,
-  );
-}
-
 /// Returns `true` when assigning [candidateJumpIds] to [currentServerId]
 /// would create a jump-server cycle.
 bool wouldCreateJumpCycleForCandidates({

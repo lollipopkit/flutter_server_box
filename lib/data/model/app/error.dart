@@ -6,7 +6,6 @@ enum SSHErrType {
   connect,
   auth,
   noPrivateKey,
-  chdir,
   segements,
   writeScript,
   getStatus,
@@ -17,7 +16,6 @@ class SSHErr extends Err<SSHErrType> {
 
   @override
   String? get solution => switch (type) {
-    SSHErrType.chdir => l10n.needHomeDir,
     SSHErrType.auth => l10n.authFailTip,
     SSHErrType.writeScript => l10n.writeScriptFailTip,
     SSHErrType.noPrivateKey => l10n.noPrivateKeyTip,
@@ -30,7 +28,6 @@ enum ContainerErrType {
   noClient,
   notInstalled,
   invalidVersion,
-  cmdNoPrefix,
   segmentsNotMatch,
   parsePs,
   parseImages,

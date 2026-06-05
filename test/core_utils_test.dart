@@ -52,7 +52,7 @@ void main() {
     test('thenTrueFirst sorts correctly', () {
       final list = [('a', false), ('b', true), ('c', false)];
       list.sort(
-        ChainComparator.empty()
+        ChainComparator.create()
             .thenTrueFirst((t) => t.$2)
             .thenWithComparator((a, b) => a.$1.compareTo(b.$1))
             .call,

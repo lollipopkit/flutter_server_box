@@ -9,16 +9,11 @@ final class SensorAdaptor {
   static const pciRaw = 'PCI adapter';
   static const virtualRaw = 'Virtual device';
   static const isaRaw = 'ISA adapter';
-  static const acpi = SensorAdaptor(acpiRaw);
-  static const pci = SensorAdaptor(pciRaw);
-  static const virtual = SensorAdaptor(virtualRaw);
-  static const isa = SensorAdaptor(isaRaw);
-
   static SensorAdaptor parse(String raw) => switch (raw) {
-    acpiRaw => acpi,
-    pciRaw => pci,
-    virtualRaw => virtual,
-    isaRaw => isa,
+    acpiRaw => const SensorAdaptor(acpiRaw),
+    pciRaw => const SensorAdaptor(pciRaw),
+    virtualRaw => const SensorAdaptor(virtualRaw),
+    isaRaw => const SensorAdaptor(isaRaw),
     _ => SensorAdaptor(raw),
   };
 }

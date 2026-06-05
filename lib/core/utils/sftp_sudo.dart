@@ -6,6 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
+import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -55,7 +56,7 @@ final class SftpSudoHelper {
 
   Future<int> getFileSize(String remotePath, {String? password}) async {
     final output = await _runAndRead(
-      'wc -c < ${_shellQuote(remotePath)}',
+      'wc -c < ${shellSingleQuote(remotePath)}',
       password: password,
     );
     return int.tryParse(output.trim()) ?? 0;
@@ -67,7 +68,7 @@ final class SftpSudoHelper {
     String? password,
   }) async {
     final text = await _runAndRead(
-      'cat ${_shellQuote(remotePath)}',
+      'cat ${shellSingleQuote(remotePath)}',
       password: password,
     );
     final file = File(localPath);
@@ -84,7 +85,7 @@ final class SftpSudoHelper {
     final bytes = await file.readAsBytes();
     final data = base64Encode(bytes);
     await _runAndRead(
-      "printf '%s' '$data' | base64 -d | tee ${_shellQuote(remotePath)} > /dev/null",
+      "printf '%s' '$data' | base64 -d | tee ${shellSingleQuote(remotePath)} > /dev/null",
       password: password,
     );
   }
@@ -98,17 +99,17 @@ final class SftpSudoHelper {
       );
     }
     await _runAndRead(
-      'chmod $perm ${_shellQuote(remotePath)}',
+      'chmod $perm ${shellSingleQuote(remotePath)}',
       password: password,
     );
   }
 
   Future<void> mkdir(String remotePath, {String? password}) async {
-    await _runAndRead('mkdir ${_shellQuote(remotePath)}', password: password);
+    await _runAndRead('mkdir ${shellSingleQuote(remotePath)}', password: password);
   }
 
   Future<void> touch(String remotePath, {String? password}) async {
-    await _runAndRead('touch ${_shellQuote(remotePath)}', password: password);
+    await _runAndRead('touch ${shellSingleQuote(remotePath)}', password: password);
   }
 
   Future<void> rename(
@@ -117,7 +118,7 @@ final class SftpSudoHelper {
     String? password,
   }) async {
     await _runAndRead(
-      'mv ${_shellQuote(oldPath)} ${_shellQuote(newPath)}',
+      'mv ${shellSingleQuote(oldPath)} ${shellSingleQuote(newPath)}',
       password: password,
     );
   }
@@ -129,16 +130,16 @@ final class SftpSudoHelper {
     String? password,
   }) async {
     final cmd = switch ((isDir, recursive)) {
-      (true, true) => 'rm -r ${_shellQuote(remotePath)}',
-      (true, false) => 'rmdir ${_shellQuote(remotePath)}',
-      (false, _) => 'rm ${_shellQuote(remotePath)}',
+      (true, true) => 'rm -r ${shellSingleQuote(remotePath)}',
+      (true, false) => 'rmdir ${shellSingleQuote(remotePath)}',
+      (false, _) => 'rm ${shellSingleQuote(remotePath)}',
     };
     await _runAndRead(cmd, password: password);
   }
 
   Future<List<SftpName>> listDir(String remotePath, {String? password}) async {
     final output = await _runAndRead(
-      'find ${_shellQuote(remotePath)} '
+      'find ${shellSingleQuote(remotePath)} '
       '-mindepth 1 -maxdepth 1 '
       '-exec sh -c \''
       'for path do '
@@ -240,10 +241,6 @@ final class SftpSudoHelper {
     final wrapped = '($command) 2>&1';
     final escapedWrapped = wrapped.replaceAll("'", "'\\''");
     return 'echo "$pwdBase64" | base64 -d | sudo -S -- sh -c \'$escapedWrapped\'';
-  }
-
-  static String _shellQuote(String value) {
-    return "'${value.replaceAll("'", "'\\''")}'";
   }
 
   static SftpFileMode _buildMode(String typeChar, int permOct) {

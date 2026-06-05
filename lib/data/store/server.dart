@@ -1,123 +1,19 @@
-import 'dart:async';
-
-import 'package:fl_lib/fl_lib.dart';
-
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/store/cached_store.dart';
 import 'package:server_box/data/store/container.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/snippet.dart';
 
-class ServerStore extends HiveStore {
+class ServerStore extends CachedHiveStore<Spi> {
   ServerStore._() : super('server');
 
   static final instance = ServerStore._();
 
-  List<Spi>? _cache;
-  StreamSubscription<dynamic>? _boxWatchSub;
-  bool _suppressWatch = false;
+  @override
+  String getKey(Spi item) => item.id;
 
   @override
-  Future<void> init() async {
-    await super.init();
-    _boxWatchSub?.cancel();
-    _boxWatchSub = box.watch().listen((_) {
-      if (!_suppressWatch) {
-        _cache = null;
-      }
-    });
-  }
-
-  @override
-  bool clear({bool? updateLastUpdateTsOnClear}) {
-    _suppressWatch = true;
-    try {
-      _cache = null;
-      return super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
-    } finally {
-      _suppressWatch = false;
-    }
-  }
-
-  void invalidateCache() {
-    _cache = null;
-  }
-
-  void put(Spi info) {
-    _suppressWatch = true;
-    try {
-      set(info.id, info);
-      _cache = null;
-    } finally {
-      _suppressWatch = false;
-    }
-  }
-
-  void _putWithoutInvalidatingCache(Spi info) {
-    _suppressWatch = true;
-    try {
-      box.put(info.id, info);
-    } finally {
-      _suppressWatch = false;
-    }
-  }
-
-  List<Spi> fetch() {
-    return List<Spi>.from(_cache ??= _loadAll());
-  }
-
-  List<Spi> _loadAll() {
-    final List<Spi> ss = [];
-    for (final id in keys()) {
-      final s = get<Spi>(
-        id,
-        fromObj: (val) {
-          if (val is Spi) return val;
-          if (val is Map<dynamic, dynamic>) {
-            final map = val.toStrDynMap;
-            if (map == null) return null;
-            try {
-              final spi = Spi.fromJson(map as Map<String, dynamic>);
-              _putWithoutInvalidatingCache(spi);
-              return spi;
-            } catch (e) {
-              dprint('Parsing Spi from JSON', e);
-            }
-          }
-          return null;
-        },
-      );
-      if (s != null) {
-        ss.add(s);
-      }
-    }
-    return ss;
-  }
-
-  void delete(String id) {
-    _suppressWatch = true;
-    try {
-      remove(id);
-      _cache = null;
-    } finally {
-      _suppressWatch = false;
-    }
-  }
-
-  void update(Spi old, Spi newInfo) {
-    if (!have(old)) {
-      throw Exception('Old spi: $old not found');
-    }
-    _suppressWatch = true;
-    try {
-      remove(old.id);
-      set(newInfo.id, newInfo);
-      _cache = null;
-    } finally {
-      _suppressWatch = false;
-    }
-  }
-
-  bool have(Spi s) => get(s.id) != null;
+  Spi? fromJson(Map<String, dynamic> json) => Spi.fromJson(json);
 
   void migrateIds() {
     final ss = fetch();
