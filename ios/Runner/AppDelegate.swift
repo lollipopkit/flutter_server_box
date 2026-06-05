@@ -20,10 +20,14 @@ import ActivityKit
     private func setupMethodChannels(binaryMessenger: FlutterBinaryMessenger) {
         let homeWidgetChannel = FlutterMethodChannel(name: "tech.lolli.toolbox/home_widget", binaryMessenger: binaryMessenger)
         homeWidgetChannel.setMethodCallHandler({(call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
-            if call.method == "update" {
+            switch call.method {
+            case "update":
                 if #available(iOS 14.0, *) {
                     WidgetCenter.shared.reloadTimelines(ofKind: "StatusWidget")
                 }
+                result(nil)
+            default:
+                result(FlutterMethodNotImplemented)
             }
         })
 
