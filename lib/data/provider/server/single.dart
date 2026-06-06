@@ -400,7 +400,7 @@ class ServerNotifier extends _$ServerNotifier {
         final newStatus = _copyStatus(
           state.status,
           err: SSHErr(
-            type: SSHErrType.segements,
+            type: SSHErrType.segments,
             message: 'Empty response from server',
           ),
           setErr: true,
@@ -430,7 +430,7 @@ class ServerNotifier extends _$ServerNotifier {
         final newStatus = _copyStatus(
           state.status,
           err: SSHErr(
-            type: SSHErrType.segements,
+            type: SSHErrType.segments,
             message: 'Separate segments failed, raw:\n$raw',
           ),
           setErr: true,
