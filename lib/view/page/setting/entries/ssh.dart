@@ -471,11 +471,6 @@ extension _SSH on _AppSettingsPageState {
   Widget _buildLetterCache() {
     return ListTile(
       leading: const Icon(Bootstrap.alphabet),
-      // title: Text(l10n.letterCache),
-      // subtitle: Text(
-      //   '${l10n.letterCacheTip}\n${l10n.needRestart}',
-      //   style: UIs.textGrey,
-      // ),
       title: TipText(
         l10n.letterCache,
         '${l10n.letterCacheTip}\n${l10n.needRestart}',

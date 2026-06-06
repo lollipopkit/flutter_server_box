@@ -393,7 +393,6 @@ class ServerNotifier extends _$ServerNotifier {
         systemType: state.status.system,
         customDir: spi.custom?.scriptDir,
       );
-      // Loggers.app.info('Running status command for ${spi.name} (${state.status.system.name}): $statusCmd');
       raw = await _runStatusCommand(statusCmd);
 
       if (raw.isEmpty) {
