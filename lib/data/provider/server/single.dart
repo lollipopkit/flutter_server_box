@@ -141,14 +141,10 @@ class ServerNotifier extends _$ServerNotifier {
 
     _isRefreshing = true;
     try {
-      await _updateServer();
+      await _getData();
     } finally {
       _isRefreshing = false;
     }
-  }
-
-  Future<void> _updateServer() async {
-    await _getData();
   }
 
   Future<void> _getData() async {

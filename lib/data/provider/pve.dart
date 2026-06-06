@@ -414,43 +414,25 @@ class PveNotifier extends _$PveNotifier {
     }
   }
 
-  Future<bool> reboot(String node, String id) async {
-    if (!state.isConnected) return false;
-    final resp = await session.post(
-      '$addrValue/api2/json/nodes/$node/$id/status/reboot',
-    );
-    final success = _isCtrlSuc(resp);
-    if (success) await list(); // Refresh data
-    return success;
-  }
+  Future<bool> reboot(String node, String id) =>
+      _controlVm(node, id, 'reboot');
 
-  Future<bool> start(String node, String id) async {
-    if (!state.isConnected) return false;
-    final resp = await session.post(
-      '$addrValue/api2/json/nodes/$node/$id/status/start',
-    );
-    final success = _isCtrlSuc(resp);
-    if (success) await list(); // Refresh data
-    return success;
-  }
+  Future<bool> start(String node, String id) =>
+      _controlVm(node, id, 'start');
 
-  Future<bool> stop(String node, String id) async {
-    if (!state.isConnected) return false;
-    final resp = await session.post(
-      '$addrValue/api2/json/nodes/$node/$id/status/stop',
-    );
-    final success = _isCtrlSuc(resp);
-    if (success) await list(); // Refresh data
-    return success;
-  }
+  Future<bool> stop(String node, String id) =>
+      _controlVm(node, id, 'stop');
 
-  Future<bool> shutdown(String node, String id) async {
+  Future<bool> shutdown(String node, String id) =>
+      _controlVm(node, id, 'shutdown');
+
+  Future<bool> _controlVm(String node, String id, String action) async {
     if (!state.isConnected) return false;
     final resp = await session.post(
-      '$addrValue/api2/json/nodes/$node/$id/status/shutdown',
+      '$addrValue/api2/json/nodes/$node/$id/status/$action',
     );
     final success = _isCtrlSuc(resp);
-    if (success) await list(); // Refresh data
+    if (success) await list();
     return success;
   }
 
