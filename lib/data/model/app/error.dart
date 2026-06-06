@@ -6,7 +6,7 @@ enum SSHErrType {
   connect,
   auth,
   noPrivateKey,
-  segements,
+  segments,
   writeScript,
   getStatus,
 }

@@ -81,12 +81,3 @@ class Comparators {
     };
   }
 }
-
-/*
-
-Comparator.comparing<Type1, Type2>(Type1::getType2)
-.thenCompare<Type3>(Type1::getType3)
-.thenCompare<Type4>(Type1::getType4)
-.thenCompareReversed<Type5>(Type1::getType5)
-
- */

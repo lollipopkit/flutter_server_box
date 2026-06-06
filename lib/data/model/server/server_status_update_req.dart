@@ -669,10 +669,16 @@ List<Battery> _parseWindowsBatteries(String raw) {
   }
 }
 
-List<NetSpeedPart> _parseWindowsNetwork(String raw, int currentTime) {
+List<T> _parseWindowsWmiDelta<T>(
+  String raw,
+  String field1Name,
+  String field2Name,
+  T? Function(String name, double delta1, double delta2, double timeDelta)
+      builder,
+) {
   try {
     final dynamic jsonData = json.decode(raw);
-    final List<NetSpeedPart> netParts = [];
+    final List<T> result = [];
 
     if (jsonData is List && jsonData.length >= 2) {
       var sample1 = jsonData[jsonData.length - 2];
@@ -691,91 +697,55 @@ List<NetSpeedPart> _parseWindowsNetwork(String raw, int currentTime) {
           final s2 = sample2[i];
           final name = s1['Name']?.toString() ?? '';
           if (name.isEmpty || name == '_Total') continue;
-          final rx1 = (s1['BytesReceivedPersec'] as num?)?.toDouble() ?? 0;
-          final rx2 = (s2['BytesReceivedPersec'] as num?)?.toDouble() ?? 0;
-          final tx1 = (s1['BytesSentPersec'] as num?)?.toDouble() ?? 0;
-          final tx2 = (s2['BytesSentPersec'] as num?)?.toDouble() ?? 0;
+          final v1a = (s1[field1Name] as num?)?.toDouble() ?? 0;
+          final v1b = (s2[field1Name] as num?)?.toDouble() ?? 0;
+          final v2a = (s1[field2Name] as num?)?.toDouble() ?? 0;
+          final v2b = (s2[field2Name] as num?)?.toDouble() ?? 0;
           final time1 = (s1['Timestamp_Sys100NS'] as num?)?.toDouble() ?? 0;
           final time2 = (s2['Timestamp_Sys100NS'] as num?)?.toDouble() ?? 0;
           final timeDelta = (time2 - time1) / 10000000;
           if (timeDelta <= 0) continue;
-          final rxDelta = rx2 - rx1;
-          final txDelta = tx2 - tx1;
-          if (rxDelta < 0 || txDelta < 0) continue;
-          final rxSpeed = rxDelta / timeDelta;
-          final txSpeed = txDelta / timeDelta;
-          netParts.add(
-            NetSpeedPart(
-              name,
-              BigInt.from(rxSpeed.toInt()),
-              BigInt.from(txSpeed.toInt()),
-              currentTime,
-            ),
-          );
+          final d1 = v1b - v1a;
+          final d2 = v2b - v2a;
+          if (d1 < 0 || d2 < 0) continue;
+          final item = builder(name, d1, d2, timeDelta);
+          if (item != null) result.add(item);
         }
       }
     }
 
-    return netParts;
+    return result;
   } catch (e) {
     return [];
   }
 }
 
+List<NetSpeedPart> _parseWindowsNetwork(String raw, int currentTime) {
+  return _parseWindowsWmiDelta<NetSpeedPart>(
+    raw,
+    'BytesReceivedPersec',
+    'BytesSentPersec',
+    (name, rxDelta, txDelta, timeDelta) => NetSpeedPart(
+      name,
+      BigInt.from((rxDelta / timeDelta).toInt()),
+      BigInt.from((txDelta / timeDelta).toInt()),
+      currentTime,
+    ),
+  );
+}
+
 List<DiskIOPiece> _parseWindowsDiskIO(String raw, int currentTime) {
-  try {
-    final dynamic jsonData = json.decode(raw);
-    final List<DiskIOPiece> diskParts = [];
-
-    if (jsonData is List && jsonData.length >= 2) {
-      var sample1 = jsonData[jsonData.length - 2];
-      var sample2 = jsonData[jsonData.length - 1];
-      if (sample1 is Map && sample1.containsKey('value')) {
-        sample1 = sample1['value'];
-      }
-      if (sample2 is Map && sample2.containsKey('value')) {
-        sample2 = sample2['value'];
-      }
-      if (sample1 is List &&
-          sample2 is List &&
-          sample1.length == sample2.length) {
-        for (int i = 0; i < sample1.length; i++) {
-          final s1 = sample1[i];
-          final s2 = sample2[i];
-          final name = s1['Name']?.toString() ?? '';
-          if (name.isEmpty || name == '_Total') continue;
-          final read1 = (s1['DiskReadBytesPersec'] as num?)?.toDouble() ?? 0;
-          final read2 = (s2['DiskReadBytesPersec'] as num?)?.toDouble() ?? 0;
-          final write1 = (s1['DiskWriteBytesPersec'] as num?)?.toDouble() ?? 0;
-          final write2 = (s2['DiskWriteBytesPersec'] as num?)?.toDouble() ?? 0;
-          final time1 = (s1['Timestamp_Sys100NS'] as num?)?.toDouble() ?? 0;
-          final time2 = (s2['Timestamp_Sys100NS'] as num?)?.toDouble() ?? 0;
-          final timeDelta = (time2 - time1) / 10000000;
-          if (timeDelta <= 0) continue;
-          final readDelta = read2 - read1;
-          final writeDelta = write2 - write1;
-          if (readDelta < 0 || writeDelta < 0) continue;
-          final readSpeed = readDelta / timeDelta;
-          final writeSpeed = writeDelta / timeDelta;
-          final sectorsRead = (readSpeed / 512).round();
-          final sectorsWrite = (writeSpeed / 512).round();
-
-          diskParts.add(
-            DiskIOPiece(
-              dev: name,
-              sectorsRead: sectorsRead,
-              sectorsWrite: sectorsWrite,
-              time: currentTime,
-            ),
-          );
-        }
-      }
-    }
-
-    return diskParts;
-  } catch (e) {
-    return [];
-  }
+  return _parseWindowsWmiDelta<DiskIOPiece>(
+    raw,
+    'DiskReadBytesPersec',
+    'DiskWriteBytesPersec',
+    (name, readDelta, writeDelta, timeDelta) => DiskIOPiece(
+      dev: name,
+      sectorsRead: (readDelta / timeDelta / 512).round(),
+      sectorsWrite: (writeDelta / timeDelta / 512).round(),
+      time: currentTime,
+    ),
+  );
 }
 
 void _parseWindowsTemperatures(

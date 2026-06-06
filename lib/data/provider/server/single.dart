@@ -141,14 +141,10 @@ class ServerNotifier extends _$ServerNotifier {
 
     _isRefreshing = true;
     try {
-      await _updateServer();
+      await _getData();
     } finally {
       _isRefreshing = false;
     }
-  }
-
-  Future<void> _updateServer() async {
-    await _getData();
   }
 
   Future<void> _getData() async {
@@ -393,7 +389,6 @@ class ServerNotifier extends _$ServerNotifier {
         systemType: state.status.system,
         customDir: spi.custom?.scriptDir,
       );
-      // Loggers.app.info('Running status command for ${spi.name} (${state.status.system.name}): $statusCmd');
       raw = await _runStatusCommand(statusCmd);
 
       if (raw.isEmpty) {
@@ -401,7 +396,7 @@ class ServerNotifier extends _$ServerNotifier {
         final newStatus = _copyStatus(
           state.status,
           err: SSHErr(
-            type: SSHErrType.segements,
+            type: SSHErrType.segments,
             message: 'Empty response from server',
           ),
           setErr: true,
@@ -431,7 +426,7 @@ class ServerNotifier extends _$ServerNotifier {
         final newStatus = _copyStatus(
           state.status,
           err: SSHErr(
-            type: SSHErrType.segements,
+            type: SSHErrType.segments,
             message: 'Separate segments failed, raw:\n$raw',
           ),
           setErr: true,

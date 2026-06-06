@@ -125,7 +125,7 @@ class NvidiaSmiItem {
 
   @override
   String toString() {
-    return 'NvdiaSmiItem{name: $name, temp: $temp, power: $power, memory: $memory}';
+    return 'NvidiaSmiItem{name: $name, temp: $temp, power: $power, memory: $memory}';
   }
 }
 
@@ -139,7 +139,7 @@ class NvidiaSmiMem {
 
   @override
   String toString() {
-    return 'NvdiaSmiMem{total: $total, used: $used, unit: $unit, processes: $processes}';
+    return 'NvidiaSmiMem{total: $total, used: $used, unit: $unit, processes: $processes}';
   }
 }
 
@@ -152,6 +152,6 @@ class NvidiaSmiMemProcess {
 
   @override
   String toString() {
-    return 'NvdiaSmiMemProcess{pid: $pid, name: $name, memory: $memory}';
+    return 'NvidiaSmiMemProcess{pid: $pid, name: $name, memory: $memory}';
   }
 }

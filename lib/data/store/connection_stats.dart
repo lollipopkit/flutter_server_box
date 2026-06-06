@@ -194,7 +194,6 @@ class ConnectionStatsStore extends HiveStore {
         stats.add(stat);
       }
     }
-    stats.sort((a, b) => b.timestamp.compareTo(a.timestamp));
     return stats;
   }
 
