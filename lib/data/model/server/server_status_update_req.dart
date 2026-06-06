@@ -671,7 +671,6 @@ List<Battery> _parseWindowsBatteries(String raw) {
 
 List<T> _parseWindowsWmiDelta<T>(
   String raw,
-  int currentTime,
   String field1Name,
   String field2Name,
   T? Function(String name, double delta1, double delta2, double timeDelta)
@@ -724,7 +723,6 @@ List<T> _parseWindowsWmiDelta<T>(
 List<NetSpeedPart> _parseWindowsNetwork(String raw, int currentTime) {
   return _parseWindowsWmiDelta<NetSpeedPart>(
     raw,
-    currentTime,
     'BytesReceivedPersec',
     'BytesSentPersec',
     (name, rxDelta, txDelta, timeDelta) => NetSpeedPart(
@@ -739,7 +737,6 @@ List<NetSpeedPart> _parseWindowsNetwork(String raw, int currentTime) {
 List<DiskIOPiece> _parseWindowsDiskIO(String raw, int currentTime) {
   return _parseWindowsWmiDelta<DiskIOPiece>(
     raw,
-    currentTime,
     'DiskReadBytesPersec',
     'DiskWriteBytesPersec',
     (name, readDelta, writeDelta, timeDelta) => DiskIOPiece(

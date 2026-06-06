@@ -19,12 +19,13 @@ class OmitStartText extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, size) {
         final textStyle = style ?? Theme.of(context).textTheme.bodyMedium;
+        const prefix = '...';
         int lo = 0;
         int hi = text.length;
         while (lo < hi) {
           final mid = (lo + hi + 1) ~/ 2;
           final span = TextSpan(
-            text: 'A' * 7 + text.substring(text.length - mid),
+            text: prefix + text.substring(text.length - mid),
             style: textStyle,
           );
           final tp = TextPainter(
@@ -43,7 +44,7 @@ class OmitStartText extends StatelessWidget {
         }
 
         return Text(
-          (lo < text.length ? '...' : '') + text.substring(text.length - lo),
+          (lo < text.length ? prefix : '') + text.substring(text.length - lo),
           overflow: overflow ?? TextOverflow.fade,
           softWrap: false,
           maxLines: maxLines ?? 1,
