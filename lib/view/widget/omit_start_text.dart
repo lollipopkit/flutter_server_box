@@ -18,31 +18,32 @@ class OmitStartText extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, size) {
-        bool exceeded = false;
-        int len = 0;
-        for (; !exceeded && len < text.length; len++) {
-          // Build the textspan
+        final textStyle = style ?? Theme.of(context).textTheme.bodyMedium;
+        int lo = 0;
+        int hi = text.length;
+        while (lo < hi) {
+          final mid = (lo + hi + 1) ~/ 2;
           final span = TextSpan(
-            text: 'A' * 7 + text.substring(text.length - len),
-            style: style ?? Theme.of(context).textTheme.bodyMedium,
+            text: 'A' * 7 + text.substring(text.length - mid),
+            style: textStyle,
           );
-
-          // Use a textpainter to determine if it will exceed max lines
           final tp = TextPainter(
             maxLines: maxLines ?? 1,
             textDirection: TextDirection.ltr,
             text: span,
           );
-
-          // trigger it to layout
           tp.layout(maxWidth: size.maxWidth);
-
-          // whether the text overflowed or not
-          exceeded = tp.didExceedMaxLines;
+          final exceeded = tp.didExceedMaxLines;
+          tp.dispose();
+          if (exceeded) {
+            hi = mid - 1;
+          } else {
+            lo = mid;
+          }
         }
 
         return Text(
-          (exceeded ? '...' : '') + text.substring(text.length - len),
+          (lo < text.length ? '...' : '') + text.substring(text.length - lo),
           overflow: overflow ?? TextOverflow.fade,
           softWrap: false,
           maxLines: maxLines ?? 1,
