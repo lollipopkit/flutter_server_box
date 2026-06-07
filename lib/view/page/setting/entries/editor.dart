@@ -38,8 +38,6 @@ extension _Editor on _AppSettingsPageState {
   Widget _buildEditorHighlight() {
     return ListTile(
       leading: const Icon(MingCute.code_line, size: _kIconSize),
-      // title: Text(l10n.highlight),
-      // subtitle: Text(l10n.editorHighlightTip, style: UIs.textGrey),
       title: TipText(l10n.highlight, l10n.editorHighlightTip),
       trailing: StoreSwitch(prop: _setting.editorHighlight),
     );

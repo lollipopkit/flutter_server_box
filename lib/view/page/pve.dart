@@ -194,13 +194,6 @@ final class _PvePageState extends ConsumerState<PvePage> {
             ],
           ),
           UIs.height13,
-          // Row(
-          //   mainAxisAlignment: MainAxisAlignment.spaceAround,
-          //   children: [
-          //     _wrap(PercentCircle(percent: item.cpu / item.maxcpu), 3),
-          //     _wrap(PercentCircle(percent: item.mem / item.maxmem), 3),
-          //   ],
-          // ),
           Row(
             children: [
               const Icon(Icons.memory, size: 13, color: Colors.grey),

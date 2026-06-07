@@ -30,8 +30,6 @@ extension _Container on _AppSettingsPageState {
   Widget _buildContainerParseStat() {
     return ListTile(
       leading: const Icon(MingCute.chart_line_line, size: _kIconSize),
-      // title: Text(l10n.parseContainerStats),
-      // subtitle: Text(l10n.parseContainerStatsTip, style: UIs.textGrey),
       title: TipText(l10n.stat, l10n.parseContainerStatsTip),
       trailing: StoreSwitch(prop: _setting.containerParseStat),
     );

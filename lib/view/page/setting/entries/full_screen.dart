@@ -13,8 +13,6 @@ extension _Fullscreen on _AppSettingsPageState {
   Widget _buildFullScreenSwitch() {
     return ListTile(
       leading: const Icon(Bootstrap.phone_landscape_fill),
-      // title: Text(l10n.fullScreen),
-      // subtitle: Text(l10n.fullScreenTip, style: UIs.textGrey),
       title: TipText(l10n.fullScreen, l10n.fullScreenTip),
       trailing: StoreSwitch(
         prop: _setting.fullScreen,
