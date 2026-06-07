@@ -5,7 +5,7 @@ on:
     inputs:
       tag:
         description: 'Tag to build (e.g. v1.0.1426)'
-        required: true
+        required: false
         type: string
   push:
     tags:
@@ -29,6 +29,7 @@ jobs:
         with:
           submodules: recursive
           ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
+          persist-credentials: false
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -103,6 +104,7 @@ jobs:
         with:
           submodules: recursive
           ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
+          persist-credentials: false
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -152,6 +154,7 @@ jobs:
         with:
           submodules: recursive
           ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
+          persist-credentials: false
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
