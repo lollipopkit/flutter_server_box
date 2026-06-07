@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:server_box/data/res/misc.dart';
 
+final _whitespaceRegExp = RegExp(r'\s+');
+
 class _ProcValIdxMap {
   final int pid;
   final int? user;
@@ -78,7 +80,7 @@ class Proc {
     Proc? previous,
     double? elapsedSeconds,
   }) {
-    final parts = raw.split(RegExp(r'\s+'));
+    final parts = raw.split(_whitespaceRegExp);
     final readBytes = _parseNullableInt(parts, map.readBytes);
     final writeBytes = _parseNullableInt(parts, map.writeBytes);
     final (readSpeed, writeSpeed) = _calculateSpeeds(
@@ -211,7 +213,7 @@ class PsResult {
     }
 
     final header = lines[0];
-    final parts = header.split(RegExp(r'\s+'));
+    final parts = header.split(_whitespaceRegExp);
     parts.removeWhere((element) => element.isEmpty);
     final map = _ProcValIdxMap(
       pid: parts.indexOfOrNull('PID')!,
@@ -336,7 +338,7 @@ extension _StrIndex on List<String> {
 }
 
 int _parsePid(String raw, int pidIndex) {
-  final parts = raw.split(RegExp(r'\s+'));
+  final parts = raw.split(_whitespaceRegExp);
   return int.parse(parts[pidIndex]);
 }
 
