@@ -287,7 +287,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
         textStyle: textStyle,
       ),
       Btn.column(
-        onTap: () => _onTapEdit(srv),
+        onTap: () => _onTapCard(srv),
         icon: const Icon(Icons.edit, color: color),
         text: libL10n.edit,
         textStyle: textStyle,

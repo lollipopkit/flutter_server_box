@@ -94,7 +94,7 @@ class NvidiaSmi {
             _parseFirstInt(memoryTotal),
             _parseFirstInt(memoryUsed),
             'MiB',
-            List.from(memoryProcesses),
+            List<NvidiaSmiMemProcess>.from(memoryProcesses),
           ),
           fanSpeed: _parseFirstInt(fanSpeed),
         );
@@ -102,7 +102,7 @@ class NvidiaSmi {
       return null;
     });
     result.removeWhere((element) => element == null);
-    return List.from(result);
+    return List<NvidiaSmiItem>.from(result);
   }
 }
 

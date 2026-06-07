@@ -92,13 +92,6 @@ extension _Operation on _ServerPageState {
     );
   }
 
-  void _onTapEdit(ServerState srv) {
-    if (srv.canViewDetails) {
-      ServerDetailPage.route.go(context, SpiRequiredArgs(srv.spi));
-    } else {
-      ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
-    }
-  }
 }
 
 extension _Utils on _ServerPageState {
