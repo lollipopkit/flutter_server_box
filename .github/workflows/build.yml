@@ -2,6 +2,11 @@ name: Flutter Build
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build (e.g. v1.0.1426)'
+        required: false
+        type: string
   push:
     tags:
       - "v*"
@@ -11,7 +16,7 @@ permissions:
 
 env:
   APP_NAME: ServerBox
-  RELEASE_TAG: ${{ github.ref_name }}
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
   BUILD_TAG: test-build-${{ github.run_number }}-${{ github.sha }}
 
 jobs:
@@ -23,6 +28,8 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
+          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
+          persist-credentials: false
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -43,7 +50,7 @@ jobs:
       - name: Build
         run: dart run fl_build -p android
       - name: Rename for release
-        if: github.ref_type == 'tag'
+        if: github.ref_type == 'tag' || inputs.tag != ''
         shell: bash
         run: |
           APK_DIR="build/app/outputs/flutter-apk"
@@ -60,7 +67,7 @@ jobs:
             mv "${matches[0]}" "$APK_DIR/${APP_NAME}_${RELEASE_TAG}_${arch}.apk"
           done
       - name: Upload artifacts
-        if: github.ref_type != 'tag'
+        if: github.ref_type != 'tag' && inputs.tag == ''
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-android
@@ -68,7 +75,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Create Release
-        if: github.ref_type == 'tag'
+        if: github.ref_type == 'tag' || inputs.tag != ''
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -96,6 +103,8 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
+          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
+          persist-credentials: false
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -108,7 +117,7 @@ jobs:
       - name: Build
         run: dart run fl_build -p linux
       - name: Rename for release
-        if: github.ref_type == 'tag'
+        if: github.ref_type == 'tag' || inputs.tag != ''
         shell: bash
         run: |
           shopt -s nullglob
@@ -120,7 +129,7 @@ jobs:
           fi
           mv "${matches[0]}" "${APP_NAME}_${RELEASE_TAG}${{ matrix.release_suffix }}_amd64.AppImage"
       - name: Upload artifacts
-        if: github.ref_type != 'tag'
+        if: github.ref_type != 'tag' && inputs.tag == ''
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-linux${{ matrix.artifact_suffix }}
@@ -128,7 +137,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Create Release
-        if: github.ref_type == 'tag'
+        if: github.ref_type == 'tag' || inputs.tag != ''
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -144,6 +153,8 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
+          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
+          persist-credentials: false
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -151,7 +162,7 @@ jobs:
       - name: Build
         run: dart run fl_build -p windows
       - name: Rename for release
-        if: github.ref_type == 'tag'
+        if: github.ref_type == 'tag' || inputs.tag != ''
         shell: bash
         run: |
           shopt -s nullglob
@@ -163,7 +174,7 @@ jobs:
           fi
           mv "${matches[0]}" "${APP_NAME}_${RELEASE_TAG}_windows_amd64.zip"
       - name: Upload artifacts
-        if: github.ref_type != 'tag'
+        if: github.ref_type != 'tag' && inputs.tag == ''
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows
@@ -171,7 +182,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Create Release
-        if: github.ref_type == 'tag'
+        if: github.ref_type == 'tag' || inputs.tag != ''
         uses: softprops/action-gh-release@v2
         with:
           files: |
