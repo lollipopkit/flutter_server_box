@@ -4,6 +4,8 @@ import 'package:fl_lib/fl_lib.dart';
 
 import 'package:server_box/data/model/server/time_seq.dart';
 
+final _whitespaceRegExp = RegExp(r'\s+');
+
 class NetSpeedPart extends TimeSeqIface<NetSpeedPart> {
   final String device;
   final BigInt bytesIn;
@@ -32,11 +34,14 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     devices.addAll(now.map((e) => e.device).toList());
 
     realIfaces.clear();
-    realIfaces.addAll(
-      devices.where(
-        (e) => realIfacePrefixs.any((prefix) => e.startsWith(prefix)),
-      ),
-    );
+    _realIfaceIndices.clear();
+    for (var i = 0; i < devices.length; i++) {
+      final dev = devices[i];
+      if (realIfacePrefixs.any((prefix) => dev.startsWith(prefix))) {
+        realIfaces.add(dev);
+        _realIfaceIndices.add(i);
+      }
+    }
 
     final sizeIn = this.sizeIn();
     final sizeOut = this.sizeOut();
@@ -61,6 +66,9 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
   /// Cached non-virtual network device prefix
   final realIfaces = <String>[];
 
+  /// Cached indices of real (non-virtual) interfaces in [devices]
+  final _realIfaceIndices = <int>[];
+
   CachedNetVals cachedVals = (
     sizeIn: '0kb',
     sizeOut: '0kb',
@@ -82,13 +90,8 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     if (pre.length != now.length) return 'N/A';
     if (device == null) {
       var speed = 0.0;
-      for (var i = 0; i < devices.length; i++) {
-        for (final prefix in realIfacePrefixs) {
-          if (devices[i].startsWith(prefix)) {
-            speed += speedInBytes(i);
-            break;
-          }
-        }
+      for (final i in _realIfaceIndices) {
+        speed += speedInBytes(i);
       }
       return buildStandardOutput(speed);
     }
@@ -101,13 +104,8 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     if (pre.length != now.length) return 'N/A';
     if (device == null) {
       var size = BigInt.from(0);
-      for (var i = 0; i < devices.length; i++) {
-        for (final prefix in realIfacePrefixs) {
-          if (devices[i].startsWith(prefix)) {
-            size += sizeInBytes(i);
-            break;
-          }
-        }
+      for (final i in _realIfaceIndices) {
+        size += sizeInBytes(i);
       }
       return size.bytes2Str;
     }
@@ -120,13 +118,8 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     if (pre.length != now.length) return 'N/A';
     if (device == null) {
       var speed = 0.0;
-      for (var i = 0; i < devices.length; i++) {
-        for (final prefix in realIfacePrefixs) {
-          if (devices[i].startsWith(prefix)) {
-            speed += speedOutBytes(i);
-            break;
-          }
-        }
+      for (final i in _realIfaceIndices) {
+        speed += speedOutBytes(i);
       }
       return buildStandardOutput(speed);
     }
@@ -139,13 +132,8 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     if (pre.length != now.length) return 'N/A';
     if (device == null) {
       var size = BigInt.from(0);
-      for (var i = 0; i < devices.length; i++) {
-        for (final prefix in realIfacePrefixs) {
-          if (devices[i].startsWith(prefix)) {
-            size += sizeOutBytes(i);
-            break;
-          }
-        }
+      for (final i in _realIfaceIndices) {
+        size += sizeOutBytes(i);
       }
       return size.bytes2Str;
     }
@@ -224,7 +212,7 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
 
     final results = <NetSpeedPart>[];
     for (final item in split.sublist(1)) {
-      final data = item.trim().split(RegExp(r'\s+'));
+      final data = item.trim().split(_whitespaceRegExp);
       final device = data[0];
       if (device.endsWith('*')) {
         continue;

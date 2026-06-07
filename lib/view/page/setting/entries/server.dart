@@ -96,8 +96,6 @@ extension _Server on _AppSettingsPageState {
 
   Widget _buildTextScaler() {
     return ListTile(
-      // title: Text(l10n.textScaler),
-      // subtitle: Text(l10n.textScalerTip, style: UIs.textGrey),
       title: TipText(l10n.textScaler, l10n.textScalerTip),
       trailing: ValBuilder(
         listenable: _setting.textFactor.listenable(),
@@ -142,8 +140,6 @@ extension _Server on _AppSettingsPageState {
 
   Widget _buildServerFuncBtnsSwitch() {
     return ListTile(
-      // title: Text(libL10n.location),
-      // subtitle: Text(l10n.moveOutServerFuncBtnsHelp, style: UIs.text13Grey),
       title: TipText(libL10n.location, l10n.moveOutServerFuncBtnsHelp),
       trailing: StoreSwitch(prop: _setting.moveServerFuncs),
     );
@@ -177,8 +173,6 @@ extension _Server on _AppSettingsPageState {
 
   Widget _buildDoubleColumnServersPage() {
     return ListTile(
-      // title: Text(l10n.doubleColumnMode),
-      // subtitle: Text(l10n.doubleColumnTip, style: UIs.textGrey),
       title: TipText(l10n.doubleColumnMode, l10n.doubleColumnTip),
       trailing: StoreSwitch(prop: _setting.doubleColumnServersPage),
     );
@@ -212,8 +206,6 @@ extension _Server on _AppSettingsPageState {
 
   Widget _buildRememberPwdInMem() {
     return ListTile(
-      // title: Text(l10n.rememberPwdInMem),
-      // subtitle: Text(l10n.rememberPwdInMemTip, style: UIs.textGrey),
       title: TipText(l10n.rememberPwdInMem, l10n.rememberPwdInMemTip),
       trailing: StoreSwitch(prop: _setting.rememberPwdInMem),
     );

@@ -205,8 +205,6 @@ Future<SSHClient> genClient(
       onPasswordRequest: () => spi.pwd,
       onUserInfoRequest: onKeyboardInteractive,
       onVerifyHostKey: hostKeyVerifier.call,
-      // printDebug: debugPrint,
-      // printTrace: debugPrint,
     );
   }
   privateKey ??= privateKeysByKeyId?[keyId] ?? getPrivateKey(keyId);
@@ -219,8 +217,6 @@ Future<SSHClient> genClient(
     identities: await compute(loadIndentity, privateKey),
     onUserInfoRequest: onKeyboardInteractive,
     onVerifyHostKey: hostKeyVerifier.call,
-    // printDebug: debugPrint,
-    // printTrace: debugPrint,
   );
 }
 

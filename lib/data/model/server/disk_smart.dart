@@ -80,20 +80,18 @@ abstract class DiskSmart with _$DiskSmart {
     return results;
   }
 
+  static final _physicalDiskPatterns = [
+    RegExp(r'^/dev/sd[a-z]$'), // SATA/SCSI: /dev/sda, /dev/sdb
+    RegExp(r'^/dev/hd[a-z]$'), // IDE: /dev/hda, /dev/hdb
+    RegExp(r'^/dev/nvme\d+n\d+$'), // NVMe: /dev/nvme0n1, /dev/nvme1n1
+    RegExp(r'^/dev/mmcblk\d+$'), // MMC: /dev/mmcblk0
+    RegExp(r'^/dev/vd[a-z]$'), // VirtIO: /dev/vda, /dev/vdb
+    RegExp(r'^/dev/xvd[a-z]$'), // Xen: /dev/xvda, /dev/xvdb
+  ];
+
   static bool _isPhysicalDisk(String device) {
     if (device.isEmpty) return false;
-
-    // Common patterns for physical disks
-    final patterns = [
-      RegExp(r'^/dev/sd[a-z]$'), // SATA/SCSI: /dev/sda, /dev/sdb
-      RegExp(r'^/dev/hd[a-z]$'), // IDE: /dev/hda, /dev/hdb
-      RegExp(r'^/dev/nvme\d+n\d+$'), // NVMe: /dev/nvme0n1, /dev/nvme1n1
-      RegExp(r'^/dev/mmcblk\d+$'), // MMC: /dev/mmcblk0
-      RegExp(r'^/dev/vd[a-z]$'), // VirtIO: /dev/vda, /dev/vdb
-      RegExp(r'^/dev/xvd[a-z]$'), // Xen: /dev/xvda, /dev/xvdb
-    ];
-
-    return patterns.any((pattern) => pattern.hasMatch(device));
+    return _physicalDiskPatterns.any((p) => p.hasMatch(device));
   }
 
   static bool? _parseHealthStatus(Map<String, dynamic> data) {

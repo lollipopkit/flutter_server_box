@@ -45,6 +45,13 @@ class Memory {
 }
 
 final memItemReg = RegExp(r'([A-Z].+:)\s+([0-9]+) kB');
+final _macMemReg = RegExp(
+  r'PhysMem:\s*([\d.]+)([KMGT])\s*used.*?,\s*([\d.]+)([KMGT])\s*unused',
+);
+final _freeBsdReg = RegExp(
+  r'(\d+)([KMGT])\s+(Active|Inact|Wired|Cache|Buf|Free)',
+  caseSensitive: false,
+);
 
 /// Parse BSD/macOS memory from top output
 ///
@@ -53,10 +60,7 @@ final memItemReg = RegExp(r'([A-Z].+:)\s+([0-9]+) kB');
 /// - FreeBSD: "Mem: 456M Active, 2918M Inact, 1127M Wired, 187M Cache, 829M Buf, 3535M Free"
 Memory parseBsdMemory(String raw) {
   // Try macOS format first: "PhysMem: 32G used (1536M wired), 64G unused."
-  final macMemReg = RegExp(
-    r'PhysMem:\s*([\d.]+)([KMGT])\s*used.*?,\s*([\d.]+)([KMGT])\s*unused',
-  );
-  final macMatch = macMemReg.firstMatch(raw);
+  final macMatch = _macMemReg.firstMatch(raw);
 
   if (macMatch != null) {
     final usedAmount = double.parse(macMatch.group(1)!);
@@ -70,11 +74,7 @@ Memory parseBsdMemory(String raw) {
   }
 
   // Try FreeBSD format: "Mem: 456M Active, 2918M Inact, 1127M Wired, 187M Cache, 829M Buf, 3535M Free"
-  final freeBsdReg = RegExp(
-    r'(\d+)([KMGT])\s+(Active|Inact|Wired|Cache|Buf|Free)',
-    caseSensitive: false,
-  );
-  final matches = freeBsdReg.allMatches(raw);
+  final matches = _freeBsdReg.allMatches(raw);
 
   if (matches.isNotEmpty) {
     double usedKB = 0;

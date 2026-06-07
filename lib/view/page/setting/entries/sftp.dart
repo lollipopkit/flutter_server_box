@@ -15,8 +15,6 @@ extension _SFTP on _AppSettingsPageState {
   Widget _buildSftpOpenLastPath() {
     return ListTile(
       leading: const Icon(MingCute.history_line),
-      // title: Text(l10n.openLastPath),
-      // subtitle: Text(l10n.openLastPathTip, style: UIs.textGrey),
       title: TipText(l10n.openLastPath, l10n.openLastPathTip),
       trailing: StoreSwitch(prop: _setting.sftpOpenLastPath),
     );
