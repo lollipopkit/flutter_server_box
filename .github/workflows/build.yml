@@ -3,10 +3,11 @@ name: Flutter Build
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Tag to build (e.g. v1.0.1426)'
+      release:
+        description: 'Create GitHub Release (auto tag v1.0.<commit_count>)'
         required: false
-        type: string
+        type: boolean
+        default: false
   push:
     tags:
       - "v*"
@@ -16,7 +17,6 @@ permissions:
 
 env:
   APP_NAME: ServerBox
-  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
   BUILD_TAG: test-build-${{ github.run_number }}-${{ github.sha }}
 
 jobs:
@@ -28,7 +28,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
-          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
           persist-credentials: false
       - name: Install Flutter
         uses: subosito/flutter-action@v2
@@ -49,25 +48,8 @@ jobs:
           scripts/release/patch-jni-build-id.sh
       - name: Build
         run: dart run fl_build -p android
-      - name: Rename for release
-        if: github.ref_type == 'tag' || inputs.tag != ''
-        shell: bash
-        run: |
-          APK_DIR="build/app/outputs/flutter-apk"
-          shopt -s nullglob
-
-          for arch in arm64 arm amd64; do
-            matches=("$APK_DIR"/"${APP_NAME}"_*_"${arch}".apk)
-            if [ ${#matches[@]} -ne 1 ]; then
-              echo "Error: expected 1 APK for ${arch}, found ${#matches[@]}"
-              echo "APK_DIR: $APK_DIR"
-              ls -la "$APK_DIR" || true
-              exit 1
-            fi
-            mv "${matches[0]}" "$APK_DIR/${APP_NAME}_${RELEASE_TAG}_${arch}.apk"
-          done
       - name: Upload artifacts
-        if: github.ref_type != 'tag' && inputs.tag == ''
+        if: inputs.release != true && github.ref_type != 'tag'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-android
@@ -75,13 +57,14 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Create Release
-        if: github.ref_type == 'tag' || inputs.tag != ''
+        if: inputs.release == true || github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v1.0.${{ env.BUILD_NUMBER }}
           files: |
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_arm64.apk
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_arm.apk
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_amd64.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_arm64.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_arm.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -103,7 +86,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
-          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
           persist-credentials: false
       - name: Install Flutter
         uses: subosito/flutter-action@v2
@@ -116,20 +98,13 @@ jobs:
           sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev libsecret-1-dev
       - name: Build
         run: dart run fl_build -p linux
-      - name: Rename for release
-        if: github.ref_type == 'tag' || inputs.tag != ''
+      - name: Add legacy suffix
+        if: matrix.release_suffix != ''
         shell: bash
         run: |
-          shopt -s nullglob
-          matches=("${APP_NAME}"_*_amd64.AppImage)
-          if [ ${#matches[@]} -ne 1 ]; then
-            echo "Error: expected 1 AppImage, found ${#matches[@]}"
-            ls -la || true
-            exit 1
-          fi
-          mv "${matches[0]}" "${APP_NAME}_${RELEASE_TAG}${{ matrix.release_suffix }}_amd64.AppImage"
+          mv "${APP_NAME}_${BUILD_NUMBER}_amd64.AppImage" "${APP_NAME}_${BUILD_NUMBER}${{ matrix.release_suffix }}_amd64.AppImage"
       - name: Upload artifacts
-        if: github.ref_type != 'tag' && inputs.tag == ''
+        if: inputs.release != true && github.ref_type != 'tag'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-linux${{ matrix.artifact_suffix }}
@@ -137,11 +112,12 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Create Release
-        if: github.ref_type == 'tag' || inputs.tag != ''
+        if: inputs.release == true || github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v1.0.${{ env.BUILD_NUMBER }}
           files: |
-            ${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}${{ matrix.release_suffix }}_amd64.AppImage
+            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}${{ matrix.release_suffix }}_amd64.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -153,7 +129,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: recursive
-          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
           persist-credentials: false
       - name: Install Flutter
         uses: subosito/flutter-action@v2
@@ -161,20 +136,8 @@ jobs:
           channel: 'stable'
       - name: Build
         run: dart run fl_build -p windows
-      - name: Rename for release
-        if: github.ref_type == 'tag' || inputs.tag != ''
-        shell: bash
-        run: |
-          shopt -s nullglob
-          matches=("${APP_NAME}"_*_windows_amd64.zip)
-          if [ ${#matches[@]} -ne 1 ]; then
-            echo "Error: expected 1 zip, found ${#matches[@]}"
-            ls -la || true
-            exit 1
-          fi
-          mv "${matches[0]}" "${APP_NAME}_${RELEASE_TAG}_windows_amd64.zip"
       - name: Upload artifacts
-        if: github.ref_type != 'tag' && inputs.tag == ''
+        if: inputs.release != true && github.ref_type != 'tag'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows
@@ -182,10 +145,11 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Create Release
-        if: github.ref_type == 'tag' || inputs.tag != ''
+        if: inputs.release == true || github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v1.0.${{ env.BUILD_NUMBER }}
           files: |
-            ${{ env.APP_NAME }}_${{ env.RELEASE_TAG }}_windows_amd64.zip
+            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_windows_amd64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
