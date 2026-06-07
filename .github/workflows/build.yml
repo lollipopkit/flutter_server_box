@@ -47,7 +47,14 @@ jobs:
           flutter pub get
           scripts/release/patch-jni-build-id.sh
       - name: Build
-        run: dart run fl_build -p android
+        run: dart run fl_build -bp -p android
+      - name: Rename
+        shell: bash
+        run: |
+          cd build/app/outputs/flutter-apk
+          for f in *_${BUILD_NUMBER}_*.apk; do
+            mv "$f" "${f/_${BUILD_NUMBER}_/_v1.0.${BUILD_NUMBER}_}"
+          done
       - name: Upload artifacts
         if: inputs.release != true && github.ref_type != 'tag'
         uses: actions/upload-artifact@v4
@@ -62,9 +69,9 @@ jobs:
         with:
           tag_name: v1.0.${{ env.BUILD_NUMBER }}
           files: |
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_arm64.apk
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_arm.apk
-            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_amd64.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm64.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_amd64.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -97,12 +104,18 @@ jobs:
           sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev mesa-utils libvulkan-dev desktop-file-utils wget
           sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev libsecret-1-dev
       - name: Build
-        run: dart run fl_build -p linux
+        run: dart run fl_build -bp -p linux
+      - name: Rename
+        shell: bash
+        run: |
+          for f in *_${BUILD_NUMBER}_*.AppImage; do
+            mv "$f" "${f/_${BUILD_NUMBER}_/_v1.0.${BUILD_NUMBER}_}"
+          done
       - name: Add legacy suffix
         if: matrix.release_suffix != ''
         shell: bash
         run: |
-          mv "${APP_NAME}_${BUILD_NUMBER}_amd64.AppImage" "${APP_NAME}_${BUILD_NUMBER}${{ matrix.release_suffix }}_amd64.AppImage"
+          mv "${APP_NAME}_v1.0.${BUILD_NUMBER}_amd64.AppImage" "${APP_NAME}_v1.0.${BUILD_NUMBER}${{ matrix.release_suffix }}_amd64.AppImage"
       - name: Upload artifacts
         if: inputs.release != true && github.ref_type != 'tag'
         uses: actions/upload-artifact@v4
@@ -117,7 +130,7 @@ jobs:
         with:
           tag_name: v1.0.${{ env.BUILD_NUMBER }}
           files: |
-            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}${{ matrix.release_suffix }}_amd64.AppImage
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}${{ matrix.release_suffix }}_amd64.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -135,7 +148,13 @@ jobs:
         with:
           channel: 'stable'
       - name: Build
-        run: dart run fl_build -p windows
+        run: dart run fl_build -bp -p windows
+      - name: Rename
+        shell: bash
+        run: |
+          for f in *_${BUILD_NUMBER}_*.zip; do
+            mv "$f" "${f/_${BUILD_NUMBER}_/_v1.0.${BUILD_NUMBER}_}"
+          done
       - name: Upload artifacts
         if: inputs.release != true && github.ref_type != 'tag'
         uses: actions/upload-artifact@v4
@@ -150,6 +169,6 @@ jobs:
         with:
           tag_name: v1.0.${{ env.BUILD_NUMBER }}
           files: |
-            ${{ env.APP_NAME }}_${{ env.BUILD_NUMBER }}_windows_amd64.zip
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
