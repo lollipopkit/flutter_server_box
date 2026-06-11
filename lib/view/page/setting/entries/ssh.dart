@@ -24,6 +24,7 @@ extension _SSH on _AppSettingsPageState {
         if (isDesktop) _buildDesktopSshAutoCopyPassword(),
         _buildSSHVirtualKeyAutoOff(),
         if (isMobile) _buildSSHVirtKeys(),
+        _buildTmuxAuto(),
       ].map((e) => CardX(child: e)).toList(),
     );
   }
@@ -589,5 +590,88 @@ extension _SSH on _AppSettingsPageState {
         actions: Btn.ok(onTap: () => onSave(_sshBlurCtrl.text)).toList,
       ),
     );
+  }
+
+  Widget _buildTmuxAuto() {
+    return ExpandTile(
+      leading: const Icon(Icons.terminal),
+      title: const Text('tmux auto-attach'),
+      children: [
+        _buildTmuxAutoToggle(),
+        _buildTmuxShowSelector(),
+        _buildTmuxSessionName(),
+      ],
+    );
+  }
+
+  Widget _buildTmuxAutoToggle() {
+    return ListTile(
+      title: const Text('Auto tmux'),
+      subtitle: Text(
+        'Automatically start/attach tmux on SSH connect',
+        style: UIs.textGrey,
+      ),
+      trailing: StoreSwitch(prop: _setting.tmuxAuto),
+    );
+  }
+
+  Widget _buildTmuxShowSelector() {
+    return _setting.tmuxAuto.listenable().listenVal((autoEnabled) {
+      return IgnorePointer(
+        ignoring: !autoEnabled,
+        child: Opacity(
+          opacity: autoEnabled ? 1.0 : 0.5,
+          child: ListTile(
+            title: const Text('Session selector'),
+            subtitle: Text(
+              'Show session picker dialog on connect',
+              style: UIs.textGrey,
+            ),
+            trailing: StoreSwitch(prop: _setting.tmuxShowSelector),
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildTmuxSessionName() {
+    return _setting.tmuxAuto.listenable().listenVal((autoEnabled) {
+      return _setting.tmuxSessionName.listenable().listenVal((name) {
+        final displayName = name.isEmpty ? 'server_box' : name;
+        return IgnorePointer(
+          ignoring: !autoEnabled,
+          child: Opacity(
+            opacity: autoEnabled ? 1.0 : 0.5,
+            child: ListTile(
+              title: const Text('Default session name'),
+              trailing: Text(displayName, style: UIs.text15),
+              onTap: () => _showTmuxSessionNameDialog(name),
+            ),
+          ),
+        );
+      });
+    });
+  }
+
+  Future<void> _showTmuxSessionNameDialog(String current) async {
+    withTextFieldController((ctrl) async {
+      ctrl.text = current;
+      void onSave() {
+        _setting.tmuxSessionName.put(ctrl.text.trim());
+        context.pop();
+      }
+
+      await context.showRoundDialog<bool>(
+        title: 'Session name',
+        child: Input(
+          controller: ctrl,
+          autoFocus: true,
+          hint: 'server_box',
+          suggestion: false,
+          onSubmitted: (_) => onSave(),
+        ),
+        actions: Btn.ok(onTap: onSave).toList,
+      );
+    });
   }
 }

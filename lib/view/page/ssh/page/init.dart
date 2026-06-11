@@ -1,6 +1,132 @@
 part of 'page.dart';
 
 extension _Init on SSHPageState {
+  void _logTmuxInfo(String message) {
+    Loggers.app.info('[TMUX] $message');
+  }
+
+  Map<String, String> get _sshEnvironment {
+    final env = <String, String>{...?widget.args.spi.envs};
+    final lang = (env['LANG']?.trim().isNotEmpty ?? false)
+        ? env['LANG']!
+        : TmuxCommandBuilder.defaultLang;
+    env['LANG'] = lang;
+    env.putIfAbsent('LC_CTYPE', () => lang);
+    env.putIfAbsent('LC_ALL', () => lang);
+    return env;
+  }
+
+  String get _tmuxLang {
+    final env = _sshEnvironment;
+    return (env['LC_CTYPE']?.trim().isNotEmpty ?? false)
+        ? env['LC_CTYPE']!
+        : env['LANG']!;
+  }
+
+  void _resetForegroundTerminal() {
+    _terminal.buffer.clear();
+    _terminal.buffer.setCursor(0, 0);
+  }
+
+  void _cancelTerminalOutputSubscriptions() {
+    for (final subscription in _terminalOutputSubscriptions) {
+      subscription.cancel();
+    }
+    _terminalOutputSubscriptions.clear();
+  }
+
+  void _bindForegroundSession(SSHSession session) {
+    _resetForegroundTerminal();
+    _cancelTerminalOutputSubscriptions();
+    _terminal.onOutput = (data) {
+      session.write(utf8.encode(data));
+    };
+    _terminal.onResize = (width, height, pixelWidth, pixelHeight) {
+      session.resizeTerminal(width, height);
+    };
+
+    _listen(session.stdout, name: 'stdout');
+    _listen(session.stderr, name: 'stderr');
+
+    _session = session;
+    TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connected);
+    unawaited(_waitForegroundSessionDone(session));
+  }
+
+  Future<void> _waitForegroundSessionDone(SSHSession session) async {
+    await session.done;
+    if (!identical(_session, session)) {
+      return;
+    }
+
+    _session = null;
+    _drainPendingTerminalOutput();
+    if (mounted && widget.args.notFromTab) {
+      context.pop();
+    }
+    widget.args.onSessionEnd?.call();
+    TermSessionManager.remove(_sessionId);
+  }
+
+  Future<bool> _replaceForegroundWithLaunchPlan(TmuxLaunchPlan plan) async {
+    if (_client == null || !plan.shouldLaunchTmux) return false;
+
+    final oldSession = _session;
+    _session = null;
+    _cancelTerminalOutputSubscriptions();
+
+    try {
+      oldSession?.close();
+    } catch (e, st) {
+      Loggers.app.warning('Failed to close old foreground session', e, st);
+    }
+
+    final pty = SSHPtyConfig(
+      width: _terminal.viewWidth,
+      height: _terminal.viewHeight,
+    );
+    final session = await _client?.execute(
+      plan.command!,
+      pty: pty,
+      environment: _sshEnvironment,
+    );
+
+    if (session == null) {
+      Loggers.app.warning('Failed to replace foreground session with tmux');
+      return false;
+    }
+
+    _saveTmuxState(
+      sessionName: plan.sessionName!,
+      windowIndex: plan.windowIndex,
+    );
+    _bindForegroundSession(session);
+    widget.args.focusNode?.requestFocus();
+    return true;
+  }
+
+  Future<SSHSession?> _openForegroundSession() async {
+    final plan = await _resolveForegroundLaunchPlan();
+    final pty = SSHPtyConfig(
+      width: _terminal.viewWidth,
+      height: _terminal.viewHeight,
+    );
+
+    if (plan.shouldLaunchTmux) {
+      _saveTmuxState(
+        sessionName: plan.sessionName!,
+        windowIndex: plan.windowIndex,
+      );
+      return _client?.execute(
+        plan.command!,
+        pty: pty,
+        environment: _sshEnvironment,
+      );
+    }
+
+    return _client?.shell(pty: pty, environment: _sshEnvironment);
+  }
+
   void _initStoredCfg() {
     final fontFamilly = Stores.setting.fontPath.fetch().getFileName();
     final textSize = Stores.setting.termFontSize.fetch();
@@ -39,67 +165,39 @@ extension _Init on SSHPageState {
     );
 
     _writeLn('${libL10n.execute}: Shell');
-    final session = await _client?.shell(
-      pty: SSHPtyConfig(
-        width: _terminal.viewWidth,
-        height: _terminal.viewHeight,
-      ),
-      environment: widget.args.spi.envs,
-    );
+    final session = await _openForegroundSession();
 
     if (session == null) {
       _writeLn(libL10n.fail);
       return;
     }
 
-    _terminal.buffer.clear();
-    _terminal.buffer.setCursor(0, 0);
-
-    _terminal.onOutput = (data) {
-      session.write(utf8.encode(data));
-    };
-    _terminal.onResize = (width, height, pixelWidth, pixelHeight) {
-      session.resizeTerminal(width, height);
-    };
-
-    _listen(session.stdout);
-    _listen(session.stderr);
-
-    // Hold the session for external control (disconnect)
-    _session = session;
-    // Mark status connected for notifications / live activities
-    TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connected);
+    _bindForegroundSession(session);
 
     final snippets = ref.read(snippetProvider.select((p) => p.snippets));
-    for (final snippet in snippets) {
-      if (snippet.autoRunOn?.contains(widget.args.spi.id) == true) {
-        snippet.runInTerm(_terminal, widget.args.spi);
+    if (_tmuxCurrentSession == null) {
+      for (final snippet in snippets) {
+        if (snippet.autoRunOn?.contains(widget.args.spi.id) == true) {
+          snippet.runInTerm(_terminal, widget.args.spi);
+        }
       }
     }
 
     final initCmd = widget.args.initCmd;
-    if (initCmd != null) {
+    if (initCmd != null && _tmuxCurrentSession == null) {
       _terminal.textInput(initCmd);
       _terminal.keyInput(TerminalKey.enter);
     }
 
     final initSnippet = widget.args.initSnippet;
-    if (initSnippet != null) {
+    if (initSnippet != null && _tmuxCurrentSession == null) {
       initSnippet.runInTerm(_terminal, widget.args.spi);
     }
 
     widget.args.focusNode?.requestFocus();
-
-    await session.done;
-    _drainPendingTerminalOutput();
-    if (mounted && widget.args.notFromTab) {
-      context.pop();
-    }
-    widget.args.onSessionEnd?.call();
-    TermSessionManager.remove(_sessionId);
   }
 
-  void _listen(Stream<Uint8List>? stream) {
+  void _listen(Stream<Uint8List>? stream, {required String name}) {
     if (stream == null) {
       return;
     }
@@ -242,6 +340,376 @@ extension _Init on SSHPageState {
   void _writeLn(String p0) {
     _terminal.write('$p0\r\n');
   }
+
+  TmuxRestoreState get _restoreTmuxState {
+    return resolveTmuxRestoreState(
+      argsSession: widget.args.tmuxSession,
+      argsWindow: widget.args.tmuxWindow,
+      restorableSession: _restorableTmuxSession.value,
+      restorableWindow: _restorableTmuxWindow.value,
+    );
+  }
+
+  void _saveTmuxState({required String sessionName, int? windowIndex}) {
+    _tmuxCurrentSession = sessionName;
+    _tmuxCurrentWindow = windowIndex;
+    _restorableServerId.value = widget.args.spi.id;
+    _restorableTmuxSession.value = sessionName;
+    _restorableTmuxWindow.value = windowIndex;
+    widget.args.onTmuxStateChanged?.call();
+  }
+
+  Future<TmuxSession> _createTmuxControlSession() async {
+    return TmuxSession(
+      PersistentShell(
+        _client,
+        sessionFactory: () async {
+          final sh = await _client!.execute(
+            'bash --login',
+            environment: _sshEnvironment,
+          );
+          return SshPersistentShellSession(sh);
+        },
+      ),
+      lang: _tmuxLang,
+    );
+  }
+
+  Future<TmuxLaunchPlan> _resolveForegroundLaunchPlan() async {
+    if (!Stores.setting.tmuxAuto.fetch() || _client == null) {
+      return const TmuxLaunchPlan.none();
+    }
+
+    final tmuxSession = await _createTmuxControlSession();
+    try {
+      bool available;
+      try {
+        available = await tmuxSession.isAvailable;
+      } catch (e, st) {
+        Loggers.app.warning('tmux availability check failed', e, st);
+        return const TmuxLaunchPlan.none();
+      }
+
+      if (!available) {
+        return const TmuxLaunchPlan.none();
+      }
+      final tmuxBin = tmuxSession.scanner.tmuxBin ?? 'tmux';
+
+      final showSelector = Stores.setting.tmuxShowSelector.fetch();
+      final restoredState = _restoreTmuxState;
+      final shouldPreloadSessions = restoredState.hasSession || showSelector;
+      final sessions = shouldPreloadSessions
+          ? await _loadTmuxSessions(tmuxSession)
+          : const <TmuxSessionInfo>[];
+
+      final restoredPlan = await _buildRestoredForegroundLaunchPlan(
+        sessions,
+        tmuxBin: tmuxBin,
+        lang: _tmuxLang,
+      );
+      if (restoredPlan.shouldLaunchTmux) return restoredPlan;
+
+      final plan = await _buildInitialForegroundLaunchPlan(
+        tmuxSession,
+        preloadedSessions: sessions,
+        tmuxBin: tmuxBin,
+        lang: _tmuxLang,
+      );
+      return plan;
+    } finally {
+      await tmuxSession.dispose();
+    }
+  }
+
+  Future<List<TmuxSessionInfo>> _loadTmuxSessions(
+    TmuxSession tmuxSession,
+  ) async {
+    try {
+      return await tmuxSession.sessions;
+    } catch (e, st) {
+      Loggers.app.warning('tmux list sessions failed', e, st);
+      return const [];
+    }
+  }
+
+  Future<TmuxLaunchPlan> _buildRestoredForegroundLaunchPlan(
+    List<TmuxSessionInfo> sessions, {
+    required String tmuxBin,
+    required String lang,
+  }) async {
+    final restoredState = _restoreTmuxState;
+    if (!restoredState.hasSession) return const TmuxLaunchPlan.none();
+
+    final restoredPlan = buildRestoredTmuxLaunchPlan(
+      restoredState,
+      sessions,
+      tmuxBin: tmuxBin,
+      lang: lang,
+    );
+    if (restoredPlan.shouldLaunchTmux) {
+      _logTmuxInfo(
+        'Restoring tmux session "${restoredState.sessionName}"'
+        '${restoredState.windowIndex != null ? ' window ${restoredState.windowIndex}' : ''}',
+      );
+      return restoredPlan;
+    }
+
+    Loggers.app.info(
+      'Restored tmux session "${restoredState.sessionName}" not found, falling back to picker',
+    );
+    return const TmuxLaunchPlan.none();
+  }
+
+  Future<TmuxLaunchPlan> _buildInitialForegroundLaunchPlan(
+    TmuxSession tmuxSession, {
+    List<TmuxSessionInfo>? preloadedSessions,
+    required String tmuxBin,
+    required String lang,
+  }) async {
+    final showSelector = Stores.setting.tmuxShowSelector.fetch();
+    final defaultName = Stores.setting.tmuxSessionName.fetch();
+    final sessionName = defaultName.isEmpty ? 'server_box' : defaultName;
+
+    TmuxAttachChoice? choice;
+
+    if (showSelector) {
+      final sessions =
+          preloadedSessions ?? await _loadTmuxSessions(tmuxSession);
+      if (!mounted) return const TmuxLaunchPlan.none();
+
+      choice = await showTmuxSessionSelectorWithSkip(
+        context,
+        sessions: sessions,
+        tmuxSessionFactory: _createTmuxControlSession,
+        defaultSessionName: sessionName,
+      );
+    } else {
+      choice = TmuxAttachNew(sessionName: sessionName);
+    }
+
+    if (choice == null || choice is TmuxAttachSkip) {
+      return const TmuxLaunchPlan.none();
+    }
+
+    return buildChosenTmuxLaunchPlan(choice, tmuxBin: tmuxBin, lang: lang);
+  }
+
+  Future<void> _showTmuxSwitcher() async {
+    if (_client == null || !mounted) return;
+
+    final tmuxSession = await _createTmuxControlSession();
+    try {
+      final available = await tmuxSession.isAvailable;
+      if (!available || !mounted) {
+        if (mounted) context.showSnackBar('tmux not available');
+        return;
+      }
+      final tmuxBin = tmuxSession.scanner.tmuxBin ?? 'tmux';
+
+      final sessions = await tmuxSession.sessions;
+      if (!mounted) return;
+
+      final defaultName = Stores.setting.tmuxSessionName.fetch();
+      final sessionName = defaultName.isEmpty ? 'server_box' : defaultName;
+
+      final choice = await showTmuxSessionSelectorWithSkip(
+        context,
+        sessions: sessions,
+        tmuxSessionFactory: _createTmuxControlSession,
+        defaultSessionName: sessionName,
+        initialSessionName: _tmuxCurrentSession,
+      );
+
+      if (choice == null || choice is TmuxAttachSkip) return;
+
+      if (choice is TmuxAttachExisting) {
+        if (_tmuxCurrentSession == null) {
+          final plan = buildChosenTmuxLaunchPlan(
+            choice,
+            tmuxBin: tmuxBin,
+            lang: _tmuxLang,
+          );
+          await _replaceForegroundWithLaunchPlan(plan);
+          return;
+        }
+        final target = choice.windowIndex != null
+            ? '${choice.sessionName}:${choice.windowIndex}'
+            : choice.sessionName;
+        await _switchTmuxClient(
+          tmuxSession,
+          target,
+          nextSessionName: choice.sessionName,
+          nextWindowIndex: choice.windowIndex,
+        );
+        widget.args.focusNode?.requestFocus();
+        return;
+      }
+
+      if (choice is TmuxAttachNew) {
+        if (_tmuxCurrentSession == null) {
+          final plan = buildChosenTmuxLaunchPlan(
+            choice,
+            tmuxBin: tmuxBin,
+            lang: _tmuxLang,
+          );
+          await _replaceForegroundWithLaunchPlan(plan);
+          return;
+        }
+        await tmuxSession.runCommand(
+          '${TmuxCommandBuilder.tmuxPrefix(tmuxBin: tmuxBin, lang: _tmuxLang)} new-session -d -s ${TmuxCommandBuilder.escapeArg(choice.sessionName)}',
+        );
+        await _switchTmuxClient(
+          tmuxSession,
+          choice.sessionName,
+          nextSessionName: choice.sessionName,
+        );
+        widget.args.focusNode?.requestFocus();
+        return;
+      }
+    } finally {
+      await tmuxSession.dispose();
+    }
+  }
+
+  /// Switch the terminal's tmux client to a different session/window.
+  /// Dynamically finds this terminal's tmux client by session/window.
+  Future<void> _switchTmuxClient(
+    TmuxSession tmuxSession,
+    String target, {
+    required String nextSessionName,
+    int? nextWindowIndex,
+  }) async {
+    final tmuxBin = tmuxSession.scanner.tmuxBin ?? 'tmux';
+    final tty = await _resolveTmuxClientTty(
+      tmuxSession,
+      tmuxBin: tmuxBin,
+      lang: _tmuxLang,
+    );
+    if (tty == null) {
+      Loggers.app.warning('Failed to find tmux client tty for session switch');
+      return;
+    }
+    final switchCmd = TmuxCommandBuilder.switchClient(
+      tty,
+      target,
+      tmuxBin: tmuxBin,
+      lang: _tmuxLang,
+    );
+    final ok = await tmuxSession.runCommand(switchCmd);
+    if (!ok) {
+      Loggers.app.warning('Failed to switch tmux client to target: $target');
+    }
+    if (ok) {
+      _saveTmuxState(
+        sessionName: nextSessionName,
+        windowIndex: nextWindowIndex,
+      );
+    }
+  }
+
+  Future<String?> _resolveTmuxClientTty(
+    TmuxSession tmuxSession, {
+    required String tmuxBin,
+    required String lang,
+  }) async {
+    final clients = await _listTmuxClients(
+      tmuxSession,
+      tmuxBin: tmuxBin,
+      lang: lang,
+    );
+
+    final currentSession = _tmuxCurrentSession;
+    if (currentSession == null) return null;
+
+    var candidates = clients
+        .where((client) => client.sessionName == currentSession)
+        .toList(growable: false);
+
+    final currentWindow = _tmuxCurrentWindow;
+    if (currentWindow != null) {
+      candidates = candidates
+          .where((client) => client.windowIndex == currentWindow)
+          .toList(growable: false);
+    }
+
+    if (candidates.length == 1) {
+      return candidates.single.tty;
+    }
+
+    final sorted = [...candidates]
+      ..sort((a, b) => b.activity.compareTo(a.activity));
+    if (sorted.isNotEmpty) {
+      final latest = sorted.first;
+      final latestCount = sorted
+          .where((client) => client.activity == latest.activity)
+          .length;
+      if (latestCount == 1) {
+        Loggers.app.info(
+          '[TMUX] Resolved ambiguous client by activity: $latest',
+        );
+        return latest.tty;
+      }
+    }
+
+    Loggers.app.warning(
+      'Ambiguous tmux client for switch: clients=$clients '
+      'currentSession=$currentSession currentWindow=$currentWindow',
+    );
+    return null;
+  }
+
+  Future<List<_TmuxClientCandidate>> _listTmuxClients(
+    TmuxSession tmuxSession, {
+    required String tmuxBin,
+    required String lang,
+  }) async {
+    final result = await tmuxSession.scanner.runCommandAndCapture(
+      TmuxCommandBuilder.listClients(tmuxBin: tmuxBin, lang: lang),
+    );
+    if (result == null) return const [];
+
+    return result
+        .split('\n')
+        .map(_TmuxClientCandidate.tryParse)
+        .whereType<_TmuxClientCandidate>()
+        .toList(growable: false);
+  }
+}
+
+final class _TmuxClientCandidate {
+  final String tty;
+  final String sessionName;
+  final int? windowIndex;
+  final int activity;
+
+  const _TmuxClientCandidate({
+    required this.tty,
+    required this.sessionName,
+    required this.windowIndex,
+    required this.activity,
+  });
+
+  static _TmuxClientCandidate? tryParse(String line) {
+    final parts = line.trim().split('|');
+    if (parts.length < 4) return null;
+
+    final tty = parts[0].trim();
+    final sessionName = parts[1].trim();
+    final windowIndex = int.tryParse(parts[2].trim());
+    final activity = int.tryParse(parts[3].trim());
+    if (tty.isEmpty || sessionName.isEmpty || activity == null) return null;
+
+    return _TmuxClientCandidate(
+      tty: tty,
+      sessionName: sessionName,
+      windowIndex: windowIndex,
+      activity: activity,
+    );
+  }
+
+  @override
+  String toString() =>
+      '$tty $sessionName:${windowIndex ?? '?'} activity=$activity';
 }
 
 extension on SSHPageState {

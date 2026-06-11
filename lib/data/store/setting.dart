@@ -309,4 +309,13 @@ class SettingStore extends HiveStore {
 
   late final sshPageSortBy = propertyDefault('sshPageSortBy', 0);
   late final sshPageSortAsc = propertyDefault('sshPageSortAsc', true);
+
+  /// Whether to automatically start/attach tmux on SSH connect.
+  late final tmuxAuto = propertyDefault('tmuxAuto', false);
+
+  /// Whether to show the tmux session selector dialog on connect.
+  late final tmuxShowSelector = propertyDefault('tmuxShowSelector', true);
+
+  /// Default tmux session name. Empty string means use 'server_box'.
+  late final tmuxSessionName = propertyDefault('tmuxSessionName', '');
 }

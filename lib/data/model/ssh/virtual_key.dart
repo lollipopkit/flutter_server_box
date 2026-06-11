@@ -11,6 +11,7 @@ enum VirtualKeyFunc {
   snippet,
   file,
   sudoPassword,
+  tmuxSwitch,
 }
 
 enum VirtKey {
@@ -60,6 +61,7 @@ enum VirtKey {
   f11,
   f12,
   sudo,
+  tmux,
 }
 
 extension VirtKeyX on VirtKey {
@@ -91,6 +93,7 @@ extension VirtKeyX on VirtKey {
 
     if (this == VirtKey.pgdn) return 'PgDn';
     if (this == VirtKey.pgup) return 'PgUp';
+    if (this == VirtKey.tmux) return 'tmux';
 
     if (name.length > 1) {
       return name.substring(0, 1).toUpperCase() + name.substring(1);
@@ -116,6 +119,7 @@ extension VirtKeyX on VirtKey {
     VirtKey.sudo,
     VirtKey.ime,
     VirtKey.shift,
+    VirtKey.tmux,
   ];
 
   /// Corresponding [TerminalKey]
@@ -158,6 +162,7 @@ extension VirtKeyX on VirtKey {
     VirtKey.snippet => Icons.code,
     VirtKey.clipboard => Icons.paste,
     VirtKey.sudo => Icons.password,
+    VirtKey.tmux => Icons.window,
     VirtKey.ime => Icons.keyboard,
     _ => null,
   };
@@ -170,6 +175,7 @@ extension VirtKeyX on VirtKey {
     VirtKey.snippet => VirtualKeyFunc.snippet,
     VirtKey.clipboard => VirtualKeyFunc.clipboard,
     VirtKey.sudo => VirtualKeyFunc.sudoPassword,
+    VirtKey.tmux => VirtualKeyFunc.tmuxSwitch,
     VirtKey.ime => VirtualKeyFunc.toggleIME,
     _ => null,
   };
