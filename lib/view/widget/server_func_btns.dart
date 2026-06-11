@@ -184,8 +184,11 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
 void _gotoSSH(Spi spi, BuildContext context) async {
   // run built-in ssh on macOS due to incompatibility
   if (isMobile || isMacOS) {
-    final args = SshPageArgs(spi: spi);
-    SSHPage.route.go(context, args);
+    Navigator.restorablePush(
+      context,
+      SSHPage.restorableRouteBuilder,
+      arguments: spi.id,
+    );
     return;
   }
 

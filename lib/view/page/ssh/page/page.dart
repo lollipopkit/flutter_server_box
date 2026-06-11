@@ -83,6 +83,28 @@ class SSHPage extends ConsumerStatefulWidget {
     page: SSHPage.new,
     path: '/ssh/page',
   );
+
+  /// Restorable route builder for navigation from server list.
+  /// Takes a server ID as argument and looks up the Spi from the store.
+  /// Note: tmux state restoration is handled at SSHTabPage level for tab-based navigation.
+  static Route<void> restorableRouteBuilder(
+    BuildContext context,
+    Object? arguments,
+  ) {
+    if (arguments is! String) {
+      return MaterialPageRoute(builder: (_) => const SizedBox.shrink());
+    }
+    final serverId = arguments;
+    final servers = Stores.server.fetch();
+    final spi = servers.where((s) => s.id == serverId).firstOrNull;
+    if (spi == null) {
+      // Server not found, return empty route
+      return MaterialPageRoute(builder: (_) => const SizedBox.shrink());
+    }
+    return MaterialPageRoute(
+      builder: (_) => SSHPage(args: SshPageArgs(spi: spi)),
+    );
+  }
 }
 
 const _horizonPadding = 7.0;
