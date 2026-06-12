@@ -67,7 +67,7 @@ types:
         index: 17
   VirtKey:
     typeId: 4
-    nextIndex: 46
+    nextIndex: 47
     fields:
       esc:
         index: 0
@@ -161,6 +161,8 @@ types:
         index: 44
       sudo:
         index: 45
+      tmux:
+        index: 46
   NetViewType:
     typeId: 5
     nextIndex: 3

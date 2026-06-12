@@ -32,7 +32,19 @@ class _HomePageState extends ConsumerState<HomePage>
         AutomaticKeepAliveClientMixin,
         AfterLayoutMixin,
         WidgetsBindingObserver,
-        GlobalRef {
+        GlobalRef,
+        RestorationMixin {
+  // Restorable state for current tab index
+  final RestorableInt _restorableTabIndex = RestorableInt(0);
+
+  @override
+  String get restorationId => 'home_page';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_restorableTabIndex, 'tab_index');
+  }
+
   late final PageController _pageController;
 
   final _selectIndex = ValueNotifier(0);
@@ -47,6 +59,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
   @override
   void dispose() {
+    _restorableTabIndex.dispose();
     if (isMobile) {
       SystemUIs.switchStatusBar(hide: false);
     }
@@ -150,6 +163,7 @@ class _HomePageState extends ConsumerState<HomePage>
                 FocusScope.of(context).unfocus();
                 if (!_switchingPage) {
                   _selectIndex.value = value;
+                  _restorableTabIndex.value = value;
                 }
                 _syncFullscreenSystemUi();
               },
@@ -243,6 +257,13 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     // Auth required for first launch
+    // Restore tab index from restoration if available
+    if (_restorableTabIndex.value >= 0 && _restorableTabIndex.value < _tabs.length) {
+      _selectIndex.value = _restorableTabIndex.value;
+      if (_pageController.hasClients) {
+        _pageController.jumpToPage(_restorableTabIndex.value);
+      }
+    }
     _goAuth();
 
     //_reqNotiPerm();
@@ -274,6 +295,7 @@ class _HomePageState extends ConsumerState<HomePage>
     if (_selectIndex.value == index) return;
     if (index < 0 || index >= _tabs.length) return;
     _selectIndex.value = index;
+    _restorableTabIndex.value = index;
     _switchingPage = true;
     _pageController.animateToPage(
       index,
@@ -337,6 +359,7 @@ extension _HomePageStateActions on _HomePageState {
     setState(() {
       _tabs = newTabs;
       _selectIndex.value = clampedIndex;
+      _restorableTabIndex.value = clampedIndex;
     });
 
     if (clampedIndex != previousIndex && _pageController.hasClients) {

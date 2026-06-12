@@ -125,6 +125,7 @@ class _MyAppState extends State<MyApp> {
 
     return MaterialApp(
       key: ValueKey(locale),
+      restorationScopeId: 'serverbox',
       navigatorKey: AppNavigator.key,
       builder: ResponsivePoints.builder,
       locale: locale,

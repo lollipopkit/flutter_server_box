@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -35,7 +36,70 @@ typedef _TabMap =
     >;
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
-    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin, RestorationMixin {
+  // Restorable state for tab restoration
+  final RestorableString _restorableTabsState = RestorableString('');
+
+  @override
+  String get restorationId => 'ssh_tab_page';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_restorableTabsState, 'tabs_state');
+
+    // Restore tabs after the first frame
+    if (initialRestore && _restorableTabsState.value.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _restoreTabs();
+      });
+    }
+  }
+
+  void _saveTabsState() {
+    final tabsData = <Map<String, dynamic>>[];
+    for (final entry in _tabMap.entries) {
+      if (entry.key == libL10n.add) continue; // Skip the add button
+
+      final sshPageState = entry.value.sshPageKey?.currentState;
+      final sshPage = entry.value.page as SSHPage;
+      final serverId = sshPageState?.widget.args.spi.id ?? sshPage.args.spi.id;
+      final tmuxSession =
+          sshPageState?.tmuxCurrentSession ?? sshPage.args.tmuxSession;
+      final tmuxWindow =
+          sshPageState?.tmuxCurrentWindow ?? sshPage.args.tmuxWindow;
+
+      tabsData.add({
+        'serverId': serverId,
+        'tmuxSession': tmuxSession,
+        'tmuxWindow': tmuxWindow,
+      });
+    }
+    _restorableTabsState.value = jsonEncode(tabsData);
+  }
+
+  void _restoreTabs() {
+    try {
+      final tabsData = jsonDecode(_restorableTabsState.value) as List;
+      for (final tabData in tabsData) {
+        final serverId = tabData['serverId'] as String;
+        final tmuxSession = tabData['tmuxSession'] as String?;
+        final tmuxWindow = tabData['tmuxWindow'] as int?;
+
+        // Find the server
+        final servers = Stores.server.fetch();
+        final spi = servers.where((s) => s.id == serverId).firstOrNull;
+        if (spi == null) {
+          continue;
+        }
+
+        // Add the tab with tmux state
+        _addTab(spi, tmuxSession: tmuxSession, tmuxWindow: tmuxWindow);
+      }
+    } catch (e, st) {
+      Loggers.app.warning('Failed to restore SSH tabs', e, st);
+    }
+  }
+
   late final _TabMap _tabMap = {
     libL10n.add: (
       page: _AddPage(
@@ -55,6 +119,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
 
   @override
   void dispose() {
+    _restorableTabsState.dispose();
     final entries = _tabMap.values.toList(growable: false);
     _tabMap.clear();
     for (final entry in entries) {
@@ -190,6 +255,7 @@ extension on _SSHTabPageState {
 
     _tabRN.notify();
     _disposeTabEntryAfterFrame(removed);
+    _saveTabsState();
     if (_tabMap.isEmpty) {
       _fabVN.value = 0;
       return;
@@ -219,23 +285,8 @@ extension on _SSHTabPageState {
     }
   }
 
-  void _onTapInitCard(Spi spi) async {
-    final name = () {
-      final reg = RegExp('${spi.name}\\((\\d+)\\)');
-      final idxs = _tabMap.keys
-          .map((e) => reg.firstMatch(e))
-          .map((e) => e?.group(1))
-          .whereType<String>();
-      if (idxs.isEmpty) {
-        return _tabMap.keys.contains(spi.name) ? '${spi.name}(1)' : spi.name;
-      }
-      final biggest = idxs.reduce((a, b) => a.length > b.length ? a : b);
-      final biggestInt = int.tryParse(biggest);
-      if (biggestInt != null && biggestInt > 0) {
-        return '${spi.name}(${biggestInt + 1})';
-      }
-      return spi.name;
-    }();
+  Future<void> _addTab(Spi spi, {String? tmuxSession, int? tmuxWindow}) async {
+    final name = _generateTabName(spi);
     final key = GlobalKey<SSHPageState>(debugLabel: name);
     final focusNode = FocusNode();
     final visibleVN = ValueNotifier(false);
@@ -247,10 +298,13 @@ extension on _SSHTabPageState {
       },
       focusNode: focusNode,
       visibleListenable: visibleVN,
+      tmuxSession: tmuxSession,
+      tmuxWindow: tmuxWindow,
+      onTmuxStateChanged: _saveTabsState,
     );
     _tabMap[name] = (
       page: SSHPage(
-        key: key, // Keep it, or the Flutter will works unexpectedly
+        key: key,
         args: args,
       ),
       focus: focusNode,
@@ -259,10 +313,32 @@ extension on _SSHTabPageState {
     );
     _tabRN.notify();
     Stores.history.sshServerHistory.add(spi.id);
+    _saveTabsState();
     // Wait for the page to be built
     await Future.delayed(Durations.short3);
     final idx = _tabMap.keys.toList().indexOf(name);
     await _toPage(idx);
+  }
+
+  String _generateTabName(Spi spi) {
+      final reg = RegExp('${spi.name}\\((\\d+)\\)');
+      final idxs = _tabMap.keys
+          .map((e) => reg.firstMatch(e))
+          .map((e) => e?.group(1))
+          .whereType<String>();
+      if (idxs.isEmpty) {
+      return _tabMap.keys.contains(spi.name) ? '${spi.name}(1)' : spi.name;
+      }
+      final biggest = idxs.reduce((a, b) => a.length > b.length ? a : b);
+      final biggestInt = int.tryParse(biggest);
+      if (biggestInt != null && biggestInt > 0) {
+      return '${spi.name}(${biggestInt + 1})';
+      }
+      return spi.name;
+  }
+
+  void _onTapInitCard(Spi spi) async {
+    await _addTab(spi);
   }
 
   void _onLongPressInitCard(Spi spi) {

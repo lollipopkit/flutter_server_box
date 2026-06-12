@@ -25,9 +25,12 @@ import 'package:server_box/data/provider/virtual_keyboard.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
+import 'package:server_box/data/ssh/persistent_shell.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/ssh/terminal_output_buffer.dart';
+import 'package:server_box/data/ssh/tmux/tmux_export.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
+import 'package:server_box/view/widget/tmux_session_selector.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
@@ -46,6 +49,9 @@ final class SshPageArgs {
   final GlobalKey<TerminalViewState>? terminalKey;
   final FocusNode? focusNode;
   final ValueListenable<bool>? visibleListenable;
+  final String? tmuxSession;
+  final int? tmuxWindow;
+  final VoidCallback? onTmuxStateChanged;
 
   const SshPageArgs({
     required this.spi,
@@ -56,6 +62,9 @@ final class SshPageArgs {
     this.terminalKey,
     this.focusNode,
     this.visibleListenable,
+    this.tmuxSession,
+    this.tmuxWindow,
+    this.onTmuxStateChanged,
   }) : assert(
          notFromTab || visibleListenable != null,
          'visibleListenable is required when notFromTab is false',
@@ -74,6 +83,28 @@ class SSHPage extends ConsumerStatefulWidget {
     page: SSHPage.new,
     path: '/ssh/page',
   );
+
+  /// Restorable route builder for navigation from server list.
+  /// Takes a server ID as argument and looks up the Spi from the store.
+  /// Note: tmux state restoration is handled at SSHTabPage level for tab-based navigation.
+  static Route<void> restorableRouteBuilder(
+    BuildContext context,
+    Object? arguments,
+  ) {
+    if (arguments is! String) {
+      return MaterialPageRoute(builder: (_) => const SizedBox.shrink());
+    }
+    final serverId = arguments;
+    final servers = Stores.server.fetch();
+    final spi = servers.where((s) => s.id == serverId).firstOrNull;
+    if (spi == null) {
+      // Server not found, return empty route
+      return MaterialPageRoute(builder: (_) => const SizedBox.shrink());
+    }
+    return MaterialPageRoute(
+      builder: (_) => SSHPage(args: SshPageArgs(spi: spi)),
+    );
+  }
 }
 
 const _horizonPadding = 7.0;
@@ -83,7 +114,23 @@ class SSHPageState extends ConsumerState<SSHPage>
         AutomaticKeepAliveClientMixin,
         AfterLayoutMixin,
         TickerProviderStateMixin,
-        WidgetsBindingObserver {
+        WidgetsBindingObserver,
+        RestorationMixin {
+  // Restorable state for this SSH page
+  final RestorableString _restorableServerId = RestorableString('');
+  final RestorableStringN _restorableTmuxSession = RestorableStringN(null);
+  final RestorableIntN _restorableTmuxWindow = RestorableIntN(null);
+
+  @override
+  String get restorationId => 'ssh_page_${widget.args.spi.id}';
+
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(_restorableServerId, 'server_id');
+    registerForRestoration(_restorableTmuxSession, 'tmux_session');
+    registerForRestoration(_restorableTmuxWindow, 'tmux_window');
+  }
+
   late final _terminal = Terminal();
   late final TerminalController _terminalController = TerminalController(
     vsync: this,
@@ -117,6 +164,14 @@ class SSHPageState extends ConsumerState<SSHPage>
   bool _reportedDisconnected = false;
   VoidCallback? _visibilityListener;
   bool _isPickingSnippet = false;
+  String? _tmuxCurrentSession;
+  int? _tmuxCurrentWindow;
+
+  /// Current tmux session name (for state restoration)
+  String? get tmuxCurrentSession => _tmuxCurrentSession;
+
+  /// Current tmux window index (for state restoration)
+  int? get tmuxCurrentWindow => _tmuxCurrentWindow;
 
   /// Used for (de)activate the wake lock and forground service
   static var _sshConnCount = 0;
@@ -127,6 +182,9 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   @override
   void dispose() {
+    _restorableServerId.dispose();
+    _restorableTmuxSession.dispose();
+    _restorableTmuxWindow.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _virtKeyLongPressTimer?.cancel();
     _terminalController.dispose();
@@ -256,8 +314,6 @@ class SSHPageState extends ConsumerState<SSHPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final bgImage = Stores.setting.sshBgImage.fetch();
-    final hasBg = bgImage.isNotEmpty;
     Widget child = PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -273,7 +329,6 @@ class SSHPageState extends ConsumerState<SSHPage>
                 actions: _buildAppBarActions(),
               )
             : null,
-        backgroundColor: hasBg ? Colors.transparent : _terminalTheme.background,
         body: _buildBody(),
         bottomNavigationBar: isDesktop ? null : _buildBottom(),
       ),

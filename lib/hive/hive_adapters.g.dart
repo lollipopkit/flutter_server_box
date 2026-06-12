@@ -270,6 +270,8 @@ class VirtKeyAdapter extends TypeAdapter<VirtKey> {
         return VirtKey.shift;
       case 45:
         return VirtKey.sudo;
+      case 46:
+        return VirtKey.tmux;
       default:
         return VirtKey.esc;
     }
@@ -370,6 +372,8 @@ class VirtKeyAdapter extends TypeAdapter<VirtKey> {
         writer.writeByte(44);
       case VirtKey.sudo:
         writer.writeByte(45);
+      case VirtKey.tmux:
+        writer.writeByte(46);
     }
   }
 
