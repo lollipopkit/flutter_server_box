@@ -130,7 +130,7 @@ void main() {
 
       expect(scriptPath, contains('powershell'));
       expect(scriptPath, contains('-ExecutionPolicy Bypass'));
-      expect(scriptPath, contains('-${ShellFunc.status.flag}'));
+      expect(scriptPath, contains('-EncodedCommand'));
     });
 
     test('should execute Windows commands correctly', () {

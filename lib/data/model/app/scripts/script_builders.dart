@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
@@ -32,6 +34,26 @@ sealed class ScriptBuilder {
 class WindowsScriptBuilder extends ScriptBuilder {
   const WindowsScriptBuilder();
 
+  static String _quotePowerShellSingle(String value) {
+    return "'${value.replaceAll("'", "''")}'";
+  }
+
+  static String _encodePowerShellCommand(String command) {
+    final bytes = <int>[];
+    for (final codeUnit in command.codeUnits) {
+      bytes
+        ..add(codeUnit & 0xff)
+        ..add(codeUnit >> 8);
+    }
+    return base64Encode(bytes);
+  }
+
+  static String _powerShellEncoded(String command) {
+    return 'powershell -NoLogo -NoProfile -NonInteractive '
+        '-ExecutionPolicy Bypass -EncodedCommand '
+        '${_encodePowerShellCommand(command)}';
+  }
+
   @override
   String get scriptFileName => ScriptConstants.scriptFileWindows;
 
@@ -40,14 +62,24 @@ class WindowsScriptBuilder extends ScriptBuilder {
 
   @override
   String getInstallCommand(String scriptDir, String scriptPath) {
-    return 'New-Item -ItemType Directory -Force -Path \'$scriptDir\' | Out-Null; '
-        '\$content = [System.Console]::In.ReadToEnd(); '
-        'Set-Content -Path \'$scriptPath\' -Value \$content -Encoding UTF8';
+    final quotedDir = _quotePowerShellSingle(scriptDir);
+    final quotedPath = _quotePowerShellSingle(scriptPath);
+    return _powerShellEncoded('''
+\$scriptDir = [Environment]::ExpandEnvironmentVariables($quotedDir)
+\$scriptPath = [Environment]::ExpandEnvironmentVariables($quotedPath)
+\$content = [System.Console]::In.ReadToEnd()
+New-Item -ItemType Directory -Force -Path \$scriptDir | Out-Null
+Set-Content -Path \$scriptPath -Value \$content -Encoding UTF8
+''');
   }
 
   @override
   String getExecCommand(String scriptPath, ShellFunc func) {
-    return 'powershell -ExecutionPolicy Bypass -File "$scriptPath" -${func.flag}';
+    final quotedPath = _quotePowerShellSingle(scriptPath);
+    return _powerShellEncoded('''
+\$scriptPath = [Environment]::ExpandEnvironmentVariables($quotedPath)
+& \$scriptPath -${func.flag}
+''');
   }
 
   @override

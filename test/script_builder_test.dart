@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/script_builders.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
@@ -119,9 +121,13 @@ void main() {
         testPathWindows,
       );
 
-      expect(installCmdWindows, contains('New-Item'));
-      expect(installCmdWindows, contains('Set-Content'));
-      expect(installCmdWindows, contains(testPathWindows));
+      expect(installCmdWindows, contains('-EncodedCommand'));
+      final installScriptWindows = _decodeEncodedPowerShell(
+        installCmdWindows,
+      );
+      expect(installScriptWindows, contains('New-Item'));
+      expect(installScriptWindows, contains('Set-Content'));
+      expect(installScriptWindows, contains(testPathWindows));
     });
 
     test('exec commands are generated correctly for all platforms', () {
@@ -142,7 +148,10 @@ void main() {
         );
         expect(windowsExec, contains('powershell'));
         expect(windowsExec, contains('-ExecutionPolicy Bypass'));
-        expect(windowsExec, contains(func.flag));
+        expect(windowsExec, contains('-EncodedCommand'));
+        final windowsScript = _decodeEncodedPowerShell(windowsExec);
+        expect(windowsScript, contains(testPathWindows));
+        expect(windowsScript, contains('-${func.flag}'));
       }
     });
 
@@ -230,4 +239,14 @@ void main() {
       expect(builders.any((b) => b is UnixScriptBuilder), isTrue);
     });
   });
+}
+
+String _decodeEncodedPowerShell(String command) {
+  final encoded = command.split('-EncodedCommand ').last.trim();
+  final bytes = base64Decode(encoded);
+  final codeUnits = <int>[];
+  for (var i = 0; i < bytes.length; i += 2) {
+    codeUnits.add(bytes[i] | (bytes[i + 1] << 8));
+  }
+  return String.fromCharCodes(codeUnits);
 }
