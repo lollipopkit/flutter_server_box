@@ -594,6 +594,15 @@ class AppLocalizationsId extends AppLocalizations {
   String get privateKey => 'Kunci Pribadi';
 
   @override
+  String privateKeyDeleteWithServersTip(
+    Object keyId,
+    Object count,
+    Object servers,
+  ) {
+    return 'Kunci privat \"$keyId\" digunakan oleh $count server:\n\n$servers\n\nPerbarui: hapus kunci privat ini dari konfigurasi server tersebut.\nHapus server massal: hapus konfigurasi server yang tercantum secara bersamaan.';
+  }
+
+  @override
   String privateKeyNotFoundFmt(Object keyId) {
     return 'Kunci privat [$keyId] tidak ditemukan.';
   }

@@ -157,6 +157,14 @@
   "preferDiskAmount": "Prioritaskan tampilan kapasitas disk",
   "privateKey": "Kunci Pribadi",
   "privateKeyNotFoundFmt": "Kunci privat [{keyId}] tidak ditemukan.",
+  "privateKeyDeleteWithServersTip": "Kunci privat \"{keyId}\" digunakan oleh {count} server:\n\n{servers}\n\nPerbarui: hapus kunci privat ini dari konfigurasi server tersebut.\nHapus server massal: hapus konfigurasi server yang tercantum secara bersamaan.",
+  "@privateKeyDeleteWithServersTip": {
+    "placeholders": {
+      "keyId": {},
+      "count": {},
+      "servers": {}
+    }
+  },
   "pushToken": "Dorong token",
   "pveIgnoreCertTip": "Tidak disarankan untuk diaktifkan, waspadai risiko keamanan! Jika Anda menggunakan sertifikat default dari PVE, Anda perlu mengaktifkan opsi ini.",
   "pveLoginFailed": "Login gagal. Tidak dapat mengautentikasi dengan nama pengguna/kata sandi dari konfigurasi server untuk login Linux PAM.",

@@ -157,6 +157,14 @@
   "preferDiskAmount": "Geef de schijfcapaciteit prioriteit bij weergave",
   "privateKey": "Privésleutel",
   "privateKeyNotFoundFmt": "Privésleutel [{keyId}] niet gevonden.",
+  "privateKeyDeleteWithServersTip": "Privésleutel \"{keyId}\" wordt gebruikt door {count} server(s):\n\n{servers}\n\nBijwerken: verwijder deze privésleutel uit die serverconfiguraties.\nServers bulksgewijs verwijderen: verwijder de vermelde serverconfiguraties samen.",
+  "@privateKeyDeleteWithServersTip": {
+    "placeholders": {
+      "keyId": {},
+      "count": {},
+      "servers": {}
+    }
+  },
   "pushToken": "Push-token",
   "pveIgnoreCertTip": "Niet aanbevolen om in te schakelen, let op beveiligingsrisico's! Als u de standaardcertificaat van PVE gebruikt, moet u deze optie inschakelen.",
   "pveLoginFailed": "Aanmelden mislukt. Kan niet authenticeren met gebruikersnaam/wachtwoord van serverconfiguratie voor Linux PAM-login.",

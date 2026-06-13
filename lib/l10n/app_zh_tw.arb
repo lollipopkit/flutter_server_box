@@ -173,6 +173,14 @@
   "plugInType": "插入類型",
   "preferDiskAmount": "優先顯示硬碟容量",
   "privateKey": "私鑰",
+  "privateKeyDeleteWithServersTip": "私鑰「{keyId}」正在被 {count} 個伺服器使用：\n\n{servers}\n\n更新：從這些伺服器設定中移除此私鑰。\n大量刪除伺服器：同時刪除上面列出的伺服器設定。",
+  "@privateKeyDeleteWithServersTip": {
+    "placeholders": {
+      "keyId": {},
+      "count": {},
+      "servers": {}
+    }
+  },
   "privateKeyNotFoundFmt": "未找到私鑰 [{keyId}]。",
   "pushToken": "消息推送 Token",
   "pveIgnoreCertTip": "不建議啟用，請注意安全風險！如果您使用的是 PVE 的預設憑證，則需要啟用此選項。",

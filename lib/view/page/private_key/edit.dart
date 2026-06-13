@@ -8,8 +8,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/res/misc.dart';
+
+enum _PrivateKeyDeleteAction {
+  clearServerKey,
+  deleteServers,
+}
 
 const _format = 'text/plain';
 final _whitespaceRegex = RegExp(r'\s+');
@@ -101,24 +107,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
         ? [
             IconButton(
               tooltip: libL10n.delete,
-              onPressed: () {
-                context.showRoundDialog(
-                  title: libL10n.attention,
-                  child: Text(
-                    libL10n.askContinue(
-                      '${libL10n.delete} ${l10n.privateKey}(${pki.id})',
-                    ),
-                  ),
-                  actions: Btn.ok(
-                    onTap: () {
-                      _notifier.delete(pki);
-                      context.pop();
-                      context.pop();
-                    },
-                    red: true,
-                  ).toList,
-                );
-              },
+              onPressed: () => _onTapDelete(pki),
               icon: const Icon(Icons.delete),
             ),
           ]
@@ -263,6 +252,63 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
           builder: (val) => val ?? UIs.placeholder,
         ),
       ],
+    );
+  }
+
+  Future<void> _onTapDelete(PrivateKeyInfo pki) async {
+    final referencedServers = _notifier.findReferencedServers(pki.id);
+    if (referencedServers.isEmpty) {
+      final ok = await context.showRoundDialog<bool>(
+        title: libL10n.attention,
+        child: Text(
+          libL10n.askContinue(
+            '${libL10n.delete} ${l10n.privateKey}(${pki.id})',
+          ),
+        ),
+        actions: Btnx.cancelRedOk,
+      );
+      if (ok != true) return;
+      _notifier.delete(pki);
+    } else {
+      final action = await context.showRoundDialog<_PrivateKeyDeleteAction>(
+        title: libL10n.attention,
+        child: _buildDeleteReferencedKeyTip(pki, referencedServers),
+        actions: [
+          Btn.cancel(),
+          TextButton(
+            onPressed: () => context.pop(_PrivateKeyDeleteAction.clearServerKey),
+            child: Text(l10n.update),
+          ),
+          TextButton(
+            onPressed: () => context.pop(_PrivateKeyDeleteAction.deleteServers),
+            child: Text(l10n.deleteServers, style: UIs.textRed),
+          ),
+        ],
+      );
+      if (action == null) return;
+      final mode = switch (action) {
+        _PrivateKeyDeleteAction.clearServerKey =>
+          PrivateKeyDeleteMode.clearServerKey,
+        _PrivateKeyDeleteAction.deleteServers =>
+          PrivateKeyDeleteMode.deleteServers,
+      };
+      await _notifier.deleteWithServerRefs(pki, mode);
+    }
+    if (!mounted) return;
+    context.pop();
+  }
+
+  Widget _buildDeleteReferencedKeyTip(
+    PrivateKeyInfo pki,
+    List<Spi> referencedServers,
+  ) {
+    final serverNames = referencedServers.map((e) => '- ${e.name}').join('\n');
+    return Text(
+      l10n.privateKeyDeleteWithServersTip(
+        pki.id,
+        referencedServers.length,
+        serverNames,
+      ),
     );
   }
 

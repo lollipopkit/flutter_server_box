@@ -594,6 +594,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get privateKey => 'Private Key';
 
   @override
+  String privateKeyDeleteWithServersTip(
+    Object keyId,
+    Object count,
+    Object servers,
+  ) {
+    return 'Private key \"$keyId\" is used by $count server(s):\n\n$servers\n\nUpdate: remove this private key from those server configurations.\nBatch delete servers: delete the listed server configurations together.';
+  }
+
+  @override
   String privateKeyNotFoundFmt(Object keyId) {
     return 'Private key [$keyId] not found.';
   }

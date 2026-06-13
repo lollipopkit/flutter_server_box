@@ -594,6 +594,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get privateKey => 'Özel Anahtar';
 
   @override
+  String privateKeyDeleteWithServersTip(
+    Object keyId,
+    Object count,
+    Object servers,
+  ) {
+    return 'Özel anahtar \"$keyId\" $count sunucu tarafından kullanılıyor:\n\n$servers\n\nGüncelle: bu özel anahtarı bu sunucu yapılandırmalarından kaldır.\nToplu sunucu silme: listelenen sunucu yapılandırmalarını birlikte sil.';
+  }
+
+  @override
   String privateKeyNotFoundFmt(Object keyId) {
     return 'Özel anahtar [$keyId] bulunamadı.';
   }

@@ -1158,6 +1158,16 @@ abstract class AppLocalizations {
   /// **'Private Key'**
   String get privateKey;
 
+  /// No description provided for @privateKeyDeleteWithServersTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Private key \"{keyId}\" is used by {count} server(s):\n\n{servers}\n\nUpdate: remove this private key from those server configurations.\nBatch delete servers: delete the listed server configurations together.'**
+  String privateKeyDeleteWithServersTip(
+    Object keyId,
+    Object count,
+    Object servers,
+  );
+
   /// No description provided for @privateKeyNotFoundFmt.
   ///
   /// In en, this message translates to:

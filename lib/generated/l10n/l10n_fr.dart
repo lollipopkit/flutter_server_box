@@ -601,6 +601,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get privateKey => 'Clé privée';
 
   @override
+  String privateKeyDeleteWithServersTip(
+    Object keyId,
+    Object count,
+    Object servers,
+  ) {
+    return 'La clé privée \"$keyId\" est utilisée par $count serveur(s) :\n\n$servers\n\nMettre à jour : retirez cette clé privée de ces configurations de serveur.\nSuppression groupée de serveurs : supprimez ensemble les configurations de serveur listées.';
+  }
+
+  @override
   String privateKeyNotFoundFmt(Object keyId) {
     return 'Clé privée [$keyId] introuvable.';
   }

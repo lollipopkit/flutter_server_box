@@ -574,6 +574,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get privateKey => '개인 키';
 
   @override
+  String privateKeyDeleteWithServersTip(
+    Object keyId,
+    Object count,
+    Object servers,
+  ) {
+    return '개인 키 \"$keyId\"은(는) $count개의 서버에서 사용 중입니다:\n\n$servers\n\n업데이트: 해당 서버 구성에서 이 개인 키를 제거하세요.\n서버 일괄 삭제: 나열된 서버 구성을 함께 삭제합니다.';
+  }
+
+  @override
   String privateKeyNotFoundFmt(Object keyId) {
     return '개인 키 [$keyId]을(를) 찾을 수 없습니다.';
   }

@@ -2,10 +2,17 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 
 part 'private_key.freezed.dart';
 part 'private_key.g.dart';
+
+enum PrivateKeyDeleteMode {
+  clearServerKey,
+  deleteServers,
+}
 
 @freezed
 abstract class PrivateKeyState with _$PrivateKeyState {
@@ -45,6 +52,36 @@ class PrivateKeyNotifier extends _$PrivateKeyNotifier {
     state = state.copyWith(keys: newKeys);
     Stores.key.delete(info);
     bakSync.sync(milliDelay: 1000);
+  }
+
+  List<Spi> findReferencedServers(String keyId) {
+    return ref
+        .read(serversProvider)
+        .servers
+        .values
+        .where((e) => e.keyId == keyId)
+        .toList();
+  }
+
+  Future<void> deleteWithServerRefs(
+    PrivateKeyInfo info,
+    PrivateKeyDeleteMode mode,
+  ) async {
+    final servers = findReferencedServers(info.id);
+    final serverNotifier = ref.read(serversProvider.notifier);
+
+    switch (mode) {
+      case PrivateKeyDeleteMode.clearServerKey:
+        for (final spi in servers) {
+          await serverNotifier.updateServer(spi, spi.copyWith(keyId: null));
+        }
+        delete(info);
+      case PrivateKeyDeleteMode.deleteServers:
+        for (final spi in servers) {
+          await serverNotifier.delServer(spi.id);
+        }
+        delete(info);
+    }
   }
 
   void update(PrivateKeyInfo old, PrivateKeyInfo newInfo) {

@@ -577,6 +577,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get privateKey => '秘密鍵';
 
   @override
+  String privateKeyDeleteWithServersTip(
+    Object keyId,
+    Object count,
+    Object servers,
+  ) {
+    return '秘密鍵「$keyId」は $count 個のサーバーで使用されています：\n\n$servers\n\n更新：これらのサーバー設定からこの秘密鍵を削除してください。\nサーバー一括削除：リストされたサーバー設定をまとめて削除します。';
+  }
+
+  @override
   String privateKeyNotFoundFmt(Object keyId) {
     return '秘密鍵 [$keyId] が見つかりません。';
   }

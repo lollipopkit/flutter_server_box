@@ -157,6 +157,14 @@
   "preferDiskAmount": "Festplattenkapazität vorrangig anzeigen",
   "privateKey": "Private Key",
   "privateKeyNotFoundFmt": "Privater Schlüssel [{keyId}] wurde nicht gefunden.",
+  "privateKeyDeleteWithServersTip": "Privater Schlüssel \"{keyId}\" wird von {count} Server(n) verwendet:\n\n{servers}\n\nAktualisieren: Entfernen Sie diesen privaten Schlüssel aus diesen Serverkonfigurationen.\nServer-Stapellöschung: Löschen Sie die aufgelisteten Serverkonfigurationen zusammen.",
+  "@privateKeyDeleteWithServersTip": {
+    "placeholders": {
+      "keyId": {},
+      "count": {},
+      "servers": {}
+    }
+  },
   "pushToken": "Push Token",
   "pveIgnoreCertTip": "Nicht empfohlen, Achten Sie auf Sicherheitsrisiken! Wenn Sie das Standardzertifikat von PVE verwenden, müssen Sie diese Option aktivieren.",
   "pveLoginFailed": "Anmeldung fehlgeschlagen. Kann nicht mit Benutzername/Passwort aus der Serverkonfiguration angemeldet werden, um sich über Linux PAM anzumelden.",

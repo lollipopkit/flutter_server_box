@@ -183,6 +183,14 @@
   "plugInType": "Insertion Type",
   "preferDiskAmount": "Prioritize displaying disk capacity",
   "privateKey": "Private Key",
+  "privateKeyDeleteWithServersTip": "Private key \"{keyId}\" is used by {count} server(s):\n\n{servers}\n\nUpdate: remove this private key from those server configurations.\nBatch delete servers: delete the listed server configurations together.",
+  "@privateKeyDeleteWithServersTip": {
+    "placeholders": {
+      "keyId": {},
+      "count": {},
+      "servers": {}
+    }
+  },
   "privateKeyNotFoundFmt": "Private key [{keyId}] not found.",
   "pushToken": "Push token",
   "proxyCommandOnlySupportedOnDesktop": "ProxyCommand is only supported on desktop platforms.",

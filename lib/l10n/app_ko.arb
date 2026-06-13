@@ -158,6 +158,14 @@
   "preferDiskAmount": "디스크 용량 우선 표시",
   "privateKey": "개인 키",
   "privateKeyNotFoundFmt": "개인 키 [{keyId}]을(를) 찾을 수 없습니다.",
+  "privateKeyDeleteWithServersTip": "개인 키 \"{keyId}\"은(는) {count}개의 서버에서 사용 중입니다:\n\n{servers}\n\n업데이트: 해당 서버 구성에서 이 개인 키를 제거하세요.\n서버 일괄 삭제: 나열된 서버 구성을 함께 삭제합니다.",
+  "@privateKeyDeleteWithServersTip": {
+    "placeholders": {
+      "keyId": {},
+      "count": {},
+      "servers": {}
+    }
+  },
   "pushToken": "푸시 토큰",
   "pveIgnoreCertTip": "활성화를 권장하지 않습니다. 보안 위험에 주의하세요! PVE 기본 인증서를 사용하는 경우 이 옵션을 활성화해야 합니다.",
   "pveLoginFailed": "로그인에 실패했습니다. 서버 설정의 사용자 이름/비밀번호로 Linux PAM 인증을 할 수 없습니다.",

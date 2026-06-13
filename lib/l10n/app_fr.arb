@@ -157,6 +157,14 @@
   "preferDiskAmount": "Prioriser l’affichage de la capacité du disque",
   "privateKey": "Clé privée",
   "privateKeyNotFoundFmt": "Clé privée [{keyId}] introuvable.",
+  "privateKeyDeleteWithServersTip": "La clé privée \"{keyId}\" est utilisée par {count} serveur(s) :\n\n{servers}\n\nMettre à jour : retirez cette clé privée de ces configurations de serveur.\nSuppression groupée de serveurs : supprimez ensemble les configurations de serveur listées.",
+  "@privateKeyDeleteWithServersTip": {
+    "placeholders": {
+      "keyId": {},
+      "count": {},
+      "servers": {}
+    }
+  },
   "pushToken": "Jeton d'identification",
   "pveIgnoreCertTip": "Il n'est pas recommandé de l'activer, attention aux risques de sécurité ! Si vous utilisez le certificat par défaut de PVE, vous devez activer cette option.",
   "pveLoginFailed": "Échec de la connexion. Impossible d'authentifier avec le nom d'utilisateur / mot de passe de la configuration du serveur pour la connexion Linux PAM.",

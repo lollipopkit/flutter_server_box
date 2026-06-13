@@ -567,6 +567,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get privateKey => '私钥';
 
   @override
+  String privateKeyDeleteWithServersTip(
+    Object keyId,
+    Object count,
+    Object servers,
+  ) {
+    return '私钥“$keyId”正在被 $count 个服务器使用：\n\n$servers\n\n更新：从这些服务器配置中移除此私钥。\n批量删除服务器：同时删除上面列出的服务器配置。';
+  }
+
+  @override
   String privateKeyNotFoundFmt(Object keyId) {
     return '未找到私钥 [$keyId]。';
   }
@@ -1567,6 +1576,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get privateKey => '私鑰';
+
+  @override
+  String privateKeyDeleteWithServersTip(
+    Object keyId,
+    Object count,
+    Object servers,
+  ) {
+    return '私鑰「$keyId」正在被 $count 個伺服器使用：\n\n$servers\n\n更新：從這些伺服器設定中移除此私鑰。\n大量刪除伺服器：同時刪除上面列出的伺服器設定。';
+  }
 
   @override
   String privateKeyNotFoundFmt(Object keyId) {

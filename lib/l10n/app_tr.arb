@@ -157,6 +157,14 @@
   "preferDiskAmount": "Disk kapasitesini öncelikli olarak göster",
   "privateKey": "Özel Anahtar",
   "privateKeyNotFoundFmt": "Özel anahtar [{keyId}] bulunamadı.",
+  "privateKeyDeleteWithServersTip": "Özel anahtar \"{keyId}\" {count} sunucu tarafından kullanılıyor:\n\n{servers}\n\nGüncelle: bu özel anahtarı bu sunucu yapılandırmalarından kaldır.\nToplu sunucu silme: listelenen sunucu yapılandırmalarını birlikte sil.",
+  "@privateKeyDeleteWithServersTip": {
+    "placeholders": {
+      "keyId": {},
+      "count": {},
+      "servers": {}
+    }
+  },
   "pushToken": "Push belirteci",
   "pveIgnoreCertTip": "Etkinleştirilmesi önerilmez, güvenlik risklerine dikkat edin! PVE'den varsayılan sertifikayı kullanıyorsanız, bu seçeneği etkinleştirmeniz gerekir.",
   "pveLoginFailed": "Giriş başarısız. Linux PAM girişi için sunucu yapılandırmasındaki kullanıcı adı/şifre ile kimlik doğrulama yapılamadı.",

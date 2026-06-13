@@ -157,6 +157,14 @@
   "preferDiskAmount": "Priorizar la visualización de la capacidad del disco",
   "privateKey": "Llave privada",
   "privateKeyNotFoundFmt": "No se encontró la clave privada [{keyId}].",
+  "privateKeyDeleteWithServersTip": "La clave privada \"{keyId}\" está siendo utilizada por {count} servidor(es):\n\n{servers}\n\nActualizar: elimine esta clave privada de esas configuraciones de servidor.\nEliminación masiva de servidores: elimine las configuraciones de servidor listadas juntas.",
+  "@privateKeyDeleteWithServersTip": {
+    "placeholders": {
+      "keyId": {},
+      "count": {},
+      "servers": {}
+    }
+  },
   "pushToken": "Token de notificaciones",
   "pveIgnoreCertTip": "No se recomienda activarlo, ¡tenga cuidado con los riesgos de seguridad! Si está utilizando el certificado predeterminado de PVE, debe habilitar esta opción.",
   "pveLoginFailed": "Fallo al iniciar sesión. No se puede autenticar con el nombre de usuario/contraseña de la configuración del servidor para el inicio de sesión de Linux PAM.",

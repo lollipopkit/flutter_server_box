@@ -598,6 +598,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get privateKey => 'Приватний ключ';
 
   @override
+  String privateKeyDeleteWithServersTip(
+    Object keyId,
+    Object count,
+    Object servers,
+  ) {
+    return 'Приватний ключ \"$keyId\" використовується на $count сервер(ах):\n\n$servers\n\nОновити: видаліть цей приватний ключ із цих конфігурацій серверів.\nМасове видалення серверів: видаліть перелічені конфігурації серверів разом.';
+  }
+
+  @override
   String privateKeyNotFoundFmt(Object keyId) {
     return 'Приватний ключ [$keyId] не знайдено.';
   }

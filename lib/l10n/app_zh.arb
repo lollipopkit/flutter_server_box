@@ -173,6 +173,14 @@
   "plugInType": "插入类型",
   "preferDiskAmount": "优先显示硬盘容量",
   "privateKey": "私钥",
+  "privateKeyDeleteWithServersTip": "私钥“{keyId}”正在被 {count} 个服务器使用：\n\n{servers}\n\n更新：从这些服务器配置中移除此私钥。\n批量删除服务器：同时删除上面列出的服务器配置。",
+  "@privateKeyDeleteWithServersTip": {
+    "placeholders": {
+      "keyId": {},
+      "count": {},
+      "servers": {}
+    }
+  },
   "privateKeyNotFoundFmt": "未找到私钥 [{keyId}]。",
   "pushToken": "消息推送 Token",
   "pveIgnoreCertTip": "不推荐开启，注意安全隐患！如果你使用的 PVE 默认证书，需要开启该选项",

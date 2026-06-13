@@ -596,6 +596,15 @@ class AppLocalizationsNl extends AppLocalizations {
   String get privateKey => 'Privésleutel';
 
   @override
+  String privateKeyDeleteWithServersTip(
+    Object keyId,
+    Object count,
+    Object servers,
+  ) {
+    return 'Privésleutel \"$keyId\" wordt gebruikt door $count server(s):\n\n$servers\n\nBijwerken: verwijder deze privésleutel uit die serverconfiguraties.\nServers bulksgewijs verwijderen: verwijder de vermelde serverconfiguraties samen.';
+  }
+
+  @override
   String privateKeyNotFoundFmt(Object keyId) {
     return 'Privésleutel [$keyId] niet gevonden.';
   }
