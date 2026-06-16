@@ -244,8 +244,6 @@ abstract class DiskSmart with _$DiskSmart {
       smartAttributes['Unsafe_Shutdown_Count']?.rawValue as int?;
   int? get averageEraseCount =>
       smartAttributes['Average_Erase_Count']?.rawValue as int?;
-  int? get maxEraseCount =>
-      smartAttributes['Max_Erase_Count']?.rawValue as int?;
 
   @override
   String toString() => 'DiskSmart($device)';

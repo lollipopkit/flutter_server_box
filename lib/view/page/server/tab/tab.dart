@@ -49,7 +49,7 @@ const _cardPadSingle = 13.0;
 class _ServerPageState extends ConsumerState<ServerPage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   late double _textFactorDouble;
-  double _offset = 1;
+  final ValueNotifier<double> _offsetNotifier = ValueNotifier(1);
   late TextScaler _textFactor;
 
   final _cardsStatus = <String, _CardNotifier>{};
@@ -70,6 +70,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _autoHideCtrl.dispose();
     _tag.dispose();
     _tags.dispose();
+    _offsetNotifier.dispose();
   }
 
   @override
@@ -136,9 +137,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
   }
 
   Widget _buildPortrait() {
-    final serverState = ref.watch(serversProvider);
+    // Watch serverOrder, tags, and servers to ensure filtered view rebuilds
+    // when individual server tags change without affecting the global tag set
+    final serverOrder = ref.watch(serversProvider.select((s) => s.serverOrder));
+    ref.watch(serversProvider.select((s) => s.tags));
+    ref.watch(serversProvider.select((s) => s.servers));
     return _tag.listenVal((val) {
-      final filtered = _filterServers(serverState.serverOrder);
+      final filtered = _filterServers(serverOrder);
       final child = _buildScaffold(_buildBodySmall(filtered: filtered));
       return child;
     });

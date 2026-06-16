@@ -2,25 +2,31 @@ part of 'tab.dart';
 
 extension on _ServerPageState {
   Widget _buildLandscape() {
-    final offset = Offset(_offset, _offset);
-    return Padding(
-      // Avoid display cutout
-      padding: EdgeInsets.all(_offset.abs()),
-      child: Transform.translate(
-        offset: offset,
-        child: Stack(
-          children: [
-            _buildLandscapeBody(),
-            Positioned(
-              top: 0,
-              left: 0,
-              child: IconButton(
-                onPressed: () => SettingsPage.route.go(context),
-                icon: const Icon(Icons.settings, color: Colors.grey),
-              ),
+    return ValueListenableBuilder<double>(
+      valueListenable: _offsetNotifier,
+      builder: (context, offsetValue, child) {
+        final offset = Offset(offsetValue, offsetValue);
+        return Padding(
+          // Avoid display cutout
+          padding: EdgeInsets.all(offsetValue.abs()),
+          child: Transform.translate(
+            offset: offset,
+            child: child,
+          ),
+        );
+      },
+      child: Stack(
+        children: [
+          _buildLandscapeBody(),
+          Positioned(
+            top: 0,
+            left: 0,
+            child: IconButton(
+              onPressed: () => SettingsPage.route.go(context),
+              icon: const Icon(Icons.settings, color: Colors.grey),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

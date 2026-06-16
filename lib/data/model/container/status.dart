@@ -15,20 +15,6 @@ enum ContainerStatus {
   /// Check if the container is actively running
   bool get isRunning => this == ContainerStatus.running;
 
-  /// Check if the container can be started
-  bool get canStart =>
-      this == ContainerStatus.exited ||
-      this == ContainerStatus.created ||
-      this == ContainerStatus.dead;
-
-  /// Check if the container can be stopped
-  bool get canStop =>
-      this == ContainerStatus.running || this == ContainerStatus.paused;
-
-  /// Check if the container can be restarted
-  bool get canRestart =>
-      this != ContainerStatus.removing && this != ContainerStatus.unknown;
-
   /// Parse Docker container status string to ContainerStatus
   static ContainerStatus fromDockerState(String? state) {
     if (state == null || state.isEmpty) return ContainerStatus.unknown;

@@ -110,17 +110,5 @@ fa1215b4be74    Up 12 hours                    firefly                          
     expect(ContainerStatus.running.isRunning, true);
     expect(ContainerStatus.exited.isRunning, false);
     expect(ContainerStatus.created.isRunning, false);
-
-    expect(ContainerStatus.exited.canStart, true);
-    expect(ContainerStatus.created.canStart, true);
-    expect(ContainerStatus.running.canStart, false);
-
-    expect(ContainerStatus.running.canStop, true);
-    expect(ContainerStatus.paused.canStop, true);
-    expect(ContainerStatus.exited.canStop, false);
-
-    expect(ContainerStatus.running.canRestart, true);
-    expect(ContainerStatus.removing.canRestart, false);
-    expect(ContainerStatus.unknown.canRestart, false);
   });
 }

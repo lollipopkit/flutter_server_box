@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:intl/intl.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/memory.dart';
@@ -36,88 +35,6 @@ class WindowsParser {
       }
     } catch (e, s) {
       Loggers.app.warning('Windows custom commands parsing failed: $e', s);
-    }
-  }
-
-  /// Parse Windows uptime from PowerShell output
-  static String? parseUpTime(String raw) {
-    try {
-      // Clean the input - trim whitespace and get the first non-empty line
-      final cleanedInput = raw
-          .trim()
-          .split('\n')
-          .where((line) => line.trim().isNotEmpty)
-          .firstOrNull;
-
-      if (cleanedInput == null || cleanedInput.isEmpty) {
-        Loggers.app.warning('Windows uptime parsing: empty or null input');
-        return null;
-      }
-
-      // Try multiple date formats to handle different Windows locale/version outputs
-      final formatters = [
-        DateFormat('EEEE, MMMM d, yyyy h:mm:ss a', 'en_US'), // Original format
-        DateFormat(
-          'EEEE, MMMM dd, yyyy h:mm:ss a',
-          'en_US',
-        ), // Double-digit day
-        DateFormat('EEE, MMM d, yyyy h:mm:ss a', 'en_US'), // Shortened format
-        DateFormat(
-          'EEE, MMM dd, yyyy h:mm:ss a',
-          'en_US',
-        ), // Shortened with double-digit day
-        DateFormat('M/d/yyyy h:mm:ss a', 'en_US'), // Short US format
-        DateFormat(
-          'MM/dd/yyyy h:mm:ss a',
-          'en_US',
-        ), // Short US format with zero padding
-        DateFormat('d/M/yyyy h:mm:ss a', 'en_US'), // Short European format
-        DateFormat(
-          'dd/MM/yyyy h:mm:ss a',
-          'en_US',
-        ), // Short European format with zero padding
-      ];
-
-      DateTime? dateTime;
-      for (final formatter in formatters) {
-        dateTime = formatter.tryParseLoose(cleanedInput);
-        if (dateTime != null) break;
-      }
-
-      if (dateTime == null) {
-        Loggers.app.warning(
-          'Windows uptime parsing: could not parse date format for: $cleanedInput',
-        );
-        return null;
-      }
-
-      final now = DateTime.now();
-      final uptime = now.difference(dateTime);
-
-      // Validate that the uptime is reasonable (not negative, not too far in the future)
-      if (uptime.isNegative || uptime.inDays > 3650) {
-        // More than 10 years seems unreasonable
-        Loggers.app.warning(
-          'Windows uptime parsing: unreasonable uptime calculated: ${uptime.inDays} days for date: $cleanedInput',
-        );
-        return null;
-      }
-
-      final days = uptime.inDays;
-      final hours = uptime.inHours % 24;
-      final minutes = uptime.inMinutes % 60;
-
-      if (days > 0) {
-        return '$days days, $hours:${minutes.toString().padLeft(2, '0')}';
-      } else {
-        return '$hours:${minutes.toString().padLeft(2, '0')}';
-      }
-    } catch (e, s) {
-      Loggers.app.warning(
-        'Windows uptime parsing failed: $e for input: $raw',
-        s,
-      );
-      return null;
     }
   }
 
