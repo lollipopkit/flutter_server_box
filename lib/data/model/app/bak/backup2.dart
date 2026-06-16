@@ -112,7 +112,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     bool includeSettings = true,
   ]) async {
     final bak = await BackupV2.loadFromStore(includeSettings: includeSettings);
-    var result = json.encode(bak.toJson());
+    var result = json.encode(bak.toJson(), toEncodable: _toEncodable);
 
     if (password != null && password.isNotEmpty) {
       result = Cryptor.encrypt(result, password);
@@ -134,4 +134,9 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     final map = json.decode(jsonString) as Map<String, dynamic>;
     return BackupV2.fromJson(map);
   }
+}
+
+Object? _toEncodable(Object? value) {
+  if (value is Enum) return value.name;
+  return value;
 }
