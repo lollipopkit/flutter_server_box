@@ -772,7 +772,7 @@ class _AddPageState extends ConsumerState<_AddPage> {
     if (mounted) setState(() {});
   }
 
-  List<String> _getSortedOrder(ServerState serverState, int sortBy, bool sortAsc) {
+  List<String> _getSortedOrder(ServersState serverState, int sortBy, bool sortAsc) {
     // Check if cache is valid
     final serverOrder = serverState.serverOrder;
     final serverNames = <String, String>{};

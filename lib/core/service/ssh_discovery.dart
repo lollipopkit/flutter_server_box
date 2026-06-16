@@ -13,7 +13,6 @@ final _interfaceRegExp = RegExp(r'^([a-z0-9]+):');
 final _ipv4AddrRegExp = RegExp(r'inet (\d+\.\d+\.\d+\.\d+)/(\d+)');
 final _ifconfigAddrRegExp = RegExp(r'inet\s+(\d+\.\d+\.\d+\.\d+)\s+netmask\s+0x([0-9a-fA-F]+)(?:\s+broadcast\s+(\d+\.\d+\.\d+\.\d+))?');
 final _sshServiceRegExp = RegExp(r'Add\s+\d+\s+(\S+)\.\s+_ssh\._tcp\.');
-final _mdnsIpRegExp = RegExp(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b');
 final _dnsSdAddressRegExp = RegExp(r'Address\s*=\s*([0-9a-fA-F:\.]+)');
 final _avahiAddressRegExp = RegExp(r'address = \[(.*?)\]');
 

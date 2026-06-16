@@ -38,9 +38,6 @@ class WindowsParser {
     }
   }
 
-
-  }
-
   /// Parse Windows CPU information from PowerShell output
   /// Returns WindowsCpuResult containing CPU cores and total core count
   static WindowsCpuResult parseCpu(String raw, ServerStatus serverStatus) {
