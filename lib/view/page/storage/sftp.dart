@@ -799,44 +799,14 @@ extension _Actions on _SftpPageState {
     );
   }
 
-  void _mkdir() {
+  void _showSftpInputDialog({
+    required String title,
+    required IconData icon,
+    String? initialValue,
+    required Future<bool> Function(String text) onConfirm,
+  }) {
     context.pop();
-    final textController = TextEditingController();
-
-    void onSubmitted() async {
-      final text = textController.text.trim();
-      if (text.isEmpty) {
-        context.showRoundDialog(child: Text(libL10n.empty), actions: Btnx.oks);
-        return;
-      }
-      context.pop();
-      final dir = '${_status.path.path}/$text';
-      final suc = await _runWithSudoRetry(
-        normal: () => _status.client!.mkdir(dir),
-        sudo: (pwd) => _sudoHelper.mkdir(dir, password: pwd),
-      );
-      if (!suc) return;
-
-      _listDir();
-    }
-
-    context.showRoundDialog(
-      title: libL10n.folder,
-      child: Input(
-        autoFocus: true,
-        icon: Icons.folder,
-        controller: textController,
-        label: libL10n.name,
-        suggestion: true,
-        onSubmitted: (_) => onSubmitted(),
-      ),
-      actions: Btn.ok(onTap: onSubmitted, red: true).toList,
-    );
-  }
-
-  void _newFile() {
-    context.pop();
-    final textController = TextEditingController();
+    final textController = TextEditingController(text: initialValue);
 
     void onSubmitted() async {
       final text = textController.text.trim();
@@ -849,64 +819,16 @@ extension _Actions on _SftpPageState {
         return;
       }
       context.pop();
-      final path = '${_status.path.path}/$text';
-      final suc = await _runWithSudoRetry(
-        normal: () => _runShellCommand('touch ${shellSingleQuote(path)}'),
-        sudo: (pwd) => _sudoHelper.touch(path, password: pwd),
-      );
+      final suc = await onConfirm(text);
       if (!suc) return;
-
       _listDir();
     }
 
     context.showRoundDialog(
-      title: libL10n.file,
+      title: title,
       child: Input(
         autoFocus: true,
-        icon: Icons.insert_drive_file,
-        controller: textController,
-        label: libL10n.name,
-        suggestion: true,
-        onSubmitted: (_) => onSubmitted(),
-      ),
-      actions: Btn.ok(onTap: onSubmitted, red: true).toList,
-    );
-  }
-
-  void _rename(SftpName file) {
-    context.pop();
-    final textController = TextEditingController(text: file.filename);
-
-    void onSubmitted() async {
-      final text = textController.text.trim();
-      if (text.isEmpty) {
-        context.showRoundDialog(
-          title: libL10n.attention,
-          child: Text(libL10n.empty),
-          actions: Btnx.oks,
-        );
-        return;
-      }
-      context.pop();
-      final newName = textController.text;
-      final suc = await _runWithSudoRetry(
-        normal: () => _status.client!.rename(file.filename, newName),
-        sudo: (pwd) => _sudoHelper.rename(
-          _getRemotePath(file),
-          _status.path.path.joinPath(newName, separator: '/'),
-          password: pwd,
-        ),
-      );
-      if (!suc) return;
-
-      _listDir();
-    }
-
-    context.showRoundDialog(
-      title: libL10n.rename,
-      child: Input(
-        autoFocus: true,
-        icon: Icons.abc,
+        icon: icon,
         controller: textController,
         label: libL10n.name,
         suggestion: true,
@@ -916,6 +838,52 @@ extension _Actions on _SftpPageState {
         Btn.cancel(),
         Btn.ok(onTap: onSubmitted, red: true),
       ],
+    );
+  }
+
+  void _mkdir() {
+    _showSftpInputDialog(
+      title: libL10n.folder,
+      icon: Icons.folder,
+      onConfirm: (text) async {
+        final dir = '${_status.path.path}/$text';
+        return await _runWithSudoRetry(
+          normal: () => _status.client!.mkdir(dir),
+          sudo: (pwd) => _sudoHelper.mkdir(dir, password: pwd),
+        );
+      },
+    );
+  }
+
+  void _newFile() {
+    _showSftpInputDialog(
+      title: libL10n.file,
+      icon: Icons.insert_drive_file,
+      onConfirm: (text) async {
+        final path = '${_status.path.path}/$text';
+        return await _runWithSudoRetry(
+          normal: () => _runShellCommand('touch ${shellSingleQuote(path)}'),
+          sudo: (pwd) => _sudoHelper.touch(path, password: pwd),
+        );
+      },
+    );
+  }
+
+  void _rename(SftpName file) {
+    _showSftpInputDialog(
+      title: libL10n.rename,
+      icon: Icons.abc,
+      initialValue: file.filename,
+      onConfirm: (newName) async {
+        return await _runWithSudoRetry(
+          normal: () => _status.client!.rename(file.filename, newName),
+          sudo: (pwd) => _sudoHelper.rename(
+            _getRemotePath(file),
+            _status.path.path.joinPath(newName, separator: '/'),
+            password: pwd,
+          ),
+        );
+      },
     );
   }
 
