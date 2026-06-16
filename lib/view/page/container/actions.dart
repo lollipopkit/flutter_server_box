@@ -15,6 +15,7 @@ extension on _ContainerPageState {
   /// Execute a container action with loading dialog and error handling.
   Future<void> _execContainerAction(Future<ContainerErr?> Function() action) async {
     final (result, err) = await context.showLoadingDialog(fn: action);
+    if (!mounted) return;
     if (err != null || result != null) {
       final e = result?.message ?? err?.toString();
       context.showRoundDialog(

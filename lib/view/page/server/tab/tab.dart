@@ -137,9 +137,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
   }
 
   Widget _buildPortrait() {
-    // Only watch serverOrder and tags to avoid unnecessary rebuilds
+    // Watch serverOrder, tags, and servers to ensure filtered view rebuilds
+    // when individual server tags change without affecting the global tag set
     final serverOrder = ref.watch(serversProvider.select((s) => s.serverOrder));
     ref.watch(serversProvider.select((s) => s.tags));
+    ref.watch(serversProvider.select((s) => s.servers));
     return _tag.listenVal((val) {
       final filtered = _filterServers(serverOrder);
       final child = _buildScaffold(_buildBodySmall(filtered: filtered));

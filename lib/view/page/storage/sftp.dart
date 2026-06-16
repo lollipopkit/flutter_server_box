@@ -799,12 +799,12 @@ extension _Actions on _SftpPageState {
     );
   }
 
-  void _showSftpInputDialog({
+  Future<void> _showSftpInputDialog({
     required String title,
     required IconData icon,
     String? initialValue,
     required Future<bool> Function(String text) onConfirm,
-  }) {
+  }) async {
     context.pop();
     final textController = TextEditingController(text: initialValue);
 
@@ -824,7 +824,7 @@ extension _Actions on _SftpPageState {
       _listDir();
     }
 
-    context.showRoundDialog(
+    await context.showRoundDialog(
       title: title,
       child: Input(
         autoFocus: true,
@@ -839,6 +839,7 @@ extension _Actions on _SftpPageState {
         Btn.ok(onTap: onSubmitted, red: true),
       ],
     );
+    textController.dispose();
   }
 
   void _mkdir() {
@@ -876,7 +877,10 @@ extension _Actions on _SftpPageState {
       initialValue: file.filename,
       onConfirm: (newName) async {
         return await _runWithSudoRetry(
-          normal: () => _status.client!.rename(file.filename, newName),
+          normal: () => _status.client!.rename(
+            _getRemotePath(file),
+            _status.path.path.joinPath(newName, separator: '/'),
+          ),
           sudo: (pwd) => _sudoHelper.rename(
             _getRemotePath(file),
             _status.path.path.joinPath(newName, separator: '/'),

@@ -784,8 +784,8 @@ class _AddPageState extends ConsumerState<_AddPage> {
     if (_cachedOrder != null &&
         _cachedSortBy == sortBy &&
         _cachedSortAsc == sortAsc &&
-        _cachedServerOrder == serverOrder &&
-        _cachedServerNames == serverNames) {
+        listEquals(_cachedServerOrder, serverOrder) &&
+        mapEquals(_cachedServerNames, serverNames)) {
       return _cachedOrder!;
     }
 
