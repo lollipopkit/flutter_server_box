@@ -6,6 +6,17 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/discovery_result.dart';
 
+// Pre-compiled RegExp patterns for SSH discovery
+final _whitespaceRegExp = RegExp(r'\s+');
+final _ipv4InParenthesesRegExp = RegExp(r'\((\d+\.\d+\.\d+\.\d+)\)');
+final _interfaceRegExp = RegExp(r'^([a-z0-9]+):');
+final _ipv4AddrRegExp = RegExp(r'inet (\d+\.\d+\.\d+\.\d+)/(\d+)');
+final _ifconfigAddrRegExp = RegExp(r'inet\s+(\d+\.\d+\.\d+\.\d+)\s+netmask\s+0x([0-9a-fA-F]+)(?:\s+broadcast\s+(\d+\.\d+\.\d+\.\d+))?');
+final _sshServiceRegExp = RegExp(r'Add\s+\d+\s+(\S+)\.\s+_ssh\._tcp\.');
+final _mdnsIpRegExp = RegExp(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b');
+final _dnsSdAddressRegExp = RegExp(r'Address\s*=\s*([0-9a-fA-F:\.]+)');
+final _avahiAddressRegExp = RegExp(r'address = \[(.*?)\]');
+
 class SshDiscoveryService {
   static const _sshPort = 22;
 
@@ -109,7 +120,7 @@ class SshDiscoveryService {
       final s = await _run('ip', ['neigh']);
       if (s != null) {
         for (final line in const LineSplitter().convert(s)) {
-          final tok = line.split(RegExp(r'\s+'));
+          final tok = line.split(_whitespaceRegExp);
           if (tok.isNotEmpty) {
             final ip = tok[0];
             if (InternetAddress.tryParse(ip)?.type ==
@@ -124,7 +135,7 @@ class SshDiscoveryService {
       if (s != null) {
         int matchCount = 0;
         for (final line in const LineSplitter().convert(s)) {
-          final m = RegExp(r'\((\d+\.\d+\.\d+\.\d+)\)').firstMatch(line);
+          final m = _ipv4InParenthesesRegExp.firstMatch(line);
           if (m != null) {
             set.add(InternetAddress(m.group(1)!));
             matchCount++;
@@ -146,7 +157,7 @@ class SshDiscoveryService {
       final s = await _run('ip', ['-6', 'neigh']);
       if (s != null) {
         for (final line in const LineSplitter().convert(s)) {
-          final ip = line.split(RegExp(r'\s+')).firstOrNull;
+          final ip = line.split(_whitespaceRegExp).firstOrNull;
           if (ip != null &&
               InternetAddress.tryParse(ip)?.type == InternetAddressType.IPv6) {
             set.add(InternetAddress(ip));
@@ -157,7 +168,7 @@ class SshDiscoveryService {
       final s = await _run('/usr/sbin/ndp', ['-a']);
       if (s != null) {
         for (final line in const LineSplitter().convert(s)) {
-          final ip = line.trim().split(RegExp(r'\s+')).firstOrNull;
+          final ip = line.trim().split(_whitespaceRegExp).firstOrNull;
           if (ip != null &&
               InternetAddress.tryParse(ip)?.type == InternetAddressType.IPv6) {
             set.add(InternetAddress(ip));
@@ -181,9 +192,7 @@ class SshDiscoveryService {
       ]);
       if (s != null) {
         for (final line in const LineSplitter().convert(s)) {
-          final m = RegExp(
-            r'inet\s+(\d+\.\d+\.\d+\.\d+)\/(\d+)',
-          ).firstMatch(line);
+          final m = _ipv4AddrRegExp.firstMatch(line);
           if (m != null) {
             final ip = InternetAddress(m.group(1)!);
             final prefix = int.parse(m.group(2)!);
@@ -199,15 +208,13 @@ class SshDiscoveryService {
       if (s != null) {
         for (final raw in const LineSplitter().convert(s)) {
           final line = raw.trimRight();
-          final ifMatch = RegExp(r'^([a-z0-9]+):').firstMatch(line);
+          final ifMatch = _interfaceRegExp.firstMatch(line);
           if (ifMatch != null) {
             continue;
           }
           if (line.contains('inet ') && !line.contains('127.0.0.1')) {
             try {
-              final ipm = RegExp(
-                r'inet\s+(\d+\.\d+\.\d+\.\d+)\s+netmask\s+0x([0-9a-fA-F]+)(?:\s+broadcast\s+(\d+\.\d+\.\d+\.\d+))?',
-              ).firstMatch(line);
+              final ipm = _ifconfigAddrRegExp.firstMatch(line);
               if (ipm == null) {
                 Loggers.app.warning(
                   '[ssh_discovery] Warning: Unexpected ifconfig line format: $line',
@@ -271,7 +278,7 @@ class SshDiscoveryService {
         await subscription.cancel();
 
         for (final l in lines) {
-          final m = RegExp(r'Add\s+\d+\s+(\S+)\.\s+_ssh\._tcp\.').firstMatch(l);
+          final m = _sshServiceRegExp.firstMatch(l);
           if (m != null) {
             final name = m.group(1)!;
             final det = await _run('/usr/bin/dns-sd', [
@@ -281,9 +288,7 @@ class SshDiscoveryService {
               'local.',
             ], timeout: const Duration(seconds: 3));
             if (det != null) {
-              for (final ip in RegExp(
-                r'Address\s*=\s*([0-9a-fA-F:\.]+)',
-              ).allMatches(det).map((e) => e.group(1)!)) {
+              for (final ip in _dnsSdAddressRegExp.allMatches(det).map((e) => e.group(1)!)) {
                 final parsed = InternetAddress.tryParse(ip);
                 if (parsed != null) set.add(parsed);
               }
@@ -300,9 +305,7 @@ class SshDiscoveryService {
     } else if (_isLinux) {
       final s = await _run('/usr/bin/avahi-browse', ['-rat', '_ssh._tcp']);
       if (s != null) {
-        for (final ip in RegExp(
-          r'address = \[(.*?)\]',
-        ).allMatches(s).map((m) => m.group(1)!).where((e) => e.isNotEmpty)) {
+        for (final ip in _avahiAddressRegExp.allMatches(s).map((m) => m.group(1)!).where((e) => e.isNotEmpty)) {
           final parsed = InternetAddress.tryParse(ip);
           if (parsed != null) set.add(parsed);
         }
