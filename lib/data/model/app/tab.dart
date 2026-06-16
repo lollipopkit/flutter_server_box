@@ -47,5 +47,5 @@ enum AppTab {
   String toJson() => name;
 
   static AppTab fromJson(String json) =>
-      AppTab.values.firstWhere((e) => e.name == json, orElse: () => AppTab.server);
+      _parseAppTabFromElement(json) ?? AppTab.server;
 }

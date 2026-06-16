@@ -22,7 +22,7 @@ enum NetViewType {
   /// If no device is specified, return the cached value (only real devices,
   /// such as ethX, wlanX...).
   (String, String) build(ServerStatus ss, {String? dev}) {
-    final notSepcifyDev = dev == null || dev.isEmpty;
+    final notSpecifyDev = dev == null || dev.isEmpty;
     try {
       switch (this) {
         case NetViewType.conn:
@@ -31,7 +31,7 @@ enum NetViewType {
             '${libL10n.fail}:\n${ss.tcp.fail}',
           );
         case NetViewType.speed:
-          if (notSepcifyDev) {
+          if (notSpecifyDev) {
             return (
               '↓:\n${ss.netSpeed.cachedVals.speedIn}',
               '↑:\n${ss.netSpeed.cachedVals.speedOut}',
@@ -42,7 +42,7 @@ enum NetViewType {
             '↑:\n${ss.netSpeed.speedOut(device: dev)}',
           );
         case NetViewType.traffic:
-          if (notSepcifyDev) {
+          if (notSpecifyDev) {
             return (
               '↓:\n${ss.netSpeed.cachedVals.sizeIn}',
               '↑:\n${ss.netSpeed.cachedVals.sizeOut}',

@@ -14,10 +14,7 @@ class BackupService {
       final saved = await SecureStoreProps.bakPwd.read();
       final password = saved?.isEmpty == true ? null : saved;
 
-      final path = await BackupV2.backup(
-        null,
-        password?.isEmpty == true ? null : password,
-      );
+      final path = await BackupV2.backup(null, password);
       await source.saveContent(path);
 
       if (source is ClipboardBackupSource) {
