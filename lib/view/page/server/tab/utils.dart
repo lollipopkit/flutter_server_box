@@ -144,7 +144,7 @@ extension _Utils on _ServerPageState {
     final x = MediaQuery.sizeOf(context).height * 0.03;
     final r = math.Random().nextDouble();
     final n = math.Random().nextBool() ? 1 : -1;
-    _offset = x * r * n;
+    _offsetNotifier.value = x * r * n;
   }
 
   void _updateTextScaler(double val) {
@@ -157,7 +157,6 @@ extension _Utils on _ServerPageState {
     _timer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (mounted) {
         _updateOffset();
-        setState(() {});
       } else {
         _timer?.cancel();
       }

@@ -49,7 +49,7 @@ const _cardPadSingle = 13.0;
 class _ServerPageState extends ConsumerState<ServerPage>
     with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
   late double _textFactorDouble;
-  double _offset = 1;
+  final ValueNotifier<double> _offsetNotifier = ValueNotifier(1);
   late TextScaler _textFactor;
 
   final _cardsStatus = <String, _CardNotifier>{};
@@ -70,6 +70,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
     _autoHideCtrl.dispose();
     _tag.dispose();
     _tags.dispose();
+    _offsetNotifier.dispose();
   }
 
   @override
