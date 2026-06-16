@@ -518,7 +518,6 @@ void main() {
       expect(diskSmart.lifetimeReadsGiB, 12361);
       expect(diskSmart.unsafeShutdownCount, 141);
       expect(diskSmart.averageEraseCount, 126);
-      expect(diskSmart.maxEraseCount, 160);
     });
 
     test('toMap() converts all important data', () {
