@@ -747,6 +747,13 @@ class _AddPage extends ConsumerStatefulWidget {
 }
 
 class _AddPageState extends ConsumerState<_AddPage> {
+  // Cache for sorted server order
+  List<String>? _cachedOrder;
+  int _cachedSortBy = -1;
+  bool _cachedSortAsc = true;
+  List<String>? _cachedServerOrder;
+  Map<String, String>? _cachedServerNames;
+
   @override
   void initState() {
     super.initState();
@@ -760,7 +767,55 @@ class _AddPageState extends ConsumerState<_AddPage> {
   }
 
   void _onSortVersionChanged() {
+    // Invalidate cache when sort version changes
+    _cachedOrder = null;
     if (mounted) setState(() {});
+  }
+
+  List<String> _getSortedOrder(ServerState serverState, int sortBy, bool sortAsc) {
+    // Check if cache is valid
+    final serverOrder = serverState.serverOrder;
+    final serverNames = <String, String>{};
+    for (final id in serverOrder) {
+      final name = serverState.servers[id]?.name;
+      if (name != null) serverNames[id] = name;
+    }
+
+    if (_cachedOrder != null &&
+        _cachedSortBy == sortBy &&
+        _cachedSortAsc == sortAsc &&
+        _cachedServerOrder == serverOrder &&
+        _cachedServerNames == serverNames) {
+      return _cachedOrder!;
+    }
+
+    // Rebuild cache
+    final order = serverOrder.toList();
+    if (sortBy == 0) {
+      order.sort((a, b) {
+        final nameA = serverNames[a] ?? '';
+        final nameB = serverNames[b] ?? '';
+        return sortAsc ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
+      });
+    } else if (sortBy == 1) {
+      final indexMap = <String, int>{};
+      for (var i = 0; i < serverOrder.length; i++) {
+        indexMap[serverOrder[i]] = i;
+      }
+      order.sort((a, b) {
+        final idxA = indexMap[a] ?? -1;
+        final idxB = indexMap[b] ?? -1;
+        return sortAsc ? idxA.compareTo(idxB) : idxB.compareTo(idxA);
+      });
+    }
+
+    _cachedOrder = order;
+    _cachedSortBy = sortBy;
+    _cachedSortAsc = sortAsc;
+    _cachedServerOrder = serverOrder;
+    _cachedServerNames = serverNames;
+
+    return order;
   }
 
   Widget get _placeholder => const Expanded(child: UIs.placeholder);
@@ -774,24 +829,7 @@ class _AddPageState extends ConsumerState<_AddPage> {
     final sortBy = Stores.setting.sshPageSortBy.fetch();
     final sortAsc = Stores.setting.sshPageSortAsc.fetch();
 
-    final order = serverState.serverOrder.toList();
-    if (sortBy == 0) {
-      order.sort((a, b) {
-        final nameA = serverState.servers[a]?.name ?? '';
-        final nameB = serverState.servers[b]?.name ?? '';
-        return sortAsc ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
-      });
-    } else if (sortBy == 1) {
-      final indexMap = <String, int>{};
-      for (var i = 0; i < serverState.serverOrder.length; i++) {
-        indexMap[serverState.serverOrder[i]] = i;
-      }
-      order.sort((a, b) {
-        final idxA = indexMap[a] ?? -1;
-        final idxB = indexMap[b] ?? -1;
-        return sortAsc ? idxA.compareTo(idxB) : idxB.compareTo(idxA);
-      });
-    }
+    final order = _getSortedOrder(serverState, sortBy, sortAsc);
 
     final itemCount = order.length;
     const itemPadding = 1.0;
