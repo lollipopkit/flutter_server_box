@@ -137,9 +137,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
   }
 
   Widget _buildPortrait() {
-    final serverState = ref.watch(serversProvider);
+    // Only watch serverOrder and tags to avoid unnecessary rebuilds
+    final serverOrder = ref.watch(serversProvider.select((s) => s.serverOrder));
+    final tags = ref.watch(serversProvider.select((s) => s.tags));
     return _tag.listenVal((val) {
-      final filtered = _filterServers(serverState.serverOrder);
+      final filtered = _filterServers(serverOrder);
       final child = _buildScaffold(_buildBodySmall(filtered: filtered));
       return child;
     });
