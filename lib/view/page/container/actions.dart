@@ -12,6 +12,20 @@ extension on _ContainerPageState {
     return trimmed?.isNotEmpty == true ? trimmed! : libL10n.fail;
   }
 
+  /// Execute a container action with loading dialog and error handling.
+  Future<void> _execContainerAction(Future<ContainerErr?> Function() action) async {
+    final (result, err) = await context.showLoadingDialog(fn: action);
+    if (err != null || result != null) {
+      final e = result?.message ?? err?.toString();
+      context.showRoundDialog(
+        title: libL10n.error,
+        child: Text(_errorMessage(e)),
+      );
+    } else {
+      context.showSnackBar(libL10n.success);
+    }
+  }
+
   Future<void> _showAddFAB() async {
     final imageCtrl = TextEditingController();
     final nameCtrl = TextEditingController();
@@ -71,16 +85,7 @@ extension on _ContainerPageState {
       actions: Btn.ok(
         onTap: () async {
           context.pop();
-          final (result, err) = await context.showLoadingDialog(fn: onConfirm);
-          if (err != null || result != null) {
-            final e = result?.message ?? err?.toString();
-            context.showRoundDialog(
-              title: libL10n.error,
-              child: Text(_errorMessage(e)),
-            );
-          } else {
-            context.showSnackBar(libL10n.success);
-          }
+          await _execContainerAction(onConfirm);
         },
         red: true,
       ).toList,
@@ -96,17 +101,7 @@ extension on _ContainerPageState {
         TextButton(
           onPressed: () async {
             context.pop();
-
-            final (result, err) = await context.showLoadingDialog(
-              fn: () => _containerNotifier.run(cmd),
-            );
-            if (err != null || result != null) {
-              final e = result?.message ?? err?.toString();
-              context.showRoundDialog(
-                title: libL10n.error,
-                child: Text(_errorMessage(e)),
-              );
-            }
+            await _execContainerAction(() => _containerNotifier.run(cmd));
           },
           child: Text(libL10n.run),
         ),
@@ -174,18 +169,7 @@ extension on _ContainerPageState {
           actions: Btn.ok(
             onTap: () async {
               context.pop();
-
-              final (result, err) = await context.showLoadingDialog(
-                fn: () => _containerNotifier.run('pull $imageRef'),
-                timeout: null,
-              );
-              if (err != null || result != null) {
-                final e = result?.message ?? err?.toString();
-                context.showRoundDialog(
-                  title: libL10n.error,
-                  child: Text(_errorMessage(e)),
-                );
-              }
+              await _execContainerAction(() => _containerNotifier.run('pull $imageRef'));
             },
           ).toList,
         );
@@ -235,56 +219,19 @@ extension on _ContainerPageState {
           actions: Btn.ok(
             onTap: () async {
               context.pop();
-
-              final (result, err) = await context.showLoadingDialog(
-                fn: () => _containerNotifier.delete(id, force),
-              );
-              if (err != null || result != null) {
-                final e = result?.message ?? err?.toString();
-                context.showRoundDialog(
-                  title: libL10n.error,
-                  child: Text(_errorMessage(e)),
-                );
-              }
+              await _execContainerAction(() => _containerNotifier.delete(id, force));
             },
           ).toList,
         );
         break;
       case ContainerMenu.start:
-        final (result, err) = await context.showLoadingDialog(
-          fn: () => _containerNotifier.start(id),
-        );
-        if (err != null || result != null) {
-          final e = result?.message ?? err?.toString();
-          context.showRoundDialog(
-            title: libL10n.error,
-            child: Text(_errorMessage(e)),
-          );
-        }
+        await _execContainerAction(() => _containerNotifier.start(id));
         break;
       case ContainerMenu.stop:
-        final (result, err) = await context.showLoadingDialog(
-          fn: () => _containerNotifier.stop(id),
-        );
-        if (err != null || result != null) {
-          final e = result?.message ?? err?.toString();
-          context.showRoundDialog(
-            title: libL10n.error,
-            child: Text(_errorMessage(e)),
-          );
-        }
+        await _execContainerAction(() => _containerNotifier.stop(id));
         break;
       case ContainerMenu.restart:
-        final (result, err) = await context.showLoadingDialog(
-          fn: () => _containerNotifier.restart(id),
-        );
-        if (err != null || result != null) {
-          final e = result?.message ?? err?.toString();
-          context.showRoundDialog(
-            title: libL10n.error,
-            child: Text(_errorMessage(e)),
-          );
-        }
+        await _execContainerAction(() => _containerNotifier.restart(id));
         break;
       case ContainerMenu.logs:
         final args = SshPageArgs(
