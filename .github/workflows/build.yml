@@ -29,6 +29,7 @@ jobs:
         with:
           submodules: recursive
           persist-credentials: false
+          fetch-depth: 0
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -55,6 +56,8 @@ jobs:
           for f in *_${BUILD_NUMBER}_*.apk; do
             mv "$f" "${f/_${BUILD_NUMBER}_/_v1.0.${BUILD_NUMBER}_}"
           done
+          # Remove original APKs copied by fl_build
+          rm -f app-*-release.apk
       - name: Upload artifacts
         if: inputs.release != true && github.ref_type != 'tag'
         uses: actions/upload-artifact@v4
@@ -94,10 +97,12 @@ jobs:
         with:
           submodules: recursive
           persist-credentials: false
+          fetch-depth: 0
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          flutter-version: "3.44.1"
       - name: Install dependencies
         run: |
           sudo apt update
@@ -143,10 +148,12 @@ jobs:
         with:
           submodules: recursive
           persist-credentials: false
+          fetch-depth: 0
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          flutter-version: "3.44.1"
       - name: Build
         run: dart run fl_build -bp -p windows
       - name: Rename
