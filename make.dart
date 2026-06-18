@@ -16,8 +16,6 @@ void main(List<String> args) async {
       final data = {'script': scriptModCount};
       await File(moreBuildDataPath).writeAsString(json.encode(data));
       break;
-    case 'after':
-    // Pass
     default:
       throw 'Invalid argument: $cmd';
   }
