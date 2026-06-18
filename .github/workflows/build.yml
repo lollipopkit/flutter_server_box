@@ -30,21 +30,6 @@ jobs:
           submodules: recursive
           persist-credentials: false
           fetch-depth: 0
-      - name: Get last release version
-        id: last_release
-        shell: bash
-        run: |
-          LAST_TAG=$(git describe --tags --abbrev=0 --match 'v1.0.*' 2>/dev/null || echo "")
-          if [ -n "$LAST_TAG" ]; then
-            VERSION="${LAST_TAG#v1.0.}"
-            if [ -n "$VERSION" ]; then
-              echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-            else
-              echo "version=0" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo "version=0" >> "$GITHUB_OUTPUT"
-          fi
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -62,12 +47,14 @@ jobs:
         run: |
           flutter pub get
           scripts/release/patch-jni-build-id.sh
-      - name: Build
+      - name: Build (release)
+        if: inputs.release == true || github.ref_type == 'tag'
+        shell: bash
         run: dart run fl_build -bp -p android
-      - name: Override version for test build
+      - name: Build (test)
         if: inputs.release != true && github.ref_type != 'tag'
         shell: bash
-        run: echo "BUILD_NUMBER=${{ steps.last_release.outputs.version }}" >> "$GITHUB_ENV"
+        run: dart run fl_build -p android
       - name: Rename
         shell: bash
         run: |
@@ -117,21 +104,6 @@ jobs:
           submodules: recursive
           persist-credentials: false
           fetch-depth: 0
-      - name: Get last release version
-        id: last_release
-        shell: bash
-        run: |
-          LAST_TAG=$(git describe --tags --abbrev=0 --match 'v1.0.*' 2>/dev/null || echo "")
-          if [ -n "$LAST_TAG" ]; then
-            VERSION="${LAST_TAG#v1.0.}"
-            if [ -n "$VERSION" ]; then
-              echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-            else
-              echo "version=0" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo "version=0" >> "$GITHUB_OUTPUT"
-          fi
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -142,12 +114,14 @@ jobs:
           sudo apt update
           sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev mesa-utils libvulkan-dev desktop-file-utils wget
           sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev libsecret-1-dev
-      - name: Build
+      - name: Build (release)
+        if: inputs.release == true || github.ref_type == 'tag'
+        shell: bash
         run: dart run fl_build -bp -p linux
-      - name: Override version for test build
+      - name: Build (test)
         if: inputs.release != true && github.ref_type != 'tag'
         shell: bash
-        run: echo "BUILD_NUMBER=${{ steps.last_release.outputs.version }}" >> "$GITHUB_ENV"
+        run: dart run fl_build -p linux
       - name: Rename
         shell: bash
         run: |
@@ -187,32 +161,19 @@ jobs:
           submodules: recursive
           persist-credentials: false
           fetch-depth: 0
-      - name: Get last release version
-        id: last_release
-        shell: bash
-        run: |
-          LAST_TAG=$(git describe --tags --abbrev=0 --match 'v1.0.*' 2>/dev/null || echo "")
-          if [ -n "$LAST_TAG" ]; then
-            VERSION="${LAST_TAG#v1.0.}"
-            if [ -n "$VERSION" ]; then
-              echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-            else
-              echo "version=0" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo "version=0" >> "$GITHUB_OUTPUT"
-          fi
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           flutter-version: "3.44.1"
-      - name: Build
+      - name: Build (release)
+        if: inputs.release == true || github.ref_type == 'tag'
+        shell: bash
         run: dart run fl_build -bp -p windows
-      - name: Override version for test build
+      - name: Build (test)
         if: inputs.release != true && github.ref_type != 'tag'
         shell: bash
-        run: echo "BUILD_NUMBER=${{ steps.last_release.outputs.version }}" >> "$GITHUB_ENV"
+        run: dart run fl_build -p windows
       - name: Rename
         shell: bash
         run: |
