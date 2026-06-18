@@ -140,5 +140,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
 
 Object? _toEncodable(Object? value) {
   if (value is Enum) return value.name;
+  _loggerV2.warning('Non-JSON-encodable type: ${value.runtimeType}, '
+      'serialized via toString() and may not be deserializable');
   return value.toString();
 }

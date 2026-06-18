@@ -1,5 +1,4 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server.dart';
 
 enum NetViewType {
@@ -16,7 +15,7 @@ enum NetViewType {
   String get toStr => switch (this) {
     NetViewType.conn => libL10n.conn,
     NetViewType.traffic => libL10n.traffic,
-    NetViewType.speed => l10n.speed,
+    NetViewType.speed => libL10n.speed,
   };
 
   /// If no device is specified, return the cached value (only real devices,
