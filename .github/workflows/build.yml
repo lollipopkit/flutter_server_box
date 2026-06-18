@@ -47,14 +47,14 @@ jobs:
         run: |
           flutter pub get
           scripts/release/patch-jni-build-id.sh
-      - name: Build
+      - name: Build (release)
+        if: inputs.release == true || github.ref_type == 'tag'
         shell: bash
-        run: |
-          if [ "${{ inputs.release }}" = "true" ] || [ "${{ github.ref_type }}" = "tag" ]; then
-            dart run fl_build -bp -p android
-          else
-            dart run fl_build -p android
-          fi
+        run: dart run fl_build -bp -p android
+      - name: Build (test)
+        if: inputs.release != true && github.ref_type != 'tag'
+        shell: bash
+        run: dart run fl_build -p android
       - name: Rename
         shell: bash
         run: |
@@ -114,14 +114,14 @@ jobs:
           sudo apt update
           sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev mesa-utils libvulkan-dev desktop-file-utils wget
           sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev libsecret-1-dev
-      - name: Build
+      - name: Build (release)
+        if: inputs.release == true || github.ref_type == 'tag'
         shell: bash
-        run: |
-          if [ "${{ inputs.release }}" = "true" ] || [ "${{ github.ref_type }}" = "tag" ]; then
-            dart run fl_build -bp -p linux
-          else
-            dart run fl_build -p linux
-          fi
+        run: dart run fl_build -bp -p linux
+      - name: Build (test)
+        if: inputs.release != true && github.ref_type != 'tag'
+        shell: bash
+        run: dart run fl_build -p linux
       - name: Rename
         shell: bash
         run: |
@@ -166,14 +166,14 @@ jobs:
         with:
           channel: 'stable'
           flutter-version: "3.44.1"
-      - name: Build
+      - name: Build (release)
+        if: inputs.release == true || github.ref_type == 'tag'
         shell: bash
-        run: |
-          if [ "${{ inputs.release }}" = "true" ] || [ "${{ github.ref_type }}" = "tag" ]; then
-            dart run fl_build -bp -p windows
-          else
-            dart run fl_build -p windows
-          fi
+        run: dart run fl_build -bp -p windows
+      - name: Build (test)
+        if: inputs.release != true && github.ref_type != 'tag'
+        shell: bash
+        run: dart run fl_build -p windows
       - name: Rename
         shell: bash
         run: |
