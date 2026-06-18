@@ -36,7 +36,12 @@ jobs:
         run: |
           LAST_TAG=$(git describe --tags --abbrev=0 --match 'v1.0.*' 2>/dev/null || echo "")
           if [ -n "$LAST_TAG" ]; then
-            echo "version=${LAST_TAG#v1.0.}" >> "$GITHUB_OUTPUT"
+            VERSION="${LAST_TAG#v1.0.}"
+            if [ -n "$VERSION" ]; then
+              echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            else
+              echo "version=0" >> "$GITHUB_OUTPUT"
+            fi
           else
             echo "version=0" >> "$GITHUB_OUTPUT"
           fi
@@ -118,7 +123,12 @@ jobs:
         run: |
           LAST_TAG=$(git describe --tags --abbrev=0 --match 'v1.0.*' 2>/dev/null || echo "")
           if [ -n "$LAST_TAG" ]; then
-            echo "version=${LAST_TAG#v1.0.}" >> "$GITHUB_OUTPUT"
+            VERSION="${LAST_TAG#v1.0.}"
+            if [ -n "$VERSION" ]; then
+              echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            else
+              echo "version=0" >> "$GITHUB_OUTPUT"
+            fi
           else
             echo "version=0" >> "$GITHUB_OUTPUT"
           fi
@@ -183,7 +193,12 @@ jobs:
         run: |
           LAST_TAG=$(git describe --tags --abbrev=0 --match 'v1.0.*' 2>/dev/null || echo "")
           if [ -n "$LAST_TAG" ]; then
-            echo "version=${LAST_TAG#v1.0.}" >> "$GITHUB_OUTPUT"
+            VERSION="${LAST_TAG#v1.0.}"
+            if [ -n "$VERSION" ]; then
+              echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            else
+              echo "version=0" >> "$GITHUB_OUTPUT"
+            fi
           else
             echo "version=0" >> "$GITHUB_OUTPUT"
           fi
