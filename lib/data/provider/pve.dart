@@ -49,7 +49,7 @@ class PveNotifier extends _$PveNotifier {
   SSHClient get _client {
     final serverState = ref.read(serverProvider(spiParam.id));
     final client = serverState.client;
-    if (client == null) {
+    if (client == null || client.isClosed) {
       throw PveErr(type: PveErrType.net, message: l10n.pveServerClientMissing);
     }
     return client;
@@ -178,7 +178,7 @@ class PveNotifier extends _$PveNotifier {
       if (!_isActiveInit(generation)) return;
       Loggers.app.warning('PVE init failed', e, s);
       state = state.copyWith(
-        error: PveErr(type: PveErrType.unknown, message: e.toString()),
+        error: _toPveErr(e),
         loadingStep: PveLoadingStep.none,
       );
     }
@@ -216,6 +216,17 @@ class PveNotifier extends _$PveNotifier {
           socket.cast<List<int>>().pipe(forward.sink);
         } catch (e, s) {
           Loggers.app.warning('PVE forward failed', e, s);
+          if (_isActiveInit(generation)) {
+            await _closeSession(clearPendingTfa: true);
+            if (ref.mounted) {
+              state = state.copyWith(
+                error: _toPveErr(e),
+                isConnected: false,
+                isBusy: false,
+                loadingStep: PveLoadingStep.none,
+              );
+            }
+          }
           socket.destroy();
         }
       });
@@ -227,6 +238,9 @@ class PveNotifier extends _$PveNotifier {
     String? proxyHost,
     int? proxyPort,
   ) async {
+    if (_localPort == 0 || _serverSocket == null) {
+      throw PveErr(type: PveErrType.net, message: l10n.pveServerClientMissing);
+    }
     if (url.isScheme('https')) {
       return SecureSocket.startConnect(
         'localhost',
@@ -404,6 +418,17 @@ class PveNotifier extends _$PveNotifier {
     } catch (e) {
       if (!ref.mounted) return;
       Loggers.app.warning('PVE list failed', e);
+      if (_isConnectionFailure(e)) {
+        await _closeSession(clearPendingTfa: true);
+        if (!ref.mounted) return;
+        state = state.copyWith(
+          error: _toPveErr(e),
+          isConnected: false,
+          isBusy: false,
+          loadingStep: PveLoadingStep.none,
+        );
+        return;
+      }
       state = state.copyWith(
         error: PveErr(type: PveErrType.unknown, message: e.toString()),
       );
@@ -412,6 +437,26 @@ class PveNotifier extends _$PveNotifier {
         state = state.copyWith(isBusy: false);
       }
     }
+  }
+
+  PveErr _toPveErr(Object e) {
+    if (e is PveErr) return e;
+    if (_isConnectionFailure(e)) {
+      return PveErr(type: PveErrType.net, message: e.toString());
+    }
+    return PveErr(type: PveErrType.unknown, message: e.toString());
+  }
+
+  bool _isConnectionFailure(Object e) {
+    if (e is SocketException || e is HandshakeException || e is SSHStateError) {
+      return true;
+    }
+    if (e is DioException) {
+      if (e.type == DioExceptionType.connectionError) return true;
+      final inner = e.error;
+      return inner != null && _isConnectionFailure(inner);
+    }
+    return false;
   }
 
   Future<bool> reboot(String node, String id) =>
