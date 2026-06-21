@@ -647,6 +647,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recentConnections => '最近连接记录';
 
   @override
+  String get reconnecting => '重连中...';
+
+  @override
   String get rememberPwdInMem => '在内存中记住密码';
 
   @override
@@ -1644,6 +1647,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get recentConnections => '最近連線記錄';
+
+  @override
+  String get reconnecting => '重連中...';
 
   @override
   String get rememberPwdInMem => '在記憶體中記住密碼';

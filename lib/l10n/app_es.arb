@@ -163,6 +163,7 @@
   "pveVersionLow": "Esta función está actualmente en fase de prueba y solo se ha probado en PVE 8+. Úsela con precaución.",
   "read": "Leer",
   "recentConnections": "Conexiones recientes",
+  "reconnecting": "Reconectando...",
   "rememberPwdInMem": "Recordar contraseña en la memoria",
   "rememberPwdInMemTip": "Utilizado para contenedores, suspensión, etc.",
   "rememberWindowSize": "Recordar el tamaño de la ventana",

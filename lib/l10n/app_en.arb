@@ -209,6 +209,7 @@
   "pvePasswordHint": "Required when using key-based SSH authentication",
   "read": "Read",
   "recentConnections": "Recent Connections",
+  "reconnecting": "Reconnecting...",
   "rememberPwdInMem": "Remember password in memory",
   "rememberPwdInMemTip": "Used for containers, suspending, etc.",
   "rememberWindowSize": "Remember window size",

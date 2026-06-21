@@ -688,6 +688,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recentConnections => 'Son Bağlantılar';
 
   @override
+  String get reconnecting => 'Yeniden bağlanılıyor...';
+
+  @override
   String get rememberPwdInMem => 'Şifreyi bellekte hatırla';
 
   @override

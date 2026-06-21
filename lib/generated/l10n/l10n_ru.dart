@@ -691,6 +691,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get recentConnections => 'Недавние соединения';
 
   @override
+  String get reconnecting => 'Переподключение...';
+
+  @override
   String get rememberPwdInMem => 'Запомнить пароль в памяти';
 
   @override

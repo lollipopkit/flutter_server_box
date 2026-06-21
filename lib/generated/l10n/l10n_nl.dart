@@ -690,6 +690,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get recentConnections => 'Recente verbindingen';
 
   @override
+  String get reconnecting => 'Opnieuw verbinden...';
+
+  @override
   String get rememberPwdInMem => 'Wachtwoord onthouden in geheugen';
 
   @override

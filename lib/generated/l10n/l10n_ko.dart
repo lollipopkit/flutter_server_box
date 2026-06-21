@@ -668,6 +668,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recentConnections => '최근 연결';
 
   @override
+  String get reconnecting => '재연결 중...';
+
+  @override
   String get rememberPwdInMem => '메모리에 비밀번호 저장';
 
   @override
