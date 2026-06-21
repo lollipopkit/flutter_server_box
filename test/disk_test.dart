@@ -165,6 +165,22 @@ void main() {
       expect(dataDisk.usedPercent, 100);
     });
 
+    test('parse Debian df -k output preserves KB values', () {
+      final disks = Disk.parse(_debianDfOutput);
+      final rootFs = disks.firstWhere((disk) => disk.mount == '/');
+
+      expect(rootFs.path, '/dev/sda2');
+      expect(rootFs.usedPercent, 36);
+      expect(rootFs.size, BigInt.from(474286144));
+      expect(rootFs.used, BigInt.from(158343564));
+      expect(rootFs.avail, BigInt.from(291776744));
+
+      final efiFs = disks.firstWhere((disk) => disk.mount == '/boot/efi');
+      expect(efiFs.path, '/dev/sda1');
+      expect(efiFs.usedPercent, 1);
+      expect(efiFs.size, BigInt.from(997432));
+    });
+
     test('handle empty input gracefully', () {
       final disks = Disk.parse('');
       expect(disks, isEmpty);
@@ -548,6 +564,23 @@ overlayfs:/overlay     5335040   4570160    315616  94% /
 tmpfs                      512         0       512   0% /dev
 /dev/sda             468851544 465106484   1960492 100% /mnt/sda
 overlayfs:/overlay     5335040   4570160    315616  94% /opt
+''';
+
+const _debianDfOutput = '''
+Filesystem     1K-blocks      Used Available Use% Mounted on
+udev             3879172         0   3879172   0% /dev
+tmpfs             800412      1792    798620   1% /run
+/dev/sda2      474286144 158343564 291776744  36% /
+tmpfs            4002060         0   4002060   0% /dev/shm
+efivarfs             148        57        87  40% /sys/firmware/efi/efivars
+tmpfs               5120        16      5104   1% /run/lock
+tmpfs            4002060         4   4002056   1% /tmp
+/dev/sda1         997432      8984    988448   1% /boot/efi
+tmpfs             800412        88    800324   1% /run/user/1000
+tmpfs                100         0       100   0% /var/lib/incus/shmounts
+tmpfs                100         0       100   0% /var/lib/incus/guestapi
+tmpfs               1024         0      1024   0% /run/credentials/systemd-journald.service
+tmpfs             800412        72    800340   1% /run/user/1001
 ''';
 
 // Test data for edge cases
