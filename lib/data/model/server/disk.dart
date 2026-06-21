@@ -277,9 +277,9 @@ class Disk with EquatableMixin {
             path: fs,
             mount: mount,
             usedPercent: int.parse(vals[4].replaceFirst('%', '')),
-            used: BigInt.parse(vals[2]) ~/ BigInt.from(1024),
-            size: BigInt.parse(vals[1]) ~/ BigInt.from(1024),
-            avail: BigInt.parse(vals[3]) ~/ BigInt.from(1024),
+            used: BigInt.parse(vals[2]),
+            size: BigInt.parse(vals[1]),
+            avail: BigInt.parse(vals[3]),
           ),
         );
       } catch (e) {
