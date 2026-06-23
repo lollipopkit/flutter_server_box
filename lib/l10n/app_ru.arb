@@ -225,7 +225,7 @@
   "time": "Время",
   "times": "Раз",
   "trySudo": "Попробовать использовать sudo",
-  "sudoPromptNotFound": "No sudo password prompt is active.",
+  "sudoPromptNotFound": "В данный момент нет запроса пароля sudo.",
   "unknown": "Неизвестно",
   "unkownConvertMode": "Неизвестный режим конвертации",
   "update": "Обновление",

@@ -923,7 +923,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get trySudo => 'sudo 사용 시도';
 
   @override
-  String get sudoPromptNotFound => 'No sudo password prompt is active.';
+  String get sudoPromptNotFound => 'sudo 비밀번호 프롬프트가 없습니다.';
 
   @override
   String get unknown => '알 수 없음';

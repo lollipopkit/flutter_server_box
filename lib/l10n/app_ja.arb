@@ -225,7 +225,7 @@
   "time": "時間",
   "times": "回",
   "trySudo": "sudoを試みる",
-  "sudoPromptNotFound": "No sudo password prompt is active.",
+  "sudoPromptNotFound": "sudo のパスワード入力プロンプトがありません。",
   "unknown": "不明",
   "unkownConvertMode": "未知の変換モード",
   "update": "更新",

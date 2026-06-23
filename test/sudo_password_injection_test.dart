@@ -7,7 +7,7 @@ bool isSudoPromptText(String raw) {
   final lower = trimmed.toLowerCase();
   if (Miscs.pwdRequestWithUserReg.hasMatch(trimmed)) return true;
   if (lower.contains('[sudo] password')) return true;
-  if (lower.endsWith(':') &&
+  if ((lower.endsWith(':') || lower.endsWith('：')) &&
       (lower.contains('password') || lower.contains('密码'))) {
     return true;
   }
@@ -54,13 +54,11 @@ void main() {
       expect(isSudoPromptText('密码:'), isTrue);
     });
 
-    test('does NOT detect Chinese prompt with full-width colon (known gap)',
-        () {
-      // [sudo] 用户 alice 的密码：  — full-width '：' does not match ':'
+    test('detects Chinese prompt with full-width colon', () {
+      // [sudo] 用户 alice 的密码：  — full-width '：' now also matched
       expect(
         isSudoPromptText('[sudo] 用户 alice 的密码：'),
-        isFalse,
-        reason: 'Full-width colon does not match endsWith(":") — known gap',
+        isTrue,
       );
     });
 

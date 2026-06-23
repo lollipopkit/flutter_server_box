@@ -782,7 +782,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     final lower = raw.toLowerCase();
     if (Miscs.pwdRequestWithUserReg.hasMatch(raw)) return true;
     if (lower.contains('[sudo] password')) return true;
-    if (lower.endsWith(':') &&
+    if ((lower.endsWith(':') || lower.endsWith('：')) &&
         (lower.contains('password') || lower.contains('密码'))) {
       return true;
     }

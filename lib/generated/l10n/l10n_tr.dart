@@ -952,7 +952,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trySudo => 'Sudo ile dene';
 
   @override
-  String get sudoPromptNotFound => 'No sudo password prompt is active.';
+  String get sudoPromptNotFound => 'Aktif bir sudo parola istemi yok.';
 
   @override
   String get unknown => 'Bilinmeyen';
