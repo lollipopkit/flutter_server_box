@@ -21,7 +21,7 @@ extension _SSH on _AppSettingsPageState {
         _buildFont(),
         _buildTermFontSize(),
         _buildSshBg(),
-        if (isDesktop) _buildDesktopTerminal(),
+        if (isLinux) _buildDesktopTerminal(),
         if (isDesktop) _buildDesktopSshAutoCopyPassword(),
         _buildSSHVirtualKeyAutoOff(),
         if (isMobile) _buildSSHVirtKeys(),
