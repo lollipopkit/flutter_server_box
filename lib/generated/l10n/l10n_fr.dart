@@ -795,6 +795,25 @@ class AppLocalizationsFr extends AppLocalizations {
   String get ssh => 'SSH';
 
   @override
+  String get sshConnectionMode => 'SSH connection mode';
+
+  @override
+  String get sshConnectionModeBuiltin => 'Built-in';
+
+  @override
+  String get sshConnectionModeSystem => 'System SSH';
+
+  @override
+  String get sshConnectionModeTip =>
+      'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
+
+  @override
+  String get sshConnectionModeUseBuiltin => 'Use built-in terminal';
+
+  @override
+  String get sshConnectionModeUseSystem => 'Use system SSH';
+
+  @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
     return '$duplicateCount doublons seront ignorés';
   }

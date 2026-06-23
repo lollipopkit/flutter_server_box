@@ -53,6 +53,9 @@ abstract final class Stores {
 
     await Future.wait(_allBackup.map((store) => store.init()));
 
+    // Migrate sshConnectionMode from old int values to bool
+    setting.migrateSshConnectionMode();
+
     if (connectionStats.indexDbKeys.isEmpty) {
       await connectionStats.rebuildIndexAndCompact();
     }

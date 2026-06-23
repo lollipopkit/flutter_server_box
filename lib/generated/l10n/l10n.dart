@@ -1494,6 +1494,42 @@ abstract class AppLocalizations {
   /// **'SSH'**
   String get ssh;
 
+  /// No description provided for @sshConnectionMode.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH connection mode'**
+  String get sshConnectionMode;
+
+  /// No description provided for @sshConnectionModeBuiltin.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in'**
+  String get sshConnectionModeBuiltin;
+
+  /// No description provided for @sshConnectionModeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System SSH'**
+  String get sshConnectionModeSystem;
+
+  /// No description provided for @sshConnectionModeTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.'**
+  String get sshConnectionModeTip;
+
+  /// No description provided for @sshConnectionModeUseBuiltin.
+  ///
+  /// In en, this message translates to:
+  /// **'Use built-in terminal'**
+  String get sshConnectionModeUseBuiltin;
+
+  /// No description provided for @sshConnectionModeUseSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Use system SSH'**
+  String get sshConnectionModeUseSystem;
+
   /// No description provided for @sshConfigDuplicatesSkipped.
   ///
   /// In en, this message translates to:

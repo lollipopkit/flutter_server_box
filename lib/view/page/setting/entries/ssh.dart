@@ -12,6 +12,7 @@ extension _SSH on _AppSettingsPageState {
     return Column(
       children: [
         if (isDesktop) _buildSSHConfigImport(),
+        if (isDesktop) _buildSshConnectionMode(),
         if (isMobile) _buildQrScan(),
         _buildSSHDiscovery(),
         _buildLetterCache(),
@@ -20,7 +21,7 @@ extension _SSH on _AppSettingsPageState {
         _buildFont(),
         _buildTermFontSize(),
         _buildSshBg(),
-        if (isDesktop) _buildDesktopTerminal(),
+        if (isLinux) _buildDesktopTerminal(),
         if (isDesktop) _buildDesktopSshAutoCopyPassword(),
         _buildSSHVirtualKeyAutoOff(),
         if (isMobile) _buildSSHVirtKeys(),
@@ -424,6 +425,20 @@ extension _SSH on _AppSettingsPageState {
       subtitle: Text('SSH', style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.desktopSshAutoCopyPassword),
     );
+  }
+
+  Widget _buildSshConnectionMode() {
+    return _setting.sshConnectionMode.listenable().listenVal((useSystemSsh) {
+      final title = useSystemSsh
+          ? l10n.sshConnectionModeUseSystem
+          : l10n.sshConnectionModeUseBuiltin;
+      return ListTile(
+        leading: const Icon(Icons.swap_horiz),
+        title: Text(title),
+        subtitle: Text(l10n.sshConnectionModeTip, style: UIs.textGrey),
+        trailing: StoreSwitch(prop: _setting.sshConnectionMode),
+      );
+    });
   }
 
   Widget _buildTermTheme() {
