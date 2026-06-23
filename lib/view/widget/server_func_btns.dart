@@ -187,7 +187,7 @@ void _gotoSSH(Spi spi, BuildContext context) async {
   final useSystemSsh = Stores.setting.sshConnectionMode.fetch();
   final useBuiltin = isMobile || !useSystemSsh;
 
-  // run built-in ssh on macOS due to incompatibility
+  // Use built-in SSH on mobile or when system SSH is not enabled
   if (useBuiltin) {
     Navigator.restorablePush(
       context,
@@ -274,9 +274,7 @@ void _gotoSSH(Spi spi, BuildContext context) async {
         await scriptFile.create(exclusive: true);
         await scriptFile.writeAsString(_runEmulatorShell);
 
-        if (Platform.isLinux) {
-          await Process.run('chmod', ['+x', scriptFile.path]);
-        }
+        await Process.run('chmod', ['+x', scriptFile.path]);
 
         try {
           var terminal = Stores.setting.desktopTerminal.fetch();
@@ -284,7 +282,9 @@ void _gotoSSH(Spi spi, BuildContext context) async {
 
           await Process.start(scriptFile.path, [terminal, ...sshCommand]);
         } catch (e, s) {
-          context.showErrDialog(e, s, libL10n.emulator);
+          if (context.mounted) {
+            context.showErrDialog(e, s, libL10n.emulator);
+          }
         } finally {
           if (await scriptDir.exists()) {
             await scriptDir.delete(recursive: true);
