@@ -154,12 +154,14 @@ class SSHPageState extends ConsumerState<SSHPage>
   final _terminalOutputBuffer = TerminalOutputBuffer();
   final List<StreamSubscription<String>> _terminalOutputSubscriptions = [];
   static const _connectionCheckInterval = Duration(seconds: 60);
-  static const _connectionCheckTimeout = Duration(seconds: 30);
+  static const _connectionCheckTimeout = Duration(seconds: 10);
   static const _terminalFlushInterval = Duration(milliseconds: 16);
   static const _terminalFlushCharLimit = 32768;
   static const _maxKeepAliveFailures = 3;
   int _missedKeepAliveCount = 0;
   bool _isCheckingConnection = false;
+  bool _hasPendingImmediateCheck = false;
+  bool _reconnectCancelled = false;
   bool _disconnectDialogOpen = false;
   bool _reportedDisconnected = false;
   VoidCallback? _visibilityListener;
@@ -276,7 +278,7 @@ class SSHPageState extends ConsumerState<SSHPage>
           widget.args.focusNode?.requestFocus();
           _termKey.currentState?.requestKeyboard();
         });
-        unawaited(_checkConnectionHealth());
+        unawaited(_checkConnectionHealth(immediate: true));
         if (_discontinuityTimer == null || !_discontinuityTimer!.isActive) {
           _setupDiscontinuityTimer();
         }
@@ -672,6 +674,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       if (!mounted) return;
       if (visibleListenable.value) {
         TermSessionManager.setActive(_sessionId, hasTerminal: true);
+        unawaited(_checkConnectionHealth(immediate: true));
       } else {
         TermSessionManager.hideTerminal(_sessionId);
       }

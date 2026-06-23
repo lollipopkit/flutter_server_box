@@ -692,6 +692,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get recentConnections => 'Останні з\'єднання';
 
   @override
+  String get reconnecting => 'Перепідключення...';
+
+  @override
   String get rememberPwdInMem => 'Запам\'ятати пароль у пам\'яті';
 
   @override

@@ -1314,6 +1314,12 @@ abstract class AppLocalizations {
   /// **'Recent Connections'**
   String get recentConnections;
 
+  /// No description provided for @reconnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnecting...'**
+  String get reconnecting;
+
   /// No description provided for @rememberPwdInMem.
   ///
   /// In en, this message translates to:

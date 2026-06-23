@@ -688,6 +688,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get recentConnections => 'Conexões recentes';
 
   @override
+  String get reconnecting => 'Reconectando...';
+
+  @override
   String get rememberPwdInMem => 'Lembrar senha na memória';
 
   @override

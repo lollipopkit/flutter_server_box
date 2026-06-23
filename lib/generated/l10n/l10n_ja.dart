@@ -670,6 +670,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get recentConnections => '最近の接続';
 
   @override
+  String get reconnecting => '再接続中...';
+
+  @override
   String get rememberPwdInMem => 'メモリにパスワードを記憶する';
 
   @override

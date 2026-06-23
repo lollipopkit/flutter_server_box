@@ -688,6 +688,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get recentConnections => 'Koneksi Terkini';
 
   @override
+  String get reconnecting => 'Menghubungkan kembali...';
+
+  @override
   String get rememberPwdInMem => 'Ingat kata sandi di dalam memori';
 
   @override

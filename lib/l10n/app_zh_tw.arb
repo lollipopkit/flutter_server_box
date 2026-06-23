@@ -198,6 +198,7 @@
   "pvePasswordHint": "使用密鑰認證時需要填寫",
   "read": "讀取",
   "recentConnections": "最近連線記錄",
+  "reconnecting": "重連中...",
   "rememberPwdInMem": "在記憶體中記住密碼",
   "rememberPwdInMemTip": "用於容器、暫停等",
   "rememberWindowSize": "記住視窗大小",
