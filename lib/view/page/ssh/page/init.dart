@@ -61,6 +61,22 @@ extension _Init on SSHPageState {
 
     _session = null;
     _drainPendingTerminalOutput();
+
+    // When the SSH transport closed unexpectedly (e.g. toggling WiFi) while a
+    // tmux session was attached, the server-side tmux session survives. Route
+    // this to the existing reconnect logic instead of tearing the tab down, so
+    // the tab isn't removed when WiFi comes back. Normal session end (shell
+    // exit) and user-initiated disconnect keep the transport open, so they
+    // still remove the tab via the path below.
+    final transportClosed = _client != null && _client!.isClosed;
+    if (mounted &&
+        transportClosed &&
+        _tmuxCurrentSession != null &&
+        _tmuxCurrentSession!.isNotEmpty) {
+      unawaited(_onConnectionLossSuspected());
+      return;
+    }
+
     if (mounted && widget.args.notFromTab) {
       context.pop();
     }
@@ -157,9 +173,6 @@ extension _Init on SSHPageState {
     _writeLn(l10n.waitConnection);
     _client ??= await genClient(
       widget.args.spi,
-      onStatus: (p0) {
-        _writeLn(p0.toString());
-      },
       onKeyboardInteractive: (_) =>
           KeybordInteractive.defaultHandle(widget.args.spi, ctx: context),
     );
@@ -263,8 +276,12 @@ extension _Init on SSHPageState {
     );
   }
 
-  Future<void> _checkConnectionHealth() async {
-    if (!mounted || _client == null || _isCheckingConnection) return;
+  Future<void> _checkConnectionHealth({bool immediate = false}) async {
+    if (!mounted || _client == null) return;
+    if (_isCheckingConnection) {
+      if (immediate) _hasPendingImmediateCheck = true;
+      return;
+    }
     _isCheckingConnection = true;
 
     try {
@@ -278,35 +295,99 @@ extension _Init on SSHPageState {
         );
       }
     } on TimeoutException catch (error) {
-      _handleConnectionCheckFailure(error);
+      _handleConnectionCheckFailure(error, immediate: immediate);
     } on Object catch (error, stackTrace) {
-      _handleConnectionCheckFailure(error, stackTrace);
+      _handleConnectionCheckFailure(
+        error,
+        stackTrace: stackTrace,
+        immediate: immediate,
+      );
     } finally {
       _isCheckingConnection = false;
+      if (_hasPendingImmediateCheck) {
+        _hasPendingImmediateCheck = false;
+        unawaited(_checkConnectionHealth(immediate: true));
+      }
     }
   }
 
-  void _handleConnectionCheckFailure(Object error, [StackTrace? stackTrace]) {
+  void _handleConnectionCheckFailure(
+    Object error, {
+    StackTrace? stackTrace,
+    bool immediate = false,
+  }) {
     Loggers.root.warning('SSH keep-alive failed', error, stackTrace);
     _missedKeepAliveCount += 1;
 
-    if (_missedKeepAliveCount < SSHPageState._maxKeepAliveFailures) {
+    if (!immediate &&
+        _missedKeepAliveCount < SSHPageState._maxKeepAliveFailures) {
       return;
     }
 
     _missedKeepAliveCount = 0;
-    _onConnectionLossSuspected();
+    unawaited(_onConnectionLossSuspected());
   }
 
-  void _onConnectionLossSuspected() {
+  Future<void> _onConnectionLossSuspected() async {
     if (!mounted || _disconnectDialogOpen) return;
 
     _disconnectDialogOpen = true;
     _reportedDisconnected = true;
     _discontinuityTimer?.cancel();
-    _writeLn('\n\nConnection lost\r\n');
+    _writeLn('\n\n${libL10n.disconnected}\r\n');
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.disconnected);
+
+    final sessionName = _tmuxCurrentSession;
+    // Check if we have any tmux session to recover
+    if (sessionName != null && sessionName.isNotEmpty) {
+      final restored = await _tryReconnectTmux(sessionName);
+      if (!mounted) return;
+      if (restored) {
+        _disconnectDialogOpen = false;
+        _reportedDisconnected = false;
+        return;
+      }
+    }
+
+    // Reconnect failed/cancelled, or no tmux to restore -> ask whether to leave.
     unawaited(_showDisconnectDialog());
+  }
+
+  /// Re-establish SSH and re-attach the previous tmux [sessionName]
+  /// (+ window), showing a cancellable progress dialog while reconnecting.
+  /// Returns `true` when the terminal was restored.
+  Future<bool> _tryReconnectTmux(String sessionName) async {
+    _reconnectCancelled = false;
+    if (mounted) {
+      _showReconnectingDialog(onCancel: () => _reconnectCancelled = true);
+    }
+    try {
+      return await _reconnectAndAttachTmux(sessionName);
+    } catch (e, st) {
+      Loggers.app.warning('SSH reconnect threw', e, st);
+      return false;
+    } finally {
+      if (mounted) contextSafe?.pop();
+    }
+  }
+
+  /// Cancellable progress dialog shown while reconnecting.
+  void _showReconnectingDialog({required VoidCallback onCancel}) {
+    unawaited(context.showRoundDialog(
+      child: Row(
+        children: [
+          const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2.5),
+          ),
+          const SizedBox(width: 16),
+          Expanded(child: Text(l10n.reconnecting)),
+          Btn.cancel(onTap: onCancel),
+        ],
+      ),
+      barrierDismiss: false,
+    ));
   }
 
   Future<void> _showDisconnectDialog() async {
@@ -332,9 +413,175 @@ extension _Init on SSHPageState {
       return;
     }
 
+    // If the client is gone or its transport already closed, "stay" means
+    // "try again" rather than resuming monitoring of a dead connection.
+    if (_client == null || _client!.isClosed) {
+      unawaited(_onConnectionLossSuspected());
+      return;
+    }
+
     _reportedDisconnected = false;
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connected);
     _setupDiscontinuityTimer();
+  }
+
+  /// Reconnect SSH after a connection loss and re-attach the previous tmux
+  /// session+window.
+  ///
+  /// Returns `true` when a usable terminal was restored (either the tmux
+  /// session was re-attached or, as a fallback, a raw shell was opened). Returns
+  /// `false` only when the SSH transport itself could not be re-established, in
+  /// which case the caller falls back to the disconnect prompt.
+  Future<bool> _reconnectAndAttachTmux(String sessionName) async {
+    // Tear down the stale SSH session/client first.
+    _session = null;
+    _cancelTerminalOutputSubscriptions();
+    final oldClient = _client;
+    _client = null;
+    try {
+      oldClient?.close();
+    } catch (e, st) {
+      Loggers.app.warning('Failed to close stale SSH client on reconnect', e, st);
+    }
+
+    TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connecting);
+
+    const maxAttempts = 10;
+    const baseInterval = Duration(milliseconds: 200);
+    const maxInterval = Duration(seconds: 3);
+    var connected = false;
+    for (var attempt = 0; attempt < maxAttempts && mounted && !_reconnectCancelled; attempt++) {
+      if (attempt > 0) {
+        final backoffMs = (baseInterval.inMilliseconds << (attempt - 1))
+            .clamp(0, maxInterval.inMilliseconds)
+            .toInt();
+        await Future.delayed(Duration(milliseconds: backoffMs));
+        if (!mounted || _reconnectCancelled) return false;
+      }
+      try {
+        _client = await genClient(
+          widget.args.spi,
+          onKeyboardInteractive: (_) =>
+              KeybordInteractive.defaultHandle(widget.args.spi, ctx: context),
+        );
+        connected = _client != null;
+        if (connected) break;
+      } catch (_) {
+        Loggers.app.info(
+          'SSH reconnect attempt ${attempt + 1}/$maxAttempts failed',
+        );
+      }
+    }
+    if (!mounted || _reconnectCancelled) return false;
+    if (!connected) {
+      Loggers.app.info('SSH reconnect failed after $maxAttempts attempts');
+      return false;
+    }
+
+    if (await _reattachTmux(sessionName: sessionName)) {
+      if (!mounted) return true;
+      _setupDiscontinuityTimer();
+      widget.args.focusNode?.requestFocus();
+      return true;
+    }
+    if (!mounted) return false;
+
+    // tmux wasn't restorable (unavailable or session gone) — fall back to a
+    // raw shell so the terminal remains usable instead of being left blank.
+    _logTmuxInfo(
+      'Previous tmux session "$sessionName" no longer available, '
+      'falling back to a raw shell',
+    );
+    _clearTmuxState();
+
+    final pty = SSHPtyConfig(
+      width: _terminal.viewWidth,
+      height: _terminal.viewHeight,
+    );
+    final shell = await _client?.shell(pty: pty, environment: _sshEnvironment);
+    if (shell == null) {
+      _writeLn(libL10n.fail);
+      return false;
+    }
+    _bindForegroundSession(shell);
+    _setupDiscontinuityTimer();
+    widget.args.focusNode?.requestFocus();
+    return true;
+  }
+
+  /// Re-attach the previous tmux [sessionName] (+ window) after reconnecting.
+  ///
+  /// Verifies via a control channel that tmux is available and that the session
+  /// still exists, then launches the attach command as the foreground session.
+  Future<bool> _reattachTmux({required String sessionName}) async {
+    final control = await _createTmuxControlSession();
+    try {
+      bool available;
+      try {
+        available = await control.isAvailable;
+      } catch (e, st) {
+        Loggers.app.warning('tmux availability check on reconnect failed', e, st);
+        return false;
+      }
+      if (!available) return false;
+
+      final tmuxBin = control.scanner.tmuxBin ?? 'tmux';
+      final List<TmuxSessionInfo> sessions;
+      try {
+        sessions = await control.sessions;
+      } catch (e, st) {
+        Loggers.app.warning('tmux list sessions on reconnect failed', e, st);
+        return false;
+      }
+      if (!sessions.any((session) => session.name == sessionName)) {
+        return false;
+      }
+
+      final windowIndex = _tmuxCurrentWindow;
+      final command = windowIndex != null
+          ? TmuxCommandBuilder.attachSessionWindow(
+              sessionName,
+              windowIndex,
+              tmuxBin: tmuxBin,
+              lang: _tmuxLang,
+            )
+          : TmuxCommandBuilder.attachSession(
+              sessionName,
+              tmuxBin: tmuxBin,
+              lang: _tmuxLang,
+            );
+
+      final pty = SSHPtyConfig(
+        width: _terminal.viewWidth,
+        height: _terminal.viewHeight,
+      );
+      final session = await _client?.execute(
+        command,
+        pty: pty,
+        environment: _sshEnvironment,
+      );
+      if (session == null) return false;
+
+      _saveTmuxState(sessionName: sessionName, windowIndex: windowIndex);
+      _bindForegroundSession(session);
+      _logTmuxInfo(
+        'Reconnected and re-attached tmux session "$sessionName"'
+        '${windowIndex != null ? ' window $windowIndex' : ''}',
+      );
+      return true;
+    } finally {
+      await control.dispose();
+    }
+  }
+
+  /// Clear the in-memory + restorable tmux state (used when a session can no
+  /// longer be restored, e.g. after it was killed server-side).
+  void _clearTmuxState() {
+    _tmuxCurrentSession = null;
+    _tmuxCurrentWindow = null;
+    _restorableTmuxSession.value = null;
+    _restorableTmuxWindow.value = null;
+    widget.args.onTmuxStateChanged?.call();
   }
 
   void _writeLn(String p0) {

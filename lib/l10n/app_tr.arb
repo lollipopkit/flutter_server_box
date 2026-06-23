@@ -163,6 +163,7 @@
   "pveVersionLow": "Bu özellik şu anda test aşamasında ve yalnızca PVE 8+ üzerinde test edildi. Lütfen dikkatli kullanın.",
   "read": "Oku",
   "recentConnections": "Son Bağlantılar",
+  "reconnecting": "Yeniden bağlanılıyor...",
   "rememberPwdInMem": "Şifreyi bellekte hatırla",
   "rememberPwdInMemTip": "Konteynerler, askıya alma vb. için kullanılır.",
   "rememberWindowSize": "Pencere boyutunu hatırla",

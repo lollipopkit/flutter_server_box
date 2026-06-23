@@ -670,6 +670,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get recentConnections => '最近の接続';
 
   @override
+  String get reconnecting => '再接続中...';
+
+  @override
   String get rememberPwdInMem => 'メモリにパスワードを記憶する';
 
   @override
@@ -762,6 +765,25 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get ssh => 'SSH';
+
+  @override
+  String get sshConnectionMode => 'SSH connection mode';
+
+  @override
+  String get sshConnectionModeBuiltin => 'Built-in';
+
+  @override
+  String get sshConnectionModeSystem => 'System SSH';
+
+  @override
+  String get sshConnectionModeTip =>
+      'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
+
+  @override
+  String get sshConnectionModeUseBuiltin => 'Use built-in terminal';
+
+  @override
+  String get sshConnectionModeUseSystem => 'Use system SSH';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {

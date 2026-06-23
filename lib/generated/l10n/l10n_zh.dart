@@ -647,6 +647,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recentConnections => '最近连接记录';
 
   @override
+  String get reconnecting => '重连中...';
+
+  @override
   String get rememberPwdInMem => '在内存中记住密码';
 
   @override
@@ -738,6 +741,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ssh => 'SSH';
+
+  @override
+  String get sshConnectionMode => 'SSH 连接方式';
+
+  @override
+  String get sshConnectionModeBuiltin => '内置终端';
+
+  @override
+  String get sshConnectionModeSystem => '系统 SSH';
+
+  @override
+  String get sshConnectionModeTip => '内置终端：使用应用自带的终端。系统 SSH：在外部终端中调用系统 ssh 命令。';
+
+  @override
+  String get sshConnectionModeUseBuiltin => '使用内置终端';
+
+  @override
+  String get sshConnectionModeUseSystem => '使用系统 SSH';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
@@ -1644,6 +1665,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get recentConnections => '最近連線記錄';
+
+  @override
+  String get reconnecting => '重連中...';
 
   @override
   String get rememberPwdInMem => '在記憶體中記住密碼';

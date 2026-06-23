@@ -179,7 +179,8 @@ abstract final class GithubIds {
     'Muska-Ami',
     'wu4339',
     'shengroubao',
-    'nuclear06'
+    'nuclear06',
+    'shen-lan'
   };
 }
 

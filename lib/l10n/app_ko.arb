@@ -164,6 +164,7 @@
   "pveVersionLow": "이 기능은 현재 테스트 단계이며 PVE 8+에서만 테스트되었습니다. 주의하여 사용해 주세요.",
   "read": "읽기",
   "recentConnections": "최근 연결",
+  "reconnecting": "재연결 중...",
   "rememberPwdInMem": "메모리에 비밀번호 저장",
   "rememberPwdInMemTip": "컨테이너, 일시 중지 등에 사용됩니다.",
   "rememberWindowSize": "창 크기 기억",

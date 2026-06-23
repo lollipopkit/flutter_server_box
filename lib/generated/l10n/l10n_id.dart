@@ -688,6 +688,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get recentConnections => 'Koneksi Terkini';
 
   @override
+  String get reconnecting => 'Menghubungkan kembali...';
+
+  @override
   String get rememberPwdInMem => 'Ingat kata sandi di dalam memori';
 
   @override
@@ -781,6 +784,25 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get ssh => 'SSH';
+
+  @override
+  String get sshConnectionMode => 'SSH connection mode';
+
+  @override
+  String get sshConnectionModeBuiltin => 'Built-in';
+
+  @override
+  String get sshConnectionModeSystem => 'System SSH';
+
+  @override
+  String get sshConnectionModeTip =>
+      'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
+
+  @override
+  String get sshConnectionModeUseBuiltin => 'Use built-in terminal';
+
+  @override
+  String get sshConnectionModeUseSystem => 'Use system SSH';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {

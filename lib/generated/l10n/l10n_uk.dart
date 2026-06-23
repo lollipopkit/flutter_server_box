@@ -692,6 +692,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get recentConnections => 'Останні з\'єднання';
 
   @override
+  String get reconnecting => 'Перепідключення...';
+
+  @override
   String get rememberPwdInMem => 'Запам\'ятати пароль у пам\'яті';
 
   @override
@@ -786,6 +789,25 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get ssh => 'SSH';
+
+  @override
+  String get sshConnectionMode => 'SSH connection mode';
+
+  @override
+  String get sshConnectionModeBuiltin => 'Built-in';
+
+  @override
+  String get sshConnectionModeSystem => 'System SSH';
+
+  @override
+  String get sshConnectionModeTip =>
+      'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
+
+  @override
+  String get sshConnectionModeUseBuiltin => 'Use built-in terminal';
+
+  @override
+  String get sshConnectionModeUseSystem => 'Use system SSH';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {

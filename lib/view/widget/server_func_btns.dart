@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -182,8 +183,12 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
 }
 
 void _gotoSSH(Spi spi, BuildContext context) async {
-  // run built-in ssh on macOS due to incompatibility
-  if (isMobile || isMacOS) {
+  // Determine whether to use built-in SSH or system SSH
+  final useSystemSsh = Stores.setting.sshConnectionMode.fetch();
+  final useBuiltin = isMobile || !useSystemSsh;
+
+  // Use built-in SSH on mobile or when system SSH is not enabled
+  if (useBuiltin) {
     Navigator.restorablePush(
       context,
       SSHPage.restorableRouteBuilder,
@@ -248,6 +253,19 @@ void _gotoSSH(Spi spi, BuildContext context) async {
       case Pfs.windows:
         await Process.start('cmd', ['/c', 'start'] + sshCommand);
         break;
+      case Pfs.macos:
+        try {
+          final command = _shellJoin(sshCommand);
+          await Process.start('osascript', [
+            '-e',
+            'tell application "Terminal" to activate',
+            '-e',
+            'tell application "Terminal" to do script ${_appleScriptString(command)}',
+          ]);
+        } catch (e, s) {
+          context.showErrDialog(e, s, libL10n.emulator);
+        }
+        break;
       case Pfs.linux:
         final scriptDir = await Directory.systemTemp.createTemp(
           'srvbox_launch_term_',
@@ -256,9 +274,7 @@ void _gotoSSH(Spi spi, BuildContext context) async {
         await scriptFile.create(exclusive: true);
         await scriptFile.writeAsString(_runEmulatorShell);
 
-        if (Platform.isLinux || Platform.isMacOS) {
-          await Process.run('chmod', ['+x', scriptFile.path]);
-        }
+        await Process.run('chmod', ['+x', scriptFile.path]);
 
         try {
           var terminal = Stores.setting.desktopTerminal.fetch();
@@ -266,7 +282,9 @@ void _gotoSSH(Spi spi, BuildContext context) async {
 
           await Process.start(scriptFile.path, [terminal, ...sshCommand]);
         } catch (e, s) {
-          context.showErrDialog(e, s, libL10n.emulator);
+          if (context.mounted) {
+            context.showErrDialog(e, s, libL10n.emulator);
+          }
         } finally {
           if (await scriptDir.exists()) {
             await scriptDir.delete(recursive: true);
@@ -402,6 +420,15 @@ bool _checkClient(BuildContext context, String id, WidgetRef ref) {
     return false;
   }
   return true;
+}
+
+String _shellJoin(List<String> args) {
+  return args.map(shellSingleQuote).join(' ');
+}
+
+String _appleScriptString(String value) {
+  final escaped = value.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
+  return '"$escaped"';
 }
 
 const _runEmulatorShell = '''

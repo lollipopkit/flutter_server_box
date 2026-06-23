@@ -276,6 +276,11 @@ class SettingStore extends HiveStore {
     false,
   );
 
+  /// SSH connection mode on desktop.
+  /// false = built-in (dartssh2 + xterm)
+  /// true = system SSH (launch ssh command in external terminal)
+  late final sshConnectionMode = propertyDefault('sshConnectionMode', false);
+
   /// Run foreground service on Android, if the SSH terminal is running
   late final fgService = propertyDefault('fgService', false);
 
@@ -318,4 +323,24 @@ class SettingStore extends HiveStore {
 
   /// Default tmux session name. Empty string means use 'server_box'.
   late final tmuxSessionName = propertyDefault('tmuxSessionName', '');
+
+  /// Migrate sshConnectionMode from old int values (-1/0/1) to bool.
+  /// Call once after store initialization.
+  void migrateSshConnectionMode() {
+    const key = 'sshConnectionMode';
+    const flagKey = 'sshConnectionModeMigrated';
+    if (box.get(flagKey) == true) return;
+    final raw = box.get(key);
+    if (raw is int) {
+      // -1 = auto, 0 = built-in, 1 = system SSH
+      final bool value;
+      if (raw == -1) {
+        value = !isMacOS; // macOS default built-in, others default system SSH
+      } else {
+        value = raw != 0;
+      }
+      box.put(key, value);
+    }
+    box.put(flagKey, true);
+  }
 }
