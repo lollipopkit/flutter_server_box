@@ -721,15 +721,16 @@ class SSHPageState extends ConsumerState<SSHPage>
 
     dprint('[SUDO] Starting sudo password injection...');
 
-    // Drain any pending terminal output first to ensure buffer is up-to-date
-    _drainPendingTerminalOutput();
-
-    // Retry detection with exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms
-    // Total max wait: ~3.1 seconds
     bool detected = false;
-    const delays = [100, 200, 400, 800, 1600];
+    const delays = [0, 100, 200, 400, 800, 1600];
     for (int i = 0; i < delays.length; i++) {
-      // Flush terminal buffer before each check
+      final delayMs = delays[i];
+      if (delayMs > 0) {
+        dprint('[SUDO] Waiting ${delayMs}ms before attempt ${i + 1}...');
+        await Future.delayed(Duration(milliseconds: delayMs));
+        if (!mounted) return;
+      }
+
       _drainPendingTerminalOutput();
 
       if (_hasPendingSudoPrompt()) {
@@ -739,11 +740,8 @@ class SSHPageState extends ConsumerState<SSHPage>
       }
       dprint(
         '[SUDO] Attempt ${i + 1}/${delays.length}: prompt not found, '
-        'waiting ${delays[i]}ms...',
+        'next delay: ${i + 1 < delays.length ? delays[i + 1] : 0}ms',
       );
-      if (i < delays.length - 1) {
-        await Future.delayed(Duration(milliseconds: delays[i]));
-      }
     }
 
     if (!detected) {
@@ -783,12 +781,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   bool _hasPendingSudoPromptInOutputTail() {
-    final normalized = _normalizeSshOutputTail(_sshOutputTail);
-    final raw = normalized
-        .split('\n')
-        .reversed
-        .map((line) => line.trim())
-        .firstWhere((line) => line.isNotEmpty, orElse: () => '');
+    final raw = _latestSshOutputLine();
     if (raw.isEmpty) return false;
     if (_isSudoPromptText(raw)) {
       dprint('[SUDO] Detected in SSH output tail: "$raw"');
@@ -796,6 +789,15 @@ class SSHPageState extends ConsumerState<SSHPage>
     }
     dprint('[SUDO] Latest SSH output line is not prompt: "$raw"');
     return false;
+  }
+
+  String _latestSshOutputLine() {
+    final normalized = _normalizeSshOutputTail(_sshOutputTail);
+    return normalized
+        .split('\n')
+        .reversed
+        .map((line) => line.trim())
+        .firstWhere((line) => line.isNotEmpty, orElse: () => '');
   }
 
   bool _isSudoPromptText(String raw) {

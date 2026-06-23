@@ -279,11 +279,7 @@ extension _Init on SSHPageState {
   void _drainPendingTerminalOutput() {
     _terminalFlushTimer?.cancel();
     _terminalFlushTimer = null;
-    // Keep draining until no more data arrives
-    // This ensures we catch data that arrives during the drain
-    var lastPending = -1;
-    while (_terminalOutputBuffer.hasPending && _terminalOutputBuffer.pendingChars != lastPending) {
-      lastPending = _terminalOutputBuffer.pendingChars;
+    while (_terminalOutputBuffer.hasPending) {
       _flushPendingTerminalOutput(scheduleNext: false);
     }
   }

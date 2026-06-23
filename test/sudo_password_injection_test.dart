@@ -2,22 +2,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:xterm/core.dart';
 
-/// Pure function extracted from SSHPageState._hasPendingSudoPrompt()
-/// for isolated testing. Takes already-stringified terminal buffer lines.
-bool hasPendingSudoPrompt(Iterable<String> rawLines) {
-  var scannedCount = 0;
-  for (final raw in rawLines) {
-    final trimmed = raw.trim();
-    if (trimmed.isEmpty) continue;
-    scannedCount++;
-    if (scannedCount > 15) break;
-    final lower = trimmed.toLowerCase();
-    if (Miscs.pwdRequestWithUserReg.hasMatch(trimmed)) return true;
-    if (lower.contains('[sudo] password')) return true;
-    if (lower.endsWith(':') &&
-        (lower.contains('password') || lower.contains('密码'))) {
-      return true;
-    }
+bool isSudoPromptText(String raw) {
+  final trimmed = raw.trim();
+  final lower = trimmed.toLowerCase();
+  if (Miscs.pwdRequestWithUserReg.hasMatch(trimmed)) return true;
+  if (lower.contains('[sudo] password')) return true;
+  if (lower.endsWith(':') &&
+      (lower.contains('password') || lower.contains('密码'))) {
+    return true;
   }
   return false;
 }
@@ -37,82 +29,47 @@ bool hasPendingSudoPromptInOutputTail(String value) {
       .map((line) => line.trim())
       .firstWhere((line) => line.isNotEmpty, orElse: () => '');
   if (latest.isEmpty) return false;
-  return hasPendingSudoPrompt([latest]);
+  return isSudoPromptText(latest);
 }
 
 void main() {
-  group('Sudo prompt detection (hasPendingSudoPrompt)', () {
+  group('Sudo prompt detection', () {
     test('detects standard English sudo prompt', () {
-      expect(hasPendingSudoPrompt(['[sudo] password for alice: ']), isTrue);
+      expect(isSudoPromptText('[sudo] password for alice: '), isTrue);
     });
 
     test('detects sudo prompt without trailing space', () {
-      expect(hasPendingSudoPrompt(['[sudo] password for root:']), isTrue);
+      expect(isSudoPromptText('[sudo] password for root:'), isTrue);
     });
 
     test('detects sudo prompt case insensitive', () {
-      expect(hasPendingSudoPrompt(['[SUDO] Password for user:']), isTrue);
+      expect(isSudoPromptText('[SUDO] Password for user:'), isTrue);
     });
 
     test('detects password prompt ending with colon', () {
-      expect(hasPendingSudoPrompt(['Password:']), isTrue);
+      expect(isSudoPromptText('Password:'), isTrue);
     });
 
     test('detects Chinese password prompt with ASCII colon', () {
-      expect(hasPendingSudoPrompt(['密码:']), isTrue);
+      expect(isSudoPromptText('密码:'), isTrue);
     });
 
     test('does NOT detect Chinese prompt with full-width colon (known gap)',
         () {
       // [sudo] 用户 alice 的密码：  — full-width '：' does not match ':'
       expect(
-        hasPendingSudoPrompt(['[sudo] 用户 alice 的密码：']),
+        isSudoPromptText('[sudo] 用户 alice 的密码：'),
         isFalse,
         reason: 'Full-width colon does not match endsWith(":") — known gap',
       );
     });
 
     test('ignores empty lines', () {
-      expect(hasPendingSudoPrompt(['', '  ', '']), isFalse);
+      expect(isSudoPromptText(''), isFalse);
     });
 
     test('ignores unrelated terminal output', () {
-      expect(
-        hasPendingSudoPrompt([
-          'total 48',
-          'drwxr-xr-x 4 user user 4096 Jan  1 00:00 .',
-          r'user@host:~$',
-        ]),
-        isFalse,
-      );
-    });
-
-    test('scans multiple lines and finds prompt in later lines', () {
-      expect(
-        hasPendingSudoPrompt([
-          'Reading package lists...',
-          'Building dependency tree...',
-          'Reading state information...',
-          '[sudo] password for user: ',
-        ]),
-        isTrue,
-      );
-    });
-
-    test('skips trailing empty terminal lines before scan limit', () {
-      expect(
-        hasPendingSudoPrompt([
-          '',
-          '',
-          '',
-          '[sudo] password for user: ',
-          ...List.filled(24, ''),
-        ].reversed),
-        isTrue,
-        reason:
-            'The terminal buffer can contain many empty rows after the prompt; '
-            'scan limit must count non-empty lines only.',
-      );
+      expect(isSudoPromptText('gt610@host:~\$'), isFalse);
     });
 
     test('detects sudo prompt in SSH output tail', () {
@@ -370,31 +327,30 @@ void main() {
 
     test('sudo prompt detection works after terminal.write', () {
       final terminal = Terminal(platform: TerminalTargetPlatform.linux);
-      
+
       // Simulate sudo prompt being written to terminal
       terminal.write('[sudo] password for user: ');
-      
-      // Verify detection works - use toList() to convert IndexAwareCircularBuffer
-      final lines = terminal.buffer.lines.toList()
-          .map((l) => l.toString())
-          .where((l) => l.trim().isNotEmpty)
-          .toList();
-      expect(hasPendingSudoPrompt(lines), isTrue);
+
+      expect(isSudoPromptText(terminal.buffer.currentLine.toString()), isTrue);
     });
 
     test('sudo prompt detection with buffered output', () {
       final terminal = Terminal(platform: TerminalTargetPlatform.linux);
-      
+
       // Simulate output that arrives in chunks (like real SSH)
       terminal.write('some previous output\r\n');
       terminal.write('[sudo] password for user: ');
-      
-      // Verify detection works even with preceding output
-      final lines = terminal.buffer.lines.toList()
-          .map((l) => l.toString())
-          .where((l) => l.trim().isNotEmpty)
-          .toList();
-      expect(hasPendingSudoPrompt(lines), isTrue);
+
+      expect(isSudoPromptText(terminal.buffer.currentLine.toString()), isTrue);
+    });
+
+    test('sudo prompt detection ignores terminal history', () {
+      final terminal = Terminal(platform: TerminalTargetPlatform.linux);
+
+      terminal.write('[sudo] password for user: \r\n');
+      terminal.write('gt610@host:~\$ ');
+
+      expect(isSudoPromptText(terminal.buffer.currentLine.toString()), isFalse);
     });
   });
 }
