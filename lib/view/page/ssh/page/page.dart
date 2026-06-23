@@ -102,7 +102,10 @@ class SSHPage extends ConsumerStatefulWidget {
       return MaterialPageRoute(builder: (_) => const SizedBox.shrink());
     }
     return MaterialPageRoute(
-      builder: (_) => SSHPage(args: SshPageArgs(spi: spi)),
+      builder: (_) => VirtualWindowFrame(
+        showCaption: WindowFrameConfig.showCaption,
+        child: SSHPage(args: SshPageArgs(spi: spi)),
+      ),
     );
   }
 }
@@ -415,11 +418,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     );
 
     return SizedBox(
-      height:
-          _media.size.height -
-          _virtKeysHeight -
-          _media.padding.bottom -
-          _media.padding.top,
+      height: double.infinity,
       child: Stack(children: children),
     );
   }
