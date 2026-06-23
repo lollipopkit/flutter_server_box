@@ -44,11 +44,11 @@ abstract final class SudoPassword {
     return await LocalAuth.goWithResult() == AuthResult.success;
   }
 
-  /// Returns true if [raw] looks like an active sudo password prompt.
-  /// [raw] should already be trimmed.
-  static bool isPromptText(String raw) {
-    final lower = raw.toLowerCase();
-    if (Miscs.pwdRequestWithUserReg.hasMatch(raw)) return true;
+  /// Returns true if [trimmed] looks like an active sudo password prompt.
+  /// [trimmed] should already be trimmed.
+  static bool isPromptText(String trimmed) {
+    final lower = trimmed.toLowerCase();
+    if (Miscs.pwdRequestWithUserReg.hasMatch(trimmed)) return true;
     if (lower.contains('[sudo] password')) return true;
     if ((lower.endsWith(':') || lower.endsWith('：')) &&
         (lower.contains('password') || lower.contains('密码'))) {
