@@ -231,11 +231,22 @@ extension _Init on SSHPageState {
 
   void _queueTerminalOutput(String data) {
     _terminalOutputBuffer.add(data);
+    _appendSshOutputTail(data);
     // Log if we might be receiving a sudo prompt
     if (data.contains('[sudo]') || data.contains('password') || data.contains('密码')) {
       dprint('[SUDO] Received potential prompt data: "${data.trim()}"');
     }
     _scheduleTerminalFlush();
+  }
+
+  void _appendSshOutputTail(String data) {
+    if (data.isEmpty) return;
+    _sshOutputTail += data;
+    if (_sshOutputTail.length > SSHPageState._sshOutputTailCharLimit) {
+      _sshOutputTail = _sshOutputTail.substring(
+        _sshOutputTail.length - SSHPageState._sshOutputTailCharLimit,
+      );
+    }
   }
 
   void _scheduleTerminalFlush() {

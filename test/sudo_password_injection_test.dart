@@ -22,6 +22,24 @@ bool hasPendingSudoPrompt(Iterable<String> rawLines) {
   return false;
 }
 
+String normalizeSshOutputTail(String value) {
+  return value
+      .replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '')
+      .replaceAll('\r\n', '\n')
+      .replaceAll('\r', '\n');
+}
+
+bool hasPendingSudoPromptInOutputTail(String value) {
+  final normalized = normalizeSshOutputTail(value);
+  final latest = normalized
+      .split('\n')
+      .reversed
+      .map((line) => line.trim())
+      .firstWhere((line) => line.isNotEmpty, orElse: () => '');
+  if (latest.isEmpty) return false;
+  return hasPendingSudoPrompt([latest]);
+}
+
 void main() {
   group('Sudo prompt detection (hasPendingSudoPrompt)', () {
     test('detects standard English sudo prompt', () {
@@ -94,6 +112,58 @@ void main() {
         reason:
             'The terminal buffer can contain many empty rows after the prompt; '
             'scan limit must count non-empty lines only.',
+      );
+    });
+
+    test('detects sudo prompt in SSH output tail', () {
+      expect(
+        hasPendingSudoPromptInOutputTail(
+          'gt610@Debian1145:~\$ sudo apt update\r\n'
+          '[sudo] password for gt610: ',
+        ),
+        isTrue,
+      );
+    });
+
+    test('detects chunked sudo prompt after tail concatenation', () {
+      final chunks = [
+        'gt610@Debian1145:~\$ sudo apt update\r\n[sudo] pass',
+        'word for gt610: ',
+      ];
+
+      expect(hasPendingSudoPromptInOutputTail(chunks.join()), isTrue);
+    });
+
+    test('detects sudo prompt wrapped in ANSI color sequence', () {
+      expect(
+        hasPendingSudoPromptInOutputTail(
+          '\x1B[31m[sudo] password for gt610: \x1B[0m',
+        ),
+        isTrue,
+      );
+    });
+
+    test('does not detect ordinary output in SSH output tail', () {
+      expect(
+        hasPendingSudoPromptInOutputTail(
+          'Hit:1 http://deb.debian.org/debian bookworm InRelease\r\n'
+          'Reading package lists... Done\r\n'
+          'gt610@Debian1145:~\$ ',
+        ),
+        isFalse,
+      );
+    });
+
+    test('does not detect stale sudo prompt in SSH output history', () {
+      expect(
+        hasPendingSudoPromptInOutputTail(
+          'gt610@Debian1145:~\$ sudo apt update\r\n'
+          '[sudo] password for gt610: \r\n'
+          'All packages are up to date.\r\n'
+          'gt610@Debian1145:~\$ ',
+        ),
+        isFalse,
+        reason: 'Only the latest non-empty output line should be actionable.',
       );
     });
   });

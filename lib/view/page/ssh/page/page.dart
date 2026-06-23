@@ -155,11 +155,13 @@ class SSHPageState extends ConsumerState<SSHPage>
   Timer? _discontinuityTimer;
   Timer? _terminalFlushTimer;
   final _terminalOutputBuffer = TerminalOutputBuffer();
+  String _sshOutputTail = '';
   final List<StreamSubscription<String>> _terminalOutputSubscriptions = [];
   static const _connectionCheckInterval = Duration(seconds: 60);
   static const _connectionCheckTimeout = Duration(seconds: 10);
   static const _terminalFlushInterval = Duration(milliseconds: 16);
   static const _terminalFlushCharLimit = 32768;
+  static const _sshOutputTailCharLimit = 8192;
   static const _maxKeepAliveFailures = 3;
   int _missedKeepAliveCount = 0;
   bool _isCheckingConnection = false;
@@ -755,6 +757,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     dprint('[SUDO] Sending password...');
     _terminal.textInput(password);
     _terminal.keyInput(TerminalKey.enter);
+    _sshOutputTail = '';
     dprint('[SUDO] Password sent successfully');
 
     if (!mounted) return;
@@ -764,35 +767,53 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   bool _hasPendingSudoPrompt() {
-    final lines = _terminal.buffer.lines.toList().reversed;
-    final scannedLines = <String>[];
-    for (final line in lines) {
-      final raw = line.toString().trim();
-      if (raw.isEmpty) continue;
-      scannedLines.add(raw);
-      if (scannedLines.length > 15) break;
-      final lower = raw.toLowerCase();
-      if (Miscs.pwdRequestWithUserReg.hasMatch(raw)) {
-        dprint('[SUDO] Detected via regex: "$raw"');
-        return true;
-      }
-      if (lower.contains('[sudo] password')) {
-        dprint('[SUDO] Detected via [sudo] password: "$raw"');
-        return true;
-      }
-      if (lower.endsWith(':') &&
-          (lower.contains('password') || lower.contains('密码'))) {
-        dprint('[SUDO] Detected via password colon: "$raw"');
-        return true;
-      }
+    return _hasPendingSudoPromptInTerminalBuffer() ||
+        _hasPendingSudoPromptInOutputTail();
+  }
+
+  bool _hasPendingSudoPromptInTerminalBuffer() {
+    final raw = _terminal.buffer.currentLine.toString().trim();
+    if (raw.isEmpty) return false;
+    if (_isSudoPromptText(raw)) {
+      dprint('[SUDO] Detected in terminal current line: "$raw"');
+      return true;
     }
-    if (scannedLines.isNotEmpty) {
-      dprint(
-        '[SUDO] Scanned ${scannedLines.length} lines, no prompt found. '
-        'Last 3: ${scannedLines.take(3).toList()}',
-      );
+    dprint('[SUDO] Current terminal line is not prompt: "$raw"');
+    return false;
+  }
+
+  bool _hasPendingSudoPromptInOutputTail() {
+    final normalized = _normalizeSshOutputTail(_sshOutputTail);
+    final raw = normalized
+        .split('\n')
+        .reversed
+        .map((line) => line.trim())
+        .firstWhere((line) => line.isNotEmpty, orElse: () => '');
+    if (raw.isEmpty) return false;
+    if (_isSudoPromptText(raw)) {
+      dprint('[SUDO] Detected in SSH output tail: "$raw"');
+      return true;
+    }
+    dprint('[SUDO] Latest SSH output line is not prompt: "$raw"');
+    return false;
+  }
+
+  bool _isSudoPromptText(String raw) {
+    final lower = raw.toLowerCase();
+    if (Miscs.pwdRequestWithUserReg.hasMatch(raw)) return true;
+    if (lower.contains('[sudo] password')) return true;
+    if (lower.endsWith(':') &&
+        (lower.contains('password') || lower.contains('密码'))) {
+      return true;
     }
     return false;
+  }
+
+  String _normalizeSshOutputTail(String value) {
+    return value
+        .replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '')
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n');
   }
 
   /// Dump terminal buffer content for debugging
@@ -805,6 +826,11 @@ class SSHPageState extends ConsumerState<SSHPage>
         dprint('[SUDO]   Line $i: "$line"');
       }
     }
+    final normalizedTail = _normalizeSshOutputTail(_sshOutputTail);
+    final tailPreview = normalizedTail.length > 1000
+        ? normalizedTail.substring(normalizedTail.length - 1000)
+        : normalizedTail;
+    dprint('[SUDO] SSH output tail preview: "$tailPreview"');
   }
 
   void _updateVirtKeysHeight() {
