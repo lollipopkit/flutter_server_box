@@ -719,14 +719,11 @@ class SSHPageState extends ConsumerState<SSHPage>
       return;
     }
 
-    dprint('[SUDO] Starting sudo password injection...');
-
     bool detected = false;
     const delays = [0, 100, 200, 400, 800, 1600];
     for (int i = 0; i < delays.length; i++) {
       final delayMs = delays[i];
       if (delayMs > 0) {
-        dprint('[SUDO] Waiting ${delayMs}ms before attempt ${i + 1}...');
         await Future.delayed(Duration(milliseconds: delayMs));
         if (!mounted) return;
       }
@@ -735,28 +732,19 @@ class SSHPageState extends ConsumerState<SSHPage>
 
       if (_hasPendingSudoPrompt()) {
         detected = true;
-        dprint('[SUDO] Prompt detected on attempt ${i + 1}');
         break;
       }
-      dprint(
-        '[SUDO] Attempt ${i + 1}/${delays.length}: prompt not found, '
-        'next delay: ${i + 1 < delays.length ? delays[i + 1] : 0}ms',
-      );
     }
 
     if (!detected) {
-      dprint('[SUDO] Prompt not detected after ${delays.length} attempts');
-      _dumpTerminalBuffer();
       if (!mounted) return;
-      context.showSnackBar(libL10n.fail);
+      context.showSnackBar(l10n.sudoPromptNotFound);
       return;
     }
 
-    dprint('[SUDO] Sending password...');
     _terminal.textInput(password);
     _terminal.keyInput(TerminalKey.enter);
     _sshOutputTail = '';
-    dprint('[SUDO] Password sent successfully');
 
     if (!mounted) return;
     widget.args.focusNode?.requestFocus();
@@ -772,23 +760,13 @@ class SSHPageState extends ConsumerState<SSHPage>
   bool _hasPendingSudoPromptInTerminalBuffer() {
     final raw = _terminal.buffer.currentLine.toString().trim();
     if (raw.isEmpty) return false;
-    if (_isSudoPromptText(raw)) {
-      dprint('[SUDO] Detected in terminal current line: "$raw"');
-      return true;
-    }
-    dprint('[SUDO] Current terminal line is not prompt: "$raw"');
-    return false;
+    return _isSudoPromptText(raw);
   }
 
   bool _hasPendingSudoPromptInOutputTail() {
     final raw = _latestSshOutputLine();
     if (raw.isEmpty) return false;
-    if (_isSudoPromptText(raw)) {
-      dprint('[SUDO] Detected in SSH output tail: "$raw"');
-      return true;
-    }
-    dprint('[SUDO] Latest SSH output line is not prompt: "$raw"');
-    return false;
+    return _isSudoPromptText(raw);
   }
 
   String _latestSshOutputLine() {
@@ -816,23 +794,6 @@ class SSHPageState extends ConsumerState<SSHPage>
         .replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '')
         .replaceAll('\r\n', '\n')
         .replaceAll('\r', '\n');
-  }
-
-  /// Dump terminal buffer content for debugging
-  void _dumpTerminalBuffer() {
-    final lines = _terminal.buffer.lines.toList();
-    dprint('[SUDO] Terminal buffer dump (${lines.length} lines):');
-    for (int i = 0; i < lines.length && i < 30; i++) {
-      final line = lines[i].toString();
-      if (line.trim().isNotEmpty) {
-        dprint('[SUDO]   Line $i: "$line"');
-      }
-    }
-    final normalizedTail = _normalizeSshOutputTail(_sshOutputTail);
-    final tailPreview = normalizedTail.length > 1000
-        ? normalizedTail.substring(normalizedTail.length - 1000)
-        : normalizedTail;
-    dprint('[SUDO] SSH output tail preview: "$tailPreview"');
   }
 
   void _updateVirtKeysHeight() {

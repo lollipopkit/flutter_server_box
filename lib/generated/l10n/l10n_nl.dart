@@ -956,6 +956,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get trySudo => 'Probeer sudo te gebruiken';
 
   @override
+  String get sudoPromptNotFound => 'No sudo password prompt is active.';
+
+  @override
   String get unknown => 'Onbekend';
 
   @override

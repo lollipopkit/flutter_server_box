@@ -225,6 +225,7 @@
   "time": "Zeit",
   "times": "x",
   "trySudo": "Versuche es mit sudo",
+  "sudoPromptNotFound": "No sudo password prompt is active.",
   "unknown": "Unbekannt",
   "unkownConvertMode": "Unbekannter Konvertierungsmodus",
   "update": "Update",

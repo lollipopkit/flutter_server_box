@@ -232,10 +232,6 @@ extension _Init on SSHPageState {
   void _queueTerminalOutput(String data) {
     _terminalOutputBuffer.add(data);
     _appendSshOutputTail(data);
-    // Log if we might be receiving a sudo prompt
-    if (data.contains('[sudo]') || data.contains('password') || data.contains('密码')) {
-      dprint('[SUDO] Received potential prompt data: "${data.trim()}"');
-    }
     _scheduleTerminalFlush();
   }
 
@@ -266,10 +262,6 @@ extension _Init on SSHPageState {
     );
     if (output.isNotEmpty) {
       _terminal.write(output);
-      // Log if we flushed data that might contain sudo prompt
-      if (output.contains('[sudo]') || output.contains('password') || output.contains('密码')) {
-        dprint('[SUDO] Flushed terminal output containing prompt data');
-      }
     }
     if (scheduleNext && _terminalOutputBuffer.hasPending) {
       _scheduleTerminalFlush();

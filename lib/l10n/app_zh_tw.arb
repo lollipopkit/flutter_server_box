@@ -260,6 +260,7 @@
   "time": "時間",
   "times": "次",
   "trySudo": "嘗試使用 sudo",
+  "sudoPromptNotFound": "目前沒有 sudo 密碼提示。",
   "unknown": "未知",
   "unkownConvertMode": "未知轉換模式",
   "update": "更新",

@@ -958,6 +958,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get trySudo => 'Versuche es mit sudo';
 
   @override
+  String get sudoPromptNotFound => 'No sudo password prompt is active.';
+
+  @override
   String get unknown => 'Unbekannt';
 
   @override

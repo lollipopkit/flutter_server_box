@@ -229,6 +229,7 @@
   "time": "시간",
   "times": "회",
   "trySudo": "sudo 사용 시도",
+  "sudoPromptNotFound": "No sudo password prompt is active.",
   "unknown": "알 수 없음",
   "unkownConvertMode": "알 수 없는 변환 모드",
   "update": "업데이트",

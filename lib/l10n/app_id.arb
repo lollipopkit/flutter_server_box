@@ -225,6 +225,7 @@
   "time": "Waktu",
   "times": "Waktu",
   "trySudo": "Cobalah menggunakan sudo",
+  "sudoPromptNotFound": "No sudo password prompt is active.",
   "unknown": "Tidak dikenal",
   "unkownConvertMode": "Mode Konversi Tidak Diketahui",
   "update": "Memperbarui",

@@ -226,6 +226,7 @@
   "time": "Час",
   "times": "Рази",
   "trySudo": "Спробуйте використовувати sudo",
+  "sudoPromptNotFound": "No sudo password prompt is active.",
   "unknown": "Невідомо",
   "unkownConvertMode": "Невідомий режим конвертації",
   "update": "Оновити",

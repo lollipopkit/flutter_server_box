@@ -225,6 +225,7 @@
   "time": "Zaman",
   "times": "Kez",
   "trySudo": "Sudo ile dene",
+  "sudoPromptNotFound": "No sudo password prompt is active.",
   "unknown": "Bilinmeyen",
   "unkownConvertMode": "Bilinmeyen dönüşüm modu",
   "update": "Güncelle",
