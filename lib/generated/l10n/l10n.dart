@@ -1518,6 +1518,18 @@ abstract class AppLocalizations {
   /// **'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.'**
   String get sshConnectionModeTip;
 
+  /// No description provided for @sshConnectionModeUseBuiltin.
+  ///
+  /// In en, this message translates to:
+  /// **'Use built-in terminal'**
+  String get sshConnectionModeUseBuiltin;
+
+  /// No description provided for @sshConnectionModeUseSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Use system SSH'**
+  String get sshConnectionModeUseSystem;
+
   /// No description provided for @sshConfigDuplicatesSkipped.
   ///
   /// In en, this message translates to:

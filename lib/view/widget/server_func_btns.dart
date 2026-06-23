@@ -183,8 +183,8 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
 
 void _gotoSSH(Spi spi, BuildContext context) async {
   // Determine whether to use built-in SSH or system SSH
-  final mode = Stores.setting.sshConnectionMode.fetch();
-  final useBuiltin = isMobile || (mode == -1 ? isMacOS : mode == 0);
+  final useSystemSsh = Stores.setting.sshConnectionMode.fetch();
+  final useBuiltin = isMobile || !useSystemSsh;
 
   // run built-in ssh on macOS due to incompatibility
   if (useBuiltin) {

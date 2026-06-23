@@ -243,6 +243,8 @@
   "sshConnectionModeBuiltin": "Built-in",
   "sshConnectionModeSystem": "System SSH",
   "sshConnectionModeTip": "Built-in: use the app's terminal. System SSH: launch the system ssh command in an external terminal.",
+  "sshConnectionModeUseBuiltin": "Use built-in terminal",
+  "sshConnectionModeUseSystem": "Use system SSH",
   "sshConfigDuplicatesSkipped": "{duplicateCount} duplicates will be skipped",
   "sshConfigFound": "We found SSH configuration on your system.",
   "sshConfigFoundServers": "Found {totalCount} servers",

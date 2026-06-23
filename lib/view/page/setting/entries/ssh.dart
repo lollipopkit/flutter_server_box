@@ -428,33 +428,15 @@ extension _SSH on _AppSettingsPageState {
   }
 
   Widget _buildSshConnectionMode() {
-    String modeLabel(int val) {
-      final effective = val == -1 ? (isMacOS ? 0 : 1) : val;
-      return effective == 0
-          ? l10n.sshConnectionModeBuiltin
-          : l10n.sshConnectionModeSystem;
-    }
-
-    return _setting.sshConnectionMode.listenable().listenVal((val) {
+    return _setting.sshConnectionMode.listenable().listenVal((useSystemSsh) {
+      final title = useSystemSsh
+          ? l10n.sshConnectionModeUseSystem
+          : l10n.sshConnectionModeUseBuiltin;
       return ListTile(
         leading: const Icon(Icons.swap_horiz),
-        title: Text(l10n.sshConnectionMode),
+        title: Text(title),
         subtitle: Text(l10n.sshConnectionModeTip, style: UIs.textGrey),
-        trailing: Text(modeLabel(val), style: UIs.text15),
-        onTap: () async {
-          final selected = await context.showPickSingleDialog(
-            title: l10n.sshConnectionMode,
-            items: const [-1, 0, 1],
-            display: (v) {
-              if (v == -1) return '${libL10n.auto} (${modeLabel(-1)})';
-              return modeLabel(v);
-            },
-            initial: val,
-          );
-          if (selected != null) {
-            _setting.sshConnectionMode.put(selected);
-          }
-        },
+        trailing: StoreSwitch(prop: _setting.sshConnectionMode),
       );
     });
   }

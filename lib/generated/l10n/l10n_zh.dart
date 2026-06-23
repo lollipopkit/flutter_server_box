@@ -755,6 +755,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshConnectionModeTip => '内置终端：使用应用自带的终端。系统 SSH：在外部终端中调用系统 ssh 命令。';
 
   @override
+  String get sshConnectionModeUseBuiltin => '使用内置终端';
+
+  @override
+  String get sshConnectionModeUseSystem => '使用系统 SSH';
+
+  @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
     return '$duplicateCount 个重复项将被跳过';
   }

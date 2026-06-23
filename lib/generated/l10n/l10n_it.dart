@@ -801,6 +801,12 @@ class AppLocalizationsIt extends AppLocalizations {
       'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
 
   @override
+  String get sshConnectionModeUseBuiltin => 'Use built-in terminal';
+
+  @override
+  String get sshConnectionModeUseSystem => 'Use system SSH';
+
+  @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
     return '$duplicateCount duplicati verranno saltati';
   }
