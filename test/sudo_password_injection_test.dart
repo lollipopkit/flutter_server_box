@@ -1,73 +1,54 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/res/misc.dart';
+import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:xterm/core.dart';
 
-bool isSudoPromptText(String raw) {
-  final trimmed = raw.trim();
-  final lower = trimmed.toLowerCase();
-  if (Miscs.pwdRequestWithUserReg.hasMatch(trimmed)) return true;
-  if (lower.contains('[sudo] password')) return true;
-  if ((lower.endsWith(':') || lower.endsWith('：')) &&
-      (lower.contains('password') || lower.contains('密码'))) {
-    return true;
-  }
-  return false;
-}
-
-String normalizeSshOutputTail(String value) {
-  return value
-      .replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '')
-      .replaceAll('\r\n', '\n')
-      .replaceAll('\r', '\n');
-}
-
 bool hasPendingSudoPromptInOutputTail(String value) {
-  final normalized = normalizeSshOutputTail(value);
+  final normalized = SudoPassword.normalizeOutput(value);
   final latest = normalized
       .split('\n')
       .reversed
       .map((line) => line.trim())
       .firstWhere((line) => line.isNotEmpty, orElse: () => '');
   if (latest.isEmpty) return false;
-  return isSudoPromptText(latest);
+  return SudoPassword.isPromptText(latest);
 }
 
 void main() {
   group('Sudo prompt detection', () {
     test('detects standard English sudo prompt', () {
-      expect(isSudoPromptText('[sudo] password for alice: '), isTrue);
+      expect(SudoPassword.isPromptText('[sudo] password for alice: '), isTrue);
     });
 
     test('detects sudo prompt without trailing space', () {
-      expect(isSudoPromptText('[sudo] password for root:'), isTrue);
+      expect(SudoPassword.isPromptText('[sudo] password for root:'), isTrue);
     });
 
     test('detects sudo prompt case insensitive', () {
-      expect(isSudoPromptText('[SUDO] Password for user:'), isTrue);
+      expect(SudoPassword.isPromptText('[SUDO] Password for user:'), isTrue);
     });
 
     test('detects password prompt ending with colon', () {
-      expect(isSudoPromptText('Password:'), isTrue);
+      expect(SudoPassword.isPromptText('Password:'), isTrue);
     });
 
     test('detects Chinese password prompt with ASCII colon', () {
-      expect(isSudoPromptText('密码:'), isTrue);
+      expect(SudoPassword.isPromptText('密码:'), isTrue);
     });
 
     test('detects Chinese prompt with full-width colon', () {
       // [sudo] 用户 alice 的密码：  — full-width '：' now also matched
       expect(
-        isSudoPromptText('[sudo] 用户 alice 的密码：'),
+        SudoPassword.isPromptText('[sudo] 用户 alice 的密码：'),
         isTrue,
       );
     });
 
     test('ignores empty lines', () {
-      expect(isSudoPromptText(''), isFalse);
+      expect(SudoPassword.isPromptText(''), isFalse);
     });
 
     test('ignores unrelated terminal output', () {
-      expect(isSudoPromptText('gt610@host:~\$'), isFalse);
+      expect(SudoPassword.isPromptText('gt610@host:~\$'), isFalse);
     });
 
     test('detects sudo prompt in SSH output tail', () {
@@ -329,7 +310,7 @@ void main() {
       // Simulate sudo prompt being written to terminal
       terminal.write('[sudo] password for user: ');
 
-      expect(isSudoPromptText(terminal.buffer.currentLine.toString()), isTrue);
+      expect(SudoPassword.isPromptText(terminal.buffer.currentLine.toString()), isTrue);
     });
 
     test('sudo prompt detection with buffered output', () {
@@ -339,7 +320,7 @@ void main() {
       terminal.write('some previous output\r\n');
       terminal.write('[sudo] password for user: ');
 
-      expect(isSudoPromptText(terminal.buffer.currentLine.toString()), isTrue);
+      expect(SudoPassword.isPromptText(terminal.buffer.currentLine.toString()), isTrue);
     });
 
     test('sudo prompt detection ignores terminal history', () {
@@ -348,7 +329,7 @@ void main() {
       terminal.write('[sudo] password for user: \r\n');
       terminal.write('gt610@host:~\$ ');
 
-      expect(isSudoPromptText(terminal.buffer.currentLine.toString()), isFalse);
+      expect(SudoPassword.isPromptText(terminal.buffer.currentLine.toString()), isFalse);
     });
   });
 }

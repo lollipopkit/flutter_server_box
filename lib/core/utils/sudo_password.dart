@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 
 abstract final class SudoPassword {
@@ -41,5 +42,26 @@ abstract final class SudoPassword {
   static Future<bool> authenticateIfNeeded() async {
     if (!Stores.setting.useBioAuth.fetch()) return true;
     return await LocalAuth.goWithResult() == AuthResult.success;
+  }
+
+  /// Returns true if [raw] looks like an active sudo password prompt.
+  /// [raw] should already be trimmed.
+  static bool isPromptText(String raw) {
+    final lower = raw.toLowerCase();
+    if (Miscs.pwdRequestWithUserReg.hasMatch(raw)) return true;
+    if (lower.contains('[sudo] password')) return true;
+    if ((lower.endsWith(':') || lower.endsWith('：')) &&
+        (lower.contains('password') || lower.contains('密码'))) {
+      return true;
+    }
+    return false;
+  }
+
+  /// Strips ANSI escape sequences and normalizes line endings.
+  static String normalizeOutput(String value) {
+    return value
+        .replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '')
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n');
   }
 }

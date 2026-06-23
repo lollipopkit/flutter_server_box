@@ -22,7 +22,6 @@ import 'package:server_box/data/provider/ai/ask_ai.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
-import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/persistent_shell.dart';
@@ -760,40 +759,22 @@ class SSHPageState extends ConsumerState<SSHPage>
   bool _hasPendingSudoPromptInTerminalBuffer() {
     final raw = _terminal.buffer.currentLine.toString().trim();
     if (raw.isEmpty) return false;
-    return _isSudoPromptText(raw);
+    return SudoPassword.isPromptText(raw);
   }
 
   bool _hasPendingSudoPromptInOutputTail() {
     final raw = _latestSshOutputLine();
     if (raw.isEmpty) return false;
-    return _isSudoPromptText(raw);
+    return SudoPassword.isPromptText(raw);
   }
 
   String _latestSshOutputLine() {
-    final normalized = _normalizeSshOutputTail(_sshOutputTail);
+    final normalized = SudoPassword.normalizeOutput(_sshOutputTail);
     return normalized
         .split('\n')
         .reversed
         .map((line) => line.trim())
         .firstWhere((line) => line.isNotEmpty, orElse: () => '');
-  }
-
-  bool _isSudoPromptText(String raw) {
-    final lower = raw.toLowerCase();
-    if (Miscs.pwdRequestWithUserReg.hasMatch(raw)) return true;
-    if (lower.contains('[sudo] password')) return true;
-    if ((lower.endsWith(':') || lower.endsWith('：')) &&
-        (lower.contains('password') || lower.contains('密码'))) {
-      return true;
-    }
-    return false;
-  }
-
-  String _normalizeSshOutputTail(String value) {
-    return value
-        .replaceAll(RegExp(r'\x1B\[[0-?]*[ -/]*[@-~]'), '')
-        .replaceAll('\r\n', '\n')
-        .replaceAll('\r', '\n');
   }
 
   void _updateVirtKeysHeight() {
