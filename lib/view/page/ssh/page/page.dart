@@ -717,25 +717,46 @@ class SSHPageState extends ConsumerState<SSHPage>
       return;
     }
 
-    // Retry detection up to 3 times with 200ms intervals
+    dprint('[SUDO] Starting sudo password injection...');
+
+    // Drain any pending terminal output first to ensure buffer is up-to-date
+    _drainPendingTerminalOutput();
+
+    // Retry detection with exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms
+    // Total max wait: ~3.1 seconds
     bool detected = false;
-    for (int i = 0; i < 3; i++) {
+    const delays = [100, 200, 400, 800, 1600];
+    for (int i = 0; i < delays.length; i++) {
+      // Flush terminal buffer before each check
+      _drainPendingTerminalOutput();
+
       if (_hasPendingSudoPrompt()) {
         detected = true;
+        dprint('[SUDO] Prompt detected on attempt ${i + 1}');
         break;
       }
-      if (i < 2) {
-        await Future.delayed(const Duration(milliseconds: 200));
+      dprint(
+        '[SUDO] Attempt ${i + 1}/${delays.length}: prompt not found, '
+        'waiting ${delays[i]}ms...',
+      );
+      if (i < delays.length - 1) {
+        await Future.delayed(Duration(milliseconds: delays[i]));
       }
     }
 
     if (!detected) {
+      dprint('[SUDO] Prompt not detected after ${delays.length} attempts');
+      _dumpTerminalBuffer();
       if (!mounted) return;
       context.showSnackBar(libL10n.fail);
       return;
     }
+
+    dprint('[SUDO] Sending password...');
     _terminal.textInput(password);
     _terminal.keyInput(TerminalKey.enter);
+    dprint('[SUDO] Password sent successfully');
+
     if (!mounted) return;
     widget.args.focusNode?.requestFocus();
     _termKey.currentState?.requestKeyboard();
@@ -743,19 +764,47 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   bool _hasPendingSudoPrompt() {
-    final lines = _terminal.buffer.lines.toList().reversed.take(15);
+    final lines = _terminal.buffer.lines.toList().reversed;
+    final scannedLines = <String>[];
     for (final line in lines) {
       final raw = line.toString().trim();
       if (raw.isEmpty) continue;
+      scannedLines.add(raw);
+      if (scannedLines.length > 15) break;
       final lower = raw.toLowerCase();
-      if (Miscs.pwdRequestWithUserReg.hasMatch(raw)) return true;
-      if (lower.contains('[sudo] password')) return true;
+      if (Miscs.pwdRequestWithUserReg.hasMatch(raw)) {
+        dprint('[SUDO] Detected via regex: "$raw"');
+        return true;
+      }
+      if (lower.contains('[sudo] password')) {
+        dprint('[SUDO] Detected via [sudo] password: "$raw"');
+        return true;
+      }
       if (lower.endsWith(':') &&
           (lower.contains('password') || lower.contains('密码'))) {
+        dprint('[SUDO] Detected via password colon: "$raw"');
         return true;
       }
     }
+    if (scannedLines.isNotEmpty) {
+      dprint(
+        '[SUDO] Scanned ${scannedLines.length} lines, no prompt found. '
+        'Last 3: ${scannedLines.take(3).toList()}',
+      );
+    }
     return false;
+  }
+
+  /// Dump terminal buffer content for debugging
+  void _dumpTerminalBuffer() {
+    final lines = _terminal.buffer.lines.toList();
+    dprint('[SUDO] Terminal buffer dump (${lines.length} lines):');
+    for (int i = 0; i < lines.length && i < 30; i++) {
+      final line = lines[i].toString();
+      if (line.trim().isNotEmpty) {
+        dprint('[SUDO]   Line $i: "$line"');
+      }
+    }
   }
 
   void _updateVirtKeysHeight() {

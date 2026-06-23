@@ -5,9 +5,12 @@ import 'package:xterm/core.dart';
 /// Pure function extracted from SSHPageState._hasPendingSudoPrompt()
 /// for isolated testing. Takes already-stringified terminal buffer lines.
 bool hasPendingSudoPrompt(Iterable<String> rawLines) {
+  var scannedCount = 0;
   for (final raw in rawLines) {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) continue;
+    scannedCount++;
+    if (scannedCount > 15) break;
     final lower = trimmed.toLowerCase();
     if (Miscs.pwdRequestWithUserReg.hasMatch(trimmed)) return true;
     if (lower.contains('[sudo] password')) return true;
@@ -75,6 +78,22 @@ void main() {
           '[sudo] password for user: ',
         ]),
         isTrue,
+      );
+    });
+
+    test('skips trailing empty terminal lines before scan limit', () {
+      expect(
+        hasPendingSudoPrompt([
+          '',
+          '',
+          '',
+          '[sudo] password for user: ',
+          ...List.filled(24, ''),
+        ].reversed),
+        isTrue,
+        reason:
+            'The terminal buffer can contain many empty rows after the prompt; '
+            'scan limit must count non-empty lines only.',
       );
     });
   });
@@ -277,6 +296,35 @@ void main() {
       // Passwords with shell special chars should be sent as-is
       terminal.textInput(r'p@ss$w0rd!#%');
       expect(sent, equals([r'p@ss$w0rd!#%']));
+    });
+
+    test('sudo prompt detection works after terminal.write', () {
+      final terminal = Terminal(platform: TerminalTargetPlatform.linux);
+      
+      // Simulate sudo prompt being written to terminal
+      terminal.write('[sudo] password for user: ');
+      
+      // Verify detection works - use toList() to convert IndexAwareCircularBuffer
+      final lines = terminal.buffer.lines.toList()
+          .map((l) => l.toString())
+          .where((l) => l.trim().isNotEmpty)
+          .toList();
+      expect(hasPendingSudoPrompt(lines), isTrue);
+    });
+
+    test('sudo prompt detection with buffered output', () {
+      final terminal = Terminal(platform: TerminalTargetPlatform.linux);
+      
+      // Simulate output that arrives in chunks (like real SSH)
+      terminal.write('some previous output\r\n');
+      terminal.write('[sudo] password for user: ');
+      
+      // Verify detection works even with preceding output
+      final lines = terminal.buffer.lines.toList()
+          .map((l) => l.toString())
+          .where((l) => l.trim().isNotEmpty)
+          .toList();
+      expect(hasPendingSudoPrompt(lines), isTrue);
     });
   });
 }
