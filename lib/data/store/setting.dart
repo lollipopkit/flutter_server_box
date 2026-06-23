@@ -276,6 +276,12 @@ class SettingStore extends HiveStore {
     false,
   );
 
+  /// SSH connection mode on desktop.
+  /// -1 = platform default (macOS: built-in, Linux/Windows: system SSH)
+  /// 0 = built-in (dartssh2 + xterm)
+  /// 1 = system SSH (launch ssh command in external terminal)
+  late final sshConnectionMode = propertyDefault('sshConnectionMode', -1);
+
   /// Run foreground service on Android, if the SSH terminal is running
   late final fgService = propertyDefault('fgService', false);
 

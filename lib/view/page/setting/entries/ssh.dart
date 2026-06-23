@@ -12,6 +12,7 @@ extension _SSH on _AppSettingsPageState {
     return Column(
       children: [
         if (isDesktop) _buildSSHConfigImport(),
+        if (isDesktop) _buildSshConnectionMode(),
         if (isMobile) _buildQrScan(),
         _buildSSHDiscovery(),
         _buildLetterCache(),
@@ -424,6 +425,38 @@ extension _SSH on _AppSettingsPageState {
       subtitle: Text('SSH', style: UIs.textGrey),
       trailing: StoreSwitch(prop: _setting.desktopSshAutoCopyPassword),
     );
+  }
+
+  Widget _buildSshConnectionMode() {
+    String modeLabel(int val) {
+      final effective = val == -1 ? (isMacOS ? 0 : 1) : val;
+      return effective == 0
+          ? l10n.sshConnectionModeBuiltin
+          : l10n.sshConnectionModeSystem;
+    }
+
+    return _setting.sshConnectionMode.listenable().listenVal((val) {
+      return ListTile(
+        leading: const Icon(Icons.swap_horiz),
+        title: Text(l10n.sshConnectionMode),
+        subtitle: Text(l10n.sshConnectionModeTip, style: UIs.textGrey),
+        trailing: Text(modeLabel(val), style: UIs.text15),
+        onTap: () async {
+          final selected = await context.showPickSingleDialog(
+            title: l10n.sshConnectionMode,
+            items: const [-1, 0, 1],
+            display: (v) {
+              if (v == -1) return '${libL10n.auto} (${modeLabel(-1)})';
+              return modeLabel(v);
+            },
+            initial: val,
+          );
+          if (selected != null) {
+            _setting.sshConnectionMode.put(selected);
+          }
+        },
+      );
+    });
   }
 
   Widget _buildTermTheme() {
