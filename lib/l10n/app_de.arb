@@ -225,6 +225,7 @@
   "time": "Zeit",
   "times": "x",
   "trySudo": "Versuche es mit sudo",
+  "sudoPromptNotFound": "Aktuell wird kein sudo-Passwort-Prompt angezeigt.",
   "unknown": "Unbekannt",
   "unkownConvertMode": "Unbekannter Konvertierungsmodus",
   "update": "Update",

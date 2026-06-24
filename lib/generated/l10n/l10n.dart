@@ -1752,6 +1752,12 @@ abstract class AppLocalizations {
   /// **'Try using sudo'**
   String get trySudo;
 
+  /// No description provided for @sudoPromptNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No sudo password prompt is active.'**
+  String get sudoPromptNotFound;
+
   /// No description provided for @unknown.
   ///
   /// In en, this message translates to:

@@ -951,6 +951,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get trySudo => 'Cobalah menggunakan sudo';
 
   @override
+  String get sudoPromptNotFound =>
+      'Tidak ada permintaan kata sandi sudo yang aktif.';
+
+  @override
   String get unknown => 'Tidak dikenal';
 
   @override

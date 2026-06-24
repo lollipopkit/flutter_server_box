@@ -269,6 +269,7 @@
   "time": "时间",
   "times": "次",
   "trySudo": "尝试使用 sudo",
+  "sudoPromptNotFound": "当前没有 sudo 密码提示。",
   "unknown": "未知",
   "unkownConvertMode": "未知转换模式",
   "update": "更新",

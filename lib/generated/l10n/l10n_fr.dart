@@ -963,6 +963,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get trySudo => 'Essayer d\'utiliser sudo';
 
   @override
+  String get sudoPromptNotFound =>
+      'Aucune invite de mot de passe sudo n\'est active.';
+
+  @override
   String get unknown => 'Inconnu';
 
   @override

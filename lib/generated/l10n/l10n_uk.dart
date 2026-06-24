@@ -956,6 +956,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get trySudo => 'Спробуйте використовувати sudo';
 
   @override
+  String get sudoPromptNotFound => 'Наразі немає запиту пароля sudo.';
+
+  @override
   String get unknown => 'Невідомо';
 
   @override

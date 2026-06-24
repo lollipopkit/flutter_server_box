@@ -225,6 +225,7 @@
   "time": "Tijd",
   "times": "Keer",
   "trySudo": "Probeer sudo te gebruiken",
+  "sudoPromptNotFound": "Er is geen sudo-wachtwoordprompt actief.",
   "unknown": "Onbekend",
   "unkownConvertMode": "Onbekende conversiemodus",
   "update": "Bijwerken",

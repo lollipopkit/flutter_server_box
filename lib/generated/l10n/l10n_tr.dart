@@ -952,6 +952,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get trySudo => 'Sudo ile dene';
 
   @override
+  String get sudoPromptNotFound => 'Aktif bir sudo parola istemi yok.';
+
+  @override
   String get unknown => 'Bilinmeyen';
 
   @override

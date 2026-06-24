@@ -924,6 +924,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get trySudo => 'sudoを試みる';
 
   @override
+  String get sudoPromptNotFound => 'sudo のパスワード入力プロンプトがありません。';
+
+  @override
   String get unknown => '不明';
 
   @override

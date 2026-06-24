@@ -225,6 +225,7 @@
   "time": "Tiempo",
   "times": "Veces",
   "trySudo": "Intentar con sudo",
+  "sudoPromptNotFound": "No hay solicitud de contraseña de sudo activa.",
   "unknown": "Desconocido",
   "unkownConvertMode": "Modo de conversión desconocido",
   "update": "Actualizar",

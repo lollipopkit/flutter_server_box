@@ -225,6 +225,7 @@
   "time": "Temps",
   "times": "Fois",
   "trySudo": "Essayer d'utiliser sudo",
+  "sudoPromptNotFound": "Aucune invite de mot de passe sudo n'est active.",
   "unknown": "Inconnu",
   "unkownConvertMode": "Mode de conversion inconnu",
   "update": "Mettre à jour",

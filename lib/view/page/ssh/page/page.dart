@@ -22,7 +22,6 @@ import 'package:server_box/data/provider/ai/ask_ai.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/provider/virtual_keyboard.dart';
-import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/persistent_shell.dart';
@@ -155,11 +154,13 @@ class SSHPageState extends ConsumerState<SSHPage>
   Timer? _discontinuityTimer;
   Timer? _terminalFlushTimer;
   final _terminalOutputBuffer = TerminalOutputBuffer();
+  String _sshOutputTail = '';
   final List<StreamSubscription<String>> _terminalOutputSubscriptions = [];
   static const _connectionCheckInterval = Duration(seconds: 60);
   static const _connectionCheckTimeout = Duration(seconds: 10);
   static const _terminalFlushInterval = Duration(milliseconds: 16);
   static const _terminalFlushCharLimit = 32768;
+  static const _sshOutputTailCharLimit = 8192;
   static const _maxKeepAliveFailures = 3;
   int _missedKeepAliveCount = 0;
   bool _isCheckingConnection = false;
@@ -717,25 +718,33 @@ class SSHPageState extends ConsumerState<SSHPage>
       return;
     }
 
-    // Retry detection up to 3 times with 200ms intervals
     bool detected = false;
-    for (int i = 0; i < 3; i++) {
+    const delays = [0, 100, 200, 400, 800, 1600];
+    for (int i = 0; i < delays.length; i++) {
+      final delayMs = delays[i];
+      if (delayMs > 0) {
+        await Future.delayed(Duration(milliseconds: delayMs));
+        if (!mounted) return;
+      }
+
+      _drainPendingTerminalOutput();
+
       if (_hasPendingSudoPrompt()) {
         detected = true;
         break;
-      }
-      if (i < 2) {
-        await Future.delayed(const Duration(milliseconds: 200));
       }
     }
 
     if (!detected) {
       if (!mounted) return;
-      context.showSnackBar(libL10n.fail);
+      context.showSnackBar(l10n.sudoPromptNotFound);
       return;
     }
+
     _terminal.textInput(password);
     _terminal.keyInput(TerminalKey.enter);
+    _sshOutputTail = '';
+
     if (!mounted) return;
     widget.args.focusNode?.requestFocus();
     _termKey.currentState?.requestKeyboard();
@@ -743,19 +752,29 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   bool _hasPendingSudoPrompt() {
-    final lines = _terminal.buffer.lines.toList().reversed.take(15);
-    for (final line in lines) {
-      final raw = line.toString().trim();
-      if (raw.isEmpty) continue;
-      final lower = raw.toLowerCase();
-      if (Miscs.pwdRequestWithUserReg.hasMatch(raw)) return true;
-      if (lower.contains('[sudo] password')) return true;
-      if (lower.endsWith(':') &&
-          (lower.contains('password') || lower.contains('密码'))) {
-        return true;
-      }
-    }
-    return false;
+    return _hasPendingSudoPromptInTerminalBuffer() ||
+        _hasPendingSudoPromptInOutputTail();
+  }
+
+  bool _hasPendingSudoPromptInTerminalBuffer() {
+    final raw = _terminal.buffer.currentLine.toString().trim();
+    if (raw.isEmpty) return false;
+    return SudoPassword.isPromptText(raw);
+  }
+
+  bool _hasPendingSudoPromptInOutputTail() {
+    final raw = _latestSshOutputLine();
+    if (raw.isEmpty) return false;
+    return SudoPassword.isPromptText(raw);
+  }
+
+  String _latestSshOutputLine() {
+    final normalized = SudoPassword.normalizeOutput(_sshOutputTail);
+    return normalized
+        .split('\n')
+        .reversed
+        .map((line) => line.trim())
+        .firstWhere((line) => line.isNotEmpty, orElse: () => '');
   }
 
   void _updateVirtKeysHeight() {

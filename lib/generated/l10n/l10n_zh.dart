@@ -895,6 +895,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get trySudo => '尝试使用 sudo';
 
   @override
+  String get sudoPromptNotFound => '当前没有 sudo 密码提示。';
+
+  @override
   String get unknown => '未知';
 
   @override
@@ -1879,6 +1882,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get trySudo => '嘗試使用 sudo';
+
+  @override
+  String get sudoPromptNotFound => '目前沒有 sudo 密碼提示。';
 
   @override
   String get unknown => '未知';

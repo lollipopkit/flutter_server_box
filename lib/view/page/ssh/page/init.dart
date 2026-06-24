@@ -231,7 +231,18 @@ extension _Init on SSHPageState {
 
   void _queueTerminalOutput(String data) {
     _terminalOutputBuffer.add(data);
+    _appendSshOutputTail(data);
     _scheduleTerminalFlush();
+  }
+
+  void _appendSshOutputTail(String data) {
+    if (data.isEmpty) return;
+    _sshOutputTail += data;
+    if (_sshOutputTail.length > SSHPageState._sshOutputTailCharLimit) {
+      _sshOutputTail = _sshOutputTail.substring(
+        _sshOutputTail.length - SSHPageState._sshOutputTailCharLimit,
+      );
+    }
   }
 
   void _scheduleTerminalFlush() {
