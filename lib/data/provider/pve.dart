@@ -448,7 +448,10 @@ class PveNotifier extends _$PveNotifier {
   }
 
   bool _isConnectionFailure(Object e) {
-    if (e is SocketException || e is HandshakeException || e is SSHStateError) {
+    if (e is SocketException ||
+        e is HandshakeException ||
+        e is SSHStateError ||
+        e is HttpException) {
       return true;
     }
     if (e is DioException) {
