@@ -245,7 +245,7 @@ class PveNotifier extends _$PveNotifier {
       return SecureSocket.startConnect(
         'localhost',
         _localPort,
-        onBadCertificate: (_) => true,
+        onBadCertificate: _ignoreCert ? (_) => true : null,
       );
     } else {
       return Socket.startConnect('localhost', _localPort);

@@ -7,9 +7,7 @@ enum ContainerMenu {
   restart,
   rm,
   logs,
-  terminal
-  //stats,
-  ;
+  terminal;
 
   static List<ContainerMenu> items(bool running) {
     if (running) {
@@ -19,7 +17,6 @@ enum ContainerMenu {
         rm,
         logs,
         terminal,
-        //stats,
       ];
     }
     return [start, rm, logs];
@@ -32,7 +29,6 @@ enum ContainerMenu {
     ContainerMenu.rm => Icons.delete,
     ContainerMenu.logs => Icons.logo_dev,
     ContainerMenu.terminal => Icons.terminal,
-    // DockerMenuType.stats => Icons.bar_chart,
   };
 
   String get toStr => switch (this) {
@@ -42,6 +38,5 @@ enum ContainerMenu {
     ContainerMenu.rm => libL10n.delete,
     ContainerMenu.logs => libL10n.log,
     ContainerMenu.terminal => libL10n.terminal,
-    // DockerMenuType.stats => s.stats,
   };
 }

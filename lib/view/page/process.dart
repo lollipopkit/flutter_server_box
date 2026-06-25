@@ -40,8 +40,8 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
 
   @override
   void dispose() {
-    super.dispose();
     _timer?.cancel();
+    super.dispose();
   }
 
   @override

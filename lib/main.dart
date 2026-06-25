@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'dart:async';
 
 import 'package:computer/computer.dart';
@@ -34,7 +32,7 @@ Future<void> _runInZone(Future<void> Function() body) async {
 
   await runZonedGuarded(
     body,
-    (e, s) => print('[ZONE] $e\n$s'),
+    (e, s) => Loggers.app.warning('Zone error', e, s),
     zoneSpecification: zoneSpec,
   );
 }
@@ -71,11 +69,9 @@ Future<void> _initData() async {
 }
 
 void _setupDebug() {
-  Logger.root.level = Level.ALL;
+  Logger.root.level = Level.WARNING;
   Logger.root.onRecord.listen((record) {
     DebugProvider.addLog(record);
-    if (record.error != null) print(record.error);
-    if (record.stackTrace != null) print(record.stackTrace);
   });
 }
 

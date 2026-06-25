@@ -94,7 +94,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
 
   @override
   void dispose() {
-    super.dispose();
     _nameController.dispose();
     _ipController.dispose();
     _altUrlController.dispose();
@@ -130,6 +129,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _systemType.dispose();
     _disabledCmdTypes.dispose();
     _hasStoredSudoPassword.dispose();
+    super.dispose();
   }
 
   @override

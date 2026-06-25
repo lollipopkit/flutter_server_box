@@ -221,7 +221,6 @@ extension _Init on SSHPageState {
         .listen(
           _queueTerminalOutput,
           onError: (Object error, StackTrace stack) {
-            // _terminal.write('Stream error: $error\n');
             Loggers.root.warning('Error in SSH stream', error, stack);
           },
           cancelOnError: false,
