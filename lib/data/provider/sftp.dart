@@ -12,6 +12,7 @@ part 'sftp.g.dart';
 abstract class SftpState with _$SftpState {
   const factory SftpState({
     @Default(<SftpReqStatus>[]) List<SftpReqStatus> requests,
+    @Default(0) int revision,
   }) = _SftpState;
 }
 
@@ -32,11 +33,11 @@ class SftpNotifier extends _$SftpNotifier {
 
   int add(SftpReq req, {Completer? completer}) {
     final reqStat = SftpReqStatus(
-      notifyListeners: _notifyListeners,
+      notifyListeners: _notifyRequestUpdated,
       completer: completer,
       req: req,
     );
-    state = state.copyWith(requests: [...state.requests, reqStat]);
+    _setRequests([...state.requests, reqStat]);
     return reqStat.id;
   }
 
@@ -44,7 +45,7 @@ class SftpNotifier extends _$SftpNotifier {
     for (final item in state.requests) {
       item.dispose();
     }
-    state = state.copyWith(requests: []);
+    _setRequests([]);
   }
 
   void cancel(int id) {
@@ -56,11 +57,27 @@ class SftpNotifier extends _$SftpNotifier {
     final item = state.requests[idx];
     item.dispose();
     final newRequests = List<SftpReqStatus>.from(state.requests)..removeAt(idx);
-    state = state.copyWith(requests: newRequests);
+    _setRequests(newRequests);
   }
 
-  void _notifyListeners() {
-    // Force state update to notify listeners
-    state = state.copyWith();
+  void refreshTransferSpeeds() {
+    final now = DateTime.now();
+    var changed = false;
+    for (final item in state.requests) {
+      changed = item.refreshSpeed(now) || changed;
+    }
+    if (changed) _notifyRequestUpdated();
+  }
+
+  void _setRequests(List<SftpReqStatus> requests) {
+    state = state.copyWith(requests: requests, revision: state.revision + 1);
+  }
+
+  void _notifyRequestUpdated() {
+    // SftpReqStatus is mutable, so bump revision to make updates observable.
+    state = state.copyWith(
+      requests: List<SftpReqStatus>.from(state.requests),
+      revision: state.revision + 1,
+    );
   }
 }

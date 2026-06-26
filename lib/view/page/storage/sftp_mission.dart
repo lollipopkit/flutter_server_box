@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
 import 'package:server_box/data/provider/sftp.dart';
+import 'package:server_box/data/res/default.dart';
 import 'package:server_box/view/page/storage/local.dart';
 
 class SftpMissionPage extends ConsumerStatefulWidget {
@@ -19,6 +23,25 @@ class SftpMissionPage extends ConsumerStatefulWidget {
 }
 
 class _SftpMissionPageState extends ConsumerState<SftpMissionPage> {
+  Timer? _speedRefreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    final interval =
+        serverStatusRefreshInterval() ??
+        const Duration(seconds: Defaults.updateInterval);
+    _speedRefreshTimer = Timer.periodic(interval, (_) {
+      ref.read(sftpProvider.notifier).refreshTransferSpeeds();
+    });
+  }
+
+  @override
+  void dispose() {
+    _speedRefreshTimer?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,15 +51,15 @@ class _SftpMissionPageState extends ConsumerState<SftpMissionPage> {
   }
 
   Widget _buildBody() {
-    final status = ref.watch(sftpProvider.select((pro) => pro.requests));
-    if (status.isEmpty) {
+    final requests = ref.watch(sftpProvider).requests;
+    if (requests.isEmpty) {
       return Center(child: Text(libL10n.empty));
     }
     return ListView.builder(
       padding: const EdgeInsets.all(11),
-      itemCount: status.length,
+      itemCount: requests.length,
       itemBuilder: (context, index) {
-        return _buildItem(status[index]);
+        return _buildItem(requests[index]);
       },
     );
   }
@@ -97,10 +120,12 @@ class _SftpMissionPageState extends ConsumerState<SftpMissionPage> {
 
   Widget _buildLoading(SftpReqStatus status) {
     final percentStr = (status.progress ?? 0.0).toStringAsFixed(2);
+    final transferred = (status.transferredBytes ?? 0).bytes2Str;
     final size = (status.size ?? 0).bytes2Str;
+    final speed = '${(status.speedBytesPerSecond ?? 0).bytes2Str}/s';
     return _wrapInCard(
       status: status,
-      subtitle: l10n.percentOfSize(percentStr, size),
+      subtitle: '$transferred / $size - $percentStr% - ${l10n.speed}: $speed',
       trailing: _buildDelete(status.fileName, status.id),
     );
   }

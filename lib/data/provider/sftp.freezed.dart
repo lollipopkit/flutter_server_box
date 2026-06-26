@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SftpState {
 
- List<SftpReqStatus> get requests;
+ List<SftpReqStatus> get requests; int get revision;
 /// Create a copy of SftpState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $SftpStateCopyWith<SftpState> get copyWith => _$SftpStateCopyWithImpl<SftpState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SftpState&&const DeepCollectionEquality().equals(other.requests, requests));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SftpState&&const DeepCollectionEquality().equals(other.requests, requests)&&(identical(other.revision, revision) || other.revision == revision));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(requests));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(requests),revision);
 
 @override
 String toString() {
-  return 'SftpState(requests: $requests)';
+  return 'SftpState(requests: $requests, revision: $revision)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $SftpStateCopyWith<$Res>  {
   factory $SftpStateCopyWith(SftpState value, $Res Function(SftpState) _then) = _$SftpStateCopyWithImpl;
 @useResult
 $Res call({
- List<SftpReqStatus> requests
+ List<SftpReqStatus> requests, int revision
 });
 
 
@@ -62,10 +62,11 @@ class _$SftpStateCopyWithImpl<$Res>
 
 /// Create a copy of SftpState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? requests = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? requests = null,Object? revision = null,}) {
   return _then(_self.copyWith(
 requests: null == requests ? _self.requests : requests // ignore: cast_nullable_to_non_nullable
-as List<SftpReqStatus>,
+as List<SftpReqStatus>,revision: null == revision ? _self.revision : revision // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -150,10 +151,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<SftpReqStatus> requests)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<SftpReqStatus> requests,  int revision)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SftpState() when $default != null:
-return $default(_that.requests);case _:
+return $default(_that.requests,_that.revision);case _:
   return orElse();
 
 }
@@ -171,10 +172,10 @@ return $default(_that.requests);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<SftpReqStatus> requests)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<SftpReqStatus> requests,  int revision)  $default,) {final _that = this;
 switch (_that) {
 case _SftpState():
-return $default(_that.requests);case _:
+return $default(_that.requests,_that.revision);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -191,10 +192,10 @@ return $default(_that.requests);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<SftpReqStatus> requests)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<SftpReqStatus> requests,  int revision)?  $default,) {final _that = this;
 switch (_that) {
 case _SftpState() when $default != null:
-return $default(_that.requests);case _:
+return $default(_that.requests,_that.revision);case _:
   return null;
 
 }
@@ -206,7 +207,7 @@ return $default(_that.requests);case _:
 
 
 class _SftpState implements SftpState {
-  const _SftpState({final  List<SftpReqStatus> requests = const <SftpReqStatus>[]}): _requests = requests;
+  const _SftpState({final  List<SftpReqStatus> requests = const <SftpReqStatus>[], this.revision = 0}): _requests = requests;
   
 
  final  List<SftpReqStatus> _requests;
@@ -216,6 +217,7 @@ class _SftpState implements SftpState {
   return EqualUnmodifiableListView(_requests);
 }
 
+@override@JsonKey() final  int revision;
 
 /// Create a copy of SftpState
 /// with the given fields replaced by the non-null parameter values.
@@ -227,16 +229,16 @@ _$SftpStateCopyWith<_SftpState> get copyWith => __$SftpStateCopyWithImpl<_SftpSt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SftpState&&const DeepCollectionEquality().equals(other._requests, _requests));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SftpState&&const DeepCollectionEquality().equals(other._requests, _requests)&&(identical(other.revision, revision) || other.revision == revision));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_requests));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_requests),revision);
 
 @override
 String toString() {
-  return 'SftpState(requests: $requests)';
+  return 'SftpState(requests: $requests, revision: $revision)';
 }
 
 
@@ -247,7 +249,7 @@ abstract mixin class _$SftpStateCopyWith<$Res> implements $SftpStateCopyWith<$Re
   factory _$SftpStateCopyWith(_SftpState value, $Res Function(_SftpState) _then) = __$SftpStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<SftpReqStatus> requests
+ List<SftpReqStatus> requests, int revision
 });
 
 
@@ -264,10 +266,11 @@ class __$SftpStateCopyWithImpl<$Res>
 
 /// Create a copy of SftpState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? requests = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? requests = null,Object? revision = null,}) {
   return _then(_SftpState(
 requests: null == requests ? _self._requests : requests // ignore: cast_nullable_to_non_nullable
-as List<SftpReqStatus>,
+as List<SftpReqStatus>,revision: null == revision ? _self.revision : revision // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
