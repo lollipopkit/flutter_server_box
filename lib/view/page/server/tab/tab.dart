@@ -64,13 +64,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
 
   @override
   void dispose() {
-    super.dispose();
     _timer?.cancel();
     _scrollController.dispose();
     _autoHideCtrl.dispose();
     _tag.dispose();
     _tags.dispose();
     _offsetNotifier.dispose();
+    super.dispose();
   }
 
   @override

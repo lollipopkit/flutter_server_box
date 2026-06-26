@@ -144,12 +144,16 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       final pwd = controller.text.trim();
       if (pwd.isEmpty) {
         context.showSnackBar(libL10n.empty);
+        controller.dispose();
+        node.dispose();
         return;
       }
       await SecureStoreProps.bakPwd.write(pwd);
       context.showSnackBar(l10n.backupPasswordSet);
       setState(() {});
     }
+    controller.dispose();
+    node.dispose();
   }
 
   Widget get _buildTip {
@@ -718,6 +722,9 @@ extension on _BackupPageState {
         context.showErrDialog(e, s, 'Gist');
       }
     }
+    tokenCtrl.dispose();
+    gistIdCtrl.dispose();
+    nodeToken.dispose();
   }
 
   Future<void> _onTapWebdavSetting(BuildContext context) async {
@@ -777,6 +784,11 @@ extension on _BackupPageState {
         context.showErrDialog(e, s, 'Webdav');
       }
     }
+    url.dispose();
+    user.dispose();
+    pwd.dispose();
+    nodeUser.dispose();
+    nodePwd.dispose();
   }
 
   void _onBulkImportServers(BuildContext context) async {

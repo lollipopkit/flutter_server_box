@@ -73,6 +73,9 @@ extension on _ContainerPageState {
         },
       ).toList,
     );
+    imageCtrl.dispose();
+    nameCtrl.dispose();
+    argsCtrl.dispose();
   }
 
   Future<void> _showPruneDialog({

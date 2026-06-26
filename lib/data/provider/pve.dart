@@ -242,11 +242,15 @@ class PveNotifier extends _$PveNotifier {
       throw PveErr(type: PveErrType.net, message: l10n.pveServerClientMissing);
     }
     if (url.isScheme('https')) {
-      return SecureSocket.startConnect(
-        'localhost',
-        _localPort,
-        onBadCertificate: (_) => true,
+      final task = await Socket.startConnect('localhost', _localPort);
+      final secureSocket = task.socket.then(
+        (socket) => SecureSocket.secure(
+          socket,
+          host: url.host,
+          onBadCertificate: _ignoreCert ? (_) => true : null,
+        ),
       );
+      return ConnectionTask.fromSocket(secureSocket, task.cancel);
     } else {
       return Socket.startConnect('localhost', _localPort);
     }

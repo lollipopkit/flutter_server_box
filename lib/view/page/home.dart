@@ -266,8 +266,6 @@ class _HomePageState extends ConsumerState<HomePage>
     }
     _goAuth();
 
-    //_reqNotiPerm();
-
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
       AppUpdateIface.doUpdate(
         build: BuildData.build,

@@ -39,9 +39,9 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
 
   @override
   void dispose() {
-    super.dispose();
     _autoRefreshTimer?.cancel();
     _textController.dispose();
+    super.dispose();
   }
 
   @override

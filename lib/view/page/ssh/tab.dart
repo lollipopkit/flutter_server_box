@@ -125,11 +125,11 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     for (final entry in entries) {
       _disposeTabEntry(entry);
     }
-    super.dispose();
     _pageCtrl.dispose();
     _tabRN.dispose();
     _fabVN.dispose();
     _sortVersionVN.dispose();
+    super.dispose();
   }
 
   @override

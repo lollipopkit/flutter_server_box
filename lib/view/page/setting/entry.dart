@@ -69,8 +69,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
 
   @override
   void dispose() {
-    super.dispose();
     _tabCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -148,6 +148,15 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
   late final _serverLogoCtrl = TextEditingController(
     text: _setting.serverLogoUrl.fetch(),
   );
+
+  @override
+  void dispose() {
+    _sshOpacityCtrl.dispose();
+    _sshBlurCtrl.dispose();
+    _textScalerCtrl.dispose();
+    _serverLogoCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
