@@ -2,17 +2,15 @@
 ///
 /// Extracted from TmuxSession for testability without flutter dependencies.
 abstract final class TmuxCommandBuilder {
-  static const defaultLang = 'en_US.UTF-8';
-
   /// Escape a shell argument for use in tmux commands.
   static String escapeArg(String arg) {
     return "'${arg.replaceAll("'", "'\\''")}'";
   }
 
-  static String tmuxPrefix({
-    String tmuxBin = 'tmux',
-    String lang = defaultLang,
-  }) {
+  static String tmuxPrefix({String tmuxBin = 'tmux', String? lang}) {
+    if (lang == null || lang.trim().isEmpty) {
+      return tmuxBin;
+    }
     final escapedLang = escapeArg(lang);
     return 'env LANG=$escapedLang LC_CTYPE=$escapedLang LC_ALL=$escapedLang $tmuxBin';
   }
@@ -21,7 +19,7 @@ abstract final class TmuxCommandBuilder {
   static String attachSession(
     String sessionName, {
     String tmuxBin = 'tmux',
-    String lang = defaultLang,
+    String? lang,
   }) {
     return '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} attach-session -t ${escapeArg(sessionName)}';
   }
@@ -31,7 +29,7 @@ abstract final class TmuxCommandBuilder {
     String sessionName,
     int windowIndex, {
     String tmuxBin = 'tmux',
-    String lang = defaultLang,
+    String? lang,
   }) {
     return '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} attach-session -t ${escapeArg('$sessionName:$windowIndex')}';
   }
@@ -40,7 +38,7 @@ abstract final class TmuxCommandBuilder {
   static String newSession(
     String sessionName, {
     String tmuxBin = 'tmux',
-    String lang = defaultLang,
+    String? lang,
   }) {
     return '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} new-session -s ${escapeArg(sessionName)}';
   }
@@ -49,7 +47,7 @@ abstract final class TmuxCommandBuilder {
   static String newSessionOrAttach(
     String sessionName, {
     String tmuxBin = 'tmux',
-    String lang = defaultLang,
+    String? lang,
   }) {
     return '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} new-session -A -s ${escapeArg(sessionName)}';
   }
@@ -58,16 +56,13 @@ abstract final class TmuxCommandBuilder {
   static String killSession(
     String sessionName, {
     String tmuxBin = 'tmux',
-    String lang = defaultLang,
+    String? lang,
   }) {
     return '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} kill-session -t ${escapeArg(sessionName)}';
   }
 
   /// Build the list-sessions command with format string.
-  static String listSessionsCmd({
-    String tmuxBin = 'tmux',
-    String lang = defaultLang,
-  }) =>
+  static String listSessionsCmd({String tmuxBin = 'tmux', String? lang}) =>
       '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} list-sessions -F '
       '"#{session_name}|#{session_windows}|#{session_attached}'
       '|#{session_created_string}|#{session_last_attached_string}'
@@ -77,16 +72,13 @@ abstract final class TmuxCommandBuilder {
   static String listWindows(
     String sessionName, {
     String tmuxBin = 'tmux',
-    String lang = defaultLang,
+    String? lang,
   }) =>
       '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} list-windows -t ${escapeArg(sessionName)} -F '
       '"#{window_index}|#{window_name}|#{window_active}|#{window_panes}|#{window_activity_string}"';
 
   /// Build the list-clients command with identity and disambiguation fields.
-  static String listClients({
-    String tmuxBin = 'tmux',
-    String lang = defaultLang,
-  }) =>
+  static String listClients({String tmuxBin = 'tmux', String? lang}) =>
       '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} list-clients -F '
       '"#{client_tty}|#{client_session}|#{window_index}|#{client_activity}"';
 
@@ -95,7 +87,7 @@ abstract final class TmuxCommandBuilder {
     String clientTty,
     String target, {
     String tmuxBin = 'tmux',
-    String lang = defaultLang,
+    String? lang,
   }) =>
       '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} switch-client -c ${escapeArg(clientTty)} -t ${escapeArg(target)}';
 
@@ -104,7 +96,7 @@ abstract final class TmuxCommandBuilder {
     String sessionName,
     int windowIndex, {
     String tmuxBin = 'tmux',
-    String lang = defaultLang,
+    String? lang,
   }) =>
       '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} kill-window -t ${escapeArg('$sessionName:$windowIndex')}';
 
@@ -113,7 +105,7 @@ abstract final class TmuxCommandBuilder {
     String sessionName,
     int windowIndex, {
     String tmuxBin = 'tmux',
-    String lang = defaultLang,
+    String? lang,
   }) =>
       '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} select-window -t ${escapeArg('$sessionName:$windowIndex')}';
 
@@ -121,7 +113,7 @@ abstract final class TmuxCommandBuilder {
   static String newWindow(
     String sessionName, {
     String tmuxBin = 'tmux',
-    String lang = defaultLang,
+    String? lang,
   }) =>
       '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} new-window -t ${escapeArg(sessionName)}';
 

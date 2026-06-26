@@ -10,14 +10,11 @@ import 'package:server_box/data/ssh/tmux/tmux_window_info.dart';
 /// tmux -CC connections.
 final class TmuxSessionScanner {
   final PersistentShell _shell;
-  final String _lang;
+  final String? _lang;
   String? _tmuxBin;
   String? get tmuxBin => _tmuxBin;
 
-  TmuxSessionScanner(
-    this._shell, {
-    String lang = TmuxCommandBuilder.defaultLang,
-  }) : _lang = lang;
+  TmuxSessionScanner(this._shell, {String? lang}) : _lang = lang;
 
   Future<String?> _findTmuxBin() async {
     final result = await _shell.run(

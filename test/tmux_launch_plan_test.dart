@@ -9,16 +9,11 @@ void main() {
     test('builds attach command for existing restored session', () {
       final plan = buildRestoredTmuxLaunchPlan(
         const TmuxRestoreState(sessionName: 'main', windowIndex: 2),
-        const [
-          TmuxSessionInfo(name: 'main', windows: 3, attached: true),
-        ],
+        const [TmuxSessionInfo(name: 'main', windows: 3, attached: true)],
       );
 
       expect(plan.shouldLaunchTmux, isTrue);
-      expect(
-        plan.command,
-        "env LANG='en_US.UTF-8' LC_CTYPE='en_US.UTF-8' LC_ALL='en_US.UTF-8' tmux attach-session -t 'main:2'",
-      );
+      expect(plan.command, "tmux attach-session -t 'main:2'");
       expect(plan.sessionName, 'main');
       expect(plan.windowIndex, 2);
     });
@@ -26,9 +21,7 @@ void main() {
     test('returns none when restored session no longer exists', () {
       final plan = buildRestoredTmuxLaunchPlan(
         const TmuxRestoreState(sessionName: 'ghost'),
-        const [
-          TmuxSessionInfo(name: 'main', windows: 1, attached: false),
-        ],
+        const [TmuxSessionInfo(name: 'main', windows: 1, attached: false)],
       );
 
       expect(plan.shouldLaunchTmux, isFalse);
@@ -42,10 +35,7 @@ void main() {
         const TmuxAttachExisting(sessionName: 'dev'),
       );
 
-      expect(
-        plan.command,
-        "env LANG='en_US.UTF-8' LC_CTYPE='en_US.UTF-8' LC_ALL='en_US.UTF-8' tmux attach-session -t 'dev'",
-      );
+      expect(plan.command, "tmux attach-session -t 'dev'");
       expect(plan.sessionName, 'dev');
       expect(plan.windowIndex, isNull);
     });
@@ -55,10 +45,7 @@ void main() {
         const TmuxAttachNew(sessionName: 'server_box'),
       );
 
-      expect(
-        plan.command,
-        "env LANG='en_US.UTF-8' LC_CTYPE='en_US.UTF-8' LC_ALL='en_US.UTF-8' tmux new-session -A -s 'server_box'",
-      );
+      expect(plan.command, "tmux new-session -A -s 'server_box'");
       expect(plan.sessionName, 'server_box');
       expect(plan.windowIndex, isNull);
     });
@@ -70,12 +57,21 @@ void main() {
         tmuxBin: tmuxBin,
       );
 
-      expect(
-        plan.command,
-        "env LANG='en_US.UTF-8' LC_CTYPE='en_US.UTF-8' LC_ALL='en_US.UTF-8' $tmuxBin attach-session -t 'codex:0'",
-      );
+      expect(plan.command, "$tmuxBin attach-session -t 'codex:0'");
       expect(plan.sessionName, 'codex');
       expect(plan.windowIndex, 0);
+    });
+
+    test('uses explicit lang when provided', () {
+      final plan = buildChosenTmuxLaunchPlan(
+        const TmuxAttachExisting(sessionName: 'dev'),
+        lang: 'zh_CN.UTF-8',
+      );
+
+      expect(
+        plan.command,
+        "env LANG='zh_CN.UTF-8' LC_CTYPE='zh_CN.UTF-8' LC_ALL='zh_CN.UTF-8' tmux attach-session -t 'dev'",
+      );
     });
   });
 }

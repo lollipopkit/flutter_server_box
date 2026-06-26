@@ -14,7 +14,8 @@ final class TmuxLaunchPlan {
     required this.windowIndex,
   });
 
-  const TmuxLaunchPlan.none() : this._(command: null, sessionName: null, windowIndex: null);
+  const TmuxLaunchPlan.none()
+    : this._(command: null, sessionName: null, windowIndex: null);
 
   const TmuxLaunchPlan.tmux({
     required String command,
@@ -31,12 +32,10 @@ final class TmuxLaunchPlan {
 
 TmuxLaunchPlan buildRestoredTmuxLaunchPlan(
   TmuxRestoreState restoreState,
-  List<TmuxSessionInfo> sessions,
-  {
-    String tmuxBin = 'tmux',
-    String lang = TmuxCommandBuilder.defaultLang,
-  }
-) {
+  List<TmuxSessionInfo> sessions, {
+  String tmuxBin = 'tmux',
+  String? lang,
+}) {
   if (!restoreState.hasSession) return const TmuxLaunchPlan.none();
 
   final sessionName = restoreState.sessionName!;
@@ -66,10 +65,13 @@ TmuxLaunchPlan buildRestoredTmuxLaunchPlan(
 TmuxLaunchPlan buildChosenTmuxLaunchPlan(
   TmuxAttachChoice choice, {
   String tmuxBin = 'tmux',
-  String lang = TmuxCommandBuilder.defaultLang,
+  String? lang,
 }) {
   return switch (choice) {
-    TmuxAttachExisting(sessionName: final sessionName, windowIndex: final windowIndex) =>
+    TmuxAttachExisting(
+      sessionName: final sessionName,
+      windowIndex: final windowIndex,
+    ) =>
       TmuxLaunchPlan.tmux(
         command: windowIndex != null
             ? TmuxCommandBuilder.attachSessionWindow(
