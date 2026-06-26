@@ -26,6 +26,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/persistent_shell.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/data/ssh/ssh_terminal_environment.dart';
 import 'package:server_box/data/ssh/terminal_output_buffer.dart';
 import 'package:server_box/data/ssh/tmux/tmux_export.dart';
 import 'package:server_box/view/page/storage/sftp.dart';

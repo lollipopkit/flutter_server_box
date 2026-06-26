@@ -38,14 +38,12 @@ final class TmuxSession {
   final PersistentShell _shell;
   final TmuxSessionScanner _scanner;
   final ValueNotifier<TmuxAttachChoice?> choiceNotifier = ValueNotifier(null);
-  final String _lang;
+  final String? _lang;
 
-  TmuxSession(
-    PersistentShell shell, {
-    String lang = TmuxCommandBuilder.defaultLang,
-  }) : _shell = shell,
-       _lang = lang,
-       _scanner = TmuxSessionScanner(shell, lang: lang);
+  TmuxSession(PersistentShell shell, {String? lang})
+    : _shell = shell,
+      _lang = lang,
+      _scanner = TmuxSessionScanner(shell, lang: lang);
 
   TmuxSessionScanner get scanner => _scanner;
 

@@ -5,23 +5,10 @@ extension _Init on SSHPageState {
     Loggers.app.info('[TMUX] $message');
   }
 
-  Map<String, String> get _sshEnvironment {
-    final env = <String, String>{...?widget.args.spi.envs};
-    final lang = (env['LANG']?.trim().isNotEmpty ?? false)
-        ? env['LANG']!
-        : TmuxCommandBuilder.defaultLang;
-    env['LANG'] = lang;
-    env.putIfAbsent('LC_CTYPE', () => lang);
-    env.putIfAbsent('LC_ALL', () => lang);
-    return env;
-  }
+  Map<String, String>? get _sshEnvironment =>
+      buildSshTerminalEnvironment(widget.args.spi.envs);
 
-  String get _tmuxLang {
-    final env = _sshEnvironment;
-    return (env['LC_CTYPE']?.trim().isNotEmpty ?? false)
-        ? env['LC_CTYPE']!
-        : env['LANG']!;
-  }
+  String? get _tmuxLang => resolveTmuxLang(widget.args.spi.envs);
 
   void _resetForegroundTerminal() {
     _terminal.buffer.clear();
@@ -383,21 +370,23 @@ extension _Init on SSHPageState {
 
   /// Cancellable progress dialog shown while reconnecting.
   void _showReconnectingDialog({required VoidCallback onCancel}) {
-    unawaited(context.showRoundDialog(
-      child: Row(
-        children: [
-          const SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2.5),
-          ),
-          const SizedBox(width: 16),
-          Expanded(child: Text(l10n.reconnecting)),
-          Btn.cancel(onTap: onCancel),
-        ],
+    unawaited(
+      context.showRoundDialog(
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            ),
+            const SizedBox(width: 16),
+            Expanded(child: Text(l10n.reconnecting)),
+            Btn.cancel(onTap: onCancel),
+          ],
+        ),
+        barrierDismiss: false,
       ),
-      barrierDismiss: false,
-    ));
+    );
   }
 
   Future<void> _showDisconnectDialog() async {
@@ -451,7 +440,11 @@ extension _Init on SSHPageState {
     try {
       oldClient?.close();
     } catch (e, st) {
-      Loggers.app.warning('Failed to close stale SSH client on reconnect', e, st);
+      Loggers.app.warning(
+        'Failed to close stale SSH client on reconnect',
+        e,
+        st,
+      );
     }
 
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connecting);
@@ -460,7 +453,11 @@ extension _Init on SSHPageState {
     const baseInterval = Duration(milliseconds: 200);
     const maxInterval = Duration(seconds: 3);
     var connected = false;
-    for (var attempt = 0; attempt < maxAttempts && mounted && !_reconnectCancelled; attempt++) {
+    for (
+      var attempt = 0;
+      attempt < maxAttempts && mounted && !_reconnectCancelled;
+      attempt++
+    ) {
       if (attempt > 0) {
         final backoffMs = (baseInterval.inMilliseconds << (attempt - 1))
             .clamp(0, maxInterval.inMilliseconds)
@@ -530,7 +527,11 @@ extension _Init on SSHPageState {
       try {
         available = await control.isAvailable;
       } catch (e, st) {
-        Loggers.app.warning('tmux availability check on reconnect failed', e, st);
+        Loggers.app.warning(
+          'tmux availability check on reconnect failed',
+          e,
+          st,
+        );
         return false;
       }
       if (!available) return false;
@@ -621,10 +622,7 @@ extension _Init on SSHPageState {
       PersistentShell(
         _client,
         sessionFactory: () async {
-          final sh = await _client!.execute(
-            'bash --login',
-            environment: _sshEnvironment,
-          );
+          final sh = await _client!.execute('sh', environment: _sshEnvironment);
           return SshPersistentShellSession(sh);
         },
       ),
@@ -637,7 +635,19 @@ extension _Init on SSHPageState {
       return const TmuxLaunchPlan.none();
     }
 
-    final tmuxSession = await _createTmuxControlSession();
+    final TmuxSession tmuxSession;
+    try {
+      tmuxSession = await _createTmuxControlSession().timeout(
+        const Duration(seconds: 5),
+      );
+    } on TimeoutException catch (e, st) {
+      Loggers.app.warning('tmux control session creation timed out', e, st);
+      return const TmuxLaunchPlan.none();
+    } catch (e, st) {
+      Loggers.app.warning('tmux control session creation failed', e, st);
+      return const TmuxLaunchPlan.none();
+    }
+
     try {
       bool available;
       try {
@@ -692,7 +702,7 @@ extension _Init on SSHPageState {
   Future<TmuxLaunchPlan> _buildRestoredForegroundLaunchPlan(
     List<TmuxSessionInfo> sessions, {
     required String tmuxBin,
-    required String lang,
+    required String? lang,
   }) async {
     final restoredState = _restoreTmuxState;
     if (!restoredState.hasSession) return const TmuxLaunchPlan.none();
@@ -721,7 +731,7 @@ extension _Init on SSHPageState {
     TmuxSession tmuxSession, {
     List<TmuxSessionInfo>? preloadedSessions,
     required String tmuxBin,
-    required String lang,
+    required String? lang,
   }) async {
     final showSelector = Stores.setting.tmuxShowSelector.fetch();
     final defaultName = Stores.setting.tmuxSessionName.fetch();
@@ -867,7 +877,7 @@ extension _Init on SSHPageState {
   Future<String?> _resolveTmuxClientTty(
     TmuxSession tmuxSession, {
     required String tmuxBin,
-    required String lang,
+    required String? lang,
   }) async {
     final clients = await _listTmuxClients(
       tmuxSession,
@@ -918,7 +928,7 @@ extension _Init on SSHPageState {
   Future<List<_TmuxClientCandidate>> _listTmuxClients(
     TmuxSession tmuxSession, {
     required String tmuxBin,
-    required String lang,
+    required String? lang,
   }) async {
     final result = await tmuxSession.scanner.runCommandAndCapture(
       TmuxCommandBuilder.listClients(tmuxBin: tmuxBin, lang: lang),

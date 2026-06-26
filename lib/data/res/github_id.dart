@@ -180,7 +180,9 @@ abstract final class GithubIds {
     'wu4339',
     'shengroubao',
     'nuclear06',
-    'shen-lan'
+    'shen-lan',
+    'Sahib911',
+    'SiLong96',
   };
 }
 
