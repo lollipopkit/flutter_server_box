@@ -6,6 +6,11 @@ Map<String, String>? buildSshTerminalEnvironment(Map<String, String>? envs) {
 }
 
 String? resolveTmuxLang(Map<String, String>? envs) {
+  final lcAll = envs?['LC_ALL']?.trim();
+  if (lcAll != null && lcAll.isNotEmpty) {
+    return lcAll;
+  }
+
   final lcCtype = envs?['LC_CTYPE']?.trim();
   if (lcCtype != null && lcCtype.isNotEmpty) {
     return lcCtype;

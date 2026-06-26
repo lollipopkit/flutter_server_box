@@ -26,6 +26,17 @@ void main() {
   });
 
   group('resolveTmuxLang', () {
+    test('uses LC_ALL before LC_CTYPE and LANG', () {
+      expect(
+        resolveTmuxLang({
+          'LANG': 'zh_CN.UTF-8',
+          'LC_CTYPE': 'C.UTF-8',
+          'LC_ALL': 'C',
+        }),
+        'C',
+      );
+    });
+
     test('uses LC_CTYPE before LANG', () {
       expect(
         resolveTmuxLang({'LANG': 'zh_CN.UTF-8', 'LC_CTYPE': 'C.UTF-8'}),
