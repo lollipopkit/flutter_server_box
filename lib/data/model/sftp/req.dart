@@ -12,9 +12,15 @@ class SftpReq {
   Map<String, String>? privateKeysByKeyId;
   Map<String, String>? knownHostFingerprints;
   late final int timeoutSeconds;
+  late final int progressUpdateIntervalSeconds;
 
   SftpReq(this.spi, this.remotePath, this.localPath, this.type) {
     timeoutSeconds = Stores.setting.timeout.fetch();
+    progressUpdateIntervalSeconds =
+        normalizeServerStatusRefreshSeconds(
+          Stores.setting.serverStatusUpdateInterval.fetch(),
+        ) ??
+        Defaults.updateInterval;
     privateKeysByKeyId = {};
 
     final keyId = spi.keyId;
@@ -71,6 +77,16 @@ class SftpReq {
 
 enum SftpReqType { download, upload }
 
+class SftpTransferProgress {
+  final double percent;
+  final int transferredBytes;
+
+  const SftpTransferProgress({
+    required this.percent,
+    required this.transferredBytes,
+  });
+}
+
 class SftpReqStatus {
   final int id;
   final SftpReq req;
@@ -82,6 +98,10 @@ class SftpReqStatus {
 
   // status of the download
   double? progress;
+  double? speedBytesPerSecond;
+  int? transferredBytes;
+  DateTime? _speedSampleTime;
+  int _speedSampleBytes = 0;
   SftpWorkerStatus? status;
   int? size;
   Exception? error;
@@ -118,6 +138,11 @@ class SftpReqStatus {
       case final double val:
         progress = val;
         break;
+      case final SftpTransferProgress val:
+        progress = val.percent;
+        transferredBytes = val.transferredBytes;
+        _initSpeedSampleIfNeeded(val.transferredBytes);
+        break;
       case final int val:
         size = val;
         break;
@@ -131,6 +156,36 @@ class SftpReqStatus {
     }
     notifyListeners();
     if (shouldDispose) dispose();
+  }
+
+  void _initSpeedSampleIfNeeded(int transferredBytes) {
+    if (_speedSampleTime != null) return;
+    _speedSampleTime = DateTime.now();
+    _speedSampleBytes = transferredBytes;
+  }
+
+  bool refreshSpeed([DateTime? now]) {
+    if (status != SftpWorkerStatus.loading) return false;
+
+    final sampleTime = now ?? DateTime.now();
+    final sampleBytes = transferredBytes ?? 0;
+    final lastSampleTime = _speedSampleTime;
+    if (lastSampleTime == null) {
+      _speedSampleTime = sampleTime;
+      _speedSampleBytes = sampleBytes;
+      return false;
+    }
+
+    final elapsedMs = sampleTime.difference(lastSampleTime).inMilliseconds;
+    if (elapsedMs <= 0) return false;
+
+    final speed = (sampleBytes - _speedSampleBytes) * 1000 / elapsedMs;
+    _speedSampleTime = sampleTime;
+    _speedSampleBytes = sampleBytes;
+
+    if (speedBytesPerSecond == speed) return false;
+    speedBytesPerSecond = speed;
+    return true;
   }
 }
 
