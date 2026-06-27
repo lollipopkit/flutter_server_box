@@ -356,7 +356,12 @@ extension _App on _AppSettingsPageState {
   Widget _buildHideTitleBar() {
     return ListTile(
       title: Text(l10n.hideTitleBar),
-      trailing: StoreSwitch(prop: _setting.hideTitleBar),
+      trailing: StoreSwitch(
+        prop: _setting.hideTitleBar,
+        callback: (value) async {
+          await SystemUIs.updateTitleBarStyle(hideTitleBar: value);
+        },
+      ),
     );
   }
 

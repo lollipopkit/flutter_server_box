@@ -103,7 +103,6 @@ class SSHPage extends ConsumerStatefulWidget {
     }
     return MaterialPageRoute(
       builder: (_) => VirtualWindowFrame(
-        showCaption: WindowFrameConfig.showCaption,
         child: SSHPage(args: SshPageArgs(spi: spi)),
       ),
     );
