@@ -171,13 +171,13 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     return ListenBuilder(
       listenable: _tabRN,
       builder: () {
+        final entries = _tabMap.entries.toList(growable: false);
         return PageView.builder(
           physics: const NeverScrollableScrollPhysics(),
           controller: _pageCtrl,
-          itemCount: _tabMap.length,
+          itemCount: entries.length,
           itemBuilder: (_, idx) {
-            final name = _tabMap.keys.elementAt(idx);
-            return _tabMap[name]?.page ?? UIs.placeholder;
+            return entries[idx].value.page ?? UIs.placeholder;
           },
           onPageChanged: (value) {
             _fabVN.value = value;
@@ -279,9 +279,9 @@ extension on _SSHTabPageState {
   }
 
   void _syncVisibleTabs(int activeIndex) {
-    for (var i = 0; i < _tabMap.length; i++) {
-      final entry = _tabMap.values.elementAt(i);
-      entry.visible?.value = i == activeIndex;
+    final entries = _tabMap.entries.toList(growable: false);
+    for (var i = 0; i < entries.length; i++) {
+      entries[i].value.visible?.value = i == activeIndex;
     }
   }
 
