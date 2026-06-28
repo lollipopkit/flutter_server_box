@@ -63,7 +63,8 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
   }
 
   Future<void> _refresh() async {
-    if (mounted) {
+    if (!mounted) return;
+    try {
       final serverState = ref.read(_provider);
       final systemType = serverState.status.system;
       final result = await _client
@@ -75,14 +76,15 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
             ),
           )
           .string;
+      if (!mounted) return;
       if (result == null || result.isEmpty) {
         context.showSnackBar(libL10n.empty);
         return;
       }
-      _result = PsResult.parse(result, sort: _procSortMode, previous: _result);
+      final parsed = PsResult.parse(result, sort: _procSortMode, previous: _result);
 
       if (!_checkedIncompleteData) {
-        final isAnyProcDataNotComplete = _result.procs.any(
+        final isAnyProcDataNotComplete = parsed.procs.any(
           (e) => e.cpu == null || e.mem == null,
         );
         if (isAnyProcDataNotComplete) {
@@ -90,7 +92,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
             (e) => e == ProcSortMode.cpu || e == ProcSortMode.mem,
           );
         }
-        final hasAnyProcIoData = _result.procs.any(
+        final hasAnyProcIoData = parsed.procs.any(
           (e) => e.readBytes != null || e.writeBytes != null,
         );
         if (!hasAnyProcIoData) {
@@ -103,7 +105,12 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
         }
         _checkedIncompleteData = true;
       }
-      setState(() {});
+      _result = parsed;
+      if (mounted) setState(() {});
+    } catch (e) {
+      if (mounted) {
+        context.showSnackBar(libL10n.error);
+      }
     }
   }
 
@@ -153,7 +160,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
     return Scaffold(
       appBar: CustomAppBar(
         centerTitle: true,
-        title: TwoLineText(up: widget.args.spi.name, down: libL10n.process),
+        title: TwoLineText(up: libL10n.process, down: widget.args.spi.name),
         actions: actions,
       ),
       body: child,

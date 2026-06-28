@@ -1074,4 +1074,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get clearHistory => 'Clear history';
+
+  @override
+  String get portForwardBetaTitle => '포트 포워딩 (Beta)';
+
+  @override
+  String get systemd => 'Systemd';
 }

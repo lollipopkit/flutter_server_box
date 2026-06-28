@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/systemd.dart';
@@ -30,7 +31,8 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: const Text('Systemd'),
+        centerTitle: true,
+        title: TwoLineText(up: l10n.systemd, down: widget.args.spi.name),
         actions: isDesktop
             ? [
                 Btn.icon(
@@ -127,7 +129,7 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
     }
   }
 
-  void _showConfirmDialog(String cmd) async {
+  Future<void> _showConfirmDialog(String cmd) async {
     final sure = await context.showRoundDialog(
       title: libL10n.attention,
       child: SimpleMarkdown(data: '```shell\n$cmd\n```'),

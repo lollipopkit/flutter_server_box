@@ -141,10 +141,6 @@ enum _NetSortType {
   trans,
   recv;
 
-  bool get isDevice => this == _NetSortType.device;
-  bool get isIn => this == _NetSortType.recv;
-  bool get isOut => this == _NetSortType.trans;
-
   _NetSortType get next {
     switch (this) {
       case device:

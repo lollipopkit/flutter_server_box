@@ -114,7 +114,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
         initTag: _tag.value,
       ),
       body: GestureDetector(
-        behavior: HitTestBehavior.opaque,
+        behavior: HitTestBehavior.translucent,
         onTap: _autoHideCtrl.show,
         child: Stores.setting.textFactor.listenable().listenVal((val) {
           _updateTextScaler(val);

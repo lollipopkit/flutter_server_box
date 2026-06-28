@@ -1114,4 +1114,10 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get clearHistory => 'Clear history';
+
+  @override
+  String get portForwardBetaTitle => 'Port Forwarding (Beta)';
+
+  @override
+  String get systemd => 'Systemd';
 }

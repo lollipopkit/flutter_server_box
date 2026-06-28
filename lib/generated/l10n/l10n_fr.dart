@@ -1119,4 +1119,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get clearHistory => 'Clear history';
+
+  @override
+  String get portForwardBetaTitle => 'Transfert de port (Beta)';
+
+  @override
+  String get systemd => 'Systemd';
 }
