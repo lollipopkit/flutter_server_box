@@ -1110,4 +1110,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get clearHistory => 'Clear history';
+
+  @override
+  String get portForwardBetaTitle => 'Port Forward (Beta)';
+
+  @override
+  String get systemd => 'Systemd';
 }

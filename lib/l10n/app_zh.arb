@@ -319,5 +319,7 @@
   ,
   "jumpServerAndProxyCommandCannotBeUsedTogether": "跳板服务器与 ProxyCommand 不能同时使用。"
   ,
-  "proxyCommandOnlySupportedOnDesktop": "ProxyCommand 仅支持桌面平台。"
+  "proxyCommandOnlySupportedOnDesktop": "ProxyCommand 仅支持桌面平台。",
+  "portForwardBetaTitle": "端口映射 (Beta)",
+  "systemd": "Systemd"
 }

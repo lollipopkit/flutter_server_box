@@ -1041,6 +1041,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clearHistory => '清空历史';
+
+  @override
+  String get portForwardBetaTitle => '端口映射 (Beta)';
+
+  @override
+  String get systemd => 'Systemd';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1971,4 +1977,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sponsor => '贊助';
+
+  @override
+  String get portForwardBetaTitle => 'Port Forward (Beta)';
+
+  @override
+  String get systemd => 'Systemd';
 }

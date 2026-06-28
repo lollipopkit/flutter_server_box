@@ -332,5 +332,7 @@
   "descending": "Descending",
   "searchServer": "Search server",
   "serverHistory": "Server history",
-  "clearHistory": "Clear history"
+  "clearHistory": "Clear history",
+  "portForwardBetaTitle": "Port Forward (Beta)",
+  "systemd": "Systemd"
 }

@@ -2039,6 +2039,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear history'**
   String get clearHistory;
+
+  /// No description provided for @portForwardBetaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Port Forward (Beta)'**
+  String get portForwardBetaTitle;
+
+  /// No description provided for @systemd.
+  ///
+  /// In en, this message translates to:
+  /// **'Systemd'**
+  String get systemd;
 }
 
 class _AppLocalizationsDelegate
