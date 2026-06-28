@@ -127,7 +127,7 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
     }
   }
 
-  void _showConfirmDialog(String cmd) async {
+  Future<void> _showConfirmDialog(String cmd) async {
     final sure = await context.showRoundDialog(
       title: libL10n.attention,
       child: SimpleMarkdown(data: '```shell\n$cmd\n```'),
