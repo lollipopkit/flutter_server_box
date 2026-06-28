@@ -70,7 +70,11 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: Text('${libL10n.portForward} (Beta)'),
+        centerTitle: true,
+        title: TwoLineText(
+          up: '${libL10n.portForward} (Beta)',
+          down: widget.args.spi.name,
+        ),
         actions: [IconButton(icon: const Icon(Icons.add), onPressed: _onAdd)],
       ),
       body: _buildBody(),

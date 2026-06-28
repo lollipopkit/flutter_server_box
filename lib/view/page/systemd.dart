@@ -30,7 +30,8 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: const Text('Systemd'),
+        centerTitle: true,
+        title: TwoLineText(up: 'Systemd', down: widget.args.spi.name),
         actions: isDesktop
             ? [
                 Btn.icon(

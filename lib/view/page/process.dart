@@ -153,7 +153,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
     return Scaffold(
       appBar: CustomAppBar(
         centerTitle: true,
-        title: TwoLineText(up: widget.args.spi.name, down: libL10n.process),
+        title: TwoLineText(up: libL10n.process, down: widget.args.spi.name),
         actions: actions,
       ),
       body: child,
