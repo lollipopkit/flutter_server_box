@@ -72,7 +72,7 @@ final class _PortForwardPageState extends ConsumerState<PortForwardPage> {
       appBar: CustomAppBar(
         centerTitle: true,
         title: TwoLineText(
-          up: libL10n.portForwardBetaTitle,
+          up: l10n.portForwardBetaTitle,
           down: widget.args.spi.name,
         ),
         actions: [IconButton(icon: const Icon(Icons.add), onPressed: _onAdd)],

@@ -177,7 +177,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
           controller: _pageCtrl,
           itemCount: entries.length,
           itemBuilder: (_, idx) {
-            return entries[idx].value.page ?? UIs.placeholder;
+            return entries[idx].value.page;
           },
           onPageChanged: (value) {
             _fabVN.value = value;
