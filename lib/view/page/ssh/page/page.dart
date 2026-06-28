@@ -71,6 +71,26 @@ final class SshPageArgs {
        );
 }
 
+class _EmptyRoute extends StatefulWidget {
+  const _EmptyRoute();
+
+  @override
+  State<_EmptyRoute> createState() => _EmptyRouteState();
+}
+
+class _EmptyRouteState extends State<_EmptyRoute> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+
 class SSHPage extends ConsumerStatefulWidget {
   final SshPageArgs args;
 
@@ -92,14 +112,13 @@ class SSHPage extends ConsumerStatefulWidget {
     Object? arguments,
   ) {
     if (arguments is! String) {
-      return MaterialPageRoute(builder: (_) => const SizedBox.shrink());
+      return MaterialPageRoute(builder: (_) => const _EmptyRoute());
     }
     final serverId = arguments;
     final servers = Stores.server.fetch();
     final spi = servers.where((s) => s.id == serverId).firstOrNull;
     if (spi == null) {
-      // Server not found, return empty route
-      return MaterialPageRoute(builder: (_) => const SizedBox.shrink());
+      return MaterialPageRoute(builder: (_) => const _EmptyRoute());
     }
     return MaterialPageRoute(
       builder: (_) => VirtualWindowFrame(
