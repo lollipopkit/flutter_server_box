@@ -254,6 +254,6 @@
   "writeScriptTip": "Après la connexion au serveur, un script sera écrit dans `~/.config/server_box` \n | `/tmp/server_box` pour surveiller l'état du système. Vous pouvez examiner le contenu du script.",
   "podmanDockerEmulationDetected": "Émulation Podman Docker détectée. Veuillez passer à Podman dans les paramètres.",
   "sponsor": "Soutenir",
-  "portForwardBetaTitle": "Port Forward (Beta)",
+  "portForwardBetaTitle": "Transfert de port (Beta)",
   "systemd": "Systemd"
 }

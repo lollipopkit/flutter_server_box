@@ -259,6 +259,6 @@
   "menuGitHubRepository": "GitHub 저장소",
   "podmanDockerEmulationDetected": "Podman Docker 에뮬레이션이 감지되었습니다. 설정에서 Podman으로 전환해 주세요.",
   "sponsor": "후원",
-  "portForwardBetaTitle": "Port Forward (Beta)",
+  "portForwardBetaTitle": "포트 포워딩 (Beta)",
   "systemd": "Systemd"
 }
