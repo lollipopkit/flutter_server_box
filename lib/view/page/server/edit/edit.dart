@@ -143,13 +143,13 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     final actions = <Widget>[];
     if (spi != null) actions.add(_buildDelBtn());
 
-    return GestureDetector(
-      onTap: () => _focusScope.unfocus(),
-      child: Scaffold(
-        appBar: CustomAppBar(title: Text(libL10n.edit), actions: actions),
-        body: _buildForm(),
-        floatingActionButton: _buildFAB(),
+    return Scaffold(
+      appBar: CustomAppBar(title: Text(libL10n.edit), actions: actions),
+      body: GestureDetector(
+        onTap: () => _focusScope.unfocus(),
+        child: _buildForm(),
       ),
+      floatingActionButton: _buildFAB(),
     );
   }
 
