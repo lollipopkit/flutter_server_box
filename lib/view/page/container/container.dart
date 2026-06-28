@@ -33,14 +33,12 @@ class ContainerPage extends ConsumerStatefulWidget {
 }
 
 class _ContainerPageState extends ConsumerState<ContainerPage> {
-  final _textController = TextEditingController();
   late final ContainerNotifierProvider _provider;
   Timer? _autoRefreshTimer;
 
   @override
   void dispose() {
     _autoRefreshTimer?.cancel();
-    _textController.dispose();
     super.dispose();
   }
 
@@ -84,7 +82,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
 
   Widget _buildFAB() {
     return FloatingActionButton(
-      onPressed: () async => await _showAddFAB(),
+      onPressed: () => _showAddFAB(),
       child: const Icon(Icons.add),
     );
   }
@@ -182,7 +180,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
         children: [
           const Center(child: CircularProgressIndicator()),
           UIs.height13,
-          Text(containerState.runLog ?? '...'),
+          Text(containerState.runLog!),
         ],
       ),
     );
@@ -231,7 +229,6 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(item.name ?? l10n.unknown, style: UIs.text15),
-              const SizedBox(height: 3),
               _buildMoreBtn(item),
             ],
           ),
@@ -348,8 +345,6 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   }
 
   Widget get _buildPruneBtns {
-    final len = _PruneTypes.values.length;
-    if (len == 0) return UIs.placeholder;
     return ExpandTile(
       leading: const Icon(Icons.delete),
       title: Text(libL10n.prune),
@@ -379,8 +374,6 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   }
 
   Widget get _buildSettingsBtns {
-    final len = _SettingsMenuItems.values.length;
-    if (len == 0) return UIs.placeholder;
     final containerState = _containerState;
 
     return ExpandTile(

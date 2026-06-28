@@ -9,7 +9,6 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/server.dart';
 import 'package:server_box/core/route.dart';
-import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
@@ -385,8 +384,8 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   }
 
   Widget _buildProgress(double percent) {
-    if (percent > 100) percent = 100;
-    final percentWithinOne = percent / 100;
+    final clamped = percent.clamp(0, 100);
+    final percentWithinOne = clamped / 100;
     return LinearProgressIndicator(
       value: percentWithinOne,
       minHeight: 7,
@@ -397,6 +396,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
 
   Widget? _buildMemView(ServerState si) {
     final ss = si.status;
+    if (ss.mem.total == 0) return null;
     final free = ss.mem.free / ss.mem.total * 100;
     final avail = ss.mem.availPercent * 100;
     final used = ss.mem.usedPercent * 100;
@@ -1022,7 +1022,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
             Text('(${si.adapter.raw})', style: UIs.text13Grey),
           ],
         ),
-        Text(si.summary ?? '', style: UIs.text13Grey),
+        Text(si.summary!, style: UIs.text13Grey),
       ],
     ).expanded();
 

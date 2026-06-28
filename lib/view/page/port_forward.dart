@@ -392,7 +392,7 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
 
   String get _dynamicTypeLabel => 'SOCKS5';
 
-  void _onSave() async {
+  Future<void> _onSave() async {
     if (_saving) return;
     setState(() => _saving = true);
     try {
@@ -433,7 +433,7 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
       );
 
       await widget.onSave(config);
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) context.pop();
     } catch (e, s) {
       Loggers.app.warning('Failed to save port forward config', e, s);
       if (mounted) context.showSnackBar(libL10n.error);
