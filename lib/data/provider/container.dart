@@ -41,6 +41,7 @@ class ContainerNotifier extends _$ContainerNotifier {
   var sudoCompleter = Completer<bool>();
   String? _cachedPassword;
   var _refreshGeneration = 0;
+  var _pendingRefresh = false;
 
   @override
   ContainerState build(
@@ -71,7 +72,7 @@ class ContainerNotifier extends _$ContainerNotifier {
   }
 
   Future<void> setType(ContainerType type) async {
-    final refreshGeneration = ++_refreshGeneration;
+    final refreshGeneration = _resetSudoProbe();
     state = state.copyWith(
       type: type,
       error: null,
@@ -82,8 +83,17 @@ class ContainerNotifier extends _$ContainerNotifier {
       isBusy: false,
     );
     Stores.container.setType(type, hostId);
-    sudoCompleter = Completer<bool>();
     await refresh(generation: refreshGeneration);
+  }
+
+  void resetSudoProbe() {
+    _resetSudoProbe();
+    state = state.copyWith(isBusy: false);
+  }
+
+  int _resetSudoProbe() {
+    sudoCompleter = Completer<bool>();
+    return ++_refreshGeneration;
   }
 
   bool _isStaleRefresh(int generation) {
@@ -119,7 +129,10 @@ class ContainerNotifier extends _$ContainerNotifier {
   }
 
   Future<void> refresh({bool isAuto = false, int? generation}) async {
-    if (state.isBusy) return;
+    if (state.isBusy) {
+      _pendingRefresh = true;
+      return;
+    }
     final refreshGeneration = generation ?? _refreshGeneration;
     final type = state.type;
     state = state.copyWith(isBusy: true);
@@ -267,7 +280,10 @@ class ContainerNotifier extends _$ContainerNotifier {
       final lines = psRaw.split('\n');
       if (type == ContainerType.docker) {
         /// Due to the fetched data is not in json format, skip table header
-        lines.removeWhere((element) => element.contains('CONTAINER ID'));
+        final headerIdx = lines.indexWhere((element) {
+          return element.trimLeft().startsWith('CONTAINER ID');
+        });
+        if (headerIdx != -1) lines.removeAt(headerIdx);
       }
       lines.removeWhere((element) => element.isEmpty);
       final items = lines
@@ -318,7 +334,10 @@ class ContainerNotifier extends _$ContainerNotifier {
       final statsLines = statsRaw.split('\n');
       statsLines.removeWhere((element) => element.isEmpty);
       final items = state.items;
-      if (items == null) return;
+      if (items == null) {
+        await _refreshPendingIfNeeded(refreshGeneration);
+        return;
+      }
 
       for (var item in items) {
         final id = item.id;
@@ -340,6 +359,13 @@ class ContainerNotifier extends _$ContainerNotifier {
       }
       Loggers.app.warning('Parse docker stats: $statsRaw', e, trace);
     }
+    await _refreshPendingIfNeeded(refreshGeneration);
+  }
+
+  Future<void> _refreshPendingIfNeeded(int generation) async {
+    if (_isStaleRefresh(generation) || !_pendingRefresh || state.isBusy) return;
+    _pendingRefresh = false;
+    await refresh(generation: generation);
   }
 
   Future<ContainerErr?> stop(String id) async => await run('stop $id');
