@@ -119,7 +119,7 @@ Future<void> _download(
     await Directory(dirPath).create(recursive: true);
 
     Loggers.app.info('SFTP download opening session: ${req.remotePath}');
-    final openedSftp = await withSftpOpTimeout(
+    final openedSftp = await withSftpSessionOpenTimeout(
       'open download session',
       client.sftp(),
       _sftpPrepareTimeout(req),
@@ -292,7 +292,7 @@ Future<void> _upload(
     mainSendPort.send(localLen);
     final localFile = local.openRead().cast<Uint8List>();
     Loggers.app.info('SFTP upload opening session: ${req.remotePath}');
-    final openedSftp = await withSftpOpTimeout(
+    final openedSftp = await withSftpSessionOpenTimeout(
       'open upload session',
       client.sftp(),
       _sftpPrepareTimeout(req),

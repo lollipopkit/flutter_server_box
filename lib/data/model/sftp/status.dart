@@ -23,13 +23,15 @@ class SftpReqStatus {
   int? size;
   Exception? error;
   Duration? spentTime;
+  bool _disposed = false;
 
   SftpReqStatus({
     required this.req,
     required this.notifyListeners,
     this.completer,
   }) : id = DateTime.now().microsecondsSinceEpoch {
-    worker = SftpWorker(onNotify: onNotify, req: req)..init();
+    worker = SftpWorker(onNotify: onNotify, req: req);
+    unawaited(_initWorker());
   }
 
   @override
@@ -39,8 +41,21 @@ class SftpReqStatus {
   int get hashCode => id.hashCode;
 
   void dispose() {
+    if (_disposed) return;
+    _disposed = true;
     worker.dispose();
-    completer?.complete(true);
+    if (completer?.isCompleted == false) {
+      completer?.complete(true);
+    }
+  }
+
+  Future<void> _initWorker() async {
+    try {
+      await worker.init();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to initialize SFTP worker', e, s);
+      onNotify(e);
+    }
   }
 
   void onNotify(dynamic event) {
