@@ -40,6 +40,7 @@ abstract class ContainerState with _$ContainerState {
 class ContainerNotifier extends _$ContainerNotifier {
   var sudoCompleter = Completer<bool>();
   String? _cachedPassword;
+  var _refreshGeneration = 0;
 
   @override
   ContainerState build(
@@ -70,6 +71,7 @@ class ContainerNotifier extends _$ContainerNotifier {
   }
 
   Future<void> setType(ContainerType type) async {
+    final refreshGeneration = ++_refreshGeneration;
     state = state.copyWith(
       type: type,
       error: null,
@@ -81,7 +83,11 @@ class ContainerNotifier extends _$ContainerNotifier {
     );
     Stores.container.setType(type, hostId);
     sudoCompleter = Completer<bool>();
-    await refresh();
+    await refresh(generation: refreshGeneration);
+  }
+
+  bool _isStaleRefresh(int generation) {
+    return generation != _refreshGeneration || !ref.mounted;
   }
 
   Future<void> _requiresSudo(
@@ -112,14 +118,17 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
   }
 
-  Future<void> refresh({bool isAuto = false}) async {
+  Future<void> refresh({bool isAuto = false, int? generation}) async {
     if (state.isBusy) return;
+    final refreshGeneration = generation ?? _refreshGeneration;
+    final type = state.type;
     state = state.copyWith(isBusy: true);
 
     final sudo = sudoCompleter;
-    if (!sudo.isCompleted) unawaited(_requiresSudo(sudo, state.type));
+    if (!sudo.isCompleted) unawaited(_requiresSudo(sudo, type));
 
     final needSudo = await sudo.future;
+    if (_isStaleRefresh(refreshGeneration)) return;
 
     /// If sudo is required and auto refresh is enabled, skip the refresh.
     /// Or this will ask for pwd again and again.
@@ -131,6 +140,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     String? password;
     if (needSudo) {
       password = await _getSudoPassword();
+      if (_isStaleRefresh(refreshGeneration)) return;
       if (password == null) {
         state = state.copyWith(
           isBusy: false,
@@ -147,7 +157,7 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     final cmd = _wrap(
       ContainerCmdType.execAll(
-        state.type,
+        type,
         sudo: needSudo,
         includeStats: includeStats,
         password: password,
@@ -168,6 +178,7 @@ class ContainerNotifier extends _$ContainerNotifier {
         },
       );
     } else {
+      if (_isStaleRefresh(refreshGeneration)) return;
       state = state.copyWith(
         isBusy: false,
         error: ContainerErr(type: ContainerErrType.noClient),
@@ -175,7 +186,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       return;
     }
 
-    if (!ref.mounted) return;
+    if (_isStaleRefresh(refreshGeneration)) return;
     state = state.copyWith(isBusy: false);
 
     if (!context.mounted) return;
@@ -254,13 +265,13 @@ class ContainerNotifier extends _$ContainerNotifier {
     final psRaw = ContainerCmdType.ps.find(segments);
     try {
       final lines = psRaw.split('\n');
-      if (state.type == ContainerType.docker) {
+      if (type == ContainerType.docker) {
         /// Due to the fetched data is not in json format, skip table header
         lines.removeWhere((element) => element.contains('CONTAINER ID'));
       }
       lines.removeWhere((element) => element.isEmpty);
       final items = lines
-          .map((e) => ContainerPs.fromRaw(e, state.type))
+          .map((e) => ContainerPs.fromRaw(e, type))
           .toList();
       state = state.copyWith(items: items);
     } catch (e, trace) {
@@ -279,13 +290,13 @@ class ContainerNotifier extends _$ContainerNotifier {
       List<ContainerImg> images;
       if (isEntireJson) {
         images = (json.decode(imageRaw) as List)
-            .map((e) => ContainerImg.fromRawJson(json.encode(e), state.type))
+            .map((e) => ContainerImg.fromRawJson(json.encode(e), type))
             .toList();
       } else {
         final lines = imageRaw.split('\n');
         lines.removeWhere((element) => element.isEmpty);
         images = lines
-            .map((e) => ContainerImg.fromRawJson(e, state.type))
+            .map((e) => ContainerImg.fromRawJson(e, type))
             .toList();
       }
       state = state.copyWith(images: images);
