@@ -489,7 +489,12 @@ extension _Actions on _SftpPageState {
     }
 
     try {
-      await _runShellCommand('rm -f ${shellSingleQuote(tmpPath)}');
+      await _sudoHelper.delete(
+        tmpPath,
+        isDir: false,
+        recursive: false,
+        password: pwd,
+      );
     } catch (_) {}
     return false;
   }

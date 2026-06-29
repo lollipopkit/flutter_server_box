@@ -53,6 +53,18 @@ Duration _sftpDownloadIdleTimeout(SftpReq req) {
       : timeout;
 }
 
+Future<SSHClient> _connectSftpSsh(SftpReq req) {
+  return genClient(
+    req.spi,
+    privateKey: req.privateKey,
+    jumpSpi: req.jumpSpi,
+    jumpPrivateKey: req.jumpPrivateKey,
+    privateKeysByKeyId: req.privateKeysByKeyId,
+    jumpSpisById: req.jumpSpisById,
+    knownHostFingerprints: req.knownHostFingerprints,
+  );
+}
+
 class SftpWorker {
   final Function(Object event) onNotify;
   final SftpReq req;
@@ -118,15 +130,7 @@ Future<void> _download(
   try {
     mainSendPort.send(SftpWorkerStatus.preparing);
     final watch = Stopwatch()..start();
-    client = await genClient(
-      req.spi,
-      privateKey: req.privateKey,
-      jumpSpi: req.jumpSpi,
-      jumpPrivateKey: req.jumpPrivateKey,
-      privateKeysByKeyId: req.privateKeysByKeyId,
-      jumpSpisById: req.jumpSpisById,
-      knownHostFingerprints: req.knownHostFingerprints,
-    );
+    client = await _connectSftpSsh(req);
     mainSendPort.send(SftpWorkerStatus.sshConnectted);
     Loggers.app.info('SFTP download SSH connected: ${req.remotePath}');
 
@@ -297,15 +301,7 @@ Future<void> _upload(
   try {
     mainSendPort.send(SftpWorkerStatus.preparing);
     final watch = Stopwatch()..start();
-    client = await genClient(
-      req.spi,
-      privateKey: req.privateKey,
-      jumpSpi: req.jumpSpi,
-      jumpPrivateKey: req.jumpPrivateKey,
-      privateKeysByKeyId: req.privateKeysByKeyId,
-      jumpSpisById: req.jumpSpisById,
-      knownHostFingerprints: req.knownHostFingerprints,
-    );
+    client = await _connectSftpSsh(req);
     mainSendPort.send(SftpWorkerStatus.sshConnectted);
     Loggers.app.info('SFTP upload SSH connected: ${req.remotePath}');
 
