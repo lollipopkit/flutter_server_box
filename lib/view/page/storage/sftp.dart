@@ -12,10 +12,11 @@ import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/utils/comparator.dart';
 import 'package:server_box/core/utils/host_key_helper.dart';
 import 'package:server_box/core/utils/sftp_sudo.dart';
+import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/browser_status.dart';
-import 'package:server_box/data/model/sftp/worker.dart';
+import 'package:server_box/data/model/sftp/req.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -142,13 +143,15 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
         SftpClient? sftp;
         try {
           final normalizedHistory = _normalizeSftpPath(history);
-          sftp = await _withSftpOpTimeout(
+          sftp = await withSftpSessionOpenTimeout(
             'open session for last path',
             _client.sftp(),
+            _sftpOpTimeout,
           );
-          await _withSftpOpTimeout(
+          await withSftpOpTimeout(
             'list last path',
-            sftp!.listdir(normalizedHistory),
+            sftp.listdir(normalizedHistory),
+            _sftpOpTimeout,
           );
           initPath = normalizedHistory;
         } catch (_) {
@@ -489,7 +492,12 @@ extension _Actions on _SftpPageState {
     }
 
     try {
-      await _runShellCommand('rm -f ${shellSingleQuote(tmpPath)}');
+      await _sudoHelper.delete(
+        tmpPath,
+        isDir: false,
+        recursive: false,
+        password: pwd,
+      );
     } catch (_) {}
     return false;
   }
@@ -734,26 +742,24 @@ extension _Actions on _SftpPageState {
     context.pop();
     final isDir = file.attr.isDirectory;
     var useRmr = Stores.setting.sftpRmrDir.fetch();
-    final text = () {
-      if (isDir && !useRmr) {
-        return libL10n.askContinue('${libL10n.delete} ${file.filename}');
-      }
-      return libL10n.askContinue('${libL10n.delete} ${file.filename}');
-    }();
 
     // Most users don't know that SFTP can't delete a directory which is not
     // empty, so we provide a checkbox to let user choose to use `rm -r` or not
     context.showRoundDialog(
       title: libL10n.attention,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ListTile(title: Text(text)),
-          if (!useRmr)
-            StatefulBuilder(
-              builder: (_, setState) {
-                return CheckboxListTile(
+      child: StatefulBuilder(
+        builder: (_, setState) {
+          final text = libL10n.askContinue(
+            '${libL10n.delete} ${file.filename}'
+            '${isDir && useRmr ? '\n${l10n.sftpRmrDirSummary}' : ''}',
+          );
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(title: Text(text)),
+              if (isDir && !Stores.setting.sftpRmrDir.fetch())
+                CheckboxListTile(
                   title: Text(l10n.sftpRmrDirSummary),
                   value: useRmr,
                   onChanged: (val) {
@@ -761,10 +767,10 @@ extension _Actions on _SftpPageState {
                       useRmr = val ?? false;
                     });
                   },
-                );
-              },
-            ),
-        ],
+                ),
+            ],
+          );
+        },
       ),
       actions: [
         TextButton(onPressed: () => context.pop(), child: Text(libL10n.cancel)),
@@ -776,7 +782,7 @@ extension _Actions on _SftpPageState {
               normal: () async {
                 if (useRmr) {
                   await _runShellCommand('rm -r ${shellSingleQuote(remotePath)}');
-                } else if (file.attr.isDirectory) {
+                } else if (isDir) {
                   await _status.client!.rmdir(remotePath);
                 } else {
                   await _status.client!.remove(remotePath);
@@ -784,7 +790,7 @@ extension _Actions on _SftpPageState {
               },
               sudo: (pwd) => _sudoHelper.delete(
                 remotePath,
-                isDir: file.attr.isDirectory,
+                isDir: isDir,
                 recursive: useRmr,
                 password: pwd,
               ),
@@ -924,28 +930,30 @@ extension _Actions on _SftpPageState {
 
   /// Local file dir + server id + remote path
   String _getLocalPath(String remotePath) {
-    var normalizedPath = remotePath.replaceAll('/', Pfs.seperator);
-    if (normalizedPath.startsWith(Pfs.seperator)) {
-      normalizedPath = normalizedPath.substring(1);
-    }
-    return Paths.file.joinPath(widget.args.spi.id).joinPath(normalizedPath);
+    final pathParts = remotePath.split('/').where((part) => part.isNotEmpty);
+    return pathParts.fold(
+      Paths.file.joinPath(widget.args.spi.id),
+      (path, part) => path.joinPath(_safeLocalPathPart(part)),
+    );
+  }
+
+  String _safeLocalPathPart(String part) {
+    if (part == '.' || part == '..') return '_';
+    var safe = part.replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]'), '_');
+    safe = safe.replaceAll(RegExp(r'[ .]+$'), '');
+    if (safe.isEmpty) return '_';
+
+    final baseName = safe.split('.').first.toUpperCase();
+    final isReservedDeviceName = RegExp(
+      r'^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$',
+    ).hasMatch(baseName);
+    return isReservedDeviceName ? '_$safe' : safe;
   }
 
   /// Only return true if the path is changed
   Duration get _sftpOpTimeout {
     final seconds = Stores.setting.timeout.fetch();
-    return Duration(seconds: seconds <= 0 ? 5 : seconds);
-  }
-
-  Future<T> _withSftpOpTimeout<T>(String operation, Future<T> future) async {
-    final timeout = _sftpOpTimeout;
-    try {
-      return await future.timeout(timeout);
-    } on TimeoutException catch (e, s) {
-      final error = TimeoutException('SFTP $operation timed out', timeout);
-      Loggers.app.warning(error.message, e, s);
-      throw error;
-    }
+    return sftpOperationTimeout(seconds);
   }
 
   Future<bool?> _listDir([BuildContext? dialogContext]) async {
@@ -1011,9 +1019,10 @@ extension _Actions on _SftpPageState {
 
     try {
       if (_status.client == null && _openingClientFuture == null) {
-        _openingClientFuture = _withSftpOpTimeout(
+        _openingClientFuture = withSftpSessionOpenTimeout(
           'open browser session',
           _client.sftp(),
+          _sftpOpTimeout,
         );
       }
       _status.client ??= await _openingClientFuture;
@@ -1021,9 +1030,10 @@ extension _Actions on _SftpPageState {
       if (!mounted) return null;
       final client = _status.client;
       if (client == null) return null;
-      return await _withSftpOpTimeout(
+      return await withSftpOpTimeout(
         'list directory',
         client.listdir(listPath),
+        _sftpOpTimeout,
       );
     } on SftpStatusError catch (e) {
       _openingClientFuture = null;

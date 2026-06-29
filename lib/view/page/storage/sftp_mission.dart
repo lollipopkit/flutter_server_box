@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
-import 'package:server_box/data/model/sftp/worker.dart';
+import 'package:server_box/data/model/sftp/req.dart';
+import 'package:server_box/data/model/sftp/status.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/default.dart';
 import 'package:server_box/view/page/storage/local.dart';
@@ -84,7 +85,7 @@ class _SftpMissionPageState extends ConsumerState<SftpMissionPage> {
       const (SftpWorkerStatus.loading) => _buildLoading(status),
       const (SftpWorkerStatus.sshConnectted) => _buildConnected(status),
       const (SftpWorkerStatus.preparing) => _buildPreparing(status),
-      _ => _buildDefault(status),
+      null => _buildPreparing(status),
     };
   }
 
@@ -93,20 +94,6 @@ class _SftpMissionPageState extends ConsumerState<SftpMissionPage> {
       status: status,
       subtitle: l10n.sftpDlPrepare,
       trailing: _buildDelete(status.fileName, status.id),
-    );
-  }
-
-  Widget _buildDefault(SftpReqStatus status) {
-    return _wrapInCard(
-      status: status,
-      subtitle: l10n.unknown,
-      trailing: IconButton(
-        onPressed: () => context.showRoundDialog(
-          title: libL10n.error,
-          child: Text((status.error ?? l10n.unknown).toString()),
-        ),
-        icon: const Icon(Icons.error),
-      ),
     );
   }
 

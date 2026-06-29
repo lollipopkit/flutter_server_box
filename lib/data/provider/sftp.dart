@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/data/model/sftp/worker.dart';
+import 'package:server_box/data/model/sftp/req.dart';
+import 'package:server_box/data/model/sftp/status.dart';
 
 part 'sftp.freezed.dart';
 part 'sftp.g.dart';
