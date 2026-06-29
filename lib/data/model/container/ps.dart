@@ -7,10 +7,9 @@ import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/res/misc.dart';
 
 sealed class ContainerPs {
-  final String? id = null;
-  final String? image = null;
+  String? get id;
+  String? get image;
   String? get name;
-  String? get cmd;
   ContainerStatus get status;
 
   String? cpu;
@@ -24,15 +23,12 @@ sealed class ContainerPs {
 }
 
 final class PodmanPs implements ContainerPs {
-  final List<String>? command;
-  final DateTime? created;
   final bool? exited;
   @override
   final String? id;
   @override
   final String? image;
   final List<String>? names;
-  final int? startedAt;
 
   @override
   String? cpu;
@@ -44,20 +40,14 @@ final class PodmanPs implements ContainerPs {
   String? disk;
 
   PodmanPs({
-    this.command,
-    this.created,
     this.exited,
     this.id,
     this.image,
     this.names,
-    this.startedAt,
   });
 
   @override
   String? get name => names?.firstOrNull;
-
-  @override
-  String? get cmd => command?.firstOrNull;
 
   @override
   ContainerStatus get status => ContainerStatus.fromPodmanExited(exited);
@@ -104,33 +94,14 @@ final class PodmanPs implements ContainerPs {
   factory PodmanPs.fromRawJson(String str) =>
       PodmanPs.fromJson(json.decode(str));
 
-  String toRawJson() => json.encode(toJson());
-
   factory PodmanPs.fromJson(Map<String, dynamic> json) => PodmanPs(
-    command: json['Command'] == null
-        ? []
-        : List<String>.from(json['Command']!.map((x) => x)),
-    created: json['Created'] == null ? null : DateTime.parse(json['Created']),
     exited: json['Exited'],
     id: json['Id'],
     image: json['Image'],
     names: json['Names'] == null
         ? []
         : List<String>.from(json['Names']!.map((x) => x)),
-    startedAt: json['StartedAt'],
   );
-
-  Map<String, dynamic> toJson() => {
-    'Command': command == null
-        ? []
-        : List<dynamic>.from(command!.map((x) => x)),
-    'Created': created?.toIso8601String(),
-    'Exited': exited,
-    'Id': id,
-    'Image': image,
-    'Names': names == null ? [] : List<dynamic>.from(names!.map((x) => x)),
-    'StartedAt': startedAt,
-  };
 }
 
 final class DockerPs implements ContainerPs {
@@ -154,9 +125,6 @@ final class DockerPs implements ContainerPs {
 
   @override
   String? get name => names;
-
-  @override
-  String? get cmd => null;
 
   @override
   ContainerStatus get status => ContainerStatus.fromDockerState(state);

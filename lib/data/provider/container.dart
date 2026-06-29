@@ -40,6 +40,8 @@ abstract class ContainerState with _$ContainerState {
 class ContainerNotifier extends _$ContainerNotifier {
   var sudoCompleter = Completer<bool>();
   String? _cachedPassword;
+  var _refreshGeneration = 0;
+  var _pendingRefresh = false;
 
   @override
   ContainerState build(
@@ -70,6 +72,7 @@ class ContainerNotifier extends _$ContainerNotifier {
   }
 
   Future<void> setType(ContainerType type) async {
+    final refreshGeneration = _resetSudoProbe();
     state = state.copyWith(
       type: type,
       error: null,
@@ -77,48 +80,80 @@ class ContainerNotifier extends _$ContainerNotifier {
       items: null,
       images: null,
       version: null,
+      isBusy: false,
     );
     Stores.container.setType(type, hostId);
-    sudoCompleter = Completer<bool>();
-    await refresh();
+    await refresh(generation: refreshGeneration);
   }
 
-  void _requiresSudo() async {
+  void resetSudoProbe() {
+    _resetSudoProbe();
+    state = state.copyWith(isBusy: false);
+  }
+
+  int _resetSudoProbe() {
+    sudoCompleter = Completer<bool>();
+    return ++_refreshGeneration;
+  }
+
+  bool _isStaleRefresh(int generation) {
+    return generation != _refreshGeneration || !ref.mounted;
+  }
+
+  Future<void> _requiresSudo(
+    Completer<bool> completer,
+    ContainerType type,
+  ) async {
     /// Podman is rootless
-    if (state.type == ContainerType.podman) {
-      return sudoCompleter.complete(false);
+    if (type == ContainerType.podman) {
+      return completer.complete(false);
     }
     if (!Stores.setting.containerTrySudo.fetch()) {
-      return sudoCompleter.complete(false);
+      return completer.complete(false);
     }
 
-    final res = await client?.run(
-      _wrap(ContainerCmdType.images.exec(state.type)),
-    );
-    if (res?.string.toLowerCase().contains('permission denied') ?? false) {
-      return sudoCompleter.complete(true);
+    try {
+      final res = await client?.run(
+        _wrap(ContainerCmdType.images.exec(type)),
+      );
+      if (res?.string.toLowerCase().contains('permission denied') ?? false) {
+        return completer.complete(true);
+      }
+      return completer.complete(false);
+    } catch (e, trace) {
+      Loggers.app.warning('Container sudo check failed', e, trace);
+      if (!completer.isCompleted) {
+        completer.complete(false);
+      }
     }
-    return sudoCompleter.complete(false);
   }
 
-  Future<void> refresh({bool isAuto = false}) async {
-    if (state.isBusy) return;
+  Future<void> refresh({bool isAuto = false, int? generation}) async {
+    if (state.isBusy) {
+      _pendingRefresh = true;
+      return;
+    }
+    final refreshGeneration = generation ?? _refreshGeneration;
+    final type = state.type;
     state = state.copyWith(isBusy: true);
 
-    if (!sudoCompleter.isCompleted) _requiresSudo();
+    final sudo = sudoCompleter;
+    if (!sudo.isCompleted) unawaited(_requiresSudo(sudo, type));
 
-    final sudo = await sudoCompleter.future;
+    final needSudo = await sudo.future;
+    if (_isStaleRefresh(refreshGeneration)) return;
 
     /// If sudo is required and auto refresh is enabled, skip the refresh.
     /// Or this will ask for pwd again and again.
-    if (sudo && isAuto) {
+    if (needSudo && isAuto) {
       state = state.copyWith(isBusy: false);
       return;
     }
 
     String? password;
-    if (sudo) {
+    if (needSudo) {
       password = await _getSudoPassword();
+      if (_isStaleRefresh(refreshGeneration)) return;
       if (password == null) {
         state = state.copyWith(
           isBusy: false,
@@ -135,8 +170,8 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     final cmd = _wrap(
       ContainerCmdType.execAll(
-        state.type,
-        sudo: sudo,
+        type,
+        sudo: needSudo,
         includeStats: includeStats,
         password: password,
       ),
@@ -156,6 +191,7 @@ class ContainerNotifier extends _$ContainerNotifier {
         },
       );
     } else {
+      if (_isStaleRefresh(refreshGeneration)) return;
       state = state.copyWith(
         isBusy: false,
         error: ContainerErr(type: ContainerErrType.noClient),
@@ -163,7 +199,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       return;
     }
 
-    if (!ref.mounted) return;
+    if (_isStaleRefresh(refreshGeneration)) return;
     state = state.copyWith(isBusy: false);
 
     if (!context.mounted) return;
@@ -242,13 +278,16 @@ class ContainerNotifier extends _$ContainerNotifier {
     final psRaw = ContainerCmdType.ps.find(segments);
     try {
       final lines = psRaw.split('\n');
-      if (state.type == ContainerType.docker) {
+      if (type == ContainerType.docker) {
         /// Due to the fetched data is not in json format, skip table header
-        lines.removeWhere((element) => element.contains('CONTAINER ID'));
+        final headerIdx = lines.indexWhere((element) {
+          return element.trimLeft().startsWith('CONTAINER ID');
+        });
+        if (headerIdx != -1) lines.removeAt(headerIdx);
       }
       lines.removeWhere((element) => element.isEmpty);
       final items = lines
-          .map((e) => ContainerPs.fromRaw(e, state.type))
+          .map((e) => ContainerPs.fromRaw(e, type))
           .toList();
       state = state.copyWith(items: items);
     } catch (e, trace) {
@@ -267,13 +306,13 @@ class ContainerNotifier extends _$ContainerNotifier {
       List<ContainerImg> images;
       if (isEntireJson) {
         images = (json.decode(imageRaw) as List)
-            .map((e) => ContainerImg.fromRawJson(json.encode(e), state.type))
+            .map((e) => ContainerImg.fromRawJson(json.encode(e), type))
             .toList();
       } else {
         final lines = imageRaw.split('\n');
         lines.removeWhere((element) => element.isEmpty);
         images = lines
-            .map((e) => ContainerImg.fromRawJson(e, state.type))
+            .map((e) => ContainerImg.fromRawJson(e, type))
             .toList();
       }
       state = state.copyWith(images: images);
@@ -295,7 +334,10 @@ class ContainerNotifier extends _$ContainerNotifier {
       final statsLines = statsRaw.split('\n');
       statsLines.removeWhere((element) => element.isEmpty);
       final items = state.items;
-      if (items == null) return;
+      if (items == null) {
+        await _refreshPendingIfNeeded(refreshGeneration);
+        return;
+      }
 
       for (var item in items) {
         final id = item.id;
@@ -317,6 +359,13 @@ class ContainerNotifier extends _$ContainerNotifier {
       }
       Loggers.app.warning('Parse docker stats: $statsRaw', e, trace);
     }
+    await _refreshPendingIfNeeded(refreshGeneration);
+  }
+
+  Future<void> _refreshPendingIfNeeded(int generation) async {
+    if (_isStaleRefresh(generation) || !_pendingRefresh || state.isBusy) return;
+    _pendingRefresh = false;
+    await refresh(generation: generation);
   }
 
   Future<ContainerErr?> stop(String id) async => await run('stop $id');
@@ -349,7 +398,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     return await run('system prune -a -f --volumes');
   }
 
-  Future<ContainerErr?> run(String cmd, {bool autoRefresh = true}) async {
+  Future<ContainerErr?> run(String cmd) async {
     if (client == null) {
       return ContainerErr(type: ContainerErrType.noClient);
     }
@@ -400,7 +449,7 @@ class ContainerNotifier extends _$ContainerNotifier {
         message: 'Command execution failed',
       );
     }
-    if (autoRefresh) await refresh();
+    await refresh();
     return null;
   }
 
@@ -410,7 +459,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     cmd = 'export LANG=en_US.UTF-8 && $cmd';
     final noDockerHost = dockerHost?.isEmpty ?? true;
     if (!noDockerHost) {
-      cmd = 'export DOCKER_HOST=$dockerHost && $cmd';
+      cmd = 'export DOCKER_HOST=${_shellQuote(dockerHost!)} && $cmd';
     }
     return cmd;
   }
@@ -422,6 +471,8 @@ String _buildSudoCmd(String baseCmd, String password) {
   final pwdBase64 = base64Encode(utf8.encode(password));
   return 'echo "$pwdBase64" | base64 -d | sudo -S $baseCmd';
 }
+
+String _shellQuote(String value) => "'${value.replaceAll("'", "'\\''")}'";
 
 enum ContainerCmdType {
   version,

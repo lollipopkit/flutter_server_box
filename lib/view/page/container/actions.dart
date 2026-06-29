@@ -133,6 +133,7 @@ extension on _ContainerPageState {
   void _onSaveDockerHost(String val) {
     context.pop();
     Stores.container.put(widget.args.spi.id, val.trim());
+    _containerNotifier.resetSudoProbe();
     _containerNotifier.refresh();
   }
 
