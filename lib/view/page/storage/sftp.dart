@@ -12,10 +12,11 @@ import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/utils/comparator.dart';
 import 'package:server_box/core/utils/host_key_helper.dart';
 import 'package:server_box/core/utils/sftp_sudo.dart';
+import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/browser_status.dart';
-import 'package:server_box/data/model/sftp/worker.dart';
+import 'package:server_box/data/model/sftp/req.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
@@ -142,13 +143,15 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
         SftpClient? sftp;
         try {
           final normalizedHistory = _normalizeSftpPath(history);
-          sftp = await _withSftpOpTimeout(
+          sftp = await withSftpOpTimeout(
             'open session for last path',
             _client.sftp(),
+            _sftpOpTimeout,
           );
-          await _withSftpOpTimeout(
+          await withSftpOpTimeout(
             'list last path',
             sftp!.listdir(normalizedHistory),
+            _sftpOpTimeout,
           );
           initPath = normalizedHistory;
         } catch (_) {
@@ -938,18 +941,7 @@ extension _Actions on _SftpPageState {
   /// Only return true if the path is changed
   Duration get _sftpOpTimeout {
     final seconds = Stores.setting.timeout.fetch();
-    return Duration(seconds: seconds <= 0 ? 5 : seconds);
-  }
-
-  Future<T> _withSftpOpTimeout<T>(String operation, Future<T> future) async {
-    final timeout = _sftpOpTimeout;
-    try {
-      return await future.timeout(timeout);
-    } on TimeoutException catch (e, s) {
-      final error = TimeoutException('SFTP $operation timed out', timeout);
-      Loggers.app.warning(error.message, e, s);
-      throw error;
-    }
+    return sftpOperationTimeout(seconds);
   }
 
   Future<bool?> _listDir([BuildContext? dialogContext]) async {
@@ -1015,9 +1007,10 @@ extension _Actions on _SftpPageState {
 
     try {
       if (_status.client == null && _openingClientFuture == null) {
-        _openingClientFuture = _withSftpOpTimeout(
+        _openingClientFuture = withSftpOpTimeout(
           'open browser session',
           _client.sftp(),
+          _sftpOpTimeout,
         );
       }
       _status.client ??= await _openingClientFuture;
@@ -1025,9 +1018,10 @@ extension _Actions on _SftpPageState {
       if (!mounted) return null;
       final client = _status.client;
       if (client == null) return null;
-      return await _withSftpOpTimeout(
+      return await withSftpOpTimeout(
         'list directory',
         client.listdir(listPath),
+        _sftpOpTimeout,
       );
     } on SftpStatusError catch (e) {
       _openingClientFuture = null;
