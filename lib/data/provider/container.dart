@@ -77,47 +77,59 @@ class ContainerNotifier extends _$ContainerNotifier {
       items: null,
       images: null,
       version: null,
+      isBusy: false,
     );
     Stores.container.setType(type, hostId);
     sudoCompleter = Completer<bool>();
     await refresh();
   }
 
-  void _requiresSudo() async {
+  Future<void> _requiresSudo(
+    Completer<bool> completer,
+    ContainerType type,
+  ) async {
     /// Podman is rootless
-    if (state.type == ContainerType.podman) {
-      return sudoCompleter.complete(false);
+    if (type == ContainerType.podman) {
+      return completer.complete(false);
     }
     if (!Stores.setting.containerTrySudo.fetch()) {
-      return sudoCompleter.complete(false);
+      return completer.complete(false);
     }
 
-    final res = await client?.run(
-      _wrap(ContainerCmdType.images.exec(state.type)),
-    );
-    if (res?.string.toLowerCase().contains('permission denied') ?? false) {
-      return sudoCompleter.complete(true);
+    try {
+      final res = await client?.run(
+        _wrap(ContainerCmdType.images.exec(type)),
+      );
+      if (res?.string.toLowerCase().contains('permission denied') ?? false) {
+        return completer.complete(true);
+      }
+      return completer.complete(false);
+    } catch (e, trace) {
+      Loggers.app.warning('Container sudo check failed', e, trace);
+      if (!completer.isCompleted) {
+        completer.complete(false);
+      }
     }
-    return sudoCompleter.complete(false);
   }
 
   Future<void> refresh({bool isAuto = false}) async {
     if (state.isBusy) return;
     state = state.copyWith(isBusy: true);
 
-    if (!sudoCompleter.isCompleted) _requiresSudo();
+    final sudo = sudoCompleter;
+    if (!sudo.isCompleted) unawaited(_requiresSudo(sudo, state.type));
 
-    final sudo = await sudoCompleter.future;
+    final needSudo = await sudo.future;
 
     /// If sudo is required and auto refresh is enabled, skip the refresh.
     /// Or this will ask for pwd again and again.
-    if (sudo && isAuto) {
+    if (needSudo && isAuto) {
       state = state.copyWith(isBusy: false);
       return;
     }
 
     String? password;
-    if (sudo) {
+    if (needSudo) {
       password = await _getSudoPassword();
       if (password == null) {
         state = state.copyWith(
@@ -136,7 +148,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     final cmd = _wrap(
       ContainerCmdType.execAll(
         state.type,
-        sudo: sudo,
+        sudo: needSudo,
         includeStats: includeStats,
         password: password,
       ),
@@ -349,7 +361,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     return await run('system prune -a -f --volumes');
   }
 
-  Future<ContainerErr?> run(String cmd, {bool autoRefresh = true}) async {
+  Future<ContainerErr?> run(String cmd) async {
     if (client == null) {
       return ContainerErr(type: ContainerErrType.noClient);
     }
@@ -400,7 +412,7 @@ class ContainerNotifier extends _$ContainerNotifier {
         message: 'Command execution failed',
       );
     }
-    if (autoRefresh) await refresh();
+    await refresh();
     return null;
   }
 
@@ -410,7 +422,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     cmd = 'export LANG=en_US.UTF-8 && $cmd';
     final noDockerHost = dockerHost?.isEmpty ?? true;
     if (!noDockerHost) {
-      cmd = 'export DOCKER_HOST=$dockerHost && $cmd';
+      cmd = 'export DOCKER_HOST=${_shellQuote(dockerHost!)} && $cmd';
     }
     return cmd;
   }
@@ -422,6 +434,8 @@ String _buildSudoCmd(String baseCmd, String password) {
   final pwdBase64 = base64Encode(utf8.encode(password));
   return 'echo "$pwdBase64" | base64 -d | sudo -S $baseCmd';
 }
+
+String _shellQuote(String value) => "'${value.replaceAll("'", "'\\''")}'";
 
 enum ContainerCmdType {
   version,
