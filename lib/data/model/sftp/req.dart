@@ -119,7 +119,7 @@ class SftpReqStatus {
   bool operator ==(Object other) => other is SftpReqStatus && id == other.id;
 
   @override
-  int get hashCode => id ^ super.hashCode;
+  int get hashCode => id.hashCode;
 
   void dispose() {
     worker._dispose();

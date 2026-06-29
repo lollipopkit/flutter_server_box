@@ -732,14 +732,8 @@ extension _Actions on _SftpPageState {
 
   void _delete(SftpName file) {
     context.pop();
-    final isDir = file.attr.isDirectory;
     var useRmr = Stores.setting.sftpRmrDir.fetch();
-    final text = () {
-      if (isDir && !useRmr) {
-        return libL10n.askContinue('${libL10n.delete} ${file.filename}');
-      }
-      return libL10n.askContinue('${libL10n.delete} ${file.filename}');
-    }();
+    final text = libL10n.askContinue('${libL10n.delete} ${file.filename}');
 
     // Most users don't know that SFTP can't delete a directory which is not
     // empty, so we provide a checkbox to let user choose to use `rm -r` or not
@@ -924,11 +918,16 @@ extension _Actions on _SftpPageState {
 
   /// Local file dir + server id + remote path
   String _getLocalPath(String remotePath) {
-    var normalizedPath = remotePath.replaceAll('/', Pfs.seperator);
-    if (normalizedPath.startsWith(Pfs.seperator)) {
-      normalizedPath = normalizedPath.substring(1);
-    }
-    return Paths.file.joinPath(widget.args.spi.id).joinPath(normalizedPath);
+    final pathParts = remotePath.split('/').where((part) => part.isNotEmpty);
+    return pathParts.fold(
+      Paths.file.joinPath(widget.args.spi.id),
+      (path, part) => path.joinPath(_safeLocalPathPart(part)),
+    );
+  }
+
+  String _safeLocalPathPart(String part) {
+    if (part == '.' || part == '..') return '_';
+    return part.replaceAll(Pfs.seperator, '_');
   }
 
   /// Only return true if the path is changed

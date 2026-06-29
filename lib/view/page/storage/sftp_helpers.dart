@@ -66,8 +66,9 @@ const _extCmdMap = {
 
 /// Return fmt: 2021-01-01 00:00:00
 String _getTime(int? unixMill) {
+  if (unixMill == null) return '-';
   return DateTime.fromMillisecondsSinceEpoch(
-    (unixMill ?? 0) * 1000,
+    unixMill * 1000,
   ).toString().replaceFirst('.000', '');
 }
 

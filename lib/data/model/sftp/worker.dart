@@ -93,10 +93,10 @@ Future<void> isolateMessageHandler(
     case final SftpReq val:
       switch (val.type) {
         case SftpReqType.download:
-          await _download(data, mainSendPort, sendError);
+          await _download(data, mainSendPort);
           break;
         case SftpReqType.upload:
-          await _upload(data, mainSendPort, sendError);
+          await _upload(data, mainSendPort);
           break;
       }
       break;
@@ -108,7 +108,6 @@ Future<void> isolateMessageHandler(
 Future<void> _download(
   SftpReq req,
   SendPort mainSendPort,
-  SendErrorFunction sendError,
 ) async {
   SSHClient? client;
   SftpClient? sftp;
@@ -288,7 +287,6 @@ Future<void> _download(
 Future<void> _upload(
   SftpReq req,
   SendPort mainSendPort,
-  SendErrorFunction sendError,
 ) async {
   SSHClient? client;
   SftpClient? sftp;
