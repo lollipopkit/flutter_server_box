@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
@@ -141,6 +142,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
           _refresh();
         },
         icon: const Icon(Icons.sort),
+        tooltip: context.l10n.sort,
         initialValue: _procSortMode,
         itemBuilder: (_) => _sortModes
             .map((e) => PopupMenuItem(value: e, child: Text(e.name)))
