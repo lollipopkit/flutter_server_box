@@ -8,6 +8,7 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/proc.dart';
+import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/single.dart';
 
@@ -71,6 +72,13 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
     try {
       final serverState = ref.read(_provider);
       final systemType = serverState.status.system;
+      // Skip refresh when the server is not connected; showing an "empty"
+      // snackbar in this case is misleading. The last successful snapshot
+      // (if any) is kept on screen so the user can still inspect stale data.
+      if (serverState.conn != ServerConn.connected) {
+        if (mounted) context.showSnackBar(libL10n.disconnected);
+        return;
+      }
       final result = await _client
           ?.run(
             ShellFunc.process.exec(
@@ -115,7 +123,8 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
       }
       _result = parsed;
       if (mounted) setState(() {});
-    } catch (e) {
+    } catch (e, s) {
+      Loggers.app.warning('Process page refresh failed', e, s);
       if (mounted) {
         context.showSnackBar(libL10n.error);
       }
