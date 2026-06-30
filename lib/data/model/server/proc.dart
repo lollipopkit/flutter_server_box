@@ -74,6 +74,51 @@ class Proc {
     required this.command,
   });
 
+  // Value equality based on all parsed fields lets ListView skip rebuilding
+  // rows whose underlying process data is unchanged between refreshes, which
+  // is the common case for idle processes. `binary` is derived from `command`
+  // so it is intentionally excluded to avoid forcing its lazy initialization
+  // during comparisons.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Proc &&
+          runtimeType == other.runtimeType &&
+          user == other.user &&
+          pid == other.pid &&
+          cpu == other.cpu &&
+          mem == other.mem &&
+          vsz == other.vsz &&
+          rss == other.rss &&
+          tty == other.tty &&
+          stat == other.stat &&
+          start == other.start &&
+          time == other.time &&
+          readBytes == other.readBytes &&
+          writeBytes == other.writeBytes &&
+          readSpeed == other.readSpeed &&
+          writeSpeed == other.writeSpeed &&
+          command == other.command;
+
+  @override
+  int get hashCode => Object.hash(
+        user,
+        pid,
+        cpu,
+        mem,
+        vsz,
+        rss,
+        tty,
+        stat,
+        start,
+        time,
+        readBytes,
+        writeBytes,
+        readSpeed,
+        writeSpeed,
+        command,
+      );
+
   factory Proc._parse(
     String raw,
     _ProcValIdxMap map, {
