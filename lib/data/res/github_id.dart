@@ -183,6 +183,8 @@ abstract final class GithubIds {
     'shen-lan',
     'Sahib911',
     'SiLong96',
+    'YCyingchen',
+    'hiSandog',
   };
 }
 

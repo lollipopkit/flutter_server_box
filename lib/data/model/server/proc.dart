@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:server_box/data/res/misc.dart';
-
 final _whitespaceRegExp = RegExp(r'\s+');
 
 class _ProcValIdxMap {
@@ -55,6 +53,7 @@ class Proc {
   final String command;
 
   late final binary = _parseBinary();
+  late final args = _parseArgs();
 
   Proc({
     this.user,
@@ -73,6 +72,51 @@ class Proc {
     this.writeSpeed,
     required this.command,
   });
+
+  // Value equality based on all parsed fields lets ListView skip rebuilding
+  // rows whose underlying process data is unchanged between refreshes, which
+  // is the common case for idle processes. `binary` is derived from `command`
+  // so it is intentionally excluded to avoid forcing its lazy initialization
+  // during comparisons.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Proc &&
+          runtimeType == other.runtimeType &&
+          user == other.user &&
+          pid == other.pid &&
+          cpu == other.cpu &&
+          mem == other.mem &&
+          vsz == other.vsz &&
+          rss == other.rss &&
+          tty == other.tty &&
+          stat == other.stat &&
+          start == other.start &&
+          time == other.time &&
+          readBytes == other.readBytes &&
+          writeBytes == other.writeBytes &&
+          readSpeed == other.readSpeed &&
+          writeSpeed == other.writeSpeed &&
+          command == other.command;
+
+  @override
+  int get hashCode => Object.hash(
+    user,
+    pid,
+    cpu,
+    mem,
+    vsz,
+    rss,
+    tty,
+    stat,
+    start,
+    time,
+    readBytes,
+    writeBytes,
+    readSpeed,
+    writeSpeed,
+    command,
+  );
 
   factory Proc._parse(
     String raw,
@@ -141,34 +185,17 @@ class Proc {
     );
   }
 
-  Map toJson() {
-    return {
-      'user': user,
-      'pid': pid,
-      'cpu': cpu,
-      'mem': mem,
-      'vsz': vsz,
-      'rss': rss,
-      'tty': tty,
-      'stat': stat,
-      'start': start,
-      'time': time,
-      'readBytes': readBytes,
-      'writeBytes': writeBytes,
-      'readSpeed': readSpeed,
-      'writeSpeed': writeSpeed,
-      'command': command,
-    };
-  }
-
-  @override
-  String toString() {
-    return Miscs.jsonEncoder.convert(toJson());
-  }
-
   String _parseBinary() {
     final parts = command.trim().split(' ').where((e) => e.isNotEmpty).toList();
     return parts.isNotEmpty ? parts[0] : '';
+  }
+
+  String _parseArgs() {
+    final trimmed = command.trim();
+    if (trimmed.isEmpty) return '';
+    final binary = this.binary;
+    if (binary.isEmpty || trimmed.length <= binary.length) return '';
+    return trimmed.substring(binary.length).trimLeft();
   }
 }
 
@@ -215,8 +242,18 @@ class PsResult {
     final header = lines[0];
     final parts = header.split(_whitespaceRegExp);
     parts.removeWhere((element) => element.isEmpty);
+    final pidIdx = parts.indexOfOrNull('PID');
+    final commandIdx =
+        parts.indexOfOrNull('COMMAND') ?? parts.indexOfOrNull('CMD');
+    if (pidIdx == null || commandIdx == null) {
+      return PsResult(
+        procs: const [],
+        error: 'Unsupported process output header: $header',
+        sampledAtMillis: currentSampledAtMillis,
+      );
+    }
     final map = _ProcValIdxMap(
-      pid: parts.indexOfOrNull('PID')!,
+      pid: pidIdx,
       user: parts.indexOfOrNull('USER'),
       cpu: parts.indexOfOrNull('%CPU'),
       mem: parts.indexOfOrNull('%MEM'),
@@ -228,7 +265,7 @@ class PsResult {
       time: parts.indexOfOrNull('TIME'),
       readBytes: parts.indexOfOrNull('READ_BYTES'),
       writeBytes: parts.indexOfOrNull('WRITE_BYTES'),
-      command: parts.indexOfOrNull('COMMAND') ?? parts.indexOfOrNull('CMD')!,
+      command: commandIdx,
     );
 
     final procs = <Proc>[];
@@ -299,6 +336,16 @@ class PsResult {
     } catch (_) {
       return null;
     }
+  }
+
+  PsResult sortedBy(ProcSortMode sort) {
+    final sorted = List<Proc>.of(procs);
+    _sort(sorted, sort);
+    return PsResult(
+      procs: sorted,
+      error: error,
+      sampledAtMillis: sampledAtMillis,
+    );
   }
 
   static void _sort(List<Proc> procs, ProcSortMode sort) {
