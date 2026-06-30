@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:server_box/data/res/misc.dart';
-
 final _whitespaceRegExp = RegExp(r'\s+');
 
 class _ProcValIdxMap {
@@ -184,31 +182,6 @@ class Proc {
       writeSpeed: writeSpeed,
       command: command.toString(),
     );
-  }
-
-  Map toJson() {
-    return {
-      'user': user,
-      'pid': pid,
-      'cpu': cpu,
-      'mem': mem,
-      'vsz': vsz,
-      'rss': rss,
-      'tty': tty,
-      'stat': stat,
-      'start': start,
-      'time': time,
-      'readBytes': readBytes,
-      'writeBytes': writeBytes,
-      'readSpeed': readSpeed,
-      'writeSpeed': writeSpeed,
-      'command': command,
-    };
-  }
-
-  @override
-  String toString() {
-    return Miscs.jsonEncoder.convert(toJson());
   }
 
   String _parseBinary() {
