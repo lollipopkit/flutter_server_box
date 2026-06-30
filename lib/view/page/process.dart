@@ -31,7 +31,8 @@ class ProcessPage extends ConsumerStatefulWidget {
   static const route = AppRouteArg(page: ProcessPage.new, path: '/process');
 }
 
-class _ProcessPageState extends ConsumerState<ProcessPage> {
+class _ProcessPageState extends ConsumerState<ProcessPage>
+    with WidgetsBindingObserver {
   Timer? _timer;
 
   PsResult _result = const PsResult(procs: []);
@@ -49,16 +50,44 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
   @override
   void dispose() {
     _timer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _refresh();
+    _startRefreshTimer();
+  }
+
+  void _startRefreshTimer() {
+    _timer?.cancel();
     final duration = serverStatusRefreshInterval();
     if (duration != null) {
       _timer = Timer.periodic(duration, (_) => _refresh());
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    switch (state) {
+      case AppLifecycleState.resumed:
+        // Resume periodic refresh and fetch immediately so the user doesn't
+        // stare at stale data after returning to the app.
+        _startRefreshTimer();
+        _refresh();
+        break;
+      case AppLifecycleState.paused:
+        // Stop the timer to avoid wasting battery and traffic while the app
+        // is in the background.
+        _timer?.cancel();
+        _timer = null;
+        break;
+      default:
+        break;
     }
   }
 
@@ -193,7 +222,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
     return CardX(
       key: ValueKey(proc.pid),
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(13),
         onTap: () => _showProcessDetails(proc),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
