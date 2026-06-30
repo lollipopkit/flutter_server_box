@@ -215,8 +215,18 @@ class PsResult {
     final header = lines[0];
     final parts = header.split(_whitespaceRegExp);
     parts.removeWhere((element) => element.isEmpty);
+    final pidIdx = parts.indexOfOrNull('PID');
+    final commandIdx =
+        parts.indexOfOrNull('COMMAND') ?? parts.indexOfOrNull('CMD');
+    if (pidIdx == null || commandIdx == null) {
+      return PsResult(
+        procs: const [],
+        error: 'Unsupported process output header: $header',
+        sampledAtMillis: currentSampledAtMillis,
+      );
+    }
     final map = _ProcValIdxMap(
-      pid: parts.indexOfOrNull('PID')!,
+      pid: pidIdx,
       user: parts.indexOfOrNull('USER'),
       cpu: parts.indexOfOrNull('%CPU'),
       mem: parts.indexOfOrNull('%MEM'),
@@ -228,7 +238,7 @@ class PsResult {
       time: parts.indexOfOrNull('TIME'),
       readBytes: parts.indexOfOrNull('READ_BYTES'),
       writeBytes: parts.indexOfOrNull('WRITE_BYTES'),
-      command: parts.indexOfOrNull('COMMAND') ?? parts.indexOfOrNull('CMD')!,
+      command: commandIdx,
     );
 
     final procs = <Proc>[];
@@ -299,6 +309,16 @@ class PsResult {
     } catch (_) {
       return null;
     }
+  }
+
+  PsResult sortedBy(ProcSortMode sort) {
+    final sorted = List<Proc>.of(procs);
+    _sort(sorted, sort);
+    return PsResult(
+      procs: sorted,
+      error: error,
+      sampledAtMillis: sampledAtMillis,
+    );
   }
 
   static void _sort(List<Proc> procs, ProcSortMode sort) {

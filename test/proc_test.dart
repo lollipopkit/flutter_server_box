@@ -129,4 +129,93 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     expect(current.procs.first.readSpeed, 1000);
     expect(current.procs.first.writeSpeed, 2000);
   });
+
+  test('sortedBy reorders processes and keeps metadata', () {
+    final original = PsResult(
+      sampledAtMillis: 1234,
+      error: 'partial parse error',
+      procs: [
+        Proc(
+          user: 'z-user',
+          pid: 3,
+          cpu: 0.2,
+          mem: 5,
+          readSpeed: 10,
+          writeSpeed: 20,
+          command: '/zeta',
+        ),
+        Proc(
+          user: 'a-user',
+          pid: 1,
+          cpu: 9,
+          mem: 1,
+          readSpeed: null,
+          writeSpeed: null,
+          command: '/alpha',
+        ),
+        Proc(
+          user: 'm-user',
+          pid: 2,
+          cpu: 3,
+          mem: 8,
+          readSpeed: 50,
+          writeSpeed: 5,
+          command: '/middle',
+        ),
+      ],
+    );
+
+    expect(original.sortedBy(ProcSortMode.cpu).procs.map((e) => e.pid), [
+      1,
+      2,
+      3,
+    ]);
+    expect(original.sortedBy(ProcSortMode.mem).procs.map((e) => e.pid), [
+      2,
+      3,
+      1,
+    ]);
+    expect(original.sortedBy(ProcSortMode.read).procs.map((e) => e.pid), [
+      2,
+      3,
+      1,
+    ]);
+    expect(original.sortedBy(ProcSortMode.write).procs.map((e) => e.pid), [
+      3,
+      2,
+      1,
+    ]);
+    expect(original.sortedBy(ProcSortMode.pid).procs.map((e) => e.pid), [
+      1,
+      2,
+      3,
+    ]);
+    expect(original.sortedBy(ProcSortMode.user).procs.map((e) => e.pid), [
+      1,
+      2,
+      3,
+    ]);
+    expect(original.sortedBy(ProcSortMode.name).procs.map((e) => e.pid), [
+      1,
+      2,
+      3,
+    ]);
+
+    final sorted = original.sortedBy(ProcSortMode.pid);
+    expect(sorted.error, original.error);
+    expect(sorted.sampledAtMillis, original.sampledAtMillis);
+    expect(original.procs.map((e) => e.pid), [3, 1, 2]);
+  });
+
+  test('malformed process header returns displayable error', () {
+    const raw = '''
+USER CPU COMMAND
+root 0.0 /sbin/procd
+''';
+    final result = PsResult.parse(raw, sampledAtMillis: 4321);
+
+    expect(result.procs, isEmpty);
+    expect(result.error, contains('Unsupported process output header'));
+    expect(result.sampledAtMillis, 4321);
+  });
 }

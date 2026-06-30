@@ -8,7 +8,16 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/proc.dart';
+import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/single.dart';
+
+const _compactStatsWidthBreakpoint = 520.0;
+const _compactStatsWidth = 108.0;
+const _compactStatItemWidth = 54.0;
+const _statTextWidth = 52.0;
+const _stopButtonSize = 36.0;
+const _minLeadingWidth = 44.0;
+const _maxLeadingWidth = 72.0;
 
 class ProcessPage extends ConsumerStatefulWidget {
   final SpiRequiredArgs args;
@@ -23,12 +32,12 @@ class ProcessPage extends ConsumerStatefulWidget {
 
 class _ProcessPageState extends ConsumerState<ProcessPage> {
   Timer? _timer;
-  late MediaQueryData _media;
 
   SSHClient? _client;
 
   PsResult _result = const PsResult(procs: []);
   bool _checkedIncompleteData = false;
+  bool _isRefreshing = false;
 
   // Issue #64
   // In cpu mode, the process list will change in a high frequency.
@@ -56,14 +65,9 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
     }
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _media = MediaQuery.of(context);
-  }
-
   Future<void> _refresh() async {
-    if (!mounted) return;
+    if (!mounted || _isRefreshing) return;
+    _isRefreshing = true;
     try {
       final serverState = ref.read(_provider);
       final systemType = serverState.status.system;
@@ -115,6 +119,8 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
       if (mounted) {
         context.showSnackBar(libL10n.error);
       }
+    } finally {
+      _isRefreshing = false;
     }
   }
 
@@ -125,7 +131,9 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
         onSelected: (value) {
           setState(() {
             _procSortMode = value;
+            _result = _result.sortedBy(value);
           });
+          _refresh();
         },
         icon: const Icon(Icons.sort),
         initialValue: _procSortMode,
@@ -211,7 +219,9 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
   }
 
   double get _leadingWidth =>
-      (_media.size.width / 6).clamp(44.0, 72.0).toDouble();
+      (_screenWidth / 6).clamp(_minLeadingWidth, _maxLeadingWidth).toDouble();
+
+  double get _screenWidth => MediaQuery.sizeOf(context).width;
 }
 
 extension _ProcessPageStateWidgets on _ProcessPageState {
@@ -224,7 +234,8 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
       if (proc.writeSpeed != null)
         (up: _formatSpeed(proc.writeSpeed!), down: 'W'),
     ];
-    final showCompactStats = _media.size.width < 520 && items.length > 2;
+    final showCompactStats =
+        _screenWidth < _compactStatsWidthBreakpoint && items.length > 2;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -238,7 +249,10 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
         if (items.isNotEmpty) UIs.width7,
         IconButton(
           visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints.tightFor(width: 36, height: 36),
+          constraints: const BoxConstraints.tightFor(
+            width: _stopButtonSize,
+            height: _stopButtonSize,
+          ),
           icon: const Icon(Icons.stop),
           onPressed: () {
             context.showRoundDialog(
@@ -255,7 +269,10 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
                     context.pop();
                     await context.showLoadingDialog(
                       fn: () async {
-                        await _client?.run('kill ${proc.pid}');
+                        final systemType = ref.read(_provider).status.system;
+                        await _client?.run(
+                          _killProcessCmd(proc.pid, systemType),
+                        );
                         await _refresh();
                       },
                     );
@@ -271,12 +288,12 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
 
   Widget _buildCompactStats(List<({String up, String down})> items) {
     return SizedBox(
-      width: 108,
+      width: _compactStatsWidth,
       child: Wrap(
         runSpacing: 4,
         children: [
           for (final item in items)
-            SizedBox(width: 54, child: _buildStatText(item)),
+            SizedBox(width: _compactStatItemWidth, child: _buildStatText(item)),
         ],
       ),
     );
@@ -287,7 +304,7 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
-          width: 52,
+          width: _statTextWidth,
           child: FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(item.up, maxLines: 1),
@@ -301,4 +318,10 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
 
 extension _ProcessPageStateUtils on _ProcessPageState {
   String _formatSpeed(double bytes) => '${bytes.bytes2Str}/s';
+
+  String _killProcessCmd(int pid, SystemType systemType) =>
+      switch (systemType) {
+        SystemType.windows => 'Stop-Process -Id $pid -Force',
+        SystemType.linux || SystemType.bsd => 'kill $pid',
+      };
 }
