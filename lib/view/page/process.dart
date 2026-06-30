@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,8 +33,6 @@ class ProcessPage extends ConsumerStatefulWidget {
 class _ProcessPageState extends ConsumerState<ProcessPage> {
   Timer? _timer;
 
-  SSHClient? _client;
-
   PsResult _result = const PsResult(procs: []);
   bool _checkedIncompleteData = false;
   bool _isRefreshing = false;
@@ -57,8 +54,6 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
   @override
   void initState() {
     super.initState();
-    final serverState = ref.read(_provider);
-    _client = serverState.client;
     _refresh();
     final duration = serverStatusRefreshInterval();
     if (duration != null) {
@@ -72,14 +67,15 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
     try {
       final serverState = ref.read(_provider);
       final systemType = serverState.status.system;
+      final client = serverState.client;
       // Skip refresh when the server is not connected; showing an "empty"
       // snackbar in this case is misleading. The last successful snapshot
       // (if any) is kept on screen so the user can still inspect stale data.
-      if (serverState.conn != ServerConn.connected) {
+      if (!_canRunProcessCmd(serverState)) {
         if (mounted) context.showSnackBar(libL10n.disconnected);
         return;
       }
-      final result = await _client
+      final result = await client
           ?.run(
             ShellFunc.process.exec(
               widget.args.spi.id,
@@ -279,9 +275,10 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
                     await context.showLoadingDialog(
                       fn: () async {
                         final systemType = ref.read(_provider).status.system;
-                        await _client?.run(
-                          _killProcessCmd(proc.pid, systemType),
-                        );
+                        await ref
+                            .read(_provider)
+                            .client
+                            ?.run(_killProcessCmd(proc.pid, systemType));
                         await _refresh();
                       },
                     );
@@ -327,6 +324,12 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
 
 extension _ProcessPageStateUtils on _ProcessPageState {
   String _formatSpeed(double bytes) => '${bytes.bytes2Str}/s';
+
+  bool _canRunProcessCmd(ServerState serverState) {
+    final client = serverState.client;
+    if (client == null || client.isClosed) return false;
+    return serverState.conn.index >= ServerConn.connected.index;
+  }
 
   String _killProcessCmd(int pid, SystemType systemType) =>
       switch (systemType) {
