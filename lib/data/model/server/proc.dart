@@ -53,6 +53,7 @@ class Proc {
   final String command;
 
   late final binary = _parseBinary();
+  late final args = _parseArgs();
 
   Proc({
     this.user,
@@ -100,22 +101,22 @@ class Proc {
 
   @override
   int get hashCode => Object.hash(
-        user,
-        pid,
-        cpu,
-        mem,
-        vsz,
-        rss,
-        tty,
-        stat,
-        start,
-        time,
-        readBytes,
-        writeBytes,
-        readSpeed,
-        writeSpeed,
-        command,
-      );
+    user,
+    pid,
+    cpu,
+    mem,
+    vsz,
+    rss,
+    tty,
+    stat,
+    start,
+    time,
+    readBytes,
+    writeBytes,
+    readSpeed,
+    writeSpeed,
+    command,
+  );
 
   factory Proc._parse(
     String raw,
@@ -187,6 +188,14 @@ class Proc {
   String _parseBinary() {
     final parts = command.trim().split(' ').where((e) => e.isNotEmpty).toList();
     return parts.isNotEmpty ? parts[0] : '';
+  }
+
+  String _parseArgs() {
+    final trimmed = command.trim();
+    if (trimmed.isEmpty) return '';
+    final binary = this.binary;
+    if (binary.isEmpty || trimmed.length <= binary.length) return '';
+    return trimmed.substring(binary.length).trimLeft();
   }
 }
 

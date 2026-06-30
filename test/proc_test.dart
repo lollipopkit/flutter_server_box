@@ -29,6 +29,39 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     expect(psResult.procs[1].command, '/sbin/procd');
   });
 
+  test('parse linux process io counters without start column', () {
+    const raw = '''
+PID USER %CPU %MEM VSZ RSS TTY STAT TIME READ_BYTES WRITE_BYTES COMMAND
+8987 root 0.9 1.8 1276 512 ? Sl 02:10:05 1024 2048 barad_agent
+''';
+    final psResult = PsResult.parse(raw, sampledAtMillis: 1000);
+    final proc = psResult.procs.single;
+
+    expect(proc.pid, 8987);
+    expect(proc.start, isNull);
+    expect(proc.time, '02:10:05');
+    expect(proc.readBytes, 1024);
+    expect(proc.writeBytes, 2048);
+    expect(proc.command, 'barad_agent');
+    expect(proc.binary, 'barad_agent');
+    expect(proc.args, isEmpty);
+  });
+
+  test('parse process binary and args for display', () {
+    const raw = '''
+PID USER %CPU %MEM VSZ RSS TTY STAT TIME READ_BYTES WRITE_BYTES COMMAND
+1 root 0.0 1.0 173552 8396 ? Ss 00:01:08 7603757056 4942843904 /usr/lib/systemd/systemd --system --deserialize 20 showopts
+''';
+    final proc = PsResult.parse(raw).procs.single;
+
+    expect(proc.binary, '/usr/lib/systemd/systemd');
+    expect(proc.args, '--system --deserialize 20 showopts');
+    expect(
+      proc.command,
+      '/usr/lib/systemd/systemd --system --deserialize 20 showopts',
+    );
+  });
+
   test('calculate process io speed from previous snapshot', () {
     const first = '''
 PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND

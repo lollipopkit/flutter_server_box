@@ -190,22 +190,39 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
         : TwoLineText(up: proc.pid.toString(), down: proc.user!);
     return CardX(
       key: ValueKey(proc.pid),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-        child: Row(
-          children: [
-            SizedBox(width: _leadingWidth, child: leading),
-            UIs.width13,
-            Expanded(
-              child: Text(
-                proc.command,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => _showProcessDetails(proc),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+          child: Row(
+            children: [
+              SizedBox(width: _leadingWidth, child: leading),
+              UIs.width13,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      proc.binary.isEmpty ? proc.command : proc.binary,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (proc.args.isNotEmpty)
+                      Text(
+                        proc.args,
+                        style: UIs.textGrey,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
               ),
-            ),
-            UIs.width7,
-            _buildItemTrail(proc),
-          ],
+              UIs.width7,
+              _buildItemTrail(proc),
+            ],
+          ),
         ),
       ),
     );
@@ -218,6 +235,46 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
 }
 
 extension _ProcessPageStateWidgets on _ProcessPageState {
+  void _showProcessDetails(Proc proc) {
+    context.showRoundDialog(
+      title: '${libL10n.process} ${proc.pid}',
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildDetailLine('PID', proc.pid.toString()),
+            if (proc.user != null) _buildDetailLine('USER', proc.user!),
+            if (proc.cpu != null)
+              _buildDetailLine('CPU', proc.cpu!.toStringAsFixed(1)),
+            if (proc.mem != null)
+              _buildDetailLine('MEM', proc.mem!.toStringAsFixed(1)),
+            if (proc.readSpeed != null)
+              _buildDetailLine('R', _formatSpeed(proc.readSpeed!)),
+            if (proc.writeSpeed != null)
+              _buildDetailLine('W', _formatSpeed(proc.writeSpeed!)),
+            if (proc.tty != null) _buildDetailLine('TTY', proc.tty!),
+            if (proc.stat != null) _buildDetailLine('STAT', proc.stat!),
+            if (proc.start != null) _buildDetailLine('START', proc.start!),
+            if (proc.time != null) _buildDetailLine('TIME', proc.time!),
+            UIs.height13,
+            SelectableText(proc.command),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Pfs.copy(proc.command),
+          child: Text(libL10n.copy),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailLine(String label, String value) {
+    return Text('$label: $value');
+  }
+
   Widget _buildItemTrail(Proc proc) {
     final items = <({String up, String down})>[
       if (proc.cpu != null) (up: proc.cpu!.toStringAsFixed(1), down: 'cpu'),

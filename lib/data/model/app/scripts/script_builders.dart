@@ -256,13 +256,13 @@ if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \tif [ "\$isBusybox" != "" ]; then
 \t\tps w
 \telse
-\t\tprintf 'PID USER %%CPU %%MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND\\n'
-\t\tps -axo pid=,user=,%cpu=,%mem=,vsz=,rss=,tty=,stat=,start=,time=,args= | while IFS= read -r line; do
+\t\tprintf 'PID USER %%CPU %%MEM VSZ RSS TTY STAT TIME READ_BYTES WRITE_BYTES COMMAND\\n'
+\t\tps -axo pid=,user=,%cpu=,%mem=,vsz=,rss=,tty=,stat=,time=,args= | while IFS= read -r line; do
 \t\t\tset -f
 \t\t\tset -- \$line
 \t\t\tset +f
-\t\t\tpid=\$1; user=\$2; cpu=\$3; mem=\$4; vsz=\$5; rss=\$6; tty=\$7; stat=\$8; start=\$9; time=\${10}
-\t\t\tshift 10
+\t\t\tpid=\$1; user=\$2; cpu=\$3; mem=\$4; vsz=\$5; rss=\$6; tty=\$7; stat=\$8; time=\$9
+\t\t\tshift 9
 \t\t\tcmd=\$*
 \t\t\tread_bytes='-'
 \t\t\twrite_bytes='-'
@@ -270,7 +270,7 @@ if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \t\t\t\tread_bytes=\$(awk '/^read_bytes:/ {print \$2}' "/proc/\$pid/io")
 \t\t\t\twrite_bytes=\$(awk '/^write_bytes:/ {print \$2}' "/proc/\$pid/io")
 \t\t\tfi
-\t\t\tprintf '%s %s %s %s %s %s %s %s %s %s %s %s %s\\n' "\$pid" "\$user" "\$cpu" "\$mem" "\$vsz" "\$rss" "\$tty" "\$stat" "\$start" "\$time" "\$read_bytes" "\$write_bytes" "\$cmd"
+\t\t\tprintf '%s %s %s %s %s %s %s %s %s %s %s %s\\n' "\$pid" "\$user" "\$cpu" "\$mem" "\$vsz" "\$rss" "\$tty" "\$stat" "\$time" "\$read_bytes" "\$write_bytes" "\$cmd"
 \t\tdone
 \tfi
 else
