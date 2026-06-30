@@ -118,7 +118,8 @@ extension _App on _AppSettingsPageState {
         () => AppUpdateIface.doUpdate(
           context: context,
           build: BuildData.build,
-          url: Urls.updateCfg,
+          githubReleasesUrl: Urls.githubReleasesApi,
+          storeUrl: Urls.appStore,
           force: BuildMode.isDebug,
         ),
       ),

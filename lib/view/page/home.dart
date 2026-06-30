@@ -269,7 +269,8 @@ class _HomePageState extends ConsumerState<HomePage>
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
       AppUpdateIface.doUpdate(
         build: BuildData.build,
-        url: Urls.updateCfg,
+        githubReleasesUrl: Urls.githubReleasesApi,
+        storeUrl: Urls.appStore,
         context: context,
       );
     }
