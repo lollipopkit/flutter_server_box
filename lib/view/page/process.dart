@@ -404,7 +404,12 @@ extension _ProcessPageStateUtils on _ProcessPageState {
   bool _canRunProcessCmd(ServerState serverState) {
     final client = serverState.client;
     if (client == null || client.isClosed) return false;
-    return serverState.conn.index >= ServerConn.connected.index;
+    // `loading` is a transient state during status parsing; avoid issuing a
+    // concurrent process command that may contend with the in-flight status
+    // request on the same SSH connection.
+    final conn = serverState.conn;
+    return conn == ServerConn.connected ||
+        conn == ServerConn.finished;
   }
 
   String _killProcessCmd(int pid, SystemType systemType) =>
