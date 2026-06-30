@@ -197,22 +197,10 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
             SizedBox(width: _leadingWidth, child: leading),
             UIs.width13,
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    proc.binary,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    proc.command,
-                    style: UIs.textGrey,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+              child: Text(
+                proc.command,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             UIs.width7,
