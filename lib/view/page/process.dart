@@ -91,18 +91,20 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
     }
   }
 
-  Future<void> _refresh() async {
+  Future<void> _refresh({bool userTriggered = false}) async {
     if (!mounted || _isRefreshing) return;
     _isRefreshing = true;
     try {
       final serverState = ref.read(_provider);
       final systemType = serverState.status.system;
       final client = serverState.client;
-      // Skip refresh when the server is not connected; showing an "empty"
-      // snackbar in this case is misleading. The last successful snapshot
-      // (if any) is kept on screen so the user can still inspect stale data.
+      // Skip refresh when the server is not connected. Periodic (timer-driven)
+      // refreshes stay silent to avoid snackbar spam, while user-triggered
+      // ones surface the disconnection so the user knows why nothing loads.
       if (!_canRunProcessCmd(serverState)) {
-        if (mounted) context.showSnackBar(libL10n.disconnected);
+        if (userTriggered && mounted) {
+          context.showSnackBar(libL10n.disconnected);
+        }
         return;
       }
       final result = await client
@@ -168,7 +170,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
             _procSortMode = value;
             _result = _result.sortedBy(value);
           });
-          _refresh();
+          _refresh(userTriggered: true);
         },
         icon: const Icon(Icons.sort),
         tooltip: context.l10n.sort,
@@ -349,14 +351,7 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
                   onTap: () async {
                     context.pop();
                     await context.showLoadingDialog(
-                      fn: () async {
-                        final systemType = ref.read(_provider).status.system;
-                        await ref
-                            .read(_provider)
-                            .client
-                            ?.run(_killProcessCmd(proc.pid, systemType));
-                        await _refresh();
-                      },
+                      fn: () => _killAndRefresh(proc.pid),
                     );
                   },
                 ),
@@ -414,7 +409,30 @@ extension _ProcessPageStateUtils on _ProcessPageState {
 
   String _killProcessCmd(int pid, SystemType systemType) =>
       switch (systemType) {
-        SystemType.windows => 'Stop-Process -Id $pid -Force',
+        // `taskkill` runs under cmd.exe (the default OpenSSH shell on Windows),
+        // whereas `Stop-Process` is PowerShell-only and fails via client.run().
+        SystemType.windows => 'taskkill /F /PID $pid',
         SystemType.linux || SystemType.bsd => 'kill $pid',
       };
+
+  /// Kill a process and refresh the list, sharing the same `_isRefreshing`
+  /// guard as periodic refreshes so the kill command never races with an
+  /// in-flight `client.run(ps)` and the post-kill refresh is not skipped.
+  Future<void> _killAndRefresh(int pid) async {
+    if (!mounted || _isRefreshing) return;
+    _isRefreshing = true;
+    try {
+      final serverState = ref.read(_provider);
+      final systemType = serverState.status.system;
+      await serverState.client?.run(_killProcessCmd(pid, systemType));
+    } catch (e, s) {
+      Loggers.app.warning('Process kill failed', e, s);
+      if (mounted) context.showSnackBar(libL10n.error);
+      return;
+    } finally {
+      _isRefreshing = false;
+    }
+    // Guard released; _refresh can now acquire it.
+    await _refresh(userTriggered: true);
+  }
 }
