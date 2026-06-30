@@ -81,7 +81,11 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
         context.showSnackBar(libL10n.empty);
         return;
       }
-      final parsed = PsResult.parse(result, sort: _procSortMode, previous: _result);
+      final parsed = PsResult.parse(
+        result,
+        sort: _procSortMode,
+        previous: _result,
+      );
 
       if (!_checkedIncompleteData) {
         final isAnyProcDataNotComplete = parsed.procs.any(
@@ -173,42 +177,68 @@ class _ProcessPageState extends ConsumerState<ProcessPage> {
         : TwoLineText(up: proc.pid.toString(), down: proc.user!);
     return CardX(
       key: ValueKey(proc.pid),
-      child: ListTile(
-        leading: SizedBox(width: _media.size.width / 6, child: leading),
-        title: Text(proc.binary),
-        subtitle: Text(
-          proc.command,
-          style: UIs.textGrey,
-          maxLines: 3,
-          overflow: TextOverflow.fade,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+        child: Row(
+          children: [
+            SizedBox(width: _leadingWidth, child: leading),
+            UIs.width13,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    proc.binary,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    proc.command,
+                    style: UIs.textGrey,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            UIs.width7,
+            _buildItemTrail(proc),
+          ],
         ),
-        trailing: _buildItemTrail(proc),
       ),
     );
   }
+
+  double get _leadingWidth =>
+      (_media.size.width / 6).clamp(44.0, 72.0).toDouble();
 }
 
 extension _ProcessPageStateWidgets on _ProcessPageState {
   Widget _buildItemTrail(Proc proc) {
-    final items = <Widget>[
-      if (proc.cpu != null)
-        TwoLineText(up: proc.cpu!.toStringAsFixed(1), down: 'cpu'),
-      if (proc.mem != null)
-        TwoLineText(up: proc.mem!.toStringAsFixed(1), down: 'mem'),
+    final items = <({String up, String down})>[
+      if (proc.cpu != null) (up: proc.cpu!.toStringAsFixed(1), down: 'cpu'),
+      if (proc.mem != null) (up: proc.mem!.toStringAsFixed(1), down: 'mem'),
       if (proc.readSpeed != null)
-        TwoLineText(up: _formatSpeed(proc.readSpeed!), down: 'R'),
+        (up: _formatSpeed(proc.readSpeed!), down: 'R'),
       if (proc.writeSpeed != null)
-        TwoLineText(up: _formatSpeed(proc.writeSpeed!), down: 'W'),
+        (up: _formatSpeed(proc.writeSpeed!), down: 'W'),
     ];
+    final showCompactStats = _media.size.width < 520 && items.length > 2;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (final (idx, item) in items.indexed) ...[
-          if (idx > 0) UIs.width13,
-          item,
-        ],
-        if (items.isNotEmpty) UIs.width13,
+        if (showCompactStats)
+          _buildCompactStats(items)
+        else
+          for (final (idx, item) in items.indexed) ...[
+            if (idx > 0) UIs.width13,
+            _buildStatText(item),
+          ],
+        if (items.isNotEmpty) UIs.width7,
         IconButton(
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints.tightFor(width: 36, height: 36),
           icon: const Icon(Icons.stop),
           onPressed: () {
             context.showRoundDialog(
@@ -235,6 +265,35 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
             );
           },
         ),
+      ],
+    );
+  }
+
+  Widget _buildCompactStats(List<({String up, String down})> items) {
+    return SizedBox(
+      width: 108,
+      child: Wrap(
+        runSpacing: 4,
+        children: [
+          for (final item in items)
+            SizedBox(width: 54, child: _buildStatText(item)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatText(({String up, String down}) item) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 52,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(item.up, maxLines: 1),
+          ),
+        ),
+        Text(item.down, style: UIs.textGrey, maxLines: 1),
       ],
     );
   }
