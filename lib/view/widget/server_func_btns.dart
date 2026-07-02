@@ -206,6 +206,7 @@ void _gotoSSH(Spi spi, BuildContext context) async {
 
   File? tempKeyFile;
   final shouldGenKey = spi.keyId != null;
+  var sshLaunched = false;
 
   try {
     if (shouldGenKey) {
@@ -247,6 +248,7 @@ void _gotoSSH(Spi spi, BuildContext context) async {
     switch (system) {
       case Pfs.windows:
         await Process.start('cmd', ['/c', 'start'] + sshCommand);
+        sshLaunched = true;
         break;
       case Pfs.macos:
         try {
@@ -257,6 +259,7 @@ void _gotoSSH(Spi spi, BuildContext context) async {
             '-e',
             'tell application "Terminal" to do script ${_appleScriptString(command)}',
           ]);
+          sshLaunched = true;
         } catch (e, s) {
           context.showErrDialog(e, s, libL10n.emulator);
         }
@@ -276,6 +279,7 @@ void _gotoSSH(Spi spi, BuildContext context) async {
           if (terminal.isEmpty) terminal = 'x-terminal-emulator';
 
           await Process.start(scriptFile.path, [terminal, ...sshCommand]);
+          sshLaunched = true;
         } catch (e, s) {
           if (context.mounted) {
             context.showErrDialog(e, s, libL10n.emulator);
@@ -292,22 +296,39 @@ void _gotoSSH(Spi spi, BuildContext context) async {
   } finally {
     final file = tempKeyFile;
     if (file != null) {
-      unawaited(
-        Future.delayed(const Duration(seconds: 30), () async {
-          try {
-            final parent = file.parent;
-            if (await parent.exists()) {
-              await parent.delete(recursive: true);
+      if (sshLaunched) {
+        // Keep the key file alive while SSH is establishing the connection.
+        unawaited(
+          Future.delayed(const Duration(seconds: 30), () async {
+            try {
+              final parent = file.parent;
+              if (await parent.exists()) {
+                await parent.delete(recursive: true);
+              }
+            } catch (e, s) {
+              Loggers.app.warning(
+                'Failed to delete temporary SSH key directory',
+                e,
+                s,
+              );
             }
-          } catch (e, s) {
-            Loggers.app.warning(
-              'Failed to delete temporary SSH key directory',
-              e,
-              s,
-            );
+          }),
+        );
+      } else {
+        // SSH never launched — clean up immediately.
+        try {
+          final parent = file.parent;
+          if (await parent.exists()) {
+            await parent.delete(recursive: true);
           }
-        }),
-      );
+        } catch (e, s) {
+          Loggers.app.warning(
+            'Failed to delete temporary SSH key directory',
+            e,
+            s,
+          );
+        }
+      }
     }
   }
 }
