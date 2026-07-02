@@ -18,10 +18,14 @@ abstract final class MethodChans {
     _channel.invokeMethod('stopService');
   }
 
-  static void updateHomeWidget() async {
+  static Future<void> updateHomeWidget() async {
     if (!isIOS && !isAndroid) return;
     if (!Stores.setting.autoUpdateHomeWidget.fetch()) return;
-    await _channel.invokeMethod('updateHomeWidget');
+    try {
+      await _channel.invokeMethod('updateHomeWidget');
+    } catch (e, s) {
+      Loggers.app.warning('Failed to update home widget', e, s);
+    }
   }
 
   /// Update Android foreground service notifications for SSH sessions

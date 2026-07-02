@@ -126,7 +126,7 @@ class _HomePageState extends ConsumerState<HomePage>
         final serverNotifier = _notifier;
         unawaited(serverNotifier.startAutoRefresh());
         unawaited(serverNotifier.refresh());
-        MethodChans.updateHomeWidget();
+        unawaited(MethodChans.updateHomeWidget());
         _syncFullscreenSystemUi();
         break;
       case AppLifecycleState.paused:
@@ -274,7 +274,7 @@ class _HomePageState extends ConsumerState<HomePage>
         context: context,
       );
     }
-    MethodChans.updateHomeWidget();
+    unawaited(MethodChans.updateHomeWidget());
     await _notifier.refresh();
 
     bakSync.sync(milliDelay: 1000);

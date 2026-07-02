@@ -241,10 +241,10 @@ bool _isJumpFailoverError(Object error) {
       errStr.contains('connection reset') ||
       errStr.contains('connection closed') ||
       errStr.contains('no route to host') ||
-      errStr.contains('network') ||
-      errStr.contains('socket') ||
+      errStr.contains('network unreachable') ||
+      errStr.contains('socketexception') ||
       errStr.contains('failed host lookup') ||
-      errStr.contains('forward') ||
+      errStr.contains('forwardlocal') ||
       errStr.contains('proxycommand exited') ||
       errStr.contains('proxycommand timed out');
 }
