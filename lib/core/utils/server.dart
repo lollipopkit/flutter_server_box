@@ -255,6 +255,7 @@ bool _isJumpFailoverError(Object error) {
       errStr.contains('connection closed') ||
       errStr.contains('no route to host') ||
       errStr.contains('network unreachable') ||
+      errStr.contains('network is unreachable') ||
       errStr.contains('socketexception') ||
       errStr.contains('failed host lookup') ||
       errStr.contains('forwardlocal') ||

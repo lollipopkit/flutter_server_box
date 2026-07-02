@@ -165,8 +165,15 @@ extension _SSH on _AppSettingsPageState {
   }
 
   Future<void> _processSSHServers(List<Spi> servers) async {
-    final deduplicated = ServerDeduplication.deduplicateServers(servers);
-    final resolved = ServerDeduplication.resolveNameConflicts(deduplicated);
+    final existing = Stores.server.fetch();
+    final deduplicated = ServerDeduplication.deduplicateServers(
+      servers,
+      existingServers: existing,
+    );
+    final resolved = ServerDeduplication.resolveNameConflicts(
+      deduplicated,
+      existingServers: existing,
+    );
     final summary = ServerDeduplication.getImportSummary(servers, resolved);
 
     if (!summary.hasItemsToImport) {

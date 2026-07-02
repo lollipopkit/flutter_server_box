@@ -209,18 +209,12 @@ void _gotoSSH(Spi spi, BuildContext context) async {
 
   try {
     if (shouldGenKey) {
-      final path = await () async {
-        final tempKeyFileName = 'srvbox_pk_${spi.keyId}';
-
-        /// Use system temp directory so the key file has a short-lived
-        /// random path and is cleaned up by the OS on reboot.
-        return Directory.systemTemp.path.joinPath(tempKeyFileName);
-      }();
+      final tempDir = await Directory.systemTemp.createTemp(
+        'srvbox_pk_${spi.keyId}_',
+      );
+      final path = tempDir.path.joinPath('id_key');
       final file = File(path);
       tempKeyFile = file;
-      if (await file.exists()) {
-        await file.delete();
-      }
       final keyContent = getPrivateKey(spi.keyId!);
       final keyContentWithNewline = keyContent.endsWith('\n')
           ? keyContent
@@ -297,16 +291,17 @@ void _gotoSSH(Spi spi, BuildContext context) async {
     }
   } finally {
     final file = tempKeyFile;
-    if (file != null && await file.exists()) {
+    if (file != null) {
       unawaited(
-        Future.delayed(const Duration(seconds: 5), () async {
+        Future.delayed(const Duration(seconds: 30), () async {
           try {
-            if (await file.exists()) {
-              await file.delete();
+            final parent = file.parent;
+            if (await parent.exists()) {
+              await parent.delete(recursive: true);
             }
           } catch (e, s) {
             Loggers.app.warning(
-              'Failed to delete temporary SSH key file',
+              'Failed to delete temporary SSH key directory',
               e,
               s,
             );

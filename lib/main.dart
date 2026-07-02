@@ -86,11 +86,9 @@ Future<void> _doPlatformRelated() async {
   }
 
   final serversCount = Stores.server.keys().length;
-  if (serversCount > 0) {
-    await Computer.shared.turnOn(
-      workersCount: (serversCount / 3).round() + 1,
-    ); // Plus 1 to avoid 0.
-  }
+  await Computer.shared.turnOn(
+    workersCount: (serversCount / 3).round() + 1,
+  ); // Plus 1 to avoid 0.
 }
 
 // It may contains some async heavy funcs.
