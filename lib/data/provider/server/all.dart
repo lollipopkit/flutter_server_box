@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/sync.dart';
@@ -335,18 +336,8 @@ class ServersNotifier extends _$ServersNotifier {
   }
 
   bool _isSameOrder(List<String> a, List<String> b) {
-    if (identical(a, b)) {
-      return true;
-    }
-    if (a.length != b.length) {
-      return false;
-    }
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) {
-        return false;
-      }
-    }
-    return true;
+    if (identical(a, b)) return true;
+    return listEquals(a, b);
   }
 
   Future<void> updateServer(Spi old, Spi newSpi) async {
