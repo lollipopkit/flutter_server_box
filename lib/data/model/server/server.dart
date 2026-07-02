@@ -64,5 +64,8 @@ enum ServerConn {
   /// Status parsing finished
   finished;
 
+  /// Orders by declaration index: failed < disconnected < connecting <
+  /// connected < loading < finished. Do NOT reorder the enum values
+  /// above without auditing all call sites that rely on this ordering.
   bool operator <(ServerConn other) => index < other.index;
 }

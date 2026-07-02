@@ -394,7 +394,7 @@ extension _App on _AppSettingsPageState {
     String? passwordUsed;
 
     Future<String?> resolvePassword() async {
-      final saved = await _setting.backupasswd.read();
+      final saved = await _setting.backupPassword.read();
       if (saved?.isNotEmpty == true) return saved;
       final backupPwd = await SecureStoreProps.bakPwd.read();
       if (backupPwd?.isNotEmpty == true) return backupPwd;
