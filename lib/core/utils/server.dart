@@ -21,6 +21,19 @@ List<SSHKeyPair> loadIdentity(String key) {
   return SSHKeyPair.fromPem(key);
 }
 
+/// Decrypts an encrypted PEM private key.
+///
+/// Must also be a top-level function because it is called via [Computer]
+/// (isolate) — see comment on [loadIdentity].
+///
+/// [args] : [key, pwd]
+String decryptPem(List<String> args) {
+  /// skip when the key is not encrypted, or will throw exception
+  if (!SSHKeyPair.isEncryptedPem(args[0])) return args[0];
+  final sshKey = SSHKeyPair.fromPem(args[0], args[1]);
+  return sshKey.first.toPem();
+}
+
 enum GenSSHClientStatus { socket, key, pwd }
 
 String getPrivateKey(String id) {
