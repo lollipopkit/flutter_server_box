@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/custom.dart';
@@ -148,7 +149,7 @@ extension Spix on Spi {
         port == other.port &&
         pwd == other.pwd &&
         keyId == other.keyId &&
-        _sameStringList(resolvedJumpIds, other.resolvedJumpIds) &&
+        listEquals(resolvedJumpIds, other.resolvedJumpIds) &&
         proxyCommand == other.proxyCommand;
   }
 
@@ -207,12 +208,4 @@ extension Spix on Spi {
 
   /// Returns true if the user is 'root'.
   bool get isRoot => user == 'root';
-}
-
-bool _sameStringList(List<String> a, List<String> b) {
-  if (a.length != b.length) return false;
-  for (var i = 0; i < a.length; i++) {
-    if (a[i] != b[i]) return false;
-  }
-  return true;
 }

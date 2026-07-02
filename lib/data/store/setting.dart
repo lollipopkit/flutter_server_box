@@ -291,7 +291,7 @@ class SettingStore extends HiveStore {
   late final noNotiPerm = propertyDefault('noNotiPerm', false);
 
   /// The backup password
-  late final backupasswd = SecureProp('bakPasswd');
+  late final backupPassword = SecureProp('bakPasswd');
 
   /// Whether to read SSH config from ~/.ssh/config on first time
   late final firstTimeReadSSHCfg = propertyDefault('firstTimeReadSSHCfg', true);

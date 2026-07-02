@@ -149,7 +149,7 @@ final class DockerPs implements ContainerPs {
   /// CONTAINER ID                   NAMES                          IMAGE                          STATUS
   /// a049d689e7a1                   aria2-pro                      p3terx/aria2-pro               Up 3 weeks
   factory DockerPs.parse(String raw) {
-    final parts = raw.split(Miscs.multiBlankreg);
+    final parts = raw.split(Miscs.multiBlankReg);
     return DockerPs(
       id: parts[0],
       state: parts[1],

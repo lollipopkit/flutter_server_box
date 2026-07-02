@@ -2,7 +2,7 @@ import 'dart:convert';
 
 abstract final class Miscs {
   static final blankReg = RegExp(r'\s+');
-  static final multiBlankreg = RegExp(r'\s{2,}');
+  static final multiBlankReg = RegExp(r'\s{2,}');
 
   /// RegExp for password request
   static final pwdRequestWithUserReg = RegExp(r'\[sudo\] password for (.+):');

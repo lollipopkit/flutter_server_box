@@ -8,12 +8,15 @@ import 'package:server_box/data/store/server.dart';
 class ServerDeduplication {
   /// Remove duplicate servers from the import list based on existing servers
   /// Returns the deduplicated list
-  static List<Spi> deduplicateServers(List<Spi> importedServers) {
-    final existingServers = ServerStore.instance.fetch();
+  static List<Spi> deduplicateServers(
+    List<Spi> importedServers, {
+    List<Spi>? existingServers,
+  }) {
+    final existing = existingServers ?? ServerStore.instance.fetch();
     final deduplicated = <Spi>[];
 
     for (final imported in importedServers) {
-      if (!_isDuplicate(imported, existingServers)) {
+      if (!_isDuplicate(imported, existing)) {
         deduplicated.add(imported);
       }
     }
@@ -33,9 +36,12 @@ class ServerDeduplication {
   }
 
   /// Resolve name conflicts by appending suffixes
-  static List<Spi> resolveNameConflicts(List<Spi> importedServers) {
-    final existingServers = ServerStore.instance.fetch();
-    final existingNames = existingServers.map((s) => s.name).toSet();
+  static List<Spi> resolveNameConflicts(
+    List<Spi> importedServers, {
+    List<Spi>? existingServers,
+  }) {
+    final existing = existingServers ?? ServerStore.instance.fetch();
+    final existingNames = existing.map((s) => s.name).toSet();
     final processedNames = <String>{};
     final result = <Spi>[];
 
@@ -111,8 +117,12 @@ class ServerDeduplication {
   }
 
   static List<Spi> _resolveServers(List<Spi> servers) {
-    final deduplicated = deduplicateServers(servers);
-    final resolved = resolveNameConflicts(deduplicated);
+    final existing = ServerStore.instance.fetch();
+    final deduplicated = deduplicateServers(servers, existingServers: existing);
+    final resolved = resolveNameConflicts(
+      deduplicated,
+      existingServers: existing,
+    );
     return resolved;
   }
 }

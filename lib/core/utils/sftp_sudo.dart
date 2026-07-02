@@ -237,10 +237,13 @@ final class SftpSudoHelper {
   }
 
   static String _buildSudoCommand(String command, String password) {
-    final pwdBase64 = base64Encode(utf8.encode(password));
     final wrapped = '($command) 2>&1';
     final escapedWrapped = wrapped.replaceAll("'", "'\\''");
-    return 'echo "$pwdBase64" | base64 -d | sudo -S -- sh -c \'$escapedWrapped\'';
+    // Use shell builtin printf to pipe password to sudo -S.
+    // printf is a shell builtin so the password does not appear in
+    // the process argument list (unlike external `echo`).
+    final escapedPwd = password.replaceAll("'", "'\\''");
+    return "printf '%s\\n' '$escapedPwd' | sudo -S -- sh -c '$escapedWrapped'";
   }
 
   static SftpFileMode _buildMode(String typeChar, int permOct) {

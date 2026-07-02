@@ -17,12 +17,17 @@ import 'package:server_box/data/res/store.dart';
 /// Because of this function is called by [compute].
 ///
 /// https://stackoverflow.com/questions/51998995/invalid-arguments-illegal-argument-in-isolate-message-object-is-a-closure
-List<SSHKeyPair> loadIndentity(String key) {
+List<SSHKeyPair> loadIdentity(String key) {
   return SSHKeyPair.fromPem(key);
 }
 
+/// Decrypts an encrypted PEM private key.
+///
+/// Must also be a top-level function because it is called via [Computer]
+/// (isolate) — see comment on [loadIdentity].
+///
 /// [args] : [key, pwd]
-String decyptPem(List<String> args) {
+String decryptPem(List<String> args) {
   /// skip when the key is not encrypted, or will throw exception
   if (!SSHKeyPair.isEncryptedPem(args[0])) return args[0];
   final sshKey = SSHKeyPair.fromPem(args[0], args[1]);
@@ -214,7 +219,7 @@ Future<SSHClient> genClient(
     socket,
     username: spi.user,
     // Must use [compute] here, instead of [Computer.shared.start]
-    identities: await compute(loadIndentity, privateKey),
+    identities: await compute(loadIdentity, privateKey),
     onUserInfoRequest: onKeyboardInteractive,
     onVerifyHostKey: hostKeyVerifier.call,
   );
@@ -249,10 +254,11 @@ bool _isJumpFailoverError(Object error) {
       errStr.contains('connection reset') ||
       errStr.contains('connection closed') ||
       errStr.contains('no route to host') ||
-      errStr.contains('network') ||
-      errStr.contains('socket') ||
+      errStr.contains('network unreachable') ||
+      errStr.contains('network is unreachable') ||
+      errStr.contains('socketexception') ||
       errStr.contains('failed host lookup') ||
-      errStr.contains('forward') ||
+      errStr.contains('forwardlocal') ||
       errStr.contains('proxycommand exited') ||
       errStr.contains('proxycommand timed out');
 }

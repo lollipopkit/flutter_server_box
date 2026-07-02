@@ -206,20 +206,16 @@ void _gotoSSH(Spi spi, BuildContext context) async {
 
   File? tempKeyFile;
   final shouldGenKey = spi.keyId != null;
+  var sshLaunched = false;
 
   try {
     if (shouldGenKey) {
-      final path = await () async {
-        final tempKeyFileName = 'srvbox_pk_${spi.keyId}';
-
-        /// For security reason, save the private key file to app doc path
-        return Paths.doc.joinPath(tempKeyFileName);
-      }();
+      final tempDir = await Directory.systemTemp.createTemp(
+        'srvbox_pk_${spi.keyId}_',
+      );
+      final path = tempDir.path.joinPath('id_key');
       final file = File(path);
       tempKeyFile = file;
-      if (await file.exists()) {
-        await file.delete();
-      }
       final keyContent = getPrivateKey(spi.keyId!);
       final keyContentWithNewline = keyContent.endsWith('\n')
           ? keyContent
@@ -252,6 +248,7 @@ void _gotoSSH(Spi spi, BuildContext context) async {
     switch (system) {
       case Pfs.windows:
         await Process.start('cmd', ['/c', 'start'] + sshCommand);
+        sshLaunched = true;
         break;
       case Pfs.macos:
         try {
@@ -262,6 +259,7 @@ void _gotoSSH(Spi spi, BuildContext context) async {
             '-e',
             'tell application "Terminal" to do script ${_appleScriptString(command)}',
           ]);
+          sshLaunched = true;
         } catch (e, s) {
           context.showErrDialog(e, s, libL10n.emulator);
         }
@@ -281,6 +279,7 @@ void _gotoSSH(Spi spi, BuildContext context) async {
           if (terminal.isEmpty) terminal = 'x-terminal-emulator';
 
           await Process.start(scriptFile.path, [terminal, ...sshCommand]);
+          sshLaunched = true;
         } catch (e, s) {
           if (context.mounted) {
             context.showErrDialog(e, s, libL10n.emulator);
@@ -296,22 +295,40 @@ void _gotoSSH(Spi spi, BuildContext context) async {
     }
   } finally {
     final file = tempKeyFile;
-    if (file != null && await file.exists()) {
-      unawaited(
-        Future.delayed(const Duration(seconds: 2), () async {
-          try {
-            if (await file.exists()) {
-              await file.delete();
+    if (file != null) {
+      if (sshLaunched) {
+        // Keep the key file alive while SSH is establishing the connection.
+        unawaited(
+          Future.delayed(const Duration(seconds: 30), () async {
+            try {
+              final parent = file.parent;
+              if (await parent.exists()) {
+                await parent.delete(recursive: true);
+              }
+            } catch (e, s) {
+              Loggers.app.warning(
+                'Failed to delete temporary SSH key directory',
+                e,
+                s,
+              );
             }
-          } catch (e, s) {
-            Loggers.app.warning(
-              'Failed to delete temporary SSH key file',
-              e,
-              s,
-            );
+          }),
+        );
+      } else {
+        // SSH never launched — clean up immediately.
+        try {
+          final parent = file.parent;
+          if (await parent.exists()) {
+            await parent.delete(recursive: true);
           }
-        }),
-      );
+        } catch (e, s) {
+          Loggers.app.warning(
+            'Failed to delete temporary SSH key directory',
+            e,
+            s,
+          );
+        }
+      }
     }
   }
 }
@@ -397,8 +414,11 @@ Future<void> _copyDesktopSshPasswordIfNeeded(
     Future.delayed(const Duration(seconds: 25), () async {
       try {
         final current = await Clipboard.getData(Clipboard.kTextPlain);
-        if (current?.text != pwd) return;
-        await Clipboard.setData(const ClipboardData(text: ''));
+        // Only clear if the clipboard still holds the password.
+        // If the user copied something else in the meantime, preserve it.
+        if (current?.text == pwd) {
+          await Clipboard.setData(const ClipboardData(text: ''));
+        }
       } catch (e, s) {
         Loggers.app.warning(
           'Failed to clear copied SSH password from clipboard',

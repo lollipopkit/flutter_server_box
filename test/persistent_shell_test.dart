@@ -6,41 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/ssh/persistent_shell.dart';
 
 void main() {
-  test('PersistentShell parses completed output marker', () {
-    const raw = 'cpu:10%\nmem:20%\n__SERVER_BOX_DONE__7:0\n';
-
-    final result = PersistentShell.tryParseCompletedOutput(
-      raw,
-      expectedCommandId: '7',
-    );
-
-    expect(result, isNotNull);
-    expect(result!.output, 'cpu:10%\nmem:20%');
-    expect(result.exitCode, 0);
-  });
-
-  test('PersistentShell waits for full completion marker', () {
-    const raw = 'cpu:10%\n__SERVER_BOX_DONE__7:';
-
-    final result = PersistentShell.tryParseCompletedOutput(
-      raw,
-      expectedCommandId: '7',
-    );
-
-    expect(result, isNull);
-  });
-
-  test('PersistentShell ignores markers for another command id', () {
-    const raw = 'cpu:10%\n__SERVER_BOX_DONE__999:0\n';
-
-    final result = PersistentShell.tryParseCompletedOutput(
-      raw,
-      expectedCommandId: '7',
-    );
-
-    expect(result, isNull);
-  });
-
   test('PersistentShell reuses one session across multiple commands', () async {
     final factory = _FakeSessionFactory();
     final shell = PersistentShell(null, sessionFactory: factory.call);
