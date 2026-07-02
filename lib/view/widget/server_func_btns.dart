@@ -397,7 +397,12 @@ Future<void> _copyDesktopSshPasswordIfNeeded(
   unawaited(
     Future.delayed(const Duration(seconds: 25), () async {
       try {
-        await Clipboard.setData(const ClipboardData(text: ''));
+        final current = await Clipboard.getData(Clipboard.kTextPlain);
+        // Only clear if the clipboard still holds the password.
+        // If the user copied something else in the meantime, preserve it.
+        if (current?.text == pwd) {
+          await Clipboard.setData(const ClipboardData(text: ''));
+        }
       } catch (e, s) {
         Loggers.app.warning(
           'Failed to clear copied SSH password from clipboard',
