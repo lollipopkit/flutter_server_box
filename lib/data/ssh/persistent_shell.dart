@@ -287,16 +287,6 @@ printf '\\n$_donePrefix$commandId:%s\\n' "\$__server_box_exit"
     }
   }
 
-  static PersistentShellCommandResult? tryParseCompletedOutput(
-    String raw, {
-    required String expectedCommandId,
-  }) {
-    return _parseCompletedOutput(
-      raw,
-      expectedCommandId: expectedCommandId,
-    )?.result;
-  }
-
   static _ParsedCompletedOutput? _parseCompletedOutput(
     String raw, {
     required String expectedCommandId,
