@@ -212,8 +212,9 @@ void _gotoSSH(Spi spi, BuildContext context) async {
       final path = await () async {
         final tempKeyFileName = 'srvbox_pk_${spi.keyId}';
 
-        /// For security reason, save the private key file to app doc path
-        return Paths.doc.joinPath(tempKeyFileName);
+        /// Use system temp directory so the key file has a short-lived
+        /// random path and is cleaned up by the OS on reboot.
+        return Directory.systemTemp.path.joinPath(tempKeyFileName);
       }();
       final file = File(path);
       tempKeyFile = file;
@@ -298,7 +299,7 @@ void _gotoSSH(Spi spi, BuildContext context) async {
     final file = tempKeyFile;
     if (file != null && await file.exists()) {
       unawaited(
-        Future.delayed(const Duration(seconds: 2), () async {
+        Future.delayed(const Duration(seconds: 5), () async {
           try {
             if (await file.exists()) {
               await file.delete();
@@ -396,8 +397,6 @@ Future<void> _copyDesktopSshPasswordIfNeeded(
   unawaited(
     Future.delayed(const Duration(seconds: 25), () async {
       try {
-        final current = await Clipboard.getData(Clipboard.kTextPlain);
-        if (current?.text != pwd) return;
         await Clipboard.setData(const ClipboardData(text: ''));
       } catch (e, s) {
         Loggers.app.warning(
