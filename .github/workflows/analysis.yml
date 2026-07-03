@@ -12,6 +12,37 @@ on:
     branches: [ "main" ]
 
 jobs:
+  reproducibilityCheck:
+    name: Reproducibility check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: recursive
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.44.4'
+
+      - name: Check locked dependencies
+        env:
+          PUB_HOSTED_URL: https://pub.dev
+        run: |
+          flutter pub get --enforce-lockfile
+          git diff --exit-code -- pubspec.yaml pubspec.lock
+
+      - name: Check JNI build-id patch
+        run: |
+          scripts/release/patch-jni-build-id.sh
+          pub_cache="$(dart pub cache path)"
+          if ! grep -R -- '--build-id=none' "$pub_cache"/hosted/pub.dev/jni-*/src/CMakeLists.txt >/dev/null; then
+            echo "jni build-id patch was not applied."
+            exit 1
+          fi
+
   check:
     runs-on: ubuntu-latest
 
