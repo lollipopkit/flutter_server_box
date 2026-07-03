@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release:
-        description: 'Create GitHub Release (auto tag v1.0.<commit_count>)'
+        description: 'Create GitHub Release from the selected v1.0.<build> tag'
         required: false
         type: boolean
         default: false
@@ -18,6 +18,7 @@ permissions:
 env:
   APP_NAME: ServerBox
   BUILD_TAG: test-build-${{ github.run_number }}-${{ github.sha }}
+  FLUTTER_VERSION: "3.44.4"
 
 jobs:
   reproducibilityCheck:
@@ -34,7 +35,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          flutter-version: "3.44.4"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
       - name: Require tagged releases
         if: inputs.release == true && github.ref_type != 'tag'
         shell: bash
@@ -94,7 +95,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          flutter-version: "3.44.4"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
       - uses: actions/setup-java@v4
         with:
           distribution: "zulu"
@@ -169,7 +170,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: "3.44.4"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
       - name: Install dependencies
         run: |
           sudo apt update
@@ -227,7 +228,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: "3.44.4"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
       - name: Build (release)
         if: inputs.release == true || github.ref_type == 'tag'
         shell: bash
