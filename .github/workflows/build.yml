@@ -20,8 +20,68 @@ env:
   BUILD_TAG: test-build-${{ github.run_number }}-${{ github.sha }}
 
 jobs:
+  reproducibilityCheck:
+    name: Reproducibility check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version: "3.44.1"
+      - name: Require tagged releases
+        if: inputs.release == true && github.ref_type != 'tag'
+        shell: bash
+        run: |
+          echo "Release builds must be started from a committed tag so the source can be reproduced by downstream builders."
+          echo "Create and push a v1.0.<build> tag after committing the release version files."
+          exit 1
+      - name: Check tag source version
+        if: github.ref_type == 'tag'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          expected="${GITHUB_REF_NAME#v}"
+          build="${expected##*.}"
+          pub_version="$(sed -n -E 's/^version:[[:space:]]*([^+]+)\+([0-9]+)$/\1+\2/p' pubspec.yaml | head -n 1)"
+          build_data="$(sed -n -E 's/.*static const int build = ([0-9]+);/\1/p' lib/data/res/build_data.dart | head -n 1)"
+
+          if [[ "$pub_version" != "$expected+$build" ]]; then
+            echo "pubspec.yaml version must match tag ${GITHUB_REF_NAME}; got ${pub_version}."
+            exit 1
+          fi
+
+          if [[ "$build_data" != "$build" ]]; then
+            echo "BuildData.build must match tag ${GITHUB_REF_NAME}; got ${build_data}."
+            exit 1
+          fi
+      - name: Check locked dependencies
+        shell: bash
+        env:
+          PUB_HOSTED_URL: https://pub.dev
+        run: |
+          flutter pub get --enforce-lockfile
+          git diff --exit-code -- pubspec.yaml pubspec.lock
+      - name: Check JNI build-id patch
+        shell: bash
+        run: |
+          scripts/release/patch-jni-build-id.sh
+          pub_cache="$(dart pub cache path)"
+          if ! grep -R -- '--build-id=none' "$pub_cache"/hosted/pub.dev/jni-*/src/CMakeLists.txt >/dev/null; then
+            echo "jni build-id patch was not applied."
+            exit 1
+          fi
+
   buildAndroid:
     name: Build android
+    needs: reproducibilityCheck
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -86,6 +146,7 @@ jobs:
 
   buildLinux:
     name: Build linux
+    needs: reproducibilityCheck
     strategy:
       fail-fast: false
       matrix:
@@ -153,6 +214,7 @@ jobs:
 
   buildWindows:
     name: Build windows
+    needs: reproducibilityCheck
     runs-on: windows-latest
     steps:
       - name: Checkout
