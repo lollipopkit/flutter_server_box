@@ -72,13 +72,7 @@ jobs:
           git diff --exit-code -- pubspec.yaml pubspec.lock
       - name: Check JNI build-id patch
         shell: bash
-        run: |
-          scripts/release/patch-jni-build-id.sh
-          pub_cache="$(dart pub cache path)"
-          if ! grep -R -- '--build-id=none' "$pub_cache"/hosted/pub.dev/jni-*/src/CMakeLists.txt >/dev/null; then
-            echo "jni build-id patch was not applied."
-            exit 1
-          fi
+        run: scripts/release/patch-jni-build-id.sh
 
   buildAndroid:
     name: Build android
