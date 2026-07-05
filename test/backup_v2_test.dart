@@ -71,6 +71,21 @@ void main() {
 
       expect(backup.toJsonString, throwsA(isA<UnsupportedError>()));
     });
+
+    test('preserves failures from supported toJson implementations', () {
+      final backup = BackupV2(
+        version: BackupV2.formatVer,
+        date: 1,
+        spis: const {},
+        snippets: const {},
+        keys: {'bad': const _ThrowingPrivateKeyInfo()},
+        container: const {},
+        history: const {},
+        settings: const {},
+      );
+
+      expect(backup.toJsonString, throwsA(isA<StateError>()));
+    });
   });
 
   group('BackupV2 restore validation', () {
@@ -96,9 +111,7 @@ void main() {
       final raw = json.encode({
         'version': BackupV2.formatVer,
         'date': 1,
-        'spis': {
-          '__lkpt_lastUpdateTs': {'server': 1},
-        },
+        'spis': {'__lkpt_lastUpdateTs': 'legacy timestamp metadata'},
         'snippets': {},
         'keys': {},
         'container': {},
@@ -108,9 +121,17 @@ void main() {
 
       final backup = BackupV2.fromJsonString(raw);
 
-      expect(backup.spis['__lkpt_lastUpdateTs'], {'server': 1});
+      expect(backup.spis['__lkpt_lastUpdateTs'], 'legacy timestamp metadata');
     });
   });
 }
 
 final class _NotJsonEncodable {}
+
+final class _ThrowingPrivateKeyInfo extends PrivateKeyInfo {
+  const _ThrowingPrivateKeyInfo()
+    : super(id: 'bad', key: '-----BEGIN OPENSSH PRIVATE KEY-----\nbad');
+
+  @override
+  Map<String, dynamic> toJson() => throw StateError('broken toJson');
+}

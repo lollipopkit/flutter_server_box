@@ -4,6 +4,11 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
+import 'package:server_box/data/model/server/custom.dart';
+import 'package:server_box/data/model/server/private_key_info.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
@@ -137,15 +142,7 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     return BackupV2.fromJson(map);
   }
 
-  String toJsonString() {
-    try {
-      return json.encode(toJson(), toEncodable: _toEncodable);
-    } on JsonUnsupportedObjectError catch (e) {
-      final cause = e.cause;
-      if (cause is UnsupportedError) throw cause;
-      rethrow;
-    }
-  }
+  String toJsonString() => json.encode(_toJsonValue(toJson()));
 
   void _validateRestorableTypedStores() {
     _validateRestorableStore('spis', spis);
@@ -157,13 +154,36 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
 Object? _toEncodable(Object? value) {
   if (value is Enum) return value.name;
 
-  try {
-    return (value as dynamic).toJson();
-  } on NoSuchMethodError {
-    throw UnsupportedError(
-      'Cannot JSON-encode ${value.runtimeType}: missing toJson()',
-    );
+  return switch (value) {
+    final Spi spi => spi.toJson(),
+    final Snippet snippet => snippet.toJson(),
+    final PrivateKeyInfo key => key.toJson(),
+    final ServerCustom custom => custom.toJson(),
+    final WakeOnLanCfg wolCfg => wolCfg.toJson(),
+    _ => throw UnsupportedError(
+      'Cannot JSON-encode ${value.runtimeType}: missing supported toJson()',
+    ),
+  };
+}
+
+Object? _toJsonValue(Object? value) {
+  if (value == null || value is num || value is bool || value is String) {
+    return value;
   }
+  if (value is Map) {
+    return value.map((key, entryValue) {
+      if (key is! String) {
+        throw UnsupportedError(
+          'Cannot JSON-encode map key ${key.runtimeType}: keys must be String',
+        );
+      }
+      return MapEntry(key, _toJsonValue(entryValue));
+    });
+  }
+  if (value is Iterable) {
+    return value.map(_toJsonValue).toList(growable: false);
+  }
+  return _toJsonValue(_toEncodable(value));
 }
 
 void _validateRestorableStore(String storeName, Map<String, Object?> data) {
