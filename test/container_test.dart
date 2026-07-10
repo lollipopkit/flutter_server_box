@@ -61,8 +61,10 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
   test('docker ps command uses human-readable status', () {
     final cmd = ContainerCmdType.ps.exec(ContainerType.docker);
 
-    expect(cmd, contains('{{.Status}}'));
-    expect(cmd, isNot(contains('{{.State}}')));
+    expect(
+      cmd,
+      'docker ps -a --format "{{.ID}}\\t{{.Status}}\\t{{.Names}}\\t{{.Image}}"',
+    );
   });
 
   test('docker ps status detection', () {
