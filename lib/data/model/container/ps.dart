@@ -4,7 +4,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/container/status.dart';
 import 'package:server_box/data/model/container/type.dart';
-import 'package:server_box/data/res/misc.dart';
 
 sealed class ContainerPs {
   String? get id;
@@ -146,15 +145,21 @@ final class DockerPs implements ContainerPs {
         '${l10n.read} ${blockParts.firstOrNull ?? '0B'} / ${l10n.write} ${blockParts.length > 1 ? blockParts[1] : '0B'}';
   }
 
-  /// CONTAINER ID                   NAMES                          IMAGE                          STATUS
-  /// a049d689e7a1                   aria2-pro                      p3terx/aria2-pro               Up 3 weeks
+  /// CONTAINER ID\tSTATUS\tNAMES\tIMAGE
+  /// a049d689e7a1\tUp 3 weeks\taria2-pro\tp3terx/aria2-pro
   factory DockerPs.parse(String raw) {
-    final parts = raw.split(Miscs.multiBlankReg);
+    final parts = raw.split('\t');
+    if (parts.length < 4) {
+      throw FormatException(
+        'Docker ps row has ${parts.length} fields, expected 4',
+        raw,
+      );
+    }
     return DockerPs(
       id: parts[0],
       state: parts[1],
       names: parts[2],
-      image: parts[3].trim(),
+      image: parts[3],
     );
   }
 }

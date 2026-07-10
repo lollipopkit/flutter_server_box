@@ -487,14 +487,8 @@ enum ContainerCmdType {
     final baseCmd = switch (this) {
       ContainerCmdType.version => '${type.name} version $_jsonFmt',
       ContainerCmdType.ps => switch (type) {
-        /// TODO: Rollback to json format when performance recovers.
-        /// Use [_jsonFmt] in Docker will cause the operation to slow down.
         ContainerType.docker =>
-          '${type.name} ps -a --format "table {{printf \\"'
-              '%-15.15s '
-              '%-30.30s '
-              '${"%-50.50s " * 2}\\"'
-              ' .ID .Status .Names .Image}}"',
+          '${type.name} ps -a --format "{{.ID}}\\t{{.State}}\\t{{.Names}}\\t{{.Image}}"',
         ContainerType.podman => '${type.name} ps -a $_jsonFmt',
       },
       ContainerCmdType.stats =>
