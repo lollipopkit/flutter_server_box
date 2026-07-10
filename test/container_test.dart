@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/status.dart';
+import 'package:server_box/data/model/container/type.dart';
+import 'package:server_box/data/provider/container.dart';
 
 void main() {
   test('docker ps parse', () {
@@ -54,6 +56,13 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
             .having((e) => e.message, 'message', contains('expected 4')),
       ),
     );
+  });
+
+  test('docker ps command uses human-readable status', () {
+    final cmd = ContainerCmdType.ps.exec(ContainerType.docker);
+
+    expect(cmd, contains('{{.Status}}'));
+    expect(cmd, isNot(contains('{{.State}}')));
   });
 
   test('docker ps status detection', () {
