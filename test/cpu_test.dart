@@ -22,6 +22,18 @@ cpu1  8 9 10 11 12 13 14''';
 
       expect(result.map((e) => e.id), ['cpu', 'cpu1']);
     });
+
+    test('SingleCpuCore.parse skips blanks and stops at non-CPU records', () {
+      const raw = '''cpu  1 2 3 4 5 6 7
+
+cpu0  8 9 10 11 12 13 14
+intr  1 2 3 4 5 6 7
+cpu1  15 16 17 18 19 20 21''';
+
+      final result = SingleCpuCore.parse(raw);
+
+      expect(result.map((e) => e.id), ['cpu', 'cpu0']);
+    });
     test('Test Cpus calculation', () {
       final pre = SingleCpuCore.parse(
         'cpu 18232538 52837 5772391 334460731 247294 0 134107 0 0 0',

@@ -136,8 +136,9 @@ class SingleCpuCore extends TimeSeqIface<SingleCpuCore> {
 
     for (var item in raw.split('\n')) {
       item = item.trim();
-      if (item.isEmpty) break;
+      if (item.isEmpty) continue;
       final matches = item.split(RegExp(r'\s+'));
+      if (!RegExp(r'^cpu\d*$').hasMatch(matches.first)) break;
       if (matches.length < 8) continue;
       try {
         cpus.add(

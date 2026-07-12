@@ -21,9 +21,12 @@ class Conn {
     if (idx != '') {
       final vals = idx.split(Miscs.blankReg);
       if (vals.length <= _attemptFailsIndex) return null;
+      final maxConn = int.tryParse(vals[_maxConnIndex]);
+      final fail = int.tryParse(vals[_attemptFailsIndex]);
+      if (maxConn == null || fail == null) return null;
       return Conn(
-        maxConn: int.tryParse(vals[_maxConnIndex]) ?? 0,
-        fail: int.tryParse(vals[_attemptFailsIndex]) ?? 0,
+        maxConn: maxConn,
+        fail: fail,
       );
     }
     return null;
