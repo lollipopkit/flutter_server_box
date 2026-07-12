@@ -62,6 +62,7 @@ final class PersistentShell {
   StreamSubscription<String>? _stderrSub;
   Completer<PersistentShellCommandResult>? _pending;
   final StringBuffer _buffer = StringBuffer();
+  final StringBuffer _stderrBuffer = StringBuffer();
   int _commandId = 0;
   bool _closed = false;
   Future<void> _stateLock = Future<void>.value();
@@ -97,6 +98,7 @@ final class PersistentShell {
       final completer = Completer<PersistentShellCommandResult>();
       _pending = completer;
       _buffer.clear();
+      _stderrBuffer.clear();
       final commandId = (++_commandId).toString();
       _pendingCommandId = commandId;
       final wrappedCommand = _wrapCommand(command, commandId);
@@ -213,11 +215,15 @@ printf '\\n$_donePrefix$commandId:%s\\n' "\$__server_box_exit"
     _pendingCommandId = null;
     pending.complete(
       PersistentShellCommandResult(
-        output: parsed.result.output,
+        output: [
+          parsed.result.output,
+          _stderrBuffer.toString().trim(),
+        ].where((part) => part.isNotEmpty).join('\n'),
         exitCode: parsed.result.exitCode,
       ),
     );
     _buffer.clear();
+    _stderrBuffer.clear();
     final remaining = raw.substring(parsed.consumedLength);
     if (remaining.isNotEmpty) {
       _buffer.write(remaining);
@@ -230,7 +236,7 @@ printf '\\n$_donePrefix$commandId:%s\\n' "\$__server_box_exit"
       return;
     }
 
-    _buffer.write(data);
+    _stderrBuffer.write(data);
   }
 
   void _handleStreamDone() {

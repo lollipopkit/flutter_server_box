@@ -135,23 +135,26 @@ class SingleCpuCore extends TimeSeqIface<SingleCpuCore> {
     final List<SingleCpuCore> cpus = [];
 
     for (var item in raw.split('\n')) {
-      if (item == '') break;
-      final id = item.split(' ').firstOrNull;
-      if (id == null) continue;
-      final matches = item.replaceFirst(id, '').trim().split(' ');
-      if (matches.length < 7) continue;
-      cpus.add(
-        SingleCpuCore(
-          id,
-          int.parse(matches[0]),
-          int.parse(matches[1]),
-          int.parse(matches[2]),
-          int.parse(matches[3]),
-          int.parse(matches[4]),
-          int.parse(matches[5]),
-          int.parse(matches[6]),
-        ),
-      );
+      item = item.trim();
+      if (item.isEmpty) break;
+      final matches = item.split(RegExp(r'\s+'));
+      if (matches.length < 8) continue;
+      try {
+        cpus.add(
+          SingleCpuCore(
+            matches[0],
+            int.parse(matches[1]),
+            int.parse(matches[2]),
+            int.parse(matches[3]),
+            int.parse(matches[4]),
+            int.parse(matches[5]),
+            int.parse(matches[6]),
+            int.parse(matches[7]),
+          ),
+        );
+      } catch (e, trace) {
+        Loggers.app.warning('Skip malformed CPU row: $item', e, trace);
+      }
     }
     return cpus;
   }

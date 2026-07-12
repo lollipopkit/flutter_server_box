@@ -373,18 +373,19 @@ class ContainerNotifier extends _$ContainerNotifier {
     await refresh(generation: generation);
   }
 
-  Future<ContainerErr?> stop(String id) async => await run('stop $id');
+  Future<ContainerErr?> stop(String id) async => await run('stop ${shellSingleQuote(id)}');
 
-  Future<ContainerErr?> start(String id) async => await run('start $id');
+  Future<ContainerErr?> start(String id) async => await run('start ${shellSingleQuote(id)}');
 
   Future<ContainerErr?> delete(String id, bool force) async {
     if (force) {
-      return await run('rm -f $id');
+      return await run('rm -f ${shellSingleQuote(id)}');
     }
-    return await run('rm $id');
+    return await run('rm ${shellSingleQuote(id)}');
   }
 
-  Future<ContainerErr?> restart(String id) async => await run('restart $id');
+  Future<ContainerErr?> restart(String id) async =>
+      await run('restart ${shellSingleQuote(id)}');
 
   Future<ContainerErr?> pruneImages({bool all = true}) async {
     final cmd = 'image prune${all ? " -a" : ""} -f';
@@ -477,7 +478,9 @@ String _buildSudoCmd(String baseCmd, String password) {
   return 'echo "$pwdBase64" | base64 -d | sudo -S $baseCmd';
 }
 
-String _shellQuote(String value) => "'${value.replaceAll("'", "'\\''")}'";
+String shellSingleQuote(String value) => "'${value.replaceAll("'", "'\\''")}'";
+
+String _shellQuote(String value) => shellSingleQuote(value);
 
 enum ContainerCmdType {
   version,

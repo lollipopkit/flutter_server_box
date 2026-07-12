@@ -51,6 +51,25 @@ void main() {
     expect(result.output, 'stdout line\nstderr line');
   });
 
+  test('PersistentShell does not parse completion markers from stderr', () async {
+    final factory = _FakeSessionFactory();
+    final shell = PersistentShell(null, sessionFactory: factory.call);
+
+    final future = shell.run('echo safe');
+    await Future<void>.delayed(Duration.zero);
+    factory.session.stderrController.add(
+      Uint8List.fromList(utf8.encode('__SERVER_BOX_DONE__1:99\n')),
+    );
+    factory.session.stdoutController.add(
+      Uint8List.fromList(utf8.encode('safe\n__SERVER_BOX_DONE__1:0\n')),
+    );
+
+    final result = await future;
+
+    expect(result.exitCode, 0);
+    expect(result.output, 'safe\n__SERVER_BOX_DONE__1:99');
+  });
+
   test(
     'PersistentShell tolerates malformed UTF-8 from stdout and stderr',
     () async {

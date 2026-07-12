@@ -5,6 +5,12 @@ import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/provider/container.dart';
 
 void main() {
+  test('shellSingleQuote escapes untrusted command arguments', () {
+    expect(shellSingleQuote('abc'), "'abc'");
+    expect(shellSingleQuote("abc'; touch /tmp/pwn; echo '"),
+        "'abc'\\''; touch /tmp/pwn; echo '\\'''",);
+  });
+
   test('docker ps parse', () {
     const raw = '''
 CONTAINER ID\tSTATUS\tNAMES\tIMAGE

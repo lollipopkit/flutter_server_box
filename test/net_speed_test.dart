@@ -2,6 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 
 void main() {
+  test('NetSpeed returns zero speed for equal timestamps', () {
+    final pre = [NetSpeedPart('eth0', BigInt.from(100), BigInt.from(200), 1)];
+    final now = [NetSpeedPart('eth0', BigInt.from(200), BigInt.from(400), 1)];
+    final netSpeed = NetSpeed(pre, now);
+
+    expect(netSpeed.speedInBytes(0), 0);
+    expect(netSpeed.speedOutBytes(0), 0);
+  });
+
   group('NetSpeedPart Tests', () {
     test('NetSpeedPart.same method', () {
       final part1 = NetSpeedPart(

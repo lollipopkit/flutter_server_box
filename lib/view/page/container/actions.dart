@@ -146,7 +146,9 @@ extension on _ContainerPageState {
       actions: Btn.ok(
         onTap: () async {
           context.pop();
-          final result = await _containerNotifier.run('rmi ${e.id} -f');
+          final result = await _containerNotifier.run(
+            'rmi ${shellSingleQuote(e.id ?? '')} -f',
+          );
           if (result != null) {
             context.showSnackBar(_errorMessage(result.message));
           }
@@ -174,7 +176,11 @@ extension on _ContainerPageState {
           actions: Btn.ok(
             onTap: () async {
               context.pop();
-              await _execContainerAction(() => _containerNotifier.run('pull $imageRef'));
+              await _execContainerAction(
+                () => _containerNotifier.run(
+                  'pull ${shellSingleQuote(imageRef)}',
+                ),
+              );
             },
           ).toList,
         );
@@ -245,7 +251,7 @@ extension on _ContainerPageState {
               '${switch (_containerState.type) {
                 ContainerType.podman => 'podman',
                 ContainerType.docker => 'docker',
-              }} logs -f --tail 100 ${dItem.id}',
+              }} logs -f --tail 100 ${shellSingleQuote(dItem.id!)}',
         );
         SSHPage.route.go(context, args);
         break;
@@ -256,7 +262,7 @@ extension on _ContainerPageState {
               '${switch (_containerState.type) {
                 ContainerType.podman => 'podman',
                 ContainerType.docker => 'docker',
-              }} exec -it ${dItem.id} sh -c "command -v bash && exec bash || command -v ash && exec ash || exec sh"',
+              }} exec -it ${shellSingleQuote(dItem.id!)} sh -c "command -v bash && exec bash || command -v ash && exec ash || exec sh"',
         );
         SSHPage.route.go(context, args);
         break;

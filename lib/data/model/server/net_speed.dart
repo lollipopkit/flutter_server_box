@@ -79,9 +79,17 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
   /// Time diff between [pre] and [now]
   BigInt get _timeDiff => BigInt.from(now[0].time - pre[0].time);
 
-  double speedInBytes(int i) => (now[i].bytesIn - pre[i].bytesIn) / _timeDiff;
-  double speedOutBytes(int i) =>
-      (now[i].bytesOut - pre[i].bytesOut) / _timeDiff;
+  double speedInBytes(int i) {
+    final timeDiff = _timeDiff;
+    if (timeDiff <= BigInt.zero) return 0;
+    return (now[i].bytesIn - pre[i].bytesIn) / timeDiff;
+  }
+
+  double speedOutBytes(int i) {
+    final timeDiff = _timeDiff;
+    if (timeDiff <= BigInt.zero) return 0;
+    return (now[i].bytesOut - pre[i].bytesOut) / timeDiff;
+  }
   BigInt sizeInBytes(int i) => now[i].bytesIn;
   BigInt sizeOutBytes(int i) => now[i].bytesOut;
 
@@ -169,8 +177,7 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
         final data = item.trim().split(':');
         final device = data.firstOrNull;
         if (device == null) continue;
-        final bytes = data.last.trim().split(' ');
-        bytes.removeWhere((element) => element == '');
+        final bytes = data.last.trim().split(_whitespaceRegExp);
         final bytesIn = BigInt.parse(bytes.first);
         final bytesOut = BigInt.parse(bytes[8]);
         results.add(NetSpeedPart(device, bytesIn, bytesOut, time));

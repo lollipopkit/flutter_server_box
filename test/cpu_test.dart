@@ -12,6 +12,16 @@ void main() {
       expect(result[0].id, 'cpu');
       expect(result[0].total, 358899898);
     });
+
+    test('SingleCpuCore.parse skips malformed rows', () {
+      const raw = '''cpu  1 2 3 4 5 6 7
+cpu0  broken 2 3 4 5 6 7
+cpu1  8 9 10 11 12 13 14''';
+
+      final result = SingleCpuCore.parse(raw);
+
+      expect(result.map((e) => e.id), ['cpu', 'cpu1']);
+    });
     test('Test Cpus calculation', () {
       final pre = SingleCpuCore.parse(
         'cpu 18232538 52837 5772391 334460731 247294 0 134107 0 0 0',
