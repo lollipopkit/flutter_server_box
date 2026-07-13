@@ -9,9 +9,6 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
-  String get aboutThanks => 'Благодарности всем участникам.';
-
-  @override
   String get acceptBeta => 'Принять обновления тестовой версии';
 
   @override
@@ -23,9 +20,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get addr => 'Адрес';
-
-  @override
-  String get alreadyLastDir => 'Уже в корневом каталоге';
 
   @override
   String get askAi => 'Спросить ИИ';
@@ -133,10 +127,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Экспортированные данные могут быть зашифрованы паролем. \nПожалуйста, храните их в безопасности.';
 
   @override
-  String get backupVersionNotMatch =>
-      'Версия резервной копии не совпадает, восстановление невозможно';
-
-  @override
   String get icloudBackupStatusTitle => 'Backup status';
 
   @override
@@ -229,9 +219,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Пароль sudo неверен или не разрешён. Пожалуйста, попробуйте снова.';
 
   @override
-  String get convert => 'Конвертировать';
-
-  @override
   String get copyPath => 'Копировать путь';
 
   @override
@@ -239,16 +226,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Отобразите уровень использования каждого процессора в виде индикатора выполнения (старый стиль)';
 
   @override
-  String get cursorType => 'Тип курсора';
-
-  @override
   String get configured => 'Configured';
 
   @override
   String get customCmd => 'Пользовательские команды';
-
-  @override
-  String get customCmdHint => '\"Имя команды\": \"Команда\"';
 
   @override
   String get deleteServers => 'Удалить серверы пакетно';
@@ -276,9 +257,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get diskHealth => 'Состояние диска';
 
   @override
-  String get diskIgnorePath => 'Игнорировать путь к диску';
-
-  @override
   String get displayCpuIndex => 'Отобразить индекс ЦП';
 
   @override
@@ -294,9 +272,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String dockerImagesFmt(Object count) {
     return 'Всего $count образов';
   }
-
-  @override
-  String get dockerNotInstalled => 'Docker не установлен';
 
   @override
   String dockerStatusRunningAndStoppedFmt(
@@ -336,9 +311,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get envVars => 'Переменная окружения';
 
   @override
-  String get experimentalFeature => 'Экспериментальная функция';
-
-  @override
   String get extraArgs => 'Дополнительные аргументы';
 
   @override
@@ -347,13 +319,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get fdroidReleaseTip =>
       'Если вы скачали это приложение с F-Droid, рекомендуется отключить эту опцию.';
-
-  @override
-  String get fgService => 'Сервис переднего плана';
-
-  @override
-  String get fgServiceTip =>
-      'После включения некоторые модели устройств могут вылетать. Отключение может привести к тому, что некоторые модели не смогут поддерживать SSH-соединения в фоновом режиме. Пожалуйста, разрешите ServerBox права на уведомления, фоновую работу и самопробуждение в системных настройках.';
 
   @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
@@ -417,11 +382,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get homeWidgetUrlConfig => 'Конфигурация URL виджета домашнего экрана';
 
   @override
-  String httpFailedWithCode(Object code) {
-    return 'ошибка запроса, код: $code';
-  }
-
-  @override
   String get ignoreCert => 'Игнорировать сертификат';
 
   @override
@@ -432,10 +392,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get pull => 'Pull';
-
-  @override
-  String get installDockerWithUrl =>
-      'Пожалуйста, сначала установите Docker по адресу https://docs.docker.com/engine/install';
 
   @override
   String get invalid => 'Недействительный';
@@ -494,21 +450,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get max => 'максимум';
-
-  @override
   String get maxConcurrency => 'Максимальная параллельность';
 
   @override
   String get maxRetryCount =>
       'Максимальное количество попыток переподключения к серверу';
-
-  @override
-  String get maxRetryCountEqual0 =>
-      'Будет бесконечно пытаться переподключиться';
-
-  @override
-  String get min => 'минимум';
 
   @override
   String mismatchSystem(Object system) {
@@ -521,10 +467,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get moveOutServerFuncBtnsHelp =>
       'Включено: кнопки функций сервера отображаются под каждой карточкой на вкладке сервера. Выключено: отображается в верхней части страницы деталей сервера.';
-
-  @override
-  String get needHomeDir =>
-      'Если вы пользователь Synology, [смотрите здесь](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Пользователям других систем нужно искать, как создать домашний каталог.';
 
   @override
   String get needRestart => 'Требуется перезапуск приложения';
@@ -542,9 +484,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noLineChart => 'Не использовать линейные графики';
 
   @override
-  String get noLineChartForCpu => 'Не используйте линейные графики для ЦП';
-
-  @override
   String get noPrivateKeyTip =>
       'Приватный ключ не существует, возможно, он был удален или есть ошибка в настройках.';
 
@@ -552,14 +491,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noPromptAgain => 'Больше не спрашивать';
 
   @override
-  String get onServerDetailPage => 'На странице деталей сервера';
-
-  @override
   String get onlyOneLine => 'Отображать только в одной строке (прокручивается)';
-
-  @override
-  String get onlyWhenCoreBiggerThan8 =>
-      'Действует только при количестве ядер больше 8';
 
   @override
   String get openLastPath => 'Открыть последний путь';
@@ -573,19 +505,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Анализ статуса использования Docker может быть медленным';
 
   @override
-  String percentOfSize(Object percent, Object size) {
-    return '$percent% от $size';
-  }
-
-  @override
   String get permission => 'Разрешения';
-
-  @override
-  String get pingInputIP => 'Пожалуйста, введите целевой IP или домен';
-
-  @override
-  String get pingNoServer =>
-      'Нет доступных серверов для Ping\nПожалуйста, добавьте их на вкладке «Сервер» и попробуйте снова';
 
   @override
   String get plugInType => 'Тип вставки';
@@ -611,10 +531,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get pveIgnoreCertTip =>
       'Не рекомендуется включать, обратите внимание на риски безопасности! Если вы используете стандартный сертификат от PVE, вам нужно включить эту опцию.';
-
-  @override
-  String get pveLoginFailed =>
-      'Ошибка входа. Невозможно аутентифицироваться с помощью имени пользователя/пароля из конфигурации сервера для входа в Linux PAM.';
 
   @override
   String get pveServerClientMissing =>
@@ -701,16 +617,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Используется для контейнеров, приостановки и т. д.';
 
   @override
-  String get rememberWindowSize => 'Запомнить размер окна';
-
-  @override
   String get remotePath => 'Удаленный путь';
-
-  @override
-  String get result => 'Результат';
-
-  @override
-  String get rotateAngel => 'Угол поворота';
 
   @override
   String get sameIdServerExist => 'Сервер с таким ID уже существует';
@@ -755,9 +662,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Показывать папки в начале';
 
   @override
-  String get showDistLogo => 'Показать лого дистрибутива';
-
-  @override
   String get size => 'Размер';
 
   @override
@@ -791,15 +695,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get ssh => 'SSH';
 
   @override
-  String get sshConnectionMode => 'SSH connection mode';
-
-  @override
-  String get sshConnectionModeBuiltin => 'Built-in';
-
-  @override
-  String get sshConnectionModeSystem => 'System SSH';
-
-  @override
   String get sshConnectionModeTip =>
       'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
 
@@ -824,10 +719,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sshConfigImport => 'Импорт SSH Конфигурации';
-
-  @override
-  String get sshConfigImportHelp =>
-      'Можно импортировать только базовую информацию, например: IP/порт.';
 
   @override
   String get sshConfigImportPermission =>
@@ -891,11 +782,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Когда терминал можно прокручивать, горизонтальное перетаскивание позволяет выделить текст. Нажатие на кнопку клавиатуры включает/выключает клавиатуру. Иконка файла открывает текущий путь SFTP. Кнопка буфера обмена копирует содержимое, когда текст выделен, и вставляет содержимое из буфера обмена в терминал, когда текст не выделен, а в буфере есть содержимое. Иконка кода вставляет фрагменты кода в терминал и выполняет их.';
 
   @override
-  String sshTip(Object url) {
-    return 'Эта функция находится в стадии тестирования.\n\nПожалуйста, отправляйте отчеты о проблемах на $url или присоединяйтесь к нашей разработке.';
-  }
-
-  @override
   String get sshVirtualKeyAutoOff =>
       'Автоматическое переключение виртуальных клавиш';
 
@@ -922,14 +808,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
 
   @override
-  String get syncTip =>
-      'Возможно, потребуется перезагрузка, чтобы некоторые изменения вступили в силу.';
-
-  @override
   String get system => 'Система';
-
-  @override
-  String get tag => 'Теги';
 
   @override
   String get tapToStartDiscovery =>
@@ -962,28 +841,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get unknown => 'Неизвестно';
 
   @override
-  String get unkownConvertMode => 'Неизвестный режим конвертации';
-
-  @override
-  String get update => 'Обновление';
-
-  @override
-  String get updateIntervalEqual0 =>
-      'Если установлено 0, статус сервера не будет автоматически обновляться.\nТакже не будет рассчитано использование ЦП.';
-
-  @override
   String get updateServerStatusInterval =>
       'Интервал обновления статуса сервера';
-
-  @override
-  String get upsideDown => 'Перевернуть';
-
-  @override
-  String get useCdn => 'Использование CDN';
-
-  @override
-  String get useCdnTip =>
-      'Не китайским пользователям рекомендуется использовать CDN. Хотели бы вы его использовать?';
 
   @override
   String get useNoPwd => 'Будет использоваться без пароля';
@@ -1101,9 +960,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get descending => 'Descending';
-
-  @override
-  String get searchServer => 'Search server';
 
   @override
   String get serverHistory => 'Server history';

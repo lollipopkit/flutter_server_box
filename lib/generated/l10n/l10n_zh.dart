@@ -9,9 +9,6 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get aboutThanks => '感谢以下参与的各位。';
-
-  @override
   String get acceptBeta => '接受测试版更新推送';
 
   @override
@@ -22,9 +19,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get addr => '地址';
-
-  @override
-  String get alreadyLastDir => '已是顶级目录';
 
   @override
   String get askAi => '问 AI';
@@ -126,9 +120,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupTip => '导出数据可通过密码加密，请妥善保管。';
 
   @override
-  String get backupVersionNotMatch => '备份版本不兼容，无法恢复';
-
-  @override
   String get icloudBackupStatusTitle => '备份状态';
 
   @override
@@ -217,25 +208,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get containerSudoPasswordIncorrect => 'sudo 密码错误或无权限。请重试。';
 
   @override
-  String get convert => '转换';
-
-  @override
   String get copyPath => '复制路径';
 
   @override
   String get cpuViewAsProgressTip => '以进度条样式显示每个 CPU 的使用率（旧版样式）';
 
   @override
-  String get cursorType => '光标类型';
-
-  @override
   String get configured => 'Configured';
 
   @override
   String get customCmd => '自定义命令';
-
-  @override
-  String get customCmdHint => '\"命令名称\": \"命令\"';
 
   @override
   String get deleteServers => '批量删除服务器';
@@ -262,9 +244,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get diskHealth => '磁盘健康';
 
   @override
-  String get diskIgnorePath => '忽略的磁盘路径';
-
-  @override
   String get displayCpuIndex => '显示 CPU 索引';
 
   @override
@@ -280,9 +259,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String dockerImagesFmt(Object count) {
     return '$count 个镜像';
   }
-
-  @override
-  String get dockerNotInstalled => '未安装 Docker';
 
   @override
   String dockerStatusRunningAndStoppedFmt(
@@ -319,9 +295,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get envVars => '环境变量';
 
   @override
-  String get experimentalFeature => '实验性功能';
-
-  @override
   String get extraArgs => '额外参数';
 
   @override
@@ -329,13 +302,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fdroidReleaseTip => '如果你是从 F-Droid 下载的本应用，推荐关闭此选项';
-
-  @override
-  String get fgService => '前台服务';
-
-  @override
-  String get fgServiceTip =>
-      '开启后，可能会导致部分机型闪退。关闭可能导致部分机型无法后台保持 SSH 连接。请在系统设置内允许 ServerBox 通知权限、后台运行、自我唤醒。';
 
   @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
@@ -397,11 +363,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeWidgetUrlConfig => '桌面部件链接配置';
 
   @override
-  String httpFailedWithCode(Object code) {
-    return '请求失败，状态码: $code';
-  }
-
-  @override
   String get ignoreCert => '忽略证书';
 
   @override
@@ -412,10 +373,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pull => '拉取';
-
-  @override
-  String get installDockerWithUrl =>
-      '请先前往 https://docs.docker.com/engine/install 安装 Docker';
 
   @override
   String get invalid => '无效';
@@ -471,19 +428,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get max => '最大';
-
-  @override
   String get maxConcurrency => '最大并发数';
 
   @override
   String get maxRetryCount => '服务器尝试重连次数';
-
-  @override
-  String get maxRetryCountEqual0 => '将无限次重试';
-
-  @override
-  String get min => '最小';
 
   @override
   String mismatchSystem(Object system) {
@@ -496,10 +444,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get moveOutServerFuncBtnsHelp =>
       '开启：可以在服务器 Tab 页的每个卡片下方显示。关闭：在服务器详情页顶部显示。';
-
-  @override
-  String get needHomeDir =>
-      '如果你是群晖用户，[看这里](https://kb.synology.cn/zh-cn/DSM/tutorial/ssh_could_not_chdir_to_home_directory)。其他系统用户，需搜索如何创建家目录（home directory）.';
 
   @override
   String get needRestart => '需要重启 App';
@@ -517,22 +461,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noLineChart => '不使用折线图';
 
   @override
-  String get noLineChartForCpu => 'CPU 不使用折线图';
-
-  @override
   String get noPrivateKeyTip => '私钥不存在，可能已被删除/配置错误';
 
   @override
   String get noPromptAgain => '不再提示';
 
   @override
-  String get onServerDetailPage => '在服务器详情页';
-
-  @override
   String get onlyOneLine => '仅显示为一行（可滚动）';
-
-  @override
-  String get onlyWhenCoreBiggerThan8 => '仅当核心数大于 8 时生效';
 
   @override
   String get openLastPath => '打开上次的路径';
@@ -544,18 +479,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get parseContainerStatsTip => 'Docker 解析占用状态较为缓慢';
 
   @override
-  String percentOfSize(Object percent, Object size) {
-    return '$size 的 $percent%';
-  }
-
-  @override
   String get permission => '权限';
-
-  @override
-  String get pingInputIP => '请输入目标IP或域名';
-
-  @override
-  String get pingNoServer => '没有服务器可用于 Ping\n请在服务器 tab 添加服务器后再试';
 
   @override
   String get plugInType => '插入类型';
@@ -579,9 +503,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pveIgnoreCertTip => '不推荐开启，注意安全隐患！如果你使用的 PVE 默认证书，需要开启该选项';
-
-  @override
-  String get pveLoginFailed => '登录失败。无法使用服务器配置中的用户名或密码通过 Linux PAM 方式认证。';
 
   @override
   String get pveServerClientMissing => '当前服务器的 SSH 客户端不可用。';
@@ -656,16 +577,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rememberPwdInMemTip => '用于容器、挂起等';
 
   @override
-  String get rememberWindowSize => '记住窗口大小';
-
-  @override
   String get remotePath => '远端路径';
-
-  @override
-  String get result => '结果';
-
-  @override
-  String get rotateAngel => '旋转角度';
 
   @override
   String get sameIdServerExist => '已存在相同 id 的服务器';
@@ -708,9 +620,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sftpShowFoldersFirst => '文件夹显示在前';
 
   @override
-  String get showDistLogo => '显示发行版 Logo';
-
-  @override
   String get size => '大小';
 
   @override
@@ -743,15 +652,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ssh => 'SSH';
 
   @override
-  String get sshConnectionMode => 'SSH 连接方式';
-
-  @override
-  String get sshConnectionModeBuiltin => '内置终端';
-
-  @override
-  String get sshConnectionModeSystem => '系统 SSH';
-
-  @override
   String get sshConnectionModeTip => '内置终端：使用应用自带的终端。系统 SSH：在外部终端中调用系统 ssh 命令。';
 
   @override
@@ -775,9 +675,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sshConfigImport => 'SSH 配置导入';
-
-  @override
-  String get sshConfigImportHelp => '只能导入基础信息，例如：IP/端口';
 
   @override
   String get sshConfigImportPermission => '是否允许读取 ~/.ssh/config 并自动导入服务器设置？';
@@ -837,11 +734,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '在终端可滚动时，横向拖动可以选中文字。点击键盘按钮可以开启/关闭键盘。文件图标会打开当前路径 SFTP。剪切板按钮会在有选中文字时复制内容，在未选中并且剪切板有内容时粘贴内容到终端。代码图标会粘贴代码片段到终端并执行。';
 
   @override
-  String sshTip(Object url) {
-    return '该功能目前处于测试阶段。\n\n请在 $url 反馈问题，或者加入我们开发。';
-  }
-
-  @override
   String get sshVirtualKeyAutoOff => '虚拟按键自动切换';
 
   @override
@@ -865,13 +757,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncAppSettingsTip => '在自动同步中包含主题、布局、编辑器、终端等设备偏好设置。';
 
   @override
-  String get syncTip => '可能需要重新启动，某些更改才能生效。';
-
-  @override
   String get system => '系统';
-
-  @override
-  String get tag => '标签';
 
   @override
   String get tapToStartDiscovery => '点击搜索按钮发现网络中的SSH服务器';
@@ -901,25 +787,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unknown => '未知';
 
   @override
-  String get unkownConvertMode => '未知转换模式';
-
-  @override
-  String get update => '更新';
-
-  @override
-  String get updateIntervalEqual0 => '设置为 0 将不自动刷新服务器状态。\n且无法计算 CPU 使用率。';
-
-  @override
   String get updateServerStatusInterval => '服务器状态刷新间隔';
-
-  @override
-  String get upsideDown => '上下交换';
-
-  @override
-  String get useCdn => '使用 CDN';
-
-  @override
-  String get useCdnTip => '非中国大陆用户推荐使用 CDN，是否使用？';
 
   @override
   String get useNoPwd => '将会使用无密码';
@@ -1034,9 +902,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get descending => '降序';
 
   @override
-  String get searchServer => '搜索服务器';
-
-  @override
   String get serverHistory => '服务器历史';
 
   @override
@@ -1054,9 +919,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   AppLocalizationsZhTw() : super('zh_TW');
 
   @override
-  String get aboutThanks => '感謝以下參與的各位。';
-
-  @override
   String get acceptBeta => '接受測試版更新推送';
 
   @override
@@ -1067,9 +929,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get addr => '位址';
-
-  @override
-  String get alreadyLastDir => '已是頂層目錄';
 
   @override
   String get askAi => '詢問 AI';
@@ -1168,9 +1027,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get backupTip => '匯出的資料可透過密碼加密，請妥善保管。';
 
   @override
-  String get backupVersionNotMatch => '備份版本不相容，無法還原';
-
-  @override
   String get icloudBackupStatusTitle => '備份狀態';
 
   @override
@@ -1259,22 +1115,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get containerSudoPasswordIncorrect => 'sudo 密碼錯誤或無權限。請重試。';
 
   @override
-  String get convert => '轉換';
-
-  @override
   String get copyPath => '複製路徑';
 
   @override
   String get cpuViewAsProgressTip => '以進度條樣式顯示每個CPU的使用率（舊版樣式）';
 
   @override
-  String get cursorType => '游標類型';
-
-  @override
   String get customCmd => '自訂指令';
-
-  @override
-  String get customCmdHint => '\"指令名稱\": \"指令\"';
 
   @override
   String get deleteServers => '大量刪除伺服器';
@@ -1301,9 +1148,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get diskHealth => '磁碟健康';
 
   @override
-  String get diskIgnorePath => '忽略的磁碟路徑';
-
-  @override
   String get displayCpuIndex => '顯示 CPU 索引';
 
   @override
@@ -1319,9 +1163,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String dockerImagesFmt(Object count) {
     return '$count 個映像檔';
   }
-
-  @override
-  String get dockerNotInstalled => '未安裝 Docker';
 
   @override
   String dockerStatusRunningAndStoppedFmt(
@@ -1358,9 +1199,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get envVars => '環境變數';
 
   @override
-  String get experimentalFeature => '實驗性功能';
-
-  @override
   String get extraArgs => '額外參數';
 
   @override
@@ -1368,13 +1206,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get fdroidReleaseTip => '如果你是從 F-Droid 下載的本App，推薦關閉此選項';
-
-  @override
-  String get fgService => '前台服務';
-
-  @override
-  String get fgServiceTip =>
-      '開啟後，可能會導致部分機型閃退。關閉可能導致部分機型無法背景保持 SSH 連線。請在系統設定內允許 ServerBox 通知權限、背景執行、自我喚醒。';
 
   @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
@@ -1436,11 +1267,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get homeWidgetUrlConfig => '桌面小工具連結配置';
 
   @override
-  String httpFailedWithCode(Object code) {
-    return '請求失敗，狀態碼：$code';
-  }
-
-  @override
   String get ignoreCert => '忽略憑證';
 
   @override
@@ -1451,10 +1277,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pull => '拉取';
-
-  @override
-  String get installDockerWithUrl =>
-      '請先前往 https://docs.docker.com/engine/install 安裝 Docker';
 
   @override
   String get invalid => '無效';
@@ -1503,19 +1325,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get max => '最大';
-
-  @override
   String get maxConcurrency => '最大並發數';
 
   @override
   String get maxRetryCount => '伺服器嘗試重連次數';
-
-  @override
-  String get maxRetryCountEqual0 => '將無限次重試';
-
-  @override
-  String get min => '最小';
 
   @override
   String mismatchSystem(Object system) {
@@ -1528,10 +1341,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get moveOutServerFuncBtnsHelp =>
       '開啟：可以在伺服器 Tab 頁的每個卡片下方顯示。關閉：在伺服器詳情頁頂部顯示。';
-
-  @override
-  String get needHomeDir =>
-      '如果你是群暉使用者，[看這裡](https://kb.synology.com/DSM/tutorial/user_enable_home_service)。其他系統使用者，需搜尋如何建立家目錄（home directory）。';
 
   @override
   String get needRestart => '需要重開 App';
@@ -1549,22 +1358,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get noLineChart => '不使用折線圖';
 
   @override
-  String get noLineChartForCpu => 'CPU 不使用折線圖';
-
-  @override
   String get noPrivateKeyTip => '私鑰不存在，可能已被刪除/配置錯誤。';
 
   @override
   String get noPromptAgain => '不再提示';
 
   @override
-  String get onServerDetailPage => '在伺服器詳情頁';
-
-  @override
   String get onlyOneLine => '僅顯示為一行（可捲動）';
-
-  @override
-  String get onlyWhenCoreBiggerThan8 => '僅當核心數大於 8 時生效';
 
   @override
   String get openLastPath => '打開上次的路徑';
@@ -1576,18 +1376,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get parseContainerStatsTip => 'Docker 解析消耗狀態較為緩慢';
 
   @override
-  String percentOfSize(Object percent, Object size) {
-    return '$size 的 $percent%';
-  }
-
-  @override
   String get permission => '權限';
-
-  @override
-  String get pingInputIP => '請輸入目標 IP 或域名';
-
-  @override
-  String get pingNoServer => '沒有伺服器可用於 Ping\n請在伺服器 Tab 新增伺服器後再試';
 
   @override
   String get plugInType => '插入類型';
@@ -1608,9 +1397,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pveIgnoreCertTip => '不建議啟用，請注意安全風險！如果您使用的是 PVE 的預設憑證，則需要啟用此選項。';
-
-  @override
-  String get pveLoginFailed => '登入失敗。無法使用伺服器設定中的使用者名稱或密碼透過 Linux PAM 方式認證。';
 
   @override
   String get pveServerClientMissing => '目前伺服器的 SSH 用戶端不可用。';
@@ -1685,16 +1471,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get rememberPwdInMemTip => '用於容器、暫停等';
 
   @override
-  String get rememberWindowSize => '記住視窗大小';
-
-  @override
   String get remotePath => '遠端路徑';
-
-  @override
-  String get result => '結果';
-
-  @override
-  String get rotateAngel => '旋轉角度';
 
   @override
   String get sameIdServerExist => '已存在相同 ID 的伺服器';
@@ -1732,9 +1509,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sftpShowFoldersFirst => '資料夾顯示在前';
-
-  @override
-  String get showDistLogo => '顯示發行版 Logo';
 
   @override
   String get size => '大小';
@@ -1776,9 +1550,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshConfigImport => '匯入SSH設定';
-
-  @override
-  String get sshConfigImportHelp => '只能匯入基礎資訊，例如：IP/端口。';
 
   @override
   String get sshConfigImportPermission => '您是否希望允許讀取 ~/.ssh/config 並自動匯入伺服器設定？';
@@ -1838,11 +1609,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '在終端機可捲動時，橫向拖動可以選中文字。點擊鍵盤按鈕可以開啟/關閉鍵盤。檔案圖示會打開目前路徑 SFTP。剪貼簿按鈕會在有選中文字時複製內容，在未選中並且剪貼簿有內容時貼上內容到終端機。程式碼圖示會貼上程式碼片段到終端機並執行。';
 
   @override
-  String sshTip(Object url) {
-    return '該功能目前處於測試階段。\n\n請在 $url 回饋問題，或者加入我們開發。';
-  }
-
-  @override
   String get sshVirtualKeyAutoOff => '虛擬按鍵自動切換';
 
   @override
@@ -1860,13 +1626,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get syncTip => '可能需要重新啟動，某些更改才能生效。';
-
-  @override
   String get system => '系統';
-
-  @override
-  String get tag => '標籤';
 
   @override
   String get tapToStartDiscovery => '點擊搜尋按鈕發現網路中的SSH服務器';
@@ -1896,25 +1656,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get unknown => '未知';
 
   @override
-  String get unkownConvertMode => '未知轉換模式';
-
-  @override
-  String get update => '更新';
-
-  @override
-  String get updateIntervalEqual0 => '設定為 0 將不自動刷新伺服器狀態，\n也無法計算 CPU 使用率。';
-
-  @override
   String get updateServerStatusInterval => '伺服器狀態更新間隔';
-
-  @override
-  String get upsideDown => '上下交換';
-
-  @override
-  String get useCdn => '使用 CDN';
-
-  @override
-  String get useCdnTip => '非中國使用者建議使用 CDN，是否使用？';
 
   @override
   String get useNoPwd => '將使用無密碼';

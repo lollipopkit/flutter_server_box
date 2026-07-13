@@ -9,9 +9,6 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
-  String get aboutThanks => '以下の参加者に感謝します。';
-
-  @override
   String get acceptBeta => 'テストバージョンの更新を受け入れる';
 
   @override
@@ -23,9 +20,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get addr => 'アドレス';
-
-  @override
-  String get alreadyLastDir => 'すでに最上位のディレクトリです';
 
   @override
   String get askAi => 'AI に質問';
@@ -128,9 +122,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get backupTip => 'エクスポートされたデータはパスワードで暗号化できます。 \n適切に保管してください。';
 
   @override
-  String get backupVersionNotMatch => 'バックアップバージョンが一致しないため、復元できません';
-
-  @override
   String get icloudBackupStatusTitle => 'Backup status';
 
   @override
@@ -221,25 +212,16 @@ class AppLocalizationsJa extends AppLocalizations {
       'sudoパスワードが正しくないか、許可されていません。再試行してください。';
 
   @override
-  String get convert => '変換';
-
-  @override
   String get copyPath => 'パスをコピー';
 
   @override
   String get cpuViewAsProgressTip => '各CPUの使用率をプログレスバースタイルで表示する（旧スタイル）';
 
   @override
-  String get cursorType => 'カーソルタイプ';
-
-  @override
   String get configured => 'Configured';
 
   @override
   String get customCmd => 'カスタムコマンド';
-
-  @override
-  String get customCmdHint => '\"コマンド名\": \"コマンド\"';
 
   @override
   String get deleteServers => 'サーバーを一括削除';
@@ -266,9 +248,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get diskHealth => 'ディスクの健康状態';
 
   @override
-  String get diskIgnorePath => '無視されたディスクパス';
-
-  @override
   String get displayCpuIndex => 'CPUインデックスを表示する';
 
   @override
@@ -284,9 +263,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String dockerImagesFmt(Object count) {
     return '合計$countイメージ';
   }
-
-  @override
-  String get dockerNotInstalled => 'Dockerがインストールされていません';
 
   @override
   String dockerStatusRunningAndStoppedFmt(
@@ -325,9 +301,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get envVars => '環境変数';
 
   @override
-  String get experimentalFeature => '実験的な機能';
-
-  @override
   String get extraArgs => '追加引数';
 
   @override
@@ -336,13 +309,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get fdroidReleaseTip =>
       'このアプリをF-Droidからダウンロードした場合、このオプションをオフにすることをお勧めします。';
-
-  @override
-  String get fgService => 'フォアグラウンドサービス';
-
-  @override
-  String get fgServiceTip =>
-      '有効にすると、一部の機種でクラッシュする可能性があります。無効にすると、一部の機種でバックグラウンドでのSSH接続を維持できなくなる可能性があります。システム設定でServerBoxの通知権限、バックグラウンド実行、自己起動を許可してください。';
 
   @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
@@ -405,11 +371,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get homeWidgetUrlConfig => 'ホームウィジェットURL設定';
 
   @override
-  String httpFailedWithCode(Object code) {
-    return 'リクエスト失敗、ステータスコード: $code';
-  }
-
-  @override
   String get ignoreCert => '証明書を無視する';
 
   @override
@@ -420,10 +381,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get pull => 'プル';
-
-  @override
-  String get installDockerWithUrl =>
-      '最初に https://docs.docker.com/engine/install dockerをインストールしてください';
 
   @override
   String get invalid => '無効';
@@ -481,19 +438,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get max => '最大';
-
-  @override
   String get maxConcurrency => '最大同時実行数';
 
   @override
   String get maxRetryCount => 'サーバーの再接続試行回数';
-
-  @override
-  String get maxRetryCountEqual0 => '無限に再試行します';
-
-  @override
-  String get min => '最小';
 
   @override
   String mismatchSystem(Object system) {
@@ -506,10 +454,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get moveOutServerFuncBtnsHelp =>
       '有効にする：サーバータブの各カードの下に表示されます。無効にする：サーバーの詳細ページの上部に表示されます。';
-
-  @override
-  String get needHomeDir =>
-      'Synologyユーザーの場合は、[こちらをご覧ください](https://kb.synology.com/DSM/tutorial/user_enable_home_service)。他のシステムのユーザーは、ホームディレクトリの作成方法を検索する必要があります。';
 
   @override
   String get needRestart => 'アプリを再起動する必要があります';
@@ -527,22 +471,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get noLineChart => '折れ線グラフを使用しない';
 
   @override
-  String get noLineChartForCpu => 'CPUに折れ線グラフを使わない';
-
-  @override
   String get noPrivateKeyTip => '秘密鍵が存在しません。削除されたか、設定ミスがある可能性があります。';
 
   @override
   String get noPromptAgain => '再度確認しない';
 
   @override
-  String get onServerDetailPage => 'サーバーの詳細ページで';
-
-  @override
   String get onlyOneLine => '一行のみ表示（スクロール可能）';
-
-  @override
-  String get onlyWhenCoreBiggerThan8 => 'コア数が8より大きい場合にのみ有効';
 
   @override
   String get openLastPath => '最後のパスを開く';
@@ -554,18 +489,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get parseContainerStatsTip => 'Dockerの使用状況の解析は比較的遅いです';
 
   @override
-  String percentOfSize(Object percent, Object size) {
-    return '$size の $percent%';
-  }
-
-  @override
   String get permission => '権限';
-
-  @override
-  String get pingInputIP => '対象のIPまたはドメインを入力してください';
-
-  @override
-  String get pingNoServer => 'Pingに使用するサーバーがありません\nサーバータブでサーバーを追加してから再試行してください';
 
   @override
   String get plugInType => '挿入タイプ';
@@ -591,10 +515,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get pveIgnoreCertTip =>
       'オプションを有効にすることは推奨されません、セキュリティリスクに注意してください！PVEのデフォルト証明書を使用している場合は、このオプションを有効にする必要があります。';
-
-  @override
-  String get pveLoginFailed =>
-      'ログインに失敗しました。Linux PAMログインのためにサーバー構成からのユーザー名/パスワードで認証できません。';
 
   @override
   String get pveServerClientMissing =>
@@ -679,16 +599,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get rememberPwdInMemTip => 'コンテナ、一時停止などに使用されます。';
 
   @override
-  String get rememberWindowSize => 'ウィンドウサイズを記憶する';
-
-  @override
   String get remotePath => 'リモートパス';
-
-  @override
-  String get result => '結果';
-
-  @override
-  String get rotateAngel => '回転角度';
 
   @override
   String get sameIdServerExist => '同じIDのサーバーが既に存在します';
@@ -731,9 +642,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sftpShowFoldersFirst => 'フォルダーを先に表示';
 
   @override
-  String get showDistLogo => 'ディストリビューションのロゴを表示';
-
-  @override
   String get size => 'サイズ';
 
   @override
@@ -767,15 +675,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get ssh => 'SSH';
 
   @override
-  String get sshConnectionMode => 'SSH connection mode';
-
-  @override
-  String get sshConnectionModeBuiltin => 'Built-in';
-
-  @override
-  String get sshConnectionModeSystem => 'System SSH';
-
-  @override
   String get sshConnectionModeTip =>
       'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
 
@@ -800,9 +699,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get sshConfigImport => 'SSH設定のインポート';
-
-  @override
-  String get sshConfigImportHelp => 'インポートできるのは基本情報のみです。例：IP/ポート。';
 
   @override
   String get sshConfigImportPermission =>
@@ -863,11 +759,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'ターミナルがスクロール可能な場合、横にドラッグするとテキストを選択できます。キーボードボタンをクリックするとキーボードのオン/オフが切り替わります。ファイルアイコンは現在のパスSFTPを開きます。クリップボードボタンは、テキストが選択されているときに内容をコピーし、テキストが選択されておらずクリップボードに内容がある場合には、その内容をターミナルに貼り付けます。コードアイコンは、コードスニペットをターミナルに貼り付けて実行します。';
 
   @override
-  String sshTip(Object url) {
-    return 'この機能は現在テスト段階にあります。\n\n問題がある場合は、$urlでフィードバックしてください。';
-  }
-
-  @override
   String get sshVirtualKeyAutoOff => '仮想キーの自動オフ';
 
   @override
@@ -892,13 +783,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
 
   @override
-  String get syncTip => '再起動が必要な場合があります。一部の変更はその後に有効になります。';
-
-  @override
   String get system => 'システム';
-
-  @override
-  String get tag => 'タグ';
 
   @override
   String get tapToStartDiscovery => '検索ボタンをタップしてネットワーク上のSSHサーバーを発見';
@@ -930,26 +815,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get unknown => '不明';
 
   @override
-  String get unkownConvertMode => '未知の変換モード';
-
-  @override
-  String get update => '更新';
-
-  @override
-  String get updateIntervalEqual0 =>
-      '0に設定すると、サーバーの状態は自動的に更新されず、CPU使用率も計算できません。';
-
-  @override
   String get updateServerStatusInterval => 'サーバー状態の更新間隔';
-
-  @override
-  String get upsideDown => '上下逆転';
-
-  @override
-  String get useCdn => 'CDNの使用';
-
-  @override
-  String get useCdnTip => '中国以外のユーザーにはCDNの使用が推奨されています。ご利用しますか？';
 
   @override
   String get useNoPwd => 'パスワードなしで使用します';
@@ -1066,9 +932,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get descending => 'Descending';
-
-  @override
-  String get searchServer => 'Search server';
 
   @override
   String get serverHistory => 'Server history';

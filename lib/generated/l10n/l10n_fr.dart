@@ -9,9 +9,6 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
-  String get aboutThanks => 'Merci aux personnes suivantes qui ont participé.';
-
-  @override
   String get acceptBeta => 'Accepter les mises à jour de la version de test';
 
   @override
@@ -23,9 +20,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get addr => 'Adresse';
-
-  @override
-  String get alreadyLastDir => 'Déjà dans le dernier répertoire.';
 
   @override
   String get askAi => 'Demander à l\'IA';
@@ -133,10 +127,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Les données exportées peuvent être chiffrées avec un mot de passe. \nVeuillez les garder en sécurité.';
 
   @override
-  String get backupVersionNotMatch =>
-      'La version de sauvegarde ne correspond pas.';
-
-  @override
   String get icloudBackupStatusTitle => 'Backup status';
 
   @override
@@ -230,9 +220,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le mot de passe sudo est incorrect ou non autorisé. Veuillez réessayer.';
 
   @override
-  String get convert => 'Convertir';
-
-  @override
   String get copyPath => 'Copier le chemin';
 
   @override
@@ -240,16 +227,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Afficher le taux d\'utilisation de chaque CPU sous forme de barre de progression (ancien style)';
 
   @override
-  String get cursorType => 'Type de curseur';
-
-  @override
   String get configured => 'Configured';
 
   @override
   String get customCmd => 'Commandes personnalisées';
-
-  @override
-  String get customCmdHint => '\"Nom de la commande\": \"Commande\"';
 
   @override
   String get deleteServers => 'Supprimer des serveurs en lot';
@@ -277,9 +258,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get diskHealth => 'Santé du disque';
 
   @override
-  String get diskIgnorePath => 'Chemin à ignorer pour le disque';
-
-  @override
   String get displayCpuIndex => 'Afficher l\'index CPU';
 
   @override
@@ -295,9 +273,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String dockerImagesFmt(Object count) {
     return '$count images';
   }
-
-  @override
-  String get dockerNotInstalled => 'Docker non installé';
 
   @override
   String dockerStatusRunningAndStoppedFmt(
@@ -337,9 +312,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get envVars => 'Variable d’environnement';
 
   @override
-  String get experimentalFeature => 'Fonctionnalité expérimentale';
-
-  @override
   String get extraArgs => 'Arguments supplémentaires';
 
   @override
@@ -348,13 +320,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get fdroidReleaseTip =>
       'Si vous avez téléchargé cette application depuis F-Droid, il est recommandé de désactiver cette option.';
-
-  @override
-  String get fgService => 'Service de premier plan';
-
-  @override
-  String get fgServiceTip =>
-      'Après l\'activation, certains modèles d\'appareils peuvent planter. La désactivation peut empêcher certains modèles de maintenir les connexions SSH en arrière-plan. Veuillez autoriser les permissions de notification ServerBox, l\'exécution en arrière-plan et l\'auto-réveil dans les paramètres système.';
 
   @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
@@ -418,11 +383,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get homeWidgetUrlConfig => 'Configurer l\'URL du widget d\'accueil';
 
   @override
-  String httpFailedWithCode(Object code) {
-    return 'Échec de la requête, code d\'état : $code';
-  }
-
-  @override
   String get ignoreCert => 'Ignorer le certificat';
 
   @override
@@ -433,10 +393,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pull => 'Tirer';
-
-  @override
-  String get installDockerWithUrl =>
-      'Veuillez d\'abord installer docker depuis https://docs.docker.com/engine/install.';
 
   @override
   String get invalid => 'Invalide';
@@ -495,19 +451,10 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get max => 'max';
-
-  @override
   String get maxConcurrency => 'Concurrence maximale';
 
   @override
   String get maxRetryCount => 'Nombre de reconnexions au serveur';
-
-  @override
-  String get maxRetryCountEqual0 => 'Il va réessayer encore et encore.';
-
-  @override
-  String get min => 'min';
 
   @override
   String mismatchSystem(Object system) {
@@ -520,10 +467,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get moveOutServerFuncBtnsHelp =>
       'Activé : peut être affiché sous chaque carte sur la page de l\'onglet Serveur. Désactivé : peut être affiché en haut de la page de détails du serveur.';
-
-  @override
-  String get needHomeDir =>
-      'Si vous êtes utilisateur Synology, [consultez ici](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Les utilisateurs d\'autres systèmes doivent rechercher comment créer un répertoire personnel.';
 
   @override
   String get needRestart => 'Nécessite un redémarrage de l\'application';
@@ -542,10 +485,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noLineChart => 'Ne pas utiliser de graphiques linéaires';
 
   @override
-  String get noLineChartForCpu =>
-      'Ne pas utiliser de graphiques linéaires pour l\'unité centrale';
-
-  @override
   String get noPrivateKeyTip =>
       'La clé privée n\'existe pas, elle a peut-être été supprimée ou il y a une erreur de configuration.';
 
@@ -553,15 +492,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noPromptAgain => 'Ne pas demander à nouveau';
 
   @override
-  String get onServerDetailPage => 'Sur la page de détails du serveur';
-
-  @override
   String get onlyOneLine =>
       'Afficher uniquement en une seule ligne (défilement)';
-
-  @override
-  String get onlyWhenCoreBiggerThan8 =>
-      'Fonctionne uniquement lorsque le nombre de cœurs est > 8';
 
   @override
   String get openLastPath => 'Ouvrir le dernier chemin';
@@ -575,20 +507,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'analyse de l\'occupation des conteneurs Docker est relativement lente.';
 
   @override
-  String percentOfSize(Object percent, Object size) {
-    return '$percent% de $size';
-  }
-
-  @override
   String get permission => 'Permissions';
-
-  @override
-  String get pingInputIP =>
-      'Veuillez saisir une adresse IP / un domaine cible.';
-
-  @override
-  String get pingNoServer =>
-      'Aucun serveur à pinger.\nVeuillez ajouter un serveur dans l\'onglet serveur.';
 
   @override
   String get plugInType => 'Type d\'insertion';
@@ -615,10 +534,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get pveIgnoreCertTip =>
       'Il n\'est pas recommandé de l\'activer, attention aux risques de sécurité ! Si vous utilisez le certificat par défaut de PVE, vous devez activer cette option.';
-
-  @override
-  String get pveLoginFailed =>
-      'Échec de la connexion. Impossible d\'authentifier avec le nom d\'utilisateur / mot de passe de la configuration du serveur pour la connexion Linux PAM.';
 
   @override
   String get pveServerClientMissing =>
@@ -705,16 +620,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Utilisé pour les conteneurs, la suspension, etc.';
 
   @override
-  String get rememberWindowSize => 'Se souvenir de la taille de la fenêtre';
-
-  @override
   String get remotePath => 'Chemin distant';
-
-  @override
-  String get result => 'Résultat';
-
-  @override
-  String get rotateAngel => 'Angle de rotation';
 
   @override
   String get sameIdServerExist => 'Un serveur avec le même ID existe déjà';
@@ -759,9 +665,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Afficher d\'abord les dossiers';
 
   @override
-  String get showDistLogo => 'Afficher le logo de la distribution';
-
-  @override
   String get size => 'Taille';
 
   @override
@@ -795,15 +698,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get ssh => 'SSH';
 
   @override
-  String get sshConnectionMode => 'SSH connection mode';
-
-  @override
-  String get sshConnectionModeBuiltin => 'Built-in';
-
-  @override
-  String get sshConnectionModeSystem => 'System SSH';
-
-  @override
   String get sshConnectionModeTip =>
       'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
 
@@ -829,10 +723,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sshConfigImport => 'Importation de configuration SSH';
-
-  @override
-  String get sshConfigImportHelp =>
-      'Seules les informations de base peuvent être importées, par exemple : IP/Port.';
 
   @override
   String get sshConfigImportPermission =>
@@ -897,11 +787,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'Lorsque le terminal est défilable, faire glisser horizontalement permet de sélectionner du texte. En cliquant sur le bouton du clavier, vous activez/désactivez le clavier. L\'icône de fichier ouvre le chemin actuel SFTP. Le bouton du presse-papiers copie le contenu lorsque du texte est sélectionné, et colle le contenu du presse-papiers dans le terminal lorsqu\'aucun texte n\'est sélectionné et qu\'il y a du contenu dans le presse-papiers. L\'icône de code colle des extraits de code dans le terminal et les exécute.';
 
   @override
-  String sshTip(Object url) {
-    return 'Cette fonctionnalité est actuellement à l\'étape expérimentale.\n\nVeuillez signaler les bugs sur $url ou rejoindre notre développement.';
-  }
-
-  @override
   String get sshVirtualKeyAutoOff =>
       'Activation automatique des touches virtuelles';
 
@@ -929,14 +814,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
 
   @override
-  String get syncTip =>
-      'Un redémarrage peut être nécessaire pour que certains changements prennent effet.';
-
-  @override
   String get system => 'Système';
-
-  @override
-  String get tag => 'Étiquettes';
 
   @override
   String get tapToStartDiscovery =>
@@ -970,28 +848,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get unknown => 'Inconnu';
 
   @override
-  String get unkownConvertMode => 'Mode de conversion inconnu';
-
-  @override
-  String get update => 'Mettre à jour';
-
-  @override
-  String get updateIntervalEqual0 =>
-      'Vous avez défini à 0, la mise à jour ne se fera pas automatiquement.\nImpossible de calculer l\'état du CPU.';
-
-  @override
   String get updateServerStatusInterval =>
       'Intervalle de mise à jour de l\'état du serveur';
-
-  @override
-  String get upsideDown => 'À l\'envers';
-
-  @override
-  String get useCdn => 'Utiliser CDN';
-
-  @override
-  String get useCdnTip =>
-      'Il est recommandé aux utilisateurs non chinois d\'utiliser le CDN. Souhaitez-vous l\'utiliser ?';
 
   @override
   String get useNoPwd => 'Aucun mot de passe ne sera utilisé';
@@ -1110,9 +968,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get descending => 'Descending';
-
-  @override
-  String get searchServer => 'Search server';
 
   @override
   String get serverHistory => 'Server history';

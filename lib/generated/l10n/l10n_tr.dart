@@ -9,9 +9,6 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
-  String get aboutThanks => 'Aşağıdaki katılımcılara teşekkürler.';
-
-  @override
   String get acceptBeta => 'Beta sürüm güncellemelerini kabul et';
 
   @override
@@ -23,9 +20,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get addr => 'Adres';
-
-  @override
-  String get alreadyLastDir => 'Zaten son dizindesiniz.';
 
   @override
   String get askAi => 'Yapay zekaya sor';
@@ -132,9 +126,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Dışa aktarılan veriler parola ile şifrelenebilir. \nLütfen güvenli bir şekilde saklayın.';
 
   @override
-  String get backupVersionNotMatch => 'Yedekleme sürümü eşleşmiyor.';
-
-  @override
   String get icloudBackupStatusTitle => 'Backup status';
 
   @override
@@ -228,9 +219,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Sudo şifresi yanlış veya izin verilmiyor. Lütfen tekrar deneyin.';
 
   @override
-  String get convert => 'Dönüştür';
-
-  @override
   String get copyPath => 'Yolu kopyala';
 
   @override
@@ -238,16 +226,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Her CPU\'nun kullanımını ilerleme çubuğu tarzında göster (eski tarz)';
 
   @override
-  String get cursorType => 'İmleç türü';
-
-  @override
   String get configured => 'Configured';
 
   @override
   String get customCmd => 'Özel komutlar';
-
-  @override
-  String get customCmdHint => '\"Komut Adı\": \"Komut\"';
 
   @override
   String get deleteServers => 'Sunucuları toplu sil';
@@ -275,9 +257,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get diskHealth => 'Disk sağlığı';
 
   @override
-  String get diskIgnorePath => 'Disk için yok sayılan yol';
-
-  @override
   String get displayCpuIndex => 'CPU indeksini göster';
 
   @override
@@ -293,9 +272,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String dockerImagesFmt(Object count) {
     return '$count görüntü';
   }
-
-  @override
-  String get dockerNotInstalled => 'Docker kurulmamış';
 
   @override
   String dockerStatusRunningAndStoppedFmt(
@@ -335,9 +311,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get envVars => 'Ortam değişkeni';
 
   @override
-  String get experimentalFeature => 'Deneysel özellik';
-
-  @override
   String get extraArgs => 'Ek argümanlar';
 
   @override
@@ -346,13 +319,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get fdroidReleaseTip =>
       'Bu uygulamayı F-Droid\'den indirdiyseniz, bu seçeneği kapatmanız önerilir.';
-
-  @override
-  String get fgService => 'Ön Plan Servisi';
-
-  @override
-  String get fgServiceTip =>
-      'Etkinleştirildikten sonra bazı cihaz modellerinde çökme olabilir. Devre dışı bırakmak, bazı modellerde SSH bağlantılarının arka planda sürdürülememesine neden olabilir. Lütfen sistem ayarlarında ServerBox bildirim izinlerini, arka planda çalışmayı ve otomatik uyanmayı etkinleştirin.';
 
   @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
@@ -416,11 +382,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeWidgetUrlConfig => 'Ana ekran bileşeni URL\'sini yapılandır';
 
   @override
-  String httpFailedWithCode(Object code) {
-    return 'İstek başarısız oldu, durum kodu: $code';
-  }
-
-  @override
   String get ignoreCert => 'Sertifikayı yok say';
 
   @override
@@ -431,10 +392,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pull => 'Çek';
-
-  @override
-  String get installDockerWithUrl =>
-      'Lütfen önce https://docs.docker.com/engine/install adresinden Docker\'ı kurun.';
 
   @override
   String get invalid => 'Geçersiz';
@@ -493,19 +450,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get max => 'maks';
-
-  @override
   String get maxConcurrency => 'Maksimum Eşzamanlılık';
 
   @override
   String get maxRetryCount => 'Sunucu yeniden bağlantı sayısı';
-
-  @override
-  String get maxRetryCountEqual0 => 'Tekrar tekrar deneyecek.';
-
-  @override
-  String get min => 'min';
 
   @override
   String mismatchSystem(Object system) {
@@ -518,10 +466,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get moveOutServerFuncBtnsHelp =>
       'Açık: Sunucu Sekmesi sayfasındaki her kartın altında görüntülenebilir. Kapalı: Sunucu Ayrıntıları sayfasının üstünde görüntülenebilir.';
-
-  @override
-  String get needHomeDir =>
-      'Synology kullanıcısıysanız, [buraya bakın](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Diğer sistem kullanıcılarının bir ana dizin oluşturma yöntemini araması gerekir.';
 
   @override
   String get needRestart => 'Uygulamanın yeniden başlatılması gerekiyor';
@@ -539,9 +483,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get noLineChart => 'Çizgi grafikleri kullanma';
 
   @override
-  String get noLineChartForCpu => 'CPU için çizgi grafikleri kullanma';
-
-  @override
   String get noPrivateKeyTip =>
       'Özel anahtar mevcut değil, silinmiş olabilir veya yapılandırma hatası vardır.';
 
@@ -549,14 +490,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get noPromptAgain => 'Tekrar sorma';
 
   @override
-  String get onServerDetailPage => 'Sunucu ayrıntı sayfasında';
-
-  @override
   String get onlyOneLine => 'Yalnızca tek satır olarak göster (kaydırılabilir)';
-
-  @override
-  String get onlyWhenCoreBiggerThan8 =>
-      'Çekirdek sayısı 8\'den büyük olduğunda çalışır';
 
   @override
   String get openLastPath => 'Son yolu aç';
@@ -570,19 +504,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Docker\'ın doluluk durumunu ayrıştırmak oldukça yavaş.';
 
   @override
-  String percentOfSize(Object percent, Object size) {
-    return '$size\'ın $percent%\'i';
-  }
-
-  @override
   String get permission => 'İzinler';
-
-  @override
-  String get pingInputIP => 'Lütfen bir hedef IP / alan adı girin.';
-
-  @override
-  String get pingNoServer =>
-      'Ping yapılacak sunucu yok.\nLütfen sunucu sekmesinde bir sunucu ekleyin.';
 
   @override
   String get plugInType => 'Eklenti Türü';
@@ -608,10 +530,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get pveIgnoreCertTip =>
       'Etkinleştirilmesi önerilmez, güvenlik risklerine dikkat edin! PVE\'den varsayılan sertifikayı kullanıyorsanız, bu seçeneği etkinleştirmeniz gerekir.';
-
-  @override
-  String get pveLoginFailed =>
-      'Giriş başarısız. Linux PAM girişi için sunucu yapılandırmasındaki kullanıcı adı/şifre ile kimlik doğrulama yapılamadı.';
 
   @override
   String get pveServerClientMissing =>
@@ -698,16 +616,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Konteynerler, askıya alma vb. için kullanılır.';
 
   @override
-  String get rememberWindowSize => 'Pencere boyutunu hatırla';
-
-  @override
   String get remotePath => 'Uzak yol';
-
-  @override
-  String get result => 'Sonuç';
-
-  @override
-  String get rotateAngel => 'Dönüş açısı';
 
   @override
   String get sameIdServerExist => 'Aynı kimliğe sahip bir sunucu zaten mevcut';
@@ -751,9 +660,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Önce klasörleri göster';
 
   @override
-  String get showDistLogo => 'Dağıtım logosunu göster';
-
-  @override
   String get size => 'Boyut';
 
   @override
@@ -787,15 +693,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get ssh => 'SSH';
 
   @override
-  String get sshConnectionMode => 'SSH connection mode';
-
-  @override
-  String get sshConnectionModeBuiltin => 'Built-in';
-
-  @override
-  String get sshConnectionModeSystem => 'System SSH';
-
-  @override
   String get sshConnectionModeTip =>
       'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
 
@@ -820,10 +717,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sshConfigImport => 'SSH Yapılandırma İçe Aktarma';
-
-  @override
-  String get sshConfigImportHelp =>
-      'Yalnızca temel bilgiler içe aktarılabilir, örneğin: IP/Port.';
 
   @override
   String get sshConfigImportPermission =>
@@ -887,11 +780,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Terminal kaydırılabilir olduğunda, yatay olarak sürüklemek metni seçebilir. Klavye düğmesine tıklamak klavyeyi açar/kapar. Dosya simgesi mevcut yolu SFTP\'de açar. Pano düğmesi, metin seçiliyken içeriği kopyalar ve metin seçili değilken panoda içerik varsa terminale yapıştırır. Kod simgesi, kod parçacıklarını terminale yapıştırır ve yürütür.';
 
   @override
-  String sshTip(Object url) {
-    return 'Bu işlev şu anda deneysel aşamada.\n\nLütfen hataları $url adresinde bildirin veya geliştirmemize katılın.';
-  }
-
-  @override
   String get sshVirtualKeyAutoOff => 'Sanal tuşların otomatik geçişi';
 
   @override
@@ -918,14 +806,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
 
   @override
-  String get syncTip =>
-      'Bazı değişikliklerin etkili olması için yeniden başlatma gerekebilir.';
-
-  @override
   String get system => 'Sistem';
-
-  @override
-  String get tag => 'Etiketler';
 
   @override
   String get tapToStartDiscovery =>
@@ -958,27 +839,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get unknown => 'Bilinmeyen';
 
   @override
-  String get unkownConvertMode => 'Bilinmeyen dönüşüm modu';
-
-  @override
-  String get update => 'Güncelle';
-
-  @override
-  String get updateIntervalEqual0 =>
-      '0 olarak ayarladınız, otomatik güncelleme yapılmayacak.\nCPU durumu hesaplanamaz.';
-
-  @override
   String get updateServerStatusInterval => 'Sunucu durumu güncelleme aralığı';
-
-  @override
-  String get upsideDown => 'Başaşağı';
-
-  @override
-  String get useCdn => 'CDN kullan';
-
-  @override
-  String get useCdnTip =>
-      'Çinli olmayan kullanıcıların CDN kullanması önerilir. Kullanmak ister misiniz?';
 
   @override
   String get useNoPwd => 'Şifre kullanılmayacak';
@@ -1096,9 +957,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get descending => 'Descending';
-
-  @override
-  String get searchServer => 'Search server';
 
   @override
   String get serverHistory => 'Server history';

@@ -123,12 +123,6 @@ abstract class AppLocalizations {
     Locale('zh', 'TW'),
   ];
 
-  /// No description provided for @aboutThanks.
-  ///
-  /// In en, this message translates to:
-  /// **'Thanks to the following people who participated in.'**
-  String get aboutThanks;
-
   /// No description provided for @acceptBeta.
   ///
   /// In en, this message translates to:
@@ -152,12 +146,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Address'**
   String get addr;
-
-  /// No description provided for @alreadyLastDir.
-  ///
-  /// In en, this message translates to:
-  /// **'Already in last directory.'**
-  String get alreadyLastDir;
 
   /// No description provided for @askAi.
   ///
@@ -351,12 +339,6 @@ abstract class AppLocalizations {
   /// **'The exported data can be encrypted with password. \nPlease keep it safe.'**
   String get backupTip;
 
-  /// No description provided for @backupVersionNotMatch.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup version is not match.'**
-  String get backupVersionNotMatch;
-
   /// No description provided for @icloudBackupStatusTitle.
   ///
   /// In en, this message translates to:
@@ -513,12 +495,6 @@ abstract class AppLocalizations {
   /// **'Sudo password is incorrect or not allowed. Please try again.'**
   String get containerSudoPasswordIncorrect;
 
-  /// No description provided for @convert.
-  ///
-  /// In en, this message translates to:
-  /// **'Convert'**
-  String get convert;
-
   /// No description provided for @copyPath.
   ///
   /// In en, this message translates to:
@@ -531,12 +507,6 @@ abstract class AppLocalizations {
   /// **'Display the usage of each CPU in a progress bar style (old style)'**
   String get cpuViewAsProgressTip;
 
-  /// No description provided for @cursorType.
-  ///
-  /// In en, this message translates to:
-  /// **'Cursor type'**
-  String get cursorType;
-
   /// No description provided for @configured.
   ///
   /// In en, this message translates to:
@@ -548,12 +518,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Custom commands'**
   String get customCmd;
-
-  /// No description provided for @customCmdHint.
-  ///
-  /// In en, this message translates to:
-  /// **'\"Command Name\": \"Command\"'**
-  String get customCmdHint;
 
   /// No description provided for @deleteServers.
   ///
@@ -603,12 +567,6 @@ abstract class AppLocalizations {
   /// **'Disk Health'**
   String get diskHealth;
 
-  /// No description provided for @diskIgnorePath.
-  ///
-  /// In en, this message translates to:
-  /// **'Ignore path for disk'**
-  String get diskIgnorePath;
-
   /// No description provided for @displayCpuIndex.
   ///
   /// In en, this message translates to:
@@ -632,12 +590,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} images'**
   String dockerImagesFmt(Object count);
-
-  /// No description provided for @dockerNotInstalled.
-  ///
-  /// In en, this message translates to:
-  /// **'Docker not installed'**
-  String get dockerNotInstalled;
 
   /// No description provided for @dockerStatusRunningAndStoppedFmt.
   ///
@@ -696,12 +648,6 @@ abstract class AppLocalizations {
   /// **'Environment variable'**
   String get envVars;
 
-  /// No description provided for @experimentalFeature.
-  ///
-  /// In en, this message translates to:
-  /// **'Experimental feature'**
-  String get experimentalFeature;
-
   /// No description provided for @extraArgs.
   ///
   /// In en, this message translates to:
@@ -719,18 +665,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'If you downloaded this app from F-Droid, it is recommended to turn off this option.'**
   String get fdroidReleaseTip;
-
-  /// No description provided for @fgService.
-  ///
-  /// In en, this message translates to:
-  /// **'Foreground Service'**
-  String get fgService;
-
-  /// No description provided for @fgServiceTip.
-  ///
-  /// In en, this message translates to:
-  /// **'After enabling, some device models may crash. Disabling it may cause some models to be unable to maintain SSH connections in the background. Please allow ServerBox notification permissions, background running, and self-wake-up in system settings.'**
-  String get fgServiceTip;
 
   /// No description provided for @fileTooLarge.
   ///
@@ -846,12 +780,6 @@ abstract class AppLocalizations {
   /// **'Config home widget url'**
   String get homeWidgetUrlConfig;
 
-  /// No description provided for @httpFailedWithCode.
-  ///
-  /// In en, this message translates to:
-  /// **'request failed, status code: {code}'**
-  String httpFailedWithCode(Object code);
-
   /// No description provided for @ignoreCert.
   ///
   /// In en, this message translates to:
@@ -875,12 +803,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pull'**
   String get pull;
-
-  /// No description provided for @installDockerWithUrl.
-  ///
-  /// In en, this message translates to:
-  /// **'Please https://docs.docker.com/engine/install docker first.'**
-  String get installDockerWithUrl;
 
   /// No description provided for @invalid.
   ///
@@ -978,12 +900,6 @@ abstract class AppLocalizations {
   /// **'Made with ❤️ by {myGithub}'**
   String madeWithLove(Object myGithub);
 
-  /// No description provided for @max.
-  ///
-  /// In en, this message translates to:
-  /// **'max'**
-  String get max;
-
   /// No description provided for @maxConcurrency.
   ///
   /// In en, this message translates to:
@@ -995,18 +911,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Number of server reconnections'**
   String get maxRetryCount;
-
-  /// No description provided for @maxRetryCountEqual0.
-  ///
-  /// In en, this message translates to:
-  /// **'Will retry again and again.'**
-  String get maxRetryCountEqual0;
-
-  /// No description provided for @min.
-  ///
-  /// In en, this message translates to:
-  /// **'min'**
-  String get min;
 
   /// No description provided for @mismatchSystem.
   ///
@@ -1025,12 +929,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'On: can be displayed below each card on the Server Tab page. Off: can be displayed at the top of the Server Details page.'**
   String get moveOutServerFuncBtnsHelp;
-
-  /// No description provided for @needHomeDir.
-  ///
-  /// In en, this message translates to:
-  /// **'If you are a Synology user, [see here](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Users of other systems need to search for how to create a home directory.'**
-  String get needHomeDir;
 
   /// No description provided for @needRestart.
   ///
@@ -1062,12 +960,6 @@ abstract class AppLocalizations {
   /// **'Do not use line charts'**
   String get noLineChart;
 
-  /// No description provided for @noLineChartForCpu.
-  ///
-  /// In en, this message translates to:
-  /// **'Do not use line charts for CPU'**
-  String get noLineChartForCpu;
-
   /// No description provided for @noPrivateKeyTip.
   ///
   /// In en, this message translates to:
@@ -1080,23 +972,11 @@ abstract class AppLocalizations {
   /// **'Do not prompt again'**
   String get noPromptAgain;
 
-  /// No description provided for @onServerDetailPage.
-  ///
-  /// In en, this message translates to:
-  /// **'On server detail page'**
-  String get onServerDetailPage;
-
   /// No description provided for @onlyOneLine.
   ///
   /// In en, this message translates to:
   /// **'Only display as one line (scrollable)'**
   String get onlyOneLine;
-
-  /// No description provided for @onlyWhenCoreBiggerThan8.
-  ///
-  /// In en, this message translates to:
-  /// **'Works only when the number of cores is greater than 8'**
-  String get onlyWhenCoreBiggerThan8;
 
   /// No description provided for @openLastPath.
   ///
@@ -1116,29 +996,11 @@ abstract class AppLocalizations {
   /// **'Parsing the occupancy status of Docker is relatively slow.'**
   String get parseContainerStatsTip;
 
-  /// No description provided for @percentOfSize.
-  ///
-  /// In en, this message translates to:
-  /// **'{percent}% of {size}'**
-  String percentOfSize(Object percent, Object size);
-
   /// No description provided for @permission.
   ///
   /// In en, this message translates to:
   /// **'Permissions'**
   String get permission;
-
-  /// No description provided for @pingInputIP.
-  ///
-  /// In en, this message translates to:
-  /// **'Please input a target IP / domain.'**
-  String get pingInputIP;
-
-  /// No description provided for @pingNoServer.
-  ///
-  /// In en, this message translates to:
-  /// **'No server to ping.\nPlease add a server in server tab.'**
-  String get pingNoServer;
 
   /// No description provided for @plugInType.
   ///
@@ -1181,12 +1043,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.'**
   String get pveIgnoreCertTip;
-
-  /// No description provided for @pveLoginFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Login failed. Unable to authenticate with username/password from server configuration for Linux PAM login.'**
-  String get pveLoginFailed;
 
   /// No description provided for @pveServerClientMissing.
   ///
@@ -1332,29 +1188,11 @@ abstract class AppLocalizations {
   /// **'Used for containers, suspending, etc.'**
   String get rememberPwdInMemTip;
 
-  /// No description provided for @rememberWindowSize.
-  ///
-  /// In en, this message translates to:
-  /// **'Remember window size'**
-  String get rememberWindowSize;
-
   /// No description provided for @remotePath.
   ///
   /// In en, this message translates to:
   /// **'Remote path'**
   String get remotePath;
-
-  /// No description provided for @result.
-  ///
-  /// In en, this message translates to:
-  /// **'Result'**
-  String get result;
-
-  /// No description provided for @rotateAngel.
-  ///
-  /// In en, this message translates to:
-  /// **'Rotation angle'**
-  String get rotateAngel;
 
   /// No description provided for @sameIdServerExist.
   ///
@@ -1434,12 +1272,6 @@ abstract class AppLocalizations {
   /// **'Display folders first'**
   String get sftpShowFoldersFirst;
 
-  /// No description provided for @showDistLogo.
-  ///
-  /// In en, this message translates to:
-  /// **'Show distribution logo'**
-  String get showDistLogo;
-
   /// No description provided for @size.
   ///
   /// In en, this message translates to:
@@ -1494,24 +1326,6 @@ abstract class AppLocalizations {
   /// **'SSH'**
   String get ssh;
 
-  /// No description provided for @sshConnectionMode.
-  ///
-  /// In en, this message translates to:
-  /// **'SSH connection mode'**
-  String get sshConnectionMode;
-
-  /// No description provided for @sshConnectionModeBuiltin.
-  ///
-  /// In en, this message translates to:
-  /// **'Built-in'**
-  String get sshConnectionModeBuiltin;
-
-  /// No description provided for @sshConnectionModeSystem.
-  ///
-  /// In en, this message translates to:
-  /// **'System SSH'**
-  String get sshConnectionModeSystem;
-
   /// No description provided for @sshConnectionModeTip.
   ///
   /// In en, this message translates to:
@@ -1553,12 +1367,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SSH Config Import'**
   String get sshConfigImport;
-
-  /// No description provided for @sshConfigImportHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Only basic information can be imported, for example: IP/Port.'**
-  String get sshConfigImportHelp;
 
   /// No description provided for @sshConfigImportPermission.
   ///
@@ -1644,12 +1452,6 @@ abstract class AppLocalizations {
   /// **'When the terminal is scrollable, dragging horizontally can select text. Clicking the keyboard button turns the keyboard on/off. The file icon opens the current path SFTP. The clipboard button copies the content when text is selected, and pastes content from the clipboard into the terminal when no text is selected and there is content on the clipboard. The code icon pastes code snippets into the terminal and executes them.'**
   String get sshTermHelp;
 
-  /// No description provided for @sshTip.
-  ///
-  /// In en, this message translates to:
-  /// **'This function is now in the experimental stage.\n\nPlease report bugs on {url} or join our development.'**
-  String sshTip(Object url);
-
   /// No description provided for @sshVirtualKeyAutoOff.
   ///
   /// In en, this message translates to:
@@ -1692,23 +1494,11 @@ abstract class AppLocalizations {
   /// **'Include theme, layout, editor, terminal and other device preferences in automatic sync.'**
   String get syncAppSettingsTip;
 
-  /// No description provided for @syncTip.
-  ///
-  /// In en, this message translates to:
-  /// **'A restart may be required for some changes to take effect.'**
-  String get syncTip;
-
   /// No description provided for @system.
   ///
   /// In en, this message translates to:
   /// **'System'**
   String get system;
-
-  /// No description provided for @tag.
-  ///
-  /// In en, this message translates to:
-  /// **'Tags'**
-  String get tag;
 
   /// No description provided for @tapToStartDiscovery.
   ///
@@ -1764,47 +1554,11 @@ abstract class AppLocalizations {
   /// **'Unknown'**
   String get unknown;
 
-  /// No description provided for @unkownConvertMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown conversion mode'**
-  String get unkownConvertMode;
-
-  /// No description provided for @update.
-  ///
-  /// In en, this message translates to:
-  /// **'Update'**
-  String get update;
-
-  /// No description provided for @updateIntervalEqual0.
-  ///
-  /// In en, this message translates to:
-  /// **'You set to 0, will not update automatically.\nCan\'t calculate CPU status.'**
-  String get updateIntervalEqual0;
-
   /// No description provided for @updateServerStatusInterval.
   ///
   /// In en, this message translates to:
   /// **'Server status update interval'**
   String get updateServerStatusInterval;
-
-  /// No description provided for @upsideDown.
-  ///
-  /// In en, this message translates to:
-  /// **'Upside Down'**
-  String get upsideDown;
-
-  /// No description provided for @useCdn.
-  ///
-  /// In en, this message translates to:
-  /// **'Using CDN'**
-  String get useCdn;
-
-  /// No description provided for @useCdnTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Non-Chinese users are recommended to use CDN. Would you like to use it?'**
-  String get useCdnTip;
 
   /// No description provided for @useNoPwd.
   ///
@@ -2021,12 +1775,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Descending'**
   String get descending;
-
-  /// No description provided for @searchServer.
-  ///
-  /// In en, this message translates to:
-  /// **'Search server'**
-  String get searchServer;
 
   /// No description provided for @serverHistory.
   ///

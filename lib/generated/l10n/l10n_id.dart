@@ -9,10 +9,6 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
-  String get aboutThanks =>
-      'Terima kasih kepada orang -orang berikut yang berpartisipasi.';
-
-  @override
   String get acceptBeta => 'Terima pembaruan versi uji coba';
 
   @override
@@ -24,9 +20,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get addr => 'Alamat';
-
-  @override
-  String get alreadyLastDir => 'Sudah di direktori terakhir.';
 
   @override
   String get askAi => 'Tanya AI';
@@ -132,9 +125,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Data yang diekspor dapat dienkripsi dengan kata sandi. \nHarap jaga keamanannya.';
 
   @override
-  String get backupVersionNotMatch => 'Versi cadangan tidak cocok.';
-
-  @override
   String get icloudBackupStatusTitle => 'Backup status';
 
   @override
@@ -228,9 +218,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Kata sandi sudo salah atau tidak diizinkan. Silakan coba lagi.';
 
   @override
-  String get convert => 'Mengubah';
-
-  @override
   String get copyPath => 'Path Copy';
 
   @override
@@ -238,16 +225,10 @@ class AppLocalizationsId extends AppLocalizations {
       'Tampilkan tingkat penggunaan setiap CPU dalam gaya bilah kemajuan (gaya lama)';
 
   @override
-  String get cursorType => 'Jenis kursor';
-
-  @override
   String get configured => 'Configured';
 
   @override
   String get customCmd => 'Perintah kustom';
-
-  @override
-  String get customCmdHint => '\"Nama Perintah\": \"Perintah\"';
 
   @override
   String get deleteServers => 'Penghapusan server secara batch';
@@ -275,9 +256,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get diskHealth => 'Kesehatan disk';
 
   @override
-  String get diskIgnorePath => 'Abaikan jalan untuk disk';
-
-  @override
   String get displayCpuIndex => 'Tampilkan indeks CPU';
 
   @override
@@ -293,9 +271,6 @@ class AppLocalizationsId extends AppLocalizations {
   String dockerImagesFmt(Object count) {
     return '$count gambar';
   }
-
-  @override
-  String get dockerNotInstalled => 'Docker tidak terpasang';
 
   @override
   String dockerStatusRunningAndStoppedFmt(
@@ -335,9 +310,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get envVars => 'Variabel lingkungan';
 
   @override
-  String get experimentalFeature => 'Fitur eksperimental';
-
-  @override
   String get extraArgs => 'Args ekstra';
 
   @override
@@ -346,13 +318,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get fdroidReleaseTip =>
       'Jika Anda mengunduh aplikasi ini dari F-Droid, disarankan untuk mematikan opsi ini.';
-
-  @override
-  String get fgService => 'Layanan Latar Depan';
-
-  @override
-  String get fgServiceTip =>
-      'Setelah diaktifkan, beberapa model perangkat mungkin crash. Menonaktifkannya dapat menyebabkan beberapa model tidak dapat mempertahankan koneksi SSH di latar belakang. Harap izinkan perizinan notifikasi ServerBox, menjalankan di latar belakang, dan bangun mandiri di pengaturan sistem.';
 
   @override
   String fileTooLarge(Object file, Object size, Object sizeMax) {
@@ -416,11 +381,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get homeWidgetUrlConfig => 'Konfigurasi URL Widget Rumah';
 
   @override
-  String httpFailedWithCode(Object code) {
-    return 'Permintaan gagal, kode status: $code';
-  }
-
-  @override
   String get ignoreCert => 'Abaikan sertifikat';
 
   @override
@@ -431,10 +391,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get pull => 'Tarik';
-
-  @override
-  String get installDockerWithUrl =>
-      'Silakan https://docs.docker.com/engine/install Docker pertama.';
 
   @override
   String get invalid => 'Tidak valid';
@@ -493,19 +449,10 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get max => 'Max';
-
-  @override
   String get maxConcurrency => 'Konkurensi Maksimum';
 
   @override
   String get maxRetryCount => 'Jumlah penyambungan kembali server';
-
-  @override
-  String get maxRetryCountEqual0 => 'Akan mencoba lagi lagi dan lagi.';
-
-  @override
-  String get min => 'Min';
 
   @override
   String mismatchSystem(Object system) {
@@ -518,10 +465,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get moveOutServerFuncBtnsHelp =>
       'Aktif: dapat ditampilkan di bawah setiap kartu pada halaman Tab Server. Nonaktif: dapat ditampilkan di bagian atas halaman Rincian Server.';
-
-  @override
-  String get needHomeDir =>
-      'Jika Anda pengguna Synology, [lihat di sini](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Pengguna sistem lain perlu mencari cara membuat direktori home.';
 
   @override
   String get needRestart => 'Perlu memulai ulang aplikasi';
@@ -539,9 +482,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get noLineChart => 'Jangan gunakan grafik garis';
 
   @override
-  String get noLineChartForCpu => 'Jangan gunakan diagram garis untuk CPU';
-
-  @override
   String get noPrivateKeyTip =>
       'Kunci privat tidak ada, mungkin telah dihapus atau ada kesalahan konfigurasi.';
 
@@ -549,14 +489,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get noPromptAgain => 'Jangan tanya lagi';
 
   @override
-  String get onServerDetailPage => 'Di halaman detail server';
-
-  @override
   String get onlyOneLine =>
       'Hanya tampilkan sebagai satu baris (dapat digulir)';
-
-  @override
-  String get onlyWhenCoreBiggerThan8 => 'Berlaku hanya ketika jumlah inti > 8';
 
   @override
   String get openLastPath => 'Buka jalur terakhir';
@@ -570,19 +504,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Parsing status okupansi oleh Docker agak lambat';
 
   @override
-  String percentOfSize(Object percent, Object size) {
-    return '$percent% dari $size';
-  }
-
-  @override
   String get permission => 'Izin';
-
-  @override
-  String get pingInputIP => 'Harap masukkan IP / domain target.';
-
-  @override
-  String get pingNoServer =>
-      'Tidak ada server untuk melakukan ping.\nHarap tambahkan server di tab Server.';
 
   @override
   String get plugInType => 'Jenis Penyisipan';
@@ -608,10 +530,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get pveIgnoreCertTip =>
       'Tidak disarankan untuk diaktifkan, waspadai risiko keamanan! Jika Anda menggunakan sertifikat default dari PVE, Anda perlu mengaktifkan opsi ini.';
-
-  @override
-  String get pveLoginFailed =>
-      'Login gagal. Tidak dapat mengautentikasi dengan nama pengguna/kata sandi dari konfigurasi server untuk login Linux PAM.';
 
   @override
   String get pveServerClientMissing =>
@@ -698,16 +616,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Digunakan untuk kontainer, menangguhkan, dll.';
 
   @override
-  String get rememberWindowSize => 'Ingat ukuran jendela';
-
-  @override
   String get remotePath => 'Jalur jarak jauh';
-
-  @override
-  String get result => 'Hasil';
-
-  @override
-  String get rotateAngel => 'Sudut rotasi';
 
   @override
   String get sameIdServerExist => 'Server dengan ID yang sama sudah ada';
@@ -750,9 +659,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Folder ditampilkan lebih dulu';
 
   @override
-  String get showDistLogo => 'Tampilkan logo distribusi';
-
-  @override
   String get size => 'Ukuran';
 
   @override
@@ -786,15 +692,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get ssh => 'SSH';
 
   @override
-  String get sshConnectionMode => 'SSH connection mode';
-
-  @override
-  String get sshConnectionModeBuiltin => 'Built-in';
-
-  @override
-  String get sshConnectionModeSystem => 'System SSH';
-
-  @override
   String get sshConnectionModeTip =>
       'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
 
@@ -819,10 +716,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get sshConfigImport => 'Impor Konfigurasi SSH';
-
-  @override
-  String get sshConfigImportHelp =>
-      'Hanya informasi dasar yang dapat diimpor, misalnya: IP/Port.';
 
   @override
   String get sshConfigImportPermission =>
@@ -887,11 +780,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Ketika terminal dapat digulirkan, menggeser secara horizontal dapat memilih teks. Mengklik tombol keyboard mengaktifkan/menonaktifkan keyboard. Ikon file membuka SFTP jalur saat ini. Tombol papan klip menyalin konten saat teks dipilih, dan menempelkan konten dari papan klip ke terminal saat tidak ada teks yang dipilih dan ada konten di papan klip. Ikon kode menempelkan potongan kode ke terminal dan mengeksekusinya.';
 
   @override
-  String sshTip(Object url) {
-    return 'Fungsi ini sekarang dalam tahap eksperimen.\n\nHarap laporkan bug di $url atau bergabunglah dengan pengembangan kami.';
-  }
-
-  @override
   String get sshVirtualKeyAutoOff => 'Switching Otomatis Kunci Virtual';
 
   @override
@@ -917,14 +805,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
 
   @override
-  String get syncTip =>
-      'Pengaktifan ulang mungkin diperlukan agar beberapa perubahan dapat diterapkan.';
-
-  @override
   String get system => 'Sistem';
-
-  @override
-  String get tag => 'Tag';
 
   @override
   String get tapToStartDiscovery =>
@@ -958,27 +839,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get unknown => 'Tidak dikenal';
 
   @override
-  String get unkownConvertMode => 'Mode Konversi Tidak Diketahui';
-
-  @override
-  String get update => 'Memperbarui';
-
-  @override
-  String get updateIntervalEqual0 =>
-      'Anda mengatur ke 0, tidak akan memperbarui secara otomatis.\nTidak dapat menghitung status CPU.';
-
-  @override
   String get updateServerStatusInterval => 'Interval Pembaruan Status Server';
-
-  @override
-  String get upsideDown => 'Terbalik';
-
-  @override
-  String get useCdn => 'Menggunakan CDN';
-
-  @override
-  String get useCdnTip =>
-      'Pengguna non-Cina disarankan menggunakan CDN. Apakah Anda ingin menggunakannya?';
 
   @override
   String get useNoPwd => 'Tidak ada kata sandi yang akan digunakan';
@@ -1096,9 +957,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get descending => 'Descending';
-
-  @override
-  String get searchServer => 'Search server';
 
   @override
   String get serverHistory => 'Server history';
