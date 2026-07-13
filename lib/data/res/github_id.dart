@@ -25,7 +25,8 @@ abstract final class GithubIds {
     'Shin-suechtig',
     'hypn4',
     'barkure',
-    'yuguorui'
+    'yuguorui',
+    'moduvoice'
   };
 
   static const participants = <GhId>{
@@ -185,6 +186,7 @@ abstract final class GithubIds {
     'SiLong96',
     'YCyingchen',
     'hiSandog',
+    'PeterSpiegler',
   };
 }
 
