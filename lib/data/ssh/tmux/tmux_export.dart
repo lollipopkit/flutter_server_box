@@ -4,3 +4,4 @@ export 'tmux_restore_state.dart';
 export 'tmux_session.dart';
 export 'tmux_session_info.dart';
 export 'tmux_session_scanner.dart';
+export 'tmux_window_info.dart';
