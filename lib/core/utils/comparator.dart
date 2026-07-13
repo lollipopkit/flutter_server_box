@@ -5,15 +5,6 @@ class ChainComparator<T> {
   ChainComparator._create(this._parent, this._comparator);
   ChainComparator.create() : this._create(null, (a, b) => 0);
 
-  static ChainComparator<T> comparing<T, F extends Comparable<F>>(
-    F Function(T) extractor,
-  ) {
-    return ChainComparator._create(
-      null,
-      (a, b) => extractor(a).compareTo(extractor(b)),
-    );
-  }
-
   int compare(T a, T b) {
     final parent = _parent;
     if (parent != null) {
@@ -49,24 +40,11 @@ class ChainComparator<T> {
     );
   }
 
-  ChainComparator<T> thenCompareByReversed<F extends Comparable<F>>(
-    F Function(T) extractor,
-  ) {
-    return ChainComparator._create(
-      this,
-      (a, b) => -extractor(a).compareTo(extractor(b)),
-    );
-  }
-
   ChainComparator<T> thenTrueFirst(bool Function(T) f) {
     return ChainComparator._create(this, (a, b) {
       final fa = f(a), fb = f(b);
       return fa == fb ? 0 : (fa ? -1 : 1);
     });
-  }
-
-  ChainComparator<T> reversed() {
-    return ChainComparator._create(null, (a, b) => compare(b, a));
   }
 }
 

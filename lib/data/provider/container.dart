@@ -8,6 +8,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
+import 'package:server_box/core/utils/shell_quote.dart' as sh;
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/container/image.dart';
@@ -22,6 +23,10 @@ final _dockerNotFound = RegExp(
   r"command not found|Unknown command|Command '\w+' not found",
 );
 final _podmanEmulationMsg = 'Emulate Docker CLI using podman';
+
+// Forwarder to the canonical quoter so part files can reference it inside
+// extension method bodies (imported top-level names are not visible there).
+String shellSingleQuote(String value) => sh.shellSingleQuote(value);
 
 @freezed
 abstract class ContainerState with _$ContainerState {
@@ -465,7 +470,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     cmd = 'export LANG=en_US.UTF-8 && $cmd';
     final noDockerHost = dockerHost?.isEmpty ?? true;
     if (!noDockerHost) {
-      cmd = 'export DOCKER_HOST=${_shellQuote(dockerHost!)} && $cmd';
+      cmd = 'export DOCKER_HOST=${shellSingleQuote(dockerHost!)} && $cmd';
     }
     return cmd;
   }
@@ -477,10 +482,6 @@ String _buildSudoCmd(String baseCmd, String password) {
   final pwdBase64 = base64Encode(utf8.encode(password));
   return 'echo "$pwdBase64" | base64 -d | sudo -S $baseCmd';
 }
-
-String shellSingleQuote(String value) => "'${value.replaceAll("'", "'\\''")}'";
-
-String _shellQuote(String value) => shellSingleQuote(value);
 
 enum ContainerCmdType {
   version,

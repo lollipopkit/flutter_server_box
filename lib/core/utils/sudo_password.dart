@@ -14,10 +14,6 @@ abstract final class SudoPassword {
     return value;
   }
 
-  static Future<bool> hasOverride(String serverId) async {
-    return await readOverride(serverId) != null;
-  }
-
   static Future<void> writeOverride(String serverId, String value) async {
     if (value.isEmpty) {
       await clearOverride(serverId);
