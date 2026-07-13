@@ -6,7 +6,7 @@ import 'package:server_box/data/model/server/time_seq.dart';
 
 import 'package:server_box/data/res/misc.dart';
 
-class Disk with Equatable {
+class Disk extends Equatable {
   final String path;
   final String? fsTyp;
   final String mount;
