@@ -1,5 +1,4 @@
 abstract final class Urls {
-  static const cdnBase = 'https://cdn.lpkt.cn/serverbox';
   static const myGithub = 'https://github.com/lollipopkit';
   static const githubApi = 'https://api.github.com/repos/lollipopkit';
   static const thisRepo = '$myGithub/flutter_server_box';

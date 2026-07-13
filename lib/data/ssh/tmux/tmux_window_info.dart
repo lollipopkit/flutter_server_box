@@ -29,13 +29,6 @@ final class TmuxWindowInfo {
     );
   }
 
-  String get displayName {
-    final parts = <String>['$index: $name'];
-    if (active) parts.add('(active)');
-    if (panes > 1) parts.add('$panes panes');
-    return parts.join(' · ');
-  }
-
   @override
   String toString() => 'TmuxWindow($index: $name, active=$active, panes=$panes)';
 }

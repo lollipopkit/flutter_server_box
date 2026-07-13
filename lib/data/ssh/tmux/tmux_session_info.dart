@@ -29,18 +29,6 @@ final class TmuxSessionInfo {
     );
   }
 
-  /// Format for display in session selector.
-  String get displayName {
-    final parts = <String>[name];
-    if (windows > 0) {
-      parts.add('$windows window${windows == 1 ? '' : 's'}');
-    }
-    if (attached) {
-      parts.add('(attached)');
-    }
-    return parts.join(' · ');
-  }
-
   @override
   String toString() => 'TmuxSession($name, $windows windows, attached=$attached)';
 }
