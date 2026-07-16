@@ -62,7 +62,7 @@ class ServerStore extends CachedHiveStore<Spi> {
 
       final dockerHost = container.fetch(oldId, ContainerType.docker);
       if (dockerHost != null) {
-        container.remove(oldId);
+        container.removeHost(oldId, ContainerType.docker);
         container.put(newId, ContainerType.docker, dockerHost);
       }
     }

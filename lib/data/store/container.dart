@@ -22,6 +22,10 @@ class ContainerStore extends HiveStore {
     set(_hostKey(id, type), host);
   }
 
+  void removeHost(String id, ContainerType type) {
+    remove(_hostKey(id, type));
+  }
+
   String _hostKey(String? id, ContainerType type) =>
       '$_keyHost${type.name}${id ?? ''}';
 
