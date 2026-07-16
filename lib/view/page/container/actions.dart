@@ -117,7 +117,7 @@ extension on _ContainerPageState {
 
   Future<void> _showEditHostDialog() async {
     final id = widget.args.spi.id;
-    final host = Stores.container.fetch(id);
+    final host = Stores.container.fetch(id, _containerState.type);
     final hostVariable = _containerState.type == ContainerType.podman
         ? 'CONTAINER_HOST'
         : 'DOCKER_HOST';
@@ -127,19 +127,19 @@ extension on _ContainerPageState {
       child: Input(
         maxLines: 2,
         controller: ctrl,
-        onSubmitted: _onSaveDockerHost,
+        onSubmitted: _onSaveContainerHost,
         hint: hostVariable == 'CONTAINER_HOST'
-            ? 'unix:///run/podman/podman.sock'
+            ? r'$XDG_RUNTIME_DIR/podman/podman.sock'
             : 'unix:///run/user/1000/docker.sock',
         suggestion: false,
       ),
-      actions: Btn.ok(onTap: () => _onSaveDockerHost(ctrl.text)).toList,
+      actions: Btn.ok(onTap: () => _onSaveContainerHost(ctrl.text)).toList,
     );
   }
 
-  void _onSaveDockerHost(String val) {
+  void _onSaveContainerHost(String val) {
     context.pop();
-    Stores.container.put(widget.args.spi.id, val.trim());
+    Stores.container.put(widget.args.spi.id, _containerState.type, val.trim());
     _containerNotifier.resetSudoProbe();
     _containerNotifier.refresh();
   }

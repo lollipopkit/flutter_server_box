@@ -1,6 +1,6 @@
 part of 'container.dart';
 
-enum _SettingsMenuItems { editDockerHost, switchProvider }
+enum _SettingsMenuItems { editContainerHost, switchProvider }
 
 enum _PruneTypes {
   images,

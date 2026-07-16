@@ -464,14 +464,13 @@ class ContainerNotifier extends _$ContainerNotifier {
 
   /// Wrap commands with the container runtime host environment variable.
   String _wrap(String cmd) {
-    final dockerHost = Stores.container.fetch(hostId);
+    final containerHost = Stores.container.fetch(hostId, state.type);
     cmd = 'export LANG=en_US.UTF-8 && $cmd';
-    final noDockerHost = dockerHost?.isEmpty ?? true;
-    if (!noDockerHost) {
+    if (containerHost?.isNotEmpty ?? false) {
       final hostVariable = state.type == ContainerType.podman
           ? 'CONTAINER_HOST'
           : 'DOCKER_HOST';
-      cmd = 'export $hostVariable=${shellSingleQuote(dockerHost!)} && $cmd';
+      cmd = 'export $hostVariable=${shellSingleQuote(containerHost!)} && $cmd';
     }
     return cmd;
   }

@@ -392,7 +392,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   ) {
     final String title;
     switch (item) {
-      case _SettingsMenuItems.editDockerHost:
+      case _SettingsMenuItems.editContainerHost:
         final hostVariable = containerState.type == ContainerType.podman
             ? 'CONTAINER_HOST'
             : 'DOCKER_HOST';
@@ -407,7 +407,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     return ListTile(
       onTap: () {
         switch (item) {
-          case _SettingsMenuItems.editDockerHost:
+          case _SettingsMenuItems.editContainerHost:
             _showEditHostDialog();
             break;
           case _SettingsMenuItems.switchProvider:

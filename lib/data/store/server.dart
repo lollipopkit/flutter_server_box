@@ -1,3 +1,4 @@
+import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/store/cached_store.dart';
 import 'package:server_box/data/store/container.dart';
@@ -59,10 +60,10 @@ class ServerStore extends CachedHiveStore<Spi> {
         }
       }
 
-      final dockerHost = container.fetch(oldId);
+      final dockerHost = container.fetch(oldId, ContainerType.docker);
       if (dockerHost != null) {
         container.remove(oldId);
-        container.set(newId, dockerHost);
+        container.put(newId, ContainerType.docker, dockerHost);
       }
     }
 
