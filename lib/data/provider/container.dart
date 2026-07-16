@@ -118,9 +118,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
 
     try {
-      final res = await client?.run(
-        _wrap(ContainerCmdType.images.exec(type)),
-      );
+      final res = await client?.run(_wrap(ContainerCmdType.images.exec(type)));
       if (res?.string.toLowerCase().contains('permission denied') ?? false) {
         return completer.complete(true);
       }
@@ -321,9 +319,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       } else {
         final lines = imageRaw.split('\n');
         lines.removeWhere((element) => element.isEmpty);
-        images = lines
-            .map((e) => ContainerImg.fromRawJson(e, type))
-            .toList();
+        images = lines.map((e) => ContainerImg.fromRawJson(e, type)).toList();
       }
       state = state.copyWith(images: images);
     } catch (e, trace) {
@@ -378,9 +374,11 @@ class ContainerNotifier extends _$ContainerNotifier {
     await refresh(generation: generation);
   }
 
-  Future<ContainerErr?> stop(String id) async => await run('stop ${shellSingleQuote(id)}');
+  Future<ContainerErr?> stop(String id) async =>
+      await run('stop ${shellSingleQuote(id)}');
 
-  Future<ContainerErr?> start(String id) async => await run('start ${shellSingleQuote(id)}');
+  Future<ContainerErr?> start(String id) async =>
+      await run('start ${shellSingleQuote(id)}');
 
   Future<ContainerErr?> delete(String id, bool force) async {
     if (force) {
@@ -464,13 +462,16 @@ class ContainerNotifier extends _$ContainerNotifier {
     return null;
   }
 
-  /// wrap cmd with `docker host`
+  /// Wrap commands with the container runtime host environment variable.
   String _wrap(String cmd) {
     final dockerHost = Stores.container.fetch(hostId);
     cmd = 'export LANG=en_US.UTF-8 && $cmd';
     final noDockerHost = dockerHost?.isEmpty ?? true;
     if (!noDockerHost) {
-      cmd = 'export DOCKER_HOST=${shellSingleQuote(dockerHost!)} && $cmd';
+      final hostVariable = state.type == ContainerType.podman
+          ? 'CONTAINER_HOST'
+          : 'DOCKER_HOST';
+      cmd = 'export $hostVariable=${shellSingleQuote(dockerHost!)} && $cmd';
     }
     return cmd;
   }
