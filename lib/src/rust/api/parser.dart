@@ -9,13 +9,16 @@ import 'package:server_box/src/rust/frb_generated.dart';
 // These functions are ignored because they are not marked as `pub`: `parse_system`
 
 /// 解析一次采集的全部输出,返回 `ServerStatus` 的 JSON。
-/// `system`: "linux" | "bsd" | "windows"
-String parseStatusJson({
+/// `system`: "linux" | "bsd" | "windows";`temp_divisor` 见 `ParseOptions`。
+/// 异步:在 Rust 线程池执行,不阻塞 UI isolate
+Future<String> parseStatusJson({
   required String system,
   required Map<String, String> raw,
+  required double tempDivisor,
 }) => RustLib.instance.api.crateApiParserParseStatusJson(
   system: system,
   raw: raw,
+  tempDivisor: tempDivisor,
 );
 
 /// Windows WMI 双采样网速差分,返回 `[{name, rx, tx}]` JSON(字节/秒)

@@ -55,8 +55,30 @@ pub struct ServerStatus {
     pub disk_smart: Vec<DiskSmart>,
 }
 
+/// 解析选项
+#[derive(Debug, Clone, Copy)]
+pub struct ParseOptions {
+    /// 温度值除数:Linux thermal_zone 为毫摄氏度(1000.0);
+    /// 传感器直接输出摄氏度时为 1.0(App 的 tempIsCelsius 配置)
+    pub temp_divisor: f64,
+}
+
+impl Default for ParseOptions {
+    fn default() -> Self {
+        Self { temp_divisor: 1000.0 }
+    }
+}
+
 /// 解析入口:`raw` 为命令 key(见 [`commands`])→ 原始输出
 pub fn parse_status(system: SystemType, raw: &HashMap<String, String>) -> ServerStatus {
+    parse_status_opts(system, raw, ParseOptions::default())
+}
+
+pub fn parse_status_opts(
+    system: SystemType,
+    raw: &HashMap<String, String>,
+    opts: ParseOptions,
+) -> ServerStatus {
     let get = |key: &str| raw.get(key).map(String::as_str).unwrap_or("");
     let mut status = ServerStatus {
         uptime: common::parse_uptime(get(commands::UPTIME)),
@@ -74,8 +96,11 @@ pub fn parse_status(system: SystemType, raw: &HashMap<String, String>) -> Server
             status.swap = linux::parse_swap(get(commands::MEM));
             status.disks = linux::parse_disk(get(commands::DISK));
             status.net = linux::parse_net(get(commands::NET));
-            status.temps =
-                linux::parse_temps(get(commands::TEMP_TYPE), get(commands::TEMP_VAL), 1000.0);
+            status.temps = linux::parse_temps(
+                get(commands::TEMP_TYPE),
+                get(commands::TEMP_VAL),
+                opts.temp_divisor,
+            );
             status.conn = linux::parse_conn(get(commands::CONN));
             status.sys = common::parse_sys_version(get(commands::SYS));
             status.diskio = linux::parse_diskio(get(commands::DISKIO));
@@ -93,6 +118,7 @@ pub fn parse_status(system: SystemType, raw: &HashMap<String, String>) -> Server
         }
         SystemType::Windows => {
             status.cpu = windows::parse_cpu(get(commands::CPU), &[]);
+            status.cpu_brand = windows::parse_cpu_brand(get(commands::CPU));
             status.mem = windows::parse_mem(get(commands::MEM));
             status.disks = windows::parse_disks(get(commands::DISK));
             status.temps = windows::parse_temps(get(commands::TEMP));

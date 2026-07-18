@@ -1,4 +1,3 @@
-import 'package:fl_lib/fl_lib.dart';
 
 /// raw dat from server:
 /// ```text
@@ -27,29 +26,6 @@ class Battery {
     this.tech,
   });
 
-  factory Battery.fromRaw(String raw) {
-    final lines = raw.split('\n');
-    final map = <String, String>{};
-    for (final line in lines) {
-      final parts = line.split('=');
-      if (parts.length != 2) continue;
-      map[parts[0]] = parts[1];
-    }
-
-    final capacity = map['POWER_SUPPLY_CAPACITY']; // 30%
-    final cycle = map['POWER_SUPPLY_CYCLE_COUNT']; // 30
-
-    var name = map['POWER_SUPPLY_MODEL_NAME'];
-    name ??= map['POWER_SUPPLY_NAME'];
-
-    return Battery(
-      percent: capacity == null ? null : int.tryParse(capacity),
-      status: BatteryStatus.parse(map['POWER_SUPPLY_STATUS']),
-      name: name,
-      cycle: cycle == null ? null : int.tryParse(cycle),
-      tech: map['POWER_SUPPLY_TECHNOLOGY'],
-    );
-  }
 
   @override
   String toString() {
@@ -79,25 +55,4 @@ enum BatteryStatus {
   }
 }
 
-abstract final class Batteries {
-  static List<Battery> parse(String raw, [bool onlyLiPoly = false]) {
-    final lines = raw.split('\n');
-    final batteries = <Battery>[];
-    final oneBatLines = <String>[];
-    for (final line in lines) {
-      if (line.isEmpty) {
-        try {
-          final bat = Battery.fromRaw(oneBatLines.join('\n'));
-          if (onlyLiPoly && !bat.isLiPoly) continue;
-          batteries.add(bat);
-        } catch (e, s) {
-          Loggers.app.warning(e, s);
-        }
-        oneBatLines.clear();
-      } else {
-        oneBatLines.add(line);
-      }
-    }
-    return batteries;
-  }
-}
+// 解析实现已迁移至共享 Rust 库 sbm_parser(见 doc/adr/0001)

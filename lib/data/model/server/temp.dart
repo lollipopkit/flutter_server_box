@@ -1,22 +1,11 @@
 class Temperatures {
   final Map<String, double> _map = {};
 
-  void parse(String type, String value, {double divisor = 1000.0}) {
-    final typeSplited = type.split('\n');
-    final valueSplited = value.split('\n');
-    for (var i = 0; i < typeSplited.length && i < valueSplited.length; i++) {
-      final t = typeSplited[i];
-      final v = valueSplited[i];
-      if (t.isEmpty || v.isEmpty) {
-        continue;
-      }
-      final name = t.split('/').last;
-      final temp = double.tryParse(v);
-      if (temp == null) {
-        continue;
-      }
-      _map[name] = temp / divisor;
-    }
+  /// 解析在共享 Rust 库完成(sbm_parser::linux::parse_temps),此处仅装配
+  void setAll(Map<String, double> values) {
+    _map
+      ..clear()
+      ..addAll(values);
   }
 
   double? get(String name) {

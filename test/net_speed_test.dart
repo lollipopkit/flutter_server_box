@@ -38,63 +38,6 @@ void main() {
   });
 
   group('NetSpeed Tests', () {
-    test('NetSpeed.parse with Linux format', () {
-      const raw = '''
-Inter-|   Receive                                                |  Transmit
- face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
-    lo: 45929941  269112    0    0    0     0          0         0 45929941  269112    0    0    0     0       0          0
-  eth0: 48481023  505772    0    0    0     0          0         0 36002262  202307    0    0    0     0       0          0
-  wlan0: 12345678  123456    0    0    0     0          0         0 87654321  123456    0    0    0     0       0          0
-''';
-
-      final parts = NetSpeed.parse(raw, 1000);
-      expect(parts, hasLength(3));
-      expect(parts[0].device, equals('lo'));
-      expect(parts[0].bytesIn, equals(BigInt.from(45929941)));
-      expect(parts[0].bytesOut, equals(BigInt.from(45929941)));
-
-      expect(parts[1].device, equals('eth0'));
-      expect(parts[1].bytesIn, equals(BigInt.from(48481023)));
-      expect(parts[1].bytesOut, equals(BigInt.from(36002262)));
-    });
-
-    test('NetSpeed.parseBsd with BSD format', () {
-      const raw = '''
-Name       Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll
-lo0        16384 <Link#1>      -              17296531     0 2524959720 17296531     0 2524959720     0
-en0        1500  <Link#4>    22:20:xx:xx:xx:e6   739447     0  693997876   535600     0   79008877     0
-en1        1500  <Link#5>    88:d8:xx:xx:xx:1d        0     0          0        0     0          0     0
-''';
-
-      final parts = NetSpeed.parseBsd(raw, 1000);
-      expect(parts, hasLength(3));
-      expect(parts[0].device, equals('lo0'));
-      expect(parts[0].bytesIn, equals(BigInt.from(2524959720)));
-      expect(parts[0].bytesOut, equals(BigInt.from(2524959720)));
-
-      expect(parts[1].device, equals('en0'));
-      expect(parts[1].bytesIn, equals(BigInt.from(693997876)));
-      expect(parts[1].bytesOut, equals(BigInt.from(79008877)));
-
-      expect(parts[2].device, equals('en1'));
-      expect(parts[2].bytesIn, equals(BigInt.from(0)));
-      expect(parts[2].bytesOut, equals(BigInt.from(0)));
-    });
-
-    test('NetSpeed.parseBsd skips disabled devices', () {
-      const raw = '''
-Name       Mtu   Network       Address            Ipkts Ierrs     Ibytes    Opkts Oerrs     Obytes  Coll
-lo0        16384 <Link#1>      -              17296531     0 2524959720 17296531     0 2524959720     0
-en2*       1500  <Link#11>   36:7c:xx:xx:xx:xx        0     0          0        0     0          0     0
-en0        1500  <Link#4>    22:20:xx:xx:xx:e6   739447     0  693997876   535600     0   79008877     0
-''';
-
-      final parts = NetSpeed.parseBsd(raw, 1000);
-      expect(parts, hasLength(2));
-      expect(parts[0].device, equals('lo0'));
-      expect(parts[1].device, equals('en0'));
-    });
-
     test('NetSpeed speed calculations', () {
       final oldData = [
         NetSpeedPart('eth0', BigInt.from(1000000), BigInt.from(500000), 1000),

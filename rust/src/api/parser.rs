@@ -22,11 +22,19 @@ fn parse_system(system: &str) -> Option<sbm_parser::SystemType> {
 }
 
 /// 解析一次采集的全部输出,返回 `ServerStatus` 的 JSON。
-/// `system`: "linux" | "bsd" | "windows"
-#[flutter_rust_bridge::frb(sync)]
-pub fn parse_status_json(system: String, raw: HashMap<String, String>) -> Result<String, String> {
+/// `system`: "linux" | "bsd" | "windows";`temp_divisor` 见 `ParseOptions`。
+/// 异步:在 Rust 线程池执行,不阻塞 UI isolate
+pub fn parse_status_json(
+    system: String,
+    raw: HashMap<String, String>,
+    temp_divisor: f64,
+) -> Result<String, String> {
     let system = parse_system(&system).ok_or_else(|| format!("unknown system: {}", system))?;
-    let status = sbm_parser::parse_status(system, &raw);
+    let status = sbm_parser::parse_status_opts(
+        system,
+        &raw,
+        sbm_parser::ParseOptions { temp_divisor },
+    );
     serde_json::to_string(&status).map_err(|e| e.to_string())
 }
 

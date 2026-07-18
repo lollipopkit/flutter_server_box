@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:computer/computer.dart';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -484,11 +483,8 @@ class ServerNotifier extends _$ServerNotifier {
         customCmds: spi.custom?.cmds ?? {},
         tempDivisor: spi.custom?.tempIsCelsius == true ? 1.0 : 1000.0,
       );
-      final newStatus = await Computer.shared.start(
-        getStatus,
-        req,
-        taskName: 'StatusUpdateReq<${spi.id}>',
-      );
+      // 解析在 Rust 线程池执行(FFI 异步),无需再走 isolate
+      final newStatus = await getStatus(req);
       updateStatus(newStatus);
     } catch (e, trace) {
       TryLimiter.inc(sid);

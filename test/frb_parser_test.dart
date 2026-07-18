@@ -1,21 +1,14 @@
-// sbm_parser FFI 双跑验证(ADR 0001 Phase 2):
-// 同一 fixture 分别经 Rust FFI 与既有 Dart 解析器,断言结果一致。
-// 运行前需构建原生库:cd rust && cargo build
+// sbm_parser FFI 集成测试(ADR 0001):
+// 验证绑定加载与 JSON 装配契约。解析行为本身由
+// crates/sbm_parser/tests/dart_compat.rs 锁定(fixture 与期望值同源)。
+// 运行前需构建原生库:cargo build -p sbm_ffi
 
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/data/model/server/battery.dart';
-import 'package:server_box/data/model/server/conn.dart';
-import 'package:server_box/data/model/server/cpu.dart';
-import 'package:server_box/data/model/server/disk.dart';
-import 'package:server_box/data/model/server/disk_smart.dart';
-import 'package:server_box/data/model/server/memory.dart';
-import 'package:server_box/data/model/server/net_speed.dart';
-import 'package:server_box/data/model/server/nvdia.dart';
-import 'package:server_box/data/model/server/sensors.dart';
+import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/src/rust/api/parser.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
@@ -40,6 +33,10 @@ tmpfs             176724      688    176036   1% /run
 /dev/vda2         192559    11807    180752   7% /boot/efi
 ''';
 
+const _connRaw =
+    'Tcp: RtoAlgorithm RtoMin RtoMax MaxConn ActiveOpens PassiveOpens AttemptFails EstabResets CurrEstab InSegs OutSegs RetransSegs InErrs OutRsts InCsumErrors\n'
+    'Tcp: 1 200 120000 -1 11 22 33 44 55 66 77 88 99 111 222';
+
 void main() {
   setUpAll(() async {
     final lib = File('target/debug/libsbm_ffi.dylib').existsSync()
@@ -48,174 +45,137 @@ void main() {
     await RustLib.init(externalLibrary: ExternalLibrary.open(lib));
   });
 
-  Map<String, dynamic> parseViaFfi(Map<String, String> raw) {
-    final json = parseStatusJson(system: 'linux', raw: raw);
+  Future<Map<String, dynamic>> parseViaFfi(Map<String, String> raw) async {
+    final json = await parseStatusJson(
+      system: 'linux',
+      raw: raw,
+      tempDivisor: 1000.0,
+    );
     return jsonDecode(json) as Map<String, dynamic>;
   }
 
-  test('cpu parity with SingleCpuCore.parse', () {
-    final ffi = parseViaFfi({'cpu': _cpuRaw})['cpu'] as List;
-    final dart = SingleCpuCore.parse(_cpuRaw);
-
-    expect(ffi.length, dart.length);
-    for (var i = 0; i < dart.length; i++) {
-      expect(ffi[i]['id'], dart[i].id);
-      expect(ffi[i]['user'], dart[i].user);
-      expect(ffi[i]['sys'], dart[i].sys);
-      expect(ffi[i]['nice'], dart[i].nice);
-      expect(ffi[i]['idle'], dart[i].idle);
-      expect(ffi[i]['iowait'], dart[i].iowait);
-      expect(ffi[i]['irq'], dart[i].irq);
-      expect(ffi[i]['softirq'], dart[i].softirq);
-    }
+  test('cpu section', () async {
+    final cpu = (await parseViaFfi({'cpu': _cpuRaw}))['cpu'] as List;
+    expect(cpu.length, 2);
+    expect(cpu[0]['id'], 'cpu');
+    expect(cpu[0]['user'], 18232538);
+    expect(cpu[1]['id'], 'cpu0');
+    expect(cpu[1]['idle'], 33446073);
   });
 
-  test('memory/swap parity with Memory.parse / Swap.parse', () {
-    final ffi = parseViaFfi({'mem': _memRaw});
-    final mem = Memory.parse(_memRaw);
-    final swap = Swap.parse(_memRaw);
-
-    expect(ffi['mem']['total'], mem.total);
-    expect(ffi['mem']['free'], mem.free);
-    expect(ffi['mem']['avail'], mem.avail);
-    expect(ffi['swap']['total'], swap.total);
-    expect(ffi['swap']['free'], swap.free);
-    expect(ffi['swap']['cached'], swap.cached);
+  test('memory/swap section', () async {
+    final status = await parseViaFfi({'mem': _memRaw});
+    expect(status['mem']['total'], 32768);
+    expect(status['mem']['avail'], 24576);
+    expect(status['swap']['total'], 2097148);
+    expect(status['swap']['free'], 1048574);
   });
 
-  test('net parity with NetSpeed.parse', () {
-    final ffi = parseViaFfi({'net': _netRaw})['net'] as List;
-    final dart = NetSpeed.parse(_netRaw, 0);
-
-    expect(ffi.length, dart.length);
-    for (var i = 0; i < dart.length; i++) {
-      expect(ffi[i]['device'], dart[i].device);
-      expect(BigInt.from(ffi[i]['rx_bytes'] as int), dart[i].bytesIn);
-      expect(BigInt.from(ffi[i]['tx_bytes'] as int), dart[i].bytesOut);
-    }
+  test('net section', () async {
+    final net = (await parseViaFfi({'net': _netRaw}))['net'] as List;
+    expect(net.length, 2);
+    expect(net[0]['device'], 'lo');
+    expect(net[1]['device'], 'eth0');
+    expect(net[1]['rx_bytes'], 48481023);
+    expect(net[1]['tx_bytes'], 36002262);
   });
 
-  test('disk parity with Disk.parse (df fallback)', () {
-    final ffi = parseViaFfi({'disk': _dfRaw})['disks'] as List;
-    final dart = Disk.parse(_dfRaw);
-
-    expect(ffi.length, dart.length);
-    for (var i = 0; i < dart.length; i++) {
-      expect(ffi[i]['path'], dart[i].path);
-      expect(ffi[i]['mount'], dart[i].mount);
-      expect(ffi[i]['used_percent'], dart[i].usedPercent);
-      expect(BigInt.from(ffi[i]['size'] as int), dart[i].size);
-      expect(BigInt.from(ffi[i]['used'] as int), dart[i].used);
-      expect(BigInt.from(ffi[i]['avail'] as int), dart[i].avail);
-    }
+  test('disk section (df fallback)', () async {
+    final disks = (await parseViaFfi({'disk': _dfRaw}))['disks'] as List;
+    expect(disks.length, 3); // udev、vda3、vda2;tmpfs 排除
+    final root = disks.firstWhere((d) => d['mount'] == '/');
+    expect(root['path'], '/dev/vda3');
+    expect(root['used_percent'], 47);
+    expect(root['size'], 40910528);
   });
 
-  test('conn parity with Conn.parse', () {
-    const raw =
-        'Tcp: RtoAlgorithm RtoMin RtoMax MaxConn ActiveOpens PassiveOpens AttemptFails EstabResets CurrEstab InSegs OutSegs RetransSegs InErrs OutRsts InCsumErrors\n'
-        'Tcp: 1 200 120000 -1 11 22 33 44 55 66 77 88 99 111 222';
-    final ffi = parseViaFfi({'conn': raw})['conn'];
-    final dart = Conn.parse(raw);
-    expect(ffi['max_conn'], dart!.maxConn);
-    expect(ffi['fail'], dart.fail);
+  test('conn section', () async {
+    final conn = (await parseViaFfi({'conn': _connRaw}))['conn'];
+    expect(conn['max_conn'], -1);
+    expect(conn['fail'], 33);
   });
 
-  test('batteries parity with Batteries.parse', () async {
-    final raw = await File(
-      'crates/sbm_parser/tests/fixtures/power_supply.txt',
-    ).readAsString();
-    // App 调用为 onlyLiPoly=true,与 parse_status 的 Linux 分支一致
-    final dart = Batteries.parse(raw, true);
-    final ffi = parseViaFfi({'battery': raw})['batteries'] as List;
-    expect(ffi.length, dart.length);
-    for (var i = 0; i < dart.length; i++) {
-      expect(ffi[i]['percent'], dart[i].percent);
-      expect(ffi[i]['name'], dart[i].name);
-      expect(ffi[i]['cycle'], dart[i].cycle);
-      expect(ffi[i]['status'], dart[i].status.name);
-    }
+  test('temps honors tempDivisor', () async {
+    const types = '/sys/class/thermal/thermal_zone0/x86_pkg_temp';
+    final milli = await parseStatusJson(
+      system: 'linux',
+      raw: {'tempType': types, 'tempVal': '45000'},
+      tempDivisor: 1000.0,
+    );
+    expect(jsonDecode(milli)['temps']['x86_pkg_temp'], 45.0);
+    final celsius = await parseStatusJson(
+      system: 'linux',
+      raw: {'tempType': types, 'tempVal': '45'},
+      tempDivisor: 1.0,
+    );
+    expect(jsonDecode(celsius)['temps']['x86_pkg_temp'], 45.0);
   });
 
-  test('sensors parity with SensorItem.parse', () async {
-    final raw = await File(
-      'crates/sbm_parser/tests/fixtures/sensors1.txt',
-    ).readAsString();
-    final dart = SensorItem.parse(raw);
-    final ffi = parseViaFfi({'sensors': raw})['sensors'] as List;
-    expect(ffi.length, dart.length);
-    for (var i = 0; i < dart.length; i++) {
-      expect(ffi[i]['device'], dart[i].device);
-      expect(ffi[i]['adapter'], dart[i].adapter.raw);
-      final ffiFirstDetail = (ffi[i]['details'] as List).firstOrNull;
-      expect(ffiFirstDetail?[1], dart[i].summary);
-    }
-  });
-
-  test('nvidia parity with NvidiaSmi.fromXml', () async {
-    final raw = await File(
-      'crates/sbm_parser/tests/fixtures/nvidia.xml',
-    ).readAsString();
-    final dart = NvidiaSmi.fromXml(raw);
-    final ffi = parseViaFfi({'nvidia': raw})['nvidia'] as List;
-    expect(ffi.length, dart.length);
-    for (var i = 0; i < dart.length; i++) {
-      expect(ffi[i]['name'], dart[i].name);
-      expect(ffi[i]['temp'], dart[i].temp);
-      expect(ffi[i]['power'], dart[i].power);
-      expect(ffi[i]['memory']['total'], dart[i].memory.total);
-      expect(ffi[i]['memory']['used'], dart[i].memory.used);
-      expect(ffi[i]['percent'], dart[i].percent);
-      expect(ffi[i]['fan_speed'], dart[i].fanSpeed);
-    }
-  });
-
-  test('smart parity with DiskSmart.parse', () async {
-    final raw = await File(
-      'crates/sbm_parser/tests/fixtures/smartctl.json',
-    ).readAsString();
-    final dart = DiskSmart.parse(raw);
-    final ffi = parseViaFfi({'diskSmart': raw})['disk_smart'] as List;
-    expect(ffi.length, dart.length);
-    for (var i = 0; i < dart.length; i++) {
-      expect(ffi[i]['device'], dart[i].device);
-      expect(ffi[i]['healthy'], dart[i].healthy);
-      expect(ffi[i]['temperature'], dart[i].temperature);
-      expect(ffi[i]['model'], dart[i].model);
-      expect(ffi[i]['power_on_hours'], dart[i].powerOnHours);
-      expect(ffi[i]['power_cycle_count'], dart[i].powerCycleCount);
-      expect(
-        (ffi[i]['smart_attributes'] as Map).length,
-        dart[i].smartAttributes.length,
-      );
-    }
-  });
-
-  test('uptime/sys/host parity', () {
-    const uptimeRaw =
-        '19:39:15 up 61 days, 18:16,  1 user,  load average: 0.00, 0.00, 0.00';
-    const sysRaw = 'PRETTY_NAME="Ubuntu 22.04.3 LTS"\n';
-    final ffi = parseViaFfi({
-      'uptime': uptimeRaw,
-      'sys': sysRaw,
+  test('uptime/sys/host section', () async {
+    final status = await parseViaFfi({
+      'uptime':
+          '19:39:15 up 61 days, 18:16,  1 user,  load average: 0.00, 0.00, 0.00',
+      'sys': 'PRETTY_NAME="Ubuntu 22.04.3 LTS"\n',
       'host': ' myhost \n',
     });
-    expect(ffi['uptime'], '61 days, 18:16');
-    expect(ffi['sys'], 'Ubuntu 22.04.3 LTS');
-    expect(ffi['host'], 'myhost');
+    expect(status['uptime'], '61 days, 18:16');
+    expect(status['sys'], 'Ubuntu 22.04.3 LTS');
+    expect(status['host'], 'myhost');
   });
 
-  test('diskio parity with DiskIO.parse', () {
+  test('batteries/sensors/gpu/smart sections', () async {
+    final battery = await File(
+      'crates/sbm_parser/tests/fixtures/power_supply.txt',
+    ).readAsString();
+    final sensors = await File(
+      'crates/sbm_parser/tests/fixtures/sensors1.txt',
+    ).readAsString();
+    final nvidia = await File(
+      'crates/sbm_parser/tests/fixtures/nvidia.xml',
+    ).readAsString();
+    final smart = await File(
+      'crates/sbm_parser/tests/fixtures/smartctl.json',
+    ).readAsString();
+
+    final status = await parseViaFfi({
+      'battery': battery,
+      'sensors': sensors,
+      'nvidia': nvidia,
+      'diskSmart': smart,
+    });
+
+    // Linux 分支只收集 Li-poly 电池
+    expect((status['batteries'] as List).length, 1);
+    expect(status['batteries'][0]['percent'], 73);
+    expect((status['sensors'] as List).length, 4);
+    expect(status['sensors'][0]['device'], 'coretemp-isa-0000');
+    expect((status['nvidia'] as List).length, 4);
+    final smartList = status['disk_smart'] as List;
+    expect(smartList.length, 1);
+    expect(smartList[0]['device'], '/dev/sda');
+    expect(smartList[0]['temperature'], 35.0);
+  });
+
+  test('diskio section', () async {
     const raw =
         '   7       0 loop0 55 0 2170 42 0 0 0 0 0 80 42 0 0 0 0 0 0\n'
         ' 259       0 nvme0n1 1234 0 567890 100 4321 0 98765 200 0 300 400 0 0 0 0 0 0';
-    final dart = DiskIO.parse(raw, 0);
-    final ffi = parseViaFfi({'diskio': raw})['diskio'] as List;
-    expect(ffi.length, dart.length);
-    for (var i = 0; i < dart.length; i++) {
-      expect(ffi[i]['dev'], dart[i].dev);
-      expect(ffi[i]['sectors_read'], dart[i].sectorsRead);
-      expect(ffi[i]['sectors_write'], dart[i].sectorsWrite);
-    }
+    final diskio = (await parseViaFfi({'diskio': raw}))['diskio'] as List;
+    expect(diskio.length, 1); // loop 跳过
+    expect(diskio[0]['dev'], 'nvme0n1');
+    expect(diskio[0]['sectors_read'], 567890);
+  });
+
+  test('windows net speed delta', () {
+    const raw = '''[
+      [{"Name": "Ethernet", "BytesReceivedPersec": 1000, "BytesSentPersec": 500, "Timestamp_Sys100NS": 10000000}],
+      [{"Name": "Ethernet", "BytesReceivedPersec": 3000, "BytesSentPersec": 1500, "Timestamp_Sys100NS": 20000000}]
+    ]''';
+    final speeds = jsonDecode(parseWindowsNetSpeedJson(raw: raw)) as List;
+    expect(speeds.length, 1);
+    expect(speeds[0]['name'], 'Ethernet');
+    expect(speeds[0]['rx'], 2000.0);
+    expect(speeds[0]['tx'], 1000.0);
   });
 
   test('command specs cover linux/bsd/windows', () {
@@ -225,5 +185,23 @@ void main() {
       expect(specs.map((s) => s.key), contains('cpu'));
     }
     expect(separator(), 'SrvBoxSep');
+  });
+
+  test('enum fallback cmds stay in sync with FFI manifest', () {
+    final cases = <(String, List<ShellCmdType>)>[
+      ('linux', StatusCmdType.values),
+      ('bsd', BSDStatusCmdType.values),
+      ('windows', WindowsStatusCmdType.values),
+    ];
+    for (final (system, types) in cases) {
+      final manifest = {
+        for (final spec in commandSpecs(system: system)) spec.key: spec.cmd,
+      };
+      for (final type in types) {
+        final expected = manifest[type.name];
+        if (expected == null) continue; // echo 等脚本结构命令不在清单内
+        expect(type.cmd, expected, reason: '$system/${type.name}');
+      }
+    }
   });
 }

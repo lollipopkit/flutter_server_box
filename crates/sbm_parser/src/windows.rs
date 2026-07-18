@@ -224,3 +224,26 @@ pub fn parse_diskio(raw: &str) -> Vec<DiskIoPiece> {
         })
         .collect()
 }
+
+/// Win32_Processor JSON 的品牌信息:Name → 物理核数
+/// (Dart Windows 分支:brand[brandName] = NumberOfCores 之和)
+pub fn parse_cpu_brand(raw: &str) -> Vec<(String, u32)> {
+    let Some(json) = decode(raw) else {
+        return Vec::new();
+    };
+    let mut brands: Vec<(String, u32)> = Vec::new();
+    for processor in as_list(json) {
+        let Some(name) = processor["Name"].as_str().map(str::trim) else {
+            continue;
+        };
+        if name.is_empty() {
+            continue;
+        }
+        let cores = processor["NumberOfCores"].as_u64().unwrap_or(1) as u32;
+        match brands.iter_mut().find(|(n, _)| n == name) {
+            Some((_, count)) => *count += cores,
+            None => brands.push((name.to_string(), cores)),
+        }
+    }
+    brands
+}

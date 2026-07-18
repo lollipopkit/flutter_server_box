@@ -6,7 +6,11 @@ import 'package:server_box/data/model/server/server_status_update_req.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/res/status.dart';
 
+import 'rust_lib_helper.dart';
+
 void main() {
+  setUpAll(initRustLibForTest);
+
   group('Windows System Tests', () {
     test('should verify Windows segments length matches command types', () {
       expect(WindowsStatusCmdType.values.length, isPositive);

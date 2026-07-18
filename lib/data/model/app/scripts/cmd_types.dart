@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/scripts/ffi_cmds.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/server/system.dart';
 
@@ -127,10 +128,14 @@ enum StatusCmdType implements ShellCmdType {
   ),
   cpuBrand('cat /proc/cpuinfo | grep "model name"');
 
-  @override
-  final String cmd;
+  /// 内置命令,仅作 FFI 清单不可用时的回退
+  final String fallbackCmd;
 
-  const StatusCmdType(this.cmd);
+  /// 命令来源:共享 Rust 库清单(单一事实来源,见 doc/adr/0001)
+  @override
+  String get cmd => FfiCmds.lookup(sysType, name) ?? fallbackCmd;
+
+  const StatusCmdType(this.fallbackCmd);
 
   @override
   String get separator => ScriptConstants.getCmdSeparator(name);
@@ -157,10 +162,14 @@ enum BSDStatusCmdType implements ShellCmdType {
   host('hostname'),
   cpuBrand('sysctl -n machdep.cpu.brand_string');
 
-  @override
-  final String cmd;
+  /// 内置命令,仅作 FFI 清单不可用时的回退
+  final String fallbackCmd;
 
-  const BSDStatusCmdType(this.cmd);
+  /// 命令来源:共享 Rust 库清单(单一事实来源,见 doc/adr/0001)
+  @override
+  String get cmd => FfiCmds.lookup(sysType, name) ?? fallbackCmd;
+
+  const BSDStatusCmdType(this.fallbackCmd);
 
   @override
   String get separator => ScriptConstants.getCmdSeparator(name);
@@ -298,10 +307,14 @@ enum WindowsStatusCmdType implements ShellCmdType {
   ),
   cpuBrand('(Get-WmiObject -Class Win32_Processor).Name');
 
-  @override
-  final String cmd;
+  /// 内置命令,仅作 FFI 清单不可用时的回退
+  final String fallbackCmd;
 
-  const WindowsStatusCmdType(this.cmd);
+  /// 命令来源:共享 Rust 库清单(单一事实来源,见 doc/adr/0001)
+  @override
+  String get cmd => FfiCmds.lookup(sysType, name) ?? fallbackCmd;
+
+  const WindowsStatusCmdType(this.fallbackCmd);
 
   @override
   String get separator => ScriptConstants.getCmdSeparator(name);

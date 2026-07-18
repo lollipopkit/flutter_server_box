@@ -15,6 +15,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
+import 'package:server_box/src/rust/frb_generated.dart';
 
 Future<void> main() async {
   await _runInZone(() async {
@@ -40,6 +41,8 @@ Future<void> _runInZone(Future<void> Function() body) async {
 Future<void> _initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 共享解析库(sbm_parser FFI,见 doc/adr/0001)
+  await RustLib.init();
   await _initData();
   _setupDebug();
   await _initWindow();

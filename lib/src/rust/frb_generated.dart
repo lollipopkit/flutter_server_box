@@ -83,9 +83,10 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiParserInitApp();
 
-  String crateApiParserParseStatusJson({
+  Future<String> crateApiParserParseStatusJson({
     required String system,
     required Map<String, String> raw,
+    required double tempDivisor,
   });
 
   String crateApiParserParseWindowsNetSpeedJson({required String raw});
@@ -152,24 +153,31 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: 'init_app', argNames: []);
 
   @override
-  String crateApiParserParseStatusJson({
+  Future<String> crateApiParserParseStatusJson({
     required String system,
     required Map<String, String> raw,
+    required double tempDivisor,
   }) {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(system, serializer);
           sse_encode_Map_String_String_None(raw, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+          sse_encode_f_64(tempDivisor, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 3,
+            port: port_,
+          );
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
           decodeErrorData: sse_decode_String,
         ),
         constMeta: kCrateApiParserParseStatusJsonConstMeta,
-        argValues: [system, raw],
+        argValues: [system, raw, tempDivisor],
         apiImpl: this,
       ),
     );
@@ -178,7 +186,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiParserParseStatusJsonConstMeta =>
       const TaskConstMeta(
         debugName: 'parse_status_json',
-        argNames: ['system', 'raw'],
+        argNames: ['system', 'raw', 'tempDivisor'],
       );
 
   @override
@@ -258,6 +266,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  double dco_decode_f_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as double;
+  }
+
+  @protected
   List<CommandSpec> dco_decode_list_command_spec(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_command_spec).toList();
@@ -319,6 +333,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_key = sse_decode_String(deserializer);
     final var_cmd = sse_decode_String(deserializer);
     return CommandSpec(key: var_key, cmd: var_cmd);
+  }
+
+  @protected
+  double sse_decode_f_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getFloat64();
   }
 
   @protected
@@ -410,6 +430,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.key, serializer);
     sse_encode_String(self.cmd, serializer);
+  }
+
+  @protected
+  void sse_encode_f_64(double self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putFloat64(self);
   }
 
   @protected

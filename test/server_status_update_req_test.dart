@@ -7,7 +7,11 @@ import 'package:server_box/data/model/server/server_status_update_req.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/res/status.dart';
 
+import 'rust_lib_helper.dart';
+
 void main() {
+  setUpAll(initRustLibForTest);
+
   group('Server status snapshot parsing', () {
     test(
       'invalid linux payload does not reuse previous disk and metadata state',

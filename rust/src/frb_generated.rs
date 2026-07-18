@@ -111,15 +111,16 @@ fn wire__crate__api__parser__init_app_impl(
     )
 }
 fn wire__crate__api__parser__parse_status_json_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
     data_len_: i32,
-) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
             debug_name: "parse_status_json",
-            port: None,
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
         },
         move || {
             let message = unsafe {
@@ -134,11 +135,18 @@ fn wire__crate__api__parser__parse_status_json_impl(
             let api_system = <String>::sse_decode(&mut deserializer);
             let api_raw =
                 <std::collections::HashMap<String, String>>::sse_decode(&mut deserializer);
+            let api_temp_divisor = <f64>::sse_decode(&mut deserializer);
             deserializer.end();
-            transform_result_sse::<_, String>((move || {
-                let output_ok = crate::api::parser::parse_status_json(api_system, api_raw)?;
-                Ok(output_ok)
-            })())
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::parser::parse_status_json(
+                        api_system,
+                        api_raw,
+                        api_temp_divisor,
+                    )?;
+                    Ok(output_ok)
+                })())
+            }
         },
     )
 }
@@ -233,6 +241,13 @@ impl SseDecode for crate::api::parser::CommandSpec {
     }
 }
 
+impl SseDecode for f64 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        deserializer.cursor.read_f64::<NativeEndian>().unwrap()
+    }
+}
+
 impl SseDecode for Vec<crate::api::parser::CommandSpec> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -314,6 +329,7 @@ fn pde_ffi_dispatcher_primary_impl(
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
         2 => wire__crate__api__parser__init_app_impl(port, ptr, rust_vec_len, data_len),
+        3 => wire__crate__api__parser__parse_status_json_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -327,7 +343,6 @@ fn pde_ffi_dispatcher_sync_impl(
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
         1 => wire__crate__api__parser__command_specs_impl(ptr, rust_vec_len, data_len),
-        3 => wire__crate__api__parser__parse_status_json_impl(ptr, rust_vec_len, data_len),
         4 => {
             wire__crate__api__parser__parse_windows_net_speed_json_impl(ptr, rust_vec_len, data_len)
         }
@@ -379,6 +394,13 @@ impl SseEncode for crate::api::parser::CommandSpec {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.key, serializer);
         <String>::sse_encode(self.cmd, serializer);
+    }
+}
+
+impl SseEncode for f64 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        serializer.cursor.write_f64::<NativeEndian>(self).unwrap();
     }
 }
 
