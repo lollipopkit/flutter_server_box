@@ -67,9 +67,9 @@ cargo sqlx prepare
 
 ## Architecture
 
-### Shared Parser (`crates/sbm_parser/`)
+### Shared Parser (`../crates/sbm_parser/`, monorepo root)
 
-Pure parsing library shared with the flutter_server_box app (see `doc/adr/0001-monorepo-shared-parser.md`). Owns the command manifest (`commands.rs`) and per-platform parsers (`linux.rs`, `bsd.rs`, `windows.rs`). Behavior is locked to the Dart implementation by `tests/dart_compat.rs`. No IO, no async — parsers take raw command output and return structured status.
+Pure parsing library shared with the Flutter app via FFI (see `../doc/adr/0001-monorepo-shared-parser.md`). Owns the command manifest (`commands.rs`) and per-platform parsers (`linux.rs`, `bsd.rs`, `windows.rs`). Behavior is locked to the Dart implementation by `tests/dart_compat.rs`. No IO, no async — parsers take raw command output and return structured status.
 
 ### Backend (Rust - `src/`)
 

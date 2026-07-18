@@ -37,9 +37,9 @@ tmpfs             176724      688    176036   1% /run
 
 void main() {
   setUpAll(() async {
-    final lib = File('rust/target/debug/libsbm_ffi.dylib').existsSync()
-        ? 'rust/target/debug/libsbm_ffi.dylib'
-        : 'rust/target/debug/libsbm_ffi.so';
+    final lib = File('target/debug/libsbm_ffi.dylib').existsSync()
+        ? 'target/debug/libsbm_ffi.dylib'
+        : 'target/debug/libsbm_ffi.so';
     await RustLib.init(externalLibrary: ExternalLibrary.open(lib));
   });
 

@@ -22,6 +22,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Flutter application for managing Linux servers with the following key architectural components:
 
+### Monorepo Layout (Rust workspace, see `doc/adr/0001-monorepo-shared-parser.md`)
+
+- `crates/sbm_parser/` - Shared status parser (single source of truth for command manifest + parsing; used by both the app via FFI and the server-side monitor). Behavior locked by `crates/sbm_parser/tests/dart_compat.rs`
+- `rust/` - `sbm_ffi`, flutter_rust_bridge binding layer (Dart side generated into `lib/src/rust/`)
+- `monitor/` - Server-side monitoring service (Rust + React frontend), has its own `monitor/CLAUDE.md`
+- Root `Cargo.toml` is the workspace; build/test all Rust with `cargo test --workspace`
+- FFI parity test: `flutter test test/frb_parser_test.dart` (requires `cargo build -p sbm_ffi` first)
+
 ### Project Structure
 
 - `lib/core/` - Core utilities, extensions, and routing

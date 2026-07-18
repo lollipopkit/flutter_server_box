@@ -1,6 +1,8 @@
 services:
   server-box-monitor:
-    build: .
+    build:
+      context: ..
+      dockerfile: monitor/Dockerfile
     container_name: server-box-monitor
     ports:
       - "3770:3770"

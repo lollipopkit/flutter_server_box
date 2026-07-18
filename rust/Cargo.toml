@@ -8,8 +8,7 @@ crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
 flutter_rust_bridge = "=2.12.0"
-# TODO: Phase 3 monorepo 合并后改为仓库内路径(crates/sbm_parser)
-sbm_parser = { path = "../../server_box_monitor/crates/sbm_parser" }
+sbm_parser = { path = "../crates/sbm_parser" }
 serde_json = "1.0"
 
 [lints.rust]

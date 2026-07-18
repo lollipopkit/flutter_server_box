@@ -1,6 +1,3 @@
-[workspace]
-members = ["crates/sbm_parser"]
-
 [package]
 name = "server_box_monitor"
 version = "0.1.0"
@@ -12,7 +9,7 @@ path = "src/lib.rs"
 
 [dependencies]
 # 共享状态解析库(ADR 0001)
-sbm_parser = { path = "crates/sbm_parser" }
+sbm_parser = { path = "../crates/sbm_parser" }
 
 # Web framework
 ntex = { version = "2", features = ["tokio"] }

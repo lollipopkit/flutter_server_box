@@ -1,11 +1,12 @@
 # Multi-stage build for smaller final image
+# 构建上下文为 monorepo 根:docker build -f monitor/Dockerfile .
 FROM node:18-alpine AS frontend-builder
 
 WORKDIR /app/frontend
-COPY frontend/package*.json ./
+COPY monitor/frontend/package*.json ./
 RUN npm install
 
-COPY frontend/ ./
+COPY monitor/frontend/ ./
 RUN npm run build
 
 # Rust build stage
@@ -19,15 +20,18 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy manifests
-COPY Cargo.toml Cargo.lock ./
-COPY migrations/ ./migrations/
+# Copy manifests and shared parser crate
+COPY monitor/Cargo.toml Cargo.lock ./
+COPY crates/ ./crates/
+COPY monitor/migrations/ ./migrations/
+COPY monitor/.sqlx/ ./.sqlx/
 
 # Copy source code
-COPY src/ ./src/
+COPY monitor/src/ ./src/
 
-# Build the application
-RUN cargo build --release
+# 独立构建 monitor(脱离 monorepo workspace),修正 sbm_parser 相对路径
+RUN sed -i 's|path = "../crates/sbm_parser"|path = "crates/sbm_parser"|' Cargo.toml \
+    && cargo build --release
 
 # Final runtime stage
 FROM debian:bookworm-slim
@@ -49,8 +53,8 @@ COPY --from=backend-builder /app/target/release/server_box_monitor .
 COPY --from=frontend-builder /app/frontend/dist ./static/
 
 # Copy configuration files
-COPY .env.example .env
-COPY migrations/ ./migrations/
+COPY monitor/.env.example .env
+COPY monitor/migrations/ ./migrations/
 
 # Change ownership to app user
 RUN chown -R app:app /app
