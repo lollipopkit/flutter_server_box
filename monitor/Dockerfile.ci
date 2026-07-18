@@ -1,0 +1,32 @@
+# CI 发布专用:不在镜像内编译,直接复用 workflow 产出的 musl 静态 bin,
+# 运行时阶段与 monitor/Dockerfile 保持一致。
+# 构建上下文为 monorepo 根,且需要 workflow 预先准备:
+#   dist/docker/{amd64,arm64}/server_box_monitor  (musl 静态编译)
+#   monitor/frontend/dist/                        (前端产物)
+FROM alpine
+
+# uptime/ps/cat 等采集命令由 busybox 提供;curl 用于 healthcheck
+RUN apk add --no-cache ca-certificates curl
+
+RUN adduser -D app
+
+WORKDIR /app
+
+ARG TARGETARCH
+COPY dist/docker/${TARGETARCH}/server_box_monitor .
+COPY monitor/frontend/dist/ ./frontend/dist/
+
+COPY monitor/.env.example .env
+COPY monitor/migrations/ ./migrations/
+
+# upload-artifact 不保留可执行位
+RUN chmod +x server_box_monitor && chown -R app:app /app
+
+USER app
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3770/api/v1/health || exit 1
+
+EXPOSE 3770
+
+CMD ["./server_box_monitor"]

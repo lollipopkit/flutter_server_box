@@ -8,7 +8,7 @@ name = "server_box_monitor"
 path = "src/lib.rs"
 
 [dependencies]
-# 共享状态解析库(ADR 0001)
+# 共享状态解析库(monorepo 共用)
 sbm_parser = { path = "../crates/sbm_parser" }
 
 # Web framework
@@ -39,7 +39,8 @@ bcrypt = "0.15"
 dotenvy = "0.15"
 
 # HTTP client for push notifications
-reqwest = { version = "0.12", features = ["json"] }
+# rustls 而非 native-tls:与 sqlx 一致,musl 静态编译不依赖 OpenSSL
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "charset", "http2"] }
 
 # Time handling
 chrono = { version = "0.4", features = ["serde"] }

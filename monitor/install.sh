@@ -1,5 +1,16 @@
 #!/bin/sh
-# (Un)Install script for ServerBoxMonitor
+# (Un)Install script for ServerBox Monitor
+# Release 来源:本 monorepo 的 GitHub Release(tag `monitor-v*`),
+# 资产 server-box-monitor_v<ver>_linux_<arch>.tar.gz,
+# 内含 server_box_monitor bin + frontend/dist + migrations + 示例配置。
+set -u
+
+REPO="lollipopkit/flutter_server_box"
+APP_DIR="/opt/server-box-monitor"
+SERVICE="server_box_monitor.service"
+TMP_DIR="/tmp/server-box-monitor-install"
+# TODO(迁移残留,确认无旧版用户后删除): 旧版安装的裸二进制位置
+LEGACY_BIN="/usr/local/bin/server_box_monitor"
 
 # Check root
 if [ "$(id -u)" -ne 0 ]; then
@@ -7,199 +18,161 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-
-download() {
-    # Check arch: amd64 or arm64
-    arch=$(uname -m)
-    case $arch in
-        x86_64)
-            arch=amd64
-            ;;
-        aarch64)
-            arch=arm64
-            ;;
+detect_arch() {
+    case "$(uname -m)" in
+        x86_64) arch=amd64 ;;
+        aarch64) arch=arm64 ;;
         *)
-            echo "Not support arch: $arch"
+            echo "Unsupported arch: $(uname -m)"
             exit 1
             ;;
     esac
+}
 
-    # Check curl
+download() {
+    detect_arch
+
     if ! command -v curl >/dev/null 2>&1; then
         echo "Please install curl"
         exit 1
     fi
 
-    # Generate download url
-    newestTag=$(curl -s https://api.github.com/repos/lollipopkit/server_box_monitor/releases/latest | grep tag_name | cut -d '"' -f 4)
-    # Remove 'v' at the start -> "0.1.0"
-    newestTagLen=$(expr length "$newestTag")
-    APPVER=$(expr substr "$newestTag" 2 "$newestTagLen")
-    DOWNLOAD_URL="https://github.com/lollipopkit/server_box_monitor/releases/download/v${APPVER}/server_box_monitor_${APPVER}_linux_$arch.tar.gz"
+    # 只认 monitor-v* tag,与 App 的 v1.0.x release 隔离
+    tag=$(curl -s "https://api.github.com/repos/${REPO}/releases?per_page=100" \
+        | grep -o '"tag_name": *"monitor-v[^"]*"' | head -n 1 | cut -d '"' -f 4)
+    if [ -z "$tag" ]; then
+        echo "Failed to find a monitor-v* release of ${REPO}"
+        exit 1
+    fi
+    ver=${tag#monitor-v}
+    url="https://github.com/${REPO}/releases/download/${tag}/server-box-monitor_v${ver}_linux_${arch}.tar.gz"
 
-    # Download binary
-    echo "Download $DOWNLOAD_URL"
+    echo "Downloading $url"
+    rm -rf "$TMP_DIR"
+    mkdir -p "$TMP_DIR"
+    if ! curl -fsSL "$url" -o "$TMP_DIR/pkg.tar.gz"; then
+        echo "Download failed"
+        exit 1
+    fi
 
-    curl -sL "$DOWNLOAD_URL" -o /tmp/server_box_monitor.tar.gz
-    if [ ! -f /tmp/server_box_monitor.tar.gz ]; then
-        echo "Download binary failed"
+    tar -xzf "$TMP_DIR/pkg.tar.gz" -C "$TMP_DIR"
+    if [ ! -f "$TMP_DIR/server-box-monitor/server_box_monitor" ]; then
+        echo "Unexpected package layout"
         exit 1
     fi
 }
-
 
 cleanup() {
-    # Clean up
-    echo "Cleaning up..."
-    rm -f /tmp/server_box_monitor.tar.gz
-    rm -rf /tmp/server_box_monitor
+    rm -rf "$TMP_DIR"
 }
 
+# 覆盖程序文件,保留 .env 与数据库
+install_files() {
+    pkg="$TMP_DIR/server-box-monitor"
+    mkdir -p "$APP_DIR"
+    rm -rf "$APP_DIR/frontend" "$APP_DIR/migrations"
+    cp "$pkg/server_box_monitor" "$APP_DIR/"
+    chmod 755 "$APP_DIR/server_box_monitor"
+    cp -r "$pkg/frontend" "$APP_DIR/frontend"
+    cp -r "$pkg/migrations" "$APP_DIR/migrations"
+    cp "$pkg/config.example.toml" "$pkg/.env.example" "$APP_DIR/"
 
-install_binary() {
-    # Extract binary
-    echo "Extracting binary..."
-    tar -xf /tmp/server_box_monitor.tar.gz -C /tmp
-    if [ ! -f /tmp/server_box_monitor ]; then
-        echo "Extract binary failed"
-        exit 1
+    if [ ! -f "$APP_DIR/.env" ]; then
+        cp "$pkg/.env.example" "$APP_DIR/.env"
+        # 生成随机 JWT_SECRET,避免默认弱密钥上线
+        secret=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')
+        sed -i "s|^JWT_SECRET=.*|JWT_SECRET=${secret}|" "$APP_DIR/.env"
+        chmod 600 "$APP_DIR/.env"
     fi
 
-    # Install binary
-    echo "Installing binary..."
-    mv /tmp/server_box_monitor /usr/local/bin/server_box_monitor
-    if [ $? -ne 0 ]; then
-        echo "Install binary failed"
-        exit 1
+    # 清理旧版安装的裸二进制
+    if [ -f "$LEGACY_BIN" ]; then
+        echo "Removing legacy binary $LEGACY_BIN"
+        rm -f "$LEGACY_BIN"
     fi
 
     cleanup
 }
 
-install() {
-    # If already installed, skip
-    if [ -f /usr/local/bin/server_box_monitor ] && [ -f /etc/systemd/system/server_box_monitor.service ]; then
-        echo "Already installed, use 'upgrade' or 'uninstall'."
-        exit 0
-    fi
-
-    download
-
-    install_binary
-
-    # Check systemd
+install_service() {
     if [ ! -d /etc/systemd ]; then
         echo "Distribution without systemd is not supported yet."
         exit 1
     fi
 
-    # Install systemd service
-    echo "Installing systemd service..."
-    cat <<EOF > /etc/systemd/system/server_box_monitor.service
+    cat <<EOF > "/etc/systemd/system/$SERVICE"
 [Unit]
-Description=Server Box Monitor
+Description=ServerBox Monitor
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/server_box_monitor serve
+WorkingDirectory=$APP_DIR
+ExecStart=$APP_DIR/server_box_monitor serve
 User=root
 Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-    # Enable systemd service
-    echo "Enabling systemd service..."
-    systemctl enable server_box_monitor.service
-    if [ $? -ne 0 ]; then
-        echo "Enable systemd service failed"
-        exit 1
-    fi
-
-    # Start systemd service
-    echo "Starting systemd service..."
-    systemctl start server_box_monitor.service
-    if [ $? -ne 0 ]; then
-        echo "Start systemd service failed"
-        exit 1
-    fi
-
-    # Display systemd service status
-    echo "Displaying systemd service status..."
-    systemctl status server_box_monitor.service
-
-    echo "Install success"
+    systemctl daemon-reload
+    systemctl enable "$SERVICE" || { echo "Enable service failed"; exit 1; }
+    systemctl restart "$SERVICE" || { echo "Start service failed"; exit 1; }
+    systemctl --no-pager status "$SERVICE"
 }
 
+install() {
+    if [ -f "$APP_DIR/server_box_monitor" ] && [ -f "/etc/systemd/system/$SERVICE" ]; then
+        echo "Already installed, use 'upgrade' or 'uninstall'."
+        exit 0
+    fi
 
-uninstall() {
-    # Stop systemd service
-    echo "Stopping systemd service..."
-    systemctl stop server_box_monitor.service
-    if [ $? -ne 0 ]; then
-        echo "Stop systemd service failed"
-        exit 1
-    fi
-    
-    # Disable systemd service
-    echo "Disabling systemd service..."
-    systemctl disable server_box_monitor.service
-    if [ $? -ne 0 ]; then
-        echo "Disable systemd service failed"
-        exit 1
-    fi
-    
-    # Remove systemd service
-    echo "Removing systemd service..."
-    rm -f /etc/systemd/system/server_box_monitor.service
-    
-    # Remove binary
-    echo "Removing binary..."
-    rm -f /usr/local/bin/server_box_monitor
-    
-    echo "Uninstall success"
+    download
+    install_files
+    install_service
+    echo "Install success. Config: $APP_DIR/.env"
 }
-
 
 upgrade() {
-    # Check if installed binary and service
-    if [ ! -f /usr/local/bin/server_box_monitor ] || [ ! -f /etc/systemd/system/server_box_monitor.service ]; then
-        echo "Not installed. It will be installed"
-        read -p "Press enter to continue"
+    if [ ! -f "$APP_DIR/server_box_monitor" ] || [ ! -f "/etc/systemd/system/$SERVICE" ]; then
+        echo "Not installed. Installing..."
         install
         exit 0
     fi
 
-    rm -f /usr/local/bin/server_box_monitor
-
     download
-
-    install_binary
-
-    # Restart systemd service
-    echo "Restarting systemd service..."
-    systemctl restart server_box_monitor.service
-    if [ $? -ne 0 ]; then
-        echo "Restart systemd service failed"
-        exit 1
-    fi
-
+    systemctl stop "$SERVICE"
+    install_files
+    systemctl restart "$SERVICE" || { echo "Restart service failed"; exit 1; }
     echo "Upgrade success"
 }
 
+uninstall() {
+    if [ -f "/etc/systemd/system/$SERVICE" ]; then
+        systemctl stop "$SERVICE" 2>/dev/null
+        systemctl disable "$SERVICE" 2>/dev/null
+        rm -f "/etc/systemd/system/$SERVICE"
+        systemctl daemon-reload
+    fi
+    rm -f "$LEGACY_BIN"
 
-case $1 in
-    install)
-        install
-        ;;
-    uninstall)
-        uninstall
-        ;;
-    upgrade)
-        upgrade
-        ;;
+    if [ -d "$APP_DIR" ]; then
+        printf "Remove %s (including database and .env)? [y/N] " "$APP_DIR"
+        read -r ans
+        case "$ans" in
+            y|Y) rm -rf "$APP_DIR" ;;
+            *) echo "Kept $APP_DIR" ;;
+        esac
+    fi
+    echo "Uninstall success"
+}
+
+case "${1:-}" in
+    install) install ;;
+    uninstall) uninstall ;;
+    upgrade) upgrade ;;
     *)
         echo "Usage: $0 [install|uninstall|upgrade]"
         exit 1

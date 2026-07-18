@@ -1,6 +1,8 @@
-# Multi-stage build for smaller final image
+# 本地/compose 用:容器内完整构建(Alpine/musl)。
+# CI 发布用 monitor/Dockerfile.ci(直接复用 workflow 编译好的 musl bin)。
+# 两者的运行时阶段需保持一致。
 # 构建上下文为 monorepo 根:docker build -f monitor/Dockerfile .
-FROM node:18-alpine AS frontend-builder
+FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 COPY monitor/frontend/package*.json ./
@@ -10,13 +12,9 @@ COPY monitor/frontend/ ./
 RUN npm run build
 
 # Rust build stage
-FROM rust:slim AS backend-builder
+FROM rust:alpine AS backend-builder
 
-# Install required system dependencies
-RUN apt-get update && apt-get install -y \
-    pkg-config \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache musl-dev
 
 WORKDIR /app
 
@@ -33,30 +31,24 @@ COPY monitor/src/ ./src/
 RUN sed -i 's|path = "../crates/sbm_parser"|path = "crates/sbm_parser"|' Cargo.toml \
     && cargo build --release
 
-# Final runtime stage
-FROM debian:bookworm-slim
+# Final runtime stage(与 Dockerfile.ci 保持一致)
+FROM alpine
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    sqlite3 \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# uptime/ps/cat 等采集命令由 busybox 提供;curl 用于 healthcheck
+RUN apk add --no-cache ca-certificates curl
 
-# Create app user
-RUN useradd --create-home --shell /bin/bash app
+RUN adduser -D app
 
 WORKDIR /app
 
-# Copy binary from builder stage
+# server.rs 从工作目录下的 frontend/dist 提供静态文件,路径必须一致
 COPY --from=backend-builder /app/target/release/server_box_monitor .
-COPY --from=frontend-builder /app/frontend/dist ./static/
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist/
 
 # Copy configuration files
 COPY monitor/.env.example .env
 COPY monitor/migrations/ ./migrations/
 
-# Change ownership to app user
 RUN chown -R app:app /app
 
 USER app
