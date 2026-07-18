@@ -186,3 +186,41 @@ fn parse_wmi_delta(raw: &str, field1: &str, field2: &str) -> Vec<(String, f64, f
     }
     result
 }
+
+/// Win32_Battery JSON(Dart `_parseWindowsBatteries`):
+/// BatteryStatus 6/7/8 视为充电中
+pub fn parse_batteries(raw: &str) -> Vec<Battery> {
+    let Some(json) = decode(raw) else {
+        return Vec::new();
+    };
+    as_list(json)
+        .into_iter()
+        .map(|b| {
+            let status = b["BatteryStatus"].as_i64().unwrap_or(0);
+            Battery {
+                name: Some("Battery".to_string()),
+                percent: Some(b["EstimatedChargeRemaining"].as_i64().unwrap_or(0)),
+                status: if matches!(status, 6..=8) {
+                    BatteryStatus::Charging
+                } else {
+                    BatteryStatus::Discharging
+                },
+                cycle: None,
+                tech: None,
+            }
+        })
+        .collect()
+}
+
+/// WMI 磁盘 IO 双采样差分(Dart `_parseWindowsDiskIO`):
+/// 速率换算为扇区数(512B),与 Linux diskstats 计数对齐
+pub fn parse_diskio(raw: &str) -> Vec<DiskIoPiece> {
+    parse_wmi_delta(raw, "DiskReadBytesPersec", "DiskWriteBytesPersec")
+        .into_iter()
+        .map(|(name, read, write)| DiskIoPiece {
+            dev: name,
+            sectors_read: (read / 512.0).round() as i64,
+            sectors_write: (write / 512.0).round() as i64,
+        })
+        .collect()
+}

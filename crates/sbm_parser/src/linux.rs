@@ -304,3 +304,135 @@ pub fn parse_temps(types_raw: &str, values_raw: &str, divisor: f64) -> Temperatu
     }
     temps
 }
+
+/// /proc/net/snmp 的 Tcp 行(Dart `Conn.parse`):
+/// 取最后一个 `Tcp:` 行,MaxConn 在第 4 列、AttemptFails 在第 7 列
+pub fn parse_conn(raw: &str) -> Option<Conn> {
+    let line = raw.split('\n').filter(|l| l.starts_with("Tcp:")).next_back()?;
+    let fields: Vec<&str> = line.split_whitespace().collect();
+    if fields.len() <= 7 {
+        return None;
+    }
+    Some(Conn {
+        max_conn: fields[4].parse().ok()?,
+        fail: fields[7].parse().ok()?,
+    })
+}
+
+/// /proc/diskstats(Dart `DiskIO.parse`):dev 第 3 列,读/写扇区第 6/10 列,
+/// 跳过 loop 设备与畸形行
+pub fn parse_diskio(raw: &str) -> Vec<DiskIoPiece> {
+    raw.split('\n')
+        .filter_map(|line| {
+            let fields: Vec<&str> = line.split_whitespace().collect();
+            if fields.len() < 10 {
+                return None;
+            }
+            let dev = fields[2];
+            if dev.starts_with("loop") {
+                return None;
+            }
+            Some(DiskIoPiece {
+                dev: dev.to_string(),
+                sectors_read: fields[5].parse().ok()?,
+                sectors_write: fields[9].parse().ok()?,
+            })
+        })
+        .collect()
+}
+
+/// power_supply uevent 多段输出(Dart `Batteries.parse`):空行分段,
+/// 每段为 KEY=VALUE 列表
+pub fn parse_batteries(raw: &str, only_li_poly: bool) -> Vec<Battery> {
+    let mut batteries = Vec::new();
+    let mut block: Vec<&str> = Vec::new();
+    for line in raw.split('\n') {
+        if !line.is_empty() {
+            block.push(line);
+            continue;
+        }
+        if let Some(battery) = parse_battery_block(&block)
+            && (!only_li_poly || battery.is_li_poly())
+        {
+            batteries.push(battery);
+        }
+        block.clear();
+    }
+    batteries
+}
+
+fn parse_battery_block(lines: &[&str]) -> Option<Battery> {
+    if lines.is_empty() {
+        return None;
+    }
+    let mut map = std::collections::HashMap::new();
+    for line in lines {
+        let parts: Vec<&str> = line.split('=').collect();
+        if parts.len() == 2 {
+            map.insert(parts[0], parts[1]);
+        }
+    }
+    Some(Battery {
+        percent: map.get("POWER_SUPPLY_CAPACITY").and_then(|v| v.parse().ok()),
+        status: BatteryStatus::parse(map.get("POWER_SUPPLY_STATUS").copied()),
+        name: map
+            .get("POWER_SUPPLY_MODEL_NAME")
+            .or_else(|| map.get("POWER_SUPPLY_NAME"))
+            .map(|s| s.to_string()),
+        cycle: map.get("POWER_SUPPLY_CYCLE_COUNT").and_then(|v| v.parse().ok()),
+        tech: map.get("POWER_SUPPLY_TECHNOLOGY").map(|s| s.to_string()),
+    })
+}
+
+/// `sensors` 输出(Dart `SensorItem.parse`):空行分段,
+/// 每段至少 3 行 [device, adapter, detail...]
+pub fn parse_sensors(raw: &str) -> Vec<SensorItem> {
+    let mut groups: Vec<Vec<&str>> = vec![Vec::new()];
+    for line in raw.split('\n') {
+        if line.is_empty() {
+            groups.push(Vec::new());
+        } else {
+            groups.last_mut().unwrap().push(line);
+        }
+    }
+
+    groups
+        .into_iter()
+        .filter(|lines| lines.len() >= 3)
+        .map(|lines| {
+            let adapter = lines[1].split(':').next_back().unwrap_or("").trim().to_string();
+            let details = lines[2..]
+                .iter()
+                .filter_map(|line| {
+                    let parts: Vec<&str> = line.split(':').collect();
+                    if parts.len() < 2 {
+                        return None;
+                    }
+                    Some((parts[0].trim().to_string(), parts[1].trim().to_string()))
+                })
+                .collect();
+            SensorItem {
+                device: lines[0].to_string(),
+                adapter,
+                details,
+            }
+        })
+        .collect()
+}
+
+/// /proc/cpuinfo 的 model name 行(Dart `CpuBrand.parse`):型号 → 出现次数,
+/// 保持首次出现顺序
+pub fn parse_cpu_brand(raw: &str) -> Vec<(String, u32)> {
+    let mut brands: Vec<(String, u32)> = Vec::new();
+    for line in raw.split('\n') {
+        if !line.contains("model name") {
+            continue;
+        }
+        let model = line.split(':').next_back().unwrap_or("").trim().to_string();
+        match brands.iter_mut().find(|(name, _)| *name == model) {
+            Some((_, count)) => *count += 1,
+            None => brands.push((model, 1)),
+        }
+    }
+    brands
+}

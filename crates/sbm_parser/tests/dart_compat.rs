@@ -497,3 +497,311 @@ fn windows_parse_net_speed_delta() {
     assert_eq!(*rx, 2000.0);
     assert_eq!(*tx, 1000.0);
 }
+
+// ---------- Conn:conn_test.dart ----------
+
+/// Dart 'Conn.parse reads MaxConn and AttemptFails from /proc/net/snmp'
+#[test]
+fn conn_parse() {
+    let raw = "Tcp: RtoAlgorithm RtoMin RtoMax MaxConn ActiveOpens PassiveOpens AttemptFails EstabResets CurrEstab InSegs OutSegs RetransSegs InErrs OutRsts InCsumErrors\nTcp: 1 200 120000 -1 11 22 33 44 55 66 77 88 99 111 222";
+    let conn = linux::parse_conn(raw).unwrap();
+    assert_eq!(conn.max_conn, -1);
+    assert_eq!(conn.fail, 33);
+}
+
+/// Dart 'Conn.parse rejects truncated/non-numeric TCP rows'
+#[test]
+fn conn_parse_invalid() {
+    assert!(linux::parse_conn("Tcp: 1 2 3").is_none());
+    assert!(linux::parse_conn("Tcp: 1 200 120000 unknown 11 22 invalid 44").is_none());
+}
+
+// ---------- Uptime:uptime_test.dart ----------
+
+#[test]
+fn uptime_parse_formats() {
+    use sbm_parser::common::parse_uptime;
+    let cases = [
+        ("19:39:15 up 61 days, 18:16,  1 user,  load average: 0.00, 0.00, 0.00", Some("61 days, 18:16")),
+        ("19:39:15 up 1 day, 2:34,  1 user,  load average: 0.00, 0.00, 0.00", Some("1 day, 2:34")),
+        ("19:39:15 up 2:34,  1 user,  load average: 0.00, 0.00, 0.00", Some("2:34")),
+        ("19:39:15 up 34 min,  1 user,  load average: 0.00, 0.00, 0.00", Some("34 min")),
+        ("19:39:15 up 5 days,  1 user,  load average: 0.00, 0.00, 0.00", Some("5 days")),
+        ("invalid uptime format", None),
+        ("", None),
+    ];
+    for (raw, expect) in cases {
+        assert_eq!(parse_uptime(raw).as_deref(), expect, "input: {:?}", raw);
+    }
+}
+
+// ---------- DiskIO:disk.dart DiskIO.parse ----------
+
+#[test]
+fn diskio_parse() {
+    let raw = "\
+   7       0 loop0 55 0 2170 42 0 0 0 0 0 80 42 0 0 0 0 0 0
+ 259       0 nvme0n1 1234 0 567890 100 4321 0 98765 200 0 300 400 0 0 0 0 0 0
+   8       0 sda 111 0 22222 10 333 0 44444 20 0 30 40 0 0 0 0 0 0";
+    let pieces = linux::parse_diskio(raw);
+    assert_eq!(pieces.len(), 2); // loop 设备跳过
+    assert_eq!(pieces[0].dev, "nvme0n1");
+    assert_eq!(pieces[0].sectors_read, 567890);
+    assert_eq!(pieces[0].sectors_write, 98765);
+    assert_eq!(pieces[1].dev, "sda");
+}
+
+// ---------- 电池:battery_test.dart ----------
+
+/// Dart 'parse battery':7 个 power_supply 段全部解析(不过滤)
+#[test]
+fn battery_parse_seven_supplies() {
+    let raw = include_str!("fixtures/power_supply.txt");
+    let all = linux::parse_batteries(raw, false);
+    assert_eq!(all.len(), 7);
+
+    // 首块:73%、放电中、Li-poly、cycle 1
+    let first = &all[0];
+    assert_eq!(first.percent, Some(73));
+    assert_eq!(first.status, BatteryStatus::Discharging);
+    assert_eq!(first.tech.as_deref(), Some("Li-poly"));
+    assert_eq!(first.cycle, Some(1));
+    assert!(first.is_li_poly());
+
+    // App 实际调用只保留 Li-poly
+    let li_poly = linux::parse_batteries(raw, true);
+    assert_eq!(li_poly.len(), 1);
+}
+
+/// Windows Win32_Battery(server_status_update_req._parseWindowsBatteries)
+#[test]
+fn battery_parse_windows() {
+    let raw = r#"{"EstimatedChargeRemaining": 88, "BatteryStatus": 6}"#;
+    let batteries = windows::parse_batteries(raw);
+    assert_eq!(batteries.len(), 1);
+    assert_eq!(batteries[0].percent, Some(88));
+    assert_eq!(batteries[0].status, BatteryStatus::Charging);
+}
+
+// ---------- Sensors:sensors_test.dart ----------
+
+/// Dart 'parse sensors1'
+#[test]
+fn sensors_parse_1() {
+    let sensors = linux::parse_sensors(include_str!("fixtures/sensors1.txt"));
+    let devices: Vec<&str> = sensors.iter().map(|s| s.device.as_str()).collect();
+    assert_eq!(devices, ["coretemp-isa-0000", "acpitz-acpi-0", "iwlwifi_1-virtual-0", "nvme-pci-0400"]);
+    let adapters: Vec<&str> = sensors.iter().map(|s| s.adapter.as_str()).collect();
+    assert_eq!(adapters, ["ISA adapter", "ACPI interface", "Virtual device", "PCI adapter"]);
+    let summaries: Vec<Option<&str>> = sensors.iter().map(|s| s.summary()).collect();
+    assert_eq!(summaries, [
+        Some("+56.0°C  (high = +105.0°C, crit = +105.0°C)"),
+        Some("+27.8°C  (crit = +119.0°C)"),
+        Some("+56.0°C"),
+        Some("+45.9°C  (low  = -273.1°C, high = +83.8°C)"),
+    ]);
+}
+
+/// Dart 'parse sensors2'
+#[test]
+fn sensors_parse_2() {
+    let sensors = linux::parse_sensors(include_str!("fixtures/sensors2.txt"));
+    let devices: Vec<&str> = sensors.iter().map(|s| s.device.as_str()).collect();
+    assert_eq!(devices, ["asusec-isa-0000", "nct6798-isa-0290", "nvme-pci-0400", "k10temp-pci-00c3"]);
+    let summaries: Vec<Option<&str>> = sensors.iter().map(|s| s.summary()).collect();
+    assert_eq!(summaries, [
+        Some("1.26 V"),
+        Some("1.19 V  (min =  +0.00 V, max =  +1.74 V)"),
+        Some("+45.9°C  (low  = -273.1°C, high = +69.8°C)"),
+        Some("+44.9°C"),
+    ]);
+}
+
+// ---------- NVIDIA:nvidia_test.dart ----------
+
+/// Dart 'nvdia-smi'(内联 fixture)
+#[test]
+fn nvidia_parse_inline() {
+    let items = sbm_parser::gpu::nvidia_from_xml(include_str!("fixtures/nvidia_inline.xml"));
+    assert_eq!(items.len(), 1);
+    let item = &items[0];
+    assert_eq!(item.name, "NVIDIA GeForce RTX 3080 Ti");
+    assert_eq!(item.temp, 34);
+    assert_eq!(item.power, "24.55 W / 350.00 W");
+    assert_eq!(item.memory.total, 12288);
+    assert_eq!(item.memory.used, 352);
+    assert_eq!(item.memory.unit, "MiB");
+    let procs = &item.memory.processes;
+    assert_eq!(procs.len(), 3);
+    assert_eq!(procs[0].pid, 1575);
+    assert_eq!(procs[0].name, "/usr/lib/xorg/Xorg");
+    assert_eq!(procs[0].memory, 220);
+    assert_eq!(procs[1].pid, 1933);
+    assert_eq!(procs[1].name, "/usr/bin/gnome-shell");
+    assert_eq!(procs[1].memory, 34);
+    assert_eq!(procs[2].pid, 16484);
+    assert_eq!(procs[2].memory, 76);
+}
+
+/// Dart 'nvidia-smi with N/A':4 GPU
+#[test]
+fn nvidia_parse_multi_gpu() {
+    let items = sbm_parser::gpu::nvidia_from_xml(include_str!("fixtures/nvidia.xml"));
+    assert_eq!(items.len(), 4);
+}
+
+/// Dart 'nvidia-smi 2':1 GPU
+#[test]
+fn nvidia_parse_v2_format() {
+    let items = sbm_parser::gpu::nvidia_from_xml(include_str!("fixtures/nvidia2.xml"));
+    assert_eq!(items.len(), 1);
+}
+
+// ---------- AMD:amd_smi_test.dart ----------
+
+#[test]
+fn amd_parse_two_gpus() {
+    let raw = r#"[
+        {
+            "name": "AMD Radeon RX 7900 XTX",
+            "temp": 45,
+            "power_draw": 120,
+            "power_cap": 355,
+            "memory": {
+                "total": 24576,
+                "used": 1024,
+                "unit": "MB",
+                "processes": [
+                    {"pid": 2456, "name": "firefox", "memory": 512},
+                    {"pid": 3784, "name": "blender", "memory": 256}
+                ]
+            },
+            "utilization": 75,
+            "fan_speed": 1200,
+            "clock_speed": 2400
+        },
+        {
+            "card_model": "AMD Radeon RX 6800 XT",
+            "gpu_temp": "38°C",
+            "current_power": "85W",
+            "power_limit": "300W",
+            "vram": {"total_memory": 16384, "used_memory": 512},
+            "gpu_util": 25,
+            "fan_rpm": 800,
+            "sclk": 1800
+        }
+    ]"#;
+    let gpus = sbm_parser::gpu::amd_from_json(raw);
+    assert_eq!(gpus.len(), 2);
+
+    let g1 = &gpus[0];
+    assert_eq!(g1.name, "AMD Radeon RX 7900 XTX");
+    assert_eq!(g1.temp, 45);
+    assert_eq!(g1.power, "120W / 355W");
+    assert_eq!(g1.memory.total, 24576);
+    assert_eq!(g1.memory.used, 1024);
+    assert_eq!(g1.memory.unit, "MB");
+    assert_eq!(g1.memory.processes.len(), 2);
+    assert_eq!(g1.memory.processes[0].pid, 2456);
+    assert_eq!(g1.memory.processes[0].name, "firefox");
+    assert_eq!(g1.memory.processes[0].memory, 512);
+    assert_eq!(g1.utilization, 75);
+    assert_eq!(g1.fan_speed, 1200);
+    assert_eq!(g1.clock_speed, 2400);
+
+    let g2 = &gpus[1];
+    assert_eq!(g2.name, "AMD Radeon RX 6800 XT");
+    assert_eq!(g2.temp, 38);
+    assert_eq!(g2.power, "85W / 300W");
+    assert_eq!(g2.memory.total, 16384);
+    assert_eq!(g2.memory.used, 512);
+    assert_eq!(g2.memory.unit, "MB");
+    assert!(g2.memory.processes.is_empty());
+    assert_eq!(g2.utilization, 25);
+}
+
+/// Dart:非数组 / 非法 JSON → 空
+#[test]
+fn amd_parse_invalid() {
+    assert!(sbm_parser::gpu::amd_from_json("not json").is_empty());
+    assert!(sbm_parser::gpu::amd_from_json(r#"{"name": "x"}"#).is_empty());
+    assert!(sbm_parser::gpu::amd_from_json("No AMD GPU monitoring tools found").is_empty());
+}
+
+// ---------- SMART:disk_smart_test.dart ----------
+
+#[test]
+fn smart_parse_fixture() {
+    let disks = sbm_parser::smart::parse(include_str!("fixtures/smartctl.json"));
+    assert_eq!(disks.len(), 1);
+    let d = &disks[0];
+    assert_eq!(d.device, "/dev/sda");
+    assert_eq!(d.temperature, Some(35.0));
+    assert_eq!(d.power_on_hours, Some(17472));
+    assert_eq!(d.power_cycle_count, Some(1948));
+    assert!(!d.smart_attributes.is_empty());
+
+    let temp_attr = d.smart_attributes.get("Temperature_Celsius").unwrap();
+    assert_eq!(temp_attr.value, Some(65));
+    assert_eq!(temp_attr.worst, Some(39));
+    assert_eq!(temp_attr.raw_string.as_deref(), Some("35 (Min/Max 14/61)"));
+    assert!(temp_attr.flags.prefailure);
+    assert!(temp_attr.flags.updated_online);
+    assert!(!temp_attr.flags.performance);
+
+    let power_on = d.smart_attributes.get("Power_On_Hours").unwrap();
+    assert_eq!(power_on.raw_value.as_i64(), Some(17472));
+
+    assert!(d.smart_attributes.get("NonExistent").is_none());
+    assert_eq!(
+        d.smart_attributes.get("SSD_Life_Left").and_then(|a| a.raw_value.as_i64()),
+        Some(93)
+    );
+    assert_eq!(
+        d.smart_attributes.get("Lifetime_Writes_GiB").and_then(|a| a.raw_value.as_i64()),
+        Some(11520)
+    );
+    assert_eq!(
+        d.smart_attributes.get("Lifetime_Reads_GiB").and_then(|a| a.raw_value.as_i64()),
+        Some(12361)
+    );
+}
+
+// ---------- Btrfs RAID:btrfs_test.dart ----------
+
+#[test]
+fn disk_parse_btrfs_raid() {
+    let disks = linux::parse_disk(include_str!("fixtures/lsblk_btrfs.json"));
+    assert_eq!(disks.len(), 2);
+    let nvme1 = disks.iter().find(|d| d.path.contains("nvme1n1")).unwrap();
+    let nvme2 = disks.iter().find(|d| d.path.contains("nvme2n1")).unwrap();
+    // RAID 成员共享同一文件系统 UUID
+    assert_eq!(nvme1.uuid, nvme2.uuid);
+    // DiskUsage 语义:两个物理盘都计入
+    let (used, size) = disk_usage(&disks);
+    assert_eq!(size, nvme1.size + nvme2.size);
+    assert_eq!(used, nvme1.used + nvme2.used);
+}
+
+// ---------- 通用文本:server_status_update_req.dart ----------
+
+#[test]
+fn sys_version_and_hostname() {
+    use sbm_parser::common::*;
+    assert_eq!(
+        parse_sys_version("PRETTY_NAME=\"Ubuntu 22.04.3 LTS\"\n").as_deref(),
+        Some("Ubuntu 22.04.3 LTS")
+    );
+    assert_eq!(parse_sys_version("no equals here"), None);
+    assert_eq!(parse_hostname("  myhost \n").as_deref(), Some("myhost"));
+    assert_eq!(parse_hostname("   "), None);
+}
+
+#[test]
+fn cpu_brand_parse() {
+    let raw = "model name\t: Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz\nmodel name\t: Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz";
+    let brands = linux::parse_cpu_brand(raw);
+    assert_eq!(brands.len(), 1);
+    assert_eq!(brands[0].0, "Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz");
+    assert_eq!(brands[0].1, 2);
+}

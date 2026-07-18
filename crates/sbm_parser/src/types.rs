@@ -126,6 +126,180 @@ pub fn net_speed(pre: &NetIface, now: &NetIface, seconds: f64) -> Option<(f64, f
     Some((rx, tx))
 }
 
+/// TCP 连接统计(Dart `Conn`,来自 /proc/net/snmp)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Conn {
+    pub max_conn: i64,
+    pub fail: i64,
+}
+
+/// 磁盘 IO 累计扇区计数(Dart `DiskIOPiece`,不含时间戳——由调用方随采样记录)
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DiskIoPiece {
+    pub dev: String,
+    pub sectors_read: i64,
+    pub sectors_write: i64,
+}
+
+/// 电池状态(Dart `BatteryStatus`)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum BatteryStatus {
+    Charging,
+    Discharging,
+    Full,
+    Unknown,
+}
+
+impl BatteryStatus {
+    pub fn parse(status: Option<&str>) -> Self {
+        match status {
+            Some("Charging") => Self::Charging,
+            Some("Discharging") => Self::Discharging,
+            Some("Full") => Self::Full,
+            _ => Self::Unknown,
+        }
+    }
+}
+
+/// 电池(Dart `Battery`,来自 power_supply uevent / Win32_Battery)
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Battery {
+    pub percent: Option<i64>,
+    pub status: BatteryStatus,
+    pub name: Option<String>,
+    pub cycle: Option<i64>,
+    pub tech: Option<String>,
+}
+
+impl Battery {
+    /// Dart `Battery.isLiPoly`
+    pub fn is_li_poly(&self) -> bool {
+        self.tech.as_deref() == Some("Li-poly")
+    }
+}
+
+/// sensors 输出条目(Dart `SensorItem`);details 保持输出顺序
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SensorItem {
+    pub device: String,
+    pub adapter: String,
+    pub details: Vec<(String, String)>,
+}
+
+impl SensorItem {
+    /// Dart `SensorItem.summary`:首个 detail 的值
+    pub fn summary(&self) -> Option<&str> {
+        self.details.first().map(|(_, v)| v.as_str())
+    }
+}
+
+/// NVIDIA GPU(Dart `NvidiaSmiItem`)
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct NvidiaSmiItem {
+    pub name: String,
+    pub temp: i64,
+    /// 如 "24.55 W / 350.00 W";缺失时与 Dart 一致为 "null / null"
+    pub power: String,
+    pub memory: GpuMem,
+    pub percent: i64,
+    pub fan_speed: i64,
+}
+
+/// AMD GPU(Dart `AmdSmiItem`)
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AmdSmiItem {
+    pub name: String,
+    pub temp: i64,
+    pub power: String,
+    pub memory: GpuMem,
+    pub utilization: i64,
+    pub fan_speed: i64,
+    pub clock_speed: i64,
+}
+
+/// GPU 显存(Dart `NvidiaSmiMem`/`AmdSmiMem`)
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct GpuMem {
+    pub total: i64,
+    pub used: i64,
+    pub unit: String,
+    pub processes: Vec<GpuMemProcess>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct GpuMemProcess {
+    pub pid: i64,
+    pub name: String,
+    pub memory: i64,
+}
+
+/// SMART 磁盘健康(Dart `DiskSmart`)
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DiskSmart {
+    pub device: String,
+    pub healthy: Option<bool>,
+    pub temperature: Option<f64>,
+    pub model: Option<String>,
+    pub serial: Option<String>,
+    pub power_on_hours: Option<i64>,
+    pub power_cycle_count: Option<i64>,
+    pub raw_data: serde_json::Value,
+    pub smart_attributes: BTreeMap<String, SmartAttribute>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SmartAttribute {
+    pub id: Option<i64>,
+    pub name: String,
+    pub value: Option<i64>,
+    pub worst: Option<i64>,
+    pub thresh: Option<i64>,
+    pub when_failed: Option<String>,
+    pub raw_value: serde_json::Value,
+    pub raw_string: Option<String>,
+    pub flags: SmartAttributeFlags,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct SmartAttributeFlags {
+    pub value: Option<i64>,
+    pub string: Option<String>,
+    pub prefailure: bool,
+    pub updated_online: bool,
+    pub performance: bool,
+    pub error_rate: bool,
+    pub event_count: bool,
+    pub auto_keep: bool,
+}
+
+/// 磁盘用量聚合(Dart `DiskUsage.parse`):按 path:kname 去重,
+/// 自身有数据的节点不再下钻子设备
+pub fn disk_usage(disks: &[Disk]) -> (u64, u64) {
+    fn visit(disk: &Disk, seen: &mut Vec<String>, used: &mut u64, size: &mut u64) {
+        if !disk_should_calc(&disk.path, &disk.mount) {
+            return;
+        }
+        let unique = format!("{}:{}", disk.path, disk.kname.as_deref().unwrap_or("unknown"));
+        if !seen.contains(&unique) {
+            seen.push(unique);
+            *used += disk.used;
+            *size += disk.size;
+        }
+        if disk.used != 0 || disk.size != 0 {
+            return;
+        }
+        for child in &disk.children {
+            visit(child, seen, used, size);
+        }
+    }
+    let (mut seen, mut used, mut size) = (Vec::new(), 0, 0);
+    for disk in disks {
+        visit(disk, &mut seen, &mut used, &mut size);
+    }
+    (used, size)
+}
+
 /// 温度表,摄氏度(Dart `Temperatures`)
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct Temperatures(pub BTreeMap<String, f64>);

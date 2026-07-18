@@ -99,6 +99,14 @@ Dart 侧以同一 fixture 断言 FFI 返回值一致后,才删除 Dart 实现。
 3. **Phase 3**:subtree merge 并入 App 仓库形成 monorepo,归档旧仓库,
    清理 `packages/server_box_monitor`;App 脚本生成切换到共享命令清单
 
+> **进度附注(2026-07)**:Phase 1–3 已完成。原定后置的热区解析
+> (GPU NVIDIA/AMD、SMART、battery、sensors、diskio、conn、uptime、
+> sys/host/cpuBrand)也已全部迁入 `sbm_parser` 并通过 Dart fixture
+> 与 FFI 双跑锁定。命令清单以 `core` 标记区分开销:monitor 周期采集
+> 仅执行 core 命令,GPU/SMART 等高开销命令由 App 按需执行。
+> 剩余工作:App 生产代码逐模块切换到 FFI 并删除 Dart 解析实现、
+> 脚本生成切换到 `command_specs`、CI 五平台交叉编译验证。
+
 ## 后果
 
 **收益**

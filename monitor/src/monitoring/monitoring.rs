@@ -111,11 +111,12 @@ async fn collect_metrics(config: &Config) -> Result<SystemMetrics> {
     Ok(adapt_status(system, status, config))
 }
 
-/// 执行 sbm_parser 命令清单(单一事实来源,见 ADR 0001),按 key 收集输出
+/// 执行 sbm_parser 命令清单(单一事实来源,见 ADR 0001),按 key 收集输出。
+/// 仅执行 core 命令:GPU/SMART 等高开销命令不适合周期采集
 async fn execute_commands(system: SystemType) -> Result<HashMap<String, String>> {
     let mut raw = HashMap::new();
 
-    for spec in commands::commands(system) {
+    for spec in commands::commands(system).iter().filter(|s| s.core) {
         let result = tokio::task::spawn_blocking(move || {
             if cfg!(target_os = "windows") {
                 Command::new("powershell").arg("-Command").arg(spec.cmd).output()
