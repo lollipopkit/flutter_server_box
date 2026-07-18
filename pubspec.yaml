@@ -60,6 +60,9 @@ dependencies:
     path: packages/plain_notification_token
   fl_lib:
     path: packages/fl_lib
+  sbm_ffi:
+    path: rust_builder
+  flutter_rust_bridge: 2.12.0
 
 dev_dependencies:
   analyzer: ^9.0.0
