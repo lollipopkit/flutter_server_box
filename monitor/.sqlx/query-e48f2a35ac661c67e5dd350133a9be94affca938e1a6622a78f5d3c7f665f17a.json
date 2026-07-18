@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT MIN(timestamp) FROM system_metrics",
+  "describe": {
+    "columns": [
+      {
+        "name": "MIN(timestamp)",
+        "ordinal": 0,
+        "type_info": "Datetime"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "e48f2a35ac661c67e5dd350133a9be94affca938e1a6622a78f5d3c7f665f17a"
+}

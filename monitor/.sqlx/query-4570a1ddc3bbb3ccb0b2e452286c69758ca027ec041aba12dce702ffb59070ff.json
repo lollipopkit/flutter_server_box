@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO velocity_metrics (\n                timestamp, server_name, network_rx_speed, network_tx_speed, cpu_usage_percent\n            ) VALUES (?, ?, ?, ?, ?)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "4570a1ddc3bbb3ccb0b2e452286c69758ca027ec041aba12dce702ffb59070ff"
+}

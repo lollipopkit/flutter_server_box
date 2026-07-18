@@ -1,0 +1,54 @@
+{
+   "blockdevices": [
+      {
+         "fstype": "LVM2_member",
+         "mountpoint": null,
+         "fssize": null,
+         "fsused": null,
+         "fsavail": null,
+         "fsuse%": null
+      },{
+         "fstype": "ext4",
+         "mountpoint": "/",
+         "fssize": 982141468672,
+         "fsused": 552718364672,
+         "fsavail": 379457622016,
+         "fsuse%": "56%"
+      },{
+         "fstype": "swap",
+         "mountpoint": "[SWAP]",
+         "fssize": null,
+         "fsused": null,
+         "fsavail": null,
+         "fsuse%": null
+      },{
+         "fstype": null,
+         "mountpoint": null,
+         "fssize": null,
+         "fsused": null,
+         "fsavail": null,
+         "fsuse%": null
+      },{
+         "fstype": "vfat",
+         "mountpoint": "/boot/efi",
+         "fssize": 535805952,
+         "fsused": 6127616,
+         "fsavail": 529678336,
+         "fsuse%": "1%"
+      },{
+         "fstype": "ext2",
+         "mountpoint": "/boot",
+         "fssize": 477210624,
+         "fsused": 161541120,
+         "fsavail": 290084864,
+         "fsuse%": "34%"
+      },{
+         "fstype": "crypto_LUKS",
+         "mountpoint": null,
+         "fssize": null,
+         "fsused": null,
+         "fsavail": null,
+         "fsuse%": null
+      }
+   ]
+}

@@ -1,0 +1,90 @@
+# ServerBox Monitor Configuration
+# TOML format configuration file example
+
+# Database configuration
+database_url = "sqlite:serverbox_monitor.db"
+
+# JWT secret for authentication
+jwt_secret = "your-secret-key-change-this"
+
+# Server configuration
+[server]
+host = "0.0.0.0"
+port = 3770
+
+# Optional TLS configuration
+# [server.tls]
+# cert_path = "/path/to/cert.pem"
+# key_path = "/path/to/key.pem"
+
+# Monitoring configuration
+[monitoring]
+interval_seconds = 7
+
+# Data retention and cleanup settings
+[monitoring.data_retention]
+# How long to keep system metrics (in days)
+metrics_days = 30
+
+# How long to keep alert records (in days)  
+alerts_days = 90
+
+# How often to run cleanup (in hours)
+cleanup_interval_hours = 24
+
+# Monitoring rules
+[[monitoring.rules]]
+name = "High CPU Usage"
+monitor_type = "cpu"
+threshold = ">=77%"
+matcher = "cpu"
+
+[[monitoring.rules]]
+name = "High Memory Usage"
+monitor_type = "memory"
+threshold = ">=85%"
+matcher = "memory"
+
+[[monitoring.rules]]
+name = "High Disk Usage"
+monitor_type = "disk"
+threshold = ">=90%"
+matcher = "disk"
+
+# Push notification configurations
+[[push]]
+name = "webhook"
+push_type = "webhook"
+url = "http://localhost:5700"
+method = "POST"
+
+[push.headers]
+"Content-Type" = "application/json"
+
+[push.body_template]
+message = "Server {{name}}: {{message}}"
+
+[[push]]
+name = "serverchan"
+push_type = "serverchan"
+sc_key = ""
+title = "ServerBox Monitor"
+desp = "{{message}}"
+
+[[push]]
+name = "bark"
+push_type = "bark"
+server = "https://api.day.app"
+key = ""
+title = "ServerBox Monitor"
+body = "{{message}}"
+level = "active"
+
+[[push]]
+name = "ios"
+push_type = "ios"
+token = ""
+title = "ServerBox Monitor"
+content = "{{message}}"
+body_regex = ".*"
+code = 200

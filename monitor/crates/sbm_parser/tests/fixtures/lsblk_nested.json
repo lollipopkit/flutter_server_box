@@ -1,0 +1,53 @@
+{
+  "blockdevices": [
+    {
+      "name": "nvme0n1",
+      "kname": "nvme0n1",
+      "path": "/dev/nvme0n1",
+      "fstype": null,
+      "mountpoint": null,
+      "fssize": null,
+      "fsused": null,
+      "fsavail": null,
+      "fsuse%": null,
+      "children": [
+        {
+          "name": "nvme0n1p1",
+          "kname": "nvme0n1p1",
+          "path": "/dev/nvme0n1p1",
+          "fstype": "vfat",
+          "mountpoint": "/boot/efi",
+          "fssize": "512000000",
+          "fsused": "25600000",
+          "fsavail": "486400000",
+          "fsuse%": "5%",
+          "uuid": "98765432-dcba-4321-dcba-0987654321fe"
+        },
+        {
+          "name": "nvme0n1p2",
+          "kname": "nvme0n1p2",
+          "path": "/dev/nvme0n1p2",
+          "fstype": "ext4",
+          "mountpoint": "/",
+          "fssize": "500000000000",
+          "fsused": "225000000000",
+          "fsavail": "275000000000",
+          "fsuse%": "45%",
+          "uuid": "abcdef12-3456-7890-abcd-ef1234567890"
+        },
+        {
+          "name": "nvme0n1p3",
+          "kname": "nvme0n1p3",
+          "path": "/dev/nvme0n1p3",
+          "fstype": "ext4",
+          "mountpoint": "/boot",
+          "fssize": "1000000000",
+          "fsused": "500000000",
+          "fsavail": "500000000",
+          "fsuse%": "50%",
+          "uuid": "12345678-abcd-1234-abcd-1234567890ab"
+        }
+      ]
+    }
+  ]
+}

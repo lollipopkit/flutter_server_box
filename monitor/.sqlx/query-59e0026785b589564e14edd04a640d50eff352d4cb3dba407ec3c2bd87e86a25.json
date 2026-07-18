@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO alerts (timestamp, server_name, rule_name, alert_type, message, threshold_value, actual_value) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "59e0026785b589564e14edd04a640d50eff352d4cb3dba407ec3c2bd87e86a25"
+}
