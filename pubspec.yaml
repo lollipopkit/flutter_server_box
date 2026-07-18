@@ -61,7 +61,7 @@ dependencies:
   fl_lib:
     path: packages/fl_lib
   sbm_ffi:
-    path: rust_builder
+    path: crates/sbm_ffi
   flutter_rust_bridge: 2.12.0
 
 dev_dependencies:

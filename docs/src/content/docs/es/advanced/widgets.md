@@ -3,11 +3,11 @@ title: Widgets de Pantalla de Inicio
 description: Añade widgets de estado del servidor a tu pantalla de inicio
 ---
 
-Requiere tener instalado [ServerBox Monitor](https://github.com/lollipopkit/server_box_monitor) en tus servidores.
+Requiere tener instalado [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) en tus servidores.
 
 ## Requisitos Previos
 
-Instala primero ServerBox Monitor en tu servidor. Consulta la [Wiki de ServerBox Monitor](https://github.com/lollipopkit/server_box_monitor/wiki/Home) para ver las instrucciones de configuración.
+Instala primero ServerBox Monitor en tu servidor. Consulta la [Wiki de ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README.md) para ver las instrucciones de configuración.
 
 Tras la instalación, tu servidor debería tener:
 - Un punto de acceso (endpoint) HTTP/HTTPS

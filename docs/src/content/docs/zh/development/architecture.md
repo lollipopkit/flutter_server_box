@@ -71,6 +71,15 @@ Server Box 遵循整洁架构 (Clean Architecture) 原则，在数据层、领�
 4. 状态更改触发 UI 重新构建
 5. 组件反映最新状态
 
+## 状态解析：共享 Rust 库
+
+服务器状态解析(CPU、内存、磁盘、网络、温度、GPU、SMART 等)在
+Rust crate `crates/sbm_parser` 中实现一次,App 经 flutter_rust_bridge
+(`crates/sbm_ffi`,生成的 Dart 位于 `lib/src/rust/`)调用;
+服务端 monitor 直接依赖同一 crate,两端解析行为始终一致。
+解析器是纯函数：只返回原始计数,差分/滑窗计算(如网速)同样是纯函数
+——FFI 边界不持有可变状态。
+
 ## 自定义依赖
 
 项目使用了多个自定义分支以扩展功能：

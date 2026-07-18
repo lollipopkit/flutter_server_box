@@ -92,6 +92,17 @@ class ServerModel {
 }
 ```
 
+
+## Rust 绑定 (flutter_rust_bridge)
+
+修改 `crates/sbm_ffi/src/api` 后,重新生成 Dart 绑定：
+
+```bash
+flutter_rust_bridge_codegen generate
+```
+
+配置位于 `flutter_rust_bridge.yaml`;输出到 `lib/src/rust/`(生成文件勿手改)。
+
 ## 生成本地化代码
 
 ```bash

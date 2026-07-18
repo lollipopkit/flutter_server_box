@@ -1,0 +1,29 @@
+version: 2
+updates:
+  # Rust workspace(monitor + 共享 crate + FFI)
+  - package-ecosystem: cargo
+    directories:
+      - "/monitor"
+      - "/crates/sbm_parser"
+      - "/crates/sbm_ffi"
+    schedule:
+      interval: weekly
+    groups:
+      rust-deps:
+        patterns:
+          - "*"
+
+  # monitor web 前端
+  - package-ecosystem: npm
+    directory: "/monitor/frontend"
+    schedule:
+      interval: weekly
+    groups:
+      frontend-deps:
+        patterns:
+          - "*"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly

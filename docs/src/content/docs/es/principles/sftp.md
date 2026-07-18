@@ -437,54 +437,8 @@ try {
 }
 ```
 
-## Optimizaciones de Rendimiento
+## Notas de Rendimiento
 
-### Caché de Directorios
-
-```dart
-class DirectoryCache {
-  final Map<String, CachedDirectory> _cache = {};
-  final Duration ttl = Duration(minutes: 5);
-
-  Future<List<SftpFile>> list(String path) async {
-    final cached = _cache[path];
-    if (cached != null && !cached.isExpired) {
-      return cached.files;
-    }
-
-    final files = await sftp.listDir(path);
-    _cache[path] = CachedDirectory(files);
-    return files;
-  }
-}
-```
-
-### Carga Perezosa (Lazy Loading)
-
-Para directorios grandes (>1000 elementos):
-
-```dart
-List<SftpFile> loadPage(String path, int page, int pageSize) {
-  final all = cache[path] ?? [];
-  final start = page * pageSize;
-  final end = start + pageSize;
-  return all.sublist(start, end.clamp(0, all.length));
-}
-```
-
-### Paginación
-
-```dart
-class PaginatedDirectory {
-  static const pageSize = 100;
-
-  Future<List<SftpFile>> getPage(int page) async {
-    final offset = page * pageSize;
-    return await sftp.listDir(
-      path,
-      offset: offset,
-      limit: pageSize,
-    );
-  }
-}
-```
+- SFTP reutiliza la conexión SSH existente; no se abre una conexión separada.
+- Los listados de directorios se obtienen al navegar y se actualizan bajo demanda — no hay capa de caché con TTL.
+- Las transferencias grandes se ejecutan en un isolate en segundo plano para mantener la UI fluida.

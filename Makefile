@@ -78,7 +78,7 @@ test:
 
 test-one:
 	@if [ -z "$(TEST)" ]; then \
-		echo 'TEST is required. Example: make test-one TEST=test/cpu_test.dart'; \
+		echo 'TEST is required. Example: make test-one TEST=test/disk_test.dart'; \
 		exit 1; \
 	fi
 	$(FLUTTER) test $(TEST)

@@ -71,6 +71,16 @@ User Action → Widget → Provider → Service/Store → Model Update → UI Re
 3. State change triggers UI rebuild
 4. New state reflected in widget
 
+## Status Parsing: Shared Rust Library
+
+Server status parsing (CPU, memory, disk, network, temperatures, GPU, SMART, …)
+is implemented once in the Rust crate `crates/sbm_parser` and used by the app
+through flutter_rust_bridge (`crates/sbm_ffi`, generated Dart in `lib/src/rust/`).
+The server-side monitor uses the same crate directly, so both ends always parse
+identically. Parsers are pure functions: they return raw counters, and
+diff/windowed computations (e.g. network speed) are pure functions too — no
+mutable state crosses the FFI boundary.
+
 ## Custom Dependencies
 
 The project uses several custom forks to extend functionality:

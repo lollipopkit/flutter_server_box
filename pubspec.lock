@@ -1286,7 +1286,7 @@ packages:
   sbm_ffi:
     dependency: "direct main"
     description:
-      path: rust_builder
+      path: "crates/sbm_ffi"
       relative: true
     source: path
     version: "0.0.1"

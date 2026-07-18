@@ -7,57 +7,30 @@ Server Box en plataformas de escritorio ofrece funciones de productividad adicio
 
 ## macOS
 
-### Integración en la Barra de Menús
+### Barra de menús nativa
 
-- Estado rápido del servidor en la barra de menús
-- Acceso al servidor con un solo clic
-- Modo compacto para una mínima distracción
-- Estilo nativo de la barra de menús de macOS
+Menús de aplicación nativos con atajos estándar:
 
-### Persistencia del Estado de la Ventana
+- **Server Box**: Acerca de, Ajustes (⌘,), Salir (⌘Q)
+- **Navegar**: Cambiar entre pestañas de inicio
+- **Info**: Enlaces del proyecto
 
-- Recuerda la posición y el tamaño de la ventana
-- Restaura la sesión anterior al iniciar
-- Soporte para múltiples monitores
+### Gestión de ventanas
 
-### Funciones Nativas
-
-- **Barra de título**: Opción de barra de título personalizada o del sistema
-- **Modo pantalla completa**: Monitorización dedicada del servidor
-- **Atajos de teclado**: Atajos nativos de macOS
-- **Touch Bar** (dispositivos compatibles): Acciones rápidas
+- Recuerda el tamaño de la ventana entre inicios
 
 ## Linux
 
-### Integración Nativa
-
-- Soporte para bandeja del sistema (systray)
-- Integración con notificaciones de escritorio
-- Integración con el selector de archivos
-
-### Gestión de Ventanas
-
-- Soporte para X11 y Wayland
-- Compatible con gestores de ventanas en mosaico (tiling)
-- Opción de decoraciones de ventana personalizadas
+- Compatibilidad con X11 y Wayland
+- Integración del selector de archivos
+- Distribuido como AppImage
 
 ## Windows
 
-### Funciones
-
-- Integración en la bandeja del sistema
-- Acciones rápidas en la Jump List
 - Controles de ventana nativos
-- Opción de inicio automático al arrancar
+- Distribuido como zip portable
 
-## Funciones de Escritorio Multiplataforma
-
-### Atajos de Teclado
-
-- **Cmd/Ctrl + N**: Nuevo servidor
-- **Cmd/Ctrl + W**: Cerrar pestaña
-- **Cmd/Ctrl + T**: Nueva pestaña de terminal
-- **Cmd/Ctrl + ,**: Ajustes
+## Funciones de escritorio multiplataforma
 
 ### Temas
 
@@ -66,15 +39,9 @@ Server Box en plataformas de escritorio ofrece funciones de productividad adicio
 - Tema AMOLED (negro puro)
 - Tema del sistema (sigue al SO)
 
-### Múltiples Ventanas
+### Ventajas sobre el móvil
 
-- Abrir varios servidores en ventanas separadas
-- Arrastrar pestañas a una nueva ventana
-- Comparar estadísticas de servidores en paralelo
-
-### Ventajas sobre el Móvil
-
-- Pantalla más grande para monitorización
+- Pantalla más grande para monitorizar
 - Teclado completo para la terminal
 - Operaciones de archivos más rápidas
 - Mejor multitarea

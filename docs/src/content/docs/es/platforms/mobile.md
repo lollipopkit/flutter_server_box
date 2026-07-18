@@ -55,23 +55,17 @@ Se aplican limitaciones de segundo plano:
 
 ## Notificaciones Push
 
-Recibe notificaciones para:
-
-- Alertas de servidor fuera de línea
-- Avisos de alto uso de recursos
-- Alertas de finalización de tareas
-
-Configúralo en Ajustes > Notificaciones.
+Las alertas del servidor (desconexión, umbral superado) las envía
+[ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor)
+ejecutándose en tus servidores — las reglas de alerta y los canales de push se configuran allí.
 
 ## Funciones de UI Móvil
 
-- **Deslizar para refrescar**: Actualiza el estado del servidor
-- **Acciones de deslizamiento**: Operaciones rápidas de servidor
+- **Deslizar para actualizar**: Actualizar el estado del servidor
 - **Modo horizontal**: Mejor experiencia de terminal
 - **Teclado virtual**: Atajos de terminal
 
 ## Integración de Archivos
 
-- **App Archivos (iOS)**: Acceso directo SFTP desde Archivos
-- **Storage Access Framework (Android)**: Comparte archivos con otras apps
-- **Selector de documentos**: Selección de archivos sencilla
+- **Selector de documentos**: Elegir archivos locales para subir por SFTP e importar/exportar copias de seguridad
+- **Compartir**: Exportar archivos a otras aplicaciones

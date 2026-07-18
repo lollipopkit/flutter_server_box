@@ -5,7 +5,24 @@ description: Server Box のコードベースを理解する
 
 Server Box プロジェクトは、関心の分離を明確にしたモジュール式のアーキテクチャを採用しています。
 
-## ディレクトリ構造
+## Monorepo レイアウト
+
+```
+flutter_server_box/
+├── lib/               # Flutter アプリ(下記参照)
+├── crates/
+│   ├── sbm_parser/    # 共有ステータス解析ライブラリ(単一の情報源。
+│   │                  # アプリは FFI 経由、monitor は直接依存)
+│   └── sbm_ffi/       # flutter_rust_bridge バインディング crate + cargokit
+│                      # Flutter プラグインシェル(同一ディレクトリ)
+├── monitor/           # サーバーサイド監視(Rust サービス + React フロントエンド)
+├── packages/          # ベンダリングした Dart フォーク(path 依存)
+├── docs/              # このドキュメントサイト(Astro Starlight)
+├── website/           # プロジェクトサイト
+└── Cargo.toml         # Rust workspace ルート
+```
+
+## アプリのディレクトリ構造
 
 ```
 lib/
@@ -94,3 +111,11 @@ Hive ベースのローカルストレージ。
 - `xterm/` - ターミナルエミュレータ
 - `fl_lib/` - 共有ユーティリティ
 - `fl_build/` - ビルドシステム
+
+## Rust 側
+
+- `crates/sbm_parser/` - コマンドの生出力を構造化されたサーバーステータスに解析。
+  アプリ(FFI 経由)と monitor が共用し、両者の解析は常に一致します。
+- `crates/sbm_ffi/` - `sbm_parser` の薄い flutter_rust_bridge ラッパー。
+  生成された Dart 側は `lib/src/rust/` にあります。
+- `monitor/` - 独立した監視サービス。ドキュメントは `monitor/README.md`。

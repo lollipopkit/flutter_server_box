@@ -51,7 +51,7 @@ Please only download pkgs from the source that **you trust**!
   <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
 </div>
 
-- In order to push  server status to your portable device without opening ServerBox app (Such as **message push** and **home widget**), you need to install [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor) on your servers, and config it correctly. See [wiki](https://github.com/lollipopkit/server_box_monitor/wiki) for more details.
+- In order to push  server status to your portable device without opening ServerBox app (Such as **message push** and **home widget**), you need to install [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) on your servers, and config it correctly. See its [README](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README.md) for more details.
 - **Common issues** can be found in [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki).
 
 Before you open an issue, please read the following:

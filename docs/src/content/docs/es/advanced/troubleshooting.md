@@ -38,9 +38,12 @@ description: Soluciones a problemas frecuentes
 
 ### No se pueden escribir ciertos caracteres
 
-**Solución:** Ajustes → Tipo de teclado → Cambiar a `visiblePassword`
+**Soluciones:**
 
-Nota: Es posible que la entrada CJK (chino, japonés, coreano) no funcione tras este cambio.
+1. Usa la fila de teclado virtual de la terminal para las teclas que el teclado del sistema no puede enviar (Esc, Tab, combinaciones Ctrl/Alt, símbolos)
+2. Alterna el teclado del sistema con la tecla virtual **IME**
+3. Si un teclado de terceros falla, prueba el teclado predeterminado del sistema
+
 
 ## Problemas de la Aplicación
 

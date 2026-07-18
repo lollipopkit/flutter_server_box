@@ -437,54 +437,8 @@ try {
 }
 ```
 
-## パフォーマンスの最適化
+## パフォーマンスに関する補足
 
-### ディレクトリキャッシュ
-
-```dart
-class DirectoryCache {
-  final Map<String, CachedDirectory> _cache = {};
-  final Duration ttl = Duration(minutes: 5);
-
-  Future<List<SftpFile>> list(String path) async {
-    final cached = _cache[path];
-    if (cached != null && !cached.isExpired) {
-      return cached.files;
-    }
-
-    final files = await sftp.listDir(path);
-    _cache[path] = CachedDirectory(files);
-    return files;
-  }
-}
-```
-
-### レイジーロード
-
-巨大なディレクトリ (>1000 アイテム) の場合:
-
-```dart
-List<SftpFile> loadPage(String path, int page, int pageSize) {
-  final all = cache[path] ?? [];
-  final start = page * pageSize;
-  final end = start + pageSize;
-  return all.sublist(start, end.clamp(0, all.length));
-}
-```
-
-### ページネーション
-
-```dart
-class PaginatedDirectory {
-  static const pageSize = 100;
-
-  Future<List<SftpFile>> getPage(int page) async {
-    final offset = page * pageSize;
-    return await sftp.listDir(
-      path,
-      offset: offset,
-      limit: pageSize,
-    );
-  }
-}
-```
+- SFTP は既存の SSH 接続を再利用し、別接続は開きません。
+- ディレクトリ一覧はナビゲーション時に取得し、必要に応じて更新します — TTL キャッシュ層はありません。
+- 大きな転送はバックグラウンドの isolate で実行され、UI をブロックしません。

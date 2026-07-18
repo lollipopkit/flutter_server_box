@@ -4,6 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+A `Makefile` wraps most common tasks — run `make help` for the full list. Preferred shortcuts:
+
+- `make deps` / `make run` / `make analyze` (`flutter analyze lib test`)
+- `make gen` - build_runner + gen-l10n in one step
+- `make build PLATFORM=<android|ios|macos|linux|windows>` - wraps `dart run fl_build -p PLATFORM`
+- Release packaging (macOS DMG, Homebrew cask sync): `make release-macos-dmg`, `make package-dmg`, `make sync-homebrew-cask`
+
 ### Development
 
 - `flutter run` - Run the app in development mode
@@ -16,19 +23,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Testing
 
 - `flutter test` - Run unit tests
-- `flutter test test/battery_test.dart` - Run specific test file
+- `flutter test test/disk_test.dart` - Run specific test file (or `make test-one TEST=test/disk_test.dart`)
+- `cargo test --workspace` - Run all Rust tests (parser, FFI shell, monitor)
+
+### Rust / FFI
+
+- `cargo build -p sbm_ffi` - Build the FFI crate; required before running `flutter test test/frb_parser_test.dart` (`test/rust_lib_helper.dart` loads the dylib from `target/`)
+- `flutter_rust_bridge_codegen generate` - Regenerate FRB bindings after changing `crates/sbm_ffi/src/api` (config: `flutter_rust_bridge.yaml`; Dart output `lib/src/rust/`, do not edit generated code)
+- App builds link Rust via cargokit inside `crates/sbm_ffi/` (the crate and the Flutter FFI plugin glue share one directory), pinned to `flutter_rust_bridge: 2.12.0` in pubspec
 
 ## Architecture
 
 This is a Flutter application for managing Linux servers with the following key architectural components:
 
-### Monorepo Layout (Rust workspace, see `doc/adr/0001-monorepo-shared-parser.md`)
+### Monorepo Layout (Rust workspace)
 
 - `crates/sbm_parser/` - Shared status parser (single source of truth for command manifest + parsing; used by both the app via FFI and the server-side monitor). Behavior locked by `crates/sbm_parser/tests/dart_compat.rs`
-- `rust/` - `sbm_ffi`, flutter_rust_bridge binding layer (Dart side generated into `lib/src/rust/`)
+  - Parsing is pure functions: parsers emit raw counters; diff/windowed computation (speeds etc.) is provided as pure functions, mutable time-series state stays on the caller side. The FFI boundary holds no mutable state.
+  - The command manifest (cmd name → per-platform command, `SrvBoxSep.<cmd>` segmenting) lives here too; commands are flagged `core` vs on-demand (monitor periodically runs core only; GPU/SMART etc. are app-triggered)
+- `crates/sbm_ffi/` - flutter_rust_bridge binding crate + cargokit Flutter plugin glue in one directory (Dart side generated into `lib/src/rust/`)
 - `monitor/` - Server-side monitoring service (Rust + React frontend), has its own `monitor/CLAUDE.md`
 - Root `Cargo.toml` is the workspace; build/test all Rust with `cargo test --workspace`
 - FFI parity test: `flutter test test/frb_parser_test.dart` (requires `cargo build -p sbm_ffi` first)
+- Migration rule ("test as spec"): before moving a parsing module to Rust, port its Dart fixture tests to Rust; only delete the Dart implementation after the FFI result is asserted identical against the same fixtures
+- Remaining migration work: switch app production code module-by-module to FFI and delete Dart parsers, switch script generation to the shared `command_specs`, CI cross-compile verification for all five platforms
 
 ### Project Structure
 
@@ -40,6 +58,9 @@ This is a Flutter application for managing Linux servers with the following key 
 - `lib/view/` - UI layer with pages and widgets
 - `lib/generated/` - Generated localization files
 - `lib/hive/` - Hive adapters for local storage
+- `lib/src/rust/` - Generated FRB bindings (do not edit)
+- `packages/` - Vendored Dart forks referenced by path from pubspec (dartssh2, xterm, fl_lib, fl_build, etc.)
+- `website/` - Project website (Svelte + bun; deployed via `scripts/build-cloudflare-pages.sh`)
 
 ### Key Technologies
 

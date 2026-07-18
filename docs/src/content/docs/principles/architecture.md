@@ -29,6 +29,7 @@ Server Box follows a layered architecture with clear separation of concerns.
 ┌─────────────────────────────────────────────────┐
 │         External Integration Layer              │
 │  - SSH (dartssh2), Terminal (xterm), SFTP       │
+│  - Rust status parser (sbm_parser via FFI)      │
 │  - Platform-specific code (iOS, Android, etc.)  │
 └─────────────────────────────────────────────────┘
 ```
@@ -59,7 +60,7 @@ void main() {
 ### Home Page
 
 `HomePage` serves as navigation hub:
-- **Tabbed Interface**: Server, Snippet, Container, SSH
+- **Tabbed Interface**: Server, SSH, File, Snippet
 - **State Management**: Per-tab state
 - **Navigation**: Feature access
 
@@ -91,7 +92,8 @@ void main() {
 - `SettingStore`: App preferences
 - `ServerStore`: Server configurations
 - `SnippetStore`: Command snippets
-- `KeyStore`: SSH keys
+- `PrivateKeyStore`: SSH keys
+- `ContainerStore`, `HistoryStore`, `PortForwardStore`, `ConnectionStatsStore`
 
 ### Immutable Models: Freezed
 
@@ -113,24 +115,24 @@ Flutter plugins provide platform integration:
 | Android | Gradle, Kotlin/Java |
 | macOS | CocoaPods, Swift |
 | Linux | CMake, C++ |
-| Windows | CMake, C# |
+| Windows | CMake, C++ |
 
 ### Platform-Specific Features
 
 **iOS Only:**
-- Home screen widgets
 - Live Activities
 - Apple Watch companion
 
+**Mobile:**
+- Home screen widgets (iOS/Android)
+- Push notifications (via ServerBox Monitor)
+
 **Android Only:**
-- Background service
-- Push notifications
-- File system access
+- Background running (foreground service)
 
 **Desktop Only:**
-- Menu bar integration
-- Multiple windows
-- Custom title bar
+- Native menu bar (macOS)
+- Window size persistence
 
 ## Custom Dependencies
 
@@ -182,8 +184,8 @@ make.dart (version) → fl_build (build) → Platform output
 ```
 1. Timer triggers →
 2. Provider calls service →
-3. Service executes SSH command →
-4. Response parsed to model →
+3. Service executes SSH command script →
+4. Raw output parsed by the shared Rust parser (sbm_parser via FFI) →
 5. State updated →
 6. UI rebuilds with new data
 ```
@@ -202,8 +204,8 @@ make.dart (version) → fl_build (build) → Platform output
 
 ### Data Protection
 
-- **Passwords**: Encrypted with flutter_secure_storage
-- **SSH Keys**: Encrypted at rest
+- **Passwords / SSH Keys**: Stored in AES-encrypted Hive boxes; the encryption
+  key itself is kept in the platform secure storage (Keychain/Keystore)
 - **Host Fingerprints**: Stored securely
 - **Session Data**: Not persisted
 

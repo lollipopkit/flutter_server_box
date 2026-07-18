@@ -10,7 +10,7 @@ description: Estrategias de prueba y ejecución de pruebas
 flutter test
 
 # Ejecutar un archivo de prueba específico
-flutter test test/battery_test.dart
+flutter test test/disk_test.dart
 
 # Ejecutar con cobertura
 flutter test --coverage
@@ -18,7 +18,23 @@ flutter test --coverage
 
 ## Estructura de las Pruebas
 
-Las pruebas se encuentran en el directorio `test/`. La suite actual es mayormente plana y se agrupa por comportamiento de parsers, modelos y utilidades, por ejemplo `cpu_test.dart`, `container_test.dart` y `ssh_config_test.dart`.
+Las pruebas se encuentran en el directorio `test/`. La suite actual es mayormente plana y se agrupa por comportamiento de parsers, modelos y utilidades, por ejemplo `disk_test.dart`, `container_test.dart` y `ssh_config_test.dart`.
+
+## Pruebas de Rust
+
+El análisis de estado vive en el workspace de Rust compartido:
+
+```bash
+# Todas las pruebas de Rust (parser, capa FFI, monitor)
+cargo test --workspace
+
+# Prueba de paridad FFI: verifica que el lado Dart obtiene resultados
+# idénticos vía flutter_rust_bridge (compila primero el crate FFI)
+cargo build -p sbm_ffi
+flutter test test/frb_parser_test.dart
+```
+
+`crates/sbm_parser/tests/dart_compat.rs` fija el comportamiento del parser contra la suite de fixtures Dart original.
 
 ## Pruebas Unitarias
 

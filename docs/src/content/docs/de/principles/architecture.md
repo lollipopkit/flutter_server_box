@@ -59,7 +59,7 @@ void main() {
 ### Startseite
 
 `HomePage` dient als Navigationszentrum:
-- **Tab-Interface**: Server, Snippet, Container, SSH
+- **Tab-Interface**: Server, SSH, Datei, Snippet
 - **Zustandsverwaltung**: Zustand pro Tab
 - **Navigation**: Funktionszugriff
 
@@ -91,7 +91,7 @@ void main() {
 - `SettingStore`: App-Einstellungen
 - `ServerStore`: Server-Konfigurationen
 - `SnippetStore`: Befehls-Snippets
-- `KeyStore`: SSH-Schlüssel
+- `PrivateKeyStore`: SSH-Schlüssel
 
 ### Immutable Modelle: Freezed
 
@@ -113,24 +113,24 @@ Flutter-Plugins ermöglichen die Plattformintegration:
 | Android | Gradle, Kotlin/Java |
 | macOS | CocoaPods, Swift |
 | Linux | CMake, C++ |
-| Windows | CMake, C# |
+| Windows | CMake, C++ |
 
 ### Plattformspezifische Funktionen
 
 **Nur iOS:**
-- Startbildschirm-Widgets
 - Live-Aktivitäten
 - Apple Watch Begleit-App
 
+**Mobil:**
+- Startbildschirm-Widgets (iOS/Android)
+- Push-Benachrichtigungen (über ServerBox Monitor)
+
 **Nur Android:**
-- Hintergrunddienst
-- Push-Benachrichtigungen
-- Dateisystemzugriff
+- Hintergrundausführung (Vordergrunddienst)
 
 **Nur Desktop:**
-- Menüleisten-Integration
-- Mehrere Fenster
-- Benutzerdefinierte Titelleiste
+- Native Menüleiste (macOS)
+- Persistente Fenstergröße
 
 ## Eigene Abhängigkeiten
 
@@ -183,7 +183,7 @@ make.dart (Version) → fl_build (Build) → Plattform-Output
 1. Timer löst aus →
 2. Provider ruft Service auf →
 3. Service führt SSH-Befehl aus →
-4. Antwort wird in Modell geparst →
+4. Rohausgabe wird vom gemeinsamen Rust-Parser (sbm_parser via FFI) geparst →
 5. Zustand wird aktualisiert →
 6. UI wird mit neuen Daten neu aufgebaut
 ```
@@ -202,7 +202,7 @@ make.dart (Version) → fl_build (Build) → Plattform-Output
 
 ### Datenschutz
 
-- **Passwörter**: Verschlüsselt mit flutter_secure_storage
+- **Passwörter / SSH-Schlüssel**: In AES-verschlüsselten Hive-Boxen gespeichert; der Schlüssel selbst liegt im sicheren Speicher der Plattform (Keychain/Keystore)
 - **SSH-Schlüssel**: Verschlüsselt gespeichert
 - **Host-Fingerabdrücke**: Sicher gespeichert
 - **Sitzungsdaten**: Werden nicht persistiert

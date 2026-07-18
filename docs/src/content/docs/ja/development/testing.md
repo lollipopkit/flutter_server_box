@@ -10,7 +10,7 @@ description: テスト戦略とテストの実行
 flutter test
 
 # 特定のテストファイルを実行
-flutter test test/battery_test.dart
+flutter test test/disk_test.dart
 
 # カバレッジ付きで実行
 flutter test --coverage
@@ -18,7 +18,23 @@ flutter test --coverage
 
 ## テスト構造
 
-テストは `test/` ディレクトリにあります。現在のテストスイートは主にフラットな構成で、パーサー、モデル、ユーティリティの挙動ごとに分かれています。例: `cpu_test.dart`、`container_test.dart`、`ssh_config_test.dart`。
+テストは `test/` ディレクトリにあります。現在のテストスイートは主にフラットな構成で、パーサー、モデル、ユーティリティの挙動ごとに分かれています。例: `disk_test.dart`、`container_test.dart`、`ssh_config_test.dart`。
+
+## Rust テスト
+
+ステータス解析は共有 Rust workspace にあります:
+
+```bash
+# すべての Rust テスト(パーサー、FFI シェル、monitor)
+cargo test --workspace
+
+# FFI 一致性テスト:Dart 側が flutter_rust_bridge 経由で
+# 完全に同じ結果を得ることを検証(先に FFI crate をビルド)
+cargo build -p sbm_ffi
+flutter test test/frb_parser_test.dart
+```
+
+`crates/sbm_parser/tests/dart_compat.rs` が元の Dart fixture スイートで解析挙動を固定しています。
 
 ## ユニットテスト
 

@@ -59,7 +59,7 @@ void main() {
 ### Página de Inicio
 
 `HomePage` sirve como núcleo de navegación:
-- **Interfaz de Pestañas**: Servidor, Snippet, Contenedor, SSH
+- **Interfaz de Pestañas**: Servidor, SSH, Archivos, Snippet
 - **Gestión de Estado**: Estado por pestaña
 - **Navegación**: Acceso a funciones
 
@@ -91,7 +91,7 @@ void main() {
 - `SettingStore`: Preferencias de la app
 - `ServerStore`: Configuraciones de servidores
 - `SnippetStore`: Fragmentos de comandos
-- `KeyStore`: Claves SSH
+- `PrivateKeyStore`: Claves SSH
 
 ### Modelos Inmutables: Freezed
 
@@ -113,24 +113,24 @@ Los plugins de Flutter proporcionan la integración con la plataforma:
 | Android | Gradle, Kotlin/Java |
 | macOS | CocoaPods, Swift |
 | Linux | CMake, C++ |
-| Windows | CMake, C# |
+| Windows | CMake, C++ |
 
 ### Funciones Específicas por Plataforma
 
 **Solo iOS:**
-- Widgets de pantalla de inicio
 - Actividades en Directo (Live Activities)
 - Compañero de Apple Watch
 
+**Móvil:**
+- Widgets de pantalla de inicio (iOS/Android)
+- Notificaciones push (vía ServerBox Monitor)
+
 **Solo Android:**
-- Servicio en segundo plano
-- Notificaciones push
-- Acceso al sistema de archivos
+- Ejecución en segundo plano (servicio en primer plano)
 
 **Solo Escritorio:**
-- Integración en la barra de menús
-- Múltiples ventanas
-- Barra de título personalizada
+- Barra de menús nativa (macOS)
+- Persistencia del tamaño de ventana
 
 ## Dependencias Personalizadas
 
@@ -183,7 +183,7 @@ make.dart (versión) → fl_build (compilación) → Salida de plataforma
 1. El temporizador se activa →
 2. El Provider llama al servicio →
 3. El servicio ejecuta el comando SSH →
-4. La respuesta se analiza en el modelo →
+4. La salida bruta la analiza el parser Rust compartido (sbm_parser vía FFI) →
 5. Se actualiza el estado →
 6. La UI se reconstruye con los nuevos datos
 ```
@@ -202,7 +202,7 @@ make.dart (versión) → fl_build (compilación) → Salida de plataforma
 
 ### Protección de Datos
 
-- **Contraseñas**: Cifradas con flutter_secure_storage
+- **Contraseñas / claves SSH**: Almacenadas en cajas Hive cifradas con AES; la clave de cifrado se guarda en el almacenamiento seguro de la plataforma (Keychain/Keystore)
 - **Claves SSH**: Cifradas en reposo
 - **Huellas de Host**: Almacenadas de forma segura
 - **Datos de Sesión**: No se persisten

@@ -9,7 +9,7 @@ Server Box は、クロスプラットフォームビルドのためにカスタ
 
 - Flutter SDK (stable チャネル)
 - プラットフォーム固有のツール (iOS 用の Xcode、Android 用の Android Studio)
-- Rust ツールチェーン (一部のネイティブ依存関係のため)
+- Rust ツールチェーン(必須:ステータス解析ライブラリは Rust crate で、flutter_rust_bridge/cargokit により全プラットフォームのアプリに組み込まれます)
 
 ## 開発用ビルド
 

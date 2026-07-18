@@ -9,7 +9,7 @@ set(PROJECT_NAME "sbm_ffi")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 include("../cargokit/cmake/cargokit.cmake")
-apply_cargokit(${PROJECT_NAME} ../../../../../../rust sbm_ffi "")
+apply_cargokit(${PROJECT_NAME} ../../../../../../crates/sbm_ffi sbm_ffi "")
 
 # List of absolute paths to libraries that should be bundled with the plugin.
 # This list could contain prebuilt libraries, or libraries created by an
