@@ -79,6 +79,8 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
                     .route("/velocity", web::get().to(get_velocity))
                     .route("/velocity/history", web::get().to(get_velocity_history)),
             )
+            // TODO: Go 兼容端点(flutter_server_box App 使用),App 迁移到 /api/v1 后删除
+            .route("/status", web::get().to(get_status_compat))
             // Static file serving configuration:
             // 1. /static/* routes serve files from {static_dir}/static/ directory (React build structure)
             // 2. Root level files (favicon.ico, manifest.json, etc.) served from {static_dir}/
@@ -153,6 +155,33 @@ async fn login(
     Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
         error: "Invalid credentials".to_string(),
     }))
+}
+
+// TODO: Go 兼容端点(与旧版 GET /status 响应格式一致,无鉴权),flutter_server_box 迁移后删除
+async fn get_status_compat(
+    app_state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse> {
+    let metrics = app_state.current_metrics.read().await;
+    let data = go_status_data(metrics.as_ref(), &app_state.config.get_server_name());
+    Ok(HttpResponse::Ok().json(&serde_json::json!({ "code": 0, "data": data })))
+}
+
+/// Go 版 web.Status 的响应数据:大小用 Size.String() 格式(如 "26.0g"),CPU 一位小数百分比
+pub fn go_status_data(metrics: Option<&SystemMetrics>, server_name: &str) -> serde_json::Value {
+    use crate::monitoring::size::Size;
+    match metrics {
+        Some(m) => serde_json::json!({
+            "name": m.server_name,
+            "cpu": format!("{:.1}%", m.cpu_usage),
+            "mem": format!("{} / {}", Size(m.memory.used), Size(m.memory.total)),
+            "net": format!("{} / {}", Size(m.network.rx_bytes), Size(m.network.tx_bytes)),
+            "disk": format!("{} / {}", Size(m.disk.used), Size(m.disk.total)),
+        }),
+        None => serde_json::json!({
+            "name": server_name,
+            "cpu": "", "mem": "", "net": "", "disk": "",
+        }),
+    }
 }
 
 async fn get_status(

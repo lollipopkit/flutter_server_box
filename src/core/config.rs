@@ -232,6 +232,45 @@ impl Config {
     pub fn get_push(&self) -> Vec<PushConfig> {
         self.push.clone().unwrap_or_else(|| vec![])
     }
+
+    pub fn get_server_name(&self) -> String {
+        self.name.clone().unwrap_or_else(|| "Server 1".to_string())
+    }
+
+    /// 推送限流,格式 "N/时长"(如 "1/1m"),默认每分钟 1 次
+    pub fn get_push_rate(&self) -> (usize, std::time::Duration) {
+        const DEFAULT: (usize, std::time::Duration) = (1, std::time::Duration::from_secs(60));
+        let Some(rate) = &self.rate else { return DEFAULT };
+        let Some((times, duration)) = rate.split_once('/') else {
+            tracing::warn!("Invalid rate format: {}", rate);
+            return DEFAULT;
+        };
+        let Ok(times) = times.parse::<usize>() else {
+            tracing::warn!("Invalid rate times: {}", rate);
+            return DEFAULT;
+        };
+        match parse_go_duration(duration) {
+            Some(d) => (times, d),
+            None => {
+                tracing::warn!("Invalid rate duration: {}", rate);
+                DEFAULT
+            }
+        }
+    }
+}
+
+/// 解析 Go 风格时长,如 "10s"、"1m"、"1h"
+fn parse_go_duration(s: &str) -> Option<std::time::Duration> {
+    let s = s.trim();
+    let (num, unit) = s.split_at(s.len().checked_sub(1)?);
+    let num: u64 = num.parse().ok()?;
+    let secs = match unit {
+        "s" => num,
+        "m" => num * 60,
+        "h" => num * 3600,
+        _ => return None,
+    };
+    Some(std::time::Duration::from_secs(secs))
 }
 
 impl Default for Config {

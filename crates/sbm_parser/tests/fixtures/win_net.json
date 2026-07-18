@@ -1,0 +1,72 @@
+[
+    {
+        "value":  [
+                      {
+                          "Name":  "Realtek Gaming 2.5GbE Family Controller",
+                          "BytesReceivedPersec":  0,
+                          "BytesSentPersec":  0,
+                          "Timestamp_Sys100NS":  134288934055840000
+                      },
+                      {
+                          "Name":  "Realtek PCIe GbE Family Controller",
+                          "BytesReceivedPersec":  0,
+                          "BytesSentPersec":  0,
+                          "Timestamp_Sys100NS":  134288934055840000
+                      },
+                      {
+                          "Name":  "Realtek USB FE Family Controller",
+                          "BytesReceivedPersec":  0,
+                          "BytesSentPersec":  0,
+                          "Timestamp_Sys100NS":  134288934055840000
+                      },
+                      {
+                          "Name":  "Realtek USB FE Family Controller _2",
+                          "BytesReceivedPersec":  0,
+                          "BytesSentPersec":  0,
+                          "Timestamp_Sys100NS":  134288934055840000
+                      },
+                      {
+                          "Name":  "Intel[R] Wi-Fi 6 AX200 160MHz",
+                          "BytesReceivedPersec":  704834947,
+                          "BytesSentPersec":  2416231230,
+                          "Timestamp_Sys100NS":  134288934055840000
+                      }
+                  ],
+        "Count":  5
+    },
+    {
+        "value":  [
+                      {
+                          "Name":  "Realtek Gaming 2.5GbE Family Controller",
+                          "BytesReceivedPersec":  0,
+                          "BytesSentPersec":  0,
+                          "Timestamp_Sys100NS":  134288934066370000
+                      },
+                      {
+                          "Name":  "Realtek PCIe GbE Family Controller",
+                          "BytesReceivedPersec":  0,
+                          "BytesSentPersec":  0,
+                          "Timestamp_Sys100NS":  134288934066370000
+                      },
+                      {
+                          "Name":  "Realtek USB FE Family Controller",
+                          "BytesReceivedPersec":  0,
+                          "BytesSentPersec":  0,
+                          "Timestamp_Sys100NS":  134288934066370000
+                      },
+                      {
+                          "Name":  "Realtek USB FE Family Controller _2",
+                          "BytesReceivedPersec":  0,
+                          "BytesSentPersec":  0,
+                          "Timestamp_Sys100NS":  134288934066370000
+                      },
+                      {
+                          "Name":  "Intel[R] Wi-Fi 6 AX200 160MHz",
+                          "BytesReceivedPersec":  704836663,
+                          "BytesSentPersec":  2416234467,
+                          "Timestamp_Sys100NS":  134288934066370000
+                      }
+                  ],
+        "Count":  5
+    }
+]

@@ -1,0 +1,52 @@
+{
+  "blockdevices": [
+    {
+      "name": "sda",
+      "kname": "sda",
+      "path": "/dev/sda",
+      "fstype": null,
+      "mountpoint": null,
+      "fssize": null,
+      "fsused": null,
+      "fsavail": null,
+      "fsuse%": null,
+      "children": [
+        {
+          "name": "vg-root",
+          "kname": "dm-0",
+          "path": "/dev/mapper/vg-root",
+          "fstype": null,
+          "mountpoint": null,
+          "fssize": null,
+          "fsused": null,
+          "fsavail": null,
+          "fsuse%": null,
+          "children": [
+            {
+              "name": "root",
+              "kname": "dm-1",
+              "path": "/dev/mapper/root",
+              "fstype": "ext4",
+              "mountpoint": "/",
+              "fssize": "1024000",
+              "fsused": "512000",
+              "fsavail": "512000",
+              "fsuse%": "50%"
+            },
+            {
+              "name": "home",
+              "kname": "dm-2",
+              "path": "/dev/mapper/home",
+              "fstype": "ext4",
+              "mountpoint": "/home",
+              "fssize": "2048000",
+              "fsused": "1024000",
+              "fsavail": "1024000",
+              "fsuse%": "50%"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

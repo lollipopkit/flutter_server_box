@@ -67,17 +67,19 @@ cargo sqlx prepare
 
 ## Architecture
 
+### Shared Parser (`crates/sbm_parser/`)
+
+Pure parsing library shared with the flutter_server_box app (see `doc/adr/0001-monorepo-shared-parser.md`). Owns the command manifest (`commands.rs`) and per-platform parsers (`linux.rs`, `bsd.rs`, `windows.rs`). Behavior is locked to the Dart implementation by `tests/dart_compat.rs`. No IO, no async — parsers take raw command output and return structured status.
+
 ### Backend (Rust - `src/`)
 
 - **`main.rs`**: Application entry point, coordinates monitoring loop and web server
-- **`config.rs`**: Configuration management with .env support and TOML/JSON config files
-- **`server.rs`**: ntex-based web server with API endpoints and JWT authentication
-- **`monitoring.rs`**: System metrics collection using sysinfo crate
-- **`rules.rs`**: Monitoring rule evaluation and threshold checking
-- **`push.rs`**: Push notification system (webhook, iOS)
-- **`auth.rs`**: JWT token generation and validation
-- **`database.rs`**: SQLite database initialization and migrations
-- **`error.rs`**: Centralized error types and handling
+- **`cli/`**: clap-based CLI (`serve`, `config`, `cleanup` subcommands)
+- **`core/`**: Configuration management (`config.rs`, `config_manager.rs`) with .env support and TOML/JSON config files
+- **`api/`**: ntex-based web server (`server.rs`) and JWT auth (`auth.rs`)
+- **`monitoring/`**: Metrics collection (`monitoring.rs`), rule evaluation (`rules.rs`), push notifications with rate limiting (`push.rs`), velocity/timeseries analysis
+- **`db/`**: SQLite initialization/migrations (`database.rs`) and data retention cleanup (`cleanup.rs`)
+- **`utils/`**: Centralized error types (`error.rs`)
 
 ### Frontend (React - `frontend/src/`)
 
@@ -87,11 +89,6 @@ cargo sqlx prepare
 - **`services/`**: API client with authentication
 - **`hooks/`**: Custom React hooks
 - **`types/`**: TypeScript type definitions
-
-### Legacy Components (Transition Period)
-
-- **`cmd/`, `model/`, `runner/`, `web/`**: Original Go implementation (being phased out)
-- **`res/monitor.sh`**: Shell script for system metrics (used by both versions)
 
 ### Key Design Patterns
 
@@ -129,7 +126,7 @@ docker run -p 3770:3770 -v $(pwd)/data:/app/data server-box-monitor
 
 ### Installation
 ```bash
-# Install as systemd service (uses install.sh from Go version)
+# Install as systemd service
 sudo ./install.sh install
 
 # Manual production deployment
@@ -151,10 +148,10 @@ cd frontend && npm run build
 ## Common Development Tasks
 
 ### Adding New API Endpoints
-Add routes in `src/server.rs` following the existing ntex pattern with JWT middleware.
+Add routes in `src/api/server.rs` following the existing ntex pattern with JWT middleware.
 
 ### Adding New Monitoring Metrics
-Extend `src/monitoring.rs` and update the database schema with new migrations.
+Extend `src/monitoring/monitoring.rs` and update the database schema with new migrations.
 
 ### Updating Frontend Components
 Use existing patterns in `frontend/src/components/` with TypeScript and TailwindCSS.

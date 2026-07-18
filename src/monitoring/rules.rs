@@ -1,5 +1,5 @@
 use crate::{core::config::{Config, MonitoringRule}, monitoring::monitoring::SystemMetrics, utils::error::Result, monitoring::velocity::VelocityManager};
-use regex::Regex;
+use crate::monitoring::threshold::{Threshold, ThresholdType};
 use tracing::{info, warn};
 
 pub async fn check_rules_with_velocity(
@@ -26,7 +26,7 @@ async fn check_enhanced_rule(
         "memory" => check_memory_rule(rule, metrics).await?,
         "swap" => check_swap_rule(rule, metrics).await?,
         "disk" => check_disk_rule(rule, metrics).await?,
-        "network" => check_network_rule(rule, metrics, velocity_manager).await?,
+        "network" => check_network_rule(rule, metrics, config, velocity_manager).await?,
         "temperature" | "temp" => check_temperature_rule(rule, metrics).await?,
         _ => {
             warn!("Unknown monitor type: {}", rule.monitor_type);
@@ -45,9 +45,16 @@ async fn check_enhanced_rule(
         
         info!("Triggering enhanced alert: {}", message);
         
+        let (rate_times, rate_window) = config.get_push_rate();
+        let limiter = crate::monitoring::push::PushRateLimiter::global();
         for push_config in &config.get_push() {
-            if let Err(e) = crate::monitoring::push::send_notification(push_config, &message).await {
-                warn!("Failed to send push notification via '{}': {}", push_config.name, e);
+            if !limiter.check(&push_config.name, rate_times, rate_window) {
+                warn!("Push '{}' rate limit reached, skipping", push_config.name);
+                continue;
+            }
+            match crate::monitoring::push::send_notification(push_config, &message).await {
+                Ok(()) => limiter.acquire(&push_config.name),
+                Err(e) => warn!("Failed to send push notification via '{}': {}", push_config.name, e),
             }
         }
     }
@@ -56,29 +63,20 @@ async fn check_enhanced_rule(
 }
 
 
+/// 百分比/温度阈值判断,格式与 Go 版一致(如 ">=77%"、">=70c")
 fn should_trigger_alert(threshold: &str, value: f64) -> Result<bool> {
-    // Parse threshold like ">=77%" or ">85%" or "<=10"
-    let re = Regex::new(r"^(>=|<=|>|<|==|!=)(\d+(?:\.\d+)?)(%?)$")?;
-    
-    if let Some(captures) = re.captures(threshold) {
-        let operator = captures.get(1).unwrap().as_str();
-        let threshold_value: f64 = captures.get(2).unwrap().as_str().parse()?;
-        let _is_percentage = captures.get(3).is_some_and(|m| m.as_str() == "%");
-        
-        let result = match operator {
-            ">=" => value >= threshold_value,
-            "<=" => value <= threshold_value,
-            ">" => value > threshold_value,
-            "<" => value < threshold_value,
-            "==" => (value - threshold_value).abs() < f64::EPSILON,
-            "!=" => (value - threshold_value).abs() >= f64::EPSILON,
-            _ => false,
-        };
-        
-        Ok(result)
-    } else {
-        warn!("Invalid threshold format: {}", threshold);
-        Ok(false)
+    match Threshold::parse(threshold) {
+        Ok(t) if matches!(t.threshold_type, ThresholdType::Percent | ThresholdType::Temperature) => {
+            Ok(t.is_true(value))
+        }
+        Ok(t) => {
+            warn!("Threshold type {:?} not applicable here: {}", t.threshold_type, threshold);
+            Ok(false)
+        }
+        Err(_) => {
+            warn!("Invalid threshold format: {}", threshold);
+            Ok(false)
+        }
     }
 }
 
@@ -175,12 +173,13 @@ async fn check_disk_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Resu
 }
 
 async fn check_network_rule(
-    rule: &MonitoringRule, 
-    metrics: &SystemMetrics, 
+    rule: &MonitoringRule,
+    metrics: &SystemMetrics,
+    config: &Config,
     velocity_manager: &VelocityManager
 ) -> Result<(bool, f64, String)> {
     let matcher = &rule.matcher;
-    let interval_seconds = 7.0; // TODO: Get from config
+    let interval_seconds = config.get_monitoring().interval_seconds as f64;
     
     if let Ok(velocity_metrics) = velocity_manager.get_server_velocity(&metrics.server_name, interval_seconds).await {
         let (value, _unit) = match matcher.as_str() {
@@ -225,37 +224,20 @@ async fn check_temperature_rule(rule: &MonitoringRule, metrics: &SystemMetrics) 
     }
 }
 
+/// 速度/大小阈值判断,格式与 Go 版一致(如 ">10m/s"、"<100m",1024 进制小写单位)
 fn should_trigger_speed_alert(threshold: &str, value: f64) -> Result<bool> {
-    let re = Regex::new(r"^(>=|<=|>|<|==|!=)(\d+(?:\.\d+)?)([KMGT]?)B?/s$")?;
-    
-    if let Some(captures) = re.captures(threshold) {
-        let operator = captures.get(1).unwrap().as_str();
-        let threshold_value: f64 = captures.get(2).unwrap().as_str().parse()?;
-        let unit = captures.get(3).map(|m| m.as_str()).unwrap_or("");
-        
-        let multiplier = match unit {
-            "K" => 1024.0,
-            "M" => 1024.0 * 1024.0,
-            "G" => 1024.0 * 1024.0 * 1024.0,
-            "T" => 1024.0 * 1024.0 * 1024.0 * 1024.0,
-            _ => 1.0,
-        };
-        
-        let threshold_bytes = threshold_value * multiplier;
-        
-        let result = match operator {
-            ">=" => value >= threshold_bytes,
-            "<=" => value <= threshold_bytes,
-            ">" => value > threshold_bytes,
-            "<" => value < threshold_bytes,
-            "==" => (value - threshold_bytes).abs() < f64::EPSILON,
-            "!=" => (value - threshold_bytes).abs() >= f64::EPSILON,
-            _ => false,
-        };
-        
-        Ok(result)
-    } else {
-        should_trigger_alert(threshold, value)
+    match Threshold::parse(threshold) {
+        Ok(t) if matches!(t.threshold_type, ThresholdType::Speed | ThresholdType::Size) => {
+            Ok(t.is_true(value))
+        }
+        Ok(t) => {
+            warn!("Threshold type {:?} not applicable for network: {}", t.threshold_type, threshold);
+            Ok(false)
+        }
+        Err(_) => {
+            warn!("Invalid speed threshold format: {}", threshold);
+            Ok(false)
+        }
     }
 }
 
