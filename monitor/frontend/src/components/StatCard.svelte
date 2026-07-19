@@ -5,7 +5,10 @@
     icon: Component
     iconClass: string
     label: string
+    /// Primary figure, always one line (truncated if needed)
     value: string
+    /// Secondary line; rendered as a fixed-height row so all cards align
+    detail?: string
     valueClass?: string
     badge: string
     badgeClass: string
@@ -16,6 +19,7 @@
     iconClass,
     label,
     value,
+    detail = '',
     valueClass = 'text-2xl',
     badge,
     badgeClass,
@@ -23,14 +27,13 @@
 </script>
 
 <div class="card">
-  <div class="flex items-center justify-between">
-    <div class="flex items-center">
-      <Icon class="w-8 h-8 {iconClass} mr-3" />
-      <div>
-        <p class="text-sm font-medium text-muted">{label}</p>
-        <p class="{valueClass} font-bold text-strong whitespace-pre-line">{value}</p>
-      </div>
+  <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center min-w-0">
+      <Icon class="w-5 h-5 {iconClass} mr-2 shrink-0" />
+      <p class="text-sm font-medium text-muted truncate">{label}</p>
     </div>
-    <span class={badgeClass}>{badge}</span>
+    <span class="{badgeClass} shrink-0 ml-2">{badge}</span>
   </div>
+  <p class="{valueClass} leading-9 font-bold text-strong truncate">{value}</p>
+  <p class="text-xs text-muted truncate mt-1">{detail || ' '}</p>
 </div>

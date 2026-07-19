@@ -19,7 +19,7 @@
   import ThemeToggle from '../components/ThemeToggle.svelte'
   import { api } from '../lib/api'
   import { servers } from '../lib/servers.svelte'
-  import { fmtBytesPerSec, fmtPercent } from '../lib/format'
+  import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../lib/format'
   import { i18n } from '../lib/i18n.svelte'
   import { Poller } from '../lib/poller.svelte'
   import type { HistoryPoint } from '../types'
@@ -80,16 +80,20 @@
     disk: { warning: 85, danger: 95 },
   }
 
-  function statusBadge(value: string | undefined, type: keyof typeof thresholds): string {
-    const percentage = parseFloat(value ?? '0')
-    if (isNaN(percentage)) return 'status-success'
+  function statusBadge(pct: number | undefined, type: keyof typeof thresholds): string {
+    if (pct === undefined || isNaN(pct)) return 'status-success'
     const t = thresholds[type]
-    if (percentage >= t.danger) return 'status-danger'
-    if (percentage >= t.warning) return 'status-warning'
+    if (pct >= t.danger) return 'status-danger'
+    if (pct >= t.warning) return 'status-warning'
     return 'status-success'
   }
 
   const error = $derived(status.error ?? metrics.error)
+
+  // Cards derive from numeric metrics (uniform layout: one big figure plus a
+  // detail line) instead of parsing the preformatted /status strings
+  const m = $derived(metrics.data)
+  const latest = $derived(history.at(-1))
 </script>
 
 {#if status.loading && metrics.loading}
@@ -145,34 +149,40 @@
         icon={Cpu}
         iconClass="text-blue-500"
         label={i18n.t('cpuUsage')}
-        value={status.data?.cpu || '--'}
-        badge={status.data?.cpu ? i18n.t('active') : i18n.t('na')}
-        badgeClass={statusBadge(status.data?.cpu, 'cpu')}
+        value={m ? `${m.cpu_usage.toFixed(1)}%` : '--'}
+        detail={m?.temperature != null ? `${m.temperature.toFixed(1)} \u00B0C` : ''}
+        badge={m ? i18n.t('active') : i18n.t('na')}
+        badgeClass={statusBadge(m?.cpu_usage, 'cpu')}
       />
       <StatCard
         icon={MemoryStick}
         iconClass="text-green-500"
         label={i18n.t('memory')}
-        value={status.data?.memory || '--'}
-        valueClass="text-lg"
-        badge={status.data?.memory ? i18n.t('active') : i18n.t('na')}
-        badgeClass={statusBadge(status.data?.memory, 'memory')}
+        value={m ? `${m.memory.usage_percent.toFixed(1)}%` : '--'}
+        detail={m ? `${fmtBytes(m.memory.used)} / ${fmtBytes(m.memory.total)}` : ''}
+        badge={m ? i18n.t('active') : i18n.t('na')}
+        badgeClass={statusBadge(m?.memory.usage_percent, 'memory')}
       />
       <StatCard
         icon={HardDrive}
         iconClass="text-yellow-500"
         label={i18n.t('diskUsage')}
-        value={status.data?.disk || '--'}
-        valueClass="text-lg"
-        badge={status.data?.disk ? i18n.t('active') : i18n.t('na')}
-        badgeClass={statusBadge(status.data?.disk, 'disk')}
+        value={m ? `${m.disk.usage_percent.toFixed(1)}%` : '--'}
+        detail={m ? `${fmtBytes(m.disk.used)} / ${fmtBytes(m.disk.total)}` : ''}
+        badge={m ? i18n.t('active') : i18n.t('na')}
+        badgeClass={statusBadge(m?.disk.usage_percent, 'disk')}
       />
       <StatCard
         icon={Network}
         iconClass="text-purple-500"
         label={i18n.t('network')}
-        value={status.data?.network?.replace(' / ', '\n') || '--'}
-        valueClass="text-sm"
+        value={latest
+          ? `\u2193 ${fmtBytesPerSec(latest.net_rx_speed)}  \u2191 ${fmtBytesPerSec(latest.net_tx_speed)}`
+          : '--'}
+        valueClass="text-lg"
+        detail={m
+          ? `RX ${fmtBytes(m.network.rx_bytes)} \u00B7 TX ${fmtBytes(m.network.tx_bytes)}`
+          : ''}
         badge={i18n.t('active')}
         badgeClass="status-success"
       />
