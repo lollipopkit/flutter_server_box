@@ -58,7 +58,8 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
 
     info!("Starting monitoring loop with {}s interval", app_state.config.get_monitoring().interval_seconds);
 
-    // 上一周期的 CPU 汇总采样:累计 ticks 需跨周期差分才是当前使用率
+    // CPU summary sample from the previous cycle: cumulative ticks need a
+    // cross-cycle delta to yield current usage
     let mut prev_cpu: Option<CpuCore> = None;
 
     loop {
@@ -116,8 +117,9 @@ async fn collect_metrics(config: &Config, prev_cpu: &mut Option<CpuCore>) -> Res
     Ok(adapt_status(system, status, config, prev.as_ref()))
 }
 
-/// 执行 sbm_parser 命令清单(单一事实来源,见 ADR 0001),按 key 收集输出。
-/// 仅执行 core 命令:GPU/SMART 等高开销命令不适合周期采集
+/// Run the sbm_parser command manifest (single source of truth, see ADR 0001),
+/// collecting output by key. Core commands only: GPU/SMART etc. are too expensive
+/// for periodic collection
 async fn execute_commands(system: SystemType) -> Result<HashMap<String, String>> {
     let mut raw = HashMap::new();
 
@@ -140,7 +142,7 @@ async fn execute_commands(system: SystemType) -> Result<HashMap<String, String>>
                 );
             }
             Ok(output) => {
-                // 单条命令失败不影响其余采集(与 App 逐段容错一致)
+                // One failing command does not affect the rest (matching the app's per-segment tolerance)
                 error!(
                     "Command '{}' failed: {}",
                     spec.key,
@@ -154,7 +156,7 @@ async fn execute_commands(system: SystemType) -> Result<HashMap<String, String>>
     Ok(raw)
 }
 
-/// 将解析结果适配为 monitor 的聚合指标
+/// Adapt the parse result into the monitor's aggregate metrics
 fn adapt_status(
     system: SystemType,
     status: ServerStatus,
@@ -166,9 +168,9 @@ fn adapt_status(
     let disk = aggregate_disks(&status.disks);
     let network = aggregate_net(&status);
 
-    // 温度取 CPU 器件优先(Dart `Temperatures.first`)
+    // Temperature prefers CPU devices (Dart `Temperatures.first`)
     let temperature = match system {
-        SystemType::Bsd => None, // top 输出无温度
+        SystemType::Bsd => None, // top output has no temperature
         _ => status.temps.first().map(|t| t as f32),
     };
 
@@ -189,10 +191,12 @@ fn summary_core(cores: &[CpuCore]) -> Option<&CpuCore> {
     cores.iter().find(|c| c.id == "cpu").or_else(|| cores.first())
 }
 
-/// CPU:汇总行(id == "cpu",BSD 无汇总则取首核)与上一采样差分计算当前使用率
-/// (与 Dart `Cpus.usedPercent` 同语义);累计 ticks 直接求比值是开机以来均值,不可用。
-/// 首个周期无差分基线报 0;计数器回绕(重启)时同样重置基线。
-/// 逐核转为 CpuCoreTime(used = total - idle)
+/// CPU: current usage from the delta between the summary row (id == "cpu", or the
+/// first core on BSD) and the previous sample (same semantics as Dart
+/// `Cpus.usedPercent`); a direct ratio of cumulative ticks is the since-boot
+/// average and unusable. The first cycle has no baseline and reports 0; counter
+/// wraparound (reboot) also resets the baseline.
+/// Per-core entries become CpuCoreTime (used = total - idle)
 fn adapt_cpu(cores: &[CpuCore], prev_summary: Option<&CpuCore>) -> (f32, Vec<CpuCoreTime>) {
     let usage = match (prev_summary, summary_core(cores)) {
         (Some(pre), Some(now)) if now.total() > pre.total() => {
@@ -210,8 +214,8 @@ fn adapt_cpu(cores: &[CpuCore], prev_summary: Option<&CpuCore>) -> (f32, Vec<Cpu
     (usage, core_times)
 }
 
-/// 内存/交换:KiB → 字节;used 按 Dart `Memory.usedPercent` 语义
-/// (avail 为 0 时回退 free)
+/// Memory/swap: KiB → bytes; used follows the Dart `Memory.usedPercent` semantics
+/// (falls back to free when avail is 0)
 fn adapt_memory(status: &ServerStatus) -> (MemoryMetrics, SwapMetrics) {
     let memory = match &status.mem {
         Some(m) => {
@@ -246,8 +250,8 @@ fn percent(used: u64, total: u64) -> f32 {
     if total == 0 { 0.0 } else { (used as f32 / total as f32) * 100.0 }
 }
 
-/// Go 兼容 /status 语义的磁盘聚合:仅 /dev 前缀文件系统,按路径去重,
-/// 递归展开 lsblk 层级;KiB → 字节
+/// Disk aggregation with Go-compatible /status semantics: only /dev-prefixed
+/// filesystems, deduped by path, lsblk hierarchy expanded recursively; KiB → bytes
 fn aggregate_disks(disks: &[Disk]) -> DiskMetrics {
     fn walk<'a>(disks: &'a [Disk], seen: &mut Vec<&'a str>, acc: &mut (u64, u64, u64)) {
         for d in disks {
@@ -280,7 +284,7 @@ fn aggregate_net(status: &ServerStatus) -> NetworkMetrics {
     }
 }
 
-/// 磁盘段解析 + Go 兼容聚合(供 /status 与测试使用)
+/// Disk segment parsing + Go-compatible aggregation (for /status and tests)
 pub fn parse_disk_metrics(segment: &str) -> Result<DiskMetrics> {
     Ok(aggregate_disks(&sbm_parser::linux::parse_disk(segment)))
 }

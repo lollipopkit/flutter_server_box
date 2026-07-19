@@ -1,4 +1,4 @@
-//! BSD/macOS 解析(对照 Dart:cpu.dart parseBsdCpu / memory.dart parseBsdMemory /
+//! BSD/macOS parsing (Dart reference: cpu.dart parseBsdCpu / memory.dart parseBsdMemory /
 //! net_speed.dart parseBsd)
 
 use crate::types::*;
@@ -9,10 +9,10 @@ fn regex(cell: &'static OnceLock<Regex>, pattern: &str) -> &'static Regex {
     cell.get_or_init(|| Regex::new(pattern).expect("valid regex"))
 }
 
-/// `top` CPU 行。macOS:`CPU usage: 14.70% user, 12.76% sys, 72.52% idle`;
+/// `top` CPU line. macOS: `CPU usage: 14.70% user, 12.76% sys, 72.52% idle`;
 /// FreeBSD:`CPU: 5.2% user, 0.0% nice, 3.1% system, 0.1% interrupt, 91.6% idle`;
-/// 其余回退提取前三个百分比(user/sys/idle)。
-/// 与 Dart 一致:产出单核 "cpu0" 的一次性百分比伪计数
+/// otherwise falls back to extracting the first three percentages (user/sys/idle).
+/// Matching Dart: produces one-shot percentage pseudo-counters for a single "cpu0" core
 pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
     static MAC: OnceLock<Regex> = OnceLock::new();
     static FREEBSD: OnceLock<Regex> = OnceLock::new();
@@ -46,7 +46,7 @@ pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
         return core(f(1), f(3), f(2), f(5), f(4));
     }
 
-    // 回退:提取所有百分比,取前三个为 user/sys/idle(Dart 同)
+    // Fallback: extract all percentages, take the first three as user/sys/idle (same as Dart)
     let percent = regex(&PERCENT, r"(-?\d+(?:\.\d+)?)%");
     let values: Vec<f64> = percent
         .captures_iter(raw)
@@ -59,7 +59,7 @@ pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
     Vec::new()
 }
 
-/// `top` 内存行,单位 KiB。macOS:`PhysMem: 32G used (1536M wired), 64G unused.`;
+/// `top` memory line, in KiB. macOS: `PhysMem: 32G used (1536M wired), 64G unused.`;
 /// FreeBSD:`Mem: 456M Active, 2918M Inact, 1127M Wired, 187M Cache, 829M Buf, 3535M Free`
 pub fn parse_mem(raw: &str) -> Option<Memory> {
     static MAC: OnceLock<Regex> = OnceLock::new();
@@ -105,7 +105,7 @@ fn to_kib(amount: f64, unit: &str) -> u64 {
 }
 
 /// `netstat -ibn`(Dart `NetSpeed.parseBsd`):
-/// 仅取 11 列的 Link 行,跳过 `*` 结尾的未激活接口,同名接口取首行
+/// Only 11-column Link lines; skip inactive interfaces ending in `*`; first line wins per interface name
 pub fn parse_net(raw: &str) -> Vec<NetIface> {
     let lines: Vec<&str> = raw.split('\n').collect();
     if lines.len() < 2 {

@@ -1,12 +1,13 @@
-//! 共享解析库 FFI(ADR 0001 Phase 2)
+//! Shared parser FFI (ADR 0001 Phase 2)
 //!
-//! 边界约定:输入为「命令 key → 原始输出」映射,输出为 `sbm_parser`
-//! 的 serde JSON。Dart 侧据此构造既有模型类,迁移期间可与 Dart 解析
-//! 双跑比对。解析为纯函数,FFI 不持有状态。
+//! Boundary contract: input is a map of command key → raw output, output is
+//! `sbm_parser`'s serde JSON. The Dart side builds its existing model classes
+//! from it and can run side-by-side with the Dart parsers during migration.
+//! Parsing is pure; the FFI holds no state.
 
 use std::collections::HashMap;
 
-/// 采集命令,与 App 脚本生成共用的单一事实来源
+/// Collection command, single source of truth shared with the app's script generation
 pub struct CommandSpec {
     pub key: String,
     pub cmd: String,
@@ -21,9 +22,9 @@ fn parse_system(system: &str) -> Option<sbm_parser::SystemType> {
     }
 }
 
-/// 解析一次采集的全部输出,返回 `ServerStatus` 的 JSON。
-/// `system`: "linux" | "bsd" | "windows";`temp_divisor` 见 `ParseOptions`。
-/// 异步:在 Rust 线程池执行,不阻塞 UI isolate
+/// Parse all output of one collection round, returning `ServerStatus` JSON.
+/// `system`: "linux" | "bsd" | "windows"; see `ParseOptions` for `temp_divisor`.
+/// Async: runs on the Rust thread pool without blocking the UI isolate
 pub fn parse_status_json(
     system: String,
     raw: HashMap<String, String>,
@@ -38,7 +39,7 @@ pub fn parse_status_json(
     serde_json::to_string(&status).map_err(|e| e.to_string())
 }
 
-/// Windows WMI 双采样网速差分,返回 `[{name, rx, tx}]` JSON(字节/秒)
+/// Windows WMI double-sample net speed delta, returning `[{name, rx, tx}]` JSON (bytes/sec)
 #[flutter_rust_bridge::frb(sync)]
 pub fn parse_windows_net_speed_json(raw: String) -> String {
     let speeds: Vec<_> = sbm_parser::windows::parse_net_speed(&raw)
@@ -48,7 +49,7 @@ pub fn parse_windows_net_speed_json(raw: String) -> String {
     serde_json::Value::Array(speeds).to_string()
 }
 
-/// 平台采集命令清单(App 脚本生成据此产出,与解析器同版本)
+/// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)
 #[flutter_rust_bridge::frb(sync)]
 pub fn command_specs(system: String) -> Result<Vec<CommandSpec>, String> {
     let system = parse_system(&system).ok_or_else(|| format!("unknown system: {}", system))?;
@@ -58,7 +59,7 @@ pub fn command_specs(system: String) -> Result<Vec<CommandSpec>, String> {
         .collect())
 }
 
-/// 输出分段符(`SrvBoxSep`)
+/// Output segment separator (`SrvBoxSep`)
 #[flutter_rust_bridge::frb(sync)]
 pub fn separator() -> String {
     sbm_parser::commands::SEPARATOR.to_string()

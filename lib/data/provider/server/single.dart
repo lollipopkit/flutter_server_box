@@ -483,7 +483,7 @@ class ServerNotifier extends _$ServerNotifier {
         customCmds: spi.custom?.cmds ?? {},
         tempDivisor: spi.custom?.tempIsCelsius == true ? 1.0 : 1000.0,
       );
-      // 解析在 Rust 线程池执行(FFI 异步),无需再走 isolate
+      // Parsing runs on the Rust thread pool (async FFI); no isolate needed anymore
       final newStatus = await getStatus(req);
       updateStatus(newStatus);
     } catch (e, trace) {

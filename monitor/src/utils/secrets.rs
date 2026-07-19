@@ -1,8 +1,8 @@
-//! 密码学随机凭据生成(getrandom 系统熵源)
+//! Cryptographically random credential generation (getrandom system entropy)
 
 use crate::utils::error::Result;
 
-/// n 字节随机数的十六进制串(2n 字符)
+/// Hex string of n random bytes (2n characters)
 pub fn random_hex(n: usize) -> Result<String> {
     let mut buf = vec![0u8; n];
     getrandom::fill(&mut buf)
@@ -10,7 +10,7 @@ pub fn random_hex(n: usize) -> Result<String> {
     Ok(buf.iter().map(|b| format!("{b:02x}")).collect())
 }
 
-/// n 位字母数字随机密码(拒绝采样,无取模偏差)
+/// n-character alphanumeric random password (rejection sampling, no modulo bias)
 pub fn random_password(n: usize) -> Result<String> {
     const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     const LIMIT: u8 = (u8::MAX / CHARSET.len() as u8) * CHARSET.len() as u8; // 248

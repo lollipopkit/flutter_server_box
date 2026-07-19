@@ -48,4 +48,4 @@ CREATE TABLE users (
     last_login DATETIME
 );
 
--- 无种子账号:初始 admin 由首次启动生成随机密码创建(db::bootstrap)
+-- No seeded account: the initial admin is created on first start with a random password (db::bootstrap)

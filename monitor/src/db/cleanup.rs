@@ -31,8 +31,9 @@ impl DataCleanupService {
         Ok(())
     }
 
-    /// retention_policies 驱动的清理。表名白名单防 SQL 注入;
-    /// system_metrics/alerts 由 DataRetentionConfig 显式治理,不在此列
+    /// Cleanup driven by retention_policies. Table names are allowlisted against SQL
+    /// injection; system_metrics/alerts are governed explicitly by DataRetentionConfig
+    /// and excluded here
     const POLICY_TABLES: &'static [&'static str] = &[
         "velocity_metrics",
         "cpu_core_metrics",
@@ -61,7 +62,7 @@ impl DataCleanupService {
                 continue;
             };
             let cutoff = Utc::now() - Duration::days(retention_days);
-            // 表名来自上方 &'static str 白名单,无注入可能
+            // Table name comes from the &'static str allowlist above; injection is impossible
             let deleted = sqlx::query(sqlx::AssertSqlSafe(format!(
                 "DELETE FROM {table} WHERE timestamp < ?"
             )))

@@ -1,9 +1,9 @@
-//! Linux 解析(对照 Dart:cpu.dart / memory.dart / disk.dart / net_speed.dart / temp.dart)
+//! Linux parsing (Dart reference: cpu.dart / memory.dart / disk.dart / net_speed.dart / temp.dart)
 
 use crate::types::*;
 
-/// /proc/stat 的 cpu 行(Dart `SingleCpuCore.parse`):
-/// 首行须为 `cpu`/`cpuN`,遇到非 cpu 行即停止;字段不足 8 跳过
+/// cpu lines of /proc/stat (Dart `SingleCpuCore.parse`):
+/// first line must be `cpu`/`cpuN`, stop at the first non-cpu line; skip lines with fewer than 8 fields
 pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
     let mut cores = Vec::new();
     for line in raw.split('\n') {
@@ -33,13 +33,13 @@ pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
                     softirq,
                 });
             }
-            _ => continue, // 与 Dart 一致:畸形行跳过
+            _ => continue, // matches Dart: skip malformed lines
         }
     }
     cores
 }
 
-/// /proc/meminfo(Dart `Memory.parse`),单位 KiB
+/// /proc/meminfo (Dart `Memory.parse`), in KiB
 pub fn parse_mem(raw: &str) -> Option<Memory> {
     let get = |key: &str| meminfo_value(raw, key);
     let total = get("MemTotal:")?;
@@ -50,7 +50,7 @@ pub fn parse_mem(raw: &str) -> Option<Memory> {
     })
 }
 
-/// /proc/meminfo 的 Swap 行(Dart `Swap.parse`),单位 KiB
+/// Swap lines of /proc/meminfo (Dart `Swap.parse`), in KiB
 pub fn parse_swap(raw: &str) -> Option<Swap> {
     Some(Swap {
         total: meminfo_value(raw, "SwapTotal:")?,
@@ -66,8 +66,8 @@ fn meminfo_value(raw: &str, key: &str) -> Option<u64> {
     })
 }
 
-/// 磁盘输出(Dart `Disk.parse`):优先 lsblk JSON(带 `LSBLK_SUCCESS` 标记),
-/// 回退 df 表格
+/// Disk output (Dart `Disk.parse`): prefer lsblk JSON (tagged `LSBLK_SUCCESS`),
+/// fall back to the df table
 pub fn parse_disk(raw: &str) -> Vec<Disk> {
     let raw = raw.trim();
     if raw.is_empty() {
@@ -105,7 +105,7 @@ fn parse_lsblk(json: &serde_json::Value) -> Vec<Disk> {
         let has_stats = size != 0 || used != 0 || avail != 0;
         let has_own_fs = fstype.is_some_and(|fs| disk_should_calc(fs, mount));
 
-        // 无自身文件系统的容器设备:只展开子设备
+        // Container devices without their own filesystem: only expand children
         if !has_stats && !has_own_fs && !children.is_empty() {
             for child in children {
                 if let Some(disk) = lsblk_device(child) {
@@ -118,7 +118,7 @@ fn parse_lsblk(json: &serde_json::Value) -> Vec<Disk> {
         if let Some(disk) = lsblk_device(device) {
             list.push(disk);
         }
-        // btrfs RAID 分区直接补充(Dart 同)
+        // btrfs RAID partitions appended directly (same as Dart)
         for child in children {
             if child["fstype"].as_str() == Some("btrfs")
                 && child["path"].as_str().is_some_and(|p| !p.is_empty())
@@ -131,7 +131,7 @@ fn parse_lsblk(json: &serde_json::Value) -> Vec<Disk> {
     list
 }
 
-/// 递归处理设备与其子设备(Dart `_processDiskDevice`)
+/// Recursively process a device and its children (Dart `_processDiskDevice`)
 fn lsblk_device(device: &serde_json::Value) -> Option<Disk> {
     let fstype = device["fstype"].as_str();
     let mount = device["mountpoint"].as_str().unwrap_or("");
@@ -150,7 +150,7 @@ fn lsblk_device(device: &serde_json::Value) -> Option<Disk> {
     }
 }
 
-/// 单设备,不递归(Dart `_processSingleDevice`)
+/// Single device, no recursion (Dart `_processSingleDevice`)
 fn lsblk_single_device(device: &serde_json::Value) -> Option<Disk> {
     let fstype = device["fstype"].as_str();
     let mount = device["mountpoint"].as_str().unwrap_or("");
@@ -182,7 +182,7 @@ fn lsblk_build(device: &serde_json::Value, children: Vec<Disk>) -> Disk {
     }
 }
 
-/// lsblk 文件系统字段:--bytes 输出为字节 → KiB(Dart `_parseFilesystemFields`)
+/// lsblk filesystem fields: --bytes output is bytes → KiB (Dart `_parseFilesystemFields`)
 fn lsblk_fs_fields(device: &serde_json::Value) -> (u64, u64, u64, u32) {
     let size = |key: &str| -> u64 {
         let v = &device[key];
@@ -198,14 +198,14 @@ fn lsblk_fs_fields(device: &serde_json::Value) -> (u64, u64, u64, u32) {
     (size("fssize"), size("fsused"), size("fsavail"), percent)
 }
 
-/// df 表格回退(Dart `_parseWithOldMethod`),单位 KiB。
-/// 处理文件系统名过长导致的折行(单字段行缓存到下一行),
-/// 按 [`disk_should_calc`] 过滤。
-/// 在 Dart 语义(df -k 纯数字)之上兼容 df -h 的 K/M/G/T 后缀
+/// df table fallback (Dart `_parseWithOldMethod`), in KiB.
+/// Handles wrapped lines caused by overlong filesystem names (a single-field line
+/// is buffered onto the next), filtered by [`disk_should_calc`].
+/// On top of the Dart semantics (df -k plain numbers), also accepts df -h K/M/G/T suffixes
 fn parse_df(raw: &str) -> Vec<Disk> {
     let mut disks = Vec::new();
     let mut lines = raw.trim().split('\n');
-    lines.next(); // 表头
+    lines.next(); // header
     let mut path_cache = String::new();
 
     for line in lines {
@@ -244,7 +244,7 @@ fn parse_df(raw: &str) -> Vec<Disk> {
     disks
 }
 
-/// df 大小列 → KiB:纯数字视为 KiB(df -k),K/M/G/T 后缀按 1024 进制换算(df -h)
+/// df size column → KiB: plain numbers are KiB (df -k), K/M/G/T suffixes converted base-1024 (df -h)
 fn df_size_kib(s: &str) -> Option<u64> {
     if let Ok(v) = s.parse::<u64>() {
         return Some(v);
@@ -260,7 +260,7 @@ fn df_size_kib(s: &str) -> Option<u64> {
     Some((num.parse::<f64>().ok()? * multiplier) as u64)
 }
 
-/// /proc/net/dev(Dart `NetSpeed.parse`):跳过两行表头,`iface: rx ... tx ...`
+/// /proc/net/dev (Dart `NetSpeed.parse`): skip two header lines, `iface: rx ... tx ...`
 pub fn parse_net(raw: &str) -> Vec<NetIface> {
     let lines: Vec<&str> = raw.split('\n').collect();
     if lines.len() < 4 {
@@ -287,8 +287,9 @@ pub fn parse_net(raw: &str) -> Vec<NetIface> {
     result
 }
 
-/// thermal_zone type/temp 两段(Dart `Temperatures.parse`):
-/// 逐行配对,名称取路径最后一段,值除以 divisor(Linux 为毫摄氏度 → 1000)
+/// thermal_zone type/temp segments (Dart `Temperatures.parse`):
+/// paired line by line, name is the last path segment, value divided by divisor
+/// (Linux reports millidegree Celsius → 1000)
 pub fn parse_temps(types_raw: &str, values_raw: &str, divisor: f64) -> Temperatures {
     let mut temps = Temperatures::default();
     let types: Vec<&str> = types_raw.split('\n').collect();
@@ -305,8 +306,8 @@ pub fn parse_temps(types_raw: &str, values_raw: &str, divisor: f64) -> Temperatu
     temps
 }
 
-/// /proc/net/snmp 的 Tcp 行(Dart `Conn.parse`):
-/// 取最后一个 `Tcp:` 行,MaxConn 在第 4 列、AttemptFails 在第 7 列
+/// Tcp lines of /proc/net/snmp (Dart `Conn.parse`):
+/// take the last `Tcp:` line; MaxConn is column 4, AttemptFails column 7
 pub fn parse_conn(raw: &str) -> Option<Conn> {
     let line = raw.split('\n').filter(|l| l.starts_with("Tcp:")).next_back()?;
     let fields: Vec<&str> = line.split_whitespace().collect();
@@ -319,8 +320,8 @@ pub fn parse_conn(raw: &str) -> Option<Conn> {
     })
 }
 
-/// /proc/diskstats(Dart `DiskIO.parse`):dev 第 3 列,读/写扇区第 6/10 列,
-/// 跳过 loop 设备与畸形行
+/// /proc/diskstats (Dart `DiskIO.parse`): dev at column 3, read/write sectors at
+/// columns 6/10; skip loop devices and malformed lines
 pub fn parse_diskio(raw: &str) -> Vec<DiskIoPiece> {
     raw.split('\n')
         .filter_map(|line| {
@@ -341,8 +342,8 @@ pub fn parse_diskio(raw: &str) -> Vec<DiskIoPiece> {
         .collect()
 }
 
-/// power_supply uevent 多段输出(Dart `Batteries.parse`):空行分段,
-/// 每段为 KEY=VALUE 列表
+/// Multi-block power_supply uevent output (Dart `Batteries.parse`): blocks separated
+/// by blank lines, each block a KEY=VALUE list
 pub fn parse_batteries(raw: &str, only_li_poly: bool) -> Vec<Battery> {
     let mut batteries = Vec::new();
     let mut block: Vec<&str> = Vec::new();
@@ -384,8 +385,8 @@ fn parse_battery_block(lines: &[&str]) -> Option<Battery> {
     })
 }
 
-/// `sensors` 输出(Dart `SensorItem.parse`):空行分段,
-/// 每段至少 3 行 [device, adapter, detail...]
+/// `sensors` output (Dart `SensorItem.parse`): blocks separated by blank lines,
+/// each block at least 3 lines [device, adapter, detail...]
 pub fn parse_sensors(raw: &str) -> Vec<SensorItem> {
     let mut groups: Vec<Vec<&str>> = vec![Vec::new()];
     for line in raw.split('\n') {
@@ -420,8 +421,8 @@ pub fn parse_sensors(raw: &str) -> Vec<SensorItem> {
         .collect()
 }
 
-/// /proc/cpuinfo 的 model name 行(Dart `CpuBrand.parse`):型号 → 出现次数,
-/// 保持首次出现顺序
+/// model name lines of /proc/cpuinfo (Dart `CpuBrand.parse`): model → occurrence
+/// count, keeping first-seen order
 pub fn parse_cpu_brand(raw: &str) -> Vec<(String, u32)> {
     let mut brands: Vec<(String, u32)> = Vec::new();
     for line in raw.split('\n') {

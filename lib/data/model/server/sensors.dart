@@ -43,5 +43,5 @@ final class SensorItem {
     return details.values.firstOrNull;
   }
 
-  // 解析实现已迁移至共享 Rust 库 sbm_parser(见 doc/adr/0001)
+  // Parsing implementation migrated to the shared Rust library sbm_parser (see doc/adr/0001)
 }

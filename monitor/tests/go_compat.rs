@@ -1,7 +1,7 @@
-//! Go 版行为一致性测试集
+//! Behavior-parity test suite against the Go implementation
 //!
-//! 对照源:git 历史中的 Go 实现(model/、web/、res/res.go)。
-//! 每个测试注明对应的 Go 语义;与 Go 刻意不一致的两处(Go 端 bug)见 threshold.rs 模块注释。
+//! Reference: the Go implementation in git history (model/, web/, res/res.go).
+//! Each test names the Go semantics it covers; see the threshold.rs module comment for the two deliberate divergences (Go-side bugs).
 
 use server_box_monitor::core::config::Config;
 use server_box_monitor::monitoring::monitoring::{
@@ -23,7 +23,7 @@ fn test_parse_to_size() {
     assert_eq!(Size::parse("7b").unwrap(), Size(7));
 }
 
-/// Go Size.String():"%.1f" + 小写后缀,1024 进制
+/// Go Size.String(): "%.1f" + lowercase suffix, base 1024
 #[test]
 fn test_size_string_go_format() {
     assert_eq!(Size(0).to_string(), "0.0b");
@@ -31,11 +31,11 @@ fn test_size_string_go_format() {
     assert_eq!(Size(3 * 1024).to_string(), "3.0k");
     assert_eq!(Size(26 * 1024 * 1024 * 1024).to_string(), "26.0g");
     assert_eq!(Size(1024_u64.pow(4)).to_string(), "1.0t");
-    // 超过 t 不再进位,与 Go 相同
+    // No carry beyond t, same as Go
     assert_eq!(Size(2048 * 1024_u64.pow(4)).to_string(), "2048.0t");
 }
 
-/// Go ParseToSize:"0" 特判;无后缀报错
+/// Go ParseToSize: "0" special-cased; no suffix errors
 #[test]
 fn test_parse_size_edge_cases() {
     assert_eq!(Size::parse("0").unwrap(), Size(0));
@@ -45,7 +45,7 @@ fn test_parse_size_edge_cases() {
 
 // ---------- Threshold:model/threshold.go ----------
 
-/// Go 文档示例:">=80.5%" "<100m" "10m/s"
+/// Go doc examples: ">=80.5%" "<100m" "10m/s"
 #[test]
 fn test_threshold_percent() {
     let t = Threshold::parse(">=80.5%").unwrap();
@@ -73,7 +73,7 @@ fn test_threshold_speed() {
     assert_eq!(t.threshold_type, ThresholdType::Speed);
     assert_eq!(t.compare_type, CompareType::Greater);
     assert_eq!(t.value, (10 * 1024 * 1024) as f64);
-    // 大写也可(Go 解析前统一转小写)
+    // Uppercase also accepted (Go lowercases before parsing)
     let t2 = Threshold::parse(">10M/s").unwrap();
     assert_eq!(t2.value, t.value);
 }
@@ -87,7 +87,7 @@ fn test_threshold_temperature() {
     assert!(!t.is_true(69.9));
 }
 
-/// Go 操作符全集:< <= = >= >(注意是单个 =,不是 ==)
+/// Full Go operator set: < <= = >= > (note: single =, not ==)
 #[test]
 fn test_threshold_operators() {
     assert_eq!(Threshold::parse("<10%").unwrap().compare_type, CompareType::Less);
@@ -97,7 +97,7 @@ fn test_threshold_operators() {
     assert_eq!(Threshold::parse(">10%").unwrap().compare_type, CompareType::Greater);
 }
 
-/// Go 零值行为:无操作符时 CompareType 为零值(Less)
+/// Go zero-value behavior: without an operator, CompareType is the zero value (Less)
 #[test]
 fn test_threshold_no_operator_defaults_to_less() {
     let t = Threshold::parse("80%").unwrap();
@@ -106,7 +106,7 @@ fn test_threshold_no_operator_defaults_to_less() {
     assert!(!t.is_true(80.0));
 }
 
-/// Go:纯数字(无 %、/s、大小后缀、c)无法识别类型 → 报错
+/// Go: bare numbers (no %, /s, size suffix, or c) have no recognizable type → error
 #[test]
 fn test_threshold_invalid() {
     assert!(Threshold::parse("10").is_err());
@@ -114,9 +114,9 @@ fn test_threshold_invalid() {
     assert!(Threshold::parse("").is_err());
 }
 
-// ---------- 配置:model/config.go + res/res.go ----------
+// ---------- Config: model/config.go + res/res.go ----------
 
-/// Go 格式 config.json 能被加载并正确归一化
+/// Go-format config.json loads and normalizes correctly
 #[test]
 fn test_go_config_json_normalize() {
     let json = r#"{
@@ -136,9 +136,9 @@ fn test_go_config_json_normalize() {
     config.normalize().unwrap();
 
     assert_eq!(config.get_server_name(), "my-server");
-    // Go:interval "3s" → 3 秒
+    // Go: interval "3s" → 3 seconds
     assert_eq!(config.get_monitoring().interval_seconds, 3);
-    // Go:rate "2/30s" → 30 秒内 2 次
+    // Go: rate "2/30s" → 2 times per 30 seconds
     assert_eq!(config.get_push_rate(), (2, Duration::from_secs(30)));
 
     let rules = config.get_monitoring().rules;
@@ -157,7 +157,7 @@ fn test_go_config_json_normalize() {
     );
 }
 
-/// Go res.go 默认值:name "Server 1"、interval 7s、rate "1/1m"
+/// Go res.go defaults: name "Server 1", interval 7s, rate "1/1m"
 #[test]
 fn test_go_config_defaults() {
     let mut config: Config = serde_json::from_str("{}").unwrap();
@@ -168,7 +168,7 @@ fn test_go_config_defaults() {
     assert_eq!(config.get_push_rate(), (1, Duration::from_secs(60)));
 }
 
-/// Go initRateLimiter:rate 解析失败时回退默认限流
+/// Go initRateLimiter: falls back to the default rate limit when rate parsing fails
 #[test]
 fn test_go_rate_invalid_falls_back_to_default() {
     for bad in ["abc", "1", "x/1m", "1/xx", "1/1w"] {
@@ -177,32 +177,32 @@ fn test_go_rate_invalid_falls_back_to_default() {
         assert_eq!(
             config.get_push_rate(),
             (1, Duration::from_secs(60)),
-            "rate {:?} 应回退默认值",
+            "rate {:?} should fall back to the default",
             bad
         );
     }
-    // Go 时长单位:s/m/h
+    // Go duration units: s/m/h
     let mut config: Config = serde_json::from_str(r#"{"rate": "3/2h"}"#).unwrap();
     config.normalize().unwrap();
     assert_eq!(config.get_push_rate(), (3, Duration::from_secs(7200)));
 }
 
-// ---------- 限流:gommon rate.Limiter 语义 ----------
+// ---------- Rate limiting: gommon rate.Limiter semantics ----------
 
-/// Go runner:推送前 Check(不消耗),成功后 Acquire(消耗);窗口内达到次数则拒绝
+/// Go runner: Check before pushing (no consumption), Acquire after success (consumes); rejected once the window count is reached
 #[test]
 fn test_rate_limiter_check_acquire() {
     let limiter = PushRateLimiter::new();
     let window = Duration::from_secs(60);
 
-    // check 不消耗配额
+    // check does not consume quota
     assert!(limiter.check("ios", 1, window));
     assert!(limiter.check("ios", 1, window));
 
     limiter.acquire("ios");
     assert!(!limiter.check("ios", 1, window));
 
-    // 不同名称独立计数
+    // Independent counters per name
     assert!(limiter.check("webhook", 1, window));
 }
 
@@ -217,11 +217,11 @@ fn test_rate_limiter_window_expiry() {
     assert!(limiter.check("x", 1, window));
 }
 
-// ---------- 磁盘解析:model/status.go + web/web.go ----------
+// ---------- Disk parsing: model/status.go + web/web.go ----------
 
-/// fixture 来自 Go model/test/disk(model/status_test.go TestParseDisk)。
-/// 聚合语义与 Go web.Status 一致:仅 /dev 前缀文件系统 + 按文件系统名去重,
-/// 因此 tmpfs/devtmpfs/overlay/shm 不计入,期望值为
+/// Fixture from Go model/test/disk (model/status_test.go TestParseDisk).
+/// Aggregation matches Go web.Status: only /dev-prefixed filesystems, deduped by
+/// filesystem name, so tmpfs/devtmpfs/overlay/shm are excluded; expected values are
 /// /dev/mapper/centosvolume-root(40G/26G/14G) + /dev/sda2(1014M/602M/413M) + /dev/sda1(100M/7.3M/93M)
 #[test]
 fn test_parse_disk_go_fixture() {
@@ -233,17 +233,17 @@ fn test_parse_disk_go_fixture() {
 
     const KIB: u64 = 1024;
     assert_eq!(disk.total, 40 * GIB + 1014 * MIB + 100 * MIB);
-    // 解析以 KiB 为粒度:7.3M → 7475 KiB(与 Go 的字节级换算差 <1KiB,展示不受影响)
+    // Parsing is KiB-granular: 7.3M → 7475 KiB (< 1KiB off Go's byte-level math; display unaffected)
     assert_eq!(disk.used, 26 * GIB + 602 * MIB + ((7.3 * KIB as f64) as u64) * KIB);
     assert_eq!(disk.free, 14 * GIB + 413 * MIB + 93 * MIB);
-    // Go web.Status 展示格式
+    // Go web.Status display format
     assert_eq!(
         format!("{} / {}", Size(disk.used), Size(disk.total)),
         "26.6g / 41.1g"
     );
 }
 
-// ---------- /status 端点:web/web.go + web/base.go ----------
+// ---------- /status endpoint: web/web.go + web/base.go ----------
 
 fn sample_metrics() -> SystemMetrics {
     SystemMetrics {
@@ -272,7 +272,7 @@ fn sample_metrics() -> SystemMetrics {
     }
 }
 
-/// Go web.Status:{"name","cpu","mem","net","disk"},cpu "%.1f%%",其余 "used/total" Size 格式
+/// Go web.Status: {"name","cpu","mem","net","disk"}, cpu "%.1f%%", others "used/total" in Size format
 #[test]
 fn test_status_response_go_shape() {
     let metrics = sample_metrics();
@@ -283,11 +283,11 @@ fn test_status_response_go_shape() {
     assert_eq!(data["mem"], "26.0g / 40.0g");
     assert_eq!(data["net"], "3.0k / 7.0b");
     assert_eq!(data["disk"], "27.0g / 41.0g");
-    // 与 Go 相同的 5 个字段,不多不少
+    // Exactly the same 5 fields as Go, no more, no less
     assert_eq!(data.as_object().unwrap().len(), 5);
 }
 
-/// 指标未就绪时字段为空串,name 取配置
+/// Fields are empty strings before metrics are ready; name comes from config
 #[test]
 fn test_status_response_no_metrics() {
     let data = server_box_monitor::api::server::go_status_data(None, "my-server");

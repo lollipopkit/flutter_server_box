@@ -1,12 +1,12 @@
 name: Monitor Release
 
-# 仅手动触发。版本号与 App 解耦:不读 git tag,
-# 以 monitor crate(monitor/Cargo.toml)的 version 为准,
-# Release tag 为 monitor-v<version>,与 App 的 v1.0.x 互不干扰。
+# Manual trigger only. Versioning is decoupled from the app: no git tags are read;
+# the monitor crate version (monitor/Cargo.toml) is authoritative.
+# The release tag is monitor-v<version>, independent of the app's v1.0.x.
 #
-# 产物:
-# - 原生 bin(Linux musl / macOS / Windows)→ GitHub Release
-# - Docker 镜像(Alpine,直接复用 Linux musl bin,不在镜像内编译)→ ghcr.io
+# Artifacts:
+# - Native binaries (Linux musl / macOS / Windows) → GitHub Release
+# - Docker image (Alpine, reusing the Linux musl binary without in-image builds) → ghcr.io
 on:
   workflow_dispatch:
     inputs:
@@ -186,7 +186,7 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
-      # Linux musl bin 直接复用进 Docker 镜像,避免二次编译
+      # The Linux musl binary is reused in the Docker image, avoiding a second build
       - name: Upload raw bin for Docker
         if: matrix.platform == 'linux'
         uses: actions/upload-artifact@v4
@@ -248,7 +248,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 仅 COPY 预编译产物,无需 QEMU 也能产多架构镜像
+      # COPY prebuilt artifacts only; multi-arch images without QEMU
       - name: Build and push
         uses: docker/build-push-action@v6
         with:

@@ -1,7 +1,7 @@
-// sbm_parser FFI 集成测试(ADR 0001):
-// 验证绑定加载与 JSON 装配契约。解析行为本身由
-// crates/sbm_parser/tests/dart_compat.rs 锁定(fixture 与期望值同源)。
-// 运行前需构建原生库:cargo build -p sbm_ffi
+// sbm_parser FFI integration tests (ADR 0001):
+// verify binding loading and the JSON assembly contract. Parsing behavior itself
+// is locked by crates/sbm_parser/tests/dart_compat.rs (same fixtures and expectations).
+// Build the native library first: cargo build -p sbm_ffi
 
 import 'dart:convert';
 import 'dart:io';
@@ -82,7 +82,7 @@ void main() {
 
   test('disk section (df fallback)', () async {
     final disks = (await parseViaFfi({'disk': _dfRaw}))['disks'] as List;
-    expect(disks.length, 3); // udev、vda3、vda2;tmpfs 排除
+    expect(disks.length, 3); // udev, vda3, vda2; tmpfs excluded
     final root = disks.firstWhere((d) => d['mount'] == '/');
     expect(root['path'], '/dev/vda3');
     expect(root['used_percent'], 47);
@@ -144,7 +144,7 @@ void main() {
       'diskSmart': smart,
     });
 
-    // Linux 分支只收集 Li-poly 电池
+    // The Linux branch collects Li-poly batteries only
     expect((status['batteries'] as List).length, 1);
     expect(status['batteries'][0]['percent'], 73);
     expect((status['sensors'] as List).length, 4);
@@ -161,7 +161,7 @@ void main() {
         '   7       0 loop0 55 0 2170 42 0 0 0 0 0 80 42 0 0 0 0 0 0\n'
         ' 259       0 nvme0n1 1234 0 567890 100 4321 0 98765 200 0 300 400 0 0 0 0 0 0';
     final diskio = (await parseViaFfi({'diskio': raw}))['diskio'] as List;
-    expect(diskio.length, 1); // loop 跳过
+    expect(diskio.length, 1); // loop skipped
     expect(diskio[0]['dev'], 'nvme0n1');
     expect(diskio[0]['sectors_read'], 567890);
   });
@@ -199,7 +199,7 @@ void main() {
       };
       for (final type in types) {
         final expected = manifest[type.name];
-        if (expected == null) continue; // echo 等脚本结构命令不在清单内
+        if (expected == null) continue; // structural script commands like echo are not in the manifest
         expect(type.cmd, expected, reason: '$system/${type.name}');
       }
     }

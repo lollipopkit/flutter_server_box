@@ -1,15 +1,15 @@
 #!/bin/sh
 # (Un)Install script for ServerBox Monitor
-# Release 来源:本 monorepo 的 GitHub Release(tag `monitor-v*`),
-# 资产 server-box-monitor_v<ver>_linux_<arch>.tar.gz,
-# 内含 server_box_monitor bin + frontend/dist + migrations + 示例配置。
+# Release source: this monorepo's GitHub Releases (tag `monitor-v*`), asset
+# server-box-monitor_v<ver>_linux_<arch>.tar.gz, containing the server_box_monitor
+# binary + frontend/dist + migrations + example config.
 set -u
 
 REPO="lollipopkit/flutter_server_box"
 APP_DIR="/opt/server-box-monitor"
 SERVICE="server_box_monitor.service"
 TMP_DIR="/tmp/server-box-monitor-install"
-# TODO(迁移残留,确认无旧版用户后删除): 旧版安装的裸二进制位置
+# TODO(migration residue; remove once no legacy users remain): bare binary location of legacy installs
 LEGACY_BIN="/usr/local/bin/server_box_monitor"
 
 # Check root
@@ -37,7 +37,7 @@ download() {
         exit 1
     fi
 
-    # 只认 monitor-v* tag,与 App 的 v1.0.x release 隔离
+    # Only monitor-v* tags; isolated from the app's v1.0.x releases
     tag=$(curl -s "https://api.github.com/repos/${REPO}/releases?per_page=100" \
         | grep -o '"tag_name": *"monitor-v[^"]*"' | head -n 1 | cut -d '"' -f 4)
     if [ -z "$tag" ]; then
@@ -66,7 +66,7 @@ cleanup() {
     rm -rf "$TMP_DIR"
 }
 
-# 覆盖程序文件,保留 .env 与数据库
+# Overwrite program files, keep .env and the database
 install_files() {
     pkg="$TMP_DIR/server-box-monitor"
     mkdir -p "$APP_DIR"
@@ -79,13 +79,13 @@ install_files() {
 
     if [ ! -f "$APP_DIR/.env" ]; then
         cp "$pkg/.env.example" "$APP_DIR/.env"
-        # 生成随机 JWT_SECRET,避免默认弱密钥上线
+        # Generate a random JWT_SECRET to avoid deploying a weak default
         secret=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')
         sed -i "s|^JWT_SECRET=.*|JWT_SECRET=${secret}|" "$APP_DIR/.env"
         chmod 600 "$APP_DIR/.env"
     fi
 
-    # 清理旧版安装的裸二进制
+    # Clean up the bare binary of legacy installs
     if [ -f "$LEGACY_BIN" ]; then
         echo "Removing legacy binary $LEGACY_BIN"
         rm -f "$LEGACY_BIN"

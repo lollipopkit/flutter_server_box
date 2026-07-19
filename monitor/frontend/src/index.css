@@ -31,7 +31,7 @@
   }
 }
 
-/* Tailwind 4 的 @apply 不能引用自定义类,btn/status-badge 的公共部分需在各类中展开 */
+/* Tailwind 4 @apply cannot reference custom classes; the shared parts of btn/status-badge are expanded in each class */
 @layer components {
   .card {
     @apply bg-white rounded-lg shadow-xs border border-gray-200 p-6;

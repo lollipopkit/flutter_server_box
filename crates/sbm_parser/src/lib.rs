@@ -1,13 +1,15 @@
-//! ServerBox 共享状态解析库(见 ADR 0001)
+//! ServerBox shared status parsing library (see ADR 0001)
 //!
-//! 纯解析,无 IO:输入为「命令 key → 原始输出」的映射,输出为结构化状态。
-//! 语义基准为 flutter_server_box 的 Dart 实现(`lib/data/model/server/`),
-//! 迁移时以 App 的 fixture 测试锁定行为。
+//! Pure parsing, no IO: input is a map of command key → raw output, output is
+//! structured status. The semantic baseline is flutter_server_box's Dart
+//! implementation (`lib/data/model/server/`); behavior is locked by the app's
+//! fixture tests during migration.
 //!
-//! 设计约束:
-//! - 解析产出原始计数器(CPU ticks、网卡累计字节、磁盘扇区),差分/滑窗
-//!   由调用方或本库的纯函数(`types::` 中的 delta 助手)完成,不持有可变状态
-//! - 单位跟随数据源:内存/磁盘为 KiB(meminfo/df -k),网络为字节
+//! Design constraints:
+//! - Parsers emit raw counters (CPU ticks, cumulative NIC bytes, disk sectors);
+//!   deltas/windowing are done by the caller or this crate's pure functions
+//!   (the delta helpers in `types::`) — no mutable state is held
+//! - Units follow the data source: memory/disk in KiB (meminfo/df -k), network in bytes
 
 pub mod bsd;
 pub mod commands;
@@ -25,17 +27,18 @@ use types::*;
 #[serde(rename_all = "lowercase")]
 pub enum SystemType {
     Linux,
-    /// BSD 家族,含 macOS
+    /// BSD family, including macOS
     Bsd,
     Windows,
 }
 
-/// 一次采集的解析结果。字段为 `None`/空表示对应命令缺失或解析失败,
-/// 与 App 逐段 try-catch 的容错语义一致:单段失败不影响其余字段。
+/// Parse result of one collection round. `None`/empty fields mean the command was
+/// missing or failed to parse, matching the app's per-segment try-catch tolerance:
+/// one failing segment does not affect the others.
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct ServerStatus {
     pub cpu: Vec<CpuCore>,
-    /// CPU 型号 → 逻辑核数(保持出现顺序)
+    /// CPU model → logical core count (keeping first-seen order)
     pub cpu_brand: Vec<(String, u32)>,
     pub mem: Option<Memory>,
     pub swap: Option<Swap>,
@@ -44,7 +47,7 @@ pub struct ServerStatus {
     pub temps: Temperatures,
     pub conn: Option<Conn>,
     pub uptime: Option<String>,
-    /// 系统版本描述(PRETTY_NAME / uname / OsName)
+    /// System version description (PRETTY_NAME / uname / OsName)
     pub sys: Option<String>,
     pub host: Option<String>,
     pub diskio: Vec<DiskIoPiece>,
@@ -55,11 +58,11 @@ pub struct ServerStatus {
     pub disk_smart: Vec<DiskSmart>,
 }
 
-/// 解析选项
+/// Parse options
 #[derive(Debug, Clone, Copy)]
 pub struct ParseOptions {
-    /// 温度值除数:Linux thermal_zone 为毫摄氏度(1000.0);
-    /// 传感器直接输出摄氏度时为 1.0(App 的 tempIsCelsius 配置)
+    /// Temperature divisor: Linux thermal_zone reports millidegree Celsius (1000.0);
+    /// 1.0 when sensors output Celsius directly (the app's tempIsCelsius setting)
     pub temp_divisor: f64,
 }
 
@@ -69,7 +72,7 @@ impl Default for ParseOptions {
     }
 }
 
-/// 解析入口:`raw` 为命令 key(见 [`commands`])→ 原始输出
+/// Parse entry point: `raw` maps command key (see [`commands`]) → raw output
 pub fn parse_status(system: SystemType, raw: &HashMap<String, String>) -> ServerStatus {
     parse_status_opts(system, raw, ParseOptions::default())
 }
@@ -104,7 +107,7 @@ pub fn parse_status_opts(
             status.conn = linux::parse_conn(get(commands::CONN));
             status.sys = common::parse_sys_version(get(commands::SYS));
             status.diskio = linux::parse_diskio(get(commands::DISKIO));
-            // 与 App 一致:仅收集锂聚合物电池
+            // Matches the app: only lithium-polymer batteries are collected
             status.batteries = linux::parse_batteries(get(commands::BATTERY), true);
             status.sensors = linux::parse_sensors(get(commands::SENSORS));
             status.disk_smart = smart::parse(get(commands::DISK_SMART));
@@ -123,15 +126,16 @@ pub fn parse_status_opts(
             status.disks = windows::parse_disks(get(commands::DISK));
             status.temps = windows::parse_temps(get(commands::TEMP));
             status.sys = common::parse_hostname(get(commands::SYS));
-            // Windows uptime 已由 PowerShell 预格式化
+            // Windows uptime is pre-formatted by PowerShell
             status.uptime = common::parse_hostname(get(commands::UPTIME));
             status.conn = get(commands::CONN).trim().parse().ok().map(|count| Conn {
                 max_conn: count,
                 fail: 0,
             });
             status.batteries = windows::parse_batteries(get(commands::BATTERY));
-            // NET 为 WMI 双采样:累计计数进 status.net(与其他平台一致),
-            // 即时速率另由 windows::parse_net_speed 差分产出
+            // NET is a WMI double sample: cumulative counters go into status.net
+            // (consistent with other platforms); instantaneous rates are separately
+            // derived by windows::parse_net_speed deltas
             status.net = windows::parse_net(get(commands::NET));
             status.diskio = windows::parse_diskio(get(commands::DISKIO));
         }

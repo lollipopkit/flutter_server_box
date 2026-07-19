@@ -63,7 +63,7 @@ async fn check_enhanced_rule(
 }
 
 
-/// 百分比/温度阈值判断,格式与 Go 版一致(如 ">=77%"、">=70c")
+/// Percentage/temperature threshold check, Go-compatible format (e.g. ">=77%", ">=70c")
 fn should_trigger_alert(threshold: &str, value: f64) -> Result<bool> {
     match Threshold::parse(threshold) {
         Ok(t) if matches!(t.threshold_type, ThresholdType::Percent | ThresholdType::Temperature) => {
@@ -224,7 +224,7 @@ async fn check_temperature_rule(rule: &MonitoringRule, metrics: &SystemMetrics) 
     }
 }
 
-/// 速度/大小阈值判断,格式与 Go 版一致(如 ">10m/s"、"<100m",1024 进制小写单位)
+/// Speed/size threshold check, Go-compatible format (e.g. ">10m/s", "<100m", base-1024 lowercase units)
 fn should_trigger_speed_alert(threshold: &str, value: f64) -> Result<bool> {
     match Threshold::parse(threshold) {
         Ok(t) if matches!(t.threshold_type, ThresholdType::Speed | ThresholdType::Size) => {

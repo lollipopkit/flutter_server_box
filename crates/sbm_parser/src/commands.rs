@@ -1,15 +1,16 @@
-//! 采集命令清单(单一事实来源,见 ADR 0001)
+//! Collection command manifest (single source of truth, see ADR 0001)
 //!
-//! 命令、分段符、解析器同版本演进。App 端脚本生成与 monitor 端本机采集
-//! 都从这里取命令。命令逐条对照 flutter_server_box
+//! Commands, segment separator, and parsers evolve in lockstep. Both the app's
+//! script generation and the monitor's local collection take commands from here.
+//! Commands mirror flutter_server_box one by one
 //! `lib/data/model/app/scripts/cmd_types.dart`。
-//! `core = false` 的命令开销较大(smartctl/GPU 等),monitor 周期采集
-//! 只执行 core 子集,App 按需全量执行。
+//! `core = false` commands are expensive (smartctl/GPU etc.); the monitor's
+//! periodic collection runs only the core subset, the app runs all on demand.
 
-/// 输出分段符,脚本中每段前输出 `SrvBoxSep.<key>`
+/// Output segment separator; scripts print `SrvBoxSep.<key>` before each segment
 pub const SEPARATOR: &str = "SrvBoxSep";
 
-// 命令 key(与 App `ShellCmdType` 枚举名一致)
+// Command keys (matching the app's `ShellCmdType` enum names)
 pub const TIME: &str = "time";
 pub const NET: &str = "net";
 pub const SYS: &str = "sys";
@@ -22,7 +23,7 @@ pub const DISK: &str = "disk";
 pub const MEM: &str = "mem";
 pub const TEMP_TYPE: &str = "tempType";
 pub const TEMP_VAL: &str = "tempVal";
-/// Windows 单段温度(InstanceName + 摄氏度 JSON)
+/// Windows single-segment temperature (InstanceName + Celsius JSON)
 pub const TEMP: &str = "temp";
 pub const DISKIO: &str = "diskio";
 pub const BATTERY: &str = "battery";
@@ -35,7 +36,7 @@ pub const AMD: &str = "amd";
 pub struct CommandSpec {
     pub key: &'static str,
     pub cmd: &'static str,
-    /// monitor 周期采集是否执行(高开销命令为 false)
+    /// Whether the monitor's periodic collection runs this (false for expensive commands)
     pub core: bool,
 }
 

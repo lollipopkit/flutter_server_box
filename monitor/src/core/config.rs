@@ -95,7 +95,7 @@ pub struct GoPush {
 
 impl Config {
     pub async fn load() -> Result<Self> {
-        // .env 支持:环境变量是 Docker/systemd 的主要配置通道
+        // .env support: environment variables are the primary config channel for Docker/systemd
         dotenvy::dotenv().ok();
 
         // Try to load from config file first (TOML preferred, JSON fallback)
@@ -230,16 +230,16 @@ impl Config {
         self.database_url.clone().unwrap_or_else(|| "sqlite:serverbox_monitor.db".to_string())
     }
 
-    /// 环境变量覆盖(优先于配置文件);空值视为未设置
+    /// Environment variable overrides (take precedence over config files); empty values count as unset
     fn apply_env_overrides(&mut self) {
         if let Some(secret) = env::var("JWT_SECRET").ok().filter(|s| !s.is_empty()) {
             self.jwt_secret = Some(secret);
         }
     }
 
-    /// JWT 密钥解析,serve 启动时必须调用一次:
-    /// - 显式配置(env/配置文件):拒绝示例值与过短密钥
-    /// - 未配置:在数据库同目录持久化随机生成的密钥(0600)
+    /// JWT secret resolution; must be called once at serve startup:
+    /// - explicitly configured (env/config file): example values and short keys rejected
+    /// - unset: a randomly generated secret is persisted next to the database (0600)
     pub fn resolve_jwt_secret(&mut self) -> Result<()> {
         const MIN_LEN: usize = 32;
         const KNOWN_DEFAULTS: &[&str] = &[
@@ -294,7 +294,7 @@ impl Config {
         Ok(())
     }
 
-    /// 密钥文件与 SQLite 数据库同目录(Docker 卷挂载下随数据持久化)
+    /// The secret file lives next to the SQLite database (persisted with the data under Docker volume mounts)
     fn jwt_secret_path(&self) -> std::path::PathBuf {
         let db = self.get_database_url();
         let db_path = db
@@ -314,7 +314,7 @@ impl Config {
         self.push.clone().unwrap_or_else(|| vec![])
     }
 
-    /// serve 子命令的 CLI/env 覆盖(--addr/--cert/--key),优先于配置文件
+    /// CLI/env overrides of the serve subcommand (--addr/--cert/--key), taking precedence over config files
     pub fn apply_cli_overrides(
         &mut self,
         addr: Option<&str>,
@@ -349,7 +349,7 @@ impl Config {
         self.name.clone().unwrap_or_else(|| "Server 1".to_string())
     }
 
-    /// 推送限流,格式 "N/时长"(如 "1/1m"),默认每分钟 1 次
+    /// Push rate limit, formatted "N/duration" (e.g. "1/1m"), default once per minute
     pub fn get_push_rate(&self) -> (usize, std::time::Duration) {
         const DEFAULT: (usize, std::time::Duration) = (1, std::time::Duration::from_secs(60));
         let Some(rate) = &self.rate else { return DEFAULT };
@@ -371,7 +371,7 @@ impl Config {
     }
 }
 
-/// 解析 Go 风格时长,如 "10s"、"1m"、"1h"
+/// Parse Go-style durations, e.g. "10s", "1m", "1h"
 fn parse_go_duration(s: &str) -> Option<std::time::Duration> {
     let s = s.trim();
     let (num, unit) = s.split_at(s.len().checked_sub(1)?);
@@ -432,7 +432,7 @@ impl Default for Config {
             }),
             database_url: Some(env::var("DATABASE_URL")
                 .unwrap_or_else(|_| "sqlite:serverbox_monitor.db".to_string())),
-            jwt_secret: None, // 缺省时首次启动自动生成,见 resolve_jwt_secret
+            jwt_secret: None, // auto-generated on first start when unset, see resolve_jwt_secret
             push: Some(vec![
                 PushConfig {
                     name: "webhook".to_string(),

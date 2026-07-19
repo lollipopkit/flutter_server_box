@@ -1,16 +1,16 @@
-//! 结构化状态类型与差分助手
+//! Structured status types and diff helpers
 //!
-//! 语义对照:flutter_server_box `lib/data/model/server/`
+//! Semantic reference: flutter_server_box `lib/data/model/server/`
 //! (cpu.dart / memory.dart / disk.dart / net_speed.dart / temp.dart)
 
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-/// 单核 CPU 累计 ticks(Dart `SingleCpuCore`)。
-/// Linux 下来自 /proc/stat;BSD/Windows 下为一次性百分比模拟的计数。
+/// Cumulative CPU ticks of one core (Dart `SingleCpuCore`).
+/// From /proc/stat on Linux; on BSD/Windows synthesized from one-shot percentages.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CpuCore {
-    /// "cpu"(汇总)或 "cpu0"、"cpu1" …
+    /// "cpu" (summary) or "cpu0", "cpu1", ...
     pub id: String,
     pub user: u64,
     pub sys: u64,
@@ -27,7 +27,7 @@ impl CpuCore {
     }
 }
 
-/// 两次采样间的 CPU 使用率(Dart `Cpus.usedPercent`),0.0–100.0
+/// CPU usage between two samples (Dart `Cpus.usedPercent`), 0.0–100.0
 pub fn cpu_used_percent(pre: &CpuCore, now: &CpuCore) -> f64 {
     let total_delta = now.total() as i64 - pre.total() as i64;
     if total_delta == 0 {
@@ -38,7 +38,7 @@ pub fn cpu_used_percent(pre: &CpuCore, now: &CpuCore) -> f64 {
     if used.is_nan() { 0.0 } else { 100.0 - used * 100.0 }
 }
 
-/// 内存,单位 KiB(Dart `Memory`,来自 meminfo)
+/// Memory in KiB (Dart `Memory`, from meminfo)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Memory {
     pub total: u64,
@@ -47,7 +47,7 @@ pub struct Memory {
 }
 
 impl Memory {
-    /// Dart `Memory.availPercent`:avail 为 0 时回退 free
+    /// Dart `Memory.availPercent`: falls back to free when avail is 0
     pub fn avail_percent(&self) -> f64 {
         if self.total == 0 {
             return 0.0;
@@ -61,7 +61,7 @@ impl Memory {
     }
 }
 
-/// 交换分区,单位 KiB(Dart `Swap`)
+/// Swap in KiB (Dart `Swap`)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Swap {
     pub total: u64,
@@ -79,10 +79,10 @@ impl Swap {
     }
 }
 
-/// 单个文件系统,大小单位 KiB(Dart `Disk`,来自 df -k / lsblk / WMI)
+/// One filesystem, sizes in KiB (Dart `Disk`, from df -k / lsblk / WMI)
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Disk {
-    /// 文件系统路径(如 /dev/sda1、C:)
+    /// Filesystem path (e.g. /dev/sda1, C:)
     pub path: String,
     pub fs_type: Option<String>,
     pub mount: String,
@@ -90,17 +90,17 @@ pub struct Disk {
     pub used: u64,
     pub size: u64,
     pub avail: u64,
-    /// 设备名(lsblk NAME,如 sda1)
+    /// Device name (lsblk NAME, e.g. sda1)
     pub name: Option<String>,
-    /// 内核设备名(lsblk KNAME)
+    /// Kernel device name (lsblk KNAME)
     pub kname: Option<String>,
     pub uuid: Option<String>,
-    /// 子设备(分区),lsblk 层级
+    /// Child devices (partitions), lsblk hierarchy
     pub children: Vec<Disk>,
 }
 
-/// 是否纳入统计(Dart `_shouldCalc`):
-/// /dev 前缀、网络挂载(//)、/mnt 挂载点纳入;shm/overlay/tmpfs 排除;其余纳入
+/// Whether to include in aggregation (Dart `_shouldCalc`):
+/// include /dev-prefixed, network mounts (//), /mnt mount points; exclude shm/overlay/tmpfs; include the rest
 pub fn disk_should_calc(fs: &str, mount: &str) -> bool {
     if fs.starts_with("/dev") || fs.starts_with("//") || mount.starts_with("/mnt") {
         return true;
@@ -108,7 +108,7 @@ pub fn disk_should_calc(fs: &str, mount: &str) -> bool {
     !(fs.starts_with("shm") || fs.starts_with("overlay") || fs.starts_with("tmpfs"))
 }
 
-/// 网卡累计计数,单位字节(Dart `NetSpeedPart`,不含时间戳——由调用方随采样记录)
+/// Cumulative NIC counters in bytes (Dart `NetSpeedPart`; no timestamp — recorded by the caller per sample)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct NetIface {
     pub device: String,
@@ -116,7 +116,7 @@ pub struct NetIface {
     pub tx_bytes: u64,
 }
 
-/// 两次采样间的网卡速率,单位字节/秒(Dart `NetSpeed.speedIn/Out`)
+/// NIC rates between two samples in bytes/sec (Dart `NetSpeed.speedIn/Out`)
 pub fn net_speed(pre: &NetIface, now: &NetIface, seconds: f64) -> Option<(f64, f64)> {
     if seconds <= 0.0 || pre.device != now.device {
         return None;
@@ -126,14 +126,14 @@ pub fn net_speed(pre: &NetIface, now: &NetIface, seconds: f64) -> Option<(f64, f
     Some((rx, tx))
 }
 
-/// TCP 连接统计(Dart `Conn`,来自 /proc/net/snmp)
+/// TCP connection stats (Dart `Conn`, from /proc/net/snmp)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Conn {
     pub max_conn: i64,
     pub fail: i64,
 }
 
-/// 磁盘 IO 累计扇区计数(Dart `DiskIOPiece`,不含时间戳——由调用方随采样记录)
+/// Cumulative disk IO sector counters (Dart `DiskIOPiece`; no timestamp — recorded by the caller per sample)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DiskIoPiece {
     pub dev: String,
@@ -141,7 +141,7 @@ pub struct DiskIoPiece {
     pub sectors_write: i64,
 }
 
-/// 电池状态(Dart `BatteryStatus`)
+/// Battery state (Dart `BatteryStatus`)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum BatteryStatus {
@@ -162,7 +162,7 @@ impl BatteryStatus {
     }
 }
 
-/// 电池(Dart `Battery`,来自 power_supply uevent / Win32_Battery)
+/// Battery (Dart `Battery`, from power_supply uevent / Win32_Battery)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Battery {
     pub percent: Option<i64>,
@@ -179,7 +179,7 @@ impl Battery {
     }
 }
 
-/// sensors 输出条目(Dart `SensorItem`);details 保持输出顺序
+/// One sensors output entry (Dart `SensorItem`); details keep output order
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SensorItem {
     pub device: String,
@@ -188,7 +188,7 @@ pub struct SensorItem {
 }
 
 impl SensorItem {
-    /// Dart `SensorItem.summary`:首个 detail 的值
+    /// Dart `SensorItem.summary`: value of the first detail
     pub fn summary(&self) -> Option<&str> {
         self.details.first().map(|(_, v)| v.as_str())
     }
@@ -199,7 +199,7 @@ impl SensorItem {
 pub struct NvidiaSmiItem {
     pub name: String,
     pub temp: i64,
-    /// 如 "24.55 W / 350.00 W";缺失时与 Dart 一致为 "null / null"
+    /// e.g. "24.55 W / 350.00 W"; "null / null" when missing, matching Dart
     pub power: String,
     pub memory: GpuMem,
     pub percent: i64,
@@ -218,7 +218,7 @@ pub struct AmdSmiItem {
     pub clock_speed: i64,
 }
 
-/// GPU 显存(Dart `NvidiaSmiMem`/`AmdSmiMem`)
+/// GPU memory (Dart `NvidiaSmiMem`/`AmdSmiMem`)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GpuMem {
     pub total: i64,
@@ -234,7 +234,7 @@ pub struct GpuMemProcess {
     pub memory: i64,
 }
 
-/// SMART 磁盘健康(Dart `DiskSmart`)
+/// SMART disk health (Dart `DiskSmart`)
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DiskSmart {
     pub device: String,
@@ -273,8 +273,8 @@ pub struct SmartAttributeFlags {
     pub auto_keep: bool,
 }
 
-/// 磁盘用量聚合(Dart `DiskUsage.parse`):按 path:kname 去重,
-/// 自身有数据的节点不再下钻子设备
+/// Disk usage aggregation (Dart `DiskUsage.parse`): dedupe by path:kname,
+/// nodes carrying their own data are not descended into
 pub fn disk_usage(disks: &[Disk]) -> (u64, u64) {
     fn visit(disk: &Disk, seen: &mut Vec<String>, used: &mut u64, size: &mut u64) {
         if !disk_should_calc(&disk.path, &disk.mount) {
@@ -300,11 +300,11 @@ pub fn disk_usage(disks: &[Disk]) -> (u64, u64) {
     (used, size)
 }
 
-/// 温度表,摄氏度(Dart `Temperatures`)
+/// Temperature table in Celsius (Dart `Temperatures`)
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct Temperatures(pub BTreeMap<String, f64>);
 
-/// CPU 温度器件优先级(Dart `_cpuTemp`)
+/// CPU temperature device priority (Dart `_cpuTemp`)
 const CPU_TEMP_KEYS: [&str; 5] = ["x86_pkg_temp", "coretemp", "zenpower", "cpu_thermal", "soc"];
 
 impl Temperatures {
@@ -312,7 +312,7 @@ impl Temperatures {
         self.0.is_empty()
     }
 
-    /// Dart `Temperatures.first`:优先返回 CPU 器件温度,否则任意第一个
+    /// Dart `Temperatures.first`: prefer a CPU device temperature, else any first entry
     pub fn first(&self) -> Option<f64> {
         for key in CPU_TEMP_KEYS {
             if let Some(v) = self.0.get(key) {

@@ -1,7 +1,7 @@
 class Temperatures {
   final Map<String, double> _map = {};
 
-  /// 解析在共享 Rust 库完成(sbm_parser::linux::parse_temps),此处仅装配
+  /// Parsing happens in the shared Rust library (sbm_parser::linux::parse_temps); assembly only here
   void setAll(Map<String, double> values) {
     _map
       ..clear()

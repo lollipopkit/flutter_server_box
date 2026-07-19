@@ -10,7 +10,7 @@ services:
       - SBM_HOST=0.0.0.0
       - SBM_PORT=3770
       - DATABASE_URL=sqlite:/app/data/serverbox_monitor.db
-      # JWT_SECRET 可选:未设置时首启自动生成并持久化到 /app/data/jwt.secret
+      # JWT_SECRET optional: auto-generated on first start and persisted to /app/data/jwt.secret
       - JWT_SECRET
       - RUST_LOG=${RUST_LOG:-info}
     volumes:

@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 use toml::Value as TomlValue;
 use tracing::{info, warn};
 
-/// 按推送名称限流:窗口 window 内最多 times 次
+/// Rate limit per push name: at most `times` within `window`
 pub struct PushRateLimiter {
     records: Mutex<HashMap<String, VecDeque<Instant>>>,
 }
@@ -24,7 +24,7 @@ impl PushRateLimiter {
         LIMITER.get_or_init(Self::new)
     }
 
-    /// 是否允许推送(不消耗配额)
+    /// Whether a push is allowed (does not consume quota)
     pub fn check(&self, name: &str, times: usize, window: Duration) -> bool {
         let mut records = self.records.lock().unwrap();
         let queue = records.entry(name.to_string()).or_default();
@@ -35,7 +35,7 @@ impl PushRateLimiter {
         queue.len() < times
     }
 
-    /// 推送成功后消耗一次配额
+    /// Consume one quota unit after a successful push
     pub fn acquire(&self, name: &str) {
         let mut records = self.records.lock().unwrap();
         records

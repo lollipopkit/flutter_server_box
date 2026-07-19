@@ -6,7 +6,7 @@ import '@testing-library/jest-dom/vitest';
 import LoginPage from '../pages/LoginPage';
 import { apiService } from '../services/api';
 
-// Mock the API service(部分 mock:apiErrorMessage 等纯函数保持真实实现)
+// Mock the API service (partial mock: pure helpers like apiErrorMessage stay real)
 vi.mock('../services/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../services/api')>()),
   apiService: { login: vi.fn() },

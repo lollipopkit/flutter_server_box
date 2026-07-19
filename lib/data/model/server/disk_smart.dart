@@ -23,7 +23,7 @@ abstract class DiskSmart with _$DiskSmart {
   factory DiskSmart.fromJson(Map<String, dynamic> json) =>
       _$DiskSmartFromJson(json);
 
-  // 解析实现已迁移至共享 Rust 库 sbm_parser(见 doc/adr/0001)
+  // Parsing implementation migrated to the shared Rust library sbm_parser (see doc/adr/0001)
 
   /// Get the specific SMART attribute by name
   SmartAttribute? getAttribute(String name) => smartAttributes[name];

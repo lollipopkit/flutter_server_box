@@ -1,12 +1,12 @@
-//! SMART 磁盘健康解析(对照 Dart disk_smart.dart)
+//! SMART disk health parsing (Dart reference: disk_smart.dart)
 //!
-//! 输入为 `smartctl -a -j` 的多段 JSON(空行分隔)
+//! Input is multi-block `smartctl -a -j` JSON (blank-line separated)
 
 use crate::types::*;
 use serde_json::Value;
 use std::collections::BTreeMap;
 
-/// 物理磁盘设备名模式(Dart `_physicalDiskPatterns`)
+/// Physical disk device name patterns (Dart `_physicalDiskPatterns`)
 fn is_physical_disk(device: &str) -> bool {
     let rest = |prefix: &str| device.strip_prefix(prefix);
     // /dev/sd[a-z] /dev/hd[a-z] /dev/vd[a-z] /dev/xvd[a-z]
@@ -131,7 +131,7 @@ fn parse_health(data: &Value) -> Option<bool> {
             return Some(true);
         }
     }
-    // 状态不明,视为健康(Dart 同)
+    // Unknown state counts as healthy (same as Dart)
     Some(true)
 }
 
@@ -172,8 +172,8 @@ fn parse_attributes(data: &Value) -> BTreeMap<String, SmartAttribute> {
     attributes
 }
 
-/// Dart `_extractTemperature`:优先 temperature.current,
-/// 其次 Temperature_Celsius 属性的 raw_string 前缀数字或 raw_value(< 150)
+/// Dart `_extractTemperature`: prefer temperature.current, then the
+/// Temperature_Celsius attribute's raw_string numeric prefix or raw_value (< 150)
 fn extract_temperature(data: &Value, attrs: &BTreeMap<String, SmartAttribute>) -> Option<f64> {
     if let Some(t) = data["temperature"]["current"].as_f64() {
         return Some(t);

@@ -1,9 +1,9 @@
-//! 与 Go 版 `model/threshold.go` 行为一致的阈值解析与比较
+//! Threshold parsing and comparison matching the Go `model/threshold.go` behavior
 //!
-//! 格式:`>=80.5%`(百分比)、`<100m`(大小)、`>10m/s`(速度)、`>=32c`(温度)。
-//! 与 Go 的两处刻意不一致(Go 端 bug,不复刻):
-//! - Go 解析 `=` 开头阈值时 startIdx 未跳过 `=`,导致必然解析失败;此处正确支持单个 `=`
-//! - Go 温度规则要求 Size 类型阈值导致永远报错;此处温度阈值可正常比较
+//! Formats: `>=80.5%` (percentage), `<100m` (size), `>10m/s` (speed), `>=32c` (temperature).
+//! Two deliberate divergences from Go (Go-side bugs, not replicated):
+//! - Go fails to skip `=` in startIdx when parsing `=`-prefixed thresholds, so they always fail; a single `=` is supported correctly here
+//! - Go temperature rules demanded Size-typed thresholds and always errored; temperature thresholds compare correctly here
 
 use crate::monitoring::size::Size;
 use crate::utils::error::{MonitorError, Result};
@@ -41,7 +41,7 @@ impl Threshold {
             return Err(MonitorError::Monitoring("empty threshold".to_string()));
         }
 
-        // 判断阈值类型(与 Go 相同的判断顺序)
+        // Determine the threshold type (same check order as Go)
         let (threshold_type, end_idx) = if s.contains('%') {
             (ThresholdType::Percent, len - 1)
         } else if s.ends_with("/s") {
@@ -60,7 +60,7 @@ impl Threshold {
             ('>', Some('=')) => (CompareType::GreaterOrEqual, 2),
             ('>', _) => (CompareType::Greater, 1),
             ('=', _) => (CompareType::Equal, 1),
-            // Go 的零值行为:无操作符 → Less
+            // Go zero-value behavior: no operator → Less
             _ => (CompareType::Less, 0),
         };
 

@@ -35,8 +35,9 @@ class ServerStatusUpdateReq {
   });
 }
 
-/// 解析实现在共享 Rust 库 `sbm_parser`(见 doc/adr/0001),此处只负责
-/// 将 FFI 返回的 JSON 装配为模型并更新滑窗状态(cpu/netSpeed/diskIO)。
+/// Parsing lives in the shared Rust library `sbm_parser` (see doc/adr/0001); this
+/// file only assembles the FFI JSON into models and updates windowed state
+/// (cpu/netSpeed/diskIO).
 Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   final ss = _createWorkingStatus(req.ss, req.system);
   final systemStr = switch (req.system) {
@@ -56,7 +57,7 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
       int.tryParse(StatusCmdType.time.findInMap(req.parsedOutput).trim()) ??
       DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
-  // 各段独立容错:单段装配失败不影响其余字段(与旧逐段 try-catch 语义一致)
+  // Per-segment tolerance: one failing segment does not affect the others (matching the old per-segment try-catch semantics)
   _apply('cpu', () => _applyCpu(ss, status, req.system));
   _apply('mem', () => _applyMemory(ss, status));
   _apply('swap', () => _applySwap(ss, status));
@@ -130,7 +131,7 @@ void _applyCpu(ServerStatus ss, Map<String, dynamic> status, SystemType system) 
   if (cores.isEmpty) return;
 
   if (system == SystemType.windows) {
-    // Windows 只有瞬时百分比:在上次伪累计值上叠加,模拟累计 ticks
+    // Windows only has instantaneous percentages: accumulate onto the previous pseudo-counters to simulate cumulative ticks
     cores = _accumulateWindowsCpu(cores, ss.cpu.now);
   }
   ss.cpu.update(cores);
@@ -148,7 +149,7 @@ List<SingleCpuCore> _accumulateWindowsCpu(
   List<SingleCpuCore> fresh,
   List<SingleCpuCore> prev,
 ) {
-  // fresh/prev 首项均为 "cpu" 汇总,逐核从 1 起
+  // The first entry of fresh/prev is the "cpu" summary; per-core entries start at 1
   final cores = <SingleCpuCore>[];
   var totalUser = 0;
   var totalIdle = 0;
@@ -221,7 +222,7 @@ void _applyNet(
 ) {
   final List<NetSpeedPart> parts;
   if (req.system == SystemType.windows) {
-    // Windows 网速为 WMI 双采样差分,FFI 直接产出速率
+    // Windows net speed is a WMI double-sample delta; the FFI emits rates directly
     final speedsJson = ffi.parseWindowsNetSpeedJson(
       raw: WindowsStatusCmdType.net.findInMap(req.parsedOutput),
     );

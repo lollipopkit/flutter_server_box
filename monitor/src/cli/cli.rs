@@ -94,7 +94,7 @@ pub async fn handle_matches(matches: clap::ArgMatches) -> anyhow::Result<()> {
         }
         _ => {
             // Default to serve if no subcommand is provided;
-            // 构造真实的 serve matches,保证参数定义与访问一致
+            // build real serve matches so argument definitions and access stay consistent
             let default_matches = build_cli().get_matches_from(["server_box_monitor", "serve"]);
             let serve_matches = default_matches
                 .subcommand_matches("serve")
@@ -110,7 +110,7 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
 
     // Load configuration and apply CLI overrides
     let mut config = Config::load().await?;
-    // --addr 带 default_value:仅显式传参/环境变量时覆盖配置文件
+    // --addr has a default_value: only explicit args/env vars override the config file
     let addr = (matches.value_source("addr") != Some(clap::parser::ValueSource::DefaultValue))
         .then(|| matches.get_one::<String>("addr"))
         .flatten();
@@ -127,7 +127,7 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     // Initialize database
     let db = db::database::init(&config.get_database_url()).await?;
 
-    // 首次启动:users 为空时创建随机密码的 admin(一次性打印)
+    // First start: create an admin with a random password when users is empty (printed once)
     db::bootstrap::ensure_admin_user(&db).await?;
 
     // Create shared state
@@ -175,8 +175,8 @@ async fn handle_user(matches: &clap::ArgMatches) -> anyhow::Result<()> {
                 .get_one::<String>("username")
                 .expect("username is required");
 
-            // 密码不经命令行参数传递(避免 shell 历史 / ps 泄露):
-            // 环境变量或免回显交互输入
+            // The password never travels via CLI arguments (avoiding shell history / ps
+            // leaks): environment variable or no-echo interactive input
             let password = match sub.get_one::<String>("password-env") {
                 Some(var) => std::env::var(var)
                     .map_err(|_| anyhow::anyhow!("Environment variable {var} is not set"))?,

@@ -3,7 +3,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/server/disk.dart';
 
-// 解析测试已迁移至 crates/sbm_parser/tests/dart_compat.rs(见 doc/adr/0001)
+// Parsing tests migrated to crates/sbm_parser/tests/dart_compat.rs (see doc/adr/0001)
 void main() {
   group('DiskUsage', () {
     test('DiskUsage does not double-count parent and child filesystems', () {

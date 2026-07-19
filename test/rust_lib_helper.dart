@@ -1,4 +1,4 @@
-// 测试环境加载 sbm_ffi 原生库(运行前需 cargo build -p sbm_ffi)
+// Load the sbm_ffi native library in the test environment (run cargo build -p sbm_ffi first)
 import 'dart:io';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';

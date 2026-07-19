@@ -1,6 +1,6 @@
-//! Windows 实机探针:以与 monitor `execute_commands` 完全相同的方式
-//! (`powershell -Command <cmd>`)执行命令清单并解析,输出结果摘要。
-//! 用法:交叉编译后放到 Windows 机器上直接运行。
+//! Windows on-device probe: runs the command manifest exactly the way monitor's
+//! `execute_commands` does (`powershell -Command <cmd>`), parses the output, and
+//! prints a summary. Usage: cross-compile and run directly on a Windows machine.
 
 use sbm_parser::{commands, SystemType};
 use std::collections::HashMap;

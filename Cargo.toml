@@ -1,7 +1,7 @@
 # ServerBox monorepo Rust workspace
-# - crates/sbm_parser: 共享状态解析库(monitor 与 App FFI 共用)
-# - crates/sbm_ffi:    flutter_rust_bridge 绑定层 + cargokit Flutter 插件壳(同目录)
-# - monitor:           服务器端监控(服务 + web 前端)
+# - crates/sbm_parser: shared status parser (used by both monitor and the app via FFI)
+# - crates/sbm_ffi:    flutter_rust_bridge binding layer + cargokit Flutter plugin shell (one directory)
+# - monitor:           server-side monitoring (service + web frontend)
 [workspace]
 resolver = "2"
 members = ["crates/sbm_parser", "crates/sbm_ffi", "monitor"]

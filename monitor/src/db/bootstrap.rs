@@ -1,4 +1,4 @@
-//! 首次启动引导:users 表为空时创建随机密码的初始 admin
+//! First-start bootstrap: create the initial admin with a random password when the users table is empty
 
 use crate::utils::error::Result;
 use crate::utils::secrets::random_password;
@@ -24,7 +24,7 @@ pub async fn ensure_admin_user(pool: &SqlitePool) -> Result<()> {
         .await?;
 
     info!("No users found; created initial admin user");
-    // 明文密码仅此一次输出到 stdout,不落库不落日志文件
+    // The plaintext password is printed to stdout exactly once; never stored or logged
     println!("=====================================================");
     println!("  Initial admin credentials (shown only once)");
     println!("    username: {INITIAL_ADMIN}");
@@ -34,7 +34,7 @@ pub async fn ensure_admin_user(pool: &SqlitePool) -> Result<()> {
     Ok(())
 }
 
-/// 设置/重置用户密码;用户不存在时创建
+/// Set/reset a user's password; creates the user if absent
 pub async fn set_password(pool: &SqlitePool, username: &str, password: &str) -> Result<()> {
     let hash = crate::api::auth::hash_password(password)?;
     sqlx::query(

@@ -8,14 +8,14 @@ name = "server_box_monitor"
 path = "src/lib.rs"
 
 [dependencies]
-# 共享状态解析库(monorepo 共用)
+# Shared status parser (monorepo-wide)
 sbm_parser = { path = "../crates/sbm_parser" }
 
 # Web framework
 ntex = { version = "3", features = ["tokio", "rustls"] }
 ntex-files = "3.2"
 
-# TLS(ring 而非 aws-lc:musl 静态编译无 cmake/汇编依赖)
+# TLS (ring instead of aws-lc: no cmake/assembly dependency for static musl builds)
 rustls = { version = "0.23", default-features = false, features = ["ring", "logging", "std", "tls12"] }
 rustls-pemfile = "2"
 
@@ -37,19 +37,19 @@ sqlx = { version = "0.9", features = [
 ] }
 
 # Authentication
-# rust_crypto 而非 aws_lc_rs:纯 Rust 实现,musl 静态编译无 cmake/汇编依赖
+# rust_crypto instead of aws_lc_rs: pure Rust, no cmake/assembly dependency for static musl builds
 jsonwebtoken = { version = "10.4", default-features = false, features = ["rust_crypto"] }
 bcrypt = "0.19"
 
 # Configuration
 dotenvy = "0.15"
 
-# 随机凭据生成(JWT secret / 初始 admin 密码)与免回显密码输入
+# Random credential generation (JWT secret / initial admin password) and no-echo password input
 getrandom = "0.3"
 rpassword = "7"
 
 # HTTP client for push notifications
-# rustls 而非 native-tls:与 sqlx 一致,musl 静态编译不依赖 OpenSSL
+# rustls instead of native-tls: consistent with sqlx, static musl builds without OpenSSL
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "charset", "http2"] }
 
 # Time handling

@@ -1,5 +1,5 @@
-//! Windows PowerShell JSON 解析(对照 Dart:windows_parser.dart +
-//! server_status_update_req.dart 的 WMI 差分助手)
+//! Windows PowerShell JSON parsing (Dart reference: windows_parser.dart +
+//! WMI delta helpers from server_status_update_req.dart)
 
 use crate::types::*;
 use serde_json::Value;
@@ -24,8 +24,10 @@ fn decode(raw: &str) -> Option<Value> {
 }
 
 /// Win32_Processor JSON(Dart `WindowsParser.parseCpu`)。
-/// Windows 只有瞬时 LoadPercentage,通过累加前次伪计数模拟累计 ticks;
-/// `prev` 传上次解析结果(含 "cpu" 汇总头),首个为汇总项与 Linux 对齐
+/// Windows only exposes an instantaneous LoadPercentage; cumulative ticks are
+/// simulated by accumulating onto the previous pseudo-counters. Pass the previous
+/// parse result (with the "cpu" summary head) as `prev`; the first entry is the
+/// summary, matching Linux
 pub fn parse_cpu(raw: &str, prev: &[CpuCore]) -> Vec<CpuCore> {
     let Some(json) = decode(raw) else {
         return Vec::new();
@@ -42,7 +44,7 @@ pub fn parse_cpu(raw: &str, prev: &[CpuCore]) -> Vec<CpuCore> {
 
         for i in 0..logical {
             let core_id = offset + i;
-            // prev[0] 为汇总项,逐核从 1 起
+            // prev[0] is the summary; per-core entries start at 1
             let prev_core = prev.get(core_id + 1);
             cores.push(CpuCore {
                 id: format!("cpu{}", core_id),
@@ -74,7 +76,7 @@ pub fn parse_cpu(raw: &str, prev: &[CpuCore]) -> Vec<CpuCore> {
     cores
 }
 
-/// Win32_OperatingSystem JSON(Dart `WindowsParser.parseMemory`),字段已是 KiB
+/// Win32_OperatingSystem JSON (Dart `WindowsParser.parseMemory`); fields are already KiB
 pub fn parse_mem(raw: &str) -> Option<Memory> {
     let json = decode(raw)?;
     let data = as_list(json).into_iter().next()?;
@@ -83,8 +85,8 @@ pub fn parse_mem(raw: &str) -> Option<Memory> {
     Some(Memory { total, free, avail: free })
 }
 
-/// Win32_LogicalDisk JSON(Dart `WindowsParser.parseDisks`),字节 → KiB;
-/// 缺少必要字段的盘跳过
+/// Win32_LogicalDisk JSON (Dart `WindowsParser.parseDisks`), bytes → KiB;
+/// disks missing required fields are skipped
 pub fn parse_disks(raw: &str) -> Vec<Disk> {
     let Some(json) = decode(raw) else {
         return Vec::new();
@@ -96,7 +98,7 @@ pub fn parse_disks(raw: &str) -> Vec<Disk> {
             let size = json_u64(&d["Size"])?;
             let free = json_u64(&d["FreeSpace"])?;
             let fs = d["FileSystem"].as_str().unwrap_or("").to_string();
-            // free == 0 是合法状态(满盘),仅缺字段/零容量的记录跳过
+            // free == 0 is a valid state (full volume); only records missing fields or with zero size are skipped
             if device_id.is_empty() || size == 0 || fs.is_empty() {
                 return None;
             }
@@ -121,7 +123,7 @@ fn json_u64(v: &Value) -> Option<u64> {
     v.as_u64().or_else(|| v.as_str()?.parse().ok())
 }
 
-/// MSAcpi_ThermalZoneTemperature JSON(已在命令中换算为摄氏度)
+/// MSAcpi_ThermalZoneTemperature JSON (already converted to Celsius in the command)
 pub fn parse_temps(raw: &str) -> Temperatures {
     let mut temps = Temperatures::default();
     let Some(json) = decode(raw) else {
@@ -136,16 +138,17 @@ pub fn parse_temps(raw: &str) -> Temperatures {
     temps
 }
 
-/// WMI 原始性能计数双采样差分(Dart `_parseWindowsWmiDelta`):
-/// 输入含 ≥2 个采样组的 JSON,返回 (name, rx_speed, tx_speed) 字节/秒。
-/// `_Total` 与空名跳过;时间戳为 100ns 单位
+/// WMI raw perf-counter two-sample delta (Dart `_parseWindowsWmiDelta`):
+/// input JSON contains >= 2 sample groups; returns (name, rx_speed, tx_speed) in bytes/sec.
+/// `_Total` and empty names are skipped; timestamps are in 100ns units
 pub fn parse_net_speed(raw: &str) -> Vec<(String, f64, f64)> {
     parse_wmi_delta(raw, "BytesReceivedPersec", "BytesSentPersec")
 }
 
-/// 与 `parse_net_speed` 同源的 WMI 采样,取最后一组的原始累计计数:
-/// Win32_PerfRawData 的 `*Persec` 字段实为累计字节数,
-/// 产出与 Linux/BSD 一致的 NetIface 累计计数器,速率由调用方跨采样差分
+/// Same WMI sampling as `parse_net_speed`, taking the raw cumulative counters of
+/// the last group: the `*Persec` fields of Win32_PerfRawData are actually cumulative
+/// byte counts. Produces NetIface cumulative counters consistent with Linux/BSD;
+/// rates are derived by the caller via cross-sample deltas
 pub fn parse_net(raw: &str) -> Vec<NetIface> {
     let Some(Value::Array(samples)) = decode(raw) else {
         return Vec::new();
@@ -221,7 +224,7 @@ fn parse_wmi_delta(raw: &str, field1: &str, field2: &str) -> Vec<(String, f64, f
 }
 
 /// Win32_Battery JSON(Dart `_parseWindowsBatteries`):
-/// BatteryStatus 6/7/8 视为充电中
+/// BatteryStatus 6/7/8 count as charging
 pub fn parse_batteries(raw: &str) -> Vec<Battery> {
     let Some(json) = decode(raw) else {
         return Vec::new();
@@ -245,8 +248,8 @@ pub fn parse_batteries(raw: &str) -> Vec<Battery> {
         .collect()
 }
 
-/// WMI 磁盘 IO 双采样差分(Dart `_parseWindowsDiskIO`):
-/// 速率换算为扇区数(512B),与 Linux diskstats 计数对齐
+/// WMI disk IO two-sample delta (Dart `_parseWindowsDiskIO`):
+/// rates converted to sector counts (512B), aligned with Linux diskstats counters
 pub fn parse_diskio(raw: &str) -> Vec<DiskIoPiece> {
     parse_wmi_delta(raw, "DiskReadBytesPersec", "DiskWriteBytesPersec")
         .into_iter()
@@ -258,8 +261,8 @@ pub fn parse_diskio(raw: &str) -> Vec<DiskIoPiece> {
         .collect()
 }
 
-/// Win32_Processor JSON 的品牌信息:Name → 物理核数
-/// (Dart Windows 分支:brand[brandName] = NumberOfCores 之和)
+/// Brand info from Win32_Processor JSON: Name → physical core count
+/// (Dart Windows branch: brand[brandName] = sum of NumberOfCores)
 pub fn parse_cpu_brand(raw: &str) -> Vec<(String, u32)> {
     let Some(json) = decode(raw) else {
         return Vec::new();

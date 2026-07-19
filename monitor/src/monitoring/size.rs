@@ -1,4 +1,4 @@
-//! 与 Go 版 `model/size.go` 行为一致的大小类型:1024 进制,小写后缀 b/k/m/g/t
+//! Size type matching the Go `model/size.go` behavior: base 1024, lowercase suffixes b/k/m/g/t
 
 use crate::utils::error::{MonitorError, Result};
 use std::fmt;
@@ -14,7 +14,7 @@ pub fn is_size_suffix(c: char) -> bool {
 }
 
 impl fmt::Display for Size {
-    /// Go `Size.String()`:`%.1f%s`,如 `7.0b`、`1.0m`、`26.0g`
+    /// Go `Size.String()`: `%.1f%s`, e.g. `7.0b`, `1.0m`, `26.0g`
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut temp = self.0 as f64;
         let mut nth = 0;
@@ -27,8 +27,8 @@ impl fmt::Display for Size {
 }
 
 impl Size {
-    /// Go `ParseToSize()`:大小写不敏感,按 b/k/m/g/t 顺序找首个出现的后缀,
-    /// 移除该后缀字符后按 1024^n 换算;`"0"` 特判为 0
+    /// Go `ParseToSize()`: case-insensitive, finds the first suffix in b/k/m/g/t
+    /// order, strips that suffix character and scales by 1024^n; `"0"` special-cased to 0
     pub fn parse(s: &str) -> Result<Size> {
         let s = s.to_lowercase();
         if s == "0" {
@@ -49,7 +49,7 @@ impl Size {
 mod tests {
     use super::*;
 
-    // 移植自 Go model/size_test.go TestParseToSize
+    // Ported from Go model/size_test.go TestParseToSize
     #[test]
     fn test_parse_to_size() {
         assert_eq!(Size::parse("1m").unwrap(), Size(1024 * 1024));
@@ -62,7 +62,7 @@ mod tests {
     fn test_parse_special() {
         assert_eq!(Size::parse("0").unwrap(), Size(0));
         assert_eq!(Size::parse("1.5g").unwrap(), Size((1.5 * 1024.0 * 1024.0 * 1024.0) as u64));
-        // Go: 无后缀 / 非法字符 → 错误
+        // Go: no suffix / invalid characters → error
         assert!(Size::parse("100").is_err());
         assert!(Size::parse("abc").is_err());
     }

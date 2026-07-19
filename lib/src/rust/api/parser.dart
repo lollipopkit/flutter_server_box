@@ -8,9 +8,9 @@ import 'package:server_box/src/rust/frb_generated.dart';
 
 // These functions are ignored because they are not marked as `pub`: `parse_system`
 
-/// 解析一次采集的全部输出,返回 `ServerStatus` 的 JSON。
-/// `system`: "linux" | "bsd" | "windows";`temp_divisor` 见 `ParseOptions`。
-/// 异步:在 Rust 线程池执行,不阻塞 UI isolate
+/// Parse all output of one collection round, returning `ServerStatus` JSON.
+/// `system`: "linux" | "bsd" | "windows"; see `ParseOptions` for `temp_divisor`.
+/// Async: runs on the Rust thread pool without blocking the UI isolate
 Future<String> parseStatusJson({
   required String system,
   required Map<String, String> raw,
@@ -21,18 +21,18 @@ Future<String> parseStatusJson({
   tempDivisor: tempDivisor,
 );
 
-/// Windows WMI 双采样网速差分,返回 `[{name, rx, tx}]` JSON(字节/秒)
+/// Windows WMI double-sample net speed delta, returning `[{name, rx, tx}]` JSON (bytes/sec)
 String parseWindowsNetSpeedJson({required String raw}) =>
     RustLib.instance.api.crateApiParserParseWindowsNetSpeedJson(raw: raw);
 
-/// 平台采集命令清单(App 脚本生成据此产出,与解析器同版本)
+/// Per-platform collection command manifest (the app's script generation derives from it, versioned with the parsers)
 List<CommandSpec> commandSpecs({required String system}) =>
     RustLib.instance.api.crateApiParserCommandSpecs(system: system);
 
-/// 输出分段符(`SrvBoxSep`)
+/// Output segment separator (`SrvBoxSep`)
 String separator() => RustLib.instance.api.crateApiParserSeparator();
 
-/// 采集命令,与 App 脚本生成共用的单一事实来源
+/// Collection command, single source of truth shared with the app's script generation
 class CommandSpec {
   final String key;
   final String cmd;

@@ -61,7 +61,7 @@ class ApiService {
 }
 
 export const apiService = new ApiService();
-/// 从 axios 错误中提取后端返回的 error 字段,否则用 fallback
+/// Extract the backend `error` field from an axios error, falling back otherwise
 export function apiErrorMessage(err: unknown, fallback: string): string {
   if (axios.isAxiosError(err)) {
     const msg = (err.response?.data as { error?: string } | undefined)?.error;

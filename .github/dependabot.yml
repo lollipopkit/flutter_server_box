@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Rust workspace(monitor + 共享 crate + FFI)
+  # Rust workspace (monitor + shared crates + FFI)
   - package-ecosystem: cargo
     directories:
       - "/monitor"
@@ -13,7 +13,7 @@ updates:
         patterns:
           - "*"
 
-  # monitor web 前端
+  # monitor web frontend
   - package-ecosystem: npm
     directory: "/monitor/frontend"
     schedule:

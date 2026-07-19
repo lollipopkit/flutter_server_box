@@ -128,10 +128,10 @@ enum StatusCmdType implements ShellCmdType {
   ),
   cpuBrand('cat /proc/cpuinfo | grep "model name"');
 
-  /// 内置命令,仅作 FFI 清单不可用时的回退
+  /// Built-in command, only a fallback when the FFI manifest is unavailable
   final String fallbackCmd;
 
-  /// 命令来源:共享 Rust 库清单(单一事实来源,见 doc/adr/0001)
+  /// Command source: the shared Rust library manifest (single source of truth, see doc/adr/0001)
   @override
   String get cmd => FfiCmds.lookup(sysType, name) ?? fallbackCmd;
 
@@ -162,10 +162,10 @@ enum BSDStatusCmdType implements ShellCmdType {
   host('hostname'),
   cpuBrand('sysctl -n machdep.cpu.brand_string');
 
-  /// 内置命令,仅作 FFI 清单不可用时的回退
+  /// Built-in command, only a fallback when the FFI manifest is unavailable
   final String fallbackCmd;
 
-  /// 命令来源:共享 Rust 库清单(单一事实来源,见 doc/adr/0001)
+  /// Command source: the shared Rust library manifest (single source of truth, see doc/adr/0001)
   @override
   String get cmd => FfiCmds.lookup(sysType, name) ?? fallbackCmd;
 
@@ -307,10 +307,10 @@ enum WindowsStatusCmdType implements ShellCmdType {
   ),
   cpuBrand('(Get-WmiObject -Class Win32_Processor).Name');
 
-  /// 内置命令,仅作 FFI 清单不可用时的回退
+  /// Built-in command, only a fallback when the FFI manifest is unavailable
   final String fallbackCmd;
 
-  /// 命令来源:共享 Rust 库清单(单一事实来源,见 doc/adr/0001)
+  /// Command source: the shared Rust library manifest (single source of truth, see doc/adr/0001)
   @override
   String get cmd => FfiCmds.lookup(sysType, name) ?? fallbackCmd;
 

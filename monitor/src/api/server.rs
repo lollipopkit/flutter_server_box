@@ -77,7 +77,7 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
                     .route("/velocity", web::get().to(get_velocity))
                     .route("/velocity/history", web::get().to(get_velocity_history)),
             )
-            // TODO: Go 兼容端点(flutter_server_box App 使用),App 迁移到 /api/v1 后删除
+            // TODO: Go-compat endpoint (used by the flutter_server_box app); remove once the app migrates to /api/v1
             .route("/status", web::get().to(get_status_compat))
             // Static file serving configuration:
             // 1. /static/* routes serve files from {static_dir}/static/ directory (React build structure)
@@ -114,7 +114,7 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
     Ok(())
 }
 
-/// 读取 PEM 证书/私钥构建 rustls 服务端配置(ring provider,与依赖选型一致)
+/// Build the rustls server config from PEM cert/key (ring provider, consistent with our dependency choices)
 fn load_rustls_config(tls: &crate::core::config::TlsConfig) -> Result<rustls::ServerConfig> {
     use std::{fs::File, io::BufReader};
 
@@ -184,7 +184,7 @@ async fn login(
     }))
 }
 
-// TODO: Go 兼容端点(与旧版 GET /status 响应格式一致,无鉴权),flutter_server_box 迁移后删除
+// TODO: Go-compat endpoint (matches the legacy GET /status response format, unauthenticated); remove once flutter_server_box migrates
 async fn get_status_compat(
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
@@ -193,7 +193,7 @@ async fn get_status_compat(
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "code": 0, "data": data })))
 }
 
-/// Go 版 web.Status 的响应数据:大小用 Size.String() 格式(如 "26.0g"),CPU 一位小数百分比
+/// Response data of Go web.Status: sizes in Size.String() format (e.g. "26.0g"), CPU as one-decimal percentage
 pub fn go_status_data(metrics: Option<&SystemMetrics>, server_name: &str) -> serde_json::Value {
     use crate::monitoring::size::Size;
     match metrics {

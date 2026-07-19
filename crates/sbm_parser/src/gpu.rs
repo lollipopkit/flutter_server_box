@@ -1,19 +1,19 @@
-//! GPU 解析(对照 Dart:nvdia.dart / amd.dart)
+//! GPU parsing (Dart reference: nvdia.dart / amd.dart)
 
 use crate::types::*;
 use serde_json::Value;
 
-/// Dart `_parseFirstInt`:取首个空格分隔段解析为整数,失败为 0
+/// Dart `_parseFirstInt`: parse the first space-separated segment as an integer, 0 on failure
 fn parse_first_int(s: Option<&str>) -> i64 {
     s.and_then(|s| s.split(' ').next())
         .and_then(|s| s.parse().ok())
         .unwrap_or(0)
 }
 
-/// nvidia-smi -q -x 输出(Dart `NvidiaSmi.fromXml`)。
-/// name 或 temp 缺失的 GPU 跳过;power 缺失时与 Dart 一致输出 "null / null"
+/// nvidia-smi -q -x output (Dart `NvidiaSmi.fromXml`).
+/// GPUs missing name or temp are skipped; missing power yields "null / null", matching Dart
 pub fn nvidia_from_xml(raw: &str) -> Vec<NvidiaSmiItem> {
-    // roxmltree 不支持 DTD,剥除 nvidia-smi 输出中的 DOCTYPE 声明
+    // roxmltree does not support DTDs; strip the DOCTYPE declaration from nvidia-smi output
     let cleaned: String = raw
         .lines()
         .filter(|l| !l.trim_start().starts_with("<!DOCTYPE"))
@@ -93,7 +93,7 @@ pub fn nvidia_from_xml(raw: &str) -> Vec<NvidiaSmiItem> {
         .collect()
 }
 
-/// amd-smi/rocm-smi JSON 输出(Dart `AmdSmi.fromJson`),非数组输入返回空
+/// amd-smi/rocm-smi JSON output (Dart `AmdSmi.fromJson`); non-array input yields empty
 pub fn amd_from_json(raw: &str) -> Vec<AmdSmiItem> {
     let Ok(Value::Array(gpus)) = serde_json::from_str::<Value>(raw) else {
         return Vec::new();
@@ -158,7 +158,7 @@ fn parse_amd_gpu(gpu: &Value) -> Option<AmdSmiItem> {
     })
 }
 
-/// Dart `AmdSmi._parseIntValue`:int 直取;字符串剔除非数字后解析("45°C" → 45)
+/// Dart `AmdSmi._parseIntValue`: ints taken as-is; strings parsed after stripping non-digits ("45°C" → 45)
 fn amd_int(value: Option<&Value>) -> i64 {
     match value {
         Some(Value::Number(n)) => n.as_i64().unwrap_or(0),
