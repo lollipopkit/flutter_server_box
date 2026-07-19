@@ -7,7 +7,7 @@
   import { LL } from '../i18n/i18n-svelte'
   import { health } from '../lib/health.svelte'
   import { layout } from '../lib/layout.svelte'
-  import { servers } from '../lib/servers.svelte'
+  import { displayName, servers } from '../lib/servers.svelte'
 
   function selectServer(id: string) {
     layout.mobileOpen = false
@@ -117,12 +117,12 @@
             : 'text-muted-fg hover:bg-soft/60 hover:text-fg',
           centerCls,
         )}
-        title={s.id === 'local' ? $LL.thisServer() : s.name}
+        title={s.id === 'local' ? $LL.thisServer() : displayName(s)}
         onclick={() => selectServer(s.id)}
       >
         <Server class="w-4 h-4 shrink-0" />
         <span class={cn('min-w-0 flex-1', labelCls)}>
-          <span class="block truncate">{s.id === 'local' ? $LL.thisServer() : s.name}</span>
+          <span class="block truncate">{s.id === 'local' ? $LL.thisServer() : displayName(s)}</span>
           {#if s.url}
             <span class="block truncate text-xs text-faint-fg">{s.url}</span>
           {/if}

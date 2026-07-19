@@ -2,7 +2,7 @@
   import { Plus, Trash2 } from '@lucide/svelte'
   import { Button, IconButton, Input, Select } from '@serverbox/webui'
   import { LL } from '../i18n/i18n-svelte'
-  import { servers } from '../lib/servers.svelte'
+  import { displayName, servers } from '../lib/servers.svelte'
 
   interface Props {
     /// Show add/remove controls (login page); the dashboard header only switches
@@ -34,7 +34,7 @@
     >
       {#each servers.list as s (s.id)}
         <option value={s.id}>
-          {s.id === 'local' ? $LL.thisServer() : s.name}{s.url ? ` (${s.url})` : ''}
+          {s.id === 'local' ? $LL.thisServer() : displayName(s)}{s.url ? ` (${s.url})` : ''}
         </option>
       {/each}
     </Select>

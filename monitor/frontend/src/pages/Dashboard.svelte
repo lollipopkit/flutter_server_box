@@ -16,7 +16,7 @@
   import LineChart from '../components/LineChart.svelte'
   import StatCard from '../components/StatCard.svelte'
   import { api } from '../lib/api'
-  import { servers } from '../lib/servers.svelte'
+  import { displayName, servers } from '../lib/servers.svelte'
   import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../lib/format'
   import { LL } from '../i18n/i18n-svelte'
   import { layout } from '../lib/layout.svelte'
@@ -82,6 +82,13 @@
   // detail line) instead of parsing the preformatted /status strings
   const m = $derived(metrics.data)
   const latest = $derived(history.at(-1))
+
+  // Backfills a blank entry name (server added without one) from the data the
+  // server itself reports; applyReportedName() no-ops once a name is set
+  $effect(() => {
+    const reported = m?.server_name || status.data?.name
+    if (reported) servers.applyReportedName(servers.currentId, reported)
+  })
 </script>
 
 {#if status.loading && metrics.loading}
@@ -103,7 +110,7 @@
         </IconButton>
         <div class="min-w-0">
           <h1 class="text-lg leading-tight font-semibold font-display text-fg-strong truncate">
-            {servers.current?.id === 'local' ? $LL.thisServer() : servers.current?.name}
+            {servers.current?.id === 'local' ? $LL.thisServer() : displayName(servers.current)}
           </h1>
           <p class="text-xs leading-tight text-muted-fg truncate">
             {status.data?.name || $LL.unknownServer()}

@@ -18,6 +18,12 @@ function normalizeUrl(u: string): string {
   return u.trim().replace(/\/+$/, '')
 }
 
+/// Best-effort label for an entry that has no custom name yet (not connected/
+/// authenticated long enough for the server to have reported its own name)
+export function displayName(entry: ServerEntry): string {
+  return entry.name || entry.url || entry.id
+}
+
 function newId(): string {
   return typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : String(Date.now())
 }
@@ -65,15 +71,28 @@ class ServersStore {
   }
 
   add(name: string, url: string) {
+    // Name left blank on purpose: once connected, applyReportedName() fills
+    // it in from the server's own data (its configured/hostname-derived name)
     const entry: ServerEntry = {
       id: newId(),
-      name: name.trim() || normalizeUrl(url),
+      name: name.trim(),
       url: normalizeUrl(url),
       token: null,
       username: null,
     }
     this.list.push(entry)
     this.currentId = entry.id
+    this.#persist()
+  }
+
+  /// Fills in a blank name from data the server itself reported (server_name
+  /// from /metrics, or the /status display name); a no-op once a name — user
+  /// given or previously auto-filled — is already set, so this never
+  /// overwrites a deliberate custom name.
+  applyReportedName(id: string, reportedName: string) {
+    const entry = this.list.find((s) => s.id === id)
+    if (!entry || entry.name || !reportedName.trim()) return
+    entry.name = reportedName.trim()
     this.#persist()
   }
 
