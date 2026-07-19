@@ -222,7 +222,9 @@ fn parse_df(raw: &str) -> Vec<Disk> {
         }
         let parsed = (|| -> Option<Disk> {
             let fs = fields.first()?.to_string();
-            let mount = fields.get(5)?.to_string();
+            // Mount point is the LAST column: Linux df has 6 columns, macOS
+            // df -k has 9 (iused/ifree/%iused between Capacity and Mounted on)
+            let mount = (fields.len() >= 6).then(|| fields.last())??.to_string();
             if !disk_should_calc(&fs, &mount) {
                 return None;
             }

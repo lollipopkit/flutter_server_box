@@ -16,9 +16,9 @@ const id = {
 	logout: 'Keluar',
 	unknownServer: 'Server tidak dikenal',
 	thisServer: 'Server ini',
-	cpuUsage: 'Penggunaan CPU',
+	cpuUsage: 'CPU',
 	memory: 'Memori',
-	diskUsage: 'Penggunaan disk',
+	diskUsage: 'Disk',
 	network: 'Jaringan',
 	active: 'Aktif',
 	na: 'T/A',
@@ -45,6 +45,15 @@ const id = {
 	menu: 'Menu',
 	collapseSidebar: 'Ciutkan bilah sisi',
 	expandSidebar: 'Perluas bilah sisi',
+	gpu: 'GPU',
+	back: 'Kembali',
+	swap: 'Swap',
+	disks: 'Disk',
+	interfaces: 'Antarmuka',
+	connected: 'Terhubung',
+	disconnected: 'Terputus',
+	cores: 'Inti',
+	power: 'Daya',
 } satisfies Translation
 
 export default id

@@ -16,9 +16,9 @@ const en = {
 	logout: 'Logout',
 	unknownServer: 'Unknown Server',
 	thisServer: 'This server',
-	cpuUsage: 'CPU Usage',
+	cpuUsage: 'CPU',
 	memory: 'Memory',
-	diskUsage: 'Disk Usage',
+	diskUsage: 'Disk',
 	network: 'Network',
 	active: 'Active',
 	na: 'N/A',
@@ -45,6 +45,15 @@ const en = {
 	menu: 'Menu',
 	collapseSidebar: 'Collapse sidebar',
 	expandSidebar: 'Expand sidebar',
+	gpu: 'GPU',
+	back: 'Back',
+	swap: 'Swap',
+	disks: 'Disks',
+	interfaces: 'Interfaces',
+	connected: 'Connected',
+	disconnected: 'Disconnected',
+	cores: 'Cores',
+	power: 'Power',
 } satisfies BaseTranslation
 
 export default en

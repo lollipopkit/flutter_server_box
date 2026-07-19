@@ -72,7 +72,9 @@ pub const LINUX: &[CommandSpec] = &[
         cmd: r#"for f in /sys/class/power_supply/*/uevent; do cat "$f"; echo; done"#,
     },
     CommandSpec {
-        core: false,
+        // core: a single fast probe + one nvidia-smi call, cheap enough for the
+        // monitor's periodic collection (unlike AMD's multi-tool fallbacks)
+        core: true,
         key: NVIDIA,
         // WSL exposes the Windows driver's nvidia-smi under /usr/lib/wsl/lib,
         // which is absent from non-interactive PATH — fall back explicitly
@@ -156,7 +158,7 @@ pub const WINDOWS: &[CommandSpec] = &[
         cmd: "Get-WmiObject -Class Win32_Battery | Select-Object EstimatedChargeRemaining, BatteryStatus | ConvertTo-Json",
     },
     CommandSpec {
-        core: false,
+        core: true,
         key: NVIDIA,
         cmd: r#"if (Get-Command nvidia-smi -ErrorAction SilentlyContinue) { nvidia-smi -q -x } else { echo "NVIDIA driver not found" }"#,
     },

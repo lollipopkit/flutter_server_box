@@ -16,9 +16,9 @@ const ko = {
 	logout: '로그아웃',
 	unknownServer: '알 수 없는 서버',
 	thisServer: '이 서버',
-	cpuUsage: 'CPU 사용률',
+	cpuUsage: 'CPU',
 	memory: '메모리',
-	diskUsage: '디스크 사용량',
+	diskUsage: '디스크',
 	network: '네트워크',
 	active: '활성',
 	na: '없음',
@@ -45,6 +45,15 @@ const ko = {
 	menu: '메뉴',
 	collapseSidebar: '사이드바 접기',
 	expandSidebar: '사이드바 펼치기',
+	gpu: 'GPU',
+	back: '뒤로',
+	swap: '스왑',
+	disks: '디스크',
+	interfaces: '인터페이스',
+	connected: '연결됨',
+	disconnected: '연결 끊김',
+	cores: '코어',
+	power: '전력',
 } satisfies Translation
 
 export default ko

@@ -16,9 +16,9 @@ const uk = {
 	logout: 'Вийти',
 	unknownServer: 'Невідомий сервер',
 	thisServer: 'Цей сервер',
-	cpuUsage: 'Використання ЦП',
+	cpuUsage: 'CPU',
 	memory: "Пам'ять",
-	diskUsage: 'Використання диска',
+	diskUsage: 'Диск',
 	network: 'Мережа',
 	active: 'Активний',
 	na: 'Н/Д',
@@ -45,6 +45,15 @@ const uk = {
 	menu: 'Меню',
 	collapseSidebar: 'Згорнути бічну панель',
 	expandSidebar: 'Розгорнути бічну панель',
+	gpu: 'GPU',
+	back: 'Назад',
+	swap: 'Своп',
+	disks: 'Диски',
+	interfaces: 'Інтерфейси',
+	connected: 'Підключено',
+	disconnected: 'Відключено',
+	cores: 'Ядра',
+	power: 'Потужність',
 } satisfies Translation
 
 export default uk

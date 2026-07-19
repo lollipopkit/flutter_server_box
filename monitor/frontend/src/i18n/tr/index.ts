@@ -16,9 +16,9 @@ const tr = {
 	logout: 'Çıkış yap',
 	unknownServer: 'Bilinmeyen sunucu',
 	thisServer: 'Bu sunucu',
-	cpuUsage: 'CPU Kullanımı',
+	cpuUsage: 'CPU',
 	memory: 'Bellek',
-	diskUsage: 'Disk Kullanımı',
+	diskUsage: 'Disk',
 	network: 'Ağ',
 	active: 'Aktif',
 	na: 'Yok',
@@ -45,6 +45,15 @@ const tr = {
 	menu: 'Menü',
 	collapseSidebar: 'Kenar çubuğunu daralt',
 	expandSidebar: 'Kenar çubuğunu genişlet',
+	gpu: 'GPU',
+	back: 'Geri',
+	swap: 'Takas',
+	disks: 'Diskler',
+	interfaces: 'Arayüzler',
+	connected: 'Bağlı',
+	disconnected: 'Bağlantı kesildi',
+	cores: 'Çekirdek',
+	power: 'Güç',
 } satisfies Translation
 
 export default tr

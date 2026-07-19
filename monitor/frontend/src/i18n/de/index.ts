@@ -16,9 +16,9 @@ const de = {
 	logout: 'Abmelden',
 	unknownServer: 'Unbekannter Server',
 	thisServer: 'Dieser Server',
-	cpuUsage: 'CPU-Auslastung',
+	cpuUsage: 'CPU',
 	memory: 'Arbeitsspeicher',
-	diskUsage: 'Festplattennutzung',
+	diskUsage: 'Festplatte',
 	network: 'Netzwerk',
 	active: 'Aktiv',
 	na: 'N/A',
@@ -45,6 +45,15 @@ const de = {
 	menu: 'Menü',
 	collapseSidebar: 'Seitenleiste einklappen',
 	expandSidebar: 'Seitenleiste ausklappen',
+	gpu: 'GPU',
+	back: 'Zurück',
+	swap: 'Swap',
+	disks: 'Festplatten',
+	interfaces: 'Schnittstellen',
+	connected: 'Verbunden',
+	disconnected: 'Getrennt',
+	cores: 'Kerne',
+	power: 'Leistung',
 } satisfies Translation
 
 export default de

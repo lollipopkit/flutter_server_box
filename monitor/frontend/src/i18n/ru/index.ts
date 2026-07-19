@@ -16,9 +16,9 @@ const ru = {
 	logout: 'Выйти',
 	unknownServer: 'Неизвестный сервер',
 	thisServer: 'Этот сервер',
-	cpuUsage: 'Загрузка ЦП',
+	cpuUsage: 'CPU',
 	memory: 'Память',
-	diskUsage: 'Использование диска',
+	diskUsage: 'Диск',
 	network: 'Сеть',
 	active: 'Активен',
 	na: 'Н/Д',
@@ -45,6 +45,15 @@ const ru = {
 	menu: 'Меню',
 	collapseSidebar: 'Свернуть боковую панель',
 	expandSidebar: 'Развернуть боковую панель',
+	gpu: 'GPU',
+	back: 'Назад',
+	swap: 'Подкачка',
+	disks: 'Диски',
+	interfaces: 'Интерфейсы',
+	connected: 'Подключено',
+	disconnected: 'Отключено',
+	cores: 'Ядра',
+	power: 'Мощность',
 } satisfies Translation
 
 export default ru

@@ -16,9 +16,9 @@ const nl = {
 	logout: 'Uitloggen',
 	unknownServer: 'Onbekende server',
 	thisServer: 'Deze server',
-	cpuUsage: 'CPU-gebruik',
+	cpuUsage: 'CPU',
 	memory: 'Geheugen',
-	diskUsage: 'Schijfgebruik',
+	diskUsage: 'Schijf',
 	network: 'Netwerk',
 	active: 'Actief',
 	na: 'N.v.t.',
@@ -45,6 +45,15 @@ const nl = {
 	menu: 'Menu',
 	collapseSidebar: 'Zijbalk inklappen',
 	expandSidebar: 'Zijbalk uitklappen',
+	gpu: 'GPU',
+	back: 'Terug',
+	swap: 'Swap',
+	disks: 'Schijven',
+	interfaces: 'Interfaces',
+	connected: 'Verbonden',
+	disconnected: 'Verbroken',
+	cores: 'Kernen',
+	power: 'Vermogen',
 } satisfies Translation
 
 export default nl

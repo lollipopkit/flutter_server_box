@@ -16,9 +16,9 @@ const ja = {
 	logout: 'ログアウト',
 	unknownServer: '不明なサーバー',
 	thisServer: 'このサーバー',
-	cpuUsage: 'CPU使用率',
+	cpuUsage: 'CPU',
 	memory: 'メモリ',
-	diskUsage: 'ディスク使用率',
+	diskUsage: 'ディスク',
 	network: 'ネットワーク',
 	active: '稼働中',
 	na: 'なし',
@@ -45,6 +45,15 @@ const ja = {
 	menu: 'メニュー',
 	collapseSidebar: 'サイドバーを折りたたむ',
 	expandSidebar: 'サイドバーを展開',
+	gpu: 'GPU',
+	back: '戻る',
+	swap: 'スワップ',
+	disks: 'ディスク',
+	interfaces: 'インターフェース',
+	connected: '接続中',
+	disconnected: '切断',
+	cores: 'コア',
+	power: '電力',
 } satisfies Translation
 
 export default ja

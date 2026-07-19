@@ -21,6 +21,13 @@ pub struct SystemMetrics {
     pub disk: DiskMetrics,
     pub network: NetworkMetrics,
     pub temperature: Option<f32>,
+    /// Detail lists for the panel's drill-down views (not persisted)
+    #[serde(default)]
+    pub gpus: Vec<GpuMetrics>,
+    #[serde(default)]
+    pub disk_details: Vec<DiskDetail>,
+    #[serde(default)]
+    pub ifaces: Vec<IfaceMetrics>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -48,6 +55,37 @@ pub struct DiskMetrics {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NetworkMetrics {
+    pub rx_bytes: u64,
+    pub tx_bytes: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GpuMetrics {
+    pub name: String,
+    pub usage_percent: f32,
+    pub temperature: i64,
+    /// e.g. "24.55 W / 350.00 W"
+    pub power: String,
+    pub memory_used: i64,
+    pub memory_total: i64,
+    /// Unit of the memory figures as reported by the tool (MiB usually)
+    pub memory_unit: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiskDetail {
+    pub path: String,
+    pub mount: String,
+    pub fs_type: Option<String>,
+    /// Bytes
+    pub used: u64,
+    pub total: u64,
+    pub usage_percent: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IfaceMetrics {
+    pub name: String,
     pub rx_bytes: u64,
     pub tx_bytes: u64,
 }
@@ -213,6 +251,41 @@ fn adapt_status(
         _ => status.temps.first().map(|t| t as f32),
     };
 
+    let gpus = status
+        .nvidia
+        .iter()
+        .map(|g| GpuMetrics {
+            name: g.name.clone(),
+            usage_percent: g.percent as f32,
+            temperature: g.temp,
+            power: g.power.clone(),
+            memory_used: g.memory.used,
+            memory_total: g.memory.total,
+            memory_unit: g.memory.unit.clone(),
+        })
+        .chain(status.amd.iter().map(|g| GpuMetrics {
+            name: g.name.clone(),
+            usage_percent: g.utilization as f32,
+            temperature: g.temp,
+            power: g.power.clone(),
+            memory_used: g.memory.used,
+            memory_total: g.memory.total,
+            memory_unit: g.memory.unit.clone(),
+        }))
+        .collect();
+
+    let disk_details = flatten_disks(&status.disks);
+
+    let ifaces = status
+        .net
+        .iter()
+        .map(|n| IfaceMetrics {
+            name: n.device.clone(),
+            rx_bytes: n.rx_bytes,
+            tx_bytes: n.tx_bytes,
+        })
+        .collect();
+
     SystemMetrics {
         timestamp: Utc::now(),
         server_name: config.get_server_name(),
@@ -223,7 +296,34 @@ fn adapt_status(
         disk,
         network,
         temperature,
+        gpus,
+        disk_details,
+        ifaces,
     }
+}
+
+/// Every /dev-backed filesystem as its own row (raw view for the drill-down;
+/// unlike aggregate_disks, APFS volumes are not pooled here), KiB -> bytes
+fn flatten_disks(disks: &[Disk]) -> Vec<DiskDetail> {
+    fn walk<'a>(disks: &'a [Disk], seen: &mut Vec<&'a str>, out: &mut Vec<DiskDetail>) {
+        for d in disks {
+            if d.path.starts_with("/dev") && d.size > 0 && !seen.contains(&d.path.as_str()) {
+                seen.push(&d.path);
+                out.push(DiskDetail {
+                    path: d.path.clone(),
+                    mount: d.mount.clone(),
+                    fs_type: d.fs_type.clone(),
+                    used: d.used * 1024,
+                    total: d.size * 1024,
+                    usage_percent: percent(d.used, d.size),
+                });
+            }
+            walk(&d.children, seen, out);
+        }
+    }
+    let mut out = Vec::new();
+    walk(disks, &mut Vec::new(), &mut out);
+    out
 }
 
 fn summary_core(cores: &[CpuCore]) -> Option<&CpuCore> {

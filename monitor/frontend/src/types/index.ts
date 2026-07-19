@@ -2,11 +2,40 @@ export interface SystemMetrics {
   timestamp: string;
   server_name: string;
   cpu_usage: number;
+  cpu_cores: unknown[];
   memory: MemoryMetrics;
   swap: SwapMetrics;
   disk: DiskMetrics;
   network: NetworkMetrics;
   temperature?: number;
+  gpus: GpuMetrics[];
+  disk_details: DiskDetail[];
+  ifaces: IfaceMetrics[];
+}
+
+export interface GpuMetrics {
+  name: string;
+  usage_percent: number;
+  temperature: number;
+  power: string;
+  memory_used: number;
+  memory_total: number;
+  memory_unit: string;
+}
+
+export interface DiskDetail {
+  path: string;
+  mount: string;
+  fs_type?: string;
+  used: number;
+  total: number;
+  usage_percent: number;
+}
+
+export interface IfaceMetrics {
+  name: string;
+  rx_bytes: number;
+  tx_bytes: number;
 }
 
 export interface MemoryMetrics {

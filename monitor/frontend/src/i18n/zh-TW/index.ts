@@ -16,9 +16,9 @@ const zh_TW = {
 	logout: '登出',
 	unknownServer: '未知伺服器',
 	thisServer: '本機',
-	cpuUsage: 'CPU 使用率',
+	cpuUsage: 'CPU',
 	memory: '記憶體',
-	diskUsage: '磁碟使用率',
+	diskUsage: '磁碟',
 	network: '網路',
 	active: '正常',
 	na: '無',
@@ -45,6 +45,15 @@ const zh_TW = {
 	menu: '選單',
 	collapseSidebar: '收合側邊欄',
 	expandSidebar: '展開側邊欄',
+	gpu: 'GPU',
+	back: '返回',
+	swap: '交換分割區',
+	disks: '磁碟',
+	interfaces: '網卡',
+	connected: '已連接',
+	disconnected: '連線中斷',
+	cores: '核心',
+	power: '功耗',
 } satisfies Translation
 
 export default zh_TW

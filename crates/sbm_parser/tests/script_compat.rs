@@ -211,11 +211,13 @@ fn disabled_case_insensitive() {
 fn core_only_excludes_expensive_commands() {
     let core = build_script(SystemType::Linux, &ScriptOptions { core_only: true, ..opts() });
     assert!(!core.contains("smartctl"));
-    assert!(!core.contains("nvidia-smi -q -x"));
+    assert!(!core.contains("amd-smi"));
     assert!(!core.contains("\techo SrvBoxSep.sensors"));
+    // NVIDIA is core: a cheap single probe, wanted for the GPU card
+    assert!(core.contains("nvidia-smi -q -x"));
     let full = build_script(SystemType::Linux, &opts());
     assert!(full.contains("smartctl"));
-    assert!(full.contains("nvidia-smi -q -x"));
+    assert!(full.contains("amd-smi"));
 }
 
 // ---------- parse_script_output ----------

@@ -2,6 +2,7 @@
   import { onDestroy, onMount } from 'svelte'
   import {
     Cpu,
+    Gpu,
     HardDrive,
     Menu,
     MemoryStick,
@@ -10,7 +11,8 @@
     CircleAlert,
     RefreshCw,
   } from '@lucide/svelte'
-  import { Button, Card, IconButton, Spinner } from '@serverbox/webui'
+  import { Badge, Button, Card, IconButton, Spinner } from '@serverbox/webui'
+  import DetailPanel, { type DetailKind } from '../components/DetailPanel.svelte'
   import LineChart from '../components/LineChart.svelte'
   import StatCard from '../components/StatCard.svelte'
   import { api } from '../lib/api'
@@ -71,24 +73,10 @@
     { label: $LL.up(), color: '#ec4899', values: history.map((p) => p.net_tx_speed) },
   ])
 
-  const thresholds = {
-    cpu: { warning: 70, danger: 85 },
-    memory: { warning: 80, danger: 90 },
-    disk: { warning: 85, danger: 95 },
-  }
-
-  function statusTone(
-    pct: number | undefined,
-    type: keyof typeof thresholds,
-  ): 'success' | 'warning' | 'danger' {
-    if (pct === undefined || isNaN(pct)) return 'success'
-    const t = thresholds[type]
-    if (pct >= t.danger) return 'danger'
-    if (pct >= t.warning) return 'warning'
-    return 'success'
-  }
-
   const error = $derived(status.error ?? metrics.error)
+  const connected = $derived(error === null && (status.data !== null || metrics.data !== null))
+
+  let detail = $state<DetailKind | null>(null)
 
   // Cards derive from numeric metrics (uniform layout: one big figure plus a
   // detail line) instead of parsing the preformatted /status strings
@@ -121,6 +109,13 @@
             {status.data?.name || $LL.unknownServer()}
           </p>
         </div>
+        <span class="flex-1"></span>
+        <Badge tone={connected ? 'success' : 'danger'}>
+          <span
+            class="w-1.5 h-1.5 rounded-full mr-1.5 {connected ? 'bg-success' : 'bg-danger'}"
+          ></span>
+          {connected ? $LL.connected() : $LL.disconnected()}
+        </Badge>
       </div>
     </div>
   </header>
@@ -137,6 +132,9 @@
       </div>
     {/if}
 
+    {#if detail}
+      <DetailPanel kind={detail} metrics={m} {history} onback={() => (detail = null)} />
+    {:else}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
       <StatCard
         class="p-4 sm:p-6"
@@ -145,8 +143,7 @@
         label={$LL.cpuUsage()}
         value={m ? `${m.cpu_usage.toFixed(1)}%` : '--'}
         detail={m?.temperature != null ? `${m.temperature.toFixed(1)} \u00B0C` : ''}
-        badge={m ? $LL.active() : $LL.na()}
-        tone={statusTone(m?.cpu_usage, 'cpu')}
+        onclick={() => (detail = 'cpu')}
       />
       <StatCard
         class="p-4 sm:p-6"
@@ -155,8 +152,7 @@
         label={$LL.memory()}
         value={m ? `${m.memory.usage_percent.toFixed(1)}%` : '--'}
         detail={m ? `${fmtBytes(m.memory.used)} / ${fmtBytes(m.memory.total)}` : ''}
-        badge={m ? $LL.active() : $LL.na()}
-        tone={statusTone(m?.memory.usage_percent, 'memory')}
+        onclick={() => (detail = 'memory')}
       />
       <StatCard
         class="p-4 sm:p-6"
@@ -165,11 +161,10 @@
         label={$LL.diskUsage()}
         value={m ? `${m.disk.usage_percent.toFixed(1)}%` : '--'}
         detail={m ? `${fmtBytes(m.disk.used)} / ${fmtBytes(m.disk.total)}` : ''}
-        badge={m ? $LL.active() : $LL.na()}
-        tone={statusTone(m?.disk.usage_percent, 'disk')}
+        onclick={() => (detail = 'disk')}
       />
       <StatCard
-        class="p-4 sm:p-6 col-span-2 lg:col-span-1"
+        class="p-4 sm:p-6 {m?.gpus.length ? '' : 'col-span-2 lg:col-span-1'}"
         icon={Network}
         iconClass="text-purple-500"
         label={$LL.network()}
@@ -180,9 +175,19 @@
         detail={m
           ? `RX ${fmtBytes(m.network.rx_bytes)} \u00B7 TX ${fmtBytes(m.network.tx_bytes)}`
           : ''}
-        badge={$LL.active()}
-        tone="success"
+        onclick={() => (detail = 'network')}
       />
+      {#if m?.gpus.length}
+        <StatCard
+          class="p-4 sm:p-6"
+          icon={Gpu}
+          iconClass="text-rose-500"
+          label={$LL.gpu()}
+          value={`${m.gpus[0].usage_percent.toFixed(0)}%`}
+          detail={m.gpus[0].name}
+          onclick={() => (detail = 'gpu')}
+        />
+      {/if}
     </div>
 
     <div class="flex items-center justify-between mb-4">
@@ -274,6 +279,7 @@
           </div>
         </Card>
       </div>
+    {/if}
     {/if}
   </main>
 {/if}

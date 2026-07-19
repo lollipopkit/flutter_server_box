@@ -282,6 +282,27 @@ fn disk_parse_lsblk_degenerate_fields() {
     }
 }
 
+/// macOS df -k has 9 columns (iused/ifree/%iused before the mount point);
+/// the mount is the last column on both layouts
+#[test]
+fn disk_parse_df_macos_columns() {
+    let raw = "\
+Filesystem                          1024-blocks      Used Available Capacity iused      ifree %iused  Mounted on
+/dev/disk3s1s1                        971298980  12276332 228035116     6%  458726 2280351160    0%   /
+/dev/disk3s5                          971298980 719366920 228035116    76% 3607614 2280351160    2%   /System/Volumes/Data
+devfs                                       223       223         0   100%     772          0  100%   /dev
+";
+    let disks = linux::parse_disk(raw);
+    // devfs is included by the shared _shouldCalc semantics (consumers filter
+    // by /dev path prefix downstream)
+    assert_eq!(disks.len(), 3);
+    assert_eq!(disks[0].mount, "/");
+    assert_eq!(disks[0].used_percent, 6);
+    assert_eq!(disks[1].mount, "/System/Volumes/Data");
+    assert_eq!(disks[1].used, 719366920);
+    assert_eq!(disks[2].mount, "/dev");
+}
+
 /// Dart 'handle JSON parsing errors gracefully': malformed JSON that isn't df → empty
 #[test]
 fn disk_parse_malformed_json() {

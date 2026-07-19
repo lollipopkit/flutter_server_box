@@ -16,9 +16,9 @@ const zh_CN = {
 	logout: '退出',
 	unknownServer: '未知服务器',
 	thisServer: '本机',
-	cpuUsage: 'CPU 使用率',
+	cpuUsage: 'CPU',
 	memory: '内存',
-	diskUsage: '磁盘使用',
+	diskUsage: '磁盘',
 	network: '网络',
 	active: '正常',
 	na: '无',
@@ -45,6 +45,15 @@ const zh_CN = {
 	menu: '菜单',
 	collapseSidebar: '折叠侧栏',
 	expandSidebar: '展开侧栏',
+	gpu: 'GPU',
+	back: '返回',
+	swap: '交换分区',
+	disks: '磁盘',
+	interfaces: '网卡',
+	connected: '已连接',
+	disconnected: '连接断开',
+	cores: '核心',
+	power: '功耗',
 } satisfies Translation
 
 export default zh_CN

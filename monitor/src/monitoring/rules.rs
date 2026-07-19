@@ -311,6 +311,9 @@ mod tests {
                 tx_bytes: 2000,
             },
             temperature: Some(65.0),
+            gpus: vec![],
+            disk_details: vec![],
+            ifaces: vec![],
         };
 
         // This test would need velocity_manager to work with check_rules_with_velocity

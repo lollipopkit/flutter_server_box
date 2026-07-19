@@ -16,9 +16,9 @@ const pt = {
 	logout: 'Sair',
 	unknownServer: 'Servidor desconhecido',
 	thisServer: 'Este servidor',
-	cpuUsage: 'Uso de CPU',
+	cpuUsage: 'CPU',
 	memory: 'Memória',
-	diskUsage: 'Uso de disco',
+	diskUsage: 'Disco',
 	network: 'Rede',
 	active: 'Ativo',
 	na: 'N/D',
@@ -45,6 +45,15 @@ const pt = {
 	menu: 'Menu',
 	collapseSidebar: 'Recolher barra lateral',
 	expandSidebar: 'Expandir barra lateral',
+	gpu: 'GPU',
+	back: 'Voltar',
+	swap: 'Swap',
+	disks: 'Discos',
+	interfaces: 'Interfaces',
+	connected: 'Conectado',
+	disconnected: 'Desconectado',
+	cores: 'Núcleos',
+	power: 'Energia',
 } satisfies Translation
 
 export default pt

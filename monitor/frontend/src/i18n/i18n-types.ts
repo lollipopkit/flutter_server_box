@@ -88,7 +88,7 @@ type RootTranslation = {
 	 */
 	thisServer: string
 	/**
-	 * C​P​U​ ​U​s​a​g​e
+	 * C​P​U
 	 */
 	cpuUsage: string
 	/**
@@ -96,7 +96,7 @@ type RootTranslation = {
 	 */
 	memory: string
 	/**
-	 * D​i​s​k​ ​U​s​a​g​e
+	 * D​i​s​k
 	 */
 	diskUsage: string
 	/**
@@ -203,6 +203,42 @@ type RootTranslation = {
 	 * E​x​p​a​n​d​ ​s​i​d​e​b​a​r
 	 */
 	expandSidebar: string
+	/**
+	 * G​P​U
+	 */
+	gpu: string
+	/**
+	 * B​a​c​k
+	 */
+	back: string
+	/**
+	 * S​w​a​p
+	 */
+	swap: string
+	/**
+	 * D​i​s​k​s
+	 */
+	disks: string
+	/**
+	 * I​n​t​e​r​f​a​c​e​s
+	 */
+	interfaces: string
+	/**
+	 * C​o​n​n​e​c​t​e​d
+	 */
+	connected: string
+	/**
+	 * D​i​s​c​o​n​n​e​c​t​e​d
+	 */
+	disconnected: string
+	/**
+	 * C​o​r​e​s
+	 */
+	cores: string
+	/**
+	 * P​o​w​e​r
+	 */
+	power: string
 }
 
 export type TranslationFunctions = {
@@ -267,7 +303,7 @@ export type TranslationFunctions = {
 	 */
 	thisServer: () => LocalizedString
 	/**
-	 * CPU Usage
+	 * CPU
 	 */
 	cpuUsage: () => LocalizedString
 	/**
@@ -275,7 +311,7 @@ export type TranslationFunctions = {
 	 */
 	memory: () => LocalizedString
 	/**
-	 * Disk Usage
+	 * Disk
 	 */
 	diskUsage: () => LocalizedString
 	/**
@@ -382,6 +418,42 @@ export type TranslationFunctions = {
 	 * Expand sidebar
 	 */
 	expandSidebar: () => LocalizedString
+	/**
+	 * GPU
+	 */
+	gpu: () => LocalizedString
+	/**
+	 * Back
+	 */
+	back: () => LocalizedString
+	/**
+	 * Swap
+	 */
+	swap: () => LocalizedString
+	/**
+	 * Disks
+	 */
+	disks: () => LocalizedString
+	/**
+	 * Interfaces
+	 */
+	interfaces: () => LocalizedString
+	/**
+	 * Connected
+	 */
+	connected: () => LocalizedString
+	/**
+	 * Disconnected
+	 */
+	disconnected: () => LocalizedString
+	/**
+	 * Cores
+	 */
+	cores: () => LocalizedString
+	/**
+	 * Power
+	 */
+	power: () => LocalizedString
 }
 
 export type Formatters = {}
