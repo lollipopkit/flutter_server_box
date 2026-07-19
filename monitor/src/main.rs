@@ -1,3 +1,6 @@
+// See lib.rs: deep ntex service generics exceed the default query depth
+#![recursion_limit = "256"]
+
 use anyhow::Result;
 use dotenvy::dotenv;
 use server_box_monitor::cli::cli::{build_cli, handle_matches};
