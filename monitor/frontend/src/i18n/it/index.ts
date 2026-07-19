@@ -57,6 +57,14 @@ const it = {
 	power: 'Potenza',
 	osHost: 'SO / Host',
 	refresh: 'Aggiorna',
+	editServer: 'Modifica server',
+	serverUrlLabel: 'URL del server',
+	optional: 'opzionale',
+	testConnection: 'Verifica connessione',
+	testingConnection: 'Verifica in corso...',
+	save: 'Salva',
+	cancel: 'Annulla',
+	confirmDeleteServer: "Rimuovere questo server? Verrà dimenticato solo in questo browser, l'agente non verrà fermato.",
 } satisfies Translation
 
 export default it

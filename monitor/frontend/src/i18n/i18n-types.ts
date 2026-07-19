@@ -251,6 +251,38 @@ type RootTranslation = {
 	 * R​e​f​r​e​s​h
 	 */
 	refresh: string
+	/**
+	 * E​d​i​t​ ​s​e​r​v​e​r
+	 */
+	editServer: string
+	/**
+	 * S​e​r​v​e​r​ ​U​R​L
+	 */
+	serverUrlLabel: string
+	/**
+	 * o​p​t​i​o​n​a​l
+	 */
+	optional: string
+	/**
+	 * T​e​s​t​ ​c​o​n​n​e​c​t​i​o​n
+	 */
+	testConnection: string
+	/**
+	 * T​e​s​t​i​n​g​.​.​.
+	 */
+	testingConnection: string
+	/**
+	 * S​a​v​e
+	 */
+	save: string
+	/**
+	 * C​a​n​c​e​l
+	 */
+	cancel: string
+	/**
+	 * R​e​m​o​v​e​ ​t​h​i​s​ ​s​e​r​v​e​r​?​ ​T​h​i​s​ ​o​n​l​y​ ​f​o​r​g​e​t​s​ ​i​t​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r​ ​—​ ​i​t​ ​d​o​e​s​ ​n​o​t​ ​s​t​o​p​ ​t​h​e​ ​a​g​e​n​t​.
+	 */
+	confirmDeleteServer: string
 }
 
 export type TranslationFunctions = {
@@ -478,6 +510,38 @@ export type TranslationFunctions = {
 	 * Refresh
 	 */
 	refresh: () => LocalizedString
+	/**
+	 * Edit server
+	 */
+	editServer: () => LocalizedString
+	/**
+	 * Server URL
+	 */
+	serverUrlLabel: () => LocalizedString
+	/**
+	 * optional
+	 */
+	optional: () => LocalizedString
+	/**
+	 * Test connection
+	 */
+	testConnection: () => LocalizedString
+	/**
+	 * Testing...
+	 */
+	testingConnection: () => LocalizedString
+	/**
+	 * Save
+	 */
+	save: () => LocalizedString
+	/**
+	 * Cancel
+	 */
+	cancel: () => LocalizedString
+	/**
+	 * Remove this server? This only forgets it in this browser — it does not stop the agent.
+	 */
+	confirmDeleteServer: () => LocalizedString
 }
 
 export type Formatters = {}

@@ -57,6 +57,14 @@ const id = {
 	power: 'Daya',
 	osHost: 'OS / Host',
 	refresh: 'Segarkan',
+	editServer: 'Edit server',
+	serverUrlLabel: 'URL server',
+	optional: 'opsional',
+	testConnection: 'Uji koneksi',
+	testingConnection: 'Menguji...',
+	save: 'Simpan',
+	cancel: 'Batal',
+	confirmDeleteServer: 'Hapus server ini? Ini hanya melupakannya di browser ini, agen tidak dihentikan.',
 } satisfies Translation
 
 export default id

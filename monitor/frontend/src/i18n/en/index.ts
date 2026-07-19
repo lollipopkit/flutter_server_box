@@ -57,6 +57,14 @@ const en = {
 	power: 'Power',
 	osHost: 'OS / Host',
 	refresh: 'Refresh',
+	editServer: 'Edit server',
+	serverUrlLabel: 'Server URL',
+	optional: 'optional',
+	testConnection: 'Test connection',
+	testingConnection: 'Testing...',
+	save: 'Save',
+	cancel: 'Cancel',
+	confirmDeleteServer: 'Remove this server? This only forgets it in this browser — it does not stop the agent.',
 } satisfies BaseTranslation
 
 export default en

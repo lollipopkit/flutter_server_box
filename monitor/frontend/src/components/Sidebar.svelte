@@ -1,30 +1,31 @@
 <script lang="ts">
-  import { ChevronsLeft, ChevronsRight, LogOut, Monitor, Plus, Server } from '@lucide/svelte'
-  import { Button, IconButton, Input, cn } from '@serverbox/webui'
+  import { ChevronsLeft, ChevronsRight, LogOut, Monitor, Pencil, Plus, Server } from '@lucide/svelte'
+  import { IconButton, cn } from '@serverbox/webui'
   import LocaleToggle from './LocaleToggle.svelte'
+  import ServerFormModal from './ServerFormModal.svelte'
   import ThemeToggle from './ThemeToggle.svelte'
   import { onDestroy, onMount } from 'svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { health } from '../lib/health.svelte'
   import { layout } from '../lib/layout.svelte'
-  import { displayName, servers } from '../lib/servers.svelte'
+  import { displayName, servers, type ServerEntry } from '../lib/servers.svelte'
 
   function selectServer(id: string) {
     layout.mobileOpen = false
     servers.select(id)
   }
 
-  let adding = $state(false)
-  let newName = $state('')
-  let newUrl = $state('')
+  let formOpen = $state(false)
+  let editingEntry = $state<ServerEntry | undefined>(undefined)
 
-  function submitAdd(e: SubmitEvent) {
-    e.preventDefault()
-    if (!newUrl.trim()) return
-    servers.add(newName, newUrl)
-    newName = ''
-    newUrl = ''
-    adding = false
+  function openAdd() {
+    editingEntry = undefined
+    formOpen = true
+  }
+
+  function openEdit(entry: ServerEntry) {
+    editingEntry = entry
+    formOpen = true
   }
 
   // Collapse only applies to the desktop rail; the mobile drawer is always
@@ -87,51 +88,52 @@
       <p class={cn('text-xs font-medium text-faint-fg uppercase tracking-wide', labelCls)}>
         {$LL.servers()}
       </p>
-      <IconButton
-        class={cn('-mr-1', labelCls)}
-        label={$LL.addServer()}
-        onclick={() => (adding = !adding)}
-      >
+      <IconButton class={cn('-mr-1', labelCls)} label={$LL.addServer()} onclick={openAdd}>
         <Plus class="w-4 h-4" />
       </IconButton>
     </div>
-    {#if adding}
-      <form class={cn('space-y-1.5 px-1 pb-2', labelCls)} onsubmit={submitAdd}>
-        <Input class="text-sm w-full" placeholder={$LL.serverName()} bind:value={newName} />
-        <Input
-          class="text-sm w-full"
-          placeholder="https://server:3770"
-          bind:value={newUrl}
-          required
-        />
-        <Button type="submit" size="sm" class="w-full">{$LL.add()}</Button>
-      </form>
-    {/if}
     {#each servers.list as s (s.id)}
       {@const active = s.id === servers.currentId}
-      <button
+      <div
         class={cn(
-          'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-left cursor-pointer transition-colors',
-          active
-            ? 'bg-soft text-fg-strong font-medium'
-            : 'text-muted-fg hover:bg-soft/60 hover:text-fg',
+          'w-full flex items-center gap-1 rounded-lg transition-colors',
+          active ? 'bg-soft' : 'hover:bg-soft/60',
           centerCls,
         )}
-        title={s.id === 'local' ? $LL.thisServer() : displayName(s)}
-        onclick={() => selectServer(s.id)}
       >
-        <Server class="w-4 h-4 shrink-0" />
-        <span class={cn('min-w-0 flex-1', labelCls)}>
-          <span class="block truncate">{s.id === 'local' ? $LL.thisServer() : displayName(s)}</span>
-          {#if s.url}
-            <span class="block truncate text-xs text-faint-fg">{s.url}</span>
-          {/if}
-        </span>
-        <span
-          class={cn('w-2 h-2 rounded-full shrink-0', dotCls(s.id))}
-          title={health.status[s.id] === false ? $LL.disconnected() : $LL.connected()}
-        ></span>
-      </button>
+        <button
+          type="button"
+          class={cn(
+            'min-w-0 flex-1 flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-left cursor-pointer',
+            active ? 'text-fg-strong font-medium' : 'text-muted-fg hover:text-fg',
+          )}
+          title={s.id === 'local' ? $LL.thisServer() : displayName(s)}
+          onclick={() => selectServer(s.id)}
+        >
+          <Server class="w-4 h-4 shrink-0" />
+          <span class={cn('min-w-0 flex-1', labelCls)}>
+            <span class="block truncate"
+              >{s.id === 'local' ? $LL.thisServer() : displayName(s)}</span
+            >
+            {#if s.url}
+              <span class="block truncate text-xs text-faint-fg">{s.url}</span>
+            {/if}
+          </span>
+          <span
+            class={cn('w-2 h-2 rounded-full shrink-0', dotCls(s.id))}
+            title={health.status[s.id] === false ? $LL.disconnected() : $LL.connected()}
+          ></span>
+        </button>
+        {#if s.id !== 'local'}
+          <IconButton
+            label={$LL.editServer()}
+            class={cn('shrink-0 mr-1', labelCls)}
+            onclick={() => openEdit(s)}
+          >
+            <Pencil class="w-3.5 h-3.5" />
+          </IconButton>
+        {/if}
+      </div>
     {/each}
   </nav>
 
@@ -155,3 +157,5 @@
     </div>
   </div>
 </aside>
+
+<ServerFormModal open={formOpen} entry={editingEntry} onclose={() => (formOpen = false)} />

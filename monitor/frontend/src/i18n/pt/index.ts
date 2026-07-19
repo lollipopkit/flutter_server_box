@@ -57,6 +57,14 @@ const pt = {
 	power: 'Energia',
 	osHost: 'SO / Host',
 	refresh: 'Atualizar',
+	editServer: 'Editar servidor',
+	serverUrlLabel: 'URL do servidor',
+	optional: 'opcional',
+	testConnection: 'Testar conexão',
+	testingConnection: 'Testando...',
+	save: 'Salvar',
+	cancel: 'Cancelar',
+	confirmDeleteServer: 'Remover este servidor? Isso apenas o esquece neste navegador, o agente não é interrompido.',
 } satisfies Translation
 
 export default pt

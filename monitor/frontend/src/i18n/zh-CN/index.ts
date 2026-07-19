@@ -57,6 +57,14 @@ const zh_CN = {
 	power: '功耗',
 	osHost: '系统 / 主机',
 	refresh: '刷新',
+	editServer: '编辑服务器',
+	serverUrlLabel: '服务器地址',
+	optional: '选填',
+	testConnection: '测试连接',
+	testingConnection: '测试中...',
+	save: '保存',
+	cancel: '取消',
+	confirmDeleteServer: '移除这台服务器?仅在此浏览器中移除记录,不会停止该 Agent。',
 } satisfies Translation
 
 export default zh_CN

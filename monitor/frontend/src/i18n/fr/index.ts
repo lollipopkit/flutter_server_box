@@ -57,6 +57,14 @@ const fr = {
 	power: 'Puissance',
 	osHost: 'OS / Hôte',
 	refresh: 'Actualiser',
+	editServer: 'Modifier le serveur',
+	serverUrlLabel: 'URL du serveur',
+	optional: 'facultatif',
+	testConnection: 'Tester la connexion',
+	testingConnection: 'Test en cours...',
+	save: 'Enregistrer',
+	cancel: 'Annuler',
+	confirmDeleteServer: "Supprimer ce serveur ? Il sera seulement oublié dans ce navigateur, l'agent continuera de fonctionner.",
 } satisfies Translation
 
 export default fr

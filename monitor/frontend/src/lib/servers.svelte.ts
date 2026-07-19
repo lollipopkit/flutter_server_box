@@ -85,6 +85,23 @@ class ServersStore {
     this.#persist()
   }
 
+  /// Edits name/url of an existing entry (edit-server form); re-normalizes the
+  /// URL the same way add() does. A URL change drops the saved session (the
+  /// old token belongs to whatever agent was at the old URL) so the app falls
+  /// back to login.
+  update(id: string, name: string, url: string) {
+    const entry = this.list.find((s) => s.id === id)
+    if (!entry) return
+    const normalized = normalizeUrl(url)
+    if (normalized !== entry.url) {
+      entry.token = null
+      entry.username = null
+    }
+    entry.name = name.trim()
+    entry.url = normalized
+    this.#persist()
+  }
+
   /// Fills in a blank name from data the server itself reported (server_name
   /// from /metrics, or the /status display name); a no-op once a name — user
   /// given or previously auto-filled — is already set, so this never

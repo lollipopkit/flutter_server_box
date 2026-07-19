@@ -57,6 +57,14 @@ const zh_TW = {
 	power: '功耗',
 	osHost: '系統 / 主機',
 	refresh: '重新整理',
+	editServer: '編輯伺服器',
+	serverUrlLabel: '伺服器位址',
+	optional: '選填',
+	testConnection: '測試連線',
+	testingConnection: '測試中...',
+	save: '儲存',
+	cancel: '取消',
+	confirmDeleteServer: '移除這台伺服器?僅在此瀏覽器中移除記錄,不會停止該 Agent。',
 } satisfies Translation
 
 export default zh_TW

@@ -57,6 +57,14 @@ const ru = {
 	power: 'Мощность',
 	osHost: 'ОС / Хост',
 	refresh: 'Обновить',
+	editServer: 'Изменить сервер',
+	serverUrlLabel: 'URL сервера',
+	optional: 'необязательно',
+	testConnection: 'Проверить соединение',
+	testingConnection: 'Проверка...',
+	save: 'Сохранить',
+	cancel: 'Отмена',
+	confirmDeleteServer: 'Удалить этот сервер? Он будет забыт только в этом браузере, агент не будет остановлен.',
 } satisfies Translation
 
 export default ru

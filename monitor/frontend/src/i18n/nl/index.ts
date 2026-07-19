@@ -57,6 +57,14 @@ const nl = {
 	power: 'Vermogen',
 	osHost: 'OS / Host',
 	refresh: 'Vernieuwen',
+	editServer: 'Server bewerken',
+	serverUrlLabel: 'Server-URL',
+	optional: 'optioneel',
+	testConnection: 'Verbinding testen',
+	testingConnection: 'Testen...',
+	save: 'Opslaan',
+	cancel: 'Annuleren',
+	confirmDeleteServer: 'Deze server verwijderen? Dit vergeet hem alleen in deze browser, de agent stopt niet.',
 } satisfies Translation
 
 export default nl

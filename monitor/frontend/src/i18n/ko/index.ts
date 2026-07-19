@@ -57,6 +57,14 @@ const ko = {
 	power: '전력',
 	osHost: 'OS / 호스트',
 	refresh: '새로고침',
+	editServer: '서버 편집',
+	serverUrlLabel: '서버 URL',
+	optional: '선택 사항',
+	testConnection: '연결 테스트',
+	testingConnection: '테스트 중...',
+	save: '저장',
+	cancel: '취소',
+	confirmDeleteServer: '이 서버를 삭제하시겠습니까? 이 브라우저에서만 잊혀지며 에이전트는 중지되지 않습니다.',
 } satisfies Translation
 
 export default ko

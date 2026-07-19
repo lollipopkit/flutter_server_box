@@ -57,6 +57,14 @@ const de = {
 	power: 'Leistung',
 	osHost: 'Betriebssystem / Host',
 	refresh: 'Aktualisieren',
+	editServer: 'Server bearbeiten',
+	serverUrlLabel: 'Server-URL',
+	optional: 'optional',
+	testConnection: 'Verbindung testen',
+	testingConnection: 'Teste...',
+	save: 'Speichern',
+	cancel: 'Abbrechen',
+	confirmDeleteServer: 'Diesen Server entfernen? Er wird nur in diesem Browser vergessen — der Agent wird nicht gestoppt.',
 } satisfies Translation
 
 export default de

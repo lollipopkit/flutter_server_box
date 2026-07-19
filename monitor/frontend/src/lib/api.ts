@@ -39,6 +39,17 @@ async function request<T>(path: string, init: RequestInit = {}, fallback = 'Requ
   return res.json() as Promise<T>
 }
 
+/// Unauthenticated reachability probe for a candidate URL (add/edit server
+/// form), independent of `servers.current` since the entry may not be saved yet
+export async function testConnection(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${url}/api/v1/health`, { signal: AbortSignal.timeout(TIMEOUT_MS) })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
 export const api = {
   login: (credentials: LoginRequest) =>
     request<LoginResponse>(

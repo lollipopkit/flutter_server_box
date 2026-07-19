@@ -57,6 +57,14 @@ const uk = {
 	power: 'Потужність',
 	osHost: 'ОС / Хост',
 	refresh: 'Оновити',
+	editServer: 'Редагувати сервер',
+	serverUrlLabel: 'URL сервера',
+	optional: "необов'язково",
+	testConnection: "Перевірити з'єднання",
+	testingConnection: 'Перевірка...',
+	save: 'Зберегти',
+	cancel: 'Скасувати',
+	confirmDeleteServer: 'Видалити цей сервер? Він буде забутий лише в цьому браузері, агент не зупиниться.',
 } satisfies Translation
 
 export default uk

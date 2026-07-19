@@ -57,6 +57,14 @@ const tr = {
 	power: 'Güç',
 	osHost: 'İşletim Sistemi / Sunucu',
 	refresh: 'Yenile',
+	editServer: 'Sunucuyu düzenle',
+	serverUrlLabel: "Sunucu URL'si",
+	optional: 'isteğe bağlı',
+	testConnection: 'Bağlantıyı test et',
+	testingConnection: 'Test ediliyor...',
+	save: 'Kaydet',
+	cancel: 'İptal',
+	confirmDeleteServer: "Bu sunucu kaldırılsın mı? Yalnızca bu tarayıcıda unutulur, aracı durdurulmaz.",
 } satisfies Translation
 
 export default tr

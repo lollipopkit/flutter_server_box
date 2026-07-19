@@ -57,6 +57,14 @@ const ja = {
 	power: '電力',
 	osHost: 'OS / ホスト',
 	refresh: '更新',
+	editServer: 'サーバーを編集',
+	serverUrlLabel: 'サーバーURL',
+	optional: '任意',
+	testConnection: '接続テスト',
+	testingConnection: 'テスト中...',
+	save: '保存',
+	cancel: 'キャンセル',
+	confirmDeleteServer: 'このサーバーを削除しますか?このブラウザから削除されるだけで、エージェントは停止しません。',
 } satisfies Translation
 
 export default ja
