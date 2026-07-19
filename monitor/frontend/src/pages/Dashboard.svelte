@@ -11,10 +11,10 @@
     CircleAlert,
     RefreshCw,
   } from '@lucide/svelte'
+  import { Button, Card, Spinner } from '@serverbox/webui'
   import LineChart from '../components/LineChart.svelte'
   import LocaleToggle from '../components/LocaleToggle.svelte'
   import ServerPicker from '../components/ServerPicker.svelte'
-  import Spinner from '../components/Spinner.svelte'
   import StatCard from '../components/StatCard.svelte'
   import ThemeToggle from '../components/ThemeToggle.svelte'
   import { api } from '../lib/api'
@@ -80,12 +80,15 @@
     disk: { warning: 85, danger: 95 },
   }
 
-  function statusBadge(pct: number | undefined, type: keyof typeof thresholds): string {
-    if (pct === undefined || isNaN(pct)) return 'status-success'
+  function statusTone(
+    pct: number | undefined,
+    type: keyof typeof thresholds,
+  ): 'success' | 'warning' | 'danger' {
+    if (pct === undefined || isNaN(pct)) return 'success'
     const t = thresholds[type]
-    if (pct >= t.danger) return 'status-danger'
-    if (pct >= t.warning) return 'status-warning'
-    return 'status-success'
+    if (pct >= t.danger) return 'danger'
+    if (pct >= t.warning) return 'warning'
+    return 'success'
   }
 
   const error = $derived(status.error ?? metrics.error)
@@ -101,14 +104,14 @@
     <Spinner size="lg" />
   </div>
 {:else}
-  <header class="bg-white shadow-sm border-b border-gray-200 dark:bg-gray-900 dark:border-gray-800">
+  <header class="bg-surface shadow-xs border-b border-line">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center py-4">
         <div class="flex items-center">
-          <Monitor class="w-8 h-8 text-primary-600 mr-3" />
+          <Monitor class="w-8 h-8 text-accent mr-3" />
           <div>
-            <h1 class="text-xl font-semibold text-strong">ServerBox Monitor</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
+            <h1 class="text-xl font-semibold font-display text-fg-strong">ServerBox Monitor</h1>
+            <p class="text-sm text-muted-fg">
               {status.data?.name || $LL.unknownServer()}
             </p>
           </div>
@@ -116,15 +119,15 @@
 
         <div class="flex items-center space-x-4">
           <ServerPicker />
-          <div class="text-sm text-muted">
+          <div class="text-sm text-muted-fg">
             {$LL.welcome()} <span class="font-medium">{servers.current?.username}</span>
           </div>
           <LocaleToggle />
           <ThemeToggle />
-          <button onclick={() => servers.logout()} class="btn btn-secondary flex items-center">
+          <Button variant="secondary" size="sm" onclick={() => servers.logout()}>
             <LogOut class="w-4 h-4 mr-2" />
             {$LL.logout()}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -132,13 +135,11 @@
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     {#if error}
-      <div
-        class="mb-6 bg-danger-50 border border-danger-200 rounded-md p-4 dark:bg-danger-600/10 dark:border-danger-600/30"
-      >
+      <div class="mb-6 bg-danger/10 border border-danger/30 rounded-(--radius-container) p-4">
         <div class="flex">
-          <CircleAlert class="w-5 h-5 text-danger-400" />
+          <CircleAlert class="w-5 h-5 text-danger" />
           <div class="ml-3">
-            <p class="text-sm text-danger-700 dark:text-danger-400">{error}</p>
+            <p class="text-sm text-danger">{error}</p>
           </div>
         </div>
       </div>
@@ -152,7 +153,7 @@
         value={m ? `${m.cpu_usage.toFixed(1)}%` : '--'}
         detail={m?.temperature != null ? `${m.temperature.toFixed(1)} \u00B0C` : ''}
         badge={m ? $LL.active() : $LL.na()}
-        badgeClass={statusBadge(m?.cpu_usage, 'cpu')}
+        tone={statusTone(m?.cpu_usage, 'cpu')}
       />
       <StatCard
         icon={MemoryStick}
@@ -161,7 +162,7 @@
         value={m ? `${m.memory.usage_percent.toFixed(1)}%` : '--'}
         detail={m ? `${fmtBytes(m.memory.used)} / ${fmtBytes(m.memory.total)}` : ''}
         badge={m ? $LL.active() : $LL.na()}
-        badgeClass={statusBadge(m?.memory.usage_percent, 'memory')}
+        tone={statusTone(m?.memory.usage_percent, 'memory')}
       />
       <StatCard
         icon={HardDrive}
@@ -170,7 +171,7 @@
         value={m ? `${m.disk.usage_percent.toFixed(1)}%` : '--'}
         detail={m ? `${fmtBytes(m.disk.used)} / ${fmtBytes(m.disk.total)}` : ''}
         badge={m ? $LL.active() : $LL.na()}
-        badgeClass={statusBadge(m?.disk.usage_percent, 'disk')}
+        tone={statusTone(m?.disk.usage_percent, 'disk')}
       />
       <StatCard
         icon={Network}
@@ -184,18 +185,18 @@
           ? `RX ${fmtBytes(m.network.rx_bytes)} \u00B7 TX ${fmtBytes(m.network.tx_bytes)}`
           : ''}
         badge={$LL.active()}
-        badgeClass="status-success"
+        tone="success"
       />
     </div>
 
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-semibold text-strong">{$LL.history()}</h2>
-      <div class="flex rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden">
+      <h2 class="text-lg font-semibold font-display text-fg-strong">{$LL.history()}</h2>
+      <div class="flex rounded-full border border-line overflow-hidden">
         {#each RANGES as r (r.minutes)}
           <button
-            class="px-3 py-1 text-sm transition-colors {rangeMinutes === r.minutes
-              ? 'bg-primary-600 text-white'
-              : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800'}"
+            class="px-3 py-1 text-sm cursor-pointer transition-colors {rangeMinutes === r.minutes
+              ? 'bg-fg-strong text-surface'
+              : 'bg-surface text-muted-fg hover:bg-soft'}"
             onclick={() => (rangeMinutes = r.minutes)}
           >
             {r.label}
@@ -205,7 +206,7 @@
     </div>
 
     {#if historyError}
-      <p class="mb-4 text-sm text-danger-600 dark:text-danger-400">{historyError}</p>
+      <p class="mb-4 text-sm text-danger">{historyError}</p>
     {/if}
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -227,34 +228,34 @@
     {#if metrics.data}
       {@const m = metrics.data}
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="card">
-          <h3 class="text-lg font-semibold text-strong mb-4">{$LL.systemInformation()}</h3>
+        <Card>
+          <h3 class="text-lg font-semibold font-display text-fg-strong mb-4">{$LL.systemInformation()}</h3>
           <div class="space-y-3">
             <div class="flex justify-between">
-              <span class="text-sm text-muted">{$LL.serverNameLabel()}</span>
+              <span class="text-sm text-muted-fg">{$LL.serverNameLabel()}</span>
               <span class="text-sm font-medium">{m.server_name}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-muted">{$LL.lastUpdated()}</span>
+              <span class="text-sm text-muted-fg">{$LL.lastUpdated()}</span>
               <span class="text-sm font-medium">
                 {new Date(m.timestamp).toLocaleString()}
               </span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-muted">{$LL.cpuUsageLabel()}</span>
+              <span class="text-sm text-muted-fg">{$LL.cpuUsageLabel()}</span>
               <span class="text-sm font-medium">{m.cpu_usage.toFixed(1)}%</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-muted">{$LL.memoryUsageLabel()}</span>
+              <span class="text-sm text-muted-fg">{$LL.memoryUsageLabel()}</span>
               <span class="text-sm font-medium">{m.memory.usage_percent.toFixed(1)}%</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-muted">{$LL.diskUsageLabel()}</span>
+              <span class="text-sm text-muted-fg">{$LL.diskUsageLabel()}</span>
               <span class="text-sm font-medium">{m.disk.usage_percent.toFixed(1)}%</span>
             </div>
             {#if m.temperature != null}
               <div class="flex justify-between">
-                <span class="text-sm text-muted">{$LL.temperature()}</span>
+                <span class="text-sm text-muted-fg">{$LL.temperature()}</span>
                 <span class="text-sm font-medium flex items-center">
                   <Thermometer class="w-4 h-4 mr-1" />
                   {m.temperature.toFixed(1)}°C
@@ -262,23 +263,20 @@
               </div>
             {/if}
           </div>
-        </div>
+        </Card>
 
-        <div class="card">
-          <h3 class="text-lg font-semibold text-strong mb-4">{$LL.quickActions()}</h3>
+        <Card>
+          <h3 class="text-lg font-semibold font-display text-fg-strong mb-4">{$LL.quickActions()}</h3>
           <div class="space-y-3">
-            <button
-              onclick={() => window.location.reload()}
-              class="btn-primary w-full flex items-center justify-center"
-            >
+            <Button block onclick={() => window.location.reload()}>
               <RefreshCw class="w-4 h-4 mr-2" />
               {$LL.refreshData()}
-            </button>
-            <div class="text-xs text-gray-500 dark:text-gray-400 text-center mt-4">
+            </Button>
+            <div class="text-xs text-muted-fg text-center mt-4">
               {$LL.autoRefreshNote()}
             </div>
           </div>
-        </div>
+        </Card>
       </div>
     {/if}
   </main>

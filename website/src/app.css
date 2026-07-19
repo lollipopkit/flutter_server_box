@@ -1,5 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap');
 
+/* Shared UI library: tailwind utilities only (no preflight — this site ships
+   its own reset) + the shared design tokens the components are built on */
+@import 'tailwindcss/theme' layer(theme);
+@import 'tailwindcss/utilities' layer(utilities);
+@import '@serverbox/webui/theme.css';
+@source '../../packages/webui/src';
+
 :root {
   color-scheme: light;
 
@@ -155,10 +162,6 @@ body {
 .language-switcher select:focus-visible,
 .nav-cta:focus-visible,
 .site-nav a:focus-visible,
-.btn:focus-visible {
-  outline: 2px solid var(--ring-blue);
-  outline-offset: 2px;
-}
 
 .sr-only {
   position: absolute;
@@ -277,34 +280,9 @@ body {
     rotateY(var(--tilt-y));
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  border-radius: var(--radius-pill);
-  padding: 0.625rem 1.5rem;
-  font-weight: 500;
-  font-size: 0.95rem;
-  font-family: var(--font-body);
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
 
-.btn:hover {
-  opacity: 0.85;
-}
 
-.btn-primary {
-  background: var(--black);
-  color: var(--white);
-}
 
-.btn-secondary {
-  background: var(--light-gray);
-  color: var(--near-black);
-}
 
 .section-head {
   margin-bottom: 2.5rem;

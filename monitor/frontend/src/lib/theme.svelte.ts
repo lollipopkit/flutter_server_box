@@ -1,26 +1,17 @@
-/// Theme selection: light / dark / system, persisted in localStorage and
-/// applied as a `dark` class on <html> (pre-paint init lives in index.html)
+/// Theme selection: light / dark / system, persisted in localStorage.
+/// The shared theme tokens (@serverbox/webui/theme.css) follow the system via
+/// media query by default; an explicit `.dark` / `.light` class on <html>
+/// overrides it (pre-paint init lives in index.html).
 
 export type Theme = 'light' | 'dark' | 'system'
 
 const ORDER: Theme[] = ['system', 'light', 'dark']
-
-function prefersDark(): boolean {
-  // jsdom has no matchMedia; default to light there
-  return typeof window.matchMedia === 'function'
-    && window.matchMedia('(prefers-color-scheme: dark)').matches
-}
 
 class ThemeStore {
   current = $state<Theme>(this.#stored())
 
   constructor() {
     this.#apply()
-    if (typeof window.matchMedia === 'function') {
-      window
-        .matchMedia('(prefers-color-scheme: dark)')
-        .addEventListener('change', () => this.#apply())
-    }
   }
 
   #stored(): Theme {
@@ -29,8 +20,9 @@ class ThemeStore {
   }
 
   #apply() {
-    const dark = this.current === 'dark' || (this.current === 'system' && prefersDark())
-    document.documentElement.classList.toggle('dark', dark)
+    const cls = document.documentElement.classList
+    cls.toggle('dark', this.current === 'dark')
+    cls.toggle('light', this.current === 'light')
   }
 
   cycle() {

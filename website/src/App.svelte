@@ -1,4 +1,5 @@
 <script>
+  import { Button } from '@serverbox/webui'
   import {
     ExternalLink,
   } from '@lucide/svelte'
@@ -199,8 +200,8 @@
         {$LL.hero.subtitle()}
       </p>
       <div class="hero-actions">
-        <a class="btn btn-primary" href="#download" onclick={(event) => scrollToSection(event, 'download')}>{$LL.hero.primaryAction()}</a>
-        <a class="btn btn-secondary" href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.hero.secondaryAction()}</a>
+        <Button href="#download" onclick={(event) => scrollToSection(event, 'download')}>{$LL.hero.primaryAction()}</Button>
+        <Button variant="secondary" href="#features" onclick={(event) => scrollToSection(event, 'features')}>{$LL.hero.secondaryAction()}</Button>
       </div>
 
       <div
@@ -312,8 +313,8 @@
           {$LL.cta.subtitle()}
         </p>
         <div class="cta-actions">
-          <a class="btn btn-secondary" href="https://apps.apple.com/app/id1586449703">{$LL.cta.appStoreAction()}</a>
-          <a class="btn btn-primary" href="https://github.com/lollipopkit/flutter_server_box/releases">{$LL.cta.githubAction()}</a>
+          <Button variant="secondary" href="https://apps.apple.com/app/id1586449703">{$LL.cta.appStoreAction()}</Button>
+          <Button href="https://github.com/lollipopkit/flutter_server_box/releases">{$LL.cta.githubAction()}</Button>
         </div>
       </div>
     </section>

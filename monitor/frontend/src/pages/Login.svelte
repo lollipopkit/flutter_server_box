@@ -1,8 +1,8 @@
 <script lang="ts">
   import { Monitor, CircleAlert } from '@lucide/svelte'
+  import { Button, Input, Spinner } from '@serverbox/webui'
   import LocaleToggle from '../components/LocaleToggle.svelte'
   import ServerPicker from '../components/ServerPicker.svelte'
-  import Spinner from '../components/Spinner.svelte'
   import ThemeToggle from '../components/ThemeToggle.svelte'
   import { api, ApiError } from '../lib/api'
   import { LL } from '../i18n/i18n-svelte'
@@ -36,23 +36,21 @@
   <div class="max-w-md w-full space-y-8 p-8">
     <div class="text-center">
       <div class="flex justify-center">
-        <Monitor class="w-12 h-12 text-primary-600" />
+        <Monitor class="w-12 h-12 text-accent" />
       </div>
-      <h2 class="mt-6 text-3xl font-bold text-strong">ServerBox Monitor</h2>
-      <p class="mt-2 text-sm text-muted">{$LL.signInSubtitle()}</p>
+      <h2 class="mt-6 text-3xl font-bold font-display text-fg-strong">ServerBox Monitor</h2>
+      <p class="mt-2 text-sm text-muted-fg">{$LL.signInSubtitle()}</p>
     </div>
 
     <ServerPicker manage={true} />
 
     <form class="mt-8 space-y-6" onsubmit={handleSubmit}>
       {#if error}
-        <div
-          class="bg-danger-50 border border-danger-200 rounded-md p-4 dark:bg-danger-600/10 dark:border-danger-600/30"
-        >
+        <div class="bg-danger/10 border border-danger/30 rounded-(--radius-container) p-4">
           <div class="flex">
-            <CircleAlert class="w-5 h-5 text-danger-400" />
+            <CircleAlert class="w-5 h-5 text-danger" />
             <div class="ml-3">
-              <p class="text-sm text-danger-700 dark:text-danger-400">{error}</p>
+              <p class="text-sm text-danger">{error}</p>
             </div>
           </div>
         </div>
@@ -60,49 +58,43 @@
 
       <div class="space-y-4">
         <div>
-          <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label for="username" class="block text-sm font-medium text-fg">
             {$LL.username()}
           </label>
-          <input
+          <Input
             id="username"
             name="username"
             type="text"
             required
             bind:value={username}
-            class="input mt-1"
+            class="mt-1"
             placeholder={$LL.enterUsername()}
           />
         </div>
         <div>
-          <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label for="password" class="block text-sm font-medium text-fg">
             {$LL.password()}
           </label>
-          <input
+          <Input
             id="password"
             name="password"
             type="password"
             required
             bind:value={password}
-            class="input mt-1"
+            class="mt-1"
             placeholder={$LL.enterPassword()}
           />
         </div>
       </div>
 
-      <div>
-        <button
-          type="submit"
-          disabled={loading}
-          class="btn-primary w-full flex items-center justify-center"
-        >
-          {#if loading}
-            <Spinner size="sm" class="mr-2" />
-            {$LL.signingIn()}
-          {:else}
-            {$LL.signIn()}
-          {/if}
-        </button>
-      </div>
+      <Button type="submit" block disabled={loading}>
+        {#if loading}
+          <Spinner size="sm" class="mr-2 text-surface" />
+          {$LL.signingIn()}
+        {:else}
+          {$LL.signIn()}
+        {/if}
+      </Button>
     </form>
   </div>
 </div>

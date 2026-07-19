@@ -4,26 +4,31 @@ import { theme } from '../lib/theme.svelte'
 describe('theme', () => {
   beforeEach(() => {
     window.localStorage.removeItem('theme')
-    document.documentElement.classList.remove('dark')
+    document.documentElement.classList.remove('dark', 'light')
   })
 
-  it('cycles system -> light -> dark and persists', () => {
-    // jsdom has no matchMedia, so `system` resolves to light
+  it('cycles system -> light -> dark, applying explicit classes only', () => {
+    const cls = document.documentElement.classList
     while (theme.current !== 'system') theme.cycle()
-    expect(document.documentElement.classList.contains('dark')).toBe(false)
+    // system preference is handled by the theme CSS media query: no classes
+    expect(cls.contains('dark')).toBe(false)
+    expect(cls.contains('light')).toBe(false)
 
     theme.cycle()
     expect(theme.current).toBe('light')
     expect(window.localStorage.getItem('theme')).toBe('light')
-    expect(document.documentElement.classList.contains('dark')).toBe(false)
+    expect(cls.contains('light')).toBe(true)
+    expect(cls.contains('dark')).toBe(false)
 
     theme.cycle()
     expect(theme.current).toBe('dark')
     expect(window.localStorage.getItem('theme')).toBe('dark')
-    expect(document.documentElement.classList.contains('dark')).toBe(true)
+    expect(cls.contains('dark')).toBe(true)
+    expect(cls.contains('light')).toBe(false)
 
     theme.cycle()
     expect(theme.current).toBe('system')
-    expect(document.documentElement.classList.contains('dark')).toBe(false)
+    expect(cls.contains('dark')).toBe(false)
+    expect(cls.contains('light')).toBe(false)
   })
 })

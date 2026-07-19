@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Card } from '@serverbox/webui'
   import { fmtTime } from '../lib/format'
   import { LL } from '../i18n/i18n-svelte'
 
@@ -61,11 +62,11 @@
   const readoutIndex = $derived(hoverIndex ?? labels.length - 1)
 </script>
 
-<div class="card">
+<Card>
   <div class="flex items-center justify-between mb-2">
-    <h3 class="text-lg font-semibold text-strong">{title}</h3>
+    <h3 class="text-lg font-semibold text-fg-strong">{title}</h3>
     {#if labels.length > 0}
-      <span class="text-xs text-gray-500 dark:text-gray-400">
+      <span class="text-xs text-muted-fg">
         {fmtTime(labels[readoutIndex])}
       </span>
     {/if}
@@ -73,10 +74,10 @@
 
   <div class="flex flex-wrap gap-x-4 gap-y-1 mb-2">
     {#each series as s (s.label)}
-      <span class="inline-flex items-center text-xs text-muted">
+      <span class="inline-flex items-center text-xs text-muted-fg">
         <span class="w-2.5 h-2.5 rounded-full mr-1.5" style="background: {s.color}"></span>
         {s.label}:&nbsp;
-        <span class="font-medium text-strong">
+        <span class="font-medium text-fg-strong">
           {labels.length > 0 ? format(s.values[readoutIndex] ?? 0) : '--'}
         </span>
       </span>
@@ -84,7 +85,7 @@
   </div>
 
   {#if labels.length < 2}
-    <div class="h-40 flex items-center justify-center text-sm text-muted">
+    <div class="h-40 flex items-center justify-center text-sm text-muted-fg">
       {$LL.collectingData()}
     </div>
   {:else}
@@ -103,7 +104,7 @@
           x2={W - PAD.right}
           y1={PAD.top + plotH * f}
           y2={PAD.top + plotH * f}
-          class="stroke-gray-200 dark:stroke-gray-800"
+          class="stroke-soft"
           stroke-width="1"
           vector-effect="non-scaling-stroke"
         />
@@ -111,7 +112,7 @@
           x={PAD.left - 6}
           y={PAD.top + plotH * f + 3}
           text-anchor="end"
-          class="fill-gray-400 dark:fill-gray-500"
+          class="fill-faint-fg"
           font-size="10"
         >
           {format(effectiveMax * (1 - f))}
@@ -135,7 +136,7 @@
           x2={x(hoverIndex)}
           y1={PAD.top}
           y2={PAD.top + plotH}
-          class="stroke-gray-400 dark:stroke-gray-600"
+          class="stroke-faint-fg"
           stroke-width="1"
           stroke-dasharray="3 3"
           vector-effect="non-scaling-stroke"
@@ -145,7 +146,7 @@
       <text
         x={PAD.left}
         y={H - 6}
-        class="fill-gray-400 dark:fill-gray-500"
+        class="fill-faint-fg"
         font-size="10"
       >
         {fmtTime(labels[0])}
@@ -154,11 +155,11 @@
         x={W - PAD.right}
         y={H - 6}
         text-anchor="end"
-        class="fill-gray-400 dark:fill-gray-500"
+        class="fill-faint-fg"
         font-size="10"
       >
         {fmtTime(labels[labels.length - 1])}
       </text>
     </svg>
   {/if}
-</div>
+</Card>

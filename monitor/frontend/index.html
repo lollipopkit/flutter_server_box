@@ -5,14 +5,18 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ServerBox Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
     <script>
-      // Apply the theme before first paint to avoid a light-mode flash
+      // Apply an explicit theme choice before first paint (system preference
+      // is handled by the theme CSS media query and needs no class)
       const theme = localStorage.getItem('theme')
-      const dark =
-        theme === 'dark' ||
-        ((theme === null || theme === 'system') &&
-          window.matchMedia('(prefers-color-scheme: dark)').matches)
-      document.documentElement.classList.toggle('dark', dark)
+      if (theme === 'dark' || theme === 'light') {
+        document.documentElement.classList.add(theme)
+      }
     </script>
   </head>
   <body>

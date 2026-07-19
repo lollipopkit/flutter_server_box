@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // Single svelte instance across the linked @serverbox/ui package
+  resolve: { dedupe: ['svelte'] },
   plugins: [svelte(), tailwindcss()],
   server: {
     port: 3000,

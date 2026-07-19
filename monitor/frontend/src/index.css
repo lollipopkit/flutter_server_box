@@ -1,87 +1,11 @@
 @import "tailwindcss";
+@import "@serverbox/webui/theme.css";
 
-/* Dark mode is class-driven (html.dark) so the user can override the system
-   preference; the class is applied pre-paint in index.html and managed by
-   src/lib/theme.svelte.ts */
-@custom-variant dark (&:where(.dark, .dark *));
-
-@theme {
-  --color-primary-50: #eff6ff;
-  --color-primary-500: #3b82f6;
-  --color-primary-600: #2563eb;
-  --color-primary-700: #1d4ed8;
-
-  --color-success-50: #f0fdf4;
-  --color-success-400: #4ade80;
-  --color-success-500: #22c55e;
-  --color-success-600: #16a34a;
-
-  --color-warning-50: #fffbeb;
-  --color-warning-400: #fbbf24;
-  --color-warning-500: #f59e0b;
-  --color-warning-600: #d97706;
-
-  --color-danger-50: #fef2f2;
-  --color-danger-400: #f87171;
-  --color-danger-500: #ef4444;
-  --color-danger-600: #dc2626;
-
-  --animate-pulse-slow: pulse 3s infinite;
-}
+/* Tailwind must scan the linked UI package for its utility classes */
+@source "../../../packages/webui/src";
 
 @layer base {
-  html {
-    font-family: system-ui, sans-serif;
-  }
-
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100;
-  }
-}
-
-@layer components {
-  .card {
-    @apply bg-white rounded-lg shadow-xs border border-gray-200 p-6 dark:bg-gray-900 dark:border-gray-800;
-  }
-
-  .btn {
-    @apply px-4 py-2 rounded-md font-medium transition-colors duration-200;
-  }
-
-  .btn-primary {
-    @apply px-4 py-2 rounded-md font-medium transition-colors duration-200 bg-primary-600 text-white hover:bg-primary-700;
-  }
-
-  .btn-secondary {
-    @apply px-4 py-2 rounded-md font-medium transition-colors duration-200 bg-gray-600 text-white hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600;
-  }
-
-  .input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-900 dark:border-gray-700 dark:placeholder-gray-500;
-  }
-
-  .status-badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
-  }
-
-  .status-success {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-50 text-success-600 dark:bg-success-600/15 dark:text-success-400;
-  }
-
-  .status-warning {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning-50 text-warning-600 dark:bg-warning-600/15 dark:text-warning-400;
-  }
-
-  .status-danger {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-danger-50 text-danger-600 dark:bg-danger-600/15 dark:text-danger-400;
-  }
-
-  /* Muted/emphasis text with dark counterparts, shared by pages */
-  .text-muted {
-    @apply text-gray-600 dark:text-gray-400;
-  }
-
-  .text-strong {
-    @apply text-gray-900 dark:text-gray-100;
+    @apply bg-bg text-fg font-body;
   }
 }

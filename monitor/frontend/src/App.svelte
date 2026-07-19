@@ -4,7 +4,7 @@
   import Dashboard from './pages/Dashboard.svelte'
 </script>
 
-<div class="min-h-screen bg-gray-50 dark:bg-gray-950">
+<div class="min-h-screen bg-bg">
   {#key servers.currentId}
     {#if servers.authenticated}
       <Dashboard />
