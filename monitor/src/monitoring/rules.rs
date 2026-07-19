@@ -311,6 +311,7 @@ mod tests {
                 tx_bytes: 2000,
             },
             temperature: Some(65.0),
+            sys: None,
             gpus: vec![],
             disk_details: vec![],
             ifaces: vec![],

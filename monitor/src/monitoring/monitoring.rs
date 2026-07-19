@@ -21,6 +21,8 @@ pub struct SystemMetrics {
     pub disk: DiskMetrics,
     pub network: NetworkMetrics,
     pub temperature: Option<f32>,
+    /// System version description (PRETTY_NAME / uname / OsName), if parsed
+    pub sys: Option<String>,
     /// Detail lists for the panel's drill-down views (not persisted)
     #[serde(default)]
     pub gpus: Vec<GpuMetrics>,
@@ -296,6 +298,7 @@ fn adapt_status(
         disk,
         network,
         temperature,
+        sys: status.sys.clone(),
         gpus,
         disk_details,
         ifaces,

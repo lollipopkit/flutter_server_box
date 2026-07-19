@@ -145,7 +145,14 @@
         iconClass="text-blue-500"
         label={$LL.cpuUsage()}
         value={m ? `${m.cpu_usage.toFixed(1)}%` : '--'}
-        detail={m?.temperature != null ? `${m.temperature.toFixed(1)} \u00B0C` : ''}
+        detail={m
+          ? [
+              m.cpu_cores?.length ? `${m.cpu_cores.length} ${$LL.cores()}` : '',
+              m.temperature != null ? `${m.temperature.toFixed(1)} \u00B0C` : '',
+            ]
+              .filter(Boolean)
+              .join(' \u00B7 ')
+          : ''}
         onclick={() => (detail = 'cpu')}
       />
       <StatCard
@@ -238,10 +245,10 @@
             <span class="text-sm text-muted-fg">{$LL.serverNameLabel()}</span>
             <span class="text-sm font-medium">{m.server_name}</span>
           </div>
-          {#if status.data?.name}
+          {#if m.sys}
             <div class="flex justify-between gap-4">
               <span class="text-sm text-muted-fg">{$LL.osHost()}</span>
-              <span class="text-sm font-medium text-right truncate">{status.data.name}</span>
+              <span class="text-sm font-medium text-right truncate">{m.sys}</span>
             </div>
           {/if}
           <div class="flex justify-between">

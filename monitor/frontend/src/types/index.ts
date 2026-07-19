@@ -8,6 +8,7 @@ export interface SystemMetrics {
   disk: DiskMetrics;
   network: NetworkMetrics;
   temperature?: number;
+  sys?: string;
   // Detail lists are absent on older agents; treat as optional
   gpus?: GpuMetrics[];
   disk_details?: DiskDetail[];
