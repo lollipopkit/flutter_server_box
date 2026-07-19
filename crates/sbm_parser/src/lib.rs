@@ -16,6 +16,7 @@ pub mod commands;
 pub mod common;
 pub mod gpu;
 pub mod linux;
+pub mod script;
 pub mod smart;
 pub mod types;
 pub mod windows;
