@@ -112,7 +112,7 @@
       <ThemeToggle />
     </div>
     <div class={cn('flex items-center gap-2', layout.collapsed && 'lg:justify-center')}>
-      <span class={cn('flex-1 min-w-0 text-sm text-muted-fg truncate', labelCls)}>
+      <span class={cn('flex-1 min-w-0 pl-3 text-sm text-muted-fg truncate', labelCls)}>
         {servers.current?.username}
       </span>
       <IconButton label={$LL.logout()} class="hover:text-danger" onclick={() => servers.logout()}>
