@@ -1,8 +1,22 @@
-import { useState, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components -- the auth context provider and its hooks intentionally share this module */
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { apiService, apiErrorMessage } from '../services/api';
 import { StatusResponse, SystemMetrics } from '../types';
 
-export const useAuth = () => {
+interface AuthState {
+  isAuthenticated: boolean;
+  username: string | null;
+  loading: boolean;
+  login: (token: string, username: string) => void;
+  logout: () => void;
+}
+
+// Auth state must be shared: with per-component hook state, the login page's
+// instance flips to authenticated while App's route guard never re-renders,
+// bouncing the user straight back to /login
+const AuthContext = createContext<AuthState | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -10,7 +24,7 @@ export const useAuth = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const storedUsername = localStorage.getItem('username');
-    
+
     if (token && storedUsername) {
       setIsAuthenticated(true);
       setUsername(storedUsername);
@@ -32,7 +46,17 @@ export const useAuth = () => {
     setUsername(null);
   };
 
-  return { isAuthenticated, username, loading, login, logout };
+  return (
+    <AuthContext.Provider value={{ isAuthenticated, username, loading, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export const useAuth = (): AuthState => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
 };
 
 export const useStatus = (refreshInterval: number = 5000) => {
