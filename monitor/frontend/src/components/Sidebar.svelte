@@ -101,17 +101,18 @@
     {/each}
   </nav>
 
-  <div class="border-t border-line px-2 py-3 space-y-2">
-    <!-- The locale select needs full width to show language names; it doesn't
-         fit the collapsed rail, so it's hidden there (same mechanism as labelCls) -->
-    <div class={labelCls}>
-      <LocaleToggle />
-    </div>
-    <div class={cn('flex items-center', layout.collapsed && 'lg:justify-center')}>
+  <div class={cn('border-t border-line px-2 py-3 space-y-1', centerCls)}>
+    <!-- Language + theme share one row: the select needs full width to show
+         language names, so it's hidden (not shrunk) on the collapsed rail,
+         leaving just the theme icon centered -->
+    <div class={cn('flex items-center gap-2', layout.collapsed && 'lg:justify-center')}>
+      <div class={cn('min-w-0 flex-1', labelCls)}>
+        <LocaleToggle />
+      </div>
       <ThemeToggle />
     </div>
-    <div class={cn('flex items-center gap-2 px-1', layout.collapsed && 'lg:justify-center lg:px-0')}>
-      <span class={cn('flex-1 text-sm text-muted-fg truncate', labelCls)}>
+    <div class={cn('flex items-center gap-2', layout.collapsed && 'lg:justify-center')}>
+      <span class={cn('flex-1 min-w-0 text-sm text-muted-fg truncate', labelCls)}>
         {servers.current?.username}
       </span>
       <IconButton label={$LL.logout()} class="hover:text-danger" onclick={() => servers.logout()}>
