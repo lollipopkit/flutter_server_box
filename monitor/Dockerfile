@@ -8,6 +8,9 @@ FROM node:22-alpine AS frontend-builder
 # resolves (/app/packages/webui from /app/monitor/frontend)
 WORKDIR /app/monitor/frontend
 COPY packages/ /app/packages/
+# webui's own devDependencies (svelte, typescript) are needed for its type
+# declarations to resolve when svelte-check follows the file: link below
+RUN npm install --prefix /app/packages/webui
 COPY monitor/frontend/package*.json ./
 RUN npm install
 
