@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiService } from '../services/api';
+import { apiService, apiErrorMessage } from '../services/api';
 import { StatusResponse, SystemMetrics } from '../types';
 
 export const useAuth = () => {
@@ -46,8 +46,8 @@ export const useStatus = (refreshInterval: number = 5000) => {
         const data = await apiService.getStatus();
         setStatus(data);
         setError(null);
-      } catch (err: any) {
-        setError(err.response?.data?.error || 'Failed to fetch status');
+      } catch (err: unknown) {
+        setError(apiErrorMessage(err, 'Failed to fetch status'));
       } finally {
         setLoading(false);
       }
@@ -73,8 +73,8 @@ export const useMetrics = (refreshInterval: number = 5000) => {
         const data = await apiService.getMetrics();
         setMetrics(data);
         setError(null);
-      } catch (err: any) {
-        setError(err.response?.data?.error || 'Failed to fetch metrics');
+      } catch (err: unknown) {
+        setError(apiErrorMessage(err, 'Failed to fetch metrics'));
       } finally {
         setLoading(false);
       }

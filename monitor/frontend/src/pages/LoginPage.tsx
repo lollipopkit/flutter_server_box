@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Monitor, AlertCircle } from 'lucide-react';
-import { apiService } from '../services/api';
+import { apiService, apiErrorMessage } from '../services/api';
 import { useAuth } from '../hooks';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -22,8 +22,8 @@ const LoginPage: React.FC = () => {
       const response = await apiService.login({ username, password });
       login(response.token, username);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed');
+    } catch (err: unknown) {
+      setError(apiErrorMessage(err, 'Login failed'));
     } finally {
       setLoading(false);
     }

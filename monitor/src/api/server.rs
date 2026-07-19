@@ -66,10 +66,10 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
 
     info!("Starting web server on {}", bind_addr);
 
-    HttpServer::new(move || {
+    HttpServer::new(async move || {
         App::new()
             .state(app_state.clone())
-            .wrap(Logger::default())
+            .middleware(Logger::default())
             .service(
                 web::scope("/api/v1")
                     .route("/login", web::post().to(login))

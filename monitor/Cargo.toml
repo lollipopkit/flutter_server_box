@@ -12,35 +12,37 @@ path = "src/lib.rs"
 sbm_parser = { path = "../crates/sbm_parser" }
 
 # Web framework
-ntex = { version = "2", features = ["tokio"] }
-ntex-files = "2.0"
+ntex = { version = "3", features = ["tokio"] }
+ntex-files = "3.2"
 
 # Async runtime
-tokio = { version = "1.0", features = ["full"] }
+tokio = { version = "1.53", features = ["full"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-toml = "0.8"
+toml = "1.1"
 
 # Database
-sqlx = { version = "0.8", features = [
-    "runtime-tokio-rustls",
+sqlx = { version = "0.9", features = [
+    "runtime-tokio",
+    "tls-rustls-ring",
     "sqlite",
     "chrono",
     "migrate",
 ] }
 
 # Authentication
-jsonwebtoken = "9.3"
-bcrypt = "0.15"
+# rust_crypto 而非 aws_lc_rs:纯 Rust 实现,musl 静态编译无 cmake/汇编依赖
+jsonwebtoken = { version = "10.4", default-features = false, features = ["rust_crypto"] }
+bcrypt = "0.19"
 
 # Configuration
 dotenvy = "0.15"
 
 # HTTP client for push notifications
 # rustls 而非 native-tls:与 sqlx 一致,musl 静态编译不依赖 OpenSSL
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "charset", "http2"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "charset", "http2"] }
 
 # Time handling
 chrono = { version = "0.4", features = ["serde"] }
@@ -51,20 +53,20 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Error handling
 anyhow = "1.0"
-thiserror = "1.0"
+thiserror = "2.0"
 
 # Rate limiting
-governor = "0.6"
+governor = "0.10"
 nonzero_ext = "0.3"
 
 # Configuration validation
-regex = "1.10"
+regex = "1.13"
 
 # URL encoding
 percent-encoding = "2.3"
 
 # CLI argument parsing
-clap = { version = "4.4", features = ["derive", "env"] }
+clap = { version = "4.6", features = ["derive", "env"] }
 
 [dev-dependencies]
 tokio-test = "0.4"

@@ -1,12 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { AxiosError } from 'axios';
 import '@testing-library/jest-dom/vitest';
 import LoginPage from '../pages/LoginPage';
 import { apiService } from '../services/api';
 
-// Mock the API service
-vi.mock('../services/api');
+// Mock the API service(部分 mock:apiErrorMessage 等纯函数保持真实实现)
+vi.mock('../services/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../services/api')>()),
+  apiService: { login: vi.fn() },
+}));
 const mockedApiService = vi.mocked(apiService);
 
 // Mock the hooks
@@ -60,11 +64,15 @@ describe('LoginPage', () => {
   });
 
   it('displays error on failed login', async () => {
-    mockedApiService.login.mockRejectedValue({
-      response: {
+    mockedApiService.login.mockRejectedValue(
+      new AxiosError('Unauthorized', AxiosError.ERR_BAD_REQUEST, undefined, undefined, {
         data: { error: 'Invalid credentials' },
-      },
-    });
+        status: 401,
+        statusText: 'Unauthorized',
+        headers: {},
+        config: {} as never,
+      }),
+    );
 
     render(
       <BrowserRouter>
