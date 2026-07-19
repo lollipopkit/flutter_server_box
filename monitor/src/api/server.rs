@@ -65,26 +65,7 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
     let bind_addr = format!("{}:{}", server_config.host, server_config.port);
 
     let server = HttpServer::new(async move || {
-        // Cors::new() defaults to allow-all: with no configured origins, pin
-        // an unresolvable sentinel so the empty config means same-origin only
-        // (CORS is browser-enforced; non-browser clients bypass it anyway)
-        let origins = app_state.config.get_server().cors_allowed_origins;
-        let mut cors = ntex_cors::Cors::new();
-        if origins.is_empty() {
-            cors = cors.allowed_origin("https://cors-disabled.invalid");
-        } else {
-            for origin in &origins {
-                cors = cors.allowed_origin(origin);
-            }
-        }
-        let cors = cors
-            .allowed_methods(vec!["GET", "POST"])
-            .allowed_headers(vec![
-                ntex::http::header::AUTHORIZATION,
-                ntex::http::header::CONTENT_TYPE,
-            ])
-            .max_age(3600)
-            .finish();
+        let cors = crate::api::cors::Cors::new(app_state.config.get_server().cors_allowed_origins);
 
         App::new()
             .state(app_state.clone())

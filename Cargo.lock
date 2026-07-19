@@ -1938,17 +1938,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ntex-cors"
-version = "3.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10a2e19080630fe84dc0edad10fc678f78d61dd410dc2206302c2d13860930a5"
-dependencies = [
- "derive_more",
- "futures",
- "ntex",
-]
-
-[[package]]
 name = "ntex-dispatcher"
 version = "3.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3140,7 +3129,6 @@ dependencies = [
  "jsonwebtoken",
  "nonzero_ext",
  "ntex",
- "ntex-cors",
  "ntex-files",
  "percent-encoding",
  "regex",
