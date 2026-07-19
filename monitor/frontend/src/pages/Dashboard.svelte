@@ -164,7 +164,7 @@
         onclick={() => (detail = 'disk')}
       />
       <StatCard
-        class="p-4 sm:p-6 {m?.gpus.length ? '' : 'col-span-2 lg:col-span-1'}"
+        class="p-4 sm:p-6 {m?.gpus?.length ? '' : 'col-span-2 lg:col-span-1'}"
         icon={Network}
         iconClass="text-purple-500"
         label={$LL.network()}
@@ -177,7 +177,7 @@
           : ''}
         onclick={() => (detail = 'network')}
       />
-      {#if m?.gpus.length}
+      {#if m?.gpus?.length}
         <StatCard
           class="p-4 sm:p-6"
           icon={Gpu}

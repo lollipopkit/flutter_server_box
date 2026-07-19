@@ -2,15 +2,16 @@ export interface SystemMetrics {
   timestamp: string;
   server_name: string;
   cpu_usage: number;
-  cpu_cores: unknown[];
+  cpu_cores?: unknown[];
   memory: MemoryMetrics;
   swap: SwapMetrics;
   disk: DiskMetrics;
   network: NetworkMetrics;
   temperature?: number;
-  gpus: GpuMetrics[];
-  disk_details: DiskDetail[];
-  ifaces: IfaceMetrics[];
+  // Detail lists are absent on older agents; treat as optional
+  gpus?: GpuMetrics[];
+  disk_details?: DiskDetail[];
+  ifaces?: IfaceMetrics[];
 }
 
 export interface GpuMetrics {

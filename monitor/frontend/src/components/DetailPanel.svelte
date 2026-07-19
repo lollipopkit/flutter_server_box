@@ -54,7 +54,7 @@
     />
     <Card>
       <div class="space-y-3">
-        {@render row($LL.cores(), String(m?.cpu_cores.length ?? '--'))}
+        {@render row($LL.cores(), String(m?.cpu_cores?.length ?? '--'))}
         {#if m?.temperature != null}
           {@render row($LL.temperature(), `${m.temperature.toFixed(1)} °C`)}
         {/if}
@@ -90,7 +90,7 @@
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <tbody class="divide-y divide-line">
-              {#each m.disk_details as d (d.path)}
+              {#each m.disk_details ?? [] as d (d.path)}
                 <tr>
                   <td class="py-2 pr-4">
                     <span class="block text-fg truncate">{d.mount}</span>
@@ -127,7 +127,7 @@
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <tbody class="divide-y divide-line">
-              {#each m.ifaces as iface (iface.name)}
+              {#each m.ifaces ?? [] as iface (iface.name)}
                 <tr>
                   <td class="py-2 pr-4 text-fg truncate">{iface.name}</td>
                   <td class="py-2 text-right whitespace-nowrap text-muted-fg">
