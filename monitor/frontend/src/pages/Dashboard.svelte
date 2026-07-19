@@ -16,6 +16,7 @@
   import LoginForm from '../components/LoginForm.svelte'
   import StatCard from '../components/StatCard.svelte'
   import { api } from '../lib/api'
+  import { health } from '../lib/health.svelte'
   import { displayName, servers } from '../lib/servers.svelte'
   import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../lib/format'
   import { LL } from '../i18n/i18n-svelte'
@@ -79,7 +80,10 @@
   ])
 
   const error = $derived(status.error ?? metrics.error)
-  const connected = $derived(error === null && (status.data !== null || metrics.data !== null))
+  // Agent reachability (unauthenticated /health ping, always running via
+  // Sidebar) — independent of whether this browser is logged in yet, so an
+  // address-only entry with no credentials doesn't read as "disconnected"
+  const connected = $derived(health.status[servers.currentId] ?? false)
 
   let detail = $state<DetailKind | null>(null)
 
