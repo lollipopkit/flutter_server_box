@@ -157,13 +157,21 @@ fn test_go_config_json_normalize() {
     );
 }
 
-/// Go res.go defaults: name "Server 1", interval 7s, rate "1/1m"
+/// Go res.go defaults: interval 7s, rate "1/1m". `name` intentionally
+/// diverges from Go's literal "Server 1" default — it falls back to the
+/// real OS hostname (see `Config::get_server_name`) so a fresh install
+/// identifies itself meaningfully instead of a generic label
 #[test]
 fn test_go_config_defaults() {
     let mut config: Config = serde_json::from_str("{}").unwrap();
     config.normalize().unwrap();
 
-    assert_eq!(config.get_server_name(), "Server 1");
+    let expected_name = hostname::get()
+        .ok()
+        .and_then(|h| h.into_string().ok())
+        .filter(|h| !h.is_empty())
+        .unwrap_or_else(|| "Server 1".to_string());
+    assert_eq!(config.get_server_name(), expected_name);
     assert_eq!(config.get_monitoring().interval_seconds, 7);
     assert_eq!(config.get_push_rate(), (1, Duration::from_secs(60)));
 }

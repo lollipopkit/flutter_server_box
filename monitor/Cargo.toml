@@ -75,6 +75,8 @@ percent-encoding = "2.3"
 
 # CLI argument parsing
 clap = { version = "4.6", features = ["derive", "env"] }
+# get_server_name() falls back to the real OS hostname (see config.rs)
+hostname = "0.4.2"
 
 # Native per-core CPU on macOS (host_processor_info via Mach, same mechanism
 # htop uses); no shell equivalent exists, so this bypasses the shared

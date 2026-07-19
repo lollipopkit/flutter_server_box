@@ -370,8 +370,16 @@ impl Config {
         Ok(())
     }
 
+    /// Falls back to the real OS hostname when unconfigured (name defaults
+    /// to None — see all `Config` construction sites), not a generic label
     pub fn get_server_name(&self) -> String {
-        self.name.clone().unwrap_or_else(|| "Server 1".to_string())
+        self.name.clone().unwrap_or_else(|| {
+            hostname::get()
+                .ok()
+                .and_then(|h| h.into_string().ok())
+                .filter(|h| !h.is_empty())
+                .unwrap_or_else(|| "Server 1".to_string())
+        })
     }
 
     /// Push rate limit, formatted "N/duration" (e.g. "1/1m"), default once per minute
