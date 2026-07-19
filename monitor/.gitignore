@@ -6,3 +6,4 @@ target
 serverbox_monitor.db
 .env
 config.toml
+jwt.secret

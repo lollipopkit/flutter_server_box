@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ServerBox Monitor is a Rust-based server monitoring application rewritten from Go, featuring a modern React frontend. It monitors server status (CPU, memory, disk, network, temperature) and sends notifications via configurable push mechanisms (webhooks, iOS notifications) when thresholds are exceeded. This is part of the [ServerBox](https://github.com/lollipopkit/flutter_server_box) project ecosystem.
+ServerBox Monitor is a Rust-based server monitoring application rewritten from Go, featuring a modern Svelte frontend. It monitors server status (CPU, memory, disk, network, temperature) and sends notifications via configurable push mechanisms (webhooks, iOS notifications) when thresholds are exceeded. This is part of the [ServerBox](https://github.com/lollipopkit/flutter_server_box) project ecosystem.
 
 ## Development Commands
 
@@ -81,14 +81,14 @@ Pure parsing library shared with the Flutter app via FFI (see `../doc/adr/0001-m
 - **`db/`**: SQLite initialization/migrations (`database.rs`) and data retention cleanup (`cleanup.rs`)
 - **`utils/`**: Centralized error types (`error.rs`)
 
-### Frontend (React - `frontend/src/`)
+### Frontend (Svelte - `frontend/src/`)
 
-- **React 18** with TypeScript and TailwindCSS
-- **`pages/`**: Main page components (Dashboard, Login)
-- **`components/`**: Reusable UI components
-- **`services/`**: API client with authentication
-- **`hooks/`**: Custom React hooks
+- **Svelte 5 (runes)** with TypeScript and Tailwind 4 (class-driven dark mode)
+- **`pages/`**: Login.svelte, Dashboard.svelte (App.svelte gates them by auth state; no router)
+- **`components/`**: Spinner, StatCard, ThemeToggle
+- **`lib/`**: fetch-based API client, module-level rune stores (auth/theme), Poller
 - **`types/`**: TypeScript type definitions
+- Tests: vitest + @testing-library/svelte; type gate via svelte-check (part of `npm run build`)
 
 ### Key Design Patterns
 
