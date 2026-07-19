@@ -2973,6 +2973,7 @@ dependencies = [
 name = "sbm_parser"
 version = "0.1.0"
 dependencies = [
+ "dotenvy",
  "regex",
  "roxmltree",
  "serde",

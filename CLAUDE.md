@@ -25,6 +25,7 @@ A `Makefile` wraps most common tasks — run `make help` for the full list. Pref
 - `flutter test` - Run unit tests
 - `flutter test test/disk_test.dart` - Run specific test file (or `make test-one TEST=test/disk_test.dart`)
 - `cargo test --workspace` - Run all Rust tests (parser, FFI shell, monitor)
+- SSH e2e (opt-in): set `SBM_E2E_SSH_HOST=<ssh destination or ~/.ssh/config alias>` in the workspace-root `.env`, then `cargo test -p sbm_parser --test ssh_e2e` — uploads the generated script to the remote, runs it, and compares the parsed result against direct command output; silently skipped when unset
 
 ### Rust / FFI
 
