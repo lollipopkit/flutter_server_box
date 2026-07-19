@@ -31,9 +31,12 @@ fn ssh_host() -> Option<String> {
 
 /// Run a command on the remote via the system ssh (BatchMode: never prompts).
 /// `stdin` is piped to the remote command when given.
+/// The command is wrapped in `sh -c` so POSIX syntax works regardless of the
+/// remote login shell (fish/zsh would otherwise reject `if ...; fi` etc.)
 fn ssh(host: &str, cmd: &str, stdin: Option<&str>) -> Result<String, String> {
+    let quoted = format!("sh -c '{}'", cmd.replace('\'', r"'\''"));
     let mut child = Command::new("ssh")
-        .args(["-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host, cmd])
+        .args(["-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host, &quoted])
         .stdin(if stdin.is_some() { Stdio::piped() } else { Stdio::null() })
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -161,6 +164,78 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
         _ => sbm_parser::common::parse_sys_version(&direct_sys),
     };
     assert_eq!(status.sys, direct_sys, "sys version: script vs direct");
+
+    // On-demand segments (GPU/sensors/SMART/battery): what the test asserts
+    // adapts to what the remote actually has — presence means the segment must
+    // parse into data, absence means graceful degradation to empty.
+    let has = |probe: &str| {
+        ssh(&host, probe, None).map(|s| s.trim() == "yes").unwrap_or(false)
+    };
+
+    if system == SystemType::Linux {
+        let has_nvidia = has(
+            "if command -v nvidia-smi >/dev/null 2>&1 || [ -x /usr/lib/wsl/lib/nvidia-smi ]; then echo yes; else echo no; fi",
+        );
+        if has_nvidia {
+            assert!(
+                !status.nvidia.is_empty(),
+                "nvidia-smi available on the remote but no GPU parsed; segment: {:?}",
+                segments.get(commands::NVIDIA)
+            );
+            let direct = ssh(&host, manifest_cmd(system, commands::NVIDIA), None)
+                .expect("direct nvidia");
+            let direct = sbm_parser::gpu::nvidia_from_xml(&direct);
+            let script_names: Vec<_> = status.nvidia.iter().map(|g| &g.name).collect();
+            let direct_names: Vec<_> = direct.iter().map(|g| &g.name).collect();
+            assert_eq!(script_names, direct_names, "GPU names: script vs direct");
+        } else {
+            assert!(status.nvidia.is_empty(), "no nvidia-smi yet GPUs parsed");
+        }
+
+        let has_amd = has(
+            "if command -v amd-smi >/dev/null 2>&1 || command -v rocm-smi >/dev/null 2>&1; then echo yes; else echo no; fi",
+        );
+        if !has_amd {
+            assert!(status.amd.is_empty(), "no AMD tools yet AMD GPUs parsed");
+        }
+
+        let has_sensors = has("if command -v sensors >/dev/null 2>&1; then echo yes; else echo no; fi");
+        if has_sensors {
+            assert!(
+                !status.sensors.is_empty(),
+                "sensors available but nothing parsed; segment: {:?}",
+                segments.get(commands::SENSORS)
+            );
+        } else {
+            assert!(status.sensors.is_empty());
+        }
+
+        // smartctl usually needs root for real data; only assert graceful
+        // degradation when the tool is absent
+        let has_smart = has("if command -v smartctl >/dev/null 2>&1; then echo yes; else echo no; fi");
+        if !has_smart {
+            assert!(status.disk_smart.is_empty());
+        }
+
+        // Batteries: the parser keeps Li-poly only, so presence of power
+        // supplies does not imply non-empty output — assert only the reverse
+        let has_power = has(
+            "if [ -n \"$(ls /sys/class/power_supply/ 2>/dev/null)\" ]; then echo yes; else echo no; fi",
+        );
+        if !has_power {
+            assert!(status.batteries.is_empty());
+        }
+
+        eprintln!(
+            "on-demand: nvidia={} ({} GPUs) amd={} sensors={} smartctl={} power_supply={}",
+            has_nvidia,
+            status.nvidia.len(),
+            has_amd,
+            has_sensors,
+            has_smart,
+            has_power
+        );
+    }
 
     eprintln!(
         "ssh e2e ok: host={:?} system={system:?} cores={} mem_total={}KiB disks={}",

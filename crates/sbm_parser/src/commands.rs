@@ -71,7 +71,13 @@ pub const LINUX: &[CommandSpec] = &[
         key: BATTERY,
         cmd: r#"for f in /sys/class/power_supply/*/uevent; do cat "$f"; echo; done"#,
     },
-    CommandSpec { core: false, key: NVIDIA, cmd: "nvidia-smi -q -x" },
+    CommandSpec {
+        core: false,
+        key: NVIDIA,
+        // WSL exposes the Windows driver's nvidia-smi under /usr/lib/wsl/lib,
+        // which is absent from non-interactive PATH — fall back explicitly
+        cmd: "if command -v nvidia-smi >/dev/null 2>&1; then nvidia-smi -q -x; elif [ -x /usr/lib/wsl/lib/nvidia-smi ]; then /usr/lib/wsl/lib/nvidia-smi -q -x; fi",
+    },
     CommandSpec {
         core: false,
         key: AMD,
