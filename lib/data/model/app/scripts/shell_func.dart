@@ -7,7 +7,7 @@ import 'package:server_box/src/rust/api/script.dart' as ffi;
 ///
 /// The FRB-generated enum is the single source; function names, flags, and
 /// script generation live in the shared Rust library (sbm_parser::script, see
-/// doc/adr/0001). This file only maps app types onto the FFI and keeps the
+/// the shared-parser design). This file only maps app types onto the FFI and keeps the
 /// connection-state concerns (script paths, custom dirs).
 typedef ShellFunc = ffi.ShellFuncKind;
 

@@ -41,7 +41,7 @@ Future<void> _runInZone(Future<void> Function() body) async {
 Future<void> _initApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Shared parsing library (sbm_parser FFI, see doc/adr/0001)
+  // Shared parsing library (sbm_parser FFI, see the shared-parser design)
   await RustLib.init();
   await _initData();
   _setupDebug();

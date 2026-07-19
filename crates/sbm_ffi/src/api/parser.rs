@@ -1,4 +1,4 @@
-//! Shared parser FFI (ADR 0001 Phase 2)
+//! Shared parser FFI
 //!
 //! Boundary contract: input is a map of command key → raw output, output is
 //! `sbm_parser`'s serde JSON. The Dart side builds its existing model classes

@@ -155,8 +155,8 @@ async fn collect_metrics(config: &Config, prev_cpu: &mut Option<CpuCore>) -> Res
     Ok(adapt_status(system, status, config, prev.as_ref()))
 }
 
-/// Build the core-only status script shared with the app (sbm_parser::script,
-/// see ADR 0001). One script execution per cycle replaces the former
+/// Build the core-only status script shared with the app (sbm_parser::script)
+/// . One script execution per cycle replaces the former
 /// per-command spawn loop; the app runs the same generation code over SSH.
 fn build_status_script(system: SystemType) -> String {
     sbm_parser::script::build_script(

@@ -1,4 +1,4 @@
-//! ServerBox shared status parsing library (see ADR 0001)
+//! ServerBox shared status parsing library
 //!
 //! Pure parsing, no IO: input is a map of command key → raw output, output is
 //! structured status. The semantic baseline is flutter_server_box's Dart

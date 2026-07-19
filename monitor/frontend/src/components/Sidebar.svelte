@@ -3,7 +3,9 @@
   import { IconButton, cn } from '@serverbox/webui'
   import LocaleToggle from './LocaleToggle.svelte'
   import ThemeToggle from './ThemeToggle.svelte'
+  import { onDestroy, onMount } from 'svelte'
   import { LL } from '../i18n/i18n-svelte'
+  import { health } from '../lib/health.svelte'
   import { layout } from '../lib/layout.svelte'
   import { servers } from '../lib/servers.svelte'
 
@@ -14,6 +16,15 @@
 
   // Collapse only applies to the desktop rail; the mobile drawer is always
   // full width with labels, so visibility is CSS-driven (lg:hidden), not #if
+  onMount(() => health.start())
+  onDestroy(() => health.stop())
+
+  function dotCls(id: string): string {
+    const h = health.status[id]
+    if (h === undefined) return 'bg-faint-fg'
+    return h ? 'bg-success' : 'bg-danger'
+  }
+
   const labelCls = $derived(layout.collapsed ? 'lg:hidden' : '')
   const centerCls = $derived(layout.collapsed ? 'lg:justify-center lg:px-0' : '')
 </script>
@@ -82,6 +93,10 @@
             <span class="block truncate text-xs text-faint-fg">{s.url}</span>
           {/if}
         </span>
+        <span
+          class={cn('w-2 h-2 rounded-full shrink-0', dotCls(s.id))}
+          title={health.status[s.id] === false ? $LL.disconnected() : $LL.connected()}
+        ></span>
       </button>
     {/each}
   </nav>

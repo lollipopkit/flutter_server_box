@@ -1,4 +1,4 @@
-//! Behavior-parity tests against the Dart implementation (ADR 0001 "tests as spec")
+//! Behavior-parity tests against the Dart implementation (the shared-parser design "tests as spec")
 //!
 //! Cases and fixtures ported from flutter_server_box `test/`
 //! (cpu_test / memory_test / disk_test / net_speed_test),

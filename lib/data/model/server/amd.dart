@@ -27,7 +27,7 @@ library;
 ///   }
 /// ]
 
-// Parsing implementation migrated to the shared Rust library sbm_parser (see doc/adr/0001)
+// Parsing implementation migrated to the shared Rust library sbm_parser
 
 class AmdSmiItem {
   final String name;

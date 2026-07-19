@@ -35,7 +35,7 @@ class ServerStatusUpdateReq {
   });
 }
 
-/// Parsing lives in the shared Rust library `sbm_parser` (see doc/adr/0001); this
+/// Parsing lives in the shared Rust library `sbm_parser`; this
 /// file only assembles the FFI JSON into models and updates windowed state
 /// (cpu/netSpeed/diskIO).
 Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {

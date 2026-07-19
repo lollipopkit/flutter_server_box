@@ -3,7 +3,7 @@ import 'package:server_box/data/res/build_data.dart';
 /// Path constants and per-connection script directory state.
 ///
 /// Script content, dividers, headers, and output splitting live in the shared
-/// Rust library (sbm_parser::script, see doc/adr/0001); only path/filename
+/// Rust library (sbm_parser::script, see the shared-parser design); only path/filename
 /// conventions and Flutter-connection state remain here.
 // TODO(migration): residue of the Dart script layer — reevaluate once the app
 // endpoints move fully onto the FFI script API.

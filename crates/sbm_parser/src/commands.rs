@@ -1,4 +1,4 @@
-//! Collection command manifest (single source of truth, see ADR 0001)
+//! Collection command manifest (single source of truth, see the shared-parser design)
 //!
 //! Commands, segment separator, and parsers evolve in lockstep. Both the app's
 //! script generation and the monitor's local collection take commands from here.

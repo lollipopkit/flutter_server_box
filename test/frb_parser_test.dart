@@ -1,4 +1,4 @@
-// sbm_parser FFI integration tests (ADR 0001):
+// sbm_parser FFI integration tests:
 // verify binding loading and the JSON assembly contract. Parsing behavior itself
 // is locked by crates/sbm_parser/tests/dart_compat.rs (same fixtures and expectations).
 // Build the native library first: cargo build -p sbm_ffi

@@ -21,10 +21,13 @@
 
   const { title, labels, series, yMax, format }: Props = $props()
 
-  const W = 600
+  // Rendered 1:1 at the measured container width (no preserveAspectRatio
+  // scaling, which stretched axis text on wide viewports)
+  let chartWidth = $state(0)
+  const W = $derived(Math.max(chartWidth, 320))
   const H = 220
   const PAD = { left: 46, right: 8, top: 10, bottom: 24 }
-  const plotW = W - PAD.left - PAD.right
+  const plotW = $derived(W - PAD.left - PAD.right)
   const plotH = H - PAD.top - PAD.bottom
 
   const effectiveMax = $derived(
@@ -51,8 +54,7 @@
   function onPointerMove(e: PointerEvent) {
     if (labels.length === 0) return
     const rect = (e.currentTarget as SVGSVGElement).getBoundingClientRect()
-    const fx = ((e.clientX - rect.left) / rect.width) * W
-    const frac = (fx - PAD.left) / plotW
+    const frac = (e.clientX - rect.left - PAD.left) / plotW
     hoverIndex = Math.min(
       labels.length - 1,
       Math.max(0, Math.round(frac * (labels.length - 1))),
@@ -84,6 +86,7 @@
     {/each}
   </div>
 
+  <div bind:clientWidth={chartWidth}>
   {#if labels.length < 2}
     <div class="h-40 flex items-center justify-center text-sm text-muted-fg">
       {$LL.collectingData()}
@@ -91,8 +94,7 @@
   {:else}
     <svg
       viewBox="0 0 {W} {H}"
-      preserveAspectRatio="none"
-      class="w-full h-48 touch-none"
+      class="w-full h-[220px] touch-none"
       role="img"
       aria-label={title}
       onpointermove={onPointerMove}
@@ -162,4 +164,5 @@
       </text>
     </svg>
   {/if}
+  </div>
 </Card>
