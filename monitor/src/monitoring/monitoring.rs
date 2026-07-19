@@ -1,7 +1,7 @@
 use crate::{core::config::Config, api::server::AppState, utils::error::Result, monitoring::timeseries::CpuCoreTime};
 use chrono::{DateTime, Utc};
 use sbm_parser::types::{CpuCore, Disk};
-use sbm_parser::{commands, ServerStatus, SystemType};
+use sbm_parser::{ServerStatus, SystemType};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use std::collections::HashMap;
@@ -117,43 +117,82 @@ async fn collect_metrics(config: &Config, prev_cpu: &mut Option<CpuCore>) -> Res
     Ok(adapt_status(system, status, config, prev.as_ref()))
 }
 
-/// Run the sbm_parser command manifest (single source of truth, see ADR 0001),
-/// collecting output by key. Core commands only: GPU/SMART etc. are too expensive
-/// for periodic collection
-async fn execute_commands(system: SystemType) -> Result<HashMap<String, String>> {
-    let mut raw = HashMap::new();
+/// Build the core-only status script shared with the app (sbm_parser::script,
+/// see ADR 0001). One script execution per cycle replaces the former
+/// per-command spawn loop; the app runs the same generation code over SSH.
+fn build_status_script(system: SystemType) -> String {
+    sbm_parser::script::build_script(
+        system,
+        &sbm_parser::script::ScriptOptions {
+            core_only: true,
+            build_number: env!("CARGO_PKG_VERSION").to_string(),
+            ..Default::default()
+        },
+    )
+}
 
-    for spec in commands::commands(system).iter().filter(|s| s.core) {
-        let result = tokio::task::spawn_blocking(move || {
-            if cfg!(target_os = "windows") {
-                Command::new("powershell").arg("-Command").arg(spec.cmd).output()
-            } else {
-                Command::new("sh").arg("-c").arg(spec.cmd).output()
-            }
-        })
-        .await
-        .map_err(|e| crate::utils::error::MonitorError::Monitoring(format!("Task join error: {}", e)))?;
+/// Script location in the temp dir. `.ps1` is mandatory for `powershell -File`
+fn script_path(system: SystemType) -> std::path::PathBuf {
+    let name = match system {
+        SystemType::Windows => "status.ps1",
+        _ => "status.sh",
+    };
+    std::env::temp_dir().join("server_box_monitor").join(name)
+}
 
-        match result {
-            Ok(output) if output.status.success() => {
-                raw.insert(
-                    spec.key.to_string(),
-                    String::from_utf8_lossy(&output.stdout).into_owned(),
-                );
-            }
-            Ok(output) => {
-                // One failing command does not affect the rest (matching the app's per-segment tolerance)
-                error!(
-                    "Command '{}' failed: {}",
-                    spec.key,
-                    String::from_utf8_lossy(&output.stderr)
-                );
-            }
-            Err(e) => error!("Command '{}' error: {}", spec.key, e),
-        }
+/// Write the script if missing or outdated (tmp reapers / version upgrades);
+/// checked every cycle before exec
+fn ensure_script(path: &std::path::Path, content: &str) -> std::io::Result<()> {
+    let up_to_date = std::fs::read_to_string(path).is_ok_and(|existing| existing == content);
+    if up_to_date {
+        return Ok(());
     }
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir)?;
+    }
+    std::fs::write(path, content)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755))?;
+    }
+    Ok(())
+}
 
-    Ok(raw)
+/// Execute the generated status script and split its output by segment.
+/// Failed commands inside the script yield empty segments (the script does
+/// `exec 2>/dev/null`), matching the app's per-segment tolerance; per-command
+/// stderr is not observable in this mode.
+async fn execute_commands(system: SystemType) -> Result<HashMap<String, String>> {
+    let content = build_status_script(system);
+    let path = script_path(system);
+
+    let output = tokio::task::spawn_blocking(move || -> std::io::Result<std::process::Output> {
+        ensure_script(&path, &content)?;
+        if cfg!(target_os = "windows") {
+            Command::new("powershell")
+                .args(["-ExecutionPolicy", "Bypass", "-File"])
+                .arg(&path)
+                .arg("-s")
+                .output()
+        } else {
+            Command::new("sh").arg(&path).arg("-s").output()
+        }
+    })
+    .await
+    .map_err(|e| crate::utils::error::MonitorError::Monitoring(format!("Task join error: {}", e)))?
+    .map_err(|e| crate::utils::error::MonitorError::Monitoring(format!("Status script error: {}", e)))?;
+
+    if !output.status.success() {
+        error!("Status script exited with {}", output.status);
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    if stdout.trim().is_empty() {
+        return Err(crate::utils::error::MonitorError::Monitoring(
+            "Status script produced no output".to_string(),
+        ));
+    }
+    Ok(sbm_parser::script::parse_script_output(&stdout))
 }
 
 /// Adapt the parse result into the monitor's aggregate metrics
@@ -357,4 +396,46 @@ async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ensure_script_writes_and_rewrites() {
+        let dir = std::env::temp_dir().join("sbm_monitor_ensure_script_test");
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("status.sh");
+        std::fs::remove_file(&path).ok();
+
+        ensure_script(&path, "v1").unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "v1");
+
+        // Unchanged content is not rewritten (mtime stays)
+        let mtime = std::fs::metadata(&path).unwrap().modified().unwrap();
+        ensure_script(&path, "v1").unwrap();
+        assert_eq!(std::fs::metadata(&path).unwrap().modified().unwrap(), mtime);
+
+        // Changed content is rewritten
+        ensure_script(&path, "v2").unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "v2");
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mode = std::fs::metadata(&path).unwrap().permissions().mode();
+            assert_eq!(mode & 0o777, 0o755);
+        }
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    /// The monitor's real collection path: run the generated script, split output
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn execute_commands_via_script_smoke() {
+        let raw = execute_commands(system_type()).await.unwrap();
+        assert!(raw.contains_key("time"), "keys: {:?}", raw.keys().collect::<Vec<_>>());
+        assert!(raw.contains_key("echo"));
+    }
 }
