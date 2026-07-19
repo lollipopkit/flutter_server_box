@@ -101,9 +101,11 @@
     <Spinner size="lg" />
   </div>
 {:else}
-  <header class="bg-surface shadow-xs border-b border-line">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center gap-2 h-16">
+  <!-- h-16 with the border inside (border-box), matching the sidebar header
+       exactly so the two dividers sit on the same line -->
+  <header class="bg-surface shadow-xs border-b border-line h-16 flex items-center">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      <div class="flex items-center gap-2">
         <IconButton
           class="lg:hidden -ml-2"
           label={$LL.menu()}

@@ -87,8 +87,12 @@
   </nav>
 
   <div class="border-t border-line px-2 py-3 space-y-2">
-    <div class={cn('flex items-center gap-1', layout.collapsed && 'lg:flex-col lg:items-center')}>
+    <!-- The locale select needs full width to show language names; it doesn't
+         fit the collapsed rail, so it's hidden there (same mechanism as labelCls) -->
+    <div class={labelCls}>
       <LocaleToggle />
+    </div>
+    <div class={cn('flex items-center', layout.collapsed && 'lg:justify-center')}>
       <ThemeToggle />
     </div>
     <div class={cn('flex items-center gap-2 px-1', layout.collapsed && 'lg:justify-center lg:px-0')}>
