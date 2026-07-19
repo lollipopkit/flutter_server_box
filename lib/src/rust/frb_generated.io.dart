@@ -9,6 +9,7 @@ import 'dart:ffi' as ffi;
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
 import 'package:server_box/src/rust/api/parser.dart';
+import 'package:server_box/src/rust/api/script.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
@@ -29,10 +30,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CommandSpec dco_decode_command_spec(dynamic raw);
 
   @protected
+  CustomCmd dco_decode_custom_cmd(dynamic raw);
+
+  @protected
   double dco_decode_f_64(dynamic raw);
 
   @protected
+  int dco_decode_i_32(dynamic raw);
+
+  @protected
+  List<String> dco_decode_list_String(dynamic raw);
+
+  @protected
   List<CommandSpec> dco_decode_list_command_spec(dynamic raw);
+
+  @protected
+  List<CustomCmd> dco_decode_list_custom_cmd(dynamic raw);
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
@@ -42,6 +55,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   (String, String) dco_decode_record_string_string(dynamic raw);
+
+  @protected
+  ShellFuncKind dco_decode_shell_func_kind(dynamic raw);
 
   @protected
   int dco_decode_u_8(dynamic raw);
@@ -61,10 +77,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   CommandSpec sse_decode_command_spec(SseDeserializer deserializer);
 
   @protected
+  CustomCmd sse_decode_custom_cmd(SseDeserializer deserializer);
+
+  @protected
   double sse_decode_f_64(SseDeserializer deserializer);
 
   @protected
+  int sse_decode_i_32(SseDeserializer deserializer);
+
+  @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer);
+
+  @protected
   List<CommandSpec> sse_decode_list_command_spec(SseDeserializer deserializer);
+
+  @protected
+  List<CustomCmd> sse_decode_list_custom_cmd(SseDeserializer deserializer);
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
@@ -80,13 +108,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  ShellFuncKind sse_decode_shell_func_kind(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_u_8(SseDeserializer deserializer);
 
   @protected
   void sse_decode_unit(SseDeserializer deserializer);
-
-  @protected
-  int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
   bool sse_decode_bool(SseDeserializer deserializer);
@@ -104,11 +132,26 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_command_spec(CommandSpec self, SseSerializer serializer);
 
   @protected
+  void sse_encode_custom_cmd(CustomCmd self, SseSerializer serializer);
+
+  @protected
   void sse_encode_f_64(double self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_i_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_command_spec(
     List<CommandSpec> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_custom_cmd(
+    List<CustomCmd> self,
     SseSerializer serializer,
   );
 
@@ -131,13 +174,13 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_shell_func_kind(ShellFuncKind self, SseSerializer serializer);
+
+  @protected
   void sse_encode_u_8(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_unit(void self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_i_32(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_bool(bool self, SseSerializer serializer);

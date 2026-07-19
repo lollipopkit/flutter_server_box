@@ -6,7 +6,7 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `parse_system`
+// These functions are ignored because they are not marked as `pub`: `parse_system_or_err`, `parse_system`
 
 /// Parse all output of one collection round, returning `ServerStatus` JSON.
 /// `system`: "linux" | "bsd" | "windows"; see `ParseOptions` for `temp_divisor`.

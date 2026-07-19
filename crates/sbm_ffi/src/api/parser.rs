@@ -22,6 +22,12 @@ fn parse_system(system: &str) -> Option<sbm_parser::SystemType> {
     }
 }
 
+/// Shared by the script FFI module; not exposed over the bridge
+#[flutter_rust_bridge::frb(ignore)]
+pub(crate) fn parse_system_or_err(system: &str) -> Result<sbm_parser::SystemType, String> {
+    parse_system(system).ok_or_else(|| format!("unknown system: {system}"))
+}
+
 /// Parse all output of one collection round, returning `ServerStatus` JSON.
 /// `system`: "linux" | "bsd" | "windows"; see `ParseOptions` for `temp_divisor`.
 /// Async: runs on the Rust thread pool without blocking the UI isolate

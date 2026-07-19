@@ -10,6 +10,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/src/rust/api/parser.dart';
+import 'package:server_box/src/rust/api/script.dart' as script;
 import 'package:server_box/src/rust/frb_generated.dart';
 
 const _cpuRaw = '''cpu  18232538 52837 5772391 334460731 247294 0 134107 0 0 0
@@ -185,6 +186,34 @@ void main() {
       expect(specs.map((s) => s.key), contains('cpu'));
     }
     expect(separator(), 'SrvBoxSep');
+  });
+
+  test('buildScript smoke via FFI', () {
+    final unix = script.buildScript(
+      system: 'linux',
+      customCmds: [],
+      disabled: [],
+      buildNumber: 'test',
+    );
+    expect(unix, startsWith('#!/bin/sh'));
+    expect(unix, contains('SbStatus() {'));
+    expect(unix, contains('case \$1 in'));
+
+    final win = script.buildScript(
+      system: 'windows',
+      customCmds: [],
+      disabled: [],
+      buildNumber: 'test',
+    );
+    expect(win, contains('function SbStatus {'));
+    expect(win, contains('switch (\$args[0])'));
+  });
+
+  test('parseScriptOutput round-trip via FFI', () async {
+    const raw = 'SrvBoxSep.time\n123\nSrvBoxCusCmdSep.x\nhello\n';
+    final map = await script.parseScriptOutput(raw: raw);
+    expect(map['time'], '123');
+    expect(map['x'], 'hello');
   });
 
   test('enum fallback cmds stay in sync with FFI manifest', () {
