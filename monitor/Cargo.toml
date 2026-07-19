@@ -44,6 +44,10 @@ bcrypt = "0.19"
 # Configuration
 dotenvy = "0.15"
 
+# 随机凭据生成(JWT secret / 初始 admin 密码)与免回显密码输入
+getrandom = "0.3"
+rpassword = "7"
+
 # HTTP client for push notifications
 # rustls 而非 native-tls:与 sqlx 一致,musl 静态编译不依赖 OpenSSL
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "charset", "http2"] }

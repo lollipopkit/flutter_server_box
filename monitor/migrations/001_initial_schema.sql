@@ -48,6 +48,4 @@ CREATE TABLE users (
     last_login DATETIME
 );
 
--- Insert default admin user (password: admin123)
-INSERT INTO users (username, password_hash) VALUES 
-('admin', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj2Ol1M0xGZG');
+-- 无种子账号:初始 admin 由首次启动生成随机密码创建(db::bootstrap)

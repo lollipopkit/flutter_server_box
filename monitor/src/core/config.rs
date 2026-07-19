@@ -95,6 +95,9 @@ pub struct GoPush {
 
 impl Config {
     pub async fn load() -> Result<Self> {
+        // .env 支持:环境变量是 Docker/systemd 的主要配置通道
+        dotenvy::dotenv().ok();
+
         // Try to load from config file first (TOML preferred, JSON fallback)
         if Path::new("config.toml").exists() {
             let content =
@@ -103,6 +106,7 @@ impl Config {
             
             // Convert from Go format if needed
             config.normalize()?;
+            config.apply_env_overrides();
             return Ok(config);
         } else if Path::new("config.json").exists() {
             let content =
@@ -111,11 +115,13 @@ impl Config {
             
             // Convert from Go format if needed
             config.normalize()?;
+            config.apply_env_overrides();
             return Ok(config);
         }
 
         // Create default config
-        let config = Self::default();
+        let mut config = Self::default();
+        config.apply_env_overrides();
 
         // Save default config as TOML
         let content =
@@ -192,8 +198,7 @@ impl Config {
             self.monitoring = Some(monitoring);
             self.database_url = Some(env::var("DATABASE_URL")
                 .unwrap_or_else(|_| "sqlite:serverbox_monitor.db".to_string()));
-            self.jwt_secret = Some(env::var("JWT_SECRET")
-                .unwrap_or_else(|_| "your-secret-key-change-this".to_string()));
+            self.jwt_secret = env::var("JWT_SECRET").ok().filter(|s| !s.is_empty());
             self.push = Some(push);
         }
 
@@ -225,8 +230,84 @@ impl Config {
         self.database_url.clone().unwrap_or_else(|| "sqlite:serverbox_monitor.db".to_string())
     }
 
+    /// 环境变量覆盖(优先于配置文件);空值视为未设置
+    fn apply_env_overrides(&mut self) {
+        if let Some(secret) = env::var("JWT_SECRET").ok().filter(|s| !s.is_empty()) {
+            self.jwt_secret = Some(secret);
+        }
+    }
+
+    /// JWT 密钥解析,serve 启动时必须调用一次:
+    /// - 显式配置(env/配置文件):拒绝示例值与过短密钥
+    /// - 未配置:在数据库同目录持久化随机生成的密钥(0600)
+    pub fn resolve_jwt_secret(&mut self) -> Result<()> {
+        const MIN_LEN: usize = 32;
+        const KNOWN_DEFAULTS: &[&str] = &[
+            "your-secret-key-change-this",
+            "your-secret-key-change-this-in-production",
+        ];
+
+        if let Some(secret) = &self.jwt_secret {
+            if KNOWN_DEFAULTS.contains(&secret.as_str()) {
+                anyhow::bail!(
+                    "JWT_SECRET is set to a publicly known example value; remove it to auto-generate a random secret, or set a unique one"
+                );
+            }
+            if secret.len() < MIN_LEN {
+                anyhow::bail!("JWT_SECRET must be at least {MIN_LEN} characters");
+            }
+            return Ok(());
+        }
+
+        let path = self.jwt_secret_path();
+        if path.exists() {
+            let secret = fs::read_to_string(&path)
+                .with_context(|| format!("Failed to read {}", path.display()))?
+                .trim()
+                .to_string();
+            if secret.len() < MIN_LEN {
+                anyhow::bail!(
+                    "Persisted JWT secret at {} is invalid; delete it to regenerate",
+                    path.display()
+                );
+            }
+            self.jwt_secret = Some(secret);
+            return Ok(());
+        }
+
+        let secret = crate::utils::secrets::random_hex(48)
+            .map_err(|e| anyhow::anyhow!("Failed to generate JWT secret: {e}"))?;
+        if let Some(dir) = path.parent().filter(|d| !d.as_os_str().is_empty()) {
+            fs::create_dir_all(dir)
+                .with_context(|| format!("Failed to create {}", dir.display()))?;
+        }
+        fs::write(&path, &secret)
+            .with_context(|| format!("Failed to write {}", path.display()))?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&path, fs::Permissions::from_mode(0o600))
+                .with_context(|| format!("Failed to chmod {}", path.display()))?;
+        }
+        tracing::info!("Generated new JWT secret at {}", path.display());
+        self.jwt_secret = Some(secret);
+        Ok(())
+    }
+
+    /// 密钥文件与 SQLite 数据库同目录(Docker 卷挂载下随数据持久化)
+    fn jwt_secret_path(&self) -> std::path::PathBuf {
+        let db = self.get_database_url();
+        let db_path = db
+            .trim_start_matches("sqlite://")
+            .trim_start_matches("sqlite:");
+        let dir = Path::new(db_path).parent().unwrap_or_else(|| Path::new("."));
+        dir.join("jwt.secret")
+    }
+
     pub fn get_jwt_secret(&self) -> String {
-        self.jwt_secret.clone().unwrap_or_else(|| "your-secret-key-change-this".to_string())
+        self.jwt_secret
+            .clone()
+            .expect("JWT secret not resolved; call resolve_jwt_secret at startup")
     }
 
     pub fn get_push(&self) -> Vec<PushConfig> {
@@ -351,8 +432,7 @@ impl Default for Config {
             }),
             database_url: Some(env::var("DATABASE_URL")
                 .unwrap_or_else(|_| "sqlite:serverbox_monitor.db".to_string())),
-            jwt_secret: Some(env::var("JWT_SECRET")
-                .unwrap_or_else(|_| "your-secret-key-change-this".to_string())),
+            jwt_secret: None, // 缺省时首次启动自动生成,见 resolve_jwt_secret
             push: Some(vec![
                 PushConfig {
                     name: "webhook".to_string(),

@@ -50,6 +50,26 @@ pub fn build_cli() -> Command {
                 .subcommand(Command::new("show").about("Show current configuration")),
         )
         .subcommand(
+            Command::new("user")
+                .about("User management")
+                .subcommand(
+                    Command::new("set-password")
+                        .about("Set or reset a user's password (creates the user if absent)")
+                        .arg(
+                            Arg::new("username")
+                                .value_name("USERNAME")
+                                .required(true)
+                                .help("Username to set the password for"),
+                        )
+                        .arg(
+                            Arg::new("password-env")
+                                .long("password-env")
+                                .value_name("ENV_VAR")
+                                .help("Read the password from this environment variable instead of prompting"),
+                        ),
+                ),
+        )
+        .subcommand(
             Command::new("cleanup")
                 .about("Data cleanup operations")
                 .subcommand(Command::new("run").about("Run data cleanup manually"))
@@ -68,6 +88,9 @@ pub async fn handle_matches(matches: clap::ArgMatches) -> anyhow::Result<()> {
         }
         Some(("cleanup", sub_matches)) => {
             handle_cleanup(sub_matches).await?;
+        }
+        Some(("user", sub_matches)) => {
+            handle_user(sub_matches).await?;
         }
         _ => {
             // Default to serve if no subcommand is provided;
@@ -98,10 +121,14 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
         cert.map(String::as_str),
         key.map(String::as_str),
     )?;
+    config.resolve_jwt_secret()?;
     let config = Arc::new(config);
 
     // Initialize database
     let db = db::database::init(&config.get_database_url()).await?;
+
+    // 首次启动:users 为空时创建随机密码的 admin(一次性打印)
+    db::bootstrap::ensure_admin_user(&db).await?;
 
     // Create shared state
     let app_state = crate::api::server::AppState::new(config.clone(), db);
@@ -138,6 +165,43 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     // Cancel monitoring task
     monitoring_handle.abort();
 
+    Ok(())
+}
+
+async fn handle_user(matches: &clap::ArgMatches) -> anyhow::Result<()> {
+    match matches.subcommand() {
+        Some(("set-password", sub)) => {
+            let username = sub
+                .get_one::<String>("username")
+                .expect("username is required");
+
+            // 密码不经命令行参数传递(避免 shell 历史 / ps 泄露):
+            // 环境变量或免回显交互输入
+            let password = match sub.get_one::<String>("password-env") {
+                Some(var) => std::env::var(var)
+                    .map_err(|_| anyhow::anyhow!("Environment variable {var} is not set"))?,
+                None => {
+                    let first = rpassword::prompt_password(format!("New password for {username}: "))?;
+                    let second = rpassword::prompt_password("Confirm password: ")?;
+                    if first != second {
+                        anyhow::bail!("Passwords do not match");
+                    }
+                    first
+                }
+            };
+            if password.len() < 8 {
+                anyhow::bail!("Password must be at least 8 characters");
+            }
+
+            let config = Config::load().await?;
+            let db = db::database::init(&config.get_database_url()).await?;
+            db::bootstrap::set_password(&db, username, &password).await?;
+            println!("Password updated for {username}");
+        }
+        _ => {
+            eprintln!("Please specify a user subcommand. Use --help for more information.");
+        }
+    }
     Ok(())
 }
 

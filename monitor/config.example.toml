@@ -4,8 +4,11 @@
 # Database configuration
 database_url = "sqlite:serverbox_monitor.db"
 
-# JWT secret for authentication
-jwt_secret = "your-secret-key-change-this"
+# JWT secret for authentication (optional).
+# Omit to auto-generate a random secret on first start,
+# persisted next to the database as jwt.secret (0600).
+# If set explicitly, it must be at least 32 characters.
+# jwt_secret = ""
 
 # Server configuration
 [server]
