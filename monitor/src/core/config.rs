@@ -370,14 +370,30 @@ impl Config {
         Ok(())
     }
 
-    /// Falls back to the real OS hostname when unconfigured (name defaults
-    /// to None — see all `Config` construction sites), not a generic label
+    /// Falls back, in order, to: `SBM_HOSTNAME` env (explicit override) ->
+    /// `/etc/host_hostname` (the host's real /etc/hostname, bind-mounted
+    /// read-only by docker-compose — inside a container, `hostname::get()`
+    /// would otherwise return the container's own random hostname, not the
+    /// machine actually being monitored) -> the local OS hostname (bare-metal
+    /// installs) -> a generic label as the last resort. `name` defaults to
+    /// None everywhere (see all `Config` construction sites).
     pub fn get_server_name(&self) -> String {
         self.name.clone().unwrap_or_else(|| {
-            hostname::get()
+            env::var("SBM_HOSTNAME")
                 .ok()
-                .and_then(|h| h.into_string().ok())
                 .filter(|h| !h.is_empty())
+                .or_else(|| {
+                    fs::read_to_string("/etc/host_hostname")
+                        .ok()
+                        .map(|h| h.trim().to_string())
+                        .filter(|h| !h.is_empty())
+                })
+                .or_else(|| {
+                    hostname::get()
+                        .ok()
+                        .and_then(|h| h.into_string().ok())
+                        .filter(|h| !h.is_empty())
+                })
                 .unwrap_or_else(|| "Server 1".to_string())
         })
     }
