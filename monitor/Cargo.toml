@@ -78,3 +78,6 @@ clap = { version = "4.6", features = ["derive", "env"] }
 
 [dev-dependencies]
 tokio-test = "0.4"
+
+[profile.release]
+strip = true

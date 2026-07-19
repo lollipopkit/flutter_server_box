@@ -5,3 +5,7 @@
 [workspace]
 resolver = "2"
 members = ["crates/sbm_parser", "crates/sbm_ffi", "monitor"]
+
+[profile.release]
+# Smaller release binaries for the shipped container / native packages
+strip = true

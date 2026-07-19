@@ -15,7 +15,7 @@ COPY monitor/frontend/ ./
 RUN npm run build
 
 # Rust build stage
-FROM rust:alpine AS backend-builder
+FROM rust:1-alpine AS backend-builder
 
 RUN apk add --no-cache musl-dev
 
@@ -35,10 +35,11 @@ RUN sed -i 's|path = "../crates/sbm_parser"|path = "crates/sbm_parser"|' Cargo.t
     && cargo build --release
 
 # Final runtime stage(与 Dockerfile.ci 保持一致)
-FROM alpine
+FROM alpine:3.24
 
-# uptime/ps/cat 等采集命令由 busybox 提供;curl 用于 healthcheck
-RUN apk add --no-cache ca-certificates curl
+# ca-certificates for reqwest rustls; collection commands (uptime/ps/cat) and
+# the healthcheck's wget come from busybox — no curl, avoiding its dependency chain
+RUN apk add --no-cache ca-certificates
 
 RUN adduser -D app
 
@@ -58,7 +59,7 @@ USER app
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3770/api/v1/health || exit 1
+    CMD wget -q -O /dev/null http://localhost:3770/api/v1/health || exit 1
 
 EXPOSE 3770
 
