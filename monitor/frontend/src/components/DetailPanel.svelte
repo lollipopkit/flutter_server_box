@@ -26,6 +26,13 @@
     network: $LL.network(),
     gpu: $LL.gpu(),
   })
+
+  // used/total are cumulative busy/total ticks (CpuCoreTime); percent is
+  // used/total, not the inverse (a prior review flagged the DB storage path
+  // computing this backwards — this display path is independently correct)
+  const corePercents = $derived(
+    (m?.cpu_cores ?? []).map((c) => (c.total > 0 ? (c.used / c.total) * 100 : 0)),
+  )
 </script>
 
 {#snippet row(label: string, value: string)}
@@ -60,6 +67,18 @@
   </div>
 {/snippet}
 
+<!-- Compact per-core tile: index + percent on top, thin bar below. Sized to
+     fit many columns so high core-count machines don't produce a page-long list. -->
+{#snippet coreTile(index: number, pct: number)}
+  <div class="rounded-lg border border-line px-2.5 py-2">
+    <div class="flex justify-between items-baseline gap-2 mb-1">
+      <span class="text-xs text-faint-fg">{index}</span>
+      <span class="text-xs font-medium text-fg tabular-nums">{pct.toFixed(0)}%</span>
+    </div>
+    {@render progressBar(pct)}
+  </div>
+{/snippet}
+
 <div class="space-y-6 max-w-4xl">
   <div class="flex items-center gap-2">
     <Button variant="ghost" size="sm" onclick={onback}>
@@ -85,6 +104,18 @@
           {#if m.temperature != null}
             {@render row($LL.temperature(), `${m.temperature.toFixed(1)} °C`)}
           {/if}
+        </div>
+      </Card>
+    {/if}
+    {#if corePercents.length > 0}
+      <Card>
+        <h3 class="text-sm font-semibold text-fg-strong mb-3">
+          {$LL.cores()} ({corePercents.length})
+        </h3>
+        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+          {#each corePercents as pct, i (i)}
+            {@render coreTile(i, pct)}
+          {/each}
         </div>
       </Card>
     {/if}

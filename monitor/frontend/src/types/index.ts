@@ -2,7 +2,9 @@ export interface SystemMetrics {
   timestamp: string;
   server_name: string;
   cpu_usage: number;
-  cpu_cores?: unknown[];
+  // Wire-compatible with monitor's CpuCoreTime { used, total } (busy/total
+  // ticks); array index is the core number (no id/label on the wire)
+  cpu_cores?: { used: number; total: number }[];
   memory: MemoryMetrics;
   swap: SwapMetrics;
   disk: DiskMetrics;
