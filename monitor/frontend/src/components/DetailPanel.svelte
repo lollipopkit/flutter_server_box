@@ -99,8 +99,13 @@
     {#if m}
       <Card>
         <div class="space-y-4">
+          {#if m.cpu_brand}
+            {@render row($LL.cpuModel(), m.cpu_brand)}
+          {/if}
           {@render labeledBar($LL.usage(), `${m.cpu_usage.toFixed(1)}%`, m.cpu_usage)}
-          {@render row($LL.cores(), String(m.cpu_cores?.length ?? '--'))}
+          {#if !corePercents.length}
+            {@render row($LL.cores(), String(m.cpu_cores?.length ?? '--'))}
+          {/if}
           {#if m.temperature != null}
             {@render row($LL.temperature(), `${m.temperature.toFixed(1)} °C`)}
           {/if}

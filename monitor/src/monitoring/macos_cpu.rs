@@ -74,18 +74,19 @@ pub fn sample() -> Option<Vec<CpuCore>> {
 mod tests {
     use super::*;
 
-    #[test]
-    fn first_call_returns_none() {
-        // Fresh module state (test binary, single process): the very first
-        // sample has no prior reading to diff against
-        assert!(sample().is_none());
-    }
-
+    // A single test, not two: `sample()` is backed by one process-wide
+    // static (correct for production — one persistent sampler per process),
+    // so "the very first call ever returns None" isn't independently
+    // testable once more than one test in this binary touches it — Rust
+    // runs tests in threads within the same process, and thread execution
+    // order across test functions is unspecified. Priming with an ignored
+    // call and asserting only the well-defined two-samples-apart behavior
+    // avoids that race entirely.
     #[test]
     fn second_call_returns_real_core_data() {
-        sample();
+        sample(); // primes the baseline; return value intentionally ignored
         std::thread::sleep(std::time::Duration::from_millis(250));
-        let cores = sample().expect("second sample should have a delta");
+        let cores = sample().expect("a sample taken after a prior one should have a delta");
         assert!(cores.len() >= 2, "expected a summary row plus at least one core");
         assert_eq!(cores[0].id, "cpu");
         assert_eq!(cores[1].id, "cpu0");

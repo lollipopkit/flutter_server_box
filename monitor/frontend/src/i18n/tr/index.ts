@@ -52,6 +52,7 @@ const tr = {
 	interfaces: 'Arayüzler',
 	connected: 'Bağlı',
 	disconnected: 'Bağlantı kesildi',
+	cpuModel: 'CPU Modeli',
 	cores: 'Çekirdek',
 	power: 'Güç',
 	osHost: 'İşletim Sistemi / Sunucu',

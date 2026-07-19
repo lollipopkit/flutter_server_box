@@ -52,6 +52,7 @@ const zh_CN = {
 	interfaces: '网卡',
 	connected: '已连接',
 	disconnected: '连接断开',
+	cpuModel: 'CPU 型号',
 	cores: '核心',
 	power: '功耗',
 	osHost: '系统 / 主机',

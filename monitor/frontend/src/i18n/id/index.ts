@@ -52,6 +52,7 @@ const id = {
 	interfaces: 'Antarmuka',
 	connected: 'Terhubung',
 	disconnected: 'Terputus',
+	cpuModel: 'Model CPU',
 	cores: 'Inti',
 	power: 'Daya',
 	osHost: 'OS / Host',

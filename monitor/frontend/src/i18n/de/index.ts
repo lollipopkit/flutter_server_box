@@ -52,6 +52,7 @@ const de = {
 	interfaces: 'Schnittstellen',
 	connected: 'Verbunden',
 	disconnected: 'Getrennt',
+	cpuModel: 'CPU-Modell',
 	cores: 'Kerne',
 	power: 'Leistung',
 	osHost: 'Betriebssystem / Host',

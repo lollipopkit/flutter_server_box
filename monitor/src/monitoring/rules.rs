@@ -312,6 +312,7 @@ mod tests {
             },
             temperature: Some(65.0),
             sys: None,
+            cpu_brand: None,
             gpus: vec![],
             disk_details: vec![],
             ifaces: vec![],

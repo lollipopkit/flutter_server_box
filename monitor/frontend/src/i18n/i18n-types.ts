@@ -232,6 +232,10 @@ type RootTranslation = {
 	 */
 	disconnected: string
 	/**
+	 * C​P​U​ ​M​o​d​e​l
+	 */
+	cpuModel: string
+	/**
 	 * C​o​r​e​s
 	 */
 	cores: string
@@ -454,6 +458,10 @@ export type TranslationFunctions = {
 	 * Disconnected
 	 */
 	disconnected: () => LocalizedString
+	/**
+	 * CPU Model
+	 */
+	cpuModel: () => LocalizedString
 	/**
 	 * Cores
 	 */

@@ -52,6 +52,7 @@ const nl = {
 	interfaces: 'Interfaces',
 	connected: 'Verbonden',
 	disconnected: 'Verbroken',
+	cpuModel: 'CPU-model',
 	cores: 'Kernen',
 	power: 'Vermogen',
 	osHost: 'OS / Host',

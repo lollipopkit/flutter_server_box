@@ -52,6 +52,7 @@ const it = {
 	interfaces: 'Interfacce',
 	connected: 'Connesso',
 	disconnected: 'Disconnesso',
+	cpuModel: 'Modello CPU',
 	cores: 'Core',
 	power: 'Potenza',
 	osHost: 'SO / Host',

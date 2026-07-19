@@ -115,6 +115,7 @@ pub fn parse_status_opts(
         }
         SystemType::Bsd => {
             status.cpu = bsd::parse_cpu(get(commands::CPU));
+            status.cpu_brand = bsd::parse_cpu_brand(get(commands::CPU_BRAND));
             status.mem = bsd::parse_mem(get(commands::MEM));
             status.disks = linux::parse_disk(get(commands::DISK));
             status.net = bsd::parse_net(get(commands::NET));

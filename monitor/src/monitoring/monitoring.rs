@@ -23,6 +23,10 @@ pub struct SystemMetrics {
     pub temperature: Option<f32>,
     /// System version description (PRETTY_NAME / uname / OsName), if parsed
     pub sys: Option<String>,
+    /// CPU model, e.g. "Apple M1 Pro" or "Intel(R) Core(TM) i7 (x8)" when
+    /// several logical cores share one brand string; joined with ", " for
+    /// the rare heterogeneous (multi-socket, differing model) case
+    pub cpu_brand: Option<String>,
     /// Detail lists for the panel's drill-down views (not persisted)
     #[serde(default)]
     pub gpus: Vec<GpuMetrics>,
@@ -313,10 +317,24 @@ fn adapt_status(
         network,
         temperature,
         sys: status.sys.clone(),
+        cpu_brand: format_cpu_brand(&status.cpu_brand),
         gpus,
         disk_details,
         ifaces,
     }
+}
+
+fn format_cpu_brand(brands: &[(String, u32)]) -> Option<String> {
+    if brands.is_empty() {
+        return None;
+    }
+    Some(
+        brands
+            .iter()
+            .map(|(name, count)| if *count > 1 { format!("{name} (x{count})") } else { name.clone() })
+            .collect::<Vec<_>>()
+            .join(", "),
+    )
 }
 
 /// Every /dev-backed filesystem as its own row (raw view for the drill-down;

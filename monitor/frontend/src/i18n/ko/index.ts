@@ -52,6 +52,7 @@ const ko = {
 	interfaces: '인터페이스',
 	connected: '연결됨',
 	disconnected: '연결 끊김',
+	cpuModel: 'CPU 모델',
 	cores: '코어',
 	power: '전력',
 	osHost: 'OS / 호스트',

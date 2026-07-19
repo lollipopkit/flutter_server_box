@@ -52,6 +52,7 @@ const ja = {
 	interfaces: 'インターフェース',
 	connected: '接続中',
 	disconnected: '切断',
+	cpuModel: 'CPU モデル',
 	cores: 'コア',
 	power: '電力',
 	osHost: 'OS / ホスト',

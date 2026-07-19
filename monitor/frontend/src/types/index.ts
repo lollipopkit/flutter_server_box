@@ -11,6 +11,7 @@ export interface SystemMetrics {
   network: NetworkMetrics;
   temperature?: number;
   sys?: string;
+  cpu_brand?: string;
   // Detail lists are absent on older agents; treat as optional
   gpus?: GpuMetrics[];
   disk_details?: DiskDetail[];

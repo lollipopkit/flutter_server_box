@@ -52,6 +52,7 @@ const ru = {
 	interfaces: 'Интерфейсы',
 	connected: 'Подключено',
 	disconnected: 'Отключено',
+	cpuModel: 'Модель ЦП',
 	cores: 'Ядра',
 	power: 'Мощность',
 	osHost: 'ОС / Хост',

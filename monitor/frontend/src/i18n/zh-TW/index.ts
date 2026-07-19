@@ -52,6 +52,7 @@ const zh_TW = {
 	interfaces: '網卡',
 	connected: '已連接',
 	disconnected: '連線中斷',
+	cpuModel: 'CPU 型號',
 	cores: '核心',
 	power: '功耗',
 	osHost: '系統 / 主機',

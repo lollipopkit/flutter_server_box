@@ -52,6 +52,7 @@ const pt = {
 	interfaces: 'Interfaces',
 	connected: 'Conectado',
 	disconnected: 'Desconectado',
+	cpuModel: 'Modelo da CPU',
 	cores: 'Núcleos',
 	power: 'Energia',
 	osHost: 'SO / Host',

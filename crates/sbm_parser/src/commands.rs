@@ -119,7 +119,15 @@ pub const BSD: &[CommandSpec] = &[
     // (top's PhysMem "used" counts cached files); parser tolerates its absence
     CommandSpec { core: true, key: MEM, cmd: "top -l 1 | grep PhysMem; vm_stat" },
     CommandSpec { core: true, key: HOST, cmd: "hostname" },
-    CommandSpec { core: true, key: CPU_BRAND, cmd: "sysctl -n machdep.cpu.brand_string" },
+    // Real logical core count appended (see the CPU command's comment) so
+    // parse_cpu_brand can report it alongside the single global brand string
+    // sysctl returns (BSD has no per-model breakdown the way Linux's
+    // per-logical-CPU /proc/cpuinfo does)
+    CommandSpec {
+        core: true,
+        key: CPU_BRAND,
+        cmd: "sysctl -n machdep.cpu.brand_string; sysctl -n hw.ncpu",
+    },
 ];
 
 /// Windows PowerShell(App `WindowsStatusCmdType`)

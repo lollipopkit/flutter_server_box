@@ -66,6 +66,27 @@ fn cpu_parse_bsd_freebsd() {
     assert_eq!(cores[0].idle, 91);
 }
 
+/// macOS/FreeBSD sysctl brand string, with the real core count appended
+#[test]
+fn cpu_brand_parse_bsd() {
+    let brands = bsd::parse_cpu_brand("Apple M1 Pro\n10\n");
+    assert_eq!(brands, vec![("Apple M1 Pro".to_string(), 10)]);
+}
+
+/// No trailing count line: falls back to a single-occurrence count
+#[test]
+fn cpu_brand_parse_bsd_no_count_line() {
+    let brands = bsd::parse_cpu_brand("Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz\n");
+    assert_eq!(brands, vec![("Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz".to_string(), 1)]);
+}
+
+/// Empty/whitespace-only output yields no brand entries
+#[test]
+fn cpu_brand_parse_bsd_empty() {
+    assert!(bsd::parse_cpu_brand("").is_empty());
+    assert!(bsd::parse_cpu_brand("\n\n").is_empty());
+}
+
 /// FreeBSD `top -b -d 1 -P`: genuine per-core lines, not replicated
 #[test]
 fn cpu_parse_freebsd_real_per_core() {

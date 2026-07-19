@@ -52,6 +52,7 @@ const uk = {
 	interfaces: 'Інтерфейси',
 	connected: 'Підключено',
 	disconnected: 'Відключено',
+	cpuModel: 'Модель ЦП',
 	cores: 'Ядра',
 	power: 'Потужність',
 	osHost: 'ОС / Хост',

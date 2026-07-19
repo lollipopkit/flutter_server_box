@@ -172,6 +172,31 @@ fn vm_stat_avail(raw: &str, total_kib: u64) -> Option<u64> {
     Some(total_kib.saturating_sub(used_kib))
 }
 
+/// `sysctl -n machdep.cpu.brand_string` (macOS/FreeBSD), with the real
+/// logical core count appended (see the CPU command); BSD reports one global
+/// brand string, not a per-logical-CPU breakdown like Linux's /proc/cpuinfo,
+/// so this always yields at most one entry
+pub fn parse_cpu_brand(raw: &str) -> Vec<(String, u32)> {
+    static CORE_COUNT: OnceLock<Regex> = OnceLock::new();
+
+    let brand = raw
+        .lines()
+        .map(str::trim)
+        .find(|l| !l.is_empty() && l.parse::<u64>().is_err())
+        .unwrap_or("")
+        .to_string();
+    if brand.is_empty() {
+        return Vec::new();
+    }
+
+    let count = regex(&CORE_COUNT, r"(?m)^\s*(\d+)\s*$")
+        .captures(raw)
+        .and_then(|c| c[1].parse::<u32>().ok())
+        .filter(|&n| n > 0)
+        .unwrap_or(1);
+    vec![(brand, count)]
+}
+
 fn to_kib(amount: f64, unit: &str) -> u64 {
     let mul = match unit.to_uppercase().as_str() {
         "T" => 1024.0 * 1024.0 * 1024.0,

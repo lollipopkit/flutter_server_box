@@ -52,6 +52,7 @@ const en = {
 	interfaces: 'Interfaces',
 	connected: 'Connected',
 	disconnected: 'Disconnected',
+	cpuModel: 'CPU Model',
 	cores: 'Cores',
 	power: 'Power',
 	osHost: 'OS / Host',
