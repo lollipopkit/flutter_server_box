@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
-import Login from '../pages/Login.svelte'
+import LoginForm from '../components/LoginForm.svelte'
 import { api, ApiError } from '../lib/api'
 import { servers } from '../lib/servers.svelte'
 
@@ -19,9 +19,8 @@ describe('Login', () => {
   })
 
   it('renders login form', () => {
-    render(Login)
+    render(LoginForm)
 
-    expect(screen.getByText('ServerBox Monitor')).toBeInTheDocument()
     expect(screen.getByLabelText('Username')).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument()
@@ -30,7 +29,7 @@ describe('Login', () => {
   it('handles successful login', async () => {
     mockedLogin.mockResolvedValue({ token: 'test-token' })
 
-    render(Login)
+    render(LoginForm)
 
     await fireEvent.input(screen.getByLabelText('Username'), { target: { value: 'admin' } })
     await fireEvent.input(screen.getByLabelText('Password'), { target: { value: 'password' } })
@@ -46,7 +45,7 @@ describe('Login', () => {
   it('displays error on failed login', async () => {
     mockedLogin.mockRejectedValue(new ApiError('Invalid credentials'))
 
-    render(Login)
+    render(LoginForm)
 
     await fireEvent.input(screen.getByLabelText('Username'), { target: { value: 'wrong' } })
     await fireEvent.input(screen.getByLabelText('Password'), { target: { value: 'wrong' } })

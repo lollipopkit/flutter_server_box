@@ -50,6 +50,32 @@ export async function testConnection(url: string): Promise<boolean> {
   }
 }
 
+/// Logs into an explicit URL (add/edit server form) instead of `servers.current`
+export async function loginTo(url: string, credentials: LoginRequest): Promise<LoginResponse> {
+  let res: Response
+  try {
+    res = await fetch(`${url}/api/v1/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    })
+  } catch {
+    throw new ApiError('Login failed')
+  }
+  if (!res.ok) {
+    let message = 'Login failed'
+    try {
+      const body = (await res.json()) as { error?: string }
+      if (body.error) message = body.error
+    } catch {
+      // Non-JSON error body: keep the fallback message
+    }
+    throw new ApiError(message)
+  }
+  return res.json() as Promise<LoginResponse>
+}
+
 export const api = {
   login: (credentials: LoginRequest) =>
     request<LoginResponse>(

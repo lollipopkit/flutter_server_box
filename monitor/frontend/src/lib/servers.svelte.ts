@@ -128,8 +128,16 @@ class ServersStore {
   }
 
   login(token: string, username: string) {
-    this.current.token = token
-    this.current.username = username
+    this.setSession(this.currentId, token, username)
+  }
+
+  /// Like login(), but for an arbitrary entry — used by the add/edit form to
+  /// save a session for a server that isn't necessarily the selected one.
+  setSession(id: string, token: string, username: string) {
+    const entry = this.list.find((s) => s.id === id)
+    if (!entry) return
+    entry.token = token
+    entry.username = username
     this.#persist()
   }
 

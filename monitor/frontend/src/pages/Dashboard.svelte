@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onDestroy, onMount } from 'svelte'
   import {
     Cpu,
     Gpu,
@@ -14,6 +13,7 @@
   import { Badge, Card, IconButton, Spinner } from '@serverbox/webui'
   import DetailPanel, { type DetailKind } from '../components/DetailPanel.svelte'
   import LineChart from '../components/LineChart.svelte'
+  import LoginForm from '../components/LoginForm.svelte'
   import StatCard from '../components/StatCard.svelte'
   import { api } from '../lib/api'
   import { displayName, servers } from '../lib/servers.svelte'
@@ -44,22 +44,27 @@
     }
   }
 
-  // Refetches on range change (and on mount)
+  // Refetches on range change (and once authenticated)
   $effect(() => {
-    void loadHistory(rangeMinutes)
+    if (servers.authenticated) void loadHistory(rangeMinutes)
   })
 
   let historyTimer: ReturnType<typeof setInterval> | undefined
 
-  onMount(() => {
-    status.start()
-    metrics.start()
-    historyTimer = setInterval(() => void loadHistory(rangeMinutes), 60_000)
-  })
-  onDestroy(() => {
-    status.stop()
-    metrics.stop()
-    clearInterval(historyTimer)
+  // Polling (and the 401 it'd draw) only makes sense once this server has a
+  // session; toggling auth state starts/stops it instead of an unconditional
+  // onMount, so a freshly-added, not-yet-logged-in server stays quiet
+  $effect(() => {
+    if (servers.authenticated) {
+      status.start()
+      metrics.start()
+      historyTimer = setInterval(() => void loadHistory(rangeMinutes), 60_000)
+    }
+    return () => {
+      status.stop()
+      metrics.stop()
+      clearInterval(historyTimer)
+    }
   })
 
   const historyLabels = $derived(history.map((p) => p.timestamp))
@@ -91,7 +96,7 @@
   })
 </script>
 
-{#if status.loading && metrics.loading}
+{#if servers.authenticated && status.loading && metrics.loading}
   <div class="min-h-screen flex items-center justify-center">
     <Spinner size="lg" />
   </div>
@@ -131,6 +136,12 @@
   </header>
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {#if !servers.authenticated}
+      <div class="py-12">
+        <p class="mb-6 text-center text-sm text-muted-fg">{$LL.signInSubtitle()}</p>
+        <LoginForm />
+      </div>
+    {:else}
     {#if error}
       <div class="mb-6 bg-danger/10 border border-danger/30 rounded-(--radius-container) p-4">
         <div class="flex">
@@ -285,6 +296,7 @@
           {/if}
         </div>
       </Card>
+    {/if}
     {/if}
     {/if}
   </main>
