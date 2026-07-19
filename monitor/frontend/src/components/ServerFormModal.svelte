@@ -112,15 +112,11 @@
     </div>
 
     <div class="space-y-1">
-      <label class="text-sm text-muted-fg" for="server-username">
-        {$LL.username()} ({$LL.optional()})
-      </label>
+      <label class="text-sm text-muted-fg" for="server-username">{$LL.username()}</label>
       <Input id="server-username" bind:value={username} placeholder={$LL.enterUsername()} />
     </div>
     <div class="space-y-1">
-      <label class="text-sm text-muted-fg" for="server-password">
-        {$LL.password()} ({$LL.optional()})
-      </label>
+      <label class="text-sm text-muted-fg" for="server-password">{$LL.password()}</label>
       <Input
         id="server-password"
         type="password"
