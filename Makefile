@@ -16,7 +16,7 @@ TAP_REPO_PATH ?=
 .PHONY: help deps pub-get run run-device analyze test test-one coverage \
 	gen gen-build gen-build-clean gen-l10n build build-android build-ios \
 	build-macos build-linux build-windows clean release-macos-dmg package-dmg \
-	sync-homebrew-cask
+	sync-homebrew-cask monitor-dev
 
 help:
 	@printf '%s\n' \
@@ -45,6 +45,9 @@ help:
 		'  build-linux        Build Linux package' \
 		'  build-windows      Build Windows package' \
 		'  clean              Run flutter clean' \
+		'' \
+		'Monitor:' \
+		'  monitor-dev        Run monitor backend + panel dev server (vite on :3000, API on :3770)' \
 		'' \
 		'Release scripts:' \
 		'  release-macos-dmg  Run scripts/release/release-macos-dmg.sh' \
@@ -157,3 +160,16 @@ sync-homebrew-cask:
 	else \
 		DMG_PATH="$(DMG_PATH)" TAP_REPO_PATH="$(TAP_REPO_PATH)" bash scripts/release/sync-homebrew-cask.sh; \
 	fi
+
+# Backend from monitor/ (finds config/db there); panel via vite dev server on
+# :3000 with /api proxied to :3770. Ctrl-C stops both.
+monitor-dev:
+	@if [ ! -d monitor/frontend/node_modules ]; then \
+		echo '==> Installing panel dependencies'; \
+		cd monitor/frontend && npm ci; \
+	fi
+	@echo '==> Panel: http://localhost:3000  API: http://localhost:3770'
+	@trap 'kill 0' INT TERM EXIT; \
+	(cd monitor && cargo run -p server_box_monitor -- serve) & \
+	(cd monitor/frontend && npm run dev) & \
+	wait
