@@ -20,7 +20,7 @@
   import { api } from '../lib/api'
   import { servers } from '../lib/servers.svelte'
   import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../lib/format'
-  import { i18n } from '../lib/i18n.svelte'
+  import { LL } from '../i18n/i18n-svelte'
   import { Poller } from '../lib/poller.svelte'
   import type { HistoryPoint } from '../types'
 
@@ -66,12 +66,12 @@
   const historyLabels = $derived(history.map((p) => p.timestamp))
   const usageSeries = $derived([
     { label: 'CPU', color: '#3b82f6', values: history.map((p) => p.cpu) },
-    { label: i18n.t('memory'), color: '#22c55e', values: history.map((p) => p.memory) },
-    { label: i18n.t('diskUsage'), color: '#f59e0b', values: history.map((p) => p.disk) },
+    { label: $LL.memory(), color: '#22c55e', values: history.map((p) => p.memory) },
+    { label: $LL.diskUsage(), color: '#f59e0b', values: history.map((p) => p.disk) },
   ])
   const networkSeries = $derived([
-    { label: i18n.t('down'), color: '#8b5cf6', values: history.map((p) => p.net_rx_speed) },
-    { label: i18n.t('up'), color: '#ec4899', values: history.map((p) => p.net_tx_speed) },
+    { label: $LL.down(), color: '#8b5cf6', values: history.map((p) => p.net_rx_speed) },
+    { label: $LL.up(), color: '#ec4899', values: history.map((p) => p.net_tx_speed) },
   ])
 
   const thresholds = {
@@ -109,7 +109,7 @@
           <div>
             <h1 class="text-xl font-semibold text-strong">ServerBox Monitor</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">
-              {status.data?.name || i18n.t('unknownServer')}
+              {status.data?.name || $LL.unknownServer()}
             </p>
           </div>
         </div>
@@ -117,13 +117,13 @@
         <div class="flex items-center space-x-4">
           <ServerPicker />
           <div class="text-sm text-muted">
-            {i18n.t('welcome')} <span class="font-medium">{servers.current?.username}</span>
+            {$LL.welcome()} <span class="font-medium">{servers.current?.username}</span>
           </div>
           <LocaleToggle />
           <ThemeToggle />
           <button onclick={() => servers.logout()} class="btn btn-secondary flex items-center">
             <LogOut class="w-4 h-4 mr-2" />
-            {i18n.t('logout')}
+            {$LL.logout()}
           </button>
         </div>
       </div>
@@ -148,34 +148,34 @@
       <StatCard
         icon={Cpu}
         iconClass="text-blue-500"
-        label={i18n.t('cpuUsage')}
+        label={$LL.cpuUsage()}
         value={m ? `${m.cpu_usage.toFixed(1)}%` : '--'}
         detail={m?.temperature != null ? `${m.temperature.toFixed(1)} \u00B0C` : ''}
-        badge={m ? i18n.t('active') : i18n.t('na')}
+        badge={m ? $LL.active() : $LL.na()}
         badgeClass={statusBadge(m?.cpu_usage, 'cpu')}
       />
       <StatCard
         icon={MemoryStick}
         iconClass="text-green-500"
-        label={i18n.t('memory')}
+        label={$LL.memory()}
         value={m ? `${m.memory.usage_percent.toFixed(1)}%` : '--'}
         detail={m ? `${fmtBytes(m.memory.used)} / ${fmtBytes(m.memory.total)}` : ''}
-        badge={m ? i18n.t('active') : i18n.t('na')}
+        badge={m ? $LL.active() : $LL.na()}
         badgeClass={statusBadge(m?.memory.usage_percent, 'memory')}
       />
       <StatCard
         icon={HardDrive}
         iconClass="text-yellow-500"
-        label={i18n.t('diskUsage')}
+        label={$LL.diskUsage()}
         value={m ? `${m.disk.usage_percent.toFixed(1)}%` : '--'}
         detail={m ? `${fmtBytes(m.disk.used)} / ${fmtBytes(m.disk.total)}` : ''}
-        badge={m ? i18n.t('active') : i18n.t('na')}
+        badge={m ? $LL.active() : $LL.na()}
         badgeClass={statusBadge(m?.disk.usage_percent, 'disk')}
       />
       <StatCard
         icon={Network}
         iconClass="text-purple-500"
-        label={i18n.t('network')}
+        label={$LL.network()}
         value={latest
           ? `\u2193 ${fmtBytesPerSec(latest.net_rx_speed)}  \u2191 ${fmtBytesPerSec(latest.net_tx_speed)}`
           : '--'}
@@ -183,13 +183,13 @@
         detail={m
           ? `RX ${fmtBytes(m.network.rx_bytes)} \u00B7 TX ${fmtBytes(m.network.tx_bytes)}`
           : ''}
-        badge={i18n.t('active')}
+        badge={$LL.active()}
         badgeClass="status-success"
       />
     </div>
 
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-semibold text-strong">{i18n.t('history')}</h2>
+      <h2 class="text-lg font-semibold text-strong">{$LL.history()}</h2>
       <div class="flex rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden">
         {#each RANGES as r (r.minutes)}
           <button
@@ -210,14 +210,14 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       <LineChart
-        title={i18n.t('usage')}
+        title={$LL.usage()}
         labels={historyLabels}
         series={usageSeries}
         yMax={100}
         format={fmtPercent}
       />
       <LineChart
-        title={i18n.t('network')}
+        title={$LL.network()}
         labels={historyLabels}
         series={networkSeries}
         format={fmtBytesPerSec}
@@ -228,33 +228,33 @@
       {@const m = metrics.data}
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="card">
-          <h3 class="text-lg font-semibold text-strong mb-4">{i18n.t('systemInformation')}</h3>
+          <h3 class="text-lg font-semibold text-strong mb-4">{$LL.systemInformation()}</h3>
           <div class="space-y-3">
             <div class="flex justify-between">
-              <span class="text-sm text-muted">{i18n.t('serverNameLabel')}</span>
+              <span class="text-sm text-muted">{$LL.serverNameLabel()}</span>
               <span class="text-sm font-medium">{m.server_name}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-muted">{i18n.t('lastUpdated')}</span>
+              <span class="text-sm text-muted">{$LL.lastUpdated()}</span>
               <span class="text-sm font-medium">
                 {new Date(m.timestamp).toLocaleString()}
               </span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-muted">{i18n.t('cpuUsageLabel')}</span>
+              <span class="text-sm text-muted">{$LL.cpuUsageLabel()}</span>
               <span class="text-sm font-medium">{m.cpu_usage.toFixed(1)}%</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-muted">{i18n.t('memoryUsageLabel')}</span>
+              <span class="text-sm text-muted">{$LL.memoryUsageLabel()}</span>
               <span class="text-sm font-medium">{m.memory.usage_percent.toFixed(1)}%</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-muted">{i18n.t('diskUsageLabel')}</span>
+              <span class="text-sm text-muted">{$LL.diskUsageLabel()}</span>
               <span class="text-sm font-medium">{m.disk.usage_percent.toFixed(1)}%</span>
             </div>
             {#if m.temperature != null}
               <div class="flex justify-between">
-                <span class="text-sm text-muted">{i18n.t('temperature')}</span>
+                <span class="text-sm text-muted">{$LL.temperature()}</span>
                 <span class="text-sm font-medium flex items-center">
                   <Thermometer class="w-4 h-4 mr-1" />
                   {m.temperature.toFixed(1)}°C
@@ -265,17 +265,17 @@
         </div>
 
         <div class="card">
-          <h3 class="text-lg font-semibold text-strong mb-4">{i18n.t('quickActions')}</h3>
+          <h3 class="text-lg font-semibold text-strong mb-4">{$LL.quickActions()}</h3>
           <div class="space-y-3">
             <button
               onclick={() => window.location.reload()}
               class="btn-primary w-full flex items-center justify-center"
             >
               <RefreshCw class="w-4 h-4 mr-2" />
-              {i18n.t('refreshData')}
+              {$LL.refreshData()}
             </button>
             <div class="text-xs text-gray-500 dark:text-gray-400 text-center mt-4">
-              {i18n.t('autoRefreshNote')}
+              {$LL.autoRefreshNote()}
             </div>
           </div>
         </div>

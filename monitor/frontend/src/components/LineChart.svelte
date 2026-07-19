@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fmtTime } from '../lib/format'
-  import { i18n } from '../lib/i18n.svelte'
+  import { LL } from '../i18n/i18n-svelte'
 
   export interface ChartSeries {
     label: string
@@ -85,7 +85,7 @@
 
   {#if labels.length < 2}
     <div class="h-40 flex items-center justify-center text-sm text-muted">
-      {i18n.t('collectingData')}
+      {$LL.collectingData()}
     </div>
   {:else}
     <svg

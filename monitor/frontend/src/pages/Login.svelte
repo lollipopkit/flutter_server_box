@@ -5,7 +5,7 @@
   import Spinner from '../components/Spinner.svelte'
   import ThemeToggle from '../components/ThemeToggle.svelte'
   import { api, ApiError } from '../lib/api'
-  import { i18n } from '../lib/i18n.svelte'
+  import { LL } from '../i18n/i18n-svelte'
   import { servers } from '../lib/servers.svelte'
 
   let username = $state('')
@@ -39,7 +39,7 @@
         <Monitor class="w-12 h-12 text-primary-600" />
       </div>
       <h2 class="mt-6 text-3xl font-bold text-strong">ServerBox Monitor</h2>
-      <p class="mt-2 text-sm text-muted">{i18n.t('signInSubtitle')}</p>
+      <p class="mt-2 text-sm text-muted">{$LL.signInSubtitle()}</p>
     </div>
 
     <ServerPicker manage={true} />
@@ -61,7 +61,7 @@
       <div class="space-y-4">
         <div>
           <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {i18n.t('username')}
+            {$LL.username()}
           </label>
           <input
             id="username"
@@ -70,12 +70,12 @@
             required
             bind:value={username}
             class="input mt-1"
-            placeholder={i18n.t('enterUsername')}
+            placeholder={$LL.enterUsername()}
           />
         </div>
         <div>
           <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {i18n.t('password')}
+            {$LL.password()}
           </label>
           <input
             id="password"
@@ -84,7 +84,7 @@
             required
             bind:value={password}
             class="input mt-1"
-            placeholder={i18n.t('enterPassword')}
+            placeholder={$LL.enterPassword()}
           />
         </div>
       </div>
@@ -97,9 +97,9 @@
         >
           {#if loading}
             <Spinner size="sm" class="mr-2" />
-            {i18n.t('signingIn')}
+            {$LL.signingIn()}
           {:else}
-            {i18n.t('signIn')}
+            {$LL.signIn()}
           {/if}
         </button>
       </div>

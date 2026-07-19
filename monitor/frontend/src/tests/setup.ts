@@ -27,3 +27,8 @@ class MemStorage implements Storage {
 const storage = new MemStorage()
 Object.defineProperty(globalThis, 'localStorage', { value: storage, configurable: true })
 Object.defineProperty(window, 'localStorage', { value: storage, configurable: true })
+
+// Locale bootstrap must follow the storage shim (init reads window.localStorage)
+await import('../i18n/init')
+
+export {}

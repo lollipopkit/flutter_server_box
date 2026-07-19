@@ -5,15 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "svelte-check --tsconfig ./tsconfig.json && vite build",
+    "build": "npm run typesafe-i18n && svelte-check --tsconfig ./tsconfig.json && vite build",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "lint": "eslint . --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "typesafe-i18n": "typesafe-i18n --no-watch"
   },
   "dependencies": {
-    "@lucide/svelte": "^1.25.0"
+    "@lucide/svelte": "^1.25.0",
+    "typesafe-i18n": "^5.27.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
