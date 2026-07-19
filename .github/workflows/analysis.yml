@@ -66,8 +66,12 @@ jobs:
       - name: Analyze project source
         run: flutter analyze lib test
 
-      # Your project will need to have tests in test/ and a dependency on
-      # package:test for this step to succeed. Note that Flutter projects will
-      # want to change this to 'flutter test'.
+      - uses: Swatinem/rust-cache@v2
+
+      # FFI-dependent suites (frb_parser/windows/server_status_update_req...)
+      # load the dylib from target/debug via test/rust_lib_helper.dart
+      - name: Build native FFI library
+        run: cargo build -p sbm_ffi
+
       - name: Run tests
         run: flutter test
