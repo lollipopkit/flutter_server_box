@@ -12,8 +12,12 @@ path = "src/lib.rs"
 sbm_parser = { path = "../crates/sbm_parser" }
 
 # Web framework
-ntex = { version = "3", features = ["tokio"] }
+ntex = { version = "3", features = ["tokio", "rustls"] }
 ntex-files = "3.2"
+
+# TLS(ring 而非 aws-lc:musl 静态编译无 cmake/汇编依赖)
+rustls = { version = "0.23", default-features = false, features = ["ring", "logging", "std", "tls12"] }
+rustls-pemfile = "2"
 
 # Async runtime
 tokio = { version = "1.53", features = ["full"] }

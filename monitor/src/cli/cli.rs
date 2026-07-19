@@ -70,8 +70,13 @@ pub async fn handle_matches(matches: clap::ArgMatches) -> anyhow::Result<()> {
             handle_cleanup(sub_matches).await?;
         }
         _ => {
-            // Default to serve if no subcommand is provided
-            handle_serve(&clap::ArgMatches::default()).await?;
+            // Default to serve if no subcommand is provided;
+            // 构造真实的 serve matches,保证参数定义与访问一致
+            let default_matches = build_cli().get_matches_from(["server_box_monitor", "serve"]);
+            let serve_matches = default_matches
+                .subcommand_matches("serve")
+                .expect("serve subcommand exists");
+            handle_serve(serve_matches).await?;
         }
     }
     Ok(())
@@ -80,8 +85,20 @@ pub async fn handle_matches(matches: clap::ArgMatches) -> anyhow::Result<()> {
 async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     tracing::debug!("Matches: {:?}", matches);
 
-    // Load configuration
-    let config = Arc::new(Config::load().await?);
+    // Load configuration and apply CLI overrides
+    let mut config = Config::load().await?;
+    // --addr 带 default_value:仅显式传参/环境变量时覆盖配置文件
+    let addr = (matches.value_source("addr") != Some(clap::parser::ValueSource::DefaultValue))
+        .then(|| matches.get_one::<String>("addr"))
+        .flatten();
+    let cert = matches.get_one::<String>("cert");
+    let key = matches.get_one::<String>("key");
+    config.apply_cli_overrides(
+        addr.map(String::as_str),
+        cert.map(String::as_str),
+        key.map(String::as_str),
+    )?;
+    let config = Arc::new(config);
 
     // Initialize database
     let db = db::database::init(&config.get_database_url()).await?;

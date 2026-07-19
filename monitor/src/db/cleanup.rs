@@ -20,14 +20,70 @@ impl DataCleanupService {
 
         let metrics_deleted = self.cleanup_old_metrics().await?;
         let alerts_deleted = self.cleanup_old_alerts().await?;
+        let policy_deleted = self.cleanup_policy_tables().await?;
 
         let duration = start_time.elapsed();
         info!(
-            "Data cleanup completed in {:?}. Deleted {} metrics records, {} alerts records",
-            duration, metrics_deleted, alerts_deleted
+            "Data cleanup completed in {:?}. Deleted {} metrics records, {} alerts records, {} policy-table records",
+            duration, metrics_deleted, alerts_deleted, policy_deleted
         );
 
         Ok(())
+    }
+
+    /// retention_policies 驱动的清理。表名白名单防 SQL 注入;
+    /// system_metrics/alerts 由 DataRetentionConfig 显式治理,不在此列
+    const POLICY_TABLES: &'static [&'static str] = &[
+        "velocity_metrics",
+        "cpu_core_metrics",
+        "network_totals",
+        "enhanced_alerts",
+        "component_metrics",
+        "rule_executions",
+        "performance_metrics",
+        "config_audit_log",
+    ];
+
+    async fn cleanup_policy_tables(&self) -> Result<u64> {
+        use sqlx::Row;
+
+        let policies = sqlx::query(
+            "SELECT table_name, retention_days FROM retention_policies WHERE enabled = 1",
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut total = 0u64;
+        for p in policies {
+            let table_name: String = p.get("table_name");
+            let retention_days: i64 = p.get("retention_days");
+            let Some(&table) = Self::POLICY_TABLES.iter().find(|t| **t == table_name) else {
+                continue;
+            };
+            let cutoff = Utc::now() - Duration::days(retention_days);
+            // 表名来自上方 &'static str 白名单,无注入可能
+            let deleted = sqlx::query(sqlx::AssertSqlSafe(format!(
+                "DELETE FROM {table} WHERE timestamp < ?"
+            )))
+                .bind(cutoff)
+                .execute(&self.pool)
+                .await?
+                .rows_affected();
+            if deleted > 0 {
+                info!(
+                    "Deleted {} rows from {} older than {} days",
+                    deleted, table, retention_days
+                );
+            }
+            sqlx::query(
+                "UPDATE retention_policies SET last_cleanup = CURRENT_TIMESTAMP WHERE table_name = ?",
+            )
+            .bind(table)
+            .execute(&self.pool)
+            .await?;
+            total += deleted;
+        }
+        Ok(total)
     }
 
     async fn cleanup_old_metrics(&self) -> Result<u64> {

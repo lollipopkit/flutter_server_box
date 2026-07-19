@@ -463,6 +463,49 @@ fn windows_real_temp() {
     assert_eq!(temps.0.get(r"ACPI\ThermalZone\TZ00_0"), Some(&27.8));
 }
 
+/// 满盘(FreeSpace = 0)是合法状态,不应被丢弃
+#[test]
+fn windows_parse_disks_keeps_full_volume() {
+    let raw = r#"[
+        {"DeviceID": "C:", "Size": 512000000000, "FreeSpace": 0, "FileSystem": "NTFS"}
+    ]"#;
+    let disks = windows::parse_disks(raw);
+    assert_eq!(disks.len(), 1);
+    assert_eq!(disks[0].avail, 0);
+    assert_eq!(disks[0].used, disks[0].size);
+    assert_eq!(disks[0].used_percent, 100);
+}
+
+/// 最后一组采样的原始累计计数 → NetIface(跳过 `_Total`)
+#[test]
+fn windows_parse_net_last_sample() {
+    let raw = r#"[
+        [
+            {"Name": "_Total", "BytesReceivedPersec": 100, "BytesSentPersec": 100, "Timestamp_Sys100NS": 10000000},
+            {"Name": "Ethernet", "BytesReceivedPersec": 1000, "BytesSentPersec": 500, "Timestamp_Sys100NS": 10000000}
+        ],
+        [
+            {"Name": "_Total", "BytesReceivedPersec": 300, "BytesSentPersec": 200, "Timestamp_Sys100NS": 20000000},
+            {"Name": "Ethernet", "BytesReceivedPersec": 3000, "BytesSentPersec": 2000, "Timestamp_Sys100NS": 20000000}
+        ]
+    ]"#;
+    let ifaces = windows::parse_net(raw);
+    assert_eq!(ifaces.len(), 1);
+    assert_eq!(ifaces[0].device, "Ethernet");
+    assert_eq!(ifaces[0].rx_bytes, 3000);
+    assert_eq!(ifaces[0].tx_bytes, 2000);
+}
+
+/// 实机 fixture:`{"value": [...]}` 包装形态同样可取累计计数
+#[test]
+fn windows_real_net_totals() {
+    let ifaces = windows::parse_net(include_str!("fixtures/win_net.json"));
+    assert_eq!(ifaces.len(), 5);
+    for i in &ifaces {
+        assert!(!i.device.is_empty() && i.device != "_Total");
+    }
+}
+
 /// WMI 双采样实机输出:5 网卡,`{"value": [...], "Count"}` 包装形态
 #[test]
 fn windows_real_net_speed() {

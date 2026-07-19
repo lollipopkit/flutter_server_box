@@ -64,9 +64,7 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
     let server_config = app_state.config.get_server();
     let bind_addr = format!("{}:{}", server_config.host, server_config.port);
 
-    info!("Starting web server on {}", bind_addr);
-
-    HttpServer::new(async move || {
+    let server = HttpServer::new(async move || {
         App::new()
             .state(app_state.clone())
             .middleware(Logger::default())
@@ -99,12 +97,41 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
             // SPA fallback - serves index.html for unmatched routes (client-side routing)
             .service(serve_index)
             .default_service(web::to(spa_fallback))
-    })
-    .bind(&bind_addr)?
-    .run()
-    .await?;
+    });
+
+    let server = match &server_config.tls {
+        Some(tls) => {
+            info!("Starting web server on {} (TLS)", bind_addr);
+            server.bind_rustls(&bind_addr, &load_rustls_config(tls)?)?
+        }
+        None => {
+            info!("Starting web server on {}", bind_addr);
+            server.bind(&bind_addr)?
+        }
+    };
+    server.run().await?;
 
     Ok(())
+}
+
+/// 读取 PEM 证书/私钥构建 rustls 服务端配置(ring provider,与依赖选型一致)
+fn load_rustls_config(tls: &crate::core::config::TlsConfig) -> Result<rustls::ServerConfig> {
+    use std::{fs::File, io::BufReader};
+
+    let certs = rustls_pemfile::certs(&mut BufReader::new(File::open(&tls.cert_path)?))
+        .collect::<std::io::Result<Vec<_>>>()?;
+    let key = rustls_pemfile::private_key(&mut BufReader::new(File::open(&tls.key_path)?))?
+        .ok_or_else(|| anyhow::anyhow!("No private key found in {}", tls.key_path))?;
+
+    let config = rustls::ServerConfig::builder_with_provider(Arc::new(
+        rustls::crypto::ring::default_provider(),
+    ))
+    .with_safe_default_protocol_versions()
+    .map_err(|e| anyhow::anyhow!("TLS protocol config: {e}"))?
+    .with_no_client_auth()
+    .with_single_cert(certs, key)
+    .map_err(|e| anyhow::anyhow!("Invalid TLS cert/key: {e}"))?;
+    Ok(config)
 }
 
 #[web::get("/")]
@@ -264,12 +291,13 @@ async fn get_velocity(
     }
 
     let interval = app_state.config.get_monitoring().interval_seconds as f64;
+    let server_name = app_state.config.get_server_name();
 
     match app_state
         .velocity_manager
         .read()
         .await
-        .get_server_velocity("server", interval)
+        .get_server_velocity(&server_name, interval)
         .await
     {
         Ok(velocity_data) => {
@@ -277,7 +305,7 @@ async fn get_velocity(
                 .velocity_manager
                 .read()
                 .await
-                .get_network_totals("server")
+                .get_network_totals(&server_name)
                 .await;
 
             let network_info = NetworkSpeedInfo::new(
@@ -294,7 +322,7 @@ async fn get_velocity(
                     .velocity_manager
                     .read()
                     .await
-                    .is_ready("server")
+                    .is_ready(&server_name)
                     .await,
             );
 
@@ -329,7 +357,7 @@ async fn get_velocity_history(
         .velocity_manager
         .read()
         .await
-        .get_server_velocity_history("server", limit)
+        .get_server_velocity_history(&app_state.config.get_server_name(), limit)
         .await
     {
         Ok(history) => Ok(HttpResponse::Ok().json(&history)),

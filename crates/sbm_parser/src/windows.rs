@@ -96,7 +96,8 @@ pub fn parse_disks(raw: &str) -> Vec<Disk> {
             let size = json_u64(&d["Size"])?;
             let free = json_u64(&d["FreeSpace"])?;
             let fs = d["FileSystem"].as_str().unwrap_or("").to_string();
-            if device_id.is_empty() || size == 0 || free == 0 || fs.is_empty() {
+            // free == 0 是合法状态(满盘),仅缺字段/零容量的记录跳过
+            if device_id.is_empty() || size == 0 || fs.is_empty() {
                 return None;
             }
             let size_kb = size / 1024;
@@ -140,6 +141,38 @@ pub fn parse_temps(raw: &str) -> Temperatures {
 /// `_Total` 与空名跳过;时间戳为 100ns 单位
 pub fn parse_net_speed(raw: &str) -> Vec<(String, f64, f64)> {
     parse_wmi_delta(raw, "BytesReceivedPersec", "BytesSentPersec")
+}
+
+/// 与 `parse_net_speed` 同源的 WMI 采样,取最后一组的原始累计计数:
+/// Win32_PerfRawData 的 `*Persec` 字段实为累计字节数,
+/// 产出与 Linux/BSD 一致的 NetIface 累计计数器,速率由调用方跨采样差分
+pub fn parse_net(raw: &str) -> Vec<NetIface> {
+    let Some(Value::Array(samples)) = decode(raw) else {
+        return Vec::new();
+    };
+    let Some(last) = samples.last() else {
+        return Vec::new();
+    };
+    let last = match last.get("value") {
+        Some(inner) => inner.clone(),
+        None => last.clone(),
+    };
+    let Value::Array(list) = last else {
+        return Vec::new();
+    };
+    list.iter()
+        .filter_map(|v| {
+            let name = v["Name"].as_str().unwrap_or("");
+            if name.is_empty() || name == "_Total" {
+                return None;
+            }
+            Some(NetIface {
+                device: name.to_string(),
+                rx_bytes: json_u64(&v["BytesReceivedPersec"])?,
+                tx_bytes: json_u64(&v["BytesSentPersec"])?,
+            })
+        })
+        .collect()
 }
 
 fn parse_wmi_delta(raw: &str, field1: &str, field2: &str) -> Vec<(String, f64, f64)> {

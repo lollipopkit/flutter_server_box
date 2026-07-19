@@ -130,8 +130,9 @@ pub fn parse_status_opts(
                 fail: 0,
             });
             status.batteries = windows::parse_batteries(get(commands::BATTERY));
-            // 网速/磁盘 IO 为 WMI 双采样差分,直接产出速率:
-            // windows::parse_net_speed / windows::parse_diskio
+            // NET 为 WMI 双采样:累计计数进 status.net(与其他平台一致),
+            // 即时速率另由 windows::parse_net_speed 差分产出
+            status.net = windows::parse_net(get(commands::NET));
             status.diskio = windows::parse_diskio(get(commands::DISKIO));
         }
     }

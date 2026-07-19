@@ -58,8 +58,11 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
 
     info!("Starting monitoring loop with {}s interval", app_state.config.get_monitoring().interval_seconds);
 
+    // 上一周期的 CPU 汇总采样:累计 ticks 需跨周期差分才是当前使用率
+    let mut prev_cpu: Option<CpuCore> = None;
+
     loop {
-        match collect_metrics(&app_state.config).await {
+        match collect_metrics(&app_state.config, &mut prev_cpu).await {
             Ok(metrics) => {
                 // Store metrics in database
                 if let Err(e) = store_metrics(&app_state.db, &metrics).await {
@@ -104,11 +107,13 @@ fn system_type() -> SystemType {
     }
 }
 
-async fn collect_metrics(config: &Config) -> Result<SystemMetrics> {
+async fn collect_metrics(config: &Config, prev_cpu: &mut Option<CpuCore>) -> Result<SystemMetrics> {
     let system = system_type();
     let raw = execute_commands(system).await?;
     let status = sbm_parser::parse_status(system, &raw);
-    Ok(adapt_status(system, status, config))
+    let prev = prev_cpu.take();
+    *prev_cpu = summary_core(&status.cpu).cloned();
+    Ok(adapt_status(system, status, config, prev.as_ref()))
 }
 
 /// 执行 sbm_parser 命令清单(单一事实来源,见 ADR 0001),按 key 收集输出。
@@ -150,8 +155,13 @@ async fn execute_commands(system: SystemType) -> Result<HashMap<String, String>>
 }
 
 /// 将解析结果适配为 monitor 的聚合指标
-fn adapt_status(system: SystemType, status: ServerStatus, config: &Config) -> SystemMetrics {
-    let (cpu_usage, cpu_cores) = adapt_cpu(&status.cpu);
+fn adapt_status(
+    system: SystemType,
+    status: ServerStatus,
+    config: &Config,
+    prev_cpu: Option<&CpuCore>,
+) -> SystemMetrics {
+    let (cpu_usage, cpu_cores) = adapt_cpu(&status.cpu, prev_cpu);
     let (memory, swap) = adapt_memory(&status);
     let disk = aggregate_disks(&status.disks);
     let network = aggregate_net(&status);
@@ -175,17 +185,21 @@ fn adapt_status(system: SystemType, status: ServerStatus, config: &Config) -> Sy
     }
 }
 
-/// CPU:汇总行(id == "cpu",BSD 无汇总则取首核)计算使用率;
-/// 逐核转为 CpuCoreTime(used = total - idle)。
-/// 注意:单次采样的累计 ticks 反映开机以来均值;差分改造见 ADR Phase 1b
-fn adapt_cpu(cores: &[CpuCore]) -> (f32, Vec<CpuCoreTime>) {
-    let summary = cores.iter().find(|c| c.id == "cpu").or_else(|| cores.first());
-    let usage = summary
-        .map(|c| {
-            let total = c.total();
-            if total == 0 { 0.0 } else { ((total - c.idle) as f32 / total as f32) * 100.0 }
-        })
-        .unwrap_or(0.0);
+fn summary_core(cores: &[CpuCore]) -> Option<&CpuCore> {
+    cores.iter().find(|c| c.id == "cpu").or_else(|| cores.first())
+}
+
+/// CPU:汇总行(id == "cpu",BSD 无汇总则取首核)与上一采样差分计算当前使用率
+/// (与 Dart `Cpus.usedPercent` 同语义);累计 ticks 直接求比值是开机以来均值,不可用。
+/// 首个周期无差分基线报 0;计数器回绕(重启)时同样重置基线。
+/// 逐核转为 CpuCoreTime(used = total - idle)
+fn adapt_cpu(cores: &[CpuCore], prev_summary: Option<&CpuCore>) -> (f32, Vec<CpuCoreTime>) {
+    let usage = match (prev_summary, summary_core(cores)) {
+        (Some(pre), Some(now)) if now.total() > pre.total() => {
+            sbm_parser::types::cpu_used_percent(pre, now) as f32
+        }
+        _ => 0.0,
+    };
 
     let core_times = cores
         .iter()

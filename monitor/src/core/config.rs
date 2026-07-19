@@ -233,6 +233,37 @@ impl Config {
         self.push.clone().unwrap_or_else(|| vec![])
     }
 
+    /// serve 子命令的 CLI/env 覆盖(--addr/--cert/--key),优先于配置文件
+    pub fn apply_cli_overrides(
+        &mut self,
+        addr: Option<&str>,
+        cert: Option<&str>,
+        key: Option<&str>,
+    ) -> Result<()> {
+        let mut server = self.get_server();
+        if let Some(addr) = addr {
+            let (host, port) = addr
+                .rsplit_once(':')
+                .ok_or_else(|| anyhow::anyhow!("Invalid --addr '{addr}', expected host:port"))?;
+            server.host = host.to_string();
+            server.port = port
+                .parse()
+                .with_context(|| format!("Invalid port in --addr '{addr}'"))?;
+        }
+        match (cert, key) {
+            (Some(cert), Some(key)) => {
+                server.tls = Some(TlsConfig {
+                    cert_path: cert.to_string(),
+                    key_path: key.to_string(),
+                });
+            }
+            (None, None) => {}
+            _ => anyhow::bail!("--cert and --key must be provided together"),
+        }
+        self.server = Some(server);
+        Ok(())
+    }
+
     pub fn get_server_name(&self) -> String {
         self.name.clone().unwrap_or_else(|| "Server 1".to_string())
     }
