@@ -1,10 +1,10 @@
-import { vi } from 'vitest';
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vitest/config'
 
-// Add necessary Vitest test environment setup
-export default {
-  testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
-  moduleNameMapping: {
-    '^@/(.*)$': '<rootDir>/src/$1',
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    globals: true,
+    environment: 'jsdom',
   },
-};
+})

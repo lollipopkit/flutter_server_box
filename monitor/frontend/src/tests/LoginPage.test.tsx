@@ -1,17 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 import LoginPage from '../pages/LoginPage';
 import { apiService } from '../services/api';
 
 // Mock the API service
-vi.mock('../src/services/api');
+vi.mock('../services/api');
 const mockedApiService = vi.mocked(apiService);
 
 // Mock the hooks
-vi.mock('../src/hooks', () => ({
-  useAuth: vi.fn(),
+vi.mock('../hooks', () => ({
+  useAuth: () => ({ login: vi.fn() }),
   useStatus: vi.fn(),
   useMetrics: vi.fn(),
 }));
