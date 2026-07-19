@@ -5,6 +5,12 @@
 @source "../../../packages/webui/src";
 
 @layer base {
+  html {
+    /* Reserve the scrollbar gutter permanently so content between the home
+       grid and shorter detail pages doesn't cause a width jump when the
+       vertical scrollbar toggles on/off */
+    scrollbar-gutter: stable;
+  }
   body {
     @apply bg-bg text-fg font-body;
   }
