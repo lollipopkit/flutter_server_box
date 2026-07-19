@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { ChevronsLeft, ChevronsRight, LogOut, Monitor, Server } from '@lucide/svelte'
-  import { IconButton, cn } from '@serverbox/webui'
+  import { ChevronsLeft, ChevronsRight, LogOut, Monitor, Plus, Server } from '@lucide/svelte'
+  import { Button, IconButton, Input, cn } from '@serverbox/webui'
   import LocaleToggle from './LocaleToggle.svelte'
   import ThemeToggle from './ThemeToggle.svelte'
   import { onDestroy, onMount } from 'svelte'
@@ -12,6 +12,19 @@
   function selectServer(id: string) {
     layout.mobileOpen = false
     servers.select(id)
+  }
+
+  let adding = $state(false)
+  let newName = $state('')
+  let newUrl = $state('')
+
+  function submitAdd(e: SubmitEvent) {
+    e.preventDefault()
+    if (!newUrl.trim()) return
+    servers.add(newName, newUrl)
+    newName = ''
+    newUrl = ''
+    adding = false
   }
 
   // Collapse only applies to the desktop rail; the mobile drawer is always
@@ -70,9 +83,30 @@
   </div>
 
   <nav class="flex-1 overflow-y-auto px-2 py-3 space-y-1">
-    <p class={cn('px-2 pb-1 text-xs font-medium text-faint-fg uppercase tracking-wide', labelCls)}>
-      {$LL.servers()}
-    </p>
+    <div class="flex items-center justify-between px-2 pb-1">
+      <p class={cn('text-xs font-medium text-faint-fg uppercase tracking-wide', labelCls)}>
+        {$LL.servers()}
+      </p>
+      <IconButton
+        class={cn('-mr-1', labelCls)}
+        label={$LL.addServer()}
+        onclick={() => (adding = !adding)}
+      >
+        <Plus class="w-4 h-4" />
+      </IconButton>
+    </div>
+    {#if adding}
+      <form class={cn('space-y-1.5 px-1 pb-2', labelCls)} onsubmit={submitAdd}>
+        <Input class="text-sm w-full" placeholder={$LL.serverName()} bind:value={newName} />
+        <Input
+          class="text-sm w-full"
+          placeholder="https://server:3770"
+          bind:value={newUrl}
+          required
+        />
+        <Button type="submit" size="sm" class="w-full">{$LL.add()}</Button>
+      </form>
+    {/if}
     {#each servers.list as s (s.id)}
       {@const active = s.id === servers.currentId}
       <button
