@@ -13,6 +13,7 @@
     valueClass?: string
     badge: string
     tone?: BadgeTone
+    class?: string
   }
 
   const {
@@ -24,10 +25,11 @@
     valueClass = 'text-2xl',
     badge,
     tone = 'success',
+    class: className = '',
   }: Props = $props()
 </script>
 
-<Card>
+<Card class={className}>
   <div class="flex items-center justify-between mb-3">
     <div class="flex items-center min-w-0">
       <Icon class="w-5 h-5 {iconClass} mr-2 shrink-0" />

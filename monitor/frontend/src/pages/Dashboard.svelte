@@ -106,25 +106,27 @@
 {:else}
   <header class="bg-surface shadow-xs border-b border-line">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center py-4">
-        <div class="flex items-center">
-          <Monitor class="w-8 h-8 text-accent mr-3" />
-          <div>
-            <h1 class="text-xl font-semibold font-display text-fg-strong">ServerBox Monitor</h1>
-            <p class="text-sm text-muted-fg">
+      <div class="flex flex-wrap justify-between items-center gap-x-4 gap-y-2 py-3 sm:py-4">
+        <div class="flex items-center min-w-0">
+          <Monitor class="w-8 h-8 text-accent mr-3 shrink-0" />
+          <div class="min-w-0">
+            <h1 class="text-xl font-semibold font-display text-fg-strong truncate">
+              ServerBox Monitor
+            </h1>
+            <p class="text-sm text-muted-fg truncate">
               {status.data?.name || $LL.unknownServer()}
             </p>
           </div>
         </div>
 
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center gap-1 sm:gap-3 min-w-0">
           <ServerPicker />
-          <div class="text-sm text-muted-fg">
+          <div class="hidden md:block text-sm text-muted-fg whitespace-nowrap">
             {$LL.welcome()} <span class="font-medium">{servers.current?.username}</span>
           </div>
           <LocaleToggle />
           <ThemeToggle />
-          <Button variant="secondary" size="sm" onclick={() => servers.logout()}>
+          <Button variant="secondary" size="sm" class="whitespace-nowrap" onclick={() => servers.logout()}>
             <LogOut class="w-4 h-4 mr-2" />
             {$LL.logout()}
           </Button>
@@ -145,8 +147,9 @@
       </div>
     {/if}
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
       <StatCard
+        class="p-4 sm:p-6"
         icon={Cpu}
         iconClass="text-blue-500"
         label={$LL.cpuUsage()}
@@ -156,6 +159,7 @@
         tone={statusTone(m?.cpu_usage, 'cpu')}
       />
       <StatCard
+        class="p-4 sm:p-6"
         icon={MemoryStick}
         iconClass="text-green-500"
         label={$LL.memory()}
@@ -165,6 +169,7 @@
         tone={statusTone(m?.memory.usage_percent, 'memory')}
       />
       <StatCard
+        class="p-4 sm:p-6"
         icon={HardDrive}
         iconClass="text-yellow-500"
         label={$LL.diskUsage()}
@@ -174,6 +179,7 @@
         tone={statusTone(m?.disk.usage_percent, 'disk')}
       />
       <StatCard
+        class="p-4 sm:p-6 col-span-2 lg:col-span-1"
         icon={Network}
         iconClass="text-purple-500"
         label={$LL.network()}
@@ -209,7 +215,7 @@
       <p class="mb-4 text-sm text-danger">{historyError}</p>
     {/if}
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 mb-8">
       <LineChart
         title={$LL.usage()}
         labels={historyLabels}
@@ -227,7 +233,7 @@
 
     {#if metrics.data}
       {@const m = metrics.data}
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
         <Card>
           <h3 class="text-lg font-semibold font-display text-fg-strong mb-4">{$LL.systemInformation()}</h3>
           <div class="space-y-3">

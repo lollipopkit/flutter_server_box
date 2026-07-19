@@ -28,7 +28,7 @@
 <div class="space-y-2">
   <div class="flex items-center gap-2">
     <Select
-      class="text-sm w-full"
+      class="text-sm {manage ? 'w-full' : 'min-w-28 max-w-40 sm:max-w-56'}"
       value={servers.currentId}
       onchange={(e: Event) => servers.select((e.currentTarget as HTMLSelectElement).value)}
     >
