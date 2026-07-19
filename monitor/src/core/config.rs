@@ -38,6 +38,10 @@ pub struct ServerConfig {
     pub host: String,
     pub port: u16,
     pub tls: Option<TlsConfig>,
+    /// Origins allowed to call the API cross-origin (e.g. a panel hosted on
+    /// Cloudflare Pages). Empty = same-origin only (no CORS headers).
+    #[serde(default)]
+    pub cors_allowed_origins: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -157,6 +161,7 @@ impl Config {
                         cert_path: cert,
                         key_path: key,
                     }),
+                cors_allowed_origins: Vec::new(),
             };
 
             let interval_seconds = if let Some(interval_str) = &self.interval {
@@ -220,6 +225,7 @@ impl Config {
             host: "0.0.0.0".to_string(),
             port: 3770,
             tls: None,
+            cors_allowed_origins: Vec::new(),
         })
     }
 
@@ -244,6 +250,15 @@ impl Config {
     fn apply_env_overrides(&mut self) {
         if let Some(secret) = env::var("JWT_SECRET").ok().filter(|s| !s.is_empty()) {
             self.jwt_secret = Some(secret);
+        }
+        if let Some(origins) = env::var("SBM_CORS_ORIGINS").ok().filter(|s| !s.is_empty()) {
+            let mut server = self.get_server();
+            server.cors_allowed_origins = origins
+                .split(',')
+                .map(|o| o.trim().trim_end_matches('/').to_string())
+                .filter(|o| !o.is_empty())
+                .collect();
+            self.server = Some(server);
         }
     }
 
@@ -411,6 +426,7 @@ impl Default for Config {
                         cert_path: cert,
                         key_path: key,
                     }),
+                cors_allowed_origins: Vec::new(),
             }),
             monitoring: Some(MonitoringConfig {
                 interval_seconds: 7,

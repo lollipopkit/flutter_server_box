@@ -13,6 +13,7 @@ sbm_parser = { path = "../crates/sbm_parser" }
 
 # Web framework
 ntex = { version = "3", features = ["tokio", "rustls"] }
+ntex-cors = "3.2"
 ntex-files = "3.2"
 
 # TLS (ring instead of aws-lc: no cmake/assembly dependency for static musl builds)

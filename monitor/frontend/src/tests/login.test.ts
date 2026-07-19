@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/svelte'
 import '@testing-library/jest-dom/vitest'
 import Login from '../pages/Login.svelte'
 import { api, ApiError } from '../lib/api'
-import { auth } from '../lib/auth.svelte'
+import { servers } from '../lib/servers.svelte'
 
 // Partial mock: ApiError stays real so instanceof narrowing works
 vi.mock('../lib/api', async (importOriginal) => ({
@@ -15,7 +15,7 @@ const mockedLogin = vi.mocked(api.login)
 describe('Login', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    auth.logout()
+    servers.logout()
   })
 
   it('renders login form', () => {
@@ -38,8 +38,8 @@ describe('Login', () => {
 
     await waitFor(() => {
       expect(mockedLogin).toHaveBeenCalledWith({ username: 'admin', password: 'password' })
-      expect(auth.authenticated).toBe(true)
-      expect(auth.username).toBe('admin')
+      expect(servers.authenticated).toBe(true)
+      expect(servers.current.username).toBe('admin')
     })
   })
 
@@ -54,7 +54,7 @@ describe('Login', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Invalid credentials')).toBeInTheDocument()
-      expect(auth.authenticated).toBe(false)
+      expect(servers.authenticated).toBe(false)
     })
   })
 })

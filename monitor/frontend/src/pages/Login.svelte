@@ -1,9 +1,10 @@
 <script lang="ts">
   import { Monitor, CircleAlert } from '@lucide/svelte'
+  import ServerPicker from '../components/ServerPicker.svelte'
   import Spinner from '../components/Spinner.svelte'
   import ThemeToggle from '../components/ThemeToggle.svelte'
   import { api, ApiError } from '../lib/api'
-  import { auth } from '../lib/auth.svelte'
+  import { servers } from '../lib/servers.svelte'
 
   let username = $state('')
   let password = $state('')
@@ -16,7 +17,7 @@
     error = ''
     try {
       const response = await api.login({ username, password })
-      auth.login(response.token, username)
+      servers.login(response.token, username)
     } catch (err) {
       error = err instanceof ApiError ? err.message : 'Login failed'
     } finally {
@@ -39,6 +40,8 @@
         Sign in to access your server monitoring dashboard
       </p>
     </div>
+
+    <ServerPicker manage={true} />
 
     <form class="mt-8 space-y-6" onsubmit={handleSubmit}>
       {#if error}

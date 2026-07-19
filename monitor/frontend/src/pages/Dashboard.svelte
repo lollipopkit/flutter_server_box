@@ -12,11 +12,12 @@
     RefreshCw,
   } from '@lucide/svelte'
   import LineChart from '../components/LineChart.svelte'
+  import ServerPicker from '../components/ServerPicker.svelte'
   import Spinner from '../components/Spinner.svelte'
   import StatCard from '../components/StatCard.svelte'
   import ThemeToggle from '../components/ThemeToggle.svelte'
   import { api } from '../lib/api'
-  import { auth } from '../lib/auth.svelte'
+  import { servers } from '../lib/servers.svelte'
   import { fmtBytesPerSec, fmtPercent } from '../lib/format'
   import { Poller } from '../lib/poller.svelte'
   import type { HistoryPoint } from '../types'
@@ -108,11 +109,12 @@
         </div>
 
         <div class="flex items-center space-x-4">
+          <ServerPicker />
           <div class="text-sm text-muted">
-            Welcome, <span class="font-medium">{auth.username}</span>
+            Welcome, <span class="font-medium">{servers.current?.username}</span>
           </div>
           <ThemeToggle />
-          <button onclick={() => auth.logout()} class="btn btn-secondary flex items-center">
+          <button onclick={() => servers.logout()} class="btn btn-secondary flex items-center">
             <LogOut class="w-4 h-4 mr-2" />
             Logout
           </button>

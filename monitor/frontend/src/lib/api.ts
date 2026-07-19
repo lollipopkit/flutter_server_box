@@ -1,18 +1,18 @@
 import type { HistoryPoint, LoginRequest, LoginResponse, StatusResponse, SystemMetrics } from '../types'
-import { auth } from './auth.svelte'
+import { servers } from './servers.svelte'
 
-const BASE = '/api/v1'
 const TIMEOUT_MS = 10_000
 
 export class ApiError extends Error {}
 
 async function request<T>(path: string, init: RequestInit = {}, fallback = 'Request failed'): Promise<T> {
+  const server = servers.current
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (auth.token) headers.Authorization = `Bearer ${auth.token}`
+  if (server?.token) headers.Authorization = `Bearer ${server.token}`
 
   let res: Response
   try {
-    res = await fetch(`${BASE}${path}`, {
+    res = await fetch(`${server?.url ?? ''}/api/v1${path}`, {
       ...init,
       headers,
       signal: AbortSignal.timeout(TIMEOUT_MS),
@@ -22,8 +22,8 @@ async function request<T>(path: string, init: RequestInit = {}, fallback = 'Requ
   }
 
   if (res.status === 401 && path !== '/login') {
-    // Expired/invalid token: drop the session, App falls back to the login page
-    auth.logout()
+    // Expired/invalid token: drop this server's session, App falls back to login
+    servers.logout()
     throw new ApiError('Session expired')
   }
   if (!res.ok) {

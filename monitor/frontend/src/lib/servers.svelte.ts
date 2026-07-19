@@ -1,0 +1,113 @@
+/// Multi-server registry with per-server sessions. The panel can be served by
+/// an agent itself (same-origin, url '') or hosted statically (e.g. Cloudflare
+/// Pages) and talk to several agents cross-origin — each agent must list the
+/// panel origin in cors_allowed_origins and be reachable over HTTPS.
+
+export interface ServerEntry {
+  id: string
+  name: string
+  /// Base URL of the agent ('' = same origin)
+  url: string
+  token: string | null
+  username: string | null
+}
+
+const KEY = 'servers.v1'
+
+function normalizeUrl(u: string): string {
+  return u.trim().replace(/\/+$/, '')
+}
+
+function newId(): string {
+  return typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : String(Date.now())
+}
+
+class ServersStore {
+  list = $state<ServerEntry[]>([])
+  currentId = $state('')
+
+  constructor() {
+    const raw = window.localStorage.getItem(KEY)
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as { list?: ServerEntry[]; currentId?: string }
+        this.list = parsed.list ?? []
+        this.currentId = parsed.currentId ?? ''
+      } catch {
+        // Corrupt store: fall through to the default entry
+      }
+    }
+    if (this.list.length === 0) {
+      // Same-origin default; migrates the legacy single-server token keys
+      this.list = [
+        {
+          id: 'local',
+          name: 'This server',
+          url: '',
+          token: window.localStorage.getItem('token'),
+          username: window.localStorage.getItem('username'),
+        },
+      ]
+      this.currentId = 'local'
+      this.#persist()
+    }
+    if (!this.list.some((s) => s.id === this.currentId)) {
+      this.currentId = this.list[0].id
+    }
+  }
+
+  get current(): ServerEntry {
+    return this.list.find((s) => s.id === this.currentId) ?? this.list[0]
+  }
+
+  get authenticated(): boolean {
+    return !!this.current?.token
+  }
+
+  add(name: string, url: string) {
+    const entry: ServerEntry = {
+      id: newId(),
+      name: name.trim() || normalizeUrl(url),
+      url: normalizeUrl(url),
+      token: null,
+      username: null,
+    }
+    this.list.push(entry)
+    this.currentId = entry.id
+    this.#persist()
+  }
+
+  remove(id: string) {
+    if (this.list.length <= 1) return
+    this.list = this.list.filter((s) => s.id !== id)
+    if (this.currentId === id) this.currentId = this.list[0].id
+    this.#persist()
+  }
+
+  select(id: string) {
+    if (this.list.some((s) => s.id === id)) {
+      this.currentId = id
+      this.#persist()
+    }
+  }
+
+  login(token: string, username: string) {
+    this.current.token = token
+    this.current.username = username
+    this.#persist()
+  }
+
+  logout() {
+    this.current.token = null
+    this.#persist()
+  }
+
+  #persist() {
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({ list: $state.snapshot(this.list), currentId: this.currentId }),
+    )
+  }
+}
+
+export const servers = new ServersStore()

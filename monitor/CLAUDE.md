@@ -89,6 +89,14 @@ Pure parsing library shared with the Flutter app via FFI (see `../doc/adr/0001-m
 - **`lib/`**: fetch-based API client, module-level rune stores (auth/theme), Poller
 - **`types/`**: TypeScript type definitions
 - Tests: vitest + @testing-library/svelte; type gate via svelte-check (part of `npm run build`)
+- Multi-server: the panel keeps a server list (per-server URL + session) in localStorage; it can be served by an agent itself (same-origin) or hosted statically (e.g. Cloudflare Pages) talking to several agents
+
+### Hosting the panel on Cloudflare Pages
+
+- Pages project settings: build command `cd monitor/frontend && npm ci && npm run build`, output directory `monitor/frontend/dist`
+- Each agent must allow the panel origin: `cors_allowed_origins` in config.toml or `SBM_CORS_ORIGINS` env (comma-separated)
+- Agents must be reachable over HTTPS (browser mixed-content policy): use the built-in TLS (`--cert/--key` / `SBM_TLS_*`) or a reverse proxy / Cloudflare Tunnel
+- An agent without the panel: just don't ship `frontend/dist`; the API works standalone
 
 ### Key Design Patterns
 

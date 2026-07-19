@@ -14,6 +14,9 @@ database_url = "sqlite:serverbox_monitor.db"
 [server]
 host = "0.0.0.0"
 port = 3770
+# Origins allowed to call the API cross-origin, e.g. a panel hosted on
+# Cloudflare Pages. Empty (default) = same-origin only.
+# cors_allowed_origins = ["https://panel.example.pages.dev"]
 
 # Optional TLS configuration
 # [server.tls]
