@@ -11,6 +11,9 @@
 pub const SEPARATOR: &str = "SrvBoxSep";
 
 // Command keys (matching the app's `ShellCmdType` enum names)
+/// System-sign echo segment (`__linux` / `__bsd` / `__windows`), used by the app
+/// to detect the remote OS from script output
+pub const ECHO: &str = "echo";
 pub const TIME: &str = "time";
 pub const NET: &str = "net";
 pub const SYS: &str = "sys";
@@ -40,8 +43,13 @@ pub struct CommandSpec {
     pub core: bool,
 }
 
+// NOTE: table order is script wire format — the generated status script emits
+// segments in this exact order, and it must match the Dart enum declaration
+// order (`StatusCmdType` etc.) for byte-identical script generation.
+
 /// Linux(App `StatusCmdType`)
 pub const LINUX: &[CommandSpec] = &[
+    CommandSpec { core: true, key: ECHO, cmd: "echo __linux" },
     CommandSpec { core: true, key: TIME, cmd: "date +%s" },
     CommandSpec { core: true, key: NET, cmd: "cat /proc/net/dev" },
     CommandSpec { core: true, key: SYS, cmd: "cat /etc/*-release | grep ^PRETTY_NAME" },
@@ -57,7 +65,6 @@ pub const LINUX: &[CommandSpec] = &[
     CommandSpec { core: true, key: TEMP_TYPE, cmd: "cat /sys/class/thermal/thermal_zone*/type" },
     CommandSpec { core: true, key: TEMP_VAL, cmd: "cat /sys/class/thermal/thermal_zone*/temp" },
     CommandSpec { core: true, key: HOST, cmd: "cat /etc/hostname" },
-    CommandSpec { core: true, key: CPU_BRAND, cmd: r#"cat /proc/cpuinfo | grep "model name""# },
     CommandSpec { core: true, key: DISKIO, cmd: "cat /proc/diskstats" },
     CommandSpec {
         core: false,
@@ -76,10 +83,12 @@ pub const LINUX: &[CommandSpec] = &[
         key: DISK_SMART,
         cmd: r#"for d in $(lsblk -dn -o KNAME); do smartctl -a -j /dev/$d; echo; done"#,
     },
+    CommandSpec { core: true, key: CPU_BRAND, cmd: r#"cat /proc/cpuinfo | grep "model name""# },
 ];
 
 /// BSD/macOS(App `BSDStatusCmdType`)
 pub const BSD: &[CommandSpec] = &[
+    CommandSpec { core: true, key: ECHO, cmd: "echo __bsd" },
     CommandSpec { core: true, key: TIME, cmd: "date +%s" },
     CommandSpec { core: true, key: NET, cmd: "netstat -ibn" },
     CommandSpec { core: true, key: SYS, cmd: "uname -or" },
@@ -93,6 +102,7 @@ pub const BSD: &[CommandSpec] = &[
 
 /// Windows PowerShell(App `WindowsStatusCmdType`)
 pub const WINDOWS: &[CommandSpec] = &[
+    CommandSpec { core: true, key: ECHO, cmd: "echo __windows" },
     CommandSpec { core: true, key: TIME, cmd: "[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()" },
     CommandSpec {
         core: true,
@@ -127,7 +137,6 @@ pub const WINDOWS: &[CommandSpec] = &[
         cmd: r#"Get-CimInstance -ClassName MSAcpi_ThermalZoneTemperature -Namespace root/wmi -ErrorAction SilentlyContinue | Select-Object InstanceName, @{Name='Temperature';Expression={[math]::Round(($_.CurrentTemperature - 2732) / 10, 1)}} | ConvertTo-Json"#,
     },
     CommandSpec { core: true, key: HOST, cmd: r#"Write-Output $env:COMPUTERNAME"# },
-    CommandSpec { core: true, key: CPU_BRAND, cmd: "(Get-WmiObject -Class Win32_Processor).Name" },
     CommandSpec {
         core: false,
         key: DISKIO,
@@ -158,6 +167,7 @@ pub const WINDOWS: &[CommandSpec] = &[
         key: DISK_SMART,
         cmd: "Get-PhysicalDisk | Get-StorageReliabilityCounter | Select-Object DeviceId, Temperature, TemperatureMax, Wear, PowerOnHours | ConvertTo-Json",
     },
+    CommandSpec { core: true, key: CPU_BRAND, cmd: "(Get-WmiObject -Class Win32_Processor).Name" },
 ];
 
 pub fn commands(system: crate::SystemType) -> &'static [CommandSpec] {
