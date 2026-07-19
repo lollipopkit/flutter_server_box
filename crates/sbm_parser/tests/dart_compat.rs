@@ -107,6 +107,26 @@ fn mem_parse_bsd_macos_comma_in_parens() {
     assert_eq!(m.free, 1867 * 1024);
 }
 
+/// macOS PhysMem + vm_stat: avail derived from real usage
+/// (active + wired + compressor), so cache does not count as used
+#[test]
+fn mem_parse_bsd_macos_with_vm_stat() {
+    let raw = "PhysMem: 62G used (6542M wired, 3155M compressor), 1104M unused.\n\
+Mach Virtual Memory Statistics: (page size of 16384 bytes)\n\
+Pages free:                                    33594.\n\
+Pages active:                                1741099.\n\
+Pages inactive:                              1703799.\n\
+Pages wired down:                             417030.\n\
+Pages purgeable:                               58852.\n\
+Pages occupied by compressor:                 201000.\n";
+    let m = bsd::parse_mem(raw).unwrap();
+    let total = 62 * 1024 * 1024 + 1104 * 1024;
+    assert_eq!(m.total, total);
+    assert_eq!(m.free, 1104 * 1024);
+    let used_kib = (1741099 + 417030 + 201000) * 16; // pages x 16 KiB
+    assert_eq!(m.avail, total - used_kib);
+}
+
 /// Dart 'Test parseBsdMemory for FreeBSD'
 #[test]
 fn mem_parse_bsd_freebsd() {

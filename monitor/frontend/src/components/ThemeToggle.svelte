@@ -1,8 +1,13 @@
 <script lang="ts">
   import { Sun, Moon, MonitorCog } from '@lucide/svelte'
+  import { i18n } from '../lib/i18n.svelte'
   import { theme } from '../lib/theme.svelte'
 
-  const labels = { system: 'System theme', light: 'Light theme', dark: 'Dark theme' }
+  const labels = $derived({
+    system: i18n.t('themeSystem'),
+    light: i18n.t('themeLight'),
+    dark: i18n.t('themeDark'),
+  })
 </script>
 
 <button

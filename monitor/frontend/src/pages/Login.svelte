@@ -1,9 +1,11 @@
 <script lang="ts">
   import { Monitor, CircleAlert } from '@lucide/svelte'
+  import LocaleToggle from '../components/LocaleToggle.svelte'
   import ServerPicker from '../components/ServerPicker.svelte'
   import Spinner from '../components/Spinner.svelte'
   import ThemeToggle from '../components/ThemeToggle.svelte'
   import { api, ApiError } from '../lib/api'
+  import { i18n } from '../lib/i18n.svelte'
   import { servers } from '../lib/servers.svelte'
 
   let username = $state('')
@@ -27,7 +29,8 @@
 </script>
 
 <div class="min-h-screen flex items-center justify-center">
-  <div class="absolute top-4 right-4">
+  <div class="absolute top-4 right-4 flex items-center gap-1">
+    <LocaleToggle />
     <ThemeToggle />
   </div>
   <div class="max-w-md w-full space-y-8 p-8">
@@ -36,9 +39,7 @@
         <Monitor class="w-12 h-12 text-primary-600" />
       </div>
       <h2 class="mt-6 text-3xl font-bold text-strong">ServerBox Monitor</h2>
-      <p class="mt-2 text-sm text-muted">
-        Sign in to access your server monitoring dashboard
-      </p>
+      <p class="mt-2 text-sm text-muted">{i18n.t('signInSubtitle')}</p>
     </div>
 
     <ServerPicker manage={true} />
@@ -60,7 +61,7 @@
       <div class="space-y-4">
         <div>
           <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Username
+            {i18n.t('username')}
           </label>
           <input
             id="username"
@@ -69,12 +70,12 @@
             required
             bind:value={username}
             class="input mt-1"
-            placeholder="Enter your username"
+            placeholder={i18n.t('enterUsername')}
           />
         </div>
         <div>
           <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Password
+            {i18n.t('password')}
           </label>
           <input
             id="password"
@@ -83,7 +84,7 @@
             required
             bind:value={password}
             class="input mt-1"
-            placeholder="Enter your password"
+            placeholder={i18n.t('enterPassword')}
           />
         </div>
       </div>
@@ -96,9 +97,9 @@
         >
           {#if loading}
             <Spinner size="sm" class="mr-2" />
-            Signing in...
+            {i18n.t('signingIn')}
           {:else}
-            Sign in
+            {i18n.t('signIn')}
           {/if}
         </button>
       </div>

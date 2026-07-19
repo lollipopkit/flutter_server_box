@@ -12,6 +12,7 @@
     RefreshCw,
   } from '@lucide/svelte'
   import LineChart from '../components/LineChart.svelte'
+  import LocaleToggle from '../components/LocaleToggle.svelte'
   import ServerPicker from '../components/ServerPicker.svelte'
   import Spinner from '../components/Spinner.svelte'
   import StatCard from '../components/StatCard.svelte'
@@ -19,6 +20,7 @@
   import { api } from '../lib/api'
   import { servers } from '../lib/servers.svelte'
   import { fmtBytesPerSec, fmtPercent } from '../lib/format'
+  import { i18n } from '../lib/i18n.svelte'
   import { Poller } from '../lib/poller.svelte'
   import type { HistoryPoint } from '../types'
 
@@ -64,12 +66,12 @@
   const historyLabels = $derived(history.map((p) => p.timestamp))
   const usageSeries = $derived([
     { label: 'CPU', color: '#3b82f6', values: history.map((p) => p.cpu) },
-    { label: 'Memory', color: '#22c55e', values: history.map((p) => p.memory) },
-    { label: 'Disk', color: '#f59e0b', values: history.map((p) => p.disk) },
+    { label: i18n.t('memory'), color: '#22c55e', values: history.map((p) => p.memory) },
+    { label: i18n.t('diskUsage'), color: '#f59e0b', values: history.map((p) => p.disk) },
   ])
   const networkSeries = $derived([
-    { label: 'Down', color: '#8b5cf6', values: history.map((p) => p.net_rx_speed) },
-    { label: 'Up', color: '#ec4899', values: history.map((p) => p.net_tx_speed) },
+    { label: i18n.t('down'), color: '#8b5cf6', values: history.map((p) => p.net_rx_speed) },
+    { label: i18n.t('up'), color: '#ec4899', values: history.map((p) => p.net_tx_speed) },
   ])
 
   const thresholds = {
@@ -103,7 +105,7 @@
           <div>
             <h1 class="text-xl font-semibold text-strong">ServerBox Monitor</h1>
             <p class="text-sm text-gray-500 dark:text-gray-400">
-              {status.data?.name || 'Unknown Server'}
+              {status.data?.name || i18n.t('unknownServer')}
             </p>
           </div>
         </div>
@@ -111,12 +113,13 @@
         <div class="flex items-center space-x-4">
           <ServerPicker />
           <div class="text-sm text-muted">
-            Welcome, <span class="font-medium">{servers.current?.username}</span>
+            {i18n.t('welcome')} <span class="font-medium">{servers.current?.username}</span>
           </div>
+          <LocaleToggle />
           <ThemeToggle />
           <button onclick={() => servers.logout()} class="btn btn-secondary flex items-center">
             <LogOut class="w-4 h-4 mr-2" />
-            Logout
+            {i18n.t('logout')}
           </button>
         </div>
       </div>
@@ -141,42 +144,42 @@
       <StatCard
         icon={Cpu}
         iconClass="text-blue-500"
-        label="CPU Usage"
+        label={i18n.t('cpuUsage')}
         value={status.data?.cpu || '--'}
-        badge={status.data?.cpu ? 'Active' : 'N/A'}
+        badge={status.data?.cpu ? i18n.t('active') : i18n.t('na')}
         badgeClass={statusBadge(status.data?.cpu, 'cpu')}
       />
       <StatCard
         icon={MemoryStick}
         iconClass="text-green-500"
-        label="Memory"
+        label={i18n.t('memory')}
         value={status.data?.memory || '--'}
         valueClass="text-lg"
-        badge={status.data?.memory ? 'Active' : 'N/A'}
+        badge={status.data?.memory ? i18n.t('active') : i18n.t('na')}
         badgeClass={statusBadge(status.data?.memory, 'memory')}
       />
       <StatCard
         icon={HardDrive}
         iconClass="text-yellow-500"
-        label="Disk Usage"
+        label={i18n.t('diskUsage')}
         value={status.data?.disk || '--'}
         valueClass="text-lg"
-        badge={status.data?.disk ? 'Active' : 'N/A'}
+        badge={status.data?.disk ? i18n.t('active') : i18n.t('na')}
         badgeClass={statusBadge(status.data?.disk, 'disk')}
       />
       <StatCard
         icon={Network}
         iconClass="text-purple-500"
-        label="Network"
-        value={status.data?.network || '--'}
+        label={i18n.t('network')}
+        value={status.data?.network?.replace(' / ', '\n') || '--'}
         valueClass="text-sm"
-        badge="Active"
+        badge={i18n.t('active')}
         badgeClass="status-success"
       />
     </div>
 
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-semibold text-strong">History</h2>
+      <h2 class="text-lg font-semibold text-strong">{i18n.t('history')}</h2>
       <div class="flex rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden">
         {#each RANGES as r (r.minutes)}
           <button
@@ -197,14 +200,14 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       <LineChart
-        title="Usage"
+        title={i18n.t('usage')}
         labels={historyLabels}
         series={usageSeries}
         yMax={100}
         format={fmtPercent}
       />
       <LineChart
-        title="Network"
+        title={i18n.t('network')}
         labels={historyLabels}
         series={networkSeries}
         format={fmtBytesPerSec}
@@ -215,33 +218,33 @@
       {@const m = metrics.data}
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="card">
-          <h3 class="text-lg font-semibold text-strong mb-4">System Information</h3>
+          <h3 class="text-lg font-semibold text-strong mb-4">{i18n.t('systemInformation')}</h3>
           <div class="space-y-3">
             <div class="flex justify-between">
-              <span class="text-sm text-muted">Server Name:</span>
+              <span class="text-sm text-muted">{i18n.t('serverNameLabel')}</span>
               <span class="text-sm font-medium">{m.server_name}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-muted">Last Updated:</span>
+              <span class="text-sm text-muted">{i18n.t('lastUpdated')}</span>
               <span class="text-sm font-medium">
                 {new Date(m.timestamp).toLocaleString()}
               </span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-muted">CPU Usage:</span>
+              <span class="text-sm text-muted">{i18n.t('cpuUsageLabel')}</span>
               <span class="text-sm font-medium">{m.cpu_usage.toFixed(1)}%</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-muted">Memory Usage:</span>
+              <span class="text-sm text-muted">{i18n.t('memoryUsageLabel')}</span>
               <span class="text-sm font-medium">{m.memory.usage_percent.toFixed(1)}%</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-sm text-muted">Disk Usage:</span>
+              <span class="text-sm text-muted">{i18n.t('diskUsageLabel')}</span>
               <span class="text-sm font-medium">{m.disk.usage_percent.toFixed(1)}%</span>
             </div>
             {#if m.temperature != null}
               <div class="flex justify-between">
-                <span class="text-sm text-muted">Temperature:</span>
+                <span class="text-sm text-muted">{i18n.t('temperature')}</span>
                 <span class="text-sm font-medium flex items-center">
                   <Thermometer class="w-4 h-4 mr-1" />
                   {m.temperature.toFixed(1)}°C
@@ -252,17 +255,17 @@
         </div>
 
         <div class="card">
-          <h3 class="text-lg font-semibold text-strong mb-4">Quick Actions</h3>
+          <h3 class="text-lg font-semibold text-strong mb-4">{i18n.t('quickActions')}</h3>
           <div class="space-y-3">
             <button
               onclick={() => window.location.reload()}
               class="btn-primary w-full flex items-center justify-center"
             >
               <RefreshCw class="w-4 h-4 mr-2" />
-              Refresh Data
+              {i18n.t('refreshData')}
             </button>
             <div class="text-xs text-gray-500 dark:text-gray-400 text-center mt-4">
-              Data refreshes automatically every 5 seconds
+              {i18n.t('autoRefreshNote')}
             </div>
           </div>
         </div>

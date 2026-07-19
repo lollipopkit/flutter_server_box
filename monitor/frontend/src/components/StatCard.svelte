@@ -28,7 +28,7 @@
       <Icon class="w-8 h-8 {iconClass} mr-3" />
       <div>
         <p class="text-sm font-medium text-muted">{label}</p>
-        <p class="{valueClass} font-bold text-strong">{value}</p>
+        <p class="{valueClass} font-bold text-strong whitespace-pre-line">{value}</p>
       </div>
     </div>
     <span class={badgeClass}>{badge}</span>

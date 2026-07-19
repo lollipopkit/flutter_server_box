@@ -1,5 +1,6 @@
 <script lang="ts">
   import { fmtTime } from '../lib/format'
+  import { i18n } from '../lib/i18n.svelte'
 
   export interface ChartSeries {
     label: string
@@ -84,7 +85,7 @@
 
   {#if labels.length < 2}
     <div class="h-40 flex items-center justify-center text-sm text-muted">
-      Collecting data...
+      {i18n.t('collectingData')}
     </div>
   {:else}
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->

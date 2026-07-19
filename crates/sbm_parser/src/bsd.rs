@@ -72,7 +72,12 @@ pub fn parse_mem(raw: &str) -> Option<Memory> {
     if let Some(c) = mac.captures(raw) {
         let used = to_kib(c[1].parse().ok()?, &c[2]);
         let free = to_kib(c[3].parse().ok()?, &c[4]);
-        return Some(Memory { total: used + free, free, avail: free });
+        let total = used + free;
+        // top's "used" includes cached files; when vm_stat output accompanies
+        // the PhysMem line, derive real usage (active + wired + compressor)
+        // so avail reflects reclaimable memory, like MemAvailable on Linux
+        let avail = vm_stat_avail(raw, total).unwrap_or(free);
+        return Some(Memory { total, free, avail });
     }
 
     let freebsd = regex(
@@ -92,6 +97,34 @@ pub fn parse_mem(raw: &str) -> Option<Memory> {
         }
     }
     matched.then(|| Memory { total: used + free, free, avail: free })
+}
+
+/// Available memory from vm_stat pages: total - (active + wired + compressor).
+/// Returns None when the vm_stat block is missing (plain PhysMem input)
+fn vm_stat_avail(raw: &str, total_kib: u64) -> Option<u64> {
+    static PAGE_SIZE: OnceLock<Regex> = OnceLock::new();
+    static PAGES: OnceLock<Regex> = OnceLock::new();
+
+    let page_size = regex(&PAGE_SIZE, r"page size of (\d+) bytes")
+        .captures(raw)
+        .and_then(|c| c[1].parse::<u64>().ok())
+        .unwrap_or(4096);
+
+    let pages = regex(
+        &PAGES,
+        r"Pages (active|wired down|occupied by compressor):\s*(\d+)",
+    );
+    let mut used_pages = 0u64;
+    let mut found = 0;
+    for c in pages.captures_iter(raw) {
+        used_pages += c[2].parse::<u64>().ok()?;
+        found += 1;
+    }
+    if found == 0 {
+        return None;
+    }
+    let used_kib = used_pages * page_size / 1024;
+    Some(total_kib.saturating_sub(used_kib))
 }
 
 fn to_kib(amount: f64, unit: &str) -> u64 {

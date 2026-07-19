@@ -101,7 +101,9 @@ pub const BSD: &[CommandSpec] = &[
     CommandSpec { core: true, key: CPU, cmd: r#"top -l 1 | grep "CPU usage""# },
     CommandSpec { core: true, key: UPTIME, cmd: "uptime" },
     CommandSpec { core: true, key: DISK, cmd: "df -k" },
-    CommandSpec { core: true, key: MEM, cmd: "top -l 1 | grep PhysMem" },
+    // vm_stat supplies page-level data so "used" can exclude cache/inactive
+    // (top's PhysMem "used" counts cached files); parser tolerates its absence
+    CommandSpec { core: true, key: MEM, cmd: "top -l 1 | grep PhysMem; vm_stat" },
     CommandSpec { core: true, key: HOST, cmd: "hostname" },
     CommandSpec { core: true, key: CPU_BRAND, cmd: "sysctl -n machdep.cpu.brand_string" },
 ];

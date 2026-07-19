@@ -304,23 +304,50 @@ fn percent(used: u64, total: u64) -> f32 {
     if total == 0 { 0.0 } else { (used as f32 / total as f32) * 100.0 }
 }
 
+/// APFS volumes of one container each report the full container size/avail
+/// (df shows /dev/disk3s1, /dev/disk3s5, ... all at ~container size), so a
+/// naive sum multiplies the real capacity. Volumes sharing (base disk, size,
+/// avail) belong to one pool: count size/avail once, keep summing used.
+/// Linux paths never match the /dev/diskN pattern and are unaffected.
+fn apfs_pool_key(d: &Disk) -> Option<(String, u64, u64)> {
+    let rest = d.path.strip_prefix("/dev/disk")?;
+    let base: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+    (!base.is_empty()).then(|| (base, d.size, d.avail))
+}
+
 /// Disk aggregation with Go-compatible /status semantics: only /dev-prefixed
-/// filesystems, deduped by path, lsblk hierarchy expanded recursively; KiB → bytes
+/// filesystems, deduped by path (APFS volumes additionally deduped per
+/// container pool), lsblk hierarchy expanded recursively; KiB → bytes
 fn aggregate_disks(disks: &[Disk]) -> DiskMetrics {
-    fn walk<'a>(disks: &'a [Disk], seen: &mut Vec<&'a str>, acc: &mut (u64, u64, u64)) {
+    fn walk<'a>(
+        disks: &'a [Disk],
+        seen: &mut Vec<&'a str>,
+        pools: &mut Vec<(String, u64, u64)>,
+        acc: &mut (u64, u64, u64),
+    ) {
         for d in disks {
             if d.path.starts_with("/dev") && d.size > 0 && !seen.contains(&d.path.as_str()) {
                 seen.push(&d.path);
-                acc.0 += d.size;
+                let pooled = match apfs_pool_key(d) {
+                    Some(key) if pools.contains(&key) => true,
+                    Some(key) => {
+                        pools.push(key);
+                        false
+                    }
+                    None => false,
+                };
                 acc.1 += d.used;
-                acc.2 += d.avail;
+                if !pooled {
+                    acc.0 += d.size;
+                    acc.2 += d.avail;
+                }
             }
-            walk(&d.children, seen, acc);
+            walk(&d.children, seen, pools, acc);
         }
     }
 
     let mut acc = (0u64, 0u64, 0u64);
-    walk(disks, &mut Vec::new(), &mut acc);
+    walk(disks, &mut Vec::new(), &mut Vec::new(), &mut acc);
     let (total, used, avail) = acc;
 
     DiskMetrics {

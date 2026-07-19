@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Plus, Trash2 } from '@lucide/svelte'
+  import { i18n } from '../lib/i18n.svelte'
   import { servers } from '../lib/servers.svelte'
 
   interface Props {
@@ -31,15 +32,17 @@
       onchange={(e) => servers.select(e.currentTarget.value)}
     >
       {#each servers.list as s (s.id)}
-        <option value={s.id}>{s.name}{s.url ? ` (${s.url})` : ''}</option>
+        <option value={s.id}>
+          {s.id === 'local' ? i18n.t('thisServer') : s.name}{s.url ? ` (${s.url})` : ''}
+        </option>
       {/each}
     </select>
     {#if manage}
       <button
         type="button"
         class="p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800"
-        title="Add server"
-        aria-label="Add server"
+        title={i18n.t('addServer')}
+        aria-label={i18n.t('addServer')}
         onclick={() => (adding = !adding)}
       >
         <Plus class="w-4 h-4" />
@@ -48,8 +51,8 @@
         <button
           type="button"
           class="p-2 rounded-md text-gray-500 hover:text-danger-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-danger-400 dark:hover:bg-gray-800"
-          title="Remove server"
-          aria-label="Remove server"
+          title={i18n.t('removeServer')}
+          aria-label={i18n.t('removeServer')}
           onclick={() => servers.remove(servers.currentId)}
         >
           <Trash2 class="w-4 h-4" />
@@ -60,14 +63,14 @@
 
   {#if manage && adding}
     <form class="flex gap-2" onsubmit={submitAdd}>
-      <input class="input text-sm" placeholder="Name" bind:value={newName} />
+      <input class="input text-sm" placeholder={i18n.t('serverName')} bind:value={newName} />
       <input
         class="input text-sm"
         placeholder="https://server:3770"
         bind:value={newUrl}
         required
       />
-      <button type="submit" class="btn-primary text-sm whitespace-nowrap">Add</button>
+      <button type="submit" class="btn-primary text-sm whitespace-nowrap">{i18n.t('add')}</button>
     </form>
   {/if}
 </div>
