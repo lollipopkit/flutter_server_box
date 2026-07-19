@@ -295,8 +295,9 @@ struct HistoryPoint {
 }
 
 /// Bucketed time series from system_metrics. `?minutes=` selects the window
-/// (default 60, clamped to 5..=10080); rows are averaged into ~300 buckets and
-/// network rates are derived from consecutive cumulative counters.
+/// (default 60, clamped to 5..=10080); rows are averaged into at most 1000
+/// buckets (finer than 1s resolution collapses to 1 point per collection
+/// cycle) and network rates are derived from consecutive cumulative counters.
 async fn get_metrics_history(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
@@ -315,8 +316,8 @@ async fn get_metrics_history(
         .unwrap_or(60)
         .clamp(5, 7 * 24 * 60);
 
-    const TARGET_POINTS: i64 = 300;
-    let bucket_secs = (minutes * 60 / TARGET_POINTS).max(1);
+    const MAX_POINTS: i64 = 1000;
+    let bucket_secs = (minutes * 60 / MAX_POINTS).max(1);
 
     use sqlx::Row;
     let rows = sqlx::query(

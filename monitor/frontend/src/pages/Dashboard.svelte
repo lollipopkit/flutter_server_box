@@ -28,8 +28,8 @@
 
   const RANGES = [
     { label: '1h', minutes: 60 },
-    { label: '6h', minutes: 360 },
     { label: '24h', minutes: 1440 },
+    { label: '7d', minutes: 7 * 24 * 60 },
   ]
   let rangeMinutes = $state(60)
   let history = $state<HistoryPoint[]>([])
