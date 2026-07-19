@@ -4,7 +4,10 @@
 # 构建上下文为 monorepo 根:docker build -f monitor/Dockerfile .
 FROM node:22-alpine AS frontend-builder
 
-WORKDIR /app/frontend
+# Layout mirrors the repo so the panel's file:../../packages/webui link
+# resolves (/app/packages/webui from /app/monitor/frontend)
+WORKDIR /app/monitor/frontend
+COPY packages/ /app/packages/
 COPY monitor/frontend/package*.json ./
 RUN npm install
 
@@ -43,7 +46,7 @@ WORKDIR /app
 
 # server.rs 从工作目录下的 frontend/dist 提供静态文件,路径必须一致
 COPY --from=backend-builder /app/target/release/server_box_monitor .
-COPY --from=frontend-builder /app/frontend/dist ./frontend/dist/
+COPY --from=frontend-builder /app/monitor/frontend/dist ./frontend/dist/
 
 # Copy configuration files
 COPY monitor/.env.example .env
