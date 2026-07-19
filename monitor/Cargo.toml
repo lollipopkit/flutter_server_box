@@ -76,6 +76,14 @@ percent-encoding = "2.3"
 # CLI argument parsing
 clap = { version = "4.6", features = ["derive", "env"] }
 
+# Native per-core CPU on macOS (host_processor_info via Mach, same mechanism
+# htop uses); no shell equivalent exists, so this bypasses the shared
+# script/parser path for this one metric when the monitor runs natively on
+# macOS. Other platforms keep the shared-parser path unchanged and don't pull
+# this dependency at all.
+[target.'cfg(target_os = "macos")'.dependencies]
+sysinfo = { version = "0.39", default-features = false, features = ["system"] }
+
 [dev-dependencies]
 tokio-test = "0.4"
 

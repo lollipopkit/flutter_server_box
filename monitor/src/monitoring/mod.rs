@@ -1,3 +1,5 @@
+#[cfg(target_os = "macos")]
+pub mod macos_cpu;
 pub mod monitoring;
 pub mod push;
 pub mod rules;

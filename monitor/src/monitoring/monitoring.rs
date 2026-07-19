@@ -151,7 +151,21 @@ fn system_type() -> SystemType {
 async fn collect_metrics(config: &Config, prev_cpu: &mut Option<CpuCore>) -> Result<SystemMetrics> {
     let system = system_type();
     let raw = execute_commands(system).await?;
-    let status = sbm_parser::parse_status(system, &raw);
+    let mut status = sbm_parser::parse_status(system, &raw);
+
+    // macOS: `top` (the shared BSD command) gives an aggregate reading only.
+    // Real per-core data requires the Mach host_processor_info kernel call
+    // (same mechanism htop uses), reachable only in-process — the app has no
+    // equivalent since it collects over SSH via shell commands. Overrides
+    // status.cpu in place so the rest of the pipeline (adapt_cpu, per-core
+    // storage) is unaware anything changed. None on the first cycle (no
+    // baseline yet) or non-macOS builds; falls back to the shared-parser
+    // reading either way.
+    #[cfg(target_os = "macos")]
+    if let Some(cores) = crate::monitoring::macos_cpu::sample() {
+        status.cpu = cores;
+    }
+
     let prev = prev_cpu.take();
     *prev_cpu = summary_core(&status.cpu).cloned();
     Ok(adapt_status(system, status, config, prev.as_ref()))
