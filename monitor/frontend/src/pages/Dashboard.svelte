@@ -22,6 +22,7 @@
   import { LL } from '../i18n/i18n-svelte'
   import { layout } from '../lib/layout.svelte'
   import { Poller } from '../lib/poller.svelte'
+  import { fly } from 'svelte/transition'
   import type { HistoryPoint } from '../types'
 
   const status = new Poller(api.getStatus, 5000)
@@ -162,6 +163,8 @@
       </div>
     {/if}
 
+    {#key detail}
+      <div in:fly={{ x: detail ? 16 : -16, duration: 200, delay: 150 }} out:fly={{ x: detail ? -16 : 16, duration: 150 }}>
     {#if detail}
       <DetailPanel kind={detail} metrics={m} {history} onback={() => (detail = null)} />
     {:else}
@@ -307,6 +310,8 @@
       </Card>
     {/if}
     {/if}
+      </div>
+    {/key}
     {/if}
   </main>
 {/if}

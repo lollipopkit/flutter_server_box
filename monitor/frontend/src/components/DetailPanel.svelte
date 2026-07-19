@@ -79,7 +79,7 @@
   </div>
 {/snippet}
 
-<div class="space-y-6 max-w-4xl">
+<div class="space-y-6">
   <div class="flex items-center gap-2">
     <Button variant="ghost" size="sm" onclick={onback}>
       <ChevronLeft class="w-4 h-4 mr-1" />
