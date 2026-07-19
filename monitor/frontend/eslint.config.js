@@ -1,22 +1,25 @@
 import js from '@eslint/js'
+import globals from 'globals'
 import tseslint from 'typescript-eslint'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
+import svelte from 'eslint-plugin-svelte'
+import svelteConfig from './svelte.config.js'
 
 export default tseslint.config(
   { ignores: ['dist'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  ...svelte.configs.recommended,
   {
-    files: ['**/*.{ts,tsx}'],
-    plugins: {
-      'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
-    },
-    rules: {
-      'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+    languageOptions: { globals: globals.browser },
+  },
+  {
+    files: ['**/*.svelte', '**/*.svelte.ts'],
+    languageOptions: {
+      parserOptions: {
+        parser: tseslint.parser,
+        extraFileExtensions: ['.svelte'],
+        svelteConfig,
+      },
     },
   },
 )
