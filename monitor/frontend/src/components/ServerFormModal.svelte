@@ -14,7 +14,6 @@
 
   const { open, entry, onclose }: Props = $props()
 
-  let name = $state('')
   let url = $state('')
   let username = $state('')
   let password = $state('')
@@ -26,7 +25,6 @@
   // modal opens; re-running on every `open` toggle, not just mount
   $effect(() => {
     if (open) {
-      name = entry?.name ?? ''
       url = entry?.url ?? ''
       username = ''
       password = ''
@@ -48,9 +46,11 @@
 
     const id = entry ? entry.id : undefined
     if (entry) {
-      servers.update(entry.id, name, url)
+      // Name isn't user-editable — the dashboard always shows the name the
+      // server itself reports; keep whatever's already stored (auto-filled)
+      servers.update(entry.id, entry.name, url)
     } else {
-      servers.add(name, url)
+      servers.add('', url)
     }
     // add()/update() may have picked a fresh id (add) or kept the existing one
     const savedId = id ?? servers.currentId
@@ -83,12 +83,6 @@
 
 <Modal {open} title={entry ? $LL.editServer() : $LL.addServer()} {onclose}>
   <form class="space-y-4" onsubmit={handleSubmit}>
-    <div class="space-y-1">
-      <label class="text-sm text-muted-fg" for="server-name">
-        {$LL.serverName()} ({$LL.optional()})
-      </label>
-      <Input id="server-name" bind:value={name} placeholder={$LL.serverName()} />
-    </div>
     <div class="space-y-1">
       <label class="text-sm text-muted-fg" for="server-url">{$LL.serverUrlLabel()}</label>
       <Input

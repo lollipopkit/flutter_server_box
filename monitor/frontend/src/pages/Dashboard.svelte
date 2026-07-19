@@ -92,6 +92,14 @@
   const m = $derived(metrics.data)
   const latest = $derived(history.at(-1))
 
+  // Always the server's own reported name — not user-editable — falling back
+  // to the address/id only before the server has ever reported anything
+  const headerName = $derived(
+    servers.current?.id === 'local'
+      ? $LL.thisServer()
+      : (m?.server_name ?? status.data?.name ?? displayName(servers.current)),
+  )
+
   // Backfills a blank entry name (server added without one) from the data the
   // server itself reports; applyReportedName() no-ops once a name is set
   $effect(() => {
@@ -118,12 +126,9 @@
           <Menu class="w-5 h-5" />
         </IconButton>
         <div class="min-w-0">
-          <h1 class="text-lg leading-tight font-semibold font-display text-fg-strong truncate">
-            {servers.current?.id === 'local' ? $LL.thisServer() : displayName(servers.current)}
+          <h1 class="text-lg font-semibold font-display text-fg-strong truncate">
+            {headerName}
           </h1>
-          <p class="text-xs leading-tight text-muted-fg truncate">
-            {status.data?.name || $LL.unknownServer()}
-          </p>
         </div>
         <span class="flex-1"></span>
         <Badge tone={connected ? 'success' : 'danger'}>

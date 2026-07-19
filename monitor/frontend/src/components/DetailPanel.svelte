@@ -3,7 +3,7 @@
   import { Button, Card } from '@serverbox/webui'
   import LineChart from './LineChart.svelte'
   import { LL } from '../i18n/i18n-svelte'
-  import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../lib/format'
+  import { fmtBytes, fmtBytesPerSec, fmtGpuPower, fmtPercent } from '../lib/format'
   import type { HistoryPoint, SystemMetrics } from '../types'
 
   export type DetailKind = 'cpu' | 'memory' | 'disk' | 'network' | 'gpu'
@@ -235,7 +235,7 @@
           {@render labeledBar($LL.usage(), `${gpu.usage_percent.toFixed(0)}%`, gpu.usage_percent)}
           {@render row($LL.memory(), `${gpu.memory_used} / ${gpu.memory_total} ${gpu.memory_unit}`)}
           {@render row($LL.temperature(), `${gpu.temperature} °C`)}
-          {@render row($LL.power(), gpu.power)}
+          {@render row($LL.power(), fmtGpuPower(gpu.power))}
         </div>
       </Card>
     {/each}
