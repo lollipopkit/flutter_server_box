@@ -21,14 +21,77 @@ impl DataCleanupService {
         let metrics_deleted = self.cleanup_old_metrics().await?;
         let alerts_deleted = self.cleanup_old_alerts().await?;
         let policy_deleted = self.cleanup_policy_tables().await?;
+        let size_deleted = self.enforce_db_size_limit().await?;
 
         let duration = start_time.elapsed();
         info!(
-            "Data cleanup completed in {:?}. Deleted {} metrics records, {} alerts records, {} policy-table records",
-            duration, metrics_deleted, alerts_deleted, policy_deleted
+            "Data cleanup completed in {:?}. Deleted {} metrics records, {} alerts records, {} policy-table records, {} size-cap records",
+            duration, metrics_deleted, alerts_deleted, policy_deleted, size_deleted
         );
 
         Ok(())
+    }
+
+    /// Time-series tables trimmed oldest-first when the database exceeds the
+    /// size cap (allowlist, same injection rationale as POLICY_TABLES)
+    const SIZE_CAPPED_TABLES: &'static [&'static str] = &[
+        "system_metrics",
+        "velocity_metrics",
+        "cpu_core_metrics",
+        "network_totals",
+        "component_metrics",
+        "rule_executions",
+        "performance_metrics",
+    ];
+
+    /// Live data size: pages in use excluding the freelist, so deletions count
+    /// immediately without waiting for VACUUM (the scheduler vacuums afterwards)
+    async fn live_db_bytes(&self) -> Result<u64> {
+        let page_count: i64 = sqlx::query_scalar("PRAGMA page_count").fetch_one(&self.pool).await?;
+        let freelist: i64 = sqlx::query_scalar("PRAGMA freelist_count").fetch_one(&self.pool).await?;
+        let page_size: i64 = sqlx::query_scalar("PRAGMA page_size").fetch_one(&self.pool).await?;
+        Ok((page_count - freelist).max(0) as u64 * page_size.max(0) as u64)
+    }
+
+    /// Enforce `max_db_size_mb`: while over the cap, drop the oldest ~10% of
+    /// each time-series table. Bounded iterations; 0 disables the cap.
+    pub async fn enforce_db_size_limit(&self) -> Result<u64> {
+        let max_bytes = self.config.max_db_size_mb.saturating_mul(1024 * 1024);
+        if max_bytes == 0 {
+            return Ok(0);
+        }
+
+        let mut deleted_total = 0u64;
+        for _ in 0..10 {
+            let size = self.live_db_bytes().await?;
+            if size <= max_bytes {
+                break;
+            }
+            let mut deleted_round = 0u64;
+            for table in Self::SIZE_CAPPED_TABLES {
+                let deleted = sqlx::query(sqlx::AssertSqlSafe(format!(
+                    "DELETE FROM {table} WHERE rowid IN                      (SELECT rowid FROM {table} ORDER BY timestamp LIMIT                       (SELECT count(*) / 10 + 1 FROM {table}))"
+                )))
+                .execute(&self.pool)
+                .await?
+                .rows_affected();
+                deleted_round += deleted;
+            }
+            deleted_total += deleted_round;
+            // Nothing meaningful left to trim: schema/index overhead alone
+            // exceeds the cap; stop rather than spin
+            if deleted_round <= Self::SIZE_CAPPED_TABLES.len() as u64 {
+                break;
+            }
+        }
+
+        if deleted_total > 0 {
+            warn!(
+                "Database exceeded the {} MB size cap; deleted {} oldest time-series rows",
+                self.config.max_db_size_mb, deleted_total
+            );
+        }
+        Ok(deleted_total)
     }
 
     /// Cleanup driven by retention_policies. Table names are allowlisted against SQL

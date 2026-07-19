@@ -1,4 +1,4 @@
-import type { LoginRequest, LoginResponse, StatusResponse, SystemMetrics } from '../types'
+import type { HistoryPoint, LoginRequest, LoginResponse, StatusResponse, SystemMetrics } from '../types'
 import { auth } from './auth.svelte'
 
 const BASE = '/api/v1'
@@ -48,4 +48,6 @@ export const api = {
     ),
   getStatus: () => request<StatusResponse>('/status', {}, 'Failed to fetch status'),
   getMetrics: () => request<SystemMetrics>('/metrics', {}, 'Failed to fetch metrics'),
+  getHistory: (minutes: number) =>
+    request<HistoryPoint[]>(`/metrics/history?minutes=${minutes}`, {}, 'Failed to fetch history'),
 }

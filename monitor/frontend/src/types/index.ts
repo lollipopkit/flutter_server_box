@@ -44,6 +44,16 @@ export interface StatusResponse {
   timestamp: string;
 }
 
+export interface HistoryPoint {
+  timestamp: string;
+  cpu: number;
+  memory: number;
+  disk: number;
+  net_rx_speed: number;
+  net_tx_speed: number;
+  temperature?: number;
+}
+
 export interface LoginRequest {
   username: string;
   password: string;

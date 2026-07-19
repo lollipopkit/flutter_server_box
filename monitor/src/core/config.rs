@@ -53,11 +53,19 @@ pub struct MonitoringConfig {
     pub data_retention: Option<DataRetentionConfig>,
 }
 
+fn default_max_db_size_mb() -> u64 {
+    256
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DataRetentionConfig {
     pub metrics_days: u32,
     pub alerts_days: u32,
     pub cleanup_interval_hours: u32,
+    /// Hard cap on the SQLite file size; oldest time-series rows are dropped
+    /// until the database fits (0 disables the cap)
+    #[serde(default = "default_max_db_size_mb")]
+    pub max_db_size_mb: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -176,6 +184,7 @@ impl Config {
                     metrics_days: 30,
                     alerts_days: 90,
                     cleanup_interval_hours: 24,
+                    max_db_size_mb: default_max_db_size_mb(),
                 }),
             };
 
@@ -222,6 +231,7 @@ impl Config {
                 metrics_days: 30,
                 alerts_days: 90,
                 cleanup_interval_hours: 24,
+                max_db_size_mb: default_max_db_size_mb(),
             }),
         })
     }
@@ -428,6 +438,7 @@ impl Default for Config {
                     metrics_days: 30,
                     alerts_days: 90,
                     cleanup_interval_hours: 24,
+                    max_db_size_mb: default_max_db_size_mb(),
                 }),
             }),
             database_url: Some(env::var("DATABASE_URL")

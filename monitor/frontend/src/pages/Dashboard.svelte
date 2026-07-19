@@ -11,24 +11,65 @@
     CircleAlert,
     RefreshCw,
   } from '@lucide/svelte'
+  import LineChart from '../components/LineChart.svelte'
   import Spinner from '../components/Spinner.svelte'
   import StatCard from '../components/StatCard.svelte'
   import ThemeToggle from '../components/ThemeToggle.svelte'
   import { api } from '../lib/api'
   import { auth } from '../lib/auth.svelte'
+  import { fmtBytesPerSec, fmtPercent } from '../lib/format'
   import { Poller } from '../lib/poller.svelte'
+  import type { HistoryPoint } from '../types'
 
   const status = new Poller(api.getStatus, 5000)
   const metrics = new Poller(api.getMetrics, 5000)
 
+  const RANGES = [
+    { label: '1h', minutes: 60 },
+    { label: '6h', minutes: 360 },
+    { label: '24h', minutes: 1440 },
+  ]
+  let rangeMinutes = $state(60)
+  let history = $state<HistoryPoint[]>([])
+  let historyError = $state<string | null>(null)
+
+  async function loadHistory(minutes: number) {
+    try {
+      history = await api.getHistory(minutes)
+      historyError = null
+    } catch (e) {
+      historyError = e instanceof Error ? e.message : String(e)
+    }
+  }
+
+  // Refetches on range change (and on mount)
+  $effect(() => {
+    void loadHistory(rangeMinutes)
+  })
+
+  let historyTimer: ReturnType<typeof setInterval> | undefined
+
   onMount(() => {
     status.start()
     metrics.start()
+    historyTimer = setInterval(() => void loadHistory(rangeMinutes), 60_000)
   })
   onDestroy(() => {
     status.stop()
     metrics.stop()
+    clearInterval(historyTimer)
   })
+
+  const historyLabels = $derived(history.map((p) => p.timestamp))
+  const usageSeries = $derived([
+    { label: 'CPU', color: '#3b82f6', values: history.map((p) => p.cpu) },
+    { label: 'Memory', color: '#22c55e', values: history.map((p) => p.memory) },
+    { label: 'Disk', color: '#f59e0b', values: history.map((p) => p.disk) },
+  ])
+  const networkSeries = $derived([
+    { label: 'Down', color: '#8b5cf6', values: history.map((p) => p.net_rx_speed) },
+    { label: 'Up', color: '#ec4899', values: history.map((p) => p.net_tx_speed) },
+  ])
 
   const thresholds = {
     cpu: { warning: 70, danger: 85 },
@@ -129,6 +170,42 @@
         valueClass="text-sm"
         badge="Active"
         badgeClass="status-success"
+      />
+    </div>
+
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-strong">History</h2>
+      <div class="flex rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden">
+        {#each RANGES as r (r.minutes)}
+          <button
+            class="px-3 py-1 text-sm transition-colors {rangeMinutes === r.minutes
+              ? 'bg-primary-600 text-white'
+              : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-400 dark:hover:bg-gray-800'}"
+            onclick={() => (rangeMinutes = r.minutes)}
+          >
+            {r.label}
+          </button>
+        {/each}
+      </div>
+    </div>
+
+    {#if historyError}
+      <p class="mb-4 text-sm text-danger-600 dark:text-danger-400">{historyError}</p>
+    {/if}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <LineChart
+        title="Usage"
+        labels={historyLabels}
+        series={usageSeries}
+        yMax={100}
+        format={fmtPercent}
+      />
+      <LineChart
+        title="Network"
+        labels={historyLabels}
+        series={networkSeries}
+        format={fmtBytesPerSec}
       />
     </div>
 

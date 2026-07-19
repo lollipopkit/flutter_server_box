@@ -202,7 +202,7 @@ fn adapt_status(
     config: &Config,
     prev_cpu: Option<&CpuCore>,
 ) -> SystemMetrics {
-    let (cpu_usage, cpu_cores) = adapt_cpu(&status.cpu, prev_cpu);
+    let (cpu_usage, cpu_cores) = adapt_cpu(system, &status.cpu, prev_cpu);
     let (memory, swap) = adapt_memory(&status);
     let disk = aggregate_disks(&status.disks);
     let network = aggregate_net(&status);
@@ -230,18 +230,33 @@ fn summary_core(cores: &[CpuCore]) -> Option<&CpuCore> {
     cores.iter().find(|c| c.id == "cpu").or_else(|| cores.first())
 }
 
-/// CPU: current usage from the delta between the summary row (id == "cpu", or the
-/// first core on BSD) and the previous sample (same semantics as Dart
-/// `Cpus.usedPercent`); a direct ratio of cumulative ticks is the since-boot
-/// average and unusable. The first cycle has no baseline and reports 0; counter
-/// wraparound (reboot) also resets the baseline.
+/// CPU usage semantics differ per source:
+/// - Linux /proc/stat is cumulative ticks — usage is the delta against the
+///   previous sample (Dart `Cpus.usedPercent`); a direct ratio would be the
+///   since-boot average. First cycle (no baseline) and counter wraparound
+///   report 0.
+/// - BSD top / Windows WMI emit one-shot percentage pseudo-counters (totals
+///   stay ~100), so the single-sample ratio IS the current usage; a delta
+///   would divide by ~0 and always yield 0.
 /// Per-core entries become CpuCoreTime (used = total - idle)
-fn adapt_cpu(cores: &[CpuCore], prev_summary: Option<&CpuCore>) -> (f32, Vec<CpuCoreTime>) {
-    let usage = match (prev_summary, summary_core(cores)) {
-        (Some(pre), Some(now)) if now.total() > pre.total() => {
-            sbm_parser::types::cpu_used_percent(pre, now) as f32
-        }
-        _ => 0.0,
+fn adapt_cpu(
+    system: SystemType,
+    cores: &[CpuCore],
+    prev_summary: Option<&CpuCore>,
+) -> (f32, Vec<CpuCoreTime>) {
+    let usage = match system {
+        SystemType::Linux => match (prev_summary, summary_core(cores)) {
+            (Some(pre), Some(now)) if now.total() > pre.total() => {
+                sbm_parser::types::cpu_used_percent(pre, now) as f32
+            }
+            _ => 0.0,
+        },
+        _ => summary_core(cores)
+            .map(|c| {
+                let total = c.total();
+                if total == 0 { 0.0 } else { (total - c.idle) as f32 / total as f32 * 100.0 }
+            })
+            .unwrap_or(0.0),
     };
 
     let core_times = cores

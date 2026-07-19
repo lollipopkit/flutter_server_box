@@ -73,6 +73,7 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
                     .route("/login", web::post().to(login))
                     .route("/status", web::get().to(get_status))
                     .route("/metrics", web::get().to(get_metrics))
+                    .route("/metrics/history", web::get().to(get_metrics_history))
                     .route("/health", web::get().to(health_check))
                     .route("/velocity", web::get().to(get_velocity))
                     .route("/velocity/history", web::get().to(get_velocity_history)),
@@ -277,6 +278,78 @@ async fn get_metrics(
             error: "Metrics not available yet".to_string(),
         }))
     }
+}
+
+#[derive(Serialize)]
+struct HistoryPoint {
+    timestamp: String,
+    cpu: f64,
+    memory: f64,
+    disk: f64,
+    net_rx_speed: f64,
+    net_tx_speed: f64,
+    temperature: Option<f64>,
+}
+
+/// Bucketed time series from system_metrics. `?minutes=` selects the window
+/// (default 60, clamped to 5..=10080); rows are averaged into ~300 buckets and
+/// network rates are derived from consecutive cumulative counters.
+async fn get_metrics_history(
+    req: HttpRequest,
+    app_state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse> {
+    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
+        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
+            error: "Invalid or missing token".to_string(),
+        }));
+    }
+
+    let minutes: i64 = req
+        .query_string()
+        .split('&')
+        .find_map(|kv| kv.strip_prefix("minutes="))
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(60)
+        .clamp(5, 7 * 24 * 60);
+
+    const TARGET_POINTS: i64 = 300;
+    let bucket_secs = (minutes * 60 / TARGET_POINTS).max(1);
+
+    use sqlx::Row;
+    let rows = sqlx::query(
+        "SELECT cast(strftime('%s', timestamp) as integer) / ?1 AS bucket,                 min(timestamp) AS ts,                 avg(cpu_usage) AS cpu,                 avg(CASE WHEN memory_total > 0 THEN memory_used * 100.0 / memory_total END) AS mem,                 avg(CASE WHEN disk_total > 0 THEN disk_used * 100.0 / disk_total END) AS disk,                 avg(network_rx_bytes) AS rx,                 avg(network_tx_bytes) AS tx,                 avg(temperature) AS temp          FROM system_metrics          WHERE timestamp >= datetime('now', ?2)          GROUP BY bucket ORDER BY bucket",
+    )
+    .bind(bucket_secs)
+    .bind(format!("-{minutes} minutes"))
+    .fetch_all(&app_state.db)
+    .await?;
+
+    let mut points = Vec::with_capacity(rows.len());
+    let mut prev: Option<(i64, f64, f64)> = None; // (bucket, rx, tx)
+    for row in rows {
+        let bucket: i64 = row.get("bucket");
+        let rx: f64 = row.try_get("rx").unwrap_or(0.0);
+        let tx: f64 = row.try_get("tx").unwrap_or(0.0);
+        let (net_rx_speed, net_tx_speed) = match prev {
+            Some((pb, prx, ptx)) if bucket > pb => {
+                let dt = ((bucket - pb) * bucket_secs) as f64;
+                (((rx - prx) / dt).max(0.0), ((tx - ptx) / dt).max(0.0))
+            }
+            _ => (0.0, 0.0),
+        };
+        prev = Some((bucket, rx, tx));
+        points.push(HistoryPoint {
+            timestamp: row.get("ts"),
+            cpu: row.try_get("cpu").unwrap_or(0.0),
+            memory: row.try_get("mem").unwrap_or(0.0),
+            disk: row.try_get("disk").unwrap_or(0.0),
+            net_rx_speed,
+            net_tx_speed,
+            temperature: row.try_get::<Option<f64>, _>("temp").ok().flatten(),
+        });
+    }
+
+    Ok(HttpResponse::Ok().json(&points))
 }
 
 async fn get_velocity(

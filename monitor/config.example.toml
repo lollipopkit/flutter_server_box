@@ -35,6 +35,10 @@ alerts_days = 90
 # How often to run cleanup (in hours)
 cleanup_interval_hours = 24
 
+# Hard cap on the SQLite file size (MB); oldest time-series rows are dropped
+# until the database fits. 0 disables the cap.
+max_db_size_mb = 256
+
 # Monitoring rules
 [[monitoring.rules]]
 name = "High CPU Usage"

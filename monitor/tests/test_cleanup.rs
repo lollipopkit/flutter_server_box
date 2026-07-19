@@ -21,6 +21,7 @@ async fn test_cleanup_service_creation() -> Result<()> {
         metrics_days: 30,
         alerts_days: 90,
         cleanup_interval_hours: 24,
+        max_db_size_mb: 256,
     };
     
     let cleanup_service = DataCleanupService::new(pool, config);
@@ -42,6 +43,7 @@ async fn test_cleanup_with_test_data() -> Result<()> {
         metrics_days: 7,
         alerts_days: 14,
         cleanup_interval_hours: 24,
+        max_db_size_mb: 256,
     };
     
     // Insert old test data
@@ -111,6 +113,7 @@ async fn test_vacuum_database() -> Result<()> {
         metrics_days: 30,
         alerts_days: 90,
         cleanup_interval_hours: 24,
+        max_db_size_mb: 256,
     };
     
     let cleanup_service = DataCleanupService::new(pool, config);
