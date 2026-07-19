@@ -10,18 +10,22 @@ fn regex(cell: &'static OnceLock<Regex>, pattern: &str) -> &'static Regex {
 }
 
 /// `top` CPU line. macOS: `CPU usage: 14.70% user, 12.76% sys, 72.52% idle`;
-/// FreeBSD:`CPU: 5.2% user, 0.0% nice, 3.1% system, 0.1% interrupt, 91.6% idle`;
+/// FreeBSD aggregate: `CPU: 5.2% user, 0.0% nice, 3.1% system, 0.1% interrupt, 91.6% idle`;
+/// FreeBSD per-core (`top -b -d 1 -P`, one line per core):
+/// `CPU 0:  5.2% user,  0.0% nice,  3.1% system,  0.1% interrupt, 91.6% idle`;
 /// otherwise falls back to extracting the first three percentages (user/sys/idle).
 ///
-/// `top`/`CPU:` give an aggregate reading only — no per-core breakdown is
+/// FreeBSD's `-P` flag gives genuine per-core readings (used when present).
+/// macOS `top` gives an aggregate percentage only — no per-core breakdown is
 /// available without extra tools (powermetrics needs root). When a trailing
 /// bare integer is present (from `sysctl -n hw.ncpu`, appended to the BSD
-/// manifest command), the aggregate reading is replicated across that many
-/// pseudo-cores "cpu0".."cpuN-1" so the reported core count is real even
-/// though per-core usage is not; absent or unparseable, falls back to a
-/// single "cpu0" pseudo-core (matching the historical Dart behavior)
+/// manifest command's Darwin branch), the aggregate reading is replicated
+/// across that many pseudo-cores "cpu0".."cpuN-1" so the reported core count
+/// is real even though per-core usage is not; absent or unparseable, falls
+/// back to a single "cpu0" pseudo-core (matching the historical Dart behavior)
 pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
     static MAC: OnceLock<Regex> = OnceLock::new();
+    static FREEBSD_PER_CORE: OnceLock<Regex> = OnceLock::new();
     static FREEBSD: OnceLock<Regex> = OnceLock::new();
     static PERCENT: OnceLock<Regex> = OnceLock::new();
     static CORE_COUNT: OnceLock<Regex> = OnceLock::new();
@@ -46,6 +50,31 @@ pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
             })
             .collect()
     };
+
+    let freebsd_per_core = regex(
+        &FREEBSD_PER_CORE,
+        r"(?m)^CPU\s+(\d+):\s+([\d.]+)% user,\s+([\d.]+)% nice,\s+([\d.]+)% system,\s+([\d.]+)% interrupt,\s*([\d.]+)% idle",
+    );
+    let per_core: Vec<CpuCore> = freebsd_per_core
+        .captures_iter(raw)
+        .map(|c| {
+            let n: usize = c[1].parse().unwrap_or(0);
+            let f = |i: usize| c[i].parse::<f64>().unwrap_or(0.0) as u64;
+            CpuCore {
+                id: format!("cpu{n}"),
+                user: f(2),
+                sys: f(4),
+                nice: f(3),
+                idle: f(6),
+                iowait: 0,
+                irq: f(5),
+                softirq: 0,
+            }
+        })
+        .collect();
+    if !per_core.is_empty() {
+        return per_core;
+    }
 
     let mac = regex(&MAC, r"CPU usage: ([\d.]+)% user, ([\d.]+)% sys, ([\d.]+)% idle");
     if let Some(c) = mac.captures(raw) {

@@ -66,6 +66,25 @@ fn cpu_parse_bsd_freebsd() {
     assert_eq!(cores[0].idle, 91);
 }
 
+/// FreeBSD `top -b -d 1 -P`: genuine per-core lines, not replicated
+#[test]
+fn cpu_parse_freebsd_real_per_core() {
+    let raw = "\
+CPU 0:  0.7% user,  0.0% nice,  1.5% system,  0.7% interrupt, 97.0% idle
+CPU 1:  0.0% user,  0.0% nice,  0.0% system,  0.4% interrupt, 99.6% idle
+CPU 2:  50.0% user,  0.0% nice,  10.0% system,  0.0% interrupt, 40.0% idle
+CPU 3:  0.0% user,  0.0% nice,  0.0% system,  0.0% interrupt, 100.0% idle
+";
+    let cores = bsd::parse_cpu(raw);
+    assert_eq!(cores.len(), 4);
+    assert_eq!(cores[0].id, "cpu0");
+    assert_eq!(cores[0].idle, 97);
+    assert_eq!(cores[2].user, 50);
+    assert_eq!(cores[2].sys, 10);
+    assert_eq!(cores[2].idle, 40);
+    assert_eq!(cores[3].idle, 100);
+}
+
 /// macOS: real logical core count appended via `sysctl -n hw.ncpu`;
 /// the aggregate reading is replicated per pseudo-core
 #[test]

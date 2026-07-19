@@ -100,14 +100,18 @@ pub const BSD: &[CommandSpec] = &[
     CommandSpec { core: true, key: TIME, cmd: "date +%s" },
     CommandSpec { core: true, key: NET, cmd: "netstat -ibn" },
     CommandSpec { core: true, key: SYS, cmd: "uname -or" },
-    // hw.ncpu is portable across macOS and FreeBSD; `top` alone gives an
-    // aggregate percentage only, no per-core breakdown, so the real logical
-    // core count is appended and the parser replicates the aggregate reading
-    // across that many pseudo-cores (see bsd::parse_cpu)
+    // `-l` (single-shot sample count) is macOS-only; FreeBSD's top has no
+    // such flag and instead needs `-b -d 1 -P` for a one-shot per-core batch
+    // read. One SystemType::Bsd manifest entry must work on either real OS,
+    // so branch at runtime on `uname`. macOS still gets only an aggregate
+    // reading (no per-core breakdown without extra tooling), with the real
+    // logical core count appended via `sysctl -n hw.ncpu` so the aggregate is
+    // replicated across that many pseudo-cores (see bsd::parse_cpu); FreeBSD
+    // gets genuine per-core lines from `top -P`.
     CommandSpec {
         core: true,
         key: CPU,
-        cmd: r#"top -l 1 | grep "CPU usage"; sysctl -n hw.ncpu"#,
+        cmd: r#"if [ "$(uname)" = "Darwin" ]; then top -l 1 | grep "CPU usage"; sysctl -n hw.ncpu; else top -b -d 1 -P | grep "^CPU"; fi"#,
     },
     CommandSpec { core: true, key: UPTIME, cmd: "uptime" },
     CommandSpec { core: true, key: DISK, cmd: "df -k" },
