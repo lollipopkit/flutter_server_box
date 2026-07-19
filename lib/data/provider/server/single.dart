@@ -23,6 +23,7 @@ import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/persistent_shell.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/src/rust/api/script.dart' as script_ffi;
 
 part 'single.g.dart';
 part 'single.freezed.dart';
@@ -474,7 +475,7 @@ class ServerNotifier extends _$ServerNotifier {
 
     try {
       // Parse script output into command-specific mappings
-      final parsedOutput = ScriptConstants.parseScriptOutput(raw);
+      final parsedOutput = await script_ffi.parseScriptOutput(raw: raw);
 
       final req = ServerStatusUpdateReq(
         ss: state.status,

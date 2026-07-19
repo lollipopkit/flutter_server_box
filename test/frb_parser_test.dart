@@ -216,21 +216,28 @@ void main() {
     expect(map['x'], 'hello');
   });
 
-  test('enum fallback cmds stay in sync with FFI manifest', () {
+  test('enum names stay in sync with the FFI manifest', () {
     final cases = <(String, List<ShellCmdType>)>[
       ('linux', StatusCmdType.values),
       ('bsd', BSDStatusCmdType.values),
       ('windows', WindowsStatusCmdType.values),
     ];
     for (final (system, types) in cases) {
-      final manifest = {
-        for (final spec in commandSpecs(system: system)) spec.key: spec.cmd,
+      final manifestKeys = {
+        for (final spec in commandSpecs(system: system)) spec.key,
       };
       for (final type in types) {
-        final expected = manifest[type.name];
-        if (expected == null) continue; // structural script commands like echo are not in the manifest
-        expect(type.cmd, expected, reason: '$system/${type.name}');
+        expect(
+          manifestKeys,
+          contains(type.name),
+          reason: '$system/${type.name} missing from the Rust manifest',
+        );
       }
+      expect(
+        manifestKeys.length,
+        types.length,
+        reason: '$system manifest and enum should have the same entries',
+      );
     }
   });
 }

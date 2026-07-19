@@ -1,10 +1,16 @@
 import 'package:server_box/data/res/build_data.dart';
 
-/// Constants used throughout the script system
+/// Path constants and per-connection script directory state.
+///
+/// Script content, dividers, headers, and output splitting live in the shared
+/// Rust library (sbm_parser::script, see doc/adr/0001); only path/filename
+/// conventions and Flutter-connection state remain here.
+// TODO(migration): residue of the Dart script layer — reevaluate once the app
+// endpoints move fully onto the FFI script API.
 class ScriptConstants {
   const ScriptConstants._();
 
-  // Script file names
+  // Script file names (versioned: bumping BuildData.script forces re-upload)
   static const String scriptFile = 'srvboxm_v${BuildData.script}.sh';
   static const String scriptFileWindows = 'srvboxm_v${BuildData.script}.ps1';
 
@@ -14,103 +20,13 @@ class ScriptConstants {
   static const String scriptDirHomeWindows = '%USERPROFILE%/.config/server_box';
   static const String scriptDirTmpWindows = '%TEMP%/server_box';
 
-  // Command separators and dividers
+  /// Output segment separator (mirrors sbm_parser commands::SEPARATOR); also
+  /// used by container/systemd providers for their own command segmenting
   static const String separator = 'SrvBoxSep';
-
-  /// Custom command separator
-  static const String customCmdSep = 'SrvBoxCusCmdSep';
-
-  /// Generate command-specific separator
-  static String getCmdSeparator(String cmdName) => '$separator.$cmdName';
-
-  /// Generate command-specific divider for custom commands
-  static String getCustomCmdSeparator(String cmdName) =>
-      '$customCmdSep.$cmdName';
-
-  /// Generate command-specific divider
-  static String getCmdDivider(String cmdName) =>
-      '\necho ${getCmdSeparator(cmdName)}\n\t';
-
-  /// Generate command-specific divider for Windows PowerShell
-  static String getWindowsCmdDivider(String cmdName) =>
-      '\n    Write-Host "${getCmdSeparator(cmdName)}"\n    ';
-
-  /// Parse script output into command-specific map
-  static Map<String, String> parseScriptOutput(String raw) {
-    final result = <String, String>{};
-
-    if (raw.isEmpty) return result;
-
-    // Parse line by line to properly handle command-specific separators
-    final lines = raw.split('\n');
-    String? currentCmd;
-    final buffer = StringBuffer();
-
-    for (final line in lines) {
-      if (line.startsWith('$separator.')) {
-        // Save previous command content
-        if (currentCmd != null) {
-          result[currentCmd] = buffer.toString().trim();
-          buffer.clear();
-        }
-        // Start new command
-        currentCmd = line.substring('$separator.'.length);
-      } else if (line.startsWith('$customCmdSep.')) {
-        // Save previous command content
-        if (currentCmd != null) {
-          result[currentCmd] = buffer.toString().trim();
-          buffer.clear();
-        }
-        // Start new custom command
-        currentCmd = line.substring('$customCmdSep.'.length);
-      } else if (currentCmd != null) {
-        buffer.writeln(line);
-      }
-    }
-
-    // Don't forget the last command
-    if (currentCmd != null) {
-      result[currentCmd] = buffer.toString().trim();
-    }
-
-    return result;
-  }
 
   // Path separators
   static const String unixPathSeparator = '/';
   static const String windowsPathSeparator = '\\';
-
-  // Script headers
-  static const String unixScriptHeader =
-      '''
-#!/bin/sh
-# Script for ServerBox app v1.0.${BuildData.build}
-# DO NOT delete this file while app is running
-
-export LANG=en_US.UTF-8
-
-# If macSign & bsdSign are both empty, then it's linux
-macSign=\$(uname -a 2>&1 | grep "Darwin")
-bsdSign=\$(uname -a 2>&1 | grep "BSD")
-
-# Link /bin/sh to busybox?
-isBusybox=\$(ls -l /bin/sh | grep "busybox")
-
-userId=\$(id -u)
-
-exec 2>/dev/null
-
-''';
-
-  static const String windowsScriptHeader =
-      '''
-# PowerShell script for ServerBox app v1.0.${BuildData.build}
-# DO NOT delete this file while app is running
-
-\$ErrorActionPreference = "SilentlyContinue"
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-
-''';
 }
 
 /// Script path configuration and management

@@ -1,8 +1,13 @@
-import 'package:server_box/data/model/app/scripts/script_builders.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/src/rust/api/script.dart' as ffi;
 
-/// Shell functions available in the ServerBox application
+/// Shell functions available in the ServerBox application.
+///
+/// Script generation lives in the shared Rust library (sbm_parser::script,
+/// see doc/adr/0001); this file only maps app types onto the FFI and keeps
+/// the connection-state concerns (script paths, custom dirs).
 enum ShellFunc {
   status('SbStatus'),
   process('SbProcess'),
@@ -24,6 +29,14 @@ enum ShellFunc {
     ShellFunc.status => 's',
   };
 
+  ffi.ShellFuncKind get _kind => switch (this) {
+    ShellFunc.status => ffi.ShellFuncKind.status,
+    ShellFunc.process => ffi.ShellFuncKind.process,
+    ShellFunc.shutdown => ffi.ShellFuncKind.shutdown,
+    ShellFunc.reboot => ffi.ShellFuncKind.reboot,
+    ShellFunc.suspend => ffi.ShellFuncKind.suspend,
+  };
+
   /// Execute this shell function on the specified server
   String exec(String id, {SystemType? systemType, required String? customDir}) {
     final scriptPath = ShellFuncManager.getScriptPath(
@@ -31,16 +44,25 @@ enum ShellFunc {
       systemType: systemType,
       customDir: customDir,
     );
-    final isWindows = systemType == SystemType.windows;
-    final builder = ScriptBuilderFactory.getBuilder(isWindows);
-
-    return builder.getExecCommand(scriptPath, this);
+    return ffi.execCommand(
+      system: ShellFuncManager.ffiSystem(systemType),
+      scriptPath: scriptPath,
+      func: _kind,
+    );
   }
 }
 
 /// Manager class for shell function operations
 class ShellFuncManager {
   const ShellFuncManager._();
+
+  /// System string used by the FFI ("linux" | "bsd" | "windows");
+  /// null defaults to linux (linux and bsd produce the same Unix script)
+  static String ffiSystem(SystemType? systemType) => switch (systemType) {
+    SystemType.windows => 'windows',
+    SystemType.bsd => 'bsd',
+    _ => 'linux',
+  };
 
   /// Normalize a directory path to ensure it doesn't end with trailing separators
   static String _normalizeDir(String dir, bool isWindows) {
@@ -108,13 +130,19 @@ class ShellFuncManager {
     );
     final isWindows = systemType == SystemType.windows;
     final normalizedDir = _normalizeDir(scriptDir, isWindows);
-    final builder = ScriptBuilderFactory.getBuilder(isWindows);
+    final fileName = isWindows
+        ? ScriptConstants.scriptFileWindows
+        : ScriptConstants.scriptFile;
     final separator = isWindows
         ? ScriptConstants.windowsPathSeparator
         : ScriptConstants.unixPathSeparator;
-    final scriptPath = '$normalizedDir$separator${builder.scriptFileName}';
+    final scriptPath = '$normalizedDir$separator$fileName';
 
-    return builder.getInstallCommand(normalizedDir, scriptPath);
+    return ffi.installCommand(
+      system: ffiSystem(systemType),
+      scriptDir: normalizedDir,
+      scriptPath: scriptPath,
+    );
   }
 
   /// Generate complete script based on system type
@@ -123,9 +151,14 @@ class ShellFuncManager {
     SystemType? systemType,
     List<String>? disabledCmdTypes,
   }) {
-    final isWindows = systemType == SystemType.windows;
-    final builder = ScriptBuilderFactory.getBuilder(isWindows);
-
-    return builder.buildScript(customCmds, disabledCmdTypes);
+    return ffi.buildScript(
+      system: ffiSystem(systemType),
+      customCmds: [
+        for (final e in (customCmds ?? const {}).entries)
+          ffi.CustomCmd(name: e.key, cmd: e.value),
+      ],
+      disabled: disabledCmdTypes ?? const [],
+      buildNumber: '${BuildData.build}',
+    );
   }
 }
