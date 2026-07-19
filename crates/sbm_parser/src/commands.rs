@@ -100,7 +100,15 @@ pub const BSD: &[CommandSpec] = &[
     CommandSpec { core: true, key: TIME, cmd: "date +%s" },
     CommandSpec { core: true, key: NET, cmd: "netstat -ibn" },
     CommandSpec { core: true, key: SYS, cmd: "uname -or" },
-    CommandSpec { core: true, key: CPU, cmd: r#"top -l 1 | grep "CPU usage""# },
+    // hw.ncpu is portable across macOS and FreeBSD; `top` alone gives an
+    // aggregate percentage only, no per-core breakdown, so the real logical
+    // core count is appended and the parser replicates the aggregate reading
+    // across that many pseudo-cores (see bsd::parse_cpu)
+    CommandSpec {
+        core: true,
+        key: CPU,
+        cmd: r#"top -l 1 | grep "CPU usage"; sysctl -n hw.ncpu"#,
+    },
     CommandSpec { core: true, key: UPTIME, cmd: "uptime" },
     CommandSpec { core: true, key: DISK, cmd: "df -k" },
     // vm_stat supplies page-level data so "used" can exclude cache/inactive

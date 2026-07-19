@@ -66,6 +66,30 @@ fn cpu_parse_bsd_freebsd() {
     assert_eq!(cores[0].idle, 91);
 }
 
+/// macOS: real logical core count appended via `sysctl -n hw.ncpu`;
+/// the aggregate reading is replicated per pseudo-core
+#[test]
+fn cpu_parse_bsd_macos_with_core_count() {
+    let cores = bsd::parse_cpu("CPU usage: 14.70% user, 12.76% sys, 72.52% idle\n10\n");
+    assert_eq!(cores.len(), 10);
+    assert_eq!(cores[0].id, "cpu0");
+    assert_eq!(cores[9].id, "cpu9");
+    assert_eq!(cores[0].user, 14);
+    assert_eq!(cores[9].user, 14);
+    assert_eq!(cores[0].idle, 72);
+}
+
+/// FreeBSD: same trailing-count mechanism
+#[test]
+fn cpu_parse_bsd_freebsd_with_core_count() {
+    let cores = bsd::parse_cpu(
+        "CPU: 5.2% user, 0.0% nice, 3.1% system, 0.1% interrupt, 91.6% idle\n4\n",
+    );
+    assert_eq!(cores.len(), 4);
+    assert_eq!(cores[3].id, "cpu3");
+    assert_eq!(cores[0].idle, 91);
+}
+
 /// Dart 'Test parseBsdCpu fallback clamps invalid percentages'
 #[test]
 fn cpu_parse_bsd_fallback_clamps() {

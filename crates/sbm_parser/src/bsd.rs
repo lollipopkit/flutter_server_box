@@ -12,29 +12,45 @@ fn regex(cell: &'static OnceLock<Regex>, pattern: &str) -> &'static Regex {
 /// `top` CPU line. macOS: `CPU usage: 14.70% user, 12.76% sys, 72.52% idle`;
 /// FreeBSD:`CPU: 5.2% user, 0.0% nice, 3.1% system, 0.1% interrupt, 91.6% idle`;
 /// otherwise falls back to extracting the first three percentages (user/sys/idle).
-/// Matching Dart: produces one-shot percentage pseudo-counters for a single "cpu0" core
+///
+/// `top`/`CPU:` give an aggregate reading only — no per-core breakdown is
+/// available without extra tools (powermetrics needs root). When a trailing
+/// bare integer is present (from `sysctl -n hw.ncpu`, appended to the BSD
+/// manifest command), the aggregate reading is replicated across that many
+/// pseudo-cores "cpu0".."cpuN-1" so the reported core count is real even
+/// though per-core usage is not; absent or unparseable, falls back to a
+/// single "cpu0" pseudo-core (matching the historical Dart behavior)
 pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
     static MAC: OnceLock<Regex> = OnceLock::new();
     static FREEBSD: OnceLock<Regex> = OnceLock::new();
     static PERCENT: OnceLock<Regex> = OnceLock::new();
+    static CORE_COUNT: OnceLock<Regex> = OnceLock::new();
 
-    let core = |user: u64, sys: u64, nice: u64, idle: u64, irq: u64| {
-        vec![CpuCore {
-            id: "cpu0".to_string(),
-            user,
-            sys,
-            nice,
-            idle,
-            iowait: 0,
-            irq,
-            softirq: 0,
-        }]
+    let count = regex(&CORE_COUNT, r"(?m)^\s*(\d+)\s*$")
+        .captures(raw)
+        .and_then(|c| c[1].parse::<usize>().ok())
+        .filter(|&n| n > 0)
+        .unwrap_or(1);
+
+    let cores = |user: u64, sys: u64, nice: u64, idle: u64, irq: u64| {
+        (0..count)
+            .map(|i| CpuCore {
+                id: format!("cpu{i}"),
+                user,
+                sys,
+                nice,
+                idle,
+                iowait: 0,
+                irq,
+                softirq: 0,
+            })
+            .collect()
     };
 
     let mac = regex(&MAC, r"CPU usage: ([\d.]+)% user, ([\d.]+)% sys, ([\d.]+)% idle");
     if let Some(c) = mac.captures(raw) {
         let f = |i: usize| c[i].parse::<f64>().unwrap_or(0.0) as u64;
-        return core(f(1), f(2), 0, f(3), 0);
+        return cores(f(1), f(2), 0, f(3), 0);
     }
 
     let freebsd = regex(
@@ -43,7 +59,7 @@ pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
     );
     if let Some(c) = freebsd.captures(raw) {
         let f = |i: usize| c[i].parse::<f64>().unwrap_or(0.0) as u64;
-        return core(f(1), f(3), f(2), f(5), f(4));
+        return cores(f(1), f(3), f(2), f(5), f(4));
     }
 
     // Fallback: extract all percentages, take the first three as user/sys/idle (same as Dart)
@@ -54,7 +70,7 @@ pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
         .map(|v| v.clamp(0.0, 100.0))
         .collect();
     if values.len() >= 3 {
-        return core(values[0] as u64, values[1] as u64, 0, values[2] as u64, 0);
+        return cores(values[0] as u64, values[1] as u64, 0, values[2] as u64, 0);
     }
     Vec::new()
 }
