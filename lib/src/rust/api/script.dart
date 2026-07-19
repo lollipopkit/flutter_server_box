@@ -44,6 +44,11 @@ String execCommand({
   func: func,
 );
 
+/// Command-line flag of a shell function ("s", "p", "sd", "r", "sp");
+/// wire format owned by sbm_parser::script
+String shellFuncFlag({required ShellFuncKind func}) =>
+    RustLib.instance.api.crateApiScriptShellFuncFlag(func: func);
+
 /// Split script output into a command key → output map.
 /// Async: status output can be large; runs on the Rust thread pool
 Future<Map<String, String>> parseScriptOutput({required String raw}) =>

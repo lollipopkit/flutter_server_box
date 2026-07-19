@@ -68,7 +68,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => 422323908;
+  int get rustContentHash => 7855265;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -116,6 +116,8 @@ abstract class RustLibApi extends BaseApi {
   String crateApiParserParseWindowsNetSpeedJson({required String raw});
 
   String crateApiParserSeparator();
+
+  String crateApiScriptShellFuncFlag({required ShellFuncKind func});
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -386,6 +388,29 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiParserSeparatorConstMeta =>
       const TaskConstMeta(debugName: 'separator', argNames: []);
+
+  @override
+  String crateApiScriptShellFuncFlag({required ShellFuncKind func}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_shell_func_kind(func, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiScriptShellFuncFlagConstMeta,
+        argValues: [func],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiScriptShellFuncFlagConstMeta =>
+      const TaskConstMeta(debugName: 'shell_func_flag', argNames: ['func']);
 
   @protected
   Map<String, String> dco_decode_Map_String_String_None(dynamic raw) {

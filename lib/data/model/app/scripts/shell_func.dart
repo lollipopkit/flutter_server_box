@@ -3,39 +3,17 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/src/rust/api/script.dart' as ffi;
 
-/// Shell functions available in the ServerBox application.
+/// Shell functions of the generated script.
 ///
-/// Script generation lives in the shared Rust library (sbm_parser::script,
-/// see doc/adr/0001); this file only maps app types onto the FFI and keeps
-/// the connection-state concerns (script paths, custom dirs).
-enum ShellFunc {
-  status('SbStatus'),
-  process('SbProcess'),
-  shutdown('SbShutdown'),
-  reboot('SbReboot'),
-  suspend('SbSuspend');
+/// The FRB-generated enum is the single source; function names, flags, and
+/// script generation live in the shared Rust library (sbm_parser::script, see
+/// doc/adr/0001). This file only maps app types onto the FFI and keeps the
+/// connection-state concerns (script paths, custom dirs).
+typedef ShellFunc = ffi.ShellFuncKind;
 
-  /// The function name used in scripts
-  final String name;
-
-  const ShellFunc(this.name);
-
-  /// Get the command line flag for this function
-  String get flag => switch (this) {
-    ShellFunc.process => 'p',
-    ShellFunc.shutdown => 'sd',
-    ShellFunc.reboot => 'r',
-    ShellFunc.suspend => 'sp',
-    ShellFunc.status => 's',
-  };
-
-  ffi.ShellFuncKind get _kind => switch (this) {
-    ShellFunc.status => ffi.ShellFuncKind.status,
-    ShellFunc.process => ffi.ShellFuncKind.process,
-    ShellFunc.shutdown => ffi.ShellFuncKind.shutdown,
-    ShellFunc.reboot => ffi.ShellFuncKind.reboot,
-    ShellFunc.suspend => ffi.ShellFuncKind.suspend,
-  };
+extension ShellFuncX on ShellFunc {
+  /// Command line flag for this function (wire format owned by Rust)
+  String get flag => ffi.shellFuncFlag(func: this);
 
   /// Execute this shell function on the specified server
   String exec(String id, {SystemType? systemType, required String? customDir}) {
@@ -47,7 +25,7 @@ enum ShellFunc {
     return ffi.execCommand(
       system: ShellFuncManager.ffiSystem(systemType),
       scriptPath: scriptPath,
-      func: _kind,
+      func: this,
     );
   }
 }
@@ -101,8 +79,8 @@ class ShellFuncManager {
     SystemType? systemType,
     required String? customDir,
   }) {
+    final isWindows = systemType == SystemType.windows;
     if (customDir != null) {
-      final isWindows = systemType == SystemType.windows;
       final normalizedDir = _normalizeDir(customDir, isWindows);
       final fileName = isWindows
           ? ScriptConstants.scriptFileWindows
@@ -113,7 +91,6 @@ class ShellFuncManager {
       return '$normalizedDir$separator$fileName';
     }
 
-    final isWindows = systemType == SystemType.windows;
     return ScriptPaths.getScriptPath(id, isWindows: isWindows);
   }
 

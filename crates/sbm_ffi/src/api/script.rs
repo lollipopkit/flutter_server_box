@@ -78,6 +78,13 @@ pub fn exec_command(
     Ok(sbm_parser::script::exec_command(system, &script_path, func.into()))
 }
 
+/// Command-line flag of a shell function ("s", "p", "sd", "r", "sp");
+/// wire format owned by sbm_parser::script
+#[flutter_rust_bridge::frb(sync)]
+pub fn shell_func_flag(func: ShellFuncKind) -> String {
+    sbm_parser::script::ShellFunc::from(func).flag().to_string()
+}
+
 /// Split script output into a command key → output map.
 /// Async: status output can be large; runs on the Rust thread pool
 pub fn parse_script_output(raw: String) -> HashMap<String, String> {
