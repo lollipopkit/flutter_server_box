@@ -147,7 +147,9 @@
         value={m ? `${m.cpu_usage.toFixed(1)}%` : '--'}
         detail={m
           ? [
-              m.cpu_cores?.length ? `${m.cpu_cores.length} ${$LL.cores()}` : '',
+              // cpu_brand already reads e.g. "Apple M5 Pro (x18)"; older
+              // agents without it fall back to a bare core count
+              m.cpu_brand || (m.cpu_cores?.length ? `${m.cpu_cores.length} ${$LL.cores()}` : ''),
               m.temperature != null ? `${m.temperature.toFixed(1)} \u00B0C` : '',
             ]
               .filter(Boolean)
