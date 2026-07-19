@@ -77,7 +77,7 @@ Pure parsing library shared with the Flutter app via FFI (see `../doc/adr/0001-m
 - **`cli/`**: clap-based CLI (`serve`, `config`, `cleanup` subcommands)
 - **`core/`**: Configuration management (`config.rs`, `config_manager.rs`) with .env support and TOML/JSON config files
 - **`api/`**: ntex-based web server (`server.rs`) and JWT auth (`auth.rs`)
-- **`monitoring/`**: Metrics collection (`monitoring.rs`), rule evaluation (`rules.rs`), push notifications with rate limiting (`push.rs`), velocity/timeseries analysis
+- **`monitoring/`**: Metrics collection (`monitoring.rs`: runs the shared generated status script from `sbm_parser::script` once per cycle and splits its `SrvBoxSep` output), rule evaluation (`rules.rs`), push notifications with rate limiting (`push.rs`), velocity/timeseries analysis
 - **`db/`**: SQLite initialization/migrations (`database.rs`) and data retention cleanup (`cleanup.rs`)
 - **`utils/`**: Centralized error types (`error.rs`)
 

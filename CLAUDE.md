@@ -41,12 +41,13 @@ This is a Flutter application for managing Linux servers with the following key 
 - `crates/sbm_parser/` - Shared status parser (single source of truth for command manifest + parsing; used by both the app via FFI and the server-side monitor). Behavior locked by `crates/sbm_parser/tests/dart_compat.rs`
   - Parsing is pure functions: parsers emit raw counters; diff/windowed computation (speeds etc.) is provided as pure functions, mutable time-series state stays on the caller side. The FFI boundary holds no mutable state.
   - The command manifest (cmd name → per-platform command, `SrvBoxSep.<cmd>` segmenting) lives here too; commands are flagged `core` vs on-demand (monitor periodically runs core only; GPU/SMART etc. are app-triggered)
+  - Script generation is shared as well (`script.rs`: build/install/exec commands + output splitting, locked by `tests/script_compat.rs`); the app calls it via FFI, the monitor executes the generated core-only script locally each cycle
 - `crates/sbm_ffi/` - flutter_rust_bridge binding crate + cargokit Flutter plugin glue in one directory (Dart side generated into `lib/src/rust/`)
 - `monitor/` - Server-side monitoring service (Rust + React frontend), has its own `monitor/CLAUDE.md`
 - Root `Cargo.toml` is the workspace; build/test all Rust with `cargo test --workspace`
 - FFI parity test: `flutter test test/frb_parser_test.dart` (requires `cargo build -p sbm_ffi` first)
 - Migration rule ("test as spec"): before moving a parsing module to Rust, port its Dart fixture tests to Rust; only delete the Dart implementation after the FFI result is asserted identical against the same fixtures
-- Remaining migration work: switch app production code module-by-module to FFI and delete Dart parsers, switch script generation to the shared `command_specs`, CI cross-compile verification for all five platforms
+- Remaining migration work: CI cross-compile verification for all five platforms
 
 ### Project Structure
 
