@@ -63,6 +63,19 @@ fn ssh(host: &str, cmd: &str, stdin: Option<&str>) -> Result<String, String> {
     Ok(String::from_utf8_lossy(&out.stdout).into_owned())
 }
 
+/// Like [`ssh`] but returns stdout regardless of exit status — for tools that
+/// exit non-zero when they have nothing to report (e.g. `sensors` without
+/// detected chips), mirroring the script's `exec 2>/dev/null` tolerance
+fn ssh_stdout(host: &str, cmd: &str) -> String {
+    let quoted = format!("sh -c '{}'", cmd.replace('\'', r"'\''"));
+    Command::new("ssh")
+        .args(["-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host, &quoted])
+        .stdin(Stdio::null())
+        .output()
+        .map(|out| String::from_utf8_lossy(&out.stdout).into_owned())
+        .unwrap_or_default()
+}
+
 /// The manifest command for `key` on `system` (panics if absent — the test
 /// only asks for keys that exist on both Unix systems)
 fn manifest_cmd(system: SystemType, key: &str) -> &'static str {
@@ -199,21 +212,32 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
             assert!(status.amd.is_empty(), "no AMD tools yet AMD GPUs parsed");
         }
 
+        // Tool presence does not imply data (e.g. sensors on a VM/WSL finds no
+        // chips and exits 1 with empty stdout) — the contract is that the
+        // script-transported parse equals the direct parse, empty or not
         let has_sensors = has("if command -v sensors >/dev/null 2>&1; then echo yes; else echo no; fi");
         if has_sensors {
-            assert!(
-                !status.sensors.is_empty(),
-                "sensors available but nothing parsed; segment: {:?}",
-                segments.get(commands::SENSORS)
-            );
+            let direct = sbm_parser::linux::parse_sensors(&ssh_stdout(
+                &host,
+                manifest_cmd(system, commands::SENSORS),
+            ));
+            let script_devices: Vec<_> = status.sensors.iter().map(|s| &s.device).collect();
+            let direct_devices: Vec<_> = direct.iter().map(|s| &s.device).collect();
+            assert_eq!(script_devices, direct_devices, "sensor devices: script vs direct");
         } else {
             assert!(status.sensors.is_empty());
         }
 
-        // smartctl usually needs root for real data; only assert graceful
-        // degradation when the tool is absent
         let has_smart = has("if command -v smartctl >/dev/null 2>&1; then echo yes; else echo no; fi");
-        if !has_smart {
+        if has_smart {
+            let direct = sbm_parser::smart::parse(&ssh_stdout(
+                &host,
+                manifest_cmd(system, commands::DISK_SMART),
+            ));
+            let script_devices: Vec<_> = status.disk_smart.iter().map(|d| &d.device).collect();
+            let direct_devices: Vec<_> = direct.iter().map(|d| &d.device).collect();
+            assert_eq!(script_devices, direct_devices, "SMART devices: script vs direct");
+        } else {
             assert!(status.disk_smart.is_empty());
         }
 
@@ -227,12 +251,14 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
         }
 
         eprintln!(
-            "on-demand: nvidia={} ({} GPUs) amd={} sensors={} smartctl={} power_supply={}",
+            "on-demand: nvidia={} ({} GPUs) amd={} sensors={} ({}) smartctl={} ({}) power_supply={}",
             has_nvidia,
             status.nvidia.len(),
             has_amd,
             has_sensors,
+            status.sensors.len(),
             has_smart,
+            status.disk_smart.len(),
             has_power
         );
     }
