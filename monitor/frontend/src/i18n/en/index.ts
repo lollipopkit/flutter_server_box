@@ -41,6 +41,10 @@ const en = {
 	themeLight: 'Light theme',
 	themeDark: 'Dark theme',
 	language: 'Language',
+	servers: 'Servers',
+	menu: 'Menu',
+	collapseSidebar: 'Collapse sidebar',
+	expandSidebar: 'Expand sidebar',
 } satisfies BaseTranslation
 
 export default en

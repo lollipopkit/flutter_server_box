@@ -1,26 +1,23 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte'
   import {
-    Monitor,
-    LogOut,
     Cpu,
     HardDrive,
+    Menu,
     MemoryStick,
     Thermometer,
     Network,
     CircleAlert,
     RefreshCw,
   } from '@lucide/svelte'
-  import { Button, Card, Spinner } from '@serverbox/webui'
+  import { Button, Card, IconButton, Spinner } from '@serverbox/webui'
   import LineChart from '../components/LineChart.svelte'
-  import LocaleToggle from '../components/LocaleToggle.svelte'
-  import ServerPicker from '../components/ServerPicker.svelte'
   import StatCard from '../components/StatCard.svelte'
-  import ThemeToggle from '../components/ThemeToggle.svelte'
   import { api } from '../lib/api'
   import { servers } from '../lib/servers.svelte'
   import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../lib/format'
   import { LL } from '../i18n/i18n-svelte'
+  import { layout } from '../lib/layout.svelte'
   import { Poller } from '../lib/poller.svelte'
   import type { HistoryPoint } from '../types'
 
@@ -106,30 +103,21 @@
 {:else}
   <header class="bg-surface shadow-xs border-b border-line">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex flex-wrap justify-between items-center gap-x-4 gap-y-2 py-3 sm:py-4">
-        <div class="flex items-center min-w-0">
-          <Monitor class="w-8 h-8 text-accent mr-3 shrink-0" />
-          <div class="min-w-0">
-            <h1 class="text-xl font-semibold font-display text-fg-strong truncate">
-              ServerBox Monitor
-            </h1>
-            <p class="text-sm text-muted-fg truncate">
-              {status.data?.name || $LL.unknownServer()}
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-1 sm:gap-3 min-w-0">
-          <ServerPicker />
-          <div class="hidden md:block text-sm text-muted-fg whitespace-nowrap">
-            {$LL.welcome()} <span class="font-medium">{servers.current?.username}</span>
-          </div>
-          <LocaleToggle />
-          <ThemeToggle />
-          <Button variant="secondary" size="sm" class="whitespace-nowrap" onclick={() => servers.logout()}>
-            <LogOut class="w-4 h-4 mr-2" />
-            {$LL.logout()}
-          </Button>
+      <div class="flex items-center gap-2 py-3 min-h-16">
+        <IconButton
+          class="lg:hidden -ml-2"
+          label={$LL.menu()}
+          onclick={() => (layout.mobileOpen = true)}
+        >
+          <Menu class="w-5 h-5" />
+        </IconButton>
+        <div class="min-w-0">
+          <h1 class="text-lg font-semibold font-display text-fg-strong truncate">
+            {servers.current?.id === 'local' ? $LL.thisServer() : servers.current?.name}
+          </h1>
+          <p class="text-xs text-muted-fg truncate">
+            {status.data?.name || $LL.unknownServer()}
+          </p>
         </div>
       </div>
     </div>

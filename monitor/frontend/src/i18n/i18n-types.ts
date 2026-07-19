@@ -174,6 +174,22 @@ type RootTranslation = {
 	 * L​a​n​g​u​a​g​e
 	 */
 	language: string
+	/**
+	 * S​e​r​v​e​r​s
+	 */
+	servers: string
+	/**
+	 * M​e​n​u
+	 */
+	menu: string
+	/**
+	 * C​o​l​l​a​p​s​e​ ​s​i​d​e​b​a​r
+	 */
+	collapseSidebar: string
+	/**
+	 * E​x​p​a​n​d​ ​s​i​d​e​b​a​r
+	 */
+	expandSidebar: string
 }
 
 export type TranslationFunctions = {
@@ -337,6 +353,22 @@ export type TranslationFunctions = {
 	 * Language
 	 */
 	language: () => LocalizedString
+	/**
+	 * Servers
+	 */
+	servers: () => LocalizedString
+	/**
+	 * Menu
+	 */
+	menu: () => LocalizedString
+	/**
+	 * Collapse sidebar
+	 */
+	collapseSidebar: () => LocalizedString
+	/**
+	 * Expand sidebar
+	 */
+	expandSidebar: () => LocalizedString
 }
 
 export type Formatters = {}

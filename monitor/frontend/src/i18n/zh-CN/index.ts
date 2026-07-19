@@ -41,6 +41,10 @@ const zh_CN = {
 	themeLight: '浅色模式',
 	themeDark: '深色模式',
 	language: '语言',
+	servers: '服务器',
+	menu: '菜单',
+	collapseSidebar: '折叠侧栏',
+	expandSidebar: '展开侧栏',
 } satisfies Translation
 
 export default zh_CN
