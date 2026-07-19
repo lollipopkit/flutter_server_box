@@ -54,6 +54,8 @@ const pt = {
 	disconnected: 'Desconectado',
 	cores: 'Núcleos',
 	power: 'Energia',
+	osHost: 'SO / Host',
+	refresh: 'Atualizar',
 } satisfies Translation
 
 export default pt

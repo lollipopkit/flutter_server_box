@@ -54,6 +54,8 @@ const de = {
 	disconnected: 'Getrennt',
 	cores: 'Kerne',
 	power: 'Leistung',
+	osHost: 'Betriebssystem / Host',
+	refresh: 'Aktualisieren',
 } satisfies Translation
 
 export default de

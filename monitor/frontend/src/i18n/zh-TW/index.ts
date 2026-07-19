@@ -54,6 +54,8 @@ const zh_TW = {
 	disconnected: '連線中斷',
 	cores: '核心',
 	power: '功耗',
+	osHost: '系統 / 主機',
+	refresh: '重新整理',
 } satisfies Translation
 
 export default zh_TW

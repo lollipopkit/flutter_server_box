@@ -54,6 +54,8 @@ const ru = {
 	disconnected: 'Отключено',
 	cores: 'Ядра',
 	power: 'Мощность',
+	osHost: 'ОС / Хост',
+	refresh: 'Обновить',
 } satisfies Translation
 
 export default ru

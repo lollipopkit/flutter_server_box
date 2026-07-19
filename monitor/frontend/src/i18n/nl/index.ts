@@ -54,6 +54,8 @@ const nl = {
 	disconnected: 'Verbroken',
 	cores: 'Kernen',
 	power: 'Vermogen',
+	osHost: 'OS / Host',
+	refresh: 'Vernieuwen',
 } satisfies Translation
 
 export default nl

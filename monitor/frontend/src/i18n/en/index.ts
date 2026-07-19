@@ -54,6 +54,8 @@ const en = {
 	disconnected: 'Disconnected',
 	cores: 'Cores',
 	power: 'Power',
+	osHost: 'OS / Host',
+	refresh: 'Refresh',
 } satisfies BaseTranslation
 
 export default en

@@ -54,6 +54,8 @@ const fr = {
 	disconnected: 'Déconnecté',
 	cores: 'Cœurs',
 	power: 'Puissance',
+	osHost: 'OS / Hôte',
+	refresh: 'Actualiser',
 } satisfies Translation
 
 export default fr

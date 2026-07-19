@@ -54,6 +54,8 @@ const tr = {
 	disconnected: 'Bağlantı kesildi',
 	cores: 'Çekirdek',
 	power: 'Güç',
+	osHost: 'İşletim Sistemi / Sunucu',
+	refresh: 'Yenile',
 } satisfies Translation
 
 export default tr

@@ -239,6 +239,14 @@ type RootTranslation = {
 	 * P​o​w​e​r
 	 */
 	power: string
+	/**
+	 * O​S​ ​/​ ​H​o​s​t
+	 */
+	osHost: string
+	/**
+	 * R​e​f​r​e​s​h
+	 */
+	refresh: string
 }
 
 export type TranslationFunctions = {
@@ -454,6 +462,14 @@ export type TranslationFunctions = {
 	 * Power
 	 */
 	power: () => LocalizedString
+	/**
+	 * OS / Host
+	 */
+	osHost: () => LocalizedString
+	/**
+	 * Refresh
+	 */
+	refresh: () => LocalizedString
 }
 
 export type Formatters = {}

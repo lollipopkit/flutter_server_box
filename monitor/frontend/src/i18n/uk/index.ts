@@ -54,6 +54,8 @@ const uk = {
 	disconnected: 'Відключено',
 	cores: 'Ядра',
 	power: 'Потужність',
+	osHost: 'ОС / Хост',
+	refresh: 'Оновити',
 } satisfies Translation
 
 export default uk

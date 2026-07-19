@@ -54,6 +54,8 @@ const id = {
 	disconnected: 'Terputus',
 	cores: 'Inti',
 	power: 'Daya',
+	osHost: 'OS / Host',
+	refresh: 'Segarkan',
 } satisfies Translation
 
 export default id

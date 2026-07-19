@@ -54,6 +54,8 @@ const zh_CN = {
 	disconnected: '连接断开',
 	cores: '核心',
 	power: '功耗',
+	osHost: '系统 / 主机',
+	refresh: '刷新',
 } satisfies Translation
 
 export default zh_CN

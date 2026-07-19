@@ -54,6 +54,8 @@ const it = {
 	disconnected: 'Disconnesso',
 	cores: 'Core',
 	power: 'Potenza',
+	osHost: 'SO / Host',
+	refresh: 'Aggiorna',
 } satisfies Translation
 
 export default it

@@ -54,6 +54,8 @@ const ko = {
 	disconnected: '연결 끊김',
 	cores: '코어',
 	power: '전력',
+	osHost: 'OS / 호스트',
+	refresh: '새로고침',
 } satisfies Translation
 
 export default ko

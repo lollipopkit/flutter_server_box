@@ -54,6 +54,8 @@ const ja = {
 	disconnected: '切断',
 	cores: 'コア',
 	power: '電力',
+	osHost: 'OS / ホスト',
+	refresh: '更新',
 } satisfies Translation
 
 export default ja

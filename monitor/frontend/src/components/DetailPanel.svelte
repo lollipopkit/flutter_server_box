@@ -35,6 +35,31 @@
   </div>
 {/snippet}
 
+<!-- Inline progress bar; fill color follows a usage threshold -->
+{#snippet progressBar(pct: number)}
+  {@const clamped = Math.min(Math.max(pct, 0), 100)}
+  <div class="w-full h-2 rounded-full bg-soft overflow-hidden">
+    <div
+      class="h-full rounded-full {clamped < 70
+        ? 'bg-success'
+        : clamped < 90
+          ? 'bg-warning'
+          : 'bg-danger'}"
+      style="width: {clamped}%"
+    ></div>
+  </div>
+{/snippet}
+
+{#snippet labeledBar(label: string, value: string, pct: number)}
+  <div class="space-y-1.5">
+    <div class="flex justify-between gap-4">
+      <span class="text-sm text-muted-fg">{label}</span>
+      <span class="text-sm font-medium text-fg truncate">{value}</span>
+    </div>
+    {@render progressBar(pct)}
+  </div>
+{/snippet}
+
 <div class="space-y-6 max-w-4xl">
   <div class="flex items-center gap-2">
     <Button variant="ghost" size="sm" onclick={onback}>
@@ -52,14 +77,17 @@
       yMax={100}
       format={fmtPercent}
     />
-    <Card>
-      <div class="space-y-3">
-        {@render row($LL.cores(), String(m?.cpu_cores?.length ?? '--'))}
-        {#if m?.temperature != null}
-          {@render row($LL.temperature(), `${m.temperature.toFixed(1)} °C`)}
-        {/if}
-      </div>
-    </Card>
+    {#if m}
+      <Card>
+        <div class="space-y-4">
+          {@render labeledBar($LL.usage(), `${m.cpu_usage.toFixed(1)}%`, m.cpu_usage)}
+          {@render row($LL.cores(), String(m.cpu_cores?.length ?? '--'))}
+          {#if m.temperature != null}
+            {@render row($LL.temperature(), `${m.temperature.toFixed(1)} °C`)}
+          {/if}
+        </div>
+      </Card>
+    {/if}
   {:else if kind === 'memory'}
     <LineChart
       title={$LL.usage()}
@@ -70,9 +98,19 @@
     />
     {#if m}
       <Card>
-        <div class="space-y-3">
-          {@render row($LL.memory(), `${fmtBytes(m.memory.used)} / ${fmtBytes(m.memory.total)} (${m.memory.usage_percent.toFixed(1)}%)`)}
-          {@render row($LL.swap(), m.swap.total > 0 ? `${fmtBytes(m.swap.used)} / ${fmtBytes(m.swap.total)} (${m.swap.usage_percent.toFixed(1)}%)` : '--')}
+        <div class="space-y-4">
+          {@render labeledBar(
+            $LL.memory(),
+            `${fmtBytes(m.memory.used)} / ${fmtBytes(m.memory.total)} (${m.memory.usage_percent.toFixed(1)}%)`,
+            m.memory.usage_percent,
+          )}
+          {#if m.swap.total > 0}
+            {@render labeledBar(
+              $LL.swap(),
+              `${fmtBytes(m.swap.used)} / ${fmtBytes(m.swap.total)} (${m.swap.usage_percent.toFixed(1)}%)`,
+              m.swap.usage_percent,
+            )}
+          {/if}
         </div>
       </Card>
     {/if}
@@ -87,28 +125,31 @@
     {#if m}
       <Card>
         <h3 class="text-sm font-semibold text-fg-strong mb-3">{$LL.disks()}</h3>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <tbody class="divide-y divide-line">
-              {#each m.disk_details ?? [] as d (d.path)}
-                <tr>
-                  <td class="py-2 pr-4">
+        <table class="w-full text-sm table-fixed">
+          <tbody class="divide-y divide-line">
+            {#each m.disk_details ?? [] as d (d.path)}
+              <tr>
+                <td class="py-2 pr-4 align-top">
+                  <div
+                    class="max-w-[240px] sm:max-w-[340px]"
+                    title={`${d.mount} (${d.path})`}
+                  >
                     <span class="block text-fg truncate">{d.mount}</span>
                     <span class="block text-xs text-faint-fg truncate">
                       {d.path}{d.fs_type ? ` · ${d.fs_type}` : ''}
                     </span>
-                  </td>
-                  <td class="py-2 text-right whitespace-nowrap text-muted-fg">
-                    {fmtBytes(d.used)} / {fmtBytes(d.total)}
-                  </td>
-                  <td class="py-2 pl-4 text-right font-medium text-fg">
-                    {d.usage_percent.toFixed(1)}%
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </td>
+                <td class="py-2 text-right whitespace-nowrap text-muted-fg w-28 sm:w-36">
+                  {fmtBytes(d.used)} / {fmtBytes(d.total)}
+                </td>
+                <td class="py-2 pl-4 text-right font-medium text-fg w-16">
+                  {d.usage_percent.toFixed(1)}%
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
       </Card>
     {/if}
   {:else if kind === 'network'}
@@ -124,31 +165,38 @@
     {#if m}
       <Card>
         <h3 class="text-sm font-semibold text-fg-strong mb-3">{$LL.interfaces()}</h3>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <tbody class="divide-y divide-line">
-              {#each m.ifaces ?? [] as iface (iface.name)}
-                <tr>
-                  <td class="py-2 pr-4 text-fg truncate">{iface.name}</td>
-                  <td class="py-2 text-right whitespace-nowrap text-muted-fg">
-                    RX {fmtBytes(iface.rx_bytes)}
-                  </td>
-                  <td class="py-2 pl-4 text-right whitespace-nowrap text-muted-fg">
-                    TX {fmtBytes(iface.tx_bytes)}
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        </div>
+        <table class="w-full text-sm table-fixed">
+          <thead>
+            <tr class="border-b border-line">
+              <th class="py-2 pr-4 text-left font-medium text-muted-fg">{$LL.interfaces()}</th>
+              <th class="py-2 text-right font-medium text-muted-fg w-24 sm:w-32">RX</th>
+              <th class="py-2 pl-4 text-right font-medium text-muted-fg w-24 sm:w-32">TX</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-line">
+            {#each m.ifaces ?? [] as iface (iface.name)}
+              <tr>
+                <td class="py-2 pr-4">
+                  <span class="block truncate" title={iface.name}>{iface.name}</span>
+                </td>
+                <td class="py-2 text-right whitespace-nowrap text-muted-fg">
+                  {fmtBytes(iface.rx_bytes)}
+                </td>
+                <td class="py-2 pl-4 text-right whitespace-nowrap text-muted-fg">
+                  {fmtBytes(iface.tx_bytes)}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
       </Card>
     {/if}
   {:else if kind === 'gpu'}
     {#each m?.gpus ?? [] as gpu (gpu.name)}
       <Card>
         <h3 class="text-sm font-semibold text-fg-strong mb-3 truncate">{gpu.name}</h3>
-        <div class="space-y-3">
-          {@render row($LL.usage(), `${gpu.usage_percent.toFixed(0)}%`)}
+        <div class="space-y-4">
+          {@render labeledBar($LL.usage(), `${gpu.usage_percent.toFixed(0)}%`, gpu.usage_percent)}
           {@render row($LL.memory(), `${gpu.memory_used} / ${gpu.memory_total} ${gpu.memory_unit}`)}
           {@render row($LL.temperature(), `${gpu.temperature} °C`)}
           {@render row($LL.power(), gpu.power)}

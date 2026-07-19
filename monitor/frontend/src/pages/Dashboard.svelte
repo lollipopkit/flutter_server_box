@@ -11,7 +11,7 @@
     CircleAlert,
     RefreshCw,
   } from '@lucide/svelte'
-  import { Badge, Button, Card, IconButton, Spinner } from '@serverbox/webui'
+  import { Badge, Card, IconButton, Spinner } from '@serverbox/webui'
   import DetailPanel, { type DetailKind } from '../components/DetailPanel.svelte'
   import LineChart from '../components/LineChart.svelte'
   import StatCard from '../components/StatCard.svelte'
@@ -116,6 +116,9 @@
           ></span>
           {connected ? $LL.connected() : $LL.disconnected()}
         </Badge>
+        <IconButton label={$LL.refresh()} onclick={() => window.location.reload()}>
+          <RefreshCw class="w-4 h-4" />
+        </IconButton>
       </div>
     </div>
   </header>
@@ -228,57 +231,44 @@
 
     {#if metrics.data}
       {@const m = metrics.data}
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
-        <Card>
-          <h3 class="text-lg font-semibold font-display text-fg-strong mb-4">{$LL.systemInformation()}</h3>
-          <div class="space-y-3">
-            <div class="flex justify-between">
-              <span class="text-sm text-muted-fg">{$LL.serverNameLabel()}</span>
-              <span class="text-sm font-medium">{m.server_name}</span>
+      <Card>
+        <h3 class="text-lg font-semibold font-display text-fg-strong mb-4">{$LL.systemInformation()}</h3>
+        <div class="space-y-3">
+          <div class="flex justify-between">
+            <span class="text-sm text-muted-fg">{$LL.serverNameLabel()}</span>
+            <span class="text-sm font-medium">{m.server_name}</span>
+          </div>
+          {#if status.data?.name}
+            <div class="flex justify-between gap-4">
+              <span class="text-sm text-muted-fg">{$LL.osHost()}</span>
+              <span class="text-sm font-medium text-right truncate">{status.data.name}</span>
             </div>
+          {/if}
+          <div class="flex justify-between">
+            <span class="text-sm text-muted-fg">{$LL.lastUpdated()}</span>
+            <span class="text-sm font-medium">
+              {new Date(m.timestamp).toLocaleString()}
+            </span>
+          </div>
+          {#if m.swap.total > 0}
             <div class="flex justify-between">
-              <span class="text-sm text-muted-fg">{$LL.lastUpdated()}</span>
+              <span class="text-sm text-muted-fg">{$LL.swap()}</span>
               <span class="text-sm font-medium">
-                {new Date(m.timestamp).toLocaleString()}
+                {fmtBytes(m.swap.used)} / {fmtBytes(m.swap.total)}
               </span>
             </div>
+          {/if}
+          {#if m.temperature != null}
             <div class="flex justify-between">
-              <span class="text-sm text-muted-fg">{$LL.cpuUsageLabel()}</span>
-              <span class="text-sm font-medium">{m.cpu_usage.toFixed(1)}%</span>
+              <span class="text-sm text-muted-fg">{$LL.temperature()}</span>
+              <span class="text-sm font-medium flex items-center">
+                <Thermometer class="w-4 h-4 mr-1" />
+                {m.temperature.toFixed(1)}°C
+              </span>
             </div>
-            <div class="flex justify-between">
-              <span class="text-sm text-muted-fg">{$LL.memoryUsageLabel()}</span>
-              <span class="text-sm font-medium">{m.memory.usage_percent.toFixed(1)}%</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-sm text-muted-fg">{$LL.diskUsageLabel()}</span>
-              <span class="text-sm font-medium">{m.disk.usage_percent.toFixed(1)}%</span>
-            </div>
-            {#if m.temperature != null}
-              <div class="flex justify-between">
-                <span class="text-sm text-muted-fg">{$LL.temperature()}</span>
-                <span class="text-sm font-medium flex items-center">
-                  <Thermometer class="w-4 h-4 mr-1" />
-                  {m.temperature.toFixed(1)}°C
-                </span>
-              </div>
-            {/if}
-          </div>
-        </Card>
-
-        <Card>
-          <h3 class="text-lg font-semibold font-display text-fg-strong mb-4">{$LL.quickActions()}</h3>
-          <div class="space-y-3">
-            <Button block onclick={() => window.location.reload()}>
-              <RefreshCw class="w-4 h-4 mr-2" />
-              {$LL.refreshData()}
-            </Button>
-            <div class="text-xs text-muted-fg text-center mt-4">
-              {$LL.autoRefreshNote()}
-            </div>
-          </div>
-        </Card>
-      </div>
+          {/if}
+        </div>
+      </Card>
     {/if}
     {/if}
   </main>
