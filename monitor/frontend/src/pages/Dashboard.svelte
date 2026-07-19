@@ -103,7 +103,7 @@
 {:else}
   <header class="bg-surface shadow-xs border-b border-line">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center gap-2 py-3 min-h-16">
+      <div class="flex items-center gap-2 h-16">
         <IconButton
           class="lg:hidden -ml-2"
           label={$LL.menu()}
@@ -112,10 +112,10 @@
           <Menu class="w-5 h-5" />
         </IconButton>
         <div class="min-w-0">
-          <h1 class="text-lg font-semibold font-display text-fg-strong truncate">
+          <h1 class="text-lg leading-tight font-semibold font-display text-fg-strong truncate">
             {servers.current?.id === 'local' ? $LL.thisServer() : servers.current?.name}
           </h1>
-          <p class="text-xs text-muted-fg truncate">
+          <p class="text-xs leading-tight text-muted-fg truncate">
             {status.data?.name || $LL.unknownServer()}
           </p>
         </div>
