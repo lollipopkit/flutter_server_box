@@ -9,6 +9,8 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 regex = "1.10"
 roxmltree = "0.20"
+# -EncodedCommand generation for shell-agnostic Windows install commands
+base64 = "0.22"
 
 [dev-dependencies]
 # .env loading for the opt-in SSH e2e test (tests/ssh_e2e.rs)

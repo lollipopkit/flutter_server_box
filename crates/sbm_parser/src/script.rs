@@ -80,14 +80,28 @@ pub fn build_script(system: SystemType, opts: &ScriptOptions) -> String {
     }
 }
 
-/// Command that installs the script on the target (script content is piped via stdin)
+/// Wrap a PowerShell snippet as `powershell -EncodedCommand ...` so it runs
+/// unmodified from any Windows default shell (cmd.exe or PowerShell) with no
+/// quoting/expansion ambiguity; stdin stays available to the snippet
+pub fn encoded_powershell_command(ps: &str) -> String {
+    use base64::Engine;
+    let utf16le: Vec<u8> = ps.encode_utf16().flat_map(u16::to_le_bytes).collect();
+    format!(
+        "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand {}",
+        base64::engine::general_purpose::STANDARD.encode(utf16le)
+    )
+}
+
+/// Command that installs the script on the target (script content is piped via
+/// stdin). The Windows variant is base64-encoded: the raw PowerShell syntax
+/// would fail on hosts whose OpenSSH default shell is cmd.exe
 pub fn install_command(system: SystemType, script_dir: &str, script_path: &str) -> String {
     match system {
-        SystemType::Windows => format!(
+        SystemType::Windows => encoded_powershell_command(&format!(
             "New-Item -ItemType Directory -Force -Path '{script_dir}' | Out-Null; \
 $content = [System.Console]::In.ReadToEnd(); \
 Set-Content -Path '{script_path}' -Value $content -Encoding UTF8"
-        ),
+        )),
         _ => format!("mkdir -p {script_dir}\ncat > {script_path}\nchmod 755 {script_path}\n"),
     }
 }

@@ -54,7 +54,8 @@ fn script_custom_commands() {
     }
 }
 
-/// Dart 'install commands are generated correctly'
+/// Dart 'install commands are generated correctly'; the Windows variant is
+/// -EncodedCommand wrapped so it runs from cmd.exe default shells too
 #[test]
 fn install_commands() {
     let unix = install_command(SystemType::Linux, "/tmp/test", "/tmp/test/script.sh");
@@ -63,9 +64,20 @@ fn install_commands() {
     assert!(unix.contains("/tmp/test/script.sh"));
 
     let win = install_command(SystemType::Windows, r"C:\temp\test", r"C:\temp\test\script.ps1");
-    assert!(win.contains("New-Item"));
-    assert!(win.contains("Set-Content"));
-    assert!(win.contains(r"C:\temp\test\script.ps1"));
+    assert!(win.starts_with("powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand "));
+    let b64 = win.rsplit(' ').next().unwrap();
+    let decoded = decode_utf16le_b64(b64);
+    assert!(decoded.contains("New-Item"));
+    assert!(decoded.contains("[System.Console]::In.ReadToEnd()"));
+    assert!(decoded.contains("Set-Content"));
+    assert!(decoded.contains(r"C:\temp\test\script.ps1"));
+}
+
+fn decode_utf16le_b64(b64: &str) -> String {
+    use base64::Engine;
+    let bytes = base64::engine::general_purpose::STANDARD.decode(b64).unwrap();
+    let utf16: Vec<u16> = bytes.chunks_exact(2).map(|c| u16::from_le_bytes([c[0], c[1]])).collect();
+    String::from_utf16(&utf16).unwrap()
 }
 
 /// Dart 'exec commands are generated correctly for all platforms'
