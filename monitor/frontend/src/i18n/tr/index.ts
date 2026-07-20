@@ -65,6 +65,20 @@ const tr = {
 	save: 'Kaydet',
 	cancel: 'İptal',
 	confirmDeleteServer: "Bu sunucu kaldırılsın mı? Yalnızca bu tarayıcıda unutulur, aracı durdurulmaz.",
+	uptime: 'Çalışma süresi',
+	connections: 'Bağlantılar',
+	diskIo: 'Disk G/Ç',
+	read: 'Okuma',
+	write: 'Yazma',
+	battery: 'Pil',
+	sensors: 'Sensörler',
+	smart: 'S.M.A.R.T.',
+	healthy: 'Sağlıklı',
+	unhealthy: 'Sorunlu',
+	model: 'Model',
+	serial: 'Seri numarası',
+	powerOnHours: 'Çalışma saati',
+	powerCycleCount: 'Açılma sayısı',
 } satisfies Translation
 
 export default tr

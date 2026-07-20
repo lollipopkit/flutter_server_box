@@ -65,6 +65,20 @@ const ko = {
 	save: '저장',
 	cancel: '취소',
 	confirmDeleteServer: '이 서버를 삭제하시겠습니까? 이 브라우저에서만 잊혀지며 에이전트는 중지되지 않습니다.',
+	uptime: '가동 시간',
+	connections: '연결 수',
+	diskIo: '디스크 I/O',
+	read: '읽기',
+	write: '쓰기',
+	battery: '배터리',
+	sensors: '센서',
+	smart: 'S.M.A.R.T.',
+	healthy: '정상',
+	unhealthy: '이상',
+	model: '모델',
+	serial: '일련번호',
+	powerOnHours: '전원 켜짐 시간',
+	powerCycleCount: '전원 켜짐 횟수',
 } satisfies Translation
 
 export default ko

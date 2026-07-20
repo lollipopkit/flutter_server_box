@@ -27,6 +27,12 @@ port = 3770
 [monitoring]
 interval_seconds = 7
 
+# How often (seconds) to run the full status script, which additionally
+# collects battery/sensors/SMART/AMD-GPU data — too slow to run every
+# interval_seconds cycle (e.g. smartctl waking spun-down disks). Values from
+# this slower script are cached and reused between extended collections.
+extended_interval_secs = 60
+
 # Data retention and cleanup settings
 [monitoring.data_retention]
 # How long to keep system metrics (in days)

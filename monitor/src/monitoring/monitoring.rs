@@ -34,6 +34,51 @@ pub struct SystemMetrics {
     pub disk_details: Vec<DiskDetail>,
     #[serde(default)]
     pub ifaces: Vec<IfaceMetrics>,
+    /// System uptime, already formatted by the collection script (e.g. "up 3 days, 2:14")
+    pub uptime: Option<String>,
+    pub conn: Option<sbm_parser::types::Conn>,
+    /// Cumulative per-device sector counters (not a rate — caller diffs across samples)
+    #[serde(default)]
+    pub diskio: Vec<sbm_parser::types::DiskIoPiece>,
+    #[serde(default)]
+    pub batteries: Vec<sbm_parser::types::Battery>,
+    #[serde(default)]
+    pub sensors: Vec<sbm_parser::types::SensorItem>,
+    #[serde(default)]
+    pub disk_smart: Vec<SmartSummary>,
+    /// Last AMD reading, kept only to re-merge into `gpus` on cycles the
+    /// (expensive, `core: false`) AMD command wasn't run — not part of the API
+    #[serde(skip, default)]
+    pub amd_cache: Vec<sbm_parser::types::AmdSmiItem>,
+}
+
+/// `sbm_parser::types::DiskSmart` trimmed for display: drops `raw_data` /
+/// `smart_attributes`, which would otherwise re-serialize a large SMART JSON
+/// blob on every `/api/metrics` poll even though it only changes once per
+/// extended collection cycle
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SmartSummary {
+    pub device: String,
+    pub healthy: Option<bool>,
+    pub temperature: Option<f64>,
+    pub model: Option<String>,
+    pub serial: Option<String>,
+    pub power_on_hours: Option<i64>,
+    pub power_cycle_count: Option<i64>,
+}
+
+impl From<&sbm_parser::types::DiskSmart> for SmartSummary {
+    fn from(d: &sbm_parser::types::DiskSmart) -> Self {
+        Self {
+            device: d.device.clone(),
+            healthy: d.healthy,
+            temperature: d.temperature,
+            model: d.model.clone(),
+            serial: d.serial.clone(),
+            power_on_hours: d.power_on_hours,
+            power_cycle_count: d.power_cycle_count,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -96,18 +141,37 @@ pub struct IfaceMetrics {
     pub tx_bytes: u64,
 }
 
-pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
-    let interval_seconds = app_state.config.get_monitoring().interval_seconds as f64;
-    let interval = Duration::from_secs(app_state.config.get_monitoring().interval_seconds);
+/// Whether `cycle` (0-indexed, incrementing once per `interval_seconds`) is
+/// due for the slower full-script collection. Cycle 0 is always extended so
+/// battery/sensors/SMART/AMD data is populated from the very first sample
+/// instead of waiting a full `extended_interval_secs`.
+fn is_extended_cycle(cycle: u64, interval_seconds: u64, extended_interval_secs: u64) -> bool {
+    let extended_every = (extended_interval_secs / interval_seconds.max(1)).max(1);
+    cycle % extended_every == 0
+}
 
-    info!("Starting monitoring loop with {}s interval", app_state.config.get_monitoring().interval_seconds);
+pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
+    let monitoring_config = app_state.config.get_monitoring();
+    let interval_seconds = monitoring_config.interval_seconds as f64;
+    let interval = Duration::from_secs(monitoring_config.interval_seconds);
+
+    info!("Starting monitoring loop with {}s interval", monitoring_config.interval_seconds);
 
     // CPU summary sample from the previous cycle: cumulative ticks need a
     // cross-cycle delta to yield current usage
     let mut prev_cpu: Option<CpuCore> = None;
+    let mut cycle: u64 = 0;
 
     loop {
-        match collect_metrics(&app_state.config, &mut prev_cpu).await {
+        let core_only = !is_extended_cycle(
+            cycle,
+            monitoring_config.interval_seconds,
+            monitoring_config.extended_interval_secs,
+        );
+        cycle += 1;
+        let prev_metrics = app_state.current_metrics.read().await.clone();
+
+        match collect_metrics(&app_state.config, &mut prev_cpu, core_only, prev_metrics.as_ref()).await {
             Ok(metrics) => {
                 // Store metrics in database
                 if let Err(e) = store_metrics(&app_state.db, &metrics).await {
@@ -152,9 +216,14 @@ fn system_type() -> SystemType {
     }
 }
 
-async fn collect_metrics(config: &Config, prev_cpu: &mut Option<CpuCore>) -> Result<SystemMetrics> {
+async fn collect_metrics(
+    config: &Config,
+    prev_cpu: &mut Option<CpuCore>,
+    core_only: bool,
+    prev_metrics: Option<&SystemMetrics>,
+) -> Result<SystemMetrics> {
     let system = system_type();
-    let raw = execute_commands(system).await?;
+    let raw = execute_commands(system, core_only).await?;
     let mut status = sbm_parser::parse_status(system, &raw);
 
     // macOS: `top` (the shared BSD command) gives an aggregate reading only.
@@ -172,28 +241,35 @@ async fn collect_metrics(config: &Config, prev_cpu: &mut Option<CpuCore>) -> Res
 
     let prev = prev_cpu.take();
     *prev_cpu = summary_core(&status.cpu).cloned();
-    Ok(adapt_status(system, status, config, prev.as_ref()))
+    Ok(adapt_status(system, status, config, prev.as_ref(), prev_metrics))
 }
 
-/// Build the core-only status script shared with the app (sbm_parser::script)
-/// . One script execution per cycle replaces the former
-/// per-command spawn loop; the app runs the same generation code over SSH.
-fn build_status_script(system: SystemType) -> String {
+/// Build the status script shared with the app (sbm_parser::script). One
+/// script execution per cycle replaces the former per-command spawn loop; the
+/// app runs the same generation code over SSH. `core_only=false` additionally
+/// includes battery/sensors/SMART/AMD — too slow to run every cycle, so the
+/// caller only requests the full script every `extended_interval_secs`.
+fn build_status_script(system: SystemType, core_only: bool) -> String {
     sbm_parser::script::build_script(
         system,
         &sbm_parser::script::ScriptOptions {
-            core_only: true,
+            core_only,
             build_number: env!("CARGO_PKG_VERSION").to_string(),
             ..Default::default()
         },
     )
 }
 
-/// Script location in the temp dir. `.ps1` is mandatory for `powershell -File`
-fn script_path(system: SystemType) -> std::path::PathBuf {
-    let name = match system {
-        SystemType::Windows => "status.ps1",
-        _ => "status.sh",
+/// Script location in the temp dir. `.ps1` is mandatory for `powershell -File`.
+/// Core and full scripts are cached under distinct filenames so alternating
+/// between them doesn't rewrite the file (and lose `ensure_script`'s skip-if-
+/// unchanged optimization) every cycle.
+fn script_path(system: SystemType, core_only: bool) -> std::path::PathBuf {
+    let name = match (system, core_only) {
+        (SystemType::Windows, true) => "status.ps1",
+        (SystemType::Windows, false) => "status_full.ps1",
+        (_, true) => "status.sh",
+        (_, false) => "status_full.sh",
     };
     std::env::temp_dir().join("server_box_monitor").join(name)
 }
@@ -221,9 +297,9 @@ fn ensure_script(path: &std::path::Path, content: &str) -> std::io::Result<()> {
 /// Failed commands inside the script yield empty segments (the script does
 /// `exec 2>/dev/null`), matching the app's per-segment tolerance; per-command
 /// stderr is not observable in this mode.
-async fn execute_commands(system: SystemType) -> Result<HashMap<String, String>> {
-    let content = build_status_script(system);
-    let path = script_path(system);
+async fn execute_commands(system: SystemType, core_only: bool) -> Result<HashMap<String, String>> {
+    let content = build_status_script(system, core_only);
+    let path = script_path(system, core_only);
 
     let output = tokio::task::spawn_blocking(move || -> std::io::Result<std::process::Output> {
         ensure_script(&path, &content)?;
@@ -253,12 +329,26 @@ async fn execute_commands(system: SystemType) -> Result<HashMap<String, String>>
     Ok(sbm_parser::script::parse_script_output(&stdout))
 }
 
+/// `fresh` wins whenever it has data; otherwise keeps whatever the previous
+/// cycle had. Used for the `core: false` fields (diskio on Windows;
+/// battery/sensors/disk_smart/amd everywhere) that only get real values on
+/// the slower extended-collection cycles, so they don't flicker empty on the
+/// core-only cycles in between.
+fn carry_forward<T>(fresh: Vec<T>, prev: Vec<T>) -> Vec<T> {
+    if fresh.is_empty() { prev } else { fresh }
+}
+
+fn carry_forward_opt<T>(fresh: Option<T>, prev: Option<T>) -> Option<T> {
+    fresh.or(prev)
+}
+
 /// Adapt the parse result into the monitor's aggregate metrics
 fn adapt_status(
     system: SystemType,
     status: ServerStatus,
     config: &Config,
     prev_cpu: Option<&CpuCore>,
+    prev_metrics: Option<&SystemMetrics>,
 ) -> SystemMetrics {
     let (cpu_usage, cpu_cores) = adapt_cpu(system, &status.cpu, prev_cpu);
     let (memory, swap) = adapt_memory(&status);
@@ -270,6 +360,11 @@ fn adapt_status(
         SystemType::Bsd => None, // top output has no temperature
         _ => status.temps.first().map(|t| t as f32),
     };
+
+    let amd = carry_forward(
+        status.amd,
+        prev_metrics.map(|p| p.amd_cache.clone()).unwrap_or_default(),
+    );
 
     let gpus = status
         .nvidia
@@ -283,7 +378,7 @@ fn adapt_status(
             memory_total: g.memory.total,
             memory_unit: g.memory.unit.clone(),
         })
-        .chain(status.amd.iter().map(|g| GpuMetrics {
+        .chain(amd.iter().map(|g| GpuMetrics {
             name: g.name.clone(),
             usage_percent: g.utilization as f32,
             temperature: g.temp,
@@ -306,6 +401,11 @@ fn adapt_status(
         })
         .collect();
 
+    let disk_smart = carry_forward(
+        status.disk_smart.iter().map(SmartSummary::from).collect(),
+        prev_metrics.map(|p| p.disk_smart.clone()).unwrap_or_default(),
+    );
+
     SystemMetrics {
         timestamp: Utc::now(),
         server_name: config.get_server_name(),
@@ -321,6 +421,19 @@ fn adapt_status(
         gpus,
         disk_details,
         ifaces,
+        uptime: carry_forward_opt(status.uptime, prev_metrics.and_then(|p| p.uptime.clone())),
+        conn: carry_forward_opt(status.conn, prev_metrics.and_then(|p| p.conn)),
+        diskio: carry_forward(status.diskio, prev_metrics.map(|p| p.diskio.clone()).unwrap_or_default()),
+        batteries: carry_forward(
+            status.batteries,
+            prev_metrics.map(|p| p.batteries.clone()).unwrap_or_default(),
+        ),
+        sensors: carry_forward(
+            status.sensors,
+            prev_metrics.map(|p| p.sensors.clone()).unwrap_or_default(),
+        ),
+        disk_smart,
+        amd_cache: amd,
     }
 }
 
@@ -607,11 +720,110 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 
+    #[test]
+    fn is_extended_cycle_always_true_on_first_cycle() {
+        assert!(is_extended_cycle(0, 5, 60));
+        assert!(is_extended_cycle(0, 30, 60));
+    }
+
+    #[test]
+    fn is_extended_cycle_respects_ratio() {
+        // 60s extended / 5s interval = every 12th cycle
+        assert!(is_extended_cycle(12, 5, 60));
+        assert!(!is_extended_cycle(1, 5, 60));
+        assert!(!is_extended_cycle(11, 5, 60));
+        // extended_interval_secs smaller than interval_seconds: every cycle
+        assert!(is_extended_cycle(1, 30, 5));
+    }
+
+    fn empty_status() -> ServerStatus {
+        ServerStatus::default()
+    }
+
+    #[test]
+    fn adapt_status_uses_fresh_extended_fields_when_present() {
+        let mut status = empty_status();
+        status.uptime = Some("up 1 day".to_string());
+        status.conn = Some(sbm_parser::types::Conn { max_conn: 10, fail: 0 });
+        status.diskio = vec![sbm_parser::types::DiskIoPiece {
+            dev: "sda".to_string(),
+            sectors_read: 100,
+            sectors_write: 50,
+        }];
+        status.batteries = vec![sbm_parser::types::Battery {
+            percent: Some(80),
+            status: sbm_parser::types::BatteryStatus::Charging,
+            name: None,
+            cycle: None,
+            tech: None,
+        }];
+        status.sensors = vec![sbm_parser::types::SensorItem {
+            device: "coretemp".to_string(),
+            adapter: "ISA".to_string(),
+            details: vec![],
+        }];
+        status.disk_smart = vec![sbm_parser::types::DiskSmart {
+            device: "sda".to_string(),
+            healthy: Some(true),
+            temperature: Some(35.0),
+            model: None,
+            serial: None,
+            power_on_hours: None,
+            power_cycle_count: None,
+            raw_data: serde_json::Value::Null,
+            smart_attributes: Default::default(),
+        }];
+
+        let metrics = adapt_status(SystemType::Linux, status, &Config::default(), None, None);
+
+        assert_eq!(metrics.uptime.as_deref(), Some("up 1 day"));
+        assert_eq!(metrics.conn.unwrap().max_conn, 10);
+        assert_eq!(metrics.diskio.len(), 1);
+        assert_eq!(metrics.batteries.len(), 1);
+        assert_eq!(metrics.sensors.len(), 1);
+        assert_eq!(metrics.disk_smart.len(), 1);
+    }
+
+    #[test]
+    fn adapt_status_carries_forward_when_extended_fields_absent() {
+        let prev = adapt_status(
+            SystemType::Linux,
+            {
+                let mut s = empty_status();
+                s.uptime = Some("up 1 day".to_string());
+                s.diskio = vec![sbm_parser::types::DiskIoPiece {
+                    dev: "sda".to_string(),
+                    sectors_read: 100,
+                    sectors_write: 50,
+                }];
+                s.batteries = vec![sbm_parser::types::Battery {
+                    percent: Some(80),
+                    status: sbm_parser::types::BatteryStatus::Charging,
+                    name: None,
+                    cycle: None,
+                    tech: None,
+                }];
+                s
+            },
+            &Config::default(),
+            None,
+            None,
+        );
+
+        // Next (core-only) cycle: the script never included these commands,
+        // so the parser returns empty/None — the previous snapshot should win.
+        let metrics = adapt_status(SystemType::Linux, empty_status(), &Config::default(), None, Some(&prev));
+
+        assert_eq!(metrics.uptime.as_deref(), Some("up 1 day"));
+        assert_eq!(metrics.diskio.len(), 1);
+        assert_eq!(metrics.batteries.len(), 1);
+    }
+
     /// The monitor's real collection path: run the generated script, split output
     #[cfg(unix)]
     #[tokio::test]
     async fn execute_commands_via_script_smoke() {
-        let raw = execute_commands(system_type()).await.unwrap();
+        let raw = execute_commands(system_type(), true).await.unwrap();
         assert!(raw.contains_key("time"), "keys: {:?}", raw.keys().collect::<Vec<_>>());
         assert!(raw.contains_key("echo"));
     }

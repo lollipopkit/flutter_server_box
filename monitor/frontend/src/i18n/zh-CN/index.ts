@@ -65,6 +65,20 @@ const zh_CN = {
 	save: '保存',
 	cancel: '取消',
 	confirmDeleteServer: '移除这台服务器?仅在此浏览器中移除记录,不会停止该 Agent。',
+	uptime: '运行时长',
+	connections: '连接数',
+	diskIo: '磁盘 I/O',
+	read: '读',
+	write: '写',
+	battery: '电池',
+	sensors: '传感器',
+	smart: 'S.M.A.R.T.',
+	healthy: '健康',
+	unhealthy: '异常',
+	model: '型号',
+	serial: '序列号',
+	powerOnHours: '通电时长',
+	powerCycleCount: '通电次数',
 } satisfies Translation
 
 export default zh_CN

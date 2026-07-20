@@ -282,6 +282,13 @@ fn sample_metrics() -> SystemMetrics {
         gpus: vec![],
         disk_details: vec![],
         ifaces: vec![],
+        uptime: None,
+        conn: None,
+        diskio: vec![],
+        batteries: vec![],
+        sensors: vec![],
+        disk_smart: vec![],
+        amd_cache: vec![],
     }
 }
 

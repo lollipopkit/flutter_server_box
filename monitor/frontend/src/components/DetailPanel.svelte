@@ -1,12 +1,12 @@
 <script lang="ts">
   import { ChevronLeft } from '@lucide/svelte'
-  import { Button, Card } from '@serverbox/webui'
+  import { Badge, Button, Card } from '@serverbox/webui'
   import LineChart from './LineChart.svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { fmtBytes, fmtBytesPerSec, fmtGpuPower, fmtPercent } from '../lib/format'
   import type { HistoryPoint, SystemMetrics } from '../types'
 
-  export type DetailKind = 'cpu' | 'memory' | 'disk' | 'network' | 'gpu'
+  export type DetailKind = 'cpu' | 'memory' | 'disk' | 'network' | 'gpu' | 'diskio' | 'battery' | 'sensors' | 'smart'
 
   interface Props {
     kind: DetailKind
@@ -25,6 +25,10 @@
     disk: $LL.diskUsage(),
     network: $LL.network(),
     gpu: $LL.gpu(),
+    diskio: $LL.diskIo(),
+    battery: $LL.battery(),
+    sensors: $LL.sensors(),
+    smart: $LL.smart(),
   })
 
   // used/total are cumulative busy/total ticks (CpuCoreTime); percent is
@@ -236,6 +240,100 @@
           {@render row($LL.memory(), `${gpu.memory_used} / ${gpu.memory_total} ${gpu.memory_unit}`)}
           {@render row($LL.temperature(), `${gpu.temperature} °C`)}
           {@render row($LL.power(), fmtGpuPower(gpu.power))}
+        </div>
+      </Card>
+    {/each}
+  {:else if kind === 'diskio'}
+    <!-- Cumulative sector counters (512B/sector), not a rate — no history is
+         persisted server-side for this field -->
+    <Card>
+      <table class="w-full text-sm table-fixed">
+        <thead>
+          <tr class="border-b border-line">
+            <th class="py-2 pr-4 text-left font-medium text-muted-fg">{$LL.diskIo()}</th>
+            <th class="py-2 text-right font-medium text-muted-fg w-24 sm:w-32">{$LL.read()}</th>
+            <th class="py-2 pl-4 text-right font-medium text-muted-fg w-24 sm:w-32">{$LL.write()}</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-line">
+          {#each m?.diskio ?? [] as d (d.dev)}
+            <tr>
+              <td class="py-2 pr-4">
+                <span class="block truncate" title={d.dev}>{d.dev}</span>
+              </td>
+              <td class="py-2 text-right whitespace-nowrap text-muted-fg">
+                {fmtBytes(d.sectors_read * 512)}
+              </td>
+              <td class="py-2 pl-4 text-right whitespace-nowrap text-muted-fg">
+                {fmtBytes(d.sectors_write * 512)}
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </Card>
+  {:else if kind === 'battery'}
+    {#each m?.batteries ?? [] as battery, i (battery.name ?? i)}
+      <Card>
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h3 class="text-sm font-semibold text-fg-strong truncate">
+            {battery.name ?? $LL.battery()}
+          </h3>
+          <Badge tone={battery.status === 'charging' || battery.status === 'full' ? 'success' : 'neutral'}>
+            <span class="capitalize">{battery.status}</span>
+          </Badge>
+        </div>
+        <div class="space-y-4">
+          {@render labeledBar($LL.usage(), `${battery.percent ?? '--'}%`, battery.percent ?? 0)}
+          {#if battery.tech}
+            {@render row($LL.model(), battery.tech)}
+          {/if}
+          {#if battery.cycle != null}
+            {@render row($LL.powerCycleCount(), String(battery.cycle))}
+          {/if}
+        </div>
+      </Card>
+    {/each}
+  {:else if kind === 'sensors'}
+    {#each m?.sensors ?? [] as sensor, i (`${sensor.device}-${i}`)}
+      <Card>
+        <h3 class="text-sm font-semibold text-fg-strong mb-3 truncate">
+          {sensor.device}{sensor.adapter ? ` (${sensor.adapter})` : ''}
+        </h3>
+        <div class="space-y-3">
+          {#each sensor.details as [label, value] (label)}
+            {@render row(label, value)}
+          {/each}
+        </div>
+      </Card>
+    {/each}
+  {:else if kind === 'smart'}
+    {#each m?.disk_smart ?? [] as disk (disk.device)}
+      <Card>
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h3 class="text-sm font-semibold text-fg-strong truncate">{disk.device}</h3>
+          {#if disk.healthy != null}
+            <Badge tone={disk.healthy ? 'success' : 'danger'}>
+              {disk.healthy ? $LL.healthy() : $LL.unhealthy()}
+            </Badge>
+          {/if}
+        </div>
+        <div class="space-y-3">
+          {#if disk.model}
+            {@render row($LL.model(), disk.model)}
+          {/if}
+          {#if disk.serial}
+            {@render row($LL.serial(), disk.serial)}
+          {/if}
+          {#if disk.temperature != null}
+            {@render row($LL.temperature(), `${disk.temperature} °C`)}
+          {/if}
+          {#if disk.power_on_hours != null}
+            {@render row($LL.powerOnHours(), String(disk.power_on_hours))}
+          {/if}
+          {#if disk.power_cycle_count != null}
+            {@render row($LL.powerCycleCount(), String(disk.power_cycle_count))}
+          {/if}
         </div>
       </Card>
     {/each}

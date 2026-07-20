@@ -283,6 +283,62 @@ type RootTranslation = {
 	 * R​e​m​o​v​e​ ​t​h​i​s​ ​s​e​r​v​e​r​?​ ​T​h​i​s​ ​o​n​l​y​ ​f​o​r​g​e​t​s​ ​i​t​ ​i​n​ ​t​h​i​s​ ​b​r​o​w​s​e​r​ ​—​ ​i​t​ ​d​o​e​s​ ​n​o​t​ ​s​t​o​p​ ​t​h​e​ ​a​g​e​n​t​.
 	 */
 	confirmDeleteServer: string
+	/**
+	 * U​p​t​i​m​e
+	 */
+	uptime: string
+	/**
+	 * C​o​n​n​e​c​t​i​o​n​s
+	 */
+	connections: string
+	/**
+	 * D​i​s​k​ ​I​/​O
+	 */
+	diskIo: string
+	/**
+	 * R​e​a​d
+	 */
+	read: string
+	/**
+	 * W​r​i​t​e
+	 */
+	write: string
+	/**
+	 * B​a​t​t​e​r​y
+	 */
+	battery: string
+	/**
+	 * S​e​n​s​o​r​s
+	 */
+	sensors: string
+	/**
+	 * S​.​M​.​A​.​R​.​T​.
+	 */
+	smart: string
+	/**
+	 * H​e​a​l​t​h​y
+	 */
+	healthy: string
+	/**
+	 * U​n​h​e​a​l​t​h​y
+	 */
+	unhealthy: string
+	/**
+	 * M​o​d​e​l
+	 */
+	model: string
+	/**
+	 * S​e​r​i​a​l
+	 */
+	serial: string
+	/**
+	 * P​o​w​e​r​-​o​n​ ​h​o​u​r​s
+	 */
+	powerOnHours: string
+	/**
+	 * P​o​w​e​r​ ​c​y​c​l​e​s
+	 */
+	powerCycleCount: string
 }
 
 export type TranslationFunctions = {
@@ -542,6 +598,62 @@ export type TranslationFunctions = {
 	 * Remove this server? This only forgets it in this browser — it does not stop the agent.
 	 */
 	confirmDeleteServer: () => LocalizedString
+	/**
+	 * Uptime
+	 */
+	uptime: () => LocalizedString
+	/**
+	 * Connections
+	 */
+	connections: () => LocalizedString
+	/**
+	 * Disk I/O
+	 */
+	diskIo: () => LocalizedString
+	/**
+	 * Read
+	 */
+	read: () => LocalizedString
+	/**
+	 * Write
+	 */
+	write: () => LocalizedString
+	/**
+	 * Battery
+	 */
+	battery: () => LocalizedString
+	/**
+	 * Sensors
+	 */
+	sensors: () => LocalizedString
+	/**
+	 * S.M.A.R.T.
+	 */
+	smart: () => LocalizedString
+	/**
+	 * Healthy
+	 */
+	healthy: () => LocalizedString
+	/**
+	 * Unhealthy
+	 */
+	unhealthy: () => LocalizedString
+	/**
+	 * Model
+	 */
+	model: () => LocalizedString
+	/**
+	 * Serial
+	 */
+	serial: () => LocalizedString
+	/**
+	 * Power-on hours
+	 */
+	powerOnHours: () => LocalizedString
+	/**
+	 * Power cycles
+	 */
+	powerCycleCount: () => LocalizedString
 }
 
 export type Formatters = {}

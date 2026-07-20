@@ -16,6 +16,50 @@ export interface SystemMetrics {
   gpus?: GpuMetrics[];
   disk_details?: DiskDetail[];
   ifaces?: IfaceMetrics[];
+  // Already formatted by the collection script, e.g. "up 3 days, 2:14"
+  uptime?: string;
+  conn?: ConnMetrics;
+  // Cumulative sector counters (not a rate); staler than the other fields —
+  // only refreshed on the agent's periodic extended collection
+  diskio?: DiskIoMetrics[];
+  batteries?: BatteryMetrics[];
+  sensors?: SensorMetrics[];
+  disk_smart?: DiskSmartMetrics[];
+}
+
+export interface ConnMetrics {
+  max_conn: number;
+  fail: number;
+}
+
+export interface DiskIoMetrics {
+  dev: string;
+  sectors_read: number;
+  sectors_write: number;
+}
+
+export interface BatteryMetrics {
+  percent: number | null;
+  status: 'charging' | 'discharging' | 'full' | 'unknown';
+  name: string | null;
+  cycle: number | null;
+  tech: string | null;
+}
+
+export interface SensorMetrics {
+  device: string;
+  adapter: string;
+  details: [string, string][];
+}
+
+export interface DiskSmartMetrics {
+  device: string;
+  healthy: boolean | null;
+  temperature: number | null;
+  model: string | null;
+  serial: string | null;
+  power_on_hours: number | null;
+  power_cycle_count: number | null;
 }
 
 export interface GpuMetrics {

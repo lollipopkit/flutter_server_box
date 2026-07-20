@@ -1,10 +1,14 @@
 <script lang="ts">
   import {
+    Activity,
+    BatteryMedium,
     Cpu,
+    Gauge,
     Gpu,
     HardDrive,
     Menu,
     MemoryStick,
+    ShieldCheck,
     Thermometer,
     Network,
     CircleAlert,
@@ -92,6 +96,10 @@
   // detail line) instead of parsing the preformatted /status strings
   const m = $derived(metrics.data)
   const latest = $derived(history.at(-1))
+  // Cumulative since boot (sectors -> bytes), not a rate — diskio only
+  // refreshes on the agent's slower extended-collection cycle
+  const diskioRead = $derived((m?.diskio ?? []).reduce((sum, d) => sum + d.sectors_read * 512, 0))
+  const diskioWrite = $derived((m?.diskio ?? []).reduce((sum, d) => sum + d.sectors_write * 512, 0))
 
   // Always the server's own reported name — not user-editable — falling back
   // to the address/id only before the server has ever reported anything
@@ -230,6 +238,51 @@
           onclick={() => (detail = 'gpu')}
         />
       {/if}
+      {#if m?.diskio?.length}
+        <StatCard
+          class="p-4 sm:p-6"
+          icon={Activity}
+          iconClass="text-cyan-500"
+          label={$LL.diskIo()}
+          value={`${$LL.read()} ${fmtBytes(diskioRead)}`}
+          valueClass="text-lg"
+          detail={`${$LL.write()} ${fmtBytes(diskioWrite)}`}
+          onclick={() => (detail = 'diskio')}
+        />
+      {/if}
+      {#if m?.batteries?.length}
+        <StatCard
+          class="p-4 sm:p-6"
+          icon={BatteryMedium}
+          iconClass="text-lime-500"
+          label={$LL.battery()}
+          value={m.batteries[0].percent != null ? `${m.batteries[0].percent}%` : '--'}
+          detail={m.batteries[0].name ?? ''}
+          onclick={() => (detail = 'battery')}
+        />
+      {/if}
+      {#if m?.sensors?.length}
+        <StatCard
+          class="p-4 sm:p-6"
+          icon={Gauge}
+          iconClass="text-orange-500"
+          label={$LL.sensors()}
+          value={String(m.sensors.length)}
+          detail={m.sensors[0].device}
+          onclick={() => (detail = 'sensors')}
+        />
+      {/if}
+      {#if m?.disk_smart?.length}
+        <StatCard
+          class="p-4 sm:p-6"
+          icon={ShieldCheck}
+          iconClass={m.disk_smart.every((d) => d.healthy !== false) ? 'text-success' : 'text-danger'}
+          label={$LL.smart()}
+          value={`${m.disk_smart.filter((d) => d.healthy !== false).length} / ${m.disk_smart.length}`}
+          detail={$LL.healthy()}
+          onclick={() => (detail = 'smart')}
+        />
+      {/if}
     </div>
 
     <div class="flex items-center justify-between mb-4">
@@ -281,6 +334,18 @@
             <div class="flex justify-between gap-4">
               <span class="text-sm text-muted-fg">{$LL.osHost()}</span>
               <span class="text-sm font-medium text-right truncate">{m.sys}</span>
+            </div>
+          {/if}
+          {#if m.uptime}
+            <div class="flex justify-between">
+              <span class="text-sm text-muted-fg">{$LL.uptime()}</span>
+              <span class="text-sm font-medium">{m.uptime}</span>
+            </div>
+          {/if}
+          {#if m.conn}
+            <div class="flex justify-between">
+              <span class="text-sm text-muted-fg">{$LL.connections()}</span>
+              <span class="text-sm font-medium">{m.conn.max_conn}</span>
             </div>
           {/if}
           <div class="flex justify-between">

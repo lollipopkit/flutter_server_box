@@ -65,6 +65,20 @@ const it = {
 	save: 'Salva',
 	cancel: 'Annulla',
 	confirmDeleteServer: "Rimuovere questo server? Verrà dimenticato solo in questo browser, l'agente non verrà fermato.",
+	uptime: 'Uptime',
+	connections: 'Connessioni',
+	diskIo: 'I/O disco',
+	read: 'Lettura',
+	write: 'Scrittura',
+	battery: 'Batteria',
+	sensors: 'Sensori',
+	smart: 'S.M.A.R.T.',
+	healthy: 'Integro',
+	unhealthy: 'Compromesso',
+	model: 'Modello',
+	serial: 'Numero di serie',
+	powerOnHours: 'Ore di accensione',
+	powerCycleCount: 'Cicli di accensione',
 } satisfies Translation
 
 export default it

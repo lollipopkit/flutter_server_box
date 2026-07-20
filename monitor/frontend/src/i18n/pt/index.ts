@@ -65,6 +65,20 @@ const pt = {
 	save: 'Salvar',
 	cancel: 'Cancelar',
 	confirmDeleteServer: 'Remover este servidor? Isso apenas o esquece neste navegador, o agente não é interrompido.',
+	uptime: 'Tempo ativo',
+	connections: 'Conexões',
+	diskIo: 'E/S de disco',
+	read: 'Leitura',
+	write: 'Escrita',
+	battery: 'Bateria',
+	sensors: 'Sensores',
+	smart: 'S.M.A.R.T.',
+	healthy: 'Saudável',
+	unhealthy: 'Com problemas',
+	model: 'Modelo',
+	serial: 'Número de série',
+	powerOnHours: 'Horas ligado',
+	powerCycleCount: 'Ciclos de energia',
 } satisfies Translation
 
 export default pt

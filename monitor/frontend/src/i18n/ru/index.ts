@@ -65,6 +65,20 @@ const ru = {
 	save: 'Сохранить',
 	cancel: 'Отмена',
 	confirmDeleteServer: 'Удалить этот сервер? Он будет забыт только в этом браузере, агент не будет остановлен.',
+	uptime: 'Время работы',
+	connections: 'Соединения',
+	diskIo: 'Дисковый I/O',
+	read: 'Чтение',
+	write: 'Запись',
+	battery: 'Батарея',
+	sensors: 'Датчики',
+	smart: 'S.M.A.R.T.',
+	healthy: 'Исправен',
+	unhealthy: 'Неисправен',
+	model: 'Модель',
+	serial: 'Серийный номер',
+	powerOnHours: 'Часов наработки',
+	powerCycleCount: 'Циклов включения',
 } satisfies Translation
 
 export default ru

@@ -65,6 +65,20 @@ const nl = {
 	save: 'Opslaan',
 	cancel: 'Annuleren',
 	confirmDeleteServer: 'Deze server verwijderen? Dit vergeet hem alleen in deze browser, de agent stopt niet.',
+	uptime: 'Uptime',
+	connections: 'Verbindingen',
+	diskIo: 'Schijf-I/O',
+	read: 'Lezen',
+	write: 'Schrijven',
+	battery: 'Batterij',
+	sensors: 'Sensoren',
+	smart: 'S.M.A.R.T.',
+	healthy: 'Gezond',
+	unhealthy: 'Ongezond',
+	model: 'Model',
+	serial: 'Serienummer',
+	powerOnHours: 'Bedrijfsuren',
+	powerCycleCount: 'Inschakelcycli',
 } satisfies Translation
 
 export default nl

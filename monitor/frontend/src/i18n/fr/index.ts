@@ -65,6 +65,20 @@ const fr = {
 	save: 'Enregistrer',
 	cancel: 'Annuler',
 	confirmDeleteServer: "Supprimer ce serveur ? Il sera seulement oublié dans ce navigateur, l'agent continuera de fonctionner.",
+	uptime: 'Disponibilité',
+	connections: 'Connexions',
+	diskIo: 'E/S disque',
+	read: 'Lecture',
+	write: 'Écriture',
+	battery: 'Batterie',
+	sensors: 'Capteurs',
+	smart: 'S.M.A.R.T.',
+	healthy: 'Sain',
+	unhealthy: 'Défaillant',
+	model: 'Modèle',
+	serial: 'Numéro de série',
+	powerOnHours: 'Heures sous tension',
+	powerCycleCount: 'Cycles de mise sous tension',
 } satisfies Translation
 
 export default fr

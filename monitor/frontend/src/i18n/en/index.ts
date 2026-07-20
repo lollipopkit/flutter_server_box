@@ -65,6 +65,20 @@ const en = {
 	save: 'Save',
 	cancel: 'Cancel',
 	confirmDeleteServer: 'Remove this server? This only forgets it in this browser — it does not stop the agent.',
+	uptime: 'Uptime',
+	connections: 'Connections',
+	diskIo: 'Disk I/O',
+	read: 'Read',
+	write: 'Write',
+	battery: 'Battery',
+	sensors: 'Sensors',
+	smart: 'S.M.A.R.T.',
+	healthy: 'Healthy',
+	unhealthy: 'Unhealthy',
+	model: 'Model',
+	serial: 'Serial',
+	powerOnHours: 'Power-on hours',
+	powerCycleCount: 'Power cycles',
 } satisfies BaseTranslation
 
 export default en

@@ -65,6 +65,20 @@ const id = {
 	save: 'Simpan',
 	cancel: 'Batal',
 	confirmDeleteServer: 'Hapus server ini? Ini hanya melupakannya di browser ini, agen tidak dihentikan.',
+	uptime: 'Waktu aktif',
+	connections: 'Koneksi',
+	diskIo: 'I/O Disk',
+	read: 'Baca',
+	write: 'Tulis',
+	battery: 'Baterai',
+	sensors: 'Sensor',
+	smart: 'S.M.A.R.T.',
+	healthy: 'Sehat',
+	unhealthy: 'Bermasalah',
+	model: 'Model',
+	serial: 'Nomor seri',
+	powerOnHours: 'Jam nyala',
+	powerCycleCount: 'Siklus nyala',
 } satisfies Translation
 
 export default id

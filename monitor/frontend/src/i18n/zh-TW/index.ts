@@ -65,6 +65,20 @@ const zh_TW = {
 	save: '儲存',
 	cancel: '取消',
 	confirmDeleteServer: '移除這台伺服器?僅在此瀏覽器中移除記錄,不會停止該 Agent。',
+	uptime: '執行時間',
+	connections: '連線數',
+	diskIo: '磁碟 I/O',
+	read: '讀取',
+	write: '寫入',
+	battery: '電池',
+	sensors: '感測器',
+	smart: 'S.M.A.R.T.',
+	healthy: '健康',
+	unhealthy: '異常',
+	model: '型號',
+	serial: '序號',
+	powerOnHours: '通電時間',
+	powerCycleCount: '通電次數',
 } satisfies Translation
 
 export default zh_TW

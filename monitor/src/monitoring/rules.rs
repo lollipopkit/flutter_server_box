@@ -316,6 +316,13 @@ mod tests {
             gpus: vec![],
             disk_details: vec![],
             ifaces: vec![],
+            uptime: None,
+            conn: None,
+            diskio: vec![],
+            batteries: vec![],
+            sensors: vec![],
+            disk_smart: vec![],
+            amd_cache: vec![],
         };
 
         // This test would need velocity_manager to work with check_rules_with_velocity

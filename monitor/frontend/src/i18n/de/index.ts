@@ -65,6 +65,20 @@ const de = {
 	save: 'Speichern',
 	cancel: 'Abbrechen',
 	confirmDeleteServer: 'Diesen Server entfernen? Er wird nur in diesem Browser vergessen — der Agent wird nicht gestoppt.',
+	uptime: 'Laufzeit',
+	connections: 'Verbindungen',
+	diskIo: 'Festplatten-I/O',
+	read: 'Lesen',
+	write: 'Schreiben',
+	battery: 'Akku',
+	sensors: 'Sensoren',
+	smart: 'S.M.A.R.T.',
+	healthy: 'Gesund',
+	unhealthy: 'Fehlerhaft',
+	model: 'Modell',
+	serial: 'Seriennummer',
+	powerOnHours: 'Betriebsstunden',
+	powerCycleCount: 'Einschaltzyklen',
 } satisfies Translation
 
 export default de

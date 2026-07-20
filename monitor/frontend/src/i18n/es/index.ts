@@ -65,6 +65,20 @@ const es = {
 	save: 'Guardar',
 	cancel: 'Cancelar',
 	confirmDeleteServer: '¿Eliminar este servidor? Solo se olvida en este navegador; no detiene el agente.',
+	uptime: 'Tiempo activo',
+	connections: 'Conexiones',
+	diskIo: 'E/S de disco',
+	read: 'Lectura',
+	write: 'Escritura',
+	battery: 'Batería',
+	sensors: 'Sensores',
+	smart: 'S.M.A.R.T.',
+	healthy: 'Saludable',
+	unhealthy: 'Con problemas',
+	model: 'Modelo',
+	serial: 'Número de serie',
+	powerOnHours: 'Horas de encendido',
+	powerCycleCount: 'Ciclos de encendido',
 } satisfies Translation
 
 export default es

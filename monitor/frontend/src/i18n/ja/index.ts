@@ -65,6 +65,20 @@ const ja = {
 	save: '保存',
 	cancel: 'キャンセル',
 	confirmDeleteServer: 'このサーバーを削除しますか?このブラウザから削除されるだけで、エージェントは停止しません。',
+	uptime: '稼働時間',
+	connections: '接続数',
+	diskIo: 'ディスク I/O',
+	read: '読み取り',
+	write: '書き込み',
+	battery: 'バッテリー',
+	sensors: 'センサー',
+	smart: 'S.M.A.R.T.',
+	healthy: '正常',
+	unhealthy: '異常',
+	model: 'モデル',
+	serial: 'シリアル番号',
+	powerOnHours: '通電時間',
+	powerCycleCount: '電源投入回数',
 } satisfies Translation
 
 export default ja

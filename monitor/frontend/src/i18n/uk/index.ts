@@ -65,6 +65,20 @@ const uk = {
 	save: 'Зберегти',
 	cancel: 'Скасувати',
 	confirmDeleteServer: 'Видалити цей сервер? Він буде забутий лише в цьому браузері, агент не зупиниться.',
+	uptime: 'Час роботи',
+	connections: "З'єднання",
+	diskIo: 'Дисковий I/O',
+	read: 'Читання',
+	write: 'Запис',
+	battery: 'Батарея',
+	sensors: 'Датчики',
+	smart: 'S.M.A.R.T.',
+	healthy: 'Справний',
+	unhealthy: 'Несправний',
+	model: 'Модель',
+	serial: 'Серійний номер',
+	powerOnHours: 'Годин напрацювання',
+	powerCycleCount: 'Циклів увімкнення',
 } satisfies Translation
 
 export default uk

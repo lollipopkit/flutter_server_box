@@ -55,10 +55,19 @@ pub struct MonitoringConfig {
     pub interval_seconds: u64,
     pub rules: Vec<MonitoringRule>,
     pub data_retention: Option<DataRetentionConfig>,
+    /// How often to run the full (non-core) status script, which additionally
+    /// collects battery/sensors/SMART/AMD-GPU data too slow for the fast
+    /// per-cycle core loop (e.g. smartctl waking spun-down disks)
+    #[serde(default = "default_extended_interval_secs")]
+    pub extended_interval_secs: u64,
 }
 
 fn default_max_db_size_mb() -> u64 {
     256
+}
+
+fn default_extended_interval_secs() -> u64 {
+    60
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -191,6 +200,7 @@ impl Config {
                     cleanup_interval_hours: 24,
                     max_db_size_mb: default_max_db_size_mb(),
                 }),
+                extended_interval_secs: default_extended_interval_secs(),
             };
 
             let push = self.pushes.as_ref().map(|go_pushes| {
@@ -239,6 +249,7 @@ impl Config {
                 cleanup_interval_hours: 24,
                 max_db_size_mb: default_max_db_size_mb(),
             }),
+            extended_interval_secs: default_extended_interval_secs(),
         })
     }
 
@@ -480,6 +491,7 @@ impl Default for Config {
                     cleanup_interval_hours: 24,
                     max_db_size_mb: default_max_db_size_mb(),
                 }),
+                extended_interval_secs: default_extended_interval_secs(),
             }),
             database_url: Some(env::var("DATABASE_URL")
                 .unwrap_or_else(|_| "sqlite:serverbox_monitor.db".to_string())),
