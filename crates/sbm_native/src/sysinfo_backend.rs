@@ -83,9 +83,19 @@ pub fn sample(state: &mut State) -> ServerStatus {
         cached: 0,
     });
 
-    let disks: Vec<Disk> = state
-        .disks
-        .list()
+    // macOS/APFS: separate volumes in one container (e.g. "/" and
+    // "/System/Volumes/Data") report the SAME `name()` ("Macintosh HD") and
+    // identical space totals — sysinfo doesn't collapse these itself. A
+    // per-name dedup (first occurrence wins, same as the seen-path pattern
+    // monitor's flatten_disks uses for the script-sourced platforms) keeps
+    // both `disks` and `diskio` from carrying duplicate entries, which the
+    // frontend keys each row by (`d.path` / `d.dev`) — a duplicate key is a
+    // hard Svelte runtime error that breaks the disk detail page entirely.
+    let mut seen_names = std::collections::HashSet::new();
+    let unique_disks: Vec<_> =
+        state.disks.list().iter().filter(|d| seen_names.insert(d.name().to_owned())).collect();
+
+    let disks: Vec<Disk> = unique_disks
         .iter()
         .map(|d| {
             let total_kb = d.total_space() / 1024;
@@ -105,9 +115,7 @@ pub fn sample(state: &mut State) -> ServerStatus {
         })
         .collect();
 
-    let diskio: Vec<DiskIoPiece> = state
-        .disks
-        .list()
+    let diskio: Vec<DiskIoPiece> = unique_disks
         .iter()
         .map(|d| {
             let usage = d.usage();
@@ -179,6 +187,28 @@ mod tests {
         assert_eq!(status.cpu[0].id, "cpu");
         assert!(status.mem.is_some());
         assert!(status.host.is_some());
+    }
+
+    /// macOS/APFS volumes sharing a container (e.g. "/" and
+    /// "/System/Volumes/Data") report identical sysinfo `name()`s — the
+    /// frontend keys disk/diskio rows by exactly that value, so a duplicate
+    /// breaks the Svelte keyed-each render (real bug hit on a real machine)
+    #[test]
+    fn disks_and_diskio_have_unique_keys() {
+        let mut state = State::default();
+        let status = sample(&mut state);
+
+        let disk_paths: Vec<&str> = status.disks.iter().map(|d| d.path.as_str()).collect();
+        let mut unique_paths = disk_paths.clone();
+        unique_paths.sort();
+        unique_paths.dedup();
+        assert_eq!(disk_paths.len(), unique_paths.len(), "duplicate disk path: {disk_paths:?}");
+
+        let devs: Vec<&str> = status.diskio.iter().map(|d| d.dev.as_str()).collect();
+        let mut unique_devs = devs.clone();
+        unique_devs.sort();
+        unique_devs.dedup();
+        assert_eq!(devs.len(), unique_devs.len(), "duplicate diskio dev: {devs:?}");
     }
 
     #[test]
