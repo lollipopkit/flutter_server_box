@@ -136,6 +136,8 @@ pub fn parse_status_opts(
                 fail: 0,
             });
             status.batteries = windows::parse_batteries(get(commands::BATTERY));
+            status.sensors = windows::parse_sensors(get(commands::SENSORS));
+            status.disk_smart = windows::parse_disk_smart(get(commands::DISK_SMART));
             // NET is a WMI double sample: cumulative counters go into status.net
             // (consistent with other platforms); instantaneous rates are separately
             // derived by windows::parse_net_speed deltas

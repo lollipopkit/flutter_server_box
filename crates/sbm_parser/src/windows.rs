@@ -261,6 +261,63 @@ pub fn parse_diskio(raw: &str) -> Vec<DiskIoPiece> {
         .collect()
 }
 
+/// Win32_TemperatureProbe JSON. No Dart reference — this command has no
+/// upstream app implementation (WMI temperature-probe support is spotty
+/// across hardware; most machines report zero instances). `CurrentReading`
+/// is tenths of Kelvin per the WMI spec; converted to Celsius here since,
+/// unlike the ThermalZone command, the PowerShell side does no conversion.
+pub fn parse_sensors(raw: &str) -> Vec<SensorItem> {
+    let Some(json) = decode(raw) else {
+        return Vec::new();
+    };
+    as_list(json)
+        .into_iter()
+        .filter_map(|p| {
+            let reading = p["CurrentReading"].as_f64()?;
+            let celsius = reading / 10.0 - 273.15;
+            let name =
+                p["Name"].as_str().filter(|s| !s.is_empty()).unwrap_or("Temperature Probe");
+            Some(SensorItem {
+                device: name.to_string(),
+                adapter: "WMI".to_string(),
+                details: vec![("temp1".to_string(), format!("{:.1}\u{b0}C", celsius))],
+            })
+        })
+        .collect()
+}
+
+/// `Get-StorageReliabilityCounter` JSON. No Dart reference — this command has
+/// no upstream app implementation. Only exposes device id/temperature/power-on
+/// hours; unlike smartctl there's no direct pass/fail health flag, model, or
+/// serial in this cmdlet's output, so those fields stay `None` rather than
+/// guessing a health threshold from `Wear` with no documented semantics
+pub fn parse_disk_smart(raw: &str) -> Vec<DiskSmart> {
+    let Some(json) = decode(raw) else {
+        return Vec::new();
+    };
+    as_list(json)
+        .into_iter()
+        .filter_map(|d| {
+            let device_id = &d["DeviceId"];
+            let device = device_id
+                .as_str()
+                .map(str::to_string)
+                .or_else(|| device_id.as_i64().map(|n| n.to_string()))?;
+            Some(DiskSmart {
+                device,
+                healthy: None,
+                temperature: d["Temperature"].as_f64(),
+                model: None,
+                serial: None,
+                power_on_hours: d["PowerOnHours"].as_i64(),
+                power_cycle_count: None,
+                raw_data: d.clone(),
+                smart_attributes: Default::default(),
+            })
+        })
+        .collect()
+}
+
 /// Brand info from Win32_Processor JSON: Name → physical core count
 /// (Dart Windows branch: brand[brandName] = sum of NumberOfCores)
 pub fn parse_cpu_brand(raw: &str) -> Vec<(String, u32)> {

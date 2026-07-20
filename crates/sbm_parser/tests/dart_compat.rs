@@ -765,6 +765,32 @@ fn sensors_parse_2() {
     ]);
 }
 
+/// Win32_TemperatureProbe(no Dart reference; new Windows-only parser)
+#[test]
+fn sensors_parse_windows() {
+    let raw = r#"[{"Name": "CPU Probe", "CurrentReading": 3033}, {"Name": null, "CurrentReading": 3001}]"#;
+    let sensors = windows::parse_sensors(raw);
+    assert_eq!(sensors.len(), 2);
+    assert_eq!(sensors[0].device, "CPU Probe");
+    assert_eq!(sensors[0].summary(), Some("30.2\u{b0}C"));
+    // Null Name falls back to a generic label instead of an empty string
+    assert_eq!(sensors[1].device, "Temperature Probe");
+    assert_eq!(sensors[1].summary(), Some("27.0\u{b0}C"));
+}
+
+/// Get-StorageReliabilityCounter(no Dart reference; new Windows-only parser)
+#[test]
+fn disk_smart_parse_windows() {
+    let raw = r#"[{"DeviceId": "0", "Temperature": 38, "TemperatureMax": 55, "Wear": 2, "PowerOnHours": 1200}]"#;
+    let disks = windows::parse_disk_smart(raw);
+    assert_eq!(disks.len(), 1);
+    assert_eq!(disks[0].device, "0");
+    assert_eq!(disks[0].temperature, Some(38.0));
+    assert_eq!(disks[0].power_on_hours, Some(1200));
+    // No pass/fail flag in this cmdlet's output — must not be fabricated
+    assert_eq!(disks[0].healthy, None);
+}
+
 // ---------- NVIDIA:nvidia_test.dart ----------
 
 /// Dart 'nvdia-smi' (inline fixture)
