@@ -36,6 +36,10 @@
   const corePercents = $derived(
     (m?.cpu_cores ?? []).map((c) => (c.total > 0 ? (c.used / c.total) * 100 : 0)),
   )
+
+  // Detail pages backed by the slower extended collection cycle — see the
+  // freshness note rendered for these below
+  const extendedKinds = new Set<DetailKind>(['battery', 'sensors', 'smart'])
 </script>
 
 {#snippet row(label: string, value: string)}
@@ -90,6 +94,17 @@
     </Button>
     <h2 class="text-lg font-semibold font-display text-fg-strong">{titles[kind]}</h2>
   </div>
+
+  {#if extendedKinds.has(kind) && m?.extended_updated_at}
+    <!-- These fields only refresh on the agent's slower extended cycle
+         (CLI-tool-bound: sensors/smartctl/battery queries) — carried
+         forward unchanged in between, so a plain "last updated" on the
+         system info card would misleadingly look live every poll -->
+    <p class="text-xs text-faint-fg -mt-4">
+      {$LL.lastUpdated()}
+      {new Date(m.extended_updated_at).toLocaleString()}
+    </p>
+  {/if}
 
   {#if kind === 'cpu'}
     <LineChart

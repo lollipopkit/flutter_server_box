@@ -1,5 +1,9 @@
 export interface SystemMetrics {
   timestamp: string;
+  // When battery/sensors/disk_smart (the CLI-tool-bound "extended" fields)
+  // were last actually refreshed — distinct from `timestamp`, which updates
+  // every poll even on cycles that just carried the previous reading forward
+  extended_updated_at?: string;
   server_name: string;
   cpu_usage: number;
   // Wire-compatible with monitor's CpuCoreTime { used, total } (busy/total

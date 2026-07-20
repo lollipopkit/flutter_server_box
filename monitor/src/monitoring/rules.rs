@@ -286,6 +286,7 @@ mod tests {
         
         let _metrics = SystemMetrics {
             timestamp: Utc::now(),
+            extended_updated_at: Utc::now(),
             server_name: "test".to_string(),
             cpu_usage: 85.0, // Should trigger CPU alert (>=77%)
             cpu_cores: vec![crate::monitoring::timeseries::CpuCoreTime { used: 85, total: 100 }],

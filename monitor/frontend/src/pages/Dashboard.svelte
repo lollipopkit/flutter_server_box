@@ -195,7 +195,11 @@
     {#if detail}
       <DetailPanel kind={detail} metrics={m} {history} onback={() => (detail = null)} />
     {:else}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
+    <!-- Up to 8 cards now that battery/sensors/smart are gated on real
+         capabilities (see showBattery et al.) rather than always reserved
+         slots — a 2-col jump straight to 4-col leaves tablet-width viewports
+         (~640-1023px) as cramped as phones; md:grid-cols-3 smooths the ramp -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
       <StatCard
         class="p-4 sm:p-6"
         icon={Cpu}

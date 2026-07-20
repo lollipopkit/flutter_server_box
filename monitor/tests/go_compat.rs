@@ -256,6 +256,7 @@ fn test_parse_disk_go_fixture() {
 fn sample_metrics() -> SystemMetrics {
     SystemMetrics {
         timestamp: chrono::Utc::now(),
+        extended_updated_at: chrono::Utc::now(),
         server_name: "Server 1".to_string(),
         cpu_usage: 36.6,
         cpu_cores: vec![],

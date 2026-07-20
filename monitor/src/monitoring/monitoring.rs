@@ -13,6 +13,10 @@ use tracing::{info, error};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemMetrics {
     pub timestamp: DateTime<Utc>,
+    /// When amd/sensors/batteries/disk_smart were last actually refreshed
+    /// (the extended script ran) — distinct from `timestamp`, which updates
+    /// every cycle even when those fields are just carried forward unchanged
+    pub extended_updated_at: DateTime<Utc>,
     pub server_name: String,
     pub cpu_usage: f32,
     pub cpu_cores: Vec<CpuCoreTime>,
@@ -295,7 +299,7 @@ async fn collect_metrics(
 
     let prev = prev_cpu.take();
     *prev_cpu = summary_core(&status.cpu).cloned();
-    Ok(adapt_status(system, status, config, prev.as_ref(), prev_metrics))
+    Ok(adapt_status(system, status, config, prev.as_ref(), prev_metrics, extended_due))
 }
 
 /// Direct `nvidia-smi` invocation — no script generation/`SrvBoxSep`
@@ -451,17 +455,20 @@ fn adapt_status(
     config: &Config,
     prev_cpu: Option<&CpuCore>,
     prev_metrics: Option<&SystemMetrics>,
+    extended_due: bool,
 ) -> SystemMetrics {
     let (cpu_usage, cpu_cores) = adapt_cpu(system, &status.cpu, prev_cpu);
     let (memory, swap) = adapt_memory(&status);
     let disk = aggregate_disks(system, &status.disks);
     let network = aggregate_net(&status);
 
-    // Temperature prefers CPU devices (Dart `Temperatures.first`)
-    let temperature = match system {
-        SystemType::Bsd => None, // top output has no temperature
-        _ => status.temps.first().map(|t| t as f32),
-    };
+    // Temperature prefers CPU devices (Dart `Temperatures.first`). Bsd used
+    // to be forced to None here ("top output has no temperature") — true for
+    // the old script-only path, but stale post-native-cutover: `sbm_native`'s
+    // sysinfo backend can populate `status.temps` via Components on Bsd now
+    // (empty when the platform locks down thermal sensors, e.g. many Macs —
+    // see `effective_capabilities`, which reports this as HardwareDependent).
+    let temperature = status.temps.first().map(|t| t as f32);
 
     let amd = carry_forward(
         status.amd,
@@ -511,9 +518,18 @@ fn adapt_status(
     let now = Utc::now();
     let diskio = carry_forward(status.diskio, prev_metrics.map(|p| p.diskio.clone()).unwrap_or_default());
     let diskio_rate = compute_diskio_rate(now, &diskio, prev_metrics);
+    // Only stamped on a cycle that actually ran the extended script — a
+    // carry_forward'd value (unchanged battery/sensors/SMART reading) keeps
+    // its previous timestamp rather than looking falsely fresh every cycle
+    let extended_updated_at = if extended_due {
+        now
+    } else {
+        prev_metrics.map(|p| p.extended_updated_at).unwrap_or(now)
+    };
 
     SystemMetrics {
         timestamp: now,
+        extended_updated_at,
         server_name: config.get_server_name(),
         cpu_usage,
         cpu_cores,
@@ -962,7 +978,7 @@ mod tests {
             smart_attributes: Default::default(),
         }];
 
-        let metrics = adapt_status(SystemType::Linux, status, &Config::default(), None, None);
+        let metrics = adapt_status(SystemType::Linux, status, &Config::default(), None, None, true);
 
         assert_eq!(metrics.uptime.as_deref(), Some("up 1 day"));
         assert_eq!(metrics.conn.unwrap().max_conn, 10);
@@ -996,15 +1012,20 @@ mod tests {
             &Config::default(),
             None,
             None,
+            true,
         );
 
         // Next (core-only) cycle: the script never included these commands,
         // so the parser returns empty/None — the previous snapshot should win.
-        let metrics = adapt_status(SystemType::Linux, empty_status(), &Config::default(), None, Some(&prev));
+        let metrics =
+            adapt_status(SystemType::Linux, empty_status(), &Config::default(), None, Some(&prev), false);
 
         assert_eq!(metrics.uptime.as_deref(), Some("up 1 day"));
         assert_eq!(metrics.diskio.len(), 1);
         assert_eq!(metrics.batteries.len(), 1);
+        // The core-only cycle didn't refresh extended data — freshness
+        // timestamp carries over from the extended cycle, not bumped to now
+        assert_eq!(metrics.extended_updated_at, prev.extended_updated_at);
     }
 
     #[test]
@@ -1015,7 +1036,7 @@ mod tests {
             sectors_read: 1000,
             sectors_write: 500,
         }];
-        let first = adapt_status(SystemType::Linux, first_status, &Config::default(), None, None);
+        let first = adapt_status(SystemType::Linux, first_status, &Config::default(), None, None, false);
         assert!(first.diskio_rate.is_empty(), "no baseline on the first cycle");
 
         let mut second_status = empty_status();
@@ -1025,7 +1046,8 @@ mod tests {
             sectors_read: 3000,
             sectors_write: 1500,
         }];
-        let mut second = adapt_status(SystemType::Linux, second_status, &Config::default(), None, Some(&first));
+        let mut second =
+            adapt_status(SystemType::Linux, second_status, &Config::default(), None, Some(&first), false);
         // Force a known 2-second elapsed window instead of relying on real time
         // passing between the two adapt_status() calls in this test
         second.timestamp = first.timestamp + chrono::Duration::seconds(2);
