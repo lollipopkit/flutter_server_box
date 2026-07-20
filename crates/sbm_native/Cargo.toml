@@ -1,0 +1,9 @@
+[package]
+name = "sbm_native"
+version = "0.1.0"
+edition = "2024"
+description = "Native (syscall/procfs) status sampling for monitor's local collection path — never used by the SSH-based app"
+
+[dependencies]
+sbm_parser = { path = "../sbm_parser" }
+sysinfo = { version = "0.39", default-features = false, features = ["system", "disk", "network"] }

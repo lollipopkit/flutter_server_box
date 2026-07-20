@@ -3009,6 +3009,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "sbm_native"
+version = "0.1.0"
+dependencies = [
+ "sbm_parser",
+ "sysinfo",
+]
+
+[[package]]
 name = "sbm_parser"
 version = "0.1.0"
 dependencies = [

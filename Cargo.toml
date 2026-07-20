@@ -1,10 +1,12 @@
 # ServerBox monorepo Rust workspace
 # - crates/sbm_parser: shared status parser (used by both monitor and the app via FFI)
+# - crates/sbm_native: native (syscall/procfs) status sampling for monitor's local
+#                       collection path only — never used by the SSH-based app
 # - crates/sbm_ffi:    flutter_rust_bridge binding layer + cargokit Flutter plugin shell (one directory)
 # - monitor:           server-side monitoring (service + web frontend)
 [workspace]
 resolver = "2"
-members = ["crates/sbm_parser", "crates/sbm_ffi", "monitor"]
+members = ["crates/sbm_parser", "crates/sbm_native", "crates/sbm_ffi", "monitor"]
 
 [profile.release]
 # Smaller release binaries for the shipped container / native packages
