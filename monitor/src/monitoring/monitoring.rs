@@ -162,13 +162,11 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
     let mut prev_cpu: Option<CpuCore> = None;
     let mut cycle: u64 = 0;
     let mut native_state = sbm_native::NativeState::new();
+    let extended_interval_secs = monitoring_config.effective_extended_interval_secs();
 
     loop {
-        let extended_due = is_extended_cycle(
-            cycle,
-            monitoring_config.interval_seconds,
-            monitoring_config.extended_interval_secs,
-        );
+        let extended_due =
+            is_extended_cycle(cycle, monitoring_config.interval_seconds, extended_interval_secs);
         cycle += 1;
         let prev_metrics = app_state.current_metrics.read().await.clone();
 

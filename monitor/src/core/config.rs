@@ -55,19 +55,25 @@ pub struct MonitoringConfig {
     pub interval_seconds: u64,
     pub rules: Vec<MonitoringRule>,
     pub data_retention: Option<DataRetentionConfig>,
-    /// How often to run the full (non-core) status script, which additionally
-    /// collects battery/sensors/SMART/AMD-GPU data too slow for the fast
-    /// per-cycle core loop (e.g. smartctl waking spun-down disks)
-    #[serde(default = "default_extended_interval_secs")]
-    pub extended_interval_secs: u64,
+    /// How often to run the extended status script, which collects
+    /// battery/sensors/SMART/AMD-GPU data — the only fields still bound to
+    /// CLI tools after monitor's native collection cutover. `None` (the
+    /// default, and what an unset/absent config value resolves to) means
+    /// "same as `interval_seconds`" — resolve via `effective_extended_interval_secs`,
+    /// not this field directly, since `interval_seconds` isn't known until
+    /// both fields exist together.
+    #[serde(default)]
+    pub extended_interval_secs: Option<u64>,
+}
+
+impl MonitoringConfig {
+    pub fn effective_extended_interval_secs(&self) -> u64 {
+        self.extended_interval_secs.unwrap_or(self.interval_seconds)
+    }
 }
 
 fn default_max_db_size_mb() -> u64 {
     256
-}
-
-fn default_extended_interval_secs() -> u64 {
-    10
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -133,10 +139,29 @@ impl Config {
             let content =
                 fs::read_to_string("config.json").context("Failed to read config.json")?;
             let mut config: Self = serde_json::from_str(&content).context("Failed to parse config.json")?;
-            
+
             // Convert from Go format if needed
             config.normalize()?;
             config.apply_env_overrides();
+
+            // One-way migration to config.toml so subsequent starts take the
+            // config.toml branch above instead of re-parsing JSON every time.
+            // The original file is renamed (kept, not deleted) as a safety
+            // net rather than silently discarded — if the TOML write fails,
+            // config.json is left untouched and this run still succeeds off
+            // the in-memory config.
+            let toml_content =
+                toml::to_string_pretty(&config).context("Failed to serialize migrated config")?;
+            fs::write("config.toml", toml_content).context("Failed to write migrated config.toml")?;
+            match fs::rename("config.json", "config.json.migrated") {
+                Ok(()) => tracing::info!(
+                    "Migrated config.json to config.toml (old file kept as config.json.migrated)"
+                ),
+                Err(e) => tracing::warn!(
+                    "Migrated config.json to config.toml but couldn't rename the old file: {e}"
+                ),
+            }
+
             return Ok(config);
         }
 
@@ -200,7 +225,7 @@ impl Config {
                     cleanup_interval_hours: 24,
                     max_db_size_mb: default_max_db_size_mb(),
                 }),
-                extended_interval_secs: default_extended_interval_secs(),
+                extended_interval_secs: None,
             };
 
             let push = self.pushes.as_ref().map(|go_pushes| {
@@ -249,7 +274,7 @@ impl Config {
                 cleanup_interval_hours: 24,
                 max_db_size_mb: default_max_db_size_mb(),
             }),
-            extended_interval_secs: default_extended_interval_secs(),
+            extended_interval_secs: None,
         })
     }
 
@@ -491,7 +516,7 @@ impl Default for Config {
                     cleanup_interval_hours: 24,
                     max_db_size_mb: default_max_db_size_mb(),
                 }),
-                extended_interval_secs: default_extended_interval_secs(),
+                extended_interval_secs: None,
             }),
             database_url: Some(env::var("DATABASE_URL")
                 .unwrap_or_else(|_| "sqlite:serverbox_monitor.db".to_string())),
