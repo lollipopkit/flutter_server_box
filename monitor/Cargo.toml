@@ -11,7 +11,7 @@ path = "src/lib.rs"
 # Shared status parser (monorepo-wide)
 sbm_parser = { path = "../crates/sbm_parser" }
 # Native (syscall/procfs) status sampling for monitor's own local collection
-# path — shadow-mode only for now, see monitoring.rs::log_native_shadow_diff
+# path (never used by the SSH-based app) — see monitoring.rs::collect_metrics
 sbm_native = { path = "../crates/sbm_native" }
 
 # Web framework
@@ -80,14 +80,6 @@ percent-encoding = "2.3"
 clap = { version = "4.6", features = ["derive", "env"] }
 # get_server_name() falls back to the real OS hostname (see config.rs)
 hostname = "0.4.2"
-
-# Native per-core CPU on macOS (host_processor_info via Mach, same mechanism
-# htop uses); no shell equivalent exists, so this bypasses the shared
-# script/parser path for this one metric when the monitor runs natively on
-# macOS. Other platforms keep the shared-parser path unchanged and don't pull
-# this dependency at all.
-[target.'cfg(target_os = "macos")'.dependencies]
-sysinfo = { version = "0.39", default-features = false, features = ["system"] }
 
 [dev-dependencies]
 tokio-test = "0.4"

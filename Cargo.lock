@@ -3189,7 +3189,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
- "sysinfo",
  "thiserror",
  "tokio",
  "tokio-test",

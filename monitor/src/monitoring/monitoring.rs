@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::process::Command;
 use std::sync::Arc;
 use tokio::time::{sleep, Duration};
-use tracing::{debug, info, error};
+use tracing::{info, error};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemMetrics {
@@ -161,12 +161,10 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
     // cross-cycle delta to yield current usage
     let mut prev_cpu: Option<CpuCore> = None;
     let mut cycle: u64 = 0;
-    // Shadow-mode native sampler state (see `log_native_shadow_diff`); not
-    // yet the source of truth for anything served to the API
     let mut native_state = sbm_native::NativeState::new();
 
     loop {
-        let core_only = !is_extended_cycle(
+        let extended_due = is_extended_cycle(
             cycle,
             monitoring_config.interval_seconds,
             monitoring_config.extended_interval_secs,
@@ -177,7 +175,7 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
         match collect_metrics(
             &app_state.config,
             &mut prev_cpu,
-            core_only,
+            extended_due,
             prev_metrics.as_ref(),
             &mut native_state,
         )
@@ -230,90 +228,85 @@ fn system_type() -> SystemType {
 async fn collect_metrics(
     config: &Config,
     prev_cpu: &mut Option<CpuCore>,
-    core_only: bool,
+    extended_due: bool,
     prev_metrics: Option<&SystemMetrics>,
     native_state: &mut sbm_native::NativeState,
 ) -> Result<SystemMetrics> {
     let system = system_type();
-    let raw = execute_commands(system, core_only).await?;
-    let mut status = sbm_parser::parse_status(system, &raw);
+    let mut status = sbm_native::sample(native_state, system);
 
-    // macOS: `top` (the shared BSD command) gives an aggregate reading only.
-    // Real per-core data requires the Mach host_processor_info kernel call
-    // (same mechanism htop uses), reachable only in-process — the app has no
-    // equivalent since it collects over SSH via shell commands. Overrides
-    // status.cpu in place so the rest of the pipeline (adapt_cpu, per-core
-    // storage) is unaware anything changed. None on the first cycle (no
-    // baseline yet) or non-macOS builds; falls back to the shared-parser
-    // reading either way.
-    #[cfg(target_os = "macos")]
-    if let Some(cores) = crate::monitoring::macos_cpu::sample() {
-        status.cpu = cores;
+    // Not part of sbm_native: neither a pure syscall nor worth bundling into
+    // the shared script (a single targeted `nvidia-smi` call, same output
+    // shape `gpu::nvidia_from_xml` already parses either way). Runs every
+    // cycle, same cadence as before native sampling existed.
+    status.nvidia = sample_nvidia(system).await;
+
+    // amd/sensors/batteries/disk_smart have no native path (CLI-tool-bound —
+    // amd-smi/rocm-smi, `sensors`, smartctl, platform battery queries) and
+    // only refresh on the slower extended cycle; `adapt_status`'s
+    // carry_forward keeps the last known values on the cycles in between.
+    // Windows' `conn` also has no native implementation yet (would need
+    // `GetExtendedTcpTable` FFI) so it rides along on the same schedule;
+    // Linux/native already fills `status.conn` and this leaves it alone.
+    if extended_due {
+        let raw = execute_commands(system).await?;
+        let extended = sbm_parser::parse_status(system, &raw);
+        status.amd = extended.amd;
+        status.sensors = extended.sensors;
+        status.batteries = extended.batteries;
+        status.disk_smart = extended.disk_smart;
+        if status.conn.is_none() {
+            status.conn = extended.conn;
+        }
     }
-
-    // Shadow mode: sample the native path alongside the script path and log
-    // a side-by-side comparison, but keep serving the script-derived
-    // `status` unchanged below. Once the logged values check out across all
-    // three real deployment platforms (see the migration plan), the native
-    // sample becomes the source of truth and this comment/step goes away.
-    let native_status = sbm_native::sample(native_state, system);
-    log_native_shadow_diff(&status, &native_status);
 
     let prev = prev_cpu.take();
     *prev_cpu = summary_core(&status.cpu).cloned();
     Ok(adapt_status(system, status, config, prev.as_ref(), prev_metrics))
 }
 
-/// Logs a coarse side-by-side comparison between the script-derived and
-/// native-derived `ServerStatus` for manual review during the shadow-mode
-/// migration step — not exhaustive field-by-field, just enough to eyeball
-/// whether the native path is in the right ballpark before cutting over.
-fn log_native_shadow_diff(script: &ServerStatus, native: &ServerStatus) {
-    debug!(
-        native.cpu_cores = native.cpu.len(),
-        script.cpu_cores = script.cpu.len(),
-        native.mem_total_kb = native.mem.as_ref().map(|m| m.total),
-        script.mem_total_kb = script.mem.as_ref().map(|m| m.total),
-        native.disks = native.disks.len(),
-        script.disks = script.disks.len(),
-        native.net_ifaces = native.net.len(),
-        script.net_ifaces = script.net.len(),
-        native.uptime = native.uptime.as_deref(),
-        script.uptime = script.uptime.as_deref(),
-        native.host = native.host.as_deref(),
-        script.host = script.host.as_deref(),
-        native.sys = native.sys.as_deref(),
-        script.sys = script.sys.as_deref(),
-        "native vs script shadow sample"
-    );
+/// Direct `nvidia-smi` invocation — no script generation/`SrvBoxSep`
+/// splitting needed for a single command. Tries PATH resolution first (the
+/// common case), then the WSL-mounted Windows driver path (absent from
+/// non-interactive PATH under WSL), matching the shell command's fallback
+/// this replaces (`commands::LINUX`'s `NVIDIA` entry).
+async fn sample_nvidia(system: SystemType) -> Vec<sbm_parser::types::NvidiaSmiItem> {
+    let raw = tokio::task::spawn_blocking(move || -> String {
+        let output = Command::new("nvidia-smi").args(["-q", "-x"]).output().or_else(|_| {
+            Command::new("/usr/lib/wsl/lib/nvidia-smi").args(["-q", "-x"]).output()
+        });
+        let _ = system; // no per-platform branching needed: PATH resolution covers Windows too
+        output
+            .ok()
+            .filter(|o| o.status.success())
+            .map(|o| String::from_utf8_lossy(&o.stdout).into_owned())
+            .unwrap_or_default()
+    })
+    .await
+    .unwrap_or_default();
+    sbm_parser::gpu::nvidia_from_xml(&raw)
 }
 
-/// Build the status script shared with the app (sbm_parser::script). One
-/// script execution per cycle replaces the former per-command spawn loop; the
-/// app runs the same generation code over SSH. `core_only=false` additionally
-/// includes battery/sensors/SMART/AMD — too slow to run every cycle, so the
-/// caller only requests the full script every `extended_interval_secs`.
-fn build_status_script(system: SystemType, core_only: bool) -> String {
+/// Build the extended-cycle status script shared with the app
+/// (`sbm_parser::script`) — `core_only=false` since the fields it's still
+/// needed for (amd/sensors/SMART/battery) are all non-core. Everything
+/// `sbm_native` covers no longer needs a generated script at all.
+fn build_status_script(system: SystemType) -> String {
     sbm_parser::script::build_script(
         system,
         &sbm_parser::script::ScriptOptions {
-            core_only,
+            core_only: false,
             build_number: env!("CARGO_PKG_VERSION").to_string(),
             ..Default::default()
         },
     )
 }
 
-/// Script location in the temp dir. `.ps1` is mandatory for `powershell -File`.
-/// Core and full scripts are cached under distinct filenames so alternating
-/// between them doesn't rewrite the file (and lose `ensure_script`'s skip-if-
-/// unchanged optimization) every cycle.
-fn script_path(system: SystemType, core_only: bool) -> std::path::PathBuf {
-    let name = match (system, core_only) {
-        (SystemType::Windows, true) => "status.ps1",
-        (SystemType::Windows, false) => "status_full.ps1",
-        (_, true) => "status.sh",
-        (_, false) => "status_full.sh",
+/// Script location in the temp dir. `.ps1` is mandatory for `powershell -File`
+fn script_path(system: SystemType) -> std::path::PathBuf {
+    let name = match system {
+        SystemType::Windows => "status.ps1",
+        _ => "status.sh",
     };
     std::env::temp_dir().join("server_box_monitor").join(name)
 }
@@ -341,9 +334,9 @@ fn ensure_script(path: &std::path::Path, content: &str) -> std::io::Result<()> {
 /// Failed commands inside the script yield empty segments (the script does
 /// `exec 2>/dev/null`), matching the app's per-segment tolerance; per-command
 /// stderr is not observable in this mode.
-async fn execute_commands(system: SystemType, core_only: bool) -> Result<HashMap<String, String>> {
-    let content = build_status_script(system, core_only);
-    let path = script_path(system, core_only);
+async fn execute_commands(system: SystemType) -> Result<HashMap<String, String>> {
+    let content = build_status_script(system);
+    let path = script_path(system);
 
     let output = tokio::task::spawn_blocking(move || -> std::io::Result<std::process::Output> {
         ensure_script(&path, &content)?;
@@ -494,15 +487,20 @@ fn format_cpu_brand(brands: &[(String, u32)]) -> Option<String> {
     )
 }
 
-/// `Disk.path` is a Unix device path ("/dev/sda1") on Linux/BSD but a bare
-/// drive letter ("C:") on Windows (`sbm_parser::windows::parse_disks`) — the
-/// `/dev` prefix check that filters out `df`/`lsblk` pseudo-filesystems on
-/// Unix would zero out every Windows disk, so Windows only requires a size
+/// `Disk.path` is a Unix device path ("/dev/sda1") from Linux's native
+/// `df -k` sampling (`sbm_native::linux`) — the `/dev` prefix there filters
+/// out `df`'s pseudo-filesystems (tmpfs, overlay, ...) and still matters.
+/// Windows (`Disk.path` = drive letter, e.g. "C:") and Bsd/macOS (`Disk.path`
+/// = sysinfo's volume label, e.g. "Macintosh HD" — confirmed empirically,
+/// `sbm_native::sysinfo_backend` never produces a `/dev`-prefixed path)
+/// both source `disks` natively now, where the list sysinfo/WMI returns is
+/// already curated to real volumes, so a `/dev` check there would zero out
+/// every disk instead of filtering anything meaningful.
 fn is_real_disk(system: SystemType, d: &Disk) -> bool {
     d.size > 0
         && match system {
-            SystemType::Windows => true,
-            _ => d.path.starts_with("/dev"),
+            SystemType::Windows | SystemType::Bsd => true,
+            SystemType::Linux => d.path.starts_with("/dev"),
         }
 }
 
@@ -920,7 +918,7 @@ mod tests {
     #[cfg(unix)]
     #[tokio::test]
     async fn execute_commands_via_script_smoke() {
-        let raw = execute_commands(system_type(), true).await.unwrap();
+        let raw = execute_commands(system_type()).await.unwrap();
         assert!(raw.contains_key("time"), "keys: {:?}", raw.keys().collect::<Vec<_>>());
         assert!(raw.contains_key("echo"));
     }
