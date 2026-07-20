@@ -67,7 +67,7 @@ fn default_max_db_size_mb() -> u64 {
 }
 
 fn default_extended_interval_secs() -> u64 {
-    60
+    10
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

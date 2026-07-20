@@ -27,11 +27,15 @@ port = 3770
 [monitoring]
 interval_seconds = 7
 
-# How often (seconds) to run the full status script, which additionally
-# collects battery/sensors/SMART/AMD-GPU data — too slow to run every
-# interval_seconds cycle (e.g. smartctl waking spun-down disks). Values from
-# this slower script are cached and reused between extended collections.
-extended_interval_secs = 60
+# How often (seconds) to run the extended status script, which additionally
+# collects battery/sensors/SMART/AMD-GPU data — the only fields that still
+# need CLI tools (smartctl/sensors/amd-smi) after monitor's native collection
+# cutover; core fields (cpu/mem/disk/net/uptime/...) no longer depend on this
+# at all. Values are cached and carried forward between extended collections.
+# NOTE: if this is <= interval_seconds, the extended script runs every cycle
+# (same cost as interval_seconds) — set it higher if smartctl-class latency
+# on every cycle isn't acceptable for your disks.
+extended_interval_secs = 10
 
 # Data retention and cleanup settings
 [monitoring.data_retention]
