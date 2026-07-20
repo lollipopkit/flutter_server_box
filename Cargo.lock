@@ -3184,6 +3184,7 @@ dependencies = [
  "rpassword",
  "rustls",
  "rustls-pemfile",
+ "sbm_native",
  "sbm_parser",
  "serde",
  "serde_json",

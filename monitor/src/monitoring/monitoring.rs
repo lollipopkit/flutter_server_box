@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::process::Command;
 use std::sync::Arc;
 use tokio::time::{sleep, Duration};
-use tracing::{info, error};
+use tracing::{debug, info, error};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemMetrics {
@@ -161,6 +161,9 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
     // cross-cycle delta to yield current usage
     let mut prev_cpu: Option<CpuCore> = None;
     let mut cycle: u64 = 0;
+    // Shadow-mode native sampler state (see `log_native_shadow_diff`); not
+    // yet the source of truth for anything served to the API
+    let mut native_state = sbm_native::NativeState::new();
 
     loop {
         let core_only = !is_extended_cycle(
@@ -171,7 +174,15 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
         cycle += 1;
         let prev_metrics = app_state.current_metrics.read().await.clone();
 
-        match collect_metrics(&app_state.config, &mut prev_cpu, core_only, prev_metrics.as_ref()).await {
+        match collect_metrics(
+            &app_state.config,
+            &mut prev_cpu,
+            core_only,
+            prev_metrics.as_ref(),
+            &mut native_state,
+        )
+        .await
+        {
             Ok(metrics) => {
                 // Store metrics in database
                 if let Err(e) = store_metrics(&app_state.db, &metrics).await {
@@ -221,6 +232,7 @@ async fn collect_metrics(
     prev_cpu: &mut Option<CpuCore>,
     core_only: bool,
     prev_metrics: Option<&SystemMetrics>,
+    native_state: &mut sbm_native::NativeState,
 ) -> Result<SystemMetrics> {
     let system = system_type();
     let raw = execute_commands(system, core_only).await?;
@@ -239,9 +251,41 @@ async fn collect_metrics(
         status.cpu = cores;
     }
 
+    // Shadow mode: sample the native path alongside the script path and log
+    // a side-by-side comparison, but keep serving the script-derived
+    // `status` unchanged below. Once the logged values check out across all
+    // three real deployment platforms (see the migration plan), the native
+    // sample becomes the source of truth and this comment/step goes away.
+    let native_status = sbm_native::sample(native_state, system);
+    log_native_shadow_diff(&status, &native_status);
+
     let prev = prev_cpu.take();
     *prev_cpu = summary_core(&status.cpu).cloned();
     Ok(adapt_status(system, status, config, prev.as_ref(), prev_metrics))
+}
+
+/// Logs a coarse side-by-side comparison between the script-derived and
+/// native-derived `ServerStatus` for manual review during the shadow-mode
+/// migration step — not exhaustive field-by-field, just enough to eyeball
+/// whether the native path is in the right ballpark before cutting over.
+fn log_native_shadow_diff(script: &ServerStatus, native: &ServerStatus) {
+    debug!(
+        native.cpu_cores = native.cpu.len(),
+        script.cpu_cores = script.cpu.len(),
+        native.mem_total_kb = native.mem.as_ref().map(|m| m.total),
+        script.mem_total_kb = script.mem.as_ref().map(|m| m.total),
+        native.disks = native.disks.len(),
+        script.disks = script.disks.len(),
+        native.net_ifaces = native.net.len(),
+        script.net_ifaces = script.net.len(),
+        native.uptime = native.uptime.as_deref(),
+        script.uptime = script.uptime.as_deref(),
+        native.host = native.host.as_deref(),
+        script.host = script.host.as_deref(),
+        native.sys = native.sys.as_deref(),
+        script.sys = script.sys.as_deref(),
+        "native vs script shadow sample"
+    );
 }
 
 /// Build the status script shared with the app (sbm_parser::script). One

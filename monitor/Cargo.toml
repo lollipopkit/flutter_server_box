@@ -10,6 +10,9 @@ path = "src/lib.rs"
 [dependencies]
 # Shared status parser (monorepo-wide)
 sbm_parser = { path = "../crates/sbm_parser" }
+# Native (syscall/procfs) status sampling for monitor's own local collection
+# path — shadow-mode only for now, see monitoring.rs::log_native_shadow_diff
+sbm_native = { path = "../crates/sbm_native" }
 
 # Web framework
 ntex = { version = "3", features = ["tokio", "rustls"] }
