@@ -352,7 +352,7 @@ fn adapt_status(
 ) -> SystemMetrics {
     let (cpu_usage, cpu_cores) = adapt_cpu(system, &status.cpu, prev_cpu);
     let (memory, swap) = adapt_memory(&status);
-    let disk = aggregate_disks(&status.disks);
+    let disk = aggregate_disks(system, &status.disks);
     let network = aggregate_net(&status);
 
     // Temperature prefers CPU devices (Dart `Temperatures.first`)
@@ -389,7 +389,7 @@ fn adapt_status(
         }))
         .collect();
 
-    let disk_details = flatten_disks(&status.disks);
+    let disk_details = flatten_disks(system, &status.disks);
 
     let ifaces = status
         .net
@@ -450,12 +450,24 @@ fn format_cpu_brand(brands: &[(String, u32)]) -> Option<String> {
     )
 }
 
-/// Every /dev-backed filesystem as its own row (raw view for the drill-down;
-/// unlike aggregate_disks, APFS volumes are not pooled here), KiB -> bytes
-fn flatten_disks(disks: &[Disk]) -> Vec<DiskDetail> {
-    fn walk<'a>(disks: &'a [Disk], seen: &mut Vec<&'a str>, out: &mut Vec<DiskDetail>) {
+/// `Disk.path` is a Unix device path ("/dev/sda1") on Linux/BSD but a bare
+/// drive letter ("C:") on Windows (`sbm_parser::windows::parse_disks`) — the
+/// `/dev` prefix check that filters out `df`/`lsblk` pseudo-filesystems on
+/// Unix would zero out every Windows disk, so Windows only requires a size
+fn is_real_disk(system: SystemType, d: &Disk) -> bool {
+    d.size > 0
+        && match system {
+            SystemType::Windows => true,
+            _ => d.path.starts_with("/dev"),
+        }
+}
+
+/// Every real filesystem as its own row (raw view for the drill-down; unlike
+/// aggregate_disks, APFS volumes are not pooled here), KiB -> bytes
+fn flatten_disks(system: SystemType, disks: &[Disk]) -> Vec<DiskDetail> {
+    fn walk<'a>(system: SystemType, disks: &'a [Disk], seen: &mut Vec<&'a str>, out: &mut Vec<DiskDetail>) {
         for d in disks {
-            if d.path.starts_with("/dev") && d.size > 0 && !seen.contains(&d.path.as_str()) {
+            if is_real_disk(system, d) && !seen.contains(&d.path.as_str()) {
                 seen.push(&d.path);
                 out.push(DiskDetail {
                     path: d.path.clone(),
@@ -466,11 +478,11 @@ fn flatten_disks(disks: &[Disk]) -> Vec<DiskDetail> {
                     usage_percent: percent(d.used, d.size),
                 });
             }
-            walk(&d.children, seen, out);
+            walk(system, &d.children, seen, out);
         }
     }
     let mut out = Vec::new();
-    walk(disks, &mut Vec::new(), &mut out);
+    walk(system, disks, &mut Vec::new(), &mut out);
     out
 }
 
@@ -563,18 +575,19 @@ fn apfs_pool_key(d: &Disk) -> Option<(String, u64, u64)> {
     (!base.is_empty()).then(|| (base, d.size, d.avail))
 }
 
-/// Disk aggregation with Go-compatible /status semantics: only /dev-prefixed
-/// filesystems, deduped by path (APFS volumes additionally deduped per
-/// container pool), lsblk hierarchy expanded recursively; KiB → bytes
-fn aggregate_disks(disks: &[Disk]) -> DiskMetrics {
+/// Disk aggregation with Go-compatible /status semantics: real filesystems
+/// only (see `is_real_disk`), deduped by path (APFS volumes additionally
+/// deduped per container pool), lsblk hierarchy expanded recursively; KiB → bytes
+fn aggregate_disks(system: SystemType, disks: &[Disk]) -> DiskMetrics {
     fn walk<'a>(
+        system: SystemType,
         disks: &'a [Disk],
         seen: &mut Vec<&'a str>,
         pools: &mut Vec<(String, u64, u64)>,
         acc: &mut (u64, u64, u64),
     ) {
         for d in disks {
-            if d.path.starts_with("/dev") && d.size > 0 && !seen.contains(&d.path.as_str()) {
+            if is_real_disk(system, d) && !seen.contains(&d.path.as_str()) {
                 seen.push(&d.path);
                 let pooled = match apfs_pool_key(d) {
                     Some(key) if pools.contains(&key) => true,
@@ -590,12 +603,12 @@ fn aggregate_disks(disks: &[Disk]) -> DiskMetrics {
                     acc.2 += d.avail;
                 }
             }
-            walk(&d.children, seen, pools, acc);
+            walk(system, &d.children, seen, pools, acc);
         }
     }
 
     let mut acc = (0u64, 0u64, 0u64);
-    walk(disks, &mut Vec::new(), &mut Vec::new(), &mut acc);
+    walk(system, disks, &mut Vec::new(), &mut Vec::new(), &mut acc);
     let (total, used, avail) = acc;
 
     DiskMetrics {
@@ -613,9 +626,10 @@ fn aggregate_net(status: &ServerStatus) -> NetworkMetrics {
     }
 }
 
-/// Disk segment parsing + Go-compatible aggregation (for /status and tests)
+/// Disk segment parsing + Go-compatible aggregation (for /status and tests);
+/// Linux-only (the legacy Go /status endpoint never ran on other platforms)
 pub fn parse_disk_metrics(segment: &str) -> Result<DiskMetrics> {
-    Ok(aggregate_disks(&sbm_parser::linux::parse_disk(segment)))
+    Ok(aggregate_disks(SystemType::Linux, &sbm_parser::linux::parse_disk(segment)))
 }
 
 async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<()> {
@@ -738,6 +752,45 @@ mod tests {
 
     fn empty_status() -> ServerStatus {
         ServerStatus::default()
+    }
+
+    /// Windows disks use drive-letter paths ("C:"), not "/dev/..." — the
+    /// aggregation must not zero them out the way it would filter a
+    /// non-device Unix pseudo-filesystem
+    #[test]
+    fn aggregate_disks_counts_windows_drive_letters() {
+        let disks = vec![sbm_parser::types::Disk {
+            path: "C:".to_string(),
+            mount: "C:".to_string(),
+            used: 1000,
+            size: 2000,
+            avail: 1000,
+            ..Default::default()
+        }];
+
+        let metrics = aggregate_disks(SystemType::Windows, &disks);
+        assert_eq!(metrics.total, 2000 * 1024);
+        assert_eq!(metrics.used, 1000 * 1024);
+
+        let details = flatten_disks(SystemType::Windows, &disks);
+        assert_eq!(details.len(), 1);
+        assert_eq!(details[0].path, "C:");
+    }
+
+    #[test]
+    fn aggregate_disks_ignores_non_dev_paths_on_unix() {
+        let disks = vec![sbm_parser::types::Disk {
+            path: "tmpfs".to_string(),
+            mount: "/tmp".to_string(),
+            used: 1000,
+            size: 2000,
+            avail: 1000,
+            ..Default::default()
+        }];
+
+        let metrics = aggregate_disks(SystemType::Linux, &disks);
+        assert_eq!(metrics.total, 0);
+        assert!(flatten_disks(SystemType::Linux, &disks).is_empty());
     }
 
     #[test]
