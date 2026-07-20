@@ -30,6 +30,33 @@ export interface SystemMetrics {
   disk_smart?: DiskSmartMetrics[];
 }
 
+export type FieldSupport = 'supported' | 'not_implemented' | 'hardware_dependent'
+
+/// Platform-only support level per ServerStatus field — depends on OS, not
+/// on any sample. See sbm_parser::capabilities for the three-state meaning:
+/// 'not_implemented' = this platform never collects it (hide unconditionally),
+/// 'hardware_dependent' = collected when present, empty just means no such
+/// hardware, 'supported' = always populated when the command succeeds.
+export interface Capabilities {
+  cpu: FieldSupport
+  cpu_brand: FieldSupport
+  mem: FieldSupport
+  swap: FieldSupport
+  disks: FieldSupport
+  net: FieldSupport
+  temps: FieldSupport
+  conn: FieldSupport
+  uptime: FieldSupport
+  sys: FieldSupport
+  host: FieldSupport
+  diskio: FieldSupport
+  batteries: FieldSupport
+  sensors: FieldSupport
+  nvidia: FieldSupport
+  amd: FieldSupport
+  disk_smart: FieldSupport
+}
+
 export interface ConnMetrics {
   max_conn: number;
   fail: number;

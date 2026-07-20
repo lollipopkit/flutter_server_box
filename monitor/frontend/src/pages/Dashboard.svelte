@@ -26,10 +26,23 @@
   import { layout } from '../lib/layout.svelte'
   import { Poller } from '../lib/poller.svelte'
   import { fly } from 'svelte/transition'
-  import type { HistoryPoint } from '../types'
+  import type { Capabilities, HistoryPoint } from '../types'
 
   const status = new Poller(api.getStatus, 5000)
   const metrics = new Poller(api.getMetrics, 5000)
+
+  // Platform-only, doesn't change per-sample — fetched once when this server
+  // connection authenticates, not on the metrics poll cadence. `null` before
+  // it loads is treated as "unknown" (permissive) below so cards don't flash
+  // hidden-then-shown while this request is still in flight.
+  let capabilities = $state<Capabilities | null>(null)
+  $effect(() => {
+    if (servers.authenticated) {
+      api.getCapabilities().then((c) => (capabilities = c)).catch(() => {})
+    } else {
+      capabilities = null
+    }
+  })
 
   const RANGES = [
     { label: '1h', minutes: 60 },
@@ -95,6 +108,17 @@
   // detail line) instead of parsing the preformatted /status strings
   const m = $derived(metrics.data)
   const latest = $derived(history.at(-1))
+
+  // A card only shows once there's data AND the platform isn't documented as
+  // never collecting the field — avoids the old "empty array = hidden" logic
+  // treating "not supported here" and "no hardware detected" the same way
+  const showGpu = $derived(
+    (capabilities?.nvidia !== 'not_implemented' || capabilities?.amd !== 'not_implemented') &&
+      !!m?.gpus?.length,
+  )
+  const showBattery = $derived(capabilities?.batteries !== 'not_implemented' && !!m?.batteries?.length)
+  const showSensors = $derived(capabilities?.sensors !== 'not_implemented' && !!m?.sensors?.length)
+  const showSmart = $derived(capabilities?.disk_smart !== 'not_implemented' && !!m?.disk_smart?.length)
 
   // Always the server's own reported name — not user-editable — falling back
   // to the address/id only before the server has ever reported anything
@@ -222,7 +246,7 @@
           : ''}
         onclick={() => (detail = 'network')}
       />
-      {#if m?.gpus?.length}
+      {#if showGpu && m?.gpus?.length}
         <StatCard
           class="p-4 sm:p-6"
           icon={Gpu}
@@ -233,7 +257,7 @@
           onclick={() => (detail = 'gpu')}
         />
       {/if}
-      {#if m?.batteries?.length}
+      {#if showBattery && m?.batteries?.length}
         <StatCard
           class="p-4 sm:p-6"
           icon={BatteryMedium}
@@ -244,7 +268,7 @@
           onclick={() => (detail = 'battery')}
         />
       {/if}
-      {#if m?.sensors?.length}
+      {#if showSensors && m?.sensors?.length}
         <StatCard
           class="p-4 sm:p-6"
           icon={Gauge}
@@ -255,7 +279,7 @@
           onclick={() => (detail = 'sensors')}
         />
       {/if}
-      {#if m?.disk_smart?.length}
+      {#if showSmart && m?.disk_smart?.length}
         <StatCard
           class="p-4 sm:p-6"
           icon={ShieldCheck}

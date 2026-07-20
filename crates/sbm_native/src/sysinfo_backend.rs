@@ -1,6 +1,7 @@
 //! macOS/BSD + Windows backend, built on the `sysinfo` crate. Absorbs and
 //! generalizes the pattern from the removed `monitor::macos_cpu` (per-core
-//! CPU only) to also cover memory/swap/disks/diskio/network/uptime/host/sys.
+//! CPU only) to also cover cpu_brand/memory/swap/disks/diskio/network/temps/
+//! uptime/host/sys.
 //!
 //! `batteries`/`sensors`/`nvidia`/`amd`/`disk_smart` are intentionally left
 //! empty — those stay on the shared script path.
@@ -12,9 +13,9 @@
 //! class of bug as the Windows `/dev`-prefix fix from earlier — see the
 //! monitor-integration step).
 
-use sbm_parser::types::{Disk, DiskIoPiece, Memory, NetIface, Swap};
+use sbm_parser::types::{Disk, DiskIoPiece, Memory, NetIface, Swap, Temperatures};
 use sbm_parser::{types::CpuCore, ServerStatus};
-use sysinfo::{Disks, Networks, System};
+use sysinfo::{Components, Disks, Networks, System};
 
 /// One scale for every synthetic CPU reading (0.01% precision). Matches the
 /// used/total tick convention every other platform's real counters use (see
@@ -26,14 +27,39 @@ pub struct State {
     system: System,
     disks: Disks,
     networks: Networks,
+    components: Components,
     /// sysinfo's first CPU reading has no prior sample to diff against
     primed: bool,
 }
 
 impl Default for State {
     fn default() -> Self {
-        Self { system: System::new(), disks: Disks::new(), networks: Networks::new(), primed: false }
+        Self {
+            system: System::new(),
+            disks: Disks::new(),
+            networks: Networks::new(),
+            components: Components::new(),
+            primed: false,
+        }
     }
+}
+
+/// Groups per-logical-core brand strings into (name, count), matching
+/// `windows::parse_cpu_brand`'s shape (and `monitor`'s `format_cpu_brand`,
+/// which expects this grouping to render "Brand (xN)")
+fn cpu_brand(system: &System) -> Vec<(String, u32)> {
+    let mut brands: Vec<(String, u32)> = Vec::new();
+    for cpu in system.cpus() {
+        let name = cpu.brand().trim();
+        if name.is_empty() {
+            continue;
+        }
+        match brands.iter_mut().find(|(n, _)| n == name) {
+            Some((_, count)) => *count += 1,
+            None => brands.push((name.to_string(), 1)),
+        }
+    }
+    brands
 }
 
 fn cpu_cores(system: &System) -> Vec<CpuCore> {
@@ -62,6 +88,7 @@ pub fn sample(state: &mut State) -> ServerStatus {
     state.system.refresh_memory();
     state.disks.refresh(true);
     state.networks.refresh(true);
+    state.components.refresh(true);
 
     let first_call = !state.primed;
     state.primed = true;
@@ -142,13 +169,22 @@ pub fn sample(state: &mut State) -> ServerStatus {
         })
         .collect();
 
+    let mut temps = Temperatures::default();
+    for component in state.components.list() {
+        if let Some(t) = component.temperature() {
+            temps.0.insert(component.label().to_string(), t as f64);
+        }
+    }
+
     ServerStatus {
         cpu,
+        cpu_brand: cpu_brand(&state.system),
         mem,
         swap,
         disks,
         diskio,
         net,
+        temps,
         uptime: Some(format_uptime(System::uptime())),
         host: System::host_name(),
         sys: System::long_os_version().or_else(System::os_version),
@@ -187,6 +223,11 @@ mod tests {
         assert_eq!(status.cpu[0].id, "cpu");
         assert!(status.mem.is_some());
         assert!(status.host.is_some());
+        // Regression: an earlier version of this backend only covered CPU
+        // usage and silently dropped cpu_brand entirely (no script fallback
+        // exists post-cutover, so this was a real "CPU (x18)" -> blank
+        // regression on every Bsd/Windows agent, not just a missing nicety)
+        assert!(!status.cpu_brand.is_empty(), "expected at least one cpu_brand entry");
     }
 
     /// macOS/APFS volumes sharing a container (e.g. "/" and

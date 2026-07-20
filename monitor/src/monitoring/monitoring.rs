@@ -225,7 +225,7 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
     }
 }
 
-fn system_type() -> SystemType {
+pub fn system_type() -> SystemType {
     if cfg!(target_os = "windows") {
         SystemType::Windows
     } else if cfg!(target_os = "macos") {
@@ -233,6 +233,29 @@ fn system_type() -> SystemType {
     } else {
         SystemType::Linux
     }
+}
+
+/// `sbm_parser::capabilities::capabilities` mechanically reflects the shared
+/// SCRIPT manifest — correct for the app (script is its only path), but
+/// stale for monitor's own native collection cutover (`sbm_native`), which
+/// added coverage the script manifest never had on Bsd: `sysinfo` provides
+/// swap/diskio/CPU-temperature there even though the old BSD shell command
+/// table has no commands for them. Overridden here (not in `sbm_parser`,
+/// which must stay script-truthful for the app) rather than changing the
+/// shared crate for a monitor-only concern.
+pub fn effective_capabilities(system: SystemType) -> sbm_parser::capabilities::Capabilities {
+    let mut caps = sbm_parser::capabilities::capabilities(system);
+    if system == SystemType::Bsd {
+        use sbm_parser::capabilities::FieldSupport;
+        // HardwareDependent, not Supported: sysinfo returns empty/zero when
+        // there's no swap configured or no exposed thermal sensor (macOS in
+        // particular locks down Components on many machines/OS versions) —
+        // "collected when present" fits better than "always populated".
+        caps.swap = FieldSupport::HardwareDependent;
+        caps.diskio = FieldSupport::HardwareDependent;
+        caps.temps = FieldSupport::HardwareDependent;
+    }
+    caps
 }
 
 async fn collect_metrics(
@@ -821,6 +844,29 @@ mod tests {
             assert_eq!(mode & 0o777, 0o755);
         }
         std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn effective_capabilities_upgrades_bsd_native_gains() {
+        use sbm_parser::capabilities::FieldSupport;
+        let caps = effective_capabilities(SystemType::Bsd);
+        assert_eq!(caps.swap, FieldSupport::HardwareDependent);
+        assert_eq!(caps.diskio, FieldSupport::HardwareDependent);
+        assert_eq!(caps.temps, FieldSupport::HardwareDependent);
+        // Untouched fields still match the script-manifest-derived baseline
+        assert_eq!(caps.conn, FieldSupport::NotImplemented);
+    }
+
+    #[test]
+    fn effective_capabilities_leaves_linux_and_windows_unchanged() {
+        assert_eq!(
+            effective_capabilities(SystemType::Linux).swap,
+            sbm_parser::capabilities::capabilities(SystemType::Linux).swap
+        );
+        assert_eq!(
+            effective_capabilities(SystemType::Windows).diskio,
+            sbm_parser::capabilities::capabilities(SystemType::Windows).diskio
+        );
     }
 
     #[test]

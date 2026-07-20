@@ -76,6 +76,7 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
                     .route("/login", web::post().to(login))
                     .route("/status", web::get().to(get_status))
                     .route("/metrics", web::get().to(get_metrics))
+                    .route("/capabilities", web::get().to(get_capabilities))
                     .route("/metrics/history", web::get().to(get_metrics_history))
                     .route("/health", web::get().to(health_check))
                     .route("/velocity", web::get().to(get_velocity))
@@ -281,6 +282,21 @@ async fn get_metrics(
             error: "Metrics not available yet".to_string(),
         }))
     }
+}
+
+/// Which `ServerStatus` fields this platform can collect at all — depends
+/// only on the OS the agent runs on, never on a sample, so unlike `/metrics`
+/// this isn't meant to be polled; the frontend fetches it once per server
+/// connection. See `sbm_parser::capabilities` for the three-state meaning and
+/// `monitoring::effective_capabilities` for monitor's native-sampling overrides.
+async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
+    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
+        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
+            error: "Invalid or missing token".to_string(),
+        }));
+    }
+    let caps = crate::monitoring::monitoring::effective_capabilities(crate::monitoring::monitoring::system_type());
+    Ok(HttpResponse::Ok().json(&caps))
 }
 
 #[derive(Serialize)]

@@ -6,4 +6,4 @@ description = "Native (syscall/procfs) status sampling for monitor's local colle
 
 [dependencies]
 sbm_parser = { path = "../sbm_parser" }
-sysinfo = { version = "0.39", default-features = false, features = ["system", "disk", "network"] }
+sysinfo = { version = "0.39", default-features = false, features = ["system", "disk", "network", "component"] }
