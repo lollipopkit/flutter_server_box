@@ -9,6 +9,19 @@ import 'package:server_box/data/provider/server/single.dart';
 part 'systemd.freezed.dart';
 part 'systemd.g.dart';
 
+/// Outcome of [SystemdNotifier.getUnits], so the view can inform the user
+/// about what failed.
+enum SystemdRefreshResult {
+  ok,
+
+  /// System units could not be listed at all (no client or command failed).
+  systemFailed,
+
+  /// System units loaded, but the user manager could not be queried (e.g. no
+  /// session bus over SSH). User units are simply absent.
+  userFailed,
+}
+
 @freezed
 abstract class SystemdState with _$SystemdState {
   const factory SystemdState({
@@ -26,8 +39,7 @@ class SystemdNotifier extends _$SystemdNotifier {
   SystemdState build(Spi spi) {
     final si = ref.read(serverProvider(spi.id));
     _si = si;
-    // Async initialization
-    Future.microtask(() => getUnits());
+    // The initial load is driven by the view so it can surface failures.
     return const SystemdState();
   }
 
@@ -50,30 +62,43 @@ class SystemdNotifier extends _$SystemdNotifier {
     state = state.copyWith(scopeFilter: filter);
   }
 
-  Future<void> getUnits() async {
+  /// Refreshes the unit list and reports what, if anything, failed so the view
+  /// can inform the user instead of silently dropping units.
+  Future<SystemdRefreshResult> getUnits() async {
     state = state.copyWith(isBusy: true);
 
     try {
       final client = _si.client;
-      if (client == null) return;
+      if (client == null) return SystemdRefreshResult.systemFailed;
 
       final systemUnits = SystemdUnit.parseListUnits(
         await client.execForOutput(SystemdUnitScope.system.listUnitsCmd),
         SystemdUnitScope.system,
       );
 
-      // The user manager may be unavailable over SSH (no session bus). Its
-      // error output simply parses to no units, so no special handling is
-      // needed here.
-      final userUnits = SystemdUnit.parseListUnits(
-        await client.execForOutput(SystemdUnitScope.user.listUnitsCmd),
-        SystemdUnitScope.user,
-      );
+      var userUnits = <SystemdUnit>[];
+      var userFailed = false;
+      try {
+        final userRaw =
+            await client.execForOutput(SystemdUnitScope.user.listUnitsCmd);
+        userUnits = SystemdUnit.parseListUnits(userRaw, SystemdUnitScope.user);
+        // A successful-but-empty list yields no output. Non-empty output that
+        // parses to no units means systemctl printed an error instead (e.g.
+        // no session bus), which is a failure worth surfacing.
+        userFailed = userUnits.isEmpty && userRaw.trim().isNotEmpty;
+      } catch (e, s) {
+        dprint('Systemd user units', e, s);
+        userFailed = true;
+      }
 
       final units = [...userUnits, ...systemUnits]..sort(_compareUnits);
       state = state.copyWith(units: units);
+      return userFailed
+          ? SystemdRefreshResult.userFailed
+          : SystemdRefreshResult.ok;
     } catch (e, s) {
       dprint('Parse systemd', e, s);
+      return SystemdRefreshResult.systemFailed;
     } finally {
       state = state.copyWith(isBusy: false);
     }

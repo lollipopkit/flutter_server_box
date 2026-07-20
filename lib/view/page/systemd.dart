@@ -28,6 +28,25 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
   late final _notifier = ref.read(_pro.notifier);
 
   @override
+  void initState() {
+    super.initState();
+    Future.microtask(_refresh);
+  }
+
+  Future<void> _refresh() async {
+    final result = await _notifier.getUnits();
+    if (!mounted) return;
+    switch (result) {
+      case SystemdRefreshResult.ok:
+        break;
+      case SystemdRefreshResult.systemFailed:
+        context.showSnackBar(libL10n.error);
+      case SystemdRefreshResult.userFailed:
+        context.showSnackBar('${libL10n.fail}: ${libL10n.user}');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
@@ -37,13 +56,13 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
             ? [
                 Btn.icon(
                   icon: const Icon(Icons.refresh),
-                  onTap: _notifier.getUnits,
+                  onTap: _refresh,
                 ),
               ]
             : null,
       ),
       body: RefreshIndicator(
-        onRefresh: _notifier.getUnits,
+        onRefresh: _refresh,
         child: _buildBody(),
       ),
     );
