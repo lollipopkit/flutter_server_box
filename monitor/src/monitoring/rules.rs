@@ -319,6 +319,7 @@ mod tests {
             uptime: None,
             conn: None,
             diskio: vec![],
+            diskio_rate: vec![],
             batteries: vec![],
             sensors: vec![],
             disk_smart: vec![],

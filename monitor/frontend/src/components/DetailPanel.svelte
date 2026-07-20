@@ -192,8 +192,9 @@
       </Card>
     {/if}
     {#if m?.diskio?.length}
-      <!-- Cumulative sector counters (512B/sector), not a rate — no history
-           is persisted server-side for this field -->
+      <!-- diskio itself is a cumulative counter since boot; diskio_rate is
+           the live bytes/sec derived from it each poll (empty on the
+           agent's first cycle, before there's a prior sample to diff) -->
       <Card>
         <h3 class="text-sm font-semibold text-fg-strong mb-3">{$LL.diskIo()}</h3>
         <table class="w-full text-sm table-fixed">
@@ -206,15 +207,19 @@
           </thead>
           <tbody class="divide-y divide-line">
             {#each m.diskio as d (d.dev)}
+              {@const rate = m?.diskio_rate?.find((r) => r.dev === d.dev)}
               <tr>
                 <td class="py-2 pr-4">
                   <span class="block truncate" title={d.dev}>{d.dev}</span>
+                  <span class="block text-xs text-faint-fg truncate">
+                    {$LL.read()} {fmtBytes(d.sectors_read * 512)} · {$LL.write()} {fmtBytes(d.sectors_write * 512)}
+                  </span>
                 </td>
                 <td class="py-2 text-right whitespace-nowrap text-muted-fg">
-                  {fmtBytes(d.sectors_read * 512)}
+                  {rate ? fmtBytesPerSec(rate.read_bytes_per_sec) : '--'}
                 </td>
                 <td class="py-2 pl-4 text-right whitespace-nowrap text-muted-fg">
-                  {fmtBytes(d.sectors_write * 512)}
+                  {rate ? fmtBytesPerSec(rate.write_bytes_per_sec) : '--'}
                 </td>
               </tr>
             {/each}

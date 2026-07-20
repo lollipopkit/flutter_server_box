@@ -19,9 +19,12 @@ export interface SystemMetrics {
   // Already formatted by the collection script, e.g. "up 3 days, 2:14"
   uptime?: string;
   conn?: ConnMetrics;
-  // Cumulative sector counters (not a rate); staler than the other fields —
-  // only refreshed on the agent's periodic extended collection
+  // Cumulative sector counters since boot (not a rate) — see diskio_rate
+  // for a live speed derived from this
   diskio?: DiskIoMetrics[];
+  // Bytes/sec since the previous poll; empty on the agent's first cycle or
+  // for a device with no prior sample yet
+  diskio_rate?: DiskIoRate[];
   batteries?: BatteryMetrics[];
   sensors?: SensorMetrics[];
   disk_smart?: DiskSmartMetrics[];
@@ -36,6 +39,12 @@ export interface DiskIoMetrics {
   dev: string;
   sectors_read: number;
   sectors_write: number;
+}
+
+export interface DiskIoRate {
+  dev: string;
+  read_bytes_per_sec: number;
+  write_bytes_per_sec: number;
 }
 
 export interface BatteryMetrics {

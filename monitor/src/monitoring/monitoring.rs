@@ -37,9 +37,14 @@ pub struct SystemMetrics {
     /// System uptime, already formatted by the collection script (e.g. "up 3 days, 2:14")
     pub uptime: Option<String>,
     pub conn: Option<sbm_parser::types::Conn>,
-    /// Cumulative per-device sector counters (not a rate — caller diffs across samples)
+    /// Cumulative per-device sector counters (not a rate — see `diskio_rate`)
     #[serde(default)]
     pub diskio: Vec<sbm_parser::types::DiskIoPiece>,
+    /// Bytes/sec since the previous cycle, derived from `diskio`'s cumulative
+    /// counters + `timestamp` deltas; empty on the first cycle (no baseline)
+    /// or for a device that just appeared
+    #[serde(default)]
+    pub diskio_rate: Vec<DiskIoRate>,
     #[serde(default)]
     pub batteries: Vec<sbm_parser::types::Battery>,
     #[serde(default)]
@@ -139,6 +144,13 @@ pub struct IfaceMetrics {
     pub name: String,
     pub rx_bytes: u64,
     pub tx_bytes: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiskIoRate {
+    pub dev: String,
+    pub read_bytes_per_sec: f64,
+    pub write_bytes_per_sec: f64,
 }
 
 /// Whether `cycle` (0-indexed, incrementing once per `interval_seconds`) is
@@ -377,6 +389,38 @@ fn carry_forward_opt<T>(fresh: Option<T>, prev: Option<T>) -> Option<T> {
     fresh.or(prev)
 }
 
+/// Per-device bytes/sec since `prev_metrics`, from `current`'s cumulative
+/// sector counters (native sampling refreshes `diskio` every core cycle now,
+/// so this is a real per-cycle rate, not just a once-per-extended-cycle
+/// snapshot). Empty on the first cycle, for a zero/negative time delta
+/// (clock oddities), or for a device with no matching entry in `prev`
+/// (counter reset or newly appeared — one cycle without a rate is cheaper
+/// than reporting a bogus spike).
+fn compute_diskio_rate(
+    now: DateTime<Utc>,
+    current: &[sbm_parser::types::DiskIoPiece],
+    prev_metrics: Option<&SystemMetrics>,
+) -> Vec<DiskIoRate> {
+    let Some(prev) = prev_metrics else { return Vec::new() };
+    let elapsed = (now - prev.timestamp).num_milliseconds() as f64 / 1000.0;
+    if elapsed <= 0.0 {
+        return Vec::new();
+    }
+    current
+        .iter()
+        .filter_map(|d| {
+            let p = prev.diskio.iter().find(|p| p.dev == d.dev)?;
+            let read_delta = (d.sectors_read - p.sectors_read).max(0) as f64 * 512.0;
+            let write_delta = (d.sectors_write - p.sectors_write).max(0) as f64 * 512.0;
+            Some(DiskIoRate {
+                dev: d.dev.clone(),
+                read_bytes_per_sec: read_delta / elapsed,
+                write_bytes_per_sec: write_delta / elapsed,
+            })
+        })
+        .collect()
+}
+
 /// Adapt the parse result into the monitor's aggregate metrics
 fn adapt_status(
     system: SystemType,
@@ -441,8 +485,12 @@ fn adapt_status(
         prev_metrics.map(|p| p.disk_smart.clone()).unwrap_or_default(),
     );
 
+    let now = Utc::now();
+    let diskio = carry_forward(status.diskio, prev_metrics.map(|p| p.diskio.clone()).unwrap_or_default());
+    let diskio_rate = compute_diskio_rate(now, &diskio, prev_metrics);
+
     SystemMetrics {
-        timestamp: Utc::now(),
+        timestamp: now,
         server_name: config.get_server_name(),
         cpu_usage,
         cpu_cores,
@@ -458,7 +506,8 @@ fn adapt_status(
         ifaces,
         uptime: carry_forward_opt(status.uptime, prev_metrics.and_then(|p| p.uptime.clone())),
         conn: carry_forward_opt(status.conn, prev_metrics.and_then(|p| p.conn)),
-        diskio: carry_forward(status.diskio, prev_metrics.map(|p| p.diskio.clone()).unwrap_or_default()),
+        diskio,
+        diskio_rate,
         batteries: carry_forward(
             status.batteries,
             prev_metrics.map(|p| p.batteries.clone()).unwrap_or_default(),
@@ -910,6 +959,38 @@ mod tests {
         assert_eq!(metrics.uptime.as_deref(), Some("up 1 day"));
         assert_eq!(metrics.diskio.len(), 1);
         assert_eq!(metrics.batteries.len(), 1);
+    }
+
+    #[test]
+    fn diskio_rate_computed_from_cumulative_delta_over_elapsed_time() {
+        let mut first_status = empty_status();
+        first_status.diskio = vec![sbm_parser::types::DiskIoPiece {
+            dev: "sda".to_string(),
+            sectors_read: 1000,
+            sectors_write: 500,
+        }];
+        let first = adapt_status(SystemType::Linux, first_status, &Config::default(), None, None);
+        assert!(first.diskio_rate.is_empty(), "no baseline on the first cycle");
+
+        let mut second_status = empty_status();
+        // +2000 sectors read, +1000 written, 1MiB/512B-per-sector = 2048 sectors
+        second_status.diskio = vec![sbm_parser::types::DiskIoPiece {
+            dev: "sda".to_string(),
+            sectors_read: 3000,
+            sectors_write: 1500,
+        }];
+        let mut second = adapt_status(SystemType::Linux, second_status, &Config::default(), None, Some(&first));
+        // Force a known 2-second elapsed window instead of relying on real time
+        // passing between the two adapt_status() calls in this test
+        second.timestamp = first.timestamp + chrono::Duration::seconds(2);
+        let rate = compute_diskio_rate(second.timestamp, &second.diskio, Some(&first));
+
+        assert_eq!(rate.len(), 1);
+        assert_eq!(rate[0].dev, "sda");
+        // (3000-1000)*512 bytes / 2s = 512_000 B/s
+        assert_eq!(rate[0].read_bytes_per_sec, 512_000.0);
+        // (1500-500)*512 bytes / 2s = 256_000 B/s
+        assert_eq!(rate[0].write_bytes_per_sec, 256_000.0);
     }
 
     /// The monitor's real collection path: run the generated script, split output
