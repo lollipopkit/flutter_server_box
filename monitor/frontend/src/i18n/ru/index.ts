@@ -104,6 +104,12 @@ const ru = {
 	addRule: 'Добавить правило',
 	corsOrigins: 'Разрешённые источники CORS',
 	removeOrigin: 'Удалить источник',
+	ruleHelpType: 'type (тип): cpu / memory / swap / disk / network / temperature',
+	ruleHelpMatcher: 'matcher (зависит от type): cpu → "cpu" (общий) или "cpu0", "cpu1", ...; memory/swap → "used" (по умолчанию) / "free" / "avail"; network → "rx" / "tx" (пусто = вместе); disk/temperature игнорируют это поле',
+	ruleHelpThreshold: 'threshold: оператор сравнения (<, <=, =, >=, >) + значение + единица — проценты с % (напр. >=80%); температура с c (напр. >=70c); скорость сети с единицей + /s (напр. >10m/s); размер только с единицей (напр. <100m)',
+	ruleNamePlaceholder: 'напр. High CPU Usage',
+	ruleThresholdPlaceholder: 'напр. >=80%',
+	ruleMatcherPlaceholder: 'напр. cpu, used, rx',
 } satisfies Translation
 
 export default ru

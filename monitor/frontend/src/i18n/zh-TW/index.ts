@@ -104,6 +104,12 @@ const zh_TW = {
 	addRule: '新增規則',
 	corsOrigins: 'CORS 允許的來源',
 	removeOrigin: '刪除來源',
+	ruleHelpType: 'type(類型):cpu / memory / swap / disk / network / temperature',
+	ruleHelpMatcher: 'matcher(比對項,含義依 type 而定):cpu → "cpu"(整體)或 "cpu0"、"cpu1"...(單核);memory/swap → "used"(預設)/ "free" / "avail";network → "rx" / "tx"(留空為收發合計);disk/temperature 忽略此欄位',
+	ruleHelpThreshold: 'threshold(閾值):比較符(<, <=, =, >=, >)+ 數值 + 單位 — 百分比用 %(如 >=80%);溫度用 c(如 >=70c);網速用 單位+/s(如 >10m/s);容量用單位(如 <100m)',
+	ruleNamePlaceholder: '例如 High CPU Usage',
+	ruleThresholdPlaceholder: '例如 >=80%',
+	ruleMatcherPlaceholder: '例如 cpu、used、rx',
 } satisfies Translation
 
 export default zh_TW

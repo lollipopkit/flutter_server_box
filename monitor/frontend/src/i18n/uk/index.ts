@@ -104,6 +104,12 @@ const uk = {
 	addRule: 'Додати правило',
 	corsOrigins: 'Дозволені джерела CORS',
 	removeOrigin: 'Видалити джерело',
+	ruleHelpType: 'type (тип): cpu / memory / swap / disk / network / temperature',
+	ruleHelpMatcher: 'matcher (залежить від type): cpu → "cpu" (загальний) або "cpu0", "cpu1", ...; memory/swap → "used" (за замовчуванням) / "free" / "avail"; network → "rx" / "tx" (порожнє = разом); disk/temperature ігнорують це поле',
+	ruleHelpThreshold: 'threshold: оператор порівняння (<, <=, =, >=, >) + значення + одиниця — відсоток з % (напр. >=80%); температура з c (напр. >=70c); швидкість мережі з одиницею + /s (напр. >10m/s); розмір лише з одиницею (напр. <100m)',
+	ruleNamePlaceholder: 'напр. High CPU Usage',
+	ruleThresholdPlaceholder: 'напр. >=80%',
+	ruleMatcherPlaceholder: 'напр. cpu, used, rx',
 } satisfies Translation
 
 export default uk

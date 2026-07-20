@@ -104,6 +104,12 @@ const zh_CN = {
 	addRule: '添加规则',
 	corsOrigins: 'CORS 允许的来源',
 	removeOrigin: '删除来源',
+	ruleHelpType: 'type(类型):cpu / memory / swap / disk / network / temperature',
+	ruleHelpMatcher: 'matcher(匹配项,含义随 type 而定):cpu → "cpu"(整体)或 "cpu0"、"cpu1"...(单核);memory/swap → "used"(默认)/ "free" / "avail";network → "rx" / "tx"(留空为收发合计);disk/temperature 忽略此字段',
+	ruleHelpThreshold: 'threshold(阈值):比较符(<, <=, =, >=, >)+ 数值 + 单位 — 百分比用 %(如 >=80%);温度用 c(如 >=70c);网速用 单位+/s(如 >10m/s);体积用单位(如 <100m)',
+	ruleNamePlaceholder: '例如 High CPU Usage',
+	ruleThresholdPlaceholder: '例如 >=80%',
+	ruleMatcherPlaceholder: '例如 cpu、used、rx',
 } satisfies Translation
 
 export default zh_CN

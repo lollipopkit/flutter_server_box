@@ -104,6 +104,12 @@ const ko = {
 	addRule: '규칙 추가',
 	corsOrigins: '허용된 CORS 오리진',
 	removeOrigin: '오리진 삭제',
+	ruleHelpType: 'type(유형): cpu / memory / swap / disk / network / temperature',
+	ruleHelpMatcher: 'matcher(type에 따라 의미가 다름): cpu → "cpu"(전체) 또는 "cpu0", "cpu1"...(코어별); memory/swap → "used"(기본값) / "free" / "avail"; network → "rx" / "tx"(비워두면 합계); disk/temperature는 이 필드를 무시함',
+	ruleHelpThreshold: 'threshold(임계값): 비교 연산자(<, <=, =, >=, >) + 값 + 단위 — 백분율은 %(예: >=80%); 온도는 c(예: >=70c); 네트워크 속도는 단위+/s(예: >10m/s); 크기는 단위만(예: <100m)',
+	ruleNamePlaceholder: '예: High CPU Usage',
+	ruleThresholdPlaceholder: '예: >=80%',
+	ruleMatcherPlaceholder: '예: cpu, used, rx',
 } satisfies Translation
 
 export default ko

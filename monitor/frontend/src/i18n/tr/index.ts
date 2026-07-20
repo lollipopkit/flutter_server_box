@@ -104,6 +104,12 @@ const tr = {
 	addRule: 'Kural ekle',
 	corsOrigins: 'İzin verilen CORS kaynakları',
 	removeOrigin: 'Kaynağı kaldır',
+	ruleHelpType: 'type: cpu / memory / swap / disk / network / temperature',
+	ruleHelpMatcher: 'matcher (type\'a göre değişir): cpu → "cpu" veya "cpu0", "cpu1", ...; memory/swap → "used" (varsayılan) / "free" / "avail"; network → "rx" / "tx" (boş = birleşik); disk/temperature bu alanı yok sayar',
+	ruleHelpThreshold: 'threshold: karşılaştırma operatörü (<, <=, =, >=, >) + değer + birim — yüzde için % (örn. >=80%); sıcaklık için c (örn. >=70c); ağ hızı için birim + /s (örn. >10m/s); boyut için sadece birim (örn. <100m)',
+	ruleNamePlaceholder: 'örn. High CPU Usage',
+	ruleThresholdPlaceholder: 'örn. >=80%',
+	ruleMatcherPlaceholder: 'örn. cpu, used, rx',
 } satisfies Translation
 
 export default tr

@@ -104,6 +104,12 @@ const id = {
 	addRule: 'Tambah aturan',
 	corsOrigins: 'Asal CORS yang diizinkan',
 	removeOrigin: 'Hapus asal',
+	ruleHelpType: 'type: cpu / memory / swap / disk / network / temperature',
+	ruleHelpMatcher: 'matcher (tergantung type): cpu → "cpu" atau "cpu0", "cpu1", ...; memory/swap → "used" (default) / "free" / "avail"; network → "rx" / "tx" (kosong = gabungan); disk/temperature mengabaikan bidang ini',
+	ruleHelpThreshold: 'threshold: pembanding (<, <=, =, >=, >) + nilai + satuan — persen pakai % (mis. >=80%); suhu pakai c (mis. >=70c); kecepatan jaringan pakai satuan + /s (mis. >10m/s); ukuran pakai satuan saja (mis. <100m)',
+	ruleNamePlaceholder: 'mis. High CPU Usage',
+	ruleThresholdPlaceholder: 'mis. >=80%',
+	ruleMatcherPlaceholder: 'mis. cpu, used, rx',
 } satisfies Translation
 
 export default id

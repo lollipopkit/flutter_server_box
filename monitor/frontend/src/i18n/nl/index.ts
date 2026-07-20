@@ -104,6 +104,12 @@ const nl = {
 	addRule: 'Regel toevoegen',
 	corsOrigins: 'Toegestane CORS-oorsprongen',
 	removeOrigin: 'Oorsprong verwijderen',
+	ruleHelpType: 'type: cpu / memory / swap / disk / network / temperature',
+	ruleHelpMatcher: 'matcher (afhankelijk van type): cpu → "cpu" of "cpu0", "cpu1", ...; memory/swap → "used" (standaard) / "free" / "avail"; network → "rx" / "tx" (leeg = gecombineerd); disk/temperature negeren dit veld',
+	ruleHelpThreshold: 'threshold: vergelijkingsoperator (<, <=, =, >=, >) + waarde + eenheid — percentage met % (bijv. >=80%); temperatuur met c (bijv. >=70c); netwerksnelheid met eenheid + /s (bijv. >10m/s); grootte met alleen eenheid (bijv. <100m)',
+	ruleNamePlaceholder: 'bijv. High CPU Usage',
+	ruleThresholdPlaceholder: 'bijv. >=80%',
+	ruleMatcherPlaceholder: 'bijv. cpu, used, rx',
 } satisfies Translation
 
 export default nl

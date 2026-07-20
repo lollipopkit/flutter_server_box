@@ -104,6 +104,12 @@ const ja = {
 	addRule: 'ルールを追加',
 	corsOrigins: 'CORS 許可オリジン',
 	removeOrigin: 'オリジンを削除',
+	ruleHelpType: 'type(種別): cpu / memory / swap / disk / network / temperature',
+	ruleHelpMatcher: 'matcher(type により意味が変わる): cpu → "cpu"(全体)または "cpu0"、"cpu1"...(コア別); memory/swap → "used"(既定)/ "free" / "avail"; network → "rx" / "tx"(空欄は合計); disk/temperature ではこの項目は無視される',
+	ruleHelpThreshold: 'threshold(しきい値): 比較演算子(<, <=, =, >=, >)+ 数値 + 単位 — パーセントは %(例 >=80%); 温度は c(例 >=70c); ネットワーク速度は 単位+/s(例 >10m/s); サイズは単位のみ(例 <100m)',
+	ruleNamePlaceholder: '例: High CPU Usage',
+	ruleThresholdPlaceholder: '例: >=80%',
+	ruleMatcherPlaceholder: '例: cpu, used, rx',
 } satisfies Translation
 
 export default ja

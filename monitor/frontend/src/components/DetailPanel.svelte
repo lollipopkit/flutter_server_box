@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { ChevronLeft } from '@lucide/svelte'
-  import { Badge, Button, Card } from '@serverbox/webui'
+  import { Badge, Card } from '@serverbox/webui'
   import LineChart from './LineChart.svelte'
+  import PageHeader from './PageHeader.svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { fmtBytes, fmtBytesPerSec, fmtGpuPower, fmtPercent } from '../lib/format'
   import type { HistoryPoint, SystemMetrics } from '../types'
@@ -86,21 +86,15 @@
   </div>
 {/snippet}
 
-<div class="space-y-6">
-  <div class="flex items-center gap-2">
-    <Button variant="ghost" size="sm" onclick={onback}>
-      <ChevronLeft class="w-4 h-4 mr-1" />
-      {$LL.back()}
-    </Button>
-    <h2 class="text-lg font-semibold font-display text-fg-strong">{titles[kind]}</h2>
-  </div>
+<PageHeader title={titles[kind]} variant="section" {onback} />
 
+<div class="space-y-6 mt-6">
   {#if extendedKinds.has(kind) && m?.extended_updated_at}
     <!-- These fields only refresh on the agent's slower extended cycle
          (CLI-tool-bound: sensors/smartctl/battery queries) — carried
          forward unchanged in between, so a plain "last updated" on the
          system info card would misleadingly look live every poll -->
-    <p class="text-xs text-faint-fg -mt-4">
+    <p class="text-xs text-faint-fg -mt-2">
       {$LL.lastUpdated()}
       {new Date(m.extended_updated_at).toLocaleString()}
     </p>

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Menu, Plus, Trash2 } from '@lucide/svelte'
+  import { Plus, Trash2 } from '@lucide/svelte'
   import { Badge, Button, Card, IconButton, Input, Spinner } from '@serverbox/webui'
+  import PageHeader from '../components/PageHeader.svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { api, ApiError } from '../lib/api'
-  import { layout } from '../lib/layout.svelte'
   import { displayName, servers } from '../lib/servers.svelte'
   import type { MonitoringRule, SettingsPayload, SettingsView } from '../types'
 
@@ -109,18 +109,19 @@
   {/if}
 {/snippet}
 
-<header class="bg-surface shadow-xs border-b border-line h-16 flex items-center">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-    <div class="flex items-center gap-2">
-      <IconButton class="lg:hidden -ml-2" label={$LL.menu()} onclick={() => (layout.mobileOpen = true)}>
-        <Menu class="w-5 h-5" />
-      </IconButton>
-      <h1 class="text-lg font-semibold font-display text-fg-strong truncate">
-        {$LL.settings()} · {displayName(servers.current)}
-      </h1>
-    </div>
-  </div>
-</header>
+<PageHeader
+  title={$LL.settings()}
+  subtitle={displayName(servers.current)}
+  containerClass="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 w-full"
+>
+  {#snippet actions()}
+    {#if settings}
+      <Button size="sm" onclick={save} disabled={saving}>
+        {saving ? $LL.saving() : $LL.save()}
+      </Button>
+    {/if}
+  {/snippet}
+</PageHeader>
 
 <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
   {#if !servers.authenticated}
@@ -178,17 +179,38 @@
         <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.monitoringRules()}</h2>
         {@render liveBadge('rules')}
       </div>
-      <div class="space-y-3">
+      <div class="bg-soft/50 rounded-lg p-3 text-xs text-faint-fg leading-relaxed space-y-1">
+        <p>{$LL.ruleHelpType()}</p>
+        <p>{$LL.ruleHelpMatcher()}</p>
+        <p>{$LL.ruleHelpThreshold()}</p>
+      </div>
+      <div class="divide-y divide-line">
         {#each rules as rule, i (i)}
-          <div class="grid grid-cols-2 gap-2 p-3 rounded-lg border border-line">
-            <Input placeholder={$LL.ruleName()} bind:value={rule.name} />
-            <Input placeholder={$LL.ruleType()} bind:value={rule.monitor_type} />
-            <Input placeholder={$LL.ruleThreshold()} bind:value={rule.threshold} />
-            <div class="flex gap-2">
-              <Input placeholder={$LL.ruleMatcher()} bind:value={rule.matcher} />
-              <IconButton label={$LL.removeRule()} class="hover:text-danger shrink-0" onclick={() => removeRule(i)}>
+          <div class="py-4 first:pt-0 last:pb-0">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-sm text-faint-fg tabular-nums">{i + 1}</span>
+              <span class="flex-1"></span>
+              <IconButton label={$LL.removeRule()} class="hover:text-danger" onclick={() => removeRule(i)}>
                 <Trash2 class="w-4 h-4" />
               </IconButton>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div class="space-y-1">
+                <span class="text-xs text-muted-fg">{$LL.ruleName()}</span>
+                <Input placeholder={$LL.ruleNamePlaceholder()} bind:value={rule.name} />
+              </div>
+              <div class="space-y-1">
+                <span class="text-xs text-muted-fg">{$LL.ruleType()}</span>
+                <Input placeholder="cpu / memory / ..." bind:value={rule.monitor_type} />
+              </div>
+              <div class="space-y-1">
+                <span class="text-xs text-muted-fg">{$LL.ruleThreshold()}</span>
+                <Input placeholder={$LL.ruleThresholdPlaceholder()} bind:value={rule.threshold} />
+              </div>
+              <div class="space-y-1">
+                <span class="text-xs text-muted-fg">{$LL.ruleMatcher()}</span>
+                <Input placeholder={$LL.ruleMatcherPlaceholder()} bind:value={rule.matcher} />
+              </div>
             </div>
           </div>
         {/each}
@@ -203,9 +225,10 @@
         <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.corsOrigins()}</h2>
         {@render liveBadge('cors_allowed_origins')}
       </div>
-      <div class="space-y-2">
+      <div class="divide-y divide-line">
         {#each corsOrigins as origin, i (i)}
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-3 py-2 first:pt-0 last:pb-0">
+            <span class="w-5 shrink-0 text-sm text-faint-fg tabular-nums">{i + 1}</span>
             <span class="flex-1 text-sm font-mono truncate">{origin}</span>
             <IconButton label={$LL.removeOrigin()} class="hover:text-danger shrink-0" onclick={() => removeOrigin(i)}>
               <Trash2 class="w-4 h-4" />
@@ -227,11 +250,5 @@
     {#if saveOk}
       <p class="text-sm text-success">{$LL.settingsSaved()}</p>
     {/if}
-
-    <div class="flex justify-end">
-      <Button onclick={save} disabled={saving}>
-        {saving ? $LL.saving() : $LL.save()}
-      </Button>
-    </div>
   {/if}
 </main>

@@ -104,6 +104,12 @@ const es = {
 	addRule: 'Añadir regla',
 	corsOrigins: 'Orígenes CORS permitidos',
 	removeOrigin: 'Eliminar origen',
+	ruleHelpType: 'type: cpu / memory / swap / disk / network / temperature',
+	ruleHelpMatcher: 'matcher (según type): cpu → "cpu" o "cpu0", "cpu1", ...; memory/swap → "used" (por defecto) / "free" / "avail"; network → "rx" / "tx" (vacío = combinado); disk/temperature ignoran este campo',
+	ruleHelpThreshold: 'threshold: comparador (<, <=, =, >=, >) + valor + unidad — porcentaje con % (ej. >=80%); temperatura con c (ej. >=70c); velocidad de red con unidad + /s (ej. >10m/s); tamaño solo con unidad (ej. <100m)',
+	ruleNamePlaceholder: 'ej. High CPU Usage',
+	ruleThresholdPlaceholder: 'ej. >=80%',
+	ruleMatcherPlaceholder: 'ej. cpu, used, rx',
 } satisfies Translation
 
 export default es

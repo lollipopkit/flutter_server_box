@@ -439,6 +439,30 @@ type RootTranslation = {
 	 * R​e​m​o​v​e​ ​o​r​i​g​i​n
 	 */
 	removeOrigin: string
+	/**
+	 * t​y​p​e​:​ ​c​p​u​ ​/​ ​m​e​m​o​r​y​ ​/​ ​s​w​a​p​ ​/​ ​d​i​s​k​ ​/​ ​n​e​t​w​o​r​k​ ​/​ ​t​e​m​p​e​r​a​t​u​r​e
+	 */
+	ruleHelpType: string
+	/**
+	 * m​a​t​c​h​e​r​ ​(​d​e​p​e​n​d​s​ ​o​n​ ​t​y​p​e​)​:​ ​c​p​u​ ​→​ ​"​c​p​u​"​ ​o​r​ ​"​c​p​u​0​"​,​ ​"​c​p​u​1​"​,​ ​.​.​.​;​ ​m​e​m​o​r​y​/​s​w​a​p​ ​→​ ​"​u​s​e​d​"​ ​(​d​e​f​a​u​l​t​)​ ​/​ ​"​f​r​e​e​"​ ​/​ ​"​a​v​a​i​l​"​;​ ​n​e​t​w​o​r​k​ ​→​ ​"​r​x​"​ ​/​ ​"​t​x​"​ ​(​b​l​a​n​k​ ​=​ ​c​o​m​b​i​n​e​d​)​;​ ​d​i​s​k​/​t​e​m​p​e​r​a​t​u​r​e​ ​i​g​n​o​r​e​ ​t​h​i​s​ ​f​i​e​l​d
+	 */
+	ruleHelpMatcher: string
+	/**
+	 * t​h​r​e​s​h​o​l​d​:​ ​c​o​m​p​a​r​a​t​o​r​ ​(​<​,​ ​<​=​,​ ​=​,​ ​>​=​,​ ​>​)​ ​+​ ​v​a​l​u​e​ ​+​ ​u​n​i​t​ ​—​ ​p​e​r​c​e​n​t​ ​u​s​e​s​ ​%​ ​(​e​.​g​.​ ​>​=​8​0​%​)​;​ ​t​e​m​p​e​r​a​t​u​r​e​ ​u​s​e​s​ ​c​ ​(​e​.​g​.​ ​>​=​7​0​c​)​;​ ​n​e​t​w​o​r​k​ ​s​p​e​e​d​ ​u​s​e​s​ ​a​ ​u​n​i​t​ ​+​ ​/​s​ ​(​e​.​g​.​ ​>​1​0​m​/​s​)​;​ ​s​i​z​e​ ​u​s​e​s​ ​j​u​s​t​ ​a​ ​u​n​i​t​ ​(​e​.​g​.​ ​<​1​0​0​m​)
+	 */
+	ruleHelpThreshold: string
+	/**
+	 * e​.​g​.​ ​H​i​g​h​ ​C​P​U​ ​U​s​a​g​e
+	 */
+	ruleNamePlaceholder: string
+	/**
+	 * e​.​g​.​ ​>​=​8​0​%
+	 */
+	ruleThresholdPlaceholder: string
+	/**
+	 * e​.​g​.​ ​c​p​u​,​ ​u​s​e​d​,​ ​r​x
+	 */
+	ruleMatcherPlaceholder: string
 }
 
 export type TranslationFunctions = {
@@ -854,6 +878,30 @@ export type TranslationFunctions = {
 	 * Remove origin
 	 */
 	removeOrigin: () => LocalizedString
+	/**
+	 * type: cpu / memory / swap / disk / network / temperature
+	 */
+	ruleHelpType: () => LocalizedString
+	/**
+	 * matcher (depends on type): cpu → "cpu" or "cpu0", "cpu1", ...; memory/swap → "used" (default) / "free" / "avail"; network → "rx" / "tx" (blank = combined); disk/temperature ignore this field
+	 */
+	ruleHelpMatcher: () => LocalizedString
+	/**
+	 * threshold: comparator (<, <=, =, >=, >) + value + unit — percent uses % (e.g. >=80%); temperature uses c (e.g. >=70c); network speed uses a unit + /s (e.g. >10m/s); size uses just a unit (e.g. <100m)
+	 */
+	ruleHelpThreshold: () => LocalizedString
+	/**
+	 * e.g. High CPU Usage
+	 */
+	ruleNamePlaceholder: () => LocalizedString
+	/**
+	 * e.g. >=80%
+	 */
+	ruleThresholdPlaceholder: () => LocalizedString
+	/**
+	 * e.g. cpu, used, rx
+	 */
+	ruleMatcherPlaceholder: () => LocalizedString
 }
 
 export type Formatters = {}

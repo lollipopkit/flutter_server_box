@@ -5,8 +5,8 @@
     Gauge,
     Gpu,
     HardDrive,
-    Menu,
     MemoryStick,
+    Server,
     ShieldCheck,
     Network,
     CircleAlert,
@@ -17,6 +17,7 @@
   import LineChart from '../components/LineChart.svelte'
   import LoginForm from '../components/LoginForm.svelte'
   import OsIcon from '../components/OsIcon.svelte'
+  import PageHeader from '../components/PageHeader.svelte'
   import StatCard from '../components/StatCard.svelte'
   import { api } from '../lib/api'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
@@ -24,7 +25,6 @@
   import { displayName, servers } from '../lib/servers.svelte'
   import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../lib/format'
   import { LL } from '../i18n/i18n-svelte'
-  import { layout } from '../lib/layout.svelte'
   import { Poller } from '../lib/poller.svelte'
   import { fly } from 'svelte/transition'
   import type { HistoryPoint } from '../types'
@@ -201,39 +201,25 @@
     <Spinner size="lg" />
   </div>
 {:else}
-  <!-- h-16 with the border inside (border-box), matching the sidebar header
-       exactly so the two dividers sit on the same line -->
-  <header class="bg-surface shadow-xs border-b border-line h-16 flex items-center">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-      <div class="flex items-center gap-2">
-        <IconButton
-          class="lg:hidden -ml-2"
-          label={$LL.menu()}
-          onclick={() => (layout.mobileOpen = true)}
-        >
-          <Menu class="w-5 h-5" />
-        </IconButton>
-        <div class="min-w-0 flex items-center gap-2">
-          {#if capabilities?.platform}
-            <OsIcon platform={capabilities.platform} class="w-5 h-5 text-muted-fg shrink-0" />
-          {/if}
-          <h1 class="text-lg font-semibold font-display text-fg-strong truncate">
-            {headerName}
-          </h1>
-        </div>
-        <span class="flex-1"></span>
-        <Badge tone={connected ? 'success' : 'danger'}>
-          <span
-            class="w-1.5 h-1.5 rounded-full mr-1.5 {connected ? 'bg-success' : 'bg-danger'}"
-          ></span>
-          {connected ? $LL.connected() : $LL.disconnected()}
-        </Badge>
-        <IconButton label={$LL.refresh()} onclick={() => window.location.reload()}>
-          <RefreshCw class="w-4 h-4" />
-        </IconButton>
-      </div>
-    </div>
-  </header>
+  <PageHeader title={headerName}>
+    {#snippet titleIcon()}
+      {@const statusCls = connected ? 'text-green-500' : 'text-red-500'}
+      {@const statusTitle = connected ? $LL.connected() : $LL.disconnected()}
+      {#if capabilities?.platform}
+        <OsIcon platform={capabilities.platform} class="w-5 h-5 shrink-0 {statusCls}" title={statusTitle} />
+      {:else}
+        <Server class="w-5 h-5 shrink-0 {statusCls}" title={statusTitle} />
+      {/if}
+    {/snippet}
+    {#snippet actions()}
+      <Badge tone={connected ? 'success' : 'danger'}>
+        {connected ? $LL.connected() : $LL.disconnected()}
+      </Badge>
+      <IconButton label={$LL.refresh()} onclick={() => window.location.reload()}>
+        <RefreshCw class="w-4 h-4" />
+      </IconButton>
+    {/snippet}
+  </PageHeader>
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     {#if !servers.authenticated}

@@ -47,10 +47,17 @@
   onMount(() => health.start())
   onDestroy(() => health.stop())
 
-  function dotCls(id: string): string {
+  // Brighter than the shared success/danger tokens (--color-success/danger
+  // are muted 600-shades meant for text/badges) — a small icon needs more
+  // saturation to read as a status signal at a glance
+  function statusIconCls(id: string): string {
     const h = health.status[id]
-    if (h === undefined) return 'bg-faint-fg'
-    return h ? 'bg-success' : 'bg-danger'
+    if (h === undefined) return 'text-faint-fg'
+    return h ? 'text-green-500' : 'text-red-500'
+  }
+
+  function statusTitle(id: string): string {
+    return health.status[id] === false ? $LL.disconnected() : $LL.connected()
   }
 
   const labelCls = $derived(layout.collapsed ? 'lg:hidden' : '')
@@ -125,22 +132,22 @@
           onclick={() => selectServer(s.id)}
         >
           {#if capabilitiesStore.byServer[s.id]?.platform}
-            <OsIcon platform={capabilitiesStore.byServer[s.id]?.platform} class="w-4 h-4 shrink-0" />
+            <OsIcon
+              platform={capabilitiesStore.byServer[s.id]?.platform}
+              class={cn('w-4 h-4 shrink-0', statusIconCls(s.id))}
+              title={statusTitle(s.id)}
+            />
           {:else}
-            <Server class="w-4 h-4 shrink-0" />
+            <Server class={cn('w-4 h-4 shrink-0', statusIconCls(s.id))} title={statusTitle(s.id)} />
           {/if}
           <span class={cn('min-w-0 flex-1', labelCls)}>
             <span class="block truncate"
               >{s.id === 'local' ? $LL.thisServer() : displayName(s)}</span
             >
-            {#if s.url}
+            {#if s.url && !s.name}
               <span class="block truncate text-xs text-faint-fg">{s.url}</span>
             {/if}
           </span>
-          <span
-            class={cn('w-2 h-2 rounded-full shrink-0', dotCls(s.id))}
-            title={health.status[s.id] === false ? $LL.disconnected() : $LL.connected()}
-          ></span>
         </button>
         {#if s.id !== 'local'}
           <IconButton
