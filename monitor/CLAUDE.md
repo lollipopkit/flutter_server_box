@@ -110,7 +110,8 @@ Monitor-only crate (the app never depends on it — it always collects over SSH 
 
 ### Hosting the panel on Cloudflare Pages
 
-- Pages project settings: build command `cd monitor/frontend && npm ci && npm run build`, output directory `monitor/frontend/dist`
+- Pages project settings: build command `npm install --prefix packages/webui && cd monitor/frontend && npm ci && npm run build`, output directory `monitor/frontend/dist`
+  - The `npm install --prefix packages/webui` step is required: `@serverbox/webui` is a `file:../../packages/webui` dependency, and `npm ci` inside `monitor/frontend` only symlinks it — it never installs *webui's own* devDependencies (svelte, clsx, tailwind-variants, ...). Without this step `svelte-check` fails with "Cannot find module" for every file under `packages/webui/src` (same class of bug the Dockerfile hit — see `RUN npm install --prefix /app/packages/webui` there)
 - Each agent must allow the panel origin: `cors_allowed_origins` in config.toml or `SBM_CORS_ORIGINS` env (comma-separated)
 - Agents must be reachable over HTTPS (browser mixed-content policy): use the built-in TLS (`--cert/--key` / `SBM_TLS_*`) or a reverse proxy / Cloudflare Tunnel
 - An agent without the panel: just don't ship `frontend/dist`; the API works standalone
