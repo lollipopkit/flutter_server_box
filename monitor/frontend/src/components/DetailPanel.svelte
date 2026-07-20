@@ -6,7 +6,7 @@
   import { fmtBytes, fmtBytesPerSec, fmtGpuPower, fmtPercent } from '../lib/format'
   import type { HistoryPoint, SystemMetrics } from '../types'
 
-  export type DetailKind = 'cpu' | 'memory' | 'disk' | 'network' | 'gpu' | 'diskio' | 'battery' | 'sensors' | 'smart'
+  export type DetailKind = 'cpu' | 'memory' | 'disk' | 'network' | 'gpu' | 'battery' | 'sensors' | 'smart'
 
   interface Props {
     kind: DetailKind
@@ -25,7 +25,6 @@
     disk: $LL.diskUsage(),
     network: $LL.network(),
     gpu: $LL.gpu(),
-    diskio: $LL.diskIo(),
     battery: $LL.battery(),
     sensors: $LL.sensors(),
     smart: $LL.smart(),
@@ -192,6 +191,37 @@
         </table>
       </Card>
     {/if}
+    {#if m?.diskio?.length}
+      <!-- Cumulative sector counters (512B/sector), not a rate — no history
+           is persisted server-side for this field -->
+      <Card>
+        <h3 class="text-sm font-semibold text-fg-strong mb-3">{$LL.diskIo()}</h3>
+        <table class="w-full text-sm table-fixed">
+          <thead>
+            <tr class="border-b border-line">
+              <th class="py-2 pr-4 text-left font-medium text-muted-fg">{$LL.diskIo()}</th>
+              <th class="py-2 text-right font-medium text-muted-fg w-24 sm:w-32">{$LL.read()}</th>
+              <th class="py-2 pl-4 text-right font-medium text-muted-fg w-24 sm:w-32">{$LL.write()}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-line">
+            {#each m.diskio as d (d.dev)}
+              <tr>
+                <td class="py-2 pr-4">
+                  <span class="block truncate" title={d.dev}>{d.dev}</span>
+                </td>
+                <td class="py-2 text-right whitespace-nowrap text-muted-fg">
+                  {fmtBytes(d.sectors_read * 512)}
+                </td>
+                <td class="py-2 pl-4 text-right whitespace-nowrap text-muted-fg">
+                  {fmtBytes(d.sectors_write * 512)}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </Card>
+    {/if}
   {:else if kind === 'network'}
     <LineChart
       title={$LL.network()}
@@ -243,35 +273,6 @@
         </div>
       </Card>
     {/each}
-  {:else if kind === 'diskio'}
-    <!-- Cumulative sector counters (512B/sector), not a rate — no history is
-         persisted server-side for this field -->
-    <Card>
-      <table class="w-full text-sm table-fixed">
-        <thead>
-          <tr class="border-b border-line">
-            <th class="py-2 pr-4 text-left font-medium text-muted-fg">{$LL.diskIo()}</th>
-            <th class="py-2 text-right font-medium text-muted-fg w-24 sm:w-32">{$LL.read()}</th>
-            <th class="py-2 pl-4 text-right font-medium text-muted-fg w-24 sm:w-32">{$LL.write()}</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-line">
-          {#each m?.diskio ?? [] as d (d.dev)}
-            <tr>
-              <td class="py-2 pr-4">
-                <span class="block truncate" title={d.dev}>{d.dev}</span>
-              </td>
-              <td class="py-2 text-right whitespace-nowrap text-muted-fg">
-                {fmtBytes(d.sectors_read * 512)}
-              </td>
-              <td class="py-2 pl-4 text-right whitespace-nowrap text-muted-fg">
-                {fmtBytes(d.sectors_write * 512)}
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </Card>
   {:else if kind === 'battery'}
     {#each m?.batteries ?? [] as battery, i (battery.name ?? i)}
       <Card>

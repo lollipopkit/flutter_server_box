@@ -1,6 +1,5 @@
 <script lang="ts">
   import {
-    Activity,
     BatteryMedium,
     Cpu,
     Gauge,
@@ -96,10 +95,6 @@
   // detail line) instead of parsing the preformatted /status strings
   const m = $derived(metrics.data)
   const latest = $derived(history.at(-1))
-  // Cumulative since boot (sectors -> bytes), not a rate — diskio only
-  // refreshes on the agent's slower extended-collection cycle
-  const diskioRead = $derived((m?.diskio ?? []).reduce((sum, d) => sum + d.sectors_read * 512, 0))
-  const diskioWrite = $derived((m?.diskio ?? []).reduce((sum, d) => sum + d.sectors_write * 512, 0))
 
   // Always the server's own reported name — not user-editable — falling back
   // to the address/id only before the server has ever reported anything
@@ -236,18 +231,6 @@
           value={`${m.gpus[0].usage_percent.toFixed(0)}%`}
           detail={m.gpus[0].name}
           onclick={() => (detail = 'gpu')}
-        />
-      {/if}
-      {#if m?.diskio?.length}
-        <StatCard
-          class="p-4 sm:p-6"
-          icon={Activity}
-          iconClass="text-cyan-500"
-          label={$LL.diskIo()}
-          value={`${$LL.read()} ${fmtBytes(diskioRead)}`}
-          valueClass="text-lg"
-          detail={`${$LL.write()} ${fmtBytes(diskioWrite)}`}
-          onclick={() => (detail = 'diskio')}
         />
       {/if}
       {#if m?.batteries?.length}
