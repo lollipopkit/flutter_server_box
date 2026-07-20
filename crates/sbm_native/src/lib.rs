@@ -49,7 +49,7 @@ impl NativeState {
 /// backend doesn't populate are left at their `Default` (empty/`None`) —
 /// exactly like a missing command segment in the script-based path, so
 /// downstream merging code doesn't need to distinguish the two sources.
-pub fn sample(state: &mut NativeState, system: SystemType) -> ServerStatus {
+pub fn sample(#[allow(unused_variables)] state: &mut NativeState, system: SystemType) -> ServerStatus {
     match system {
         #[cfg(target_os = "linux")]
         SystemType::Linux => linux::sample(),
