@@ -12,6 +12,7 @@
 //! - Units follow the data source: memory/disk in KiB (meminfo/df -k), network in bytes
 
 pub mod bsd;
+pub mod capabilities;
 pub mod commands;
 pub mod common;
 pub mod gpu;
