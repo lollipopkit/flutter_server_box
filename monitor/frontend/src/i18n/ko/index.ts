@@ -88,7 +88,7 @@ const ko = {
 	collection: '수집',
 	intervalSeconds: '수집 간격(초)',
 	extendedIntervalSecs: '확장 주기 간격(초)',
-	defaultsToInterval: '기본값: 수집 간격과 동일',
+	defaultsToInterval: '기본값: 수집 간격 x10(최소 120초)',
 	idlePause: '유유상태 일시정지',
 	idlePauseNote: '`/metrics` 및 `/status` 폴링 활동을 기준으로 추정한 값이며, 실제 브라우저 가시성 신호가 아닙니다. 확장 주기(`smartctl`/`sensors`/`amd-smi`)만 일시정지하며, 핵심 지표 수집과 경고 검사는 항상 계속됩니다.',
 	idlePauseEnabled: '유유상태 시 확장 수집 일시정지',

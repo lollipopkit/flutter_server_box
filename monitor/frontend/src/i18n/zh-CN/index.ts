@@ -88,7 +88,7 @@ const zh_CN = {
 	collection: '采集',
 	intervalSeconds: '采集间隔(秒)',
 	extendedIntervalSecs: '扩展周期间隔(秒)',
-	defaultsToInterval: '默认等于采集间隔',
+	defaultsToInterval: '默认等于采集间隔 x10(最少 120 秒)',
 	idlePause: '空闲暂停',
 	idlePauseNote: '基于 `/metrics` 和 `/status` 的轮询活跃度近似判断,不是真正的浏览器前台检测。只暂停扩展周期(`smartctl`/`sensors`/`amd-smi`),核心指标采集和告警检查始终照常运行。',
 	idlePauseEnabled: '空闲时暂停扩展采集',

@@ -83,6 +83,7 @@ enum BSDStatusCmdType implements ShellCmdType {
   disk,
   mem,
   host,
+  diskSmart,
   cpuBrand;
 
   @override

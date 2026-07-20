@@ -88,7 +88,7 @@ const zh_TW = {
 	collection: '採集',
 	intervalSeconds: '採集間隔(秒)',
 	extendedIntervalSecs: '擴充週期間隔(秒)',
-	defaultsToInterval: '預設等於採集間隔',
+	defaultsToInterval: '預設等於採集間隔 x10(最少 120 秒)',
 	idlePause: '閒置暫停',
 	idlePauseNote: '根據 `/metrics` 與 `/status` 的輪詢活躍度近似判斷,並非真正的瀏覽器前台偵測。僅暫停擴充週期(`smartctl`/`sensors`/`amd-smi`),核心指標採集與告警檢查一律照常運行。',
 	idlePauseEnabled: '閒置時暫停擴充採集',

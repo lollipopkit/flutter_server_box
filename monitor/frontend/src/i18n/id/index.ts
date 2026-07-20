@@ -88,7 +88,7 @@ const id = {
 	collection: 'Pengumpulan',
 	intervalSeconds: 'Interval (detik)',
 	extendedIntervalSecs: 'Interval diperluas (detik)',
-	defaultsToInterval: 'Default sama dengan interval',
+	defaultsToInterval: 'Default interval x10 (min 120d)',
 	idlePause: 'Jeda idle',
 	idlePauseNote: 'Diperkirakan dari aktivitas polling `/metrics` dan `/status`, bukan sinyal visibilitas browser sebenarnya. Hanya menjeda siklus diperluas (`smartctl`/`sensors`/`amd-smi`) — metrik inti dan pemeriksaan peringatan selalu tetap berjalan.',
 	idlePauseEnabled: 'Jeda pengumpulan diperluas saat idle',

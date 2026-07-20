@@ -134,6 +134,11 @@ pub fn parse_status_opts(
             status.disks = linux::parse_disk(get(commands::DISK));
             status.net = bsd::parse_net(get(commands::NET));
             status.sys = common::parse_hostname(get(commands::SYS));
+            // `smartctl -a -j` output is the same generic JSON shape on
+            // macOS as Linux; `smart::parse`'s `is_physical_disk` already
+            // accepts the `/dev/diskN` device names the Bsd DISK_SMART
+            // command produces
+            status.disk_smart = smart::parse(get(commands::DISK_SMART));
         }
         SystemType::Windows => {
             status.cpu = windows::parse_cpu(get(commands::CPU), &[]);

@@ -88,7 +88,7 @@ const it = {
 	collection: 'Raccolta',
 	intervalSeconds: 'Intervallo (secondi)',
 	extendedIntervalSecs: 'Intervallo esteso (secondi)',
-	defaultsToInterval: 'Predefinito: uguale all\'intervallo',
+	defaultsToInterval: 'Predefinito: intervallo x10 (min 120s)',
 	idlePause: 'Pausa inattività',
 	idlePauseNote: 'Approssimato dall\'attività di polling di `/metrics` e `/status`, non un vero segnale di visibilità del browser. Mette in pausa solo il ciclo esteso (`smartctl`/`sensors`/`amd-smi`) — le metriche principali e i controlli degli avvisi continuano sempre.',
 	idlePauseEnabled: 'Pausa raccolta estesa quando inattivo',

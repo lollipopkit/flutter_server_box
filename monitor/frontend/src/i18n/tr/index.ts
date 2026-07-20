@@ -88,7 +88,7 @@ const tr = {
 	collection: 'Toplama',
 	intervalSeconds: 'Aralık (saniye)',
 	extendedIntervalSecs: 'Genişletilmiş döngü aralığı (saniye)',
-	defaultsToInterval: 'Varsayılan: aralıkla aynı',
+	defaultsToInterval: 'Varsayılan: aralık x10 (en az 120sn)',
 	idlePause: 'Boşta duraklatma',
 	idlePauseNote: '`/metrics` ve `/status` yoklama etkinliğinden yaklaşık olarak hesaplanır, gerçek bir tarayıcı görünürlük sinyali değildir. Yalnızca genişletilmiş döngüyü (`smartctl`/`sensors`/`amd-smi`) duraklatır — temel metrik toplama ve uyarı kontrolleri her zaman devam eder.',
 	idlePauseEnabled: 'Boştayken genişletilmiş toplamayı duraklat',

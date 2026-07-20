@@ -88,7 +88,7 @@ const de = {
 	collection: 'Erfassung',
 	intervalSeconds: 'Intervall (Sekunden)',
 	extendedIntervalSecs: 'Erweitertes Intervall (Sekunden)',
-	defaultsToInterval: 'Standard: gleich dem Intervall',
+	defaultsToInterval: 'Standard: Intervall x10 (mind. 120s)',
 	idlePause: 'Ruhepause',
 	idlePauseNote: 'Annäherung anhand der Abfrageaktivität von `/metrics` und `/status`, kein echtes Browser-Sichtbarkeitssignal. Pausiert nur den erweiterten Zyklus (`smartctl`/`sensors`/`amd-smi`) — Kernmetriken und Alarmprüfungen laufen immer weiter.',
 	idlePauseEnabled: 'Erweiterte Erfassung bei Inaktivität pausieren',

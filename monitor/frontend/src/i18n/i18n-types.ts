@@ -376,7 +376,7 @@ type RootTranslation = {
 	 */
 	extendedIntervalSecs: string
 	/**
-	 * D​e​f​a​u​l​t​s​ ​t​o​ ​i​n​t​e​r​v​a​l
+	 * D​e​f​a​u​l​t​s​ ​t​o​ ​i​n​t​e​r​v​a​l​ ​x​1​0​ ​(​m​i​n​ ​1​2​0​s​)
 	 */
 	defaultsToInterval: string
 	/**
@@ -839,7 +839,7 @@ export type TranslationFunctions = {
 	 */
 	extendedIntervalSecs: () => LocalizedString
 	/**
-	 * Defaults to interval
+	 * Defaults to interval x10 (min 120s)
 	 */
 	defaultsToInterval: () => LocalizedString
 	/**

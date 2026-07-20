@@ -89,7 +89,18 @@ pub const LINUX: &[CommandSpec] = &[
     CommandSpec {
         core: false,
         key: DISK_SMART,
-        cmd: r#"for d in $(lsblk -dn -o KNAME); do smartctl -a -j /dev/$d; echo; done"#,
+        // Most distros restrict raw ATA/NVMe ioctls to root, and this runs
+        // as an unprivileged service user — check readability first (a
+        // cheap stat, not a wasted smartctl invocation) and only add
+        // `sudo -n` (non-interactive) when actually needed. This tries
+        // passwordless elevation if the operator has configured a narrow
+        // `NOPASSWD: /usr/sbin/smartctl` sudoers rule; otherwise it fails in
+        // well under a second (no hang, no password prompt) and this
+        // cycle's disk_smart is just empty, same as before this existed.
+        // Deliberately not just `smartctl ... || sudo -n smartctl ...`:
+        // smartctl often exits non-zero even on a *successful* read (e.g.
+        // a benign warning), which would double-invoke and duplicate output.
+        cmd: r#"for d in $(lsblk -dn -o KNAME); do if [ -r "/dev/$d" ]; then smartctl -a -j "/dev/$d" 2>/dev/null; else sudo -n smartctl -a -j "/dev/$d" 2>/dev/null; fi; echo; done"#,
     },
     CommandSpec { core: true, key: CPU_BRAND, cmd: r#"cat /proc/cpuinfo | grep "model name""# },
 ];
@@ -119,6 +130,18 @@ pub const BSD: &[CommandSpec] = &[
     // (top's PhysMem "used" counts cached files); parser tolerates its absence
     CommandSpec { core: true, key: MEM, cmd: "top -l 1 | grep PhysMem; vm_stat" },
     CommandSpec { core: true, key: HOST, cmd: "hostname" },
+    CommandSpec {
+        core: false,
+        key: DISK_SMART,
+        // `diskutil list` labels each device's role; only "internal,
+        // physical"/"external, physical" are real hardware — APFS
+        // synthesized containers and mounted disk images (both very common:
+        // every APFS volume group has one) are not, and querying smartctl
+        // against them is both pointless (no real SMART data) and wasted
+        // work every extended cycle. `smartctl -a /dev/diskN` needs no sudo
+        // on macOS (unlike Linux), confirmed against real hardware.
+        cmd: r#"for d in $(diskutil list 2>/dev/null | awk '/\(internal, physical\)|\(external, physical\)/{print $1}'); do smartctl -a -j "$d" 2>/dev/null; echo; done"#,
+    },
     // Real logical core count appended (see the CPU command's comment) so
     // parse_cpu_brand can report it alongside the single global brand string
     // sysctl returns (BSD has no per-model breakdown the way Linux's

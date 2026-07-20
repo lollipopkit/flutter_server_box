@@ -95,8 +95,15 @@ fn default_idle_pause_enabled() -> bool {
 }
 
 impl MonitoringConfig {
+    /// Unset defaults to 10x the core interval, floored at 120s — running
+    /// smartctl/sensors/amd-smi on every core cycle (previously: literally
+    /// every cycle, since this defaulted to `interval_seconds` itself) burns
+    /// CPU/power for data that doesn't change meaningfully faster than a
+    /// couple of minutes. Explicit `extended_interval_secs` in config.toml
+    /// (or the settings page) always overrides this.
     pub fn effective_extended_interval_secs(&self) -> u64 {
-        self.extended_interval_secs.unwrap_or(self.interval_seconds)
+        self.extended_interval_secs
+            .unwrap_or_else(|| self.interval_seconds.saturating_mul(10).max(120))
     }
 
     pub fn effective_idle_pause_threshold_secs(&self) -> u64 {

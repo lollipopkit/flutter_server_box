@@ -142,7 +142,7 @@ mod tests {
         assert_eq!(c.sensors, No);
         assert_eq!(c.nvidia, No);
         assert_eq!(c.amd, No);
-        assert_eq!(c.disk_smart, No);
+        assert_eq!(c.disk_smart, Hw);
     }
 
     #[test]

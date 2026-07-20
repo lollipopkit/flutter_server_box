@@ -35,6 +35,16 @@ fn is_physical_disk(device: &str) -> bool {
     {
         return true;
     }
+    // /dev/disk\d+ (macOS whole-disk naming, e.g. /dev/disk0) — the
+    // generated Bsd command already filters to physical devices via
+    // `diskutil list`, so this only needs to reject the `diskNsM` partition
+    // suffix form, not re-derive physical-vs-synthesized itself
+    if let Some(r) = rest("/dev/disk")
+        && !r.is_empty()
+        && r.chars().all(|c| c.is_ascii_digit())
+    {
+        return true;
+    }
     false
 }
 

@@ -1,0 +1,53 @@
+{
+  "json_format_version": [1, 0],
+  "smartctl": {
+    "version": [7, 5],
+    "pre_release": false,
+    "svn_revision": "5714",
+    "platform_info": "Darwin 25.5.0 arm64",
+    "build_info": "(local build)",
+    "argv": ["smartctl", "-a", "-j", "/dev/disk0"],
+    "messages": [
+      {
+        "string": "Read 1 entries from Error Information Log failed: GetLogPage failed: system=0x38, sub=0x0, code=745",
+        "severity": "error"
+      }
+    ],
+    "exit_status": 4
+  },
+  "local_time": { "time_t": 1784555931, "asctime": "Mon Jul 20 21:58:51 2026 +08" },
+  "device": { "name": "/dev/disk0", "info_name": "/dev/disk0", "type": "nvme", "protocol": "NVMe" },
+  "model_name": "APPLE SSD AP1024Z",
+  "serial_number": "REDACTED0000",
+  "firmware_version": "2973.120",
+  "nvme_pci_vendor": { "id": 4203, "subsystem_id": 4203 },
+  "nvme_ieee_oui_identifier": 0,
+  "nvme_controller_id": 0,
+  "nvme_version": { "string": "<1.2", "value": 0 },
+  "nvme_number_of_namespaces": 3,
+  "smart_support": { "available": true, "enabled": true },
+  "smart_status": { "passed": true, "nvme": { "value": 0 } },
+  "nvme_smart_health_information_log": {
+    "nsid": -1,
+    "critical_warning": 0,
+    "temperature": 46,
+    "available_spare": 100,
+    "available_spare_threshold": 99,
+    "percentage_used": 1,
+    "data_units_read": 80299012,
+    "data_units_written": 48675825,
+    "host_reads": 7669363482,
+    "host_writes": 1059627230,
+    "controller_busy_time": 0,
+    "power_cycles": 145,
+    "power_on_hours": 531,
+    "unsafe_shutdowns": 6,
+    "media_errors": 0,
+    "num_err_log_entries": 0
+  },
+  "temperature": { "current": 46 },
+  "spare_available": { "current_percent": 100, "threshold_percent": 99 },
+  "endurance_used": { "current_percent": 1 },
+  "power_cycle_count": 145,
+  "power_on_time": { "hours": 531 }
+}

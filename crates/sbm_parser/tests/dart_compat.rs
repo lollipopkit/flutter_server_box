@@ -941,6 +941,29 @@ fn smart_parse_fixture() {
     );
 }
 
+/// macOS's `/dev/diskN` whole-disk naming (no Dart reference — Bsd never
+/// had a smartctl command before; this is a real captured `smartctl -a -j`
+/// against an Apple Silicon internal NVMe SSD, serial redacted). Locks in
+/// that `is_physical_disk` accepts this device-name shape and that NVMe's
+/// top-level fields (no `ata_smart_attributes` table at all) still populate
+/// health/temperature/power-on/cycle-count via the same fallback paths the
+/// Linux NVMe case already exercises.
+#[test]
+fn smart_parse_macos_nvme() {
+    let disks = sbm_parser::smart::parse(include_str!("fixtures/smartctl_macos.json"));
+    assert_eq!(disks.len(), 1);
+    let d = &disks[0];
+    assert_eq!(d.device, "/dev/disk0");
+    assert_eq!(d.healthy, Some(true));
+    assert_eq!(d.temperature, Some(46.0));
+    assert_eq!(d.model.as_deref(), Some("APPLE SSD AP1024Z"));
+    assert_eq!(d.serial.as_deref(), Some("REDACTED0000"));
+    assert_eq!(d.power_on_hours, Some(531));
+    assert_eq!(d.power_cycle_count, Some(145));
+    // NVMe output has no ATA attribute table at all
+    assert!(d.smart_attributes.is_empty());
+}
+
 // ---------- Btrfs RAID:btrfs_test.dart ----------
 
 #[test]

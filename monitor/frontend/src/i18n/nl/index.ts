@@ -88,7 +88,7 @@ const nl = {
 	collection: 'Verzameling',
 	intervalSeconds: 'Interval (seconden)',
 	extendedIntervalSecs: 'Uitgebreid interval (seconden)',
-	defaultsToInterval: 'Standaard gelijk aan interval',
+	defaultsToInterval: 'Standaard interval x10 (min. 120s)',
 	idlePause: 'Inactiviteitspauze',
 	idlePauseNote: 'Benaderd op basis van polling-activiteit van `/metrics` en `/status`, geen echt zichtbaarheidssignaal van de browser. Pauzeert alleen de uitgebreide cyclus (`smartctl`/`sensors`/`amd-smi`) — kernmetrieken en waarschuwingscontroles blijven altijd doorlopen.',
 	idlePauseEnabled: 'Uitgebreide verzameling pauzeren bij inactiviteit',

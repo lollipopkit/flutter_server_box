@@ -88,7 +88,7 @@ const pt = {
 	collection: 'Coleta',
 	intervalSeconds: 'Intervalo (segundos)',
 	extendedIntervalSecs: 'Intervalo estendido (segundos)',
-	defaultsToInterval: 'Padrão: igual ao intervalo',
+	defaultsToInterval: 'Padrão: intervalo x10 (mín. 120s)',
 	idlePause: 'Pausa por inatividade',
 	idlePauseNote: 'Aproximado pela atividade de polling de `/metrics` e `/status`, não é um sinal real de visibilidade do navegador. Pausa apenas o ciclo estendido (`smartctl`/`sensors`/`amd-smi`) — as métricas principais e verificações de alerta sempre continuam.',
 	idlePauseEnabled: 'Pausar coleta estendida quando inativo',

@@ -12,6 +12,7 @@ extension _Actions on _ServerEditPageState {
 
   Iterable<ShellCmdType> get _diskHealthCmdTypes => const [
     StatusCmdType.diskSmart,
+    BSDStatusCmdType.diskSmart,
     WindowsStatusCmdType.diskSmart,
   ];
 

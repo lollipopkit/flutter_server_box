@@ -88,7 +88,7 @@ const en = {
 	collection: 'Collection',
 	intervalSeconds: 'Interval (seconds)',
 	extendedIntervalSecs: 'Extended interval (seconds)',
-	defaultsToInterval: 'Defaults to interval',
+	defaultsToInterval: 'Defaults to interval x10 (min 120s)',
 	idlePause: 'Idle pause',
 	idlePauseNote: 'Approximated from `/metrics` and `/status` polling activity, not a real browser visibility signal. Only pauses the extended cycle (`smartctl`/`sensors`/`amd-smi`) — core metrics and alert checks always keep running.',
 	idlePauseEnabled: 'Pause extended collection when idle',

@@ -88,7 +88,7 @@ const ja = {
 	collection: '収集',
 	intervalSeconds: '取得間隔（秒）',
 	extendedIntervalSecs: '拡張サイクル間隔（秒）',
-	defaultsToInterval: '初期値は取得間隔と同じ',
+	defaultsToInterval: '初期値は取得間隔 x10(最低 120 秒)',
 	idlePause: 'アイドル一時停止',
 	idlePauseNote: '`/metrics` と `/status` へのポーリング活動からの推定であり、実際のブラウザ可視性信号ではありません。拡張サイクル（`smartctl`/`sensors`/`amd-smi`）のみを一時停止し、コア指標の収集とアラートチェックは常に継続します。',
 	idlePauseEnabled: 'アイドル時に拡張収集を一時停止',
