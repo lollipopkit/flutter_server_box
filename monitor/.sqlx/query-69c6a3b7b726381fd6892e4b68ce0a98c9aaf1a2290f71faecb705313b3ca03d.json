@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT INTO system_metrics (\n            timestamp, server_name, cpu_usage, memory_total, memory_used, memory_free,\n            swap_total, swap_used, disk_total, disk_used, disk_free,\n            network_rx_bytes, network_tx_bytes, temperature,\n            diskio_read_bytes, diskio_write_bytes, battery_percent\n        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 17
+    },
+    "nullable": []
+  },
+  "hash": "69c6a3b7b726381fd6892e4b68ce0a98c9aaf1a2290f71faecb705313b3ca03d"
+}

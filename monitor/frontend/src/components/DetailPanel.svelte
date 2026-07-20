@@ -176,6 +176,17 @@
       yMax={100}
       format={fmtPercent}
     />
+    {#if m?.diskio?.length}
+      <LineChart
+        title={$LL.diskIo()}
+        {labels}
+        series={[
+          { label: $LL.read(), color: '#0ea5e9', values: history.map((p) => p.diskio_read_speed) },
+          { label: $LL.write(), color: '#f97316', values: history.map((p) => p.diskio_write_speed) },
+        ]}
+        format={fmtBytesPerSec}
+      />
+    {/if}
     {#if m}
       <Card>
         <h3 class="text-sm font-semibold text-fg-strong mb-3">{$LL.disks()}</h3>
@@ -294,6 +305,18 @@
       </Card>
     {/each}
   {:else if kind === 'battery'}
+    <!-- History only tracks the first battery (matches the home page card
+         and store_metrics' single battery_percent column) — multi-battery
+         machines still get per-battery current-value cards below -->
+    <LineChart
+      title={$LL.usage()}
+      {labels}
+      series={[
+        { label: $LL.battery(), color: '#84cc16', values: history.map((p) => p.battery_percent ?? 0) },
+      ]}
+      yMax={100}
+      format={fmtPercent}
+    />
     {#each m?.batteries ?? [] as battery, i (battery.name ?? i)}
       <Card>
         <div class="flex items-center justify-between gap-2 mb-3">

@@ -6,7 +6,8 @@
       {
         "name": "MIN(timestamp)",
         "ordinal": 0,
-        "type_info": "Datetime"
+        "type_info": "Datetime",
+        "origin": "Expression"
       }
     ],
     "parameters": {

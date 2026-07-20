@@ -760,7 +760,7 @@ pub fn parse_disk_metrics(segment: &str) -> Result<DiskMetrics> {
     Ok(aggregate_disks(SystemType::Linux, &sbm_parser::linux::parse_disk(segment)))
 }
 
-async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<()> {
+pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<()> {
     let memory_total = metrics.memory.total as i64;
     let memory_used = metrics.memory.used as i64;
     let memory_free = metrics.memory.free as i64;
@@ -771,14 +771,24 @@ async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<()> {
     let disk_free = metrics.disk.free as i64;
     let network_rx_bytes = metrics.network.rx_bytes as i64;
     let network_tx_bytes = metrics.network.tx_bytes as i64;
+    // Summed across all devices — same "one aggregate trend line" shape as
+    // network_rx_bytes/network_tx_bytes, not per-device (diskio's per-device
+    // detail is snapshot-only, matching disk_details/ifaces)
+    let diskio_read_bytes: i64 =
+        metrics.diskio.iter().map(|d| d.sectors_read.max(0) as i64 * 512).sum();
+    let diskio_write_bytes: i64 =
+        metrics.diskio.iter().map(|d| d.sectors_write.max(0) as i64 * 512).sum();
+    // First battery only — matches the home page card's existing convention
+    let battery_percent: Option<f64> = metrics.batteries.first().and_then(|b| b.percent).map(|p| p as f64);
 
     sqlx::query!(
         r#"
         INSERT INTO system_metrics (
             timestamp, server_name, cpu_usage, memory_total, memory_used, memory_free,
             swap_total, swap_used, disk_total, disk_used, disk_free,
-            network_rx_bytes, network_tx_bytes, temperature
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            network_rx_bytes, network_tx_bytes, temperature,
+            diskio_read_bytes, diskio_write_bytes, battery_percent
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         "#,
         metrics.timestamp,
         metrics.server_name,
@@ -793,7 +803,10 @@ async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<()> {
         disk_free,
         network_rx_bytes,
         network_tx_bytes,
-        metrics.temperature
+        metrics.temperature,
+        diskio_read_bytes,
+        diskio_write_bytes,
+        battery_percent
     )
     .execute(db)
     .await?;

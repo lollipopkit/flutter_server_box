@@ -170,6 +170,9 @@ export interface HistoryPoint {
   net_rx_speed: number;
   net_tx_speed: number;
   temperature?: number;
+  diskio_read_speed: number;
+  diskio_write_speed: number;
+  battery_percent?: number;
 }
 
 export interface LoginRequest {

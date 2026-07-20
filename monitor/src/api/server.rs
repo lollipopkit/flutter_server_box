@@ -308,6 +308,9 @@ struct HistoryPoint {
     net_rx_speed: f64,
     net_tx_speed: f64,
     temperature: Option<f64>,
+    diskio_read_speed: f64,
+    diskio_write_speed: f64,
+    battery_percent: Option<f64>,
 }
 
 /// Bucketed time series from system_metrics. `?minutes=` selects the window
@@ -336,7 +339,7 @@ async fn get_metrics_history(
 
     use sqlx::Row;
     let rows = sqlx::query(
-        "SELECT cast(strftime('%s', timestamp) as integer) / ?1 AS bucket,                 min(timestamp) AS ts,                 avg(cpu_usage) AS cpu,                 avg(CASE WHEN memory_total > 0 THEN memory_used * 100.0 / memory_total END) AS mem,                 avg(CASE WHEN disk_total > 0 THEN disk_used * 100.0 / disk_total END) AS disk,                 avg(network_rx_bytes) AS rx,                 avg(network_tx_bytes) AS tx,                 avg(temperature) AS temp          FROM system_metrics          WHERE timestamp >= datetime('now', ?2)          GROUP BY bucket ORDER BY bucket",
+        "SELECT cast(strftime('%s', timestamp) as integer) / ?1 AS bucket,                 min(timestamp) AS ts,                 avg(cpu_usage) AS cpu,                 avg(CASE WHEN memory_total > 0 THEN memory_used * 100.0 / memory_total END) AS mem,                 avg(CASE WHEN disk_total > 0 THEN disk_used * 100.0 / disk_total END) AS disk,                 avg(network_rx_bytes) AS rx,                 avg(network_tx_bytes) AS tx,                 avg(temperature) AS temp,                 avg(diskio_read_bytes) AS dio_r,                 avg(diskio_write_bytes) AS dio_w,                 avg(battery_percent) AS battery          FROM system_metrics          WHERE timestamp >= datetime('now', ?2)          GROUP BY bucket ORDER BY bucket",
     )
     .bind(bucket_secs)
     .bind(format!("-{minutes} minutes"))
@@ -344,19 +347,27 @@ async fn get_metrics_history(
     .await?;
 
     let mut points = Vec::with_capacity(rows.len());
-    let mut prev: Option<(i64, f64, f64)> = None; // (bucket, rx, tx)
+    // (bucket, rx, tx, diskio_read, diskio_write)
+    let mut prev: Option<(i64, f64, f64, f64, f64)> = None;
     for row in rows {
         let bucket: i64 = row.get("bucket");
         let rx: f64 = row.try_get("rx").unwrap_or(0.0);
         let tx: f64 = row.try_get("tx").unwrap_or(0.0);
-        let (net_rx_speed, net_tx_speed) = match prev {
-            Some((pb, prx, ptx)) if bucket > pb => {
+        let dio_r: f64 = row.try_get("dio_r").unwrap_or(0.0);
+        let dio_w: f64 = row.try_get("dio_w").unwrap_or(0.0);
+        let (net_rx_speed, net_tx_speed, diskio_read_speed, diskio_write_speed) = match prev {
+            Some((pb, prx, ptx, pdr, pdw)) if bucket > pb => {
                 let dt = ((bucket - pb) * bucket_secs) as f64;
-                (((rx - prx) / dt).max(0.0), ((tx - ptx) / dt).max(0.0))
+                (
+                    ((rx - prx) / dt).max(0.0),
+                    ((tx - ptx) / dt).max(0.0),
+                    ((dio_r - pdr) / dt).max(0.0),
+                    ((dio_w - pdw) / dt).max(0.0),
+                )
             }
-            _ => (0.0, 0.0),
+            _ => (0.0, 0.0, 0.0, 0.0),
         };
-        prev = Some((bucket, rx, tx));
+        prev = Some((bucket, rx, tx, dio_r, dio_w));
         points.push(HistoryPoint {
             timestamp: row.get("ts"),
             cpu: row.try_get("cpu").unwrap_or(0.0),
@@ -365,6 +376,9 @@ async fn get_metrics_history(
             net_rx_speed,
             net_tx_speed,
             temperature: row.try_get::<Option<f64>, _>("temp").ok().flatten(),
+            diskio_read_speed,
+            diskio_write_speed,
+            battery_percent: row.try_get::<Option<f64>, _>("battery").ok().flatten(),
         });
     }
 
