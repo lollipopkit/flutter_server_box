@@ -89,6 +89,8 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
                     .route("/capabilities", web::get().to(get_capabilities))
                     .route("/settings", web::get().to(get_settings))
                     .route("/settings", web::put().to(update_settings))
+                    .route("/card-order", web::get().to(get_card_order))
+                    .route("/card-order", web::put().to(update_card_order))
                     .route("/metrics/history", web::get().to(get_metrics_history))
                     .route("/health", web::get().to(health_check))
                     .route("/velocity", web::get().to(get_velocity))
@@ -303,14 +305,26 @@ async fn get_metrics(
 /// this isn't meant to be polled; the frontend fetches it once per server
 /// connection. See `sbm_parser::capabilities` for the three-state meaning and
 /// `monitoring::effective_capabilities` for monitor's native-sampling overrides.
+/// `Capabilities` plus the OS family — mechanically derived from the same
+/// `system_type()` used to compute `capabilities` itself, so it can't drift
+/// out of sync. Used by the panel to pick an OS icon for the sidebar/header;
+/// `Bsd` covers macOS (the only Bsd target this monitor actually ships on).
+#[derive(Serialize)]
+struct CapabilitiesView {
+    #[serde(flatten)]
+    capabilities: sbm_parser::capabilities::Capabilities,
+    platform: sbm_parser::SystemType,
+}
+
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
     if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
         return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
             error: "Invalid or missing token".to_string(),
         }));
     }
-    let caps = crate::monitoring::monitoring::effective_capabilities(crate::monitoring::monitoring::system_type());
-    Ok(HttpResponse::Ok().json(&caps))
+    let platform = crate::monitoring::monitoring::system_type();
+    let capabilities = crate::monitoring::monitoring::effective_capabilities(platform);
+    Ok(HttpResponse::Ok().json(&CapabilitiesView { capabilities, platform }))
 }
 
 /// Whitelisted, writable subset of `Config` the settings page exposes.
@@ -472,6 +486,68 @@ async fn update_settings(
     *app_state.live_settings.write().await = crate::monitoring::monitoring::LiveSettings::from_config(&monitoring);
 
     tracing::info!("Settings saved via PUT /api/v1/settings");
+    Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
+}
+
+/// Home-grid card order — split out from `SettingsPayload`/`PUT /settings`
+/// deliberately: reordering cards by drag-and-drop happens far more often
+/// than editing rules/CORS, and routing it through the full settings payload
+/// would mean read-modify-write races against whatever the settings page has
+/// open, risking clobbering an in-progress edit there. No restart-required
+/// concept applies — this is never read by the backend, only stored for sync.
+#[derive(Serialize, Deserialize)]
+struct CardOrderPayload {
+    card_order: Vec<String>,
+}
+
+async fn get_card_order(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
+    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
+        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
+            error: "Invalid or missing token".to_string(),
+        }));
+    }
+    let file_config = match read_config_file() {
+        Ok(c) => c,
+        Err(e) => {
+            return Ok(HttpResponse::InternalServerError()
+                .json(&ErrorResponse { error: format!("Failed to read config.toml: {e}") }));
+        }
+    };
+    Ok(HttpResponse::Ok().json(&CardOrderPayload { card_order: file_config.get_server().card_order }))
+}
+
+async fn update_card_order(
+    req: HttpRequest,
+    app_state: web::types::State<Arc<AppState>>,
+    payload: web::types::Json<CardOrderPayload>,
+) -> Result<HttpResponse> {
+    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
+        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
+            error: "Invalid or missing token".to_string(),
+        }));
+    }
+    let mut config = match read_config_file() {
+        Ok(c) => c,
+        Err(e) => {
+            return Ok(HttpResponse::InternalServerError()
+                .json(&ErrorResponse { error: format!("Failed to read config.toml: {e}") }));
+        }
+    };
+    let mut server_config = config.get_server();
+    server_config.card_order = payload.into_inner().card_order;
+    config.server = Some(server_config);
+
+    let toml_content = match toml::to_string_pretty(&config) {
+        Ok(s) => s,
+        Err(e) => {
+            return Ok(HttpResponse::InternalServerError()
+                .json(&ErrorResponse { error: format!("Failed to serialize config: {e}") }));
+        }
+    };
+    if let Err(e) = std::fs::write("config.toml", toml_content) {
+        return Ok(HttpResponse::InternalServerError()
+            .json(&ErrorResponse { error: format!("Failed to write config.toml: {e}") }));
+    }
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
 }
 

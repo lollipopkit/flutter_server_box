@@ -2,13 +2,21 @@
   import { ChevronsLeft, ChevronsRight, LogOut, Monitor, Pencil, Plus, Server, Settings } from '@lucide/svelte'
   import { IconButton, cn } from '@serverbox/webui'
   import LocaleToggle from './LocaleToggle.svelte'
+  import OsIcon from './OsIcon.svelte'
   import ServerFormModal from './ServerFormModal.svelte'
   import ThemeToggle from './ThemeToggle.svelte'
   import { onDestroy, onMount } from 'svelte'
   import { LL } from '../i18n/i18n-svelte'
+  import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { health } from '../lib/health.svelte'
   import { layout } from '../lib/layout.svelte'
   import { displayName, servers, type ServerEntry } from '../lib/servers.svelte'
+
+  // Fetch (once each, not polled) so every authenticated entry can show its
+  // OS icon, not just the currently-selected server
+  $effect(() => {
+    for (const s of servers.list) void capabilitiesStore.ensure(s.id)
+  })
 
   function selectServer(id: string) {
     layout.mobileOpen = false
@@ -116,7 +124,11 @@
           title={s.id === 'local' ? $LL.thisServer() : displayName(s)}
           onclick={() => selectServer(s.id)}
         >
-          <Server class="w-4 h-4 shrink-0" />
+          {#if capabilitiesStore.byServer[s.id]?.platform}
+            <OsIcon platform={capabilitiesStore.byServer[s.id]?.platform} class="w-4 h-4 shrink-0" />
+          {:else}
+            <Server class="w-4 h-4 shrink-0" />
+          {/if}
           <span class={cn('min-w-0 flex-1', labelCls)}>
             <span class="block truncate"
               >{s.id === 'local' ? $LL.thisServer() : displayName(s)}</span

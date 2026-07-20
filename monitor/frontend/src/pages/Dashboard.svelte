@@ -8,7 +8,6 @@
     Menu,
     MemoryStick,
     ShieldCheck,
-    Thermometer,
     Network,
     CircleAlert,
     RefreshCw,
@@ -17,8 +16,10 @@
   import DetailPanel, { type DetailKind } from '../components/DetailPanel.svelte'
   import LineChart from '../components/LineChart.svelte'
   import LoginForm from '../components/LoginForm.svelte'
+  import OsIcon from '../components/OsIcon.svelte'
   import StatCard from '../components/StatCard.svelte'
   import { api } from '../lib/api'
+  import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { health } from '../lib/health.svelte'
   import { displayName, servers } from '../lib/servers.svelte'
   import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../lib/format'
@@ -26,23 +27,63 @@
   import { layout } from '../lib/layout.svelte'
   import { Poller } from '../lib/poller.svelte'
   import { fly } from 'svelte/transition'
-  import type { Capabilities, HistoryPoint } from '../types'
+  import type { HistoryPoint } from '../types'
 
   const status = new Poller(api.getStatus, 5000)
   const metrics = new Poller(api.getMetrics, 5000)
 
-  // Platform-only, doesn't change per-sample — fetched once when this server
-  // connection authenticates, not on the metrics poll cadence. `null` before
-  // it loads is treated as "unknown" (permissive) below so cards don't flash
-  // hidden-then-shown while this request is still in flight.
-  let capabilities = $state<Capabilities | null>(null)
+  // Platform-only, doesn't change per-sample — fetched once per server
+  // (shared with the sidebar's OS icons via capabilitiesStore), not on the
+  // metrics poll cadence. Undefined before it loads is treated as "unknown"
+  // (permissive) below so cards don't flash hidden-then-shown while in flight.
   $effect(() => {
-    if (servers.authenticated) {
-      api.getCapabilities().then((c) => (capabilities = c)).catch(() => {})
-    } else {
-      capabilities = null
-    }
+    if (servers.authenticated) void capabilitiesStore.ensure(servers.currentId)
   })
+  const capabilities = $derived(capabilitiesStore.byServer[servers.currentId])
+
+  // Home-grid card order, synced server-side (not localStorage) so every
+  // client viewing this agent sees the same arrangement — see card-order.ts
+  const ALL_CARD_IDS = ['cpu', 'memory', 'disk', 'network', 'gpu', 'battery', 'sensors', 'smart'] as const
+  type CardId = (typeof ALL_CARD_IDS)[number]
+  let cardOrder = $state<CardId[]>([...ALL_CARD_IDS])
+
+  async function loadCardOrder() {
+    try {
+      const { card_order } = await api.getCardOrder()
+      const known = card_order.filter((id): id is CardId => (ALL_CARD_IDS as readonly string[]).includes(id))
+      // Append any ids missing from the saved order (new card added later,
+      // or first-ever save) so nothing silently disappears
+      const missing = ALL_CARD_IDS.filter((id) => !known.includes(id))
+      cardOrder = known.length ? [...known, ...missing] : [...ALL_CARD_IDS]
+    } catch {
+      // Keep the default order; a failed fetch shouldn't block the dashboard
+    }
+  }
+
+  $effect(() => {
+    if (servers.authenticated) void loadCardOrder()
+  })
+
+  let dragId = $state<CardId | null>(null)
+
+  function onCardDragStart(id: CardId) {
+    dragId = id
+  }
+  function onCardDragOver(e: DragEvent) {
+    e.preventDefault()
+  }
+  function onCardDrop(targetId: CardId) {
+    if (!dragId || dragId === targetId) return
+    const from = cardOrder.indexOf(dragId)
+    const to = cardOrder.indexOf(targetId)
+    if (from === -1 || to === -1) return
+    const next = [...cardOrder]
+    next.splice(from, 1)
+    next.splice(to, 0, dragId)
+    cardOrder = next
+    dragId = null
+    void api.updateCardOrder(cardOrder).catch(() => {})
+  }
 
   const RANGES = [
     { label: '1h', minutes: 60 },
@@ -134,6 +175,25 @@
     const reported = m?.server_name || status.data?.name
     if (reported) servers.applyReportedName(servers.currentId, reported)
   })
+
+  function isCardVisible(id: CardId): boolean {
+    switch (id) {
+      case 'cpu':
+      case 'memory':
+      case 'disk':
+      case 'network':
+        return true
+      case 'gpu':
+        return showGpu && !!m?.gpus?.length
+      case 'battery':
+        return showBattery && !!m?.batteries?.length
+      case 'sensors':
+        return showSensors && !!m?.sensors?.length
+      case 'smart':
+        return showSmart && !!m?.disk_smart?.length
+    }
+  }
+  const visibleCardOrder = $derived(cardOrder.filter(isCardVisible))
 </script>
 
 {#if servers.authenticated && status.loading && metrics.loading}
@@ -153,7 +213,10 @@
         >
           <Menu class="w-5 h-5" />
         </IconButton>
-        <div class="min-w-0">
+        <div class="min-w-0 flex items-center gap-2">
+          {#if capabilities?.platform}
+            <OsIcon platform={capabilities.platform} class="w-5 h-5 text-muted-fg shrink-0" />
+          {/if}
           <h1 class="text-lg font-semibold font-display text-fg-strong truncate">
             {headerName}
           </h1>
@@ -195,62 +258,62 @@
     {#if detail}
       <DetailPanel kind={detail} metrics={m} {history} onback={() => (detail = null)} />
     {:else}
-    <!-- Up to 8 cards now that battery/sensors/smart are gated on real
-         capabilities (see showBattery et al.) rather than always reserved
-         slots — a 2-col jump straight to 4-col leaves tablet-width viewports
-         (~640-1023px) as cramped as phones; md:grid-cols-3 smooths the ramp -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
-      <StatCard
-        class="p-4 sm:p-6"
-        icon={Cpu}
-        iconClass="text-blue-500"
-        label={$LL.cpuUsage()}
-        value={m ? `${m.cpu_usage.toFixed(1)}%` : '--'}
-        detail={m
-          ? [
-              // cpu_brand already reads e.g. "Apple M5 Pro (x18)"; older
-              // agents without it fall back to a bare core count
-              m.cpu_brand || (m.cpu_cores?.length ? `${m.cpu_cores.length} ${$LL.cores()}` : ''),
-              m.temperature != null ? `${m.temperature.toFixed(1)} \u00B0C` : '',
-            ]
-              .filter(Boolean)
-              .join(' \u00B7 ')
-          : ''}
-        onclick={() => (detail = 'cpu')}
-      />
-      <StatCard
-        class="p-4 sm:p-6"
-        icon={MemoryStick}
-        iconClass="text-green-500"
-        label={$LL.memory()}
-        value={m ? `${m.memory.usage_percent.toFixed(1)}%` : '--'}
-        detail={m ? `${fmtBytes(m.memory.used)} / ${fmtBytes(m.memory.total)}` : ''}
-        onclick={() => (detail = 'memory')}
-      />
-      <StatCard
-        class="p-4 sm:p-6"
-        icon={HardDrive}
-        iconClass="text-yellow-500"
-        label={$LL.diskUsage()}
-        value={m ? `${m.disk.usage_percent.toFixed(1)}%` : '--'}
-        detail={m ? `${fmtBytes(m.disk.used)} / ${fmtBytes(m.disk.total)}` : ''}
-        onclick={() => (detail = 'disk')}
-      />
-      <StatCard
-        class="p-4 sm:p-6 {m?.gpus?.length ? '' : 'col-span-2 lg:col-span-1'}"
-        icon={Network}
-        iconClass="text-purple-500"
-        label={$LL.network()}
-        value={latest
-          ? `\u2193 ${fmtBytesPerSec(latest.net_rx_speed)}  \u2191 ${fmtBytesPerSec(latest.net_tx_speed)}`
-          : '--'}
-        valueClass="text-lg"
-        detail={m
-          ? `RX ${fmtBytes(m.network.rx_bytes)} \u00B7 TX ${fmtBytes(m.network.tx_bytes)}`
-          : ''}
-        onclick={() => (detail = 'network')}
-      />
-      {#if showGpu && m?.gpus?.length}
+    {#snippet card(id: CardId)}
+      {#if id === 'cpu'}
+        <StatCard
+          class="p-4 sm:p-6"
+          icon={Cpu}
+          iconClass="text-blue-500"
+          label={$LL.cpuUsage()}
+          value={m ? `${m.cpu_usage.toFixed(1)}%` : '--'}
+          detail={m
+            ? [
+                // cpu_brand already reads e.g. "Apple M5 Pro (x18)"; older
+                // agents without it fall back to a bare core count
+                m.cpu_brand || (m.cpu_cores?.length ? `${m.cpu_cores.length} ${$LL.cores()}` : ''),
+                m.temperature != null ? `${m.temperature.toFixed(1)} \u00B0C` : '',
+              ]
+                .filter(Boolean)
+                .join(' \u00B7 ')
+            : ''}
+          onclick={() => (detail = 'cpu')}
+        />
+      {:else if id === 'memory'}
+        <StatCard
+          class="p-4 sm:p-6"
+          icon={MemoryStick}
+          iconClass="text-green-500"
+          label={$LL.memory()}
+          value={m ? `${m.memory.usage_percent.toFixed(1)}%` : '--'}
+          detail={m ? `${fmtBytes(m.memory.used)} / ${fmtBytes(m.memory.total)}` : ''}
+          onclick={() => (detail = 'memory')}
+        />
+      {:else if id === 'disk'}
+        <StatCard
+          class="p-4 sm:p-6"
+          icon={HardDrive}
+          iconClass="text-yellow-500"
+          label={$LL.diskUsage()}
+          value={m ? `${m.disk.usage_percent.toFixed(1)}%` : '--'}
+          detail={m ? `${fmtBytes(m.disk.used)} / ${fmtBytes(m.disk.total)}` : ''}
+          onclick={() => (detail = 'disk')}
+        />
+      {:else if id === 'network'}
+        <StatCard
+          class="p-4 sm:p-6"
+          icon={Network}
+          iconClass="text-purple-500"
+          label={$LL.network()}
+          value={latest
+            ? `\u2193 ${fmtBytesPerSec(latest.net_rx_speed)}  \u2191 ${fmtBytesPerSec(latest.net_tx_speed)}`
+            : '--'}
+          valueClass="text-lg"
+          detail={m
+            ? `RX ${fmtBytes(m.network.rx_bytes)} \u00B7 TX ${fmtBytes(m.network.tx_bytes)}`
+            : ''}
+          onclick={() => (detail = 'network')}
+        />
+      {:else if id === 'gpu' && m?.gpus?.length}
         <StatCard
           class="p-4 sm:p-6"
           icon={Gpu}
@@ -260,8 +323,7 @@
           detail={m.gpus[0].name}
           onclick={() => (detail = 'gpu')}
         />
-      {/if}
-      {#if showBattery && m?.batteries?.length}
+      {:else if id === 'battery' && m?.batteries?.length}
         <StatCard
           class="p-4 sm:p-6"
           icon={BatteryMedium}
@@ -271,8 +333,7 @@
           detail={m.batteries[0].name ?? ''}
           onclick={() => (detail = 'battery')}
         />
-      {/if}
-      {#if showSensors && m?.sensors?.length}
+      {:else if id === 'sensors' && m?.sensors?.length}
         <StatCard
           class="p-4 sm:p-6"
           icon={Gauge}
@@ -282,8 +343,7 @@
           detail={m.sensors[0].device}
           onclick={() => (detail = 'sensors')}
         />
-      {/if}
-      {#if showSmart && m?.disk_smart?.length}
+      {:else if id === 'smart' && m?.disk_smart?.length}
         <StatCard
           class="p-4 sm:p-6"
           icon={ShieldCheck}
@@ -294,6 +354,27 @@
           onclick={() => (detail = 'smart')}
         />
       {/if}
+    {/snippet}
+
+    <!-- Up to 8 cards now that battery/sensors/smart are gated on real
+         capabilities (see showBattery et al.) rather than always reserved
+         slots — a 2-col jump straight to 4-col leaves tablet-width viewports
+         (~640-1023px) as cramped as phones; md:grid-cols-3 smooths the ramp.
+         Order is drag-to-reorder (desktop pointer only — HTML5 DnD has no
+         built-in touch support) and synced server-side via cardOrder. -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
+      {#each visibleCardOrder as id (id)}
+        <div
+          role="listitem"
+          draggable="true"
+          ondragstart={() => onCardDragStart(id)}
+          ondragover={onCardDragOver}
+          ondrop={() => onCardDrop(id)}
+          class="cursor-grab active:cursor-grabbing"
+        >
+          {@render card(id)}
+        </div>
+      {/each}
     </div>
 
     <div class="flex items-center justify-between mb-4">
@@ -370,15 +451,6 @@
               <span class="text-sm text-muted-fg">{$LL.swap()}</span>
               <span class="text-sm font-medium">
                 {fmtBytes(m.swap.used)} / {fmtBytes(m.swap.total)}
-              </span>
-            </div>
-          {/if}
-          {#if m.temperature != null}
-            <div class="flex justify-between">
-              <span class="text-sm text-muted-fg">{$LL.temperature()}</span>
-              <span class="text-sm font-medium flex items-center">
-                <Thermometer class="w-4 h-4 mr-1" />
-                {m.temperature.toFixed(1)}°C
               </span>
             </div>
           {/if}

@@ -42,6 +42,12 @@ pub struct ServerConfig {
     /// Cloudflare Pages). Empty = same-origin only (no CORS headers).
     #[serde(default)]
     pub cors_allowed_origins: Vec<String>,
+    /// Home-grid card display order (StatCard keys, e.g. "cpu"/"memory"/...),
+    /// persisted server-side (not per-browser localStorage) so every client
+    /// viewing this agent sees the same arrangement. Empty = default order;
+    /// never read by the backend itself, purely a sync point for the panel.
+    #[serde(default)]
+    pub card_order: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -217,6 +223,7 @@ impl Config {
                         key_path: key,
                     }),
                 cors_allowed_origins: Vec::new(),
+                card_order: Vec::new(),
             };
 
             let interval_seconds = if let Some(interval_str) = &self.interval {
@@ -284,6 +291,7 @@ impl Config {
             port: 3770,
             tls: None,
             cors_allowed_origins: Vec::new(),
+                card_order: Vec::new(),
         })
     }
 
@@ -512,6 +520,7 @@ impl Default for Config {
                         key_path: key,
                     }),
                 cors_allowed_origins: Vec::new(),
+                card_order: Vec::new(),
             }),
             monitoring: Some(MonitoringConfig {
                 interval_seconds: 7,

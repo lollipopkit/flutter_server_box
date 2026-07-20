@@ -1,4 +1,5 @@
 import type {
+  CardOrderPayload,
   Capabilities,
   HistoryPoint,
   LoginRequest,
@@ -8,7 +9,7 @@ import type {
   StatusResponse,
   SystemMetrics,
 } from '../types'
-import { servers } from './servers.svelte'
+import { servers, type ServerEntry } from './servers.svelte'
 
 const TIMEOUT_MS = 10_000
 
@@ -46,6 +47,19 @@ async function request<T>(path: string, init: RequestInit = {}, fallback = 'Requ
     throw new ApiError(message)
   }
   return res.json() as Promise<T>
+}
+
+/// Fetches capabilities for an explicit server entry (rather than
+/// `servers.current`) — used by the sidebar to show every authenticated
+/// entry's OS icon, not just the currently-selected one
+export async function getCapabilitiesFor(entry: ServerEntry): Promise<Capabilities> {
+  if (!entry.token) throw new ApiError('Not authenticated')
+  const res = await fetch(`${entry.url}/api/v1/capabilities`, {
+    headers: { Authorization: `Bearer ${entry.token}` },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  })
+  if (!res.ok) throw new ApiError('Failed to fetch capabilities')
+  return res.json() as Promise<Capabilities>
 }
 
 /// Unauthenticated reachability probe for a candidate URL (add/edit server
@@ -105,5 +119,12 @@ export const api = {
       '/settings',
       { method: 'PUT', body: JSON.stringify(payload) },
       'Failed to save settings',
+    ),
+  getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
+  updateCardOrder: (card_order: string[]) =>
+    request<{ status: string }>(
+      '/card-order',
+      { method: 'PUT', body: JSON.stringify({ card_order }) },
+      'Failed to save card order',
     ),
 }

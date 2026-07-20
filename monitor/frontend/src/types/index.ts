@@ -41,6 +41,8 @@ export type FieldSupport = 'supported' | 'not_implemented' | 'hardware_dependent
 /// 'not_implemented' = this platform never collects it (hide unconditionally),
 /// 'hardware_dependent' = collected when present, empty just means no such
 /// hardware, 'supported' = always populated when the command succeeds.
+export type Platform = 'linux' | 'bsd' | 'windows'
+
 export interface Capabilities {
   cpu: FieldSupport
   cpu_brand: FieldSupport
@@ -59,6 +61,9 @@ export interface Capabilities {
   nvidia: FieldSupport
   amd: FieldSupport
   disk_smart: FieldSupport
+  // Mechanically derived from the same system_type() capabilities() is
+  // computed from — 'bsd' covers macOS, the only Bsd target this ships on
+  platform: Platform
 }
 
 export interface ConnMetrics {
@@ -223,4 +228,10 @@ export interface SettingsPayload {
 /// immediately vs. require a monitor restart
 export interface SettingsView extends SettingsPayload {
   live_fields: string[];
+}
+
+/// Home-grid card order — kept out of SettingsPayload; see the dedicated
+/// GET/PUT /api/v1/card-order handlers for why
+export interface CardOrderPayload {
+  card_order: string[];
 }
