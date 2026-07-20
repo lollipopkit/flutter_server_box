@@ -1,4 +1,4 @@
-use crate::{core::config::Config, api::server::AppState, utils::error::Result, monitoring::timeseries::CpuCoreTime};
+use crate::{core::config::{Config, MonitoringConfig}, api::server::AppState, utils::error::Result, monitoring::timeseries::CpuCoreTime};
 use chrono::{DateTime, Utc};
 use sbm_parser::types::{CpuCore, Disk};
 use sbm_parser::{ServerStatus, SystemType};
@@ -9,6 +9,28 @@ use std::process::Command;
 use std::sync::Arc;
 use tokio::time::{sleep, Duration};
 use tracing::{info, error};
+
+/// The subset of `MonitoringConfig` that takes effect immediately on a
+/// settings save, instead of requiring a restart — resolved once from
+/// `Config` at startup, then read fresh by `run_monitoring_loop` every
+/// cycle so a later write through `PUT /api/v1/settings` is picked up
+/// without restarting the process.
+#[derive(Debug, Clone)]
+pub struct LiveSettings {
+    pub extended_interval_secs: u64,
+    pub idle_pause_enabled: bool,
+    pub idle_pause_threshold_secs: u64,
+}
+
+impl LiveSettings {
+    pub fn from_config(config: &MonitoringConfig) -> Self {
+        Self {
+            extended_interval_secs: config.effective_extended_interval_secs(),
+            idle_pause_enabled: config.idle_pause_enabled,
+            idle_pause_threshold_secs: config.effective_idle_pause_threshold_secs(),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemMetrics {
@@ -166,6 +188,18 @@ fn is_extended_cycle(cycle: u64, interval_seconds: u64, extended_interval_secs: 
     cycle % extended_every == 0
 }
 
+/// Whether the extended script should actually run this cycle: `extended_due`
+/// (the schedule) AND-ed with the idle-pause check (skip if enabled and
+/// nobody's polled `/metrics`/`/status` within the threshold). Core metrics
+/// and alert rule checks are never affected — this only ever downgrades
+/// `extended_due` from true to false, never the reverse.
+fn should_run_extended(extended_due: bool, live: &LiveSettings, idle_secs: i64) -> bool {
+    if !extended_due || !live.idle_pause_enabled {
+        return extended_due;
+    }
+    idle_secs < live.idle_pause_threshold_secs as i64
+}
+
 pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
     let monitoring_config = app_state.config.get_monitoring();
     let interval_seconds = monitoring_config.interval_seconds as f64;
@@ -178,11 +212,19 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
     let mut prev_cpu: Option<CpuCore> = None;
     let mut cycle: u64 = 0;
     let mut native_state = sbm_native::NativeState::new();
-    let extended_interval_secs = monitoring_config.effective_extended_interval_secs();
 
     loop {
-        let extended_due =
-            is_extended_cycle(cycle, monitoring_config.interval_seconds, extended_interval_secs);
+        // Re-read every cycle (not captured once outside the loop) so a
+        // `PUT /api/v1/settings` save takes effect on the very next cycle
+        // instead of needing a restart — see `LiveSettings`.
+        let live = app_state.live_settings.read().await.clone();
+        let mut extended_due = is_extended_cycle(
+            cycle,
+            monitoring_config.interval_seconds,
+            live.extended_interval_secs,
+        );
+        let idle_secs = (chrono::Utc::now() - *app_state.last_viewer_seen.read().await).num_seconds();
+        extended_due = should_run_extended(extended_due, &live, idle_secs);
         cycle += 1;
         let prev_metrics = app_state.current_metrics.read().await.clone();
 
@@ -912,6 +954,30 @@ mod tests {
         assert!(!is_extended_cycle(11, 5, 60));
         // extended_interval_secs smaller than interval_seconds: every cycle
         assert!(is_extended_cycle(1, 30, 5));
+    }
+
+    fn live_settings(idle_pause_enabled: bool, idle_pause_threshold_secs: u64) -> LiveSettings {
+        LiveSettings { extended_interval_secs: 60, idle_pause_enabled, idle_pause_threshold_secs }
+    }
+
+    #[test]
+    fn should_run_extended_never_upgrades_a_non_due_cycle() {
+        // extended_due=false stays false regardless of idle state
+        assert!(!should_run_extended(false, &live_settings(false, 100), 0));
+        assert!(!should_run_extended(false, &live_settings(true, 100), 0));
+    }
+
+    #[test]
+    fn should_run_extended_ignores_idle_when_disabled() {
+        assert!(should_run_extended(true, &live_settings(false, 10), 9999));
+    }
+
+    #[test]
+    fn should_run_extended_skips_when_idle_past_threshold() {
+        let live = live_settings(true, 30);
+        assert!(should_run_extended(true, &live, 29), "just under the threshold: still runs");
+        assert!(!should_run_extended(true, &live, 30), "at the threshold: idle");
+        assert!(!should_run_extended(true, &live, 999), "well past: idle");
     }
 
     fn empty_status() -> ServerStatus {

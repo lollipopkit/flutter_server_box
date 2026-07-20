@@ -1,7 +1,7 @@
 use crate::{
     core::config::Config,
     utils::error::Result,
-    monitoring::monitoring::SystemMetrics,
+    monitoring::monitoring::{LiveSettings, SystemMetrics},
     monitoring::velocity::{NetworkSpeedInfo, VelocityAnalysisResponse, VelocityManager},
 };
 use ntex::web::{self, App, HttpRequest, HttpResponse, HttpServer, middleware::Logger};
@@ -18,17 +18,27 @@ pub struct AppState {
     pub db: SqlitePool,
     pub current_metrics: Arc<RwLock<Option<SystemMetrics>>>,
     pub velocity_manager: Arc<RwLock<VelocityManager>>,
+    /// Settings that apply immediately on save — see `LiveSettings` doc
+    pub live_settings: Arc<RwLock<LiveSettings>>,
+    /// Last time an authenticated client polled `/metrics` or `/status` —
+    /// the idle-pause heartbeat (see `MonitoringConfig.idle_pause_enabled`).
+    /// Initialized to startup time, not the epoch, so the extended cycle
+    /// isn't treated as already-idle before any client has ever connected.
+    pub last_viewer_seen: Arc<RwLock<chrono::DateTime<chrono::Utc>>>,
 }
 
 impl AppState {
     pub fn new(config: Arc<Config>, db: SqlitePool) -> Arc<Self> {
         let db_arc = Arc::new(db.clone());
         let velocity_manager = Arc::new(RwLock::new(VelocityManager::new(db_arc)));
+        let live_settings = Arc::new(RwLock::new(LiveSettings::from_config(&config.get_monitoring())));
         Arc::new(Self {
             config,
             db,
             current_metrics: Arc::new(RwLock::new(None)),
             velocity_manager,
+            live_settings,
+            last_viewer_seen: Arc::new(RwLock::new(chrono::Utc::now())),
         })
     }
 }
@@ -77,6 +87,8 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
                     .route("/status", web::get().to(get_status))
                     .route("/metrics", web::get().to(get_metrics))
                     .route("/capabilities", web::get().to(get_capabilities))
+                    .route("/settings", web::get().to(get_settings))
+                    .route("/settings", web::put().to(update_settings))
                     .route("/metrics/history", web::get().to(get_metrics_history))
                     .route("/health", web::get().to(health_check))
                     .route("/velocity", web::get().to(get_velocity))
@@ -226,6 +238,7 @@ async fn get_status(
             error: "Invalid or missing token".to_string(),
         }));
     }
+    touch_viewer_heartbeat(&app_state).await;
 
     let metrics = app_state.current_metrics.read().await;
 
@@ -272,6 +285,7 @@ async fn get_metrics(
             error: "Invalid or missing token".to_string(),
         }));
     }
+    touch_viewer_heartbeat(&app_state).await;
 
     let metrics = app_state.current_metrics.read().await;
 
@@ -297,6 +311,168 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
     }
     let caps = crate::monitoring::monitoring::effective_capabilities(crate::monitoring::monitoring::system_type());
     Ok(HttpResponse::Ok().json(&caps))
+}
+
+/// Whitelisted, writable subset of `Config` the settings page exposes.
+/// Deliberately excludes `jwt_secret`/`database_url`/`push` (secrets, or
+/// need their own dedicated design for session-invalidation-on-rotation) —
+/// see the settings-page plan for why those are out of scope.
+#[derive(Serialize, Deserialize)]
+struct SettingsPayload {
+    interval_seconds: u64,
+    /// `null` = follow `interval_seconds` (see `LiveSettings`)
+    extended_interval_secs: Option<u64>,
+    idle_pause_enabled: bool,
+    /// `null` = `interval_seconds * 4`
+    idle_pause_threshold_secs: Option<u64>,
+    rules: Vec<crate::core::config::MonitoringRule>,
+    data_retention: Option<crate::core::config::DataRetentionConfig>,
+    cors_allowed_origins: Vec<String>,
+}
+
+/// GET-only wrapper: which fields take effect immediately vs. need a
+/// restart, so the settings UI can label fields honestly instead of
+/// guessing. A separate type from `SettingsPayload` (rather than an
+/// `Option<Vec<&'static str>>` field on it) because a `'static` field breaks
+/// deriving `Deserialize`, which `SettingsPayload` also needs for PUT.
+#[derive(Serialize)]
+struct SettingsView {
+    #[serde(flatten)]
+    settings: SettingsPayload,
+    live_fields: &'static [&'static str],
+}
+
+const SETTINGS_LIVE_FIELDS: &[&str] = &["extended_interval_secs", "idle_pause_enabled", "idle_pause_threshold_secs"];
+
+/// Reads `config.toml` fresh off disk rather than `app_state.config` —
+/// after a `PUT` the file is updated immediately but `app_state.config`
+/// (an `Arc<Config>`, not `Arc<RwLock<Config>>`) intentionally stays the
+/// pre-restart snapshot for the non-live fields, so reading from it here
+/// would show stale values right after a successful save.
+fn read_config_file() -> Result<crate::core::config::Config> {
+    let content = std::fs::read_to_string("config.toml")
+        .map_err(crate::utils::error::MonitorError::Io)?;
+    toml::from_str(&content)
+        .map_err(|e| crate::utils::error::MonitorError::Config(anyhow::anyhow!(e)))
+}
+
+async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
+    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
+        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
+            error: "Invalid or missing token".to_string(),
+        }));
+    }
+
+    let file_config = match read_config_file() {
+        Ok(c) => c,
+        Err(e) => {
+            return Ok(HttpResponse::InternalServerError()
+                .json(&ErrorResponse { error: format!("Failed to read config.toml: {e}") }));
+        }
+    };
+    let monitoring = file_config.get_monitoring();
+    let live = app_state.live_settings.read().await.clone();
+
+    Ok(HttpResponse::Ok().json(&SettingsView {
+        settings: SettingsPayload {
+            interval_seconds: monitoring.interval_seconds,
+            extended_interval_secs: monitoring.extended_interval_secs,
+            idle_pause_enabled: live.idle_pause_enabled,
+            idle_pause_threshold_secs: monitoring.idle_pause_threshold_secs,
+            rules: monitoring.rules,
+            data_retention: monitoring.data_retention,
+            cors_allowed_origins: file_config.get_server().cors_allowed_origins,
+        },
+        live_fields: SETTINGS_LIVE_FIELDS,
+    }))
+}
+
+/// Same shape `config_manager.rs::validate_threshold_format` uses — not
+/// reusing that struct wholesale (it's file-JSON-versioned, dead code
+/// predating the config.toml migration; see the settings-page plan)
+fn validate_threshold_format(threshold: &str) -> std::result::Result<(), String> {
+    let re = regex::Regex::new(r"^(>=|<=|>|<|==|!=)(\d+(?:\.\d+)?)([%KMGTB]*)(/s)?$").unwrap();
+    if re.is_match(threshold) {
+        Ok(())
+    } else {
+        Err(format!("Invalid threshold format: {threshold}"))
+    }
+}
+
+async fn update_settings(
+    req: HttpRequest,
+    app_state: web::types::State<Arc<AppState>>,
+    payload: web::types::Json<SettingsPayload>,
+) -> Result<HttpResponse> {
+    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
+        return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
+            error: "Invalid or missing token".to_string(),
+        }));
+    }
+    let payload = payload.into_inner();
+
+    if payload.interval_seconds < 1 {
+        return Ok(HttpResponse::BadRequest()
+            .json(&ErrorResponse { error: "interval_seconds must be at least 1".to_string() }));
+    }
+    for rule in &payload.rules {
+        if let Err(e) = validate_threshold_format(&rule.threshold) {
+            return Ok(HttpResponse::BadRequest().json(&ErrorResponse {
+                error: format!("Rule '{}': {e}", rule.name),
+            }));
+        }
+    }
+
+    let mut config = match read_config_file() {
+        Ok(c) => c,
+        Err(e) => {
+            return Ok(HttpResponse::InternalServerError()
+                .json(&ErrorResponse { error: format!("Failed to read config.toml: {e}") }));
+        }
+    };
+
+    let mut monitoring = config.get_monitoring();
+    monitoring.interval_seconds = payload.interval_seconds;
+    monitoring.extended_interval_secs = payload.extended_interval_secs;
+    monitoring.idle_pause_enabled = payload.idle_pause_enabled;
+    monitoring.idle_pause_threshold_secs = payload.idle_pause_threshold_secs;
+    monitoring.rules = payload.rules;
+    monitoring.data_retention = payload.data_retention;
+    config.monitoring = Some(monitoring.clone());
+
+    let mut server_config = config.get_server();
+    server_config.cors_allowed_origins = payload.cors_allowed_origins;
+    config.server = Some(server_config);
+
+    // Backup before overwriting — a timestamped copy, not the version-chain
+    // ConfigManager builds (that's dead code, see the settings-page plan);
+    // this is just a manual undo path, not meant to be browsable
+    if let Ok(existing) = std::fs::read_to_string("config.toml") {
+        let backup_path = format!("config.toml.bak-{}", chrono::Utc::now().timestamp());
+        if let Err(e) = std::fs::write(&backup_path, existing) {
+            tracing::warn!("Failed to back up config.toml before saving settings: {e}");
+        }
+    }
+
+    let toml_content = match toml::to_string_pretty(&config) {
+        Ok(s) => s,
+        Err(e) => {
+            return Ok(HttpResponse::InternalServerError()
+                .json(&ErrorResponse { error: format!("Failed to serialize config: {e}") }));
+        }
+    };
+    if let Err(e) = std::fs::write("config.toml", toml_content) {
+        return Ok(HttpResponse::InternalServerError()
+            .json(&ErrorResponse { error: format!("Failed to write config.toml: {e}") }));
+    }
+
+    // The live-reloadable subset takes effect immediately; everything else
+    // needs a restart (the settings UI must say so — this response doesn't
+    // repeat itself here, see SETTINGS_LIVE_FIELDS via GET)
+    *app_state.live_settings.write().await = crate::monitoring::monitoring::LiveSettings::from_config(&monitoring);
+
+    tracing::info!("Settings saved via PUT /api/v1/settings");
+    Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
 }
 
 #[derive(Serialize)]
@@ -478,6 +654,14 @@ async fn health_check() -> HttpResponse {
         "status": "healthy",
         "timestamp": chrono::Utc::now().to_rfc3339()
     }))
+}
+
+/// The idle-pause heartbeat: called from the endpoints the panel actually
+/// polls while open (`/metrics`, `/status`), not every authenticated
+/// request — a one-off `/capabilities`/`/settings` fetch shouldn't count as
+/// "someone's actively watching."
+async fn touch_viewer_heartbeat(app_state: &AppState) {
+    *app_state.last_viewer_seen.write().await = chrono::Utc::now();
 }
 
 fn verify_auth(req: &HttpRequest, jwt_secret: &str) -> Result<crate::api::auth::Claims> {

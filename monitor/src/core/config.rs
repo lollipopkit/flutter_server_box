@@ -64,11 +64,32 @@ pub struct MonitoringConfig {
     /// both fields exist together.
     #[serde(default)]
     pub extended_interval_secs: Option<u64>,
+    /// Skip the extended cycle (see `extended_interval_secs`) while no
+    /// authenticated client has polled `/metrics` or `/status` recently —
+    /// core metrics and alert rule checks are unaffected either way, this
+    /// only pauses the CLI-tool-bound fields (battery/sensors/SMART/AMD).
+    /// Approximates "nobody has the panel open," not a real browser
+    /// visibility signal — see `AppState.last_viewer_seen`.
+    #[serde(default = "default_idle_pause_enabled")]
+    pub idle_pause_enabled: bool,
+    /// How long without a poll before the extended cycle is considered
+    /// idle. `None` (default) resolves to `interval_seconds * 4` — long
+    /// enough to tolerate a couple of missed/slow polls without flapping.
+    #[serde(default)]
+    pub idle_pause_threshold_secs: Option<u64>,
+}
+
+fn default_idle_pause_enabled() -> bool {
+    true
 }
 
 impl MonitoringConfig {
     pub fn effective_extended_interval_secs(&self) -> u64 {
         self.extended_interval_secs.unwrap_or(self.interval_seconds)
+    }
+
+    pub fn effective_idle_pause_threshold_secs(&self) -> u64 {
+        self.idle_pause_threshold_secs.unwrap_or(self.interval_seconds.saturating_mul(4))
     }
 }
 
@@ -226,6 +247,8 @@ impl Config {
                     max_db_size_mb: default_max_db_size_mb(),
                 }),
                 extended_interval_secs: None,
+                idle_pause_enabled: default_idle_pause_enabled(),
+                idle_pause_threshold_secs: None,
             };
 
             let push = self.pushes.as_ref().map(|go_pushes| {
@@ -275,6 +298,8 @@ impl Config {
                 max_db_size_mb: default_max_db_size_mb(),
             }),
             extended_interval_secs: None,
+                idle_pause_enabled: default_idle_pause_enabled(),
+                idle_pause_threshold_secs: None,
         })
     }
 
@@ -517,6 +542,8 @@ impl Default for Config {
                     max_db_size_mb: default_max_db_size_mb(),
                 }),
                 extended_interval_secs: None,
+                idle_pause_enabled: default_idle_pause_enabled(),
+                idle_pause_threshold_secs: None,
             }),
             database_url: Some(env::var("DATABASE_URL")
                 .unwrap_or_else(|_| "sqlite:serverbox_monitor.db".to_string())),

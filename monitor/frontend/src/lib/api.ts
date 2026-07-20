@@ -1,4 +1,13 @@
-import type { Capabilities, HistoryPoint, LoginRequest, LoginResponse, StatusResponse, SystemMetrics } from '../types'
+import type {
+  Capabilities,
+  HistoryPoint,
+  LoginRequest,
+  LoginResponse,
+  SettingsPayload,
+  SettingsView,
+  StatusResponse,
+  SystemMetrics,
+} from '../types'
 import { servers } from './servers.svelte'
 
 const TIMEOUT_MS = 10_000
@@ -90,4 +99,11 @@ export const api = {
   // Platform-only, doesn't change per-sample — fetch once per server
   // connection, not on the metrics poll cadence
   getCapabilities: () => request<Capabilities>('/capabilities', {}, 'Failed to fetch capabilities'),
+  getSettings: () => request<SettingsView>('/settings', {}, 'Failed to fetch settings'),
+  updateSettings: (payload: SettingsPayload) =>
+    request<{ status: string }>(
+      '/settings',
+      { method: 'PUT', body: JSON.stringify(payload) },
+      'Failed to save settings',
+    ),
 }

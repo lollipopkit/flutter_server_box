@@ -192,3 +192,35 @@ export interface User {
 export interface ApiError {
   error: string;
 }
+
+export interface MonitoringRule {
+  name: string;
+  monitor_type: string;
+  threshold: string;
+  matcher: string;
+}
+
+export interface DataRetentionConfig {
+  metrics_days: number;
+  alerts_days: number;
+  cleanup_interval_hours: number;
+  max_db_size_mb: number;
+}
+
+/// Whitelisted, writable subset of config.toml — see monitor's settings-page
+/// plan for why jwt_secret/database_url/push are deliberately excluded
+export interface SettingsPayload {
+  interval_seconds: number;
+  extended_interval_secs: number | null;
+  idle_pause_enabled: boolean;
+  idle_pause_threshold_secs: number | null;
+  rules: MonitoringRule[];
+  data_retention: DataRetentionConfig | null;
+  cors_allowed_origins: string[];
+}
+
+/// GET response: the payload plus which of its own field names take effect
+/// immediately vs. require a monitor restart
+export interface SettingsView extends SettingsPayload {
+  live_fields: string[];
+}

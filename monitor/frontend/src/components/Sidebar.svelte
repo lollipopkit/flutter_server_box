@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ChevronsLeft, ChevronsRight, LogOut, Monitor, Pencil, Plus, Server } from '@lucide/svelte'
+  import { ChevronsLeft, ChevronsRight, LogOut, Monitor, Pencil, Plus, Server, Settings } from '@lucide/svelte'
   import { IconButton, cn } from '@serverbox/webui'
   import LocaleToggle from './LocaleToggle.svelte'
   import ServerFormModal from './ServerFormModal.svelte'
@@ -12,7 +12,13 @@
 
   function selectServer(id: string) {
     layout.mobileOpen = false
+    layout.view = 'dashboard'
     servers.select(id)
+  }
+
+  function openSettings() {
+    layout.mobileOpen = false
+    layout.view = 'settings'
   }
 
   let formOpen = $state(false)
@@ -138,6 +144,22 @@
   </nav>
 
   <div class={cn('border-t border-line px-2 py-3 space-y-1', centerCls)}>
+    <!-- Agent-level (not per-server) settings entry -->
+    <button
+      type="button"
+      class={cn(
+        'w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-left cursor-pointer transition-colors',
+        layout.view === 'settings'
+          ? 'bg-soft text-fg-strong font-medium'
+          : 'text-muted-fg hover:bg-soft/60 hover:text-fg',
+        centerCls,
+      )}
+      title={$LL.settings()}
+      onclick={openSettings}
+    >
+      <Settings class="w-4 h-4 shrink-0" />
+      <span class={labelCls}>{$LL.settings()}</span>
+    </button>
     <!-- Language + theme share one row: the select needs full width to show
          language names, so it's hidden (not shrunk) on the collapsed rail,
          leaving just the theme icon centered -->
