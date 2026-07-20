@@ -71,10 +71,13 @@ class SystemdNotifier extends _$SystemdNotifier {
       final client = _si.client;
       if (client == null) return SystemdRefreshResult.systemFailed;
 
-      final systemUnits = SystemdUnit.parseListUnits(
-        await client.execForOutput(SystemdUnitScope.system.listUnitsCmd),
-        SystemdUnitScope.system,
-      );
+      final systemRaw =
+          await client.execForOutput(SystemdUnitScope.system.listUnitsCmd);
+      final systemUnits =
+          SystemdUnit.parseListUnits(systemRaw, SystemdUnitScope.system);
+      if (_listFailed(systemRaw, systemUnits)) {
+        return SystemdRefreshResult.systemFailed;
+      }
 
       var userUnits = <SystemdUnit>[];
       var userFailed = false;
@@ -82,10 +85,7 @@ class SystemdNotifier extends _$SystemdNotifier {
         final userRaw =
             await client.execForOutput(SystemdUnitScope.user.listUnitsCmd);
         userUnits = SystemdUnit.parseListUnits(userRaw, SystemdUnitScope.user);
-        // A successful-but-empty list yields no output. Non-empty output that
-        // parses to no units means systemctl printed an error instead (e.g.
-        // no session bus), which is a failure worth surfacing.
-        userFailed = userUnits.isEmpty && userRaw.trim().isNotEmpty;
+        userFailed = _listFailed(userRaw, userUnits);
       } catch (e, s) {
         dprint('Systemd user units', e, s);
         userFailed = true;
@@ -104,6 +104,12 @@ class SystemdNotifier extends _$SystemdNotifier {
     }
   }
 }
+
+/// systemctl prints nothing for an empty list, so non-empty output that yields
+/// no units means it reported an error (no session bus, systemd not the init
+/// system, command missing) rather than an empty list.
+bool _listFailed(String raw, List<SystemdUnit> units) =>
+    units.isEmpty && raw.trim().isNotEmpty;
 
 int _compareUnits(SystemdUnit a, SystemdUnit b) {
   // user units first
