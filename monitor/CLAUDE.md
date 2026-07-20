@@ -71,6 +71,19 @@ cargo sqlx prepare
 
 Pure parsing library shared with the Flutter app via FFI (see `../doc/adr/0001-monorepo-shared-parser.md`). Owns the command manifest (`commands.rs`) and per-platform parsers (`linux.rs`, `bsd.rs`, `windows.rs`). Behavior is locked to the Dart implementation by `tests/dart_compat.rs`. No IO, no async — parsers take raw command output and return structured status.
 
+`sbm_parser::capabilities::capabilities(system)` reports, per `ServerStatus` field, whether a platform `Supported`/`NotImplemented`/`HardwareDependent`-ly collects it — mechanically derived from `commands::commands(system)` wherever a field maps 1:1 to a command key, so it can't silently drift out of sync the way an empty field used to (no signal for "platform doesn't support this" vs "no hardware" vs "not refreshed yet"). Check this before assuming a `None`/empty field is a bug.
+
+#### 已知的跨平台语义差异 (documented, not fixed — see `crates/sbm_parser/src/types.rs` and `lib.rs` doc comments for the authoritative version)
+
+Several `ServerStatus` fields share one struct shape across `SystemType::{Linux,Bsd,Windows}` but carry different semantics per platform. Fixing these would change how already-deployed instances' historical data reads, so each is deliberately left as-is and only documented:
+
+- **`cpu` (`CpuCore.user`/`idle`/...)**: Linux = real cumulative `/proc/stat` ticks (delta-over-time is correct); Bsd = an instantaneous percentage stored directly into the tick fields (never delta — the raw value already is the percentage); Windows = an instantaneous percentage *accumulated* onto the previous sample into a synthetic monotonic counter (`windows::parse_cpu`'s `prev` param). Three incompatible interpretations of the same fields — `monitor::monitoring::adapt_cpu` already branches on `SystemType` correctly; any new consumer must too.
+- **`diskio` (`DiskIoPiece.sectors_read`/`sectors_write`)**: Linux = genuine cumulative sector counters (`/proc/diskstats`); Windows = already-computed bytes/sec rate divided by 512 and stored in the same "sectors" fields — not a cumulative count at all. A naive delta-over-two-samples on Windows data double-differentiates.
+- **`sys`**: Linux uses a real distro-description parser (`common::parse_sys_version`, extracts `PRETTY_NAME`); Bsd/Windows repurpose the generic hostname-trimming helper (`common::parse_hostname`) against `uname -or`/`OsName` output — happens to work because those are single clean lines, but isn't a "system version" parser on those platforms.
+- **`uptime`**: Linux/Bsd normalize the `uptime` command's varied output via `common::parse_uptime`; Windows pre-formats the duration string in PowerShell itself and the field just passes it through — presentation shape isn't guaranteed identical across platforms.
+
+Replacing the shell-script collection path with native per-platform sampling (evaluated but not yet implemented — monitor runs directly on the monitored machine, never over SSH, so it isn't structurally forced into the script-based approach the way the SSH-based Flutter app is) would incidentally resolve the `cpu` mismatch as a side effect, since `sysinfo`'s CPU percentage has consistent semantics across platforms; the other three would still need a deliberate follow-up.
+
 ### Backend (Rust - `src/`)
 
 - **`main.rs`**: Application entry point, coordinates monitoring loop and web server

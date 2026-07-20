@@ -8,6 +8,27 @@ use std::collections::BTreeMap;
 
 /// Cumulative CPU ticks of one core (Dart `SingleCpuCore`).
 /// From /proc/stat on Linux; on BSD/Windows synthesized from one-shot percentages.
+///
+/// KNOWN CROSS-PLATFORM SEMANTIC MISMATCH (not fixed, only documented — see
+/// `monitor/CLAUDE.md`'s "已知的跨平台语义差异" section): these fields mean
+/// three different things depending on `SystemType`, despite sharing one
+/// struct shape.
+/// - Linux: real cumulative ticks straight from `/proc/stat` — a delta
+///   between two samples over the sample interval is the standard, correct
+///   way to compute usage.
+/// - Bsd: `top`/`vm_stat` only give an instantaneous percentage; that percent
+///   is stored directly into `user`/`idle` as if it were a tick count (see
+///   `bsd::parse_cpu`), so `total()` is always ~100 and a delta calculation
+///   would be meaningless — callers must use the raw percentage, not a delta.
+/// - Windows: WMI's `LoadPercentage` is also instantaneous, but
+///   `windows::parse_cpu` *accumulates* it onto the previous sample's
+///   pseudo-counters (caller-supplied `prev`) to fake a monotonic counter, so
+///   deltas work again but the absolute `user`/`idle` values are not
+///   comparable to Linux's real tick counts.
+///
+/// `monitor/src/monitoring/monitoring.rs`'s `adapt_cpu` already branches on
+/// `SystemType` to compute usage correctly per platform; any *new* caller of
+/// this struct must do the same rather than assuming Linux semantics.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CpuCore {
     /// "cpu" (summary) or "cpu0", "cpu1", ...
@@ -134,6 +155,23 @@ pub struct Conn {
 }
 
 /// Cumulative disk IO sector counters (Dart `DiskIOPiece`; no timestamp — recorded by the caller per sample)
+///
+/// KNOWN CROSS-PLATFORM SEMANTIC MISMATCH (not fixed, only documented — see
+/// `monitor/CLAUDE.md`'s "已知的跨平台语义差异" section): despite the name and
+/// doc, `sectors_read`/`sectors_write` are NOT the same kind of value on every
+/// platform.
+/// - Linux (`linux::parse_diskio`): genuine cumulative sector counters read
+///   straight from `/proc/diskstats` — a true "since boot" total.
+/// - Windows (`windows::parse_diskio`): the source command already samples
+///   WMI twice one second apart and computes a bytes/sec *rate*, which is
+///   then divided by 512 and stored into these same "sectors" fields — i.e.
+///   Windows silently returns an instantaneous rate, not a cumulative count.
+///
+/// Any caller diffing two samples to compute a rate (as this crate's design
+/// doc at the top of `lib.rs` assumes for all "raw counters") will
+/// double-differentiate Windows data. Not currently an issue because
+/// `monitor` only displays the raw value directly (no delta), but a future
+/// caller must branch on `SystemType` before doing arithmetic on this field.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DiskIoPiece {
     pub dev: String,

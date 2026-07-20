@@ -48,8 +48,21 @@ pub struct ServerStatus {
     pub net: Vec<NetIface>,
     pub temps: Temperatures,
     pub conn: Option<Conn>,
+    /// KNOWN CROSS-PLATFORM DIFFERENCE (see `monitor/CLAUDE.md`): Linux/Bsd
+    /// go through `common::parse_uptime`, which normalizes the `uptime`
+    /// command's varied output into one string shape; Windows instead
+    /// pre-formats the string in PowerShell and this field just passes it
+    /// through unparsed (reusing `common::parse_hostname` as a generic
+    /// trim-and-pass helper) — the presentation format is not guaranteed
+    /// identical across platforms.
     pub uptime: Option<String>,
-    /// System version description (PRETTY_NAME / uname / OsName)
+    /// System version description (PRETTY_NAME / uname / OsName).
+    /// KNOWN CROSS-PLATFORM DIFFERENCE: only Linux's `common::parse_sys_version`
+    /// is a real distro/version parser; Bsd/Windows repurpose
+    /// `common::parse_hostname` (a generic single-line trimmer) against
+    /// `uname -or`/`OsName` output — works today because those happen to be
+    /// single clean lines, but this field is not semantically a "hostname
+    /// parser" output on those platforms, just reused machinery.
     pub sys: Option<String>,
     pub host: Option<String>,
     pub diskio: Vec<DiskIoPiece>,
