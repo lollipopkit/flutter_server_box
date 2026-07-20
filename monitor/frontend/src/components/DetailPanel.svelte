@@ -1,10 +1,10 @@
 <script lang="ts">
+  import { ChevronDown } from '@lucide/svelte'
   import { Badge, Card } from '@serverbox/webui'
   import LineChart from './LineChart.svelte'
-  import PageHeader from './PageHeader.svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { fmtBytes, fmtBytesPerSec, fmtGpuPower, fmtPercent } from '../lib/format'
-  import type { HistoryPoint, SystemMetrics } from '../types'
+  import type { DiskDetail, DiskIoMetrics, HistoryPoint, IfaceMetrics, SystemMetrics } from '../types'
 
   export type DetailKind = 'cpu' | 'memory' | 'disk' | 'network' | 'gpu' | 'battery' | 'sensors' | 'smart'
 
@@ -12,23 +12,11 @@
     kind: DetailKind
     metrics: SystemMetrics | null
     history: HistoryPoint[]
-    onback: () => void
   }
 
-  const { kind, metrics: m, history, onback }: Props = $props()
+  const { kind, metrics: m, history }: Props = $props()
 
   const labels = $derived(history.map((p) => p.timestamp))
-
-  const titles = $derived({
-    cpu: $LL.cpuUsage(),
-    memory: $LL.memory(),
-    disk: $LL.diskUsage(),
-    network: $LL.network(),
-    gpu: $LL.gpu(),
-    battery: $LL.battery(),
-    sensors: $LL.sensors(),
-    smart: $LL.smart(),
-  })
 
   // used/total are cumulative busy/total ticks (CpuCoreTime); percent is
   // used/total, not the inverse (a prior review flagged the DB storage path
@@ -40,7 +28,82 @@
   // Detail pages backed by the slower extended collection cycle — see the
   // freshness note rendered for these below
   const extendedKinds = new Set<DetailKind>(['battery', 'sensors', 'smart'])
+
+  // Click-to-sort table state — one per list, since a page (disk) can show
+  // more than one sortable table at once
+  type SortDir = 1 | -1
+  type Sort<K extends string> = { key: K; dir: SortDir }
+
+  function toggleSort<K extends string>(current: Sort<K>, key: K): Sort<K> {
+    return current.key === key ? { key, dir: (current.dir * -1) as SortDir } : { key, dir: 1 }
+  }
+
+  type DiskSortKey = 'name' | 'used' | 'percent'
+  let diskSort = $state<Sort<DiskSortKey>>({ key: 'percent', dir: -1 })
+  const sortedDisks = $derived(
+    [...(m?.disk_details ?? [])].sort((a: DiskDetail, b: DiskDetail) => {
+      const dir = diskSort.dir
+      switch (diskSort.key) {
+        case 'name':
+          return dir * a.mount.localeCompare(b.mount)
+        case 'used':
+          return dir * (a.used - b.used)
+        case 'percent':
+          return dir * (a.usage_percent - b.usage_percent)
+      }
+    }),
+  )
+
+  type DiskIoSortKey = 'name' | 'read' | 'write'
+  let diskioSort = $state<Sort<DiskIoSortKey>>({ key: 'name', dir: 1 })
+  const sortedDiskio = $derived(
+    (m?.diskio ?? [])
+      .map((d: DiskIoMetrics) => ({ d, rate: m?.diskio_rate?.find((r) => r.dev === d.dev) }))
+      .sort((a, b) => {
+        const dir = diskioSort.dir
+        switch (diskioSort.key) {
+          case 'name':
+            return dir * a.d.dev.localeCompare(b.d.dev)
+          case 'read':
+            return dir * ((a.rate?.read_bytes_per_sec ?? 0) - (b.rate?.read_bytes_per_sec ?? 0))
+          case 'write':
+            return dir * ((a.rate?.write_bytes_per_sec ?? 0) - (b.rate?.write_bytes_per_sec ?? 0))
+        }
+      }),
+  )
+
+  type IfaceSortKey = 'name' | 'rx' | 'tx'
+  let ifaceSort = $state<Sort<IfaceSortKey>>({ key: 'name', dir: 1 })
+  const sortedIfaces = $derived(
+    [...(m?.ifaces ?? [])].sort((a: IfaceMetrics, b: IfaceMetrics) => {
+      const dir = ifaceSort.dir
+      switch (ifaceSort.key) {
+        case 'name':
+          return dir * a.name.localeCompare(b.name)
+        case 'rx':
+          return dir * (a.rx_bytes - b.rx_bytes)
+        case 'tx':
+          return dir * (a.tx_bytes - b.tx_bytes)
+      }
+    }),
+  )
 </script>
+
+{#snippet sortTh(label: string, active: boolean, dir: 1 | -1, align: 'left' | 'right', onclick: () => void)}
+  <th class={align === 'left' ? 'pr-4 text-left' : 'pl-4 text-right'}>
+    <button
+      type="button"
+      class="inline-flex items-center gap-1 py-2 font-medium text-muted-fg hover:text-fg cursor-pointer {align ===
+      'right'
+        ? 'flex-row-reverse'
+        : ''}"
+      {onclick}
+    >
+      {label}
+      <ChevronDown class="w-3 h-3 shrink-0 transition-transform {active ? '' : 'opacity-0'} {active && dir === 1 ? 'rotate-180' : ''}" />
+    </button>
+  </th>
+{/snippet}
 
 {#snippet row(label: string, value: string)}
   <div class="flex justify-between gap-4">
@@ -86,15 +149,13 @@
   </div>
 {/snippet}
 
-<PageHeader title={titles[kind]} variant="section" {onback} />
-
-<div class="space-y-6 mt-6">
+<div class="space-y-6">
   {#if extendedKinds.has(kind) && m?.extended_updated_at}
     <!-- These fields only refresh on the agent's slower extended cycle
          (CLI-tool-bound: sensors/smartctl/battery queries) — carried
          forward unchanged in between, so a plain "last updated" on the
          system info card would misleadingly look live every poll -->
-    <p class="text-xs text-faint-fg -mt-2">
+    <p class="text-xs text-faint-fg">
       {$LL.lastUpdated()}
       {new Date(m.extended_updated_at).toLocaleString()}
     </p>
@@ -102,7 +163,6 @@
 
   {#if kind === 'cpu'}
     <LineChart
-      title={$LL.usage()}
       {labels}
       series={[{ label: 'CPU', color: '#3b82f6', values: history.map((p) => p.cpu) }]}
       yMax={100}
@@ -138,7 +198,6 @@
     {/if}
   {:else if kind === 'memory'}
     <LineChart
-      title={$LL.usage()}
       {labels}
       series={[{ label: $LL.memory(), color: '#22c55e', values: history.map((p) => p.memory) }]}
       yMax={100}
@@ -163,30 +222,38 @@
       </Card>
     {/if}
   {:else if kind === 'disk'}
-    <LineChart
-      title={$LL.usage()}
-      {labels}
-      series={[{ label: $LL.diskUsage(), color: '#f59e0b', values: history.map((p) => p.disk) }]}
-      yMax={100}
-      format={fmtPercent}
-    />
-    {#if m?.diskio?.length}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
       <LineChart
-        title={$LL.diskIo()}
+        title={$LL.usage()}
         {labels}
-        series={[
-          { label: $LL.read(), color: '#0ea5e9', values: history.map((p) => p.diskio_read_speed) },
-          { label: $LL.write(), color: '#f97316', values: history.map((p) => p.diskio_write_speed) },
-        ]}
-        format={fmtBytesPerSec}
+        series={[{ label: $LL.diskUsage(), color: '#f59e0b', values: history.map((p) => p.disk) }]}
+        yMax={100}
+        format={fmtPercent}
       />
-    {/if}
+      {#if m?.diskio?.length}
+        <LineChart
+          title={$LL.diskIo()}
+          {labels}
+          series={[
+            { label: $LL.read(), color: '#0ea5e9', values: history.map((p) => p.diskio_read_speed) },
+            { label: $LL.write(), color: '#f97316', values: history.map((p) => p.diskio_write_speed) },
+          ]}
+          format={fmtBytesPerSec}
+        />
+      {/if}
+    </div>
     {#if m}
       <Card>
-        <h3 class="text-sm font-semibold text-fg-strong mb-3">{$LL.disks()}</h3>
         <table class="w-full text-sm table-fixed">
+          <thead>
+            <tr class="border-b border-line">
+              {@render sortTh($LL.disks(), diskSort.key === 'name', diskSort.dir, 'left', () => (diskSort = toggleSort(diskSort, 'name')))}
+              {@render sortTh($LL.used(), diskSort.key === 'used', diskSort.dir, 'right', () => (diskSort = toggleSort(diskSort, 'used')))}
+              <th class="pl-4 w-16"></th>
+            </tr>
+          </thead>
           <tbody class="divide-y divide-line">
-            {#each m.disk_details ?? [] as d (d.path)}
+            {#each sortedDisks as d (d.path)}
               <tr>
                 <td class="py-2 pr-4 align-top">
                   <div
@@ -216,18 +283,16 @@
            the live bytes/sec derived from it each poll (empty on the
            agent's first cycle, before there's a prior sample to diff) -->
       <Card>
-        <h3 class="text-sm font-semibold text-fg-strong mb-3">{$LL.diskIo()}</h3>
         <table class="w-full text-sm table-fixed">
           <thead>
             <tr class="border-b border-line">
-              <th class="py-2 pr-4 text-left font-medium text-muted-fg">{$LL.diskIo()}</th>
-              <th class="py-2 text-right font-medium text-muted-fg w-24 sm:w-32">{$LL.read()}</th>
-              <th class="py-2 pl-4 text-right font-medium text-muted-fg w-24 sm:w-32">{$LL.write()}</th>
+              {@render sortTh($LL.diskIo(), diskioSort.key === 'name', diskioSort.dir, 'left', () => (diskioSort = toggleSort(diskioSort, 'name')))}
+              {@render sortTh($LL.read(), diskioSort.key === 'read', diskioSort.dir, 'right', () => (diskioSort = toggleSort(diskioSort, 'read')))}
+              {@render sortTh($LL.write(), diskioSort.key === 'write', diskioSort.dir, 'right', () => (diskioSort = toggleSort(diskioSort, 'write')))}
             </tr>
           </thead>
           <tbody class="divide-y divide-line">
-            {#each m.diskio as d (d.dev)}
-              {@const rate = m?.diskio_rate?.find((r) => r.dev === d.dev)}
+            {#each sortedDiskio as { d, rate } (d.dev)}
               <tr>
                 <td class="py-2 pr-4">
                   <span class="block truncate" title={d.dev}>{d.dev}</span>
@@ -249,7 +314,6 @@
     {/if}
   {:else if kind === 'network'}
     <LineChart
-      title={$LL.network()}
       {labels}
       series={[
         { label: $LL.down(), color: '#8b5cf6', values: history.map((p) => p.net_rx_speed) },
@@ -259,17 +323,16 @@
     />
     {#if m}
       <Card>
-        <h3 class="text-sm font-semibold text-fg-strong mb-3">{$LL.interfaces()}</h3>
         <table class="w-full text-sm table-fixed">
           <thead>
             <tr class="border-b border-line">
-              <th class="py-2 pr-4 text-left font-medium text-muted-fg">{$LL.interfaces()}</th>
-              <th class="py-2 text-right font-medium text-muted-fg w-24 sm:w-32">RX</th>
-              <th class="py-2 pl-4 text-right font-medium text-muted-fg w-24 sm:w-32">TX</th>
+              {@render sortTh($LL.interfaces(), ifaceSort.key === 'name', ifaceSort.dir, 'left', () => (ifaceSort = toggleSort(ifaceSort, 'name')))}
+              {@render sortTh('RX', ifaceSort.key === 'rx', ifaceSort.dir, 'right', () => (ifaceSort = toggleSort(ifaceSort, 'rx')))}
+              {@render sortTh('TX', ifaceSort.key === 'tx', ifaceSort.dir, 'right', () => (ifaceSort = toggleSort(ifaceSort, 'tx')))}
             </tr>
           </thead>
           <tbody class="divide-y divide-line">
-            {#each m.ifaces ?? [] as iface (iface.name)}
+            {#each sortedIfaces as iface (iface.name)}
               <tr>
                 <td class="py-2 pr-4">
                   <span class="block truncate" title={iface.name}>{iface.name}</span>
@@ -303,7 +366,6 @@
          and store_metrics' single battery_percent column) — multi-battery
          machines still get per-battery current-value cards below -->
     <LineChart
-      title={$LL.usage()}
       {labels}
       series={[
         { label: $LL.battery(), color: '#84cc16', values: history.map((p) => p.battery_percent ?? 0) },

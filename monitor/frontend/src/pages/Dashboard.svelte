@@ -7,6 +7,7 @@
     HardDrive,
     MemoryStick,
     Server,
+    Settings as SettingsIcon,
     ShieldCheck,
     Network,
     CircleAlert,
@@ -22,6 +23,7 @@
   import { api } from '../lib/api'
   import { capabilitiesStore } from '../lib/capabilities.svelte'
   import { health } from '../lib/health.svelte'
+  import { layout } from '../lib/layout.svelte'
   import { displayName, servers } from '../lib/servers.svelte'
   import { fmtBytes, fmtBytesPerSec, fmtPercent } from '../lib/format'
   import { LL } from '../i18n/i18n-svelte'
@@ -161,20 +163,15 @@
   const showSensors = $derived(capabilities?.sensors !== 'not_implemented' && !!m?.sensors?.length)
   const showSmart = $derived(capabilities?.disk_smart !== 'not_implemented' && !!m?.disk_smart?.length)
 
-  // Always the server's own reported name — not user-editable — falling back
-  // to the address/id only before the server has ever reported anything
+  // Always the server's own live-reported name (config.toml's `name`, or its
+  // hostname fallback) — never a locally cached/editable one. Before the
+  // first successful poll: "This server" for the built-in same-origin entry,
+  // otherwise the address/id.
   const headerName = $derived(
-    servers.current?.id === 'local'
-      ? $LL.thisServer()
-      : (m?.server_name ?? status.data?.name ?? displayName(servers.current)),
+    m?.server_name ??
+      status.data?.name ??
+      (servers.current?.id === 'local' ? $LL.thisServer() : displayName(servers.current)),
   )
-
-  // Backfills a blank entry name (server added without one) from the data the
-  // server itself reports; applyReportedName() no-ops once a name is set
-  $effect(() => {
-    const reported = m?.server_name || status.data?.name
-    if (reported) servers.applyReportedName(servers.currentId, reported)
-  })
 
   function isCardVisible(id: CardId): boolean {
     switch (id) {
@@ -194,6 +191,19 @@
     }
   }
   const visibleCardOrder = $derived(cardOrder.filter(isCardVisible))
+
+  // Detail drill-down reuses this same header (back button + section title)
+  // instead of stacking a second header bar under it — see DetailPanel
+  const detailTitles = $derived({
+    cpu: $LL.cpuUsage(),
+    memory: $LL.memory(),
+    disk: $LL.diskUsage(),
+    network: $LL.network(),
+    gpu: $LL.gpu(),
+    battery: $LL.battery(),
+    sensors: $LL.sensors(),
+    smart: $LL.smart(),
+  })
 </script>
 
 {#if servers.authenticated && status.loading && metrics.loading}
@@ -201,25 +211,32 @@
     <Spinner size="lg" />
   </div>
 {:else}
-  <PageHeader title={headerName}>
-    {#snippet titleIcon()}
-      {@const statusCls = connected ? 'text-green-500' : 'text-red-500'}
-      {@const statusTitle = connected ? $LL.connected() : $LL.disconnected()}
-      {#if capabilities?.platform}
-        <OsIcon platform={capabilities.platform} class="w-5 h-5 shrink-0 {statusCls}" title={statusTitle} />
-      {:else}
-        <Server class="w-5 h-5 shrink-0 {statusCls}" title={statusTitle} />
-      {/if}
-    {/snippet}
-    {#snippet actions()}
-      <Badge tone={connected ? 'success' : 'danger'}>
-        {connected ? $LL.connected() : $LL.disconnected()}
-      </Badge>
-      <IconButton label={$LL.refresh()} onclick={() => window.location.reload()}>
-        <RefreshCw class="w-4 h-4" />
-      </IconButton>
-    {/snippet}
-  </PageHeader>
+  {#if detail}
+    <PageHeader title={detailTitles[detail]} onback={() => (detail = null)} />
+  {:else}
+    <PageHeader title={headerName}>
+      {#snippet titleIcon()}
+        {@const statusCls = connected ? 'text-green-500' : 'text-red-500'}
+        {@const statusTitle = connected ? $LL.connected() : $LL.disconnected()}
+        {#if capabilities?.platform}
+          <OsIcon platform={capabilities.platform} class="w-5 h-5 shrink-0 {statusCls}" title={statusTitle} />
+        {:else}
+          <Server class="w-5 h-5 shrink-0 {statusCls}" title={statusTitle} />
+        {/if}
+      {/snippet}
+      {#snippet actions()}
+        <Badge tone={connected ? 'success' : 'danger'}>
+          {connected ? $LL.connected() : $LL.disconnected()}
+        </Badge>
+        <IconButton label={$LL.serverSettings()} onclick={() => layout.navigate('server-settings')}>
+          <SettingsIcon class="w-4 h-4" />
+        </IconButton>
+        <IconButton label={$LL.refresh()} onclick={() => window.location.reload()}>
+          <RefreshCw class="w-4 h-4" />
+        </IconButton>
+      {/snippet}
+    </PageHeader>
+  {/if}
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     {#if !servers.authenticated}
@@ -242,7 +259,7 @@
     {#key detail}
       <div in:fly={{ x: detail ? 16 : -16, duration: 200, delay: 150 }} out:fly={{ x: detail ? -16 : 16, duration: 150 }}>
     {#if detail}
-      <DetailPanel kind={detail} metrics={m} {history} onback={() => (detail = null)} />
+      <DetailPanel kind={detail} metrics={m} {history} />
     {:else}
     {#snippet card(id: CardId)}
       {#if id === 'cpu'}
@@ -423,7 +440,13 @@
           {#if m.conn}
             <div class="flex justify-between">
               <span class="text-sm text-muted-fg">{$LL.connections()}</span>
-              <span class="text-sm font-medium">{m.conn.max_conn}</span>
+              <!-- Linux's /proc/net/snmp reports the SNMP MIB-II tcpMaxConn
+                   counter, which is -1 by convention when the kernel has no
+                   static connection cap (i.e. always, on Linux) — not an
+                   error, so show it as "unlimited" rather than a raw -1 -->
+              <span class="text-sm font-medium">
+                {m.conn.max_conn === -1 ? $LL.unlimited() : m.conn.max_conn}
+              </span>
             </div>
           {/if}
           <div class="flex justify-between">

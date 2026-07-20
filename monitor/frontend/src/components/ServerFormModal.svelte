@@ -46,11 +46,9 @@
 
     const id = entry ? entry.id : undefined
     if (entry) {
-      // Name isn't user-editable — the dashboard always shows the name the
-      // server itself reports; keep whatever's already stored (auto-filled)
-      servers.update(entry.id, entry.name, url)
+      servers.update(entry.id, url)
     } else {
-      servers.add('', url)
+      servers.add(url)
     }
     // add()/update() may have picked a fresh id (add) or kept the existing one
     const savedId = id ?? servers.currentId

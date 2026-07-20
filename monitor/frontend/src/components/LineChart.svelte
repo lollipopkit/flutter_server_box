@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Card } from '@serverbox/webui'
-  import { fmtTime } from '../lib/format'
+  import { fmtTime, parseTimestamp } from '../lib/format'
   import { LL } from '../i18n/i18n-svelte'
 
   export interface ChartSeries {
@@ -10,7 +10,10 @@
   }
 
   interface Props {
-    title: string
+    /// Omit when the surrounding page already says what this chart is (e.g.
+    /// a detail page's own header) — repeating it as a card title too is
+    /// just noise
+    title?: string
     /// Timestamps aligned index-by-index with every series' values
     labels: string[]
     series: ChartSeries[]
@@ -33,6 +36,19 @@
   const effectiveMax = $derived(
     yMax ?? Math.max(1, ...series.flatMap((s) => s.values)) * 1.1,
   )
+
+  // Whether this range's endpoints fall on different calendar days — once
+  // true, every timestamp rendered for this chart includes the date, not
+  // just "08:00 AM" repeated with no way to tell which day it's from
+  const spansMultipleDays = $derived(
+    labels.length > 1 &&
+      parseTimestamp(labels[0]).toDateString() !==
+        parseTimestamp(labels[labels.length - 1]).toDateString(),
+  )
+
+  function fmtAxisTime(ts: string): string {
+    return fmtTime(ts, { withDate: spansMultipleDays })
+  }
 
   function x(i: number): number {
     const n = Math.max(labels.length - 1, 1)
@@ -66,10 +82,14 @@
 
 <Card>
   <div class="flex items-center justify-between mb-2">
-    <h3 class="text-lg font-semibold text-fg-strong">{title}</h3>
+    {#if title}
+      <h3 class="text-lg font-semibold text-fg-strong">{title}</h3>
+    {:else}
+      <span></span>
+    {/if}
     {#if labels.length > 0}
       <span class="text-xs text-muted-fg">
-        {fmtTime(labels[readoutIndex])}
+        {fmtAxisTime(labels[readoutIndex])}
       </span>
     {/if}
   </div>
@@ -96,7 +116,7 @@
       viewBox="0 0 {W} {H}"
       class="w-full h-[220px] touch-none"
       role="img"
-      aria-label={title}
+      aria-label={title ?? series.map((s) => s.label).join(', ')}
       onpointermove={onPointerMove}
       onpointerleave={() => (hoverIndex = null)}
     >
@@ -151,7 +171,7 @@
         class="fill-faint-fg"
         font-size="10"
       >
-        {fmtTime(labels[0])}
+        {fmtAxisTime(labels[0])}
       </text>
       <text
         x={W - PAD.right}
@@ -160,7 +180,7 @@
         class="fill-faint-fg"
         font-size="10"
       >
-        {fmtTime(labels[labels.length - 1])}
+        {fmtAxisTime(labels[labels.length - 1])}
       </text>
     </svg>
   {/if}

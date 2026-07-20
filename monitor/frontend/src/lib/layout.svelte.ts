@@ -1,6 +1,9 @@
 /// Sidebar layout state: desktop collapse persisted, mobile drawer transient
 
-export type View = 'dashboard' | 'settings'
+/// 'panel' = browser-local prefs (language/theme), reached from the sidebar
+/// footer, independent of any server. 'server-settings' = the currently
+/// selected server's config.toml, reached from a gear icon on its dashboard.
+export type View = 'dashboard' | 'panel' | 'server-settings'
 
 class LayoutStore {
   collapsed = $state(window.localStorage.getItem('sidebar.collapsed') === '1')
@@ -8,10 +11,24 @@ class LayoutStore {
   // Agent-level (not per-server) view switch — no router, mirrors the
   // existing Dashboard/detail local-state pattern
   view = $state<View>('dashboard')
+  // Drives which way the page-level transition slides — set by the call
+  // site (navigate() vs back()) so a "back" navigation visually reverses
+  // the "forward" one instead of always sliding the same direction
+  navDirection = $state<'forward' | 'back'>('forward')
 
   toggleCollapsed() {
     this.collapsed = !this.collapsed
     window.localStorage.setItem('sidebar.collapsed', this.collapsed ? '1' : '0')
+  }
+
+  navigate(view: View) {
+    this.navDirection = 'forward'
+    this.view = view
+  }
+
+  back(view: View) {
+    this.navDirection = 'back'
+    this.view = view
   }
 }
 

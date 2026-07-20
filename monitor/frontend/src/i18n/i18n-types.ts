@@ -340,10 +340,6 @@ type RootTranslation = {
 	 */
 	powerCycleCount: string
 	/**
-	 * S​e​t​t​i​n​g​s
-	 */
-	settings: string
-	/**
 	 * C​h​a​n​g​e​s​ ​t​o​ ​c​o​l​l​e​c​t​i​o​n​ ​i​n​t​e​r​v​a​l​,​ ​r​u​l​e​s​,​ ​a​n​d​ ​C​O​R​S​ ​o​r​i​g​i​n​s​ ​r​e​q​u​i​r​e​ ​a​ ​m​o​n​i​t​o​r​ ​r​e​s​t​a​r​t​ ​t​o​ ​t​a​k​e​ ​e​f​f​e​c​t​.​ ​I​d​l​e​-​p​a​u​s​e​ ​f​i​e​l​d​s​ ​a​p​p​l​y​ ​i​m​m​e​d​i​a​t​e​l​y​ ​o​n​ ​s​a​v​e​.
 	 */
 	settingsIntro: string
@@ -388,7 +384,7 @@ type RootTranslation = {
 	 */
 	idlePause: string
 	/**
-	 * A​p​p​r​o​x​i​m​a​t​e​d​ ​f​r​o​m​ ​/​m​e​t​r​i​c​s​ ​a​n​d​ ​/​s​t​a​t​u​s​ ​p​o​l​l​i​n​g​ ​a​c​t​i​v​i​t​y​,​ ​n​o​t​ ​a​ ​r​e​a​l​ ​b​r​o​w​s​e​r​ ​v​i​s​i​b​i​l​i​t​y​ ​s​i​g​n​a​l​.​ ​O​n​l​y​ ​p​a​u​s​e​s​ ​t​h​e​ ​e​x​t​e​n​d​e​d​ ​c​y​c​l​e​ ​(​s​m​a​r​t​c​t​l​/​s​e​n​s​o​r​s​/​a​m​d​-​s​m​i​)​ ​—​ ​c​o​r​e​ ​m​e​t​r​i​c​s​ ​a​n​d​ ​a​l​e​r​t​ ​c​h​e​c​k​s​ ​a​l​w​a​y​s​ ​k​e​e​p​ ​r​u​n​n​i​n​g​.
+	 * A​p​p​r​o​x​i​m​a​t​e​d​ ​f​r​o​m​ ​`​/​m​e​t​r​i​c​s​`​ ​a​n​d​ ​`​/​s​t​a​t​u​s​`​ ​p​o​l​l​i​n​g​ ​a​c​t​i​v​i​t​y​,​ ​n​o​t​ ​a​ ​r​e​a​l​ ​b​r​o​w​s​e​r​ ​v​i​s​i​b​i​l​i​t​y​ ​s​i​g​n​a​l​.​ ​O​n​l​y​ ​p​a​u​s​e​s​ ​t​h​e​ ​e​x​t​e​n​d​e​d​ ​c​y​c​l​e​ ​(​`​s​m​a​r​t​c​t​l​`​/​`​s​e​n​s​o​r​s​`​/​`​a​m​d​-​s​m​i​`​)​ ​—​ ​c​o​r​e​ ​m​e​t​r​i​c​s​ ​a​n​d​ ​a​l​e​r​t​ ​c​h​e​c​k​s​ ​a​l​w​a​y​s​ ​k​e​e​p​ ​r​u​n​n​i​n​g​.
 	 */
 	idlePauseNote: string
 	/**
@@ -440,15 +436,15 @@ type RootTranslation = {
 	 */
 	removeOrigin: string
 	/**
-	 * t​y​p​e​:​ ​c​p​u​ ​/​ ​m​e​m​o​r​y​ ​/​ ​s​w​a​p​ ​/​ ​d​i​s​k​ ​/​ ​n​e​t​w​o​r​k​ ​/​ ​t​e​m​p​e​r​a​t​u​r​e
+	 * t​y​p​e​:​ ​`​c​p​u​`​ ​/​ ​`​m​e​m​o​r​y​`​ ​/​ ​`​s​w​a​p​`​ ​/​ ​`​d​i​s​k​`​ ​/​ ​`​n​e​t​w​o​r​k​`​ ​/​ ​`​t​e​m​p​e​r​a​t​u​r​e​`
 	 */
 	ruleHelpType: string
 	/**
-	 * m​a​t​c​h​e​r​ ​(​d​e​p​e​n​d​s​ ​o​n​ ​t​y​p​e​)​:​ ​c​p​u​ ​→​ ​"​c​p​u​"​ ​o​r​ ​"​c​p​u​0​"​,​ ​"​c​p​u​1​"​,​ ​.​.​.​;​ ​m​e​m​o​r​y​/​s​w​a​p​ ​→​ ​"​u​s​e​d​"​ ​(​d​e​f​a​u​l​t​)​ ​/​ ​"​f​r​e​e​"​ ​/​ ​"​a​v​a​i​l​"​;​ ​n​e​t​w​o​r​k​ ​→​ ​"​r​x​"​ ​/​ ​"​t​x​"​ ​(​b​l​a​n​k​ ​=​ ​c​o​m​b​i​n​e​d​)​;​ ​d​i​s​k​/​t​e​m​p​e​r​a​t​u​r​e​ ​i​g​n​o​r​e​ ​t​h​i​s​ ​f​i​e​l​d
+	 * m​a​t​c​h​e​r​ ​(​d​e​p​e​n​d​s​ ​o​n​ ​t​y​p​e​)​:​ ​c​p​u​ ​→​ ​`​c​p​u​`​ ​o​r​ ​`​c​p​u​0​`​,​ ​`​c​p​u​1​`​,​ ​.​.​.​;​ ​m​e​m​o​r​y​/​s​w​a​p​ ​→​ ​`​u​s​e​d​`​ ​(​d​e​f​a​u​l​t​)​ ​/​ ​`​f​r​e​e​`​ ​/​ ​`​a​v​a​i​l​`​;​ ​n​e​t​w​o​r​k​ ​→​ ​`​r​x​`​ ​/​ ​`​t​x​`​ ​(​b​l​a​n​k​ ​=​ ​c​o​m​b​i​n​e​d​)​;​ ​d​i​s​k​/​t​e​m​p​e​r​a​t​u​r​e​ ​i​g​n​o​r​e​ ​t​h​i​s​ ​f​i​e​l​d
 	 */
 	ruleHelpMatcher: string
 	/**
-	 * t​h​r​e​s​h​o​l​d​:​ ​c​o​m​p​a​r​a​t​o​r​ ​(​<​,​ ​<​=​,​ ​=​,​ ​>​=​,​ ​>​)​ ​+​ ​v​a​l​u​e​ ​+​ ​u​n​i​t​ ​—​ ​p​e​r​c​e​n​t​ ​u​s​e​s​ ​%​ ​(​e​.​g​.​ ​>​=​8​0​%​)​;​ ​t​e​m​p​e​r​a​t​u​r​e​ ​u​s​e​s​ ​c​ ​(​e​.​g​.​ ​>​=​7​0​c​)​;​ ​n​e​t​w​o​r​k​ ​s​p​e​e​d​ ​u​s​e​s​ ​a​ ​u​n​i​t​ ​+​ ​/​s​ ​(​e​.​g​.​ ​>​1​0​m​/​s​)​;​ ​s​i​z​e​ ​u​s​e​s​ ​j​u​s​t​ ​a​ ​u​n​i​t​ ​(​e​.​g​.​ ​<​1​0​0​m​)
+	 * t​h​r​e​s​h​o​l​d​:​ ​c​o​m​p​a​r​a​t​o​r​ ​`​(​<​,​ ​<​=​,​ ​=​,​ ​>​=​,​ ​>​)​`​ ​+​ ​v​a​l​u​e​ ​+​ ​u​n​i​t​ ​—​ ​p​e​r​c​e​n​t​ ​u​s​e​s​ ​%​ ​(​e​.​g​.​ ​`​>​=​8​0​%​`​)​;​ ​t​e​m​p​e​r​a​t​u​r​e​ ​u​s​e​s​ ​c​ ​(​e​.​g​.​ ​`​>​=​7​0​c​`​)​;​ ​n​e​t​w​o​r​k​ ​s​p​e​e​d​ ​u​s​e​s​ ​a​ ​u​n​i​t​ ​+​ ​/​s​ ​(​e​.​g​.​ ​`​>​1​0​m​/​s​`​)​;​ ​s​i​z​e​ ​u​s​e​s​ ​j​u​s​t​ ​a​ ​u​n​i​t​ ​(​e​.​g​.​ ​`​<​1​0​0​m​`​)
 	 */
 	ruleHelpThreshold: string
 	/**
@@ -463,6 +459,34 @@ type RootTranslation = {
 	 * e​.​g​.​ ​c​p​u​,​ ​u​s​e​d​,​ ​r​x
 	 */
 	ruleMatcherPlaceholder: string
+	/**
+	 * A​p​p​e​a​r​a​n​c​e
+	 */
+	appearance: string
+	/**
+	 * T​h​e​m​e
+	 */
+	theme: string
+	/**
+	 * D​e​t​a​i​l​s
+	 */
+	moreDetails: string
+	/**
+	 * S​e​r​v​e​r​ ​S​e​t​t​i​n​g​s
+	 */
+	serverSettings: string
+	/**
+	 * P​a​n​e​l​ ​S​e​t​t​i​n​g​s
+	 */
+	panelSettings: string
+	/**
+	 * U​n​l​i​m​i​t​e​d
+	 */
+	unlimited: string
+	/**
+	 * U​s​e​d
+	 */
+	used: string
 }
 
 export type TranslationFunctions = {
@@ -779,10 +803,6 @@ export type TranslationFunctions = {
 	 */
 	powerCycleCount: () => LocalizedString
 	/**
-	 * Settings
-	 */
-	settings: () => LocalizedString
-	/**
 	 * Changes to collection interval, rules, and CORS origins require a monitor restart to take effect. Idle-pause fields apply immediately on save.
 	 */
 	settingsIntro: () => LocalizedString
@@ -827,7 +847,7 @@ export type TranslationFunctions = {
 	 */
 	idlePause: () => LocalizedString
 	/**
-	 * Approximated from /metrics and /status polling activity, not a real browser visibility signal. Only pauses the extended cycle (smartctl/sensors/amd-smi) — core metrics and alert checks always keep running.
+	 * Approximated from `/metrics` and `/status` polling activity, not a real browser visibility signal. Only pauses the extended cycle (`smartctl`/`sensors`/`amd-smi`) — core metrics and alert checks always keep running.
 	 */
 	idlePauseNote: () => LocalizedString
 	/**
@@ -879,15 +899,15 @@ export type TranslationFunctions = {
 	 */
 	removeOrigin: () => LocalizedString
 	/**
-	 * type: cpu / memory / swap / disk / network / temperature
+	 * type: `cpu` / `memory` / `swap` / `disk` / `network` / `temperature`
 	 */
 	ruleHelpType: () => LocalizedString
 	/**
-	 * matcher (depends on type): cpu → "cpu" or "cpu0", "cpu1", ...; memory/swap → "used" (default) / "free" / "avail"; network → "rx" / "tx" (blank = combined); disk/temperature ignore this field
+	 * matcher (depends on type): cpu → `cpu` or `cpu0`, `cpu1`, ...; memory/swap → `used` (default) / `free` / `avail`; network → `rx` / `tx` (blank = combined); disk/temperature ignore this field
 	 */
 	ruleHelpMatcher: () => LocalizedString
 	/**
-	 * threshold: comparator (<, <=, =, >=, >) + value + unit — percent uses % (e.g. >=80%); temperature uses c (e.g. >=70c); network speed uses a unit + /s (e.g. >10m/s); size uses just a unit (e.g. <100m)
+	 * threshold: comparator `(<, <=, =, >=, >)` + value + unit — percent uses % (e.g. `>=80%`); temperature uses c (e.g. `>=70c`); network speed uses a unit + /s (e.g. `>10m/s`); size uses just a unit (e.g. `<100m`)
 	 */
 	ruleHelpThreshold: () => LocalizedString
 	/**
@@ -902,6 +922,34 @@ export type TranslationFunctions = {
 	 * e.g. cpu, used, rx
 	 */
 	ruleMatcherPlaceholder: () => LocalizedString
+	/**
+	 * Appearance
+	 */
+	appearance: () => LocalizedString
+	/**
+	 * Theme
+	 */
+	theme: () => LocalizedString
+	/**
+	 * Details
+	 */
+	moreDetails: () => LocalizedString
+	/**
+	 * Server Settings
+	 */
+	serverSettings: () => LocalizedString
+	/**
+	 * Panel Settings
+	 */
+	panelSettings: () => LocalizedString
+	/**
+	 * Unlimited
+	 */
+	unlimited: () => LocalizedString
+	/**
+	 * Used
+	 */
+	used: () => LocalizedString
 }
 
 export type Formatters = {}

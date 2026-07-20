@@ -23,8 +23,15 @@ export function parseTimestamp(ts: string): Date {
   return new Date(ts.includes('T') ? ts : ts.replace(' ', 'T'))
 }
 
-export function fmtTime(ts: string): string {
-  return parseTimestamp(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+/// Time-only by default (matches the common case: a chart range within one
+/// day). Pass withDate when the range being labeled spans multiple calendar
+/// days — otherwise e.g. a 7d chart's axis reads "08:00 AM" at both ends
+/// with no way to tell which day either point is on.
+export function fmtTime(ts: string, opts: { withDate?: boolean } = {}): string {
+  const d = parseTimestamp(ts)
+  return opts.withDate
+    ? d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
 /// GPU power comes preformatted as "<draw> / <limit>" from the agent, with the

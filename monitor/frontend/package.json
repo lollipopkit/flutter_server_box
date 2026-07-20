@@ -15,8 +15,9 @@
   },
   "dependencies": {
     "@lucide/svelte": "^1.25.0",
-    "typesafe-i18n": "^5.27.1",
-    "@serverbox/webui": "file:../../packages/webui"
+    "@serverbox/webui": "file:../../packages/webui",
+    "snarkdown": "^2.0.0",
+    "typesafe-i18n": "^5.27.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

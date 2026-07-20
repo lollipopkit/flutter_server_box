@@ -64,10 +64,15 @@ pub struct MonitoringConfig {
     /// How often to run the extended status script, which collects
     /// battery/sensors/SMART/AMD-GPU data — the only fields still bound to
     /// CLI tools after monitor's native collection cutover. `None` (the
-    /// default, and what an unset/absent config value resolves to) means
-    /// "same as `interval_seconds`" — resolve via `effective_extended_interval_secs`,
-    /// not this field directly, since `interval_seconds` isn't known until
-    /// both fields exist together.
+    /// default, and what an unset/absent config value resolves to) does
+    /// *not* mean "same as `interval_seconds`" — resolve via
+    /// `effective_extended_interval_secs`, which defaults to a much slower
+    /// cadence. Running `smartctl`/`sensors`/`amd-smi` every core cycle (e.g.
+    /// every few seconds) is real, avoidable CPU/power/battery-drain cost
+    /// for data that essentially never changes that fast; SMART reads
+    /// themselves are negligible flash wear (a diagnostic log read, not a
+    /// write), so the slower default here is about host resource use, not
+    /// disk lifespan.
     #[serde(default)]
     pub extended_interval_secs: Option<u64>,
     /// Skip the extended cycle (see `extended_interval_secs`) while no

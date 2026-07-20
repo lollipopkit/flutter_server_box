@@ -26,8 +26,12 @@ class ThemeStore {
   }
 
   cycle() {
-    this.current = ORDER[(ORDER.indexOf(this.current) + 1) % ORDER.length]
-    window.localStorage.setItem('theme', this.current)
+    this.set(ORDER[(ORDER.indexOf(this.current) + 1) % ORDER.length])
+  }
+
+  set(value: Theme) {
+    this.current = value
+    window.localStorage.setItem('theme', value)
     this.#apply()
   }
 }

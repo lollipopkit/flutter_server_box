@@ -1,11 +1,21 @@
 <script lang="ts">
   import { Plus, Trash2 } from '@lucide/svelte'
   import { Badge, Button, Card, IconButton, Input, Spinner } from '@serverbox/webui'
+  import { fade } from 'svelte/transition'
+  import Disclosure from '../components/Disclosure.svelte'
+  import Markdown from '../components/Markdown.svelte'
   import PageHeader from '../components/PageHeader.svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { api, ApiError } from '../lib/api'
+  import { serverNames } from '../lib/serverNames.svelte'
   import { displayName, servers } from '../lib/servers.svelte'
   import type { MonitoringRule, SettingsPayload, SettingsView } from '../types'
+
+  interface Props {
+    onback: () => void
+  }
+
+  const { onback }: Props = $props()
 
   let loading = $state(true)
   let loadError = $state<string | null>(null)
@@ -110,8 +120,9 @@
 {/snippet}
 
 <PageHeader
-  title={$LL.settings()}
-  subtitle={displayName(servers.current)}
+  title={$LL.serverSettings()}
+  subtitle={serverNames.byServer[servers.currentId] ?? displayName(servers.current)}
+  {onback}
   containerClass="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 w-full"
 >
   {#snippet actions()}
@@ -131,6 +142,11 @@
   {:else if loadError}
     <p class="text-sm text-danger">{loadError}</p>
   {:else if settings}
+    <!-- The API round-trip (network latency to a remote agent, unlike
+         Dashboard's already-cached poller data or Panel Settings' no-fetch
+         local prefs) can land after the page-level fly-in finishes — fade
+         this in on its own instead of popping in abruptly -->
+    <div in:fade={{ duration: 200 }} class="space-y-6">
     <p class="text-sm text-muted-fg">{$LL.settingsIntro()}</p>
 
     <Card class="space-y-4">
@@ -153,7 +169,9 @@
 
     <Card class="space-y-4">
       <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.idlePause()}</h2>
-      <p class="text-xs text-faint-fg">{$LL.idlePauseNote()}</p>
+      <Disclosure summary={$LL.moreDetails()}>
+        <Markdown text={$LL.idlePauseNote()} class="text-xs text-faint-fg" />
+      </Disclosure>
       <label class="flex items-center gap-2 text-sm">
         <input type="checkbox" bind:checked={idlePauseEnabled} class="w-4 h-4" />
         {$LL.idlePauseEnabled()}
@@ -179,11 +197,13 @@
         <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.monitoringRules()}</h2>
         {@render liveBadge('rules')}
       </div>
-      <div class="bg-soft/50 rounded-lg p-3 text-xs text-faint-fg leading-relaxed space-y-1">
-        <p>{$LL.ruleHelpType()}</p>
-        <p>{$LL.ruleHelpMatcher()}</p>
-        <p>{$LL.ruleHelpThreshold()}</p>
-      </div>
+      <Disclosure summary={$LL.moreDetails()}>
+        <div class="bg-soft/50 rounded-lg p-3 text-xs text-faint-fg leading-relaxed space-y-1">
+          <Markdown text={$LL.ruleHelpType()} />
+          <Markdown text={$LL.ruleHelpMatcher()} />
+          <Markdown text={$LL.ruleHelpThreshold()} />
+        </div>
+      </Disclosure>
       <div class="divide-y divide-line">
         {#each rules as rule, i (i)}
           <div class="py-4 first:pt-0 last:pb-0">
@@ -250,5 +270,6 @@
     {#if saveOk}
       <p class="text-sm text-success">{$LL.settingsSaved()}</p>
     {/if}
+    </div>
   {/if}
 </main>

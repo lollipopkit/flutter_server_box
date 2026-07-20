@@ -5,7 +5,6 @@
 
 export interface ServerEntry {
   id: string
-  name: string
   /// Base URL of the agent ('' = same origin)
   url: string
   token: string | null
@@ -18,10 +17,12 @@ function normalizeUrl(u: string): string {
   return u.trim().replace(/\/+$/, '')
 }
 
-/// Best-effort label for an entry that has no custom name yet (not connected/
-/// authenticated long enough for the server to have reported its own name)
+/// No locally-editable/cached name — this is only the pre-connection
+/// fallback. The real display name always comes live from the agent
+/// (config.toml's `name`, or its hostname fallback) via `serverNames`; the
+/// only way to change what's displayed is to change config.toml.
 export function displayName(entry: ServerEntry): string {
-  return entry.name || entry.url || entry.id
+  return entry.url || entry.id
 }
 
 function newId(): string {
@@ -48,7 +49,6 @@ class ServersStore {
       this.list = [
         {
           id: 'local',
-          name: 'This server',
           url: '',
           token: window.localStorage.getItem('token'),
           username: window.localStorage.getItem('username'),
@@ -70,12 +70,9 @@ class ServersStore {
     return !!this.current?.token
   }
 
-  add(name: string, url: string) {
-    // Name left blank on purpose: once connected, applyReportedName() fills
-    // it in from the server's own data (its configured/hostname-derived name)
+  add(url: string) {
     const entry: ServerEntry = {
       id: newId(),
-      name: name.trim(),
       url: normalizeUrl(url),
       token: null,
       username: null,
@@ -85,11 +82,11 @@ class ServersStore {
     this.#persist()
   }
 
-  /// Edits name/url of an existing entry (edit-server form); re-normalizes the
-  /// URL the same way add() does. A URL change drops the saved session (the
-  /// old token belongs to whatever agent was at the old URL) so the app falls
+  /// Edits the URL of an existing entry (edit-server form); re-normalizes it
+  /// the same way add() does. A URL change drops the saved session (the old
+  /// token belongs to whatever agent was at the old URL) so the app falls
   /// back to login.
-  update(id: string, name: string, url: string) {
+  update(id: string, url: string) {
     const entry = this.list.find((s) => s.id === id)
     if (!entry) return
     const normalized = normalizeUrl(url)
@@ -97,19 +94,7 @@ class ServersStore {
       entry.token = null
       entry.username = null
     }
-    entry.name = name.trim()
     entry.url = normalized
-    this.#persist()
-  }
-
-  /// Fills in a blank name from data the server itself reported (server_name
-  /// from /metrics, or the /status display name); a no-op once a name — user
-  /// given or previously auto-filled — is already set, so this never
-  /// overwrites a deliberate custom name.
-  applyReportedName(id: string, reportedName: string) {
-    const entry = this.list.find((s) => s.id === id)
-    if (!entry || entry.name || !reportedName.trim()) return
-    entry.name = reportedName.trim()
     this.#persist()
   }
 

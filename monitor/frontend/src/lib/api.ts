@@ -62,6 +62,19 @@ export async function getCapabilitiesFor(entry: ServerEntry): Promise<Capabiliti
   return res.json() as Promise<Capabilities>
 }
 
+/// Fetches status (incl. the agent-reported `name`) for an explicit server
+/// entry — used by the sidebar/settings header so the displayed name always
+/// reflects config.toml's current hostname, never a locally cached copy
+export async function getStatusFor(entry: ServerEntry): Promise<StatusResponse> {
+  if (!entry.token) throw new ApiError('Not authenticated')
+  const res = await fetch(`${entry.url}/api/v1/status`, {
+    headers: { Authorization: `Bearer ${entry.token}` },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  })
+  if (!res.ok) throw new ApiError('Failed to fetch status')
+  return res.json() as Promise<StatusResponse>
+}
+
 /// Unauthenticated reachability probe for a candidate URL (add/edit server
 /// form), independent of `servers.current` since the entry may not be saved yet
 export async function testConnection(url: string): Promise<boolean> {
