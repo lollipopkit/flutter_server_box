@@ -10,18 +10,8 @@ import 'package:server_box/data/provider/server/single.dart';
 part 'systemd.freezed.dart';
 part 'systemd.g.dart';
 
-/// Outcome of [SystemdNotifier.getUnits], so the view can inform the user
-/// about what failed.
-enum SystemdRefreshResult {
-  ok,
-
-  /// System units could not be listed at all (no client or command failed).
-  systemFailed,
-
-  /// System units loaded, but the user manager could not be queried (e.g. no
-  /// session bus over SSH). User units are simply absent.
-  userFailed,
-}
+/// Outcome of [SystemdNotifier.getUnits], so the view can report what failed.
+enum SystemdRefreshResult { ok, systemFailed, userFailed }
 
 @freezed
 abstract class SystemdState with _$SystemdState {
@@ -63,8 +53,7 @@ class SystemdNotifier extends _$SystemdNotifier {
     state = state.copyWith(scopeFilter: filter);
   }
 
-  /// Refreshes the unit list and reports what, if anything, failed so the view
-  /// can inform the user instead of silently dropping units.
+  /// System units are essential; user units are optional and only reported.
   Future<SystemdRefreshResult> getUnits() async {
     state = state.copyWith(isBusy: true);
 
@@ -90,11 +79,8 @@ class SystemdNotifier extends _$SystemdNotifier {
     }
   }
 
-  /// Lists the units of [scope].
-  ///
-  /// systemctl prints nothing for an empty list, so non-empty output that
-  /// yields no units means it reported an error (no session bus, systemd not
-  /// the init system, command missing) rather than an empty list.
+  /// systemctl prints nothing for an empty list, so non-empty output yielding
+  /// no units means it reported an error rather than an empty list.
   Future<({List<SystemdUnit> units, bool failed})> _listScope(
     SSHClient client,
     SystemdUnitScope scope,
