@@ -1,3 +1,4 @@
+import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -71,45 +72,43 @@ class SystemdNotifier extends _$SystemdNotifier {
       final client = _si.client;
       if (client == null) return SystemdRefreshResult.systemFailed;
 
-      final systemRaw =
-          await client.execForOutput(SystemdUnitScope.system.listUnitsCmd);
-      final systemUnits =
-          SystemdUnit.parseListUnits(systemRaw, SystemdUnitScope.system);
-      if (_listFailed(systemRaw, systemUnits)) {
-        return SystemdRefreshResult.systemFailed;
-      }
+      final system = await _listScope(client, SystemdUnitScope.system);
+      if (system.failed) return SystemdRefreshResult.systemFailed;
 
-      var userUnits = <SystemdUnit>[];
-      var userFailed = false;
-      try {
-        final userRaw =
-            await client.execForOutput(SystemdUnitScope.user.listUnitsCmd);
-        userUnits = SystemdUnit.parseListUnits(userRaw, SystemdUnitScope.user);
-        userFailed = _listFailed(userRaw, userUnits);
-      } catch (e, s) {
-        dprint('Systemd user units', e, s);
-        userFailed = true;
-      }
+      final user = await _listScope(client, SystemdUnitScope.user);
 
-      final units = [...userUnits, ...systemUnits]..sort(_compareUnits);
+      final units = [...user.units, ...system.units]..sort(_compareUnits);
       state = state.copyWith(units: units);
-      return userFailed
+      return user.failed
           ? SystemdRefreshResult.userFailed
           : SystemdRefreshResult.ok;
     } catch (e, s) {
-      dprint('Parse systemd', e, s);
+      dprint('Systemd refresh', e, s);
       return SystemdRefreshResult.systemFailed;
     } finally {
       state = state.copyWith(isBusy: false);
     }
   }
-}
 
-/// systemctl prints nothing for an empty list, so non-empty output that yields
-/// no units means it reported an error (no session bus, systemd not the init
-/// system, command missing) rather than an empty list.
-bool _listFailed(String raw, List<SystemdUnit> units) =>
-    units.isEmpty && raw.trim().isNotEmpty;
+  /// Lists the units of [scope].
+  ///
+  /// systemctl prints nothing for an empty list, so non-empty output that
+  /// yields no units means it reported an error (no session bus, systemd not
+  /// the init system, command missing) rather than an empty list.
+  Future<({List<SystemdUnit> units, bool failed})> _listScope(
+    SSHClient client,
+    SystemdUnitScope scope,
+  ) async {
+    try {
+      final raw = await client.execForOutput(scope.listUnitsCmd);
+      final units = SystemdUnit.parseListUnits(raw, scope);
+      return (units: units, failed: units.isEmpty && raw.trim().isNotEmpty);
+    } catch (e, s) {
+      dprint('Systemd ${scope.name} units', e, s);
+      return (units: const <SystemdUnit>[], failed: true);
+    }
+  }
+}
 
 int _compareUnits(SystemdUnit a, SystemdUnit b) {
   // user units first

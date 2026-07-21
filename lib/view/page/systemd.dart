@@ -33,19 +33,6 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
     Future.microtask(_refresh);
   }
 
-  Future<void> _refresh() async {
-    final result = await _notifier.getUnits();
-    if (!mounted) return;
-    switch (result) {
-      case SystemdRefreshResult.ok:
-        break;
-      case SystemdRefreshResult.systemFailed:
-        context.showSnackBar(libL10n.error);
-      case SystemdRefreshResult.userFailed:
-        context.showSnackBar('${libL10n.fail}: ${libL10n.user}');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -208,5 +195,20 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
         style: UIs.text11,
       ).paddingSymmetric(horizontal: 5, vertical: 1),
     ).paddingOnly(right: noPad ? 0 : 5);
+  }
+}
+
+extension _SystemdPageActions on _SystemdPageState {
+  Future<void> _refresh() async {
+    final result = await _notifier.getUnits();
+    if (!mounted) return;
+    switch (result) {
+      case SystemdRefreshResult.ok:
+        break;
+      case SystemdRefreshResult.systemFailed:
+        context.showSnackBar(libL10n.error);
+      case SystemdRefreshResult.userFailed:
+        context.showSnackBar('${libL10n.fail}: ${libL10n.user}');
+    }
   }
 }
