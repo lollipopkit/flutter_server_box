@@ -293,7 +293,7 @@ class ServerNotifier extends _$ServerNotifier {
           'Writing script for ${spi.name} (${detectedSystemType.name})',
         );
 
-        final (stdoutResult, writeScriptResult) = await state.client!.execSafe(
+        final writeScriptResult = await state.client!.execSafe(
           (session) async {
             final scriptRaw = ShellFuncManager.allScript(
               spi.custom?.cmds,
@@ -312,23 +312,30 @@ class ServerNotifier extends _$ServerNotifier {
           context: 'WriteScript<${spi.name}>',
         );
 
-        if (stdoutResult.isNotEmpty) {
+        if (writeScriptResult.stdout.isNotEmpty) {
           Loggers.app.info(
-            'Script write stdout for ${spi.name}: $stdoutResult',
+            'Script write stdout for ${spi.name}: ${writeScriptResult.stdout}',
           );
         }
 
-        if (writeScriptResult.isNotEmpty) {
+        if (writeScriptResult.stderr.isNotEmpty) {
           Loggers.app.warning(
-            'Script write stderr for ${spi.name}: $writeScriptResult',
+            'Script write stderr for ${spi.name}: ${writeScriptResult.stderr}',
           );
+        }
+
+        if (!writeScriptResult.succeeded) {
           if (detectedSystemType != SystemType.windows) {
             ShellFuncManager.switchScriptDir(
               spi.id,
               systemType: detectedSystemType,
             );
-            throw writeScriptResult;
           }
+          final output = writeScriptResult.stderr.isNotEmpty
+              ? writeScriptResult.stderr
+              : writeScriptResult.stdout;
+          throw 'Script installation exited with code '
+              '${writeScriptResult.exitCode}: $output';
         } else {
           Loggers.app.info('Script written successfully for ${spi.name}');
         }
@@ -359,6 +366,7 @@ class ServerNotifier extends _$ServerNotifier {
         );
         return;
       } catch (e) {
+        TryLimiter.inc(sid);
         final err = SSHErr(type: SSHErrType.writeScript, message: e.toString());
         final newStatus = _copyStatus(state.status, err: err, setErr: true);
         Loggers.app.warning(err);
