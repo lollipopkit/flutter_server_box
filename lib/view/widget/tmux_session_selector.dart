@@ -1,7 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/ssh/tmux/tmux_command_builder.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
 import 'package:server_box/data/ssh/tmux/tmux_window_info.dart';
@@ -30,6 +29,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   TmuxSessionInfo? _selectedSession;
   List<TmuxWindowInfo>? _windows;
   bool _loadingWindows = false;
+  int _windowRequestId = 0;
 
   @override
   void initState() {
@@ -107,6 +107,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
                 children: [
                   IconButton(
                     onPressed: () => setState(() {
+                      _windowRequestId++;
                       _selectedSession = null;
                       _windows = null;
                     }),
@@ -213,22 +214,29 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   }
 
   Future<void> _loadWindowsForSession(TmuxSessionInfo session) async {
+    final requestId = ++_windowRequestId;
     try {
       final windows = await _withTmuxSession(
         (tmuxSession) => tmuxSession.listWindows(session.name),
       );
-      if (!mounted) return;
+      if (!_isCurrentWindowRequest(requestId, session.name)) return;
       setState(() {
         _windows = windows;
         _loadingWindows = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!_isCurrentWindowRequest(requestId, session.name)) return;
       setState(() {
         _windows = [];
         _loadingWindows = false;
       });
     }
+  }
+
+  bool _isCurrentWindowRequest(int requestId, String sessionName) {
+    return mounted &&
+        requestId == _windowRequestId &&
+        _selectedSession?.name == sessionName;
   }
 
   Widget _buildWindowTile(String sessionName, TmuxWindowInfo window) {
@@ -287,28 +295,10 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   }
 
   Future<void> _killWindow(String sessionName, int windowIndex) async {
-    if (!mounted) return;
-    setState(() {
-      _loadingWindows = true;
-    });
-    try {
-      final windows = await _withTmuxSession((tmuxSession) async {
-        final cmd = TmuxCommandBuilder.killWindow(sessionName, windowIndex);
-        await tmuxSession.runCommand(cmd);
-        return tmuxSession.listWindows(sessionName);
-      });
-      if (!mounted) return;
-      setState(() {
-        _windows = windows;
-        _loadingWindows = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _windows = [];
-        _loadingWindows = false;
-      });
-    }
+    await _runWindowMutation(
+      sessionName,
+      (tmuxSession) => tmuxSession.killWindow(sessionName, windowIndex),
+    );
   }
 
   Widget _buildNewSessionInput() {
@@ -341,26 +331,47 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   }
 
   Future<void> _createWindow(String sessionName) async {
+    await _runWindowMutation(
+      sessionName,
+      (tmuxSession) => tmuxSession.newWindow(sessionName),
+    );
+  }
+
+  Future<void> _runWindowMutation(
+    String sessionName,
+    Future<bool> Function(TmuxSession tmuxSession) mutation,
+  ) async {
     if (!mounted) return;
+    final previousWindows = _windows;
+    final requestId = ++_windowRequestId;
     setState(() {
       _loadingWindows = true;
     });
     try {
       final windows = await _withTmuxSession((tmuxSession) async {
-        await tmuxSession.runCommand(TmuxCommandBuilder.newWindow(sessionName));
-        return tmuxSession.listWindows(sessionName);
+        if (!await mutation(tmuxSession)) return null;
+        return tmuxSession.tryListWindows(sessionName);
       });
-      if (!mounted) return;
+      if (!_isCurrentWindowRequest(requestId, sessionName)) return;
+      if (windows == null) {
+        setState(() {
+          _windows = previousWindows;
+          _loadingWindows = false;
+        });
+        context.showSnackBar(libL10n.fail);
+        return;
+      }
       setState(() {
         _windows = windows;
         _loadingWindows = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!_isCurrentWindowRequest(requestId, sessionName)) return;
       setState(() {
-        _windows = [];
+        _windows = previousWindows;
         _loadingWindows = false;
       });
+      context.showSnackBar(libL10n.fail);
     }
   }
 }

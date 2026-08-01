@@ -2,6 +2,7 @@ import 'package:server_box/data/ssh/tmux/tmux_launch_plan.dart';
 import 'package:server_box/data/ssh/tmux/tmux_restore_state.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
+import 'package:server_box/data/ssh/tmux/tmux_window_info.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -10,10 +11,13 @@ void main() {
       final plan = buildRestoredTmuxLaunchPlan(
         const TmuxRestoreState(sessionName: 'main', windowIndex: 2),
         const [TmuxSessionInfo(name: 'main', windows: 3, attached: true)],
+        windows: const [
+          TmuxWindowInfo(index: 2, name: 'shell', active: true, panes: 1),
+        ],
       );
 
       expect(plan.shouldLaunchTmux, isTrue);
-      expect(plan.command, "tmux -u attach-session -t 'main:2'");
+      expect(plan.command, "'tmux' -u attach-session -t 'main:2'");
       expect(plan.sessionName, 'main');
       expect(plan.windowIndex, 2);
     });
@@ -22,10 +26,24 @@ void main() {
       final plan = buildRestoredTmuxLaunchPlan(
         const TmuxRestoreState(sessionName: 'ghost'),
         const [TmuxSessionInfo(name: 'main', windows: 1, attached: false)],
+        windows: const [],
       );
 
       expect(plan.shouldLaunchTmux, isFalse);
       expect(plan.command, isNull);
+    });
+
+    test('falls back to the session when restored window is gone', () {
+      final plan = buildRestoredTmuxLaunchPlan(
+        const TmuxRestoreState(sessionName: 'main', windowIndex: 4),
+        const [TmuxSessionInfo(name: 'main', windows: 1, attached: false)],
+        windows: const [
+          TmuxWindowInfo(index: 0, name: 'shell', active: true, panes: 1),
+        ],
+      );
+
+      expect(plan.command, "'tmux' -u attach-session -t 'main'");
+      expect(plan.windowIndex, isNull);
     });
   });
 
@@ -35,7 +53,7 @@ void main() {
         const TmuxAttachExisting(sessionName: 'dev'),
       );
 
-      expect(plan.command, "tmux -u attach-session -t 'dev'");
+      expect(plan.command, "'tmux' -u attach-session -t 'dev'");
       expect(plan.sessionName, 'dev');
       expect(plan.windowIndex, isNull);
     });
@@ -45,7 +63,7 @@ void main() {
         const TmuxAttachNew(sessionName: 'server_box'),
       );
 
-      expect(plan.command, "tmux -u new-session -A -s 'server_box'");
+      expect(plan.command, "'tmux' -u new-session -A -s 'server_box'");
       expect(plan.sessionName, 'server_box');
       expect(plan.windowIndex, isNull);
     });
@@ -57,7 +75,7 @@ void main() {
         tmuxBin: tmuxBin,
       );
 
-      expect(plan.command, "$tmuxBin -u attach-session -t 'codex:0'");
+      expect(plan.command, "'$tmuxBin' -u attach-session -t 'codex:0'");
       expect(plan.sessionName, 'codex');
       expect(plan.windowIndex, 0);
     });
@@ -70,7 +88,7 @@ void main() {
 
       expect(
         plan.command,
-        "env LANG='zh_CN.UTF-8' LC_CTYPE='zh_CN.UTF-8' LC_ALL='zh_CN.UTF-8' tmux -u attach-session -t 'dev'",
+        "env LANG='zh_CN.UTF-8' LC_CTYPE='zh_CN.UTF-8' LC_ALL='zh_CN.UTF-8' 'tmux' -u attach-session -t 'dev'",
       );
     });
   });

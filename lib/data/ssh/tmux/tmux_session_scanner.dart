@@ -68,8 +68,13 @@ final class TmuxSessionScanner {
 
   /// List windows in a tmux session.
   Future<List<TmuxWindowInfo>> listWindows(String sessionName) async {
+    return await tryListWindows(sessionName) ?? const [];
+  }
+
+  /// List windows, returning null when discovery or the command fails.
+  Future<List<TmuxWindowInfo>?> tryListWindows(String sessionName) async {
     try {
-      if (!await _ensureTmuxResolved()) return [];
+      if (!await _ensureTmuxResolved()) return null;
       final result = await _shell.run(
         TmuxCommandBuilder.listWindows(
           sessionName,
@@ -78,7 +83,7 @@ final class TmuxSessionScanner {
         ),
         timeout: const Duration(seconds: 5),
       );
-      if (result.exitCode != 0) return [];
+      if (result.exitCode != 0) return null;
       return result.output
           .split('\n')
           .where((line) => line.trim().isNotEmpty)
@@ -87,8 +92,33 @@ final class TmuxSessionScanner {
           .toList();
     } catch (e, st) {
       Loggers.app.warning('Failed to list tmux windows', e, st);
-      return [];
+      return null;
     }
+  }
+
+  /// Kill a window using the discovered tmux binary and configured locale.
+  Future<bool> killWindow(String sessionName, int windowIndex) async {
+    if (!await _ensureTmuxResolved()) return false;
+    return runCommand(
+      TmuxCommandBuilder.killWindow(
+        sessionName,
+        windowIndex,
+        tmuxBin: _tmuxBin!,
+        lang: _lang,
+      ),
+    );
+  }
+
+  /// Create a window using the discovered tmux binary and configured locale.
+  Future<bool> newWindow(String sessionName) async {
+    if (!await _ensureTmuxResolved()) return false;
+    return runCommand(
+      TmuxCommandBuilder.newWindow(
+        sessionName,
+        tmuxBin: _tmuxBin!,
+        lang: _lang,
+      ),
+    );
   }
 
   /// Run a command and capture its output.

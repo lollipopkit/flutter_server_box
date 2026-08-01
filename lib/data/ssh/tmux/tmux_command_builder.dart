@@ -8,11 +8,12 @@ abstract final class TmuxCommandBuilder {
   }
 
   static String tmuxPrefix({String tmuxBin = 'tmux', String? lang}) {
+    final escapedTmuxBin = escapeArg(tmuxBin);
     if (lang == null || lang.trim().isEmpty) {
-      return tmuxBin;
+      return escapedTmuxBin;
     }
     final escapedLang = escapeArg(lang);
-    return 'env LANG=$escapedLang LC_CTYPE=$escapedLang LC_ALL=$escapedLang $tmuxBin';
+    return 'env LANG=$escapedLang LC_CTYPE=$escapedLang LC_ALL=$escapedLang $escapedTmuxBin';
   }
 
   /// Build the tmux prefix for commands attached to ServerBox's UTF-8 terminal.

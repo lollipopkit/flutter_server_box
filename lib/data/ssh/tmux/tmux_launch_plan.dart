@@ -2,6 +2,7 @@ import 'package:server_box/data/ssh/tmux/tmux_command_builder.dart';
 import 'package:server_box/data/ssh/tmux/tmux_restore_state.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
+import 'package:server_box/data/ssh/tmux/tmux_window_info.dart';
 
 final class TmuxLaunchPlan {
   final String? command;
@@ -33,6 +34,7 @@ final class TmuxLaunchPlan {
 TmuxLaunchPlan buildRestoredTmuxLaunchPlan(
   TmuxRestoreState restoreState,
   List<TmuxSessionInfo> sessions, {
+  required List<TmuxWindowInfo> windows,
   String tmuxBin = 'tmux',
   String? lang,
 }) {
@@ -42,10 +44,15 @@ TmuxLaunchPlan buildRestoredTmuxLaunchPlan(
   final exists = sessions.any((session) => session.name == sessionName);
   if (!exists) return const TmuxLaunchPlan.none();
 
-  final command = restoreState.windowIndex != null
+  final restoredWindowIndex = restoreState.windowIndex;
+  final windowIndex = restoredWindowIndex != null &&
+          windows.any((window) => window.index == restoredWindowIndex)
+      ? restoredWindowIndex
+      : null;
+  final command = windowIndex != null
       ? TmuxCommandBuilder.attachSessionWindow(
           sessionName,
-          restoreState.windowIndex!,
+          windowIndex,
           tmuxBin: tmuxBin,
           lang: lang,
         )
@@ -58,7 +65,7 @@ TmuxLaunchPlan buildRestoredTmuxLaunchPlan(
   return TmuxLaunchPlan.tmux(
     command: command,
     sessionName: sessionName,
-    windowIndex: restoreState.windowIndex,
+    windowIndex: windowIndex,
   );
 }
 
