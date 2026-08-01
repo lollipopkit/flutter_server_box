@@ -1,6 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:server_box/data/ssh/tmux/tmux_command_builder.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
 import 'package:server_box/data/ssh/tmux/tmux_window_info.dart';
@@ -29,6 +29,8 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   TmuxSessionInfo? _selectedSession;
   List<TmuxWindowInfo>? _windows;
   bool _loadingWindows = false;
+  int _windowRequestId = 0;
+  Future<void> _windowMutationQueue = Future.value();
 
   @override
   void initState() {
@@ -67,6 +69,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   }
 
   Widget _buildSessionView() {
+    final l10n = context.l10n;
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 400, maxWidth: 400),
       child: SingleChildScrollView(
@@ -75,12 +78,12 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (widget.sessions.isNotEmpty) ...[
-              _buildSectionHeader('Existing Sessions'),
+              _buildSectionHeader(l10n.tmuxExistingSessions),
               const SizedBox(height: 4),
               ...widget.sessions.map(_buildSessionTile),
               const Divider(height: 24),
             ],
-            _buildSectionHeader('New Session'),
+            _buildSectionHeader(l10n.tmuxNewSession),
             const SizedBox(height: 4),
             _buildNewSessionInput(),
           ],
@@ -90,6 +93,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   }
 
   Widget _buildWindowView() {
+    final l10n = context.l10n;
     final session = _selectedSession!;
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 400, maxWidth: 400),
@@ -104,6 +108,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
                 children: [
                   IconButton(
                     onPressed: () => setState(() {
+                      _windowRequestId++;
                       _selectedSession = null;
                       _windows = null;
                     }),
@@ -125,13 +130,13 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(child: _buildSectionHeader('Windows')),
+                Expanded(child: _buildSectionHeader(l10n.tmuxWindows)),
                 IconButton(
                   onPressed: () => _createWindow(session.name),
                   icon: const Icon(Icons.add, size: 20),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
-                  tooltip: 'New window',
+                  tooltip: l10n.tmuxNewWindow,
                 ),
               ],
             ),
@@ -144,9 +149,12 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
             else if (_windows != null && _windows!.isNotEmpty)
               ..._windows!.map((w) => _buildWindowTile(session.name, w))
             else if (_windows != null)
-              const Padding(
-                padding: EdgeInsets.all(12),
-                child: Text('No windows found', style: TextStyle(fontSize: 13)),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  l10n.tmuxNoWindowsFound,
+                  style: const TextStyle(fontSize: 13),
+                ),
               ),
           ],
         ),
@@ -165,14 +173,19 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   }
 
   Widget _buildSessionTile(TmuxSessionInfo session) {
+    final l10n = context.l10n;
     final timeParts = <String>[];
     if (session.activity != null && session.activity!.isNotEmpty) {
-      timeParts.add('active: ${session.activity}');
+      timeParts.add(l10n.tmuxActiveAt(session.activity!));
     }
     if (session.lastAttached != null && session.lastAttached!.isNotEmpty) {
-      timeParts.add('attached: ${session.lastAttached}');
+      timeParts.add(l10n.tmuxAttachedAt(session.lastAttached!));
     }
     final timeLine = timeParts.isNotEmpty ? '\n${timeParts.join(' · ')}' : '';
+    final details = <String>[
+      l10n.tmuxWindowCount(session.windows),
+      if (session.attached) l10n.tmuxAttached,
+    ];
 
     return ListTile(
       dense: true,
@@ -184,9 +197,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
       ),
       title: Text(session.name),
       subtitle: Text(
-        '${session.windows} window${session.windows == 1 ? '' : 's'}'
-        '${session.attached ? ' · attached' : ''}'
-        '$timeLine',
+        '${details.join(' · ')}$timeLine',
         style: const TextStyle(fontSize: 12),
       ),
       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
@@ -204,27 +215,50 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   }
 
   Future<void> _loadWindowsForSession(TmuxSessionInfo session) async {
+    final previousWindows = _windows;
+    final requestId = ++_windowRequestId;
     try {
       final windows = await _withTmuxSession(
-        (tmuxSession) => tmuxSession.listWindows(session.name),
+        (tmuxSession) => tmuxSession.tryListWindows(session.name),
       );
-      if (!mounted) return;
+      if (!_isCurrentWindowRequest(requestId, session.name)) return;
+      if (windows == null) {
+        setState(() {
+          _windows = previousWindows;
+          _loadingWindows = false;
+        });
+        context.showSnackBar(libL10n.fail);
+        return;
+      }
       setState(() {
         _windows = windows;
         _loadingWindows = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!_isCurrentWindowRequest(requestId, session.name)) return;
       setState(() {
-        _windows = [];
+        _windows = previousWindows;
         _loadingWindows = false;
       });
+      context.showSnackBar(libL10n.fail);
     }
   }
+
+  bool _isCurrentWindowRequest(int requestId, String sessionName) {
+    return mounted &&
+        requestId == _windowRequestId &&
+        _selectedSession?.name == sessionName;
+  }
+
   Widget _buildWindowTile(String sessionName, TmuxWindowInfo window) {
-    final subtitle = '${window.panes} pane${window.panes == 1 ? '' : 's'}'
-        '${window.active ? ' · active' : ''}'
-        '${window.activity != null && window.activity!.isNotEmpty ? '\n${window.activity}' : ''}';
+    final l10n = context.l10n;
+    final details = <String>[
+      l10n.tmuxPaneCount(window.panes),
+      if (window.active) l10n.tmuxActive,
+    ];
+    final activity = window.activity;
+    final subtitle = '${details.join(' · ')}'
+        '${activity != null && activity.isNotEmpty ? '\n$activity' : ''}';
 
     final tile = ListTile(
       dense: true,
@@ -272,28 +306,10 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   }
 
   Future<void> _killWindow(String sessionName, int windowIndex) async {
-    if (!mounted) return;
-    setState(() {
-      _loadingWindows = true;
-    });
-    try {
-      final windows = await _withTmuxSession((tmuxSession) async {
-        final cmd = TmuxCommandBuilder.killWindow(sessionName, windowIndex);
-        await tmuxSession.runCommand(cmd);
-        return tmuxSession.listWindows(sessionName);
-      });
-      if (!mounted) return;
-      setState(() {
-        _windows = windows;
-        _loadingWindows = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _windows = [];
-        _loadingWindows = false;
-      });
-    }
+    await _runWindowMutation(
+      sessionName,
+      (tmuxSession) => tmuxSession.killWindow(sessionName, windowIndex),
+    );
   }
 
   Widget _buildNewSessionInput() {
@@ -304,7 +320,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
           Expanded(
             child: Input(
               controller: _newSessionCtrl,
-              hint: 'session name',
+              hint: context.l10n.tmuxSessionName,
               suggestion: false,
               onSubmitted: (_) => _createNewSession(),
             ),
@@ -326,26 +342,57 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   }
 
   Future<void> _createWindow(String sessionName) async {
-    if (!mounted) return;
+    await _runWindowMutation(
+      sessionName,
+      (tmuxSession) => tmuxSession.newWindow(sessionName),
+    );
+  }
+
+  Future<void> _runWindowMutation(
+    String sessionName,
+    Future<bool> Function(TmuxSession tmuxSession) mutation,
+  ) {
+    _windowMutationQueue = _windowMutationQueue.then(
+      (_) => _executeWindowMutation(sessionName, mutation),
+    );
+    return _windowMutationQueue;
+  }
+
+  Future<void> _executeWindowMutation(
+    String sessionName,
+    Future<bool> Function(TmuxSession tmuxSession) mutation,
+  ) async {
+    if (!mounted || _selectedSession?.name != sessionName) return;
+    final previousWindows = _windows;
+    final requestId = ++_windowRequestId;
     setState(() {
       _loadingWindows = true;
     });
     try {
       final windows = await _withTmuxSession((tmuxSession) async {
-        await tmuxSession.runCommand(TmuxCommandBuilder.newWindow(sessionName));
-        return tmuxSession.listWindows(sessionName);
+        if (!await mutation(tmuxSession)) return null;
+        return tmuxSession.tryListWindows(sessionName);
       });
-      if (!mounted) return;
+      if (!_isCurrentWindowRequest(requestId, sessionName)) return;
+      if (windows == null) {
+        setState(() {
+          _windows = previousWindows;
+          _loadingWindows = false;
+        });
+        context.showSnackBar(libL10n.fail);
+        return;
+      }
       setState(() {
         _windows = windows;
         _loadingWindows = false;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!_isCurrentWindowRequest(requestId, sessionName)) return;
       setState(() {
-        _windows = [];
+        _windows = previousWindows;
         _loadingWindows = false;
       });
+      context.showSnackBar(libL10n.fail);
     }
   }
 }
@@ -358,6 +405,7 @@ Future<TmuxAttachChoice?> showTmuxSessionSelectorWithSkip(
   String defaultSessionName = 'server_box',
   String? initialSessionName,
 }) async {
+  final l10n = context.l10n;
   return context.showRoundDialog<TmuxAttachChoice>(
     title: 'tmux',
     child: TmuxSessionSelector(
@@ -369,7 +417,7 @@ Future<TmuxAttachChoice?> showTmuxSessionSelectorWithSkip(
     actions: [
       TextButton(
         onPressed: () => context.pop(const TmuxAttachSkip()),
-        child: const Text('Skip'),
+        child: Text(l10n.tmuxSkip),
       ),
     ],
   );

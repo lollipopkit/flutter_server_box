@@ -75,28 +75,33 @@ extension _Init on SSHPageState {
     if (_client == null || !plan.shouldLaunchTmux) return false;
 
     final oldSession = _session;
-    _session = null;
-    _cancelTerminalOutputSubscriptions();
-
-    try {
-      oldSession?.close();
-    } catch (e, st) {
-      Loggers.app.warning('Failed to close old foreground session', e, st);
-    }
-
     final pty = SSHPtyConfig(
       width: _terminal.viewWidth,
       height: _terminal.viewHeight,
     );
-    final session = await _client?.execute(
-      plan.command!,
-      pty: pty,
-      environment: _sshEnvironment,
-    );
+    SSHSession? session;
+    try {
+      session = await _client?.execute(
+        plan.command!,
+        pty: pty,
+        environment: _sshEnvironment,
+      );
+    } catch (e, st) {
+      Loggers.app.warning('Failed to replace foreground session with tmux', e, st);
+      return false;
+    }
 
     if (session == null) {
       Loggers.app.warning('Failed to replace foreground session with tmux');
       return false;
+    }
+
+    _session = null;
+    _cancelTerminalOutputSubscriptions();
+    try {
+      oldSession?.close();
+    } catch (e, st) {
+      Loggers.app.warning('Failed to close old foreground session', e, st);
     }
 
     _saveTmuxState(
@@ -116,17 +121,30 @@ extension _Init on SSHPageState {
     );
 
     if (plan.shouldLaunchTmux) {
-      _saveTmuxState(
-        sessionName: plan.sessionName!,
-        windowIndex: plan.windowIndex,
-      );
-      return _client?.execute(
-        plan.command!,
-        pty: pty,
-        environment: _sshEnvironment,
-      );
+      SSHSession? session;
+      try {
+        session = await _client?.execute(
+          plan.command!,
+          pty: pty,
+          environment: _sshEnvironment,
+        );
+      } catch (e, st) {
+        Loggers.app.warning('Failed to open foreground tmux session', e, st);
+        _clearTmuxState();
+        return null;
+      }
+      if (session != null) {
+        _saveTmuxState(
+          sessionName: plan.sessionName!,
+          windowIndex: plan.windowIndex,
+        );
+      } else {
+        _clearTmuxState();
+      }
+      return session;
     }
 
+    _clearTmuxState();
     return _client?.shell(pty: pty, environment: _sshEnvironment);
   }
 
@@ -362,6 +380,7 @@ extension _Init on SSHPageState {
       return await _reconnectAndAttachTmux(sessionName);
     } catch (e, st) {
       Loggers.app.warning('SSH reconnect threw', e, st);
+      _closeFailedReconnectClient();
       return false;
     } finally {
       if (mounted) contextSafe?.pop();
@@ -463,7 +482,10 @@ extension _Init on SSHPageState {
             .clamp(0, maxInterval.inMilliseconds)
             .toInt();
         await Future.delayed(Duration(milliseconds: backoffMs));
-        if (!mounted || _reconnectCancelled) return false;
+        if (!mounted || _reconnectCancelled) {
+          _closeFailedReconnectClient();
+          return false;
+        }
       }
       try {
         _client = await genClient(
@@ -479,19 +501,29 @@ extension _Init on SSHPageState {
         );
       }
     }
-    if (!mounted || _reconnectCancelled) return false;
+    if (!mounted || _reconnectCancelled) {
+      _closeFailedReconnectClient();
+      return false;
+    }
     if (!connected) {
       Loggers.app.info('SSH reconnect failed after $maxAttempts attempts');
+      _closeFailedReconnectClient();
       return false;
     }
 
     if (await _reattachTmux(sessionName: sessionName)) {
-      if (!mounted) return true;
+      if (!mounted || _reconnectCancelled) {
+        _closeFailedReconnectClient();
+        return false;
+      }
       _setupDiscontinuityTimer();
       widget.args.focusNode?.requestFocus();
       return true;
     }
-    if (!mounted) return false;
+    if (!mounted || _reconnectCancelled) {
+      _closeFailedReconnectClient();
+      return false;
+    }
 
     // tmux wasn't restorable (unavailable or session gone) — fall back to a
     // raw shell so the terminal remains usable instead of being left blank.
@@ -506,8 +538,9 @@ extension _Init on SSHPageState {
       height: _terminal.viewHeight,
     );
     final shell = await _client?.shell(pty: pty, environment: _sshEnvironment);
-    if (shell == null) {
-      _writeLn(libL10n.fail);
+    if (shell == null || !mounted || _reconnectCancelled) {
+      if (mounted) _writeLn(libL10n.fail);
+      _closeFailedReconnectClient();
       return false;
     }
     _bindForegroundSession(shell);
@@ -548,7 +581,15 @@ extension _Init on SSHPageState {
         return false;
       }
 
-      final windowIndex = _tmuxCurrentWindow;
+      final restoredWindowIndex = _tmuxCurrentWindow;
+      final windows = restoredWindowIndex == null
+          ? const <TmuxWindowInfo>[]
+          : await control.tryListWindows(sessionName) ??
+                const <TmuxWindowInfo>[];
+      final windowIndex = validateRestoredWindowIndex(
+        restoredWindowIndex,
+        windows,
+      );
       final command = windowIndex != null
           ? TmuxCommandBuilder.attachSessionWindow(
               sessionName,
@@ -593,6 +634,18 @@ extension _Init on SSHPageState {
     _restorableTmuxSession.value = null;
     _restorableTmuxWindow.value = null;
     widget.args.onTmuxStateChanged?.call();
+  }
+
+  void _closeFailedReconnectClient() {
+    _session = null;
+    _cancelTerminalOutputSubscriptions();
+    final failedClient = _client;
+    _client = null;
+    try {
+      failedClient?.close();
+    } catch (e, st) {
+      Loggers.app.warning('Failed to close unsuccessful SSH reconnect', e, st);
+    }
   }
 
   void _writeLn(String p0) {
@@ -670,6 +723,7 @@ extension _Init on SSHPageState {
           : const <TmuxSessionInfo>[];
 
       final restoredPlan = await _buildRestoredForegroundLaunchPlan(
+        tmuxSession,
         sessions,
         tmuxBin: tmuxBin,
         lang: _tmuxLang,
@@ -700,6 +754,7 @@ extension _Init on SSHPageState {
   }
 
   Future<TmuxLaunchPlan> _buildRestoredForegroundLaunchPlan(
+    TmuxSession tmuxSession,
     List<TmuxSessionInfo> sessions, {
     required String tmuxBin,
     required String? lang,
@@ -707,16 +762,27 @@ extension _Init on SSHPageState {
     final restoredState = _restoreTmuxState;
     if (!restoredState.hasSession) return const TmuxLaunchPlan.none();
 
+    final sessionExists = sessions.any(
+      (session) => session.name == restoredState.sessionName,
+    );
+    if (!sessionExists) return const TmuxLaunchPlan.none();
+
+    final windows = restoredState.windowIndex == null
+        ? const <TmuxWindowInfo>[]
+        : await tmuxSession.tryListWindows(restoredState.sessionName!) ??
+              const <TmuxWindowInfo>[];
+
     final restoredPlan = buildRestoredTmuxLaunchPlan(
       restoredState,
       sessions,
+      windows: windows,
       tmuxBin: tmuxBin,
       lang: lang,
     );
     if (restoredPlan.shouldLaunchTmux) {
       _logTmuxInfo(
         'Restoring tmux session "${restoredState.sessionName}"'
-        '${restoredState.windowIndex != null ? ' window ${restoredState.windowIndex}' : ''}',
+        '${restoredPlan.windowIndex != null ? ' window ${restoredPlan.windowIndex}' : ''}',
       );
       return restoredPlan;
     }
@@ -768,7 +834,7 @@ extension _Init on SSHPageState {
     try {
       final available = await tmuxSession.isAvailable;
       if (!available || !mounted) {
-        if (mounted) context.showSnackBar('tmux not available');
+        if (mounted) context.showSnackBar(context.l10n.tmuxNotAvailable);
         return;
       }
       final tmuxBin = tmuxSession.scanner.tmuxBin ?? 'tmux';

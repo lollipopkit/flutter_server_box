@@ -1794,6 +1794,126 @@ abstract class AppLocalizations {
   /// **'Port Forward (Beta)'**
   String get portForwardBetaTitle;
 
+  /// No description provided for @tmuxAutoAttach.
+  ///
+  /// In en, this message translates to:
+  /// **'tmux auto-attach'**
+  String get tmuxAutoAttach;
+
+  /// No description provided for @tmuxAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto tmux'**
+  String get tmuxAuto;
+
+  /// No description provided for @tmuxAutoTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically start or attach tmux when connecting over SSH'**
+  String get tmuxAutoTip;
+
+  /// No description provided for @tmuxSessionSelector.
+  ///
+  /// In en, this message translates to:
+  /// **'Session selector'**
+  String get tmuxSessionSelector;
+
+  /// No description provided for @tmuxSessionSelectorTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the session picker when connecting'**
+  String get tmuxSessionSelectorTip;
+
+  /// No description provided for @tmuxDefaultSessionName.
+  ///
+  /// In en, this message translates to:
+  /// **'Default session name'**
+  String get tmuxDefaultSessionName;
+
+  /// No description provided for @tmuxSessionName.
+  ///
+  /// In en, this message translates to:
+  /// **'Session name'**
+  String get tmuxSessionName;
+
+  /// No description provided for @tmuxExistingSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing sessions'**
+  String get tmuxExistingSessions;
+
+  /// No description provided for @tmuxNewSession.
+  ///
+  /// In en, this message translates to:
+  /// **'New session'**
+  String get tmuxNewSession;
+
+  /// No description provided for @tmuxWindows.
+  ///
+  /// In en, this message translates to:
+  /// **'Windows'**
+  String get tmuxWindows;
+
+  /// No description provided for @tmuxNewWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'New window'**
+  String get tmuxNewWindow;
+
+  /// No description provided for @tmuxNoWindowsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No windows found'**
+  String get tmuxNoWindowsFound;
+
+  /// No description provided for @tmuxWindowCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 window} other{{count} windows}}'**
+  String tmuxWindowCount(int count);
+
+  /// No description provided for @tmuxPaneCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 pane} other{{count} panes}}'**
+  String tmuxPaneCount(int count);
+
+  /// No description provided for @tmuxAttached.
+  ///
+  /// In en, this message translates to:
+  /// **'Attached'**
+  String get tmuxAttached;
+
+  /// No description provided for @tmuxActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get tmuxActive;
+
+  /// No description provided for @tmuxActiveAt.
+  ///
+  /// In en, this message translates to:
+  /// **'active: {time}'**
+  String tmuxActiveAt(String time);
+
+  /// No description provided for @tmuxAttachedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'attached: {time}'**
+  String tmuxAttachedAt(String time);
+
+  /// No description provided for @tmuxSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get tmuxSkip;
+
+  /// No description provided for @tmuxNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'tmux is not available'**
+  String get tmuxNotAvailable;
+
   /// No description provided for @systemd.
   ///
   /// In en, this message translates to:

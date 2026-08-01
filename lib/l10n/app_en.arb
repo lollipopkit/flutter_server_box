@@ -292,5 +292,53 @@
   "serverHistory": "Server history",
   "clearHistory": "Clear history",
   "portForwardBetaTitle": "Port Forward (Beta)",
+  "tmuxAutoAttach": "tmux auto-attach",
+  "tmuxAuto": "Auto tmux",
+  "tmuxAutoTip": "Automatically start or attach tmux when connecting over SSH",
+  "tmuxSessionSelector": "Session selector",
+  "tmuxSessionSelectorTip": "Show the session picker when connecting",
+  "tmuxDefaultSessionName": "Default session name",
+  "tmuxSessionName": "Session name",
+  "tmuxExistingSessions": "Existing sessions",
+  "tmuxNewSession": "New session",
+  "tmuxWindows": "Windows",
+  "tmuxNewWindow": "New window",
+  "tmuxNoWindowsFound": "No windows found",
+  "tmuxWindowCount": "{count, plural, one{1 window} other{{count} windows}}",
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tmuxPaneCount": "{count, plural, one{1 pane} other{{count} panes}}",
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tmuxAttached": "Attached",
+  "tmuxActive": "Active",
+  "tmuxActiveAt": "active: {time}",
+  "@tmuxActiveAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "tmuxAttachedAt": "attached: {time}",
+  "@tmuxAttachedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "tmuxSkip": "Skip",
+  "tmuxNotAvailable": "tmux is not available",
   "systemd": "Systemd"
 }
