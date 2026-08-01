@@ -4,8 +4,8 @@
 	branch = master
 [submodule "xterm"]
 	path = packages/xterm
-	url = https://github.com/LittleWool/xterm.dart
-	branch = fix/windows-ime-input
+	url = https://github.com/lollipopkit/xterm.dart
+	branch = master
 [submodule "fl_lib"]
 	path = packages/fl_lib
 	url = https://github.com/lollipopkit/fl_lib
