@@ -121,11 +121,18 @@ extension _Init on SSHPageState {
     );
 
     if (plan.shouldLaunchTmux) {
-      final session = await _client?.execute(
-        plan.command!,
-        pty: pty,
-        environment: _sshEnvironment,
-      );
+      SSHSession? session;
+      try {
+        session = await _client?.execute(
+          plan.command!,
+          pty: pty,
+          environment: _sshEnvironment,
+        );
+      } catch (e, st) {
+        Loggers.app.warning('Failed to open foreground tmux session', e, st);
+        _clearTmuxState();
+        return null;
+      }
       if (session != null) {
         _saveTmuxState(
           sessionName: plan.sessionName!,
@@ -579,10 +586,10 @@ extension _Init on SSHPageState {
           ? const <TmuxWindowInfo>[]
           : await control.tryListWindows(sessionName) ??
                 const <TmuxWindowInfo>[];
-      final windowIndex = restoredWindowIndex != null &&
-              windows.any((window) => window.index == restoredWindowIndex)
-          ? restoredWindowIndex
-          : null;
+      final windowIndex = validateRestoredWindowIndex(
+        restoredWindowIndex,
+        windows,
+      );
       final command = windowIndex != null
           ? TmuxCommandBuilder.attachSessionWindow(
               sessionName,

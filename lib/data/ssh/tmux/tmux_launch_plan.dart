@@ -31,6 +31,16 @@ final class TmuxLaunchPlan {
   bool get shouldLaunchTmux => command != null && sessionName != null;
 }
 
+int? validateRestoredWindowIndex(
+  int? restoredWindowIndex,
+  List<TmuxWindowInfo> windows,
+) {
+  if (restoredWindowIndex == null) return null;
+  return windows.any((window) => window.index == restoredWindowIndex)
+      ? restoredWindowIndex
+      : null;
+}
+
 TmuxLaunchPlan buildRestoredTmuxLaunchPlan(
   TmuxRestoreState restoreState,
   List<TmuxSessionInfo> sessions, {
@@ -44,11 +54,10 @@ TmuxLaunchPlan buildRestoredTmuxLaunchPlan(
   final exists = sessions.any((session) => session.name == sessionName);
   if (!exists) return const TmuxLaunchPlan.none();
 
-  final restoredWindowIndex = restoreState.windowIndex;
-  final windowIndex = restoredWindowIndex != null &&
-          windows.any((window) => window.index == restoredWindowIndex)
-      ? restoredWindowIndex
-      : null;
+  final windowIndex = validateRestoredWindowIndex(
+    restoreState.windowIndex,
+    windows,
+  );
   final command = windowIndex != null
       ? TmuxCommandBuilder.attachSessionWindow(
           sessionName,

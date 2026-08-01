@@ -215,12 +215,21 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   }
 
   Future<void> _loadWindowsForSession(TmuxSessionInfo session) async {
+    final previousWindows = _windows;
     final requestId = ++_windowRequestId;
     try {
       final windows = await _withTmuxSession(
-        (tmuxSession) => tmuxSession.listWindows(session.name),
+        (tmuxSession) => tmuxSession.tryListWindows(session.name),
       );
       if (!_isCurrentWindowRequest(requestId, session.name)) return;
+      if (windows == null) {
+        setState(() {
+          _windows = previousWindows;
+          _loadingWindows = false;
+        });
+        context.showSnackBar(libL10n.fail);
+        return;
+      }
       setState(() {
         _windows = windows;
         _loadingWindows = false;
@@ -228,9 +237,10 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
     } catch (_) {
       if (!_isCurrentWindowRequest(requestId, session.name)) return;
       setState(() {
-        _windows = [];
+        _windows = previousWindows;
         _loadingWindows = false;
       });
+      context.showSnackBar(libL10n.fail);
     }
   }
 
