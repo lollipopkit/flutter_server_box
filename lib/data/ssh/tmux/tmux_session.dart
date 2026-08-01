@@ -58,8 +58,8 @@ final class TmuxSession {
   /// Generate the shell command to execute for tmux attachment.
   ///
   /// Returns the command string to prepend to the terminal session.
-  /// For existing sessions: `tmux attach-session -t <name>`
-  /// For new sessions: `tmux new-session -s <name>`
+  /// For existing sessions: `tmux -u attach-session -t <name>`
+  /// For new sessions: `tmux -u new-session -s <name>`
   /// For skip: returns null (no tmux command).
   String? buildAttachCommand(
     TmuxAttachChoice choice, {

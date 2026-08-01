@@ -13,7 +13,7 @@ void main() {
       );
 
       expect(plan.shouldLaunchTmux, isTrue);
-      expect(plan.command, "tmux attach-session -t 'main:2'");
+      expect(plan.command, "tmux -u attach-session -t 'main:2'");
       expect(plan.sessionName, 'main');
       expect(plan.windowIndex, 2);
     });
@@ -35,7 +35,7 @@ void main() {
         const TmuxAttachExisting(sessionName: 'dev'),
       );
 
-      expect(plan.command, "tmux attach-session -t 'dev'");
+      expect(plan.command, "tmux -u attach-session -t 'dev'");
       expect(plan.sessionName, 'dev');
       expect(plan.windowIndex, isNull);
     });
@@ -45,7 +45,7 @@ void main() {
         const TmuxAttachNew(sessionName: 'server_box'),
       );
 
-      expect(plan.command, "tmux new-session -A -s 'server_box'");
+      expect(plan.command, "tmux -u new-session -A -s 'server_box'");
       expect(plan.sessionName, 'server_box');
       expect(plan.windowIndex, isNull);
     });
@@ -57,7 +57,7 @@ void main() {
         tmuxBin: tmuxBin,
       );
 
-      expect(plan.command, "$tmuxBin attach-session -t 'codex:0'");
+      expect(plan.command, "$tmuxBin -u attach-session -t 'codex:0'");
       expect(plan.sessionName, 'codex');
       expect(plan.windowIndex, 0);
     });
@@ -70,7 +70,7 @@ void main() {
 
       expect(
         plan.command,
-        "env LANG='zh_CN.UTF-8' LC_CTYPE='zh_CN.UTF-8' LC_ALL='zh_CN.UTF-8' tmux attach-session -t 'dev'",
+        "env LANG='zh_CN.UTF-8' LC_CTYPE='zh_CN.UTF-8' LC_ALL='zh_CN.UTF-8' tmux -u attach-session -t 'dev'",
       );
     });
   });

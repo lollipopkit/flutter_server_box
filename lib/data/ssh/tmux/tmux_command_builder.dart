@@ -15,13 +15,21 @@ abstract final class TmuxCommandBuilder {
     return 'env LANG=$escapedLang LC_CTYPE=$escapedLang LC_ALL=$escapedLang $tmuxBin';
   }
 
+  /// Build the tmux prefix for commands attached to ServerBox's UTF-8 terminal.
+  static String _tmuxClientPrefix({
+    String tmuxBin = 'tmux',
+    String? lang,
+  }) {
+    return '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} -u';
+  }
+
   /// Build the attach command for an existing session.
   static String attachSession(
     String sessionName, {
     String tmuxBin = 'tmux',
     String? lang,
   }) {
-    return '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} attach-session -t ${escapeArg(sessionName)}';
+    return '${_tmuxClientPrefix(tmuxBin: tmuxBin, lang: lang)} attach-session -t ${escapeArg(sessionName)}';
   }
 
   /// Build the attach command targeting a specific window.
@@ -31,7 +39,7 @@ abstract final class TmuxCommandBuilder {
     String tmuxBin = 'tmux',
     String? lang,
   }) {
-    return '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} attach-session -t ${escapeArg('$sessionName:$windowIndex')}';
+    return '${_tmuxClientPrefix(tmuxBin: tmuxBin, lang: lang)} attach-session -t ${escapeArg('$sessionName:$windowIndex')}';
   }
 
   /// Build the new-session command.
@@ -40,7 +48,7 @@ abstract final class TmuxCommandBuilder {
     String tmuxBin = 'tmux',
     String? lang,
   }) {
-    return '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} new-session -s ${escapeArg(sessionName)}';
+    return '${_tmuxClientPrefix(tmuxBin: tmuxBin, lang: lang)} new-session -s ${escapeArg(sessionName)}';
   }
 
   /// Build the new-session -A command (attach or create).
@@ -49,7 +57,7 @@ abstract final class TmuxCommandBuilder {
     String tmuxBin = 'tmux',
     String? lang,
   }) {
-    return '${tmuxPrefix(tmuxBin: tmuxBin, lang: lang)} new-session -A -s ${escapeArg(sessionName)}';
+    return '${_tmuxClientPrefix(tmuxBin: tmuxBin, lang: lang)} new-session -A -s ${escapeArg(sessionName)}';
   }
 
   /// Build the kill-session command.

@@ -14,14 +14,14 @@ void main() {
     test('attachSession builds correct command', () {
       expect(
         TmuxCommandBuilder.attachSession('main'),
-        "tmux attach-session -t 'main'",
+        "tmux -u attach-session -t 'main'",
       );
     });
 
     test('attachSessionWindow builds correct command', () {
       expect(
         TmuxCommandBuilder.attachSessionWindow('main', 2),
-        "tmux attach-session -t 'main:2'",
+        "tmux -u attach-session -t 'main:2'",
       );
     });
 
@@ -29,26 +29,29 @@ void main() {
       const tmuxBin = '/home/linuxbrew/.linuxbrew/bin/tmux';
       expect(
         TmuxCommandBuilder.attachSession('main', tmuxBin: tmuxBin),
-        "$tmuxBin attach-session -t 'main'",
+        "$tmuxBin -u attach-session -t 'main'",
       );
       expect(
         TmuxCommandBuilder.attachSessionWindow('main', 2, tmuxBin: tmuxBin),
-        "$tmuxBin attach-session -t 'main:2'",
+        "$tmuxBin -u attach-session -t 'main:2'",
       );
       expect(
         TmuxCommandBuilder.newSessionOrAttach('server_box', tmuxBin: tmuxBin),
-        "$tmuxBin new-session -A -s 'server_box'",
+        "$tmuxBin -u new-session -A -s 'server_box'",
       );
     });
 
     test('newSession builds correct command', () {
-      expect(TmuxCommandBuilder.newSession('dev'), "tmux new-session -s 'dev'");
+      expect(
+        TmuxCommandBuilder.newSession('dev'),
+        "tmux -u new-session -s 'dev'",
+      );
     });
 
     test('newSessionOrAttach builds correct command', () {
       expect(
         TmuxCommandBuilder.newSessionOrAttach('server_box'),
-        "tmux new-session -A -s 'server_box'",
+        "tmux -u new-session -A -s 'server_box'",
       );
     });
 
@@ -89,7 +92,7 @@ void main() {
     test('commands include locale only when lang is explicit', () {
       expect(
         TmuxCommandBuilder.attachSession('main', lang: 'C.UTF-8'),
-        "env LANG='C.UTF-8' LC_CTYPE='C.UTF-8' LC_ALL='C.UTF-8' tmux attach-session -t 'main'",
+        "env LANG='C.UTF-8' LC_CTYPE='C.UTF-8' LC_ALL='C.UTF-8' tmux -u attach-session -t 'main'",
       );
       expect(TmuxCommandBuilder.tmuxPrefix(lang: ''), 'tmux');
     });
@@ -101,14 +104,14 @@ void main() {
     test('attachSession handles special characters', () {
       expect(
         TmuxCommandBuilder.attachSession('my session'),
-        "tmux attach-session -t 'my session'",
+        "tmux -u attach-session -t 'my session'",
       );
     });
 
     test('newSession handles special characters in name', () {
       expect(
         TmuxCommandBuilder.newSession("user's-work"),
-        "tmux new-session -s 'user'\\''s-work'",
+        "tmux -u new-session -s 'user'\\''s-work'",
       );
     });
   });
