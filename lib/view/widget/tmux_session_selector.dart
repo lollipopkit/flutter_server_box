@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/ssh/tmux/tmux_command_builder.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session_info.dart';
@@ -67,6 +68,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   }
 
   Widget _buildSessionView() {
+    final l10n = context.l10n;
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 400, maxWidth: 400),
       child: SingleChildScrollView(
@@ -75,12 +77,12 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (widget.sessions.isNotEmpty) ...[
-              _buildSectionHeader('Existing Sessions'),
+              _buildSectionHeader(l10n.tmuxExistingSessions),
               const SizedBox(height: 4),
               ...widget.sessions.map(_buildSessionTile),
               const Divider(height: 24),
             ],
-            _buildSectionHeader('New Session'),
+            _buildSectionHeader(l10n.tmuxNewSession),
             const SizedBox(height: 4),
             _buildNewSessionInput(),
           ],
@@ -90,6 +92,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   }
 
   Widget _buildWindowView() {
+    final l10n = context.l10n;
     final session = _selectedSession!;
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 400, maxWidth: 400),
@@ -125,13 +128,13 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(child: _buildSectionHeader('Windows')),
+                Expanded(child: _buildSectionHeader(l10n.tmuxWindows)),
                 IconButton(
                   onPressed: () => _createWindow(session.name),
                   icon: const Icon(Icons.add, size: 20),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
-                  tooltip: 'New window',
+                  tooltip: l10n.tmuxNewWindow,
                 ),
               ],
             ),
@@ -144,9 +147,12 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
             else if (_windows != null && _windows!.isNotEmpty)
               ..._windows!.map((w) => _buildWindowTile(session.name, w))
             else if (_windows != null)
-              const Padding(
-                padding: EdgeInsets.all(12),
-                child: Text('No windows found', style: TextStyle(fontSize: 13)),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  l10n.tmuxNoWindowsFound,
+                  style: const TextStyle(fontSize: 13),
+                ),
               ),
           ],
         ),
@@ -165,14 +171,19 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   }
 
   Widget _buildSessionTile(TmuxSessionInfo session) {
+    final l10n = context.l10n;
     final timeParts = <String>[];
     if (session.activity != null && session.activity!.isNotEmpty) {
-      timeParts.add('active: ${session.activity}');
+      timeParts.add(l10n.tmuxActiveAt(session.activity!));
     }
     if (session.lastAttached != null && session.lastAttached!.isNotEmpty) {
-      timeParts.add('attached: ${session.lastAttached}');
+      timeParts.add(l10n.tmuxAttachedAt(session.lastAttached!));
     }
     final timeLine = timeParts.isNotEmpty ? '\n${timeParts.join(' · ')}' : '';
+    final details = <String>[
+      l10n.tmuxWindowCount(session.windows),
+      if (session.attached) l10n.tmuxAttached,
+    ];
 
     return ListTile(
       dense: true,
@@ -184,9 +195,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
       ),
       title: Text(session.name),
       subtitle: Text(
-        '${session.windows} window${session.windows == 1 ? '' : 's'}'
-        '${session.attached ? ' · attached' : ''}'
-        '$timeLine',
+        '${details.join(' · ')}$timeLine',
         style: const TextStyle(fontSize: 12),
       ),
       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
@@ -221,10 +230,16 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
       });
     }
   }
+
   Widget _buildWindowTile(String sessionName, TmuxWindowInfo window) {
-    final subtitle = '${window.panes} pane${window.panes == 1 ? '' : 's'}'
-        '${window.active ? ' · active' : ''}'
-        '${window.activity != null && window.activity!.isNotEmpty ? '\n${window.activity}' : ''}';
+    final l10n = context.l10n;
+    final details = <String>[
+      l10n.tmuxPaneCount(window.panes),
+      if (window.active) l10n.tmuxActive,
+    ];
+    final activity = window.activity;
+    final subtitle = '${details.join(' · ')}'
+        '${activity != null && activity.isNotEmpty ? '\n$activity' : ''}';
 
     final tile = ListTile(
       dense: true,
@@ -304,7 +319,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
           Expanded(
             child: Input(
               controller: _newSessionCtrl,
-              hint: 'session name',
+              hint: context.l10n.tmuxSessionName,
               suggestion: false,
               onSubmitted: (_) => _createNewSession(),
             ),
@@ -358,6 +373,7 @@ Future<TmuxAttachChoice?> showTmuxSessionSelectorWithSkip(
   String defaultSessionName = 'server_box',
   String? initialSessionName,
 }) async {
+  final l10n = context.l10n;
   return context.showRoundDialog<TmuxAttachChoice>(
     title: 'tmux',
     child: TmuxSessionSelector(
@@ -369,7 +385,7 @@ Future<TmuxAttachChoice?> showTmuxSessionSelectorWithSkip(
     actions: [
       TextButton(
         onPressed: () => context.pop(const TmuxAttachSkip()),
-        child: const Text('Skip'),
+        child: Text(l10n.tmuxSkip),
       ),
     ],
   );
