@@ -30,6 +30,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   List<TmuxWindowInfo>? _windows;
   bool _loadingWindows = false;
   int _windowRequestId = 0;
+  Future<void> _windowMutationQueue = Future.value();
 
   @override
   void initState() {
@@ -340,8 +341,18 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
   Future<void> _runWindowMutation(
     String sessionName,
     Future<bool> Function(TmuxSession tmuxSession) mutation,
+  ) {
+    _windowMutationQueue = _windowMutationQueue.then(
+      (_) => _executeWindowMutation(sessionName, mutation),
+    );
+    return _windowMutationQueue;
+  }
+
+  Future<void> _executeWindowMutation(
+    String sessionName,
+    Future<bool> Function(TmuxSession tmuxSession) mutation,
   ) async {
-    if (!mounted) return;
+    if (!mounted || _selectedSession?.name != sessionName) return;
     final previousWindows = _windows;
     final requestId = ++_windowRequestId;
     setState(() {
