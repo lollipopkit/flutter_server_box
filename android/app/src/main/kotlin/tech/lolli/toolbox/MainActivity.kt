@@ -23,6 +23,7 @@ class MainActivity: FlutterFragmentActivity() {
     private val ACTION_STOP_ALL_CONNECTIONS = "tech.lolli.toolbox.STOP_ALL_CONNECTIONS"
     private var stopAllReceiver: BroadcastReceiver? = null
     private var disableImpeller = false
+    private var ownsFlutterEngine = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val graphicsCompatibility = ImpellerCompatibility.check(this)
@@ -38,11 +39,13 @@ class MainActivity: FlutterFragmentActivity() {
 
     override fun provideFlutterEngine(context: Context): FlutterEngine? {
         if (!disableImpeller) return null
-        return FlutterEngine(context, arrayOf(ARG_DISABLE_IMPELLER), true, true)
+        val flutterEngine = FlutterEngine(context, arrayOf(ARG_DISABLE_IMPELLER), true, true)
+        ownsFlutterEngine = true
+        return flutterEngine
     }
 
     override fun shouldDestroyEngineWithHost(): Boolean {
-        return disableImpeller || super.shouldDestroyEngineWithHost()
+        return ownsFlutterEngine || super.shouldDestroyEngineWithHost()
     }
 
     private companion object {
