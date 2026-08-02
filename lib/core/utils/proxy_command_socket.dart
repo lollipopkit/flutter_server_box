@@ -11,7 +11,7 @@ class ProxyCommandSocket implements SSHSocket {
   ProxyCommandSocket._({
     required Process process,
     required Stream<Uint8List> stream,
-    required StreamSink<List<int>> sink,
+    required IOSink sink,
     required Future<void> done,
   }) : _process = process,
        _stream = stream,
@@ -20,7 +20,7 @@ class ProxyCommandSocket implements SSHSocket {
 
   final Process _process;
   final Stream<Uint8List> _stream;
-  final StreamSink<List<int>> _sink;
+  final IOSink _sink;
   final Future<void> _done;
 
   static Future<SSHSocket> connect({
@@ -190,6 +190,9 @@ class ProxyCommandSocket implements SSHSocket {
     }
     await _done.catchError((_) {});
   }
+
+  @override
+  Future<void> flush() => _sink.flush();
 
   @override
   void destroy() {
