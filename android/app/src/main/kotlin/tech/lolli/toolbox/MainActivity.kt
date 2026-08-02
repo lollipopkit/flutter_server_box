@@ -38,7 +38,7 @@ class MainActivity: FlutterFragmentActivity() {
 
     override fun provideFlutterEngine(context: Context): FlutterEngine? {
         if (!disableImpeller) return null
-        return FlutterEngine(context, arrayOf(ARG_DISABLE_IMPELLER))
+        return FlutterEngine(context, arrayOf(ARG_DISABLE_IMPELLER), true, true)
     }
 
     override fun shouldDestroyEngineWithHost(): Boolean {
