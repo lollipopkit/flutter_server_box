@@ -1,6 +1,7 @@
 package tech.lolli.toolbox
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.opengl.EGL14
 import android.opengl.EGLConfig
 import android.opengl.EGLContext
@@ -16,9 +17,10 @@ internal object ImpellerCompatibility {
     private const val PREFS_NAME = "graphics_compatibility"
     private const val KEY_SIGNATURE = "impeller_probe_signature"
     private const val KEY_IN_PROGRESS = "impeller_probe_in_progress"
+    private const val KEY_COMPLETE = "impeller_probe_complete"
     private const val KEY_DISABLE = "impeller_probe_disable"
     private const val KEY_REASON = "impeller_probe_reason"
-    private const val PROBE_VERSION = 1
+    private const val PROBE_VERSION = 2
 
     private val adrenoVersionRegex = Regex(
         pattern = """\bAdreno(?:\s+\(TM\))?\s+(\d{3})\b""",
@@ -31,42 +33,75 @@ internal object ImpellerCompatibility {
         }
 
         val signature = "$PROBE_VERSION|${BuildConfig.VERSION_CODE}|${Build.FINGERPRINT}"
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        if (prefs.getString(KEY_SIGNATURE, null) == signature) {
-            if (prefs.getBoolean(KEY_IN_PROGRESS, false)) {
-                val result = incompatible("Previous Impeller EGL probe did not complete")
-                prefs.edit()
-                    .putBoolean(KEY_IN_PROGRESS, false)
-                    .putBoolean(KEY_DISABLE, result.disableImpeller)
-                    .putString(KEY_REASON, result.reason)
-                    .commit()
-                return result
-            }
-            return Result(
-                prefs.getBoolean(KEY_DISABLE, false),
-                prefs.getString(KEY_REASON, "cached graphics probe result")
-                    ?: "cached graphics probe result",
-            )
+        val prefs = try {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        } catch (e: RuntimeException) {
+            return incompatible("Impeller EGL probe storage is unavailable: ${errorMessage(e)}")
         }
+        try {
+            if (prefs.getString(KEY_SIGNATURE, null) == signature) {
+                if (prefs.getBoolean(KEY_IN_PROGRESS, false)) {
+                    return cacheIncompatible(
+                        prefs,
+                        signature,
+                        "Previous Impeller EGL probe did not complete",
+                    )
+                }
+                if (!prefs.getBoolean(KEY_COMPLETE, false) ||
+                    !prefs.contains(KEY_DISABLE) ||
+                    !prefs.contains(KEY_REASON)
+                ) {
+                    return cacheIncompatible(
+                        prefs,
+                        signature,
+                        "Cached Impeller EGL probe result is incomplete",
+                    )
+                }
+                val reason = prefs.getString(KEY_REASON, null)
+                    ?: return cacheIncompatible(
+                        prefs,
+                        signature,
+                        "Cached Impeller EGL probe reason is missing",
+                    )
+                return Result(prefs.getBoolean(KEY_DISABLE, true), reason)
+            }
 
-        val markerPersisted = prefs.edit()
-            .putString(KEY_SIGNATURE, signature)
-            .putBoolean(KEY_IN_PROGRESS, true)
-            .remove(KEY_DISABLE)
-            .remove(KEY_REASON)
-            .commit()
-        if (!markerPersisted) {
-            return incompatible("Impeller EGL probe state could not be persisted")
+            val markerPersisted = prefs.edit()
+                .putString(KEY_SIGNATURE, signature)
+                .putBoolean(KEY_IN_PROGRESS, true)
+                .putBoolean(KEY_COMPLETE, false)
+                .remove(KEY_DISABLE)
+                .remove(KEY_REASON)
+                .commit()
+            if (!markerPersisted) {
+                return cacheIncompatible(
+                    prefs,
+                    signature,
+                    "Impeller EGL probe state could not be persisted",
+                )
+            }
+        } catch (e: RuntimeException) {
+            return incompatible("Impeller EGL probe storage failed: ${errorMessage(e)}")
         }
 
         val result = probe()
-        prefs.edit()
-            .putString(KEY_SIGNATURE, signature)
-            .putBoolean(KEY_IN_PROGRESS, false)
-            .putBoolean(KEY_DISABLE, result.disableImpeller)
-            .putString(KEY_REASON, result.reason)
-            .commit()
-        return result
+        return try {
+            if (persistResult(prefs, signature, result)) {
+                result
+            } else {
+                cacheIncompatible(
+                    prefs,
+                    signature,
+                    "Impeller EGL probe result could not be persisted",
+                )
+            }
+        } catch (e: RuntimeException) {
+            cacheIncompatible(
+                prefs,
+                signature,
+                "Impeller EGL probe result persistence failed: ${errorMessage(e)}",
+            )
+        }
     }
 
     private fun probe(): Result {
@@ -75,13 +110,14 @@ internal object ImpellerCompatibility {
         var offscreenContext: EGLContext = EGL14.EGL_NO_CONTEXT
         var offscreenSurface: EGLSurface = EGL14.EGL_NO_SURFACE
 
-        try {
+        val result = try {
+            run probe@ {
             display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
             if (display == EGL14.EGL_NO_DISPLAY) {
-                return incompatible("EGL display is unavailable")
+                return@probe incompatible("EGL display is unavailable")
             }
             if (!EGL14.eglInitialize(display, null, 0, null, 0)) {
-                return incompatible("EGL initialization failed")
+                return@probe incompatible("EGL initialization failed")
             }
 
             var clientVersion = 3
@@ -111,7 +147,7 @@ internal object ImpellerCompatibility {
                 )
             }
             if (onscreenConfig == null) {
-                return incompatible("Impeller onscreen EGL config is unsupported")
+                return@probe incompatible("Impeller onscreen EGL config is unsupported")
             }
 
             val offscreenConfig = chooseConfig(
@@ -119,7 +155,7 @@ internal object ImpellerCompatibility {
                 clientVersion,
                 EGL14.EGL_PBUFFER_BIT,
                 samples,
-            ) ?: return incompatible("Impeller offscreen EGL config is unsupported")
+            ) ?: return@probe incompatible("Impeller offscreen EGL config is unsupported")
 
             val contextAttributes = intArrayOf(
                 EGL14.EGL_CONTEXT_CLIENT_VERSION,
@@ -134,7 +170,7 @@ internal object ImpellerCompatibility {
                 0,
             )
             if (onscreenContext == EGL14.EGL_NO_CONTEXT) {
-                return incompatible("Impeller onscreen EGL context creation failed")
+                return@probe incompatible("Impeller onscreen EGL context creation failed")
             }
 
             offscreenContext = EGL14.eglCreateContext(
@@ -145,7 +181,7 @@ internal object ImpellerCompatibility {
                 0,
             )
             if (offscreenContext == EGL14.EGL_NO_CONTEXT) {
-                return incompatible("Impeller offscreen EGL context creation failed")
+                return@probe incompatible("Impeller offscreen EGL context creation failed")
             }
 
             offscreenSurface = EGL14.eglCreatePbufferSurface(
@@ -161,7 +197,7 @@ internal object ImpellerCompatibility {
                 0,
             )
             if (offscreenSurface == EGL14.EGL_NO_SURFACE) {
-                return incompatible("Impeller PBuffer surface creation failed")
+                return@probe incompatible("Impeller PBuffer surface creation failed")
             }
             if (!EGL14.eglMakeCurrent(
                     display,
@@ -169,49 +205,105 @@ internal object ImpellerCompatibility {
                     offscreenSurface,
                     offscreenContext,
                 )) {
-                return incompatible("Impeller offscreen EGL context cannot be made current")
+                return@probe incompatible("Impeller offscreen EGL context cannot be made current")
             }
 
             val renderer = GLES20.glGetString(GLES20.GL_RENDERER)?.trim()
-                ?: return incompatible("OpenGL renderer is unavailable")
+                ?: return@probe incompatible("OpenGL renderer is unavailable")
             val glVersion = GLES20.glGetString(GLES20.GL_VERSION)?.trim() ?: "unknown"
             val adrenoVersion = adrenoVersionRegex.find(renderer)
                 ?.groupValues
                 ?.getOrNull(1)
                 ?.toIntOrNull()
             if (adrenoVersion != null && adrenoVersion in 300..399) {
-                return incompatible(
+                return@probe incompatible(
                     "$renderer has a known Impeller shader-linker crash ($glVersion)",
                 )
             }
 
-            return Result(
+            Result(
                 false,
                 "Impeller EGL probe passed: $renderer ($glVersion), GLES$clientVersion, ${samples}x MSAA",
             )
+            }
         } catch (e: RuntimeException) {
-            return incompatible("Impeller EGL probe failed: ${e.message ?: e.javaClass.simpleName}")
-        } finally {
-            if (display != EGL14.EGL_NO_DISPLAY) {
+            incompatible("Impeller EGL probe failed: ${errorMessage(e)}")
+        }
+
+        var cleanupFailure: RuntimeException? = null
+        fun cleanup(action: () -> Unit) {
+            try {
+                action()
+            } catch (e: RuntimeException) {
+                if (cleanupFailure == null) cleanupFailure = e
+            }
+        }
+        if (display != EGL14.EGL_NO_DISPLAY) {
+            cleanup {
                 EGL14.eglMakeCurrent(
                     display,
                     EGL14.EGL_NO_SURFACE,
                     EGL14.EGL_NO_SURFACE,
                     EGL14.EGL_NO_CONTEXT,
                 )
-                if (offscreenSurface != EGL14.EGL_NO_SURFACE) {
+            }
+            if (offscreenSurface != EGL14.EGL_NO_SURFACE) {
+                cleanup {
                     EGL14.eglDestroySurface(display, offscreenSurface)
                 }
-                if (offscreenContext != EGL14.EGL_NO_CONTEXT) {
+            }
+            if (offscreenContext != EGL14.EGL_NO_CONTEXT) {
+                cleanup {
                     EGL14.eglDestroyContext(display, offscreenContext)
                 }
-                if (onscreenContext != EGL14.EGL_NO_CONTEXT) {
+            }
+            if (onscreenContext != EGL14.EGL_NO_CONTEXT) {
+                cleanup {
                     EGL14.eglDestroyContext(display, onscreenContext)
                 }
+            }
+            cleanup {
                 EGL14.eglTerminate(display)
+            }
+            cleanup {
                 EGL14.eglReleaseThread()
             }
         }
+        return cleanupFailure?.let {
+            incompatible("Impeller EGL cleanup failed: ${errorMessage(it)}")
+        } ?: result
+    }
+
+    private fun cacheIncompatible(
+        prefs: SharedPreferences,
+        signature: String,
+        reason: String,
+    ): Result {
+        val result = incompatible(reason)
+        try {
+            persistResult(prefs, signature, result)
+        } catch (_: RuntimeException) {
+            // The conservative result is still safe for this launch.
+        }
+        return result
+    }
+
+    private fun persistResult(
+        prefs: SharedPreferences,
+        signature: String,
+        result: Result,
+    ): Boolean {
+        return prefs.edit()
+            .putString(KEY_SIGNATURE, signature)
+            .putBoolean(KEY_IN_PROGRESS, false)
+            .putBoolean(KEY_COMPLETE, true)
+            .putBoolean(KEY_DISABLE, result.disableImpeller)
+            .putString(KEY_REASON, result.reason)
+            .commit()
+    }
+
+    private fun errorMessage(error: RuntimeException): String {
+        return error.message ?: error.javaClass.simpleName
     }
 
     private fun chooseConfig(
