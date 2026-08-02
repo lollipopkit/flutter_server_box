@@ -15,6 +15,7 @@ internal object ImpellerCompatibility {
 
     private const val PREFS_NAME = "graphics_compatibility"
     private const val KEY_SIGNATURE = "impeller_probe_signature"
+    private const val KEY_IN_PROGRESS = "impeller_probe_in_progress"
     private const val KEY_DISABLE = "impeller_probe_disable"
     private const val KEY_REASON = "impeller_probe_reason"
     private const val PROBE_VERSION = 1
@@ -32,6 +33,15 @@ internal object ImpellerCompatibility {
         val signature = "$PROBE_VERSION|${BuildConfig.VERSION_CODE}|${Build.FINGERPRINT}"
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         if (prefs.getString(KEY_SIGNATURE, null) == signature) {
+            if (prefs.getBoolean(KEY_IN_PROGRESS, false)) {
+                val result = incompatible("Previous Impeller EGL probe did not complete")
+                prefs.edit()
+                    .putBoolean(KEY_IN_PROGRESS, false)
+                    .putBoolean(KEY_DISABLE, result.disableImpeller)
+                    .putString(KEY_REASON, result.reason)
+                    .commit()
+                return result
+            }
             return Result(
                 prefs.getBoolean(KEY_DISABLE, false),
                 prefs.getString(KEY_REASON, "cached graphics probe result")
@@ -39,12 +49,23 @@ internal object ImpellerCompatibility {
             )
         }
 
+        val markerPersisted = prefs.edit()
+            .putString(KEY_SIGNATURE, signature)
+            .putBoolean(KEY_IN_PROGRESS, true)
+            .remove(KEY_DISABLE)
+            .remove(KEY_REASON)
+            .commit()
+        if (!markerPersisted) {
+            return incompatible("Impeller EGL probe state could not be persisted")
+        }
+
         val result = probe()
         prefs.edit()
             .putString(KEY_SIGNATURE, signature)
+            .putBoolean(KEY_IN_PROGRESS, false)
             .putBoolean(KEY_DISABLE, result.disableImpeller)
             .putString(KEY_REASON, result.reason)
-            .apply()
+            .commit()
         return result
     }
 

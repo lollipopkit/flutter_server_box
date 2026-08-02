@@ -22,11 +22,12 @@ class MainActivity: FlutterFragmentActivity() {
     private val ACTION_DISCONNECT_SESSION = "tech.lolli.toolbox.ACTION_DISCONNECT_SESSION"
     private val ACTION_STOP_ALL_CONNECTIONS = "tech.lolli.toolbox.STOP_ALL_CONNECTIONS"
     private var stopAllReceiver: BroadcastReceiver? = null
+    private var disableImpeller = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val graphicsCompatibility = ImpellerCompatibility.check(this)
+        disableImpeller = graphicsCompatibility.disableImpeller
         if (graphicsCompatibility.disableImpeller) {
-            intent.putExtra(EXTRA_ENABLE_IMPELLER, false)
             android.util.Log.w(
                 "MainActivity",
                 "Disabling Impeller: ${graphicsCompatibility.reason}",
@@ -35,8 +36,17 @@ class MainActivity: FlutterFragmentActivity() {
         super.onCreate(savedInstanceState)
     }
 
+    override fun provideFlutterEngine(context: Context): FlutterEngine? {
+        if (!disableImpeller) return null
+        return FlutterEngine(context, arrayOf(ARG_DISABLE_IMPELLER))
+    }
+
+    override fun shouldDestroyEngineWithHost(): Boolean {
+        return disableImpeller || super.shouldDestroyEngineWithHost()
+    }
+
     private companion object {
-        const val EXTRA_ENABLE_IMPELLER = "enable-impeller"
+        const val ARG_DISABLE_IMPELLER = "--enable-impeller=false"
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
