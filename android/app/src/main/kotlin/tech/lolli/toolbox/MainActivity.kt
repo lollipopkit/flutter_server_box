@@ -3,6 +3,7 @@ package tech.lolli.toolbox
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Bundle
 import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -21,6 +22,22 @@ class MainActivity: FlutterFragmentActivity() {
     private val ACTION_DISCONNECT_SESSION = "tech.lolli.toolbox.ACTION_DISCONNECT_SESSION"
     private val ACTION_STOP_ALL_CONNECTIONS = "tech.lolli.toolbox.STOP_ALL_CONNECTIONS"
     private var stopAllReceiver: BroadcastReceiver? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        val graphicsCompatibility = ImpellerCompatibility.check(this)
+        if (graphicsCompatibility.disableImpeller) {
+            intent.putExtra(EXTRA_ENABLE_IMPELLER, false)
+            android.util.Log.w(
+                "MainActivity",
+                "Disabling Impeller: ${graphicsCompatibility.reason}",
+            )
+        }
+        super.onCreate(savedInstanceState)
+    }
+
+    private companion object {
+        const val EXTRA_ENABLE_IMPELLER = "enable-impeller"
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
