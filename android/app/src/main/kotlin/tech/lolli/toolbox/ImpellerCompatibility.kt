@@ -41,9 +41,8 @@ internal object ImpellerCompatibility {
         try {
             if (prefs.getString(KEY_SIGNATURE, null) == signature) {
                 if (prefs.getBoolean(KEY_IN_PROGRESS, false)) {
-                    return cacheIncompatible(
+                    return invalidateAndDisable(
                         prefs,
-                        signature,
                         "Previous Impeller EGL probe did not complete",
                     )
                 }
@@ -51,16 +50,14 @@ internal object ImpellerCompatibility {
                     !prefs.contains(KEY_DISABLE) ||
                     !prefs.contains(KEY_REASON)
                 ) {
-                    return cacheIncompatible(
+                    return invalidateAndDisable(
                         prefs,
-                        signature,
                         "Cached Impeller EGL probe result is incomplete",
                     )
                 }
                 val reason = prefs.getString(KEY_REASON, null)
-                    ?: return cacheIncompatible(
+                    ?: return invalidateAndDisable(
                         prefs,
-                        signature,
                         "Cached Impeller EGL probe reason is missing",
                     )
                 return Result(prefs.getBoolean(KEY_DISABLE, true), reason)
@@ -74,9 +71,8 @@ internal object ImpellerCompatibility {
                 .remove(KEY_REASON)
                 .commit()
             if (!markerPersisted) {
-                return cacheIncompatible(
+                return invalidateAndDisable(
                     prefs,
-                    signature,
                     "Impeller EGL probe state could not be persisted",
                 )
             }
@@ -89,16 +85,14 @@ internal object ImpellerCompatibility {
             if (persistResult(prefs, signature, result)) {
                 result
             } else {
-                cacheIncompatible(
+                invalidateAndDisable(
                     prefs,
-                    signature,
                     "Impeller EGL probe result could not be persisted",
                 )
             }
         } catch (e: RuntimeException) {
-            cacheIncompatible(
+            invalidateAndDisable(
                 prefs,
-                signature,
                 "Impeller EGL probe result persistence failed: ${errorMessage(e)}",
             )
         }
@@ -274,14 +268,19 @@ internal object ImpellerCompatibility {
         } ?: result
     }
 
-    private fun cacheIncompatible(
+    private fun invalidateAndDisable(
         prefs: SharedPreferences,
-        signature: String,
         reason: String,
     ): Result {
         val result = incompatible(reason)
         try {
-            persistResult(prefs, signature, result)
+            prefs.edit()
+                .remove(KEY_SIGNATURE)
+                .remove(KEY_IN_PROGRESS)
+                .remove(KEY_COMPLETE)
+                .remove(KEY_DISABLE)
+                .remove(KEY_REASON)
+                .commit()
         } catch (_: RuntimeException) {
             // The conservative result is still safe for this launch.
         }

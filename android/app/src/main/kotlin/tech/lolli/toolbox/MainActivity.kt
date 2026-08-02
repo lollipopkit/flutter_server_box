@@ -38,12 +38,7 @@ class MainActivity: FlutterFragmentActivity() {
 
     override fun provideFlutterEngine(context: Context): FlutterEngine? {
         if (!disableImpeller) return null
-        return try {
-            FlutterEngine(context, arrayOf(ARG_DISABLE_IMPELLER), true, true)
-        } catch (e: RuntimeException) {
-            android.util.Log.e("MainActivity", "Failed to create the Skia Flutter engine", e)
-            null
-        }
+        return FlutterEngine(context, arrayOf(ARG_DISABLE_IMPELLER), true, true)
     }
 
     override fun shouldDestroyEngineWithHost(): Boolean {
