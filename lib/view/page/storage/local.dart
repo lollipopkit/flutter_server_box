@@ -4,7 +4,6 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/host_key_helper.dart';
 import 'package:server_box/data/model/app/path_with_prefix.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/req.dart';
@@ -420,10 +419,6 @@ extension _OnTapFile on _LocalFilePageState {
     final args = SftpPageArgs(spi: spi, isSelect: true);
     final remotePath = await SftpPage.route.go(context, args);
     if (remotePath == null) {
-      return;
-    }
-
-    if (!await ensureHostKeyAcceptedForSftp(context, spi)) {
       return;
     }
 

@@ -230,6 +230,10 @@
   },
   "sshHostKeyNewDesc": "A new SSH host key was received from {serverName}. Review the fingerprint before trusting.",
   "sshHostKeyStoredFingerprint": "Stored fingerprint: {fingerprint}",
+  "sshVerificationCode": "Verification code",
+  "@sshVerificationCode": {
+    "description": "Label for a one-time verification code requested during SSH keyboard-interactive authentication."
+  },
   "sshConfigManualSelect": "Would you like to select the SSH config file manually?",
   "sshConfigNoServers": "No servers found in SSH config",
   "sshConfigPermissionDenied": "Cannot access SSH config file due to macOS permissions.",

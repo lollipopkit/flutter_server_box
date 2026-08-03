@@ -741,6 +741,9 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get sshVerificationCode => '確認コード';
+
+  @override
   String get sshConfigManualSelect => 'SSH設定ファイルを手動で選択しますか？';
 
   @override

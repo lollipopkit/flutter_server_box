@@ -758,6 +758,9 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get sshVerificationCode => 'Código de verificação';
+
+  @override
   String get sshConfigManualSelect =>
       'Gostaria de selecionar manualmente o arquivo de configuração SSH?';
 

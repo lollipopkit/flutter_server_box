@@ -184,6 +184,7 @@
   "sshConfigPermissionDenied": "Impossibile accedere al file di configurazione SSH a causa dei permessi macOS.",
   "sshConfigServersToImport": "{importCount} server verranno importati",
   "sshTermHelp": "Quando il terminale è scorrevole, trascinare orizzontalmente può selezionare il testo. Cliccando il pulsante tastiera accende/spegne la tastiera. L'icona file apre il percorso corrente SFTP. Il pulsante appunti copia il contenuto quando il testo è selezionato e incolla il contenuto dagli appunti nel terminale quando nessun testo è selezionato e c'è contenuto negli appunti. L'icona codice incolla snippet di codice nel terminale ed esegue.",
+  "sshVerificationCode": "Codice di verifica",
   "sshVirtualKeyAutoOff": "Commutazione automatica dei tasti virtuali",
   "stat": "Statistiche",
   "supportFmtArgs": "Sono supportati i seguenti parametri di formattazione:",

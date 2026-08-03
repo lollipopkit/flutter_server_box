@@ -235,6 +235,7 @@
   "sshConfigPermissionDenied": "macOS 권한으로 인해 SSH 설정 파일에 접근할 수 없습니다.",
   "sshConfigServersToImport": "서버 {importCount}개가 가져오기됩니다",
   "sshTermHelp": "터미널이 스크롤 가능할 때, 가로로 드래그하면 텍스트를 선택할 수 있습니다. 키보드 버튼을 누르면 키보드가 켜지거나 꺼집니다. 파일 아이콘은 현재 경로를 SFTP로 엽니다. 클립보드 버튼은 텍스트가 선택되어 있을 때 내용을 복사하고, 텍스트가 선택되어 있지 않고 클립보드에 내용이 있을 때 터미널에 붙여넣습니다. 코드 아이콘은 코드 스니펫을 터미널에 붙여넣고 실행합니다.",
+  "sshVerificationCode": "인증 코드",
   "sshVirtualKeyAutoOff": "가상 키 자동 전환",
   "stat": "통계",
   "supportFmtArgs": "다음 형식 매개변수가 지원됩니다:",

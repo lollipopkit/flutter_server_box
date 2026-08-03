@@ -1422,6 +1422,12 @@ abstract class AppLocalizations {
   /// **'Stored fingerprint: {fingerprint}'**
   String sshHostKeyStoredFingerprint(Object fingerprint);
 
+  /// Label for a one-time verification code requested during SSH keyboard-interactive authentication.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification code'**
+  String get sshVerificationCode;
+
   /// No description provided for @sshConfigManualSelect.
   ///
   /// In en, this message translates to:

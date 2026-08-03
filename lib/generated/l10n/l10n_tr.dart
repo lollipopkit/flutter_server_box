@@ -760,6 +760,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get sshVerificationCode => 'Doğrulama kodu';
+
+  @override
   String get sshConfigManualSelect =>
       'SSH yapılandırma dosyasını manuel olarak seçmek ister misiniz?';
 

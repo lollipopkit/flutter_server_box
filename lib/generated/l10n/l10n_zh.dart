@@ -716,6 +716,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get sshVerificationCode => '验证码';
+
+  @override
   String get sshConfigManualSelect => '是否要手动选择 SSH 配置文件？';
 
   @override
@@ -1657,6 +1660,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String sshHostKeyStoredFingerprint(Object fingerprint) {
     return '已儲存的指紋：$fingerprint';
   }
+
+  @override
+  String get sshVerificationCode => '驗證碼';
 
   @override
   String get sshConfigManualSelect => '是否要手動選擇 SSH 設定檔案？';

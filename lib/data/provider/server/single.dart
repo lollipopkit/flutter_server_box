@@ -136,20 +136,21 @@ class ServerNotifier extends _$ServerNotifier {
   // Refresh server status
   bool _isRefreshing = false;
 
-  Future<void> refresh() async {
+  Future<void> refresh({bool interactive = false}) async {
     if (_isRefreshing) return;
 
     _isRefreshing = true;
     try {
-      await _getData();
+      await _getData(interactive: interactive);
     } finally {
       _isRefreshing = false;
     }
   }
 
-  Future<void> _getData() async {
+  Future<void> _getData({required bool interactive}) async {
     final spi = state.spi;
     final sid = spi.id;
+    var keyboardInteractiveRequested = false;
 
     if (!TryLimiter.canTry(sid)) {
       if (state.conn != ServerConn.failed) {
@@ -184,8 +185,13 @@ class ServerNotifier extends _$ServerNotifier {
         final client = await genClient(
           spi,
           timeout: Duration(seconds: Stores.setting.timeout.fetch()),
-          onKeyboardInteractive: (_) => KeybordInteractive.defaultHandle(spi),
+          onKeyboardInteractive: (server, request) {
+            keyboardInteractiveRequested = true;
+            if (!interactive) return null;
+            return KeyboardInteractiveAuth.handle(server, request);
+          },
         );
+        await client.authenticated;
         updateClient(client);
 
         final time2 = DateTime.now();
@@ -222,7 +228,9 @@ class ServerNotifier extends _$ServerNotifier {
         );
         TermSessionManager.setActive(sessionId, hasTerminal: false);
       } catch (e) {
-        TryLimiter.inc(sid);
+        if (!keyboardInteractiveRequested || interactive) {
+          TryLimiter.inc(sid);
+        }
 
         final durationMs = DateTime.now().difference(time1).inMilliseconds;
 
@@ -259,9 +267,17 @@ class ServerNotifier extends _$ServerNotifier {
           Loggers.app.warning('Failed to record connection failure', recErr);
         }
 
+        final SSHErrType errType;
+        if (keyboardInteractiveRequested && !interactive) {
+          errType = SSHErrType.interactiveAuth;
+        } else if (e is SSHAuthError) {
+          errType = SSHErrType.auth;
+        } else {
+          errType = SSHErrType.connect;
+        }
         final newStatus = _copyStatus(
           state.status,
-          err: SSHErr(type: SSHErrType.connect, message: e.toString()),
+          err: SSHErr(type: errType, message: e.toString()),
           setErr: true,
         );
         _setFailedState(newStatus, closeClient: true);

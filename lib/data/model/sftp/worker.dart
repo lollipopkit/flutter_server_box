@@ -8,6 +8,8 @@ import 'package:easy_isolate/easy_isolate.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
+import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/req.dart';
 
 const _sftpChunkSize = 32 * 1024;
@@ -17,6 +19,60 @@ const _sftpDownloadMaxPendingRequests = 64;
 const _sftpDownloadMinIdleTimeout = Duration(seconds: 60);
 
 const _sftpUploadMaxBytesOnTheWire = _sftpChunkSize * 64;
+
+var _sftpPromptSequence = 0;
+
+final _keyboardInteractiveResponses = <int, Completer<List<String>?>>{};
+
+final _hostKeyResponses = <int, Completer<bool>>{};
+
+class SftpKeyboardInteractivePrompt {
+  final int id;
+  final Spi spi;
+  final SSHUserInfoRequest request;
+  final DateTime expiresAt;
+
+  const SftpKeyboardInteractivePrompt({
+    required this.id,
+    required this.spi,
+    required this.request,
+    required this.expiresAt,
+  });
+}
+
+class SftpKeyboardInteractiveResponse {
+  final int id;
+  final List<String>? responses;
+
+  const SftpKeyboardInteractiveResponse({
+    required this.id,
+    required this.responses,
+  });
+}
+
+class SftpHostKeyPrompt {
+  final int id;
+  final HostKeyPromptInfo info;
+
+  const SftpHostKeyPrompt({required this.id, required this.info});
+}
+
+class SftpHostKeyResponse {
+  final int id;
+  final bool accepted;
+
+  const SftpHostKeyResponse({required this.id, required this.accepted});
+}
+
+class SftpHostKeyAccepted {
+  final String storageKey;
+  final String fingerprintHex;
+
+  const SftpHostKeyAccepted({
+    required this.storageKey,
+    required this.fingerprintHex,
+  });
+}
 
 Duration _sftpPrepareTimeout(SftpReq req) {
   final seconds = req.timeoutSeconds;
@@ -31,8 +87,8 @@ Duration _sftpDownloadIdleTimeout(SftpReq req) {
       : timeout;
 }
 
-Future<SSHClient> _connectSftpSsh(SftpReq req) {
-  return genClient(
+Future<SSHClient> _connectSftpSsh(SftpReq req, SendPort mainSendPort) async {
+  final client = await genClient(
     req.spi,
     privateKey: req.privateKey,
     jumpSpi: req.jumpSpi,
@@ -40,7 +96,68 @@ Future<SSHClient> _connectSftpSsh(SftpReq req) {
     privateKeysByKeyId: req.privateKeysByKeyId,
     jumpSpisById: req.jumpSpisById,
     knownHostFingerprints: req.knownHostFingerprints,
+    onKeyboardInteractive: (server, request) =>
+        _requestKeyboardInteractive(mainSendPort, server, request),
+    onHostKeyPrompt: (info) => _requestHostKey(mainSendPort, info),
+    onHostKeyAccepted: (storageKey, fingerprintHex) {
+      mainSendPort.send(
+        SftpHostKeyAccepted(
+          storageKey: storageKey,
+          fingerprintHex: fingerprintHex,
+        ),
+      );
+    },
   );
+  try {
+    await client.authenticated;
+    return client;
+  } catch (_) {
+    client.close();
+    rethrow;
+  }
+}
+
+Future<List<String>?> _requestKeyboardInteractive(
+  SendPort mainSendPort,
+  Spi spi,
+  SSHUserInfoRequest request,
+) async {
+  final id = _sftpPromptSequence++;
+  final completer = Completer<List<String>?>();
+  final expiresAt = DateTime.now().add(KeyboardInteractiveAuth.promptTimeout);
+  _keyboardInteractiveResponses[id] = completer;
+  mainSendPort.send(
+    SftpKeyboardInteractivePrompt(
+      id: id,
+      spi: spi,
+      request: request,
+      expiresAt: expiresAt,
+    ),
+  );
+  try {
+    return await completer.future.timeout(KeyboardInteractiveAuth.promptTimeout);
+  } on TimeoutException {
+    return null;
+  } finally {
+    _keyboardInteractiveResponses.remove(id);
+  }
+}
+
+Future<bool> _requestHostKey(
+  SendPort mainSendPort,
+  HostKeyPromptInfo info,
+) async {
+  final id = _sftpPromptSequence++;
+  final completer = Completer<bool>();
+  _hostKeyResponses[id] = completer;
+  mainSendPort.send(SftpHostKeyPrompt(id: id, info: info));
+  try {
+    return await completer.future.timeout(KeyboardInteractiveAuth.promptTimeout);
+  } on TimeoutException {
+    return false;
+  } finally {
+    _hostKeyResponses.remove(id);
+  }
 }
 
 class SftpWorker {
@@ -68,8 +185,52 @@ class SftpWorker {
   }
 
   /// Handle the messages coming from the isolate
-  void mainMessageHandler(dynamic data, SendPort isolateSendPort) {
-    onNotify(data);
+  Future<void> mainMessageHandler(
+    dynamic data,
+    SendPort isolateSendPort,
+  ) async {
+    switch (data) {
+      case final SftpKeyboardInteractivePrompt prompt:
+        List<String>? responses;
+        try {
+          final timeout = prompt.expiresAt.difference(DateTime.now());
+          if (timeout > Duration.zero) {
+            responses = await KeyboardInteractiveAuth.handle(
+              prompt.spi,
+              prompt.request,
+              timeout: timeout,
+            );
+          }
+        } catch (e, s) {
+          Loggers.app.warning('SFTP interactive authentication failed', e, s);
+        }
+        isolateSendPort.send(
+          SftpKeyboardInteractiveResponse(
+            id: prompt.id,
+            responses: responses,
+          ),
+        );
+        return;
+      case final SftpHostKeyPrompt prompt:
+        var accepted = false;
+        try {
+          accepted = await showHostKeyPrompt(prompt.info);
+        } catch (e, s) {
+          Loggers.app.warning('SFTP host key prompt failed', e, s);
+        }
+        isolateSendPort.send(
+          SftpHostKeyResponse(id: prompt.id, accepted: accepted),
+        );
+        return;
+      case final SftpHostKeyAccepted accepted:
+        persistHostKeyFingerprint(
+          accepted.storageKey,
+          accepted.fingerprintHex,
+        );
+        return;
+      default:
+        onNotify(data);
+    }
   }
 }
 
@@ -90,6 +251,18 @@ Future<void> isolateMessageHandler(
           break;
       }
       break;
+    case final SftpKeyboardInteractiveResponse response:
+      final completer = _keyboardInteractiveResponses[response.id];
+      if (completer != null && !completer.isCompleted) {
+        completer.complete(response.responses);
+      }
+      break;
+    case final SftpHostKeyResponse response:
+      final completer = _hostKeyResponses[response.id];
+      if (completer != null && !completer.isCompleted) {
+        completer.complete(response.accepted);
+      }
+      break;
     default:
       sendError(Exception('unknown event'));
   }
@@ -108,7 +281,7 @@ Future<void> _download(
   try {
     mainSendPort.send(SftpWorkerStatus.preparing);
     final watch = Stopwatch()..start();
-    client = await _connectSftpSsh(req);
+    client = await _connectSftpSsh(req, mainSendPort);
     mainSendPort.send(SftpWorkerStatus.sshConnectted);
     Loggers.app.info('SFTP download SSH connected: ${req.remotePath}');
 
@@ -279,7 +452,7 @@ Future<void> _upload(
   try {
     mainSendPort.send(SftpWorkerStatus.preparing);
     final watch = Stopwatch()..start();
-    client = await _connectSftpSsh(req);
+    client = await _connectSftpSsh(req, mainSendPort);
     mainSendPort.send(SftpWorkerStatus.sshConnectted);
     Loggers.app.info('SFTP upload SSH connected: ${req.remotePath}');
 

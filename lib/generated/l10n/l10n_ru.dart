@@ -762,6 +762,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get sshVerificationCode => 'Код подтверждения';
+
+  @override
   String get sshConfigManualSelect =>
       'Хотели бы вы вручную выбрать файл конфигурации SSH?';
 

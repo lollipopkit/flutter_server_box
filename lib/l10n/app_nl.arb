@@ -180,6 +180,7 @@
   "sshConfigPermissionDenied": "Kan geen toegang krijgen tot SSH-configuratiebestand vanwege macOS-rechten.",
   "sshConfigServersToImport": "{importCount} servers worden geïmporteerd",
   "sshTermHelp": "Wanneer het terminal scrollbaar is, kan horizontaal slepen tekst selecteren. Klikken op de toetsenbordknop schakelt het toetsenbord aan/uit. Het bestandsicoon opent de huidige pad SFTP. De klembordknop kopieert de inhoud wanneer tekst is geselecteerd en plakt inhoud van het klembord in de terminal wanneer geen tekst is geselecteerd en er inhoud op het klembord staat. Het code-icoon plakt codefragmenten in de terminal en voert ze uit.",
+  "sshVerificationCode": "Verificatiecode",
   "sshVirtualKeyAutoOff": "Automatisch schakelen van virtuele toetsen",
   "stat": "Statistieken",
   "supportFmtArgs": "De volgende opmaakparameters worden ondersteund:",
