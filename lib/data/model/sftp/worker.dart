@@ -20,8 +20,6 @@ const _sftpDownloadMinIdleTimeout = Duration(seconds: 60);
 
 const _sftpUploadMaxBytesOnTheWire = _sftpChunkSize * 64;
 
-const _sftpInteractivePromptTimeout = Duration(minutes: 3);
-
 var _sftpPromptSequence = 0;
 
 final _keyboardInteractiveResponses = <int, Completer<List<String>?>>{};
@@ -32,11 +30,13 @@ class SftpKeyboardInteractivePrompt {
   final int id;
   final Spi spi;
   final SSHUserInfoRequest request;
+  final DateTime expiresAt;
 
   const SftpKeyboardInteractivePrompt({
     required this.id,
     required this.spi,
     required this.request,
+    required this.expiresAt,
   });
 }
 
@@ -124,12 +124,18 @@ Future<List<String>?> _requestKeyboardInteractive(
 ) async {
   final id = _sftpPromptSequence++;
   final completer = Completer<List<String>?>();
+  final expiresAt = DateTime.now().add(KeyboardInteractiveAuth.promptTimeout);
   _keyboardInteractiveResponses[id] = completer;
   mainSendPort.send(
-    SftpKeyboardInteractivePrompt(id: id, spi: spi, request: request),
+    SftpKeyboardInteractivePrompt(
+      id: id,
+      spi: spi,
+      request: request,
+      expiresAt: expiresAt,
+    ),
   );
   try {
-    return await completer.future.timeout(_sftpInteractivePromptTimeout);
+    return await completer.future.timeout(KeyboardInteractiveAuth.promptTimeout);
   } on TimeoutException {
     return null;
   } finally {
@@ -146,7 +152,7 @@ Future<bool> _requestHostKey(
   _hostKeyResponses[id] = completer;
   mainSendPort.send(SftpHostKeyPrompt(id: id, info: info));
   try {
-    return await completer.future.timeout(_sftpInteractivePromptTimeout);
+    return await completer.future.timeout(KeyboardInteractiveAuth.promptTimeout);
   } on TimeoutException {
     return false;
   } finally {
@@ -187,10 +193,14 @@ class SftpWorker {
       case final SftpKeyboardInteractivePrompt prompt:
         List<String>? responses;
         try {
-          responses = await KeyboardInteractiveAuth.handle(
-            prompt.spi,
-            prompt.request,
-          );
+          final timeout = prompt.expiresAt.difference(DateTime.now());
+          if (timeout > Duration.zero) {
+            responses = await KeyboardInteractiveAuth.handle(
+              prompt.spi,
+              prompt.request,
+              timeout: timeout,
+            );
+          }
         } catch (e, s) {
           Loggers.app.warning('SFTP interactive authentication failed', e, s);
         }

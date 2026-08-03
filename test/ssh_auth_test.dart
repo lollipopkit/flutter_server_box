@@ -36,6 +36,8 @@ void main() {
     app_locale.l10n = AppLocalizationsEn();
   });
 
+  tearDown(KeyboardInteractiveAuth.resetForTesting);
+
   test('empty keyboard-interactive request needs no dialog', () {
     final result = KeyboardInteractiveAuth.handle(
       _spi,
@@ -64,6 +66,9 @@ void main() {
         SftpKeyboardInteractivePrompt(
           id: 1,
           spi: _spi,
+          expiresAt: DateTime.now().add(
+            KeyboardInteractiveAuth.promptTimeout,
+          ),
           request: SSHUserInfoRequest(
             'OTP',
             'Enter a code',
@@ -188,6 +193,119 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(await resultFuture, ['stored-password', '123456']);
+  });
+
+  testWidgets('preserves prompt order when stored password is last', (
+    tester,
+  ) async {
+    late BuildContext context;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: const [LibLocalizations.delegate],
+        supportedLocales: LibLocalizations.supportedLocales,
+        home: Builder(
+          builder: (ctx) {
+            context = ctx;
+            ctx.setLibL10n();
+            return const Scaffold(body: SizedBox());
+          },
+        ),
+      ),
+    );
+
+    final resultFuture = KeyboardInteractiveAuth.handle(
+      _spiWithPassword,
+      SSHUserInfoRequest(
+        'Multi-factor authentication',
+        '',
+        [
+          SSHUserInfoPrompt('Verification code:', false),
+          SSHUserInfoPrompt('Password:', false),
+        ],
+      ),
+      context: context,
+    ) as Future<List<String>?>;
+
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '123456');
+    await tester.tap(find.byType(TextButton).last);
+    await tester.pumpAndSettle();
+
+    expect(await resultFuture, ['123456', 'stored-password']);
+  });
+
+  testWidgets('keeps the original prompt as a standardized field hint', (
+    tester,
+  ) async {
+    late BuildContext context;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: const [LibLocalizations.delegate],
+        supportedLocales: LibLocalizations.supportedLocales,
+        home: Builder(
+          builder: (ctx) {
+            context = ctx;
+            ctx.setLibL10n();
+            return const Scaffold(body: SizedBox());
+          },
+        ),
+      ),
+    );
+
+    final resultFuture = KeyboardInteractiveAuth.handle(
+      _spi,
+      SSHUserInfoRequest(
+        'Multi-factor authentication',
+        '',
+        [SSHUserInfoPrompt('Enter backup code from list 3:', false)],
+      ),
+      context: context,
+    ) as Future<List<String>?>;
+
+    await tester.pumpAndSettle();
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.decoration?.labelText, 'Verification code');
+    expect(field.decoration?.hintText, 'Enter backup code from list 3:');
+    await tester.tap(find.byType(TextButton).first);
+    await tester.pumpAndSettle();
+
+    expect(await resultFuture, isNull);
+  });
+
+  testWidgets('expires an unanswered authentication dialog', (tester) async {
+    late BuildContext context;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: const [LibLocalizations.delegate],
+        supportedLocales: LibLocalizations.supportedLocales,
+        home: Builder(
+          builder: (ctx) {
+            context = ctx;
+            ctx.setLibL10n();
+            return const Scaffold(body: SizedBox());
+          },
+        ),
+      ),
+    );
+
+    final resultFuture = KeyboardInteractiveAuth.handle(
+      _spi,
+      SSHUserInfoRequest(
+        'OTP',
+        '',
+        [SSHUserInfoPrompt('Verification code:', false)],
+      ),
+      context: context,
+      timeout: const Duration(seconds: 1),
+    ) as Future<List<String>?>;
+
+    await tester.pumpAndSettle();
+    expect(find.text('OTP'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
+
+    expect(await resultFuture, isNull);
+    expect(find.text('OTP'), findsNothing);
   });
 
   testWidgets('keeps a one-time password user-editable', (

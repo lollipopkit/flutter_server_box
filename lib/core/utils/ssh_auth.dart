@@ -14,40 +14,105 @@ typedef SSHKeyboardInteractiveHandler = FutureOr<List<String>?> Function(
 );
 
 abstract final class KeyboardInteractiveAuth {
-  static final _dialogQueue = Queue<Future<void> Function()>();
+  static const promptTimeout = Duration(minutes: 3);
+
+  static final _dialogQueue = Queue<_QueuedKeyboardInteractiveRequest>();
   static bool _isDrainingQueue = false;
+  static _QueuedKeyboardInteractiveRequest? _activeRequest;
+  static int _queueGeneration = 0;
 
   static FutureOr<List<String>?> handle(
     Spi spi,
     SSHUserInfoRequest request, {
     BuildContext? context,
+    Duration timeout = promptTimeout,
   }) {
     final prepared = _prepareRequest(spi, request);
     if (prepared.pendingPrompts.isEmpty) {
       return prepared.merge(const <String>[]);
     }
 
-    final result = Completer<List<String>?>();
-    _dialogQueue.add(() async {
-      try {
-        final pendingResponses = await _showDialog(
-          spi,
-          SSHUserInfoRequest(
-            request.name,
-            request.instruction,
-            prepared.pendingPrompts,
-          ),
-          preferredContext: context,
-        );
-        result.complete(
-          pendingResponses == null ? null : prepared.merge(pendingResponses),
-        );
-      } catch (e, s) {
-        result.completeError(e, s);
-      }
-    });
+    final queued = _QueuedKeyboardInteractiveRequest(
+      spi: spi,
+      request: SSHUserInfoRequest(
+        request.name,
+        request.instruction,
+        prepared.pendingPrompts,
+      ),
+      prepared: prepared,
+      preferredContext: context,
+    );
+    _dialogQueue.add(queued);
+    queued.timeoutTimer = Timer(timeout, () => _cancelRequest(queued));
     unawaited(_drainQueue());
-    return result.future;
+    return queued.result.future;
+  }
+
+  static void _cancelRequest(_QueuedKeyboardInteractiveRequest request) {
+    _dialogQueue.remove(request);
+    request.cancel();
+  }
+
+  @visibleForTesting
+  static void resetForTesting() {
+    final requests = <_QueuedKeyboardInteractiveRequest>{..._dialogQueue};
+    final active = _activeRequest;
+    if (active != null) requests.add(active);
+    _queueGeneration++;
+    _dialogQueue.clear();
+    _activeRequest = null;
+    _isDrainingQueue = false;
+    for (final request in requests) {
+      request.cancel();
+    }
+  }
+
+  static Future<void> _showQueuedRequest(
+    _QueuedKeyboardInteractiveRequest queued,
+  ) async {
+    if (queued.result.isCompleted) return;
+
+    _activeRequest = queued;
+    try {
+      final pendingResponses = await _showDialog(
+        queued.spi,
+        queued.request,
+        preferredContext: queued.preferredContext,
+        onDismissReady: (dismiss) {
+          queued.dismiss = dismiss;
+          if (queued.result.isCompleted) dismiss();
+        },
+      );
+      if (queued.result.isCompleted) return;
+      queued.result.complete(
+        pendingResponses == null
+            ? null
+            : queued.prepared.merge(pendingResponses),
+      );
+    } catch (e, s) {
+      if (!queued.result.isCompleted) queued.result.completeError(e, s);
+    } finally {
+      queued.timeoutTimer?.cancel();
+      queued.dismiss = null;
+      if (identical(_activeRequest, queued)) _activeRequest = null;
+    }
+  }
+
+  static Future<void> _drainQueue() async {
+    if (_isDrainingQueue) return;
+    _isDrainingQueue = true;
+    final generation = _queueGeneration;
+    try {
+      while (generation == _queueGeneration && _dialogQueue.isNotEmpty) {
+        final queued = _dialogQueue.removeFirst();
+        await _showQueuedRequest(queued);
+      }
+    } finally {
+      if (generation == _queueGeneration) {
+        _isDrainingQueue = false;
+        if (_dialogQueue.isNotEmpty) unawaited(_drainQueue());
+      }
+    }
   }
 
   static _PreparedKeyboardInteractiveRequest _prepareRequest(
@@ -150,24 +215,11 @@ abstract final class KeyboardInteractiveAuth {
         .trim();
   }
 
-  static Future<void> _drainQueue() async {
-    if (_isDrainingQueue) return;
-    _isDrainingQueue = true;
-    try {
-      while (_dialogQueue.isNotEmpty) {
-        final showNext = _dialogQueue.removeFirst();
-        await showNext();
-      }
-    } finally {
-      _isDrainingQueue = false;
-      if (_dialogQueue.isNotEmpty) unawaited(_drainQueue());
-    }
-  }
-
   static Future<List<String>?> _showDialog(
     Spi spi,
     SSHUserInfoRequest request, {
     BuildContext? preferredContext,
+    required ValueChanged<VoidCallback> onDismissReady,
   }) async {
     final lifecycle = WidgetsBinding.instance.lifecycleState;
     if (lifecycle != null && lifecycle != AppLifecycleState.resumed) {
@@ -190,15 +242,22 @@ abstract final class KeyboardInteractiveAuth {
       title: title,
       titleMaxLines: 2,
       barrierDismiss: false,
-      childBuilder: (dialogContext) => _KeyboardInteractiveFields(
-        key: fieldsKey,
-        spi: spi,
-        instruction: instruction,
-        prompts: request.prompts,
-        onSubmit: () => Navigator.of(dialogContext).pop(
-          fieldsKey.currentState?.responses,
-        ),
-      ),
+      childBuilder: (dialogContext) {
+        onDismissReady(() {
+          if (!dialogContext.mounted) return;
+          final route = ModalRoute.of(dialogContext);
+          if (route?.isCurrent == true) Navigator.of(dialogContext).pop();
+        });
+        return _KeyboardInteractiveFields(
+          key: fieldsKey,
+          spi: spi,
+          instruction: instruction,
+          prompts: request.prompts,
+          onSubmit: () => Navigator.of(dialogContext).pop(
+            fieldsKey.currentState?.responses,
+          ),
+        );
+      },
       actionsBuilder: (dialogContext) => [
         TextButton(
           onPressed: () => Navigator.of(dialogContext).pop(),
@@ -223,6 +282,12 @@ abstract final class KeyboardInteractiveAuth {
     return '${libL10n.authRequired} ${index + 1}';
   }
 
+  static String? _promptHint(SSHUserInfoPrompt prompt) {
+    if (!_isOtpPrompt(prompt) && !_isAccountPasswordPrompt(prompt)) return null;
+    final hint = _sanitize(prompt.promptText);
+    return hint.isEmpty ? null : hint;
+  }
+
   static String _sanitize(String value) {
     final sanitized = value.replaceAll(
       RegExp(r'[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]'),
@@ -230,6 +295,30 @@ abstract final class KeyboardInteractiveAuth {
     );
     if (sanitized.length <= 1024) return sanitized;
     return sanitized.substring(0, 1024);
+  }
+}
+
+class _QueuedKeyboardInteractiveRequest {
+  final Spi spi;
+  final SSHUserInfoRequest request;
+  final _PreparedKeyboardInteractiveRequest prepared;
+  final BuildContext? preferredContext;
+  final result = Completer<List<String>?>();
+
+  Timer? timeoutTimer;
+  VoidCallback? dismiss;
+
+  _QueuedKeyboardInteractiveRequest({
+    required this.spi,
+    required this.request,
+    required this.prepared,
+    required this.preferredContext,
+  });
+
+  void cancel() {
+    timeoutTimer?.cancel();
+    if (!result.isCompleted) result.complete(null);
+    dismiss?.call();
   }
 }
 
@@ -320,6 +409,7 @@ class _KeyboardInteractiveFieldsState
                   widget.prompts[i],
                   i,
                 ),
+                hint: KeyboardInteractiveAuth._promptHint(widget.prompts[i]),
                 autoFocus: i == 0,
                 obscureText: !widget.prompts[i].echo,
                 type: widget.prompts[i].echo

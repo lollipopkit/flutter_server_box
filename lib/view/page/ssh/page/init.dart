@@ -182,7 +182,7 @@ extension _Init on SSHPageState {
           KeyboardInteractiveAuth.handle(
             server,
             request,
-            context: context,
+            context: mounted ? context : AppNavigator.context,
           ),
     );
 
@@ -498,7 +498,7 @@ extension _Init on SSHPageState {
               KeyboardInteractiveAuth.handle(
                 server,
                 request,
-                context: context,
+                context: mounted ? context : AppNavigator.context,
               ),
         );
         connected = _client != null;
