@@ -7,6 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
@@ -125,7 +126,7 @@ class ServersNotifier extends _$ServersNotifier {
       )..remove(spi.id);
       state = state.copyWith(manualDisconnectedIds: newManualDisconnected);
       final serverNotifier = ref.read(serverProvider(spi.id).notifier);
-      await serverNotifier.refresh();
+      await serverNotifier.refresh(interactive: true);
       return;
     }
 
@@ -139,6 +140,11 @@ class ServersNotifier extends _$ServersNotifier {
       if (state.manualDisconnectedIds.contains(serverId)) continue;
 
       final serverState = ref.read(serverProvider(serverId));
+
+      final error = serverState.status.err;
+      if (error is SSHErr && error.type == SSHErrType.interactiveAuth) {
+        continue;
+      }
 
       if (onlyFailed) {
         if (serverState.conn != ServerConn.failed) {

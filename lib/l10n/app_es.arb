@@ -180,6 +180,7 @@
   "sshConfigPermissionDenied": "No se puede acceder al archivo de configuración SSH debido a los permisos de macOS.",
   "sshConfigServersToImport": "Se importarán {importCount} servidores",
   "sshTermHelp": "Cuando el terminal es desplazable, arrastrar horizontalmente puede seleccionar texto. Hacer clic en el botón del teclado enciende/apaga el teclado. El icono de archivo abre el SFTP de la ruta actual. El botón del portapapeles copia el contenido cuando se selecciona texto y pega el contenido del portapapeles en el terminal cuando no se selecciona texto y hay contenido en el portapapeles. El icono de código pega fragmentos de código en el terminal y los ejecuta.",
+  "sshVerificationCode": "Código de verificación",
   "sshVirtualKeyAutoOff": "Desactivación automática de teclas virtuales",
   "stat": "Estadísticas",
   "supportFmtArgs": "Soporta los siguientes argumentos de formato:",

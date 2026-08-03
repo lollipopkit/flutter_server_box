@@ -1,22 +1,344 @@
 import 'dart:async';
+import 'dart:collection';
 
+import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/core/app_navigator.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
-abstract final class KeybordInteractive {
-  static FutureOr<List<String>?> defaultHandle(
-    Spi spi, {
-    BuildContext? ctx,
-  }) async {
+typedef SSHKeyboardInteractiveHandler = FutureOr<List<String>?> Function(
+  Spi server,
+  SSHUserInfoRequest request,
+);
+
+abstract final class KeyboardInteractiveAuth {
+  static final _dialogQueue = Queue<Future<void> Function()>();
+  static bool _isDrainingQueue = false;
+
+  static FutureOr<List<String>?> handle(
+    Spi spi,
+    SSHUserInfoRequest request, {
+    BuildContext? context,
+  }) {
+    final prepared = _prepareRequest(spi, request);
+    if (prepared.pendingPrompts.isEmpty) {
+      return prepared.merge(const <String>[]);
+    }
+
+    final result = Completer<List<String>?>();
+    _dialogQueue.add(() async {
+      try {
+        final pendingResponses = await _showDialog(
+          spi,
+          SSHUserInfoRequest(
+            request.name,
+            request.instruction,
+            prepared.pendingPrompts,
+          ),
+          preferredContext: context,
+        );
+        result.complete(
+          pendingResponses == null ? null : prepared.merge(pendingResponses),
+        );
+      } catch (e, s) {
+        result.completeError(e, s);
+      }
+    });
+    unawaited(_drainQueue());
+    return result.future;
+  }
+
+  static _PreparedKeyboardInteractiveRequest _prepareRequest(
+    Spi spi,
+    SSHUserInfoRequest request,
+  ) {
+    final responses = List<String?>.filled(request.prompts.length, null);
+    final pendingIndexes = <int>[];
+    final pendingPrompts = <SSHUserInfoPrompt>[];
+    final password = spi.pwd;
+    var usedStoredPassword = false;
+
+    for (var i = 0; i < request.prompts.length; i++) {
+      final prompt = request.prompts[i];
+      if (!usedStoredPassword &&
+          password != null &&
+          password.isNotEmpty &&
+          _isAccountPasswordPrompt(prompt)) {
+        responses[i] = password;
+        usedStoredPassword = true;
+      } else {
+        pendingIndexes.add(i);
+        pendingPrompts.add(prompt);
+      }
+    }
+
+    return _PreparedKeyboardInteractiveRequest(
+      responses: responses,
+      pendingIndexes: pendingIndexes,
+      pendingPrompts: pendingPrompts,
+    );
+  }
+
+  static bool _isAccountPasswordPrompt(SSHUserInfoPrompt prompt) {
+    if (prompt.echo) return false;
+
+    final normalized = _normalizePrompt(prompt.promptText);
+    if (normalized.isEmpty) return false;
+
+    if (_isOtpPrompt(prompt)) return false;
+
+    const passwordChangeMarkers = [
+      'new password',
+      'confirm password',
+      'repeat password',
+      'retype password',
+      'again',
+      '新密码',
+      '新密碼',
+      '确认密码',
+      '確認密碼',
+    ];
+    if (passwordChangeMarkers.any(normalized.contains)) return false;
+
+    const passwordMarkers = [
+      'password',
+      'passwort',
+      'mot de passe',
+      'contraseña',
+      'senha',
+      'wachtwoord',
+      'kata sandi',
+      'пароль',
+      'parola',
+      'şifre',
+      '密码',
+      '密碼',
+      'パスワード',
+      '비밀번호',
+      '암호',
+    ];
+    return passwordMarkers.any(normalized.contains);
+  }
+
+  static bool _isOtpPrompt(SSHUserInfoPrompt prompt) {
+    final normalized = _normalizePrompt(prompt.promptText);
+    const otpMarkers = [
+      'one-time',
+      'one time',
+      'otp',
+      'verification',
+      'authenticator',
+      'token',
+      'passcode',
+      'code',
+      '动态',
+      '動態',
+      '验证码',
+      '驗證碼',
+      '確認コード',
+      '인증 코드',
+    ];
+    return otpMarkers.any(normalized.contains);
+  }
+
+  static String _normalizePrompt(String value) {
+    return _sanitize(value)
+        .toLowerCase()
+        .replaceAll(RegExp(r'[\s:：]+'), ' ')
+        .trim();
+  }
+
+  static Future<void> _drainQueue() async {
+    if (_isDrainingQueue) return;
+    _isDrainingQueue = true;
     try {
-      final res =
-          await (ctx ??
-                  WidgetsBinding.instance.focusManager.primaryFocus?.context)
-              ?.showPwdDialog(title: libL10n.pwd, id: spi.id, label: spi.id);
-      return res == null ? null : [res];
-    } catch (e) {
+      while (_dialogQueue.isNotEmpty) {
+        final showNext = _dialogQueue.removeFirst();
+        await showNext();
+      }
+    } finally {
+      _isDrainingQueue = false;
+      if (_dialogQueue.isNotEmpty) unawaited(_drainQueue());
+    }
+  }
+
+  static Future<List<String>?> _showDialog(
+    Spi spi,
+    SSHUserInfoRequest request, {
+    BuildContext? preferredContext,
+  }) async {
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (lifecycle != null && lifecycle != AppLifecycleState.resumed) {
       return null;
     }
+
+    final context = preferredContext?.mounted == true
+        ? preferredContext
+        : AppNavigator.context;
+    if (context == null || !context.mounted) return null;
+
+    final fieldsKey = GlobalKey<_KeyboardInteractiveFieldsState>();
+    final requestName = _sanitize(request.name);
+    final instruction = _sanitize(request.instruction);
+    final title = requestName.isNotEmpty
+        ? requestName
+        : libL10n.authRequired;
+
+    return await context.showRoundDialog<List<String>>(
+      title: title,
+      titleMaxLines: 2,
+      barrierDismiss: false,
+      childBuilder: (dialogContext) => _KeyboardInteractiveFields(
+        key: fieldsKey,
+        spi: spi,
+        instruction: instruction,
+        prompts: request.prompts,
+        onSubmit: () => Navigator.of(dialogContext).pop(
+          fieldsKey.currentState?.responses,
+        ),
+      ),
+      actionsBuilder: (dialogContext) => [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: Text(libL10n.cancel),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(
+            fieldsKey.currentState?.responses,
+          ),
+          child: Text(libL10n.ok),
+        ),
+      ],
+    );
+  }
+
+  static String _promptLabel(SSHUserInfoPrompt prompt, int index) {
+    if (_isOtpPrompt(prompt)) return l10n.sshVerificationCode;
+    if (_isAccountPasswordPrompt(prompt)) return libL10n.pwd;
+
+    final label = _sanitize(prompt.promptText);
+    if (label.isNotEmpty) return label;
+    return '${libL10n.authRequired} ${index + 1}';
+  }
+
+  static String _sanitize(String value) {
+    final sanitized = value.replaceAll(
+      RegExp(r'[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]'),
+      '',
+    );
+    if (sanitized.length <= 1024) return sanitized;
+    return sanitized.substring(0, 1024);
+  }
+}
+
+class _PreparedKeyboardInteractiveRequest {
+  final List<String?> responses;
+  final List<int> pendingIndexes;
+  final List<SSHUserInfoPrompt> pendingPrompts;
+
+  const _PreparedKeyboardInteractiveRequest({
+    required this.responses,
+    required this.pendingIndexes,
+    required this.pendingPrompts,
+  });
+
+  List<String> merge(List<String> pendingResponses) {
+    if (pendingResponses.length != pendingIndexes.length) {
+      throw ArgumentError(
+        'pendingResponses.length (${pendingResponses.length}) != '
+        'pendingIndexes.length (${pendingIndexes.length})',
+      );
+    }
+
+    final merged = List<String?>.of(responses);
+    for (var i = 0; i < pendingIndexes.length; i++) {
+      merged[pendingIndexes[i]] = pendingResponses[i];
+    }
+    return [for (final response in merged) response!];
+  }
+}
+
+class _KeyboardInteractiveFields extends StatefulWidget {
+  final Spi spi;
+  final String instruction;
+  final List<SSHUserInfoPrompt> prompts;
+  final VoidCallback onSubmit;
+
+  const _KeyboardInteractiveFields({
+    super.key,
+    required this.spi,
+    required this.instruction,
+    required this.prompts,
+    required this.onSubmit,
+  });
+
+  @override
+  State<_KeyboardInteractiveFields> createState() =>
+      _KeyboardInteractiveFieldsState();
+}
+
+class _KeyboardInteractiveFieldsState
+    extends State<_KeyboardInteractiveFields> {
+  late final List<TextEditingController> _controllers = [
+    for (var i = 0; i < widget.prompts.length; i++) TextEditingController(),
+  ];
+
+  List<String> get responses => [
+    for (final controller in _controllers) controller.text,
+  ];
+
+  @override
+  void dispose() {
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('${libL10n.server}: ${widget.spi.name}'),
+            if (widget.instruction.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              SelectableText(widget.instruction),
+            ],
+            const SizedBox(height: 12),
+            for (var i = 0; i < widget.prompts.length; i++) ...[
+              Input(
+                key: ValueKey('ssh-keyboard-interactive-$i'),
+                controller: _controllers[i],
+                label: KeyboardInteractiveAuth._promptLabel(
+                  widget.prompts[i],
+                  i,
+                ),
+                autoFocus: i == 0,
+                obscureText: !widget.prompts[i].echo,
+                type: widget.prompts[i].echo
+                    ? TextInputType.text
+                    : TextInputType.visiblePassword,
+                action: i == widget.prompts.length - 1
+                    ? TextInputAction.done
+                    : TextInputAction.next,
+                suggestion: false,
+                onSubmitted: i == widget.prompts.length - 1
+                    ? (_) => widget.onSubmit()
+                    : null,
+              ),
+              if (i != widget.prompts.length - 1)
+                const SizedBox(height: 8),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }

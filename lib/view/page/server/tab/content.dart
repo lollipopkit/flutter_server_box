@@ -23,6 +23,7 @@ extension on _ServerPageState {
   }
 
   Widget _buildTopRightWidget(ServerState s) {
+    final needsInteractiveAuth = s.needsInteractiveAuth;
     final (child, onTap) = switch (s.conn) {
       ServerConn.connecting || ServerConn.loading || ServerConn.connected => (
         SizedBox.square(
@@ -32,7 +33,11 @@ extension on _ServerPageState {
         null,
       ),
       ServerConn.failed => (
-        const Icon(Icons.refresh, size: 21, color: Colors.grey),
+        Icon(
+          needsInteractiveAuth ? Icons.lock_outline : Icons.refresh,
+          size: 21,
+          color: Colors.grey,
+        ),
         () {
           TryLimiter.reset(s.spi.id);
           ref.read(serversProvider.notifier).refresh(spi: s.spi);
@@ -66,6 +71,9 @@ extension on _ServerPageState {
 
   Widget _buildTopRightText(ServerState s) {
     final hasErr = s.status.err != null;
+    if (s.needsInteractiveAuth) {
+      return Text(libL10n.tapToAuth, style: UIs.text13Grey);
+    }
     final str = s._getTopRightStr(s.spi);
     if (str == null) return UIs.placeholder;
     return GestureDetector(

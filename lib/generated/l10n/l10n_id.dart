@@ -759,6 +759,9 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get sshVerificationCode => 'Kode verifikasi';
+
+  @override
   String get sshConfigManualSelect =>
       'Apakah Anda ingin memilih file konfigurasi SSH secara manual?';
 

@@ -5,6 +5,7 @@ enum SSHErrType {
   unknown,
   connect,
   auth,
+  interactiveAuth,
   noPrivateKey,
   segments,
   writeScript,
@@ -17,6 +18,8 @@ class SSHErr extends Err<SSHErrType> {
   @override
   String? get solution => switch (type) {
     SSHErrType.auth => l10n.authFailTip,
+    SSHErrType.interactiveAuth =>
+        '${libL10n.authRequired}. ${libL10n.tapToAuth}.',
     SSHErrType.writeScript => l10n.writeScriptFailTip,
     SSHErrType.noPrivateKey => l10n.noPrivateKeyTip,
     _ => null,

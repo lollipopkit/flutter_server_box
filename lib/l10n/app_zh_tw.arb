@@ -210,6 +210,7 @@
   "sshHostKeyType": "SSH 主機金鑰類型",
   "sshHostKeyNewDesc": "收到來自 {serverName} 的新 SSH 主機金鑰，信任前請先檢查指紋。",
   "sshHostKeyStoredFingerprint": "已儲存的指紋：{fingerprint}",
+  "sshVerificationCode": "驗證碼",
   "sshConfigManualSelect": "是否要手動選擇 SSH 設定檔案？",
   "sshConfigNoServers": "SSH設定中未找到伺服器",
   "sshConfigPermissionDenied": "由於 macOS 權限限制，無法存取 SSH 設定檔案。",

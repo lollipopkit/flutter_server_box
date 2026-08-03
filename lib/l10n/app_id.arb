@@ -180,6 +180,7 @@
   "sshConfigPermissionDenied": "Tidak dapat mengakses file konfigurasi SSH karena izin macOS.",
   "sshConfigServersToImport": "{importCount} server akan diimpor",
   "sshTermHelp": "Ketika terminal dapat digulirkan, menggeser secara horizontal dapat memilih teks. Mengklik tombol keyboard mengaktifkan/menonaktifkan keyboard. Ikon file membuka SFTP jalur saat ini. Tombol papan klip menyalin konten saat teks dipilih, dan menempelkan konten dari papan klip ke terminal saat tidak ada teks yang dipilih dan ada konten di papan klip. Ikon kode menempelkan potongan kode ke terminal dan mengeksekusinya.",
+  "sshVerificationCode": "Kode verifikasi",
   "sshVirtualKeyAutoOff": "Switching Otomatis Kunci Virtual",
   "stat": "Statistik",
   "supportFmtArgs": "Parameter pemformatan berikut ini didukung:",

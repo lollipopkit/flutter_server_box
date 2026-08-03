@@ -178,8 +178,12 @@ extension _Init on SSHPageState {
     _writeLn(l10n.waitConnection);
     _client ??= await genClient(
       widget.args.spi,
-      onKeyboardInteractive: (_) =>
-          KeybordInteractive.defaultHandle(widget.args.spi, ctx: context),
+      onKeyboardInteractive: (server, request) =>
+          KeyboardInteractiveAuth.handle(
+            server,
+            request,
+            context: context,
+          ),
     );
 
     _writeLn('${libL10n.execute}: Shell');
@@ -490,8 +494,12 @@ extension _Init on SSHPageState {
       try {
         _client = await genClient(
           widget.args.spi,
-          onKeyboardInteractive: (_) =>
-              KeybordInteractive.defaultHandle(widget.args.spi, ctx: context),
+          onKeyboardInteractive: (server, request) =>
+              KeyboardInteractiveAuth.handle(
+                server,
+                request,
+                context: context,
+              ),
         );
         connected = _client != null;
         if (connected) break;

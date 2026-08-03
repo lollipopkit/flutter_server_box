@@ -10,7 +10,6 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/sftpfile.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/utils/comparator.dart';
-import 'package:server_box/core/utils/host_key_helper.dart';
 import 'package:server_box/core/utils/sftp_sudo.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
@@ -630,10 +629,6 @@ extension _Actions on _SftpPageState {
       );
       if (suc == null || err != null) return;
     } else {
-      if (!await ensureHostKeyAcceptedForSftp(context, widget.args.spi)) {
-        return;
-      }
-
       final completer = Completer();
       final req = SftpReq(
         widget.args.spi,
@@ -672,9 +667,6 @@ extension _Actions on _SftpPageState {
             return;
           }
 
-          if (!await ensureHostKeyAcceptedForSftp(context, widget.args.spi)) {
-            return;
-          }
           ref
               .read(sftpProvider.notifier)
               .add(
@@ -714,10 +706,6 @@ extension _Actions on _SftpPageState {
           onPressed: () async {
             context.pop();
             final remotePath = _getRemotePath(name);
-
-            if (!await ensureHostKeyAcceptedForSftp(context, widget.args.spi)) {
-              return;
-            }
 
             ref
                 .read(sftpProvider.notifier)
@@ -1125,10 +1113,6 @@ extension _Actions on _SftpPageState {
         if (fileName == null || fileName.isEmpty) return;
         final remotePath = '$remoteDir/$fileName';
         Loggers.app.info('SFTP upload local: $path, remote: $remotePath');
-        if (!await ensureHostKeyAcceptedForSftp(context, widget.args.spi)) {
-          return;
-        }
-
         if (_useSudo) {
           await _uploadViaSudo(
             localPath: path,

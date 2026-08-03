@@ -761,6 +761,9 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get sshVerificationCode => 'Bestätigungscode';
+
+  @override
   String get sshConfigManualSelect =>
       'Möchten Sie die SSH-Konfigurationsdatei manuell auswählen?';
 

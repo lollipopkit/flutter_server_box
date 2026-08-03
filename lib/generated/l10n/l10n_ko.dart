@@ -730,6 +730,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get sshVerificationCode => '인증 코드';
+
+  @override
   String get sshConfigManualSelect => 'SSH 설정 파일을 수동으로 선택하시겠습니까?';
 
   @override

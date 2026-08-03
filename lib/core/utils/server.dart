@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/proxy_command_socket.dart';
+import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
@@ -70,7 +71,7 @@ Future<SSHClient> genClient(
   Spi? jumpSpi,
 
   /// Handle keyboard-interactive authentication
-  SSHUserInfoRequestHandler? onKeyboardInteractive,
+  SSHKeyboardInteractiveHandler? onKeyboardInteractive,
   Map<String, String>? knownHostFingerprints,
   void Function(String storageKey, String fingerprintHex)? onHostKeyAccepted,
   Future<bool> Function(HostKeyPromptInfo info)? onHostKeyPrompt,
@@ -91,8 +92,8 @@ Future<SSHClient> genClient(
   final hostKeyCache = Map<String, String>.from(
     knownHostFingerprints ?? _loadKnownHostFingerprints(),
   );
-  final hostKeyPersist = onHostKeyAccepted ?? _persistHostKeyFingerprint;
-  final hostKeyPrompt = onHostKeyPrompt ?? _defaultHostKeyPrompt;
+  final hostKeyPersist = onHostKeyAccepted ?? persistHostKeyFingerprint;
+  final hostKeyPrompt = onHostKeyPrompt ?? showHostKeyPrompt;
 
   String? alterUser;
 
@@ -208,7 +209,9 @@ Future<SSHClient> genClient(
       socket,
       username: alterUser ?? spi.user,
       onPasswordRequest: () => spi.pwd,
-      onUserInfoRequest: onKeyboardInteractive,
+      onUserInfoRequest: onKeyboardInteractive == null
+          ? null
+          : (request) => onKeyboardInteractive(spi, request),
       onVerifyHostKey: hostKeyVerifier.call,
     );
   }
@@ -220,7 +223,9 @@ Future<SSHClient> genClient(
     username: spi.user,
     // Must use [compute] here, instead of [Computer.shared.start]
     identities: await compute(loadIdentity, privateKey),
-    onUserInfoRequest: onKeyboardInteractive,
+    onUserInfoRequest: onKeyboardInteractive == null
+        ? null
+        : (request) => onKeyboardInteractive(spi, request),
     onVerifyHostKey: hostKeyVerifier.call,
   );
 }
@@ -366,7 +371,7 @@ Map<String, String> _loadKnownHostFingerprints() {
   }
 }
 
-void _persistHostKeyFingerprint(String storageKey, String fingerprintHex) {
+void persistHostKeyFingerprint(String storageKey, String fingerprintHex) {
   try {
     final prop = Stores.setting.sshKnownHostFingerprints;
     final updated = Map<String, String>.from(prop.get());
@@ -381,8 +386,11 @@ void _persistHostKeyFingerprint(String storageKey, String fingerprintHex) {
   }
 }
 
-Future<bool> _defaultHostKeyPrompt(HostKeyPromptInfo info) async {
-  final ctx = AppNavigator.context;
+Future<bool> showHostKeyPrompt(
+  HostKeyPromptInfo info, {
+  BuildContext? context,
+}) async {
+  final ctx = context?.mounted == true ? context : AppNavigator.context;
   if (ctx == null) {
     Loggers.app.warning(
       'Host key prompt skipped: navigator context unavailable.',
@@ -431,7 +439,7 @@ Future<bool> _defaultHostKeyPrompt(HostKeyPromptInfo info) async {
 Future<void> ensureKnownHostKey(
   Spi spi, {
   Duration timeout = const Duration(seconds: 5),
-  SSHUserInfoRequestHandler? onKeyboardInteractive,
+  SSHKeyboardInteractiveHandler? onKeyboardInteractive,
   Map<String, Spi>? jumpSpisById,
   Set<String>? visitedServerIds,
 }) async {
