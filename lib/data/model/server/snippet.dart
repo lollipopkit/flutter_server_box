@@ -165,14 +165,6 @@ extension SnippetX on Snippet {
   };
 }
 
-class SnippetResult {
-  final String? dest;
-  final String result;
-  final Duration time;
-
-  SnippetResult({required this.dest, required this.result, required this.time});
-}
-
 typedef SnippetFuncCtx = ({Terminal term, String raw});
 
 abstract final class SnippetFuncs {

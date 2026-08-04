@@ -18,7 +18,7 @@ permissions:
 env:
   APP_NAME: ServerBox
   BUILD_TAG: test-build-${{ github.run_number }}-${{ github.sha }}
-  FLUTTER_VERSION: "3.44.4"
+  FLUTTER_VERSION: "3.44.8"
 
 jobs:
   reproducibilityCheck:
