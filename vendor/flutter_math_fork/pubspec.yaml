@@ -1,0 +1,80 @@
+name: flutter_math_fork
+description: Fast and high-quality TeX math equation rendering with pure Dart & Flutter. 
+version: 0.7.2
+homepage: https://github.com/simpleclub-extended/flutter_math_fork
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flutter_svg: ">=2.0.0+1 <3.0.0"
+  provider: ^6.0.5
+  meta: ^1.8.0
+  collection: ^1.17.0
+  tuple: ^2.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  fonts:
+    - family: KaTeX_Main
+      fonts:
+        - asset: lib/katex_fonts/fonts/KaTeX_Main-Regular.ttf
+        - asset: lib/katex_fonts/fonts/KaTeX_Main-Italic.ttf
+          style: italic
+        - asset: lib/katex_fonts/fonts/KaTeX_Main-Bold.ttf
+          weight: 700
+        - asset: lib/katex_fonts/fonts/KaTeX_Main-BoldItalic.ttf
+          weight: 700
+          style: italic
+    - family: KaTeX_Math
+      fonts:
+        - asset: lib/katex_fonts/fonts/KaTeX_Math-Italic.ttf
+          style: italic
+        - asset: lib/katex_fonts/fonts/KaTeX_Math-BoldItalic.ttf
+          weight: 700
+          style: italic
+    - family: KaTeX_AMS
+      fonts:
+        - asset: lib/katex_fonts/fonts/KaTeX_AMS-Regular.ttf
+    - family: KaTeX_Caligraphic
+      fonts:
+        - asset: lib/katex_fonts/fonts/KaTeX_Caligraphic-Regular.ttf
+        - asset: lib/katex_fonts/fonts/KaTeX_Caligraphic-Bold.ttf
+          weight: 700
+    - family: KaTeX_Fraktur
+      fonts:
+        - asset: lib/katex_fonts/fonts/KaTeX_Fraktur-Regular.ttf
+        - asset: lib/katex_fonts/fonts/KaTeX_Fraktur-Bold.ttf
+          weight: 700
+    - family: KaTeX_SansSerif
+      fonts:
+        - asset: lib/katex_fonts/fonts/KaTeX_SansSerif-Regular.ttf
+        - asset: lib/katex_fonts/fonts/KaTeX_SansSerif-Bold.ttf
+          weight: 700
+        - asset: lib/katex_fonts/fonts/KaTeX_SansSerif-Italic.ttf
+          style: italic
+    - family: KaTeX_Script
+      fonts:
+        - asset: lib/katex_fonts/fonts/KaTeX_Script-Regular.ttf
+    - family: KaTeX_Typewriter
+      fonts:
+        - asset: lib/katex_fonts/fonts/KaTeX_Typewriter-Regular.ttf
+    - family: KaTeX_Size1
+      fonts:
+        - asset: lib/katex_fonts/fonts/KaTeX_Size1-Regular.ttf
+    - family: KaTeX_Size2
+      fonts:
+        - asset: lib/katex_fonts/fonts/KaTeX_Size2-Regular.ttf
+    - family: KaTeX_Size3
+      fonts:
+        - asset: lib/katex_fonts/fonts/KaTeX_Size3-Regular.ttf
+    - family: KaTeX_Size4
+      fonts:
+        - asset: lib/katex_fonts/fonts/KaTeX_Size4-Regular.ttf

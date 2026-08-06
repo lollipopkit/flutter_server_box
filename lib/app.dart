@@ -2,6 +2,7 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/l10n/gen_l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -23,6 +24,7 @@ class MyApp extends StatelessWidget {
       builder: (context, _) {
         if (!Stores.setting.useSystemPrimaryColor.fetch()) {
           UIs.colorSeed = Color(Stores.setting.primaryColor.fetch());
+          UIs.primaryColor = UIs.colorSeed;
           return _buildApp(context);
         }
         return DynamicColorBuilder(
@@ -70,6 +72,11 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       locale: locale,
+      // Locale text is read from the global `l10n` (not an inherited
+      // dependency), so existing pushed routes don't repaint on rebuild.
+      // Keying MaterialApp by locale force-remounts the whole app so the
+      // language switch takes effect immediately instead of on restart.
+      key: ValueKey(locale),
       localizationsDelegates: const [
         LibLocalizations.delegate,
         ...AppLocalizations.localizationsDelegates,
@@ -81,6 +88,26 @@ class MyApp extends StatelessWidget {
       theme: light,
       darkTheme: tMode < 3 ? dark : dark.toAmoled,
       home: _buildAppContent(ctx),
+      // Make the status bar / navigation bar icons follow the app theme
+      // (this is effective on platforms where the engine supports
+      // [SystemUiOverlayStyle], including HarmonyOS).
+      builder: (ctx, child) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final overlay = SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness:
+              isDark ? Brightness.light : Brightness.dark,
+          statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+          systemNavigationBarColor: Colors.transparent,
+          systemNavigationBarContrastEnforced: true,
+          systemNavigationBarIconBrightness:
+              isDark ? Brightness.light : Brightness.dark,
+        );
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: overlay,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 

@@ -1,8 +1,10 @@
 // ignore_for_file: avoid_print
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:computer/computer.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
@@ -104,8 +106,6 @@ Future<void> _initData() async {
   Pros.snippet.load();
   Pros.key.load();
   await Pros.app.init();
-
-  if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
 }
 
 void _setupDebug() {
@@ -124,6 +124,11 @@ void _doPlatformRelated() async {
     SharedPreferences.setPrefix('');
     // try switch to highest refresh rate
     FlutterDisplayMode.setHighRefreshRate();
+  }
+  if (Platform.isOhos) {
+    // FilePicker.platform is a `late` field and is not auto-registered on
+    // OHOS by the generated dart plugin registrant, register it manually.
+    FilePickerIO.registerWith();
   }
 
   final serversCount = Stores.server.box.keys.length;

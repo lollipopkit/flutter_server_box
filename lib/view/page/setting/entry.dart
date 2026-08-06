@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_gen/gen_l10n/l10n.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:provider/provider.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/rebuild.dart';
 import 'package:server_box/data/res/store.dart';
@@ -14,8 +13,6 @@ import 'package:server_box/view/page/setting/platform/platform_pub.dart';
 
 import '../../../core/route.dart';
 import '../../../data/model/app/net_view.dart';
-import '../../../data/provider/app.dart';
-import '../../../data/res/build_data.dart';
 
 const _kIconSize = 23.0;
 
@@ -105,7 +102,7 @@ class _SettingPageState extends State<SettingPage> {
       _buildThemeMode(),
       _buildAppColor(),
       //_buildLaunchPage(),
-      _buildCheckUpdate(),
+      //_buildCheckUpdate(),
 
       /// Platform specific settings
       if (specific != null) specific,
@@ -156,7 +153,6 @@ class _SettingPageState extends State<SettingPage> {
   Widget _buildSSH() {
     return Column(
       children: [
-        _buildSSHWakeLock(),
         _buildTermTheme(),
         _buildFont(),
         _buildTermFontSize(),
@@ -176,37 +172,6 @@ class _SettingPageState extends State<SettingPage> {
         _buildEditorDarkTheme(),
         _buildEditorHighlight(),
       ].map((e) => CardX(child: e)).toList(),
-    );
-  }
-
-  Widget _buildCheckUpdate() {
-    return ListTile(
-      leading: const Icon(Icons.update),
-      title: Text(l10n.autoCheckUpdate),
-      subtitle: Consumer<AppProvider>(
-        builder: (ctx, app, __) {
-          String display;
-          if (app.newestBuild != null) {
-            if (app.newestBuild! > BuildData.build) {
-              display = l10n.versionHaveUpdate(app.newestBuild!);
-            } else {
-              display = l10n.versionUpdated(BuildData.build);
-            }
-          } else {
-            display = l10n.versionUnknownUpdate(BuildData.build);
-          }
-          return Text(display, style: UIs.textGrey);
-        },
-      ),
-      onTap: () => Funcs.throttle(
-        () => AppUpdateIface.doUpdate(
-          context: context,
-          build: BuildData.build,
-          url: Urls.updateCfg,
-          force: BuildMode.isDebug,
-        ),
-      ),
-      trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
     );
   }
 
@@ -302,6 +267,7 @@ class _SettingPageState extends State<SettingPage> {
     // Change [primaryColor] first, then change [_selectedColorValue],
     // So the [ValueBuilder] will be triggered with the new value
     UIs.colorSeed = color;
+    UIs.primaryColor = color;
     _setting.primaryColor.put(color.value);
     context.pop();
     context.pop();
@@ -1048,8 +1014,6 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(MingCute.more_3_fill),
       title: Text(l10n.more),
       children: [
-        _buildBeta(),
-        _buildWakeLock(),
         _buildCollapseUI(),
         _buildCupertinoRoute(),
         if (isDesktop) _buildHideTitleBar(),
@@ -1096,21 +1060,6 @@ class _SettingPageState extends State<SettingPage> {
       leading: const Icon(MingCute.align_center_line),
       title: Text(l10n.softWrap),
       trailing: StoreSwitch(prop: _setting.editorSoftWrap),
-    );
-  }
-
-  Widget _buildWakeLock() {
-    return ListTile(
-      title: Text(l10n.wakeLock),
-      trailing: StoreSwitch(prop: _setting.generalWakeLock),
-    );
-  }
-
-  Widget _buildSSHWakeLock() {
-    return ListTile(
-      leading: const Icon(MingCute.lock_fill),
-      title: Text(l10n.wakeLock),
-      trailing: StoreSwitch(prop: _setting.sshWakeLock),
     );
   }
 
@@ -1168,14 +1117,6 @@ class _SettingPageState extends State<SettingPage> {
           ],
         );
       },
-    );
-  }
-
-  Widget _buildBeta() {
-    return ListTile(
-      title: const Text('Beta Program'),
-      subtitle: Text(l10n.acceptBeta, style: UIs.textGrey),
-      trailing: StoreSwitch(prop: _setting.betaTest),
     );
   }
 }

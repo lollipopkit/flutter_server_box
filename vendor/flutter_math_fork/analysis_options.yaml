@@ -1,0 +1,69 @@
+include: package:flutter/analysis_options_user.yaml
+
+analyzer:
+  strong-mode:
+    implicit-casts: false
+    implicit-dynamic: false
+  exclude:
+    - lib/**.freezed.dart
+linter:
+  rules:
+    - prefer_relative_imports
+    - # The design https://dart.dev/guides/language/effective-dart/design
+    - avoid_null_checks_in_equality_operators
+    - hash_and_equals
+    - avoid_positional_boolean_parameters
+    - use_function_type_syntax_for_parameters
+    - avoid_private_typedef_functions
+    - prefer_generic_function_type_aliases
+    - avoid_return_types_on_setters
+    - omit_local_variable_types
+    - prefer_typing_uninitialized_variables
+    - #type_annotate_public_apis
+    - avoid_returning_null
+    - avoid_setters_without_getters
+    - use_setters_to_change_properties
+    - prefer_final_fields
+    - avoid_classes_with_only_static_members
+    - one_member_abstracts
+    - use_to_and_as_if_applicable
+    - # The usage https://dart.dev/guides/language/effective-dart/usage
+    - avoid_relative_lib_imports
+    - prefer_adjacent_string_concatenation
+    - prefer_interpolation_to_compose_strings
+    - unnecessary_brace_in_string_interps
+    - prefer_collection_literals
+    - avoid_function_literals_in_foreach_calls
+    - prefer_iterable_whereType
+    - prefer_function_declarations_over_variables
+    - unnecessary_lambdas
+    - prefer_equal_for_default_values
+    - #avoid_init_to_null
+    - unnecessary_getters_setters
+    # - unnecessary_getters
+    - prefer_expression_function_bodies
+    - #unnecessary_this
+    - prefer_initializing_formals
+    - type_init_formals
+    - empty_constructor_bodies
+    - unnecessary_new
+    - unnecessary_const
+    - avoid_catches_without_on_clauses
+    - use_rethrow_when_possible
+    - # The documentation https://dart.dev/guides/language/effective-dart/documentation
+    - slash_for_doc_comments
+    - #package_api_docs
+    - #public_member_api_docs
+    - comment_references
+    - # The style https://dart.dev/guides/language/effective-dart/style
+    - camel_case_types
+    - library_names
+    - file_names
+    - library_prefixes
+    - non_constant_identifier_names
+    - constant_identifier_names
+    - directives_ordering
+    - lines_longer_than_80_chars
+    - curly_braces_in_flow_control_structures
+    - #personal
+    - prefer_single_quotes

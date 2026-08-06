@@ -1,0 +1,8 @@
+﻿name: shared_preferences
+description: "No-op stub of shared_preferences for HarmonyOS port."
+version: 2.2.2
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0"
+

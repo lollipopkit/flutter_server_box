@@ -146,11 +146,6 @@ class SettingStore extends PersistentStore {
     isIOS,
   );
 
-  late final autoCheckAppUpdate = property(
-    'autoCheckAppUpdate',
-    true,
-  );
-
   /// Display server tab function buttons on the bottom of each server card if [true]
   ///
   /// Otherwise, display them on the top of server detail page
@@ -273,8 +268,6 @@ class SettingStore extends PersistentStore {
 
   /// fmt: https://example.com/{DIST}-{BRIGHT}.png
   late final serverLogoUrl = property('serverLogoUrl', '');
-
-  late final betaTest = property('betaTest', false);
 
   /// If it's empty, skip change window size.
   /// Format: {width}x{height}

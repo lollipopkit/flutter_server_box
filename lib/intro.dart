@@ -84,12 +84,6 @@ final class _IntroPage extends StatelessWidget {
             style: const TextStyle(fontSize: 15, color: Colors.grey),
           ),
         ).cardx,
-        ListTile(
-          leading: const Icon(Icons.update),
-          title: Text(l10n.autoCheckUpdate),
-          subtitle: Text(l10n.fdroidReleaseTip, style: UIs.textGrey),
-          trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
-        ).cardx,
       ],
     );
   }

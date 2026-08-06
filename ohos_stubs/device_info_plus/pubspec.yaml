@@ -1,0 +1,8 @@
+﻿name: device_info_plus
+description: "No-op stub of device_info_plus for HarmonyOS port."
+version: 10.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0"
+

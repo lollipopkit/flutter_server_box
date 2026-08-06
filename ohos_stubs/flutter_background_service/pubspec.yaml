@@ -1,0 +1,8 @@
+﻿name: flutter_background_service
+description: "No-op stub of flutter_background_service for HarmonyOS port."
+version: 5.0.5
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0"
+

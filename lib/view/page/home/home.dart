@@ -220,7 +220,7 @@ class _HomePageState extends State<HomePage>
         children: [
           _buildIcon(),
           const Text(
-            '${BuildData.name}\n${BuildDataX.versionStr}',
+            '${OhosBuild.appName}\n${OhosBuild.version}',
             textAlign: TextAlign.center,
             style: UIs.text15,
           ),
@@ -246,11 +246,6 @@ class _HomePageState extends State<HomePage>
             leading: const Icon(Icons.vpn_key),
             title: Text(l10n.privateKey),
             onTap: () => AppRoutes.keyList().go(context),
-          ),
-          ListTile(
-            leading: const Icon(BoxIcons.bxs_file_blank),
-            title: Text(l10n.files),
-            onTap: () => AppRoutes.localStorage().go(context),
           ),
           ListTile(
             leading: const Icon(MingCute.file_import_fill),
@@ -296,14 +291,13 @@ class _HomePageState extends State<HomePage>
           data: '''
 ${l10n.madeWithLove('[lollipopkit](${Urls.myGithub})')}
 
+由 yxl826 修改
+
 #### Contributors
 ${GithubIds.contributors.map((e) => '[$e](${e.url})').join(' ')}
 
 #### Participants
 ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
-
-#### My other apps
-- [GPT Box](https://github.com/lollipopkit/flutter_gpt_box)
 ''',
         ),
       ),
@@ -327,13 +321,6 @@ ${GithubIds.participants.map((e) => '[$e](${e.url})').join(' ')}
 
     //_reqNotiPerm();
 
-    if (Stores.setting.autoCheckAppUpdate.fetch()) {
-      AppUpdateIface.doUpdate(
-        build: BuildData.build,
-        url: Urls.updateCfg,
-        context: context,
-      );
-    }
     HomeWidgetMC.update();
     await Pros.server.load();
     await Pros.server.refresh();

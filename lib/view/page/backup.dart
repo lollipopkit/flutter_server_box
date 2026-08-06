@@ -38,7 +38,6 @@ class BackupPage extends StatelessWidget {
         if (isMacOS || isIOS) _buildIcloud(context),
         _buildWebdav(context),
         _buildFile(context),
-        _buildClipboard(context),
         _buildBulkImportServers(context),
       ],
     );
@@ -169,31 +168,6 @@ class BackupPage extends StatelessWidget {
                 );
               },
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildClipboard(BuildContext context) {
-    return CardX(
-      child: ExpandTile(
-        leading: const Icon(Icons.content_paste),
-        title: Text(l10n.clipboard),
-        children: [
-          ListTile(
-            title: Text(l10n.backup),
-            trailing: const Icon(Icons.save),
-            onTap: () async {
-              final path = await Backup.backup();
-              Pfs.copy(await File(path).readAsString());
-              context.showSnackBar(l10n.success);
-            },
-          ),
-          ListTile(
-            trailing: const Icon(Icons.restore),
-            title: Text(l10n.restore),
-            onTap: () async => _onTapClipboardRestore(context),
           ),
         ],
       ),
@@ -342,48 +316,6 @@ class BackupPage extends StatelessWidget {
       }
       context.showSnackBar(l10n.success);
       Webdav.changeClient(url.text, user.text, pwd.text);
-    }
-  }
-
-  void _onTapClipboardRestore(BuildContext context) async {
-    final text = await Pfs.paste();
-    if (text == null || text.isEmpty) {
-      context.showSnackBar(l10n.fieldMustNotEmpty);
-      return;
-    }
-
-    try {
-      final backup = await context.showLoadingDialog(
-        fn: () => Computer.shared.start(Backup.fromJsonString, text.trim()),
-      );
-
-      if (backupFormatVersion != backup.version) {
-        context.showSnackBar(l10n.backupVersionNotMatch);
-        return;
-      }
-
-      await context.showRoundDialog(
-        title: l10n.restore,
-        child: Text(l10n.askContinue(
-          '${l10n.restore} ${l10n.backup}(${backup.date})',
-        )),
-        actions: [
-          TextButton(
-            onPressed: () => context.pop(),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () async {
-              await backup.restore(force: true);
-              context.pop();
-            },
-            child: Text(l10n.ok),
-          ),
-        ],
-      );
-    } catch (e, s) {
-      Loggers.app.warning('Import backup failed', e, s);
-      context.showErrDialog(e: e, s: s, operation: l10n.restore);
     }
   }
 

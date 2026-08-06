@@ -1,0 +1,1 @@
+Type getTypeOf<T>() => T;

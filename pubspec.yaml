@@ -1,7 +1,7 @@
 name: server_box
 description: server status & toolbox app.
 publish_to: 'none'
-version: 1.0.992+992
+version: 1.0.0+1
 
 environment:
   sdk: ">=3.0.0"
@@ -61,12 +61,34 @@ dependencies:
       ref: v1.0.50
 
 dependency_overrides:
+  # flutter_math_fork 0.7.4 needs newer Flutter APIs (RenderObjectWithLayoutCallbackMixin);
+  # 0.7.2 compiles on Flutter 3.22, patched with TargetPlatform.ohos switch cases.
+  flutter_math_fork:
+    path: vendor/flutter_math_fork
 #   dartssh2:
 #     path: ../dartssh2
   # fl_lib:
   #   path: ../fl_lib
   # xterm:
   #   path: ../xterm.dart
+  # path_provider: OHOS native implementation (hive storage needs it).
+  path_provider:
+    git:
+      url: https://gitee.com/openharmony-sig/flutter_packages.git
+      path: packages/path_provider/path_provider
+  # Plugins without OHOS support -> local no-op stubs (UI stays 100% intact).
+  wakelock_plus:
+    path: ohos_stubs/wakelock_plus
+  device_info_plus:
+    path: ohos_stubs/device_info_plus
+  shared_preferences:
+    path: ohos_stubs/shared_preferences
+  flutter_displaymode:
+    path: ohos_stubs/flutter_displaymode
+  flutter_background_service:
+    path: ohos_stubs/flutter_background_service
+  watch_connectivity:
+    path: ohos_stubs/watch_connectivity
 
 dev_dependencies:
   flutter_native_splash: ^2.1.6
