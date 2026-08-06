@@ -1,1 +1,0 @@
-A server status & toolbox app using Flutter

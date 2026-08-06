@@ -1,8 +1,0 @@
-﻿name: watch_connectivity
-description: "No-op stub of watch_connectivity for HarmonyOS port."
-version: 1.0.85
-publish_to: none
-
-environment:
-  sdk: ">=3.0.0"
-

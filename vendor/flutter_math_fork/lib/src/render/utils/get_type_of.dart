@@ -1,1 +1,0 @@
-Type getTypeOf<T>() => T;

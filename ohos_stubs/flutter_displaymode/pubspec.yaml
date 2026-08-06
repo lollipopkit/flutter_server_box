@@ -1,8 +1,0 @@
-﻿name: flutter_displaymode
-description: "No-op stub of flutter_displaymode for HarmonyOS port."
-version: 0.6.0
-publish_to: none
-
-environment:
-  sdk: ">=3.0.0"
-

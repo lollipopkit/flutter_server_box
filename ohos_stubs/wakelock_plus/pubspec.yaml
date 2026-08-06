@@ -1,8 +1,0 @@
-﻿name: wakelock_plus
-description: "No-op stub for HarmonyOS port (screen wakelock unsupported)."
-version: 1.2.4
-publish_to: none
-
-environment:
-  sdk: ">=3.0.0"
-
