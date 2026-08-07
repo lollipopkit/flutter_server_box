@@ -273,6 +273,9 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get dockerProjectOther => 'Lainnya';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,

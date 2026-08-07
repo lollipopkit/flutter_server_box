@@ -66,6 +66,7 @@
   "dl2Local": "Datei \"{fileName}\" herunterladen?",
   "dockerEmptyRunningItems": "Es gibt keine laufenden Container.\nDas könnte daran liegen:\n- Der Docker-Installationsbenutzer ist nicht mit dem in der App konfigurierten Benutzernamen identisch.\n- Die Umgebungsvariable DOCKER_HOST wurde nicht korrekt gelesen. Sie können sie ermitteln, indem Sie `echo $DOCKER_HOST` im Terminal ausführen.",
   "dockerImagesFmt": "{count} Image(s)",
+  "dockerProjectOther": "Andere",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} aktiv, {stoppedCount} container gestoppt.",
   "dockerStatusRunningFmt": "{count} Container aktiv",
   "doubleColumnMode": "Doppelspaltiger Modus",

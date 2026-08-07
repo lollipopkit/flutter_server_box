@@ -265,6 +265,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get dockerProjectOther => '기타';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,

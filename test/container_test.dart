@@ -40,6 +40,48 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     }
   });
 
+  test('docker ps parse extracts compose project from 5th field', () {
+    const raw = '0e9e2ef860d2\tUp 2 hours\tcmp-web\tnginx:alpine\tnginx';
+    final ps = DockerPs.parse(raw);
+    expect(ps.project, 'nginx');
+  });
+
+  test('docker ps parse handles empty compose project field', () {
+    const raw = '0e9e2ef860d2\tUp 2 hours\tcmp-standalone\talpine\t';
+    final ps = DockerPs.parse(raw);
+    expect(ps.project, null);
+  });
+
+  test('docker ps parse stays backward compatible without project field', () {
+    const raw = '0e9e2ef860d2\tUp 2 hours\tcmp-standalone\talpine';
+    final ps = DockerPs.parse(raw);
+    expect(ps.project, null);
+  });
+
+  test('podman ps parse extracts compose project from labels', () {
+    final ps = PodmanPs.fromJson({
+      'Id': '0e9e2ef860d2',
+      'Exited': false,
+      'Image': 'nginx:alpine',
+      'Names': ['cmp-web'],
+      'Labels': {
+        'com.docker.compose.project': 'nginx',
+        'other': 'x',
+      },
+    });
+    expect(ps.project, 'nginx');
+  });
+
+  test('podman ps parse handles missing labels', () {
+    final ps = PodmanPs.fromJson({
+      'Id': '0e9e2ef860d2',
+      'Exited': false,
+      'Image': 'alpine',
+      'Names': ['cmp-standalone'],
+    });
+    expect(ps.project, null);
+  });
+
   test('docker ps parse handles long swarm container names', () {
     const name =
         'apps-all-stack_komari-agent.zdngp1z1t23llz9l30s86tq3g.fjmkg9amn0u76tbln96mmzlq2';
@@ -59,17 +101,23 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       throwsA(
         isA<FormatException>()
             .having((e) => e.message, 'message', contains('Docker ps row'))
-            .having((e) => e.message, 'message', contains('expected 4')),
+            .having(
+              (e) => e.message,
+              'message',
+              contains('expected at least 4'),
+            ),
       ),
     );
   });
 
-  test('docker ps command uses human-readable status', () {
+  test('docker ps command uses human-readable status with compose project', () {
     final cmd = ContainerCmdType.ps.exec(ContainerType.docker);
 
     expect(
       cmd,
-      'docker ps -a --format "{{.ID}}\\t{{.Status}}\\t{{.Names}}\\t{{.Image}}"',
+      'docker ps -a --format '
+      '"{{.ID}}\\t{{.Status}}\\t{{.Names}}\\t{{.Image}}\\t'
+      '{{.Label \\"com.docker.compose.project\\"}}"',
     );
   });
 

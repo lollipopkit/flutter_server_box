@@ -66,6 +66,7 @@
   "dl2Local": "{fileName} dosyasını yerel cihaza indir?",
   "dockerEmptyRunningItems": "Çalışan konteyner yok.\nBunun nedeni şunlar olabilir:\n- Docker kurulum kullanıcısı, uygulamada yapılandırılan kullanıcı adıyla aynı değil.\n- DOCKER_HOST ortam değişkeni doğru okunmadı. Terminalde `echo $DOCKER_HOST` komutunu çalıştırarak kontrol edebilirsiniz.",
   "dockerImagesFmt": "{count} görüntü",
+  "dockerProjectOther": "Diğer",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} çalışıyor, {stoppedCount} konteyner durdurulmuş.",
   "dockerStatusRunningFmt": "{count} konteyner çalışıyor.",
   "doubleColumnMode": "Çift sütun modu",

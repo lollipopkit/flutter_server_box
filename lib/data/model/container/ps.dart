@@ -9,6 +9,7 @@ sealed class ContainerPs {
   String? get id;
   String? get image;
   String? get name;
+  String? get project;
   ContainerStatus get status;
 
   String? cpu;
@@ -28,6 +29,8 @@ final class PodmanPs implements ContainerPs {
   @override
   final String? image;
   final List<String>? names;
+  @override
+  final String? project;
 
   @override
   String? cpu;
@@ -43,6 +46,7 @@ final class PodmanPs implements ContainerPs {
     this.id,
     this.image,
     this.names,
+    this.project,
   });
 
   @override
@@ -100,6 +104,7 @@ final class PodmanPs implements ContainerPs {
     names: json['Names'] == null
         ? []
         : List<String>.from(json['Names']!.map((x) => x)),
+    project: _projectFromLabels(json['Labels']),
   );
 }
 
@@ -110,6 +115,8 @@ final class DockerPs implements ContainerPs {
   final String? image;
   final String? names;
   final String? state;
+  @override
+  final String? project;
 
   @override
   String? cpu;
@@ -120,7 +127,13 @@ final class DockerPs implements ContainerPs {
   @override
   String? disk;
 
-  DockerPs({this.id, this.image, this.names, this.state});
+  DockerPs({
+    this.id,
+    this.image,
+    this.names,
+    this.state,
+    this.project,
+  });
 
   @override
   String? get name => names;
@@ -145,13 +158,13 @@ final class DockerPs implements ContainerPs {
         '${l10n.read} ${blockParts.firstOrNull ?? '0B'} / ${l10n.write} ${blockParts.length > 1 ? blockParts[1] : '0B'}';
   }
 
-  /// CONTAINER ID\tSTATUS\tNAMES\tIMAGE
-  /// a049d689e7a1\tUp 3 weeks\taria2-pro\tp3terx/aria2-pro
+  /// CONTAINER ID\tSTATUS\tNAMES\tIMAGE\tPROJECT
+  /// a049d689e7a1\tUp 3 weeks\taria2-pro\tp3terx/aria2-pro\ttorrent
   factory DockerPs.parse(String raw) {
     final parts = raw.split('\t');
     if (parts.length < 4) {
       throw FormatException(
-        'Docker ps row has ${parts.length} fields, expected 4',
+        'Docker ps row has ${parts.length} fields, expected at least 4',
         raw,
       );
     }
@@ -160,6 +173,17 @@ final class DockerPs implements ContainerPs {
       state: parts[1],
       names: parts[2],
       image: parts[3],
+      project: parts.length > 4 ? _nonEmpty(parts[4]) : null,
     );
   }
+}
+
+String? _nonEmpty(String? value) =>
+    value == null || value.trim().isEmpty ? null : value.trim();
+
+String? _projectFromLabels(dynamic labels) {
+  if (labels is! Map) return null;
+  final project = labels['com.docker.compose.project'];
+  if (project is! String) return null;
+  return _nonEmpty(project);
 }

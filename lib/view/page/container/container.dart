@@ -214,8 +214,43 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
       title: Text(libL10n.container),
       subtitle: Text(subtitle, style: UIs.textGrey),
       initiallyExpanded: items.length < 7,
-      children: items.map(_buildPsItem).toList(),
+      children: _buildGroupedPsItems(items),
     ).cardx;
+  }
+
+  List<Widget> _buildGroupedPsItems(List<ContainerPs> items) {
+    final grouped = <String?, List<ContainerPs>>{};
+    for (final item in items) {
+      grouped.putIfAbsent(item.project, () => []).add(item);
+    }
+    if (grouped.length <= 1 && grouped[null] != null) {
+      return items.map(_buildPsItem).toList();
+    }
+    final result = <Widget>[];
+    final keys = grouped.keys.toList()
+      ..sort((a, b) {
+        if (a == null) return 1;
+        if (b == null) return -1;
+        return a.toLowerCase().compareTo(b.toLowerCase());
+      });
+    for (final key in keys) {
+      result.add(_buildPsGroupHeader(key ?? l10n.dockerProjectOther));
+      result.addAll(grouped[key]!.map(_buildPsItem));
+    }
+    return result;
+  }
+
+  Widget _buildPsGroupHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(17, 7, 17, 0),
+      child: Row(
+        children: [
+          const Icon(Icons.folder_outlined, size: 15, color: Colors.grey),
+          UIs.width7,
+          Text(title, style: UIs.text13Grey),
+        ],
+      ),
+    );
   }
 
   Widget _buildPsItem(ContainerPs item) {

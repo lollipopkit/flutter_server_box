@@ -496,8 +496,9 @@ enum ContainerCmdType {
     final baseCmd = switch (this) {
       ContainerCmdType.version => '${type.name} version $_jsonFmt',
       ContainerCmdType.ps => switch (type) {
-        ContainerType.docker =>
-          '${type.name} ps -a --format "{{.ID}}\\t{{.Status}}\\t{{.Names}}\\t{{.Image}}"',
+        ContainerType.docker => '${type.name} ps -a --format '
+            '"{{.ID}}\\t{{.Status}}\\t{{.Names}}\\t{{.Image}}\\t'
+            '{{.Label \\"com.docker.compose.project\\"}}"',
         ContainerType.podman => '${type.name} ps -a $_jsonFmt',
       },
       ContainerCmdType.stats =>

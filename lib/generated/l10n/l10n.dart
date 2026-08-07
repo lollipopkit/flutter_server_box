@@ -591,6 +591,12 @@ abstract class AppLocalizations {
   /// **'{count} images'**
   String dockerImagesFmt(Object count);
 
+  /// No description provided for @dockerProjectOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get dockerProjectOther;
+
   /// No description provided for @dockerStatusRunningAndStoppedFmt.
   ///
   /// In en, this message translates to:

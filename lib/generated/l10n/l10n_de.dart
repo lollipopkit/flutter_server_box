@@ -274,6 +274,9 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get dockerProjectOther => 'Andere';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,

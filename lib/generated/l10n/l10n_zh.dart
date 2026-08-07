@@ -261,6 +261,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get dockerProjectOther => '其他';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -1234,6 +1237,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String dockerImagesFmt(Object count) {
     return '$count 個映像檔';
   }
+
+  @override
+  String get dockerProjectOther => '其他';
 
   @override
   String dockerStatusRunningAndStoppedFmt(

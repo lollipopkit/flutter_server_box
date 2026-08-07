@@ -66,6 +66,7 @@
   "dl2Local": "Télécharger {fileName} localement ?",
   "dockerEmptyRunningItems": "Aucun conteneur en cours d'exécution.\nCela peut être dû à :\n- L'utilisateur d'installation de Docker n'est pas le même que celui configuré dans l'application.\n- La variable d'environnement DOCKER_HOST n'a pas été lue correctement. Vous pouvez l'obtenir en exécutant `echo $DOCKER_HOST` dans le terminal.",
   "dockerImagesFmt": "{count} images",
+  "dockerProjectOther": "Autres",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} en cours d'exécution, {stoppedCount} conteneur arrêté.",
   "dockerStatusRunningFmt": "{count} conteneur en cours d'exécution.",
   "doubleColumnMode": "Mode double colonne",
