@@ -40,25 +40,30 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     }
   });
 
-  test('docker ps parse extracts compose project from 5th field', () {
-    const raw = '0e9e2ef860d2\tUp 2 hours\tcmp-web\tnginx:alpine\tnginx';
+  test('docker ps parse extracts compose project and working dir', () {
+    const raw =
+        '0e9e2ef860d2\tUp 2 hours\tcmp-web\tnginx:alpine\tnginx\t/opt/nginx';
     final ps = DockerPs.parse(raw);
     expect(ps.project, 'nginx');
+    expect(ps.workingDir, '/opt/nginx');
   });
 
-  test('docker ps parse handles empty compose project field', () {
-    const raw = '0e9e2ef860d2\tUp 2 hours\tcmp-standalone\talpine\t';
+  test('docker ps parse handles empty compose project and working dir', () {
+    const raw = '0e9e2ef860d2\tUp 2 hours\tcmp-standalone\talpine\t\t';
     final ps = DockerPs.parse(raw);
     expect(ps.project, null);
+    expect(ps.workingDir, null);
   });
 
   test('docker ps parse stays backward compatible without project field', () {
     const raw = '0e9e2ef860d2\tUp 2 hours\tcmp-standalone\talpine';
     final ps = DockerPs.parse(raw);
     expect(ps.project, null);
+    expect(ps.workingDir, null);
   });
 
-  test('podman ps parse extracts compose project from labels', () {
+  test('podman ps parse extracts compose project and working dir from labels',
+      () {
     final ps = PodmanPs.fromJson({
       'Id': '0e9e2ef860d2',
       'Exited': false,
@@ -66,10 +71,12 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       'Names': ['cmp-web'],
       'Labels': {
         'com.docker.compose.project': 'nginx',
+        'com.docker.compose.project.working_dir': '/opt/nginx',
         'other': 'x',
       },
     });
     expect(ps.project, 'nginx');
+    expect(ps.workingDir, '/opt/nginx');
   });
 
   test('podman ps parse handles missing labels', () {
@@ -80,6 +87,7 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       'Names': ['cmp-standalone'],
     });
     expect(ps.project, null);
+    expect(ps.workingDir, null);
   });
 
   test('docker ps parse handles long swarm container names', () {
@@ -117,7 +125,8 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       cmd,
       'docker ps -a --format '
       '"{{.ID}}\\t{{.Status}}\\t{{.Names}}\\t{{.Image}}\\t'
-      '{{.Label \\"com.docker.compose.project\\"}}"',
+      '{{.Label \\"com.docker.compose.project\\"}}\\t'
+      '{{.Label \\"com.docker.compose.project.working_dir\\"}}"',
     );
   });
 

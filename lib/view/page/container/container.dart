@@ -234,22 +234,59 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
         return a.toLowerCase().compareTo(b.toLowerCase());
       });
     for (final key in keys) {
-      result.add(_buildPsGroupHeader(key ?? l10n.dockerProjectOther));
-      result.addAll(grouped[key]!.map(_buildPsItem));
+      final groupItems = grouped[key]!;
+      final workingDir = groupItems
+          .map((e) => e.workingDir)
+          .firstWhereOrNull((d) => d != null && d.isNotEmpty);
+      result.add(
+        _buildPsGroupHeader(
+          key ?? l10n.dockerProjectOther,
+          project: key,
+          workingDir: workingDir,
+        ),
+      );
+      result.addAll(groupItems.map(_buildPsItem));
     }
     return result;
   }
 
-  Widget _buildPsGroupHeader(String title) {
+  Widget _buildPsGroupHeader(
+    String title, {
+    String? project,
+    String? workingDir,
+  }) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(17, 7, 17, 0),
+      padding: const EdgeInsets.fromLTRB(17, 7, 7, 0),
       child: Row(
         children: [
           const Icon(Icons.folder_outlined, size: 15, color: Colors.grey),
           UIs.width7,
-          Text(title, style: UIs.text13Grey),
+          Expanded(
+            child: Text(title, style: UIs.text13Grey),
+          ),
+          if (project != null)
+            IconButton(
+              tooltip: libL10n.logs,
+              visualDensity: VisualDensity.compact,
+              iconSize: 16,
+              onPressed: () => _openMergedLogs(project, workingDir),
+              icon: const Icon(Icons.receipt_long_outlined),
+            ),
         ],
       ),
+    );
+  }
+
+  void _openMergedLogs(String project, String? workingDir) {
+    final runtime = _containerState.type.name;
+    final projectQuoted = shellSingleQuote(project);
+    final cmd = '$runtime compose -p $projectQuoted logs --follow --tail 300';
+    final initCmd = (workingDir == null || workingDir.isEmpty)
+        ? cmd
+        : 'cd ${shellSingleQuote(workingDir)} && $cmd';
+    SSHPage.route.go(
+      context,
+      SshPageArgs(spi: widget.args.spi, initCmd: initCmd),
     );
   }
 

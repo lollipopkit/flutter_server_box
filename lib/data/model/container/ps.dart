@@ -10,6 +10,7 @@ sealed class ContainerPs {
   String? get image;
   String? get name;
   String? get project;
+  String? get workingDir;
   ContainerStatus get status;
 
   String? cpu;
@@ -31,6 +32,8 @@ final class PodmanPs implements ContainerPs {
   final List<String>? names;
   @override
   final String? project;
+  @override
+  final String? workingDir;
 
   @override
   String? cpu;
@@ -47,6 +50,7 @@ final class PodmanPs implements ContainerPs {
     this.image,
     this.names,
     this.project,
+    this.workingDir,
   });
 
   @override
@@ -104,7 +108,11 @@ final class PodmanPs implements ContainerPs {
     names: json['Names'] == null
         ? []
         : List<String>.from(json['Names']!.map((x) => x)),
-    project: _projectFromLabels(json['Labels']),
+    project: _labelFromLabels(json['Labels'], 'com.docker.compose.project'),
+    workingDir: _labelFromLabels(
+      json['Labels'],
+      'com.docker.compose.project.working_dir',
+    ),
   );
 }
 
@@ -117,6 +125,8 @@ final class DockerPs implements ContainerPs {
   final String? state;
   @override
   final String? project;
+  @override
+  final String? workingDir;
 
   @override
   String? cpu;
@@ -133,6 +143,7 @@ final class DockerPs implements ContainerPs {
     this.names,
     this.state,
     this.project,
+    this.workingDir,
   });
 
   @override
@@ -158,8 +169,8 @@ final class DockerPs implements ContainerPs {
         '${l10n.read} ${blockParts.firstOrNull ?? '0B'} / ${l10n.write} ${blockParts.length > 1 ? blockParts[1] : '0B'}';
   }
 
-  /// CONTAINER ID\tSTATUS\tNAMES\tIMAGE\tPROJECT
-  /// a049d689e7a1\tUp 3 weeks\taria2-pro\tp3terx/aria2-pro\ttorrent
+  /// CONTAINER ID\tSTATUS\tNAMES\tIMAGE\tPROJECT\tWORKING_DIR
+  /// a049d689e7a1\tUp 3 weeks\taria2-pro\tp3terx/aria2-pro\ttorrent\t/opt/torrent
   factory DockerPs.parse(String raw) {
     final parts = raw.split('\t');
     if (parts.length < 4) {
@@ -174,6 +185,7 @@ final class DockerPs implements ContainerPs {
       names: parts[2],
       image: parts[3],
       project: parts.length > 4 ? _nonEmpty(parts[4]) : null,
+      workingDir: parts.length > 5 ? _nonEmpty(parts[5]) : null,
     );
   }
 }
@@ -181,9 +193,9 @@ final class DockerPs implements ContainerPs {
 String? _nonEmpty(String? value) =>
     value == null || value.trim().isEmpty ? null : value.trim();
 
-String? _projectFromLabels(dynamic labels) {
+String? _labelFromLabels(dynamic labels, String key) {
   if (labels is! Map) return null;
-  final project = labels['com.docker.compose.project'];
-  if (project is! String) return null;
-  return _nonEmpty(project);
+  final value = labels[key];
+  if (value is! String) return null;
+  return _nonEmpty(value);
 }
