@@ -11,6 +11,22 @@ void main() {
         "'abc'\\''; touch /tmp/pwn; echo '\\'''",);
   });
 
+  test('buildContainerBulkCmd joins quoted container ids', () {
+    expect(buildContainerBulkCmd('start', ['a', 'b']), "start 'a' 'b'");
+    expect(buildContainerBulkCmd('stop', ['a']), "stop 'a'");
+    expect(buildContainerBulkCmd('restart', ['a', 'b', 'c']),
+        "restart 'a' 'b' 'c'");
+  });
+
+  test('buildContainerBulkCmd escapes hostile container ids', () {
+    expect(buildContainerBulkCmd('start', ["a'; touch /pwn; echo '"]),
+        "start 'a'\\''; touch /pwn; echo '\\'''");
+  });
+
+  test('buildContainerBulkCmd returns null for empty ids', () {
+    expect(buildContainerBulkCmd('start', []), null);
+  });
+
   test('docker ps parse', () {
     const raw = '''
 CONTAINER ID\tSTATUS\tNAMES\tIMAGE

@@ -234,27 +234,18 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
         return a.toLowerCase().compareTo(b.toLowerCase());
       });
     for (final key in keys) {
+      if (result.isNotEmpty) result.add(const Divider(height: 1));
       final groupItems = grouped[key]!;
-      final workingDir = groupItems
-          .map((e) => e.workingDir)
-          .firstWhereOrNull((d) => d != null && d.isNotEmpty);
       result.add(
-        _buildPsGroupHeader(
-          key ?? l10n.dockerProjectOther,
-          project: key,
-          workingDir: workingDir,
-        ),
+        _buildPsGroupHeader(key ?? l10n.dockerProjectOther, groupItems),
       );
       result.addAll(groupItems.map(_buildPsItem));
     }
     return result;
   }
 
-  Widget _buildPsGroupHeader(
-    String title, {
-    String? project,
-    String? workingDir,
-  }) {
+  Widget _buildPsGroupHeader(String title, List<ContainerPs> groupItems) {
+    final project = groupItems.firstOrNull?.project;
     return Padding(
       padding: const EdgeInsets.fromLTRB(17, 7, 7, 0),
       child: Row(
@@ -265,16 +256,38 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
             child: Text(title, style: UIs.text13Grey),
           ),
           if (project != null)
-            IconButton(
-              tooltip: libL10n.logs,
-              visualDensity: VisualDensity.compact,
-              iconSize: 16,
-              onPressed: () => _openMergedLogs(project, workingDir),
-              icon: const Icon(Icons.receipt_long_outlined),
+            PopupMenu(
+              items: ContainerGroupMenu.values
+                  .map((e) => PopMenu.build(e, e.icon, e.toStr))
+                  .toList(),
+              onSelected: (item) => _onTapGroupMenu(item, groupItems),
             ),
         ],
       ),
     );
+  }
+
+  void _onTapGroupMenu(ContainerGroupMenu item, List<ContainerPs> groupItems) {
+    final ids = groupItems.map((e) => e.id).whereType<String>().toList();
+    switch (item) {
+      case ContainerGroupMenu.start:
+        _execContainerAction(() => _containerNotifier.startAll(ids));
+        break;
+      case ContainerGroupMenu.stop:
+        _execContainerAction(() => _containerNotifier.stopAll(ids));
+        break;
+      case ContainerGroupMenu.restart:
+        _execContainerAction(() => _containerNotifier.restartAll(ids));
+        break;
+      case ContainerGroupMenu.logs:
+        final project = groupItems.firstOrNull?.project;
+        if (project == null) return;
+        final workingDir = groupItems
+            .map((e) => e.workingDir)
+            .firstWhereOrNull((d) => d != null && d.isNotEmpty);
+        _openMergedLogs(project, workingDir);
+        break;
+    }
   }
 
   void _openMergedLogs(String project, String? workingDir) {
