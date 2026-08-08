@@ -422,7 +422,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pruneUnusedImagesTip =>
-      'Supprime aussi les images étiquetées utilisées par aucun conteneur.';
+      'Supprime aussi les images étiquetées qui ne sont utilisées par aucun conteneur.';
 
   @override
   String get includeUnusedVolumesTip =>

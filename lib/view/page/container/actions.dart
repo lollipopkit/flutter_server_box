@@ -7,6 +7,9 @@ extension on _ContainerPageState {
   /// Watch the current state of the container.
   ContainerState get _containerState => ref.watch(_provider);
 
+  bool get _containerActionsBusy =>
+      _containerState.isBusy || _containerState.runLog != null;
+
   String _errorMessage(String? message) {
     final trimmed = message?.trim();
     return trimmed?.isNotEmpty == true ? trimmed! : libL10n.fail;
@@ -66,10 +69,10 @@ extension on _ContainerPageState {
         onTap: () async {
           context.pop();
           await _showAddCmdPreview(
-            _buildAddCmd(
-              imageCtrl.text.trim(),
-              nameCtrl.text.trim(),
-              argsCtrl.text.trim(),
+            buildContainerRunCmd(
+              image: imageCtrl.text.trim(),
+              name: nameCtrl.text.trim(),
+              extraArgs: argsCtrl.text.trim(),
             ),
           );
         },
@@ -85,28 +88,23 @@ extension on _ContainerPageState {
     String? message,
     required Future<ContainerErr?> Function() onConfirm,
   }) async {
-    await context.showRoundDialog(
+    final confirmed = await context.showRoundDialog<bool>(
       title: title,
       child: Text(message ?? libL10n.askContinue('${libL10n.prune} $title')),
-      actions: Btn.ok(
-        onTap: () async {
-          context.pop();
-          await _execContainerAction(onConfirm);
-        },
-        red: true,
-      ).toList,
+      actions: Btnx.cancelRedOk,
     );
+    if (confirmed == true && mounted) await _execContainerAction(onConfirm);
   }
 
   Future<void> _showImagePruneDialog() async {
     final images = _containerState.images ?? const <ContainerImg>[];
     final danglingCount = images.where((image) => image.isDangling).length;
-    final unusedTaggedCount = countUnusedTaggedImages(
-      images,
-      _containerState.items?.map((item) => item.image) ?? const <String?>[],
-    );
+    final containerImages = _containerState.items?.map((item) => item.image);
+    final unusedTaggedCount = containerImages == null
+        ? null
+        : countUnusedTaggedImages(images, containerImages);
     var allUnused = false;
-    await context.showRoundDialog(
+    final confirmed = await context.showRoundDialog<bool>(
       title: l10n.pruneImages,
       child: StatefulBuilder(
         builder: (_, setState) {
@@ -124,22 +122,19 @@ extension on _ContainerPageState {
           );
         },
       ),
-      actions: Btn.ok(
-        onTap: () async {
-          context.pop();
-          await _execContainerAction(
-            () => _containerNotifier.pruneImages(allUnused: allUnused),
-          );
-        },
-        red: true,
-      ).toList,
+      actions: Btnx.cancelRedOk,
     );
+    if (confirmed == true && mounted) {
+      await _execContainerAction(
+        () => _containerNotifier.pruneImages(allUnused: allUnused),
+      );
+    }
   }
 
   Future<void> _showSystemPruneDialog() async {
     var allUnusedImages = false;
     var includeVolumes = false;
-    await context.showRoundDialog(
+    final confirmed = await context.showRoundDialog<bool>(
       title: l10n.pruneUnusedData,
       child: StatefulBuilder(
         builder: (_, setState) {
@@ -161,19 +156,16 @@ extension on _ContainerPageState {
           );
         },
       ),
-      actions: Btn.ok(
-        onTap: () async {
-          context.pop();
-          await _execContainerAction(
-            () => _containerNotifier.pruneSystem(
-              allUnusedImages: allUnusedImages,
-              includeVolumes: includeVolumes,
-            ),
-          );
-        },
-        red: true,
-      ).toList,
+      actions: Btnx.cancelRedOk,
     );
+    if (confirmed == true && mounted) {
+      await _execContainerAction(
+        () => _containerNotifier.pruneSystem(
+          allUnusedImages: allUnusedImages,
+          includeVolumes: includeVolumes,
+        ),
+      );
+    }
   }
 
   String _runtimePruneCommand(String command) {
@@ -223,6 +215,7 @@ extension on _ContainerPageState {
     context.pop();
     Stores.container.put(widget.args.spi.id, _containerState.type, val.trim());
     _containerNotifier.resetSudoProbe();
+    unawaited(_refreshContainerTab(_lastResourceTab));
   }
 
   void _showImageRmDialog(ContainerImg e) {
@@ -342,24 +335,20 @@ extension on _ContainerPageState {
         await _execContainerAction(() => _containerNotifier.restart(id));
         break;
       case ContainerMenu.logs:
+        final cmd =
+            '${_containerState.type.name} logs -f --tail 100 ${shellSingleQuote(dItem.id!)}';
         final args = SshPageArgs(
           spi: widget.args.spi,
-          initCmd:
-              '${switch (_containerState.type) {
-                ContainerType.podman => 'podman',
-                ContainerType.docker => 'docker',
-              }} logs -f --tail 100 ${shellSingleQuote(dItem.id!)}',
+          initCmd: _wrapContainerHost(cmd),
         );
         SSHPage.route.go(context, args);
         break;
       case ContainerMenu.terminal:
+        final cmd =
+            '${_containerState.type.name} exec -it ${shellSingleQuote(dItem.id!)} sh -c "command -v bash && exec bash || command -v ash && exec ash || exec sh"';
         final args = SshPageArgs(
           spi: widget.args.spi,
-          initCmd:
-              '${switch (_containerState.type) {
-                ContainerType.podman => 'podman',
-                ContainerType.docker => 'docker',
-              }} exec -it ${shellSingleQuote(dItem.id!)} sh -c "command -v bash && exec bash || command -v ash && exec ash || exec sh"',
+          initCmd: _wrapContainerHost(cmd),
         );
         SSHPage.route.go(context, args);
         break;
@@ -412,7 +401,9 @@ extension on _ContainerPageState {
     final index = _tabCtrl.index;
     if (index == _lastTabIndex) return;
     _lastTabIndex = index;
-    unawaited(_refreshContainerTab(_ContainerTabs.values[index]));
+    final tab = _ContainerTabs.values[index];
+    if (tab != _ContainerTabs.settings) _lastResourceTab = tab;
+    unawaited(_refreshContainerTab(tab));
   }
 
   Future<void> _refreshCurrentContainerTab({bool isAuto = false}) {

@@ -65,22 +65,9 @@ Set<String> _imageMarkers(ContainerImg image) {
   if (repository == null || repository.isEmpty || repository == '<none>') {
     return markers;
   }
-  final shortRepository = repository.split('/').last;
   final tag = image.tag?.trim();
   final hasTag = tag != null && tag.isNotEmpty && tag != '<none>';
-  if (hasTag) {
-    markers.add('$repository:$tag');
-    markers.add('$shortRepository:$tag');
-    if (tag == 'latest') {
-      markers.add(repository);
-      markers.add(shortRepository);
-    }
-  } else {
-    markers.add(repository);
-    markers.add(shortRepository);
-    markers.add('$repository:latest');
-    markers.add('$shortRepository:latest');
-  }
+  _addRepositoryMarkers(markers, repository, hasTag ? tag : null);
   return markers;
 }
 
@@ -88,15 +75,11 @@ void _addRuntimeImageReference(Set<String> markers, String? raw) {
   final value = raw?.trim();
   if (value == null || value.isEmpty) return;
   final withoutDigest = value.split('@').first.trim();
-  if (_addImageId(markers, withoutDigest)) return;
-
-  markers.add(withoutDigest);
-  final shortReference = withoutDigest.split('/').last;
-  markers.add(shortReference);
-  if (!shortReference.contains(':')) {
-    markers.add('$withoutDigest:latest');
-    markers.add('$shortReference:latest');
+  if (withoutDigest.startsWith('sha256:')) {
+    _addImageId(markers, withoutDigest);
   }
+  final reference = _splitImageReference(withoutDigest);
+  _addRepositoryMarkers(markers, reference.repository, reference.tag);
 }
 
 bool _addImageId(Set<String> markers, String? raw) {
@@ -104,10 +87,38 @@ bool _addImageId(Set<String> markers, String? raw) {
   if (value == null || value.isEmpty) return false;
   final bare = value.startsWith('sha256:') ? value.substring(7) : value;
   if (!RegExp(r'^[a-fA-F0-9]{12,64}$').hasMatch(bare)) return false;
-  markers.add(value);
-  markers.add(bare);
-  if (bare.length >= 12) markers.add(bare.substring(0, 12));
+  markers.add('id:$bare');
+  if (bare.length >= 12) markers.add('id:${bare.substring(0, 12)}');
   return true;
+}
+
+void _addRepositoryMarkers(
+  Set<String> markers,
+  String repository,
+  String? tag,
+) {
+  final aliases = <String>{repository};
+  const dockerLibrary = 'docker.io/library/';
+  if (repository.startsWith(dockerLibrary)) {
+    aliases.add(repository.substring(dockerLibrary.length));
+  }
+  final effectiveTag = tag == null || tag.isEmpty ? 'latest' : tag;
+  for (final alias in aliases) {
+    markers.add('ref:$alias:$effectiveTag');
+    if (effectiveTag == 'latest') markers.add('ref:$alias');
+  }
+}
+
+({String repository, String? tag}) _splitImageReference(String raw) {
+  final lastSlash = raw.lastIndexOf('/');
+  final lastColon = raw.lastIndexOf(':');
+  if (lastColon > lastSlash) {
+    return (
+      repository: raw.substring(0, lastColon),
+      tag: raw.substring(lastColon + 1),
+    );
+  }
+  return (repository: raw, tag: null);
 }
 
 final class PodmanImg implements ContainerImg {
@@ -158,14 +169,31 @@ final class PodmanImg implements ContainerImg {
 
   String toRawJson() => json.encode(toJson());
 
-  factory PodmanImg.fromJson(Map<String, dynamic> json) => PodmanImg(
-    repository: _asString(json['repository']),
-    tag: _asString(json['tag']),
-    id: _asString(json['Id']),
-    created: _asInt(json['Created']),
-    size: _asInt(json['Size']),
-    containers: _asInt(json['Containers']),
-  );
+  factory PodmanImg.fromJson(Map<String, dynamic> json) {
+    final namedReference = switch (json['Names']) {
+      final List value => _firstNonEmptyFromList(value),
+      final Object? value => _nonEmptyOrNull(value?.toString()),
+    };
+    final parsedReference = namedReference == null
+        ? null
+        : _splitImageReference(namedReference);
+    return PodmanImg(
+      repository: _firstNonEmptyOrNull([
+        _asString(json['repository']),
+        _asString(json['Repository']),
+        parsedReference?.repository,
+      ]),
+      tag: _firstNonEmptyOrNull([
+        _asString(json['tag']),
+        _asString(json['Tag']),
+        parsedReference?.tag,
+      ]),
+      id: _asString(json['Id'] ?? json['ID']),
+      created: _asInt(json['Created']),
+      size: _asInt(json['Size']),
+      containers: _asInt(json['Containers']),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'repository': repository,
@@ -290,6 +318,14 @@ String _firstNonEmpty(List<String?> candidates) {
     if (c != null && c.isNotEmpty) return c;
   }
   return '<none>';
+}
+
+String? _firstNonEmptyOrNull(List<String?> candidates) {
+  for (final candidate in candidates) {
+    final value = _nonEmptyOrNull(candidate);
+    if (value != null) return value;
+  }
+  return null;
 }
 
 int? _asInt(dynamic val) {

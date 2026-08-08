@@ -1,9 +1,11 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:intl/intl.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
+import 'package:server_box/data/model/container/status.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
 
@@ -75,7 +77,10 @@ class ContainerItemsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final groups = _groupContainers(items);
     final running = items.where((e) => e.status.isRunning).length;
-    final stopped = items.length - running;
+    final stopped = items.where((e) => e.status.isStopped).length;
+    final unknown = items
+        .where((e) => e.status == ContainerStatus.unknown)
+        .length;
     return _ResourceList(
       children: [
         _RuntimeSummaryCard(
@@ -91,6 +96,10 @@ class ContainerItemsView extends StatelessWidget {
             if (stopped > 0)
               _SummaryBadge(
                 label: '$stopped ${context.libL10n.stopped}',
+              ),
+            if (unknown > 0)
+              _SummaryBadge(
+                label: '$unknown ${context.l10n.unknown}',
               ),
           ],
         ),
@@ -141,45 +150,50 @@ class ContainerImagesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final unused = images.where((e) => e.isUnused).length;
-
-    return _ResourceList(
-      children: [
-        _RuntimeSummaryCard(
-          icon: MingCute.clapperboard_line,
-          title: type.name.capitalize,
-          subtitle: version ?? context.l10n.unknown,
-          action: summaryAction,
-          badges: [
-            _SummaryBadge(
-              label: context.l10n.dockerImagesFmt(images.length),
-              emphasized: images.isNotEmpty,
-            ),
-            if (unused > 0)
-              _SummaryBadge(label: '$unused ${context.l10n.unused}'),
-          ],
+    final summary = _RuntimeSummaryCard(
+      icon: MingCute.clapperboard_line,
+      title: type.name.capitalize,
+      subtitle: version ?? context.l10n.unknown,
+      action: summaryAction,
+      badges: [
+        _SummaryBadge(
+          label: context.l10n.dockerImagesFmt(images.length),
+          emphasized: images.isNotEmpty,
         ),
-        const SizedBox(height: 10),
-        if (images.isEmpty)
+        if (unused > 0)
+          _SummaryBadge(label: '$unused ${context.l10n.unused}'),
+      ],
+    );
+
+    if (images.isEmpty) {
+      return _ResourceList(
+        children: [
+          summary,
+          const SizedBox(height: 10),
           _EmptyResourceCard(
             icon: MingCute.clapperboard_line,
             message: context.libL10n.empty,
-          )
-        else
-          CardX(
-            child: Column(
-              children: [
-                for (var index = 0; index < images.length; index++) ...[
-                  _ContainerImageRow(
-                    image: images[index],
-                    trailing: trailingBuilder(images[index]),
-                  ),
-                  if (index != images.length - 1)
-                    const Divider(height: 1, indent: 15, endIndent: 15),
-                ],
-              ],
-            ),
           ),
-      ],
+        ],
+      );
+    }
+
+    return _ResourceBuilderList(
+      itemCount: images.length + 2,
+      itemBuilder: (context, index) {
+        if (index == 0) return summary;
+        if (index == 1) return const SizedBox(height: 10);
+        final imageIndex = index - 2;
+        return _ImageRowCardSegment(
+          index: imageIndex,
+          itemCount: images.length,
+          child: _ContainerImageRow(
+            index: imageIndex,
+            image: images[imageIndex],
+            trailing: trailingBuilder(images[imageIndex]),
+          ),
+        );
+      },
     );
   }
 }
@@ -319,6 +333,7 @@ class _PruneScopeTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = context.theme.colorScheme;
     return ListTile(
+      selected: selected,
       contentPadding: EdgeInsets.zero,
       leading: Icon(
         selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
@@ -410,6 +425,68 @@ class _ResourceList extends StatelessWidget {
           children: children,
         );
       },
+    );
+  }
+}
+
+class _ResourceBuilderList extends StatelessWidget {
+  final int itemCount;
+  final NullableIndexedWidgetBuilder itemBuilder;
+
+  const _ResourceBuilderList({
+    required this.itemCount,
+    required this.itemBuilder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (_, constraints) {
+        final horizontal = constraints.maxWidth > 1226
+            ? (constraints.maxWidth - 1200) / 2
+            : 13.0;
+        return ListView.builder(
+          padding: EdgeInsets.fromLTRB(horizontal, 13, horizontal, 96),
+          itemCount: itemCount,
+          itemBuilder: itemBuilder,
+        );
+      },
+    );
+  }
+}
+
+class _ImageRowCardSegment extends StatelessWidget {
+  final int index;
+  final int itemCount;
+  final Widget child;
+
+  const _ImageRowCardSegment({
+    required this.index,
+    required this.itemCount,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final first = index == 0;
+    final last = index == itemCount - 1;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(4, first ? 4 : 0, 4, last ? 4 : 0),
+      child: Material(
+        color: context.theme.cardTheme.color ??
+            context.theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.vertical(
+          top: first ? const Radius.circular(13) : Radius.zero,
+          bottom: last ? const Radius.circular(13) : Radius.zero,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            child,
+            if (!last) const Divider(height: 1, indent: 15, endIndent: 15),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -620,6 +697,7 @@ class _ContainerGroupCardState extends State<_ContainerGroupCard> {
           if (showItems)
             for (var index = 0; index < group.items.length; index++) ...[
               _ContainerItemRow(
+                index: index,
                 item: group.items[index],
                 trailing: widget.trailingBuilder(group.items[index]),
               ),
@@ -652,10 +730,14 @@ class _ContainerGroupHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final running = items.where((e) => e.status.isRunning).length;
-    final stopped = items.length - running;
+    final stopped = items.where((e) => e.status.isStopped).length;
+    final unknown = items
+        .where((e) => e.status == ContainerStatus.unknown)
+        .length;
     final summary = [
       '$running ${context.libL10n.running}',
       if (stopped > 0) '$stopped ${context.libL10n.stopped}',
+      if (unknown > 0) '$unknown ${context.l10n.unknown}',
     ].join(' · ');
     return ListTile(
       key: ValueKey('container-group-header-$project'),
@@ -691,10 +773,12 @@ class _ContainerGroupHeader extends StatelessWidget {
 }
 
 class _ContainerItemRow extends StatelessWidget {
+  final int index;
   final ContainerPs item;
   final Widget trailing;
 
   const _ContainerItemRow({
+    required this.index,
     required this.item,
     required this.trailing,
   });
@@ -707,7 +791,9 @@ class _ContainerItemRow extends StatelessWidget {
       builder: (_, constraints) {
         final wide = constraints.maxWidth >= 1040;
         return KeyedSubtree(
-          key: ValueKey('container-row-${wide ? 'wide' : 'compact'}-$id'),
+          key: ValueKey(
+            'container-row-${wide ? 'wide' : 'compact'}-$index-$id',
+          ),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(15, 12, 5, 12),
             child: Column(
@@ -993,19 +1079,30 @@ class _StatusIcon extends StatelessWidget {
 }
 
 class _ContainerImageRow extends StatelessWidget {
+  final int index;
   final ContainerImg image;
   final Widget trailing;
 
-  const _ContainerImageRow({required this.image, required this.trailing});
+  const _ContainerImageRow({
+    required this.index,
+    required this.image,
+    required this.trailing,
+  });
 
   @override
   Widget build(BuildContext context) {
     final id = image.id ?? _imageReference(image);
+    final createdLabel = _imageCreatedLabel(
+      image,
+      Localizations.localeOf(context),
+    );
     return LayoutBuilder(
       builder: (_, constraints) {
         final wide = constraints.maxWidth >= 760;
         return KeyedSubtree(
-          key: ValueKey('image-row-${wide ? 'wide' : 'compact'}-$id'),
+          key: ValueKey(
+            'image-row-${wide ? 'wide' : 'compact'}-$index-$id',
+          ),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(15, 12, 5, 12),
             child: Row(
@@ -1036,7 +1133,7 @@ class _ContainerImageRow extends StatelessWidget {
                   SizedBox(
                     width: 180,
                     child: Text(
-                      _imageCreatedLabel(image) ?? '—',
+                      createdLabel ?? '—',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.end,
@@ -1063,6 +1160,10 @@ class _ImageIdentity extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final id = _shortId(image.id) ?? context.l10n.unknown;
+    final createdLabel = _imageCreatedLabel(
+      image,
+      Localizations.localeOf(context),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1092,10 +1193,10 @@ class _ImageIdentity extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: UIs.text13Grey,
         ),
-        if (!wide && _imageCreatedLabel(image) != null) ...[
+        if (!wide && createdLabel != null) ...[
           const SizedBox(height: 2),
           Text(
-            _imageCreatedLabel(image)!,
+            createdLabel,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: UIs.text11Grey,
@@ -1227,8 +1328,7 @@ String? _extractMetricValue(String raw) {
   if (match != null) {
     return match.group(0)!.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
-  final value = raw.trim();
-  return value.isEmpty ? null : value;
+  return null;
 }
 
 String _imageReference(ContainerImg image) {
@@ -1250,19 +1350,17 @@ String? _shortId(String? id) {
   return normalized.substring(0, 12);
 }
 
-String? _imageCreatedLabel(ContainerImg image) => switch (image) {
+String? _imageCreatedLabel(ContainerImg image, Locale locale) => switch (image) {
   final DockerImg img => img.createdAt.trim().isEmpty ? null : img.createdAt,
-  final PodmanImg img => _formatUnixDate(img.created),
+  final PodmanImg img => _formatUnixDate(img.created, locale),
   _ => null,
 };
 
-String? _formatUnixDate(int? seconds) {
+String? _formatUnixDate(int? seconds, Locale locale) {
   if (seconds == null || seconds <= 0) return null;
   final date = DateTime.fromMillisecondsSinceEpoch(
     seconds * 1000,
     isUtc: true,
   ).toLocal();
-  final month = date.month.toString().padLeft(2, '0');
-  final day = date.day.toString().padLeft(2, '0');
-  return '${date.year}-$month-$day';
+  return DateFormat.yMd(locale.toLanguageTag()).format(date);
 }

@@ -63,7 +63,7 @@ final class PodmanPs implements ContainerPs {
   String? get name => names?.firstOrNull;
 
   @override
-  ContainerStatus get status => ContainerStatus.fromPodmanExited(exited);
+  ContainerStatus get status => ContainerStatus.fromPodman(exited, rawStatus);
 
   @override
   void parseStats(String s, [String? version]) {
@@ -130,10 +130,10 @@ final class PodmanPs implements ContainerPs {
 /// Parses Podman's JSON listing with the human-readable `.Status` template
 /// appended to each row. Older JSON-only output remains supported.
 List<PodmanPs> parsePodmanPsOutput(String raw) {
-  return raw
-      .split('\n')
-      .where((line) => line.trim().isNotEmpty)
-      .map((line) {
+  final items = <PodmanPs>[];
+  for (final line in raw.split('\n')) {
+    if (line.trim().isEmpty) continue;
+    try {
         final separator = line.lastIndexOf('\t');
         final jsonPart = separator < 0 ? line : line.substring(0, separator);
         final data = json.decode(jsonPart) as Map<String, dynamic>;
@@ -143,9 +143,14 @@ List<PodmanPs> parsePodmanPsOutput(String raw) {
             data['ServerBoxStatus'] = detailedStatus;
           }
         }
-        return PodmanPs.fromJson(data);
-      })
-      .toList(growable: false);
+      items.add(PodmanPs.fromJson(data));
+    } on FormatException {
+      continue;
+    } on TypeError {
+      continue;
+    }
+  }
+  return items.toList(growable: false);
 }
 
 final class DockerPs implements ContainerPs {

@@ -40,6 +40,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
     vsync: this,
   );
   var _lastTabIndex = _ContainerTabs.ps.index;
+  var _lastResourceTab = _ContainerTabs.ps;
   Timer? _autoRefreshTimer;
 
   @override
@@ -104,7 +105,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
           return const SizedBox.shrink();
         }
         return FloatingActionButton(
-          onPressed: () => _showAddFAB(),
+          onPressed: _containerActionsBusy ? null : () => _showAddFAB(),
           child: const Icon(Icons.add),
         );
       },
@@ -146,10 +147,12 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
         pruneAction: _buildPruneAction(
           key: const ValueKey('prune-containers-button'),
           label: '${libL10n.prune} ${libL10n.container}',
-          onPressed: () => _showPruneDialog(
-            title: libL10n.container,
-            onConfirm: _containerNotifier.pruneContainers,
-          ),
+          onPressed: _containerActionsBusy
+              ? null
+              : () => _showPruneDialog(
+                  title: libL10n.container,
+                  onConfirm: _containerNotifier.pruneContainers,
+                ),
         ),
         refreshKey: const ValueKey('refresh-containers-button'),
         onRefresh: containerState.isBusy
@@ -175,7 +178,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
         pruneAction: _buildPruneAction(
           key: const ValueKey('prune-images-button'),
           label: '${libL10n.prune} ${l10n.image}',
-          onPressed: _showImagePruneDialog,
+          onPressed: _containerActionsBusy ? null : _showImagePruneDialog,
         ),
         refreshKey: const ValueKey('refresh-images-button'),
         onRefresh: containerState.isBusy
@@ -239,7 +242,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
   Widget _buildPruneAction({
     required Key key,
     required String label,
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed,
   }) {
     return IconButton(
       key: key,
@@ -274,6 +277,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
   }
 
   Widget _buildImageMoreBtn(ContainerImg image) {
+    if (_containerActionsBusy) return _buildDisabledMoreBtn();
     return PopupMenu<ImageMenu>(
       items: ImageMenu.items
           .map((e) => PopMenu.build(e, e.icon, e.toStr))
@@ -290,13 +294,14 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
   Widget? _buildGroupMoreBtn(List<ContainerPs> groupItems) {
     final project = groupItems.firstOrNull?.project;
     if (project == null) return null;
+    if (_containerActionsBusy) return _buildDisabledMoreBtn();
     final hasWorkingDir = groupItems.any(
       (e) => e.workingDir?.isNotEmpty ?? false,
     );
     return PopupMenu(
       items: ContainerGroupMenu.items(
         anyRunning: groupItems.any((e) => e.status.isRunning),
-        anyStopped: groupItems.any((e) => !e.status.isRunning),
+        anyStopped: groupItems.any((e) => e.status.isStopped),
       )
           .where((e) => e != ContainerGroupMenu.logs || hasWorkingDir)
           .map((e) => PopMenu.build(e, e.icon, e.toStr))
@@ -312,7 +317,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
         .whereType<String>()
         .toList();
     final stoppedIds = groupItems
-        .where((e) => !e.status.isRunning)
+        .where((e) => e.status.isStopped)
         .map((e) => e.id)
         .whereType<String>()
         .toList();
@@ -362,25 +367,17 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
   }
 
   Widget _buildMoreBtn(ContainerPs dItem) {
+    if (_containerActionsBusy) return _buildDisabledMoreBtn();
     return PopupMenu(
       items: ContainerMenu.items(
-        dItem.status.isRunning,
+        dItem.status,
       ).map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
       onSelected: (item) => _onTapMoreBtn(item, dItem),
     );
   }
 
-  String _buildAddCmd(String image, String name, String args) {
-    var suffix = '';
-    if (args.isEmpty) {
-      suffix = image;
-    } else {
-      suffix = '$args $image';
-    }
-    if (name.isEmpty) {
-      return 'run -itd $suffix';
-    }
-    return 'run -itd --name $name $suffix';
+  Widget _buildDisabledMoreBtn() {
+    return const IconButton(onPressed: null, icon: Icon(Icons.more_vert));
   }
 
   Widget _buildPruneCard(_PruneTypes type) {
@@ -390,7 +387,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
       child: ListTile(
         key: ValueKey('container-setting-prune-${type.name}'),
         leading: Icon(type.icon),
-        onTap: () async {
+        onTap: _containerActionsBusy ? null : () async {
           switch (type) {
             case _PruneTypes.volumes:
               await _showPruneDialog(
@@ -439,7 +436,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
     return ListTile(
       key: ValueKey('container-setting-${item.name}'),
       leading: Icon(item.icon),
-      onTap: () {
+      onTap: _containerActionsBusy ? null : () {
         switch (item) {
           case _SettingsMenuItems.editContainerHost:
             _showEditHostDialog();
@@ -452,6 +449,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
                       ? ContainerType.podman
                       : ContainerType.docker,
                 );
+            unawaited(_refreshContainerTab(_lastResourceTab));
             break;
         }
       },

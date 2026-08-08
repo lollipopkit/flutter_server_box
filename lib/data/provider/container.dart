@@ -36,6 +36,72 @@ String? buildContainerBulkCmd(String action, Iterable<String> ids) {
   return '$action $args';
 }
 
+String buildContainerRunCmd({
+  required String image,
+  required String name,
+  required String extraArgs,
+}) {
+  final imageArg = shellSingleQuote(image);
+  final suffix = extraArgs.isEmpty ? imageArg : '$extraArgs $imageArg';
+  final nameArg = name.isEmpty ? '' : ' --name ${shellSingleQuote(name)}';
+  return 'run -itd$nameArg $suffix';
+}
+
+List<ContainerImg> parseContainerImagesOutput(
+  String raw,
+  ContainerType type,
+) {
+  final trimmed = raw.trim();
+  final encodedRows = trimmed.startsWith('[') && trimmed.endsWith(']')
+      ? (json.decode(trimmed) as List).map(json.encode)
+      : trimmed.split('\n');
+  final images = <ContainerImg>[];
+  for (final row in encodedRows) {
+    if (row.trim().isEmpty) continue;
+    try {
+      images.add(ContainerImg.fromRawJson(row, type));
+    } catch (e, trace) {
+      Loggers.app.warning('Skip malformed container image row', e, trace);
+    }
+  }
+  return images.toList(growable: false);
+}
+
+List<({String id, String raw})> parseContainerStatsRows(
+  Iterable<String> rows,
+) {
+  final parsed = <({String id, String raw})>[];
+  for (final row in rows) {
+    if (row.trim().isEmpty) continue;
+    try {
+      final data = json.decode(row) as Map<String, dynamic>;
+      final statsId = (data['ID'] ?? data['Id'] ?? data['ContainerID'])
+          ?.toString()
+          .trim();
+      if (statsId == null || statsId.isEmpty) continue;
+      parsed.add((id: statsId, raw: row));
+    } catch (e, trace) {
+      Loggers.app.warning('Skip malformed container stats row', e, trace);
+    }
+  }
+  return parsed.toList(growable: false);
+}
+
+String? findContainerStatsRow(
+  Iterable<({String id, String raw})> rows,
+  String? containerId,
+) {
+  final id = containerId?.trim();
+  if (id == null || id.isEmpty) return null;
+  for (final row in rows) {
+    final prefixMatch = id.length >= 12 &&
+        row.id.length >= 12 &&
+        (id.startsWith(row.id) || row.id.startsWith(id));
+    if (id == row.id || prefixMatch) return row.raw;
+  }
+  return null;
+}
+
 /// Build a non-interactive image prune command.
 ///
 /// Without [allUnused], only dangling images are removed. `-f` is always
@@ -205,8 +271,9 @@ class ContainerNotifier extends _$ContainerNotifier {
       password = await _getSudoPassword();
       if (_isStaleRefresh(refreshGeneration)) return;
       if (password == null) {
-        state = state.copyWith(
-          error: ContainerErr(
+        _setRefreshError(
+          target,
+          ContainerErr(
             type: ContainerErrType.sudoPasswordRequired,
             message: l10n.containerSudoPasswordRequired,
           ),
@@ -229,10 +296,13 @@ class ContainerNotifier extends _$ContainerNotifier {
       ],
     };
 
+    final separator = '${ScriptConstants.separator}_'
+        '${DateTime.now().microsecondsSinceEpoch}_$refreshGeneration';
     final cmd = _wrap(
       ContainerCmdType.execSelected(
         commands,
         type,
+        separator: separator,
         sudo: needSudo,
         password: password,
       ),
@@ -241,20 +311,32 @@ class ContainerNotifier extends _$ContainerNotifier {
     String raw = '';
     var isPodmanEmulation = false;
     if (client != null) {
-      (code, raw) = await client!.execWithPwd(
-        cmd,
-        context: context,
-        id: hostId,
-        onStderr: (data, _) {
-          if (data.contains(_podmanEmulationMsg)) {
-            isPodmanEmulation = true;
-          }
-        },
-      );
+      try {
+        (code, raw) = await client!.execWithPwd(
+          cmd,
+          context: context,
+          id: hostId,
+          onStderr: (data, _) {
+            if (data.contains(_podmanEmulationMsg)) {
+              isPodmanEmulation = true;
+            }
+          },
+        );
+      } catch (e, trace) {
+        if (_isStaleRefresh(refreshGeneration)) return;
+        Loggers.app.warning('Container refresh execution failed', e, trace);
+        _setRefreshError(
+          target,
+          ContainerErr(type: ContainerErrType.unknown, message: '$e'),
+        );
+        await _finishRefresh(refreshGeneration);
+        return;
+      }
     } else {
       if (_isStaleRefresh(refreshGeneration)) return;
-      state = state.copyWith(
-        error: ContainerErr(type: ContainerErrType.noClient),
+      _setRefreshError(
+        target,
+        ContainerErr(type: ContainerErrType.noClient),
       );
       await _finishRefresh(refreshGeneration);
       return;
@@ -269,8 +351,9 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     /// Code 127 means command not found
     if (code == 127 || raw.contains(_dockerNotFound)) {
-      state = state.copyWith(
-        error: ContainerErr(type: ContainerErrType.notInstalled),
+      _setRefreshError(
+        target,
+        ContainerErr(type: ContainerErrType.notInstalled),
       );
       await _finishRefresh(refreshGeneration);
       return;
@@ -279,8 +362,9 @@ class ContainerNotifier extends _$ContainerNotifier {
     /// Sudo password error (exitCode = 2)
     if (code == 2) {
       _cachedPassword = null;
-      state = state.copyWith(
-        error: ContainerErr(
+      _setRefreshError(
+        target,
+        ContainerErr(
           type: ContainerErrType.sudoPasswordIncorrect,
           message: l10n.containerSudoPasswordIncorrect,
         ),
@@ -291,8 +375,9 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     /// Pre-parse Podman detection
     if (isPodmanEmulation) {
-      state = state.copyWith(
-        error: ContainerErr(
+      _setRefreshError(
+        target,
+        ContainerErr(
           type: ContainerErrType.podmanDetected,
           message: l10n.podmanDockerEmulationDetected,
         ),
@@ -304,18 +389,20 @@ class ContainerNotifier extends _$ContainerNotifier {
     /// Detect Podman not installed when using Podman mode
     if (state.type == ContainerType.podman &&
         raw.contains('podman: not found')) {
-      state = state.copyWith(
-        error: ContainerErr(type: ContainerErrType.notInstalled),
+      _setRefreshError(
+        target,
+        ContainerErr(type: ContainerErrType.notInstalled),
       );
       await _finishRefresh(refreshGeneration);
       return;
     }
 
     // Check result segments count
-    final segments = raw.split(ScriptConstants.separator);
+    final segments = raw.split(separator);
     if (segments.length != commands.length) {
-      state = state.copyWith(
-        error: ContainerErr(
+      _setRefreshError(
+        target,
+        ContainerErr(
           type: ContainerErrType.segmentsNotMatch,
           message: 'Container segments: ${segments.length}',
         ),
@@ -375,6 +462,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       } catch (e, trace) {
         if (state.error == null) {
           state = state.copyWith(
+            items: null,
             error: ContainerErr(type: ContainerErrType.parsePs, message: '$e'),
           );
         }
@@ -385,8 +473,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       final statsRaw = output[ContainerCmdType.stats];
       if (statsRaw != null) {
         try {
-          final statsLines = statsRaw.split('\n');
-          statsLines.removeWhere((element) => element.isEmpty);
+          final statsRows = parseContainerStatsRows(statsRaw.split('\n'));
           final items = state.items;
           if (items == null) {
             await _finishRefresh(refreshGeneration);
@@ -394,15 +481,13 @@ class ContainerNotifier extends _$ContainerNotifier {
           }
 
           for (var item in items) {
-            final id = item.id;
-            if (id == null || id.length < 5) continue;
-            final statsLine = statsLines.firstWhereOrNull(
-              /// Use 5 characters to match the container id, possibility of
-              /// mismatch is very low.
-              (element) => element.contains(id.substring(0, 5)),
-            );
+            final statsLine = findContainerStatsRow(statsRows, item.id);
             if (statsLine == null) continue;
-            item.parseStats(statsLine, state.version);
+            try {
+              item.parseStats(statsLine, state.version);
+            } catch (e, trace) {
+              Loggers.app.warning('Skip malformed container stats', e, trace);
+            }
           }
         } catch (e, trace) {
           if (state.error == null) {
@@ -418,25 +503,14 @@ class ContainerNotifier extends _$ContainerNotifier {
       }
     } else {
       // Parse images
-      final imageRaw = output[ContainerCmdType.images]!.trim();
-      final isEntireJson = imageRaw.startsWith('[') && imageRaw.endsWith(']');
+      final imageRaw = output[ContainerCmdType.images]!;
       try {
-        final List<ContainerImg> images;
-        if (isEntireJson) {
-          images = (json.decode(imageRaw) as List)
-              .map((e) => ContainerImg.fromRawJson(json.encode(e), type))
-              .toList();
-        } else {
-          final lines = imageRaw.split('\n');
-          lines.removeWhere((element) => element.isEmpty);
-          images = lines
-              .map((e) => ContainerImg.fromRawJson(e, type))
-              .toList();
-        }
+        final images = parseContainerImagesOutput(imageRaw, type);
         state = state.copyWith(images: images);
       } catch (e, trace) {
         if (state.error == null) {
           state = state.copyWith(
+            images: null,
             error: ContainerErr(
               type: ContainerErrType.parseImages,
               message: '$e',
@@ -453,6 +527,19 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (_isStaleRefresh(generation)) return;
     state = state.copyWith(isBusy: false);
     await _refreshPendingIfNeeded(generation);
+  }
+
+  void _setRefreshError(ContainerRefreshTarget target, ContainerErr error) {
+    state = switch (target) {
+      ContainerRefreshTarget.containers => state.copyWith(
+          items: null,
+          error: error,
+        ),
+      ContainerRefreshTarget.images => state.copyWith(
+          images: null,
+          error: error,
+        ),
+    };
   }
 
   Future<void> _refreshPendingIfNeeded(int generation) async {
@@ -531,13 +618,19 @@ class ContainerNotifier extends _$ContainerNotifier {
   Future<ContainerErr?> pruneSystem({
     bool allUnusedImages = false,
     bool includeVolumes = false,
-  }) async => await run(
-    buildContainerSystemPruneCmd(
-      allUnusedImages: allUnusedImages,
-      includeVolumes: includeVolumes,
-    ),
-    refreshTarget: null,
-  );
+  }) async {
+    final result = await run(
+      buildContainerSystemPruneCmd(
+        allUnusedImages: allUnusedImages,
+        includeVolumes: includeVolumes,
+      ),
+      refreshTarget: null,
+    );
+    if (result != null) return result;
+    await refreshContainers();
+    await refreshImages();
+    return null;
+  }
 
   Future<ContainerErr?> run(
     String cmd, {
@@ -546,6 +639,13 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (client == null) {
       return ContainerErr(type: ContainerErrType.noClient);
     }
+    if (state.isBusy || state.runLog != null) {
+      return const ContainerErr(
+        type: ContainerErrType.unknown,
+        message: 'Another container operation is already running',
+      );
+    }
+    state = state.copyWith(runLog: '');
 
     cmd = switch (state.type) {
       ContainerType.docker => 'docker $cmd',
@@ -557,6 +657,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (needSudo) {
       password = await _getSudoPassword();
       if (password == null) {
+        state = state.copyWith(runLog: null);
         return ContainerErr(
           type: ContainerErrType.sudoPasswordRequired,
           message: l10n.containerSudoPasswordRequired,
@@ -568,15 +669,23 @@ class ContainerNotifier extends _$ContainerNotifier {
       cmd = _buildSudoCmd(cmd, password!);
     }
 
-    state = state.copyWith(runLog: '');
-    final (code, _) = await client!.execWithPwd(
-      _wrap(cmd),
-      context: context,
-      onStdout: (data, _) {
-        state = state.copyWith(runLog: '${state.runLog}$data');
-      },
-      id: hostId,
-    );
+    int? code;
+    try {
+      (code, _) = await client!.execWithPwd(
+        _wrap(cmd),
+        context: context,
+        onStdout: (data, _) {
+          if (ref.mounted) {
+            state = state.copyWith(runLog: '${state.runLog}$data');
+          }
+        },
+        id: hostId,
+      );
+    } catch (e, trace) {
+      Loggers.app.warning('Container command execution failed', e, trace);
+      if (ref.mounted) state = state.copyWith(runLog: null);
+      return ContainerErr(type: ContainerErrType.unknown, message: '$e');
+    }
 
     state = state.copyWith(runLog: null);
 
@@ -645,12 +754,13 @@ enum ContainerCmdType {
   static String execSelected(
     Iterable<ContainerCmdType> types,
     ContainerType type, {
+    String separator = ScriptConstants.separator,
     bool sudo = false,
     String? password,
   }) {
     final commands = types
         .map((e) => e.exec(type))
-        .join('\necho ${ScriptConstants.separator}\n');
+        .join('\necho $separator\n');
 
     final wrappedCommands = 'sh -c \'${commands.replaceAll("'", "'\\''")}\'';
 

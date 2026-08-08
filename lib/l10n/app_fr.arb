@@ -105,7 +105,7 @@
   "pruneImages": "Nettoyer les images",
   "unusedTaggedImages": "Étiquetées inutilisées",
   "pruneDanglingImagesTip": "Supprime uniquement les images fantômes (couches sans étiquette).",
-  "pruneUnusedImagesTip": "Supprime aussi les images étiquetées utilisées par aucun conteneur.",
+  "pruneUnusedImagesTip": "Supprime aussi les images étiquetées qui ne sont utilisées par aucun conteneur.",
   "includeUnusedVolumesTip": "Supprime aussi les volumes utilisés par aucun conteneur.",
   "pruneCommandPreview": "Aperçu de la commande",
   "pruneForceSshTip": "-f ignore la confirmation interactive et reste toujours activé via SSH.",

@@ -390,7 +390,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pruneDanglingImages => '清理悬空镜像';
 
   @override
-  String get pruneImages => '修剪镜像';
+  String get pruneImages => '清理镜像';
 
   @override
   String get unusedTaggedImages => '未使用标记';
@@ -411,10 +411,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pruneForceSshTip => '远程执行始终启用 -f，以跳过无法交互的确认提示。';
 
   @override
-  String get pruneVolumes => '修剪卷';
+  String get pruneVolumes => '清理卷';
 
   @override
-  String get pruneUnusedData => '修剪未使用数据';
+  String get pruneUnusedData => '清理未使用数据';
 
   @override
   String get volume => '卷';
@@ -1413,7 +1413,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get pruneDanglingImages => '清理懸空映像檔';
 
   @override
-  String get pruneImages => '修剪映像檔';
+  String get pruneImages => '清理映像檔';
 
   @override
   String get unusedTaggedImages => '未使用標記';
@@ -1434,10 +1434,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get pruneForceSshTip => '遠端執行始終啟用 -f，以略過無法互動的確認提示。';
 
   @override
-  String get pruneVolumes => '修剪卷';
+  String get pruneVolumes => '清理卷';
 
   @override
-  String get pruneUnusedData => '修剪未使用資料';
+  String get pruneUnusedData => '清理未使用資料';
 
   @override
   String get volume => '卷';

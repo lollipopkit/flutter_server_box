@@ -421,11 +421,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pruneUnusedImagesTip =>
-      'Hiçbir kapsayıcı tarafından kullanılmayan etiketli görüntüleri de kaldırır.';
+      'Hiçbir konteyner tarafından kullanılmayan etiketli görüntüleri de kaldırır.';
 
   @override
   String get includeUnusedVolumesTip =>
-      'Hiçbir kapsayıcı tarafından kullanılmayan birimleri de kaldırır.';
+      'Hiçbir konteyner tarafından kullanılmayan birimleri de kaldırır.';
 
   @override
   String get pruneCommandPreview => 'Komut önizlemesi';

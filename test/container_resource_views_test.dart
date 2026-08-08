@@ -150,11 +150,11 @@ void main() {
     await _pumpAt(tester, width: 390, child: containerView([item]));
 
     expect(
-      find.byKey(const ValueKey('container-row-compact-mobile-container')),
+      find.byKey(const ValueKey('container-row-compact-0-mobile-container')),
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey('container-row-wide-mobile-container')),
+      find.byKey(const ValueKey('container-row-wide-0-mobile-container')),
       findsNothing,
     );
     expect(find.text('CPU'), findsOneWidget);
@@ -251,6 +251,22 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('unknown container state is not summarized as stopped', (
+    tester,
+  ) async {
+    final item = PodmanPs(
+      id: 'unknown-container',
+      names: ['worker'],
+      rawStatus: 'Unexpected state',
+    );
+
+    await _pumpAt(tester, width: 390, child: containerView([item]));
+
+    expect(find.text('1 Unknown'), findsOneWidget);
+    expect(find.text('1 Stopped'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('1280px renders the wide container resource card', (
     tester,
   ) async {
@@ -268,11 +284,11 @@ void main() {
     await _pumpAt(tester, width: 1280, child: containerView([item]));
 
     expect(
-      find.byKey(const ValueKey('container-row-wide-desktop-container')),
+      find.byKey(const ValueKey('container-row-wide-0-desktop-container')),
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey('container-row-compact-desktop-container')),
+      find.byKey(const ValueKey('container-row-compact-0-desktop-container')),
       findsNothing,
     );
     for (final label in ['CPU', 'MEM', 'NET', 'DISK']) {
@@ -294,7 +310,9 @@ void main() {
       state: 'Up 4 minutes',
     )
       ..cpu = '4.2%'
-      ..mem = 'not available';
+      ..mem = 'not available'
+      ..net = 'not available / garbage'
+      ..disk = 'garbage / not available';
 
     await _pumpAt(tester, width: 390, child: containerView([item]));
 
@@ -341,12 +359,12 @@ void main() {
     await _pumpAt(tester, width: 390, child: imageView([image]));
     expect(
       find.byKey(
-        const ValueKey('image-row-compact-sha256:image-switch'),
+        const ValueKey('image-row-compact-0-sha256:image-switch'),
       ),
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey('image-row-wide-sha256:image-switch')),
+      find.byKey(const ValueKey('image-row-wide-0-sha256:image-switch')),
       findsNothing,
     );
     expect(find.text(image.createdAt), findsOneWidget);
@@ -354,12 +372,12 @@ void main() {
 
     await _pumpAt(tester, width: 900, child: imageView([image]));
     expect(
-      find.byKey(const ValueKey('image-row-wide-sha256:image-switch')),
+      find.byKey(const ValueKey('image-row-wide-0-sha256:image-switch')),
       findsOneWidget,
     );
     expect(
       find.byKey(
-        const ValueKey('image-row-compact-sha256:image-switch'),
+        const ValueKey('image-row-compact-0-sha256:image-switch'),
       ),
       findsNothing,
     );
@@ -390,6 +408,46 @@ void main() {
       tester.widget<Text>(find.text(reference)).overflow,
       TextOverflow.ellipsis,
     );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('fallback row identifiers remain unique', (tester) async {
+    await _pumpAt(
+      tester,
+      width: 390,
+      child: imageView([
+        PodmanImg(),
+        PodmanImg(),
+      ]),
+    );
+
+    expect(
+      find.byKey(const ValueKey('image-row-compact-0-<none>')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('image-row-compact-1-<none>')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('large image lists build only visible rows', (tester) async {
+    final images = List.generate(
+      200,
+      (index) => DockerImg(
+        containers: '1',
+        createdAt: 'today',
+        id: 'image-$index',
+        repository: 'example/image-$index',
+        size: '10 MB',
+        tag: 'latest',
+      ),
+    );
+
+    await _pumpAt(tester, width: 390, child: imageView(images));
+
+    expect(find.byIcon(Icons.more_vert).evaluate().length, lessThan(200));
     expect(tester.takeException(), isNull);
   });
 
@@ -571,6 +629,15 @@ void main() {
     expect(find.text('Unused tagged: 1'), findsOneWidget);
     expect(find.text('docker image prune -f'), findsOneWidget);
     expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
+    expect(
+      tester.widget<ListTile>(
+        find.descendant(
+          of: find.byKey(const ValueKey('image-prune-dangling-option')),
+          matching: find.byType(ListTile),
+        ),
+      ).selected,
+      true,
+    );
 
     await tester.tap(
       find.byKey(const ValueKey('image-prune-all-unused-option')),
@@ -578,6 +645,15 @@ void main() {
     await tester.pump();
 
     expect(find.text('docker image prune -a -f'), findsOneWidget);
+    expect(
+      tester.widget<ListTile>(
+        find.descendant(
+          of: find.byKey(const ValueKey('image-prune-all-unused-option')),
+          matching: find.byType(ListTile),
+        ),
+      ).selected,
+      true,
+    );
     expect(tester.takeException(), isNull);
   });
 

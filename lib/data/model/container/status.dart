@@ -21,7 +21,9 @@ enum ContainerStatus {
 
     final lowerState = state.toLowerCase();
 
-    if (lowerState.startsWith('up')) return ContainerStatus.running;
+    if (lowerState == 'running' || lowerState.startsWith('up')) {
+      return ContainerStatus.running;
+    }
     if (lowerState.contains('exited')) return ContainerStatus.exited;
     if (lowerState.contains('created')) return ContainerStatus.created;
     if (lowerState.contains('paused')) return ContainerStatus.paused;
@@ -38,6 +40,20 @@ enum ContainerStatus {
     if (exited == false) return ContainerStatus.running;
     return ContainerStatus.unknown;
   }
+
+  /// Parse Podman status text first, with the legacy exited flag as fallback.
+  static ContainerStatus fromPodman(bool? exited, String? rawStatus) {
+    final parsed = fromDockerState(rawStatus);
+    if (parsed != ContainerStatus.unknown) return parsed;
+    return fromPodmanExited(exited);
+  }
+
+  bool get isStopped => switch (this) {
+    ContainerStatus.exited ||
+    ContainerStatus.created ||
+    ContainerStatus.dead => true,
+    _ => false,
+  };
 
   /// Get display string for the status
   String get displayName {
