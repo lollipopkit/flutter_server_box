@@ -144,7 +144,6 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
             children: [
               _buildPsTab(containerState),
               _buildImagesTab(containerState),
-              _buildPruneTab(containerState),
               _buildSettingsTab(containerState),
             ],
           ),
@@ -161,6 +160,14 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
       trailingBuilder: _buildMoreBtn,
       groupTrailingBuilder: _buildGroupMoreBtn,
       emptyState: _buildEmptyStateMessage(containerState),
+      summaryAction: _buildPruneAction(
+        key: const ValueKey('prune-containers-button'),
+        label: '${libL10n.prune} ${libL10n.container}',
+        onPressed: () => _showPruneDialog(
+          title: libL10n.container,
+          onConfirm: _containerNotifier.pruneContainers,
+        ),
+      ),
     );
   }
 
@@ -170,14 +177,24 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
       type: containerState.type,
       version: containerState.version,
       trailingBuilder: _buildImageMoreBtn,
+      summaryAction: _buildPruneAction(
+        key: const ValueKey('prune-images-button'),
+        label: '${libL10n.prune} ${l10n.image}',
+        onPressed: _showImagePruneDialog,
+      ),
     );
   }
 
-  Widget _buildPruneTab(ContainerState containerState) {
-    return AutoMultiList(
-      children: <Widget>[
-        _buildPruneCard(),
-      ],
+  Widget _buildPruneAction({
+    required Key key,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return IconButton(
+      key: key,
+      tooltip: label,
+      onPressed: onPressed,
+      icon: const Icon(Icons.cleaning_services_outlined),
     );
   }
 
@@ -185,6 +202,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
     return AutoMultiList(
       children: <Widget>[
         _buildSettingsCard(containerState),
+        _buildPruneCard(),
       ],
     );
   }
@@ -327,7 +345,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
       child: Column(
         children: [
           ListTile(
-            leading: const Icon(Icons.delete),
+            leading: const Icon(Icons.cleaning_services_outlined),
             title: Text(
               libL10n.prune,
               style: UIs.text15,
@@ -346,18 +364,12 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
     final containerNotifier = _containerNotifier;
     return ListTile(
       onTap: () async {
-        if (type == _PruneTypes.images) {
-          await _showImagePruneDialog();
-          return;
-        }
         await _showPruneDialog(
           title: title,
           message: type.tip,
           onConfirm: switch (type) {
-            _PruneTypes.containers => containerNotifier.pruneContainers,
             _PruneTypes.volumes => containerNotifier.pruneVolumes,
             _PruneTypes.system => containerNotifier.pruneSystem,
-            _PruneTypes.images => () => containerNotifier.pruneImages(),
           },
         );
       },

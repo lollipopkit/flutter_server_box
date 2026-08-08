@@ -25,6 +25,7 @@ class ContainerItemsView extends StatelessWidget {
   final ContainerItemTrailingBuilder trailingBuilder;
   final ContainerGroupTrailingBuilder groupTrailingBuilder;
   final Widget? emptyState;
+  final Widget? summaryAction;
 
   const ContainerItemsView({
     required this.items,
@@ -33,6 +34,7 @@ class ContainerItemsView extends StatelessWidget {
     required this.trailingBuilder,
     required this.groupTrailingBuilder,
     this.emptyState,
+    this.summaryAction,
     super.key,
   });
 
@@ -47,6 +49,7 @@ class ContainerItemsView extends StatelessWidget {
           icon: _runtimeIcon(type),
           title: type.name.capitalize,
           subtitle: version ?? context.l10n.unknown,
+          action: summaryAction,
           badges: [
             _SummaryBadge(
               label: '$running ${context.libL10n.running}',
@@ -86,12 +89,14 @@ class ContainerImagesView extends StatelessWidget {
   final ContainerType type;
   final String? version;
   final ContainerImageTrailingBuilder trailingBuilder;
+  final Widget? summaryAction;
 
   const ContainerImagesView({
     required this.images,
     required this.type,
     required this.version,
     required this.trailingBuilder,
+    this.summaryAction,
     super.key,
   });
 
@@ -105,6 +110,7 @@ class ContainerImagesView extends StatelessWidget {
           icon: MingCute.clapperboard_line,
           title: type.name.capitalize,
           subtitle: version ?? context.l10n.unknown,
+          action: summaryAction,
           badges: [
             _SummaryBadge(
               label: context.l10n.dockerImagesFmt(images.length),
@@ -166,12 +172,14 @@ class _RuntimeSummaryCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final List<Widget> badges;
+  final Widget? action;
 
   const _RuntimeSummaryCard({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.badges,
+    this.action,
   });
 
   @override
@@ -229,7 +237,20 @@ class _RuntimeSummaryCard extends StatelessWidget {
                 children: [
                   identity,
                   UIs.height13,
-                  Align(alignment: Alignment.centerLeft, child: badgeWrap),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: badgeWrap,
+                        ),
+                      ),
+                      if (action != null) ...[
+                        UIs.width7,
+                        action!,
+                      ],
+                    ],
+                  ),
                 ],
               ),
             );
@@ -241,6 +262,10 @@ class _RuntimeSummaryCard extends StatelessWidget {
                 Expanded(child: identity),
                 UIs.width13,
                 badgeWrap,
+                if (action != null) ...[
+                  UIs.width7,
+                  action!,
+                ],
               ],
             ),
           );

@@ -11,11 +11,20 @@ import 'package:server_box/view/page/container/resource_views.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
 
 void main() {
-  Widget containerView(List<ContainerPs> items) {
+  Widget containerView(
+    List<ContainerPs> items, {
+    VoidCallback? onPrune,
+  }) {
     return ContainerItemsView(
       items: items,
       type: ContainerType.docker,
       version: '27.1.1',
+      summaryAction: IconButton(
+        key: const ValueKey('test-prune-containers'),
+        tooltip: 'Prune containers',
+        onPressed: onPrune ?? () {},
+        icon: const Icon(Icons.cleaning_services_outlined),
+      ),
       trailingBuilder: (item) => SizedBox(
         key: ValueKey('container-trailing-${item.id}'),
         width: 32,
@@ -26,11 +35,20 @@ void main() {
     );
   }
 
-  Widget imageView(List<ContainerImg> images) {
+  Widget imageView(
+    List<ContainerImg> images, {
+    VoidCallback? onPrune,
+  }) {
     return ContainerImagesView(
       images: images,
       type: ContainerType.docker,
       version: '27.1.1',
+      summaryAction: IconButton(
+        key: const ValueKey('test-prune-images'),
+        tooltip: 'Prune images',
+        onPressed: onPrune ?? () {},
+        icon: const Icon(Icons.cleaning_services_outlined),
+      ),
       trailingBuilder: (image) => SizedBox(
         key: ValueKey('image-trailing-${image.id}'),
         width: 32,
@@ -321,6 +339,52 @@ void main() {
     expect(find.text('Dangling'), findsOneWidget);
     expect(find.text('Unused'), findsOneWidget);
     expect(find.text('2 Unused'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('summary prune actions stay rightmost and are tappable', (
+    tester,
+  ) async {
+    var containerPrunes = 0;
+    await _pumpAt(
+      tester,
+      width: 390,
+      child: containerView(
+        const [],
+        onPrune: () => containerPrunes++,
+      ),
+    );
+
+    final containerAction = find.byKey(
+      const ValueKey('test-prune-containers'),
+    );
+    expect(containerAction, findsOneWidget);
+    expect(
+      tester.getCenter(containerAction).dx,
+      greaterThan(tester.getCenter(find.text('Docker')).dx),
+    );
+    await tester.tap(containerAction);
+    expect(containerPrunes, 1);
+    expect(tester.takeException(), isNull);
+
+    var imagePrunes = 0;
+    await _pumpAt(
+      tester,
+      width: 900,
+      child: imageView(
+        const [],
+        onPrune: () => imagePrunes++,
+      ),
+    );
+
+    final imageAction = find.byKey(const ValueKey('test-prune-images'));
+    expect(imageAction, findsOneWidget);
+    expect(
+      tester.getCenter(imageAction).dx,
+      greaterThan(tester.getCenter(find.text('Docker')).dx),
+    );
+    await tester.tap(imageAction);
+    expect(imagePrunes, 1);
     expect(tester.takeException(), isNull);
   });
 }
