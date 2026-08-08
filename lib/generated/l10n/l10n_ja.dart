@@ -383,16 +383,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get imagesList => 'イメージリスト';
 
   @override
-  String get unused => 'Unused';
+  String get unused => '未使用';
 
   @override
-  String get dangling => 'Dangling';
+  String get dangling => '未タグ';
 
   @override
-  String get pruneUnusedImages => 'Prune unused images';
+  String get pruneUnusedImages => '未使用イメージをクリーンアップ';
 
   @override
-  String get pruneDanglingImages => 'Prune dangling images';
+  String get pruneDanglingImages => '未タグイメージをクリーンアップ';
+
+  @override
+  String get volume => 'ボリューム';
 
   @override
   String get pull => 'プル';

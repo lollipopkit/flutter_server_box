@@ -395,16 +395,19 @@ class AppLocalizationsUk extends AppLocalizations {
   String get imagesList => 'Список зображень';
 
   @override
-  String get unused => 'Unused';
+  String get unused => 'Не використовується';
 
   @override
-  String get dangling => 'Dangling';
+  String get dangling => 'Висячий';
 
   @override
-  String get pruneUnusedImages => 'Prune unused images';
+  String get pruneUnusedImages => 'Очистити невикористані образи';
 
   @override
-  String get pruneDanglingImages => 'Prune dangling images';
+  String get pruneDanglingImages => 'Очистити висячі образи';
+
+  @override
+  String get volume => 'Том';
 
   @override
   String get pull => 'Pull';

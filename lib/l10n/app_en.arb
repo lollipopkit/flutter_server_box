@@ -117,6 +117,7 @@
   "dangling": "Dangling",
   "pruneUnusedImages": "Prune unused images",
   "pruneDanglingImages": "Prune dangling images",
+  "volume": "Volume",
   "pull": "Pull",
   "invalid": "Invalid",
   "invalidUrl": "Invalid URL",

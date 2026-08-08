@@ -828,6 +828,12 @@ abstract class AppLocalizations {
   /// **'Prune dangling images'**
   String get pruneDanglingImages;
 
+  /// No description provided for @volume.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume'**
+  String get volume;
+
   /// No description provided for @pull.
   ///
   /// In en, this message translates to:

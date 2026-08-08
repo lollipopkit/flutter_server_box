@@ -387,6 +387,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pruneDanglingImages => '清理悬空镜像';
 
   @override
+  String get volume => '卷';
+
+  @override
   String get pull => '拉取';
 
   @override
@@ -1375,6 +1378,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pruneDanglingImages => '清理懸空映像檔';
+
+  @override
+  String get volume => '卷';
 
   @override
   String get pull => '拉取';

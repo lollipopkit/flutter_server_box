@@ -405,6 +405,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pruneDanglingImages => 'Prune dangling images';
 
   @override
+  String get volume => 'Volume';
+
+  @override
   String get pull => 'Pull';
 
   @override

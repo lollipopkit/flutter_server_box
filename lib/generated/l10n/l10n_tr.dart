@@ -394,16 +394,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get imagesList => 'Görüntü listesi';
 
   @override
-  String get unused => 'Unused';
+  String get unused => 'Kullanılmıyor';
 
   @override
-  String get dangling => 'Dangling';
+  String get dangling => 'Sallantıda';
 
   @override
-  String get pruneUnusedImages => 'Prune unused images';
+  String get pruneUnusedImages => 'Kullanılmayan görüntüleri temizle';
 
   @override
-  String get pruneDanglingImages => 'Prune dangling images';
+  String get pruneDanglingImages => 'Sallantıdaki görüntüleri temizle';
+
+  @override
+  String get volume => 'Birim';
 
   @override
   String get pull => 'Çek';

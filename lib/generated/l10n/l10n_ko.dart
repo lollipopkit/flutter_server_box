@@ -381,16 +381,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get imagesList => '이미지 목록';
 
   @override
-  String get unused => 'Unused';
+  String get unused => '미사용';
 
   @override
-  String get dangling => 'Dangling';
+  String get dangling => '댕글링';
 
   @override
-  String get pruneUnusedImages => 'Prune unused images';
+  String get pruneUnusedImages => '미사용 이미지 정리';
 
   @override
-  String get pruneDanglingImages => 'Prune dangling images';
+  String get pruneDanglingImages => '댕글링 이미지 정리';
+
+  @override
+  String get volume => '볼륨';
 
   @override
   String get pull => '풀';

@@ -325,6 +325,19 @@ extension on _ContainerPageState {
     }
   }
 
+  void _openMergedLogs(String project, String? workingDir) {
+    final runtime = _containerState.type.name;
+    final projectQuoted = shellSingleQuote(project);
+    final cmd = '$runtime compose -p $projectQuoted logs --follow --tail 300';
+    final initCmd = (workingDir == null || workingDir.isEmpty)
+        ? cmd
+        : 'cd ${shellSingleQuote(workingDir)} && $cmd';
+    SSHPage.route.go(
+      context,
+      SshPageArgs(spi: widget.args.spi, initCmd: initCmd),
+    );
+  }
+
   void _initAutoRefresh() {
     _autoRefreshTimer?.cancel();
     _autoRefreshTimer = null;

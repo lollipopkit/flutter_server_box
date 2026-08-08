@@ -47,6 +47,16 @@ enum ContainerGroupMenu {
   restart,
   logs;
 
+  static List<ContainerGroupMenu> items({
+    required bool anyRunning,
+    required bool anyStopped,
+  }) => [
+    if (anyStopped) start,
+    if (anyRunning) stop,
+    if (anyRunning) restart,
+    logs,
+  ];
+
   IconData get icon => switch (this) {
     ContainerGroupMenu.start => Icons.play_arrow,
     ContainerGroupMenu.stop => Icons.stop,

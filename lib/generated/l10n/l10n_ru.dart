@@ -394,16 +394,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get imagesList => 'Список образов';
 
   @override
-  String get unused => 'Unused';
+  String get unused => 'Не используется';
 
   @override
-  String get dangling => 'Dangling';
+  String get dangling => 'Висячий';
 
   @override
-  String get pruneUnusedImages => 'Prune unused images';
+  String get pruneUnusedImages => 'Очистить неиспользуемые образы';
 
   @override
-  String get pruneDanglingImages => 'Prune dangling images';
+  String get pruneDanglingImages => 'Очистить висячие образы';
+
+  @override
+  String get volume => 'Том';
 
   @override
   String get pull => 'Pull';

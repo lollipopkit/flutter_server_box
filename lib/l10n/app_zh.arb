@@ -115,6 +115,7 @@
   "dangling": "悬空",
   "pruneUnusedImages": "清理未使用镜像",
   "pruneDanglingImages": "清理悬空镜像",
+  "volume": "卷",
   "pull": "拉取",
   "invalid": "无效",
   "invalidHostFormat": "主机格式无效，仅支持 IPv4、IPv6 和域名字符。",

@@ -283,9 +283,10 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
           ),
           if (project != null)
             PopupMenu(
-              items: ContainerGroupMenu.values
-                  .map((e) => PopMenu.build(e, e.icon, e.toStr))
-                  .toList(),
+              items: ContainerGroupMenu.items(
+                anyRunning: groupItems.any((e) => e.status.isRunning),
+                anyStopped: groupItems.any((e) => !e.status.isRunning),
+              ).map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
               onSelected: (item) => _onTapGroupMenu(item, groupItems),
             ),
         ],
@@ -294,16 +295,25 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   }
 
   void _onTapGroupMenu(ContainerGroupMenu item, List<ContainerPs> groupItems) {
-    final ids = groupItems.map((e) => e.id).whereType<String>().toList();
+    final runningIds = groupItems
+        .where((e) => e.status.isRunning)
+        .map((e) => e.id)
+        .whereType<String>()
+        .toList();
+    final stoppedIds = groupItems
+        .where((e) => !e.status.isRunning)
+        .map((e) => e.id)
+        .whereType<String>()
+        .toList();
     switch (item) {
       case ContainerGroupMenu.start:
-        _execContainerAction(() => _containerNotifier.startAll(ids));
+        _execContainerAction(() => _containerNotifier.startAll(stoppedIds));
         break;
       case ContainerGroupMenu.stop:
-        _execContainerAction(() => _containerNotifier.stopAll(ids));
+        _execContainerAction(() => _containerNotifier.stopAll(runningIds));
         break;
       case ContainerGroupMenu.restart:
-        _execContainerAction(() => _containerNotifier.restartAll(ids));
+        _execContainerAction(() => _containerNotifier.restartAll(runningIds));
         break;
       case ContainerGroupMenu.logs:
         final project = groupItems.firstOrNull?.project;
@@ -314,19 +324,6 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
         _openMergedLogs(project, workingDir);
         break;
     }
-  }
-
-  void _openMergedLogs(String project, String? workingDir) {
-    final runtime = _containerState.type.name;
-    final projectQuoted = shellSingleQuote(project);
-    final cmd = '$runtime compose -p $projectQuoted logs --follow --tail 300';
-    final initCmd = (workingDir == null || workingDir.isEmpty)
-        ? cmd
-        : 'cd ${shellSingleQuote(workingDir)} && $cmd';
-    SSHPage.route.go(
-      context,
-      SshPageArgs(spi: widget.args.spi, initCmd: initCmd),
-    );
   }
 
   Widget _buildPsItem(ContainerPs item) {
