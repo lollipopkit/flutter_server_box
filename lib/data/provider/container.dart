@@ -39,12 +39,66 @@ String? buildContainerBulkCmd(String action, Iterable<String> ids) {
 String buildContainerRunCmd({
   required String image,
   required String name,
-  required String extraArgs,
+  required Iterable<String> extraArgs,
 }) {
   final imageArg = shellSingleQuote(image);
-  final suffix = extraArgs.isEmpty ? imageArg : '$extraArgs $imageArg';
+  final args = extraArgs.map(shellSingleQuote).join(' ');
+  final suffix = args.isEmpty ? imageArg : '$args $imageArg';
   final nameArg = name.isEmpty ? '' : ' --name ${shellSingleQuote(name)}';
   return 'run -itd$nameArg $suffix';
+}
+
+List<String> parseContainerRunArgs(String raw) {
+  final args = <String>[];
+  final current = StringBuffer();
+  String? quote;
+  var escaping = false;
+  var tokenStarted = false;
+
+  void finishToken() {
+    if (!tokenStarted) return;
+    args.add(current.toString());
+    current.clear();
+    tokenStarted = false;
+  }
+
+  for (final rune in raw.runes) {
+    final char = String.fromCharCode(rune);
+    if (escaping) {
+      current.write(char);
+      tokenStarted = true;
+      escaping = false;
+      continue;
+    }
+    if (quote != null) {
+      if (char == quote) {
+        quote = null;
+      } else if (char == r'\' && quote == '"') {
+        escaping = true;
+      } else {
+        current.write(char);
+      }
+      tokenStarted = true;
+      continue;
+    }
+    if (char == "'" || char == '"') {
+      quote = char;
+      tokenStarted = true;
+    } else if (char == r'\') {
+      escaping = true;
+      tokenStarted = true;
+    } else if (RegExp(r'\s').hasMatch(char)) {
+      finishToken();
+    } else {
+      current.write(char);
+      tokenStarted = true;
+    }
+  }
+  if (quote != null || escaping) {
+    throw const FormatException('Unterminated quoted container argument');
+  }
+  finishToken();
+  return args.toList(growable: false);
 }
 
 List<ContainerImg> parseContainerImagesOutput(
@@ -647,12 +701,23 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
     state = state.copyWith(runLog: '');
 
-    cmd = switch (state.type) {
+    final type = state.type;
+    cmd = switch (type) {
       ContainerType.docker => 'docker $cmd',
       ContainerType.podman => 'podman $cmd',
     };
 
-    final needSudo = await sudoCompleter.future;
+    final sudo = sudoCompleter;
+    if (!sudo.isCompleted) {
+      unawaited(
+        _requiresSudo(
+          sudo,
+          type,
+          refreshTarget ?? ContainerRefreshTarget.containers,
+        ),
+      );
+    }
+    final needSudo = await sudo.future;
     String? password;
     if (needSudo) {
       password = await _getSudoPassword();

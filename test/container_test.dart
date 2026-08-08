@@ -29,15 +29,47 @@ void main() {
     expect(buildContainerBulkCmd('start', []), null);
   });
 
-  test('buildContainerRunCmd quotes image and container name', () {
+  test('buildContainerRunCmd quotes every untrusted argument', () {
     expect(
       buildContainerRunCmd(
         image: 'safe; touch /tmp/image-pwned; #',
         name: 'safe; touch /tmp/name-pwned; #',
-        extraArgs: '-p 8080:80',
+        extraArgs: parseContainerRunArgs('-p 8080:80'),
       ),
       "run -itd --name 'safe; touch /tmp/name-pwned; #' "
-      "-p 8080:80 'safe; touch /tmp/image-pwned; #'",
+      "'-p' '8080:80' 'safe; touch /tmp/image-pwned; #'",
+    );
+  });
+
+  test('parseContainerRunArgs preserves quoted values', () {
+    expect(
+      parseContainerRunArgs(
+        '''-e "GREETING=hello world" -v '/host path:/container path' '' ''',
+      ),
+      ['-e', 'GREETING=hello world', '-v', '/host path:/container path', ''],
+    );
+  });
+
+  test('container run shell operators remain quoted arguments', () {
+    final cmd = buildContainerRunCmd(
+      image: 'alpine',
+      name: '',
+      extraArgs: parseContainerRunArgs(
+        r'--label x=$(touch /tmp/pwned) ; echo owned',
+      ),
+    );
+
+    expect(
+      cmd,
+      "run -itd '--label' 'x=\$(touch' '/tmp/pwned)' ';' 'echo' 'owned' "
+      "'alpine'",
+    );
+  });
+
+  test('parseContainerRunArgs rejects unterminated quoting', () {
+    expect(
+      () => parseContainerRunArgs('''-e "unfinished'''),
+      throwsFormatException,
     );
   });
 
@@ -309,6 +341,10 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     expect(ContainerStatus.unknown.isStopped, false);
     expect(
       ContainerMenu.items(ContainerStatus.unknown),
+      [ContainerMenu.rm, ContainerMenu.logs],
+    );
+    expect(
+      ContainerMenu.items(ContainerStatus.paused),
       [ContainerMenu.rm, ContainerMenu.logs],
     );
   });

@@ -67,14 +67,19 @@ extension on _ContainerPageState {
       ),
       actions: Btn.ok(
         onTap: () async {
-          context.pop();
-          await _showAddCmdPreview(
-            buildContainerRunCmd(
-              image: imageCtrl.text.trim(),
-              name: nameCtrl.text.trim(),
-              extraArgs: argsCtrl.text.trim(),
-            ),
-          );
+          try {
+            final extraArgs = parseContainerRunArgs(argsCtrl.text.trim());
+            context.pop();
+            await _showAddCmdPreview(
+              buildContainerRunCmd(
+                image: imageCtrl.text.trim(),
+                name: nameCtrl.text.trim(),
+                extraArgs: extraArgs,
+              ),
+            );
+          } on FormatException {
+            context.showSnackBar(libL10n.invalid);
+          }
         },
       ).toList,
     );
@@ -336,7 +341,7 @@ extension on _ContainerPageState {
         break;
       case ContainerMenu.logs:
         final cmd =
-            '${_containerState.type.name} logs -f --tail 100 ${shellSingleQuote(dItem.id!)}';
+            '${_containerState.type.name} logs -f --tail 100 ${shellSingleQuote(id)}';
         final args = SshPageArgs(
           spi: widget.args.spi,
           initCmd: _wrapContainerHost(cmd),
@@ -345,7 +350,7 @@ extension on _ContainerPageState {
         break;
       case ContainerMenu.terminal:
         final cmd =
-            '${_containerState.type.name} exec -it ${shellSingleQuote(dItem.id!)} sh -c "command -v bash && exec bash || command -v ash && exec ash || exec sh"';
+            '${_containerState.type.name} exec -it ${shellSingleQuote(id)} sh -c "command -v bash && exec bash || command -v ash && exec ash || exec sh"';
         final args = SshPageArgs(
           spi: widget.args.spi,
           initCmd: _wrapContainerHost(cmd),
