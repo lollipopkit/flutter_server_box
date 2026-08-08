@@ -13,7 +13,10 @@ abstract final class ContainerImg {
   /// Whether the image has no repository/tag (e.g. `<none>:<none>`).
   bool get isDangling;
 
-  /// Whether no container is using this image (includes dangling images).
+  /// Whether this image is known to have no container references.
+  ///
+  /// Some Docker versions report `N/A` instead of a reference count. That is
+  /// treated as unknown rather than unused to avoid a misleading cleanup badge.
   bool get isUnused;
 
   factory ContainerImg.fromRawJson(String s, ContainerType typ) => typ.img(s);
@@ -111,7 +114,7 @@ final class DockerImg implements ContainerImg {
 
   @override
   int? get containersCount =>
-      containers == 'N/A' ? 0 : int.tryParse(containers);
+      containers == 'N/A' ? null : int.tryParse(containers);
 
   @override
   bool get isDangling {

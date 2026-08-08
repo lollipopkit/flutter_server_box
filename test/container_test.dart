@@ -241,7 +241,7 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       expect(img.isUnused, false);
     });
 
-    test('tagged image with no containers is unused but not dangling', () {
+    test('tagged image with unknown container count is not marked unused', () {
       final img = DockerImg.fromJson({
         'ID': 'def456',
         'Repository': 'redis',
@@ -251,7 +251,8 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
         'Containers': 'N/A',
       });
       expect(img.isDangling, false);
-      expect(img.isUnused, true);
+      expect(img.containersCount, null);
+      expect(img.isUnused, false);
     });
 
     test('dangling image is unused and dangling', () {

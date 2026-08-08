@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
@@ -17,6 +16,7 @@ import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/provider/container.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/container/resource_views.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 
 part 'actions.dart';
@@ -154,20 +154,22 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
   }
 
   Widget _buildPsTab(ContainerState containerState) {
-    return AutoMultiList(
-      children: <Widget>[
-        _buildVersion(containerState),
-        _buildPs(containerState),
-        _buildEmptyStateMessage(containerState),
-      ],
+    return ContainerItemsView(
+      items: containerState.items ?? const [],
+      type: containerState.type,
+      version: containerState.version,
+      trailingBuilder: _buildMoreBtn,
+      groupTrailingBuilder: _buildGroupMoreBtn,
+      emptyState: _buildEmptyStateMessage(containerState),
     );
   }
 
   Widget _buildImagesTab(ContainerState containerState) {
-    return AutoMultiList(
-      children: <Widget>[
-        _buildImage(containerState),
-      ],
+    return ContainerImagesView(
+      images: containerState.images ?? const [],
+      type: containerState.type,
+      version: containerState.version,
+      trailingBuilder: _buildImageMoreBtn,
     );
   }
 
@@ -187,7 +189,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
     );
   }
 
-  Widget _buildEmptyStateMessage(ContainerState containerState) {
+  Widget? _buildEmptyStateMessage(ContainerState containerState) {
     final emptyImgs = containerState.images?.isEmpty ?? true;
     final emptyPs = containerState.items?.isEmpty ?? true;
     if (emptyPs && emptyImgs && containerState.runLog == null) {
@@ -198,64 +200,15 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
         ),
       );
     }
-    return UIs.placeholder;
+    return null;
   }
 
-  Widget _buildImage(ContainerState containerState) {
-    final images = containerState.images ?? [];
-    final unused = images.where((e) => e.isUnused).length;
-    final summary = unused > 0
-        ? '${l10n.dockerImagesFmt(images.length)} · $unused ${l10n.unused}'
-        : l10n.dockerImagesFmt(images.length);
-    return ExpandTile(
-      leading: const Icon(MingCute.clapperboard_line),
-      title: Text(summary),
-      initiallyExpanded: images.length <= 3,
-      children: images.map(_buildImageItem).toList(),
-    ).cardx;
-  }
-
-  Widget _buildImageItem(ContainerImg e) {
-    final repoSplited = e.repository?.split('/');
-    final title = repoSplited?.lastOrNull ?? e.repository;
-    repoSplited?.removeLast();
-    final reg = repoSplited?.join('/');
-    return ListTile(
-      title: Row(
-        children: [
-          Expanded(child: Text(title ?? l10n.unknown, style: UIs.text15)),
-          if (e.isDangling) _buildImageBadge(l10n.dangling),
-          if (e.isUnused && !e.isDangling) _buildImageBadge(l10n.unused),
-        ],
-      ),
-      subtitle: Text(
-        '${reg ?? ''} - ${e.tag ?? l10n.unknown} - ${e.sizeMB ?? l10n.unknown}',
-        style: UIs.text13Grey,
-      ),
-      trailing: PopupMenu<ImageMenu>(
-        items: ImageMenu.items
-            .map((e) => PopMenu.build(e, e.icon, e.toStr))
-            .toList(),
-        onSelected: (item) => _onTapImageMenu(item, e),
-      ),
-    );
-  }
-
-  Widget _buildImageBadge(String label) {
-    return Container(
-      margin: const EdgeInsets.only(left: 7),
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-      decoration: BoxDecoration(
-        color: UIs.primaryColor.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: UIs.text11.copyWith(
-          color: UIs.primaryColor,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
+  Widget _buildImageMoreBtn(ContainerImg image) {
+    return PopupMenu<ImageMenu>(
+      items: ImageMenu.items
+          .map((e) => PopMenu.build(e, e.icon, e.toStr))
+          .toList(),
+      onSelected: (item) => _onTapImageMenu(item, image),
     );
   }
 
@@ -273,92 +226,21 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
     );
   }
 
-  Widget _buildVersion(ContainerState containerState) {
-    return CardX(
-      child: Padding(
-        padding: const EdgeInsets.all(17),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(containerState.type.name.capitalize),
-            Text(containerState.version ?? l10n.unknown),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPs(ContainerState containerState) {
-    final items = containerState.items;
-    if (items == null) return UIs.placeholder;
-    final running = items.where((e) => e.status.isRunning).length;
-    final stopped = items.length - running;
-    final summary = stopped > 0
-        ? l10n.dockerStatusRunningAndStoppedFmt(running, stopped)
-        : l10n.dockerStatusRunningFmt(running);
-    return ExpandTile(
-      leading: const Icon(OctIcons.container, size: 22),
-      title: Text(summary),
-      initiallyExpanded: items.length < 7,
-      children: _buildGroupedPsItems(items),
-    ).cardx;
-  }
-
-  List<Widget> _buildGroupedPsItems(List<ContainerPs> items) {
-    final grouped = <String?, List<ContainerPs>>{};
-    for (final item in items) {
-      grouped.putIfAbsent(item.project, () => []).add(item);
-    }
-    if (grouped.length <= 1 && grouped[null] != null) {
-      return items.map(_buildPsItem).toList();
-    }
-    final result = <Widget>[];
-    final keys = grouped.keys.toList()
-      ..sort((a, b) {
-        if (a == null) return 1;
-        if (b == null) return -1;
-        final lowerCmp = a.toLowerCase().compareTo(b.toLowerCase());
-        if (lowerCmp != 0) return lowerCmp;
-        return a.compareTo(b);
-      });
-    for (final key in keys) {
-      if (result.isNotEmpty) result.add(const Divider(height: 1));
-      final groupItems = grouped[key]!;
-      result.add(
-        _buildPsGroupHeader(key ?? l10n.dockerProjectOther, groupItems),
-      );
-      result.addAll(groupItems.map(_buildPsItem));
-    }
-    return result;
-  }
-
-  Widget _buildPsGroupHeader(String title, List<ContainerPs> groupItems) {
+  Widget? _buildGroupMoreBtn(List<ContainerPs> groupItems) {
     final project = groupItems.firstOrNull?.project;
+    if (project == null) return null;
     final hasWorkingDir = groupItems.any(
       (e) => e.workingDir?.isNotEmpty ?? false,
     );
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(17, 7, 7, 0),
-      child: Row(
-        children: [
-          const Icon(Icons.folder_outlined, size: 15, color: Colors.grey),
-          UIs.width7,
-          Expanded(
-            child: Text(title, style: UIs.text13Grey),
-          ),
-          if (project != null)
-            PopupMenu(
-              items: ContainerGroupMenu.items(
-                anyRunning: groupItems.any((e) => e.status.isRunning),
-                anyStopped: groupItems.any((e) => !e.status.isRunning),
-              )
-                  .where((e) => e != ContainerGroupMenu.logs || hasWorkingDir)
-                  .map((e) => PopMenu.build(e, e.icon, e.toStr))
-                  .toList(),
-              onSelected: (item) => _onTapGroupMenu(item, groupItems),
-            ),
-        ],
-      ),
+    return PopupMenu(
+      items: ContainerGroupMenu.items(
+        anyRunning: groupItems.any((e) => e.status.isRunning),
+        anyStopped: groupItems.any((e) => !e.status.isRunning),
+      )
+          .where((e) => e != ContainerGroupMenu.logs || hasWorkingDir)
+          .map((e) => PopMenu.build(e, e.icon, e.toStr))
+          .toList(),
+      onSelected: (item) => _onTapGroupMenu(item, groupItems),
     );
   }
 
@@ -416,110 +298,6 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
     return counts.entries.reduce(
       (a, b) => a.value >= b.value ? a : b,
     ).key;
-  }
-
-  Widget _buildPsItem(ContainerPs item) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 11),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(item.name ?? l10n.unknown, style: UIs.text15),
-              _buildMoreBtn(item),
-            ],
-          ),
-          Text(
-            '${item.image ?? l10n.unknown} - ${switch (item) {
-              final PodmanPs ps => ps.status.displayName,
-              final DockerPs ps => ps.state ?? ps.status.displayName,
-            }}',
-            style: UIs.text13Grey,
-          ),
-          _buildPsItemStats(item),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPsItemStats(ContainerPs item) {
-    if (item.cpu == null || item.mem == null) return UIs.placeholder;
-    return LayoutBuilder(
-      builder: (_, cons) {
-        final width = cons.maxWidth / 2 - 6.5;
-        return Column(
-          children: [
-            UIs.height13,
-            Row(
-              children: [
-                _buildPsItemStatsItem(
-                  'CPU',
-                  item.cpu,
-                  Icons.memory,
-                  width: width,
-                ),
-                UIs.width13,
-                _buildPsItemStatsItem(
-                  'Net',
-                  item.net,
-                  Icons.network_cell,
-                  width: width,
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                _buildPsItemStatsItem(
-                  'Mem',
-                  item.mem,
-                  Icons.settings_input_component,
-                  width: width,
-                ),
-                UIs.width13,
-                _buildPsItemStatsItem(
-                  'Disk',
-                  item.disk,
-                  Icons.storage,
-                  width: width,
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildPsItemStatsItem(
-    String title,
-    String? value,
-    IconData icon, {
-    required double width,
-  }) {
-    return SizedBox(
-      width: width,
-      child: Column(
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 12, color: Colors.grey),
-              UIs.width7,
-              Expanded(
-                child: Text(
-                  value ?? l10n.unknown,
-                  style: UIs.text11Grey,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildMoreBtn(ContainerPs dItem) {
