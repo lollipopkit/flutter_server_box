@@ -11,6 +11,9 @@ sealed class ContainerPs {
   String? get name;
   String? get project;
   String? get workingDir;
+
+  /// Human-readable lifecycle text reported by the runtime's STATUS field.
+  String? get rawStatus;
   ContainerStatus get status;
 
   String? cpu;
@@ -31,6 +34,8 @@ final class PodmanPs implements ContainerPs {
   final String? image;
   final List<String>? names;
   @override
+  final String? rawStatus;
+  @override
   final String? project;
   @override
   final String? workingDir;
@@ -49,6 +54,7 @@ final class PodmanPs implements ContainerPs {
     this.id,
     this.image,
     this.names,
+    this.rawStatus,
     this.project,
     this.workingDir,
   });
@@ -57,7 +63,7 @@ final class PodmanPs implements ContainerPs {
   String? get name => names?.firstOrNull;
 
   @override
-  ContainerStatus get status => ContainerStatus.fromPodmanExited(exited);
+  ContainerStatus get status => ContainerStatus.fromPodman(exited, rawStatus);
 
   @override
   void parseStats(String s, [String? version]) {
@@ -84,13 +90,20 @@ final class PodmanPs implements ContainerPs {
       netOut = _asInt(stats['NetOutput']);
     } else if (majorVersionNum >= 5) {
       final network = stats['Network'];
+      var hasNestedNetworkCounters = false;
       if (network is Map) {
         for (final entry in network.entries) {
           final interface = entry.value;
           if (interface is! Map) continue;
+          hasNestedNetworkCounters |= interface.containsKey('RxBytes') ||
+              interface.containsKey('TxBytes');
           netIn += _asInt(interface['RxBytes']);
           netOut += _asInt(interface['TxBytes']);
         }
+      }
+      if (!hasNestedNetworkCounters) {
+        netIn = _asInt(stats['NetInput']);
+        netOut = _asInt(stats['NetOutput']);
       }
     }
     net = '↓ ${netIn.bytes2Str} / ↑ ${netOut.bytes2Str}';
@@ -110,12 +123,41 @@ final class PodmanPs implements ContainerPs {
     names: json['Names'] == null
         ? []
         : List<String>.from(json['Names']!.map((x) => x)),
+    rawStatus: _nonEmpty(json['ServerBoxStatus']?.toString()) ??
+        _nonEmpty(json['Status']?.toString()) ??
+        _nonEmpty(json['State']?.toString()),
     project: _labelFromLabels(json['Labels'], 'com.docker.compose.project'),
     workingDir: _labelFromLabels(
       json['Labels'],
       'com.docker.compose.project.working_dir',
     ),
   );
+}
+
+/// Parses Podman's JSON listing with the human-readable `.Status` template
+/// appended to each row. Older JSON-only output remains supported.
+List<PodmanPs> parsePodmanPsOutput(String raw) {
+  final items = <PodmanPs>[];
+  for (final line in raw.split('\n')) {
+    if (line.trim().isEmpty) continue;
+    try {
+        final separator = line.lastIndexOf('\t');
+        final jsonPart = separator < 0 ? line : line.substring(0, separator);
+        final data = json.decode(jsonPart) as Map<String, dynamic>;
+        if (separator >= 0) {
+          final detailedStatus = line.substring(separator + 1).trim();
+          if (detailedStatus.isNotEmpty) {
+            data['ServerBoxStatus'] = detailedStatus;
+          }
+        }
+      items.add(PodmanPs.fromJson(data));
+    } on FormatException {
+      continue;
+    } on TypeError {
+      continue;
+    }
+  }
+  return items.toList(growable: false);
 }
 
 final class DockerPs implements ContainerPs {
@@ -125,6 +167,8 @@ final class DockerPs implements ContainerPs {
   final String? image;
   final String? names;
   final String? state;
+  @override
+  String? get rawStatus => state;
   @override
   final String? project;
   @override

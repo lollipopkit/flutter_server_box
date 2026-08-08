@@ -264,6 +264,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dockerProjectOther => '其他';
 
   @override
+  String get dockerPruneTip => '清理未使用的数据以释放磁盘空间';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -385,6 +388,33 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pruneDanglingImages => '清理悬空镜像';
+
+  @override
+  String get pruneImages => '清理镜像';
+
+  @override
+  String get unusedTaggedImages => '未使用标记';
+
+  @override
+  String get pruneDanglingImagesTip => '仅移除悬空镜像（未标记的镜像层）。';
+
+  @override
+  String get pruneUnusedImagesTip => '同时移除未被任何容器使用的已标记镜像。';
+
+  @override
+  String get includeUnusedVolumesTip => '同时移除未被任何容器使用的卷。';
+
+  @override
+  String get pruneCommandPreview => '命令预览';
+
+  @override
+  String get pruneForceSshTip => '远程执行始终启用 -f，以跳过无法交互的确认提示。';
+
+  @override
+  String get pruneVolumes => '清理卷';
+
+  @override
+  String get pruneUnusedData => '清理未使用数据';
 
   @override
   String get volume => '卷';
@@ -1000,6 +1030,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tmuxNotAvailable => 'tmux 不可用';
 
   @override
+  String containerSegmentsMismatch(int count) {
+    return '容器响应分段数量异常：$count';
+  }
+
+  @override
+  String get containerOperationInProgress => '另一个容器操作正在进行中';
+
+  @override
   String get systemd => 'Systemd';
 }
 
@@ -1257,6 +1295,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get dockerProjectOther => '其他';
 
   @override
+  String get dockerPruneTip => '清理未使用的資料以釋放磁碟空間';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -1380,6 +1421,33 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get pruneDanglingImages => '清理懸空映像檔';
 
   @override
+  String get pruneImages => '清理映像檔';
+
+  @override
+  String get unusedTaggedImages => '未使用標記';
+
+  @override
+  String get pruneDanglingImagesTip => '僅移除懸空映像檔（未標記的映像層）。';
+
+  @override
+  String get pruneUnusedImagesTip => '同時移除未被任何容器使用的已標記映像檔。';
+
+  @override
+  String get includeUnusedVolumesTip => '同時移除未被任何容器使用的卷。';
+
+  @override
+  String get pruneCommandPreview => '命令預覽';
+
+  @override
+  String get pruneForceSshTip => '遠端執行始終啟用 -f，以略過無法互動的確認提示。';
+
+  @override
+  String get pruneVolumes => '清理卷';
+
+  @override
+  String get pruneUnusedData => '清理未使用資料';
+
+  @override
   String get volume => '卷';
 
   @override
@@ -1387,6 +1455,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get invalid => '無效';
+
+  @override
+  String get invalidUrl => '無效的網址';
 
   @override
   String get invalidHostFormat => '主機格式無效，僅支援 IPv4、IPv6 和網域字元。';
@@ -1900,6 +1971,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get tmuxNotAvailable => 'tmux 無法使用';
+
+  @override
+  String containerSegmentsMismatch(int count) {
+    return '容器回應分段數量異常：$count';
+  }
+
+  @override
+  String get containerOperationInProgress => '另一個容器操作正在進行中';
 
   @override
   String get systemd => 'Systemd';

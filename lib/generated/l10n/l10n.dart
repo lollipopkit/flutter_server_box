@@ -597,6 +597,12 @@ abstract class AppLocalizations {
   /// **'Other'**
   String get dockerProjectOther;
 
+  /// No description provided for @dockerPruneTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove unused data to free up disk space'**
+  String get dockerPruneTip;
+
   /// No description provided for @dockerStatusRunningAndStoppedFmt.
   ///
   /// In en, this message translates to:
@@ -827,6 +833,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Prune dangling images'**
   String get pruneDanglingImages;
+
+  /// No description provided for @pruneImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Prune images'**
+  String get pruneImages;
+
+  /// No description provided for @unusedTaggedImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Unused tagged'**
+  String get unusedTaggedImages;
+
+  /// No description provided for @pruneDanglingImagesTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Only remove dangling images (untagged layers).'**
+  String get pruneDanglingImagesTip;
+
+  /// No description provided for @pruneUnusedImagesTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Also remove tagged images not used by any container.'**
+  String get pruneUnusedImagesTip;
+
+  /// No description provided for @includeUnusedVolumesTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Also remove volumes not used by any container.'**
+  String get includeUnusedVolumesTip;
+
+  /// No description provided for @pruneCommandPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Command preview'**
+  String get pruneCommandPreview;
+
+  /// No description provided for @pruneForceSshTip.
+  ///
+  /// In en, this message translates to:
+  /// **'-f skips the interactive prompt and is always enabled for SSH execution.'**
+  String get pruneForceSshTip;
+
+  /// No description provided for @pruneVolumes.
+  ///
+  /// In en, this message translates to:
+  /// **'Prune volumes'**
+  String get pruneVolumes;
+
+  /// No description provided for @pruneUnusedData.
+  ///
+  /// In en, this message translates to:
+  /// **'Prune unused data'**
+  String get pruneUnusedData;
 
   /// No description provided for @volume.
   ///
@@ -1955,6 +2015,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'tmux is not available'**
   String get tmuxNotAvailable;
+
+  /// No description provided for @containerSegmentsMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Unexpected container response segment count: {count}'**
+  String containerSegmentsMismatch(int count);
+
+  /// No description provided for @containerOperationInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Another container operation is already in progress'**
+  String get containerOperationInProgress;
 
   /// No description provided for @systemd.
   ///

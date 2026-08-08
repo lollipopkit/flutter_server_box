@@ -268,6 +268,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get dockerProjectOther => '기타';
 
   @override
+  String get dockerPruneTip => '사용하지 않는 데이터를 제거하여 디스크 공간을 확보합니다';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -391,6 +394,33 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get pruneDanglingImages => '댕글링 이미지 정리';
+
+  @override
+  String get pruneImages => '이미지 정리';
+
+  @override
+  String get unusedTaggedImages => '사용하지 않는 태그 이미지';
+
+  @override
+  String get pruneDanglingImagesTip => '태그가 없는 댕글링 이미지만 제거합니다.';
+
+  @override
+  String get pruneUnusedImagesTip => '어떤 컨테이너에서도 사용하지 않는 태그 이미지도 제거합니다.';
+
+  @override
+  String get includeUnusedVolumesTip => '어떤 컨테이너에서도 사용하지 않는 볼륨도 제거합니다.';
+
+  @override
+  String get pruneCommandPreview => '명령 미리보기';
+
+  @override
+  String get pruneForceSshTip => '-f는 대화형 확인을 건너뛰며 SSH 실행에서 항상 활성화됩니다.';
+
+  @override
+  String get pruneVolumes => '볼륨 정리';
+
+  @override
+  String get pruneUnusedData => '사용하지 않는 데이터 정리';
 
   @override
   String get volume => '볼륨';
@@ -1032,6 +1062,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get tmuxNotAvailable => 'tmux is not available';
+
+  @override
+  String containerSegmentsMismatch(int count) {
+    return '컨테이너 응답 세그먼트 수가 예상과 다릅니다: $count';
+  }
+
+  @override
+  String get containerOperationInProgress => '다른 컨테이너 작업이 이미 진행 중입니다';
 
   @override
   String get systemd => 'Systemd';

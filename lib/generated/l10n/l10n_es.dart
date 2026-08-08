@@ -278,6 +278,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get dockerProjectOther => 'Otros';
 
   @override
+  String get dockerPruneTip =>
+      'Elimina los datos no utilizados para liberar espacio en disco';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -404,6 +408,37 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get pruneDanglingImages => 'Limpiar imágenes colgantes';
+
+  @override
+  String get pruneImages => 'Limpiar imágenes';
+
+  @override
+  String get unusedTaggedImages => 'Etiquetadas sin usar';
+
+  @override
+  String get pruneDanglingImagesTip =>
+      'Elimina solo imágenes colgantes (capas sin etiqueta).';
+
+  @override
+  String get pruneUnusedImagesTip =>
+      'También elimina imágenes etiquetadas que ningún contenedor utiliza.';
+
+  @override
+  String get includeUnusedVolumesTip =>
+      'También elimina volúmenes que ningún contenedor utiliza.';
+
+  @override
+  String get pruneCommandPreview => 'Vista previa del comando';
+
+  @override
+  String get pruneForceSshTip =>
+      '-f omite la confirmación interactiva y siempre está activado al ejecutar por SSH.';
+
+  @override
+  String get pruneVolumes => 'Limpiar volúmenes';
+
+  @override
+  String get pruneUnusedData => 'Limpiar datos sin usar';
 
   @override
   String get volume => 'Volumen';
@@ -1078,6 +1113,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tmuxNotAvailable => 'tmux is not available';
+
+  @override
+  String containerSegmentsMismatch(int count) {
+    return 'Número inesperado de segmentos en la respuesta del contenedor: $count';
+  }
+
+  @override
+  String get containerOperationInProgress =>
+      'Ya hay otra operación de contenedor en curso';
 
   @override
   String get systemd => 'Systemd';

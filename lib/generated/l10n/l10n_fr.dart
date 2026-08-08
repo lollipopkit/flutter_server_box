@@ -278,6 +278,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dockerProjectOther => 'Autres';
 
   @override
+  String get dockerPruneTip =>
+      'Supprimez les données inutilisées pour libérer de l\'espace disque';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -405,6 +409,37 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pruneDanglingImages => 'Nettoyer les images fantômes';
+
+  @override
+  String get pruneImages => 'Nettoyer les images';
+
+  @override
+  String get unusedTaggedImages => 'Étiquetées inutilisées';
+
+  @override
+  String get pruneDanglingImagesTip =>
+      'Supprime uniquement les images fantômes (couches sans étiquette).';
+
+  @override
+  String get pruneUnusedImagesTip =>
+      'Supprime aussi les images étiquetées qui ne sont utilisées par aucun conteneur.';
+
+  @override
+  String get includeUnusedVolumesTip =>
+      'Supprime aussi les volumes utilisés par aucun conteneur.';
+
+  @override
+  String get pruneCommandPreview => 'Aperçu de la commande';
+
+  @override
+  String get pruneForceSshTip =>
+      '-f ignore la confirmation interactive et reste toujours activé via SSH.';
+
+  @override
+  String get pruneVolumes => 'Nettoyer les volumes';
+
+  @override
+  String get pruneUnusedData => 'Nettoyer les données inutilisées';
 
   @override
   String get volume => 'Volume';
@@ -1080,6 +1115,15 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tmuxNotAvailable => 'tmux is not available';
+
+  @override
+  String containerSegmentsMismatch(int count) {
+    return 'Nombre inattendu de segments dans la réponse du conteneur : $count';
+  }
+
+  @override
+  String get containerOperationInProgress =>
+      'Une autre opération sur les conteneurs est déjà en cours';
 
   @override
   String get systemd => 'Systemd';

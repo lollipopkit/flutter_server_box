@@ -277,6 +277,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dockerProjectOther => 'Other';
 
   @override
+  String get dockerPruneTip => 'Remove unused data to free up disk space';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -403,6 +406,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pruneDanglingImages => 'Prune dangling images';
+
+  @override
+  String get pruneImages => 'Prune images';
+
+  @override
+  String get unusedTaggedImages => 'Unused tagged';
+
+  @override
+  String get pruneDanglingImagesTip =>
+      'Only remove dangling images (untagged layers).';
+
+  @override
+  String get pruneUnusedImagesTip =>
+      'Also remove tagged images not used by any container.';
+
+  @override
+  String get includeUnusedVolumesTip =>
+      'Also remove volumes not used by any container.';
+
+  @override
+  String get pruneCommandPreview => 'Command preview';
+
+  @override
+  String get pruneForceSshTip =>
+      '-f skips the interactive prompt and is always enabled for SSH execution.';
+
+  @override
+  String get pruneVolumes => 'Prune volumes';
+
+  @override
+  String get pruneUnusedData => 'Prune unused data';
 
   @override
   String get volume => 'Volume';
@@ -1067,6 +1101,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tmuxNotAvailable => 'tmux is not available';
+
+  @override
+  String containerSegmentsMismatch(int count) {
+    return 'Unexpected container response segment count: $count';
+  }
+
+  @override
+  String get containerOperationInProgress =>
+      'Another container operation is already in progress';
 
   @override
   String get systemd => 'Systemd';

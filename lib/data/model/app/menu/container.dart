@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/data/model/container/status.dart';
 
 enum ContainerMenu {
   start,
@@ -9,8 +10,8 @@ enum ContainerMenu {
   logs,
   terminal;
 
-  static List<ContainerMenu> items(bool running) {
-    if (running) {
+  static List<ContainerMenu> items(ContainerStatus status) {
+    if (status.isRunning) {
       return [
         stop,
         restart,
@@ -19,7 +20,10 @@ enum ContainerMenu {
         terminal,
       ];
     }
-    return [start, rm, logs];
+    if (status.isStopped || status == ContainerStatus.unknown) {
+      return [start, rm, logs];
+    }
+    return [rm, logs];
   }
 
   IconData get icon => switch (this) {

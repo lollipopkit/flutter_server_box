@@ -277,6 +277,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dockerProjectOther => 'Diğer';
 
   @override
+  String get dockerPruneTip =>
+      'Disk alanını boşaltmak için kullanılmayan verileri kaldırın';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -404,6 +408,37 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pruneDanglingImages => 'Askıdaki görüntüleri temizle';
+
+  @override
+  String get pruneImages => 'Görüntüleri temizle';
+
+  @override
+  String get unusedTaggedImages => 'Kullanılmayan etiketliler';
+
+  @override
+  String get pruneDanglingImagesTip =>
+      'Yalnızca askıdaki görüntüleri (etiketsiz katmanları) kaldırır.';
+
+  @override
+  String get pruneUnusedImagesTip =>
+      'Hiçbir konteyner tarafından kullanılmayan etiketli görüntüleri de kaldırır.';
+
+  @override
+  String get includeUnusedVolumesTip =>
+      'Hiçbir konteyner tarafından kullanılmayan birimleri de kaldırır.';
+
+  @override
+  String get pruneCommandPreview => 'Komut önizlemesi';
+
+  @override
+  String get pruneForceSshTip =>
+      '-f etkileşimli onayı atlar ve SSH yürütmesinde her zaman etkindir.';
+
+  @override
+  String get pruneVolumes => 'Birimleri temizle';
+
+  @override
+  String get pruneUnusedData => 'Kullanılmayan verileri temizle';
 
   @override
   String get volume => 'Birim';
@@ -1069,6 +1104,15 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get tmuxNotAvailable => 'tmux is not available';
+
+  @override
+  String containerSegmentsMismatch(int count) {
+    return 'Konteyner yanıtındaki beklenmeyen bölüm sayısı: $count';
+  }
+
+  @override
+  String get containerOperationInProgress =>
+      'Başka bir konteyner işlemi zaten devam ediyor';
 
   @override
   String get systemd => 'Systemd';

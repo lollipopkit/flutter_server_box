@@ -276,6 +276,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get dockerProjectOther => 'Lainnya';
 
   @override
+  String get dockerPruneTip =>
+      'Hapus data yang tidak digunakan untuk mengosongkan ruang disk';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -403,6 +407,37 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get pruneDanglingImages => 'Bersihkan gambar menggantung';
+
+  @override
+  String get pruneImages => 'Bersihkan gambar';
+
+  @override
+  String get unusedTaggedImages => 'Bertag tidak digunakan';
+
+  @override
+  String get pruneDanglingImagesTip =>
+      'Hanya hapus gambar menggantung (lapisan tanpa tag).';
+
+  @override
+  String get pruneUnusedImagesTip =>
+      'Juga hapus gambar bertag yang tidak digunakan kontainer mana pun.';
+
+  @override
+  String get includeUnusedVolumesTip =>
+      'Juga hapus volume yang tidak digunakan kontainer mana pun.';
+
+  @override
+  String get pruneCommandPreview => 'Pratinjau perintah';
+
+  @override
+  String get pruneForceSshTip =>
+      '-f melewati konfirmasi interaktif dan selalu aktif untuk eksekusi SSH.';
+
+  @override
+  String get pruneVolumes => 'Bersihkan volume';
+
+  @override
+  String get pruneUnusedData => 'Bersihkan data yang tidak digunakan';
 
   @override
   String get volume => 'Volume';
@@ -1069,6 +1104,15 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get tmuxNotAvailable => 'tmux is not available';
+
+  @override
+  String containerSegmentsMismatch(int count) {
+    return 'Jumlah segmen respons kontainer tidak sesuai: $count';
+  }
+
+  @override
+  String get containerOperationInProgress =>
+      'Operasi kontainer lain sedang berlangsung';
 
   @override
   String get systemd => 'Systemd';

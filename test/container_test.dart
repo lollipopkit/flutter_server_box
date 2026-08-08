@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/app/menu/container.dart';
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/status.dart';
@@ -26,6 +27,77 @@ void main() {
 
   test('buildContainerBulkCmd returns null for empty ids', () {
     expect(buildContainerBulkCmd('start', []), null);
+  });
+
+  test('buildContainerRunCmd quotes every untrusted argument', () {
+    expect(
+      buildContainerRunCmd(
+        image: 'safe; touch /tmp/image-pwned; #',
+        name: 'safe; touch /tmp/name-pwned; #',
+        extraArgs: parseContainerRunArgs('-p 8080:80'),
+      ),
+      "run -itd --name 'safe; touch /tmp/name-pwned; #' "
+      "'-p' '8080:80' 'safe; touch /tmp/image-pwned; #'",
+    );
+  });
+
+  test('parseContainerRunArgs preserves quoted values', () {
+    expect(
+      parseContainerRunArgs(
+        '''-e "GREETING=hello world" -v '/host path:/container path' '' ''',
+      ),
+      ['-e', 'GREETING=hello world', '-v', '/host path:/container path', ''],
+    );
+  });
+
+  test('container run shell operators remain quoted arguments', () {
+    final cmd = buildContainerRunCmd(
+      image: 'alpine',
+      name: '',
+      extraArgs: parseContainerRunArgs(
+        r'--label x=$(touch /tmp/pwned) ; echo owned',
+      ),
+    );
+
+    expect(
+      cmd,
+      "run -itd '--label' 'x=\$(touch' '/tmp/pwned)' ';' 'echo' 'owned' "
+      "'alpine'",
+    );
+  });
+
+  test('parseContainerRunArgs rejects unterminated quoting', () {
+    expect(
+      () => parseContainerRunArgs('''-e "unfinished'''),
+      throwsFormatException,
+    );
+  });
+
+  test('buildContainerImagePruneCmd keeps remote execution non-interactive', () {
+    expect(buildContainerImagePruneCmd(), 'image prune -f');
+    expect(
+      buildContainerImagePruneCmd(allUnused: true),
+      'image prune -a -f',
+    );
+  });
+
+  test('buildContainerSystemPruneCmd reflects each optional scope', () {
+    expect(buildContainerSystemPruneCmd(), 'system prune -f');
+    expect(
+      buildContainerSystemPruneCmd(allUnusedImages: true),
+      'system prune -a -f',
+    );
+    expect(
+      buildContainerSystemPruneCmd(includeVolumes: true),
+      'system prune --volumes -f',
+    );
+    expect(
+      buildContainerSystemPruneCmd(
+        allUnusedImages: true,
+        includeVolumes: true,
+      ),
+      'system prune -a --volumes -f',
+    );
   });
 
   test('docker ps parse', () {
@@ -84,6 +156,7 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     final ps = PodmanPs.fromJson({
       'Id': '0e9e2ef860d2',
       'Exited': false,
+      'Status': 'Up 3 hours',
       'Image': 'nginx:alpine',
       'Names': ['cmp-web'],
       'Labels': {
@@ -94,6 +167,45 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     });
     expect(ps.project, 'nginx');
     expect(ps.workingDir, '/opt/nginx');
+    expect(ps.rawStatus, 'Up 3 hours');
+  });
+
+  test('podman ps status falls back to State on older output', () {
+    final ps = PodmanPs.fromJson({
+      'Id': '0e9e2ef860d2',
+      'Exited': true,
+      'State': 'exited',
+      'Image': 'alpine',
+      'Names': ['worker'],
+    });
+
+    expect(ps.rawStatus, 'exited');
+    expect(ps.status, ContainerStatus.exited);
+  });
+
+  test('podman ps output reads detailed status from the same row', () {
+    const raw = '''
+{"Id":"abc123","Exited":false,"Image":"alpine","Names":["worker"],"Status":"running"}\tUp 3 hours
+{"Id":"def456","Exited":true,"Image":"redis","Names":["cache"],"Status":"exited"}\tExited (0) 7 seconds ago
+''';
+
+    final items = parsePodmanPsOutput(raw);
+
+    expect(items, hasLength(2));
+    expect(items[0].rawStatus, 'Up 3 hours');
+    expect(items[1].rawStatus, 'Exited (0) 7 seconds ago');
+  });
+
+  test('podman ps output skips only malformed rows', () {
+    const raw = '''
+{"Id":"abc123","Exited":false,"Image":"alpine","Names":["worker"]}\tUp 3 hours
+{"Id":
+{"Id":"def456","Exited":true,"Image":"redis","Names":["cache"]}\tExited (0) 7 seconds ago
+''';
+
+    final items = parsePodmanPsOutput(raw);
+
+    expect(items.map((item) => item.id), ['abc123', 'def456']);
   });
 
   test('podman ps parse handles missing labels', () {
@@ -165,8 +277,13 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       {'state': 'Exited (0) 5 minutes ago', 'status': ContainerStatus.exited},
       {'state': 'Created', 'status': ContainerStatus.created},
       {'state': 'Paused', 'status': ContainerStatus.paused},
+      {'state': 'Up 5 minutes (Paused)', 'status': ContainerStatus.paused},
       {'state': 'Restarting', 'status': ContainerStatus.restarting},
       {'state': 'Removing', 'status': ContainerStatus.removing},
+      {
+        'state': 'Removal In Progress',
+        'status': ContainerStatus.removing,
+      },
       {'state': 'Dead', 'status': ContainerStatus.dead},
 
       // Edge cases
@@ -225,6 +342,16 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     expect(ContainerStatus.running.isRunning, true);
     expect(ContainerStatus.exited.isRunning, false);
     expect(ContainerStatus.created.isRunning, false);
+    expect(ContainerStatus.exited.isStopped, true);
+    expect(ContainerStatus.unknown.isStopped, false);
+    expect(
+      ContainerMenu.items(ContainerStatus.unknown),
+      [ContainerMenu.start, ContainerMenu.rm, ContainerMenu.logs],
+    );
+    expect(
+      ContainerMenu.items(ContainerStatus.paused),
+      [ContainerMenu.rm, ContainerMenu.logs],
+    );
   });
 
   group('DockerImg usage markers', () {
@@ -241,7 +368,7 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       expect(img.isUnused, false);
     });
 
-    test('tagged image with no containers is unused but not dangling', () {
+    test('tagged image with unknown container count is not marked unused', () {
       final img = DockerImg.fromJson({
         'ID': 'def456',
         'Repository': 'redis',
@@ -251,7 +378,8 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
         'Containers': 'N/A',
       });
       expect(img.isDangling, false);
-      expect(img.isUnused, true);
+      expect(img.containersCount, null);
+      expect(img.isUnused, false);
     });
 
     test('dangling image is unused and dangling', () {
@@ -266,6 +394,253 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       expect(img.isDangling, true);
       expect(img.isUnused, true);
     });
+
+    test('counts known unused tagged images', () {
+      final images = [
+        DockerImg(
+          containers: '0',
+          createdAt: '',
+          id: 'aaaaaaaaaaaa',
+          repository: 'example/worker',
+          size: '64 MB',
+          tag: 'old',
+        ),
+        DockerImg(
+          containers: '1',
+          createdAt: '',
+          id: 'bbbbbbbbbbbb',
+          repository: 'example/api',
+          size: '80 MB',
+          tag: 'latest',
+        ),
+      ];
+
+      expect(countUnusedTaggedImages(images, const []), 1);
+    });
+
+    test('matches unknown usage by exact repository and implicit latest', () {
+      final image = DockerImg(
+        containers: 'N/A',
+        createdAt: '',
+        id: 'aaaaaaaaaaaa',
+        repository: 'registry.example.com/team/api',
+        size: '80 MB',
+        tag: 'latest',
+      );
+
+      expect(countUnusedTaggedImages([image], const ['api']), null);
+      expect(
+        countUnusedTaggedImages(
+          [image],
+          const ['registry.example.com/team/api:latest'],
+        ),
+        0,
+      );
+    });
+
+    test('matches unknown usage by explicit image id', () {
+      final image = DockerImg(
+        containers: 'N/A',
+        createdAt: '',
+        id: 'sha256:'
+            '0123456789abcdef0123456789abcdef'
+            '0123456789abcdef0123456789abcdef',
+        repository: 'example/api',
+        size: '80 MB',
+        tag: 'stable',
+      );
+
+      expect(
+        countUnusedTaggedImages(
+          [image],
+          const [
+            'sha256:'
+                '0123456789abcdef0123456789abcdef'
+                '0123456789abcdef0123456789abcdef',
+          ],
+        ),
+        0,
+      );
+    });
+
+    test('returns unknown when an image reference cannot be confirmed', () {
+      final image = DockerImg(
+        containers: 'N/A',
+        createdAt: '',
+        id: 'aaaaaaaaaaaa',
+        repository: 'example/api',
+        size: '80 MB',
+        tag: 'stable',
+      );
+
+      expect(countUnusedTaggedImages([image], const ['example/worker']), null);
+    });
+
+    test('mixed confirmed-unused and unresolved images stay unknown', () {
+      final images = [
+        DockerImg(
+          containers: '0',
+          createdAt: '',
+          id: 'aaaaaaaaaaaa',
+          repository: 'example/old',
+          size: '64 MB',
+          tag: 'stable',
+        ),
+        DockerImg(
+          containers: 'N/A',
+          createdAt: '',
+          id: 'bbbbbbbbbbbb',
+          repository: 'example/current',
+          size: '80 MB',
+          tag: 'stable',
+        ),
+      ];
+
+      expect(countUnusedTaggedImages(images, const ['example/other']), null);
+    });
+
+    test('does not match repositories across registry boundaries', () {
+      final image = DockerImg(
+        containers: 'N/A',
+        createdAt: '',
+        id: 'aaaaaaaaaaaa',
+        repository: 'registry-a.example/team/api',
+        size: '80 MB',
+        tag: 'latest',
+      );
+
+      expect(
+        countUnusedTaggedImages(
+          [image],
+          const ['registry-b.example/other/api:latest'],
+        ),
+        null,
+      );
+    });
+
+    test('does not treat an ambiguous hex repository as an image id', () {
+      final image = DockerImg(
+        containers: 'N/A',
+        createdAt: '',
+        id: '0123456789abffffffffffffffffffffffffffffffffffffffffffff',
+        repository: 'example/api',
+        size: '80 MB',
+        tag: 'stable',
+      );
+
+      expect(countUnusedTaggedImages([image], const ['0123456789ab']), null);
+    });
+
+    test('matches digest-pinned references without assuming latest', () {
+      final digest = 'sha256:${List.filled(64, 'a').join()}';
+      final image = DockerImg(
+        containers: 'N/A',
+        createdAt: '',
+        id: 'bbbbbbbbbbbb',
+        digest: digest,
+        repository: 'registry.example/team/api',
+        size: '80 MB',
+        tag: 'stable',
+      );
+
+      expect(
+        countUnusedTaggedImages(
+          [image],
+          ['registry.example/team/api@$digest'],
+        ),
+        0,
+      );
+      expect(
+        countUnusedTaggedImages(
+          [image],
+          [
+            'registry.example/team/api@sha256:'
+                '${List.filled(64, 'c').join()}',
+          ],
+        ),
+        null,
+      );
+    });
+  });
+
+  test('Podman status text overrides the legacy exited flag', () {
+    final paused = PodmanPs.fromJson({
+      'Id': 'abc123',
+      'Exited': false,
+      'Status': 'Paused',
+      'Names': ['worker'],
+    });
+
+    expect(paused.status, ContainerStatus.paused);
+    expect(paused.status.isRunning, false);
+  });
+
+  test('podman ps command requests detailed human-readable status', () {
+    final cmd = ContainerCmdType.ps.exec(ContainerType.podman);
+
+    expect(
+      cmd,
+      'podman ps -a --format "{{json .}}\\t{{.Status}}"',
+    );
+  });
+
+  test('container refresh command excludes image listing', () {
+    final cmd = ContainerCmdType.execSelected(
+      const [
+        ContainerCmdType.ps,
+        ContainerCmdType.stats,
+      ],
+      ContainerType.docker,
+    );
+
+    expect(cmd, contains('docker ps -a'));
+    expect(cmd, contains('docker stats --no-stream'));
+    expect(cmd, isNot(contains('docker image ls')));
+  });
+
+  test('image refresh command excludes containers and stats', () {
+    final cmd = ContainerCmdType.execSelected(
+      const [ContainerCmdType.images],
+      ContainerType.podman,
+    );
+
+    expect(cmd, contains('podman image ls'));
+    expect(cmd, contains('--digests'));
+    expect(cmd, isNot(contains('podman ps -a')));
+    expect(cmd, isNot(contains('podman stats')));
+  });
+
+  test('image output skips malformed rows without losing valid images', () {
+    const raw = '''
+{"ID":"abc123","Repository":"nginx","Tag":"latest","Size":"10MB","CreatedAt":"now","Containers":"1"}
+not-json
+{"ID":"def456","Repository":"redis","Tag":"7","Size":"20MB","CreatedAt":"now","Containers":"0"}
+''';
+
+    final images = parseContainerImagesOutput(raw, ContainerType.docker);
+
+    expect(images.map((image) => image.id), ['abc123', 'def456']);
+  });
+
+  test('image output recovers complete rows from a truncated JSON array', () {
+    const raw = '''[
+{"ID":"abc123","Repository":"nginx","Tag":"latest","Size":"10MB","CreatedAt":"now","Containers":"1"},
+{"ID":"truncated"''';
+
+    final images = parseContainerImagesOutput(raw, ContainerType.docker);
+
+    expect(images.map((image) => image.id), ['abc123']);
+  });
+
+  test('stats rows match exact container ids instead of short substrings', () {
+    const rows = [
+      '{"ID":"abcde1111111","CPUPerc":"1%"}',
+      '{"ID":"abcde2222222","CPUPerc":"2%"}',
+    ];
+    final parsed = parseContainerStatsRows(rows);
+
+    expect(findContainerStatsRow(parsed, 'abcde2222222'), rows[1]);
+    expect(findContainerStatsRow(parsed, 'abcde2'), null);
   });
 
   group('PodmanImg usage markers', () {
@@ -318,7 +693,24 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
         'Created': 1720000000,
         'Containers': 2,
       });
-      expect(img.isDangling, true);
+      expect(img.repository, 'docker.io/library/nginx');
+      expect(img.tag, 'latest');
+      expect(img.isDangling, false);
+    });
+
+    test('accepts capitalized Podman template fields', () {
+      final img = PodmanImg.fromJson({
+        'ID': 'abc123',
+        'Repository': 'quay.io/example/api',
+        'Tag': 'stable',
+        'Size': 63700000,
+        'Created': 1720000000,
+        'Containers': 2,
+      });
+
+      expect(img.repository, 'quay.io/example/api');
+      expect(img.tag, 'stable');
+      expect(img.isDangling, false);
     });
 
     test('handles missing optional numeric fields', () {
@@ -429,5 +821,34 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       );
       expect(podman.net, '↓ 512 B / ↑ 256 B');
     });
+
+    test('falls back to top-level network fields for Podman 5', () {
+      final podman = PodmanPs(id: 'test');
+      podman.parseStats(
+        '{"CPU":1,"AvgCPU":0,"MemLimit":1073741824,"MemUsage":1,'
+        '"NetInput":512,"NetOutput":256,"BlockInput":0,"BlockOutput":0}',
+        '5.0.0',
+      );
+      expect(podman.net, '↓ 512 B / ↑ 256 B');
+    });
+  });
+
+  test('sudo runtime command keeps the remote host inside sudo env', () {
+    final command = buildContainerRuntimeCommand(
+      command: 'docker ps',
+      type: ContainerType.docker,
+      containerHost: 'ssh://docker.example/run.sock',
+      sudo: true,
+      password: 'secret',
+    );
+
+    expect(
+      command,
+      contains(
+        'sudo -S env LANG=en_US.UTF-8 '
+        "DOCKER_HOST='ssh://docker.example/run.sock' docker ps",
+      ),
+    );
+    expect(command, isNot(contains('export DOCKER_HOST')));
   });
 }

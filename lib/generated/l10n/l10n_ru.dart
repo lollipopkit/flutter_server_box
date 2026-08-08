@@ -277,6 +277,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dockerProjectOther => 'Другое';
 
   @override
+  String get dockerPruneTip =>
+      'Удалите неиспользуемые данные, чтобы освободить место на диске';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -404,6 +408,37 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get pruneDanglingImages => 'Очистить висячие образы';
+
+  @override
+  String get pruneImages => 'Очистить образы';
+
+  @override
+  String get unusedTaggedImages => 'Неиспользуемые с тегами';
+
+  @override
+  String get pruneDanglingImagesTip =>
+      'Удаляет только висячие образы (слои без тегов).';
+
+  @override
+  String get pruneUnusedImagesTip =>
+      'Также удаляет образы с тегами, не используемые контейнерами.';
+
+  @override
+  String get includeUnusedVolumesTip =>
+      'Также удаляет тома, не используемые контейнерами.';
+
+  @override
+  String get pruneCommandPreview => 'Предпросмотр команды';
+
+  @override
+  String get pruneForceSshTip =>
+      '-f пропускает интерактивное подтверждение и всегда включён при выполнении через SSH.';
+
+  @override
+  String get pruneVolumes => 'Очистить тома';
+
+  @override
+  String get pruneUnusedData => 'Очистить неиспользуемые данные';
 
   @override
   String get volume => 'Том';
@@ -1072,6 +1107,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tmuxNotAvailable => 'tmux is not available';
+
+  @override
+  String containerSegmentsMismatch(int count) {
+    return 'Неожиданное количество сегментов в ответе контейнера: $count';
+  }
+
+  @override
+  String get containerOperationInProgress =>
+      'Уже выполняется другая операция с контейнером';
 
   @override
   String get systemd => 'Systemd';

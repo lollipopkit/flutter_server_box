@@ -277,6 +277,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get dockerProjectOther => 'Overig';
 
   @override
+  String get dockerPruneTip =>
+      'Verwijder ongebruikte gegevens om schijfruimte vrij te maken';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -404,6 +408,37 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get pruneDanglingImages => 'Bungelende images opschonen';
+
+  @override
+  String get pruneImages => 'Images opschonen';
+
+  @override
+  String get unusedTaggedImages => 'Ongebruikte tags';
+
+  @override
+  String get pruneDanglingImagesTip =>
+      'Verwijder alleen bungelende images (lagen zonder tag).';
+
+  @override
+  String get pruneUnusedImagesTip =>
+      'Verwijder ook getagde images die door geen container worden gebruikt.';
+
+  @override
+  String get includeUnusedVolumesTip =>
+      'Verwijder ook volumes die door geen container worden gebruikt.';
+
+  @override
+  String get pruneCommandPreview => 'Opdrachtvoorbeeld';
+
+  @override
+  String get pruneForceSshTip =>
+      '-f slaat de interactieve bevestiging over en is bij SSH-uitvoering altijd ingeschakeld.';
+
+  @override
+  String get pruneVolumes => 'Volumes opschonen';
+
+  @override
+  String get pruneUnusedData => 'Ongebruikte gegevens opschonen';
 
   @override
   String get volume => 'Volume';
@@ -1074,6 +1109,15 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get tmuxNotAvailable => 'tmux is not available';
+
+  @override
+  String containerSegmentsMismatch(int count) {
+    return 'Onverwacht aantal segmenten in containerrespons: $count';
+  }
+
+  @override
+  String get containerOperationInProgress =>
+      'Er wordt al een andere containerbewerking uitgevoerd';
 
   @override
   String get systemd => 'Systemd';
