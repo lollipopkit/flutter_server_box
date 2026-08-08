@@ -363,12 +363,40 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       expect(img.repository, isNot('null'));
       expect(img.repository, isNotEmpty);
     });
+
+    test('whitespace-leading Names entries fall through to valid name', () {
+      final img = DockerImg.fromJson({
+        'ID': 'abc123',
+        'Repository': '',
+        'Names': ['', '   ', 'nginx'],
+        'Tag': 'latest',
+        'Size': '63.7MB',
+        'CreatedAt': '2 weeks ago',
+        'Containers': '2',
+      });
+      expect(img.repository, 'nginx');
+      expect(img.repository, isNot('<none>'));
+      expect(img.isDangling, false);
+    });
+
+    test('all-empty Names entries fall back to none', () {
+      final img = DockerImg.fromJson({
+        'ID': 'abc123',
+        'Repository': '',
+        'Names': ['', '   '],
+        'Tag': 'latest',
+        'Size': '63.7MB',
+        'CreatedAt': '2 weeks ago',
+        'Containers': '2',
+      });
+      expect(img.repository, '<none>');
+      expect(img.isDangling, true);
+    });
   });
 
   group('PodmanPs stats parsing', () {
-    final podman = PodmanPs(id: 'test');
-
     test('accepts JSON integer values for numeric fields', () {
+      final podman = PodmanPs(id: 'test');
       podman.parseStats(
         '{"CPU":1,"AvgCPU":0,"MemLimit":1073741824,"MemUsage":1,'
         '"NetInput":0,"NetOutput":0,"BlockInput":0,"BlockOutput":0}',
@@ -381,6 +409,7 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     });
 
     test('handles missing network interfaces and non-int counters', () {
+      final podman = PodmanPs(id: 'test');
       podman.parseStats(
         '{"CPU":1.5,"AvgCPU":0.5,"MemLimit":1073741824,"MemUsage":1,'
         '"Network":{"eth0":{"RxBytes":1024,"TxBytes":"2048"},'
@@ -393,6 +422,7 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     });
 
     test('handles top-level network fields when version is missing', () {
+      final podman = PodmanPs(id: 'test');
       podman.parseStats(
         '{"CPU":1,"AvgCPU":0,"MemLimit":1073741824,"MemUsage":1,'
         '"NetInput":512,"NetOutput":256,"BlockInput":0,"BlockOutput":0}',

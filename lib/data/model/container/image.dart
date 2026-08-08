@@ -146,7 +146,7 @@ final class DockerImg implements ContainerImg {
         final Object? a => _nonEmptyOrNull(a?.toString()),
       },
       switch (json['Names']) {
-        final List a => _nonEmptyOrNull(a.firstOrNull?.toString()),
+        final List a => _firstNonEmptyFromList(a),
         final Object? a => _nonEmptyOrNull(a?.toString()),
       },
     ]);
@@ -184,6 +184,14 @@ String? _asString(dynamic val) {
 String? _nonEmptyOrNull(String? val) {
   if (val == null || val.trim().isEmpty) return null;
   return val.trim();
+}
+
+String? _firstNonEmptyFromList(List list) {
+  for (final e in list) {
+    final val = _nonEmptyOrNull(e?.toString());
+    if (val != null) return val;
+  }
+  return null;
 }
 
 String _firstNonEmpty(List<String?> candidates) {
