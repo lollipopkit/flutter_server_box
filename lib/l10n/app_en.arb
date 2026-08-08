@@ -360,5 +360,14 @@
   },
   "tmuxSkip": "Skip",
   "tmuxNotAvailable": "tmux is not available",
+  "containerSegmentsMismatch": "Unexpected container response segment count: {count}",
+  "@containerSegmentsMismatch": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "containerOperationInProgress": "Another container operation is already in progress",
   "systemd": "Systemd"
 }

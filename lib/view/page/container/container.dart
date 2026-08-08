@@ -69,7 +69,11 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => _buildPage();
+}
+
+extension _ContainerPageWidgets on _ContainerPageState {
+  Widget _buildPage() {
     final hasItems = ref.watch(
       _provider.select((state) => state.items != null),
     );
@@ -155,7 +159,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
                 ),
         ),
         refreshKey: const ValueKey('refresh-containers-button'),
-        onRefresh: containerState.isBusy
+        onRefresh: _containerActionsBusy
             ? null
             : () => _refreshContainerTab(
                 _ContainerTabs.ps,
@@ -181,7 +185,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
           onPressed: _containerActionsBusy ? null : _showImagePruneDialog,
         ),
         refreshKey: const ValueKey('refresh-images-button'),
-        onRefresh: containerState.isBusy
+        onRefresh: _containerActionsBusy
             ? null
             : () => _refreshContainerTab(
                 _ContainerTabs.images,
@@ -208,7 +212,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
             Text(error.toString(), textAlign: TextAlign.center),
             UIs.height13,
             OutlinedButton.icon(
-              onPressed: containerState.isBusy
+              onPressed: _containerActionsBusy
                   ? null
                   : () => _refreshContainerTab(tab, showLoading: true),
               icon: const Icon(Icons.refresh),
@@ -310,62 +314,6 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
     );
   }
 
-  void _onTapGroupMenu(ContainerGroupMenu item, List<ContainerPs> groupItems) {
-    final runningIds = groupItems
-        .where((e) => e.status.isRunning)
-        .map((e) => e.id)
-        .whereType<String>()
-        .toList();
-    final stoppedIds = groupItems
-        .where((e) => e.status.isStopped)
-        .map((e) => e.id)
-        .whereType<String>()
-        .toList();
-    switch (item) {
-      case ContainerGroupMenu.start:
-        if (stoppedIds.isEmpty) {
-          context.showSnackBar(libL10n.empty);
-          return;
-        }
-        _execContainerAction(() => _containerNotifier.startAll(stoppedIds));
-        break;
-      case ContainerGroupMenu.stop:
-        if (runningIds.isEmpty) {
-          context.showSnackBar(libL10n.empty);
-          return;
-        }
-        _execContainerAction(() => _containerNotifier.stopAll(runningIds));
-        break;
-      case ContainerGroupMenu.restart:
-        if (runningIds.isEmpty) {
-          context.showSnackBar(libL10n.empty);
-          return;
-        }
-        _execContainerAction(() => _containerNotifier.restartAll(runningIds));
-        break;
-      case ContainerGroupMenu.logs:
-        final project = groupItems.firstOrNull?.project;
-        if (project == null) return;
-        final workingDir = _mostCommonWorkingDir(groupItems);
-        if (workingDir == null) return;
-        _openMergedLogs(project, workingDir);
-        break;
-    }
-  }
-
-  String? _mostCommonWorkingDir(List<ContainerPs> groupItems) {
-    final counts = <String, int>{};
-    for (final e in groupItems) {
-      final dir = e.workingDir;
-      if (dir == null || dir.isEmpty) continue;
-      counts[dir] = (counts[dir] ?? 0) + 1;
-    }
-    if (counts.isEmpty) return null;
-    return counts.entries.reduce(
-      (a, b) => a.value >= b.value ? a : b,
-    ).key;
-  }
-
   Widget _buildMoreBtn(ContainerPs dItem) {
     if (_containerActionsBusy) return _buildDisabledMoreBtn();
     return PopupMenu(
@@ -458,5 +406,65 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
       title: Text(title),
       trailing: const Icon(Icons.keyboard_arrow_right),
     );
+  }
+}
+
+extension _ContainerPageActions on _ContainerPageState {
+  void _onTapGroupMenu(ContainerGroupMenu item, List<ContainerPs> groupItems) {
+    final runningIds = groupItems
+        .where((e) => e.status.isRunning)
+        .map((e) => e.id)
+        .whereType<String>()
+        .toList();
+    final stoppedIds = groupItems
+        .where((e) => e.status.isStopped)
+        .map((e) => e.id)
+        .whereType<String>()
+        .toList();
+    switch (item) {
+      case ContainerGroupMenu.start:
+        if (stoppedIds.isEmpty) {
+          context.showSnackBar(libL10n.empty);
+          return;
+        }
+        _execContainerAction(() => _containerNotifier.startAll(stoppedIds));
+        break;
+      case ContainerGroupMenu.stop:
+        if (runningIds.isEmpty) {
+          context.showSnackBar(libL10n.empty);
+          return;
+        }
+        _execContainerAction(() => _containerNotifier.stopAll(runningIds));
+        break;
+      case ContainerGroupMenu.restart:
+        if (runningIds.isEmpty) {
+          context.showSnackBar(libL10n.empty);
+          return;
+        }
+        _execContainerAction(() => _containerNotifier.restartAll(runningIds));
+        break;
+      case ContainerGroupMenu.logs:
+        final project = groupItems.firstOrNull?.project;
+        if (project == null) return;
+        final workingDir = _mostCommonWorkingDir(groupItems);
+        if (workingDir == null) return;
+        _openMergedLogs(project, workingDir);
+        break;
+    }
+  }
+}
+
+extension _ContainerPageUtils on _ContainerPageState {
+  String? _mostCommonWorkingDir(List<ContainerPs> groupItems) {
+    final counts = <String, int>{};
+    for (final e in groupItems) {
+      final dir = e.workingDir;
+      if (dir == null || dir.isEmpty) continue;
+      counts[dir] = (counts[dir] ?? 0) + 1;
+    }
+    if (counts.isEmpty) return null;
+    return counts.entries.reduce(
+      (a, b) => a.value >= b.value ? a : b,
+    ).key;
   }
 }

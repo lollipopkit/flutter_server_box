@@ -1112,5 +1112,14 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tmuxNotAvailable => 'tmux is not available';
 
   @override
+  String containerSegmentsMismatch(int count) {
+    return 'Unexpected container response segment count: $count';
+  }
+
+  @override
+  String get containerOperationInProgress =>
+      'Another container operation is already in progress';
+
+  @override
   String get systemd => 'Systemd';
 }

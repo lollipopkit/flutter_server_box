@@ -301,7 +301,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     bool isAuto = false,
     int? generation,
   }) async {
-    if (state.isBusy) {
+    if (state.isBusy || state.runLog != null) {
       _pendingRefreshTarget = target;
       return;
     }
@@ -460,7 +460,7 @@ class ContainerNotifier extends _$ContainerNotifier {
         target,
         ContainerErr(
           type: ContainerErrType.segmentsNotMatch,
-          message: 'Container segments: ${segments.length}',
+          message: l10n.containerSegmentsMismatch(segments.length),
         ),
       );
       Loggers.app.warning('Container segments: ${segments.length}\n$raw');
@@ -696,9 +696,9 @@ class ContainerNotifier extends _$ContainerNotifier {
       return ContainerErr(type: ContainerErrType.noClient);
     }
     if (state.isBusy || state.runLog != null) {
-      return const ContainerErr(
+      return ContainerErr(
         type: ContainerErrType.unknown,
-        message: 'Another container operation is already running',
+        message: l10n.containerOperationInProgress,
       );
     }
     state = state.copyWith(runLog: '');
@@ -766,7 +766,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (code != 0) {
       return ContainerErr(
         type: ContainerErrType.unknown,
-        message: 'Command execution failed',
+        message: libL10n.fail,
       );
     }
     if (refreshTarget != null) await refresh(refreshTarget);

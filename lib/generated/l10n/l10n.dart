@@ -2016,6 +2016,18 @@ abstract class AppLocalizations {
   /// **'tmux is not available'**
   String get tmuxNotAvailable;
 
+  /// No description provided for @containerSegmentsMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Unexpected container response segment count: {count}'**
+  String containerSegmentsMismatch(int count);
+
+  /// No description provided for @containerOperationInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Another container operation is already in progress'**
+  String get containerOperationInProgress;
+
   /// No description provided for @systemd.
   ///
   /// In en, this message translates to:

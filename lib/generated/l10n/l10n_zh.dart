@@ -1030,6 +1030,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tmuxNotAvailable => 'tmux 不可用';
 
   @override
+  String containerSegmentsMismatch(int count) {
+    return '容器响应分段数量异常：$count';
+  }
+
+  @override
+  String get containerOperationInProgress => '另一个容器操作正在进行中';
+
+  @override
   String get systemd => 'Systemd';
 }
 
@@ -1960,6 +1968,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get tmuxNotAvailable => 'tmux 無法使用';
+
+  @override
+  String containerSegmentsMismatch(int count) {
+    return '容器回應分段數量異常：$count';
+  }
+
+  @override
+  String get containerOperationInProgress => '另一個容器操作正在進行中';
 
   @override
   String get systemd => 'Systemd';

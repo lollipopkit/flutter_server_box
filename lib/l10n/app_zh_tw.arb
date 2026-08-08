@@ -289,5 +289,7 @@
   "tmuxAttachedAt": "附加：{time}",
   "tmuxSkip": "略過",
   "tmuxNotAvailable": "tmux 無法使用",
+  "containerSegmentsMismatch": "容器回應分段數量異常：{count}",
+  "containerOperationInProgress": "另一個容器操作正在進行中",
   "systemd": "Systemd"
 }
