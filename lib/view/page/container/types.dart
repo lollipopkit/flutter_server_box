@@ -8,6 +8,13 @@ enum _PruneTypes {
   volumes,
   system;
 
+  String get label => switch (this) {
+    _PruneTypes.images => l10n.image,
+    _PruneTypes.containers => libL10n.container,
+    _PruneTypes.volumes => l10n.volume,
+    _PruneTypes.system => libL10n.system,
+  };
+
   String? get tip {
     return switch (this) {
       _PruneTypes.system =>

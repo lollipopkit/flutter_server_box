@@ -10,6 +10,12 @@ abstract final class ContainerImg {
   String? get sizeMB;
   int? get containersCount;
 
+  /// Whether the image has no repository/tag (e.g. `<none>:<none>`).
+  bool get isDangling;
+
+  /// Whether no container is using this image (includes dangling images).
+  bool get isUnused;
+
   factory ContainerImg.fromRawJson(String s, ContainerType typ) => typ.img(s);
 }
 
@@ -38,6 +44,23 @@ final class PodmanImg implements ContainerImg {
 
   @override
   int? get containersCount => containers;
+
+  @override
+  bool get isDangling {
+    final repo = repository?.trim() ?? '';
+    final t = tag?.trim() ?? '';
+    return repo.isEmpty ||
+        repo == '<none>' ||
+        t.isEmpty ||
+        t == '<none>';
+  }
+
+  @override
+  bool get isUnused {
+    if (isDangling) return true;
+    final count = containersCount;
+    return count != null && count == 0;
+  }
 
   factory PodmanImg.fromRawJson(String str) =>
       PodmanImg.fromJson(json.decode(str));
@@ -90,6 +113,23 @@ final class DockerImg implements ContainerImg {
   int? get containersCount =>
       containers == 'N/A' ? 0 : int.tryParse(containers);
 
+  @override
+  bool get isDangling {
+    final repo = repository.trim();
+    final t = (tag ?? '').trim();
+    return repo.isEmpty ||
+        repo == '<none>' ||
+        t.isEmpty ||
+        t == '<none>';
+  }
+
+  @override
+  bool get isUnused {
+    if (isDangling) return true;
+    final count = containersCount;
+    return count != null && count == 0;
+  }
+
   factory DockerImg.fromRawJson(String str) =>
       DockerImg.fromJson(json.decode(str));
 
@@ -100,11 +140,16 @@ final class DockerImg implements ContainerImg {
       final String a => a,
       final Object? a => a.toString(),
     };
-    final repo = switch (json['Repository'] ?? json['Names']) {
-      final String a => a,
-      final List a => a.firstOrNull.toString(),
-      final Object? a => a.toString(),
-    };
+    final repo = _firstNonEmpty([
+      switch (json['Repository']) {
+        final String a => _nonEmptyOrNull(a),
+        final Object? a => _nonEmptyOrNull(a?.toString()),
+      },
+      switch (json['Names']) {
+        final List a => _firstNonEmptyFromList(a),
+        final Object? a => _nonEmptyOrNull(a?.toString()),
+      },
+    ]);
     final size = switch (json['Size']) {
       final String a => a,
       final int a => a.bytes2Str,
@@ -134,6 +179,26 @@ String? _asString(dynamic val) {
   if (val == null) return null;
   if (val is String) return val;
   return val.toString();
+}
+
+String? _nonEmptyOrNull(String? val) {
+  if (val == null || val.trim().isEmpty) return null;
+  return val.trim();
+}
+
+String? _firstNonEmptyFromList(List list) {
+  for (final e in list) {
+    final val = _nonEmptyOrNull(e?.toString());
+    if (val != null) return val;
+  }
+  return null;
+}
+
+String _firstNonEmpty(List<String?> candidates) {
+  for (final c in candidates) {
+    if (c != null && c.isNotEmpty) return c;
+  }
+  return '<none>';
 }
 
 int? _asInt(dynamic val) {

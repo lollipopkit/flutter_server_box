@@ -40,3 +40,34 @@ enum ContainerMenu {
     ContainerMenu.terminal => libL10n.terminal,
   };
 }
+
+enum ContainerGroupMenu {
+  start,
+  stop,
+  restart,
+  logs;
+
+  static List<ContainerGroupMenu> items({
+    required bool anyRunning,
+    required bool anyStopped,
+  }) => [
+    if (anyStopped) start,
+    if (anyRunning) stop,
+    if (anyRunning) restart,
+    logs,
+  ];
+
+  IconData get icon => switch (this) {
+    ContainerGroupMenu.start => Icons.play_arrow,
+    ContainerGroupMenu.stop => Icons.stop,
+    ContainerGroupMenu.restart => Icons.restart_alt,
+    ContainerGroupMenu.logs => Icons.receipt_long_outlined,
+  };
+
+  String get toStr => switch (this) {
+    ContainerGroupMenu.start => libL10n.start,
+    ContainerGroupMenu.stop => libL10n.stop,
+    ContainerGroupMenu.restart => libL10n.restart,
+    ContainerGroupMenu.logs => libL10n.log,
+  };
+}

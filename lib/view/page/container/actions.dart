@@ -98,6 +98,53 @@ extension on _ContainerPageState {
     );
   }
 
+  Future<void> _showImagePruneDialog() async {
+    var allUnused = false;
+    await context.showRoundDialog(
+      title: l10n.image,
+      child: StatefulBuilder(
+        builder: (_, setState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  allUnused
+                      ? Icons.radio_button_unchecked
+                      : Icons.radio_button_checked,
+                  color: allUnused ? null : UIs.primaryColor,
+                ),
+                title: Text(l10n.pruneDanglingImages),
+                onTap: () => setState(() => allUnused = false),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  allUnused
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: allUnused ? UIs.primaryColor : null,
+                ),
+                title: Text(l10n.pruneUnusedImages),
+                onTap: () => setState(() => allUnused = true),
+              ),
+            ],
+          );
+        },
+      ),
+      actions: Btn.ok(
+        onTap: () async {
+          context.pop();
+          await _execContainerAction(
+            () => _containerNotifier.pruneImages(all: allUnused),
+          );
+        },
+        red: true,
+      ).toList,
+    );
+  }
+
   Future<void> _showAddCmdPreview(String cmd) async {
     await context.showRoundDialog(
       title: libL10n.preview,
@@ -145,6 +192,11 @@ extension on _ContainerPageState {
   }
 
   void _showImageRmDialog(ContainerImg e) {
+    final id = e.id;
+    if (id == null || id.isEmpty) {
+      context.showSnackBar(libL10n.empty);
+      return;
+    }
     context.showRoundDialog(
       title: libL10n.attention,
       child: Text(
@@ -153,11 +205,9 @@ extension on _ContainerPageState {
       actions: Btn.ok(
         onTap: () async {
           context.pop();
-          final result = await _containerNotifier.run(
-            'rmi ${shellSingleQuote(e.id ?? '')} -f',
-          );
+          final result = await _containerNotifier.run('rmi ${shellSingleQuote(id)} -f');
           if (result != null) {
-            context.showSnackBar(_errorMessage(result.message));
+            if (mounted) context.showSnackBar(_errorMessage(result.message));
           }
         },
         red: true,
@@ -276,6 +326,33 @@ extension on _ContainerPageState {
         SSHPage.route.go(context, args);
         break;
     }
+  }
+
+  String _wrapContainerHost(String cmd) {
+    final containerHost = Stores.container.fetch(
+      widget.args.spi.id,
+      _containerState.type,
+    );
+    if (containerHost?.isNotEmpty ?? false) {
+      final hostVariable = _containerState.type == ContainerType.podman
+          ? 'CONTAINER_HOST'
+          : 'DOCKER_HOST';
+      return 'export $hostVariable=${shellSingleQuote(containerHost!)} && $cmd';
+    }
+    return cmd;
+  }
+
+  void _openMergedLogs(String project, String? workingDir) {
+    if (workingDir == null || workingDir.isEmpty) return;
+    final runtime = _containerState.type.name;
+    final projectQuoted = shellSingleQuote(project);
+    final cmd = '$runtime compose -p $projectQuoted logs --follow --tail 300';
+    final initCmd =
+        _wrapContainerHost('cd ${shellSingleQuote(workingDir)} && $cmd');
+    SSHPage.route.go(
+      context,
+      SshPageArgs(spi: widget.args.spi, initCmd: initCmd),
+    );
   }
 
   void _initAutoRefresh() {

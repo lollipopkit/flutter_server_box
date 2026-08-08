@@ -140,15 +140,17 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   }
 
   Widget _buildImage(ContainerState containerState) {
+    final images = containerState.images ?? [];
+    final unused = images.where((e) => e.isUnused).length;
+    final subtitle = unused > 0
+        ? '${l10n.dockerImagesFmt(images.length)} · $unused ${l10n.unused}'
+        : l10n.dockerImagesFmt(images.length);
     return ExpandTile(
       leading: const Icon(MingCute.clapperboard_line),
       title: Text(l10n.imagesList),
-      subtitle: Text(
-        l10n.dockerImagesFmt(containerState.images?.length ?? 'null'),
-        style: UIs.textGrey,
-      ),
-      initiallyExpanded: (containerState.images?.length ?? 0) <= 3,
-      children: containerState.images?.map(_buildImageItem).toList() ?? [],
+      subtitle: Text(subtitle, style: UIs.textGrey),
+      initiallyExpanded: images.length <= 3,
+      children: images.map(_buildImageItem).toList(),
     ).cardx;
   }
 
@@ -158,9 +160,15 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     repoSplited?.removeLast();
     final reg = repoSplited?.join('/');
     return ListTile(
-      title: Text(title ?? l10n.unknown, style: UIs.text15),
+      title: Row(
+        children: [
+          Expanded(child: Text(title ?? l10n.unknown, style: UIs.text15)),
+          if (e.isDangling) _buildImageBadge(l10n.dangling),
+          if (e.isUnused && !e.isDangling) _buildImageBadge(l10n.unused),
+        ],
+      ),
       subtitle: Text(
-        '${reg ?? ''} - ${e.tag} - ${e.sizeMB}',
+        '${reg ?? ''} - ${e.tag ?? l10n.unknown} - ${e.sizeMB ?? l10n.unknown}',
         style: UIs.text13Grey,
       ),
       trailing: PopupMenu<ImageMenu>(
@@ -168,6 +176,24 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
             .map((e) => PopMenu.build(e, e.icon, e.toStr))
             .toList(),
         onSelected: (item) => _onTapImageMenu(item, e),
+      ),
+    );
+  }
+
+  Widget _buildImageBadge(String label) {
+    return Container(
+      margin: const EdgeInsets.only(left: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: UIs.primaryColor.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: UIs.text11.copyWith(
+          color: UIs.primaryColor,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -214,8 +240,122 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
       title: Text(libL10n.container),
       subtitle: Text(subtitle, style: UIs.textGrey),
       initiallyExpanded: items.length < 7,
-      children: items.map(_buildPsItem).toList(),
+      children: _buildGroupedPsItems(items),
     ).cardx;
+  }
+
+  List<Widget> _buildGroupedPsItems(List<ContainerPs> items) {
+    final grouped = <String?, List<ContainerPs>>{};
+    for (final item in items) {
+      grouped.putIfAbsent(item.project, () => []).add(item);
+    }
+    if (grouped.length <= 1 && grouped[null] != null) {
+      return items.map(_buildPsItem).toList();
+    }
+    final result = <Widget>[];
+    final keys = grouped.keys.toList()
+      ..sort((a, b) {
+        if (a == null) return 1;
+        if (b == null) return -1;
+        final lowerCmp = a.toLowerCase().compareTo(b.toLowerCase());
+        if (lowerCmp != 0) return lowerCmp;
+        return a.compareTo(b);
+      });
+    for (final key in keys) {
+      if (result.isNotEmpty) result.add(const Divider(height: 1));
+      final groupItems = grouped[key]!;
+      result.add(
+        _buildPsGroupHeader(key ?? l10n.dockerProjectOther, groupItems),
+      );
+      result.addAll(groupItems.map(_buildPsItem));
+    }
+    return result;
+  }
+
+  Widget _buildPsGroupHeader(String title, List<ContainerPs> groupItems) {
+    final project = groupItems.firstOrNull?.project;
+    final hasWorkingDir = groupItems.any(
+      (e) => e.workingDir?.isNotEmpty ?? false,
+    );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(17, 7, 7, 0),
+      child: Row(
+        children: [
+          const Icon(Icons.folder_outlined, size: 15, color: Colors.grey),
+          UIs.width7,
+          Expanded(
+            child: Text(title, style: UIs.text13Grey),
+          ),
+          if (project != null)
+            PopupMenu(
+              items: ContainerGroupMenu.items(
+                anyRunning: groupItems.any((e) => e.status.isRunning),
+                anyStopped: groupItems.any((e) => !e.status.isRunning),
+              )
+                  .where((e) => e != ContainerGroupMenu.logs || hasWorkingDir)
+                  .map((e) => PopMenu.build(e, e.icon, e.toStr))
+                  .toList(),
+              onSelected: (item) => _onTapGroupMenu(item, groupItems),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _onTapGroupMenu(ContainerGroupMenu item, List<ContainerPs> groupItems) {
+    final runningIds = groupItems
+        .where((e) => e.status.isRunning)
+        .map((e) => e.id)
+        .whereType<String>()
+        .toList();
+    final stoppedIds = groupItems
+        .where((e) => !e.status.isRunning)
+        .map((e) => e.id)
+        .whereType<String>()
+        .toList();
+    switch (item) {
+      case ContainerGroupMenu.start:
+        if (stoppedIds.isEmpty) {
+          context.showSnackBar(libL10n.empty);
+          return;
+        }
+        _execContainerAction(() => _containerNotifier.startAll(stoppedIds));
+        break;
+      case ContainerGroupMenu.stop:
+        if (runningIds.isEmpty) {
+          context.showSnackBar(libL10n.empty);
+          return;
+        }
+        _execContainerAction(() => _containerNotifier.stopAll(runningIds));
+        break;
+      case ContainerGroupMenu.restart:
+        if (runningIds.isEmpty) {
+          context.showSnackBar(libL10n.empty);
+          return;
+        }
+        _execContainerAction(() => _containerNotifier.restartAll(runningIds));
+        break;
+      case ContainerGroupMenu.logs:
+        final project = groupItems.firstOrNull?.project;
+        if (project == null) return;
+        final workingDir = _mostCommonWorkingDir(groupItems);
+        if (workingDir == null) return;
+        _openMergedLogs(project, workingDir);
+        break;
+    }
+  }
+
+  String? _mostCommonWorkingDir(List<ContainerPs> groupItems) {
+    final counts = <String, int>{};
+    for (final e in groupItems) {
+      final dir = e.workingDir;
+      if (dir == null || dir.isEmpty) continue;
+      counts[dir] = (counts[dir] ?? 0) + 1;
+    }
+    if (counts.isEmpty) return null;
+    return counts.entries.reduce(
+      (a, b) => a.value >= b.value ? a : b,
+    ).key;
   }
 
   Widget _buildPsItem(ContainerPs item) {
@@ -353,18 +493,22 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   }
 
   Widget _buildPruneBtn(_PruneTypes type) {
-    final title = type.name.capitalize;
+    final title = type.label;
     final containerNotifier = _containerNotifier;
     return ListTile(
       onTap: () async {
+        if (type == _PruneTypes.images) {
+          await _showImagePruneDialog();
+          return;
+        }
         await _showPruneDialog(
           title: title,
           message: type.tip,
           onConfirm: switch (type) {
-            _PruneTypes.images => containerNotifier.pruneImages,
             _PruneTypes.containers => containerNotifier.pruneContainers,
             _PruneTypes.volumes => containerNotifier.pruneVolumes,
             _PruneTypes.system => containerNotifier.pruneSystem,
+            _PruneTypes.images => () => containerNotifier.pruneImages(),
           },
         );
       },

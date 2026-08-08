@@ -274,6 +274,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get dockerProjectOther => 'Diğer';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -389,6 +392,21 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get imagesList => 'Görüntü listesi';
+
+  @override
+  String get unused => 'Kullanılmıyor';
+
+  @override
+  String get dangling => 'Askıda';
+
+  @override
+  String get pruneUnusedImages => 'Kullanılmayan görüntüleri temizle';
+
+  @override
+  String get pruneDanglingImages => 'Askıdaki görüntüleri temizle';
+
+  @override
+  String get volume => 'Birim';
 
   @override
   String get pull => 'Çek';

@@ -274,6 +274,9 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get dockerProjectOther => 'Другое';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -389,6 +392,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get imagesList => 'Список образов';
+
+  @override
+  String get unused => 'Не используется';
+
+  @override
+  String get dangling => 'Висячий';
+
+  @override
+  String get pruneUnusedImages => 'Очистить неиспользуемые образы';
+
+  @override
+  String get pruneDanglingImages => 'Очистить висячие образы';
+
+  @override
+  String get volume => 'Том';
 
   @override
   String get pull => 'Pull';

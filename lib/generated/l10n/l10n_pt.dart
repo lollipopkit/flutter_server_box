@@ -273,6 +273,9 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get dockerProjectOther => 'Outros';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -388,6 +391,21 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get imagesList => 'Lista de imagens';
+
+  @override
+  String get unused => 'Não utilizado';
+
+  @override
+  String get dangling => 'Sem referência';
+
+  @override
+  String get pruneUnusedImages => 'Limpar imagens não utilizadas';
+
+  @override
+  String get pruneDanglingImages => 'Limpar imagens sem referência';
+
+  @override
+  String get volume => 'Volume';
 
   @override
   String get pull => 'Puxar';

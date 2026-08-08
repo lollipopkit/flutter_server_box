@@ -28,6 +28,14 @@ final _podmanEmulationMsg = 'Emulate Docker CLI using podman';
 // extension method bodies (imported top-level names are not visible there).
 String shellSingleQuote(String value) => sh.shellSingleQuote(value);
 
+/// Build a single command that acts on multiple containers, e.g.
+/// `start 'id1' 'id2'`. Returns null when [ids] is empty.
+String? buildContainerBulkCmd(String action, Iterable<String> ids) {
+  final args = ids.map(shellSingleQuote).join(' ');
+  if (args.isEmpty) return null;
+  return '$action $args';
+}
+
 @freezed
 abstract class ContainerState with _$ContainerState {
   const factory ContainerState({
@@ -390,6 +398,21 @@ class ContainerNotifier extends _$ContainerNotifier {
   Future<ContainerErr?> restart(String id) async =>
       await run('restart ${shellSingleQuote(id)}');
 
+  Future<ContainerErr?> startAll(Iterable<String> ids) async =>
+      await _runBulk('start', ids);
+
+  Future<ContainerErr?> stopAll(Iterable<String> ids) async =>
+      await _runBulk('stop', ids);
+
+  Future<ContainerErr?> restartAll(Iterable<String> ids) async =>
+      await _runBulk('restart', ids);
+
+  Future<ContainerErr?> _runBulk(String action, Iterable<String> ids) async {
+    final cmd = buildContainerBulkCmd(action, ids);
+    if (cmd == null) return null;
+    return await run(cmd);
+  }
+
   Future<ContainerErr?> pruneImages({bool all = true}) async {
     final cmd = 'image prune${all ? " -a" : ""} -f';
     return await run(cmd);
@@ -496,8 +519,10 @@ enum ContainerCmdType {
     final baseCmd = switch (this) {
       ContainerCmdType.version => '${type.name} version $_jsonFmt',
       ContainerCmdType.ps => switch (type) {
-        ContainerType.docker =>
-          '${type.name} ps -a --format "{{.ID}}\\t{{.Status}}\\t{{.Names}}\\t{{.Image}}"',
+        ContainerType.docker => '${type.name} ps -a --format '
+            '"{{.ID}}\\t{{.Status}}\\t{{.Names}}\\t{{.Image}}\\t'
+            '{{.Label \\"com.docker.compose.project\\"}}\\t'
+            '{{.Label \\"com.docker.compose.project.working_dir\\"}}"',
         ContainerType.podman => '${type.name} ps -a $_jsonFmt',
       },
       ContainerCmdType.stats =>
