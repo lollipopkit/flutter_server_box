@@ -5,6 +5,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
+import 'package:server_box/view/widget/percent_circle.dart';
 
 typedef ContainerItemTrailingBuilder = Widget Function(ContainerPs item);
 typedef ContainerGroupTrailingBuilder = Widget? Function(
@@ -40,10 +41,6 @@ class ContainerItemsView extends StatelessWidget {
     final groups = _groupContainers(items);
     final running = items.where((e) => e.status.isRunning).length;
     final stopped = items.length - running;
-    final hasStats = items.any(
-      (e) => e.cpu != null || e.mem != null || e.net != null || e.disk != null,
-    );
-
     return _ResourceList(
       children: [
         _RuntimeSummaryCard(
@@ -73,7 +70,6 @@ class ContainerItemsView extends StatelessWidget {
             _ContainerGroupCard(
               group: groups[index],
               showHeader: groups.length > 1 || groups[index].project != null,
-              hasStats: hasStats,
               trailingBuilder: trailingBuilder,
               groupTrailingBuilder: groupTrailingBuilder,
             ),
@@ -311,14 +307,12 @@ List<_ContainerGroup> _groupContainers(List<ContainerPs> items) {
 class _ContainerGroupCard extends StatelessWidget {
   final _ContainerGroup group;
   final bool showHeader;
-  final bool hasStats;
   final ContainerItemTrailingBuilder trailingBuilder;
   final ContainerGroupTrailingBuilder groupTrailingBuilder;
 
   const _ContainerGroupCard({
     required this.group,
     required this.showHeader,
-    required this.hasStats,
     required this.trailingBuilder,
     required this.groupTrailingBuilder,
   });
@@ -340,7 +334,6 @@ class _ContainerGroupCard extends StatelessWidget {
           for (var index = 0; index < group.items.length; index++) ...[
             _ContainerItemRow(
               item: group.items[index],
-              hasStats: hasStats,
               trailing: trailingBuilder(group.items[index]),
             ),
             if (index != group.items.length - 1)
@@ -404,86 +397,271 @@ class _ContainerGroupHeader extends StatelessWidget {
 
 class _ContainerItemRow extends StatelessWidget {
   final ContainerPs item;
-  final bool hasStats;
   final Widget trailing;
 
   const _ContainerItemRow({
     required this.item,
-    required this.hasStats,
     required this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
     final id = item.id ?? item.name ?? 'unknown';
+    final resources = _ContainerResourceData.from(item);
     return LayoutBuilder(
       builder: (_, constraints) {
         final wide = constraints.maxWidth >= 1040;
         return KeyedSubtree(
           key: ValueKey('container-row-${wide ? 'wide' : 'compact'}-$id'),
-          child: wide ? _buildWide(context) : _buildCompact(context),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(15, 12, 5, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                wide ? _buildWideHeader(context) : _buildCompactHeader(),
+                if (resources.isNotEmpty) ...[
+                  UIs.height13,
+                  Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: _ContainerResourcePanel(
+                      id: id,
+                      data: resources,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         );
       },
     );
   }
 
-  Widget _buildWide(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(15, 12, 5, 12),
-      child: Row(
-        children: [
-          _StatusIcon(running: item.status.isRunning),
-          UIs.width13,
-          Expanded(child: _ContainerIdentity(item: item, showStatus: false)),
-          if (hasStats) ...[
-            _MetricColumn(label: 'CPU', value: item.cpu, width: 90),
-            _MetricColumn(label: 'MEM', value: item.mem, width: 135),
-            _MetricColumn(label: 'NET', value: item.net, width: 145),
-            _MetricColumn(label: 'DISK', value: item.disk, width: 155),
-          ],
-          SizedBox(
-            width: 112,
-            child: Text(
-              _statusLabel(item),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.end,
-              style: UIs.text11Grey,
-            ),
+  Widget _buildWideHeader(BuildContext context) {
+    return Row(
+      children: [
+        _StatusIcon(running: item.status.isRunning),
+        UIs.width13,
+        Expanded(child: _ContainerIdentity(item: item, showStatus: false)),
+        SizedBox(
+          width: 112,
+          child: Text(
+            _statusLabel(item),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
+            style: UIs.text11Grey,
           ),
-          trailing,
-        ],
-      ),
+        ),
+        trailing,
+      ],
     );
   }
 
-  Widget _buildCompact(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(15, 12, 5, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: _StatusIcon(running: item.status.isRunning),
+  Widget _buildCompactHeader() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: _StatusIcon(running: item.status.isRunning),
+        ),
+        UIs.width13,
+        Expanded(child: _ContainerIdentity(item: item)),
+        trailing,
+      ],
+    );
+  }
+}
+
+class _ContainerResourceData {
+  final double? cpuPercent;
+  final double? memoryPercent;
+  final _MetricPair? network;
+  final _MetricPair? disk;
+
+  const _ContainerResourceData({
+    required this.cpuPercent,
+    required this.memoryPercent,
+    required this.network,
+    required this.disk,
+  });
+
+  factory _ContainerResourceData.from(ContainerPs item) {
+    return _ContainerResourceData(
+      cpuPercent: _parsePercent(item.cpu),
+      memoryPercent: _parseUsagePercent(item.mem),
+      network: _parseMetricPair(item.net),
+      disk: _parseMetricPair(item.disk),
+    );
+  }
+
+  bool get isNotEmpty =>
+      cpuPercent != null ||
+      memoryPercent != null ||
+      network != null ||
+      disk != null;
+}
+
+class _MetricPair {
+  final String first;
+  final String? second;
+
+  const _MetricPair({required this.first, required this.second});
+}
+
+class _ContainerResourcePanel extends StatelessWidget {
+  final String id;
+  final _ContainerResourceData data;
+
+  const _ContainerResourcePanel({required this.id, required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final slots = <Widget?>[
+      data.cpuPercent == null
+          ? null
+          : _ResourceMetricSlot(
+              key: ValueKey('container-resource-circle-$id-cpu'),
+              label: 'CPU',
+              child: PercentCircle(
+                percent: data.cpuPercent!,
+                centerText: '${data.cpuPercent!.toStringAsFixed(1)}%',
               ),
-              UIs.width13,
-              Expanded(child: _ContainerIdentity(item: item)),
-              trailing,
-            ],
-          ),
-          if (hasStats && _hasItemStats(item)) ...[
-            UIs.height13,
-            Padding(
-              padding: const EdgeInsets.only(left: 31, right: 10),
-              child: _CompactMetricGrid(item: item),
             ),
-          ],
-        ],
+      data.memoryPercent == null
+          ? null
+          : _ResourceMetricSlot(
+              key: ValueKey('container-resource-circle-$id-memory'),
+              label: 'MEM',
+              child: PercentCircle(
+                percent: data.memoryPercent!,
+                centerText: '${data.memoryPercent!.toStringAsFixed(1)}%',
+              ),
+            ),
+      data.network == null
+          ? null
+          : _ResourceMetricSlot(
+              key: ValueKey('container-resource-module-$id-network'),
+              label: 'NET',
+              child: _ResourcePairValues(
+                firstLabel: '↓',
+                secondLabel: '↑',
+                values: data.network!,
+              ),
+            ),
+      data.disk == null
+          ? null
+          : _ResourceMetricSlot(
+              key: ValueKey('container-resource-module-$id-disk'),
+              label: 'DISK',
+              child: _ResourcePairValues(
+                firstLabel: context.l10n.read,
+                secondLabel: context.l10n.write,
+                values: data.disk!,
+              ),
+            ),
+    ];
+    return Align(
+      key: ValueKey('container-resource-panel-$id'),
+      alignment: Alignment.center,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: slots
+              .map(
+                (slot) => Expanded(
+                  child: Center(child: slot ?? const SizedBox.shrink()),
+                ),
+              )
+              .toList(growable: false),
+        ),
       ),
+    );
+  }
+}
+
+class _ResourceMetricSlot extends StatelessWidget {
+  final String label;
+  final Widget child;
+
+  const _ResourceMetricSlot({
+    required this.label,
+    required this.child,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 70,
+          child: Center(child: child),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 13,
+          child: Center(
+            child: Text(
+              label,
+              style: UIs.text11Grey,
+              strutStyle: const StrutStyle(
+                fontSize: 11,
+                height: 1,
+                forceStrutHeight: true,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ResourcePairValues extends StatelessWidget {
+  final String firstLabel;
+  final String secondLabel;
+  final _MetricPair values;
+
+  const _ResourcePairValues({
+    required this.firstLabel,
+    required this.secondLabel,
+    required this.values,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _ResourcePairValue(label: firstLabel, value: values.first),
+        if (values.second != null) ...[
+          const SizedBox(height: 3),
+          _ResourcePairValue(label: secondLabel, value: values.second!),
+        ],
+      ],
+    );
+  }
+}
+
+class _ResourcePairValue extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _ResourcePairValue({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      '$label:\n$value',
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+      style: UIs.text11Grey,
     );
   }
 }
@@ -538,70 +716,6 @@ class _StatusIcon extends StatelessWidget {
       running ? Icons.play_circle_outline : Icons.stop_circle_outlined,
       size: 20,
       color: running ? scheme.primary : scheme.onSurfaceVariant,
-    );
-  }
-}
-
-class _MetricColumn extends StatelessWidget {
-  final String label;
-  final String? value;
-  final double? width;
-
-  const _MetricColumn({required this.label, required this.value, this.width});
-
-  @override
-  Widget build(BuildContext context) {
-    final child = Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(label, style: UIs.text11Grey),
-        const SizedBox(height: 2),
-        Text(
-          value ?? '—',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textAlign: TextAlign.end,
-          style: UIs.text13,
-        ),
-      ],
-    );
-    if (width == null) return child;
-    return SizedBox(width: width, child: child);
-  }
-}
-
-class _CompactMetricGrid extends StatelessWidget {
-  final ContainerPs item;
-
-  const _CompactMetricGrid({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    final metrics = <(String, String?)>[
-      ('CPU', item.cpu),
-      ('MEM', item.mem),
-      ('NET', item.net),
-      ('DISK', item.disk),
-    ].where((e) => e.$2 != null).toList(growable: false);
-    return LayoutBuilder(
-      builder: (_, constraints) {
-        final columns = constraints.maxWidth >= 620 ? 4 : 2;
-        const spacing = 13.0;
-        final width =
-            (constraints.maxWidth - spacing * (columns - 1)) / columns;
-        return Wrap(
-          spacing: spacing,
-          runSpacing: 8,
-          children: metrics
-              .map(
-                (metric) => SizedBox(
-                  width: width,
-                  child: _MetricColumn(label: metric.$1, value: metric.$2),
-                ),
-              )
-              .toList(growable: false),
-        );
-      },
     );
   }
 }
@@ -774,13 +888,76 @@ IconData _runtimeIcon(ContainerType type) => switch (type) {
   ContainerType.podman => OctIcons.container,
 };
 
-bool _hasItemStats(ContainerPs item) =>
-    item.cpu != null || item.mem != null || item.net != null || item.disk != null;
-
 String _statusLabel(ContainerPs item) => switch (item) {
   final PodmanPs ps => ps.status.displayName,
   final DockerPs ps => ps.state ?? ps.status.displayName,
 };
+
+double? _parsePercent(String? raw) {
+  if (raw == null || raw.isEmpty) return null;
+  final match = RegExp(r'(\d+(?:\.\d+)?|\.\d+)\s*%').firstMatch(raw);
+  final value = double.tryParse(match?.group(1) ?? '');
+  if (value == null || !value.isFinite || value < 0) return null;
+  return value;
+}
+
+double? _parseUsagePercent(String? raw) {
+  if (raw == null || raw.isEmpty) return null;
+  final parts = raw.split(RegExp(r'\s*/\s*'));
+  if (parts.length < 2) return null;
+  final used = _parseByteSize(parts[0]);
+  final total = _parseByteSize(parts[1]);
+  if (used == null || total == null || total <= 0) return null;
+  return used / total * 100;
+}
+
+double? _parseByteSize(String raw) {
+  final match = RegExp(
+    r'(\d+(?:\.\d+)?|\.\d+)\s*([kmgtpe]?i?b)?',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (match == null) return null;
+  final value = double.tryParse(match.group(1)!);
+  if (value == null || !value.isFinite) return null;
+  final unit = (match.group(2) ?? 'b').toLowerCase();
+  final multiplier = switch (unit) {
+    'kb' => 1000.0,
+    'kib' => 1024.0,
+    'mb' => 1000.0 * 1000,
+    'mib' => 1024.0 * 1024,
+    'gb' => 1000.0 * 1000 * 1000,
+    'gib' => 1024.0 * 1024 * 1024,
+    'tb' => 1000.0 * 1000 * 1000 * 1000,
+    'tib' => 1024.0 * 1024 * 1024 * 1024,
+    'pb' => 1000.0 * 1000 * 1000 * 1000 * 1000,
+    'pib' => 1024.0 * 1024 * 1024 * 1024 * 1024,
+    'eb' => 1000.0 * 1000 * 1000 * 1000 * 1000 * 1000,
+    'eib' => 1024.0 * 1024 * 1024 * 1024 * 1024 * 1024,
+    _ => 1.0,
+  };
+  return value * multiplier;
+}
+
+_MetricPair? _parseMetricPair(String? raw) {
+  if (raw == null || raw.trim().isEmpty) return null;
+  final parts = raw.split(RegExp(r'\s*/\s*'));
+  final first = _extractMetricValue(parts.first);
+  if (first == null) return null;
+  final second = parts.length > 1 ? _extractMetricValue(parts[1]) : null;
+  return _MetricPair(first: first, second: second);
+}
+
+String? _extractMetricValue(String raw) {
+  final match = RegExp(
+    r'(\d+(?:\.\d+)?|\.\d+)\s*[kmgtpe]?i?b',
+    caseSensitive: false,
+  ).firstMatch(raw);
+  if (match != null) {
+    return match.group(0)!.replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+  final value = raw.trim();
+  return value.isEmpty ? null : value;
+}
 
 String _imageReference(ContainerImg image) {
   final repository = image.repository?.trim();

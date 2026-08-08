@@ -4,8 +4,13 @@ import 'package:flutter/material.dart';
 
 final class PercentCircle extends StatelessWidget {
   final double percent;
+  final String? centerText;
 
-  const PercentCircle({super.key, required this.percent});
+  const PercentCircle({
+    super.key,
+    required this.percent,
+    this.centerText,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +31,7 @@ final class PercentCircle extends StatelessWidget {
           animationDuration: const Duration(milliseconds: 777),
         ),
         Text(
-          '${percent.toStringAsFixed(1)}%',
+          centerText ?? '${percent.toStringAsFixed(1)}%',
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 12.7),
         ),

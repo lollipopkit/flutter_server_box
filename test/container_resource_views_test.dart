@@ -8,6 +8,7 @@ import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/container/resource_views.dart';
+import 'package:server_box/view/widget/percent_circle.dart';
 
 void main() {
   Widget containerView(List<ContainerPs> items) {
@@ -69,6 +70,46 @@ void main() {
     );
     expect(find.text('CPU'), findsOneWidget);
     expect(find.text('MEM'), findsOneWidget);
+    expect(find.byType(PercentCircle), findsNWidgets(2));
+    expect(
+      find.byKey(
+        const ValueKey('container-resource-module-mobile-container-disk'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(
+        const ValueKey('container-resource-module-mobile-container-network'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('31.3%'), findsOneWidget);
+
+    final panelCenter = tester.getCenter(
+      find.byKey(
+        const ValueKey('container-resource-panel-mobile-container'),
+      ),
+    );
+    final slotCenters = [
+      'container-resource-circle-mobile-container-cpu',
+      'container-resource-circle-mobile-container-memory',
+      'container-resource-module-mobile-container-network',
+      'container-resource-module-mobile-container-disk',
+    ]
+        .map((key) => tester.getCenter(find.byKey(ValueKey(key))))
+        .toList(growable: false);
+    final firstGap = slotCenters[1].dx - slotCenters[0].dx;
+    expect(slotCenters[2].dx - slotCenters[1].dx, closeTo(firstGap, 0.1));
+    expect(slotCenters[3].dx - slotCenters[2].dx, closeTo(firstGap, 0.1));
+    expect(
+      (slotCenters.first.dx + slotCenters.last.dx) / 2,
+      closeTo(panelCenter.dx, 0.1),
+    );
+
+    final labelTop = tester.getTopLeft(find.text('CPU')).dy;
+    for (final label in ['MEM', 'NET', 'DISK']) {
+      expect(tester.getTopLeft(find.text(label)).dy, closeTo(labelTop, 0.1));
+    }
     expect(find.text(longName), findsOneWidget);
     expect(find.text(longImage), findsOneWidget);
     expect(
@@ -82,7 +123,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('1280px renders the wide container metrics row', (tester) async {
+  testWidgets('1280px renders the wide container resource card', (
+    tester,
+  ) async {
     final item = DockerPs(
       id: 'desktop-container',
       names: 'api',
@@ -107,8 +150,51 @@ void main() {
     for (final label in ['CPU', 'MEM', 'NET', 'DISK']) {
       expect(find.text(label), findsOneWidget);
     }
+    expect(find.byType(PercentCircle), findsNWidgets(2));
     expect(find.text('2.5%'), findsOneWidget);
-    expect(find.text('128 MiB / 1 GiB'), findsOneWidget);
+    expect(find.text('12.5%'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('missing or unparseable container stats are omitted', (
+    tester,
+  ) async {
+    final item = DockerPs(
+      id: 'partial-stats',
+      names: 'worker',
+      image: 'example/worker:latest',
+      state: 'Up 4 minutes',
+    )
+      ..cpu = '4.2%'
+      ..mem = 'not available';
+
+    await _pumpAt(tester, width: 390, child: containerView([item]));
+
+    expect(
+      find.byKey(
+        const ValueKey('container-resource-circle-partial-stats-cpu'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(
+        const ValueKey('container-resource-circle-partial-stats-memory'),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.byKey(
+        const ValueKey('container-resource-module-partial-stats-disk'),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.byKey(
+        const ValueKey('container-resource-module-partial-stats-network'),
+      ),
+      findsNothing,
+    );
+    expect(find.byType(PercentCircle), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
