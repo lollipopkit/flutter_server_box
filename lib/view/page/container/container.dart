@@ -140,15 +140,17 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   }
 
   Widget _buildImage(ContainerState containerState) {
+    final images = containerState.images ?? [];
+    final unused = images.where((e) => e.isUnused).length;
+    final subtitle = unused > 0
+        ? '${l10n.dockerImagesFmt(images.length)} · $unused ${l10n.unused}'
+        : l10n.dockerImagesFmt(images.length);
     return ExpandTile(
       leading: const Icon(MingCute.clapperboard_line),
       title: Text(l10n.imagesList),
-      subtitle: Text(
-        l10n.dockerImagesFmt(containerState.images?.length ?? 'null'),
-        style: UIs.textGrey,
-      ),
-      initiallyExpanded: (containerState.images?.length ?? 0) <= 3,
-      children: containerState.images?.map(_buildImageItem).toList() ?? [],
+      subtitle: Text(subtitle, style: UIs.textGrey),
+      initiallyExpanded: images.length <= 3,
+      children: images.map(_buildImageItem).toList(),
     ).cardx;
   }
 
@@ -158,7 +160,13 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     repoSplited?.removeLast();
     final reg = repoSplited?.join('/');
     return ListTile(
-      title: Text(title ?? l10n.unknown, style: UIs.text15),
+      title: Row(
+        children: [
+          Expanded(child: Text(title ?? l10n.unknown, style: UIs.text15)),
+          if (e.isDangling) _buildImageBadge(l10n.dangling),
+          if (e.isUnused && !e.isDangling) _buildImageBadge(l10n.unused),
+        ],
+      ),
       subtitle: Text(
         '${reg ?? ''} - ${e.tag} - ${e.sizeMB}',
         style: UIs.text13Grey,
@@ -168,6 +176,24 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
             .map((e) => PopMenu.build(e, e.icon, e.toStr))
             .toList(),
         onSelected: (item) => _onTapImageMenu(item, e),
+      ),
+    );
+  }
+
+  Widget _buildImageBadge(String label) {
+    return Container(
+      margin: const EdgeInsets.only(left: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: UIs.primaryColor.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: UIs.text11.copyWith(
+          color: UIs.primaryColor,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -438,7 +464,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   }
 
   Widget _buildPruneBtn(_PruneTypes type) {
-    final title = type.name.capitalize;
+    final title = type.label;
     final containerNotifier = _containerNotifier;
     return ListTile(
       onTap: () async {
@@ -446,7 +472,8 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
           title: title,
           message: type.tip,
           onConfirm: switch (type) {
-            _PruneTypes.images => containerNotifier.pruneImages,
+            _PruneTypes.images => () => containerNotifier.pruneImages(all: true),
+            _PruneTypes.danglingImages => () => containerNotifier.pruneImages(all: false),
             _PruneTypes.containers => containerNotifier.pruneContainers,
             _PruneTypes.volumes => containerNotifier.pruneVolumes,
             _PruneTypes.system => containerNotifier.pruneSystem,

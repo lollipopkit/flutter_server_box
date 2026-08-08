@@ -10,6 +10,12 @@ abstract final class ContainerImg {
   String? get sizeMB;
   int? get containersCount;
 
+  /// Whether the image has no repository/tag (e.g. `<none>:<none>`).
+  bool get isDangling;
+
+  /// Whether no container is using this image (includes dangling images).
+  bool get isUnused;
+
   factory ContainerImg.fromRawJson(String s, ContainerType typ) => typ.img(s);
 }
 
@@ -38,6 +44,23 @@ final class PodmanImg implements ContainerImg {
 
   @override
   int? get containersCount => containers;
+
+  @override
+  bool get isDangling {
+    final repo = repository?.trim() ?? '';
+    final t = tag?.trim() ?? '';
+    return repo.isEmpty ||
+        repo == '<none>' ||
+        t.isEmpty ||
+        t == '<none>';
+  }
+
+  @override
+  bool get isUnused {
+    if (isDangling) return true;
+    final count = containersCount;
+    return count != null && count == 0;
+  }
 
   factory PodmanImg.fromRawJson(String str) =>
       PodmanImg.fromJson(json.decode(str));
@@ -89,6 +112,23 @@ final class DockerImg implements ContainerImg {
   @override
   int? get containersCount =>
       containers == 'N/A' ? 0 : int.tryParse(containers);
+
+  @override
+  bool get isDangling {
+    final repo = repository.trim();
+    final t = (tag ?? '').trim();
+    return repo.isEmpty ||
+        repo == '<none>' ||
+        t.isEmpty ||
+        t == '<none>';
+  }
+
+  @override
+  bool get isUnused {
+    if (isDangling) return true;
+    final count = containersCount;
+    return count != null && count == 0;
+  }
 
   factory DockerImg.fromRawJson(String str) =>
       DockerImg.fromJson(json.decode(str));

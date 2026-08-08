@@ -804,6 +804,30 @@ abstract class AppLocalizations {
   /// **'Images list'**
   String get imagesList;
 
+  /// No description provided for @unused.
+  ///
+  /// In en, this message translates to:
+  /// **'Unused'**
+  String get unused;
+
+  /// No description provided for @dangling.
+  ///
+  /// In en, this message translates to:
+  /// **'Dangling'**
+  String get dangling;
+
+  /// No description provided for @pruneUnusedImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Prune unused images'**
+  String get pruneUnusedImages;
+
+  /// No description provided for @pruneDanglingImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Prune dangling images'**
+  String get pruneDanglingImages;
+
   /// No description provided for @pull.
   ///
   /// In en, this message translates to:

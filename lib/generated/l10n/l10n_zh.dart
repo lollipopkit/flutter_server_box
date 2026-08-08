@@ -375,6 +375,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagesList => '镜像列表';
 
   @override
+  String get unused => '未使用';
+
+  @override
+  String get dangling => '悬空';
+
+  @override
+  String get pruneUnusedImages => '清理未使用镜像';
+
+  @override
+  String get pruneDanglingImages => '清理悬空镜像';
+
+  @override
   String get pull => '拉取';
 
   @override
@@ -1351,6 +1363,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get imagesList => '映像檔列表';
+
+  @override
+  String get unused => '未使用';
+
+  @override
+  String get dangling => '懸空';
+
+  @override
+  String get pruneUnusedImages => '清理未使用映像檔';
+
+  @override
+  String get pruneDanglingImages => '清理懸空映像檔';
 
   @override
   String get pull => '拉取';

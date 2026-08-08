@@ -394,6 +394,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get imagesList => 'Lista de imágenes';
 
   @override
+  String get unused => 'Unused';
+
+  @override
+  String get dangling => 'Dangling';
+
+  @override
+  String get pruneUnusedImages => 'Prune unused images';
+
+  @override
+  String get pruneDanglingImages => 'Prune dangling images';
+
+  @override
   String get pull => 'Extraer';
 
   @override

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/status.dart';
 import 'package:server_box/data/model/container/type.dart';
@@ -224,5 +225,87 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     expect(ContainerStatus.running.isRunning, true);
     expect(ContainerStatus.exited.isRunning, false);
     expect(ContainerStatus.created.isRunning, false);
+  });
+
+  group('DockerImg usage markers', () {
+    test('normal tagged image in use is not unused/dangling', () {
+      final img = DockerImg.fromJson({
+        'ID': 'abc123',
+        'Repository': 'nginx',
+        'Tag': 'alpine',
+        'Size': '63.7MB',
+        'CreatedAt': '2 weeks ago',
+        'Containers': '2',
+      });
+      expect(img.isDangling, false);
+      expect(img.isUnused, false);
+    });
+
+    test('tagged image with no containers is unused but not dangling', () {
+      final img = DockerImg.fromJson({
+        'ID': 'def456',
+        'Repository': 'redis',
+        'Tag': '7-alpine',
+        'Size': '39.9MB',
+        'CreatedAt': '12 days ago',
+        'Containers': 'N/A',
+      });
+      expect(img.isDangling, false);
+      expect(img.isUnused, true);
+    });
+
+    test('dangling image is unused and dangling', () {
+      final img = DockerImg.fromJson({
+        'ID': 'b771e9afbece',
+        'Repository': '<none>',
+        'Tag': '<none>',
+        'Size': '648MB',
+        'CreatedAt': '3 months ago',
+        'Containers': 'N/A',
+      });
+      expect(img.isDangling, true);
+      expect(img.isUnused, true);
+    });
+  });
+
+  group('PodmanImg usage markers', () {
+    test('normal tagged image in use is not unused/dangling', () {
+      final img = PodmanImg.fromJson({
+        'Id': 'abc123',
+        'repository': 'nginx',
+        'tag': 'alpine',
+        'Size': 63700000,
+        'Created': 1720000000,
+        'Containers': 2,
+      });
+      expect(img.isDangling, false);
+      expect(img.isUnused, false);
+    });
+
+    test('tagged image with no containers is unused but not dangling', () {
+      final img = PodmanImg.fromJson({
+        'Id': 'def456',
+        'repository': 'redis',
+        'tag': '7-alpine',
+        'Size': 39900000,
+        'Created': 1721000000,
+        'Containers': 0,
+      });
+      expect(img.isDangling, false);
+      expect(img.isUnused, true);
+    });
+
+    test('dangling image is unused and dangling', () {
+      final img = PodmanImg.fromJson({
+        'Id': 'b771e9afbece',
+        'repository': '<none>',
+        'tag': '<none>',
+        'Size': 648000000,
+        'Created': 1710000000,
+        'Containers': 0,
+      });
+      expect(img.isDangling, true);
+      expect(img.isUnused, true);
+    });
   });
 }

@@ -4,9 +4,18 @@ enum _SettingsMenuItems { editContainerHost, switchProvider }
 
 enum _PruneTypes {
   images,
+  danglingImages,
   containers,
   volumes,
   system;
+
+  String get label => switch (this) {
+    _PruneTypes.images => l10n.pruneUnusedImages,
+    _PruneTypes.danglingImages => l10n.pruneDanglingImages,
+    _PruneTypes.containers => 'Containers',
+    _PruneTypes.volumes => 'Volumes',
+    _PruneTypes.system => 'System',
+  };
 
   String? get tip {
     return switch (this) {
