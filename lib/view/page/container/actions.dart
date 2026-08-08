@@ -98,6 +98,53 @@ extension on _ContainerPageState {
     );
   }
 
+  Future<void> _showImagePruneDialog() async {
+    var allUnused = false;
+    await context.showRoundDialog(
+      title: l10n.image,
+      child: StatefulBuilder(
+        builder: (_, setState) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  allUnused
+                      ? Icons.radio_button_unchecked
+                      : Icons.radio_button_checked,
+                  color: allUnused ? null : UIs.primaryColor,
+                ),
+                title: Text(l10n.pruneDanglingImages),
+                onTap: () => setState(() => allUnused = false),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  allUnused
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: allUnused ? UIs.primaryColor : null,
+                ),
+                title: Text(l10n.pruneUnusedImages),
+                onTap: () => setState(() => allUnused = true),
+              ),
+            ],
+          );
+        },
+      ),
+      actions: Btn.ok(
+        onTap: () async {
+          context.pop();
+          await _execContainerAction(
+            () => _containerNotifier.pruneImages(all: allUnused),
+          );
+        },
+        red: true,
+      ).toList,
+    );
+  }
+
   Future<void> _showAddCmdPreview(String cmd) async {
     await context.showRoundDialog(
       title: libL10n.preview,

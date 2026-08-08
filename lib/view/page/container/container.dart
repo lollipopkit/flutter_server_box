@@ -468,15 +468,18 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     final containerNotifier = _containerNotifier;
     return ListTile(
       onTap: () async {
+        if (type == _PruneTypes.images) {
+          await _showImagePruneDialog();
+          return;
+        }
         await _showPruneDialog(
           title: title,
           message: type.tip,
           onConfirm: switch (type) {
-            _PruneTypes.images => () => containerNotifier.pruneImages(all: true),
-            _PruneTypes.danglingImages => () => containerNotifier.pruneImages(all: false),
             _PruneTypes.containers => containerNotifier.pruneContainers,
             _PruneTypes.volumes => containerNotifier.pruneVolumes,
             _PruneTypes.system => containerNotifier.pruneSystem,
+            _PruneTypes.images => () => containerNotifier.pruneImages(),
           },
         );
       },
