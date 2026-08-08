@@ -102,6 +102,8 @@
   "dangling": "Orfana",
   "pruneUnusedImages": "Rimuovi immagini inutilizzate",
   "pruneDanglingImages": "Rimuovi immagini orfane",
+  "pruneVolumes": "Rimuovi volumi inutilizzati",
+  "pruneUnusedData": "Rimuovi dati inutilizzati",
   "volume": "Volume",
   "pull": "Pull",
   "invalid": "Non valido",

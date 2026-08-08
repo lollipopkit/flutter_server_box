@@ -834,6 +834,18 @@ abstract class AppLocalizations {
   /// **'Prune dangling images'**
   String get pruneDanglingImages;
 
+  /// No description provided for @pruneVolumes.
+  ///
+  /// In en, this message translates to:
+  /// **'Prune volumes'**
+  String get pruneVolumes;
+
+  /// No description provided for @pruneUnusedData.
+  ///
+  /// In en, this message translates to:
+  /// **'Prune unused data'**
+  String get pruneUnusedData;
+
   /// No description provided for @volume.
   ///
   /// In en, this message translates to:

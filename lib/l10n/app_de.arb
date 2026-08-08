@@ -102,6 +102,8 @@
   "dangling": "Verwaist",
   "pruneUnusedImages": "Ungenutzte Images bereinigen",
   "pruneDanglingImages": "Verwaiste Images bereinigen",
+  "pruneVolumes": "Volumes bereinigen",
+  "pruneUnusedData": "Ungenutzte Daten bereinigen",
   "volume": "Volume",
   "pull": "Pull",
   "invalid": "Ungültig",

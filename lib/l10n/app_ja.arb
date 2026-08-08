@@ -102,6 +102,8 @@
   "dangling": "未タグ",
   "pruneUnusedImages": "未使用イメージをクリーンアップ",
   "pruneDanglingImages": "未タグイメージをクリーンアップ",
+  "pruneVolumes": "ボリュームをクリーンアップ",
+  "pruneUnusedData": "未使用データをクリーンアップ",
   "volume": "ボリューム",
   "pull": "プル",
   "invalid": "無効",

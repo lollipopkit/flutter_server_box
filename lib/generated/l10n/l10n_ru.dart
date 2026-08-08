@@ -410,6 +410,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get pruneDanglingImages => 'Очистить висячие образы';
 
   @override
+  String get pruneVolumes => 'Очистить тома';
+
+  @override
+  String get pruneUnusedData => 'Очистить неиспользуемые данные';
+
+  @override
   String get volume => 'Том';
 
   @override

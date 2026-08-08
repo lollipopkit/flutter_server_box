@@ -408,6 +408,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pruneDanglingImages => 'Prune dangling images';
 
   @override
+  String get pruneVolumes => 'Prune volumes';
+
+  @override
+  String get pruneUnusedData => 'Prune unused data';
+
+  @override
   String get volume => 'Volume';
 
   @override

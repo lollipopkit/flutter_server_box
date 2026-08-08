@@ -409,6 +409,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get pruneDanglingImages => 'Bersihkan gambar menggantung';
 
   @override
+  String get pruneVolumes => 'Bersihkan volume';
+
+  @override
+  String get pruneUnusedData => 'Bersihkan data yang tidak digunakan';
+
+  @override
   String get volume => 'Volume';
 
   @override

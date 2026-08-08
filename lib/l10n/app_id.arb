@@ -102,6 +102,8 @@
   "dangling": "Menggantung",
   "pruneUnusedImages": "Bersihkan gambar tidak terpakai",
   "pruneDanglingImages": "Bersihkan gambar menggantung",
+  "pruneVolumes": "Bersihkan volume",
+  "pruneUnusedData": "Bersihkan data yang tidak digunakan",
   "volume": "Volume",
   "pull": "Tarik",
   "invalid": "Tidak valid",

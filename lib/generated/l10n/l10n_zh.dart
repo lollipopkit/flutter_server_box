@@ -390,6 +390,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pruneDanglingImages => '清理悬空镜像';
 
   @override
+  String get pruneVolumes => '修剪卷';
+
+  @override
+  String get pruneUnusedData => '修剪未使用数据';
+
+  @override
   String get volume => '卷';
 
   @override
@@ -1384,6 +1390,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pruneDanglingImages => '清理懸空映像檔';
+
+  @override
+  String get pruneVolumes => '修剪卷';
+
+  @override
+  String get pruneUnusedData => '修剪未使用資料';
 
   @override
   String get volume => '卷';

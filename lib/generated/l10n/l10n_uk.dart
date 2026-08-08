@@ -411,6 +411,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get pruneDanglingImages => 'Очистити висячі образи';
 
   @override
+  String get pruneVolumes => 'Очистити томи';
+
+  @override
+  String get pruneUnusedData => 'Очистити невикористані дані';
+
+  @override
   String get volume => 'Том';
 
   @override

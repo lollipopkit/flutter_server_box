@@ -116,6 +116,8 @@
   "dangling": "悬空",
   "pruneUnusedImages": "清理未使用镜像",
   "pruneDanglingImages": "清理悬空镜像",
+  "pruneVolumes": "修剪卷",
+  "pruneUnusedData": "修剪未使用数据",
   "volume": "卷",
   "pull": "拉取",
   "invalid": "无效",

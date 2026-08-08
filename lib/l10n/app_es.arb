@@ -102,6 +102,8 @@
   "dangling": "Colgante",
   "pruneUnusedImages": "Limpiar imágenes sin usar",
   "pruneDanglingImages": "Limpiar imágenes colgantes",
+  "pruneVolumes": "Limpiar volúmenes",
+  "pruneUnusedData": "Limpiar datos sin usar",
   "volume": "Volumen",
   "pull": "Extraer",
   "invalid": "Inválido",

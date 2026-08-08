@@ -126,7 +126,9 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
             ),
             const Spacer(),
             UIs.height13,
-            _buildSettingsCard(containerState),
+            ..._SettingsMenuItems.values.map(
+              (item) => _buildSettingCard(item, containerState),
+            ),
           ],
         ).paddingSymmetric(horizontal: 13),
       );
@@ -201,8 +203,10 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
   Widget _buildSettingsTab(ContainerState containerState) {
     return AutoMultiList(
       children: <Widget>[
-        _buildSettingsCard(containerState),
-        _buildPruneCard(),
+        ..._SettingsMenuItems.values.map(
+          (item) => _buildSettingCard(item, containerState),
+        ),
+        ..._PruneTypes.values.map(_buildPruneCard),
       ],
     );
   }
@@ -340,57 +344,35 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
     return 'run -itd --name $name $suffix';
   }
 
-  Widget _buildPruneCard() {
-    return CardX(
-      child: Column(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.cleaning_services_outlined),
-            title: Text(
-              libL10n.prune,
-              style: UIs.text15,
-            ),
-            subtitle: Text(l10n.dockerPruneTip, style: UIs.text13Grey),
-          ),
-          const Divider(height: 1),
-          ..._PruneTypes.values.map(_buildPruneBtn),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPruneBtn(_PruneTypes type) {
+  Widget _buildPruneCard(_PruneTypes type) {
     final title = type.label;
     final containerNotifier = _containerNotifier;
-    return ListTile(
-      onTap: () async {
-        await _showPruneDialog(
-          title: title,
-          message: type.tip,
-          onConfirm: switch (type) {
-            _PruneTypes.volumes => containerNotifier.pruneVolumes,
-            _PruneTypes.system => containerNotifier.pruneSystem,
-          },
-        );
-      },
-      title: Text(title),
-      trailing: const Icon(Icons.keyboard_arrow_right),
+    return CardX(
+      child: ListTile(
+        key: ValueKey('container-setting-prune-${type.name}'),
+        leading: Icon(type.icon),
+        onTap: () async {
+          await _showPruneDialog(
+            title: title,
+            message: type.tip,
+            onConfirm: switch (type) {
+              _PruneTypes.volumes => containerNotifier.pruneVolumes,
+              _PruneTypes.unusedData => containerNotifier.pruneSystem,
+            },
+          );
+        },
+        title: Text(title),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+      ),
     );
   }
 
-  Widget _buildSettingsCard(ContainerState containerState) {
+  Widget _buildSettingCard(
+    _SettingsMenuItems item,
+    ContainerState containerState,
+  ) {
     return CardX(
-      child: Column(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: Text(libL10n.setting, style: UIs.text15),
-          ),
-          const Divider(height: 1),
-          ..._SettingsMenuItems.values
-              .map((item) => _buildSettingTile(item, containerState)),
-        ],
-      ),
+      child: _buildSettingTile(item, containerState),
     );
   }
 
@@ -413,6 +395,8 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
         break;
     }
     return ListTile(
+      key: ValueKey('container-setting-${item.name}'),
+      leading: Icon(item.icon),
       onTap: () {
         switch (item) {
           case _SettingsMenuItems.editContainerHost:

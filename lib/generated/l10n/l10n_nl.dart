@@ -410,6 +410,12 @@ class AppLocalizationsNl extends AppLocalizations {
   String get pruneDanglingImages => 'Bungelende images opschonen';
 
   @override
+  String get pruneVolumes => 'Volumes opschonen';
+
+  @override
+  String get pruneUnusedData => 'Ongebruikte gegevens opschonen';
+
+  @override
   String get volume => 'Volume';
 
   @override

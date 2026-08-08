@@ -398,6 +398,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get pruneDanglingImages => '未タグイメージをクリーンアップ';
 
   @override
+  String get pruneVolumes => 'ボリュームをクリーンアップ';
+
+  @override
+  String get pruneUnusedData => '未使用データをクリーンアップ';
+
+  @override
   String get volume => 'ボリューム';
 
   @override

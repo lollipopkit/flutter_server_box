@@ -118,6 +118,8 @@
   "dangling": "댕글링",
   "pruneUnusedImages": "미사용 이미지 정리",
   "pruneDanglingImages": "댕글링 이미지 정리",
+  "pruneVolumes": "볼륨 정리",
+  "pruneUnusedData": "사용하지 않는 데이터 정리",
   "volume": "볼륨",
   "pull": "풀",
   "invalid": "유효하지 않음",

@@ -102,6 +102,8 @@
   "dangling": "Bungelend",
   "pruneUnusedImages": "Ongebruikte images opschonen",
   "pruneDanglingImages": "Bungelende images opschonen",
+  "pruneVolumes": "Volumes opschonen",
+  "pruneUnusedData": "Ongebruikte gegevens opschonen",
   "volume": "Volume",
   "pull": "Pull",
   "invalid": "Ongeldig",

@@ -12,21 +12,33 @@ enum _ContainerTabs {
   };
 }
 
-enum _SettingsMenuItems { editContainerHost, switchProvider }
+enum _SettingsMenuItems {
+  editContainerHost,
+  switchProvider;
+
+  IconData get icon => switch (this) {
+    _SettingsMenuItems.editContainerHost => Icons.dns_outlined,
+    _SettingsMenuItems.switchProvider => Icons.swap_horiz,
+  };
+}
 
 enum _PruneTypes {
   volumes,
-  system;
+  unusedData;
 
   String get label => switch (this) {
-    _PruneTypes.volumes => l10n.volume,
-    _PruneTypes.system => libL10n.system,
+    _PruneTypes.volumes => l10n.pruneVolumes,
+    _PruneTypes.unusedData => l10n.pruneUnusedData,
+  };
+
+  IconData get icon => switch (this) {
+    _PruneTypes.volumes => Icons.storage_outlined,
+    _PruneTypes.unusedData => Icons.cleaning_services_outlined,
   };
 
   String? get tip {
     return switch (this) {
-      _PruneTypes.system =>
-        'This will remove all unused data, including images, containers, volumes, and networks.',
+      _PruneTypes.unusedData => l10n.dockerPruneTip,
       _ => null,
     };
   }

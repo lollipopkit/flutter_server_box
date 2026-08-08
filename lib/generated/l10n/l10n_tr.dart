@@ -410,6 +410,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pruneDanglingImages => 'Askıdaki görüntüleri temizle';
 
   @override
+  String get pruneVolumes => 'Birimleri temizle';
+
+  @override
+  String get pruneUnusedData => 'Kullanılmayan verileri temizle';
+
+  @override
   String get volume => 'Birim';
 
   @override

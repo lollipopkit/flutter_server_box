@@ -396,6 +396,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get pruneDanglingImages => '댕글링 이미지 정리';
 
   @override
+  String get pruneVolumes => '볼륨 정리';
+
+  @override
+  String get pruneUnusedData => '사용하지 않는 데이터 정리';
+
+  @override
   String get volume => '볼륨';
 
   @override

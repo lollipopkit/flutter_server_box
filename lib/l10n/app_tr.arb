@@ -102,6 +102,8 @@
   "dangling": "Askıda",
   "pruneUnusedImages": "Kullanılmayan görüntüleri temizle",
   "pruneDanglingImages": "Askıdaki görüntüleri temizle",
+  "pruneVolumes": "Birimleri temizle",
+  "pruneUnusedData": "Kullanılmayan verileri temizle",
   "volume": "Birim",
   "pull": "Çek",
   "invalid": "Geçersiz",

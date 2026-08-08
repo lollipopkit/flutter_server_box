@@ -411,6 +411,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pruneDanglingImages => 'Nettoyer les images fantômes';
 
   @override
+  String get pruneVolumes => 'Nettoyer les volumes';
+
+  @override
+  String get pruneUnusedData => 'Nettoyer les données inutilisées';
+
+  @override
   String get volume => 'Volume';
 
   @override

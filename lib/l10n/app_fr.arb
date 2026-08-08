@@ -102,6 +102,8 @@
   "dangling": "Fantôme",
   "pruneUnusedImages": "Nettoyer les images inutilisées",
   "pruneDanglingImages": "Nettoyer les images fantômes",
+  "pruneVolumes": "Nettoyer les volumes",
+  "pruneUnusedData": "Nettoyer les données inutilisées",
   "volume": "Volume",
   "pull": "Tirer",
   "invalid": "Invalide",

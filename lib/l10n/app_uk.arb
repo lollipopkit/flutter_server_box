@@ -102,6 +102,8 @@
   "dangling": "Висячий",
   "pruneUnusedImages": "Очистити невикористані образи",
   "pruneDanglingImages": "Очистити висячі образи",
+  "pruneVolumes": "Очистити томи",
+  "pruneUnusedData": "Очистити невикористані дані",
   "volume": "Том",
   "pull": "Pull",
   "invalid": "Недійсний",

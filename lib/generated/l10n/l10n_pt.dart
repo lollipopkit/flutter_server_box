@@ -409,6 +409,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get pruneDanglingImages => 'Limpar imagens sem referência';
 
   @override
+  String get pruneVolumes => 'Limpar volumes';
+
+  @override
+  String get pruneUnusedData => 'Limpar dados não utilizados';
+
+  @override
   String get volume => 'Volume';
 
   @override

@@ -409,6 +409,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get pruneDanglingImages => 'Rimuovi immagini orfane';
 
   @override
+  String get pruneVolumes => 'Rimuovi volumi inutilizzati';
+
+  @override
+  String get pruneUnusedData => 'Rimuovi dati inutilizzati';
+
+  @override
   String get volume => 'Volume';
 
   @override

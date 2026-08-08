@@ -102,6 +102,8 @@
   "dangling": "Sem referência",
   "pruneUnusedImages": "Limpar imagens não utilizadas",
   "pruneDanglingImages": "Limpar imagens sem referência",
+  "pruneVolumes": "Limpar volumes",
+  "pruneUnusedData": "Limpar dados não utilizados",
   "volume": "Volume",
   "pull": "Puxar",
   "invalid": "Inválido",

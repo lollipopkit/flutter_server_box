@@ -118,6 +118,8 @@
   "dangling": "Dangling",
   "pruneUnusedImages": "Prune unused images",
   "pruneDanglingImages": "Prune dangling images",
+  "pruneVolumes": "Prune volumes",
+  "pruneUnusedData": "Prune unused data",
   "volume": "Volume",
   "pull": "Pull",
   "invalid": "Invalid",
