@@ -101,9 +101,10 @@ extension on _ContainerPageState {
   Future<void> _showImagePruneDialog() async {
     final images = _containerState.images ?? const <ContainerImg>[];
     final danglingCount = images.where((image) => image.isDangling).length;
-    final unusedTaggedCount = images
-        .where((image) => image.isUnused && !image.isDangling)
-        .length;
+    final unusedTaggedCount = countUnusedTaggedImages(
+      images,
+      _containerState.items?.map((item) => item.image) ?? const <String?>[],
+    );
     var allUnused = false;
     await context.showRoundDialog(
       title: l10n.pruneImages,

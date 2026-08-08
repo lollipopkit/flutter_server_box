@@ -236,16 +236,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
 
   Widget _buildLoading(ContainerState containerState) {
     if (containerState.runLog == null) return UIs.placeholder;
-    return Padding(
-      padding: const EdgeInsets.all(17),
-      child: Column(
-        children: [
-          const Center(child: CircularProgressIndicator()),
-          UIs.height13,
-          Text(containerState.runLog!),
-        ],
-      ),
-    );
+    return ContainerRunLogView(log: containerState.runLog!);
   }
 
   Widget? _buildGroupMoreBtn(List<ContainerPs> groupItems) {

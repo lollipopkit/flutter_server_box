@@ -13,6 +13,39 @@ typedef ContainerGroupTrailingBuilder = Widget? Function(
 );
 typedef ContainerImageTrailingBuilder = Widget Function(ContainerImg image);
 
+/// Displays the output of a running container command without allowing a long
+/// log to consume the page's remaining layout space.
+class ContainerRunLogView extends StatelessWidget {
+  final String log;
+
+  const ContainerRunLogView({required this.log, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(17),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Center(child: CircularProgressIndicator()),
+          UIs.height13,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 160),
+            child: SingleChildScrollView(
+              key: const ValueKey('container-run-log-scroll'),
+              reverse: true,
+              child: SizedBox(
+                width: double.infinity,
+                child: Text(log),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Responsive container list used by [ContainerPage].
 ///
 /// The view intentionally owns presentation only. Container actions are
@@ -149,7 +182,7 @@ class ContainerImagesView extends StatelessWidget {
 /// Configures the scope of an image prune command.
 class ContainerImagePruneOptionsView extends StatelessWidget {
   final int danglingCount;
-  final int unusedTaggedCount;
+  final int? unusedTaggedCount;
   final bool allUnused;
   final ValueChanged<bool> onAllUnusedChanged;
   final String commandPreview;
@@ -177,12 +210,12 @@ class ContainerImagePruneOptionsView extends StatelessWidget {
             _PruneCountBadge(
               key: const ValueKey('image-prune-dangling-count'),
               label: context.l10n.dangling,
-              count: danglingCount,
+              value: '$danglingCount',
             ),
             _PruneCountBadge(
               key: const ValueKey('image-prune-unused-tagged-count'),
               label: context.l10n.unusedTaggedImages,
-              count: unusedTaggedCount,
+              value: unusedTaggedCount?.toString() ?? context.l10n.unknown,
             ),
           ],
         ),
@@ -295,11 +328,11 @@ class _PruneScopeTile extends StatelessWidget {
 
 class _PruneCountBadge extends StatelessWidget {
   final String label;
-  final int count;
+  final String value;
 
   const _PruneCountBadge({
     required this.label,
-    required this.count,
+    required this.value,
     super.key,
   });
 
@@ -313,7 +346,7 @@ class _PruneCountBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        '$count $label',
+        '$label: $value',
         style: UIs.text11.copyWith(color: scheme.onSurfaceVariant),
       ),
     );

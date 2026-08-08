@@ -294,6 +294,77 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       expect(img.isDangling, true);
       expect(img.isUnused, true);
     });
+
+    test('counts known unused tagged images', () {
+      final images = [
+        DockerImg(
+          containers: '0',
+          createdAt: '',
+          id: 'aaaaaaaaaaaa',
+          repository: 'example/worker',
+          size: '64 MB',
+          tag: 'old',
+        ),
+        DockerImg(
+          containers: '1',
+          createdAt: '',
+          id: 'bbbbbbbbbbbb',
+          repository: 'example/api',
+          size: '80 MB',
+          tag: 'latest',
+        ),
+      ];
+
+      expect(countUnusedTaggedImages(images, const []), 1);
+    });
+
+    test('matches unknown usage by repository and implicit latest', () {
+      final image = DockerImg(
+        containers: 'N/A',
+        createdAt: '',
+        id: 'aaaaaaaaaaaa',
+        repository: 'registry.example.com/team/api',
+        size: '80 MB',
+        tag: 'latest',
+      );
+
+      expect(countUnusedTaggedImages([image], const ['api']), 0);
+      expect(
+        countUnusedTaggedImages(
+          [image],
+          const ['registry.example.com/team/api:latest'],
+        ),
+        0,
+      );
+    });
+
+    test('matches unknown usage by short image id', () {
+      final image = DockerImg(
+        containers: 'N/A',
+        createdAt: '',
+        id: 'sha256:'
+            '0123456789abcdef0123456789abcdef'
+            '0123456789abcdef0123456789abcdef',
+        repository: 'example/api',
+        size: '80 MB',
+        tag: 'stable',
+      );
+
+      expect(countUnusedTaggedImages([image], const ['0123456789ab']), 0);
+    });
+
+    test('returns unknown when an image reference cannot be confirmed', () {
+      final image = DockerImg(
+        containers: 'N/A',
+        createdAt: '',
+        id: 'aaaaaaaaaaaa',
+        repository: 'example/api',
+        size: '80 MB',
+        tag: 'stable',
+      );
+
+      expect(countUnusedTaggedImages([image], const ['example/worker']), null);
+    });
   });
 
   group('PodmanImg usage markers', () {

@@ -62,7 +62,7 @@ void main() {
   Widget imagePruneOptions({
     ContainerType type = ContainerType.docker,
     int danglingCount = 2,
-    int unusedTaggedCount = 1,
+    int? unusedTaggedCount = 1,
   }) {
     var allUnused = false;
     return StatefulBuilder(
@@ -444,8 +444,8 @@ void main() {
       child: SingleChildScrollView(child: imagePruneOptions()),
     );
 
-    expect(find.text('2 Dangling'), findsOneWidget);
-    expect(find.text('1 Unused tagged'), findsOneWidget);
+    expect(find.text('Dangling: 2'), findsOneWidget);
+    expect(find.text('Unused tagged: 1'), findsOneWidget);
     expect(find.text('docker image prune -f'), findsOneWidget);
     expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
 
@@ -455,6 +455,57 @@ void main() {
     await tester.pump();
 
     expect(find.text('docker image prune -a -f'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('image prune options show unknown usage count', (tester) async {
+    await _pumpAt(
+      tester,
+      width: 390,
+      child: SingleChildScrollView(
+        child: imagePruneOptions(unusedTaggedCount: null),
+      ),
+    );
+
+    expect(find.text('Unused tagged: Unknown'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('long running command log is internally scrollable', (
+    tester,
+  ) async {
+    final log = List.generate(
+      80,
+      (index) => 'Step ${index + 1}: processing container resources',
+    ).join('\n');
+
+    await _pumpAt(
+      tester,
+      width: 390,
+      settle: false,
+      child: Column(
+        children: [
+          ContainerRunLogView(log: log),
+          const Expanded(child: SizedBox()),
+        ],
+      ),
+    );
+
+    final scroll = tester.widget<SingleChildScrollView>(
+      find.byKey(const ValueKey('container-run-log-scroll')),
+    );
+    expect(scroll.reverse, true);
+    final scrollSize = tester.getSize(
+      find.byKey(const ValueKey('container-run-log-scroll')),
+    );
+    expect(
+      scrollSize.height,
+      lessThanOrEqualTo(160),
+    );
+    expect(
+      tester.getSize(find.byType(ContainerRunLogView)).height,
+      lessThan(250),
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -493,6 +544,7 @@ Future<void> _pumpAt(
   WidgetTester tester, {
   required double width,
   required Widget child,
+  bool settle = true,
 }) async {
   await tester.binding.setSurfaceSize(Size(width, 1000));
   addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -515,5 +567,9 @@ Future<void> _pumpAt(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
 }

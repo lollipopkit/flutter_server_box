@@ -22,6 +22,94 @@ abstract final class ContainerImg {
   factory ContainerImg.fromRawJson(String s, ContainerType typ) => typ.img(s);
 }
 
+/// Counts tagged images that are known to be unused.
+///
+/// Returns `null` when at least one tagged image has an unknown container
+/// reference count and cannot be matched to the current container list. This
+/// prevents an unknown Docker `N/A` count from being presented as zero.
+int? countUnusedTaggedImages(
+  Iterable<ContainerImg> images,
+  Iterable<String?> containerImageReferences,
+) {
+  final usedMarkers = _containerImageMarkers(containerImageReferences);
+  var unused = 0;
+  var hasUnknown = false;
+
+  for (final image in images) {
+    if (image.isDangling) continue;
+    final count = image.containersCount;
+    if (count != null) {
+      if (count == 0) unused++;
+      continue;
+    }
+    if (!_imageMarkers(image).any(usedMarkers.contains)) {
+      hasUnknown = true;
+    }
+  }
+  return hasUnknown ? null : unused;
+}
+
+Set<String> _containerImageMarkers(Iterable<String?> references) {
+  final markers = <String>{};
+  for (final reference in references) {
+    _addRuntimeImageReference(markers, reference);
+  }
+  return markers;
+}
+
+Set<String> _imageMarkers(ContainerImg image) {
+  final markers = <String>{};
+  _addImageId(markers, image.id);
+
+  final repository = image.repository?.trim();
+  if (repository == null || repository.isEmpty || repository == '<none>') {
+    return markers;
+  }
+  final shortRepository = repository.split('/').last;
+  final tag = image.tag?.trim();
+  final hasTag = tag != null && tag.isNotEmpty && tag != '<none>';
+  if (hasTag) {
+    markers.add('$repository:$tag');
+    markers.add('$shortRepository:$tag');
+    if (tag == 'latest') {
+      markers.add(repository);
+      markers.add(shortRepository);
+    }
+  } else {
+    markers.add(repository);
+    markers.add(shortRepository);
+    markers.add('$repository:latest');
+    markers.add('$shortRepository:latest');
+  }
+  return markers;
+}
+
+void _addRuntimeImageReference(Set<String> markers, String? raw) {
+  final value = raw?.trim();
+  if (value == null || value.isEmpty) return;
+  final withoutDigest = value.split('@').first.trim();
+  if (_addImageId(markers, withoutDigest)) return;
+
+  markers.add(withoutDigest);
+  final shortReference = withoutDigest.split('/').last;
+  markers.add(shortReference);
+  if (!shortReference.contains(':')) {
+    markers.add('$withoutDigest:latest');
+    markers.add('$shortReference:latest');
+  }
+}
+
+bool _addImageId(Set<String> markers, String? raw) {
+  final value = raw?.trim();
+  if (value == null || value.isEmpty) return false;
+  final bare = value.startsWith('sha256:') ? value.substring(7) : value;
+  if (!RegExp(r'^[a-fA-F0-9]{12,64}$').hasMatch(bare)) return false;
+  markers.add(value);
+  markers.add(bare);
+  if (bare.length >= 12) markers.add(bare.substring(0, 12));
+  return true;
+}
+
 final class PodmanImg implements ContainerImg {
   @override
   final String? repository;
