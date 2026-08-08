@@ -308,4 +308,96 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       expect(img.isUnused, true);
     });
   });
+
+  group('PodmanImg fromJson field handling', () {
+    test('falls back to Names when lowercase repository/tag missing', () {
+      final img = PodmanImg.fromJson({
+        'Id': 'abc123',
+        'Names': ['docker.io/library/nginx:latest'],
+        'Size': 63700000,
+        'Created': 1720000000,
+        'Containers': 2,
+      });
+      expect(img.isDangling, true);
+    });
+
+    test('handles missing optional numeric fields', () {
+      final img = PodmanImg.fromJson({
+        'Id': 'abc123',
+        'repository': 'nginx',
+        'tag': 'alpine',
+      });
+      expect(img.size, null);
+      expect(img.created, null);
+      expect(img.containers, null);
+      expect(img.isDangling, false);
+      expect(img.isUnused, false);
+    });
+  });
+
+  group('DockerImg fromJson field handling', () {
+    test('empty Repository falls back to Names', () {
+      final img = DockerImg.fromJson({
+        'ID': 'abc123',
+        'Repository': '',
+        'Names': ['nginx'],
+        'Tag': 'latest',
+        'Size': '63.7MB',
+        'CreatedAt': '2 weeks ago',
+        'Containers': '2',
+      });
+      expect(img.repository, 'nginx');
+      expect(img.isDangling, false);
+    });
+
+    test('empty Names list does not produce literal null repository', () {
+      final img = DockerImg.fromJson({
+        'ID': 'abc123',
+        'Repository': '',
+        'Names': <String>[],
+        'Tag': 'latest',
+        'Size': '63.7MB',
+        'CreatedAt': '2 weeks ago',
+        'Containers': '2',
+      });
+      expect(img.repository, isNot('null'));
+      expect(img.repository, isNotEmpty);
+    });
+  });
+
+  group('PodmanPs stats parsing', () {
+    final podman = PodmanPs(id: 'test');
+
+    test('accepts JSON integer values for numeric fields', () {
+      podman.parseStats(
+        '{"CPU":1,"AvgCPU":0,"MemLimit":1073741824,"MemUsage":1,'
+        '"NetInput":0,"NetOutput":0,"BlockInput":0,"BlockOutput":0}',
+        '5.0.0',
+      );
+      expect(podman.cpu, isNotNull);
+      expect(podman.mem, isNotNull);
+      expect(podman.net, isNotNull);
+      expect(podman.disk, isNotNull);
+    });
+
+    test('handles missing network interfaces and non-int counters', () {
+      podman.parseStats(
+        '{"CPU":1.5,"AvgCPU":0.5,"MemLimit":1073741824,"MemUsage":1,'
+        '"Network":{"eth0":{"RxBytes":1024,"TxBytes":"2048"},'
+        '"nulliface":null},'
+        '"BlockInput":0,"BlockOutput":0}',
+        '5.0.0',
+      );
+      expect(podman.cpu, isNotNull);
+      expect(podman.net, isNotNull);
+    });
+
+    test('handles top-level network fields when version is missing', () {
+      podman.parseStats(
+        '{"CPU":1,"AvgCPU":0,"MemLimit":1073741824,"MemUsage":1,'
+        '"NetInput":512,"NetOutput":256,"BlockInput":0,"BlockOutput":0}',
+      );
+      expect(podman.net, '↓ 512 B / ↑ 256 B');
+    });
+  });
 }

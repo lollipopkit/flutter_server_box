@@ -62,11 +62,11 @@ final class PodmanPs implements ContainerPs {
   @override
   void parseStats(String s, [String? version]) {
     final stats = json.decode(s);
-    final cpuD = (stats['CPU'] as double? ?? 0).toStringAsFixed(1);
-    final cpuAvgD = (stats['AvgCPU'] as double? ?? 0).toStringAsFixed(1);
+    final cpuD = _asDouble(stats['CPU']).toStringAsFixed(1);
+    final cpuAvgD = _asDouble(stats['AvgCPU']).toStringAsFixed(1);
     cpu = '$cpuD% / ${libL10n.pingAvg} $cpuAvgD%';
-    final memLimit = (stats['MemLimit'] as int? ?? 0).bytes2Str;
-    final memUsage = (stats['MemUsage'] as int? ?? 0).bytes2Str;
+    final memLimit = _asInt(stats['MemLimit']).bytes2Str;
+    final memUsage = _asInt(stats['MemUsage']).bytes2Str;
     mem = '$memUsage / $memLimit';
 
     int netIn = 0;
@@ -80,21 +80,23 @@ final class PodmanPs implements ContainerPs {
     // Podman 5.x changed network backend (Netavark) and uses nested
     // Network.{iface}.RxBytes/TxBytes structure instead.
     if (majorVersionNum == null || majorVersionNum <= 4) {
-      netIn = stats['NetInput'] as int? ?? 0;
-      netOut = stats['NetOutput'] as int? ?? 0;
+      netIn = _asInt(stats['NetInput']);
+      netOut = _asInt(stats['NetOutput']);
     } else if (majorVersionNum >= 5) {
-      final network = stats['Network'] as Map<String, dynamic>?;
-      if (network != null) {
-        for (final interface in network.values) {
-          netIn += interface['RxBytes'] as int? ?? 0;
-          netOut += interface['TxBytes'] as int? ?? 0;
+      final network = stats['Network'];
+      if (network is Map) {
+        for (final entry in network.entries) {
+          final interface = entry.value;
+          if (interface is! Map) continue;
+          netIn += _asInt(interface['RxBytes']);
+          netOut += _asInt(interface['TxBytes']);
         }
       }
     }
     net = '↓ ${netIn.bytes2Str} / ↑ ${netOut.bytes2Str}';
 
-    final diskIn = (stats['BlockInput'] as int? ?? 0).bytes2Str;
-    final diskOut = (stats['BlockOutput'] as int? ?? 0).bytes2Str;
+    final diskIn = _asInt(stats['BlockInput']).bytes2Str;
+    final diskOut = _asInt(stats['BlockOutput']).bytes2Str;
     disk = '${l10n.read} $diskIn / ${l10n.write} $diskOut';
   }
 
@@ -192,6 +194,17 @@ final class DockerPs implements ContainerPs {
 
 String? _nonEmpty(String? value) =>
     value == null || value.trim().isEmpty ? null : value.trim();
+
+double _asDouble(dynamic val) {
+  if (val is num) return val.toDouble();
+  return double.tryParse(val?.toString() ?? '') ?? 0;
+}
+
+int _asInt(dynamic val) {
+  if (val is int) return val;
+  if (val is num) return val.toInt();
+  return int.tryParse(val?.toString() ?? '') ?? 0;
+}
 
 String? _labelFromLabels(dynamic labels, String key) {
   if (labels is! Map) return null;

@@ -192,6 +192,11 @@ extension on _ContainerPageState {
   }
 
   void _showImageRmDialog(ContainerImg e) {
+    final id = e.id;
+    if (id == null || id.isEmpty) {
+      context.showSnackBar(libL10n.empty);
+      return;
+    }
     context.showRoundDialog(
       title: libL10n.attention,
       child: Text(
@@ -200,11 +205,9 @@ extension on _ContainerPageState {
       actions: Btn.ok(
         onTap: () async {
           context.pop();
-          final result = await _containerNotifier.run(
-            'rmi ${shellSingleQuote(e.id ?? '')} -f',
-          );
+          final result = await _containerNotifier.run('rmi ${shellSingleQuote(id)} -f');
           if (result != null) {
-            context.showSnackBar(_errorMessage(result.message));
+            if (mounted) context.showSnackBar(_errorMessage(result.message));
           }
         },
         red: true,
@@ -325,13 +328,27 @@ extension on _ContainerPageState {
     }
   }
 
+  String _wrapContainerHost(String cmd) {
+    final containerHost = Stores.container.fetch(
+      widget.args.spi.id,
+      _containerState.type,
+    );
+    if (containerHost?.isNotEmpty ?? false) {
+      final hostVariable = _containerState.type == ContainerType.podman
+          ? 'CONTAINER_HOST'
+          : 'DOCKER_HOST';
+      return 'export $hostVariable=${shellSingleQuote(containerHost!)} && $cmd';
+    }
+    return cmd;
+  }
+
   void _openMergedLogs(String project, String? workingDir) {
+    if (workingDir == null || workingDir.isEmpty) return;
     final runtime = _containerState.type.name;
     final projectQuoted = shellSingleQuote(project);
     final cmd = '$runtime compose -p $projectQuoted logs --follow --tail 300';
-    final initCmd = (workingDir == null || workingDir.isEmpty)
-        ? cmd
-        : 'cd ${shellSingleQuote(workingDir)} && $cmd';
+    final initCmd =
+        _wrapContainerHost('cd ${shellSingleQuote(workingDir)} && $cmd');
     SSHPage.route.go(
       context,
       SshPageArgs(spi: widget.args.spi, initCmd: initCmd),

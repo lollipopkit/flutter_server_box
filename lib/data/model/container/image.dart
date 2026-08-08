@@ -140,11 +140,16 @@ final class DockerImg implements ContainerImg {
       final String a => a,
       final Object? a => a.toString(),
     };
-    final repo = switch (json['Repository'] ?? json['Names']) {
-      final String a => a,
-      final List a => a.firstOrNull.toString(),
-      final Object? a => a.toString(),
-    };
+    final repo = _firstNonEmpty([
+      switch (json['Repository']) {
+        final String a => _nonEmptyOrNull(a),
+        final Object? a => _nonEmptyOrNull(a?.toString()),
+      },
+      switch (json['Names']) {
+        final List a => _nonEmptyOrNull(a.firstOrNull?.toString()),
+        final Object? a => _nonEmptyOrNull(a?.toString()),
+      },
+    ]);
     final size = switch (json['Size']) {
       final String a => a,
       final int a => a.bytes2Str,
@@ -174,6 +179,18 @@ String? _asString(dynamic val) {
   if (val == null) return null;
   if (val is String) return val;
   return val.toString();
+}
+
+String? _nonEmptyOrNull(String? val) {
+  if (val == null || val.trim().isEmpty) return null;
+  return val.trim();
+}
+
+String _firstNonEmpty(List<String?> candidates) {
+  for (final c in candidates) {
+    if (c != null && c.isNotEmpty) return c;
+  }
+  return '<none>';
 }
 
 int? _asInt(dynamic val) {
