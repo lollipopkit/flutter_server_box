@@ -35,11 +35,4 @@ enum _PruneTypes {
     _PruneTypes.volumes => Icons.storage_outlined,
     _PruneTypes.unusedData => Icons.cleaning_services_outlined,
   };
-
-  String? get tip {
-    return switch (this) {
-      _PruneTypes.unusedData => l10n.dockerPruneTip,
-      _ => null,
-    };
-  }
 }

@@ -36,6 +36,29 @@ String? buildContainerBulkCmd(String action, Iterable<String> ids) {
   return '$action $args';
 }
 
+/// Build a non-interactive image prune command.
+///
+/// Without [allUnused], only dangling images are removed. `-f` is always
+/// included because an interactive confirmation cannot be answered reliably
+/// through the remote execution flow.
+String buildContainerImagePruneCmd({bool allUnused = false}) {
+  final flags = [if (allUnused) '-a', '-f'].join(' ');
+  return 'image prune $flags';
+}
+
+/// Build a non-interactive system prune command with an explicit scope.
+String buildContainerSystemPruneCmd({
+  bool allUnusedImages = false,
+  bool includeVolumes = false,
+}) {
+  final flags = [
+    if (allUnusedImages) '-a',
+    if (includeVolumes) '--volumes',
+    '-f',
+  ].join(' ');
+  return 'system prune $flags';
+}
+
 @freezed
 abstract class ContainerState with _$ContainerState {
   const factory ContainerState({
@@ -413,10 +436,8 @@ class ContainerNotifier extends _$ContainerNotifier {
     return await run(cmd);
   }
 
-  Future<ContainerErr?> pruneImages({bool all = true}) async {
-    final cmd = 'image prune${all ? " -a" : ""} -f';
-    return await run(cmd);
-  }
+  Future<ContainerErr?> pruneImages({bool allUnused = false}) async =>
+      await run(buildContainerImagePruneCmd(allUnused: allUnused));
 
   Future<ContainerErr?> pruneContainers() async {
     return await run('container prune -f');
@@ -426,9 +447,15 @@ class ContainerNotifier extends _$ContainerNotifier {
     return await run('volume prune -f');
   }
 
-  Future<ContainerErr?> pruneSystem() async {
-    return await run('system prune -a -f --volumes');
-  }
+  Future<ContainerErr?> pruneSystem({
+    bool allUnusedImages = false,
+    bool includeVolumes = false,
+  }) async => await run(
+    buildContainerSystemPruneCmd(
+      allUnusedImages: allUnusedImages,
+      includeVolumes: includeVolumes,
+    ),
+  );
 
   Future<ContainerErr?> run(String cmd) async {
     if (client == null) {

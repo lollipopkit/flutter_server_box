@@ -411,6 +411,31 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pruneDanglingImages => 'Nettoyer les images fantômes';
 
   @override
+  String get pruneImages => 'Nettoyer les images';
+
+  @override
+  String get unusedTaggedImages => 'Étiquetées inutilisées';
+
+  @override
+  String get pruneDanglingImagesTip =>
+      'Supprime uniquement les images fantômes (couches sans étiquette).';
+
+  @override
+  String get pruneUnusedImagesTip =>
+      'Supprime aussi les images étiquetées utilisées par aucun conteneur.';
+
+  @override
+  String get includeUnusedVolumesTip =>
+      'Supprime aussi les volumes utilisés par aucun conteneur.';
+
+  @override
+  String get pruneCommandPreview => 'Aperçu de la commande';
+
+  @override
+  String get pruneForceSshTip =>
+      '-f ignore la confirmation interactive et reste toujours activé via SSH.';
+
+  @override
   String get pruneVolumes => 'Nettoyer les volumes';
 
   @override

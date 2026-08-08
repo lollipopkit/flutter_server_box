@@ -409,6 +409,31 @@ class AppLocalizationsPt extends AppLocalizations {
   String get pruneDanglingImages => 'Limpar imagens sem referência';
 
   @override
+  String get pruneImages => 'Limpar imagens';
+
+  @override
+  String get unusedTaggedImages => 'Etiquetadas não utilizadas';
+
+  @override
+  String get pruneDanglingImagesTip =>
+      'Remove apenas imagens sem referência (camadas sem etiqueta).';
+
+  @override
+  String get pruneUnusedImagesTip =>
+      'Também remove imagens etiquetadas não utilizadas por nenhum contêiner.';
+
+  @override
+  String get includeUnusedVolumesTip =>
+      'Também remove volumes não utilizados por nenhum contêiner.';
+
+  @override
+  String get pruneCommandPreview => 'Pré-visualização do comando';
+
+  @override
+  String get pruneForceSshTip =>
+      '-f ignora a confirmação interativa e fica sempre ativado na execução por SSH.';
+
+  @override
   String get pruneVolumes => 'Limpar volumes';
 
   @override

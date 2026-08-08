@@ -99,37 +99,27 @@ extension on _ContainerPageState {
   }
 
   Future<void> _showImagePruneDialog() async {
+    final images = _containerState.images ?? const <ContainerImg>[];
+    final danglingCount = images.where((image) => image.isDangling).length;
+    final unusedTaggedCount = images
+        .where((image) => image.isUnused && !image.isDangling)
+        .length;
     var allUnused = false;
     await context.showRoundDialog(
-      title: l10n.image,
+      title: l10n.pruneImages,
       child: StatefulBuilder(
         builder: (_, setState) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(
-                  allUnused
-                      ? Icons.radio_button_unchecked
-                      : Icons.radio_button_checked,
-                  color: allUnused ? null : UIs.primaryColor,
-                ),
-                title: Text(l10n.pruneDanglingImages),
-                onTap: () => setState(() => allUnused = false),
+          return SingleChildScrollView(
+            child: ContainerImagePruneOptionsView(
+              danglingCount: danglingCount,
+              unusedTaggedCount: unusedTaggedCount,
+              allUnused: allUnused,
+              onAllUnusedChanged: (value) =>
+                  setState(() => allUnused = value),
+              commandPreview: _runtimePruneCommand(
+                buildContainerImagePruneCmd(allUnused: allUnused),
               ),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(
-                  allUnused
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_unchecked,
-                  color: allUnused ? UIs.primaryColor : null,
-                ),
-                title: Text(l10n.pruneUnusedImages),
-                onTap: () => setState(() => allUnused = true),
-              ),
-            ],
+            ),
           );
         },
       ),
@@ -137,12 +127,56 @@ extension on _ContainerPageState {
         onTap: () async {
           context.pop();
           await _execContainerAction(
-            () => _containerNotifier.pruneImages(all: allUnused),
+            () => _containerNotifier.pruneImages(allUnused: allUnused),
           );
         },
         red: true,
       ).toList,
     );
+  }
+
+  Future<void> _showSystemPruneDialog() async {
+    var allUnusedImages = false;
+    var includeVolumes = false;
+    await context.showRoundDialog(
+      title: l10n.pruneUnusedData,
+      child: StatefulBuilder(
+        builder: (_, setState) {
+          return SingleChildScrollView(
+            child: ContainerSystemPruneOptionsView(
+              allUnusedImages: allUnusedImages,
+              includeVolumes: includeVolumes,
+              onAllUnusedImagesChanged: (value) =>
+                  setState(() => allUnusedImages = value),
+              onIncludeVolumesChanged: (value) =>
+                  setState(() => includeVolumes = value),
+              commandPreview: _runtimePruneCommand(
+                buildContainerSystemPruneCmd(
+                  allUnusedImages: allUnusedImages,
+                  includeVolumes: includeVolumes,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+      actions: Btn.ok(
+        onTap: () async {
+          context.pop();
+          await _execContainerAction(
+            () => _containerNotifier.pruneSystem(
+              allUnusedImages: allUnusedImages,
+              includeVolumes: includeVolumes,
+            ),
+          );
+        },
+        red: true,
+      ).toList,
+    );
+  }
+
+  String _runtimePruneCommand(String command) {
+    return '${_containerState.type.name} $command';
   }
 
   Future<void> _showAddCmdPreview(String cmd) async {

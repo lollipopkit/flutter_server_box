@@ -409,6 +409,31 @@ class AppLocalizationsId extends AppLocalizations {
   String get pruneDanglingImages => 'Bersihkan gambar menggantung';
 
   @override
+  String get pruneImages => 'Bersihkan gambar';
+
+  @override
+  String get unusedTaggedImages => 'Bertag tidak digunakan';
+
+  @override
+  String get pruneDanglingImagesTip =>
+      'Hanya hapus gambar menggantung (lapisan tanpa tag).';
+
+  @override
+  String get pruneUnusedImagesTip =>
+      'Juga hapus gambar bertag yang tidak digunakan kontainer mana pun.';
+
+  @override
+  String get includeUnusedVolumesTip =>
+      'Juga hapus volume yang tidak digunakan kontainer mana pun.';
+
+  @override
+  String get pruneCommandPreview => 'Pratinjau perintah';
+
+  @override
+  String get pruneForceSshTip =>
+      '-f melewati konfirmasi interaktif dan selalu aktif untuk eksekusi SSH.';
+
+  @override
   String get pruneVolumes => 'Bersihkan volume';
 
   @override

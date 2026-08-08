@@ -834,6 +834,48 @@ abstract class AppLocalizations {
   /// **'Prune dangling images'**
   String get pruneDanglingImages;
 
+  /// No description provided for @pruneImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Prune images'**
+  String get pruneImages;
+
+  /// No description provided for @unusedTaggedImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Unused tagged'**
+  String get unusedTaggedImages;
+
+  /// No description provided for @pruneDanglingImagesTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Only remove dangling images (untagged layers).'**
+  String get pruneDanglingImagesTip;
+
+  /// No description provided for @pruneUnusedImagesTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Also remove tagged images not used by any container.'**
+  String get pruneUnusedImagesTip;
+
+  /// No description provided for @includeUnusedVolumesTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Also remove volumes not used by any container.'**
+  String get includeUnusedVolumesTip;
+
+  /// No description provided for @pruneCommandPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Command preview'**
+  String get pruneCommandPreview;
+
+  /// No description provided for @pruneForceSshTip.
+  ///
+  /// In en, this message translates to:
+  /// **'-f skips the interactive prompt and is always enabled for SSH execution.'**
+  String get pruneForceSshTip;
+
   /// No description provided for @pruneVolumes.
   ///
   /// In en, this message translates to:

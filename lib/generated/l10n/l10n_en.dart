@@ -408,6 +408,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pruneDanglingImages => 'Prune dangling images';
 
   @override
+  String get pruneImages => 'Prune images';
+
+  @override
+  String get unusedTaggedImages => 'Unused tagged';
+
+  @override
+  String get pruneDanglingImagesTip =>
+      'Only remove dangling images (untagged layers).';
+
+  @override
+  String get pruneUnusedImagesTip =>
+      'Also remove tagged images not used by any container.';
+
+  @override
+  String get includeUnusedVolumesTip =>
+      'Also remove volumes not used by any container.';
+
+  @override
+  String get pruneCommandPreview => 'Command preview';
+
+  @override
+  String get pruneForceSshTip =>
+      '-f skips the interactive prompt and is always enabled for SSH execution.';
+
+  @override
   String get pruneVolumes => 'Prune volumes';
 
   @override

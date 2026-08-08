@@ -6,6 +6,7 @@ import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
+import 'package:server_box/data/provider/container.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/container/resource_views.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
@@ -55,6 +56,52 @@ void main() {
         height: 32,
         child: const Icon(Icons.more_vert),
       ),
+    );
+  }
+
+  Widget imagePruneOptions({
+    ContainerType type = ContainerType.docker,
+    int danglingCount = 2,
+    int unusedTaggedCount = 1,
+  }) {
+    var allUnused = false;
+    return StatefulBuilder(
+      builder: (_, setState) {
+        return ContainerImagePruneOptionsView(
+          danglingCount: danglingCount,
+          unusedTaggedCount: unusedTaggedCount,
+          allUnused: allUnused,
+          onAllUnusedChanged: (value) => setState(() => allUnused = value),
+          commandPreview:
+              '${type.name} '
+              '${buildContainerImagePruneCmd(allUnused: allUnused)}',
+        );
+      },
+    );
+  }
+
+  Widget systemPruneOptions({
+    ContainerType type = ContainerType.docker,
+  }) {
+    var allUnusedImages = false;
+    var includeVolumes = false;
+    return StatefulBuilder(
+      builder: (_, setState) {
+        return ContainerSystemPruneOptionsView(
+          allUnusedImages: allUnusedImages,
+          includeVolumes: includeVolumes,
+          onAllUnusedImagesChanged: (value) =>
+              setState(() => allUnusedImages = value),
+          onIncludeVolumesChanged: (value) =>
+              setState(() => includeVolumes = value),
+          commandPreview:
+              '${type.name} '
+              '${buildContainerSystemPruneCmd(
+                allUnusedImages: allUnusedImages,
+                includeVolumes: includeVolumes,
+              )}',
+        );
+      },
     );
   }
 
@@ -385,6 +432,59 @@ void main() {
     );
     await tester.tap(imageAction);
     expect(imagePrunes, 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('image prune options show counts and update command at 390px', (
+    tester,
+  ) async {
+    await _pumpAt(
+      tester,
+      width: 390,
+      child: SingleChildScrollView(child: imagePruneOptions()),
+    );
+
+    expect(find.text('2 Dangling'), findsOneWidget);
+    expect(find.text('1 Unused tagged'), findsOneWidget);
+    expect(find.text('docker image prune -f'), findsOneWidget);
+    expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey('image-prune-all-unused-option')),
+    );
+    await tester.pump();
+
+    expect(find.text('docker image prune -a -f'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('system prune switches update a Podman command without overflow', (
+    tester,
+  ) async {
+    await _pumpAt(
+      tester,
+      width: 390,
+      child: SingleChildScrollView(
+        child: systemPruneOptions(type: ContainerType.podman),
+      ),
+    );
+
+    expect(find.text('podman system prune -f'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey('system-prune-all-images-switch')),
+    );
+    await tester.pump();
+    expect(find.text('podman system prune -a -f'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey('system-prune-volumes-switch')),
+    );
+    await tester.pump();
+    expect(
+      find.text('podman system prune -a --volumes -f'),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 }

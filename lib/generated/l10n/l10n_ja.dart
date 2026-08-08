@@ -398,6 +398,27 @@ class AppLocalizationsJa extends AppLocalizations {
   String get pruneDanglingImages => '未タグイメージをクリーンアップ';
 
   @override
+  String get pruneImages => 'イメージをクリーンアップ';
+
+  @override
+  String get unusedTaggedImages => '未使用タグ付き';
+
+  @override
+  String get pruneDanglingImagesTip => '未タグのダングリングイメージのみを削除します。';
+
+  @override
+  String get pruneUnusedImagesTip => 'どのコンテナからも使用されていないタグ付きイメージも削除します。';
+
+  @override
+  String get includeUnusedVolumesTip => 'どのコンテナからも使用されていないボリュームも削除します。';
+
+  @override
+  String get pruneCommandPreview => 'コマンドプレビュー';
+
+  @override
+  String get pruneForceSshTip => '-f は対話確認を省略し、SSH 実行では常に有効になります。';
+
+  @override
   String get pruneVolumes => 'ボリュームをクリーンアップ';
 
   @override

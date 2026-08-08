@@ -390,6 +390,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pruneDanglingImages => '清理悬空镜像';
 
   @override
+  String get pruneImages => '修剪镜像';
+
+  @override
+  String get unusedTaggedImages => '未使用标记';
+
+  @override
+  String get pruneDanglingImagesTip => '仅移除悬空镜像（未标记的镜像层）。';
+
+  @override
+  String get pruneUnusedImagesTip => '同时移除未被任何容器使用的已标记镜像。';
+
+  @override
+  String get includeUnusedVolumesTip => '同时移除未被任何容器使用的卷。';
+
+  @override
+  String get pruneCommandPreview => '命令预览';
+
+  @override
+  String get pruneForceSshTip => '远程执行始终启用 -f，以跳过无法交互的确认提示。';
+
+  @override
   String get pruneVolumes => '修剪卷';
 
   @override
@@ -1390,6 +1411,27 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pruneDanglingImages => '清理懸空映像檔';
+
+  @override
+  String get pruneImages => '修剪映像檔';
+
+  @override
+  String get unusedTaggedImages => '未使用標記';
+
+  @override
+  String get pruneDanglingImagesTip => '僅移除懸空映像檔（未標記的映像層）。';
+
+  @override
+  String get pruneUnusedImagesTip => '同時移除未被任何容器使用的已標記映像檔。';
+
+  @override
+  String get includeUnusedVolumesTip => '同時移除未被任何容器使用的卷。';
+
+  @override
+  String get pruneCommandPreview => '命令預覽';
+
+  @override
+  String get pruneForceSshTip => '遠端執行始終啟用 -f，以略過無法互動的確認提示。';
 
   @override
   String get pruneVolumes => '修剪卷';

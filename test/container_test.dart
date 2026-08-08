@@ -28,6 +28,33 @@ void main() {
     expect(buildContainerBulkCmd('start', []), null);
   });
 
+  test('buildContainerImagePruneCmd keeps remote execution non-interactive', () {
+    expect(buildContainerImagePruneCmd(), 'image prune -f');
+    expect(
+      buildContainerImagePruneCmd(allUnused: true),
+      'image prune -a -f',
+    );
+  });
+
+  test('buildContainerSystemPruneCmd reflects each optional scope', () {
+    expect(buildContainerSystemPruneCmd(), 'system prune -f');
+    expect(
+      buildContainerSystemPruneCmd(allUnusedImages: true),
+      'system prune -a -f',
+    );
+    expect(
+      buildContainerSystemPruneCmd(includeVolumes: true),
+      'system prune --volumes -f',
+    );
+    expect(
+      buildContainerSystemPruneCmd(
+        allUnusedImages: true,
+        includeVolumes: true,
+      ),
+      'system prune -a --volumes -f',
+    );
+  });
+
   test('docker ps parse', () {
     const raw = '''
 CONTAINER ID\tSTATUS\tNAMES\tIMAGE

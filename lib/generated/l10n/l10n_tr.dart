@@ -410,6 +410,31 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pruneDanglingImages => 'Askıdaki görüntüleri temizle';
 
   @override
+  String get pruneImages => 'Görüntüleri temizle';
+
+  @override
+  String get unusedTaggedImages => 'Kullanılmayan etiketliler';
+
+  @override
+  String get pruneDanglingImagesTip =>
+      'Yalnızca askıdaki görüntüleri (etiketsiz katmanları) kaldırır.';
+
+  @override
+  String get pruneUnusedImagesTip =>
+      'Hiçbir kapsayıcı tarafından kullanılmayan etiketli görüntüleri de kaldırır.';
+
+  @override
+  String get includeUnusedVolumesTip =>
+      'Hiçbir kapsayıcı tarafından kullanılmayan birimleri de kaldırır.';
+
+  @override
+  String get pruneCommandPreview => 'Komut önizlemesi';
+
+  @override
+  String get pruneForceSshTip =>
+      '-f etkileşimli onayı atlar ve SSH yürütmesinde her zaman etkindir.';
+
+  @override
   String get pruneVolumes => 'Birimleri temizle';
 
   @override

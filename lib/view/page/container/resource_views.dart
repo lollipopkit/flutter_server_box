@@ -146,6 +146,215 @@ class ContainerImagesView extends StatelessWidget {
   }
 }
 
+/// Configures the scope of an image prune command.
+class ContainerImagePruneOptionsView extends StatelessWidget {
+  final int danglingCount;
+  final int unusedTaggedCount;
+  final bool allUnused;
+  final ValueChanged<bool> onAllUnusedChanged;
+  final String commandPreview;
+
+  const ContainerImagePruneOptionsView({
+    required this.danglingCount,
+    required this.unusedTaggedCount,
+    required this.allUnused,
+    required this.onAllUnusedChanged,
+    required this.commandPreview,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.theme.colorScheme;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Wrap(
+          spacing: 7,
+          runSpacing: 7,
+          children: [
+            _PruneCountBadge(
+              key: const ValueKey('image-prune-dangling-count'),
+              label: context.l10n.dangling,
+              count: danglingCount,
+            ),
+            _PruneCountBadge(
+              key: const ValueKey('image-prune-unused-tagged-count'),
+              label: context.l10n.unusedTaggedImages,
+              count: unusedTaggedCount,
+            ),
+          ],
+        ),
+        UIs.height7,
+        _PruneScopeTile(
+          key: const ValueKey('image-prune-dangling-option'),
+          selected: !allUnused,
+          title: context.l10n.pruneDanglingImages,
+          subtitle: context.l10n.pruneDanglingImagesTip,
+          onTap: () => onAllUnusedChanged(false),
+        ),
+        _PruneScopeTile(
+          key: const ValueKey('image-prune-all-unused-option'),
+          selected: allUnused,
+          title: context.l10n.pruneUnusedImages,
+          subtitle: context.l10n.pruneUnusedImagesTip,
+          onTap: () => onAllUnusedChanged(true),
+        ),
+        UIs.height7,
+        _PruneCommandPreview(command: commandPreview),
+        UIs.height7,
+        Text(
+          context.l10n.pruneForceSshTip,
+          style: UIs.text11.copyWith(color: scheme.onSurfaceVariant),
+        ),
+      ],
+    );
+  }
+}
+
+/// Configures the optional scope of a system prune command.
+class ContainerSystemPruneOptionsView extends StatelessWidget {
+  final bool allUnusedImages;
+  final bool includeVolumes;
+  final ValueChanged<bool> onAllUnusedImagesChanged;
+  final ValueChanged<bool> onIncludeVolumesChanged;
+  final String commandPreview;
+
+  const ContainerSystemPruneOptionsView({
+    required this.allUnusedImages,
+    required this.includeVolumes,
+    required this.onAllUnusedImagesChanged,
+    required this.onIncludeVolumesChanged,
+    required this.commandPreview,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(context.l10n.dockerPruneTip, style: UIs.text13Grey),
+        UIs.height7,
+        SwitchListTile(
+          key: const ValueKey('system-prune-all-images-switch'),
+          contentPadding: EdgeInsets.zero,
+          title: Text('${context.l10n.pruneUnusedImages} (-a)'),
+          subtitle: Text(context.l10n.pruneUnusedImagesTip),
+          value: allUnusedImages,
+          onChanged: onAllUnusedImagesChanged,
+        ),
+        SwitchListTile(
+          key: const ValueKey('system-prune-volumes-switch'),
+          contentPadding: EdgeInsets.zero,
+          title: Text('${context.l10n.pruneVolumes} (--volumes)'),
+          subtitle: Text(context.l10n.includeUnusedVolumesTip),
+          value: includeVolumes,
+          onChanged: onIncludeVolumesChanged,
+        ),
+        UIs.height7,
+        _PruneCommandPreview(command: commandPreview),
+        UIs.height7,
+        Text(context.l10n.pruneForceSshTip, style: UIs.text11Grey),
+      ],
+    );
+  }
+}
+
+class _PruneScopeTile extends StatelessWidget {
+  final bool selected;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _PruneScopeTile({
+    required this.selected,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.theme.colorScheme;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(
+        selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+        color: selected ? scheme.primary : scheme.onSurfaceVariant,
+      ),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      onTap: onTap,
+    );
+  }
+}
+
+class _PruneCountBadge extends StatelessWidget {
+  final String label;
+  final int count;
+
+  const _PruneCountBadge({
+    required this.label,
+    required this.count,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '$count $label',
+        style: UIs.text11.copyWith(color: scheme.onSurfaceVariant),
+      ),
+    );
+  }
+}
+
+class _PruneCommandPreview extends StatelessWidget {
+  final String command;
+
+  const _PruneCommandPreview({required this.command});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.theme.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(context.l10n.pruneCommandPreview, style: UIs.text13Grey),
+        UIs.height7,
+        Container(
+          key: const ValueKey('prune-command-preview'),
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainerLowest,
+            border: Border.all(color: scheme.outlineVariant),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: SelectableText(
+            command,
+            style: UIs.text13.copyWith(
+              color: scheme.onSurface,
+              fontFamily: 'monospace',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _ResourceList extends StatelessWidget {
   final List<Widget> children;
 

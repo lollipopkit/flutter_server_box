@@ -352,14 +352,17 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
         key: ValueKey('container-setting-prune-${type.name}'),
         leading: Icon(type.icon),
         onTap: () async {
-          await _showPruneDialog(
-            title: title,
-            message: type.tip,
-            onConfirm: switch (type) {
-              _PruneTypes.volumes => containerNotifier.pruneVolumes,
-              _PruneTypes.unusedData => containerNotifier.pruneSystem,
-            },
-          );
+          switch (type) {
+            case _PruneTypes.volumes:
+              await _showPruneDialog(
+                title: title,
+                onConfirm: containerNotifier.pruneVolumes,
+              );
+              break;
+            case _PruneTypes.unusedData:
+              await _showSystemPruneDialog();
+              break;
+          }
         },
         title: Text(title),
         trailing: const Icon(Icons.keyboard_arrow_right),

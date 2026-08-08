@@ -410,6 +410,31 @@ class AppLocalizationsRu extends AppLocalizations {
   String get pruneDanglingImages => 'Очистить висячие образы';
 
   @override
+  String get pruneImages => 'Очистить образы';
+
+  @override
+  String get unusedTaggedImages => 'Неиспользуемые с тегами';
+
+  @override
+  String get pruneDanglingImagesTip =>
+      'Удаляет только висячие образы (слои без тегов).';
+
+  @override
+  String get pruneUnusedImagesTip =>
+      'Также удаляет образы с тегами, не используемые контейнерами.';
+
+  @override
+  String get includeUnusedVolumesTip =>
+      'Также удаляет тома, не используемые контейнерами.';
+
+  @override
+  String get pruneCommandPreview => 'Предпросмотр команды';
+
+  @override
+  String get pruneForceSshTip =>
+      '-f пропускает интерактивное подтверждение и всегда включён при выполнении через SSH.';
+
+  @override
   String get pruneVolumes => 'Очистить тома';
 
   @override
