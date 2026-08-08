@@ -309,5 +309,7 @@
   "serverHistory": "서버 기록",
   "clearHistory": "기록 지우기",
   "portForwardBetaTitle": "포트 포워딩 (Beta)",
+  "containerSegmentsMismatch": "컨테이너 응답 세그먼트 수가 예상과 다릅니다: {count}",
+  "containerOperationInProgress": "다른 컨테이너 작업이 이미 진행 중입니다",
   "systemd": "Systemd"
 }

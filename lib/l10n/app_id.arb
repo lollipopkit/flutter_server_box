@@ -234,5 +234,7 @@
   "podmanDockerEmulationDetected": "Emulasi Podman Docker terdeteksi. Silakan beralih ke Podman di pengaturan.",
   "sponsor": "Sponsor",
   "portForwardBetaTitle": "Port Forward (Beta)",
+  "containerSegmentsMismatch": "Jumlah segmen respons kontainer tidak sesuai: {count}",
+  "containerOperationInProgress": "Operasi kontainer lain sedang berlangsung",
   "systemd": "Systemd"
 }

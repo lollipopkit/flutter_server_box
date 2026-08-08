@@ -448,7 +448,7 @@ extension _ContainerPageActions on _ContainerPageState {
         if (project == null) return;
         final workingDir = _mostCommonWorkingDir(groupItems);
         if (workingDir == null) return;
-        _openMergedLogs(project, workingDir);
+        unawaited(_openMergedLogs(project, workingDir));
         break;
     }
   }

@@ -234,5 +234,7 @@
   "podmanDockerEmulationDetected": "Emulação Podman Docker detectada. Por favor, alterne para Podman nas configurações.",
   "sponsor": "Patrocinador",
   "portForwardBetaTitle": "Port Forward (Beta)",
+  "containerSegmentsMismatch": "Número inesperado de segmentos na resposta do contêiner: {count}",
+  "containerOperationInProgress": "Outra operação de contêiner já está em andamento",
   "systemd": "Systemd"
 }

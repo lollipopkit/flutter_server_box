@@ -344,6 +344,50 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('negative container stats are omitted', (tester) async {
+    final item = DockerPs(
+      id: 'negative-stats',
+      names: 'worker',
+      image: 'example/worker:latest',
+      state: 'Up 4 minutes',
+    )
+      ..cpu = '-5%'
+      ..mem = '-1 MiB / 2 GiB'
+      ..net = '↓ -1 MiB / ↑ 2 MiB'
+      ..disk = 'Read -1 MiB / Write 2 MiB';
+
+    await _pumpAt(tester, width: 390, child: containerView([item]));
+
+    expect(
+      find.byKey(
+        const ValueKey('container-resource-panel-negative-stats'),
+      ),
+      findsNothing,
+    );
+    expect(find.byType(PercentCircle), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('resource percentages above 100 are clamped consistently', (
+    tester,
+  ) async {
+    final item = DockerPs(
+      id: 'clamped-stats',
+      names: 'worker',
+      image: 'example/worker:latest',
+      state: 'Up 4 minutes',
+    )
+      ..cpu = '150%'
+      ..mem = '3 GiB / 2 GiB';
+
+    await _pumpAt(tester, width: 390, child: containerView([item]));
+
+    expect(find.text('100.0%'), findsNWidgets(2));
+    expect(find.text('150.0%'), findsNothing);
+    expect(find.byType(PercentCircle), findsNWidgets(2));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('image rows switch from compact at 390px to wide at 900px', (
     tester,
   ) async {

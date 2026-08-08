@@ -234,5 +234,7 @@
   "podmanDockerEmulationDetected": "Podman Docker emülasyonu tespit edildi. Lütfen ayarlarda Podman'a geçin.",
   "sponsor": "Sponsor",
   "portForwardBetaTitle": "Port Forward (Beta)",
+  "containerSegmentsMismatch": "Konteyner yanıtındaki beklenmeyen bölüm sayısı: {count}",
+  "containerOperationInProgress": "Başka bir konteyner işlemi zaten devam ediyor",
   "systemd": "Systemd"
 }

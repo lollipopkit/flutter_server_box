@@ -235,5 +235,7 @@
   "podmanDockerEmulationDetected": "Виявлено емуляцію Podman Docker. Будь ласка, переключіться на Podman у налаштуваннях.",
   "sponsor": "Спонсор",
   "portForwardBetaTitle": "Port Forward (Beta)",
+  "containerSegmentsMismatch": "Неочікувана кількість сегментів у відповіді контейнера: {count}",
+  "containerOperationInProgress": "Інша операція з контейнером уже виконується",
   "systemd": "Systemd"
 }

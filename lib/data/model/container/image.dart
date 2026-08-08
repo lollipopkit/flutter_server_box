@@ -7,6 +7,7 @@ abstract final class ContainerImg {
   final String? repository = null;
   final String? tag = null;
   final String? id = null;
+  final String? digest = null;
   String? get sizeMB;
   int? get containersCount;
 
@@ -68,18 +69,44 @@ Set<String> _imageMarkers(ContainerImg image) {
   final tag = image.tag?.trim();
   final hasTag = tag != null && tag.isNotEmpty && tag != '<none>';
   _addRepositoryMarkers(markers, repository, hasTag ? tag : null);
+  _addDigestMarkers(markers, repository, image.digest);
   return markers;
 }
 
 void _addRuntimeImageReference(Set<String> markers, String? raw) {
   final value = raw?.trim();
   if (value == null || value.isEmpty) return;
-  final withoutDigest = value.split('@').first.trim();
-  if (withoutDigest.startsWith('sha256:')) {
-    _addImageId(markers, withoutDigest);
+  final digestSeparator = value.lastIndexOf('@');
+  if (digestSeparator > 0) {
+    final repository = value.substring(0, digestSeparator).trim();
+    final digest = value.substring(digestSeparator + 1).trim();
+    _addDigestMarkers(markers, repository, digest);
+    _addImageId(markers, digest);
+    return;
   }
-  final reference = _splitImageReference(withoutDigest);
+  if (value.startsWith('sha256:')) {
+    _addImageId(markers, value);
+    return;
+  }
+  final reference = _splitImageReference(value);
   _addRepositoryMarkers(markers, reference.repository, reference.tag);
+}
+
+void _addDigestMarkers(
+  Set<String> markers,
+  String repository,
+  String? rawDigest,
+) {
+  final digest = rawDigest?.trim();
+  if (digest == null || digest.isEmpty || digest == '<none>') return;
+  final aliases = <String>{repository};
+  const dockerLibrary = 'docker.io/library/';
+  if (repository.startsWith(dockerLibrary)) {
+    aliases.add(repository.substring(dockerLibrary.length));
+  }
+  for (final alias in aliases) {
+    markers.add('digest:$alias@$digest');
+  }
 }
 
 bool _addImageId(Set<String> markers, String? raw) {
@@ -128,6 +155,8 @@ final class PodmanImg implements ContainerImg {
   final String? tag;
   @override
   final String? id;
+  @override
+  final String? digest;
   final int? created;
   final int? size;
   final int? containers;
@@ -136,6 +165,7 @@ final class PodmanImg implements ContainerImg {
     this.repository,
     this.tag,
     this.id,
+    this.digest,
     this.created,
     this.size,
     this.containers,
@@ -189,6 +219,7 @@ final class PodmanImg implements ContainerImg {
         parsedReference?.tag,
       ]),
       id: _asString(json['Id'] ?? json['ID']),
+      digest: _asString(json['Digest'] ?? json['digest']),
       created: _asInt(json['Created']),
       size: _asInt(json['Size']),
       containers: _asInt(json['Containers']),
@@ -199,6 +230,7 @@ final class PodmanImg implements ContainerImg {
     'repository': repository,
     'tag': tag,
     'Id': id,
+    'Digest': digest,
     'Created': created,
     'Size': size,
     'Containers': containers,
@@ -211,6 +243,8 @@ final class DockerImg implements ContainerImg {
   @override
   final String id;
   @override
+  final String? digest;
+  @override
   final String repository;
   final String size;
   @override
@@ -220,6 +254,7 @@ final class DockerImg implements ContainerImg {
     required this.containers,
     required this.createdAt,
     required this.id,
+    this.digest,
     required this.repository,
     required this.size,
     required this.tag,
@@ -278,6 +313,7 @@ final class DockerImg implements ContainerImg {
       containers: containers,
       createdAt: json['CreatedAt'],
       id: json['ID'] ?? json['Id'] ?? '',
+      digest: _asString(json['Digest']),
       repository: repo,
       size: size,
       tag: json['Tag'],
@@ -288,6 +324,7 @@ final class DockerImg implements ContainerImg {
     'Containers': containers,
     'CreatedAt': createdAt,
     'ID': id,
+    'Digest': digest,
     'Repository': repository,
     'Size': size,
     'Tag': tag,

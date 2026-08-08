@@ -1108,12 +1108,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String containerSegmentsMismatch(int count) {
-    return 'Unexpected container response segment count: $count';
+    return 'Número inesperado de segmentos na resposta do contêiner: $count';
   }
 
   @override
   String get containerOperationInProgress =>
-      'Another container operation is already in progress';
+      'Outra operação de contêiner já está em andamento';
 
   @override
   String get systemd => 'Systemd';

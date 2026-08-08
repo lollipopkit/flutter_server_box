@@ -90,13 +90,20 @@ final class PodmanPs implements ContainerPs {
       netOut = _asInt(stats['NetOutput']);
     } else if (majorVersionNum >= 5) {
       final network = stats['Network'];
+      var hasNestedNetworkCounters = false;
       if (network is Map) {
         for (final entry in network.entries) {
           final interface = entry.value;
           if (interface is! Map) continue;
+          hasNestedNetworkCounters |= interface.containsKey('RxBytes') ||
+              interface.containsKey('TxBytes');
           netIn += _asInt(interface['RxBytes']);
           netOut += _asInt(interface['TxBytes']);
         }
+      }
+      if (!hasNestedNetworkCounters) {
+        netIn = _asInt(stats['NetInput']);
+        netOut = _asInt(stats['NetOutput']);
       }
     }
     net = '↓ ${netIn.bytes2Str} / ↑ ${netOut.bytes2Str}';

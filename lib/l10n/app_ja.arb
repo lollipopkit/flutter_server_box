@@ -234,5 +234,7 @@
   "podmanDockerEmulationDetected": "Podman Docker エミュレーションが検出されました。設定で Podman に切り替えてください。",
   "sponsor": "赞助",
   "portForwardBetaTitle": "Port Forward (Beta)",
+  "containerSegmentsMismatch": "コンテナ応答のセグメント数が想定外です: {count}",
+  "containerOperationInProgress": "別のコンテナ操作がすでに実行中です",
   "systemd": "Systemd"
 }

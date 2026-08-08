@@ -199,7 +199,7 @@ class ContainerNotifier extends _$ContainerNotifier {
   var sudoCompleter = Completer<bool>();
   String? _cachedPassword;
   var _refreshGeneration = 0;
-  ContainerRefreshTarget? _pendingRefreshTarget;
+  ({ContainerRefreshTarget target, bool isAuto})? _pendingRefresh;
 
   @override
   ContainerState build(
@@ -247,8 +247,18 @@ class ContainerNotifier extends _$ContainerNotifier {
 
   int _resetSudoProbe() {
     sudoCompleter = Completer<bool>();
-    _pendingRefreshTarget = null;
+    _pendingRefresh = null;
     return ++_refreshGeneration;
+  }
+
+  void _queueRefresh(ContainerRefreshTarget target, bool isAuto) {
+    final pending = _pendingRefresh;
+    _pendingRefresh = (
+      target: target,
+      isAuto: pending?.target == target
+          ? isAuto && pending!.isAuto
+          : isAuto,
+    );
   }
 
   bool _isStaleRefresh(int generation) {
@@ -302,7 +312,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     int? generation,
   }) async {
     if (state.isBusy || state.runLog != null) {
-      _pendingRefreshTarget = target;
+      _queueRefresh(target, isAuto);
       return;
     }
     final refreshGeneration = generation ?? _refreshGeneration;
@@ -359,9 +369,9 @@ class ContainerNotifier extends _$ContainerNotifier {
         commands,
         type,
         separator: separator,
-        sudo: needSudo,
-        password: password,
       ),
+      sudo: needSudo,
+      password: password,
     );
     int? code;
     String raw = '';
@@ -400,7 +410,7 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     if (_isStaleRefresh(refreshGeneration)) return;
     if (!context.mounted) {
-      _pendingRefreshTarget = null;
+      _pendingRefresh = null;
       state = state.copyWith(isBusy: false);
       return;
     }
@@ -416,7 +426,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
 
     /// Sudo password error (exitCode = 2)
-    if (code == 2) {
+    if (needSudo && code == 2) {
       _cachedPassword = null;
       _setRefreshError(
         target,
@@ -424,6 +434,14 @@ class ContainerNotifier extends _$ContainerNotifier {
           type: ContainerErrType.sudoPasswordIncorrect,
           message: l10n.containerSudoPasswordIncorrect,
         ),
+      );
+      await _finishRefresh(refreshGeneration);
+      return;
+    }
+    if (code != 0) {
+      _setRefreshError(
+        target,
+        ContainerErr(type: ContainerErrType.unknown, message: libL10n.fail),
       );
       await _finishRefresh(refreshGeneration);
       return;
@@ -599,10 +617,19 @@ class ContainerNotifier extends _$ContainerNotifier {
   }
 
   Future<void> _refreshPendingIfNeeded(int generation) async {
-    final target = _pendingRefreshTarget;
-    if (_isStaleRefresh(generation) || target == null || state.isBusy) return;
-    _pendingRefreshTarget = null;
-    await refresh(target, generation: generation);
+    final pending = _pendingRefresh;
+    if (_isStaleRefresh(generation) ||
+        pending == null ||
+        state.isBusy ||
+        state.runLog != null) {
+      return;
+    }
+    _pendingRefresh = null;
+    await refresh(
+      pending.target,
+      isAuto: pending.isAuto,
+      generation: generation,
+    );
   }
 
   Future<ContainerErr?> stop(String id) async =>
@@ -720,11 +747,13 @@ class ContainerNotifier extends _$ContainerNotifier {
       );
     }
     final needSudo = await sudo.future;
+    if (!ref.mounted) return null;
     String? password;
     if (needSudo) {
       password = await _getSudoPassword();
+      if (!ref.mounted) return null;
       if (password == null) {
-        state = state.copyWith(runLog: null);
+        await _finishRun();
         return ContainerErr(
           type: ContainerErrType.sudoPasswordRequired,
           message: l10n.containerSudoPasswordRequired,
@@ -732,14 +761,10 @@ class ContainerNotifier extends _$ContainerNotifier {
       }
     }
 
-    if (needSudo) {
-      cmd = _buildSudoCmd(cmd, password!);
-    }
-
     int? code;
     try {
       (code, _) = await client!.execWithPwd(
-        _wrap(cmd),
+        _wrap(cmd, sudo: needSudo, password: password),
         context: context,
         onStdout: (data, _) {
           if (ref.mounted) {
@@ -750,41 +775,69 @@ class ContainerNotifier extends _$ContainerNotifier {
       );
     } catch (e, trace) {
       Loggers.app.warning('Container command execution failed', e, trace);
-      if (ref.mounted) state = state.copyWith(runLog: null);
+      if (ref.mounted) await _finishRun();
       return ContainerErr(type: ContainerErrType.unknown, message: '$e');
     }
 
-    state = state.copyWith(runLog: null);
+    if (!ref.mounted) return null;
 
-    if (code == 2) {
+    if (needSudo && code == 2) {
       _cachedPassword = null;
+      await _finishRun();
       return ContainerErr(
         type: ContainerErrType.sudoPasswordIncorrect,
         message: l10n.containerSudoPasswordIncorrect,
       );
     }
     if (code != 0) {
+      await _finishRun();
       return ContainerErr(
         type: ContainerErrType.unknown,
         message: libL10n.fail,
       );
     }
-    if (refreshTarget != null) await refresh(refreshTarget);
+    await _finishRun(refreshTarget: refreshTarget);
     return null;
   }
 
-  /// Wrap commands with the container runtime host environment variable.
-  String _wrap(String cmd) {
-    final containerHost = Stores.container.fetch(hostId, state.type);
-    cmd = 'export LANG=en_US.UTF-8 && $cmd';
-    if (containerHost?.isNotEmpty ?? false) {
-      final hostVariable = state.type == ContainerType.podman
-          ? 'CONTAINER_HOST'
-          : 'DOCKER_HOST';
-      cmd = 'export $hostVariable=${shellSingleQuote(containerHost!)} && $cmd';
+  Future<void> _finishRun({ContainerRefreshTarget? refreshTarget}) async {
+    if (!ref.mounted) return;
+    state = state.copyWith(runLog: null);
+    if (refreshTarget != null) {
+      if (_pendingRefresh?.target == refreshTarget) {
+        _pendingRefresh = null;
+      }
+      await refresh(refreshTarget);
+    } else {
+      await _refreshPendingIfNeeded(_refreshGeneration);
     }
-    return cmd;
   }
+
+  Future<String?> prepareInteractiveCommand(
+    String cmd, {
+    ContainerRefreshTarget target = ContainerRefreshTarget.containers,
+  }) async {
+    final generation = _refreshGeneration;
+    final type = state.type;
+    final sudo = sudoCompleter;
+    if (!sudo.isCompleted) unawaited(_requiresSudo(sudo, type, target));
+    final needSudo = await sudo.future;
+    if (_isStaleRefresh(generation)) return null;
+    return _wrap(cmd, sudo: needSudo);
+  }
+
+  /// Wrap commands with the container runtime host environment variable.
+  String _wrap(
+    String cmd, {
+    bool sudo = false,
+    String? password,
+  }) => buildContainerRuntimeCommand(
+    command: cmd,
+    type: state.type,
+    containerHost: Stores.container.fetch(hostId, state.type),
+    sudo: sudo,
+    password: password,
+  );
 }
 
 const _jsonFmt = '--format "{{json .}}"';
@@ -792,6 +845,31 @@ const _jsonFmt = '--format "{{json .}}"';
 String _buildSudoCmd(String baseCmd, String password) {
   final pwdBase64 = base64Encode(utf8.encode(password));
   return 'echo "$pwdBase64" | base64 -d | sudo -S $baseCmd';
+}
+
+String buildContainerRuntimeCommand({
+  required String command,
+  required ContainerType type,
+  String? containerHost,
+  bool sudo = false,
+  String? password,
+}) {
+  final environment = <String>['LANG=en_US.UTF-8'];
+  if (containerHost?.isNotEmpty ?? false) {
+    final hostVariable = type == ContainerType.podman
+        ? 'CONTAINER_HOST'
+        : 'DOCKER_HOST';
+    environment.add('$hostVariable=${shellSingleQuote(containerHost!)}');
+  }
+  if (sudo) {
+    final privilegedCommand = 'env ${environment.join(' ')} $command';
+    if (password != null) {
+      return _buildSudoCmd(privilegedCommand, password);
+    }
+    return 'sudo -S $privilegedCommand';
+  }
+  final exports = environment.map((value) => 'export $value').join(' && ');
+  return '$exports && $command';
 }
 
 enum ContainerCmdType {
@@ -812,7 +890,7 @@ enum ContainerCmdType {
             '"{{json .}}\\t{{.Status}}"',
       },
       ContainerCmdType.stats => '${type.name} stats --no-stream $_jsonFmt',
-      ContainerCmdType.images => '${type.name} image ls $_jsonFmt',
+      ContainerCmdType.images => '${type.name} image ls --digests $_jsonFmt',
     };
 
     return baseCmd;

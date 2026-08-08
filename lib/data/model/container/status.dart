@@ -21,15 +21,15 @@ enum ContainerStatus {
 
     final lowerState = state.toLowerCase();
 
-    if (lowerState == 'running' || lowerState.startsWith('up')) {
-      return ContainerStatus.running;
-    }
     if (lowerState.contains('exited')) return ContainerStatus.exited;
     if (lowerState.contains('created')) return ContainerStatus.created;
     if (lowerState.contains('paused')) return ContainerStatus.paused;
     if (lowerState.contains('restarting')) return ContainerStatus.restarting;
     if (lowerState.contains('removing')) return ContainerStatus.removing;
     if (lowerState.contains('dead')) return ContainerStatus.dead;
+    if (lowerState == 'running' || lowerState.startsWith('up')) {
+      return ContainerStatus.running;
+    }
 
     return ContainerStatus.unknown;
   }

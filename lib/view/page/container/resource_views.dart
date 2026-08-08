@@ -1268,10 +1268,11 @@ String _statusLabel(ContainerPs item) {
 
 double? _parsePercent(String? raw) {
   if (raw == null || raw.isEmpty) return null;
-  final match = RegExp(r'(\d+(?:\.\d+)?|\.\d+)\s*%').firstMatch(raw);
+  final match = RegExp(r'^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*%')
+      .firstMatch(raw);
   final value = double.tryParse(match?.group(1) ?? '');
   if (value == null || !value.isFinite || value < 0) return null;
-  return value;
+  return value.clamp(0, 100).toDouble();
 }
 
 double? _parseUsagePercent(String? raw) {
@@ -1281,17 +1282,17 @@ double? _parseUsagePercent(String? raw) {
   final used = _parseByteSize(parts[0]);
   final total = _parseByteSize(parts[1]);
   if (used == null || total == null || total <= 0) return null;
-  return used / total * 100;
+  return (used / total * 100).clamp(0, 100).toDouble();
 }
 
 double? _parseByteSize(String raw) {
   final match = RegExp(
-    r'(\d+(?:\.\d+)?|\.\d+)\s*([kmgtpe]?i?b)?',
+    r'^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*([kmgtpe]?i?b)?',
     caseSensitive: false,
   ).firstMatch(raw);
   if (match == null) return null;
   final value = double.tryParse(match.group(1)!);
-  if (value == null || !value.isFinite) return null;
+  if (value == null || !value.isFinite || value < 0) return null;
   final unit = (match.group(2) ?? 'b').toLowerCase();
   final multiplier = switch (unit) {
     'kb' => 1000.0,
@@ -1322,10 +1323,12 @@ _MetricPair? _parseMetricPair(String? raw) {
 
 String? _extractMetricValue(String raw) {
   final match = RegExp(
-    r'(\d+(?:\.\d+)?|\.\d+)\s*[kmgtpe]?i?b',
+    r'(-?(?:\d+(?:\.\d+)?|\.\d+))\s*[kmgtpe]?i?b',
     caseSensitive: false,
   ).firstMatch(raw);
   if (match != null) {
+    final value = double.tryParse(match.group(1)!);
+    if (value == null || !value.isFinite || value < 0) return null;
     return match.group(0)!.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
   return null;

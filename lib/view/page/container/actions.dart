@@ -201,19 +201,23 @@ extension on _ContainerPageState {
         ? 'CONTAINER_HOST'
         : 'DOCKER_HOST';
     final ctrl = TextEditingController(text: host);
-    await context.showRoundDialog(
-      title: libL10n.edit,
-      child: Input(
-        maxLines: 2,
-        controller: ctrl,
-        onSubmitted: _onSaveContainerHost,
-        hint: hostVariable == 'CONTAINER_HOST'
-            ? r'$XDG_RUNTIME_DIR/podman/podman.sock'
-            : 'unix:///run/user/1000/docker.sock',
-        suggestion: false,
-      ),
-      actions: Btn.ok(onTap: () => _onSaveContainerHost(ctrl.text)).toList,
-    );
+    try {
+      await context.showRoundDialog(
+        title: libL10n.edit,
+        child: Input(
+          maxLines: 2,
+          controller: ctrl,
+          onSubmitted: _onSaveContainerHost,
+          hint: hostVariable == 'CONTAINER_HOST'
+              ? r'$XDG_RUNTIME_DIR/podman/podman.sock'
+              : 'unix:///run/user/1000/docker.sock',
+          suggestion: false,
+        ),
+        actions: Btn.ok(onTap: () => _onSaveContainerHost(ctrl.text)).toList,
+      );
+    } finally {
+      ctrl.dispose();
+    }
   }
 
   void _onSaveContainerHost(String val) {
@@ -254,11 +258,17 @@ extension on _ContainerPageState {
     switch (item) {
       case ImageMenu.pull:
         final repo = e.repository;
-        if (repo == null) {
+        final tag = e.tag;
+        if (e.isDangling ||
+            repo == null ||
+            repo.trim().isEmpty ||
+            repo == '<none>' ||
+            tag == null ||
+            tag.trim().isEmpty ||
+            tag == '<none>') {
           context.showSnackBar(libL10n.empty);
           return;
         }
-        final tag = e.tag ?? 'latest';
         final imageRef = '$repo:$tag';
         context.showRoundDialog(
           title: libL10n.attention,
@@ -342,45 +352,36 @@ extension on _ContainerPageState {
       case ContainerMenu.logs:
         final cmd =
             '${_containerState.type.name} logs -f --tail 100 ${shellSingleQuote(id)}';
+        final initCmd = await _containerNotifier.prepareInteractiveCommand(cmd);
+        if (!mounted || initCmd == null) return;
         final args = SshPageArgs(
           spi: widget.args.spi,
-          initCmd: _wrapContainerHost(cmd),
+          initCmd: initCmd,
         );
         SSHPage.route.go(context, args);
         break;
       case ContainerMenu.terminal:
         final cmd =
             '${_containerState.type.name} exec -it ${shellSingleQuote(id)} sh -c "command -v bash && exec bash || command -v ash && exec ash || exec sh"';
+        final initCmd = await _containerNotifier.prepareInteractiveCommand(cmd);
+        if (!mounted || initCmd == null) return;
         final args = SshPageArgs(
           spi: widget.args.spi,
-          initCmd: _wrapContainerHost(cmd),
+          initCmd: initCmd,
         );
         SSHPage.route.go(context, args);
         break;
     }
   }
 
-  String _wrapContainerHost(String cmd) {
-    final containerHost = Stores.container.fetch(
-      widget.args.spi.id,
-      _containerState.type,
-    );
-    if (containerHost?.isNotEmpty ?? false) {
-      final hostVariable = _containerState.type == ContainerType.podman
-          ? 'CONTAINER_HOST'
-          : 'DOCKER_HOST';
-      return 'export $hostVariable=${shellSingleQuote(containerHost!)} && $cmd';
-    }
-    return cmd;
-  }
-
-  void _openMergedLogs(String project, String? workingDir) {
+  Future<void> _openMergedLogs(String project, String? workingDir) async {
     if (workingDir == null || workingDir.isEmpty) return;
     final runtime = _containerState.type.name;
     final projectQuoted = shellSingleQuote(project);
     final cmd = '$runtime compose -p $projectQuoted logs --follow --tail 300';
-    final initCmd =
-        _wrapContainerHost('cd ${shellSingleQuote(workingDir)} && $cmd');
+    final prepared = await _containerNotifier.prepareInteractiveCommand(cmd);
+    if (!mounted || prepared == null) return;
+    final initCmd = 'cd ${shellSingleQuote(workingDir)} && $prepared';
     SSHPage.route.go(
       context,
       SshPageArgs(spi: widget.args.spi, initCmd: initCmd),

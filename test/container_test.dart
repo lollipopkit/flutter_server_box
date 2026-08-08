@@ -277,6 +277,7 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       {'state': 'Exited (0) 5 minutes ago', 'status': ContainerStatus.exited},
       {'state': 'Created', 'status': ContainerStatus.created},
       {'state': 'Paused', 'status': ContainerStatus.paused},
+      {'state': 'Up 5 minutes (Paused)', 'status': ContainerStatus.paused},
       {'state': 'Restarting', 'status': ContainerStatus.restarting},
       {'state': 'Removing', 'status': ContainerStatus.removing},
       {'state': 'Dead', 'status': ContainerStatus.dead},
@@ -341,11 +342,11 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     expect(ContainerStatus.unknown.isStopped, false);
     expect(
       ContainerMenu.items(ContainerStatus.unknown),
-      [ContainerMenu.rm, ContainerMenu.logs],
+      [ContainerMenu.start, ContainerMenu.rm, ContainerMenu.logs],
     );
     expect(
       ContainerMenu.items(ContainerStatus.paused),
-      [ContainerMenu.rm, ContainerMenu.logs],
+      [ContainerMenu.start, ContainerMenu.rm, ContainerMenu.logs],
     );
   });
 
@@ -525,6 +526,37 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
 
       expect(countUnusedTaggedImages([image], const ['0123456789ab']), null);
     });
+
+    test('matches digest-pinned references without assuming latest', () {
+      final digest = 'sha256:${List.filled(64, 'a').join()}';
+      final image = DockerImg(
+        containers: 'N/A',
+        createdAt: '',
+        id: 'bbbbbbbbbbbb',
+        digest: digest,
+        repository: 'registry.example/team/api',
+        size: '80 MB',
+        tag: 'stable',
+      );
+
+      expect(
+        countUnusedTaggedImages(
+          [image],
+          ['registry.example/team/api@$digest'],
+        ),
+        0,
+      );
+      expect(
+        countUnusedTaggedImages(
+          [image],
+          [
+            'registry.example/team/api@sha256:'
+                '${List.filled(64, 'c').join()}',
+          ],
+        ),
+        null,
+      );
+    });
   });
 
   test('Podman status text overrides the legacy exited flag', () {
@@ -569,6 +601,7 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     );
 
     expect(cmd, contains('podman image ls'));
+    expect(cmd, contains('--digests'));
     expect(cmd, isNot(contains('podman ps -a')));
     expect(cmd, isNot(contains('podman stats')));
   });
@@ -774,5 +807,34 @@ not-json
       );
       expect(podman.net, '↓ 512 B / ↑ 256 B');
     });
+
+    test('falls back to top-level network fields for Podman 5', () {
+      final podman = PodmanPs(id: 'test');
+      podman.parseStats(
+        '{"CPU":1,"AvgCPU":0,"MemLimit":1073741824,"MemUsage":1,'
+        '"NetInput":512,"NetOutput":256,"BlockInput":0,"BlockOutput":0}',
+        '5.0.0',
+      );
+      expect(podman.net, '↓ 512 B / ↑ 256 B');
+    });
+  });
+
+  test('sudo runtime command keeps the remote host inside sudo env', () {
+    final command = buildContainerRuntimeCommand(
+      command: 'docker ps',
+      type: ContainerType.docker,
+      containerHost: 'ssh://docker.example/run.sock',
+      sudo: true,
+      password: 'secret',
+    );
+
+    expect(
+      command,
+      contains(
+        'sudo -S env LANG=en_US.UTF-8 '
+        "DOCKER_HOST='ssh://docker.example/run.sock' docker ps",
+      ),
+    );
+    expect(command, isNot(contains('export DOCKER_HOST')));
   });
 }

@@ -1077,12 +1077,11 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String containerSegmentsMismatch(int count) {
-    return 'Unexpected container response segment count: $count';
+    return 'コンテナ応答のセグメント数が想定外です: $count';
   }
 
   @override
-  String get containerOperationInProgress =>
-      'Another container operation is already in progress';
+  String get containerOperationInProgress => '別のコンテナ操作がすでに実行中です';
 
   @override
   String get systemd => 'Systemd';
