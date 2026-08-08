@@ -311,24 +311,26 @@ class ContainerNotifier extends _$ContainerNotifier {
     // Parse ps
     final psRaw = ContainerCmdType.ps.find(segments);
     try {
-      final lines = psRaw.split('\n');
       if (type == ContainerType.docker) {
+        final lines = psRaw.split('\n');
         /// Due to the fetched data is not in json format, skip table header
         final headerIdx = lines.indexWhere((element) {
           return element.trimLeft().startsWith('CONTAINER ID');
         });
         if (headerIdx != -1) lines.removeAt(headerIdx);
-      }
-      lines.removeWhere((element) => element.isEmpty);
-      final items = <ContainerPs>[];
-      for (final line in lines) {
-        try {
-          items.add(ContainerPs.fromRaw(line, type));
-        } on FormatException catch (e, trace) {
-          Loggers.app.warning('Skip malformed container ps row', e, trace);
+        lines.removeWhere((element) => element.isEmpty);
+        final items = <ContainerPs>[];
+        for (final line in lines) {
+          try {
+            items.add(ContainerPs.fromRaw(line, type));
+          } on FormatException catch (e, trace) {
+            Loggers.app.warning('Skip malformed container ps row', e, trace);
+          }
         }
+        state = state.copyWith(items: items);
+      } else {
+        state = state.copyWith(items: parsePodmanPsOutput(psRaw));
       }
-      state = state.copyWith(items: items);
     } catch (e, trace) {
       if (state.error == null) {
         state = state.copyWith(
@@ -550,7 +552,11 @@ enum ContainerCmdType {
             '"{{.ID}}\\t{{.Status}}\\t{{.Names}}\\t{{.Image}}\\t'
             '{{.Label \\"com.docker.compose.project\\"}}\\t'
             '{{.Label \\"com.docker.compose.project.working_dir\\"}}"',
-        ContainerType.podman => '${type.name} ps -a $_jsonFmt',
+        ContainerType.podman =>
+          '${type.name} ps -a $_jsonFmt\n'
+          'echo $podmanPsStatusSeparator\n'
+          '${type.name} ps -a --no-trunc --format '
+          '"{{.ID}}\\t{{.Status}}"',
       },
       ContainerCmdType.stats =>
         includeStats ? '${type.name} stats --no-stream $_jsonFmt' : 'echo PASS',

@@ -713,7 +713,7 @@ class _ContainerItemRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                wide ? _buildWideHeader(context) : _buildCompactHeader(),
+                _buildHeader(context, wide: wide),
                 if (resources.isNotEmpty) ...[
                   UIs.height13,
                   Padding(
@@ -732,37 +732,24 @@ class _ContainerItemRow extends StatelessWidget {
     );
   }
 
-  Widget _buildWideHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, {required bool wide}) {
     return Row(
       children: [
         _StatusIcon(running: item.status.isRunning),
         UIs.width13,
-        Expanded(child: _ContainerIdentity(item: item, showStatus: false)),
+        Expanded(child: _ContainerIdentity(item: item)),
+        UIs.width7,
         SizedBox(
-          width: 112,
+          width: wide ? 128 : 100,
           child: Text(
             _statusLabel(item),
+            key: ValueKey('container-status-${item.id ?? item.name}'),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.end,
-            style: UIs.text11Grey,
+            style: UIs.text13Grey,
           ),
         ),
-        trailing,
-      ],
-    );
-  }
-
-  Widget _buildCompactHeader() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: _StatusIcon(running: item.status.isRunning),
-        ),
-        UIs.width13,
-        Expanded(child: _ContainerIdentity(item: item)),
         trailing,
       ],
     );
@@ -963,9 +950,8 @@ class _ResourcePairValue extends StatelessWidget {
 
 class _ContainerIdentity extends StatelessWidget {
   final ContainerPs item;
-  final bool showStatus;
 
-  const _ContainerIdentity({required this.item, this.showStatus = true});
+  const _ContainerIdentity({required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -985,15 +971,6 @@ class _ContainerIdentity extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: UIs.text13Grey,
         ),
-        if (showStatus) ...[
-          const SizedBox(height: 2),
-          Text(
-            _statusLabel(item),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: UIs.text11Grey,
-          ),
-        ],
       ],
     );
   }
@@ -1183,10 +1160,10 @@ IconData _runtimeIcon(ContainerType type) => switch (type) {
   ContainerType.podman => OctIcons.container,
 };
 
-String _statusLabel(ContainerPs item) => switch (item) {
-  final PodmanPs ps => ps.status.displayName,
-  final DockerPs ps => ps.state ?? ps.status.displayName,
-};
+String _statusLabel(ContainerPs item) {
+  final raw = item.rawStatus?.trim();
+  return raw == null || raw.isEmpty ? item.status.displayName : raw;
+}
 
 double? _parsePercent(String? raw) {
   if (raw == null || raw.isEmpty) return null;

@@ -111,6 +111,7 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     final ps = PodmanPs.fromJson({
       'Id': '0e9e2ef860d2',
       'Exited': false,
+      'Status': 'Up 3 hours',
       'Image': 'nginx:alpine',
       'Names': ['cmp-web'],
       'Labels': {
@@ -121,6 +122,36 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     });
     expect(ps.project, 'nginx');
     expect(ps.workingDir, '/opt/nginx');
+    expect(ps.rawStatus, 'Up 3 hours');
+  });
+
+  test('podman ps status falls back to State on older output', () {
+    final ps = PodmanPs.fromJson({
+      'Id': '0e9e2ef860d2',
+      'Exited': true,
+      'State': 'exited',
+      'Image': 'alpine',
+      'Names': ['worker'],
+    });
+
+    expect(ps.rawStatus, 'exited');
+    expect(ps.status, ContainerStatus.exited);
+  });
+
+  test('podman ps output merges detailed template status by id', () {
+    const raw = '''
+{"Id":"abc123456789abcdef","Exited":false,"Image":"alpine","Names":["worker"],"Status":"running"}
+{"Id":"def456","Exited":true,"Image":"redis","Names":["cache"],"Status":"exited"}
+$podmanPsStatusSeparator
+abc123456789\tUp 3 hours
+def456\tExited (0) 7 seconds ago
+''';
+
+    final items = parsePodmanPsOutput(raw);
+
+    expect(items, hasLength(2));
+    expect(items[0].rawStatus, 'Up 3 hours');
+    expect(items[1].rawStatus, 'Exited (0) 7 seconds ago');
   });
 
   test('podman ps parse handles missing labels', () {
@@ -365,6 +396,19 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
 
       expect(countUnusedTaggedImages([image], const ['example/worker']), null);
     });
+  });
+
+  test('podman ps command requests detailed human-readable status', () {
+    final cmd = ContainerCmdType.ps.exec(ContainerType.podman);
+
+    expect(cmd, contains('podman ps -a --format "{{json .}}"'));
+    expect(cmd, contains(podmanPsStatusSeparator));
+    expect(
+      cmd,
+      contains(
+        'podman ps -a --no-trunc --format "{{.ID}}\\t{{.Status}}"',
+      ),
+    );
   });
 
   group('PodmanImg usage markers', () {

@@ -177,6 +177,17 @@ void main() {
     }
     expect(find.text(longName), findsOneWidget);
     expect(find.text(longImage), findsOneWidget);
+    expect(find.text('Up 3 hours'), findsOneWidget);
+    final status = find.byKey(
+      const ValueKey('container-status-mobile-container'),
+    );
+    final trailing = find.byKey(
+      const ValueKey('container-trailing-mobile-container'),
+    );
+    expect(
+      tester.getCenter(status).dx,
+      lessThan(tester.getCenter(trailing).dx),
+    );
     expect(
       tester.widget<Text>(find.text(longName)).overflow,
       TextOverflow.ellipsis,
@@ -184,6 +195,34 @@ void main() {
     expect(
       tester.widget<Text>(find.text(longImage)).overflow,
       TextOverflow.ellipsis,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('stopped container shows the original status at 390px', (
+    tester,
+  ) async {
+    final item = DockerPs(
+      id: 'stopped-container',
+      names: 'alpine-test',
+      image: 'docker.io/library/alpine:latest',
+      state: 'Exited (0) 7 seconds ago',
+    );
+
+    await _pumpAt(tester, width: 390, child: containerView([item]));
+
+    final status = find.text('Exited (0) 7 seconds ago');
+    expect(status, findsOneWidget);
+    expect(tester.widget<Text>(status).maxLines, 2);
+    expect(
+      tester.getCenter(status).dx,
+      lessThan(
+        tester.getCenter(
+          find.byKey(
+            const ValueKey('container-trailing-stopped-container'),
+          ),
+        ).dx,
+      ),
     );
     expect(tester.takeException(), isNull);
   });

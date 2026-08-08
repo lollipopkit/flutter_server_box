@@ -5,12 +5,17 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/container/status.dart';
 import 'package:server_box/data/model/container/type.dart';
 
+const podmanPsStatusSeparator = '__SERVER_BOX_PODMAN_STATUS__';
+
 sealed class ContainerPs {
   String? get id;
   String? get image;
   String? get name;
   String? get project;
   String? get workingDir;
+
+  /// Human-readable lifecycle text reported by the runtime's STATUS field.
+  String? get rawStatus;
   ContainerStatus get status;
 
   String? cpu;
@@ -31,6 +36,8 @@ final class PodmanPs implements ContainerPs {
   final String? image;
   final List<String>? names;
   @override
+  final String? rawStatus;
+  @override
   final String? project;
   @override
   final String? workingDir;
@@ -49,6 +56,7 @@ final class PodmanPs implements ContainerPs {
     this.id,
     this.image,
     this.names,
+    this.rawStatus,
     this.project,
     this.workingDir,
   });
@@ -110,12 +118,59 @@ final class PodmanPs implements ContainerPs {
     names: json['Names'] == null
         ? []
         : List<String>.from(json['Names']!.map((x) => x)),
+    rawStatus: _nonEmpty(json['ServerBoxStatus']?.toString()) ??
+        _nonEmpty(json['Status']?.toString()) ??
+        _nonEmpty(json['State']?.toString()),
     project: _labelFromLabels(json['Labels'], 'com.docker.compose.project'),
     workingDir: _labelFromLabels(
       json['Labels'],
       'com.docker.compose.project.working_dir',
     ),
   );
+}
+
+/// Parses Podman's JSON listing and merges the human-readable `.Status`
+/// template output by container ID.
+List<PodmanPs> parsePodmanPsOutput(String raw) {
+  final lines = raw.split('\n');
+  final separatorIndex = lines.indexWhere(
+    (line) => line.trim() == podmanPsStatusSeparator,
+  );
+  final jsonLines = separatorIndex < 0
+      ? lines
+      : lines.take(separatorIndex);
+  final detailedStatuses = <String, String>{};
+  if (separatorIndex >= 0) {
+    for (final line in lines.skip(separatorIndex + 1)) {
+      final separator = line.indexOf('\t');
+      if (separator <= 0) continue;
+      final id = line.substring(0, separator).trim();
+      final status = line.substring(separator + 1).trim();
+      if (id.isNotEmpty && status.isNotEmpty) {
+        detailedStatuses[_containerIdMarker(id)] = status;
+      }
+    }
+  }
+
+  return jsonLines
+      .where((line) => line.trim().isNotEmpty)
+      .map((line) {
+        final data = json.decode(line) as Map<String, dynamic>;
+        final id = (data['Id'] ?? data['ID'])?.toString();
+        final detailedStatus = id == null
+            ? null
+            : detailedStatuses[_containerIdMarker(id)];
+        if (detailedStatus != null) {
+          data['ServerBoxStatus'] = detailedStatus;
+        }
+        return PodmanPs.fromJson(data);
+      })
+      .toList(growable: false);
+}
+
+String _containerIdMarker(String id) {
+  final value = id.trim();
+  return value.length <= 12 ? value : value.substring(0, 12);
 }
 
 final class DockerPs implements ContainerPs {
@@ -125,6 +180,8 @@ final class DockerPs implements ContainerPs {
   final String? image;
   final String? names;
   final String? state;
+  @override
+  String? get rawStatus => state;
   @override
   final String? project;
   @override
