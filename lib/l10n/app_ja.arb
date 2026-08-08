@@ -67,6 +67,7 @@
   "dockerEmptyRunningItems": "実行中のコンテナがありません。\nこれは次の理由による可能性があります：\n- Dockerのインストールユーザーとアプリ内の設定されたユーザー名が異なる\n- 環境変数DOCKER_HOSTが正しく読み込まれていない。ターミナルで`echo $DOCKER_HOST`を実行して取得できます。",
   "dockerImagesFmt": "合計{count}イメージ",
   "dockerProjectOther": "その他",
+  "dockerPruneTip": "未使用のデータを削除してディスク容量を解放します",
   "dockerStatusRunningAndStoppedFmt": "{runningCount}個が実行中、{stoppedCount}個が停止中",
   "dockerStatusRunningFmt": "{count}個のコンテナが実行中",
   "doubleColumnMode": "ダブルカラムモード",

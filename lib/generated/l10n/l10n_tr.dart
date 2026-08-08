@@ -277,6 +277,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dockerProjectOther => 'Diğer';
 
   @override
+  String get dockerPruneTip =>
+      'Disk alanını boşaltmak için kullanılmayan verileri kaldırın';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,

@@ -1,5 +1,19 @@
 part of 'container.dart';
 
+enum _ContainerTabs {
+  ps,
+  images,
+  prune,
+  settings;
+
+  String get i18n => switch (this) {
+    _ContainerTabs.ps => libL10n.container,
+    _ContainerTabs.images => l10n.image,
+    _ContainerTabs.prune => libL10n.prune,
+    _ContainerTabs.settings => libL10n.setting,
+  };
+}
+
 enum _SettingsMenuItems { editContainerHost, switchProvider }
 
 enum _PruneTypes {

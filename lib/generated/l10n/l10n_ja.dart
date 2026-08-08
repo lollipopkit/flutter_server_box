@@ -268,6 +268,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get dockerProjectOther => 'その他';
 
   @override
+  String get dockerPruneTip => '未使用のデータを削除してディスク容量を解放します';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,

@@ -277,6 +277,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get dockerProjectOther => 'Інші';
 
   @override
+  String get dockerPruneTip =>
+      'Видаліть невикористані дані, щоб звільнити місце на диску';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,

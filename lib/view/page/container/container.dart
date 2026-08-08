@@ -32,13 +32,19 @@ class ContainerPage extends ConsumerStatefulWidget {
   static const route = AppRouteArg(page: ContainerPage.new, path: '/container');
 }
 
-class _ContainerPageState extends ConsumerState<ContainerPage> {
+class _ContainerPageState extends ConsumerState<ContainerPage>
+    with SingleTickerProviderStateMixin {
   late final ContainerNotifierProvider _provider;
+  late final _tabCtrl = TabController(
+    length: _ContainerTabs.values.length,
+    vsync: this,
+  );
   Timer? _autoRefreshTimer;
 
   @override
   void dispose() {
     _autoRefreshTimer?.cancel();
+    _tabCtrl.dispose();
     super.dispose();
   }
 
@@ -70,6 +76,15 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     return CustomAppBar(
       centerTitle: true,
       title: TwoLineText(up: libL10n.container, down: widget.args.spi.name),
+      bottom: TabBar(
+        controller: _tabCtrl,
+        dividerHeight: 0,
+        tabAlignment: TabAlignment.center,
+        isScrollable: true,
+        tabs: _ContainerTabs.values
+            .map((e) => Tab(text: e.i18n))
+            .toList(growable: false),
+      ),
       actions: [
         IconButton(
           onPressed: () =>
@@ -81,9 +96,17 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   }
 
   Widget _buildFAB() {
-    return FloatingActionButton(
-      onPressed: () => _showAddFAB(),
-      child: const Icon(Icons.add),
+    return ListenableBuilder(
+      listenable: _tabCtrl,
+      builder: (_, _) {
+        if (_tabCtrl.index != _ContainerTabs.ps.index) {
+          return const SizedBox.shrink();
+        }
+        return FloatingActionButton(
+          onPressed: () => _showAddFAB(),
+          child: const Icon(Icons.add),
+        );
+      },
     );
   }
 
@@ -103,7 +126,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
             ),
             const Spacer(),
             UIs.height13,
-            _buildSettingsBtns,
+            _buildSettingsCard(containerState),
           ],
         ).paddingSymmetric(horizontal: 13),
       );
@@ -112,15 +135,54 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
       return UIs.centerLoading;
     }
 
+    return Column(
+      children: [
+        _buildLoading(containerState),
+        Expanded(
+          child: TabBarView(
+            controller: _tabCtrl,
+            children: [
+              _buildPsTab(containerState),
+              _buildImagesTab(containerState),
+              _buildPruneTab(containerState),
+              _buildSettingsTab(containerState),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPsTab(ContainerState containerState) {
     return AutoMultiList(
       children: <Widget>[
-        _buildLoading(containerState),
         _buildVersion(containerState),
         _buildPs(containerState),
-        _buildImage(containerState),
         _buildEmptyStateMessage(containerState),
-        _buildPruneBtns,
-        _buildSettingsBtns,
+      ],
+    );
+  }
+
+  Widget _buildImagesTab(ContainerState containerState) {
+    return AutoMultiList(
+      children: <Widget>[
+        _buildImage(containerState),
+      ],
+    );
+  }
+
+  Widget _buildPruneTab(ContainerState containerState) {
+    return AutoMultiList(
+      children: <Widget>[
+        _buildPruneCard(),
+      ],
+    );
+  }
+
+  Widget _buildSettingsTab(ContainerState containerState) {
+    return AutoMultiList(
+      children: <Widget>[
+        _buildSettingsCard(containerState),
       ],
     );
   }
@@ -142,13 +204,12 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
   Widget _buildImage(ContainerState containerState) {
     final images = containerState.images ?? [];
     final unused = images.where((e) => e.isUnused).length;
-    final subtitle = unused > 0
+    final summary = unused > 0
         ? '${l10n.dockerImagesFmt(images.length)} · $unused ${l10n.unused}'
         : l10n.dockerImagesFmt(images.length);
     return ExpandTile(
       leading: const Icon(MingCute.clapperboard_line),
-      title: Text(l10n.imagesList),
-      subtitle: Text(subtitle, style: UIs.textGrey),
+      title: Text(summary),
       initiallyExpanded: images.length <= 3,
       children: images.map(_buildImageItem).toList(),
     ).cardx;
@@ -232,13 +293,12 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     if (items == null) return UIs.placeholder;
     final running = items.where((e) => e.status.isRunning).length;
     final stopped = items.length - running;
-    final subtitle = stopped > 0
+    final summary = stopped > 0
         ? l10n.dockerStatusRunningAndStoppedFmt(running, stopped)
         : l10n.dockerStatusRunningFmt(running);
     return ExpandTile(
       leading: const Icon(OctIcons.container, size: 22),
-      title: Text(libL10n.container),
-      subtitle: Text(subtitle, style: UIs.textGrey),
+      title: Text(summary),
       initiallyExpanded: items.length < 7,
       children: _buildGroupedPsItems(items),
     ).cardx;
@@ -484,12 +544,23 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     return 'run -itd --name $name $suffix';
   }
 
-  Widget get _buildPruneBtns {
-    return ExpandTile(
-      leading: const Icon(Icons.delete),
-      title: Text(libL10n.prune),
-      children: _PruneTypes.values.map(_buildPruneBtn).toList(),
-    ).cardx;
+  Widget _buildPruneCard() {
+    return CardX(
+      child: Column(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.delete),
+            title: Text(
+              libL10n.prune,
+              style: UIs.text15,
+            ),
+            subtitle: Text(l10n.dockerPruneTip, style: UIs.text13Grey),
+          ),
+          const Divider(height: 1),
+          ..._PruneTypes.values.map(_buildPruneBtn),
+        ],
+      ),
+    );
   }
 
   Widget _buildPruneBtn(_PruneTypes type) {
@@ -517,17 +588,20 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     );
   }
 
-  Widget get _buildSettingsBtns {
-    final containerState = _containerState;
-
-    return ExpandTile(
-      leading: const Icon(Icons.settings),
-      title: Text(libL10n.setting),
-      initiallyExpanded: containerState.error != null,
-      children: _SettingsMenuItems.values
-          .map((item) => _buildSettingTile(item, containerState))
-          .toList(),
-    ).cardx;
+  Widget _buildSettingsCard(ContainerState containerState) {
+    return CardX(
+      child: Column(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: Text(libL10n.setting, style: UIs.text15),
+          ),
+          const Divider(height: 1),
+          ..._SettingsMenuItems.values
+              .map((item) => _buildSettingTile(item, containerState)),
+        ],
+      ),
+    );
   }
 
   Widget _buildSettingTile(

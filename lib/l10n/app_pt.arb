@@ -67,6 +67,7 @@
   "dockerEmptyRunningItems": "Não há contêineres em execução.\nIsso pode ser porque:\n- O usuário que instalou o Docker difere do usuário configurado no app\n- A variável de ambiente DOCKER_HOST não foi lida corretamente. Você pode verificar isso executando `echo $DOCKER_HOST` no terminal.",
   "dockerImagesFmt": "Total de {count} imagens",
   "dockerProjectOther": "Outros",
+  "dockerPruneTip": "Remova os dados não utilizados para liberar espaço em disco",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} em execução, {stoppedCount} parados",
   "dockerStatusRunningFmt": "{count} contêiner(es) em execução",
   "doubleColumnMode": "Modo de coluna dupla",

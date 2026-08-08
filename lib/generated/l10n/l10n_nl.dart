@@ -277,6 +277,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get dockerProjectOther => 'Overig';
 
   @override
+  String get dockerPruneTip =>
+      'Verwijder ongebruikte gegevens om schijfruimte vrij te maken';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,

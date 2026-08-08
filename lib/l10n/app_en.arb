@@ -79,6 +79,7 @@
   "dockerEmptyRunningItems": "There are no running containers.\nThis could be because:\n- The Docker installation user is not the same as the username configured within the App.\n- The environment variable DOCKER_HOST was not read correctly. You can get it by running `echo $DOCKER_HOST` in the terminal.",
   "dockerImagesFmt": "{count} images",
   "dockerProjectOther": "Other",
+  "dockerPruneTip": "Remove unused data to free up disk space",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} running, {stoppedCount} container stopped.",
   "dockerStatusRunningFmt": "{count} container running.",
   "doubleColumnMode": "Double column mode",

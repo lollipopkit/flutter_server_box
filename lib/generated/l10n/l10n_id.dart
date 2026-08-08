@@ -276,6 +276,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get dockerProjectOther => 'Lainnya';
 
   @override
+  String get dockerPruneTip =>
+      'Hapus data yang tidak digunakan untuk mengosongkan ruang disk';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,

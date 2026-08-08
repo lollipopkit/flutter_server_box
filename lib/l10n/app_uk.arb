@@ -67,6 +67,7 @@
   "dockerEmptyRunningItems": "Немає запущених контейнерів.\nЦе може бути через:\n- Користувача Docker, відмінного від користувача, налаштованого в додатку\n- змінну оточення DOCKER_HOST, яка не була правильно зчитана. Ви можете виконати `echo $DOCKER_HOST` у терміналі, щоб побачити її значення.",
   "dockerImagesFmt": "Всього {count} образів",
   "dockerProjectOther": "Інші",
+  "dockerPruneTip": "Видаліть невикористані дані, щоб звільнити місце на диску",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} запущено, {stoppedCount} контейнерів зупинено.",
   "dockerStatusRunningFmt": "{count} контейнер(и) запущено.",
   "doubleColumnMode": "Режим подвійної колонки",
