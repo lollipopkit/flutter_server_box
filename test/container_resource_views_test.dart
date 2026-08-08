@@ -330,7 +330,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('compose containers are grouped under their project title', (
+  testWidgets('compose groups are collapsed by default and can expand', (
     tester,
   ) async {
     final items = [
@@ -354,8 +354,56 @@ void main() {
 
     expect(find.text('production-stack'), findsOneWidget);
     expect(find.byIcon(Icons.folder_outlined), findsOneWidget);
+    expect(find.text('1 Running · 1 Stopped'), findsOneWidget);
+    expect(find.text('web'), findsNothing);
+    expect(find.text('db'), findsNothing);
+
+    final arrow = find.byKey(
+      const ValueKey('container-group-arrow-production-stack'),
+    );
+    expect(arrow, findsOneWidget);
+    expect(tester.widget<AnimatedRotation>(arrow).turns, 0);
+
+    await tester.tap(
+      find.byKey(
+        const ValueKey('container-group-header-production-stack'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
     expect(find.text('web'), findsOneWidget);
     expect(find.text('db'), findsOneWidget);
+    expect(tester.widget<AnimatedRotation>(arrow).turns, 0.5);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('standalone containers remain visible beside compose groups', (
+    tester,
+  ) async {
+    final items = [
+      DockerPs(
+        id: 'compose-web',
+        names: 'web',
+        image: 'example/web:latest',
+        state: 'Up 8 minutes',
+        project: 'production-stack',
+      ),
+      DockerPs(
+        id: 'standalone-worker',
+        names: 'worker',
+        image: 'example/worker:latest',
+        state: 'Up 3 minutes',
+      ),
+    ];
+
+    await _pumpAt(tester, width: 390, child: containerView(items));
+
+    expect(find.text('web'), findsNothing);
+    expect(find.text('worker'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('container-group-arrow-Other')),
+      findsNothing,
+    );
     expect(tester.takeException(), isNull);
   });
 

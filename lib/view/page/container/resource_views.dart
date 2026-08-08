@@ -104,6 +104,11 @@ class ContainerItemsView extends StatelessWidget {
         else
           for (var index = 0; index < groups.length; index++) ...[
             _ContainerGroupCard(
+              key: ValueKey(
+                groups[index].project == null
+                    ? 'container-group-standalone'
+                    : 'container-group-compose:${groups[index].project}',
+              ),
               group: groups[index],
               showHeader: groups.length > 1 || groups[index].project != null,
               trailingBuilder: trailingBuilder,
@@ -571,7 +576,7 @@ List<_ContainerGroup> _groupContainers(List<ContainerPs> items) {
       .toList(growable: false);
 }
 
-class _ContainerGroupCard extends StatelessWidget {
+class _ContainerGroupCard extends StatefulWidget {
   final _ContainerGroup group;
   final bool showHeader;
   final ContainerItemTrailingBuilder trailingBuilder;
@@ -582,30 +587,45 @@ class _ContainerGroupCard extends StatelessWidget {
     required this.showHeader,
     required this.trailingBuilder,
     required this.groupTrailingBuilder,
+    super.key,
   });
 
   @override
+  State<_ContainerGroupCard> createState() => _ContainerGroupCardState();
+}
+
+class _ContainerGroupCardState extends State<_ContainerGroupCard> {
+  var _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    final groupTrailing = groupTrailingBuilder(group.items);
+    final group = widget.group;
+    final collapsible = widget.showHeader && group.project != null;
+    final showItems = !collapsible || _expanded;
+    final groupTrailing = widget.groupTrailingBuilder(group.items);
     return CardX(
       child: Column(
         children: [
-          if (showHeader) ...[
+          if (widget.showHeader) ...[
             _ContainerGroupHeader(
               project: group.project ?? context.l10n.dockerProjectOther,
               items: group.items,
               trailing: groupTrailing,
+              collapsible: collapsible,
+              expanded: _expanded,
+              onToggle: () => setState(() => _expanded = !_expanded),
             ),
-            const Divider(height: 1),
+            if (showItems) const Divider(height: 1),
           ],
-          for (var index = 0; index < group.items.length; index++) ...[
-            _ContainerItemRow(
-              item: group.items[index],
-              trailing: trailingBuilder(group.items[index]),
-            ),
-            if (index != group.items.length - 1)
-              const Divider(height: 1, indent: 15, endIndent: 15),
-          ],
+          if (showItems)
+            for (var index = 0; index < group.items.length; index++) ...[
+              _ContainerItemRow(
+                item: group.items[index],
+                trailing: widget.trailingBuilder(group.items[index]),
+              ),
+              if (index != group.items.length - 1)
+                const Divider(height: 1, indent: 15, endIndent: 15),
+            ],
         ],
       ),
     );
@@ -616,11 +636,17 @@ class _ContainerGroupHeader extends StatelessWidget {
   final String project;
   final List<ContainerPs> items;
   final Widget? trailing;
+  final bool collapsible;
+  final bool expanded;
+  final VoidCallback onToggle;
 
   const _ContainerGroupHeader({
     required this.project,
     required this.items,
     required this.trailing,
+    required this.collapsible,
+    required this.expanded,
+    required this.onToggle,
   });
 
   @override
@@ -631,33 +657,35 @@ class _ContainerGroupHeader extends StatelessWidget {
       '$running ${context.libL10n.running}',
       if (stopped > 0) '$stopped ${context.libL10n.stopped}',
     ].join(' · ');
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(15, 11, 5, 11),
-      child: Row(
+    return ListTile(
+      key: ValueKey('container-group-header-$project'),
+      contentPadding: const EdgeInsets.only(left: 15, right: 5),
+      leading: Icon(
+        Icons.folder_outlined,
+        size: 18,
+        color: context.theme.colorScheme.onSurfaceVariant,
+      ),
+      title: Text(
+        project,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: context.theme.textTheme.titleSmall,
+      ),
+      subtitle: Text(summary, style: UIs.text11Grey),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.folder_outlined,
-            size: 18,
-            color: context.theme.colorScheme.onSurfaceVariant,
-          ),
-          UIs.width13,
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  project,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: context.theme.textTheme.titleSmall,
-                ),
-                Text(summary, style: UIs.text11Grey),
-              ],
-            ),
-          ),
           ?trailing,
+          if (collapsible)
+            AnimatedRotation(
+              key: ValueKey('container-group-arrow-$project'),
+              turns: expanded ? 0.5 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: const Icon(Icons.expand_more),
+            ),
         ],
       ),
+      onTap: collapsible ? onToggle : null,
     );
   }
 }
