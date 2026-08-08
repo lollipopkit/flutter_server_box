@@ -281,12 +281,14 @@ extension _ContainerPageWidgets on _ContainerPageState {
   }
 
   Widget _buildImageMoreBtn(ContainerImg image) {
-    if (_containerActionsBusy) return _buildDisabledMoreBtn();
-    return PopupMenu<ImageMenu>(
-      items: ImageMenu.items
-          .map((e) => PopMenu.build(e, e.icon, e.toStr))
-          .toList(),
-      onSelected: (item) => _onTapImageMenu(item, image),
+    return IgnorePointer(
+      ignoring: _containerActionsBusy,
+      child: PopupMenu<ImageMenu>(
+        items: ImageMenu.items
+            .map((e) => PopMenu.build(e, e.icon, e.toStr))
+            .toList(),
+        onSelected: (item) => _onTapImageMenu(item, image),
+      ),
     );
   }
 
@@ -298,34 +300,34 @@ extension _ContainerPageWidgets on _ContainerPageState {
   Widget? _buildGroupMoreBtn(List<ContainerPs> groupItems) {
     final project = groupItems.firstOrNull?.project;
     if (project == null) return null;
-    if (_containerActionsBusy) return _buildDisabledMoreBtn();
     final hasWorkingDir = groupItems.any(
       (e) => e.workingDir?.isNotEmpty ?? false,
     );
-    return PopupMenu(
-      items: ContainerGroupMenu.items(
-        anyRunning: groupItems.any((e) => e.status.isRunning),
-        anyStopped: groupItems.any((e) => e.status.isStopped),
-      )
-          .where((e) => e != ContainerGroupMenu.logs || hasWorkingDir)
-          .map((e) => PopMenu.build(e, e.icon, e.toStr))
-          .toList(),
-      onSelected: (item) => _onTapGroupMenu(item, groupItems),
+    return IgnorePointer(
+      ignoring: _containerActionsBusy,
+      child: PopupMenu(
+        items: ContainerGroupMenu.items(
+          anyRunning: groupItems.any((e) => e.status.isRunning),
+          anyStopped: groupItems.any((e) => e.status.isStopped),
+        )
+            .where((e) => e != ContainerGroupMenu.logs || hasWorkingDir)
+            .map((e) => PopMenu.build(e, e.icon, e.toStr))
+            .toList(),
+        onSelected: (item) => _onTapGroupMenu(item, groupItems),
+      ),
     );
   }
 
   Widget _buildMoreBtn(ContainerPs dItem) {
-    if (_containerActionsBusy) return _buildDisabledMoreBtn();
-    return PopupMenu(
-      items: ContainerMenu.items(
-        dItem.status,
-      ).map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
-      onSelected: (item) => _onTapMoreBtn(item, dItem),
+    return IgnorePointer(
+      ignoring: _containerActionsBusy,
+      child: PopupMenu(
+        items: ContainerMenu.items(
+          dItem.status,
+        ).map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
+        onSelected: (item) => _onTapMoreBtn(item, dItem),
+      ),
     );
-  }
-
-  Widget _buildDisabledMoreBtn() {
-    return const IconButton(onPressed: null, icon: Icon(Icons.more_vert));
   }
 
   Widget _buildPruneCard(_PruneTypes type) {
@@ -463,8 +465,15 @@ extension _ContainerPageUtils on _ContainerPageState {
       counts[dir] = (counts[dir] ?? 0) + 1;
     }
     if (counts.isEmpty) return null;
-    return counts.entries.reduce(
-      (a, b) => a.value >= b.value ? a : b,
-    ).key;
+    final entries = counts.entries.toList()
+      ..sort((a, b) {
+        final countComparison = b.value.compareTo(a.value);
+        if (countComparison != 0) return countComparison;
+        final lowerComparison =
+            a.key.toLowerCase().compareTo(b.key.toLowerCase());
+        if (lowerComparison != 0) return lowerComparison;
+        return a.key.compareTo(b.key);
+      });
+    return entries.first.key;
   }
 }

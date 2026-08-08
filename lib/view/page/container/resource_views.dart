@@ -649,8 +649,32 @@ List<_ContainerGroup> _groupContainers(List<ContainerPs> items) {
       return a.compareTo(b);
     });
   return keys
-      .map((key) => _ContainerGroup(project: key, items: grouped[key]!))
+      .map((key) {
+        final groupItems = grouped[key]!..sort(_compareContainerItems);
+        return _ContainerGroup(project: key, items: groupItems);
+      })
       .toList(growable: false);
+}
+
+int _compareContainerItems(ContainerPs a, ContainerPs b) {
+  for (final fields in [
+    (a.name, b.name),
+    (a.id, b.id),
+    (a.image, b.image),
+    (a.rawStatus, b.rawStatus),
+  ]) {
+    final comparison = _compareContainerText(fields.$1, fields.$2);
+    if (comparison != 0) return comparison;
+  }
+  return 0;
+}
+
+int _compareContainerText(String? a, String? b) {
+  final aValue = a?.trim() ?? '';
+  final bValue = b?.trim() ?? '';
+  final lowerComparison = aValue.toLowerCase().compareTo(bValue.toLowerCase());
+  if (lowerComparison != 0) return lowerComparison;
+  return aValue.compareTo(bValue);
 }
 
 class _ContainerGroupCard extends StatefulWidget {
@@ -1268,17 +1292,30 @@ String _statusLabel(ContainerPs item) {
 
 double? _parsePercent(String? raw) {
   if (raw == null || raw.isEmpty) return null;
-  final match = RegExp(r'^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*%')
-      .firstMatch(raw);
+  final parts = raw.split(RegExp(r'\s*/\s*'));
+  if (parts.isEmpty || parts.length > 2) return null;
+  final value = _parsePercentValue(parts.first);
+  if (value == null || !value.isFinite || value < 0) return null;
+  if (parts.length == 2 && _parsePercentValue(parts[1], labeled: true) == null) {
+    return null;
+  }
+  return value.clamp(0, 100).toDouble();
+}
+
+double? _parsePercentValue(String raw, {bool labeled = false}) {
+  final prefix = labeled ? r'[^\d.-]*' : '';
+  final match = RegExp(
+    '^\\s*$prefix(-?(?:\\d+(?:\\.\\d+)?|\\.\\d+))\\s*%\\s*\$',
+  ).firstMatch(raw);
   final value = double.tryParse(match?.group(1) ?? '');
   if (value == null || !value.isFinite || value < 0) return null;
-  return value.clamp(0, 100).toDouble();
+  return value;
 }
 
 double? _parseUsagePercent(String? raw) {
   if (raw == null || raw.isEmpty) return null;
   final parts = raw.split(RegExp(r'\s*/\s*'));
-  if (parts.length < 2) return null;
+  if (parts.length != 2) return null;
   final used = _parseByteSize(parts[0]);
   final total = _parseByteSize(parts[1]);
   if (used == null || total == null || total <= 0) return null;
@@ -1287,7 +1324,7 @@ double? _parseUsagePercent(String? raw) {
 
 double? _parseByteSize(String raw) {
   final match = RegExp(
-    r'^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*([kmgtpe]?i?b)?',
+    r'^\s*(-?(?:\d+(?:\.\d+)?|\.\d+))\s*([kmgtpe]?i?b)?\s*$',
     caseSensitive: false,
   ).firstMatch(raw);
   if (match == null) return null;
@@ -1315,21 +1352,22 @@ double? _parseByteSize(String raw) {
 _MetricPair? _parseMetricPair(String? raw) {
   if (raw == null || raw.trim().isEmpty) return null;
   final parts = raw.split(RegExp(r'\s*/\s*'));
+  if (parts.length != 2) return null;
   final first = _extractMetricValue(parts.first);
-  if (first == null) return null;
-  final second = parts.length > 1 ? _extractMetricValue(parts[1]) : null;
+  final second = _extractMetricValue(parts[1]);
+  if (first == null || second == null) return null;
   return _MetricPair(first: first, second: second);
 }
 
 String? _extractMetricValue(String raw) {
   final match = RegExp(
-    r'(-?(?:\d+(?:\.\d+)?|\.\d+))\s*[kmgtpe]?i?b',
+    r'^\s*[^\d.-]*((-?(?:\d+(?:\.\d+)?|\.\d+))\s*[kmgtpe]?i?b)\s*$',
     caseSensitive: false,
   ).firstMatch(raw);
   if (match != null) {
-    final value = double.tryParse(match.group(1)!);
+    final value = double.tryParse(match.group(2)!);
     if (value == null || !value.isFinite || value < 0) return null;
-    return match.group(0)!.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return match.group(1)!.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
   return null;
 }

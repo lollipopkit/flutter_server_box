@@ -25,7 +25,10 @@ enum ContainerStatus {
     if (lowerState.contains('created')) return ContainerStatus.created;
     if (lowerState.contains('paused')) return ContainerStatus.paused;
     if (lowerState.contains('restarting')) return ContainerStatus.restarting;
-    if (lowerState.contains('removing')) return ContainerStatus.removing;
+    if (lowerState.contains('removing') ||
+        lowerState.contains('removal in progress')) {
+      return ContainerStatus.removing;
+    }
     if (lowerState.contains('dead')) return ContainerStatus.dead;
     if (lowerState == 'running' || lowerState.startsWith('up')) {
       return ContainerStatus.running;

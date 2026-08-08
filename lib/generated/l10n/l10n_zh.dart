@@ -1457,6 +1457,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get invalid => '無效';
 
   @override
+  String get invalidUrl => '無效的網址';
+
+  @override
   String get invalidHostFormat => '主機格式無效，僅支援 IPv4、IPv6 和網域字元。';
 
   @override

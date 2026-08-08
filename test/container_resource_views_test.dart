@@ -344,28 +344,121 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('negative container stats are omitted', (tester) async {
+  testWidgets('partial or trailing-garbage metrics are omitted', (
+    tester,
+  ) async {
     final item = DockerPs(
-      id: 'negative-stats',
+      id: 'malformed-stats',
       names: 'worker',
       image: 'example/worker:latest',
       state: 'Up 4 minutes',
     )
-      ..cpu = '-5%'
-      ..mem = '-1 MiB / 2 GiB'
-      ..net = '↓ -1 MiB / ↑ 2 MiB'
-      ..disk = 'Read -1 MiB / Write 2 MiB';
+      ..cpu = '12.5% garbage'
+      ..mem = '640 MiB junk / 2 GiB'
+      ..net = '12 MB / garbage'
+      ..disk = '1 GB / -2 MB';
 
     await _pumpAt(tester, width: 390, child: containerView([item]));
 
     expect(
       find.byKey(
-        const ValueKey('container-resource-panel-negative-stats'),
+        const ValueKey('container-resource-panel-malformed-stats'),
       ),
       findsNothing,
     );
     expect(find.byType(PercentCircle), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('provider-valid averaged CPU metrics remain visible', (
+    tester,
+  ) async {
+    final item = PodmanPs(
+      id: 'averaged-cpu',
+      names: ['worker'],
+      rawStatus: 'Up 4 minutes',
+    )..cpu = '12.5% / Avg 3.0%';
+
+    await _pumpAt(tester, width: 390, child: containerView([item]));
+
+    expect(
+      find.byKey(
+        const ValueKey('container-resource-circle-averaged-cpu-cpu'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('12.5%'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('negative container stats are omitted', (tester) async {
+    final cases = [
+      (
+        id: 'negative-cpu',
+        cpu: '-5%',
+        mem: '1 GiB / 2 GiB',
+        net: '1 MiB / 2 MiB',
+        disk: '3 MiB / 4 MiB',
+        missingKey: 'container-resource-circle-negative-cpu-cpu',
+      ),
+      (
+        id: 'negative-memory',
+        cpu: '5%',
+        mem: '-1 GiB / 2 GiB',
+        net: '1 MiB / 2 MiB',
+        disk: '3 MiB / 4 MiB',
+        missingKey: 'container-resource-circle-negative-memory-memory',
+      ),
+      (
+        id: 'negative-network',
+        cpu: '5%',
+        mem: '1 GiB / 2 GiB',
+        net: '-1 MiB / 2 MiB',
+        disk: '3 MiB / 4 MiB',
+        missingKey: 'container-resource-module-negative-network-network',
+      ),
+      (
+        id: 'negative-disk',
+        cpu: '5%',
+        mem: '1 GiB / 2 GiB',
+        net: '1 MiB / 2 MiB',
+        disk: '-3 MiB / 4 MiB',
+        missingKey: 'container-resource-module-negative-disk-disk',
+      ),
+    ];
+
+    for (final data in cases) {
+      final item = DockerPs(
+        id: data.id,
+        names: 'worker',
+        image: 'example/worker:latest',
+        state: 'Up 4 minutes',
+      )
+        ..cpu = data.cpu
+        ..mem = data.mem
+        ..net = data.net
+        ..disk = data.disk;
+
+      await _pumpAt(tester, width: 390, child: containerView([item]));
+
+      final metricKeys = [
+        'container-resource-circle-${data.id}-cpu',
+        'container-resource-circle-${data.id}-memory',
+        'container-resource-module-${data.id}-network',
+        'container-resource-module-${data.id}-disk',
+      ];
+      for (final key in metricKeys) {
+        expect(
+          find.byKey(ValueKey(key)),
+          key == data.missingKey ? findsNothing : findsOneWidget,
+        );
+      }
+      expect(
+        find.byKey(ValueKey('container-resource-panel-${data.id}')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    }
   });
 
   testWidgets('resource percentages above 100 are clamped consistently', (
@@ -570,6 +663,42 @@ void main() {
       findsNothing,
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('containers keep deterministic ordering after input reordering', (
+    tester,
+  ) async {
+    final alpha = DockerPs(
+      id: 'container-alpha',
+      names: 'Alpha',
+      image: 'example/alpha:latest',
+      state: 'Up 3 minutes',
+    );
+    final zeta = DockerPs(
+      id: 'container-zeta',
+      names: 'zeta',
+      image: 'example/zeta:latest',
+      state: 'Up 3 minutes',
+    );
+
+    for (final items in [
+      [zeta, alpha],
+      [alpha, zeta],
+    ]) {
+      await _pumpAt(tester, width: 390, child: containerView(items));
+
+      expect(
+        tester.getTopLeft(find.text('Alpha')).dy,
+        lessThan(tester.getTopLeft(find.text('zeta')).dy),
+      );
+      expect(
+        find.byKey(
+          const ValueKey('container-row-compact-0-container-alpha'),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    }
   });
 
   testWidgets('dangling and unused image badges are both visible', (

@@ -280,6 +280,10 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
       {'state': 'Up 5 minutes (Paused)', 'status': ContainerStatus.paused},
       {'state': 'Restarting', 'status': ContainerStatus.restarting},
       {'state': 'Removing', 'status': ContainerStatus.removing},
+      {
+        'state': 'Removal In Progress',
+        'status': ContainerStatus.removing,
+      },
       {'state': 'Dead', 'status': ContainerStatus.dead},
 
       // Edge cases
@@ -346,7 +350,7 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     );
     expect(
       ContainerMenu.items(ContainerStatus.paused),
-      [ContainerMenu.start, ContainerMenu.rm, ContainerMenu.logs],
+      [ContainerMenu.rm, ContainerMenu.logs],
     );
   });
 
@@ -616,6 +620,16 @@ not-json
     final images = parseContainerImagesOutput(raw, ContainerType.docker);
 
     expect(images.map((image) => image.id), ['abc123', 'def456']);
+  });
+
+  test('image output recovers complete rows from a truncated JSON array', () {
+    const raw = '''[
+{"ID":"abc123","Repository":"nginx","Tag":"latest","Size":"10MB","CreatedAt":"now","Containers":"1"},
+{"ID":"truncated"''';
+
+    final images = parseContainerImagesOutput(raw, ContainerType.docker);
+
+    expect(images.map((image) => image.id), ['abc123']);
   });
 
   test('stats rows match exact container ids instead of short substrings', () {

@@ -20,9 +20,7 @@ enum ContainerMenu {
         terminal,
       ];
     }
-    if (status.isStopped ||
-        status == ContainerStatus.paused ||
-        status == ContainerStatus.unknown) {
+    if (status.isStopped || status == ContainerStatus.unknown) {
       return [start, rm, logs];
     }
     return [rm, logs];

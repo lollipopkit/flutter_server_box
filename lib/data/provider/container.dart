@@ -106,11 +106,8 @@ List<ContainerImg> parseContainerImagesOutput(
   ContainerType type,
 ) {
   final trimmed = raw.trim();
-  final encodedRows = trimmed.startsWith('[') && trimmed.endsWith(']')
-      ? (json.decode(trimmed) as List).map(json.encode)
-      : trimmed.split('\n');
   final images = <ContainerImg>[];
-  for (final row in encodedRows) {
+  for (final row in _containerImageRows(trimmed)) {
     if (row.trim().isEmpty) continue;
     try {
       images.add(ContainerImg.fromRawJson(row, type));
@@ -119,6 +116,57 @@ List<ContainerImg> parseContainerImagesOutput(
     }
   }
   return images.toList(growable: false);
+}
+
+Iterable<String> _containerImageRows(String raw) sync* {
+  if (!raw.startsWith('[')) {
+    yield* raw.split('\n');
+    return;
+  }
+  try {
+    final decoded = json.decode(raw);
+    if (decoded is List) {
+      for (final row in decoded) {
+        yield json.encode(row);
+      }
+      return;
+    }
+  } catch (e, trace) {
+    Loggers.app.warning('Recover malformed container image array', e, trace);
+  }
+  yield* _completeJsonObjects(raw);
+}
+
+Iterable<String> _completeJsonObjects(String raw) sync* {
+  var start = -1;
+  var depth = 0;
+  var inString = false;
+  var escaping = false;
+  for (var index = 0; index < raw.length; index++) {
+    final char = raw[index];
+    if (inString) {
+      if (escaping) {
+        escaping = false;
+      } else if (char == r'\') {
+        escaping = true;
+      } else if (char == '"') {
+        inString = false;
+      }
+      continue;
+    }
+    if (char == '"') {
+      inString = true;
+    } else if (char == '{') {
+      if (depth == 0) start = index;
+      depth++;
+    } else if (char == '}' && depth > 0) {
+      depth--;
+      if (depth == 0 && start >= 0) {
+        yield raw.substring(start, index + 1);
+        start = -1;
+      }
+    }
+  }
 }
 
 List<({String id, String raw})> parseContainerStatsRows(
