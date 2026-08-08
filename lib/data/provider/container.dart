@@ -224,7 +224,8 @@ class ContainerNotifier extends _$ContainerNotifier {
     return pwd;
   }
 
-  void setType(ContainerType type) {
+  bool setType(ContainerType type) {
+    if (state.runLog != null) return false;
     _resetSudoProbe();
     state = state.copyWith(
       type: type,
@@ -236,6 +237,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       isBusy: false,
     );
     Stores.container.setType(type, hostId);
+    return true;
   }
 
   void resetSudoProbe() {

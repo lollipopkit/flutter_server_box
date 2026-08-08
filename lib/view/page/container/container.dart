@@ -442,14 +442,16 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
             _showEditHostDialog();
             break;
           case _SettingsMenuItems.switchProvider:
-            ref
+            final changed = ref
                 .read(_provider.notifier)
                 .setType(
                   containerState.type == ContainerType.docker
                       ? ContainerType.podman
                       : ContainerType.docker,
                 );
-            unawaited(_refreshContainerTab(_lastResourceTab));
+            if (changed) {
+              unawaited(_refreshContainerTab(_lastResourceTab));
+            }
             break;
         }
       },
