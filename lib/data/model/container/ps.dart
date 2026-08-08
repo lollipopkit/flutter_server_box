@@ -5,8 +5,6 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/container/status.dart';
 import 'package:server_box/data/model/container/type.dart';
 
-const podmanPsStatusSeparator = '__SERVER_BOX_PODMAN_STATUS__';
-
 sealed class ContainerPs {
   String? get id;
   String? get image;
@@ -129,48 +127,25 @@ final class PodmanPs implements ContainerPs {
   );
 }
 
-/// Parses Podman's JSON listing and merges the human-readable `.Status`
-/// template output by container ID.
+/// Parses Podman's JSON listing with the human-readable `.Status` template
+/// appended to each row. Older JSON-only output remains supported.
 List<PodmanPs> parsePodmanPsOutput(String raw) {
-  final lines = raw.split('\n');
-  final separatorIndex = lines.indexWhere(
-    (line) => line.trim() == podmanPsStatusSeparator,
-  );
-  final jsonLines = separatorIndex < 0
-      ? lines
-      : lines.take(separatorIndex);
-  final detailedStatuses = <String, String>{};
-  if (separatorIndex >= 0) {
-    for (final line in lines.skip(separatorIndex + 1)) {
-      final separator = line.indexOf('\t');
-      if (separator <= 0) continue;
-      final id = line.substring(0, separator).trim();
-      final status = line.substring(separator + 1).trim();
-      if (id.isNotEmpty && status.isNotEmpty) {
-        detailedStatuses[_containerIdMarker(id)] = status;
-      }
-    }
-  }
-
-  return jsonLines
+  return raw
+      .split('\n')
       .where((line) => line.trim().isNotEmpty)
       .map((line) {
-        final data = json.decode(line) as Map<String, dynamic>;
-        final id = (data['Id'] ?? data['ID'])?.toString();
-        final detailedStatus = id == null
-            ? null
-            : detailedStatuses[_containerIdMarker(id)];
-        if (detailedStatus != null) {
-          data['ServerBoxStatus'] = detailedStatus;
+        final separator = line.lastIndexOf('\t');
+        final jsonPart = separator < 0 ? line : line.substring(0, separator);
+        final data = json.decode(jsonPart) as Map<String, dynamic>;
+        if (separator >= 0) {
+          final detailedStatus = line.substring(separator + 1).trim();
+          if (detailedStatus.isNotEmpty) {
+            data['ServerBoxStatus'] = detailedStatus;
+          }
         }
         return PodmanPs.fromJson(data);
       })
       .toList(growable: false);
-}
-
-String _containerIdMarker(String id) {
-  final value = id.trim();
-  return value.length <= 12 ? value : value.substring(0, 12);
 }
 
 final class DockerPs implements ContainerPs {

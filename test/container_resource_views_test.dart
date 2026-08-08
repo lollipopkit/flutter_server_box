@@ -15,16 +15,28 @@ void main() {
   Widget containerView(
     List<ContainerPs> items, {
     VoidCallback? onPrune,
+    VoidCallback? onRefresh,
   }) {
     return ContainerItemsView(
       items: items,
       type: ContainerType.docker,
       version: '27.1.1',
-      summaryAction: IconButton(
-        key: const ValueKey('test-prune-containers'),
-        tooltip: 'Prune containers',
-        onPressed: onPrune ?? () {},
-        icon: const Icon(Icons.cleaning_services_outlined),
+      summaryAction: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            key: const ValueKey('test-prune-containers'),
+            tooltip: 'Prune containers',
+            onPressed: onPrune ?? () {},
+            icon: const Icon(Icons.cleaning_services_outlined),
+          ),
+          IconButton(
+            key: const ValueKey('test-refresh-containers'),
+            tooltip: 'Refresh containers',
+            onPressed: onRefresh ?? () {},
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
       ),
       trailingBuilder: (item) => SizedBox(
         key: ValueKey('container-trailing-${item.id}'),
@@ -39,16 +51,28 @@ void main() {
   Widget imageView(
     List<ContainerImg> images, {
     VoidCallback? onPrune,
+    VoidCallback? onRefresh,
   }) {
     return ContainerImagesView(
       images: images,
       type: ContainerType.docker,
       version: '27.1.1',
-      summaryAction: IconButton(
-        key: const ValueKey('test-prune-images'),
-        tooltip: 'Prune images',
-        onPressed: onPrune ?? () {},
-        icon: const Icon(Icons.cleaning_services_outlined),
+      summaryAction: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            key: const ValueKey('test-prune-images'),
+            tooltip: 'Prune images',
+            onPressed: onPrune ?? () {},
+            icon: const Icon(Icons.cleaning_services_outlined),
+          ),
+          IconButton(
+            key: const ValueKey('test-refresh-images'),
+            tooltip: 'Refresh images',
+            onPressed: onRefresh ?? () {},
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
       ),
       trailingBuilder: (image) => SizedBox(
         key: ValueKey('image-trailing-${image.id}'),
@@ -476,49 +500,61 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('summary prune actions stay rightmost and are tappable', (
+  testWidgets('summary refresh actions follow prune and are tappable', (
     tester,
   ) async {
     var containerPrunes = 0;
+    var containerRefreshes = 0;
     await _pumpAt(
       tester,
       width: 390,
       child: containerView(
         const [],
         onPrune: () => containerPrunes++,
+        onRefresh: () => containerRefreshes++,
       ),
     );
 
     final containerAction = find.byKey(
       const ValueKey('test-prune-containers'),
     );
+    final containerRefresh = find.byKey(
+      const ValueKey('test-refresh-containers'),
+    );
     expect(containerAction, findsOneWidget);
     expect(
-      tester.getCenter(containerAction).dx,
-      greaterThan(tester.getCenter(find.text('Docker')).dx),
+      tester.getCenter(containerRefresh).dx,
+      greaterThan(tester.getCenter(containerAction).dx),
     );
     await tester.tap(containerAction);
+    await tester.tap(containerRefresh);
     expect(containerPrunes, 1);
+    expect(containerRefreshes, 1);
     expect(tester.takeException(), isNull);
 
     var imagePrunes = 0;
+    var imageRefreshes = 0;
     await _pumpAt(
       tester,
       width: 900,
       child: imageView(
         const [],
         onPrune: () => imagePrunes++,
+        onRefresh: () => imageRefreshes++,
       ),
     );
 
     final imageAction = find.byKey(const ValueKey('test-prune-images'));
+    final imageRefresh = find.byKey(const ValueKey('test-refresh-images'));
     expect(imageAction, findsOneWidget);
     expect(
-      tester.getCenter(imageAction).dx,
-      greaterThan(tester.getCenter(find.text('Docker')).dx),
+      tester.getCenter(imageRefresh).dx,
+      greaterThan(tester.getCenter(imageAction).dx),
     );
     await tester.tap(imageAction);
+    await tester.tap(imageRefresh);
     expect(imagePrunes, 1);
+    expect(imageRefreshes, 1);
     expect(tester.takeException(), isNull);
   });
 

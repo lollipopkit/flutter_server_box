@@ -138,13 +138,10 @@ fa1215b4be74\tUp 12 hours\tfirefly\tuusec/firefly:latest
     expect(ps.status, ContainerStatus.exited);
   });
 
-  test('podman ps output merges detailed template status by id', () {
+  test('podman ps output reads detailed status from the same row', () {
     const raw = '''
-{"Id":"abc123456789abcdef","Exited":false,"Image":"alpine","Names":["worker"],"Status":"running"}
-{"Id":"def456","Exited":true,"Image":"redis","Names":["cache"],"Status":"exited"}
-$podmanPsStatusSeparator
-abc123456789\tUp 3 hours
-def456\tExited (0) 7 seconds ago
+{"Id":"abc123","Exited":false,"Image":"alpine","Names":["worker"],"Status":"running"}\tUp 3 hours
+{"Id":"def456","Exited":true,"Image":"redis","Names":["cache"],"Status":"exited"}\tExited (0) 7 seconds ago
 ''';
 
     final items = parsePodmanPsOutput(raw);
@@ -401,14 +398,35 @@ def456\tExited (0) 7 seconds ago
   test('podman ps command requests detailed human-readable status', () {
     final cmd = ContainerCmdType.ps.exec(ContainerType.podman);
 
-    expect(cmd, contains('podman ps -a --format "{{json .}}"'));
-    expect(cmd, contains(podmanPsStatusSeparator));
     expect(
       cmd,
-      contains(
-        'podman ps -a --no-trunc --format "{{.ID}}\\t{{.Status}}"',
-      ),
+      'podman ps -a --format "{{json .}}\\t{{.Status}}"',
     );
+  });
+
+  test('container refresh command excludes image listing', () {
+    final cmd = ContainerCmdType.execSelected(
+      const [
+        ContainerCmdType.ps,
+        ContainerCmdType.stats,
+      ],
+      ContainerType.docker,
+    );
+
+    expect(cmd, contains('docker ps -a'));
+    expect(cmd, contains('docker stats --no-stream'));
+    expect(cmd, isNot(contains('docker image ls')));
+  });
+
+  test('image refresh command excludes containers and stats', () {
+    final cmd = ContainerCmdType.execSelected(
+      const [ContainerCmdType.images],
+      ContainerType.podman,
+    );
+
+    expect(cmd, contains('podman image ls'));
+    expect(cmd, isNot(contains('podman ps -a')));
+    expect(cmd, isNot(contains('podman stats')));
   });
 
   group('PodmanImg usage markers', () {

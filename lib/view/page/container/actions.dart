@@ -223,7 +223,6 @@ extension on _ContainerPageState {
     context.pop();
     Stores.container.put(widget.args.spi.id, _containerState.type, val.trim());
     _containerNotifier.resetSudoProbe();
-    _containerNotifier.refresh();
   }
 
   void _showImageRmDialog(ContainerImg e) {
@@ -240,7 +239,10 @@ extension on _ContainerPageState {
       actions: Btn.ok(
         onTap: () async {
           context.pop();
-          final result = await _containerNotifier.run('rmi ${shellSingleQuote(id)} -f');
+          final result = await _containerNotifier.run(
+            'rmi ${shellSingleQuote(id)} -f',
+            refreshTarget: ContainerRefreshTarget.images,
+          );
           if (result != null) {
             if (mounted) context.showSnackBar(_errorMessage(result.message));
           }
@@ -271,6 +273,7 @@ extension on _ContainerPageState {
               await _execContainerAction(
                 () => _containerNotifier.run(
                   'pull ${shellSingleQuote(imageRef)}',
+                  refreshTarget: ContainerRefreshTarget.images,
                 ),
               );
             },
@@ -398,10 +401,44 @@ extension on _ContainerPageState {
     if (duration == null) return;
     _autoRefreshTimer = Timer.periodic(duration, (timer) {
       if (mounted) {
-        _containerNotifier.refresh(isAuto: true);
+        unawaited(_refreshCurrentContainerTab(isAuto: true));
       } else {
         timer.cancel();
       }
     });
+  }
+
+  void _onContainerTabChanged() {
+    final index = _tabCtrl.index;
+    if (index == _lastTabIndex) return;
+    _lastTabIndex = index;
+    unawaited(_refreshContainerTab(_ContainerTabs.values[index]));
+  }
+
+  Future<void> _refreshCurrentContainerTab({bool isAuto = false}) {
+    return _refreshContainerTab(
+      _ContainerTabs.values[_tabCtrl.index],
+      isAuto: isAuto,
+    );
+  }
+
+  Future<void> _refreshContainerTab(
+    _ContainerTabs tab, {
+    bool isAuto = false,
+    bool showLoading = false,
+  }) async {
+    final Future<void> Function()? action = switch (tab) {
+      _ContainerTabs.ps => () =>
+          _containerNotifier.refreshContainers(isAuto: isAuto),
+      _ContainerTabs.images => () =>
+          _containerNotifier.refreshImages(isAuto: isAuto),
+      _ContainerTabs.settings => null,
+    };
+    if (action == null) return;
+    if (showLoading) {
+      await context.showLoadingDialog(fn: action);
+    } else {
+      await action();
+    }
   }
 }
