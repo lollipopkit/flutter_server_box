@@ -97,6 +97,17 @@ fn cpu_cores(system: &System) -> Vec<CpuCore> {
     cores
 }
 
+/// Total physical memory in bytes.
+///
+/// Builds its own throwaway `System` rather than reusing the sampling
+/// [`State`]: callers need this at startup, before any sampling state is
+/// constructed, and refreshing memory once is cheap.
+pub fn total_memory() -> Option<u64> {
+    let mut system = System::new();
+    system.refresh_memory();
+    Some(system.total_memory()).filter(|&t| t > 0)
+}
+
 pub fn sample(state: &mut State) -> ServerStatus {
     state.system.refresh_cpu_usage();
     state.system.refresh_memory();

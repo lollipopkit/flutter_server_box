@@ -61,3 +61,42 @@ pub fn sample(#[allow(unused_variables)] state: &mut NativeState, system: System
         _ => ServerStatus::default(),
     }
 }
+
+/// Total physical memory in bytes, or `None` when this platform has no
+/// backend here or the read failed.
+///
+/// Separate from [`sample`] because the caller needs it before any sampling
+/// happens: monitor sizes its buffer/session limits off it at startup (see
+/// `RemoteAccessConfig`), and running a whole sample cycle just to read one
+/// constant would be wasteful and would need a `NativeState` that doesn't
+/// exist yet. The value doesn't change while the process runs, so callers
+/// read it once.
+pub fn total_memory() -> Option<u64> {
+    #[cfg(target_os = "linux")]
+    {
+        linux::total_memory()
+    }
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    {
+        sysinfo_backend::total_memory()
+    }
+    #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+    {
+        None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    /// Only asserts plausibility, not a value: this reads the real host.
+    /// Platforms without a backend legitimately return `None`.
+    #[test]
+    fn total_memory_is_plausible_or_absent() {
+        if let Some(total) = super::total_memory() {
+            assert!(
+                total >= 64 * 1024 * 1024,
+                "implausibly small total memory: {total}"
+            );
+        }
+    }
+}

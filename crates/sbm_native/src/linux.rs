@@ -87,6 +87,19 @@ fn thermal_zones() -> (String, String) {
     (types, values)
 }
 
+/// `MemTotal` from `/proc/meminfo`, in bytes (the file reports kibibytes).
+///
+/// Parsed here rather than going through `sbm_parser::linux::parse_mem`
+/// because callers of `sbm_native::total_memory` want this before any
+/// sampling state exists, and the one field is trivial to read directly.
+pub fn total_memory() -> Option<u64> {
+    read("/proc/meminfo")
+        .lines()
+        .find_map(|line| line.strip_prefix("MemTotal:"))
+        .and_then(|rest| rest.split_whitespace().next()?.parse::<u64>().ok())
+        .map(|kib| kib * 1024)
+}
+
 pub fn sample() -> ServerStatus {
     let mem_raw = read("/proc/meminfo");
     let (temp_types, temp_values) = thermal_zones();
