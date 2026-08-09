@@ -2033,6 +2033,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Systemd'**
   String get systemd;
+
+  /// No description provided for @processCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 process} other{{count} processes}}'**
+  String processCount(int count);
 }
 
 class _AppLocalizationsDelegate

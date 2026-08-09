@@ -271,6 +271,17 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     expect(original.procs.map((e) => e.pid), [3, 1, 2]);
   });
 
+  test('CPU sort breaks equal-value ties by PID', () {
+    final result = PsResult(
+      procs: [
+        Proc(pid: 20, cpu: 5, command: 'second'),
+        Proc(pid: 10, cpu: 5, command: 'first'),
+      ],
+    ).sortedBy(ProcSortMode.cpu);
+
+    expect(result.procs.map((proc) => proc.pid), [10, 20]);
+  });
+
   test('malformed process header returns displayable error', () {
     const raw = '''
 USER CPU COMMAND

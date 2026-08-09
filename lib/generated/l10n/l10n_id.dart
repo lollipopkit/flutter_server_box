@@ -1116,4 +1116,15 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get systemd => 'Systemd';
+
+  @override
+  String processCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count processes',
+      one: '1 process',
+    );
+    return '$_temp0';
+  }
 }

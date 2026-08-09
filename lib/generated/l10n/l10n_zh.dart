@@ -1039,6 +1039,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get systemd => 'Systemd';
+
+  @override
+  String processCount(int count) {
+    return '$count 个进程';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1982,4 +1987,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get systemd => 'Systemd';
+
+  @override
+  String processCount(int count) {
+    return '$count 個處理程序';
+  }
 }

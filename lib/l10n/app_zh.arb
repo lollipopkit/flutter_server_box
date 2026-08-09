@@ -318,5 +318,6 @@
   "tmuxNotAvailable": "tmux 不可用",
   "containerSegmentsMismatch": "容器响应分段数量异常：{count}",
   "containerOperationInProgress": "另一个容器操作正在进行中",
-  "systemd": "Systemd"
+  "systemd": "Systemd",
+  "processCount": "{count} 个进程"
 }

@@ -369,5 +369,13 @@
     }
   },
   "containerOperationInProgress": "Another container operation is already in progress",
-  "systemd": "Systemd"
+  "systemd": "Systemd",
+  "processCount": "{count, plural, one{1 process} other{{count} processes}}",
+  "@processCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
