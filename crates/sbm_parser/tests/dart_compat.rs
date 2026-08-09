@@ -964,6 +964,32 @@ fn smart_parse_macos_nvme() {
     assert!(d.smart_attributes.is_empty());
 }
 
+/// `-n standby` (see the `diskSmart` command) makes smartctl exit before it
+/// reads anything, and a device it cannot open behaves the same way: both
+/// print a JSON block naming the device with no reading in it. Neither may
+/// surface as a disk with every field blank. No Dart reference — the Dart
+/// implementation predates `-n standby`.
+#[test]
+fn smart_skips_blocks_without_a_reading() {
+    let standby = r#"{
+      "smartctl": {
+        "messages": [{ "string": "Device is in STANDBY mode, exit(2)", "severity": "information" }],
+        "exit_status": 2
+      },
+      "device": { "name": "/dev/sda", "type": "sat", "protocol": "ATA" }
+    }"#;
+    assert!(sbm_parser::smart::parse(standby).is_empty());
+
+    // Bit 2 alone ("some SMART command failed") is a partial read, not a
+    // skipped one — the macOS fixture exits with 4 and must still parse
+    let partial = r#"{
+      "smartctl": { "exit_status": 4 },
+      "device": { "name": "/dev/sda" },
+      "model_name": "Some Disk"
+    }"#;
+    assert_eq!(sbm_parser::smart::parse(partial).len(), 1);
+}
+
 // ---------- Btrfs RAID:btrfs_test.dart ----------
 
 #[test]

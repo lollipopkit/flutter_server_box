@@ -4,7 +4,11 @@
 //! every template artifact (blank lines, tab prefixes, trailing trims) is
 //! preserved so the output is byte-identical to the historical Dart builders.
 //! The app uploads the generated script over SSH and calls it with a flag; the
-//! monitor executes the same script locally with a core-only command subset.
+//! monitor executes the same script locally.
+//!
+//! Status collection is split across two functions: `SbStatus` for the fast
+//! poll and `SbStatusExt` for the commands in `commands::EXTENDED`, which both
+//! callers run on a much slower cadence.
 
 use crate::commands::{self, CommandSpec, SEPARATOR};
 use crate::SystemType;
@@ -18,6 +22,9 @@ pub const CUSTOM_CMD_SEPARATOR: &str = "SrvBoxCusCmdSep";
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ShellFunc {
     Status,
+    /// The `commands::EXTENDED` subset, split out of [`ShellFunc::Status`] so
+    /// callers can run it on a slower cadence than the status poll
+    StatusExt,
     Process,
     Shutdown,
     Reboot,
@@ -25,8 +32,9 @@ pub enum ShellFunc {
 }
 
 impl ShellFunc {
-    pub const ALL: [ShellFunc; 5] = [
+    pub const ALL: [ShellFunc; 6] = [
         ShellFunc::Status,
+        ShellFunc::StatusExt,
         ShellFunc::Process,
         ShellFunc::Shutdown,
         ShellFunc::Reboot,
@@ -36,6 +44,7 @@ impl ShellFunc {
     pub fn name(self) -> &'static str {
         match self {
             ShellFunc::Status => "SbStatus",
+            ShellFunc::StatusExt => "SbStatusExt",
             ShellFunc::Process => "SbProcess",
             ShellFunc::Shutdown => "SbShutdown",
             ShellFunc::Reboot => "SbReboot",
@@ -46,6 +55,7 @@ impl ShellFunc {
     pub fn flag(self) -> &'static str {
         match self {
             ShellFunc::Status => "s",
+            ShellFunc::StatusExt => "e",
             ShellFunc::Process => "p",
             ShellFunc::Shutdown => "sd",
             ShellFunc::Reboot => "r",
@@ -65,8 +75,6 @@ pub struct ScriptOptions {
     /// Disabled command keys in the app's stored displayName format
     /// ("Linux.net", "BSD.mem", "Windows.cpu"); compared case-insensitively
     pub disabled: Vec<String>,
-    /// Monitor mode: only `core` commands in the status function
-    pub core_only: bool,
     /// App build number embedded in the header comment ("v1.0.<build>")
     pub build_number: String,
 }
@@ -161,12 +169,9 @@ pub fn parse_script_output(raw: &str) -> HashMap<String, String> {
 
 // ---------- internal: shared filtering ----------
 
-/// Whether a command is included in the status function.
-/// `scope` is the displayName prefix used by the app ("Linux"/"BSD"/"Windows").
+/// Whether the user disabled this command for `scope`, the displayName prefix
+/// used by the app ("Linux"/"BSD"/"Windows").
 fn enabled(spec: &CommandSpec, scope: &str, opts: &ScriptOptions) -> bool {
-    if opts.core_only && !spec.core {
-        return false;
-    }
     let display_name = format!("{scope}.{}", spec.key);
     !opts
         .disabled
@@ -174,16 +179,18 @@ fn enabled(spec: &CommandSpec, scope: &str, opts: &ScriptOptions) -> bool {
         .any(|d| d.eq_ignore_ascii_case(&display_name))
 }
 
-/// `divider + cmd` segments joined and right-trimmed (Dart `_get*StatusCommand`)
+/// `divider + cmd` segments joined and right-trimmed (Dart `_get*StatusCommand`),
+/// limited to the half of the manifest `extended` selects
 fn segment_list(
     specs: &[CommandSpec],
     scope: &str,
     opts: &ScriptOptions,
+    extended: bool,
     divider: impl Fn(&str) -> String,
 ) -> String {
     let joined: String = specs
         .iter()
-        .filter(|s| enabled(s, scope, opts))
+        .filter(|s| s.is_extended() == extended && enabled(s, scope, opts))
         .map(|s| format!("{}{}", divider(s.key), s.cmd))
         .collect();
     joined.trim_end().to_string()
@@ -249,15 +256,20 @@ fn unix_custom_cmds(func: ShellFunc, opts: &ScriptOptions) -> String {
     s
 }
 
+/// A branch with no enabled commands left in it would make the generated
+/// script a shell syntax error (`if ...; then\nelse`), which the user can
+/// reach by disabling every command of one half of the manifest
+fn or_noop(segments: String) -> String {
+    if segments.is_empty() { ":".to_string() } else { segments }
+}
+
 fn unix_command(func: ShellFunc, opts: &ScriptOptions) -> String {
     match func {
-        ShellFunc::Status => {
-            let linux = segment_list(commands::LINUX, "Linux", opts, |key| {
-                format!("\necho {SEPARATOR}.{key}\n\t")
-            });
-            let bsd = segment_list(commands::BSD, "BSD", opts, |key| {
-                format!("\necho {SEPARATOR}.{key}\n\t")
-            });
+        ShellFunc::Status | ShellFunc::StatusExt => {
+            let extended = func == ShellFunc::StatusExt;
+            let divider = |key: &str| format!("\necho {SEPARATOR}.{key}\n\t");
+            let linux = or_noop(segment_list(commands::LINUX, "Linux", opts, extended, divider));
+            let bsd = or_noop(segment_list(commands::BSD, "BSD", opts, extended, divider));
             format!(
                 "if [ \"$macSign\" = \"\" ] && [ \"$bsdSign\" = \"\" ]; then\n\t{linux}\nelse\n\t{bsd}\nfi"
             )
@@ -357,9 +369,13 @@ fn windows_custom_cmds(func: ShellFunc, opts: &ScriptOptions) -> String {
 
 fn windows_command(func: ShellFunc, opts: &ScriptOptions) -> String {
     match func {
-        ShellFunc::Status => segment_list(commands::WINDOWS, "Windows", opts, |key| {
-            format!("\n    Write-Host \"{SEPARATOR}.{key}\"\n    ")
-        }),
+        ShellFunc::Status | ShellFunc::StatusExt => segment_list(
+            commands::WINDOWS,
+            "Windows",
+            opts,
+            func == ShellFunc::StatusExt,
+            |key| format!("\n    Write-Host \"{SEPARATOR}.{key}\"\n    "),
+        ),
         ShellFunc::Process => "Get-Process | Select-Object ProcessName, Id, CPU, WorkingSet,
     @{Name='IOReadBytes';Expression={$_.IOReadBytes}},
     @{Name='IOWriteBytes';Expression={$_.IOWriteBytes}} | ConvertTo-Json"

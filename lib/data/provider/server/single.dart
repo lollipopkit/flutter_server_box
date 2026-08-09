@@ -33,6 +33,15 @@ import 'package:server_box/data/ssh/session_manager.dart';
 part 'single.g.dart';
 part 'single.freezed.dart';
 
+/// How often [ShellFunc.statusExt] runs, independent of the status poll.
+///
+/// It carries the commands kept out of the poll (`sbm_parser::commands::
+/// EXTENDED`), chiefly smartctl: reading SMART reaches the disk itself, so at
+/// the status interval a disk with spin-down configured would never stay spun
+/// down. The values it collects (SMART, AMD GPU) don't change meaningfully
+/// faster than this anyway.
+const _extendedStatusInterval = Duration(minutes: 5);
+
 // Individual server state, including connection and status information
 @freezed
 abstract class ServerState with _$ServerState {
@@ -56,6 +65,12 @@ abstract class ServerState with _$ServerState {
 class ServerNotifier extends _$ServerNotifier {
   PersistentShell? _persistentShell;
   bool _usePersistentShellForStatus = true;
+
+  /// Last [ShellFunc.statusExt] output, appended to every status refresh's raw
+  /// output so its segments don't blank out on the polls in between — see
+  /// [_extendedStatusInterval]
+  String _extendedRaw = '';
+  DateTime? _extendedFetchedAt;
 
   /// Reads status for whichever connection method this server uses. Rebuilt
   /// when the SPI's connection config changes.
@@ -124,6 +139,10 @@ class ServerNotifier extends _$ServerNotifier {
     if (!identical(state.client, client)) {
       unawaited(_disposePersistentShell());
       _usePersistentShellForStatus = true;
+      // A new connection reinstalls the script, so drop the cache: the next
+      // refresh re-runs the extended function against the current script
+      _extendedRaw = '';
+      _extendedFetchedAt = null;
     }
     state = state.copyWith(client: client);
   }
@@ -595,9 +614,15 @@ class ServerNotifier extends _$ServerNotifier {
     }
 
     try {
+      // Segments the status function no longer carries, refreshed on their own
+      // schedule and concatenated here: the parser splits by separator, so one
+      // combined output parses exactly as the two runs would have
+      final extended = await _refreshExtendedRaw(force: interactive);
+      final combined = extended.isEmpty ? raw : '$raw\n$extended';
+
       // Same conversion contract as the monitor path: raw transport output in,
       // ServerStatus (plus a trend sample) out
-      final source = SshDataSource(spi: spi, runScript: () async => raw!);
+      final source = SshDataSource(spi: spi, runScript: () async => combined);
       updateStatus(await source.fetchStatus(_copyStatus(state.status)));
     } catch (e, trace) {
       _failSsh(
@@ -613,6 +638,45 @@ class ServerNotifier extends _$ServerNotifier {
     updateConnection(ServerConn.finished);
     // Reset retry count only after successful preparation
     TryLimiter.reset(sid);
+  }
+
+  /// Runs [ShellFunc.statusExt] when [_extendedStatusInterval] has elapsed
+  /// (or [force], for a user-initiated refresh) and returns its output,
+  /// falling back to the last successful one.
+  ///
+  /// Deliberately on the exec path rather than the persistent shell: these
+  /// commands can take seconds, and a timeout there would drop the whole
+  /// connection to exec for good (see [_runStatusCommand]).
+  Future<String> _refreshExtendedRaw({required bool force}) async {
+    final fetchedAt = _extendedFetchedAt;
+    final due =
+        force ||
+        fetchedAt == null ||
+        DateTime.now().difference(fetchedAt) >= _extendedStatusInterval;
+    final client = state.client;
+    if (!due || client == null) return _extendedRaw;
+
+    // Stamped before the run, so a remote that can't answer (an older script
+    // without the function, until the next connect reinstalls it) is retried
+    // on the extended schedule instead of on every poll
+    _extendedFetchedAt = DateTime.now();
+    final spi = state.spi;
+    try {
+      final cmd = ShellFunc.statusExt.exec(
+        spi.id,
+        systemType: state.status.system,
+        customDir: spi.custom?.scriptDir,
+      );
+      final raw = await _runStatusCommandWithExec(
+        client,
+        cmd,
+        isWindows: state.status.system == SystemType.windows,
+      );
+      if (raw.contains(ScriptConstants.separator)) _extendedRaw = raw;
+    } catch (e, s) {
+      Loggers.app.warning('Extended status for ${spi.name} failed', e, s);
+    }
+    return _extendedRaw;
   }
 
   Future<String> _runStatusCommand(String statusCmd) async {

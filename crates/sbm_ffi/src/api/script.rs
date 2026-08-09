@@ -18,6 +18,7 @@ pub struct CustomCmd {
 /// Shell functions of the generated script (mirrors sbm_parser::script::ShellFunc)
 pub enum ShellFuncKind {
     Status,
+    StatusExt,
     Process,
     Shutdown,
     Reboot,
@@ -29,6 +30,7 @@ impl From<ShellFuncKind> for sbm_parser::script::ShellFunc {
         use sbm_parser::script::ShellFunc as F;
         match kind {
             ShellFuncKind::Status => F::Status,
+            ShellFuncKind::StatusExt => F::StatusExt,
             ShellFuncKind::Process => F::Process,
             ShellFuncKind::Shutdown => F::Shutdown,
             ShellFuncKind::Reboot => F::Reboot,
@@ -50,7 +52,6 @@ pub fn build_script(
     let opts = sbm_parser::script::ScriptOptions {
         custom_cmds: custom_cmds.into_iter().map(|c| (c.name, c.cmd)).collect(),
         disabled,
-        core_only: false,
         build_number,
     };
     Ok(sbm_parser::script::build_script(system, &opts))
@@ -78,7 +79,7 @@ pub fn exec_command(
     Ok(sbm_parser::script::exec_command(system, &script_path, func.into()))
 }
 
-/// Command-line flag of a shell function ("s", "p", "sd", "r", "sp");
+/// Command-line flag of a shell function ("s", "e", "p", "sd", "r", "sp");
 /// wire format owned by sbm_parser::script
 #[flutter_rust_bridge::frb(sync)]
 pub fn shell_func_flag(func: ShellFuncKind) -> String {

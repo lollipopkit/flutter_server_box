@@ -78,7 +78,7 @@ pub struct SystemMetrics {
     #[serde(default)]
     pub disk_smart: Vec<SmartSummary>,
     /// Last AMD reading, kept only to re-merge into `gpus` on cycles the
-    /// (expensive, `core: false`) AMD command wasn't run — not part of the API
+    /// (expensive, extended-only) AMD command wasn't run — not part of the API
     #[serde(skip, default)]
     pub amd_cache: Vec<sbm_parser::types::AmdSmiItem>,
 }
@@ -365,15 +365,13 @@ async fn sample_nvidia(system: SystemType) -> Vec<sbm_parser::types::NvidiaSmiIt
     sbm_parser::gpu::nvidia_from_xml(&raw)
 }
 
-/// Build the extended-cycle status script shared with the app
-/// (`sbm_parser::script`) — `core_only=false` since the fields it's still
-/// needed for (amd/sensors/SMART/battery) are all non-core. Everything
-/// `sbm_native` covers no longer needs a generated script at all.
+/// Build the status script shared with the app (`sbm_parser::script`). Only
+/// the extended cycle runs it, for the shell functions in `EXTENDED_FUNCS` —
+/// everything `sbm_native` covers no longer needs a generated script at all.
 fn build_status_script(system: SystemType) -> String {
     sbm_parser::script::build_script(
         system,
         &sbm_parser::script::ScriptOptions {
-            core_only: false,
             build_number: env!("CARGO_PKG_VERSION").to_string(),
             ..Default::default()
         },
@@ -408,6 +406,15 @@ fn ensure_script(path: &std::path::Path, content: &str) -> std::io::Result<()> {
     Ok(())
 }
 
+/// Shell functions the extended cycle runs. Both halves, because the fields
+/// this cycle exists for straddle the split: SMART and AMD are in
+/// `SbStatusExt`, while `sensors`/`battery` (and Windows' `conn`, which has no
+/// native path yet — see `collect_metrics`) are cheap enough for the app's
+/// poll and stayed in `SbStatus`. The rest of `SbStatus` is redundant here
+/// (`sbm_native` covers it every cycle) but costs only file reads.
+const EXTENDED_FUNCS: [sbm_parser::script::ShellFunc; 2] =
+    [sbm_parser::script::ShellFunc::StatusExt, sbm_parser::script::ShellFunc::Status];
+
 /// Execute the generated status script and split its output by segment.
 /// Failed commands inside the script yield empty segments (the script does
 /// `exec 2>/dev/null`), matching the app's per-segment tolerance; per-command
@@ -416,26 +423,31 @@ async fn execute_commands(system: SystemType) -> Result<HashMap<String, String>>
     let content = build_status_script(system);
     let path = script_path(system);
 
-    let output = tokio::task::spawn_blocking(move || -> std::io::Result<std::process::Output> {
+    let stdout = tokio::task::spawn_blocking(move || -> std::io::Result<String> {
         ensure_script(&path, &content)?;
-        if cfg!(target_os = "windows") {
-            Command::new("powershell")
-                .args(["-ExecutionPolicy", "Bypass", "-File"])
-                .arg(&path)
-                .arg("-s")
-                .output()
-        } else {
-            Command::new("sh").arg(&path).arg("-s").output()
+        let mut stdout = String::new();
+        for func in EXTENDED_FUNCS {
+            let output = if cfg!(target_os = "windows") {
+                Command::new("powershell")
+                    .args(["-ExecutionPolicy", "Bypass", "-File"])
+                    .arg(&path)
+                    .arg(format!("-{}", func.flag()))
+                    .output()?
+            } else {
+                Command::new("sh").arg(&path).arg(format!("-{}", func.flag())).output()?
+            };
+            if !output.status.success() {
+                error!("Status script {} exited with {}", func.name(), output.status);
+            }
+            stdout.push_str(&String::from_utf8_lossy(&output.stdout));
+            stdout.push('\n');
         }
+        Ok(stdout)
     })
     .await
     .map_err(|e| crate::utils::error::MonitorError::Monitoring(format!("Task join error: {}", e)))?
     .map_err(|e| crate::utils::error::MonitorError::Monitoring(format!("Status script error: {}", e)))?;
 
-    if !output.status.success() {
-        error!("Status script exited with {}", output.status);
-    }
-    let stdout = String::from_utf8_lossy(&output.stdout);
     if stdout.trim().is_empty() {
         return Err(crate::utils::error::MonitorError::Monitoring(
             "Status script produced no output".to_string(),
@@ -445,10 +457,10 @@ async fn execute_commands(system: SystemType) -> Result<HashMap<String, String>>
 }
 
 /// `fresh` wins whenever it has data; otherwise keeps whatever the previous
-/// cycle had. Used for the `core: false` fields (diskio on Windows;
+/// cycle had. Used for the script-bound fields (diskio on Windows;
 /// battery/sensors/disk_smart/amd everywhere) that only get real values on
 /// the slower extended-collection cycles, so they don't flicker empty on the
-/// core-only cycles in between.
+/// cycles in between.
 fn carry_forward<T>(fresh: Vec<T>, prev: Vec<T>) -> Vec<T> {
     if fresh.is_empty() { prev } else { fresh }
 }
@@ -1118,15 +1130,15 @@ mod tests {
             true,
         );
 
-        // Next (core-only) cycle: the script never included these commands,
-        // so the parser returns empty/None — the previous snapshot should win.
+        // Next (non-extended) cycle: the script never ran these commands, so
+        // the parser returns empty/None — the previous snapshot should win.
         let metrics =
             adapt_status(SystemType::Linux, empty_status(), &Config::default(), None, Some(&prev), false);
 
         assert_eq!(metrics.uptime.as_deref(), Some("up 1 day"));
         assert_eq!(metrics.diskio.len(), 1);
         assert_eq!(metrics.batteries.len(), 1);
-        // The core-only cycle didn't refresh extended data — freshness
+        // The non-extended cycle didn't refresh extended data — freshness
         // timestamp carries over from the extended cycle, not bumped to now
         assert_eq!(metrics.extended_updated_at, prev.extended_updated_at);
     }
@@ -1164,12 +1176,14 @@ mod tests {
         assert_eq!(rate[0].write_bytes_per_sec, 256_000.0);
     }
 
-    /// The monitor's real collection path: run the generated script, split output
+    /// The monitor's real collection path: run the generated script, split
+    /// output. Both shell functions run, so keys from either half come back.
     #[cfg(unix)]
     #[tokio::test]
     async fn execute_commands_via_script_smoke() {
         let raw = execute_commands(system_type()).await.unwrap();
         assert!(raw.contains_key("time"), "keys: {:?}", raw.keys().collect::<Vec<_>>());
         assert!(raw.contains_key("echo"));
+        assert!(raw.contains_key("diskSmart"), "extended half missing");
     }
 }

@@ -514,10 +514,11 @@ impl SseDecode for crate::api::script::ShellFuncKind {
         let mut inner = <i32>::sse_decode(deserializer);
         return match inner {
             0 => crate::api::script::ShellFuncKind::Status,
-            1 => crate::api::script::ShellFuncKind::Process,
-            2 => crate::api::script::ShellFuncKind::Shutdown,
-            3 => crate::api::script::ShellFuncKind::Reboot,
-            4 => crate::api::script::ShellFuncKind::Suspend,
+            1 => crate::api::script::ShellFuncKind::StatusExt,
+            2 => crate::api::script::ShellFuncKind::Process,
+            3 => crate::api::script::ShellFuncKind::Shutdown,
+            4 => crate::api::script::ShellFuncKind::Reboot,
+            5 => crate::api::script::ShellFuncKind::Suspend,
             _ => unreachable!("Invalid variant for ShellFuncKind: {}", inner),
         };
     }
@@ -625,10 +626,11 @@ impl flutter_rust_bridge::IntoDart for crate::api::script::ShellFuncKind {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         match self {
             Self::Status => 0.into_dart(),
-            Self::Process => 1.into_dart(),
-            Self::Shutdown => 2.into_dart(),
-            Self::Reboot => 3.into_dart(),
-            Self::Suspend => 4.into_dart(),
+            Self::StatusExt => 1.into_dart(),
+            Self::Process => 2.into_dart(),
+            Self::Shutdown => 3.into_dart(),
+            Self::Reboot => 4.into_dart(),
+            Self::Suspend => 5.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -753,10 +755,11 @@ impl SseEncode for crate::api::script::ShellFuncKind {
         <i32>::sse_encode(
             match self {
                 crate::api::script::ShellFuncKind::Status => 0,
-                crate::api::script::ShellFuncKind::Process => 1,
-                crate::api::script::ShellFuncKind::Shutdown => 2,
-                crate::api::script::ShellFuncKind::Reboot => 3,
-                crate::api::script::ShellFuncKind::Suspend => 4,
+                crate::api::script::ShellFuncKind::StatusExt => 1,
+                crate::api::script::ShellFuncKind::Process => 2,
+                crate::api::script::ShellFuncKind::Shutdown => 3,
+                crate::api::script::ShellFuncKind::Reboot => 4,
+                crate::api::script::ShellFuncKind::Suspend => 5,
                 _ => {
                     unimplemented!("");
                 }

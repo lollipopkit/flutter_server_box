@@ -44,7 +44,7 @@ String execCommand({
   func: func,
 );
 
-/// Command-line flag of a shell function ("s", "p", "sd", "r", "sp");
+/// Command-line flag of a shell function ("s", "e", "p", "sd", "r", "sp");
 /// wire format owned by sbm_parser::script
 String shellFuncFlag({required ShellFuncKind func}) =>
     RustLib.instance.api.crateApiScriptShellFuncFlag(func: func);
@@ -75,4 +75,4 @@ class CustomCmd {
 }
 
 /// Shell functions of the generated script (mirrors sbm_parser::script::ShellFunc)
-enum ShellFuncKind { status, process, shutdown, reboot, suspend }
+enum ShellFuncKind { status, statusExt, process, shutdown, reboot, suspend }

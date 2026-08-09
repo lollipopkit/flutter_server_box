@@ -62,6 +62,15 @@ fn parse_block(block: &str) -> Option<DiskSmart> {
         return None;
     }
 
+    // Exit status bit 1: the device could not be opened, or `-n standby`
+    // stopped before touching a disk that had spun down. Either way the block
+    // holds no reading, and emitting it would show the disk with every field
+    // blank. Bit 2 (`4`, "some SMART command failed") is a partial read and
+    // is kept — see the macOS fixture.
+    if data["smartctl"]["exit_status"].as_i64().is_some_and(|s| s & 2 != 0) {
+        return None;
+    }
+
     let attributes = parse_attributes(&data);
     let str_of = |v: &Value| v.as_str().map(str::to_string);
 

@@ -150,12 +150,22 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
 
     let exec = script::exec_command(SystemType::Linux, &script_path, ShellFunc::Status);
     let raw = ssh(&host, &exec, None).expect("run status script");
+    // SMART/AMD live in the extended function, which the app runs on its own
+    // slow timer and merges into the same parse — do the same here
+    let exec_ext = script::exec_command(SystemType::Linux, &script_path, ShellFunc::StatusExt);
+    let raw_ext = ssh(&host, &exec_ext, None).expect("run extended status script");
 
     // Best-effort cleanup before assertions
     let _ = ssh(&host, &format!("rm -rf {REMOTE_DIR}"), None);
 
-    let segments = script::parse_script_output(&raw);
+    let mut segments = script::parse_script_output(&raw);
     assert!(!segments.is_empty(), "no segments parsed; raw output: {raw:?}");
+    let segments_ext = script::parse_script_output(&raw_ext);
+    assert!(
+        segments_ext.contains_key(commands::DISK_SMART),
+        "no extended segments parsed; raw output: {raw_ext:?}"
+    );
+    segments.extend(segments_ext);
 
     // Detect the remote system from the echo segment
     let sign = segments.get("echo").map(String::as_str).unwrap_or("");

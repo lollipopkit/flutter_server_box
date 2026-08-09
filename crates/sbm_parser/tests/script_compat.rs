@@ -205,19 +205,64 @@ fn disabled_case_insensitive() {
     assert!(!script.contains("cat /proc/net/dev"));
 }
 
-// ---------- core_only (monitor mode) ----------
+// ---------- SbStatus / SbStatusExt split ----------
+
+fn func_body(script: &str, func: ShellFunc) -> &str {
+    let start = script.find(&format!("{}() {{", func.name())).unwrap();
+    let rest = &script[start..];
+    &rest[..rest.find("\n}\n").unwrap()]
+}
+
+/// The expensive/hardware-disturbing commands live in `SbStatusExt` only, so
+/// the fast poll never runs them — see `commands::EXTENDED`
+#[test]
+fn extended_commands_split_out_of_status() {
+    let script = build_script(SystemType::Linux, &opts());
+    let status = func_body(&script, ShellFunc::Status);
+    let ext = func_body(&script, ShellFunc::StatusExt);
+
+    assert!(!status.contains("smartctl"));
+    assert!(!status.contains("amd-smi"));
+    assert!(ext.contains("smartctl"));
+    assert!(ext.contains("amd-smi"));
+
+    // Everything else stays in the fast poll: cheap to run, and wanted at the
+    // status interval rather than minutes apart
+    assert!(status.contains("echo SrvBoxSep.sensors"));
+    assert!(status.contains("echo SrvBoxSep.battery"));
+    assert!(status.contains("nvidia-smi -q -x"));
+    assert!(!ext.contains("echo SrvBoxSep.sensors"));
+    assert!(!ext.contains("nvidia-smi"));
+}
 
 #[test]
-fn core_only_excludes_expensive_commands() {
-    let core = build_script(SystemType::Linux, &ScriptOptions { core_only: true, ..opts() });
-    assert!(!core.contains("smartctl"));
-    assert!(!core.contains("amd-smi"));
-    assert!(!core.contains("\techo SrvBoxSep.sensors"));
-    // NVIDIA is core: a cheap single probe, wanted for the GPU card
-    assert!(core.contains("nvidia-smi -q -x"));
-    let full = build_script(SystemType::Linux, &opts());
-    assert!(full.contains("smartctl"));
-    assert!(full.contains("amd-smi"));
+fn extended_commands_split_out_of_status_windows() {
+    let script = build_script(SystemType::Windows, &opts());
+    let status = script.split("function SbProcess").next().unwrap();
+    let (status, ext) = status.split_once("function SbStatusExt").unwrap();
+
+    assert!(!status.contains("Get-StorageReliabilityCounter"));
+    assert!(!status.contains("amd-smi"));
+    assert!(ext.contains("Get-StorageReliabilityCounter"));
+    assert!(ext.contains("amd-smi"));
+    // The Windows disk-IO sample costs two seconds of Start-Sleep but feeds a
+    // live chart, so it stays in the fast poll
+    assert!(status.contains("Win32_PerfRawData_PerfDisk_PhysicalDisk"));
+}
+
+/// Disabling every command of one half must not emit an empty `then`/`else`
+/// branch, which `sh` rejects as a syntax error
+#[test]
+fn disabled_all_extended_keeps_script_valid() {
+    let disabled: Vec<String> = sbm_parser::commands::EXTENDED
+        .iter()
+        .flat_map(|key| [format!("Linux.{key}"), format!("BSD.{key}")])
+        .collect();
+    let script = build_script(SystemType::Linux, &ScriptOptions { disabled, ..opts() });
+    let ext = func_body(&script, ShellFunc::StatusExt);
+    assert!(!ext.contains("SrvBoxSep."));
+    // Body lines carry the function's tab prefix
+    assert!(ext.contains("then\n\t\t:\n\telse\n\t\t:\n\tfi"), "{ext}");
 }
 
 // ---------- parse_script_output ----------
@@ -258,7 +303,7 @@ fn parse_output_crlf() {
 
 // ---------- e2e: run the generated script the way the monitor does ----------
 
-/// Executes the core-only status script through `sh -s` and parses the output.
+/// Executes the status script through `sh -s` and parses the output.
 /// This is exactly the monitor's local collection path.
 #[cfg(unix)]
 #[test]
@@ -267,7 +312,6 @@ fn e2e_unix_status_script_runs() {
     use std::process::{Command, Stdio};
 
     let script = build_script(SystemType::Linux, &ScriptOptions {
-        core_only: true,
         build_number: "test".into(),
         ..Default::default()
     });
