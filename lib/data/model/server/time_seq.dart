@@ -66,7 +66,18 @@ abstract class TimeSeq<T extends TimeSeqIface<T>> {
   /// Called after each [update], for subclasses to refresh cached values.
   void onUpdate();
 
+  /// Whether [next] is a later sample than the one already held.
+  ///
+  /// Defaults to accepting everything. Sources that can hand back the same
+  /// sample twice must override it: monitor refreshes its metrics once per
+  /// collection cycle and the app polls faster, so roughly every other fetch
+  /// returns the same counters at the same instant. Pushing that in collapses
+  /// the window to zero width, which made every derived rate disappear for
+  /// that cycle — speeds visibly flickering on and off.
+  bool advances(List<T> next) => true;
+
   void update(List<T> next) {
+    if (!advances(next)) return;
     _pre = _now.isEmpty ? null : _now;
     _now = next;
     _alignPre();

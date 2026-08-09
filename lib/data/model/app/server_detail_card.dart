@@ -8,13 +8,12 @@ import 'package:server_box/data/res/store.dart';
 /// also the order `_ServerDetailPageState._cardBuildMap` pairs builders with —
 /// the two lists must stay in step.
 enum ServerDetailCards {
-  /// CPU and RAM, both their current figures and their shared trend. The two
-  /// used to be separate `cpu`/`mem` cards that the trend chart then repeated.
-  usage(Icons.speed, sinceBuild: 1467),
+  about(Icons.info),
+  cpu(Icons.memory),
+  mem(Bootstrap.memory),
   diskChart(Icons.stacked_line_chart, sinceBuild: 1467),
   netChart(Icons.multiline_chart, sinceBuild: 1467),
   tempChart(Icons.thermostat, sinceBuild: 1467),
-  about(Icons.info),
   swap(Icons.swap_horiz),
   gpu(Bootstrap.gpu_card),
   disk(Bootstrap.device_hdd_fill),
@@ -38,8 +37,9 @@ enum ServerDetailCards {
   static final names = values.map((e) => e.name).toList();
 
   String get toStr => switch (this) {
-    usage => libL10n.used,
     about => libL10n.about,
+    cpu => 'CPU',
+    mem => 'RAM',
     swap => 'Swap',
     gpu => 'GPU',
     disk => libL10n.disk,
@@ -50,10 +50,13 @@ enum ServerDetailCards {
     battery => libL10n.battery,
     pve => 'PVE',
     custom => libL10n.cmd,
-    // Trend-only cards, named apart from the snapshot card of the same subject
-    diskChart => '${libL10n.disk} · ${libL10n.stats}',
-    netChart => '${libL10n.net} · ${libL10n.stats}',
-    tempChart => '${libL10n.temperature} · ${libL10n.stats}',
+    // Trend-only cards. Named the same as the snapshot card of the same
+    // subject: the header sits on the card the user is already looking at, so
+    // a qualifier there is noise. The reorder list in `srv_detail_seq.dart`
+    // shows the enum name, which stays distinct.
+    diskChart => libL10n.disk,
+    netChart => libL10n.net,
+    tempChart => libL10n.temperature,
   };
 
   /// If:
@@ -78,18 +81,23 @@ enum ServerDetailCards {
       }
     }
 
-    if (cur >= usage.sinceBuild!) {
+    if (cur >= diskChart.sinceBuild!) {
       final prop = Stores.setting.detailCardOrder;
       final list = prop.fetch();
-      // The separate cpu/mem cards were folded into `usage`; drop their stored
-      // entries so the merged card doesn't sit alongside the originals.
-      // TODO: remove these three `remove`s once no install can still carry the
-      // old names (`monitorHistory` only ever shipped on the frb branch).
-      list.removeWhere((e) => e == 'cpu' || e == 'mem' || e == 'monitorHistory');
-      // Inserted at the front, not appended: these carry the headline figures
-      // and belong above the per-device detail cards.
-      for (final card in [usage, diskChart, netChart, tempChart].reversed) {
-        if (!list.contains(card.name)) list.insert(0, card.name);
+      // Names only ever written by unreleased builds of this branch.
+      // TODO: drop these two `remove`s before they can accumulate meaning.
+      list.removeWhere((e) => e == 'usage' || e == 'monitorHistory');
+      // Inserted after the figures they chart rather than appended, so the
+      // trends sit above the per-device detail cards. `cpu`/`mem` are already
+      // in every stored list at their original positions.
+      final anchor = [mem.name, cpu.name, about.name]
+          .map(list.indexOf)
+          .firstWhere((i) => i != -1, orElse: () => -1);
+      var at = anchor + 1;
+      for (final card in [diskChart, netChart, tempChart]) {
+        if (list.contains(card.name)) continue;
+        list.insert(at, card.name);
+        at++;
       }
       prop.put(list);
     }

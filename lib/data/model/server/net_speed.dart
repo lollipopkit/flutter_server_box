@@ -34,6 +34,12 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
   static const noReading = '--';
 
   @override
+  bool advances(List<NetSpeedPart> next) {
+    if (next.isEmpty || now.isEmpty) return true;
+    return next.first.time > now.first.time;
+  }
+
+  @override
   void onUpdate() {
     devices
       ..clear()

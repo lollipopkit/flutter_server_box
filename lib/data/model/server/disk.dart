@@ -69,6 +69,12 @@ class DiskIO extends TimeSeq<DiskIOPiece> {
   static const _devPrefixes = ['nvme', 'sd', 'vd', 'hd', 'mmcblk', 'sr'];
 
   @override
+  bool advances(List<DiskIOPiece> next) {
+    if (next.isEmpty || now.isEmpty) return true;
+    return next.first.time > now.first.time;
+  }
+
+  @override
   void onUpdate() {
     final (read, write) = allSpeedBytes;
     cachedAllSpeed = (_fmt(read), _fmt(write));

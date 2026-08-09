@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:extended_image/extended_image.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -45,14 +46,19 @@ class ServerDetailPage extends ConsumerStatefulWidget {
   );
 }
 
+/// Widest the card grid is allowed to get: four `UIs.columnWidth` columns
+/// plus the gaps between them.
+const _kMaxContentWidth = 4 * (UIs.columnWidth + 10);
+
 class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   late final _cardBuildMap = Map.fromIterables(ServerDetailCards.names, [
-    _buildUsage,
+    _buildAbout,
+    _buildCPUView,
+    _buildMemView,
     _buildDiskChart,
     _buildNetChart,
     _buildTempChart,
-    _buildAbout,
     _buildSwapView,
     _buildGpuView,
     _buildDiskView,
@@ -112,7 +118,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   @override
   Widget build(BuildContext context) {
     final serverState = ref.watch(serverProvider(widget.args.spi.id));
-    if (!_hasSession(serverState)) {
+    if (!_hasContent(serverState)) {
       return Scaffold(
         appBar: CustomAppBar(),
         body: Center(child: Text(libL10n.empty)),
@@ -121,15 +127,22 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     return _buildMainPage(serverState);
   }
 
-  /// Whether there is anything to render yet.
+  /// Whether there is anything to render.
   ///
-  /// A transport that keeps a session has a live client to test; a stateless
-  /// one holds no client at all, so it can only be judged by whether it has
-  /// answered yet. Gating both on `client == null` left every monitor-HTTP
-  /// server stuck on the empty placeholder.
-  bool _hasSession(ServerState state) {
+  /// Losing the connection must not empty the page: the status already
+  /// fetched is still the most recent thing known about the server, and the
+  /// error card below explains why it stopped updating. Collapsing to the
+  /// placeholder on `ServerConn.failed` threw both away, so a monitor going
+  /// offline looked identical to a server that had never been opened.
+  ///
+  /// `more` is the "has ever been fetched" signal — every successful status
+  /// apply populates it on both transports, and `keepStatusWhenErr` in
+  /// `ServerNotifier` already relies on that.
+  bool _hasContent(ServerState state) {
+    if (state.status.more.isNotEmpty) return true;
+    // Nothing fetched yet: a transport that keeps a session has a live client
+    // to test, a stateless one can only be judged by whether it has answered
     if (state.capabilities.persistentSession) return state.client != null;
-    // connecting → nothing fetched yet; loading/finished → status is populated
     return !(state.conn < server_model.ServerConn.connected);
   }
 
@@ -141,6 +154,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     final logo = _buildLogo(si);
     final children = <Widget>[
       ?logo,
+      ?_buildErrCard(si),
       if (buildFuncs) ServerFuncBtns(spi: si.spi),
     ];
     for (final card in _cardsOrder) {
@@ -152,7 +166,62 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
 
     return Scaffold(
       appBar: _buildAppBar(si),
-      body: SafeArea(child: AutoMultiList(children: children)),
+      body: SafeArea(
+        // Capped and centred. AutoMultiList fits as many columns as the window
+        // allows, which on a wide desktop window meant five narrow columns of
+        // cards with the eye travelling the full width of the screen to read
+        // one server. Four is the point where a column still holds a chart at
+        // a readable size.
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: _kMaxContentWidth),
+            child: AutoMultiList(children: children),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Why the status stopped updating. Sits above the cards, which keep
+  /// showing the last successful reading — stale data with a visible reason
+  /// beats a blank page.
+  Widget? _buildErrCard(ServerState si) {
+    final err = si.status.err;
+    if (err == null) return null;
+
+    final solution = err.solution;
+    return CardX(
+      child: ListTile(
+        leading: const Icon(Icons.error_outline, color: Colors.red, size: 20),
+        title: Text(libL10n.error, style: UIs.text15),
+        subtitle: Text(
+          solution ?? err.message ?? libL10n.unknown,
+          style: UIs.text12Grey,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: const Icon(Icons.chevron_right, size: 17),
+        onTap: () => _showErrDetail(err),
+      ),
+    );
+  }
+
+  void _showErrDetail(Err err) {
+    final md =
+        '''
+${err.solution ?? libL10n.unknown}
+
+```sh
+${err.message ?? 'null'}
+```
+''';
+    context.showRoundDialog(
+      title: libL10n.error,
+      child: SingleChildScrollView(child: SimpleMarkdown(data: md)),
+      actions: [
+        TextButton(onPressed: () => Pfs.copy(md), child: Text(libL10n.copy)),
+        TextButton(onPressed: () => context.pop(), child: Text(libL10n.close)),
+      ],
     );
   }
 
@@ -189,14 +258,15 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
 
   Widget? _buildLogo(ServerState si) {
     final logoUrl = si.getLogoUrl(context);
+    // Null, not an empty placeholder: the wrapping Padding was laid out either
+    // way, leaving a band of dead space above the first card on every server
+    // without a logo configured.
+    if (logoUrl == null) return null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 13),
       child: LayoutBuilder(
         builder: (_, cons) {
-          if (logoUrl == null) {
-            return UIs.placeholder;
-          }
           final height = cons.maxWidth * 0.3;
           if (logoUrl.isSvgUrl) {
             return SvgPicture.network(
@@ -250,21 +320,24 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     ).cardx;
   }
 
-  /// CPU and RAM in one card: their current figures plus the shared trend.
-  /// They were three cards (cpu, mem, and a chart that re-plotted both), so
-  /// every number appeared twice on the page.
-  Widget? _buildUsage(ServerState si) {
+  /// CPU: the live figure, its breakdown, the per-core bars, its own trend,
+  /// and the model last.
+  ///
+  /// Separate from RAM again. They shared a card briefly, which put two 27pt
+  /// figures eight lines apart with one chart between them and never read as
+  /// a single subject. Apart, each figure is identified by what surrounds it:
+  /// the CPU breakdown here, the total beside the RAM one.
+  Widget? _buildCPUView(ServerState si) {
     final ss = si.status;
-    final cpuUsed = ss.cpu.usedPercent(coreIdx: 0);
-    final cpuPercent = cpuUsed?.toInt();
+    final cpuPercent = ss.cpu.usedPercent(coreIdx: 0)?.toInt();
 
-    final cpuDetails = [
+    final details = [
       _buildDetailPercent(ss.cpu.user, 'user'),
       UIs.width13,
       _buildDetailPercent(ss.cpu.idle, 'idle'),
     ];
     if (ss.system == SystemType.linux) {
-      cpuDetails.addAll([
+      details.addAll([
         UIs.width13,
         _buildDetailPercent(ss.cpu.sys, 'sys'),
         UIs.width13,
@@ -272,14 +345,15 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       ]);
     }
 
+    // The model string never changes while the page is open, so it sits after
+    // the readings that do
     final children = <Widget>[
       if (_cpuViewAsProgress) ..._buildCPUProgress(ss.cpu),
+      ?_buildCpuChart(si),
       if (ss.cpu.brand.isNotEmpty)
         Column(
           children: ss.cpu.brand.entries.map(_buildCpuModelItem).toList(),
         ).paddingOnly(top: 13),
-      ?_buildMemRow(ss),
-      ?_buildUsageChart(si),
     ];
 
     return ExpandTile(
@@ -293,55 +367,47 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       ),
       childrenPadding: const EdgeInsets.symmetric(vertical: 13),
       initiallyExpanded: _getInitExpand(1),
-      trailing: Row(mainAxisSize: MainAxisSize.min, children: cpuDetails),
+      trailing: Row(mainAxisSize: MainAxisSize.min, children: details),
       children: children,
     ).cardx;
   }
 
-  /// RAM figures, laid out like the CPU header above it so the two read as one
-  /// card rather than two stacked ones
-  Widget? _buildMemRow(server_model.ServerStatus ss) {
+  /// RAM, laid out to mirror the CPU card so the two read as one scale.
+  ///
+  ///
+  /// No progress bar: it restated the same percentage the figure and the trend
+  /// already carried, and its full-width fill was the heaviest mark on the card.
+  Widget? _buildMemView(ServerState si) {
+    final ss = si.status;
     if (ss.mem.total == 0) return null;
+
     final free = ss.mem.free / ss.mem.total * 100;
     final avail = ss.mem.availPercent * 100;
-    final used = ss.mem.usedPercent * 100;
-    final usedStr = used.toStringAsFixed(0);
+    final usedStr = (ss.mem.usedPercent * 100).toStringAsFixed(0);
 
-    return Padding(
-      padding: const EdgeInsets.only(left: 17, right: 17, top: 13),
-      child: Column(
+    return ExpandTile(
+      title: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  _buildAnimatedText(
-                    ValueKey(usedStr),
-                    '$usedStr%',
-                    UIs.text27,
-                  ),
-                  UIs.width7,
-                  Text(
-                    'of ${(ss.mem.total * 1024).bytes2Str}',
-                    style: UIs.text13Grey,
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  _buildDetailPercent(free, 'free'),
-                  UIs.width13,
-                  _buildDetailPercent(avail, 'avail'),
-                ],
-              ),
-            ],
+          _buildAnimatedText(ValueKey(usedStr), '$usedStr%', UIs.text27),
+          UIs.width7,
+          Text(
+            'of ${(ss.mem.total * 1024).bytes2Str}',
+            style: UIs.text13Grey,
           ),
-          UIs.height13,
-          _buildProgress(used),
         ],
       ),
-    );
+      childrenPadding: const EdgeInsets.symmetric(vertical: 13),
+      initiallyExpanded: _getInitExpand(1),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildDetailPercent(free, 'free'),
+          UIs.width13,
+          _buildDetailPercent(avail, 'avail'),
+        ],
+      ),
+      children: [?_buildMemChart(si)],
+    ).cardx;
   }
 
   Widget _buildCpuModelItem(MapEntry<String, int> e) {

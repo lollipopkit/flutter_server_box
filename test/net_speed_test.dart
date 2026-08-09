@@ -34,10 +34,27 @@ void main() {
       expect(ns.sizeIn(device: 'eth0'), '1000 B');
     });
 
+    test('a repeated sample is ignored, not pushed as a new one', () {
+      // The app polls monitor faster than its 7s collection cycle, so roughly
+      // every other fetch returns the same counters at the same instant.
+      // Accepting it collapsed the window and made the rate vanish for that
+      // cycle — speeds flickered on and off.
+      final ns = _seeded([
+        [_part('eth0', 1000000, 500000, 1000)],
+        [_part('eth0', 2000000, 1000000, 2000)],
+      ]);
+      expect(ns.speedInBytes(0), 1000);
+
+      ns.update([_part('eth0', 2000000, 1000000, 2000)]);
+      expect(ns.speedInBytes(0), 1000, reason: 'window must survive a repeat');
+
+      ns.update([_part('eth0', 3000000, 1500000, 3000)]);
+      expect(ns.speedInBytes(0), 1000);
+    });
+
     test('no reading when the source has not advanced', () {
-      // Same timestamp twice: monitor refreshes its metrics once per collection
-      // cycle, so polling faster returns the same instant. Dividing by that gap
-      // used to produce NaN/Infinity; it must report nothing instead of 0.
+      // Same timestamp twice: the second push is rejected by `advances`, so
+      // there is still only one sample and therefore no window
       final ns = _seeded([
         [_part('eth0', 100, 200, 1)],
         [_part('eth0', 200, 400, 1)],

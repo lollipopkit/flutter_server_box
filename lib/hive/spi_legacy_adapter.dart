@@ -6,28 +6,76 @@ import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 
-/// Reads `Spi` records written before schema v3, when the SSH fields sat flat
-/// on the record instead of nested under `ssh`.
+/// A `Spi` record as written before schema v3, when the SSH fields sat flat on
+/// the record instead of nested under `ssh`.
 ///
-/// Registered alongside the generated adapter, which owns the current typeId
-/// and the current layout. Keeping the old layout out of the live adapter is
-/// what makes it deletable: a permanent "read either shape" branch has no
-/// point at which anyone can tell it is safe to remove — `Spi.jumpId` has
-/// carried a compatibility comment for exactly that reason.
+/// A type of its own rather than another adapter for [Spi]. Hive resolves
+/// *writes* by walking its adapters for the first one matching the value's
+/// runtime type, so two adapters claiming [Spi] would make every write depend
+/// on registration order — and it warns as much:
 ///
-/// `write` throws on purpose. Records are rewritten in the new shape by
-/// `SpiNestSshMigration`, so nothing should ever produce the old layout again;
-/// silently writing it would keep the old records alive indefinitely.
+///     WARNING: You are trying to register SpiLegacyAdapter (typeId 3) for
+///     type Spi but there is already a TypeAdapter for this type
 ///
-/// TODO: delete together with `SpiNestSshMigration` once no install can still
-/// be on schema v2.
-class SpiLegacyAdapter extends TypeAdapter<Spi> {
-  /// The typeId `Spi` used through schema v2
+/// Giving the old layout its own type makes the two unambiguous: typeId 3
+/// decodes to [LegacySpiV2] and nothing ever writes it, typeId 15 decodes and
+/// encodes [Spi].
+///
+/// TODO: delete with `SpiNestSshMigration` once no install can still be on
+/// schema v2.
+class LegacySpiV2 {
+  final String name;
+  final SshCredential? ssh;
+  final MonitorHttpCredential? monitorHttp;
+  final List<String>? tags;
+  final bool autoConnect;
+  final ServerCustom? custom;
+  final WakeOnLanCfg? wolCfg;
+  final Map<String, String>? envs;
+  final String id;
+  final SystemType? customSystemType;
+  final List<String>? disabledCmdTypes;
+
+  const LegacySpiV2({
+    required this.name,
+    required this.ssh,
+    required this.monitorHttp,
+    required this.tags,
+    required this.autoConnect,
+    required this.custom,
+    required this.wolCfg,
+    required this.envs,
+    required this.id,
+    required this.customSystemType,
+    required this.disabledCmdTypes,
+  });
+
+  Spi toSpi() => Spi(
+    name: name,
+    ssh: ssh,
+    monitorHttp: monitorHttp,
+    tags: tags,
+    autoConnect: autoConnect,
+    custom: custom,
+    wolCfg: wolCfg,
+    envs: envs,
+    id: id,
+    customSystemType: customSystemType,
+    disabledCmdTypes: disabledCmdTypes,
+  );
+}
+
+/// Read-only decoder for the typeId `Spi` used through schema v2.
+///
+/// `write` throws: records are re-encoded under the current typeId by
+/// `SpiNestSshMigration`, and producing the old layout again would keep v2
+/// records alive indefinitely.
+class SpiLegacyAdapter extends TypeAdapter<LegacySpiV2> {
   @override
   final typeId = 3;
 
   @override
-  Spi read(BinaryReader reader) {
+  LegacySpiV2 read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
@@ -50,7 +98,7 @@ class SpiLegacyAdapter extends TypeAdapter<Spi> {
             proxyCommand: fields[16] as String?,
           );
 
-    return Spi(
+    return LegacySpiV2(
       name: fields[0] as String,
       ssh: ssh,
       monitorHttp: fields[18] as MonitorHttpCredential?,
@@ -66,7 +114,7 @@ class SpiLegacyAdapter extends TypeAdapter<Spi> {
   }
 
   @override
-  void write(BinaryWriter writer, Spi obj) {
+  void write(BinaryWriter writer, LegacySpiV2 obj) {
     throw UnsupportedError(
       'SpiLegacyAdapter is read-only: records are rewritten under the current '
       'Spi typeId by SpiNestSshMigration',

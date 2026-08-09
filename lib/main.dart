@@ -124,18 +124,18 @@ Future<void> _doDbMigrate() async {
     Stores.setting.lastVer.put(newVer);
   }
 
-  // Migrate the old id to new id.
+  // Storage layout first: it must finish before anything decodes a record as
+  // its current type. Throws SchemaTooNewException when the data was written
+  // by a newer build — that must not be swallowed, since continuing would let
+  // this build overwrite records whose shape it doesn't understand.
+  await SchemaVersion.migrate(const [SpiNestSshMigration()]);
+
+  // Then the app-level fixups, which read records as `Spi`.
   ServerStore.instance.migrateIds();
 
   // Pick up sync history written under the pre-v3 remote filename. Runs at
   // most once per remote and is best-effort — see `inheritLegacyRemote`.
   unawaited(bakSync.inheritLegacyRemote());
-
-  // Bring local storage up to the layout this build expects. Throws
-  // SchemaTooNewException when the data was written by a newer build — that
-  // must not be swallowed: continuing would let this build overwrite records
-  // whose shape it doesn't understand.
-  await SchemaVersion.migrate(const [SpiNestSshMigration()]);
 }
 
 Future<void> _initWindow() async {
