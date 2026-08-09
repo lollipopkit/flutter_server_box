@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
@@ -43,12 +42,12 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
   bool _hasLoaded = false;
   bool _isRefreshing = false;
   SystemType? _systemType;
+  _ProcessCapabilities _capabilities = _ProcessCapabilities.empty;
 
   // Issue #64: CPU sorting keeps high-churn lists visibly fresh and surfaces
   // the processes that normally need attention first.
   ProcSortMode _procSortMode = ProcSortMode.cpu;
   bool _sortAscending = ProcSortMode.cpu.defaultAscending;
-  final _sortModes = <ProcSortMode>[...ProcSortMode.values];
 
   late final _provider = serverProvider(widget.args.spi.id);
 
@@ -119,13 +118,14 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
       if (!mounted) return;
       if (result == null || result.trim().isEmpty) {
         _result = const PsResult(procs: []);
+        _updateCapabilities(_result);
         _hasLoaded = true;
         if (userTriggered) context.showSnackBar(libL10n.empty);
         return;
       }
 
       var parsed = PsResult.parse(result, previous: _result);
-      _updateAvailableSortModes(parsed);
+      _updateCapabilities(parsed);
       parsed = parsed.sortedBy(_procSortMode, ascending: _sortAscending);
       _result = parsed;
       _hasLoaded = true;
@@ -141,29 +141,16 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
     }
   }
 
-  void _updateAvailableSortModes(PsResult result) {
-    final procs = result.procs;
-    final modes = <ProcSortMode>[
-      if (procs.any((proc) => proc.cpu != null)) ProcSortMode.cpu,
-      if (procs.any((proc) => proc.mem != null)) ProcSortMode.mem,
-      if (procs.any((proc) => proc.rssKb != null)) ProcSortMode.rss,
-      if (procs.any((proc) => proc.readSpeed != null)) ProcSortMode.read,
-      if (procs.any((proc) => proc.writeSpeed != null)) ProcSortMode.write,
-      ProcSortMode.pid,
-      if (procs.any((proc) => proc.user?.isNotEmpty == true)) ProcSortMode.user,
-      ProcSortMode.name,
-    ];
-    _sortModes
-      ..clear()
-      ..addAll(modes);
-    if (!_sortModes.contains(_procSortMode)) {
-      _procSortMode = _sortModes.first;
+  void _updateCapabilities(PsResult result) {
+    _capabilities = _ProcessCapabilities.from(result.procs);
+    if (!_capabilities.supportsSort(_procSortMode)) {
+      _procSortMode = _capabilities.preferredSort;
       _sortAscending = _procSortMode.defaultAscending;
     }
   }
 
   void _selectSort(ProcSortMode mode) {
-    if (!_sortModes.contains(mode)) return;
+    if (!_capabilities.supportsSort(mode)) return;
     setState(() {
       if (_procSortMode == mode) {
         _sortAscending = !_sortAscending;
@@ -206,12 +193,12 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
         builder: (context, constraints) {
           final layout = _ProcessLayout.fromWidth(
             constraints.maxWidth,
-            _result.procs,
+            _capabilities,
           );
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildToolbar(),
+              _buildProcessBar(),
               Divider(
                 height: 1,
                 color: Theme.of(context).colorScheme.outlineVariant,
@@ -224,7 +211,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
     );
   }
 
-  Widget _buildToolbar() {
+  Widget _buildProcessBar() {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     return Padding(
@@ -239,33 +226,6 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
             ),
           ),
           const Spacer(),
-          PopupMenuButton<ProcSortMode>(
-            tooltip: context.l10n.sort,
-            icon: Icon(
-              Icons.sort,
-              color: _sortModes.isEmpty ? null : scheme.primary,
-            ),
-            onSelected: _selectSort,
-            itemBuilder: (_) => [
-              for (final mode in _sortModes)
-                PopupMenuItem(
-                  value: mode,
-                  child: Row(
-                    children: [
-                      Expanded(child: Text(_sortLabel(mode))),
-                      if (_procSortMode == mode)
-                        Icon(
-                          _sortAscending
-                              ? Icons.arrow_upward
-                              : Icons.arrow_downward,
-                          size: 16,
-                          color: scheme.primary,
-                        ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
           IconButton(
             tooltip: libL10n.refresh,
             onPressed: _isRefreshing
@@ -629,17 +589,6 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
 
   Widget _buildDetailLine(String label, String value) => Text('$label: $value');
 
-  String _sortLabel(ProcSortMode mode) => switch (mode) {
-    ProcSortMode.cpu => 'CPU',
-    ProcSortMode.mem => 'MEM',
-    ProcSortMode.rss => 'RSS',
-    ProcSortMode.read => 'R/s',
-    ProcSortMode.write => 'W/s',
-    ProcSortMode.pid => 'PID',
-    ProcSortMode.user => libL10n.user,
-    ProcSortMode.name => libL10n.name,
-  };
-
   String _formatPercent(double? value) =>
       value == null ? '—' : '${value.toStringAsFixed(1)}%';
 
@@ -696,6 +645,78 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
   }
 }
 
+class _ProcessCapabilities {
+  const _ProcessCapabilities({
+    required this.hasUser,
+    required this.hasCpu,
+    required this.hasMem,
+    required this.hasRss,
+    required this.hasRead,
+    required this.hasWrite,
+  });
+
+  static const empty = _ProcessCapabilities(
+    hasUser: false,
+    hasCpu: false,
+    hasMem: false,
+    hasRss: false,
+    hasRead: false,
+    hasWrite: false,
+  );
+
+  factory _ProcessCapabilities.from(List<Proc> procs) {
+    var hasUser = false;
+    var hasCpu = false;
+    var hasMem = false;
+    var hasRss = false;
+    var hasRead = false;
+    var hasWrite = false;
+    for (final proc in procs) {
+      hasUser |= proc.user?.isNotEmpty == true;
+      hasCpu |= proc.cpu != null;
+      hasMem |= proc.mem != null;
+      hasRss |= proc.rssKb != null;
+      hasRead |= proc.readSpeed != null;
+      hasWrite |= proc.writeSpeed != null;
+      if (hasUser && hasCpu && hasMem && hasRss && hasRead && hasWrite) break;
+    }
+    return _ProcessCapabilities(
+      hasUser: hasUser,
+      hasCpu: hasCpu,
+      hasMem: hasMem,
+      hasRss: hasRss,
+      hasRead: hasRead,
+      hasWrite: hasWrite,
+    );
+  }
+
+  final bool hasUser;
+  final bool hasCpu;
+  final bool hasMem;
+  final bool hasRss;
+  final bool hasRead;
+  final bool hasWrite;
+
+  bool supportsSort(ProcSortMode mode) => switch (mode) {
+    ProcSortMode.cpu => hasCpu,
+    ProcSortMode.mem => hasMem,
+    ProcSortMode.rss => hasRss,
+    ProcSortMode.read => hasRead,
+    ProcSortMode.write => hasWrite,
+    ProcSortMode.user => hasUser,
+    ProcSortMode.pid || ProcSortMode.name => true,
+  };
+
+  ProcSortMode get preferredSort {
+    if (hasCpu) return ProcSortMode.cpu;
+    if (hasMem) return ProcSortMode.mem;
+    if (hasRss) return ProcSortMode.rss;
+    if (hasRead) return ProcSortMode.read;
+    if (hasWrite) return ProcSortMode.write;
+    return ProcSortMode.pid;
+  }
+}
+
 class _ProcessLayout {
   const _ProcessLayout({
     required this.compact,
@@ -707,25 +728,23 @@ class _ProcessLayout {
     required this.showWrite,
   });
 
-  factory _ProcessLayout.fromWidth(double width, List<Proc> procs) {
+  factory _ProcessLayout.fromWidth(
+    double width,
+    _ProcessCapabilities capabilities,
+  ) {
     final compact = width < _compactBreakpoint;
-    final hasUser = procs.any((proc) => proc.user?.isNotEmpty == true);
-    final hasCpu = procs.any((proc) => proc.cpu != null);
-    final hasMem = procs.any((proc) => proc.mem != null);
-    final hasRss = procs.any((proc) => proc.rssKb != null);
-    final hasRead = procs.any((proc) => proc.readSpeed != null);
-    final hasWrite = procs.any((proc) => proc.writeSpeed != null);
     return _ProcessLayout(
       compact: compact,
-      showUser: !compact && hasUser,
-      showCpu: !compact && hasCpu,
-      showMem: !compact && hasMem,
+      showUser: !compact && capabilities.hasUser,
+      showCpu: !compact && capabilities.hasCpu,
+      showMem: !compact && capabilities.hasMem,
       showRss:
           !compact &&
-          hasRss &&
-          (width >= _rssBreakpoint || (!hasUser && !hasMem)),
-      showRead: !compact && width >= _ioBreakpoint && hasRead,
-      showWrite: !compact && width >= _ioBreakpoint && hasWrite,
+          capabilities.hasRss &&
+          (width >= _rssBreakpoint ||
+              (!capabilities.hasUser && !capabilities.hasMem)),
+      showRead: !compact && width >= _ioBreakpoint && capabilities.hasRead,
+      showWrite: !compact && width >= _ioBreakpoint && capabilities.hasWrite,
     );
   }
 
