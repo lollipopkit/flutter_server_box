@@ -45,6 +45,7 @@ This is a Flutter application for managing Linux servers with the following key 
   - Script generation is shared as well (`script.rs`: build/install/exec commands + output splitting, locked by `tests/script_compat.rs`); the app calls it via FFI and merges the two functions' output, the monitor executes the script locally on its extended cycle
 - `crates/sbm_ffi/` - flutter_rust_bridge binding crate + cargokit Flutter plugin glue in one directory (Dart side generated into `lib/src/rust/`)
 - `monitor/` - Server-side monitoring service (Rust + Svelte frontend), has its own `monitor/CLAUDE.md`
+  - It can also relay SSH for the app (`SshCredential.viaMonitor`, off by default on both sides) and serve an in-browser terminal — see the "Remote access" section there for the security model
 - Root `Cargo.toml` is the workspace; build/test all Rust with `cargo test --workspace`
 - FFI parity test: `flutter test test/frb_parser_test.dart` (requires `cargo build -p sbm_ffi` first)
 - Migration rule ("test as spec"): before moving a parsing module to Rust, port its Dart fixture tests to Rust; only delete the Dart implementation after the FFI result is asserted identical against the same fixtures
@@ -81,6 +82,29 @@ This is a Flutter application for managing Linux servers with the following key 
 - Container/Docker models in `lib/data/model/container/`
 - SSH and SFTP models in respective directories
 - Most models use freezed for immutability and json_annotation for serialization
+
+### Connection methods
+
+A server is reached over SSH, over a `monitor` agent's HTTP API, or both — see
+`ServerConnectCredential` and `ServerCapabilities`. The UI asks capabilities
+rather than testing which transport is in use, so a feature needing a shell
+never has to know that "SSH" is the thing that provides one.
+
+Where the SSH byte stream comes from is a separate axis, resolved in
+`genClient` (`lib/core/utils/server.dart`): direct, through a jump server,
+through a `ProxyCommand`, or — for hosts whose SSH port isn't reachable —
+relayed by that server's monitor agent (`SshCredential.viaMonitor`,
+`MonitorTunnelSocket`). At most one applies; `Spix.validate()` enforces that.
+Everything above `SSHSocket` is unchanged either way, which is why terminal,
+SFTP, containers and port forwarding all work over the tunnel without knowing
+it exists — and why this app still verifies the host key itself, so the agent
+in the middle can't impersonate the server.
+
+Monitor-backed servers connect SSH **lazily**, on first shell use
+(`ServerNotifier.ensureShellClient`): holding a tunnel open for every server
+that merely *could* open a terminal would defeat the point of polling over
+HTTP. Their shell failures use a separate `TryLimiter` key (`${id}#shell`), so
+a host with no sshd doesn't also stop the status page refreshing.
 
 ### Features
 

@@ -82,6 +82,7 @@ If I forgot to add your name to the contributors list, please add a comment in t
 ## 💡 My other apps
 
 - [GPT Box](https://github.com/lollipopkit/flutter_gpt_box) - A third-party GPT Client for OpenAI API on all platforms.
+- [MFuse](https://github.com/lollipopkit/mfuse) - a macOS app that exposes remote storage in Finder through File Provider, with a modular backend layer for multiple protocols.
 - [More](https://github.com/lollipopkit) - Tools & etc.
 
 ## 📝 License

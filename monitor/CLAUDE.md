@@ -93,7 +93,8 @@ Monitor-only crate (the app never depends on it — it always collects over SSH 
 - **`main.rs`**: Application entry point, coordinates monitoring loop and web server
 - **`cli/`**: clap-based CLI (`serve`, `config`, `cleanup` subcommands)
 - **`core/`**: Configuration management (`config.rs`, `config_manager.rs`) with .env support and TOML/JSON config files
-- **`api/`**: ntex-based web server (`server.rs`) and JWT auth (`auth.rs`)
+- **`api/`**: ntex-based web server (`server.rs`), JWT auth (`auth.rs`), login throttling (`ratelimit.rs`), and the WebSocket endpoints under `api/ws/` (see below)
+- **`ssh/`**: shells for the browser terminal — `client.rs` (russh: connect/authenticate/PTY), `known_hosts.rs` (trust-on-first-use pinning of the local sshd), and `local_pty.rs` (the passwordless path, a local PTY interface-compatible with the SSH one so both drive the same session machinery)
 - **`monitoring/`**: Metrics collection (`monitoring.rs`: `sbm_native::sample()` covers cpu/mem/swap/disk/diskio/net/uptime/host/sys every cycle via direct syscalls/procfs reads — see `../crates/sbm_native`; `nvidia-smi` runs as one targeted subprocess call every cycle; the shared generated script from `sbm_parser::script` only still runs on the slower extended cycle, for amd/sensors/SMART/battery — the only data that genuinely needs CLI tools), rule evaluation (`rules.rs`), push notifications with rate limiting (`push.rs`), velocity/timeseries analysis
 - **`db/`**: SQLite initialization/migrations (`database.rs`) and data retention cleanup (`cleanup.rs`)
 - **`utils/`**: Centralized error types (`error.rs`)
@@ -103,6 +104,7 @@ Monitor-only crate (the app never depends on it — it always collects over SSH 
 - **Svelte 5 (runes)** with TypeScript and Tailwind 4 (class-driven dark mode)
 - **`pages/`**: Login.svelte, Dashboard.svelte (App.svelte gates them by auth state; no router)
 - **`components/`**: Spinner, StatCard, ThemeToggle
+- **`pages/Terminal.svelte`** + **`lib/terminal.svelte.ts`**: the in-browser terminal. The store owns the protocol and reconnect policy and knows nothing about xterm.js, which keeps the part worth testing free of a DOM; xterm is loaded by dynamic `import()` so it stays out of the main bundle
 - **`lib/`**: fetch-based API client, module-level rune stores (auth/theme), Poller
 - **`types/`**: TypeScript type definitions
 - Tests: vitest + @testing-library/svelte; type gate via svelte-check (part of `npm run build`)
@@ -117,13 +119,76 @@ Monitor-only crate (the app never depends on it — it always collects over SSH 
 - Agents must be reachable over HTTPS (browser mixed-content policy): use the built-in TLS (`--cert/--key` / `SBM_TLS_*`) or a reverse proxy / Cloudflare Tunnel
 - An agent without the panel: just don't ship `frontend/dist`; the API works standalone
 
+### Remote access (`api/ws/`, `ssh/`, `core/remote_access.rs`)
+
+Two WebSocket endpoints reach the local sshd. **Both are off by default**, are
+configured only in `config.toml` (deliberately absent from `PUT /settings`, so
+the panel password can't switch them on), and share the admission checks in
+`api/ws/mod.rs`.
+
+- **`/api/v1/tunnel/ws`** — a byte relay for the app, which then speaks SSH end
+  to end with sshd and verifies the host key at its own end. The agent can't
+  read the session. **No target parameter**: it connects to
+  `remote_access.ssh_addr` and nothing else, which is the whole reason it isn't
+  usable as a pivot into the agent's network. Multi-hop is the SSH layer's job
+  (configure the far host with this one as its jump server). Port forwarding
+  needs nothing here — the app's forwards are channels inside that stream.
+- **`/api/v1/terminal/ws`** — the panel's terminal. The agent is an SSH *client*
+  rather than a shell spawner, so a session carries the privileges of the SSH
+  account the browser authenticated as; the panel password alone grants no
+  shell. Frame type is the channel selector: Binary = PTY bytes, Text = control
+  JSON (`api/ws/terminal.rs` documents the messages).
+
+Things that are easy to get wrong here, and are locked by tests:
+
+- **Auth for the upgrade is a single-use ticket** (`api/ws/ticket.rs`), not the
+  JWT: browsers can't set headers on a WebSocket handshake, and a token in the
+  query string lands in ntex's access log. Purpose-bound, ~30s, burned even on
+  a wrong secret.
+- **`is_secure_transport` treats loopback as secure** even without TLS. That is
+  the same-host reverse proxy / `cloudflared` case, which really is encrypted;
+  refusing it would push people to `allow_insecure` and switch the check off for
+  genuinely plaintext setups too. It never consults `X-Forwarded-Proto`, which
+  the client controls.
+- **Terminal sessions outlive their WebSocket** (`api/ws/session.rs`) so a
+  reconnect rejoins the same shell. The handle is a bearer capability for an
+  *already authenticated* shell: 256 bits, bound to the panel account, constant-
+  time compared, memory-only. An `attach` takes over from the previous
+  connection rather than being refused — after a network drop the old socket
+  often isn't known to be dead yet.
+- **Replay is incremental.** The client reports how many bytes it has rendered;
+  if that point is still in the ring buffer only the gap is sent, so the screen
+  is never cleared for a short outage. `ready.since` is *the absolute position
+  the following byte stream starts at* — echoing back `next_seq` instead would
+  make the client double-count the replay. `ready` must also precede any output.
+- **The passwordless terminal is a deliberate reversal of the model above.**
+  With `remote_access.passwordless_terminal` on (default: Linux only), a panel
+  login opens a local PTY as the agent's own user — no sshd, no SSH
+  credentials, so none of sshd's authentication, logging or second factor
+  applies. `install.sh` therefore installs a **user** systemd service by
+  default: the point is that "the agent's own user" is an ordinary account
+  rather than root. The switch is checked at the moment of use
+  (`AppState::passwordless_allowed`), not only in the UI, since the UI is not
+  a boundary. `DELETE /api/v1/remote-access/passwordless` lets the panel turn
+  it off and has no counterpart that turns it on — narrowing what the agent
+  exposes is always safe, widening is a config-file decision.
+- **Capacities are derived from physical memory** (`core/remote_access.rs`), not
+  constants: monitor runs on everything from a 512 MiB VPS to a 256 GiB server.
+  Explicit config always wins; the resolved values are logged at startup.
+
+`tests/fake_sshd/` is an in-process SSH server, so `tests/terminal_ws.rs`
+exercises the real connect → authenticate → PTY → data path without needing an
+sshd on the machine running the tests. `a_real_sshd_produces_a_working_shell`
+additionally targets a real one when `SBM_E2E_TERMINAL_*` is set, and is
+silently skipped otherwise.
+
 ### Key Design Patterns
 
 1. **Async-first architecture**: Uses tokio for async runtime with concurrent tasks
 2. **Type-safe database**: sqlx with compile-time query verification
 3. **JWT authentication**: Secure token-based API access
 4. **Configuration-driven monitoring**: Rules and push configs in TOML/env files
-5. **Rate limiting**: Built-in rate limiting for push notifications
+5. **Rate limiting**: Hand-rolled sliding window for push notifications (`monitoring/push.rs`); failure-backoff throttling for `/login`, keyed by both source address and username (`api/ratelimit.rs`)
 6. **Separation of concerns**: Clean module boundaries between monitoring, API, and notifications
 
 ### Configuration
@@ -139,6 +204,15 @@ SQLite database with migrations in `migrations/`:
 - System metrics history
 - User authentication
 - Configuration storage
+- `access_log` — who opened a tunnel/terminal, from where, and whether it
+  worked. Never records a credential; cleaned up by the existing
+  `retention_policies` mechanism (`DataCleanupService::POLICY_TABLES`)
+- `ssh_known_hosts` — the pinned host key of the sshd the terminal connects to
+
+`core/config_file.rs` owns runtime writes to `config.toml`: atomic replace via
+`rename`, bounded backups, and a diagnosable read error. Callers hold
+`AppState.config_write` across the whole read-modify-write, since atomicity
+alone doesn't stop two handlers clobbering each other's fields.
 
 ## Release and Deployment
 
