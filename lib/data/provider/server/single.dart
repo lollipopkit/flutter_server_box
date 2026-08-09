@@ -12,23 +12,23 @@ import 'package:server_box/data/helper/system_detector.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
+import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
-import 'package:server_box/data/model/server/monitor_metrics.dart';
-import 'package:server_box/data/model/server/monitor_metrics_mapper.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/server/server_status_update_req.dart';
+import 'package:server_box/data/model/server/status_history.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
+import 'package:server_box/data/provider/server/data_source.dart';
+import 'package:server_box/data/provider/server/monitor_http_source.dart';
+import 'package:server_box/data/provider/server/ssh_source.dart';
 import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/persistent_shell.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
-import 'package:server_box/src/rust/api/script.dart' as script_ffi;
 
 part 'single.g.dart';
 part 'single.freezed.dart';
@@ -42,6 +42,13 @@ abstract class ServerState with _$ServerState {
     @Default(ServerConn.disconnected) ServerConn conn,
     SSHClient? client,
   }) = _ServerState;
+
+  const ServerState._();
+
+  /// What this server's connection method can do. The UI reads this instead of
+  /// testing which transport is in use — see [ServerCapabilities].
+  ServerCapabilities get capabilities =>
+      ServerCapabilities.of(ServerConnectCredential.fromSpi(spi));
 }
 
 // Individual server state management
@@ -49,13 +56,16 @@ abstract class ServerState with _$ServerState {
 class ServerNotifier extends _$ServerNotifier {
   PersistentShell? _persistentShell;
   bool _usePersistentShellForStatus = true;
-  MonitorHttpClient? _monitorClient;
+
+  /// Reads status for whichever connection method this server uses. Rebuilt
+  /// when the SPI's connection config changes.
+  ServerDataSource? _source;
 
   @override
   ServerState build(String serverId) {
     ref.onDispose(() {
       unawaited(_disposePersistentShell());
-      _monitorClient?.dispose();
+      _source?.close();
     });
 
     final serverNotifier = ref.read(serversProvider);
@@ -97,6 +107,9 @@ class ServerNotifier extends _$ServerNotifier {
       err: setErr ? err : source.err,
       nvidia: source.nvidia?.toList(),
       diskUsage: source.diskUsage,
+      // Carried, not recreated: the trend buffer must outlive the per-refresh
+      // ServerStatus the way cpu/netSpeed/diskIO already do
+      history: source.history,
     );
     status.amd = source.amd?.toList();
     status.batteries.addAll(source.batteries);
@@ -160,9 +173,39 @@ class ServerNotifier extends _$ServerNotifier {
   Future<void> _getData({required bool interactive}) async {
     switch (ServerConnectCredential.fromSpi(state.spi)) {
       case ServerConnectCredentialSsh():
+        // Connecting is inseparable from fetching here (auth prompts, script
+        // install, session bookkeeping), so the SSH path drives the state
+        // machine itself and hands the reading half to SshDataSource
         await _getDataSsh(interactive: interactive);
       case ServerConnectCredentialMonitorHttp(:final monitor):
         await _getDataMonitorHttp(monitor);
+    }
+  }
+
+  /// The [ServerDataSource] for the current SPI.
+  ///
+  /// Only the monitor HTTP source is cached: it owns a `Dio` session and a
+  /// login token, so reusing it across refreshes avoids re-authenticating, and
+  /// it must be rebuilt when the connection config changes. [SshDataSource] is
+  /// stateless — the connection it reads through belongs to this notifier — so
+  /// the SSH path constructs one per refresh instead.
+  ServerDataSource _resolveSource(ServerConnectCredential credential) {
+    switch (credential) {
+      case ServerConnectCredentialSsh():
+        return SshDataSource(
+          spi: state.spi,
+          runScript: () => throw StateError(
+            'SSH status output is supplied by _getDataSsh, which runs the '
+            'script as part of its connect-and-fetch flow',
+          ),
+        );
+      case ServerConnectCredentialMonitorHttp():
+        final existing = _source;
+        if (existing is MonitorHttpDataSource && existing.matches(credential)) {
+          return existing;
+        }
+        existing?.close();
+        return _source = MonitorHttpDataSource(credential);
     }
   }
 
@@ -189,21 +232,12 @@ class ServerNotifier extends _$ServerNotifier {
       updateConnection(ServerConn.loading);
     }
 
-    final credential = ServerConnectCredentialMonitorHttp(
-      spi: spi,
-      monitor: monitor,
+    final source = _resolveSource(
+      ServerConnectCredentialMonitorHttp(spi: spi, monitor: monitor),
     );
-    var client = _monitorClient;
-    if (client == null || !client.matches(credential)) {
-      client?.dispose();
-      client = MonitorHttpClient(credential);
-      _monitorClient = client;
-    }
 
     try {
-      final metrics = await client.fetchStatus();
-      final newStatus = applyMonitorMetrics(_copyStatus(state.status), metrics);
-      updateStatus(newStatus);
+      updateStatus(await source.fetchStatus(_copyStatus(state.status)));
       updateConnection(ServerConn.finished);
       TryLimiter.reset(sid);
     } catch (e, s) {
@@ -214,30 +248,31 @@ class ServerNotifier extends _$ServerNotifier {
               type: MonitorHttpErrType.unknown,
               message: e.toString(),
             );
-      final newStatus = _copyStatus(state.status, err: err, setErr: true);
-      _setFailedState(newStatus);
+      _setFailedState(_copyStatus(state.status, err: err, setErr: true));
       Loggers.app.warning('Get status via monitor for ${spi.name} failed', e, s);
     }
   }
 
-  /// Fetches monitor's `/api/v1/metrics/history` for this server. Only
-  /// meaningful when `spi.monitorHttp` is configured — returns an empty list
-  /// otherwise (SSH has no history concept).
-  Future<List<MonitorHistoryPoint>> fetchMonitorHistory({int minutes = 60}) {
-    final monitor = state.spi.monitorHttp;
-    if (monitor == null) return Future.value(const []);
-
-    final credential = ServerConnectCredentialMonitorHttp(
-      spi: state.spi,
-      monitor: monitor,
-    );
-    var client = _monitorClient;
-    if (client == null || !client.matches(credential)) {
-      client?.dispose();
-      client = MonitorHttpClient(credential);
-      _monitorClient = client;
+  /// Prefills [ServerStatus.history] from whatever trend data the source
+  /// already holds, so a freshly opened detail page shows a trend instead of
+  /// building one up from scratch. A no-op for sources without
+  /// [ServerCapabilities.storedHistory], and once live samples exist — see
+  /// [StatusHistory.seed].
+  Future<void> seedHistory({int minutes = 60}) async {
+    final credential = ServerConnectCredential.fromSpi(state.spi);
+    if (!ServerCapabilities.of(credential).storedHistory) return;
+    try {
+      final samples = await _resolveSource(
+        credential,
+      ).fetchHistory(minutes: minutes);
+      if (samples.isEmpty) return;
+      state.status.history.seed(samples);
+      // history is mutated in place, so hand out a fresh ServerStatus to make
+      // the watchers rebuild
+      updateStatus(_copyStatus(state.status));
+    } catch (e, s) {
+      Loggers.app.warning('Seed history for ${state.spi.name}', e, s);
     }
-    return client.fetchHistory(minutes: minutes);
   }
 
   Future<void> _getDataSsh({required bool interactive}) async {
@@ -591,19 +626,10 @@ class ServerNotifier extends _$ServerNotifier {
     }
 
     try {
-      // Parse script output into command-specific mappings
-      final parsedOutput = await script_ffi.parseScriptOutput(raw: raw);
-
-      final req = ServerStatusUpdateReq(
-        ss: state.status,
-        parsedOutput: parsedOutput,
-        system: state.status.system,
-        customCmds: spi.custom?.cmds ?? {},
-        tempDivisor: spi.custom?.tempIsCelsius == true ? 1.0 : 1000.0,
-      );
-      // Parsing runs on the Rust thread pool (async FFI); no isolate needed anymore
-      final newStatus = await getStatus(req);
-      updateStatus(newStatus);
+      // Same conversion contract as the monitor path: raw transport output in,
+      // ServerStatus (plus a trend sample) out
+      final source = SshDataSource(spi: spi, runScript: () async => raw!);
+      updateStatus(await source.fetchStatus(_copyStatus(state.status)));
     } catch (e, trace) {
       TryLimiter.inc(sid);
       final newStatus = _copyStatus(

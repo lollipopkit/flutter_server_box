@@ -59,65 +59,64 @@ class Disk extends Equatable {
 }
 
 class DiskIO extends TimeSeq<DiskIOPiece> {
-  DiskIO(super.init1, super.init2);
+  DiskIO();
+
+  /// `/proc/diskstats` reports in 512-byte units regardless of the drive's
+  /// physical sector size
+  static const _sectorBytes = 512;
+
+  /// Issue #314: real block devices only, not loop/ram/dm entries
+  static const _devPrefixes = ['nvme', 'sd', 'vd', 'hd', 'mmcblk', 'sr'];
 
   @override
   void onUpdate() {
-    cachedAllSpeed = _getAllSpeed();
+    final (read, write) = allSpeedBytes;
+    cachedAllSpeed = (_fmt(read), _fmt(write));
   }
 
-  (double?, double?) _getSpeed(String dev) {
-    // Extract the device name from path if needed
-    String searchDev = dev;
-    if (dev.startsWith('/dev/')) {
-      searchDev = dev.substring(5);
-    }
-
-    // Try to find by exact device name first
+  /// Bytes per second for [dev]. Either both components are present or both
+  /// are `null`: a window with no baseline, no elapsed time, or counters that
+  /// went backwards has no rate at all. The old code divided by that
+  /// zero-width window and rendered `NaN B/s`; clamping to 0 instead would
+  /// have been indistinguishable from a genuinely idle disk.
+  (double?, double?) speedBytes(String dev) {
+    final searchDev = dev.startsWith('/dev/') ? dev.substring(5) : dev;
     final old = pre.firstWhereOrNull((e) => e.dev == searchDev);
     final new_ = now.firstWhereOrNull((e) => e.dev == searchDev);
-
     if (old == null || new_ == null) return (null, null);
-    final sectorsRead = new_.sectorsRead - old.sectorsRead;
-    final sectorsWrite = new_.sectorsWrite - old.sectorsWrite;
-    final time = new_.time - old.time;
-    final read = sectorsRead / time * 512;
-    final write = sectorsWrite / time * 512;
-    return (read, write);
+
+    final elapsed = elapsedSeconds(old.time, new_.time);
+    if (elapsed == null) return (null, null);
+
+    final read = counterDelta(old.sectorsRead, new_.sectorsRead);
+    final write = counterDelta(old.sectorsWrite, new_.sectorsWrite);
+    if (read == null || write == null) return (null, null);
+
+    return (read * _sectorBytes / elapsed, write * _sectorBytes / elapsed);
   }
 
   (String?, String?) getSpeed(String dev) {
-    final (read_, write_) = _getSpeed(dev);
-    if (read_ == null || write_ == null) return (null, null);
-    final read = '${read_.bytes2Str}/s';
-    final write = '${write_.bytes2Str}/s';
+    final (read, write) = speedBytes(dev);
+    return (_fmt(read), _fmt(write));
+  }
+
+  /// Summed across real block devices; `null` when none produced a reading
+  (double?, double?) get allSpeedBytes {
+    double? read, write;
+    for (final item in now) {
+      if (!_devPrefixes.any(item.dev.startsWith)) continue;
+      final (r, w) = speedBytes(item.dev);
+      if (r == null || w == null) continue;
+      read = (read ?? 0) + r;
+      write = (write ?? 0) + w;
+    }
     return (read, write);
   }
 
   (String?, String?) cachedAllSpeed = (null, null);
-  (String?, String?) _getAllSpeed() {
-    if (pre.isEmpty || now.isEmpty) return (null, null);
-    var (read, write) = (0.0, 0.0);
-    for (var item in pre) {
-      /// Issue #314
-      /// Only calc nvme, sd, vd, hd, mmcblk, sr
-      if (!item.dev.startsWith('nvme') &&
-          !item.dev.startsWith('sd') &&
-          !item.dev.startsWith('vd') &&
-          !item.dev.startsWith('hd') &&
-          !item.dev.startsWith('mmcblk') &&
-          !item.dev.startsWith('sr')) {
-        continue;
-      }
-      final (read_, write_) = _getSpeed(item.dev);
-      read += read_ ?? 0;
-      write += write_ ?? 0;
-    }
 
-    final readStr = '${read.bytes2Str}/s';
-    final writeStr = '${write.bytes2Str}/s';
-    return (readStr, writeStr);
-  }
+  static String? _fmt(double? bytesPerSec) =>
+      bytesPerSec == null ? null : '${bytesPerSec.bytes2Str}/s';
 
 }
 

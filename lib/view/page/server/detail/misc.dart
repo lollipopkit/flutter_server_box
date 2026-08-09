@@ -119,127 +119,112 @@ extension on _ServerDetailPageState {
     return len > 0 && len <= (max ?? 3);
   }
 
-  /// Trend charts backed by monitor's `/api/v1/metrics/history` — only
-  /// meaningful for servers connected via monitor HTTP (see
-  /// `Spi.monitorHttp`); SSH-connected servers have no history concept
-  /// beyond the existing in-memory CPU ring buffer, so this card is hidden
-  /// for them entirely rather than showing an empty/misleading chart.
-  Widget? _buildMonitorHistory(ServerState si) {
-    if (si.spi.monitorHttp == null) return null;
-    return _monitorHistory.listenVal((points) {
-      if (points == null) {
-        return const CardX(
-          child: Padding(
-            padding: EdgeInsets.all(21),
-            child: Center(
-              child: SizedBox(
-                width: 21,
-                height: 21,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-          ),
-        );
-      }
-      if (points.isEmpty) return UIs.placeholder;
-
-      final hasTemp = points.any((e) => e.temperature != null);
-      final hasBattery = points.any((e) => e.batteryPercent != null);
-
-      return CardX(
-        child: ExpandTile(
-          title: const Text('History'),
-          leading: const Icon(Icons.show_chart, size: 17),
-          initiallyExpanded: _getInitExpand(1),
-          childrenPadding: const EdgeInsets.only(bottom: 7),
-          children: [
-            // Grouped the same way monitor's own panel groups them
-            // (`Dashboard.svelte`'s usageSeries/networkSeries and
-            // `DetailPanel.svelte`'s diskIo chart): series sharing a unit go on
-            // one axis, so three percentages read as one comparable picture
-            // instead of three separately auto-scaled strips.
-            _buildHistoryChart(
-              libL10n.used,
-              points,
-              const [
-                _HistorySeries('CPU', Color(0xFF3B82F6), _selCpu),
-                _HistorySeries('RAM', Color(0xFF22C55E), _selMem),
-                _HistorySeries('Disk', Color(0xFFF59E0B), _selDisk),
-              ],
-              format: _formatPercent,
-              maxY: 100,
-            ),
-            _buildHistoryChart(
-              libL10n.net,
-              points,
-              const [
-                _HistorySeries('↓', Color(0xFF8B5CF6), _selNetRx),
-                _HistorySeries('↑', Color(0xFFEC4899), _selNetTx),
-              ],
-              format: _formatSpeed,
-            ),
-            _buildHistoryChart(
-              'Disk IO',
-              points,
-              [
-                _HistorySeries(l10n.read, const Color(0xFF0EA5E9), _selDioRead),
-                _HistorySeries(
-                  l10n.write,
-                  const Color(0xFFF97316),
-                  _selDioWrite,
-                ),
-              ],
-              format: _formatSpeed,
-            ),
-            if (hasTemp)
-              _buildHistoryChart(
-                libL10n.temperature,
-                points,
-                [
-                  _HistorySeries(
-                    libL10n.temperature,
-                    const Color(0xFFEF4444),
-                    _selTemp,
-                  ),
-                ],
-                format: _formatTemp,
-              ),
-            if (hasBattery)
-              _buildHistoryChart(
-                libL10n.battery,
-                points,
-                [
-                  _HistorySeries(
-                    libL10n.battery,
-                    const Color(0xFF14B8A6),
-                    _selBattery,
-                  ),
-                ],
-                format: _formatPercent,
-                maxY: 100,
-              ),
-          ],
-        ),
-      );
-    });
+  /// Trends read one buffer ([ServerStatus.history]) that both connection
+  /// methods append to, so an SSH server and a monitor HTTP server render
+  /// identically; monitor servers additionally get theirs prefilled from the
+  /// agent's stored history (`seedHistoryFromMonitor`).
+  ///
+  /// Grouping follows monitor's own panel: series sharing a unit go on one
+  /// axis so they stay comparable, rather than each getting its own
+  /// auto-scaled strip.
+  ///
+  /// Unlike the other three this returns a bare chart, not a card — it is
+  /// embedded in the Usage card beneath the CPU and RAM figures it plots.
+  Widget? _buildUsageChart(ServerState si) {
+    final h = si.status.history;
+    final spec = _ChartSpec(
+      series: [
+        _HistorySeries('CPU', const Color(0xFF3B82F6), h.cpu),
+        _HistorySeries('RAM', const Color(0xFF22C55E), h.mem),
+      ],
+      format: _formatPercent,
+      maxY: 100,
+    );
+    return spec.hasData ? _buildChart(spec) : null;
   }
 
-  /// One chart per unit, all its series overlaid on a shared axis, with a
-  /// legend line carrying each series' latest value — mirrors
-  /// `monitor/frontend/src/components/LineChart.svelte`.
-  Widget _buildHistoryChart(
-    String title,
-    List<MonitorHistoryPoint> points,
-    List<_HistorySeries> series, {
-    required String Function(double) format,
-    double? maxY,
-  }) {
+  Widget? _buildDiskChart(ServerState si) {
+    final h = si.status.history;
+    return _chartCard(ServerDetailCards.diskChart, [
+      _ChartSpec(
+        series: [
+          _HistorySeries(libL10n.used, const Color(0xFFF59E0B), h.disk),
+        ],
+        format: _formatPercent,
+        maxY: 100,
+      ),
+      // Separate chart, not a third line above: a byte rate and a percentage
+      // share no axis
+      _ChartSpec(
+        series: [
+          _HistorySeries(l10n.read, const Color(0xFF0EA5E9), h.diskRead),
+          _HistorySeries(l10n.write, const Color(0xFFF97316), h.diskWrite),
+        ],
+        format: _formatSpeed,
+      ),
+    ]);
+  }
+
+  Widget? _buildNetChart(ServerState si) {
+    final h = si.status.history;
+    return _chartCard(ServerDetailCards.netChart, [
+      _ChartSpec(
+        series: [
+          _HistorySeries('↓', const Color(0xFF8B5CF6), h.netRx),
+          _HistorySeries('↑', const Color(0xFFEC4899), h.netTx),
+        ],
+        format: _formatSpeed,
+      ),
+    ]);
+  }
+
+  Widget? _buildTempChart(ServerState si) {
+    final h = si.status.history;
+    return _chartCard(ServerDetailCards.tempChart, [
+      _ChartSpec(
+        series: [
+          _HistorySeries(
+            libL10n.temperature,
+            const Color(0xFFEF4444),
+            h.temp,
+          ),
+        ],
+        format: _formatTemp,
+      ),
+      _ChartSpec(
+        series: [
+          _HistorySeries(libL10n.battery, const Color(0xFF14B8A6), h.battery),
+        ],
+        format: _formatPercent,
+        maxY: 100,
+      ),
+    ]);
+  }
+
+  /// Renders only the specs that actually have data, and nothing at all if
+  /// none do — a server with no battery or no thermal sensor must not show an
+  /// empty axis.
+  Widget? _chartCard(ServerDetailCards card, List<_ChartSpec> specs) {
+    final live = specs.where((s) => s.hasData).toList();
+    if (live.isEmpty) return null;
+
+    return CardX(
+      child: ExpandTile(
+        title: Text(card.toStr),
+        leading: Icon(card.icon, size: 17),
+        initiallyExpanded: _getInitExpand(1),
+        childrenPadding: const EdgeInsets.only(bottom: 7),
+        children: live.map(_buildChart).toList(),
+      ),
+    );
+  }
+
+  /// One chart plus the legend line carrying each series' latest value —
+  /// mirrors `monitor/frontend/src/components/LineChart.svelte`.
+  Widget _buildChart(_ChartSpec spec) {
     final bars = <LineChartBarData>[];
-    for (final s in series) {
-      final spots = <FlSpot>[
-        for (var i = 0; i < points.length; i++)
-          FlSpot(i.toDouble(), s.selector(points[i])),
-      ];
+    for (final s in spec.series) {
+      final spots = s.spots;
       if (spots.isEmpty) continue;
       bars.add(
         LineChartBarData(
@@ -255,48 +240,48 @@ extension on _ServerDetailPageState {
     }
     if (bars.isEmpty) return UIs.placeholder;
 
-    final last = points.last;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: UIs.text12Grey),
-          UIs.height7,
-          Wrap(
-            spacing: 13,
-            runSpacing: 3,
-            children: [
-              for (final s in series)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: s.color,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    UIs.width7,
-                    Text(
-                      '${s.label} ${format(s.selector(last))}',
-                      style: UIs.text12Grey,
-                    ),
-                  ],
-                ),
-            ],
-          ),
-          UIs.height7,
           SizedBox(
             height: 110,
             child: _buildHistoryLineChart(
               bars,
-              series: series,
-              format: format,
-              maxY: maxY,
+              series: spec.series,
+              format: spec.format,
+              maxY: spec.maxY,
             ),
+          ),
+          UIs.height7,
+          // Below the plot: above it, the legend row and the axis' top label
+          // sat on adjacent lines and read as one run-on line
+          Wrap(
+            spacing: 13,
+            runSpacing: 3,
+            children: [
+              for (final s in spec.series)
+                if (s.latest != null)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: s.color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      UIs.width7,
+                      Text(
+                        '${s.label} ${spec.format(s.latest!)}',
+                        style: UIs.text12Grey,
+                      ),
+                    ],
+                  ),
+            ],
           ),
         ],
       ),
@@ -304,25 +289,47 @@ extension on _ServerDetailPageState {
   }
 }
 
-/// One line of a history chart. Const-constructible (hence the top-level
-/// selector functions below) so the shared groups can be `const` lists.
+/// One chart: the series drawn on its shared axis, and how to label that axis.
+class _ChartSpec {
+  final List<_HistorySeries> series;
+  final String Function(double) format;
+
+  /// Fixed axis top for bounded quantities (percentages); auto-scaled when null
+  final double? maxY;
+
+  const _ChartSpec({
+    required this.series,
+    required this.format,
+    this.maxY,
+  });
+
+  bool get hasData => series.any((s) => s.spots.isNotEmpty);
+}
+
+/// One line. Reads straight off a [StatusHistory] ring buffer, whose gaps are
+/// `null` for "not measured at that sample" — those points are skipped rather
+/// than plotted as 0, so an interface that only just appeared doesn't drag the
+/// line down to the axis.
 class _HistorySeries {
   final String label;
   final Color color;
-  final double Function(MonitorHistoryPoint) selector;
+  final List<double?> values;
 
-  const _HistorySeries(this.label, this.color, this.selector);
+  const _HistorySeries(this.label, this.color, this.values);
+
+  List<FlSpot> get spots => [
+    for (var i = 0; i < values.length; i++)
+      if (values[i] != null) FlSpot(i.toDouble(), values[i]!),
+  ];
+
+  double? get latest {
+    for (var i = values.length - 1; i >= 0; i--) {
+      final v = values[i];
+      if (v != null) return v;
+    }
+    return null;
+  }
 }
-
-double _selCpu(MonitorHistoryPoint p) => p.cpu;
-double _selMem(MonitorHistoryPoint p) => p.memory;
-double _selDisk(MonitorHistoryPoint p) => p.disk;
-double _selNetRx(MonitorHistoryPoint p) => p.netRxSpeed;
-double _selNetTx(MonitorHistoryPoint p) => p.netTxSpeed;
-double _selDioRead(MonitorHistoryPoint p) => p.diskioReadSpeed;
-double _selDioWrite(MonitorHistoryPoint p) => p.diskioWriteSpeed;
-double _selTemp(MonitorHistoryPoint p) => p.temperature ?? 0;
-double _selBattery(MonitorHistoryPoint p) => p.batteryPercent ?? 0;
 
 String _formatPercent(double v) => '${v.toStringAsFixed(1)}%';
 String _formatTemp(double v) => '${v.toStringAsFixed(1)}°C';
@@ -364,98 +371,18 @@ enum _NetSortType {
     switch (this) {
       case _NetSortType.device:
         return (b, a) => a.compareTo(b);
+      // Interfaces with no reading yet sort as slowest rather than jumping
+      // around as their first sample lands
       case _NetSortType.recv:
-        return (b, a) => ns
-            .speedInBytes(ns.deviceIdx(a))
-            .compareTo(ns.speedInBytes(ns.deviceIdx(b)));
+        return (b, a) => (ns.speedInBytes(ns.deviceIdx(a)) ?? -1).compareTo(
+          ns.speedInBytes(ns.deviceIdx(b)) ?? -1,
+        );
       case _NetSortType.trans:
-        return (b, a) => ns
-            .speedOutBytes(ns.deviceIdx(a))
-            .compareTo(ns.speedOutBytes(ns.deviceIdx(b)));
+        return (b, a) => (ns.speedOutBytes(ns.deviceIdx(a)) ?? -1).compareTo(
+          ns.speedOutBytes(ns.deviceIdx(b)) ?? -1,
+        );
     }
   }
-}
-
-Widget _buildLineChart(
-  List<List<FlSpot>> spots, {
-  String? tooltipPrefix,
-  bool curve = false,
-  int verticalInterval = 20,
-}) {
-  // `Cpus._updateSpots` seeds an empty Fifo on a core's first sample and only
-  // starts filling it on the next one, so the very first frame after connecting
-  // hands us empty series. fl_chart's `mostLeftSpot` is late-initialized from
-  // the spot list and throws a LateInitializationError on an empty one.
-  if (spots.isEmpty || spots.every((e) => e.isEmpty)) return UIs.placeholder;
-
-  return LineChart(
-    LineChartData(
-      lineTouchData: LineTouchData(
-        touchTooltipData: LineTouchTooltipData(
-          tooltipPadding: const EdgeInsets.all(5),
-          tooltipBorderRadius: BorderRadius.circular(8),
-          getTooltipItems: (List<LineBarSpot> touchedSpots) {
-            return touchedSpots.map((e) {
-              return LineTooltipItem(
-                '$tooltipPrefix${e.barIndex}: ${e.y.toStringAsFixed(2)}',
-                const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              );
-            }).toList();
-          },
-        ),
-        handleBuiltInTouches: true,
-      ),
-      gridData: FlGridData(
-        show: true,
-        drawVerticalLine: false,
-        horizontalInterval: verticalInterval.toDouble(),
-        getDrawingHorizontalLine: (value) {
-          return const FlLine(
-            color: Color.fromARGB(43, 88, 91, 94),
-            strokeWidth: 1,
-          );
-        },
-      ),
-      titlesData: FlTitlesData(
-        show: true,
-        rightTitles: const AxisTitles(
-          sideTitles: SideTitles(showTitles: false),
-        ),
-        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        bottomTitles: const AxisTitles(
-          sideTitles: SideTitles(showTitles: false),
-        ),
-        leftTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            interval: 20,
-            getTitlesWidget: (val, meta) {
-              if (val % verticalInterval != 0) return UIs.placeholder;
-              if (val == 0) return const Text('0 %', style: UIs.text12Grey);
-              return Text(val.toInt().toString(), style: UIs.text12Grey);
-            },
-            reservedSize: 27,
-          ),
-        ),
-      ),
-      borderData: FlBorderData(show: false),
-      minY: -1,
-      maxY: 101,
-      lineBarsData: spots
-          .map(
-            (e) => LineChartBarData(
-              spots: e,
-              isCurved: curve,
-              barWidth: 2,
-              isStrokeCapRound: true,
-              color: UIs.primaryColor,
-              dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(show: false),
-            ),
-          )
-          .toList(),
-    ),
-  );
 }
 
 /// Multi-series chart for monitor's history card. Unlike [_buildLineChart]

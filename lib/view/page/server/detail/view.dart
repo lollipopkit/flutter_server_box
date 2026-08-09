@@ -19,7 +19,6 @@ import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
-import 'package:server_box/data/model/server/monitor_metrics.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/sensors.dart';
@@ -50,9 +49,11 @@ class ServerDetailPage extends ConsumerStatefulWidget {
 class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   late final _cardBuildMap = Map.fromIterables(ServerDetailCards.names, [
+    _buildUsage,
+    _buildDiskChart,
+    _buildNetChart,
+    _buildTempChart,
     _buildAbout,
-    _buildCPUView,
-    _buildMemView,
     _buildSwapView,
     _buildGpuView,
     _buildDiskView,
@@ -63,7 +64,6 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     _buildBatteries,
     _buildPve,
     _buildCustomCmd,
-    _buildMonitorHistory,
   ]);
 
   late Size _size;
@@ -71,7 +71,6 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
 
   final _settings = Stores.setting;
   final _netSortType = ValueNotifier(_NetSortType.device);
-  final _monitorHistory = ValueNotifier<List<MonitorHistoryPoint>?>(null);
   late final _collapse = _settings.collapseUIDefault.fetch();
   late final _textFactor = TextScaler.linear(_settings.textFactor.fetch());
   late final _cpuViewAsProgress = _settings.cpuViewAsProgress.fetch();
@@ -82,7 +81,6 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   void dispose() {
     super.dispose();
     _netSortType.dispose();
-    _monitorHistory.dispose();
   }
 
   @override
@@ -101,21 +99,15 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     );
     _cardsOrder.addAll(order);
 
-    if (widget.args.spi.monitorHttp != null) {
-      unawaited(_loadMonitorHistory());
-    }
-  }
-
-  Future<void> _loadMonitorHistory() async {
-    try {
-      final points = await ref
+    // Prefill the trend buffer from whatever history the source already has,
+    // so the chart cards aren't blank on a freshly opened page. A no-op for
+    // sources without ServerCapabilities.storedHistory (i.e. SSH), which
+    // simply accumulate from here on.
+    unawaited(
+      ref
           .read(serverProvider(widget.args.spi.id).notifier)
-          .fetchMonitorHistory();
-      if (mounted) _monitorHistory.value = points;
-    } catch (e, s) {
-      Loggers.app.warning('Fetch monitor history failed', e, s);
-      if (mounted) _monitorHistory.value = const [];
-    }
+          .seedHistory(),
+    );
   }
 
   @override
@@ -268,16 +260,21 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     ).cardx;
   }
 
-  Widget? _buildCPUView(ServerState si) {
+  /// CPU and RAM in one card: their current figures plus the shared trend.
+  /// They were three cards (cpu, mem, and a chart that re-plotted both), so
+  /// every number appeared twice on the page.
+  Widget? _buildUsage(ServerState si) {
     final ss = si.status;
-    final percent = ss.cpu.usedPercent(coreIdx: 0).toInt();
-    final details = [
+    final cpuUsed = ss.cpu.usedPercent(coreIdx: 0);
+    final cpuPercent = cpuUsed?.toInt();
+
+    final cpuDetails = [
       _buildDetailPercent(ss.cpu.user, 'user'),
       UIs.width13,
       _buildDetailPercent(ss.cpu.idle, 'idle'),
     ];
     if (ss.system == SystemType.linux) {
-      details.addAll([
+      cpuDetails.addAll([
         UIs.width13,
         _buildDetailPercent(ss.cpu.sys, 'sys'),
         UIs.width13,
@@ -285,28 +282,76 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       ]);
     }
 
-    final List<Widget> children = _cpuViewAsProgress
-        ? _buildCPUProgress(ss.cpu)
-        : [_buildCPUChart(ss)];
-
-    if (ss.cpu.brand.isNotEmpty) {
-      children.add(
+    final children = <Widget>[
+      if (_cpuViewAsProgress) ..._buildCPUProgress(ss.cpu),
+      if (ss.cpu.brand.isNotEmpty)
         Column(
           children: ss.cpu.brand.entries.map(_buildCpuModelItem).toList(),
         ).paddingOnly(top: 13),
-      );
-    }
+      ?_buildMemRow(ss),
+      ?_buildUsageChart(si),
+    ];
 
     return ExpandTile(
       title: Align(
         alignment: Alignment.centerLeft,
-        child: _buildAnimatedText(ValueKey(percent), '$percent%', UIs.text27),
+        child: _buildAnimatedText(
+          ValueKey(cpuPercent),
+          cpuPercent == null ? '--' : '$cpuPercent%',
+          UIs.text27,
+        ),
       ),
       childrenPadding: const EdgeInsets.symmetric(vertical: 13),
       initiallyExpanded: _getInitExpand(1),
-      trailing: Row(mainAxisSize: MainAxisSize.min, children: details),
+      trailing: Row(mainAxisSize: MainAxisSize.min, children: cpuDetails),
       children: children,
     ).cardx;
+  }
+
+  /// RAM figures, laid out like the CPU header above it so the two read as one
+  /// card rather than two stacked ones
+  Widget? _buildMemRow(server_model.ServerStatus ss) {
+    if (ss.mem.total == 0) return null;
+    final free = ss.mem.free / ss.mem.total * 100;
+    final avail = ss.mem.availPercent * 100;
+    final used = ss.mem.usedPercent * 100;
+    final usedStr = used.toStringAsFixed(0);
+
+    return Padding(
+      padding: const EdgeInsets.only(left: 17, right: 17, top: 13),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  _buildAnimatedText(
+                    ValueKey(usedStr),
+                    '$usedStr%',
+                    UIs.text27,
+                  ),
+                  UIs.width7,
+                  Text(
+                    'of ${(ss.mem.total * 1024).bytes2Str}',
+                    style: UIs.text13Grey,
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  _buildDetailPercent(free, 'free'),
+                  UIs.width13,
+                  _buildDetailPercent(avail, 'avail'),
+                ],
+              ),
+            ],
+          ),
+          UIs.height13,
+          _buildProgress(used),
+        ],
+      ),
+    );
   }
 
   Widget _buildCpuModelItem(MapEntry<String, int> e) {
@@ -340,14 +385,17 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     return child.paddingSymmetric(horizontal: 17);
   }
 
-  Widget _buildDetailPercent(double percent, String timeType) {
+  /// [percent] is null before a second sample exists, i.e. there is no window
+  /// to compute a share over — rendered as "--" so it can't be mistaken for a
+  /// measured 0%
+  Widget _buildDetailPercent(double? percent, String timeType) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
-          '${percent.toStringAsFixed(1)}%',
+          percent == null ? '--' : '${percent.toStringAsFixed(1)}%',
           style: UIs.text12,
           textScaler: _textFactor,
         ),
@@ -412,76 +460,18 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     return children;
   }
 
-  Widget _buildCPUChart(server_model.ServerStatus ss) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 13),
-      child: LayoutBuilder(
-        builder: (_, cons) {
-          return SizedBox(
-            height: 137,
-            width: cons.maxWidth,
-            child: _buildLineChart(
-              ss.cpu.spots,
-              //ss.cpu.rangeX,
-              tooltipPrefix: 'CPU',
-            ),
-          );
-        },
-      ),
-    );
-  }
 
-  Widget _buildProgress(double percent) {
-    final clamped = percent.clamp(0, 100);
-    final percentWithinOne = clamped / 100;
+  Widget _buildProgress(double? percent) {
+    // Indeterminate while there is no reading, instead of a full-width 0 bar
+    final percentWithinOne = percent == null
+        ? null
+        : percent.clamp(0, 100) / 100;
     return LinearProgressIndicator(
       value: percentWithinOne,
       minHeight: 7,
       backgroundColor: UIs.halfAlpha,
       color: UIs.primaryColor,
     );
-  }
-
-  Widget? _buildMemView(ServerState si) {
-    final ss = si.status;
-    if (ss.mem.total == 0) return null;
-    final free = ss.mem.free / ss.mem.total * 100;
-    final avail = ss.mem.availPercent * 100;
-    final used = ss.mem.usedPercent * 100;
-    final usedStr = used.toStringAsFixed(0);
-
-    final percentW = Row(
-      children: [
-        _buildAnimatedText(ValueKey(usedStr), '$usedStr%', UIs.text27),
-        UIs.width7,
-        Text('of ${(ss.mem.total * 1024).bytes2Str}', style: UIs.text13Grey),
-      ],
-    );
-
-    return Padding(
-      padding: UIs.roundRectCardPadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              percentW,
-              Row(
-                children: [
-                  _buildDetailPercent(free, 'free'),
-                  UIs.width13,
-                  _buildDetailPercent(avail, 'avail'),
-                ],
-              ),
-            ],
-          ),
-          UIs.height13,
-          _buildProgress(used),
-        ],
-      ),
-    ).cardx;
   }
 
   Widget? _buildSwapView(ServerState si) {

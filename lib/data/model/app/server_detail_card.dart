@@ -4,10 +4,17 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 
+/// Declaration order is the default card order on the detail page, and it is
+/// also the order `_ServerDetailPageState._cardBuildMap` pairs builders with —
+/// the two lists must stay in step.
 enum ServerDetailCards {
+  /// CPU and RAM, both their current figures and their shared trend. The two
+  /// used to be separate `cpu`/`mem` cards that the trend chart then repeated.
+  usage(Icons.speed, sinceBuild: 1467),
+  diskChart(Icons.stacked_line_chart, sinceBuild: 1467),
+  netChart(Icons.multiline_chart, sinceBuild: 1467),
+  tempChart(Icons.thermostat, sinceBuild: 1467),
   about(Icons.info),
-  cpu(Icons.memory),
-  mem(Bootstrap.memory),
   swap(Icons.swap_horiz),
   gpu(Bootstrap.gpu_card),
   disk(Bootstrap.device_hdd_fill),
@@ -17,8 +24,7 @@ enum ServerDetailCards {
   temp(FontAwesome.temperature_empty_solid),
   battery(Icons.battery_full),
   pve(BoxIcons.bxs_dashboard, sinceBuild: 818),
-  custom(Icons.code, sinceBuild: 825),
-  monitorHistory(Icons.show_chart, sinceBuild: 1467);
+  custom(Icons.code, sinceBuild: 825);
 
   final int? sinceBuild;
 
@@ -32,9 +38,8 @@ enum ServerDetailCards {
   static final names = values.map((e) => e.name).toList();
 
   String get toStr => switch (this) {
+    usage => libL10n.used,
     about => libL10n.about,
-    cpu => 'CPU',
-    mem => 'RAM',
     swap => 'Swap',
     gpu => 'GPU',
     disk => libL10n.disk,
@@ -45,7 +50,10 @@ enum ServerDetailCards {
     battery => libL10n.battery,
     pve => 'PVE',
     custom => libL10n.cmd,
-    monitorHistory => 'History',
+    // Trend-only cards, named apart from the snapshot card of the same subject
+    diskChart => '${libL10n.disk} · ${libL10n.stats}',
+    netChart => '${libL10n.net} · ${libL10n.stats}',
+    tempChart => '${libL10n.temperature} · ${libL10n.stats}',
   };
 
   /// If:
@@ -70,13 +78,20 @@ enum ServerDetailCards {
       }
     }
 
-    if (cur >= monitorHistory.sinceBuild!) {
+    if (cur >= usage.sinceBuild!) {
       final prop = Stores.setting.detailCardOrder;
       final list = prop.fetch();
-      if (!list.contains(monitorHistory.name)) {
-        list.add(monitorHistory.name);
-        prop.put(list);
+      // The separate cpu/mem cards were folded into `usage`; drop their stored
+      // entries so the merged card doesn't sit alongside the originals.
+      // TODO: remove these three `remove`s once no install can still carry the
+      // old names (`monitorHistory` only ever shipped on the frb branch).
+      list.removeWhere((e) => e == 'cpu' || e == 'mem' || e == 'monitorHistory');
+      // Inserted at the front, not appended: these carry the headline figures
+      // and belong above the per-device detail cards.
+      for (final card in [usage, diskChart, netChart, tempChart].reversed) {
+        if (!list.contains(card.name)) list.insert(0, card.name);
       }
+      prop.put(list);
     }
   }
 }

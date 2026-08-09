@@ -217,8 +217,8 @@ return $default(_that.spi,_that.status,_that.conn,_that.client);case _:
 /// @nodoc
 
 
-class _ServerState implements ServerState {
-  const _ServerState({required this.spi, required this.status, this.conn = ServerConn.disconnected, this.client});
+class _ServerState extends ServerState {
+  const _ServerState({required this.spi, required this.status, this.conn = ServerConn.disconnected, this.client}): super._();
   
 
 @override final  Spi spi;

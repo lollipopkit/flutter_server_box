@@ -4,11 +4,12 @@ import 'package:fl_lib/fl_lib.dart';
 
 import 'package:server_box/data/model/server/time_seq.dart';
 
-
 class NetSpeedPart extends TimeSeqIface<NetSpeedPart> {
   final String device;
   final BigInt bytesIn;
   final BigInt bytesOut;
+
+  /// Seconds since epoch of the sample these counters came from
   final int time;
 
   NetSpeedPart(this.device, this.bytesIn, this.bytesOut, this.time);
@@ -25,12 +26,18 @@ typedef CachedNetVals = ({
 });
 
 class NetSpeed extends TimeSeq<NetSpeedPart> {
-  NetSpeed(super.init1, super.init2);
+  NetSpeed();
+
+  /// Shown wherever a rate can't be computed yet: right after connecting, or
+  /// when the source hasn't produced a new sample. Distinct from "0 B/s",
+  /// which is a real measurement of an idle link.
+  static const noReading = '--';
 
   @override
   void onUpdate() {
-    devices.clear();
-    devices.addAll(now.map((e) => e.device).toList());
+    devices
+      ..clear()
+      ..addAll(now.map((e) => e.device));
 
     realIfaces.clear();
     _realIfaceIndices.clear();
@@ -42,16 +49,11 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
       }
     }
 
-    final sizeIn = this.sizeIn();
-    final sizeOut = this.sizeOut();
-    final speedIn = this.speedIn();
-    final speedOut = this.speedOut();
-
     cachedVals = (
-      sizeIn: sizeIn,
-      sizeOut: sizeOut,
-      speedIn: speedIn,
-      speedOut: speedOut,
+      sizeIn: sizeIn(),
+      sizeOut: sizeOut(),
+      speedIn: speedIn(),
+      speedOut: speedOut(),
     );
   }
 
@@ -69,83 +71,76 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
   final _realIfaceIndices = <int>[];
 
   CachedNetVals cachedVals = (
-    sizeIn: '0kb',
-    sizeOut: '0kb',
-    speedIn: '0kb/s',
-    speedOut: '0kb/s',
+    sizeIn: noReading,
+    sizeOut: noReading,
+    speedIn: noReading,
+    speedOut: noReading,
   );
 
-  /// Time diff between [pre] and [now]
-  BigInt get _timeDiff => BigInt.from(now[0].time - pre[0].time);
-
-  double speedInBytes(int i) {
-    final timeDiff = _timeDiff;
-    if (timeDiff <= BigInt.zero) return 0;
-    return (now[i].bytesIn - pre[i].bytesIn) / timeDiff;
+  /// Seconds covered by the current window, `null` when there isn't one
+  double? get _elapsed {
+    if (!hasWindow) return null;
+    return elapsedSeconds(pre[0].time, now[0].time);
   }
 
-  double speedOutBytes(int i) {
-    final timeDiff = _timeDiff;
-    if (timeDiff <= BigInt.zero) return 0;
-    return (now[i].bytesOut - pre[i].bytesOut) / timeDiff;
+  double? _speed(int i, BigInt Function(NetSpeedPart) counter) {
+    final elapsed = _elapsed;
+    if (elapsed == null || i >= now.length || i >= pre.length) return null;
+    final delta = counterDeltaBig(counter(pre[i]), counter(now[i]));
+    if (delta == null) return null;
+    return delta.toDouble() / elapsed;
   }
-  BigInt sizeInBytes(int i) => now[i].bytesIn;
-  BigInt sizeOutBytes(int i) => now[i].bytesOut;
 
-  String speedIn({String? device}) {
-    if (pre.isEmpty || now.isEmpty) return 'N/A';
-    if (pre.length != now.length) return 'N/A';
-    if (device == null) {
-      var speed = 0.0;
-      for (final i in _realIfaceIndices) {
-        speed += speedInBytes(i);
-      }
-      return buildStandardOutput(speed);
+  /// Bytes per second into [i], or `null` when unmeasurable
+  double? speedInBytes(int i) => _speed(i, (e) => e.bytesIn);
+
+  /// Bytes per second out of [i], or `null` when unmeasurable
+  double? speedOutBytes(int i) => _speed(i, (e) => e.bytesOut);
+
+  BigInt sizeInBytes(int i) => i < now.length ? now[i].bytesIn : BigInt.zero;
+  BigInt sizeOutBytes(int i) => i < now.length ? now[i].bytesOut : BigInt.zero;
+
+  /// Summed over real interfaces when [device] is null. `null` if no
+  /// interface produced a reading.
+  double? speedInBytesOf({String? device}) =>
+      _aggregate(device, speedInBytes);
+
+  double? speedOutBytesOf({String? device}) =>
+      _aggregate(device, speedOutBytes);
+
+  double? _aggregate(String? device, double? Function(int) of) {
+    if (device != null) return of(deviceIdx(device));
+    double? sum;
+    for (final i in _realIfaceIndices) {
+      final v = of(i);
+      if (v != null) sum = (sum ?? 0) + v;
     }
-    final idx = deviceIdx(device);
-    return buildStandardOutput(speedInBytes(idx));
+    return sum;
   }
+
+  String speedIn({String? device}) => _fmtSpeed(speedInBytesOf(device: device));
+
+  String speedOut({String? device}) =>
+      _fmtSpeed(speedOutBytesOf(device: device));
 
   String sizeIn({String? device}) {
-    if (pre.isEmpty || now.isEmpty) return 'N/A';
-    if (pre.length != now.length) return 'N/A';
-    if (device == null) {
-      var size = BigInt.from(0);
-      for (final i in _realIfaceIndices) {
-        size += sizeInBytes(i);
-      }
-      return size.bytes2Str;
+    if (now.isEmpty) return noReading;
+    if (device != null) return sizeInBytes(deviceIdx(device)).bytes2Str;
+    var size = BigInt.zero;
+    for (final i in _realIfaceIndices) {
+      size += sizeInBytes(i);
     }
-    final idx = deviceIdx(device);
-    return sizeInBytes(idx).bytes2Str;
-  }
-
-  String speedOut({String? device}) {
-    if (pre.isEmpty || now.isEmpty) return 'N/A';
-    if (pre.length != now.length) return 'N/A';
-    if (device == null) {
-      var speed = 0.0;
-      for (final i in _realIfaceIndices) {
-        speed += speedOutBytes(i);
-      }
-      return buildStandardOutput(speed);
-    }
-    final idx = deviceIdx(device);
-    return buildStandardOutput(speedOutBytes(idx));
+    return size.bytes2Str;
   }
 
   String sizeOut({String? device}) {
-    if (pre.isEmpty || now.isEmpty) return 'N/A';
-    if (pre.length != now.length) return 'N/A';
-    if (device == null) {
-      var size = BigInt.from(0);
-      for (final i in _realIfaceIndices) {
-        size += sizeOutBytes(i);
-      }
-      return size.bytes2Str;
+    if (now.isEmpty) return noReading;
+    if (device != null) return sizeOutBytes(deviceIdx(device)).bytes2Str;
+    var size = BigInt.zero;
+    for (final i in _realIfaceIndices) {
+      size += sizeOutBytes(i);
     }
-    final idx = deviceIdx(device);
-    return sizeOutBytes(idx).bytes2Str;
+    return size.bytes2Str;
   }
 
   int deviceIdx(String? device) {
@@ -157,7 +152,6 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     return 0;
   }
 
-  String buildStandardOutput(double speed) => '${speed.bytes2Str}/s';
-
-
+  static String _fmtSpeed(double? bytesPerSec) =>
+      bytesPerSec == null ? noReading : '${bytesPerSec.bytes2Str}/s';
 }

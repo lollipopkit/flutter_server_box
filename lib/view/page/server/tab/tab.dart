@@ -329,7 +329,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _wrapWithSizedbox(
-                  PercentCircle(percent: ss.cpu.usedPercent()),
+                  // 0 until the second sample lands: the tab list needs a
+                  // fixed-size circle, and an empty ring reads the same as idle
+                  PercentCircle(percent: ss.cpu.usedPercent() ?? 0),
                   maxWidth,
                   true,
                 ),

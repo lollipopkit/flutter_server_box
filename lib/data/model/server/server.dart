@@ -10,6 +10,7 @@ import 'package:server_box/data/model/server/memory.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/sensors.dart';
+import 'package:server_box/data/model/server/status_history.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/temp.dart';
 
@@ -33,6 +34,15 @@ class ServerStatus {
   DiskUsage? diskUsage;
   final Map<String, String> customCmds = {};
 
+  /// Trend data for the chart cards, appended to after every successful
+  /// refresh. Lives here rather than in the UI so it survives navigation, and
+  /// so both the SSH and the monitor HTTP path feed one buffer.
+  ///
+  /// A refresh builds a new [ServerStatus] around the same mutable sub-objects
+  /// (`cpu`, `netSpeed`, ...); callers doing that must carry this over too, or
+  /// the trend restarts from empty every cycle.
+  final StatusHistory history;
+
   ServerStatus({
     required this.cpu,
     required this.mem,
@@ -47,7 +57,8 @@ class ServerStatus {
     this.err,
     this.nvidia,
     this.diskUsage,
-  });
+    StatusHistory? history,
+  }) : history = history ?? StatusHistory();
 }
 
 enum ServerConn {
