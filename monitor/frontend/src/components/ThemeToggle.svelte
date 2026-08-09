@@ -18,14 +18,14 @@
     {@const active = theme.current === opt.value}
     <button
       type="button"
-      class="flex-1 flex items-center justify-center py-2 cursor-pointer transition-colors {active
+      class="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 cursor-pointer transition-colors {active
         ? 'bg-fg-strong text-surface'
         : 'bg-surface text-muted-fg hover:bg-soft'}"
       title={opt.label()}
-      aria-label={opt.label()}
       onclick={() => theme.set(opt.value)}
     >
-      <opt.icon class="w-4 h-4" />
+      <opt.icon class="w-4 h-4 shrink-0" />
+      <span class="text-sm truncate">{opt.label()}</span>
     </button>
   {/each}
 </div>

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show listEquals;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/custom.dart';
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/store/server.dart';
@@ -58,6 +59,12 @@ abstract class Spi with _$Spi {
     String? proxyCommand,
     ServerCustom? custom,
     WakeOnLanCfg? wolCfg,
+
+    /// Alternative connection method: reach this server via a `monitor`
+    /// instance's HTTP API instead of SSH+shell. Peer to the SSH connection
+    /// fields above (`ip`/`port`/`user`/`pwd`/`keyId`), not a misc setting —
+    /// see `ServerConnectCredential.fromSpi`.
+    MonitorHttpCredential? monitorHttp,
 
     /// It only applies to SSH terminal.
     Map<String, String>? envs,
@@ -157,7 +164,8 @@ extension Spix on Spi {
   bool shouldReconnect(Spi old) {
     return !isSameAs(old) ||
         alterUrl != old.alterUrl ||
-        custom?.cmds != old.custom?.cmds;
+        custom?.cmds != old.custom?.cmds ||
+        monitorHttp != old.monitorHttp;
   }
 
   /// Parse the [alterUrl] to (ip, user, port).

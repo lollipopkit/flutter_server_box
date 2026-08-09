@@ -13,15 +13,13 @@
        save step (LocaleToggle/ThemeToggle persist on change themselves) -->
   <Card class="space-y-4">
     <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.appearance()}</h2>
-    <div class="flex items-end gap-3">
-      <div class="flex-1 min-w-0 space-y-1">
-        <span class="text-sm text-muted-fg">{$LL.language()}</span>
-        <LocaleToggle />
-      </div>
-      <div class="flex-1 min-w-0 space-y-1">
-        <span class="block text-sm text-muted-fg">{$LL.theme()}</span>
-        <ThemeToggle />
-      </div>
+    <div class="space-y-1">
+      <span class="text-sm text-muted-fg">{$LL.language()}</span>
+      <LocaleToggle />
+    </div>
+    <div class="space-y-1">
+      <span class="block text-sm text-muted-fg">{$LL.theme()}</span>
+      <ThemeToggle />
     </div>
   </Card>
 </main>

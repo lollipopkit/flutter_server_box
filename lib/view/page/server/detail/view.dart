@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:extended_image/extended_image.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -16,6 +18,7 @@ import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
+import 'package:server_box/data/model/server/monitor_metrics.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/nvdia.dart';
 import 'package:server_box/data/model/server/sensors.dart';
@@ -59,6 +62,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     _buildBatteries,
     _buildPve,
     _buildCustomCmd,
+    _buildMonitorHistory,
   ]);
 
   late Size _size;
@@ -66,6 +70,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
 
   final _settings = Stores.setting;
   final _netSortType = ValueNotifier(_NetSortType.device);
+  final _monitorHistory = ValueNotifier<List<MonitorHistoryPoint>?>(null);
   late final _collapse = _settings.collapseUIDefault.fetch();
   late final _textFactor = TextScaler.linear(_settings.textFactor.fetch());
   late final _cpuViewAsProgress = _settings.cpuViewAsProgress.fetch();
@@ -76,6 +81,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   void dispose() {
     super.dispose();
     _netSortType.dispose();
+    _monitorHistory.dispose();
   }
 
   @override
@@ -93,6 +99,22 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       (e) => !ServerDetailCards.names.contains(e) || disabled.contains(e),
     );
     _cardsOrder.addAll(order);
+
+    if (widget.args.spi.monitorHttp != null) {
+      unawaited(_loadMonitorHistory());
+    }
+  }
+
+  Future<void> _loadMonitorHistory() async {
+    try {
+      final points = await ref
+          .read(serverProvider(widget.args.spi.id).notifier)
+          .fetchMonitorHistory();
+      if (mounted) _monitorHistory.value = points;
+    } catch (e, s) {
+      Loggers.app.warning('Fetch monitor history failed', e, s);
+      if (mounted) _monitorHistory.value = const [];
+    }
   }
 
   @override

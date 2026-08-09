@@ -111,6 +111,7 @@ class SpiAdapter extends TypeAdapter<Spi> {
       proxyCommand: fields[16] as String?,
       custom: fields[10] as ServerCustom?,
       wolCfg: fields[11] as WakeOnLanCfg?,
+      monitorHttp: fields[18] as MonitorHttpCredential?,
       envs: (fields[12] as Map?)?.cast<String, String>(),
       id: fields[13] == null ? '' : fields[13] as String,
       customSystemType: fields[14] as SystemType?,
@@ -121,7 +122,7 @@ class SpiAdapter extends TypeAdapter<Spi> {
   @override
   void write(BinaryWriter writer, Spi obj) {
     writer
-      ..writeByte(18)
+      ..writeByte(19)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -157,7 +158,9 @@ class SpiAdapter extends TypeAdapter<Spi> {
       ..writeByte(16)
       ..write(obj.proxyCommand)
       ..writeByte(17)
-      ..write(obj.jumpIds);
+      ..write(obj.jumpIds)
+      ..writeByte(18)
+      ..write(obj.monitorHttp);
   }
 
   @override
@@ -721,6 +724,49 @@ class PortForwardTypeAdapter extends TypeAdapter<PortForwardType> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is PortForwardTypeAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class MonitorHttpCredentialAdapter extends TypeAdapter<MonitorHttpCredential> {
+  @override
+  final typeId = 13;
+
+  @override
+  MonitorHttpCredential read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return MonitorHttpCredential(
+      addr: fields[0] as String,
+      user: fields[1] as String?,
+      pwd: fields[2] as String?,
+      ignoreCert: fields[3] == null ? false : fields[3] as bool,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, MonitorHttpCredential obj) {
+    writer
+      ..writeByte(4)
+      ..writeByte(0)
+      ..write(obj.addr)
+      ..writeByte(1)
+      ..write(obj.user)
+      ..writeByte(2)
+      ..write(obj.pwd)
+      ..writeByte(3)
+      ..write(obj.ignoreCert);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MonitorHttpCredentialAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

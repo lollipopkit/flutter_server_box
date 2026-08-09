@@ -118,6 +118,130 @@ extension on _ServerDetailPageState {
     if (_size.width > UIs.columnWidth) return true;
     return len > 0 && len <= (max ?? 3);
   }
+
+  /// Trend charts backed by monitor's `/api/v1/metrics/history` — only
+  /// meaningful for servers connected via monitor HTTP (see
+  /// `Spi.monitorHttp`); SSH-connected servers have no history concept
+  /// beyond the existing in-memory CPU ring buffer, so this card is hidden
+  /// for them entirely rather than showing an empty/misleading chart.
+  Widget? _buildMonitorHistory(ServerState si) {
+    if (si.spi.monitorHttp == null) return null;
+    return _monitorHistory.listenVal((points) {
+      if (points == null) {
+        return const CardX(
+          child: Padding(
+            padding: EdgeInsets.all(21),
+            child: Center(
+              child: SizedBox(
+                width: 21,
+                height: 21,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          ),
+        );
+      }
+      if (points.isEmpty) return UIs.placeholder;
+
+      final hasTemp = points.any((e) => e.temperature != null);
+      final hasBattery = points.any((e) => e.batteryPercent != null);
+
+      return CardX(
+        child: ExpandTile(
+          title: const Text('History'),
+          leading: const Icon(Icons.show_chart, size: 17),
+          initiallyExpanded: _getInitExpand(1),
+          childrenPadding: const EdgeInsets.only(bottom: 7),
+          children: [
+            _buildHistoryLine('CPU', points, (e) => e.cpu, unit: '%'),
+            _buildHistoryLine('RAM', points, (e) => e.memory, unit: '%'),
+            _buildHistoryLine(
+              libL10n.disk,
+              points,
+              (e) => e.disk,
+              unit: '%',
+            ),
+            _buildHistoryLine(
+              '${libL10n.net} ↓',
+              points,
+              (e) => e.netRxSpeed,
+              formatY: _formatSpeed,
+            ),
+            _buildHistoryLine(
+              '${libL10n.net} ↑',
+              points,
+              (e) => e.netTxSpeed,
+              formatY: _formatSpeed,
+            ),
+            _buildHistoryLine(
+              'DiskIO ${l10n.read}',
+              points,
+              (e) => e.diskioReadSpeed,
+              formatY: _formatSpeed,
+            ),
+            _buildHistoryLine(
+              'DiskIO ${l10n.write}',
+              points,
+              (e) => e.diskioWriteSpeed,
+              formatY: _formatSpeed,
+            ),
+            if (hasTemp)
+              _buildHistoryLine(
+                libL10n.temperature,
+                points,
+                (e) => e.temperature ?? 0,
+                unit: '°C',
+              ),
+            if (hasBattery)
+              _buildHistoryLine(
+                libL10n.battery,
+                points,
+                (e) => e.batteryPercent ?? 0,
+                unit: '%',
+              ),
+          ],
+        ),
+      );
+    });
+  }
+
+  String _formatSpeed(double bytesPerSec) => '${bytesPerSec.bytes2Str}/s';
+
+  Widget _buildHistoryLine(
+    String title,
+    List<MonitorHistoryPoint> points,
+    double Function(MonitorHistoryPoint) selector, {
+    String? unit,
+    String Function(double)? formatY,
+  }) {
+    final spots = <FlSpot>[
+      for (var i = 0; i < points.length; i++)
+        FlSpot(
+          (DateTime.tryParse(points[i].timestamp)?.millisecondsSinceEpoch ??
+                  i)
+              .toDouble(),
+          selector(points[i]),
+        ),
+    ];
+    final format = formatY ?? (v) => '${v.toStringAsFixed(1)}${unit ?? ''}';
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: UIs.text12Grey),
+          SizedBox(
+            height: 100,
+            child: _buildAutoLineChart(
+              spots,
+              tooltipPrefix: '$title: ',
+              formatY: format,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 String _formatAmdGpuProcessMemory(int rawMemory) {
@@ -240,6 +364,92 @@ Widget _buildLineChart(
             ),
           )
           .toList(),
+    ),
+  );
+}
+
+/// Like [_buildLineChart] but with a Y axis auto-scaled to the data range,
+/// for series that aren't a 0-100 percentage (network/diskio speeds,
+/// temperature) — used by monitor's history charts (`_buildMonitorHistory`).
+Widget _buildAutoLineChart(
+  List<FlSpot> spots, {
+  String? tooltipPrefix,
+  String Function(double)? formatY,
+}) {
+  if (spots.isEmpty) return UIs.placeholder;
+
+  final ys = spots.map((e) => e.y);
+  var minY = ys.reduce((a, b) => a < b ? a : b);
+  var maxY = ys.reduce((a, b) => a > b ? a : b);
+  if (minY == maxY) {
+    minY -= 1;
+    maxY += 1;
+  } else {
+    final pad = (maxY - minY) * 0.1;
+    minY -= pad;
+    maxY += pad;
+  }
+  final format = formatY ?? (v) => v.toStringAsFixed(1);
+
+  return LineChart(
+    LineChartData(
+      lineTouchData: LineTouchData(
+        touchTooltipData: LineTouchTooltipData(
+          tooltipPadding: const EdgeInsets.all(5),
+          tooltipBorderRadius: BorderRadius.circular(8),
+          getTooltipItems: (List<LineBarSpot> touchedSpots) {
+            return touchedSpots.map((e) {
+              return LineTooltipItem(
+                '$tooltipPrefix${format(e.y)}',
+                const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              );
+            }).toList();
+          },
+        ),
+        handleBuiltInTouches: true,
+      ),
+      gridData: FlGridData(
+        show: true,
+        drawVerticalLine: false,
+        getDrawingHorizontalLine: (value) {
+          return const FlLine(
+            color: Color.fromARGB(43, 88, 91, 94),
+            strokeWidth: 1,
+          );
+        },
+      ),
+      titlesData: FlTitlesData(
+        show: true,
+        rightTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
+        ),
+        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        bottomTitles: const AxisTitles(
+          sideTitles: SideTitles(showTitles: false),
+        ),
+        leftTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 44,
+            getTitlesWidget: (val, meta) =>
+                Text(format(val), style: UIs.text12Grey),
+          ),
+        ),
+      ),
+      borderData: FlBorderData(show: false),
+      minY: minY,
+      maxY: maxY,
+      lineBarsData: [
+        LineChartBarData(
+          spots: spots,
+          isCurved: false,
+          barWidth: 2,
+          isStrokeCapRound: true,
+          color: UIs.primaryColor,
+          dotData: const FlDotData(show: false),
+          belowBarData: BarAreaData(show: false),
+        ),
+      ],
     ),
   );
 }

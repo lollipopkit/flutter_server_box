@@ -12,13 +12,18 @@ import 'package:server_box/data/helper/system_detector.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
+import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor_metrics.dart';
+import 'package:server_box/data/model/server/monitor_metrics_mapper.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/server_status_update_req.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/persistent_shell.dart';
@@ -44,11 +49,13 @@ abstract class ServerState with _$ServerState {
 class ServerNotifier extends _$ServerNotifier {
   PersistentShell? _persistentShell;
   bool _usePersistentShellForStatus = true;
+  MonitorHttpClient? _monitorClient;
 
   @override
   ServerState build(String serverId) {
     ref.onDispose(() {
       unawaited(_disposePersistentShell());
+      _monitorClient?.dispose();
     });
 
     final serverNotifier = ref.read(serversProvider);
@@ -148,6 +155,89 @@ class ServerNotifier extends _$ServerNotifier {
   }
 
   Future<void> _getData() async {
+    switch (ServerConnectCredential.fromSpi(state.spi)) {
+      case ServerConnectCredentialSsh():
+        await _getDataSsh();
+      case ServerConnectCredentialMonitorHttp(:final monitor):
+        await _getDataMonitorHttp(monitor);
+    }
+  }
+
+  /// Status polling via a `monitor` instance's HTTP API instead of SSH+shell
+  /// (see `Spi.monitorHttp`). Deliberately does NOT fall back to SSH on
+  /// failure — a misconfigured/unreachable monitor should surface as an
+  /// error, not silently switch data sources.
+  Future<void> _getDataMonitorHttp(MonitorHttpCredential monitor) async {
+    final spi = state.spi;
+    final sid = spi.id;
+
+    if (!TryLimiter.canTry(sid)) {
+      if (state.conn != ServerConn.failed) {
+        updateConnection(ServerConn.failed);
+      }
+      return;
+    }
+
+    updateStatus(_copyStatus(state.status, err: null, setErr: true));
+    if (state.conn < ServerConn.connecting) {
+      updateConnection(ServerConn.connecting);
+    }
+    if (state.conn != ServerConn.finished) {
+      updateConnection(ServerConn.loading);
+    }
+
+    final credential = ServerConnectCredentialMonitorHttp(
+      spi: spi,
+      monitor: monitor,
+    );
+    var client = _monitorClient;
+    if (client == null || !client.matches(credential)) {
+      client?.dispose();
+      client = MonitorHttpClient(credential);
+      _monitorClient = client;
+    }
+
+    try {
+      final metrics = await client.fetchStatus();
+      final newStatus = applyMonitorMetrics(_copyStatus(state.status), metrics);
+      updateStatus(newStatus);
+      updateConnection(ServerConn.finished);
+      TryLimiter.reset(sid);
+    } catch (e, s) {
+      TryLimiter.inc(sid);
+      final err = e is MonitorHttpErr
+          ? e
+          : MonitorHttpErr(
+              type: MonitorHttpErrType.unknown,
+              message: e.toString(),
+            );
+      final newStatus = _copyStatus(state.status, err: err, setErr: true);
+      _setFailedState(newStatus);
+      Loggers.app.warning('Get status via monitor for ${spi.name} failed', e, s);
+    }
+  }
+
+  /// Fetches monitor's `/api/v1/metrics/history` for this server. Only
+  /// meaningful when `spi.monitorHttp` is configured — returns an empty list
+  /// otherwise (SSH has no history concept).
+  Future<List<MonitorHistoryPoint>> fetchMonitorHistory({int minutes = 60}) {
+    final monitor = state.spi.monitorHttp;
+    if (monitor == null) return Future.value(const []);
+
+    final credential = ServerConnectCredentialMonitorHttp(
+      spi: state.spi,
+      monitor: monitor,
+    );
+    var client = _monitorClient;
+    if (client == null || !client.matches(credential)) {
+      client?.dispose();
+      client = MonitorHttpClient(credential);
+      _monitorClient = client;
+    }
+    return client.fetchHistory(minutes: minutes);
+  }
+
+  Future<void> _getDataSsh() async {
     final spi = state.spi;
     final sid = spi.id;
 

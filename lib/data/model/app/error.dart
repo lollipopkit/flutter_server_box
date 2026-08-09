@@ -52,3 +52,15 @@ class PveErr extends Err<PveErrType> {
   @override
   String? get solution => null;
 }
+
+enum MonitorHttpErrType { unknown, net, loginFailed, auth, invalidResponse }
+
+class MonitorHttpErr extends Err<MonitorHttpErrType> {
+  const MonitorHttpErr({required super.type, super.message});
+
+  @override
+  String? get solution => switch (type) {
+    MonitorHttpErrType.auth => l10n.authFailTip,
+    _ => null,
+  };
+}

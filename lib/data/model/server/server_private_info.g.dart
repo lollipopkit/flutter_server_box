@@ -27,6 +27,11 @@ _Spi _$SpiFromJson(Map<String, dynamic> json) => _Spi(
   wolCfg: json['wolCfg'] == null
       ? null
       : WakeOnLanCfg.fromJson(json['wolCfg'] as Map<String, dynamic>),
+  monitorHttp: json['monitorHttp'] == null
+      ? null
+      : MonitorHttpCredential.fromJson(
+          json['monitorHttp'] as Map<String, dynamic>,
+        ),
   envs: (json['envs'] as Map<String, dynamic>?)?.map(
     (k, e) => MapEntry(k, e as String),
   ),
@@ -55,6 +60,7 @@ Map<String, dynamic> _$SpiToJson(_Spi instance) => <String, dynamic>{
   'proxyCommand': ?instance.proxyCommand,
   'custom': ?instance.custom,
   'wolCfg': ?instance.wolCfg,
+  'monitorHttp': ?instance.monitorHttp,
   'envs': ?instance.envs,
   'id': instance.id,
   'customSystemType': ?_$SystemTypeEnumMap[instance.customSystemType],

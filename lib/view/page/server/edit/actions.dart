@@ -185,42 +185,48 @@ extension _Actions on _ServerEditPageState {
   }
 
   void _onSave() async {
-    if (_ipController.text.isEmpty) {
-      context.showSnackBar('${libL10n.empty} ${libL10n.host}');
-      return;
-    }
+    final useMonitorHttp = _useMonitorHttp.value;
 
-    if (!_hostReg.hasMatch(_ipController.text)) {
-      context.showSnackBar(l10n.invalidHostFormat);
-      return;
-    }
+    // SSH host/auth/jump-chain fields are hidden (and irrelevant) in
+    // monitor-HTTP mode — skip their validation/defaulting entirely.
+    if (!useMonitorHttp) {
+      if (_ipController.text.isEmpty) {
+        context.showSnackBar('${libL10n.empty} ${libL10n.host}');
+        return;
+      }
 
-    if (_keyIdx.value == null && _passwordController.text.isEmpty) {
-      final ok = await context.showRoundDialog<bool>(
-        title: libL10n.attention,
-        child: Text(libL10n.askContinue(l10n.useNoPwd)),
-        actions: Btnx.cancelRedOk,
-      );
-      if (ok != true) return;
-    }
+      if (!_hostReg.hasMatch(_ipController.text)) {
+        context.showSnackBar(l10n.invalidHostFormat);
+        return;
+      }
 
-    // If [_pubKeyIndex] is -1, it means that the user has not selected
-    if (_keyIdx.value == -1) {
-      context.showSnackBar(libL10n.empty);
-      return;
-    }
-    if (_usernameController.text.isEmpty) {
-      _usernameController.text = 'root';
-    }
-    if (_portController.text.isEmpty) {
-      _portController.text = '22';
-    }
-    if (_areInvalidJumpSelections(_jumpServers.value)) {
-      context.showSnackBar('${l10n.invalid}: ${l10n.jumpServer}');
-      return;
+      if (_keyIdx.value == null && _passwordController.text.isEmpty) {
+        final ok = await context.showRoundDialog<bool>(
+          title: libL10n.attention,
+          child: Text(libL10n.askContinue(l10n.useNoPwd)),
+          actions: Btnx.cancelRedOk,
+        );
+        if (ok != true) return;
+      }
+
+      // If [_pubKeyIndex] is -1, it means that the user has not selected
+      if (_keyIdx.value == -1) {
+        context.showSnackBar(libL10n.empty);
+        return;
+      }
+      if (_usernameController.text.isEmpty) {
+        _usernameController.text = 'root';
+      }
+      if (_portController.text.isEmpty) {
+        _portController.text = '22';
+      }
+      if (_areInvalidJumpSelections(_jumpServers.value)) {
+        context.showSnackBar('${l10n.invalid}: ${l10n.jumpServer}');
+        return;
+      }
     }
     final proxyCommandText = _proxyCommandCtrl.text.trim();
-    if (!isDesktop && proxyCommandText.isNotEmpty) {
+    if (!useMonitorHttp && !isDesktop && proxyCommandText.isNotEmpty) {
       context.showSnackBar(l10n.proxyCommandOnlySupportedOnDesktop);
       return;
     }
@@ -236,6 +242,34 @@ extension _Actions on _ServerEditPageState {
       netDev: _netDevCtrl.text.selfNotEmptyOrNull,
       scriptDir: _scriptDirCtrl.text.selfNotEmptyOrNull,
     );
+
+    MonitorHttpCredential? monitorHttp;
+    // Spi.ip/port/user are non-nullable (SSH's historically-required fields),
+    // but unused by the monitor HTTP connection path — derived from the
+    // monitor URL purely so they hold a sensible value, not shown to the
+    // user or read by anything on this path.
+    String derivedIp = _ipController.text;
+    int derivedPort = int.tryParse(_portController.text) ?? 22;
+    String derivedUser = _usernameController.text;
+    if (useMonitorHttp) {
+      final monitorAddr = _monitorAddrCtrl.text.selfNotEmptyOrNull;
+      if (monitorAddr == null) {
+        context.showSnackBar('${l10n.invalid}: Monitor URL');
+        return;
+      }
+      monitorHttp = MonitorHttpCredential(
+        addr: monitorAddr,
+        user: _monitorUserCtrl.text.selfNotEmptyOrNull,
+        pwd: _monitorPwdCtrl.text.selfNotEmptyOrNull,
+        ignoreCert: _monitorIgnoreCert.value,
+      );
+      final uri = Uri.tryParse(monitorAddr);
+      derivedIp = uri?.host.selfNotEmptyOrNull ?? monitorAddr;
+      derivedPort = uri?.hasPort == true
+          ? uri!.port
+          : (uri?.scheme == 'https' ? 443 : 80);
+      derivedUser = 'monitor';
+    }
 
     final wolEmpty =
         _wolMacCtrl.text.isEmpty &&
@@ -258,23 +292,32 @@ extension _Actions on _ServerEditPageState {
 
     final spi = Spi(
       name: _nameController.text.isEmpty
-          ? _ipController.text
+          ? derivedIp
           : _nameController.text,
-      ip: _ipController.text,
-      port: int.parse(_portController.text),
-      user: _usernameController.text,
-      pwd: _passwordController.text.selfNotEmptyOrNull,
-      keyId: _keyIdx.value != null
+      ip: derivedIp,
+      port: derivedPort,
+      user: derivedUser,
+      pwd: useMonitorHttp ? null : _passwordController.text.selfNotEmptyOrNull,
+      keyId: !useMonitorHttp && _keyIdx.value != null
           ? ref.read(privateKeyProvider).keys.elementAt(_keyIdx.value!).id
           : null,
       tags: _tags.value.isEmpty ? null : _tags.value.toList(),
-      alterUrl: _altUrlController.text.selfNotEmptyOrNull,
+      alterUrl: useMonitorHttp
+          ? null
+          : _altUrlController.text.selfNotEmptyOrNull,
       autoConnect: _autoConnect.value,
-      jumpId: _jumpServers.value.isEmpty ? null : _jumpServers.value.first,
-      jumpIds: _jumpServers.value.isEmpty ? null : _jumpServers.value,
-      proxyCommand: proxyCommandText.selfNotEmptyOrNull,
+      jumpId: useMonitorHttp || _jumpServers.value.isEmpty
+          ? null
+          : _jumpServers.value.first,
+      jumpIds: useMonitorHttp || _jumpServers.value.isEmpty
+          ? null
+          : _jumpServers.value,
+      proxyCommand: useMonitorHttp
+          ? null
+          : proxyCommandText.selfNotEmptyOrNull,
       custom: custom,
       wolCfg: wol,
+      monitorHttp: monitorHttp,
       envs: _env.value.isEmpty ? null : _env.value,
       id: _serverId,
       customSystemType: _systemType.value,
@@ -440,6 +483,15 @@ extension _Utils on _ServerEditPageState {
       _preferTempDevCtrl.text = custom.preferTempDev ?? '';
       _tempIsCelsius.value = custom.tempIsCelsius;
       _logoUrlCtrl.text = custom.logoUrl ?? '';
+    }
+
+    final monitorHttp = spi.monitorHttp;
+    _useMonitorHttp.value = monitorHttp != null;
+    if (monitorHttp != null) {
+      _monitorAddrCtrl.text = monitorHttp.addr;
+      _monitorUserCtrl.text = monitorHttp.user ?? '';
+      _monitorPwdCtrl.text = monitorHttp.pwd ?? '';
+      _monitorIgnoreCert.value = monitorHttp.ignoreCert;
     }
 
     final wol = spi.wolCfg;

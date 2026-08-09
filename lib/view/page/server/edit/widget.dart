@@ -317,6 +317,117 @@ extension _Widgets on _ServerEditPageState {
     });
   }
 
+  /// SSH+shell vs monitor's HTTP API — mutually exclusive connection
+  /// methods for reaching this server (see `Spi.monitorHttp`'s doc comment).
+  Widget _buildConnMethodSwitch() {
+    return _useMonitorHttp.listenVal((useHttp) {
+      return SegmentedButton<bool>(
+        segments: const [
+          ButtonSegment(
+            value: false,
+            label: Text('SSH'),
+            icon: Icon(Icons.terminal, size: 16),
+          ),
+          ButtonSegment(
+            value: true,
+            label: Text('Monitor HTTP'),
+            icon: Icon(MingCute.web_line, size: 16),
+          ),
+        ],
+        selected: {useHttp},
+        onSelectionChanged: (selection) {
+          _useMonitorHttp.value = selection.first;
+        },
+      );
+    });
+  }
+
+  /// SSH host/port/user — hidden when `_useMonitorHttp` is selected, since
+  /// they're not used by the monitor HTTP connection path at all.
+  Widget _buildSshConnFields() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Input(
+          controller: _ipController,
+          type: TextInputType.url,
+          onSubmitted: (_) => _focusScope.requestFocus(_portFocus),
+          node: _ipFocus,
+          label: libL10n.host,
+          icon: BoxIcons.bx_server,
+          hint: 'example.com',
+          suggestion: false,
+        ),
+        Input(
+          controller: _portController,
+          type: TextInputType.number,
+          node: _portFocus,
+          onSubmitted: (_) => _focusScope.requestFocus(_usernameFocus),
+          label: libL10n.port,
+          icon: Bootstrap.number_123,
+          hint: '22',
+          suggestion: false,
+        ),
+        Input(
+          controller: _usernameController,
+          type: TextInputType.text,
+          node: _usernameFocus,
+          onSubmitted: (_) => _focusScope.requestFocus(_alterUrlFocus),
+          label: libL10n.user,
+          icon: Icons.account_box,
+          hint: 'root',
+          suggestion: false,
+        ),
+      ],
+    );
+  }
+
+  /// Monitor's HTTP API connection fields — shown instead of `_buildAuth()`
+  /// when `_useMonitorHttp` is selected, never alongside it.
+  Widget _buildMonitorHttp() {
+    const addr = 'https://127.0.0.1:3770';
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Input(
+          controller: _monitorAddrCtrl,
+          type: TextInputType.url,
+          icon: MingCute.web_line,
+          label: 'URL',
+          hint: addr,
+          suggestion: false,
+        ),
+        Input(
+          controller: _monitorUserCtrl,
+          type: TextInputType.text,
+          icon: MingCute.user_2_line,
+          label: libL10n.user,
+          suggestion: false,
+        ),
+        Input(
+          controller: _monitorPwdCtrl,
+          type: TextInputType.visiblePassword,
+          icon: MingCute.lock_line,
+          label: libL10n.pwd,
+          obscureText: true,
+          suggestion: false,
+        ),
+        ListTile(
+          leading: const Icon(MingCute.certificate_line),
+          title: TipText('Monitor ${l10n.ignoreCert}', l10n.pveIgnoreCertTip),
+          trailing: _monitorIgnoreCert.listenVal(
+            (v) => Switch(
+              value: v,
+              onChanged: (val) {
+                _monitorIgnoreCert.value = val;
+              },
+            ),
+          ),
+        ).cardx,
+      ],
+    );
+  }
+
   Widget _buildCustomCmds() {
     return Column(
       mainAxisSize: MainAxisSize.min,
