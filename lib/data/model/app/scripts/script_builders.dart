@@ -28,6 +28,9 @@ String _quoteUnixPath(String path) {
   ).firstMatch(path);
   if (envMatch != null) {
     final name = envMatch.group(1) ?? envMatch.group(2)!;
+    if (!const {'HOME', 'TMPDIR', 'TMP', 'TEMP'}.contains(name)) {
+      return _quoteUnixLiteral(path);
+    }
     final suffix = path.substring(envMatch.end);
     return suffix.isEmpty
         ? '"\${$name}"'
@@ -338,6 +341,19 @@ fi''';
   /// Get Unix process command with busybox detection
   String _getUnixProcessCommand() {
     return '''
+srvbox_command_tail() {
+\tsrvbox_value=\$1
+\tsrvbox_count=\$2
+\twhile [ "\$srvbox_count" -gt 0 ]; do
+\t\tsrvbox_value=\${srvbox_value#"\${srvbox_value%%[![:space:]]*}"}
+\t\tsrvbox_field=\${srvbox_value%%[[:space:]]*}
+\t\tsrvbox_value=\${srvbox_value#"\$srvbox_field"}
+\t\tsrvbox_count=\$((srvbox_count - 1))
+\tdone
+\tsrvbox_value=\${srvbox_value#"\${srvbox_value%%[![:space:]]*}"}
+\tprintf '%s' "\$srvbox_value"
+}
+
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \tif [ "\$isBusybox" != "" ]; then
 \t\tprintf 'PID USER %%CPU %%MEM VSZ RSS TTY STAT TIME START_ID READ_BYTES WRITE_BYTES COMMAND\\n'
@@ -348,8 +364,7 @@ if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \t\t\tset +f
 \t\t\t[ "\$#" -ge 4 ] || continue
 \t\t\tpid=\$1; user=\$2; time=\$3
-\t\t\tshift 3
-\t\t\tcmd=\$*
+\t\t\tcmd=\$(srvbox_command_tail "\$line" 3)
 \t\t\tstart_id='-'
 \t\t\tread_bytes='-'
 \t\t\twrite_bytes='-'
@@ -372,8 +387,7 @@ if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \t\t\tset -- \$line
 \t\t\tset +f
 \t\t\tpid=\$1; user=\$2; cpu=\$3; mem=\$4; vsz=\$5; rss=\$6; tty=\$7; stat=\$8; time=\$9
-\t\t\tshift 9
-\t\t\tcmd=\$*
+\t\t\tcmd=\$(srvbox_command_tail "\$line" 9)
 \t\t\tstart_id='-'
 \t\t\tread_bytes='-'
 \t\t\twrite_bytes='-'
@@ -392,14 +406,14 @@ if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \tfi
 else
 \tprintf 'PID USER %%CPU %%MEM VSZ RSS TTY STAT TIME START_ID READ_BYTES WRITE_BYTES COMMAND\\n'
-\tps -axo pid=,user=,%cpu=,%mem=,vsz=,rss=,tty=,state=,time=,start=,command= | while IFS= read -r line; do
+\tps -axo pid=,user=,%cpu=,%mem=,vsz=,rss=,tty=,state=,time=,lstart=,command= | while IFS= read -r line; do
 \t\tset -f
 \t\tset -- \$line
 \t\tset +f
-\t\t[ "\$#" -ge 11 ] || continue
-\t\tpid=\$1; user=\$2; cpu=\$3; mem=\$4; vsz=\$5; rss=\$6; tty=\$7; stat=\$8; time=\$9; start_id=\$10
-\t\tshift 10
-\t\tcmd=\$*
+\t\t[ "\$#" -ge 14 ] || continue
+\t\tpid=\$1; user=\$2; cpu=\$3; mem=\$4; vsz=\$5; rss=\$6; tty=\$7; stat=\$8; time=\$9
+\t\tstart_id=\${10}_\${11}_\${12}_\${13}_\${14}
+\t\tcmd=\$(srvbox_command_tail "\$line" 14)
 \t\tprintf '%s %s %s %s %s %s %s %s %s %s - - %s\\n' "\$pid" "\$user" "\$cpu" "\$mem" "\$vsz" "\$rss" "\$tty" "\$stat" "\$time" "\$start_id" "\$cmd"
 \tdone
 fi''';

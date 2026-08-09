@@ -308,6 +308,14 @@ class Disk extends Equatable {
 class DiskIO extends TimeSeq<DiskIOPiece> {
   DiskIO(super.init1, super.init2);
 
+  DiskIO.copy(DiskIO source)
+    : super(
+        source.pre.toList(growable: false),
+        source.now.toList(growable: false),
+      ) {
+    cachedAllSpeed = source.cachedAllSpeed;
+  }
+
   @override
   void onUpdate() {
     cachedAllSpeed = _getAllSpeed();

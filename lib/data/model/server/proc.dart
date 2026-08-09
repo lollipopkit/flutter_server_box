@@ -145,8 +145,16 @@ class Proc {
       start: start,
       startId: startId,
     );
-    final readBytes = _parseNullableInt(parts, map.readBytes);
-    final writeBytes = _parseNullableInt(parts, map.writeBytes);
+    final readBytes = _parseNullableInt(
+      parts,
+      map.readBytes,
+      nonNegative: true,
+    );
+    final writeBytes = _parseNullableInt(
+      parts,
+      map.writeBytes,
+      nonNegative: true,
+    );
     final (readSpeed, writeSpeed) = _calculateSpeeds(
       readBytes: readBytes,
       writeBytes: writeBytes,
@@ -220,16 +228,13 @@ class Proc {
   }
 
   String _parseBinary() {
-    final parts = command.trim().split(' ').where((e) => e.isNotEmpty).toList();
-    return parts.isNotEmpty ? parts[0] : '';
+    return _nonWhitespaceRegExp.firstMatch(command)?.group(0) ?? '';
   }
 
   String _parseArgs() {
-    final trimmed = command.trim();
-    if (trimmed.isEmpty) return '';
-    final binary = this.binary;
-    if (binary.isEmpty || trimmed.length <= binary.length) return '';
-    return trimmed.substring(binary.length).trimLeft();
+    final match = _nonWhitespaceRegExp.firstMatch(command);
+    if (match == null) return '';
+    return command.substring(match.end).trimLeft();
   }
 
   int? _parseRssKb() {
@@ -375,7 +380,13 @@ class PsResult {
     required bool? ascending,
   }) {
     final trimmed = raw.trim();
-    if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return null;
+    if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
+      try {
+        json.decode(trimmed);
+      } catch (_) {
+        return null;
+      }
+    }
     try {
       final decoded = json.decode(trimmed);
       final items = switch (decoded) {
@@ -548,9 +559,14 @@ int _parsePositivePid(String value) {
   return pid;
 }
 
-int? _parseNullableInt(List<String> parts, int? idx) {
+int? _parseNullableInt(
+  List<String> parts,
+  int? idx, {
+  bool nonNegative = false,
+}) {
   if (idx == null || idx >= parts.length) return null;
-  return _parseDynamicInt(parts[idx]);
+  final parsed = _parseDynamicInt(parts[idx]);
+  return parsed != null && (!nonNegative || parsed >= 0) ? parsed : null;
 }
 
 double? _parseNullableDouble(List<String> parts, int? idx) {

@@ -1135,6 +1135,7 @@ class AppLocalizationsFr extends AppLocalizations {
       locale: localeName,
       other: '$count processus',
       one: '1 processus',
+      zero: '0 processus',
     );
     return '$_temp0';
   }

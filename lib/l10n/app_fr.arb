@@ -237,7 +237,7 @@
   "containerSegmentsMismatch": "Nombre inattendu de segments dans la réponse du conteneur : {count}",
   "containerOperationInProgress": "Une autre opération sur les conteneurs est déjà en cours",
   "systemd": "Systemd",
-  "processCount": "{count, plural, one{1 processus} other{{count} processus}}",
+  "processCount": "{count, plural, =0{0 processus} =1{1 processus} other{{count} processus}}",
   "processParseUnsupportedOutput": "Le format de la liste des processus n’est pas pris en charge.",
   "processParseInvalidRows": "Certaines entrées de processus n’ont pas pu être lues.",
   "processParseInvalidWindowsJson": "La réponse des processus Windows n’a pas pu être lue.",

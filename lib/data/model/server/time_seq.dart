@@ -7,6 +7,11 @@ class Fifo<T> extends ListBase<T> {
 
   Fifo({this.capacity = 30, List<T>? list}) : _list = list ?? <T>[];
 
+  Fifo.copy(Fifo<T> source)
+    : capacity = source.capacity,
+      _list = List<T>.of(source._list),
+      _count = source._count;
+
   @override
   void add(element) {
     _count++;

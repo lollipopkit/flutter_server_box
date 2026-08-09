@@ -47,6 +47,8 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
   Completer<void>? _refreshCompleter;
 
   PsResult _result = const PsResult(procs: []);
+  PsResult? _lastValidResult;
+  String? _loadErrorMessage;
   bool _hasLoaded = false;
   bool _isRefreshing = false;
   _ProcessCapabilities _capabilities = _ProcessCapabilities.empty;
@@ -99,7 +101,11 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
   }
 
   Future<void> _refresh({bool userTriggered = false}) async {
-    if (!mounted || _isRefreshing) return;
+    if (!mounted) return;
+    if (_isRefreshing) {
+      await _refreshCompleter?.future;
+      return;
+    }
     final refreshCompleter = Completer<void>();
     _refreshCompleter = refreshCompleter;
     _isRefreshing = true;
@@ -109,6 +115,8 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
       final systemType = serverState.status.system;
       final client = serverState.client;
       if (!_canRunProcessCmd(serverState)) {
+        _result = const PsResult(procs: []);
+        _loadErrorMessage = libL10n.disconnected;
         _hasLoaded = true;
         if (userTriggered && mounted) {
           context.showSnackBar(libL10n.disconnected);
@@ -118,15 +126,17 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
       final result = await client
           ?.run(
             ShellFunc.process.exec(
-              widget.args.spi.id,
+              serverState.spi.id,
               systemType: systemType,
-              customDir: null,
+              customDir: serverState.spi.custom?.scriptDir,
             ),
           )
           .timeout(_processCommandTimeout)
           .string;
       if (!mounted) return;
       if (result == null || result.trim().isEmpty) {
+        _result = const PsResult(procs: []);
+        _loadErrorMessage = libL10n.empty;
         _hasLoaded = true;
         if (userTriggered) context.showSnackBar(libL10n.empty);
         return;
@@ -137,14 +147,11 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
         result,
         sort: requestedSort,
         ascending: _sortAscending,
-        previous: _result,
+        previous: _lastValidResult,
       );
       if (parsed.issue != null) {
-        _result = PsResult(
-          procs: _result.procs,
-          issue: parsed.issue,
-          sampledAtMillis: _result.sampledAtMillis,
-        );
+        _result = PsResult(procs: const [], issue: parsed.issue);
+        _loadErrorMessage = null;
         _hasLoaded = true;
         return;
       }
@@ -153,18 +160,24 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
         parsed = parsed.sortedBy(_procSortMode, ascending: _sortAscending);
       }
       _result = parsed;
+      _lastValidResult = parsed;
+      _loadErrorMessage = null;
       _hasLoaded = true;
     } on TimeoutException catch (e, s) {
       Loggers.app.warning('Process page command timed out', e, s);
       if (mounted && (userTriggered || !_hasLoaded)) {
         context.showSnackBar(libL10n.error);
       }
+      _result = const PsResult(procs: []);
+      _loadErrorMessage = libL10n.error;
       _hasLoaded = true;
     } catch (e, s) {
       Loggers.app.warning('Process page refresh failed', e, s);
       if (mounted && (userTriggered || !_hasLoaded)) {
         context.showSnackBar(libL10n.error);
       }
+      _result = const PsResult(procs: []);
+      _loadErrorMessage = libL10n.error;
       _hasLoaded = true;
     } finally {
       _isRefreshing = false;
@@ -241,7 +254,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildProcessBar(),
+              _buildProcessBar(layout),
               Divider(
                 height: 1,
                 color: Theme.of(context).colorScheme.outlineVariant,
@@ -266,7 +279,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
 }
 
 extension _ProcessPageStateWidgets on _ProcessPageState {
-  Widget _buildProcessBar() {
+  Widget _buildProcessBar(_ProcessLayout layout) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     return Padding(
@@ -281,6 +294,8 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
             ),
           ),
           const Spacer(),
+          if (layout.compact && _result.procs.isNotEmpty)
+            _buildCompactSortMenu(),
           IconButton(
             tooltip: libL10n.refresh,
             onPressed: _isRefreshing
@@ -298,6 +313,61 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
     );
   }
 
+  Widget _buildCompactSortMenu() {
+    final modes = ProcSortMode.values
+        .where(_capabilities.supportsSort)
+        .toList(growable: false);
+    return PopupMenuButton<ProcSortMode>(
+      tooltip: _sortLabel(_procSortMode),
+      initialValue: _procSortMode,
+      onSelected: _selectSort,
+      itemBuilder: (_) => [
+        for (final mode in modes)
+          PopupMenuItem(
+            value: mode,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 24,
+                  child: _procSortMode == mode
+                      ? Icon(
+                          _sortAscending
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                          size: 16,
+                        )
+                      : null,
+                ),
+                Text(_sortLabel(mode)),
+              ],
+            ),
+          ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.sort, size: 18),
+            const SizedBox(width: 4),
+            Text(_sortLabel(_procSortMode)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _sortLabel(ProcSortMode mode) => switch (mode) {
+    ProcSortMode.cpu => 'CPU',
+    ProcSortMode.mem => 'MEM',
+    ProcSortMode.rss => 'RSS',
+    ProcSortMode.read => 'R/s',
+    ProcSortMode.write => 'W/s',
+    ProcSortMode.pid => 'PID',
+    ProcSortMode.user => libL10n.user,
+    ProcSortMode.name => libL10n.name,
+  };
+
   Widget _buildProcessContent(_ProcessLayout layout) {
     if (!_hasLoaded && _result.procs.isEmpty) return UIs.centerLoading;
     if (_result.procs.isEmpty) {
@@ -309,7 +379,7 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
             SliverFillRemaining(
               hasScrollBody: false,
               child: CenterGreyTitle(
-                libL10n.empty,
+                _loadErrorMessage ?? libL10n.empty,
               ).paddingSymmetric(horizontal: 13),
             ),
           ],
@@ -638,12 +708,22 @@ extension _ProcessPageStateUtils on _ProcessPageState {
     final startId = target.startId;
     if (startId == null) return null;
     final expected = _quotePowerShell(startId);
-    return '\$p = Get-Process -Id ${target.pid} -ErrorAction SilentlyContinue; '
+    final script =
+        'Add-Type -TypeDefinition \'using System; using '
+        'System.Runtime.InteropServices; public static class SrvBoxNative { '
+        '[DllImport("kernel32.dll", SetLastError=true)] public static extern '
+        'bool TerminateProcess(IntPtr process, uint exitCode); }\' '
+        '-ErrorAction SilentlyContinue; '
+        '\$p = Get-Process -Id ${target.pid} -ErrorAction SilentlyContinue; '
         'if (\$null -eq \$p) { Write-Output \'$_killTargetChangedMarker\' } '
-        'elseif (\$p.StartTime.ToUniversalTime().Ticks.ToString() -ne $expected) '
-        '{ Write-Output \'$_killTargetChangedMarker\' } else { try { '
-        '\$p.Kill(); \$p.WaitForExit(); Write-Output \'$_killSucceededMarker\' '
-        '} catch { Write-Output \'$_killFailedMarker\' } }';
+        'else { try { \$handle = \$p.Handle; '
+        'if (\$p.StartTime.ToUniversalTime().Ticks.ToString() -ne $expected) '
+        '{ Write-Output \'$_killTargetChangedMarker\' } '
+        'elseif ([SrvBoxNative]::TerminateProcess(\$handle, 1)) { '
+        '\$p.WaitForExit(); Write-Output \'$_killSucceededMarker\' } '
+        'else { Write-Output \'$_killFailedMarker\' } } '
+        'catch { Write-Output \'$_killFailedMarker\' } }';
+    return _powerShellEncodedCommand(script);
   }
 
   String? _linuxKillProcessCmd(Proc target) {
@@ -675,20 +755,22 @@ except Exception:
         'else echo $_killFailedMarker; fi';
   }
 
-  String? _bsdKillProcessCmd(Proc target) {
-    final startId = target.startId;
-    if (startId == null) return null;
-    final expected = _quoteShell(startId);
-    return 'current=\$(ps -p ${target.pid} -o start= 2>/dev/null | '
-        'awk \'{\$1=\$1; print}\'); if [ "\$current" = $expected ]; then '
-        'if kill ${target.pid}; then echo $_killSucceededMarker; '
-        'else echo $_killFailedMarker; fi; '
-        'else echo $_killTargetChangedMarker; fi';
-  }
+  String? _bsdKillProcessCmd(Proc target) => null;
 
   String _quoteShell(String value) => "'${value.replaceAll("'", "'\"'\"'")}'";
 
   String _quotePowerShell(String value) => "'${value.replaceAll("'", "''")}'";
+
+  String _powerShellEncodedCommand(String script) {
+    final bytes = <int>[];
+    for (final unit in script.codeUnits) {
+      bytes
+        ..add(unit & 0xff)
+        ..add(unit >> 8);
+    }
+    return 'powershell.exe -NoProfile -NonInteractive '
+        '-ExecutionPolicy Bypass -EncodedCommand ${base64Encode(bytes)}';
+  }
 
   bool _isSameProcess(Proc expected, Proc current) {
     if (expected.pid != current.pid) return false;
@@ -737,9 +819,9 @@ extension _ProcessPageStateActions on _ProcessPageState {
       final raw = await client
           .run(
             ShellFunc.process.exec(
-              widget.args.spi.id,
+              serverState.spi.id,
               systemType: systemType,
-              customDir: null,
+              customDir: serverState.spi.custom?.scriptDir,
             ),
           )
           .timeout(_processCommandTimeout)
@@ -753,14 +835,11 @@ extension _ProcessPageStateActions on _ProcessPageState {
         raw,
         sort: _procSortMode,
         ascending: _sortAscending,
-        previous: _result,
+        previous: _lastValidResult,
       );
       if (latest.issue != null) {
-        _result = PsResult(
-          procs: _result.procs,
-          issue: latest.issue,
-          sampledAtMillis: _result.sampledAtMillis,
-        );
+        _result = PsResult(procs: const [], issue: latest.issue);
+        _loadErrorMessage = null;
         _hasLoaded = true;
         _rebuild();
         return;
@@ -770,6 +849,8 @@ extension _ProcessPageStateActions on _ProcessPageState {
         latest = latest.sortedBy(_procSortMode, ascending: _sortAscending);
       }
       _result = latest;
+      _lastValidResult = latest;
+      _loadErrorMessage = null;
       _hasLoaded = true;
       _rebuild();
       final current = latest.procs
@@ -785,6 +866,10 @@ extension _ProcessPageStateActions on _ProcessPageState {
         return;
       }
       if (latestServerState.status.system != systemType) {
+        context.showSnackBar(context.l10n.processKillTargetChanged);
+        return;
+      }
+      if (latestServerState.spi != serverState.spi) {
         context.showSnackBar(context.l10n.processKillTargetChanged);
         return;
       }
@@ -852,6 +937,8 @@ class _ProcessCapabilities {
     required this.hasRss,
     required this.hasRead,
     required this.hasWrite,
+    required this.hasReadSpeed,
+    required this.hasWriteSpeed,
   });
 
   static const empty = _ProcessCapabilities(
@@ -861,6 +948,8 @@ class _ProcessCapabilities {
     hasRss: false,
     hasRead: false,
     hasWrite: false,
+    hasReadSpeed: false,
+    hasWriteSpeed: false,
   );
 
   factory _ProcessCapabilities.from(List<Proc> procs) {
@@ -870,6 +959,8 @@ class _ProcessCapabilities {
     var hasRss = false;
     var hasRead = false;
     var hasWrite = false;
+    var hasReadSpeed = false;
+    var hasWriteSpeed = false;
     for (final proc in procs) {
       hasUser |= proc.user?.isNotEmpty == true;
       hasCpu |= proc.cpu != null;
@@ -877,7 +968,8 @@ class _ProcessCapabilities {
       hasRss |= proc.rssKb != null;
       hasRead |= proc.readBytes != null;
       hasWrite |= proc.writeBytes != null;
-      if (hasUser && hasCpu && hasMem && hasRss && hasRead && hasWrite) break;
+      hasReadSpeed |= proc.readSpeed != null;
+      hasWriteSpeed |= proc.writeSpeed != null;
     }
     return _ProcessCapabilities(
       hasUser: hasUser,
@@ -886,6 +978,8 @@ class _ProcessCapabilities {
       hasRss: hasRss,
       hasRead: hasRead,
       hasWrite: hasWrite,
+      hasReadSpeed: hasReadSpeed,
+      hasWriteSpeed: hasWriteSpeed,
     );
   }
 
@@ -895,13 +989,15 @@ class _ProcessCapabilities {
   final bool hasRss;
   final bool hasRead;
   final bool hasWrite;
+  final bool hasReadSpeed;
+  final bool hasWriteSpeed;
 
   bool supportsSort(ProcSortMode mode) => switch (mode) {
     ProcSortMode.cpu => hasCpu,
     ProcSortMode.mem => hasMem,
     ProcSortMode.rss => hasRss,
-    ProcSortMode.read => hasRead,
-    ProcSortMode.write => hasWrite,
+    ProcSortMode.read => hasReadSpeed,
+    ProcSortMode.write => hasWriteSpeed,
     ProcSortMode.user => hasUser,
     ProcSortMode.pid || ProcSortMode.name => true,
   };
@@ -910,8 +1006,8 @@ class _ProcessCapabilities {
     if (hasCpu) return ProcSortMode.cpu;
     if (hasMem) return ProcSortMode.mem;
     if (hasRss) return ProcSortMode.rss;
-    if (hasRead) return ProcSortMode.read;
-    if (hasWrite) return ProcSortMode.write;
+    if (hasReadSpeed) return ProcSortMode.read;
+    if (hasWriteSpeed) return ProcSortMode.write;
     return ProcSortMode.pid;
   }
 }

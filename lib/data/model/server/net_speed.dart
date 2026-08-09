@@ -28,6 +28,17 @@ typedef CachedNetVals = ({
 class NetSpeed extends TimeSeq<NetSpeedPart> {
   NetSpeed(super.init1, super.init2);
 
+  NetSpeed.copy(NetSpeed source)
+    : super(
+        source.pre.toList(growable: false),
+        source.now.toList(growable: false),
+      ) {
+    devices.addAll(source.devices);
+    realIfaces.addAll(source.realIfaces);
+    _realIfaceIndices.addAll(source._realIfaceIndices);
+    cachedVals = source.cachedVals;
+  }
+
   @override
   void onUpdate() {
     devices.clear();
@@ -90,6 +101,7 @@ class NetSpeed extends TimeSeq<NetSpeedPart> {
     if (timeDiff <= BigInt.zero) return 0;
     return (now[i].bytesOut - pre[i].bytesOut) / timeDiff;
   }
+
   BigInt sizeInBytes(int i) => now[i].bytesIn;
   BigInt sizeOutBytes(int i) => now[i].bytesOut;
 

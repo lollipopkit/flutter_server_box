@@ -129,6 +129,9 @@ void main() {
       expect(script, contains('read_value='));
       expect(script, contains('[ -n "\$read_value" ] && read_bytes='));
       expect(script, contains('START_ID READ_BYTES WRITE_BYTES COMMAND'));
+      expect(script, contains('srvbox_command_tail'));
+      expect(script, contains('lstart='));
+      expect(script, contains(r'start_id=${10}_${11}_${12}_${13}_${14}'));
     });
 
     test('Unix script paths are shell-quoted', () {
@@ -159,6 +162,13 @@ void main() {
       );
       expect(envInstall, contains(r'"${HOME}"/'));
       expect(envInstall, isNot(contains(r"'$HOME")));
+
+      final pathInstall = builder.getInstallCommand(
+        r'$PATH/server_box',
+        r'$PATH/server_box/script.sh',
+      );
+      expect(pathInstall, contains(r"'$PATH/server_box'"));
+      expect(pathInstall, isNot(contains(r'"${PATH}"')));
     });
 
     test('Windows custom script paths are PowerShell-quoted', () {
@@ -251,12 +261,16 @@ void main() {
       },
     );
 
-    test('legacy Windows output markers ignore carriage returns', () {
+    test('ambiguous legacy output markers are rejected', () {
       const raw = 'SrvBoxSep.echo\r\n__windows\r\nSrvBoxData.legacy-output\r\n';
 
-      expect(ScriptConstants.parseScriptOutput(raw), {
-        'echo': '__windows\nSrvBoxData.legacy-output',
-      });
+      expect(ScriptConstants.parseScriptOutput(raw), isEmpty);
+      expect(
+        ScriptConstants.parseScriptOutput(
+          'SrvBoxSep.echo\nhello\nSrvBoxSep.cpu\nworld',
+        ),
+        isEmpty,
+      );
     });
 
     test('install commands are generated correctly', () {

@@ -4,7 +4,9 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
+import 'package:server_box/data/model/server/disk_smart.dart';
 import 'package:server_box/data/model/server/memory.dart';
+import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
 
 /// Windows CPU parse result
@@ -55,10 +57,17 @@ class WindowsParser {
         final prevCpus = serverStatus.cpu.now;
         for (int procIdx = 0; procIdx < jsonData.length; procIdx++) {
           final processor = jsonData[procIdx];
-          final loadPercentage = (processor['LoadPercentage'] as num?) ?? 0;
-          final numberOfCores = (processor['NumberOfCores'] as int?) ?? 1;
-          final numberOfLogicalProcessors =
-              (processor['NumberOfLogicalProcessors'] as int?) ?? numberOfCores;
+          if (processor is! Map) continue;
+          final loadPercentage = _parsePercentage(processor['LoadPercentage']);
+          final numberOfCores = _parsePositiveInt(processor['NumberOfCores']);
+          final numberOfLogicalProcessors = _parsePositiveInt(
+            processor['NumberOfLogicalProcessors'],
+          );
+          if (loadPercentage == null ||
+              numberOfCores == null ||
+              numberOfLogicalProcessors == null) {
+            continue;
+          }
           totalCoreCount += numberOfCores;
           final usage = loadPercentage.toInt();
           final idle = 100 - usage;
@@ -98,10 +107,16 @@ class WindowsParser {
         }
       } else if (jsonData is Map) {
         // Single physical processor
-        final loadPercentage = (jsonData['LoadPercentage'] as num?) ?? 0;
-        final numberOfCores = (jsonData['NumberOfCores'] as int?) ?? 1;
-        final numberOfLogicalProcessors =
-            (jsonData['NumberOfLogicalProcessors'] as int?) ?? numberOfCores;
+        final loadPercentage = _parsePercentage(jsonData['LoadPercentage']);
+        final numberOfCores = _parsePositiveInt(jsonData['NumberOfCores']);
+        final numberOfLogicalProcessors = _parsePositiveInt(
+          jsonData['NumberOfLogicalProcessors'],
+        );
+        if (loadPercentage == null ||
+            numberOfCores == null ||
+            numberOfLogicalProcessors == null) {
+          return const WindowsCpuResult([], 0);
+        }
         totalCoreCount = numberOfCores;
         final usage = loadPercentage.toInt();
         final idle = 100 - usage;
@@ -174,10 +189,17 @@ class WindowsParser {
     try {
       final dynamic jsonData = json.decode(raw);
       final data = jsonData is List ? jsonData.first : jsonData;
+      if (data is! Map) return null;
 
       // Win32_OperatingSystem properties are in KB
-      final totalKB = data['TotalVisibleMemorySize'] as int? ?? 0;
-      final freeKB = data['FreePhysicalMemory'] as int? ?? 0;
+      final totalKB = _parseNonNegativeInt(data['TotalVisibleMemorySize']);
+      final freeKB = _parseNonNegativeInt(data['FreePhysicalMemory']);
+      if (totalKB == null ||
+          freeKB == null ||
+          totalKB <= 0 ||
+          freeKB > totalKB) {
+        return null;
+      }
 
       return Memory(
         total: totalKB,
@@ -199,18 +221,20 @@ class WindowsParser {
 
       for (final diskData in diskList) {
         final deviceId = diskData['DeviceID']?.toString() ?? '';
-        final size =
-            BigInt.tryParse(diskData['Size']?.toString() ?? '0') ?? BigInt.zero;
-        final freeSpace =
-            BigInt.tryParse(diskData['FreeSpace']?.toString() ?? '0') ??
-            BigInt.zero;
+        final size = BigInt.tryParse(diskData['Size']?.toString() ?? '');
+        final freeSpace = BigInt.tryParse(
+          diskData['FreeSpace']?.toString() ?? '',
+        );
         final fileSystem = diskData['FileSystem']?.toString() ?? '';
 
         // Validate all required fields
         final hasRequiredFields =
             deviceId.isNotEmpty &&
-            size != BigInt.zero &&
-            freeSpace != BigInt.zero &&
+            size != null &&
+            size > BigInt.zero &&
+            freeSpace != null &&
+            freeSpace >= BigInt.zero &&
+            freeSpace <= size &&
             fileSystem.isNotEmpty;
 
         if (!hasRequiredFields) {
@@ -247,4 +271,73 @@ class WindowsParser {
       return [];
     }
   }
+
+  static List<DiskSmart> parseDiskSmart(String raw) {
+    try {
+      final decoded = json.decode(raw);
+      final values = decoded is List ? decoded : [decoded];
+      return [
+        for (final value in values)
+          if (value is Map && value['DeviceId'] != null)
+            DiskSmart(
+              device: value['DeviceId'].toString(),
+              temperature: (value['Temperature'] as num?)?.toDouble(),
+              powerOnHours: _parseNonNegativeInt(value['PowerOnHours']),
+              rawData: Map<String, dynamic>.from(value),
+              smartAttributes: const {},
+            ),
+      ];
+    } catch (e, s) {
+      Loggers.app.warning('Windows SMART parsing failed: $e', s);
+      return const [];
+    }
+  }
+
+  static List<SensorItem> parseSensors(String raw) {
+    try {
+      final decoded = json.decode(raw);
+      final values = decoded is List ? decoded : [decoded];
+      return [
+        for (final value in values)
+          if (value is Map &&
+              value['Name']?.toString().trim().isNotEmpty == true)
+            SensorItem(
+              device: value['Name'].toString(),
+              adapter: const SensorAdaptor('Windows WMI'),
+              details: {
+                if (value['CurrentReading'] != null)
+                  'CurrentReading': value['CurrentReading'].toString(),
+              },
+            ),
+      ];
+    } catch (e, s) {
+      Loggers.app.warning('Windows sensor parsing failed: $e', s);
+      return const [];
+    }
+  }
+}
+
+int? _parsePositiveInt(Object? value) {
+  final parsed = _parseNonNegativeInt(value);
+  return parsed != null && parsed > 0 ? parsed : null;
+}
+
+int? _parseNonNegativeInt(Object? value) {
+  final parsed = switch (value) {
+    final int value => value,
+    final num value when value.isFinite && value == value.truncateToDouble() =>
+      value.toInt(),
+    _ => int.tryParse(value?.toString() ?? ''),
+  };
+  return parsed != null && parsed >= 0 ? parsed : null;
+}
+
+double? _parsePercentage(Object? value) {
+  final parsed = switch (value) {
+    final num value => value.toDouble(),
+    _ => double.tryParse(value?.toString() ?? ''),
+  };
+  return parsed != null && parsed.isFinite && parsed >= 0 && parsed <= 100
+      ? parsed
+      : null;
 }

@@ -106,9 +106,9 @@ class ScriptConstants {
         : null;
     if (prefix == null) return null;
     final value = line.substring(prefix.length);
-    if (!value.startsWith(_encodedNamePrefix)) {
-      return (name: value, framed: false, custom: isCustom);
-    }
+    // Unframed legacy markers are ambiguous with ordinary command output.
+    // Only the encoded/framed protocol can distinguish data from delimiters.
+    if (!value.startsWith(_encodedNamePrefix)) return null;
     try {
       return (
         name: utf8.decode(

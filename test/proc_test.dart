@@ -74,6 +74,13 @@ PID USER COMMAND
     );
   });
 
+  test('binary and args recognize all command whitespace', () {
+    final proc = Proc(pid: 1, command: '\t/usr/bin/worker\t--job  one');
+
+    expect(proc.binary, '/usr/bin/worker');
+    expect(proc.args, '--job  one');
+  });
+
   test('malformed optional metrics do not discard Unix process rows', () {
     const raw = '''
 PID USER %CPU %MEM COMMAND
@@ -309,6 +316,25 @@ PID %CPU %MEM RSS COMMAND
     expect(windowsProc.cpu, isNull);
     expect(windowsProc.rssKb, isNull);
     expect(windowsProc.readBytes, isNull);
+  });
+
+  test('negative Unix IO counters are omitted', () {
+    const raw = '''
+PID START_ID READ_BYTES WRITE_BYTES COMMAND
+1 100 -1 -2 /bad
+''';
+    final proc = PsResult.parse(raw).procs.single;
+
+    expect(proc.readBytes, isNull);
+    expect(proc.writeBytes, isNull);
+  });
+
+  test('scalar JSON is classified as invalid Windows JSON', () {
+    for (final raw in ['null', '123', 'true', '"text"']) {
+      final result = PsResult.parse(raw);
+      expect(result.procs, isEmpty);
+      expect(result.issue?.failure, PsParseFailure.invalidWindowsJson);
+    }
   });
 
   test('Windows fields fall back after empty or unparsable values', () {

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/server/battery.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
@@ -101,9 +102,8 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
       expect(result.diskUsage!.used, greaterThan(BigInt.zero));
     });
 
-    test('bsd refresh preserves shared cpu history object', () async {
+    test('status parsing copies rolling history objects', () async {
       final previous = InitStatus.status;
-      final sharedCpu = previous.cpu;
 
       final result = await getStatus(
         ServerStatusUpdateReq(
@@ -117,7 +117,65 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
         ),
       );
 
-      expect(identical(result.cpu, sharedCpu), isTrue);
+      expect(identical(result.cpu, previous.cpu), isFalse);
+      expect(identical(result.netSpeed, previous.netSpeed), isFalse);
+      expect(identical(result.diskIO, previous.diskIO), isFalse);
+      expect(previous.cpu.now.single.user, 0);
+      expect(result.cpu.now.single.user, 14);
+    });
+
+    test('Windows CPU brand parses when CPU metrics are disabled', () async {
+      final result = await getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.windows,
+          ss: InitStatus.status,
+          parsedOutput: {WindowsStatusCmdType.cpuBrand.name: 'Example CPU'},
+          customCmds: const {},
+        ),
+      );
+
+      expect(result.cpu.brand, {'Example CPU': 1});
+    });
+
+    test('Windows Celsius temperatures ignore Unix divisor settings', () async {
+      for (final divisor in [1.0, 1000.0]) {
+        final result = await getStatus(
+          ServerStatusUpdateReq(
+            system: SystemType.windows,
+            ss: InitStatus.status,
+            parsedOutput: {
+              WindowsStatusCmdType.temp.name:
+                  '{"InstanceName":"zone","Temperature":45.0}',
+            },
+            customCmds: const {},
+            tempDivisor: divisor,
+          ),
+        );
+        expect(result.temps.first, 45);
+      }
+    });
+
+    test('Windows full batteries and hardware sections are retained', () async {
+      final result = await getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.windows,
+          ss: InitStatus.status,
+          parsedOutput: {
+            WindowsStatusCmdType.battery.name:
+                '{"EstimatedChargeRemaining":100,"BatteryStatus":3}',
+            WindowsStatusCmdType.sensors.name:
+                '{"Name":"Probe","CurrentReading":42}',
+            WindowsStatusCmdType.diskSmart.name:
+                '{"DeviceId":"0","Temperature":35,"PowerOnHours":10}',
+          },
+          customCmds: const {},
+        ),
+      );
+
+      expect(result.batteries.single.status, BatteryStatus.full);
+      expect(result.sensors.single.device, 'Probe');
+      expect(result.diskSmart.single.device, '0');
+      expect(result.diskSmart.single.temperature, 35);
     });
   });
 }
