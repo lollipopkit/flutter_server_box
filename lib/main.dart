@@ -8,9 +8,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/app.dart';
+import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/store/migrations/m002_nest_ssh.dart';
@@ -57,7 +59,15 @@ Future<void> _initApp() async {
 }
 
 Future<void> _initData() async {
-  await Paths.init(BuildData.name, bakName: 'srvbox_bak.json');
+  // Versioned on purpose. Sync is a single shared file on iCloud/WebDAV/Gist,
+  // and `SyncIface._sync` uploads unconditionally after a failed merge — so a
+  // build that cannot read the remote copy overwrites it. Builds already
+  // released have no version check and cannot be given one, and the only thing
+  // that stops them is not seeing the file at all.
+  //
+  // TODO: drop the legacy name (and `BakSyncer.inheritLegacyRemote`) once no
+  // install can still be writing `srvbox_bak.json`.
+  await Paths.init(BuildData.name, bakName: Miscs.bakFileName);
 
   await Hive.initFlutter();
   Hive.registerAdapters();
@@ -116,6 +126,10 @@ Future<void> _doDbMigrate() async {
 
   // Migrate the old id to new id.
   ServerStore.instance.migrateIds();
+
+  // Pick up sync history written under the pre-v3 remote filename. Runs at
+  // most once per remote and is best-effort — see `inheritLegacyRemote`.
+  unawaited(bakSync.inheritLegacyRemote());
 
   // Bring local storage up to the layout this build expects. Throws
   // SchemaTooNewException when the data was written by a newer build — that

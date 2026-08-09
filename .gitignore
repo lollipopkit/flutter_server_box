@@ -72,3 +72,16 @@ android/app/.cxx
 
 # Rust workspace
 /target/
+
+# Runtime artifacts of a locally-run monitor agent. `monitor/.gitignore`
+# already covers these when it runs from its own directory; these rules catch
+# the case where it was started from the repo root instead.
+/config.toml
+/jwt.secret
+
+# SQLite databases (monitor's metrics store, and anything else local)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3

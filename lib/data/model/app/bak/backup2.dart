@@ -16,6 +16,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/schema.dart';
 
 part 'backup2.freezed.dart';
 part 'backup2.g.dart';
@@ -102,7 +103,13 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _loggerV2.info('Merge completed');
   }
 
-  static const formatVer = 2;
+  /// Envelope version. Bumped to 3 with the nested `Spi.ssh` layout, so a
+  /// reader can tell whether it understands the file before decoding it.
+  ///
+  /// Kept in step with [SchemaVersion.current]: the stores a backup carries
+  /// are exactly the stores the schema describes, and two independent numbers
+  /// would drift.
+  static const formatVer = SchemaVersion.current;
 
   static Future<BackupV2> loadFromStore({bool includeSettings = true}) async {
     return BackupV2(
@@ -145,6 +152,15 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     }
 
     final map = json.decode(jsonString) as Map<String, dynamic>;
+
+    // Checked before decoding. `version` was written from the beginning but
+    // never read, so a newer file was decoded by whatever reader happened to
+    // accept its shape — silently dropping the fields it didn't know.
+    final ver = map['version'];
+    if (ver is int && ver > formatVer) {
+      throw SchemaTooNewException(stored: ver, supported: formatVer);
+    }
+
     return BackupV2.fromJson(map);
   }
 

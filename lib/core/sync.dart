@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/app/bak/backup.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/utils.dart';
+import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/store/schema.dart';
 
 const bakSync = BakSyncer._();
@@ -109,6 +110,43 @@ final class BakSyncer extends SyncIface {
       return;
     }
     return super.backup(rs);
+  }
+
+  /// Reads the pre-v3 remote file once, so upgrading doesn't look like a
+  /// fresh start.
+  ///
+  /// The versioned name means this build ignores `srvbox_bak.json` from then
+  /// on; a device still on an older build keeps updating it, and the two
+  /// histories diverge from here. That divergence is the cost of not letting
+  /// those builds overwrite data they cannot read — see the note at
+  /// `Paths.init`.
+  ///
+  /// A no-op once the versioned file exists remotely, so it runs at most once
+  /// per remote.
+  ///
+  /// TODO: remove with the rest of the v2 compatibility shims.
+  Future<void> inheritLegacyRemote() async {
+    final rs = remoteStorage;
+    if (rs == null) return;
+
+    try {
+      if (await rs.exists(Paths.bakName)) return;
+      if (!await rs.exists(Miscs.legacyBakFileName)) return;
+
+      final localPath = Paths.doc.joinPath(Miscs.legacyBakFileName);
+      await rs.download(
+        relativePath: Miscs.legacyBakFileName,
+        localPath: localPath,
+      );
+      final mergeable = await fromFile(localPath);
+      await mergeable.merge();
+      Loggers.app.info('Inherited sync history from ${Miscs.legacyBakFileName}');
+    } catch (e, s) {
+      // Best-effort: failing to inherit leaves the user with an empty remote
+      // they can populate by syncing, which is recoverable. Failing loudly
+      // here would block startup over a file that may not even be theirs.
+      Loggers.app.warning('Inherit legacy sync file', e, s);
+    }
   }
 
   @override
