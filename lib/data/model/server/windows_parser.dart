@@ -12,8 +12,8 @@ import 'package:server_box/data/model/server/server.dart';
 /// Windows CPU parse result
 class WindowsCpuResult {
   final List<SingleCpuCore> cores;
-  final int coreCount;
-  const WindowsCpuResult(this.cores, this.coreCount);
+  final int totalCoreCount;
+  const WindowsCpuResult(this.cores, this.totalCoreCount);
 }
 
 /// Windows-specific status parsing utilities

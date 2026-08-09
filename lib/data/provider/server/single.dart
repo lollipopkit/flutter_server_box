@@ -122,7 +122,14 @@ class ServerNotifier extends _$ServerNotifier {
   // Update SPI configuration
   void updateSpi(Spi spi) {
     _operationGeneration++;
-    state = state.copyWith(spi: spi);
+    unawaited(_disposePersistentShell());
+    state.client?.close();
+    _usePersistentShellForStatus = true;
+    state = state.copyWith(
+      spi: spi,
+      client: null,
+      conn: ServerConn.disconnected,
+    );
   }
 
   void _setFailedState(ServerStatus status, {bool closeClient = false}) {

@@ -456,11 +456,12 @@ void _parseWindowsCpuData(
   try {
     // Windows CPU parsing - JSON format from PowerShell
     final cpuRaw = WindowsStatusCmdType.cpu.findInMap(parsedOutput);
+    WindowsCpuResult? cpuResult;
     if (cpuRaw.isNotEmpty &&
         cpuRaw != 'null' &&
         !cpuRaw.contains('error') &&
         !cpuRaw.contains('Exception')) {
-      final cpuResult = WindowsParser.parseCpu(cpuRaw, req.ss);
+      cpuResult = WindowsParser.parseCpu(cpuRaw, req.ss);
       if (cpuResult.cores.isNotEmpty) {
         req.ss.cpu.update(cpuResult.cores);
       }
@@ -474,7 +475,8 @@ void _parseWindowsCpuData(
           .where((line) => line.isNotEmpty)
           .toSet();
       if (brands.isNotEmpty) {
-        final coreCount = req.ss.cpu.coresCount > 0 ? req.ss.cpu.coresCount : 1;
+        final totalCoreCount = cpuResult?.totalCoreCount ?? 0;
+        final coreCount = totalCoreCount > 0 ? totalCoreCount : 1;
         req.ss.cpu.brand
           ..clear()
           ..[brands.first] = coreCount;

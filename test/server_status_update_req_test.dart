@@ -137,6 +137,25 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
       expect(result.cpu.brand, {'Example CPU': 1});
     });
 
+    test('Windows CPU brand uses the physical core count', () async {
+      final result = await getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.windows,
+          ss: InitStatus.status,
+          parsedOutput: {
+            WindowsStatusCmdType.cpu.name:
+                '{"LoadPercentage":50,"NumberOfCores":4,'
+                '"NumberOfLogicalProcessors":8}',
+            WindowsStatusCmdType.cpuBrand.name: 'Example CPU',
+          },
+          customCmds: const {},
+        ),
+      );
+
+      expect(result.cpu.coresCount, 9);
+      expect(result.cpu.brand, {'Example CPU': 4});
+    });
+
     test('Windows Celsius temperatures ignore Unix divisor settings', () async {
       for (final divisor in [1.0, 1000.0]) {
         final result = await getStatus(
