@@ -51,7 +51,7 @@ abstract final class TermSessionManager {
     seconds: 5,
   ); // 5-second update interval
 
-  static void init() {
+  static Future<void> init() async {
     if (isAndroid) {
       MethodChans.registerHandler(
         (id) async {
@@ -62,6 +62,11 @@ abstract final class TermSessionManager {
           stopAllConnections();
         },
       );
+    }
+    if (isIOS) {
+      // A Live Activity can outlive a killed process. Clear any orphan left
+      // by the previous app run before new sessions can be registered.
+      await MethodChans.stopLiveActivity();
     }
   }
 
