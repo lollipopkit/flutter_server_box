@@ -6,6 +6,7 @@
   import Dashboard from './pages/Dashboard.svelte'
   import PanelSettings from './pages/PanelSettings.svelte'
   import ServerSettings from './pages/ServerSettings.svelte'
+  import Terminal from './pages/Terminal.svelte'
 
   // One key covering both axes (page view + selected server) so switching
   // either one gets the same page-level transition — not just Dashboard's
@@ -27,6 +28,8 @@
             <PanelSettings />
           {:else if layout.view === 'server-settings'}
             <ServerSettings onback={() => layout.back('dashboard')} />
+          {:else if layout.view === 'terminal'}
+            <Terminal />
           {:else}
             <Dashboard />
           {/if}

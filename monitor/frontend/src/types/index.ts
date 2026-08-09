@@ -64,6 +64,27 @@ export interface Capabilities {
   // Mechanically derived from the same system_type() capabilities() is
   // computed from — 'bsd' covers macOS, the only Bsd target this ships on
   platform: Platform
+  // Absent on agents predating the feature; treat as all-off
+  remote_access?: RemoteAccess
+}
+
+/// Which remote-access paths this agent will actually accept, already
+/// accounting for the transport check — `terminal: false` with
+/// `secure: false` means "would work over TLS or from loopback".
+export interface RemoteAccess {
+  tunnel: boolean
+  terminal: boolean
+  secure: boolean
+  /// Whether a shell can be opened straight from this panel session, with no
+  /// SSH credentials. Absent on agents predating the feature.
+  passwordless?: boolean
+}
+
+export type WsTicketPurpose = 'terminal' | 'tunnel'
+
+export interface WsTicketResponse {
+  ticket: string
+  expires_in: number
 }
 
 export interface ConnMetrics {

@@ -3,7 +3,9 @@
 /// 'panel' = browser-local prefs (language/theme), reached from the sidebar
 /// footer, independent of any server. 'server-settings' = the currently
 /// selected server's config.toml, reached from a gear icon on its dashboard.
-export type View = 'dashboard' | 'panel' | 'server-settings'
+/// 'terminal' = an SSH session on the selected server, reached from its
+/// dashboard and only offered when that agent reports the feature available.
+export type View = 'dashboard' | 'panel' | 'server-settings' | 'terminal'
 
 class LayoutStore {
   collapsed = $state(window.localStorage.getItem('sidebar.collapsed') === '1')

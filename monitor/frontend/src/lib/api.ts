@@ -8,6 +8,8 @@ import type {
   SettingsView,
   StatusResponse,
   SystemMetrics,
+  WsTicketPurpose,
+  WsTicketResponse,
 } from '../types'
 import { servers, type ServerEntry } from './servers.svelte'
 
@@ -132,6 +134,25 @@ export const api = {
       '/settings',
       { method: 'PUT', body: JSON.stringify(payload) },
       'Failed to save settings',
+    ),
+  /// Exchanges the session token for a single-use ticket authorising one
+  /// WebSocket upgrade. A browser can't put a bearer token on a WebSocket
+  /// handshake, and a token in the query string would land in the agent's
+  /// access log; the ticket is good for one connection and ~30 seconds.
+  issueWsTicket: (purpose: WsTicketPurpose) =>
+    request<WsTicketResponse>(
+      '/ws-ticket',
+      { method: 'POST', body: JSON.stringify({ purpose }) },
+      'Failed to authorise the connection',
+    ),
+  /// Turns the passwordless terminal off for good. There is deliberately no
+  /// counterpart that turns it on: the panel may narrow what the agent
+  /// exposes, never widen it — re-enabling is a config-file decision.
+  disablePasswordlessTerminal: () =>
+    request<{ status: string }>(
+      '/remote-access/passwordless',
+      { method: 'DELETE' },
+      'Failed to disable the passwordless terminal',
     ),
   getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
   updateCardOrder: (card_order: string[]) =>

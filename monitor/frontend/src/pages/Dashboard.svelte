@@ -8,6 +8,7 @@
     MemoryStick,
     Server,
     Settings as SettingsIcon,
+    SquareTerminal,
     ShieldCheck,
     Network,
     CircleAlert,
@@ -228,6 +229,11 @@
         <Badge tone={connected ? 'success' : 'danger'}>
           {connected ? $LL.connected() : $LL.disconnected()}
         </Badge>
+        {#if capabilities?.remote_access?.terminal}
+          <IconButton label={$LL.terminal()} onclick={() => layout.navigate('terminal')}>
+            <SquareTerminal class="w-4 h-4" />
+          </IconButton>
+        {/if}
         <IconButton label={$LL.serverSettings()} onclick={() => layout.navigate('server-settings')}>
           <SettingsIcon class="w-4 h-4" />
         </IconButton>
