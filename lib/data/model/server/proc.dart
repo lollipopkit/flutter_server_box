@@ -140,7 +140,6 @@ class Proc {
     final command = parts.sublist(map.command).join(' ');
     final matchingPrevious = _matchingPrevious(
       previous,
-      command: command,
       start: start,
       startId: startId,
     );
@@ -155,8 +154,8 @@ class Proc {
     return Proc(
       user: map.user == null ? null : parts[map.user!],
       pid: pid,
-      cpu: map.cpu == null ? null : double.parse(parts[map.cpu!]),
-      mem: map.mem == null ? null : double.parse(parts[map.mem!]),
+      cpu: _parseNullableDouble(parts, map.cpu),
+      mem: _parseNullableDouble(parts, map.mem),
       vsz: map.vsz == null ? null : parts[map.vsz!],
       rss: map.rss == null ? null : parts[map.rss!],
       tty: map.tty == null ? null : parts[map.tty!],
@@ -181,11 +180,7 @@ class Proc {
     final name = raw['ProcessName'] ?? raw['Name'];
     final command = raw['CommandLine'] ?? raw['Path'] ?? name ?? '';
     final startId = _parseProcessIdentity(raw['StartId']);
-    final matchingPrevious = _matchingPrevious(
-      previous,
-      command: command.toString(),
-      startId: startId,
-    );
+    final matchingPrevious = _matchingPrevious(previous, startId: startId);
     final readBytes = _parseDynamicInt(
       raw['IOReadBytes'] ?? raw['ReadTransferCount'],
     );
@@ -241,12 +236,26 @@ class Proc {
 }
 
 // `ps -aux` result
+enum PsParseFailure {
+  unsupportedOutput,
+  invalidRows,
+  invalidWindowsJson,
+  invalidWindowsRows,
+}
+
+class PsParseIssue {
+  final PsParseFailure failure;
+  final String diagnostics;
+
+  const PsParseIssue({required this.failure, required this.diagnostics});
+}
+
 class PsResult {
   final List<Proc> procs;
-  final String? error;
+  final PsParseIssue? issue;
   final int sampledAtMillis;
 
-  const PsResult({required this.procs, this.error, this.sampledAtMillis = 0});
+  const PsResult({required this.procs, this.issue, this.sampledAtMillis = 0});
 
   factory PsResult.parse(
     String raw, {
@@ -291,7 +300,10 @@ class PsResult {
     if (pidIdx == null || commandIdx == null) {
       return PsResult(
         procs: const [],
-        error: 'Unsupported process output header: $header',
+        issue: PsParseIssue(
+          failure: PsParseFailure.unsupportedOutput,
+          diagnostics: 'Unsupported process output header: $header',
+        ),
         sampledAtMillis: currentSampledAtMillis,
       );
     }
@@ -335,7 +347,12 @@ class PsResult {
     _sort(procs, sort, ascending: ascending);
     return PsResult(
       procs: procs,
-      error: errs.isEmpty ? null : errs.join('\n'),
+      issue: errs.isEmpty
+          ? null
+          : PsParseIssue(
+              failure: PsParseFailure.invalidRows,
+              diagnostics: errs.join('\n'),
+            ),
       sampledAtMillis: currentSampledAtMillis,
     );
   }
@@ -360,7 +377,11 @@ class PsResult {
       if (items == null) {
         return PsResult(
           procs: const [],
-          error: 'Invalid Windows process JSON: expected an object or array',
+          issue: const PsParseIssue(
+            failure: PsParseFailure.invalidWindowsJson,
+            diagnostics:
+                'Invalid Windows process JSON: expected an object or array',
+          ),
           sampledAtMillis: sampledAtMillis,
         );
       }
@@ -395,13 +416,21 @@ class PsResult {
       _sort(procs, sort, ascending: ascending);
       return PsResult(
         procs: procs,
-        error: errs.isEmpty ? null : errs.join('\n'),
+        issue: errs.isEmpty
+            ? null
+            : PsParseIssue(
+                failure: PsParseFailure.invalidWindowsRows,
+                diagnostics: errs.join('\n'),
+              ),
         sampledAtMillis: sampledAtMillis,
       );
     } catch (e) {
       return PsResult(
         procs: const [],
-        error: 'Invalid Windows process JSON: $e',
+        issue: PsParseIssue(
+          failure: PsParseFailure.invalidWindowsJson,
+          diagnostics: 'Invalid Windows process JSON: $e',
+        ),
         sampledAtMillis: sampledAtMillis,
       );
     }
@@ -412,7 +441,7 @@ class PsResult {
     _sort(sorted, sort, ascending: ascending);
     return PsResult(
       procs: sorted,
-      error: error,
+      issue: issue,
       sampledAtMillis: sampledAtMillis,
     );
   }
@@ -502,6 +531,11 @@ int? _parseNullableInt(List<String> parts, int? idx) {
   return _parseDynamicInt(parts[idx]);
 }
 
+double? _parseNullableDouble(List<String> parts, int? idx) {
+  if (idx == null || idx >= parts.length) return null;
+  return _parseDynamicDouble(parts[idx]);
+}
+
 int? _parseDynamicInt(Object? val) {
   if (val == null) return null;
   if (val is int) return val;
@@ -535,12 +569,7 @@ String? _parseProcessIdentity(Object? value) {
   return identity;
 }
 
-Proc? _matchingPrevious(
-  Proc? previous, {
-  required String command,
-  String? start,
-  String? startId,
-}) {
+Proc? _matchingPrevious(Proc? previous, {String? start, String? startId}) {
   if (previous == null) return null;
   if (startId != null || previous.startId != null) {
     if (startId == null || previous.startId == null) return null;
@@ -551,7 +580,7 @@ Proc? _matchingPrevious(
       return null;
     }
   }
-  return command == previous.command ? previous : null;
+  return previous;
 }
 
 (double?, double?) _calculateSpeeds({

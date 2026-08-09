@@ -23,6 +23,7 @@ const _metricWidth = 68.0;
 const _rssWidth = 84.0;
 const _ioWidth = 88.0;
 const _actionWidth = 44.0;
+const _minimumProcessWidth = 148.0;
 const _processCommandTimeout = Duration(seconds: 30);
 
 class ProcessPage extends ConsumerStatefulWidget {
@@ -194,17 +195,19 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
   @override
   Widget build(BuildContext context) {
     final actions = <Widget>[];
-    if (_result.error != null) {
+    final parseIssue = _result.issue;
+    if (parseIssue != null) {
+      final message = _parseFailureMessage(parseIssue.failure);
       actions.add(
         IconButton(
           icon: const Icon(Icons.error_outline),
-          tooltip: libL10n.error,
+          tooltip: message,
           onPressed: () => context.showRoundDialog(
             title: libL10n.error,
-            child: SingleChildScrollView(child: Text(_result.error!)),
+            child: Text(message),
             actions: [
               TextButton(
-                onPressed: () => Pfs.copy(_result.error!),
+                onPressed: () => Pfs.copy(parseIssue.diagnostics),
                 child: Text(libL10n.copy),
               ),
             ],
@@ -239,6 +242,16 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
       ),
     );
   }
+
+  String _parseFailureMessage(PsParseFailure failure) => switch (failure) {
+    PsParseFailure.unsupportedOutput =>
+      context.l10n.processParseUnsupportedOutput,
+    PsParseFailure.invalidRows => context.l10n.processParseInvalidRows,
+    PsParseFailure.invalidWindowsJson =>
+      context.l10n.processParseInvalidWindowsJson,
+    PsParseFailure.invalidWindowsRows =>
+      context.l10n.processParseInvalidWindowsRows,
+  };
 }
 
 extension _ProcessPageStateWidgets on _ProcessPageState {
@@ -294,7 +307,7 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
     }
     final scheme = Theme.of(context).colorScheme;
     final columns = _buildColumns(layout);
-    return Column(
+    final content = Column(
       children: [
         _buildHeader(columns),
         Divider(height: 1, color: scheme.outlineVariant),
@@ -314,6 +327,11 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
           ),
         ),
       ],
+    );
+    if (!layout.needsHorizontalScroll) return content;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SizedBox(width: layout.contentWidth, child: content),
     );
   }
 
@@ -603,6 +621,17 @@ extension _ProcessPageStateUtils on _ProcessPageState {
         SystemType.windows => 'taskkill /F /PID $pid',
         SystemType.linux || SystemType.bsd => 'kill $pid',
       };
+
+  bool _isSameProcess(Proc expected, Proc current) {
+    if (expected.pid != current.pid) return false;
+    if (expected.startId != null || current.startId != null) {
+      return expected.startId != null && expected.startId == current.startId;
+    }
+    if (expected.start != null || current.start != null) {
+      return expected.start != null && expected.start == current.start;
+    }
+    return expected.command == current.command;
+  }
 }
 
 extension _ProcessPageStateActions on _ProcessPageState {
@@ -615,10 +644,10 @@ extension _ProcessPageStateActions on _ProcessPageState {
       actions: Btnx.cancelOk,
     );
     if (confirmed != true || !mounted) return;
-    await context.showLoadingDialog(fn: () => _killAndRefresh(proc.pid));
+    await context.showLoadingDialog(fn: () => _killAndRefresh(proc));
   }
 
-  Future<void> _killAndRefresh(int pid) async {
+  Future<void> _killAndRefresh(Proc target) async {
     if (!mounted) return;
     while (_isRefreshing) {
       final refresh = _refreshCompleter;
@@ -628,12 +657,54 @@ extension _ProcessPageStateActions on _ProcessPageState {
     }
     _isRefreshing = true;
     _rebuild();
+    var killed = false;
     try {
       final serverState = ref.read(_provider);
       final systemType = serverState.status.system;
-      await serverState.client
-          ?.run(_killProcessCmd(pid, systemType))
+      final client = serverState.client;
+      if (client == null || client.isClosed) {
+        if (mounted) context.showSnackBar(libL10n.disconnected);
+        return;
+      }
+      final raw = await client
+          .run(
+            ShellFunc.process.exec(
+              widget.args.spi.id,
+              systemType: systemType,
+              customDir: null,
+            ),
+          )
+          .timeout(_processCommandTimeout)
+          .string;
+      if (!mounted) return;
+      if (raw.trim().isEmpty) {
+        context.showSnackBar(context.l10n.processKillTargetChanged);
+        return;
+      }
+      var latest = PsResult.parse(
+        raw,
+        sort: _procSortMode,
+        ascending: _sortAscending,
+        previous: _result,
+      );
+      final sortChanged = _updateCapabilities(latest);
+      if (sortChanged) {
+        latest = latest.sortedBy(_procSortMode, ascending: _sortAscending);
+      }
+      _result = latest;
+      _hasLoaded = true;
+      _rebuild();
+      final current = latest.procs
+          .where((proc) => proc.pid == target.pid)
+          .firstOrNull;
+      if (current == null || !_isSameProcess(target, current)) {
+        context.showSnackBar(context.l10n.processKillTargetChanged);
+        return;
+      }
+      await client
+          .run(_killProcessCmd(target.pid, systemType))
           .timeout(_processCommandTimeout);
+      killed = true;
     } on TimeoutException catch (e, s) {
       Loggers.app.warning('Process kill command timed out', e, s);
       if (mounted) context.showSnackBar(libL10n.error);
@@ -646,7 +717,7 @@ extension _ProcessPageStateActions on _ProcessPageState {
       _isRefreshing = false;
       _rebuild();
     }
-    await _refresh(userTriggered: true);
+    if (killed) await _refresh(userTriggered: true);
   }
 }
 
@@ -746,6 +817,8 @@ class _ProcessCapabilities {
 
 class _ProcessLayout {
   const _ProcessLayout({
+    required this.contentWidth,
+    required this.needsHorizontalScroll,
     required this.compact,
     required this.showUser,
     required this.showCpu,
@@ -761,6 +834,8 @@ class _ProcessLayout {
   ) {
     final compact = width < _compactBreakpoint;
     return _ProcessLayout(
+      contentWidth: width < _minimumProcessWidth ? _minimumProcessWidth : width,
+      needsHorizontalScroll: width < _minimumProcessWidth,
       compact: compact,
       showUser: !compact && capabilities.hasUser,
       showCpu: !compact && capabilities.hasCpu,
@@ -775,6 +850,8 @@ class _ProcessLayout {
     );
   }
 
+  final double contentWidth;
+  final bool needsHorizontalScroll;
   final bool compact;
   final bool showUser;
   final bool showCpu;

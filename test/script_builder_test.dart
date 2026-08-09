@@ -103,9 +103,14 @@ void main() {
       final script = const WindowsScriptBuilder().buildScript(null);
 
       expect(script, contains('Win32_PerfFormattedData_PerfProc_Process'));
+      expect(script, contains('Get-CimInstance Win32_Process'));
       expect(script, contains('PercentProcessorTime'));
       expect(script, contains('CPUPercent'));
       expect(script, contains('StartId'));
+      expect(script, contains('ReadTransferCount'));
+      expect(script, contains('WriteTransferCount'));
+      expect(script, contains('CommandLine'));
+      expect(script, isNot(contains(r'$process.IOReadBytes')));
       expect(script, isNot(contains('Select-Object ProcessName, Id, CPU,')));
     });
 
@@ -115,6 +120,63 @@ void main() {
       expect(script, contains('START_ID'));
       expect(script, contains('/proc/\$pid/stat'));
       expect(script, contains("awk '{print \$20}'"));
+      expect(script, contains('ps w | while IFS= read -r line'));
+      expect(script, contains('READ_BYTES WRITE_BYTES COMMAND'));
+    });
+
+    test('Unix script paths are shell-quoted', () {
+      const dir = "/tmp/x; touch /tmp/pwned; #'";
+      const path = "/tmp/x; touch /tmp/pwned; #'/script.sh";
+      const builder = UnixScriptBuilder();
+
+      final install = builder.getInstallCommand(dir, path);
+      final exec = builder.getExecCommand(path, ShellFunc.status);
+
+      expect(install, isNot(contains('mkdir -p /tmp/x;')));
+      expect(
+        install,
+        contains("mkdir -p '/tmp/x; touch /tmp/pwned; #'\"'\"''"),
+      );
+      expect(exec, startsWith("sh '"));
+      expect(exec, contains("'\"'\"'"));
+
+      final homeInstall = builder.getInstallCommand(
+        '~/.config/server_box',
+        '~/.config/server_box/script.sh',
+      );
+      expect(homeInstall, contains(r'"$HOME"/'));
+    });
+
+    test('Windows custom script paths are PowerShell-quoted', () {
+      const dir = "C:\\temp\\x'; Write-Host pwned; #";
+      const path = "C:\\temp\\x'; Write-Host pwned; #\\script.ps1";
+      const builder = WindowsScriptBuilder();
+
+      final install = builder.getInstallCommand(dir, path);
+      final exec = builder.getExecCommand(path, ShellFunc.status);
+
+      expect(install, contains("x''; Write-Host pwned; #"));
+      expect(exec, contains("x''; Write-Host pwned; #"));
+      expect(install, isNot(contains("-Path 'C:\\temp\\x';")));
+    });
+
+    test('Windows default paths use PowerShell environment variables', () {
+      ScriptPaths.clearCache();
+      final install = ShellFuncManager.getInstallShellCmd(
+        'windows-path-test',
+        systemType: SystemType.windows,
+        customDir: null,
+      );
+      final exec = ShellFunc.status.exec(
+        'windows-path-test',
+        systemType: SystemType.windows,
+        customDir: null,
+      );
+
+      expect(install, contains(r'$env:TEMP'));
+      expect(exec, contains(r'$env:TEMP'));
+      expect(install, isNot(contains('%TEMP%')));
+      expect(exec, isNot(contains('%TEMP%')));
     });
 
     test('install commands are generated correctly', () {

@@ -62,6 +62,19 @@ PID USER %CPU %MEM VSZ RSS TTY STAT TIME READ_BYTES WRITE_BYTES COMMAND
     );
   });
 
+  test('malformed optional metrics do not discard Unix process rows', () {
+    const raw = '''
+PID USER %CPU %MEM COMMAND
+1 root - N/A /sbin/procd
+''';
+    final proc = PsResult.parse(raw).procs.single;
+
+    expect(proc.pid, 1);
+    expect(proc.cpu, isNull);
+    expect(proc.mem, isNull);
+    expect(proc.command, '/sbin/procd');
+  });
+
   test('calculate process io speed from previous snapshot', () {
     const first = '''
 PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
@@ -106,6 +119,26 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     expect(rolledBack.writeSpeed, isNull);
     expect(newProc.readSpeed, isNull);
     expect(newProc.writeSpeed, isNull);
+  });
+
+  test('PID-stable process keeps IO deltas when command text changes', () {
+    const first = '''
+PID USER %CPU %MEM TIME READ_BYTES WRITE_BYTES COMMAND
+7 root 0.1 1.2 00:01 1000 2000 /usr/bin/worker --old
+''';
+    const second = '''
+PID USER %CPU %MEM TIME READ_BYTES WRITE_BYTES COMMAND
+7 root 0.1 1.2 00:02 3000 5000 /usr/bin/worker --new
+''';
+    final previous = PsResult.parse(first, sampledAtMillis: 1000);
+    final current = PsResult.parse(
+      second,
+      previous: previous,
+      sampledAtMillis: 3000,
+    );
+
+    expect(current.procs.single.readSpeed, 1000);
+    expect(current.procs.single.writeSpeed, 1500);
   });
 
   test(
@@ -200,7 +233,7 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     expect(proc.cpu, isNull);
   });
 
-  test('invalid Windows rows produce displayable parse errors', () {
+  test('invalid Windows rows preserve typed diagnostics', () {
     const raw = '''
 [
   {"ProcessName":"missing-pid"},
@@ -212,26 +245,33 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     final result = PsResult.parse(raw, sampledAtMillis: 1234);
 
     expect(result.procs.map((proc) => proc.pid), [7]);
+    expect(result.issue?.failure, PsParseFailure.invalidWindowsRows);
     expect(
-      RegExp('missing or invalid PID').allMatches(result.error!).length,
+      RegExp(
+        'missing or invalid PID',
+      ).allMatches(result.issue!.diagnostics).length,
       2,
     );
-    expect(result.error, contains('expected an object'));
+    expect(result.issue?.diagnostics, contains('expected an object'));
     expect(result.sampledAtMillis, 1234);
   });
 
-  test('malformed Windows JSON returns a displayable parse error', () {
+  test('malformed Windows JSON preserves typed diagnostics', () {
     final result = PsResult.parse('{"ProcessName":', sampledAtMillis: 5678);
 
     expect(result.procs, isEmpty);
-    expect(result.error, contains('Invalid Windows process JSON'));
+    expect(result.issue?.failure, PsParseFailure.invalidWindowsJson);
+    expect(result.issue?.diagnostics, contains('Invalid Windows process JSON'));
     expect(result.sampledAtMillis, 5678);
   });
 
   test('sortedBy reorders processes and keeps metadata', () {
     final original = PsResult(
       sampledAtMillis: 1234,
-      error: 'partial parse error',
+      issue: const PsParseIssue(
+        failure: PsParseFailure.invalidRows,
+        diagnostics: 'partial parse error',
+      ),
       procs: [
         Proc(
           user: 'z-user',
@@ -329,7 +369,7 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     );
 
     final sorted = original.sortedBy(ProcSortMode.pid);
-    expect(sorted.error, original.error);
+    expect(sorted.issue, same(original.issue));
     expect(sorted.sampledAtMillis, original.sampledAtMillis);
     expect(original.procs.map((e) => e.pid), [3, 1, 2]);
   });
@@ -345,7 +385,7 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     expect(result.procs.map((proc) => proc.pid), [10, 20]);
   });
 
-  test('malformed process header returns displayable error', () {
+  test('malformed process header preserves typed diagnostics', () {
     const raw = '''
 USER CPU COMMAND
 root 0.0 /sbin/procd
@@ -353,7 +393,11 @@ root 0.0 /sbin/procd
     final result = PsResult.parse(raw, sampledAtMillis: 4321);
 
     expect(result.procs, isEmpty);
-    expect(result.error, contains('Unsupported process output header'));
+    expect(result.issue?.failure, PsParseFailure.unsupportedOutput);
+    expect(
+      result.issue?.diagnostics,
+      contains('Unsupported process output header'),
+    );
     expect(result.sampledAtMillis, 4321);
   });
 }

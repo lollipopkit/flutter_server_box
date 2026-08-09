@@ -377,5 +377,10 @@
         "type": "int"
       }
     }
-  }
+  },
+  "processParseUnsupportedOutput": "The process list format is not supported.",
+  "processParseInvalidRows": "Some process entries could not be read.",
+  "processParseInvalidWindowsJson": "The Windows process response could not be read.",
+  "processParseInvalidWindowsRows": "Some Windows process entries could not be read.",
+  "processKillTargetChanged": "The process changed or exited. Refresh and try again."
 }

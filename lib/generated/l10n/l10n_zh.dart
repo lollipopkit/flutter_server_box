@@ -1044,6 +1044,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String processCount(int count) {
     return '$count 个进程';
   }
+
+  @override
+  String get processParseUnsupportedOutput => '不支持此进程列表格式。';
+
+  @override
+  String get processParseInvalidRows => '部分进程条目无法读取。';
+
+  @override
+  String get processParseInvalidWindowsJson => '无法读取 Windows 进程响应。';
+
+  @override
+  String get processParseInvalidWindowsRows => '部分 Windows 进程条目无法读取。';
+
+  @override
+  String get processKillTargetChanged => '该进程已变化或退出，请刷新后重试。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1992,4 +2007,19 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String processCount(int count) {
     return '$count 個處理程序';
   }
+
+  @override
+  String get processParseUnsupportedOutput => '不支援此處理程序清單格式。';
+
+  @override
+  String get processParseInvalidRows => '部分處理程序項目無法讀取。';
+
+  @override
+  String get processParseInvalidWindowsJson => '無法讀取 Windows 處理程序回應。';
+
+  @override
+  String get processParseInvalidWindowsRows => '部分 Windows 處理程序項目無法讀取。';
+
+  @override
+  String get processKillTargetChanged => '該處理程序已變更或結束，請重新整理後再試。';
 }

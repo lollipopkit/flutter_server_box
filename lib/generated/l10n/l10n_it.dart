@@ -1132,4 +1132,24 @@ class AppLocalizationsIt extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get processParseUnsupportedOutput =>
+      'The process list format is not supported.';
+
+  @override
+  String get processParseInvalidRows =>
+      'Some process entries could not be read.';
+
+  @override
+  String get processParseInvalidWindowsJson =>
+      'The Windows process response could not be read.';
+
+  @override
+  String get processParseInvalidWindowsRows =>
+      'Some Windows process entries could not be read.';
+
+  @override
+  String get processKillTargetChanged =>
+      'The process changed or exited. Refresh and try again.';
 }

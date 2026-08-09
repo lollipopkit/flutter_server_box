@@ -11,8 +11,9 @@ class ScriptConstants {
   // Script directories
   static const String scriptDirHome = '~/.config/server_box';
   static const String scriptDirTmp = '/tmp/server_box';
-  static const String scriptDirHomeWindows = '%USERPROFILE%/.config/server_box';
-  static const String scriptDirTmpWindows = '%TEMP%/server_box';
+  static const String scriptDirHomeWindows =
+      r'$env:USERPROFILE/.config/server_box';
+  static const String scriptDirTmpWindows = r'$env:TEMP/server_box';
 
   // Command separators and dividers
   static const String separator = 'SrvBoxSep';

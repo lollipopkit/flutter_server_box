@@ -293,5 +293,10 @@
   "containerOperationInProgress": "另一個容器操作正在進行中",
   "invalidUrl": "無效的網址",
   "systemd": "Systemd",
-  "processCount": "{count} 個處理程序"
+  "processCount": "{count} 個處理程序",
+  "processParseUnsupportedOutput": "不支援此處理程序清單格式。",
+  "processParseInvalidRows": "部分處理程序項目無法讀取。",
+  "processParseInvalidWindowsJson": "無法讀取 Windows 處理程序回應。",
+  "processParseInvalidWindowsRows": "部分 Windows 處理程序項目無法讀取。",
+  "processKillTargetChanged": "該處理程序已變更或結束，請重新整理後再試。"
 }

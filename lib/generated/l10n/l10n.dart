@@ -2039,6 +2039,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, one{1 process} other{{count} processes}}'**
   String processCount(int count);
+
+  /// No description provided for @processParseUnsupportedOutput.
+  ///
+  /// In en, this message translates to:
+  /// **'The process list format is not supported.'**
+  String get processParseUnsupportedOutput;
+
+  /// No description provided for @processParseInvalidRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Some process entries could not be read.'**
+  String get processParseInvalidRows;
+
+  /// No description provided for @processParseInvalidWindowsJson.
+  ///
+  /// In en, this message translates to:
+  /// **'The Windows process response could not be read.'**
+  String get processParseInvalidWindowsJson;
+
+  /// No description provided for @processParseInvalidWindowsRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Some Windows process entries could not be read.'**
+  String get processParseInvalidWindowsRows;
+
+  /// No description provided for @processKillTargetChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The process changed or exited. Refresh and try again.'**
+  String get processKillTargetChanged;
 }
 
 class _AppLocalizationsDelegate
