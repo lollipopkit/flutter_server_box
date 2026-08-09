@@ -161,6 +161,8 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     expect(current.procs.first.pid, 1);
     expect(current.procs.first.readSpeed, 1000);
     expect(current.procs.first.writeSpeed, 2000);
+    expect(current.procs.first.rssKb, 1);
+    expect(current.procs.last.rssKb, 1);
   });
 
   test('sortedBy reorders processes and keeps metadata', () {
@@ -173,6 +175,7 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
           pid: 3,
           cpu: 0.2,
           mem: 5,
+          rss: '2048',
           readSpeed: 10,
           writeSpeed: 20,
           command: '/zeta',
@@ -182,6 +185,7 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
           pid: 1,
           cpu: 9,
           mem: 1,
+          rss: null,
           readSpeed: null,
           writeSpeed: null,
           command: '/alpha',
@@ -191,6 +195,7 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
           pid: 2,
           cpu: 3,
           mem: 8,
+          rss: '1024',
           readSpeed: 50,
           writeSpeed: 5,
           command: '/middle',
@@ -206,6 +211,11 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     expect(original.sortedBy(ProcSortMode.mem).procs.map((e) => e.pid), [
       2,
       3,
+      1,
+    ]);
+    expect(original.sortedBy(ProcSortMode.rss).procs.map((e) => e.pid), [
+      3,
+      2,
       1,
     ]);
     expect(original.sortedBy(ProcSortMode.read).procs.map((e) => e.pid), [
@@ -233,6 +243,27 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
       2,
       3,
     ]);
+    expect(
+      original
+          .sortedBy(ProcSortMode.cpu, ascending: true)
+          .procs
+          .map((e) => e.pid),
+      [3, 2, 1],
+    );
+    expect(
+      original
+          .sortedBy(ProcSortMode.pid, ascending: false)
+          .procs
+          .map((e) => e.pid),
+      [3, 2, 1],
+    );
+    expect(
+      original
+          .sortedBy(ProcSortMode.rss, ascending: true)
+          .procs
+          .map((e) => e.pid),
+      [2, 3, 1],
+    );
 
     final sorted = original.sortedBy(ProcSortMode.pid);
     expect(sorted.error, original.error);

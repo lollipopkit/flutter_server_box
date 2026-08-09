@@ -54,6 +54,7 @@ class Proc {
 
   late final binary = _parseBinary();
   late final args = _parseArgs();
+  late final rssKb = _parseRssKb();
 
   Proc({
     this.user,
@@ -171,12 +172,17 @@ class Proc {
     );
     final name = raw['ProcessName'] ?? raw['Name'];
     final command = raw['CommandLine'] ?? raw['Path'] ?? name ?? '';
+    final workingSetBytes = _parseDynamicInt(
+      raw['WorkingSet'] ?? raw['WorkingSetSize'],
+    );
     return Proc(
       pid: _parseDynamicInt(raw['Id'] ?? raw['ProcessId'])!,
       cpu: _parseDynamicDouble(raw['CPU']),
-      rss: _parseDynamicInt(
-        raw['WorkingSet'] ?? raw['WorkingSetSize'],
-      )?.toString(),
+      // Unix `ps` reports RSS in KiB. Normalize the Windows byte count to the
+      // same unit so sorting and display stay consistent across platforms.
+      rss: workingSetBytes == null
+          ? null
+          : ((workingSetBytes + 1023) ~/ 1024).toString(),
       readBytes: readBytes,
       writeBytes: writeBytes,
       readSpeed: readSpeed,
@@ -197,6 +203,12 @@ class Proc {
     if (binary.isEmpty || trimmed.length <= binary.length) return '';
     return trimmed.substring(binary.length).trimLeft();
   }
+
+  int? _parseRssKb() {
+    final raw = rss;
+    if (raw == null || raw.isEmpty || raw == '-') return null;
+    return int.tryParse(raw);
+  }
 }
 
 // `ps -aux` result
@@ -210,6 +222,7 @@ class PsResult {
   factory PsResult.parse(
     String raw, {
     ProcSortMode sort = ProcSortMode.cpu,
+    bool? ascending,
     PsResult? previous,
     int? sampledAtMillis,
   }) {
@@ -227,6 +240,7 @@ class PsResult {
       elapsedSeconds: elapsedSeconds,
       sampledAtMillis: currentSampledAtMillis,
       sort: sort,
+      ascending: ascending,
     );
     if (jsonResult != null) return jsonResult;
 
@@ -288,7 +302,7 @@ class PsResult {
       }
     }
 
-    _sort(procs, sort);
+    _sort(procs, sort, ascending: ascending);
     return PsResult(
       procs: procs,
       error: errs.isEmpty ? null : errs.join('\n'),
@@ -302,6 +316,7 @@ class PsResult {
     required double? elapsedSeconds,
     required int sampledAtMillis,
     required ProcSortMode sort,
+    required bool? ascending,
   }) {
     final trimmed = raw.trim();
     if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return null;
@@ -327,7 +342,7 @@ class PsResult {
           errs.add('$item: $e');
         }
       }
-      _sort(procs, sort);
+      _sort(procs, sort, ascending: ascending);
       return PsResult(
         procs: procs,
         error: errs.isEmpty ? null : errs.join('\n'),
@@ -338,9 +353,9 @@ class PsResult {
     }
   }
 
-  PsResult sortedBy(ProcSortMode sort) {
+  PsResult sortedBy(ProcSortMode sort, {bool? ascending}) {
     final sorted = List<Proc>.of(procs);
-    _sort(sorted, sort);
+    _sort(sorted, sort, ascending: ascending);
     return PsResult(
       procs: sorted,
       error: error,
@@ -348,34 +363,73 @@ class PsResult {
     );
   }
 
-  static void _sort(List<Proc> procs, ProcSortMode sort) {
-    switch (sort) {
-      case ProcSortMode.cpu:
-        procs.sort((a, b) => _compareNullableDesc(a.cpu, b.cpu));
-        break;
-      case ProcSortMode.mem:
-        procs.sort((a, b) => _compareNullableDesc(a.mem, b.mem));
-        break;
-      case ProcSortMode.read:
-        procs.sort((a, b) => _compareNullableDesc(a.readSpeed, b.readSpeed));
-        break;
-      case ProcSortMode.write:
-        procs.sort((a, b) => _compareNullableDesc(a.writeSpeed, b.writeSpeed));
-        break;
-      case ProcSortMode.pid:
-        procs.sort((a, b) => a.pid.compareTo(b.pid));
-        break;
-      case ProcSortMode.user:
-        procs.sort((a, b) => a.user?.compareTo(b.user ?? '') ?? 0);
-        break;
-      case ProcSortMode.name:
-        procs.sort((a, b) => a.binary.compareTo(b.binary));
-        break;
-    }
+  static void _sort(List<Proc> procs, ProcSortMode sort, {bool? ascending}) {
+    final isAscending = ascending ?? sort.defaultAscending;
+    procs.sort((a, b) {
+      final compared = switch (sort) {
+        ProcSortMode.cpu => _compareNullable(
+          a.cpu,
+          b.cpu,
+          ascending: isAscending,
+        ),
+        ProcSortMode.mem => _compareNullable(
+          a.mem,
+          b.mem,
+          ascending: isAscending,
+        ),
+        ProcSortMode.rss => _compareNullable(
+          a.rssKb,
+          b.rssKb,
+          ascending: isAscending,
+        ),
+        ProcSortMode.read => _compareNullable(
+          a.readSpeed,
+          b.readSpeed,
+          ascending: isAscending,
+        ),
+        ProcSortMode.write => _compareNullable(
+          a.writeSpeed,
+          b.writeSpeed,
+          ascending: isAscending,
+        ),
+        ProcSortMode.pid => _applyDirection(
+          a.pid.compareTo(b.pid),
+          ascending: isAscending,
+        ),
+        ProcSortMode.user => _compareNullable(
+          a.user?.toLowerCase(),
+          b.user?.toLowerCase(),
+          ascending: isAscending,
+        ),
+        ProcSortMode.name => _applyDirection(
+          a.command.toLowerCase().compareTo(b.command.toLowerCase()),
+          ascending: isAscending,
+        ),
+      };
+      return compared == 0 ? a.pid.compareTo(b.pid) : compared;
+    });
   }
 }
 
-enum ProcSortMode { cpu, mem, read, write, pid, user, name }
+enum ProcSortMode {
+  cpu,
+  mem,
+  rss,
+  read,
+  write,
+  pid,
+  user,
+  name;
+
+  bool get defaultAscending => switch (this) {
+    ProcSortMode.pid || ProcSortMode.user || ProcSortMode.name => true,
+    ProcSortMode.cpu ||
+    ProcSortMode.mem ||
+    ProcSortMode.rss ||
+    ProcSortMode.read ||
+    ProcSortMode.write => false,
+  };
+}
 
 extension _StrIndex on List<String> {
   int? indexOfOrNull(String val) {
@@ -434,9 +488,16 @@ double? _calculateSpeed(int? current, int? previous, double elapsedSeconds) {
   return diff / elapsedSeconds;
 }
 
-int _compareNullableDesc(num? a, num? b) {
+int _compareNullable<T extends Comparable<T>>(
+  T? a,
+  T? b, {
+  required bool ascending,
+}) {
   if (a == null && b == null) return 0;
   if (a == null) return 1;
   if (b == null) return -1;
-  return b.compareTo(a);
+  return _applyDirection(a.compareTo(b), ascending: ascending);
 }
+
+int _applyDirection(int value, {required bool ascending}) =>
+    ascending ? value : -value;
