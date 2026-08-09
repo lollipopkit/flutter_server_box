@@ -352,7 +352,7 @@ fn ssh_e2e_unix_custom_and_disabled() {
 
     let segments = script::parse_script_output(&raw);
     assert_eq!(
-        segments.get("e2e_probe").map(String::as_str),
+        segments.get(&script::custom_result_key("e2e_probe")).map(String::as_str),
         Some("custom-cmd-works"),
         "custom command segment must round-trip"
     );

@@ -148,3 +148,21 @@ fork,unix 脚本的核心命令约 20 条,在 busybox 路由器/NAS 这类目标
 目前不构成故障:`single.dart` 每次建连都用 `cat >` 无条件重写脚本,远端不会留
 旧版本。版本号只影响文件名(`srvboxm_v<n>.sh`),作用退化为与更老 App 版本遗留
 文件不撞名。真要修就把 make.dart 的统计路径换成 Rust 那两个文件。
+
+## arm64 Linux 取不到 CPU 型号
+
+`commands::LINUX` 的 `cpuBrand` 是 `cat /proc/cpuinfo | grep "model name"`,
+`linux::parse_cpu_brand` 也按字面量 `model name` 匹配。aarch64 的
+`/proc/cpuinfo` 没有这一行(orb 上 Debian bookworm / Alpine 3.23 实测,只有
+`CPU implementer`、`CPU part`、`CPU variant` 等编号字段),该 section 恒为空,
+About 卡片上没有 CPU 型号。覆盖面是所有 ARM 服务器(树莓派、ARM VPS、
+Apple Silicon 上的 Linux 虚拟机)。
+
+不是随手能补的,几个候选源都有缺口:
+- `lscpu` 的 `Model name:`——Debian 有,Alpine 默认没装(util-linux 不在 base)
+- `/proc/device-tree/model`——SBC 有,虚拟机没有(上述两台都没有)
+- `CPU implementer`/`CPU part` 编号——要带一张 ARM 厂商/型号对照表
+
+还有一个形状上的约束:`parse_cpu_brand` 返回 `(型号, 核数)`,核数靠数
+`model name` 出现次数。`lscpu` 只输出一行,直接接上去核数会变成 1。要改就得
+连解析侧的契约一起改。

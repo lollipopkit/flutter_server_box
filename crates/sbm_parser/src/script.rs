@@ -292,7 +292,11 @@ fn build_unix_script(opts: &ScriptOptions) -> String {
             .collect::<Vec<_>>()
             .join("\n");
         let custom = unix_custom_cmds(func, opts);
-        out.push_str(&format!("{}() {{\n{tabbed}\n{custom}\n}}\n\n", func.name()));
+        // Trailing no-op: without it the function's exit status is whatever the
+        // last probe returned, so a `grep` that matched nothing (`model name` is
+        // absent from /proc/cpuinfo on arm64) makes a healthy run look failed.
+        // Reaching the end is the signal callers actually want.
+        out.push_str(&format!("{}() {{\n{tabbed}\n{custom}\n\t:\n}}\n\n", func.name()));
     }
 
     out.push_str("case $1 in\n");
