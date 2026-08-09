@@ -55,4 +55,31 @@ message = "Alert: {{message}}"
         
         println!("✓ TOML configuration loaded and validated successfully!");
     }
+
+    /// The shipped example is the first thing anyone copies, so a key that no
+    /// longer deserializes there is a broken first run rather than a typo in
+    /// a comment.
+    #[test]
+    fn example_config_still_parses() {
+        let example = include_str!("../config.example.toml");
+        let config: Config = toml::from_str(example).expect("config.example.toml must parse");
+
+        // Both switches must ship off: the example is copied verbatim, and
+        // shell access should never be something a user turns on by accident.
+        let remote = config.get_remote_access();
+        assert!(!remote.tunnel_enabled);
+        assert!(!remote.terminal_enabled);
+        assert!(!remote.allow_insecure);
+    }
+
+    /// Every config written before remote access existed lacks the section
+    /// entirely; it must keep loading, with the feature off.
+    #[test]
+    fn a_config_without_the_remote_access_section_loads_with_it_disabled() {
+        let config: Config = toml::from_str("database_url = \"sqlite:test.db\"").unwrap();
+        assert!(config.remote_access.is_none());
+
+        let remote = config.get_remote_access().resolve(None);
+        assert!(!remote.any_enabled());
+    }
 }

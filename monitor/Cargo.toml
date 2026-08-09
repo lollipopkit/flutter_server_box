@@ -55,6 +55,28 @@ rpassword = "7"
 # rustls instead of native-tls: consistent with sqlx, static musl builds without OpenSSL
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "charset", "http2"] }
 
+# SSH client for the browser terminal. `ring` rather than the default
+# aws-lc-rs, matching the backend rustls and jsonwebtoken are configured with,
+# so this adds no second crypto implementation of its own.
+#
+# NOTE: it does not follow that the build is free of aws-lc. `reqwest`'s
+# `rustls` feature is defined as `__rustls-aws-lc-rs`, so aws-lc-sys and its
+# cmake build script come in regardless of what the direct rustls dependency
+# asks for — the "no cmake for musl" intent above is currently not achieved.
+# Fixing it takes two steps, not one: switch reqwest to `rustls-no-provider`
+# *and* install a process-level provider at startup, since without that the
+# push client panics on its first HTTPS request (verified: it drops aws-lc and
+# cmake from the tree, and fails all five push tests until the provider is
+# installed). Left alone here as it belongs to the push path, not this one.
+russh = { version = "0.62", default-features = false, features = ["ring", "flate2", "rsa"] }
+# Wipes SSH credentials from memory once they have been used
+zeroize = "1"
+
+# Local PTY for the passwordless terminal (ConPTY on Windows, forkpty
+# elsewhere). Only used when remote_access.passwordless_terminal is on; the
+# SSH path needs none of this.
+portable-pty = "0.9"
+
 # Time handling
 chrono = { version = "0.4", features = ["serde"] }
 
@@ -66,10 +88,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1.0"
 thiserror = "2.0"
 
-# Rate limiting
-governor = "0.10"
-nonzero_ext = "0.3"
-
 # Configuration validation
 regex = "1.13"
 
@@ -80,6 +98,12 @@ percent-encoding = "2.3"
 clap = { version = "4.6", features = ["derive", "env"] }
 # get_server_name() falls back to the real OS hostname (see config.rs)
 hostname = "0.4.2"
+
+# Reading the user's login shell out of the passwd database. `$SHELL` is no
+# substitute for a service: it reports whatever launched the agent, not what
+# the user configured.
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
 
 [dev-dependencies]
 tokio-test = "0.4"

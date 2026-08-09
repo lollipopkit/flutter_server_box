@@ -1,15 +1,33 @@
 use crate::{
+    api::auth::{self, Claims},
+    api::cors::Cors,
+    api::ratelimit::LoginThrottle,
+    api::ws::{
+        self,
+        audit::{self, Action, Event, Kind, Outcome},
+        session::SessionStore,
+        terminal::{start_reaper, terminal_ws},
+        ticket::{Purpose, TicketRequest, TicketResponse, TicketStore},
+        tunnel::{TunnelCount, tunnel_ws},
+    },
     core::config::Config,
-    utils::error::Result,
-    monitoring::monitoring::{LiveSettings, SystemMetrics},
+    core::config_file,
+    core::remote_access::RemoteAccess,
+    monitoring::monitoring::{self, LiveSettings, SystemMetrics},
+    monitoring::size::Size,
     monitoring::velocity::{NetworkSpeedInfo, VelocityAnalysisResponse, VelocityManager},
+    utils::error::{MonitorError, Result},
 };
+use ntex::http::header::RETRY_AFTER;
 use ntex::web::{self, App, HttpRequest, HttpResponse, HttpServer, middleware::Logger};
 use ntex_files::Files;
+use sbm_parser::{SystemType, capabilities::Capabilities};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
+use tokio::sync::{Mutex, RwLock};
 use tracing::info;
 
 #[derive(Clone)]
@@ -25,6 +43,35 @@ pub struct AppState {
     /// Initialized to startup time, not the epoch, so the extended cycle
     /// isn't treated as already-idle before any client has ever connected.
     pub last_viewer_seen: Arc<RwLock<chrono::DateTime<chrono::Utc>>>,
+    /// Resolved remote-access settings (capacities filled in from physical
+    /// memory at startup — see `core::remote_access`). A snapshot, like
+    /// `config`: turning the tunnel or terminal on is a restart-level change,
+    /// not something a running process should pick up mid-session.
+    pub remote_access: Arc<RemoteAccess>,
+    /// Whether this process terminates TLS itself. Decided once at startup
+    /// from the same config `start_server` binds with, so handlers don't have
+    /// to re-derive it.
+    pub tls_active: bool,
+    pub tickets: Arc<TicketStore>,
+    /// Live tunnel count, for `remote_access.tunnel_max_conns`.
+    pub tunnel_count: Arc<TunnelCount>,
+    /// Terminal sessions, which outlive the WebSockets driving them so a
+    /// reconnect can rejoin the same shell — see `api::ws::session`.
+    pub sessions: Arc<SessionStore>,
+    pub login_throttle: Arc<LoginThrottle>,
+    /// Set when the panel turns the passwordless terminal off, so the change
+    /// applies to the running process rather than waiting for a restart.
+    /// One-way: nothing here can switch it back on.
+    pub passwordless_off: Arc<AtomicBool>,
+    /// Serialises every read-modify-write of `config.toml`.
+    ///
+    /// `config_file::write` is atomic, so no reader ever sees a half-written
+    /// file — but atomicity alone doesn't stop two handlers from each reading
+    /// the same starting state and the later write discarding the earlier
+    /// one's field. `/settings` and `/card-order` are separate endpoints
+    /// precisely so ordinary use doesn't contend here, yet they still edit
+    /// one file and must not race.
+    pub config_write: Arc<Mutex<()>>,
 }
 
 impl AppState {
@@ -32,14 +79,42 @@ impl AppState {
         let db_arc = Arc::new(db.clone());
         let velocity_manager = Arc::new(RwLock::new(VelocityManager::new(db_arc)));
         let live_settings = Arc::new(RwLock::new(LiveSettings::from_config(&config.get_monitoring())));
+        let tls_active = config.get_server().tls.is_some();
+        let remote_access = config
+            .get_remote_access()
+            .resolve(sbm_native::total_memory());
+        remote_access.log_summary(tls_active);
+        let sessions = Arc::new(SessionStore::new(
+            remote_access.terminal_max_sessions,
+            remote_access.terminal_detached_timeout,
+        ));
         Arc::new(Self {
+            remote_access: Arc::new(remote_access),
+            tls_active,
+            tickets: Arc::new(TicketStore::new()),
+            tunnel_count: Arc::new(Default::default()),
+            sessions,
+            login_throttle: Arc::new(LoginThrottle::new()),
+            passwordless_off: Arc::new(AtomicBool::new(false)),
             config,
             db,
             current_metrics: Arc::new(RwLock::new(None)),
             velocity_manager,
             live_settings,
             last_viewer_seen: Arc::new(RwLock::new(chrono::Utc::now())),
+            config_write: Arc::new(Mutex::new(())),
         })
+    }
+
+    /// Whether a shell may be opened without SSH credentials right now.
+    ///
+    /// The config snapshot minus anything the panel has switched off since
+    /// startup. Both halves are checked at the point of use rather than
+    /// resolved once, so pressing "turn this off" takes effect on the next
+    /// request instead of the next restart.
+    pub fn passwordless_allowed(&self, secure: bool) -> bool {
+        self.remote_access.passwordless_available(secure)
+            && !self.passwordless_off.load(Ordering::Acquire)
     }
 }
 
@@ -74,8 +149,18 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
     let server_config = app_state.config.get_server();
     let bind_addr = format!("{}:{}", server_config.host, server_config.port);
 
+    if app_state.remote_access.terminal_enabled {
+        // A quarter of the grace period: often enough that a reaped session
+        // isn't held much past its deadline, rare enough to be invisible
+        start_reaper(
+            app_state.sessions.clone(),
+            (app_state.remote_access.terminal_detached_timeout / 4)
+                .max(Duration::from_secs(10)),
+        );
+    }
+
     let server = HttpServer::new(async move || {
-        let cors = crate::api::cors::Cors::new(app_state.config.get_server().cors_allowed_origins);
+        let cors = Cors::new(app_state.config.get_server().cors_allowed_origins);
 
         App::new()
             .state(app_state.clone())
@@ -87,6 +172,13 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
                     .route("/status", web::get().to(get_status))
                     .route("/metrics", web::get().to(get_metrics))
                     .route("/capabilities", web::get().to(get_capabilities))
+                    .route("/ws-ticket", web::post().to(issue_ws_ticket))
+                    .route("/tunnel/ws", web::get().to(tunnel_ws))
+                    .route("/terminal/ws", web::get().to(terminal_ws))
+                    .route(
+                        "/remote-access/passwordless",
+                        web::delete().to(disable_passwordless_terminal),
+                    )
                     .route("/settings", web::get().to(get_settings))
                     .route("/settings", web::put().to(update_settings))
                     .route("/card-order", web::get().to(get_card_order))
@@ -170,9 +262,23 @@ async fn spa_fallback() -> HttpResponse {
 }
 
 async fn login(
+    http_req: HttpRequest,
     req: web::types::Json<LoginRequest>,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
+    let peer_ip = http_req.peer_addr().map(|addr| addr.ip());
+
+    // Checked before touching the database, so a guessing loop can't keep
+    // spending bcrypt verifications (~100ms each) on this process.
+    if let Some(wait) = app_state.login_throttle.check(peer_ip, &req.username) {
+        let seconds = wait.as_secs().max(1);
+        return Ok(HttpResponse::TooManyRequests()
+            .header(RETRY_AFTER, seconds.to_string())
+            .json(&ErrorResponse {
+                error: format!("Too many failed attempts; retry in {seconds}s"),
+            }));
+    }
+
     // Verify user credentials
     let user = sqlx::query!(
         "SELECT id, username, password_hash FROM users WHERE username = ?",
@@ -182,8 +288,10 @@ async fn login(
     .await?;
 
     if let Some(user) = user
-        && crate::api::auth::verify_password(&req.password, &user.password_hash)?
+        && auth::verify_password(&req.password, &user.password_hash)?
     {
+        app_state.login_throttle.record_success(peer_ip, &req.username);
+
         // Update last login
         sqlx::query!(
             "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?",
@@ -193,10 +301,15 @@ async fn login(
         .await?;
 
         // Generate JWT token
-        let token = crate::api::auth::generate_token(&user.username, &app_state.config.get_jwt_secret())?;
+        let token = auth::generate_token(&user.username, &app_state.config.get_jwt_secret())?;
 
         return Ok(HttpResponse::Ok().json(&LoginResponse { token }));
     }
+
+    // One counter for both "no such user" and "wrong password": tracking them
+    // separately would let an attacker tell the two apart by how quickly they
+    // get throttled.
+    app_state.login_throttle.record_failure(peer_ip, &req.username);
 
     Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
         error: "Invalid credentials".to_string(),
@@ -214,7 +327,6 @@ async fn get_status_compat(
 
 /// Response data of Go web.Status: sizes in Size.String() format (e.g. "26.0g"), CPU as one-decimal percentage
 pub fn go_status_data(metrics: Option<&SystemMetrics>, server_name: &str) -> serde_json::Value {
-    use crate::monitoring::size::Size;
     match metrics {
         Some(m) => serde_json::json!({
             "name": m.server_name,
@@ -312,8 +424,24 @@ async fn get_metrics(
 #[derive(Serialize)]
 struct CapabilitiesView {
     #[serde(flatten)]
-    capabilities: sbm_parser::capabilities::Capabilities,
-    platform: sbm_parser::SystemType,
+    capabilities: Capabilities,
+    platform: SystemType,
+    remote_access: RemoteAccessView,
+}
+
+/// Which remote-access paths this agent will actually accept, as opposed to
+/// what the config asks for: `terminal` already accounts for the transport
+/// check, so the panel can hide the entry rather than offer something that
+/// answers 403. `secure` is reported separately so it can explain *why*.
+#[derive(Serialize)]
+struct RemoteAccessView {
+    tunnel: bool,
+    terminal: bool,
+    secure: bool,
+    /// Whether a shell can be opened without SSH credentials. The panel only
+    /// offers that entry when this is true — and, being a UI decision, it is
+    /// re-checked server-side when the request actually arrives.
+    passwordless: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -322,9 +450,85 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             error: "Invalid or missing token".to_string(),
         }));
     }
-    let platform = crate::monitoring::monitoring::system_type();
-    let capabilities = crate::monitoring::monitoring::effective_capabilities(platform);
-    Ok(HttpResponse::Ok().json(&CapabilitiesView { capabilities, platform }))
+    let platform = monitoring::system_type();
+    let capabilities = monitoring::effective_capabilities(platform);
+    let secure = ws::is_secure_transport(&req, app_state.tls_active);
+    Ok(HttpResponse::Ok().json(&CapabilitiesView {
+        capabilities,
+        platform,
+        remote_access: RemoteAccessView {
+            tunnel: app_state.remote_access.tunnel_enabled,
+            terminal: app_state.remote_access.terminal_available(secure),
+            secure,
+            passwordless: app_state.passwordless_allowed(secure),
+        },
+    }))
+}
+
+/// Exchanges the caller's JWT for a short-lived, single-use ticket that
+/// authorises one WebSocket upgrade — see `api::ws::ticket` for why the
+/// upgrade can't just carry the JWT.
+///
+/// Refuses to mint a ticket for a path that isn't open, so a client finds out
+/// here rather than at a failed handshake.
+async fn issue_ws_ticket(
+    req: HttpRequest,
+    app_state: web::types::State<Arc<AppState>>,
+    payload: web::types::Json<TicketRequest>,
+) -> Result<HttpResponse> {
+
+    let claims = match verify_auth(&req, &app_state.config.get_jwt_secret()) {
+        Ok(claims) => claims,
+        Err(_) => {
+            return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
+                error: "Invalid or missing token".to_string(),
+            }));
+        }
+    };
+
+    let purpose = payload.into_inner().purpose;
+    let remote_ip = audit::peer_ip(&req);
+    let available = match purpose {
+        Purpose::Tunnel => app_state.remote_access.tunnel_enabled,
+        Purpose::Terminal => app_state
+            .remote_access
+            .terminal_available(ws::is_secure_transport(&req, app_state.tls_active)),
+    };
+    if !available {
+        Event::new(Kind::Ticket, Action::Denied, Outcome::Denied)
+            .subject(&claims.sub)
+            .remote_ip(remote_ip)
+            .detail(format!("{purpose:?} not available"))
+            .record(&app_state.db)
+            .await;
+        return Ok(HttpResponse::Forbidden().json(&ErrorResponse {
+            error: "Remote access is not enabled for this purpose".to_string(),
+        }));
+    }
+
+    match app_state.tickets.issue(purpose, &claims.sub) {
+        Ok(ticket) => {
+            Event::new(Kind::Ticket, Action::Open, Outcome::Ok)
+                .subject(&claims.sub)
+                .remote_ip(remote_ip)
+                .detail(format!("{purpose:?}"))
+                .record(&app_state.db)
+                .await;
+            Ok(HttpResponse::Ok()
+                .json(&TicketResponse::new(ticket)))
+        }
+        Err(e) => {
+            Event::new(Kind::Ticket, Action::Denied, Outcome::Error)
+                .subject(&claims.sub)
+                .remote_ip(remote_ip)
+                .detail("issue failed")
+                .record(&app_state.db)
+                .await;
+            Ok(HttpResponse::ServiceUnavailable().json(&ErrorResponse {
+                error: e.to_string(),
+            }))
+        }
+    }
 }
 
 /// Whitelisted, writable subset of `Config` the settings page exposes.
@@ -358,18 +562,6 @@ struct SettingsView {
 
 const SETTINGS_LIVE_FIELDS: &[&str] = &["extended_interval_secs", "idle_pause_enabled", "idle_pause_threshold_secs"];
 
-/// Reads `config.toml` fresh off disk rather than `app_state.config` —
-/// after a `PUT` the file is updated immediately but `app_state.config`
-/// (an `Arc<Config>`, not `Arc<RwLock<Config>>`) intentionally stays the
-/// pre-restart snapshot for the non-live fields, so reading from it here
-/// would show stale values right after a successful save.
-fn read_config_file() -> Result<crate::core::config::Config> {
-    let content = std::fs::read_to_string("config.toml")
-        .map_err(crate::utils::error::MonitorError::Io)?;
-    toml::from_str(&content)
-        .map_err(|e| crate::utils::error::MonitorError::Config(anyhow::anyhow!(e)))
-}
-
 async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
     if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
         return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
@@ -377,11 +569,11 @@ async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppStat
         }));
     }
 
-    let file_config = match read_config_file() {
+    let file_config = match config_file::read() {
         Ok(c) => c,
         Err(e) => {
             return Ok(HttpResponse::InternalServerError()
-                .json(&ErrorResponse { error: format!("Failed to read config.toml: {e}") }));
+                .json(&ErrorResponse { error: e.to_string() }));
         }
     };
     let monitoring = file_config.get_monitoring();
@@ -437,11 +629,15 @@ async fn update_settings(
         }
     }
 
-    let mut config = match read_config_file() {
+    // Held across the whole read-modify-write so a concurrent PUT can't read
+    // the same starting state and drop this change on its own save.
+    let _config_guard = app_state.config_write.lock().await;
+
+    let mut config = match config_file::read() {
         Ok(c) => c,
         Err(e) => {
             return Ok(HttpResponse::InternalServerError()
-                .json(&ErrorResponse { error: format!("Failed to read config.toml: {e}") }));
+                .json(&ErrorResponse { error: e.to_string() }));
         }
     };
 
@@ -458,34 +654,68 @@ async fn update_settings(
     server_config.cors_allowed_origins = payload.cors_allowed_origins;
     config.server = Some(server_config);
 
-    // Backup before overwriting — a timestamped copy, not the version-chain
-    // ConfigManager builds (that's dead code, see the settings-page plan);
-    // this is just a manual undo path, not meant to be browsable
-    if let Ok(existing) = std::fs::read_to_string("config.toml") {
-        let backup_path = format!("config.toml.bak-{}", chrono::Utc::now().timestamp());
-        if let Err(e) = std::fs::write(&backup_path, existing) {
-            tracing::warn!("Failed to back up config.toml before saving settings: {e}");
-        }
-    }
-
-    let toml_content = match toml::to_string_pretty(&config) {
-        Ok(s) => s,
-        Err(e) => {
-            return Ok(HttpResponse::InternalServerError()
-                .json(&ErrorResponse { error: format!("Failed to serialize config: {e}") }));
-        }
-    };
-    if let Err(e) = std::fs::write("config.toml", toml_content) {
+    // Writes atomically and keeps a bounded set of timestamped backups as a
+    // manual undo path — see `config_file`
+    if let Err(e) = config_file::write(&config) {
         return Ok(HttpResponse::InternalServerError()
-            .json(&ErrorResponse { error: format!("Failed to write config.toml: {e}") }));
+            .json(&ErrorResponse { error: e.to_string() }));
     }
 
     // The live-reloadable subset takes effect immediately; everything else
     // needs a restart (the settings UI must say so — this response doesn't
     // repeat itself here, see SETTINGS_LIVE_FIELDS via GET)
-    *app_state.live_settings.write().await = crate::monitoring::monitoring::LiveSettings::from_config(&monitoring);
+    *app_state.live_settings.write().await = LiveSettings::from_config(&monitoring);
 
     tracing::info!("Settings saved via PUT /api/v1/settings");
+    Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
+}
+
+/// Turns the passwordless terminal off, permanently, from the panel.
+///
+/// The rest of `remote_access` is deliberately absent from the settings API:
+/// a panel-password holder must not be able to *widen* what the agent exposes.
+/// This is the one direction that is always safe, so it gets its own endpoint
+/// rather than a general read-write field — there is no way to spell "enable"
+/// through it, which is what the first-run prompt in the panel needs and all
+/// it needs.
+///
+/// Takes effect immediately as well as on disk: `AppState.remote_access` is
+/// otherwise a startup snapshot, and a switch the user just pressed for
+/// safety reasons should not wait for a restart.
+async fn disable_passwordless_terminal(
+    req: HttpRequest,
+    app_state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse> {
+    let claims = match verify_auth(&req, &app_state.config.get_jwt_secret()) {
+        Ok(claims) => claims,
+        Err(_) => {
+            return Ok(HttpResponse::Unauthorized().json(&ErrorResponse {
+                error: "Invalid or missing token".to_string(),
+            }));
+        }
+    };
+
+    let _config_guard = app_state.config_write.lock().await;
+    let mut config = match config_file::read() {
+        Ok(c) => c,
+        Err(e) => {
+            return Ok(HttpResponse::InternalServerError()
+                .json(&ErrorResponse { error: e.to_string() }));
+        }
+    };
+    let mut remote = config.get_remote_access();
+    remote.passwordless_terminal = Some(false);
+    config.remote_access = Some(remote);
+    if let Err(e) = config_file::write(&config) {
+        return Ok(HttpResponse::InternalServerError()
+            .json(&ErrorResponse { error: e.to_string() }));
+    }
+
+    app_state.passwordless_off.store(true, Ordering::Release);
+    tracing::info!(
+        "Passwordless terminal disabled from the panel by {}",
+        claims.sub
+    );
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
 }
 
@@ -506,11 +736,11 @@ async fn get_card_order(req: HttpRequest, app_state: web::types::State<Arc<AppSt
             error: "Invalid or missing token".to_string(),
         }));
     }
-    let file_config = match read_config_file() {
+    let file_config = match config_file::read() {
         Ok(c) => c,
         Err(e) => {
             return Ok(HttpResponse::InternalServerError()
-                .json(&ErrorResponse { error: format!("Failed to read config.toml: {e}") }));
+                .json(&ErrorResponse { error: e.to_string() }));
         }
     };
     Ok(HttpResponse::Ok().json(&CardOrderPayload { card_order: file_config.get_server().card_order }))
@@ -526,27 +756,22 @@ async fn update_card_order(
             error: "Invalid or missing token".to_string(),
         }));
     }
-    let mut config = match read_config_file() {
+    let _config_guard = app_state.config_write.lock().await;
+
+    let mut config = match config_file::read() {
         Ok(c) => c,
         Err(e) => {
             return Ok(HttpResponse::InternalServerError()
-                .json(&ErrorResponse { error: format!("Failed to read config.toml: {e}") }));
+                .json(&ErrorResponse { error: e.to_string() }));
         }
     };
     let mut server_config = config.get_server();
     server_config.card_order = payload.into_inner().card_order;
     config.server = Some(server_config);
 
-    let toml_content = match toml::to_string_pretty(&config) {
-        Ok(s) => s,
-        Err(e) => {
-            return Ok(HttpResponse::InternalServerError()
-                .json(&ErrorResponse { error: format!("Failed to serialize config: {e}") }));
-        }
-    };
-    if let Err(e) = std::fs::write("config.toml", toml_content) {
+    if let Err(e) = config_file::write(&config) {
         return Ok(HttpResponse::InternalServerError()
-            .json(&ErrorResponse { error: format!("Failed to write config.toml: {e}") }));
+            .json(&ErrorResponse { error: e.to_string() }));
     }
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
 }
@@ -739,26 +964,26 @@ async fn touch_viewer_heartbeat(app_state: &AppState) {
     *app_state.last_viewer_seen.write().await = chrono::Utc::now();
 }
 
-fn verify_auth(req: &HttpRequest, jwt_secret: &str) -> Result<crate::api::auth::Claims> {
+fn verify_auth(req: &HttpRequest, jwt_secret: &str) -> Result<Claims> {
     let auth_header = req
         .headers()
         .get("Authorization")
         .ok_or_else(|| {
-            crate::utils::error::MonitorError::Auth("Missing Authorization header".to_string())
+            MonitorError::Auth("Missing Authorization header".to_string())
         })?
         .to_str()
         .map_err(|_| {
-            crate::utils::error::MonitorError::Auth("Invalid Authorization header".to_string())
+            MonitorError::Auth("Invalid Authorization header".to_string())
         })?;
 
     if !auth_header.starts_with("Bearer ") {
-        return Err(crate::utils::error::MonitorError::Auth(
+        return Err(MonitorError::Auth(
             "Invalid Authorization format".to_string(),
         ));
     }
 
     let token = &auth_header[7..];
-    crate::api::auth::verify_token(token, jwt_secret)
+    auth::verify_token(token, jwt_secret)
 }
 
 fn format_bytes(bytes: u64) -> String {

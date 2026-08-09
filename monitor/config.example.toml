@@ -23,6 +23,62 @@ port = 3770
 # cert_path = "/path/to/cert.pem"
 # key_path = "/path/to/key.pem"
 
+# WebSocket access to this machine's SSH daemon. Both switches are off by
+# default; turning either on exposes shell access through this agent's HTTP
+# surface, so it is deliberately a config-file decision and cannot be changed
+# from the panel's settings page.
+#
+# This section is never required — omit it entirely and both stay off.
+[remote_access]
+# The only address either feature connects to. Not selectable by clients: the
+# tunnel takes no target parameter at all, which is what stops it from being
+# usable to reach other hosts on this agent's network. To reach another
+# machine, configure it in the app with this one as its jump server, so that
+# hop is authorised by SSH rather than by this agent.
+ssh_addr = "127.0.0.1:22"
+
+# Lets the app reach this machine's SSH over the same HTTPS endpoint it
+# already polls, for servers whose SSH port isn't reachable directly. What
+# travels through it is the SSH protocol itself, still end-to-end encrypted
+# between app and sshd, with the app verifying the host key — this agent
+# only moves bytes and cannot read the session.
+tunnel_enabled = false
+
+# In-browser terminal in the panel. The agent acts as an SSH client to
+# `ssh_addr`, so a session has exactly the privileges of the SSH account the
+# browser authenticates as — the panel password alone grants no shell.
+terminal_enabled = false
+
+# How long a terminal session survives the browser disconnecting, so a laptop
+# that sleeps or a phone that changes network reattaches to the same shell.
+# terminal_detached_timeout_secs = 300
+
+# Open a shell straight from a panel login, with no SSH credentials at all.
+# Unset follows the platform: on for Linux, off for macOS and Windows.
+#
+# This makes your panel password equivalent to a shell as whatever account the
+# agent runs as — which is why install.sh installs a *user* service by default.
+# If you run the agent as root, turn this off. The SSH login stays available
+# alongside it either way, for anyone who wants sshd's authentication, logging
+# and second factor instead.
+#
+# Also settable with SBM_PASSWORDLESS_TERMINAL=0/1 (env wins over this file),
+# and the panel can turn it off — but never on — from its first-run prompt.
+# passwordless_terminal = false
+
+# Serve the terminal on a plaintext listener. Off by default because the
+# terminal's first message carries an SSH password and everything after it is
+# cleartext output. Not needed when TLS is configured above, nor when a proxy
+# on this same host terminates TLS (loopback traffic counts as secure).
+# The tunnel is unaffected by this setting.
+# allow_insecure = false
+
+# Capacity limits. Leave unset to size them from this machine's physical
+# memory; the resolved values are logged once at startup.
+# tunnel_max_conns = 8
+# terminal_max_sessions = 8
+# terminal_scrollback_bytes = 2097152
+
 # Monitoring configuration
 [monitoring]
 interval_seconds = 7

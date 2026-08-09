@@ -13,6 +13,16 @@ use ntex::http::{Method, header};
 use ntex::service::{Middleware, Service, ServiceCtx, cfg::SharedCfg};
 use ntex::web::{ErrorRenderer, HttpResponse, WebRequest, WebResponse};
 
+/// Methods advertised on preflight responses.
+///
+/// Must cover every method registered under `/api/v1` — a method missing here
+/// is silently unusable from a cross-origin panel (the browser rejects the
+/// request after preflight, the server never sees it). `PUT` used to be
+/// missing, which broke saving settings and card order on a panel hosted
+/// away from the agent. `allow_methods_covers_registered_api_methods` guards
+/// against that drifting again.
+const ALLOW_METHODS: &str = "GET, POST, PUT, DELETE";
+
 pub struct Cors {
     origins: Rc<Vec<String>>,
 }
@@ -64,7 +74,7 @@ where
             if req.method() == Method::OPTIONS {
                 let res = HttpResponse::NoContent()
                     .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin.as_str())
-                    .header(header::ACCESS_CONTROL_ALLOW_METHODS, "GET, POST")
+                    .header(header::ACCESS_CONTROL_ALLOW_METHODS, ALLOW_METHODS)
                     .header(header::ACCESS_CONTROL_ALLOW_HEADERS, "authorization, content-type")
                     .header(header::ACCESS_CONTROL_MAX_AGE, "3600")
                     .header(header::VARY, "Origin")
@@ -82,5 +92,31 @@ where
             }
         }
         Ok(res)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ALLOW_METHODS;
+
+    /// Reads the route table's source rather than taking a hand-maintained
+    /// list on faith: any `web::<method>()` that appears in `server.rs` must
+    /// be advertised on preflight, or cross-origin panels lose that verb
+    /// without any server-side symptom to notice.
+    #[test]
+    fn allow_methods_covers_registered_api_methods() {
+        const ROUTES_SRC: &str = include_str!("server.rs");
+        let advertised: Vec<&str> = ALLOW_METHODS.split(',').map(str::trim).collect();
+
+        for method in ["get", "post", "put", "delete", "patch", "head"] {
+            if !ROUTES_SRC.contains(&format!("web::{method}()")) {
+                continue;
+            }
+            let upper = method.to_uppercase();
+            assert!(
+                advertised.contains(&upper.as_str()),
+                "server.rs registers {upper} routes but ALLOW_METHODS ({ALLOW_METHODS}) omits it"
+            );
+        }
     }
 }

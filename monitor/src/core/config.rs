@@ -1,3 +1,4 @@
+use crate::core::remote_access::RemoteAccessConfig;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -17,7 +18,12 @@ pub struct Config {
     pub jwt_secret: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub push: Option<Vec<PushConfig>>,
-    
+    /// WebSocket access to the local sshd — off unless present and enabled.
+    /// Absent in every config written before the feature existed, hence
+    /// `Option`; see `core::remote_access`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub remote_access: Option<RemoteAccessConfig>,
+
     // Go-compatible fields (for compatibility)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub version: Option<i32>,
@@ -420,6 +426,12 @@ impl Config {
         self.push.clone().unwrap_or_else(|| vec![])
     }
 
+    /// The raw section as written (or its all-off defaults when absent).
+    /// Call `.resolve(..)` on it to fill in the memory-derived capacities.
+    pub fn get_remote_access(&self) -> RemoteAccessConfig {
+        self.remote_access.clone().unwrap_or_default()
+    }
+
     /// CLI/env overrides of the serve subcommand (--addr/--cert/--key), taking precedence over config files
     pub fn apply_cli_overrides(
         &mut self,
@@ -569,6 +581,9 @@ impl Default for Config {
             database_url: Some(env::var("DATABASE_URL")
                 .unwrap_or_else(|_| "sqlite:serverbox_monitor.db".to_string())),
             jwt_secret: None, // auto-generated on first start when unset, see resolve_jwt_secret
+            // Written out so a generated config.toml shows the section and
+            // its switches; every switch in it defaults to off
+            remote_access: Some(RemoteAccessConfig::default()),
             push: Some(vec![
                 PushConfig {
                     name: "webhook".to_string(),

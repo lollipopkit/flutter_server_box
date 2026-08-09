@@ -106,6 +106,7 @@ impl DataCleanupService {
         "rule_executions",
         "performance_metrics",
         "config_audit_log",
+        "access_log",
     ];
 
     async fn cleanup_policy_tables(&self) -> Result<u64> {
