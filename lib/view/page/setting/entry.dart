@@ -14,6 +14,7 @@ import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/server/discovery_result.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/github_id.dart';

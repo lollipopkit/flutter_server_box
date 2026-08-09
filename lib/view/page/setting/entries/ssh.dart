@@ -127,9 +127,11 @@ extension _SSH on _AppSettingsPageState {
               (result) => Spi(
                 id: ShortId.generate(),
                 name: result.ip,
-                ip: result.ip,
-                port: result.port,
-                user: username,
+                ssh: SshCredential(
+                  ip: result.ip,
+                  port: result.port,
+                  user: username,
+                ),
               ),
             )
             .toList();
@@ -198,7 +200,7 @@ extension _SSH on _AppSettingsPageState {
             Text(l10n.sshConfigServersToImport('${summary.toImport}')),
             const SizedBox(height: 16),
             ...resolved.map(
-              (s) => Text('• ${s.name} (${s.user}@${s.ip}:${s.port})'),
+              (s) => Text('• ${s.name} (${s.displayAddr})'),
             ),
           ],
         ),

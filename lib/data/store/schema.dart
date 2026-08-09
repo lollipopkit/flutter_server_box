@@ -51,7 +51,8 @@ abstract final class SchemaVersion {
   /// v2: everything up to and including `monitorHttp` on Spi — the last
   ///     layout written before versioning existed, hence the starting point
   ///     rather than v1
-  static const current = 2;
+  /// v3: Spi's flat SSH fields nested under `ssh`
+  static const current = 3;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

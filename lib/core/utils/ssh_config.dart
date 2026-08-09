@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 
 /// Utility class to parse SSH config files under `~/.ssh/config`
 abstract final class SSHConfig {
@@ -83,12 +84,14 @@ abstract final class SSHConfig {
         final spi = Spi(
           id: ShortId.generate(),
           name: currentHost,
-          ip: hostname,
-          port: port,
-          user: user ?? 'root', // Default user is 'root'
-          keyId: identityFile,
-          jumpId: resolvedJumpHost,
-          proxyCommand: resolvedProxyCommand,
+          ssh: SshCredential(
+            ip: hostname,
+            port: port,
+            user: user ?? 'root', // Default user is 'root'
+            keyId: identityFile,
+            jumpId: resolvedJumpHost,
+            proxyCommand: resolvedProxyCommand,
+          ),
         );
         final validationError = spi.validate();
         if (validationError != null) {

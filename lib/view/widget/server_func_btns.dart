@@ -197,26 +197,31 @@ void _gotoSSH(Spi spi, BuildContext context) async {
     return;
   }
 
+  // Launching an external `ssh` needs the SSH credential; a monitor-only
+  // server has none and never reaches here (the button row is hidden for it)
+  final ssh = spi.ssh;
+  if (ssh == null) return;
+
   final extraArgs = <String>[];
-  if (spi.port != 22) {
-    extraArgs.addAll(['-p', '${spi.port}']);
+  if (ssh.port != 22) {
+    extraArgs.addAll(['-p', '${ssh.port}']);
   }
 
   await _copyDesktopSshPasswordIfNeeded(spi, context);
 
   File? tempKeyFile;
-  final shouldGenKey = spi.keyId != null;
+  final shouldGenKey = ssh.keyId != null;
   var sshLaunched = false;
 
   try {
     if (shouldGenKey) {
       final tempDir = await Directory.systemTemp.createTemp(
-        'srvbox_pk_${spi.keyId}_',
+        'srvbox_pk_${ssh.keyId}_',
       );
       final path = tempDir.path.joinPath('id_key');
       final file = File(path);
       tempKeyFile = file;
-      final keyContent = getPrivateKey(spi.keyId!);
+      final keyContent = getPrivateKey(ssh.keyId!);
       final keyContentWithNewline = keyContent.endsWith('\n')
           ? keyContent
           : '$keyContent\n';
@@ -243,7 +248,7 @@ void _gotoSSH(Spi spi, BuildContext context) async {
       extraArgs.addAll(['-i', path]);
     }
 
-    final sshCommand = ['ssh'] + extraArgs + ['${spi.user}@${spi.ip}'];
+    final sshCommand = ['ssh'] + extraArgs + ['${ssh.user}@${ssh.ip}'];
     final system = Pfs.type;
     switch (system) {
       case Pfs.windows:
@@ -381,7 +386,7 @@ Future<void> _copyDesktopSshPasswordIfNeeded(
   if (!isDesktop) return;
   if (!Stores.setting.desktopSshAutoCopyPassword.fetch()) return;
 
-  final pwd = spi.pwd;
+  final pwd = spi.ssh?.pwd;
   if (pwd == null || pwd.isEmpty) return;
 
   if (Stores.setting.useBioAuth.fetch()) {

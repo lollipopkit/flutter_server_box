@@ -122,7 +122,7 @@ abstract final class KeyboardInteractiveAuth {
     final responses = List<String?>.filled(request.prompts.length, null);
     final pendingIndexes = <int>[];
     final pendingPrompts = <SSHUserInfoPrompt>[];
-    final password = spi.pwd;
+    final password = spi.ssh?.pwd;
     var usedStoredPassword = false;
 
     for (var i = 0; i < request.prompts.length; i++) {

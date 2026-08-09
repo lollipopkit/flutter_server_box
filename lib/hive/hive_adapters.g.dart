@@ -86,94 +86,6 @@ class SnippetAdapter extends TypeAdapter<Snippet> {
           typeId == other.typeId;
 }
 
-class SpiAdapter extends TypeAdapter<Spi> {
-  @override
-  final typeId = 3;
-
-  @override
-  Spi read(BinaryReader reader) {
-    final numOfFields = reader.readByte();
-    final fields = <int, dynamic>{
-      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
-    };
-    return Spi(
-      name: fields[0] as String,
-      ip: fields[1] as String,
-      port: (fields[2] as num).toInt(),
-      user: fields[3] as String,
-      pwd: fields[4] as String?,
-      keyId: fields[5] as String?,
-      tags: (fields[6] as List?)?.cast<String>(),
-      alterUrl: fields[7] as String?,
-      autoConnect: fields[8] == null ? true : fields[8] as bool,
-      jumpId: fields[9] as String?,
-      jumpIds: (fields[17] as List?)?.cast<String>(),
-      proxyCommand: fields[16] as String?,
-      custom: fields[10] as ServerCustom?,
-      wolCfg: fields[11] as WakeOnLanCfg?,
-      monitorHttp: fields[18] as MonitorHttpCredential?,
-      envs: (fields[12] as Map?)?.cast<String, String>(),
-      id: fields[13] == null ? '' : fields[13] as String,
-      customSystemType: fields[14] as SystemType?,
-      disabledCmdTypes: (fields[15] as List?)?.cast<String>(),
-    );
-  }
-
-  @override
-  void write(BinaryWriter writer, Spi obj) {
-    writer
-      ..writeByte(19)
-      ..writeByte(0)
-      ..write(obj.name)
-      ..writeByte(1)
-      ..write(obj.ip)
-      ..writeByte(2)
-      ..write(obj.port)
-      ..writeByte(3)
-      ..write(obj.user)
-      ..writeByte(4)
-      ..write(obj.pwd)
-      ..writeByte(5)
-      ..write(obj.keyId)
-      ..writeByte(6)
-      ..write(obj.tags)
-      ..writeByte(7)
-      ..write(obj.alterUrl)
-      ..writeByte(8)
-      ..write(obj.autoConnect)
-      ..writeByte(9)
-      ..write(obj.jumpId)
-      ..writeByte(10)
-      ..write(obj.custom)
-      ..writeByte(11)
-      ..write(obj.wolCfg)
-      ..writeByte(12)
-      ..write(obj.envs)
-      ..writeByte(13)
-      ..write(obj.id)
-      ..writeByte(14)
-      ..write(obj.customSystemType)
-      ..writeByte(15)
-      ..write(obj.disabledCmdTypes)
-      ..writeByte(16)
-      ..write(obj.proxyCommand)
-      ..writeByte(17)
-      ..write(obj.jumpIds)
-      ..writeByte(18)
-      ..write(obj.monitorHttp);
-  }
-
-  @override
-  int get hashCode => typeId.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SpiAdapter &&
-          runtimeType == other.runtimeType &&
-          typeId == other.typeId;
-}
-
 class VirtKeyAdapter extends TypeAdapter<VirtKey> {
   @override
   final typeId = 4;
@@ -767,6 +679,128 @@ class MonitorHttpCredentialAdapter extends TypeAdapter<MonitorHttpCredential> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is MonitorHttpCredentialAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class SpiAdapter extends TypeAdapter<Spi> {
+  @override
+  final typeId = 15;
+
+  @override
+  Spi read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return Spi(
+      name: fields[0] as String,
+      ssh: fields[19] as SshCredential?,
+      monitorHttp: fields[18] as MonitorHttpCredential?,
+      tags: (fields[6] as List?)?.cast<String>(),
+      autoConnect: fields[8] == null ? true : fields[8] as bool,
+      custom: fields[10] as ServerCustom?,
+      wolCfg: fields[11] as WakeOnLanCfg?,
+      envs: (fields[12] as Map?)?.cast<String, String>(),
+      id: fields[13] == null ? '' : fields[13] as String,
+      customSystemType: fields[14] as SystemType?,
+      disabledCmdTypes: (fields[15] as List?)?.cast<String>(),
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, Spi obj) {
+    writer
+      ..writeByte(11)
+      ..writeByte(0)
+      ..write(obj.name)
+      ..writeByte(6)
+      ..write(obj.tags)
+      ..writeByte(8)
+      ..write(obj.autoConnect)
+      ..writeByte(10)
+      ..write(obj.custom)
+      ..writeByte(11)
+      ..write(obj.wolCfg)
+      ..writeByte(12)
+      ..write(obj.envs)
+      ..writeByte(13)
+      ..write(obj.id)
+      ..writeByte(14)
+      ..write(obj.customSystemType)
+      ..writeByte(15)
+      ..write(obj.disabledCmdTypes)
+      ..writeByte(18)
+      ..write(obj.monitorHttp)
+      ..writeByte(19)
+      ..write(obj.ssh);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SpiAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+class SshCredentialAdapter extends TypeAdapter<SshCredential> {
+  @override
+  final typeId = 16;
+
+  @override
+  SshCredential read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return SshCredential(
+      ip: fields[0] as String,
+      port: fields[1] == null ? 22 : (fields[1] as num).toInt(),
+      user: fields[2] == null ? 'root' : fields[2] as String,
+      pwd: fields[3] as String?,
+      keyId: fields[4] as String?,
+      alterUrl: fields[5] as String?,
+      jumpId: fields[6] as String?,
+      jumpIds: (fields[7] as List?)?.cast<String>(),
+      proxyCommand: fields[8] as String?,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, SshCredential obj) {
+    writer
+      ..writeByte(9)
+      ..writeByte(0)
+      ..write(obj.ip)
+      ..writeByte(1)
+      ..write(obj.port)
+      ..writeByte(2)
+      ..write(obj.user)
+      ..writeByte(3)
+      ..write(obj.pwd)
+      ..writeByte(4)
+      ..write(obj.keyId)
+      ..writeByte(5)
+      ..write(obj.alterUrl)
+      ..writeByte(6)
+      ..write(obj.jumpId)
+      ..writeByte(7)
+      ..write(obj.jumpIds)
+      ..writeByte(8)
+      ..write(obj.proxyCommand);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SshCredentialAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

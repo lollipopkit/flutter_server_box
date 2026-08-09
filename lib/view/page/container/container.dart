@@ -57,7 +57,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
     final serverState = ref.read(serverProvider(widget.args.spi.id));
     _provider = containerProvider(
       serverState.client,
-      widget.args.spi.user,
+      widget.args.spi.ssh?.user ?? '',
       widget.args.spi.id,
       context,
     );

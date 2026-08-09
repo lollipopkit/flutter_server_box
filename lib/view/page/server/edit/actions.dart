@@ -244,13 +244,6 @@ extension _Actions on _ServerEditPageState {
     );
 
     MonitorHttpCredential? monitorHttp;
-    // Spi.ip/port/user are non-nullable (SSH's historically-required fields),
-    // but unused by the monitor HTTP connection path — derived from the
-    // monitor URL purely so they hold a sensible value, not shown to the
-    // user or read by anything on this path.
-    String derivedIp = _ipController.text;
-    int derivedPort = int.tryParse(_portController.text) ?? 22;
-    String derivedUser = _usernameController.text;
     if (useMonitorHttp) {
       final monitorAddr = _monitorAddrCtrl.text.selfNotEmptyOrNull;
       if (monitorAddr == null) {
@@ -263,13 +256,33 @@ extension _Actions on _ServerEditPageState {
         pwd: _monitorPwdCtrl.text.selfNotEmptyOrNull,
         ignoreCert: _monitorIgnoreCert.value,
       );
-      final uri = Uri.tryParse(monitorAddr);
-      derivedIp = uri?.host.selfNotEmptyOrNull ?? monitorAddr;
-      derivedPort = uri?.hasPort == true
-          ? uri!.port
-          : (uri?.scheme == 'https' ? 443 : 80);
-      derivedUser = 'monitor';
     }
+
+    // Left null in monitor mode: the SSH form is hidden there, so there is
+    // nothing to record. Previously these were required, which is why a
+    // monitor-only server used to be saved with a host derived from the
+    // monitor URL and a user literally named `monitor`.
+    final ssh = useMonitorHttp
+        ? null
+        : SshCredential(
+            ip: _ipController.text,
+            port: int.tryParse(_portController.text) ?? 22,
+            user: _usernameController.text,
+            pwd: _passwordController.text.selfNotEmptyOrNull,
+            keyId: _keyIdx.value != null
+                ? ref
+                      .read(privateKeyProvider)
+                      .keys
+                      .elementAt(_keyIdx.value!)
+                      .id
+                : null,
+            alterUrl: _altUrlController.text.selfNotEmptyOrNull,
+            jumpId: _jumpServers.value.isEmpty
+                ? null
+                : _jumpServers.value.first,
+            jumpIds: _jumpServers.value.isEmpty ? null : _jumpServers.value,
+            proxyCommand: proxyCommandText.selfNotEmptyOrNull,
+          );
 
     final wolEmpty =
         _wolMacCtrl.text.isEmpty &&
@@ -292,29 +305,11 @@ extension _Actions on _ServerEditPageState {
 
     final spi = Spi(
       name: _nameController.text.isEmpty
-          ? derivedIp
+          ? (ssh?.ip ?? monitorHttp?.addr ?? '')
           : _nameController.text,
-      ip: derivedIp,
-      port: derivedPort,
-      user: derivedUser,
-      pwd: useMonitorHttp ? null : _passwordController.text.selfNotEmptyOrNull,
-      keyId: !useMonitorHttp && _keyIdx.value != null
-          ? ref.read(privateKeyProvider).keys.elementAt(_keyIdx.value!).id
-          : null,
+      ssh: ssh,
       tags: _tags.value.isEmpty ? null : _tags.value.toList(),
-      alterUrl: useMonitorHttp
-          ? null
-          : _altUrlController.text.selfNotEmptyOrNull,
       autoConnect: _autoConnect.value,
-      jumpId: useMonitorHttp || _jumpServers.value.isEmpty
-          ? null
-          : _jumpServers.value.first,
-      jumpIds: useMonitorHttp || _jumpServers.value.isEmpty
-          ? null
-          : _jumpServers.value,
-      proxyCommand: useMonitorHttp
-          ? null
-          : proxyCommandText.selfNotEmptyOrNull,
       custom: custom,
       wolCfg: wol,
       monitorHttp: monitorHttp,
@@ -454,25 +449,29 @@ extension _Utils on _ServerEditPageState {
 
   void _initWithSpi(Spi spi) {
     _nameController.text = spi.name;
-    _ipController.text = spi.ip;
-    _portController.text = spi.port.toString();
-    _usernameController.text = spi.user;
-    if (spi.keyId == null) {
-      _passwordController.text = spi.pwd ?? '';
-    } else {
-      _keyIdx.value = ref
-          .read(privateKeyProvider)
-          .keys
-          .indexWhere((e) => e.id == spi.keyId);
+
+    final ssh = spi.ssh;
+    if (ssh != null) {
+      _ipController.text = ssh.ip;
+      _portController.text = ssh.port.toString();
+      _usernameController.text = ssh.user;
+      if (ssh.keyId == null) {
+        _passwordController.text = ssh.pwd ?? '';
+      } else {
+        _keyIdx.value = ref
+            .read(privateKeyProvider)
+            .keys
+            .indexWhere((e) => e.id == ssh.keyId);
+      }
+      _altUrlController.text = ssh.alterUrl ?? '';
+      _jumpServers.value = ssh.resolvedJumpIds;
+      _proxyCommandCtrl.text = ssh.proxyCommand ?? '';
     }
 
     /// List in dart is passed by pointer, so you need to copy it here
     _tags.value = spi.tags?.toSet() ?? {};
 
-    _altUrlController.text = spi.alterUrl ?? '';
     _autoConnect.value = spi.autoConnect;
-    _jumpServers.value = spi.resolvedJumpIds;
-    _proxyCommandCtrl.text = spi.proxyCommand ?? '';
 
     final custom = spi.custom;
     if (custom != null) {

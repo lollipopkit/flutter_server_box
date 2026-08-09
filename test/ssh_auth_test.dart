@@ -6,15 +6,17 @@ import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/worker.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/generated/l10n/l10n_en.dart';
 
-const _spi = Spi(
+import 'helpers/spi_fixture.dart';
+
+final _spi = spiFixture(
   name: 'Jump host',
   ip: '192.0.2.1',
   port: 22,
@@ -22,7 +24,7 @@ const _spi = Spi(
   id: 'jump-host',
 );
 
-const _spiWithPassword = Spi(
+final _spiWithPassword = spiFixture(
   name: 'Jump host',
   ip: '192.0.2.1',
   port: 22,

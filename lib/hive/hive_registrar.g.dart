@@ -22,6 +22,7 @@ extension HiveRegistrar on HiveInterface {
     registerAdapter(ServerFuncBtnAdapter());
     registerAdapter(SnippetAdapter());
     registerAdapter(SpiAdapter());
+    registerAdapter(SshCredentialAdapter());
     registerAdapter(SystemTypeAdapter());
     registerAdapter(VirtKeyAdapter());
     registerAdapter(WakeOnLanCfgAdapter());
@@ -43,6 +44,7 @@ extension IsolatedHiveRegistrar on IsolatedHiveInterface {
     registerAdapter(ServerFuncBtnAdapter());
     registerAdapter(SnippetAdapter());
     registerAdapter(SpiAdapter());
+    registerAdapter(SshCredentialAdapter());
     registerAdapter(SystemTypeAdapter());
     registerAdapter(VirtKeyAdapter());
     registerAdapter(WakeOnLanCfgAdapter());

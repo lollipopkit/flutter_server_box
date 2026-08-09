@@ -29,7 +29,7 @@ class SftpReq {
         Defaults.updateInterval;
     privateKeysByKeyId = {};
 
-    final keyId = spi.keyId;
+    final keyId = spi.ssh?.keyId;
     if (keyId != null) {
       privateKey = getPrivateKey(keyId);
       privateKeysByKeyId![keyId] = privateKey!;
@@ -43,8 +43,8 @@ class SftpReq {
     final firstJumpId = spi.firstJumpId;
     if (firstJumpId != null) {
       jumpSpi = jumpSpisById?[firstJumpId];
-      jumpPrivateKey = Stores.key.fetchOne(jumpSpi?.keyId)?.key;
-      if (jumpSpi?.keyId case final jumpKeyId?) {
+      jumpPrivateKey = Stores.key.fetchOne(jumpSpi?.ssh?.keyId)?.key;
+      if (jumpSpi?.ssh?.keyId case final jumpKeyId?) {
         if (jumpPrivateKey != null) {
           privateKeysByKeyId![jumpKeyId] = jumpPrivateKey!;
         }
@@ -52,7 +52,7 @@ class SftpReq {
     }
 
     for (final jump in jumpSpisById?.values ?? const <Spi>[]) {
-      final jumpKeyId = jump.keyId;
+      final jumpKeyId = jump.ssh?.keyId;
       if (jumpKeyId == null || privateKeysByKeyId!.containsKey(jumpKeyId)) {
         continue;
       }

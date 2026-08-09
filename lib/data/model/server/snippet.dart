@@ -150,10 +150,10 @@ extension SnippetX on Snippet {
   }
 
   static final fmtArgs = {
-    r'${host}': (Spi spi) => spi.ip,
-    r'${port}': (Spi spi) => spi.port.toString(),
-    r'${user}': (Spi spi) => spi.user,
-    r'${pwd}': (Spi spi) => spi.pwd ?? '',
+    r'${host}': (Spi spi) => spi.ssh?.ip ?? '',
+    r'${port}': (Spi spi) => (spi.ssh?.port ?? 22).toString(),
+    r'${user}': (Spi spi) => spi.ssh?.user ?? '',
+    r'${pwd}': (Spi spi) => spi.ssh?.pwd ?? '',
     r'${id}': (Spi spi) => spi.id,
     r'${name}': (Spi spi) => spi.name,
   };

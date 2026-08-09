@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+
+import 'helpers/spi_fixture.dart';
 
 // Mock functions to test the deduplication logic without relying on ServerStore
 List<Spi> _mockDeduplicateServers(
@@ -25,9 +28,9 @@ List<Spi> _mockDeduplicateServers(
 bool _mockIsDuplicate(Spi imported, List<Spi> existing) {
   for (final existingSpi in existing) {
     // Check for exact match on ip:port@user combination
-    if (existingSpi.ip == imported.ip &&
-        existingSpi.port == imported.port &&
-        existingSpi.user == imported.user) {
+    if (existingSpi.ssh?.ip == imported.ssh?.ip &&
+        existingSpi.ssh?.port == imported.ssh?.port &&
+        existingSpi.ssh?.user == imported.ssh?.user) {
       return true;
     }
   }
@@ -74,21 +77,21 @@ void main() {
     setUp(() {
       // Set up some existing servers for testing
       existingServers = [
-        const Spi(
+        spiFixture(
           name: 'production-web',
           ip: '192.168.1.100',
           port: 22,
           user: 'root',
           id: 'existing1',
         ),
-        const Spi(
+        spiFixture(
           name: 'staging-db',
           ip: '192.168.1.200',
           port: 22,
           user: 'postgres',
           id: 'existing2',
         ),
-        const Spi(
+        spiFixture(
           name: 'dev-server',
           ip: '192.168.1.50',
           port: 2222,
@@ -100,19 +103,19 @@ void main() {
 
     test('deduplicateServers removes exact duplicates', () {
       importedServers = [
-        const Spi(
+        spiFixture(
           name: 'new-server-1',
           ip: '192.168.1.100',
           port: 22,
           user: 'root', // Same as existing1
         ),
-        const Spi(
+        spiFixture(
           name: 'new-server-2',
           ip: '192.168.1.300',
           port: 22,
           user: 'admin', // New server
         ),
-        const Spi(
+        spiFixture(
           name: 'new-server-3',
           ip: '192.168.1.200',
           port: 22,
@@ -127,24 +130,24 @@ void main() {
 
       expect(deduplicated, hasLength(1));
       expect(deduplicated.first.name, 'new-server-2');
-      expect(deduplicated.first.ip, '192.168.1.300');
+      expect(deduplicated.first.ssh?.ip, '192.168.1.300');
     });
 
     test('deduplicateServers considers port and user in deduplication', () {
       importedServers = [
-        const Spi(
+        spiFixture(
           name: 'same-ip-diff-port',
           ip: '192.168.1.100',
           port: 2222, // Different port
           user: 'root',
         ),
-        const Spi(
+        spiFixture(
           name: 'same-ip-diff-user',
           ip: '192.168.1.100',
           port: 22,
           user: 'admin', // Different user
         ),
-        const Spi(
+        spiFixture(
           name: 'exact-duplicate',
           ip: '192.168.1.100',
           port: 22,
@@ -165,8 +168,8 @@ void main() {
 
     test('deduplicateServers handles empty existing servers list', () {
       importedServers = [
-        const Spi(name: 'server1', ip: '192.168.1.100', port: 22, user: 'root'),
-        const Spi(
+        spiFixture(name: 'server1', ip: '192.168.1.100', port: 22, user: 'root'),
+        spiFixture(
           name: 'server2',
           ip: '192.168.1.200',
           port: 22,
@@ -188,19 +191,19 @@ void main() {
 
     test('resolveNameConflicts appends numbers to conflicting names', () {
       importedServers = [
-        const Spi(
+        spiFixture(
           name: 'production-web', // Conflicts with existing
           ip: '192.168.1.300',
           port: 22,
           user: 'root',
         ),
-        const Spi(
+        spiFixture(
           name: 'dev-server', // Conflicts with existing
           ip: '192.168.1.400',
           port: 22,
           user: 'root',
         ),
-        const Spi(
+        spiFixture(
           name: 'unique-name', // No conflict
           ip: '192.168.1.500',
           port: 22,
@@ -223,19 +226,19 @@ void main() {
       'resolveNameConflicts handles multiple conflicts with same base name',
       () {
         importedServers = [
-          const Spi(
+          spiFixture(
             name: 'server',
             ip: '192.168.1.100',
             port: 22,
             user: 'root',
           ),
-          const Spi(
+          spiFixture(
             name: 'server',
             ip: '192.168.1.200',
             port: 22,
             user: 'admin',
           ),
-          const Spi(
+          spiFixture(
             name: 'server',
             ip: '192.168.1.300',
             port: 2222,
@@ -267,15 +270,15 @@ void main() {
 
     test('getImportSummary calculates correct statistics', () {
       final originalList = [
-        const Spi(name: 'server1', ip: '192.168.1.100', port: 22, user: 'root'),
-        const Spi(
+        spiFixture(name: 'server1', ip: '192.168.1.100', port: 22, user: 'root'),
+        spiFixture(
           name: 'server2',
           ip: '192.168.1.200',
           port: 22,
           user: 'admin',
         ),
-        const Spi(name: 'server3', ip: '192.168.1.300', port: 22, user: 'root'),
-        const Spi(
+        spiFixture(name: 'server3', ip: '192.168.1.300', port: 22, user: 'root'),
+        spiFixture(
           name: 'duplicate',
           ip: '192.168.1.100',
           port: 22,
@@ -284,13 +287,13 @@ void main() {
       ];
 
       final deduplicatedList = [
-        const Spi(
+        spiFixture(
           name: 'server2',
           ip: '192.168.1.200',
           port: 22,
           user: 'admin',
         ),
-        const Spi(name: 'server3', ip: '192.168.1.300', port: 22, user: 'root'),
+        spiFixture(name: 'server3', ip: '192.168.1.300', port: 22, user: 'root'),
       ];
 
       final summary = ServerDeduplication.getImportSummary(
@@ -305,8 +308,8 @@ void main() {
 
     test('getImportSummary handles case with no duplicates', () {
       final originalList = [
-        const Spi(name: 'server1', ip: '192.168.1.100', port: 22, user: 'root'),
-        const Spi(
+        spiFixture(name: 'server1', ip: '192.168.1.100', port: 22, user: 'root'),
+        spiFixture(
           name: 'server2',
           ip: '192.168.1.200',
           port: 22,
@@ -326,8 +329,8 @@ void main() {
 
     test('getImportSummary handles case with all duplicates', () {
       final originalList = [
-        const Spi(name: 'server1', ip: '192.168.1.100', port: 22, user: 'root'),
-        const Spi(
+        spiFixture(name: 'server1', ip: '192.168.1.100', port: 22, user: 'root'),
+        spiFixture(
           name: 'server2',
           ip: '192.168.1.200',
           port: 22,
@@ -353,19 +356,19 @@ void main() {
     test('complete deduplication workflow', () {
       // Simulate a complete import workflow
       importedServers = [
-        const Spi(
+        spiFixture(
           name: 'production-web', // Name conflicts with existing
           ip: '192.168.1.400', // Different IP, so not a duplicate
           port: 22,
           user: 'root',
         ),
-        const Spi(
+        spiFixture(
           name: 'new-staging',
           ip: '192.168.1.100', // Same as existing1, should be removed
           port: 22,
           user: 'root',
         ),
-        const Spi(
+        spiFixture(
           name: 'unique-server',
           ip: '192.168.1.500', // Unique server
           port: 22,
@@ -403,14 +406,14 @@ void main() {
     });
 
     test('deduplication key generation is consistent', () {
-      const server1 = Spi(
+      final server1 = spiFixture(
         name: 'test1',
         ip: '192.168.1.100',
         port: 22,
         user: 'root',
       );
 
-      const server2 = Spi(
+      final server2 = spiFixture(
         name: 'test2', // Different name
         ip: '192.168.1.100', // Same IP
         port: 22, // Same port
@@ -428,13 +431,13 @@ void main() {
     test('ImportSummary properties work correctly', () {
       final summary = ServerDeduplication.getImportSummary(
         [
-          const Spi(
+          spiFixture(
             name: 'server1',
             ip: '192.168.1.100',
             port: 22,
             user: 'root',
           ),
-          const Spi(
+          spiFixture(
             name: 'server2',
             ip: '192.168.1.200',
             port: 22,
@@ -442,7 +445,7 @@ void main() {
           ),
         ],
         [
-          const Spi(
+          spiFixture(
             name: 'server2',
             ip: '192.168.1.200',
             port: 22,

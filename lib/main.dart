@@ -13,9 +13,11 @@ import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/data/store/migrations/m002_nest_ssh.dart';
 import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
+import 'package:server_box/hive/spi_legacy_adapter.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
 Future<void> main() async {
@@ -59,6 +61,11 @@ Future<void> _initData() async {
 
   await Hive.initFlutter();
   Hive.registerAdapters();
+  // Reads pre-v3 server records, which the generated SpiAdapter no longer
+  // understands (it owns a new typeId and the nested layout).
+  // TODO: drop together with SpiNestSshMigration once no install can still be
+  // on schema v2.
+  Hive.registerAdapter(SpiLegacyAdapter());
 
   await PrefStore.shared.init(); // Call this before accessing any store
   await Stores.init();
@@ -114,7 +121,7 @@ Future<void> _doDbMigrate() async {
   // SchemaTooNewException when the data was written by a newer build — that
   // must not be swallowed: continuing would let this build overwrite records
   // whose shape it doesn't understand.
-  await SchemaVersion.migrate(const []);
+  await SchemaVersion.migrate(const [SpiNestSshMigration()]);
 }
 
 Future<void> _initWindow() async {

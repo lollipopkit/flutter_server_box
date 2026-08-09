@@ -82,23 +82,28 @@ class ServerStore extends CachedHiveStore<Spi> {
 }
 
 Spi? _replaceJumpIds(Spi spi, Map<String, String> idMap) {
+  final ssh = spi.ssh;
+  if (ssh == null) return null;
+
   var changed = false;
-  final resolvedJumpIds = spi.resolvedJumpIds;
-  final newJumpIds = resolvedJumpIds.map((id) {
+  final newJumpIds = ssh.resolvedJumpIds.map((id) {
     final newId = idMap[id];
     if (newId == null) return id;
     changed = true;
     return newId;
   }).toList();
 
-  final newJumpId = spi.jumpId != null && idMap.containsKey(spi.jumpId)
-      ? idMap[spi.jumpId]
-      : spi.jumpId;
-  changed = changed || newJumpId != spi.jumpId;
+  final oldJumpId = ssh.jumpId;
+  final newJumpId = oldJumpId != null && idMap.containsKey(oldJumpId)
+      ? idMap[oldJumpId]
+      : oldJumpId;
+  changed = changed || newJumpId != oldJumpId;
 
   if (!changed) return null;
   return spi.copyWith(
-    jumpId: newJumpIds.isEmpty ? newJumpId : newJumpIds.first,
-    jumpIds: newJumpIds.isEmpty ? null : newJumpIds,
+    ssh: ssh.copyWith(
+      jumpId: newJumpIds.isEmpty ? newJumpId : newJumpIds.first,
+      jumpIds: newJumpIds.isEmpty ? null : newJumpIds,
+    ),
   );
 }

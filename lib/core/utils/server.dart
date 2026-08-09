@@ -77,6 +77,16 @@ Future<SSHClient> genClient(
   Future<bool> Function(HostKeyPromptInfo info)? onHostKeyPrompt,
   Set<String>? visitedServerIds,
 }) async {
+  // Bound once, up front: everything below needs SSH, and a server reached
+  // only over monitor's HTTP API has no credential to connect with
+  final ssh = spi.ssh;
+  if (ssh == null) {
+    throw SSHErr(
+      type: SSHErrType.connect,
+      message: 'No SSH credential configured for ${spi.name}',
+    );
+  }
+
   final chainVisitedServerIds = visitedServerIds ?? <String>{};
   final currentServerId = _hostIdentifier(spi);
   if (!chainVisitedServerIds.add(currentServerId)) {
@@ -118,7 +128,7 @@ Future<SSHClient> genClient(
         SSHClient? jumpClient;
         try {
           String? nextJumpPrivateKey;
-          final jumpSpiKeyId = jumpSpi_.keyId;
+          final jumpSpiKeyId = jumpSpi_.ssh?.keyId;
           if (jumpSpi != null &&
               jumpSpi.id == jumpSpi_.id &&
               jumpPrivateKey != null) {
@@ -141,7 +151,7 @@ Future<SSHClient> genClient(
             visitedServerIds: {...chainVisitedServerIds},
           );
 
-          return await jumpClient.forwardLocal(spi.ip, spi.port);
+          return await jumpClient.forwardLocal(ssh.ip, ssh.port);
         } catch (e, stack) {
           jumpClient?.close();
           if (!_isJumpFailoverError(e)) {
@@ -167,25 +177,25 @@ Future<SSHClient> genClient(
       );
     }
 
-    final proxyCommand = spi.proxyCommand;
+    final proxyCommand = ssh.proxyCommand;
     if (proxyCommand != null && proxyCommand.trim().isNotEmpty) {
       return await ProxyCommandSocket.connect(
         command: proxyCommand,
-        host: spi.ip,
-        port: spi.port,
-        user: spi.user,
+        host: ssh.ip,
+        port: ssh.port,
+        user: ssh.user,
         timeout: timeout,
       );
     }
 
     // Direct
     try {
-      return await SSHSocket.connect(spi.ip, spi.port, timeout: timeout);
+      return await SSHSocket.connect(ssh.ip, ssh.port, timeout: timeout);
     } catch (e) {
       Loggers.app.warning('genClient', e);
-      if (spi.alterUrl == null) rethrow;
+      if (ssh.alterUrl == null) rethrow;
       try {
-        final res = spi.parseAlterUrl();
+        final res = ssh.parseAlterUrl();
         alterUser = res.$2;
         return await SSHSocket.connect(res.$1, res.$3, timeout: timeout);
       } catch (e) {
@@ -202,13 +212,13 @@ Future<SSHClient> genClient(
     prompt: hostKeyPrompt,
   );
 
-  final keyId = spi.keyId;
+  final keyId = ssh.keyId;
   if (keyId == null) {
     onStatus?.call(GenSSHClientStatus.pwd);
     return SSHClient(
       socket,
-      username: alterUser ?? spi.user,
-      onPasswordRequest: () => spi.pwd,
+      username: alterUser ?? ssh.user,
+      onPasswordRequest: () => ssh.pwd,
       onUserInfoRequest: onKeyboardInteractive == null
           ? null
           : (request) => onKeyboardInteractive(spi, request),
@@ -220,7 +230,7 @@ Future<SSHClient> genClient(
   onStatus?.call(GenSSHClientStatus.key);
   return SSHClient(
     socket,
-    username: spi.user,
+    username: ssh.user,
     // Must use [compute] here, instead of [Computer.shared.start]
     identities: await compute(loadIdentity, privateKey),
     onUserInfoRequest: onKeyboardInteractive == null
@@ -398,7 +408,7 @@ Future<bool> showHostKeyPrompt(
     return false;
   }
 
-  final hostLine = '${info.spi.user}@${info.spi.ip}:${info.spi.port}';
+  final hostLine = info.spi.displayAddr;
   final description = info.isMismatch
       ? l10n.sshHostKeyChangedDesc(info.spi.name)
       : l10n.sshHostKeyNewDesc(info.spi.name);
@@ -443,6 +453,16 @@ Future<void> ensureKnownHostKey(
   Map<String, Spi>? jumpSpisById,
   Set<String>? visitedServerIds,
 }) async {
+  // Bound once, up front: everything below needs SSH, and a server reached
+  // only over monitor's HTTP API has no credential to connect with
+  final ssh = spi.ssh;
+  if (ssh == null) {
+    throw SSHErr(
+      type: SSHErrType.connect,
+      message: 'No SSH credential configured for ${spi.name}',
+    );
+  }
+
   final chainVisitedServerIds = visitedServerIds ?? <String>{};
   final currentServerId = _hostIdentifier(spi);
   if (!chainVisitedServerIds.add(currentServerId)) {

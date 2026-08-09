@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:server_box/data/model/server/server_private_info.dart';
+
+import 'helpers/spi_fixture.dart';
 
 void main() {
   group('Server Edit Page Logic Tests', () {
@@ -48,7 +51,7 @@ void main() {
       // Test server validation without actual form widgets
 
       // Valid server
-      const validServer = Spi(
+      final validServer = spiFixture(
         name: 'test-server',
         ip: '192.168.1.100',
         port: 22,
@@ -56,9 +59,9 @@ void main() {
       );
 
       expect(validServer.name.isNotEmpty, isTrue);
-      expect(validServer.ip.isNotEmpty, isTrue);
-      expect(validServer.port > 0 && validServer.port <= 65535, isTrue);
-      expect(validServer.user.isNotEmpty, isTrue);
+      expect(validServer.ssh?.ip.isNotEmpty, isTrue);
+      expect(validServer.ssh!.port > 0 && validServer.ssh!.port <= 65535, isTrue);
+      expect(validServer.ssh?.user.isNotEmpty, isTrue);
 
       // Invalid cases
       expect(''.isNotEmpty, isFalse); // Empty name
@@ -77,7 +80,7 @@ void main() {
       };
 
       // Process form data into server object
-      final server = Spi(
+      final server = spiFixture(
         name: formData['name'] as String,
         ip: formData['ip'] as String,
         port: int.parse(formData['port'] as String),
@@ -85,15 +88,15 @@ void main() {
       );
 
       expect(server.name, 'my-server');
-      expect(server.ip, '192.168.1.100');
-      expect(server.port, 2222);
-      expect(server.user, 'admin');
+      expect(server.ssh?.ip, '192.168.1.100');
+      expect(server.ssh?.port, 2222);
+      expect(server.ssh?.user, 'admin');
     });
 
     test('SSH key handling is correct', () {
       // Test SSH key field handling
 
-      const serverWithKey = Spi(
+      final serverWithKey = spiFixture(
         name: 'key-server',
         ip: '192.168.1.100',
         port: 22,
@@ -101,10 +104,10 @@ void main() {
         keyId: '~/.ssh/id_rsa',
       );
 
-      expect(serverWithKey.keyId, '~/.ssh/id_rsa');
-      expect(serverWithKey.keyId?.isNotEmpty, isTrue);
+      expect(serverWithKey.ssh?.keyId, '~/.ssh/id_rsa');
+      expect(serverWithKey.ssh?.keyId?.isNotEmpty, isTrue);
 
-      const serverWithoutKey = Spi(
+      final serverWithoutKey = spiFixture(
         name: 'pwd-server',
         ip: '192.168.1.100',
         port: 22,
@@ -112,14 +115,14 @@ void main() {
         pwd: 'password123',
       );
 
-      expect(serverWithoutKey.keyId, isNull);
-      expect(serverWithoutKey.pwd, 'password123');
+      expect(serverWithoutKey.ssh?.keyId, isNull);
+      expect(serverWithoutKey.ssh?.pwd, 'password123');
     });
 
     test('server editing vs creation logic', () {
       // Test logic for distinguishing between editing and creating servers
 
-      const existingServer = Spi(
+      final existingServer = spiFixture(
         name: 'existing',
         ip: '192.168.1.100',
         port: 22,
@@ -134,7 +137,7 @@ void main() {
       expect(isEditing, isTrue);
       expect(isCreating, isFalse);
 
-      const newServer = Spi(
+      final newServer = spiFixture(
         name: 'new-server',
         ip: '192.168.1.100',
         port: 22,
@@ -152,7 +155,7 @@ void main() {
     test('form field population from imported server', () {
       // Test that imported server data correctly populates form fields
 
-      const importedServer = Spi(
+      final importedServer = spiFixture(
         name: 'imported-prod-web',
         ip: '10.0.1.100',
         port: 2222,
@@ -163,10 +166,10 @@ void main() {
       // Simulate form field population
       final formFields = {
         'name': importedServer.name,
-        'ip': importedServer.ip,
-        'port': importedServer.port.toString(),
-        'user': importedServer.user,
-        'keyId': importedServer.keyId,
+        'ip': importedServer.ssh?.ip,
+        'port': importedServer.ssh?.port.toString(),
+        'user': importedServer.ssh?.user,
+        'keyId': importedServer.ssh?.keyId,
       };
 
       expect(formFields['name'], 'imported-prod-web');
@@ -218,19 +221,24 @@ void main() {
         if (server.name.isEmpty) {
           errors.add('Server name is required');
         }
-        if (server.ip.isEmpty) {
+        final ssh = server.ssh;
+        if (ssh == null) {
+          errors.add('SSH credential is required');
+          return;
+        }
+        if (ssh.ip.isEmpty) {
           errors.add('Server IP is required');
         }
-        if (server.port <= 0 || server.port > 65535) {
+        if (ssh.port <= 0 || ssh.port > 65535) {
           errors.add('Port must be between 1 and 65535');
         }
-        if (server.user.isEmpty) {
+        if (ssh.user.isEmpty) {
           errors.add('Username is required');
         }
       }
 
       // Test with invalid server
-      const invalidServer = Spi(name: '', ip: '', port: 0, user: '');
+      final invalidServer = spiFixture(name: '', ip: '', port: 0, user: '');
 
       validateServer(invalidServer);
 
@@ -242,7 +250,7 @@ void main() {
 
       // Test with valid server
       errors.clear();
-      const validServer = Spi(
+      final validServer = spiFixture(
         name: 'valid',
         ip: '192.168.1.1',
         port: 22,

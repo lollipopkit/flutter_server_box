@@ -461,14 +461,13 @@ extension on _SSHTabPageState {
               .where(
                 (spi) =>
                     spi.name.toLowerCase().contains(q.toLowerCase()) ||
-                    spi.user.toLowerCase().contains(q.toLowerCase()) ||
-                    spi.ip.contains(q),
+                    spi.displayAddr.toLowerCase().contains(q.toLowerCase()),
               )
               .toList();
         },
         builder: (ctx, spi) => ListTile(
           title: Text(spi.name),
-          subtitle: Text('${spi.user}@${spi.ip}:${spi.port}'),
+          subtitle: Text(spi.displayAddr),
           trailing: const Icon(Icons.chevron_right),
           onTap: () {
             ctx.pop();
@@ -524,7 +523,7 @@ extension on _SSHTabPageState {
               contentPadding: EdgeInsets.zero,
               title: Text(spi?.name ?? id),
               subtitle: spi != null
-                  ? Text('${spi.user}@${spi.ip}:${spi.port}')
+                  ? Text(spi.displayAddr)
                   : null,
               trailing: const Icon(Icons.chevron_right),
               onTap: () {

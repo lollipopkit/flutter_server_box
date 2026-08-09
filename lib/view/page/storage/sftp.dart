@@ -121,18 +121,18 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
 
     try {
       final homeResult = await _client.run(
-        'getent passwd -- ${shellSingleQuote(widget.args.spi.user)}',
+        'getent passwd -- ${shellSingleQuote(widget.args.spi.ssh?.user ?? '')}',
       );
       final passwdEntry = homeResult.string.trim();
       final homePath = passwdEntry.split(':').elementAtOrNull(5)?.trim() ?? '';
       if (homePath.isNotEmpty && homePath.startsWith('/')) {
         initPath = homePath;
       } else {
-        final user = widget.args.spi.user;
+        final user = widget.args.spi.ssh?.user ?? '';
         initPath = user != 'root' ? '/home/$user' : '/root';
       }
     } catch (_) {
-      final user = widget.args.spi.user;
+      final user = widget.args.spi.ssh?.user ?? '';
       initPath = user != 'root' ? '/home/$user' : '/root';
     }
 
@@ -1221,7 +1221,7 @@ extension _Actions on _SftpPageState {
   Widget _buildHomeBtn() {
     return IconButton(
       onPressed: () {
-        final user = widget.args.spi.user;
+        final user = widget.args.spi.ssh?.user ?? '';
         _status.path.path = user != 'root' ? '/home/$user' : '/root';
         _listDir();
       },
