@@ -15,6 +15,7 @@ import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
+import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
@@ -120,7 +121,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   @override
   Widget build(BuildContext context) {
     final serverState = ref.watch(serverProvider(widget.args.spi.id));
-    if (serverState.client == null) {
+    if (!_hasSession(serverState)) {
       return Scaffold(
         appBar: CustomAppBar(),
         body: Center(child: Text(libL10n.empty)),
@@ -129,8 +130,32 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     return _buildMainPage(serverState);
   }
 
+  /// Whether there is anything to render yet. The two connection methods
+  /// signal this differently: SSH keeps a long-lived [SSHClient] on the state,
+  /// while the monitor HTTP path holds no client at all (its `Dio` session is
+  /// private to `MonitorHttpClient`), so it can only be judged by [ServerConn].
+  /// Gating both on `client == null` left every monitor-HTTP server stuck on
+  /// the empty placeholder.
+  bool _hasSession(ServerState state) {
+    return switch (ServerConnectCredential.fromSpi(state.spi)) {
+      ServerConnectCredentialSsh() => state.client != null,
+      // connecting → still nothing fetched; loading/finished → status is populated
+      ServerConnectCredentialMonitorHttp() =>
+        !(state.conn < server_model.ServerConn.connected),
+    };
+  }
+
+  bool _isSsh(ServerState state) {
+    return ServerConnectCredential.fromSpi(state.spi)
+        is ServerConnectCredentialSsh;
+  }
+
   Widget _buildMainPage(ServerState si) {
-    final buildFuncs = !_moveServerFuncs;
+    // Every ServerFuncBtn (terminal / sftp / container / process / snippet /
+    // iperf / systemd / portForward) is driven over SSH; monitor's HTTP API
+    // exposes no counterpart for any of them. Hide the whole row on such
+    // servers instead of offering buttons that can only fail.
+    final buildFuncs = !_moveServerFuncs && _isSsh(si);
     final logo = _buildLogo(si);
     final children = <Widget>[
       ?logo,
@@ -906,23 +931,30 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                device,
-                style: UIs.text12,
-                textScaler: _textFactor,
-                maxLines: 1,
-                overflow: TextOverflow.fade,
-                textAlign: TextAlign.left,
-              ),
-              Text(
-                '${ns.sizeIn(device: device)} | ${ns.sizeOut(device: device)}',
-                style: UIs.text12Grey,
-                textScaler: _textFactor,
-              ),
-            ],
+          // Expanded, not intrinsic: the totals line grows with the numbers
+          // ("502.4 MB | 502.4 MB" on a busy loopback) and pushed the
+          // fixed-width speed column past the right edge
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  device,
+                  style: UIs.text12,
+                  textScaler: _textFactor,
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                  textAlign: TextAlign.left,
+                ),
+                Text(
+                  '${ns.sizeIn(device: device)} | ${ns.sizeOut(device: device)}',
+                  style: UIs.text12Grey,
+                  textScaler: _textFactor,
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                ),
+              ],
+            ),
           ),
           SizedBox(
             width: 170,

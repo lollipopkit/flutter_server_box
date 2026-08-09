@@ -101,10 +101,15 @@ MonitorCpuCoreTime _$MonitorCpuCoreTimeFromJson(Map<String, dynamic> json) =>
     MonitorCpuCoreTime(
       used: (json['used'] as num).toInt(),
       total: (json['total'] as num).toInt(),
+      usagePercent: (json['usage_percent'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$MonitorCpuCoreTimeToJson(MonitorCpuCoreTime instance) =>
-    <String, dynamic>{'used': instance.used, 'total': instance.total};
+    <String, dynamic>{
+      'used': instance.used,
+      'total': instance.total,
+      'usage_percent': instance.usagePercent,
+    };
 
 MonitorMemoryMetrics _$MonitorMemoryMetricsFromJson(
   Map<String, dynamic> json,

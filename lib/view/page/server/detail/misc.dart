@@ -153,51 +153,70 @@ extension on _ServerDetailPageState {
           initiallyExpanded: _getInitExpand(1),
           childrenPadding: const EdgeInsets.only(bottom: 7),
           children: [
-            _buildHistoryLine('CPU', points, (e) => e.cpu, unit: '%'),
-            _buildHistoryLine('RAM', points, (e) => e.memory, unit: '%'),
-            _buildHistoryLine(
-              libL10n.disk,
+            // Grouped the same way monitor's own panel groups them
+            // (`Dashboard.svelte`'s usageSeries/networkSeries and
+            // `DetailPanel.svelte`'s diskIo chart): series sharing a unit go on
+            // one axis, so three percentages read as one comparable picture
+            // instead of three separately auto-scaled strips.
+            _buildHistoryChart(
+              libL10n.used,
               points,
-              (e) => e.disk,
-              unit: '%',
+              const [
+                _HistorySeries('CPU', Color(0xFF3B82F6), _selCpu),
+                _HistorySeries('RAM', Color(0xFF22C55E), _selMem),
+                _HistorySeries('Disk', Color(0xFFF59E0B), _selDisk),
+              ],
+              format: _formatPercent,
+              maxY: 100,
             ),
-            _buildHistoryLine(
-              '${libL10n.net} ↓',
+            _buildHistoryChart(
+              libL10n.net,
               points,
-              (e) => e.netRxSpeed,
-              formatY: _formatSpeed,
+              const [
+                _HistorySeries('↓', Color(0xFF8B5CF6), _selNetRx),
+                _HistorySeries('↑', Color(0xFFEC4899), _selNetTx),
+              ],
+              format: _formatSpeed,
             ),
-            _buildHistoryLine(
-              '${libL10n.net} ↑',
+            _buildHistoryChart(
+              'Disk IO',
               points,
-              (e) => e.netTxSpeed,
-              formatY: _formatSpeed,
-            ),
-            _buildHistoryLine(
-              'DiskIO ${l10n.read}',
-              points,
-              (e) => e.diskioReadSpeed,
-              formatY: _formatSpeed,
-            ),
-            _buildHistoryLine(
-              'DiskIO ${l10n.write}',
-              points,
-              (e) => e.diskioWriteSpeed,
-              formatY: _formatSpeed,
+              [
+                _HistorySeries(l10n.read, const Color(0xFF0EA5E9), _selDioRead),
+                _HistorySeries(
+                  l10n.write,
+                  const Color(0xFFF97316),
+                  _selDioWrite,
+                ),
+              ],
+              format: _formatSpeed,
             ),
             if (hasTemp)
-              _buildHistoryLine(
+              _buildHistoryChart(
                 libL10n.temperature,
                 points,
-                (e) => e.temperature ?? 0,
-                unit: '°C',
+                [
+                  _HistorySeries(
+                    libL10n.temperature,
+                    const Color(0xFFEF4444),
+                    _selTemp,
+                  ),
+                ],
+                format: _formatTemp,
               ),
             if (hasBattery)
-              _buildHistoryLine(
+              _buildHistoryChart(
                 libL10n.battery,
                 points,
-                (e) => e.batteryPercent ?? 0,
-                unit: '%',
+                [
+                  _HistorySeries(
+                    libL10n.battery,
+                    const Color(0xFF14B8A6),
+                    _selBattery,
+                  ),
+                ],
+                format: _formatPercent,
+                maxY: 100,
               ),
           ],
         ),
@@ -205,37 +224,78 @@ extension on _ServerDetailPageState {
     });
   }
 
-  String _formatSpeed(double bytesPerSec) => '${bytesPerSec.bytes2Str}/s';
-
-  Widget _buildHistoryLine(
+  /// One chart per unit, all its series overlaid on a shared axis, with a
+  /// legend line carrying each series' latest value — mirrors
+  /// `monitor/frontend/src/components/LineChart.svelte`.
+  Widget _buildHistoryChart(
     String title,
     List<MonitorHistoryPoint> points,
-    double Function(MonitorHistoryPoint) selector, {
-    String? unit,
-    String Function(double)? formatY,
+    List<_HistorySeries> series, {
+    required String Function(double) format,
+    double? maxY,
   }) {
-    final spots = <FlSpot>[
-      for (var i = 0; i < points.length; i++)
-        FlSpot(
-          (DateTime.tryParse(points[i].timestamp)?.millisecondsSinceEpoch ??
-                  i)
-              .toDouble(),
-          selector(points[i]),
+    final bars = <LineChartBarData>[];
+    for (final s in series) {
+      final spots = <FlSpot>[
+        for (var i = 0; i < points.length; i++)
+          FlSpot(i.toDouble(), s.selector(points[i])),
+      ];
+      if (spots.isEmpty) continue;
+      bars.add(
+        LineChartBarData(
+          spots: spots,
+          isCurved: false,
+          barWidth: 1.5,
+          isStrokeCapRound: true,
+          color: s.color,
+          dotData: const FlDotData(show: false),
+          belowBarData: BarAreaData(show: false),
         ),
-    ];
-    final format = formatY ?? (v) => '${v.toStringAsFixed(1)}${unit ?? ''}';
+      );
+    }
+    if (bars.isEmpty) return UIs.placeholder;
+
+    final last = points.last;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: UIs.text12Grey),
+          UIs.height7,
+          Wrap(
+            spacing: 13,
+            runSpacing: 3,
+            children: [
+              for (final s in series)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        color: s.color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    UIs.width7,
+                    Text(
+                      '${s.label} ${format(s.selector(last))}',
+                      style: UIs.text12Grey,
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          UIs.height7,
           SizedBox(
-            height: 100,
-            child: _buildAutoLineChart(
-              spots,
-              tooltipPrefix: '$title: ',
-              formatY: format,
+            height: 110,
+            child: _buildHistoryLineChart(
+              bars,
+              series: series,
+              format: format,
+              maxY: maxY,
             ),
           ),
         ],
@@ -243,6 +303,30 @@ extension on _ServerDetailPageState {
     );
   }
 }
+
+/// One line of a history chart. Const-constructible (hence the top-level
+/// selector functions below) so the shared groups can be `const` lists.
+class _HistorySeries {
+  final String label;
+  final Color color;
+  final double Function(MonitorHistoryPoint) selector;
+
+  const _HistorySeries(this.label, this.color, this.selector);
+}
+
+double _selCpu(MonitorHistoryPoint p) => p.cpu;
+double _selMem(MonitorHistoryPoint p) => p.memory;
+double _selDisk(MonitorHistoryPoint p) => p.disk;
+double _selNetRx(MonitorHistoryPoint p) => p.netRxSpeed;
+double _selNetTx(MonitorHistoryPoint p) => p.netTxSpeed;
+double _selDioRead(MonitorHistoryPoint p) => p.diskioReadSpeed;
+double _selDioWrite(MonitorHistoryPoint p) => p.diskioWriteSpeed;
+double _selTemp(MonitorHistoryPoint p) => p.temperature ?? 0;
+double _selBattery(MonitorHistoryPoint p) => p.batteryPercent ?? 0;
+
+String _formatPercent(double v) => '${v.toStringAsFixed(1)}%';
+String _formatTemp(double v) => '${v.toStringAsFixed(1)}°C';
+String _formatSpeed(double bytesPerSec) => '${bytesPerSec.bytes2Str}/s';
 
 String _formatAmdGpuProcessMemory(int rawMemory) {
   final valueInMiB = rawMemory / 1024;
@@ -298,6 +382,12 @@ Widget _buildLineChart(
   bool curve = false,
   int verticalInterval = 20,
 }) {
+  // `Cpus._updateSpots` seeds an empty Fifo on a core's first sample and only
+  // starts filling it on the next one, so the very first frame after connecting
+  // hands us empty series. fl_chart's `mostLeftSpot` is late-initialized from
+  // the spot list and throws a LateInitializationError on an empty one.
+  if (spots.isEmpty || spots.every((e) => e.isEmpty)) return UIs.placeholder;
+
   return LineChart(
     LineChartData(
       lineTouchData: LineTouchData(
@@ -368,28 +458,32 @@ Widget _buildLineChart(
   );
 }
 
-/// Like [_buildLineChart] but with a Y axis auto-scaled to the data range,
-/// for series that aren't a 0-100 percentage (network/diskio speeds,
-/// temperature) — used by monitor's history charts (`_buildMonitorHistory`).
-Widget _buildAutoLineChart(
-  List<FlSpot> spots, {
-  String? tooltipPrefix,
-  String Function(double)? formatY,
+/// Multi-series chart for monitor's history card. Unlike [_buildLineChart]
+/// (fixed 0-100 percent axis) the Y axis is auto-scaled unless [maxY] is
+/// given, and every series shares that one axis so they stay comparable.
+///
+/// The axis is anchored at 0 rather than padded below the minimum: every
+/// quantity plotted here (percentages, byte rates, °C) has 0 as its floor, and
+/// the old 10% bottom padding rendered labels like "-3.6%" and "-6979 B/s".
+Widget _buildHistoryLineChart(
+  List<LineChartBarData> bars, {
+  required List<_HistorySeries> series,
+  required String Function(double) format,
+  double? maxY,
 }) {
-  if (spots.isEmpty) return UIs.placeholder;
-
-  final ys = spots.map((e) => e.y);
-  var minY = ys.reduce((a, b) => a < b ? a : b);
-  var maxY = ys.reduce((a, b) => a > b ? a : b);
-  if (minY == maxY) {
-    minY -= 1;
-    maxY += 1;
-  } else {
-    final pad = (maxY - minY) * 0.1;
-    minY -= pad;
-    maxY += pad;
+  // fl_chart throws a LateInitializationError on `mostLeftSpot` when handed a
+  // bar with no spots at all
+  if (bars.isEmpty || bars.every((b) => b.spots.isEmpty)) {
+    return UIs.placeholder;
   }
-  final format = formatY ?? (v) => v.toStringAsFixed(1);
+
+  final peak = bars
+      .expand((b) => b.spots)
+      .map((e) => e.y)
+      .fold<double>(0, (a, b) => a > b ? a : b);
+  // A flat all-zero window still needs a non-zero range to divide by
+  final top = maxY ?? (peak <= 0 ? 1 : peak * 1.1);
+  const gridLines = 4;
 
   return LineChart(
     LineChartData(
@@ -397,26 +491,30 @@ Widget _buildAutoLineChart(
         touchTooltipData: LineTouchTooltipData(
           tooltipPadding: const EdgeInsets.all(5),
           tooltipBorderRadius: BorderRadius.circular(8),
-          getTooltipItems: (List<LineBarSpot> touchedSpots) {
-            return touchedSpots.map((e) {
-              return LineTooltipItem(
-                '$tooltipPrefix${format(e.y)}',
-                const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              );
-            }).toList();
-          },
+          getTooltipItems: (touchedSpots) => touchedSpots.map((e) {
+            final label = e.barIndex < series.length
+                ? series[e.barIndex].label
+                : '';
+            return LineTooltipItem(
+              '$label ${format(e.y)}',
+              TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: e.bar.color,
+              ),
+            );
+          }).toList(),
         ),
         handleBuiltInTouches: true,
       ),
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
-        getDrawingHorizontalLine: (value) {
-          return const FlLine(
-            color: Color.fromARGB(43, 88, 91, 94),
-            strokeWidth: 1,
-          );
-        },
+        horizontalInterval: top / gridLines,
+        getDrawingHorizontalLine: (value) => const FlLine(
+          color: Color.fromARGB(43, 88, 91, 94),
+          strokeWidth: 1,
+        ),
       ),
       titlesData: FlTitlesData(
         show: true,
@@ -430,26 +528,27 @@ Widget _buildAutoLineChart(
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            reservedSize: 44,
-            getTitlesWidget: (val, meta) =>
-                Text(format(val), style: UIs.text12Grey),
+            // Without an explicit interval fl_chart emits a label per pixel
+            // step, which stacked them into an unreadable smear
+            interval: top / gridLines,
+            reservedSize: 56,
+            getTitlesWidget: (val, meta) => SideTitleWidget(
+              meta: meta,
+              child: Text(
+                format(val),
+                style: UIs.text12Grey,
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.visible,
+              ),
+            ),
           ),
         ),
       ),
       borderData: FlBorderData(show: false),
-      minY: minY,
-      maxY: maxY,
-      lineBarsData: [
-        LineChartBarData(
-          spots: spots,
-          isCurved: false,
-          barWidth: 2,
-          isStrokeCapRound: true,
-          color: UIs.primaryColor,
-          dotData: const FlDotData(show: false),
-          belowBarData: BarAreaData(show: false),
-        ),
-      ],
+      minY: 0,
+      maxY: top,
+      lineBarsData: bars,
     ),
   );
 }

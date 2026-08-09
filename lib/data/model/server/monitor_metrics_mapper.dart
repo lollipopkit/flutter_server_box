@@ -56,27 +56,53 @@ int _parseEpochSeconds(String iso) {
   return parsed.millisecondsSinceEpoch ~/ 1000;
 }
 
-/// monitor's `CpuCoreTime` only has `used`/`total` (no user/sys/nice/iowait/
-/// irq/softirq breakdown) — those sub-fields are set to 0, same convention
-/// `_accumulateWindowsCpu` already uses in `server_status_update_req.dart`
-/// for Windows' instantaneous-percentage source. Overall usage percentage
-/// (index 0, the "cpu" aggregate `Cpus` reads by default) is unaffected.
+/// Sub-percent resolution for the synthetic CPU counter below; any value works
+/// as long as it is the same for the busy and idle halves, since [Cpus] only
+/// ever looks at their ratio.
+const _kCpuScale = 1000;
+
+/// monitor's `CpuCoreTime.used`/`total` cannot be handed to [Cpus] directly.
+/// [Cpus] divides by the `total` delta between two samples, which is right for
+/// Linux's cumulative `/proc/stat` ticks but zero for the constant-scale
+/// one-shot percentages the agent produces on Bsd/Windows/macOS — that
+/// division yielded ±Infinity for user/sys/io and a flat 100% idle.
+///
+/// monitor already resolves the platform ambiguity and ships the answer as
+/// `usage_percent`, so accumulate that into a synthetic monotonic counter.
+/// This is the same convention `_accumulateWindowsCpu` uses in
+/// `server_status_update_req.dart` for Windows' instantaneous source. All busy
+/// time lands in `user` because monitor carries no user/sys/nice/iowait/irq/
+/// softirq breakdown; those stay 0, as they already do on the Windows path.
 void _applyCpu(ServerStatus ss, MonitorMetrics m) {
   if (m.cpuCores.isEmpty) return;
-  var totalUsed = 0;
-  var totalTotal = 0;
-  final perCore = <SingleCpuCore>[];
-  for (var i = 0; i < m.cpuCores.length; i++) {
-    final c = m.cpuCores[i];
-    totalUsed += c.used;
-    totalTotal += c.total;
-    perCore.add(SingleCpuCore('cpu$i', c.used, 0, 0, c.total - c.used, 0, 0, 0));
+
+  // Every core needs a reading. The agent reports null on its first Linux
+  // cycle (no baseline yet) and on builds predating the field — keep the
+  // previous sample instead of accumulating a fabricated 0.
+  final percents = <double>[];
+  for (final c in m.cpuCores) {
+    final p = c.usagePercent;
+    if (p == null) return;
+    percents.add(p.clamp(0.0, 100.0));
   }
-  final cores = [
-    SingleCpuCore('cpu', totalUsed, 0, 0, totalTotal - totalUsed, 0, 0, 0),
+
+  // Index 0 of the previous sample is the "cpu" summary; per-core starts at 1
+  final prev = ss.cpu.now;
+  var totalUsed = 0;
+  var totalIdle = 0;
+  final perCore = <SingleCpuCore>[];
+  for (var i = 0; i < percents.length; i++) {
+    final p = i + 1 < prev.length ? prev[i + 1] : null;
+    final used = (p?.user ?? 0) + (percents[i] * _kCpuScale).round();
+    final idle = (p?.idle ?? 0) + ((100 - percents[i]) * _kCpuScale).round();
+    totalUsed += used;
+    totalIdle += idle;
+    perCore.add(SingleCpuCore('cpu$i', used, 0, 0, idle, 0, 0, 0));
+  }
+  ss.cpu.update([
+    SingleCpuCore('cpu', totalUsed, 0, 0, totalIdle, 0, 0, 0),
     ...perCore,
-  ];
-  ss.cpu.update(cores);
+  ]);
 
   final brand = m.cpuBrand;
   if (brand != null && brand.isNotEmpty) {
@@ -85,13 +111,20 @@ void _applyCpu(ServerStatus ss, MonitorMetrics m) {
   }
 }
 
+/// monitor reports memory, swap and disk sizes in **bytes**
+/// (`adapt_memory`/`disk_details` multiply the parsed KiB by 1024), while the
+/// app's [Memory]/[Swap]/[Disk] carry the KiB their `/proc/meminfo` and
+/// `df -k` sources produce. Passing bytes straight through rendered a 64 GiB
+/// host as "64 TB".
+int _toKib(int bytes) => bytes ~/ 1024;
+
 /// monitor doesn't report `avail` separately from `used`; `avail` is derived
 /// as `total - used`, which reproduces monitor's own `usage_percent` exactly.
 void _applyMemory(ServerStatus ss, MonitorMetrics m) {
   ss.mem = Memory(
-    total: m.memory.total,
-    free: m.memory.free,
-    avail: m.memory.total - m.memory.used,
+    total: _toKib(m.memory.total),
+    free: _toKib(m.memory.free),
+    avail: _toKib(m.memory.total - m.memory.used),
   );
 }
 
@@ -99,8 +132,8 @@ void _applyMemory(ServerStatus ss, MonitorMetrics m) {
 /// beyond a debug display).
 void _applySwap(ServerStatus ss, MonitorMetrics m) {
   ss.swap = Swap(
-    total: m.swap.total,
-    free: m.swap.total - m.swap.used,
+    total: _toKib(m.swap.total),
+    free: _toKib(m.swap.total - m.swap.used),
     cached: 0,
   );
 }
@@ -113,9 +146,9 @@ void _applyDisks(ServerStatus ss, MonitorMetrics m) {
           fsTyp: d.fsType,
           mount: d.mount,
           usedPercent: d.usagePercent.round(),
-          used: BigInt.from(d.used),
-          size: BigInt.from(d.total),
-          avail: BigInt.from(d.total - d.used),
+          used: BigInt.from(_toKib(d.used)),
+          size: BigInt.from(_toKib(d.total)),
+          avail: BigInt.from(_toKib(d.total - d.used)),
         ),
       )
       .toList();

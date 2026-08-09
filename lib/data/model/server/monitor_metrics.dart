@@ -70,7 +70,21 @@ class MonitorCpuCoreTime {
   final int used;
   final int total;
 
-  const MonitorCpuCoreTime({required this.used, required this.total});
+  /// Usage over monitor's own sampling window, 0.0–100.0. Resolved agent-side
+  /// (`adapt_cpu`), because what [used]/[total] mean depends on the platform
+  /// the agent runs on: cumulative `/proc/stat` ticks on Linux, but a
+  /// constant-scale one-shot percentage on Bsd/Windows/macOS. Deriving usage
+  /// from the raw pair on this side would be wrong for one of the two.
+  ///
+  /// `null` on the agent's very first Linux cycle, before it has a baseline,
+  /// and on monitor builds predating the field.
+  final double? usagePercent;
+
+  const MonitorCpuCoreTime({
+    required this.used,
+    required this.total,
+    this.usagePercent,
+  });
 
   factory MonitorCpuCoreTime.fromJson(Map<String, dynamic> json) =>
       _$MonitorCpuCoreTimeFromJson(json);

@@ -104,12 +104,14 @@ class MonitorHttpClient {
 
   Future<List<MonitorHistoryPoint>> fetchHistory({int minutes = 60}) {
     return _authed(() async {
-      final resp = await _session().get<Map<String, dynamic>>(
+      // The endpoint answers with a bare JSON array of points, not an
+      // envelope object — see `get_metrics_history` in monitor's api/server.rs
+      final resp = await _session().get<List<dynamic>>(
         '/api/v1/metrics/history',
         queryParameters: {'minutes': minutes},
       );
-      final points = resp.data?['points'] ?? resp.data?['data'];
-      if (points is! List) {
+      final points = resp.data;
+      if (points == null) {
         throw const MonitorHttpErr(
           type: MonitorHttpErrType.invalidResponse,
           message: 'Empty /api/v1/metrics/history response',
