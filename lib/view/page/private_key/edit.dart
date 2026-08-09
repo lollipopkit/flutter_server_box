@@ -10,6 +10,7 @@ import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/res/misc.dart';
+import 'package:server_box/view/widget/max_width.dart';
 
 const _format = 'text/plain';
 final _whitespaceRegex = RegExp(r'\s+');
@@ -196,73 +197,75 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
   }
 
   Widget _buildBody() {
-    return AutoMultiList(
-      children: [
-        Input(
-          autoFocus: true,
-          controller: _nameController,
-          type: TextInputType.text,
-          node: _nameNode,
-          onSubmitted: (_) => _focusScope.requestFocus(_keyNode),
-          label: libL10n.name,
-          icon: Icons.info,
-          suggestion: true,
-        ),
-        Input(
-          controller: _keyController,
-          minLines: 3,
-          maxLines: 10,
-          type: TextInputType.text,
-          node: _keyNode,
-          onSubmitted: (_) => _focusScope.requestFocus(_pwdNode),
-          label: l10n.privateKey,
-          icon: Icons.vpn_key,
-          suggestion: false,
-        ),
-        TextButton(
-          onPressed: () async {
-            final path = await Pfs.pickFilePath();
-            if (path == null) return;
+    return MaxWidth(
+      child: AutoMultiList(
+        children: [
+          Input(
+            autoFocus: true,
+            controller: _nameController,
+            type: TextInputType.text,
+            node: _nameNode,
+            onSubmitted: (_) => _focusScope.requestFocus(_keyNode),
+            label: libL10n.name,
+            icon: Icons.info,
+            suggestion: true,
+          ),
+          Input(
+            controller: _keyController,
+            minLines: 3,
+            maxLines: 10,
+            type: TextInputType.text,
+            node: _keyNode,
+            onSubmitted: (_) => _focusScope.requestFocus(_pwdNode),
+            label: l10n.privateKey,
+            icon: Icons.vpn_key,
+            suggestion: false,
+          ),
+          TextButton(
+            onPressed: () async {
+              final path = await Pfs.pickFilePath();
+              if (path == null) return;
 
-            final file = File(path);
-            if (!file.existsSync()) {
-              context.showSnackBar(libL10n.notExistFmt(path));
-              return;
-            }
-            final size = (await file.stat()).size;
-            if (size > Miscs.privateKeyMaxSize) {
-              context.showSnackBar(
-                l10n.fileTooLarge(
-                  path,
-                  size.bytes2Str,
-                  Miscs.privateKeyMaxSize.bytes2Str,
-                ),
-              );
-              return;
-            }
+              final file = File(path);
+              if (!file.existsSync()) {
+                context.showSnackBar(libL10n.notExistFmt(path));
+                return;
+              }
+              final size = (await file.stat()).size;
+              if (size > Miscs.privateKeyMaxSize) {
+                context.showSnackBar(
+                  l10n.fileTooLarge(
+                    path,
+                    size.bytes2Str,
+                    Miscs.privateKeyMaxSize.bytes2Str,
+                  ),
+                );
+                return;
+              }
 
-            final content = await file.readAsString();
-            // dartssh2 accepts only LF (but not CRLF or CR)
-            _keyController.text = _standardizeLineSeparators(content.trim());
-          },
-          child: Text(libL10n.file),
-        ),
-        Input(
-          controller: _pwdController,
-          type: TextInputType.text,
-          node: _pwdNode,
-          obscureText: true,
-          label: libL10n.pwd,
-          icon: Icons.password,
-          suggestion: false,
-          onSubmitted: (_) => _onTapSave(),
-        ),
-        SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-        ValBuilder(
-          listenable: _loading,
-          builder: (val) => val ?? UIs.placeholder,
-        ),
-      ],
+              final content = await file.readAsString();
+              // dartssh2 accepts only LF (but not CRLF or CR)
+              _keyController.text = _standardizeLineSeparators(content.trim());
+            },
+            child: Text(libL10n.file),
+          ),
+          Input(
+            controller: _pwdController,
+            type: TextInputType.text,
+            node: _pwdNode,
+            obscureText: true,
+            label: libL10n.pwd,
+            icon: Icons.password,
+            suggestion: false,
+            onSubmitted: (_) => _onTapSave(),
+          ),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+          ValBuilder(
+            listenable: _loading,
+            builder: (val) => val ?? UIs.placeholder,
+          ),
+        ],
+      ),
     );
   }
 

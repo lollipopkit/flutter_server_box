@@ -9,6 +9,7 @@ import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
+import 'package:server_box/view/widget/max_width.dart';
 
 class PrivateKeysListPage extends ConsumerStatefulWidget {
   const PrivateKeysListPage({super.key});
@@ -44,7 +45,7 @@ class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage>
     }
 
     final children = pkis.map(_buildKeyItem).toList();
-    return AutoMultiList(children: children);
+    return MaxWidth(child: AutoMultiList(children: children));
   }
 
   Widget _buildKeyItem(PrivateKeyInfo item) {

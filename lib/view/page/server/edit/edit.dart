@@ -24,6 +24,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
+import 'package:server_box/view/widget/max_width.dart';
 
 part 'actions.dart';
 part 'widget.dart';
@@ -220,7 +221,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
       ),
       _buildMore(),
     ];
-    return AutoMultiList(children: children);
+    return MaxWidth(child: AutoMultiList(children: children));
   }
 
   @override

@@ -29,6 +29,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/widget/max_width.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 
 part 'misc.dart';
@@ -45,10 +46,6 @@ class ServerDetailPage extends ConsumerStatefulWidget {
     path: '/servers/detail',
   );
 }
-
-/// Widest the card grid is allowed to get: four `UIs.columnWidth` columns
-/// plus the gaps between them.
-const _kMaxContentWidth = 4 * (UIs.columnWidth + 10);
 
 class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     with SingleTickerProviderStateMixin {
@@ -166,19 +163,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
 
     return Scaffold(
       appBar: _buildAppBar(si),
-      body: SafeArea(
-        // Capped and centred. AutoMultiList fits as many columns as the window
-        // allows, which on a wide desktop window meant five narrow columns of
-        // cards with the eye travelling the full width of the screen to read
-        // one server. Four is the point where a column still holds a chart at
-        // a readable size.
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: _kMaxContentWidth),
-            child: AutoMultiList(children: children),
-          ),
-        ),
-      ),
+      body: SafeArea(child: MaxWidth(child: AutoMultiList(children: children))),
     );
   }
 

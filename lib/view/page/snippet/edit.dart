@@ -6,6 +6,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
+import 'package:server_box/view/widget/max_width.dart';
 
 final class SnippetEditPageArgs {
   final Snippet? snippet;
@@ -119,45 +120,47 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage>
   }
 
   Widget _buildBody() {
-    return AutoMultiList(
-      children: [
-        Input(
-          autoFocus: true,
-          controller: _nameController,
-          type: TextInputType.text,
-          onSubmitted: (_) => FocusScope.of(context).requestFocus(_scriptNode),
-          label: libL10n.name,
-          icon: Icons.info,
-          suggestion: true,
-        ),
-        Input(
-          controller: _noteController,
-          minLines: 3,
-          maxLines: 3,
-          type: TextInputType.multiline,
-          label: libL10n.note,
-          icon: Icons.note,
-          suggestion: true,
-        ),
-        Consumer(
-          builder: (_, ref, _) {
-            final tags = ref.watch(snippetProvider.select((p) => p.tags));
-            return TagTile(tags: _tags, allTags: tags).cardx;
-          },
-        ),
-        Input(
-          controller: _scriptController,
-          node: _scriptNode,
-          minLines: 3,
-          maxLines: 10,
-          type: TextInputType.multiline,
-          label: libL10n.snippet,
-          icon: Icons.code,
-          suggestion: false,
-        ),
-        _buildAutoRunOn(),
-        _buildTip(),
-      ],
+    return MaxWidth(
+      child: AutoMultiList(
+        children: [
+          Input(
+            autoFocus: true,
+            controller: _nameController,
+            type: TextInputType.text,
+            onSubmitted: (_) => FocusScope.of(context).requestFocus(_scriptNode),
+            label: libL10n.name,
+            icon: Icons.info,
+            suggestion: true,
+          ),
+          Input(
+            controller: _noteController,
+            minLines: 3,
+            maxLines: 3,
+            type: TextInputType.multiline,
+            label: libL10n.note,
+            icon: Icons.note,
+            suggestion: true,
+          ),
+          Consumer(
+            builder: (_, ref, _) {
+              final tags = ref.watch(snippetProvider.select((p) => p.tags));
+              return TagTile(tags: _tags, allTags: tags).cardx;
+            },
+          ),
+          Input(
+            controller: _scriptController,
+            node: _scriptNode,
+            minLines: 3,
+            maxLines: 10,
+            type: TextInputType.multiline,
+            label: libL10n.snippet,
+            icon: Icons.code,
+            suggestion: false,
+          ),
+          _buildAutoRunOn(),
+          _buildTip(),
+        ],
+      ),
     );
   }
 
