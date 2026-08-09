@@ -546,12 +546,13 @@ int? _parseDynamicInt(Object? val) {
 }
 
 int? _parseProcessId(Object? value) {
-  if (value is int) return value;
-  if (value is num) {
-    if (!value.isFinite || value != value.truncateToDouble()) return null;
-    return value.toInt();
-  }
-  return int.tryParse(value?.toString() ?? '');
+  final parsed = switch (value) {
+    final int value => value,
+    final num value when value.isFinite && value == value.truncateToDouble() =>
+      value.toInt(),
+    _ => int.tryParse(value?.toString() ?? ''),
+  };
+  return parsed != null && parsed > 0 ? parsed : null;
 }
 
 double? _parseDynamicDouble(Object? val) {

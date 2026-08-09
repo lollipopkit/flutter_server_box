@@ -68,7 +68,7 @@ void main() {
       expect(script, isNot(contains('MSAcpi_ThermalZoneTemperature'))); // temp
 
       // Other Windows commands should remain
-      expect(script, contains('Get-Process'));
+      expect(script, contains('Get-CimInstance Win32_Process'));
       expect(script, contains('Get-WmiObject -Class Win32_OperatingSystem'));
     });
 

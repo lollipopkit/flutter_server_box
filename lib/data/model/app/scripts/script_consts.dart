@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:server_box/data/res/build_data.dart';
 
 /// Constants used throughout the script system
@@ -21,12 +23,21 @@ class ScriptConstants {
   /// Custom command separator
   static const String customCmdSep = 'SrvBoxCusCmdSep';
 
+  /// Prefix applied to every command output line so output cannot be confused
+  /// with a section marker.
+  static const String dataPrefix = 'SrvBoxData.';
+
+  static const String _encodedNamePrefix = 'b64.';
+
+  static String _encodeName(String name) => base64Url.encode(utf8.encode(name));
+
   /// Generate command-specific separator
-  static String getCmdSeparator(String cmdName) => '$separator.$cmdName';
+  static String getCmdSeparator(String cmdName) =>
+      '$separator.$_encodedNamePrefix${_encodeName(cmdName)}';
 
   /// Generate command-specific divider for custom commands
   static String getCustomCmdSeparator(String cmdName) =>
-      '$customCmdSep.$cmdName';
+      '$customCmdSep.$_encodedNamePrefix${_encodeName(cmdName)}';
 
   /// Generate command-specific divider
   static String getCmdDivider(String cmdName) =>
@@ -45,27 +56,28 @@ class ScriptConstants {
     // Parse line by line to properly handle command-specific separators
     final lines = raw.split('\n');
     String? currentCmd;
+    var framedOutput = false;
     final buffer = StringBuffer();
 
-    for (final line in lines) {
-      if (line.startsWith('$separator.')) {
+    for (final rawLine in lines) {
+      final line = rawLine.endsWith('\r')
+          ? rawLine.substring(0, rawLine.length - 1)
+          : rawLine;
+      final marker = _parseMarker(line);
+      if (marker != null) {
         // Save previous command content
         if (currentCmd != null) {
           result[currentCmd] = buffer.toString().trim();
           buffer.clear();
         }
-        // Start new command
-        currentCmd = line.substring('$separator.'.length);
-      } else if (line.startsWith('$customCmdSep.')) {
-        // Save previous command content
-        if (currentCmd != null) {
-          result[currentCmd] = buffer.toString().trim();
-          buffer.clear();
-        }
-        // Start new custom command
-        currentCmd = line.substring('$customCmdSep.'.length);
+        currentCmd = marker.name;
+        framedOutput = marker.framed;
       } else if (currentCmd != null) {
-        buffer.writeln(line);
+        buffer.writeln(
+          framedOutput && line.startsWith(dataPrefix)
+              ? line.substring(dataPrefix.length)
+              : line,
+        );
       }
     }
 
@@ -75,6 +87,29 @@ class ScriptConstants {
     }
 
     return result;
+  }
+
+  static ({String name, bool framed})? _parseMarker(String line) {
+    final prefix = line.startsWith('$separator.')
+        ? '$separator.'
+        : line.startsWith('$customCmdSep.')
+        ? '$customCmdSep.'
+        : null;
+    if (prefix == null) return null;
+    final value = line.substring(prefix.length);
+    if (!value.startsWith(_encodedNamePrefix)) {
+      return (name: value, framed: false);
+    }
+    try {
+      return (
+        name: utf8.decode(
+          base64Url.decode(value.substring(_encodedNamePrefix.length)),
+        ),
+        framed: true,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   // Path separators
@@ -118,7 +153,8 @@ exec 2>/dev/null
 class ScriptPaths {
   ScriptPaths._();
 
-  static final Map<String, String> _scriptDirMap = <String, String>{};
+  static final Map<(String, bool), String> _scriptDirMap =
+      <(String, bool), String>{};
 
   /// Get the script directory for the given [id].
   ///
@@ -126,26 +162,28 @@ class ScriptPaths {
   /// if this path is not accessible, it will be changed to
   /// [ScriptConstants.scriptDirHome]/[ScriptConstants.scriptFile].
   static String getScriptDir(String id, {bool isWindows = false}) {
+    final key = (id, isWindows);
     final defaultTmpDir = isWindows
         ? ScriptConstants.scriptDirTmpWindows
         : ScriptConstants.scriptDirTmp;
-    _scriptDirMap[id] ??= defaultTmpDir;
-    return _scriptDirMap[id]!;
+    _scriptDirMap[key] ??= defaultTmpDir;
+    return _scriptDirMap[key]!;
   }
 
   /// Switch between tmp and home directories for script storage
   static String switchScriptDir(String id, {bool isWindows = false}) {
-    return switch (_scriptDirMap[id]) {
+    final key = (id, isWindows);
+    return switch (_scriptDirMap[key]) {
       ScriptConstants.scriptDirTmp =>
-        _scriptDirMap[id] = ScriptConstants.scriptDirHome,
+        _scriptDirMap[key] = ScriptConstants.scriptDirHome,
       ScriptConstants.scriptDirTmpWindows =>
-        _scriptDirMap[id] = ScriptConstants.scriptDirHomeWindows,
+        _scriptDirMap[key] = ScriptConstants.scriptDirHomeWindows,
       ScriptConstants.scriptDirHome =>
-        _scriptDirMap[id] = ScriptConstants.scriptDirTmp,
+        _scriptDirMap[key] = ScriptConstants.scriptDirTmp,
       ScriptConstants.scriptDirHomeWindows =>
-        _scriptDirMap[id] = ScriptConstants.scriptDirTmpWindows,
+        _scriptDirMap[key] = ScriptConstants.scriptDirTmpWindows,
       _ =>
-        _scriptDirMap[id] = isWindows
+        _scriptDirMap[key] = isWindows
             ? ScriptConstants.scriptDirHomeWindows
             : ScriptConstants.scriptDirHome,
     };

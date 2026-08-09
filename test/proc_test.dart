@@ -256,6 +256,27 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     expect(result.sampledAtMillis, 1234);
   });
 
+  test('Windows rows reject non-positive process IDs', () {
+    const raw = '''
+[
+  {"ProcessName":"zero","Id":0},
+  {"ProcessName":"negative","Id":-2},
+  {"ProcessName":"string-zero","Id":"0"},
+  {"ProcessName":"valid","Id":3}
+]
+''';
+    final result = PsResult.parse(raw);
+
+    expect(result.procs.map((proc) => proc.pid), [3]);
+    expect(result.issue?.failure, PsParseFailure.invalidWindowsRows);
+    expect(
+      RegExp(
+        'missing or invalid PID',
+      ).allMatches(result.issue!.diagnostics).length,
+      3,
+    );
+  });
+
   test('malformed Windows JSON preserves typed diagnostics', () {
     final result = PsResult.parse('{"ProcessName":', sampledAtMillis: 5678);
 

@@ -26,6 +26,26 @@ String _quoteUnixPath(String path) {
   return _quoteUnixLiteral(path);
 }
 
+String _unixFramedCommand(String marker, String command) =>
+    '''
+printf '%s\\n' ${_quoteUnixLiteral(marker)}
+{
+$command
+} | sed 's/^/${ScriptConstants.dataPrefix}/'
+''';
+
+String _powerShellFramedCommand(String marker, String command) =>
+    '''
+Write-Output ${_quotePowerShellLiteral(marker)}
+& {
+$command
+} | ForEach-Object {
+    ([string]\$_).Replace("`r", "").Split("`n") | ForEach-Object {
+        Write-Output "${ScriptConstants.dataPrefix}\$_"
+    }
+}
+''';
+
 /// Abstract base class for platform-specific script builders
 sealed class ScriptBuilder {
   const ScriptBuilder();
@@ -85,8 +105,10 @@ class WindowsScriptBuilder extends ScriptBuilder {
       final sb = StringBuffer();
       for (final e in customCmds.entries) {
         final cmdDivider = ScriptConstants.getCustomCmdSeparator(e.key);
-        sb.writeln('    Write-Host "$cmdDivider"');
-        sb.writeln('    ${e.value}');
+        final framed = _powerShellFramedCommand(cmdDivider, e.value);
+        for (final line in framed.trimRight().split('\n')) {
+          sb.writeln('    $line');
+        }
       }
       return '\n$sb';
     }
@@ -172,7 +194,7 @@ Get-CimInstance Win32_Process | ForEach-Object {
       (e) => !disabledCmdTypes.contains(e.displayName),
     );
     return cmdTypes
-        .map((e) => '${e.divider}${e.cmd}')
+        .map((e) => _powerShellFramedCommand(e.separator, e.cmd))
         .join('')
         .trimRight(); // Remove trailing divider
   }
@@ -212,8 +234,7 @@ chmod 755 $path
       final sb = StringBuffer();
       for (final e in customCmds.entries) {
         final cmdDivider = ScriptConstants.getCustomCmdSeparator(e.key);
-        sb.writeln('echo "$cmdDivider"');
-        sb.writeln(e.value);
+        sb.writeln(_unixFramedCommand(cmdDivider, e.value).trimRight());
       }
       return '\n$sb';
     }
@@ -276,7 +297,7 @@ esac''');
       (e) => !disabledCmdTypes.contains(e.displayName),
     );
     final linuxCommands = filteredLinuxCmdTypes
-        .map((e) => '${e.divider}${e.cmd}')
+        .map((e) => _unixFramedCommand(e.separator, e.cmd))
         .join('')
         .trimRight();
 
@@ -284,7 +305,7 @@ esac''');
       (e) => !disabledCmdTypes.contains(e.displayName),
     );
     final bsdCommands = filteredBsdCmdTypes
-        .map((e) => '${e.divider}${e.cmd}')
+        .map((e) => _unixFramedCommand(e.separator, e.cmd))
         .join('')
         .trimRight();
 
@@ -350,7 +371,8 @@ if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \t\tdone
 \tfi
 else
-\tps -ax
+\tprintf 'PID USER %%CPU %%MEM VSZ RSS TTY STAT TIME START COMMAND\\n'
+\tps -axo pid=,user=,%cpu=,%mem=,vsz=,rss=,tty=,state=,time=,start=,command=
 fi''';
   }
 

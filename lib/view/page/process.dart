@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +26,9 @@ const _ioWidth = 88.0;
 const _actionWidth = 44.0;
 const _minimumProcessWidth = 148.0;
 const _processCommandTimeout = Duration(seconds: 30);
+const _killSucceededMarker = 'SrvBoxKill.Succeeded';
+const _killTargetChangedMarker = 'SrvBoxKill.TargetChanged';
+const _killFailedMarker = 'SrvBoxKill.Failed';
 
 class ProcessPage extends ConsumerStatefulWidget {
   final SpiRequiredArgs args;
@@ -593,7 +597,7 @@ extension _ProcessPageStateUtils on _ProcessPageState {
 
   String _formatRss(Proc proc) {
     final rssKb = proc.rssKb;
-    if (rssKb == null) return proc.rss ?? '—';
+    if (rssKb == null) return '—';
     return (rssKb * 1024).bytes2Str;
   }
 
@@ -601,7 +605,7 @@ extension _ProcessPageStateUtils on _ProcessPageState {
     final raw = proc.vsz;
     if (raw == null || raw.isEmpty || raw == '-') return '—';
     final vszKb = int.tryParse(raw);
-    return vszKb == null ? raw : (vszKb * 1024).bytes2Str;
+    return vszKb == null ? '—' : (vszKb * 1024).bytes2Str;
   }
 
   String _formatNullableSpeed(double? bytes) =>
@@ -616,11 +620,59 @@ extension _ProcessPageStateUtils on _ProcessPageState {
     return conn == ServerConn.connected || conn == ServerConn.finished;
   }
 
-  String _killProcessCmd(int pid, SystemType systemType) =>
+  String? _killProcessCmd(Proc target, SystemType systemType) =>
       switch (systemType) {
-        SystemType.windows => 'taskkill /F /PID $pid',
-        SystemType.linux || SystemType.bsd => 'kill $pid',
+        SystemType.windows => _windowsKillProcessCmd(target),
+        SystemType.linux => _linuxKillProcessCmd(target),
+        SystemType.bsd => _bsdKillProcessCmd(target),
       };
+
+  String? _windowsKillProcessCmd(Proc target) {
+    final startId = target.startId;
+    if (startId == null) return null;
+    final expected = _quotePowerShell(startId);
+    return '\$p = Get-Process -Id ${target.pid} -ErrorAction SilentlyContinue; '
+        'if (\$null -eq \$p) { Write-Output \'$_killTargetChangedMarker\' } '
+        'elseif (\$p.StartTime.ToUniversalTime().Ticks.ToString() -ne $expected) '
+        '{ Write-Output \'$_killTargetChangedMarker\' } else { try { '
+        '\$p.Kill(); \$p.WaitForExit(); Write-Output \'$_killSucceededMarker\' '
+        '} catch { Write-Output \'$_killFailedMarker\' } }';
+  }
+
+  String? _linuxKillProcessCmd(Proc target) {
+    final startId = target.startId;
+    if (startId == null) return null;
+    final code =
+        '''
+import os
+import signal
+
+pid = ${target.pid}
+expected = ${jsonEncode(startId)}
+try:
+    pidfd = os.pidfd_open(pid)
+    with open(f"/proc/{pid}/stat", encoding="utf-8") as stat_file:
+        fields = stat_file.read().rsplit(") ", 1)[1].split()
+    if fields[19] != expected:
+        print("$_killTargetChangedMarker")
+    else:
+        signal.pidfd_send_signal(pidfd, signal.SIGTERM)
+        print("$_killSucceededMarker")
+except (ProcessLookupError, FileNotFoundError):
+    print("$_killTargetChangedMarker")
+except Exception:
+    print("$_killFailedMarker")
+''';
+    return 'if command -v python3 >/dev/null 2>&1; then '
+        'python3 -c ${_quoteShell(code)}; '
+        'else echo $_killFailedMarker; fi';
+  }
+
+  String? _bsdKillProcessCmd(Proc target) => null;
+
+  String _quoteShell(String value) => "'${value.replaceAll("'", "'\"'\"'")}'";
+
+  String _quotePowerShell(String value) => "'${value.replaceAll("'", "''")}'";
 
   bool _isSameProcess(Proc expected, Proc current) {
     if (expected.pid != current.pid) return false;
@@ -661,11 +713,11 @@ extension _ProcessPageStateActions on _ProcessPageState {
     try {
       final serverState = ref.read(_provider);
       final systemType = serverState.status.system;
-      final client = serverState.client;
-      if (client == null || client.isClosed) {
+      if (!_canRunProcessCmd(serverState)) {
         if (mounted) context.showSnackBar(libL10n.disconnected);
         return;
       }
+      final client = serverState.client!;
       final raw = await client
           .run(
             ShellFunc.process.exec(
@@ -701,9 +753,32 @@ extension _ProcessPageStateActions on _ProcessPageState {
         context.showSnackBar(context.l10n.processKillTargetChanged);
         return;
       }
-      await client
-          .run(_killProcessCmd(target.pid, systemType))
-          .timeout(_processCommandTimeout);
+      final latestServerState = ref.read(_provider);
+      if (!_canRunProcessCmd(latestServerState)) {
+        context.showSnackBar(libL10n.disconnected);
+        return;
+      }
+      if (latestServerState.status.system != systemType) {
+        context.showSnackBar(context.l10n.processKillTargetChanged);
+        return;
+      }
+      final killCommand = _killProcessCmd(current, systemType);
+      if (killCommand == null) {
+        context.showSnackBar(libL10n.notAvailable);
+        return;
+      }
+      final killOutput = await latestServerState.client!
+          .run(killCommand)
+          .timeout(_processCommandTimeout)
+          .string;
+      if (killOutput.contains(_killTargetChangedMarker)) {
+        context.showSnackBar(context.l10n.processKillTargetChanged);
+        return;
+      }
+      if (!killOutput.contains(_killSucceededMarker)) {
+        context.showSnackBar(libL10n.error);
+        return;
+      }
       killed = true;
     } on TimeoutException catch (e, s) {
       Loggers.app.warning('Process kill command timed out', e, s);

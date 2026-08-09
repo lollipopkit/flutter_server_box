@@ -179,6 +179,43 @@ void main() {
       expect(exec, isNot(contains('%TEMP%')));
     });
 
+    test('script directory cache separates Unix and Windows entries', () {
+      ScriptPaths.clearCache();
+
+      final unixPath = ScriptPaths.getScriptPath('platform-change');
+      final windowsPath = ScriptPaths.getScriptPath(
+        'platform-change',
+        isWindows: true,
+      );
+
+      expect(unixPath, startsWith('/tmp/server_box/'));
+      expect(windowsPath, startsWith(r'$env:TEMP/server_box\'));
+      expect(unixPath, endsWith('.sh'));
+      expect(windowsPath, endsWith('.ps1'));
+    });
+
+    test('script output framing preserves marker-like output and names', () {
+      const customName = 'custom\nname';
+      final marker = ScriptConstants.getCustomCmdSeparator(customName);
+      final raw = [
+        marker,
+        '${ScriptConstants.dataPrefix}SrvBoxSep.cpu',
+        '${ScriptConstants.dataPrefix}SrvBoxCusCmdSep.other',
+      ].join('\r\n');
+
+      expect(ScriptConstants.parseScriptOutput(raw), {
+        customName: 'SrvBoxSep.cpu\nSrvBoxCusCmdSep.other',
+      });
+    });
+
+    test('legacy Windows output markers ignore carriage returns', () {
+      const raw = 'SrvBoxSep.echo\r\n__windows\r\nSrvBoxData.legacy-output\r\n';
+
+      expect(ScriptConstants.parseScriptOutput(raw), {
+        'echo': '__windows\nSrvBoxData.legacy-output',
+      });
+    });
+
     test('install commands are generated correctly', () {
       const testDir = '/tmp/test';
       const testPath = '/tmp/test/script.sh';
