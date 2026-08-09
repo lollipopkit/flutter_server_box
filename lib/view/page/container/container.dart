@@ -18,7 +18,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/container/resource_views.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
-import 'package:server_box/view/widget/max_width.dart';
+import 'package:server_box/view/widget/page_columns.dart';
 
 part 'actions.dart';
 part 'types.dart';
@@ -258,15 +258,13 @@ extension _ContainerPageWidgets on _ContainerPageState {
   }
 
   Widget _buildSettingsTab(ContainerState containerState) {
-    return MaxWidth(
-      child: AutoMultiList(
+    return PageColumns(
         children: <Widget>[
           ..._SettingsMenuItems.values.map(
             (item) => _buildSettingCard(item, containerState),
           ),
           ..._PruneTypes.values.map(_buildPruneCard),
         ],
-      ),
     );
   }
 

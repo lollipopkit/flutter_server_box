@@ -6,7 +6,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
-import 'package:server_box/view/widget/max_width.dart';
+import 'package:server_box/view/widget/page_columns.dart';
 
 final class SnippetEditPageArgs {
   final Snippet? snippet;
@@ -120,8 +120,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage>
   }
 
   Widget _buildBody() {
-    return MaxWidth(
-      child: AutoMultiList(
+    return PageColumns(
         children: [
           Input(
             autoFocus: true,
@@ -160,7 +159,6 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage>
           _buildAutoRunOn(),
           _buildTip(),
         ],
-      ),
     );
   }
 
