@@ -1076,32 +1076,22 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String processCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count processes',
-      one: '1 process',
-    );
-    return '$_temp0';
+    return '프로세스 $count개';
   }
 
   @override
-  String get processParseUnsupportedOutput =>
-      'The process list format is not supported.';
+  String get processParseUnsupportedOutput => '이 프로세스 목록 형식은 지원되지 않습니다.';
 
   @override
-  String get processParseInvalidRows =>
-      'Some process entries could not be read.';
+  String get processParseInvalidRows => '일부 프로세스 항목을 읽을 수 없습니다.';
 
   @override
-  String get processParseInvalidWindowsJson =>
-      'The Windows process response could not be read.';
+  String get processParseInvalidWindowsJson => 'Windows 프로세스 응답을 읽을 수 없습니다.';
 
   @override
-  String get processParseInvalidWindowsRows =>
-      'Some Windows process entries could not be read.';
+  String get processParseInvalidWindowsRows => '일부 Windows 프로세스 항목을 읽을 수 없습니다.';
 
   @override
   String get processKillTargetChanged =>
-      'The process changed or exited. Refresh and try again.';
+      '프로세스가 변경되었거나 종료되었습니다. 목록을 새로 고친 후 다시 시도하세요.';
 }

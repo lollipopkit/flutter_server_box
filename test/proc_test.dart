@@ -62,6 +62,18 @@ PID USER %CPU %MEM VSZ RSS TTY STAT TIME READ_BYTES WRITE_BYTES COMMAND
     );
   });
 
+  test('Unix command text preserves repeated whitespace', () {
+    const raw = '''
+PID USER COMMAND
+1 root /bin/tool  --name 'a  b'
+''';
+
+    expect(
+      PsResult.parse(raw).procs.single.command,
+      "/bin/tool  --name 'a  b'",
+    );
+  });
+
   test('malformed optional metrics do not discard Unix process rows', () {
     const raw = '''
 PID USER %CPU %MEM COMMAND
@@ -97,6 +109,53 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     expect(proc.writeSpeed, 1500);
   });
 
+  test('IO speed uses elapsed sample time and matches predecessors by PID', () {
+    const first = '''
+PID START_ID READ_BYTES WRITE_BYTES COMMAND
+1 100 1000 4000 /one
+2 200 8000 2000 /two
+''';
+    const second = '''
+PID START_ID READ_BYTES WRITE_BYTES COMMAND
+2 200 10000 10000 /two
+1 100 5000 6000 /one
+''';
+    final previous = PsResult.parse(first, sampledAtMillis: 1000);
+    final current = PsResult.parse(
+      second,
+      previous: previous,
+      sampledAtMillis: 5000,
+      sort: ProcSortMode.pid,
+    );
+
+    expect(current.procs[0].readSpeed, 1000);
+    expect(current.procs[0].writeSpeed, 500);
+    expect(current.procs[1].readSpeed, 500);
+    expect(current.procs[1].writeSpeed, 2000);
+  });
+
+  test('IO speed is null for zero or negative sample intervals', () {
+    const first = '''
+PID START_ID READ_BYTES WRITE_BYTES COMMAND
+1 100 1000 2000 /one
+''';
+    const second = '''
+PID START_ID READ_BYTES WRITE_BYTES COMMAND
+1 100 3000 5000 /one
+''';
+    final previous = PsResult.parse(first, sampledAtMillis: 2000);
+
+    for (final sampledAt in [2000, 1000]) {
+      final current = PsResult.parse(
+        second,
+        previous: previous,
+        sampledAtMillis: sampledAt,
+      ).procs.single;
+      expect(current.readSpeed, isNull);
+      expect(current.writeSpeed, isNull);
+    }
+  });
+
   test('io speed is null for missing previous and counter rollback', () {
     const first = '''
 PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
@@ -121,7 +180,7 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     expect(newProc.writeSpeed, isNull);
   });
 
-  test('PID-stable process keeps IO deltas when command text changes', () {
+  test('missing process identity does not inherit IO counters by PID', () {
     const first = '''
 PID USER %CPU %MEM TIME READ_BYTES WRITE_BYTES COMMAND
 7 root 0.1 1.2 00:01 1000 2000 /usr/bin/worker --old
@@ -137,8 +196,8 @@ PID USER %CPU %MEM TIME READ_BYTES WRITE_BYTES COMMAND
       sampledAtMillis: 3000,
     );
 
-    expect(current.procs.single.readSpeed, 1000);
-    expect(current.procs.single.writeSpeed, 1500);
+    expect(current.procs.single.readSpeed, isNull);
+    expect(current.procs.single.writeSpeed, isNull);
   });
 
   test(
@@ -233,6 +292,37 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     expect(proc.cpu, isNull);
   });
 
+  test('invalid numeric metrics and negative RSS are omitted', () {
+    const unixRaw = '''
+PID %CPU %MEM RSS COMMAND
+1 NaN Infinity -1 /bad
+''';
+    final unixProc = PsResult.parse(unixRaw).procs.single;
+    expect(unixProc.cpu, isNull);
+    expect(unixProc.mem, isNull);
+    expect(unixProc.rssKb, isNull);
+
+    const windowsRaw = '''
+{"Id":2,"WorkingSet":-1,"CPUPercent":"Infinity","IOReadBytes":1.5}
+''';
+    final windowsProc = PsResult.parse(windowsRaw).procs.single;
+    expect(windowsProc.cpu, isNull);
+    expect(windowsProc.rssKb, isNull);
+    expect(windowsProc.readBytes, isNull);
+  });
+
+  test('Windows fields fall back after empty or unparsable values', () {
+    const raw = r'''
+{"Id":7,"CommandLine":"","Path":"C:\\app.exe","CPUPercent":"","PercentProcessorTime":12.5,"IOReadBytes":1.5,"ReadTransferCount":100,"WorkingSet":"bad","WorkingSetSize":2048}
+''';
+    final proc = PsResult.parse(raw).procs.single;
+
+    expect(proc.command, r'C:\app.exe');
+    expect(proc.cpu, 12.5);
+    expect(proc.readBytes, 100);
+    expect(proc.rssKb, 2);
+  });
+
   test('invalid Windows rows preserve typed diagnostics', () {
     const raw = '''
 [
@@ -275,6 +365,33 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
       ).allMatches(result.issue!.diagnostics).length,
       3,
     );
+  });
+
+  test('Unix rows reject non-positive and duplicate process IDs', () {
+    const raw = '''
+PID COMMAND
+0 zero
+-1 negative
+2 valid
+2 duplicate
+''';
+    final result = PsResult.parse(raw);
+
+    expect(result.procs.map((proc) => proc.pid), [2]);
+    expect(result.issue?.failure, PsParseFailure.invalidRows);
+    expect(result.issue?.diagnostics, contains('Invalid process ID'));
+    expect(result.issue?.diagnostics, contains('Duplicate process ID'));
+  });
+
+  test('Windows rows reject duplicate process IDs', () {
+    const raw = '''
+[{"Id":3,"ProcessName":"first"},{"Id":3,"ProcessName":"second"}]
+''';
+    final result = PsResult.parse(raw);
+
+    expect(result.procs, hasLength(1));
+    expect(result.issue?.failure, PsParseFailure.invalidWindowsRows);
+    expect(result.issue?.diagnostics, contains('duplicate PID 3'));
   });
 
   test('malformed Windows JSON preserves typed diagnostics', () {

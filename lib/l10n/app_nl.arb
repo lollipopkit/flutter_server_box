@@ -236,5 +236,11 @@
   "portForwardBetaTitle": "Port Forward (Beta)",
   "containerSegmentsMismatch": "Onverwacht aantal segmenten in containerrespons: {count}",
   "containerOperationInProgress": "Er wordt al een andere containerbewerking uitgevoerd",
-  "systemd": "Systemd"
+  "systemd": "Systemd",
+  "processCount": "{count, plural, one{1 proces} other{{count} processen}}",
+  "processParseUnsupportedOutput": "De indeling van de proceslijst wordt niet ondersteund.",
+  "processParseInvalidRows": "Sommige procesvermeldingen konden niet worden gelezen.",
+  "processParseInvalidWindowsJson": "Het Windows-procesantwoord kon niet worden gelezen.",
+  "processParseInvalidWindowsRows": "Sommige Windows-procesvermeldingen konden niet worden gelezen.",
+  "processKillTargetChanged": "Het proces is gewijzigd of beëindigd. Vernieuw de lijst en probeer het opnieuw."
 }

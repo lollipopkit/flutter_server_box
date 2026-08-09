@@ -23,16 +23,28 @@ String _quoteUnixPath(String path) {
   if (path.startsWith('~/')) {
     return r'"$HOME"/' + _quoteUnixLiteral(path.substring(2));
   }
+  final envMatch = RegExp(
+    r'^\$(?:\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))(?:/|$)',
+  ).firstMatch(path);
+  if (envMatch != null) {
+    final name = envMatch.group(1) ?? envMatch.group(2)!;
+    final suffix = path.substring(envMatch.end);
+    return suffix.isEmpty
+        ? '"\${$name}"'
+        : '"\${$name}"/${_quoteUnixLiteral(suffix)}';
+  }
   return _quoteUnixLiteral(path);
 }
 
-String _unixFramedCommand(String marker, String command) =>
-    '''
+String _unixFramedCommand(String marker, String command) {
+  final body = command.trim().isEmpty ? ':' : command;
+  return '''
 printf '%s\\n' ${_quoteUnixLiteral(marker)}
 {
-$command
+$body
 } | sed 's/^/${ScriptConstants.dataPrefix}/'
 ''';
+}
 
 String _powerShellFramedCommand(String marker, String command) =>
     '''
@@ -167,21 +179,25 @@ try {
         Where-Object { $_.IDProcess -gt 0 } |
         ForEach-Object { $cpuByPid[[int]$_.IDProcess] = [double]$_.PercentProcessorTime }
 } catch {}
-Get-CimInstance Win32_Process | ForEach-Object {
-    $process = $_
-    $startId = $null
-    try { $startId = $process.CreationDate.ToUniversalTime().Ticks } catch {}
-    [PSCustomObject]@{
-        ProcessName = $process.Name
-        Id = $process.ProcessId
-        CPUPercent = $cpuByPid[[int]$process.ProcessId]
-        WorkingSet = $process.WorkingSetSize
-        IOReadBytes = $process.ReadTransferCount
-        IOWriteBytes = $process.WriteTransferCount
-        StartId = $startId
-        CommandLine = $process.CommandLine
-    }
-} | ConvertTo-Json -Compress''',
+$processes = @()
+try {
+    $processes = @(Get-CimInstance Win32_Process -ErrorAction Stop | ForEach-Object {
+        $process = $_
+        $startId = $null
+        try { $startId = $process.CreationDate.ToUniversalTime().Ticks } catch {}
+        [PSCustomObject]@{
+            ProcessName = $process.Name
+            Id = $process.ProcessId
+            CPUPercent = $cpuByPid[[int]$process.ProcessId]
+            WorkingSet = $process.WorkingSetSize
+            IOReadBytes = $process.ReadTransferCount
+            IOWriteBytes = $process.WriteTransferCount
+            StartId = $startId
+            CommandLine = $process.CommandLine
+        }
+    })
+} catch {}
+ConvertTo-Json -InputObject $processes -Compress''',
     ShellFunc.shutdown => 'Stop-Computer -Force',
     ShellFunc.reboot => 'Restart-Computer -Force',
     ShellFunc.suspend =>
@@ -308,12 +324,14 @@ esac''');
         .map((e) => _unixFramedCommand(e.separator, e.cmd))
         .join('')
         .trimRight();
+    final linuxBody = linuxCommands.isEmpty ? ':' : linuxCommands;
+    final bsdBody = bsdCommands.isEmpty ? ':' : bsdCommands;
 
     return '''
 if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
-\t$linuxCommands
+\t$linuxBody
 else
-\t$bsdCommands
+\t$bsdBody
 fi''';
   }
 
@@ -364,15 +382,26 @@ if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \t\t\t\t[ -n "\$start_id" ] || start_id='-'
 \t\t\tfi
 \t\t\tif [ -r "/proc/\$pid/io" ]; then
-\t\t\t\tread_bytes=\$(awk '/^read_bytes:/ {print \$2}' "/proc/\$pid/io")
-\t\t\t\twrite_bytes=\$(awk '/^write_bytes:/ {print \$2}' "/proc/\$pid/io")
+\t\t\t\tread_value=\$(awk '/^read_bytes:/ {print \$2}' "/proc/\$pid/io")
+\t\t\t\twrite_value=\$(awk '/^write_bytes:/ {print \$2}' "/proc/\$pid/io")
+\t\t\t\t[ -n "\$read_value" ] && read_bytes=\$read_value
+\t\t\t\t[ -n "\$write_value" ] && write_bytes=\$write_value
 \t\t\tfi
 \t\t\tprintf '%s %s %s %s %s %s %s %s %s %s %s %s %s\\n' "\$pid" "\$user" "\$cpu" "\$mem" "\$vsz" "\$rss" "\$tty" "\$stat" "\$time" "\$start_id" "\$read_bytes" "\$write_bytes" "\$cmd"
 \t\tdone
 \tfi
 else
-\tprintf 'PID USER %%CPU %%MEM VSZ RSS TTY STAT TIME START COMMAND\\n'
-\tps -axo pid=,user=,%cpu=,%mem=,vsz=,rss=,tty=,state=,time=,start=,command=
+\tprintf 'PID USER %%CPU %%MEM VSZ RSS TTY STAT TIME START_ID READ_BYTES WRITE_BYTES COMMAND\\n'
+\tps -axo pid=,user=,%cpu=,%mem=,vsz=,rss=,tty=,state=,time=,start=,command= | while IFS= read -r line; do
+\t\tset -f
+\t\tset -- \$line
+\t\tset +f
+\t\t[ "\$#" -ge 11 ] || continue
+\t\tpid=\$1; user=\$2; cpu=\$3; mem=\$4; vsz=\$5; rss=\$6; tty=\$7; stat=\$8; time=\$9; start_id=\$10
+\t\tshift 10
+\t\tcmd=\$*
+\t\tprintf '%s %s %s %s %s %s %s %s %s %s - - %s\\n' "\$pid" "\$user" "\$cpu" "\$mem" "\$vsz" "\$rss" "\$tty" "\$stat" "\$time" "\$start_id" "\$cmd"
+\tdone
 fi''';
   }
 

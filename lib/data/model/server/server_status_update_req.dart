@@ -236,7 +236,8 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   try {
     for (final entry in req.customCmds.entries) {
       final key = entry.key;
-      final value = req.parsedOutput[key] ?? '';
+      final value =
+          req.parsedOutput[ScriptConstants.getCustomResultKey(key)] ?? '';
       req.ss.customCmds[key] = value;
     }
   } catch (e, s) {
@@ -674,7 +675,7 @@ List<T> _parseWindowsWmiDelta<T>(
   String field1Name,
   String field2Name,
   T? Function(String name, double delta1, double delta2, double timeDelta)
-      builder,
+  builder,
 ) {
   try {
     final dynamic jsonData = json.decode(raw);

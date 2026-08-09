@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 final _whitespaceRegExp = RegExp(r'\s+');
+final _nonWhitespaceRegExp = RegExp(r'\S+');
 
 class _ProcValIdxMap {
   final int pid;
@@ -131,13 +132,14 @@ class Proc {
     Proc? previous,
     double? elapsedSeconds,
   }) {
-    final parts = raw.split(_whitespaceRegExp);
-    final pid = int.parse(parts[map.pid]);
+    final matches = _nonWhitespaceRegExp.allMatches(raw).toList();
+    final parts = [for (final match in matches) match.group(0)!];
+    final pid = _parsePositivePid(parts[map.pid]);
     final start = map.start == null ? null : parts[map.start!];
     final startId = map.startId == null
         ? null
         : _parseProcessIdentity(parts[map.startId!]);
-    final command = parts.sublist(map.command).join(' ');
+    final command = raw.substring(matches[map.command].start);
     final matchingPrevious = _matchingPrevious(
       previous,
       start: start,
@@ -177,30 +179,32 @@ class Proc {
     Proc? previous,
     double? elapsedSeconds,
   }) {
-    final name = raw['ProcessName'] ?? raw['Name'];
-    final command = raw['CommandLine'] ?? raw['Path'] ?? name ?? '';
+    final name = _firstNonEmptyString([raw['ProcessName'], raw['Name']]);
+    final command =
+        _firstNonEmptyString([raw['CommandLine'], raw['Path'], name]) ?? '';
     final startId = _parseProcessIdentity(raw['StartId']);
     final matchingPrevious = _matchingPrevious(previous, startId: startId);
-    final readBytes = _parseDynamicInt(
-      raw['IOReadBytes'] ?? raw['ReadTransferCount'],
-    );
-    final writeBytes = _parseDynamicInt(
-      raw['IOWriteBytes'] ?? raw['WriteTransferCount'],
-    );
+    final readBytes = _firstParsedInt([
+      raw['IOReadBytes'],
+      raw['ReadTransferCount'],
+    ], nonNegative: true);
+    final writeBytes = _firstParsedInt([
+      raw['IOWriteBytes'],
+      raw['WriteTransferCount'],
+    ], nonNegative: true);
     final (readSpeed, writeSpeed) = _calculateSpeeds(
       readBytes: readBytes,
       writeBytes: writeBytes,
       previous: matchingPrevious,
       elapsedSeconds: elapsedSeconds,
     );
-    final workingSetBytes = _parseDynamicInt(
-      raw['WorkingSet'] ?? raw['WorkingSetSize'],
-    );
+    final workingSetBytes = _firstParsedInt([
+      raw['WorkingSet'],
+      raw['WorkingSetSize'],
+    ], nonNegative: true);
     return Proc(
       pid: pid,
-      cpu: _parseDynamicDouble(
-        raw['CPUPercent'] ?? raw['PercentProcessorTime'],
-      ),
+      cpu: _firstParsedDouble([raw['CPUPercent'], raw['PercentProcessorTime']]),
       // Unix `ps` reports RSS in KiB. Normalize the Windows byte count to the
       // same unit so sorting and display stay consistent across platforms.
       rss: workingSetBytes == null
@@ -211,7 +215,7 @@ class Proc {
       readSpeed: readSpeed,
       writeSpeed: writeSpeed,
       startId: startId,
-      command: command.toString(),
+      command: command,
     );
   }
 
@@ -231,7 +235,8 @@ class Proc {
   int? _parseRssKb() {
     final raw = rss;
     if (raw == null || raw.isEmpty || raw == '-') return null;
-    return int.tryParse(raw);
+    final parsed = int.tryParse(raw);
+    return parsed != null && parsed >= 0 ? parsed : null;
   }
 }
 
@@ -326,11 +331,15 @@ class PsResult {
 
     final procs = <Proc>[];
     final errs = <String>[];
+    final seenPids = <int>{};
     for (var i = 1; i < lines.length; i++) {
       final line = lines[i];
       if (line.isEmpty) continue;
       try {
         final pid = _parsePid(line, map.pid);
+        if (!seenPids.add(pid)) {
+          throw FormatException('Duplicate process ID: $pid');
+        }
         procs.add(
           Proc._parse(
             line,
@@ -387,6 +396,7 @@ class PsResult {
       }
       final procs = <Proc>[];
       final errs = <String>[];
+      final seenPids = <int>{};
       for (final (index, item) in items.indexed) {
         if (item is! Map) {
           errs.add('Invalid Windows process row $index: expected an object');
@@ -399,6 +409,10 @@ class PsResult {
             errs.add(
               'Invalid Windows process row $index: missing or invalid PID',
             );
+            continue;
+          }
+          if (!seenPids.add(pid)) {
+            errs.add('Invalid Windows process row $index: duplicate PID $pid');
             continue;
           }
           procs.add(
@@ -522,8 +536,16 @@ extension _StrIndex on List<String> {
 }
 
 int _parsePid(String raw, int pidIndex) {
-  final parts = raw.split(_whitespaceRegExp);
-  return int.parse(parts[pidIndex]);
+  final parts = [
+    for (final match in _nonWhitespaceRegExp.allMatches(raw)) match.group(0)!,
+  ];
+  return _parsePositivePid(parts[pidIndex]);
+}
+
+int _parsePositivePid(String value) {
+  final pid = int.parse(value);
+  if (pid <= 0) throw FormatException('Invalid process ID: $value');
+  return pid;
 }
 
 int? _parseNullableInt(List<String> parts, int? idx) {
@@ -539,10 +561,21 @@ double? _parseNullableDouble(List<String> parts, int? idx) {
 int? _parseDynamicInt(Object? val) {
   if (val == null) return null;
   if (val is int) return val;
-  if (val is num) return val.toInt();
+  if (val is num) {
+    if (!val.isFinite || val != val.truncateToDouble()) return null;
+    return val.toInt();
+  }
   final str = val.toString();
   if (str.isEmpty || str == '-') return null;
   return int.tryParse(str);
+}
+
+int? _firstParsedInt(List<Object?> values, {bool nonNegative = false}) {
+  for (final value in values) {
+    final parsed = _parseDynamicInt(value);
+    if (parsed != null && (!nonNegative || parsed >= 0)) return parsed;
+  }
+  return null;
 }
 
 int? _parseProcessId(Object? value) {
@@ -557,11 +590,30 @@ int? _parseProcessId(Object? value) {
 
 double? _parseDynamicDouble(Object? val) {
   if (val == null) return null;
-  if (val is double) return val;
-  if (val is num) return val.toDouble();
+  if (val is num) {
+    final parsed = val.toDouble();
+    return parsed.isFinite ? parsed : null;
+  }
   final str = val.toString();
   if (str.isEmpty || str == '-') return null;
-  return double.tryParse(str);
+  final parsed = double.tryParse(str);
+  return parsed != null && parsed.isFinite ? parsed : null;
+}
+
+double? _firstParsedDouble(List<Object?> values) {
+  for (final value in values) {
+    final parsed = _parseDynamicDouble(value);
+    if (parsed != null) return parsed;
+  }
+  return null;
+}
+
+String? _firstNonEmptyString(List<Object?> values) {
+  for (final value in values) {
+    final string = value?.toString();
+    if (string != null && string.trim().isNotEmpty) return string;
+  }
+  return null;
 }
 
 String? _parseProcessIdentity(Object? value) {
@@ -580,8 +632,9 @@ Proc? _matchingPrevious(Proc? previous, {String? start, String? startId}) {
     if (start == null || previous.start == null || start != previous.start) {
       return null;
     }
+    return previous;
   }
-  return previous;
+  return null;
 }
 
 (double?, double?) _calculateSpeeds({

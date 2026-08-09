@@ -1119,32 +1119,26 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String processCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count processes',
-      one: '1 process',
-    );
-    return '$_temp0';
+    return '$count proses';
   }
 
   @override
   String get processParseUnsupportedOutput =>
-      'The process list format is not supported.';
+      'Format daftar proses tidak didukung.';
 
   @override
   String get processParseInvalidRows =>
-      'Some process entries could not be read.';
+      'Beberapa entri proses tidak dapat dibaca.';
 
   @override
   String get processParseInvalidWindowsJson =>
-      'The Windows process response could not be read.';
+      'Respons proses Windows tidak dapat dibaca.';
 
   @override
   String get processParseInvalidWindowsRows =>
-      'Some Windows process entries could not be read.';
+      'Beberapa entri proses Windows tidak dapat dibaca.';
 
   @override
   String get processKillTargetChanged =>
-      'The process changed or exited. Refresh and try again.';
+      'Proses telah berubah atau berhenti. Segarkan daftar lalu coba lagi.';
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/script_builders.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
@@ -110,6 +112,8 @@ void main() {
       expect(script, contains('ReadTransferCount'));
       expect(script, contains('WriteTransferCount'));
       expect(script, contains('CommandLine'));
+      expect(script, contains(r'$processes = @()'));
+      expect(script, contains('ConvertTo-Json -InputObject \$processes'));
       expect(script, isNot(contains(r'$process.IOReadBytes')));
       expect(script, isNot(contains('Select-Object ProcessName, Id, CPU,')));
     });
@@ -122,6 +126,9 @@ void main() {
       expect(script, contains("awk '{print \$20}'"));
       expect(script, contains('ps w | while IFS= read -r line'));
       expect(script, contains('READ_BYTES WRITE_BYTES COMMAND'));
+      expect(script, contains('read_value='));
+      expect(script, contains('[ -n "\$read_value" ] && read_bytes='));
+      expect(script, contains('START_ID READ_BYTES WRITE_BYTES COMMAND'));
     });
 
     test('Unix script paths are shell-quoted', () {
@@ -145,6 +152,13 @@ void main() {
         '~/.config/server_box/script.sh',
       );
       expect(homeInstall, contains(r'"$HOME"/'));
+
+      final envInstall = builder.getInstallCommand(
+        r'$HOME/.config/server_box',
+        r'$HOME/.config/server_box/script.sh',
+      );
+      expect(envInstall, contains(r'"${HOME}"/'));
+      expect(envInstall, isNot(contains(r"'$HOME")));
     });
 
     test('Windows custom script paths are PowerShell-quoted', () {
@@ -204,9 +218,38 @@ void main() {
       ].join('\r\n');
 
       expect(ScriptConstants.parseScriptOutput(raw), {
-        customName: 'SrvBoxSep.cpu\nSrvBoxCusCmdSep.other',
+        ScriptConstants.getCustomResultKey(customName):
+            'SrvBoxSep.cpu\nSrvBoxCusCmdSep.other',
       });
     });
+
+    test('framed output preserves whitespace and custom-name collisions', () {
+      const name = 'cpu';
+      final raw = [
+        ScriptConstants.getCmdSeparator(name),
+        '${ScriptConstants.dataPrefix}built-in',
+        ScriptConstants.getCustomCmdSeparator(name),
+        '${ScriptConstants.dataPrefix}  custom  ',
+        ScriptConstants.dataPrefix,
+      ].join('\n');
+
+      expect(ScriptConstants.parseScriptOutput(raw), {
+        name: 'built-in',
+        ScriptConstants.getCustomResultKey(name): '  custom  \n',
+      });
+    });
+
+    test(
+      'empty Unix custom commands still produce valid shell syntax',
+      () async {
+        final script = const UnixScriptBuilder().buildScript({'empty': ''});
+        expect(script, contains('\n:\n'));
+        if (Platform.isLinux || Platform.isMacOS) {
+          final result = await Process.run('sh', ['-n', '-c', script]);
+          expect(result.exitCode, 0, reason: result.stderr.toString());
+        }
+      },
+    );
 
     test('legacy Windows output markers ignore carriage returns', () {
       const raw = 'SrvBoxSep.echo\r\n__windows\r\nSrvBoxData.legacy-output\r\n';

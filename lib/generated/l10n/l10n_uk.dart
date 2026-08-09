@@ -1125,29 +1125,31 @@ class AppLocalizationsUk extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count processes',
-      one: '1 process',
+      other: '$count процесу',
+      many: '$count процесів',
+      few: '$count процеси',
+      one: '$count процес',
     );
     return '$_temp0';
   }
 
   @override
   String get processParseUnsupportedOutput =>
-      'The process list format is not supported.';
+      'Формат списку процесів не підтримується.';
 
   @override
   String get processParseInvalidRows =>
-      'Some process entries could not be read.';
+      'Не вдалося прочитати деякі записи процесів.';
 
   @override
   String get processParseInvalidWindowsJson =>
-      'The Windows process response could not be read.';
+      'Не вдалося прочитати відповідь зі списком процесів Windows.';
 
   @override
   String get processParseInvalidWindowsRows =>
-      'Some Windows process entries could not be read.';
+      'Не вдалося прочитати деякі записи процесів Windows.';
 
   @override
   String get processKillTargetChanged =>
-      'The process changed or exited. Refresh and try again.';
+      'Процес змінився або завершився. Оновіть список і повторіть спробу.';
 }

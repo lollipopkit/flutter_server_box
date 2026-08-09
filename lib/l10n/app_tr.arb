@@ -236,5 +236,11 @@
   "portForwardBetaTitle": "Port Forward (Beta)",
   "containerSegmentsMismatch": "Konteyner yanıtındaki beklenmeyen bölüm sayısı: {count}",
   "containerOperationInProgress": "Başka bir konteyner işlemi zaten devam ediyor",
-  "systemd": "Systemd"
+  "systemd": "Systemd",
+  "processCount": "{count} işlem",
+  "processParseUnsupportedOutput": "İşlem listesi biçimi desteklenmiyor.",
+  "processParseInvalidRows": "Bazı işlem girdileri okunamadı.",
+  "processParseInvalidWindowsJson": "Windows işlem yanıtı okunamadı.",
+  "processParseInvalidWindowsRows": "Bazı Windows işlem girdileri okunamadı.",
+  "processKillTargetChanged": "İşlem değişti veya sonlandı. Listeyi yenileyip tekrar deneyin."
 }

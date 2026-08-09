@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
@@ -89,7 +91,7 @@ void main() {
       expect(script, contains('cat /proc/net/dev'));
     });
 
-    test('disabling all status commands removes separators', () {
+    test('disabling all status commands keeps scripts valid', () async {
       final allUnixDisabled = <String>{
         ...StatusCmdType.values.map((e) => e.displayName),
         ...BSDStatusCmdType.values.map((e) => e.displayName),
@@ -116,6 +118,12 @@ void main() {
 
       // No status separators for Windows script
       expect(windowsScript, isNot(contains('SrvBoxSep.')));
+
+      expect(unixScript, contains('\t:'));
+      if (Platform.isLinux || Platform.isMacOS) {
+        final result = await Process.run('sh', ['-n', '-c', unixScript]);
+        expect(result.exitCode, 0, reason: result.stderr.toString());
+      }
     });
   });
 }

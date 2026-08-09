@@ -127,8 +127,6 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
           .string;
       if (!mounted) return;
       if (result == null || result.trim().isEmpty) {
-        _result = const PsResult(procs: []);
-        _updateCapabilities(_result);
         _hasLoaded = true;
         if (userTriggered) context.showSnackBar(libL10n.empty);
         return;
@@ -141,6 +139,15 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
         ascending: _sortAscending,
         previous: _result,
       );
+      if (parsed.issue != null) {
+        _result = PsResult(
+          procs: _result.procs,
+          issue: parsed.issue,
+          sampledAtMillis: _result.sampledAtMillis,
+        );
+        _hasLoaded = true;
+        return;
+      }
       final sortChanged = _updateCapabilities(parsed);
       if (sortChanged) {
         parsed = parsed.sortedBy(_procSortMode, ascending: _sortAscending);
@@ -668,7 +675,16 @@ except Exception:
         'else echo $_killFailedMarker; fi';
   }
 
-  String? _bsdKillProcessCmd(Proc target) => null;
+  String? _bsdKillProcessCmd(Proc target) {
+    final startId = target.startId;
+    if (startId == null) return null;
+    final expected = _quoteShell(startId);
+    return 'current=\$(ps -p ${target.pid} -o start= 2>/dev/null | '
+        'awk \'{\$1=\$1; print}\'); if [ "\$current" = $expected ]; then '
+        'if kill ${target.pid}; then echo $_killSucceededMarker; '
+        'else echo $_killFailedMarker; fi; '
+        'else echo $_killTargetChangedMarker; fi';
+  }
 
   String _quoteShell(String value) => "'${value.replaceAll("'", "'\"'\"'")}'";
 
@@ -739,6 +755,16 @@ extension _ProcessPageStateActions on _ProcessPageState {
         ascending: _sortAscending,
         previous: _result,
       );
+      if (latest.issue != null) {
+        _result = PsResult(
+          procs: _result.procs,
+          issue: latest.issue,
+          sampledAtMillis: _result.sampledAtMillis,
+        );
+        _hasLoaded = true;
+        _rebuild();
+        return;
+      }
       final sortChanged = _updateCapabilities(latest);
       if (sortChanged) {
         latest = latest.sortedBy(_procSortMode, ascending: _sortAscending);

@@ -341,7 +341,7 @@ class ServerNotifier extends _$ServerNotifier {
         }
 
         if (!writeScriptResult.succeeded) {
-          if (detectedSystemType != SystemType.windows) {
+          if (spi.custom?.scriptDir == null) {
             ShellFuncManager.switchScriptDir(
               spi.id,
               systemType: detectedSystemType,

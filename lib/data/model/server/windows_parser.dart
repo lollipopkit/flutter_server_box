@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/memory.dart';
@@ -30,7 +31,8 @@ class WindowsParser {
     try {
       for (final entry in customCmds.entries) {
         final key = entry.key;
-        final value = parsedOutput[key] ?? '';
+        final value =
+            parsedOutput[ScriptConstants.getCustomResultKey(key)] ?? '';
         serverStatus.customCmds[key] = value;
       }
     } catch (e, s) {

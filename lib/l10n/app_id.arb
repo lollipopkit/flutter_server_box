@@ -236,5 +236,11 @@
   "portForwardBetaTitle": "Port Forward (Beta)",
   "containerSegmentsMismatch": "Jumlah segmen respons kontainer tidak sesuai: {count}",
   "containerOperationInProgress": "Operasi kontainer lain sedang berlangsung",
-  "systemd": "Systemd"
+  "systemd": "Systemd",
+  "processCount": "{count} proses",
+  "processParseUnsupportedOutput": "Format daftar proses tidak didukung.",
+  "processParseInvalidRows": "Beberapa entri proses tidak dapat dibaca.",
+  "processParseInvalidWindowsJson": "Respons proses Windows tidak dapat dibaca.",
+  "processParseInvalidWindowsRows": "Beberapa entri proses Windows tidak dapat dibaca.",
+  "processKillTargetChanged": "Proses telah berubah atau berhenti. Segarkan daftar lalu coba lagi."
 }

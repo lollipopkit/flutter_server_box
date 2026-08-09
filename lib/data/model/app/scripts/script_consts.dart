@@ -39,6 +39,10 @@ class ScriptConstants {
   static String getCustomCmdSeparator(String cmdName) =>
       '$customCmdSep.$_encodedNamePrefix${_encodeName(cmdName)}';
 
+  /// Internal result-map key for custom commands. This keeps arbitrary custom
+  /// names from overwriting built-in status sections with the same name.
+  static String getCustomResultKey(String cmdName) => '$customCmdSep.$cmdName';
+
   /// Generate command-specific divider
   static String getCmdDivider(String cmdName) =>
       '\necho ${getCmdSeparator(cmdName)}\n\t';
@@ -55,25 +59,32 @@ class ScriptConstants {
 
     // Parse line by line to properly handle command-specific separators
     final lines = raw.split('\n');
-    String? currentCmd;
+    String? currentKey;
     var framedOutput = false;
-    final buffer = StringBuffer();
+    final buffer = <String>[];
 
-    for (final rawLine in lines) {
+    void flush() {
+      final key = currentKey;
+      if (key == null) return;
+      final output = buffer.join('\n');
+      result[key] = framedOutput ? output : output.trim();
+      buffer.clear();
+    }
+
+    for (final (index, rawLine) in lines.indexed) {
+      if (index == lines.length - 1 && rawLine.isEmpty) continue;
       final line = rawLine.endsWith('\r')
           ? rawLine.substring(0, rawLine.length - 1)
           : rawLine;
       final marker = _parseMarker(line);
       if (marker != null) {
-        // Save previous command content
-        if (currentCmd != null) {
-          result[currentCmd] = buffer.toString().trim();
-          buffer.clear();
-        }
-        currentCmd = marker.name;
+        flush();
+        currentKey = marker.custom
+            ? getCustomResultKey(marker.name)
+            : marker.name;
         framedOutput = marker.framed;
-      } else if (currentCmd != null) {
-        buffer.writeln(
+      } else if (currentKey != null) {
+        buffer.add(
           framedOutput && line.startsWith(dataPrefix)
               ? line.substring(dataPrefix.length)
               : line,
@@ -81,24 +92,22 @@ class ScriptConstants {
       }
     }
 
-    // Don't forget the last command
-    if (currentCmd != null) {
-      result[currentCmd] = buffer.toString().trim();
-    }
+    flush();
 
     return result;
   }
 
-  static ({String name, bool framed})? _parseMarker(String line) {
+  static ({String name, bool framed, bool custom})? _parseMarker(String line) {
+    final isCustom = line.startsWith('$customCmdSep.');
     final prefix = line.startsWith('$separator.')
         ? '$separator.'
-        : line.startsWith('$customCmdSep.')
+        : isCustom
         ? '$customCmdSep.'
         : null;
     if (prefix == null) return null;
     final value = line.substring(prefix.length);
     if (!value.startsWith(_encodedNamePrefix)) {
-      return (name: value, framed: false);
+      return (name: value, framed: false, custom: isCustom);
     }
     try {
       return (
@@ -106,6 +115,7 @@ class ScriptConstants {
           base64Url.decode(value.substring(_encodedNamePrefix.length)),
         ),
         framed: true,
+        custom: isCustom,
       );
     } catch (_) {
       return null;
