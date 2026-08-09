@@ -108,11 +108,6 @@ extension on _ServerDetailPageState {
     );
   }
 
-  void _onTapTemperatureItem(String key) {
-    Pfs.copy(key);
-    context.showSnackBar('${libL10n.copy} ${libL10n.success}');
-  }
-
   bool _getInitExpand(int len, [int? max]) {
     if (!_collapse) return true;
     if (_size.width > UIs.columnWidth) return true;
@@ -148,88 +143,185 @@ extension on _ServerDetailPageState {
     final spec = _ChartSpec(
       series: [_HistorySeries(label, color, values)],
       format: _formatPercent,
-      maxY: 100,
     );
     return spec.hasData ? _buildChart(spec) : null;
   }
 
+  /// Throughput, appended to the Disk card below its mounts.
+  ///
+  /// Only the rate is plotted. Used capacity was charted alongside it at
+  /// first, but a filesystem's fill level barely moves over the minutes this
+  /// buffer covers, so the line was flat and told nobody anything the ring
+  /// beside each mount doesn't.
   Widget? _buildDiskChart(ServerState si) {
     final h = si.status.history;
-    return _chartCard(ServerDetailCards.diskChart, [
-      _ChartSpec(
-        series: [
-          _HistorySeries(libL10n.used, const Color(0xFFF59E0B), h.disk),
-        ],
-        format: _formatPercent,
-        maxY: 100,
-      ),
-      // Separate chart, not a third line above: a byte rate and a percentage
-      // share no axis
-      _ChartSpec(
-        series: [
-          _HistorySeries(l10n.read, const Color(0xFF0EA5E9), h.diskRead),
-          _HistorySeries(l10n.write, const Color(0xFFF97316), h.diskWrite),
-        ],
-        format: _formatSpeed,
-        binaryScale: true,
-      ),
-    ]);
+    final spec = _ChartSpec(
+      series: [
+        _HistorySeries(l10n.read, const Color(0xFF0EA5E9), h.diskRead),
+        _HistorySeries(l10n.write, const Color(0xFFF97316), h.diskWrite),
+      ],
+      format: _formatSpeed,
+      binaryScale: true,
+    );
+    return spec.hasData ? _buildChart(spec) : null;
   }
 
-  Widget? _buildNetChart(ServerState si) {
+  /// Palette for per-sensor temperature lines. Fixed order so a sensor keeps
+  /// its colour across rebuilds, and at least as long as [_kTempCategories]
+  /// so two plotted lines never share one.
+  static const _kTempColors = [
+    Color(0xFFEF4444),
+    Color(0xFFF59E0B),
+    Color(0xFF8B5CF6),
+    Color(0xFF14B8A6),
+    Color(0xFF3B82F6),
+    Color(0xFFEC4899),
+  ];
+
+  /// What the chart plots, in order: the hottest sensor matching each group.
+  ///
+  /// A Mac reports two dozen sensors through one API — fourteen of them PMU
+  /// dies within a degree of each other — and a Linux box with several thermal
+  /// zones is no better. Plotting all of them produced a legend taller than
+  /// the plot and a band of indistinguishable lines; plotting simply the
+  /// hottest N filled the chart with near-duplicate dies and dropped the SSD
+  /// and the battery entirely. One line per component is what a temperature
+  /// chart is read for; everything else is a tap away in [_showAllTemps].
+  ///
+  /// Names come from three unrelated sources, so each group has to cover all
+  /// three:
+  /// - Linux: the `type` of each `/sys/class/thermal/thermal_zone*`, plus
+  ///   hwmon driver names where those are read
+  /// - macOS: `sysinfo` Component labels, which are SMC keys spelled out
+  /// - Windows: `MSAcpi_ThermalZoneTemperature`'s `InstanceName`, e.g.
+  ///   `ACPI\ThermalZone\TZ00_0`
+  ///
+  /// Matched as lowercase substrings; the first group to match claims the
+  /// sensor, so a device is never plotted twice. Order is by how much the
+  /// reading usually matters.
+  static const _kTempCategories = <List<String>>[
+    // CPU / SoC package
+    [
+      'x86_pkg_temp', 'coretemp', 'k10temp', 'zenpower', 'peci', // Linux x86
+      'cpu_thermal', 'cpu-thermal', 'soc_thermal', 'soc-thermal', // Linux ARM
+      'bcm2835_thermal', 'tcpu',
+      'tdie', 'tcal', 'pmgr soc', 'soc mtr', // macOS
+      'cpu', 'package', 'soc',
+    ],
+    // GPU
+    ['amdgpu', 'nouveau', 'radeon', 'gpu', 'tgpu'],
+    // Storage
+    ['nvme', 'nand', 'ssd', 'drive', 'disk'],
+    // Battery / power delivery
+    ['gas gauge', 'battery', 'bat0', 'charger'],
+    // Wireless
+    ['iwlwifi', 'airport', 'wifi', 'wlan'],
+    // Board, chipset, ambient. Windows' single ACPI zone lands here, which is
+    // fine: a host with one sensor plots it whichever group claims it.
+    ['acpitz', 'thermalzone', 'pch', 'tskin', 'tskn', 'ambient', 'thermal'],
+  ];
+
+  static double? _latest(List<double?> values) {
+    for (var i = values.length - 1; i >= 0; i--) {
+      if (values[i] != null) return values[i];
+    }
+    return null;
+  }
+
+  List<_HistorySeries> _tempSeries(ServerState si) {
     final h = si.status.history;
-    return _chartCard(ServerDetailCards.netChart, [
-      _ChartSpec(
-        series: [
-          _HistorySeries('↓', const Color(0xFF8B5CF6), h.netRx),
-          _HistorySeries('↑', const Color(0xFFEC4899), h.netTx),
-        ],
-        format: _formatSpeed,
-        binaryScale: true,
-      ),
-    ]);
+    if (h.tempsByDevice.isEmpty) {
+      return [_HistorySeries(libL10n.temperature, _kTempColors.first, h.temp)];
+    }
+
+    // Hottest first, so "the hottest match in this group" falls out of a
+    // single pass and any leftovers are already ranked
+    final ranked = h.tempsByDevice.entries.toList()
+      ..sort(
+        (a, b) => (_latest(b.value) ?? -1).compareTo(_latest(a.value) ?? -1),
+      );
+
+    final picked = <MapEntry<String, List<double?>>>[];
+    final taken = <String>{};
+    for (final group in _kTempCategories) {
+      for (final e in ranked) {
+        if (taken.contains(e.key)) continue;
+        final name = e.key.toLowerCase();
+        if (!group.any(name.contains)) continue;
+        picked.add(e);
+        taken.add(e.key);
+        break;
+      }
+    }
+
+    // A platform naming its sensors in some way this doesn't anticipate still
+    // gets a chart, just an unsorted one
+    if (picked.isEmpty) picked.add(ranked.first);
+
+    return [
+      for (final (i, e) in picked.indexed)
+        _HistorySeries(e.key, _kTempColors[i % _kTempColors.length], e.value),
+    ];
   }
 
   Widget? _buildTempChart(ServerState si) {
-    final h = si.status.history;
-    return _chartCard(ServerDetailCards.tempChart, [
-      _ChartSpec(
-        series: [
-          _HistorySeries(
-            libL10n.temperature,
-            const Color(0xFFEF4444),
-            h.temp,
-          ),
-        ],
-        format: _formatTemp,
-      ),
-      _ChartSpec(
-        series: [
-          _HistorySeries(libL10n.battery, const Color(0xFF14B8A6), h.battery),
-        ],
-        format: _formatPercent,
-        maxY: 100,
-      ),
-    ]);
+    final spec = _ChartSpec(series: _tempSeries(si), format: _formatTemp);
+    return spec.hasData ? _buildChart(spec) : null;
   }
 
-  /// Renders only the specs that actually have data, and nothing at all if
-  /// none do — a server with no battery or no thermal sensor must not show an
-  /// empty axis.
-  Widget? _chartCard(ServerDetailCards card, List<_ChartSpec> specs) {
-    final live = specs.where((s) => s.hasData).toList();
-    if (live.isEmpty) return null;
+  /// Every sensor and its current reading, for the ones the chart leaves out.
+  void _showAllTemps(server_model.ServerStatus ss) {
+    final plotted = _tempSeries(
+      ref.read(serverProvider(widget.args.spi.id)),
+    ).map((e) => e.label).toSet();
 
-    return CardX(
-      child: ExpandTile(
-        title: Text(card.toStr),
-        leading: Icon(card.icon, size: 17),
-        initiallyExpanded: _getInitExpand(1),
-        childrenPadding: const EdgeInsets.only(bottom: 7),
-        children: live.map(_buildChart).toList(),
+    final rows = ss.temps.devices
+        .map((d) {
+          final mark = plotted.contains(d) ? '●' : '';
+          final v = ss.temps.get(d)?.toStringAsFixed(1) ?? '--';
+          return '| $mark | $d | $v °C |';
+        })
+        .join('\n');
+
+    context.showRoundDialog(
+      title: libL10n.temperature,
+      child: SingleChildScrollView(
+        child: SimpleMarkdown(
+          data: '| | ${libL10n.device} | ${libL10n.temperature} |\n'
+              '|---|---|---|\n$rows',
+          styleSheet: MarkdownStyleSheet(
+            tableBorder: TableBorder.all(color: Colors.grey),
+            tableHead: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
       ),
+      actions: [
+        TextButton(onPressed: () => context.pop(), child: Text(libL10n.close)),
+      ],
     );
   }
+
+  /// Sits at the top of the Network card, above the interface list.
+  Widget? _buildNetChart(ServerState si) {
+    final h = si.status.history;
+    final spec = _ChartSpec(
+      series: [
+        _HistorySeries('↓', const Color(0xFF8B5CF6), h.netRx),
+        _HistorySeries('↑', const Color(0xFFEC4899), h.netTx),
+      ],
+      format: _formatSpeed,
+      binaryScale: true,
+    );
+    return spec.hasData ? _buildChart(spec) : null;
+  }
+
+  /// Appended to the Battery card. It used to sit in the temperature card,
+  /// which stopped making sense once that card carried the sensor list too.
+  Widget? _buildBatteryChart(ServerState si) => _percentChart(
+    libL10n.battery,
+    const Color(0xFF14B8A6),
+    si.status.history.battery,
+  );
 
   /// One chart plus the legend line carrying each series' latest value —
   /// mirrors `monitor/frontend/src/components/LineChart.svelte`.
@@ -252,12 +344,13 @@ extension on _ServerDetailPageState {
     }
     if (bars.isEmpty) return UIs.placeholder;
 
+    final hasLegend = spec.series.length > 1;
     return Padding(
-      // Bottom is larger than top on purpose: fl_chart centres the zero axis
-      // label on the bottom gridline, so roughly half of it hangs below the
-      // plot box. Without the allowance the last chart in a card sits flush
-      // against the card's edge.
-      padding: const EdgeInsets.fromLTRB(17, 7, 17, 15),
+      // The extra bottom allowance is only for the axis' own overflow: fl_chart
+      // centres the lowest label on the bottom gridline, so roughly half of it
+      // hangs outside the plot box. A legend below already absorbs that, and
+      // adding the allowance there too left a visible gap under the card.
+      padding: EdgeInsets.fromLTRB(17, 7, 17, hasLegend ? 0 : 15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -267,14 +360,13 @@ extension on _ServerDetailPageState {
               bars,
               series: spec.series,
               format: spec.format,
-              maxY: spec.maxY,
               binaryScale: spec.binaryScale,
             ),
           ),
           // Only worth drawing when there is something to tell apart. A lone
           // line needs no key: the card already names its subject, and the
           // value is a touch away in the tooltip.
-          if (spec.series.length > 1) ...[
+          if (hasLegend) ...[
             UIs.height13,
             Wrap(
               spacing: 13,
@@ -314,9 +406,6 @@ class _ChartSpec {
   final List<_HistorySeries> series;
   final String Function(double) format;
 
-  /// Fixed axis top for bounded quantities (percentages); auto-scaled when null
-  final double? maxY;
-
   /// Whether the values are byte-based, so the axis should step in multiples
   /// of 1024 rather than of 10 — see [_niceAxis]
   final bool binaryScale;
@@ -324,7 +413,6 @@ class _ChartSpec {
   const _ChartSpec({
     required this.series,
     required this.format,
-    this.maxY,
     this.binaryScale = false,
   });
 
@@ -365,14 +453,38 @@ class _HistorySeries {
 /// [binary] selects the progression. Byte rates are formatted in powers of
 /// 1024, so a decimal-round step of 500 000 renders as "488.3 KB/s"; stepping
 /// in multiples of 1024 gives "512 KB/s".
-({double top, double interval}) _niceAxis(double peak, {required bool binary}) {
-  // A flat all-zero window still needs a non-zero range to divide by
-  if (peak <= 0) return (top: binary ? 1024 : 1, interval: binary ? 256 : 0.25);
+({double bottom, double top, double interval}) _niceAxis({
+  required double trough,
+  required double peak,
+  required bool binary,
+}) {
+  // Below this the labels repeat: the formatters carry one decimal for
+  // percentages and °C, and whole bytes for rates
+  final minInterval = binary ? 1.0 : 0.1;
+
+  if (!peak.isFinite || !trough.isFinite) {
+    return binary
+        ? (bottom: 0.0, top: 1024.0, interval: 256.0)
+        : (bottom: 0.0, top: 1.0, interval: 0.25);
+  }
 
   const targetTicks = 4;
-  final raw = peak / targetTicks;
+  var lo = trough;
+  var hi = peak;
 
-  final double interval;
+  // A flat line has no span to derive a step from, and taking one from the
+  // value's own magnitude pinned it to an edge — a disk sitting at 65.4%
+  // produced a 60..80 axis. Give it a span proportional to the value and
+  // centre it instead.
+  if (hi - lo <= 0) {
+    final pad = math.max(hi.abs() * 0.05, minInterval * targetTicks / 2);
+    lo -= pad;
+    hi += pad;
+  }
+
+  final raw = (hi - lo) / targetTicks;
+
+  double interval;
   if (binary) {
     var unit = 1.0;
     while (unit * 1024 <= raw) {
@@ -387,16 +499,28 @@ class _HistorySeries {
     final norm = raw / mag;
     interval = steps.firstWhere((s) => s >= norm, orElse: () => 10.0) * mag;
   }
+  if (interval < minInterval) interval = minInterval;
 
-  // Round the top up to a whole number of intervals, which is also where the
-  // headroom above the peak comes from
-  return (top: (peak / interval).ceil() * interval, interval: interval);
+  // Snap outwards to whole intervals, which is also where the margin around
+  // the data comes from. Data that never went negative doesn't get a negative
+  // axis: an idle interface reading "-2 B/s" is not a smaller number, it's an
+  // impossible one.
+  var bottom = (lo / interval).floor() * interval;
+  if (trough >= 0 && bottom < 0) bottom = 0;
+  var top = (hi / interval).ceil() * interval;
+  if (top <= bottom) top = bottom + interval;
+  return (bottom: bottom, top: top, interval: interval);
 }
 
 /// Width to reserve for the left axis, from the labels it will actually draw.
-double _axisWidth(double top, double interval, String Function(double) format) {
+double _axisWidth(
+  double bottom,
+  double top,
+  double interval,
+  String Function(double) format,
+) {
   var longest = 0;
-  for (var v = 0.0; v <= top + interval / 2; v += interval) {
+  for (var v = bottom; v <= top + interval / 2; v += interval) {
     final len = format(v).length;
     if (len > longest) longest = len;
   }
@@ -462,18 +586,17 @@ enum _NetSortType {
   }
 }
 
-/// Multi-series chart for monitor's history card. Unlike [_buildLineChart]
-/// (fixed 0-100 percent axis) the Y axis is auto-scaled unless [maxY] is
-/// given, and every series shares that one axis so they stay comparable.
+/// Multi-series chart. Every series shares one axis, whose bounds come from
+/// the data rather than from a fixed range.
 ///
-/// The axis is anchored at 0 rather than padded below the minimum: every
-/// quantity plotted here (percentages, byte rates, °C) has 0 as its floor, and
-/// the old 10% bottom padding rendered labels like "-3.6%" and "-6979 B/s".
+/// Anchoring at 0 was tried first and spent most of the plot on empty axis:
+/// a CPU idling at 8% and a machine sitting at 40 °C both drew a flat line
+/// hugging the bottom edge. Both bounds now snap outwards to whole intervals,
+/// which is also where the margin around the data comes from.
 Widget _buildHistoryLineChart(
   List<LineChartBarData> bars, {
   required List<_HistorySeries> series,
   required String Function(double) format,
-  double? maxY,
   bool binaryScale = false,
 }) {
   // fl_chart throws a LateInitializationError on `mostLeftSpot` when handed a
@@ -486,9 +609,12 @@ Widget _buildHistoryLineChart(
       .expand((b) => b.spots)
       .map((e) => e.y)
       .fold<double>(0, (a, b) => a > b ? a : b);
-  final axis = maxY != null
-      ? (top: maxY, interval: maxY / 4)
-      : _niceAxis(peak, binary: binaryScale);
+  final trough = bars
+      .expand((b) => b.spots)
+      .map((e) => e.y)
+      .fold<double>(double.infinity, (a, b) => a < b ? a : b);
+  final axis = _niceAxis(trough: trough, peak: peak, binary: binaryScale);
+  final bottom = axis.bottom;
   final top = axis.top;
   final interval = axis.interval;
 
@@ -498,6 +624,9 @@ Widget _buildHistoryLineChart(
         touchTooltipData: LineTouchTooltipData(
           tooltipPadding: const EdgeInsets.all(5),
           tooltipBorderRadius: BorderRadius.circular(8),
+          // fl_chart wraps at 120 by default, which folded rows like
+          // "gas gauge battery 33°C" onto three lines
+          maxContentWidth: 220,
           // A spot near the top of the plot puts the tooltip outside the box,
           // where the card clips it. Reflowing it back inside keeps the axis
           // honest — the alternative, reserving headroom by inflating maxY,
@@ -511,10 +640,14 @@ Widget _buildHistoryLineChart(
                 : '';
             return LineTooltipItem(
               '$label ${format(e.y)}',
-              TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: e.bar.color,
+              // One colour for every line. Tinting each row to match its
+              // series repeated what the legend already encodes, and on the
+              // tooltip's own background the lighter series read as washed
+              // out next to the darker ones.
+              const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
               ),
             );
           }).toList(),
@@ -548,7 +681,7 @@ Widget _buildHistoryLineChart(
             // Sized to the labels this axis will actually draw. A fixed
             // reserve had to assume the worst case, which left a wide empty
             // gutter on every chart whose ticks happened to be short.
-            reservedSize: _axisWidth(top, interval, format),
+            reservedSize: _axisWidth(bottom, top, interval, format),
             getTitlesWidget: (val, meta) => SideTitleWidget(
               meta: meta,
               child: Text(
@@ -563,7 +696,7 @@ Widget _buildHistoryLineChart(
         ),
       ),
       borderData: FlBorderData(show: false),
-      minY: 0,
+      minY: bottom,
       maxY: top,
       lineBarsData: bars,
     ),

@@ -31,8 +31,16 @@ class StatusHistory {
   final diskRead = Fifo<double?>(capacity: capacity);
   final diskWrite = Fifo<double?>(capacity: capacity);
 
-  /// Celsius
+  /// Celsius. The aggregate reading, kept for sources that only expose one
+  /// (and for [seed], since monitor's stored history has a single column).
   final temp = Fifo<double?>(capacity: capacity);
+
+  /// Celsius per sensor, for hosts that expose several. Every series is
+  /// index-aligned with [time] like the fixed ones: a device that appears
+  /// mid-run is backfilled with nulls, and one that disappears keeps getting
+  /// them, so index `i` means the same sample in all of them.
+  final _tempsByDevice = <String, Fifo<double?>>{};
+  Map<String, List<double?>> get tempsByDevice => _tempsByDevice;
 
   /// Milliseconds since epoch of each sample
   final time = Fifo<int>(capacity: capacity);
@@ -52,6 +60,7 @@ class StatusHistory {
     double? diskRead,
     double? diskWrite,
     double? temp,
+    Map<String, double>? temps,
     double? battery,
   }) {
     // A repeated sampling instant means the source hasn't advanced (monitor
@@ -69,6 +78,19 @@ class StatusHistory {
     this.diskWrite.add(diskWrite);
     this.temp.add(temp);
     this.battery.add(battery);
+
+    final reported = temps ?? const <String, double>{};
+    for (final device in {..._tempsByDevice.keys, ...reported.keys}) {
+      final series = _tempsByDevice.putIfAbsent(device, () {
+        // `time` already holds this sample, so pad to one short of it
+        final f = Fifo<double?>(capacity: capacity);
+        for (var i = 1; i < time.length; i++) {
+          f.add(null);
+        }
+        return f;
+      });
+      series.add(reported[device]);
+    }
   }
 
   /// Replaces the buffer with [samples], oldest first. Used to prefill from

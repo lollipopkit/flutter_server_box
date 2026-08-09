@@ -11,9 +11,6 @@ enum ServerDetailCards {
   about(Icons.info),
   cpu(Icons.memory),
   mem(Bootstrap.memory),
-  diskChart(Icons.stacked_line_chart, sinceBuild: 1467),
-  netChart(Icons.multiline_chart, sinceBuild: 1467),
-  tempChart(Icons.thermostat, sinceBuild: 1467),
   swap(Icons.swap_horiz),
   gpu(Bootstrap.gpu_card),
   disk(Bootstrap.device_hdd_fill),
@@ -50,14 +47,10 @@ enum ServerDetailCards {
     battery => libL10n.battery,
     pve => 'PVE',
     custom => libL10n.cmd,
-    // Trend-only cards. Named the same as the snapshot card of the same
-    // subject: the header sits on the card the user is already looking at, so
-    // a qualifier there is noise. The reorder list in `srv_detail_seq.dart`
-    // shows the enum name, which stays distinct.
-    diskChart => libL10n.disk,
-    netChart => libL10n.net,
-    tempChart => libL10n.temperature,
   };
+
+  /// Build that folded the standalone trend cards into their snapshot cards.
+  static const _kTrendCardsFoldedBuild = 1467;
 
   /// If:
   /// Version 1 => user set [about], default is [about, cpu]
@@ -81,25 +74,26 @@ enum ServerDetailCards {
       }
     }
 
-    if (cur >= diskChart.sinceBuild!) {
+    if (cur >= _kTrendCardsFoldedBuild) {
       final prop = Stores.setting.detailCardOrder;
       final list = prop.fetch();
-      // Names only ever written by unreleased builds of this branch.
-      // TODO: drop these two `remove`s before they can accumulate meaning.
-      list.removeWhere((e) => e == 'usage' || e == 'monitorHistory');
-      // Inserted after the figures they chart rather than appended, so the
-      // trends sit above the per-device detail cards. `cpu`/`mem` are already
-      // in every stored list at their original positions.
-      final anchor = [mem.name, cpu.name, about.name]
-          .map(list.indexOf)
-          .firstWhere((i) => i != -1, orElse: () => -1);
-      var at = anchor + 1;
-      for (final card in [diskChart, netChart, tempChart]) {
-        if (list.contains(card.name)) continue;
-        list.insert(at, card.name);
-        at++;
-      }
-      prop.put(list);
+      // Standalone trend cards, each since folded into the snapshot card of
+      // the same subject. These names were only ever written by unreleased
+      // builds of this branch, so there is nothing to insert in their place —
+      // `initState` drops any name the enum no longer has, but doing it here
+      // too keeps the stored list from carrying dead entries around.
+      // TODO: drop this block before the names can accumulate meaning.
+      final before = list.length;
+      list.removeWhere(
+        (e) => const {
+          'usage',
+          'diskChart',
+          'tempChart',
+          'netChart',
+          'monitorHistory',
+        }.contains(e),
+      );
+      if (list.length != before) prop.put(list);
     }
   }
 }

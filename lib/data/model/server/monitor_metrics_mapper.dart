@@ -174,10 +174,16 @@ void _applyNet(ServerStatus ss, MonitorMetrics m, int time) {
   ss.netSpeed.update(parts);
 }
 
-/// monitor only exposes one aggregate temperature reading (no per-sensor
-/// breakdown here — that lives in `sensors`/`disk_smart` instead). Stored
-/// under a recognized CPU-temp key so `Temperatures.first` picks it up.
+/// Every sensor the agent reported, keyed by device.
+///
+/// Falls back to the single aggregate `temperature` for agents predating the
+/// per-sensor list, stored under a recognized CPU-temp key so
+/// `Temperatures.first` still picks it up.
 void _applyTemps(ServerStatus ss, MonitorMetrics m) {
+  if (m.temps.isNotEmpty) {
+    ss.temps.setAll({for (final t in m.temps) t.device: t.value});
+    return;
+  }
   final t = m.temperature;
   if (t == null) return;
   ss.temps.setAll({'cpu_thermal': t});

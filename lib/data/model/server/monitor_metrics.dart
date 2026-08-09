@@ -21,6 +21,10 @@ class MonitorMetrics {
   final MonitorDiskMetrics disk;
   final MonitorNetworkMetrics network;
   final double? temperature;
+
+  /// Every sensor the agent could read. Empty on agents predating the
+  /// field, where [temperature] is the only reading available.
+  final List<MonitorTempReading> temps;
   final String? sys;
   final String? cpuBrand;
   final List<MonitorGpuMetrics> gpus;
@@ -45,6 +49,7 @@ class MonitorMetrics {
     required this.disk,
     required this.network,
     this.temperature,
+    this.temps = const [],
     this.sys,
     this.cpuBrand,
     this.gpus = const [],
@@ -90,6 +95,21 @@ class MonitorCpuCoreTime {
       _$MonitorCpuCoreTimeFromJson(json);
 
   Map<String, dynamic> toJson() => _$MonitorCpuCoreTimeToJson(this);
+}
+
+@JsonSerializable(fieldRename: FieldRename.snake)
+class MonitorTempReading {
+  final String device;
+
+  /// Celsius
+  final double value;
+
+  const MonitorTempReading({required this.device, required this.value});
+
+  factory MonitorTempReading.fromJson(Map<String, dynamic> json) =>
+      _$MonitorTempReadingFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MonitorTempReadingToJson(this);
 }
 
 @JsonSerializable(fieldRename: FieldRename.snake)

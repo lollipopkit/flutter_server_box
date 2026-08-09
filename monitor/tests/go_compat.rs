@@ -278,6 +278,7 @@ fn sample_metrics() -> SystemMetrics {
             tx_bytes: 7,
         },
         temperature: None,
+        temps: vec![],
         sys: None,
         cpu_brand: None,
         gpus: vec![],

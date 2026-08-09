@@ -46,7 +46,15 @@ pub struct SystemMetrics {
     pub swap: SwapMetrics,
     pub disk: DiskMetrics,
     pub network: NetworkMetrics,
+    /// The single reading the home-page card shows: a CPU sensor when one is
+    /// identifiable, else any. Kept alongside `temps` because every consumer
+    /// wants that one number and re-deriving the preference order per client
+    /// would let them drift.
     pub temperature: Option<f32>,
+    /// Every sensor the platform exposes, keyed by device name. `Temperatures`
+    /// has always been a named map; only this API flattened it.
+    #[serde(default)]
+    pub temps: Vec<TempReading>,
     /// System version description (PRETTY_NAME / uname / OsName), if parsed
     pub sys: Option<String>,
     /// CPU model, e.g. "Apple M1 Pro" or "Intel(R) Core(TM) i7 (x8)" when
@@ -110,6 +118,13 @@ impl From<&sbm_parser::types::DiskSmart> for SmartSummary {
             power_cycle_count: d.power_cycle_count,
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TempReading {
+    pub device: String,
+    /// Celsius
+    pub value: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -527,6 +542,12 @@ fn adapt_status(
     // (empty when the platform locks down thermal sensors, e.g. many Macs —
     // see `effective_capabilities`, which reports this as HardwareDependent).
     let temperature = status.temps.first().map(|t| t as f32);
+    let temps = status
+        .temps
+        .0
+        .iter()
+        .map(|(device, value)| TempReading { device: device.clone(), value: *value })
+        .collect();
 
     let amd = carry_forward(
         status.amd,
@@ -596,6 +617,7 @@ fn adapt_status(
         disk,
         network,
         temperature,
+        temps,
         sys: status.sys.clone(),
         cpu_brand: format_cpu_brand(&status.cpu_brand),
         gpus,

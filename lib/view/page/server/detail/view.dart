@@ -49,24 +49,28 @@ class ServerDetailPage extends ConsumerStatefulWidget {
 
 class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     with SingleTickerProviderStateMixin {
-  late final _cardBuildMap = Map.fromIterables(ServerDetailCards.names, [
-    _buildAbout,
-    _buildCPUView,
-    _buildMemView,
-    _buildDiskChart,
-    _buildNetChart,
-    _buildTempChart,
-    _buildSwapView,
-    _buildGpuView,
-    _buildDiskView,
-    _buildDiskSmart,
-    _buildNetView,
-    _buildSensors,
-    _buildTemperature,
-    _buildBatteries,
-    _buildPve,
-    _buildCustomCmd,
-  ]);
+  /// Keyed by the enum, not paired positionally with `ServerDetailCards.names`.
+  ///
+  /// The positional form threw `Iterables do not have same length` at runtime
+  /// whenever a card was added or removed and only one of the two lists was
+  /// updated, and a reordering of either silently paired a card with the wrong
+  /// builder. Here a mistake is at worst one missing card.
+  late final _cardBuildMap =
+      <ServerDetailCards, Widget? Function(ServerState)>{
+        ServerDetailCards.about: _buildAbout,
+        ServerDetailCards.cpu: _buildCPUView,
+        ServerDetailCards.mem: _buildMemView,
+        ServerDetailCards.swap: _buildSwapView,
+        ServerDetailCards.gpu: _buildGpuView,
+        ServerDetailCards.disk: _buildDiskView,
+        ServerDetailCards.smart: _buildDiskSmart,
+        ServerDetailCards.net: _buildNetView,
+        ServerDetailCards.sensor: _buildSensors,
+        ServerDetailCards.temp: _buildTemperature,
+        ServerDetailCards.battery: _buildBatteries,
+        ServerDetailCards.pve: _buildPve,
+        ServerDetailCards.custom: _buildCustomCmd,
+      };
 
   late Size _size;
   final List<String> _cardsOrder = [];
@@ -155,7 +159,8 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       if (buildFuncs) ServerFuncBtns(spi: si.spi),
     ];
     for (final card in _cardsOrder) {
-      final child = _cardBuildMap[card]?.call(si);
+      final child = _cardBuildMap[ServerDetailCards.fromName(card)]
+          ?.call(si);
       if (child != null) {
         children.add(child);
       }
@@ -677,6 +682,11 @@ ${err.message ?? 'null'}
 
     if (children.isEmpty) return null;
 
+    // The throughput trend belongs with the mounts it describes rather than in
+    // a card of its own
+    final ioChart = _buildDiskChart(si);
+    if (ioChart != null) children.add(ioChart);
+
     return ExpandTile(
       title: Text(libL10n.disk),
       childrenPadding: const EdgeInsets.only(bottom: 7),
@@ -923,7 +933,20 @@ ${err.message ?? 'null'}
     if (devices.isEmpty) return null;
 
     devices.sort(_netSortType.value.getSortFunc(ns));
-    children.addAll(devices.map((e) => _buildNetSpeedItem(ns, e)));
+
+    // Chart first, interfaces behind a disclosure that starts closed. A host
+    // routinely reports twenty-odd interfaces, nearly all of them idle
+    // tunnels; putting the trend after that list buried it.
+    final chart = _buildNetChart(si);
+    if (chart != null) children.add(chart);
+    children.add(
+      ExpandTile(
+        title: Text(libL10n.device, style: UIs.text13Grey),
+        initiallyExpanded: false,
+        childrenPadding: const EdgeInsets.only(bottom: 7),
+        children: devices.map((e) => _buildNetSpeedItem(ns, e)).toList(),
+      ),
+    );
 
     return ExpandTile(
       leading: Icon(ServerDetailCards.net.icon, size: 17),
@@ -950,8 +973,8 @@ ${err.message ?? 'null'}
           ),
         ],
       ),
-      childrenPadding: const EdgeInsets.only(bottom: 11),
-      initiallyExpanded: _getInitExpand(children.length),
+      childrenPadding: EdgeInsets.zero,
+      initiallyExpanded: _getInitExpand(1),
       children: children,
     ).cardx;
   }
@@ -1004,32 +1027,51 @@ ${err.message ?? 'null'}
     final ss = si.status;
     if (ss.temps.isEmpty) return null;
 
+    final devices = ss.temps.devices;
+    // Chart only. Sensor names and readings are what the chart's legend
+    // carries once there is more than one line; with a single sensor there is
+    // no legend, so its reading goes in the header instead. Either way a list
+    // above the chart would restate it.
+    final chart = _buildTempChart(si);
+    if (chart == null) return null;
+
+    // The chart plots one sensor per component, so a host with more than that
+    // has readings it isn't showing. Saying "4 / 20" and opening the full set
+    // on tap keeps a curated view from reading as the whole one.
+    final plotted = _tempSeries(si).length;
+    final hidden = devices.length > plotted;
+
+    final Widget? note;
+    if (devices.length == 1) {
+      note = Text(
+        '${ss.temps.get(devices.first)?.toStringAsFixed(1)}°C',
+        style: UIs.text13Grey,
+      );
+    } else if (hidden) {
+      note = InkWell(
+        onTap: () => _showAllTemps(ss),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('$plotted / ${devices.length}', style: UIs.text13Grey),
+            UIs.width7,
+            const Icon(Icons.list, size: 15, color: Colors.grey),
+          ],
+        ),
+      );
+    } else {
+      note = null;
+    }
+
     return CardX(
       child: ExpandTile(
         title: Text(libL10n.temperature),
         leading: const Icon(Icons.ac_unit, size: 20),
-        initiallyExpanded: _getInitExpand(ss.temps.devices.length),
-        childrenPadding: const EdgeInsets.only(bottom: 7),
-        children: ss.temps.devices
-            .map((key) => _buildTemperatureItem(key, ss.temps.get(key)))
-            .toList(),
-      ),
-    );
-  }
-
-  Widget _buildTemperatureItem(String key, double? val) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 3, right: 17, top: 5, bottom: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Btn.text(
-            text: key,
-            textStyle: UIs.text15,
-            onTap: () => _onTapTemperatureItem(key),
-          ).paddingSymmetric(horizontal: 5),
-          Text('${val?.toStringAsFixed(1)}°C', style: UIs.text13Grey),
-        ],
+        initiallyExpanded: _getInitExpand(1),
+        // The chart already carries whatever space its axis needs
+        childrenPadding: EdgeInsets.symmetric(vertical: 10),
+        trailing: note,
+        children: [chart],
       ),
     );
   }
@@ -1038,13 +1080,17 @@ ${err.message ?? 'null'}
     final ss = si.status;
     if (ss.batteries.isEmpty) return null;
 
+    final children = ss.batteries.map(_buildBatteryItem).toList();
+    final chart = _buildBatteryChart(si);
+    if (chart != null) children.add(chart);
+
     return CardX(
       child: ExpandTile(
         title: Text(libL10n.battery),
         leading: const Icon(Icons.battery_charging_full, size: 17),
         childrenPadding: const EdgeInsets.only(bottom: 7),
         initiallyExpanded: _getInitExpand(ss.batteries.length, 2),
-        children: ss.batteries.map(_buildBatteryItem).toList(),
+        children: children,
       ),
     );
   }

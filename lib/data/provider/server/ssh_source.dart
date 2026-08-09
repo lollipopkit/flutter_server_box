@@ -53,6 +53,9 @@ class SshDataSource implements ServerDataSource {
       diskRead: status.diskIO.allSpeedBytes.$1,
       diskWrite: status.diskIO.allSpeedBytes.$2,
       temp: status.temps.first,
+      temps: {
+        for (final d in status.temps.devices) d: ?status.temps.get(d),
+      },
       battery: status.batteries.firstOrNull?.percent?.toDouble(),
     );
     return status;

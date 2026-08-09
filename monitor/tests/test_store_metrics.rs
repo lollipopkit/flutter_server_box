@@ -23,6 +23,7 @@ fn sample_metrics() -> SystemMetrics {
         disk: DiskMetrics { total: 100, used: 50, free: 50, usage_percent: 50.0 },
         network: NetworkMetrics { rx_bytes: 0, tx_bytes: 0 },
         temperature: None,
+        temps: vec![],
         sys: None,
         cpu_brand: None,
         gpus: vec![],

@@ -47,6 +47,20 @@ impl Default for State {
 /// Groups per-logical-core brand strings into (name, count), matching
 /// `windows::parse_cpu_brand`'s shape (and `monitor`'s `format_cpu_brand`,
 /// which expects this grouping to render "Brand (xN)")
+/// Whether a reading is a measurement rather than a sentinel.
+///
+/// macOS reports inactive PMU sensors through the same API as live ones, with
+/// values like -9201.1 °C. Passed through, they turned the temperature chart
+/// into two dozen lines most of which sat far off the axis, and they would
+/// drag any min/mean computed over the set.
+///
+/// The window is deliberately wide: −40 covers a machine sitting in a freezer
+/// or a cold-boot reading, 150 covers a GPU or VRM under load. Anything
+/// outside it is not a temperature this software can act on.
+fn is_plausible_temp(c: f64) -> bool {
+    c.is_finite() && (-40.0..=150.0).contains(&c)
+}
+
 fn cpu_brand(system: &System) -> Vec<(String, u32)> {
     let mut brands: Vec<(String, u32)> = Vec::new();
     for cpu in system.cpus() {
@@ -171,7 +185,9 @@ pub fn sample(state: &mut State) -> ServerStatus {
 
     let mut temps = Temperatures::default();
     for component in state.components.list() {
-        if let Some(t) = component.temperature() {
+        if let Some(t) = component.temperature()
+            && is_plausible_temp(t as f64)
+        {
             temps.0.insert(component.label().to_string(), t as f64);
         }
     }

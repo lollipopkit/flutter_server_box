@@ -23,6 +23,11 @@ MonitorMetrics _$MonitorMetricsFromJson(
     json['network'] as Map<String, dynamic>,
   ),
   temperature: (json['temperature'] as num?)?.toDouble(),
+  temps:
+      (json['temps'] as List<dynamic>?)
+          ?.map((e) => MonitorTempReading.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
   sys: json['sys'] as String?,
   cpuBrand: json['cpu_brand'] as String?,
   gpus:
@@ -83,6 +88,7 @@ Map<String, dynamic> _$MonitorMetricsToJson(MonitorMetrics instance) =>
       'disk': instance.disk,
       'network': instance.network,
       'temperature': instance.temperature,
+      'temps': instance.temps,
       'sys': instance.sys,
       'cpu_brand': instance.cpuBrand,
       'gpus': instance.gpus,
@@ -110,6 +116,15 @@ Map<String, dynamic> _$MonitorCpuCoreTimeToJson(MonitorCpuCoreTime instance) =>
       'total': instance.total,
       'usage_percent': instance.usagePercent,
     };
+
+MonitorTempReading _$MonitorTempReadingFromJson(Map<String, dynamic> json) =>
+    MonitorTempReading(
+      device: json['device'] as String,
+      value: (json['value'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$MonitorTempReadingToJson(MonitorTempReading instance) =>
+    <String, dynamic>{'device': instance.device, 'value': instance.value};
 
 MonitorMemoryMetrics _$MonitorMemoryMetricsFromJson(
   Map<String, dynamic> json,
