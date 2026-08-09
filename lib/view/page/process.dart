@@ -44,7 +44,6 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
   PsResult _result = const PsResult(procs: []);
   bool _hasLoaded = false;
   bool _isRefreshing = false;
-  SystemType? _systemType;
   _ProcessCapabilities _capabilities = _ProcessCapabilities.empty;
 
   // Issue #64: CPU sorting keeps high-churn lists visibly fresh and surfaces
@@ -103,7 +102,6 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
     try {
       final serverState = ref.read(_provider);
       final systemType = serverState.status.system;
-      _systemType = systemType;
       final client = serverState.client;
       if (!_canRunProcessCmd(serverState)) {
         _hasLoaded = true;
@@ -573,14 +571,7 @@ extension _ProcessPageStateUtils on _ProcessPageState {
   String _formatPercent(double? value) =>
       value == null ? '—' : '${value.toStringAsFixed(1)}%';
 
-  String _formatCpu(double? value) {
-    if (value == null) return '—';
-    final formatted = value.toStringAsFixed(1);
-    // PowerShell Get-Process reports cumulative CPU seconds, while Unix ps
-    // reports a percentage. Keep the unit explicit instead of implying that
-    // the Windows value is a percentage.
-    return _systemType == SystemType.windows ? '${formatted}s' : '$formatted%';
-  }
+  String _formatCpu(double? value) => _formatPercent(value);
 
   String _formatRss(Proc proc) {
     final rssKb = proc.rssKb;
@@ -712,8 +703,8 @@ class _ProcessCapabilities {
       hasCpu |= proc.cpu != null;
       hasMem |= proc.mem != null;
       hasRss |= proc.rssKb != null;
-      hasRead |= proc.readSpeed != null;
-      hasWrite |= proc.writeSpeed != null;
+      hasRead |= proc.readBytes != null;
+      hasWrite |= proc.writeBytes != null;
       if (hasUser && hasCpu && hasMem && hasRss && hasRead && hasWrite) break;
     }
     return _ProcessCapabilities(

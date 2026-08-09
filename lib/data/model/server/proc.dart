@@ -12,6 +12,7 @@ class _ProcValIdxMap {
   final int? tty;
   final int? stat;
   final int? start;
+  final int? startId;
   final int? time;
   final int? readBytes;
   final int? writeBytes;
@@ -27,6 +28,7 @@ class _ProcValIdxMap {
     this.tty,
     this.stat,
     this.start,
+    this.startId,
     this.time,
     this.readBytes,
     this.writeBytes,
@@ -45,6 +47,7 @@ class Proc {
   final String? tty;
   final String? stat;
   final String? start;
+  final String? startId;
   final String? time;
   final int? readBytes;
   final int? writeBytes;
@@ -66,6 +69,7 @@ class Proc {
     this.tty,
     this.stat,
     this.start,
+    this.startId,
     this.time,
     this.readBytes,
     this.writeBytes,
@@ -93,6 +97,7 @@ class Proc {
           tty == other.tty &&
           stat == other.stat &&
           start == other.start &&
+          startId == other.startId &&
           time == other.time &&
           readBytes == other.readBytes &&
           writeBytes == other.writeBytes &&
@@ -111,6 +116,7 @@ class Proc {
     tty,
     stat,
     start,
+    startId,
     time,
     readBytes,
     writeBytes,
@@ -126,38 +132,60 @@ class Proc {
     double? elapsedSeconds,
   }) {
     final parts = raw.split(_whitespaceRegExp);
+    final pid = int.parse(parts[map.pid]);
+    final start = map.start == null ? null : parts[map.start!];
+    final startId = map.startId == null
+        ? null
+        : _parseProcessIdentity(parts[map.startId!]);
+    final command = parts.sublist(map.command).join(' ');
+    final matchingPrevious = _matchingPrevious(
+      previous,
+      command: command,
+      start: start,
+      startId: startId,
+    );
     final readBytes = _parseNullableInt(parts, map.readBytes);
     final writeBytes = _parseNullableInt(parts, map.writeBytes);
     final (readSpeed, writeSpeed) = _calculateSpeeds(
       readBytes: readBytes,
       writeBytes: writeBytes,
-      previous: previous,
+      previous: matchingPrevious,
       elapsedSeconds: elapsedSeconds,
     );
     return Proc(
       user: map.user == null ? null : parts[map.user!],
-      pid: int.parse(parts[map.pid]),
+      pid: pid,
       cpu: map.cpu == null ? null : double.parse(parts[map.cpu!]),
       mem: map.mem == null ? null : double.parse(parts[map.mem!]),
       vsz: map.vsz == null ? null : parts[map.vsz!],
       rss: map.rss == null ? null : parts[map.rss!],
       tty: map.tty == null ? null : parts[map.tty!],
       stat: map.stat == null ? null : parts[map.stat!],
-      start: map.start == null ? null : parts[map.start!],
+      start: start,
+      startId: startId,
       time: map.time == null ? null : parts[map.time!],
       readBytes: readBytes,
       writeBytes: writeBytes,
       readSpeed: readSpeed,
       writeSpeed: writeSpeed,
-      command: parts.sublist(map.command).join(' '),
+      command: command,
     );
   }
 
   factory Proc._parseWindowsJson(
     Map<String, dynamic> raw, {
+    required int pid,
     Proc? previous,
     double? elapsedSeconds,
   }) {
+    final name = raw['ProcessName'] ?? raw['Name'];
+    final command = raw['CommandLine'] ?? raw['Path'] ?? name ?? '';
+    final startId = _parseProcessIdentity(raw['StartId']);
+    final matchingPrevious = _matchingPrevious(
+      previous,
+      command: command.toString(),
+      startId: startId,
+    );
     final readBytes = _parseDynamicInt(
       raw['IOReadBytes'] ?? raw['ReadTransferCount'],
     );
@@ -167,17 +195,17 @@ class Proc {
     final (readSpeed, writeSpeed) = _calculateSpeeds(
       readBytes: readBytes,
       writeBytes: writeBytes,
-      previous: previous,
+      previous: matchingPrevious,
       elapsedSeconds: elapsedSeconds,
     );
-    final name = raw['ProcessName'] ?? raw['Name'];
-    final command = raw['CommandLine'] ?? raw['Path'] ?? name ?? '';
     final workingSetBytes = _parseDynamicInt(
       raw['WorkingSet'] ?? raw['WorkingSetSize'],
     );
     return Proc(
-      pid: _parseDynamicInt(raw['Id'] ?? raw['ProcessId'])!,
-      cpu: _parseDynamicDouble(raw['CPU']),
+      pid: pid,
+      cpu: _parseDynamicDouble(
+        raw['CPUPercent'] ?? raw['PercentProcessorTime'],
+      ),
       // Unix `ps` reports RSS in KiB. Normalize the Windows byte count to the
       // same unit so sorting and display stay consistent across platforms.
       rss: workingSetBytes == null
@@ -187,6 +215,7 @@ class Proc {
       writeBytes: writeBytes,
       readSpeed: readSpeed,
       writeSpeed: writeSpeed,
+      startId: startId,
       command: command.toString(),
     );
   }
@@ -276,6 +305,7 @@ class PsResult {
       tty: parts.indexOfOrNull('TTY'),
       stat: parts.indexOfOrNull('STAT'),
       start: parts.indexOfOrNull('START'),
+      startId: parts.indexOfOrNull('START_ID'),
       time: parts.indexOfOrNull('TIME'),
       readBytes: parts.indexOfOrNull('READ_BYTES'),
       writeBytes: parts.indexOfOrNull('WRITE_BYTES'),
@@ -322,18 +352,38 @@ class PsResult {
     if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return null;
     try {
       final decoded = json.decode(trimmed);
-      final items = decoded is List ? decoded : [decoded];
+      final items = switch (decoded) {
+        final List<Object?> values => values,
+        final Map<Object?, Object?> value => <Object?>[value],
+        _ => null,
+      };
+      if (items == null) {
+        return PsResult(
+          procs: const [],
+          error: 'Invalid Windows process JSON: expected an object or array',
+          sampledAtMillis: sampledAtMillis,
+        );
+      }
       final procs = <Proc>[];
       final errs = <String>[];
-      for (final item in items) {
-        if (item is! Map) continue;
+      for (final (index, item) in items.indexed) {
+        if (item is! Map) {
+          errs.add('Invalid Windows process row $index: expected an object');
+          continue;
+        }
         try {
           final map = Map<String, dynamic>.from(item);
-          final pid = _parseDynamicInt(map['Id'] ?? map['ProcessId']);
-          if (pid == null) continue;
+          final pid = _parseProcessId(map['Id'] ?? map['ProcessId']);
+          if (pid == null) {
+            errs.add(
+              'Invalid Windows process row $index: missing or invalid PID',
+            );
+            continue;
+          }
           procs.add(
             Proc._parseWindowsJson(
               map,
+              pid: pid,
               previous: previousByPid[pid],
               elapsedSeconds: elapsedSeconds,
             ),
@@ -348,8 +398,12 @@ class PsResult {
         error: errs.isEmpty ? null : errs.join('\n'),
         sampledAtMillis: sampledAtMillis,
       );
-    } catch (_) {
-      return null;
+    } catch (e) {
+      return PsResult(
+        procs: const [],
+        error: 'Invalid Windows process JSON: $e',
+        sampledAtMillis: sampledAtMillis,
+      );
     }
   }
 
@@ -457,6 +511,15 @@ int? _parseDynamicInt(Object? val) {
   return int.tryParse(str);
 }
 
+int? _parseProcessId(Object? value) {
+  if (value is int) return value;
+  if (value is num) {
+    if (!value.isFinite || value != value.truncateToDouble()) return null;
+    return value.toInt();
+  }
+  return int.tryParse(value?.toString() ?? '');
+}
+
 double? _parseDynamicDouble(Object? val) {
   if (val == null) return null;
   if (val is double) return val;
@@ -464,6 +527,31 @@ double? _parseDynamicDouble(Object? val) {
   final str = val.toString();
   if (str.isEmpty || str == '-') return null;
   return double.tryParse(str);
+}
+
+String? _parseProcessIdentity(Object? value) {
+  final identity = value?.toString().trim();
+  if (identity == null || identity.isEmpty || identity == '-') return null;
+  return identity;
+}
+
+Proc? _matchingPrevious(
+  Proc? previous, {
+  required String command,
+  String? start,
+  String? startId,
+}) {
+  if (previous == null) return null;
+  if (startId != null || previous.startId != null) {
+    if (startId == null || previous.startId == null) return null;
+    return startId == previous.startId ? previous : null;
+  }
+  if (start != null || previous.start != null) {
+    if (start == null || previous.start == null || start != previous.start) {
+      return null;
+    }
+  }
+  return command == previous.command ? previous : null;
 }
 
 (double?, double?) _calculateSpeeds({

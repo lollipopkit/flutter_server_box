@@ -99,6 +99,24 @@ void main() {
       expect(unixBuilder.scriptFileName, endsWith('.sh'));
     });
 
+    test('Windows process script samples current CPU and process identity', () {
+      final script = const WindowsScriptBuilder().buildScript(null);
+
+      expect(script, contains('Win32_PerfFormattedData_PerfProc_Process'));
+      expect(script, contains('PercentProcessorTime'));
+      expect(script, contains('CPUPercent'));
+      expect(script, contains('StartId'));
+      expect(script, isNot(contains('Select-Object ProcessName, Id, CPU,')));
+    });
+
+    test('Unix process script includes a stable process start ID', () {
+      final script = const UnixScriptBuilder().buildScript(null);
+
+      expect(script, contains('START_ID'));
+      expect(script, contains('/proc/\$pid/stat'));
+      expect(script, contains("awk '{print \$20}'"));
+    });
+
     test('install commands are generated correctly', () {
       const testDir = '/tmp/test';
       const testPath = '/tmp/test/script.sh';

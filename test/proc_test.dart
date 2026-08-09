@@ -108,6 +108,30 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     expect(newProc.writeSpeed, isNull);
   });
 
+  test(
+    'PID reuse with a new process start ID does not inherit IO counters',
+    () {
+      const first = '''
+PID USER %CPU %MEM VSZ RSS TTY STAT TIME START_ID READ_BYTES WRITE_BYTES COMMAND
+42 root 0.1 1.2 1276 512 ? S 00:01 100 1000 2000 /usr/bin/worker
+''';
+      const second = '''
+PID USER %CPU %MEM VSZ RSS TTY STAT TIME START_ID READ_BYTES WRITE_BYTES COMMAND
+42 root 0.1 1.2 1276 512 ? S 00:01 200 9000 12000 /usr/bin/worker
+''';
+      final previous = PsResult.parse(first, sampledAtMillis: 1000);
+      final current = PsResult.parse(
+        second,
+        previous: previous,
+        sampledAtMillis: 2000,
+      );
+
+      expect(current.procs.single.startId, '200');
+      expect(current.procs.single.readSpeed, isNull);
+      expect(current.procs.single.writeSpeed, isNull);
+    },
+  );
+
   test('sort process by io speed with null last', () {
     const first = '''
 PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
@@ -141,14 +165,14 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
   test('parse windows process json io counters', () {
     const first = '''
 [
-  {"ProcessName":"a","Id":1,"CPU":1.5,"WorkingSet":1024,"IOReadBytes":100,"IOWriteBytes":200},
-  {"ProcessName":"b","Id":2,"CPU":0.5,"WorkingSet":512,"IOReadBytes":1000,"IOWriteBytes":1200}
+  {"ProcessName":"a","Id":1,"CPUPercent":12.5,"StartId":"100","WorkingSet":1024,"IOReadBytes":100,"IOWriteBytes":200},
+  {"ProcessName":"b","Id":2,"CPUPercent":2.5,"StartId":"200","WorkingSet":512,"IOReadBytes":1000,"IOWriteBytes":1200}
 ]
 ''';
     const second = '''
 [
-  {"ProcessName":"a","Id":1,"CPU":1.5,"WorkingSet":1024,"IOReadBytes":1100,"IOWriteBytes":2200},
-  {"ProcessName":"b","Id":2,"CPU":0.5,"WorkingSet":512,"IOReadBytes":1200,"IOWriteBytes":1600}
+  {"ProcessName":"a","Id":1,"CPUPercent":25.0,"StartId":"100","WorkingSet":1024,"IOReadBytes":1100,"IOWriteBytes":2200},
+  {"ProcessName":"b","Id":2,"CPUPercent":5.0,"StartId":"200","WorkingSet":512,"IOReadBytes":1200,"IOWriteBytes":1600}
 ]
 ''';
     final previous = PsResult.parse(first, sampledAtMillis: 1000);
@@ -161,8 +185,47 @@ PID USER %CPU %MEM VSZ RSS TTY STAT START TIME READ_BYTES WRITE_BYTES COMMAND
     expect(current.procs.first.pid, 1);
     expect(current.procs.first.readSpeed, 1000);
     expect(current.procs.first.writeSpeed, 2000);
+    expect(current.procs.first.cpu, 25);
+    expect(current.procs.first.startId, '100');
     expect(current.procs.first.rssKb, 1);
     expect(current.procs.last.rssKb, 1);
+  });
+
+  test('Windows cumulative CPU seconds are not parsed as CPU usage', () {
+    const raw = '''
+{"ProcessName":"legacy","Id":1,"CPU":99.5,"WorkingSet":1024}
+''';
+    final proc = PsResult.parse(raw).procs.single;
+
+    expect(proc.cpu, isNull);
+  });
+
+  test('invalid Windows rows produce displayable parse errors', () {
+    const raw = '''
+[
+  {"ProcessName":"missing-pid"},
+  {"ProcessName":"fractional-pid","Id":1.5},
+  "not-an-object",
+  {"ProcessName":"valid","Id":7,"CPUPercent":3.0}
+]
+''';
+    final result = PsResult.parse(raw, sampledAtMillis: 1234);
+
+    expect(result.procs.map((proc) => proc.pid), [7]);
+    expect(
+      RegExp('missing or invalid PID').allMatches(result.error!).length,
+      2,
+    );
+    expect(result.error, contains('expected an object'));
+    expect(result.sampledAtMillis, 1234);
+  });
+
+  test('malformed Windows JSON returns a displayable parse error', () {
+    final result = PsResult.parse('{"ProcessName":', sampledAtMillis: 5678);
+
+    expect(result.procs, isEmpty);
+    expect(result.error, contains('Invalid Windows process JSON'));
+    expect(result.sampledAtMillis, 5678);
   });
 
   test('sortedBy reorders processes and keeps metadata', () {

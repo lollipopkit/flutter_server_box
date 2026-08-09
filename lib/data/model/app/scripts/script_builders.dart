@@ -112,9 +112,26 @@ switch (\$args[0]) {
     ),
     ShellFunc.process =>
       r'''
-Get-Process | Select-Object ProcessName, Id, CPU, WorkingSet,
-    @{Name='IOReadBytes';Expression={$_.IOReadBytes}},
-    @{Name='IOWriteBytes';Expression={$_.IOWriteBytes}} | ConvertTo-Json''',
+$cpuByPid = @{}
+try {
+    Get-CimInstance Win32_PerfFormattedData_PerfProc_Process -ErrorAction Stop |
+        Where-Object { $_.IDProcess -gt 0 } |
+        ForEach-Object { $cpuByPid[[int]$_.IDProcess] = [double]$_.PercentProcessorTime }
+} catch {}
+Get-Process | ForEach-Object {
+    $process = $_
+    $startId = $null
+    try { $startId = $process.StartTime.ToUniversalTime().Ticks } catch {}
+    [PSCustomObject]@{
+        ProcessName = $process.ProcessName
+        Id = $process.Id
+        CPUPercent = $cpuByPid[[int]$process.Id]
+        WorkingSet = $process.WorkingSet64
+        IOReadBytes = $process.IOReadBytes
+        IOWriteBytes = $process.IOWriteBytes
+        StartId = $startId
+    }
+} | ConvertTo-Json -Compress''',
     ShellFunc.shutdown => 'Stop-Computer -Force',
     ShellFunc.reboot => 'Restart-Computer -Force',
     ShellFunc.suspend =>
@@ -256,7 +273,7 @@ if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \tif [ "\$isBusybox" != "" ]; then
 \t\tps w
 \telse
-\t\tprintf 'PID USER %%CPU %%MEM VSZ RSS TTY STAT TIME READ_BYTES WRITE_BYTES COMMAND\\n'
+\t\tprintf 'PID USER %%CPU %%MEM VSZ RSS TTY STAT TIME START_ID READ_BYTES WRITE_BYTES COMMAND\\n'
 \t\tps -axo pid=,user=,%cpu=,%mem=,vsz=,rss=,tty=,stat=,time=,args= | while IFS= read -r line; do
 \t\t\tset -f
 \t\t\tset -- \$line
@@ -264,13 +281,18 @@ if [ "\$macSign" = "" ] && [ "\$bsdSign" = "" ]; then
 \t\t\tpid=\$1; user=\$2; cpu=\$3; mem=\$4; vsz=\$5; rss=\$6; tty=\$7; stat=\$8; time=\$9
 \t\t\tshift 9
 \t\t\tcmd=\$*
+\t\t\tstart_id='-'
 \t\t\tread_bytes='-'
 \t\t\twrite_bytes='-'
+\t\t\tif [ -r "/proc/\$pid/stat" ]; then
+\t\t\t\tstart_id=\$(sed 's/^.*) //' "/proc/\$pid/stat" | awk '{print \$20}')
+\t\t\t\t[ -n "\$start_id" ] || start_id='-'
+\t\t\tfi
 \t\t\tif [ -r "/proc/\$pid/io" ]; then
 \t\t\t\tread_bytes=\$(awk '/^read_bytes:/ {print \$2}' "/proc/\$pid/io")
 \t\t\t\twrite_bytes=\$(awk '/^write_bytes:/ {print \$2}' "/proc/\$pid/io")
 \t\t\tfi
-\t\t\tprintf '%s %s %s %s %s %s %s %s %s %s %s %s\\n' "\$pid" "\$user" "\$cpu" "\$mem" "\$vsz" "\$rss" "\$tty" "\$stat" "\$time" "\$read_bytes" "\$write_bytes" "\$cmd"
+\t\t\tprintf '%s %s %s %s %s %s %s %s %s %s %s %s %s\\n' "\$pid" "\$user" "\$cpu" "\$mem" "\$vsz" "\$rss" "\$tty" "\$stat" "\$time" "\$start_id" "\$read_bytes" "\$write_bytes" "\$cmd"
 \t\tdone
 \tfi
 else
