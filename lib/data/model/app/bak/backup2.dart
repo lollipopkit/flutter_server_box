@@ -46,11 +46,15 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     required Map<String, Object?> settings,
   }) = _BackupV2;
 
-  factory BackupV2.fromJson(Map<String, dynamic> json) {
-    final backup = _$BackupV2FromJson(json);
-    backup._validateRestorableTypedStores();
-    return backup;
-  }
+  /// Must stay a single expression with a cascade, not a block body.
+  /// `Freezed.needsJsonSerializable` only enables JSON generation when the
+  /// `fromJson` factory's body `is ExpressionFunctionBody`; with a block body
+  /// it silently emits no `@JsonSerializable()`, json_serializable then writes
+  /// no `backup2.g.dart`, and `toJson`/`_$BackupV2FromJson` stop existing. The
+  /// checked-in generated files predate that check, so the breakage only shows
+  /// up the next time codegen runs from scratch.
+  factory BackupV2.fromJson(Map<String, dynamic> json) =>
+      _$BackupV2FromJson(json).._validateRestorableTypedStores();
 
   @override
   Future<void> merge({bool force = false}) async {

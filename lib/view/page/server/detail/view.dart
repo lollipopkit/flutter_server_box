@@ -15,7 +15,6 @@ import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
-import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
@@ -122,32 +121,23 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     return _buildMainPage(serverState);
   }
 
-  /// Whether there is anything to render yet. The two connection methods
-  /// signal this differently: SSH keeps a long-lived [SSHClient] on the state,
-  /// while the monitor HTTP path holds no client at all (its `Dio` session is
-  /// private to `MonitorHttpClient`), so it can only be judged by [ServerConn].
-  /// Gating both on `client == null` left every monitor-HTTP server stuck on
-  /// the empty placeholder.
+  /// Whether there is anything to render yet.
+  ///
+  /// A transport that keeps a session has a live client to test; a stateless
+  /// one holds no client at all, so it can only be judged by whether it has
+  /// answered yet. Gating both on `client == null` left every monitor-HTTP
+  /// server stuck on the empty placeholder.
   bool _hasSession(ServerState state) {
-    return switch (ServerConnectCredential.fromSpi(state.spi)) {
-      ServerConnectCredentialSsh() => state.client != null,
-      // connecting → still nothing fetched; loading/finished → status is populated
-      ServerConnectCredentialMonitorHttp() =>
-        !(state.conn < server_model.ServerConn.connected),
-    };
-  }
-
-  bool _isSsh(ServerState state) {
-    return ServerConnectCredential.fromSpi(state.spi)
-        is ServerConnectCredentialSsh;
+    if (state.capabilities.persistentSession) return state.client != null;
+    // connecting → nothing fetched yet; loading/finished → status is populated
+    return !(state.conn < server_model.ServerConn.connected);
   }
 
   Widget _buildMainPage(ServerState si) {
     // Every ServerFuncBtn (terminal / sftp / container / process / snippet /
-    // iperf / systemd / portForward) is driven over SSH; monitor's HTTP API
-    // exposes no counterpart for any of them. Hide the whole row on such
-    // servers instead of offering buttons that can only fail.
-    final buildFuncs = !_moveServerFuncs && _isSsh(si);
+    // iperf / systemd / portForward) needs a shell. Hide the whole row on
+    // transports without one instead of offering buttons that can only fail.
+    final buildFuncs = !_moveServerFuncs && si.capabilities.shell;
     final logo = _buildLogo(si);
     final children = <Widget>[
       ?logo,
