@@ -147,9 +147,14 @@ pub const BSD: &[CommandSpec] = &[
     },
     CommandSpec { key: UPTIME, cmd: "uptime" },
     CommandSpec { key: DISK, cmd: "df -k" },
-    // vm_stat supplies page-level data so "used" can exclude cache/inactive
-    // (top's PhysMem "used" counts cached files); parser tolerates its absence
-    CommandSpec { key: MEM, cmd: "top -l 1 | grep PhysMem; vm_stat" },
+    // Darwin: vm_stat supplies page-level data so "used" can exclude
+    // cache/inactive (top's PhysMem "used" counts cached files); parser
+    // tolerates its absence. FreeBSD has neither `top -l` nor vm_stat, so
+    // without the branch its memory section came back empty.
+    CommandSpec {
+        key: MEM,
+        cmd: r#"if [ "$(uname)" = "Darwin" ]; then top -l 1 | grep PhysMem; vm_stat; else top -b -d 1 | grep "^Mem:"; fi"#,
+    },
     CommandSpec { key: HOST, cmd: "hostname" },
     CommandSpec {
         key: DISK_SMART,

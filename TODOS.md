@@ -120,3 +120,31 @@ velocity_metrics 合计只有 0.6 KB),外加三个索引,索引比表本身还�
 - 补上读取接口(每核历史图表),让这份存储有用;还是
 - 保留但降采样(例如只在扩展周期写一次,而不是每个核心周期)
 `idx_cpu_core_metrics_server_core` 在任一方案下都没有对应的查询,先留着。
+
+## 脚本 marker 协议:采用编码名,未采用 `SrvBoxData.` 逐行 framing
+
+upstream `f647ce83` 对 marker 协议做了两层加固,本分支只取了第一层:
+
+1. **marker 名 base64url 编码**(已采用)。marker 与命令输出共用一条流,原先
+   任何以 `SrvBoxSep.` 开头的输出行都会被当成新 section。改为只认
+   `SrvBoxSep.b64.<base64url>`,其余一律当数据。
+2. **每行输出加 `SrvBoxData.` 前缀**(未采用)。实现方式是每条命令的输出管道
+   接一次 `sed 's/^/SrvBoxData./'`,PowerShell 侧是逐行 `ForEach-Object`。
+
+不采用第 2 层的理由:第 1 层已经把现实可达的歧义关掉了——要再撞上,输出行得
+恰好以 `SrvBoxSep.b64.` 开头且后接合法 base64url。代价一侧则是每条命令多一次
+fork,unix 脚本的核心命令约 20 条,在 busybox 路由器/NAS 这类目标硬件上每个
+采样周期多 20 次 fork,而脚本 header 里的 `isBusybox` 说明这正是要支持的机型。
+
+如果之后要收第 2 层,注意 upstream 的 framed 输出不做 `trim()`,与当前
+`parse_script_output` 的行为不同。
+
+## `BuildData.script` 不再跟踪脚本内容
+
+`make.dart` 用 `lib/data/model/app/scripts/cmd_types.dart` 的 commit 数推导
+`BuildData.script`,但脚本内容已经迁到 `crates/sbm_parser/src/{commands,script}.rs`,
+改 Rust 不会让这个版本号变。
+
+目前不构成故障:`single.dart` 每次建连都用 `cat >` 无条件重写脚本,远端不会留
+旧版本。版本号只影响文件名(`srvboxm_v<n>.sh`),作用退化为与更老 App 版本遗留
+文件不撞名。真要修就把 make.dart 的统计路径换成 Rust 那两个文件。

@@ -26,6 +26,18 @@ class ScriptConstants {
   /// used by container/systemd providers for their own command segmenting
   static const String separator = 'SrvBoxSep';
 
+  /// Custom-command segment separator (mirrors sbm_parser
+  /// script::CUSTOM_CMD_SEPARATOR)
+  static const String customCmdSep = 'SrvBoxCusCmdSep';
+
+  /// Key a custom command's output is filed under by
+  /// `sbm_parser::script::parse_script_output`. Namespaced because custom
+  /// command names come from the user: one called `cpu` would otherwise
+  /// overwrite the built-in section of that name.
+  ///
+  /// Locked against the Rust implementation by `test/frb_parser_test.dart`.
+  static String customResultKey(String cmdName) => '$customCmdSep.$cmdName';
+
   // Path separators
   static const String unixPathSeparator = '/';
   static const String windowsPathSeparator = '\\';

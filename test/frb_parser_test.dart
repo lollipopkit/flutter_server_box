@@ -9,6 +9,7 @@ import 'dart:io';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/src/rust/api/parser.dart';
 import 'package:server_box/src/rust/api/script.dart' as script;
 import 'package:server_box/src/rust/frb_generated.dart';
@@ -210,10 +211,25 @@ void main() {
   });
 
   test('parseScriptOutput round-trip via FFI', () async {
-    const raw = 'SrvBoxSep.time\n123\nSrvBoxCusCmdSep.x\nhello\n';
+    // Markers carry their name base64url-encoded so command output can never
+    // be mistaken for one; see sbm_parser::script::ENCODED_NAME_PREFIX.
+    String marker(String sep, String name) =>
+        '$sep.b64.${base64Url.encode(utf8.encode(name))}';
+
+    final raw = [
+      marker(ScriptConstants.separator, 'time'), '123',
+      marker(ScriptConstants.customCmdSep, 'x'), 'hello',
+      // A custom command named after a built-in section, plus output that
+      // looks like an unencoded marker
+      marker(ScriptConstants.customCmdSep, 'time'), 'SrvBoxSep.host',
+      '',
+    ].join('\n');
+
     final map = await script.parseScriptOutput(raw: raw);
     expect(map['time'], '123');
-    expect(map['x'], 'hello');
+    expect(map[ScriptConstants.customResultKey('x')], 'hello');
+    // The namespaced key is what the app reads, and it did not clobber 'time'
+    expect(map[ScriptConstants.customResultKey('time')], 'SrvBoxSep.host');
   });
 
   test('enum names stay in sync with the FFI manifest', () {

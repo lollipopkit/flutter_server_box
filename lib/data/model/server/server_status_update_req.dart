@@ -74,7 +74,8 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   _apply('smart', () => _applySmart(ss, status));
   _apply('custom', () {
     for (final key in req.customCmds.keys) {
-      ss.customCmds[key] = req.parsedOutput[key] ?? '';
+      ss.customCmds[key] =
+          req.parsedOutput[ScriptConstants.customResultKey(key)] ?? '';
     }
   });
 

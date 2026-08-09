@@ -2,6 +2,7 @@
 //! tests (`test/script_builder_test.dart`, `test/disabled_cmd_types_test.dart`)
 //! per the "tests as spec" migration rule.
 
+use sbm_parser::script;
 use sbm_parser::script::*;
 use sbm_parser::SystemType;
 
@@ -47,7 +48,7 @@ fn script_custom_commands() {
         let script = build_script(system, &o);
         assert!(script.contains("echo \"Custom test command\""));
         assert!(script.contains("whoami"));
-        assert!(script.contains("SrvBoxCusCmdSep.custom_test"));
+        assert!(script.contains(&script::custom_cmd_marker("custom_test")));
         // Custom commands are only injected into SbStatus
         let after_status = script.split("SbProcess").nth(1).unwrap();
         assert!(!after_status.contains("SrvBoxCusCmdSep."));
@@ -228,10 +229,10 @@ fn extended_commands_split_out_of_status() {
 
     // Everything else stays in the fast poll: cheap to run, and wanted at the
     // status interval rather than minutes apart
-    assert!(status.contains("echo SrvBoxSep.sensors"));
-    assert!(status.contains("echo SrvBoxSep.battery"));
+    assert!(status.contains(&format!("echo {}", script::cmd_marker("sensors"))));
+    assert!(status.contains(&format!("echo {}", script::cmd_marker("battery"))));
     assert!(status.contains("nvidia-smi -q -x"));
-    assert!(!ext.contains("echo SrvBoxSep.sensors"));
+    assert!(!ext.contains(&format!("echo {}", script::cmd_marker("sensors"))));
     assert!(!ext.contains("nvidia-smi"));
 }
 
@@ -267,27 +268,65 @@ fn disabled_all_extended_keeps_script_valid() {
 
 // ---------- parse_script_output ----------
 
+/// Builds the wire form of a section: marker line + body
+fn section(key: &str, body: &str) -> String {
+    format!("{}\n{body}\n", script::cmd_marker(key))
+}
+
+fn custom_section(name: &str, body: &str) -> String {
+    format!("{}\n{body}\n", script::custom_cmd_marker(name))
+}
+
 #[test]
 fn parse_output_basic() {
-    let raw = "SrvBoxSep.time\n123456\nSrvBoxSep.host\nmyhost\n";
-    let map = parse_script_output(raw);
+    let raw = section("time", "123456") + &section("host", "myhost");
+    let map = parse_script_output(&raw);
     assert_eq!(map["time"], "123456");
     assert_eq!(map["host"], "myhost");
 }
 
 #[test]
 fn parse_output_custom_and_multiline() {
-    let raw = "SrvBoxSep.mem\nMemTotal: 1\nMemFree: 2\nSrvBoxCusCmdSep.my_cmd\nhello\nworld\n";
-    let map = parse_script_output(raw);
+    let raw = section("mem", "MemTotal: 1\nMemFree: 2") + &custom_section("my_cmd", "hello\nworld");
+    let map = parse_script_output(&raw);
     assert_eq!(map["mem"], "MemTotal: 1\nMemFree: 2");
-    assert_eq!(map["my_cmd"], "hello\nworld");
+    assert_eq!(map[&script::custom_result_key("my_cmd")], "hello\nworld");
+}
+
+/// A custom command may be named after a built-in section. Filing it under a
+/// namespaced key keeps it from replacing that section's real output.
+#[test]
+fn custom_command_cannot_overwrite_a_builtin_section() {
+    let raw = section("cpu", "cpu 1 2 3") + &custom_section("cpu", "user output");
+    let map = parse_script_output(&raw);
+    assert_eq!(map["cpu"], "cpu 1 2 3");
+    assert_eq!(map[&script::custom_result_key("cpu")], "user output");
+}
+
+/// Markers share the stream with command output, so only the encoded form
+/// counts. A command printing a plausible-looking separator is data.
+#[test]
+fn unencoded_separator_in_output_is_data() {
+    let raw = section("host", "SrvBoxSep.time\nSrvBoxCusCmdSep.x\nmyhost");
+    let map = parse_script_output(&raw);
+    assert_eq!(map.len(), 1);
+    assert_eq!(map["host"], "SrvBoxSep.time\nSrvBoxCusCmdSep.x\nmyhost");
+}
+
+/// Likewise a marker whose payload is not decodable base64url
+#[test]
+fn undecodable_marker_is_data() {
+    let raw = section("host", "SrvBoxSep.b64.!!!not-base64!!!\nmyhost");
+    let map = parse_script_output(&raw);
+    assert_eq!(map.len(), 1);
+    assert!(map["host"].contains("myhost"));
 }
 
 #[test]
 fn parse_output_empty_and_leading_noise() {
     assert!(parse_script_output("").is_empty());
     // Lines before the first separator are dropped (no current key)
-    let map = parse_script_output("noise\nSrvBoxSep.time\n1\n");
+    let map = parse_script_output(&("noise\n".to_string() + &section("time", "1")));
     assert_eq!(map.len(), 1);
     assert_eq!(map["time"], "1");
 }
@@ -295,8 +334,8 @@ fn parse_output_empty_and_leading_noise() {
 /// CRLF tolerance is a deliberate deviation from Dart (see module docs)
 #[test]
 fn parse_output_crlf() {
-    let raw = "SrvBoxSep.time\r\n123456\r\nSrvBoxSep.host\r\nmyhost\r\n";
-    let map = parse_script_output(raw);
+    let raw = (section("time", "123456") + &section("host", "myhost")).replace('\n', "\r\n");
+    let map = parse_script_output(&raw);
     assert_eq!(map["time"], "123456");
     assert_eq!(map["host"], "myhost");
 }

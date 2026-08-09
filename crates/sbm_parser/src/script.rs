@@ -14,8 +14,53 @@ use crate::commands::{self, CommandSpec, SEPARATOR};
 use crate::SystemType;
 use std::collections::HashMap;
 
-/// Custom-command segment separator (`SrvBoxCusCmdSep.<name>`)
+/// Custom-command segment separator (`SrvBoxCusCmdSep.b64.<name>`)
 pub const CUSTOM_CMD_SEPARATOR: &str = "SrvBoxCusCmdSep";
+
+/// Marks a segment marker's name as base64url-encoded.
+///
+/// Markers are ordinary lines in the same stream as command output, so a
+/// command that prints `SrvBoxSep.cpu` would previously have opened a new
+/// section. Encoding the name means a marker is only recognised as
+/// `<sep>.b64.<base64url>`, and [`parse_script_output`] rejects anything else
+/// as data. Custom commands run arbitrary user shell, which is where an
+/// unencoded marker was realistically reachable.
+const ENCODED_NAME_PREFIX: &str = "b64.";
+
+fn encode_marker_name(name: &str) -> String {
+    use base64::Engine;
+    base64::engine::general_purpose::URL_SAFE.encode(name)
+}
+
+fn decode_marker_name(encoded: &str) -> Option<String> {
+    use base64::Engine;
+    let bytes = base64::engine::general_purpose::URL_SAFE
+        .decode(encoded.strip_prefix(ENCODED_NAME_PREFIX)?)
+        .ok()?;
+    String::from_utf8(bytes).ok()
+}
+
+/// Segment marker for a built-in command
+pub fn cmd_marker(key: &str) -> String {
+    format!("{SEPARATOR}.{ENCODED_NAME_PREFIX}{}", encode_marker_name(key))
+}
+
+/// Segment marker for a custom command
+pub fn custom_cmd_marker(name: &str) -> String {
+    format!(
+        "{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}{}",
+        encode_marker_name(name)
+    )
+}
+
+/// Key a custom command's output is filed under in [`parse_script_output`].
+///
+/// Namespaced rather than the bare name: custom command names come from the
+/// user, and one called `cpu` or `disk` would otherwise overwrite the built-in
+/// section of that name and take down the whole status page.
+pub fn custom_result_key(name: &str) -> String {
+    format!("{CUSTOM_CMD_SEPARATOR}.{name}")
+}
 
 /// Shell functions exposed by the generated script. Names and flags are wire
 /// format: `sh script.sh -s` dispatches to `SbStatus`, etc.
@@ -125,12 +170,17 @@ pub fn exec_command(system: SystemType, script_path: &str, func: ShellFunc) -> S
     }
 }
 
-/// Split script output into a command key → output map
-/// (port of Dart `ScriptConstants.parseScriptOutput`).
+/// Split script output into a command key → output map.
 ///
-/// Deliberate deviation from Dart: a trailing `\r` is stripped from each line
-/// before matching, so CRLF output (monitor running PowerShell locally) parses
-/// identically to LF output. Strictly more tolerant than the Dart original.
+/// Built-in sections are keyed by the command key; custom commands by
+/// [`custom_result_key`].
+///
+/// Only the encoded marker form is recognised (see [`ENCODED_NAME_PREFIX`]);
+/// a line that merely starts with `SrvBoxSep.` is command output and is
+/// buffered as such.
+///
+/// A trailing `\r` is stripped from each line before matching, so CRLF output
+/// (monitor running PowerShell locally) parses identically to LF output.
 pub fn parse_script_output(raw: &str) -> HashMap<String, String> {
     let mut result = HashMap::new();
     if raw.is_empty() {
@@ -151,15 +201,24 @@ pub fn parse_script_output(raw: &str) -> HashMap<String, String> {
 
     for line in raw.split('\n') {
         let line = line.strip_suffix('\r').unwrap_or(line);
-        if let Some(key) = line.strip_prefix(&sep_prefix) {
-            flush(&mut current, &mut buf, &mut result);
-            current = Some(key.to_string());
-        } else if let Some(key) = line.strip_prefix(&custom_prefix) {
-            flush(&mut current, &mut buf, &mut result);
-            current = Some(key.to_string());
-        } else if current.is_some() {
-            buf.push_str(line);
-            buf.push('\n');
+        let marker = line
+            .strip_prefix(&sep_prefix)
+            .and_then(decode_marker_name)
+            .or_else(|| {
+                line.strip_prefix(&custom_prefix)
+                    .and_then(decode_marker_name)
+                    .map(|name| custom_result_key(&name))
+            });
+        match marker {
+            Some(key) => {
+                flush(&mut current, &mut buf, &mut result);
+                current = Some(key);
+            }
+            None if current.is_some() => {
+                buf.push_str(line);
+                buf.push('\n');
+            }
+            None => {}
         }
     }
     flush(&mut current, &mut buf, &mut result);
@@ -251,7 +310,7 @@ fn unix_custom_cmds(func: ShellFunc, opts: &ScriptOptions) -> String {
     }
     let mut s = String::from("\n");
     for (name, cmd) in &opts.custom_cmds {
-        s.push_str(&format!("echo \"{CUSTOM_CMD_SEPARATOR}.{name}\"\n{cmd}\n"));
+        s.push_str(&format!("echo \"{}\"\n{cmd}\n", custom_cmd_marker(name)));
     }
     s
 }
@@ -267,7 +326,7 @@ fn unix_command(func: ShellFunc, opts: &ScriptOptions) -> String {
     match func {
         ShellFunc::Status | ShellFunc::StatusExt => {
             let extended = func == ShellFunc::StatusExt;
-            let divider = |key: &str| format!("\necho {SEPARATOR}.{key}\n\t");
+            let divider = |key: &str| format!("\necho {}\n\t", cmd_marker(key));
             let linux = or_noop(segment_list(commands::LINUX, "Linux", opts, extended, divider));
             let bsd = or_noop(segment_list(commands::BSD, "BSD", opts, extended, divider));
             format!(
@@ -361,7 +420,8 @@ fn windows_custom_cmds(func: ShellFunc, opts: &ScriptOptions) -> String {
     let mut s = String::from("\n");
     for (name, cmd) in &opts.custom_cmds {
         s.push_str(&format!(
-            "    Write-Host \"{CUSTOM_CMD_SEPARATOR}.{name}\"\n    {cmd}\n"
+            "    Write-Host \"{}\"\n    {cmd}\n",
+            custom_cmd_marker(name)
         ));
     }
     s
@@ -374,7 +434,7 @@ fn windows_command(func: ShellFunc, opts: &ScriptOptions) -> String {
             "Windows",
             opts,
             func == ShellFunc::StatusExt,
-            |key| format!("\n    Write-Host \"{SEPARATOR}.{key}\"\n    "),
+            |key| format!("\n    Write-Host \"{}\"\n    ", cmd_marker(key)),
         ),
         ShellFunc::Process => "Get-Process | Select-Object ProcessName, Id, CPU, WorkingSet,
     @{Name='IOReadBytes';Expression={$_.IOReadBytes}},
