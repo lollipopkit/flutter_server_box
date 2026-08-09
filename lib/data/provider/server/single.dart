@@ -143,21 +143,24 @@ class ServerNotifier extends _$ServerNotifier {
   // Refresh server status
   bool _isRefreshing = false;
 
-  Future<void> refresh() async {
+  Future<void> refresh({bool interactive = false}) async {
     if (_isRefreshing) return;
 
     _isRefreshing = true;
     try {
-      await _getData();
+      await _getData(interactive: interactive);
     } finally {
       _isRefreshing = false;
     }
   }
 
-  Future<void> _getData() async {
+  /// [interactive] only reaches the SSH path: it gates prompting the user for
+  /// keyboard-interactive auth, which has no counterpart over monitor's HTTP
+  /// API (credentials there are configured up front, never prompted for).
+  Future<void> _getData({required bool interactive}) async {
     switch (ServerConnectCredential.fromSpi(state.spi)) {
       case ServerConnectCredentialSsh():
-        await _getDataSsh();
+        await _getDataSsh(interactive: interactive);
       case ServerConnectCredentialMonitorHttp(:final monitor):
         await _getDataMonitorHttp(monitor);
     }
@@ -237,9 +240,10 @@ class ServerNotifier extends _$ServerNotifier {
     return client.fetchHistory(minutes: minutes);
   }
 
-  Future<void> _getDataSsh() async {
+  Future<void> _getDataSsh({required bool interactive}) async {
     final spi = state.spi;
     final sid = spi.id;
+    var keyboardInteractiveRequested = false;
 
     if (!TryLimiter.canTry(sid)) {
       if (state.conn != ServerConn.failed) {
@@ -274,8 +278,13 @@ class ServerNotifier extends _$ServerNotifier {
         final client = await genClient(
           spi,
           timeout: Duration(seconds: Stores.setting.timeout.fetch()),
-          onKeyboardInteractive: (_) => KeybordInteractive.defaultHandle(spi),
+          onKeyboardInteractive: (server, request) {
+            keyboardInteractiveRequested = true;
+            if (!interactive) return null;
+            return KeyboardInteractiveAuth.handle(server, request);
+          },
         );
+        await client.authenticated;
         updateClient(client);
 
         final time2 = DateTime.now();
@@ -312,7 +321,9 @@ class ServerNotifier extends _$ServerNotifier {
         );
         TermSessionManager.setActive(sessionId, hasTerminal: false);
       } catch (e) {
-        TryLimiter.inc(sid);
+        if (!keyboardInteractiveRequested || interactive) {
+          TryLimiter.inc(sid);
+        }
 
         final durationMs = DateTime.now().difference(time1).inMilliseconds;
 
@@ -349,9 +360,17 @@ class ServerNotifier extends _$ServerNotifier {
           Loggers.app.warning('Failed to record connection failure', recErr);
         }
 
+        final SSHErrType errType;
+        if (keyboardInteractiveRequested && !interactive) {
+          errType = SSHErrType.interactiveAuth;
+        } else if (e is SSHAuthError) {
+          errType = SSHErrType.auth;
+        } else {
+          errType = SSHErrType.connect;
+        }
         final newStatus = _copyStatus(
           state.status,
-          err: SSHErr(type: SSHErrType.connect, message: e.toString()),
+          err: SSHErr(type: errType, message: e.toString()),
           setErr: true,
         );
         _setFailedState(newStatus, closeClient: true);
@@ -383,7 +402,7 @@ class ServerNotifier extends _$ServerNotifier {
           'Writing script for ${spi.name} (${detectedSystemType.name})',
         );
 
-        final (stdoutResult, writeScriptResult) = await state.client!.execSafe(
+        final writeScriptResult = await state.client!.execSafe(
           (session) async {
             final scriptRaw = ShellFuncManager.allScript(
               spi.custom?.cmds,
@@ -402,23 +421,30 @@ class ServerNotifier extends _$ServerNotifier {
           context: 'WriteScript<${spi.name}>',
         );
 
-        if (stdoutResult.isNotEmpty) {
+        if (writeScriptResult.stdout.isNotEmpty) {
           Loggers.app.info(
-            'Script write stdout for ${spi.name}: $stdoutResult',
+            'Script write stdout for ${spi.name}: ${writeScriptResult.stdout}',
           );
         }
 
-        if (writeScriptResult.isNotEmpty) {
+        if (writeScriptResult.stderr.isNotEmpty) {
           Loggers.app.warning(
-            'Script write stderr for ${spi.name}: $writeScriptResult',
+            'Script write stderr for ${spi.name}: ${writeScriptResult.stderr}',
           );
+        }
+
+        if (!writeScriptResult.succeeded) {
           if (detectedSystemType != SystemType.windows) {
             ShellFuncManager.switchScriptDir(
               spi.id,
               systemType: detectedSystemType,
             );
-            throw writeScriptResult;
           }
+          final output = writeScriptResult.stderr.isNotEmpty
+              ? writeScriptResult.stderr
+              : writeScriptResult.stdout;
+          throw 'Script installation exited with code '
+              '${writeScriptResult.exitCode}: $output';
         } else {
           Loggers.app.info('Script written successfully for ${spi.name}');
         }
@@ -449,6 +475,7 @@ class ServerNotifier extends _$ServerNotifier {
         );
         return;
       } catch (e) {
+        TryLimiter.inc(sid);
         final err = SSHErr(type: SSHErrType.writeScript, message: e.toString());
         final newStatus = _copyStatus(state.status, err: err, setErr: true);
         Loggers.app.warning(err);

@@ -78,6 +78,8 @@
   "dl2Local": "Download {fileName} to local?",
   "dockerEmptyRunningItems": "There are no running containers.\nThis could be because:\n- The Docker installation user is not the same as the username configured within the App.\n- The environment variable DOCKER_HOST was not read correctly. You can get it by running `echo $DOCKER_HOST` in the terminal.",
   "dockerImagesFmt": "{count} images",
+  "dockerProjectOther": "Other",
+  "dockerPruneTip": "Remove unused data to free up disk space",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} running, {stoppedCount} container stopped.",
   "dockerStatusRunningFmt": "{count} container running.",
   "doubleColumnMode": "Double column mode",
@@ -112,6 +114,20 @@
   "ignoreCert": "Ignore certificate",
   "image": "Image",
   "imagesList": "Images list",
+  "unused": "Unused",
+  "dangling": "Dangling",
+  "pruneUnusedImages": "Prune unused images",
+  "pruneDanglingImages": "Prune dangling images",
+  "pruneImages": "Prune images",
+  "unusedTaggedImages": "Unused tagged",
+  "pruneDanglingImagesTip": "Only remove dangling images (untagged layers).",
+  "pruneUnusedImagesTip": "Also remove tagged images not used by any container.",
+  "includeUnusedVolumesTip": "Also remove volumes not used by any container.",
+  "pruneCommandPreview": "Command preview",
+  "pruneForceSshTip": "-f skips the interactive prompt and is always enabled for SSH execution.",
+  "pruneVolumes": "Prune volumes",
+  "pruneUnusedData": "Prune unused data",
+  "volume": "Volume",
   "pull": "Pull",
   "invalid": "Invalid",
   "invalidUrl": "Invalid URL",
@@ -230,6 +246,10 @@
   },
   "sshHostKeyNewDesc": "A new SSH host key was received from {serverName}. Review the fingerprint before trusting.",
   "sshHostKeyStoredFingerprint": "Stored fingerprint: {fingerprint}",
+  "sshVerificationCode": "Verification code",
+  "@sshVerificationCode": {
+    "description": "Label for a one-time verification code requested during SSH keyboard-interactive authentication."
+  },
   "sshConfigManualSelect": "Would you like to select the SSH config file manually?",
   "sshConfigNoServers": "No servers found in SSH config",
   "sshConfigPermissionDenied": "Cannot access SSH config file due to macOS permissions.",
@@ -292,5 +312,62 @@
   "serverHistory": "Server history",
   "clearHistory": "Clear history",
   "portForwardBetaTitle": "Port Forward (Beta)",
+  "tmuxAutoAttach": "tmux auto-attach",
+  "tmuxAuto": "Auto tmux",
+  "tmuxAutoTip": "Automatically start or attach tmux when connecting over SSH",
+  "tmuxSessionSelector": "Session selector",
+  "tmuxSessionSelectorTip": "Show the session picker when connecting",
+  "tmuxDefaultSessionName": "Default session name",
+  "tmuxSessionName": "Session name",
+  "tmuxExistingSessions": "Existing sessions",
+  "tmuxNewSession": "New session",
+  "tmuxWindows": "Windows",
+  "tmuxNewWindow": "New window",
+  "tmuxNoWindowsFound": "No windows found",
+  "tmuxWindowCount": "{count, plural, one{1 window} other{{count} windows}}",
+  "@tmuxWindowCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tmuxPaneCount": "{count, plural, one{1 pane} other{{count} panes}}",
+  "@tmuxPaneCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tmuxAttached": "Attached",
+  "tmuxActive": "Active",
+  "tmuxActiveAt": "active: {time}",
+  "@tmuxActiveAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "tmuxAttachedAt": "attached: {time}",
+  "@tmuxAttachedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "tmuxSkip": "Skip",
+  "tmuxNotAvailable": "tmux is not available",
+  "containerSegmentsMismatch": "Unexpected container response segment count: {count}",
+  "@containerSegmentsMismatch": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "containerOperationInProgress": "Another container operation is already in progress",
   "systemd": "Systemd"
 }

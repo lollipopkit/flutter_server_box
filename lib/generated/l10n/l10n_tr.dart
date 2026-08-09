@@ -274,6 +274,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get dockerProjectOther => 'Diğer';
+
+  @override
+  String get dockerPruneTip =>
+      'Disk alanını boşaltmak için kullanılmayan verileri kaldırın';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -389,6 +396,52 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get imagesList => 'Görüntü listesi';
+
+  @override
+  String get unused => 'Kullanılmıyor';
+
+  @override
+  String get dangling => 'Askıda';
+
+  @override
+  String get pruneUnusedImages => 'Kullanılmayan görüntüleri temizle';
+
+  @override
+  String get pruneDanglingImages => 'Askıdaki görüntüleri temizle';
+
+  @override
+  String get pruneImages => 'Görüntüleri temizle';
+
+  @override
+  String get unusedTaggedImages => 'Kullanılmayan etiketliler';
+
+  @override
+  String get pruneDanglingImagesTip =>
+      'Yalnızca askıdaki görüntüleri (etiketsiz katmanları) kaldırır.';
+
+  @override
+  String get pruneUnusedImagesTip =>
+      'Hiçbir konteyner tarafından kullanılmayan etiketli görüntüleri de kaldırır.';
+
+  @override
+  String get includeUnusedVolumesTip =>
+      'Hiçbir konteyner tarafından kullanılmayan birimleri de kaldırır.';
+
+  @override
+  String get pruneCommandPreview => 'Komut önizlemesi';
+
+  @override
+  String get pruneForceSshTip =>
+      '-f etkileşimli onayı atlar ve SSH yürütmesinde her zaman etkindir.';
+
+  @override
+  String get pruneVolumes => 'Birimleri temizle';
+
+  @override
+  String get pruneUnusedData => 'Kullanılmayan verileri temizle';
+
+  @override
+  String get volume => 'Birim';
 
   @override
   String get pull => 'Çek';
@@ -760,6 +813,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get sshVerificationCode => 'Doğrulama kodu';
+
+  @override
   String get sshConfigManualSelect =>
       'SSH yapılandırma dosyasını manuel olarak seçmek ister misiniz?';
 
@@ -966,6 +1022,97 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
+
+  @override
+  String get tmuxAutoAttach => 'tmux auto-attach';
+
+  @override
+  String get tmuxAuto => 'Auto tmux';
+
+  @override
+  String get tmuxAutoTip =>
+      'Automatically start or attach tmux when connecting over SSH';
+
+  @override
+  String get tmuxSessionSelector => 'Session selector';
+
+  @override
+  String get tmuxSessionSelectorTip =>
+      'Show the session picker when connecting';
+
+  @override
+  String get tmuxDefaultSessionName => 'Default session name';
+
+  @override
+  String get tmuxSessionName => 'Session name';
+
+  @override
+  String get tmuxExistingSessions => 'Existing sessions';
+
+  @override
+  String get tmuxNewSession => 'New session';
+
+  @override
+  String get tmuxWindows => 'Windows';
+
+  @override
+  String get tmuxNewWindow => 'New window';
+
+  @override
+  String get tmuxNoWindowsFound => 'No windows found';
+
+  @override
+  String tmuxWindowCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count windows',
+      one: '1 window',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String tmuxPaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count panes',
+      one: '1 pane',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tmuxAttached => 'Attached';
+
+  @override
+  String get tmuxActive => 'Active';
+
+  @override
+  String tmuxActiveAt(String time) {
+    return 'active: $time';
+  }
+
+  @override
+  String tmuxAttachedAt(String time) {
+    return 'attached: $time';
+  }
+
+  @override
+  String get tmuxSkip => 'Skip';
+
+  @override
+  String get tmuxNotAvailable => 'tmux is not available';
+
+  @override
+  String containerSegmentsMismatch(int count) {
+    return 'Konteyner yanıtındaki beklenmeyen bölüm sayısı: $count';
+  }
+
+  @override
+  String get containerOperationInProgress =>
+      'Başka bir konteyner işlemi zaten devam ediyor';
 
   @override
   String get systemd => 'Systemd';

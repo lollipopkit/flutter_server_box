@@ -265,6 +265,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get dockerProjectOther => '기타';
+
+  @override
+  String get dockerPruneTip => '사용하지 않는 데이터를 제거하여 디스크 공간을 확보합니다';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -376,6 +382,48 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get imagesList => '이미지 목록';
+
+  @override
+  String get unused => '미사용';
+
+  @override
+  String get dangling => '댕글링';
+
+  @override
+  String get pruneUnusedImages => '미사용 이미지 정리';
+
+  @override
+  String get pruneDanglingImages => '댕글링 이미지 정리';
+
+  @override
+  String get pruneImages => '이미지 정리';
+
+  @override
+  String get unusedTaggedImages => '사용하지 않는 태그 이미지';
+
+  @override
+  String get pruneDanglingImagesTip => '태그가 없는 댕글링 이미지만 제거합니다.';
+
+  @override
+  String get pruneUnusedImagesTip => '어떤 컨테이너에서도 사용하지 않는 태그 이미지도 제거합니다.';
+
+  @override
+  String get includeUnusedVolumesTip => '어떤 컨테이너에서도 사용하지 않는 볼륨도 제거합니다.';
+
+  @override
+  String get pruneCommandPreview => '명령 미리보기';
+
+  @override
+  String get pruneForceSshTip => '-f는 대화형 확인을 건너뛰며 SSH 실행에서 항상 활성화됩니다.';
+
+  @override
+  String get pruneVolumes => '볼륨 정리';
+
+  @override
+  String get pruneUnusedData => '사용하지 않는 데이터 정리';
+
+  @override
+  String get volume => '볼륨';
 
   @override
   String get pull => '풀';
@@ -730,6 +778,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get sshVerificationCode => '인증 코드';
+
+  @override
   String get sshConfigManualSelect => 'SSH 설정 파일을 수동으로 선택하시겠습니까?';
 
   @override
@@ -929,6 +980,96 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get portForwardBetaTitle => '포트 포워딩 (Beta)';
+
+  @override
+  String get tmuxAutoAttach => 'tmux auto-attach';
+
+  @override
+  String get tmuxAuto => 'Auto tmux';
+
+  @override
+  String get tmuxAutoTip =>
+      'Automatically start or attach tmux when connecting over SSH';
+
+  @override
+  String get tmuxSessionSelector => 'Session selector';
+
+  @override
+  String get tmuxSessionSelectorTip =>
+      'Show the session picker when connecting';
+
+  @override
+  String get tmuxDefaultSessionName => 'Default session name';
+
+  @override
+  String get tmuxSessionName => 'Session name';
+
+  @override
+  String get tmuxExistingSessions => 'Existing sessions';
+
+  @override
+  String get tmuxNewSession => 'New session';
+
+  @override
+  String get tmuxWindows => 'Windows';
+
+  @override
+  String get tmuxNewWindow => 'New window';
+
+  @override
+  String get tmuxNoWindowsFound => 'No windows found';
+
+  @override
+  String tmuxWindowCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count windows',
+      one: '1 window',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String tmuxPaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count panes',
+      one: '1 pane',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tmuxAttached => 'Attached';
+
+  @override
+  String get tmuxActive => 'Active';
+
+  @override
+  String tmuxActiveAt(String time) {
+    return 'active: $time';
+  }
+
+  @override
+  String tmuxAttachedAt(String time) {
+    return 'attached: $time';
+  }
+
+  @override
+  String get tmuxSkip => 'Skip';
+
+  @override
+  String get tmuxNotAvailable => 'tmux is not available';
+
+  @override
+  String containerSegmentsMismatch(int count) {
+    return '컨테이너 응답 세그먼트 수가 예상과 다릅니다: $count';
+  }
+
+  @override
+  String get containerOperationInProgress => '다른 컨테이너 작업이 이미 진행 중입니다';
 
   @override
   String get systemd => 'Systemd';

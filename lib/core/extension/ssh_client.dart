@@ -11,6 +11,21 @@ typedef OnStdout = void Function(String data, SSHSession session);
 typedef OnStderr = void Function(String data, SSHSession session);
 typedef OnStdin = void Function(SSHSession session);
 
+final class SSHExecResult {
+  final int? exitCode;
+  final String stdout;
+  final String stderr;
+
+  const SSHExecResult({
+    required this.exitCode,
+    required this.stdout,
+    required this.stderr,
+  });
+
+  bool get succeeded =>
+      exitCode == 0 || (exitCode == null && stderr.isEmpty);
+}
+
 Future<void> _collectOutput(
   SSHSession session, {
   BytesBuilder? stdoutBuilder,
@@ -180,7 +195,7 @@ extension SSHClientX on SSHClient {
     );
   }
 
-  Future<(String stdout, String stderr)> execSafe(
+  Future<SSHExecResult> execSafe(
     void Function(SSHSession session) callback, {
     required String entry,
     SystemType? systemType,
@@ -214,6 +229,10 @@ extension SSHClientX on SSHClient {
       label: 'stderr',
     );
 
-    return (stdout, stderr);
+    return SSHExecResult(
+      exitCode: session.exitCode,
+      stdout: stdout,
+      stderr: stderr,
+    );
   }
 }

@@ -274,6 +274,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get dockerProjectOther => 'Other';
+
+  @override
+  String get dockerPruneTip => 'Remove unused data to free up disk space';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -388,6 +394,52 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagesList => 'Images list';
+
+  @override
+  String get unused => 'Unused';
+
+  @override
+  String get dangling => 'Dangling';
+
+  @override
+  String get pruneUnusedImages => 'Prune unused images';
+
+  @override
+  String get pruneDanglingImages => 'Prune dangling images';
+
+  @override
+  String get pruneImages => 'Prune images';
+
+  @override
+  String get unusedTaggedImages => 'Unused tagged';
+
+  @override
+  String get pruneDanglingImagesTip =>
+      'Only remove dangling images (untagged layers).';
+
+  @override
+  String get pruneUnusedImagesTip =>
+      'Also remove tagged images not used by any container.';
+
+  @override
+  String get includeUnusedVolumesTip =>
+      'Also remove volumes not used by any container.';
+
+  @override
+  String get pruneCommandPreview => 'Command preview';
+
+  @override
+  String get pruneForceSshTip =>
+      '-f skips the interactive prompt and is always enabled for SSH execution.';
+
+  @override
+  String get pruneVolumes => 'Prune volumes';
+
+  @override
+  String get pruneUnusedData => 'Prune unused data';
+
+  @override
+  String get volume => 'Volume';
 
   @override
   String get pull => 'Pull';
@@ -757,6 +809,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get sshVerificationCode => 'Verification code';
+
+  @override
   String get sshConfigManualSelect =>
       'Would you like to select the SSH config file manually?';
 
@@ -964,6 +1019,97 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
+
+  @override
+  String get tmuxAutoAttach => 'tmux auto-attach';
+
+  @override
+  String get tmuxAuto => 'Auto tmux';
+
+  @override
+  String get tmuxAutoTip =>
+      'Automatically start or attach tmux when connecting over SSH';
+
+  @override
+  String get tmuxSessionSelector => 'Session selector';
+
+  @override
+  String get tmuxSessionSelectorTip =>
+      'Show the session picker when connecting';
+
+  @override
+  String get tmuxDefaultSessionName => 'Default session name';
+
+  @override
+  String get tmuxSessionName => 'Session name';
+
+  @override
+  String get tmuxExistingSessions => 'Existing sessions';
+
+  @override
+  String get tmuxNewSession => 'New session';
+
+  @override
+  String get tmuxWindows => 'Windows';
+
+  @override
+  String get tmuxNewWindow => 'New window';
+
+  @override
+  String get tmuxNoWindowsFound => 'No windows found';
+
+  @override
+  String tmuxWindowCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count windows',
+      one: '1 window',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String tmuxPaneCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count panes',
+      one: '1 pane',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get tmuxAttached => 'Attached';
+
+  @override
+  String get tmuxActive => 'Active';
+
+  @override
+  String tmuxActiveAt(String time) {
+    return 'active: $time';
+  }
+
+  @override
+  String tmuxAttachedAt(String time) {
+    return 'attached: $time';
+  }
+
+  @override
+  String get tmuxSkip => 'Skip';
+
+  @override
+  String get tmuxNotAvailable => 'tmux is not available';
+
+  @override
+  String containerSegmentsMismatch(int count) {
+    return 'Unexpected container response segment count: $count';
+  }
+
+  @override
+  String get containerOperationInProgress =>
+      'Another container operation is already in progress';
 
   @override
   String get systemd => 'Systemd';

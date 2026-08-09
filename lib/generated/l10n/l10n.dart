@@ -591,6 +591,18 @@ abstract class AppLocalizations {
   /// **'{count} images'**
   String dockerImagesFmt(Object count);
 
+  /// No description provided for @dockerProjectOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get dockerProjectOther;
+
+  /// No description provided for @dockerPruneTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove unused data to free up disk space'**
+  String get dockerPruneTip;
+
   /// No description provided for @dockerStatusRunningAndStoppedFmt.
   ///
   /// In en, this message translates to:
@@ -797,6 +809,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Images list'**
   String get imagesList;
+
+  /// No description provided for @unused.
+  ///
+  /// In en, this message translates to:
+  /// **'Unused'**
+  String get unused;
+
+  /// No description provided for @dangling.
+  ///
+  /// In en, this message translates to:
+  /// **'Dangling'**
+  String get dangling;
+
+  /// No description provided for @pruneUnusedImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Prune unused images'**
+  String get pruneUnusedImages;
+
+  /// No description provided for @pruneDanglingImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Prune dangling images'**
+  String get pruneDanglingImages;
+
+  /// No description provided for @pruneImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Prune images'**
+  String get pruneImages;
+
+  /// No description provided for @unusedTaggedImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Unused tagged'**
+  String get unusedTaggedImages;
+
+  /// No description provided for @pruneDanglingImagesTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Only remove dangling images (untagged layers).'**
+  String get pruneDanglingImagesTip;
+
+  /// No description provided for @pruneUnusedImagesTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Also remove tagged images not used by any container.'**
+  String get pruneUnusedImagesTip;
+
+  /// No description provided for @includeUnusedVolumesTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Also remove volumes not used by any container.'**
+  String get includeUnusedVolumesTip;
+
+  /// No description provided for @pruneCommandPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Command preview'**
+  String get pruneCommandPreview;
+
+  /// No description provided for @pruneForceSshTip.
+  ///
+  /// In en, this message translates to:
+  /// **'-f skips the interactive prompt and is always enabled for SSH execution.'**
+  String get pruneForceSshTip;
+
+  /// No description provided for @pruneVolumes.
+  ///
+  /// In en, this message translates to:
+  /// **'Prune volumes'**
+  String get pruneVolumes;
+
+  /// No description provided for @pruneUnusedData.
+  ///
+  /// In en, this message translates to:
+  /// **'Prune unused data'**
+  String get pruneUnusedData;
+
+  /// No description provided for @volume.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume'**
+  String get volume;
 
   /// No description provided for @pull.
   ///
@@ -1422,6 +1518,12 @@ abstract class AppLocalizations {
   /// **'Stored fingerprint: {fingerprint}'**
   String sshHostKeyStoredFingerprint(Object fingerprint);
 
+  /// Label for a one-time verification code requested during SSH keyboard-interactive authentication.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification code'**
+  String get sshVerificationCode;
+
   /// No description provided for @sshConfigManualSelect.
   ///
   /// In en, this message translates to:
@@ -1793,6 +1895,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Port Forward (Beta)'**
   String get portForwardBetaTitle;
+
+  /// No description provided for @tmuxAutoAttach.
+  ///
+  /// In en, this message translates to:
+  /// **'tmux auto-attach'**
+  String get tmuxAutoAttach;
+
+  /// No description provided for @tmuxAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto tmux'**
+  String get tmuxAuto;
+
+  /// No description provided for @tmuxAutoTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically start or attach tmux when connecting over SSH'**
+  String get tmuxAutoTip;
+
+  /// No description provided for @tmuxSessionSelector.
+  ///
+  /// In en, this message translates to:
+  /// **'Session selector'**
+  String get tmuxSessionSelector;
+
+  /// No description provided for @tmuxSessionSelectorTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the session picker when connecting'**
+  String get tmuxSessionSelectorTip;
+
+  /// No description provided for @tmuxDefaultSessionName.
+  ///
+  /// In en, this message translates to:
+  /// **'Default session name'**
+  String get tmuxDefaultSessionName;
+
+  /// No description provided for @tmuxSessionName.
+  ///
+  /// In en, this message translates to:
+  /// **'Session name'**
+  String get tmuxSessionName;
+
+  /// No description provided for @tmuxExistingSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing sessions'**
+  String get tmuxExistingSessions;
+
+  /// No description provided for @tmuxNewSession.
+  ///
+  /// In en, this message translates to:
+  /// **'New session'**
+  String get tmuxNewSession;
+
+  /// No description provided for @tmuxWindows.
+  ///
+  /// In en, this message translates to:
+  /// **'Windows'**
+  String get tmuxWindows;
+
+  /// No description provided for @tmuxNewWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'New window'**
+  String get tmuxNewWindow;
+
+  /// No description provided for @tmuxNoWindowsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No windows found'**
+  String get tmuxNoWindowsFound;
+
+  /// No description provided for @tmuxWindowCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 window} other{{count} windows}}'**
+  String tmuxWindowCount(int count);
+
+  /// No description provided for @tmuxPaneCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 pane} other{{count} panes}}'**
+  String tmuxPaneCount(int count);
+
+  /// No description provided for @tmuxAttached.
+  ///
+  /// In en, this message translates to:
+  /// **'Attached'**
+  String get tmuxAttached;
+
+  /// No description provided for @tmuxActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get tmuxActive;
+
+  /// No description provided for @tmuxActiveAt.
+  ///
+  /// In en, this message translates to:
+  /// **'active: {time}'**
+  String tmuxActiveAt(String time);
+
+  /// No description provided for @tmuxAttachedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'attached: {time}'**
+  String tmuxAttachedAt(String time);
+
+  /// No description provided for @tmuxSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get tmuxSkip;
+
+  /// No description provided for @tmuxNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'tmux is not available'**
+  String get tmuxNotAvailable;
+
+  /// No description provided for @containerSegmentsMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Unexpected container response segment count: {count}'**
+  String containerSegmentsMismatch(int count);
+
+  /// No description provided for @containerOperationInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Another container operation is already in progress'**
+  String get containerOperationInProgress;
 
   /// No description provided for @systemd.
   ///

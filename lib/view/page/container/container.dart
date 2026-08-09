@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
@@ -17,6 +16,7 @@ import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/provider/container.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/container/resource_views.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 
 part 'actions.dart';
@@ -32,13 +32,22 @@ class ContainerPage extends ConsumerStatefulWidget {
   static const route = AppRouteArg(page: ContainerPage.new, path: '/container');
 }
 
-class _ContainerPageState extends ConsumerState<ContainerPage> {
+class _ContainerPageState extends ConsumerState<ContainerPage>
+    with SingleTickerProviderStateMixin {
   late final ContainerNotifierProvider _provider;
+  late final _tabCtrl = TabController(
+    length: _ContainerTabs.values.length,
+    vsync: this,
+  );
+  var _lastTabIndex = _ContainerTabs.ps.index;
+  var _lastResourceTab = _ContainerTabs.ps;
   Timer? _autoRefreshTimer;
 
   @override
   void dispose() {
     _autoRefreshTimer?.cancel();
+    _tabCtrl.removeListener(_onContainerTabChanged);
+    _tabCtrl.dispose();
     super.dispose();
   }
 
@@ -52,17 +61,27 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
       widget.args.spi.id,
       context,
     );
+    _tabCtrl.addListener(_onContainerTabChanged);
     _initAutoRefresh();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_refreshContainerTab(_ContainerTabs.ps));
+    });
   }
 
   @override
-  Widget build(BuildContext context) {
-    final err = ref.watch(_provider.select((p) => p.error));
+  Widget build(BuildContext context) => _buildPage();
+}
+
+extension _ContainerPageWidgets on _ContainerPageState {
+  Widget _buildPage() {
+    final hasItems = ref.watch(
+      _provider.select((state) => state.items != null),
+    );
 
     return Scaffold(
       appBar: _buildAppBar(),
       body: SafeArea(child: _buildMain()),
-      floatingActionButton: err == null ? _buildFAB() : null,
+      floatingActionButton: hasItems ? _buildFAB() : null,
     );
   }
 
@@ -70,65 +89,187 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
     return CustomAppBar(
       centerTitle: true,
       title: TwoLineText(up: libL10n.container, down: widget.args.spi.name),
-      actions: [
-        IconButton(
-          onPressed: () =>
-              context.showLoadingDialog(fn: () => _containerNotifier.refresh()),
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
+      bottom: TabBar(
+        controller: _tabCtrl,
+        dividerHeight: 0,
+        tabAlignment: TabAlignment.center,
+        isScrollable: true,
+        tabs: _ContainerTabs.values
+            .map((e) => Tab(text: e.i18n))
+            .toList(growable: false),
+      ),
     );
   }
 
   Widget _buildFAB() {
-    return FloatingActionButton(
-      onPressed: () => _showAddFAB(),
-      child: const Icon(Icons.add),
+    return ListenableBuilder(
+      listenable: _tabCtrl,
+      builder: (_, _) {
+        if (_tabCtrl.index != _ContainerTabs.ps.index) {
+          return const SizedBox.shrink();
+        }
+        return FloatingActionButton(
+          onPressed: _containerActionsBusy ? null : () => _showAddFAB(),
+          child: const Icon(Icons.add),
+        );
+      },
     );
   }
 
   Widget _buildMain() {
     final containerState = _containerState;
 
-    if (containerState.error != null && containerState.items == null) {
-      return SizedBox.expand(
-        child: Column(
-          children: [
-            const Spacer(),
-            const Icon(Icons.error, size: 37),
-            UIs.height13,
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 23),
-              child: Text(containerState.error.toString()),
-            ),
-            const Spacer(),
-            UIs.height13,
-            _buildSettingsBtns,
-          ],
-        ).paddingSymmetric(horizontal: 13),
-      );
-    }
-    if (containerState.items == null || containerState.images == null) {
-      return UIs.centerLoading;
-    }
-
-    return AutoMultiList(
-      children: <Widget>[
+    return Column(
+      children: [
         _buildLoading(containerState),
-        _buildVersion(containerState),
-        _buildPs(containerState),
-        _buildImage(containerState),
-        _buildEmptyStateMessage(containerState),
-        _buildPruneBtns,
-        _buildSettingsBtns,
+        Expanded(
+          child: TabBarView(
+            controller: _tabCtrl,
+            children: [
+              _buildPsTab(containerState),
+              _buildImagesTab(containerState),
+              _buildSettingsTab(containerState),
+            ],
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildEmptyStateMessage(ContainerState containerState) {
-    final emptyImgs = containerState.images?.isEmpty ?? true;
+  Widget _buildPsTab(ContainerState containerState) {
+    if (containerState.items == null) {
+      return _buildResourceLoadState(containerState, _ContainerTabs.ps);
+    }
+    return ContainerItemsView(
+      items: containerState.items!,
+      type: containerState.type,
+      version: containerState.version,
+      trailingBuilder: _buildMoreBtn,
+      groupTrailingBuilder: _buildGroupMoreBtn,
+      emptyState: _buildEmptyStateMessage(containerState),
+      summaryAction: _buildResourceActions(
+        pruneAction: _buildPruneAction(
+          key: const ValueKey('prune-containers-button'),
+          label: '${libL10n.prune} ${libL10n.container}',
+          onPressed: _containerActionsBusy
+              ? null
+              : () => _showPruneDialog(
+                  title: libL10n.container,
+                  onConfirm: _containerNotifier.pruneContainers,
+                ),
+        ),
+        refreshKey: const ValueKey('refresh-containers-button'),
+        onRefresh: _containerActionsBusy
+            ? null
+            : () => _refreshContainerTab(
+                _ContainerTabs.ps,
+                showLoading: true,
+              ),
+      ),
+    );
+  }
+
+  Widget _buildImagesTab(ContainerState containerState) {
+    if (containerState.images == null) {
+      return _buildResourceLoadState(containerState, _ContainerTabs.images);
+    }
+    return ContainerImagesView(
+      images: containerState.images!,
+      type: containerState.type,
+      version: containerState.version,
+      trailingBuilder: _buildImageMoreBtn,
+      summaryAction: _buildResourceActions(
+        pruneAction: _buildPruneAction(
+          key: const ValueKey('prune-images-button'),
+          label: '${libL10n.prune} ${l10n.image}',
+          onPressed: _containerActionsBusy ? null : _showImagePruneDialog,
+        ),
+        refreshKey: const ValueKey('refresh-images-button'),
+        onRefresh: _containerActionsBusy
+            ? null
+            : () => _refreshContainerTab(
+                _ContainerTabs.images,
+                showLoading: true,
+              ),
+      ),
+    );
+  }
+
+  Widget _buildResourceLoadState(
+    ContainerState containerState,
+    _ContainerTabs tab,
+  ) {
+    final error = containerState.error;
+    if (error == null) return UIs.centerLoading;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(23),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 37),
+            UIs.height13,
+            Text(error.toString(), textAlign: TextAlign.center),
+            UIs.height13,
+            OutlinedButton.icon(
+              onPressed: _containerActionsBusy
+                  ? null
+                  : () => _refreshContainerTab(tab, showLoading: true),
+              icon: const Icon(Icons.refresh),
+              label: Text(libL10n.refresh),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResourceActions({
+    required Widget pruneAction,
+    required Key refreshKey,
+    required VoidCallback? onRefresh,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        pruneAction,
+        IconButton(
+          key: refreshKey,
+          tooltip: libL10n.refresh,
+          onPressed: onRefresh,
+          icon: const Icon(Icons.refresh),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPruneAction({
+    required Key key,
+    required String label,
+    required VoidCallback? onPressed,
+  }) {
+    return IconButton(
+      key: key,
+      tooltip: label,
+      onPressed: onPressed,
+      icon: const Icon(Icons.cleaning_services_outlined),
+    );
+  }
+
+  Widget _buildSettingsTab(ContainerState containerState) {
+    return AutoMultiList(
+      children: <Widget>[
+        ..._SettingsMenuItems.values.map(
+          (item) => _buildSettingCard(item, containerState),
+        ),
+        ..._PruneTypes.values.map(_buildPruneCard),
+      ],
+    );
+  }
+
+  Widget? _buildEmptyStateMessage(ContainerState containerState) {
     final emptyPs = containerState.items?.isEmpty ?? true;
-    if (emptyPs && emptyImgs && containerState.runLog == null) {
+    if (emptyPs && containerState.runLog == null) {
       return CardX(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(17, 17, 17, 7),
@@ -136,254 +277,92 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
         ),
       );
     }
-    return UIs.placeholder;
+    return null;
   }
 
-  Widget _buildImage(ContainerState containerState) {
-    return ExpandTile(
-      leading: const Icon(MingCute.clapperboard_line),
-      title: Text(l10n.imagesList),
-      subtitle: Text(
-        l10n.dockerImagesFmt(containerState.images?.length ?? 'null'),
-        style: UIs.textGrey,
-      ),
-      initiallyExpanded: (containerState.images?.length ?? 0) <= 3,
-      children: containerState.images?.map(_buildImageItem).toList() ?? [],
-    ).cardx;
-  }
-
-  Widget _buildImageItem(ContainerImg e) {
-    final repoSplited = e.repository?.split('/');
-    final title = repoSplited?.lastOrNull ?? e.repository;
-    repoSplited?.removeLast();
-    final reg = repoSplited?.join('/');
-    return ListTile(
-      title: Text(title ?? l10n.unknown, style: UIs.text15),
-      subtitle: Text(
-        '${reg ?? ''} - ${e.tag} - ${e.sizeMB}',
-        style: UIs.text13Grey,
-      ),
-      trailing: PopupMenu<ImageMenu>(
+  Widget _buildImageMoreBtn(ContainerImg image) {
+    return IgnorePointer(
+      ignoring: _containerActionsBusy,
+      child: PopupMenu<ImageMenu>(
         items: ImageMenu.items
             .map((e) => PopMenu.build(e, e.icon, e.toStr))
             .toList(),
-        onSelected: (item) => _onTapImageMenu(item, e),
+        onSelected: (item) => _onTapImageMenu(item, image),
       ),
     );
   }
 
   Widget _buildLoading(ContainerState containerState) {
     if (containerState.runLog == null) return UIs.placeholder;
-    return Padding(
-      padding: const EdgeInsets.all(17),
-      child: Column(
-        children: [
-          const Center(child: CircularProgressIndicator()),
-          UIs.height13,
-          Text(containerState.runLog!),
-        ],
-      ),
+    return ContainerRunLogView(log: containerState.runLog!);
+  }
+
+  Widget? _buildGroupMoreBtn(List<ContainerPs> groupItems) {
+    final project = groupItems.firstOrNull?.project;
+    if (project == null) return null;
+    final hasWorkingDir = groupItems.any(
+      (e) => e.workingDir?.isNotEmpty ?? false,
     );
-  }
-
-  Widget _buildVersion(ContainerState containerState) {
-    return CardX(
-      child: Padding(
-        padding: const EdgeInsets.all(17),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(containerState.type.name.capitalize),
-            Text(containerState.version ?? l10n.unknown),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPs(ContainerState containerState) {
-    final items = containerState.items;
-    if (items == null) return UIs.placeholder;
-    final running = items.where((e) => e.status.isRunning).length;
-    final stopped = items.length - running;
-    final subtitle = stopped > 0
-        ? l10n.dockerStatusRunningAndStoppedFmt(running, stopped)
-        : l10n.dockerStatusRunningFmt(running);
-    return ExpandTile(
-      leading: const Icon(OctIcons.container, size: 22),
-      title: Text(libL10n.container),
-      subtitle: Text(subtitle, style: UIs.textGrey),
-      initiallyExpanded: items.length < 7,
-      children: items.map(_buildPsItem).toList(),
-    ).cardx;
-  }
-
-  Widget _buildPsItem(ContainerPs item) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 11),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(item.name ?? l10n.unknown, style: UIs.text15),
-              _buildMoreBtn(item),
-            ],
-          ),
-          Text(
-            '${item.image ?? l10n.unknown} - ${switch (item) {
-              final PodmanPs ps => ps.status.displayName,
-              final DockerPs ps => ps.state ?? ps.status.displayName,
-            }}',
-            style: UIs.text13Grey,
-          ),
-          _buildPsItemStats(item),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPsItemStats(ContainerPs item) {
-    if (item.cpu == null || item.mem == null) return UIs.placeholder;
-    return LayoutBuilder(
-      builder: (_, cons) {
-        final width = cons.maxWidth / 2 - 6.5;
-        return Column(
-          children: [
-            UIs.height13,
-            Row(
-              children: [
-                _buildPsItemStatsItem(
-                  'CPU',
-                  item.cpu,
-                  Icons.memory,
-                  width: width,
-                ),
-                UIs.width13,
-                _buildPsItemStatsItem(
-                  'Net',
-                  item.net,
-                  Icons.network_cell,
-                  width: width,
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                _buildPsItemStatsItem(
-                  'Mem',
-                  item.mem,
-                  Icons.settings_input_component,
-                  width: width,
-                ),
-                UIs.width13,
-                _buildPsItemStatsItem(
-                  'Disk',
-                  item.disk,
-                  Icons.storage,
-                  width: width,
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildPsItemStatsItem(
-    String title,
-    String? value,
-    IconData icon, {
-    required double width,
-  }) {
-    return SizedBox(
-      width: width,
-      child: Column(
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 12, color: Colors.grey),
-              UIs.width7,
-              Expanded(
-                child: Text(
-                  value ?? l10n.unknown,
-                  style: UIs.text11Grey,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ],
+    return IgnorePointer(
+      ignoring: _containerActionsBusy,
+      child: PopupMenu(
+        items: ContainerGroupMenu.items(
+          anyRunning: groupItems.any((e) => e.status.isRunning),
+          anyStopped: groupItems.any((e) => e.status.isStopped),
+        )
+            .where((e) => e != ContainerGroupMenu.logs || hasWorkingDir)
+            .map((e) => PopMenu.build(e, e.icon, e.toStr))
+            .toList(),
+        onSelected: (item) => _onTapGroupMenu(item, groupItems),
       ),
     );
   }
 
   Widget _buildMoreBtn(ContainerPs dItem) {
-    return PopupMenu(
-      items: ContainerMenu.items(
-        dItem.status.isRunning,
-      ).map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
-      onSelected: (item) => _onTapMoreBtn(item, dItem),
+    return IgnorePointer(
+      ignoring: _containerActionsBusy,
+      child: PopupMenu(
+        items: ContainerMenu.items(
+          dItem.status,
+        ).map((e) => PopMenu.build(e, e.icon, e.toStr)).toList(),
+        onSelected: (item) => _onTapMoreBtn(item, dItem),
+      ),
     );
   }
 
-  String _buildAddCmd(String image, String name, String args) {
-    var suffix = '';
-    if (args.isEmpty) {
-      suffix = image;
-    } else {
-      suffix = '$args $image';
-    }
-    if (name.isEmpty) {
-      return 'run -itd $suffix';
-    }
-    return 'run -itd --name $name $suffix';
-  }
-
-  Widget get _buildPruneBtns {
-    return ExpandTile(
-      leading: const Icon(Icons.delete),
-      title: Text(libL10n.prune),
-      children: _PruneTypes.values.map(_buildPruneBtn).toList(),
-    ).cardx;
-  }
-
-  Widget _buildPruneBtn(_PruneTypes type) {
-    final title = type.name.capitalize;
+  Widget _buildPruneCard(_PruneTypes type) {
+    final title = type.label;
     final containerNotifier = _containerNotifier;
-    return ListTile(
-      onTap: () async {
-        await _showPruneDialog(
-          title: title,
-          message: type.tip,
-          onConfirm: switch (type) {
-            _PruneTypes.images => containerNotifier.pruneImages,
-            _PruneTypes.containers => containerNotifier.pruneContainers,
-            _PruneTypes.volumes => containerNotifier.pruneVolumes,
-            _PruneTypes.system => containerNotifier.pruneSystem,
-          },
-        );
-      },
-      title: Text(title),
-      trailing: const Icon(Icons.keyboard_arrow_right),
+    return CardX(
+      child: ListTile(
+        key: ValueKey('container-setting-prune-${type.name}'),
+        leading: Icon(type.icon),
+        onTap: _containerActionsBusy ? null : () async {
+          switch (type) {
+            case _PruneTypes.volumes:
+              await _showPruneDialog(
+                title: title,
+                onConfirm: containerNotifier.pruneVolumes,
+              );
+              break;
+            case _PruneTypes.unusedData:
+              await _showSystemPruneDialog();
+              break;
+          }
+        },
+        title: Text(title),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+      ),
     );
   }
 
-  Widget get _buildSettingsBtns {
-    final containerState = _containerState;
-
-    return ExpandTile(
-      leading: const Icon(Icons.settings),
-      title: Text(libL10n.setting),
-      initiallyExpanded: containerState.error != null,
-      children: _SettingsMenuItems.values
-          .map((item) => _buildSettingTile(item, containerState))
-          .toList(),
-    ).cardx;
+  Widget _buildSettingCard(
+    _SettingsMenuItems item,
+    ContainerState containerState,
+  ) {
+    return CardX(
+      child: _buildSettingTile(item, containerState),
+    );
   }
 
   Widget _buildSettingTile(
@@ -405,24 +384,96 @@ class _ContainerPageState extends ConsumerState<ContainerPage> {
         break;
     }
     return ListTile(
-      onTap: () {
+      key: ValueKey('container-setting-${item.name}'),
+      leading: Icon(item.icon),
+      onTap: _containerActionsBusy ? null : () {
         switch (item) {
           case _SettingsMenuItems.editContainerHost:
             _showEditHostDialog();
             break;
           case _SettingsMenuItems.switchProvider:
-            ref
+            final changed = ref
                 .read(_provider.notifier)
                 .setType(
                   containerState.type == ContainerType.docker
                       ? ContainerType.podman
                       : ContainerType.docker,
                 );
+            if (changed) {
+              unawaited(_refreshContainerTab(_lastResourceTab));
+            }
             break;
         }
       },
       title: Text(title),
       trailing: const Icon(Icons.keyboard_arrow_right),
     );
+  }
+}
+
+extension _ContainerPageActions on _ContainerPageState {
+  void _onTapGroupMenu(ContainerGroupMenu item, List<ContainerPs> groupItems) {
+    final runningIds = groupItems
+        .where((e) => e.status.isRunning)
+        .map((e) => e.id)
+        .whereType<String>()
+        .toList();
+    final stoppedIds = groupItems
+        .where((e) => e.status.isStopped)
+        .map((e) => e.id)
+        .whereType<String>()
+        .toList();
+    switch (item) {
+      case ContainerGroupMenu.start:
+        if (stoppedIds.isEmpty) {
+          context.showSnackBar(libL10n.empty);
+          return;
+        }
+        _execContainerAction(() => _containerNotifier.startAll(stoppedIds));
+        break;
+      case ContainerGroupMenu.stop:
+        if (runningIds.isEmpty) {
+          context.showSnackBar(libL10n.empty);
+          return;
+        }
+        _execContainerAction(() => _containerNotifier.stopAll(runningIds));
+        break;
+      case ContainerGroupMenu.restart:
+        if (runningIds.isEmpty) {
+          context.showSnackBar(libL10n.empty);
+          return;
+        }
+        _execContainerAction(() => _containerNotifier.restartAll(runningIds));
+        break;
+      case ContainerGroupMenu.logs:
+        final project = groupItems.firstOrNull?.project;
+        if (project == null) return;
+        final workingDir = _mostCommonWorkingDir(groupItems);
+        if (workingDir == null) return;
+        unawaited(_openMergedLogs(project, workingDir));
+        break;
+    }
+  }
+}
+
+extension _ContainerPageUtils on _ContainerPageState {
+  String? _mostCommonWorkingDir(List<ContainerPs> groupItems) {
+    final counts = <String, int>{};
+    for (final e in groupItems) {
+      final dir = e.workingDir;
+      if (dir == null || dir.isEmpty) continue;
+      counts[dir] = (counts[dir] ?? 0) + 1;
+    }
+    if (counts.isEmpty) return null;
+    final entries = counts.entries.toList()
+      ..sort((a, b) {
+        final countComparison = b.value.compareTo(a.value);
+        if (countComparison != 0) return countComparison;
+        final lowerComparison =
+            a.key.toLowerCase().compareTo(b.key.toLowerCase());
+        if (lowerComparison != 0) return lowerComparison;
+        return a.key.compareTo(b.key);
+      });
+    return entries.first.key;
   }
 }

@@ -7,6 +7,9 @@ extension on _ContainerPageState {
   /// Watch the current state of the container.
   ContainerState get _containerState => ref.watch(_provider);
 
+  bool get _containerActionsBusy =>
+      _containerState.isBusy || _containerState.runLog != null;
+
   String _errorMessage(String? message) {
     final trimmed = message?.trim();
     return trimmed?.isNotEmpty == true ? trimmed! : libL10n.fail;
@@ -64,14 +67,19 @@ extension on _ContainerPageState {
       ),
       actions: Btn.ok(
         onTap: () async {
-          context.pop();
-          await _showAddCmdPreview(
-            _buildAddCmd(
-              imageCtrl.text.trim(),
-              nameCtrl.text.trim(),
-              argsCtrl.text.trim(),
-            ),
-          );
+          try {
+            final extraArgs = parseContainerRunArgs(argsCtrl.text.trim());
+            context.pop();
+            await _showAddCmdPreview(
+              buildContainerRunCmd(
+                image: imageCtrl.text.trim(),
+                name: nameCtrl.text.trim(),
+                extraArgs: extraArgs,
+              ),
+            );
+          } on FormatException {
+            context.showSnackBar(libL10n.invalid);
+          }
         },
       ).toList,
     );
@@ -85,17 +93,88 @@ extension on _ContainerPageState {
     String? message,
     required Future<ContainerErr?> Function() onConfirm,
   }) async {
-    await context.showRoundDialog(
+    final confirmed = await context.showRoundDialog<bool>(
       title: title,
       child: Text(message ?? libL10n.askContinue('${libL10n.prune} $title')),
-      actions: Btn.ok(
-        onTap: () async {
-          context.pop();
-          await _execContainerAction(onConfirm);
-        },
-        red: true,
-      ).toList,
+      actions: Btnx.cancelRedOk,
     );
+    if (confirmed == true && mounted) await _execContainerAction(onConfirm);
+  }
+
+  Future<void> _showImagePruneDialog() async {
+    final images = _containerState.images ?? const <ContainerImg>[];
+    final danglingCount = images.where((image) => image.isDangling).length;
+    final containerImages = _containerState.items?.map((item) => item.image);
+    final unusedTaggedCount = containerImages == null
+        ? null
+        : countUnusedTaggedImages(images, containerImages);
+    var allUnused = false;
+    final confirmed = await context.showRoundDialog<bool>(
+      title: l10n.pruneImages,
+      child: StatefulBuilder(
+        builder: (_, setState) {
+          return SingleChildScrollView(
+            child: ContainerImagePruneOptionsView(
+              danglingCount: danglingCount,
+              unusedTaggedCount: unusedTaggedCount,
+              allUnused: allUnused,
+              onAllUnusedChanged: (value) =>
+                  setState(() => allUnused = value),
+              commandPreview: _runtimePruneCommand(
+                buildContainerImagePruneCmd(allUnused: allUnused),
+              ),
+            ),
+          );
+        },
+      ),
+      actions: Btnx.cancelRedOk,
+    );
+    if (confirmed == true && mounted) {
+      await _execContainerAction(
+        () => _containerNotifier.pruneImages(allUnused: allUnused),
+      );
+    }
+  }
+
+  Future<void> _showSystemPruneDialog() async {
+    var allUnusedImages = false;
+    var includeVolumes = false;
+    final confirmed = await context.showRoundDialog<bool>(
+      title: l10n.pruneUnusedData,
+      child: StatefulBuilder(
+        builder: (_, setState) {
+          return SingleChildScrollView(
+            child: ContainerSystemPruneOptionsView(
+              allUnusedImages: allUnusedImages,
+              includeVolumes: includeVolumes,
+              onAllUnusedImagesChanged: (value) =>
+                  setState(() => allUnusedImages = value),
+              onIncludeVolumesChanged: (value) =>
+                  setState(() => includeVolumes = value),
+              commandPreview: _runtimePruneCommand(
+                buildContainerSystemPruneCmd(
+                  allUnusedImages: allUnusedImages,
+                  includeVolumes: includeVolumes,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+      actions: Btnx.cancelRedOk,
+    );
+    if (confirmed == true && mounted) {
+      await _execContainerAction(
+        () => _containerNotifier.pruneSystem(
+          allUnusedImages: allUnusedImages,
+          includeVolumes: includeVolumes,
+        ),
+      );
+    }
+  }
+
+  String _runtimePruneCommand(String command) {
+    return '${_containerState.type.name} $command';
   }
 
   Future<void> _showAddCmdPreview(String cmd) async {
@@ -122,29 +201,38 @@ extension on _ContainerPageState {
         ? 'CONTAINER_HOST'
         : 'DOCKER_HOST';
     final ctrl = TextEditingController(text: host);
-    await context.showRoundDialog(
-      title: libL10n.edit,
-      child: Input(
-        maxLines: 2,
-        controller: ctrl,
-        onSubmitted: _onSaveContainerHost,
-        hint: hostVariable == 'CONTAINER_HOST'
-            ? r'$XDG_RUNTIME_DIR/podman/podman.sock'
-            : 'unix:///run/user/1000/docker.sock',
-        suggestion: false,
-      ),
-      actions: Btn.ok(onTap: () => _onSaveContainerHost(ctrl.text)).toList,
-    );
+    try {
+      await context.showRoundDialog(
+        title: libL10n.edit,
+        child: Input(
+          maxLines: 2,
+          controller: ctrl,
+          onSubmitted: _onSaveContainerHost,
+          hint: hostVariable == 'CONTAINER_HOST'
+              ? r'$XDG_RUNTIME_DIR/podman/podman.sock'
+              : 'unix:///run/user/1000/docker.sock',
+          suggestion: false,
+        ),
+        actions: Btn.ok(onTap: () => _onSaveContainerHost(ctrl.text)).toList,
+      );
+    } finally {
+      ctrl.dispose();
+    }
   }
 
   void _onSaveContainerHost(String val) {
     context.pop();
     Stores.container.put(widget.args.spi.id, _containerState.type, val.trim());
     _containerNotifier.resetSudoProbe();
-    _containerNotifier.refresh();
+    unawaited(_refreshContainerTab(_lastResourceTab));
   }
 
   void _showImageRmDialog(ContainerImg e) {
+    final id = e.id;
+    if (id == null || id.isEmpty) {
+      context.showSnackBar(libL10n.empty);
+      return;
+    }
     context.showRoundDialog(
       title: libL10n.attention,
       child: Text(
@@ -154,10 +242,11 @@ extension on _ContainerPageState {
         onTap: () async {
           context.pop();
           final result = await _containerNotifier.run(
-            'rmi ${shellSingleQuote(e.id ?? '')} -f',
+            'rmi ${shellSingleQuote(id)} -f',
+            refreshTarget: ContainerRefreshTarget.images,
           );
           if (result != null) {
-            context.showSnackBar(_errorMessage(result.message));
+            if (mounted) context.showSnackBar(_errorMessage(result.message));
           }
         },
         red: true,
@@ -169,11 +258,17 @@ extension on _ContainerPageState {
     switch (item) {
       case ImageMenu.pull:
         final repo = e.repository;
-        if (repo == null) {
+        final tag = e.tag;
+        if (e.isDangling ||
+            repo == null ||
+            repo.trim().isEmpty ||
+            repo == '<none>' ||
+            tag == null ||
+            tag.trim().isEmpty ||
+            tag == '<none>') {
           context.showSnackBar(libL10n.empty);
           return;
         }
-        final tag = e.tag ?? 'latest';
         final imageRef = '$repo:$tag';
         context.showRoundDialog(
           title: libL10n.attention,
@@ -186,6 +281,7 @@ extension on _ContainerPageState {
               await _execContainerAction(
                 () => _containerNotifier.run(
                   'pull ${shellSingleQuote(imageRef)}',
+                  refreshTarget: ContainerRefreshTarget.images,
                 ),
               );
             },
@@ -254,28 +350,42 @@ extension on _ContainerPageState {
         await _execContainerAction(() => _containerNotifier.restart(id));
         break;
       case ContainerMenu.logs:
+        final cmd =
+            '${_containerState.type.name} logs -f --tail 100 ${shellSingleQuote(id)}';
+        final initCmd = await _containerNotifier.prepareInteractiveCommand(cmd);
+        if (!mounted || initCmd == null) return;
         final args = SshPageArgs(
           spi: widget.args.spi,
-          initCmd:
-              '${switch (_containerState.type) {
-                ContainerType.podman => 'podman',
-                ContainerType.docker => 'docker',
-              }} logs -f --tail 100 ${shellSingleQuote(dItem.id!)}',
+          initCmd: initCmd,
         );
         SSHPage.route.go(context, args);
         break;
       case ContainerMenu.terminal:
+        final cmd =
+            '${_containerState.type.name} exec -it ${shellSingleQuote(id)} sh -c "command -v bash && exec bash || command -v ash && exec ash || exec sh"';
+        final initCmd = await _containerNotifier.prepareInteractiveCommand(cmd);
+        if (!mounted || initCmd == null) return;
         final args = SshPageArgs(
           spi: widget.args.spi,
-          initCmd:
-              '${switch (_containerState.type) {
-                ContainerType.podman => 'podman',
-                ContainerType.docker => 'docker',
-              }} exec -it ${shellSingleQuote(dItem.id!)} sh -c "command -v bash && exec bash || command -v ash && exec ash || exec sh"',
+          initCmd: initCmd,
         );
         SSHPage.route.go(context, args);
         break;
     }
+  }
+
+  Future<void> _openMergedLogs(String project, String? workingDir) async {
+    if (workingDir == null || workingDir.isEmpty) return;
+    final runtime = _containerState.type.name;
+    final projectQuoted = shellSingleQuote(project);
+    final cmd = '$runtime compose -p $projectQuoted logs --follow --tail 300';
+    final prepared = await _containerNotifier.prepareInteractiveCommand(cmd);
+    if (!mounted || prepared == null) return;
+    final initCmd = 'cd ${shellSingleQuote(workingDir)} && $prepared';
+    SSHPage.route.go(
+      context,
+      SshPageArgs(spi: widget.args.spi, initCmd: initCmd),
+    );
   }
 
   void _initAutoRefresh() {
@@ -286,10 +396,46 @@ extension on _ContainerPageState {
     if (duration == null) return;
     _autoRefreshTimer = Timer.periodic(duration, (timer) {
       if (mounted) {
-        _containerNotifier.refresh(isAuto: true);
+        unawaited(_refreshCurrentContainerTab(isAuto: true));
       } else {
         timer.cancel();
       }
     });
+  }
+
+  void _onContainerTabChanged() {
+    final index = _tabCtrl.index;
+    if (index == _lastTabIndex) return;
+    _lastTabIndex = index;
+    final tab = _ContainerTabs.values[index];
+    if (tab != _ContainerTabs.settings) _lastResourceTab = tab;
+    unawaited(_refreshContainerTab(tab));
+  }
+
+  Future<void> _refreshCurrentContainerTab({bool isAuto = false}) {
+    return _refreshContainerTab(
+      _ContainerTabs.values[_tabCtrl.index],
+      isAuto: isAuto,
+    );
+  }
+
+  Future<void> _refreshContainerTab(
+    _ContainerTabs tab, {
+    bool isAuto = false,
+    bool showLoading = false,
+  }) async {
+    final Future<void> Function()? action = switch (tab) {
+      _ContainerTabs.ps => () =>
+          _containerNotifier.refreshContainers(isAuto: isAuto),
+      _ContainerTabs.images => () =>
+          _containerNotifier.refreshImages(isAuto: isAuto),
+      _ContainerTabs.settings => null,
+    };
+    if (action == null) return;
+    if (showLoading) {
+      await context.showLoadingDialog(fn: action);
+    } else {
+      await action();
+    }
   }
 }

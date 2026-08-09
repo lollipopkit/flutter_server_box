@@ -617,7 +617,7 @@ extension _SSH on _AppSettingsPageState {
   Widget _buildTmuxAuto() {
     return ExpandTile(
       leading: const Icon(Icons.terminal),
-      title: const Text('tmux auto-attach'),
+      title: Text(l10n.tmuxAutoAttach),
       children: [
         _buildTmuxAutoToggle(),
         _buildTmuxShowSelector(),
@@ -628,9 +628,9 @@ extension _SSH on _AppSettingsPageState {
 
   Widget _buildTmuxAutoToggle() {
     return ListTile(
-      title: const Text('Auto tmux'),
+      title: Text(l10n.tmuxAuto),
       subtitle: Text(
-        'Automatically start/attach tmux on SSH connect',
+        l10n.tmuxAutoTip,
         style: UIs.textGrey,
       ),
       trailing: StoreSwitch(prop: _setting.tmuxAuto),
@@ -644,9 +644,9 @@ extension _SSH on _AppSettingsPageState {
         child: Opacity(
           opacity: autoEnabled ? 1.0 : 0.5,
           child: ListTile(
-            title: const Text('Session selector'),
+            title: Text(l10n.tmuxSessionSelector),
             subtitle: Text(
-              'Show session picker dialog on connect',
+              l10n.tmuxSessionSelectorTip,
               style: UIs.textGrey,
             ),
             trailing: StoreSwitch(prop: _setting.tmuxShowSelector),
@@ -665,7 +665,7 @@ extension _SSH on _AppSettingsPageState {
           child: Opacity(
             opacity: autoEnabled ? 1.0 : 0.5,
             child: ListTile(
-              title: const Text('Default session name'),
+              title: Text(l10n.tmuxDefaultSessionName),
               trailing: Text(displayName, style: UIs.text15),
               onTap: () => _showTmuxSessionNameDialog(name),
             ),
@@ -684,7 +684,7 @@ extension _SSH on _AppSettingsPageState {
       }
 
       await context.showRoundDialog<bool>(
-        title: 'Session name',
+        title: l10n.tmuxSessionName,
         child: Input(
           controller: ctrl,
           autoFocus: true,

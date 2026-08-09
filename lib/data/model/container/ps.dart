@@ -9,6 +9,11 @@ sealed class ContainerPs {
   String? get id;
   String? get image;
   String? get name;
+  String? get project;
+  String? get workingDir;
+
+  /// Human-readable lifecycle text reported by the runtime's STATUS field.
+  String? get rawStatus;
   ContainerStatus get status;
 
   String? cpu;
@@ -28,6 +33,12 @@ final class PodmanPs implements ContainerPs {
   @override
   final String? image;
   final List<String>? names;
+  @override
+  final String? rawStatus;
+  @override
+  final String? project;
+  @override
+  final String? workingDir;
 
   @override
   String? cpu;
@@ -43,22 +54,25 @@ final class PodmanPs implements ContainerPs {
     this.id,
     this.image,
     this.names,
+    this.rawStatus,
+    this.project,
+    this.workingDir,
   });
 
   @override
   String? get name => names?.firstOrNull;
 
   @override
-  ContainerStatus get status => ContainerStatus.fromPodmanExited(exited);
+  ContainerStatus get status => ContainerStatus.fromPodman(exited, rawStatus);
 
   @override
   void parseStats(String s, [String? version]) {
     final stats = json.decode(s);
-    final cpuD = (stats['CPU'] as double? ?? 0).toStringAsFixed(1);
-    final cpuAvgD = (stats['AvgCPU'] as double? ?? 0).toStringAsFixed(1);
+    final cpuD = _asDouble(stats['CPU']).toStringAsFixed(1);
+    final cpuAvgD = _asDouble(stats['AvgCPU']).toStringAsFixed(1);
     cpu = '$cpuD% / ${libL10n.pingAvg} $cpuAvgD%';
-    final memLimit = (stats['MemLimit'] as int? ?? 0).bytes2Str;
-    final memUsage = (stats['MemUsage'] as int? ?? 0).bytes2Str;
+    final memLimit = _asInt(stats['MemLimit']).bytes2Str;
+    final memUsage = _asInt(stats['MemUsage']).bytes2Str;
     mem = '$memUsage / $memLimit';
 
     int netIn = 0;
@@ -72,21 +86,30 @@ final class PodmanPs implements ContainerPs {
     // Podman 5.x changed network backend (Netavark) and uses nested
     // Network.{iface}.RxBytes/TxBytes structure instead.
     if (majorVersionNum == null || majorVersionNum <= 4) {
-      netIn = stats['NetInput'] as int? ?? 0;
-      netOut = stats['NetOutput'] as int? ?? 0;
+      netIn = _asInt(stats['NetInput']);
+      netOut = _asInt(stats['NetOutput']);
     } else if (majorVersionNum >= 5) {
-      final network = stats['Network'] as Map<String, dynamic>?;
-      if (network != null) {
-        for (final interface in network.values) {
-          netIn += interface['RxBytes'] as int? ?? 0;
-          netOut += interface['TxBytes'] as int? ?? 0;
+      final network = stats['Network'];
+      var hasNestedNetworkCounters = false;
+      if (network is Map) {
+        for (final entry in network.entries) {
+          final interface = entry.value;
+          if (interface is! Map) continue;
+          hasNestedNetworkCounters |= interface.containsKey('RxBytes') ||
+              interface.containsKey('TxBytes');
+          netIn += _asInt(interface['RxBytes']);
+          netOut += _asInt(interface['TxBytes']);
         }
+      }
+      if (!hasNestedNetworkCounters) {
+        netIn = _asInt(stats['NetInput']);
+        netOut = _asInt(stats['NetOutput']);
       }
     }
     net = '↓ ${netIn.bytes2Str} / ↑ ${netOut.bytes2Str}';
 
-    final diskIn = (stats['BlockInput'] as int? ?? 0).bytes2Str;
-    final diskOut = (stats['BlockOutput'] as int? ?? 0).bytes2Str;
+    final diskIn = _asInt(stats['BlockInput']).bytes2Str;
+    final diskOut = _asInt(stats['BlockOutput']).bytes2Str;
     disk = '${l10n.read} $diskIn / ${l10n.write} $diskOut';
   }
 
@@ -100,7 +123,41 @@ final class PodmanPs implements ContainerPs {
     names: json['Names'] == null
         ? []
         : List<String>.from(json['Names']!.map((x) => x)),
+    rawStatus: _nonEmpty(json['ServerBoxStatus']?.toString()) ??
+        _nonEmpty(json['Status']?.toString()) ??
+        _nonEmpty(json['State']?.toString()),
+    project: _labelFromLabels(json['Labels'], 'com.docker.compose.project'),
+    workingDir: _labelFromLabels(
+      json['Labels'],
+      'com.docker.compose.project.working_dir',
+    ),
   );
+}
+
+/// Parses Podman's JSON listing with the human-readable `.Status` template
+/// appended to each row. Older JSON-only output remains supported.
+List<PodmanPs> parsePodmanPsOutput(String raw) {
+  final items = <PodmanPs>[];
+  for (final line in raw.split('\n')) {
+    if (line.trim().isEmpty) continue;
+    try {
+        final separator = line.lastIndexOf('\t');
+        final jsonPart = separator < 0 ? line : line.substring(0, separator);
+        final data = json.decode(jsonPart) as Map<String, dynamic>;
+        if (separator >= 0) {
+          final detailedStatus = line.substring(separator + 1).trim();
+          if (detailedStatus.isNotEmpty) {
+            data['ServerBoxStatus'] = detailedStatus;
+          }
+        }
+      items.add(PodmanPs.fromJson(data));
+    } on FormatException {
+      continue;
+    } on TypeError {
+      continue;
+    }
+  }
+  return items.toList(growable: false);
 }
 
 final class DockerPs implements ContainerPs {
@@ -110,6 +167,12 @@ final class DockerPs implements ContainerPs {
   final String? image;
   final String? names;
   final String? state;
+  @override
+  String? get rawStatus => state;
+  @override
+  final String? project;
+  @override
+  final String? workingDir;
 
   @override
   String? cpu;
@@ -120,7 +183,14 @@ final class DockerPs implements ContainerPs {
   @override
   String? disk;
 
-  DockerPs({this.id, this.image, this.names, this.state});
+  DockerPs({
+    this.id,
+    this.image,
+    this.names,
+    this.state,
+    this.project,
+    this.workingDir,
+  });
 
   @override
   String? get name => names;
@@ -145,13 +215,13 @@ final class DockerPs implements ContainerPs {
         '${l10n.read} ${blockParts.firstOrNull ?? '0B'} / ${l10n.write} ${blockParts.length > 1 ? blockParts[1] : '0B'}';
   }
 
-  /// CONTAINER ID\tSTATUS\tNAMES\tIMAGE
-  /// a049d689e7a1\tUp 3 weeks\taria2-pro\tp3terx/aria2-pro
+  /// CONTAINER ID\tSTATUS\tNAMES\tIMAGE\tPROJECT\tWORKING_DIR
+  /// a049d689e7a1\tUp 3 weeks\taria2-pro\tp3terx/aria2-pro\ttorrent\t/opt/torrent
   factory DockerPs.parse(String raw) {
     final parts = raw.split('\t');
     if (parts.length < 4) {
       throw FormatException(
-        'Docker ps row has ${parts.length} fields, expected 4',
+        'Docker ps row has ${parts.length} fields, expected at least 4',
         raw,
       );
     }
@@ -160,6 +230,29 @@ final class DockerPs implements ContainerPs {
       state: parts[1],
       names: parts[2],
       image: parts[3],
+      project: parts.length > 4 ? _nonEmpty(parts[4]) : null,
+      workingDir: parts.length > 5 ? _nonEmpty(parts[5]) : null,
     );
   }
+}
+
+String? _nonEmpty(String? value) =>
+    value == null || value.trim().isEmpty ? null : value.trim();
+
+double _asDouble(dynamic val) {
+  if (val is num) return val.toDouble();
+  return double.tryParse(val?.toString() ?? '') ?? 0;
+}
+
+int _asInt(dynamic val) {
+  if (val is int) return val;
+  if (val is num) return val.toInt();
+  return int.tryParse(val?.toString() ?? '') ?? 0;
+}
+
+String? _labelFromLabels(dynamic labels, String key) {
+  if (labels is! Map) return null;
+  final value = labels[key];
+  if (value is! String) return null;
+  return _nonEmpty(value);
 }

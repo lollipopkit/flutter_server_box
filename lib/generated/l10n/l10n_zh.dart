@@ -261,6 +261,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get dockerProjectOther => '其他';
+
+  @override
+  String get dockerPruneTip => '清理未使用的数据以释放磁盘空间';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -370,6 +376,48 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get imagesList => '镜像列表';
+
+  @override
+  String get unused => '未使用';
+
+  @override
+  String get dangling => '悬空';
+
+  @override
+  String get pruneUnusedImages => '清理未使用镜像';
+
+  @override
+  String get pruneDanglingImages => '清理悬空镜像';
+
+  @override
+  String get pruneImages => '清理镜像';
+
+  @override
+  String get unusedTaggedImages => '未使用标记';
+
+  @override
+  String get pruneDanglingImagesTip => '仅移除悬空镜像（未标记的镜像层）。';
+
+  @override
+  String get pruneUnusedImagesTip => '同时移除未被任何容器使用的已标记镜像。';
+
+  @override
+  String get includeUnusedVolumesTip => '同时移除未被任何容器使用的卷。';
+
+  @override
+  String get pruneCommandPreview => '命令预览';
+
+  @override
+  String get pruneForceSshTip => '远程执行始终启用 -f，以跳过无法交互的确认提示。';
+
+  @override
+  String get pruneVolumes => '清理卷';
+
+  @override
+  String get pruneUnusedData => '清理未使用数据';
+
+  @override
+  String get volume => '卷';
 
   @override
   String get pull => '拉取';
@@ -716,6 +764,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get sshVerificationCode => '验证码';
+
+  @override
   String get sshConfigManualSelect => '是否要手动选择 SSH 配置文件？';
 
   @override
@@ -909,6 +960,82 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get portForwardBetaTitle => '端口映射 (Beta)';
+
+  @override
+  String get tmuxAutoAttach => 'tmux 自动附加';
+
+  @override
+  String get tmuxAuto => '自动使用 tmux';
+
+  @override
+  String get tmuxAutoTip => '通过 SSH 连接时自动启动或附加 tmux';
+
+  @override
+  String get tmuxSessionSelector => '会话选择器';
+
+  @override
+  String get tmuxSessionSelectorTip => '连接时显示会话选择器';
+
+  @override
+  String get tmuxDefaultSessionName => '默认会话名称';
+
+  @override
+  String get tmuxSessionName => '会话名称';
+
+  @override
+  String get tmuxExistingSessions => '现有会话';
+
+  @override
+  String get tmuxNewSession => '新建会话';
+
+  @override
+  String get tmuxWindows => '窗口';
+
+  @override
+  String get tmuxNewWindow => '新建窗口';
+
+  @override
+  String get tmuxNoWindowsFound => '未找到窗口';
+
+  @override
+  String tmuxWindowCount(int count) {
+    return '$count 个窗口';
+  }
+
+  @override
+  String tmuxPaneCount(int count) {
+    return '$count 个窗格';
+  }
+
+  @override
+  String get tmuxAttached => '已附加';
+
+  @override
+  String get tmuxActive => '活动中';
+
+  @override
+  String tmuxActiveAt(String time) {
+    return '活动：$time';
+  }
+
+  @override
+  String tmuxAttachedAt(String time) {
+    return '附加：$time';
+  }
+
+  @override
+  String get tmuxSkip => '跳过';
+
+  @override
+  String get tmuxNotAvailable => 'tmux 不可用';
+
+  @override
+  String containerSegmentsMismatch(int count) {
+    return '容器响应分段数量异常：$count';
+  }
+
+  @override
+  String get containerOperationInProgress => '另一个容器操作正在进行中';
 
   @override
   String get systemd => 'Systemd';
@@ -1165,6 +1292,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
+  String get dockerProjectOther => '其他';
+
+  @override
+  String get dockerPruneTip => '清理未使用的資料以釋放磁碟空間';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -1276,10 +1409,55 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get imagesList => '映像檔列表';
 
   @override
+  String get unused => '未使用';
+
+  @override
+  String get dangling => '懸空';
+
+  @override
+  String get pruneUnusedImages => '清理未使用映像檔';
+
+  @override
+  String get pruneDanglingImages => '清理懸空映像檔';
+
+  @override
+  String get pruneImages => '清理映像檔';
+
+  @override
+  String get unusedTaggedImages => '未使用標記';
+
+  @override
+  String get pruneDanglingImagesTip => '僅移除懸空映像檔（未標記的映像層）。';
+
+  @override
+  String get pruneUnusedImagesTip => '同時移除未被任何容器使用的已標記映像檔。';
+
+  @override
+  String get includeUnusedVolumesTip => '同時移除未被任何容器使用的卷。';
+
+  @override
+  String get pruneCommandPreview => '命令預覽';
+
+  @override
+  String get pruneForceSshTip => '遠端執行始終啟用 -f，以略過無法互動的確認提示。';
+
+  @override
+  String get pruneVolumes => '清理卷';
+
+  @override
+  String get pruneUnusedData => '清理未使用資料';
+
+  @override
+  String get volume => '卷';
+
+  @override
   String get pull => '拉取';
 
   @override
   String get invalid => '無效';
+
+  @override
+  String get invalidUrl => '無效的網址';
 
   @override
   String get invalidHostFormat => '主機格式無效，僅支援 IPv4、IPv6 和網域字元。';
@@ -1591,6 +1769,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
+  String get sshVerificationCode => '驗證碼';
+
+  @override
   String get sshConfigManualSelect => '是否要手動選擇 SSH 設定檔案？';
 
   @override
@@ -1722,6 +1903,82 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
+
+  @override
+  String get tmuxAutoAttach => 'tmux 自動附加';
+
+  @override
+  String get tmuxAuto => '自動使用 tmux';
+
+  @override
+  String get tmuxAutoTip => '透過 SSH 連線時自動啟動或附加 tmux';
+
+  @override
+  String get tmuxSessionSelector => '工作階段選擇器';
+
+  @override
+  String get tmuxSessionSelectorTip => '連線時顯示工作階段選擇器';
+
+  @override
+  String get tmuxDefaultSessionName => '預設工作階段名稱';
+
+  @override
+  String get tmuxSessionName => '工作階段名稱';
+
+  @override
+  String get tmuxExistingSessions => '現有工作階段';
+
+  @override
+  String get tmuxNewSession => '新增工作階段';
+
+  @override
+  String get tmuxWindows => '視窗';
+
+  @override
+  String get tmuxNewWindow => '新增視窗';
+
+  @override
+  String get tmuxNoWindowsFound => '找不到視窗';
+
+  @override
+  String tmuxWindowCount(int count) {
+    return '$count 個視窗';
+  }
+
+  @override
+  String tmuxPaneCount(int count) {
+    return '$count 個窗格';
+  }
+
+  @override
+  String get tmuxAttached => '已附加';
+
+  @override
+  String get tmuxActive => '使用中';
+
+  @override
+  String tmuxActiveAt(String time) {
+    return '活動：$time';
+  }
+
+  @override
+  String tmuxAttachedAt(String time) {
+    return '附加：$time';
+  }
+
+  @override
+  String get tmuxSkip => '略過';
+
+  @override
+  String get tmuxNotAvailable => 'tmux 無法使用';
+
+  @override
+  String containerSegmentsMismatch(int count) {
+    return '容器回應分段數量異常：$count';
+  }
+
+  @override
+  String get containerOperationInProgress => '另一個容器操作正在進行中';
 
   @override
   String get systemd => 'Systemd';

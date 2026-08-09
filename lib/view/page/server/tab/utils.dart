@@ -4,6 +4,11 @@ part of 'tab.dart';
 
 extension _Actions on _ServerPageState {
   void _onTapCard(ServerState srv) {
+    if (srv.needsInteractiveAuth) {
+      TryLimiter.reset(srv.spi.id);
+      ref.read(serversProvider.notifier).refresh(spi: srv.spi);
+      return;
+    }
     if (srv.canViewDetails) {
       ServerDetailPage.route.go(context, SpiRequiredArgs(srv.spi));
     } else {
@@ -165,6 +170,11 @@ extension _Utils on _ServerPageState {
 }
 
 extension _ServerX on ServerState {
+  bool get needsInteractiveAuth {
+    final error = status.err;
+    return error is SSHErr && error.type == SSHErrType.interactiveAuth;
+  }
+
   String? _getTopRightStr(Spi spi) {
     if (status.err != null) {
       return l10n.viewErr;

@@ -1,14 +1,17 @@
+import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
-import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/systemd.dart';
 import 'package:server_box/data/provider/server/single.dart';
 
 part 'systemd.freezed.dart';
 part 'systemd.g.dart';
+
+/// Outcome of [SystemdNotifier.getUnits], so the view can report what failed.
+enum SystemdRefreshResult { ok, systemFailed, userFailed }
 
 @freezed
 abstract class SystemdState with _$SystemdState {
@@ -27,8 +30,7 @@ class SystemdNotifier extends _$SystemdNotifier {
   SystemdState build(Spi spi) {
     final si = ref.read(serverProvider(spi.id));
     _si = si;
-    // Async initialization
-    Future.microtask(() => getUnits());
+    // The initial load is driven by the view so it can surface failures.
     return const SystemdState();
   }
 
@@ -51,159 +53,57 @@ class SystemdNotifier extends _$SystemdNotifier {
     state = state.copyWith(scopeFilter: filter);
   }
 
-  Future<void> getUnits() async {
+  /// System units are essential; user units are optional and only reported.
+  Future<SystemdRefreshResult> getUnits() async {
     state = state.copyWith(isBusy: true);
 
     try {
       final client = _si.client;
-      final result = await client!.execForOutput(_getUnitsCmd);
-      final units = result.split('\n');
+      if (client == null) return SystemdRefreshResult.systemFailed;
 
-      final userUnits = <String>[];
-      final systemUnits = <String>[];
-      for (final unit in units) {
-        final maybeSystem = unit.contains('/systemd/system');
-        final maybeUser = unit.contains('/.config/systemd/user');
-        if (maybeSystem && !maybeUser) {
-          systemUnits.add(unit);
-        } else {
-          userUnits.add(unit);
-        }
-      }
+      final system = await _listScope(client, SystemdUnitScope.system);
+      if (system.failed) return SystemdRefreshResult.systemFailed;
 
-      final parsedUserUnits = await _parseUnitObj(
-        userUnits,
-        SystemdUnitScope.user,
-      );
-      final parsedSystemUnits = await _parseUnitObj(
-        systemUnits,
-        SystemdUnitScope.system,
-      );
-      state = state.copyWith(
-        units: [...parsedUserUnits, ...parsedSystemUnits],
-        isBusy: false,
-      );
+      final user = await _listScope(client, SystemdUnitScope.user);
+
+      final units = [...user.units, ...system.units]..sort(_compareUnits);
+      state = state.copyWith(units: units);
+      return user.failed
+          ? SystemdRefreshResult.userFailed
+          : SystemdRefreshResult.ok;
     } catch (e, s) {
-      dprint('Parse systemd', e, s);
+      dprint('Systemd refresh', e, s);
+      return SystemdRefreshResult.systemFailed;
+    } finally {
       state = state.copyWith(isBusy: false);
     }
   }
 
-  Future<List<SystemdUnit>> _parseUnitObj(
-    List<String> unitNames,
+  /// systemctl prints nothing for an empty list, so non-empty output yielding
+  /// no units means it reported an error rather than an empty list.
+  Future<({List<SystemdUnit> units, bool failed})> _listScope(
+    SSHClient client,
     SystemdUnitScope scope,
   ) async {
-    final unitNames_ = unitNames.map((e) {
-      final fullName = e.trim().split('/').last;
-      final lastDot = fullName.lastIndexOf('.');
-      final name = lastDot > 0 ? fullName.substring(0, lastDot) : fullName;
-      return name.replaceAll(RegExp(r'[^a-zA-Z0-9\-_.@:]'), '');
-    }).toList();
-    final script =
-        '''
-for unit in ${unitNames_.map((e) => '"$e"').join(' ')}; do
-  state=\$(systemctl show --no-pager -- "\$unit")
-  echo "\$state"
-  echo -n "\n${ScriptConstants.separator}\n"
-done
-''';
-    final client = _si.client!;
-    final result = await client.execForOutput(script);
-    final units = result.split(ScriptConstants.separator);
-
-    final parsedUnits = <SystemdUnit>[];
-    for (final unit in units.where((e) => e.trim().isNotEmpty)) {
-      final parts = unit.split('\n').where((e) => e.trim().isNotEmpty).toList();
-      if (parts.isEmpty) continue;
-      var name = '';
-      var type = '';
-      var state = '';
-      String? description;
-      for (final part in parts) {
-        if (part.startsWith('Id=')) {
-          final val = _getIniVal(part);
-          if (val == null) continue;
-          // Id=org.cups.cupsd.service
-          final lastDot = val.lastIndexOf('.');
-          if (lastDot > 0) {
-            name = val.substring(0, lastDot);
-            type = val.substring(lastDot + 1);
-          } else {
-            name = val;
-            type = '';
-          }
-          continue;
-        }
-        if (part.startsWith('ActiveState=')) {
-          final val = _getIniVal(part);
-          if (val == null) continue;
-          state = val;
-          continue;
-        }
-        if (part.startsWith('Description=')) {
-          description = _getIniVal(part);
-          continue;
-        }
-      }
-
-      final unitType = SystemdUnitType.fromString(type);
-      if (unitType == null) {
-        dprint('Unit type: $type');
-        continue;
-      }
-      final unitState = SystemdUnitState.fromString(state);
-      if (unitState == null) {
-        dprint('Unit state: $state');
-        continue;
-      }
-
-      parsedUnits.add(
-        SystemdUnit(
-          name: name,
-          type: unitType,
-          scope: scope,
-          state: unitState,
-          description: description,
-        ),
-      );
+    try {
+      final raw = await client.execForOutput(scope.listUnitsCmd);
+      final units = SystemdUnit.parseListUnits(raw, scope);
+      return (units: units, failed: units.isEmpty && raw.trim().isNotEmpty);
+    } catch (e, s) {
+      dprint('Systemd ${scope.name} units', e, s);
+      return (units: const <SystemdUnit>[], failed: true);
     }
-
-    parsedUnits.sort((a, b) {
-      // user units first
-      if (a.scope != b.scope) {
-        return a.scope == SystemdUnitScope.user ? -1 : 1;
-      }
-      // active units first
-      if (a.state != b.state) {
-        return a.state == SystemdUnitState.active ? -1 : 1;
-      }
-      return a.name.compareTo(b.name);
-    });
-    return parsedUnits;
   }
-
-  late final _getUnitsCmd = '''
-    types="service socket mount timer"
-
-    get_files() {
-      unit_type=\$1
-      base_dir=\$2
-      [ -d "\$base_dir" ] || return
-      find "\$base_dir" -type f -name "*.\$unit_type" -print
-    }
-
-    for type in \$types; do
-      get_files \$type /etc/systemd/system
-      # Parsing these paths can lead to SSH transport closed errors
-      # get_files \$type /lib/systemd/system
-      # get_files \$type /usr/lib/systemd/system
-      get_files \$type ~/.config/systemd/user
-    done | sort
-    ''';
 }
 
-String? _getIniVal(String line) {
-  final idx = line.indexOf('=');
-  if (idx < 0) return null;
-  return line.substring(idx + 1).trim();
+int _compareUnits(SystemdUnit a, SystemdUnit b) {
+  // user units first
+  if (a.scope != b.scope) {
+    return a.scope == SystemdUnitScope.user ? -1 : 1;
+  }
+  // active units first
+  if (a.state != b.state) {
+    return a.state == SystemdUnitState.active ? -1 : 1;
+  }
+  return a.name.compareTo(b.name);
 }
