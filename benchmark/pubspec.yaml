@@ -1,0 +1,11 @@
+name: sbm_bench
+description: Throughput benchmarks for the SSH stack. Not part of the app build.
+publish_to: none
+
+environment:
+  sdk: ">=3.11.0"
+
+dependencies:
+  dartssh2:
+    path: ../packages/dartssh2
+  pointycastle: ^4.0.0
