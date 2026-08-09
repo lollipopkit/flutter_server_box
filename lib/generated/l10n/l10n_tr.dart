@@ -816,6 +816,21 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sshVerificationCode => 'Doğrulama kodu';
 
   @override
+  String get sshViaMonitor => 'monitor üzerinden SSH';
+
+  @override
+  String get sshViaMonitorTip =>
+      'SSH bağlantı noktasına doğrudan erişilemeyen makineler için bu sunucunun SSH\'ına monitor aracısı üzerinden erişir. Aracı yalnızca bayt aktarır: oturum uçtan uca şifreli kalır ve host key\'i yine burada doğrulanır. Hedef adres aracıda yapılandırılır ve uygulamadan seçilemez.';
+
+  @override
+  String get sshViaMonitorNeedsMonitor =>
+      'monitor üzerinden SSH için bir monitor adresi gerekir.';
+
+  @override
+  String get sshViaMonitorConflictsWithOtherTransport =>
+      'monitor üzerinden SSH; atlama sunucusu, ProxyCommand veya yedek adresle birlikte kullanılamaz.';
+
+  @override
   String get sshConfigManualSelect =>
       'SSH yapılandırma dosyasını manuel olarak seçmek ister misiniz?';
 

@@ -792,6 +792,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshVerificationCode => '確認コード';
 
   @override
+  String get sshViaMonitor => 'monitor 経由の SSH';
+
+  @override
+  String get sshViaMonitorTip =>
+      'SSH ポートに直接到達できないホスト向けに、そのサーバーの monitor エージェント経由で SSH に接続します。エージェントはバイトを中継するだけで、セッションはエンドツーエンドで暗号化されたままであり、ホストキーの検証もこちらで行われます。接続先アドレスはエージェント側の設定で決まり、アプリからは指定できません。';
+
+  @override
+  String get sshViaMonitorNeedsMonitor =>
+      'monitor 経由の SSH には monitor アドレスが必要です。';
+
+  @override
+  String get sshViaMonitorConflictsWithOtherTransport =>
+      'monitor 経由の SSH は踏み台サーバー・ProxyCommand・代替アドレスとは併用できません。';
+
+  @override
   String get sshConfigManualSelect => 'SSH設定ファイルを手動で選択しますか？';
 
   @override

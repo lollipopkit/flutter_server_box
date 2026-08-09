@@ -148,6 +148,10 @@ extension _Actions on _ServerEditPageState {
     switch (error) {
       case SpiValidationError.jumpServerAndProxyCommandConflict:
         return l10n.jumpServerAndProxyCommandCannotBeUsedTogether;
+      case SpiValidationError.monitorTunnelWithoutMonitor:
+        return l10n.sshViaMonitorNeedsMonitor;
+      case SpiValidationError.monitorTunnelAndOtherTransport:
+        return l10n.sshViaMonitorConflictsWithOtherTransport;
     }
   }
 
@@ -258,12 +262,28 @@ extension _Actions on _ServerEditPageState {
       );
     }
 
-    // Left null in monitor mode: the SSH form is hidden there, so there is
-    // nothing to record. Previously these were required, which is why a
-    // monitor-only server used to be saved with a host derived from the
-    // monitor URL and a user literally named `monitor`.
+    // In monitor mode the SSH form is hidden, so there is normally nothing to
+    // record — previously these were required, which is why a monitor-only
+    // server used to be saved with a host derived from the monitor URL and a
+    // user literally named `monitor`. The exception is the SSH-via-monitor
+    // tunnel, which needs credentials but no address: the agent connects to
+    // its own configured target and takes none from us.
     final ssh = useMonitorHttp
-        ? null
+        ? (!_sshViaMonitor.value
+              ? null
+              : SshCredential(
+                  ip: '',
+                  user: _tunnelUserCtrl.text.selfNotEmptyOrNull ?? 'root',
+                  pwd: _tunnelPwdCtrl.text.selfNotEmptyOrNull,
+                  keyId: _tunnelKeyIdx.value != null
+                      ? ref
+                            .read(privateKeyProvider)
+                            .keys
+                            .elementAt(_tunnelKeyIdx.value!)
+                            .id
+                      : null,
+                  viaMonitor: true,
+                ))
         : SshCredential(
             ip: _ipController.text,
             port: int.tryParse(_portController.text) ?? 22,
@@ -451,7 +471,21 @@ extension _Utils on _ServerEditPageState {
     _nameController.text = spi.name;
 
     final ssh = spi.ssh;
-    if (ssh != null) {
+    // A tunneled credential has no address and lives in its own section of
+    // the form; loading it into the direct-SSH fields would show a host of ''
+    // and a port of 22 that mean nothing.
+    if (ssh != null && ssh.viaMonitor) {
+      _sshViaMonitor.value = true;
+      _tunnelUserCtrl.text = ssh.user;
+      if (ssh.keyId == null) {
+        _tunnelPwdCtrl.text = ssh.pwd ?? '';
+      } else {
+        _tunnelKeyIdx.value = ref
+            .read(privateKeyProvider)
+            .keys
+            .indexWhere((e) => e.id == ssh.keyId);
+      }
+    } else if (ssh != null) {
       _ipController.text = ssh.ip;
       _portController.text = ssh.port.toString();
       _usernameController.text = ssh.user;

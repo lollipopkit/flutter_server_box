@@ -822,6 +822,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sshVerificationCode => 'Code de vérification';
 
   @override
+  String get sshViaMonitor => 'SSH via monitor';
+
+  @override
+  String get sshViaMonitorTip =>
+      'Atteint le SSH de ce serveur par son agent monitor, pour les hôtes dont le port SSH n\'est pas joignable directement. L\'agent ne fait que relayer des octets : la session reste chiffrée de bout en bout et sa clé d\'hôte est toujours vérifiée ici. L\'adresse cible est configurée sur l\'agent et ne peut pas être choisie depuis l\'app.';
+
+  @override
+  String get sshViaMonitorNeedsMonitor =>
+      'SSH via monitor nécessite une adresse monitor.';
+
+  @override
+  String get sshViaMonitorConflictsWithOtherTransport =>
+      'SSH via monitor ne peut pas être combiné avec un serveur de rebond, ProxyCommand ou une adresse de secours.';
+
+  @override
   String get sshConfigManualSelect =>
       'Souhaitez-vous sélectionner manuellement le fichier de configuration SSH ?';
 

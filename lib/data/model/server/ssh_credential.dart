@@ -13,7 +13,14 @@ part 'ssh_credential.g.dart';
 /// satisfy them, and made "is SSH configured" impossible to express.
 @JsonSerializable(includeIfNull: false)
 final class SshCredential {
+  /// Empty only when [viaMonitor] is set: a tunneled server has no direct
+  /// address to record, and inventing `127.0.0.1` would claim something
+  /// untrue about where it lives — the same mistake the flat pre-v3 layout
+  /// made with monitor-only servers.
   final String ip;
+
+  /// Unused when [viaMonitor] is set — the agent connects to whatever its own
+  /// `remote_access.ssh_addr` says, and accepts no target from clients.
   final int port;
   final String user;
   final String? pwd;
@@ -36,6 +43,19 @@ final class SshCredential {
 
   final String? proxyCommand;
 
+  /// Carry the SSH byte stream over this server's `monitor` agent instead of
+  /// connecting to [ip]:[port] directly, for hosts whose SSH port isn't
+  /// reachable but whose monitor endpoint is.
+  ///
+  /// A peer of [proxyCommand] and [jumpIds]: all three answer "where does the
+  /// socket come from", so at most one may be set. The SSH session on top is
+  /// unchanged — same authentication, and this app still verifies the host
+  /// key itself, so the agent in the middle can't impersonate the server.
+  ///
+  /// Requires [Spi.monitorHttp]; [Spix.validate] enforces both rules.
+  @JsonKey(defaultValue: false)
+  final bool viaMonitor;
+
   const SshCredential({
     required this.ip,
     this.port = 22,
@@ -46,6 +66,7 @@ final class SshCredential {
     this.jumpId,
     this.jumpIds,
     this.proxyCommand,
+    this.viaMonitor = false,
   });
 
   factory SshCredential.fromJson(Map<String, dynamic> json) =>
@@ -112,6 +133,7 @@ final class SshCredential {
     Object? jumpId = _unset,
     Object? jumpIds = _unset,
     Object? proxyCommand = _unset,
+    bool? viaMonitor,
   }) {
     return SshCredential(
       ip: ip ?? this.ip,
@@ -127,6 +149,7 @@ final class SshCredential {
       proxyCommand: proxyCommand == _unset
           ? this.proxyCommand
           : proxyCommand as String?,
+      viaMonitor: viaMonitor ?? this.viaMonitor,
     );
   }
 
@@ -139,6 +162,9 @@ final class SshCredential {
         pwd == other.pwd &&
         keyId == other.keyId &&
         proxyCommand == other.proxyCommand &&
+        // Changing how the socket is obtained needs a reconnect just as much
+        // as changing the address does
+        viaMonitor == other.viaMonitor &&
         listEquals(resolvedJumpIds, other.resolvedJumpIds);
   }
 
@@ -160,6 +186,7 @@ final class SshCredential {
     jumpId,
     Object.hashAll(jumpIds ?? const []),
     proxyCommand,
+    viaMonitor,
   );
 }
 

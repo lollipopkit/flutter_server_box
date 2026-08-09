@@ -59,6 +59,11 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _monitorAddrCtrl = TextEditingController();
   final _monitorUserCtrl = TextEditingController();
   final _monitorPwdCtrl = TextEditingController();
+  // SSH credentials for the agent's tunnel. Separate controllers from the
+  // direct-SSH form above: the two are never on screen together, and sharing
+  // them would carry a half-filled direct-SSH form into a tunnel config.
+  final _tunnelUserCtrl = TextEditingController();
+  final _tunnelPwdCtrl = TextEditingController();
   final _preferTempDevCtrl = TextEditingController();
   final _logoUrlCtrl = TextEditingController();
   final _wolMacCtrl = TextEditingController();
@@ -86,6 +91,15 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   /// Connection method for this server: SSH+shell (false) or monitor's HTTP
   /// API (true) — mutually exclusive, see the switch at the top of the form.
   final _useMonitorHttp = ValueNotifier(false);
+
+  /// Whether to also reach SSH through the agent, for hosts whose SSH port
+  /// isn't exposed. Only meaningful alongside [_useMonitorHttp]: it changes
+  /// where the SSH *socket* comes from, not how status is read.
+  final _sshViaMonitor = ValueNotifier(false);
+
+  /// Key selection for the tunnel's SSH credential; same encoding as
+  /// [_keyIdx], kept separate for the same reason the controllers are.
+  final _tunnelKeyIdx = ValueNotifier<int?>(null);
   final _tempIsCelsius = ValueNotifier(false);
   final _env = <String, String>{}.vn;
   final _customCmds = <String, String>{}.vn;
@@ -131,6 +145,8 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _monitorAddrCtrl.dispose();
     _monitorUserCtrl.dispose();
     _monitorPwdCtrl.dispose();
+    _tunnelUserCtrl.dispose();
+    _tunnelPwdCtrl.dispose();
 
     _keyIdx.dispose();
     _autoConnect.dispose();
@@ -138,6 +154,8 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _pveIgnoreCert.dispose();
     _monitorIgnoreCert.dispose();
     _useMonitorHttp.dispose();
+    _sshViaMonitor.dispose();
+    _tunnelKeyIdx.dispose();
     _tempIsCelsius.dispose();
     _env.dispose();
     _customCmds.dispose();

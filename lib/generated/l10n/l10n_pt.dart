@@ -814,6 +814,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sshVerificationCode => 'Código de verificação';
 
   @override
+  String get sshViaMonitor => 'SSH via monitor';
+
+  @override
+  String get sshViaMonitorTip =>
+      'Acessa o SSH deste servidor pelo seu agente monitor, para hosts cuja porta SSH não é alcançável diretamente. O agente apenas retransmite bytes: a sessão continua criptografada de ponta a ponta e sua host key continua sendo verificada aqui. O endereço de destino é configurado no agente e não pode ser escolhido pelo app.';
+
+  @override
+  String get sshViaMonitorNeedsMonitor =>
+      'SSH via monitor requer um endereço de monitor.';
+
+  @override
+  String get sshViaMonitorConflictsWithOtherTransport =>
+      'SSH via monitor não pode ser combinado com servidor de salto, ProxyCommand ou endereço alternativo.';
+
+  @override
   String get sshConfigManualSelect =>
       'Gostaria de selecionar manualmente o arquivo de configuração SSH?';
 

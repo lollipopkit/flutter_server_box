@@ -818,6 +818,21 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sshVerificationCode => 'Код підтвердження';
 
   @override
+  String get sshViaMonitor => 'SSH через monitor';
+
+  @override
+  String get sshViaMonitorTip =>
+      'Доступ до SSH цього сервера через його агент monitor — для хостів, чий SSH-порт недоступний напряму. Агент лише передає байти: сесія лишається зашифрованою наскрізно, а її host key усе одно перевіряється тут. Адресу призначення задано на агенті, і її не можна обрати з застосунку.';
+
+  @override
+  String get sshViaMonitorNeedsMonitor =>
+      'Для SSH через monitor потрібна адреса monitor.';
+
+  @override
+  String get sshViaMonitorConflictsWithOtherTransport =>
+      'SSH через monitor не можна поєднувати з проміжним сервером, ProxyCommand чи резервною адресою.';
+
+  @override
   String get sshConfigManualSelect =>
       'Чи хочете ви вручну вибрати файл конфігурації SSH?';
 

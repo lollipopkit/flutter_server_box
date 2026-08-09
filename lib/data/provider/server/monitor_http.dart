@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:server_box/data/model/app/error.dart';
-import 'package:server_box/data/model/server/connect_credential.dart';
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_metrics.dart';
 
 /// Talks to one server's `monitor` HTTP API. One instance is owned per
@@ -11,41 +11,47 @@ import 'package:server_box/data/model/server/monitor_metrics.dart';
 /// own `Dio` session in `pve.dart` — but simpler, since monitor is meant to
 /// be reached directly over HTTPS rather than tunneled through an SSH
 /// forward like PVE.
+///
+/// Holds the [MonitorHttpCredential] rather than the full
+/// `ServerConnectCredentialMonitorHttp`: nothing here needs the `Spi`, and
+/// `MonitorTunnelSocket` builds a client from a bare credential inside
+/// `genClient`, which also runs in isolates where no `Spi` graph is loaded.
 class MonitorHttpClient {
-  MonitorHttpClient(this.credential);
+  MonitorHttpClient(this.monitor);
 
-  final ServerConnectCredentialMonitorHttp credential;
+  final MonitorHttpCredential monitor;
 
   Dio? _dio;
   String? _token;
 
   String get _addr {
-    final addr = credential.monitor.addr.trim();
+    final addr = monitor.addr.trim();
     return addr.endsWith('/') ? addr.substring(0, addr.length - 1) : addr;
   }
 
   Dio _session() {
     final existing = _dio;
     if (existing != null) return existing;
-    final ignoreCert = credential.monitor.ignoreCert;
     final dio = Dio(BaseOptions(baseUrl: _addr))
       ..httpClientAdapter = IOHttpClientAdapter(
-        createHttpClient: () {
-          final client = HttpClient();
-          if (ignoreCert) {
-            client.badCertificateCallback = (_, _, _) => true;
-          }
-          return client;
-        },
-        validateCertificate: ignoreCert ? (_, _, _) => true : null,
+        createHttpClient: _httpClient,
+        validateCertificate: monitor.ignoreCert ? (_, _, _) => true : null,
       );
     _dio = dio;
     return dio;
   }
 
+  HttpClient _httpClient() {
+    final client = HttpClient();
+    if (monitor.ignoreCert) {
+      client.badCertificateCallback = (_, _, _) => true;
+    }
+    return client;
+  }
+
   Future<void> _login() async {
-    final user = credential.monitor.user?.trim() ?? '';
-    final pwd = credential.monitor.pwd ?? '';
+    final user = monitor.user?.trim() ?? '';
+    final pwd = monitor.pwd ?? '';
     try {
       final resp = await _session().post<Map<String, dynamic>>(
         '/api/v1/login',
@@ -123,6 +129,50 @@ class MonitorHttpClient {
     });
   }
 
+  /// Opens the agent's SSH tunnel and returns the raw WebSocket.
+  ///
+  /// Takes a single-use ticket first: a browser can't put a bearer token on a
+  /// WebSocket handshake, so the agent authorises upgrades with a short-lived
+  /// ticket instead, and this client uses the same path rather than a second
+  /// mechanism that only native clients could exercise.
+  ///
+  /// Sends no target — the agent connects to its own configured address and
+  /// refuses to take one from a client.
+  Future<WebSocket> openTunnel({Duration? timeout}) {
+    return _authed(() async {
+      final resp = await _session().post<Map<String, dynamic>>(
+        '/api/v1/ws-ticket',
+        data: {'purpose': 'tunnel'},
+      );
+      final ticket = resp.data?['ticket'] as String?;
+      if (ticket == null || ticket.isEmpty) {
+        throw const MonitorHttpErr(
+          type: MonitorHttpErrType.invalidResponse,
+          message: 'Empty ticket in /api/v1/ws-ticket response',
+        );
+      }
+
+      final url = Uri.parse(_addr).replace(
+        scheme: _addr.startsWith('https') ? 'wss' : 'ws',
+        path: '/api/v1/tunnel/ws',
+        queryParameters: {'ticket': ticket},
+      );
+      final socket = await WebSocket.connect(
+        url.toString(),
+        // Carries `ignoreCert` onto the upgrade: the tunnel talks to the same
+        // endpoint the status poll does, so it has to trust the same certs
+        customClient: _httpClient(),
+      ).timeout(
+        timeout ?? const Duration(seconds: 15),
+        onTimeout: () => throw const MonitorHttpErr(
+          type: MonitorHttpErrType.net,
+          message: 'Timed out opening the monitor tunnel',
+        ),
+      );
+      return socket;
+    });
+  }
+
   void dispose() {
     _dio?.close(force: true);
     _dio = null;
@@ -132,9 +182,7 @@ class MonitorHttpClient {
   /// Whether this client was built from the same monitor connection config
   /// as [other] — used to decide whether a cached client can be reused
   /// across refreshes or must be rebuilt (and re-logged-in) instead.
-  bool matches(ServerConnectCredentialMonitorHttp other) {
-    return credential.monitor == other.monitor;
-  }
+  bool matches(MonitorHttpCredential other) => monitor == other;
 
   MonitorHttpErr _toMonitorHttpErr(DioException e) {
     if (e.type == DioExceptionType.connectionError ||

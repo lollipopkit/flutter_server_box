@@ -9,6 +9,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -104,7 +105,8 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
   ) async {
     switch (value) {
       case ServerFuncBtn.sftp:
-        if (!_checkClient(context, spi.id, ref)) return;
+        if (!await _checkClient(context, spi.id, ref)) return;
+        if (!context.mounted) return;
         final args = SftpPageArgs(spi: spi);
         SftpPage.route.go(context, args);
 
@@ -146,17 +148,20 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
           ],
         );
         if (sure != true) return;
-        if (!_checkClient(context, spi.id, ref)) return;
+        if (!await _checkClient(context, spi.id, ref)) return;
+        if (!context.mounted) return;
         final args = SshPageArgs(spi: spi, initSnippet: snippet);
         SSHPage.route.go(context, args);
         break;
       case ServerFuncBtn.container:
-        if (!_checkClient(context, spi.id, ref)) return;
+        if (!await _checkClient(context, spi.id, ref)) return;
+        if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
         ContainerPage.route.go(context, args);
         break;
       case ServerFuncBtn.process:
-        if (!_checkClient(context, spi.id, ref)) return;
+        if (!await _checkClient(context, spi.id, ref)) return;
+        if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
         ProcessPage.route.go(context, args);
         break;
@@ -164,17 +169,20 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
         _gotoSSH(spi, context);
         break;
       case ServerFuncBtn.iperf:
-        if (!_checkClient(context, spi.id, ref)) return;
+        if (!await _checkClient(context, spi.id, ref)) return;
+        if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
         IPerfPage.route.go(context, args);
         break;
       case ServerFuncBtn.systemd:
-        if (!_checkClient(context, spi.id, ref)) return;
+        if (!await _checkClient(context, spi.id, ref)) return;
+        if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
         SystemdPage.route.go(context, args);
         break;
       case ServerFuncBtn.portForward:
-        if (!_checkClient(context, spi.id, ref)) return;
+        if (!await _checkClient(context, spi.id, ref)) return;
+        if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
         PortForwardPage.route.go(context, args);
         break;
@@ -185,7 +193,11 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
 void _gotoSSH(Spi spi, BuildContext context) async {
   // Determine whether to use built-in SSH or system SSH
   final useSystemSsh = Stores.setting.sshConnectionMode.fetch();
-  final useBuiltin = isMobile || !useSystemSsh;
+  // A tunneled server has no address the system `ssh` could dial — its bytes
+  // reach sshd through the agent's WebSocket, which only this app speaks. The
+  // built-in terminal is the only option regardless of the setting.
+  final useBuiltin =
+      isMobile || !useSystemSsh || (spi.ssh?.viaMonitor ?? false);
 
   // Use built-in SSH on mobile or when system SSH is not enabled
   if (useBuiltin) {
@@ -438,13 +450,35 @@ Future<void> _copyDesktopSshPasswordIfNeeded(
   }
 }
 
-bool _checkClient(BuildContext context, String id, WidgetRef ref) {
-  final serverState = ref.read(serverProvider(id));
-  if (serverState.client == null) {
-    context.showSnackBar(l10n.waitConnection);
+/// Makes sure a shell is available before opening a page that needs one.
+///
+/// Connects on demand rather than only reporting a missing client: a server
+/// reached through its monitor agent has no SSH connection until something
+/// asks for one, so "wait for the connection" would be advice that never
+/// comes true. Servers connected over SSH already hold a client and take the
+/// fast path out of [ServerNotifier.ensureShellClient].
+///
+/// Returns false — after telling the user why — when there is no shell to be
+/// had. Callers must re-check `context.mounted` before navigating, since this
+/// can await a real connection attempt.
+Future<bool> _checkClient(BuildContext context, String id, WidgetRef ref) async {
+  final notifier = ref.read(serverProvider(id).notifier);
+  final existing = ref.read(serverProvider(id)).client;
+  if (existing != null && !existing.isClosed) return true;
+
+  if (context.mounted) context.showSnackBar(l10n.waitConnection);
+  try {
+    await notifier.ensureShellClient();
+    return true;
+  } catch (e, s) {
+    Loggers.app.warning('Ensure shell client for $id', e, s);
+    if (context.mounted) {
+      context.showSnackBar(
+        e is SSHErr ? (e.message ?? e.type.name) : e.toString(),
+      );
+    }
     return false;
   }
-  return true;
 }
 
 String _shellJoin(List<String> args) {

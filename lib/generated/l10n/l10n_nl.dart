@@ -818,6 +818,21 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sshVerificationCode => 'Verificatiecode';
 
   @override
+  String get sshViaMonitor => 'SSH via monitor';
+
+  @override
+  String get sshViaMonitorTip =>
+      'Bereikt de SSH van deze server via zijn monitor-agent, voor hosts waarvan de SSH-poort niet rechtstreeks bereikbaar is. De agent geeft alleen bytes door: de sessie blijft end-to-end versleuteld en de host key wordt hier nog steeds geverifieerd. Het doeladres wordt op de agent ingesteld en kan niet vanuit de app worden gekozen.';
+
+  @override
+  String get sshViaMonitorNeedsMonitor =>
+      'SSH via monitor vereist een monitor-adres.';
+
+  @override
+  String get sshViaMonitorConflictsWithOtherTransport =>
+      'SSH via monitor kan niet worden gecombineerd met een jumpserver, ProxyCommand of terugvaladres.';
+
+  @override
   String get sshConfigManualSelect =>
       'Wilt u het SSH-configuratiebestand handmatig selecteren?';
 

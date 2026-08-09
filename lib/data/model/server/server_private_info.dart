@@ -13,7 +13,16 @@ import 'package:server_box/data/store/server.dart';
 part 'server_private_info.freezed.dart';
 part 'server_private_info.g.dart';
 
-enum SpiValidationError { jumpServerAndProxyCommandConflict }
+enum SpiValidationError {
+  jumpServerAndProxyCommandConflict,
+
+  /// [SshCredential.viaMonitor] without a monitor endpoint to tunnel through.
+  monitorTunnelWithoutMonitor,
+
+  /// [SshCredential.viaMonitor] together with another way of obtaining the
+  /// socket. All of them answer the same question, so exactly one may win.
+  monitorTunnelAndOtherTransport,
+}
 
 class SpiValidationException implements Exception {
   const SpiValidationException(this.error);
@@ -127,6 +136,17 @@ extension Spix on Spi {
     if (hasJumpServer && hasProxyCommand) {
       return SpiValidationError.jumpServerAndProxyCommandConflict;
     }
+    if (s.viaMonitor) {
+      final addr = monitorHttp?.addr.trim() ?? '';
+      if (addr.isEmpty) {
+        return SpiValidationError.monitorTunnelWithoutMonitor;
+      }
+      // alterUrl is included: it is a fallback *address*, and the tunnel has
+      // no address to fall back from
+      if (hasJumpServer || hasProxyCommand || s.alterUrl != null) {
+        return SpiValidationError.monitorTunnelAndOtherTransport;
+      }
+    }
     return null;
   }
 
@@ -141,8 +161,12 @@ extension Spix on Spi {
   /// configuration, and finally to the opaque [Spi.id].
   String get displayAddr {
     final s = ssh;
-    if (s != null) return '${s.user}@${s.ip}:${s.port}';
-    return monitorHttp?.addr ?? id;
+    // A tunneled server has no address of its own — showing `user@:22` would
+    // be noise, and showing `127.0.0.1` would be wrong on every such server
+    if (s != null && !s.viaMonitor) return '${s.user}@${s.ip}:${s.port}';
+    final monitor = monitorHttp?.addr;
+    if (monitor != null && s != null) return '${s.user}@$monitor';
+    return monitor ?? id;
   }
 
   /// The pre-1155 storage key.

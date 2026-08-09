@@ -13,7 +13,7 @@ import 'package:server_box/data/provider/server/monitor_http.dart';
 /// switching the user to a different data source with different semantics.
 class MonitorHttpDataSource implements ServerDataSource {
   MonitorHttpDataSource(this.credential)
-    : _client = MonitorHttpClient(credential);
+    : _client = MonitorHttpClient(credential.monitor);
 
   final ServerConnectCredentialMonitorHttp credential;
   final MonitorHttpClient _client;

@@ -40,12 +40,18 @@ extension _Widgets on _ServerEditPageState {
     });
   }
 
-  Widget _buildKeyAuth() {
+  Widget _buildKeyAuth() => _buildKeyAuthFor(_keyIdx);
+
+  /// The private-key picker, parameterised by which selection it drives.
+  ///
+  /// Two independent SSH credentials can be on this page — the direct one and
+  /// the tunnel's — and they must not share a selection.
+  Widget _buildKeyAuthFor(ValueNotifier<int?> keyIdx) {
     const padding = EdgeInsets.only(left: 13, right: 13, bottom: 7);
     final privateKeyState = ref.watch(privateKeyProvider);
     final pkis = privateKeyState.keys;
 
-    final choice = _keyIdx.listenVal((val) {
+    final choice = keyIdx.listenVal((val) {
       final selectedPki = val != null && val >= 0 && val < pkis.length
           ? pkis[val]
           : null;
@@ -65,9 +71,9 @@ extension _Widgets on _ServerEditPageState {
                   value: index,
                   onSelected: (idx, on) {
                     if (on) {
-                      _keyIdx.value = idx;
+                      keyIdx.value = idx;
                     } else {
-                      _keyIdx.value = -1;
+                      keyIdx.value = -1;
                     }
                   },
                 );
@@ -100,7 +106,7 @@ extension _Widgets on _ServerEditPageState {
 
     return ExpandTile(
       leading: const Icon(Icons.key),
-      initiallyExpanded: _keyIdx.value != null && _keyIdx.value! >= 0,
+      initiallyExpanded: keyIdx.value != null && keyIdx.value! >= 0,
       childrenPadding: padding,
       title: Text(l10n.privateKey),
       children: [choice],
@@ -424,8 +430,66 @@ extension _Widgets on _ServerEditPageState {
             ),
           ),
         ).cardx,
+        _buildSshViaMonitor(),
       ],
     );
+  }
+
+  /// SSH reached through the agent instead of directly.
+  ///
+  /// Deliberately has no host/port field: the agent connects to the address in
+  /// its own `remote_access.ssh_addr` and refuses to take one from a client,
+  /// which is what stops it being usable to reach anything else on its
+  /// network. All that's needed here is who to log in as.
+  Widget _buildSshViaMonitor() {
+    final switch_ = ListTile(
+      leading: const Icon(Icons.terminal),
+      title: TipText(l10n.sshViaMonitor, l10n.sshViaMonitorTip),
+      trailing: _sshViaMonitor.listenVal(
+        (v) => Switch(
+          value: v,
+          onChanged: (val) => _sshViaMonitor.value = val,
+        ),
+      ),
+    ).cardx;
+
+    return _sshViaMonitor.listenVal((enabled) {
+      if (!enabled) return switch_;
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          switch_,
+          Input(
+            controller: _tunnelUserCtrl,
+            type: TextInputType.text,
+            label: libL10n.user,
+            icon: Icons.account_box,
+            hint: 'root',
+            suggestion: false,
+          ),
+          ListTile(
+            title: Text(l10n.keyAuth),
+            trailing: _tunnelKeyIdx.listenVal(
+              (v) => Switch(
+                value: v != null,
+                onChanged: (val) => _tunnelKeyIdx.value = val ? -1 : null,
+              ),
+            ),
+          ),
+          _tunnelKeyIdx.listenVal((v) {
+            if (v != null) return _buildKeyAuthFor(_tunnelKeyIdx);
+            return Input(
+              controller: _tunnelPwdCtrl,
+              obscureText: true,
+              type: TextInputType.text,
+              label: libL10n.pwd,
+              icon: Icons.password,
+              suggestion: false,
+            );
+          }),
+        ],
+      );
+    });
   }
 
   Widget _buildCustomCmds() {

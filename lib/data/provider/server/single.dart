@@ -335,6 +335,60 @@ class ServerNotifier extends _$ServerNotifier {
 
   String get _sshSessionId => 'ssh_${state.spi.id}';
 
+  /// Retry-limiter key for connecting the shell, kept apart from the one the
+  /// status poll uses.
+  ///
+  /// A monitor-backed server reads status over HTTP and reaches SSH through
+  /// the agent's tunnel; those are separate failure domains. Sharing one key
+  /// meant a host with no sshd running would burn the limiter and stop the
+  /// status page from refreshing too.
+  String get _shellTryId => '${state.spi.id}#shell';
+
+  /// The [SSHClient] for this server, connecting on first use.
+  ///
+  /// The SSH path already holds a client from its connect-and-fetch flow, so
+  /// this returns that one. Monitor-backed servers get theirs only when
+  /// something actually needs a shell: keeping a tunnel open for every server
+  /// that merely *could* open a terminal would undo the reason for polling
+  /// over HTTP in the first place.
+  ///
+  /// Throws [SSHErr] when the server has no SSH configuration, or when the
+  /// retry limiter has given up on it.
+  Future<SSHClient> ensureShellClient() async {
+    final existing = state.client;
+    if (existing != null && !existing.isClosed) return existing;
+
+    final spi = state.spi;
+    if (spi.ssh == null) {
+      throw SSHErr(
+        type: SSHErrType.connect,
+        message: 'No SSH credential configured for ${spi.name}',
+      );
+    }
+    if (!TryLimiter.canTry(_shellTryId)) {
+      throw SSHErr(
+        type: SSHErrType.connect,
+        message: 'Reconnect limit reached for ${spi.name}',
+      );
+    }
+
+    try {
+      final client = await genClient(
+        spi,
+        timeout: Duration(seconds: Stores.setting.timeout.fetch()),
+        onKeyboardInteractive: KeyboardInteractiveAuth.handle,
+      );
+      await client.authenticated;
+      TryLimiter.reset(_shellTryId);
+      _setClient(client);
+      return client;
+    } catch (e, s) {
+      TryLimiter.inc(_shellTryId);
+      Loggers.app.warning('Connect shell for ${spi.name}', e, s);
+      rethrow;
+    }
+  }
+
   /// The failure ritual every SSH branch repeated: count the attempt against
   /// the retry limiter, record the error on the status, drop to `failed`, and
   /// mark the terminal session dead. Nine copies of it made the actual control

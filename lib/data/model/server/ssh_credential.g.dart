@@ -19,6 +19,7 @@ SshCredential _$SshCredentialFromJson(Map<String, dynamic> json) =>
           ?.map((e) => e as String)
           .toList(),
       proxyCommand: json['proxyCommand'] as String?,
+      viaMonitor: json['viaMonitor'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$SshCredentialToJson(SshCredential instance) =>
@@ -32,4 +33,5 @@ Map<String, dynamic> _$SshCredentialToJson(SshCredential instance) =>
       'jumpId': ?instance.jumpId,
       'jumpIds': ?instance.jumpIds,
       'proxyCommand': ?instance.proxyCommand,
+      'viaMonitor': instance.viaMonitor,
     };
