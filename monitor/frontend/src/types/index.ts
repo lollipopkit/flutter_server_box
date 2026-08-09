@@ -8,7 +8,7 @@ export interface SystemMetrics {
   cpu_usage: number;
   // Wire-compatible with monitor's CpuCoreTime { used, total } (busy/total
   // ticks); array index is the core number (no id/label on the wire)
-  cpu_cores?: { used: number; total: number }[];
+  cpu_cores?: { used: number; total: number; usage_percent: number | null }[];
   memory: MemoryMetrics;
   swap: SwapMetrics;
   disk: DiskMetrics;

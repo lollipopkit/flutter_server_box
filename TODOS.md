@@ -74,3 +74,49 @@ relay 服务,而不是(或者除了)在本地直接对外提供面板访问;面�
 命令能暴露每核数据(htop 自己的 macOS 后端也是进程内直接调用同一个 Mach API,
 不是靠 shell)。这和上面那条是同一条架构主线:如果 app 能通过 HTTP 和 `monitor`
 实例通信,就能顺带白嫖到真实的每核读数,而 SSH+shell 这条路在这件事上是条死路。
+
+## sbm_ffi:Swift Package Manager 支持
+
+Flutter 3.44 起 SPM 是默认路径,`flutter build ios/macos` 会对 `sbm_ffi` 报
+"The following plugins do not support Swift Package Manager"。项目里其他 13 个
+plugin 都已走 SPM(见生成的 `FlutterGeneratedPluginSwiftPackage/Package.swift`),
+只剩 `sbm_ffi` 靠 CocoaPods —— `ios/Podfile.lock` 和 `macos/Podfile.lock` 里都只有
+它一个 pod。混合模式在 3.44 下可用,警告不阻塞构建,但 Flutter 声明未来会变成 error。
+
+卡点:`crates/sbm_ffi/{ios,macos}/sbm_ffi.podspec` 靠 CocoaPods 的 `script_phase`
+调 `cargokit/build_pod.sh` 编 Rust,再用 `-force_load` 链接 `libsbm_ffi.a`。
+`Package.swift` 没有等价机制:
+- SwiftPM build tool plugin 的 `prebuildCommand` 跑在 sandbox 里(profile 是
+  `deny file-write*` 项目目录,只允许写 pluginWorkDirectory),cargo 写 `target/`
+  和 `~/.cargo` 都会被拒;Xcode 没有传 `--disable-sandbox` 的入口
+  (swift-package-manager#7121),`ENABLE_USER_SCRIPT_SANDBOXING=NO` 管的是
+  Run Script phase,对 plugin sandbox 无效
+- cargokit 上游已于 2026-03-26 归档,irondash/cargokit#106 提了这件事,无人跟进
+- flutter_rust_bridge 的 SPM PR(fzyzcjy/flutter_rust_bridge#3315)未合并
+
+两条候选路线(都还没做):
+- **预编译 xcframework**:给 `crates/sbm_ffi/{ios,macos}/sbm_ffi/` 写 `Package.swift`,
+  用 `.binaryTarget` 指向预先构建好的 `sbm_ffi.xcframework`,cargo 编译移到
+  Makefile / fl_build 的 pre-build 步骤,绕开 sandbox。代价:在 Xcode 里直接 Run
+  不会重编 Rust,容易用到旧产物;要额外维护打包脚本和 `-force_load` 处理
+- **Dart native assets**:删掉 cargokit,改用 `hook/build.dart` +
+  `native_toolchain_rust`,五个平台统一,不再需要 podspec 或 Package.swift。代价:
+  Flutter native assets 仍是实验特性(`--enable-native-assets`),FRB 侧
+  `ExternalLibrary` 的加载方式(`frb_generated.dart` 的 `stem`/`ioDirectory`)要改
+
+现状决定:先维持混合模式,等 FRB #3315 合并或 native assets 转正再动。
+
+## monitor:cpu_core_metrics / velocity_metrics 是只写表
+
+`monitor/src` 里没有任何 `SELECT ... FROM cpu_core_metrics` 或
+`FROM velocity_metrics`——两张表只写不读。面板的每核数据来自 `/metrics` 的实时
+`SystemMetrics.cpu_cores`,不是数据库。而 `cpu_core_metrics` 每周期每核一行,在
+18 核机器上约占数据库总字节的 87%(每采样 3.9 KB,system_metrics +
+velocity_metrics 合计只有 0.6 KB),外加三个索引,索引比表本身还大。
+
+写入路径本身的正确性问题已修(见 `core_usage_percent`、store_metrics 的事务)。
+剩下的是取舍问题,没有结论:
+- 直接删表,把历史每核数据这个能力去掉;还是
+- 补上读取接口(每核历史图表),让这份存储有用;还是
+- 保留但降采样(例如只在扩展周期写一次,而不是每个核心周期)
+`idx_cpu_core_metrics_server_core` 在任一方案下都没有对应的查询,先留着。

@@ -27,70 +27,47 @@ pub struct VelocityProcessor {
 }
 
 impl VelocityProcessor {
-    fn new(db_pool: Arc<SqlitePool>, cpu_core_count: usize, server_name: String) -> Self {
+    fn new(db_pool: Arc<SqlitePool>, server_name: String) -> Self {
         Self {
             network_series: NetworkTimeSeries::new(),
-            cpu_series: CpuTimeSeries::new(cpu_core_count),
+            cpu_series: CpuTimeSeries::new(),
             metrics_history: TimeSeries::new(1000), // Keep last 1000 velocity metrics
             db_pool,
             server_name,
         }
     }
 
-    pub async fn update_network_metrics(
+    /// One row per collection cycle. Advancing the two series separately and
+    /// persisting after each wrote two rows sharing a timestamp, the first
+    /// carrying the *previous* cycle's CPU reading — and it halved the usable
+    /// depth of the in-memory history ring.
+    pub async fn update(
         &mut self,
         rx_bytes: u64,
         tx_bytes: u64,
-        timestamp: DateTime<Utc>,
-        interval_seconds: f64,
-    ) -> Result<()> {
-        self.network_series.update(rx_bytes, tx_bytes, timestamp);
-        
-        let rx_speed = self.network_series.get_rx_speed(interval_seconds);
-        let tx_speed = self.network_series.get_tx_speed(interval_seconds);
-        
-        let velocity_data = VelocityData {
-            timestamp,
-            network_rx_speed: rx_speed,
-            network_tx_speed: tx_speed,
-            cpu_usage_percent: self.cpu_series.get_average_usage_percent(),
-        };
-        
-        self.store_velocity_data(&velocity_data).await?;
-        self.metrics_history.add_point(velocity_data, timestamp);
-        
-        Ok(())
-    }
-
-    pub async fn update_cpu_metrics(
-        &mut self,
         core_times: Vec<CpuCoreTime>,
         timestamp: DateTime<Utc>,
-        interval_seconds: f64,
     ) -> Result<()> {
+        self.network_series.update(rx_bytes, tx_bytes, timestamp);
         self.cpu_series.update(core_times, timestamp);
-        
+
         let velocity_data = VelocityData {
             timestamp,
-            network_rx_speed: self.network_series.get_rx_speed(interval_seconds),
-            network_tx_speed: self.network_series.get_tx_speed(interval_seconds),
+            network_rx_speed: self.network_series.get_rx_speed(),
+            network_tx_speed: self.network_series.get_tx_speed(),
             cpu_usage_percent: self.cpu_series.get_average_usage_percent(),
         };
-        
+
         self.store_velocity_data(&velocity_data).await?;
         self.metrics_history.add_point(velocity_data, timestamp);
-        
+
         Ok(())
     }
 
-    pub async fn get_current_velocity(&self, interval_seconds: f64) -> Result<VelocityMetrics> {
-        let rx_speed = self.network_series.get_rx_speed(interval_seconds);
-        let tx_speed = self.network_series.get_tx_speed(interval_seconds);
-        let cpu_usage = self.cpu_series.get_average_usage_percent();
-        
+    pub async fn get_current_velocity(&self) -> Result<VelocityMetrics> {
         Ok(VelocityMetrics::new()
-            .with_network_speed(rx_speed, tx_speed)
-            .with_cpu_usage(cpu_usage))
+            .with_network_speed(self.network_series.get_rx_speed(), self.network_series.get_tx_speed())
+            .with_cpu_usage(self.cpu_series.get_average_usage_percent()))
     }
 
     pub fn get_velocity_history(&self, limit: Option<usize>) -> Vec<&VelocityData> {
@@ -173,35 +150,33 @@ impl VelocityManager {
     }
 
 
+    /// `timestamp` is the sampling instant of the cycle these values came from,
+    /// so velocity rows line up with the `system_metrics`/`cpu_core_metrics`
+    /// rows of the same cycle. Stamping `Utc::now()` here instead left every
+    /// table on a slightly different clock and made the histories unjoinable.
     pub async fn update_server_metrics(
         &mut self,
         server_name: &str,
         rx_bytes: u64,
         tx_bytes: u64,
         core_times: Vec<CpuCoreTime>,
-        interval_seconds: f64,
+        timestamp: DateTime<Utc>,
     ) -> Result<()> {
         let processor = if let Some(processor) = self.processors.get(server_name) {
             processor.clone()
         } else {
-            let processor = Arc::new(RwLock::new(VelocityProcessor::new(self.db_pool.clone(), core_times.len(), server_name.to_string())));
+            let processor = Arc::new(RwLock::new(VelocityProcessor::new(self.db_pool.clone(), server_name.to_string())));
             self.processors.insert(server_name.to_string(), processor.clone());
             processor
         };
-        
-        let mut processor_lock = processor.write().await;
-        let timestamp = Utc::now();
-        
-        processor_lock.update_network_metrics(rx_bytes, tx_bytes, timestamp, interval_seconds).await?;
-        processor_lock.update_cpu_metrics(core_times, timestamp, interval_seconds).await?;
-        
-        Ok(())
+
+        processor.write().await.update(rx_bytes, tx_bytes, core_times, timestamp).await
     }
 
-    pub async fn get_server_velocity(&self, server_name: &str, interval_seconds: f64) -> Result<VelocityMetrics> {
+    pub async fn get_server_velocity(&self, server_name: &str) -> Result<VelocityMetrics> {
         if let Some(processor) = self.processors.get(server_name) {
             let processor = processor.read().await;
-            processor.get_current_velocity(interval_seconds).await
+            processor.get_current_velocity().await
         } else {
             Ok(VelocityMetrics::new())
         }

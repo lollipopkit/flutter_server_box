@@ -26,7 +26,7 @@ async fn check_enhanced_rule(
         "memory" => check_memory_rule(rule, metrics).await?,
         "swap" => check_swap_rule(rule, metrics).await?,
         "disk" => check_disk_rule(rule, metrics).await?,
-        "network" => check_network_rule(rule, metrics, config, velocity_manager).await?,
+        "network" => check_network_rule(rule, metrics, velocity_manager).await?,
         "temperature" | "temp" => check_temperature_rule(rule, metrics).await?,
         _ => {
             warn!("Unknown monitor type: {}", rule.monitor_type);
@@ -92,10 +92,13 @@ async fn check_cpu_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Resul
         let core_index_str = matcher.strip_prefix("cpu").unwrap_or("0");
         if let Ok(core_index) = core_index_str.parse::<usize>() {
             if core_index < metrics.cpu_cores.len() {
-                let core = &metrics.cpu_cores[core_index];
-                let usage = if core.total > 0 {
-                    (core.used as f64 / core.total as f64) * 100.0
-                } else { 0.0 };
+                // adapt_cpu already resolved this per platform; deriving it from
+                // used/total here would be the since-boot average on Linux
+                let Some(usage) = metrics.cpu_cores[core_index].usage_percent else {
+                    // No baseline yet (first Linux cycle) — no reading to judge
+                    return Ok((false, 0.0, "--".to_string()));
+                };
+                let usage = usage as f64;
                 let should_alert = should_trigger_alert(&rule.threshold, usage)?;
                 let formatted = format!("{:.2}%", usage);
                 Ok((should_alert, usage, formatted))
@@ -175,13 +178,10 @@ async fn check_disk_rule(rule: &MonitoringRule, metrics: &SystemMetrics) -> Resu
 async fn check_network_rule(
     rule: &MonitoringRule,
     metrics: &SystemMetrics,
-    config: &Config,
     velocity_manager: &VelocityManager
 ) -> Result<(bool, f64, String)> {
     let matcher = &rule.matcher;
-    let interval_seconds = config.get_monitoring().interval_seconds as f64;
-    
-    if let Ok(velocity_metrics) = velocity_manager.get_server_velocity(&metrics.server_name, interval_seconds).await {
+    if let Ok(velocity_metrics) = velocity_manager.get_server_velocity(&metrics.server_name).await {
         let (value, _unit) = match matcher.as_str() {
             "rx" | "in" => {
                 if let Some(speed) = velocity_metrics.network_rx_speed {
@@ -289,7 +289,11 @@ mod tests {
             extended_updated_at: Utc::now(),
             server_name: "test".to_string(),
             cpu_usage: 85.0, // Should trigger CPU alert (>=77%)
-            cpu_cores: vec![crate::monitoring::timeseries::CpuCoreTime { used: 85, total: 100 }],
+            cpu_cores: vec![crate::monitoring::timeseries::CpuCoreTime {
+                used: 85,
+                total: 100,
+                usage_percent: Some(85.0),
+            }],
             memory: crate::monitoring::monitoring::MemoryMetrics {
                 total: 1000,
                 used: 800,

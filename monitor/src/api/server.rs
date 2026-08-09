@@ -648,14 +648,13 @@ async fn get_velocity(
         }));
     }
 
-    let interval = app_state.config.get_monitoring().interval_seconds as f64;
     let server_name = app_state.config.get_server_name();
 
     match app_state
         .velocity_manager
         .read()
         .await
-        .get_server_velocity(&server_name, interval)
+        .get_server_velocity(&server_name)
         .await
     {
         Ok(velocity_data) => {

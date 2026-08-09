@@ -1,4 +1,4 @@
-use crate::{core::config::{Config, MonitoringConfig}, api::server::AppState, utils::error::Result, monitoring::timeseries::CpuCoreTime};
+use crate::{core::config::{Config, MonitoringConfig}, api::server::AppState, utils::error::Result, monitoring::timeseries::{core_usage_percent, CpuCoreTime}};
 use chrono::{DateTime, Utc};
 use sbm_parser::types::{CpuCore, Disk};
 use sbm_parser::{ServerStatus, SystemType};
@@ -202,7 +202,6 @@ fn should_run_extended(extended_due: bool, live: &LiveSettings, idle_secs: i64) 
 
 pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
     let monitoring_config = app_state.config.get_monitoring();
-    let interval_seconds = monitoring_config.interval_seconds as f64;
     let interval = Duration::from_secs(monitoring_config.interval_seconds);
 
     info!("Starting monitoring loop with {}s interval", monitoring_config.interval_seconds);
@@ -249,7 +248,7 @@ pub async fn run_monitoring_loop(app_state: Arc<AppState>) -> Result<()> {
                     metrics.network.rx_bytes,
                     metrics.network.tx_bytes,
                     metrics.cpu_cores.clone(),
-                    interval_seconds
+                    metrics.timestamp
                 ).await {
                     error!("Failed to update velocity metrics: {}", e);
                 }
@@ -499,7 +498,12 @@ fn adapt_status(
     prev_metrics: Option<&SystemMetrics>,
     extended_due: bool,
 ) -> SystemMetrics {
-    let (cpu_usage, cpu_cores) = adapt_cpu(system, &status.cpu, prev_cpu);
+    let (cpu_usage, cpu_cores) = adapt_cpu(
+        system,
+        &status.cpu,
+        prev_cpu,
+        prev_metrics.map(|m| m.cpu_cores.as_slice()).unwrap_or(&[]),
+    );
     let (memory, swap) = adapt_memory(&status);
     let disk = aggregate_disks(system, &status.disks);
     let network = aggregate_net(&status);
@@ -668,11 +672,15 @@ fn summary_core(cores: &[CpuCore]) -> Option<&CpuCore> {
 /// - BSD top / Windows WMI emit one-shot percentage pseudo-counters (totals
 ///   stay ~100), so the single-sample ratio IS the current usage; a delta
 ///   would divide by ~0 and always yield 0.
-/// Per-core entries become CpuCoreTime (used = total - idle)
+/// Per-core entries become CpuCoreTime (used = total - idle) with
+/// `usage_percent` resolved here against `prev_cores`, so that every consumer
+/// (storage, rules, velocity, the panel) reads one already-correct number
+/// instead of re-deriving it from the platform-dependent raw counters.
 fn adapt_cpu(
     system: SystemType,
     cores: &[CpuCore],
     prev_summary: Option<&CpuCore>,
+    prev_cores: &[CpuCoreTime],
 ) -> (f32, Vec<CpuCoreTime>) {
     let usage = match system {
         SystemType::Linux => match (prev_summary, summary_core(cores)) {
@@ -692,7 +700,18 @@ fn adapt_cpu(
     let core_times = cores
         .iter()
         .filter(|c| c.id != "cpu")
-        .map(|c| CpuCoreTime { used: c.total() - c.idle, total: c.total() })
+        .enumerate()
+        .map(|(i, c)| {
+            let now = CpuCoreTime {
+                used: c.total() - c.idle,
+                total: c.total(),
+                usage_percent: None,
+            };
+            CpuCoreTime {
+                usage_percent: core_usage_percent(system, prev_cores.get(i).copied(), now),
+                ..now
+            }
+        })
         .collect();
 
     (usage, core_times)
@@ -802,6 +821,10 @@ pub fn parse_disk_metrics(segment: &str) -> Result<DiskMetrics> {
     Ok(aggregate_disks(SystemType::Linux, &sbm_parser::linux::parse_disk(segment)))
 }
 
+/// One cycle's rows are written in a single transaction: the `system_metrics`
+/// row and its `cpu_core_metrics` rows share a timestamp and are only
+/// meaningful together, and committing 1 + N_cores inserts as one write keeps
+/// the loop from holding the database lock across every core.
 pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<()> {
     let memory_total = metrics.memory.total as i64;
     let memory_used = metrics.memory.used as i64;
@@ -822,6 +845,8 @@ pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<(
         metrics.diskio.iter().map(|d| d.sectors_write.max(0) as i64 * 512).sum();
     // First battery only — matches the home page card's existing convention
     let battery_percent: Option<f64> = metrics.batteries.first().and_then(|b| b.percent).map(|p| p as f64);
+
+    let mut tx = db.begin().await?;
 
     sqlx::query!(
         r#"
@@ -850,20 +875,17 @@ pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<(
         diskio_write_bytes,
         battery_percent
     )
-    .execute(db)
+    .execute(&mut *tx)
     .await?;
 
-    // Store CPU core data
+    // Store CPU core data. usage_percent comes from adapt_cpu, which is the
+    // only place that knows the per-platform meaning of used/total; it is NULL
+    // on the first Linux cycle, before a delta baseline exists.
     for (core_id, core_time) in metrics.cpu_cores.iter().enumerate() {
-        let usage_percent = if core_time.total > 0 {
-            ((core_time.total - core_time.used) as f32 / core_time.total as f32) * 100.0
-        } else {
-            0.0
-        };
-
         let core_id_i32 = core_id as i32;
         let used_time_i64 = core_time.used as i64;
         let total_time_i64 = core_time.total as i64;
+        let usage_percent = core_time.usage_percent;
 
         sqlx::query!(
             r#"
@@ -878,9 +900,11 @@ pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<(
             total_time_i64,
             usage_percent
         )
-        .execute(db)
+        .execute(&mut *tx)
         .await?;
     }
+
+    tx.commit().await?;
 
     Ok(())
 }

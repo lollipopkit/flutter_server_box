@@ -18,12 +18,11 @@
 
   const labels = $derived(history.map((p) => p.timestamp))
 
-  // used/total are cumulative busy/total ticks (CpuCoreTime); percent is
-  // used/total, not the inverse (a prior review flagged the DB storage path
-  // computing this backwards — this display path is independently correct)
-  const corePercents = $derived(
-    (m?.cpu_cores ?? []).map((c) => (c.total > 0 ? (c.used / c.total) * 100 : 0)),
-  )
+  // usage_percent is resolved server-side by adapt_cpu, which is the only place
+  // that knows whether used/total are cumulative ticks (Linux, needs a delta)
+  // or one-shot percentage pseudo-counters (Bsd/Windows, ratio is the value).
+  // null until a baseline exists on the first Linux cycle.
+  const corePercents = $derived((m?.cpu_cores ?? []).map((c) => c.usage_percent ?? 0))
 
   // Detail pages backed by the slower extended collection cycle — see the
   // freshness note rendered for these below
