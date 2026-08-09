@@ -13,6 +13,7 @@ import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/data/store/schema.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/hive/hive_registrar.g.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
@@ -108,6 +109,12 @@ Future<void> _doDbMigrate() async {
 
   // Migrate the old id to new id.
   ServerStore.instance.migrateIds();
+
+  // Bring local storage up to the layout this build expects. Throws
+  // SchemaTooNewException when the data was written by a newer build — that
+  // must not be swallowed: continuing would let this build overwrite records
+  // whose shape it doesn't understand.
+  await SchemaVersion.migrate(const []);
 }
 
 Future<void> _initWindow() async {

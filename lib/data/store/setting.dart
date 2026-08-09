@@ -219,6 +219,14 @@ class SettingStore extends HiveStore {
 
   late final lastVer = propertyDefault('lastVer', 0);
 
+  /// Layout version of this device's local storage — see [SchemaVersion].
+  ///
+  /// Defaults to 2, not 0: storage that predates versioning is, by definition,
+  /// whatever the last unversioned release wrote, and that is v2 (Spi with a
+  /// flat SSH layout plus `monitorHttp`). A fresh install overwrites this with
+  /// [SchemaVersion.current] before any migration runs.
+  late final schemaVersion = propertyDefault('schemaVersion', 2);
+
   /// Hide title bar on desktop
   late final hideTitleBar = propertyDefault('hideTitleBar', isDesktop);
 
