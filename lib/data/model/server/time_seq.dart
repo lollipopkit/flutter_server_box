@@ -7,6 +7,7 @@ class Fifo<T> extends ListBase<T> {
 
   Fifo({this.capacity = 30, List<T>? list}) : _list = list ?? <T>[];
 
+
   @override
   void add(T element) {
     while (_list.length >= capacity) {
@@ -46,6 +47,15 @@ class Fifo<T> extends ListBase<T> {
 /// arithmetic through [window], which yields nothing unless there are two
 /// samples covering a positive amount of time.
 abstract class TimeSeq<T extends TimeSeqIface<T>> {
+  TimeSeq();
+
+  /// An independent copy that keeps the window, so the snapshot it belongs to
+  /// stops changing while the live one carries on. Rates still work from a
+  /// copy: both samples come along.
+  TimeSeq.copy(TimeSeq<T> source)
+    : _pre = source._pre?.toList(growable: false),
+      _now = source._now.toList(growable: false);
+
   List<T>? _pre;
   List<T> _now = const [];
 

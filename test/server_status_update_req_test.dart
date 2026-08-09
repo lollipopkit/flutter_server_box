@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
+import 'package:server_box/data/model/server/battery.dart';
+import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
@@ -105,9 +107,8 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
       expect(result.diskUsage!.used, greaterThan(BigInt.zero));
     });
 
-    test('bsd refresh preserves shared cpu history object', () async {
+    test('status parsing copies rolling history objects', () async {
       final previous = InitStatus.status;
-      final sharedCpu = previous.cpu;
 
       final result = await getStatus(
         ServerStatusUpdateReq(
@@ -121,7 +122,80 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
         ),
       );
 
-      expect(identical(result.cpu, sharedCpu), isTrue);
+      // `getStatus` parses into the status it was handed; the private copy is
+      // made by `ServerNotifier._copyStatus` before it gets here. What matters
+      // is that a copy is independent, which `Cpus.copy` is asserted on below.
+      expect(result.cpu.now.single.user, 14);
+
+      final snapshot = Cpus.copy(result.cpu);
+      result.cpu.update([SingleCpuCore('cpu', 99, 0, 0, 1, 0, 0, 0)]);
+      expect(
+        snapshot.now.single.user,
+        14,
+        reason: 'a copy must stop tracking the original',
+      );
+    });
+
+    test('Windows CPU brand comes from the processor record', () async {
+      // One WMI record carries Name alongside the core counts, so the brand
+      // and the count it applies to can't disagree. Upstream reads the brand
+      // from a second, plain-text command instead.
+      final result = await getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.windows,
+          ss: InitStatus.status,
+          parsedOutput: {
+            WindowsStatusCmdType.cpu.name:
+                '{"Name":"Example CPU","LoadPercentage":50,'
+                '"NumberOfCores":4,"NumberOfLogicalProcessors":8}',
+          },
+          customCmds: const {},
+        ),
+      );
+
+      expect(result.cpu.brand, {'Example CPU': 4});
+      expect(result.cpu.coresCount, 9);
+    });
+
+    test('Windows Celsius temperatures ignore Unix divisor settings', () async {
+      for (final divisor in [1.0, 1000.0]) {
+        final result = await getStatus(
+          ServerStatusUpdateReq(
+            system: SystemType.windows,
+            ss: InitStatus.status,
+            parsedOutput: {
+              WindowsStatusCmdType.temp.name:
+                  '{"InstanceName":"zone","Temperature":45.0}',
+            },
+            customCmds: const {},
+            tempDivisor: divisor,
+          ),
+        );
+        expect(result.temps.first, 45);
+      }
+    });
+
+    test('Windows full batteries and hardware sections are retained', () async {
+      final result = await getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.windows,
+          ss: InitStatus.status,
+          parsedOutput: {
+            WindowsStatusCmdType.battery.name:
+                '{"EstimatedChargeRemaining":100,"BatteryStatus":3}',
+            WindowsStatusCmdType.sensors.name:
+                '{"Name":"Probe","CurrentReading":42}',
+            WindowsStatusCmdType.diskSmart.name:
+                '{"DeviceId":"0","Temperature":35,"PowerOnHours":10}',
+          },
+          customCmds: const {},
+        ),
+      );
+
+      expect(result.batteries.single.status, BatteryStatus.full);
+      expect(result.sensors.single.device, 'Probe');
+      expect(result.diskSmart.single.device, '0');
+      expect(result.diskSmart.single.temperature, 35);
     });
   });
 }

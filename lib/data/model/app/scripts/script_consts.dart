@@ -1,3 +1,4 @@
+
 import 'package:server_box/data/res/build_data.dart';
 
 /// Path constants and per-connection script directory state.
@@ -17,8 +18,9 @@ class ScriptConstants {
   // Script directories
   static const String scriptDirHome = '~/.config/server_box';
   static const String scriptDirTmp = '/tmp/server_box';
-  static const String scriptDirHomeWindows = '%USERPROFILE%/.config/server_box';
-  static const String scriptDirTmpWindows = '%TEMP%/server_box';
+  static const String scriptDirHomeWindows =
+      r'$env:USERPROFILE/.config/server_box';
+  static const String scriptDirTmpWindows = r'$env:TEMP/server_box';
 
   /// Output segment separator (mirrors sbm_parser commands::SEPARATOR); also
   /// used by container/systemd providers for their own command segmenting
@@ -33,7 +35,8 @@ class ScriptConstants {
 class ScriptPaths {
   ScriptPaths._();
 
-  static final Map<String, String> _scriptDirMap = <String, String>{};
+  static final Map<(String, bool), String> _scriptDirMap =
+      <(String, bool), String>{};
 
   /// Get the script directory for the given [id].
   ///
@@ -41,26 +44,28 @@ class ScriptPaths {
   /// if this path is not accessible, it will be changed to
   /// [ScriptConstants.scriptDirHome]/[ScriptConstants.scriptFile].
   static String getScriptDir(String id, {bool isWindows = false}) {
+    final key = (id, isWindows);
     final defaultTmpDir = isWindows
         ? ScriptConstants.scriptDirTmpWindows
         : ScriptConstants.scriptDirTmp;
-    _scriptDirMap[id] ??= defaultTmpDir;
-    return _scriptDirMap[id]!;
+    _scriptDirMap[key] ??= defaultTmpDir;
+    return _scriptDirMap[key]!;
   }
 
   /// Switch between tmp and home directories for script storage
   static String switchScriptDir(String id, {bool isWindows = false}) {
-    return switch (_scriptDirMap[id]) {
+    final key = (id, isWindows);
+    return switch (_scriptDirMap[key]) {
       ScriptConstants.scriptDirTmp =>
-        _scriptDirMap[id] = ScriptConstants.scriptDirHome,
+        _scriptDirMap[key] = ScriptConstants.scriptDirHome,
       ScriptConstants.scriptDirTmpWindows =>
-        _scriptDirMap[id] = ScriptConstants.scriptDirHomeWindows,
+        _scriptDirMap[key] = ScriptConstants.scriptDirHomeWindows,
       ScriptConstants.scriptDirHome =>
-        _scriptDirMap[id] = ScriptConstants.scriptDirTmp,
+        _scriptDirMap[key] = ScriptConstants.scriptDirTmp,
       ScriptConstants.scriptDirHomeWindows =>
-        _scriptDirMap[id] = ScriptConstants.scriptDirTmpWindows,
+        _scriptDirMap[key] = ScriptConstants.scriptDirTmpWindows,
       _ =>
-        _scriptDirMap[id] = isWindows
+        _scriptDirMap[key] = isWindows
             ? ScriptConstants.scriptDirHomeWindows
             : ScriptConstants.scriptDirHome,
     };

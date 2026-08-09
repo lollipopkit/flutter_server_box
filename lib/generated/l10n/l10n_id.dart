@@ -1116,4 +1116,29 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get systemd => 'Systemd';
+
+  @override
+  String processCount(int count) {
+    return '$count proses';
+  }
+
+  @override
+  String get processParseUnsupportedOutput =>
+      'Format daftar proses tidak didukung.';
+
+  @override
+  String get processParseInvalidRows =>
+      'Beberapa entri proses tidak dapat dibaca.';
+
+  @override
+  String get processParseInvalidWindowsJson =>
+      'Respons proses Windows tidak dapat dibaca.';
+
+  @override
+  String get processParseInvalidWindowsRows =>
+      'Beberapa entri proses Windows tidak dapat dibaca.';
+
+  @override
+  String get processKillTargetChanged =>
+      'Proses telah berubah atau berhenti. Segarkan daftar lalu coba lagi.';
 }

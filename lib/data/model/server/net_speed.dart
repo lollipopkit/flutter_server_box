@@ -28,6 +28,13 @@ typedef CachedNetVals = ({
 class NetSpeed extends TimeSeq<NetSpeedPart> {
   NetSpeed();
 
+  NetSpeed.copy(NetSpeed source) : super.copy(source) {
+    devices.addAll(source.devices);
+    realIfaces.addAll(source.realIfaces);
+    _realIfaceIndices.addAll(source._realIfaceIndices);
+    cachedVals = source.cachedVals;
+  }
+
   /// Shown wherever a rate can't be computed yet: right after connecting, or
   /// when the source hasn't produced a new sample. Distinct from "0 B/s",
   /// which is a real measurement of an idle link.

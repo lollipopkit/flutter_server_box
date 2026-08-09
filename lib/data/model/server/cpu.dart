@@ -3,6 +3,15 @@ import 'package:server_box/data/model/server/time_seq.dart';
 class Cpus extends TimeSeq<SingleCpuCore> {
   Cpus();
 
+  Cpus.copy(Cpus source) : super.copy(source) {
+    brand.addAll(source.brand);
+    _coresCount = source._coresCount;
+    _user = source._user;
+    _sys = source._sys;
+    _iowait = source._iowait;
+    _idle = source._idle;
+  }
+
   final Map<String, int> brand = {};
 
   @override

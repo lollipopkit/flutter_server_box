@@ -1,6 +1,15 @@
 class Temperatures {
   final Map<String, double> _map = {};
 
+  Temperatures();
+
+  /// Independent snapshot. Upstream added these across the status models so a
+  /// page reading a `ServerStatus` can't have it mutate underneath — see
+  /// `ServerStatus.snapshot`.
+  Temperatures.copy(Temperatures source) {
+    _map.addAll(source._map);
+  }
+
   /// Parsing happens in the shared Rust library (sbm_parser::linux::parse_temps); assembly only here
   void setAll(Map<String, double> values) {
     _map

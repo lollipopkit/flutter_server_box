@@ -1028,3 +1028,79 @@ fn cpu_brand_parse() {
     assert_eq!(brands[0].0, "Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz");
     assert_eq!(brands[0].1, 2);
 }
+
+/// Ported from `test/windows_test.dart`, which upstream added while this
+/// branch had already replaced `WindowsParser` with this module. The Dart
+/// tests are the spec; the behaviour they pin down was missing here, and the
+/// `free > size` case underflowed `size - free`.
+#[test]
+fn windows_mem_rejects_missing_and_impossible_values() {
+    assert!(windows::parse_mem("{}").is_none());
+    assert!(
+        windows::parse_mem(r#"{"TotalVisibleMemorySize":0,"FreePhysicalMemory":0}"#).is_none(),
+        "a zero total divides by zero in every percentage derived from it"
+    );
+    assert!(
+        windows::parse_mem(r#"{"TotalVisibleMemorySize":100,"FreePhysicalMemory":200}"#).is_none(),
+        "more free than total is not a reading"
+    );
+
+    let m = windows::parse_mem(r#"{"TotalVisibleMemorySize":100,"FreePhysicalMemory":20}"#)
+        .expect("a plausible pair is accepted");
+    assert_eq!(m.total, 100);
+    assert_eq!(m.free, 20);
+}
+
+#[test]
+fn windows_disks_accept_full_volumes_and_reject_bad_ranges() {
+    let full = windows::parse_disks(
+        r#"{"DeviceID":"C:","Size":1024,"FreeSpace":0,"FileSystem":"NTFS"}"#,
+    );
+    assert_eq!(full.len(), 1, "a full volume is a valid reading");
+    assert_eq!(full[0].avail, 0);
+    assert_eq!(full[0].used_percent, 100);
+
+    assert!(
+        windows::parse_disks(
+            r#"{"DeviceID":"C:","Size":1024,"FreeSpace":2048,"FileSystem":"NTFS"}"#
+        )
+        .is_empty(),
+        "more free than total would underflow size - free"
+    );
+}
+
+/// Also ported from `test/windows_test.dart`. A processor entry whose load is
+/// out of range is dropped rather than clamped: 150 and -1 both mean the query
+/// failed, and both a pegged and an idle reading would be invented.
+#[test]
+fn windows_cpu_rejects_invalid_ranges_and_core_counts() {
+    for raw in [
+        r#"{"LoadPercentage":150,"NumberOfCores":4,"NumberOfLogicalProcessors":8}"#,
+        r#"{"LoadPercentage":-1,"NumberOfCores":4,"NumberOfLogicalProcessors":8}"#,
+        r#"{"LoadPercentage":50,"NumberOfCores":0,"NumberOfLogicalProcessors":0}"#,
+    ] {
+        assert!(windows::parse_cpu(raw, &[]).is_empty(), "accepted {raw}");
+    }
+}
+
+/// Ported from `test/server_status_update_req_test.dart`. Win32_Battery's
+/// enumeration has a distinct "fully charged" state; folding it into
+/// discharging reported a battery on mains at 100% as draining.
+#[test]
+fn windows_battery_status_follows_the_win32_enumeration() {
+    use sbm_parser::types::BatteryStatus;
+
+    fn status_of(code: i64) -> BatteryStatus {
+        let raw = format!(r#"{{"EstimatedChargeRemaining":100,"BatteryStatus":{code}}}"#);
+        windows::parse_batteries(&raw).remove(0).status
+    }
+
+    assert_eq!(status_of(3), BatteryStatus::Full);
+    for code in 6..=9 {
+        assert_eq!(status_of(code), BatteryStatus::Charging, "code {code}");
+    }
+    assert_eq!(status_of(2), BatteryStatus::Unknown);
+    assert_eq!(status_of(10), BatteryStatus::Unknown);
+    assert_eq!(status_of(1), BatteryStatus::Discharging);
+    assert_eq!(status_of(5), BatteryStatus::Discharging);
+}

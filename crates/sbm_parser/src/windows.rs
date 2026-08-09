@@ -36,7 +36,12 @@ pub fn parse_cpu(raw: &str, prev: &[CpuCore]) -> Vec<CpuCore> {
     let mut offset = 0usize;
 
     for processor in as_list(json) {
-        let load = processor["LoadPercentage"].as_u64().unwrap_or(0).min(100);
+        // Strict rather than clamped: 150 and -1 both mean the WMI query came
+        // back wrong, and reporting a pegged or an idle CPU is worse than
+        // reporting none. -1 arrives as a negative, which `as_u64` rejects.
+        let Some(load) = processor["LoadPercentage"].as_u64().filter(|v| *v <= 100) else {
+            continue;
+        };
         let physical = processor["NumberOfCores"].as_u64().unwrap_or(1) as usize;
         let logical =
             processor["NumberOfLogicalProcessors"].as_u64().unwrap_or(physical as u64) as usize;
@@ -82,6 +87,12 @@ pub fn parse_mem(raw: &str) -> Option<Memory> {
     let data = as_list(json).into_iter().next()?;
     let total = data["TotalVisibleMemorySize"].as_u64()?;
     let free = data["FreePhysicalMemory"].as_u64().unwrap_or(0);
+    // A zero total divides by zero in every percentage derived from this, and
+    // free above total is not a reading — WMI returns both when the query
+    // partially fails. No memory is better than impossible memory.
+    if total == 0 || free > total {
+        return None;
+    }
     Some(Memory { total, free, avail: free })
 }
 
@@ -98,8 +109,10 @@ pub fn parse_disks(raw: &str) -> Vec<Disk> {
             let size = json_u64(&d["Size"])?;
             let free = json_u64(&d["FreeSpace"])?;
             let fs = d["FileSystem"].as_str().unwrap_or("").to_string();
-            // free == 0 is a valid state (full volume); only records missing fields or with zero size are skipped
-            if device_id.is_empty() || size == 0 || fs.is_empty() {
+            // free == 0 is a valid state (a full volume); a zero size or more
+            // free than total is not. The latter also underflows `size - free`
+            // below, which panics in debug and wraps to a huge value in release.
+            if device_id.is_empty() || size == 0 || fs.is_empty() || free > size {
                 return None;
             }
             let size_kb = size / 1024;
@@ -223,8 +236,12 @@ fn parse_wmi_delta(raw: &str, field1: &str, field2: &str) -> Vec<(String, f64, f
     result
 }
 
-/// Win32_Battery JSON(Dart `_parseWindowsBatteries`):
-/// BatteryStatus 6/7/8 count as charging
+/// Win32_Battery JSON (Dart `_parseWindowsBatteries`).
+///
+/// `BatteryStatus` follows Win32_Battery's enumeration: 3 is fully charged,
+/// 6-9 are the charging states, 2 and 10 mean the provider doesn't know.
+/// Everything else is a discharge state. Collapsing 3 into "discharging",
+/// as this did, reported a battery sitting at 100% on mains as draining.
 pub fn parse_batteries(raw: &str) -> Vec<Battery> {
     let Some(json) = decode(raw) else {
         return Vec::new();
@@ -236,10 +253,11 @@ pub fn parse_batteries(raw: &str) -> Vec<Battery> {
             Battery {
                 name: Some("Battery".to_string()),
                 percent: Some(b["EstimatedChargeRemaining"].as_i64().unwrap_or(0)),
-                status: if matches!(status, 6..=8) {
-                    BatteryStatus::Charging
-                } else {
-                    BatteryStatus::Discharging
+                status: match status {
+                    3 => BatteryStatus::Full,
+                    6..=9 => BatteryStatus::Charging,
+                    2 | 10 => BatteryStatus::Unknown,
+                    _ => BatteryStatus::Discharging,
                 },
                 cycle: None,
                 tech: None,

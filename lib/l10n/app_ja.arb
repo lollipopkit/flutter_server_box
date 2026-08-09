@@ -236,5 +236,11 @@
   "portForwardBetaTitle": "Port Forward (Beta)",
   "containerSegmentsMismatch": "コンテナ応答のセグメント数が想定外です: {count}",
   "containerOperationInProgress": "別のコンテナ操作がすでに実行中です",
-  "systemd": "Systemd"
+  "systemd": "Systemd",
+  "processCount": "{count} 件のプロセス",
+  "processParseUnsupportedOutput": "このプロセス一覧の形式はサポートされていません。",
+  "processParseInvalidRows": "一部のプロセス項目を読み取れませんでした。",
+  "processParseInvalidWindowsJson": "Windows のプロセス応答を読み取れませんでした。",
+  "processParseInvalidWindowsRows": "一部の Windows プロセス項目を読み取れませんでした。",
+  "processKillTargetChanged": "プロセスが変更されたか終了しました。一覧を更新して再試行してください。"
 }

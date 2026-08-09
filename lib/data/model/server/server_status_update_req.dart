@@ -95,15 +95,15 @@ void _apply(String section, void Function() fn) {
 /// because their rolling/history state is needed for deltas across refreshes.
 ServerStatus _createWorkingStatus(ServerStatus source, SystemType system) {
   return ServerStatus(
-    cpu: source.cpu,
+    cpu: Cpus.copy(source.cpu),
     mem: InitStatus.mem,
     disk: const [],
     tcp: const Conn(maxConn: 0, fail: 0),
-    netSpeed: source.netSpeed,
+    netSpeed: NetSpeed.copy(source.netSpeed),
     swap: const Swap(total: 0, free: 0, cached: 0),
     temps: Temperatures(),
     system: system,
-    diskIO: source.diskIO,
+    diskIO: DiskIO.copy(source.diskIO),
     diskSmart: const [],
     err: source.err,
   );

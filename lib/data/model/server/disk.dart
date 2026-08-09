@@ -61,6 +61,10 @@ class Disk extends Equatable {
 class DiskIO extends TimeSeq<DiskIOPiece> {
   DiskIO();
 
+  DiskIO.copy(DiskIO source) : super.copy(source) {
+    cachedAllSpeed = source.cachedAllSpeed;
+  }
+
   /// `/proc/diskstats` reports in 512-byte units regardless of the drive's
   /// physical sector size
   static const _sectorBytes = 512;
