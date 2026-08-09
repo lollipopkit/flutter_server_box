@@ -1116,4 +1116,28 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get systemd => 'Systemd';
+
+  @override
+  String processCount(int count) {
+    return '$count işlem';
+  }
+
+  @override
+  String get processParseUnsupportedOutput =>
+      'İşlem listesi biçimi desteklenmiyor.';
+
+  @override
+  String get processParseInvalidRows => 'Bazı işlem girdileri okunamadı.';
+
+  @override
+  String get processParseInvalidWindowsJson =>
+      'Windows işlem yanıtı okunamadı.';
+
+  @override
+  String get processParseInvalidWindowsRows =>
+      'Bazı Windows işlem girdileri okunamadı.';
+
+  @override
+  String get processKillTargetChanged =>
+      'İşlem değişti veya sonlandı. Listeyi yenileyip tekrar deneyin.';
 }

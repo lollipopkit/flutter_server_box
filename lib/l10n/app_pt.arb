@@ -236,5 +236,11 @@
   "portForwardBetaTitle": "Port Forward (Beta)",
   "containerSegmentsMismatch": "Número inesperado de segmentos na resposta do contêiner: {count}",
   "containerOperationInProgress": "Outra operação de contêiner já está em andamento",
-  "systemd": "Systemd"
+  "systemd": "Systemd",
+  "processCount": "{count, plural, one{1 processo} other{{count} processos}}",
+  "processParseUnsupportedOutput": "O formato da lista de processos não é compatível.",
+  "processParseInvalidRows": "Não foi possível ler algumas entradas de processos.",
+  "processParseInvalidWindowsJson": "Não foi possível ler a resposta de processos do Windows.",
+  "processParseInvalidWindowsRows": "Não foi possível ler algumas entradas de processos do Windows.",
+  "processKillTargetChanged": "O processo foi alterado ou terminou. Atualize a lista e tente novamente."
 }

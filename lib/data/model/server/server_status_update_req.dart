@@ -52,22 +52,20 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
 
 /// Creates a per-refresh working snapshot.
 ///
-/// `cpu`, `netSpeed`, and `diskIO` intentionally reuse the source references
-/// because their parsers update rolling/history state needed for deltas and rate
-/// calculations across refreshes. Callers should treat those fields as shared
-/// mutable state for the duration of parsing; the other stale-prone fields are
-/// reset here so failed/empty parsing does not leak old values forward.
+/// Rolling values are copied so parsing cannot mutate the status currently
+/// published by Riverpod. The copies retain the previous samples needed for
+/// delta/rate calculations.
 ServerStatus _createWorkingStatus(ServerStatus source, SystemType system) {
   return ServerStatus(
-    cpu: source.cpu,
+    cpu: Cpus.copy(source.cpu),
     mem: InitStatus.mem,
     disk: const [],
     tcp: const Conn(maxConn: 0, fail: 0),
-    netSpeed: source.netSpeed,
+    netSpeed: NetSpeed.copy(source.netSpeed),
     swap: const Swap(total: 0, free: 0, cached: 0),
     temps: Temperatures(),
     system: system,
-    diskIO: source.diskIO,
+    diskIO: DiskIO.copy(source.diskIO),
     diskSmart: const [],
     err: source.err,
   );
@@ -236,7 +234,8 @@ Future<ServerStatus> _getLinuxStatus(ServerStatusUpdateReq req) async {
   try {
     for (final entry in req.customCmds.entries) {
       final key = entry.key;
-      final value = req.parsedOutput[key] ?? '';
+      final value =
+          req.parsedOutput[ScriptConstants.getCustomResultKey(key)] ?? '';
       req.ss.customCmds[key] = value;
     }
   } catch (e, s) {
@@ -386,6 +385,8 @@ Future<ServerStatus> _getWindowsStatus(ServerStatusUpdateReq req) async {
   _parseWindowsConnectionData(req, parsedOutput);
   _parseWindowsBatteryData(req, parsedOutput);
   _parseWindowsTemperatureData(req, parsedOutput);
+  _parseWindowsSensorData(req, parsedOutput);
+  _parseWindowsDiskSmartData(req, parsedOutput);
   _parseWindowsGpuData(req, parsedOutput);
   WindowsParser.parseCustomCommands(req.ss, req.parsedOutput, req.customCmds);
 
@@ -455,29 +456,30 @@ void _parseWindowsCpuData(
   try {
     // Windows CPU parsing - JSON format from PowerShell
     final cpuRaw = WindowsStatusCmdType.cpu.findInMap(parsedOutput);
+    WindowsCpuResult? cpuResult;
     if (cpuRaw.isNotEmpty &&
         cpuRaw != 'null' &&
         !cpuRaw.contains('error') &&
         !cpuRaw.contains('Exception')) {
-      final cpuResult = WindowsParser.parseCpu(cpuRaw, req.ss);
+      cpuResult = WindowsParser.parseCpu(cpuRaw, req.ss);
       if (cpuResult.cores.isNotEmpty) {
         req.ss.cpu.update(cpuResult.cores);
-        final brandRaw = WindowsStatusCmdType.cpuBrand.findInMap(parsedOutput);
-        if (brandRaw.isNotEmpty && brandRaw != 'null') {
-          req.ss.cpu.brand.clear();
-          final brandLines = brandRaw.trim().split('\n');
-          final uniqueBrands = <String>{};
-          for (final line in brandLines) {
-            final trimmedLine = line.trim();
-            if (trimmedLine.isNotEmpty) {
-              uniqueBrands.add(trimmedLine);
-            }
-          }
-          if (uniqueBrands.isNotEmpty) {
-            final brandName = uniqueBrands.first;
-            req.ss.cpu.brand[brandName] = cpuResult.coreCount;
-          }
-        }
+      }
+    }
+    final brandRaw = WindowsStatusCmdType.cpuBrand.findInMap(parsedOutput);
+    if (brandRaw.isNotEmpty && brandRaw != 'null') {
+      final brands = brandRaw
+          .trim()
+          .split('\n')
+          .map((line) => line.trim())
+          .where((line) => line.isNotEmpty)
+          .toSet();
+      if (brands.isNotEmpty) {
+        final totalCoreCount = cpuResult?.totalCoreCount ?? 0;
+        final coreCount = totalCoreCount > 0 ? totalCoreCount : 1;
+        req.ss.cpu.brand
+          ..clear()
+          ..[brands.first] = coreCount;
       }
     }
   } catch (e, s) {
@@ -601,14 +603,36 @@ void _parseWindowsTemperatureData(
   try {
     final tempRaw = WindowsStatusCmdType.temp.findInMap(parsedOutput);
     if (tempRaw.isNotEmpty && tempRaw != 'null') {
-      _parseWindowsTemperatures(
-        req.ss.temps,
-        tempRaw,
-        divisor: req.tempDivisor,
-      );
+      _parseWindowsTemperatures(req.ss.temps, tempRaw);
     }
   } catch (e, s) {
     Loggers.app.warning('Windows temperature parsing failed: $e', s);
+  }
+}
+
+void _parseWindowsSensorData(
+  ServerStatusUpdateReq req,
+  Map<String, String> parsedOutput,
+) {
+  try {
+    final raw = WindowsStatusCmdType.sensors.findInMap(parsedOutput);
+    if (raw.isEmpty || raw == 'null') return;
+    req.ss.sensors.addAll(WindowsParser.parseSensors(raw));
+  } catch (e, s) {
+    Loggers.app.warning('Windows sensor parsing failed: $e', s);
+  }
+}
+
+void _parseWindowsDiskSmartData(
+  ServerStatusUpdateReq req,
+  Map<String, String> parsedOutput,
+) {
+  try {
+    final raw = WindowsStatusCmdType.diskSmart.findInMap(parsedOutput);
+    if (raw.isEmpty || raw == 'null') return;
+    req.ss.diskSmart = WindowsParser.parseDiskSmart(raw);
+  } catch (e, s) {
+    Loggers.app.warning('Windows SMART parsing failed: $e', s);
   }
 }
 
@@ -649,17 +673,15 @@ List<Battery> _parseWindowsBatteries(String raw) {
       // Windows battery status: 1=Other, 2=Unknown, 3=Full, 4=Low,
       // 5=Critical, 6=Charging, 7=ChargingAndLow, 8=ChargingAndCritical,
       // 9=Undefined, 10=PartiallyCharged
-      final isCharging =
-          batteryStatus == 6 || batteryStatus == 7 || batteryStatus == 8;
+      final status = switch (batteryStatus) {
+        3 => BatteryStatus.full,
+        6 || 7 || 8 => BatteryStatus.charging,
+        4 || 5 => BatteryStatus.discharging,
+        _ => BatteryStatus.unknown,
+      };
 
       batteries.add(
-        Battery(
-          name: 'Battery',
-          percent: chargeRemaining,
-          status: isCharging
-              ? BatteryStatus.charging
-              : BatteryStatus.discharging,
-        ),
+        Battery(name: 'Battery', percent: chargeRemaining, status: status),
       );
     }
 
@@ -674,7 +696,7 @@ List<T> _parseWindowsWmiDelta<T>(
   String field1Name,
   String field2Name,
   T? Function(String name, double delta1, double delta2, double timeDelta)
-      builder,
+  builder,
 ) {
   try {
     final dynamic jsonData = json.decode(raw);
@@ -748,11 +770,7 @@ List<DiskIOPiece> _parseWindowsDiskIO(String raw, int currentTime) {
   );
 }
 
-void _parseWindowsTemperatures(
-  Temperatures temps,
-  String raw, {
-  double divisor = 1000.0,
-}) {
+void _parseWindowsTemperatures(Temperatures temps, String raw) {
   try {
     // Handle error output
     if (raw.contains('Error') ||
@@ -776,18 +794,12 @@ void _parseWindowsTemperatures(
       if (temperature != null) {
         // Convert to the format expected by the existing parse method
         typeLines.add('/sys/class/thermal/thermal_zone$i/$typeName');
-        // Convert to millicelsius (multiply by 1000)
-        // as expected by Linux parsing
-        valueLines.add((temperature * 1000).round().toString());
+        valueLines.add(temperature.toString());
       }
     }
 
     if (typeLines.isNotEmpty && valueLines.isNotEmpty) {
-      temps.parse(
-        typeLines.join('\n'),
-        valueLines.join('\n'),
-        divisor: divisor,
-      );
+      temps.parse(typeLines.join('\n'), valueLines.join('\n'), divisor: 1);
     }
   } catch (e, s) {
     Loggers.app.warning('Failed to parse Windows temperature data', e, s);

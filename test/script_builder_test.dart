@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/script_builders.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
@@ -97,6 +99,178 @@ void main() {
 
       expect(unixBuilder.scriptFileName, equals(ScriptConstants.scriptFile));
       expect(unixBuilder.scriptFileName, endsWith('.sh'));
+    });
+
+    test('Windows process script samples current CPU and process identity', () {
+      final script = const WindowsScriptBuilder().buildScript(null);
+
+      expect(script, contains('Win32_PerfFormattedData_PerfProc_Process'));
+      expect(script, contains('Get-CimInstance Win32_Process'));
+      expect(script, contains('PercentProcessorTime'));
+      expect(script, contains('CPUPercent'));
+      expect(script, contains('StartId'));
+      expect(script, contains('ReadTransferCount'));
+      expect(script, contains('WriteTransferCount'));
+      expect(script, contains('CommandLine'));
+      expect(script, contains(r'$processes = @()'));
+      expect(script, contains('ConvertTo-Json -InputObject \$processes'));
+      expect(script, isNot(contains(r'$process.IOReadBytes')));
+      expect(script, isNot(contains('Select-Object ProcessName, Id, CPU,')));
+    });
+
+    test('Unix process script includes a stable process start ID', () {
+      final script = const UnixScriptBuilder().buildScript(null);
+
+      expect(script, contains('START_ID'));
+      expect(script, contains('/proc/\$pid/stat'));
+      expect(script, contains("awk '{print \$20}'"));
+      expect(script, contains('ps w | while IFS= read -r line'));
+      expect(script, contains('READ_BYTES WRITE_BYTES COMMAND'));
+      expect(script, contains('read_value='));
+      expect(script, contains('[ -n "\$read_value" ] && read_bytes='));
+      expect(script, contains('START_ID READ_BYTES WRITE_BYTES COMMAND'));
+      expect(script, contains('srvbox_command_tail'));
+      expect(script, contains('lstart='));
+      expect(script, contains(r'start_id=${10}_${11}_${12}_${13}_${14}'));
+    });
+
+    test('Unix script paths are shell-quoted', () {
+      const dir = "/tmp/x; touch /tmp/pwned; #'";
+      const path = "/tmp/x; touch /tmp/pwned; #'/script.sh";
+      const builder = UnixScriptBuilder();
+
+      final install = builder.getInstallCommand(dir, path);
+      final exec = builder.getExecCommand(path, ShellFunc.status);
+
+      expect(install, isNot(contains('mkdir -p /tmp/x;')));
+      expect(
+        install,
+        contains("mkdir -p '/tmp/x; touch /tmp/pwned; #'\"'\"''"),
+      );
+      expect(exec, startsWith("sh '"));
+      expect(exec, contains("'\"'\"'"));
+
+      final homeInstall = builder.getInstallCommand(
+        '~/.config/server_box',
+        '~/.config/server_box/script.sh',
+      );
+      expect(homeInstall, contains(r'"$HOME"/'));
+
+      final envInstall = builder.getInstallCommand(
+        r'$HOME/.config/server_box',
+        r'$HOME/.config/server_box/script.sh',
+      );
+      expect(envInstall, contains(r'"${HOME}"/'));
+      expect(envInstall, isNot(contains(r"'$HOME")));
+
+      final pathInstall = builder.getInstallCommand(
+        r'$PATH/server_box',
+        r'$PATH/server_box/script.sh',
+      );
+      expect(pathInstall, contains(r"'$PATH/server_box'"));
+      expect(pathInstall, isNot(contains(r'"${PATH}"')));
+    });
+
+    test('Windows custom script paths are PowerShell-quoted', () {
+      const dir = "C:\\temp\\x'; Write-Host pwned; #";
+      const path = "C:\\temp\\x'; Write-Host pwned; #\\script.ps1";
+      const builder = WindowsScriptBuilder();
+
+      final install = builder.getInstallCommand(dir, path);
+      final exec = builder.getExecCommand(path, ShellFunc.status);
+
+      expect(install, contains("x''; Write-Host pwned; #"));
+      expect(exec, contains("x''; Write-Host pwned; #"));
+      expect(install, isNot(contains("-Path 'C:\\temp\\x';")));
+    });
+
+    test('Windows default paths use PowerShell environment variables', () {
+      ScriptPaths.clearCache();
+      final install = ShellFuncManager.getInstallShellCmd(
+        'windows-path-test',
+        systemType: SystemType.windows,
+        customDir: null,
+      );
+      final exec = ShellFunc.status.exec(
+        'windows-path-test',
+        systemType: SystemType.windows,
+        customDir: null,
+      );
+
+      expect(install, contains(r'$env:TEMP'));
+      expect(exec, contains(r'$env:TEMP'));
+      expect(install, isNot(contains('%TEMP%')));
+      expect(exec, isNot(contains('%TEMP%')));
+    });
+
+    test('script directory cache separates Unix and Windows entries', () {
+      ScriptPaths.clearCache();
+
+      final unixPath = ScriptPaths.getScriptPath('platform-change');
+      final windowsPath = ScriptPaths.getScriptPath(
+        'platform-change',
+        isWindows: true,
+      );
+
+      expect(unixPath, startsWith('/tmp/server_box/'));
+      expect(windowsPath, startsWith(r'$env:TEMP/server_box\'));
+      expect(unixPath, endsWith('.sh'));
+      expect(windowsPath, endsWith('.ps1'));
+    });
+
+    test('script output framing preserves marker-like output and names', () {
+      const customName = 'custom\nname';
+      final marker = ScriptConstants.getCustomCmdSeparator(customName);
+      final raw = [
+        marker,
+        '${ScriptConstants.dataPrefix}SrvBoxSep.cpu',
+        '${ScriptConstants.dataPrefix}SrvBoxCusCmdSep.other',
+      ].join('\r\n');
+
+      expect(ScriptConstants.parseScriptOutput(raw), {
+        ScriptConstants.getCustomResultKey(customName):
+            'SrvBoxSep.cpu\nSrvBoxCusCmdSep.other',
+      });
+    });
+
+    test('framed output preserves whitespace and custom-name collisions', () {
+      const name = 'cpu';
+      final raw = [
+        ScriptConstants.getCmdSeparator(name),
+        '${ScriptConstants.dataPrefix}built-in',
+        ScriptConstants.getCustomCmdSeparator(name),
+        '${ScriptConstants.dataPrefix}  custom  ',
+        ScriptConstants.dataPrefix,
+      ].join('\n');
+
+      expect(ScriptConstants.parseScriptOutput(raw), {
+        name: 'built-in',
+        ScriptConstants.getCustomResultKey(name): '  custom  \n',
+      });
+    });
+
+    test(
+      'empty Unix custom commands still produce valid shell syntax',
+      () async {
+        final script = const UnixScriptBuilder().buildScript({'empty': ''});
+        expect(script, contains('\n:\n'));
+        if (Platform.isLinux || Platform.isMacOS) {
+          final result = await Process.run('sh', ['-n', '-c', script]);
+          expect(result.exitCode, 0, reason: result.stderr.toString());
+        }
+      },
+    );
+
+    test('ambiguous legacy output markers are rejected', () {
+      const raw = 'SrvBoxSep.echo\r\n__windows\r\nSrvBoxData.legacy-output\r\n';
+
+      expect(ScriptConstants.parseScriptOutput(raw), isEmpty);
+      expect(
+        ScriptConstants.parseScriptOutput(
+          'SrvBoxSep.echo\nhello\nSrvBoxSep.cpu\nworld',
+        ),
+        isEmpty,
+      );
     });
 
     test('install commands are generated correctly', () {

@@ -9,6 +9,21 @@ const _kCap = 30;
 class Cpus extends TimeSeq<SingleCpuCore> {
   Cpus(super.init1, super.init2);
 
+  Cpus.copy(Cpus source)
+    : super(
+        source.pre.toList(growable: false),
+        source.now.toList(growable: false),
+      ) {
+    brand.addAll(source.brand);
+    _coresCount = source._coresCount;
+    _totalDelta = source._totalDelta;
+    _user = source._user;
+    _sys = source._sys;
+    _iowait = source._iowait;
+    _idle = source._idle;
+    _spots.addAll(source._spots.map(Fifo<FlSpot>.copy));
+  }
+
   final Map<String, int> brand = {};
 
   @override

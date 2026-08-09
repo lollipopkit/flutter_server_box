@@ -369,5 +369,18 @@
     }
   },
   "containerOperationInProgress": "Another container operation is already in progress",
-  "systemd": "Systemd"
+  "systemd": "Systemd",
+  "processCount": "{count, plural, one{1 process} other{{count} processes}}",
+  "@processCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "processParseUnsupportedOutput": "The process list format is not supported.",
+  "processParseInvalidRows": "Some process entries could not be read.",
+  "processParseInvalidWindowsJson": "The Windows process response could not be read.",
+  "processParseInvalidWindowsRows": "Some Windows process entries could not be read.",
+  "processKillTargetChanged": "The process changed or exited. Refresh and try again."
 }

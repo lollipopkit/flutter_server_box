@@ -1073,4 +1073,25 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get systemd => 'Systemd';
+
+  @override
+  String processCount(int count) {
+    return '프로세스 $count개';
+  }
+
+  @override
+  String get processParseUnsupportedOutput => '이 프로세스 목록 형식은 지원되지 않습니다.';
+
+  @override
+  String get processParseInvalidRows => '일부 프로세스 항목을 읽을 수 없습니다.';
+
+  @override
+  String get processParseInvalidWindowsJson => 'Windows 프로세스 응답을 읽을 수 없습니다.';
+
+  @override
+  String get processParseInvalidWindowsRows => '일부 Windows 프로세스 항목을 읽을 수 없습니다.';
+
+  @override
+  String get processKillTargetChanged =>
+      '프로세스가 변경되었거나 종료되었습니다. 목록을 새로 고친 후 다시 시도하세요.';
 }

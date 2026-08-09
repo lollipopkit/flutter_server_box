@@ -318,5 +318,11 @@
   "tmuxNotAvailable": "tmux 不可用",
   "containerSegmentsMismatch": "容器响应分段数量异常：{count}",
   "containerOperationInProgress": "另一个容器操作正在进行中",
-  "systemd": "Systemd"
+  "systemd": "Systemd",
+  "processCount": "{count} 个进程",
+  "processParseUnsupportedOutput": "不支持此进程列表格式。",
+  "processParseInvalidRows": "部分进程条目无法读取。",
+  "processParseInvalidWindowsJson": "无法读取 Windows 进程响应。",
+  "processParseInvalidWindowsRows": "部分 Windows 进程条目无法读取。",
+  "processKillTargetChanged": "该进程已变化或退出，请刷新后重试。"
 }

@@ -236,5 +236,11 @@
   "portForwardBetaTitle": "Port Forward (Beta)",
   "containerSegmentsMismatch": "Неожиданное количество сегментов в ответе контейнера: {count}",
   "containerOperationInProgress": "Уже выполняется другая операция с контейнером",
-  "systemd": "Systemd"
+  "systemd": "Systemd",
+  "processCount": "{count, plural, one{{count} процесс} few{{count} процесса} many{{count} процессов} other{{count} процесса}}",
+  "processParseUnsupportedOutput": "Формат списка процессов не поддерживается.",
+  "processParseInvalidRows": "Не удалось прочитать некоторые записи процессов.",
+  "processParseInvalidWindowsJson": "Не удалось прочитать ответ со списком процессов Windows.",
+  "processParseInvalidWindowsRows": "Не удалось прочитать некоторые записи процессов Windows.",
+  "processKillTargetChanged": "Процесс изменился или завершился. Обновите список и повторите попытку."
 }

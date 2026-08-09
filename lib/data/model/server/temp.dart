@@ -1,6 +1,12 @@
 class Temperatures {
   final Map<String, double> _map = {};
 
+  Temperatures();
+
+  Temperatures.copy(Temperatures source) {
+    _map.addAll(source._map);
+  }
+
   void parse(String type, String value, {double divisor = 1000.0}) {
     final typeSplited = type.split('\n');
     final valueSplited = value.split('\n');

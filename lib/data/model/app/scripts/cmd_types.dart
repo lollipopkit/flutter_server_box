@@ -153,7 +153,10 @@ enum BSDStatusCmdType implements ShellCmdType {
   disk(
     'df -k',
   ), // Keep df -k for BSD systems as lsblk is not available on macOS/BSD
-  mem('top -l 1 | grep PhysMem'),
+  mem(
+    'if [ "\$(uname -s)" = "Darwin" ]; then '
+    'top -l 1 | grep PhysMem; else top -b -d 1 | grep "^Mem:"; fi',
+  ),
   host('hostname'),
   cpuBrand('sysctl -n machdep.cpu.brand_string');
 

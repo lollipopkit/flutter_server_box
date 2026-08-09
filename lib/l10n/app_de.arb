@@ -236,5 +236,11 @@
   "portForwardBetaTitle": "Port Forwarding (Beta)",
   "containerSegmentsMismatch": "Unerwartete Anzahl von Segmenten in der Containerantwort: {count}",
   "containerOperationInProgress": "Ein anderer Container-Vorgang wird bereits ausgeführt",
-  "systemd": "Systemd"
+  "systemd": "Systemd",
+  "processCount": "{count, plural, one{1 Prozess} other{{count} Prozesse}}",
+  "processParseUnsupportedOutput": "Das Format der Prozessliste wird nicht unterstützt.",
+  "processParseInvalidRows": "Einige Prozesseinträge konnten nicht gelesen werden.",
+  "processParseInvalidWindowsJson": "Die Windows-Prozessantwort konnte nicht gelesen werden.",
+  "processParseInvalidWindowsRows": "Einige Windows-Prozesseinträge konnten nicht gelesen werden.",
+  "processKillTargetChanged": "Der Prozess wurde geändert oder beendet. Aktualisieren Sie die Liste und versuchen Sie es erneut."
 }

@@ -11,13 +11,18 @@ import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/helper/ssh_decoder.dart';
 import 'package:server_box/data/helper/system_detector.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
+import 'package:server_box/data/model/server/cpu.dart';
+import 'package:server_box/data/model/server/disk.dart';
+import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/server_status_update_req.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/model/server/temp.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/status.dart';
@@ -44,6 +49,7 @@ abstract class ServerState with _$ServerState {
 class ServerNotifier extends _$ServerNotifier {
   PersistentShell? _persistentShell;
   bool _usePersistentShellForStatus = true;
+  int _operationGeneration = 0;
 
   @override
   ServerState build(String serverId) {
@@ -77,15 +83,15 @@ class ServerNotifier extends _$ServerNotifier {
     SystemType? system,
   }) {
     final status = ServerStatus(
-      cpu: source.cpu,
+      cpu: Cpus.copy(source.cpu),
       mem: source.mem,
       disk: source.disk.toList(),
       tcp: source.tcp,
-      netSpeed: source.netSpeed,
+      netSpeed: NetSpeed.copy(source.netSpeed),
       swap: source.swap,
-      temps: source.temps,
+      temps: Temperatures.copy(source.temps),
       system: system ?? source.system,
-      diskIO: source.diskIO,
+      diskIO: DiskIO.copy(source.diskIO),
       diskSmart: source.diskSmart.toList(),
       err: setErr ? err : source.err,
       nvidia: source.nvidia?.toList(),
@@ -100,7 +106,7 @@ class ServerNotifier extends _$ServerNotifier {
   }
 
   // Update SSH client
-  void updateClient(SSHClient? client) {
+  void _setClient(SSHClient? client) {
     if (!identical(state.client, client)) {
       unawaited(_disposePersistentShell());
       _usePersistentShellForStatus = true;
@@ -108,9 +114,22 @@ class ServerNotifier extends _$ServerNotifier {
     state = state.copyWith(client: client);
   }
 
+  void updateClient(SSHClient? client) {
+    _operationGeneration++;
+    _setClient(client);
+  }
+
   // Update SPI configuration
   void updateSpi(Spi spi) {
-    state = state.copyWith(spi: spi);
+    _operationGeneration++;
+    unawaited(_disposePersistentShell());
+    state.client?.close();
+    _usePersistentShellForStatus = true;
+    state = state.copyWith(
+      spi: spi,
+      client: null,
+      conn: ServerConn.disconnected,
+    );
   }
 
   void _setFailedState(ServerStatus status, {bool closeClient = false}) {
@@ -128,6 +147,7 @@ class ServerNotifier extends _$ServerNotifier {
 
   // Close connection
   void closeConnection() {
+    _operationGeneration++;
     unawaited(_disposePersistentShell());
     state.client?.close();
     state = state.copyWith(client: null, conn: ServerConn.disconnected);
@@ -140,14 +160,21 @@ class ServerNotifier extends _$ServerNotifier {
     if (_isRefreshing) return;
 
     _isRefreshing = true;
+    final operation = _operationGeneration;
     try {
-      await _getData(interactive: interactive);
+      await _getData(interactive: interactive, operation: operation);
     } finally {
       _isRefreshing = false;
     }
   }
 
-  Future<void> _getData({required bool interactive}) async {
+  bool _isRefreshCurrent(int operation, Spi spi) =>
+      operation == _operationGeneration && state.spi == spi;
+
+  Future<void> _getData({
+    required bool interactive,
+    required int operation,
+  }) async {
     final spi = state.spi;
     final sid = spi.id;
     var keyboardInteractiveRequested = false;
@@ -175,9 +202,11 @@ class ServerNotifier extends _$ServerNotifier {
       if (wol != null) {
         try {
           await wol.wake();
+          if (!_isRefreshCurrent(operation, spi)) return;
         } catch (e) {
           Loggers.app.warning('Wake on lan failed', e);
         }
+        if (!_isRefreshCurrent(operation, spi)) return;
       }
 
       final time1 = DateTime.now();
@@ -192,7 +221,11 @@ class ServerNotifier extends _$ServerNotifier {
           },
         );
         await client.authenticated;
-        updateClient(client);
+        if (!_isRefreshCurrent(operation, spi)) {
+          client.close();
+          return;
+        }
+        _setClient(client);
 
         final time2 = DateTime.now();
         final spentTime = time2.difference(time1).inMilliseconds;
@@ -215,6 +248,7 @@ class ServerNotifier extends _$ServerNotifier {
         } catch (e) {
           Loggers.app.warning('Failed to record connection success', e);
         }
+        if (!_isRefreshCurrent(operation, spi)) return;
 
         final sessionId = 'ssh_${spi.id}';
         TermSessionManager.add(
@@ -228,6 +262,7 @@ class ServerNotifier extends _$ServerNotifier {
         );
         TermSessionManager.setActive(sessionId, hasTerminal: false);
       } catch (e) {
+        if (!_isRefreshCurrent(operation, spi)) return;
         if (!keyboardInteractiveRequested || interactive) {
           TryLimiter.inc(sid);
         }
@@ -266,6 +301,7 @@ class ServerNotifier extends _$ServerNotifier {
         } catch (recErr) {
           Loggers.app.warning('Failed to record connection failure', recErr);
         }
+        if (!_isRefreshCurrent(operation, spi)) return;
 
         final SSHErrType errType;
         if (keyboardInteractiveRequested && !interactive) {
@@ -302,6 +338,7 @@ class ServerNotifier extends _$ServerNotifier {
           state.client!,
           spi,
         );
+        if (!_isRefreshCurrent(operation, spi)) return;
         final newStatus = _copyStatus(state.status, system: detectedSystemType);
         updateStatus(newStatus);
 
@@ -327,6 +364,7 @@ class ServerNotifier extends _$ServerNotifier {
           systemType: detectedSystemType,
           context: 'WriteScript<${spi.name}>',
         );
+        if (!_isRefreshCurrent(operation, spi)) return;
 
         if (writeScriptResult.stdout.isNotEmpty) {
           Loggers.app.info(
@@ -341,7 +379,7 @@ class ServerNotifier extends _$ServerNotifier {
         }
 
         if (!writeScriptResult.succeeded) {
-          if (detectedSystemType != SystemType.windows) {
+          if (spi.custom?.scriptDir == null) {
             ShellFuncManager.switchScriptDir(
               spi.id,
               systemType: detectedSystemType,
@@ -356,6 +394,7 @@ class ServerNotifier extends _$ServerNotifier {
           Loggers.app.info('Script written successfully for ${spi.name}');
         }
       } on SSHAuthAbortError catch (e) {
+        if (!_isRefreshCurrent(operation, spi)) return;
         TryLimiter.inc(sid);
         final err = SSHErr(type: SSHErrType.auth, message: e.toString());
         final newStatus = _copyStatus(state.status, err: err, setErr: true);
@@ -369,6 +408,7 @@ class ServerNotifier extends _$ServerNotifier {
         );
         return;
       } on SSHAuthFailError catch (e) {
+        if (!_isRefreshCurrent(operation, spi)) return;
         TryLimiter.inc(sid);
         final err = SSHErr(type: SSHErrType.auth, message: e.toString());
         final newStatus = _copyStatus(state.status, err: err, setErr: true);
@@ -382,6 +422,7 @@ class ServerNotifier extends _$ServerNotifier {
         );
         return;
       } catch (e) {
+        if (!_isRefreshCurrent(operation, spi)) return;
         TryLimiter.inc(sid);
         final err = SSHErr(type: SSHErrType.writeScript, message: e.toString());
         final newStatus = _copyStatus(state.status, err: err, setErr: true);
@@ -414,8 +455,9 @@ class ServerNotifier extends _$ServerNotifier {
         customDir: spi.custom?.scriptDir,
       );
       raw = await _runStatusCommand(statusCmd);
+      if (!_isRefreshCurrent(operation, spi)) return;
 
-      if (raw.isEmpty) {
+      if (raw.isEmpty && _hasEnabledStatusCommands(spi, state.status.system)) {
         TryLimiter.inc(sid);
         final newStatus = _copyStatus(
           state.status,
@@ -465,6 +507,7 @@ class ServerNotifier extends _$ServerNotifier {
         return;
       }
     } on TimeoutException catch (e, s) {
+      if (!_isRefreshCurrent(operation, spi)) return;
       final newStatus = _copyStatus(
         state.status,
         err: SSHErr(type: SSHErrType.getStatus, message: e.toString()),
@@ -480,6 +523,7 @@ class ServerNotifier extends _$ServerNotifier {
       TermSessionManager.updateStatus(sessionId, TermSessionStatus.connected);
       return;
     } catch (e) {
+      if (!_isRefreshCurrent(operation, spi)) return;
       TryLimiter.inc(sid);
       final newStatus = _copyStatus(
         state.status,
@@ -500,6 +544,11 @@ class ServerNotifier extends _$ServerNotifier {
     try {
       // Parse script output into command-specific mappings
       final parsedOutput = ScriptConstants.parseScriptOutput(raw);
+      if (parsedOutput.isEmpty &&
+          raw.trim().isNotEmpty &&
+          _hasEnabledStatusCommands(spi, state.status.system)) {
+        throw const FormatException('Unsupported script output protocol');
+      }
 
       final req = ServerStatusUpdateReq(
         ss: state.status,
@@ -513,8 +562,10 @@ class ServerNotifier extends _$ServerNotifier {
         req,
         taskName: 'StatusUpdateReq<${spi.id}>',
       );
+      if (!_isRefreshCurrent(operation, spi)) return;
       updateStatus(newStatus);
     } catch (e, trace) {
+      if (!_isRefreshCurrent(operation, spi)) return;
       TryLimiter.inc(sid);
       final newStatus = _copyStatus(
         state.status,
@@ -578,6 +629,17 @@ class ServerNotifier extends _$ServerNotifier {
       );
       return _runStatusCommandWithExec(client, statusCmd);
     }
+  }
+
+  bool _hasEnabledStatusCommands(Spi spi, SystemType system) {
+    if (spi.custom?.cmds?.isNotEmpty == true) return true;
+    final disabled = spi.disabledCmdTypes?.toSet() ?? const <String>{};
+    final Iterable<ShellCmdType> commands = switch (system) {
+      SystemType.linux => StatusCmdType.values,
+      SystemType.bsd => BSDStatusCmdType.values,
+      SystemType.windows => WindowsStatusCmdType.values,
+    };
+    return commands.any((command) => !disabled.contains(command.displayName));
   }
 
   Future<String> _runStatusCommandWithExec(

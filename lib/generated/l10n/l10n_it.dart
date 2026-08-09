@@ -1121,4 +1121,35 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get systemd => 'Systemd';
+
+  @override
+  String processCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count processi',
+      one: '1 processo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get processParseUnsupportedOutput =>
+      'Il formato dell’elenco dei processi non è supportato.';
+
+  @override
+  String get processParseInvalidRows =>
+      'Non è stato possibile leggere alcune voci dei processi.';
+
+  @override
+  String get processParseInvalidWindowsJson =>
+      'Non è stato possibile leggere la risposta dei processi Windows.';
+
+  @override
+  String get processParseInvalidWindowsRows =>
+      'Non è stato possibile leggere alcune voci dei processi Windows.';
+
+  @override
+  String get processKillTargetChanged =>
+      'Il processo è cambiato o terminato. Aggiorna l’elenco e riprova.';
 }
