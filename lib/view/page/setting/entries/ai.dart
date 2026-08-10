@@ -37,6 +37,15 @@ extension _AI on _AppSettingsPageState {
       leading: const Icon(LineAwesome.robot_solid, size: _kIconSize),
       title: TipText(l10n.askAi, l10n.askAiUsageHint),
       children: [
+        _setting.askAiAutoRunSafeCommands.listenable().listenVal((enabled) {
+          return SwitchListTile.adaptive(
+            secondary: const Icon(Icons.verified_user_outlined),
+            title: Text(l10n.askAiAutoRunSafeCommands),
+            subtitle: Text(l10n.askAiAutoRunSafeCommandsTip),
+            value: enabled,
+            onChanged: _setting.askAiAutoRunSafeCommands.put,
+          );
+        }),
         _buildAskAiTextTile(
           prop: _setting.askAiBaseUrl,
           leading: const Icon(MingCute.link_2_line),
@@ -60,8 +69,9 @@ extension _AI on _AppSettingsPageState {
           title: l10n.askAiApiKey,
           hint: 'sk-...',
           obscure: true,
-          displayBuilder: (val) =>
-              val?.isNotEmpty == true ? l10n.configured : libL10n.empty,
+          displayBuilder: (val) => val?.isNotEmpty == true
+              ? l10n.configured
+              : l10n.askAiApiKeyOptional,
         ),
       ],
     ).cardx;

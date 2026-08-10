@@ -246,8 +246,188 @@ abstract class AppLocalizations {
   /// No description provided for @askAiUsageHint.
   ///
   /// In en, this message translates to:
-  /// **'Used in SSH Terminal'**
+  /// **'Diagnose and operate the current SSH server with reviewed actions'**
   String get askAiUsageHint;
+
+  /// No description provided for @askAiAgentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH Agent'**
+  String get askAiAgentTitle;
+
+  /// No description provided for @askAiAgentWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'What should we do on this server?'**
+  String get askAiAgentWelcome;
+
+  /// No description provided for @askAiAgentWelcomeTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a diagnosis or a task. The Agent proposes one command at a time and waits for review before making changes.'**
+  String get askAiAgentWelcomeTip;
+
+  /// No description provided for @askAiAgentPromptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask the Agent to inspect or fix something...'**
+  String get askAiAgentPromptHint;
+
+  /// No description provided for @askAiAgentSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to Agent'**
+  String get askAiAgentSend;
+
+  /// No description provided for @askAiAnalyzeSelectionPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze the selected terminal content, explain what happened, and propose the safest next step if action is needed.'**
+  String get askAiAnalyzeSelectionPrompt;
+
+  /// No description provided for @askAiTerminalContext.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal context'**
+  String get askAiTerminalContext;
+
+  /// No description provided for @askAiReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get askAiReady;
+
+  /// No description provided for @askAiThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking'**
+  String get askAiThinking;
+
+  /// No description provided for @askAiRunningCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get askAiRunningCommand;
+
+  /// No description provided for @askAiReviewNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get askAiReviewNeeded;
+
+  /// No description provided for @askAiReviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review proposed command'**
+  String get askAiReviewAction;
+
+  /// No description provided for @askAiReviewBeforeContinuing.
+  ///
+  /// In en, this message translates to:
+  /// **'Review or decline the proposed command first'**
+  String get askAiReviewBeforeContinuing;
+
+  /// No description provided for @askAiApproveRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve & run'**
+  String get askAiApproveRun;
+
+  /// No description provided for @askAiDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get askAiDecline;
+
+  /// No description provided for @askAiActionDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'The proposed command was declined.'**
+  String get askAiActionDeclined;
+
+  /// No description provided for @askAiInterrupted.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent response was interrupted.'**
+  String get askAiInterrupted;
+
+  /// No description provided for @askAiRiskReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only'**
+  String get askAiRiskReadOnly;
+
+  /// No description provided for @askAiRiskCaution.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes system'**
+  String get askAiRiskCaution;
+
+  /// No description provided for @askAiRiskDestructive.
+  ///
+  /// In en, this message translates to:
+  /// **'High risk'**
+  String get askAiRiskDestructive;
+
+  /// No description provided for @askAiHighRiskConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Run high-risk command?'**
+  String get askAiHighRiskConfirmTitle;
+
+  /// No description provided for @askAiHighRiskConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.'**
+  String get askAiHighRiskConfirmBody;
+
+  /// No description provided for @askAiCommandCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get askAiCommandCancelled;
+
+  /// No description provided for @askAiCommandTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Timed out'**
+  String get askAiCommandTimedOut;
+
+  /// No description provided for @askAiNoCommandOutput.
+  ///
+  /// In en, this message translates to:
+  /// **'Command completed without output.'**
+  String get askAiNoCommandOutput;
+
+  /// No description provided for @askAiOutputTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Long output was truncated before it was sent back to the Agent.'**
+  String get askAiOutputTruncated;
+
+  /// No description provided for @askAiAutoApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-approved'**
+  String get askAiAutoApproved;
+
+  /// No description provided for @askAiAutoRunSafeCommands.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-run read-only commands'**
+  String get askAiAutoRunSafeCommands;
+
+  /// No description provided for @askAiAutoRunSafeCommandsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.'**
+  String get askAiAutoRunSafeCommandsTip;
+
+  /// No description provided for @askAiApiKeyOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional for local or unauthenticated endpoints'**
+  String get askAiApiKeyOptional;
 
   /// No description provided for @atLeastOneTab.
   ///

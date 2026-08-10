@@ -76,6 +76,104 @@ class AppLocalizationsUk extends AppLocalizations {
   String get askAiUsageHint => 'Використовується в SSH-терміналі';
 
   @override
+  String get askAiAgentTitle => 'SSH Agent';
+
+  @override
+  String get askAiAgentWelcome => 'What should we do on this server?';
+
+  @override
+  String get askAiAgentWelcomeTip =>
+      'Ask for a diagnosis or a task. The Agent proposes one command at a time and waits for review before making changes.';
+
+  @override
+  String get askAiAgentPromptHint =>
+      'Ask the Agent to inspect or fix something...';
+
+  @override
+  String get askAiAgentSend => 'Send to Agent';
+
+  @override
+  String get askAiAnalyzeSelectionPrompt =>
+      'Analyze the selected terminal content, explain what happened, and propose the safest next step if action is needed.';
+
+  @override
+  String get askAiTerminalContext => 'Terminal context';
+
+  @override
+  String get askAiReady => 'Ready';
+
+  @override
+  String get askAiThinking => 'Thinking';
+
+  @override
+  String get askAiRunningCommand => 'Running';
+
+  @override
+  String get askAiReviewNeeded => 'Review';
+
+  @override
+  String get askAiReviewAction => 'Review proposed command';
+
+  @override
+  String get askAiReviewBeforeContinuing =>
+      'Review or decline the proposed command first';
+
+  @override
+  String get askAiApproveRun => 'Approve & run';
+
+  @override
+  String get askAiDecline => 'Decline';
+
+  @override
+  String get askAiActionDeclined => 'The proposed command was declined.';
+
+  @override
+  String get askAiInterrupted => 'Agent response was interrupted.';
+
+  @override
+  String get askAiRiskReadOnly => 'Read-only';
+
+  @override
+  String get askAiRiskCaution => 'Changes system';
+
+  @override
+  String get askAiRiskDestructive => 'High risk';
+
+  @override
+  String get askAiHighRiskConfirmTitle => 'Run high-risk command?';
+
+  @override
+  String get askAiHighRiskConfirmBody =>
+      'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.';
+
+  @override
+  String get askAiCommandCancelled => 'Cancelled';
+
+  @override
+  String get askAiCommandTimedOut => 'Timed out';
+
+  @override
+  String get askAiNoCommandOutput => 'Command completed without output.';
+
+  @override
+  String get askAiOutputTruncated =>
+      'Long output was truncated before it was sent back to the Agent.';
+
+  @override
+  String get askAiAutoApproved => 'Auto-approved';
+
+  @override
+  String get askAiAutoRunSafeCommands => 'Auto-run read-only commands';
+
+  @override
+  String get askAiAutoRunSafeCommandsTip =>
+      'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.';
+
+  @override
+  String get askAiApiKeyOptional =>
+      'Optional for local or unauthenticated endpoints';
+
+  @override
   String get atLeastOneTab => 'Потрібно вибрати принаймні одну вкладку';
 
   @override

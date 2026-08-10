@@ -72,7 +72,100 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiSelectedContent => '选中的内容';
 
   @override
-  String get askAiUsageHint => '用于 SSH 终端';
+  String get askAiUsageHint => '通过逐步审核的操作诊断并管理当前 SSH 服务器';
+
+  @override
+  String get askAiAgentTitle => 'SSH Agent';
+
+  @override
+  String get askAiAgentWelcome => '想在这台服务器上做什么？';
+
+  @override
+  String get askAiAgentWelcomeTip =>
+      '可以让 Agent 诊断问题或完成任务。Agent 每次只提出一条命令，并在更改系统前等待审核。';
+
+  @override
+  String get askAiAgentPromptHint => '让 Agent 检查或修复问题……';
+
+  @override
+  String get askAiAgentSend => '发送给 Agent';
+
+  @override
+  String get askAiAnalyzeSelectionPrompt =>
+      '分析选中的终端内容，解释发生了什么；如果需要操作，请提出最安全的下一步。';
+
+  @override
+  String get askAiTerminalContext => '终端上下文';
+
+  @override
+  String get askAiReady => '就绪';
+
+  @override
+  String get askAiThinking => '思考中';
+
+  @override
+  String get askAiRunningCommand => '执行中';
+
+  @override
+  String get askAiReviewNeeded => '待审核';
+
+  @override
+  String get askAiReviewAction => '审核建议命令';
+
+  @override
+  String get askAiReviewBeforeContinuing => '请先审核或拒绝当前建议命令';
+
+  @override
+  String get askAiApproveRun => '批准并执行';
+
+  @override
+  String get askAiDecline => '拒绝';
+
+  @override
+  String get askAiActionDeclined => '已拒绝建议命令。';
+
+  @override
+  String get askAiInterrupted => '已中断 Agent 回复。';
+
+  @override
+  String get askAiRiskReadOnly => '只读';
+
+  @override
+  String get askAiRiskCaution => '会更改系统';
+
+  @override
+  String get askAiRiskDestructive => '高风险';
+
+  @override
+  String get askAiHighRiskConfirmTitle => '执行高风险命令？';
+
+  @override
+  String get askAiHighRiskConfirmBody => '此命令可能删除数据、停止服务或造成难以撤销的更改，请在执行前仔细检查。';
+
+  @override
+  String get askAiCommandCancelled => '已取消';
+
+  @override
+  String get askAiCommandTimedOut => '执行超时';
+
+  @override
+  String get askAiNoCommandOutput => '命令已完成，没有输出。';
+
+  @override
+  String get askAiOutputTruncated => '输出过长，回传给 Agent 前已被截断。';
+
+  @override
+  String get askAiAutoApproved => '已自动批准';
+
+  @override
+  String get askAiAutoRunSafeCommands => '自动执行只读命令';
+
+  @override
+  String get askAiAutoRunSafeCommandsTip =>
+      '仅当模型与本地安全检查都判定命令为只读时自动执行；会更改系统的命令仍需人工审核。';
+
+  @override
+  String get askAiApiKeyOptional => '本地或无需认证的接口可留空';
 
   @override
   String get atLeastOneTab => '至少需要选择一个标签';
@@ -1126,7 +1219,100 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiSelectedContent => '選取的內容';
 
   @override
-  String get askAiUsageHint => '於 SSH 終端機中使用';
+  String get askAiUsageHint => '透過逐步審核的操作診斷並管理目前 SSH 伺服器';
+
+  @override
+  String get askAiAgentTitle => 'SSH Agent';
+
+  @override
+  String get askAiAgentWelcome => '想在這台伺服器上做什麼？';
+
+  @override
+  String get askAiAgentWelcomeTip =>
+      '可以讓 Agent 診斷問題或完成工作。Agent 每次只提出一條指令，並在變更系統前等待審核。';
+
+  @override
+  String get askAiAgentPromptHint => '讓 Agent 檢查或修復問題……';
+
+  @override
+  String get askAiAgentSend => '傳送給 Agent';
+
+  @override
+  String get askAiAnalyzeSelectionPrompt =>
+      '分析選取的終端機內容，解釋發生了什麼；如果需要操作，請提出最安全的下一步。';
+
+  @override
+  String get askAiTerminalContext => '終端機內容';
+
+  @override
+  String get askAiReady => '就緒';
+
+  @override
+  String get askAiThinking => '思考中';
+
+  @override
+  String get askAiRunningCommand => '執行中';
+
+  @override
+  String get askAiReviewNeeded => '待審核';
+
+  @override
+  String get askAiReviewAction => '審核建議指令';
+
+  @override
+  String get askAiReviewBeforeContinuing => '請先審核或拒絕目前的建議指令';
+
+  @override
+  String get askAiApproveRun => '核准並執行';
+
+  @override
+  String get askAiDecline => '拒絕';
+
+  @override
+  String get askAiActionDeclined => '已拒絕建議指令。';
+
+  @override
+  String get askAiInterrupted => '已中斷 Agent 回覆。';
+
+  @override
+  String get askAiRiskReadOnly => '唯讀';
+
+  @override
+  String get askAiRiskCaution => '會變更系統';
+
+  @override
+  String get askAiRiskDestructive => '高風險';
+
+  @override
+  String get askAiHighRiskConfirmTitle => '執行高風險指令？';
+
+  @override
+  String get askAiHighRiskConfirmBody => '此指令可能刪除資料、停止服務或造成難以復原的變更，請在執行前仔細檢查。';
+
+  @override
+  String get askAiCommandCancelled => '已取消';
+
+  @override
+  String get askAiCommandTimedOut => '執行逾時';
+
+  @override
+  String get askAiNoCommandOutput => '指令已完成，沒有輸出。';
+
+  @override
+  String get askAiOutputTruncated => '輸出過長，傳回 Agent 前已被截斷。';
+
+  @override
+  String get askAiAutoApproved => '已自動核准';
+
+  @override
+  String get askAiAutoRunSafeCommands => '自動執行唯讀指令';
+
+  @override
+  String get askAiAutoRunSafeCommandsTip =>
+      '僅當模型與本機安全檢查都判定指令為唯讀時自動執行；會變更系統的指令仍需人工審核。';
+
+  @override
+  String get askAiApiKeyOptional => '本機或不需驗證的介面可留空';
 
   @override
   String get atLeastOneTab => '至少需要選擇一個標籤';

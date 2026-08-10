@@ -179,6 +179,10 @@ class SettingStore extends HiveStore {
   );
   late final askAiApiKey = propertyDefault('askAiApiKey', '');
   late final askAiModel = propertyDefault('askAiModel', 'gpt-5.4-mini');
+  late final askAiAutoRunSafeCommands = propertyDefault(
+    'askAiAutoRunSafeCommands',
+    false,
+  );
 
   late final serverFuncBtns = listProperty(
     'serverBtns',
