@@ -61,11 +61,26 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   /// picker — or the icon on the bar — to rebuild.
   final _sortVersion = RNode();
 
-  late final _picker = _AddPage(
-    sortVersion: _sortVersion,
-    onTap: _open,
-    onLongPress: (spi) =>
-        ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
+  /// The picker, and the button for adding a server to pick from.
+  ///
+  /// A scaffold of its own so the button belongs to the page it acts on,
+  /// wherever that page is shown — the first tab on one screen, the column
+  /// beside the terminals on two.
+  late final _picker = Scaffold(
+    body: _AddPage(
+      sortVersion: _sortVersion,
+      onTap: _open,
+      onLongPress: (spi) =>
+          ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
+    ),
+    floatingActionButton: Builder(
+      builder: (ctx) => FloatingActionButton(
+        heroTag: 'sshAddServer',
+        onPressed: () => ServerEditPage.route.go(ctx),
+        tooltip: libL10n.add,
+        child: const Icon(Icons.add),
+      ),
+    ),
   );
 
   final _restorableTabs = RestorableString('');
@@ -104,6 +119,24 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   Widget build(BuildContext context) {
     super.build(context);
     ref.listen(terminalRequestsProvider, (_, _) => _drainRequests());
+    return Stores.setting.forceSinglePane.listenable().listenVal((single) {
+      return ListenBuilder(
+        listenable: _sessions,
+        builder: () => AdaptiveSideList(
+          // Nothing open yet means nothing for a column to sit beside, so the
+          // picker keeps the whole width until the first terminal is opened —
+          // the same as the server list before anything is selected.
+          enabled: !single && _sessions.tabs.isNotEmpty,
+          sideWidth: Stores.setting.paneListWidth.fetch(),
+          onSideWidthChanged: Stores.setting.paneListWidth.put,
+          sideBuilder: (_) => _picker,
+          builder: (_, split) => _buildTabs(split),
+        ),
+      );
+    });
+  }
+
+  Widget _buildTabs(bool split) {
     return Scaffold(
       appBar: PreferredSizeListenBuilder(
         // Both: the bar shows which tab is current *and* how the picker behind
@@ -112,6 +145,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
         builder: () => SessionTabBar(
           names: _sessions.names,
           index: _sessions.index,
+          showLeading: !split,
           onTap: _sessions.select,
           onClose: _confirmClose,
           sessionActions: [_snippetBtn],
@@ -120,20 +154,11 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       ),
       body: SessionTabsView<_SshSession>(
         controller: _sessions,
-        leading: _picker,
+        // Page 0 is still the picker's, and while it has a column of its own
+        // nothing can reach that page — building it here would be drawing the
+        // same list twice.
+        leading: split ? const SizedBox.shrink() : _picker,
         builder: (_, tab) => tab.data.page,
-      ),
-      floatingActionButton: ListenBuilder(
-        listenable: _sessions,
-        builder: () {
-          if (_sessions.index != 0) return const SizedBox.shrink();
-          return FloatingActionButton(
-            heroTag: 'sshAddServer',
-            onPressed: () => ServerEditPage.route.go(context),
-            tooltip: libL10n.add,
-            child: const Icon(Icons.add),
-          );
-        },
       ),
     );
   }

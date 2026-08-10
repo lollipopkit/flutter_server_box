@@ -127,12 +127,30 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
     super.build(context);
     ref.listen(sftpRequestsProvider, (_, _) => _drainRequests());
 
+    return Stores.setting.forceSinglePane.listenable().listenVal((single) {
+      return ListenBuilder(
+        listenable: _sessions,
+        builder: () => AdaptiveSideList(
+          // Nothing open yet means nothing for a column to sit beside, so the
+          // picker keeps the whole width until the first browser is opened.
+          enabled: !single && _sessions.tabs.isNotEmpty,
+          sideWidth: Stores.setting.paneListWidth.fetch(),
+          onSideWidthChanged: Stores.setting.paneListWidth.put,
+          sideBuilder: (_) => _picker,
+          builder: (_, split) => _buildTabs(split),
+        ),
+      );
+    });
+  }
+
+  Widget _buildTabs(bool split) {
     return Scaffold(
       appBar: PreferredSizeListenBuilder(
         listenable: _sessions,
         builder: () => SessionTabBar(
           names: _sessions.names,
           index: _sessions.index,
+          showLeading: !split,
           onTap: _sessions.select,
           onClose: _close,
           // One widget that follows whichever session is showing, rather than
@@ -143,7 +161,10 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       ),
       body: SessionTabsView<_FileSession>(
         controller: _sessions,
-        leading: _picker,
+        // Page 0 is still the picker's, and while it has a column of its own
+        // nothing can reach that page — building it here would be drawing the
+        // same list twice.
+        leading: split ? const SizedBox.shrink() : _picker,
         builder: (_, tab) {
           final session = tab.data;
           void onPathChanged(String path) {
