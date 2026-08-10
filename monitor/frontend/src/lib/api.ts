@@ -15,7 +15,17 @@ import { servers, type ServerEntry } from './servers.svelte'
 
 const TIMEOUT_MS = 10_000
 
-export class ApiError extends Error {}
+export class ApiError extends Error {
+  /// HTTP status, when the request got far enough to have one. Absent for a
+  /// failure to reach the agent at all — a distinction callers that retry
+  /// need, since "refused" and "unreachable" deserve opposite responses.
+  readonly status?: number
+
+  constructor(message: string, status?: number) {
+    super(message)
+    this.status = status
+  }
+}
 
 async function request<T>(path: string, init: RequestInit = {}, fallback = 'Request failed'): Promise<T> {
   const server = servers.current
@@ -36,7 +46,7 @@ async function request<T>(path: string, init: RequestInit = {}, fallback = 'Requ
   if (res.status === 401 && path !== '/login') {
     // Expired/invalid token: drop this server's session, App falls back to login
     servers.logout()
-    throw new ApiError('Session expired')
+    throw new ApiError('Session expired', 401)
   }
   if (!res.ok) {
     let message = fallback
@@ -46,7 +56,7 @@ async function request<T>(path: string, init: RequestInit = {}, fallback = 'Requ
     } catch {
       // Non-JSON error body: keep the fallback message
     }
-    throw new ApiError(message)
+    throw new ApiError(message, res.status)
   }
   return res.json() as Promise<T>
 }
@@ -109,7 +119,7 @@ export async function loginTo(url: string, credentials: LoginRequest): Promise<L
     } catch {
       // Non-JSON error body: keep the fallback message
     }
-    throw new ApiError(message)
+    throw new ApiError(message, res.status)
   }
   return res.json() as Promise<LoginResponse>
 }

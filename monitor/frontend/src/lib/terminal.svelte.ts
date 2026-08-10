@@ -20,7 +20,7 @@
 /// - Browsers cannot see WebSocket pings, so the agent sends an application
 ///   heartbeat and a gap in it is what triggers a reconnect.
 
-import { api } from './api'
+import { ApiError, api } from './api'
 import { servers } from './servers.svelte'
 
 /// Missing this many milliseconds of heartbeat means the link is gone. The
@@ -235,9 +235,20 @@ export class TerminalSession {
     try {
       ticket = (await api.issueWsTicket('terminal')).ticket
     } catch (e) {
-      // A 401 already dropped the session in `request`, so App falls back to
-      // the login screen; retrying here would spin against a dead token.
-      this.fail(e instanceof Error ? e.message : 'Could not authorise the terminal')
+      // Not being able to reach the agent is the ordinary case here — it is
+      // exactly what a dropped link looks like from this side — so it must
+      // keep retrying rather than end the session. Only a refused
+      // authorisation is final: `request` has already dropped the session on
+      // a 401 and App is showing the login screen, so retrying would spin
+      // against a dead token. With no session to rejoin there is likewise
+      // nothing a retry could recover.
+      const refused = e instanceof ApiError && e.status === 401
+      if (refused || !this.handle) {
+        this.fail(e instanceof Error ? e.message : 'Could not authorise the terminal')
+      } else {
+        this.phase = 'reconnecting'
+        this.scheduleReconnect()
+      }
       return
     }
 

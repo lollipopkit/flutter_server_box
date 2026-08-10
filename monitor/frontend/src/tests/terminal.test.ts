@@ -77,9 +77,24 @@ class FakeRenderer implements Renderer {
 
 const ticketMock = vi.fn(async () => ({ ticket: 'id.secret', expires_in: 30 }))
 
-vi.mock('../lib/api', () => ({
-  api: { issueWsTicket: (...args: unknown[]) => ticketMock(...(args as [])) },
-}))
+// The factory is hoisted above the imports, so the class has to be declared
+// inside it — referencing one from the module scope would be read in its
+// temporal dead zone. Tests get hold of it through the mocked module below.
+vi.mock('../lib/api', () => {
+  class ApiError extends Error {
+    status?: number
+    constructor(message: string, status?: number) {
+      super(message)
+      this.status = status
+    }
+  }
+  return {
+    ApiError,
+    api: { issueWsTicket: (...args: unknown[]) => ticketMock(...(args as [])) },
+  }
+})
+
+const { ApiError: FakeApiError } = await import('../lib/api')
 
 function installSessionStorage() {
   const map = new Map<string, string>()
@@ -197,6 +212,41 @@ describe('TerminalSession', () => {
       since: 5,
     })
     expect(ticketMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('keeps trying while the agent is unreachable', async () => {
+    const { session, socket } = await connected(renderer)
+
+    // What a dropped link looks like from here: the socket dies and the
+    // ticket request that starts the retry cannot reach the agent either
+    ticketMock.mockRejectedValueOnce(new FakeApiError('Request failed'))
+    socket.close()
+    expect(session.phase).toBe('reconnecting')
+
+    session.reconnectNow()
+    await vi.waitFor(() => expect(ticketMock).toHaveBeenCalledTimes(2))
+    // The overlay must stay up: giving up here is what made a brief outage
+    // look like a dead session
+    await vi.waitFor(() => expect(session.phase).toBe('reconnecting'))
+
+    // And the next attempt still happens, with the agent back
+    session.reconnectNow()
+    await vi.waitFor(() => expect(FakeSocket.instances.length).toBe(2))
+    FakeSocket.latest().onopen?.()
+    expect(FakeSocket.latest().sent[0]).toMatchObject({ type: 'attach' })
+  })
+
+  it('stops when authorisation is refused rather than unavailable', async () => {
+    const { session, socket } = await connected(renderer)
+
+    // A 401 has already dropped the panel session; retrying would spin
+    // against a dead token
+    ticketMock.mockRejectedValueOnce(new FakeApiError('Session expired', 401))
+    socket.close()
+    session.reconnectNow()
+
+    await vi.waitFor(() => expect(session.phase).toBe('closed'))
+    expect(session.error).toBe('Session expired')
   })
 
   it('sets the counter from ready rather than adding to it', async () => {
