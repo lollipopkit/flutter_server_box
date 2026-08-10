@@ -152,6 +152,9 @@ extension _Sessions on _SSHTabPageState {
     int? tmuxWindow,
     bool select = true,
   }) {
+    // Assigned once `add` returns. Only the callback below reads it, and only
+    // after the session it names has run for a while — the tab's own name is
+    // what anything evaluated *during* the build has to use.
     late final String id;
     final tab = _sessions.add(
       preferred: spi.name,
@@ -175,7 +178,12 @@ extension _Sessions on _SSHTabPageState {
               onTmuxStateChanged: _saveTabs,
               // Per tab: two shells on one server would otherwise share one
               // restoration bucket and overwrite each other's tmux state.
-              restorationId: 'tab_$id',
+              //
+              // The name, not the id: this is evaluated while `add` is still
+              // running, so the id does not exist yet. The name is unique
+              // among the open tabs and comes back in the same order after a
+              // relaunch, which is all a restoration key needs.
+              restorationId: 'tab_$name',
             ),
           ),
         );
