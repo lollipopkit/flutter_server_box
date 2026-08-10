@@ -129,39 +129,59 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
           enabled: !single && _sessions.tabs.isNotEmpty,
           sideWidth: Stores.setting.paneListWidth.fetch(),
           onSideWidthChanged: Stores.setting.paneListWidth.put,
-          sideBuilder: (_) => _picker,
-          builder: (_, split) => _buildTabs(split),
+          sideBuilder: (_) => _SideBar(
+            sessions: _sessions,
+            sortVersion: _sortVersion,
+            actions: [_sortBtn, _searchBtn, _historyBtn, _addBtn],
+            onOpen: _open,
+            onEdit: (spi) =>
+                ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
+            onSelect: _sessions.select,
+            onClose: _confirmClose,
+          ),
+          builder: (_, split) => _buildTerminals(split),
         ),
       );
     });
   }
 
-  Widget _buildTabs(bool split) {
+  Widget _buildTerminals(bool split) {
     return Scaffold(
-      appBar: PreferredSizeListenBuilder(
-        // Both: the bar shows which tab is current *and* how the picker behind
-        // it is sorted.
-        listenable: Listenable.merge([_sessions, _sortVersion]),
-        builder: () => SessionTabBar(
-          names: _sessions.names,
-          index: _sessions.index,
-          showLeading: !split,
-          onTap: _sessions.select,
-          onClose: _confirmClose,
-          sessionActions: [_snippetBtn],
-          leadingActions: [_sortBtn, _searchBtn, _historyBtn],
-        ),
-      ),
+      // With a rail beside it there is nothing left for a strip to do: the
+      // rail switches sessions and starts them, so all the bar has to say is
+      // which one is on screen.
+      appBar: split ? _sessionBar : _tabBar,
       body: SessionTabsView<_SshSession>(
         controller: _sessions,
-        // Page 0 is still the picker's, and while it has a column of its own
-        // nothing can reach that page — building it here would be drawing the
-        // same list twice.
+        // Page 0 is still the picker's, and while the rail is there nothing
+        // can reach that page — building it would draw the same list twice.
         leading: split ? const SizedBox.shrink() : _picker,
         builder: (_, tab) => tab.data.page,
       ),
     );
   }
+
+  PreferredSizeWidget get _tabBar => PreferredSizeListenBuilder(
+    // Both: the bar shows which tab is current *and* how the picker behind it
+    // is sorted.
+    listenable: Listenable.merge([_sessions, _sortVersion]),
+    builder: () => SessionTabBar(
+      names: _sessions.names,
+      index: _sessions.index,
+      onTap: _sessions.select,
+      onClose: _confirmClose,
+      sessionActions: [_snippetBtn],
+      leadingActions: [_sortBtn, _searchBtn, _historyBtn],
+    ),
+  );
+
+  PreferredSizeWidget get _sessionBar => PreferredSizeListenBuilder(
+    listenable: _sessions,
+    builder: () => CustomAppBar(
+      title: Text(_sessions.current?.name ?? libL10n.terminal),
+      actions: [_snippetBtn, const SizedBox(width: 7)],
+    ),
+  );
 }
 
 /// Opening, closing and remembering terminals.
@@ -319,6 +339,13 @@ extension _Actions on _SSHTabPageState {
   Widget get _historyBtn => Btn.icon(
     icon: const Icon(Icons.history, size: 18),
     onTap: _showHistory,
+  );
+
+  /// The rail's own way to add a server. On one screen that is the picker's
+  /// floating button; a rail has no room for one.
+  Widget get _addBtn => Btn.icon(
+    icon: const Icon(Icons.add, size: 18),
+    onTap: () => ServerEditPage.route.go(context),
   );
 
   void _showSortMenu() {

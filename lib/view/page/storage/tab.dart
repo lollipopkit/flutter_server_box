@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -136,29 +137,25 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
           enabled: !single && _sessions.tabs.isNotEmpty,
           sideWidth: Stores.setting.paneListWidth.fetch(),
           onSideWidthChanged: Stores.setting.paneListWidth.put,
-          sideBuilder: (_) => _picker,
-          builder: (_, split) => _buildTabs(split),
+          sideBuilder: (_) => _SideBar(
+            sessions: _sessions,
+            onLocal: _openLocal,
+            onServer: _openRemote,
+            onSelect: _sessions.select,
+            onClose: _close,
+          ),
+          builder: (_, split) => _buildBrowsers(split),
         ),
       );
     });
   }
 
-  Widget _buildTabs(bool split) {
+  Widget _buildBrowsers(bool split) {
     return Scaffold(
-      appBar: PreferredSizeListenBuilder(
-        listenable: _sessions,
-        builder: () => SessionTabBar(
-          names: _sessions.names,
-          index: _sessions.index,
-          showLeading: !split,
-          onTap: _sessions.select,
-          onClose: _close,
-          // One widget that follows whichever session is showing, rather than
-          // a list the bar would have to rebuild itself to keep current.
-          sessionActions: [_SessionActions(sessions: _sessions)],
-          leadingActions: const [],
-        ),
-      ),
+      // With a rail beside it there is nothing left for a strip to do: the
+      // rail switches sessions and starts them, so all the bar has to say is
+      // which one is on screen.
+      appBar: split ? _sessionBar : _tabBar,
       body: SessionTabsView<_FileSession>(
         controller: _sessions,
         // Page 0 is still the picker's, and while it has a column of its own
@@ -196,6 +193,29 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       ),
     );
   }
+
+  PreferredSizeWidget get _tabBar => PreferredSizeListenBuilder(
+    listenable: _sessions,
+    builder: () => SessionTabBar(
+      names: _sessions.names,
+      index: _sessions.index,
+      leadingIcon: MingCute.folder_fill,
+      onTap: _sessions.select,
+      onClose: _close,
+      // One widget that follows whichever session is showing, rather than a
+      // list the bar would have to rebuild itself to keep current.
+      sessionActions: [_SessionActions(sessions: _sessions)],
+      leadingActions: const [],
+    ),
+  );
+
+  PreferredSizeWidget get _sessionBar => PreferredSizeListenBuilder(
+    listenable: _sessions,
+    builder: () => CustomAppBar(
+      title: Text(_sessions.current?.name ?? libL10n.file),
+      actions: [_SessionActions(sessions: _sessions)],
+    ),
+  );
 }
 
 extension _Sessions on _FileTabPageState {
@@ -340,6 +360,58 @@ class _PickPage extends ConsumerWidget {
 /// Wide enough for a name and the chevron beside it, and narrow enough that a
 /// desktop window gets more than one column.
 const _kColumnWidth = 300.0;
+
+/// The same two things as [_PickPage], in a column too narrow for cards: the
+/// browsers that are open, and the places another could be opened on.
+class _SideBar extends ConsumerWidget {
+  const _SideBar({
+    required this.sessions,
+    required this.onLocal,
+    required this.onServer,
+    required this.onSelect,
+    required this.onClose,
+  });
+
+  final SessionTabsController<_FileSession> sessions;
+  final VoidCallback onLocal;
+  final void Function(Spi spi) onServer;
+  final void Function(int index) onSelect;
+  final void Function(int index) onClose;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(serversProvider);
+
+    return ListenBuilder(
+      listenable: sessions,
+      builder: () => SessionSideBar(
+        names: sessions.names,
+        index: sessions.index,
+        onTap: onSelect,
+        onClose: onClose,
+        targets: [
+          // Above the heading rather than under one of its own: it is the
+          // place that is always reachable, not one entry in a list of many.
+          const SizedBox(height: 8),
+          SessionSideBarTile(
+            title: libL10n.device,
+            subtitle: Paths.file,
+            onTap: onLocal,
+          ),
+          SessionSideBarSection(libL10n.servers),
+          for (final id in state.serverOrder)
+            if (state.servers[id] case final spi?)
+              SessionSideBarTile(
+                key: ValueKey(id),
+                title: spi.name,
+                subtitle: spi.displayAddr,
+                onTap: () => onServer(spi),
+              ),
+        ],
+      ),
+    );
+  }
+}
 
 class _PickTile extends StatelessWidget {
   const _PickTile({
