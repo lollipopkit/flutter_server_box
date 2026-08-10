@@ -85,3 +85,6 @@ android/app/.cxx
 *.db-wal
 *.sqlite
 *.sqlite3
+
+# Agent scratch space: worktrees here are checkouts of this same repo.
+.claude/worktrees/

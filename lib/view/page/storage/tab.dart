@@ -58,6 +58,11 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
 
   final _restorableSessions = RestorableString('');
 
+  /// The local page's own toolbar and title, which it hands over rather than
+  /// drawing, so the strip is the only bar on screen.
+  final _localActions = ValueNotifier<List<Widget>>(const []);
+  final _localTitle = ValueNotifier<String?>(null);
+
   @override
   String get restorationId => 'file_tab_page';
 
@@ -83,6 +88,8 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   @override
   void dispose() {
     _restorableSessions.dispose();
+    _localActions.dispose();
+    _localTitle.dispose();
     // The controller disposes what it created — focus, visibility — but the
     // session data is ours.
     for (final tab in _sessions.tabs) {
@@ -99,22 +106,30 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
 
     return Scaffold(
       appBar: PreferredSizeListenBuilder(
-        listenable: _sessions,
+        listenable: Listenable.merge([_sessions, _localActions, _localTitle]),
         builder: () => SessionTabBar(
           names: _sessions.names,
           index: _sessions.index,
           leadingIcon: MingCute.folder_fill,
+          leadingLabel: _localTitle.value,
           onTap: _sessions.select,
           onClose: _close,
           // One widget that follows whichever session is showing, rather than
           // a list the bar would have to rebuild itself to keep current.
           sessionActions: [_SessionActions(sessions: _sessions)],
-          leadingActions: const [],
+          // Only one local page exists, so the bar can hold its buttons
+          // directly instead of following a notifier per session.
+          leadingActions: _localActions.value,
         ),
       ),
       body: SessionTabsView<_SftpSession>(
         controller: _sessions,
-        leading: const LocalFilePage(),
+        leading: LocalFilePage(
+          args: LocalFilePageArgs(
+            actionsSink: _localActions,
+            onDirChanged: (name) => _localTitle.value = name,
+          ),
+        ),
         builder: (_, tab) {
           final session = tab.data;
           return SftpPage(

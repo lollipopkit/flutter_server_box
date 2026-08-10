@@ -17,7 +17,27 @@ import 'package:server_box/view/page/storage/sftp_mission.dart';
 final class LocalFilePageArgs {
   final bool? isPickFile;
   final String? initDir;
-  const LocalFilePageArgs({this.isPickFile, this.initDir});
+
+  /// Where to put this page's toolbar, for a host that draws a bar of its own.
+  ///
+  /// Given one, the page draws no app bar: the file tab already has a strip
+  /// across the top, and a page under it with its own bar makes two rows of
+  /// chrome where one would do. Null keeps the page self-contained, which is
+  /// what it is when pushed on its own — the file picker, for one.
+  final ValueNotifier<List<Widget>>? actionsSink;
+
+  /// Told which directory is being shown, as it changes.
+  ///
+  /// The app bar that went with [actionsSink] was also where the folder's name
+  /// was; this is how the host can still say where you are.
+  final void Function(String name)? onDirChanged;
+
+  const LocalFilePageArgs({
+    this.isPickFile,
+    this.initDir,
+    this.actionsSink,
+    this.onDirChanged,
+  });
 }
 
 class LocalFilePage extends ConsumerStatefulWidget {
@@ -59,47 +79,63 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage>
   Widget build(BuildContext context) {
     super.build(context);
     final title = _path.path.fileNameGetter ?? libL10n.file;
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: AnimatedSwitcher(
-          duration: Durations.short3,
-          child: Text(title, key: ValueKey(title)),
+    final actions = [
+      if (!isPickFile)
+        IconButton(
+          onPressed: () async {
+            final path = await Pfs.pickFilePath();
+            if (path == null) return;
+            final name = path.getFileName() ?? 'imported';
+            final destinationDir = Directory(_path.path);
+            if (!await destinationDir.exists()) {
+              await destinationDir.create(recursive: true);
+            }
+            await File(path).copy(_path.path.joinPath(name));
+            _refresh();
+          },
+          icon: const Icon(Icons.add),
         ),
-        actions: [
-          if (!isPickFile)
-            IconButton(
-              onPressed: () async {
-                final path = await Pfs.pickFilePath();
-                if (path == null) return;
-                final name = path.getFileName() ?? 'imported';
-                final destinationDir = Directory(_path.path);
-                if (!await destinationDir.exists()) {
-                  await destinationDir.create(recursive: true);
-                }
-                await File(path).copy(_path.path.joinPath(name));
-                _refresh();
-              },
-              icon: const Icon(Icons.add),
-            ),
-          if (!isMobile)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: MaterialLocalizations.of(
-                context,
-              ).refreshIndicatorSemanticLabel,
-              onPressed: _refresh,
-            ),
-          if (!isPickFile) _buildMissionBtn(),
-          _buildSortBtn(),
-        ],
-      ),
-      body: isMobile
-          ? RefreshIndicator(
-              onRefresh: _refresh,
-              child: _sortType.listen(_buildBody),
-            )
-          : _sortType.listen(_buildBody),
-    );
+      if (!isMobile)
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          tooltip: MaterialLocalizations.of(
+            context,
+          ).refreshIndicatorSemanticLabel,
+          onPressed: _refresh,
+        ),
+      if (!isPickFile) _buildMissionBtn(),
+      _buildSortBtn(),
+    ];
+
+    final body = isMobile
+        ? RefreshIndicator(
+            onRefresh: _refresh,
+            child: _sortType.listen(_buildBody),
+          )
+        : _sortType.listen(_buildBody);
+
+    final sink = widget.args?.actionsSink;
+    if (sink == null) {
+      return Scaffold(
+        appBar: CustomAppBar(
+          title: AnimatedSwitcher(
+            duration: Durations.short3,
+            child: Text(title, key: ValueKey(title)),
+          ),
+          actions: actions,
+        ),
+        body: body,
+      );
+    }
+
+    // Handed over after the frame, not during it: a notifier written while
+    // building tells its listeners to rebuild in the middle of a build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      sink.value = actions;
+      widget.args?.onDirChanged?.call(title);
+    });
+    return Scaffold(body: body);
   }
 
   Widget _buildBody() {
