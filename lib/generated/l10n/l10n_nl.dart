@@ -557,6 +557,29 @@ class AppLocalizationsNl extends AppLocalizations {
       'Het parsen van de bezettingsstatus van Docker is relatief langzaam.';
 
   @override
+  String get passwordlessTerminal => 'Terminal zonder inloggegevens';
+
+  @override
+  String get passwordlessTerminalTip =>
+      'Open een terminal via de monitor-agent zonder SSH-inloggegevens. De shell draait als het account waaronder de agent draait, dus het monitor-wachtwoord alleen volstaat — authenticatie, logging en tweede factor van sshd gelden hier niet. De agent bepaalt of dit is toegestaan. Het levert alleen een terminal: SFTP, port forwarding, containers, processen en systemd hebben SSH nodig.';
+
+  @override
+  String get passwordlessTerminalNeedsMonitor =>
+      'Een terminal zonder inloggegevens vereist een monitor-adres.';
+
+  @override
+  String get passwordlessTerminalConflictsWithSsh =>
+      'Een terminal zonder inloggegevens kan niet samen met SSH-inloggegevens worden gebruikt.';
+
+  @override
+  String get passwordlessTerminalRefused =>
+      'Deze agent biedt geen terminal zonder inloggegevens.';
+
+  @override
+  String get passwordlessTerminalInsecure =>
+      'Deze agent biedt de terminal alleen via TLS of loopback aan, en deze verbinding is onversleutelde HTTP.';
+
+  @override
   String get permission => 'Machtigingen';
 
   @override

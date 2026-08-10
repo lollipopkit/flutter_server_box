@@ -527,6 +527,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get parseContainerStatsTip => 'Docker 解析占用状态较为缓慢';
 
   @override
+  String get passwordlessTerminal => '免凭据终端';
+
+  @override
+  String get passwordlessTerminalTip =>
+      '不填 SSH 凭据，直接通过 monitor agent 打开终端。shell 以 agent 所在账户的身份运行，因此只要有 monitor 密码就能拿到它——sshd 的认证、日志和二次验证都不生效。是否允许由 agent 决定。它只提供终端：SFTP、端口转发、容器、进程和 systemd 仍需要 SSH。';
+
+  @override
+  String get passwordlessTerminalNeedsMonitor => '免凭据终端需要填写 monitor 地址。';
+
+  @override
+  String get passwordlessTerminalConflictsWithSsh => '免凭据终端不能与 SSH 凭据同时使用。';
+
+  @override
+  String get passwordlessTerminalRefused => '该 agent 未提供免凭据终端。';
+
+  @override
+  String get passwordlessTerminalInsecure =>
+      '该 agent 仅在 TLS 或本地回环上提供终端，而当前连接是明文 HTTP。';
+
+  @override
   String get permission => '权限';
 
   @override
@@ -1586,6 +1606,26 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get parseContainerStatsTip => 'Docker 解析消耗狀態較為緩慢';
+
+  @override
+  String get passwordlessTerminal => '免憑證終端';
+
+  @override
+  String get passwordlessTerminalTip =>
+      '不填 SSH 憑證，直接透過 monitor agent 開啟終端。shell 以 agent 所在帳戶的身分執行，因此只要有 monitor 密碼就能取得它——sshd 的認證、日誌和二次驗證都不生效。是否允許由 agent 決定。它只提供終端：SFTP、連接埠轉送、容器、行程和 systemd 仍需要 SSH。';
+
+  @override
+  String get passwordlessTerminalNeedsMonitor => '免憑證終端需要填寫 monitor 位址。';
+
+  @override
+  String get passwordlessTerminalConflictsWithSsh => '免憑證終端不能與 SSH 憑證同時使用。';
+
+  @override
+  String get passwordlessTerminalRefused => '此 agent 未提供免憑證終端。';
+
+  @override
+  String get passwordlessTerminalInsecure =>
+      '此 agent 僅在 TLS 或本機回送上提供終端，而目前連線是明文 HTTP。';
 
   @override
   String get permission => '權限';

@@ -12,11 +12,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/monitor_terminal.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/provider/ai/ask_ai.dart';
@@ -169,8 +171,20 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
-  SSHClient? _client;
-  SSHSession? _session;
+  /// Where this terminal's shell comes from. Usually SSH; for a server
+  /// reached only through its monitor agent it is the agent's own PTY, which
+  /// answers strictly less — see [ShellBackend.supportsExec].
+  ShellBackend? _backend;
+
+  /// The SSH connection behind [_backend], when there is one. tmux is the
+  /// only thing that needs it: it drives a second channel of its own, so it
+  /// cannot be expressed through [ShellBackend].
+  SSHClient? get _client => switch (_backend) {
+    SshShellBackend(:final client) => client,
+    _ => null,
+  };
+
+  ShellSession? _session;
   Timer? _discontinuityTimer;
   Timer? _terminalFlushTimer;
   final _terminalOutputBuffer = TerminalOutputBuffer();
@@ -263,9 +277,10 @@ class SSHPageState extends ConsumerState<SSHPage>
     _bindVisibilityListener();
     _setupDiscontinuityTimer();
 
-    // Initialize client from provider
+    // Adopt whatever the provider already has, so a server that is connected
+    // for status does not connect a second time just to show a terminal.
     final serverState = ref.read(serverProvider(widget.args.spi.id));
-    _client = serverState.client;
+    _backend = _adoptBackend(serverState.client);
 
     if (++_sshConnCount == 1) {
       WakelockPlus.enable();

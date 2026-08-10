@@ -557,6 +557,29 @@ class AppLocalizationsId extends AppLocalizations {
       'Parsing status okupansi oleh Docker agak lambat';
 
   @override
+  String get passwordlessTerminal => 'Terminal tanpa kredensial';
+
+  @override
+  String get passwordlessTerminalTip =>
+      'Buka terminal melalui agen monitor tanpa kredensial SSH. Shell berjalan sebagai akun tempat agen berjalan, jadi kata sandi monitor saja sudah cukup untuk mendapatkannya — autentikasi, pencatatan, dan faktor kedua milik sshd tidak berlaku. Agen yang menentukan apakah ini diizinkan. Hanya menyediakan terminal: SFTP, penerusan port, kontainer, proses, dan systemd tetap membutuhkan SSH.';
+
+  @override
+  String get passwordlessTerminalNeedsMonitor =>
+      'Terminal tanpa kredensial memerlukan alamat monitor.';
+
+  @override
+  String get passwordlessTerminalConflictsWithSsh =>
+      'Terminal tanpa kredensial tidak dapat digabungkan dengan kredensial SSH.';
+
+  @override
+  String get passwordlessTerminalRefused =>
+      'Agen ini tidak menyediakan terminal tanpa kredensial.';
+
+  @override
+  String get passwordlessTerminalInsecure =>
+      'Agen ini hanya menyajikan terminal melalui TLS atau loopback, sedangkan koneksi ini HTTP polos.';
+
+  @override
   String get permission => 'Izin';
 
   @override

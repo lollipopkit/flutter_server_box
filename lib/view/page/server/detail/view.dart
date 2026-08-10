@@ -151,7 +151,9 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     // Every ServerFuncBtn (terminal / sftp / container / process / snippet /
     // iperf / systemd / portForward) needs a shell. Hide the whole row on
     // transports without one instead of offering buttons that can only fail.
-    final buildFuncs = !_moveServerFuncs && si.capabilities.shell;
+    // `terminal` rather than `shell`: an agent's passwordless PTY earns the
+    // row too, and `btns` decides what belongs in it
+    final buildFuncs = !_moveServerFuncs && si.capabilities.terminal;
     final logo = _buildLogo(si);
     final children = <Widget>[
       ?logo,

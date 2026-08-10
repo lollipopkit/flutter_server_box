@@ -199,6 +199,52 @@ void main() {
       }
     });
 
+    test('rejects a passwordless terminal with no monitor endpoint', () {
+      final spi = spiWith(
+        ssh: null,
+        monitor: const MonitorHttpCredential(
+          addr: '  ',
+          passwordlessTerminal: true,
+        ),
+      );
+      expect(
+        spi.validate(),
+        SpiValidationError.passwordlessTerminalWithoutMonitor,
+        reason: 'there would be no agent to open it on',
+      );
+    });
+
+    test('rejects a passwordless terminal alongside SSH', () {
+      // Both answer where the shell comes from, and they answer it
+      // differently — SSH gives every shell-backed feature, the PTY gives one
+      for (final ssh in [
+        const SshCredential(ip: '10.0.0.1'),
+        const SshCredential(ip: '', viaMonitor: true),
+      ]) {
+        expect(
+          spiWith(
+            ssh: ssh,
+            monitor: const MonitorHttpCredential(
+              addr: 'https://agent:3770',
+              passwordlessTerminal: true,
+            ),
+          ).validate(),
+          SpiValidationError.passwordlessTerminalAndSsh,
+        );
+      }
+    });
+
+    test('accepts a passwordless terminal on its own', () {
+      final spi = spiWith(
+        ssh: null,
+        monitor: const MonitorHttpCredential(
+          addr: 'https://agent:3770',
+          passwordlessTerminal: true,
+        ),
+      );
+      expect(spi.validate(), isNull);
+    });
+
     test('leaves direct SSH alone', () {
       final spi = spiWith(ssh: const SshCredential(ip: '10.0.0.1'));
       expect(spi.validate(), isNull);
@@ -262,6 +308,45 @@ void main() {
         ServerConnectCredential.fromSpi(spi),
       );
       expect(caps.shell, isFalse);
+      expect(caps.terminal, isFalse);
+    });
+
+    test('a passwordless agent gives a terminal but not a shell', () {
+      // The agent's PTY is one stream, so SFTP, port forwarding and the
+      // process pages have nothing to run on. Offering them would be a row of
+      // entries that each fail on open.
+      final spi = Spi(
+        name: 'test',
+        id: 'd',
+        monitorHttp: const MonitorHttpCredential(
+          addr: 'https://agent:3770',
+          passwordlessTerminal: true,
+        ),
+      );
+      final caps = ServerCapabilities.of(
+        ServerConnectCredential.fromSpi(spi),
+      );
+      expect(caps.terminal, isTrue);
+      expect(caps.shell, isFalse);
+      expect(caps.storedHistory, isTrue);
+    });
+
+    test('SSH wins when both are somehow configured', () {
+      // `validate` rejects this, so it can only arrive from hand-edited
+      // storage — and then the more capable answer is the safe one
+      final spi = Spi(
+        name: 'test',
+        id: 'e',
+        ssh: const SshCredential(ip: '10.0.0.1'),
+        monitorHttp: const MonitorHttpCredential(
+          addr: 'https://agent:3770',
+          passwordlessTerminal: true,
+        ),
+      );
+      final caps = ServerCapabilities.of(
+        ServerConnectCredential.fromSpi(spi),
+      );
+      expect(caps.shell, isTrue);
     });
 
     test('a plain SSH server is unchanged', () {

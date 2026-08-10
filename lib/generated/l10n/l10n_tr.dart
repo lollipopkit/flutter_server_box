@@ -557,6 +557,29 @@ class AppLocalizationsTr extends AppLocalizations {
       'Docker\'ın doluluk durumunu ayrıştırmak oldukça yavaş.';
 
   @override
+  String get passwordlessTerminal => 'Kimlik bilgisiz terminal';
+
+  @override
+  String get passwordlessTerminalTip =>
+      'SSH kimlik bilgileri olmadan monitor aracısı üzerinden bir terminal açın. Kabuk, aracının çalıştığı hesapla çalışır; dolayısıyla yalnızca monitor parolası yeterlidir ve sshd\'nin kimlik doğrulaması, günlüğü ve ikinci faktörü geçerli olmaz. Buna izin verilip verilmeyeceğine aracı karar verir. Yalnızca terminal sağlar: SFTP, bağlantı noktası yönlendirme, konteynerler, süreçler ve systemd için SSH gerekir.';
+
+  @override
+  String get passwordlessTerminalNeedsMonitor =>
+      'Kimlik bilgisiz terminal için bir monitor adresi gerekir.';
+
+  @override
+  String get passwordlessTerminalConflictsWithSsh =>
+      'Kimlik bilgisiz terminal, SSH kimlik bilgileriyle birlikte kullanılamaz.';
+
+  @override
+  String get passwordlessTerminalRefused =>
+      'Bu aracı kimlik bilgisiz terminal sunmuyor.';
+
+  @override
+  String get passwordlessTerminalInsecure =>
+      'Bu aracı terminali yalnızca TLS veya loopback üzerinden sunuyor, bu bağlantı ise düz HTTP.';
+
+  @override
   String get permission => 'İzinler';
 
   @override

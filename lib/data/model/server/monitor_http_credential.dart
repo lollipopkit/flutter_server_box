@@ -18,11 +18,27 @@ final class MonitorHttpCredential {
 
   final bool ignoreCert;
 
+  /// Open a terminal through the agent with no SSH credentials, as the
+  /// account the agent runs as.
+  ///
+  /// Off by default, and only ever a request: the agent decides whether to
+  /// offer this at all (`remote_access.passwordless_terminal`) and re-checks
+  /// when the connection arrives. What it costs is that the monitor password
+  /// becomes equivalent to a shell on that machine — with none of sshd's
+  /// authentication, logging or second factor — which is why it is a separate,
+  /// deliberate switch rather than something implied by configuring monitor.
+  ///
+  /// Mutually exclusive with [SshCredential.viaMonitor]: both answer "where
+  /// does this server's shell come from", and [Spix.validate] enforces it.
+  @JsonKey(defaultValue: false)
+  final bool passwordlessTerminal;
+
   const MonitorHttpCredential({
     required this.addr,
     this.user,
     this.pwd,
     this.ignoreCert = false,
+    this.passwordlessTerminal = false,
   });
 
   factory MonitorHttpCredential.fromJson(Map<String, dynamic> json) =>
@@ -36,10 +52,16 @@ final class MonitorHttpCredential {
         other.addr == addr &&
         other.user == user &&
         other.pwd == pwd &&
-        other.ignoreCert == ignoreCert;
+        other.ignoreCert == ignoreCert &&
+        other.passwordlessTerminal == passwordlessTerminal;
   }
 
   @override
-  int get hashCode =>
-      addr.hashCode ^ user.hashCode ^ pwd.hashCode ^ ignoreCert.hashCode;
+  int get hashCode => Object.hash(
+    addr,
+    user,
+    pwd,
+    ignoreCert,
+    passwordlessTerminal,
+  );
 }

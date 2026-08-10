@@ -555,6 +555,29 @@ class AppLocalizationsEn extends AppLocalizations {
       'Parsing the occupancy status of Docker is relatively slow.';
 
   @override
+  String get passwordlessTerminal => 'Passwordless terminal';
+
+  @override
+  String get passwordlessTerminalTip =>
+      'Open a terminal through the monitor agent without SSH credentials. The shell runs as the account the agent runs as, so the monitor password alone is enough to get it — none of sshd\'s authentication, logging or second factor applies. The agent decides whether to allow this. It provides a terminal only: SFTP, port forwarding, containers, processes and systemd need SSH.';
+
+  @override
+  String get passwordlessTerminalNeedsMonitor =>
+      'A passwordless terminal requires a monitor address.';
+
+  @override
+  String get passwordlessTerminalConflictsWithSsh =>
+      'A passwordless terminal cannot be combined with SSH credentials.';
+
+  @override
+  String get passwordlessTerminalRefused =>
+      'This agent does not offer a passwordless terminal.';
+
+  @override
+  String get passwordlessTerminalInsecure =>
+      'This agent serves the terminal over TLS or loopback only, and this connection is plain HTTP.';
+
+  @override
   String get permission => 'Permissions';
 
   @override

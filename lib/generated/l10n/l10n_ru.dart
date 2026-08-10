@@ -558,6 +558,29 @@ class AppLocalizationsRu extends AppLocalizations {
       'Анализ статуса использования Docker может быть медленным';
 
   @override
+  String get passwordlessTerminal => 'Терминал без учётных данных';
+
+  @override
+  String get passwordlessTerminalTip =>
+      'Открыть терминал через агент monitor без учётных данных SSH. Оболочка выполняется от имени учётной записи, под которой работает агент, поэтому достаточно пароля monitor — аутентификация, журналирование и второй фактор sshd не применяются. Разрешать ли это, решает агент. Предоставляется только терминал: SFTP, проброс портов, контейнеры, процессы и systemd требуют SSH.';
+
+  @override
+  String get passwordlessTerminalNeedsMonitor =>
+      'Для терминала без учётных данных нужен адрес monitor.';
+
+  @override
+  String get passwordlessTerminalConflictsWithSsh =>
+      'Терминал без учётных данных нельзя совмещать с учётными данными SSH.';
+
+  @override
+  String get passwordlessTerminalRefused =>
+      'Этот агент не предоставляет терминал без учётных данных.';
+
+  @override
+  String get passwordlessTerminalInsecure =>
+      'Этот агент отдаёт терминал только по TLS или через loopback, а это соединение — открытый HTTP.';
+
+  @override
   String get permission => 'Разрешения';
 
   @override

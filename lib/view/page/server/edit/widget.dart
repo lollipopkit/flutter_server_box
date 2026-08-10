@@ -431,8 +431,30 @@ extension _Widgets on _ServerEditPageState {
           ),
         ).cardx,
         _buildSshViaMonitor(),
+        _buildPasswordlessTerminal(),
       ],
     );
+  }
+
+  /// A terminal from the agent itself, with no SSH credentials.
+  ///
+  /// Sits next to `SSH via monitor` because the two answer the same question
+  /// and only one may win — turning either on turns the other off here, and
+  /// `Spix.validate` refuses the combination regardless of what the form did.
+  Widget _buildPasswordlessTerminal() {
+    return ListTile(
+      leading: const Icon(Icons.lock_open),
+      title: TipText(l10n.passwordlessTerminal, l10n.passwordlessTerminalTip),
+      trailing: _passwordlessTerminal.listenVal(
+        (v) => Switch(
+          value: v,
+          onChanged: (val) {
+            _passwordlessTerminal.value = val;
+            if (val) _sshViaMonitor.value = false;
+          },
+        ),
+      ),
+    ).cardx;
   }
 
   /// SSH reached through the agent instead of directly.
@@ -448,7 +470,10 @@ extension _Widgets on _ServerEditPageState {
       trailing: _sshViaMonitor.listenVal(
         (v) => Switch(
           value: v,
-          onChanged: (val) => _sshViaMonitor.value = val,
+          onChanged: (val) {
+            _sshViaMonitor.value = val;
+            if (val) _passwordlessTerminal.value = false;
+          },
         ),
       ),
     ).cardx;

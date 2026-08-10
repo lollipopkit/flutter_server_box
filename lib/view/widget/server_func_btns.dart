@@ -11,6 +11,8 @@ import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
+import 'package:server_box/data/model/server/capabilities.dart';
+import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -83,17 +85,30 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
 
 extension ServerFuncBtnsUtils on ServerFuncBtns {
   List<ServerFuncBtn> get btns {
-    try {
-      final vals = <ServerFuncBtn>[];
-      final list = Stores.setting.serverFuncBtns.fetch();
-      for (final idx in list) {
-        if (idx < 0 || idx >= ServerFuncBtn.values.length) continue;
-        vals.add(ServerFuncBtn.values[idx]);
+    final ordered = () {
+      try {
+        final vals = <ServerFuncBtn>[];
+        final list = Stores.setting.serverFuncBtns.fetch();
+        for (final idx in list) {
+          if (idx < 0 || idx >= ServerFuncBtn.values.length) continue;
+          vals.add(ServerFuncBtn.values[idx]);
+        }
+        return vals;
+      } catch (e) {
+        return ServerFuncBtn.values;
       }
-      return vals;
-    } catch (e) {
-      return ServerFuncBtn.values;
-    }
+    }();
+
+    // A server reached only through its agent's passwordless PTY has one
+    // stream and no way to run a second command, so every other entry here
+    // would open a page that can never load. Filtered rather than disabled:
+    // there is nothing the user could do to make them work short of
+    // configuring SSH.
+    final caps = ServerCapabilities.of(ServerConnectCredential.fromSpi(spi));
+    if (caps.shell) return ordered;
+    return ordered
+        .where((e) => e == ServerFuncBtn.terminal && caps.terminal)
+        .toList();
   }
 }
 
@@ -193,11 +208,13 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
 void _gotoSSH(Spi spi, BuildContext context) async {
   // Determine whether to use built-in SSH or system SSH
   final useSystemSsh = Stores.setting.sshConnectionMode.fetch();
-  // A tunneled server has no address the system `ssh` could dial — its bytes
-  // reach sshd through the agent's WebSocket, which only this app speaks. The
-  // built-in terminal is the only option regardless of the setting.
+  // Neither a tunneled server nor one reached through its agent's own PTY has
+  // an address the system `ssh` could dial: their bytes travel over the
+  // agent's WebSocket, which only this app speaks. The built-in terminal is
+  // the only option for them regardless of the setting.
+  final ssh = spi.ssh;
   final useBuiltin =
-      isMobile || !useSystemSsh || (spi.ssh?.viaMonitor ?? false);
+      isMobile || !useSystemSsh || ssh == null || ssh.viaMonitor;
 
   // Use built-in SSH on mobile or when system SSH is not enabled
   if (useBuiltin) {
@@ -208,11 +225,6 @@ void _gotoSSH(Spi spi, BuildContext context) async {
     );
     return;
   }
-
-  // Launching an external `ssh` needs the SSH credential; a monitor-only
-  // server has none and never reaches here (the button row is hidden for it)
-  final ssh = spi.ssh;
-  if (ssh == null) return;
 
   final extraArgs = <String>[];
   if (ssh.port != 22) {

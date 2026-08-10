@@ -560,6 +560,29 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'analyse de l\'occupation des conteneurs Docker est relativement lente.';
 
   @override
+  String get passwordlessTerminal => 'Terminal sans identifiants';
+
+  @override
+  String get passwordlessTerminalTip =>
+      'Ouvrir un terminal via l\'agent monitor sans identifiants SSH. Le shell s\'exécute sous le compte de l\'agent : le mot de passe monitor suffit donc à l\'obtenir, et ni l\'authentification, ni la journalisation, ni le second facteur de sshd ne s\'appliquent. C\'est l\'agent qui décide de l\'autoriser. Il ne fournit qu\'un terminal : SFTP, redirection de ports, conteneurs, processus et systemd nécessitent SSH.';
+
+  @override
+  String get passwordlessTerminalNeedsMonitor =>
+      'Un terminal sans identifiants nécessite une adresse monitor.';
+
+  @override
+  String get passwordlessTerminalConflictsWithSsh =>
+      'Un terminal sans identifiants ne peut pas être combiné avec des identifiants SSH.';
+
+  @override
+  String get passwordlessTerminalRefused =>
+      'Cet agent ne propose pas de terminal sans identifiants.';
+
+  @override
+  String get passwordlessTerminalInsecure =>
+      'Cet agent ne sert le terminal qu\'en TLS ou en loopback, et cette connexion est en HTTP non chiffré.';
+
+  @override
   String get permission => 'Permissions';
 
   @override

@@ -87,6 +87,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _jumpServers = <String>[].vn;
   final _pveIgnoreCert = ValueNotifier(false);
   final _monitorIgnoreCert = ValueNotifier(false);
+  final _passwordlessTerminal = ValueNotifier(false);
 
   /// Connection method for this server: SSH+shell (false) or monitor's HTTP
   /// API (true) — mutually exclusive, see the switch at the top of the form.
@@ -153,6 +154,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _jumpServers.dispose();
     _pveIgnoreCert.dispose();
     _monitorIgnoreCert.dispose();
+    _passwordlessTerminal.dispose();
     _useMonitorHttp.dispose();
     _sshViaMonitor.dispose();
     _tunnelKeyIdx.dispose();

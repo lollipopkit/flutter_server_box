@@ -1092,6 +1092,42 @@ abstract class AppLocalizations {
   /// **'Parsing the occupancy status of Docker is relatively slow.'**
   String get parseContainerStatsTip;
 
+  /// No description provided for @passwordlessTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwordless terminal'**
+  String get passwordlessTerminal;
+
+  /// No description provided for @passwordlessTerminalTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Open a terminal through the monitor agent without SSH credentials. The shell runs as the account the agent runs as, so the monitor password alone is enough to get it — none of sshd\'s authentication, logging or second factor applies. The agent decides whether to allow this. It provides a terminal only: SFTP, port forwarding, containers, processes and systemd need SSH.'**
+  String get passwordlessTerminalTip;
+
+  /// No description provided for @passwordlessTerminalNeedsMonitor.
+  ///
+  /// In en, this message translates to:
+  /// **'A passwordless terminal requires a monitor address.'**
+  String get passwordlessTerminalNeedsMonitor;
+
+  /// No description provided for @passwordlessTerminalConflictsWithSsh.
+  ///
+  /// In en, this message translates to:
+  /// **'A passwordless terminal cannot be combined with SSH credentials.'**
+  String get passwordlessTerminalConflictsWithSsh;
+
+  /// No description provided for @passwordlessTerminalRefused.
+  ///
+  /// In en, this message translates to:
+  /// **'This agent does not offer a passwordless terminal.'**
+  String get passwordlessTerminalRefused;
+
+  /// No description provided for @passwordlessTerminalInsecure.
+  ///
+  /// In en, this message translates to:
+  /// **'This agent serves the terminal over TLS or loopback only, and this connection is plain HTTP.'**
+  String get passwordlessTerminalInsecure;
+
   /// No description provided for @permission.
   ///
   /// In en, this message translates to:

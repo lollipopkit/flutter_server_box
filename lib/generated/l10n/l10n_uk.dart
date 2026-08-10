@@ -559,6 +559,29 @@ class AppLocalizationsUk extends AppLocalizations {
       'Парсинг статусу зайнятості Docker є відносно повільним.';
 
   @override
+  String get passwordlessTerminal => 'Термінал без облікових даних';
+
+  @override
+  String get passwordlessTerminalTip =>
+      'Відкрити термінал через агент monitor без облікових даних SSH. Оболонка виконується від імені облікового запису, під яким працює агент, тож достатньо лише пароля monitor — автентифікація, журналювання та другий фактор sshd не застосовуються. Чи дозволяти це, вирішує агент. Надається лише термінал: SFTP, переспрямування портів, контейнери, процеси та systemd потребують SSH.';
+
+  @override
+  String get passwordlessTerminalNeedsMonitor =>
+      'Для термінала без облікових даних потрібна адреса monitor.';
+
+  @override
+  String get passwordlessTerminalConflictsWithSsh =>
+      'Термінал без облікових даних не можна поєднувати з обліковими даними SSH.';
+
+  @override
+  String get passwordlessTerminalRefused =>
+      'Цей агент не пропонує термінал без облікових даних.';
+
+  @override
+  String get passwordlessTerminalInsecure =>
+      'Цей агент віддає термінал лише через TLS або loopback, а це з\'єднання — відкритий HTTP.';
+
+  @override
   String get permission => 'Дозволи';
 
   @override

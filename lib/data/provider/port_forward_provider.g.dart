@@ -59,7 +59,7 @@ final class PortForwardNotifierProvider
 }
 
 String _$portForwardNotifierHash() =>
-    r'dff9f3fc99907d9ad28fd6da31105e54f13a5459';
+    r'578c114703b404b3fe053d46bb3be2d09d8cd2cb';
 
 final class PortForwardNotifierFamily extends $Family
     with

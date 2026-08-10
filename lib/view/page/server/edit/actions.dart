@@ -152,6 +152,10 @@ extension _Actions on _ServerEditPageState {
         return l10n.sshViaMonitorNeedsMonitor;
       case SpiValidationError.monitorTunnelAndOtherTransport:
         return l10n.sshViaMonitorConflictsWithOtherTransport;
+      case SpiValidationError.passwordlessTerminalWithoutMonitor:
+        return l10n.passwordlessTerminalNeedsMonitor;
+      case SpiValidationError.passwordlessTerminalAndSsh:
+        return l10n.passwordlessTerminalConflictsWithSsh;
     }
   }
 
@@ -259,6 +263,7 @@ extension _Actions on _ServerEditPageState {
         user: _monitorUserCtrl.text.selfNotEmptyOrNull,
         pwd: _monitorPwdCtrl.text.selfNotEmptyOrNull,
         ignoreCert: _monitorIgnoreCert.value,
+        passwordlessTerminal: _passwordlessTerminal.value,
       );
     }
 
@@ -525,6 +530,7 @@ extension _Utils on _ServerEditPageState {
       _monitorUserCtrl.text = monitorHttp.user ?? '';
       _monitorPwdCtrl.text = monitorHttp.pwd ?? '';
       _monitorIgnoreCert.value = monitorHttp.ignoreCert;
+      _passwordlessTerminal.value = monitorHttp.passwordlessTerminal;
     }
 
     final wol = spi.wolCfg;

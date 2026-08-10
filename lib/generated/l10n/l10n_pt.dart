@@ -556,6 +556,29 @@ class AppLocalizationsPt extends AppLocalizations {
       'Análise de status do Docker pode ser lenta';
 
   @override
+  String get passwordlessTerminal => 'Terminal sem credenciais';
+
+  @override
+  String get passwordlessTerminalTip =>
+      'Abrir um terminal através do agente monitor sem credenciais SSH. A shell é executada com a conta com que o agente é executado, por isso basta a palavra-passe do monitor para a obter — a autenticação, o registo e o segundo fator do sshd não se aplicam. É o agente que decide se o permite. Fornece apenas um terminal: SFTP, encaminhamento de portas, contentores, processos e systemd precisam de SSH.';
+
+  @override
+  String get passwordlessTerminalNeedsMonitor =>
+      'Um terminal sem credenciais requer um endereço de monitor.';
+
+  @override
+  String get passwordlessTerminalConflictsWithSsh =>
+      'Um terminal sem credenciais não pode ser combinado com credenciais SSH.';
+
+  @override
+  String get passwordlessTerminalRefused =>
+      'Este agente não oferece um terminal sem credenciais.';
+
+  @override
+  String get passwordlessTerminalInsecure =>
+      'Este agente serve o terminal apenas por TLS ou loopback, e esta ligação é HTTP não cifrado.';
+
+  @override
   String get permission => 'Permissões';
 
   @override
