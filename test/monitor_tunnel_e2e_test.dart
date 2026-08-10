@@ -114,6 +114,48 @@ void main() {
     );
   }, timeout: const Timeout(Duration(seconds: 60)));
 
+  test('opens an interactive shell on a PTY', () async {
+    final (client, _) = await connect();
+    addTearDown(client.close);
+
+    // What the app's terminal actually opens. Unlike `run`, this keeps the
+    // channel open in both directions for the life of the session, so a relay
+    // that only survives request/response traffic fails here and nowhere else.
+    final session = await client.shell(
+      pty: const SSHPtyConfig(width: 80, height: 24),
+    );
+    addTearDown(session.close);
+
+    final seen = StringBuffer();
+    final sub = session.stdout.listen(
+      (chunk) => seen.write(String.fromCharCodes(chunk)),
+    );
+    addTearDown(sub.cancel);
+
+    session.write(Uint8List.fromList('echo pty-e2e-marker\n'.codeUnits));
+    await Future.doWhile(() async {
+      if (seen.toString().contains('pty-e2e-marker')) return false;
+      await Future.delayed(const Duration(milliseconds: 100));
+      return true;
+    }).timeout(
+      const Duration(seconds: 20),
+      onTimeout: () => fail('no shell output over the tunnel; saw "$seen"'),
+    );
+
+    // A resize is a channel request rather than data, so it proves the relay
+    // carries the out-of-band traffic an interactive session depends on
+    session.resizeTerminal(100, 30);
+    session.write(Uint8List.fromList('echo pty-resized\n'.codeUnits));
+    await Future.doWhile(() async {
+      if (seen.toString().contains('pty-resized')) return false;
+      await Future.delayed(const Duration(milliseconds: 100));
+      return true;
+    }).timeout(
+      const Duration(seconds: 20),
+      onTimeout: () => fail('shell stopped responding after a resize'),
+    );
+  }, timeout: const Timeout(Duration(seconds: 60)));
+
   test('carries bulk data without corrupting it', () async {
     final (client, _) = await connect();
     addTearDown(client.close);
@@ -173,23 +215,20 @@ void main() {
     final (client, _) = await connect();
     addTearDown(client.close);
 
-    // Reaching the agent's own HTTP port proves the forward carries real
-    // traffic, and that port forwarding needs nothing from the agent beyond
-    // the SSH stream it is already relaying
-    final agentPort = Uri.parse(url).port;
-    final forward = await client.forwardLocal('127.0.0.1', agentPort);
+    // Forwarded to the far host's own sshd: it is the one service known to be
+    // listening there, since this session just came through it. The agent's
+    // HTTP port would only work when the agent and sshd share a host, which
+    // is exactly the case this feature exists to avoid.
+    final forward = await client.forwardLocal('127.0.0.1', 22);
     addTearDown(forward.close);
 
-    forward.sink.add(
-      'GET /api/v1/health HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n'
-          .codeUnits,
-    );
-
+    // A forward carrying real traffic gets the peer's version string without
+    // sending anything first, so the read direction is proven on its own
     final response = StringBuffer();
     await for (final chunk in forward.stream) {
       response.write(String.fromCharCodes(chunk));
-      if (response.toString().contains('healthy')) break;
+      if (response.toString().contains('\n')) break;
     }
-    expect(response.toString(), contains('healthy'));
+    expect(response.toString(), startsWith('SSH-2.0-'));
   }, timeout: const Timeout(Duration(seconds: 60)));
 }
