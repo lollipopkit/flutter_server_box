@@ -75,10 +75,15 @@ void main() {
     await waitFor(seen, 'passwordless-marker');
 
     // The shell runs as the agent's own account — the whole reason this needs
-    // the agent to be an ordinary user rather than root
-    session.write(utf8.encode('id -un\n'));
-    await waitFor(seen, Platform.environment['USER'] ?? 'root',
-        because: 'the shell should be the agent account');
+    // the agent to be an ordinary user rather than root. Which account that is
+    // depends on where the agent was installed, so it is named explicitly
+    // rather than guessed from this machine's environment.
+    final shellUser = env['SBM_E2E_SHELL_USER'];
+    if (shellUser != null) {
+      session.write(utf8.encode('id -un\n'));
+      await waitFor(seen, shellUser,
+          because: 'the shell should be the agent account');
+    }
   }, timeout: const Timeout(Duration(seconds: 60)));
 
   test('carries a resize to the shell', () async {
@@ -90,9 +95,11 @@ void main() {
 
     session.resizeTerminal(100, 40);
     // Asked of the shell rather than assumed: a resize is a control message,
-    // so nothing in the byte stream would otherwise show it arrived
-    session.write(utf8.encode('tput lines\n'));
-    await waitFor(seen, '40', because: 'the shell should see the new height');
+    // so nothing in the byte stream would otherwise show it arrived. `stty`
+    // rather than `tput`, which needs ncurses and is absent on a stock Alpine.
+    session.write(utf8.encode('stty size\n'));
+    await waitFor(seen, '40 100',
+        because: 'the shell should see the new size as rows then columns');
   }, timeout: const Timeout(Duration(seconds: 60)));
 
   test('ends the session when the shell exits', () async {
