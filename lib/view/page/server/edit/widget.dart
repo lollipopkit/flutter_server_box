@@ -805,7 +805,10 @@ extension _Widgets on _ServerEditPageState {
           ),
           actions: Btn.ok(
             onTap: () async {
-              context.pop();
+              // Two different navigators: the dialog is on the root one, and
+              // this page may be inside a pane. Popping the page's own stack
+              // to close a dialog dismissed the page and left the dialog up.
+              context.popDialog();
               await ref.read(serversProvider.notifier).delServer(spi!.id);
               if (!mounted) return;
               context.pop(true);

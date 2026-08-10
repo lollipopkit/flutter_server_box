@@ -168,7 +168,14 @@ class _HomePageState extends ConsumerState<HomePage>
               controller: _pageController,
               itemCount: _tabs.length,
               physics: const NeverScrollableScrollPhysics(),
-              itemBuilder: (_, index) => _tabs[index].page,
+              // Each tab keeps its own stack, so a page opened inside one —
+              // a server's details, its files — covers the tab and not the
+              // window. The bar or rail that got you here stays put, and
+              // coming back to a tab returns you to where you were in it.
+              itemBuilder: (_, index) => NestedNavigator(
+                key: ValueKey(_tabs[index]),
+                rootBuilder: (_) => _tabs[index].page,
+              ),
               onPageChanged: (value) {
                 FocusScope.of(context).unfocus();
                 if (!_switchingPage) {

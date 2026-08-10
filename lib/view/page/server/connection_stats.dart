@@ -300,7 +300,7 @@ extension _Actions on _ConnectionStatsPageState {
       title: l10n.compactDatabase,
       child: Text(l10n.compactDatabaseContent(sizeStr)),
       actions: [
-        TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
+        TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
         TextButton(
           onPressed: () async {
             context.pop();
@@ -369,7 +369,7 @@ extension _Actions on _ConnectionStatsPageState {
         ),
       ),
       actions: [
-        TextButton(onPressed: context.pop, child: Text(libL10n.close)),
+        TextButton(onPressed: context.popDialog, child: Text(libL10n.close)),
         TextButton(
           onPressed: () {
             context.pop();
@@ -409,7 +409,7 @@ extension _Actions on _ConnectionStatsPageState {
       title: title,
       child: Text(content),
       actions: [
-        TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
+        TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
         CountDownBtn(
           onTap: () async {
             try {

@@ -267,7 +267,7 @@ class _AskAiSheetState extends ConsumerState<_AskAiSheet> {
         style: const TextStyle(fontFamily: 'monospace'),
       ),
       actions: [
-        TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
+        TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
         TextButton(onPressed: () => context.pop(true), child: Text(libL10n.ok)),
       ],
     );

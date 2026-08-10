@@ -343,7 +343,7 @@ extension _Actions on _SSHTabPageState {
       context.showRoundDialog(
         title: l10n.serverHistory,
         child: Text(libL10n.empty),
-        actions: [Btn.ok(onTap: context.pop)],
+        actions: [Btn.ok(onTap: context.popDialog)],
       );
       return;
     }
@@ -385,7 +385,7 @@ extension _Actions on _SSHTabPageState {
           },
           child: Text(l10n.clearHistory),
         ),
-        Btn.ok(onTap: context.pop),
+        Btn.ok(onTap: context.popDialog),
       ],
     );
   }

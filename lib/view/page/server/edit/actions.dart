@@ -63,7 +63,7 @@ extension _Actions on _ServerEditPageState {
               },
               child: Text(libL10n.clear),
             ),
-          TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
+          TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
           TextButton(
             onPressed: () async => await _saveSudoPassword(controller.text),
             child: Text(libL10n.save),

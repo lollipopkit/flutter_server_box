@@ -18,11 +18,4 @@ class ServerSelection extends _$ServerSelection {
   String? build() => null;
 
   void select(String? id) => state = id;
-
-  /// Drops the selection when the selected server is gone, so the pane does
-  /// not sit on a server that has been deleted.
-  void clearIfMissing(Iterable<String> existing) {
-    final current = state;
-    if (current != null && !existing.contains(current)) state = null;
-  }
 }
