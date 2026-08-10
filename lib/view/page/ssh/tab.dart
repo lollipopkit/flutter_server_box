@@ -8,6 +8,7 @@ import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
@@ -79,6 +80,15 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   bool get wantKeepAlive => true;
 
   @override
+  void initState() {
+    super.initState();
+    // Anything queued before this tab existed. Tabs are built when first
+    // visited, so a request made from the server list arrives while there is
+    // nothing here to receive it.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _drainRequests());
+  }
+
+  @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
     registerForRestoration(_restorableTabs, 'tabs_state');
     if (!initialRestore || _restorableTabs.value.isEmpty) return;
@@ -96,6 +106,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    ref.listen(terminalRequestsProvider, (_, _) => _drainRequests());
     return Scaffold(
       appBar: PreferredSizeListenBuilder(
         // Both: the bar shows which tab is current *and* how the picker behind
@@ -193,6 +204,16 @@ extension _Sessions on _SSHTabPageState {
     // decided to keep.
     if (mounted) FocusScope.of(context).unfocus();
     _closeTab(tab.id);
+  }
+
+  /// Opens everything queued for this tab and empties the queue.
+  void _drainRequests() {
+    final pending = ref.read(terminalRequestsProvider);
+    if (pending.isEmpty) return;
+    ref.read(terminalRequestsProvider.notifier).clear();
+    for (final spi in pending) {
+      _open(spi);
+    }
   }
 
   void _closeTab(String id) {

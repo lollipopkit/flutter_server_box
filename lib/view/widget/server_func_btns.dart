@@ -11,10 +11,12 @@ import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/store.dart';
@@ -181,7 +183,7 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
         ProcessPage.route.go(context, args);
         break;
       case ServerFuncBtn.terminal:
-        _gotoSSH(spi, context);
+        _gotoSSH(spi, context, ref);
         break;
       case ServerFuncBtn.iperf:
         if (!await _checkClient(context, spi.id, ref)) return;
@@ -205,7 +207,7 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
   }
 }
 
-void _gotoSSH(Spi spi, BuildContext context) async {
+void _gotoSSH(Spi spi, BuildContext context, WidgetRef ref) async {
   // Determine whether to use built-in SSH or system SSH
   final useSystemSsh = Stores.setting.sshConnectionMode.fetch();
   // Neither a tunneled server nor one reached through its agent's own PTY has
@@ -216,13 +218,13 @@ void _gotoSSH(Spi spi, BuildContext context) async {
   final useBuiltin =
       isMobile || !useSystemSsh || ssh == null || ssh.viaMonitor;
 
-  // Use built-in SSH on mobile or when system SSH is not enabled
+  // One way in. A terminal opened from here used to be a page pushed over
+  // whatever was on screen, unknown to the SSH tab and its sessions, so the
+  // same server opened twice gave two shells that could not see each other and
+  // only one of which survived a relaunch.
   if (useBuiltin) {
-    Navigator.restorablePush(
-      context,
-      SSHPage.restorableRouteBuilder,
-      arguments: spi.id,
-    );
+    ref.read(terminalRequestsProvider.notifier).add(spi);
+    ref.read(homeTabRequestProvider.notifier).go(AppTab.ssh);
     return;
   }
 

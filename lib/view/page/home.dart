@@ -9,6 +9,7 @@ import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
@@ -145,6 +146,15 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    // Something elsewhere asked for a tab — opening a terminal from the server
+    // list, say. Acted on here because this page owns the controller and the
+    // animation; the caller only says where it wants to be.
+    ref.listen(homeTabRequestProvider, (_, tab) {
+      if (tab == null) return;
+      final index = _tabs.indexOf(tab);
+      if (index >= 0) _onDestinationSelected(index);
+      ref.read(homeTabRequestProvider.notifier).done();
+    });
     final isMobile = ResponsiveBreakpoints.of(context).isMobile;
     _syncFullscreenSystemUi();
 
