@@ -38,7 +38,7 @@ class _SshSession {
 }
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
-    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin, RestorationMixin {
+    with AutomaticKeepAliveClientMixin, RestorationMixin {
   // Restorable state for tab restoration
   final RestorableString _restorableTabsState = RestorableString('');
 
@@ -77,26 +77,48 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     _restorableTabsState.value = jsonEncode(tabsData);
   }
 
+  /// Reopens whatever was open when the app last went away.
+  ///
+  /// Every entry is read defensively and skipped on its own. This is the one
+  /// path that runs against data an older build wrote, and one malformed
+  /// record used to abort the loop — losing every other terminal with it.
   void _restoreTabs() {
+    final List<dynamic> entries;
     try {
-      final tabsData = jsonDecode(_restorableTabsState.value) as List;
-      for (final tabData in tabsData) {
-        final serverId = tabData['serverId'] as String;
-        final tmuxSession = tabData['tmuxSession'] as String?;
-        final tmuxWindow = tabData['tmuxWindow'] as int?;
-
-        // Find the server
-        final servers = Stores.server.fetch();
-        final spi = servers.where((s) => s.id == serverId).firstOrNull;
-        if (spi == null) {
-          continue;
-        }
-
-        // Add the tab with tmux state
-        _addTab(spi, tmuxSession: tmuxSession, tmuxWindow: tmuxWindow);
-      }
+      entries = jsonDecode(_restorableTabsState.value) as List;
     } catch (e, st) {
-      Loggers.app.warning('Failed to restore SSH tabs', e, st);
+      Loggers.app.warning('Unreadable SSH tab state', e, st);
+      return;
+    }
+
+    // Read once, not once per tab.
+    final servers = {for (final spi in Stores.server.fetch()) spi.id: spi};
+
+    var restored = 0;
+    for (final entry in entries) {
+      try {
+        if (entry is! Map) continue;
+        final spi = servers[entry['serverId']];
+        if (spi == null) continue;
+        _addTab(
+          spi,
+          tmuxSession: entry['tmuxSession'] as String?,
+          tmuxWindow: entry['tmuxWindow'] as int?,
+          // Selecting each in turn would animate through every restored tab
+          // and land on the last one, which is not where anyone left off.
+          select: false,
+        );
+        restored++;
+      } catch (e, st) {
+        Loggers.app.warning('Skipped an unrestorable SSH tab', e, st);
+      }
+    }
+
+    // One write for the whole restore rather than one per tab, and only after
+    // the set is final.
+    if (restored > 0) {
+      _saveTabsState();
+      _sessions.select(1);
     }
   }
 
@@ -123,7 +145,9 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     super.build(context);
     return Scaffold(
       appBar: PreferredSizeListenBuilder(
-        listenable: _sessions,
+        // Both, because the bar shows two things: which tab is current, and
+        // which way the list behind the add page is sorted.
+        listenable: Listenable.merge([_sessions, _sortVersionVN]),
         builder: () {
           return _TabBar(
             names: _sessions.names,
@@ -174,7 +198,12 @@ extension on _SSHTabPageState {
     _saveTabsState();
   }
 
-  Future<void> _addTab(Spi spi, {String? tmuxSession, int? tmuxWindow}) async {
+  void _addTab(
+    Spi spi, {
+    String? tmuxSession,
+    int? tmuxWindow,
+    bool select = true,
+  }) {
     final tab = _sessions.add(
       preferred: spi.name,
       build: (name, focus, visible) {
@@ -200,13 +229,12 @@ extension on _SSHTabPageState {
       },
     );
     Stores.history.sshServerHistory.add(spi.id);
+    if (!select) return;
     _saveTabsState();
     _sessions.select(_sessions.names.indexOf(tab.name));
   }
 
-  void _onTapInitCard(Spi spi) async {
-    await _addTab(spi);
-  }
+  void _onTapInitCard(Spi spi) => _addTab(spi);
 
   void _onLongPressInitCard(Spi spi) {
     ServerEditPage.route.go(context, args: SpiRequiredArgs(spi));
@@ -218,8 +246,11 @@ extension on _SSHTabPageState {
       child: Text('${libL10n.close} SSH ${libL10n.conn}($name) ?'),
       actions: Btnx.okReds,
     );
-    Future.delayed(Durations.short1, FocusScope.of(context).unfocus);
+    // Only when the tab actually goes. Unfocusing on the way out of a
+    // cancelled dialog took the keyboard away from a terminal the user had
+    // just decided to keep.
     if (confirm != true) return;
+    if (mounted) FocusScope.of(context).unfocus();
     await _handleTabRemoved(name);
   }
 
@@ -429,10 +460,8 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final showHomeActions = index == 0;
     final showSnippetAction = index != 0;
-    return Builder(
-      builder: (context) {
-        return Row(
-          children: [
+    return Row(
+      children: [
             _buildAddItem(context),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 17),
@@ -495,10 +524,8 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
                   ],
                 ),
               ),
-            ],
-          ],
-        );
-      },
+        ],
+      ],
     );
   }
 
