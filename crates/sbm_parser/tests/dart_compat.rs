@@ -267,11 +267,12 @@ fn disk_parse_nested_container_keeps_children() {
     assert!(mounts.contains(&"/") && mounts.contains(&"/home"));
 }
 
-/// Dart 'parse df -k output (fallback mode)': 3 entries (udev, vda3, vda2; tmpfs excluded)
+/// Dart 'parse df -k output (fallback mode)': 2 entries (vda3, vda2; tmpfs and
+/// the kernel mounts excluded)
 #[test]
 fn disk_parse_df_k() {
     let disks = linux::parse_disk(include_str!("fixtures/df_k.txt"));
-    assert_eq!(disks.len(), 3);
+    assert_eq!(disks.len(), 2);
 
     let root = disks.iter().find(|d| d.mount == "/").unwrap();
     assert_eq!(root.path, "/dev/vda3");
@@ -285,9 +286,30 @@ fn disk_parse_df_k() {
     assert_eq!(efi.used_percent, 7);
     assert_eq!(efi.size, 192559);
 
-    let udev = disks.iter().find(|d| d.path == "udev").unwrap();
-    assert_eq!(udev.mount, "/dev");
-    assert_eq!(udev.size, 864088);
+    // udev on /dev used to be reported. It is 0 B used of a size that is just
+    // the RAM the kernel would let it take, on a mount holding device nodes.
+    assert!(!disks.iter().any(|d| d.mount == "/dev"));
+}
+
+/// A container host publishes one devtmpfs row per device node — 24 of them
+/// here, every one 0 B used of the same 7.8 GB — plus shm, tmpfs and a bind
+/// mount over /proc. None of it is storage.
+#[test]
+fn disk_parse_df_drops_kernel_mounts() {
+    let disks = linux::parse_disk(include_str!("fixtures/df_orbstack.txt"));
+
+    assert!(!disks.iter().any(|d| d.path == "devtmpfs"));
+    assert!(!disks.iter().any(|d| d.mount.starts_with("/dev")));
+    assert!(!disks.iter().any(|d| d.mount.starts_with("/proc")));
+    assert!(!disks.iter().any(|d| d.path == "shm" || d.path == "tmpfs"));
+
+    let root = disks.iter().find(|d| d.mount == "/").unwrap();
+    assert_eq!(root.path, "/dev/vdb1");
+    assert_eq!(root.used_percent, 9);
+    assert_eq!(root.size, 235798528);
+
+    // The virtiofs share is real storage and stays, wherever it is mounted
+    assert!(disks.iter().any(|d| d.path == "mac" && d.mount == "/mnt/mac"));
 }
 
 /// Dart 'parse ImmortalWrt df -k output without shrinking units'
@@ -357,14 +379,12 @@ Filesystem                          1024-blocks      Used Available Capacity ius
 devfs                                       223       223         0   100%     772          0  100%   /dev
 ";
     let disks = linux::parse_disk(raw);
-    // devfs is included by the shared _shouldCalc semantics (consumers filter
-    // by /dev path prefix downstream)
-    assert_eq!(disks.len(), 3);
+    // devfs on /dev is a kernel mount like Linux's udev, and dropped with it
+    assert_eq!(disks.len(), 2);
     assert_eq!(disks[0].mount, "/");
     assert_eq!(disks[0].used_percent, 6);
     assert_eq!(disks[1].mount, "/System/Volumes/Data");
     assert_eq!(disks[1].used, 719366920);
-    assert_eq!(disks[2].mount, "/dev");
 }
 
 /// Dart 'handle JSON parsing errors gracefully': malformed JSON that isn't df → empty
@@ -389,7 +409,7 @@ LSBLK_SUCCESS"#;
 #[test]
 fn disk_parse_df_fallback_when_not_json() {
     let disks = linux::parse_disk(include_str!("fixtures/df_k.txt"));
-    assert_eq!(disks.len(), 3);
+    assert_eq!(disks.len(), 2);
 }
 
 // ---------- Network: net_speed_test.dart ----------

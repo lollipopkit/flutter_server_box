@@ -136,6 +136,27 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
       );
     });
 
+    test('the trend buffer carries over between refreshes', () async {
+      // What the chart cards are drawn from. Handing every refresh a fresh
+      // buffer left them holding only the sample taken moments ago, which
+      // fl_chart plots as a single point against the left edge.
+      final previous = InitStatus.status;
+      previous.history.add(timeMs: 1, cpu: 1);
+      previous.history.add(timeMs: 2, cpu: 2);
+
+      final result = await getStatus(
+        ServerStatusUpdateReq(
+          system: SystemType.bsd,
+          ss: previous,
+          parsedOutput: const {},
+          customCmds: const {},
+        ),
+      );
+
+      expect(identical(result.history, previous.history), isTrue);
+      expect(result.history.length, 2);
+    });
+
     test('Windows CPU brand comes from the processor record', () async {
       // One WMI record carries Name alongside the core counts, so the brand
       // and the count it applies to can't disagree. Upstream reads the brand

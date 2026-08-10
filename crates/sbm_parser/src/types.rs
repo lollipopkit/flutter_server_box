@@ -120,13 +120,35 @@ pub struct Disk {
     pub children: Vec<Disk>,
 }
 
-/// Whether to include in aggregation (Dart `_shouldCalc`):
-/// include /dev-prefixed, network mounts (//), /mnt mount points; exclude shm/overlay/tmpfs; include the rest
+/// Whether a `df` row describes storage worth reporting (Dart `_shouldCalc`):
+/// exclude kernel mounts; include /dev-prefixed sources, network mounts (//),
+/// /mnt mount points; exclude shm/overlay/tmpfs/devtmpfs sources; include the rest
 pub fn disk_should_calc(fs: &str, mount: &str) -> bool {
+    // Checked before the inclusions below, so that a source spelled like a
+    // block device cannot bring these back: a host that exposes many device
+    // nodes publishes one devtmpfs row per node, two dozen lines all claiming
+    // 0 B used of the same size.
+    if is_kernel_mount(mount) {
+        return false;
+    }
     if fs.starts_with("/dev") || fs.starts_with("//") || mount.starts_with("/mnt") {
         return true;
     }
-    !(fs.starts_with("shm") || fs.starts_with("overlay") || fs.starts_with("tmpfs"))
+    !(fs.starts_with("shm")
+        || fs.starts_with("overlay")
+        || fs.starts_with("tmpfs")
+        || fs.starts_with("devtmpfs"))
+}
+
+/// `/dev`, `/proc`, `/sys`, and anything mounted inside them.
+///
+/// `/run` is deliberately absent: several distributions mount removable media
+/// under `/run/media/<user>`, which is a disk someone wants to see. The tmpfs
+/// rows `/run` otherwise carries are excluded by their source instead.
+fn is_kernel_mount(mount: &str) -> bool {
+    ["/dev", "/proc", "/sys"]
+        .iter()
+        .any(|p| mount == *p || mount.strip_prefix(p).is_some_and(|r| r.starts_with('/')))
 }
 
 /// Cumulative NIC counters in bytes (Dart `NetSpeedPart`; no timestamp — recorded by the caller per sample)

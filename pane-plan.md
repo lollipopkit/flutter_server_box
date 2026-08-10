@@ -218,64 +218,90 @@ is a separate commit and can be reverted alone.
 
 ## Manual verification
 
-Everything here needs a running app and, in places, a real server. Collected
-as it came up rather than checked one item at a time.
+Ordered so that a failure stops wasted effort: each phase assumes the ones
+before it passed. Restarts come last, because they clear the state everything
+earlier set up.
 
-### Panes
+Three items are marked **unverified reasoning** — places where the code is
+correct as far as I can argue but nothing has actually run it. If something is
+going to be wrong, it is most likely one of those.
 
-- [ ] Window at least 800pt wide: tapping a server shows a compact list on the
-      left and its details on the right. Below 800pt, unchanged.
-- [ ] Selecting another server cross-fades the detail; the list stays put.
-- [ ] The divider drags, and the width it is left at survives a relaunch.
-- [ ] Settings → single column forces one pane however wide the window is.
-- [ ] A server that has never connected still selects, and the detail pane
-      shows the error in full plus a working Retry.
-- [ ] Deleting a server closes the dialog and collapses the pane back to a
-      full-width list.
-- [ ] The close button on the detail pane's bar hands the width back to the
-      list. It appears only there — full-screen, the back button is the way
-      out and the bar keeps it.
+### 0. Smoke — if this fails, nothing below means anything
 
-### Navigation
+- [ ] The app launches without a red screen.
+- [ ] All four tabs open.
+- [ ] Switching Server / SSH / File is smooth. Jank here means the
+      rebuild-per-frame regression is not actually fixed.
 
-- [ ] The bar (or rail) stays visible on a server's details, its files, its
-      processes.
-- [ ] Leaving a tab and returning lands back where you were in it.
-- [ ] Back steps through a tab's own stack, and only leaves the app once that
-      stack is empty.
-- [ ] Switching between Server / SSH / File tabs is smooth — the regression
-      that rebuilt each tab once per animation frame is fixed, but only a real
-      run says whether anything else is heavy.
+### 1. Navigation skeleton
 
-### Terminal
+- [ ] Opening a server's details keeps the bar (phone) or rail (desktop) on
+      screen.
+- [ ] From there, open something further in — processes, edit. Back steps out
+      one level at a time.
+- [ ] **Unverified reasoning:** leave the tab mid-way through that stack,
+      come back, and you should still be where you were. This depends on
+      `AutomaticKeepAliveClientMixin` notifications crossing the per-tab
+      `Navigator`. If they do not, the tab resets to its root.
+- [ ] At a tab's root, back leaves the app (or asks to) rather than doing
+      nothing.
 
-- [ ] Opening the first terminal shows no red screen (was `View.of` during
-      `initState` in xterm).
-- [ ] The terminal button on a server opens a tab in the SSH tab rather than a
-      full-screen page.
+### 2. Panes — a window at least 800pt wide
+
+- [ ] Tapping a server puts a compact list on the left, its details on the
+      right.
+- [ ] Tapping another server cross-fades the details; the list does not move.
+- [ ] The divider drags.
+- [ ] The close button on the details bar hands the width back to the list.
+- [ ] Settings → single column forces one pane at any width; turning it off
+      restores two.
+- [ ] Narrow the window below 800pt: back to one column, and tapping a server
+      pushes as it always did.
+
+### 3. Terminal — needs a real server
+
+- [ ] **The first terminal opens without a red screen.** This one broke
+      before; the fix is in xterm's `initState`.
+- [ ] The terminal button on a server switches to the SSH tab and adds a
+      session, rather than covering the window.
 - [ ] The same server opened twice gives `name` and `name(1)`.
-- [ ] Closing a middle tab keeps the tab you were looking at.
-- [ ] Cancelling the close confirmation leaves the terminal focused.
-- [ ] Switching tabs moves focus with them — typing goes to the visible one.
-- [ ] Quit and reopen: terminals come back, with their tmux session and
-      window, and it lands on the first.
-- [ ] Two shells on the *same* server, both attached to different tmux
-      sessions, both come back attached to their own — they used to share one
-      restoration bucket.
-- [ ] Sort menu: all four options apply, and the icon on the bar changes.
-- [ ] Search and history both open a terminal; a server deleted since is a
-      disabled row rather than an error toast.
+- [ ] Closing a middle tab leaves you on the tab you were looking at.
+- [ ] Cancelling the close confirmation leaves the terminal focused — type
+      immediately and it should land.
+- [ ] Switching tabs moves focus with them.
+- [ ] Sort menu: all four options reorder the picker, and the icon on the bar
+      changes with them.
+- [ ] Search and history both open a terminal. A server deleted since is a
+      greyed row, not an error toast.
 
-### Files
+### 4. Files — needs a real server
 
-- [ ] The SFTP button opens a tab in the File tab beside this device's files.
-- [ ] Two servers' files stay open at once, and switching between them does
-      not reconnect.
-- [ ] Quit and reopen: the same servers come back, each in the directory it
-      was left in, landing on the first.
-
-- [ ] One bar, not two: SFTP's download / sort / search / sudo / refresh sit
-      in the tab strip, follow the session you switch to, and the sudo button
-      still appears only where sudo is configured.
+- [ ] The SFTP button switches to the File tab and adds a session beside this
+      device's files.
+- [ ] Two servers stay open at once; switching between them does not
+      reconnect.
+- [ ] One bar, not two. Download / sort / search / refresh sit in the tab
+      strip and follow the session you switch to; sudo appears only where sudo
+      is configured.
 - [ ] Opening SFTP as a file picker from elsewhere still draws its own bar
       with the server name.
+
+### 5. Restart — last, because it clears everything above
+
+- [ ] **Unverified reasoning:** quit and reopen — terminals come back at all.
+      This depends on `RestorationMixin` still finding its bucket now that
+      each tab sits under its own `Navigator`. If it does not, nothing is
+      restored anywhere.
+- [ ] They come back with their tmux session and window, landing on the first.
+- [ ] **Two shells on the *same* server, attached to different tmux sessions,
+      each come back to its own.** They used to share one restoration bucket.
+- [ ] The file tab reopens the same servers, each in the directory it was left
+      in.
+- [ ] The pane divider is where you left it.
+
+### 6. Destructive — do these on a server you do not mind losing
+
+- [ ] A server that has never connected still selects, and the pane shows the
+      whole error plus a Retry that works.
+- [ ] Deleting a server closes the confirmation and collapses the pane back to
+      a full-width list — the dialog used to stay up with nothing behind it.

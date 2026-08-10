@@ -84,7 +84,9 @@ void main() {
 
   test('disk section (df fallback)', () async {
     final disks = (await parseViaFfi({'disk': _dfRaw}))['disks'] as List;
-    expect(disks.length, 3); // udev, vda3, vda2; tmpfs excluded
+    // vda3, vda2; tmpfs and the kernel mounts (udev on /dev) excluded
+    expect(disks.length, 2);
+    expect(disks.any((d) => d['mount'] == '/dev'), isFalse);
     final root = disks.firstWhere((d) => d['mount'] == '/');
     expect(root['path'], '/dev/vda3');
     expect(root['used_percent'], 47);

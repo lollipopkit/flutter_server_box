@@ -189,6 +189,12 @@ class DiskUsage {
 }
 
 bool _shouldCalc(String fs, String mount) {
+  // Checked before the inclusions below, so that a source spelled like a block
+  // device cannot bring these back: a host that exposes many device nodes
+  // publishes one devtmpfs row per node, two dozen lines all claiming 0 B used
+  // of the same size.
+  if (_isKernelMount(mount)) return false;
+
   if (fs.startsWith('/dev')) return true;
   // Some NAS may have mounted path like this `//192.168.1.2/`
   if (fs.startsWith('//')) return true;
@@ -196,9 +202,22 @@ bool _shouldCalc(String fs, String mount) {
 
   if (fs.startsWith('shm') ||
       fs.startsWith('overlay') ||
-      fs.startsWith('tmpfs')) {
+      fs.startsWith('tmpfs') ||
+      fs.startsWith('devtmpfs')) {
     return false;
   }
 
   return true;
+}
+
+/// `/dev`, `/proc`, `/sys`, and anything mounted inside them.
+///
+/// `/run` is deliberately absent: several distributions mount removable media
+/// under `/run/media/<user>`, which is a disk someone wants to see. The tmpfs
+/// rows `/run` otherwise carries are excluded by their source instead.
+bool _isKernelMount(String mount) {
+  for (final prefix in const ['/dev', '/proc', '/sys']) {
+    if (mount == prefix || mount.startsWith('$prefix/')) return true;
+  }
+  return false;
 }

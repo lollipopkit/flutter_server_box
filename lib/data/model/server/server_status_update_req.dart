@@ -92,10 +92,14 @@ void _apply(String section, void Function() fn) {
 
 /// Creates a per-refresh working snapshot.
 ///
-/// `cpu`, `netSpeed`, and `diskIO` intentionally reuse the source references
-/// because their rolling/history state is needed for deltas across refreshes.
+/// `cpu`, `netSpeed`, `diskIO` and `history` intentionally reuse the source
+/// references because their rolling/history state is needed across refreshes.
+/// Leaving `history` out gave every refresh an empty buffer, so the trend
+/// charts only ever held the sample taken moments ago — one point, drawn at
+/// the left edge.
 ServerStatus _createWorkingStatus(ServerStatus source, SystemType system) {
   return ServerStatus(
+    history: source.history,
     cpu: Cpus.copy(source.cpu),
     mem: InitStatus.mem,
     disk: const [],
