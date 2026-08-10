@@ -65,12 +65,17 @@ extension _PaneList on _ServerPageState {
     );
 
     return _flyingId.listenVal((flyingId) {
-      if (flyingId != srv.spi.id) return tile;
+      // Marked while selected as well as while flying: closing the pane has to
+      // measure this row *before* the layout goes back to a grid, and by then
+      // there is nothing left to ask.
+      if (flyingId != srv.spi.id) {
+        return selected ? KeyedSubtree(key: _flightAnchorKey, child: tile) : tile;
+      }
       // Laid out but not drawn: the flight needs this row's rectangle to know
       // where it is going, and showing the row while a copy of it is still on
       // its way would put the same card on screen twice.
       return Visibility(
-        key: _flightTargetKey,
+        key: _flightAnchorKey,
         visible: false,
         maintainSize: true,
         maintainAnimation: true,

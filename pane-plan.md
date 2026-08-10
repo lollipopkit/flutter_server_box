@@ -252,7 +252,8 @@ going to be wrong, it is most likely one of those.
       right.
 - [ ] Tapping another server transitions the details; the list does not move.
 - [ ] The divider drags.
-- [ ] The close button on the details bar hands the width back to the list.
+- [ ] The close button on the details bar hands the width back to the list,
+      and the row flies back to where its card sits in the grid.
 - [ ] Settings → single column forces one pane at any width; turning it off
       restores two.
 - [ ] Narrow the window below 800pt: back to one column, and tapping a server

@@ -25,6 +25,21 @@ extension _Flight on _ServerPageState {
     _awaitLanding(overlay, srv, from, attempt: 0);
   }
 
+  /// List → grid, the way back.
+  ///
+  /// Measured before the caller clears the selection, because the row being
+  /// flown *from* is the one the pane is about to take away — after the
+  /// rebuild there is nothing left to ask where it was.
+  void _flyRowIntoGrid(ServerState srv) {
+    final overlay = Overlay.maybeOf(context, rootOverlay: true);
+    if (overlay == null) return;
+    final from = rectInOverlay(_flightAnchorKey.currentContext, overlay);
+    if (from == null) return;
+
+    _flyingId.value = srv.spi.id;
+    _awaitLanding(overlay, srv, from, attempt: 0);
+  }
+
   void _awaitLanding(
     OverlayState overlay,
     ServerState srv,
@@ -34,11 +49,12 @@ extension _Flight on _ServerPageState {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _flyingId.value != srv.spi.id) return;
 
-      final to = rectInOverlay(_flightTargetKey.currentContext, overlay);
+      final to = rectInOverlay(_flightAnchorKey.currentContext, overlay);
       if (to == null) {
-        // The rows are built by a ListView, so one below the fold has no
-        // context to measure, and the pane takes a frame or two to lay out at
-        // all. Give it those, then give up rather than leave a row hidden.
+        // Both ends are built lazily — rows by a `ListView`, cards by the
+        // grid's columns — so one below the fold has no context to measure,
+        // and the new layout takes a frame or two to settle. Give it those,
+        // then give up rather than leave the destination hidden.
         if (attempt < 2) {
           return _awaitLanding(overlay, srv, from, attempt: attempt + 1);
         }

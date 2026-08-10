@@ -77,10 +77,17 @@ class _ServerPageState extends ConsumerState<ServerPage>
   final _autoHideCtrl = AutoHideController();
 
   /// The server whose card is in the air, or null. Its row in the list is
-  /// built hidden and carries [_flightTargetKey], so the flight has somewhere
+  /// built hidden and carries [_flightAnchorKey], so the flight has somewhere
   /// to measure and somewhere to land without a second copy showing early.
   final _flyingId = ValueNotifier<String?>(null);
-  final _flightTargetKey = GlobalKey();
+
+  /// The row or card at the far end of a flight.
+  ///
+  /// One key for both ends, because the two can never be on screen together:
+  /// the compact row only exists while the pane is open, the grid card only
+  /// while it is closed, and a flight is what happens in between. Going out it
+  /// marks the row being flown to; coming back, the card.
+  final _flightAnchorKey = GlobalKey();
   OverlayFlight? _flight;
 
   /// Deselecting is the whole of "close the pane": the detail is built from
@@ -95,7 +102,11 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // would land on nothing.
     _endFlight();
     _flyingId.value = null;
+
+    final id = ref.read(serverSelectionProvider);
+    final srv = id == null ? null : ref.read(serverProvider(id));
     ref.read(serverSelectionProvider.notifier).select(null);
+    if (srv != null) _flyRowIntoGrid(srv);
   }
 
   @override
@@ -255,7 +266,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
   }
 
   Widget _buildEachServerCard(ServerState srv) {
-    return CardX(
+    final card = CardX(
       key: Key(srv.spi.id + _tag.value),
       // A context from inside the built tree, so the tap can ask whether a
       // detail pane is on screen. The state's own context is an ancestor of
@@ -276,6 +287,20 @@ class _ServerPageState extends ConsumerState<ServerPage>
         ),
       ),
     );
+
+    return _flyingId.listenVal((flyingId) {
+      if (flyingId != srv.spi.id) return card;
+      // Where a card flying back is going. Laid out so it can be measured,
+      // unpainted so the copy in the air is the only one visible.
+      return Visibility(
+        key: _flightAnchorKey,
+        visible: false,
+        maintainSize: true,
+        maintainAnimation: true,
+        maintainState: true,
+        child: card,
+      );
+    });
   }
 
   /// The child's width mat not equal to 1/4 of the screen width,
