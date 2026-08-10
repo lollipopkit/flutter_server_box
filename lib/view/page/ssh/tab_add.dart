@@ -135,13 +135,12 @@ class _SideBarState extends ConsumerState<_SideBar> {
         onClose: widget.onClose,
         actions: widget.actions,
         targets: [
-          SessionSideBarSection(libL10n.servers),
+          SideBarSection(libL10n.servers),
           for (final id in order)
             if (state.servers[id] case final spi?)
-              SessionSideBarTile(
+              SideBarTile(
                 key: ValueKey(id),
                 title: spi.name,
-                subtitle: spi.displayAddr,
                 // Always a new shell, never a jump to one that is already
                 // open: the section above is where switching happens, and a
                 // second shell on one server is an ordinary thing to want.

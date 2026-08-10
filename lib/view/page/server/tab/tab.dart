@@ -50,10 +50,6 @@ class ServerPage extends ConsumerStatefulWidget {
 const _cardPad = 74.0;
 const _cardPadSingle = 13.0;
 
-/// The title row brings 7 of its own on the left, which is sized for a card as
-/// wide as the window. In a 320pt column the name ends up against the edge.
-const _kPaneTilePadding = EdgeInsets.fromLTRB(6, 11, 0, 11);
-
 /// Long enough to read as one movement, short enough not to be waited on.
 const _kFlightDuration = Durations.medium3;
 

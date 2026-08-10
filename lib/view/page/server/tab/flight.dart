@@ -93,16 +93,16 @@ extension _Flight on _ServerPageState {
     _flight = null;
   }
 
-  /// The row form: a card with nothing but its title, which is also what a
-  /// card of a server that has not connected looks like. That overlap is why
-  /// the two ends read as one thing changing shape rather than two widgets
-  /// swapped for each other.
+  /// The row form: the rail entry the card lands as.
+  ///
+  /// Drawn selected, because a card only ever flies into the rail as the thing
+  /// that was just opened, and it would otherwise arrive plain and change
+  /// colour a frame later.
   Widget _flightRow(ServerState srv) {
-    return CardX(
-      child: Padding(
-        padding: _kPaneTilePadding,
-        child: _buildServerCardTitle(srv),
-      ),
+    return SideBarTile(
+      title: srv.spi.name,
+      selected: true,
+      live: srv.conn == ServerConn.finished,
     );
   }
 

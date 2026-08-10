@@ -393,18 +393,13 @@ class _SideBar extends ConsumerWidget {
           // Above the heading rather than under one of its own: it is the
           // place that is always reachable, not one entry in a list of many.
           const SizedBox(height: 8),
-          SessionSideBarTile(
-            title: libL10n.device,
-            subtitle: Paths.file,
-            onTap: onLocal,
-          ),
-          SessionSideBarSection(libL10n.servers),
+          SideBarTile(title: libL10n.device, onTap: onLocal),
+          SideBarSection(libL10n.servers),
           for (final id in state.serverOrder)
             if (state.servers[id] case final spi?)
-              SessionSideBarTile(
+              SideBarTile(
                 key: ValueKey(id),
                 title: spi.name,
-                subtitle: spi.displayAddr,
                 onTap: () => onServer(spi),
               ),
         ],

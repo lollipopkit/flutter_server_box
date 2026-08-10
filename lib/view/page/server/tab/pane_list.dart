@@ -1,11 +1,12 @@
 part of 'tab.dart';
 
-/// The server list as a narrow column beside the detail pane.
+/// The server list as a rail beside the detail pane.
 ///
-/// Reuses the card's title row rather than inventing a second way to say the
-/// same things. That row is already exactly what a card shows when the server
-/// is not connected — name, connection state, the actions that apply — so a
-/// separate list style would be a second thing to keep in sync for no gain.
+/// The same rail the terminal and file pages use, because it is the same job:
+/// a narrow index of everything, marking what is live and what is on screen,
+/// read while your attention is on the pane beside it. A card belongs at full
+/// width where its charts can be read; in a column this narrow they are a
+/// smaller copy of what the detail pane is already showing.
 extension _PaneList on _ServerPageState {
   Widget _buildPaneList(List<String> filtered) {
     final selected = ref.watch(serverSelectionProvider);
@@ -26,10 +27,8 @@ extension _PaneList on _ServerPageState {
           ? Center(child: Text(libL10n.empty, textAlign: TextAlign.center))
           : ListView.builder(
               controller: _scrollController,
-              // The grid gets its side margins from the column layout; a
-              // single column has none of its own, so the cards would sit
-              // against the window edge.
-              padding: const EdgeInsets.fromLTRB(7, 7, 7, 77),
+              // Room at the bottom for the add button to float over.
+              padding: const EdgeInsets.only(top: 4, bottom: 77),
               itemCount: filtered.length,
               itemBuilder: (context, index) {
                 final id = filtered[index];
@@ -49,19 +48,14 @@ extension _PaneList on _ServerPageState {
     ServerState srv, {
     required bool selected,
   }) {
-    final scheme = Theme.of(context).colorScheme;
-    final tile = CardX(
-      // The selected card carries the tint the rest of the app uses for a
-      // current choice; the others keep the default card colour.
-      color: selected ? scheme.secondaryContainer : null,
-      child: InkWell(
-        onTap: () => _onTapCard(context, srv),
-        onLongPress: () => _onLongPressCard(srv),
-        child: Padding(
-          padding: _kPaneTilePadding,
-          child: _buildServerCardTitle(srv),
-        ),
-      ),
+    final tile = SideBarTile(
+      title: srv.spi.name,
+      selected: selected,
+      // The same mark the terminal rail uses for a running shell: this one is
+      // connected and has something to show.
+      live: srv.conn == ServerConn.finished,
+      onTap: () => _onTapCard(context, srv),
+      onLongPress: () => _onLongPressCard(srv),
     );
 
     return _flyingId.listenVal((flyingId) {
