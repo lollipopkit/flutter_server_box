@@ -555,6 +555,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Parsing the occupancy status of Docker is relatively slow.';
 
   @override
+  String get shellSourceNone => 'No shell';
+
+  @override
   String get passwordlessTerminal => 'Passwordless terminal';
 
   @override

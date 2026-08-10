@@ -557,6 +557,9 @@ class AppLocalizationsNl extends AppLocalizations {
       'Het parsen van de bezettingsstatus van Docker is relatief langzaam.';
 
   @override
+  String get shellSourceNone => 'Geen shell';
+
+  @override
   String get passwordlessTerminal => 'Terminal zonder inloggegevens';
 
   @override

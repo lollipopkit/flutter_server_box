@@ -537,6 +537,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get parseContainerStatsTip => 'Dockerの使用状況の解析は比較的遅いです';
 
   @override
+  String get shellSourceNone => 'シェルなし';
+
+  @override
   String get passwordlessTerminal => '認証情報なしのターミナル';
 
   @override

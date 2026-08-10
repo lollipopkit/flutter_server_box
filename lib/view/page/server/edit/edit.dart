@@ -195,6 +195,10 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   Widget _buildForm() {
     final children = [
       _buildConnMethodSwitch(),
+      // The switch is a bare SegmentedButton with no margin of its own, and
+      // the fields below it are cards that supply their own. Without this it
+      // sits flush against the first one.
+      UIs.height13,
       Input(
         autoFocus: true,
         controller: _nameController,

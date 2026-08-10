@@ -558,6 +558,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Анализ статуса использования Docker может быть медленным';
 
   @override
+  String get shellSourceNone => 'Без оболочки';
+
+  @override
   String get passwordlessTerminal => 'Терминал без учётных данных';
 
   @override

@@ -560,6 +560,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'analyse de l\'occupation des conteneurs Docker est relativement lente.';
 
   @override
+  String get shellSourceNone => 'Aucun shell';
+
+  @override
   String get passwordlessTerminal => 'Terminal sans identifiants';
 
   @override

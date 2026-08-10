@@ -559,6 +559,9 @@ class AppLocalizationsUk extends AppLocalizations {
       'Парсинг статусу зайнятості Docker є відносно повільним.';
 
   @override
+  String get shellSourceNone => 'Без оболонки';
+
+  @override
   String get passwordlessTerminal => 'Термінал без облікових даних';
 
   @override

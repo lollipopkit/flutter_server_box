@@ -527,6 +527,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get parseContainerStatsTip => 'Docker 解析占用状态较为缓慢';
 
   @override
+  String get shellSourceNone => '不提供 shell';
+
+  @override
   String get passwordlessTerminal => '免凭据终端';
 
   @override
@@ -1606,6 +1609,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get parseContainerStatsTip => 'Docker 解析消耗狀態較為緩慢';
+
+  @override
+  String get shellSourceNone => '不提供 shell';
 
   @override
   String get passwordlessTerminal => '免憑證終端';

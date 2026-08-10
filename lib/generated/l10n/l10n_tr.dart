@@ -557,6 +557,9 @@ class AppLocalizationsTr extends AppLocalizations {
       'Docker\'ın doluluk durumunu ayrıştırmak oldukça yavaş.';
 
   @override
+  String get shellSourceNone => 'Kabuk yok';
+
+  @override
   String get passwordlessTerminal => 'Kimlik bilgisiz terminal';
 
   @override

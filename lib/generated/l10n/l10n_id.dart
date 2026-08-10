@@ -557,6 +557,9 @@ class AppLocalizationsId extends AppLocalizations {
       'Parsing status okupansi oleh Docker agak lambat';
 
   @override
+  String get shellSourceNone => 'Tanpa shell';
+
+  @override
   String get passwordlessTerminal => 'Terminal tanpa kredensial';
 
   @override

@@ -534,6 +534,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get parseContainerStatsTip => 'Docker 점유 상태 파싱이 비교적 느립니다.';
 
   @override
+  String get shellSourceNone => '셸 없음';
+
+  @override
   String get passwordlessTerminal => '자격 증명 없는 터미널';
 
   @override

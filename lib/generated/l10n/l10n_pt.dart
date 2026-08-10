@@ -556,6 +556,9 @@ class AppLocalizationsPt extends AppLocalizations {
       'Análise de status do Docker pode ser lenta';
 
   @override
+  String get shellSourceNone => 'Sem shell';
+
+  @override
   String get passwordlessTerminal => 'Terminal sem credenciais';
 
   @override

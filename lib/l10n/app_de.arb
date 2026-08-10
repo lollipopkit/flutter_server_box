@@ -145,6 +145,7 @@
   "openLastPath": "Öffnen Sie den letzten Pfad",
   "openLastPathTip": "Verschiedene Server haben unterschiedliche Einträge, und der Eintrag ist der Pfad zum Ausgang",
   "parseContainerStatsTip": "Das Analysieren des Belegungsstatus durch Docker ist relativ langsam",
+  "shellSourceNone": "Keine Shell",
   "passwordlessTerminal": "Terminal ohne Zugangsdaten",
   "passwordlessTerminalTip": "Ein Terminal über den Monitor-Agent öffnen, ohne SSH-Zugangsdaten. Die Shell läuft unter dem Konto, unter dem der Agent läuft — das Monitor-Passwort allein genügt also, und weder Authentifizierung noch Protokollierung oder zweiter Faktor von sshd greifen. Ob das erlaubt ist, entscheidet der Agent. Es gibt nur ein Terminal: SFTP, Portweiterleitung, Container, Prozesse und systemd brauchen SSH.",
   "passwordlessTerminalNeedsMonitor": "Ein Terminal ohne Zugangsdaten benötigt eine Monitor-Adresse.",

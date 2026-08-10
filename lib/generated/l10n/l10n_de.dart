@@ -557,6 +557,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Das Analysieren des Belegungsstatus durch Docker ist relativ langsam';
 
   @override
+  String get shellSourceNone => 'Keine Shell';
+
+  @override
   String get passwordlessTerminal => 'Terminal ohne Zugangsdaten';
 
   @override

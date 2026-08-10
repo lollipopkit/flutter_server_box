@@ -145,6 +145,7 @@
   "openLastPath": "Abrir el último camino",
   "openLastPathTip": "Los diferentes servidores tendrán diferentes registros, y lo que se registra es la ruta de salida",
   "parseContainerStatsTip": "El análisis del estado de uso de Docker es bastante lento",
+  "shellSourceNone": "Sin shell",
   "passwordlessTerminal": "Terminal sin credenciales",
   "passwordlessTerminalTip": "Abrir un terminal a través del agente monitor sin credenciales SSH. El shell se ejecuta con la cuenta con la que se ejecuta el agente, así que basta con la contraseña de monitor para obtenerlo: no se aplica la autenticación, el registro ni el segundo factor de sshd. El agente decide si lo permite. Solo ofrece un terminal: SFTP, reenvío de puertos, contenedores, procesos y systemd necesitan SSH.",
   "passwordlessTerminalNeedsMonitor": "Un terminal sin credenciales requiere una dirección de monitor.",

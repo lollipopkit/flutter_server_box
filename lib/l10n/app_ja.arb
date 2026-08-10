@@ -145,6 +145,7 @@
   "openLastPath": "最後のパスを開く",
   "openLastPathTip": "異なるサーバーには異なる記録があり、記録されているのは退出時のパスです",
   "parseContainerStatsTip": "Dockerの使用状況の解析は比較的遅いです",
+  "shellSourceNone": "シェルなし",
   "passwordlessTerminal": "認証情報なしのターミナル",
   "passwordlessTerminalTip": "SSH の認証情報なしで、monitor エージェント経由でターミナルを開きます。シェルはエージェントを実行しているアカウントとして動くため、monitor のパスワードだけで取得でき、sshd の認証・ログ・二要素はいずれも適用されません。許可するかどうかはエージェントが決めます。提供されるのはターミナルのみで、SFTP・ポート転送・コンテナ・プロセス・systemd には SSH が必要です。",
   "passwordlessTerminalNeedsMonitor": "認証情報なしのターミナルには monitor のアドレスが必要です。",

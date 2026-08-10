@@ -1092,6 +1092,12 @@ abstract class AppLocalizations {
   /// **'Parsing the occupancy status of Docker is relatively slow.'**
   String get parseContainerStatsTip;
 
+  /// No description provided for @shellSourceNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No shell'**
+  String get shellSourceNone;
+
   /// No description provided for @passwordlessTerminal.
   ///
   /// In en, this message translates to:
