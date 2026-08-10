@@ -22,7 +22,7 @@ extension _Flight on _ServerPageState {
     // Set before the rebuild this tap causes, so the row it names is built
     // hidden and carrying the key the landing is measured from.
     _flyingId.value = srv.spi.id;
-    _awaitLanding(overlay, srv, from, attempt: 0);
+    _awaitLanding(overlay, srv, from, becomesRow: true, attempt: 0);
   }
 
   /// List → grid, the way back.
@@ -37,13 +37,14 @@ extension _Flight on _ServerPageState {
     if (from == null) return;
 
     _flyingId.value = srv.spi.id;
-    _awaitLanding(overlay, srv, from, attempt: 0);
+    _awaitLanding(overlay, srv, from, becomesRow: false, attempt: 0);
   }
 
   void _awaitLanding(
     OverlayState overlay,
     ServerState srv,
     Rect from, {
+    required bool becomesRow,
     required int attempt,
   }) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -56,7 +57,13 @@ extension _Flight on _ServerPageState {
         // and the new layout takes a frame or two to settle. Give it those,
         // then give up rather than leave the destination hidden.
         if (attempt < 2) {
-          return _awaitLanding(overlay, srv, from, attempt: attempt + 1);
+          return _awaitLanding(
+            overlay,
+            srv,
+            from,
+            becomesRow: becomesRow,
+            attempt: attempt + 1,
+          );
         }
         _flyingId.value = null;
         return;
@@ -69,7 +76,10 @@ extension _Flight on _ServerPageState {
         from: from,
         to: to,
         duration: _kFlightDuration,
-        child: _flightCard(srv),
+        // Both forms, so the card sheds or grows its charts on the way rather
+        // than at one end of the trip.
+        child: becomesRow ? _flightRow(srv) : _flightCard(srv),
+        departing: becomesRow ? _flightCard(srv) : _flightRow(srv),
         onEnd: () {
           if (mounted) _flyingId.value = null;
         },
@@ -83,17 +93,30 @@ extension _Flight on _ServerPageState {
     _flight = null;
   }
 
-  /// What flies: the card as it will look when it lands.
-  ///
-  /// The same choice [Hero] makes by default, and the reason the two ends can
-  /// be the same widget at all — a card whose server is not connected *is*
-  /// this row, so the flight is a card shedding its charts rather than one
-  /// widget turning into another.
-  Widget _flightCard(ServerState srv) {
+  /// The row form: a card with nothing but its title, which is also what a
+  /// card of a server that has not connected looks like. That overlap is why
+  /// the two ends read as one thing changing shape rather than two widgets
+  /// swapped for each other.
+  Widget _flightRow(ServerState srv) {
     return CardX(
       child: Padding(
         padding: _kPaneTilePadding,
         child: _buildServerCardTitle(srv),
+      ),
+    );
+  }
+
+  /// The grid form, charts and all.
+  Widget _flightCard(ServerState srv) {
+    return CardX(
+      child: Padding(
+        padding: const EdgeInsets.only(
+          left: _cardPadSingle,
+          right: 3,
+          top: _cardPadSingle,
+          bottom: _cardPadSingle,
+        ),
+        child: _buildRealServerCard(srv),
       ),
     );
   }
