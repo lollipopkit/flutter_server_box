@@ -309,5 +309,10 @@
   "processParseInvalidRows": "部分處理程序項目無法讀取。",
   "processParseInvalidWindowsJson": "無法讀取 Windows 處理程序回應。",
   "processParseInvalidWindowsRows": "部分 Windows 處理程序項目無法讀取。",
-  "processKillTargetChanged": "該處理程序已變更或結束，請重新整理後再試。"
+  "processKillTargetChanged": "該處理程序已變更或結束，請重新整理後再試。",
+  "watchServers": "手錶上的伺服器",
+  "watchServersTip": "手錶自己向 monitor agent 取資料，因此只能選擇已設定 monitor 的伺服器。",
+  "watchNoMonitorServer": "沒有伺服器設定了 monitor",
+  "watchLegacyUrls": "舊版 status 連結",
+  "accessoryWidgetServer": "鎖定畫面小工具伺服器"
 }

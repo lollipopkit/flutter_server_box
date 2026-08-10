@@ -188,6 +188,27 @@ extension Spix on Spi {
     return monitor ?? id;
   }
 
+  /// This server's monitor agent, or null when it has none configured.
+  MonitorHttpCredential? get monitor {
+    final m = monitorHttp;
+    if (m == null || m.addr.trim().isEmpty) return null;
+    return m;
+  }
+
+  /// The agent's unauthenticated Go-compat status endpoint, or null when this
+  /// server has no monitor agent.
+  ///
+  /// Used by the clients that can only do one plain GET and have nowhere to
+  /// keep a token: the iOS lock-screen widget, and watch app builds predating
+  /// the `/api/v1` client.
+  ///
+  /// TODO: drop together with monitor's `/status` compat route.
+  String? get monitorStatusUrl {
+    final addr = monitor?.addr.trim();
+    if (addr == null) return null;
+    return '${addr.endsWith('/') ? addr.substring(0, addr.length - 1) : addr}/status';
+  }
+
   /// The pre-1155 storage key.
   ///
   /// SSH-only by construction: no install old enough to still be keyed this

@@ -1096,6 +1096,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get processKillTargetChanged => '该进程已变化或退出，请刷新后重试。';
+
+  @override
+  String get watchServers => '手表上的服务器';
+
+  @override
+  String get watchServersTip =>
+      '手表自己向 monitor agent 取数据，所以只能选择已配置 monitor 的服务器。';
+
+  @override
+  String get watchNoMonitorServer => '没有服务器配置了 monitor';
+
+  @override
+  String get watchLegacyUrls => '旧版 status 链接';
+
+  @override
+  String get accessoryWidgetServer => '锁屏小组件服务器';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2096,4 +2112,20 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get processKillTargetChanged => '該處理程序已變更或結束，請重新整理後再試。';
+
+  @override
+  String get watchServers => '手錶上的伺服器';
+
+  @override
+  String get watchServersTip =>
+      '手錶自己向 monitor agent 取資料，因此只能選擇已設定 monitor 的伺服器。';
+
+  @override
+  String get watchNoMonitorServer => '沒有伺服器設定了 monitor';
+
+  @override
+  String get watchLegacyUrls => '舊版 status 連結';
+
+  @override
+  String get accessoryWidgetServer => '鎖定畫面小工具伺服器';
 }

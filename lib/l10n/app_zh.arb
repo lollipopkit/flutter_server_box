@@ -301,10 +301,8 @@
   "ascending": "升序",
   "descending": "降序",
   "serverHistory": "服务器历史",
-  "clearHistory": "清空历史"
-  ,
-  "jumpServerAndProxyCommandCannotBeUsedTogether": "跳板服务器与 ProxyCommand 不能同时使用。"
-  ,
+  "clearHistory": "清空历史",
+  "jumpServerAndProxyCommandCannotBeUsedTogether": "跳板服务器与 ProxyCommand 不能同时使用。",
   "proxyCommandOnlySupportedOnDesktop": "ProxyCommand 仅支持桌面平台。",
   "portForwardBetaTitle": "端口映射 (Beta)",
   "tmuxAutoAttach": "tmux 自动附加",
@@ -335,5 +333,10 @@
   "processParseInvalidRows": "部分进程条目无法读取。",
   "processParseInvalidWindowsJson": "无法读取 Windows 进程响应。",
   "processParseInvalidWindowsRows": "部分 Windows 进程条目无法读取。",
-  "processKillTargetChanged": "该进程已变化或退出，请刷新后重试。"
+  "processKillTargetChanged": "该进程已变化或退出，请刷新后重试。",
+  "watchServers": "手表上的服务器",
+  "watchServersTip": "手表自己向 monitor agent 取数据，所以只能选择已配置 monitor 的服务器。",
+  "watchNoMonitorServer": "没有服务器配置了 monitor",
+  "watchLegacyUrls": "旧版 status 链接",
+  "accessoryWidgetServer": "锁屏小组件服务器"
 }

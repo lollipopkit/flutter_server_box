@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/services.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -26,6 +27,33 @@ abstract final class MethodChans {
     } catch (e, s) {
       Loggers.app.warning('Failed to update home widget', e, s);
     }
+  }
+
+  /// Point the iOS lock-screen accessory widget at a server's Go-compat
+  /// `/status` URL, or clear it with `null`.
+  ///
+  /// The widget reads this out of the App Group container, which no Dart code
+  /// ever wrote — so every install has been showing "url is nil" on the
+  /// accessory families since they were added.
+  static Future<void> setAccessoryWidgetUrl(String? url) async {
+    if (!isIOS) return;
+    try {
+      await _channel.invokeMethod('setAccessoryWidgetUrl', url);
+    } catch (e, s) {
+      Loggers.app.warning('Failed to set accessory widget url', e, s);
+    }
+  }
+
+  /// Re-derive the accessory widget's URL from the chosen server.
+  ///
+  /// Run at launch as well as on change: the App Group container goes away
+  /// with the app, while the choice lives in the (backed up, synced) settings
+  /// store, so a reinstall has to re-publish it.
+  static Future<void> syncAccessoryWidgetUrl() async {
+    if (!isIOS) return;
+    final id = Stores.setting.accessoryWidgetServerId.fetch();
+    final spi = id.isEmpty ? null : Stores.server.get<Spi>(id);
+    await setAccessoryWidgetUrl(spi?.monitorStatusUrl);
   }
 
   /// Update Android foreground service notifications for SSH sessions

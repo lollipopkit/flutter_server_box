@@ -2135,6 +2135,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The process changed or exited. Refresh and try again.'**
   String get processKillTargetChanged;
+
+  /// No description provided for @watchServers.
+  ///
+  /// In en, this message translates to:
+  /// **'Servers on the watch'**
+  String get watchServers;
+
+  /// No description provided for @watchServersTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.'**
+  String get watchServersTip;
+
+  /// No description provided for @watchNoMonitorServer.
+  ///
+  /// In en, this message translates to:
+  /// **'No server has a monitor agent configured'**
+  String get watchNoMonitorServer;
+
+  /// No description provided for @watchLegacyUrls.
+  ///
+  /// In en, this message translates to:
+  /// **'Legacy status URLs'**
+  String get watchLegacyUrls;
+
+  /// No description provided for @accessoryWidgetServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock screen widget server'**
+  String get accessoryWidgetServer;
 }
 
 class _AppLocalizationsDelegate

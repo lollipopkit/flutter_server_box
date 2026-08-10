@@ -1200,4 +1200,20 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get processKillTargetChanged =>
       'Le processus a changé ou s’est terminé. Actualisez la liste et réessayez.';
+
+  @override
+  String get watchServers => 'Servers on the watch';
+
+  @override
+  String get watchServersTip =>
+      'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.';
+
+  @override
+  String get watchNoMonitorServer => 'No server has a monitor agent configured';
+
+  @override
+  String get watchLegacyUrls => 'Legacy status URLs';
+
+  @override
+  String get accessoryWidgetServer => 'Lock screen widget server';
 }

@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/app.dart';
+import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
@@ -104,6 +106,14 @@ Future<void> _doPlatformRelated() async {
     } catch (e, s) {
       Loggers.app.warning('Failed to set high refresh rate', e, s);
     }
+  }
+
+  // The watch app used to learn about servers only while the user sat on the
+  // iOS settings page. Pushing at launch is what makes a freshly installed or
+  // restored watch configure itself.
+  if (isIOS) {
+    unawaited(WatchSync.instance.init());
+    unawaited(MethodChans.syncAccessoryWidgetUrl());
   }
 
   final serversCount = Stores.server.keys().length;

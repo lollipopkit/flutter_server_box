@@ -128,6 +128,44 @@ class SettingStore extends HiveStore {
     isIOS,
   );
 
+  /// Servers the watch app may show, by [Spi.id], in display order.
+  ///
+  /// The watch used to be configured by a list of URLs living only inside the
+  /// WCSession application context — invisible to backup and sync, lost on
+  /// reinstall, and unrelated to the server list the user actually maintains.
+  /// Keeping the selection here makes the app the source of truth and the
+  /// context merely the transport. iOS only.
+  late final watchServerIds = listProperty<String>('watchServerIds');
+
+  /// Raw Go-compat `/status` URLs typed by hand in builds before the watch
+  /// could read a server record.
+  ///
+  /// Still pushed to the watch so an existing setup keeps working, and still
+  /// editable so it can be emptied.
+  ///
+  /// TODO: drop this together with the watch app's `legacy` server kind and
+  /// monitor's `/status` compat route, once no install can still be carrying
+  /// one of these.
+  late final watchLegacyUrls = listProperty<String>('watchLegacyUrls');
+
+  /// Whether [watchLegacyUrls] has been seeded from the pre-existing
+  /// application context. Runs at most once; the user may legitimately empty
+  /// the list afterwards, and re-importing would resurrect it.
+  ///
+  /// TODO: drop with [watchLegacyUrls].
+  late final watchLegacyUrlsImported = propertyDefault(
+    'watchLegacyUrlsImported',
+    false,
+  );
+
+  /// Server whose status feeds the iOS lock-screen accessory widget, by
+  /// [Spi.id]. Empty means none is chosen, which is what every install had
+  /// until now — the widget read an App Group key nothing ever wrote.
+  late final accessoryWidgetServerId = propertyDefault(
+    'accessoryWidgetServerId',
+    '',
+  );
+
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 
   /// Display server tab function buttons on the bottom of each server card if [true]

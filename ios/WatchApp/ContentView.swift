@@ -5,231 +5,275 @@
 //  Created by lolli on 2023/9/16.
 //
 
+import Charts
 import SwiftUI
+import WidgetKit
 
 struct ContentView: View {
-    @ObservedObject var _mgr = PhoneConnMgr()
+    /// `@StateObject`, not `@ObservedObject`: this view is a struct that
+    /// SwiftUI re-initialises freely, and an observed object created inline is
+    /// rebuilt with it — which used to hand `WCSession.default.delegate` to a
+    /// new instance and release the old one mid-flight, losing updates.
+    @StateObject private var mgr = PhoneConnMgr()
+
     @State private var selection: Int = 0
-    @State private var refreshAllCounter: Int = 0
-    
+
     var body: some View {
-        let hasServers = !_mgr.urls.isEmpty
-        let pagesCount = hasServers ? _mgr.urls.count : 1
-        TabView(selection: $selection) {
-            ForEach(0 ..< pagesCount, id:\.self) { index in
-                let url = hasServers ? _mgr.urls[index] : nil
-                PageView(
-                    url: url,
-                    state: .loading,
-                    refreshAllCounter: refreshAllCounter,
-                    onRefreshAll: { refreshAllCounter += 1 }
-                )
-                .tag(index)
-            }
-        }
-        .tabViewStyle(PageTabViewStyle())
-        // 当 URL 列表变化时，尽量保持当前选中的页面不变
-        .onChange(of: _mgr.urls) { newValue in
-            let newCount = newValue.count
-            // 当没有服务器时，只有占位页
-            if newCount == 0 {
-                selection = 0
-            } else if selection >= newCount {
-                // 如果当前选择超出范围，则跳到最后一个有效页
-                selection = max(0, newCount - 1)
-            }
-        }
-        // 持久化当前选择，供 Widget 使用
-        .onChange(of: selection) { newIndex in
-            let appGroupId = "group.com.lollipopkit.toolbox"
-            if let defaults = UserDefaults(suiteName: appGroupId) {
-                defaults.set(newIndex, forKey: "watch_shared_selected_index")
-            }
-        }
-        .onAppear {
-            // 尽量恢复上一次的选择
-            let appGroupId = "group.com.lollipopkit.toolbox"
-            let saved = UserDefaults(suiteName: appGroupId)?.integer(forKey: "watch_shared_selected_index") ?? 0
-            if !_mgr.urls.isEmpty {
-                selection = min(max(0, saved), _mgr.urls.count - 1)
+        Group {
+            if mgr.servers.isEmpty {
+                EmptyHint()
             } else {
-                selection = 0
+                TabView(selection: $selection) {
+                    // Identified by server, not by index: pages keep their own
+                    // load state, and index identity would show one server's
+                    // numbers under another's name after the list changes.
+                    ForEach(Array(mgr.servers.enumerated()), id: \.element.id) { index, server in
+                        ServerPage(server: server).tag(index)
+                    }
+                }
+                .tabViewStyle(.page)
             }
         }
+        .onAppear { selection = clamped(WatchStore.selectedIndex) }
+        .onChange(of: mgr.servers) { _ in selection = clamped(selection) }
+        .onChange(of: selection) { newValue in
+            // The widget shows whichever server the user last looked at.
+            WatchStore.selectedIndex = newValue
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
+    private func clamped(_ index: Int) -> Int {
+        guard !mgr.servers.isEmpty else { return 0 }
+        return min(max(0, index), mgr.servers.count - 1)
     }
 }
 
-struct PageView: View {
-    let url: String?
-    @State var state: ContentState
-    // 触发所有页面刷新的计数器
-    let refreshAllCounter: Int
-    let onRefreshAll: () -> Void
-    
+private struct EmptyHint: View {
     var body: some View {
-        if url == nil {
-            VStack {
-                Spacer()
-                Image(systemName: "exclamationmark.triangle.fill")
-                Spacer()
-                Text("Tip: Config it in the iOS app settings.").font(.system(.body, design: .monospaced)).padding(.horizontal, 7)
-                Spacer()
-            }
-        } else {
-            Group {
-                switch state {
-                case .loading:
-                    ProgressView().padding().onAppear {
-                        getStatus(url: url!)
-                    }
-                case .error(let err):
-                switch err {
-                case .http(let description):
-                    VStack(alignment: .center) {
-                        Text(description)
-                        HStack(spacing: 10) {
-                            Button(action: {
-                                state = .loading
-                            }){
-                                Image(systemName: "arrow.clockwise")
-                            }.buttonStyle(.plain)
-                            Button(action: {
-                                onRefreshAll()
-                            }){
-                                Image(systemName: "arrow.triangle.2.circlepath")
-                            }.buttonStyle(.plain)
-                        }
-                    }
-                case .url(_):
-                    Link("View help", destination: helpUrl)
-                }
-                case .normal(let status):
-                    VStack(alignment: .leading) {
-                    HStack {
-                        Text(status.name).font(.system(.title, design: .monospaced))
-                        Spacer()
-                        HStack(spacing: 10) {
-                            Button(action: {
-                                state = .loading
-                            }){
-                                Image(systemName: "arrow.clockwise")
-                            }.buttonStyle(.plain)
-                            Button(action: {
-                                onRefreshAll()
-                            }){
-                                Image(systemName: "arrow.triangle.2.circlepath")
-                            }.buttonStyle(.plain)
-                        }
-                    }
-                    Spacer()
-                    DetailItem(icon: "cpu", text: status.cpu)
-                    DetailItem(icon: "memorychip", text: status.mem)
-                    DetailItem(icon: "externaldrive", text: status.disk)
-                    DetailItem(icon: "network", text: status.net)
-                }.frame(maxWidth: .infinity, maxHeight: .infinity).padding([.horizontal], 11)
-                }
-            }
-            .onChange(of: refreshAllCounter) { _ in
-                if let url = url {
-                    getStatus(url: url)
-                }
-            }
+        VStack(spacing: 7) {
+            Image(systemName: "exclamationmark.triangle.fill")
+            Text("Pick servers in the iOS app: Settings → iOS → Watch app.")
+                .font(.system(.footnote, design: .monospaced))
+                .multilineTextAlignment(.center)
+            Link("View help", destination: helpUrl).font(.footnote)
         }
-    }
-    
-    func getStatus(url: String) {
-        state = .loading
-        if url.count < 12 {
-            state = .error(.url("url len < 12"))
-            return
-        }
-        guard let url = URL(string: url) else {
-            state = .error(.url("parse url failed"))
-            return
-        }
-        let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
-            // 所有 UI 状态更新必须在主线程执行，否则可能导致 TabView 跳回第一页等问题
-            func setStateOnMain(_ newState: ContentState) {
-                DispatchQueue.main.async {
-                    self.state = newState
-                }
-            }
-
-            if let error = error {
-                setStateOnMain(.error(.http(error.localizedDescription)))
-                return
-            }
-            guard let data = data else {
-                setStateOnMain(.error(.http("empty data")))
-                return
-            }
-            guard let jsonAll = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
-                setStateOnMain(.error(.http("json parse fail")))
-                return
-            }
-            guard let code = jsonAll["code"] as? Int else {
-                setStateOnMain(.error(.http("code is nil")))
-                return
-            }
-            if (code != 0) {
-                let msg = jsonAll["msg"] as? String ?? ""
-                setStateOnMain(.error(.http(msg)))
-                return
-            }
-
-            let json = jsonAll["data"] as? [String: Any] ?? [:]
-            let name = json["name"] as? String ?? ""
-            let disk = json["disk"] as? String ?? ""
-            let cpu = json["cpu"] as? String ?? ""
-            let mem = json["mem"] as? String ?? ""
-            let net = json["net"] as? String ?? ""
-            let status = Status(name: name, cpu: cpu, mem: mem, disk: disk, net: net)
-            setStateOnMain(.normal(status))
-            // 将最新数据写入 App Group，供表盘/叠放的 Widget 使用
-            let appGroupId = "group.com.lollipopkit.toolbox"
-            if let defaults = UserDefaults(suiteName: appGroupId) {
-                var statusMap = (defaults.dictionary(forKey: "watch_shared_status_by_url") as? [String: [String: String]]) ?? [:]
-                statusMap[url.absoluteString] = [
-                    "name": status.name,
-                    "cpu": status.cpu,
-                    "mem": status.mem,
-                    "disk": status.disk,
-                    "net": status.net
-                ]
-                defaults.set(statusMap, forKey: "watch_shared_status_by_url")
-            }
-        }
-        task.resume()
-    }
-    
-    // 监听“刷新全部”触发器变化，主动刷新当前页
-    @ViewBuilder
-    var _onRefreshAllHook: some View {
-        EmptyView()
-            .onChange(of: refreshAllCounter) { _ in
-                if let url = url {
-                    getStatus(url: url)
-                }
-            }
+        .padding(.horizontal, 7)
     }
 }
 
+// MARK: - One server
+
+struct ServerPage: View {
+    let server: WatchServer
+
+    private enum LoadState: Equatable {
+        case loading
+        case loaded(WatchSnapshot)
+        case failed(String)
+    }
+
+    @State private var state: LoadState = .loading
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 7) {
+                header
+                content
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 9)
+        }
+        // Re-runs when the page is reused for a different server, which is the
+        // only way a value-identified page can change servers.
+        .task(id: server.id) { await load() }
+    }
+
+    private var header: some View {
+        HStack {
+            Text(displayName)
+                .font(.system(.headline, design: .monospaced))
+                .lineLimit(1)
+            Spacer()
+            Button {
+                Task { await load() }
+            } label: {
+                Image(systemName: "arrow.clockwise")
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var displayName: String {
+        if case .loaded(let snapshot) = state { return snapshot.name }
+        return server.name
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch state {
+        case .loading:
+            ProgressView().frame(maxWidth: .infinity).padding(.vertical, 20)
+        case .failed(let message):
+            VStack(alignment: .leading, spacing: 5) {
+                Text(message)
+                    .font(.system(.caption2, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(4)
+                Link("View help", destination: helpUrl).font(.caption2)
+            }
+        case .loaded(let snapshot):
+            SnapshotView(snapshot: snapshot)
+        }
+    }
+
+    private func load() async {
+        // Show the last reading rather than a spinner when there is one: a
+        // watch wakes up on a wrist raise and the fetch takes a moment.
+        if case .loading = state, let cached = WatchStore.snapshot(id: server.id) {
+            state = .loaded(cached)
+        }
+
+        do {
+            let (reading, history) = try await MonitorClient.shared(for: server).load()
+            let snapshot = WatchSnapshot(
+                serverId: server.id,
+                name: reading.name.isEmpty ? server.name : reading.name,
+                updatedAt: Date(),
+                cpu: reading.cpu,
+                mem: reading.mem,
+                disk: reading.disk,
+                memText: reading.memText,
+                diskText: reading.diskText,
+                netText: reading.netText,
+                uptime: reading.uptime,
+                cpuSeries: history.tailValues(\.cpu),
+                memSeries: history.tailValues(\.memory),
+                netRxSeries: history.tailValues(\.net_rx_speed),
+                netTxSeries: history.tailValues(\.net_tx_speed)
+            )
+            WatchStore.setSnapshot(snapshot)
+            WidgetCenter.shared.reloadAllTimelines()
+            state = .loaded(snapshot)
+        } catch {
+            state = .failed(error.localizedDescription)
+        }
+    }
+}
+
+private extension Array where Element == HistoryPoint {
+    /// The most recent points of one series, oldest first.
+    func tailValues(_ key: KeyPath<HistoryPoint, Double>) -> [Double] {
+        suffix(WatchSnapshot.maxSeriesPoints).map { $0[keyPath: key] }
+    }
+}
+
+// MARK: - Rendering one reading
+
+private struct SnapshotView: View {
+    let snapshot: WatchSnapshot
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            PercentRow(icon: "cpu", label: "CPU", percent: snapshot.cpu, detail: nil)
+            if !snapshot.cpuSeries.isEmpty {
+                PercentChart(values: snapshot.cpuSeries, tint: .green)
+            }
+
+            PercentRow(icon: "memorychip", label: "MEM", percent: snapshot.mem, detail: snapshot.memText)
+            if !snapshot.memSeries.isEmpty {
+                PercentChart(values: snapshot.memSeries, tint: .blue)
+            }
+
+            PercentRow(icon: "externaldrive", label: "DISK", percent: snapshot.disk, detail: snapshot.diskText)
+
+            Label(snapshot.netText, systemImage: "network")
+                .font(.system(.caption2, design: .monospaced))
+            if !snapshot.netRxSeries.isEmpty || !snapshot.netTxSeries.isEmpty {
+                NetChart(rx: snapshot.netRxSeries, tx: snapshot.netTxSeries)
+            }
+
+            if let uptime = snapshot.uptime, !uptime.isEmpty {
+                Text(uptime)
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Text(snapshot.updatedAt, style: .time)
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+private struct PercentRow: View {
+    let icon: String
+    let label: String
+    /// Nil renders as "no data" — a source that cannot measure this must not
+    /// look like a server sitting at 0%.
+    let percent: Double?
+    let detail: String?
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon).font(.system(size: 11))
+            Text(label).font(.system(size: 11, design: .monospaced)).foregroundStyle(.secondary)
+            Spacer()
+            if let detail {
+                Text(detail)
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            Text(percent.map { String(format: "%.0f%%", $0) } ?? "--")
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+        }
+    }
+}
+
+private struct PercentChart: View {
+    let values: [Double]
+    let tint: Color
+
+    var body: some View {
+        Chart(Array(values.enumerated()), id: \.offset) { index, value in
+            AreaMark(x: .value("t", index), y: .value("%", value))
+                .foregroundStyle(tint.opacity(0.25))
+            LineMark(x: .value("t", index), y: .value("%", value))
+                .foregroundStyle(tint)
+        }
+        .chartYScale(domain: 0 ... 100)
+        .chartXAxis(.hidden)
+        .chartYAxis(.hidden)
+        .frame(height: 34)
+    }
+}
+
+private struct NetChart: View {
+    let rx: [Double]
+    let tx: [Double]
+
+    var body: some View {
+        Chart {
+            ForEach(Array(rx.enumerated()), id: \.offset) { index, value in
+                LineMark(x: .value("t", index), y: .value("B/s", value))
+                    .foregroundStyle(by: .value("dir", "rx"))
+            }
+            ForEach(Array(tx.enumerated()), id: \.offset) { index, value in
+                LineMark(x: .value("t", index), y: .value("B/s", value))
+                    .foregroundStyle(by: .value("dir", "tx"))
+            }
+        }
+        .chartXAxis(.hidden)
+        .chartYAxis(.hidden)
+        .chartLegend(.hidden)
+        .frame(height: 34)
+    }
+}
+
+// `PreviewProvider` rather than the `#Preview` macro, which needs watchOS 10.
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
-    }
-}
-
-struct DetailItem: View {
-    let icon: String
-    let text: String
-    
-    var body: some View {
-        HStack(spacing: 5.7) {
-            Image(systemName: icon).resizable().foregroundColor(.white).frame(width: 11, height: 11, alignment: .center)
-            Text(text)
-                .font(.system(.caption2, design: .monospaced))
-                .foregroundColor(.white)
-        }
     }
 }

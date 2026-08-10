@@ -1134,4 +1134,20 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get processKillTargetChanged =>
       '프로세스가 변경되었거나 종료되었습니다. 목록을 새로 고친 후 다시 시도하세요.';
+
+  @override
+  String get watchServers => 'Servers on the watch';
+
+  @override
+  String get watchServersTip =>
+      'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.';
+
+  @override
+  String get watchNoMonitorServer => 'No server has a monitor agent configured';
+
+  @override
+  String get watchLegacyUrls => 'Legacy status URLs';
+
+  @override
+  String get accessoryWidgetServer => 'Lock screen widget server';
 }

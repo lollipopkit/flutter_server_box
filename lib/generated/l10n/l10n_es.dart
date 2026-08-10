@@ -1197,4 +1197,20 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get processKillTargetChanged =>
       'El proceso cambió o finalizó. Actualiza la lista e inténtalo de nuevo.';
+
+  @override
+  String get watchServers => 'Servers on the watch';
+
+  @override
+  String get watchServersTip =>
+      'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.';
+
+  @override
+  String get watchNoMonitorServer => 'No server has a monitor agent configured';
+
+  @override
+  String get watchLegacyUrls => 'Legacy status URLs';
+
+  @override
+  String get accessoryWidgetServer => 'Lock screen widget server';
 }
