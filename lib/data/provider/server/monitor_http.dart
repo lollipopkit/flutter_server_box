@@ -5,6 +5,7 @@ import 'package:dio/io.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_metrics.dart';
+import 'package:server_box/data/model/server/monitor_remote_access.dart';
 
 /// Talks to one server's `monitor` HTTP API. One instance is owned per
 /// `ServerNotifier` (see `single.dart`), mirroring how `PveNotifier` owns its
@@ -138,11 +139,59 @@ class MonitorHttpClient {
   ///
   /// Sends no target — the agent connects to its own configured address and
   /// refuses to take one from a client.
-  Future<WebSocket> openTunnel({Duration? timeout}) {
+  Future<WebSocket> openTunnel({Duration? timeout}) =>
+      _openWs(purpose: 'tunnel', path: '/api/v1/tunnel/ws', timeout: timeout);
+
+  /// Opens the agent's terminal endpoint and returns the raw WebSocket.
+  ///
+  /// Unlike the tunnel this carries no SSH: the agent runs the shell itself
+  /// and what travels here is PTY bytes and control JSON in the clear, which
+  /// is why the agent refuses this endpoint on a plaintext link that isn't
+  /// loopback. See `MonitorShellBackend` for the protocol spoken over it.
+  Future<WebSocket> openTerminal({Duration? timeout}) => _openWs(
+    purpose: 'terminal',
+    path: '/api/v1/terminal/ws',
+    timeout: timeout,
+  );
+
+  /// Which remote-access paths this agent will actually accept right now.
+  ///
+  /// Reports what the agent will *do*, not what its config asks for — the
+  /// transport check is already folded into `terminal`, so a caller can hide
+  /// an entry rather than offer one that answers 403.
+  Future<MonitorRemoteAccess> fetchRemoteAccess() {
+    return _authed(() async {
+      final resp = await _session().get<Map<String, dynamic>>(
+        '/api/v1/capabilities',
+      );
+      final data = resp.data;
+      if (data == null) {
+        throw const MonitorHttpErr(
+          type: MonitorHttpErrType.invalidResponse,
+          message: 'Empty /api/v1/capabilities response',
+        );
+      }
+      return MonitorRemoteAccess.fromJson(
+        data['remote_access'] as Map<String, dynamic>? ?? const {},
+      );
+    });
+  }
+
+  /// Takes a single-use ticket, then upgrades.
+  ///
+  /// A browser can't put a bearer token on a WebSocket handshake, so the agent
+  /// authorises upgrades with a short-lived, purpose-bound ticket instead;
+  /// this client uses the same path rather than a second mechanism that only
+  /// native clients could exercise.
+  Future<WebSocket> _openWs({
+    required String purpose,
+    required String path,
+    Duration? timeout,
+  }) {
     return _authed(() async {
       final resp = await _session().post<Map<String, dynamic>>(
         '/api/v1/ws-ticket',
-        data: {'purpose': 'tunnel'},
+        data: {'purpose': purpose},
       );
       final ticket = resp.data?['ticket'] as String?;
       if (ticket == null || ticket.isEmpty) {
@@ -152,21 +201,24 @@ class MonitorHttpClient {
         );
       }
 
+      // Scheme compared case-insensitively: `Uri.parse` lowercases it, but
+      // `_addr` is whatever the user typed, and reading `HTTPS://` as
+      // plaintext would dial `ws://` at a TLS port and hang
       final url = Uri.parse(_addr).replace(
-        scheme: _addr.startsWith('https') ? 'wss' : 'ws',
-        path: '/api/v1/tunnel/ws',
+        scheme: _addr.toLowerCase().startsWith('https') ? 'wss' : 'ws',
+        path: path,
         queryParameters: {'ticket': ticket},
       );
       final socket = await WebSocket.connect(
         url.toString(),
-        // Carries `ignoreCert` onto the upgrade: the tunnel talks to the same
-        // endpoint the status poll does, so it has to trust the same certs
+        // Carries `ignoreCert` onto the upgrade: this is the same endpoint the
+        // status poll uses, so it has to trust the same certs
         customClient: _httpClient(),
       ).timeout(
         timeout ?? const Duration(seconds: 15),
-        onTimeout: () => throw const MonitorHttpErr(
+        onTimeout: () => throw MonitorHttpErr(
           type: MonitorHttpErrType.net,
-          message: 'Timed out opening the monitor tunnel',
+          message: 'Timed out opening the monitor $purpose',
         ),
       );
       return socket;
