@@ -191,6 +191,50 @@ void main() {
     );
   });
 
+  test('does not split a tool pair when trimming inside one turn', () {
+    const command = AskAiCommand(id: 'boundary-call', command: 'uptime');
+    final items = <AskAiConversationItem>[
+      const AskAiMessageItem.user('Inspect the server.'),
+      const AskAiFunctionCallItem(command: command),
+      const AskAiFunctionOutputItem(
+        callId: 'boundary-call',
+        output: '{"exit_code":0,"stdout":"up"}',
+      ),
+      for (var index = 0; index < 239; index++)
+        AskAiMessageItem.assistant('Reply $index'),
+    ];
+
+    final trimmed = AgentConversationStore.trimItemsForStorage(items);
+
+    expect(trimmed.length, lessThanOrEqualTo(240));
+    expect(trimmed.whereType<AskAiFunctionCallItem>(), isEmpty);
+    expect(trimmed.whereType<AskAiFunctionOutputItem>(), isEmpty);
+  });
+
+  test('bounds a single turn that exceeds both storage limits', () {
+    final payload = List.filled(2200, 'x').join();
+    final items = <AskAiConversationItem>[
+      AskAiMessageItem.user(payload),
+      for (var index = 0; index < 241; index++)
+        AskAiMessageItem.assistant(payload),
+    ];
+
+    final trimmed = AgentConversationStore.trimItemsForStorage(items);
+    final characters = trimmed.fold<int>(
+      0,
+      (sum, item) => sum + item.estimatedCharacters,
+    );
+
+    expect(
+      trimmed.length,
+      lessThanOrEqualTo(AgentConversationStore.maxItemsPerConversation),
+    );
+    expect(
+      characters,
+      lessThanOrEqualTo(AgentConversationStore.maxCharactersPerConversation),
+    );
+  });
+
   test('clearServer does not remove conversations from other servers', () {
     store.create(
       serverId: 'server-a',

@@ -502,6 +502,7 @@ extension on _SSHTabPageState {
   Widget buildAgentBtn(BuildContext context) {
     return Btn.icon(
       icon: const Icon(Icons.auto_awesome, size: 18),
+      text: l10n.askAiAgentTitle,
       onTap: () {
         final idx = _fabVN.value;
         if (idx == 0) return;

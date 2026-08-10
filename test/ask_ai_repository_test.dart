@@ -134,6 +134,14 @@ void main() {
         AskAiCommand.classifyRisk(r'echo $(systemctl restart nginx)'),
         AskAiCommandRisk.caution,
       );
+      expect(
+        AskAiCommand.classifyRisk('uptime && whoami'),
+        AskAiCommandRisk.caution,
+      );
+      expect(
+        AskAiCommand.classifyRisk('uptime && systemctl restart nginx'),
+        AskAiCommandRisk.caution,
+      );
     });
 
     test('classifies destructive commands as high risk', () {
@@ -309,6 +317,37 @@ void main() {
       expect(events.whereType<AskAiToolSuggestion>(), hasLength(1));
     });
 
+    test('keeps tool calls when DONE arrives without a finish reason', () async {
+      const arguments =
+          '{"command":"uptime","description":"Inspect uptime","safe_to_run":true}';
+      final sse = [
+        'data: ${jsonEncode({
+          'choices': [
+            {
+              'delta': {
+                'tool_calls': [
+                  {
+                    'index': 0,
+                    'id': 'call-done',
+                    'function': {'name': 'run_shell_command', 'arguments': arguments},
+                  },
+                ],
+              },
+            },
+          ],
+        })}',
+        'data: [DONE]',
+      ].join('\n\n');
+
+      final events = await AskAiRepository.decodeSse(
+        Stream.value(utf8.encode('$sse\n\n')),
+      ).toList();
+      final completed = events.whereType<AskAiCompleted>().single;
+
+      expect(completed.commands.single.id, 'call-done');
+      expect(events.whereType<AskAiToolSuggestion>(), hasLength(1));
+    });
+
     test('builds a stateless Responses request with replayable items', () {
       const command = AskAiCommand(
         id: 'call-1',
@@ -354,6 +393,39 @@ void main() {
       expect(tool['name'], 'run_shell_command');
       expect(tool['function'], isNull);
       expect(tool['strict'], isTrue);
+    });
+
+    test('omits empty raw Responses items without losing valid fallbacks', () {
+      const command = AskAiCommand(
+        id: 'call-empty-raw',
+        command: 'uptime',
+        rawArguments:
+            '{"command":"uptime","description":"Inspect uptime","safe_to_run":true}',
+        modelSafeToRun: true,
+      );
+      final body = AskAiRepository.buildRequestBody(
+        model: 'gpt-test',
+        terminalContext: '',
+        serverName: 'Example server',
+        protocol: AskAiProtocol.responses,
+        conversation: const [
+          AskAiMessageItem(
+            role: AskAiMessageRole.user,
+            content: 'Check uptime.',
+            rawResponseItem: {},
+          ),
+          AskAiReasoningItem(rawResponseItem: {}),
+          AskAiFunctionCallItem(command: command, rawResponseItem: {}),
+          AskAiRawResponseItem(rawResponseItem: {}),
+        ],
+      );
+
+      final input = body['input'] as List<dynamic>;
+      expect(input, hasLength(2));
+      expect(input[0], {'role': 'user', 'content': 'Check uptime.'});
+      expect(input[1]['type'], 'function_call');
+      expect(input[1]['call_id'], 'call-empty-raw');
+      expect(input.whereType<Map>().any((item) => item.isEmpty), isFalse);
     });
 
     test('decodes typed Responses SSE and preserves output items', () async {
@@ -449,6 +521,50 @@ void main() {
         hasLength(1),
       );
       expect(events.whereType<AskAiToolSuggestion>(), hasLength(1));
+    });
+
+    test('uses streamed fallback items for an empty completed output', () async {
+      const arguments =
+          '{"command":"uptime","description":"Inspect uptime","safe_to_run":true}';
+      String event(Map<String, dynamic> value) => 'data: ${jsonEncode(value)}';
+      final sse = [
+        event({
+          'type': 'response.output_text.delta',
+          'response_id': 'resp-empty-output',
+          'output_index': 0,
+          'delta': 'I will inspect uptime.',
+        }),
+        event({
+          'type': 'response.output_item.added',
+          'response_id': 'resp-empty-output',
+          'output_index': 1,
+          'item': {
+            'id': 'fc-empty-output',
+            'type': 'function_call',
+            'call_id': 'call-empty-output',
+            'name': 'run_shell_command',
+            'arguments': arguments,
+          },
+        }),
+        event({
+          'type': 'response.completed',
+          'response': {'id': 'resp-empty-output', 'output': []},
+        }),
+      ].join('\n\n');
+
+      final events = await AskAiRepository.decodeSse(
+        Stream.value(utf8.encode('$sse\n\n')),
+        protocol: AskAiProtocol.responses,
+      ).toList();
+      final completed = events.whereType<AskAiCompleted>().single;
+
+      expect(completed.fullText, 'I will inspect uptime.');
+      expect(completed.commands.single.id, 'call-empty-output');
+      expect(completed.outputItems.whereType<AskAiMessageItem>(), hasLength(1));
+      expect(
+        completed.outputItems.whereType<AskAiFunctionCallItem>(),
+        hasLength(1),
+      );
     });
   });
 }

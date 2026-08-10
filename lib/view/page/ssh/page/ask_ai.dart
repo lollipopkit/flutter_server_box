@@ -45,7 +45,9 @@ extension _AskAi on SSHPageState {
       serverName: widget.args.spi.name,
       localeHint: localeHint,
       autoStart: autoStart,
-      placement: placement,
+      placement: askAiPanelPlacementForWidth(
+        MediaQuery.sizeOf(panelContext).width,
+      ),
       onCommandInsert: _insertAiCommand,
       onCommandRun: _runAiCommand,
       onCommandCancel: _cancelAiCommand,
@@ -69,7 +71,11 @@ extension _AskAi on SSHPageState {
       barrierColor: Colors.black38,
       transitionDuration: const Duration(milliseconds: 220),
       pageBuilder: (dialogContext, _, _) {
-        final dialogWidth = (width * 0.55).clamp(480.0, 620.0).toDouble();
+        final availableWidth = MediaQuery.sizeOf(dialogContext).width;
+        final dialogWidth = (availableWidth * 0.55)
+            .clamp(480.0, 620.0)
+            .clamp(0.0, availableWidth)
+            .toDouble();
         return SafeArea(
           child: Align(
             alignment: Alignment.centerRight,
@@ -125,7 +131,7 @@ extension _AskAi on SSHPageState {
         await session.done.timeout(const Duration(minutes: 5));
       } on TimeoutException {
         timedOut = true;
-        session.close();
+        await _terminateAiCommandSession(session);
       }
       final stdout = await stdoutFuture.timeout(
         const Duration(seconds: 5),
@@ -184,9 +190,25 @@ extension _AskAi on SSHPageState {
     );
   }
 
-  void _cancelAiCommand() {
+  Future<void> _terminateAiCommandSession(SSHSession session) async {
+    try {
+      session.kill(SSHSignal.KILL);
+    } catch (_) {
+      // The session may already have ended between the state check and kill.
+    } finally {
+      session.close();
+    }
+    try {
+      await session.done;
+    } catch (_) {
+      // Termination is best-effort; the command result reports cancellation.
+    }
+  }
+
+  Future<void> _cancelAiCommand() async {
     _aiCommandCancelled = true;
-    _aiCommandSession?.close();
+    final session = _aiCommandSession;
+    if (session != null) await _terminateAiCommandSession(session);
   }
 }
 
@@ -211,7 +233,7 @@ class _AskAiPanel extends ConsumerStatefulWidget {
   final AskAiPanelPlacement placement;
   final ValueChanged<String> onCommandInsert;
   final Future<AskAiCommandResult> Function(AskAiCommand command) onCommandRun;
-  final VoidCallback onCommandCancel;
+  final Future<void> Function() onCommandCancel;
 
   @override
   ConsumerState<_AskAiPanel> createState() => _AskAiPanelState();
@@ -643,10 +665,25 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       if (!result.cancelled) _startStream();
     } catch (error) {
       if (!mounted) return;
+      final message = _describeError(error);
       setState(() {
-        _error = _describeError(error);
+        _history.add(
+          AskAiFunctionOutputItem(
+            callId: command.id,
+            output: AskAiCommandResult(
+              command: command.command,
+              stdout: '',
+              stderr: message,
+              duration: Duration.zero,
+            ).toToolMessage(),
+          ),
+        );
+        _pendingCommand = null;
+        _pendingCommandRestored = false;
+        _error = message;
         _isExecuting = false;
       });
+      _persistConversation();
     }
   }
 
@@ -692,9 +729,9 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     context.showSnackBar(message);
   }
 
-  void _stopWork() {
+  Future<void> _stopWork() async {
     if (_isExecuting) {
-      widget.onCommandCancel();
+      await widget.onCommandCancel();
       return;
     }
     if (!_isStreaming) return;

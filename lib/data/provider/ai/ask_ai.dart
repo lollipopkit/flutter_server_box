@@ -77,6 +77,7 @@ class AskAiRepository {
         options: Options(
           responseType: ResponseType.stream,
           headers: headers,
+          connectTimeout: const Duration(seconds: 20),
           sendTimeout: const Duration(seconds: 20),
           receiveTimeout: const Duration(minutes: 5),
         ),
@@ -135,9 +136,22 @@ class AskAiRepository {
       );
     }
 
+    Iterable<AskAiCommand> flushToolBuilders() sync* {
+      for (final builder in toolBuilders.values) {
+        final command = builder.tryBuild(force: true);
+        if (command != null && emittedCallIds.add(command.id)) {
+          commands.add(command);
+          yield command;
+        }
+      }
+    }
+
     try {
       await for (final payload in _decodeSsePayloads(byteStream)) {
         if (payload == '[DONE]') {
+          for (final command in flushToolBuilders()) {
+            yield AskAiToolSuggestion(command);
+          }
           completed = true;
           yield completion();
           break;
@@ -202,24 +216,16 @@ class AskAiRepository {
           }
 
           if (choice['finish_reason'] == 'tool_calls') {
-            for (final builder in toolBuilders.values) {
-              final command = builder.tryBuild(force: true);
-              if (command != null && emittedCallIds.add(command.id)) {
-                commands.add(command);
-                yield AskAiToolSuggestion(command);
-              }
+            for (final command in flushToolBuilders()) {
+              yield AskAiToolSuggestion(command);
             }
           }
         }
       }
       if (completed) return;
 
-      for (final builder in toolBuilders.values) {
-        final command = builder.tryBuild(force: true);
-        if (command != null && emittedCallIds.add(command.id)) {
-          commands.add(command);
-          yield AskAiToolSuggestion(command);
-        }
+      for (final command in flushToolBuilders()) {
+        yield AskAiToolSuggestion(command);
       }
       yield completion();
     } catch (error, stackTrace) {
@@ -369,12 +375,13 @@ class AskAiRepository {
             final response = _mapOrNull(event['response']);
             responseId ??= response?['id'] as String?;
             final output = response?['output'];
-            final items = output is List
+            final mappedItems = output is List
                 ? output
                       .map(_conversationItemFromResponsesOutput)
                       .whereType<AskAiConversationItem>()
                       .toList()
-                : fallbackItems();
+                : <AskAiConversationItem>[];
+            final items = mappedItems.isEmpty ? fallbackItems() : mappedItems;
             for (final item in items.whereType<AskAiFunctionCallItem>()) {
               if (emittedCallIds.add(item.command.id)) {
                 yield AskAiToolSuggestion(item.command);
@@ -779,13 +786,15 @@ List<Map<String, dynamic>> _responsesInputItems(
       .map((item) {
         return switch (item) {
           AskAiMessageItem() =>
-            item.rawResponseItem ??
-                {'role': item.role.name, 'content': item.content},
+            item.rawResponseItem?.isNotEmpty == true
+                ? item.rawResponseItem!
+                : {'role': item.role.name, 'content': item.content},
           AskAiFunctionCallItem() =>
-            item.rawResponseItem ??
-                item.command.toResponsesFunctionCallJson(
-                  itemId: item.responseItemId,
-                ),
+            item.rawResponseItem?.isNotEmpty == true
+                ? item.rawResponseItem!
+                : item.command.toResponsesFunctionCallJson(
+                    itemId: item.responseItemId,
+                  ),
           AskAiFunctionOutputItem() => {
             'type': 'function_call_output',
             'call_id': item.callId,
@@ -795,6 +804,7 @@ List<Map<String, dynamic>> _responsesInputItems(
           AskAiRawResponseItem() => item.rawResponseItem,
         };
       })
+      .where((item) => item.isNotEmpty)
       .toList(growable: false);
 }
 

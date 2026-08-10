@@ -223,7 +223,10 @@ class SSHPageState extends ConsumerState<SSHPage>
     _restorableTmuxWindow.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _virtKeyLongPressTimer?.cancel();
-    _aiCommandSession?.close();
+    final aiCommandSession = _aiCommandSession;
+    if (aiCommandSession != null) {
+      unawaited(_terminateAiCommandSession(aiCommandSession));
+    }
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
     _terminalFlushTimer?.cancel();

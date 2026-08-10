@@ -78,6 +78,43 @@ void main() {
     expect(replay.pendingCommand, isNull);
   });
 
+  test('matches duplicate call IDs in arrival order', () {
+    const first = AskAiCommand(id: 'duplicate', command: 'uptime');
+    const second = AskAiCommand(id: 'duplicate', command: 'df -h');
+    const result = AskAiCommandResult(
+      command: 'uptime',
+      exitCode: 0,
+      stdout: 'up 3 days',
+      stderr: '',
+      duration: Duration.zero,
+    );
+    final replay = AgentConversationReplay.fromItems([
+      const AskAiFunctionCallItem(command: first),
+      AskAiFunctionOutputItem(callId: first.id, output: result.toToolMessage()),
+      const AskAiFunctionCallItem(command: second),
+    ]);
+
+    expect(replay.entries.single.command?.command, 'uptime');
+    expect(replay.pendingCommand?.command, 'df -h');
+  });
+
+  test('renders unparsable function output as a notice', () {
+    final replay = AgentConversationReplay.fromItems([
+      const AskAiFunctionCallItem(command: pendingCommand),
+      const AskAiFunctionOutputItem(
+        callId: 'call-pending',
+        output: 'remote runner returned an unknown response',
+      ),
+    ]);
+
+    expect(replay.entries.single.type, AgentConversationReplayEntryType.notice);
+    expect(
+      replay.entries.single.content,
+      contains('remote runner returned an unknown response'),
+    );
+    expect(replay.pendingCommand, isNull);
+  });
+
   test('restored commands are never eligible for automatic execution', () {
     expect(
       shouldAutoRunAgentCommand(
@@ -93,9 +130,27 @@ void main() {
         command: pendingCommand,
         enabled: true,
         restored: false,
-        runCount: 0,
+        runCount: 2,
       ),
       isTrue,
+    );
+    expect(
+      shouldAutoRunAgentCommand(
+        command: pendingCommand,
+        enabled: true,
+        restored: false,
+        runCount: 3,
+      ),
+      isFalse,
+    );
+    expect(
+      shouldAutoRunAgentCommand(
+        command: pendingCommand,
+        enabled: true,
+        restored: false,
+        runCount: 8,
+      ),
+      isFalse,
     );
   });
 }

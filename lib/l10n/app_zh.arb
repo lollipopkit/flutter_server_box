@@ -21,6 +21,7 @@
   "askAiDisclaimer": "AI 可能会犯错，请谨慎使用。",
   "askAiFollowUpHint": "继续提问...",
   "askAiInsertTerminal": "插入终端",
+  "invalidUrl": "无效的 URL",
   "askAiNoResponse": "无回复内容",
   "askAiRecommendedCommand": "AI 推荐命令",
   "askAiSelectedContent": "选中的内容",

@@ -379,9 +379,6 @@ class AskAiCommand {
       return AskAiCommandRisk.caution;
     }
 
-    final stripped = normalized
-        .replaceFirst(RegExp(r'^sudo\s+'), '')
-        .replaceFirst(RegExp(r'^(env\s+)?([a-z_][a-z0-9_]*=[^\s]+\s+)+'), '');
     final readOnlyStarts = <RegExp>[
       RegExp(r'^(ls|pwd|whoami|id|groups|uname|hostname|uptime|date|cal)\b'),
       RegExp(
@@ -411,7 +408,24 @@ class AskAiCommand {
         r'^(get-[a-z0-9-]+|test-[a-z0-9-]+|select-[a-z0-9-]+|where-object|measure-object|compare-object|tasklist|systeminfo|dir|type)\b',
       ),
     ];
-    if (readOnlyStarts.any((pattern) => pattern.hasMatch(stripped))) {
+
+    bool isReadOnlySegment(String segment) {
+      final stripped = segment
+          .trim()
+          .replaceFirst(RegExp(r'^sudo\s+'), '')
+          .replaceFirst(RegExp(r'^(env\s+)?([a-z_][a-z0-9_]*=[^\s]+\s+)+'), '');
+      return readOnlyStarts.any((pattern) => pattern.hasMatch(stripped));
+    }
+
+    final chainCandidate = normalized.replaceAll(RegExp(r'\d*>&\d+'), '');
+    if (RegExp(r'&&|\|\||[;\r\n]|&').hasMatch(chainCandidate)) {
+      return AskAiCommandRisk.caution;
+    }
+
+    final pipelineSegments = normalized.split('|');
+    if (pipelineSegments.every(
+      (segment) => segment.trim().isNotEmpty && isReadOnlySegment(segment),
+    )) {
       return AskAiCommandRisk.readOnly;
     }
     return AskAiCommandRisk.caution;

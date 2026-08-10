@@ -63,9 +63,8 @@ class AgentConversationReplay {
 
   factory AgentConversationReplay.fromItems(List<AskAiConversationItem> items) {
     final entries = <AgentConversationReplayEntry>[];
-    final calls = <String, AskAiCommand>{};
-    final callOrder = <String>[];
-    final completedCalls = <String>{};
+    final calls = <String, List<_ReplayCall>>{};
+    final callOrder = <_ReplayCall>[];
 
     for (final item in items) {
       switch (item) {
@@ -77,12 +76,21 @@ class AgentConversationReplay {
                 : AgentConversationReplayEntry.assistant(content),
           );
         case AskAiFunctionCallItem(:final command):
-          calls[command.id] = command;
-          callOrder.add(command.id);
+          final call = _ReplayCall(command);
+          calls.putIfAbsent(command.id, () => <_ReplayCall>[]).add(call);
+          callOrder.add(call);
         case AskAiFunctionOutputItem(:final callId, :final output):
-          completedCalls.add(callId);
-          final command = calls[callId];
-          if (command == null) continue;
+          final matchingCalls = calls[callId];
+          if (matchingCalls == null) continue;
+          _ReplayCall? matchingCall;
+          for (final call in matchingCalls) {
+            if (call.completed) continue;
+            matchingCall = call;
+            break;
+          }
+          if (matchingCall == null) continue;
+          matchingCall.completed = true;
+          final command = matchingCall.command;
           final result = AskAiCommandResult.tryFromToolMessage(
             output,
             fallbackCommand: command.command,
@@ -109,9 +117,9 @@ class AgentConversationReplay {
     }
 
     AskAiCommand? pendingCommand;
-    for (final callId in callOrder.reversed) {
-      if (completedCalls.contains(callId)) continue;
-      pendingCommand = calls[callId];
+    for (final call in callOrder.reversed) {
+      if (call.completed) continue;
+      pendingCommand = call.command;
       break;
     }
     return AgentConversationReplay(
@@ -122,6 +130,13 @@ class AgentConversationReplay {
 
   final List<AgentConversationReplayEntry> entries;
   final AskAiCommand? pendingCommand;
+}
+
+class _ReplayCall {
+  _ReplayCall(this.command);
+
+  final AskAiCommand command;
+  bool completed = false;
 }
 
 enum AgentConversationToolAction { declined, inserted }

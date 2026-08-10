@@ -157,15 +157,20 @@ class AgentConversationStore extends HiveStore {
       0,
       (sum, item) => sum + item.estimatedCharacters,
     );
+    final protocolPairs = _protocolPairIndexes(items);
     while (start < items.length &&
         (items.length - start > maxItemsPerConversation ||
             characters > maxCharactersPerConversation)) {
       final nextUser = _nextUserMessage(items, start + 1);
-      if (nextUser == -1) break;
-      for (var index = start; index < nextUser; index++) {
+      final nextStart = _safeTrimEndExclusive(
+        protocolPairs,
+        start: start,
+        initialEndExclusive: nextUser == -1 ? start + 1 : nextUser,
+      );
+      for (var index = start; index < nextStart; index++) {
         characters -= items[index].estimatedCharacters;
       }
-      start = nextUser;
+      start = nextStart;
     }
     return List.unmodifiable(items.sublist(start));
   }
@@ -188,6 +193,40 @@ class AgentConversationStore extends HiveStore {
       }
     }
     return -1;
+  }
+
+  static List<int?> _protocolPairIndexes(List<AskAiConversationItem> items) {
+    final pairs = List<int?>.filled(items.length, null, growable: false);
+    final pendingCalls = <String, List<int>>{};
+    for (var index = 0; index < items.length; index++) {
+      final item = items[index];
+      if (item is AskAiFunctionCallItem) {
+        pendingCalls.putIfAbsent(item.command.id, () => <int>[]).add(index);
+        continue;
+      }
+      if (item is! AskAiFunctionOutputItem) continue;
+      final calls = pendingCalls[item.callId];
+      if (calls == null || calls.isEmpty) continue;
+      final callIndex = calls.removeAt(0);
+      pairs[callIndex] = index;
+      pairs[index] = callIndex;
+    }
+    return pairs;
+  }
+
+  static int _safeTrimEndExclusive(
+    List<int?> protocolPairs, {
+    required int start,
+    required int initialEndExclusive,
+  }) {
+    var end = initialEndExclusive
+        .clamp(start + 1, protocolPairs.length)
+        .toInt();
+    for (var index = start; index < end; index++) {
+      final pairIndex = protocolPairs[index];
+      if (pairIndex != null && pairIndex >= end) end = pairIndex + 1;
+    }
+    return end;
   }
 
   static String _normalizeTitle(

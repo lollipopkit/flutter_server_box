@@ -574,7 +574,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get invalid => '无效';
 
   @override
-  String get invalidUrl => 'Invalid URL';
+  String get invalidUrl => '无效的 URL';
 
   @override
   String get invalidHostFormat => '主机格式无效，仅支持 IPv4、IPv6 和域名字符。';
