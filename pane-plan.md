@@ -215,3 +215,59 @@ is a separate commit and can be reverted alone.
 - **Terminal sessions during migration.** Stage 3 moves live session state
   onto new machinery. The encode/decode format in `_restorableTabsState` must
   stay compatible, or users lose their open terminals on upgrade.
+
+## Manual verification
+
+Everything here needs a running app and, in places, a real server. Collected
+as it came up rather than checked one item at a time.
+
+### Panes
+
+- [ ] Window at least 800pt wide: tapping a server shows a compact list on the
+      left and its details on the right. Below 800pt, unchanged.
+- [ ] Selecting another server cross-fades the detail; the list stays put.
+- [ ] The divider drags, and the width it is left at survives a relaunch.
+- [ ] Settings → single column forces one pane however wide the window is.
+- [ ] A server that has never connected still selects, and the detail pane
+      shows the error in full plus a working Retry.
+- [ ] Deleting a server closes the dialog and collapses the pane back to a
+      full-width list.
+
+### Navigation
+
+- [ ] The bar (or rail) stays visible on a server's details, its files, its
+      processes.
+- [ ] Leaving a tab and returning lands back where you were in it.
+- [ ] Back steps through a tab's own stack, and only leaves the app once that
+      stack is empty.
+- [ ] Switching between Server / SSH / File tabs is smooth — the regression
+      that rebuilt each tab once per animation frame is fixed, but only a real
+      run says whether anything else is heavy.
+
+### Terminal
+
+- [ ] Opening the first terminal shows no red screen (was `View.of` during
+      `initState` in xterm).
+- [ ] The terminal button on a server opens a tab in the SSH tab rather than a
+      full-screen page.
+- [ ] The same server opened twice gives `name` and `name(1)`.
+- [ ] Closing a middle tab keeps the tab you were looking at.
+- [ ] Cancelling the close confirmation leaves the terminal focused.
+- [ ] Switching tabs moves focus with them — typing goes to the visible one.
+- [ ] Quit and reopen: terminals come back, with their tmux session and
+      window, and it lands on the first.
+- [ ] Sort menu: all four options apply, and the icon on the bar changes.
+- [ ] Search and history both open a terminal; a server deleted since is a
+      disabled row rather than an error toast.
+
+### Files
+
+- [ ] The SFTP button opens a tab in the File tab beside this device's files.
+- [ ] Two servers' files stay open at once, and switching between them does
+      not reconnect.
+
+### Known gaps
+
+- SFTP sessions are not restored across launches; terminals are.
+- The File tab shows two bars: the tab strip, and SFTP's own bar carrying
+  download/sort/search/sudo/refresh. Movable into the strip if it reads heavy.
