@@ -26,7 +26,10 @@ extension _PaneList on _ServerPageState {
           ? Center(child: Text(libL10n.empty, textAlign: TextAlign.center))
           : ListView.builder(
               controller: _scrollController,
-              padding: const EdgeInsets.only(top: 7, bottom: 77),
+              // The grid gets its side margins from the column layout; a
+              // single column has none of its own, so the cards would sit
+              // against the window edge.
+              padding: const EdgeInsets.fromLTRB(7, 7, 7, 77),
               itemCount: filtered.length,
               itemBuilder: (context, index) {
                 final id = filtered[index];

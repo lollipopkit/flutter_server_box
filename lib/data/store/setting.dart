@@ -183,6 +183,12 @@ class SettingStore extends HiveStore {
   /// capability, so it overrides the width rather than being overridden by it.
   late final forceSinglePane = propertyDefault('forceSinglePane', false);
 
+  /// Width of the server list when it shares the window with a detail pane.
+  ///
+  /// Remembered because it is a working preference, not a one-off: someone who
+  /// widens it to read long server names wants it that way tomorrow too.
+  late final paneListWidth = propertyDefault('paneListWidth', 320.0);
+
   /// Whether use `rm -r` to delete directory on SFTP
   late final sftpRmrDir = propertyDefault('sftpRmrDir', false);
 

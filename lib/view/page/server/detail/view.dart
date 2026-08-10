@@ -25,6 +25,8 @@ import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart' as server_model;
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/model/server/try_limiter.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/pve.dart';
@@ -120,12 +122,60 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   Widget build(BuildContext context) {
     final serverState = ref.watch(serverProvider(widget.args.spi.id));
     if (!_hasContent(serverState)) {
-      return Scaffold(
-        appBar: CustomAppBar(),
-        body: Center(child: Text(libL10n.empty)),
-      );
+      return _buildNothingYet(serverState);
     }
     return _buildMainPage(serverState);
+  }
+
+  /// A server that has not reported anything yet.
+  ///
+  /// Used to be the word "empty" on its own, which was survivable when this
+  /// page could only be reached by opening it deliberately. Beside a list it
+  /// is where every server that fails to connect ends up, so it has to say why
+  /// and offer the one action that helps.
+  Widget _buildNothingYet(ServerState si) {
+    final err = si.status.err;
+    final busy =
+        si.conn == server_model.ServerConn.connecting ||
+        si.conn == server_model.ServerConn.loading;
+
+    return Scaffold(
+      appBar: _buildAppBar(si),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ?_buildErrCard(si),
+              if (err == null)
+                Padding(
+                  padding: const EdgeInsets.all(13),
+                  child: Text(libL10n.empty, style: UIs.textGrey),
+                ),
+              Padding(
+                padding: const EdgeInsets.all(13),
+                child: busy
+                    ? SizedLoading.medium
+                    : Btn.elevated(
+                        text: libL10n.retry,
+                        icon: const Icon(Icons.link, size: 18),
+                        onTap: () => _reconnect(si),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Clears the retry limiter first: the user asking again *is* the new
+  /// information, and without this the request is dropped by the backoff that
+  /// the previous failures installed.
+  void _reconnect(ServerState si) {
+    TryLimiter.reset(si.spi.id);
+    ref.read(serversProvider.notifier).refresh(spi: si.spi);
   }
 
   /// Whether there is anything to render.

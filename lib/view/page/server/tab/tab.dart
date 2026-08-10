@@ -152,6 +152,8 @@ class _ServerPageState extends ConsumerState<ServerPage>
       final filtered = _filterServers(serverOrder);
       return AdaptivePanes(
         enabled: !Stores.setting.forceSinglePane.fetch(),
+        primaryWidth: Stores.setting.paneListWidth.fetch(),
+        onPrimaryWidthChanged: Stores.setting.paneListWidth.put,
         detailId: selectedSpi?.id,
         // Null until something is opened, so a fresh launch gets the whole
         // width for browsing rather than a column reserved for nothing.
