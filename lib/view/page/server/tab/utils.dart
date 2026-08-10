@@ -14,18 +14,25 @@ extension _Actions on _ServerPageState {
       ref.read(serversProvider.notifier).refresh(spi: srv.spi);
       return;
     }
-    final page = srv.canViewDetails
-        ? () => ServerDetailPage.route.go(context, SpiRequiredArgs(srv.spi))
-        : () => ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
-
     // The one place that knows about the layout. With a pane on screen,
     // opening a server means selecting it; without one it means pushing, and
     // the page that opens cannot tell the difference either way.
-    if (PaneScope.isSplit(context) && srv.canViewDetails) {
+    //
+    // Selected even when it has nothing to show yet. On one screen, jumping
+    // straight to the edit form is the only useful thing a tap can do for a
+    // server that has never connected. Beside a list it is not: the detail
+    // page says why it is empty, and staying on the list is what lets someone
+    // work through several servers that are all failing.
+    if (PaneScope.isSplit(context)) {
       ref.read(serverSelectionProvider.notifier).select(srv.spi.id);
       return;
     }
-    page();
+
+    if (srv.canViewDetails) {
+      ServerDetailPage.route.go(context, SpiRequiredArgs(srv.spi));
+    } else {
+      ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
+    }
   }
 
   void _onLongPressCard(ServerState srv) {

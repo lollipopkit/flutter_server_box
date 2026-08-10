@@ -2,10 +2,10 @@ part of 'tab.dart';
 
 /// The server list as a narrow column beside the detail pane.
 ///
-/// A different widget from the card grid rather than the grid squeezed: at
-/// 320pt a card's charts and buttons have nowhere to go, and the two lists
-/// answer different questions anyway. The grid is for looking over the fleet;
-/// this is for moving between two servers without losing your place.
+/// Reuses the card's title row rather than inventing a second way to say the
+/// same things. That row is already exactly what a card shows when the server
+/// is not connected — name, connection state, the actions that apply — so a
+/// separate list style would be a second thing to keep in sync for no gain.
 extension _PaneList on _ServerPageState {
   Widget _buildPaneList(List<String> filtered) {
     final selected = ref.watch(serverSelectionProvider);
@@ -26,7 +26,7 @@ extension _PaneList on _ServerPageState {
           ? Center(child: Text(libL10n.empty, textAlign: TextAlign.center))
           : ListView.builder(
               controller: _scrollController,
-              padding: const EdgeInsets.only(bottom: 77),
+              padding: const EdgeInsets.only(top: 7, bottom: 77),
               itemCount: filtered.length,
               itemBuilder: (context, index) {
                 final id = filtered[index];
@@ -46,53 +46,19 @@ extension _PaneList on _ServerPageState {
     ServerState srv, {
     required bool selected,
   }) {
-    final theme = Theme.of(context);
-    return ListTile(
-      dense: true,
-      selected: selected,
-      selectedTileColor: theme.colorScheme.secondaryContainer,
-      leading: _ServerConnDot(conn: srv.conn),
-      title: Text(
-        srv.spi.name,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: UIs.text13Bold,
+    final scheme = Theme.of(context).colorScheme;
+    return CardX(
+      // The selected card carries the tint the rest of the app uses for a
+      // current choice; the others keep the default card colour.
+      color: selected ? scheme.secondaryContainer : null,
+      child: InkWell(
+        onTap: () => _onTapCard(context, srv),
+        onLongPress: () => _onLongPressCard(srv),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 11),
+          child: _buildServerCardTitle(srv),
+        ),
       ),
-      subtitle: Text(
-        srv.spi.displayAddr,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: UIs.text11Grey,
-      ),
-      onTap: () => _onTapCard(context, srv),
-      onLongPress: () => _onLongPressCard(srv),
-    );
-  }
-}
-
-/// Connection state as a dot.
-///
-/// The grid says the same thing with a spinner and a row of icons, which needs
-/// more room than a 320pt column has. Colour only, and the tooltip carries the
-/// word for anyone who cannot separate these hues.
-class _ServerConnDot extends StatelessWidget {
-  const _ServerConnDot({required this.conn});
-
-  final ServerConn conn;
-
-  @override
-  Widget build(BuildContext context) {
-    final (color, label) = switch (conn) {
-      ServerConn.finished => (Colors.green, libL10n.success),
-      ServerConn.connected ||
-      ServerConn.connecting ||
-      ServerConn.loading => (Colors.orange, libL10n.loadingEllipsis),
-      ServerConn.failed => (Colors.red, libL10n.fail),
-      ServerConn.disconnected => (Colors.grey, libL10n.disabled),
-    };
-    return Tooltip(
-      message: label,
-      child: Icon(Icons.circle, size: 10, color: color),
     );
   }
 }
