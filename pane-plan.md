@@ -247,15 +247,15 @@ going to be wrong, it is most likely one of those.
 
 ### 2. Panes — a window at least 800pt wide
 
-- [ ] Tapping a server puts a compact list on the left, its details on the
+- [x] Tapping a server puts a compact list on the left, its details on the
       right.
-- [ ] Tapping another server transitions the details; the list does not move.
-- [ ] The divider drags.
-- [ ] The close button on the details bar hands the width back to the list,
+- [x] Tapping another server transitions the details; the list does not move.
+- [x] The divider drags.
+- [x] The close button on the details bar hands the width back to the list,
       and the row flies back to where its card sits in the grid.
-- [ ] Settings → single column forces one pane at any width; turning it off
+- [x] Settings → single column forces one pane at any width; turning it off
       restores two.
-- [ ] Narrow the window below 800pt: back to one column, and tapping a server
+- [x] Narrow the window below 800pt: back to one column, and tapping a server
       pushes as it always did.
 
 ### 3. Terminal — needs a real server

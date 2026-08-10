@@ -52,7 +52,7 @@ extension _Server on _AppSettingsPageState {
     return ListTile(
       leading: const Icon(Icons.analytics, size: _kIconSize),
       title: Text(l10n.connectionStats),
-      subtitle: Text(l10n.connectionStatsDesc),
+      subtitle: Text(l10n.connectionStatsDesc, style: UIs.textGrey),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
         ConnectionStatsPage.route.go(context);
