@@ -134,6 +134,41 @@ void main() {
     expect(store.fetch(newer.id), isNull);
   });
 
+  test('rename keeps the selected conversation active', () {
+    final active = store.create(
+      serverId: 'server-1',
+      protocol: AskAiProtocol.chatCompletions,
+      providerBaseUrl: 'https://example.com',
+      model: 'model',
+    );
+    final other = store.create(
+      serverId: 'server-1',
+      protocol: AskAiProtocol.chatCompletions,
+      providerBaseUrl: 'https://example.com',
+      model: 'model',
+    );
+    expect(store.setActive('server-1', active.id), isTrue);
+
+    expect(store.rename(other.id, 'Renamed conversation'), isTrue);
+
+    expect(store.activeConversationId('server-1'), active.id);
+    expect(store.fetch(other.id)?.title, 'Renamed conversation');
+  });
+
+  test('cannot delete another server conversation through a foreign key', () {
+    final other = store.create(
+      serverId: 'server-b',
+      protocol: AskAiProtocol.chatCompletions,
+      providerBaseUrl: 'https://example.com',
+      model: 'model',
+    );
+
+    store.deleteConversation('server-a', other.id);
+
+    expect(store.fetch(other.id), isNotNull);
+    expect(store.activeConversationId('server-b'), other.id);
+  });
+
   test('trims whole old turns without splitting tool protocol pairs', () {
     final items = <AskAiConversationItem>[];
     for (var turn = 0; turn < 3; turn++) {

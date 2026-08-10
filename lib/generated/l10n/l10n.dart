@@ -459,6 +459,84 @@ abstract class AppLocalizations {
   /// **'Optional for local or unauthenticated endpoints'**
   String get askAiApiKeyOptional;
 
+  /// No description provided for @askAiHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation history'**
+  String get askAiHistory;
+
+  /// No description provided for @askAiHistoryLocalOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted on this device and excluded from backup and sync'**
+  String get askAiHistoryLocalOnly;
+
+  /// No description provided for @askAiNewConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'New conversation'**
+  String get askAiNewConversation;
+
+  /// No description provided for @askAiNoHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved conversations for this server'**
+  String get askAiNoHistory;
+
+  /// No description provided for @askAiNoHistoryMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet'**
+  String get askAiNoHistoryMessages;
+
+  /// No description provided for @askAiUntitledConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'New conversation'**
+  String get askAiUntitledConversation;
+
+  /// No description provided for @askAiRenameConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename conversation'**
+  String get askAiRenameConversation;
+
+  /// No description provided for @askAiDeleteConversationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this conversation?'**
+  String get askAiDeleteConversationTitle;
+
+  /// No description provided for @askAiDeleteConversationTip.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the conversation from this device and cannot be undone.'**
+  String get askAiDeleteConversationTip;
+
+  /// No description provided for @askAiClearHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear history'**
+  String get askAiClearHistory;
+
+  /// No description provided for @askAiClearHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear this server\'s Agent history?'**
+  String get askAiClearHistoryTitle;
+
+  /// No description provided for @askAiClearHistoryTip.
+  ///
+  /// In en, this message translates to:
+  /// **'All Agent conversations saved for this server will be removed from this device.'**
+  String get askAiClearHistoryTip;
+
+  /// No description provided for @askAiRestoredReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored from history. Review it again before running; it will never run automatically.'**
+  String get askAiRestoredReview;
+
   /// No description provided for @atLeastOneTab.
   ///
   /// In en, this message translates to:

@@ -41,6 +41,7 @@ extension _AskAi on SSHPageState {
 
     Widget panel(BuildContext panelContext) => _AskAiPanel(
       terminalContext: terminalContext,
+      serverId: widget.args.spi.id,
       serverName: widget.args.spi.name,
       localeHint: localeHint,
       autoStart: autoStart,
@@ -192,6 +193,7 @@ extension _AskAi on SSHPageState {
 class _AskAiPanel extends ConsumerStatefulWidget {
   const _AskAiPanel({
     required this.terminalContext,
+    required this.serverId,
     required this.serverName,
     required this.localeHint,
     required this.autoStart,
@@ -202,6 +204,7 @@ class _AskAiPanel extends ConsumerStatefulWidget {
   });
 
   final String terminalContext;
+  final String serverId;
   final String serverName;
   final String? localeHint;
   final bool autoStart;
@@ -258,13 +261,16 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   final _history = <AskAiConversationItem>[];
   final _scrollController = ScrollController();
   final _inputController = TextEditingController();
-  late final AskAiProtocol _protocol;
+  late AskAiProtocol _protocol;
+  AgentConversation? _conversation;
   AskAiCommand? _pendingCommand;
   String? _streamingContent;
   String? _error;
   bool _isStreaming = false;
   bool _isExecuting = false;
   bool _turnCompleted = false;
+  bool _historyInitialized = false;
+  bool _pendingCommandRestored = false;
   int _autoRunCount = 0;
 
   bool get _isWorking => _isStreaming || _isExecuting;
@@ -272,11 +278,19 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   @override
   void initState() {
     super.initState();
-    _protocol = AskAiRepository.resolveProtocol(
-      configured: parseAskAiProtocol(Stores.setting.askAiProtocol.fetch()),
-      endpoint: Stores.setting.askAiBaseUrl.fetch(),
-    );
+    _protocol = _resolvedConfiguredProtocol();
     _inputController.addListener(_handleInputChanged);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_historyInitialized) return;
+    _historyInitialized = true;
+    _restoreConversation(
+      Stores.agentConversation.fetchActive(widget.serverId),
+      notify: false,
+    );
     if (widget.autoStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -300,9 +314,119 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     if (mounted) setState(() {});
   }
 
+  AskAiProtocol _resolvedConfiguredProtocol() {
+    return AskAiRepository.resolveProtocol(
+      configured: parseAskAiProtocol(Stores.setting.askAiProtocol.fetch()),
+      endpoint: Stores.setting.askAiBaseUrl.fetch(),
+    );
+  }
+
+  void _restoreConversation(
+    AgentConversation? conversation, {
+    bool notify = true,
+  }) {
+    final replay = AgentConversationReplay.fromItems(
+      conversation?.items ?? const [],
+    );
+
+    void apply() {
+      final restoredProtocol = conversation?.protocol;
+      _subscription?.cancel();
+      _conversation = conversation;
+      _protocol =
+          restoredProtocol == null || restoredProtocol == AskAiProtocol.auto
+          ? _resolvedConfiguredProtocol()
+          : restoredProtocol;
+      _history
+        ..clear()
+        ..addAll(conversation?.items ?? const []);
+      _chatEntries
+        ..clear()
+        ..addAll(replay.entries.map(_chatEntryFromReplay));
+      _pendingCommand = replay.pendingCommand;
+      _pendingCommandRestored = replay.pendingCommand != null;
+      _streamingContent = null;
+      _error = null;
+      _isStreaming = false;
+      _isExecuting = false;
+      _turnCompleted = false;
+      _autoRunCount = 0;
+      _inputController.clear();
+    }
+
+    if (notify) {
+      setState(apply);
+      _scheduleAutoScroll(force: true);
+    } else {
+      apply();
+    }
+  }
+
+  _ChatEntry _chatEntryFromReplay(AgentConversationReplayEntry entry) {
+    return switch (entry.type) {
+      AgentConversationReplayEntryType.user => _ChatEntry.user(
+        entry.content ?? '',
+      ),
+      AgentConversationReplayEntryType.assistant => _ChatEntry.assistant(
+        entry.content ?? '',
+      ),
+      AgentConversationReplayEntryType.commandResult => _ChatEntry.result(
+        entry.command!,
+        entry.result!,
+      ),
+      AgentConversationReplayEntryType.declined => _ChatEntry.notice(
+        context.l10n.askAiActionDeclined,
+      ),
+      AgentConversationReplayEntryType.inserted => _ChatEntry.notice(
+        context.l10n.askAiCommandInserted,
+      ),
+      AgentConversationReplayEntryType.notice => _ChatEntry.notice(
+        entry.content ?? '',
+      ),
+    };
+  }
+
+  AgentConversation _ensureConversation() {
+    final existing = _conversation;
+    if (existing != null) return existing;
+    final created = Stores.agentConversation.create(
+      serverId: widget.serverId,
+      protocol: _protocol,
+      providerBaseUrl: Stores.setting.askAiBaseUrl.fetch(),
+      model: Stores.setting.askAiModel.fetch(),
+    );
+    _conversation = created;
+    return created;
+  }
+
+  void _persistConversation() {
+    final conversation = _ensureConversation();
+    final trimmed = AgentConversationStore.trimItemsForStorage(_history);
+    final updated = conversation.copyWith(
+      updatedAt: DateTime.now(),
+      protocol: _protocol,
+      items: trimmed,
+    );
+    if (!Stores.agentConversation.save(updated)) return;
+    _conversation = Stores.agentConversation.fetch(updated.id) ?? updated;
+    if (trimmed.length != _history.length) {
+      _history
+        ..clear()
+        ..addAll(trimmed);
+    }
+  }
+
+  void _refreshConversationMetadata(String conversationId) {
+    if (_conversation?.id != conversationId || !mounted) return;
+    setState(() {
+      _conversation = Stores.agentConversation.fetch(conversationId);
+    });
+  }
+
   void _submitPrompt(String prompt) {
     final text = prompt.trim();
     if (text.isEmpty || _isWorking || _pendingCommand != null) return;
+    _ensureConversation();
     final message = AskAiMessageItem.user(text);
     setState(() {
       _history.add(message);
@@ -310,6 +434,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       _inputController.clear();
       _autoRunCount = 0;
     });
+    _persistConversation();
     _startStream();
     _scheduleAutoScroll(force: true);
   }
@@ -363,7 +488,10 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       return;
     }
     if (event is AskAiToolSuggestion) {
-      setState(() => _pendingCommand ??= event.command);
+      setState(() {
+        _pendingCommand ??= event.command;
+        _pendingCommandRestored = false;
+      });
       return;
     }
     if (event is AskAiStreamError) {
@@ -389,6 +517,8 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       _isStreaming = false;
       _streamingContent = null;
       _pendingCommand = command;
+      _pendingCommandRestored = false;
+      _protocol = event.protocol;
       _history.addAll(event.outputItems);
       if (text.trim().isNotEmpty) {
         _chatEntries.add(_ChatEntry.assistant(text));
@@ -397,12 +527,16 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
         _error = context.l10n.askAiNoResponse;
       }
     });
+    _persistConversation();
     _scheduleAutoScroll(force: true);
 
     if (command != null &&
-        Stores.setting.askAiAutoRunSafeCommands.fetch() &&
-        command.canAutoRun &&
-        _autoRunCount < 3) {
+        shouldAutoRunAgentCommand(
+          command: command,
+          enabled: Stores.setting.askAiAutoRunSafeCommands.fetch(),
+          restored: _pendingCommandRestored,
+          runCount: _autoRunCount,
+        )) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && identical(_pendingCommand, command)) {
           _runPendingCommand(autoApproved: true);
@@ -501,8 +635,10 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
           _ChatEntry.result(command, result, autoApproved: autoApproved),
         );
         _pendingCommand = null;
+        _pendingCommandRestored = false;
         _isExecuting = false;
       });
+      _persistConversation();
       _scheduleAutoScroll(force: true);
       if (!result.cancelled) _startStream();
     } catch (error) {
@@ -520,11 +656,18 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     final message = context.l10n.askAiActionDeclined;
     setState(() {
       _history.add(
-        AskAiFunctionOutputItem(callId: command.id, output: message),
+        AskAiFunctionOutputItem(
+          callId: command.id,
+          output: encodeAgentConversationToolAction(
+            AgentConversationToolAction.declined,
+          ),
+        ),
       );
       _chatEntries.add(_ChatEntry.notice(message));
       _pendingCommand = null;
+      _pendingCommandRestored = false;
     });
+    _persistConversation();
   }
 
   void _insertPendingCommand() {
@@ -536,13 +679,16 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       _history.add(
         AskAiFunctionOutputItem(
           callId: command.id,
-          output:
-              'The command was inserted into the interactive terminal. Its execution result is unknown.',
+          output: encodeAgentConversationToolAction(
+            AgentConversationToolAction.inserted,
+          ),
         ),
       );
       _chatEntries.add(_ChatEntry.notice(message));
       _pendingCommand = null;
+      _pendingCommandRestored = false;
     });
+    _persistConversation();
     context.showSnackBar(message);
   }
 
@@ -557,6 +703,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       _isStreaming = false;
       _streamingContent = null;
       _pendingCommand = null;
+      _pendingCommandRestored = false;
       _chatEntries.add(_ChatEntry.notice(context.l10n.askAiInterrupted));
     });
   }
@@ -568,6 +715,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   }
 
   Widget _buildHeader(BuildContext context, ThemeData theme) {
+    final compact = MediaQuery.sizeOf(context).width < 480;
     final status = switch ((
       _isExecuting,
       _isStreaming,
@@ -606,7 +754,9 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
                   ),
                 ),
                 Text(
-                  widget.serverName,
+                  _conversation?.title.trim().isNotEmpty == true
+                      ? '${widget.serverName} · ${_conversation!.title}'
+                      : widget.serverName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -616,19 +766,33 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              status,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: statusColor,
-                fontWeight: FontWeight.w600,
+          if (compact)
+            Tooltip(
+              message: status,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 7),
+                child: Icon(Icons.circle, size: 10, color: statusColor),
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                status,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: statusColor,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
+          IconButton(
+            tooltip: context.l10n.askAiHistory,
+            onPressed: _isWorking ? null : _showConversationHistory,
+            icon: const Icon(Icons.history),
           ),
           if (_isWorking)
             IconButton(
@@ -947,6 +1111,22 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
           if (command.description.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(command.description, style: theme.textTheme.bodySmall),
+          ],
+          if (_pendingCommandRestored) ...[
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.history, size: 16, color: color),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    context.l10n.askAiRestoredReview,
+                    style: theme.textTheme.bodySmall?.copyWith(color: color),
+                  ),
+                ),
+              ],
+            ),
           ],
           const SizedBox(height: 10),
           Wrap(

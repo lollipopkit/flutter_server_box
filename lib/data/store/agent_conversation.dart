@@ -126,6 +126,8 @@ class AgentConversationStore extends HiveStore {
   }
 
   void deleteConversation(String serverId, String conversationId) {
+    final conversation = fetch(conversationId);
+    if (conversation == null || conversation.serverId != serverId) return;
     remove(_conversationKey(conversationId), updateLastUpdateTsOnRemove: false);
     if (activeConversationId(serverId) != conversationId) return;
     final remaining = fetchForServer(serverId);
@@ -146,7 +148,6 @@ class AgentConversationStore extends HiveStore {
     remove(_activeKey(serverId), updateLastUpdateTsOnRemove: false);
   }
 
-  @visibleForTesting
   static List<AskAiConversationItem> trimItemsForStorage(
     List<AskAiConversationItem> items,
   ) {

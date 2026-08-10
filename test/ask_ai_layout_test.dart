@@ -13,4 +13,28 @@ void main() {
       expect(askAiPanelPlacementForWidth(1440), AskAiPanelPlacement.sidePanel);
     });
   });
+
+  group('askAiHistoryPresentationForWidth', () {
+    test('uses a bottom sheet on compact widths', () {
+      expect(
+        askAiHistoryPresentationForWidth(390),
+        AskAiHistoryPresentation.bottomSheet,
+      );
+      expect(
+        askAiHistoryPresentationForWidth(799),
+        AskAiHistoryPresentation.bottomSheet,
+      );
+    });
+
+    test('uses a dialog on wide tablets and desktop', () {
+      expect(
+        askAiHistoryPresentationForWidth(800),
+        AskAiHistoryPresentation.dialog,
+      );
+      expect(
+        askAiHistoryPresentationForWidth(1440),
+        AskAiHistoryPresentation.dialog,
+      );
+    });
+  });
 }

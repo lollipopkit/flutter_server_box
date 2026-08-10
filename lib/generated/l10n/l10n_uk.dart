@@ -190,6 +190,49 @@ class AppLocalizationsUk extends AppLocalizations {
       'Optional for local or unauthenticated endpoints';
 
   @override
+  String get askAiHistory => 'Conversation history';
+
+  @override
+  String get askAiHistoryLocalOnly =>
+      'Encrypted on this device and excluded from backup and sync';
+
+  @override
+  String get askAiNewConversation => 'New conversation';
+
+  @override
+  String get askAiNoHistory => 'No saved conversations for this server';
+
+  @override
+  String get askAiNoHistoryMessages => 'No messages yet';
+
+  @override
+  String get askAiUntitledConversation => 'New conversation';
+
+  @override
+  String get askAiRenameConversation => 'Rename conversation';
+
+  @override
+  String get askAiDeleteConversationTitle => 'Delete this conversation?';
+
+  @override
+  String get askAiDeleteConversationTip =>
+      'This removes the conversation from this device and cannot be undone.';
+
+  @override
+  String get askAiClearHistory => 'Clear history';
+
+  @override
+  String get askAiClearHistoryTitle => 'Clear this server\'s Agent history?';
+
+  @override
+  String get askAiClearHistoryTip =>
+      'All Agent conversations saved for this server will be removed from this device.';
+
+  @override
+  String get askAiRestoredReview =>
+      'Restored from history. Review it again before running; it will never run automatically.';
+
+  @override
   String get atLeastOneTab => 'Потрібно вибрати принаймні одну вкладку';
 
   @override

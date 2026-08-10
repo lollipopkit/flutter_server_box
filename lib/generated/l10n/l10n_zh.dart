@@ -184,6 +184,45 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiApiKeyOptional => '本地或无需认证的接口可留空';
 
   @override
+  String get askAiHistory => '对话历史';
+
+  @override
+  String get askAiHistoryLocalOnly => '在本机加密保存，不参与备份和同步';
+
+  @override
+  String get askAiNewConversation => '新建对话';
+
+  @override
+  String get askAiNoHistory => '这台服务器还没有已保存的对话';
+
+  @override
+  String get askAiNoHistoryMessages => '暂无消息';
+
+  @override
+  String get askAiUntitledConversation => '新对话';
+
+  @override
+  String get askAiRenameConversation => '重命名对话';
+
+  @override
+  String get askAiDeleteConversationTitle => '删除这个对话？';
+
+  @override
+  String get askAiDeleteConversationTip => '此操作会从本机删除该对话，且无法撤销。';
+
+  @override
+  String get askAiClearHistory => '清空历史';
+
+  @override
+  String get askAiClearHistoryTitle => '清空这台服务器的 Agent 历史？';
+
+  @override
+  String get askAiClearHistoryTip => '本机为这台服务器保存的所有 Agent 对话都会被删除。';
+
+  @override
+  String get askAiRestoredReview => '此命令来自历史记录，请重新审核；恢复后绝不会自动执行。';
+
+  @override
   String get atLeastOneTab => '至少需要选择一个标签';
 
   @override
@@ -1345,6 +1384,45 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiApiKeyOptional => '本機或不需驗證的介面可留空';
+
+  @override
+  String get askAiHistory => '對話歷史';
+
+  @override
+  String get askAiHistoryLocalOnly => '在本機加密儲存，不參與備份與同步';
+
+  @override
+  String get askAiNewConversation => '新增對話';
+
+  @override
+  String get askAiNoHistory => '這台伺服器尚無已儲存的對話';
+
+  @override
+  String get askAiNoHistoryMessages => '暫無訊息';
+
+  @override
+  String get askAiUntitledConversation => '新對話';
+
+  @override
+  String get askAiRenameConversation => '重新命名對話';
+
+  @override
+  String get askAiDeleteConversationTitle => '刪除這個對話？';
+
+  @override
+  String get askAiDeleteConversationTip => '此操作會從本機刪除該對話，且無法復原。';
+
+  @override
+  String get askAiClearHistory => '清除歷史';
+
+  @override
+  String get askAiClearHistoryTitle => '清除這台伺服器的 Agent 歷史？';
+
+  @override
+  String get askAiClearHistoryTip => '本機為這台伺服器儲存的所有 Agent 對話都會被刪除。';
+
+  @override
+  String get askAiRestoredReview => '此指令來自歷史記錄，請重新審核；恢復後絕不會自動執行。';
 
   @override
   String get atLeastOneTab => '至少需要選擇一個標籤';
