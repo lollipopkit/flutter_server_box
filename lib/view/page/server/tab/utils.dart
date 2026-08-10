@@ -3,7 +3,12 @@
 part of 'tab.dart';
 
 extension _Actions on _ServerPageState {
-  void _onTapCard(ServerState srv) {
+  /// [context] is the tapped widget's, not the state's.
+  ///
+  /// `PaneScope` is installed by the layout this page builds, so it is a
+  /// descendant of the state's own context — and an inherited lookup only
+  /// travels upwards. Asking from the state would always answer "no pane".
+  void _onTapCard(BuildContext context, ServerState srv) {
     if (srv.needsInteractiveAuth) {
       TryLimiter.reset(srv.spi.id);
       ref.read(serversProvider.notifier).refresh(spi: srv.spi);

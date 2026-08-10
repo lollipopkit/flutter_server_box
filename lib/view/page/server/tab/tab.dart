@@ -217,17 +217,22 @@ class _ServerPageState extends ConsumerState<ServerPage>
   Widget _buildEachServerCard(ServerState srv) {
     return CardX(
       key: Key(srv.spi.id + _tag.value),
-      child: InkWell(
-        onTap: () => _onTapCard(srv),
-        onLongPress: () => _onLongPressCard(srv),
-        child: Padding(
-          padding: const EdgeInsets.only(
-            left: _cardPadSingle,
-            right: 3,
-            top: _cardPadSingle,
-            bottom: _cardPadSingle,
+      // A context from inside the built tree, so the tap can ask whether a
+      // detail pane is on screen. The state's own context is an ancestor of
+      // the layout that installs the scope, and the lookup only goes up.
+      child: Builder(
+        builder: (context) => InkWell(
+          onTap: () => _onTapCard(context, srv),
+          onLongPress: () => _onLongPressCard(srv),
+          child: Padding(
+            padding: const EdgeInsets.only(
+              left: _cardPadSingle,
+              right: 3,
+              top: _cardPadSingle,
+              bottom: _cardPadSingle,
+            ),
+            child: _buildRealServerCard(srv),
           ),
-          child: _buildRealServerCard(srv),
         ),
       ),
     );

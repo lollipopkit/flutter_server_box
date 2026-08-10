@@ -31,13 +31,21 @@ extension _PaneList on _ServerPageState {
               itemBuilder: (context, index) {
                 final id = filtered[index];
                 final srv = ref.watch(serverProvider(id));
-                return _buildPaneListTile(srv, selected: selected == id);
+                return _buildPaneListTile(
+                  context,
+                  srv,
+                  selected: selected == id,
+                );
               },
             ),
     );
   }
 
-  Widget _buildPaneListTile(ServerState srv, {required bool selected}) {
+  Widget _buildPaneListTile(
+    BuildContext context,
+    ServerState srv, {
+    required bool selected,
+  }) {
     final theme = Theme.of(context);
     return ListTile(
       dense: true,
@@ -56,7 +64,7 @@ extension _PaneList on _ServerPageState {
         overflow: TextOverflow.ellipsis,
         style: UIs.text11Grey,
       ),
-      onTap: () => _onTapCard(srv),
+      onTap: () => _onTapCard(context, srv),
       onLongPress: () => _onLongPressCard(srv),
     );
   }
