@@ -250,7 +250,7 @@ going to be wrong, it is most likely one of those.
 
 - [ ] Tapping a server puts a compact list on the left, its details on the
       right.
-- [ ] Tapping another server cross-fades the details; the list does not move.
+- [ ] Tapping another server transitions the details; the list does not move.
 - [ ] The divider drags.
 - [ ] The close button on the details bar hands the width back to the list.
 - [ ] Settings → single column forces one pane at any width; turning it off
