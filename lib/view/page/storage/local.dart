@@ -28,15 +28,15 @@ final class LocalFilePageArgs {
 
   /// Told which directory is being shown, as it changes.
   ///
-  /// The app bar that went with [actionsSink] was also where the folder's name
-  /// was; this is how the host can still say where you are.
-  final void Function(String name)? onDirChanged;
+  /// For a host that outlives the page — the file tab, which remembers where
+  /// each of its tabs was left and reopens them there.
+  final void Function(String path)? onPathChanged;
 
   const LocalFilePageArgs({
     this.isPickFile,
     this.initDir,
     this.actionsSink,
-    this.onDirChanged,
+    this.onPathChanged,
   });
 }
 
@@ -133,7 +133,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       sink.value = actions;
-      widget.args?.onDirChanged?.call(title);
+      widget.args?.onPathChanged?.call(_path.path);
     });
     return Scaffold(body: body);
   }

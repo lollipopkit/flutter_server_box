@@ -3,17 +3,18 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 
-/// This device's files, and one tab per server being browsed.
+/// Every open file browser, one tab each, plus a picker at the head of the
+/// strip.
 ///
-/// Remote browsing used to be a page pushed over whatever was on screen, so
-/// opening two servers meant losing the first, and going back to compare meant
+/// Browsing used to be a page pushed over whatever was on screen, so opening
+/// two servers meant losing the first, and going back to compare meant
 /// reconnecting. Sessions here behave like the terminal's: they stay open, and
 /// the strip says what is open.
 class FileTabPage extends ConsumerStatefulWidget {
@@ -23,11 +24,13 @@ class FileTabPage extends ConsumerStatefulWidget {
   ConsumerState<FileTabPage> createState() => _FileTabPageState();
 }
 
-/// One server being browsed.
-class _SftpSession {
-  _SftpSession({required this.spi, this.initialPath});
-
-  final Spi spi;
+/// One thing being browsed.
+///
+/// This device and a server differ in what it takes to reach them and in
+/// nothing else the tab cares about, which is why they are two shapes of one
+/// session rather than two kinds of tab.
+sealed class _FileSession {
+  _FileSession({this.initialPath});
 
   /// Where the page opens. Separate from [currentPath] because the page reads
   /// it once, when it is created; changing it later would do nothing and
@@ -47,21 +50,43 @@ class _SftpSession {
 
   String? get path => currentPath ?? initialPath;
 
+  Map<String, dynamic> toRestorable();
+
   void dispose() => actions.dispose();
+}
+
+/// This device's own files.
+final class _LocalSession extends _FileSession {
+  _LocalSession({super.initialPath});
+
+  /// No `serverId`, which is how [_FileTabPageState._restore] tells the two
+  /// apart. Records written before there were local tabs always carry one.
+  @override
+  Map<String, dynamic> toRestorable() => {'path': path};
+}
+
+/// A server's files, over SFTP.
+final class _RemoteSession extends _FileSession {
+  _RemoteSession({required this.spi, super.initialPath});
+
+  final Spi spi;
+
+  @override
+  Map<String, dynamic> toRestorable() => {'serverId': spi.id, 'path': path};
 }
 
 class _FileTabPageState extends ConsumerState<FileTabPage>
     with AutomaticKeepAliveClientMixin, RestorationMixin {
-  late final _sessions = SessionTabsController<_SftpSession>(
-    leadingName: libL10n.file,
+  late final _sessions = SessionTabsController<_FileSession>(
+    leadingName: libL10n.open,
   );
 
   final _restorableSessions = RestorableString('');
 
-  /// The local page's own toolbar and title, which it hands over rather than
-  /// drawing, so the strip is the only bar on screen.
-  final _localActions = ValueNotifier<List<Widget>>(const []);
-  final _localTitle = ValueNotifier<String?>(null);
+  late final _picker = _PickPage(
+    onLocal: _openLocal,
+    onServer: _openRemote,
+  );
 
   @override
   String get restorationId => 'file_tab_page';
@@ -88,8 +113,6 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   @override
   void dispose() {
     _restorableSessions.dispose();
-    _localActions.dispose();
-    _localTitle.dispose();
     // The controller disposes what it created — focus, visibility — but the
     // session data is ours.
     for (final tab in _sessions.tabs) {
@@ -106,45 +129,48 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
 
     return Scaffold(
       appBar: PreferredSizeListenBuilder(
-        listenable: Listenable.merge([_sessions, _localActions, _localTitle]),
+        listenable: _sessions,
         builder: () => SessionTabBar(
           names: _sessions.names,
           index: _sessions.index,
-          leadingIcon: MingCute.folder_fill,
-          leadingLabel: _localTitle.value,
           onTap: _sessions.select,
           onClose: _close,
           // One widget that follows whichever session is showing, rather than
           // a list the bar would have to rebuild itself to keep current.
           sessionActions: [_SessionActions(sessions: _sessions)],
-          // Only one local page exists, so the bar can hold its buttons
-          // directly instead of following a notifier per session.
-          leadingActions: _localActions.value,
+          leadingActions: const [],
         ),
       ),
-      body: SessionTabsView<_SftpSession>(
+      body: SessionTabsView<_FileSession>(
         controller: _sessions,
-        leading: LocalFilePage(
-          args: LocalFilePageArgs(
-            actionsSink: _localActions,
-            onDirChanged: (name) => _localTitle.value = name,
-          ),
-        ),
+        leading: _picker,
         builder: (_, tab) {
           final session = tab.data;
-          return SftpPage(
-            key: ValueKey(tab.id),
-            args: SftpPageArgs(
-              spi: session.spi,
-              initPath: session.initialPath,
-              actionsSink: session.actions,
-              onPathChanged: (path) {
-                if (session.currentPath == path) return;
-                session.currentPath = path;
-                _save();
-              },
+          void onPathChanged(String path) {
+            if (session.currentPath == path) return;
+            session.currentPath = path;
+            _save();
+          }
+
+          return switch (session) {
+            _LocalSession() => LocalFilePage(
+              key: ValueKey(tab.id),
+              args: LocalFilePageArgs(
+                initDir: session.initialPath,
+                actionsSink: session.actions,
+                onPathChanged: onPathChanged,
+              ),
             ),
-          );
+            _RemoteSession(:final spi) => SftpPage(
+              key: ValueKey(tab.id),
+              args: SftpPageArgs(
+                spi: spi,
+                initPath: session.initialPath,
+                actionsSink: session.actions,
+                onPathChanged: onPathChanged,
+              ),
+            ),
+          };
         },
       ),
     );
@@ -152,13 +178,30 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
 }
 
 extension _Sessions on _FileTabPageState {
+  void _openLocal({String? initialPath, bool select = true}) {
+    _add(
+      preferred: libL10n.device,
+      session: _LocalSession(initialPath: initialPath),
+      select: select,
+    );
+  }
+
+  void _openRemote(Spi spi, {String? initialPath, bool select = true}) {
+    _add(
+      preferred: spi.name,
+      session: _RemoteSession(spi: spi, initialPath: initialPath),
+      select: select,
+    );
+  }
+
   /// [select] is off while restoring: selecting each as it arrives would
   /// animate through every session to land on the last.
-  void _open(Spi spi, {String? initialPath, bool select = true}) {
-    final tab = _sessions.add(
-      preferred: spi.name,
-      build: (_, _, _) => _SftpSession(spi: spi, initialPath: initialPath),
-    );
+  void _add({
+    required String preferred,
+    required _FileSession session,
+    required bool select,
+  }) {
+    final tab = _sessions.add(preferred: preferred, build: (_, _, _) => session);
     if (!select) return;
     _save();
     _sessions.select(_sessions.names.indexOf(tab.name));
@@ -169,7 +212,7 @@ extension _Sessions on _FileTabPageState {
     if (pending.isEmpty) return;
     ref.read(sftpRequestsProvider.notifier).clear();
     for (final spi in pending) {
-      _open(spi);
+      _openRemote(spi);
     }
   }
 
@@ -180,7 +223,7 @@ extension _Sessions on _FileTabPageState {
 
     final confirm = await context.showRoundDialog<bool>(
       title: libL10n.attention,
-      child: Text('${libL10n.close} SFTP(${tab.name}) ?'),
+      child: Text('${libL10n.close} ${tab.name} ?'),
       actions: Btnx.okReds,
     );
     if (confirm != true) return;
@@ -194,17 +237,15 @@ extension _Sessions on _FileTabPageState {
 
   void _save() {
     _restorableSessions.value = jsonEncode([
-      for (final tab in _sessions.tabs)
-        {'serverId': tab.data.spi.id, 'path': tab.data.path},
+      for (final tab in _sessions.tabs) tab.data.toRestorable(),
     ]);
   }
 
-  /// Reopens the servers that were being browsed, where they were being
-  /// browsed.
+  /// Reopens what was being browsed, where it was being browsed.
   ///
-  /// Unlike a terminal there is nothing still alive on the far side — this
-  /// reconnects. What it restores is the intent: which servers, and where in
-  /// them.
+  /// Unlike a terminal there is nothing still alive on the far side — a remote
+  /// tab reconnects. What this restores is the intent: which places, and where
+  /// in them.
   void _restore() {
     final List<dynamic> entries;
     try {
@@ -214,20 +255,106 @@ extension _Sessions on _FileTabPageState {
       return;
     }
 
+    // Read once, not once per tab.
     final servers = {for (final spi in Stores.server.fetch()) spi.id: spi};
 
     var restored = 0;
     for (final entry in entries) {
       if (entry is! Map) continue;
-      final spi = servers[entry['serverId']];
-      if (spi == null) continue;
-      _open(spi, initialPath: entry['path'] as String?, select: false);
+      final path = entry['path'] as String?;
+      final serverId = entry['serverId'];
+      if (serverId == null) {
+        _openLocal(initialPath: path, select: false);
+      } else {
+        final spi = servers[serverId];
+        // A server can be deleted while a tab on it is still remembered.
+        if (spi == null) continue;
+        _openRemote(spi, initialPath: path, select: false);
+      }
       restored++;
     }
 
     if (restored == 0) return;
     _save();
     _sessions.select(1);
+  }
+}
+
+/// The first tab: pick somewhere to browse.
+///
+/// This device is first because it is always reachable, and because it is
+/// where downloads land.
+class _PickPage extends ConsumerWidget {
+  const _PickPage({required this.onLocal, required this.onServer});
+
+  final VoidCallback onLocal;
+  final void Function(Spi spi) onServer;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(serversProvider);
+    return AutoMultiList(
+      columnWidth: _kColumnWidth,
+      children: [
+        _PickTile(
+          icon: Icons.smartphone,
+          title: libL10n.device,
+          subtitle: Paths.file,
+          onTap: onLocal,
+        ),
+        for (final id in state.serverOrder)
+          if (state.servers[id] case final spi?)
+            _PickTile(
+              key: ValueKey(id),
+              icon: Icons.dns,
+              title: spi.name,
+              subtitle: spi.displayAddr,
+              onTap: () => onServer(spi),
+            ),
+      ],
+    );
+  }
+}
+
+/// Wide enough for a name and the chevron beside it, and narrow enough that a
+/// desktop window gets more than one column.
+const _kColumnWidth = 300.0;
+
+class _PickTile extends StatelessWidget {
+  const _PickTile({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return CardX(
+      child: ListTile(
+        leading: Icon(icon),
+        title: Text(
+          title,
+          style: UIs.text18,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          subtitle,
+          style: UIs.text12Grey,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
+      ),
+    );
   }
 }
 
@@ -238,7 +365,7 @@ extension _Sessions on _FileTabPageState {
 class _SessionActions extends StatelessWidget {
   const _SessionActions({required this.sessions});
 
-  final SessionTabsController<_SftpSession> sessions;
+  final SessionTabsController<_FileSession> sessions;
 
   @override
   Widget build(BuildContext context) {
