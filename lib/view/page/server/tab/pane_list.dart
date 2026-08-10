@@ -58,7 +58,10 @@ extension _PaneList on _ServerPageState {
         onTap: () => _onTapCard(context, srv),
         onLongPress: () => _onLongPressCard(srv),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 11),
+          // The title row brings 7 of its own on the left, which is sized for
+          // a card that is as wide as the window. In a 320pt column the name
+          // ends up against the edge.
+          padding: const EdgeInsets.fromLTRB(6, 11, 0, 11),
           child: _buildServerCardTitle(srv),
         ),
       ),

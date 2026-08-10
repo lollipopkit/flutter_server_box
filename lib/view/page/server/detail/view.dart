@@ -173,6 +173,11 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
                 : Btn.elevated(
                     text: libL10n.retry,
                     icon: const Icon(Icons.refresh, size: 18),
+                    // The icon variant lays its row out at max size, so
+                    // without this the button fills whatever it is given and
+                    // reads as a list row.
+                    mainAxisSize: MainAxisSize.min,
+                    gap: 8,
                     onTap: () => _reconnect(si),
                   ),
           ),
