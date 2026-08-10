@@ -173,6 +173,9 @@ extension _Sessions on _SSHTabPageState {
               tmuxSession: tmuxSession,
               tmuxWindow: tmuxWindow,
               onTmuxStateChanged: _saveTabs,
+              // Per tab: two shells on one server would otherwise share one
+              // restoration bucket and overwrite each other's tmux state.
+              restorationId: 'tab_$id',
             ),
           ),
         );

@@ -56,6 +56,13 @@ final class SshPageArgs {
   final int? tmuxWindow;
   final VoidCallback? onTmuxStateChanged;
 
+  /// Distinguishes this page's saved state from another page's.
+  ///
+  /// Defaults to the server's id, which is only unique while one shell per
+  /// server is open. A host that can open several — the SSH tab — passes
+  /// something per session instead.
+  final String? restorationId;
+
   const SshPageArgs({
     required this.spi,
     this.initCmd,
@@ -68,30 +75,11 @@ final class SshPageArgs {
     this.tmuxSession,
     this.tmuxWindow,
     this.onTmuxStateChanged,
+    this.restorationId,
   }) : assert(
          notFromTab || visibleListenable != null,
          'visibleListenable is required when notFromTab is false',
        );
-}
-
-class _EmptyRoute extends StatefulWidget {
-  const _EmptyRoute();
-
-  @override
-  State<_EmptyRoute> createState() => _EmptyRouteState();
-}
-
-class _EmptyRouteState extends State<_EmptyRoute> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Navigator.of(context).pop();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
 }
 
 class SSHPage extends ConsumerStatefulWidget {
@@ -106,29 +94,6 @@ class SSHPage extends ConsumerStatefulWidget {
     page: SSHPage.new,
     path: '/ssh/page',
   );
-
-  /// Restorable route builder for navigation from server list.
-  /// Takes a server ID as argument and looks up the Spi from the store.
-  /// Note: tmux state restoration is handled at SSHTabPage level for tab-based navigation.
-  static Route<void> restorableRouteBuilder(
-    BuildContext context,
-    Object? arguments,
-  ) {
-    if (arguments is! String) {
-      return MaterialPageRoute(builder: (_) => const _EmptyRoute());
-    }
-    final serverId = arguments;
-    final servers = Stores.server.fetch();
-    final spi = servers.where((s) => s.id == serverId).firstOrNull;
-    if (spi == null) {
-      return MaterialPageRoute(builder: (_) => const _EmptyRoute());
-    }
-    return MaterialPageRoute(
-      builder: (_) => VirtualWindowFrame(
-        child: SSHPage(args: SshPageArgs(spi: spi)),
-      ),
-    );
-  }
 }
 
 const _horizonPadding = 7.0;
@@ -145,8 +110,12 @@ class SSHPageState extends ConsumerState<SSHPage>
   final RestorableStringN _restorableTmuxSession = RestorableStringN(null);
   final RestorableIntN _restorableTmuxWindow = RestorableIntN(null);
 
+  /// Per tab, not per server: two shells on one server is ordinary, and both
+  /// registering `ssh_page_<serverId>` had them claiming the same bucket —
+  /// one tab's tmux state overwriting the other's.
   @override
-  String get restorationId => 'ssh_page_${widget.args.spi.id}';
+  String get restorationId =>
+      'ssh_page_${widget.args.restorationId ?? widget.args.spi.id}';
 
   @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {

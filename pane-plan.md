@@ -259,6 +259,9 @@ as it came up rather than checked one item at a time.
 - [ ] Switching tabs moves focus with them — typing goes to the visible one.
 - [ ] Quit and reopen: terminals come back, with their tmux session and
       window, and it lands on the first.
+- [ ] Two shells on the *same* server, both attached to different tmux
+      sessions, both come back attached to their own — they used to share one
+      restoration bucket.
 - [ ] Sort menu: all four options apply, and the icon on the bar changes.
 - [ ] Search and history both open a terminal; a server deleted since is a
       disabled row rather than an error toast.
