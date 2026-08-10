@@ -562,6 +562,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get shellSourceNone => 'Без оболонки';
 
   @override
+  String get forceSinglePane => 'Одна колонка';
+
+  @override
+  String get forceSinglePaneTip =>
+      'Завжди одна колонка незалежно від ширини вікна, замість показу деталей поруч зі списком.';
+
+  @override
   String get passwordlessTerminal => 'Термінал без облікових даних';
 
   @override

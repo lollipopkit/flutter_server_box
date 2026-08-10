@@ -163,6 +163,8 @@
   "openLastPathTip": "将为每台服务器记录其最后访问路径",
   "parseContainerStatsTip": "Docker 解析占用状态较为缓慢",
   "shellSourceNone": "不提供 shell",
+  "forceSinglePane": "单栏显示",
+  "forceSinglePaneTip": "无论窗口多宽都只用一栏，不在列表旁边显示服务器详情。",
   "passwordlessTerminal": "免凭据终端",
   "passwordlessTerminalTip": "不填 SSH 凭据，直接通过 monitor agent 打开终端。shell 以 agent 所在账户的身份运行，因此只要有 monitor 密码就能拿到它——sshd 的认证、日志和二次验证都不生效。是否允许由 agent 决定。它只提供终端：SFTP、端口转发、容器、进程和 systemd 仍需要 SSH。",
   "passwordlessTerminalNeedsMonitor": "免凭据终端需要填写 monitor 地址。",

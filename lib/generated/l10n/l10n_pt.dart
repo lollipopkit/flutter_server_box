@@ -559,6 +559,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get shellSourceNone => 'Sem shell';
 
   @override
+  String get forceSinglePane => 'Coluna única';
+
+  @override
+  String get forceSinglePaneTip =>
+      'Manter uma coluna independentemente da largura da janela, em vez de mostrar os detalhes ao lado da lista.';
+
+  @override
   String get passwordlessTerminal => 'Terminal sem credenciais';
 
   @override

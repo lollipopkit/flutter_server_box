@@ -173,6 +173,8 @@
   "openLastPathTip": "서버마다 다른 기록이 있으며, 기록은 종료 시의 경로입니다",
   "parseContainerStatsTip": "Docker 점유 상태 파싱이 비교적 느립니다.",
   "shellSourceNone": "셸 없음",
+  "forceSinglePane": "한 열로 표시",
+  "forceSinglePaneTip": "창 너비와 관계없이 한 열만 사용하고, 목록 옆에 서버 상세를 표시하지 않습니다.",
   "passwordlessTerminal": "자격 증명 없는 터미널",
   "passwordlessTerminalTip": "SSH 자격 증명 없이 monitor 에이전트를 통해 터미널을 엽니다. 셸은 에이전트가 실행 중인 계정으로 동작하므로 monitor 비밀번호만으로 셸을 얻을 수 있으며, sshd의 인증·로깅·2단계 인증은 적용되지 않습니다. 허용 여부는 에이전트가 결정합니다. 터미널만 제공되며 SFTP, 포트 포워딩, 컨테이너, 프로세스, systemd에는 SSH가 필요합니다.",
   "passwordlessTerminalNeedsMonitor": "자격 증명 없는 터미널에는 monitor 주소가 필요합니다.",

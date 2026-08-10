@@ -146,6 +146,8 @@
   "openLastPathTip": "Farklı sunucular farklı günlükler tutar ve günlük, çıkış yoludur",
   "parseContainerStatsTip": "Docker'ın doluluk durumunu ayrıştırmak oldukça yavaş.",
   "shellSourceNone": "Kabuk yok",
+  "forceSinglePane": "Tek sütun",
+  "forceSinglePaneTip": "Pencere ne kadar geniş olursa olsun tek sütun kalsın; ayrıntılar listenin yanında gösterilmesin.",
   "passwordlessTerminal": "Kimlik bilgisiz terminal",
   "passwordlessTerminalTip": "SSH kimlik bilgileri olmadan monitor aracısı üzerinden bir terminal açın. Kabuk, aracının çalıştığı hesapla çalışır; dolayısıyla yalnızca monitor parolası yeterlidir ve sshd'nin kimlik doğrulaması, günlüğü ve ikinci faktörü geçerli olmaz. Buna izin verilip verilmeyeceğine aracı karar verir. Yalnızca terminal sağlar: SFTP, bağlantı noktası yönlendirme, konteynerler, süreçler ve systemd için SSH gerekir.",
   "passwordlessTerminalNeedsMonitor": "Kimlik bilgisiz terminal için bir monitor adresi gerekir.",

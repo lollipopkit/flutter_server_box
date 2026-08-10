@@ -146,6 +146,8 @@
   "openLastPathTip": "Server yang berbeda akan memiliki catatan yang berbeda, dan catatan tersebut adalah jalur menuju pintu keluar",
   "parseContainerStatsTip": "Parsing status okupansi oleh Docker agak lambat",
   "shellSourceNone": "Tanpa shell",
+  "forceSinglePane": "Satu kolom",
+  "forceSinglePaneTip": "Tetap satu kolom seberapa pun lebar jendela, alih-alih menampilkan detail di samping daftar.",
   "passwordlessTerminal": "Terminal tanpa kredensial",
   "passwordlessTerminalTip": "Buka terminal melalui agen monitor tanpa kredensial SSH. Shell berjalan sebagai akun tempat agen berjalan, jadi kata sandi monitor saja sudah cukup untuk mendapatkannya — autentikasi, pencatatan, dan faktor kedua milik sshd tidak berlaku. Agen yang menentukan apakah ini diizinkan. Hanya menyediakan terminal: SFTP, penerusan port, kontainer, proses, dan systemd tetap membutuhkan SSH.",
   "passwordlessTerminalNeedsMonitor": "Terminal tanpa kredensial memerlukan alamat monitor.",

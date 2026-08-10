@@ -540,6 +540,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get shellSourceNone => 'シェルなし';
 
   @override
+  String get forceSinglePane => '1 列表示';
+
+  @override
+  String get forceSinglePaneTip =>
+      'ウィンドウの幅にかかわらず 1 列のままにし、一覧の横にサーバーの詳細を表示しません。';
+
+  @override
   String get passwordlessTerminal => '認証情報なしのターミナル';
 
   @override

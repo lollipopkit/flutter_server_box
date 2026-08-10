@@ -13,6 +13,7 @@ extension _Server on _AppSettingsPageState {
     return Column(
       children: [
         _buildServerLogoUrl(),
+        _buildForceSinglePane(),
         _buildServerFuncBtns(),
         _buildNetViewType(),
         _buildServerSeq(),
@@ -128,6 +129,16 @@ extension _Server on _AppSettingsPageState {
     _setting.textFactor.put(val);
     RNodes.app.notify();
     context.pop();
+  }
+
+  /// Desktop and tablet only: below the width threshold there is only ever
+  /// one column, so the switch would claim to change something it cannot.
+  Widget _buildForceSinglePane() {
+    return ListTile(
+      leading: const Icon(Icons.view_sidebar_outlined, size: _kIconSize),
+      title: TipText(l10n.forceSinglePane, l10n.forceSinglePaneTip),
+      trailing: StoreSwitch(prop: _setting.forceSinglePane),
+    );
   }
 
   Widget _buildServerFuncBtns() {

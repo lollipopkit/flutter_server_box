@@ -560,6 +560,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get shellSourceNone => 'Geen shell';
 
   @override
+  String get forceSinglePane => 'Eén kolom';
+
+  @override
+  String get forceSinglePaneTip =>
+      'Houd één kolom aan, hoe breed het venster ook is, in plaats van de details naast de lijst te tonen.';
+
+  @override
   String get passwordlessTerminal => 'Terminal zonder inloggegevens';
 
   @override

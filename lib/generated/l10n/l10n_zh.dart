@@ -530,6 +530,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shellSourceNone => '不提供 shell';
 
   @override
+  String get forceSinglePane => '单栏显示';
+
+  @override
+  String get forceSinglePaneTip => '无论窗口多宽都只用一栏，不在列表旁边显示服务器详情。';
+
+  @override
   String get passwordlessTerminal => '免凭据终端';
 
   @override
@@ -1628,6 +1634,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get shellSourceNone => '不提供 shell';
+
+  @override
+  String get forceSinglePane => '單欄顯示';
+
+  @override
+  String get forceSinglePaneTip => '無論視窗多寬都只用一欄，不在清單旁邊顯示伺服器詳情。';
 
   @override
   String get passwordlessTerminal => '免憑證終端';

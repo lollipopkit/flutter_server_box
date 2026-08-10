@@ -558,6 +558,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shellSourceNone => 'No shell';
 
   @override
+  String get forceSinglePane => 'Single column';
+
+  @override
+  String get forceSinglePaneTip =>
+      'Keep one column however wide the window is, instead of showing a server\'s details beside the list.';
+
+  @override
   String get passwordlessTerminal => 'Passwordless terminal';
 
   @override

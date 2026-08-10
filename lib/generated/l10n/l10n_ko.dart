@@ -537,6 +537,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get shellSourceNone => '셸 없음';
 
   @override
+  String get forceSinglePane => '한 열로 표시';
+
+  @override
+  String get forceSinglePaneTip =>
+      '창 너비와 관계없이 한 열만 사용하고, 목록 옆에 서버 상세를 표시하지 않습니다.';
+
+  @override
   String get passwordlessTerminal => '자격 증명 없는 터미널';
 
   @override

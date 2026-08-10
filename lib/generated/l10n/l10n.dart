@@ -1098,6 +1098,18 @@ abstract class AppLocalizations {
   /// **'No shell'**
   String get shellSourceNone;
 
+  /// No description provided for @forceSinglePane.
+  ///
+  /// In en, this message translates to:
+  /// **'Single column'**
+  String get forceSinglePane;
+
+  /// No description provided for @forceSinglePaneTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep one column however wide the window is, instead of showing a server\'s details beside the list.'**
+  String get forceSinglePaneTip;
+
   /// No description provided for @passwordlessTerminal.
   ///
   /// In en, this message translates to:

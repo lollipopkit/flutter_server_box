@@ -560,6 +560,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shellSourceNone => 'Kabuk yok';
 
   @override
+  String get forceSinglePane => 'Tek sütun';
+
+  @override
+  String get forceSinglePaneTip =>
+      'Pencere ne kadar geniş olursa olsun tek sütun kalsın; ayrıntılar listenin yanında gösterilmesin.';
+
+  @override
   String get passwordlessTerminal => 'Kimlik bilgisiz terminal';
 
   @override

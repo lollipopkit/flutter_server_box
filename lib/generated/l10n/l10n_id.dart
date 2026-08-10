@@ -560,6 +560,13 @@ class AppLocalizationsId extends AppLocalizations {
   String get shellSourceNone => 'Tanpa shell';
 
   @override
+  String get forceSinglePane => 'Satu kolom';
+
+  @override
+  String get forceSinglePaneTip =>
+      'Tetap satu kolom seberapa pun lebar jendela, alih-alih menampilkan detail di samping daftar.';
+
+  @override
   String get passwordlessTerminal => 'Terminal tanpa kredensial';
 
   @override
