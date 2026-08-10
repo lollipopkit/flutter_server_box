@@ -274,7 +274,8 @@ as it came up rather than checked one item at a time.
 - [ ] Quit and reopen: the same servers come back, each in the directory it
       was left in, landing on the first.
 
-### Known gaps
-
-- The File tab shows two bars: the tab strip, and SFTP's own bar carrying
-  download/sort/search/sudo/refresh. Movable into the strip if it reads heavy.
+- [ ] One bar, not two: SFTP's download / sort / search / sudo / refresh sit
+      in the tab strip, follow the session you switch to, and the sudo button
+      still appears only where sudo is configured.
+- [ ] Opening SFTP as a file picker from elsewhere still draws its own bar
+      with the server name.

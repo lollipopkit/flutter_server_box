@@ -38,7 +38,16 @@ class _SftpSession {
   /// listing lands.
   String? currentPath;
 
+  /// The page's toolbar, which it hands over rather than drawing, so the tab
+  /// strip is the only bar on screen.
+  ///
+  /// One per session: every page is built, including the ones off screen, and
+  /// a shared sink would have them overwriting each other.
+  final actions = ValueNotifier<List<Widget>>(const []);
+
   String? get path => currentPath ?? initialPath;
+
+  void dispose() => actions.dispose();
 }
 
 class _FileTabPageState extends ConsumerState<FileTabPage>
@@ -74,6 +83,11 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   @override
   void dispose() {
     _restorableSessions.dispose();
+    // The controller disposes what it created — focus, visibility — but the
+    // session data is ours.
+    for (final tab in _sessions.tabs) {
+      tab.data.dispose();
+    }
     _sessions.dispose();
     super.dispose();
   }
@@ -92,9 +106,9 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
           leadingIcon: MingCute.folder_fill,
           onTap: _sessions.select,
           onClose: _close,
-          // The pages carry their own actions in their own bars; this strip
-          // only says which one is showing.
-          sessionActions: const [],
+          // One widget that follows whichever session is showing, rather than
+          // a list the bar would have to rebuild itself to keep current.
+          sessionActions: [_SessionActions(sessions: _sessions)],
           leadingActions: const [],
         ),
       ),
@@ -108,6 +122,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
             args: SftpPageArgs(
               spi: session.spi,
               initPath: session.initialPath,
+              actionsSink: session.actions,
               onPathChanged: (path) {
                 if (session.currentPath == path) return;
                 session.currentPath = path;
@@ -154,7 +169,11 @@ extension _Sessions on _FileTabPageState {
       actions: Btnx.okReds,
     );
     if (confirm != true) return;
+    final session = tab.data;
     _sessions.remove(tab.id);
+    // After the controller has let go of it, and after the frame in which the
+    // page view still has the page that writes to it.
+    WidgetsBinding.instance.addPostFrameCallback((_) => session.dispose());
     if (mounted) _save();
   }
 
@@ -194,5 +213,30 @@ extension _Sessions on _FileTabPageState {
     if (restored == 0) return;
     _save();
     _sessions.select(1);
+  }
+}
+
+/// The toolbar of whichever session is showing.
+///
+/// Rebuilt from that session's own notifier, so the strip does not have to
+/// listen to every open session to keep one row of buttons current.
+class _SessionActions extends StatelessWidget {
+  const _SessionActions({required this.sessions});
+
+  final SessionTabsController<_SftpSession> sessions;
+
+  @override
+  Widget build(BuildContext context) {
+    final current = sessions.current;
+    if (current == null) return const SizedBox.shrink();
+    return ValueListenableBuilder(
+      valueListenable: current.data.actions,
+      builder: (_, actions, _) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final action in actions) ...[action, const SizedBox(width: 7)],
+        ],
+      ),
+    );
   }
 }

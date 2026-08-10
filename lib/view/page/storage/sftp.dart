@@ -38,6 +38,13 @@ final class SftpPageArgs {
   final bool isSelect;
   final String? initPath;
 
+  /// Where this page publishes its toolbar instead of drawing one.
+  ///
+  /// A host that already has a bar of its own — the file tab's strip of
+  /// sessions — takes them so the screen does not carry two. Null means draw
+  /// the usual app bar, which is what a pushed page does.
+  final ValueNotifier<List<Widget>>? actionsSink;
+
   /// Told where the browser has moved to, after each successful listing.
   ///
   /// For a host that outlives the page — the file tab, which remembers where
@@ -50,6 +57,7 @@ final class SftpPageArgs {
     this.isSelect = false,
     this.initPath,
     this.onPathChanged,
+    this.actionsSink,
   });
 }
 
@@ -106,7 +114,7 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
 
   @override
   Widget build(BuildContext context) {
-    final children = [
+    final actions = [
       Btn.icon(
         icon: const Icon(Icons.downloading),
         onTap: () => SftpMissionPage.route.go(context),
@@ -114,14 +122,27 @@ class _SftpPageState extends ConsumerState<SftpPage> with AfterLayoutMixin {
       _buildSortMenu(),
       _buildSearchBtn(),
       if (_sudoHelper.enabled) _buildSudoBtn(),
+      if (isDesktop) _buildRefreshBtn(),
     ];
-    if (isDesktop) children.add(_buildRefreshBtn());
 
+    final sink = widget.args.actionsSink;
+    if (sink == null) {
+      return Scaffold(
+        appBar: CustomAppBar(
+          title: Text(widget.args.spi.name),
+          actions: actions,
+        ),
+        body: _buildFileView(),
+        bottomNavigationBar: _buildBottom(),
+      );
+    }
+
+    // Handed over after the frame, not during it: a notifier written while
+    // building tells its listeners to rebuild in the middle of a build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) sink.value = actions;
+    });
     return Scaffold(
-      appBar: CustomAppBar(
-        title: Text(widget.args.spi.name),
-        actions: children,
-      ),
       body: _buildFileView(),
       bottomNavigationBar: _buildBottom(),
     );
