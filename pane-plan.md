@@ -260,18 +260,18 @@ going to be wrong, it is most likely one of those.
 
 ### 3. Terminal — needs a real server
 
-- [ ] **The first terminal opens without a red screen.** This one broke
+- [x] **The first terminal opens without a red screen.** This one broke
       before; the fix is in xterm's `initState`.
-- [ ] The terminal button on a server switches to the SSH tab and adds a
+- [x] The terminal button on a server switches to the SSH tab and adds a
       session, rather than covering the window.
-- [ ] The same server opened twice gives `name` and `name(1)`.
-- [ ] Closing a middle tab leaves you on the tab you were looking at.
-- [ ] Cancelling the close confirmation leaves the terminal focused — type
+- [x] The same server opened twice gives `name` and `name(1)`.
+- [x] Closing a middle tab leaves you on the tab you were looking at.
+- [x] Cancelling the close confirmation leaves the terminal focused — type
       immediately and it should land.
-- [ ] Switching tabs moves focus with them.
-- [ ] Sort menu: all four options reorder the picker, and the icon on the bar
+- [x] Switching tabs moves focus with them.
+- [x] Sort menu: all four options reorder the picker, and the icon on the bar
       changes with them.
-- [ ] Search and history both open a terminal. A server deleted since is a
+- [x] Search and history both open a terminal. A server deleted since is a
       greyed row, not an error toast.
 
 ### 4. Files — needs a real server
