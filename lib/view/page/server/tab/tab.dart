@@ -65,6 +65,16 @@ class _ServerPageState extends ConsumerState<ServerPage>
   final _scrollController = ScrollController();
   final _autoHideCtrl = AutoHideController();
 
+  /// Deselecting is the whole of "close the pane": the detail is built from
+  /// the selection, so dropping it collapses the layout back to the
+  /// full-width grid the app starts on.
+  ///
+  /// A method rather than a closure written at the call site: tearing off the
+  /// same instance method twice yields equal values, while a fresh closure per
+  /// build would make `PaneScope` notify its dependents on every rebuild.
+  void _closeDetail() =>
+      ref.read(serverSelectionProvider.notifier).select(null);
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -155,6 +165,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
         primaryWidth: Stores.setting.paneListWidth.fetch(),
         onPrimaryWidthChanged: Stores.setting.paneListWidth.put,
         detailId: selectedSpi?.id,
+        onCloseDetail: _closeDetail,
         // Null until something is opened, so a fresh launch gets the whole
         // width for browsing rather than a column reserved for nothing.
         detailBuilder: selectedSpi == null

@@ -232,6 +232,9 @@ as it came up rather than checked one item at a time.
       shows the error in full plus a working Retry.
 - [ ] Deleting a server closes the dialog and collapses the pane back to a
       full-width list.
+- [ ] The close button on the detail pane's bar hands the width back to the
+      list. It appears only there — full-screen, the back button is the way
+      out and the bar keeps it.
 
 ### Navigation
 

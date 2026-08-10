@@ -288,7 +288,18 @@ ${err.message ?? 'null'}
   }
 
   CustomAppBar _buildAppBar(ServerState si) {
+    // At the root of a detail pane there is nothing to pop, so no back button
+    // is drawn and there is no way to hand the width back to the list. Null
+    // everywhere else, where the implicit back button is the way out.
+    final closeDetail = PaneScope.closeDetailOf(context);
     return CustomAppBar(
+      leading: closeDetail == null
+          ? null
+          : IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: libL10n.close,
+              onPressed: closeDetail,
+            ),
       title: Text(
         si.spi.name,
         style: TextStyle(
