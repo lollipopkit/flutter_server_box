@@ -20,7 +20,9 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
 
   final int index;
   final void Function(int index) onTap;
-  final void Function(String name) onClose;
+  /// By position, not by label: the bar renders a snapshot, and a position is
+  /// what it actually drew. Which session that is stays the page's business.
+  final void Function(int index) onClose;
 
   /// Shown while a terminal is open.
   final List<Widget> sessionActions;
@@ -55,7 +57,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
                   name: names[tabIndex],
                   selected: index == tabIndex,
                   onTap: () => onTap(tabIndex),
-                  onClose: () => onClose(names[tabIndex]),
+                  onClose: () => onClose(tabIndex),
                 );
               },
             ),

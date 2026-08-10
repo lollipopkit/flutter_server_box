@@ -144,6 +144,7 @@ extension _Sessions on _SSHTabPageState {
     int? tmuxWindow,
     bool select = true,
   }) {
+    late final String id;
     final tab = _sessions.add(
       preferred: spi.name,
       build: (name, focus, visible) {
@@ -155,7 +156,10 @@ extension _Sessions on _SSHTabPageState {
             args: SshPageArgs(
               spi: spi,
               notFromTab: false,
-              onSessionEnd: () => _closeTab(name),
+              // The tab's id, not its name: a connection can end long after
+              // its tab was closed, by which time the name may belong to a
+              // newer session on the same server.
+              onSessionEnd: () => _closeTab(id),
               focusNode: focus,
               visibleListenable: visible,
               tmuxSession: tmuxSession,
@@ -166,16 +170,21 @@ extension _Sessions on _SSHTabPageState {
         );
       },
     );
+    id = tab.id;
     Stores.history.sshServerHistory.add(spi.id);
     if (!select) return;
     _saveTabs();
     _sessions.select(_sessions.names.indexOf(tab.name));
   }
 
-  Future<void> _confirmClose(String name) async {
+  Future<void> _confirmClose(int index) async {
+    // Resolved now, while the position still means what the bar drew.
+    final tab = _sessions.tabs.elementAtOrNull(index - 1);
+    if (tab == null) return;
+
     final confirm = await contextSafe?.showRoundDialog(
       title: libL10n.attention,
-      child: Text('${libL10n.close} SSH ${libL10n.conn}($name) ?'),
+      child: Text('${libL10n.close} SSH ${libL10n.conn}(${tab.name}) ?'),
       actions: Btnx.okReds,
     );
     if (confirm != true) return;
@@ -183,11 +192,11 @@ extension _Sessions on _SSHTabPageState {
     // cancelled dialog took the keyboard from a terminal the user had just
     // decided to keep.
     if (mounted) FocusScope.of(context).unfocus();
-    _closeTab(name);
+    _closeTab(tab.id);
   }
 
-  void _closeTab(String name) {
-    _sessions.remove(name);
+  void _closeTab(String id) {
+    _sessions.remove(id);
     if (mounted) _saveTabs();
   }
 
