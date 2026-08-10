@@ -228,22 +228,21 @@ going to be wrong, it is most likely one of those.
 
 ### 0. Smoke — if this fails, nothing below means anything
 
-- [ ] The app launches without a red screen.
-- [ ] All four tabs open.
-- [ ] Switching Server / SSH / File is smooth. Jank here means the
+- [x] The app launches without a red screen.
+- [x] All four tabs open.
+- [x] Switching Server / SSH / File is smooth. Jank here means the
       rebuild-per-frame regression is not actually fixed.
 
 ### 1. Navigation skeleton
 
-- [ ] Opening a server's details keeps the bar (phone) or rail (desktop) on
+- [x] Opening a server's details keeps the bar (phone) or rail (desktop) on
       screen.
-- [ ] From there, open something further in — processes, edit. Back steps out
+- [x] From there, open something further in — processes, edit. Back steps out
       one level at a time.
-- [ ] **Unverified reasoning:** leave the tab mid-way through that stack,
-      come back, and you should still be where you were. This depends on
-      `AutomaticKeepAliveClientMixin` notifications crossing the per-tab
-      `Navigator`. If they do not, the tab resets to its root.
-- [ ] At a tab's root, back leaves the app (or asks to) rather than doing
+- [x] Leave the tab mid-way through that stack, come back, and you are still
+      where you were. Verified: `AutomaticKeepAliveClientMixin` notifications
+      do cross the per-tab `Navigator`, which had been reasoning only.
+- [x] At a tab's root, back leaves the app (or asks to) rather than doing
       nothing.
 
 ### 2. Panes — a window at least 800pt wide
