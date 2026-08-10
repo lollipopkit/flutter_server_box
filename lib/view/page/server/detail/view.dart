@@ -141,33 +141,55 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
 
     return Scaffold(
       appBar: _buildAppBar(si),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ?_buildErrCard(si),
-              if (err == null)
-                Padding(
-                  padding: const EdgeInsets.all(13),
-                  child: Text(libL10n.empty, style: UIs.textGrey),
-                ),
-              Padding(
+      // Scrolls, and shows the error in full. The card elsewhere on this page
+      // clips to two lines because it sits above the data it is annotating;
+      // here the error is the entire content, and a truncated address or
+      // errno is the part someone needs.
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 20),
+        children: [
+          if (err != null)
+            CardX(
+              child: Padding(
                 padding: const EdgeInsets.all(13),
-                child: busy
-                    ? SizedLoading.medium
-                    : Btn.elevated(
-                        text: libL10n.retry,
-                        icon: const Icon(Icons.link, size: 18),
-                        onTap: () => _reconnect(si),
-                      ),
+                child: SimpleMarkdown(data: _errMarkdown(err)),
               ),
-            ],
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.all(13),
+              child: Text(
+                libL10n.empty,
+                style: UIs.textGrey,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          UIs.height13,
+          // Centred, or the column stretches it into something that reads as
+          // a list row rather than a button.
+          Center(
+            child: busy
+                ? SizedLoading.medium
+                : Btn.elevated(
+                    text: libL10n.retry,
+                    icon: const Icon(Icons.refresh, size: 18),
+                    onTap: () => _reconnect(si),
+                  ),
           ),
-        ),
+        ],
       ),
     );
+  }
+
+  /// The error as markdown: what to do about it, then what was actually said.
+  String _errMarkdown(Err err) {
+    return '''
+${err.solution ?? libL10n.unknown}
+
+```sh
+${err.message ?? 'null'}
+```
+''';
   }
 
   /// Clears the retry limiter first: the user asking again *is* the new
@@ -249,14 +271,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   }
 
   void _showErrDetail(Err err) {
-    final md =
-        '''
-${err.solution ?? libL10n.unknown}
-
-```sh
-${err.message ?? 'null'}
-```
-''';
+    final md = _errMarkdown(err);
     context.showRoundDialog(
       title: libL10n.error,
       child: SingleChildScrollView(child: SimpleMarkdown(data: md)),
