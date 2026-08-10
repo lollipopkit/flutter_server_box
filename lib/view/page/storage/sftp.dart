@@ -38,7 +38,19 @@ final class SftpPageArgs {
   final bool isSelect;
   final String? initPath;
 
-  const SftpPageArgs({required this.spi, this.isSelect = false, this.initPath});
+  /// Told where the browser has moved to, after each successful listing.
+  ///
+  /// For a host that outlives the page — the file tab, which remembers where
+  /// each of its sessions was so a relaunch reopens them there rather than at
+  /// the home directory.
+  final void Function(String path)? onPathChanged;
+
+  const SftpPageArgs({
+    required this.spi,
+    this.isSelect = false,
+    this.initPath,
+    this.onPathChanged,
+  });
 }
 
 class SftpPage extends ConsumerStatefulWidget {
@@ -971,6 +983,10 @@ extension _Actions on _SftpPageState {
           fs.removeAt(0);
         }
         if (mounted) {
+          // Reported here rather than at each `path =`: every way of moving
+          // ends up listing the directory, so this is the one place that knows
+          // the move actually happened.
+          widget.args.onPathChanged?.call(_status.path.path);
           // ignore: invalid_use_of_protected_member
           setState(() {
             _status.files

@@ -268,9 +268,10 @@ as it came up rather than checked one item at a time.
 - [ ] The SFTP button opens a tab in the File tab beside this device's files.
 - [ ] Two servers' files stay open at once, and switching between them does
       not reconnect.
+- [ ] Quit and reopen: the same servers come back, each in the directory it
+      was left in, landing on the first.
 
 ### Known gaps
 
-- SFTP sessions are not restored across launches; terminals are.
 - The File tab shows two bars: the tab strip, and SFTP's own bar carrying
   download/sort/search/sudo/refresh. Movable into the strip if it reads heavy.
