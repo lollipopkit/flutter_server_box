@@ -223,47 +223,20 @@ class _ServerPageState extends ConsumerState<ServerPage>
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 
-    return LayoutBuilder(
-      builder: (_, cons) {
-        // Calculate number of columns based on available width
-        final columnsCount = math.max(
-          1,
-          (cons.maxWidth / UIs.columnWidth).floor(),
-        );
-        final padding = columnsCount > 1
-            ? const EdgeInsets.fromLTRB(0, 0, 5, 7)
-            : const EdgeInsets.fromLTRB(7, 0, 7, 7);
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: List.generate(columnsCount, (colIndex) {
-            // Calculate which servers belong in this column
-            final serversInThisColumn = <String>[];
-            for (int i = colIndex; i < filtered.length; i += columnsCount) {
-              serversInThisColumn.add(filtered[i]);
-            }
-            final lens = serversInThisColumn.length;
-
-            return Expanded(
-              child: ListView.builder(
-                controller: colIndex == 0 ? _scrollController : null,
-                padding: padding,
-                itemCount: lens + 1, // Add 1 for bottom spacing
-                itemBuilder: (context, index) {
-                  // Last item is just spacing
-                  if (index == lens) return SizedBox(height: 77);
-
-                  final individualState = ref.watch(
-                    serverProvider(serversInThisColumn[index]),
-                  );
-
-                  return _buildEachServerCard(individualState);
-                },
-              ),
-            );
-          }),
-        );
-      },
+    // Cards are as tall as what they have to say — a server that has not
+    // connected is one line, one that has is several charts. Splitting them
+    // round-robin into a `ListView` per column left a short column beside a
+    // long one and gave each its own scroll position; they flow into whichever
+    // column is shortest now, in one scrollable.
+    return MasonryList.builder(
+      controller: _scrollController,
+      // Room at the bottom for the add button to float over.
+      padding: MasonryList.kPadding.copyWith(bottom: 77),
+      itemCount: filtered.length,
+      // Built as they come into view, so a page of servers watches the ones it
+      // is showing rather than all of them.
+      itemBuilder: (_, i) =>
+          _buildEachServerCard(ref.watch(serverProvider(filtered[i]))),
     );
   }
 

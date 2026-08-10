@@ -51,7 +51,7 @@ class _AddPageState extends ConsumerState<_AddPage> {
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 
-    return AutoMultiList(
+    return MasonryList(
       columnWidth: _kServerColumnWidth,
       children: [
         for (final id in order)

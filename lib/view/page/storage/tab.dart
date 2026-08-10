@@ -334,7 +334,7 @@ class _PickPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(serversProvider);
-    return AutoMultiList(
+    return MasonryList(
       columnWidth: _kColumnWidth,
       children: [
         _PickTile(

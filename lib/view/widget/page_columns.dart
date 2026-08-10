@@ -3,14 +3,10 @@ import 'package:flutter/material.dart';
 
 /// The card/form grid used by the pages that lay their content out in columns.
 ///
-/// Owns both halves of the decision, because they have to agree:
-/// [AutoMultiList] derives its column count from the width it is given, so
-/// setting a cap without widening the columns just leaves emptier ones, and
-/// widening them without a cap lets a large window keep adding more.
-///
-/// Left to itself on a wide desktop window it produced five or six narrow
-/// columns, and reading one page meant crossing the whole screen. Edit pages
-/// suffered most: a single form became five columns of unrelated fields.
+/// Left to itself on a wide desktop window a grid of these produced five or six
+/// narrow columns, and reading one page meant crossing the whole screen. Edit
+/// pages suffered most: a single form became five columns of unrelated fields.
+/// Hence both a wider column and a ceiling on how many of them there can be.
 class PageColumns extends StatelessWidget {
   const PageColumns({super.key, required this.children});
 
@@ -22,24 +18,27 @@ class PageColumns extends StatelessWidget {
 
   static const _maxColumns = 3;
 
-  /// Wide enough for [_maxColumns] columns and no more, matching
-  /// `AutoMultiList`'s own `floor((width - outerPadding) / columnWidth)`.
-  /// Derived rather than written out so it follows if either input changes.
+  /// Wide enough for [_maxColumns] and no more. Derived from the grid's own
+  /// arithmetic rather than written out, so it follows if either input
+  /// changes — a cap without the width just leaves emptier columns.
   static final maxWidth =
       _maxColumns * columnWidth +
-      (_maxColumns - 1) * _betweenPadding +
-      MultiList.kOuterPadding.horizontal;
+      (_maxColumns - 1) * _spacing +
+      _padding.horizontal;
 
-  static const _betweenPadding = 10.0;
+  static const _spacing = 8.0;
+  static const _padding = MasonryList.kPadding;
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
-        child: AutoMultiList(
+        child: MasonryList(
           columnWidth: columnWidth,
-          betweenPadding: _betweenPadding,
+          maxColumns: _maxColumns,
+          spacing: _spacing,
+          padding: _padding,
           children: children,
         ),
       ),
