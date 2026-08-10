@@ -9,7 +9,8 @@
   /// could ship, and most visits never open a terminal.
 
   import { onDestroy } from 'svelte'
-  import { Button, Card, Input, Spinner } from '@serverbox/webui'
+  import { Unplug } from '@lucide/svelte'
+  import { Button, Card, IconButton, Input, Spinner } from '@serverbox/webui'
   import PageHeader from '../components/PageHeader.svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { api } from '../lib/api'
@@ -37,6 +38,12 @@
   let resizeObserver: ResizeObserver | null = null
 
   const CREDENTIAL_KEY = 'terminal.credential'
+
+  /// Waits for the browser to have laid out. `requestAnimationFrame` runs
+  /// after style and layout for the coming frame, which is the earliest point
+  /// a flex-derived height can be measured.
+  const nextFrame = () =>
+    new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
 
   /// Credentials live in memory by default. "Remember" upgrades that to
   /// `sessionStorage` — gone when the tab closes — and never to
@@ -89,7 +96,6 @@
       fit = new FitAddon()
       term.loadAddon(fit)
       if (host) term.open(host)
-      fit.fit()
       decoder = new TextDecoder()
 
       term.onData((data) => session.input(data))
@@ -99,6 +105,14 @@
         resizeObserver = new ResizeObserver(() => fit?.fit())
         resizeObserver.observe(host)
       }
+
+      // Fitted a frame later, not inline with open(): the host's height comes
+      // from flex sizing, which the browser has not resolved yet in this tick.
+      // Measuring now would see zero and leave the terminal at its default 24
+      // rows — the size then sent to the shell as well, so it would not just
+      // look wrong, it would wrap wrong.
+      await nextFrame()
+      fit.fit()
     }
 
     const instance = term
@@ -267,9 +281,26 @@
   title={$LL.terminal()}
   containerClass="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 w-full"
   onback={() => layout.back('dashboard')}
-/>
+>
+  {#snippet actions()}
+    <!-- In the header rather than under the terminal: the terminal fills the
+         viewport, so a button below it is off-screen exactly when a session
+         is running and someone wants to end it -->
+    {#if session.phase === 'running'}
+      <!-- Unplug rather than a power symbol: next to a server's terminal,
+           "power off" reads as an offer to shut the machine down -->
+      <IconButton label={$LL.terminalDisconnect()} onclick={disconnect}>
+        <Unplug class="w-4 h-4" />
+      </IconButton>
+    {/if}
+  {/snippet}
+</PageHeader>
 
-<main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
+<!-- A column that fills what the sticky 4rem header leaves, so the terminal
+     can take the remainder rather than a fixed slice of the viewport -->
+<main
+  class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4 flex flex-col min-h-[calc(100vh-4rem)]"
+>
   {#if !available}
     <Card>
       <p class="text-sm text-muted-fg">{$LL.terminalUnavailable()}</p>
@@ -399,10 +430,16 @@
     </Card>
   {/if}
 
-  <div class="relative">
-    <!-- Kept mounted across reconnects: what is on screen is still the last
+  <!-- Takes whatever the cards above leave, down to a floor that keeps the
+       terminal usable on a short window -->
+  <div class="relative flex-1 min-h-[16rem]">
+    <!-- Positioned rather than `h-full`: a percentage height against a flex
+         item is only definite because browsers special-case it, and xterm
+         sizes itself from what it measures here. `inset-0` against the
+         positioned parent is unambiguous.
+         Kept mounted across reconnects: what is on screen is still the last
          thing the user saw, and may be worth copying out of -->
-    <div bind:this={host} class="h-[60vh] rounded-md overflow-hidden bg-black/90"></div>
+    <div bind:this={host} class="absolute inset-0 rounded-md overflow-hidden bg-black/90"></div>
 
     {#if session.phase === 'reconnecting'}
       <div
@@ -413,8 +450,4 @@
       </div>
     {/if}
   </div>
-
-  {#if session.phase === 'running'}
-    <Button variant="ghost" onclick={disconnect}>{$LL.terminalDisconnect()}</Button>
-  {/if}
 </main>
