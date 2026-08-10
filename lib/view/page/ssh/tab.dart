@@ -24,16 +24,18 @@ class SSHTabPage extends ConsumerStatefulWidget {
   static const route = AppRouteNoArg(page: SSHTabPage.new, path: '/ssh');
 }
 
-typedef _TabMap =
-    Map<
-      String,
-      ({
-        Widget page,
-        FocusNode? focus,
-        ValueNotifier<bool>? visible,
-        GlobalKey<SSHPageState>? sshPageKey,
-      })
-    >;
+/// What a terminal tab is, beyond the name, focus and visibility that
+/// [SessionTabs] already keeps for it.
+///
+/// The page is built once and held, not rebuilt from the record: a terminal's
+/// state lives in its element, and handing `PageView` a fresh widget on every
+/// frame would be relying on `GlobalKey` to put it back.
+class _SshSession {
+  const _SshSession({required this.page, required this.pageKey});
+
+  final Widget page;
+  final GlobalKey<SSHPageState> pageKey;
+}
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin, RestorationMixin {
@@ -57,11 +59,9 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
 
   void _saveTabsState() {
     final tabsData = <Map<String, dynamic>>[];
-    for (final entry in _tabMap.entries) {
-      if (entry.key == libL10n.add) continue; // Skip the add button
-
-      final sshPageState = entry.value.sshPageKey?.currentState;
-      final sshPage = entry.value.page as SSHPage;
+    for (final tab in _sessions.tabs) {
+      final sshPageState = tab.data.pageKey.currentState;
+      final sshPage = tab.data.page as SSHPage;
       final serverId = sshPageState?.widget.args.spi.id ?? sshPage.args.spi.id;
       final tmuxSession =
           sshPageState?.tmuxCurrentSession ?? sshPage.args.tmuxSession;
@@ -100,34 +100,20 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     }
   }
 
-  late final _TabMap _tabMap = {
-    libL10n.add: (
-      page: _AddPage(
-        sortVersionVN: _sortVersionVN,
-        onTapInitCard: _onTapInitCard,
-        onLongPressInitCard: _onLongPressInitCard,
-      ),
-      focus: null,
-      visible: null,
-      sshPageKey: null,
-    ),
-  };
-  final _pageCtrl = PageController();
-  final _fabVN = 0.vn;
-  final _tabRN = RNode();
+  late final _sessions = SessionTabsController<_SshSession>(
+    leadingName: libL10n.add,
+  );
+  late final _addPage = _AddPage(
+    sortVersionVN: _sortVersionVN,
+    onTapInitCard: _onTapInitCard,
+    onLongPressInitCard: _onLongPressInitCard,
+  );
   final _sortVersionVN = 0.vn;
 
   @override
   void dispose() {
     _restorableTabsState.dispose();
-    final entries = _tabMap.values.toList(growable: false);
-    _tabMap.clear();
-    for (final entry in entries) {
-      _disposeTabEntry(entry);
-    }
-    _pageCtrl.dispose();
-    _tabRN.dispose();
-    _fabVN.dispose();
+    _sessions.dispose();
     _sortVersionVN.dispose();
     super.dispose();
   }
@@ -137,12 +123,12 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     super.build(context);
     return Scaffold(
       appBar: PreferredSizeListenBuilder(
-        listenable: _tabRN,
+        listenable: _sessions,
         builder: () {
           return _TabBar(
-            idxVN: _fabVN,
-            map: _tabMap,
-            onTap: _onTapTab,
+            names: _sessions.names,
+            index: _sessions.index,
+            onTap: _sessions.select,
             onClose: _onTapClose,
             snippetBtn: buildSnippetBtn(context),
             sortBtn: buildSortBtn(context),
@@ -151,11 +137,15 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
           );
         },
       ),
-      body: _buildBody(),
-      floatingActionButton: ValBuilder(
-        listenable: _fabVN,
-        builder: (idx) {
-          if (idx != 0) return const SizedBox();
+      body: SessionTabsView<_SshSession>(
+        controller: _sessions,
+        leading: _addPage,
+        builder: (_, tab) => tab.data.page,
+      ),
+      floatingActionButton: ListenBuilder(
+        listenable: _sessions,
+        builder: () {
+          if (_sessions.index != 0) return const SizedBox();
           return FloatingActionButton(
             heroTag: 'sshAddServer',
             onPressed: () => ServerEditPage.route.go(context),
@@ -167,27 +157,6 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     );
   }
 
-  Widget _buildBody() {
-    return ListenBuilder(
-      listenable: _tabRN,
-      builder: () {
-        final entries = _tabMap.entries.toList(growable: false);
-        return PageView.builder(
-          physics: const NeverScrollableScrollPhysics(),
-          controller: _pageCtrl,
-          itemCount: entries.length,
-          itemBuilder: (_, idx) {
-            return entries[idx].value.page;
-          },
-          onPageChanged: (value) {
-            _fabVN.value = value;
-            _syncVisibleTabs(value);
-          },
-        );
-      },
-    );
-  }
-
   @override
   bool get wantKeepAlive => true;
 }
@@ -196,145 +165,43 @@ extension on _SSHTabPageState {
   void _applySort({required int sortBy, required bool sortAsc}) {
     Stores.setting.sshPageSortBy.put(sortBy);
     Stores.setting.sshPageSortAsc.put(sortAsc);
-    _tabRN.notify();
     _sortVersionVN.notify();
   }
 
-  void _disposeTabEntry(
-    ({
-      Widget page,
-      FocusNode? focus,
-      ValueNotifier<bool>? visible,
-      GlobalKey<SSHPageState>? sshPageKey,
-    })
-    entry,
-  ) {
-    entry.focus?.dispose();
-    entry.visible?.dispose();
-  }
-
-  ({
-    Widget page,
-    FocusNode? focus,
-    ValueNotifier<bool>? visible,
-    GlobalKey<SSHPageState>? sshPageKey,
-  })?
-  _detachTabEntry(String name) {
-    return _tabMap.remove(name);
-  }
-
-  void _disposeTabEntryAfterFrame(
-    ({
-      Widget page,
-      FocusNode? focus,
-      ValueNotifier<bool>? visible,
-      GlobalKey<SSHPageState>? sshPageKey,
-    })?
-    entry,
-  ) {
-    if (entry == null) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _disposeTabEntry(entry);
-    });
-  }
-
-  Future<void> _handleTabRemoved(
-    String name, {
-    Duration duration = Durations.medium1,
-    Curve curve = Curves.fastEaseInToSlowEaseOut,
-  }) async {
-    final removedIndex = _tabMap.keys.toList().indexOf(name);
-    final currentIndex = _fabVN.value;
-    final removed = _detachTabEntry(name);
-    if (!mounted) {
-      if (removed != null) {
-        _disposeTabEntry(removed);
-      }
-      return;
-    }
-
-    _tabRN.notify();
-    _disposeTabEntryAfterFrame(removed);
+  Future<void> _handleTabRemoved(String name) async {
+    _sessions.remove(name);
+    if (!mounted) return;
     _saveTabsState();
-    if (_tabMap.isEmpty) {
-      _fabVN.value = 0;
-      return;
-    }
-
-    final maxIndex = _tabMap.length - 1;
-    final nextIndex = () {
-      if (removedIndex == -1) {
-        return currentIndex.clamp(0, maxIndex);
-      }
-      if (currentIndex > removedIndex) {
-        return (currentIndex - 1).clamp(0, maxIndex);
-      }
-      return currentIndex.clamp(0, maxIndex);
-    }();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted || !_pageCtrl.hasClients) return;
-      await _toPage(nextIndex, duration: duration, curve: curve);
-    });
-  }
-
-  void _syncVisibleTabs(int activeIndex) {
-    final entries = _tabMap.entries.toList(growable: false);
-    for (var i = 0; i < entries.length; i++) {
-      entries[i].value.visible?.value = i == activeIndex;
-    }
   }
 
   Future<void> _addTab(Spi spi, {String? tmuxSession, int? tmuxWindow}) async {
-    final name = _generateTabName(spi);
-    final key = GlobalKey<SSHPageState>(debugLabel: name);
-    final focusNode = FocusNode();
-    final visibleVN = ValueNotifier(false);
-    final args = SshPageArgs(
-      spi: spi,
-      notFromTab: false,
-      onSessionEnd: () {
-        _handleTabRemoved(name).ignore();
+    final tab = _sessions.add(
+      preferred: spi.name,
+      build: (name, focus, visible) {
+        final key = GlobalKey<SSHPageState>(debugLabel: name);
+        return _SshSession(
+          pageKey: key,
+          page: SSHPage(
+            key: key,
+            args: SshPageArgs(
+              spi: spi,
+              notFromTab: false,
+              onSessionEnd: () {
+                _handleTabRemoved(name).ignore();
+              },
+              focusNode: focus,
+              visibleListenable: visible,
+              tmuxSession: tmuxSession,
+              tmuxWindow: tmuxWindow,
+              onTmuxStateChanged: _saveTabsState,
+            ),
+          ),
+        );
       },
-      focusNode: focusNode,
-      visibleListenable: visibleVN,
-      tmuxSession: tmuxSession,
-      tmuxWindow: tmuxWindow,
-      onTmuxStateChanged: _saveTabsState,
     );
-    _tabMap[name] = (
-      page: SSHPage(
-        key: key,
-        args: args,
-      ),
-      focus: focusNode,
-      visible: visibleVN,
-      sshPageKey: key,
-    );
-    _tabRN.notify();
     Stores.history.sshServerHistory.add(spi.id);
     _saveTabsState();
-    // Wait for the page to be built
-    await Future.delayed(Durations.short3);
-    final idx = _tabMap.keys.toList().indexOf(name);
-    await _toPage(idx);
-  }
-
-  String _generateTabName(Spi spi) {
-      final reg = RegExp('${spi.name}\\((\\d+)\\)');
-      final idxs = _tabMap.keys
-          .map((e) => reg.firstMatch(e))
-          .map((e) => e?.group(1))
-          .whereType<String>();
-      if (idxs.isEmpty) {
-      return _tabMap.keys.contains(spi.name) ? '${spi.name}(1)' : spi.name;
-      }
-      final biggest = idxs.reduce((a, b) => a.length > b.length ? a : b);
-      final biggestInt = int.tryParse(biggest);
-      if (biggestInt != null && biggestInt > 0) {
-      return '${spi.name}(${biggestInt + 1})';
-      }
-      return spi.name;
+    _sessions.select(_sessions.names.indexOf(tab.name));
   }
 
   void _onTapInitCard(Spi spi) async {
@@ -343,24 +210,6 @@ extension on _SSHTabPageState {
 
   void _onLongPressInitCard(Spi spi) {
     ServerEditPage.route.go(context, args: SpiRequiredArgs(spi));
-  }
-
-  Future<void> _toPage(
-    int idx, {
-    Duration duration = Durations.short3,
-    Curve curve = Curves.fastEaseInToSlowEaseOut,
-  }) async {
-    _fabVN.value = idx;
-    await _pageCtrl.animateToPage(idx, duration: duration, curve: curve);
-    _syncVisibleTabs(idx);
-    final focus = _tabMap.values.elementAt(idx).focus;
-    if (focus != null) {
-      FocusScope.of(context).requestFocus(focus);
-    }
-  }
-
-  void _onTapTab(int idx) async {
-    await _toPage(idx);
   }
 
   void _onTapClose(String name) async {
@@ -489,10 +338,8 @@ extension on _SSHTabPageState {
     return Btn.icon(
       icon: const Icon(Icons.code, size: 18),
       onTap: () {
-        final idx = _fabVN.value;
-        if (idx == 0) return;
-        final entry = _tabMap.values.elementAtOrNull(idx);
-        entry?.sshPageKey?.currentState?.pickSnippetFromToolbar();
+        _sessions.current?.data.pageKey.currentState
+            ?.pickSnippetFromToolbar();
       },
     );
   }
@@ -554,8 +401,8 @@ extension on _SSHTabPageState {
 
 final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
   const _TabBar({
-    required this.idxVN,
-    required this.map,
+    required this.names,
+    required this.index,
     required this.onTap,
     required this.onClose,
     required this.snippetBtn,
@@ -564,8 +411,8 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
     required this.historyBtn,
   });
 
-  final ValueListenable<int> idxVN;
-  final _TabMap map;
+  final List<String> names;
+  final int index;
   final void Function(int idx) onTap;
   final void Function(String name) onClose;
   final Widget snippetBtn;
@@ -573,7 +420,6 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget searchBtn;
   final Widget historyBtn;
 
-  List<String> get names => map.keys.toList();
   List<String> get connectionNames => names.skip(1).toList();
 
   @override
@@ -581,11 +427,10 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListenBuilder(
-      listenable: idxVN,
-      builder: () {
-        final showHomeActions = idxVN.value == 0;
-        final showSnippetAction = idxVN.value != 0;
+    final showHomeActions = index == 0;
+    final showSnippetAction = index != 0;
+    return Builder(
+      builder: (context) {
         return Row(
           children: [
             _buildAddItem(context),
@@ -658,7 +503,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _buildAddItem(BuildContext context) {
-    final color = idxVN.value == 0 ? null : Colors.grey;
+    final color = index == 0 ? null : Colors.grey;
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(13),
@@ -679,7 +524,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
     final wideWidth = isMobile ? 90.0 : 130.0;
     final narrowWidth = isMobile ? 60.0 : 90.0;
     final name = names[idx];
-    final selected = idxVN.value == idx;
+    final selected = index == idx;
     final color = selected ? null : Colors.grey;
 
     final text = Text(
