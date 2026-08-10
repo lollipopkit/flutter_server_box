@@ -1184,18 +1184,19 @@ class AppLocalizationsId extends AppLocalizations {
       'Proses telah berubah atau berhenti. Segarkan daftar lalu coba lagi.';
 
   @override
-  String get watchServers => 'Servers on the watch';
+  String get watchServers => 'Server di jam tangan';
 
   @override
   String get watchServersTip =>
-      'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.';
+      'Jam tangan membaca server ini langsung dari agen monitor-nya, jadi hanya server yang sudah dikonfigurasi monitor yang bisa dipilih.';
 
   @override
-  String get watchNoMonitorServer => 'No server has a monitor agent configured';
+  String get watchNoMonitorServer =>
+      'Tidak ada server dengan agen monitor terkonfigurasi';
 
   @override
-  String get watchLegacyUrls => 'Legacy status URLs';
+  String get watchLegacyUrls => 'URL status lama';
 
   @override
-  String get accessoryWidgetServer => 'Lock screen widget server';
+  String get accessoryWidgetServer => 'Server widget layar kunci';
 }

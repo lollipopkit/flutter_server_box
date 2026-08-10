@@ -1183,18 +1183,19 @@ class AppLocalizationsTr extends AppLocalizations {
       'İşlem değişti veya sonlandı. Listeyi yenileyip tekrar deneyin.';
 
   @override
-  String get watchServers => 'Servers on the watch';
+  String get watchServers => 'Saatteki sunucular';
 
   @override
   String get watchServersTip =>
-      'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.';
+      'Saat bu sunucuları doğrudan monitor aracısından okur, bu yüzden yalnızca monitor yapılandırılmış sunucular seçilebilir.';
 
   @override
-  String get watchNoMonitorServer => 'No server has a monitor agent configured';
+  String get watchNoMonitorServer =>
+      'monitor aracısı yapılandırılmış sunucu yok';
 
   @override
-  String get watchLegacyUrls => 'Legacy status URLs';
+  String get watchLegacyUrls => 'Eski durum URL\'leri';
 
   @override
-  String get accessoryWidgetServer => 'Lock screen widget server';
+  String get accessoryWidgetServer => 'Kilit ekranı bileşeni sunucusu';
 }

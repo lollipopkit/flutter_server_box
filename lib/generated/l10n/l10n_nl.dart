@@ -1195,18 +1195,19 @@ class AppLocalizationsNl extends AppLocalizations {
       'Het proces is gewijzigd of beëindigd. Vernieuw de lijst en probeer het opnieuw.';
 
   @override
-  String get watchServers => 'Servers on the watch';
+  String get watchServers => 'Servers op de watch';
 
   @override
   String get watchServersTip =>
-      'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.';
+      'De watch haalt deze servers zelf op bij hun monitor-agent, dus alleen servers met een geconfigureerde monitor zijn te kiezen.';
 
   @override
-  String get watchNoMonitorServer => 'No server has a monitor agent configured';
+  String get watchNoMonitorServer =>
+      'Geen enkele server heeft een monitor-agent geconfigureerd';
 
   @override
-  String get watchLegacyUrls => 'Legacy status URLs';
+  String get watchLegacyUrls => 'Oude status-URL\'s';
 
   @override
-  String get accessoryWidgetServer => 'Lock screen widget server';
+  String get accessoryWidgetServer => 'Server voor vergrendelscherm-widget';
 }

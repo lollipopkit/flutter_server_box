@@ -1195,18 +1195,20 @@ class AppLocalizationsIt extends AppLocalizations {
       'Il processo è cambiato o terminato. Aggiorna l’elenco e riprova.';
 
   @override
-  String get watchServers => 'Servers on the watch';
+  String get watchServers => 'Server sull\'orologio';
 
   @override
   String get watchServersTip =>
-      'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.';
+      'L\'orologio interroga da solo l\'agente monitor di questi server, quindi si possono scegliere solo i server con monitor configurato.';
 
   @override
-  String get watchNoMonitorServer => 'No server has a monitor agent configured';
+  String get watchNoMonitorServer =>
+      'Nessun server ha un agente monitor configurato';
 
   @override
-  String get watchLegacyUrls => 'Legacy status URLs';
+  String get watchLegacyUrls => 'URL di stato legacy';
 
   @override
-  String get accessoryWidgetServer => 'Lock screen widget server';
+  String get accessoryWidgetServer =>
+      'Server del widget della schermata di blocco';
 }

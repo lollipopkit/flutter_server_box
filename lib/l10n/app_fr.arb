@@ -253,5 +253,10 @@
   "processParseInvalidRows": "Certaines entrées de processus n’ont pas pu être lues.",
   "processParseInvalidWindowsJson": "La réponse des processus Windows n’a pas pu être lue.",
   "processParseInvalidWindowsRows": "Certaines entrées de processus Windows n’ont pas pu être lues.",
-  "processKillTargetChanged": "Le processus a changé ou s’est terminé. Actualisez la liste et réessayez."
+  "processKillTargetChanged": "Le processus a changé ou s’est terminé. Actualisez la liste et réessayez.",
+  "watchServers": "Serveurs sur la montre",
+  "watchServersTip": "La montre interroge elle-même l'agent monitor de ces serveurs ; seuls les serveurs dotés d'un monitor peuvent donc être sélectionnés.",
+  "watchNoMonitorServer": "Aucun serveur n'a d'agent monitor configuré",
+  "watchLegacyUrls": "Anciennes URL de statut",
+  "accessoryWidgetServer": "Serveur du widget d'écran verrouillé"
 }

@@ -1195,18 +1195,19 @@ class AppLocalizationsRu extends AppLocalizations {
       'Процесс изменился или завершился. Обновите список и повторите попытку.';
 
   @override
-  String get watchServers => 'Servers on the watch';
+  String get watchServers => 'Серверы на часах';
 
   @override
   String get watchServersTip =>
-      'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.';
+      'Часы сами обращаются к агенту monitor этих серверов, поэтому выбрать можно только серверы с настроенным monitor.';
 
   @override
-  String get watchNoMonitorServer => 'No server has a monitor agent configured';
+  String get watchNoMonitorServer =>
+      'Ни на одном сервере не настроен агент monitor';
 
   @override
-  String get watchLegacyUrls => 'Legacy status URLs';
+  String get watchLegacyUrls => 'Устаревшие URL статуса';
 
   @override
-  String get accessoryWidgetServer => 'Lock screen widget server';
+  String get accessoryWidgetServer => 'Сервер для виджета экрана блокировки';
 }

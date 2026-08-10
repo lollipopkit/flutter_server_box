@@ -253,5 +253,10 @@
   "processParseInvalidRows": "Не удалось прочитать некоторые записи процессов.",
   "processParseInvalidWindowsJson": "Не удалось прочитать ответ со списком процессов Windows.",
   "processParseInvalidWindowsRows": "Не удалось прочитать некоторые записи процессов Windows.",
-  "processKillTargetChanged": "Процесс изменился или завершился. Обновите список и повторите попытку."
+  "processKillTargetChanged": "Процесс изменился или завершился. Обновите список и повторите попытку.",
+  "watchServers": "Серверы на часах",
+  "watchServersTip": "Часы сами обращаются к агенту monitor этих серверов, поэтому выбрать можно только серверы с настроенным monitor.",
+  "watchNoMonitorServer": "Ни на одном сервере не настроен агент monitor",
+  "watchLegacyUrls": "Устаревшие URL статуса",
+  "accessoryWidgetServer": "Сервер для виджета экрана блокировки"
 }

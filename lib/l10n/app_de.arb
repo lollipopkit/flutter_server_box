@@ -253,5 +253,10 @@
   "processParseInvalidRows": "Einige Prozesseinträge konnten nicht gelesen werden.",
   "processParseInvalidWindowsJson": "Die Windows-Prozessantwort konnte nicht gelesen werden.",
   "processParseInvalidWindowsRows": "Einige Windows-Prozesseinträge konnten nicht gelesen werden.",
-  "processKillTargetChanged": "Der Prozess wurde geändert oder beendet. Aktualisieren Sie die Liste und versuchen Sie es erneut."
+  "processKillTargetChanged": "Der Prozess wurde geändert oder beendet. Aktualisieren Sie die Liste und versuchen Sie es erneut.",
+  "watchServers": "Server auf der Watch",
+  "watchServersTip": "Die Watch ruft diese Server selbst über deren monitor-Agent ab, daher lassen sich nur Server mit konfiguriertem monitor auswählen.",
+  "watchNoMonitorServer": "Kein Server hat einen monitor-Agenten konfiguriert",
+  "watchLegacyUrls": "Alte Status-URLs",
+  "accessoryWidgetServer": "Server für Sperrbildschirm-Widget"
 }

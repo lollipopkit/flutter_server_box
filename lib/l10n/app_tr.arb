@@ -253,5 +253,10 @@
   "processParseInvalidRows": "Bazı işlem girdileri okunamadı.",
   "processParseInvalidWindowsJson": "Windows işlem yanıtı okunamadı.",
   "processParseInvalidWindowsRows": "Bazı Windows işlem girdileri okunamadı.",
-  "processKillTargetChanged": "İşlem değişti veya sonlandı. Listeyi yenileyip tekrar deneyin."
+  "processKillTargetChanged": "İşlem değişti veya sonlandı. Listeyi yenileyip tekrar deneyin.",
+  "watchServers": "Saatteki sunucular",
+  "watchServersTip": "Saat bu sunucuları doğrudan monitor aracısından okur, bu yüzden yalnızca monitor yapılandırılmış sunucular seçilebilir.",
+  "watchNoMonitorServer": "monitor aracısı yapılandırılmış sunucu yok",
+  "watchLegacyUrls": "Eski durum URL'leri",
+  "accessoryWidgetServer": "Kilit ekranı bileşeni sunucusu"
 }

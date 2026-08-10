@@ -258,5 +258,10 @@
   "processParseInvalidRows": "Non è stato possibile leggere alcune voci dei processi.",
   "processParseInvalidWindowsJson": "Non è stato possibile leggere la risposta dei processi Windows.",
   "processParseInvalidWindowsRows": "Non è stato possibile leggere alcune voci dei processi Windows.",
-  "processKillTargetChanged": "Il processo è cambiato o terminato. Aggiorna l’elenco e riprova."
+  "processKillTargetChanged": "Il processo è cambiato o terminato. Aggiorna l’elenco e riprova.",
+  "watchServers": "Server sull'orologio",
+  "watchServersTip": "L'orologio interroga da solo l'agente monitor di questi server, quindi si possono scegliere solo i server con monitor configurato.",
+  "watchNoMonitorServer": "Nessun server ha un agente monitor configurato",
+  "watchLegacyUrls": "URL di stato legacy",
+  "accessoryWidgetServer": "Server del widget della schermata di blocco"
 }

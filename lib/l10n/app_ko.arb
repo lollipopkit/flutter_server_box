@@ -328,5 +328,10 @@
   "processParseInvalidRows": "일부 프로세스 항목을 읽을 수 없습니다.",
   "processParseInvalidWindowsJson": "Windows 프로세스 응답을 읽을 수 없습니다.",
   "processParseInvalidWindowsRows": "일부 Windows 프로세스 항목을 읽을 수 없습니다.",
-  "processKillTargetChanged": "프로세스가 변경되었거나 종료되었습니다. 목록을 새로 고친 후 다시 시도하세요."
+  "processKillTargetChanged": "프로세스가 변경되었거나 종료되었습니다. 목록을 새로 고친 후 다시 시도하세요.",
+  "watchServers": "워치에 표시할 서버",
+  "watchServersTip": "워치가 각 서버의 monitor 에이전트에서 직접 가져오므로, monitor가 설정된 서버만 선택할 수 있습니다.",
+  "watchNoMonitorServer": "monitor 에이전트가 설정된 서버가 없습니다",
+  "watchLegacyUrls": "레거시 status URL",
+  "accessoryWidgetServer": "잠금 화면 위젯 서버"
 }

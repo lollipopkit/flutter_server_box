@@ -1136,18 +1136,18 @@ class AppLocalizationsKo extends AppLocalizations {
       '프로세스가 변경되었거나 종료되었습니다. 목록을 새로 고친 후 다시 시도하세요.';
 
   @override
-  String get watchServers => 'Servers on the watch';
+  String get watchServers => '워치에 표시할 서버';
 
   @override
   String get watchServersTip =>
-      'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.';
+      '워치가 각 서버의 monitor 에이전트에서 직접 가져오므로, monitor가 설정된 서버만 선택할 수 있습니다.';
 
   @override
-  String get watchNoMonitorServer => 'No server has a monitor agent configured';
+  String get watchNoMonitorServer => 'monitor 에이전트가 설정된 서버가 없습니다';
 
   @override
-  String get watchLegacyUrls => 'Legacy status URLs';
+  String get watchLegacyUrls => '레거시 status URL';
 
   @override
-  String get accessoryWidgetServer => 'Lock screen widget server';
+  String get accessoryWidgetServer => '잠금 화면 위젯 서버';
 }

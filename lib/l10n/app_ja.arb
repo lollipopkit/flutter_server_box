@@ -253,5 +253,10 @@
   "processParseInvalidRows": "一部のプロセス項目を読み取れませんでした。",
   "processParseInvalidWindowsJson": "Windows のプロセス応答を読み取れませんでした。",
   "processParseInvalidWindowsRows": "一部の Windows プロセス項目を読み取れませんでした。",
-  "processKillTargetChanged": "プロセスが変更されたか終了しました。一覧を更新して再試行してください。"
+  "processKillTargetChanged": "プロセスが変更されたか終了しました。一覧を更新して再試行してください。",
+  "watchServers": "Watch に表示するサーバー",
+  "watchServersTip": "Watch は各サーバーの monitor エージェントから直接取得するため、monitor を設定済みのサーバーのみ選択できます。",
+  "watchNoMonitorServer": "monitor を設定したサーバーがありません",
+  "watchLegacyUrls": "旧形式の status URL",
+  "accessoryWidgetServer": "ロック画面ウィジェットのサーバー"
 }

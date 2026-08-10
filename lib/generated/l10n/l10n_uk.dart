@@ -1195,18 +1195,19 @@ class AppLocalizationsUk extends AppLocalizations {
       'Процес змінився або завершився. Оновіть список і повторіть спробу.';
 
   @override
-  String get watchServers => 'Servers on the watch';
+  String get watchServers => 'Сервери на годиннику';
 
   @override
   String get watchServersTip =>
-      'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.';
+      'Годинник сам звертається до агента monitor цих серверів, тому вибрати можна лише сервери з налаштованим monitor.';
 
   @override
-  String get watchNoMonitorServer => 'No server has a monitor agent configured';
+  String get watchNoMonitorServer =>
+      'Жоден сервер не має налаштованого агента monitor';
 
   @override
-  String get watchLegacyUrls => 'Legacy status URLs';
+  String get watchLegacyUrls => 'Застарілі URL статусу';
 
   @override
-  String get accessoryWidgetServer => 'Lock screen widget server';
+  String get accessoryWidgetServer => 'Сервер для віджета екрана блокування';
 }

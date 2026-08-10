@@ -253,5 +253,10 @@
   "processParseInvalidRows": "No se pudieron leer algunas entradas de procesos.",
   "processParseInvalidWindowsJson": "No se pudo leer la respuesta de procesos de Windows.",
   "processParseInvalidWindowsRows": "No se pudieron leer algunas entradas de procesos de Windows.",
-  "processKillTargetChanged": "El proceso cambió o finalizó. Actualiza la lista e inténtalo de nuevo."
+  "processKillTargetChanged": "El proceso cambió o finalizó. Actualiza la lista e inténtalo de nuevo.",
+  "watchServers": "Servidores en el reloj",
+  "watchServersTip": "El reloj consulta estos servidores directamente a su agente monitor, por lo que solo pueden elegirse servidores con monitor configurado.",
+  "watchNoMonitorServer": "Ningún servidor tiene un agente monitor configurado",
+  "watchLegacyUrls": "URL de estado heredadas",
+  "accessoryWidgetServer": "Servidor del widget de pantalla bloqueada"
 }

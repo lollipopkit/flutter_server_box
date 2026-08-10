@@ -253,5 +253,10 @@
   "processParseInvalidRows": "Sommige procesvermeldingen konden niet worden gelezen.",
   "processParseInvalidWindowsJson": "Het Windows-procesantwoord kon niet worden gelezen.",
   "processParseInvalidWindowsRows": "Sommige Windows-procesvermeldingen konden niet worden gelezen.",
-  "processKillTargetChanged": "Het proces is gewijzigd of beëindigd. Vernieuw de lijst en probeer het opnieuw."
+  "processKillTargetChanged": "Het proces is gewijzigd of beëindigd. Vernieuw de lijst en probeer het opnieuw.",
+  "watchServers": "Servers op de watch",
+  "watchServersTip": "De watch haalt deze servers zelf op bij hun monitor-agent, dus alleen servers met een geconfigureerde monitor zijn te kiezen.",
+  "watchNoMonitorServer": "Geen enkele server heeft een monitor-agent geconfigureerd",
+  "watchLegacyUrls": "Oude status-URL's",
+  "accessoryWidgetServer": "Server voor vergrendelscherm-widget"
 }

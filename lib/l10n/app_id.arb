@@ -253,5 +253,10 @@
   "processParseInvalidRows": "Beberapa entri proses tidak dapat dibaca.",
   "processParseInvalidWindowsJson": "Respons proses Windows tidak dapat dibaca.",
   "processParseInvalidWindowsRows": "Beberapa entri proses Windows tidak dapat dibaca.",
-  "processKillTargetChanged": "Proses telah berubah atau berhenti. Segarkan daftar lalu coba lagi."
+  "processKillTargetChanged": "Proses telah berubah atau berhenti. Segarkan daftar lalu coba lagi.",
+  "watchServers": "Server di jam tangan",
+  "watchServersTip": "Jam tangan membaca server ini langsung dari agen monitor-nya, jadi hanya server yang sudah dikonfigurasi monitor yang bisa dipilih.",
+  "watchNoMonitorServer": "Tidak ada server dengan agen monitor terkonfigurasi",
+  "watchLegacyUrls": "URL status lama",
+  "accessoryWidgetServer": "Server widget layar kunci"
 }

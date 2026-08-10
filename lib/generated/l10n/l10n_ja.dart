@@ -1147,18 +1147,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get processKillTargetChanged => 'プロセスが変更されたか終了しました。一覧を更新して再試行してください。';
 
   @override
-  String get watchServers => 'Servers on the watch';
+  String get watchServers => 'Watch に表示するサーバー';
 
   @override
   String get watchServersTip =>
-      'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.';
+      'Watch は各サーバーの monitor エージェントから直接取得するため、monitor を設定済みのサーバーのみ選択できます。';
 
   @override
-  String get watchNoMonitorServer => 'No server has a monitor agent configured';
+  String get watchNoMonitorServer => 'monitor を設定したサーバーがありません';
 
   @override
-  String get watchLegacyUrls => 'Legacy status URLs';
+  String get watchLegacyUrls => '旧形式の status URL';
 
   @override
-  String get accessoryWidgetServer => 'Lock screen widget server';
+  String get accessoryWidgetServer => 'ロック画面ウィジェットのサーバー';
 }
