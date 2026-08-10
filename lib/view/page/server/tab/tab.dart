@@ -19,6 +19,7 @@ import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
@@ -32,6 +33,7 @@ import 'package:server_box/view/widget/server_func_btns.dart';
 part 'card_stat.dart';
 part 'content.dart';
 part 'landscape.dart';
+part 'pane_list.dart';
 part 'top_bar.dart';
 part 'utils.dart';
 
@@ -142,11 +144,24 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // when individual server tags change without affecting the global tag set
     final serverOrder = ref.watch(serversProvider.select((s) => s.serverOrder));
     ref.watch(serversProvider.select((s) => s.tags));
-    ref.watch(serversProvider.select((s) => s.servers));
+    final servers = ref.watch(serversProvider.select((s) => s.servers));
+    final selected = ref.watch(serverSelectionProvider);
+    final selectedSpi = selected == null ? null : servers[selected];
+
     return _tag.listenVal((val) {
       final filtered = _filterServers(serverOrder);
-      final child = _buildScaffold(_buildBodySmall(filtered: filtered));
-      return child;
+      return AdaptivePanes(
+        enabled: !Stores.setting.forceSinglePane.fetch(),
+        detailId: selectedSpi?.id,
+        // Null until something is opened, so a fresh launch gets the whole
+        // width for browsing rather than a column reserved for nothing.
+        detailBuilder: selectedSpi == null
+            ? null
+            : (_) => ServerDetailPage(args: SpiRequiredArgs(selectedSpi)),
+        primaryBuilder: (_, split) => split
+            ? _buildPaneList(filtered)
+            : _buildScaffold(_buildBodySmall(filtered: filtered)),
+      );
     });
   }
 

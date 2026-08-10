@@ -176,6 +176,13 @@ class SettingStore extends HiveStore {
     false,
   );
 
+  /// Keep one column however wide the window is.
+  ///
+  /// The two-pane layout is on by default above its width threshold. This is
+  /// for someone who has the room and does not want it — a preference, not a
+  /// capability, so it overrides the width rather than being overridden by it.
+  late final forceSinglePane = propertyDefault('forceSinglePane', false);
+
   /// Whether use `rm -r` to delete directory on SFTP
   late final sftpRmrDir = propertyDefault('sftpRmrDir', false);
 

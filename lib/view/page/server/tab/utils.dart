@@ -9,11 +9,18 @@ extension _Actions on _ServerPageState {
       ref.read(serversProvider.notifier).refresh(spi: srv.spi);
       return;
     }
-    if (srv.canViewDetails) {
-      ServerDetailPage.route.go(context, SpiRequiredArgs(srv.spi));
-    } else {
-      ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
+    final page = srv.canViewDetails
+        ? () => ServerDetailPage.route.go(context, SpiRequiredArgs(srv.spi))
+        : () => ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi));
+
+    // The one place that knows about the layout. With a pane on screen,
+    // opening a server means selecting it; without one it means pushing, and
+    // the page that opens cannot tell the difference either way.
+    if (PaneScope.isSplit(context) && srv.canViewDetails) {
+      ref.read(serverSelectionProvider.notifier).select(srv.spi.id);
+      return;
     }
+    page();
   }
 
   void _onLongPressCard(ServerState srv) {
