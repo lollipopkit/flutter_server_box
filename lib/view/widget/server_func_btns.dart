@@ -25,7 +25,6 @@ import 'package:server_box/view/page/iperf.dart';
 import 'package:server_box/view/page/port_forward.dart';
 import 'package:server_box/view/page/process.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
-import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/page/systemd.dart';
 
 class ServerFuncBtns extends StatelessWidget {
@@ -123,10 +122,10 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
     switch (value) {
       case ServerFuncBtn.sftp:
         if (!await _checkClient(context, spi.id, ref)) return;
-        if (!context.mounted) return;
-        final args = SftpPageArgs(spi: spi);
-        SftpPage.route.go(context, args);
-
+        // Into the file tab rather than over whatever is on screen, so two
+        // servers can be open at once and neither is lost by opening the other.
+        ref.read(sftpRequestsProvider.notifier).add(spi);
+        ref.read(homeTabRequestProvider.notifier).go(AppTab.file);
         break;
       case ServerFuncBtn.snippet:
         final snippetState = ref.read(snippetProvider);

@@ -5,14 +5,14 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 import 'package:server_box/view/page/snippet/list.dart';
 import 'package:server_box/view/page/ssh/tab.dart';
-import 'package:server_box/view/page/storage/local.dart';
+import 'package:server_box/view/page/storage/tab.dart';
 
 extension AppTabViewX on AppTab {
   Widget get page {
     return switch (this) {
       AppTab.server => const ServerPage(),
       AppTab.ssh => const SSHTabPage(),
-      AppTab.file => const LocalFilePage(),
+      AppTab.file => const FileTabPage(),
       AppTab.snippet => const SnippetListPage(),
     };
   }

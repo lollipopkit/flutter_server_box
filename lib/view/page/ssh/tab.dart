@@ -3,8 +3,6 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:icons_plus/icons_plus.dart';
-import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -15,7 +13,6 @@ import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 
 part 'tab_add.dart';
-part 'tab_bar.dart';
 part 'tab_sort.dart';
 
 /// Every open terminal, one tab each, plus a picker at the head of the strip.
@@ -112,13 +109,13 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
         // Both: the bar shows which tab is current *and* how the picker behind
         // it is sorted.
         listenable: Listenable.merge([_sessions, _sortVersion]),
-        builder: () => _TabBar(
+        builder: () => SessionTabBar(
           names: _sessions.names,
           index: _sessions.index,
           onTap: _sessions.select,
           onClose: _confirmClose,
           sessionActions: [_snippetBtn],
-          pickerActions: [_sortBtn, _searchBtn, _historyBtn],
+          leadingActions: [_sortBtn, _searchBtn, _historyBtn],
         ),
       ),
       body: SessionTabsView<_SshSession>(
