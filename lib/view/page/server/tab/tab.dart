@@ -32,6 +32,7 @@ import 'package:server_box/view/widget/server_func_btns.dart';
 
 part 'card_stat.dart';
 part 'content.dart';
+part 'flight.dart';
 part 'landscape.dart';
 part 'pane_list.dart';
 part 'top_bar.dart';
@@ -49,8 +50,18 @@ class ServerPage extends ConsumerStatefulWidget {
 const _cardPad = 74.0;
 const _cardPadSingle = 13.0;
 
+/// The title row brings 7 of its own on the left, which is sized for a card as
+/// wide as the window. In a 320pt column the name ends up against the edge.
+const _kPaneTilePadding = EdgeInsets.fromLTRB(6, 11, 0, 11);
+
+/// Long enough to read as one movement, short enough not to be waited on.
+const _kFlightDuration = Durations.medium3;
+
 class _ServerPageState extends ConsumerState<ServerPage>
-    with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
+    with
+        AutomaticKeepAliveClientMixin,
+        AfterLayoutMixin,
+        TickerProviderStateMixin {
   late double _textFactorDouble;
   final ValueNotifier<double> _offsetNotifier = ValueNotifier(1);
   late TextScaler _textFactor;
@@ -65,6 +76,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
   final _scrollController = ScrollController();
   final _autoHideCtrl = AutoHideController();
 
+  /// The server whose card is in the air, or null. Its row in the list is
+  /// built hidden and carries [_flightTargetKey], so the flight has somewhere
+  /// to measure and somewhere to land without a second copy showing early.
+  final _flyingId = ValueNotifier<String?>(null);
+  final _flightTargetKey = GlobalKey();
+  OverlayFlight? _flight;
+
   /// Deselecting is the whole of "close the pane": the detail is built from
   /// the selection, so dropping it collapses the layout back to the
   /// full-width grid the app starts on.
@@ -72,11 +90,20 @@ class _ServerPageState extends ConsumerState<ServerPage>
   /// A method rather than a closure written at the call site: tearing off the
   /// same instance method twice yields equal values, while a fresh closure per
   /// build would make `PaneScope` notify its dependents on every rebuild.
-  void _closeDetail() =>
-      ref.read(serverSelectionProvider.notifier).select(null);
+  void _closeDetail() {
+    // A card still on its way to a list that is about to become a grid again
+    // would land on nothing.
+    _endFlight();
+    _flyingId.value = null;
+    ref.read(serverSelectionProvider.notifier).select(null);
+  }
 
   @override
   void dispose() {
+    // Before the tickers this state vends go with it: an entry left in the
+    // overlay outlives the page that put it there.
+    _endFlight();
+    _flyingId.dispose();
     _timer?.cancel();
     _scrollController.dispose();
     _autoHideCtrl.dispose();

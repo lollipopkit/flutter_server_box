@@ -50,7 +50,7 @@ extension _PaneList on _ServerPageState {
     required bool selected,
   }) {
     final scheme = Theme.of(context).colorScheme;
-    return CardX(
+    final tile = CardX(
       // The selected card carries the tint the rest of the app uses for a
       // current choice; the others keep the default card colour.
       color: selected ? scheme.secondaryContainer : null,
@@ -58,13 +58,25 @@ extension _PaneList on _ServerPageState {
         onTap: () => _onTapCard(context, srv),
         onLongPress: () => _onLongPressCard(srv),
         child: Padding(
-          // The title row brings 7 of its own on the left, which is sized for
-          // a card that is as wide as the window. In a 320pt column the name
-          // ends up against the edge.
-          padding: const EdgeInsets.fromLTRB(6, 11, 0, 11),
+          padding: _kPaneTilePadding,
           child: _buildServerCardTitle(srv),
         ),
       ),
     );
+
+    return _flyingId.listenVal((flyingId) {
+      if (flyingId != srv.spi.id) return tile;
+      // Laid out but not drawn: the flight needs this row's rectangle to know
+      // where it is going, and showing the row while a copy of it is still on
+      // its way would put the same card on screen twice.
+      return Visibility(
+        key: _flightTargetKey,
+        visible: false,
+        maintainSize: true,
+        maintainAnimation: true,
+        maintainState: true,
+        child: tile,
+      );
+    });
   }
 }

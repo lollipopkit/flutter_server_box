@@ -243,6 +243,14 @@ fn parse_df(raw: &str) -> Vec<Disk> {
             disks.push(disk);
         }
     }
+
+    // Bind mounts and container volumes republish one filesystem under many
+    // paths: a host running containers reports the same device a dozen times,
+    // every row carrying identical numbers. Same source and same numbers is
+    // the same filesystem, and the first mount `df` lists — `/` before the
+    // volumes under it — is the one worth naming.
+    let mut seen = std::collections::HashSet::new();
+    disks.retain(|d| seen.insert((d.path.clone(), d.size, d.used)));
     disks
 }
 

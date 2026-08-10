@@ -24,7 +24,12 @@ extension _Actions on _ServerPageState {
     // page says why it is empty, and staying on the list is what lets someone
     // work through several servers that are all failing.
     if (PaneScope.isSplit(context)) {
+      // Only the first selection reshapes the list, from a grid across the
+      // window to a column beside the pane. That is the move worth animating;
+      // picking another server afterwards leaves every row where it was.
+      final reshapes = ref.read(serverSelectionProvider) == null;
       ref.read(serverSelectionProvider.notifier).select(srv.spi.id);
+      if (reshapes) _flyCardIntoPane(context, srv);
       return;
     }
 

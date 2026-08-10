@@ -312,6 +312,29 @@ fn disk_parse_df_drops_kernel_mounts() {
     assert!(disks.iter().any(|d| d.path == "mac" && d.mount == "/mnt/mac"));
 }
 
+/// One filesystem published under many paths is one row: `/dev/vdb1` appears
+/// 14 times in this `df` (once as `/`, then per container volume), `mac` six
+/// times, all with identical numbers.
+#[test]
+fn disk_parse_df_collapses_repeated_mounts() {
+    let disks = linux::parse_disk(include_str!("fixtures/df_orbstack.txt"));
+
+    assert_eq!(disks.len(), 5);
+    assert_eq!(disks[0].path, "/dev/vdb1");
+    assert_eq!(
+        disks[0].mount, "/",
+        "the first mount df lists is the one kept"
+    );
+    assert_eq!(disks.iter().filter(|d| d.path == "/dev/vdb1").count(), 1);
+    assert_eq!(disks.iter().filter(|d| d.path == "mac").count(), 1);
+
+    // Same source, different numbers, so not the same filesystem: the tmpfs
+    // orbstack mounts differ in what is used and both survive
+    let orbstack: Vec<_> = disks.iter().filter(|d| d.path == "orbstack").collect();
+    assert_eq!(orbstack.len(), 2);
+    assert_ne!(orbstack[0].used, orbstack[1].used);
+}
+
 /// Dart 'parse ImmortalWrt df -k output without shrinking units'
 #[test]
 fn disk_parse_immortalwrt() {
