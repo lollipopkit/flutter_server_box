@@ -1,8 +1,6 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
@@ -15,6 +13,11 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 
+part 'tab_add.dart';
+part 'tab_bar.dart';
+part 'tab_sort.dart';
+
+/// Every open terminal, one tab each, plus a picker at the head of the strip.
 class SSHTabPage extends ConsumerStatefulWidget {
   const SSHTabPage({super.key});
 
@@ -25,118 +28,68 @@ class SSHTabPage extends ConsumerStatefulWidget {
 }
 
 /// What a terminal tab is, beyond the name, focus and visibility that
-/// [SessionTabs] already keeps for it.
+/// [SessionTabsController] already keeps for it.
 ///
-/// The page is built once and held, not rebuilt from the record: a terminal's
-/// state lives in its element, and handing `PageView` a fresh widget on every
-/// frame would be relying on `GlobalKey` to put it back.
+/// The page is built once and held rather than rebuilt from this record: a
+/// terminal's state lives in its element, and handing `PageView` a fresh
+/// widget every frame would be leaning on `GlobalKey` to put it back.
 class _SshSession {
   const _SshSession({required this.page, required this.pageKey});
 
-  final Widget page;
+  final SSHPage page;
   final GlobalKey<SSHPageState> pageKey;
+
+  /// What has to survive a relaunch. Read from the live page when there is
+  /// one, and from the arguments it was opened with when there is not — a tab
+  /// restored but never looked at has no state of its own yet.
+  Map<String, dynamic> toRestorable() {
+    final live = pageKey.currentState;
+    return {
+      'serverId': live?.widget.args.spi.id ?? page.args.spi.id,
+      'tmuxSession': live?.tmuxCurrentSession ?? page.args.tmuxSession,
+      'tmuxWindow': live?.tmuxCurrentWindow ?? page.args.tmuxWindow,
+    };
+  }
 }
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
     with AutomaticKeepAliveClientMixin, RestorationMixin {
-  // Restorable state for tab restoration
-  final RestorableString _restorableTabsState = RestorableString('');
+  late final _sessions = SessionTabsController<_SshSession>(
+    leadingName: libL10n.add,
+  );
+
+  /// Notified when the picker's sort order changes. That order lives in the
+  /// settings store rather than a provider, so nothing else would tell the
+  /// picker — or the icon on the bar — to rebuild.
+  final _sortVersion = RNode();
+
+  late final _picker = _AddPage(
+    sortVersion: _sortVersion,
+    onTap: _open,
+    onLongPress: (spi) =>
+        ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
+  );
+
+  final _restorableTabs = RestorableString('');
 
   @override
   String get restorationId => 'ssh_tab_page';
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    registerForRestoration(_restorableTabsState, 'tabs_state');
-
-    // Restore tabs after the first frame
-    if (initialRestore && _restorableTabsState.value.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _restoreTabs();
-      });
-    }
+    registerForRestoration(_restorableTabs, 'tabs_state');
+    if (!initialRestore || _restorableTabs.value.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _restoreTabs());
   }
-
-  void _saveTabsState() {
-    final tabsData = <Map<String, dynamic>>[];
-    for (final tab in _sessions.tabs) {
-      final sshPageState = tab.data.pageKey.currentState;
-      final sshPage = tab.data.page as SSHPage;
-      final serverId = sshPageState?.widget.args.spi.id ?? sshPage.args.spi.id;
-      final tmuxSession =
-          sshPageState?.tmuxCurrentSession ?? sshPage.args.tmuxSession;
-      final tmuxWindow =
-          sshPageState?.tmuxCurrentWindow ?? sshPage.args.tmuxWindow;
-
-      tabsData.add({
-        'serverId': serverId,
-        'tmuxSession': tmuxSession,
-        'tmuxWindow': tmuxWindow,
-      });
-    }
-    _restorableTabsState.value = jsonEncode(tabsData);
-  }
-
-  /// Reopens whatever was open when the app last went away.
-  ///
-  /// Every entry is read defensively and skipped on its own. This is the one
-  /// path that runs against data an older build wrote, and one malformed
-  /// record used to abort the loop — losing every other terminal with it.
-  void _restoreTabs() {
-    final List<dynamic> entries;
-    try {
-      entries = jsonDecode(_restorableTabsState.value) as List;
-    } catch (e, st) {
-      Loggers.app.warning('Unreadable SSH tab state', e, st);
-      return;
-    }
-
-    // Read once, not once per tab.
-    final servers = {for (final spi in Stores.server.fetch()) spi.id: spi};
-
-    var restored = 0;
-    for (final entry in entries) {
-      try {
-        if (entry is! Map) continue;
-        final spi = servers[entry['serverId']];
-        if (spi == null) continue;
-        _addTab(
-          spi,
-          tmuxSession: entry['tmuxSession'] as String?,
-          tmuxWindow: entry['tmuxWindow'] as int?,
-          // Selecting each in turn would animate through every restored tab
-          // and land on the last one, which is not where anyone left off.
-          select: false,
-        );
-        restored++;
-      } catch (e, st) {
-        Loggers.app.warning('Skipped an unrestorable SSH tab', e, st);
-      }
-    }
-
-    // One write for the whole restore rather than one per tab, and only after
-    // the set is final.
-    if (restored > 0) {
-      _saveTabsState();
-      _sessions.select(1);
-    }
-  }
-
-  late final _sessions = SessionTabsController<_SshSession>(
-    leadingName: libL10n.add,
-  );
-  late final _addPage = _AddPage(
-    sortVersionVN: _sortVersionVN,
-    onTapInitCard: _onTapInitCard,
-    onLongPressInitCard: _onLongPressInitCard,
-  );
-  final _sortVersionVN = 0.vn;
 
   @override
   void dispose() {
-    _restorableTabsState.dispose();
+    _restorableTabs.dispose();
     _sessions.dispose();
-    _sortVersionVN.dispose();
+    _sortVersion.dispose();
     super.dispose();
   }
 
@@ -145,31 +98,27 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     super.build(context);
     return Scaffold(
       appBar: PreferredSizeListenBuilder(
-        // Both, because the bar shows two things: which tab is current, and
-        // which way the list behind the add page is sorted.
-        listenable: Listenable.merge([_sessions, _sortVersionVN]),
-        builder: () {
-          return _TabBar(
-            names: _sessions.names,
-            index: _sessions.index,
-            onTap: _sessions.select,
-            onClose: _onTapClose,
-            snippetBtn: buildSnippetBtn(context),
-            sortBtn: buildSortBtn(context),
-            searchBtn: buildSearchBtn(context),
-            historyBtn: buildHistoryBtn(context),
-          );
-        },
+        // Both: the bar shows which tab is current *and* how the picker behind
+        // it is sorted.
+        listenable: Listenable.merge([_sessions, _sortVersion]),
+        builder: () => _TabBar(
+          names: _sessions.names,
+          index: _sessions.index,
+          onTap: _sessions.select,
+          onClose: _confirmClose,
+          sessionActions: [_snippetBtn],
+          pickerActions: [_sortBtn, _searchBtn, _historyBtn],
+        ),
       ),
       body: SessionTabsView<_SshSession>(
         controller: _sessions,
-        leading: _addPage,
+        leading: _picker,
         builder: (_, tab) => tab.data.page,
       ),
       floatingActionButton: ListenBuilder(
         listenable: _sessions,
         builder: () {
-          if (_sessions.index != 0) return const SizedBox();
+          if (_sessions.index != 0) return const SizedBox.shrink();
           return FloatingActionButton(
             heroTag: 'sshAddServer',
             onPressed: () => ServerEditPage.route.go(context),
@@ -180,25 +129,16 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       ),
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }
 
-extension on _SSHTabPageState {
-  void _applySort({required int sortBy, required bool sortAsc}) {
-    Stores.setting.sshPageSortBy.put(sortBy);
-    Stores.setting.sshPageSortAsc.put(sortAsc);
-    _sortVersionVN.notify();
-  }
-
-  Future<void> _handleTabRemoved(String name) async {
-    _sessions.remove(name);
-    if (!mounted) return;
-    _saveTabsState();
-  }
-
-  void _addTab(
+/// Opening, closing and remembering terminals.
+extension _Sessions on _SSHTabPageState {
+  /// Opens a shell on [spi].
+  ///
+  /// [select] is off while restoring: selecting each tab as it arrives would
+  /// animate through all of them and land on the last, which is not where
+  /// anyone left off.
+  void _open(
     Spi spi, {
     String? tmuxSession,
     int? tmuxWindow,
@@ -215,14 +155,12 @@ extension on _SSHTabPageState {
             args: SshPageArgs(
               spi: spi,
               notFromTab: false,
-              onSessionEnd: () {
-                _handleTabRemoved(name).ignore();
-              },
+              onSessionEnd: () => _closeTab(name),
               focusNode: focus,
               visibleListenable: visible,
               tmuxSession: tmuxSession,
               tmuxWindow: tmuxWindow,
-              onTmuxStateChanged: _saveTabsState,
+              onTmuxStateChanged: _saveTabs,
             ),
           ),
         );
@@ -230,120 +168,134 @@ extension on _SSHTabPageState {
     );
     Stores.history.sshServerHistory.add(spi.id);
     if (!select) return;
-    _saveTabsState();
+    _saveTabs();
     _sessions.select(_sessions.names.indexOf(tab.name));
   }
 
-  void _onTapInitCard(Spi spi) => _addTab(spi);
-
-  void _onLongPressInitCard(Spi spi) {
-    ServerEditPage.route.go(context, args: SpiRequiredArgs(spi));
-  }
-
-  void _onTapClose(String name) async {
+  Future<void> _confirmClose(String name) async {
     final confirm = await contextSafe?.showRoundDialog(
       title: libL10n.attention,
       child: Text('${libL10n.close} SSH ${libL10n.conn}($name) ?'),
       actions: Btnx.okReds,
     );
-    // Only when the tab actually goes. Unfocusing on the way out of a
-    // cancelled dialog took the keyboard away from a terminal the user had
-    // just decided to keep.
     if (confirm != true) return;
+    // Only once the tab is actually going. Dropping focus on the way out of a
+    // cancelled dialog took the keyboard from a terminal the user had just
+    // decided to keep.
     if (mounted) FocusScope.of(context).unfocus();
-    await _handleTabRemoved(name);
+    _closeTab(name);
   }
 
-  Widget buildSortBtn(BuildContext context) {
-    final sortBy = Stores.setting.sshPageSortBy.fetch();
-    final sortAsc = Stores.setting.sshPageSortAsc.fetch();
-    final sortIcon = sortBy == 0
-        ? (sortAsc ? Icons.sort_by_alpha : Icons.sort)
-        : (sortAsc ? Icons.arrow_upward : Icons.arrow_downward);
-
-    return Btn.icon(
-      icon: Icon(sortIcon, size: 18),
-      onTap: () => showSortMenu(context),
-    );
+  void _closeTab(String name) {
+    _sessions.remove(name);
+    if (mounted) _saveTabs();
   }
 
-  void showSortMenu(BuildContext context) {
-    final sortBy = Stores.setting.sshPageSortBy.fetch();
-    final sortAsc = Stores.setting.sshPageSortAsc.fetch();
+  void _saveTabs() {
+    _restorableTabs.value = jsonEncode([
+      for (final tab in _sessions.tabs) tab.data.toRestorable(),
+    ]);
+  }
 
+  /// Reopens whatever was open when the app last went away.
+  ///
+  /// Each entry is read defensively and skipped on its own. This is the one
+  /// path that runs against data an older build wrote, and a single malformed
+  /// record used to abort the loop — taking every other terminal with it.
+  void _restoreTabs() {
+    final List<dynamic> entries;
+    try {
+      entries = jsonDecode(_restorableTabs.value) as List;
+    } catch (e, st) {
+      Loggers.app.warning('Unreadable SSH tab state', e, st);
+      return;
+    }
+
+    // Read once, not once per tab.
+    final servers = {for (final spi in Stores.server.fetch()) spi.id: spi};
+
+    var restored = 0;
+    for (final entry in entries) {
+      if (entry is! Map) continue;
+      final spi = servers[entry['serverId']];
+      if (spi == null) continue;
+      _open(
+        spi,
+        tmuxSession: entry['tmuxSession'] as String?,
+        tmuxWindow: entry['tmuxWindow'] as int?,
+        select: false,
+      );
+      restored++;
+    }
+
+    if (restored == 0) return;
+    // One write for the whole restore, and only once the set is final.
+    _saveTabs();
+    _sessions.select(1);
+  }
+}
+
+/// The buttons on the tab bar.
+extension _Actions on _SSHTabPageState {
+  Widget get _snippetBtn => Btn.icon(
+    icon: const Icon(Icons.code, size: 18),
+    onTap: () =>
+        _sessions.current?.data.pageKey.currentState?.pickSnippetFromToolbar(),
+  );
+
+  Widget get _sortBtn => Btn.icon(
+    icon: Icon(_SortOrder.stored.icon, size: 18),
+    onTap: _showSortMenu,
+  );
+
+  Widget get _searchBtn => Btn.icon(
+    icon: const Icon(Icons.search, size: 18),
+    onTap: _showSearch,
+  );
+
+  Widget get _historyBtn => Btn.icon(
+    icon: const Icon(Icons.history, size: 18),
+    onTap: _showHistory,
+  );
+
+  void _showSortMenu() {
     context.showRoundDialog(
       title: l10n.sort,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _SortOption(
-            icon: Icons.sort_by_alpha,
-            label: '${l10n.sortByName} (A-Z)',
-            selected: sortBy == 0 && sortAsc,
-            onTap: () {
-              _applySort(sortBy: 0, sortAsc: true);
-              context.pop();
-            },
-          ),
-          _SortOption(
-            icon: Icons.sort,
-            label: '${l10n.sortByName} (Z-A)',
-            selected: sortBy == 0 && !sortAsc,
-            onTap: () {
-              _applySort(sortBy: 0, sortAsc: false);
-              context.pop();
-            },
-          ),
-          _SortOption(
-            icon: Icons.arrow_upward,
-            label: '${l10n.sortByJoinTime} (${l10n.ascending})',
-            selected: sortBy == 1 && sortAsc,
-            onTap: () {
-              _applySort(sortBy: 1, sortAsc: true);
-              context.pop();
-            },
-          ),
-          _SortOption(
-            icon: Icons.arrow_downward,
-            label: '${l10n.sortByJoinTime} (${l10n.descending})',
-            selected: sortBy == 1 && !sortAsc,
-            onTap: () {
-              _applySort(sortBy: 1, sortAsc: false);
-              context.pop();
-            },
-          ),
+          for (final order in _SortOrder.all)
+            _SortOptionTile(
+              order: order,
+              onTap: () {
+                order.save();
+                _sortVersion.notify();
+                context.pop();
+              },
+            ),
         ],
       ),
     );
   }
 
-  Widget buildSearchBtn(BuildContext context) {
-    return Btn.icon(
-      icon: const Icon(Icons.search, size: 18),
-      onTap: () => showSearchDialog(context),
-    );
-  }
-
-  void showSearchDialog(BuildContext context) {
-    final serverState = ref.read(serversProvider);
-    final allServers = serverState.serverOrder
-        .map((id) => serverState.servers[id])
-        .whereType<Spi>()
-        .toList();
-
+  void _showSearch() {
     showSearch(
       context: context,
       delegate: SearchPage<Spi>(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-        future: (q) async {
-          if (q.isEmpty) return [];
-          return allServers
-              .where(
-                (spi) =>
-                    spi.name.toLowerCase().contains(q.toLowerCase()) ||
-                    spi.displayAddr.toLowerCase().contains(q.toLowerCase()),
-              )
-              .toList();
+        future: (query) async {
+          if (query.isEmpty) return [];
+          // Read per query rather than snapshotted when the dialog opened, so
+          // a server added or renamed meanwhile is findable.
+          final state = ref.read(serversProvider);
+          final needle = query.toLowerCase();
+          return [
+            for (final id in state.serverOrder)
+              if (state.servers[id] case final spi?)
+                if (spi.name.toLowerCase().contains(needle) ||
+                    spi.displayAddr.toLowerCase().contains(needle))
+                  spi,
+          ];
         },
         builder: (ctx, spi) => ListTile(
           title: Text(spi.name),
@@ -351,31 +303,14 @@ extension on _SSHTabPageState {
           trailing: const Icon(Icons.chevron_right),
           onTap: () {
             ctx.pop();
-            _onTapInitCard(spi);
+            _open(spi);
           },
         ),
       ),
     );
   }
 
-  Widget buildHistoryBtn(BuildContext context) {
-    return Btn.icon(
-      icon: const Icon(Icons.history, size: 18),
-      onTap: () => showHistoryDialog(context),
-    );
-  }
-
-  Widget buildSnippetBtn(BuildContext context) {
-    return Btn.icon(
-      icon: const Icon(Icons.code, size: 18),
-      onTap: () {
-        _sessions.current?.data.pageKey.currentState
-            ?.pickSnippetFromToolbar();
-      },
-    );
-  }
-
-  void showHistoryDialog(BuildContext context) {
+  void _showHistory() {
     final history = Stores.history.sshServerHistory.all.cast<String>();
     if (history.isEmpty) {
       context.showRoundDialog(
@@ -386,7 +321,7 @@ extension on _SSHTabPageState {
       return;
     }
 
-    final serverState = ref.read(serversProvider);
+    final servers = ref.read(serversProvider).servers;
     context.showRoundDialog(
       title: l10n.serverHistory,
       child: SizedBox(
@@ -394,24 +329,23 @@ extension on _SSHTabPageState {
         height: 300,
         child: ListView.builder(
           itemCount: history.length,
-          itemBuilder: (_, idx) {
-            final id = history[idx];
-            final spi = serverState.servers[id];
+          itemBuilder: (_, index) {
+            final id = history[index];
+            final spi = servers[id];
             return ListTile(
               contentPadding: EdgeInsets.zero,
+              // A server can be deleted while its visits stay in the history.
+              // Saying so beats a row that looks tappable and is not.
+              enabled: spi != null,
               title: Text(spi?.name ?? id),
-              subtitle: spi != null
-                  ? Text(spi.displayAddr)
-                  : null,
+              subtitle: Text(spi?.displayAddr ?? libL10n.unknown),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                context.pop();
-                if (spi != null) {
-                  _onTapInitCard(spi);
-                } else {
-                  context.showSnackBar(libL10n.error);
-                }
-              },
+              onTap: spi == null
+                  ? null
+                  : () {
+                      context.pop();
+                      _open(spi);
+                    },
             );
           },
         ),
@@ -426,400 +360,6 @@ extension on _SSHTabPageState {
         ),
         Btn.ok(onTap: context.pop),
       ],
-    );
-  }
-}
-
-final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
-  const _TabBar({
-    required this.names,
-    required this.index,
-    required this.onTap,
-    required this.onClose,
-    required this.snippetBtn,
-    required this.sortBtn,
-    required this.searchBtn,
-    required this.historyBtn,
-  });
-
-  final List<String> names;
-  final int index;
-  final void Function(int idx) onTap;
-  final void Function(String name) onClose;
-  final Widget snippetBtn;
-  final Widget sortBtn;
-  final Widget searchBtn;
-  final Widget historyBtn;
-
-  List<String> get connectionNames => names.skip(1).toList();
-
-  @override
-  Size get preferredSize => const Size.fromHeight(48);
-
-  @override
-  Widget build(BuildContext context) {
-    final showHomeActions = index == 0;
-    final showSnippetAction = index != 0;
-    return Row(
-      children: [
-            _buildAddItem(context),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 17),
-              child: Container(
-                color: Theme.of(context).dividerColor.withAlpha(61),
-                width: 3,
-              ),
-            ),
-            Expanded(
-              child: ClipRect(
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 5,
-                  ),
-                  itemCount: connectionNames.length,
-                  itemBuilder: (_, idx) => _buildItem(context, idx + 1),
-                  separatorBuilder: (_, _) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 17),
-                    child: Container(
-                      color: Theme.of(context).dividerColor.withAlpha(61),
-                      width: 3,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            if (showSnippetAction) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 17),
-                child: Container(
-                  color: Theme.of(context).dividerColor.withAlpha(61),
-                  width: 3,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 7),
-                child: snippetBtn,
-              ),
-            ],
-            if (showHomeActions) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 17),
-                child: Container(
-                  color: Theme.of(context).dividerColor.withAlpha(61),
-                  width: 3,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 7),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    sortBtn,
-                    const SizedBox(width: 7),
-                    searchBtn,
-                    const SizedBox(width: 7),
-                    historyBtn,
-                  ],
-                ),
-              ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildAddItem(BuildContext context) {
-    final color = index == 0 ? null : Colors.grey;
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(13),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(13),
-        onTap: () => onTap(0),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          child: Icon(MingCute.add_circle_fill, size: 17, color: color),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildItem(BuildContext context, int idx) {
-    final isMobile = ResponsiveBreakpoints.of(context).isMobile;
-    final wideWidth = isMobile ? 90.0 : 130.0;
-    final narrowWidth = isMobile ? 60.0 : 90.0;
-    final name = names[idx];
-    final selected = index == idx;
-    final color = selected ? null : Colors.grey;
-
-    final text = Text(
-      name,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(color: color),
-      softWrap: false,
-      textAlign: TextAlign.right,
-      textWidthBasis: TextWidthBasis.parent,
-    );
-    final Widget btn;
-    if (selected) {
-      btn = Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          Btn.icon(
-            icon: Icon(MingCute.close_circle_fill, color: color, size: 17),
-            onTap: () => onClose(name),
-            padding: null,
-          ),
-          Expanded(child: text),
-        ],
-      );
-    } else {
-      btn = Center(child: text);
-    }
-    final child = AnimatedContainer(
-      width: selected ? wideWidth : narrowWidth,
-      duration: Durations.medium3,
-      curve: Curves.fastEaseInToSlowEaseOut,
-      child: btn,
-    );
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 7),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(13),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(13),
-          onTap: () => onTap(idx),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class _AddPage extends ConsumerStatefulWidget {
-  const _AddPage({
-    required this.sortVersionVN,
-    required this.onTapInitCard,
-    required this.onLongPressInitCard,
-  });
-
-  final ValueListenable<int> sortVersionVN;
-  final void Function(Spi spi) onTapInitCard;
-  final void Function(Spi spi) onLongPressInitCard;
-
-  @override
-  ConsumerState<_AddPage> createState() => _AddPageState();
-}
-
-class _AddPageState extends ConsumerState<_AddPage> {
-  // Cache for sorted server order
-  List<String>? _cachedOrder;
-  int _cachedSortBy = -1;
-  bool _cachedSortAsc = true;
-  List<String>? _cachedServerOrder;
-  Map<String, String>? _cachedServerNames;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.sortVersionVN.addListener(_onSortVersionChanged);
-  }
-
-  @override
-  void dispose() {
-    widget.sortVersionVN.removeListener(_onSortVersionChanged);
-    super.dispose();
-  }
-
-  void _onSortVersionChanged() {
-    // Invalidate cache when sort version changes
-    _cachedOrder = null;
-    if (mounted) setState(() {});
-  }
-
-  List<String> _getSortedOrder(ServersState serverState, int sortBy, bool sortAsc) {
-    // Check if cache is valid
-    final serverOrder = serverState.serverOrder;
-    final serverNames = <String, String>{};
-    for (final id in serverOrder) {
-      final name = serverState.servers[id]?.name;
-      if (name != null) serverNames[id] = name;
-    }
-
-    if (_cachedOrder != null &&
-        _cachedSortBy == sortBy &&
-        _cachedSortAsc == sortAsc &&
-        listEquals(_cachedServerOrder, serverOrder) &&
-        mapEquals(_cachedServerNames, serverNames)) {
-      return _cachedOrder!;
-    }
-
-    // Rebuild cache
-    final order = serverOrder.toList();
-    if (sortBy == 0) {
-      order.sort((a, b) {
-        final nameA = serverNames[a] ?? '';
-        final nameB = serverNames[b] ?? '';
-        return sortAsc ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
-      });
-    } else if (sortBy == 1) {
-      final indexMap = <String, int>{};
-      for (var i = 0; i < serverOrder.length; i++) {
-        indexMap[serverOrder[i]] = i;
-      }
-      order.sort((a, b) {
-        final idxA = indexMap[a] ?? -1;
-        final idxB = indexMap[b] ?? -1;
-        return sortAsc ? idxA.compareTo(idxB) : idxB.compareTo(idxA);
-      });
-    }
-
-    _cachedOrder = order;
-    _cachedSortBy = sortBy;
-    _cachedSortAsc = sortAsc;
-    _cachedServerOrder = serverOrder;
-    _cachedServerNames = serverNames;
-
-    return order;
-  }
-
-  Widget get _placeholder => const Expanded(child: UIs.placeholder);
-
-  @override
-  Widget build(BuildContext context) {
-    const viewPadding = 7.0;
-    final isMobile = ResponsiveBreakpoints.of(context).isMobile;
-
-    final serverState = ref.watch(serversProvider);
-    final sortBy = Stores.setting.sshPageSortBy.fetch();
-    final sortAsc = Stores.setting.sshPageSortAsc.fetch();
-
-    final order = _getSortedOrder(serverState, sortBy, sortAsc);
-
-    final itemCount = order.length;
-    const itemPadding = 1.0;
-    final isDesktopWide = !isMobile;
-    const desktopMinItemWidth = 280.0;
-    const desktopMaxItemWidth = 320.0;
-
-    if (order.isEmpty) {
-      return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
-    }
-
-    return LayoutBuilder(
-      builder: (_, cons) {
-        final availableWidth = max(cons.maxWidth - 2 * viewPadding, 0.0);
-        final canUseTwoColumns =
-            availableWidth >= 2 * (desktopMinItemWidth + itemPadding);
-        final crossCount = isDesktopWide
-            ? max(
-                availableWidth ~/ (desktopMinItemWidth + itemPadding),
-                canUseTwoColumns ? 2 : 1,
-              )
-            : 1;
-        final mainCount = (itemCount + crossCount - 1) ~/ crossCount;
-        final desktopItemWidth = isDesktopWide
-            ? max(
-                0.0,
-                min(
-                  desktopMaxItemWidth,
-                  (availableWidth - crossCount * itemPadding * 2) / crossCount,
-                ),
-              )
-            : null;
-
-        return ListView(
-          padding: const EdgeInsets.all(viewPadding),
-          children: List.generate(
-            mainCount,
-            (rowIndex) => Row(
-              mainAxisAlignment: isDesktopWide
-                  ? MainAxisAlignment.center
-                  : MainAxisAlignment.start,
-              children: List.generate(crossCount, (columnIndex) {
-                final idx = rowIndex * crossCount + columnIndex;
-                final id = order.elementAtOrNull(idx);
-                final spi = serverState.servers[id];
-                if (spi == null) {
-                  return isDesktopWide
-                      ? SizedBox(width: desktopItemWidth)
-                      : _placeholder;
-                }
-
-                final child = Padding(
-                  padding: const EdgeInsets.all(itemPadding),
-                  child: InkWell(
-                    onTap: () => widget.onTapInitCard(spi),
-                    onLongPress: () => widget.onLongPressInitCard(spi),
-                    child: Container(
-                      alignment: Alignment.centerLeft,
-                      constraints: BoxConstraints(
-                        minHeight: isDesktopWide ? 58.0 : 50.0,
-                      ),
-                      padding: const EdgeInsets.only(left: 17, right: 7),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              spi.name,
-                              style: UIs.text18,
-                              maxLines: isDesktopWide ? null : 2,
-                              overflow: isDesktopWide
-                                  ? null
-                                  : TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const Icon(Icons.chevron_right),
-                        ],
-                      ),
-                    ),
-                  ).cardx,
-                );
-
-                if (isDesktopWide) {
-                  return SizedBox(width: desktopItemWidth, child: child);
-                }
-
-                return Expanded(child: child);
-              }),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _SortOption extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _SortOption({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
-    return ListTile(
-      leading: Icon(icon, color: selected ? primaryColor : null),
-      title: Text(
-        label,
-        style: TextStyle(color: selected ? primaryColor : null),
-      ),
-      onTap: onTap,
     );
   }
 }
