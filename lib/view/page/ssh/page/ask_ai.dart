@@ -255,9 +255,10 @@ class _ChatEntry {
 class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   StreamSubscription<AskAiEvent>? _subscription;
   final _chatEntries = <_ChatEntry>[];
-  final _history = <AskAiMessage>[];
+  final _history = <AskAiConversationItem>[];
   final _scrollController = ScrollController();
   final _inputController = TextEditingController();
+  late final AskAiProtocol _protocol;
   AskAiCommand? _pendingCommand;
   String? _streamingContent;
   String? _error;
@@ -271,6 +272,10 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   @override
   void initState() {
     super.initState();
+    _protocol = AskAiRepository.resolveProtocol(
+      configured: parseAskAiProtocol(Stores.setting.askAiProtocol.fetch()),
+      endpoint: Stores.setting.askAiBaseUrl.fetch(),
+    );
     _inputController.addListener(_handleInputChanged);
     if (widget.autoStart) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -298,7 +303,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   void _submitPrompt(String prompt) {
     final text = prompt.trim();
     if (text.isEmpty || _isWorking || _pendingCommand != null) return;
-    final message = AskAiMessage.user(text);
+    final message = AskAiMessageItem.user(text);
     setState(() {
       _history.add(message);
       _chatEntries.add(_ChatEntry.user(text));
@@ -325,6 +330,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
           serverName: widget.serverName,
           localeHint: widget.localeHint,
           conversation: List.unmodifiable(_history),
+          protocol: _protocol,
         )
         .listen(
           _handleEvent,
@@ -383,13 +389,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       _isStreaming = false;
       _streamingContent = null;
       _pendingCommand = command;
-      _history.add(
-        AskAiMessage.assistant(
-          text,
-          toolCalls: command == null ? const [] : [command],
-          reasoningContent: event.reasoningContent,
-        ),
-      );
+      _history.addAll(event.outputItems);
       if (text.trim().isNotEmpty) {
         _chatEntries.add(_ChatEntry.assistant(text));
       }
@@ -492,9 +492,9 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       if (!mounted) return;
       setState(() {
         _history.add(
-          AskAiMessage.tool(
-            toolCallId: command.id,
-            content: result.toToolMessage(),
+          AskAiFunctionOutputItem(
+            callId: command.id,
+            output: result.toToolMessage(),
           ),
         );
         _chatEntries.add(
@@ -519,7 +519,9 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     if (command == null || _isWorking) return;
     final message = context.l10n.askAiActionDeclined;
     setState(() {
-      _history.add(AskAiMessage.tool(toolCallId: command.id, content: message));
+      _history.add(
+        AskAiFunctionOutputItem(callId: command.id, output: message),
+      );
       _chatEntries.add(_ChatEntry.notice(message));
       _pendingCommand = null;
     });
@@ -532,9 +534,9 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     final message = context.l10n.askAiCommandInserted;
     setState(() {
       _history.add(
-        AskAiMessage.tool(
-          toolCallId: command.id,
-          content:
+        AskAiFunctionOutputItem(
+          callId: command.id,
+          output:
               'The command was inserted into the interactive terminal. Its execution result is unknown.',
         ),
       );

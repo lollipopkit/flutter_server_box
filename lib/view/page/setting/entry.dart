@@ -11,6 +11,7 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
+import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/server/discovery_result.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';

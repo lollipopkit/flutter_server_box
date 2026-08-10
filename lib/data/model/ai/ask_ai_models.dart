@@ -2,66 +2,228 @@ import 'dart:convert';
 
 import 'package:meta/meta.dart';
 
-/// Chat message exchanged with the Ask AI service.
-enum AskAiMessageRole { user, assistant, tool }
+/// API protocol used for one Agent conversation.
+enum AskAiProtocol { auto, chatCompletions, responses }
+
+AskAiProtocol parseAskAiProtocol(Object? value) {
+  final name = value?.toString();
+  return AskAiProtocol.values.firstWhere(
+    (protocol) => protocol.name == name,
+    orElse: () => AskAiProtocol.auto,
+  );
+}
+
+enum AskAiMessageRole { user, assistant }
+
+/// Protocol-neutral item stored in an Agent conversation.
+///
+/// Chat Completions codecs regroup adjacent assistant messages and function
+/// calls into a single message. Responses codecs replay the typed output items
+/// directly, including encrypted reasoning data when it is available.
+@immutable
+sealed class AskAiConversationItem {
+  const AskAiConversationItem();
+
+  String get persistenceKind;
+  int get estimatedCharacters;
+  Map<String, dynamic> toJson();
+
+  static AskAiConversationItem? fromJson(Object? value) {
+    if (value is! Map) return null;
+    final json = Map<String, dynamic>.from(value);
+    return switch (json['kind']) {
+      'message' => AskAiMessageItem.fromJson(json),
+      'function_call' => AskAiFunctionCallItem.fromJson(json),
+      'function_output' => AskAiFunctionOutputItem.fromJson(json),
+      'reasoning' => AskAiReasoningItem.fromJson(json),
+      'raw_response' => AskAiRawResponseItem.fromJson(json),
+      _ => null,
+    };
+  }
+}
 
 @immutable
-class AskAiMessage {
-  const AskAiMessage({
+class AskAiMessageItem extends AskAiConversationItem {
+  const AskAiMessageItem({
     required this.role,
     required this.content,
-    this.toolCalls = const [],
-    this.toolCallId,
     this.reasoningContent,
+    this.rawResponseItem,
   });
 
-  const AskAiMessage.user(String content)
+  const AskAiMessageItem.user(String content)
     : this(role: AskAiMessageRole.user, content: content);
 
-  const AskAiMessage.assistant(
+  const AskAiMessageItem.assistant(
     String content, {
-    List<AskAiCommand> toolCalls = const [],
     String? reasoningContent,
+    Map<String, dynamic>? rawResponseItem,
   }) : this(
          role: AskAiMessageRole.assistant,
          content: content,
-         toolCalls: toolCalls,
          reasoningContent: reasoningContent,
+         rawResponseItem: rawResponseItem,
        );
 
-  const AskAiMessage.tool({required String toolCallId, required String content})
-    : this(
-        role: AskAiMessageRole.tool,
-        content: content,
-        toolCallId: toolCallId,
-      );
+  factory AskAiMessageItem.fromJson(Map<String, dynamic> json) {
+    return AskAiMessageItem(
+      role: AskAiMessageRole.values.firstWhere(
+        (role) => role.name == json['role'],
+        orElse: () => AskAiMessageRole.user,
+      ),
+      content: json['content'] as String? ?? '',
+      reasoningContent: json['reasoning_content'] as String?,
+      rawResponseItem: _mapOrNull(json['raw_response_item']),
+    );
+  }
 
   final AskAiMessageRole role;
   final String content;
-  final List<AskAiCommand> toolCalls;
-  final String? toolCallId;
   final String? reasoningContent;
+  final Map<String, dynamic>? rawResponseItem;
 
-  String get apiRole => role.name;
+  @override
+  String get persistenceKind => 'message';
 
-  Map<String, dynamic> toApiJson() {
-    return switch (role) {
-      AskAiMessageRole.user => {'role': apiRole, 'content': content},
-      AskAiMessageRole.assistant => {
-        'role': apiRole,
-        'content': content.isEmpty ? null : content,
-        if (reasoningContent?.isNotEmpty == true)
-          'reasoning_content': reasoningContent,
-        if (toolCalls.isNotEmpty)
-          'tool_calls': toolCalls.map((call) => call.toToolCallJson()).toList(),
-      },
-      AskAiMessageRole.tool => {
-        'role': apiRole,
-        'tool_call_id': toolCallId,
-        'content': content,
-      },
-    };
+  @override
+  int get estimatedCharacters =>
+      content.length + (reasoningContent?.length ?? 0);
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'kind': persistenceKind,
+    'role': role.name,
+    'content': content,
+    if (reasoningContent?.isNotEmpty == true)
+      'reasoning_content': reasoningContent,
+    if (rawResponseItem != null) 'raw_response_item': rawResponseItem,
+  };
+}
+
+@immutable
+class AskAiFunctionCallItem extends AskAiConversationItem {
+  const AskAiFunctionCallItem({
+    required this.command,
+    this.responseItemId,
+    this.rawResponseItem,
+  });
+
+  factory AskAiFunctionCallItem.fromJson(Map<String, dynamic> json) {
+    return AskAiFunctionCallItem(
+      command: AskAiCommand.fromJson(
+        Map<String, dynamic>.from(json['command'] as Map? ?? const {}),
+      ),
+      responseItemId: json['response_item_id'] as String?,
+      rawResponseItem: _mapOrNull(json['raw_response_item']),
+    );
   }
+
+  final AskAiCommand command;
+  final String? responseItemId;
+  final Map<String, dynamic>? rawResponseItem;
+
+  @override
+  String get persistenceKind => 'function_call';
+
+  @override
+  int get estimatedCharacters =>
+      command.rawArguments.length + command.description.length;
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'kind': persistenceKind,
+    'command': command.toJson(),
+    if (responseItemId != null) 'response_item_id': responseItemId,
+    if (rawResponseItem != null) 'raw_response_item': rawResponseItem,
+  };
+}
+
+@immutable
+class AskAiFunctionOutputItem extends AskAiConversationItem {
+  const AskAiFunctionOutputItem({required this.callId, required this.output});
+
+  factory AskAiFunctionOutputItem.fromJson(Map<String, dynamic> json) {
+    return AskAiFunctionOutputItem(
+      callId: json['call_id'] as String? ?? '',
+      output: json['output'] as String? ?? '',
+    );
+  }
+
+  final String callId;
+  final String output;
+
+  @override
+  String get persistenceKind => 'function_output';
+
+  @override
+  int get estimatedCharacters => output.length;
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'kind': persistenceKind,
+    'call_id': callId,
+    'output': output,
+  };
+}
+
+@immutable
+class AskAiReasoningItem extends AskAiConversationItem {
+  const AskAiReasoningItem({required this.rawResponseItem, this.summaryText});
+
+  factory AskAiReasoningItem.fromJson(Map<String, dynamic> json) {
+    return AskAiReasoningItem(
+      rawResponseItem: _mapOrNull(json['raw_response_item']) ?? const {},
+      summaryText: json['summary_text'] as String?,
+    );
+  }
+
+  final Map<String, dynamic> rawResponseItem;
+  final String? summaryText;
+
+  @override
+  String get persistenceKind => 'reasoning';
+
+  @override
+  int get estimatedCharacters =>
+      jsonEncode(rawResponseItem).length + (summaryText?.length ?? 0);
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'kind': persistenceKind,
+    'raw_response_item': rawResponseItem,
+    if (summaryText?.isNotEmpty == true) 'summary_text': summaryText,
+  };
+}
+
+/// Preserves output item types not yet rendered by ServerBox.
+@immutable
+class AskAiRawResponseItem extends AskAiConversationItem {
+  const AskAiRawResponseItem({required this.rawResponseItem});
+
+  factory AskAiRawResponseItem.fromJson(Map<String, dynamic> json) {
+    return AskAiRawResponseItem(
+      rawResponseItem: _mapOrNull(json['raw_response_item']) ?? const {},
+    );
+  }
+
+  final Map<String, dynamic> rawResponseItem;
+
+  @override
+  String get persistenceKind => 'raw_response';
+
+  @override
+  int get estimatedCharacters => jsonEncode(rawResponseItem).length;
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'kind': persistenceKind,
+    'raw_response_item': rawResponseItem,
+  };
+}
+
+Map<String, dynamic>? _mapOrNull(Object? value) {
+  if (value is! Map) return null;
+  return Map<String, dynamic>.from(value);
 }
 
 enum AskAiCommandRisk { readOnly, caution, destructive }
@@ -78,6 +240,17 @@ class AskAiCommand {
     this.modelSafeToRun = false,
   });
 
+  factory AskAiCommand.fromJson(Map<String, dynamic> json) {
+    return AskAiCommand(
+      id: json['id'] as String? ?? 'run-shell-command',
+      command: json['command'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      toolName: json['tool_name'] as String? ?? 'run_shell_command',
+      rawArguments: json['raw_arguments'] as String? ?? '',
+      modelSafeToRun: json['model_safe_to_run'] as bool? ?? false,
+    );
+  }
+
   final String id;
   final String command;
   final String description;
@@ -92,6 +265,15 @@ class AskAiCommand {
 
   bool get canAutoRun => modelSafeToRun && risk == AskAiCommandRisk.readOnly;
 
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'command': command,
+    'description': description,
+    'tool_name': toolName,
+    'raw_arguments': rawArguments,
+    'model_safe_to_run': modelSafeToRun,
+  };
+
   Map<String, dynamic> toToolCallJson() {
     final arguments = rawArguments.isNotEmpty
         ? rawArguments
@@ -104,6 +286,23 @@ class AskAiCommand {
       'id': id,
       'type': 'function',
       'function': {'name': toolName, 'arguments': arguments},
+    };
+  }
+
+  Map<String, dynamic> toResponsesFunctionCallJson({String? itemId}) {
+    final arguments = rawArguments.isNotEmpty
+        ? rawArguments
+        : jsonEncode({
+            'command': command,
+            'description': description,
+            'safe_to_run': modelSafeToRun,
+          });
+    return {
+      if (itemId != null && itemId.isNotEmpty) 'id': itemId,
+      'type': 'function_call',
+      'call_id': id,
+      'name': toolName,
+      'arguments': arguments,
     };
   }
 
@@ -232,6 +431,36 @@ class AskAiCommandResult {
     this.truncated = false,
   });
 
+  static AskAiCommandResult? tryFromToolMessage(
+    String message, {
+    required String fallbackCommand,
+  }) {
+    try {
+      final json = Map<String, dynamic>.from(jsonDecode(message) as Map);
+      if (!json.containsKey('stdout') && !json.containsKey('stderr')) {
+        return null;
+      }
+      final exitCode = json['exit_code'];
+      final durationMs = json['duration_ms'];
+      return AskAiCommandResult(
+        command: json['command'] as String? ?? fallbackCommand,
+        exitCode: exitCode is num ? exitCode.toInt() : null,
+        stdout: json['stdout'] as String? ?? '',
+        stderr: json['stderr'] as String? ?? '',
+        duration: Duration(
+          milliseconds: durationMs is num ? durationMs.toInt() : 0,
+        ),
+        cancelled: json['cancelled'] as bool? ?? false,
+        timedOut: json['timed_out'] as bool? ?? false,
+        truncated: json['output_truncated'] as bool? ?? false,
+      );
+    } on FormatException {
+      return null;
+    } on TypeError {
+      return null;
+    }
+  }
+
   final String command;
   final int? exitCode;
   final String stdout;
@@ -260,6 +489,7 @@ class AskAiCommandResult {
       'cancelled': cancelled,
       'timed_out': timedOut,
       'output_truncated': truncated,
+      'duration_ms': duration.inMilliseconds,
       'stdout': stdout,
       'stderr': stderr,
     });
@@ -288,12 +518,18 @@ class AskAiCompleted extends AskAiEvent {
   const AskAiCompleted({
     required this.fullText,
     required this.commands,
+    required this.outputItems,
+    required this.protocol,
     this.reasoningContent,
+    this.responseId,
   });
 
   final String fullText;
   final List<AskAiCommand> commands;
+  final List<AskAiConversationItem> outputItems;
+  final AskAiProtocol protocol;
   final String? reasoningContent;
+  final String? responseId;
 }
 
 /// Signals that the stream terminated with an error before completion.

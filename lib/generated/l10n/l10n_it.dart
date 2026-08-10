@@ -38,7 +38,23 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      'Enter the full Chat Completions endpoint, or a service base URL. If the address ends with /v1, the app will append /chat/completions.';
+      'Enter a service base URL or a full Chat Completions or Responses endpoint. ServerBox completes the path for the selected protocol.';
+
+  @override
+  String get askAiProtocol => 'API protocol';
+
+  @override
+  String get askAiProtocolTip =>
+      'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.';
+
+  @override
+  String get askAiProtocolAuto => 'Auto';
+
+  @override
+  String get askAiProtocolChatCompletions => 'Chat Completions';
+
+  @override
+  String get askAiProtocolResponses => 'Responses';
 
   @override
   String get askAiCommandInserted => 'Comando inserito nel terminale';

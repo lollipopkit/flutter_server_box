@@ -180,8 +180,38 @@ abstract class AppLocalizations {
   /// No description provided for @askAiEndpointTip.
   ///
   /// In en, this message translates to:
-  /// **'Enter the full Chat Completions endpoint, or a service base URL. If the address ends with /v1, the app will append /chat/completions.'**
+  /// **'Enter a service base URL or a full Chat Completions or Responses endpoint. ServerBox completes the path for the selected protocol.'**
   String get askAiEndpointTip;
+
+  /// No description provided for @askAiProtocol.
+  ///
+  /// In en, this message translates to:
+  /// **'API protocol'**
+  String get askAiProtocol;
+
+  /// No description provided for @askAiProtocolTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.'**
+  String get askAiProtocolTip;
+
+  /// No description provided for @askAiProtocolAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get askAiProtocolAuto;
+
+  /// No description provided for @askAiProtocolChatCompletions.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat Completions'**
+  String get askAiProtocolChatCompletions;
+
+  /// No description provided for @askAiProtocolResponses.
+  ///
+  /// In en, this message translates to:
+  /// **'Responses'**
+  String get askAiProtocolResponses;
 
   /// No description provided for @askAiCommandInserted.
   ///

@@ -41,6 +41,22 @@ class AppLocalizationsKo extends AppLocalizations {
       '전체 Chat Completions 엔드포인트 또는 서비스 기본 URL을 입력하세요. 주소가 /v1로 끝나면 앱이 자동으로 /chat/completions를 추가합니다.';
 
   @override
+  String get askAiProtocol => 'API protocol';
+
+  @override
+  String get askAiProtocolTip =>
+      'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.';
+
+  @override
+  String get askAiProtocolAuto => 'Auto';
+
+  @override
+  String get askAiProtocolChatCompletions => 'Chat Completions';
+
+  @override
+  String get askAiProtocolResponses => 'Responses';
+
+  @override
   String get askAiCommandInserted => '명령어가 터미널에 삽입되었습니다';
 
   @override

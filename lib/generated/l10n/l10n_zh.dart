@@ -37,7 +37,23 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      '填写完整的 Chat Completions 地址，或填写服务根地址。若地址以 /v1 结尾，应用会自动补全 /chat/completions。';
+      '填写服务根地址，或完整的 Chat Completions/Responses 地址。ServerBox 会根据所选协议自动补全路径。';
+
+  @override
+  String get askAiProtocol => 'API 协议';
+
+  @override
+  String get askAiProtocolTip =>
+      '自动模式对 OpenAI 官方接口使用 Responses，对兼容服务使用 Chat Completions。';
+
+  @override
+  String get askAiProtocolAuto => '自动';
+
+  @override
+  String get askAiProtocolChatCompletions => 'Chat Completions';
+
+  @override
+  String get askAiProtocolResponses => 'Responses';
 
   @override
   String get askAiCommandInserted => '命令已插入终端';
@@ -1184,7 +1200,23 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiEndpointTip =>
-      '填寫完整的 Chat Completions 位址，或填寫服務根位址。若位址以 /v1 結尾，應用程式會自動補上 /chat/completions。';
+      '填寫服務根位址，或完整的 Chat Completions/Responses 位址。ServerBox 會依所選協議自動補全路徑。';
+
+  @override
+  String get askAiProtocol => 'API 協議';
+
+  @override
+  String get askAiProtocolTip =>
+      '自動模式對 OpenAI 官方介面使用 Responses，對相容服務使用 Chat Completions。';
+
+  @override
+  String get askAiProtocolAuto => '自動';
+
+  @override
+  String get askAiProtocolChatCompletions => 'Chat Completions';
+
+  @override
+  String get askAiProtocolResponses => 'Responses';
 
   @override
   String get askAiCommandInserted => '指令已插入終端機';
