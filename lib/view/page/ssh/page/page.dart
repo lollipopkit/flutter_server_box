@@ -15,6 +15,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
+import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -30,12 +31,16 @@ import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/ssh/ssh_terminal_environment.dart';
 import 'package:server_box/data/ssh/terminal_output_buffer.dart';
 import 'package:server_box/data/ssh/tmux/tmux_export.dart';
+import 'package:server_box/data/store/agent_conversation.dart';
+import 'package:server_box/view/page/ssh/agent_conversation_replay.dart';
+import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/widget/tmux_session_selector.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:xterm/core.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
+part 'agent_history.dart';
 part 'ask_ai.dart';
 part 'init.dart';
 part 'keyboard.dart';
@@ -171,6 +176,8 @@ class SSHPageState extends ConsumerState<SSHPage>
   Timer? _virtKeyLongPressTimer;
   SSHClient? _client;
   SSHSession? _session;
+  SSHSession? _aiCommandSession;
+  bool _aiCommandCancelled = false;
   Timer? _discontinuityTimer;
   Timer? _terminalFlushTimer;
   final _terminalOutputBuffer = TerminalOutputBuffer();
@@ -206,6 +213,9 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   Future<void> pickSnippetFromToolbar() => _pickSnippet();
 
+  Future<void> openAgentFromToolbar() =>
+      _showAskAiPanel(_recentTerminalContext, autoStart: false);
+
   @override
   void dispose() {
     _restorableServerId.dispose();
@@ -213,6 +223,10 @@ class SSHPageState extends ConsumerState<SSHPage>
     _restorableTmuxWindow.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _virtKeyLongPressTimer?.cancel();
+    final aiCommandSession = _aiCommandSession;
+    if (aiCommandSession != null) {
+      unawaited(_terminateAiCommandSession(aiCommandSession));
+    }
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
     _terminalFlushTimer?.cancel();
@@ -475,6 +489,11 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   List<Widget> _buildAppBarActions() {
     final actions = <Widget>[
+      IconButton(
+        onPressed: openAgentFromToolbar,
+        tooltip: l10n.askAiAgentTitle,
+        icon: const Icon(Icons.auto_awesome),
+      ),
       IconButton(
         onPressed: _pickSnippet,
         tooltip: libL10n.snippet,

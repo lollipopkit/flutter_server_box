@@ -11,7 +11,9 @@ enum AppTab {
   @HiveField(2)
   file,
   @HiveField(3)
-  snippet;
+  snippet,
+  @HiveField(4)
+  agent;
 
   /// Helper function to parse AppTab list from stored object
   static List<AppTab> parseAppTabsFromObj(dynamic val) {

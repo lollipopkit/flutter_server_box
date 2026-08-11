@@ -37,11 +37,46 @@ extension _AI on _AppSettingsPageState {
       leading: const Icon(LineAwesome.robot_solid, size: _kIconSize),
       title: TipText(l10n.askAi, l10n.askAiUsageHint),
       children: [
+        _setting.askAiProtocol.listenable().listenVal((value) {
+          final selected = parseAskAiProtocol(value);
+          String label(AskAiProtocol protocol) => switch (protocol) {
+            AskAiProtocol.auto => l10n.askAiProtocolAuto,
+            AskAiProtocol.chatCompletions => l10n.askAiProtocolChatCompletions,
+            AskAiProtocol.responses => l10n.askAiProtocolResponses,
+          };
+          return PopupMenuButton<AskAiProtocol>(
+            initialValue: selected,
+            onSelected: (protocol) => _setting.askAiProtocol.put(protocol.name),
+            itemBuilder: (_) => [
+              for (final protocol in AskAiProtocol.values)
+                PopupMenuItem(value: protocol, child: Text(label(protocol))),
+            ],
+            child: ListTile(
+              leading: const Icon(Icons.swap_calls_outlined),
+              title: Text(l10n.askAiProtocol),
+              subtitle: Text(
+                '${label(selected)}\n${l10n.askAiProtocolTip}',
+                style: UIs.textGrey,
+              ),
+              isThreeLine: true,
+              trailing: const Icon(Icons.arrow_drop_down),
+            ),
+          );
+        }),
+        _setting.askAiAutoRunSafeCommands.listenable().listenVal((enabled) {
+          return SwitchListTile.adaptive(
+            secondary: const Icon(Icons.verified_user_outlined),
+            title: Text(l10n.askAiAutoRunSafeCommands),
+            subtitle: Text(l10n.askAiAutoRunSafeCommandsTip),
+            value: enabled,
+            onChanged: _setting.askAiAutoRunSafeCommands.put,
+          );
+        }),
         _buildAskAiTextTile(
           prop: _setting.askAiBaseUrl,
           leading: const Icon(MingCute.link_2_line),
           title: l10n.askAiBaseUrl,
-          hint: 'https://api.openai.com/v1/chat/completions',
+          hint: 'https://api.openai.com',
           description: l10n.askAiEndpointTip,
           displayBuilder: (val) =>
               (val == null || val.isEmpty) ? libL10n.empty : val,
@@ -60,8 +95,9 @@ extension _AI on _AppSettingsPageState {
           title: l10n.askAiApiKey,
           hint: 'sk-...',
           obscure: true,
-          displayBuilder: (val) =>
-              val?.isNotEmpty == true ? l10n.configured : libL10n.empty,
+          displayBuilder: (val) => val?.isNotEmpty == true
+              ? l10n.configured
+              : l10n.askAiApiKeyOptional,
         ),
       ],
     ).cardx;

@@ -37,7 +37,23 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      '填写完整的 Chat Completions 地址，或填写服务根地址。若地址以 /v1 结尾，应用会自动补全 /chat/completions。';
+      '填写服务根地址，或完整的 Chat Completions/Responses 地址。ServerBox 会根据所选协议自动补全路径。';
+
+  @override
+  String get askAiProtocol => 'API 协议';
+
+  @override
+  String get askAiProtocolTip =>
+      '自动模式对 OpenAI 官方接口使用 Responses，对兼容服务使用 Chat Completions。';
+
+  @override
+  String get askAiProtocolAuto => '自动';
+
+  @override
+  String get askAiProtocolChatCompletions => 'Chat Completions';
+
+  @override
+  String get askAiProtocolResponses => 'Responses';
 
   @override
   String get askAiCommandInserted => '命令已插入终端';
@@ -72,7 +88,179 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiSelectedContent => '选中的内容';
 
   @override
-  String get askAiUsageHint => '用于 SSH 终端';
+  String get askAiUsageHint => '通过逐步审核的操作诊断并管理当前 SSH 服务器';
+
+  @override
+  String get askAiAgentTitle => 'SSH Agent';
+
+  @override
+  String get askAiAgentWelcome => '想在这台服务器上做什么？';
+
+  @override
+  String get askAiAgentWelcomeTip =>
+      '可以让 Agent 诊断问题或完成任务。Agent 每次只提出一条命令，并在更改系统前等待审核。';
+
+  @override
+  String get askAiAgentPromptHint => '让 Agent 检查或修复问题……';
+
+  @override
+  String get askAiAgentSend => '发送给 Agent';
+
+  @override
+  String get askAiAnalyzeSelectionPrompt =>
+      '分析选中的终端内容，解释发生了什么；如果需要操作，请提出最安全的下一步。';
+
+  @override
+  String get askAiTerminalContext => '终端上下文';
+
+  @override
+  String get askAiReady => '就绪';
+
+  @override
+  String get askAiThinking => '思考中';
+
+  @override
+  String get askAiRunningCommand => '执行中';
+
+  @override
+  String get askAiReviewNeeded => '待审核';
+
+  @override
+  String get askAiReviewAction => '审核建议命令';
+
+  @override
+  String get askAiReviewBeforeContinuing => '请先审核或拒绝当前建议命令';
+
+  @override
+  String get askAiApproveRun => '批准并执行';
+
+  @override
+  String get askAiDecline => '拒绝';
+
+  @override
+  String get askAiActionDeclined => '已拒绝建议命令。';
+
+  @override
+  String get askAiInterrupted => '已中断 Agent 回复。';
+
+  @override
+  String get askAiRiskReadOnly => '只读';
+
+  @override
+  String get askAiRiskCaution => '会更改系统';
+
+  @override
+  String get askAiRiskDestructive => '高风险';
+
+  @override
+  String get askAiHighRiskConfirmTitle => '执行高风险命令？';
+
+  @override
+  String get askAiHighRiskConfirmBody => '此命令可能删除数据、停止服务或造成难以撤销的更改，请在执行前仔细检查。';
+
+  @override
+  String get askAiCommandCancelled => '已取消';
+
+  @override
+  String get askAiCommandTimedOut => '执行超时';
+
+  @override
+  String get askAiNoCommandOutput => '命令已完成，没有输出。';
+
+  @override
+  String get askAiOutputTruncated => '输出过长，回传给 Agent 前已被截断。';
+
+  @override
+  String get askAiAutoApproved => '已自动批准';
+
+  @override
+  String get askAiAutoRunSafeCommands => '自动执行只读命令';
+
+  @override
+  String get askAiAutoRunSafeCommandsTip =>
+      '仅当模型与本地安全检查都判定命令为只读时自动执行；会更改系统的命令仍需人工审核。';
+
+  @override
+  String get askAiApiKeyOptional => '本地或无需认证的接口可留空';
+
+  @override
+  String get askAiHistory => '对话历史';
+
+  @override
+  String get askAiHistoryLocalOnly => '在本机加密保存，不参与备份和同步';
+
+  @override
+  String get askAiNewConversation => '新建对话';
+
+  @override
+  String get askAiNoHistory => '这台服务器还没有已保存的对话';
+
+  @override
+  String get askAiNoHistoryMessages => '暂无消息';
+
+  @override
+  String get askAiUntitledConversation => '新对话';
+
+  @override
+  String get askAiRenameConversation => '重命名对话';
+
+  @override
+  String get askAiDeleteConversationTitle => '删除这个对话？';
+
+  @override
+  String get askAiDeleteConversationTip => '此操作会从本机删除该对话，且无法撤销。';
+
+  @override
+  String get askAiClearHistory => '清空历史';
+
+  @override
+  String get askAiClearHistoryTitle => '清空这台服务器的 Agent 历史？';
+
+  @override
+  String get askAiClearHistoryTip => '本机为这台服务器保存的所有 Agent 对话都会被删除。';
+
+  @override
+  String get askAiRestoredReview => '此命令来自历史记录，请重新审核；恢复后绝不会自动执行。';
+
+  @override
+  String get agentTitle => 'Agent';
+
+  @override
+  String get agentWelcome => '想对你的服务器做些什么？';
+
+  @override
+  String get agentWelcomeTip =>
+      '可以让 Agent 诊断问题或执行运维任务。它会读取 ServerBox 的实时状态，并一次提出一个需要审核的操作。';
+
+  @override
+  String get agentPromptHint => '让 Agent 检查或操作你的服务器……';
+
+  @override
+  String get agentNoServers => '尚未配置服务器';
+
+  @override
+  String get agentNoHistory => '暂无全局 Agent 对话';
+
+  @override
+  String get agentClearHistoryTitle => '清空全局 Agent 历史记录？';
+
+  @override
+  String get agentClearHistoryTip => '此设备上的全部全局 Agent 对话都将被删除。';
+
+  @override
+  String get agentToolShell => '终端命令';
+
+  @override
+  String get agentToolReadFile => '读取文件';
+
+  @override
+  String get agentToolWriteFile => '写入文件';
+
+  @override
+  String get agentToolServerBox => 'ServerBox';
+
+  @override
+  String get agentToolFailed => '工具执行失败。';
 
   @override
   String get atLeastOneTab => '至少需要选择一个标签';
@@ -426,7 +614,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get invalid => '无效';
 
   @override
-  String get invalidUrl => 'Invalid URL';
+  String get invalidUrl => '无效的 URL';
 
   @override
   String get invalidHostFormat => '主机格式无效，仅支持 IPv4、IPv6 和域名字符。';
@@ -1091,7 +1279,23 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiEndpointTip =>
-      '填寫完整的 Chat Completions 位址，或填寫服務根位址。若位址以 /v1 結尾，應用程式會自動補上 /chat/completions。';
+      '填寫服務根位址，或完整的 Chat Completions/Responses 位址。ServerBox 會依所選協議自動補全路徑。';
+
+  @override
+  String get askAiProtocol => 'API 協議';
+
+  @override
+  String get askAiProtocolTip =>
+      '自動模式對 OpenAI 官方介面使用 Responses，對相容服務使用 Chat Completions。';
+
+  @override
+  String get askAiProtocolAuto => '自動';
+
+  @override
+  String get askAiProtocolChatCompletions => 'Chat Completions';
+
+  @override
+  String get askAiProtocolResponses => 'Responses';
 
   @override
   String get askAiCommandInserted => '指令已插入終端機';
@@ -1126,7 +1330,179 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiSelectedContent => '選取的內容';
 
   @override
-  String get askAiUsageHint => '於 SSH 終端機中使用';
+  String get askAiUsageHint => '透過逐步審核的操作診斷並管理目前 SSH 伺服器';
+
+  @override
+  String get askAiAgentTitle => 'SSH Agent';
+
+  @override
+  String get askAiAgentWelcome => '想在這台伺服器上做什麼？';
+
+  @override
+  String get askAiAgentWelcomeTip =>
+      '可以讓 Agent 診斷問題或完成工作。Agent 每次只提出一條指令，並在變更系統前等待審核。';
+
+  @override
+  String get askAiAgentPromptHint => '讓 Agent 檢查或修復問題……';
+
+  @override
+  String get askAiAgentSend => '傳送給 Agent';
+
+  @override
+  String get askAiAnalyzeSelectionPrompt =>
+      '分析選取的終端機內容，解釋發生了什麼；如果需要操作，請提出最安全的下一步。';
+
+  @override
+  String get askAiTerminalContext => '終端機內容';
+
+  @override
+  String get askAiReady => '就緒';
+
+  @override
+  String get askAiThinking => '思考中';
+
+  @override
+  String get askAiRunningCommand => '執行中';
+
+  @override
+  String get askAiReviewNeeded => '待審核';
+
+  @override
+  String get askAiReviewAction => '審核建議指令';
+
+  @override
+  String get askAiReviewBeforeContinuing => '請先審核或拒絕目前的建議指令';
+
+  @override
+  String get askAiApproveRun => '核准並執行';
+
+  @override
+  String get askAiDecline => '拒絕';
+
+  @override
+  String get askAiActionDeclined => '已拒絕建議指令。';
+
+  @override
+  String get askAiInterrupted => '已中斷 Agent 回覆。';
+
+  @override
+  String get askAiRiskReadOnly => '唯讀';
+
+  @override
+  String get askAiRiskCaution => '會變更系統';
+
+  @override
+  String get askAiRiskDestructive => '高風險';
+
+  @override
+  String get askAiHighRiskConfirmTitle => '執行高風險指令？';
+
+  @override
+  String get askAiHighRiskConfirmBody => '此指令可能刪除資料、停止服務或造成難以復原的變更，請在執行前仔細檢查。';
+
+  @override
+  String get askAiCommandCancelled => '已取消';
+
+  @override
+  String get askAiCommandTimedOut => '執行逾時';
+
+  @override
+  String get askAiNoCommandOutput => '指令已完成，沒有輸出。';
+
+  @override
+  String get askAiOutputTruncated => '輸出過長，傳回 Agent 前已被截斷。';
+
+  @override
+  String get askAiAutoApproved => '已自動核准';
+
+  @override
+  String get askAiAutoRunSafeCommands => '自動執行唯讀指令';
+
+  @override
+  String get askAiAutoRunSafeCommandsTip =>
+      '僅當模型與本機安全檢查都判定指令為唯讀時自動執行；會變更系統的指令仍需人工審核。';
+
+  @override
+  String get askAiApiKeyOptional => '本機或不需驗證的介面可留空';
+
+  @override
+  String get askAiHistory => '對話歷史';
+
+  @override
+  String get askAiHistoryLocalOnly => '在本機加密儲存，不參與備份與同步';
+
+  @override
+  String get askAiNewConversation => '新增對話';
+
+  @override
+  String get askAiNoHistory => '這台伺服器尚無已儲存的對話';
+
+  @override
+  String get askAiNoHistoryMessages => '暫無訊息';
+
+  @override
+  String get askAiUntitledConversation => '新對話';
+
+  @override
+  String get askAiRenameConversation => '重新命名對話';
+
+  @override
+  String get askAiDeleteConversationTitle => '刪除這個對話？';
+
+  @override
+  String get askAiDeleteConversationTip => '此操作會從本機刪除該對話，且無法復原。';
+
+  @override
+  String get askAiClearHistory => '清除歷史';
+
+  @override
+  String get askAiClearHistoryTitle => '清除這台伺服器的 Agent 歷史？';
+
+  @override
+  String get askAiClearHistoryTip => '本機為這台伺服器儲存的所有 Agent 對話都會被刪除。';
+
+  @override
+  String get askAiRestoredReview => '此指令來自歷史記錄，請重新審核；恢復後絕不會自動執行。';
+
+  @override
+  String get agentTitle => 'Agent';
+
+  @override
+  String get agentWelcome => '想對你的伺服器做些什麼？';
+
+  @override
+  String get agentWelcomeTip =>
+      '可以讓 Agent 診斷問題或執行維運工作。它會讀取 ServerBox 的即時狀態，並一次提出一個需要審核的操作。';
+
+  @override
+  String get agentPromptHint => '讓 Agent 檢查或操作你的伺服器……';
+
+  @override
+  String get agentNoServers => '尚未設定伺服器';
+
+  @override
+  String get agentNoHistory => '暫無全域 Agent 對話';
+
+  @override
+  String get agentClearHistoryTitle => '清除全域 Agent 歷史記錄？';
+
+  @override
+  String get agentClearHistoryTip => '此裝置上的全部全域 Agent 對話都將被刪除。';
+
+  @override
+  String get agentToolShell => '終端指令';
+
+  @override
+  String get agentToolReadFile => '讀取檔案';
+
+  @override
+  String get agentToolWriteFile => '寫入檔案';
+
+  @override
+  String get agentToolServerBox => 'ServerBox';
+
+  @override
+  String get agentToolFailed => '工具執行失敗。';
 
   @override
   String get atLeastOneTab => '至少需要選擇一個標籤';

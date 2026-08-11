@@ -144,6 +144,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
             map: _tabMap,
             onTap: _onTapTab,
             onClose: _onTapClose,
+            agentBtn: buildAgentBtn(context),
             snippetBtn: buildSnippetBtn(context),
             sortBtn: buildSortBtn(context),
             searchBtn: buildSearchBtn(context),
@@ -498,6 +499,19 @@ extension on _SSHTabPageState {
     );
   }
 
+  Widget buildAgentBtn(BuildContext context) {
+    return Btn.icon(
+      icon: const Icon(Icons.auto_awesome, size: 18),
+      text: l10n.askAiAgentTitle,
+      onTap: () {
+        final idx = _fabVN.value;
+        if (idx == 0) return;
+        final entry = _tabMap.values.elementAtOrNull(idx);
+        entry?.sshPageKey?.currentState?.openAgentFromToolbar();
+      },
+    );
+  }
+
   void showHistoryDialog(BuildContext context) {
     final history = Stores.history.sshServerHistory.all.cast<String>();
     if (history.isEmpty) {
@@ -559,6 +573,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
     required this.map,
     required this.onTap,
     required this.onClose,
+    required this.agentBtn,
     required this.snippetBtn,
     required this.sortBtn,
     required this.searchBtn,
@@ -569,6 +584,7 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
   final _TabMap map;
   final void Function(int idx) onTap;
   final void Function(String name) onClose;
+  final Widget agentBtn;
   final Widget snippetBtn;
   final Widget sortBtn;
   final Widget searchBtn;
@@ -627,7 +643,10 @@ final class _TabBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 7),
-                child: snippetBtn,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [agentBtn, const SizedBox(width: 4), snippetBtn],
+                ),
               ),
             ],
             if (showHomeActions) ...[
