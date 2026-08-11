@@ -234,6 +234,48 @@ class AppLocalizationsIt extends AppLocalizations {
       'Restored from history. Review it again before running; it will never run automatically.';
 
   @override
+  String get agentTitle => 'Agent';
+
+  @override
+  String get agentWelcome => 'What should we do across your servers?';
+
+  @override
+  String get agentWelcomeTip =>
+      'Ask for a diagnosis or an operational task. The Agent uses live ServerBox state and proposes one reviewed action at a time.';
+
+  @override
+  String get agentPromptHint =>
+      'Ask the Agent to inspect or operate your servers...';
+
+  @override
+  String get agentNoServers => 'No configured servers';
+
+  @override
+  String get agentNoHistory => 'No saved global Agent conversations';
+
+  @override
+  String get agentClearHistoryTitle => 'Clear global Agent history?';
+
+  @override
+  String get agentClearHistoryTip =>
+      'All global Agent conversations will be removed from this device.';
+
+  @override
+  String get agentToolShell => 'Shell';
+
+  @override
+  String get agentToolReadFile => 'Read file';
+
+  @override
+  String get agentToolWriteFile => 'Write file';
+
+  @override
+  String get agentToolServerBox => 'ServerBox';
+
+  @override
+  String get agentToolFailed => 'Tool execution failed.';
+
+  @override
   String get atLeastOneTab => 'Deve essere selezionata almeno una scheda';
 
   @override

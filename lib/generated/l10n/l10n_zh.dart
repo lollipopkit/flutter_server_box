@@ -223,6 +223,46 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiRestoredReview => '此命令来自历史记录，请重新审核；恢复后绝不会自动执行。';
 
   @override
+  String get agentTitle => 'Agent';
+
+  @override
+  String get agentWelcome => '想对你的服务器做些什么？';
+
+  @override
+  String get agentWelcomeTip =>
+      '可以让 Agent 诊断问题或执行运维任务。它会读取 ServerBox 的实时状态，并一次提出一个需要审核的操作。';
+
+  @override
+  String get agentPromptHint => '让 Agent 检查或操作你的服务器……';
+
+  @override
+  String get agentNoServers => '尚未配置服务器';
+
+  @override
+  String get agentNoHistory => '暂无全局 Agent 对话';
+
+  @override
+  String get agentClearHistoryTitle => '清空全局 Agent 历史记录？';
+
+  @override
+  String get agentClearHistoryTip => '此设备上的全部全局 Agent 对话都将被删除。';
+
+  @override
+  String get agentToolShell => '终端命令';
+
+  @override
+  String get agentToolReadFile => '读取文件';
+
+  @override
+  String get agentToolWriteFile => '写入文件';
+
+  @override
+  String get agentToolServerBox => 'ServerBox';
+
+  @override
+  String get agentToolFailed => '工具执行失败。';
+
+  @override
   String get atLeastOneTab => '至少需要选择一个标签';
 
   @override
@@ -1423,6 +1463,46 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiRestoredReview => '此指令來自歷史記錄，請重新審核；恢復後絕不會自動執行。';
+
+  @override
+  String get agentTitle => 'Agent';
+
+  @override
+  String get agentWelcome => '想對你的伺服器做些什麼？';
+
+  @override
+  String get agentWelcomeTip =>
+      '可以讓 Agent 診斷問題或執行維運工作。它會讀取 ServerBox 的即時狀態，並一次提出一個需要審核的操作。';
+
+  @override
+  String get agentPromptHint => '讓 Agent 檢查或操作你的伺服器……';
+
+  @override
+  String get agentNoServers => '尚未設定伺服器';
+
+  @override
+  String get agentNoHistory => '暫無全域 Agent 對話';
+
+  @override
+  String get agentClearHistoryTitle => '清除全域 Agent 歷史記錄？';
+
+  @override
+  String get agentClearHistoryTip => '此裝置上的全部全域 Agent 對話都將被刪除。';
+
+  @override
+  String get agentToolShell => '終端指令';
+
+  @override
+  String get agentToolReadFile => '讀取檔案';
+
+  @override
+  String get agentToolWriteFile => '寫入檔案';
+
+  @override
+  String get agentToolServerBox => 'ServerBox';
+
+  @override
+  String get agentToolFailed => '工具執行失敗。';
 
   @override
   String get atLeastOneTab => '至少需要選擇一個標籤';

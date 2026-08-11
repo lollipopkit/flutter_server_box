@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/ask_ai.dart';
+import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 
 void main() {
   group('AskAiRepository.composeChatCompletionsUri', () {
@@ -171,6 +172,48 @@ void main() {
       expect(modelDidNotApprove.canAutoRun, isFalse);
       expect(localDidNotApprove.canAutoRun, isFalse);
     });
+
+    test('classifies global Agent tools locally', () {
+      const readFile = AskAiCommand(
+        command: '/etc/os-release',
+        toolName: 'read_file',
+        rawArguments:
+            '{"server_id":"server-1","path":"/etc/os-release","description":"Inspect OS","safe_to_run":true}',
+        modelSafeToRun: true,
+      );
+      const writeFile = AskAiCommand(
+        command: '/etc/example.conf',
+        toolName: 'write_file',
+        rawArguments:
+            '{"server_id":"server-1","path":"/etc/example.conf","content":"enabled=true","description":"Update config","safe_to_run":true}',
+        modelSafeToRun: true,
+      );
+      const listServers = AskAiCommand(
+        command: 'list_servers',
+        toolName: 'serverbox',
+        rawArguments:
+            '{"action":"list_servers","server_id":null,"description":"List servers","safe_to_run":true}',
+        modelSafeToRun: true,
+      );
+      const disconnect = AskAiCommand(
+        command: 'disconnect',
+        toolName: 'serverbox',
+        rawArguments:
+            '{"action":"disconnect","server_id":"server-1","description":"Disconnect server","safe_to_run":true}',
+        modelSafeToRun: true,
+      );
+
+      expect(readFile.risk, AskAiCommandRisk.readOnly);
+      expect(readFile.canAutoRun, isTrue);
+      expect(readFile.serverId, 'server-1');
+      expect(readFile.path, '/etc/os-release');
+      expect(writeFile.risk, AskAiCommandRisk.caution);
+      expect(writeFile.canAutoRun, isFalse);
+      expect(listServers.risk, AskAiCommandRisk.readOnly);
+      expect(listServers.canAutoRun, isTrue);
+      expect(disconnect.risk, AskAiCommandRisk.caution);
+      expect(disconnect.canAutoRun, isFalse);
+    });
   });
 
   group('AskAiRepository Agent request', () {
@@ -206,6 +249,33 @@ void main() {
       expect(messages[3]['role'], 'tool');
       expect(messages[3]['tool_call_id'], 'call-1');
       expect(body['parallel_tool_calls'], isFalse);
+    });
+
+    test('builds global Agent requests with custom tools and instructions', () {
+      final body = AskAiRepository.buildRequestBody(
+        model: 'gpt-test',
+        terminalContext: '',
+        serverName: 'ServerBox',
+        protocol: AskAiProtocol.responses,
+        conversation: const [AskAiMessageItem.user('List my servers.')],
+        customInstructions: 'Global Agent instructions',
+        tools: globalAgentToolDefinitions,
+      );
+
+      expect(body['instructions'], 'Global Agent instructions');
+      final tools = body['tools'] as List<dynamic>;
+      expect(tools.map((tool) => tool['name']), [
+        'run_shell_command',
+        'read_file',
+        'write_file',
+        'serverbox',
+      ]);
+      expect(tools.every((tool) => tool['strict'] == true), isTrue);
+      final serverBox = tools.last as Map<String, dynamic>;
+      expect(
+        serverBox['parameters']['properties']['action']['enum'],
+        contains('disconnect'),
+      );
     });
 
     test('preserves reasoning content required by reasoning providers', () {
@@ -346,6 +416,41 @@ void main() {
 
       expect(completed.commands.single.id, 'call-done');
       expect(events.whereType<AskAiToolSuggestion>(), hasLength(1));
+    });
+
+    test('decodes non-shell Agent tool calls', () async {
+      const arguments =
+          '{"server_id":"server-1","path":"/etc/os-release","description":"Read OS information","safe_to_run":true}';
+      final sse = [
+        'data: ${jsonEncode({
+          'choices': [
+            {
+              'delta': {
+                'tool_calls': [
+                  {
+                    'index': 0,
+                    'id': 'call-read-file',
+                    'function': {'name': 'read_file', 'arguments': arguments},
+                  },
+                ],
+              },
+              'finish_reason': 'tool_calls',
+            },
+          ],
+        })}',
+        'data: [DONE]',
+      ].join('\n\n');
+
+      final events = await AskAiRepository.decodeSse(
+        Stream.value(utf8.encode('$sse\n\n')),
+      ).toList();
+      final proposal = events.whereType<AskAiToolSuggestion>().single.command;
+
+      expect(proposal.id, 'call-read-file');
+      expect(proposal.toolName, 'read_file');
+      expect(proposal.path, '/etc/os-release');
+      expect(proposal.serverId, 'server-1');
+      expect(proposal.canAutoRun, isTrue);
     });
 
     test('builds a stateless Responses request with replayable items', () {

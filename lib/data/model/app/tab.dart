@@ -11,7 +11,9 @@ enum AppTab {
   @HiveField(2)
   file,
   @HiveField(3)
-  snippet;
+  snippet,
+  @HiveField(4)
+  agent;
 
   /// Helper function to parse AppTab list from stored object
   static List<AppTab> parseAppTabsFromObj(dynamic val) {
@@ -23,7 +25,19 @@ enum AppTab {
           tabs.add(tab);
         }
       }
-      if (tabs.isNotEmpty) return tabs;
+      if (tabs.isNotEmpty) {
+        const legacyDefaultTabs = {
+          AppTab.server,
+          AppTab.ssh,
+          AppTab.file,
+          AppTab.snippet,
+        };
+        if (tabs.length == legacyDefaultTabs.length &&
+            tabs.toSet().containsAll(legacyDefaultTabs)) {
+          tabs.add(AppTab.agent);
+        }
+        return tabs;
+      }
     }
     return AppTab.values;
   }

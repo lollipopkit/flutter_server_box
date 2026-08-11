@@ -228,6 +228,59 @@ Map<String, dynamic>? _mapOrNull(Object? value) {
 
 enum AskAiCommandRisk { readOnly, caution, destructive }
 
+/// Protocol-neutral function tool definition used by both Chat Completions and
+/// Responses requests.
+@immutable
+class AskAiToolDefinition {
+  const AskAiToolDefinition({
+    required this.name,
+    required this.description,
+    required this.parameters,
+  });
+
+  static const runShellCommand = AskAiToolDefinition(
+    name: 'run_shell_command',
+    description:
+        'Propose one non-interactive shell command to run on the current SSH server.',
+    parameters: {
+      'type': 'object',
+      'additionalProperties': false,
+      'required': ['command', 'description', 'safe_to_run'],
+      'properties': {
+        'command': {
+          'type': 'string',
+          'description': 'A complete, non-interactive shell command.',
+        },
+        'description': {
+          'type': 'string',
+          'description':
+              'A concise explanation of the command and any relevant risk.',
+        },
+        'safe_to_run': {
+          'type': 'boolean',
+          'description':
+              'True only for clearly read-only, idempotent, non-destructive commands.',
+        },
+      },
+    },
+  );
+
+  final String name;
+  final String description;
+  final Map<String, dynamic> parameters;
+
+  Map<String, dynamic> toRequestJson(AskAiProtocol protocol) {
+    final definition = <String, dynamic>{
+      'name': name,
+      'description': description,
+      'parameters': parameters,
+    };
+    return protocol == AskAiProtocol.responses
+        ? {'type': 'function', ...definition, 'strict': true}
+        : {'type': 'function', 'function': definition};
+  }
+}
+
 /// A command proposal returned by the AI tool call.
 @immutable
 class AskAiCommand {
@@ -261,7 +314,44 @@ class AskAiCommand {
   /// command safe before the app may auto-run it.
   final bool modelSafeToRun;
 
-  AskAiCommandRisk get risk => classifyRisk(command);
+  Map<String, dynamic> get arguments {
+    if (rawArguments.isEmpty) return const {};
+    try {
+      final value = jsonDecode(rawArguments);
+      return value is Map ? Map<String, dynamic>.from(value) : const {};
+    } on FormatException {
+      return const {};
+    } on TypeError {
+      return const {};
+    }
+  }
+
+  String? argumentString(String name) {
+    final value = arguments[name];
+    return value is String && value.trim().isNotEmpty ? value.trim() : null;
+  }
+
+  String? get serverId => argumentString('server_id');
+
+  String? get path => argumentString('path');
+
+  String? get action => argumentString('action');
+
+  String get displayValue => switch (toolName) {
+    'read_file' || 'write_file' => path ?? command,
+    'serverbox' => action ?? command,
+    _ => command,
+  };
+
+  AskAiCommandRisk get risk => switch (toolName) {
+    'read_file' => AskAiCommandRisk.readOnly,
+    'write_file' => AskAiCommandRisk.caution,
+    'serverbox' => switch (action) {
+      'list_servers' || 'get_status' => AskAiCommandRisk.readOnly,
+      _ => AskAiCommandRisk.caution,
+    },
+    _ => classifyRisk(command),
+  };
 
   bool get canAutoRun => modelSafeToRun && risk == AskAiCommandRisk.readOnly;
 

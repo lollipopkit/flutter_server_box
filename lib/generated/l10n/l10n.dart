@@ -537,6 +537,84 @@ abstract class AppLocalizations {
   /// **'Restored from history. Review it again before running; it will never run automatically.'**
   String get askAiRestoredReview;
 
+  /// No description provided for @agentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent'**
+  String get agentTitle;
+
+  /// No description provided for @agentWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'What should we do across your servers?'**
+  String get agentWelcome;
+
+  /// No description provided for @agentWelcomeTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a diagnosis or an operational task. The Agent uses live ServerBox state and proposes one reviewed action at a time.'**
+  String get agentWelcomeTip;
+
+  /// No description provided for @agentPromptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask the Agent to inspect or operate your servers...'**
+  String get agentPromptHint;
+
+  /// No description provided for @agentNoServers.
+  ///
+  /// In en, this message translates to:
+  /// **'No configured servers'**
+  String get agentNoServers;
+
+  /// No description provided for @agentNoHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved global Agent conversations'**
+  String get agentNoHistory;
+
+  /// No description provided for @agentClearHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear global Agent history?'**
+  String get agentClearHistoryTitle;
+
+  /// No description provided for @agentClearHistoryTip.
+  ///
+  /// In en, this message translates to:
+  /// **'All global Agent conversations will be removed from this device.'**
+  String get agentClearHistoryTip;
+
+  /// No description provided for @agentToolShell.
+  ///
+  /// In en, this message translates to:
+  /// **'Shell'**
+  String get agentToolShell;
+
+  /// No description provided for @agentToolReadFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Read file'**
+  String get agentToolReadFile;
+
+  /// No description provided for @agentToolWriteFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Write file'**
+  String get agentToolWriteFile;
+
+  /// No description provided for @agentToolServerBox.
+  ///
+  /// In en, this message translates to:
+  /// **'ServerBox'**
+  String get agentToolServerBox;
+
+  /// No description provided for @agentToolFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool execution failed.'**
+  String get agentToolFailed;
+
   /// No description provided for @atLeastOneTab.
   ///
   /// In en, this message translates to:

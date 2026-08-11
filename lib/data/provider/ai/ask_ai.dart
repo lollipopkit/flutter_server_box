@@ -26,6 +26,10 @@ class AskAiRepository {
     String? localeHint,
     List<AskAiConversationItem> conversation = const [],
     AskAiProtocol? protocol,
+    String? customInstructions,
+    List<AskAiToolDefinition> tools = const [
+      AskAiToolDefinition.runShellCommand,
+    ],
   }) async* {
     final baseUrl = _settings.askAiBaseUrl.fetch().trim();
     final apiKey = _settings.askAiApiKey.fetch().trim();
@@ -67,6 +71,8 @@ class AskAiRepository {
       localeHint: localeHint,
       conversation: conversation,
       protocol: resolvedProtocol,
+      customInstructions: customInstructions,
+      tools: tools,
     );
 
     Response<ResponseBody> response;
@@ -439,13 +445,22 @@ class AskAiRepository {
     required List<AskAiConversationItem> conversation,
     AskAiProtocol protocol = AskAiProtocol.chatCompletions,
     String? localeHint,
+    String? customInstructions,
+    List<AskAiToolDefinition> tools = const [
+      AskAiToolDefinition.runShellCommand,
+    ],
   }) {
-    final instructions = buildInstructions(
-      terminalContext: terminalContext,
-      serverName: serverName,
-      localeHint: localeHint,
-    );
+    final instructions = customInstructions?.trim().isNotEmpty == true
+        ? customInstructions!.trim()
+        : buildInstructions(
+            terminalContext: terminalContext,
+            serverName: serverName,
+            localeHint: localeHint,
+          );
     final window = _conversationWindow(conversation);
+    final requestTools = tools
+        .map((tool) => tool.toRequestJson(protocol))
+        .toList(growable: false);
 
     if (protocol == AskAiProtocol.responses) {
       return {
@@ -455,7 +470,7 @@ class AskAiRepository {
         'instructions': instructions,
         'input': _responsesInputItems(window),
         'parallel_tool_calls': false,
-        'tools': [_toolDefinition(AskAiProtocol.responses)],
+        'tools': requestTools,
       };
     }
 
@@ -467,7 +482,7 @@ class AskAiRepository {
         ..._chatMessages(window),
       ],
       'parallel_tool_calls': false,
-      'tools': [_toolDefinition(AskAiProtocol.chatCompletions)],
+      'tools': requestTools,
     };
   }
 
@@ -637,33 +652,17 @@ class _ChatToolCallBuilder {
   AskAiCommand? tryBuild({bool force = false}) {
     if (_emitted) return null;
     final raw = arguments.toString();
-    try {
-      final decoded = Map<String, dynamic>.from(jsonDecode(raw) as Map);
-      final command = decoded['command'] as String?;
-      if (command == null || command.trim().isEmpty) {
-        if (force) _emitted = true;
-        return null;
-      }
+    final command = _parseCommand(
+      id: id ?? 'tool-call-$index',
+      name: name,
+      rawArguments: raw,
+    );
+    if (command != null) {
       _emitted = true;
-      return AskAiCommand(
-        id: id ?? 'run-shell-command-$index',
-        command: command.trim(),
-        description:
-            (decoded['description'] as String? ??
-                    decoded['explanation'] as String? ??
-                    '')
-                .trim(),
-        toolName: name ?? 'run_shell_command',
-        rawArguments: raw,
-        modelSafeToRun: decoded['safe_to_run'] as bool? ?? false,
-      );
-    } on FormatException {
-      if (force) _emitted = true;
-      return null;
-    } on TypeError {
-      if (force) _emitted = true;
-      return null;
+      return command;
     }
+    if (force) _emitted = true;
+    return null;
   }
 }
 
@@ -808,39 +807,6 @@ List<Map<String, dynamic>> _responsesInputItems(
       .toList(growable: false);
 }
 
-Map<String, dynamic> _toolDefinition(AskAiProtocol protocol) {
-  const parameters = {
-    'type': 'object',
-    'additionalProperties': false,
-    'required': ['command', 'description', 'safe_to_run'],
-    'properties': {
-      'command': {
-        'type': 'string',
-        'description': 'A complete, non-interactive shell command.',
-      },
-      'description': {
-        'type': 'string',
-        'description':
-            'A concise explanation of the command and any relevant risk.',
-      },
-      'safe_to_run': {
-        'type': 'boolean',
-        'description':
-            'True only for clearly read-only, idempotent, non-destructive commands.',
-      },
-    },
-  };
-  const definition = {
-    'name': 'run_shell_command',
-    'description':
-        'Propose one non-interactive shell command to run on the current SSH server.',
-    'parameters': parameters,
-  };
-  return protocol == AskAiProtocol.responses
-      ? {'type': 'function', ...definition, 'strict': true}
-      : {'type': 'function', 'function': definition};
-}
-
 AskAiConversationItem? _conversationItemFromResponsesOutput(Object? value) {
   final item = _mapOrNull(value);
   if (item == null) return null;
@@ -884,17 +850,24 @@ AskAiCommand? _parseCommand({
 }) {
   try {
     final decoded = Map<String, dynamic>.from(jsonDecode(rawArguments) as Map);
-    final command = decoded['command'] as String?;
+    final toolName = name?.trim().isNotEmpty == true
+        ? name!.trim()
+        : 'run_shell_command';
+    final command = switch (toolName) {
+      'read_file' || 'write_file' => decoded['path'] as String?,
+      'serverbox' => decoded['action'] as String?,
+      _ => decoded['command'] as String?,
+    };
     if (command == null || command.trim().isEmpty) return null;
     return AskAiCommand(
-      id: id.isEmpty ? 'run-shell-command' : id,
+      id: id.isEmpty ? 'tool-call' : id,
       command: command.trim(),
       description:
           (decoded['description'] as String? ??
                   decoded['explanation'] as String? ??
                   '')
               .trim(),
-      toolName: name ?? 'run_shell_command',
+      toolName: toolName,
       rawArguments: rawArguments,
       modelSafeToRun: decoded['safe_to_run'] as bool? ?? false,
     );
