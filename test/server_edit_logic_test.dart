@@ -1,5 +1,19 @@
+import 'dart:convert';
+
+import 'package:fl_lib/fl_lib.dart';
+import 'package:fl_lib/generated/l10n/lib_l10n.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/extension/context/locale.dart' as app_locale;
+import 'package:server_box/core/route.dart';
+import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/private_key.dart';
+import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/server/edit/edit.dart';
 
 void main() {
   group('Server Edit Page Logic Tests', () {
@@ -116,20 +130,104 @@ void main() {
       expect(serverWithoutKey.pwd, 'password123');
     });
 
-    test('SSH key and password can be stored together', () {
-      const server = Spi(
+    testWidgets('server editor preserves combined SSH credentials', (
+      tester,
+    ) async {
+      FlutterSecureStorage.setMockInitialValues({});
+
+      var server = const Spi(
         name: 'combined-auth-server',
         ip: '192.168.1.100',
         port: 22,
         user: 'root',
         pwd: 'password123',
-        keyId: '~/.ssh/id_ed25519',
+        keyId: 'test-key',
+        id: 'combined-auth-server-id',
+      );
+      Spi? persisted;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            serversProvider.overrideWith(
+              () => _PersistingServersNotifier(
+                server,
+                (value) => persisted = value,
+              ),
+            ),
+            privateKeyProvider.overrideWithValue(
+              const PrivateKeyState(
+                keys: [PrivateKeyInfo(id: 'test-key', key: 'unused')],
+              ),
+            ),
+          ],
+          child: MaterialApp(
+            builder: ResponsivePoints.builder,
+            locale: const Locale('en'),
+            localizationsDelegates: const [
+              LibLocalizations.delegate,
+              ...AppLocalizations.localizationsDelegates,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Builder(
+              builder: (context) {
+                app_locale.l10n = AppLocalizations.of(context)!;
+                context.setLibL10n();
+                return Scaffold(
+                  body: TextButton(
+                    key: const ValueKey('open-server-editor'),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            ServerEditPage(args: SpiRequiredArgs(server)),
+                      ),
+                    ),
+                    child: const Text('Open editor'),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
       );
 
-      final restored = Spi.fromJson(server.toJson());
+      await tester.tap(find.byKey(const ValueKey('open-server-editor')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
 
+      expect(find.text('test-key'), findsOneWidget);
+      expect(
+        tester
+            .widgetList<EditableText>(find.byType(EditableText))
+            .where((field) => field.controller.text == 'password123'),
+        hasLength(1),
+      );
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byKey(const ValueKey('open-server-editor')), findsOneWidget);
+      expect(persisted, isNotNull);
+      final restored = persisted!;
       expect(restored.pwd, 'password123');
-      expect(restored.keyId, '~/.ssh/id_ed25519');
+      expect(restored.keyId, 'test-key');
+
+      server = restored;
+      await tester.tap(find.byKey(const ValueKey('open-server-editor')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('test-key'), findsOneWidget);
+      expect(
+        tester
+            .widgetList<EditableText>(find.byType(EditableText))
+            .where((field) => field.controller.text == 'password123'),
+        hasLength(1),
+      );
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
     });
 
     test('server editing vs creation logic', () {
@@ -352,4 +450,34 @@ void main() {
       );
     });
   });
+}
+
+final class _PersistingServersNotifier extends ServersNotifier {
+  _PersistingServersNotifier(this.initialServer, this.onPersist);
+
+  final Spi initialServer;
+  final ValueChanged<Spi> onPersist;
+
+  @override
+  ServersState build() {
+    return ServersState(
+      servers: {initialServer.id: initialServer},
+      serverOrder: [initialServer.id],
+    );
+  }
+
+  @override
+  Future<void> updateServer(Spi old, Spi newSpi) async {
+    final persisted = Spi.fromJson(
+      jsonDecode(jsonEncode(newSpi)) as Map<String, dynamic>,
+    );
+    onPersist(persisted);
+    final servers = Map<String, Spi>.from(state.servers)
+      ..remove(old.id)
+      ..[persisted.id] = persisted;
+    state = state.copyWith(
+      servers: servers,
+      serverOrder: servers.keys.toList(),
+    );
+  }
 }
