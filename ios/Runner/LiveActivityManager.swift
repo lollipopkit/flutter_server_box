@@ -10,7 +10,7 @@ import ActivityKit
 
 @available(iOS 16.2, *)
 class LiveActivityManager {
-    static var current: Activity<TerminalAttributes>?
+    private static var current: Activity<TerminalAttributes>?
 
     struct Payload: Decodable {
         let id: String
@@ -25,6 +25,26 @@ class LiveActivityManager {
     private static func parse(_ json: String) -> Payload? {
         guard let data = json.data(using: .utf8) else { return nil }
         return try? JSONDecoder().decode(Payload.self, from: data)
+    }
+
+    private static func trackedActivities() -> [Activity<TerminalAttributes>] {
+        var activities = Activity<TerminalAttributes>.activities
+        if let current = current, !activities.contains(where: { $0.id == current.id }) {
+            activities.append(current)
+        }
+        return activities
+    }
+
+    private static func updatableActivity() -> Activity<TerminalAttributes>? {
+        if let current = current,
+           current.activityState == .active || current.activityState == .stale {
+            return current
+        }
+        let activity = Activity<TerminalAttributes>.activities.first {
+            $0.activityState == .active || $0.activityState == .stale
+        }
+        current = activity
+        return activity
     }
 
     static func start(json: String) {
@@ -50,6 +70,19 @@ class LiveActivityManager {
             connectionCount: p.connectionCount ?? 1
         )
         let content = ActivityContent(state: state, staleDate: nil)
+
+        if let activity = updatableActivity() {
+            current = activity
+            let duplicates = trackedActivities().filter { $0.id != activity.id }
+            Task {
+                await activity.update(content)
+                for duplicate in duplicates {
+                    await duplicate.end(dismissalPolicy: .immediate)
+                }
+            }
+            return
+        }
+
         do {
             current = try Activity<TerminalAttributes>.request(attributes: attributes, content: content, pushType: nil)
         } catch {
@@ -78,18 +111,26 @@ class LiveActivityManager {
             hasTerminal: p.hasTerminal ?? true,
             connectionCount: p.connectionCount ?? 1
         )
-        if let activity = current {
-            Task { await activity.update(ActivityContent(state: state, staleDate: nil)) }
+        if let activity = updatableActivity() {
+            current = activity
+            let duplicates = trackedActivities().filter { $0.id != activity.id }
+            Task {
+                await activity.update(ActivityContent(state: state, staleDate: nil))
+                for duplicate in duplicates {
+                    await duplicate.end(dismissalPolicy: .immediate)
+                }
+            }
         } else {
             start(json: json)
         }
     }
 
-    static func stop() {
+    static func stop() async {
         guard #available(iOS 16.2, *) else { return }
-        if let activity = current {
-            Task { await activity.end(dismissalPolicy: .immediate) }
-            current = nil
+        let activities = trackedActivities()
+        current = nil
+        for activity in activities {
+            await activity.end(dismissalPolicy: .immediate)
         }
     }
 }

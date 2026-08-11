@@ -86,8 +86,9 @@ extension _Server on _AppSettingsPageState {
         );
 
         if (sure != true) return;
+        final notifier = ref.read(serversProvider.notifier);
         for (final key in deleteKeys) {
-          Stores.server.remove(key);
+          await notifier.delServer(key);
         }
         context.showSnackBar(libL10n.success);
       },
