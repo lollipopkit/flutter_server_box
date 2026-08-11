@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:hive_ce/hive.dart';
+import 'package:meta/meta.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
@@ -10,6 +12,11 @@ import 'package:server_box/data/res/default.dart';
 
 class SettingStore extends HiveStore {
   SettingStore._() : super('setting');
+
+  @visibleForTesting
+  SettingStore.forBox(Box<dynamic> testBox) : super('setting_test') {
+    box = testBox;
+  }
 
   static final instance = SettingStore._();
 

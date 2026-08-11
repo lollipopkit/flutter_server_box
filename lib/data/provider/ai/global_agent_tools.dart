@@ -596,7 +596,7 @@ class GlobalAgentToolService {
       final size = attrs.size;
       final readLength = size == null
           ? _maxReadBytes + 1
-          : size.clamp(0, _maxReadBytes + 1);
+          : size.clamp(0, _maxReadBytes + 1).toInt();
       final bytes = BytesBuilder(copy: false);
       await for (final chunk
           in file.read(length: readLength).timeout(_sftpTimeout)) {
