@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 
 void main() {
   test('parses the legacy default home tabs without recurring migration', () {
@@ -39,5 +40,16 @@ void main() {
 
   test('uses non-null defaults when every stored tab name is unknown', () {
     expect(AppTab.parseAppTabsFromObj(['unknown']), AppTab.values);
+  });
+
+  test('offers Agent when only the legacy home tabs are selected', () {
+    final available = availableHomeTabs(const [
+      AppTab.server,
+      AppTab.ssh,
+      AppTab.file,
+      AppTab.snippet,
+    ]);
+
+    expect(available, [AppTab.agent]);
   });
 }

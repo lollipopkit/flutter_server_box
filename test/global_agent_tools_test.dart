@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
+import 'package:server_box/view/page/agent/agent.dart';
 
 void main() {
   test('global Agent instructions expose exact live server IDs', () {
@@ -66,6 +67,38 @@ void main() {
     expect(limited.stdout, contains('[... output truncated ...]'));
     expect(limited.stdout.length, lessThanOrEqualTo(96));
     expect(limited.stderr, isEmpty);
+  });
+
+  test('shell result display shows output instead of raw tool JSON', () {
+    const result = AgentToolExecutionResult(
+      toolName: 'run_shell_command',
+      summary: 'Command timed out.',
+      succeeded: false,
+      duration: Duration(seconds: 5),
+      truncated: true,
+      data: {
+        'command': 'raw tool command',
+        'exit_code': 124,
+        'stdout': 'partial output',
+        'stderr': 'timeout warning',
+        'timed_out': true,
+      },
+    );
+
+    final output = formatGlobalAgentToolResultOutput(
+      result,
+      cancelledLabel: 'Cancelled',
+      timedOutLabel: 'Timed out',
+      noOutputLabel: 'No output',
+      truncatedLabel: 'Truncated',
+    );
+
+    expect(output, contains('Timed out · Exit code: 124'));
+    expect(output, contains('stdout\npartial output'));
+    expect(output, contains('stderr\ntimeout warning'));
+    expect(output, contains('Truncated'));
+    expect(output, isNot(contains('raw tool command')));
+    expect(output, isNot(contains('"command"')));
   });
 
   test('empty server list remains explicit in the prompt', () {

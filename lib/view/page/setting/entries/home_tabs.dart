@@ -6,6 +6,14 @@ import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/home_tab.dart';
 
+@visibleForTesting
+List<AppTab> availableHomeTabs(Iterable<AppTab> selectedTabs) {
+  final selected = selectedTabs.toSet();
+  return AppTab.values
+      .where((tab) => !selected.contains(tab))
+      .toList(growable: false);
+}
+
 class HomeTabsConfigPage extends ConsumerStatefulWidget {
   const HomeTabsConfigPage({super.key});
 
@@ -19,7 +27,6 @@ class HomeTabsConfigPage extends ConsumerStatefulWidget {
 }
 
 class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
-  final _availableTabs = AppTab.values;
   var _selectedTabs = List<AppTab>.from(Stores.setting.homeTabs.fetch());
 
   void _showHomeTabConstraint(String message) {
@@ -28,6 +35,7 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
 
   @override
   Widget build(BuildContext context) {
+    final availableTabs = availableHomeTabs(_selectedTabs);
     return Scaffold(
       appBar: CustomAppBar(
         title: Text(l10n.homeTabs),
@@ -66,12 +74,9 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: _availableTabs.length,
+              itemCount: availableTabs.length,
               itemBuilder: (context, index) {
-                final tab = _availableTabs[index];
-                if (_selectedTabs.contains(tab)) {
-                  return const SizedBox.shrink();
-                }
+                final tab = availableTabs[index];
                 return _buildTabItem(tab, index, false);
               },
             ),

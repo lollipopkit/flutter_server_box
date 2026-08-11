@@ -64,7 +64,11 @@ extension _AgentHistoryActions on _AskAiPanelState {
   }
 
   Future<void> _renameConversation(AgentConversation conversation) async {
-    final controller = TextEditingController(text: conversation.title);
+    final controller = TextEditingController(text: conversation.title)
+      ..selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: conversation.title.length,
+      );
     try {
       final title = await context.showRoundDialog<String>(
         title: context.l10n.askAiRenameConversation,

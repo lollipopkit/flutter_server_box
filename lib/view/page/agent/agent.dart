@@ -8,14 +8,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
-import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/provider/ai/ask_ai.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
-import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/page/ssh/agent_conversation_replay.dart';
 
 class AgentPage extends ConsumerStatefulWidget {
@@ -70,28 +67,35 @@ class _ReplayToolCall {
   bool completed = false;
 }
 
-class _AgentServerSummary extends ConsumerWidget {
-  const _AgentServerSummary({required this.style});
-
-  final TextStyle? style;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final servers = ref.watch(serversProvider);
-    var connected = 0;
-    for (final id in servers.servers.keys) {
-      final connection = ref.watch(serverProvider(id)).conn;
-      if (connection.index >= ServerConn.connected.index) connected++;
-    }
-    return Text(
-      servers.servers.isEmpty
-          ? context.l10n.agentNoServers
-          : '${servers.servers.length} ${libL10n.server} · $connected ${context.l10n.askAiReady}',
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: style,
-    );
+@visibleForTesting
+String formatGlobalAgentToolResultOutput(
+  AgentToolExecutionResult result, {
+  required String cancelledLabel,
+  required String timedOutLabel,
+  required String noOutputLabel,
+  required String truncatedLabel,
+}) {
+  if (result.toolName != 'run_shell_command' || result.data is! Map) {
+    return result.displayData;
   }
+
+  final data = Map<Object?, Object?>.from(result.data! as Map);
+  final stdout = data['stdout'] as String? ?? '';
+  final stderr = data['stderr'] as String? ?? '';
+  final exitCode = data['exit_code'];
+  final timedOut = data['timed_out'] == true;
+  final sections = <String>[];
+
+  final status = <String>[
+    if (timedOut) timedOutLabel else if (result.cancelled) cancelledLabel,
+    if (exitCode != null) 'Exit code: $exitCode',
+  ];
+  if (status.isNotEmpty) sections.add(status.join(' · '));
+  if (stdout.isNotEmpty) sections.add('stdout\n$stdout');
+  if (stderr.isNotEmpty) sections.add('stderr\n$stderr');
+  if (stdout.isEmpty && stderr.isEmpty) sections.add(noOutputLabel);
+  if (result.truncated) sections.add(truncatedLabel);
+  return sections.join('\n\n');
 }
 
 class _AgentPageState extends ConsumerState<AgentPage>
@@ -597,7 +601,11 @@ class _AgentPageState extends ConsumerState<AgentPage>
     AgentConversation conversation, {
     VoidCallback? onChanged,
   }) async {
-    final controller = TextEditingController(text: conversation.title);
+    final controller = TextEditingController(text: conversation.title)
+      ..selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: conversation.title.length,
+      );
     try {
       final title = await context.showRoundDialog<String>(
         title: context.l10n.askAiRenameConversation,
@@ -875,21 +883,11 @@ class _AgentPageState extends ConsumerState<AgentPage>
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  context.l10n.agentTitle,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                _AgentServerSummary(
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
+            child: Text(
+              context.l10n.agentTitle,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           if (compact)
@@ -902,11 +900,6 @@ class _AgentPageState extends ConsumerState<AgentPage>
             tooltip: context.l10n.askAiNewConversation,
             onPressed: _isWorking ? null : _beginNewConversation,
             icon: const Icon(Icons.add_comment_outlined),
-          ),
-          IconButton(
-            tooltip: libL10n.setting,
-            onPressed: () => SettingsPage.route.go(context),
-            icon: const Icon(Icons.tune),
           ),
           if (_isWorking)
             IconButton.filledTonal(
@@ -1039,15 +1032,24 @@ class _AgentPageState extends ConsumerState<AgentPage>
   ) {
     final proposal = entry.proposal!;
     final result = entry.result!;
-    final output = result.displayData;
+    final output = formatGlobalAgentToolResultOutput(
+      result,
+      cancelledLabel: context.l10n.askAiCommandCancelled,
+      timedOutLabel: context.l10n.askAiCommandTimedOut,
+      noOutputLabel: context.l10n.askAiNoCommandOutput,
+      truncatedLabel: context.l10n.askAiOutputTruncated,
+    );
     return Card(
       elevation: 0,
       color: theme.colorScheme.surfaceContainerLow,
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(color: theme.colorScheme.outlineVariant),
       ),
       child: ExpansionTile(
+        shape: const RoundedRectangleBorder(),
+        collapsedShape: const RoundedRectangleBorder(),
         leading: CircleAvatar(
           radius: 17,
           backgroundColor: result.succeeded
@@ -1348,7 +1350,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
                   border: Border.all(color: theme.colorScheme.outlineVariant),
                 ),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
                       child: TextField(
@@ -1356,6 +1358,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
                         minLines: 1,
                         maxLines: 6,
                         textInputAction: TextInputAction.newline,
+                        textAlignVertical: TextAlignVertical.center,
                         enabled: !_isWorking && _pendingTool == null,
                         decoration: InputDecoration(
                           hintText: _pendingTool == null

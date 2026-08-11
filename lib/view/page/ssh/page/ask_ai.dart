@@ -1005,6 +1005,8 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: ExpansionTile(
+        shape: const RoundedRectangleBorder(),
+        collapsedShape: const RoundedRectangleBorder(),
         initiallyExpanded: !result.succeeded,
         tilePadding: const EdgeInsets.symmetric(horizontal: 12),
         childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
