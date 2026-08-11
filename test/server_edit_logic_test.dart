@@ -116,6 +116,22 @@ void main() {
       expect(serverWithoutKey.pwd, 'password123');
     });
 
+    test('SSH key and password can be stored together', () {
+      const server = Spi(
+        name: 'combined-auth-server',
+        ip: '192.168.1.100',
+        port: 22,
+        user: 'root',
+        pwd: 'password123',
+        keyId: '~/.ssh/id_ed25519',
+      );
+
+      final restored = Spi.fromJson(server.toJson());
+
+      expect(restored.pwd, 'password123');
+      expect(restored.keyId, '~/.ssh/id_ed25519');
+    });
+
     test('server editing vs creation logic', () {
       // Test logic for distinguishing between editing and creating servers
 

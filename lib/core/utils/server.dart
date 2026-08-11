@@ -223,6 +223,7 @@ Future<SSHClient> genClient(
     username: spi.user,
     // Must use [compute] here, instead of [Computer.shared.start]
     identities: await compute(loadIdentity, privateKey),
+    onPasswordRequest: spi.pwd?.isNotEmpty == true ? () => spi.pwd : null,
     onUserInfoRequest: onKeyboardInteractive == null
         ? null
         : (request) => onKeyboardInteractive(spi, request),

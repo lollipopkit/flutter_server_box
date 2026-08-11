@@ -413,9 +413,8 @@ extension _Utils on _ServerEditPageState {
     _ipController.text = spi.ip;
     _portController.text = spi.port.toString();
     _usernameController.text = spi.user;
-    if (spi.keyId == null) {
-      _passwordController.text = spi.pwd ?? '';
-    } else {
+    _passwordController.text = spi.pwd ?? '';
+    if (spi.keyId != null) {
       _keyIdx.value = ref
           .read(privateKeyProvider)
           .keys
