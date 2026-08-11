@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -11,6 +12,135 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 
 const globalAgentConversationScope = '__global_agent__';
+const _maxGlobalAgentShellOutputCharacters = 32000;
+const _shellOutputTruncationMarker = '\n\n[... output truncated ...]\n\n';
+
+@visibleForTesting
+({String stdout, String stderr, bool truncated}) limitGlobalAgentShellOutput(
+  String stdout,
+  String stderr, {
+  bool stdoutAlreadyTruncated = false,
+  bool stderrAlreadyTruncated = false,
+  int maxCharacters = _maxGlobalAgentShellOutputCharacters,
+}) {
+  if (maxCharacters <= 0) {
+    return (
+      stdout: '',
+      stderr: '',
+      truncated:
+          stdout.isNotEmpty ||
+          stderr.isNotEmpty ||
+          stdoutAlreadyTruncated ||
+          stderrAlreadyTruncated,
+    );
+  }
+
+  final total = stdout.length + stderr.length;
+  final truncated =
+      stdoutAlreadyTruncated || stderrAlreadyTruncated || total > maxCharacters;
+  if (!truncated) {
+    return (stdout: stdout, stderr: stderr, truncated: false);
+  }
+
+  String limit(String value, int budget, {required bool force}) {
+    if (!force && value.length <= budget) return value;
+    if (budget <= 0) return '';
+    if (budget <= _shellOutputTruncationMarker.length) {
+      return _shellOutputTruncationMarker.substring(0, budget);
+    }
+
+    final visibleBudget = budget - _shellOutputTruncationMarker.length;
+    final desiredHeadLength = visibleBudget ~/ 2;
+    final headLength = desiredHeadLength < value.length
+        ? desiredHeadLength
+        : value.length;
+    final availableTailLength = value.length - headLength;
+    final desiredTailLength = visibleBudget - desiredHeadLength;
+    final tailLength = desiredTailLength < availableTailLength
+        ? desiredTailLength
+        : availableTailLength;
+    return '${value.substring(0, headLength)}'
+        '$_shellOutputTruncationMarker'
+        '${value.substring(value.length - tailLength)}';
+  }
+
+  final stdoutBudget = stderr.isEmpty
+      ? maxCharacters
+      : maxCharacters * 11 ~/ 16;
+  final stderrBudget = stderr.isEmpty ? 0 : maxCharacters - stdoutBudget;
+  return (
+    stdout: limit(
+      stdout,
+      stdoutBudget,
+      force: stdoutAlreadyTruncated || stdout.length > stdoutBudget,
+    ),
+    stderr: limit(
+      stderr,
+      stderrBudget,
+      force: stderrAlreadyTruncated || stderr.length > stderrBudget,
+    ),
+    truncated: true,
+  );
+}
+
+final class _BoundedTextAccumulator {
+  _BoundedTextAccumulator(this.maxCharacters)
+    : assert(maxCharacters > 0),
+      _headLimit = maxCharacters ~/ 2,
+      _tailLimit = maxCharacters - (maxCharacters ~/ 2);
+
+  final int maxCharacters;
+  final int _headLimit;
+  final int _tailLimit;
+  final StringBuffer _head = StringBuffer();
+  final ListQueue<String> _tail = ListQueue<String>();
+  int _tailLength = 0;
+  int _totalCharacters = 0;
+
+  bool get truncated => _totalCharacters > maxCharacters;
+
+  String get text => '${_head.toString()}${_tail.join()}';
+
+  void add(String chunk) {
+    if (chunk.isEmpty) return;
+    _totalCharacters += chunk.length;
+
+    var offset = 0;
+    final remainingHead = _headLimit - _head.length;
+    if (remainingHead > 0) {
+      final take = remainingHead < chunk.length ? remainingHead : chunk.length;
+      _head.write(chunk.substring(0, take));
+      offset = take;
+    }
+    if (offset < chunk.length) {
+      _appendTail(chunk.substring(offset));
+    }
+  }
+
+  void _appendTail(String value) {
+    if (_tailLimit == 0 || value.isEmpty) return;
+    if (value.length >= _tailLimit) {
+      _tail
+        ..clear()
+        ..add(value.substring(value.length - _tailLimit));
+      _tailLength = _tailLimit;
+      return;
+    }
+
+    _tail.addLast(value);
+    _tailLength += value.length;
+    while (_tailLength > _tailLimit) {
+      final overflow = _tailLength - _tailLimit;
+      final first = _tail.removeFirst();
+      if (first.length <= overflow) {
+        _tailLength -= first.length;
+        continue;
+      }
+      _tail.addFirst(first.substring(overflow));
+      _tailLength -= overflow;
+    }
+  }
+}
 
 const globalAgentToolDefinitions = <AskAiToolDefinition>[
   AskAiToolDefinition(
@@ -291,9 +421,10 @@ class GlobalAgentToolService {
 
   static const _operationTimeout = Duration(minutes: 5);
   static const _sftpTimeout = Duration(seconds: 30);
-  static const _maxShellOutputCharacters = 32000;
+  static const _maxShellOutputCharacters = _maxGlobalAgentShellOutputCharacters;
   static const _maxReadBytes = 128 * 1024;
   static const _maxWriteBytes = 512 * 1024;
+  static int _temporaryFileSequence = 0;
 
   final Ref _ref;
   SSHSession? _activeSession;
@@ -388,13 +519,19 @@ class GlobalAgentToolService {
     if (command == null) throw const FormatException('command is required');
     final session = await state.client!.execute(command);
     _activeSession = session;
+    final stdoutCapture = _BoundedTextAccumulator(_maxShellOutputCharacters);
+    final stderrCapture = _BoundedTextAccumulator(_maxShellOutputCharacters);
     final stdoutFuture = const Utf8Decoder(
       allowMalformed: true,
-    ).bind(session.stdout).join();
+    ).bind(session.stdout).forEach(stdoutCapture.add);
     final stderrFuture = const Utf8Decoder(
       allowMalformed: true,
-    ).bind(session.stderr).join();
+    ).bind(session.stderr).forEach(stderrCapture.add);
+    if (_cancelRequested) await cancelCurrent();
+
     var timedOut = false;
+    var stdoutDrainTimedOut = false;
+    var stderrDrainTimedOut = false;
     try {
       try {
         await session.done.timeout(_operationTimeout);
@@ -402,15 +539,21 @@ class GlobalAgentToolService {
         timedOut = true;
         await cancelCurrent();
       }
-      final stdout = await stdoutFuture.timeout(
+      await stdoutFuture.timeout(
         const Duration(seconds: 5),
-        onTimeout: () => '',
+        onTimeout: () => stdoutDrainTimedOut = true,
       );
-      final stderr = await stderrFuture.timeout(
+      await stderrFuture.timeout(
         const Duration(seconds: 5),
-        onTimeout: () => '',
+        onTimeout: () => stderrDrainTimedOut = true,
       );
-      final limited = _limitShellOutput(stdout, stderr);
+      final limited = limitGlobalAgentShellOutput(
+        stdoutCapture.text,
+        stderrCapture.text,
+        stdoutAlreadyTruncated: stdoutCapture.truncated || stdoutDrainTimedOut,
+        stderrAlreadyTruncated: stderrCapture.truncated || stderrDrainTimedOut,
+        maxCharacters: _maxShellOutputCharacters,
+      );
       return AgentToolExecutionResult(
         toolName: proposal.toolName,
         serverId: state.spi.id,
@@ -501,11 +644,14 @@ class GlobalAgentToolService {
     }
     SftpClient? sftp;
     SftpFile? file;
+    String? temporaryPath;
     try {
       sftp = await state.client!.sftp().timeout(_sftpTimeout);
+      final tempPath = _temporaryRemotePath(path);
+      temporaryPath = tempPath;
       file = await sftp
           .open(
-            path,
+            tempPath,
             mode:
                 SftpFileOpenMode.truncate |
                 SftpFileOpenMode.create |
@@ -514,6 +660,10 @@ class GlobalAgentToolService {
           .timeout(_sftpTimeout);
       final writer = file.write(Stream<Uint8List>.value(bytes));
       await writer.done.timeout(_operationTimeout);
+      await file.close();
+      file = null;
+      await sftp.rename(tempPath, path).timeout(_sftpTimeout);
+      temporaryPath = null;
       return AgentToolExecutionResult(
         toolName: proposal.toolName,
         serverId: state.spi.id,
@@ -523,9 +673,30 @@ class GlobalAgentToolService {
         data: {'path': path, 'bytes_written': bytes.length},
       );
     } finally {
-      await file?.close();
-      await sftp?.close();
+      try {
+        await file?.close();
+      } finally {
+        if (temporaryPath != null && sftp != null) {
+          try {
+            await sftp.remove(temporaryPath).timeout(_sftpTimeout);
+          } catch (_) {
+            // Best-effort cleanup keeps the original write error intact.
+          }
+        }
+        await sftp?.close();
+      }
     }
+  }
+
+  String _temporaryRemotePath(String path) {
+    final slash = path.lastIndexOf('/');
+    final backslash = path.lastIndexOf('\\');
+    final separator = slash > backslash ? slash : backslash;
+    final directory = separator < 0 ? '' : path.substring(0, separator + 1);
+    final filename = separator < 0 ? path : path.substring(separator + 1);
+    final sequence = _temporaryFileSequence++;
+    final timestamp = DateTime.now().microsecondsSinceEpoch;
+    return '$directory.$filename.serverbox-agent-$timestamp-$sequence.tmp';
   }
 
   Future<AgentToolExecutionResult> _runServerBox(
@@ -598,17 +769,15 @@ class GlobalAgentToolService {
 
   Map<String, dynamic> _statusJson(ServerState state) {
     final status = state.status;
+    final cpuUsedPercent = _jsonSafePercent(status.cpu.usedPercent());
+    final memoryUsedPercent = _jsonSafePercent(status.mem.usedPercent * 100);
     return {
       'id': state.spi.id,
       'name': state.spi.name,
       'connection': state.conn.name,
       'system': status.system.name,
-      'cpu_used_percent': double.parse(
-        status.cpu.usedPercent().toStringAsFixed(1),
-      ),
-      'memory_used_percent': double.parse(
-        (status.mem.usedPercent * 100).toStringAsFixed(1),
-      ),
+      'cpu_used_percent': cpuUsedPercent,
+      'memory_used_percent': memoryUsedPercent,
       'network': {
         'download': status.netSpeed.cachedVals.speedIn,
         'upload': status.netSpeed.cachedVals.speedOut,
@@ -625,29 +794,9 @@ class GlobalAgentToolService {
     };
   }
 
-  ({String stdout, String stderr, bool truncated}) _limitShellOutput(
-    String stdout,
-    String stderr,
-  ) {
-    final total = stdout.length + stderr.length;
-    if (total <= _maxShellOutputCharacters) {
-      return (stdout: stdout, stderr: stderr, truncated: false);
-    }
-    const marker = '\n\n[... output truncated ...]\n\n';
-    String limit(String value, int budget) {
-      if (value.length <= budget) return value;
-      final side = ((budget - marker.length) ~/ 2).clamp(0, value.length);
-      return '${value.substring(0, side)}$marker${value.substring(value.length - side)}';
-    }
-
-    final stdoutBudget = stderr.isEmpty ? _maxShellOutputCharacters : 22000;
-    final stderrBudget = stderr.isEmpty
-        ? 0
-        : _maxShellOutputCharacters - stdoutBudget;
-    return (
-      stdout: limit(stdout, stdoutBudget),
-      stderr: limit(stderr, stderrBudget),
-      truncated: true,
-    );
+  double _jsonSafePercent(num value) {
+    final percent = value.toDouble();
+    if (!percent.isFinite) return 0.0;
+    return double.parse(percent.toStringAsFixed(1));
   }
 }

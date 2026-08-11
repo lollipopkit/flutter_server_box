@@ -25,19 +25,7 @@ enum AppTab {
           tabs.add(tab);
         }
       }
-      if (tabs.isNotEmpty) {
-        const legacyDefaultTabs = {
-          AppTab.server,
-          AppTab.ssh,
-          AppTab.file,
-          AppTab.snippet,
-        };
-        if (tabs.length == legacyDefaultTabs.length &&
-            tabs.toSet().containsAll(legacyDefaultTabs)) {
-          tabs.add(AppTab.agent);
-        }
-        return tabs;
-      }
+      if (tabs.isNotEmpty) return tabs;
     }
     return AppTab.values;
   }

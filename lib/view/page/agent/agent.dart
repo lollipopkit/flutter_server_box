@@ -70,6 +70,30 @@ class _ReplayToolCall {
   bool completed = false;
 }
 
+class _AgentServerSummary extends ConsumerWidget {
+  const _AgentServerSummary({required this.style});
+
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final servers = ref.watch(serversProvider);
+    var connected = 0;
+    for (final id in servers.servers.keys) {
+      final connection = ref.watch(serverProvider(id)).conn;
+      if (connection.index >= ServerConn.connected.index) connected++;
+    }
+    return Text(
+      servers.servers.isEmpty
+          ? context.l10n.agentNoServers
+          : '${servers.servers.length} ${libL10n.server} · $connected ${context.l10n.askAiReady}',
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: style,
+    );
+  }
+}
+
 class _AgentPageState extends ConsumerState<AgentPage>
     with AutomaticKeepAliveClientMixin {
   final _timeline = <_AgentTimelineEntry>[];
@@ -88,6 +112,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
   bool _historyInitialized = false;
   bool _pendingToolRestored = false;
   int _autoRunCount = 0;
+  late final GlobalAgentToolService _toolService;
 
   bool get _isWorking => _isStreaming || _isExecuting;
 
@@ -97,6 +122,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
   @override
   void initState() {
     super.initState();
+    _toolService = ref.read(globalAgentToolServiceProvider);
     _protocol = _resolvedConfiguredProtocol();
     _inputController.addListener(_handleInputChanged);
   }
@@ -116,7 +142,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
   void dispose() {
     _subscription?.cancel();
     if (_isExecuting) {
-      unawaited(ref.read(globalAgentToolServiceProvider).cancelCurrent());
+      unawaited(_toolService.cancelCurrent());
     }
     _scrollController.dispose();
     _inputController
@@ -285,7 +311,6 @@ class _AgentPageState extends ConsumerState<AgentPage>
   void _startStream() {
     _subscription?.cancel();
     final localeHint = Localizations.maybeLocaleOf(context)?.toLanguageTag();
-    final toolService = ref.read(globalAgentToolServiceProvider);
     setState(() {
       _isStreaming = true;
       _turnCompleted = false;
@@ -300,7 +325,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
           localeHint: localeHint,
           conversation: List.unmodifiable(_history),
           protocol: _protocol,
-          customInstructions: toolService.buildInstructions(
+          customInstructions: _toolService.buildInstructions(
             localeHint: localeHint,
           ),
           tools: globalAgentToolDefinitions,
@@ -398,33 +423,24 @@ class _AgentPageState extends ConsumerState<AgentPage>
     final proposal = _pendingTool;
     if (proposal == null || _isWorking) return;
     if (!autoApproved && proposal.risk == AskAiCommandRisk.destructive) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(context.l10n.askAiHighRiskConfirmTitle),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(context.l10n.askAiHighRiskConfirmBody),
-              const SizedBox(height: 12),
-              SelectableText(
-                proposal.displayValue,
-                style: const TextStyle(fontFamily: 'monospace'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(libL10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(libL10n.run),
+      final confirmed = await context.showRoundDialog<bool>(
+        title: context.l10n.askAiHighRiskConfirmTitle,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(context.l10n.askAiHighRiskConfirmBody),
+            const SizedBox(height: 12),
+            SelectableText(
+              proposal.displayValue,
+              style: const TextStyle(fontFamily: 'monospace'),
             ),
           ],
         ),
+        actionsBuilder: (dialogContext) => [
+          Btn.cancel(),
+          Btn.text(text: libL10n.run, onTap: () => dialogContext.pop(true)),
+        ],
       );
       if (confirmed != true || !mounted) return;
     }
@@ -436,8 +452,9 @@ class _AgentPageState extends ConsumerState<AgentPage>
     });
     AgentToolExecutionResult result;
     try {
-      result = await ref.read(globalAgentToolServiceProvider).execute(proposal);
+      result = await _toolService.execute(proposal);
     } catch (error) {
+      if (!mounted) return;
       result = AgentToolExecutionResult(
         toolName: proposal.toolName,
         serverId: proposal.serverId,
@@ -495,7 +512,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
 
   Future<void> _stopWork() async {
     if (_isExecuting) {
-      await ref.read(globalAgentToolServiceProvider).cancelCurrent();
+      await _toolService.cancelCurrent();
       return;
     }
     if (!_isStreaming) return;
@@ -576,60 +593,55 @@ class _AgentPageState extends ConsumerState<AgentPage>
     _restoreConversation(conversation);
   }
 
-  Future<void> _renameConversation(AgentConversation conversation) async {
+  Future<void> _renameConversation(
+    AgentConversation conversation, {
+    VoidCallback? onChanged,
+  }) async {
     final controller = TextEditingController(text: conversation.title);
     try {
-      final title = await showDialog<String>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(context.l10n.askAiRenameConversation),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            onSubmitted: (value) => Navigator.pop(dialogContext, value.trim()),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(libL10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () =>
-                  Navigator.pop(dialogContext, controller.text.trim()),
-              child: Text(libL10n.ok),
-            ),
-          ],
+      final title = await context.showRoundDialog<String>(
+        title: context.l10n.askAiRenameConversation,
+        childBuilder: (dialogContext) => TextField(
+          controller: controller,
+          autofocus: true,
+          onSubmitted: (value) => dialogContext.pop(value.trim()),
         ),
+        actionsBuilder: (dialogContext) => [
+          Btn.text(text: libL10n.cancel),
+          Btn.text(
+            text: libL10n.ok,
+            onTap: () => dialogContext.pop(controller.text.trim()),
+          ),
+        ],
       );
-      if (title == null || title.isEmpty) return;
+      if (title == null || title.isEmpty || !mounted) return;
       if (!Stores.agentConversation.rename(conversation.id, title)) return;
       setState(() {
         if (_conversation?.id == conversation.id) {
           _conversation = Stores.agentConversation.fetch(conversation.id);
         }
       });
+      onChanged?.call();
     } finally {
       controller.dispose();
     }
   }
 
-  Future<void> _deleteConversation(AgentConversation conversation) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(context.l10n.askAiDeleteConversationTitle),
-        content: Text(context.l10n.askAiDeleteConversationTip),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(libL10n.cancel),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(libL10n.delete),
-          ),
-        ],
-      ),
+  Future<void> _deleteConversation(
+    AgentConversation conversation, {
+    VoidCallback? onChanged,
+  }) async {
+    final confirmed = await context.showRoundDialog<bool>(
+      title: context.l10n.askAiDeleteConversationTitle,
+      child: Text(context.l10n.askAiDeleteConversationTip),
+      actionsBuilder: (dialogContext) => [
+        Btn.cancel(),
+        Btn.text(
+          text: libL10n.delete,
+          textStyle: UIs.textRed,
+          onTap: () => dialogContext.pop(true),
+        ),
+      ],
     );
     if (confirmed != true || !mounted) return;
     final deletingCurrent = _conversation?.id == conversation.id;
@@ -644,29 +656,26 @@ class _AgentPageState extends ConsumerState<AgentPage>
     } else {
       setState(() {});
     }
+    onChanged?.call();
   }
 
-  Future<void> _clearConversationHistory() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(context.l10n.agentClearHistoryTitle),
-        content: Text(context.l10n.agentClearHistoryTip),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(libL10n.cancel),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(context.l10n.askAiClearHistory),
-          ),
-        ],
-      ),
+  Future<void> _clearConversationHistory({VoidCallback? onChanged}) async {
+    final confirmed = await context.showRoundDialog<bool>(
+      title: context.l10n.agentClearHistoryTitle,
+      child: Text(context.l10n.agentClearHistoryTip),
+      actionsBuilder: (dialogContext) => [
+        Btn.cancel(),
+        Btn.text(
+          text: context.l10n.askAiClearHistory,
+          textStyle: UIs.textRed,
+          onTap: () => dialogContext.pop(true),
+        ),
+      ],
     );
     if (confirmed != true || !mounted) return;
     Stores.agentConversation.clearServer(globalAgentConversationScope);
     _restoreConversation(null);
+    onChanged?.call();
   }
 
   Future<void> _showHistorySheet() async {
@@ -676,9 +685,17 @@ class _AgentPageState extends ConsumerState<AgentPage>
       useSafeArea: true,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (sheetContext) => FractionallySizedBox(
-        heightFactor: 0.82,
-        child: _buildHistoryPanel(sheetContext, closeOnSelect: true),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => FractionallySizedBox(
+          heightFactor: 0.82,
+          child: _buildHistoryPanel(
+            sheetContext,
+            closeOnSelect: true,
+            onChanged: () {
+              if (sheetContext.mounted) setSheetState(() {});
+            },
+          ),
+        ),
       ),
     );
   }
@@ -686,6 +703,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
   Widget _buildHistoryPanel(
     BuildContext context, {
     required bool closeOnSelect,
+    VoidCallback? onChanged,
   }) {
     final theme = Theme.of(context);
     final conversations = Stores.agentConversation.fetchForServer(
@@ -713,7 +731,9 @@ class _AgentPageState extends ConsumerState<AgentPage>
                 if (conversations.isNotEmpty)
                   IconButton(
                     tooltip: context.l10n.askAiClearHistory,
-                    onPressed: _isWorking ? null : _clearConversationHistory,
+                    onPressed: _isWorking
+                        ? null
+                        : () => _clearConversationHistory(onChanged: onChanged),
                     icon: const Icon(Icons.delete_sweep_outlined),
                   ),
                 IconButton.filledTonal(
@@ -792,11 +812,17 @@ class _AgentPageState extends ConsumerState<AgentPage>
                                 child: Text(libL10n.delete),
                               ),
                             ],
-                            onSelected: (action) {
+                            onSelected: (action) async {
                               if (action == _HistoryAction.rename) {
-                                _renameConversation(conversation);
+                                await _renameConversation(
+                                  conversation,
+                                  onChanged: onChanged,
+                                );
                               } else {
-                                _deleteConversation(conversation);
+                                await _deleteConversation(
+                                  conversation,
+                                  onChanged: onChanged,
+                                );
                               }
                             },
                           ),
@@ -830,13 +856,6 @@ class _AgentPageState extends ConsumerState<AgentPage>
   }
 
   Widget _buildHeader(BuildContext context, ThemeData theme, bool compact) {
-    final servers = ref.watch(serversProvider);
-    var connected = 0;
-    for (final id in servers.servers.keys) {
-      if (!(ref.watch(serverProvider(id)).conn < ServerConn.connected)) {
-        connected++;
-      }
-    }
     return Padding(
       padding: EdgeInsets.fromLTRB(compact ? 12 : 20, 10, 8, 10),
       child: Row(
@@ -865,12 +884,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                Text(
-                  servers.servers.isEmpty
-                      ? context.l10n.agentNoServers
-                      : '${servers.servers.length} ${libL10n.server} · $connected ${context.l10n.askAiReady}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                _AgentServerSummary(
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),

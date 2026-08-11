@@ -65,6 +65,7 @@ abstract final class Stores {
 
     // Migrate sshConnectionMode from old int values to bool
     setting.migrateSshConnectionMode();
+    await setting.migrateHomeTabsAgent();
 
     if (connectionStats.indexDbKeys.isEmpty) {
       await connectionStats.rebuildIndexAndCompact();

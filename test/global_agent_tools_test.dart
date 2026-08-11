@@ -48,6 +48,26 @@ void main() {
     expect(decoded.displayData, contains('cpu_used_percent'));
   });
 
+  test('non-Agent tool payloads are ignored', () {
+    final result = AgentToolExecutionResult.tryFromToolMessage(
+      '{"tool":"serverbox","ok":true}',
+    );
+
+    expect(result, isNull);
+  });
+
+  test('oversized shell output preserves its head and tail', () {
+    final stdout = 'HEAD-${List.filled(200, 'x').join()}-TAIL';
+    final limited = limitGlobalAgentShellOutput(stdout, '', maxCharacters: 96);
+
+    expect(limited.truncated, isTrue);
+    expect(limited.stdout, startsWith('HEAD-'));
+    expect(limited.stdout, endsWith('-TAIL'));
+    expect(limited.stdout, contains('[... output truncated ...]'));
+    expect(limited.stdout.length, lessThanOrEqualTo(96));
+    expect(limited.stderr, isEmpty);
+  });
+
   test('empty server list remains explicit in the prompt', () {
     final instructions = buildGlobalAgentInstructions(servers: const []);
 

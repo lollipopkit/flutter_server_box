@@ -311,6 +311,29 @@ class SettingStore extends HiveStore {
     },
   );
 
+  /// Add Agent to the legacy default home tabs once.
+  Future<void> migrateHomeTabsAgent() async {
+    const key = 'homeTabs';
+    const flagKey = 'homeTabsAgentMigrated';
+    if (box.get(flagKey) == true) return;
+
+    final tabs = AppTab.parseAppTabsFromObj(box.get(key));
+    const legacyDefaultTabs = {
+      AppTab.server,
+      AppTab.ssh,
+      AppTab.file,
+      AppTab.snippet,
+    };
+    if (tabs.length == legacyDefaultTabs.length &&
+        tabs.toSet().containsAll(legacyDefaultTabs)) {
+      await box.put(
+        key,
+        [...tabs, AppTab.agent].map((tab) => tab.name).toList(),
+      );
+    }
+    await box.put(flagKey, true);
+  }
+
   /// Hide port forward beta warning
   late final portForwardBetaWarned = propertyDefault(
     'portForwardBetaWarned',
