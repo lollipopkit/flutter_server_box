@@ -220,6 +220,7 @@
   "serverFuncBtns": "서버 기능 버튼",
   "serverOrder": "서버 순서",
   "serverTabRequired": "서버 탭은 제거할 수 없습니다",
+  "shareServerRiskTip": "이 QR 코드에는 비밀번호를 포함한 서버 연결 설정이 평문으로 들어 있습니다. 스캔하거나 촬영한 사람은 누구나 이 서버에 접속할 수 있습니다.",
   "sftpDlPrepare": "연결 준비 중...",
   "sftpEditorTip": "비어 있으면 앱 내장 파일 편집기를 사용합니다. 값이 있으면 원격 서버의 편집기(예: `vim`)를 사용합니다 (`EDITOR`에 따라 자동 감지 권장).",
   "sftpRmrDirSummary": "SFTP에서 `rm -r`을 사용하여 폴더를 삭제합니다.",

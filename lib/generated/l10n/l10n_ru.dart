@@ -923,6 +923,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get serverTabRequired => 'Вкладку сервера нельзя удалить';
 
   @override
+  String get shareServerRiskTip =>
+      'Этот QR-код содержит настройки подключения к серверу в открытом виде, включая пароли. Любой, кто его отсканирует или сфотографирует, сможет подключиться к этому серверу.';
+
+  @override
   String get sftpDlPrepare => 'Подготовка подключения...';
 
   @override

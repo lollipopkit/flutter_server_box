@@ -175,6 +175,7 @@
   "serverFuncBtns": "Pulsanti funzione server",
   "serverOrder": "Ordine server",
   "serverTabRequired": "La scheda server non può essere rimossa",
+  "shareServerRiskTip": "Questo codice QR contiene le impostazioni di connessione del server in chiaro, password incluse. Chiunque lo scansioni o lo fotografi può connettersi a questo server.",
   "sftpDlPrepare": "Preparazione alla connessione...",
   "sftpEditorTip": "Se vuoto, usa l'editor di file integrato dell'app. Se è presente un valore, usa l'editor del server remoto, ad es. `vim` (si consiglia di rilevare automaticamente secondo `EDITOR`).",
   "sftpRmrDirSummary": "Usa `rm -r` per eliminare una cartella in SFTP.",

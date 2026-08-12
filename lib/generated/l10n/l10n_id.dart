@@ -921,6 +921,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get serverTabRequired => 'Tab server tidak dapat dihapus';
 
   @override
+  String get shareServerRiskTip =>
+      'Kode QR ini berisi pengaturan koneksi server dalam teks biasa, termasuk kata sandi. Siapa pun yang memindai atau memotretnya dapat terhubung ke server ini.';
+
+  @override
   String get sftpDlPrepare => 'Bersiap untuk terhubung ...';
 
   @override

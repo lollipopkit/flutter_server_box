@@ -862,6 +862,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get serverTabRequired => '服务器标签不能被移除';
 
   @override
+  String get shareServerRiskTip =>
+      '此二维码以明文包含服务器的连接设置，其中有密码。任何扫描或拍下它的人都能连接到这台服务器。';
+
+  @override
   String get sftpDlPrepare => '准备连接至服务器...';
 
   @override
@@ -2144,6 +2148,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get serverTabRequired => '服務器標籤不能被移除';
+
+  @override
+  String get shareServerRiskTip =>
+      '此二維碼以明文包含伺服器的連線設定，其中有密碼。任何掃描或拍下它的人都能連線到這台伺服器。';
 
   @override
   String get sftpDlPrepare => '準備連線至伺服器...';

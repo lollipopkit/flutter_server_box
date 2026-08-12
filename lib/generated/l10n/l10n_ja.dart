@@ -898,6 +898,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get serverTabRequired => 'サーバータブは削除できません';
 
   @override
+  String get shareServerRiskTip =>
+      'このQRコードには、パスワードを含むサーバーの接続設定が平文で入っています。読み取ったり撮影したりした相手は、このサーバーに接続できます。';
+
+  @override
   String get sftpDlPrepare => 'サーバーへの接続を準備中...';
 
   @override

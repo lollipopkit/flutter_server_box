@@ -887,6 +887,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get serverTabRequired => '서버 탭은 제거할 수 없습니다';
 
   @override
+  String get shareServerRiskTip =>
+      '이 QR 코드에는 비밀번호를 포함한 서버 연결 설정이 평문으로 들어 있습니다. 스캔하거나 촬영한 사람은 누구나 이 서버에 접속할 수 있습니다.';
+
+  @override
   String get sftpDlPrepare => '연결 준비 중...';
 
   @override

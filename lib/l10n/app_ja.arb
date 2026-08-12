@@ -174,6 +174,7 @@
   "serverFuncBtns": "サーバー機能ボタン",
   "serverOrder": "サーバー順序",
   "serverTabRequired": "サーバータブは削除できません",
+  "shareServerRiskTip": "このQRコードには、パスワードを含むサーバーの接続設定が平文で入っています。読み取ったり撮影したりした相手は、このサーバーに接続できます。",
   "sftpDlPrepare": "サーバーへの接続を準備中...",
   "sftpEditorTip": "空の場合は、アプリ内蔵のファイルエディタを使用します。値がある場合は、リモートサーバーのエディタ（例：`vim`）を使用します（`EDITOR` に従って自動検出することをお勧めします）。",
   "sftpRmrDirSummary": "SFTPで`rm -r`を使用してフォルダーを削除",

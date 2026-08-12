@@ -1746,6 +1746,12 @@ abstract class AppLocalizations {
   /// **'Server tab cannot be removed'**
   String get serverTabRequired;
 
+  /// No description provided for @shareServerRiskTip.
+  ///
+  /// In en, this message translates to:
+  /// **'This QR code contains the server\'s connection settings in plain text, passwords included. Anyone who scans or photographs it can connect to this server.'**
+  String get shareServerRiskTip;
+
   /// No description provided for @sftpDlPrepare.
   ///
   /// In en, this message translates to:

@@ -926,6 +926,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'La pestaña del servidor no se puede eliminar';
 
   @override
+  String get shareServerRiskTip =>
+      'Este código QR contiene la configuración de conexión del servidor en texto plano, incluidas las contraseñas. Cualquiera que lo escanee o fotografíe puede conectarse a este servidor.';
+
+  @override
   String get sftpDlPrepare => 'Preparando para conectar al servidor...';
 
   @override
