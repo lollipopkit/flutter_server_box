@@ -4,62 +4,27 @@ part of 'edit.dart';
 final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:%;]+$');
 
 extension _Discovery on _ServerEditPageState {
-  /// Sweeps the network and adds whatever is picked.
+  /// Sweeps the network and fills this form in from what is picked.
   ///
-  /// Adds rather than fills this form in: discovery finds hosts, not accounts,
-  /// so every one of them needs the same user typed once — and someone who
-  /// went looking for what is on their network usually wants more than one of
-  /// what they found. This form is left where it was, for the one they were
-  /// adding by hand.
+  /// Only the fields the sweep actually knows: an address and a port. It
+  /// cannot know an account, a key or what you call the machine, so it does
+  /// not guess at them — except the name, and only while that field is still
+  /// empty, where the address is a better starting point than nothing and is
+  /// what someone would have typed anyway.
   Future<void> _onTapDiscover() async {
+    final SshDiscoveryResult? found;
     try {
-      final found = await SshDiscoveryPage.route.go(context);
-      if (!mounted || found == null || found.isEmpty) return;
-      await _importDiscovered(found);
+      found = await SshDiscoveryDialog.show(context);
     } catch (e, s) {
       if (!mounted) return;
       context.showErrDialog(e, s);
+      return;
     }
-  }
+    if (!mounted || found == null) return;
 
-  Future<void> _importDiscovered(List<SshDiscoveryResult> found) async {
-    const defaultUser = 'root';
-    final userCtrl = TextEditingController(text: defaultUser);
-
-    try {
-      final go = await context.showRoundDialog<bool>(
-        title: libL10n.import,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.sshConfigFoundServers('${found.length}')),
-            const SizedBox(height: 8),
-            Input(controller: userCtrl, label: libL10n.user),
-          ],
-        ),
-        actions: Btnx.cancelOk,
-      );
-      if (!mounted || go != true) return;
-
-      final user = userCtrl.text.isNotEmpty ? userCtrl.text : defaultUser;
-      await ServerDeduplication.importServersWithNotification(
-        servers: [
-          for (final one in found)
-            Spi(
-              id: ShortId.generate(),
-              name: one.ip,
-              ssh: SshCredential(ip: one.ip, port: one.port, user: user),
-            ),
-        ],
-        ref: ref,
-        context: context,
-        allExistMessage: l10n.sshConfigAllExist,
-        importedMessage: (count) =>
-            '${libL10n.success}: $count ${libL10n.servers}',
-      );
-    } finally {
-      userCtrl.dispose();
-    }
+    _ipController.text = found.ip;
+    _portController.text = '${found.port}';
+    if (_nameController.text.isEmpty) _nameController.text = found.ip;
   }
 }
 

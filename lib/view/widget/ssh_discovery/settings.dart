@@ -1,4 +1,4 @@
-part of 'discovery.dart';
+part of 'dialog.dart';
 
 class _DiscoverySettingsDialog extends StatefulWidget {
   final SshDiscoveryConfig config;

@@ -71,7 +71,7 @@ final class ServerSelectionProvider
   }
 }
 
-String _$serverSelectionHash() => r'6249701f0492994837b537d73d24a52064923b2b';
+String _$serverSelectionHash() => r'd711cdf123614ca52efa951a5e594fd9a7128e58';
 
 /// Which server the detail pane is showing.
 ///
