@@ -25,7 +25,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get askAi => 'Спросить ИИ';
 
   @override
-  String get ai => 'AI';
+  String get ai => 'ИИ';
 
   @override
   String get askAiApiKey => 'Ключ API';
@@ -38,17 +38,17 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      'Enter a service base URL or a full Chat Completions or Responses endpoint. ServerBox completes the path for the selected protocol.';
+      'Укажите базовый URL сервиса или полный эндпойнт Chat Completions либо Responses. ServerBox дополнит путь в соответствии с выбранным протоколом.';
 
   @override
-  String get askAiProtocol => 'API protocol';
+  String get askAiProtocol => 'Протокол API';
 
   @override
   String get askAiProtocolTip =>
-      'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.';
+      '«Авто» использует Responses для официального эндпойнта OpenAI и Chat Completions для совместимых провайдеров.';
 
   @override
-  String get askAiProtocolAuto => 'Auto';
+  String get askAiProtocolAuto => 'Авто';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -93,194 +93,196 @@ class AppLocalizationsRu extends AppLocalizations {
   String get askAiUsageHint => 'Используется в SSH-терминале';
 
   @override
-  String get askAiAgentTitle => 'SSH Agent';
+  String get askAiAgentTitle => 'SSH-агент';
 
   @override
-  String get askAiAgentWelcome => 'What should we do on this server?';
+  String get askAiAgentWelcome => 'Что сделаем на этом сервере?';
 
   @override
   String get askAiAgentWelcomeTip =>
-      'Ask for a diagnosis or a task. The Agent proposes one command at a time and waits for review before making changes.';
+      'Попросите диагностику или задачу. Агент предлагает по одной команде и ждёт вашей проверки, прежде чем что-то менять.';
 
   @override
   String get askAiAgentPromptHint =>
-      'Ask the Agent to inspect or fix something...';
+      'Попросите агента что-нибудь проверить или починить…';
 
   @override
-  String get askAiAgentSend => 'Send to Agent';
+  String get askAiAgentSend => 'Отправить агенту';
 
   @override
   String get askAiAnalyzeSelectionPrompt =>
-      'Analyze the selected terminal content, explain what happened, and propose the safest next step if action is needed.';
+      'Проанализируйте выделенный вывод терминала, объясните, что произошло, и предложите самый безопасный следующий шаг, если нужно действие.';
 
   @override
-  String get askAiTerminalContext => 'Terminal context';
+  String get askAiTerminalContext => 'Контекст терминала';
 
   @override
-  String get askAiReady => 'Ready';
+  String get askAiReady => 'Готов';
 
   @override
-  String get askAiThinking => 'Thinking';
+  String get askAiThinking => 'Думает';
 
   @override
-  String get askAiRunningCommand => 'Running';
+  String get askAiRunningCommand => 'Выполняется';
 
   @override
-  String get askAiReviewNeeded => 'Review';
+  String get askAiReviewNeeded => 'Проверить';
 
   @override
-  String get askAiReviewAction => 'Review proposed command';
+  String get askAiReviewAction => 'Проверить предложенную команду';
 
   @override
   String get askAiReviewBeforeContinuing =>
-      'Review or decline the proposed command first';
+      'Сначала проверьте или отклоните предложенную команду';
 
   @override
-  String get askAiApproveRun => 'Approve & run';
+  String get askAiApproveRun => 'Одобрить и выполнить';
 
   @override
-  String get askAiDecline => 'Decline';
+  String get askAiDecline => 'Отклонить';
 
   @override
-  String get askAiActionDeclined => 'The proposed command was declined.';
+  String get askAiActionDeclined => 'Предложенная команда отклонена.';
 
   @override
-  String get askAiInterrupted => 'Agent response was interrupted.';
+  String get askAiInterrupted => 'Ответ агента прерван.';
 
   @override
-  String get askAiRiskReadOnly => 'Read-only';
+  String get askAiRiskReadOnly => 'Только чтение';
 
   @override
-  String get askAiRiskCaution => 'Changes system';
+  String get askAiRiskCaution => 'Изменяет систему';
 
   @override
-  String get askAiRiskDestructive => 'High risk';
+  String get askAiRiskDestructive => 'Высокий риск';
 
   @override
-  String get askAiHighRiskConfirmTitle => 'Run high-risk command?';
+  String get askAiHighRiskConfirmTitle => 'Выполнить команду с высоким риском?';
 
   @override
   String get askAiHighRiskConfirmBody =>
-      'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.';
+      'Эта команда может удалить данные, остановить службы или оказаться трудно обратимой. Внимательно проверьте её перед запуском.';
 
   @override
-  String get askAiCommandCancelled => 'Cancelled';
+  String get askAiCommandCancelled => 'Отменено';
 
   @override
-  String get askAiCommandTimedOut => 'Timed out';
+  String get askAiCommandTimedOut => 'Время истекло';
 
   @override
-  String get askAiNoCommandOutput => 'Command completed without output.';
+  String get askAiNoCommandOutput => 'Команда завершилась без вывода.';
 
   @override
   String get askAiOutputTruncated =>
-      'Long output was truncated before it was sent back to the Agent.';
+      'Длинный вывод обрезан перед отправкой обратно агенту.';
 
   @override
-  String get askAiAutoApproved => 'Auto-approved';
+  String get askAiAutoApproved => 'Одобрено автоматически';
 
   @override
-  String get askAiAutoRunSafeCommands => 'Auto-run read-only commands';
+  String get askAiAutoRunSafeCommands =>
+      'Автоматически выполнять команды только для чтения';
 
   @override
   String get askAiAutoRunSafeCommandsTip =>
-      'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.';
+      'Автоматический запуск только тогда, когда и модель, и локальные проверки безопасности считают команду доступной только для чтения. Команды, изменяющие систему, по-прежнему требуют проверки.';
 
   @override
-  String get askAiSendOnEnter => 'Enter sends';
+  String get askAiSendOnEnter => 'Enter отправляет';
 
   @override
   String get askAiSendOnEnterTip =>
-      'Enter sends the message, Shift+Enter starts a new line. Off swaps them: Enter starts a new line and Cmd/Ctrl+Enter sends.';
+      'Enter отправляет сообщение, Shift+Enter переносит строку. Если выключено, наоборот: Enter переносит строку, а отправляет Cmd/Ctrl+Enter.';
 
   @override
   String get askAiApiKeyOptional =>
-      'Optional for local or unauthenticated endpoints';
+      'Необязательно для локальных эндпойнтов и эндпойнтов без аутентификации';
 
   @override
-  String get askAiHistory => 'Conversation history';
+  String get askAiHistory => 'История диалогов';
 
   @override
   String get askAiHistoryLocalOnly =>
-      'Encrypted on this device and excluded from backup and sync';
+      'Зашифровано на этом устройстве и не входит в резервную копию и синхронизацию';
 
   @override
-  String get askAiNewConversation => 'New conversation';
+  String get askAiNewConversation => 'Новый диалог';
 
   @override
-  String get askAiNoHistory => 'No saved conversations for this server';
+  String get askAiNoHistory => 'Для этого сервера нет сохранённых диалогов';
 
   @override
-  String get askAiNoHistoryMessages => 'No messages yet';
+  String get askAiNoHistoryMessages => 'Сообщений пока нет';
 
   @override
-  String get askAiUntitledConversation => 'New conversation';
+  String get askAiUntitledConversation => 'Новый диалог';
 
   @override
-  String get askAiRenameConversation => 'Rename conversation';
+  String get askAiRenameConversation => 'Переименовать диалог';
 
   @override
-  String get askAiDeleteConversationTitle => 'Delete this conversation?';
+  String get askAiDeleteConversationTitle => 'Удалить этот диалог?';
 
   @override
   String get askAiDeleteConversationTip =>
-      'This removes the conversation from this device and cannot be undone.';
+      'Диалог будет удалён с этого устройства без возможности восстановления.';
 
   @override
-  String get askAiClearHistory => 'Clear history';
+  String get askAiClearHistory => 'Очистить историю';
 
   @override
-  String get askAiClearHistoryTitle => 'Clear this server\'s Agent history?';
+  String get askAiClearHistoryTitle =>
+      'Очистить историю агента для этого сервера?';
 
   @override
   String get askAiClearHistoryTip =>
-      'All Agent conversations saved for this server will be removed from this device.';
+      'Все диалоги агента, сохранённые для этого сервера, будут удалены с этого устройства.';
 
   @override
   String get askAiRestoredReview =>
-      'Restored from history. Review it again before running; it will never run automatically.';
+      'Восстановлено из истории. Проверьте ещё раз перед запуском; сама команда никогда не выполнится.';
 
   @override
-  String get agentTitle => 'Agent';
+  String get agentTitle => 'Агент';
 
   @override
-  String get agentWelcome => 'What should we do across your servers?';
+  String get agentWelcome => 'Что сделаем на ваших серверах?';
 
   @override
   String get agentWelcomeTip =>
-      'Ask for a diagnosis or an operational task. The Agent uses live ServerBox state and proposes one reviewed action at a time.';
+      'Попросите диагностику или эксплуатационную задачу. Агент использует текущее состояние ServerBox и предлагает по одному действию на проверку.';
 
   @override
   String get agentPromptHint =>
-      'Ask the Agent to inspect or operate your servers...';
+      'Попросите агента проверить серверы или выполнить на них действие…';
 
   @override
-  String get agentNoServers => 'No configured servers';
+  String get agentNoServers => 'Нет настроенных серверов';
 
   @override
-  String get agentNoHistory => 'No saved global Agent conversations';
+  String get agentNoHistory => 'Нет сохранённых глобальных диалогов агента';
 
   @override
-  String get agentClearHistoryTitle => 'Clear global Agent history?';
+  String get agentClearHistoryTitle => 'Очистить глобальную историю агента?';
 
   @override
   String get agentClearHistoryTip =>
-      'All global Agent conversations will be removed from this device.';
+      'Все глобальные диалоги агента будут удалены с этого устройства.';
 
   @override
   String get agentToolShell => 'Shell';
 
   @override
-  String get agentToolReadFile => 'Read file';
+  String get agentToolReadFile => 'Чтение файла';
 
   @override
-  String get agentToolWriteFile => 'Write file';
+  String get agentToolWriteFile => 'Запись файла';
 
   @override
   String get agentToolServerBox => 'ServerBox';
 
   @override
-  String get agentToolFailed => 'Tool execution failed.';
+  String get agentToolFailed => 'Не удалось выполнить инструмент.';
 
   @override
   String get atLeastOneTab => 'Должна быть выбрана хотя бы одна вкладка';
@@ -333,32 +335,35 @@ class AppLocalizationsRu extends AppLocalizations {
       'Экспортированные данные могут быть зашифрованы паролем. \nПожалуйста, храните их в безопасности.';
 
   @override
-  String get icloudBackupStatusTitle => 'Backup status';
+  String get icloudBackupStatusTitle => 'Состояние резервной копии';
 
   @override
-  String get icloudBackupStatusLoading => 'Loading iCloud backup status...';
+  String get icloudBackupStatusLoading =>
+      'Загрузка состояния резервной копии iCloud…';
 
   @override
-  String get icloudBackupStatusError => 'Unable to read iCloud backup metadata';
+  String get icloudBackupStatusError =>
+      'Не удалось прочитать метаданные резервной копии iCloud';
 
   @override
-  String get icloudBackupStatusEmpty => 'No iCloud backup file found yet';
+  String get icloudBackupStatusEmpty =>
+      'Файл резервной копии в iCloud пока не найден';
 
   @override
-  String get icloudBackupStateUploading => 'Uploading';
+  String get icloudBackupStateUploading => 'Выгружается';
 
   @override
-  String get icloudBackupStateConflict => 'Conflict detected';
+  String get icloudBackupStateConflict => 'Обнаружен конфликт';
 
   @override
-  String get icloudBackupStateUploaded => 'Uploaded';
+  String get icloudBackupStateUploaded => 'Выгружено';
 
   @override
-  String get icloudBackupStateWaiting => 'Waiting for iCloud';
+  String get icloudBackupStateWaiting => 'Ожидание iCloud';
 
   @override
   String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
-    return 'Last backup: $lastModified\nStatus: $remoteState';
+    return 'Последняя копия: $lastModified\nСостояние: $remoteState';
   }
 
   @override
@@ -432,7 +437,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Отобразите уровень использования каждого процессора в виде индикатора выполнения (старый стиль)';
 
   @override
-  String get configured => 'Configured';
+  String get configured => 'Настроено';
 
   @override
   String get customCmd => 'Пользовательские команды';
@@ -567,13 +572,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get githubGist => 'GitHub Gist';
 
   @override
-  String get githubGistIdOptional => 'Gist ID (optional)';
+  String get githubGistIdOptional => 'ID Gist (необязательно)';
 
   @override
-  String get githubGistToken => 'GitHub Gist token';
+  String get githubGistToken => 'Токен GitHub Gist';
 
   @override
-  String get githubGistTokenEmpty => 'Token is empty';
+  String get githubGistTokenEmpty => 'Токен пуст';
 
   @override
   String get goBackQ => 'Вернуться?';
@@ -659,26 +664,26 @@ class AppLocalizationsRu extends AppLocalizations {
   String get invalid => 'Недействительный';
 
   @override
-  String get invalidUrl => 'Invalid URL';
+  String get invalidUrl => 'Некорректный URL';
 
   @override
   String get invalidHostFormat =>
-      'Invalid host format. Only IPv4, IPv6, and domain characters are allowed.';
+      'Некорректный формат хоста. Допустимы только символы IPv4, IPv6 и доменных имён.';
 
   @override
   String get jumpServer => 'прыжковый сервер';
 
   @override
   String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
-    return 'Jump servers not found for $serverName: $jumpIds';
+    return 'Промежуточные серверы для $serverName не найдены: $jumpIds';
   }
 
   @override
-  String get noJumpServerAvailable => 'No jump server available.';
+  String get noJumpServerAvailable => 'Нет доступного промежуточного сервера.';
 
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
-      'Jump server and ProxyCommand cannot be used together.';
+      'Промежуточный сервер и ProxyCommand нельзя использовать вместе.';
 
   @override
   String get keepForeground => 'Пожалуйста, держите приложение в фокусе!';
@@ -817,7 +822,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand is only supported on desktop platforms.';
+      'ProxyCommand поддерживается только на настольных платформах.';
 
   @override
   String get pveIgnoreCertTip =>
@@ -825,71 +830,70 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get pveServerClientMissing =>
-      'The SSH client for this server is not available.';
+      'SSH-клиент для этого сервера недоступен.';
 
   @override
   String get pveAddressMissing =>
-      'The PVE address is missing. Please configure it in server settings.';
+      'Не указан адрес PVE. Задайте его в настройках сервера.';
 
   @override
   String get pvePasswordRequired =>
-      'PVE password is required. Please set it in server settings.';
+      'Требуется пароль PVE. Задайте его в настройках сервера.';
 
   @override
   String get pveOtpRequired =>
-      'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.';
+      'На этом сервере PVE включена двухфакторная аутентификация. Введите код OTP.';
 
   @override
   String get pveOtpChallengeExpired =>
-      'The OTP challenge has expired. Please refresh and try again.';
+      'Срок действия запроса OTP истёк. Обновите и попробуйте снова.';
 
   @override
-  String get pveOtpCodeRequired => 'OTP code is required.';
+  String get pveOtpCodeRequired => 'Требуется код OTP.';
 
   @override
   String get pveOtpVerificationFailed =>
-      'OTP verification failed. Please try again with a fresh code.';
+      'Проверка OTP не удалась. Попробуйте снова с новым кодом.';
 
   @override
-  String get pveOtpTitle => 'OTP Verification';
+  String get pveOtpTitle => 'Проверка OTP';
 
   @override
-  String get pveOtpLabel => 'OTP Code';
+  String get pveOtpLabel => 'Код OTP';
 
   @override
   String get pveInvalidResponseBody =>
-      'PVE login returned an invalid response body.';
+      'Вход в PVE вернул некорректное тело ответа.';
 
   @override
   String get pveInvalidResponseData =>
-      'PVE login response did not contain a valid data payload.';
+      'Ответ на вход в PVE не содержал корректных данных.';
 
   @override
   String get pveMissingAuthTicket =>
-      'PVE login succeeded but no authentication ticket was returned.';
+      'Вход в PVE выполнен, но билет аутентификации не возвращён.';
 
   @override
   String get pveVersionLow =>
       'Эта функция в настоящее время находится на стадии тестирования и была протестирована только на PVE 8+. Используйте ее с осторожностью.';
 
   @override
-  String get pveLoadingForwarding => 'Establishing SSH tunnel...';
+  String get pveLoadingForwarding => 'Установка SSH-туннеля…';
 
   @override
-  String get pveLoadingLogin => 'Authenticating with PVE...';
+  String get pveLoadingLogin => 'Аутентификация в PVE…';
 
   @override
-  String get pveLoadingData => 'Fetching cluster data...';
+  String get pveLoadingData => 'Получение данных кластера…';
 
   @override
-  String get pveLoadingConnect => 'Connecting...';
+  String get pveLoadingConnect => 'Подключение…';
 
   @override
-  String get pvePassword => 'PVE Password';
+  String get pvePassword => 'Пароль PVE';
 
   @override
-  String get pvePasswordHint =>
-      'Required when using key-based SSH authentication';
+  String get pvePasswordHint => 'Требуется при аутентификации SSH по ключу';
 
   @override
   String get read => 'Чтение';
@@ -971,7 +975,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tempIsCelsiusTip =>
-      'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).';
+      'Если включено, значение температуры считается в градусах Цельсия, а не в миллицельсиях. Включайте, только если температура отображается неверно (например, 0,1 °C вместо 58 °C).';
 
   @override
   String get speed => 'Скорость';
@@ -991,13 +995,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sshConnectionModeTip =>
-      'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
+      'Встроенный: использовать терминал приложения. Системный SSH: запускать системную команду ssh во внешнем терминале.';
 
   @override
-  String get sshConnectionModeUseBuiltin => 'Use built-in terminal';
+  String get sshConnectionModeUseBuiltin => 'Использовать встроенный терминал';
 
   @override
-  String get sshConnectionModeUseSystem => 'Use system SSH';
+  String get sshConnectionModeUseSystem => 'Использовать системный SSH';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
@@ -1114,11 +1118,11 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Sync app settings';
+  String get syncAppSettings => 'Синхронизировать настройки приложения';
 
   @override
   String get syncAppSettingsTip =>
-      'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
+      'Включить тему, макет, редактор, терминал и другие настройки устройства в автоматическую синхронизацию.';
 
   @override
   String get system => 'Система';
@@ -1197,7 +1201,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get whenOpenApp => 'При открытии приложения';
 
   @override
-  String get wiki => 'Wiki';
+  String get wiki => 'Вики';
 
   @override
   String get wolTip =>
@@ -1215,7 +1219,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'После подключения к серверу скрипт будет записан в `~/.config/server_box` \n | `/tmp/server_box` для мониторинга состояния системы. Вы можете проверить содержимое скрипта.';
 
   @override
-  String get menuGitHubRepository => 'GitHub Repository';
+  String get menuGitHubRepository => 'Репозиторий GitHub';
 
   @override
   String get podmanDockerEmulationDetected =>
@@ -1223,107 +1227,109 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get portForwardBeta =>
-      'This feature is still in beta testing. Functionality is not guaranteed.';
+      'Функция ещё в бета-тестировании. Её работа не гарантируется.';
 
   @override
   String get portForward_startPrompt =>
-      'Add a port forward rule to get started';
+      'Добавьте правило проброса порта, чтобы начать';
 
   @override
-  String get portForward_localHost => 'Local Host';
+  String get portForward_localHost => 'Локальный хост';
 
   @override
-  String get portForward_localPort => 'Local Port';
+  String get portForward_localPort => 'Локальный порт';
 
   @override
-  String get portForward_remoteHost => 'Remote Host';
+  String get portForward_remoteHost => 'Удалённый хост';
 
   @override
-  String get portForward_remotePort => 'Remote Port';
+  String get portForward_remotePort => 'Удалённый порт';
 
   @override
-  String get portForward_type_local => 'Local';
+  String get portForward_type_local => 'Локальный';
 
   @override
-  String get portForward_type_remote => 'Remote';
+  String get portForward_type_remote => 'Удалённый';
 
   @override
   String portForward_deleteConfirmFmt(Object name) {
-    return 'Delete $name?';
+    return 'Удалить $name?';
   }
 
   @override
   String get sponsor => 'Спонсор';
 
   @override
-  String get sort => 'Sort';
+  String get sort => 'Сортировка';
 
   @override
-  String get sortByName => 'By name';
+  String get sortByName => 'По имени';
 
   @override
-  String get sortByJoinTime => 'By join time';
+  String get sortByJoinTime => 'По времени добавления';
 
   @override
-  String get ascending => 'Ascending';
+  String get ascending => 'По возрастанию';
 
   @override
-  String get descending => 'Descending';
+  String get descending => 'По убыванию';
 
   @override
-  String get serverHistory => 'Server history';
+  String get serverHistory => 'История сервера';
 
   @override
-  String get clearHistory => 'Clear history';
+  String get clearHistory => 'Очистить историю';
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
 
   @override
-  String get tmuxAutoAttach => 'tmux auto-attach';
+  String get tmuxAutoAttach => 'Автоподключение к tmux';
 
   @override
-  String get tmuxAuto => 'Auto tmux';
+  String get tmuxAuto => 'Автоматический tmux';
 
   @override
   String get tmuxAutoTip =>
-      'Automatically start or attach tmux when connecting over SSH';
+      'Автоматически запускать tmux или подключаться к нему при соединении по SSH';
 
   @override
-  String get tmuxSessionSelector => 'Session selector';
+  String get tmuxSessionSelector => 'Выбор сессии';
 
   @override
   String get tmuxSessionSelectorTip =>
-      'Show the session picker when connecting';
+      'Показывать выбор сессии при подключении';
 
   @override
-  String get tmuxDefaultSessionName => 'Default session name';
+  String get tmuxDefaultSessionName => 'Имя сессии по умолчанию';
 
   @override
-  String get tmuxSessionName => 'Session name';
+  String get tmuxSessionName => 'Имя сессии';
 
   @override
-  String get tmuxExistingSessions => 'Existing sessions';
+  String get tmuxExistingSessions => 'Существующие сессии';
 
   @override
-  String get tmuxNewSession => 'New session';
+  String get tmuxNewSession => 'Новая сессия';
 
   @override
-  String get tmuxWindows => 'Windows';
+  String get tmuxWindows => 'Окна';
 
   @override
-  String get tmuxNewWindow => 'New window';
+  String get tmuxNewWindow => 'Новое окно';
 
   @override
-  String get tmuxNoWindowsFound => 'No windows found';
+  String get tmuxNoWindowsFound => 'Окон не найдено';
 
   @override
   String tmuxWindowCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count windows',
-      one: '1 window',
+      other: '$count окна',
+      many: '$count окон',
+      few: '$count окна',
+      one: '1 окно',
     );
     return '$_temp0';
   }
@@ -1333,33 +1339,35 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count panes',
-      one: '1 pane',
+      other: '$count панели',
+      many: '$count панелей',
+      few: '$count панели',
+      one: '1 панель',
     );
     return '$_temp0';
   }
 
   @override
-  String get tmuxAttached => 'Attached';
+  String get tmuxAttached => 'Подключена';
 
   @override
-  String get tmuxActive => 'Active';
+  String get tmuxActive => 'Активна';
 
   @override
   String tmuxActiveAt(String time) {
-    return 'active: $time';
+    return 'активна: $time';
   }
 
   @override
   String tmuxAttachedAt(String time) {
-    return 'attached: $time';
+    return 'подключена: $time';
   }
 
   @override
-  String get tmuxSkip => 'Skip';
+  String get tmuxSkip => 'Пропустить';
 
   @override
-  String get tmuxNotAvailable => 'tmux is not available';
+  String get tmuxNotAvailable => 'tmux недоступен';
 
   @override
   String containerSegmentsMismatch(int count) {

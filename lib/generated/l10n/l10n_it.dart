@@ -25,7 +25,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get askAi => 'Chiedi all\'IA';
 
   @override
-  String get ai => 'AI';
+  String get ai => 'IA';
 
   @override
   String get askAiApiKey => 'Chiave API';
@@ -38,14 +38,14 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      'Enter a service base URL or a full Chat Completions or Responses endpoint. ServerBox completes the path for the selected protocol.';
+      'Inserisci un URL di base del servizio o un endpoint completo Chat Completions o Responses. ServerBox completa il percorso in base al protocollo scelto.';
 
   @override
-  String get askAiProtocol => 'API protocol';
+  String get askAiProtocol => 'Protocollo API';
 
   @override
   String get askAiProtocolTip =>
-      'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.';
+      'Auto usa Responses per l\'endpoint ufficiale di OpenAI e Chat Completions per i provider compatibili.';
 
   @override
   String get askAiProtocolAuto => 'Auto';
@@ -93,194 +93,200 @@ class AppLocalizationsIt extends AppLocalizations {
   String get askAiUsageHint => 'Utilizzato nel Terminale SSH';
 
   @override
-  String get askAiAgentTitle => 'SSH Agent';
+  String get askAiAgentTitle => 'Agente SSH';
 
   @override
-  String get askAiAgentWelcome => 'What should we do on this server?';
+  String get askAiAgentWelcome => 'Cosa facciamo su questo server?';
 
   @override
   String get askAiAgentWelcomeTip =>
-      'Ask for a diagnosis or a task. The Agent proposes one command at a time and waits for review before making changes.';
+      'Chiedi una diagnosi o un\'attività. L\'Agente propone un comando alla volta e attende la tua revisione prima di apportare modifiche.';
 
   @override
   String get askAiAgentPromptHint =>
-      'Ask the Agent to inspect or fix something...';
+      'Chiedi all\'Agente di esaminare o sistemare qualcosa...';
 
   @override
-  String get askAiAgentSend => 'Send to Agent';
+  String get askAiAgentSend => 'Invia all\'Agente';
 
   @override
   String get askAiAnalyzeSelectionPrompt =>
-      'Analyze the selected terminal content, explain what happened, and propose the safest next step if action is needed.';
+      'Analizza il contenuto selezionato del terminale, spiega cosa è successo e proponi il passo successivo più sicuro se serve intervenire.';
 
   @override
-  String get askAiTerminalContext => 'Terminal context';
+  String get askAiTerminalContext => 'Contesto del terminale';
 
   @override
-  String get askAiReady => 'Ready';
+  String get askAiReady => 'Pronto';
 
   @override
-  String get askAiThinking => 'Thinking';
+  String get askAiThinking => 'Sta pensando';
 
   @override
-  String get askAiRunningCommand => 'Running';
+  String get askAiRunningCommand => 'In esecuzione';
 
   @override
-  String get askAiReviewNeeded => 'Review';
+  String get askAiReviewNeeded => 'Da rivedere';
 
   @override
-  String get askAiReviewAction => 'Review proposed command';
+  String get askAiReviewAction => 'Rivedi il comando proposto';
 
   @override
   String get askAiReviewBeforeContinuing =>
-      'Review or decline the proposed command first';
+      'Prima rivedi o rifiuta il comando proposto';
 
   @override
-  String get askAiApproveRun => 'Approve & run';
+  String get askAiApproveRun => 'Approva ed esegui';
 
   @override
-  String get askAiDecline => 'Decline';
+  String get askAiDecline => 'Rifiuta';
 
   @override
-  String get askAiActionDeclined => 'The proposed command was declined.';
+  String get askAiActionDeclined => 'Il comando proposto è stato rifiutato.';
 
   @override
-  String get askAiInterrupted => 'Agent response was interrupted.';
+  String get askAiInterrupted => 'La risposta dell\'Agente è stata interrotta.';
 
   @override
-  String get askAiRiskReadOnly => 'Read-only';
+  String get askAiRiskReadOnly => 'Sola lettura';
 
   @override
-  String get askAiRiskCaution => 'Changes system';
+  String get askAiRiskCaution => 'Modifica il sistema';
 
   @override
-  String get askAiRiskDestructive => 'High risk';
+  String get askAiRiskDestructive => 'Rischio alto';
 
   @override
-  String get askAiHighRiskConfirmTitle => 'Run high-risk command?';
+  String get askAiHighRiskConfirmTitle =>
+      'Eseguire un comando ad alto rischio?';
 
   @override
   String get askAiHighRiskConfirmBody =>
-      'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.';
+      'Questo comando può eliminare dati, arrestare servizi o essere difficile da annullare. Rivedilo con attenzione prima di eseguirlo.';
 
   @override
-  String get askAiCommandCancelled => 'Cancelled';
+  String get askAiCommandCancelled => 'Annullato';
 
   @override
-  String get askAiCommandTimedOut => 'Timed out';
+  String get askAiCommandTimedOut => 'Tempo scaduto';
 
   @override
-  String get askAiNoCommandOutput => 'Command completed without output.';
+  String get askAiNoCommandOutput => 'Il comando è terminato senza output.';
 
   @override
   String get askAiOutputTruncated =>
-      'Long output was truncated before it was sent back to the Agent.';
+      'L\'output lungo è stato troncato prima di essere restituito all\'Agente.';
 
   @override
-  String get askAiAutoApproved => 'Auto-approved';
+  String get askAiAutoApproved => 'Approvato automaticamente';
 
   @override
-  String get askAiAutoRunSafeCommands => 'Auto-run read-only commands';
+  String get askAiAutoRunSafeCommands =>
+      'Esegui automaticamente i comandi di sola lettura';
 
   @override
   String get askAiAutoRunSafeCommandsTip =>
-      'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.';
+      'Esecuzione automatica solo quando sia il modello sia i controlli di sicurezza locali classificano il comando come di sola lettura. I comandi che modificano il sistema richiedono comunque una revisione.';
 
   @override
-  String get askAiSendOnEnter => 'Enter sends';
+  String get askAiSendOnEnter => 'Invio invia';
 
   @override
   String get askAiSendOnEnterTip =>
-      'Enter sends the message, Shift+Enter starts a new line. Off swaps them: Enter starts a new line and Cmd/Ctrl+Enter sends.';
+      'Invio invia il messaggio, Maiusc+Invio va a capo. Se disattivato si invertono: Invio va a capo e Cmd/Ctrl+Invio invia.';
 
   @override
   String get askAiApiKeyOptional =>
-      'Optional for local or unauthenticated endpoints';
+      'Facoltativa per endpoint locali o senza autenticazione';
 
   @override
-  String get askAiHistory => 'Conversation history';
+  String get askAiHistory => 'Cronologia conversazioni';
 
   @override
   String get askAiHistoryLocalOnly =>
-      'Encrypted on this device and excluded from backup and sync';
+      'Cifrata su questo dispositivo ed esclusa da backup e sincronizzazione';
 
   @override
-  String get askAiNewConversation => 'New conversation';
+  String get askAiNewConversation => 'Nuova conversazione';
 
   @override
-  String get askAiNoHistory => 'No saved conversations for this server';
+  String get askAiNoHistory =>
+      'Nessuna conversazione salvata per questo server';
 
   @override
-  String get askAiNoHistoryMessages => 'No messages yet';
+  String get askAiNoHistoryMessages => 'Ancora nessun messaggio';
 
   @override
-  String get askAiUntitledConversation => 'New conversation';
+  String get askAiUntitledConversation => 'Nuova conversazione';
 
   @override
-  String get askAiRenameConversation => 'Rename conversation';
+  String get askAiRenameConversation => 'Rinomina conversazione';
 
   @override
-  String get askAiDeleteConversationTitle => 'Delete this conversation?';
+  String get askAiDeleteConversationTitle => 'Eliminare questa conversazione?';
 
   @override
   String get askAiDeleteConversationTip =>
-      'This removes the conversation from this device and cannot be undone.';
+      'La conversazione verrà rimossa da questo dispositivo e non sarà possibile annullare.';
 
   @override
-  String get askAiClearHistory => 'Clear history';
+  String get askAiClearHistory => 'Cancella cronologia';
 
   @override
-  String get askAiClearHistoryTitle => 'Clear this server\'s Agent history?';
+  String get askAiClearHistoryTitle =>
+      'Cancellare la cronologia dell\'Agente di questo server?';
 
   @override
   String get askAiClearHistoryTip =>
-      'All Agent conversations saved for this server will be removed from this device.';
+      'Tutte le conversazioni dell\'Agente salvate per questo server verranno rimosse da questo dispositivo.';
 
   @override
   String get askAiRestoredReview =>
-      'Restored from history. Review it again before running; it will never run automatically.';
+      'Ripristinato dalla cronologia. Rivedilo di nuovo prima di eseguirlo; non verrà mai eseguito da solo.';
 
   @override
-  String get agentTitle => 'Agent';
+  String get agentTitle => 'Agente';
 
   @override
-  String get agentWelcome => 'What should we do across your servers?';
+  String get agentWelcome => 'Cosa facciamo sui tuoi server?';
 
   @override
   String get agentWelcomeTip =>
-      'Ask for a diagnosis or an operational task. The Agent uses live ServerBox state and proposes one reviewed action at a time.';
+      'Chiedi una diagnosi o un\'attività operativa. L\'Agente usa lo stato attuale di ServerBox e propone un\'azione da rivedere alla volta.';
 
   @override
   String get agentPromptHint =>
-      'Ask the Agent to inspect or operate your servers...';
+      'Chiedi all\'Agente di esaminare o gestire i tuoi server...';
 
   @override
-  String get agentNoServers => 'No configured servers';
+  String get agentNoServers => 'Nessun server configurato';
 
   @override
-  String get agentNoHistory => 'No saved global Agent conversations';
+  String get agentNoHistory =>
+      'Nessuna conversazione globale dell\'Agente salvata';
 
   @override
-  String get agentClearHistoryTitle => 'Clear global Agent history?';
+  String get agentClearHistoryTitle =>
+      'Cancellare la cronologia globale dell\'Agente?';
 
   @override
   String get agentClearHistoryTip =>
-      'All global Agent conversations will be removed from this device.';
+      'Tutte le conversazioni globali dell\'Agente verranno rimosse da questo dispositivo.';
 
   @override
   String get agentToolShell => 'Shell';
 
   @override
-  String get agentToolReadFile => 'Read file';
+  String get agentToolReadFile => 'Leggi file';
 
   @override
-  String get agentToolWriteFile => 'Write file';
+  String get agentToolWriteFile => 'Scrivi file';
 
   @override
   String get agentToolServerBox => 'ServerBox';
 
   @override
-  String get agentToolFailed => 'Tool execution failed.';
+  String get agentToolFailed => 'Esecuzione dello strumento non riuscita.';
 
   @override
   String get atLeastOneTab => 'Deve essere selezionata almeno una scheda';
@@ -332,32 +338,35 @@ class AppLocalizationsIt extends AppLocalizations {
       'I dati esportati possono essere crittografati con password.\nConservali al sicuro.';
 
   @override
-  String get icloudBackupStatusTitle => 'Backup status';
+  String get icloudBackupStatusTitle => 'Stato del backup';
 
   @override
-  String get icloudBackupStatusLoading => 'Loading iCloud backup status...';
+  String get icloudBackupStatusLoading =>
+      'Caricamento dello stato del backup iCloud...';
 
   @override
-  String get icloudBackupStatusError => 'Unable to read iCloud backup metadata';
+  String get icloudBackupStatusError =>
+      'Impossibile leggere i metadati del backup iCloud';
 
   @override
-  String get icloudBackupStatusEmpty => 'No iCloud backup file found yet';
+  String get icloudBackupStatusEmpty =>
+      'Nessun file di backup iCloud trovato per ora';
 
   @override
-  String get icloudBackupStateUploading => 'Uploading';
+  String get icloudBackupStateUploading => 'Caricamento';
 
   @override
-  String get icloudBackupStateConflict => 'Conflict detected';
+  String get icloudBackupStateConflict => 'Conflitto rilevato';
 
   @override
-  String get icloudBackupStateUploaded => 'Uploaded';
+  String get icloudBackupStateUploaded => 'Caricato';
 
   @override
-  String get icloudBackupStateWaiting => 'Waiting for iCloud';
+  String get icloudBackupStateWaiting => 'In attesa di iCloud';
 
   @override
   String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
-    return 'Last backup: $lastModified\nStatus: $remoteState';
+    return 'Ultimo backup: $lastModified\nStato: $remoteState';
   }
 
   @override
@@ -432,7 +441,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Visualizza l\'utilizzo di ogni CPU in stile barra di avanzamento (stile vecchio)';
 
   @override
-  String get configured => 'Configured';
+  String get configured => 'Configurato';
 
   @override
   String get customCmd => 'Comandi personalizzati';
@@ -566,13 +575,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get githubGist => 'GitHub Gist';
 
   @override
-  String get githubGistIdOptional => 'Gist ID (optional)';
+  String get githubGistIdOptional => 'ID del Gist (facoltativo)';
 
   @override
-  String get githubGistToken => 'GitHub Gist token';
+  String get githubGistToken => 'Token GitHub Gist';
 
   @override
-  String get githubGistTokenEmpty => 'Token is empty';
+  String get githubGistTokenEmpty => 'Il token è vuoto';
 
   @override
   String get goBackQ => 'Tornare indietro?';
@@ -658,7 +667,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get invalid => 'Non valido';
 
   @override
-  String get invalidUrl => 'Invalid URL';
+  String get invalidUrl => 'URL non valido';
 
   @override
   String get invalidHostFormat =>
@@ -669,15 +678,15 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
-    return 'Jump servers not found for $serverName: $jumpIds';
+    return 'Jump server non trovati per $serverName: $jumpIds';
   }
 
   @override
-  String get noJumpServerAvailable => 'No jump server available.';
+  String get noJumpServerAvailable => 'Nessun jump server disponibile.';
 
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
-      'Jump server and ProxyCommand cannot be used together.';
+      'Jump server e ProxyCommand non possono essere usati insieme.';
 
   @override
   String get keepForeground => 'Mantieni l\'app in primo piano!';
@@ -816,7 +825,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand is only supported on desktop platforms.';
+      'ProxyCommand è supportato solo sulle piattaforme desktop.';
 
   @override
   String get pveIgnoreCertTip =>
@@ -824,71 +833,71 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get pveServerClientMissing =>
-      'The SSH client for this server is not available.';
+      'Il client SSH per questo server non è disponibile.';
 
   @override
   String get pveAddressMissing =>
-      'The PVE address is missing. Please configure it in server settings.';
+      'Manca l\'indirizzo PVE. Configuralo nelle impostazioni del server.';
 
   @override
   String get pvePasswordRequired =>
-      'PVE password is required. Please set it in server settings.';
+      'È richiesta la password PVE. Impostala nelle impostazioni del server.';
 
   @override
   String get pveOtpRequired =>
-      'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.';
+      'Su questo server PVE è attiva l\'autenticazione a due fattori. Inserisci il codice OTP.';
 
   @override
   String get pveOtpChallengeExpired =>
-      'The OTP challenge has expired. Please refresh and try again.';
+      'La richiesta OTP è scaduta. Aggiorna e riprova.';
 
   @override
-  String get pveOtpCodeRequired => 'OTP code is required.';
+  String get pveOtpCodeRequired => 'Il codice OTP è obbligatorio.';
 
   @override
   String get pveOtpVerificationFailed =>
-      'OTP verification failed. Please try again with a fresh code.';
+      'Verifica OTP non riuscita. Riprova con un codice nuovo.';
 
   @override
-  String get pveOtpTitle => 'OTP Verification';
+  String get pveOtpTitle => 'Verifica OTP';
 
   @override
-  String get pveOtpLabel => 'OTP Code';
+  String get pveOtpLabel => 'Codice OTP';
 
   @override
   String get pveInvalidResponseBody =>
-      'PVE login returned an invalid response body.';
+      'Il login PVE ha restituito un corpo della risposta non valido.';
 
   @override
   String get pveInvalidResponseData =>
-      'PVE login response did not contain a valid data payload.';
+      'La risposta del login PVE non conteneva dati validi.';
 
   @override
   String get pveMissingAuthTicket =>
-      'PVE login succeeded but no authentication ticket was returned.';
+      'Il login PVE è riuscito ma non è stato restituito alcun ticket di autenticazione.';
 
   @override
   String get pveVersionLow =>
       'Questa funzionalità è attualmente nella fase di test ed è stata testata solo su PVE 8+. Usala con cautela.';
 
   @override
-  String get pveLoadingForwarding => 'Establishing SSH tunnel...';
+  String get pveLoadingForwarding => 'Creazione del tunnel SSH...';
 
   @override
-  String get pveLoadingLogin => 'Authenticating with PVE...';
+  String get pveLoadingLogin => 'Autenticazione con PVE...';
 
   @override
-  String get pveLoadingData => 'Fetching cluster data...';
+  String get pveLoadingData => 'Recupero dei dati del cluster...';
 
   @override
-  String get pveLoadingConnect => 'Connecting...';
+  String get pveLoadingConnect => 'Connessione...';
 
   @override
-  String get pvePassword => 'PVE Password';
+  String get pvePassword => 'Password PVE';
 
   @override
   String get pvePasswordHint =>
-      'Required when using key-based SSH authentication';
+      'Necessaria quando si usa l\'autenticazione SSH con chiave';
 
   @override
   String get read => 'Leggi';
@@ -969,7 +978,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get tempIsCelsiusTip =>
-      'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).';
+      'Se attivo, il valore della temperatura viene trattato come Celsius anziché millicelsius. Attivalo solo se la temperatura è visualizzata in modo errato (ad esempio 0,1 °C invece di 58 °C).';
 
   @override
   String get speed => 'Velocità';
@@ -989,13 +998,13 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get sshConnectionModeTip =>
-      'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
+      'Integrato: usa il terminale dell\'app. SSH di sistema: avvia il comando ssh di sistema in un terminale esterno.';
 
   @override
-  String get sshConnectionModeUseBuiltin => 'Use built-in terminal';
+  String get sshConnectionModeUseBuiltin => 'Usa il terminale integrato';
 
   @override
-  String get sshConnectionModeUseSystem => 'Use system SSH';
+  String get sshConnectionModeUseSystem => 'Usa l\'SSH di sistema';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
@@ -1115,11 +1124,11 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Sync app settings';
+  String get syncAppSettings => 'Sincronizza le impostazioni dell\'app';
 
   @override
   String get syncAppSettingsTip =>
-      'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
+      'Includi tema, layout, editor, terminale e altre preferenze del dispositivo nella sincronizzazione automatica.';
 
   @override
   String get system => 'Sistema';
@@ -1225,107 +1234,107 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get portForwardBeta =>
-      'This feature is still in beta testing. Functionality is not guaranteed.';
+      'Questa funzione è ancora in beta. Il funzionamento non è garantito.';
 
   @override
   String get portForward_startPrompt =>
-      'Add a port forward rule to get started';
+      'Aggiungi una regola di port forwarding per iniziare';
 
   @override
-  String get portForward_localHost => 'Local Host';
+  String get portForward_localHost => 'Host locale';
 
   @override
-  String get portForward_localPort => 'Local Port';
+  String get portForward_localPort => 'Porta locale';
 
   @override
-  String get portForward_remoteHost => 'Remote Host';
+  String get portForward_remoteHost => 'Host remoto';
 
   @override
-  String get portForward_remotePort => 'Remote Port';
+  String get portForward_remotePort => 'Porta remota';
 
   @override
-  String get portForward_type_local => 'Local';
+  String get portForward_type_local => 'Locale';
 
   @override
-  String get portForward_type_remote => 'Remote';
+  String get portForward_type_remote => 'Remoto';
 
   @override
   String portForward_deleteConfirmFmt(Object name) {
-    return 'Delete $name?';
+    return 'Eliminare $name?';
   }
 
   @override
   String get sponsor => 'Sponsor';
 
   @override
-  String get sort => 'Sort';
+  String get sort => 'Ordina';
 
   @override
-  String get sortByName => 'By name';
+  String get sortByName => 'Per nome';
 
   @override
-  String get sortByJoinTime => 'By join time';
+  String get sortByJoinTime => 'Per data di aggiunta';
 
   @override
-  String get ascending => 'Ascending';
+  String get ascending => 'Crescente';
 
   @override
-  String get descending => 'Descending';
+  String get descending => 'Decrescente';
 
   @override
-  String get serverHistory => 'Server history';
+  String get serverHistory => 'Cronologia server';
 
   @override
-  String get clearHistory => 'Clear history';
+  String get clearHistory => 'Cancella cronologia';
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
 
   @override
-  String get tmuxAutoAttach => 'tmux auto-attach';
+  String get tmuxAutoAttach => 'Collegamento automatico a tmux';
 
   @override
-  String get tmuxAuto => 'Auto tmux';
+  String get tmuxAuto => 'tmux automatico';
 
   @override
   String get tmuxAutoTip =>
-      'Automatically start or attach tmux when connecting over SSH';
+      'Avvia o collega tmux automaticamente quando ci si connette via SSH';
 
   @override
-  String get tmuxSessionSelector => 'Session selector';
+  String get tmuxSessionSelector => 'Selettore di sessione';
 
   @override
   String get tmuxSessionSelectorTip =>
-      'Show the session picker when connecting';
+      'Mostra il selettore di sessione alla connessione';
 
   @override
-  String get tmuxDefaultSessionName => 'Default session name';
+  String get tmuxDefaultSessionName => 'Nome sessione predefinito';
 
   @override
-  String get tmuxSessionName => 'Session name';
+  String get tmuxSessionName => 'Nome della sessione';
 
   @override
-  String get tmuxExistingSessions => 'Existing sessions';
+  String get tmuxExistingSessions => 'Sessioni esistenti';
 
   @override
-  String get tmuxNewSession => 'New session';
+  String get tmuxNewSession => 'Nuova sessione';
 
   @override
-  String get tmuxWindows => 'Windows';
+  String get tmuxWindows => 'Finestre';
 
   @override
-  String get tmuxNewWindow => 'New window';
+  String get tmuxNewWindow => 'Nuova finestra';
 
   @override
-  String get tmuxNoWindowsFound => 'No windows found';
+  String get tmuxNoWindowsFound => 'Nessuna finestra trovata';
 
   @override
   String tmuxWindowCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count windows',
-      one: '1 window',
+      other: '$count finestre',
+      one: '1 finestra',
     );
     return '$_temp0';
   }
@@ -1335,33 +1344,33 @@ class AppLocalizationsIt extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count panes',
-      one: '1 pane',
+      other: '$count riquadri',
+      one: '1 riquadro',
     );
     return '$_temp0';
   }
 
   @override
-  String get tmuxAttached => 'Attached';
+  String get tmuxAttached => 'Collegata';
 
   @override
-  String get tmuxActive => 'Active';
+  String get tmuxActive => 'Attiva';
 
   @override
   String tmuxActiveAt(String time) {
-    return 'active: $time';
+    return 'attiva: $time';
   }
 
   @override
   String tmuxAttachedAt(String time) {
-    return 'attached: $time';
+    return 'collegata: $time';
   }
 
   @override
-  String get tmuxSkip => 'Skip';
+  String get tmuxSkip => 'Salta';
 
   @override
-  String get tmuxNotAvailable => 'tmux is not available';
+  String get tmuxNotAvailable => 'tmux non è disponibile';
 
   @override
   String containerSegmentsMismatch(int count) {

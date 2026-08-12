@@ -25,7 +25,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAi => 'Yapay zekaya sor';
 
   @override
-  String get ai => 'AI';
+  String get ai => 'Yapay zekâ';
 
   @override
   String get askAiApiKey => 'API anahtarı';
@@ -38,17 +38,17 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      'Enter a service base URL or a full Chat Completions or Responses endpoint. ServerBox completes the path for the selected protocol.';
+      'Bir servis temel URL\'si ya da tam bir Chat Completions veya Responses uç noktası gir. ServerBox yolu seçilen protokole göre tamamlar.';
 
   @override
-  String get askAiProtocol => 'API protocol';
+  String get askAiProtocol => 'API protokolü';
 
   @override
   String get askAiProtocolTip =>
-      'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.';
+      'Otomatik, resmî OpenAI uç noktası için Responses\'ı, uyumlu sağlayıcılar için Chat Completions\'ı kullanır.';
 
   @override
-  String get askAiProtocolAuto => 'Auto';
+  String get askAiProtocolAuto => 'Otomatik';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -96,191 +96,194 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiAgentTitle => 'SSH Agent';
 
   @override
-  String get askAiAgentWelcome => 'What should we do on this server?';
+  String get askAiAgentWelcome => 'Bu sunucuda ne yapalım?';
 
   @override
   String get askAiAgentWelcomeTip =>
-      'Ask for a diagnosis or a task. The Agent proposes one command at a time and waits for review before making changes.';
+      'Bir teşhis ya da görev iste. Agent her seferinde tek bir komut önerir ve değişiklik yapmadan önce onayını bekler.';
 
   @override
   String get askAiAgentPromptHint =>
-      'Ask the Agent to inspect or fix something...';
+      'Agent\'tan bir şeyi incelemesini veya düzeltmesini iste...';
 
   @override
-  String get askAiAgentSend => 'Send to Agent';
+  String get askAiAgentSend => 'Agent\'a gönder';
 
   @override
   String get askAiAnalyzeSelectionPrompt =>
-      'Analyze the selected terminal content, explain what happened, and propose the safest next step if action is needed.';
+      'Seçilen terminal içeriğini incele, ne olduğunu açıkla ve işlem gerekiyorsa en güvenli sonraki adımı öner.';
 
   @override
-  String get askAiTerminalContext => 'Terminal context';
+  String get askAiTerminalContext => 'Terminal bağlamı';
 
   @override
-  String get askAiReady => 'Ready';
+  String get askAiReady => 'Hazır';
 
   @override
-  String get askAiThinking => 'Thinking';
+  String get askAiThinking => 'Düşünüyor';
 
   @override
-  String get askAiRunningCommand => 'Running';
+  String get askAiRunningCommand => 'Çalışıyor';
 
   @override
-  String get askAiReviewNeeded => 'Review';
+  String get askAiReviewNeeded => 'İncele';
 
   @override
-  String get askAiReviewAction => 'Review proposed command';
+  String get askAiReviewAction => 'Önerilen komutu incele';
 
   @override
   String get askAiReviewBeforeContinuing =>
-      'Review or decline the proposed command first';
+      'Önce önerilen komutu incele ya da reddet';
 
   @override
-  String get askAiApproveRun => 'Approve & run';
+  String get askAiApproveRun => 'Onayla ve çalıştır';
 
   @override
-  String get askAiDecline => 'Decline';
+  String get askAiDecline => 'Reddet';
 
   @override
-  String get askAiActionDeclined => 'The proposed command was declined.';
+  String get askAiActionDeclined => 'Önerilen komut reddedildi.';
 
   @override
-  String get askAiInterrupted => 'Agent response was interrupted.';
+  String get askAiInterrupted => 'Agent yanıtı kesildi.';
 
   @override
-  String get askAiRiskReadOnly => 'Read-only';
+  String get askAiRiskReadOnly => 'Salt okunur';
 
   @override
-  String get askAiRiskCaution => 'Changes system';
+  String get askAiRiskCaution => 'Sistemi değiştirir';
 
   @override
-  String get askAiRiskDestructive => 'High risk';
+  String get askAiRiskDestructive => 'Yüksek risk';
 
   @override
-  String get askAiHighRiskConfirmTitle => 'Run high-risk command?';
+  String get askAiHighRiskConfirmTitle =>
+      'Yüksek riskli komut çalıştırılsın mı?';
 
   @override
   String get askAiHighRiskConfirmBody =>
-      'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.';
+      'Bu komut veri silebilir, servisleri durdurabilir ya da geri alınması zor olabilir. Çalıştırmadan önce dikkatle incele.';
 
   @override
-  String get askAiCommandCancelled => 'Cancelled';
+  String get askAiCommandCancelled => 'İptal edildi';
 
   @override
-  String get askAiCommandTimedOut => 'Timed out';
+  String get askAiCommandTimedOut => 'Zaman aşımı';
 
   @override
-  String get askAiNoCommandOutput => 'Command completed without output.';
+  String get askAiNoCommandOutput => 'Komut çıktı üretmeden tamamlandı.';
 
   @override
   String get askAiOutputTruncated =>
-      'Long output was truncated before it was sent back to the Agent.';
+      'Uzun çıktı, Agent\'a geri gönderilmeden önce kısaltıldı.';
 
   @override
-  String get askAiAutoApproved => 'Auto-approved';
+  String get askAiAutoApproved => 'Otomatik onaylandı';
 
   @override
-  String get askAiAutoRunSafeCommands => 'Auto-run read-only commands';
+  String get askAiAutoRunSafeCommands =>
+      'Salt okunur komutları otomatik çalıştır';
 
   @override
   String get askAiAutoRunSafeCommandsTip =>
-      'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.';
+      'Yalnızca hem model hem de yerel güvenlik denetimleri komutu salt okunur olarak sınıflandırdığında otomatik çalıştırılır. Sistemi değiştiren komutlar yine incelenmelidir.';
 
   @override
-  String get askAiSendOnEnter => 'Enter sends';
+  String get askAiSendOnEnter => 'Enter gönderir';
 
   @override
   String get askAiSendOnEnterTip =>
-      'Enter sends the message, Shift+Enter starts a new line. Off swaps them: Enter starts a new line and Cmd/Ctrl+Enter sends.';
+      'Enter mesajı gönderir, Shift+Enter yeni satır açar. Kapalıyken yer değiştirir: Enter yeni satır açar, Cmd/Ctrl+Enter gönderir.';
 
   @override
   String get askAiApiKeyOptional =>
-      'Optional for local or unauthenticated endpoints';
+      'Yerel veya kimlik doğrulaması olmayan uç noktalar için isteğe bağlı';
 
   @override
-  String get askAiHistory => 'Conversation history';
+  String get askAiHistory => 'Konuşma geçmişi';
 
   @override
   String get askAiHistoryLocalOnly =>
-      'Encrypted on this device and excluded from backup and sync';
+      'Bu cihazda şifrelenir; yedekleme ve eşitlemeye dâhil edilmez';
 
   @override
-  String get askAiNewConversation => 'New conversation';
+  String get askAiNewConversation => 'Yeni konuşma';
 
   @override
-  String get askAiNoHistory => 'No saved conversations for this server';
+  String get askAiNoHistory => 'Bu sunucu için kayıtlı konuşma yok';
 
   @override
-  String get askAiNoHistoryMessages => 'No messages yet';
+  String get askAiNoHistoryMessages => 'Henüz mesaj yok';
 
   @override
-  String get askAiUntitledConversation => 'New conversation';
+  String get askAiUntitledConversation => 'Yeni konuşma';
 
   @override
-  String get askAiRenameConversation => 'Rename conversation';
+  String get askAiRenameConversation => 'Konuşmayı yeniden adlandır';
 
   @override
-  String get askAiDeleteConversationTitle => 'Delete this conversation?';
+  String get askAiDeleteConversationTitle => 'Bu konuşma silinsin mi?';
 
   @override
   String get askAiDeleteConversationTip =>
-      'This removes the conversation from this device and cannot be undone.';
+      'Konuşma bu cihazdan kaldırılır ve geri alınamaz.';
 
   @override
-  String get askAiClearHistory => 'Clear history';
+  String get askAiClearHistory => 'Geçmişi temizle';
 
   @override
-  String get askAiClearHistoryTitle => 'Clear this server\'s Agent history?';
+  String get askAiClearHistoryTitle =>
+      'Bu sunucunun Agent geçmişi temizlensin mi?';
 
   @override
   String get askAiClearHistoryTip =>
-      'All Agent conversations saved for this server will be removed from this device.';
+      'Bu sunucu için kaydedilmiş tüm Agent konuşmaları bu cihazdan kaldırılır.';
 
   @override
   String get askAiRestoredReview =>
-      'Restored from history. Review it again before running; it will never run automatically.';
+      'Geçmişten geri yüklendi. Çalıştırmadan önce yeniden incele; kendiliğinden asla çalışmaz.';
 
   @override
   String get agentTitle => 'Agent';
 
   @override
-  String get agentWelcome => 'What should we do across your servers?';
+  String get agentWelcome => 'Sunucularında ne yapalım?';
 
   @override
   String get agentWelcomeTip =>
-      'Ask for a diagnosis or an operational task. The Agent uses live ServerBox state and proposes one reviewed action at a time.';
+      'Bir teşhis ya da işletim görevi iste. Agent, ServerBox\'ın anlık durumunu kullanır ve her seferinde incelenecek tek bir eylem önerir.';
 
   @override
   String get agentPromptHint =>
-      'Ask the Agent to inspect or operate your servers...';
+      'Agent\'tan sunucularını incelemesini veya yönetmesini iste...';
 
   @override
-  String get agentNoServers => 'No configured servers';
+  String get agentNoServers => 'Yapılandırılmış sunucu yok';
 
   @override
-  String get agentNoHistory => 'No saved global Agent conversations';
+  String get agentNoHistory => 'Kayıtlı genel Agent konuşması yok';
 
   @override
-  String get agentClearHistoryTitle => 'Clear global Agent history?';
+  String get agentClearHistoryTitle => 'Genel Agent geçmişi temizlensin mi?';
 
   @override
   String get agentClearHistoryTip =>
-      'All global Agent conversations will be removed from this device.';
+      'Tüm genel Agent konuşmaları bu cihazdan kaldırılır.';
 
   @override
   String get agentToolShell => 'Shell';
 
   @override
-  String get agentToolReadFile => 'Read file';
+  String get agentToolReadFile => 'Dosya oku';
 
   @override
-  String get agentToolWriteFile => 'Write file';
+  String get agentToolWriteFile => 'Dosya yaz';
 
   @override
   String get agentToolServerBox => 'ServerBox';
 
   @override
-  String get agentToolFailed => 'Tool execution failed.';
+  String get agentToolFailed => 'Araç çalıştırılamadı.';
 
   @override
   String get atLeastOneTab => 'En az bir sekme seçilmelidir';
@@ -332,32 +335,35 @@ class AppLocalizationsTr extends AppLocalizations {
       'Dışa aktarılan veriler parola ile şifrelenebilir. \nLütfen güvenli bir şekilde saklayın.';
 
   @override
-  String get icloudBackupStatusTitle => 'Backup status';
+  String get icloudBackupStatusTitle => 'Yedekleme durumu';
 
   @override
-  String get icloudBackupStatusLoading => 'Loading iCloud backup status...';
+  String get icloudBackupStatusLoading =>
+      'iCloud yedekleme durumu yükleniyor...';
 
   @override
-  String get icloudBackupStatusError => 'Unable to read iCloud backup metadata';
+  String get icloudBackupStatusError =>
+      'iCloud yedekleme meta verileri okunamıyor';
 
   @override
-  String get icloudBackupStatusEmpty => 'No iCloud backup file found yet';
+  String get icloudBackupStatusEmpty =>
+      'Henüz bir iCloud yedekleme dosyası bulunamadı';
 
   @override
-  String get icloudBackupStateUploading => 'Uploading';
+  String get icloudBackupStateUploading => 'Yükleniyor';
 
   @override
-  String get icloudBackupStateConflict => 'Conflict detected';
+  String get icloudBackupStateConflict => 'Çakışma algılandı';
 
   @override
-  String get icloudBackupStateUploaded => 'Uploaded';
+  String get icloudBackupStateUploaded => 'Yüklendi';
 
   @override
-  String get icloudBackupStateWaiting => 'Waiting for iCloud';
+  String get icloudBackupStateWaiting => 'iCloud bekleniyor';
 
   @override
   String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
-    return 'Last backup: $lastModified\nStatus: $remoteState';
+    return 'Son yedekleme: $lastModified\nDurum: $remoteState';
   }
 
   @override
@@ -432,7 +438,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Her CPU\'nun kullanımını ilerleme çubuğu tarzında göster (eski tarz)';
 
   @override
-  String get configured => 'Configured';
+  String get configured => 'Yapılandırıldı';
 
   @override
   String get customCmd => 'Özel komutlar';
@@ -567,13 +573,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get githubGist => 'GitHub Gist';
 
   @override
-  String get githubGistIdOptional => 'Gist ID (optional)';
+  String get githubGistIdOptional => 'Gist kimliği (isteğe bağlı)';
 
   @override
-  String get githubGistToken => 'GitHub Gist token';
+  String get githubGistToken => 'GitHub Gist belirteci';
 
   @override
-  String get githubGistTokenEmpty => 'Token is empty';
+  String get githubGistTokenEmpty => 'Belirteç boş';
 
   @override
   String get goBackQ => 'Geri dön?';
@@ -659,26 +665,26 @@ class AppLocalizationsTr extends AppLocalizations {
   String get invalid => 'Geçersiz';
 
   @override
-  String get invalidUrl => 'Invalid URL';
+  String get invalidUrl => 'Geçersiz URL';
 
   @override
   String get invalidHostFormat =>
-      'Invalid host format. Only IPv4, IPv6, and domain characters are allowed.';
+      'Geçersiz ana makine biçimi. Yalnızca IPv4, IPv6 ve alan adı karakterlerine izin verilir.';
 
   @override
   String get jumpServer => 'Atlama sunucusu';
 
   @override
   String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
-    return 'Jump servers not found for $serverName: $jumpIds';
+    return '$serverName için atlama sunucuları bulunamadı: $jumpIds';
   }
 
   @override
-  String get noJumpServerAvailable => 'No jump server available.';
+  String get noJumpServerAvailable => 'Kullanılabilir atlama sunucusu yok.';
 
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
-      'Jump server and ProxyCommand cannot be used together.';
+      'Atlama sunucusu ile ProxyCommand birlikte kullanılamaz.';
 
   @override
   String get keepForeground => 'Uygulamayı ön planda tut!';
@@ -816,7 +822,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand is only supported on desktop platforms.';
+      'ProxyCommand yalnızca masaüstü platformlarda desteklenir.';
 
   @override
   String get pveIgnoreCertTip =>
@@ -824,71 +830,71 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pveServerClientMissing =>
-      'The SSH client for this server is not available.';
+      'Bu sunucunun SSH istemcisi kullanılamıyor.';
 
   @override
   String get pveAddressMissing =>
-      'The PVE address is missing. Please configure it in server settings.';
+      'PVE adresi eksik. Lütfen sunucu ayarlarından yapılandır.';
 
   @override
   String get pvePasswordRequired =>
-      'PVE password is required. Please set it in server settings.';
+      'PVE parolası gerekli. Lütfen sunucu ayarlarında belirle.';
 
   @override
   String get pveOtpRequired =>
-      'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.';
+      'Bu PVE sunucusunda iki adımlı doğrulama açık. Lütfen OTP kodunu gir.';
 
   @override
   String get pveOtpChallengeExpired =>
-      'The OTP challenge has expired. Please refresh and try again.';
+      'OTP isteğinin süresi doldu. Lütfen yenileyip tekrar dene.';
 
   @override
-  String get pveOtpCodeRequired => 'OTP code is required.';
+  String get pveOtpCodeRequired => 'OTP kodu gerekli.';
 
   @override
   String get pveOtpVerificationFailed =>
-      'OTP verification failed. Please try again with a fresh code.';
+      'OTP doğrulaması başarısız. Lütfen yeni bir kodla tekrar dene.';
 
   @override
-  String get pveOtpTitle => 'OTP Verification';
+  String get pveOtpTitle => 'OTP doğrulaması';
 
   @override
-  String get pveOtpLabel => 'OTP Code';
+  String get pveOtpLabel => 'OTP kodu';
 
   @override
   String get pveInvalidResponseBody =>
-      'PVE login returned an invalid response body.';
+      'PVE oturum açma isteği geçersiz bir yanıt gövdesi döndürdü.';
 
   @override
   String get pveInvalidResponseData =>
-      'PVE login response did not contain a valid data payload.';
+      'PVE oturum açma yanıtı geçerli bir veri içermiyordu.';
 
   @override
   String get pveMissingAuthTicket =>
-      'PVE login succeeded but no authentication ticket was returned.';
+      'PVE oturumu açıldı ancak kimlik doğrulama bileti döndürülmedi.';
 
   @override
   String get pveVersionLow =>
       'Bu özellik şu anda test aşamasında ve yalnızca PVE 8+ üzerinde test edildi. Lütfen dikkatli kullanın.';
 
   @override
-  String get pveLoadingForwarding => 'Establishing SSH tunnel...';
+  String get pveLoadingForwarding => 'SSH tüneli kuruluyor...';
 
   @override
-  String get pveLoadingLogin => 'Authenticating with PVE...';
+  String get pveLoadingLogin => 'PVE ile kimlik doğrulanıyor...';
 
   @override
-  String get pveLoadingData => 'Fetching cluster data...';
+  String get pveLoadingData => 'Küme verileri alınıyor...';
 
   @override
-  String get pveLoadingConnect => 'Connecting...';
+  String get pveLoadingConnect => 'Bağlanıyor...';
 
   @override
-  String get pvePassword => 'PVE Password';
+  String get pvePassword => 'PVE parolası';
 
   @override
   String get pvePasswordHint =>
-      'Required when using key-based SSH authentication';
+      'Anahtar tabanlı SSH kimlik doğrulaması kullanılırken gerekir';
 
   @override
   String get read => 'Oku';
@@ -969,7 +975,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get tempIsCelsiusTip =>
-      'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).';
+      'Açıkken sıcaklık değeri milisantigrat yerine santigrat olarak işlenir. Yalnızca sıcaklık yanlış görünüyorsa aç (örneğin 58 °C yerine 0,1 °C).';
 
   @override
   String get speed => 'Hız';
@@ -989,13 +995,13 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sshConnectionModeTip =>
-      'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
+      'Yerleşik: uygulamanın terminalini kullanır. Sistem SSH: sistemin ssh komutunu harici bir terminalde başlatır.';
 
   @override
-  String get sshConnectionModeUseBuiltin => 'Use built-in terminal';
+  String get sshConnectionModeUseBuiltin => 'Yerleşik terminali kullan';
 
   @override
-  String get sshConnectionModeUseSystem => 'Use system SSH';
+  String get sshConnectionModeUseSystem => 'Sistem SSH\'ini kullan';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
@@ -1112,11 +1118,11 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Sync app settings';
+  String get syncAppSettings => 'Uygulama ayarlarını eşitle';
 
   @override
   String get syncAppSettingsTip =>
-      'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
+      'Tema, düzen, düzenleyici, terminal ve diğer cihaz tercihlerini otomatik eşitlemeye dâhil et.';
 
   @override
   String get system => 'Sistem';
@@ -1212,7 +1218,7 @@ class AppLocalizationsTr extends AppLocalizations {
       'Sunucuya bağlandıktan sonra, sistem durumunu izlemek için `~/.config/server_box` \n | `/tmp/server_box` dizinine bir betik yazılacak. Betik içeriğini inceleyebilirsiniz.';
 
   @override
-  String get menuGitHubRepository => 'GitHub Repository';
+  String get menuGitHubRepository => 'GitHub deposu';
 
   @override
   String get podmanDockerEmulationDetected =>
@@ -1220,107 +1226,105 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get portForwardBeta =>
-      'This feature is still in beta testing. Functionality is not guaranteed.';
+      'Bu özellik hâlâ beta aşamasında. İşleyişi garanti edilmez.';
 
   @override
   String get portForward_startPrompt =>
-      'Add a port forward rule to get started';
+      'Başlamak için bir port yönlendirme kuralı ekle';
 
   @override
-  String get portForward_localHost => 'Local Host';
+  String get portForward_localHost => 'Yerel ana makine';
 
   @override
-  String get portForward_localPort => 'Local Port';
+  String get portForward_localPort => 'Yerel port';
 
   @override
-  String get portForward_remoteHost => 'Remote Host';
+  String get portForward_remoteHost => 'Uzak ana makine';
 
   @override
-  String get portForward_remotePort => 'Remote Port';
+  String get portForward_remotePort => 'Uzak port';
 
   @override
-  String get portForward_type_local => 'Local';
+  String get portForward_type_local => 'Yerel';
 
   @override
-  String get portForward_type_remote => 'Remote';
+  String get portForward_type_remote => 'Uzak';
 
   @override
   String portForward_deleteConfirmFmt(Object name) {
-    return 'Delete $name?';
+    return '$name silinsin mi?';
   }
 
   @override
   String get sponsor => 'Sponsor';
 
   @override
-  String get sort => 'Sort';
+  String get sort => 'Sırala';
 
   @override
-  String get sortByName => 'By name';
+  String get sortByName => 'Ada göre';
 
   @override
-  String get sortByJoinTime => 'By join time';
+  String get sortByJoinTime => 'Eklenme zamanına göre';
 
   @override
-  String get ascending => 'Ascending';
+  String get ascending => 'Artan';
 
   @override
-  String get descending => 'Descending';
+  String get descending => 'Azalan';
 
   @override
-  String get serverHistory => 'Server history';
+  String get serverHistory => 'Sunucu geçmişi';
 
   @override
-  String get clearHistory => 'Clear history';
+  String get clearHistory => 'Geçmişi temizle';
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
 
   @override
-  String get tmuxAutoAttach => 'tmux auto-attach';
+  String get tmuxAutoAttach => 'tmux\'a otomatik bağlan';
 
   @override
-  String get tmuxAuto => 'Auto tmux';
+  String get tmuxAuto => 'Otomatik tmux';
 
   @override
   String get tmuxAutoTip =>
-      'Automatically start or attach tmux when connecting over SSH';
+      'SSH ile bağlanırken tmux\'u otomatik başlat veya ona bağlan';
 
   @override
-  String get tmuxSessionSelector => 'Session selector';
+  String get tmuxSessionSelector => 'Oturum seçici';
 
   @override
-  String get tmuxSessionSelectorTip =>
-      'Show the session picker when connecting';
+  String get tmuxSessionSelectorTip => 'Bağlanırken oturum seçiciyi göster';
 
   @override
-  String get tmuxDefaultSessionName => 'Default session name';
+  String get tmuxDefaultSessionName => 'Varsayılan oturum adı';
 
   @override
-  String get tmuxSessionName => 'Session name';
+  String get tmuxSessionName => 'Oturum adı';
 
   @override
-  String get tmuxExistingSessions => 'Existing sessions';
+  String get tmuxExistingSessions => 'Mevcut oturumlar';
 
   @override
-  String get tmuxNewSession => 'New session';
+  String get tmuxNewSession => 'Yeni oturum';
 
   @override
-  String get tmuxWindows => 'Windows';
+  String get tmuxWindows => 'Pencereler';
 
   @override
-  String get tmuxNewWindow => 'New window';
+  String get tmuxNewWindow => 'Yeni pencere';
 
   @override
-  String get tmuxNoWindowsFound => 'No windows found';
+  String get tmuxNoWindowsFound => 'Pencere bulunamadı';
 
   @override
   String tmuxWindowCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count windows',
-      one: '1 window',
+      other: '$count pencere',
     );
     return '$_temp0';
   }
@@ -1330,33 +1334,32 @@ class AppLocalizationsTr extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count panes',
-      one: '1 pane',
+      other: '$count bölme',
     );
     return '$_temp0';
   }
 
   @override
-  String get tmuxAttached => 'Attached';
+  String get tmuxAttached => 'Bağlı';
 
   @override
-  String get tmuxActive => 'Active';
+  String get tmuxActive => 'Etkin';
 
   @override
   String tmuxActiveAt(String time) {
-    return 'active: $time';
+    return 'etkin: $time';
   }
 
   @override
   String tmuxAttachedAt(String time) {
-    return 'attached: $time';
+    return 'bağlandı: $time';
   }
 
   @override
-  String get tmuxSkip => 'Skip';
+  String get tmuxSkip => 'Atla';
 
   @override
-  String get tmuxNotAvailable => 'tmux is not available';
+  String get tmuxNotAvailable => 'tmux kullanılamıyor';
 
   @override
   String containerSegmentsMismatch(int count) {

@@ -41,14 +41,14 @@ class AppLocalizationsKo extends AppLocalizations {
       '전체 Chat Completions 엔드포인트 또는 서비스 기본 URL을 입력하세요. 주소가 /v1로 끝나면 앱이 자동으로 /chat/completions를 추가합니다.';
 
   @override
-  String get askAiProtocol => 'API protocol';
+  String get askAiProtocol => 'API 프로토콜';
 
   @override
   String get askAiProtocolTip =>
-      'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.';
+      '자동은 공식 OpenAI 엔드포인트에는 Responses를, 호환 제공자에는 Chat Completions를 사용합니다.';
 
   @override
-  String get askAiProtocolAuto => 'Auto';
+  String get askAiProtocolAuto => '자동';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -92,194 +92,185 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiUsageHint => 'SSH 터미널에서 사용';
 
   @override
-  String get askAiAgentTitle => 'SSH Agent';
+  String get askAiAgentTitle => 'SSH 에이전트';
 
   @override
-  String get askAiAgentWelcome => 'What should we do on this server?';
+  String get askAiAgentWelcome => '이 서버에서 무엇을 할까요?';
 
   @override
   String get askAiAgentWelcomeTip =>
-      'Ask for a diagnosis or a task. The Agent proposes one command at a time and waits for review before making changes.';
+      '진단이나 작업을 요청하세요. 에이전트는 한 번에 하나의 명령을 제안하고 변경 전에 검토를 기다립니다.';
 
   @override
-  String get askAiAgentPromptHint =>
-      'Ask the Agent to inspect or fix something...';
+  String get askAiAgentPromptHint => '에이전트에게 점검이나 수정을 요청하세요...';
 
   @override
-  String get askAiAgentSend => 'Send to Agent';
+  String get askAiAgentSend => '에이전트에게 보내기';
 
   @override
   String get askAiAnalyzeSelectionPrompt =>
-      'Analyze the selected terminal content, explain what happened, and propose the safest next step if action is needed.';
+      '선택한 터미널 내용을 분석해 무슨 일이 있었는지 설명하고, 조치가 필요하면 가장 안전한 다음 단계를 제안하세요.';
 
   @override
-  String get askAiTerminalContext => 'Terminal context';
+  String get askAiTerminalContext => '터미널 컨텍스트';
 
   @override
-  String get askAiReady => 'Ready';
+  String get askAiReady => '준비됨';
 
   @override
-  String get askAiThinking => 'Thinking';
+  String get askAiThinking => '생각 중';
 
   @override
-  String get askAiRunningCommand => 'Running';
+  String get askAiRunningCommand => '실행 중';
 
   @override
-  String get askAiReviewNeeded => 'Review';
+  String get askAiReviewNeeded => '검토 필요';
 
   @override
-  String get askAiReviewAction => 'Review proposed command';
+  String get askAiReviewAction => '제안된 명령 검토';
 
   @override
-  String get askAiReviewBeforeContinuing =>
-      'Review or decline the proposed command first';
+  String get askAiReviewBeforeContinuing => '먼저 제안된 명령을 검토하거나 거부하세요';
 
   @override
-  String get askAiApproveRun => 'Approve & run';
+  String get askAiApproveRun => '승인 후 실행';
 
   @override
-  String get askAiDecline => 'Decline';
+  String get askAiDecline => '거부';
 
   @override
-  String get askAiActionDeclined => 'The proposed command was declined.';
+  String get askAiActionDeclined => '제안된 명령이 거부되었습니다.';
 
   @override
-  String get askAiInterrupted => 'Agent response was interrupted.';
+  String get askAiInterrupted => '에이전트 응답이 중단되었습니다.';
 
   @override
-  String get askAiRiskReadOnly => 'Read-only';
+  String get askAiRiskReadOnly => '읽기 전용';
 
   @override
-  String get askAiRiskCaution => 'Changes system';
+  String get askAiRiskCaution => '시스템 변경';
 
   @override
-  String get askAiRiskDestructive => 'High risk';
+  String get askAiRiskDestructive => '높은 위험';
 
   @override
-  String get askAiHighRiskConfirmTitle => 'Run high-risk command?';
+  String get askAiHighRiskConfirmTitle => '위험도가 높은 명령을 실행할까요?';
 
   @override
   String get askAiHighRiskConfirmBody =>
-      'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.';
+      '이 명령은 데이터를 지우거나 서비스를 중지하는 등 되돌리기 어려울 수 있습니다. 실행 전에 꼼꼼히 확인하세요.';
 
   @override
-  String get askAiCommandCancelled => 'Cancelled';
+  String get askAiCommandCancelled => '취소됨';
 
   @override
-  String get askAiCommandTimedOut => 'Timed out';
+  String get askAiCommandTimedOut => '시간 초과';
 
   @override
-  String get askAiNoCommandOutput => 'Command completed without output.';
+  String get askAiNoCommandOutput => '명령이 출력 없이 끝났습니다.';
 
   @override
-  String get askAiOutputTruncated =>
-      'Long output was truncated before it was sent back to the Agent.';
+  String get askAiOutputTruncated => '긴 출력은 에이전트로 되돌리기 전에 잘렸습니다.';
 
   @override
-  String get askAiAutoApproved => 'Auto-approved';
+  String get askAiAutoApproved => '자동 승인됨';
 
   @override
-  String get askAiAutoRunSafeCommands => 'Auto-run read-only commands';
+  String get askAiAutoRunSafeCommands => '읽기 전용 명령 자동 실행';
 
   @override
   String get askAiAutoRunSafeCommandsTip =>
-      'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.';
+      '모델과 로컬 안전 검사 모두가 읽기 전용으로 판단한 경우에만 자동 실행합니다. 시스템을 바꾸는 명령은 여전히 검토가 필요합니다.';
 
   @override
-  String get askAiSendOnEnter => 'Enter sends';
+  String get askAiSendOnEnter => 'Enter로 보내기';
 
   @override
   String get askAiSendOnEnterTip =>
-      'Enter sends the message, Shift+Enter starts a new line. Off swaps them: Enter starts a new line and Cmd/Ctrl+Enter sends.';
+      'Enter로 메시지를 보내고 Shift+Enter로 줄을 바꿉니다. 끄면 반대가 되어 Enter가 줄바꿈, Cmd/Ctrl+Enter가 전송입니다.';
 
   @override
-  String get askAiApiKeyOptional =>
-      'Optional for local or unauthenticated endpoints';
+  String get askAiApiKeyOptional => '로컬이거나 인증이 없는 엔드포인트에서는 선택 사항';
 
   @override
-  String get askAiHistory => 'Conversation history';
+  String get askAiHistory => '대화 기록';
 
   @override
-  String get askAiHistoryLocalOnly =>
-      'Encrypted on this device and excluded from backup and sync';
+  String get askAiHistoryLocalOnly => '이 기기에서 암호화되며 백업과 동기화에서 제외됩니다';
 
   @override
-  String get askAiNewConversation => 'New conversation';
+  String get askAiNewConversation => '새 대화';
 
   @override
-  String get askAiNoHistory => 'No saved conversations for this server';
+  String get askAiNoHistory => '이 서버에 저장된 대화가 없습니다';
 
   @override
-  String get askAiNoHistoryMessages => 'No messages yet';
+  String get askAiNoHistoryMessages => '아직 메시지가 없습니다';
 
   @override
-  String get askAiUntitledConversation => 'New conversation';
+  String get askAiUntitledConversation => '새 대화';
 
   @override
-  String get askAiRenameConversation => 'Rename conversation';
+  String get askAiRenameConversation => '대화 이름 바꾸기';
 
   @override
-  String get askAiDeleteConversationTitle => 'Delete this conversation?';
+  String get askAiDeleteConversationTitle => '이 대화를 삭제할까요?';
 
   @override
-  String get askAiDeleteConversationTip =>
-      'This removes the conversation from this device and cannot be undone.';
+  String get askAiDeleteConversationTip => '대화가 이 기기에서 삭제되며 되돌릴 수 없습니다.';
 
   @override
-  String get askAiClearHistory => 'Clear history';
+  String get askAiClearHistory => '기록 지우기';
 
   @override
-  String get askAiClearHistoryTitle => 'Clear this server\'s Agent history?';
+  String get askAiClearHistoryTitle => '이 서버의 에이전트 기록을 지울까요?';
 
   @override
-  String get askAiClearHistoryTip =>
-      'All Agent conversations saved for this server will be removed from this device.';
+  String get askAiClearHistoryTip => '이 서버에 저장된 모든 에이전트 대화가 이 기기에서 삭제됩니다.';
 
   @override
   String get askAiRestoredReview =>
-      'Restored from history. Review it again before running; it will never run automatically.';
+      '기록에서 복원했습니다. 실행 전에 다시 확인하세요. 저절로 실행되지는 않습니다.';
 
   @override
-  String get agentTitle => 'Agent';
+  String get agentTitle => '에이전트';
 
   @override
-  String get agentWelcome => 'What should we do across your servers?';
+  String get agentWelcome => '서버들에서 무엇을 할까요?';
 
   @override
   String get agentWelcomeTip =>
-      'Ask for a diagnosis or an operational task. The Agent uses live ServerBox state and proposes one reviewed action at a time.';
+      '진단이나 운영 작업을 요청하세요. 에이전트는 ServerBox의 현재 상태를 사용해 검토가 필요한 작업을 하나씩 제안합니다.';
 
   @override
-  String get agentPromptHint =>
-      'Ask the Agent to inspect or operate your servers...';
+  String get agentPromptHint => '에이전트에게 서버 점검이나 조작을 요청하세요...';
 
   @override
-  String get agentNoServers => 'No configured servers';
+  String get agentNoServers => '설정된 서버가 없습니다';
 
   @override
-  String get agentNoHistory => 'No saved global Agent conversations';
+  String get agentNoHistory => '저장된 전역 에이전트 대화가 없습니다';
 
   @override
-  String get agentClearHistoryTitle => 'Clear global Agent history?';
+  String get agentClearHistoryTitle => '전역 에이전트 기록을 지울까요?';
 
   @override
-  String get agentClearHistoryTip =>
-      'All global Agent conversations will be removed from this device.';
+  String get agentClearHistoryTip => '모든 전역 에이전트 대화가 이 기기에서 삭제됩니다.';
 
   @override
-  String get agentToolShell => 'Shell';
+  String get agentToolShell => '셸';
 
   @override
-  String get agentToolReadFile => 'Read file';
+  String get agentToolReadFile => '파일 읽기';
 
   @override
-  String get agentToolWriteFile => 'Write file';
+  String get agentToolWriteFile => '파일 쓰기';
 
   @override
   String get agentToolServerBox => 'ServerBox';
 
   @override
-  String get agentToolFailed => 'Tool execution failed.';
+  String get agentToolFailed => '도구 실행에 실패했습니다.';
 
   @override
   String get atLeastOneTab => '최소 하나의 탭을 선택해야 합니다';
@@ -1235,50 +1226,47 @@ class AppLocalizationsKo extends AppLocalizations {
   String get portForwardBetaTitle => '포트 포워딩 (Beta)';
 
   @override
-  String get tmuxAutoAttach => 'tmux auto-attach';
+  String get tmuxAutoAttach => 'tmux 자동 연결';
 
   @override
-  String get tmuxAuto => 'Auto tmux';
+  String get tmuxAuto => '자동 tmux';
 
   @override
-  String get tmuxAutoTip =>
-      'Automatically start or attach tmux when connecting over SSH';
+  String get tmuxAutoTip => 'SSH로 접속할 때 tmux를 자동으로 시작하거나 연결합니다';
 
   @override
-  String get tmuxSessionSelector => 'Session selector';
+  String get tmuxSessionSelector => '세션 선택기';
 
   @override
-  String get tmuxSessionSelectorTip =>
-      'Show the session picker when connecting';
+  String get tmuxSessionSelectorTip => '접속할 때 세션 선택기를 표시합니다';
 
   @override
-  String get tmuxDefaultSessionName => 'Default session name';
+  String get tmuxDefaultSessionName => '기본 세션 이름';
 
   @override
-  String get tmuxSessionName => 'Session name';
+  String get tmuxSessionName => '세션 이름';
 
   @override
-  String get tmuxExistingSessions => 'Existing sessions';
+  String get tmuxExistingSessions => '기존 세션';
 
   @override
-  String get tmuxNewSession => 'New session';
+  String get tmuxNewSession => '새 세션';
 
   @override
-  String get tmuxWindows => 'Windows';
+  String get tmuxWindows => '창';
 
   @override
-  String get tmuxNewWindow => 'New window';
+  String get tmuxNewWindow => '새 창';
 
   @override
-  String get tmuxNoWindowsFound => 'No windows found';
+  String get tmuxNoWindowsFound => '창을 찾을 수 없습니다';
 
   @override
   String tmuxWindowCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count windows',
-      one: '1 window',
+      other: '창 $count개',
     );
     return '$_temp0';
   }
@@ -1288,33 +1276,32 @@ class AppLocalizationsKo extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count panes',
-      one: '1 pane',
+      other: '페인 $count개',
     );
     return '$_temp0';
   }
 
   @override
-  String get tmuxAttached => 'Attached';
+  String get tmuxAttached => '연결됨';
 
   @override
-  String get tmuxActive => 'Active';
+  String get tmuxActive => '활성';
 
   @override
   String tmuxActiveAt(String time) {
-    return 'active: $time';
+    return '활성: $time';
   }
 
   @override
   String tmuxAttachedAt(String time) {
-    return 'attached: $time';
+    return '연결: $time';
   }
 
   @override
-  String get tmuxSkip => 'Skip';
+  String get tmuxSkip => '건너뛰기';
 
   @override
-  String get tmuxNotAvailable => 'tmux is not available';
+  String get tmuxNotAvailable => 'tmux를 사용할 수 없습니다';
 
   @override
   String containerSegmentsMismatch(int count) {
