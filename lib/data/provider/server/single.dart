@@ -658,7 +658,6 @@ class ServerNotifier extends _$ServerNotifier {
       updateConnection(ServerConn.loading);
     }
 
-    List<String>? segments;
     String? raw;
 
     try {
@@ -670,23 +669,25 @@ class ServerNotifier extends _$ServerNotifier {
       raw = await _runStatusCommand(statusCmd);
       if (!_isRefreshCurrent(operation, spi)) return;
 
+      // Output carrying no segment marker parses into an empty status: the
+      // page keeps whatever its rolling state still holds (cpu, net speeds)
+      // and blanks the rest, with nothing saying why. It is what a host
+      // answers once the script is gone from under it — the default script
+      // directory is /tmp — so it is reported as a failure, which puts the
+      // connection back through the connect path and reinstalls the script.
+      //
+      // Was `raw.split(separator).isEmpty`, which `String.split` never
+      // returns: unparseable output reached the parser as if it were fine.
+      //
+      // Custom commands carry their own separator, and with every built-in
+      // command disabled they are the only output there is.
+      //
       // Empty output is only a failure if the server was asked for anything.
       // A host with every status command disabled legitimately returns nothing.
-      if (raw.isEmpty &&
-          _hasEnabledStatusCommands(spi, state.status.system)) {
-        _failSsh(
-          SSHErrType.segments,
-          '',
-          message: 'Empty response from server',
-        );
-        return;
-      }
-
-      segments = raw
-          .split(ScriptConstants.separator)
-          .map((e) => e.trim())
-          .toList();
-      if (segments.isEmpty) {
+      final hasSegment =
+          raw.contains(ScriptConstants.separator) ||
+          raw.contains(ScriptConstants.customCmdSep);
+      if (!hasSegment && _hasEnabledStatusCommands(spi, state.status.system)) {
         if (Stores.setting.keepStatusWhenErr.fetch()) {
           // Keep previous server status when error occurs
           if (state.conn != ServerConn.failed && state.status.more.isNotEmpty) {
@@ -696,7 +697,9 @@ class ServerNotifier extends _$ServerNotifier {
         _failSsh(
           SSHErrType.segments,
           '',
-          message: 'Separate segments failed, raw:\n$raw',
+          message: raw.isEmpty
+              ? 'Empty response from server'
+              : 'No status segments in response, raw:\n$raw',
         );
         return;
       }
