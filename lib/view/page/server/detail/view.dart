@@ -825,26 +825,34 @@ ${err.message ?? 'null'}
 
   Widget? _buildDiskView(ServerState si) {
     final ss = si.status;
-    final children = <Widget>[];
+    final mounts = <Widget>[];
 
     // Create widgets for each top-level disk
     for (int idx = 0; idx < ss.disk.length; idx++) {
       final disk = ss.disk[idx];
-      children.add(_buildDiskItemWithHierarchy(disk, ss, 0));
+      mounts.add(_buildDiskItemWithHierarchy(disk, ss, 0));
     }
 
-    if (children.isEmpty) return null;
+    if (mounts.isEmpty) return null;
 
-    // The throughput trend belongs with the mounts it describes rather than in
-    // a card of its own
-    final ioChart = _buildDiskChart(si);
-    if (ioChart != null) children.add(ioChart);
+    // Laid out like the Network card, and for the same reason: a host reports
+    // as many mounts as it has, most of them loop devices and container
+    // layers, and the throughput trend put after that list was never seen.
+    final children = <Widget>[
+      ?_buildDiskChart(si),
+      ExpandTile(
+        title: Text(libL10n.device, style: UIs.text13Grey),
+        initiallyExpanded: false,
+        childrenPadding: const EdgeInsets.only(bottom: 7),
+        children: mounts,
+      ),
+    ];
 
     return ExpandTile(
       title: Text(libL10n.disk),
-      childrenPadding: const EdgeInsets.only(bottom: 7),
+      childrenPadding: EdgeInsets.zero,
       leading: Icon(ServerDetailCards.disk.icon, size: 17),
-      initiallyExpanded: _getInitExpand(children.length),
+      initiallyExpanded: _getInitExpand(1),
       children: children,
     ).cardx;
   }

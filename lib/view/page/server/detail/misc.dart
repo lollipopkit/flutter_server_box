@@ -350,7 +350,10 @@ extension on _ServerDetailPageState {
       // centres the lowest label on the bottom gridline, so roughly half of it
       // hangs outside the plot box. A legend below already absorbs that, and
       // adding the allowance there too left a visible gap under the card.
-      padding: EdgeInsets.fromLTRB(17, 7, 17, hasLegend ? 0 : 15),
+      //
+      // The top keeps the topmost axis label off whatever heading is above it;
+      // at 7 the two touched.
+      padding: EdgeInsets.fromLTRB(17, 15, 17, hasLegend ? 0 : 15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

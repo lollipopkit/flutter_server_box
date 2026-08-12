@@ -62,7 +62,7 @@ class ServerFuncBtns extends StatelessWidget {
     return ListView.separated(
       scrollDirection: Axis.horizontal,
       shrinkWrap: true,
-      padding: const EdgeInsets.symmetric(horizontal: _kPad, vertical: _kVPad),
+      padding: const EdgeInsets.fromLTRB(_kPad, _kVPadTop, _kPad, _kVPadBottom),
       itemCount: items.length,
       itemBuilder: (_, i) => items[i],
       separatorBuilder: (_, _) => const SizedBox(width: _kGap),
@@ -79,9 +79,13 @@ const _kGap = 10.0;
 /// rather than as buttons that happen to be near an edge.
 const _kPad = 14.0;
 
-/// Above and below. The buttons bring their own tap target, which is most of
+/// Above the icons. The buttons bring their own tap target, which is most of
 /// the row's height; this is only what keeps them off the border.
-const _kVPad = 3.0;
+const _kVPadTop = 5.0;
+
+/// Below the labels, and less than [_kVPadTop]: a line of text carries its own
+/// space under it, so matching the two reads as more room below than above.
+const _kVPadBottom = 1.0;
 
 extension ServerFuncBtnsBuild on ServerFuncBtns {
   Widget _buildItem(BuildContext context, ServerFuncBtn e, WidgetRef ref) {
