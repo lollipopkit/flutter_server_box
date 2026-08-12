@@ -487,17 +487,33 @@ class GlobalAgentToolService {
     }
   }
 
-  ServerState _connectedServer(String? serverId) {
+  /// The server, with a shell open on it.
+  ///
+  /// Opens one if there is none. A server reached over its monitor agent's
+  /// HTTP API holds no SSH client until something needs a shell — that is the
+  /// point of polling over HTTP — so demanding an existing client meant every
+  /// command on such a server failed, and the `connect` action the error told
+  /// the model to use refreshes status over HTTP without producing one, so the
+  /// retry failed the same way. Terminal, SFTP and port forwarding all reach a
+  /// shell through this same lazy path.
+  Future<ServerState> _connectedServer(String? serverId) async {
     final state = _server(serverId);
     final client = state.client;
-    if (client == null ||
-        client.isClosed ||
-        state.conn < ServerConn.connected) {
+    if (client != null && !client.isClosed) return state;
+
+    if (state.spi.ssh == null) {
       throw StateError(
-        'Server ${state.spi.name} is not connected. Use the serverbox connect action first.',
+        'Server ${state.spi.name} has no SSH credential, so it cannot run '
+        'commands. It reports status over its monitor agent only.',
       );
     }
-    return state;
+
+    try {
+      await _ref.read(serverProvider(state.spi.id).notifier).ensureShellClient();
+    } catch (e) {
+      throw StateError('Cannot open a shell on ${state.spi.name}: $e');
+    }
+    return _ref.read(serverProvider(state.spi.id));
   }
 
   ServerState _server(String? serverId) {
@@ -514,7 +530,7 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final state = _connectedServer(proposal.serverId);
+    final state = await _connectedServer(proposal.serverId);
     final command = proposal.argumentString('command');
     if (command == null) throw const FormatException('command is required');
     final session = await state.client!.execute(command);
@@ -584,7 +600,7 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final state = _connectedServer(proposal.serverId);
+    final state = await _connectedServer(proposal.serverId);
     final path = proposal.path;
     if (path == null) throw const FormatException('path is required');
     SftpClient? sftp;
@@ -631,7 +647,7 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final state = _connectedServer(proposal.serverId);
+    final state = await _connectedServer(proposal.serverId);
     final path = proposal.path;
     final content = proposal.arguments['content'];
     if (path == null) throw const FormatException('path is required');

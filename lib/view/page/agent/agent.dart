@@ -80,6 +80,14 @@ String formatGlobalAgentToolResultOutput(
   }
 
   final data = Map<Object?, Object?>.from(result.data! as Map);
+
+  // A tool that threw never produced any of the fields below, so reading them
+  // yielded "the command produced no output" — which is what a command that
+  // never ran looks like from here, and says nothing about why. The reason is
+  // the only thing worth showing.
+  final error = data['error'] as String?;
+  if (error != null && error.isNotEmpty) return error;
+
   final stdout = data['stdout'] as String? ?? '';
   final stderr = data['stderr'] as String? ?? '';
   final exitCode = data['exit_code'];
