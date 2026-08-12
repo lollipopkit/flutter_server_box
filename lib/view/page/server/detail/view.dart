@@ -98,7 +98,6 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   late final _collapse = _settings.collapseUIDefault.fetch();
   late final _textFactor = TextScaler.linear(_settings.textFactor.fetch());
   late final _cpuViewAsProgress = _settings.cpuViewAsProgress.fetch();
-  late final _moveServerFuncs = _settings.moveServerFuncs.fetch();
   late final _displayCpuIndex = _settings.displayCpuIndex.fetch();
 
   @override
@@ -247,7 +246,7 @@ ${err.message ?? 'null'}
     // transports without one instead of offering buttons that can only fail.
     // `terminal` rather than `shell`: an agent's passwordless PTY earns the
     // row too, and `btns` decides what belongs in it
-    final buildFuncs = !_moveServerFuncs && si.capabilities.terminal;
+    final buildFuncs = si.capabilities.terminal;
     final logo = _buildLogo(si);
     final children = <Widget>[?logo, ?_buildErrCard(si)];
     for (final card in _cardsOrder) {

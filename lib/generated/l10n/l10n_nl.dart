@@ -517,10 +517,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get more => 'Meer';
 
   @override
-  String get moveOutServerFuncBtnsHelp =>
-      'Aan: kan worden weergegeven onder elke kaart op de Server-tabbladpagina. Uit: kan worden weergegeven bovenaan de Serverdetails-pagina.';
-
-  @override
   String get needRestart => 'App moet opnieuw worden gestart';
 
   @override

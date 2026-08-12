@@ -1020,12 +1020,6 @@ abstract class AppLocalizations {
   /// **'More'**
   String get more;
 
-  /// No description provided for @moveOutServerFuncBtnsHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'On: can be displayed below each card on the Server Tab page. Off: can be displayed at the top of the Server Details page.'**
-  String get moveOutServerFuncBtnsHelp;
-
   /// No description provided for @needRestart.
   ///
   /// In en, this message translates to:

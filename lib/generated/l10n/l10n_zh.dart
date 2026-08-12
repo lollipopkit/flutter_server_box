@@ -490,10 +490,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get more => '更多';
 
   @override
-  String get moveOutServerFuncBtnsHelp =>
-      '开启：可以在服务器 Tab 页的每个卡片下方显示。关闭：在服务器详情页顶部显示。';
-
-  @override
   String get needRestart => '需要重启 App';
 
   @override
@@ -1594,10 +1590,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get more => '更多';
-
-  @override
-  String get moveOutServerFuncBtnsHelp =>
-      '開啟：可以在伺服器 Tab 頁的每個卡片下方顯示。關閉：在伺服器詳情頁頂部顯示。';
 
   @override
   String get needRestart => '需要重開 App';

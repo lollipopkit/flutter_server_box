@@ -516,10 +516,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get more => 'Mais';
 
   @override
-  String get moveOutServerFuncBtnsHelp =>
-      'Ativado: Mostra abaixo de cada cartão na aba do servidor. Desativado: Mostra no topo da página de detalhes do servidor.';
-
-  @override
   String get needRestart => 'Necessita reiniciar o app';
 
   @override

@@ -133,7 +133,6 @@
     }
   },
   "more": "Plus",
-  "moveOutServerFuncBtnsHelp": "Activé : peut être affiché sous chaque carte sur la page de l'onglet Serveur. Désactivé : peut être affiché en haut de la page de détails du serveur.",
   "needRestart": "Nécessite un redémarrage de l'application",
   "netViewType": "Type de vue réseau",
   "newContainer": "Nouveau conteneur",

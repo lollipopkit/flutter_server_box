@@ -150,7 +150,6 @@
     }
   },
   "more": "更多",
-  "moveOutServerFuncBtnsHelp": "開啟：可以在伺服器 Tab 頁的每個卡片下方顯示。關閉：在伺服器詳情頁頂部顯示。",
   "needRestart": "需要重開 App",
   "netViewType": "網路檢視類型",
   "newContainer": "新建容器",

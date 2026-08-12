@@ -141,24 +141,13 @@ extension _Server on _AppSettingsPageState {
     );
   }
 
+  /// Order only. There was a switch above it for whether the buttons lived on
+  /// the server card or the detail page; they float over the detail page now,
+  /// which works on either layout, so there is nothing left to choose.
   Widget _buildServerFuncBtns() {
-    return ExpandTile(
+    return ListTile(
       leading: const Icon(BoxIcons.bxs_joystick_button, size: _kIconSize),
       title: Text(l10n.serverFuncBtns),
-      children: [_buildServerFuncBtnsSwitch(), _buildServerFuncBtnsOrder()],
-    );
-  }
-
-  Widget _buildServerFuncBtnsSwitch() {
-    return ListTile(
-      title: TipText(libL10n.location, l10n.moveOutServerFuncBtnsHelp),
-      trailing: StoreSwitch(prop: _setting.moveServerFuncs),
-    );
-  }
-
-  Widget _buildServerFuncBtnsOrder() {
-    return ListTile(
-      title: Text(libL10n.sequence),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => ServerFuncBtnsOrderPage.route.go(context),
     );

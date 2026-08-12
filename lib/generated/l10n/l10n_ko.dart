@@ -497,10 +497,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get more => '더 보기';
 
   @override
-  String get moveOutServerFuncBtnsHelp =>
-      '켜기: 서버 탭의 각 카드 아래에 표시됩니다. 끄기: 서버 상세 페이지 상단에 표시됩니다.';
-
-  @override
   String get needRestart => '앱을 다시 시작해야 합니다';
 
   @override

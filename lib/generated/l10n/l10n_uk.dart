@@ -519,10 +519,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get more => 'Більше';
 
   @override
-  String get moveOutServerFuncBtnsHelp =>
-      'Включено: може відображатися під кожною карткою на вкладці Сервер. Вимкнено: може відображатися вгорі на сторінці деталей сервера.';
-
-  @override
   String get needRestart => 'Необхідно перезапустити застосунок';
 
   @override

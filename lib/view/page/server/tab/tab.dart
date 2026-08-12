@@ -28,7 +28,6 @@ import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
-import 'package:server_box/view/widget/server_func_btns.dart';
 
 part 'card_stat.dart';
 part 'content.dart';
@@ -405,8 +404,6 @@ class _ServerPageState extends ConsumerState<ServerPage>
               ],
             ),
             UIs.height13,
-            if (Stores.setting.moveServerFuncs.fetch())
-              SizedBox(height: 27, child: ServerFuncBtns(spi: spi)),
           ],
         );
       },
@@ -425,5 +422,4 @@ class _ServerPageState extends ConsumerState<ServerPage>
   static const _kCardHeightMin = 23.0;
   static const _kCardHeightFlip = 99.0;
   static const _kCardHeightNormal = 110.0;
-  static const _kCardHeightMoveOutFuncs = 135.0;
 }

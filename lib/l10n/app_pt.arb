@@ -133,7 +133,6 @@
     }
   },
   "more": "Mais",
-  "moveOutServerFuncBtnsHelp": "Ativado: Mostra abaixo de cada cartão na aba do servidor. Desativado: Mostra no topo da página de detalhes do servidor.",
   "needRestart": "Necessita reiniciar o app",
   "netViewType": "Tipo de visualização de rede",
   "newContainer": "Novo contêiner",

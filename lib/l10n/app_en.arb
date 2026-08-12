@@ -160,7 +160,6 @@
     }
   },
   "more": "More",
-  "moveOutServerFuncBtnsHelp": "On: can be displayed below each card on the Server Tab page. Off: can be displayed at the top of the Server Details page.",
   "needRestart": "App needs to be restarted",
   "netViewType": "Network view type",
   "newContainer": "New container",

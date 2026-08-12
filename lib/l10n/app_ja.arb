@@ -133,7 +133,6 @@
     }
   },
   "more": "もっと",
-  "moveOutServerFuncBtnsHelp": "有効にする：サーバータブの各カードの下に表示されます。無効にする：サーバーの詳細ページの上部に表示されます。",
   "needRestart": "アプリを再起動する必要があります",
   "netViewType": "ネットワークビュータイプ",
   "newContainer": "新しいコンテナを作成",

@@ -133,7 +133,6 @@
     }
   },
   "more": "Más",
-  "moveOutServerFuncBtnsHelp": "Activado: se mostrará debajo de cada tarjeta en la página de servidores. Desactivado: se mostrará en la parte superior de los detalles del servidor.",
   "needRestart": "Necesita reiniciar la app",
   "netViewType": "Tipo de vista de red",
   "newContainer": "Crear contenedor nuevo",

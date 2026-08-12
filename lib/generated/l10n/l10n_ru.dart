@@ -518,10 +518,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get more => 'Больше';
 
   @override
-  String get moveOutServerFuncBtnsHelp =>
-      'Включено: кнопки функций сервера отображаются под каждой карточкой на вкладке сервера. Выключено: отображается в верхней части страницы деталей сервера.';
-
-  @override
   String get needRestart => 'Требуется перезапуск приложения';
 
   @override

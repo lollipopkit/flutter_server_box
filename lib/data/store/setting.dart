@@ -168,9 +168,13 @@ class SettingStore extends HiveStore {
 
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 
-  /// Display server tab function buttons on the bottom of each server card if [true]
+  /// Whether the server card carried the function buttons instead of the
+  /// detail page.
   ///
-  /// Otherwise, display them on the top of server detail page
+  /// TODO: delete this and its stored key. Nothing reads it — the buttons are
+  /// a bar floating over the detail page, which is where they are within reach
+  /// on either layout, so there is no longer a choice to store.
+  @Deprecated('The buttons float over the detail page on every layout')
   late final moveServerFuncs = propertyDefault(
     'moveOutServerTabFuncBtns',
     false,

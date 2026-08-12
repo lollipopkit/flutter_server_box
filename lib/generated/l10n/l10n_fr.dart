@@ -518,10 +518,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get more => 'Plus';
 
   @override
-  String get moveOutServerFuncBtnsHelp =>
-      'Activé : peut être affiché sous chaque carte sur la page de l\'onglet Serveur. Désactivé : peut être affiché en haut de la page de détails du serveur.';
-
-  @override
   String get needRestart => 'Nécessite un redémarrage de l\'application';
 
   @override

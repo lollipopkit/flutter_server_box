@@ -42,20 +42,7 @@ class ServerFuncBtns extends StatelessWidget {
         Consumer(builder: (_, ref, _) => _buildItem(context, value, ref)),
     ];
 
-    // Inside a card, at the card's width: a row that scrolls where it has to.
-    if (Stores.setting.moveServerFuncs.fetch()) {
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: _kGap),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          spacing: _kGap,
-          children: items,
-        ),
-      );
-    }
-
-    // On its own, so it has to say how wide it is. A shrink-wrapping viewport
+    // It has to say how wide it is. A shrink-wrapping viewport
     // takes the width of what is in it and no more — and, once whatever holds
     // it runs out of room to give, scrolls instead of overflowing. One line
     // either way.
@@ -90,16 +77,6 @@ const _kVPadBottom = 1.0;
 
 extension ServerFuncBtnsBuild on ServerFuncBtns {
   Widget _buildItem(BuildContext context, ServerFuncBtn e, WidgetRef ref) {
-    final move = Stores.setting.moveServerFuncs.fetch();
-    if (move) {
-      return IconButton(
-        onPressed: () => _onTapMoreBtns(e, context, ref),
-        padding: EdgeInsets.zero,
-        tooltip: e.toStr,
-        icon: Icon(e.icon, size: 15),
-      );
-    }
-
     // The label is part of the button, not a caption under one. An
     // `IconButton` with a `Text` beneath it left the word inert, so half of
     // what looks like a target did nothing when tapped.

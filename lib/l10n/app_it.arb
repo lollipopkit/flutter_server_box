@@ -134,7 +134,6 @@
     }
   },
   "more": "Altro",
-  "moveOutServerFuncBtnsHelp": "Attivo: può essere visualizzato sotto ogni carta nella pagina Scheda Server. Disattivato: può essere visualizzato nella parte superiore della pagina Dettagli Server.",
   "needRestart": "L'app deve essere riavviata",
   "netViewType": "Tipo di visualizzazione rete",
   "newContainer": "Nuovo container",

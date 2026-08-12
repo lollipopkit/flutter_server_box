@@ -517,10 +517,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get more => 'Daha fazla';
 
   @override
-  String get moveOutServerFuncBtnsHelp =>
-      'Açık: Sunucu Sekmesi sayfasındaki her kartın altında görüntülenebilir. Kapalı: Sunucu Ayrıntıları sayfasının üstünde görüntülenebilir.';
-
-  @override
   String get needRestart => 'Uygulamanın yeniden başlatılması gerekiyor';
 
   @override

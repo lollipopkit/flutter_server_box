@@ -133,7 +133,6 @@
     }
   },
   "more": "Daha fazla",
-  "moveOutServerFuncBtnsHelp": "Açık: Sunucu Sekmesi sayfasındaki her kartın altında görüntülenebilir. Kapalı: Sunucu Ayrıntıları sayfasının üstünde görüntülenebilir.",
   "needRestart": "Uygulamanın yeniden başlatılması gerekiyor",
   "netViewType": "Ağ görüntüleme türü",
   "newContainer": "Yeni konteyner",

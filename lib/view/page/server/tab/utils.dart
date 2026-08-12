@@ -142,9 +142,6 @@ extension _Utils on _ServerPageState {
     if (flip) {
       return _ServerPageState._kCardHeightFlip;
     }
-    if (Stores.setting.moveServerFuncs.fetch()) {
-      return _ServerPageState._kCardHeightMoveOutFuncs;
-    }
     return _ServerPageState._kCardHeightNormal;
   }
 

@@ -500,10 +500,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get more => 'もっと';
 
   @override
-  String get moveOutServerFuncBtnsHelp =>
-      '有効にする：サーバータブの各カードの下に表示されます。無効にする：サーバーの詳細ページの上部に表示されます。';
-
-  @override
   String get needRestart => 'アプリを再起動する必要があります';
 
   @override
