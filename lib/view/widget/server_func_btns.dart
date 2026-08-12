@@ -46,8 +46,12 @@ class ServerFuncBtns extends StatelessWidget {
     if (Stores.setting.moveServerFuncs.fetch()) {
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: Row(mainAxisSize: MainAxisSize.min, children: items),
+        padding: const EdgeInsets.symmetric(horizontal: _kGap),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: _kGap,
+          children: items,
+        ),
       );
     }
 
@@ -57,11 +61,25 @@ class ServerFuncBtns extends StatelessWidget {
     // language makes the labels long enough to run out of room, it takes a
     // second line instead of clipping them.
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
-      child: Wrap(alignment: WrapAlignment.center, children: items),
+      padding: const EdgeInsets.symmetric(horizontal: _kPad, vertical: _kPad),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: _kGap,
+        runSpacing: _kGap,
+        children: items,
+      ),
     );
   }
 }
+
+/// Between two buttons.
+const _kGap = 10.0;
+
+/// Between the buttons and whatever the row is drawn inside.
+///
+/// Larger than [_kGap], so the row reads as a group with a border around it
+/// rather than as buttons that happen to be near an edge.
+const _kPad = 14.0;
 
 extension ServerFuncBtnsBuild on ServerFuncBtns {
   Widget _buildItem(BuildContext context, ServerFuncBtn e, WidgetRef ref) {
