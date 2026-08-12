@@ -139,6 +139,7 @@
   "dockerImagesFmt": "{count} 個映像檔",
   "dockerProjectOther": "其他",
   "dockerPruneTip": "清理未使用的資料以釋放磁碟空間",
+  "dockerStatistics": "Docker 統計",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} 個正在執行, {stoppedCount} 個已停止",
   "dockerStatusRunningFmt": "{count} 個容器正在執行",
   "doubleColumnMode": "雙列模式",

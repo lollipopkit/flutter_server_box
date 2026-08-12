@@ -102,7 +102,7 @@ final class _IntroPage extends StatelessWidget {
                           size: _kIconSize,
                         ),
                         title: TipText(
-                          'Docker ${l10n.stat}',
+                          l10n.dockerStatistics,
                           l10n.parseContainerStatsTip,
                         ),
                         trailing: StoreSwitch(

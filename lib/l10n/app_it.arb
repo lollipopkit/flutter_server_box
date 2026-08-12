@@ -68,6 +68,7 @@
   "dockerImagesFmt": "{count} immagini",
   "dockerProjectOther": "Altri",
   "dockerPruneTip": "Rimuovi i dati inutilizzati per liberare spazio su disco",
+  "dockerStatistics": "Statistiche Docker",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} in esecuzione, {stoppedCount} container fermati.",
   "dockerStatusRunningFmt": "{count} container in esecuzione.",
   "doubleColumnMode": "Modalità a doppia colonna",

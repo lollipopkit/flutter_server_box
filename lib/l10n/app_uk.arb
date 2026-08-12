@@ -68,6 +68,7 @@
   "dockerImagesFmt": "Всього {count} образів",
   "dockerProjectOther": "Інші",
   "dockerPruneTip": "Видаліть невикористані дані, щоб звільнити місце на диску",
+  "dockerStatistics": "Статистика Docker",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} запущено, {stoppedCount} контейнерів зупинено.",
   "dockerStatusRunningFmt": "{count} контейнер(и) запущено.",
   "doubleColumnMode": "Режим подвійної колонки",

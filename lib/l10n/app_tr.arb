@@ -68,6 +68,7 @@
   "dockerImagesFmt": "{count} görüntü",
   "dockerProjectOther": "Diğer",
   "dockerPruneTip": "Disk alanını boşaltmak için kullanılmayan verileri kaldırın",
+  "dockerStatistics": "Docker İstatistikleri",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} çalışıyor, {stoppedCount} konteyner durdurulmuş.",
   "dockerStatusRunningFmt": "{count} konteyner çalışıyor.",
   "doubleColumnMode": "Çift sütun modu",

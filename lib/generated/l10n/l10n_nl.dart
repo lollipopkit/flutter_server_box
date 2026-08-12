@@ -480,6 +480,9 @@ class AppLocalizationsNl extends AppLocalizations {
       'Verwijder ongebruikte gegevens om schijfruimte vrij te maken';
 
   @override
+  String get dockerStatistics => 'Docker-statistieken';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
