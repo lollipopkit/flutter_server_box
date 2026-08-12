@@ -72,6 +72,15 @@ extension _AI on _AppSettingsPageState {
             onChanged: _setting.askAiAutoRunSafeCommands.put,
           );
         }),
+        _setting.askAiSendOnEnter.listenable().listenVal((enabled) {
+          return SwitchListTile.adaptive(
+            secondary: const Icon(Icons.keyboard_return),
+            title: Text(l10n.askAiSendOnEnter),
+            subtitle: Text(l10n.askAiSendOnEnterTip),
+            value: enabled,
+            onChanged: _setting.askAiSendOnEnter.put,
+          );
+        }),
         _buildAskAiTextTile(
           prop: _setting.askAiBaseUrl,
           leading: const Icon(MingCute.link_2_line),

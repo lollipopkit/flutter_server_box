@@ -856,12 +856,12 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        border: Border.all(color: Hairline.color(context)),
       ),
       child: ExpansionTile(
         initiallyExpanded: widget.autoStart,
         tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-        childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        childrenPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
         leading: const Icon(Icons.terminal, size: 19),
         title: Text(context.l10n.askAiTerminalContext),
         subtitle: Text(
@@ -1002,14 +1002,14 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        border: Border.all(color: Hairline.color(context)),
       ),
       child: ExpansionTile(
         shape: const RoundedRectangleBorder(),
         collapsedShape: const RoundedRectangleBorder(),
         initiallyExpanded: !result.succeeded,
         tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-        childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        childrenPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
         leading: Icon(Icons.terminal, size: 19, color: color),
         title: Text(
           command.command,
@@ -1295,7 +1295,13 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       child: Column(
         children: [
           _buildHeader(context, theme),
-          Divider(height: 1, color: theme.colorScheme.outlineVariant),
+          // The app's one line — see [Hairline]. This panel sits beside the
+          // terminal, so its rules meet that column's edge.
+          Divider(
+            height: Hairline.thickness,
+            thickness: Hairline.thickness,
+            color: Hairline.color(context),
+          ),
           Expanded(
             child: Scrollbar(
               controller: _scrollController,
@@ -1315,7 +1321,11 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
               ),
             ),
           ),
-          Divider(height: 1, color: theme.colorScheme.outlineVariant),
+          Divider(
+            height: Hairline.thickness,
+            thickness: Hairline.thickness,
+            color: Hairline.color(context),
+          ),
           _buildComposer(context, theme),
         ],
       ),

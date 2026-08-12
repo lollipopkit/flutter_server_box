@@ -181,6 +181,13 @@ class AppLocalizationsZh extends AppLocalizations {
       '仅当模型与本地安全检查都判定命令为只读时自动执行；会更改系统的命令仍需人工审核。';
 
   @override
+  String get askAiSendOnEnter => 'Enter 发送';
+
+  @override
+  String get askAiSendOnEnterTip =>
+      'Enter 发送消息，Shift+Enter 换行。关闭后互换：Enter 换行，Cmd/Ctrl+Enter 发送。';
+
+  @override
   String get askAiApiKeyOptional => '本地或无需认证的接口可留空';
 
   @override
@@ -402,7 +409,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cpuViewAsProgressTip => '以进度条样式显示每个 CPU 的使用率（旧版样式）';
 
   @override
-  String get configured => 'Configured';
+  String get configured => '已配置';
 
   @override
   String get customCmd => '自定义命令';
@@ -720,7 +727,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get forceSinglePane => '单栏显示';
 
   @override
-  String get forceSinglePaneTip => '无论窗口多宽都只用一栏，不在列表旁边显示服务器详情。';
+  String get forceSinglePaneTip =>
+      '无论窗口多宽都只用一栏，不在列表旁边显示它打开的内容——服务器旁的详情、终端与文件旁的会话。';
 
   @override
   String get passwordlessTerminal => '免凭据终端';
@@ -1328,6 +1336,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAi => '詢問 AI';
 
   @override
+  String get ai => 'AI';
+
+  @override
   String get askAiApiKey => 'API 金鑰';
 
   @override
@@ -1480,6 +1491,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get askAiAutoRunSafeCommandsTip =>
       '僅當模型與本機安全檢查都判定指令為唯讀時自動執行；會變更系統的指令仍需人工審核。';
+
+  @override
+  String get askAiSendOnEnter => 'Enter 傳送';
+
+  @override
+  String get askAiSendOnEnterTip =>
+      'Enter 傳送訊息，Shift+Enter 換行。關閉後互換：Enter 換行，Cmd/Ctrl+Enter 傳送。';
 
   @override
   String get askAiApiKeyOptional => '本機或不需驗證的介面可留空';
@@ -1701,6 +1719,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get cpuViewAsProgressTip => '以進度條樣式顯示每個CPU的使用率（舊版樣式）';
+
+  @override
+  String get configured => '已設定';
 
   @override
   String get customCmd => '自訂指令';
@@ -1932,6 +1953,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get noJumpServerAvailable => '沒有可用的跳板伺服器。';
 
   @override
+  String get jumpServerAndProxyCommandCannotBeUsedTogether =>
+      '跳板伺服器與 ProxyCommand 不能同時使用。';
+
+  @override
   String get keepForeground => '請讓 App 保持在前景執行';
 
   @override
@@ -2014,7 +2039,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get forceSinglePane => '單欄顯示';
 
   @override
-  String get forceSinglePaneTip => '無論視窗多寬都只用一欄，不在清單旁邊顯示伺服器詳情。';
+  String get forceSinglePaneTip =>
+      '無論視窗多寬都只用一欄，不在清單旁邊顯示它打開的內容——伺服器旁的詳情、終端與檔案旁的對話。';
 
   @override
   String get passwordlessTerminal => '免憑證終端';
@@ -2055,6 +2081,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pushToken => '消息推送 Token';
+
+  @override
+  String get proxyCommandOnlySupportedOnDesktop => 'ProxyCommand 僅支援桌面平台。';
 
   @override
   String get pveIgnoreCertTip => '不建議啟用，請注意安全風險！如果您使用的是 PVE 的預設憑證，則需要啟用此選項。';
@@ -2173,6 +2202,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sftpSSHConnected => 'SFTP 已連線';
 
   @override
+  String get sftp => 'SFTP';
+
+  @override
   String get sftpShowFoldersFirst => '資料夾顯示在前';
 
   @override
@@ -2188,6 +2220,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get specifyDevTip => '例如網路流量統計預設是所有裝置，你可以在這裡指定特定的裝置。';
 
   @override
+  String get tempIsCelsiusTip =>
+      '啟用後，溫度值會以攝氏度而非毫攝氏度處理。僅在溫度顯示錯誤時開啟（例如顯示 0.1°C 而非 58°C）。';
+
+  @override
   String get speed => '速度';
 
   @override
@@ -2199,6 +2235,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String sshConfigAllExist(Object duplicateCount) {
     return '所有伺服器均已存在（發現$duplicateCount個重複項）';
   }
+
+  @override
+  String get ssh => 'SSH';
+
+  @override
+  String get sshConnectionModeTip => '內建：使用 App 的終端。系統 SSH：在外部終端中啟動系統的 ssh 指令。';
+
+  @override
+  String get sshConnectionModeUseBuiltin => '使用內建終端';
+
+  @override
+  String get sshConnectionModeUseSystem => '使用系統 SSH';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
@@ -2308,6 +2356,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
+  String get syncAppSettings => '同步 App 設定';
+
+  @override
+  String get syncAppSettingsTip => '將主題、版面配置、編輯器、終端等裝置偏好一併納入自動同步。';
+
+  @override
   String get system => '系統';
 
   @override
@@ -2380,6 +2434,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get whenOpenApp => '當打開 App 時';
 
   @override
+  String get wiki => 'Wiki';
+
+  @override
   String get wolTip => '設定 WOL 後，每次連線伺服器時將自動發送喚醒請求';
 
   @override
@@ -2393,11 +2450,64 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '連線到伺服器後，將會在 `~/.config/server_box` \n | `/tmp/server_box` 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。';
 
   @override
+  String get menuGitHubRepository => 'GitHub 儲存庫';
+
+  @override
   String get podmanDockerEmulationDetected =>
       '檢測到 Podman Docker 仿真。請在設定中切換到 Podman。';
 
   @override
+  String get portForwardBeta => '此功能仍在 Beta 測試階段，不保證可正常運作。';
+
+  @override
+  String get portForward_startPrompt => '新增一條連接埠轉發規則以開始';
+
+  @override
+  String get portForward_localHost => '本機主機';
+
+  @override
+  String get portForward_localPort => '本機連接埠';
+
+  @override
+  String get portForward_remoteHost => '遠端主機';
+
+  @override
+  String get portForward_remotePort => '遠端連接埠';
+
+  @override
+  String get portForward_type_local => '本機';
+
+  @override
+  String get portForward_type_remote => '遠端';
+
+  @override
+  String portForward_deleteConfirmFmt(Object name) {
+    return '刪除 $name？';
+  }
+
+  @override
   String get sponsor => '贊助';
+
+  @override
+  String get sort => '排序';
+
+  @override
+  String get sortByName => '依名稱';
+
+  @override
+  String get sortByJoinTime => '依加入時間';
+
+  @override
+  String get ascending => '遞增';
+
+  @override
+  String get descending => '遞減';
+
+  @override
+  String get serverHistory => '伺服器紀錄';
+
+  @override
+  String get clearHistory => '清除紀錄';
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';

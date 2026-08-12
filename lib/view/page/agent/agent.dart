@@ -121,6 +121,14 @@ class _AgentPageState extends ConsumerState<AgentPage>
   bool _isStreaming = false;
   bool _isExecuting = false;
   bool _turnCompleted = false;
+  /// The stored conversations, read from the box rather than re-read on every
+  /// build.
+  ///
+  /// The column that shows them is rebuilt by every `setState` this page makes
+  /// — one per keystroke while typing, one per token while streaming — and
+  /// each fetch deserialises every conversation's full item list. Refreshed
+  /// where the store is written, which is the only thing that can change it.
+  var _conversations = const <AgentConversation>[];
   bool _historyInitialized = false;
   bool _pendingToolRestored = false;
   int _autoRunCount = 0;
@@ -144,6 +152,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
     super.didChangeDependencies();
     if (_historyInitialized) return;
     _historyInitialized = true;
+    _refreshConversations();
     _restoreConversation(
       Stores.agentConversation.fetchActive(globalAgentConversationScope),
       notify: false,
@@ -161,6 +170,13 @@ class _AgentPageState extends ConsumerState<AgentPage>
       ..removeListener(_handleInputChanged)
       ..dispose();
     super.dispose();
+  }
+
+  /// Re-reads the stored conversations. Called wherever the box is written.
+  void _refreshConversations() {
+    _conversations = Stores.agentConversation.fetchForServer(
+      globalAgentConversationScope,
+    );
   }
 
   void _handleInputChanged() {
@@ -281,6 +297,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
       providerBaseUrl: Stores.setting.askAiBaseUrl.fetch(),
       model: Stores.setting.askAiModel.fetch(),
     );
+    _refreshConversations();
     _conversation = created;
     return created;
   }
@@ -296,12 +313,39 @@ class _AgentPageState extends ConsumerState<AgentPage>
       items: trimmed,
     );
     if (!Stores.agentConversation.save(updated)) return;
+    _refreshConversations();
     _conversation = Stores.agentConversation.fetch(updated.id) ?? updated;
     if (trimmed.length != _history.length) {
       _history
         ..clear()
         ..addAll(trimmed);
     }
+  }
+
+  /// Enter sends and Shift+Enter breaks the line, or the other way round with
+  /// the modifier doing the sending — the two habits people bring to a chat
+  /// box, and the setting that picks between them.
+  KeyEventResult _handleComposerKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (event.logicalKey != LogicalKeyboardKey.enter &&
+        event.logicalKey != LogicalKeyboardKey.numpadEnter) {
+      return KeyEventResult.ignored;
+    }
+    // Mid-composition the key belongs to the IME, which is using it to accept a
+    // candidate. Taking it would send half a word in every language that needs
+    // one to type at all.
+    if (!_inputController.value.composing.isCollapsed) {
+      return KeyEventResult.ignored;
+    }
+    final keys = HardwareKeyboard.instance;
+    final sends = Stores.setting.askAiSendOnEnter.fetch()
+        ? !keys.isShiftPressed
+        : keys.isMetaPressed || keys.isControlPressed;
+    if (!sends) return KeyEventResult.ignored;
+    _submitPrompt(_inputController.text);
+    // Handled either way: the key meant "send", and letting it through would
+    // leave a line break behind whenever there was nothing to send.
+    return KeyEventResult.handled;
   }
 
   void _submitPrompt(String prompt) {
@@ -589,6 +633,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
       providerBaseUrl: Stores.setting.askAiBaseUrl.fetch(),
       model: Stores.setting.askAiModel.fetch(),
     );
+    _refreshConversations();
     _restoreConversation(conversation);
   }
 
@@ -632,6 +677,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
       );
       if (title == null || title.isEmpty || !mounted) return;
       if (!Stores.agentConversation.rename(conversation.id, title)) return;
+      _refreshConversations();
       setState(() {
         if (_conversation?.id == conversation.id) {
           _conversation = Stores.agentConversation.fetch(conversation.id);
@@ -665,6 +711,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
       globalAgentConversationScope,
       conversation.id,
     );
+    _refreshConversations();
     if (deletingCurrent) {
       _restoreConversation(
         Stores.agentConversation.fetchActive(globalAgentConversationScope),
@@ -690,6 +737,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
     );
     if (confirmed != true || !mounted) return;
     Stores.agentConversation.clearServer(globalAgentConversationScope);
+    _refreshConversations();
     _restoreConversation(null);
     onChanged?.call();
   }
@@ -706,7 +754,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
           heightFactor: 0.82,
           child: _buildHistoryPanel(
             sheetContext,
-            closeOnSelect: true,
+            inSheet: true,
             onChanged: () {
               if (sheetContext.mounted) setSheetState(() {});
             },
@@ -716,15 +764,18 @@ class _AgentPageState extends ConsumerState<AgentPage>
     );
   }
 
+  /// The conversation list, as a sheet you opened or as the column that is
+  /// always beside the page.
+  ///
+  /// [inSheet] is the difference between the two: a sheet is done once you have
+  /// picked something from it, so picking closes it. The column stays.
   Widget _buildHistoryPanel(
     BuildContext context, {
-    required bool closeOnSelect,
+    required bool inSheet,
     VoidCallback? onChanged,
   }) {
     final theme = Theme.of(context);
-    final conversations = Stores.agentConversation.fetchForServer(
-      globalAgentConversationScope,
-    );
+    final conversations = _conversations;
     final activeId = Stores.agentConversation.activeConversationId(
       globalAgentConversationScope,
     );
@@ -758,7 +809,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
                       ? null
                       : () async {
                           await _beginNewConversation();
-                          if (closeOnSelect && context.mounted) {
+                          if (inSheet && context.mounted) {
                             Navigator.pop(context);
                           }
                         },
@@ -811,11 +862,18 @@ class _AgentPageState extends ConsumerState<AgentPage>
                               ? null
                               : () async {
                                   await _activateConversation(conversation);
-                                  if (closeOnSelect && context.mounted) {
+                                  if (inSheet && context.mounted) {
                                     Navigator.pop(context);
                                   }
                                 },
                           trailing: PopupMenuButton<_HistoryAction>(
+                            // The row's own tap is already refused while a
+                            // tool is running. Renaming is harmless, but
+                            // deleting the conversation being worked in
+                            // clears the timeline the execution is about to
+                            // append its output to — and the execution keeps
+                            // going, since only `dispose` cancels it.
+                            enabled: !_isWorking,
                             itemBuilder: (context) => [
                               PopupMenuItem(
                                 value: _HistoryAction.rename,
@@ -847,16 +905,6 @@ class _AgentPageState extends ConsumerState<AgentPage>
                     },
                   ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(
-              context.l10n.askAiHistoryLocalOnly,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -873,7 +921,10 @@ class _AgentPageState extends ConsumerState<AgentPage>
 
   Widget _buildHeader(BuildContext context, ThemeData theme, bool compact) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(compact ? 12 : 20, 10, 8, 10),
+      // Symmetric where the row ends with the title, so its ellipsis sits
+      // the same distance from the edge as the content below it. The
+      // narrower right side is for the buttons the compact layout keeps.
+      padding: EdgeInsets.fromLTRB(compact ? 12 : 20, 10, compact ? 8 : 20, 10),
       child: Row(
         children: [
           Container(
@@ -898,17 +949,21 @@ class _AgentPageState extends ConsumerState<AgentPage>
               ),
             ),
           ),
-          if (compact)
+          // Both only while the history is a sheet away. Beside its own column
+          // they would be a second copy of the two buttons already at the top
+          // of it.
+          if (compact) ...[
             IconButton(
               tooltip: context.l10n.askAiHistory,
               onPressed: _isWorking ? null : _showHistorySheet,
               icon: const Icon(Icons.history),
             ),
-          IconButton(
-            tooltip: context.l10n.askAiNewConversation,
-            onPressed: _isWorking ? null : _beginNewConversation,
-            icon: const Icon(Icons.add_comment_outlined),
-          ),
+            IconButton(
+              tooltip: context.l10n.askAiNewConversation,
+              onPressed: _isWorking ? null : _beginNewConversation,
+              icon: const Icon(Icons.add_comment_outlined),
+            ),
+          ],
           if (_isWorking)
             IconButton.filledTonal(
               tooltip: libL10n.stop,
@@ -975,7 +1030,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
     return Chip(
       avatar: Icon(icon, size: 17),
       label: Text(label),
-      side: BorderSide(color: theme.colorScheme.outlineVariant),
+      side: BorderSide(color: Hairline.color(context)),
       backgroundColor: theme.colorScheme.surfaceContainerLow,
     );
   }
@@ -1053,7 +1108,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: theme.colorScheme.outlineVariant),
+        side: BorderSide(color: Hairline.color(context)),
       ),
       child: ExpansionTile(
         shape: const RoundedRectangleBorder(),
@@ -1081,7 +1136,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
         children: [
           if (output.isNotEmpty) ...[
             Container(
@@ -1136,7 +1191,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
       color: theme.colorScheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: theme.colorScheme.outlineVariant),
+        side: BorderSide(color: Hairline.color(context)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -1351,50 +1406,79 @@ class _AgentPageState extends ConsumerState<AgentPage>
                 ),
                 const SizedBox(height: 8),
               ],
-              Container(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: theme.colorScheme.outlineVariant),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _inputController,
-                        minLines: 1,
-                        maxLines: 6,
-                        textInputAction: TextInputAction.newline,
-                        textAlignVertical: TextAlignVertical.center,
-                        enabled: !_isWorking && _pendingTool == null,
-                        decoration: InputDecoration(
-                          hintText: _pendingTool == null
-                              ? context.l10n.agentPromptHint
-                              : context.l10n.askAiReviewBeforeContinuing,
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.fromLTRB(
-                            15,
-                            12,
-                            8,
-                            12,
+              // Listened to, not read: the setting is changed on another page,
+              // and nothing here would bring this one back to ask again.
+              Stores.setting.askAiSendOnEnter.listenable().listenVal((
+                sendOnEnter,
+              ) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(18),
+                    // The same line as the rule directly above it.
+                    border: Border.all(color: Hairline.color(context)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        // Above the field rather than on it: the key has to be
+                        // answered before the platform's text input sees it, or
+                        // the newline is in the box by the time we decide it was
+                        // a send.
+                        child: Focus(
+                          canRequestFocus: false,
+                          onKeyEvent: _handleComposerKey,
+                          child: TextField(
+                            controller: _inputController,
+                            minLines: 1,
+                            maxLines: 6,
+                            // What a soft keyboard's return key does, on the
+                            // devices that have one of those instead of a Shift.
+                            textInputAction: sendOnEnter
+                                ? TextInputAction.send
+                                : TextInputAction.newline,
+                            onSubmitted: sendOnEnter ? _submitPrompt : null,
+                            enabled: !_isWorking && _pendingTool == null,
+                            decoration: InputDecoration(
+                              hintText: _pendingTool == null
+                                  ? context.l10n.agentPromptHint
+                                  : context.l10n.askAiReviewBeforeContinuing,
+                              border: InputBorder.none,
+                              // Not for density — the padding below is
+                              // unchanged — but because a field that is not
+                              // dense is also never shorter than 48px, and
+                              // `InputDecorator` both centres the text in that
+                              // floor *and* applies `textAlignVertical` to what
+                              // is left over. The two together pushed the line
+                              // below the middle of the box. Dense, the field is
+                              // its padding plus its text, and the row centres
+                              // the whole of it against the send button.
+                              isDense: true,
+                              contentPadding: const EdgeInsets.fromLTRB(
+                                15,
+                                12,
+                                8,
+                                12,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(7),
-                      child: IconButton.filled(
-                        tooltip: context.l10n.askAiAgentSend,
-                        onPressed: canSend
-                            ? () => _submitPrompt(_inputController.text)
-                            : null,
-                        icon: const Icon(Icons.arrow_upward),
+                      Padding(
+                        padding: const EdgeInsets.all(7),
+                        child: IconButton.filled(
+                          tooltip: context.l10n.askAiAgentSend,
+                          onPressed: canSend
+                              ? () => _submitPrompt(_inputController.text)
+                              : null,
+                          icon: const Icon(Icons.arrow_upward),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
+                    ],
+                  ),
+                );
+              }),
               const SizedBox(height: 6),
               Text(
                 context.l10n.askAiDisclaimer,
@@ -1446,7 +1530,14 @@ class _AgentPageState extends ConsumerState<AgentPage>
     return Column(
       children: [
         _buildHeader(context, theme, compact),
-        Divider(height: 1, color: theme.colorScheme.outlineVariant),
+        // The same seam as the one beside the history column, which these two
+        // meet at a corner: at full strength they read as a brighter line than
+        // it, which is the pane looking like a window of its own.
+        Divider(
+          height: Hairline.thickness,
+          thickness: Hairline.thickness,
+          color: Hairline.color(context),
+        ),
         Expanded(
           child: Scrollbar(
             controller: _scrollController,
@@ -1473,7 +1564,11 @@ class _AgentPageState extends ConsumerState<AgentPage>
             ),
           ),
         ),
-        Divider(height: 1, color: theme.colorScheme.outlineVariant),
+        Divider(
+          height: Hairline.thickness,
+          thickness: Hairline.thickness,
+          color: Hairline.color(context),
+        ),
         Align(
           alignment: Alignment.center,
           child: _buildComposer(context, theme),
@@ -1486,29 +1581,24 @@ class _AgentPageState extends ConsumerState<AgentPage>
   Widget build(BuildContext context) {
     super.build(context);
     final theme = Theme.of(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 900;
-        return Material(
-          color: theme.colorScheme.surface,
-          child: Row(
-            children: [
-              if (wide) ...[
-                SizedBox(
-                  width: 280,
-                  child: _buildHistoryPanel(context, closeOnSelect: false),
-                ),
-                VerticalDivider(
-                  width: 1,
-                  color: theme.colorScheme.outlineVariant,
-                ),
-              ],
-              Expanded(child: _buildMain(context, theme, !wide)),
-            ],
-          ),
-        );
-      },
-    );
+    // The same judgement, width and seam as the server list and the terminal
+    // tabs: whether a list gets a column of its own is a property of the
+    // window, not of the page that happens to be in it.
+    return Stores.setting.forceSinglePane.listenable().listenVal((single) {
+      return Material(
+        color: theme.colorScheme.surface,
+        child: AdaptiveSideList(
+          // Nothing to sit beside until there is a conversation: the header
+          // keeps its history and new-conversation buttons, so folding the
+          // column away costs nothing and hands 320pt back to the answer.
+          enabled: !single && _conversations.isNotEmpty,
+          sideWidth: Stores.setting.paneListWidth.fetch(),
+          onSideWidthChanged: Stores.setting.paneListWidth.put,
+          sideBuilder: (ctx) => _buildHistoryPanel(ctx, inSheet: false),
+          builder: (ctx, split) => _buildMain(ctx, theme, !split),
+        ),
+      );
+    });
   }
 }
 

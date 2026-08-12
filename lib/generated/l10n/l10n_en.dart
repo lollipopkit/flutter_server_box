@@ -188,6 +188,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.';
 
   @override
+  String get askAiSendOnEnter => 'Enter sends';
+
+  @override
+  String get askAiSendOnEnterTip =>
+      'Enter sends the message, Shift+Enter starts a new line. Off swaps them: Enter starts a new line and Cmd/Ctrl+Enter sends.';
+
+  @override
   String get askAiApiKeyOptional =>
       'Optional for local or unauthenticated endpoints';
 
@@ -761,7 +768,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get forceSinglePaneTip =>
-      'Keep one column however wide the window is, instead of showing a server\'s details beside the list.';
+      'Keep one column however wide the window is, instead of putting a list beside what it opens — servers beside their details, terminals and file browsers beside their sessions.';
 
   @override
   String get passwordlessTerminal => 'Passwordless terminal';

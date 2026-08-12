@@ -453,6 +453,18 @@ abstract class AppLocalizations {
   /// **'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.'**
   String get askAiAutoRunSafeCommandsTip;
 
+  /// No description provided for @askAiSendOnEnter.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter sends'**
+  String get askAiSendOnEnter;
+
+  /// No description provided for @askAiSendOnEnterTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter sends the message, Shift+Enter starts a new line. Off swaps them: Enter starts a new line and Cmd/Ctrl+Enter sends.'**
+  String get askAiSendOnEnterTip;
+
   /// No description provided for @askAiApiKeyOptional.
   ///
   /// In en, this message translates to:
@@ -1473,7 +1485,7 @@ abstract class AppLocalizations {
   /// No description provided for @forceSinglePaneTip.
   ///
   /// In en, this message translates to:
-  /// **'Keep one column however wide the window is, instead of showing a server\'s details beside the list.'**
+  /// **'Keep one column however wide the window is, instead of putting a list beside what it opens — servers beside their details, terminals and file browsers beside their sessions.'**
   String get forceSinglePaneTip;
 
   /// No description provided for @passwordlessTerminal.

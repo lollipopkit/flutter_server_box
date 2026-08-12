@@ -194,7 +194,10 @@ class SettingStore extends HiveStore {
   /// capability, so it overrides the width rather than being overridden by it.
   late final forceSinglePane = propertyDefault('forceSinglePane', false);
 
-  /// Width of the server list when it shares the window with a detail pane.
+  /// Width of the list column, wherever one shares the window with what it
+  /// opens: the server list, the terminal and file rails, the agent's
+  /// history. One width for all of them, so the columns line up between
+  /// tabs.
   ///
   /// Remembered because it is a working preference, not a one-off: someone who
   /// widens it to read long server names wants it that way tomorrow too.
@@ -246,6 +249,10 @@ class SettingStore extends HiveStore {
     'askAiAutoRunSafeCommands',
     false,
   );
+
+  /// Enter sends the prompt and Shift+Enter starts a line. Off swaps them: a
+  /// line break is the plain key, and sending is the modifier or the button.
+  late final askAiSendOnEnter = propertyDefault('askAiSendOnEnter', true);
 
   late final serverFuncBtns = listProperty(
     'serverBtns',

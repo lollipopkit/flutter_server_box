@@ -55,6 +55,8 @@
   "askAiAutoApproved": "已自动批准",
   "askAiAutoRunSafeCommands": "自动执行只读命令",
   "askAiAutoRunSafeCommandsTip": "仅当模型与本地安全检查都判定命令为只读时自动执行；会更改系统的命令仍需人工审核。",
+  "askAiSendOnEnter": "Enter 发送",
+  "askAiSendOnEnterTip": "Enter 发送消息，Shift+Enter 换行。关闭后互换：Enter 换行，Cmd/Ctrl+Enter 发送。",
   "askAiApiKeyOptional": "本地或无需认证的接口可留空",
   "askAiHistory": "对话历史",
   "askAiHistoryLocalOnly": "在本机加密保存，不参与备份和同步",
@@ -226,7 +228,7 @@
   "parseContainerStatsTip": "Docker 解析占用状态较为缓慢",
   "shellSourceNone": "不提供 shell",
   "forceSinglePane": "单栏显示",
-  "forceSinglePaneTip": "无论窗口多宽都只用一栏，不在列表旁边显示服务器详情。",
+  "forceSinglePaneTip": "无论窗口多宽都只用一栏，不在列表旁边显示它打开的内容——服务器旁的详情、终端与文件旁的会话。",
   "passwordlessTerminal": "免凭据终端",
   "passwordlessTerminalTip": "不填 SSH 凭据，直接通过 monitor agent 打开终端。shell 以 agent 所在账户的身份运行，因此只要有 monitor 密码就能拿到它——sshd 的认证、日志和二次验证都不生效。是否允许由 agent 决定。它只提供终端：SFTP、端口转发、容器、进程和 systemd 仍需要 SSH。",
   "passwordlessTerminalNeedsMonitor": "免凭据终端需要填写 monitor 地址。",
@@ -402,5 +404,10 @@
   "watchServersTip": "手表自己向 monitor agent 取数据，所以只能选择已配置 monitor 的服务器。",
   "watchNoMonitorServer": "没有服务器配置了 monitor",
   "watchLegacyUrls": "旧版 status 链接",
-  "accessoryWidgetServer": "锁屏小组件服务器"
+  "accessoryWidgetServer": "锁屏小组件服务器",
+  "ai": "AI",
+  "configured": "已配置",
+  "sftp": "SFTP",
+  "ssh": "SSH",
+  "wiki": "Wiki"
 }
