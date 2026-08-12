@@ -37,27 +37,28 @@ class ServerFuncBtns extends StatelessWidget {
     final btns = this.btns;
     if (btns.isEmpty) return UIs.placeholder;
 
-    // Centred where the row fits and scrolling where it does not. A plain
-    // horizontal list is always left-aligned, which on a wide window left the
-    // buttons huddled in one corner of a bar the width of the screen.
-    return LayoutBuilder(
-      builder: (_, cons) => SingleChildScrollView(
+    final items = [
+      for (final value in btns)
+        Consumer(builder: (_, ref, _) => _buildItem(context, value, ref)),
+    ];
+
+    // Inside a card, at the card's width: a row that scrolls where it has to.
+    if (Stores.setting.moveServerFuncs.fetch()) {
+      return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minWidth: cons.maxWidth - 12),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (final value in btns)
-                Consumer(
-                  builder: (_, ref, _) => _buildItem(context, value, ref),
-                ).paddingSymmetric(horizontal: 7),
-            ],
-          ),
-        ),
-      ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: items),
+      );
+    }
+
+    // On its own, so it has to say how wide it is. A `Wrap` reports the sum of
+    // its children as its intrinsic width, which is what lets whatever holds
+    // this size itself to the buttons rather than to the window — and if a
+    // language makes the labels long enough to run out of room, it takes a
+    // second line instead of clipping them.
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+      child: Wrap(alignment: WrapAlignment.center, children: items),
     );
   }
 }

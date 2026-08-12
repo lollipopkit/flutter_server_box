@@ -49,15 +49,13 @@ class ServerDetailPage extends ConsumerStatefulWidget {
   );
 }
 
-/// Tall enough for an icon over its label.
-const _kFuncBarHeight = 62.0;
-
-/// Wide enough for every button the row can hold.
+/// A ceiling on the bar, which is otherwise as wide as the buttons in it.
 const _kFuncBarMaxWidth = 640.0;
 
 /// What the grid keeps clear below its last card, so the bar is never over
-/// something that cannot be scrolled out from under it.
-const _kFuncBarInset = _kFuncBarHeight + 26;
+/// something that cannot be scrolled out from under it. The bar's own height
+/// follows its contents; this is one row of them plus its margins.
+const _kFuncBarInset = 88.0;
 
 class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     with SingleTickerProviderStateMixin {
@@ -288,23 +286,22 @@ ${err.message ?? 'null'}
   /// The row of things that can be done to this server, floating over it.
   Widget _buildFuncBar(ServerState si) {
     return Center(
-      child: ConstrainedBox(
-        // Wide enough for the whole row, and no wider: stretched across a
-        // desktop window it stops being a group of buttons and becomes a band
-        // across the bottom of the page.
-        constraints: const BoxConstraints(maxWidth: _kFuncBarMaxWidth),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(13, 0, 13, 13),
-          child: Material(
-            // Raised off the page, because it is the one thing here that is
-            // not part of what the page is showing.
-            elevation: 3,
-            shadowColor: Colors.black26,
-            color: Theme.of(context).colorScheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(19),
-            clipBehavior: Clip.antiAlias,
-            child: SizedBox(
-              height: _kFuncBarHeight,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(13, 0, 13, 13),
+        child: ConstrainedBox(
+          // No wider than the row needs, and no wider than this however many
+          // buttons there are: stretched across a desktop window it stops
+          // being a group of buttons and becomes a band across the page.
+          constraints: const BoxConstraints(maxWidth: _kFuncBarMaxWidth),
+          child: IntrinsicWidth(
+            child: Material(
+              // Raised off the page, because it is the one thing here that is
+              // not part of what the page is showing.
+              elevation: 3,
+              shadowColor: Colors.black26,
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(19),
+              clipBehavior: Clip.antiAlias,
               child: ServerFuncBtns(spi: si.spi),
             ),
           ),
