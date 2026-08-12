@@ -81,15 +81,21 @@ class _SshDiscoveryDialogState extends State<SshDiscoveryDialog> {
             icon: const Icon(Icons.settings, size: 18),
             onPressed: _showSettings,
           ),
-          _scanning.listenVal(
-            (scanning) => IconButton(
-              tooltip: libL10n.search,
-              icon: scanning
-                  ? SizedLoading.small
-                  : const Icon(BoxIcons.bx_search, size: 18),
-              onPressed: scanning ? null : _scan,
-            ),
-          ),
+          // Only once there is something to replace. Before that the button in
+          // the middle of the empty view is the one to press, and two ways to
+          // start the same sweep is one more than the dialog needs.
+          _results.listenVal((results) {
+            if (results.isEmpty) return UIs.placeholder;
+            return _scanning.listenVal(
+              (scanning) => IconButton(
+                tooltip: libL10n.search,
+                icon: scanning
+                    ? SizedLoading.small
+                    : const Icon(BoxIcons.bx_search, size: 18),
+                onPressed: scanning ? null : _scan,
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -98,13 +104,20 @@ class _SshDiscoveryDialogState extends State<SshDiscoveryDialog> {
   Widget _buildResults() {
     return _results.listenVal((results) {
       if (results.isEmpty) {
+        // The action, not directions to it. This used to read "tap the search
+        // button", which on a page meant the one filling the bottom corner and
+        // here meant an 18pt icon in the top one.
         return _scanning.listenVal(
           (scanning) => Center(
-            child: Text(
-              scanning ? libL10n.loadingEllipsis : l10n.tapToStartDiscovery,
-              style: UIs.textGrey,
-              textAlign: TextAlign.center,
-            ),
+            child: scanning
+                ? SizedLoading.medium
+                : Btn.elevated(
+                    text: l10n.discoverSshServers,
+                    icon: const Icon(BoxIcons.bx_search, size: 18),
+                    mainAxisSize: MainAxisSize.min,
+                    gap: 8,
+                    onTap: _scan,
+                  ),
           ),
         );
       }

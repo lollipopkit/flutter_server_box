@@ -250,7 +250,6 @@
   "suspendTip": "suspend 功能需要 root 權限及 systemd 支援。",
   "switchTo": "切換到 {val}",
   "system": "系統",
-  "tapToStartDiscovery": "點擊搜尋按鈕發現網路中的SSH服務器",
   "termFontSizeTip": "此設定將影響終端機大小（寬度和高度）。您可以在終端機頁面縮放，來調整目前會話的字型大小。",
   "textScaler": "字型縮放",
   "textScalerTip": "1.0 => 100%（原大小），僅作用於伺服器頁面部分字型，不建議修改。",

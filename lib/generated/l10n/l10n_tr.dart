@@ -909,10 +909,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get system => 'Sistem';
 
   @override
-  String get tapToStartDiscovery =>
-      'Ağınızdaki SSH sunucularını keşfetmek için arama düğmesine dokunun';
-
-  @override
   String get termFontSizeTip =>
       'Bu ayar terminal boyutunu (genişlik ve yükseklik) etkiler. Terminal sayfasında yakınlaştırarak mevcut oturumun yazı tipi boyutunu ayarlayabilirsiniz.';
 

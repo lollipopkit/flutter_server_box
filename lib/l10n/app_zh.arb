@@ -256,7 +256,6 @@
   "syncAppSettings": "同步应用设置",
   "syncAppSettingsTip": "在自动同步中包含主题、布局、编辑器、终端等设备偏好设置。",
   "system": "系统",
-  "tapToStartDiscovery": "点击搜索按钮发现网络中的SSH服务器",
   "termFontSizeTip": "此设置会影响终端大小（宽和高）。可以在终端页面缩放来调整当前会话的字体大小",
   "textScaler": "字体缩放",
   "textScalerTip": "1.0 => 100%（原大小），仅作用于服务器页面部分字体，不建议修改。",

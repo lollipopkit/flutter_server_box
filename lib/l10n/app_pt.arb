@@ -215,7 +215,6 @@
   "suspendTip": "A função de suspensão requer permissões de root e suporte do systemd.",
   "switchTo": "Mudar para {val}",
   "system": "Sistema",
-  "tapToStartDiscovery": "Toque no botão de pesquisa para descobrir servidores SSH na sua rede",
   "termFontSizeTip": "Esta configuração afetará o tamanho do terminal (largura e altura). Você pode dar zoom na página do terminal para ajustar o tamanho da fonte da sessão atual.",
   "textScaler": "Escala de texto",
   "textScalerTip": "1.0 => 100% (tamanho original), afeta apenas algumas fontes na página do servidor, não é recomendado alterar.",

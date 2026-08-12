@@ -911,10 +911,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get system => 'Система';
 
   @override
-  String get tapToStartDiscovery =>
-      'Нажмите кнопку поиска, чтобы обнаружить SSH серверы в вашей сети';
-
-  @override
   String get termFontSizeTip =>
       'Эта настройка повлияет на размер терминала (ширина и высота). Вы можете масштабировать страницу терминала, чтобы调整 размер шрифта текущей сессии.';
 

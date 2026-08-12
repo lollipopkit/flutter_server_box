@@ -850,9 +850,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get system => '系统';
 
   @override
-  String get tapToStartDiscovery => '点击搜索按钮发现网络中的SSH服务器';
-
-  @override
   String get termFontSizeTip => '此设置会影响终端大小（宽和高）。可以在终端页面缩放来调整当前会话的字体大小';
 
   @override
@@ -1922,9 +1919,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get system => '系統';
-
-  @override
-  String get tapToStartDiscovery => '點擊搜尋按鈕發現網路中的SSH服務器';
 
   @override
   String get termFontSizeTip => '此設定將影響終端機大小（寬度和高度）。您可以在終端機頁面縮放，來調整目前會話的字型大小。';

@@ -880,9 +880,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get system => 'システム';
 
   @override
-  String get tapToStartDiscovery => '検索ボタンをタップしてネットワーク上のSSHサーバーを発見';
-
-  @override
   String get termFontSizeTip =>
       'この設定は端末のサイズ（幅と高さ）に影響します。現在のセッションのフォントサイズを調整するために、端末ページを拡大縮小できます。';
 

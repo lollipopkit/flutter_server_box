@@ -219,7 +219,6 @@
   "suspendTip": "La funzione di sospensione richiede il permesso root e il supporto systemd.",
   "switchTo": "Passa a {val}",
   "system": "Sistema",
-  "tapToStartDiscovery": "Tocca il pulsante di ricerca per scoprire i server SSH sulla tua rete",
   "termFontSizeTip": "Questa impostazione influirà sulla dimensione del terminale (larghezza e altezza). Puoi ingrandire la pagina del terminale per regolare la dimensione del carattere della sessione corrente.",
   "textScaler": "Scalatore testo",
   "textScalerTip": "1.0 => 100% (dimensione originale), funziona solo su parte del carattere della pagina server, non si consiglia di cambiare.",

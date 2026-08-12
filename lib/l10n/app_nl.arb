@@ -215,7 +215,6 @@
   "suspendTip": "De opschortfunctie vereist rootrechten en systemd-ondersteuning.",
   "switchTo": "Overschakelen naar {val}",
   "system": "Systeem",
-  "tapToStartDiscovery": "Tik op de zoekknop om SSH-servers op uw netwerk te ontdekken",
   "termFontSizeTip": "Deze instelling heeft invloed op de terminalgrootte (breedte en hoogte). U kunt inzoomen op de terminalpagina om de lettergrootte van de huidige sessie aan te passen.",
   "textScaler": "Tekstschaler",
   "textScalerTip": "1.0 => 100% (oorspronkelijke grootte), werkt alleen op het gedeelte van de serverpagina van het lettertype, niet aanbevolen om te wijzigen.",

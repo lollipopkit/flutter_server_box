@@ -275,7 +275,6 @@
   "syncAppSettings": "Sync app settings",
   "syncAppSettingsTip": "Include theme, layout, editor, terminal and other device preferences in automatic sync.",
   "system": "System",
-  "tapToStartDiscovery": "Tap the search button to discover SSH servers on your network",
   "termFontSizeTip": "This setting will affect the terminal size (width and height). You can zoom in on the terminal page to adjust the font size of the current session.",
   "textScaler": "Text scaler",
   "textScalerTip": "1.0 => 100% (original size), only works on server page part of the font, not recommended to change.",

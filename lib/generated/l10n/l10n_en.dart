@@ -905,10 +905,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get system => 'System';
 
   @override
-  String get tapToStartDiscovery =>
-      'Tap the search button to discover SSH servers on your network';
-
-  @override
   String get termFontSizeTip =>
       'This setting will affect the terminal size (width and height). You can zoom in on the terminal page to adjust the font size of the current session.';
 

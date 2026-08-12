@@ -215,7 +215,6 @@
   "suspendTip": "suspend機能はroot権限とsystemdのサポートが必要です。",
   "switchTo": "{val}に切り替える",
   "system": "システム",
-  "tapToStartDiscovery": "検索ボタンをタップしてネットワーク上のSSHサーバーを発見",
   "termFontSizeTip": "この設定は端末のサイズ（幅と高さ）に影響します。現在のセッションのフォントサイズを調整するために、端末ページを拡大縮小できます。",
   "textScaler": "テキストスケーラー",
   "textScalerTip": "1.0 => 100%（デフォルトサイズ）。サーバーページの一部のテキストにのみ適用されます。変更をお勧めしません。",

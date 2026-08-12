@@ -870,9 +870,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get system => '시스템';
 
   @override
-  String get tapToStartDiscovery => '검색 버튼을 눌러 네트워크에서 SSH 서버를 검색하세요';
-
-  @override
   String get termFontSizeTip =>
       '이 설정은 터미널 크기(너비 및 높이)에 영향을 줍니다. 현재 세션의 글꼴 크기를 조정하려면 터미널 페이지에서 확대/축소할 수 있습니다.';
 

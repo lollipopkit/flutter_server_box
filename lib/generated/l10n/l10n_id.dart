@@ -908,10 +908,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get system => 'Sistem';
 
   @override
-  String get tapToStartDiscovery =>
-      'Tekan tombol pencarian untuk menemukan server SSH di jaringan Anda';
-
-  @override
   String get termFontSizeTip =>
       'Pengaturan ini akan memengaruhi ukuran terminal (lebar dan tinggi). Anda dapat melakukan zoom pada halaman terminal untuk menyesuaikan ukuran font sesi saat ini.';
 

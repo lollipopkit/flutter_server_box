@@ -215,7 +215,6 @@
   "suspendTip": "Askıya alma işlevi, root izni ve systemd desteği gerektirir.",
   "switchTo": "{val}'a geç",
   "system": "Sistem",
-  "tapToStartDiscovery": "Ağınızdaki SSH sunucularını keşfetmek için arama düğmesine dokunun",
   "termFontSizeTip": "Bu ayar terminal boyutunu (genişlik ve yükseklik) etkiler. Terminal sayfasında yakınlaştırarak mevcut oturumun yazı tipi boyutunu ayarlayabilirsiniz.",
   "textScaler": "Metin ölçekleyici",
   "textScalerTip": "1.0 => %100 (orijinal boyut), yalnızca sunucu sayfasındaki yazı tipinin bir kısmı üzerinde çalışır, değiştirilmesi önerilmez.",

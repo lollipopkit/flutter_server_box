@@ -912,10 +912,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get system => 'Sistema';
 
   @override
-  String get tapToStartDiscovery =>
-      'Tocca il pulsante di ricerca per scoprire i server SSH sulla tua rete';
-
-  @override
   String get termFontSizeTip =>
       'Questa impostazione influirà sulla dimensione del terminale (larghezza e altezza). Puoi ingrandire la pagina del terminale per regolare la dimensione del carattere della sessione corrente.';
 

@@ -1674,12 +1674,6 @@ abstract class AppLocalizations {
   /// **'System'**
   String get system;
 
-  /// No description provided for @tapToStartDiscovery.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap the search button to discover SSH servers on your network'**
-  String get tapToStartDiscovery;
-
   /// No description provided for @termFontSizeTip.
   ///
   /// In en, this message translates to:
