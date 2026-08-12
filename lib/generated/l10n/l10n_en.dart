@@ -893,6 +893,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get serverTabRequired => 'Server tab cannot be removed';
 
   @override
+  String get shareServerRiskTip =>
+      'This QR code contains the server\'s connection settings in plain text, passwords included. Anyone who scans or photographs it can connect to this server.';
+
+  @override
   String get sftpDlPrepare => 'Preparing to connect...';
 
   @override

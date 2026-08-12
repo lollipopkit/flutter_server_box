@@ -274,6 +274,7 @@
   "serverFuncBtns": "Server function buttons",
   "serverOrder": "Server order",
   "serverTabRequired": "Server tab cannot be removed",
+  "shareServerRiskTip": "This QR code contains the server's connection settings in plain text, passwords included. Anyone who scans or photographs it can connect to this server.",
   "sftpDlPrepare": "Preparing to connect...",
   "sftpEditorTip": "If empty, use the built-in file editor of the app. If a value is present, use the remote server’s editor, e.g., `vim` (recommended to automatically detect according to `EDITOR`).",
   "sftpRmrDirSummary": "Use `rm -r` to delete a folder in SFTP.",

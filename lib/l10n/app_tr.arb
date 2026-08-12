@@ -167,6 +167,7 @@
   "serverFuncBtns": "Sunucu işlev düğmeleri",
   "serverOrder": "Sunucu sırası",
   "serverTabRequired": "Sunucu sekmesi kaldırılamaz",
+  "shareServerRiskTip": "Bu QR kod, parolalar dahil olmak üzere sunucunun bağlantı ayarlarını düz metin olarak içerir. Kodu tarayan veya fotoğraflayan herkes bu sunucuya bağlanabilir.",
   "sftpDlPrepare": "Bağlantı hazırlanıyor...",
   "sftpEditorTip": "Boşsa, uygulamanın yerleşik dosya düzenleyicisi kullanılır. Bir değer varsa, uzak sunucunun düzenleyicisi kullanılır, örn. `vim` (otomatik olarak `EDITOR`'a göre algılanması önerilir).",
   "sftpRmrDirSummary": "SFTP'de bir klasörü silmek için `rm -r` kullan.",

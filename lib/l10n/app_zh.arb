@@ -264,6 +264,7 @@
   "serverFuncBtns": "服务器功能按钮",
   "serverOrder": "服务器顺序",
   "serverTabRequired": "服务器标签不能被移除",
+  "shareServerRiskTip": "此二维码以明文包含服务器的连接设置，其中有密码。任何扫描或拍下它的人都能连接到这台服务器。",
   "sftpDlPrepare": "准备连接至服务器...",
   "sftpEditorTip": "如果为空, 使用App内置的文件编辑器. 如果有值, 这是用远程服务器的编辑器, 例如 `vim` (建议根据 `EDITOR` 自动获取).",
   "sftpRmrDirSummary": "在 SFTP 中使用 `rm -r` 来删除文件夹",

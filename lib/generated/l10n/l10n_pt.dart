@@ -894,6 +894,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get serverTabRequired => 'A aba do servidor não pode ser removida';
 
   @override
+  String get shareServerRiskTip =>
+      'Este código QR contém as configurações de conexão do servidor em texto simples, incluindo senhas. Qualquer pessoa que o escaneie ou fotografe pode se conectar a este servidor.';
+
+  @override
   String get sftpDlPrepare => 'Preparando para conectar ao servidor...';
 
   @override

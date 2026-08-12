@@ -167,6 +167,7 @@
   "serverFuncBtns": "Server functieknoppen",
   "serverOrder": "Servervolgorde",
   "serverTabRequired": "Servertabblad kan niet worden verwijderd",
+  "shareServerRiskTip": "Deze QR-code bevat de verbindingsinstellingen van de server in leesbare tekst, inclusief wachtwoorden. Iedereen die hem scant of fotografeert kan verbinding maken met deze server.",
   "sftpDlPrepare": "Voorbereiden om verbinding te maken...",
   "sftpEditorTip": "Indien leeg, gebruik de ingebouwde bestandseditor van de app. Indien een waarde aanwezig is, gebruik de editor van de externe server, bijvoorbeeld `vim` (aanbevolen om automatisch te detecteren volgens `EDITOR`).",
   "sftpRmrDirSummary": "Gebruik `rm -r` om een map te verwijderen in SFTP.",

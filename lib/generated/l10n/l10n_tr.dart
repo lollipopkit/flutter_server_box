@@ -895,6 +895,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get serverTabRequired => 'Sunucu sekmesi kaldırılamaz';
 
   @override
+  String get shareServerRiskTip =>
+      'Bu QR kod, parolalar dahil olmak üzere sunucunun bağlantı ayarlarını düz metin olarak içerir. Kodu tarayan veya fotoğraflayan herkes bu sunucuya bağlanabilir.';
+
+  @override
   String get sftpDlPrepare => 'Bağlantı hazırlanıyor...';
 
   @override

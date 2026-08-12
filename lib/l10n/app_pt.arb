@@ -167,6 +167,7 @@
   "serverFuncBtns": "Botões de função do servidor",
   "serverOrder": "Ordem do servidor",
   "serverTabRequired": "A aba do servidor não pode ser removida",
+  "shareServerRiskTip": "Este código QR contém as configurações de conexão do servidor em texto simples, incluindo senhas. Qualquer pessoa que o escaneie ou fotografe pode se conectar a este servidor.",
   "sftpDlPrepare": "Preparando para conectar ao servidor...",
   "sftpEditorTip": "Se vazio, use o editor de arquivos integrado do aplicativo. Se houver um valor, use o editor do servidor remoto, por exemplo, `vim` (recomendado detectar automaticamente de acordo com `EDITOR`).",
   "sftpRmrDirSummary": "Usar `rm -r` em SFTP para excluir pastas",

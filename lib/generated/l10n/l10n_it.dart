@@ -895,6 +895,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get serverTabRequired => 'La scheda server non può essere rimossa';
 
   @override
+  String get shareServerRiskTip =>
+      'Questo codice QR contiene le impostazioni di connessione del server in chiaro, password incluse. Chiunque lo scansioni o lo fotografi può connettersi a questo server.';
+
+  @override
   String get sftpDlPrepare => 'Preparazione alla connessione...';
 
   @override
