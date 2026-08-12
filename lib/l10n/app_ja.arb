@@ -68,6 +68,7 @@
   "dockerImagesFmt": "合計{count}イメージ",
   "dockerProjectOther": "その他",
   "dockerPruneTip": "未使用のデータを削除してディスク容量を解放します",
+  "dockerStatistics": "Docker 統計",
   "dockerStatusRunningAndStoppedFmt": "{runningCount}個が実行中、{stoppedCount}個が停止中",
   "dockerStatusRunningFmt": "{count}個のコンテナが実行中",
   "doubleColumnMode": "ダブルカラムモード",

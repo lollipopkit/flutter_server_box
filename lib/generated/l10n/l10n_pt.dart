@@ -479,6 +479,9 @@ class AppLocalizationsPt extends AppLocalizations {
       'Remova os dados não utilizados para liberar espaço em disco';
 
   @override
+  String get dockerStatistics => 'Estatísticas do Docker';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,

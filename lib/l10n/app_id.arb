@@ -68,6 +68,7 @@
   "dockerImagesFmt": "{count} gambar",
   "dockerProjectOther": "Lainnya",
   "dockerPruneTip": "Hapus data yang tidak digunakan untuk mengosongkan ruang disk",
+  "dockerStatistics": "Statistik Docker",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} running, {stoppedCount} container stopped.",
   "dockerStatusRunningFmt": "{count} wadah berjalan.",
   "doubleColumnMode": "Mode kolom ganda",

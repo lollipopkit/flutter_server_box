@@ -25,6 +25,10 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   late final Future<List<IntroPageBuilder>> _introFuture = _IntroPage.builders;
+  late final Listenable _appListenable = Listenable.merge([
+    RNodes.app,
+    Stores.setting.locale.listenable(),
+  ]);
   bool _transparentNavBarConfigured = false;
 
   @override
@@ -41,7 +45,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: RNodes.app,
+      listenable: _appListenable,
       builder: (context, _) {
         if (!Stores.setting.useSystemPrimaryColor.fetch()) {
           return _build(context);

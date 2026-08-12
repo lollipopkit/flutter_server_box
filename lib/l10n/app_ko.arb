@@ -80,6 +80,7 @@
   "dockerImagesFmt": "이미지 {count}개",
   "dockerProjectOther": "기타",
   "dockerPruneTip": "사용하지 않는 데이터를 제거하여 디스크 공간을 확보합니다",
+  "dockerStatistics": "Docker 통계",
   "dockerStatusRunningAndStoppedFmt": "{runningCount}개 실행 중, {stoppedCount}개 중지됨.",
   "dockerStatusRunningFmt": "컨테이너 {count}개 실행 중.",
   "doubleColumnMode": "이중 열 모드",

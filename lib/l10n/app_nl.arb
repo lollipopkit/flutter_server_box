@@ -68,6 +68,7 @@
   "dockerImagesFmt": "{count} afbeeldingen",
   "dockerProjectOther": "Overig",
   "dockerPruneTip": "Verwijder ongebruikte gegevens om schijfruimte vrij te maken",
+  "dockerStatistics": "Docker-statistieken",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} actief, {stoppedCount} container gestopt.",
   "dockerStatusRunningFmt": "{count} container actief.",
   "doubleColumnMode": "Dubbele kolommodus",

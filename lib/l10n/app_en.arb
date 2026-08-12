@@ -141,6 +141,7 @@
   "dockerImagesFmt": "{count} images",
   "dockerProjectOther": "Other",
   "dockerPruneTip": "Remove unused data to free up disk space",
+  "dockerStatistics": "Docker Statistics",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} running, {stoppedCount} container stopped.",
   "dockerStatusRunningFmt": "{count} container running.",
   "doubleColumnMode": "Double column mode",

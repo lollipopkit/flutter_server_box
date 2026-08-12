@@ -479,6 +479,9 @@ class AppLocalizationsId extends AppLocalizations {
       'Hapus data yang tidak digunakan untuk mengosongkan ruang disk';
 
   @override
+  String get dockerStatistics => 'Statistik Docker';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
