@@ -83,7 +83,8 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
 
   late FocusScopeNode _focusScope;
 
-  /// -1: non selected, null: password, others: index of private key
+  /// -1: key auth enabled without a selection, null: key auth disabled,
+  /// others: index of private key
   final _keyIdx = ValueNotifier<int?>(null);
   final _autoConnect = ValueNotifier(true);
   final _jumpServers = <String>[].vn;

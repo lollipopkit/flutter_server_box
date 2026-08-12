@@ -180,8 +180,38 @@ abstract class AppLocalizations {
   /// No description provided for @askAiEndpointTip.
   ///
   /// In en, this message translates to:
-  /// **'Enter the full Chat Completions endpoint, or a service base URL. If the address ends with /v1, the app will append /chat/completions.'**
+  /// **'Enter a service base URL or a full Chat Completions or Responses endpoint. ServerBox completes the path for the selected protocol.'**
   String get askAiEndpointTip;
+
+  /// No description provided for @askAiProtocol.
+  ///
+  /// In en, this message translates to:
+  /// **'API protocol'**
+  String get askAiProtocol;
+
+  /// No description provided for @askAiProtocolTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.'**
+  String get askAiProtocolTip;
+
+  /// No description provided for @askAiProtocolAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get askAiProtocolAuto;
+
+  /// No description provided for @askAiProtocolChatCompletions.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat Completions'**
+  String get askAiProtocolChatCompletions;
+
+  /// No description provided for @askAiProtocolResponses.
+  ///
+  /// In en, this message translates to:
+  /// **'Responses'**
+  String get askAiProtocolResponses;
 
   /// No description provided for @askAiCommandInserted.
   ///
@@ -246,8 +276,344 @@ abstract class AppLocalizations {
   /// No description provided for @askAiUsageHint.
   ///
   /// In en, this message translates to:
-  /// **'Used in SSH Terminal'**
+  /// **'Diagnose and operate the current SSH server with reviewed actions'**
   String get askAiUsageHint;
+
+  /// No description provided for @askAiAgentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH Agent'**
+  String get askAiAgentTitle;
+
+  /// No description provided for @askAiAgentWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'What should we do on this server?'**
+  String get askAiAgentWelcome;
+
+  /// No description provided for @askAiAgentWelcomeTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a diagnosis or a task. The Agent proposes one command at a time and waits for review before making changes.'**
+  String get askAiAgentWelcomeTip;
+
+  /// No description provided for @askAiAgentPromptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask the Agent to inspect or fix something...'**
+  String get askAiAgentPromptHint;
+
+  /// No description provided for @askAiAgentSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to Agent'**
+  String get askAiAgentSend;
+
+  /// No description provided for @askAiAnalyzeSelectionPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze the selected terminal content, explain what happened, and propose the safest next step if action is needed.'**
+  String get askAiAnalyzeSelectionPrompt;
+
+  /// No description provided for @askAiTerminalContext.
+  ///
+  /// In en, this message translates to:
+  /// **'Terminal context'**
+  String get askAiTerminalContext;
+
+  /// No description provided for @askAiReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get askAiReady;
+
+  /// No description provided for @askAiThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking'**
+  String get askAiThinking;
+
+  /// No description provided for @askAiRunningCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get askAiRunningCommand;
+
+  /// No description provided for @askAiReviewNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get askAiReviewNeeded;
+
+  /// No description provided for @askAiReviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review proposed command'**
+  String get askAiReviewAction;
+
+  /// No description provided for @askAiReviewBeforeContinuing.
+  ///
+  /// In en, this message translates to:
+  /// **'Review or decline the proposed command first'**
+  String get askAiReviewBeforeContinuing;
+
+  /// No description provided for @askAiApproveRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve & run'**
+  String get askAiApproveRun;
+
+  /// No description provided for @askAiDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get askAiDecline;
+
+  /// No description provided for @askAiActionDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'The proposed command was declined.'**
+  String get askAiActionDeclined;
+
+  /// No description provided for @askAiInterrupted.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent response was interrupted.'**
+  String get askAiInterrupted;
+
+  /// No description provided for @askAiRiskReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only'**
+  String get askAiRiskReadOnly;
+
+  /// No description provided for @askAiRiskCaution.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes system'**
+  String get askAiRiskCaution;
+
+  /// No description provided for @askAiRiskDestructive.
+  ///
+  /// In en, this message translates to:
+  /// **'High risk'**
+  String get askAiRiskDestructive;
+
+  /// No description provided for @askAiHighRiskConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Run high-risk command?'**
+  String get askAiHighRiskConfirmTitle;
+
+  /// No description provided for @askAiHighRiskConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.'**
+  String get askAiHighRiskConfirmBody;
+
+  /// No description provided for @askAiCommandCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get askAiCommandCancelled;
+
+  /// No description provided for @askAiCommandTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Timed out'**
+  String get askAiCommandTimedOut;
+
+  /// No description provided for @askAiNoCommandOutput.
+  ///
+  /// In en, this message translates to:
+  /// **'Command completed without output.'**
+  String get askAiNoCommandOutput;
+
+  /// No description provided for @askAiOutputTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Long output was truncated before it was sent back to the Agent.'**
+  String get askAiOutputTruncated;
+
+  /// No description provided for @askAiAutoApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-approved'**
+  String get askAiAutoApproved;
+
+  /// No description provided for @askAiAutoRunSafeCommands.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-run read-only commands'**
+  String get askAiAutoRunSafeCommands;
+
+  /// No description provided for @askAiAutoRunSafeCommandsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.'**
+  String get askAiAutoRunSafeCommandsTip;
+
+  /// No description provided for @askAiApiKeyOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional for local or unauthenticated endpoints'**
+  String get askAiApiKeyOptional;
+
+  /// No description provided for @askAiHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation history'**
+  String get askAiHistory;
+
+  /// No description provided for @askAiHistoryLocalOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted on this device and excluded from backup and sync'**
+  String get askAiHistoryLocalOnly;
+
+  /// No description provided for @askAiNewConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'New conversation'**
+  String get askAiNewConversation;
+
+  /// No description provided for @askAiNoHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved conversations for this server'**
+  String get askAiNoHistory;
+
+  /// No description provided for @askAiNoHistoryMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet'**
+  String get askAiNoHistoryMessages;
+
+  /// No description provided for @askAiUntitledConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'New conversation'**
+  String get askAiUntitledConversation;
+
+  /// No description provided for @askAiRenameConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename conversation'**
+  String get askAiRenameConversation;
+
+  /// No description provided for @askAiDeleteConversationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this conversation?'**
+  String get askAiDeleteConversationTitle;
+
+  /// No description provided for @askAiDeleteConversationTip.
+  ///
+  /// In en, this message translates to:
+  /// **'This removes the conversation from this device and cannot be undone.'**
+  String get askAiDeleteConversationTip;
+
+  /// No description provided for @askAiClearHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear history'**
+  String get askAiClearHistory;
+
+  /// No description provided for @askAiClearHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear this server\'s Agent history?'**
+  String get askAiClearHistoryTitle;
+
+  /// No description provided for @askAiClearHistoryTip.
+  ///
+  /// In en, this message translates to:
+  /// **'All Agent conversations saved for this server will be removed from this device.'**
+  String get askAiClearHistoryTip;
+
+  /// No description provided for @askAiRestoredReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored from history. Review it again before running; it will never run automatically.'**
+  String get askAiRestoredReview;
+
+  /// No description provided for @agentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent'**
+  String get agentTitle;
+
+  /// No description provided for @agentWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'What should we do across your servers?'**
+  String get agentWelcome;
+
+  /// No description provided for @agentWelcomeTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for a diagnosis or an operational task. The Agent uses live ServerBox state and proposes one reviewed action at a time.'**
+  String get agentWelcomeTip;
+
+  /// No description provided for @agentPromptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask the Agent to inspect or operate your servers...'**
+  String get agentPromptHint;
+
+  /// No description provided for @agentNoServers.
+  ///
+  /// In en, this message translates to:
+  /// **'No configured servers'**
+  String get agentNoServers;
+
+  /// No description provided for @agentNoHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved global Agent conversations'**
+  String get agentNoHistory;
+
+  /// No description provided for @agentClearHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear global Agent history?'**
+  String get agentClearHistoryTitle;
+
+  /// No description provided for @agentClearHistoryTip.
+  ///
+  /// In en, this message translates to:
+  /// **'All global Agent conversations will be removed from this device.'**
+  String get agentClearHistoryTip;
+
+  /// No description provided for @agentToolShell.
+  ///
+  /// In en, this message translates to:
+  /// **'Shell'**
+  String get agentToolShell;
+
+  /// No description provided for @agentToolReadFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Read file'**
+  String get agentToolReadFile;
+
+  /// No description provided for @agentToolWriteFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Write file'**
+  String get agentToolWriteFile;
+
+  /// No description provided for @agentToolServerBox.
+  ///
+  /// In en, this message translates to:
+  /// **'ServerBox'**
+  String get agentToolServerBox;
+
+  /// No description provided for @agentToolFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool execution failed.'**
+  String get agentToolFailed;
 
   /// No description provided for @atLeastOneTab.
   ///

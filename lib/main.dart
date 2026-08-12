@@ -56,8 +56,8 @@ Future<void> _initApp() async {
 
   await _doPlatformRelated();
 
-  // Initialize Android session notification channel/handler
-  TermSessionManager.init();
+  // Initialize platform session notifications and Live Activities.
+  await TermSessionManager.init();
 }
 
 Future<void> _initData() async {

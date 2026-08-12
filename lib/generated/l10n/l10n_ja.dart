@@ -38,7 +38,23 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get askAiEndpointTip =>
-      'Enter the full Chat Completions endpoint, or a service base URL. If the address ends with /v1, the app will append /chat/completions.';
+      'Enter a service base URL or a full Chat Completions or Responses endpoint. ServerBox completes the path for the selected protocol.';
+
+  @override
+  String get askAiProtocol => 'API protocol';
+
+  @override
+  String get askAiProtocolTip =>
+      'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.';
+
+  @override
+  String get askAiProtocolAuto => 'Auto';
+
+  @override
+  String get askAiProtocolChatCompletions => 'Chat Completions';
+
+  @override
+  String get askAiProtocolResponses => 'Responses';
 
   @override
   String get askAiCommandInserted => 'コマンドをターミナルに挿入しました';
@@ -74,6 +90,189 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get askAiUsageHint => 'SSH ターミナルで使用';
+
+  @override
+  String get askAiAgentTitle => 'SSH Agent';
+
+  @override
+  String get askAiAgentWelcome => 'What should we do on this server?';
+
+  @override
+  String get askAiAgentWelcomeTip =>
+      'Ask for a diagnosis or a task. The Agent proposes one command at a time and waits for review before making changes.';
+
+  @override
+  String get askAiAgentPromptHint =>
+      'Ask the Agent to inspect or fix something...';
+
+  @override
+  String get askAiAgentSend => 'Send to Agent';
+
+  @override
+  String get askAiAnalyzeSelectionPrompt =>
+      'Analyze the selected terminal content, explain what happened, and propose the safest next step if action is needed.';
+
+  @override
+  String get askAiTerminalContext => 'Terminal context';
+
+  @override
+  String get askAiReady => 'Ready';
+
+  @override
+  String get askAiThinking => 'Thinking';
+
+  @override
+  String get askAiRunningCommand => 'Running';
+
+  @override
+  String get askAiReviewNeeded => 'Review';
+
+  @override
+  String get askAiReviewAction => 'Review proposed command';
+
+  @override
+  String get askAiReviewBeforeContinuing =>
+      'Review or decline the proposed command first';
+
+  @override
+  String get askAiApproveRun => 'Approve & run';
+
+  @override
+  String get askAiDecline => 'Decline';
+
+  @override
+  String get askAiActionDeclined => 'The proposed command was declined.';
+
+  @override
+  String get askAiInterrupted => 'Agent response was interrupted.';
+
+  @override
+  String get askAiRiskReadOnly => 'Read-only';
+
+  @override
+  String get askAiRiskCaution => 'Changes system';
+
+  @override
+  String get askAiRiskDestructive => 'High risk';
+
+  @override
+  String get askAiHighRiskConfirmTitle => 'Run high-risk command?';
+
+  @override
+  String get askAiHighRiskConfirmBody =>
+      'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.';
+
+  @override
+  String get askAiCommandCancelled => 'Cancelled';
+
+  @override
+  String get askAiCommandTimedOut => 'Timed out';
+
+  @override
+  String get askAiNoCommandOutput => 'Command completed without output.';
+
+  @override
+  String get askAiOutputTruncated =>
+      'Long output was truncated before it was sent back to the Agent.';
+
+  @override
+  String get askAiAutoApproved => 'Auto-approved';
+
+  @override
+  String get askAiAutoRunSafeCommands => 'Auto-run read-only commands';
+
+  @override
+  String get askAiAutoRunSafeCommandsTip =>
+      'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.';
+
+  @override
+  String get askAiApiKeyOptional =>
+      'Optional for local or unauthenticated endpoints';
+
+  @override
+  String get askAiHistory => 'Conversation history';
+
+  @override
+  String get askAiHistoryLocalOnly =>
+      'Encrypted on this device and excluded from backup and sync';
+
+  @override
+  String get askAiNewConversation => 'New conversation';
+
+  @override
+  String get askAiNoHistory => 'No saved conversations for this server';
+
+  @override
+  String get askAiNoHistoryMessages => 'No messages yet';
+
+  @override
+  String get askAiUntitledConversation => 'New conversation';
+
+  @override
+  String get askAiRenameConversation => 'Rename conversation';
+
+  @override
+  String get askAiDeleteConversationTitle => 'Delete this conversation?';
+
+  @override
+  String get askAiDeleteConversationTip =>
+      'This removes the conversation from this device and cannot be undone.';
+
+  @override
+  String get askAiClearHistory => 'Clear history';
+
+  @override
+  String get askAiClearHistoryTitle => 'Clear this server\'s Agent history?';
+
+  @override
+  String get askAiClearHistoryTip =>
+      'All Agent conversations saved for this server will be removed from this device.';
+
+  @override
+  String get askAiRestoredReview =>
+      'Restored from history. Review it again before running; it will never run automatically.';
+
+  @override
+  String get agentTitle => 'Agent';
+
+  @override
+  String get agentWelcome => 'What should we do across your servers?';
+
+  @override
+  String get agentWelcomeTip =>
+      'Ask for a diagnosis or an operational task. The Agent uses live ServerBox state and proposes one reviewed action at a time.';
+
+  @override
+  String get agentPromptHint =>
+      'Ask the Agent to inspect or operate your servers...';
+
+  @override
+  String get agentNoServers => 'No configured servers';
+
+  @override
+  String get agentNoHistory => 'No saved global Agent conversations';
+
+  @override
+  String get agentClearHistoryTitle => 'Clear global Agent history?';
+
+  @override
+  String get agentClearHistoryTip =>
+      'All global Agent conversations will be removed from this device.';
+
+  @override
+  String get agentToolShell => 'Shell';
+
+  @override
+  String get agentToolReadFile => 'Read file';
+
+  @override
+  String get agentToolWriteFile => 'Write file';
+
+  @override
+  String get agentToolServerBox => 'ServerBox';
+
+  @override
+  String get agentToolFailed => 'Tool execution failed.';
 
   @override
   String get atLeastOneTab => '少なくとも1つのタブを選択する必要があります';

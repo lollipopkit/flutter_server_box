@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:get_it/get_it.dart';
+import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/container.dart';
 import 'package:server_box/data/store/history.dart';
@@ -18,6 +19,8 @@ abstract final class Stores {
   static PrivateKeyStore get key => getIt<PrivateKeyStore>();
   static SnippetStore get snippet => getIt<SnippetStore>();
   static HistoryStore get history => getIt<HistoryStore>();
+  static AgentConversationStore get agentConversation =>
+      getIt<AgentConversationStore>();
   // Keep the legacy box registered so existing connection stats DB files remain intact.
   static ConnectionStatsStore get connectionStats =>
       getIt<ConnectionStatsStore>();
@@ -35,6 +38,10 @@ abstract final class Stores {
     portForward,
   ];
 
+  /// Stores initialized locally. Agent conversations intentionally stay out of
+  /// backup and sync because they may contain terminal output and reasoning.
+  static List<HiveStore> get _allStores => [..._allBackup, agentConversation];
+
   static Future<void> init() async {
     getIt.registerLazySingleton<SettingStore>(() => SettingStore.instance);
     getIt.registerLazySingleton<ServerStore>(() => ServerStore.instance);
@@ -44,6 +51,9 @@ abstract final class Stores {
     );
     getIt.registerLazySingleton<SnippetStore>(() => SnippetStore.instance);
     getIt.registerLazySingleton<HistoryStore>(() => HistoryStore.instance);
+    getIt.registerLazySingleton<AgentConversationStore>(
+      () => AgentConversationStore.instance,
+    );
     getIt.registerLazySingleton<ConnectionStatsStore>(
       () => ConnectionStatsStore.instance,
     );
@@ -51,10 +61,11 @@ abstract final class Stores {
       () => PortForwardStore.instance,
     );
 
-    await Future.wait(_allBackup.map((store) => store.init()));
+    await Future.wait(_allStores.map((store) => store.init()));
 
     // Migrate sshConnectionMode from old int values to bool
     setting.migrateSshConnectionMode();
+    await setting.migrateHomeTabsAgent();
 
     if (connectionStats.indexDbKeys.isEmpty) {
       await connectionStats.rebuildIndexAndCompact();

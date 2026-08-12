@@ -170,7 +170,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       index: _sessions.index,
       onTap: _sessions.select,
       onClose: _confirmClose,
-      sessionActions: [_snippetBtn],
+      sessionActions: [_agentBtn, _snippetBtn],
       leadingActions: [_sortBtn, _searchBtn, _historyBtn],
     ),
   );
@@ -179,7 +179,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     listenable: _sessions,
     builder: () => CustomAppBar(
       title: Text(_sessions.current?.name ?? libL10n.terminal),
-      actions: [_snippetBtn, const SizedBox(width: 7)],
+      actions: [_agentBtn, _snippetBtn, const SizedBox(width: 7)],
     ),
   );
 }
@@ -320,6 +320,14 @@ extension _Sessions on _SSHTabPageState {
 
 /// The buttons on the tab bar.
 extension _Actions on _SSHTabPageState {
+  /// Opens the agent on the terminal that is on screen, the same way the
+  /// snippet picker beside it works.
+  Widget get _agentBtn => Btn.icon(
+    icon: const Icon(Icons.auto_awesome, size: 18),
+    onTap: () =>
+        _sessions.current?.data.pageKey.currentState?.openAgentFromToolbar(),
+  );
+
   Widget get _snippetBtn => Btn.icon(
     icon: const Icon(Icons.code, size: 18),
     onTap: () =>

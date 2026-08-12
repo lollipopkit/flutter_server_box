@@ -507,9 +507,10 @@ extension _Utils on _ServerEditPageState {
     if (ssh != null && ssh.viaMonitor) {
       _sshViaMonitor.value = true;
       _tunnelUserCtrl.text = ssh.user;
-      if (ssh.keyId == null) {
-        _tunnelPwdCtrl.text = ssh.pwd ?? '';
-      } else {
+      // Key and password are not exclusive: sshd can ask for both, and the
+      // client falls back from one to the other. Load whichever are set.
+      _tunnelPwdCtrl.text = ssh.pwd ?? '';
+      if (ssh.keyId != null) {
         _tunnelKeyIdx.value = ref
             .read(privateKeyProvider)
             .keys
@@ -519,9 +520,8 @@ extension _Utils on _ServerEditPageState {
       _ipController.text = ssh.ip;
       _portController.text = ssh.port.toString();
       _usernameController.text = ssh.user;
-      if (ssh.keyId == null) {
-        _passwordController.text = ssh.pwd ?? '';
-      } else {
+      _passwordController.text = ssh.pwd ?? '';
+      if (ssh.keyId != null) {
         _keyIdx.value = ref
             .read(privateKeyProvider)
             .keys

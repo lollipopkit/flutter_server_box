@@ -39,25 +39,23 @@ extension _Widgets on _ServerEditPageState {
         ),
       ),
     );
+    final password = Input(
+      controller: _passwordController,
+      obscureText: true,
+      type: TextInputType.text,
+      label: libL10n.pwd,
+      icon: Icons.password,
+      suggestion: false,
+      onSubmitted: (_) => _onSave(),
+    );
 
-    /// Put [switch_] out of [ValueBuilder] to avoid rebuild
+    /// Keep static auth fields outside [ValueBuilder] to avoid rebuilding them.
     return _keyIdx.listenVal((v) {
       final children = <Widget>[switch_];
       if (v != null) {
         children.add(_buildKeyAuth());
-      } else {
-        children.add(
-          Input(
-            controller: _passwordController,
-            obscureText: true,
-            type: TextInputType.text,
-            label: libL10n.pwd,
-            icon: Icons.password,
-            suggestion: false,
-            onSubmitted: (_) => _onSave(),
-          ),
-        );
       }
+      children.add(password);
       return Column(children: children);
     });
   }
@@ -565,16 +563,17 @@ extension _Widgets on _ServerEditPageState {
           ),
         ).cardx,
         _tunnelKeyIdx.listenVal((v) {
-          if (v != null) return _buildKeyAuthFor(_tunnelKeyIdx);
-          return Input(
-            controller: _tunnelPwdCtrl,
-            obscureText: true,
-            type: TextInputType.text,
-            label: 'SSH ${libL10n.pwd}',
-            icon: Icons.password,
-            suggestion: false,
-          );
+          if (v == null) return UIs.placeholder;
+          return _buildKeyAuthFor(_tunnelKeyIdx);
         }),
+        Input(
+          controller: _tunnelPwdCtrl,
+          obscureText: true,
+          type: TextInputType.text,
+          label: 'SSH ${libL10n.pwd}',
+          icon: Icons.password,
+          suggestion: false,
+        ),
       ],
     );
   }

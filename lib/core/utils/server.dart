@@ -253,6 +253,7 @@ Future<SSHClient> genClient(
     username: ssh.user,
     // Must use [compute] here, instead of [Computer.shared.start]
     identities: await compute(loadIdentity, privateKey),
+    onPasswordRequest: ssh.pwd?.isNotEmpty == true ? () => ssh.pwd : null,
     onUserInfoRequest: onKeyboardInteractive == null
         ? null
         : (request) => onKeyboardInteractive(spi, request),

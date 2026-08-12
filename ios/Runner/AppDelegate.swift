@@ -55,9 +55,13 @@ import ActivityKit
                 result(nil)
             case "stopLiveActivity":
                 if #available(iOS 16.2, *) {
-                    LiveActivityManager.stop()
+                    Task {
+                        await LiveActivityManager.stop()
+                        result(nil)
+                    }
+                } else {
+                    result(nil)
                 }
-                result(nil)
             case "setAccessoryWidgetUrl":
                 // The accessory families can't carry the intent configuration
                 // the home-screen ones use, so they read this key instead —
@@ -86,11 +90,20 @@ import ActivityKit
         }
         return true
     }
+
+    override func application(_ application: UIApplication, didDiscardSceneSessions sceneSessions: Set<UISceneSession>) {
+        // UIScene apps use this callback when the user closes the app from the
+        // app switcher. applicationWillTerminate is not reliable for that path.
+        if #available(iOS 16.2, *) {
+            Task { await LiveActivityManager.stop() }
+        }
+        super.application(application, didDiscardSceneSessions: sceneSessions)
+    }
     
     override func applicationWillTerminate(_ application: UIApplication) {
         // Stop Live Activity when app is about to terminate
         if #available(iOS 16.2, *) {
-            LiveActivityManager.stop()
+            Task { await LiveActivityManager.stop() }
         }
     }
 }

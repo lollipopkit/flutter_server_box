@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:hive_ce/hive.dart';
+import 'package:meta/meta.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
@@ -10,6 +12,11 @@ import 'package:server_box/data/res/default.dart';
 
 class SettingStore extends HiveStore {
   SettingStore._() : super('setting');
+
+  @visibleForTesting
+  SettingStore.forBox(Box<dynamic> testBox) : super('setting_test') {
+    box = testBox;
+  }
 
   static final instance = SettingStore._();
 
@@ -234,6 +241,11 @@ class SettingStore extends HiveStore {
   );
   late final askAiApiKey = propertyDefault('askAiApiKey', '');
   late final askAiModel = propertyDefault('askAiModel', 'gpt-5.4-mini');
+  late final askAiProtocol = propertyDefault('askAiProtocol', 'auto');
+  late final askAiAutoRunSafeCommands = propertyDefault(
+    'askAiAutoRunSafeCommands',
+    false,
+  );
 
   late final serverFuncBtns = listProperty(
     'serverBtns',
@@ -368,6 +380,29 @@ class SettingStore extends HiveStore {
       return val?.map((e) => e.name).toList() ?? [];
     },
   );
+
+  /// Add Agent to the legacy default home tabs once.
+  Future<void> migrateHomeTabsAgent() async {
+    const key = 'homeTabs';
+    const flagKey = 'homeTabsAgentMigrated';
+    if (box.get(flagKey) == true) return;
+
+    final tabs = AppTab.parseAppTabsFromObj(box.get(key));
+    const legacyDefaultTabs = {
+      AppTab.server,
+      AppTab.ssh,
+      AppTab.file,
+      AppTab.snippet,
+    };
+    if (tabs.length == legacyDefaultTabs.length &&
+        tabs.toSet().containsAll(legacyDefaultTabs)) {
+      await box.put(
+        key,
+        [...tabs, AppTab.agent].map((tab) => tab.name).toList(),
+      );
+    }
+    await box.put(flagKey, true);
+  }
 
   /// Hide port forward beta warning
   late final portForwardBetaWarned = propertyDefault(
