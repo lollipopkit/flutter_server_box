@@ -14,7 +14,6 @@ extension _SSH on _AppSettingsPageState {
         if (isDesktop) _buildSSHConfigImport(),
         if (isDesktop) _buildSshConnectionMode(),
         if (isMobile) _buildQrScan(),
-        _buildSSHDiscovery(),
         _buildLetterCache(),
         _buildSSHWakeLock(),
         _buildTermTheme(),
@@ -70,83 +69,6 @@ extension _SSH on _AppSettingsPageState {
       context.showSnackBar(libL10n.success);
     } catch (e, s) {
       context.showErrDialog(e, s);
-    }
-  }
-
-  Widget _buildSSHDiscovery() {
-    return ListTile(
-      leading: const Icon(BoxIcons.bx_search),
-      title: Text(l10n.discoverSshServers),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: _onTapSSHDiscovery,
-    );
-  }
-
-  Future<void> _onTapSSHDiscovery() async {
-    try {
-      final result = await SshDiscoveryPage.route.go(context);
-      if (!mounted) return;
-
-      if (result != null && result.isNotEmpty) {
-        await _processDiscoveredServers(result);
-      }
-    } catch (e, s) {
-      if (!mounted) return;
-      context.showErrDialog(e, s);
-    }
-  }
-
-  Future<void> _processDiscoveredServers(
-    List<SshDiscoveryResult> discoveredServers,
-  ) async {
-    final defaultUsername = 'root';
-    final usernameController = TextEditingController(text: defaultUsername);
-
-    try {
-      final shouldImport = await context.showRoundDialog<bool>(
-        title: libL10n.import,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.sshConfigFoundServers('${discoveredServers.length}')),
-            const SizedBox(height: 8),
-            Input(controller: usernameController, label: libL10n.user),
-          ],
-        ),
-        actions: Btnx.cancelOk,
-      );
-
-      if (!mounted) return;
-
-      if (shouldImport == true) {
-        final username = usernameController.text.isNotEmpty
-            ? usernameController.text
-            : defaultUsername;
-        final servers = discoveredServers
-            .map(
-              (result) => Spi(
-                id: ShortId.generate(),
-                name: result.ip,
-                ssh: SshCredential(
-                  ip: result.ip,
-                  port: result.port,
-                  user: username,
-                ),
-              ),
-            )
-            .toList();
-
-        await ServerDeduplication.importServersWithNotification(
-          servers: servers,
-          ref: ref,
-          context: context,
-          allExistMessage: l10n.sshConfigAllExist,
-          importedMessage: (count) =>
-              '${libL10n.success}: $count ${libL10n.servers}',
-        );
-      }
-    } finally {
-      usernameController.dispose();
     }
   }
 

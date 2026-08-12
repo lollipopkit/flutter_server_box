@@ -14,6 +14,7 @@ import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/custom.dart';
+import 'package:server_box/data/model/server/discovery_result.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -24,6 +25,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
+import 'package:server_box/view/page/server/discovery/discovery.dart';
 import 'package:server_box/view/widget/page_columns.dart';
 
 part 'actions.dart';
@@ -179,8 +181,14 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     // The tip is about the form as a whole rather than any one field, so it
     // belongs beside the other page-level action rather than inside the
     // scrolling content, where it took a row of its own and moved away.
-    final actions = <Widget>[_buildWriteScriptTip()];
-    if (spi != null) actions.add(_buildDelBtn());
+    final actions = <Widget>[
+      // Only while adding. Sweeping the network for hosts is how someone with
+      // an empty form finds what to put in it; on a server that already exists
+      // it answers a question nobody is asking.
+      if (spi == null) _buildDiscoverBtn(),
+      _buildWriteScriptTip(),
+      if (spi != null) _buildDelBtn(),
+    ];
 
     return Scaffold(
       appBar: CustomAppBar(title: Text(libL10n.edit), actions: actions),

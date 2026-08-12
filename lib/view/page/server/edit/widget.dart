@@ -779,6 +779,14 @@ extension _Widgets on _ServerEditPageState {
     ).cardx;
   }
 
+  Widget _buildDiscoverBtn() {
+    return IconButton(
+      tooltip: l10n.discoverSshServers,
+      onPressed: _onTapDiscover,
+      icon: const Icon(Icons.radar),
+    );
+  }
+
   Widget _buildWriteScriptTip() {
     return IconButton(
       tooltip: libL10n.attention,
