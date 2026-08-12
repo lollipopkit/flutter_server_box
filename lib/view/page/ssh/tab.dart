@@ -11,6 +11,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
+import 'package:server_box/view/widget/pane_list.dart';
 
 part 'tab_add.dart';
 part 'tab_sort.dart';
@@ -119,30 +120,26 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   Widget build(BuildContext context) {
     super.build(context);
     ref.listen(terminalRequestsProvider, (_, _) => _drainRequests());
-    return Stores.setting.forceSinglePane.listenable().listenVal((single) {
-      return ListenBuilder(
-        listenable: _sessions,
-        builder: () => AdaptiveSideList(
-          // Nothing open yet means nothing for a column to sit beside, so the
-          // picker keeps the whole width until the first terminal is opened —
-          // the same as the server list before anything is selected.
-          enabled: !single && _sessions.tabs.isNotEmpty,
-          sideWidth: Stores.setting.paneListWidth.fetch(),
-          onSideWidthChanged: Stores.setting.paneListWidth.put,
-          sideBuilder: (_) => _SideBar(
-            sessions: _sessions,
-            sortVersion: _sortVersion,
-            actions: [_sortBtn, _searchBtn, _historyBtn, _addBtn],
-            onOpen: _open,
-            onEdit: (spi) =>
-                ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
-            onSelect: _sessions.select,
-            onClose: _confirmClose,
-          ),
-          builder: (_, split) => _buildTerminals(split),
+    return ListenBuilder(
+      listenable: _sessions,
+      builder: () => SbPaneList(
+        // Nothing open yet means nothing for a column to sit beside, so the
+        // picker keeps the whole width until the first terminal is opened —
+        // the same as the server list before anything is selected.
+        hasContent: _sessions.tabs.isNotEmpty,
+        sideBuilder: (_) => _SideBar(
+          sessions: _sessions,
+          sortVersion: _sortVersion,
+          actions: [_sortBtn, _searchBtn, _historyBtn, _addBtn],
+          onOpen: _open,
+          onEdit: (spi) =>
+              ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
+          onSelect: _sessions.select,
+          onClose: _confirmClose,
         ),
-      );
-    });
+        builder: (_, split) => _buildTerminals(split),
+      ),
+    );
   }
 
   Widget _buildTerminals(bool split) {

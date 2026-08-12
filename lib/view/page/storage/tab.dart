@@ -10,6 +10,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
+import 'package:server_box/view/widget/pane_list.dart';
 
 /// Every open file browser, one tab each, plus a picker at the head of the
 /// strip.
@@ -128,26 +129,22 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
     super.build(context);
     ref.listen(sftpRequestsProvider, (_, _) => _drainRequests());
 
-    return Stores.setting.forceSinglePane.listenable().listenVal((single) {
-      return ListenBuilder(
-        listenable: _sessions,
-        builder: () => AdaptiveSideList(
-          // Nothing open yet means nothing for a column to sit beside, so the
-          // picker keeps the whole width until the first browser is opened.
-          enabled: !single && _sessions.tabs.isNotEmpty,
-          sideWidth: Stores.setting.paneListWidth.fetch(),
-          onSideWidthChanged: Stores.setting.paneListWidth.put,
-          sideBuilder: (_) => _SideBar(
-            sessions: _sessions,
-            onLocal: _openLocal,
-            onServer: _openRemote,
-            onSelect: _sessions.select,
-            onClose: _close,
-          ),
-          builder: (_, split) => _buildBrowsers(split),
+    return ListenBuilder(
+      listenable: _sessions,
+      builder: () => SbPaneList(
+        // Nothing open yet means nothing for a column to sit beside, so the
+        // picker keeps the whole width until the first browser is opened.
+        hasContent: _sessions.tabs.isNotEmpty,
+        sideBuilder: (_) => _SideBar(
+          sessions: _sessions,
+          onLocal: _openLocal,
+          onServer: _openRemote,
+          onSelect: _sessions.select,
+          onClose: _close,
         ),
-      );
-    });
+        builder: (_, split) => _buildBrowsers(split),
+      ),
+    );
   }
 
   Widget _buildBrowsers(bool split) {

@@ -14,6 +14,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/view/page/ssh/agent_conversation_replay.dart';
+import 'package:server_box/view/widget/pane_list.dart';
 
 class AgentPage extends ConsumerStatefulWidget {
   const AgentPage({super.key});
@@ -1584,21 +1585,17 @@ class _AgentPageState extends ConsumerState<AgentPage>
     // The same judgement, width and seam as the server list and the terminal
     // tabs: whether a list gets a column of its own is a property of the
     // window, not of the page that happens to be in it.
-    return Stores.setting.forceSinglePane.listenable().listenVal((single) {
-      return Material(
-        color: theme.colorScheme.surface,
-        child: AdaptiveSideList(
-          // Nothing to sit beside until there is a conversation: the header
-          // keeps its history and new-conversation buttons, so folding the
-          // column away costs nothing and hands 320pt back to the answer.
-          enabled: !single && _conversations.isNotEmpty,
-          sideWidth: Stores.setting.paneListWidth.fetch(),
-          onSideWidthChanged: Stores.setting.paneListWidth.put,
-          sideBuilder: (ctx) => _buildHistoryPanel(ctx, inSheet: false),
-          builder: (ctx, split) => _buildMain(ctx, theme, !split),
-        ),
-      );
-    });
+    return Material(
+      color: theme.colorScheme.surface,
+      child: SbPaneList(
+        // Nothing to sit beside until there is a conversation: the header
+        // keeps its history and new-conversation buttons, so folding the
+        // column away costs nothing and hands 320pt back to the answer.
+        hasContent: _conversations.isNotEmpty,
+        sideBuilder: (ctx) => _buildHistoryPanel(ctx, inSheet: false),
+        builder: (ctx, split) => _buildMain(ctx, theme, !split),
+      ),
+    );
   }
 }
 
