@@ -71,13 +71,14 @@ class ServerFuncBtns extends StatelessWidget {
 }
 
 /// Between two buttons.
-const _kGap = 10.0;
+const _kGap = 7.0;
 
 /// Between the buttons and the ends of the row.
 ///
-/// Larger than [_kGap], so the row reads as a group with a border around it
-/// rather than as buttons that happen to be near an edge.
-const _kPad = 14.0;
+/// The buttons carry a little of their own, so this is what is left to make
+/// the row read as a group with a border around it rather than as buttons that
+/// happen to be near an edge.
+const _kPad = 8.0;
 
 /// Above the icons. The buttons bring their own tap target, which is most of
 /// the row's height; this is only what keeps them off the border.
@@ -99,20 +100,23 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
       );
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          onPressed: () => _onTapMoreBtns(e, context, ref),
-          padding: EdgeInsets.zero,
-          // Narrower and shorter than the default 48 square, which in a bar
-          // this size was the whole of its height.
-          constraints: const BoxConstraints.tightFor(width: 44, height: 38),
-          visualDensity: VisualDensity.compact,
-          icon: Icon(e.icon, size: 17),
+    // The label is part of the button, not a caption under one. An
+    // `IconButton` with a `Text` beneath it left the word inert, so half of
+    // what looks like a target did nothing when tapped.
+    return InkWell(
+      onTap: () => _onTapMoreBtns(e, context, ref),
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(e.icon, size: 17),
+            const SizedBox(height: 4),
+            Text(e.toStr, style: UIs.text11Grey),
+          ],
         ),
-        Text(e.toStr, style: UIs.text11Grey),
-      ],
+      ),
     );
   }
 }

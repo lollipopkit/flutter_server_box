@@ -53,8 +53,9 @@ class ServerDetailPage extends ConsumerStatefulWidget {
 /// visible past it and it never reads as a second edge to the window.
 const _kFuncBarSideRoom = 100.0;
 
-/// One row of buttons with their labels.
-const _kFuncBarHeight = 59.0;
+/// One row of buttons with their labels: a 17pt icon over a line of 11pt text,
+/// plus the buttons' own inset and the row's, and a little over.
+const _kFuncBarHeight = 56.0;
 
 /// What the grid keeps clear below its last card, so the bar is never over
 /// something that cannot be scrolled out from under it.
