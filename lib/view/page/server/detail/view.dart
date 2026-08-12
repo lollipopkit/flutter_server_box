@@ -49,13 +49,16 @@ class ServerDetailPage extends ConsumerStatefulWidget {
   );
 }
 
-/// A ceiling on the bar, which is otherwise as wide as the buttons in it.
-const _kFuncBarMaxWidth = 640.0;
+/// Left over on either side of the bar, so the page it floats above is still
+/// visible past it and it never reads as a second edge to the window.
+const _kFuncBarSideRoom = 100.0;
+
+/// One row of buttons with their labels.
+const _kFuncBarHeight = 59.0;
 
 /// What the grid keeps clear below its last card, so the bar is never over
-/// something that cannot be scrolled out from under it. The bar's own height
-/// follows its contents; this is one row of them plus its margins.
-const _kFuncBarInset = 88.0;
+/// something that cannot be scrolled out from under it.
+const _kFuncBarInset = _kFuncBarHeight + 26;
 
 class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     with SingleTickerProviderStateMixin {
@@ -285,15 +288,20 @@ ${err.message ?? 'null'}
 
   /// The row of things that can be done to this server, floating over it.
   Widget _buildFuncBar(ServerState si) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(13, 0, 13, 13),
-        child: ConstrainedBox(
-          // No wider than the row needs, and no wider than this however many
-          // buttons there are: stretched across a desktop window it stops
-          // being a group of buttons and becomes a band across the page.
-          constraints: const BoxConstraints(maxWidth: _kFuncBarMaxWidth),
-          child: IntrinsicWidth(
+    return LayoutBuilder(
+      builder: (_, cons) => Center(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 13),
+          child: ConstrainedBox(
+            // The row takes the width it needs up to this; beyond it, it
+            // scrolls. Stretched across a desktop window it would stop being a
+            // group of buttons and become a band across the page.
+            constraints: BoxConstraints(
+              maxWidth: (cons.maxWidth - _kFuncBarSideRoom).clamp(
+                0.0,
+                double.infinity,
+              ),
+            ),
             child: Material(
               // Raised off the page, because it is the one thing here that is
               // not part of what the page is showing.
@@ -302,7 +310,10 @@ ${err.message ?? 'null'}
               color: Theme.of(context).colorScheme.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(19),
               clipBehavior: Clip.antiAlias,
-              child: ServerFuncBtns(spi: si.spi),
+              child: SizedBox(
+                height: _kFuncBarHeight,
+                child: ServerFuncBtns(spi: si.spi),
+              ),
             ),
           ),
         ),

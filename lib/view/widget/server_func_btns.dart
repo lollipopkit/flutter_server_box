@@ -55,19 +55,17 @@ class ServerFuncBtns extends StatelessWidget {
       );
     }
 
-    // On its own, so it has to say how wide it is. A `Wrap` reports the sum of
-    // its children as its intrinsic width, which is what lets whatever holds
-    // this size itself to the buttons rather than to the window — and if a
-    // language makes the labels long enough to run out of room, it takes a
-    // second line instead of clipping them.
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: _kPad, vertical: _kPad),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        spacing: _kGap,
-        runSpacing: _kGap,
-        children: items,
-      ),
+    // On its own, so it has to say how wide it is. A shrink-wrapping viewport
+    // takes the width of what is in it and no more — and, once whatever holds
+    // it runs out of room to give, scrolls instead of overflowing. One line
+    // either way.
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      shrinkWrap: true,
+      padding: const EdgeInsets.symmetric(horizontal: _kPad, vertical: _kVPad),
+      itemCount: items.length,
+      itemBuilder: (_, i) => items[i],
+      separatorBuilder: (_, _) => const SizedBox(width: _kGap),
     );
   }
 }
@@ -75,11 +73,15 @@ class ServerFuncBtns extends StatelessWidget {
 /// Between two buttons.
 const _kGap = 10.0;
 
-/// Between the buttons and whatever the row is drawn inside.
+/// Between the buttons and the ends of the row.
 ///
 /// Larger than [_kGap], so the row reads as a group with a border around it
 /// rather than as buttons that happen to be near an edge.
 const _kPad = 14.0;
+
+/// Above and below. The buttons bring their own tap target, which is most of
+/// the row's height; this is only what keeps them off the border.
+const _kVPad = 3.0;
 
 extension ServerFuncBtnsBuild on ServerFuncBtns {
   Widget _buildItem(BuildContext context, ServerFuncBtn e, WidgetRef ref) {
@@ -99,6 +101,10 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
         IconButton(
           onPressed: () => _onTapMoreBtns(e, context, ref),
           padding: EdgeInsets.zero,
+          // Narrower and shorter than the default 48 square, which in a bar
+          // this size was the whole of its height.
+          constraints: const BoxConstraints.tightFor(width: 44, height: 38),
+          visualDensity: VisualDensity.compact,
           icon: Icon(e.icon, size: 17),
         ),
         Text(e.toStr, style: UIs.text11Grey),
