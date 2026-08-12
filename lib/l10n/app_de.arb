@@ -68,6 +68,7 @@
   "dockerImagesFmt": "{count} Image(s)",
   "dockerProjectOther": "Andere",
   "dockerPruneTip": "Nicht verwendete Daten entfernen, um Speicherplatz freizugeben",
+  "dockerStatistics": "Docker-Statistiken",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} aktiv, {stoppedCount} container gestoppt.",
   "dockerStatusRunningFmt": "{count} Container aktiv",
   "doubleColumnMode": "Doppelspaltiger Modus",

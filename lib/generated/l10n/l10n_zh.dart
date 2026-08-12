@@ -455,6 +455,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dockerPruneTip => '清理未使用的数据以释放磁盘空间';
 
   @override
+  String get dockerStatistics => 'Docker 统计';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,
@@ -1692,6 +1695,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get dockerPruneTip => '清理未使用的資料以釋放磁碟空間';
+
+  @override
+  String get dockerStatistics => 'Docker 統計';
 
   @override
   String dockerStatusRunningAndStoppedFmt(

@@ -68,6 +68,7 @@
   "dockerImagesFmt": "Всего {count} образов",
   "dockerProjectOther": "Другое",
   "dockerPruneTip": "Удалите неиспользуемые данные, чтобы освободить место на диске",
+  "dockerStatistics": "Статистика Docker",
   "dockerStatusRunningAndStoppedFmt": "{runningCount} запущено, {stoppedCount} остановлено",
   "dockerStatusRunningFmt": "{count} контейнеров запущено",
   "doubleColumnMode": "Режим двойной колонки",

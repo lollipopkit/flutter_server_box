@@ -969,6 +969,12 @@ abstract class AppLocalizations {
   /// **'Remove unused data to free up disk space'**
   String get dockerPruneTip;
 
+  /// No description provided for @dockerStatistics.
+  ///
+  /// In en, this message translates to:
+  /// **'Docker Statistics'**
+  String get dockerStatistics;
+
   /// No description provided for @dockerStatusRunningAndStoppedFmt.
   ///
   /// In en, this message translates to:

@@ -480,6 +480,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Удалите неиспользуемые данные, чтобы освободить место на диске';
 
   @override
+  String get dockerStatistics => 'Статистика Docker';
+
+  @override
   String dockerStatusRunningAndStoppedFmt(
     Object runningCount,
     Object stoppedCount,

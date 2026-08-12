@@ -17,6 +17,7 @@ final class _IntroPage extends StatelessWidget {
         final padTop = cons.maxHeight * .16;
         final pages_ = pages.map((e) => e(context, padTop)).toList();
         return IntroPage(
+          key: ValueKey(Localizations.localeOf(context)),
           args: IntroPageArgs(
             pages: pages_,
             onDone: (ctx) {
@@ -32,61 +33,227 @@ final class _IntroPage extends StatelessWidget {
   }
 
   static Widget _buildAppSettings(BuildContext ctx, double padTop) {
+    final theme = Theme.of(ctx);
+    final scheme = theme.colorScheme;
+    final libL10n = ctx.libL10n;
+    final l10n = ctx.l10n;
+
     return ListView(
       padding: _introListPad,
       children: [
-        SizedBox(height: padTop),
-        IntroPage.title(text: libL10n.init, big: true),
-        SizedBox(height: padTop),
-        ListTile(
-          leading: const Icon(IonIcons.language),
-          title: Text(libL10n.language),
-          onTap: () async {
-            final selected = await ctx.showPickSingleDialog(
-              title: libL10n.language,
-              items: AppLocalizations.supportedLocales,
-              display: (p0) => p0.nativeName,
-              initial: _setting.locale.fetch().toLocale,
-            );
-            if (selected != null) {
-              _setting.locale.put(selected.code);
-              RNodes.app.notify();
-            }
-          },
-          trailing: Text(
-            ctx.localeNativeName,
-            style: const TextStyle(fontSize: 15, color: Colors.grey),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(height: padTop * .38),
+                _buildWelcomeHeader(ctx),
+                const SizedBox(height: 26),
+                Text(
+                  libL10n.setting,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                CardX(
+                  color: scheme.surfaceContainerLow,
+                  child: Column(
+                    children: [
+                      ListTile(
+                        leading: _buildSettingIcon(ctx, IonIcons.language),
+                        title: Text(libL10n.language),
+                        subtitle: Text(
+                          ctx.localeNativeName,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _selectLocale(ctx),
+                      ),
+                      Divider(height: 1, color: scheme.outlineVariant),
+                      ListTile(
+                        leading: _buildSettingIcon(ctx, Icons.update),
+                        title: Text(libL10n.checkUpdate),
+                        subtitle: isAndroid
+                            ? Text(l10n.fdroidReleaseTip, style: UIs.textGrey)
+                            : null,
+                        trailing: StoreSwitch(
+                          prop: _setting.autoCheckAppUpdate,
+                        ),
+                      ),
+                      Divider(height: 1, color: scheme.outlineVariant),
+                      ListTile(
+                        leading: _buildSettingIcon(
+                          ctx,
+                          MingCute.delete_2_fill,
+                        ),
+                        title: TipText('rm -r', l10n.sftpRmrDirSummary),
+                        trailing: StoreSwitch(prop: _setting.sftpRmrDir),
+                      ),
+                      Divider(height: 1, color: scheme.outlineVariant),
+                      ListTile(
+                        leading: _buildSettingIcon(
+                          ctx,
+                          MingCute.chart_line_line,
+                          size: _kIconSize,
+                        ),
+                        title: TipText(
+                          l10n.dockerStatistics,
+                          l10n.parseContainerStatsTip,
+                        ),
+                        trailing: StoreSwitch(
+                          prop: _setting.containerParseStat,
+                        ),
+                      ),
+                      Divider(height: 1, color: scheme.outlineVariant),
+                      ListTile(
+                        leading: _buildSettingIcon(
+                          ctx,
+                          Bootstrap.alphabet,
+                        ),
+                        title: TipText(
+                          l10n.letterCache,
+                          l10n.letterCacheTip,
+                        ),
+                        trailing: StoreSwitch(prop: _setting.letterCache),
+                      ),
+                    ],
+                  ),
+                ),
+                UIs.height77,
+              ],
+            ),
           ),
-        ).cardx,
-        ListTile(
-          leading: const Icon(Icons.update),
-          title: Text(libL10n.checkUpdate),
-          subtitle: isAndroid
-              ? Text(l10n.fdroidReleaseTip, style: UIs.textGrey)
-              : null,
-          trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
-        ).cardx,
-        ListTile(
-          leading: const Icon(MingCute.delete_2_fill),
-          title: TipText('rm -r', l10n.sftpRmrDirSummary),
-          trailing: StoreSwitch(prop: _setting.sftpRmrDir),
-        ).cardx,
-        ListTile(
-          leading: const Icon(MingCute.chart_line_line, size: _kIconSize),
-          title: TipText('Docker ${l10n.stat}', l10n.parseContainerStatsTip),
-          trailing: StoreSwitch(prop: _setting.containerParseStat),
-        ).cardx,
-        ListTile(
-          leading: const Icon(Bootstrap.alphabet),
-          title: TipText(l10n.letterCache, l10n.letterCacheTip),
-          trailing: StoreSwitch(prop: _setting.letterCache),
-        ).cardx,
-        UIs.height77,
+        ),
       ],
     );
   }
 
+  static Widget _buildWelcomeHeader(BuildContext ctx) {
+    final theme = Theme.of(ctx);
+    final scheme = theme.colorScheme;
+    final libL10n = ctx.libL10n;
+    final l10n = ctx.l10n;
+
+    return Column(
+      children: [
+        Container(
+          width: 112,
+          height: 112,
+          padding: const EdgeInsets.all(17),
+          decoration: BoxDecoration(
+            color: scheme.primaryContainer.withValues(alpha: .55),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: scheme.primary.withValues(alpha: .16)),
+            boxShadow: [
+              BoxShadow(
+                color: scheme.primary.withValues(alpha: .12),
+                blurRadius: 28,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Image.asset('assets/app_icon.png'),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          BuildData.name,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: -.5,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          libL10n.init,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 18),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildFeatureChip(ctx, Icons.dns_outlined, libL10n.server),
+            _buildFeatureChip(ctx, Icons.terminal, l10n.ssh),
+            _buildFeatureChip(ctx, Icons.folder_outlined, l10n.sftp),
+            _buildFeatureChip(
+              ctx,
+              Icons.inventory_2_outlined,
+              libL10n.container,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  static Widget _buildFeatureChip(
+    BuildContext ctx,
+    IconData icon,
+    String label,
+  ) {
+    final scheme = Theme.of(ctx).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 17, color: scheme.primary),
+          const SizedBox(width: 7),
+          Text(label, style: Theme.of(ctx).textTheme.labelLarge),
+        ],
+      ),
+    );
+  }
+
+  static Widget _buildSettingIcon(
+    BuildContext ctx,
+    IconData icon, {
+    double? size,
+  }) {
+    final scheme = Theme.of(ctx).colorScheme;
+
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icon, size: size ?? 21, color: scheme.onPrimaryContainer),
+    );
+  }
+
+  static Future<void> _selectLocale(BuildContext ctx) async {
+    final selected = await ctx.showPickSingleDialog(
+      title: ctx.libL10n.language,
+      items: AppLocalizations.supportedLocales,
+      display: (locale) => locale.nativeName,
+      initial: _setting.locale.fetch().toLocale,
+    );
+    if (selected == null || !ctx.mounted) return;
+
+    _setting.locale.put(selected.code);
+  }
+
   static Widget _buildBackupPasswordMigration(BuildContext ctx, double padTop) {
+    final l10n = ctx.l10n;
+
     return ListView(
       padding: _introListPad,
       children: [
