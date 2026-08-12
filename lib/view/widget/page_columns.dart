@@ -8,9 +8,22 @@ import 'package:flutter/material.dart';
 /// pages suffered most: a single form became five columns of unrelated fields.
 /// Hence both a wider column and a ceiling on how many of them there can be.
 class PageColumns extends StatelessWidget {
-  const PageColumns({super.key, required this.children});
+  const PageColumns({
+    super.key,
+    required this.children,
+    this.controller,
+    this.bottomInset = 0,
+  });
 
   final List<Widget> children;
+
+  /// The grid's scroll position, for a page with something floating over it
+  /// that has to know when the content moves.
+  final ScrollController? controller;
+
+  /// Room below the last card, for whatever is floating there. Without it the
+  /// bottom of the page can only be read by scrolling past its own end.
+  final double bottomInset;
 
   /// Half again the default. A column now comfortably holds a chart with its
   /// axis labels, or a form field with its description.
@@ -35,10 +48,11 @@ class PageColumns extends StatelessWidget {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: MasonryList(
+          controller: controller,
           columnWidth: columnWidth,
           maxColumns: _maxColumns,
           spacing: _spacing,
-          padding: _padding,
+          padding: _padding.copyWith(bottom: _padding.bottom + bottomInset),
           children: children,
         ),
       ),

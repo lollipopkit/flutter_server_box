@@ -37,19 +37,26 @@ class ServerFuncBtns extends StatelessWidget {
     final btns = this.btns;
     if (btns.isEmpty) return UIs.placeholder;
 
-    return SizedBox(
-      height: 77,
-      child: ListView.builder(
-        itemCount: btns.length,
+    // Centred where the row fits and scrolling where it does not. A plain
+    // horizontal list is always left-aligned, which on a wide window left the
+    // buttons huddled in one corner of a bar the width of the screen.
+    return LayoutBuilder(
+      builder: (_, cons) => SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: 13),
-        itemBuilder: (context, index) {
-          final value = btns[index];
-          final item = Consumer(
-            builder: (_, ref, _) => _buildItem(context, value, ref),
-          );
-          return item.paddingSymmetric(horizontal: 7);
-        },
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minWidth: cons.maxWidth - 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (final value in btns)
+                Consumer(
+                  builder: (_, ref, _) => _buildItem(context, value, ref),
+                ).paddingSymmetric(horizontal: 7),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -67,19 +74,16 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 13),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            onPressed: () => _onTapMoreBtns(e, context, ref),
-            padding: EdgeInsets.zero,
-            icon: Icon(e.icon, size: 17),
-          ),
-          Text(e.toStr, style: UIs.text11Grey),
-        ],
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          onPressed: () => _onTapMoreBtns(e, context, ref),
+          padding: EdgeInsets.zero,
+          icon: Icon(e.icon, size: 17),
+        ),
+        Text(e.toStr, style: UIs.text11Grey),
+      ],
     );
   }
 }

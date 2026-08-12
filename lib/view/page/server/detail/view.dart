@@ -49,6 +49,16 @@ class ServerDetailPage extends ConsumerStatefulWidget {
   );
 }
 
+/// Tall enough for an icon over its label.
+const _kFuncBarHeight = 62.0;
+
+/// Wide enough for every button the row can hold.
+const _kFuncBarMaxWidth = 640.0;
+
+/// What the grid keeps clear below its last card, so the bar is never over
+/// something that cannot be scrolled out from under it.
+const _kFuncBarInset = _kFuncBarHeight + 26;
+
 class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     with SingleTickerProviderStateMixin {
   /// Keyed by the enum, not paired positionally with `ServerDetailCards.names`.
@@ -79,6 +89,10 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
 
   final _settings = Stores.setting;
   final _netSortType = ValueNotifier(_NetSortType.device);
+
+  /// Shared by the grid and the bar floating over it, which is how the bar
+  /// knows to get out of the way.
+  final _scrollCtrl = ScrollController();
   late final _collapse = _settings.collapseUIDefault.fetch();
   late final _textFactor = TextScaler.linear(_settings.textFactor.fetch());
   late final _cpuViewAsProgress = _settings.cpuViewAsProgress.fetch();
@@ -89,6 +103,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   void dispose() {
     super.dispose();
     _netSortType.dispose();
+    _scrollCtrl.dispose();
   }
 
   @override
@@ -232,11 +247,7 @@ ${err.message ?? 'null'}
     // row too, and `btns` decides what belongs in it
     final buildFuncs = !_moveServerFuncs && si.capabilities.terminal;
     final logo = _buildLogo(si);
-    final children = <Widget>[
-      ?logo,
-      ?_buildErrCard(si),
-      if (buildFuncs) ServerFuncBtns(spi: si.spi),
-    ];
+    final children = <Widget>[?logo, ?_buildErrCard(si)];
     for (final card in _cardsOrder) {
       final child = _cardBuildMap[ServerDetailCards.fromName(card)]
           ?.call(si);
@@ -247,7 +258,58 @@ ${err.message ?? 'null'}
 
     return Scaffold(
       appBar: _buildAppBar(si),
-      body: SafeArea(child: PageColumns(children: children)),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            PageColumns(
+              controller: _scrollCtrl,
+              bottomInset: buildFuncs ? _kFuncBarInset : 0,
+              children: children,
+            ),
+            // Over the page rather than at the top of it. These act on the
+            // server, not on any one card, so they belong within reach the
+            // whole way down instead of scrolling off after the first chart.
+            if (buildFuncs)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: HideOnScroll(
+                  controller: _scrollCtrl,
+                  child: _buildFuncBar(si),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// The row of things that can be done to this server, floating over it.
+  Widget _buildFuncBar(ServerState si) {
+    return Center(
+      child: ConstrainedBox(
+        // Wide enough for the whole row, and no wider: stretched across a
+        // desktop window it stops being a group of buttons and becomes a band
+        // across the bottom of the page.
+        constraints: const BoxConstraints(maxWidth: _kFuncBarMaxWidth),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(13, 0, 13, 13),
+          child: Material(
+            // Raised off the page, because it is the one thing here that is
+            // not part of what the page is showing.
+            elevation: 3,
+            shadowColor: Colors.black26,
+            color: Theme.of(context).colorScheme.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(19),
+            clipBehavior: Clip.antiAlias,
+            child: SizedBox(
+              height: _kFuncBarHeight,
+              child: ServerFuncBtns(spi: si.spi),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
