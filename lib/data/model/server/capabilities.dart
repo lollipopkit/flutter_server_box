@@ -1,4 +1,5 @@
 import 'package:server_box/data/model/server/connect_credential.dart';
+import 'package:server_box/data/model/server/monitor_remote_access.dart';
 
 /// What a server's connection method can actually do.
 ///
@@ -16,9 +17,9 @@ class ServerCapabilities {
   /// already carries.
   final bool shell;
 
-  /// An interactive terminal can be opened. Implied by [shell], but also true
-  /// on its own for a monitor agent offering a passwordless PTY, which is one
-  /// stream and therefore a terminal and nothing else.
+  /// An interactive terminal can be opened. Implied by [shell] everywhere it
+  /// is true today, and kept separate because the two are different questions:
+  /// one is "can a shell be had", the other "can anything be run".
   ///
   /// Separate from [shell] because the two used to be the same question, and
   /// answering it with one boolean would offer SFTP and port forwarding on a
@@ -86,7 +87,14 @@ class ServerCapabilities {
     persistentSession: false,
   );
 
-  static ServerCapabilities of(ServerConnectCredential credential) {
+  /// [granted] is what the agent said it allows, or null before it has
+  /// answered. Null is read as "not yet" rather than "no": the buttons appear
+  /// when the first status poll comes back, which is the same moment anything
+  /// behind them could have worked.
+  static ServerCapabilities of(
+    ServerConnectCredential credential, {
+    MonitorRemoteAccess? granted,
+  }) {
     return switch (credential) {
       ServerConnectCredentialSsh() => ssh,
       // Having SSH configured at all is what decides this, whether it is
@@ -94,10 +102,10 @@ class ServerCapabilities {
       // need an `SSHClient`, not a particular way of getting one. Only when
       // there is none does the agent's own PTY come into it, and that one
       // answers strictly less.
-      ServerConnectCredentialMonitorHttp(:final spi, :final monitor) =>
+      ServerConnectCredentialMonitorHttp(:final spi) =>
         spi.ssh != null
             ? monitorHttpWithShell
-            : monitor.fullAccess
+            : (granted?.fullAccess ?? false)
             ? monitorHttpFullAccess
             : monitorHttp,
     };

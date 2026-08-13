@@ -773,21 +773,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Immer nur eine Spalte, wie breit das Fenster auch ist, statt die Details neben der Liste zu zeigen.';
 
   @override
-  String get fullAccess => 'Terminal ohne Zugangsdaten';
-
-  @override
-  String get fullAccessTip =>
-      'Ein Terminal über den Monitor-Agent öffnen, ohne SSH-Zugangsdaten. Die Shell läuft unter dem Konto, unter dem der Agent läuft — das Monitor-Passwort allein genügt also, und weder Authentifizierung noch Protokollierung oder zweiter Faktor von sshd greifen. Ob das erlaubt ist, entscheidet der Agent. Es gibt nur ein Terminal: SFTP, Portweiterleitung, Container, Prozesse und systemd brauchen SSH.';
-
-  @override
-  String get fullAccessNeedsMonitor =>
-      'Ein Terminal ohne Zugangsdaten benötigt eine Monitor-Adresse.';
-
-  @override
-  String get fullAccessConflictsWithSsh =>
-      'Ein Terminal ohne Zugangsdaten lässt sich nicht mit SSH-Zugangsdaten kombinieren.';
-
-  @override
   String get fullAccessRefused =>
       'Dieser Agent bietet kein Terminal ohne Zugangsdaten an.';
 

@@ -39,11 +39,18 @@ extension _Init on SSHPageState {
     return SshShellBackend(client);
   }
 
+  /// The agent's own shell, when the agent said it allows one.
+  ///
+  /// Asked of the server rather than of the settings: the agent decides, and
+  /// it re-checks at the moment of use, so a stored "yes" it would refuse is
+  /// a dead button and a stored "no" hides a shell that is there.
   ShellBackend? _fullAccessBackend() {
     final spi = widget.args.spi;
     if (spi.ssh != null) return null;
     final monitor = spi.monitorHttp;
-    if (monitor == null || !monitor.fullAccess) return null;
+    if (monitor == null) return null;
+    final granted = ref.read(serverProvider(spi.id)).remoteAccess;
+    if (granted?.fullAccess != true) return null;
     return MonitorShellBackend(monitor);
   }
 

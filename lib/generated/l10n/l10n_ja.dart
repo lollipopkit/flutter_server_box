@@ -738,19 +738,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'ウィンドウの幅にかかわらず 1 列のままにし、一覧の横にサーバーの詳細を表示しません。';
 
   @override
-  String get fullAccess => '認証情報なしのターミナル';
-
-  @override
-  String get fullAccessTip =>
-      'SSH の認証情報なしで、monitor エージェント経由でターミナルを開きます。シェルはエージェントを実行しているアカウントとして動くため、monitor のパスワードだけで取得でき、sshd の認証・ログ・二要素はいずれも適用されません。許可するかどうかはエージェントが決めます。提供されるのはターミナルのみで、SFTP・ポート転送・コンテナ・プロセス・systemd には SSH が必要です。';
-
-  @override
-  String get fullAccessNeedsMonitor => '認証情報なしのターミナルには monitor のアドレスが必要です。';
-
-  @override
-  String get fullAccessConflictsWithSsh => '認証情報なしのターミナルは SSH の認証情報と併用できません。';
-
-  @override
   String get fullAccessRefused => 'このエージェントは認証情報なしのターミナルを提供していません。';
 
   @override

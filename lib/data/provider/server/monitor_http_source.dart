@@ -1,6 +1,7 @@
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor_metrics_mapper.dart';
+import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/status_history.dart';
 import 'package:server_box/data/provider/server/data_source.dart';
@@ -26,6 +27,14 @@ class MonitorHttpDataSource implements ServerDataSource {
   /// re-logged-in) instead.
   bool matches(ServerConnectCredentialMonitorHttp other) =>
       credential.monitor == other.monitor;
+
+  /// What the agent says it allows.
+  ///
+  /// Cheap and already authenticated, so it rides along with the status poll
+  /// rather than being a connect-time step that could go stale the moment the
+  /// agent's config changes.
+  Future<MonitorRemoteAccess> fetchRemoteAccess() =>
+      _client.fetchRemoteAccess();
 
   @override
   Future<ServerStatus> fetchStatus(ServerStatus into) async {

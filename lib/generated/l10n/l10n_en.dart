@@ -767,21 +767,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Keep one column however wide the window is, instead of putting a list beside what it opens — servers beside their details, terminals and file browsers beside their sessions.';
 
   @override
-  String get fullAccess => 'Access without SSH';
-
-  @override
-  String get fullAccessTip =>
-      'Reach this machine through the monitor agent with no SSH credentials: a terminal, commands, SFTP, port forwarding. Everything runs as the account the agent runs as, so the monitor password alone is enough to get it — none of sshd\'s authentication, logging or second factor applies. The agent decides whether to allow this at all.';
-
-  @override
-  String get fullAccessNeedsMonitor =>
-      'Access without SSH requires a monitor address.';
-
-  @override
-  String get fullAccessConflictsWithSsh =>
-      'Access without SSH cannot be combined with SSH credentials.';
-
-  @override
   String get fullAccessRefused =>
       'This agent does not allow access without SSH.';
 

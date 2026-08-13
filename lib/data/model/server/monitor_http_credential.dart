@@ -18,31 +18,11 @@ final class MonitorHttpCredential {
 
   final bool ignoreCert;
 
-  /// Reach the machine through the agent with no SSH credentials, as the
-  /// account the agent runs as: a terminal, a command, a forwarded port.
-  ///
-  /// One switch for all of it rather than one per feature. Anyone who can open
-  /// a shell can run anything in it, so a grant that gives the terminal and
-  /// withholds the rest withholds nothing — it only makes the app pretend.
-  ///
-  /// Off by default, and only ever a request: the agent decides whether to
-  /// offer this at all (`remote_access.full_access`) and re-checks when the
-  /// connection arrives. What it costs is that the monitor password becomes
-  /// equivalent to a shell on that machine — with none of sshd's
-  /// authentication, logging or second factor — which is why it is a separate,
-  /// deliberate switch rather than something implied by configuring monitor.
-  ///
-  /// Mutually exclusive with [SshCredential.viaMonitor]: both answer "where
-  /// does this server's shell come from", and [Spix.validate] enforces it.
-  @JsonKey(defaultValue: false)
-  final bool fullAccess;
-
   const MonitorHttpCredential({
     required this.addr,
     this.user,
     this.pwd,
     this.ignoreCert = false,
-    this.fullAccess = false,
   });
 
   factory MonitorHttpCredential.fromJson(Map<String, dynamic> json) =>
@@ -56,8 +36,7 @@ final class MonitorHttpCredential {
         other.addr == addr &&
         other.user == user &&
         other.pwd == pwd &&
-        other.ignoreCert == ignoreCert &&
-        other.fullAccess == fullAccess;
+        other.ignoreCert == ignoreCert;
   }
 
   @override
@@ -66,6 +45,5 @@ final class MonitorHttpCredential {
     user,
     pwd,
     ignoreCert,
-    fullAccess,
   );
 }

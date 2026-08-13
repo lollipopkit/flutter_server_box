@@ -772,21 +772,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Manter uma coluna independentemente da largura da janela, em vez de mostrar os detalhes ao lado da lista.';
 
   @override
-  String get fullAccess => 'Terminal sem credenciais';
-
-  @override
-  String get fullAccessTip =>
-      'Abrir um terminal através do agente monitor sem credenciais SSH. A shell é executada com a conta com que o agente é executado, por isso basta a palavra-passe do monitor para a obter — a autenticação, o registo e o segundo fator do sshd não se aplicam. É o agente que decide se o permite. Fornece apenas um terminal: SFTP, encaminhamento de portas, contentores, processos e systemd precisam de SSH.';
-
-  @override
-  String get fullAccessNeedsMonitor =>
-      'Um terminal sem credenciais requer um endereço de monitor.';
-
-  @override
-  String get fullAccessConflictsWithSsh =>
-      'Um terminal sem credenciais não pode ser combinado com credenciais SSH.';
-
-  @override
   String get fullAccessRefused =>
       'Este agente não oferece um terminal sem credenciais.';
 

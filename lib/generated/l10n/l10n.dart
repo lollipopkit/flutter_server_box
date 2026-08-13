@@ -1482,30 +1482,6 @@ abstract class AppLocalizations {
   /// **'Keep one column however wide the window is, instead of putting a list beside what it opens — servers beside their details, terminals and file browsers beside their sessions.'**
   String get forceSinglePaneTip;
 
-  /// No description provided for @fullAccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Access without SSH'**
-  String get fullAccess;
-
-  /// No description provided for @fullAccessTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Reach this machine through the monitor agent with no SSH credentials: a terminal, commands, SFTP, port forwarding. Everything runs as the account the agent runs as, so the monitor password alone is enough to get it — none of sshd\'s authentication, logging or second factor applies. The agent decides whether to allow this at all.'**
-  String get fullAccessTip;
-
-  /// No description provided for @fullAccessNeedsMonitor.
-  ///
-  /// In en, this message translates to:
-  /// **'Access without SSH requires a monitor address.'**
-  String get fullAccessNeedsMonitor;
-
-  /// No description provided for @fullAccessConflictsWithSsh.
-  ///
-  /// In en, this message translates to:
-  /// **'Access without SSH cannot be combined with SSH credentials.'**
-  String get fullAccessConflictsWithSsh;
-
   /// No description provided for @fullAccessRefused.
   ///
   /// In en, this message translates to:

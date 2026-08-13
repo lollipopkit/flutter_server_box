@@ -9,17 +9,17 @@ part of 'edit.dart';
 /// also puts the two SSH-account fields underneath the option that owns them,
 /// instead of beside a second account with the same field labels.
 enum _ShellSource {
-  /// Status only. Every shell-backed feature is unavailable, which is the
-  /// honest default for a server that has only ever been given a monitor URL.
+  /// No SSH of this app's own. What the server can then do is the agent's
+  /// answer, not a setting here — see [ServerState.remoteAccess]. An agent
+  /// that grants access without SSH is offering it to anyone with the panel
+  /// password, so a switch here could only have made the app pretend
+  /// otherwise.
   none,
 
   /// SSH relayed by the agent. Real SSH, so it answers everything: terminal,
   /// SFTP, port forwarding, containers.
   tunnel,
 
-  /// A PTY from the agent itself, with no SSH credentials. A terminal and
-  /// nothing else, and it makes the monitor password worth a shell.
-  fullAccess,
 }
 
 extension _Widgets on _ServerEditPageState {
@@ -460,21 +460,17 @@ extension _Widgets on _ServerEditPageState {
     );
   }
 
-  _ShellSource get _shellSource {
-    if (_sshViaMonitor.value) return _ShellSource.tunnel;
-    if (_fullAccess.value) return _ShellSource.fullAccess;
-    return _ShellSource.none;
-  }
+  _ShellSource get _shellSource =>
+      _sshViaMonitor.value ? _ShellSource.tunnel : _ShellSource.none;
 
   void _setShellSource(_ShellSource source) {
     _sshViaMonitor.value = source == _ShellSource.tunnel;
-    _fullAccess.value = source == _ShellSource.fullAccess;
   }
 
   /// The shell choice, and the fields belonging to whichever option owns them.
   Widget _buildShellSource() {
     return ListenableBuilder(
-      listenable: Listenable.merge([_sshViaMonitor, _fullAccess]),
+      listenable: _sshViaMonitor,
       builder: (_, _) {
         final selected = _shellSource;
         Widget option(_ShellSource value, IconData icon, Widget title) {
@@ -511,14 +507,6 @@ extension _Widgets on _ServerEditPageState {
                     _ShellSource.tunnel,
                     Icons.terminal,
                     TipText(l10n.sshViaMonitor, l10n.sshViaMonitorTip),
-                  ),
-                  option(
-                    _ShellSource.fullAccess,
-                    Icons.lock_open,
-                    TipText(
-                      l10n.fullAccess,
-                      l10n.fullAccessTip,
-                    ),
                   ),
                 ],
               ),

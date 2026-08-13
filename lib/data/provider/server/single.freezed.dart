@@ -14,7 +14,16 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ServerState {
 
- Spi get spi; ServerStatus get status; ServerConn get conn; SSHClient? get client;
+ Spi get spi; ServerStatus get status; ServerConn get conn; SSHClient? get client;/// What the agent said it allows, or null before it has been asked.
+///
+/// Asked rather than configured: whether this app can reach the machine
+/// without SSH is the agent's decision, it re-checks that decision when a
+/// request arrives, and it already answers the question over an
+/// authenticated endpoint. Putting the same question to the user meant
+/// asking them to assert something the server knows — and being wrong
+/// either way, since a "yes" the agent refuses is a row of dead buttons
+/// and a "no" it would have allowed hides features that are there.
+ MonitorRemoteAccess? get remoteAccess;
 /// Create a copy of ServerState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +34,16 @@ $ServerStateCopyWith<ServerState> get copyWith => _$ServerStateCopyWithImpl<Serv
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.client, client) || other.client == client));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.client, client) || other.client == client)&&(identical(other.remoteAccess, remoteAccess) || other.remoteAccess == remoteAccess));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,spi,status,conn,client);
+int get hashCode => Object.hash(runtimeType,spi,status,conn,client,remoteAccess);
 
 @override
 String toString() {
-  return 'ServerState(spi: $spi, status: $status, conn: $conn, client: $client)';
+  return 'ServerState(spi: $spi, status: $status, conn: $conn, client: $client, remoteAccess: $remoteAccess)';
 }
 
 
@@ -45,7 +54,7 @@ abstract mixin class $ServerStateCopyWith<$Res>  {
   factory $ServerStateCopyWith(ServerState value, $Res Function(ServerState) _then) = _$ServerStateCopyWithImpl;
 @useResult
 $Res call({
- Spi spi, ServerStatus status, ServerConn conn, SSHClient? client
+ Spi spi, ServerStatus status, ServerConn conn, SSHClient? client, MonitorRemoteAccess? remoteAccess
 });
 
 
@@ -62,13 +71,14 @@ class _$ServerStateCopyWithImpl<$Res>
 
 /// Create a copy of ServerState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? spi = null,Object? status = null,Object? conn = null,Object? client = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? spi = null,Object? status = null,Object? conn = null,Object? client = freezed,Object? remoteAccess = freezed,}) {
   return _then(_self.copyWith(
 spi: null == spi ? _self.spi : spi // ignore: cast_nullable_to_non_nullable
 as Spi,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ServerStatus,conn: null == conn ? _self.conn : conn // ignore: cast_nullable_to_non_nullable
 as ServerConn,client: freezed == client ? _self.client : client // ignore: cast_nullable_to_non_nullable
-as SSHClient?,
+as SSHClient?,remoteAccess: freezed == remoteAccess ? _self.remoteAccess : remoteAccess // ignore: cast_nullable_to_non_nullable
+as MonitorRemoteAccess?,
   ));
 }
 /// Create a copy of ServerState
@@ -162,10 +172,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Spi spi,  ServerStatus status,  ServerConn conn,  SSHClient? client)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Spi spi,  ServerStatus status,  ServerConn conn,  SSHClient? client,  MonitorRemoteAccess? remoteAccess)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ServerState() when $default != null:
-return $default(_that.spi,_that.status,_that.conn,_that.client);case _:
+return $default(_that.spi,_that.status,_that.conn,_that.client,_that.remoteAccess);case _:
   return orElse();
 
 }
@@ -183,10 +193,10 @@ return $default(_that.spi,_that.status,_that.conn,_that.client);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Spi spi,  ServerStatus status,  ServerConn conn,  SSHClient? client)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Spi spi,  ServerStatus status,  ServerConn conn,  SSHClient? client,  MonitorRemoteAccess? remoteAccess)  $default,) {final _that = this;
 switch (_that) {
 case _ServerState():
-return $default(_that.spi,_that.status,_that.conn,_that.client);case _:
+return $default(_that.spi,_that.status,_that.conn,_that.client,_that.remoteAccess);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +213,10 @@ return $default(_that.spi,_that.status,_that.conn,_that.client);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Spi spi,  ServerStatus status,  ServerConn conn,  SSHClient? client)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Spi spi,  ServerStatus status,  ServerConn conn,  SSHClient? client,  MonitorRemoteAccess? remoteAccess)?  $default,) {final _that = this;
 switch (_that) {
 case _ServerState() when $default != null:
-return $default(_that.spi,_that.status,_that.conn,_that.client);case _:
+return $default(_that.spi,_that.status,_that.conn,_that.client,_that.remoteAccess);case _:
   return null;
 
 }
@@ -218,13 +228,23 @@ return $default(_that.spi,_that.status,_that.conn,_that.client);case _:
 
 
 class _ServerState extends ServerState {
-  const _ServerState({required this.spi, required this.status, this.conn = ServerConn.disconnected, this.client}): super._();
+  const _ServerState({required this.spi, required this.status, this.conn = ServerConn.disconnected, this.client, this.remoteAccess}): super._();
   
 
 @override final  Spi spi;
 @override final  ServerStatus status;
 @override@JsonKey() final  ServerConn conn;
 @override final  SSHClient? client;
+/// What the agent said it allows, or null before it has been asked.
+///
+/// Asked rather than configured: whether this app can reach the machine
+/// without SSH is the agent's decision, it re-checks that decision when a
+/// request arrives, and it already answers the question over an
+/// authenticated endpoint. Putting the same question to the user meant
+/// asking them to assert something the server knows — and being wrong
+/// either way, since a "yes" the agent refuses is a row of dead buttons
+/// and a "no" it would have allowed hides features that are there.
+@override final  MonitorRemoteAccess? remoteAccess;
 
 /// Create a copy of ServerState
 /// with the given fields replaced by the non-null parameter values.
@@ -236,16 +256,16 @@ _$ServerStateCopyWith<_ServerState> get copyWith => __$ServerStateCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.client, client) || other.client == client));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ServerState&&(identical(other.spi, spi) || other.spi == spi)&&(identical(other.status, status) || other.status == status)&&(identical(other.conn, conn) || other.conn == conn)&&(identical(other.client, client) || other.client == client)&&(identical(other.remoteAccess, remoteAccess) || other.remoteAccess == remoteAccess));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,spi,status,conn,client);
+int get hashCode => Object.hash(runtimeType,spi,status,conn,client,remoteAccess);
 
 @override
 String toString() {
-  return 'ServerState(spi: $spi, status: $status, conn: $conn, client: $client)';
+  return 'ServerState(spi: $spi, status: $status, conn: $conn, client: $client, remoteAccess: $remoteAccess)';
 }
 
 
@@ -256,7 +276,7 @@ abstract mixin class _$ServerStateCopyWith<$Res> implements $ServerStateCopyWith
   factory _$ServerStateCopyWith(_ServerState value, $Res Function(_ServerState) _then) = __$ServerStateCopyWithImpl;
 @override @useResult
 $Res call({
- Spi spi, ServerStatus status, ServerConn conn, SSHClient? client
+ Spi spi, ServerStatus status, ServerConn conn, SSHClient? client, MonitorRemoteAccess? remoteAccess
 });
 
 
@@ -273,13 +293,14 @@ class __$ServerStateCopyWithImpl<$Res>
 
 /// Create a copy of ServerState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? spi = null,Object? status = null,Object? conn = null,Object? client = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? spi = null,Object? status = null,Object? conn = null,Object? client = freezed,Object? remoteAccess = freezed,}) {
   return _then(_ServerState(
 spi: null == spi ? _self.spi : spi // ignore: cast_nullable_to_non_nullable
 as Spi,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ServerStatus,conn: null == conn ? _self.conn : conn // ignore: cast_nullable_to_non_nullable
 as ServerConn,client: freezed == client ? _self.client : client // ignore: cast_nullable_to_non_nullable
-as SSHClient?,
+as SSHClient?,remoteAccess: freezed == remoteAccess ? _self.remoteAccess : remoteAccess // ignore: cast_nullable_to_non_nullable
+as MonitorRemoteAccess?,
   ));
 }
 

@@ -20,6 +20,7 @@ import 'package:server_box/data/model/server/connection_stat.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
@@ -57,14 +58,27 @@ abstract class ServerState with _$ServerState {
     required ServerStatus status,
     @Default(ServerConn.disconnected) ServerConn conn,
     SSHClient? client,
+
+    /// What the agent said it allows, or null before it has been asked.
+    ///
+    /// Asked rather than configured: whether this app can reach the machine
+    /// without SSH is the agent's decision, it re-checks that decision when a
+    /// request arrives, and it already answers the question over an
+    /// authenticated endpoint. Putting the same question to the user meant
+    /// asking them to assert something the server knows — and being wrong
+    /// either way, since a "yes" the agent refuses is a row of dead buttons
+    /// and a "no" it would have allowed hides features that are there.
+    MonitorRemoteAccess? remoteAccess,
   }) = _ServerState;
 
   const ServerState._();
 
   /// What this server's connection method can do. The UI reads this instead of
   /// testing which transport is in use — see [ServerCapabilities].
-  ServerCapabilities get capabilities =>
-      ServerCapabilities.of(ServerConnectCredential.fromSpi(spi));
+  ServerCapabilities get capabilities => ServerCapabilities.of(
+    ServerConnectCredential.fromSpi(spi),
+    granted: remoteAccess,
+  );
 }
 
 // Individual server state management
@@ -298,6 +312,18 @@ class ServerNotifier extends _$ServerNotifier {
 
     try {
       updateStatus(await source.fetchStatus(_copyStatus(state.status)));
+      // Alongside the status rather than once at connect: what the agent
+      // allows is its own config, which can change under a running app, and
+      // this poll is already authenticated and periodic. A failure here is
+      // not a failure of the status — the app simply keeps the last answer,
+      // or offers nothing until there is one.
+      if (source is MonitorHttpDataSource) {
+        try {
+          state = state.copyWith(remoteAccess: await source.fetchRemoteAccess());
+        } catch (e, s) {
+          Loggers.app.warning('Ask ${spi.name} what it allows', e, s);
+        }
+      }
       updateConnection(ServerConn.finished);
       TryLimiter.reset(sid);
     } catch (e, s) {

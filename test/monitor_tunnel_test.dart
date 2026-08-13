@@ -8,6 +8,7 @@ import 'package:server_box/core/utils/monitor_tunnel_socket.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
+import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 
@@ -199,48 +200,12 @@ void main() {
       }
     });
 
-    test('rejects a passwordless terminal with no monitor endpoint', () {
+    test('accepts a monitor server with no SSH of its own', () {
+      // What such a server can do is the agent's answer, asked for at the
+      // first status poll — there is nothing here to validate.
       final spi = spiWith(
         ssh: null,
-        monitor: const MonitorHttpCredential(
-          addr: '  ',
-          fullAccess: true,
-        ),
-      );
-      expect(
-        spi.validate(),
-        SpiValidationError.fullAccessWithoutMonitor,
-        reason: 'there would be no agent to open it on',
-      );
-    });
-
-    test('rejects a passwordless terminal alongside SSH', () {
-      // Both answer where the shell comes from, and they answer it
-      // differently — SSH gives every shell-backed feature, the PTY gives one
-      for (final ssh in [
-        const SshCredential(ip: '10.0.0.1'),
-        const SshCredential(ip: '', viaMonitor: true),
-      ]) {
-        expect(
-          spiWith(
-            ssh: ssh,
-            monitor: const MonitorHttpCredential(
-              addr: 'https://agent:3770',
-              fullAccess: true,
-            ),
-          ).validate(),
-          SpiValidationError.fullAccessAndSsh,
-        );
-      }
-    });
-
-    test('accepts a passwordless terminal on its own', () {
-      final spi = spiWith(
-        ssh: null,
-        monitor: const MonitorHttpCredential(
-          addr: 'https://agent:3770',
-          fullAccess: true,
-        ),
+        monitor: const MonitorHttpCredential(addr: 'https://agent:3770'),
       );
       expect(spi.validate(), isNull);
     });
@@ -319,13 +284,11 @@ void main() {
       final spi = Spi(
         name: 'test',
         id: 'd',
-        monitorHttp: const MonitorHttpCredential(
-          addr: 'https://agent:3770',
-          fullAccess: true,
-        ),
+        monitorHttp: const MonitorHttpCredential(addr: 'https://agent:3770'),
       );
       final caps = ServerCapabilities.of(
         ServerConnectCredential.fromSpi(spi),
+        granted: const MonitorRemoteAccess(fullAccess: true),
       );
       expect(caps.terminal, isTrue);
       expect(caps.shell, isTrue);
@@ -339,13 +302,11 @@ void main() {
         name: 'test',
         id: 'e',
         ssh: const SshCredential(ip: '10.0.0.1'),
-        monitorHttp: const MonitorHttpCredential(
-          addr: 'https://agent:3770',
-          fullAccess: true,
-        ),
+        monitorHttp: const MonitorHttpCredential(addr: 'https://agent:3770'),
       );
       final caps = ServerCapabilities.of(
         ServerConnectCredential.fromSpi(spi),
+        granted: const MonitorRemoteAccess(fullAccess: true),
       );
       expect(caps.shell, isTrue);
     });

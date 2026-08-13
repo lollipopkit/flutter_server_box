@@ -237,8 +237,6 @@ types:
         index: 2
       ignoreCert:
         index: 3
-      fullAccess:
-        index: 5
   Spi:
     typeId: 15
     nextIndex: 20

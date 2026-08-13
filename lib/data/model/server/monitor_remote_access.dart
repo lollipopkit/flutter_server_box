@@ -22,16 +22,19 @@ class MonitorRemoteAccess {
   /// the transport*, and configuring TLS would turn it on.
   final bool secure;
 
-  /// A shell can be opened with no SSH credentials, as the account the agent
-  /// runs as. Always re-checked by the agent when the request arrives — this
-  /// only decides whether it is worth offering.
-  final bool passwordless;
+  /// The agent will let this app reach the machine with no SSH credentials —
+  /// a shell, a command, a forwarded port — as the account it runs as.
+  ///
+  /// Always re-checked by the agent when the request arrives; this is what the
+  /// app asks in order to know what to offer, rather than asking the user to
+  /// assert something the agent already knows.
+  final bool fullAccess;
 
   const MonitorRemoteAccess({
     this.tunnel = false,
     this.terminal = false,
     this.secure = false,
-    this.passwordless = false,
+    this.fullAccess = false,
   });
 
   static const none = MonitorRemoteAccess();
@@ -42,14 +45,14 @@ class MonitorRemoteAccess {
       tunnel: flag('tunnel'),
       terminal: flag('terminal'),
       secure: flag('secure'),
-      passwordless: flag('passwordless'),
+      fullAccess: flag('full_access'),
     );
   }
 
   @override
   String toString() =>
       'MonitorRemoteAccess(tunnel: $tunnel, terminal: $terminal, '
-      'secure: $secure, passwordless: $passwordless)';
+      'secure: $secure, fullAccess: $fullAccess)';
 
   @override
   bool operator ==(Object other) =>
@@ -57,8 +60,8 @@ class MonitorRemoteAccess {
       tunnel == other.tunnel &&
       terminal == other.terminal &&
       secure == other.secure &&
-      passwordless == other.passwordless;
+      fullAccess == other.fullAccess;
 
   @override
-  int get hashCode => Object.hash(tunnel, terminal, secure, passwordless);
+  int get hashCode => Object.hash(tunnel, terminal, secure, fullAccess);
 }
