@@ -104,13 +104,23 @@ extension _Operation on _ServerPageState {
     try {
       final exec = await ref.read(serverProvider(srv.spi.id).notifier)
           .ensureScriptExec();
-      final result = await exec.runWithSudo(
-        func.exec(
-          srv.spi.id,
-          systemType: srv.status.system,
-          customDir: srv.spi.custom?.scriptDir,
-        ),
+      final cmd = func.exec(
+        srv.spi.id,
+        systemType: srv.status.system,
+        customDir: srv.spi.custom?.scriptDir,
       );
+
+      // Tried without one first. The script only reaches for `sudo` when the
+      // account is not root, and an account with NOPASSWD needs nothing after
+      // that — asking up front would put a password prompt in front of
+      // everyone to serve the ones who need it.
+      var result = await exec.runWithSudo(cmd);
+      if (result.exitCode == kSudoPasswordRejected) {
+        final pwd = await _askSudoPassword(srv);
+        if (pwd == null) return;
+        result = await exec.runWithSudo(cmd, password: pwd);
+      }
+
       // Checked rather than assumed: shutting a machine down and being told
       // nothing is indistinguishable from it having worked, right up until the
       // status keeps refreshing.
@@ -122,6 +132,22 @@ extension _Operation on _ServerPageState {
       Loggers.app.warning('${func.name} ${srv.spi.name}', e, s);
       if (mounted) context.showSnackBar('$e');
     }
+  }
+
+  /// Null when the user closed the prompt, which is an answer — they did not
+  /// want to power the machine after all, so nothing is said about it.
+  Future<String?> _askSudoPassword(ServerState srv) async {
+    if (!mounted) return null;
+    final remember = Stores.setting.rememberPwdInMem.fetch();
+    final pwd = await context.showPwdDialog(
+      title: libL10n.pwd,
+      label: srv.spi.ssh?.user ?? '',
+      // Shared with nothing else on purpose: this is the account's sudo
+      // password, not the SSH one, and the two are not always the same.
+      id: '${srv.spi.id}_sudo',
+      remember: remember,
+    );
+    return (pwd == null || pwd.isEmpty) ? null : pwd;
   }
 }
 

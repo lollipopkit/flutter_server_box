@@ -63,6 +63,14 @@ abstract interface class ServerExec {
   });
 }
 
+/// The exit code [ServerExecSudo.runWithSudo] reports when sudo would not
+/// take the password it was given, or was not given one at all.
+///
+/// A number rather than an exception because it travels with the rest of the
+/// result: the command's own output is still worth reading, and a caller that
+/// does not care about sudo can treat it as any other non-zero exit.
+const kSudoPasswordRejected = 2;
+
 /// A sudo password the server rejected, told apart from any other failure.
 ///
 /// `sudo` says so on stderr and then exits non-zero like everything else, so
@@ -76,7 +84,7 @@ const _sudoRejected = [
 
 extension ServerExecSudo on ServerExec {
   /// Runs [script] with [password] on its stdin, reporting a rejected sudo
-  /// password as exit code 2.
+  /// password as [kSudoPasswordRejected].
   ///
   /// The password goes here rather than into the command `sudo -S` is part of,
   /// which is what `sudo -S` reading stdin is for. Written into the command it
@@ -108,7 +116,7 @@ extension ServerExecSudo on ServerExec {
     );
     if (!rejected) return result;
     return ExecResult(
-      exitCode: 2,
+      exitCode: kSudoPasswordRejected,
       stdout: result.stdout,
       stderr: result.stderr,
     );

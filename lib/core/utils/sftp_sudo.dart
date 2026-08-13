@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -202,7 +203,7 @@ final class SftpSudoHelper {
       id: '${spi.id}_sftp_sudo',
     );
 
-    if (code == 2) {
+    if (code == kSudoPasswordRejected) {
       _cachedPassword = null;
       final retryPwd = await ensurePassword(force: true);
       if (retryPwd == null) throw const _SftpSudoCancelled();

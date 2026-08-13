@@ -504,8 +504,8 @@ class ContainerNotifier extends _$ContainerNotifier {
       return;
     }
 
-    /// Sudo password error (exitCode = 2)
-    if (needSudo && code == 2) {
+    /// Sudo password error
+    if (needSudo && code == kSudoPasswordRejected) {
       _cachedPassword = null;
       _setRefreshError(
         target,
@@ -875,7 +875,7 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     if (!ref.mounted) return null;
 
-    if (needSudo && code == 2) {
+    if (needSudo && code == kSudoPasswordRejected) {
       _cachedPassword = null;
       await _finishRun();
       return ContainerErr(

@@ -62,6 +62,21 @@ void main() {
       expect(result.exitCode, 2);
     });
 
+    test('sudo asked for a password it was never given', () async {
+      // What the power buttons rely on to know they have to prompt: the script
+      // reaches for `sudo -S`, gets EOF, and says so. Any other non-zero exit
+      // means the command itself failed and a password would not help.
+      final exec = _RecordingExec()
+        ..result = const ExecResult(
+          exitCode: 1,
+          stdout: '',
+          stderr: 'sudo: a password is required',
+        );
+      final result = await exec.runWithSudo('sudo -S shutdown -h now');
+      expect(result.exitCode, kSudoPasswordRejected);
+      expect(exec.stdin, isNull);
+    });
+
     test('an ordinary failure keeps its own exit code', () async {
       final exec = _RecordingExec()
         ..result = const ExecResult(

@@ -72,6 +72,7 @@ android/app/.cxx
 
 # Rust workspace
 /target/
+/target-alpine/
 
 # Runtime artifacts of a locally-run monitor agent. `monitor/.gitignore`
 # already covers these when it runs from its own directory; these rules catch
