@@ -181,6 +181,9 @@ class ServerNotifier extends _$ServerNotifier {
     unawaited(_disposePersistentShell());
     state.client?.close();
     _usePersistentShellForStatus = true;
+    // The edit may have moved the script directory or changed the custom
+    // commands in it, so what was written no longer matches what will be run.
+    _scriptWritten = false;
     state = state.copyWith(
       spi: spi,
       client: null,
