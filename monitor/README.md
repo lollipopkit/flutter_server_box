@@ -59,14 +59,19 @@ and sshd's own logging, `AllowUsers` and two-factor prompts all still apply.
 Sessions survive a dropped connection for a few minutes, so a phone changing
 networks rejoins the same shell instead of losing it.
 
-**`passwordless_terminal`** removes the SSH login step: anyone signed into the
-panel gets a shell, running as the account the agent runs as. Unset follows the
-platform — on for Linux, off for macOS and Windows. **Your panel password then
-buys a shell on this machine**, which is why `install.sh` installs a *user*
-systemd service by default; if you run the agent as root, turn this off. The
-SSH login stays available alongside it. Also settable with
-`SBM_PASSWORDLESS_TERMINAL=0/1`, and the panel's first-run prompt can turn it
-off — never on.
+**`full_access`** removes the SSH login step: anyone signed into the panel can
+open a shell, run a command and reach any address this machine can reach, all
+as the account the agent runs as. Unset follows the platform — on for Linux,
+off for macOS and Windows. **Your panel password then buys the machine**, which
+is why `install.sh` installs a *user* systemd service by default; if you run
+the agent as root, turn this off. The SSH login stays available alongside it.
+Also settable with `SBM_FULL_ACCESS=0/1`, and the panel's first-run prompt can
+turn it off — never on.
+
+It is one switch rather than one per feature because there is only one decision
+in it: anyone who can open a shell can run anything in that shell and connect
+anywhere from it, so granting the terminal and withholding the rest withholds
+nothing.
 
 Notes:
 

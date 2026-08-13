@@ -105,7 +105,7 @@ enum AuthPayload {
     /// two-factor prompts.
     Interactive,
     /// No credentials at all: run a shell as the agent's own user. Only
-    /// honoured when `remote_access.passwordless_terminal` is on; see
+    /// honoured when `remote_access.full_access` is on; see
     /// `crate::ssh::local_pty` for what that costs.
     Local,
 }
@@ -378,7 +378,7 @@ async fn on_control(
 
 /// Starts a shell with no authentication step, as the agent's own user.
 ///
-/// Refused unless `remote_access.passwordless_terminal` is on. The check is
+/// Refused unless `remote_access.full_access` is on. The check is
 /// here rather than only in the UI because the UI is not a security boundary:
 /// a client can send this frame whether or not a button was rendered for it.
 async fn open_local(
@@ -392,15 +392,15 @@ async fn open_local(
     // Re-derived here rather than trusted from the handshake: the panel may
     // have switched it off in between, and this is the request that matters.
     let secure = ctx.secure;
-    if !ctx.state.passwordless_allowed(secure) {
+    if !ctx.state.full_access_allowed(secure) {
         Event::new(Kind::Terminal, Action::Denied, Outcome::Denied)
             .subject(&ctx.subject)
             .remote_ip(ctx.remote_ip.clone())
-            .detail("passwordless disabled")
+            .detail("full access disabled")
             .record(&ctx.state.db)
             .await;
         return Some(error_frame(
-            "passwordless_disabled",
+            "full_access_disabled",
             "This agent does not allow opening a terminal without SSH credentials",
         ));
     }
@@ -467,14 +467,14 @@ async fn open_local(
         .subject(&ctx.subject)
         .remote_ip(ctx.remote_ip.clone())
         .ssh_user(&user)
-        .detail("passwordless")
+        .detail("full access")
         .record(&ctx.state.db)
         .await;
 
     None
 }
 
-/// The account a passwordless shell runs as, for the audit log.
+/// The account an SSH-less shell runs as, for the audit log.
 fn local_user() -> String {
     std::env::var("USER")
         .or_else(|_| std::env::var("USERNAME"))
@@ -944,7 +944,7 @@ mod tests {
             (r#"{"kind":"password","password":"x"}"#, "password"),
             (r#"{"kind":"key","pem":"-----","passphrase":null}"#, "key"),
             (r#"{"kind":"interactive"}"#, "interactive"),
-            // No credential at all — the passwordless path
+            // No credential at all — the SSH-less path
             (r#"{"kind":"local"}"#, "local"),
         ] {
             let payload: AuthPayload = serde_json::from_str(json).unwrap();

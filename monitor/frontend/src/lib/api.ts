@@ -155,14 +155,14 @@ export const api = {
       { method: 'POST', body: JSON.stringify({ purpose }) },
       'Failed to authorise the connection',
     ),
-  /// Turns the passwordless terminal off for good. There is deliberately no
+  /// Turns access without SSH off for good. There is deliberately no
   /// counterpart that turns it on: the panel may narrow what the agent
   /// exposes, never widen it — re-enabling is a config-file decision.
   disablePasswordlessTerminal: () =>
     request<{ status: string }>(
-      '/remote-access/passwordless',
+      '/remote-access/full-access',
       { method: 'DELETE' },
-      'Failed to disable the passwordless terminal',
+      'Failed to disable access without SSH',
     ),
   getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
   updateCardOrder: (card_order: string[]) =>

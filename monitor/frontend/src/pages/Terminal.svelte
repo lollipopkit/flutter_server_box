@@ -234,17 +234,17 @@
   /// capabilities cache is refetched. The agent's answer stays the source of
   /// truth — the panel can narrow it, never widen it.
   let turnedOff = $state(false)
-  const passwordless = $derived(
+  const fullAccess = $derived(
     !turnedOff &&
-      capabilitiesStore.byServer[servers.currentId]?.remote_access?.passwordless === true,
+      capabilitiesStore.byServer[servers.currentId]?.remote_access?.full_access === true,
   )
 
-  /// Shown the first time a passwordless terminal is on offer, once per
+  /// Shown the first time access without SSH is on offer, once per
   /// browser: it changes what the panel password is worth, and silently
   /// handing out a shell would be the wrong kind of convenient.
-  const NOTICE_KEY = 'terminal.passwordlessNoticeSeen'
+  const NOTICE_KEY = 'terminal.fullAccessNoticeSeen'
   let noticeDismissed = $state(window.localStorage.getItem(NOTICE_KEY) === '1')
-  const showNotice = $derived(passwordless && !noticeDismissed)
+  const showNotice = $derived(fullAccess && !noticeDismissed)
   let disabling = $state(false)
 
   function acknowledgeNotice() {
@@ -324,7 +324,7 @@
       </Card>
     {/if}
 
-    {#if passwordless}
+    {#if fullAccess}
       <Card class="space-y-3">
         <p class="text-sm text-muted-fg">{$LL.terminalPasswordlessHint()}</p>
         <Button onclick={openPasswordless} disabled={busy}>

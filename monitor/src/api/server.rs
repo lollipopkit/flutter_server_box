@@ -59,10 +59,10 @@ pub struct AppState {
     /// reconnect can rejoin the same shell — see `api::ws::session`.
     pub sessions: Arc<SessionStore>,
     pub login_throttle: Arc<LoginThrottle>,
-    /// Set when the panel turns the passwordless terminal off, so the change
+    /// Set when the panel turns the access without SSH off, so the change
     /// applies to the running process rather than waiting for a restart.
     /// One-way: nothing here can switch it back on.
-    pub passwordless_off: Arc<AtomicBool>,
+    pub full_access_off: Arc<AtomicBool>,
     /// Serialises every read-modify-write of `config.toml`.
     ///
     /// `config_file::write` is atomic, so no reader ever sees a half-written
@@ -95,7 +95,7 @@ impl AppState {
             tunnel_count: Arc::new(Default::default()),
             sessions,
             login_throttle: Arc::new(LoginThrottle::new()),
-            passwordless_off: Arc::new(AtomicBool::new(false)),
+            full_access_off: Arc::new(AtomicBool::new(false)),
             config,
             db,
             current_metrics: Arc::new(RwLock::new(None)),
@@ -112,9 +112,9 @@ impl AppState {
     /// startup. Both halves are checked at the point of use rather than
     /// resolved once, so pressing "turn this off" takes effect on the next
     /// request instead of the next restart.
-    pub fn passwordless_allowed(&self, secure: bool) -> bool {
-        self.remote_access.passwordless_available(secure)
-            && !self.passwordless_off.load(Ordering::Acquire)
+    pub fn full_access_allowed(&self, secure: bool) -> bool {
+        self.remote_access.full_access_available(secure)
+            && !self.full_access_off.load(Ordering::Acquire)
     }
 }
 
@@ -176,8 +176,8 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
                     .route("/tunnel/ws", web::get().to(tunnel_ws))
                     .route("/terminal/ws", web::get().to(terminal_ws))
                     .route(
-                        "/remote-access/passwordless",
-                        web::delete().to(disable_passwordless_terminal),
+                        "/remote-access/full-access",
+                        web::delete().to(disable_full_access),
                     )
                     .route("/settings", web::get().to(get_settings))
                     .route("/settings", web::put().to(update_settings))
@@ -441,7 +441,7 @@ struct RemoteAccessView {
     /// Whether a shell can be opened without SSH credentials. The panel only
     /// offers that entry when this is true — and, being a UI decision, it is
     /// re-checked server-side when the request actually arrives.
-    passwordless: bool,
+    full_access: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -460,7 +460,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             tunnel: app_state.remote_access.tunnel_enabled,
             terminal: app_state.remote_access.terminal_available(secure),
             secure,
-            passwordless: app_state.passwordless_allowed(secure),
+            full_access: app_state.full_access_allowed(secure),
         },
     }))
 }
@@ -670,7 +670,7 @@ async fn update_settings(
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))
 }
 
-/// Turns the passwordless terminal off, permanently, from the panel.
+/// Turns the access without SSH off, permanently, from the panel.
 ///
 /// The rest of `remote_access` is deliberately absent from the settings API:
 /// a panel-password holder must not be able to *widen* what the agent exposes.
@@ -682,7 +682,7 @@ async fn update_settings(
 /// Takes effect immediately as well as on disk: `AppState.remote_access` is
 /// otherwise a startup snapshot, and a switch the user just pressed for
 /// safety reasons should not wait for a restart.
-async fn disable_passwordless_terminal(
+async fn disable_full_access(
     req: HttpRequest,
     app_state: web::types::State<Arc<AppState>>,
 ) -> Result<HttpResponse> {
@@ -704,16 +704,16 @@ async fn disable_passwordless_terminal(
         }
     };
     let mut remote = config.get_remote_access();
-    remote.passwordless_terminal = Some(false);
+    remote.full_access = Some(false);
     config.remote_access = Some(remote);
     if let Err(e) = config_file::write(&config) {
         return Ok(HttpResponse::InternalServerError()
             .json(&ErrorResponse { error: e.to_string() }));
     }
 
-    app_state.passwordless_off.store(true, Ordering::Release);
+    app_state.full_access_off.store(true, Ordering::Release);
     tracing::info!(
-        "Passwordless terminal disabled from the panel by {}",
+        "Access without SSH disabled from the panel by {}",
         claims.sub
     );
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "status": "ok" })))

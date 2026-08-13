@@ -602,16 +602,16 @@ async fn the_session_cap_refuses_the_extra_terminal() {
     assert_eq!(next_control(&io2, &codec2).await["code"], "at_capacity");
 }
 
-/// A state with the passwordless terminal explicitly on or off.
-async fn passwordless_state(enabled: bool) -> Arc<AppState> {
+/// A state with the access without SSH explicitly on or off.
+async fn full_access_state(enabled: bool) -> Arc<AppState> {
     ensure_crypto_provider();
     let mut config = Config::default();
     config.jwt_secret = Some("test-secret-that-is-long-enough-32ch".to_string());
     let mut remote = config.get_remote_access();
     remote.terminal_enabled = true;
-    // Nothing listens here: a passwordless shell must not need it
+    // Nothing listens here: an SSH-less shell must not need it
     remote.ssh_addr = "127.0.0.1:1".to_string();
-    remote.passwordless_terminal = Some(enabled);
+    remote.full_access = Some(enabled);
     config.remote_access = Some(remote);
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
@@ -620,8 +620,8 @@ async fn passwordless_state(enabled: bool) -> Arc<AppState> {
 }
 
 #[ntex::test]
-async fn a_passwordless_open_starts_a_shell_without_any_credential() {
-    let state = passwordless_state(true).await;
+async fn a_full_access_open_starts_a_shell_without_any_credential() {
+    let state = full_access_state(true).await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
@@ -639,22 +639,23 @@ async fn a_passwordless_open_starts_a_shell_without_any_credential() {
     assert_eq!(ready["type"], "ready", "expected a shell, got {ready}");
 
     io.send(
-        ws::Message::Binary(ntex::util::Bytes::from_static(b"echo passwordless-ok
+        ws::Message::Binary(ntex::util::Bytes::from_static(b"echo full-access-ok
 ")),
         &codec,
     )
     .await
     .unwrap();
-    let seen = read_until(&io, &codec, b"passwordless-ok").await;
+    let marker = b"full-access-ok";
+    let seen = read_until(&io, &codec, marker).await;
     assert!(
-        seen.windows(15).any(|w| w == b"passwordless-ok"),
+        seen.windows(marker.len()).any(|w| w == marker),
         "the local shell must actually run what it is sent"
     );
 }
 
 #[ntex::test]
-async fn a_passwordless_open_is_refused_when_the_feature_is_off() {
-    let state = passwordless_state(false).await;
+async fn a_full_access_open_is_refused_when_the_feature_is_off() {
+    let state = full_access_state(false).await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state).await;
     let (io, codec) = open_terminal(&srv, &ticket).await;
@@ -672,19 +673,19 @@ async fn a_passwordless_open_is_refused_when_the_feature_is_off() {
 
     assert_eq!(
         next_control(&io, &codec).await["code"],
-        "passwordless_disabled"
+        "full_access_disabled"
     );
 }
 
 #[ntex::test]
 async fn turning_it_off_from_the_panel_applies_without_a_restart() {
-    let state = passwordless_state(true).await;
+    let state = full_access_state(true).await;
     let ticket = state.tickets.issue(Purpose::Terminal, "admin").unwrap();
     let srv = test_server(state.clone()).await;
 
     // What the first-run prompt does
     state
-        .passwordless_off
+        .full_access_off
         .store(true, std::sync::atomic::Ordering::Release);
 
     let (io, codec) = open_terminal(&srv, &ticket).await;
@@ -699,7 +700,7 @@ async fn turning_it_off_from_the_panel_applies_without_a_restart() {
 
     assert_eq!(
         next_control(&io, &codec).await["code"],
-        "passwordless_disabled",
+        "full_access_disabled",
         "the switch must bind the running process, not just the config file"
     );
 }

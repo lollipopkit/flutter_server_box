@@ -77,7 +77,7 @@ export interface RemoteAccess {
   secure: boolean
   /// Whether a shell can be opened straight from this panel session, with no
   /// SSH credentials. Absent on agents predating the feature.
-  passwordless?: boolean
+  full_access?: boolean
 }
 
 export type WsTicketPurpose = 'terminal' | 'tunnel'

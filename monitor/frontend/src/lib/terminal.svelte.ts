@@ -58,7 +58,7 @@ export type Credential =
   | { kind: 'key'; pem: string; passphrase?: string }
   | { kind: 'interactive' }
   /// No credentials: the agent runs a shell as its own user. Only accepted
-  /// when the agent reports `remote_access.passwordless`.
+  /// when the agent reports `remote_access.full_access`.
   | { kind: 'local' }
 
 interface ServerMessage {

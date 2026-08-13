@@ -1,4 +1,4 @@
-//! A login shell on a local PTY, for the passwordless terminal.
+//! A login shell on a local PTY, for the access without SSH.
 //!
 //! The other terminal path authenticates against sshd and therefore borrows
 //! its identity from whoever signed in. This one has no such step: the shell

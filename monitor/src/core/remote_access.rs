@@ -89,7 +89,7 @@ pub struct RemoteAccessConfig {
     /// installs a *user* service by default so that identity is an ordinary
     /// account rather than root.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub passwordless_terminal: Option<bool>,
+    pub full_access: Option<bool>,
 }
 
 impl Default for RemoteAccessConfig {
@@ -103,30 +103,30 @@ impl Default for RemoteAccessConfig {
             terminal_max_sessions: None,
             terminal_scrollback_bytes: None,
             terminal_detached_timeout_secs: default_detached_timeout_secs(),
-            passwordless_terminal: None,
+            full_access: None,
         }
     }
 }
 
-/// Whether a passwordless terminal is the right default for this platform.
+/// Whether access without SSH is the right default for this platform.
 ///
 /// Split out so the rule is stated once and can be asserted in a test on
 /// every target, rather than being buried in a `cfg!` inside `resolve`.
-pub const fn passwordless_default() -> bool {
+pub const fn full_access_default() -> bool {
     cfg!(target_os = "linux")
 }
 
-/// Reads the `SBM_PASSWORDLESS_TERMINAL` override.
+/// Reads the `SBM_FULL_ACCESS` override.
 ///
 /// Env beats the config file, matching how the rest of monitor's settings
 /// behave for container deployments where editing a file is awkward.
-fn passwordless_from_env() -> Option<bool> {
-    match std::env::var("SBM_PASSWORDLESS_TERMINAL").ok()?.trim().to_ascii_lowercase().as_str() {
+fn full_access_from_env() -> Option<bool> {
+    match std::env::var("SBM_FULL_ACCESS").ok()?.trim().to_ascii_lowercase().as_str() {
         "1" | "true" | "yes" | "on" => Some(true),
         "0" | "false" | "no" | "off" => Some(false),
         other => {
             tracing::warn!(
-                "Ignoring SBM_PASSWORDLESS_TERMINAL={other:?}: expected a boolean"
+                "Ignoring SBM_FULL_ACCESS={other:?}: expected a boolean"
             );
             None
         }
@@ -170,9 +170,9 @@ impl RemoteAccessConfig {
                 .filter(|&n| n > 0)
                 .unwrap_or(scrollback),
             terminal_detached_timeout: Duration::from_secs(self.terminal_detached_timeout_secs),
-            passwordless_terminal: passwordless_from_env()
-                .or(self.passwordless_terminal)
-                .unwrap_or_else(passwordless_default),
+            full_access: full_access_from_env()
+                .or(self.full_access)
+                .unwrap_or_else(full_access_default),
         }
     }
 }
@@ -189,8 +189,8 @@ pub struct RemoteAccess {
     pub terminal_max_sessions: usize,
     pub terminal_scrollback_bytes: usize,
     pub terminal_detached_timeout: Duration,
-    /// See [`RemoteAccessConfig::passwordless_terminal`].
-    pub passwordless_terminal: bool,
+    /// See [`RemoteAccessConfig::full_access`].
+    pub full_access: bool,
 }
 
 impl RemoteAccess {
@@ -208,12 +208,17 @@ impl RemoteAccess {
         self.terminal_enabled && (tls_active || self.allow_insecure)
     }
 
-    /// Whether a client may open a shell without presenting SSH credentials.
+    /// Whether a client may reach this machine without presenting SSH
+    /// credentials — a shell, a command, a forwarded port.
+    ///
+    /// One answer for all of them. Anyone who can open a shell can run
+    /// anything in it and connect anywhere from it, so granting the shell and
+    /// withholding the rest withholds nothing; it only makes the app pretend.
     ///
     /// Gated on the terminal being available at all, so turning the terminal
-    /// off can never leave a passwordless door open behind it.
-    pub fn passwordless_available(&self, tls_active: bool) -> bool {
-        self.terminal_available(tls_active) && self.passwordless_terminal
+    /// off can never leave a door open behind it.
+    pub fn full_access_available(&self, tls_active: bool) -> bool {
+        self.terminal_available(tls_active) && self.full_access
     }
 
     /// Logs the resolved limits once at startup.
@@ -226,22 +231,23 @@ impl RemoteAccess {
             return;
         }
         tracing::info!(
-            "Remote access: tunnel={} (max {} conns), terminal={} (max {} sessions, {} KiB scrollback, {}s detached timeout), passwordless={}, target={}",
+            "Remote access: tunnel={} (max {} conns), terminal={} (max {} sessions, {} KiB scrollback, {}s detached timeout), full_access={}, target={}",
             self.tunnel_enabled,
             self.tunnel_max_conns,
             self.terminal_enabled,
             self.terminal_max_sessions,
             self.terminal_scrollback_bytes / 1024,
             self.terminal_detached_timeout.as_secs(),
-            self.passwordless_terminal,
+            self.full_access,
             self.ssh_addr,
         );
-        if self.terminal_enabled && self.passwordless_terminal {
+        if self.terminal_enabled && self.full_access {
             tracing::warn!(
-                "Passwordless terminal is on: anyone who can log into the panel gets a \
-                 shell as {}, with no SSH authentication in between. Turn it off with \
-                 remote_access.passwordless_terminal = false or \
-                 SBM_PASSWORDLESS_TERMINAL=0.",
+                "Access without SSH is on: anyone who can log into the panel gets a \
+                 shell as {}, can run any command as that account, and can reach any \
+                 address this machine can reach — with no SSH authentication in \
+                 between. The panel password is the only thing in the way. Turn it \
+                 off with remote_access.full_access = false or SBM_FULL_ACCESS=0.",
                 whoami()
             );
         }

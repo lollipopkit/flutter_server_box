@@ -94,7 +94,7 @@ Monitor-only crate (the app never depends on it — it always collects over SSH 
 - **`cli/`**: clap-based CLI (`serve`, `config`, `cleanup` subcommands)
 - **`core/`**: Configuration management (`config.rs`, `config_manager.rs`) with .env support and TOML/JSON config files
 - **`api/`**: ntex-based web server (`server.rs`), JWT auth (`auth.rs`), login throttling (`ratelimit.rs`), and the WebSocket endpoints under `api/ws/` (see below)
-- **`ssh/`**: shells for the browser terminal — `client.rs` (russh: connect/authenticate/PTY), `known_hosts.rs` (trust-on-first-use pinning of the local sshd), and `local_pty.rs` (the passwordless path, a local PTY interface-compatible with the SSH one so both drive the same session machinery)
+- **`ssh/`**: shells for the browser terminal — `client.rs` (russh: connect/authenticate/PTY), `known_hosts.rs` (trust-on-first-use pinning of the local sshd), and `local_pty.rs` (the SSH-less path, a local PTY interface-compatible with the SSH one so both drive the same session machinery)
 - **`monitoring/`**: Metrics collection (`monitoring.rs`: `sbm_native::sample()` covers cpu/mem/swap/disk/diskio/net/uptime/host/sys every cycle via direct syscalls/procfs reads — see `../crates/sbm_native`; `nvidia-smi` runs as one targeted subprocess call every cycle; the shared generated script from `sbm_parser::script` only still runs on the slower extended cycle, for amd/sensors/SMART/battery — the only data that genuinely needs CLI tools), rule evaluation (`rules.rs`), push notifications with rate limiting (`push.rs`), velocity/timeseries analysis
 - **`db/`**: SQLite initialization/migrations (`database.rs`) and data retention cleanup (`cleanup.rs`)
 - **`utils/`**: Centralized error types (`error.rs`)
@@ -161,17 +161,21 @@ Things that are easy to get wrong here, and are locked by tests:
   is never cleared for a short outage. `ready.since` is *the absolute position
   the following byte stream starts at* — echoing back `next_seq` instead would
   make the client double-count the replay. `ready` must also precede any output.
-- **The passwordless terminal is a deliberate reversal of the model above.**
-  With `remote_access.passwordless_terminal` on (default: Linux only), a panel
-  login opens a local PTY as the agent's own user — no sshd, no SSH
+- **`full_access` is a deliberate reversal of the model above.**
+  With `remote_access.full_access` on (default: Linux only), a panel login
+  reaches the machine directly — a local PTY as the agent's own user, a command
+  run as that user, a TCP connection made from it — with no sshd and no SSH
   credentials, so none of sshd's authentication, logging or second factor
   applies. `install.sh` therefore installs a **user** systemd service by
   default: the point is that "the agent's own user" is an ordinary account
   rather than root. The switch is checked at the moment of use
-  (`AppState::passwordless_allowed`), not only in the UI, since the UI is not
-  a boundary. `DELETE /api/v1/remote-access/passwordless` lets the panel turn
+  (`AppState::full_access_allowed`), not only in the UI, since the UI is not
+  a boundary. `DELETE /api/v1/remote-access/full-access` lets the panel turn
   it off and has no counterpart that turns it on — narrowing what the agent
   exposes is always safe, widening is a config-file decision.
+  It is one switch and not one per feature: anyone who can open a shell can run
+  anything in it and connect anywhere from it, so a grant that gives the
+  terminal and withholds the rest withholds nothing.
 - **Capacities are derived from physical memory** (`core/remote_access.rs`), not
   constants: monitor runs on everything from a 512 MiB VPS to a 256 GiB server.
   Explicit config always wins; the resolved values are logged at startup.

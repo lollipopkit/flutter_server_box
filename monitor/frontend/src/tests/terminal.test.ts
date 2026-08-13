@@ -409,14 +409,14 @@ describe('TerminalSession', () => {
     expect(JSON.stringify(open)).not.toMatch(/password|pem|passphrase/)
   })
 
-  it('reports a refusal when the agent has passwordless turned off', async () => {
+  it('reports a refusal when the agent has full access turned off', async () => {
     const session = new TerminalSession()
     await session.start(renderer, '', { kind: 'local' })
     const socket = FakeSocket.latest()
     socket.onopen?.()
     socket.control({
       type: 'error',
-      code: 'passwordless_disabled',
+      code: 'full_access_disabled',
       message: 'not allowed',
     })
     socket.close()
