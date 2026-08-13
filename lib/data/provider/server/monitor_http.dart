@@ -55,11 +55,11 @@ class MonitorHttpClient {
     final user = monitor.user?.trim() ?? '';
     final pwd = monitor.pwd ?? '';
     try {
-      final resp = await _session().post<Map<String, dynamic>>(
+      final resp = await _object(
         '/api/v1/login',
-        data: {'username': user, 'password': pwd},
+        post: {'username': user, 'password': pwd},
       );
-      final token = resp.data?['token'] as String?;
+      final token = resp['token'] as String?;
       if (token == null || token.isEmpty) {
         throw const MonitorHttpErr(
           type: MonitorHttpErrType.loginFailed,
@@ -71,6 +71,32 @@ class MonitorHttpClient {
     } on DioException catch (e) {
       throw _toMonitorHttpErr(e);
     }
+  }
+
+  /// A JSON object from [path], or a [MonitorHttpErr] saying what came instead.
+  ///
+  /// Typed as `dynamic` on the way in and checked here rather than asking Dio
+  /// to cast the body for us: that cast runs before the status code is looked
+  /// at, so an endpoint the agent does not have — a 404 with a line of text —
+  /// surfaced as a type-cast error naming two Dart types, which says nothing
+  /// about what went wrong.
+  Future<Map<String, dynamic>> _object(
+    String path, {
+    Object? post,
+    Map<String, dynamic>? query,
+  }) async {
+    final dio = _session();
+    final resp = post == null
+        ? await dio.get<dynamic>(path, queryParameters: query)
+        : await dio.post<dynamic>(path, data: post, queryParameters: query);
+    final data = resp.data;
+    if (data is Map<String, dynamic>) return data;
+    throw MonitorHttpErr(
+      type: MonitorHttpErrType.invalidResponse,
+      message: data == null || (data is String && data.isEmpty)
+          ? 'Empty $path response'
+          : '$path answered with ${data.runtimeType}, not a JSON object',
+    );
   }
 
   Future<T> _authed<T>(Future<T> Function() fn) async {
@@ -96,17 +122,7 @@ class MonitorHttpClient {
 
   Future<MonitorMetrics> fetchStatus() {
     return _authed(() async {
-      final resp = await _session().get<Map<String, dynamic>>(
-        '/api/v1/metrics',
-      );
-      final data = resp.data;
-      if (data == null) {
-        throw const MonitorHttpErr(
-          type: MonitorHttpErrType.invalidResponse,
-          message: 'Empty /api/v1/metrics response',
-        );
-      }
-      return MonitorMetrics.fromJson(data);
+      return MonitorMetrics.fromJson(await _object('/api/v1/metrics'));
     });
   }
 
@@ -114,15 +130,16 @@ class MonitorHttpClient {
     return _authed(() async {
       // The endpoint answers with a bare JSON array of points, not an
       // envelope object — see `get_metrics_history` in monitor's api/server.rs
-      final resp = await _session().get<List<dynamic>>(
+      final resp = await _session().get<dynamic>(
         '/api/v1/metrics/history',
         queryParameters: {'minutes': minutes},
       );
       final points = resp.data;
-      if (points == null) {
-        throw const MonitorHttpErr(
+      if (points is! List) {
+        throw MonitorHttpErr(
           type: MonitorHttpErrType.invalidResponse,
-          message: 'Empty /api/v1/metrics/history response',
+          message: '/api/v1/metrics/history answered with '
+              '${points.runtimeType}, not a JSON array',
         );
       }
       return points
@@ -147,38 +164,36 @@ class MonitorHttpClient {
     Map<String, String>? env,
   }) {
     return _authed(() async {
-      final Response<Map<String, dynamic>> resp;
       try {
-        resp = await _session().post<Map<String, dynamic>>(
-          '/api/v1/exec',
-          data: {
-            'cmd': cmd,
-            'stdin': ?stdin,
-            if (env != null && env.isNotEmpty) 'env': env,
-          },
+        return MonitorExecOutput.fromJson(
+          await _object(
+            '/api/v1/exec',
+            post: {
+              'cmd': cmd,
+              'stdin': ?stdin,
+              if (env != null && env.isNotEmpty) 'env': env,
+            },
+          ),
         );
       } on DioException catch (e) {
-        // Told apart from a generic failure because it is the one the user can
-        // do something about, and because retrying it will never help: the
-        // agent is configured not to run commands at all.
-        if (e.response?.statusCode == 403) {
-          throw MonitorHttpErr(
-            type: MonitorHttpErrType.unknown,
-            message:
-                'The monitor agent refuses to run commands — full access is '
-                'off in its config.\n$e',
-          );
-        }
-        rethrow;
-      }
-      final data = resp.data;
-      if (data == null) {
-        throw const MonitorHttpErr(
-          type: MonitorHttpErrType.invalidResponse,
-          message: 'Empty /api/v1/exec response',
+        // Both are told apart from a generic failure because they are the ones
+        // the user can do something about, and because retrying neither will
+        // ever help.
+        final message = switch (e.response?.statusCode) {
+          403 =>
+            'The monitor agent refuses to run commands — full access is off '
+                'in its config.',
+          404 =>
+            'This monitor agent has no command endpoint. It is older than '
+                'this app expects; update the agent.',
+          _ => null,
+        };
+        if (message == null) rethrow;
+        throw MonitorHttpErr(
+          type: MonitorHttpErrType.unknown,
+          message: '$message\n$e',
         );
       }
-      return MonitorExecOutput.fromJson(data);
     });
   }
 
@@ -213,17 +228,9 @@ class MonitorHttpClient {
   /// an entry rather than offer one that answers 403.
   Future<MonitorCapabilities> fetchCapabilities() {
     return _authed(() async {
-      final resp = await _session().get<Map<String, dynamic>>(
-        '/api/v1/capabilities',
+      return MonitorCapabilities.fromJson(
+        await _object('/api/v1/capabilities'),
       );
-      final data = resp.data;
-      if (data == null) {
-        throw const MonitorHttpErr(
-          type: MonitorHttpErrType.invalidResponse,
-          message: 'Empty /api/v1/capabilities response',
-        );
-      }
-      return MonitorCapabilities.fromJson(data);
     });
   }
 
@@ -239,11 +246,11 @@ class MonitorHttpClient {
     Duration? timeout,
   }) {
     return _authed(() async {
-      final resp = await _session().post<Map<String, dynamic>>(
+      final resp = await _object(
         '/api/v1/ws-ticket',
-        data: {'purpose': purpose},
+        post: {'purpose': purpose},
       );
-      final ticket = resp.data?['ticket'] as String?;
+      final ticket = resp['ticket'] as String?;
       if (ticket == null || ticket.isEmpty) {
         throw const MonitorHttpErr(
           type: MonitorHttpErrType.invalidResponse,
