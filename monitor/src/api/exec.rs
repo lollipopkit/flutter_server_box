@@ -16,6 +16,7 @@
 //! for the same reason: anyone who can open a shell can run anything in it, so
 //! there is one decision here, not two.
 
+use std::collections::HashMap;
 use std::process::Stdio;
 use std::sync::Arc;
 use std::time::Duration;
@@ -47,6 +48,11 @@ pub struct ExecRequest {
     /// gets in without a terminal to type it into.
     #[serde(default)]
     stdin: Option<String>,
+    /// Added to the command's environment. A field rather than `export` lines
+    /// the caller prepends, so a value with a quote or a newline in it does
+    /// not have to survive a round of shell quoting.
+    #[serde(default)]
+    env: Option<HashMap<String, String>>,
 }
 
 #[derive(Serialize)]
@@ -99,7 +105,7 @@ pub async fn exec(
         .record(&app_state.db)
         .await;
 
-    match run(&cmd, body.stdin.as_deref()).await {
+    match run(&cmd, body.stdin.as_deref(), body.env.as_ref()).await {
         Ok(resp) => Ok(HttpResponse::Ok().json(&resp)),
         Err(e) => {
             Event::new(Kind::Exec, Action::Close, Outcome::Error)
@@ -126,15 +132,26 @@ fn first_line(cmd: &str) -> String {
     format!("{}…", &line[..end])
 }
 
-async fn run(cmd: &str, stdin: Option<&str>) -> std::io::Result<ExecResponse> {
-    let mut child = Command::new(shell())
+async fn run(
+    cmd: &str,
+    stdin: Option<&str>,
+    env: Option<&HashMap<String, String>>,
+) -> std::io::Result<ExecResponse> {
+    let mut command = Command::new(shell());
+    command
         .arg("-c")
         .arg(cmd)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .kill_on_drop(true)
-        .spawn()?;
+        .kill_on_drop(true);
+    // Added to the agent's own environment rather than replacing it: the
+    // command still needs a `PATH`, and the caller is naming a few variables,
+    // not describing the whole environment it wants.
+    if let Some(env) = env {
+        command.envs(env);
+    }
+    let mut child = command.spawn()?;
 
     if let Some(mut pipe) = child.stdin.take() {
         if let Some(data) = stdin {

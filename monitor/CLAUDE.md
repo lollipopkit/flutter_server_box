@@ -139,7 +139,12 @@ the panel password can't switch them on), and share the admission checks in
   callers streams or types. Deliberately not the terminal endpoint with an
   `exec` frame: a PTY is one stream shared with what the user is typing, so a
   command written into it lands in their shell — which is why `terminal.rs`
-  rejects such a frame, locked by a test.
+  rejects such a frame, locked by a test. `{cmd, stdin?, env?}` in, `{exit_code,
+  stdout, stderr, truncated, timed_out}` out: `stdin` is how a sudo password
+  gets in with no terminal to type it into, and `env` is a field rather than
+  `export` lines the caller prepends so a value never has to survive shell
+  quoting. Output is capped (1 MiB per stream) and the command is killed after
+  60s, both reported rather than silently applied. `tests/exec_api.rs`.
 - **`/api/v1/terminal/ws`** — the panel's terminal. The agent is an SSH *client*
   rather than a shell spawner, so a session carries the privileges of the SSH
   account the browser authenticated as; the panel password alone grants no
