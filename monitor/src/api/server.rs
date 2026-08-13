@@ -175,7 +175,19 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
                     .route("/ws-ticket", web::post().to(issue_ws_ticket))
                     .route("/tunnel/ws", web::get().to(tunnel_ws))
                     .route("/terminal/ws", web::get().to(terminal_ws))
-                    .route("/exec", web::post().to(crate::api::exec::exec))
+                    .service(
+                        // Its own payload limit: ntex allows 32 KiB by
+                        // default, and this endpoint's `stdin` carries the
+                        // generated status script — 5 KiB today, but it grows
+                        // with every custom command a user adds, and going
+                        // over would answer 413 with nothing to explain it.
+                        web::resource("/exec")
+                            .state(
+                                web::types::JsonConfig::default()
+                                    .limit(crate::api::exec::MAX_REQUEST),
+                            )
+                            .route(web::post().to(crate::api::exec::exec)),
+                    )
                     .route(
                         "/remote-access/full-access",
                         web::delete().to(disable_full_access),

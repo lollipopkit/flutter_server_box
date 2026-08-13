@@ -74,6 +74,17 @@ abstract interface class ServerCapabilities {
 class SshCapabilities implements ServerCapabilities {
   const SshCapabilities();
 
+  /// Every instance describes the same thing, so they are all the same
+  /// instance as far as anything watching is concerned. Without this, an
+  /// implementation that is `const` compares identical while one built from a
+  /// grant never does — and a caller that selects on capabilities would see
+  /// one transport never update and the other update constantly.
+  @override
+  bool operator ==(Object other) => other is SshCapabilities;
+
+  @override
+  int get hashCode => (SshCapabilities).hashCode;
+
   @override
   bool get shell => true;
 
@@ -131,4 +142,13 @@ class MonitorHttpCapabilities implements ServerCapabilities {
 
   @override
   bool get persistentSession => false;
+
+  /// Two agents granting the same things answer the same, so a poll that finds
+  /// no change publishes no change. See [SshCapabilities.==].
+  @override
+  bool operator ==(Object other) =>
+      other is MonitorHttpCapabilities && other.granted == granted;
+
+  @override
+  int get hashCode => Object.hash(MonitorHttpCapabilities, granted);
 }

@@ -173,6 +173,9 @@ class ServerNotifier extends _$ServerNotifier {
     if (!identical(state.client, client)) {
       unawaited(_disposePersistentShell());
       _usePersistentShellForStatus = true;
+      // A different connection may be to a machine that has been rebooted
+      // since, and a reboot takes `/tmp` — where the script lives — with it.
+      _scriptWritten = false;
       // A new connection reinstalls the script, so drop the cache: the next
       // refresh re-runs the extended function against the current script
       _extendedRaw = '';
@@ -223,6 +226,7 @@ class ServerNotifier extends _$ServerNotifier {
     _operationGeneration++;
     unawaited(_disposePersistentShell());
     state.client?.close();
+    _scriptWritten = false;
     state = state.copyWith(client: null, conn: ServerConn.disconnected);
   }
 
@@ -350,6 +354,9 @@ class ServerNotifier extends _$ServerNotifier {
           // installed on the machine.
           final platform = caps.platform;
           if (platform != null && state.status.system != platform) {
+            // The script that was written is the other platform's, and the
+            // command about to run it is this platform's.
+            _scriptWritten = false;
             updateStatus(_copyStatus(state.status, system: platform));
           }
         } catch (e, s) {

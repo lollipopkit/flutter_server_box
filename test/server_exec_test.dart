@@ -31,9 +31,9 @@ class _RecordingExec implements ServerExec {
 
 void main() {
   group('runWithSudo', () {
-    test('the password goes to stdin, never into the command', () {
+    test('the password goes to stdin, never into the command', () async {
       final exec = _RecordingExec();
-      exec.runWithSudo('sudo -S docker ps', password: 'hunter2');
+      await exec.runWithSudo('sudo -S docker ps', password: 'hunter2');
 
       expect(exec.stdin, 'hunter2\n');
       expect(exec.script, isNot(contains('hunter2')));

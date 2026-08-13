@@ -468,7 +468,10 @@ class ContainerNotifier extends _$ContainerNotifier {
       Loggers.app.warning('Container refresh execution failed', e, trace);
       _setRefreshError(
         target,
-        ContainerErr(type: ContainerErrType.unknown, message: '$e'),
+        // Nothing ran at all — a connection that could not be opened, an agent
+        // that refused. Told apart from a command that ran and failed, which
+        // is what `unknown` is for.
+        ContainerErr(type: ContainerErrType.noClient, message: '$e'),
       );
       await _finishRefresh(refreshGeneration);
       return;
@@ -477,6 +480,7 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (_isStaleRefresh(refreshGeneration)) return;
     if (!context.mounted) {
       _pendingRefresh = null;
+      _refreshing = false;
       state = state.copyWith(isBusy: false);
       return;
     }
@@ -572,12 +576,19 @@ class ContainerNotifier extends _$ContainerNotifier {
         commands[index]: segments[index],
     };
 
+    // The runtime answered in full, so whatever was wrong last time is over.
+    // Cleared here rather than at the start of a refresh, which is what kept a
+    // failure on screen through a retry that only reproduced it — and here
+    // rather than in the version branch below, which is skipped once the
+    // version is cached, so a recovered server kept showing a dead daemon.
+    if (state.error != null) state = state.copyWith(error: null);
+
     // Parse version only until it has been cached for the selected runtime.
     final verRaw = output[ContainerCmdType.version];
     if (verRaw != null) {
       try {
         final version = json.decode(verRaw)['Client']['Version'];
-        state = state.copyWith(version: version, error: null);
+        state = state.copyWith(version: version);
       } catch (e, trace) {
         if (state.error == null) {
           state = state.copyWith(
@@ -932,14 +943,17 @@ const _jsonFmt = '--format "{{json .}}"';
 String? userFacingOutput(String stderr, String stdout) {
   for (final stream in [stderr, stdout]) {
     final lines = <String>[];
+    // Deduplicated through a set rather than by scanning the list: several
+    // commands are batched into one call, so a missing runtime says
+    // `sh: docker: not found` once per command — three identical lines are
+    // three attempts at the same thing, not three problems — and the stream
+    // this walks can be a megabyte of distinct lines.
+    final seen = <String>{};
     for (final line in stream.split('\n')) {
       final trimmed = line.trim();
       if (trimmed.isEmpty) continue;
       if (trimmed.startsWith(ScriptConstants.separator)) continue;
-      // Deduplicated: several commands are batched into one call, so a missing
-      // runtime says `sh: docker: not found` once per command. Three identical
-      // lines are three attempts at the same thing, not three problems.
-      if (lines.contains(trimmed)) continue;
+      if (!seen.add(trimmed)) continue;
       lines.add(trimmed);
     }
     if (lines.isNotEmpty) return lines.join('\n');

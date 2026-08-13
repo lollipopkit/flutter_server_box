@@ -48,8 +48,14 @@ async fn test_server(state: Arc<AppState>) -> TestServer {
         let state = state.clone();
         async move {
             App::new().state(state).service(
-                web::scope("/api/v1")
-                    .route("/exec", web::post().to(server_box_monitor::api::exec::exec)),
+                web::scope("/api/v1").service(
+                    web::resource("/exec")
+                        .state(
+                            web::types::JsonConfig::default()
+                                .limit(server_box_monitor::api::exec::MAX_REQUEST),
+                        )
+                        .route(web::post().to(server_box_monitor::api::exec::exec)),
+                ),
             )
         }
     })
@@ -135,6 +141,25 @@ async fn stdin_is_not_audited() {
         !rows.iter().any(|r| r.contains("hunter2")),
         "input must not be recorded, got {rows:?}"
     );
+}
+
+/// A command that never reads its input still answers.
+///
+/// More than a pipe buffer — 64 KiB on Linux — so the write blocks until
+/// something drains it, and nothing ever does. Before the write was moved
+/// inside the timeout this held the worker forever.
+#[ntex::test]
+async fn a_command_that_ignores_a_large_stdin_still_returns() {
+    let srv = test_server(app_state(true).await).await;
+    let body = post(
+        &srv,
+        json!({"cmd": "echo ignored-it", "stdin": "x".repeat(512 * 1024)}),
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(body["stdout"], "ignored-it\n");
+    assert_eq!(body["timed_out"], false);
 }
 
 /// How a sudo password gets in with no terminal to type it into.

@@ -35,6 +35,13 @@ use super::ws;
 /// command waiting on input nobody will type does not hold a worker forever.
 const TIMEOUT: Duration = Duration::from_secs(60);
 
+/// The largest request body accepted, which is `stdin` plus the command.
+///
+/// Generous next to what the app sends — a password, or a status script of a
+/// few KiB — and bounded, so one caller cannot make the agent buffer whatever
+/// it likes before the command has even started.
+pub const MAX_REQUEST: usize = 1024 * 1024;
+
 /// What is kept of each stream. A caller parsing `ps` output does not need
 /// more, and an unbounded read is a way for one command to exhaust memory.
 const MAX_OUTPUT: usize = 1024 * 1024;
@@ -163,16 +170,36 @@ async fn run(
     }
     let mut child = command.spawn()?;
 
-    if let Some(mut pipe) = child.stdin.take() {
-        if let Some(data) = stdin {
-            pipe.write_all(data.as_bytes()).await?;
+    let pipe = child.stdin.take();
+    let feed = async move {
+        if let Some(mut pipe) = pipe {
+            if let Some(data) = stdin {
+                // A command that exits without reading closes the pipe, and
+                // writing to a closed pipe is that command's answer, not a
+                // failure of this request: the output it did produce is still
+                // worth returning.
+                if let Err(e) = pipe.write_all(data.as_bytes()).await {
+                    if e.kind() != std::io::ErrorKind::BrokenPipe {
+                        tracing::debug!("exec stdin: {e}");
+                    }
+                }
+            }
+            // Closed either way: a command reading stdin would otherwise wait
+            // for input that is never coming, and take the timeout to find out.
+            drop(pipe);
         }
-        // Closed either way: a command reading stdin would otherwise wait for
-        // input that is never coming, and take the timeout to find out.
-        drop(pipe);
-    }
+    };
 
-    let output = match tokio::time::timeout(TIMEOUT, child.wait_with_output()).await {
+    // Inside the timeout with the wait, not before it. A command that never
+    // reads its stdin leaves a write of more than a pipe buffer — 64 KiB on
+    // Linux, and the status script is larger than that — blocked forever, and
+    // nothing above was bounding it.
+    let output = match tokio::time::timeout(TIMEOUT, async {
+        feed.await;
+        child.wait_with_output().await
+    })
+    .await
+    {
         Ok(result) => result?,
         Err(_) => {
             // `kill_on_drop` handles the process; what is lost is whatever it

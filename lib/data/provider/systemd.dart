@@ -44,6 +44,19 @@ class SystemdFailure {
   /// — the difference between "this did not work" and "this machine is Alpine,
   /// which uses OpenRC".
   final String? initSystem;
+
+  /// The same failure twice is the same failure, so a refresh that reproduces
+  /// it leaves the state equal and the page does not rebuild.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SystemdFailure &&
+          other.issue == issue &&
+          other.detail == detail &&
+          other.initSystem == initSystem;
+
+  @override
+  int get hashCode => Object.hash(issue, detail, initSystem);
 }
 
 @freezed
@@ -92,7 +105,11 @@ class SystemdNotifier extends _$SystemdNotifier {
 
   /// System units are essential; user units are optional and only reported.
   Future<void> getUnits() async {
-    state = state.copyWith(isBusy: true, failure: null);
+    // The failure stays up while the retry runs. Clearing it here put the page
+    // back to chips over an empty list for the length of every pull-to-refresh
+    // and then swapped the explanation back in — the same flicker the
+    // container page had.
+    state = state.copyWith(isBusy: true);
 
     final ServerExec exec;
     try {
@@ -131,6 +148,8 @@ class SystemdNotifier extends _$SystemdNotifier {
       final units = [...user.units, ...system.units]..sort(_compareUnits);
       state = state.copyWith(
         units: units,
+        // Cleared by assignment below rather than up front, so a retry that
+        // fails the same way never blanks the page in between.
         // Not fatal, and not a snackbar either: the list on screen is real and
         // the note says what is missing from it.
         failure: user.failure == null
@@ -176,15 +195,24 @@ class SystemdNotifier extends _$SystemdNotifier {
 
   /// Whether the shell could not find `systemctl` at all.
   ///
-  /// 127 is the POSIX shell's answer for that, and the wording differs between
-  /// shells (`not found`, `command not found`, busybox's `applet not found`),
-  /// so both are checked rather than trusting either alone.
+  /// 127 is the POSIX shell's answer for that. The text is only consulted for
+  /// shells that report it differently, and only in forms that name a missing
+  /// *command* — matching "not found" anywhere read
+  /// `Failed to connect to bus: No such file or directory` as "no systemd",
+  /// which is what a systemd machine says when it is not PID 1, and
+  /// `Unit foo.service not found.` as the same.
   static bool _missingCommand(int? exitCode, String raw) {
     if (exitCode == 127) return true;
-    final said = raw.toLowerCase();
-    return said.contains('not found') ||
-        said.contains('no such file or directory');
+    return _noSuchCommand.hasMatch(raw);
   }
+
+  /// `sh: systemctl: not found`, bash's `command not found`, busybox's
+  /// `applet not found`, and PowerShell's phrasing.
+  static final _noSuchCommand = RegExp(
+    r'(command not found|: not found|applet not found|'
+    r'is not recognized as .* cmdlet)',
+    caseSensitive: false,
+  );
 
   /// What the machine runs instead of systemd.
   ///
@@ -193,7 +221,11 @@ class SystemdNotifier extends _$SystemdNotifier {
   /// message.
   Future<String?> _probeInitSystem(ServerExec exec) async {
     const script = r'''
-. /etc/os-release 2>/dev/null
+# Guarded rather than `. /etc/os-release 2>/dev/null`: `.` is a POSIX special
+# builtin, so dash and busybox ash exit the whole script when the file is not
+# there — which is every BSD, exactly where naming the init system is the only
+# useful part of the answer.
+if [ -r /etc/os-release ]; then . /etc/os-release; fi
 if command -v rc-status >/dev/null 2>&1; then init=OpenRC
 elif command -v s6-rc >/dev/null 2>&1; then init=s6
 elif command -v sv >/dev/null 2>&1 && [ -d /etc/service ]; then init=runit
@@ -204,7 +236,11 @@ fi
 printf '%s	%s' "${init:-}" "${PRETTY_NAME:-}"
 ''';
     try {
-      final result = await exec.run(script);
+      // Fed to `sh` rather than run as the command: with no `entry` the script
+      // reaches the account's login shell, and this runs on machines without
+      // systemd — which includes the BSDs, where root's shell is csh and none
+      // of the syntax below parses.
+      final result = await exec.run(script, entry: 'sh');
       if (!result.succeeded) return null;
       final parts = result.stdout.trim().split('	');
       final init = parts.firstOrNull?.trim() ?? '';

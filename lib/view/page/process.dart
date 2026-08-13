@@ -880,7 +880,16 @@ extension _ProcessPageStateActions on _ProcessPageState {
         return;
       }
       final killOutput =
-          (await exec.run(killCommand).timeout(_processCommandTimeout))
+          (await exec
+                  .run(
+                    killCommand,
+                    // POSIX shell syntax, so it is fed to one rather than to
+                    // whatever the account's login shell happens to be. Windows
+                    // builds a PowerShell command instead, which has to run as
+                    // the command.
+                    entry: systemType == SystemType.windows ? null : 'sh',
+                  )
+                  .timeout(_processCommandTimeout))
               .combined;
       if (killOutput.contains(_killTargetChangedMarker)) {
         context.showSnackBar(context.l10n.processKillTargetChanged);
