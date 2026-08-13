@@ -11,7 +11,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
-import 'package:server_box/view/widget/pane_list.dart';
+import 'package:server_box/view/widget/pane_settings.dart';
 
 part 'tab_add.dart';
 part 'tab_sort.dart';
@@ -143,6 +143,17 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   }
 
   Widget _buildTerminals(bool split) {
+    // Selected here rather than left where it was: page 0 is the picker's,
+    // and once the rail is drawing that list nothing in it can reach page 0
+    // again, so a layout that turns split while the picker was current left an
+    // empty surface beside a rail with no way back. Deferred, because this
+    // runs during a build.
+    if (split && _sessions.index == 0 && _sessions.tabs.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _sessions.index == 0) _sessions.select(1);
+      });
+    }
+
     return Scaffold(
       // With a rail beside it there is nothing left for a strip to do: the
       // rail switches sessions and starts them, so all the bar has to say is

@@ -14,7 +14,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/view/page/ssh/agent_conversation_replay.dart';
-import 'package:server_box/view/widget/pane_list.dart';
+import 'package:server_box/view/widget/pane_settings.dart';
 
 class AgentPage extends ConsumerStatefulWidget {
   const AgentPage({super.key});
@@ -76,19 +76,21 @@ String formatGlobalAgentToolResultOutput(
   required String noOutputLabel,
   required String truncatedLabel,
 }) {
+  // Above the tool name, because `{'error': ...}` is what every tool that
+  // threw produces, not only the shell's. Read inside the shell branch, a
+  // failed read_file printed the raw JSON of that map, and a failed shell
+  // command printed "the command produced no output" — which is what a
+  // command that never ran looks like from here, and says nothing about why.
+  if (result.data case final Map data?) {
+    final error = data['error'];
+    if (error is String && error.isNotEmpty) return error;
+  }
+
   if (result.toolName != 'run_shell_command' || result.data is! Map) {
     return result.displayData;
   }
 
   final data = Map<Object?, Object?>.from(result.data! as Map);
-
-  // A tool that threw never produced any of the fields below, so reading them
-  // yielded "the command produced no output" — which is what a command that
-  // never ran looks like from here, and says nothing about why. The reason is
-  // the only thing worth showing.
-  final error = data['error'] as String?;
-  if (error != null && error.isNotEmpty) return error;
-
   final stdout = data['stdout'] as String? ?? '';
   final stderr = data['stderr'] as String? ?? '';
   final exitCode = data['exit_code'];
@@ -145,7 +147,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
     super.initState();
     _toolService = ref.read(globalAgentToolServiceProvider);
     _protocol = _resolvedConfiguredProtocol();
-    _inputController.addListener(_handleInputChanged);
+
   }
 
   @override
@@ -154,6 +156,10 @@ class _AgentPageState extends ConsumerState<AgentPage>
     if (_historyInitialized) return;
     _historyInitialized = true;
     _refreshConversations();
+    _conversationWatch ??= Stores.agentConversation.box.watch().listen((_) {
+      if (!mounted) return;
+      setState(_refreshConversations);
+    });
     _restoreConversation(
       Stores.agentConversation.fetchActive(globalAgentConversationScope),
       notify: false,
@@ -162,26 +168,28 @@ class _AgentPageState extends ConsumerState<AgentPage>
 
   @override
   void dispose() {
+    _conversationWatch?.cancel();
     _subscription?.cancel();
     if (_isExecuting) {
       unawaited(_toolService.cancelCurrent());
     }
     _scrollController.dispose();
-    _inputController
-      ..removeListener(_handleInputChanged)
-      ..dispose();
+    _inputController.dispose();
     super.dispose();
   }
 
-  /// Re-reads the stored conversations. Called wherever the box is written.
+  /// Watches the box, so a write this page did not make — a restored backup —
+  /// is not missed. This tab is kept alive, so nothing else would bring it
+  /// back to look.
+  StreamSubscription<void>? _conversationWatch;
+
+  /// Re-reads the stored conversations. Called for this page's own writes so
+  /// the list is right in the same frame, and from [_conversationWatch] for
+  /// everyone else's.
   void _refreshConversations() {
     _conversations = Stores.agentConversation.fetchForServer(
       globalAgentConversationScope,
     );
-  }
-
-  void _handleInputChanged() {
-    if (mounted) setState(() {});
   }
 
   AskAiProtocol _resolvedConfiguredProtocol() {
@@ -332,17 +340,27 @@ class _AgentPageState extends ConsumerState<AgentPage>
         event.logicalKey != LogicalKeyboardKey.numpadEnter) {
       return KeyEventResult.ignored;
     }
-    // Mid-composition the key belongs to the IME, which is using it to accept a
-    // candidate. Taking it would send half a word in every language that needs
-    // one to type at all.
+    final keys = HardwareKeyboard.instance;
+    final withModifier = keys.isMetaPressed || keys.isControlPressed;
+    final sends = Stores.setting.askAiSendOnEnter.fetch()
+        ? !keys.isShiftPressed
+        : withModifier;
+    if (!sends) return KeyEventResult.ignored;
+
+    // Mid-composition a bare Enter belongs to the IME, which is using it to
+    // accept a candidate; taking it would send half a word in every language
+    // that needs one to type at all. Only a bare one: no IME commits on
+    // Cmd/Ctrl+Enter, and Android keeps the word being typed in a composing
+    // range at all times, so guarding the modifier form too swallowed the
+    // send shortcut for the whole of a sentence.
+    if (withModifier) return _sendAndConsume();
     if (!_inputController.value.composing.isCollapsed) {
       return KeyEventResult.ignored;
     }
-    final keys = HardwareKeyboard.instance;
-    final sends = Stores.setting.askAiSendOnEnter.fetch()
-        ? !keys.isShiftPressed
-        : keys.isMetaPressed || keys.isControlPressed;
-    if (!sends) return KeyEventResult.ignored;
+    return _sendAndConsume();
+  }
+
+  KeyEventResult _sendAndConsume() {
     _submitPrompt(_inputController.text);
     // Handled either way: the key meant "send", and letting it through would
     // leave a line break behind whenever there was nothing to send.
@@ -706,7 +724,12 @@ class _AgentPageState extends ConsumerState<AgentPage>
         ),
       ],
     );
-    if (confirmed != true || !mounted) return;
+    // Re-checked after the dialog, not only when the row was built: an
+    // auto-approved tool can start while the confirmation is on screen, and
+    // tearing the conversation down under it leaves the execution running —
+    // only `dispose` cancels one — to append its result to whichever
+    // conversation is active by then.
+    if (confirmed != true || !mounted || _isWorking) return;
     final deletingCurrent = _conversation?.id == conversation.id;
     Stores.agentConversation.deleteConversation(
       globalAgentConversationScope,
@@ -736,7 +759,12 @@ class _AgentPageState extends ConsumerState<AgentPage>
         ),
       ],
     );
-    if (confirmed != true || !mounted) return;
+    // Re-checked after the dialog, not only when the row was built: an
+    // auto-approved tool can start while the confirmation is on screen, and
+    // tearing the conversation down under it leaves the execution running —
+    // only `dispose` cancels one — to append its result to whichever
+    // conversation is active by then.
+    if (confirmed != true || !mounted || _isWorking) return;
     Stores.agentConversation.clearServer(globalAgentConversationScope);
     _refreshConversations();
     _restoreConversation(null);
@@ -789,11 +817,27 @@ class _AgentPageState extends ConsumerState<AgentPage>
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    context.l10n.askAiHistory,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        context.l10n.askAiHistory,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      // Where the conversations live. Someone about to type a
+                      // password into a prompt deserves to be told before
+                      // rather than after, and the sheet on the terminal page
+                      // says the same thing in the same place.
+                      Text(
+                        context.l10n.askAiHistoryLocalOnly,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 if (conversations.isNotEmpty)
@@ -914,7 +958,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
   String _conversationPreview(AgentConversation conversation) {
     for (final item in conversation.items.reversed) {
       if (item is AskAiMessageItem && item.content.trim().isNotEmpty) {
-        return item.content.replaceAll(RegExp(r'\s+'), ' ').trim();
+        return item.content.replaceAll(_whitespace, ' ').trim();
       }
     }
     return context.l10n.askAiNoHistoryMessages;
@@ -1362,10 +1406,10 @@ class _AgentPageState extends ConsumerState<AgentPage>
   }
 
   Widget _buildComposer(BuildContext context, ThemeData theme) {
-    final canSend =
-        !_isWorking &&
-        _pendingTool == null &&
-        _inputController.text.trim().isNotEmpty;
+    // Everything but the text is page state, so only the send button has to
+    // follow the keystrokes — see the builder around it. Rebuilding the page
+    // for each one redrew the timeline's markdown and every history row.
+    final canSendWhatever = !_isWorking && _pendingTool == null;
     return SafeArea(
       top: false,
       child: Padding(
@@ -1436,10 +1480,17 @@ class _AgentPageState extends ConsumerState<AgentPage>
                             maxLines: 6,
                             // What a soft keyboard's return key does, on the
                             // devices that have one of those instead of a Shift.
-                            textInputAction: sendOnEnter
+                            // The setting is about a hardware keyboard, where
+                            // Shift+Enter is the other half of it. A soft one
+                            // has no Shift, so a return key that sends leaves
+                            // no way to type a line break at all — and the
+                            // send button is right beside the field anyway.
+                            textInputAction: sendOnEnter && isDesktop
                                 ? TextInputAction.send
                                 : TextInputAction.newline,
-                            onSubmitted: sendOnEnter ? _submitPrompt : null,
+                            onSubmitted: sendOnEnter && isDesktop
+                                ? _submitPrompt
+                                : null,
                             enabled: !_isWorking && _pendingTool == null,
                             decoration: InputDecoration(
                               hintText: _pendingTool == null
@@ -1468,12 +1519,16 @@ class _AgentPageState extends ConsumerState<AgentPage>
                       ),
                       Padding(
                         padding: const EdgeInsets.all(7),
-                        child: IconButton.filled(
-                          tooltip: context.l10n.askAiAgentSend,
-                          onPressed: canSend
-                              ? () => _submitPrompt(_inputController.text)
-                              : null,
-                          icon: const Icon(Icons.arrow_upward),
+                        child: ValueListenableBuilder(
+                          valueListenable: _inputController,
+                          builder: (_, value, _) => IconButton.filled(
+                            tooltip: context.l10n.askAiAgentSend,
+                            onPressed:
+                                canSendWhatever && value.text.trim().isNotEmpty
+                                ? () => _submitPrompt(_inputController.text)
+                                : null,
+                            icon: const Icon(Icons.arrow_upward),
+                          ),
                         ),
                       ),
                     ],
@@ -1598,5 +1653,8 @@ class _AgentPageState extends ConsumerState<AgentPage>
     );
   }
 }
+
+/// Built once. It was constructed per history row per rebuild.
+final _whitespace = RegExp(r'\s+');
 
 enum _HistoryAction { rename, delete }

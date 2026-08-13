@@ -400,7 +400,7 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
               itemCount: _result.procs.length,
               separatorBuilder: (_, _) => Divider(
                 height: 1,
-                color: scheme.outlineVariant.withValues(alpha: 0.55),
+                color: Hairline.color(context),
               ),
               itemBuilder: (_, index) =>
                   _buildProcessRow(_result.procs[index], layout, columns),

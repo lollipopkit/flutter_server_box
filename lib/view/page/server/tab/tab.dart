@@ -27,6 +27,7 @@ import 'package:server_box/view/page/server/connection_stats.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
 
 part 'card_stat.dart';
@@ -191,17 +192,20 @@ class _ServerPageState extends ConsumerState<ServerPage>
     final selected = ref.watch(serverSelectionProvider);
     final selectedSpi = selected == null ? null : servers[selected];
 
-    // Listened to, not read: the setting is changed on another page, and
-    // nothing else would bring this one back to ask again — so it took effect
-    // whenever something unrelated happened to rebuild, which is to say it
-    // looked broken.
-    return Stores.setting.forceSinglePane.listenable().listenVal((single) {
+    // Both settings listened to, not read. They are changed elsewhere — the
+    // switch on the settings page, the width by dragging the divider on the
+    // terminal or files tab — and this page is kept alive behind those, so a
+    // value read when it was last on screen is not the value now. Read that
+    // way the switch took effect whenever something unrelated happened to
+    // rebuild, and this column stayed at whatever width it opened with while
+    // the others moved.
+    return PaneSettings.listen((single, paneWidth) {
       return _tag.listenVal((val) {
         final filtered = _filterServers(serverOrder);
         return AdaptivePanes(
           enabled: !single,
-          primaryWidth: Stores.setting.paneListWidth.fetch(),
-          onPrimaryWidthChanged: Stores.setting.paneListWidth.put,
+          primaryWidth: paneWidth,
+          onPrimaryWidthChanged: PaneSettings.saveWidth,
           detailId: selectedSpi?.id,
           onCloseDetail: _closeDetail,
           // Null until something is opened, so a fresh launch gets the whole

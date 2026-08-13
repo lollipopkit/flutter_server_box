@@ -1199,12 +1199,41 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     );
   }
 
+  /// Enter, under the same setting the Agent page reads.
+  ///
+  /// A bare Enter mid-composition belongs to the IME, which uses it to accept
+  /// a candidate; a modified one never does, so only the bare form gives way.
+  KeyEventResult _handleComposerKey(KeyEvent event, bool canSend) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (event.logicalKey != LogicalKeyboardKey.enter &&
+        event.logicalKey != LogicalKeyboardKey.numpadEnter) {
+      return KeyEventResult.ignored;
+    }
+
+    final keys = HardwareKeyboard.instance;
+    final withModifier = keys.isMetaPressed || keys.isControlPressed;
+    final sends = Stores.setting.askAiSendOnEnter.fetch()
+        ? !keys.isShiftPressed
+        : withModifier;
+    if (!sends) return KeyEventResult.ignored;
+
+    if (!withModifier && !_inputController.value.composing.isCollapsed) {
+      return KeyEventResult.ignored;
+    }
+
+    if (canSend) _submitPrompt(_inputController.text);
+    // Handled either way: the key meant "send", and letting it through would
+    // leave a line break behind whenever there was nothing to send.
+    return KeyEventResult.handled;
+  }
+
   Widget _buildComposer(BuildContext context, ThemeData theme) {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     final canSend =
         !_isWorking &&
         _pendingCommand == null &&
         _inputController.text.trim().isNotEmpty;
+    final sendOnEnter = Stores.setting.askAiSendOnEnter.fetch();
     return AnimatedPadding(
       duration: const Duration(milliseconds: 120),
       padding: EdgeInsets.fromLTRB(12, 8, 12, 12 + bottomInset),
@@ -1251,17 +1280,27 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
-                child: Input(
-                  controller: _inputController,
-                  minLines: 1,
-                  maxLines: 5,
-                  hint: _pendingCommand == null
-                      ? context.l10n.askAiAgentPromptHint
-                      : context.l10n.askAiReviewBeforeContinuing,
-                  action: TextInputAction.send,
-                  onSubmitted: (_) {
-                    if (canSend) _submitPrompt(_inputController.text);
-                  },
+                // Same key handling as the Agent page's composer: this is the
+                // app's other chat box, and a setting that governs one of two
+                // identical fields is a setting nobody can rely on.
+                child: Focus(
+                  onKeyEvent: (_, event) => _handleComposerKey(event, canSend),
+                  child: Input(
+                    controller: _inputController,
+                    minLines: 1,
+                    maxLines: 5,
+                    hint: _pendingCommand == null
+                        ? context.l10n.askAiAgentPromptHint
+                        : context.l10n.askAiReviewBeforeContinuing,
+                    action: sendOnEnter && isDesktop
+                        ? TextInputAction.send
+                        : TextInputAction.newline,
+                    onSubmitted: sendOnEnter && isDesktop
+                        ? (_) {
+                            if (canSend) _submitPrompt(_inputController.text);
+                          }
+                        : null,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),

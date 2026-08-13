@@ -496,10 +496,14 @@ class GlobalAgentToolService {
   /// the model to use refreshes status over HTTP without producing one, so the
   /// retry failed the same way. Terminal, SFTP and port forwarding all reach a
   /// shell through this same lazy path.
-  Future<ServerState> _connectedServer(String? serverId) async {
+  Future<({ServerState state, SSHClient client})> _connectedServer(
+    String? serverId,
+  ) async {
     final state = _server(serverId);
-    final client = state.client;
-    if (client != null && !client.isClosed) return state;
+    final existing = state.client;
+    if (existing != null && !existing.isClosed) {
+      return (state: state, client: existing);
+    }
 
     if (state.spi.ssh == null) {
       throw StateError(
@@ -508,12 +512,20 @@ class GlobalAgentToolService {
       );
     }
 
+    final SSHClient client;
     try {
-      await _ref.read(serverProvider(state.spi.id).notifier).ensureShellClient();
+      client = await _ref
+          .read(serverProvider(state.spi.id).notifier)
+          .ensureShellClient();
     } catch (e) {
       throw StateError('Cannot open a shell on ${state.spi.name}: $e');
     }
-    return _ref.read(serverProvider(state.spi.id));
+    // The client that was just connected, not whatever the provider holds by
+    // now: a status refresh that failed while this was awaiting drops the
+    // client from the state, as does editing or disconnecting the server, and
+    // re-reading it then hands back a state whose `client` is null for the
+    // caller to assert on.
+    return (state: _ref.read(serverProvider(state.spi.id)), client: client);
   }
 
   ServerState _server(String? serverId) {
@@ -530,10 +542,10 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final state = await _connectedServer(proposal.serverId);
+    final (:state, :client) = await _connectedServer(proposal.serverId);
     final command = proposal.argumentString('command');
     if (command == null) throw const FormatException('command is required');
-    final session = await state.client!.execute(command);
+    final session = await client.execute(command);
     _activeSession = session;
     final stdoutCapture = _BoundedTextAccumulator(_maxShellOutputCharacters);
     final stderrCapture = _BoundedTextAccumulator(_maxShellOutputCharacters);
@@ -600,13 +612,13 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final state = await _connectedServer(proposal.serverId);
+    final (:state, :client) = await _connectedServer(proposal.serverId);
     final path = proposal.path;
     if (path == null) throw const FormatException('path is required');
     SftpClient? sftp;
     SftpFile? file;
     try {
-      sftp = await state.client!.sftp().timeout(_sftpTimeout);
+      sftp = await client.sftp().timeout(_sftpTimeout);
       file = await sftp.open(path).timeout(_sftpTimeout);
       final attrs = await file.stat().timeout(_sftpTimeout);
       final size = attrs.size;
@@ -647,7 +659,7 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final state = await _connectedServer(proposal.serverId);
+    final (:state, :client) = await _connectedServer(proposal.serverId);
     final path = proposal.path;
     final content = proposal.arguments['content'];
     if (path == null) throw const FormatException('path is required');
@@ -662,7 +674,7 @@ class GlobalAgentToolService {
     SftpFile? file;
     String? temporaryPath;
     try {
-      sftp = await state.client!.sftp().timeout(_sftpTimeout);
+      sftp = await client.sftp().timeout(_sftpTimeout);
       final tempPath = _temporaryRemotePath(path);
       temporaryPath = tempPath;
       file = await sftp
