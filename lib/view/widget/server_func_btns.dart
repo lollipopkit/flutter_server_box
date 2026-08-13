@@ -518,11 +518,11 @@ Future<bool> _ensure(
 ) async {
   final notifier = ref.read(serverProvider(id).notifier);
 
-  // Said only when there is going to be a connection. The notifier answers
-  // that per transport, because a monitor server holds none and needs none —
-  // announcing a wait there put "wait for the connection" on screen at the
-  // same moment the page it was about opened.
-  if (notifier.execWillConnect && context.mounted) {
+  // Said only when there is going to be a connection — a transport with no
+  // persistent session never waits for one, so announcing it there put "wait
+  // for the connection" on screen at the same moment the page it was about
+  // opened.
+  if (ref.read(serverProvider(id)).execWillConnect && context.mounted) {
     context.showSnackBar(l10n.waitConnection);
   }
   try {

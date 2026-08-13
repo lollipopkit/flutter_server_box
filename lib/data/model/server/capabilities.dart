@@ -1,30 +1,32 @@
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
 
-/// What a server's connection method can actually do.
+/// What a way of reaching a server can do.
 ///
-/// The UI asks this instead of testing which transport is in use. Without it,
-/// every feature that happens to need a shell has to know that "SSH" is the
-/// one that provides it, and adding a third transport means hunting down
-/// `is ServerConnectCredentialSsh` checks scattered across the widget tree.
-class ServerCapabilities {
-  /// Features that need to reach the machine rather than just read a status
-  /// from it: SFTP, the process and systemd pages, snippets, containers, port
-  /// forwarding, power control.
-  ///
-  /// True over SSH, however that SSH is reached, and true for a monitor agent
-  /// told to grant full access — which is the same grant its panel login
-  /// already carries.
-  final bool shell;
+/// The questions are the ones the UI has to answer before it offers something:
+/// each server function button asks exactly one of them (see
+/// `ServerFuncBtn.availableWith`), and the server detail page asks two more.
+/// Asking here instead of testing which transport is in use is what keeps
+/// every feature that happens to need a shell from knowing that "SSH" is the
+/// thing that provides one.
+///
+/// An interface with one implementation per transport, rather than a bag of
+/// booleans somebody fills in: the answers differ per transport for reasons
+/// that belong to that transport, and a third one should be a new class here
+/// rather than another branch inside a factory. [of] is the only place a
+/// credential picks between them.
+abstract interface class ServerCapabilities {
+  /// A command can be run and its output read: the process and systemd pages,
+  /// containers, power control.
+  bool get shell;
 
-  /// An interactive terminal can be opened. Implied by [shell] everywhere it
-  /// is true today, and kept separate because the two are different questions:
-  /// one is "can a shell be had", the other "can anything be run".
+  /// An interactive terminal can be opened — the terminal page, and the
+  /// snippet and iperf buttons, which both end in one.
   ///
-  /// Separate from [shell] because the two used to be the same question, and
-  /// answering it with one boolean would offer SFTP and port forwarding on a
-  /// connection that cannot carry them.
-  final bool terminal;
+  /// Separate from [shell] because they are different questions: one is "can a
+  /// shell be had", the other "can anything be run". A transport may grow one
+  /// without the other.
+  bool get terminal;
 
   /// Bidirectional byte streams can be opened: SFTP moves file contents, port
   /// forwarding moves a TCP connection.
@@ -33,79 +35,100 @@ class ServerCapabilities {
   /// output without being able to carry a stream — which is exactly a monitor
   /// agent's HTTP API. Offering SFTP on one would open a page that can only
   /// ever fail.
-  // TODO: true for a full-access agent once it relays a connection to an
-  // address the caller names, the way `MonitorTunnelSocket` did for one fixed
-  // address.
-  final bool byteStream;
+  bool get byteStream;
 
-  /// The source keeps its own trend history that can prefill the local buffer
-  /// (see `StatusHistory.seed`). False means the buffer only ever holds what
-  /// this app sampled while the page was open.
-  final bool storedHistory;
+  /// The transport keeps its own trend history that can prefill the local
+  /// buffer (see `StatusHistory.seed`). False means the buffer only ever holds
+  /// what this app sampled while the page was open.
+  bool get storedHistory;
 
-  /// Whether a connected-but-not-yet-fetched state is observable. SSH holds a
-  /// long-lived client, so "connected" is a real state; a stateless HTTP
-  /// transport only ever has "has it answered yet".
-  final bool persistentSession;
+  /// Whether a connected-but-not-yet-fetched state is observable. A long-lived
+  /// connection makes "connected" a real state; a transport that only ever
+  /// makes requests has nothing but "has it answered yet".
+  bool get persistentSession;
 
-  const ServerCapabilities({
-    required this.shell,
-    required this.terminal,
-    required this.byteStream,
-    required this.storedHistory,
-    required this.persistentSession,
-  });
-
-  static const ssh = ServerCapabilities(
-    shell: true,
-    terminal: true,
-    byteStream: true,
-    storedHistory: false,
-    persistentSession: true,
-  );
-
-  /// Status over monitor's HTTP API, with no way to reach a shell.
-  static const monitorHttp = ServerCapabilities(
-    shell: false,
-    terminal: false,
-    byteStream: false,
-    storedHistory: true,
-    persistentSession: false,
-  );
-
-  /// Status over monitor's HTTP API, with the agent granting full access
-  /// (`MonitorHttpCredential.fullAccess`).
+  /// The implementation for how this server is reached.
   ///
-  /// One switch, not one per feature. The agent's own grant is what decides
-  /// this: with it the app can open a shell, run a command and reach a port
-  /// through the agent, all of which the panel login already implied — anyone
-  /// who can get a shell can run anything in it. Splitting them would have
-  /// been three switches describing one decision.
-  ///
-  /// [byteStream] is false while the agent has no way to relay a connection to
-  /// an address the app names; that is a missing endpoint, not a second
-  /// decision, and it flips to true for everyone once the agent grows one.
-  static const monitorHttpFullAccess = ServerCapabilities(
-    shell: true,
-    terminal: true,
-    byteStream: false,
-    storedHistory: true,
-    persistentSession: false,
-  );
-
+  /// [granted] is what the server's agent said it allows, for a monitor
+  /// server; ignored for an SSH one, which answers for itself.
   static ServerCapabilities of(
     ServerConnectCredential credential, {
     MonitorRemoteAccess? granted,
   }) {
     return switch (credential) {
-      ServerConnectCredentialSsh() => ssh,
-      // A monitor server is reached through its agent and nowhere else, so
-      // what it can do is the agent's answer alone. It used to be able to
-      // carry SSH credentials tunneled to the machine's own sshd; that was a
-      // second way to the same place, configured separately, and it meant
-      // "what can this server do" had two sources.
-      ServerConnectCredentialMonitorHttp() =>
-        (granted?.fullAccess ?? false) ? monitorHttpFullAccess : monitorHttp,
+      ServerConnectCredentialSsh() => const SshCapabilities(),
+      ServerConnectCredentialMonitorHttp() => MonitorHttpCapabilities(
+        granted ?? MonitorRemoteAccess.none,
+      ),
     };
   }
+}
+
+/// An SSH connection, which can do all of it.
+///
+/// Not because SSH is special, but because every one of these questions was
+/// originally asked about SSH: a shell, a PTY and a channel are three things
+/// one connection already carries. What it does not have is history — the app
+/// samples the machine itself, so a page opened now starts with an empty
+/// buffer.
+class SshCapabilities implements ServerCapabilities {
+  const SshCapabilities();
+
+  @override
+  bool get shell => true;
+
+  @override
+  bool get terminal => true;
+
+  @override
+  bool get byteStream => true;
+
+  @override
+  bool get storedHistory => false;
+
+  @override
+  bool get persistentSession => true;
+}
+
+/// A `monitor` agent's HTTP API, which can do whatever the agent says it will.
+///
+/// A monitor server is reached through its agent and nowhere else, so what it
+/// can do is the agent's answer alone. It used to be able to carry SSH
+/// credentials tunneled to the machine's own sshd; that was a second way to
+/// the same place, configured separately, and it meant "what can this server
+/// do" had two sources.
+class MonitorHttpCapabilities implements ServerCapabilities {
+  const MonitorHttpCapabilities(this.granted);
+
+  /// What the agent reported on `GET /api/v1/capabilities`. Defaults to
+  /// granting nothing, which is also the answer before the first poll and for
+  /// an agent too old to have the endpoint.
+  final MonitorRemoteAccess granted;
+
+  /// One grant, not one per feature. Anyone who can open a shell through the
+  /// agent can run anything in it, so a second switch for commands would
+  /// withhold nothing — it would only make the app pretend. The agent folds
+  /// its own transport check into this, so it is already false on a link the
+  /// agent would refuse.
+  @override
+  bool get shell => granted.fullAccess;
+
+  @override
+  bool get terminal => granted.fullAccess;
+
+  /// The agent has no endpoint that relays a connection to an address the app
+  /// names. That is a missing endpoint rather than a second decision, so this
+  /// is not a third switch — it flips for every agent at once when one lands.
+  // TODO: `granted.fullAccess` once the agent relays to a named address, the
+  // way `MonitorTunnelSocket` did for one fixed address.
+  @override
+  bool get byteStream => false;
+
+  /// The agent has been sampling since before the app asked, which is the
+  /// point of running one.
+  @override
+  bool get storedHistory => true;
+
+  @override
+  bool get persistentSession => false;
 }
