@@ -7,6 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/data/helper/ssh_decoder.dart';
 import 'package:server_box/data/helper/system_detector.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -21,6 +22,7 @@ import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/net_speed.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/status_history.dart';
 import 'package:server_box/data/model/server/system.dart';
@@ -352,6 +354,17 @@ class ServerNotifier extends _$ServerNotifier {
   /// that merely *could* open a terminal would undo the reason for polling
   /// over HTTP in the first place.
   ///
+  /// Something that can run a command on this server.
+  ///
+  /// The one place that decides *how* a command reaches a server. Callers —
+  /// the process list, systemd units, containers, snippets, power control —
+  /// take a [ServerExec] and never learn which transport answered, which is
+  /// what keeps a second transport from being a condition inside each of
+  /// them.
+  ///
+  /// Throws whatever the transport throws when it cannot be reached.
+  Future<ServerExec> ensureExec() async => SshExec(await ensureShellClient());
+
   /// Throws [SSHErr] when the server has no SSH configuration, or when the
   /// retry limiter has given up on it.
   Future<SSHClient> ensureShellClient() async {

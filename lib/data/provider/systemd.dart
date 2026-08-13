@@ -1,8 +1,7 @@
-import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:server_box/core/extension/ssh_client.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/systemd.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -24,12 +23,11 @@ abstract class SystemdState with _$SystemdState {
 
 @riverpod
 class SystemdNotifier extends _$SystemdNotifier {
-  late final ServerState _si;
+  late final Spi _spi;
 
   @override
   SystemdState build(Spi spi) {
-    final si = ref.read(serverProvider(spi.id));
-    _si = si;
+    _spi = spi;
     // The initial load is driven by the view so it can surface failures.
     return const SystemdState();
   }
@@ -58,13 +56,15 @@ class SystemdNotifier extends _$SystemdNotifier {
     state = state.copyWith(isBusy: true);
 
     try {
-      final client = _si.client;
-      if (client == null) return SystemdRefreshResult.systemFailed;
+      // Asked for rather than taken from the state: a server reached over its
+      // monitor agent has no client sitting there, and one is opened on
+      // demand — which is the same path the terminal and SFTP take.
+      final exec = await ref.read(serverProvider(_spi.id).notifier).ensureExec();
 
-      final system = await _listScope(client, SystemdUnitScope.system);
+      final system = await _listScope(exec, SystemdUnitScope.system);
       if (system.failed) return SystemdRefreshResult.systemFailed;
 
-      final user = await _listScope(client, SystemdUnitScope.user);
+      final user = await _listScope(exec, SystemdUnitScope.user);
 
       final units = [...user.units, ...system.units]..sort(_compareUnits);
       state = state.copyWith(units: units);
@@ -82,11 +82,11 @@ class SystemdNotifier extends _$SystemdNotifier {
   /// systemctl prints nothing for an empty list, so non-empty output yielding
   /// no units means it reported an error rather than an empty list.
   Future<({List<SystemdUnit> units, bool failed})> _listScope(
-    SSHClient client,
+    ServerExec exec,
     SystemdUnitScope scope,
   ) async {
     try {
-      final raw = await client.execForOutput(scope.listUnitsCmd);
+      final raw = (await exec.run(scope.listUnitsCmd)).combined;
       final units = SystemdUnit.parseListUnits(raw, scope);
       return (units: units, failed: units.isEmpty && raw.trim().isNotEmpty);
     } catch (e, s) {
