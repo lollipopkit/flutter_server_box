@@ -194,9 +194,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiHistory => '对话历史';
 
   @override
-  String get askAiHistoryLocalOnly => '在本机加密保存，不参与备份和同步';
-
-  @override
   String get askAiNewConversation => '新建对话';
 
   @override
@@ -1504,9 +1501,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiHistory => '對話歷史';
-
-  @override
-  String get askAiHistoryLocalOnly => '在本機加密儲存，不參與備份與同步';
 
   @override
   String get askAiNewConversation => '新增對話';

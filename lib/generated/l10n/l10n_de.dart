@@ -203,10 +203,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get askAiHistory => 'Gesprächsverlauf';
 
   @override
-  String get askAiHistoryLocalOnly =>
-      'Auf diesem Gerät verschlüsselt und von Backup und Sync ausgenommen';
-
-  @override
   String get askAiNewConversation => 'Neues Gespräch';
 
   @override

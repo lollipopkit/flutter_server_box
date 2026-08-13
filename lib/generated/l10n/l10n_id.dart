@@ -201,10 +201,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAiHistory => 'Riwayat percakapan';
 
   @override
-  String get askAiHistoryLocalOnly =>
-      'Dienkripsi di perangkat ini dan tidak ikut dicadangkan maupun disinkronkan';
-
-  @override
   String get askAiNewConversation => 'Percakapan baru';
 
   @override

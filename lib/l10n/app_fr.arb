@@ -301,7 +301,6 @@
   "askAiSendOnEnterTip": "Entrée envoie le message, Maj+Entrée insère un saut de ligne. Désactivé, c'est l'inverse : Entrée insère un saut de ligne et Cmd/Ctrl+Entrée envoie.",
   "askAiApiKeyOptional": "Facultatif pour les points de terminaison locaux ou sans authentification",
   "askAiHistory": "Historique des conversations",
-  "askAiHistoryLocalOnly": "Chiffré sur cet appareil et exclu de la sauvegarde et de la synchronisation",
   "askAiNewConversation": "Nouvelle conversation",
   "askAiNoHistory": "Aucune conversation enregistrée pour ce serveur",
   "askAiNoHistoryMessages": "Aucun message pour l'instant",

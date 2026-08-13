@@ -302,7 +302,6 @@
   "askAiSendOnEnterTip": "Enter надсилає повідомлення, Shift+Enter переносить рядок. Якщо вимкнено, навпаки: Enter переносить рядок, а надсилає Cmd/Ctrl+Enter.",
   "askAiApiKeyOptional": "Необов'язково для локальних ендпоінтів і ендпоінтів без автентифікації",
   "askAiHistory": "Історія розмов",
-  "askAiHistoryLocalOnly": "Зашифровано на цьому пристрої та не входить до резервної копії й синхронізації",
   "askAiNewConversation": "Нова розмова",
   "askAiNoHistory": "Для цього сервера немає збережених розмов",
   "askAiNoHistoryMessages": "Повідомлень ще немає",

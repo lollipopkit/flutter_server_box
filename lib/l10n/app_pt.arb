@@ -301,7 +301,6 @@
   "askAiSendOnEnterTip": "Enter envia a mensagem e Shift+Enter quebra a linha. Desligado, inverte: Enter quebra a linha e Cmd/Ctrl+Enter envia.",
   "askAiApiKeyOptional": "Opcional para endpoints locais ou sem autenticação",
   "askAiHistory": "Histórico de conversas",
-  "askAiHistoryLocalOnly": "Criptografado neste dispositivo e fora do backup e da sincronização",
   "askAiNewConversation": "Nova conversa",
   "askAiNoHistory": "Nenhuma conversa salva para este servidor",
   "askAiNoHistoryMessages": "Ainda sem mensagens",

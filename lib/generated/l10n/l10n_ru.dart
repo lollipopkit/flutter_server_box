@@ -202,10 +202,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get askAiHistory => 'История диалогов';
 
   @override
-  String get askAiHistoryLocalOnly =>
-      'Зашифровано на этом устройстве и не входит в резервную копию и синхронизацию';
-
-  @override
   String get askAiNewConversation => 'Новый диалог';
 
   @override

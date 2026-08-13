@@ -301,7 +301,6 @@
   "askAiSendOnEnterTip": "Enter verstuurt het bericht, Shift+Enter begint een nieuwe regel. Uit draait het om: Enter begint een nieuwe regel en Cmd/Ctrl+Enter verstuurt.",
   "askAiApiKeyOptional": "Optioneel voor lokale of niet-geverifieerde endpoints",
   "askAiHistory": "Gespreksgeschiedenis",
-  "askAiHistoryLocalOnly": "Versleuteld op dit apparaat en uitgesloten van back-up en synchronisatie",
   "askAiNewConversation": "Nieuw gesprek",
   "askAiNoHistory": "Geen opgeslagen gesprekken voor deze server",
   "askAiNoHistoryMessages": "Nog geen berichten",

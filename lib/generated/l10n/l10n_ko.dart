@@ -196,9 +196,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiHistory => '대화 기록';
 
   @override
-  String get askAiHistoryLocalOnly => '이 기기에서 암호화되며 백업과 동기화에서 제외됩니다';
-
-  @override
   String get askAiNewConversation => '새 대화';
 
   @override

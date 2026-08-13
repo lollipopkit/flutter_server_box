@@ -301,7 +301,6 @@
   "askAiSendOnEnterTip": "Enter отправляет сообщение, Shift+Enter переносит строку. Если выключено, наоборот: Enter переносит строку, а отправляет Cmd/Ctrl+Enter.",
   "askAiApiKeyOptional": "Необязательно для локальных эндпойнтов и эндпойнтов без аутентификации",
   "askAiHistory": "История диалогов",
-  "askAiHistoryLocalOnly": "Зашифровано на этом устройстве и не входит в резервную копию и синхронизацию",
   "askAiNewConversation": "Новый диалог",
   "askAiNoHistory": "Для этого сервера нет сохранённых диалогов",
   "askAiNoHistoryMessages": "Сообщений пока нет",

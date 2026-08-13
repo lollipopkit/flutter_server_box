@@ -201,10 +201,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get askAiHistory => 'Gespreksgeschiedenis';
 
   @override
-  String get askAiHistoryLocalOnly =>
-      'Versleuteld op dit apparaat en uitgesloten van back-up en synchronisatie';
-
-  @override
   String get askAiNewConversation => 'Nieuw gesprek';
 
   @override

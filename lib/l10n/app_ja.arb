@@ -301,7 +301,6 @@
   "askAiSendOnEnterTip": "Enter でメッセージを送信し、Shift+Enter で改行します。オフにすると逆になり、Enter で改行、Cmd/Ctrl+Enter で送信します。",
   "askAiApiKeyOptional": "ローカルまたは認証不要のエンドポイントでは任意",
   "askAiHistory": "会話履歴",
-  "askAiHistoryLocalOnly": "この端末で暗号化して保存し、バックアップと同期の対象外です",
   "askAiNewConversation": "新しい会話",
   "askAiNoHistory": "このサーバーに保存された会話はありません",
   "askAiNoHistoryMessages": "メッセージはまだありません",

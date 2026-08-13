@@ -203,10 +203,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiHistory => 'Konuşma geçmişi';
 
   @override
-  String get askAiHistoryLocalOnly =>
-      'Bu cihazda şifrelenir; yedekleme ve eşitlemeye dâhil edilmez';
-
-  @override
   String get askAiNewConversation => 'Yeni konuşma';
 
   @override

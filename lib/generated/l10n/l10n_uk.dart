@@ -201,10 +201,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get askAiHistory => 'Історія розмов';
 
   @override
-  String get askAiHistoryLocalOnly =>
-      'Зашифровано на цьому пристрої та не входить до резервної копії й синхронізації';
-
-  @override
   String get askAiNewConversation => 'Нова розмова';
 
   @override

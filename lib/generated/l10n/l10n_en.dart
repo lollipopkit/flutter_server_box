@@ -202,10 +202,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get askAiHistory => 'Conversation history';
 
   @override
-  String get askAiHistoryLocalOnly =>
-      'Encrypted on this device and excluded from backup and sync';
-
-  @override
   String get askAiNewConversation => 'New conversation';
 
   @override

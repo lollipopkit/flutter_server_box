@@ -59,7 +59,6 @@
   "askAiSendOnEnterTip": "Enter sends the message, Shift+Enter starts a new line. Off swaps them: Enter starts a new line and Cmd/Ctrl+Enter sends.",
   "askAiApiKeyOptional": "Optional for local or unauthenticated endpoints",
   "askAiHistory": "Conversation history",
-  "askAiHistoryLocalOnly": "Encrypted on this device and excluded from backup and sync",
   "askAiNewConversation": "New conversation",
   "askAiNoHistory": "No saved conversations for this server",
   "askAiNoHistoryMessages": "No messages yet",

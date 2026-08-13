@@ -374,7 +374,6 @@
   "askAiSendOnEnterTip": "Enter로 메시지를 보내고 Shift+Enter로 줄을 바꿉니다. 끄면 반대가 되어 Enter가 줄바꿈, Cmd/Ctrl+Enter가 전송입니다.",
   "askAiApiKeyOptional": "로컬이거나 인증이 없는 엔드포인트에서는 선택 사항",
   "askAiHistory": "대화 기록",
-  "askAiHistoryLocalOnly": "이 기기에서 암호화되며 백업과 동기화에서 제외됩니다",
   "askAiNewConversation": "새 대화",
   "askAiNoHistory": "이 서버에 저장된 대화가 없습니다",
   "askAiNoHistoryMessages": "아직 메시지가 없습니다",

@@ -301,7 +301,6 @@
   "askAiSendOnEnterTip": "Enter mesajı gönderir, Shift+Enter yeni satır açar. Kapalıyken yer değiştirir: Enter yeni satır açar, Cmd/Ctrl+Enter gönderir.",
   "askAiApiKeyOptional": "Yerel veya kimlik doğrulaması olmayan uç noktalar için isteğe bağlı",
   "askAiHistory": "Konuşma geçmişi",
-  "askAiHistoryLocalOnly": "Bu cihazda şifrelenir; yedekleme ve eşitlemeye dâhil edilmez",
   "askAiNewConversation": "Yeni konuşma",
   "askAiNoHistory": "Bu sunucu için kayıtlı konuşma yok",
   "askAiNoHistoryMessages": "Henüz mesaj yok",

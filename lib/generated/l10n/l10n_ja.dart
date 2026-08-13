@@ -196,9 +196,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAiHistory => '会話履歴';
 
   @override
-  String get askAiHistoryLocalOnly => 'この端末で暗号化して保存し、バックアップと同期の対象外です';
-
-  @override
   String get askAiNewConversation => '新しい会話';
 
   @override

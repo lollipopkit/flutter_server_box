@@ -301,7 +301,6 @@
   "askAiSendOnEnterTip": "Enter envía el mensaje y Mayús+Enter inserta un salto de línea. Al desactivarlo se invierte: Enter inserta un salto de línea y Cmd/Ctrl+Enter envía.",
   "askAiApiKeyOptional": "Opcional para endpoints locales o sin autenticación",
   "askAiHistory": "Historial de conversaciones",
-  "askAiHistoryLocalOnly": "Cifrado en este dispositivo y excluido de la copia de seguridad y la sincronización",
   "askAiNewConversation": "Nueva conversación",
   "askAiNoHistory": "No hay conversaciones guardadas para este servidor",
   "askAiNoHistoryMessages": "Todavía no hay mensajes",

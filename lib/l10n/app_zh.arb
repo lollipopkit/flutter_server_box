@@ -59,7 +59,6 @@
   "askAiSendOnEnterTip": "Enter 发送消息，Shift+Enter 换行。关闭后互换：Enter 换行，Cmd/Ctrl+Enter 发送。",
   "askAiApiKeyOptional": "本地或无需认证的接口可留空",
   "askAiHistory": "对话历史",
-  "askAiHistoryLocalOnly": "在本机加密保存，不参与备份和同步",
   "askAiNewConversation": "新建对话",
   "askAiNoHistory": "这台服务器还没有已保存的对话",
   "askAiNoHistoryMessages": "暂无消息",

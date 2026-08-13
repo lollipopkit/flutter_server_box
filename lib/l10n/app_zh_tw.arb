@@ -58,7 +58,6 @@
   "askAiSendOnEnterTip": "Enter 傳送訊息，Shift+Enter 換行。關閉後互換：Enter 換行，Cmd/Ctrl+Enter 傳送。",
   "askAiApiKeyOptional": "本機或不需驗證的介面可留空",
   "askAiHistory": "對話歷史",
-  "askAiHistoryLocalOnly": "在本機加密儲存，不參與備份與同步",
   "askAiNewConversation": "新增對話",
   "askAiNoHistory": "這台伺服器尚無已儲存的對話",
   "askAiNoHistoryMessages": "暫無訊息",

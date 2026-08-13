@@ -301,7 +301,6 @@
   "askAiSendOnEnterTip": "Enter sendet die Nachricht, Shift+Enter beginnt eine neue Zeile. Aus vertauscht beides: Enter beginnt eine neue Zeile, Cmd/Strg+Enter sendet.",
   "askAiApiKeyOptional": "Optional bei lokalen oder nicht authentifizierten Endpunkten",
   "askAiHistory": "Gesprächsverlauf",
-  "askAiHistoryLocalOnly": "Auf diesem Gerät verschlüsselt und von Backup und Sync ausgenommen",
   "askAiNewConversation": "Neues Gespräch",
   "askAiNoHistory": "Keine gespeicherten Gespräche für diesen Server",
   "askAiNoHistoryMessages": "Noch keine Nachrichten",

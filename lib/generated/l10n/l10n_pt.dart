@@ -201,10 +201,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get askAiHistory => 'Histórico de conversas';
 
   @override
-  String get askAiHistoryLocalOnly =>
-      'Criptografado neste dispositivo e fora do backup e da sincronização';
-
-  @override
   String get askAiNewConversation => 'Nova conversa';
 
   @override

@@ -306,7 +306,6 @@
   "askAiSendOnEnterTip": "Invio invia il messaggio, Maiusc+Invio va a capo. Se disattivato si invertono: Invio va a capo e Cmd/Ctrl+Invio invia.",
   "askAiApiKeyOptional": "Facoltativa per endpoint locali o senza autenticazione",
   "askAiHistory": "Cronologia conversazioni",
-  "askAiHistoryLocalOnly": "Cifrata su questo dispositivo ed esclusa da backup e sincronizzazione",
   "askAiNewConversation": "Nuova conversazione",
   "askAiNoHistory": "Nessuna conversazione salvata per questo server",
   "askAiNoHistoryMessages": "Ancora nessun messaggio",

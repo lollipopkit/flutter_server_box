@@ -817,27 +817,11 @@ class _AgentPageState extends ConsumerState<AgentPage>
             child: Row(
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        context.l10n.askAiHistory,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      // Where the conversations live. Someone about to type a
-                      // password into a prompt deserves to be told before
-                      // rather than after, and the sheet on the terminal page
-                      // says the same thing in the same place.
-                      Text(
-                        context.l10n.askAiHistoryLocalOnly,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    context.l10n.askAiHistory,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 if (conversations.isNotEmpty)
@@ -900,7 +884,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
                           ),
                           subtitle: Text(
                             _conversationPreview(conversation),
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           onTap: _isWorking
@@ -912,6 +896,11 @@ class _AgentPageState extends ConsumerState<AgentPage>
                                   }
                                 },
                           trailing: PopupMenuButton<_HistoryAction>(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints.tightFor(
+                              width: 32,
+                              height: 32,
+                            ),
                             // The row's own tap is already refused while a
                             // tool is running. Renaming is harmless, but
                             // deleting the conversation being worked in

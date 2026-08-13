@@ -477,12 +477,6 @@ abstract class AppLocalizations {
   /// **'Conversation history'**
   String get askAiHistory;
 
-  /// No description provided for @askAiHistoryLocalOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Encrypted on this device and excluded from backup and sync'**
-  String get askAiHistoryLocalOnly;
-
   /// No description provided for @askAiNewConversation.
   ///
   /// In en, this message translates to:

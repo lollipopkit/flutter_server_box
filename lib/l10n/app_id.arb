@@ -301,7 +301,6 @@
   "askAiSendOnEnterTip": "Enter mengirim pesan, Shift+Enter membuat baris baru. Jika dimatikan, keduanya bertukar: Enter membuat baris baru dan Cmd/Ctrl+Enter mengirim.",
   "askAiApiKeyOptional": "Opsional untuk endpoint lokal atau tanpa autentikasi",
   "askAiHistory": "Riwayat percakapan",
-  "askAiHistoryLocalOnly": "Dienkripsi di perangkat ini dan tidak ikut dicadangkan maupun disinkronkan",
   "askAiNewConversation": "Percakapan baru",
   "askAiNoHistory": "Tidak ada percakapan tersimpan untuk server ini",
   "askAiNoHistoryMessages": "Belum ada pesan",
