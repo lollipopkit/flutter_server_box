@@ -850,4 +850,33 @@ not-json
     );
     expect(command, isNot(contains('export DOCKER_HOST')));
   });
+
+  group('userFacingOutput', () {
+    test('prefers what stderr said', () {
+      expect(
+        userFacingOutput('sh: docker: not found', 'SrvBoxSep_1_0'),
+        'sh: docker: not found',
+      );
+    });
+
+    test('drops the separators the script echoes between commands', () {
+      // The whole explanation a user got used to be exactly this and nothing
+      // else, which named neither the command nor the reason.
+      expect(
+        userFacingOutput('', 'SrvBoxSep_1786614816321254_0\nSrvBoxSep_1786614816321254_0'),
+        isNull,
+      );
+    });
+
+    test('keeps real stdout when stderr is empty', () {
+      expect(
+        userFacingOutput('', 'SrvBoxSep_1_0\npermission denied\n'),
+        'permission denied',
+      );
+    });
+
+    test('nothing said at all is null, not an empty line', () {
+      expect(userFacingOutput('  ', '\n\n'), isNull);
+    });
+  });
 }

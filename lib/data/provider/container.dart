@@ -365,7 +365,11 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
     final refreshGeneration = generation ?? _refreshGeneration;
     final type = state.type;
-    state = state.copyWith(isBusy: true, error: null);
+    // The error is left alone until something replaces it. Clearing it here
+    // put the page back to a full-screen spinner for the length of every
+    // refresh — and with auto-refresh on, a server with no runtime flashed
+    // between spinner and explanation on every tick.
+    state = state.copyWith(isBusy: true);
 
     final sudo = sudoCompleter;
     if (!sudo.isCompleted) unawaited(_requiresSudo(sudo, type, target));
@@ -422,6 +426,11 @@ class ContainerNotifier extends _$ContainerNotifier {
     );
     int? code;
     String raw = '';
+    // Kept apart from [raw]: parsing wants stdout only, but everything that
+    // explains a failure — `sh: docker: not found`, a permission denial — is
+    // on stderr, and dropping it left the page quoting the separators the
+    // script echoes between commands.
+    String errOut = '';
     var isPodmanEmulation = false;
     try {
       // Asked for rather than held: a server reached over its monitor agent
@@ -437,7 +446,7 @@ class ContainerNotifier extends _$ContainerNotifier {
           }
         },
       );
-      (code, raw) = (result.exitCode, result.stdout);
+      (code, raw, errOut) = (result.exitCode, result.stdout, result.stderr);
     } catch (e, trace) {
       if (_isStaleRefresh(refreshGeneration)) return;
       Loggers.app.warning('Container refresh execution failed', e, trace);
@@ -457,14 +466,19 @@ class ContainerNotifier extends _$ContainerNotifier {
     }
 
     /// Code 127 means command not found
-    if (code == 127 || raw.contains(_dockerNotFound)) {
+    if (code == 127 ||
+        errOut.contains(_dockerNotFound) ||
+        raw.contains(_dockerNotFound)) {
       _setRefreshError(
         target,
         // Carries what the shell said: "not installed" is a reading of that
         // output, and it is wrong often enough — a runtime installed for
         // another account, a `DOCKER_HOST` pointing nowhere — that the user
         // should be able to see what it was.
-        ContainerErr(type: ContainerErrType.notInstalled, message: raw.trim()),
+        ContainerErr(
+          type: ContainerErrType.notInstalled,
+          message: userFacingOutput(errOut, raw),
+        ),
       );
       await _finishRefresh(refreshGeneration);
       return;
@@ -488,7 +502,7 @@ class ContainerNotifier extends _$ContainerNotifier {
         target,
         ContainerErr(
           type: ContainerErrType.unknown,
-          message: raw.trim().isEmpty ? libL10n.fail : raw.trim(),
+          message: userFacingOutput(errOut, raw) ?? libL10n.fail,
         ),
       );
       await _finishRefresh(refreshGeneration);
@@ -510,10 +524,14 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     /// Detect Podman not installed when using Podman mode
     if (state.type == ContainerType.podman &&
-        raw.contains('podman: not found')) {
+        (errOut.contains('podman: not found') ||
+            raw.contains('podman: not found'))) {
       _setRefreshError(
         target,
-        ContainerErr(type: ContainerErrType.notInstalled, message: raw.trim()),
+        ContainerErr(
+          type: ContainerErrType.notInstalled,
+          message: userFacingOutput(errOut, raw),
+        ),
       );
       await _finishRefresh(refreshGeneration);
       return;
@@ -885,6 +903,27 @@ class ContainerNotifier extends _$ContainerNotifier {
 }
 
 const _jsonFmt = '--format "{{json .}}"';
+
+/// What the machine said, for a user reading why a page is empty.
+///
+/// stderr first, since that is where a shell puts the reason. The separators
+/// the script echoes between its commands are dropped: they are this app's own
+/// scaffolding, and a page whose entire explanation was
+/// `SrvBoxSep_1786614816321254_0` twice over told the user nothing.
+String? userFacingOutput(String stderr, String stdout) {
+  for (final stream in [stderr, stdout]) {
+    final lines = stream
+        .split('\n')
+        .map((line) => line.trim())
+        .where(
+          (line) =>
+              line.isNotEmpty && !line.startsWith(ScriptConstants.separator),
+        )
+        .toList();
+    if (lines.isNotEmpty) return lines.join('\n');
+  }
+  return null;
+}
 
 /// The command line for one container-runtime call.
 ///
