@@ -14,7 +14,6 @@ import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/provider/container.dart';
-import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/container/resource_views.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
@@ -55,9 +54,7 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
   @override
   void initState() {
     super.initState();
-    final serverState = ref.read(serverProvider(widget.args.spi.id));
     _provider = containerProvider(
-      serverState.client,
       widget.args.spi.ssh?.user ?? '',
       widget.args.spi.id,
       context,

@@ -56,3 +56,45 @@ abstract interface class ServerExec {
     OnExecOutput? onStderr,
   });
 }
+
+/// A sudo password the server rejected, told apart from any other failure.
+///
+/// `sudo` says so on stderr and then exits non-zero like everything else, so
+/// without reading what it said a wrong password is indistinguishable from the
+/// command itself failing — and the caller has no reason to ask for a new one.
+const _sudoRejected = [
+  'Sorry, try again.',
+  'incorrect password attempt',
+  'a password is required',
+];
+
+extension ServerExecSudo on ServerExec {
+  /// Runs [script], reporting a rejected sudo password as exit code 2.
+  ///
+  /// The password itself is already inside [script] — callers wrap the command
+  /// with `sudo -S` and feed it — so this only has to notice that it was
+  /// turned down.
+  Future<ExecResult> runWithSudo(
+    String script, {
+    String? entry,
+    OnExecOutput? onStdout,
+    OnExecOutput? onStderr,
+  }) async {
+    var rejected = false;
+    final result = await run(
+      script,
+      entry: entry,
+      onStdout: onStdout,
+      onStderr: (chunk) {
+        onStderr?.call(chunk);
+        if (_sudoRejected.any(chunk.contains)) rejected = true;
+      },
+    );
+    if (!rejected) return result;
+    return ExecResult(
+      exitCode: 2,
+      stdout: result.stdout,
+      stderr: result.stderr,
+    );
+  }
+}

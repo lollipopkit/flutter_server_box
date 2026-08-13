@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/utils/shell_quote.dart' as sh;
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 
 part 'container.freezed.dart';
@@ -251,7 +251,6 @@ class ContainerNotifier extends _$ContainerNotifier {
 
   @override
   ContainerState build(
-    SSHClient? client,
     String userName,
     String hostId,
     BuildContext context,
@@ -331,8 +330,9 @@ class ContainerNotifier extends _$ContainerNotifier {
         ContainerRefreshTarget.containers => ContainerCmdType.ps,
         ContainerRefreshTarget.images => ContainerCmdType.images,
       };
-      final res = await client?.run(_wrap(probe.exec(type)));
-      if (res?.string.toLowerCase().contains('permission denied') ?? false) {
+      final exec = await ref.read(serverProvider(hostId).notifier).ensureExec();
+      final res = await exec.run(_wrap(probe.exec(type)));
+      if (res.combined.toLowerCase().contains('permission denied')) {
         return completer.complete(true);
       }
       return completer.complete(false);
@@ -424,33 +424,26 @@ class ContainerNotifier extends _$ContainerNotifier {
     int? code;
     String raw = '';
     var isPodmanEmulation = false;
-    if (client != null) {
-      try {
-        (code, raw) = await client!.execWithPwd(
-          cmd,
-          context: context,
-          id: hostId,
-          onStderr: (data, _) {
-            if (data.contains(_podmanEmulationMsg)) {
-              isPodmanEmulation = true;
-            }
-          },
-        );
-      } catch (e, trace) {
-        if (_isStaleRefresh(refreshGeneration)) return;
-        Loggers.app.warning('Container refresh execution failed', e, trace);
-        _setRefreshError(
-          target,
-          ContainerErr(type: ContainerErrType.unknown, message: '$e'),
-        );
-        await _finishRefresh(refreshGeneration);
-        return;
-      }
-    } else {
+    try {
+      // Asked for rather than held: a server reached over its monitor agent
+      // has no connection sitting there until something needs one, and a
+      // failure to open one is reported below like any other.
+      final exec = await ref.read(serverProvider(hostId).notifier).ensureExec();
+      final result = await exec.runWithSudo(
+        cmd,
+        onStderr: (data) {
+          if (data.contains(_podmanEmulationMsg)) {
+            isPodmanEmulation = true;
+          }
+        },
+      );
+      (code, raw) = (result.exitCode, result.stdout);
+    } catch (e, trace) {
       if (_isStaleRefresh(refreshGeneration)) return;
+      Loggers.app.warning('Container refresh execution failed', e, trace);
       _setRefreshError(
         target,
-        ContainerErr(type: ContainerErrType.noClient),
+        ContainerErr(type: ContainerErrType.unknown, message: '$e'),
       );
       await _finishRefresh(refreshGeneration);
       return;
@@ -767,9 +760,6 @@ class ContainerNotifier extends _$ContainerNotifier {
     String cmd, {
     ContainerRefreshTarget? refreshTarget = ContainerRefreshTarget.containers,
   }) async {
-    if (client == null) {
-      return ContainerErr(type: ContainerErrType.noClient);
-    }
     if (state.isBusy || state.runLog != null) {
       return ContainerErr(
         type: ContainerErrType.unknown,
@@ -811,16 +801,16 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     int? code;
     try {
-      (code, _) = await client!.execWithPwd(
+      final exec = await ref.read(serverProvider(hostId).notifier).ensureExec();
+      final result = await exec.runWithSudo(
         _wrap(cmd, sudo: needSudo, password: password),
-        context: context,
-        onStdout: (data, _) {
+        onStdout: (data) {
           if (ref.mounted) {
             state = state.copyWith(runLog: '${state.runLog}$data');
           }
         },
-        id: hostId,
       );
+      code = result.exitCode;
     } catch (e, trace) {
       Loggers.app.warning('Container command execution failed', e, trace);
       if (ref.mounted) await _finishRun();
