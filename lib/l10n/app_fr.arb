@@ -146,7 +146,7 @@
   "openLastPathTip": "Les différents serveurs auront des journaux différents, et le journal est le chemin vers la sortie",
   "parseContainerStatsTip": "L'analyse de l'occupation des conteneurs Docker est relativement lente.",
   "forceSinglePane": "Une seule colonne",
-  "forceSinglePaneTip": "Garder une seule colonne quelle que soit la largeur de la fenêtre, au lieu d'afficher les détails à côté de la liste.",
+  "forceSinglePaneTip": "Garder une seule colonne quelle que soit la largeur de la fenêtre, au lieu d'afficher à côté de la liste ce qu'elle ouvre : les serveurs à côté de leurs détails, les terminaux et explorateurs de fichiers à côté de leurs sessions.",
   "fullAccessRefused": "Cet agent ne propose pas de terminal sans identifiants.",
   "fullAccessInsecure": "Cet agent ne sert le terminal qu'en TLS ou en loopback, et cette connexion est en HTTP non chiffré.",
   "permission": "Permissions",
@@ -399,5 +399,15 @@
   "tmuxActiveAt": "active : {time}",
   "tmuxAttachedAt": "rattachée : {time}",
   "tmuxSkip": "Ignorer",
-  "tmuxNotAvailable": "tmux n'est pas disponible"
+  "tmuxNotAvailable": "tmux n'est pas disponible",
+  "systemdMissing": "Pas de systemd sur ce serveur",
+  "systemdMissingTip": "`systemctl` n'est pas installé ici, il n'y a donc aucune unité à lister.",
+  "initSystemFmt": "Cette machine semble utiliser {init}.",
+  "systemdListFailed": "Impossible de lister les unités",
+  "systemdUserScopeMissing": "Les unités utilisateur ne sont pas listées",
+  "systemdUserScopeMissingTip": "Ce compte n'a pas de bus de session utilisateur sur le serveur, seules les unités système sont affichées.",
+  "serverUnreachable": "Impossible d'exécuter une commande sur ce serveur",
+  "containerNoRuntime": "Aucun environnement d'exécution de conteneurs ici",
+  "containerNoRuntimeTip": "Ni `docker` ni `podman` n'a répondu sur cette machine. Si l'un d'eux est installé pour un autre compte, activez « Essayer d'utiliser sudo » dans les réglages.",
+  "containerUnreadable": "L'environnement d'exécution de conteneurs a répondu dans un format inattendu"
 }

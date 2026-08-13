@@ -146,7 +146,7 @@
   "openLastPathTip": "Server yang berbeda akan memiliki catatan yang berbeda, dan catatan tersebut adalah jalur menuju pintu keluar",
   "parseContainerStatsTip": "Parsing status okupansi oleh Docker agak lambat",
   "forceSinglePane": "Satu kolom",
-  "forceSinglePaneTip": "Tetap satu kolom seberapa pun lebar jendela, alih-alih menampilkan detail di samping daftar.",
+  "forceSinglePaneTip": "Tetap satu kolom seberapa pun lebar jendela, alih-alih menampilkan di samping daftar apa yang dibukanya — server di samping detailnya, terminal dan penjelajah berkas di samping sesinya.",
   "fullAccessRefused": "Agen ini tidak menyediakan terminal tanpa kredensial.",
   "fullAccessInsecure": "Agen ini hanya menyajikan terminal melalui TLS atau loopback, sedangkan koneksi ini HTTP polos.",
   "permission": "Izin",
@@ -399,5 +399,15 @@
   "tmuxActiveAt": "aktif: {time}",
   "tmuxAttachedAt": "tersambung: {time}",
   "tmuxSkip": "Lewati",
-  "tmuxNotAvailable": "tmux tidak tersedia"
+  "tmuxNotAvailable": "tmux tidak tersedia",
+  "systemdMissing": "Tidak ada systemd di server ini",
+  "systemdMissingTip": "`systemctl` tidak terpasang di sini, jadi tidak ada unit untuk ditampilkan.",
+  "initSystemFmt": "Mesin ini tampaknya menggunakan {init}.",
+  "systemdListFailed": "Tidak dapat menampilkan daftar unit",
+  "systemdUserScopeMissing": "Unit pengguna tidak ditampilkan",
+  "systemdUserScopeMissingTip": "Akun ini tidak memiliki bus sesi pengguna di server, jadi hanya unit sistem yang ditampilkan.",
+  "serverUnreachable": "Tidak dapat menjalankan perintah di server ini",
+  "containerNoRuntime": "Tidak ada runtime kontainer di sini",
+  "containerNoRuntimeTip": "Baik `docker` maupun `podman` tidak merespons di mesin ini. Jika salah satunya terpasang untuk akun lain, aktifkan \"Cobalah menggunakan sudo\" di Pengaturan.",
+  "containerUnreadable": "Runtime kontainer merespons dalam bentuk yang tidak terduga"
 }

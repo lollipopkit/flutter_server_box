@@ -2547,7 +2547,7 @@ abstract class AppLocalizations {
   /// No description provided for @containerNoRuntimeTip.
   ///
   /// In en, this message translates to:
-  /// **'Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try sudo\" in Settings.'**
+  /// **'Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try using sudo\" in Settings.'**
   String get containerNoRuntimeTip;
 
   /// No description provided for @containerUnreadable.

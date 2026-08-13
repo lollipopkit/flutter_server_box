@@ -767,7 +767,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get forceSinglePaneTip =>
-      'Tetap satu kolom seberapa pun lebar jendela, alih-alih menampilkan detail di samping daftar.';
+      'Tetap satu kolom seberapa pun lebar jendela, alih-alih menampilkan di samping daftar apa yang dibukanya — server di samping detailnya, terminal dan penjelajah berkas di samping sesinya.';
 
   @override
   String get fullAccessRefused =>
@@ -1379,38 +1379,39 @@ class AppLocalizationsId extends AppLocalizations {
   String get accessoryWidgetServer => 'Server widget layar kunci';
 
   @override
-  String get systemdMissing => 'No systemd on this server';
+  String get systemdMissing => 'Tidak ada systemd di server ini';
 
   @override
   String get systemdMissingTip =>
-      '`systemctl` is not installed here, so there are no units to list.';
+      '`systemctl` tidak terpasang di sini, jadi tidak ada unit untuk ditampilkan.';
 
   @override
   String initSystemFmt(String init) {
-    return 'This machine appears to use $init.';
+    return 'Mesin ini tampaknya menggunakan $init.';
   }
 
   @override
-  String get systemdListFailed => 'Could not list units';
+  String get systemdListFailed => 'Tidak dapat menampilkan daftar unit';
 
   @override
-  String get systemdUserScopeMissing => 'User units are not listed';
+  String get systemdUserScopeMissing => 'Unit pengguna tidak ditampilkan';
 
   @override
   String get systemdUserScopeMissingTip =>
-      'This account has no user session bus on the server, so only system units are shown.';
+      'Akun ini tidak memiliki bus sesi pengguna di server, jadi hanya unit sistem yang ditampilkan.';
 
   @override
-  String get serverUnreachable => 'Could not run a command on this server';
+  String get serverUnreachable =>
+      'Tidak dapat menjalankan perintah di server ini';
 
   @override
-  String get containerNoRuntime => 'No container runtime here';
+  String get containerNoRuntime => 'Tidak ada runtime kontainer di sini';
 
   @override
   String get containerNoRuntimeTip =>
-      'Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try sudo\" in Settings.';
+      'Baik `docker` maupun `podman` tidak merespons di mesin ini. Jika salah satunya terpasang untuk akun lain, aktifkan \"Cobalah menggunakan sudo\" di Pengaturan.';
 
   @override
   String get containerUnreadable =>
-      'The container runtime answered in an unexpected form';
+      'Runtime kontainer merespons dalam bentuk yang tidak terduga';
 }

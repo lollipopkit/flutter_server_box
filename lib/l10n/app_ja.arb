@@ -146,7 +146,7 @@
   "openLastPathTip": "異なるサーバーには異なる記録があり、記録されているのは退出時のパスです",
   "parseContainerStatsTip": "Dockerの使用状況の解析は比較的遅いです",
   "forceSinglePane": "1 列表示",
-  "forceSinglePaneTip": "ウィンドウの幅にかかわらず 1 列のままにし、一覧の横にサーバーの詳細を表示しません。",
+  "forceSinglePaneTip": "ウィンドウの幅にかかわらず 1 列のままにし、一覧の横に開いた内容を表示しません——サーバーの詳細も、ターミナルやファイルのセッションも同様です。",
   "fullAccessRefused": "このエージェントは認証情報なしのターミナルを提供していません。",
   "fullAccessInsecure": "このエージェントは TLS またはループバックでのみターミナルを提供しますが、この接続は平文の HTTP です。",
   "permission": "権限",
@@ -399,5 +399,15 @@
   "tmuxActiveAt": "アクティブ: {time}",
   "tmuxAttachedAt": "アタッチ: {time}",
   "tmuxSkip": "スキップ",
-  "tmuxNotAvailable": "tmux を利用できません"
+  "tmuxNotAvailable": "tmux を利用できません",
+  "systemdMissing": "このサーバーには systemd がありません",
+  "systemdMissingTip": "`systemctl` がインストールされていないため、一覧表示できる unit はありません。",
+  "initSystemFmt": "このマシンは {init} を使用しているようです。",
+  "systemdListFailed": "unit を一覧表示できませんでした",
+  "systemdUserScopeMissing": "ユーザー unit は表示されていません",
+  "systemdUserScopeMissingTip": "このアカウントにはサーバー上のユーザーセッションバスがないため、システム unit のみ表示しています。",
+  "serverUnreachable": "このサーバーでコマンドを実行できませんでした",
+  "containerNoRuntime": "コンテナランタイムがありません",
+  "containerNoRuntimeTip": "このマシンでは `docker` も `podman` も応答しませんでした。別のアカウントにインストールされている場合は、設定で「sudoを試みる」を有効にしてください。",
+  "containerUnreadable": "コンテナランタイムの応答を解釈できませんでした"
 }

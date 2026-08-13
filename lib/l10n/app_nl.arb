@@ -146,7 +146,7 @@
   "openLastPathTip": "Verschillende servers hebben verschillende logs, en de log is het pad naar de uitgang",
   "parseContainerStatsTip": "Het parsen van de bezettingsstatus van Docker is relatief langzaam.",
   "forceSinglePane": "Eén kolom",
-  "forceSinglePaneTip": "Houd één kolom aan, hoe breed het venster ook is, in plaats van de details naast de lijst te tonen.",
+  "forceSinglePaneTip": "Houd één kolom aan, hoe breed het venster ook is, in plaats van naast de lijst te tonen wat die opent — servers naast hun details, terminals en bestandsbeheer naast hun sessies.",
   "fullAccessRefused": "Deze agent biedt geen terminal zonder inloggegevens.",
   "fullAccessInsecure": "Deze agent biedt de terminal alleen via TLS of loopback aan, en deze verbinding is onversleutelde HTTP.",
   "permission": "Machtigingen",
@@ -399,5 +399,15 @@
   "tmuxActiveAt": "actief: {time}",
   "tmuxAttachedAt": "gekoppeld: {time}",
   "tmuxSkip": "Overslaan",
-  "tmuxNotAvailable": "tmux is niet beschikbaar"
+  "tmuxNotAvailable": "tmux is niet beschikbaar",
+  "systemdMissing": "Geen systemd op deze server",
+  "systemdMissingTip": "`systemctl` is hier niet geïnstalleerd, dus er zijn geen units om te tonen.",
+  "initSystemFmt": "Deze machine lijkt {init} te gebruiken.",
+  "systemdListFailed": "Kon units niet tonen",
+  "systemdUserScopeMissing": "Gebruikers-units worden niet getoond",
+  "systemdUserScopeMissingTip": "Dit account heeft geen gebruikerssessiebus op de server, dus alleen systeem-units worden getoond.",
+  "serverUnreachable": "Kon geen opdracht uitvoeren op deze server",
+  "containerNoRuntime": "Geen container-runtime hier",
+  "containerNoRuntimeTip": "Noch `docker` noch `podman` reageerde op deze machine. Als er één voor een ander account is geïnstalleerd, schakel dan \"Probeer sudo te gebruiken\" in bij Instellingen.",
+  "containerUnreadable": "De container-runtime antwoordde in een onverwachte vorm"
 }

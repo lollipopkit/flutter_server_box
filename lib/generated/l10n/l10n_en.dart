@@ -1408,7 +1408,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get containerNoRuntimeTip =>
-      'Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try sudo\" in Settings.';
+      'Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try using sudo\" in Settings.';
 
   @override
   String get containerUnreadable =>

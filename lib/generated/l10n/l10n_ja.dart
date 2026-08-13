@@ -732,7 +732,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get forceSinglePaneTip =>
-      'ウィンドウの幅にかかわらず 1 列のままにし、一覧の横にサーバーの詳細を表示しません。';
+      'ウィンドウの幅にかかわらず 1 列のままにし、一覧の横に開いた内容を表示しません——サーバーの詳細も、ターミナルやファイルのセッションも同様です。';
 
   @override
   String get fullAccessRefused => 'このエージェントは認証情報なしのターミナルを提供していません。';
@@ -1312,38 +1312,37 @@ class AppLocalizationsJa extends AppLocalizations {
   String get accessoryWidgetServer => 'ロック画面ウィジェットのサーバー';
 
   @override
-  String get systemdMissing => 'No systemd on this server';
+  String get systemdMissing => 'このサーバーには systemd がありません';
 
   @override
   String get systemdMissingTip =>
-      '`systemctl` is not installed here, so there are no units to list.';
+      '`systemctl` がインストールされていないため、一覧表示できる unit はありません。';
 
   @override
   String initSystemFmt(String init) {
-    return 'This machine appears to use $init.';
+    return 'このマシンは $init を使用しているようです。';
   }
 
   @override
-  String get systemdListFailed => 'Could not list units';
+  String get systemdListFailed => 'unit を一覧表示できませんでした';
 
   @override
-  String get systemdUserScopeMissing => 'User units are not listed';
+  String get systemdUserScopeMissing => 'ユーザー unit は表示されていません';
 
   @override
   String get systemdUserScopeMissingTip =>
-      'This account has no user session bus on the server, so only system units are shown.';
+      'このアカウントにはサーバー上のユーザーセッションバスがないため、システム unit のみ表示しています。';
 
   @override
-  String get serverUnreachable => 'Could not run a command on this server';
+  String get serverUnreachable => 'このサーバーでコマンドを実行できませんでした';
 
   @override
-  String get containerNoRuntime => 'No container runtime here';
+  String get containerNoRuntime => 'コンテナランタイムがありません';
 
   @override
   String get containerNoRuntimeTip =>
-      'Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try sudo\" in Settings.';
+      'このマシンでは `docker` も `podman` も応答しませんでした。別のアカウントにインストールされている場合は、設定で「sudoを試みる」を有効にしてください。';
 
   @override
-  String get containerUnreadable =>
-      'The container runtime answered in an unexpected form';
+  String get containerUnreadable => 'コンテナランタイムの応答を解釈できませんでした';
 }

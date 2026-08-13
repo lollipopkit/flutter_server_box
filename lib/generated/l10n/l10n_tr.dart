@@ -768,7 +768,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get forceSinglePaneTip =>
-      'Pencere ne kadar geniş olursa olsun tek sütun kalsın; ayrıntılar listenin yanında gösterilmesin.';
+      'Pencere ne kadar geniş olursa olsun tek sütun kalsın; listenin yanında açtığı şey gösterilmesin — sunucular ayrıntılarının, terminaller ve dosya tarayıcıları oturumlarının yanında.';
 
   @override
   String get fullAccessRefused => 'Bu aracı kimlik bilgisiz terminal sunmuyor.';
@@ -1377,38 +1377,38 @@ class AppLocalizationsTr extends AppLocalizations {
   String get accessoryWidgetServer => 'Kilit ekranı bileşeni sunucusu';
 
   @override
-  String get systemdMissing => 'No systemd on this server';
+  String get systemdMissing => 'Bu sunucuda systemd yok';
 
   @override
   String get systemdMissingTip =>
-      '`systemctl` is not installed here, so there are no units to list.';
+      '`systemctl` burada kurulu değil, bu yüzden listelenecek unit yok.';
 
   @override
   String initSystemFmt(String init) {
-    return 'This machine appears to use $init.';
+    return 'Bu makine $init kullanıyor gibi görünüyor.';
   }
 
   @override
-  String get systemdListFailed => 'Could not list units';
+  String get systemdListFailed => 'Unit\'ler listelenemedi';
 
   @override
-  String get systemdUserScopeMissing => 'User units are not listed';
+  String get systemdUserScopeMissing => 'Kullanıcı unit\'leri listelenmiyor';
 
   @override
   String get systemdUserScopeMissingTip =>
-      'This account has no user session bus on the server, so only system units are shown.';
+      'Bu hesabın sunucuda kullanıcı oturum veri yolu yok, bu yüzden yalnızca sistem unit\'leri gösteriliyor.';
 
   @override
-  String get serverUnreachable => 'Could not run a command on this server';
+  String get serverUnreachable => 'Bu sunucuda komut çalıştırılamadı';
 
   @override
-  String get containerNoRuntime => 'No container runtime here';
+  String get containerNoRuntime => 'Burada konteyner çalışma ortamı yok';
 
   @override
   String get containerNoRuntimeTip =>
-      'Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try sudo\" in Settings.';
+      'Bu makinede ne `docker` ne de `podman` yanıt verdi. Biri başka bir hesap için kuruluysa Ayarlar\'dan \"Sudo ile dene\" seçeneğini açın.';
 
   @override
   String get containerUnreadable =>
-      'The container runtime answered in an unexpected form';
+      'Konteyner çalışma ortamı beklenmeyen bir biçimde yanıt verdi';
 }

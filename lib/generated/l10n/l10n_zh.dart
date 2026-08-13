@@ -1310,7 +1310,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get containerNoRuntimeTip =>
-      '这台机器上 `docker` 和 `podman` 都没有响应。如果它装在另一个账户下，请在设置中开启「尝试 sudo」。';
+      '这台机器上 `docker` 和 `podman` 都没有响应。如果它装在另一个账户下，请在设置中开启「尝试使用 sudo」。';
 
   @override
   String get containerUnreadable => '容器运行时返回了无法解析的内容';
@@ -2593,4 +2593,37 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get accessoryWidgetServer => '鎖定畫面小工具伺服器';
+
+  @override
+  String get systemdMissing => '此伺服器沒有 systemd';
+
+  @override
+  String get systemdMissingTip => '機器上沒有安裝 `systemctl`，因此沒有 unit 可列。';
+
+  @override
+  String initSystemFmt(String init) {
+    return '這台機器似乎使用 $init。';
+  }
+
+  @override
+  String get systemdListFailed => '無法列出 unit';
+
+  @override
+  String get systemdUserScopeMissing => '未列出使用者 unit';
+
+  @override
+  String get systemdUserScopeMissingTip => '該帳號在伺服器上沒有使用者工作階段匯流排，因此只顯示系統 unit。';
+
+  @override
+  String get serverUnreachable => '無法在此伺服器上執行命令';
+
+  @override
+  String get containerNoRuntime => '此處沒有容器執行環境';
+
+  @override
+  String get containerNoRuntimeTip =>
+      '這台機器上 `docker` 和 `podman` 都沒有回應。如果它裝在另一個帳號下，請在設定中開啟「嘗試使用 sudo」。';
+
+  @override
+  String get containerUnreadable => '容器執行環境回傳了無法解析的內容';
 }

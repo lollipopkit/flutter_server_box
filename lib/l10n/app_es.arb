@@ -146,7 +146,7 @@
   "openLastPathTip": "Los diferentes servidores tendrán diferentes registros, y lo que se registra es la ruta de salida",
   "parseContainerStatsTip": "El análisis del estado de uso de Docker es bastante lento",
   "forceSinglePane": "Una sola columna",
-  "forceSinglePaneTip": "Mantener una columna sea cual sea el ancho de la ventana, en vez de mostrar los detalles junto a la lista.",
+  "forceSinglePaneTip": "Mantener una columna sea cual sea el ancho de la ventana, en vez de mostrar junto a la lista lo que esta abre: los servidores junto a sus detalles, y los terminales y exploradores de archivos junto a sus sesiones.",
   "fullAccessRefused": "Este agente no ofrece un terminal sin credenciales.",
   "fullAccessInsecure": "Este agente sirve el terminal solo por TLS o loopback, y esta conexión es HTTP sin cifrar.",
   "permission": "Permisos",
@@ -399,5 +399,15 @@
   "tmuxActiveAt": "activa: {time}",
   "tmuxAttachedAt": "adjuntada: {time}",
   "tmuxSkip": "Omitir",
-  "tmuxNotAvailable": "tmux no está disponible"
+  "tmuxNotAvailable": "tmux no está disponible",
+  "systemdMissing": "No hay systemd en este servidor",
+  "systemdMissingTip": "`systemctl` no está instalado aquí, por lo que no hay unidades que listar.",
+  "initSystemFmt": "Esta máquina parece usar {init}.",
+  "systemdListFailed": "No se pudieron listar las unidades",
+  "systemdUserScopeMissing": "No se listan las unidades de usuario",
+  "systemdUserScopeMissingTip": "Esta cuenta no tiene bus de sesión de usuario en el servidor, por lo que solo se muestran las unidades del sistema.",
+  "serverUnreachable": "No se pudo ejecutar ningún comando en este servidor",
+  "containerNoRuntime": "Aquí no hay entorno de ejecución de contenedores",
+  "containerNoRuntimeTip": "Ni `docker` ni `podman` respondieron en esta máquina. Si uno está instalado para otra cuenta, activa «Intentar con sudo» en los ajustes.",
+  "containerUnreadable": "El entorno de ejecución de contenedores respondió de forma inesperada"
 }

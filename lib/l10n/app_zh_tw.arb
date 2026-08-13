@@ -399,5 +399,15 @@
   "ascending": "遞增",
   "descending": "遞減",
   "serverHistory": "伺服器紀錄",
-  "clearHistory": "清除紀錄"
+  "clearHistory": "清除紀錄",
+  "systemdMissing": "此伺服器沒有 systemd",
+  "systemdMissingTip": "機器上沒有安裝 `systemctl`，因此沒有 unit 可列。",
+  "initSystemFmt": "這台機器似乎使用 {init}。",
+  "systemdListFailed": "無法列出 unit",
+  "systemdUserScopeMissing": "未列出使用者 unit",
+  "systemdUserScopeMissingTip": "該帳號在伺服器上沒有使用者工作階段匯流排，因此只顯示系統 unit。",
+  "serverUnreachable": "無法在此伺服器上執行命令",
+  "containerNoRuntime": "此處沒有容器執行環境",
+  "containerNoRuntimeTip": "這台機器上 `docker` 和 `podman` 都沒有回應。如果它裝在另一個帳號下，請在設定中開啟「嘗試使用 sudo」。",
+  "containerUnreadable": "容器執行環境回傳了無法解析的內容"
 }

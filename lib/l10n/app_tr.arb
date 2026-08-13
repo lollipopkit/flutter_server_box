@@ -146,7 +146,7 @@
   "openLastPathTip": "Farklı sunucular farklı günlükler tutar ve günlük, çıkış yoludur",
   "parseContainerStatsTip": "Docker'ın doluluk durumunu ayrıştırmak oldukça yavaş.",
   "forceSinglePane": "Tek sütun",
-  "forceSinglePaneTip": "Pencere ne kadar geniş olursa olsun tek sütun kalsın; ayrıntılar listenin yanında gösterilmesin.",
+  "forceSinglePaneTip": "Pencere ne kadar geniş olursa olsun tek sütun kalsın; listenin yanında açtığı şey gösterilmesin — sunucular ayrıntılarının, terminaller ve dosya tarayıcıları oturumlarının yanında.",
   "fullAccessRefused": "Bu aracı kimlik bilgisiz terminal sunmuyor.",
   "fullAccessInsecure": "Bu aracı terminali yalnızca TLS veya loopback üzerinden sunuyor, bu bağlantı ise düz HTTP.",
   "permission": "İzinler",
@@ -399,5 +399,15 @@
   "tmuxActiveAt": "etkin: {time}",
   "tmuxAttachedAt": "bağlandı: {time}",
   "tmuxSkip": "Atla",
-  "tmuxNotAvailable": "tmux kullanılamıyor"
+  "tmuxNotAvailable": "tmux kullanılamıyor",
+  "systemdMissing": "Bu sunucuda systemd yok",
+  "systemdMissingTip": "`systemctl` burada kurulu değil, bu yüzden listelenecek unit yok.",
+  "initSystemFmt": "Bu makine {init} kullanıyor gibi görünüyor.",
+  "systemdListFailed": "Unit'ler listelenemedi",
+  "systemdUserScopeMissing": "Kullanıcı unit'leri listelenmiyor",
+  "systemdUserScopeMissingTip": "Bu hesabın sunucuda kullanıcı oturum veri yolu yok, bu yüzden yalnızca sistem unit'leri gösteriliyor.",
+  "serverUnreachable": "Bu sunucuda komut çalıştırılamadı",
+  "containerNoRuntime": "Burada konteyner çalışma ortamı yok",
+  "containerNoRuntimeTip": "Bu makinede ne `docker` ne de `podman` yanıt verdi. Biri başka bir hesap için kuruluysa Ayarlar'dan \"Sudo ile dene\" seçeneğini açın.",
+  "containerUnreadable": "Konteyner çalışma ortamı beklenmeyen bir biçimde yanıt verdi"
 }

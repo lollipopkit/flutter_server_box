@@ -731,7 +731,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get forceSinglePaneTip =>
-      '창 너비와 관계없이 한 열만 사용하고, 목록 옆에 서버 상세를 표시하지 않습니다.';
+      '창 너비와 관계없이 한 열만 사용하고, 목록 옆에 그것이 여는 내용을 표시하지 않습니다 — 서버 상세, 터미널과 파일 브라우저의 세션 모두.';
 
   @override
   String get fullAccessRefused => '이 에이전트는 자격 증명 없는 터미널을 제공하지 않습니다.';
@@ -1316,38 +1316,36 @@ class AppLocalizationsKo extends AppLocalizations {
   String get accessoryWidgetServer => '잠금 화면 위젯 서버';
 
   @override
-  String get systemdMissing => 'No systemd on this server';
+  String get systemdMissing => '이 서버에는 systemd가 없습니다';
 
   @override
-  String get systemdMissingTip =>
-      '`systemctl` is not installed here, so there are no units to list.';
+  String get systemdMissingTip => '`systemctl`이 설치되어 있지 않아 나열할 unit이 없습니다.';
 
   @override
   String initSystemFmt(String init) {
-    return 'This machine appears to use $init.';
+    return '이 머신은 $init을(를) 사용하는 것으로 보입니다.';
   }
 
   @override
-  String get systemdListFailed => 'Could not list units';
+  String get systemdListFailed => 'unit을 나열할 수 없습니다';
 
   @override
-  String get systemdUserScopeMissing => 'User units are not listed';
+  String get systemdUserScopeMissing => '사용자 unit이 나열되지 않았습니다';
 
   @override
   String get systemdUserScopeMissingTip =>
-      'This account has no user session bus on the server, so only system units are shown.';
+      '이 계정에는 서버에 사용자 세션 버스가 없어 시스템 unit만 표시됩니다.';
 
   @override
-  String get serverUnreachable => 'Could not run a command on this server';
+  String get serverUnreachable => '이 서버에서 명령을 실행할 수 없습니다';
 
   @override
-  String get containerNoRuntime => 'No container runtime here';
+  String get containerNoRuntime => '컨테이너 런타임이 없습니다';
 
   @override
   String get containerNoRuntimeTip =>
-      'Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try sudo\" in Settings.';
+      '이 머신에서 `docker`와 `podman` 모두 응답하지 않았습니다. 다른 계정에 설치되어 있다면 설정에서 \"sudo 사용 시도\"를 켜세요.';
 
   @override
-  String get containerUnreadable =>
-      'The container runtime answered in an unexpected form';
+  String get containerUnreadable => '컨테이너 런타임이 예상과 다른 형식으로 응답했습니다';
 }

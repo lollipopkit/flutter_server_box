@@ -768,7 +768,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get forceSinglePaneTip =>
-      'Всегда одна колонка независимо от ширины окна, вместо показа сведений рядом со списком.';
+      'Всегда одна колонка независимо от ширины окна, вместо показа рядом со списком того, что он открывает — серверов рядом с их сведениями, терминалов и файловых браузеров рядом с их сеансами.';
 
   @override
   String get fullAccessRefused =>
@@ -1395,38 +1395,39 @@ class AppLocalizationsRu extends AppLocalizations {
   String get accessoryWidgetServer => 'Сервер для виджета экрана блокировки';
 
   @override
-  String get systemdMissing => 'No systemd on this server';
+  String get systemdMissing => 'На этом сервере нет systemd';
 
   @override
   String get systemdMissingTip =>
-      '`systemctl` is not installed here, so there are no units to list.';
+      '`systemctl` здесь не установлен, поэтому юнитов для показа нет.';
 
   @override
   String initSystemFmt(String init) {
-    return 'This machine appears to use $init.';
+    return 'Похоже, эта машина использует $init.';
   }
 
   @override
-  String get systemdListFailed => 'Could not list units';
+  String get systemdListFailed => 'Не удалось получить список юнитов';
 
   @override
-  String get systemdUserScopeMissing => 'User units are not listed';
+  String get systemdUserScopeMissing => 'Пользовательские юниты не показаны';
 
   @override
   String get systemdUserScopeMissingTip =>
-      'This account has no user session bus on the server, so only system units are shown.';
+      'У этой учётной записи нет пользовательской шины сеанса на сервере, поэтому показаны только системные юниты.';
 
   @override
-  String get serverUnreachable => 'Could not run a command on this server';
+  String get serverUnreachable =>
+      'Не удалось выполнить команду на этом сервере';
 
   @override
-  String get containerNoRuntime => 'No container runtime here';
+  String get containerNoRuntime => 'Здесь нет среды выполнения контейнеров';
 
   @override
   String get containerNoRuntimeTip =>
-      'Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try sudo\" in Settings.';
+      'Ни `docker`, ни `podman` не ответили на этой машине. Если один из них установлен для другой учётной записи, включите «Попробовать использовать sudo» в настройках.';
 
   @override
   String get containerUnreadable =>
-      'The container runtime answered in an unexpected form';
+      'Среда выполнения контейнеров ответила в неожиданном формате';
 }
