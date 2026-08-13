@@ -367,6 +367,8 @@ class ServerFuncBtnAdapter extends TypeAdapter<ServerFuncBtn> {
         return ServerFuncBtn.systemd;
       case 9:
         return ServerFuncBtn.portForward;
+      case 10:
+        return ServerFuncBtn.power;
       default:
         return ServerFuncBtn.terminal;
     }
@@ -391,6 +393,8 @@ class ServerFuncBtnAdapter extends TypeAdapter<ServerFuncBtn> {
         writer.writeByte(8);
       case ServerFuncBtn.portForward:
         writer.writeByte(9);
+      case ServerFuncBtn.power:
+        writer.writeByte(10);
     }
   }
 

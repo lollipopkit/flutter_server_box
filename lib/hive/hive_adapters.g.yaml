@@ -135,7 +135,7 @@ types:
         index: 2
   ServerFuncBtn:
     typeId: 6
-    nextIndex: 10
+    nextIndex: 11
     fields:
       terminal:
         index: 0
@@ -153,6 +153,8 @@ types:
         index: 8
       portForward:
         index: 9
+      power:
+        index: 10
   ServerCustom:
     typeId: 7
     nextIndex: 10

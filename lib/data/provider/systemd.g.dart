@@ -58,7 +58,7 @@ final class SystemdNotifierProvider
   }
 }
 
-String _$systemdNotifierHash() => r'a0e967df21c9ba413d167c4b85b64cc57d63b777';
+String _$systemdNotifierHash() => r'9175306a987f4d4c23d603db4666b1e3bdae1d08';
 
 final class SystemdNotifierFamily extends $Family
     with
