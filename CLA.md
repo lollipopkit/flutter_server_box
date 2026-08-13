@@ -191,9 +191,11 @@ all of your future contributions to this Project.
 
 Your signature is stored in a JSON file on the `cla-signatures` branch of this
 repository, which is public. Each record contains your GitHub username, your
-numeric GitHub user ID, the pull request number you signed on, the commit the
-pull request pointed at, and a UTC timestamp. Nothing else is collected — the
-check never asks for your legal name, address, or email.
+numeric GitHub user ID, a UTC timestamp, and where you signed — the pull
+request number and commit if you signed on a pull request, or a link to the
+comment if you signed somewhere else and the signature was written down for
+you. Nothing else is collected: the check never asks for your legal name,
+address, or email.
 
 To withdraw a signature, open an issue. Withdrawal stops future contributions
 from being covered; it cannot revoke the licenses already granted for

@@ -1,0 +1,151 @@
+# Records a CLA signature that was given somewhere other than a pull request —
+# in practice, a past contributor signing in an issue after being asked.
+#
+# The everyday path is .github/workflows/cla.yml, which records a signature the
+# moment a contributor comments on their own pull request. That one cannot help
+# someone who is not going to open another pull request, so this exists.
+#
+# Run it from Actions → CLA record → Run workflow. Only accounts with write
+# access to this repository can start it, and the run itself is the audit trail
+# of who recorded what.
+#
+# `reference` must be the URL of the comment where the person actually agreed.
+# That comment is the signature; this workflow only writes it down. Recording a
+# signature nobody gave would be plain dishonest, and the empty reference field
+# is not the thing stopping you.
+#
+# The write below must stay format-compatible with cla.yml — same branch, same
+# path, same login/id fields — because that is the file the check reads.
+
+name: CLA record
+
+on:
+  workflow_dispatch:
+    inputs:
+      login:
+        description: 'GitHub username of the person who signed'
+        required: true
+        type: string
+      reference:
+        description: 'URL of the comment where they signed (issue or PR comment)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cla-signatures-write
+  cancel-in-progress: false
+
+jobs:
+  record:
+    name: Record a CLA signature
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          SIGNER_LOGIN: ${{ inputs.login }}
+          SIGNER_REFERENCE: ${{ inputs.reference }}
+        with:
+          script: |
+            const SIGNATURES_BRANCH = 'cla-signatures'
+            const SIGNATURES_PATH = 'signatures/v1/cla.json'
+            const { owner, repo } = context.repo
+
+            // Read from env, never interpolated into the script body: a username
+            // is user input like any other.
+            const login = (process.env.SIGNER_LOGIN || '').trim()
+            const reference = (process.env.SIGNER_REFERENCE || '').trim()
+            if (!login) throw new Error('login is empty')
+            if (!/^https:\/\/github\.com\//.test(reference)) {
+              throw new Error(`reference must be a github.com URL, got: ${reference}`)
+            }
+
+            // Resolve the account now, so the record holds the numeric id rather
+            // than a login that can later be renamed or reused.
+            const { data: user } = await github.rest.users.getByUsername({ username: login })
+
+            const emptyDoc = () => ({ version: 1, signatures: [] })
+
+            async function readAt(ref) {
+              try {
+                const { data } = await github.rest.repos.getContent({
+                  owner, repo, path: SIGNATURES_PATH, ref,
+                })
+                return JSON.parse(Buffer.from(data.content, 'base64').toString('utf8'))
+              } catch (e) {
+                if (e.status === 404) return emptyDoc()
+                throw e
+              }
+            }
+
+            async function head() {
+              try {
+                const { data } = await github.rest.git.getRef({
+                  owner, repo, ref: `heads/${SIGNATURES_BRANCH}`,
+                })
+                return data.object.sha
+              } catch (e) {
+                if (e.status === 404) return null
+                throw e
+              }
+            }
+
+            const record = {
+              login: user.login,
+              id: user.id,
+              reference,
+              recordedBy: context.actor,
+              signedAt: new Date().toISOString(),
+            }
+
+            let result = ''
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              const parent = await head()
+              const doc = parent ? await readAt(parent) : emptyDoc()
+
+              if (doc.signatures.some((s) => s.id === user.id)) {
+                result = `${user.login} (id ${user.id}) had already signed; nothing written.`
+                break
+              }
+
+              doc.signatures.push(record)
+              doc.signatures.sort((a, b) => a.login.toLowerCase().localeCompare(b.login.toLowerCase()))
+
+              const { data: blob } = await github.rest.git.createBlob({
+                owner, repo,
+                content: Buffer.from(JSON.stringify(doc, null, 2) + '\n', 'utf8').toString('base64'),
+                encoding: 'base64',
+              })
+              const { data: tree } = await github.rest.git.createTree({
+                owner, repo,
+                tree: [{ path: SIGNATURES_PATH, mode: '100644', type: 'blob', sha: blob.sha }],
+              })
+              const { data: commit } = await github.rest.git.createCommit({
+                owner, repo,
+                message: `chore: record ${user.login}'s CLA signature\n\nGiven at ${reference}\nRecorded by ${context.actor}`,
+                tree: tree.sha,
+                parents: parent ? [parent] : [],
+              })
+
+              try {
+                if (parent) {
+                  await github.rest.git.updateRef({
+                    owner, repo, ref: `heads/${SIGNATURES_BRANCH}`, sha: commit.sha, force: false,
+                  })
+                } else {
+                  await github.rest.git.createRef({
+                    owner, repo, ref: `refs/heads/${SIGNATURES_BRANCH}`, sha: commit.sha,
+                  })
+                }
+                result = `Recorded ${user.login} (id ${user.id}), signed at ${reference}.`
+                break
+              } catch (e) {
+                if (attempt === 3) throw e
+                core.info(`Signature branch moved; retrying (${attempt}/3).`)
+              }
+            }
+
+            core.info(result)
+            await core.summary.addRaw(result).write()

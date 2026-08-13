@@ -108,7 +108,7 @@ I have read the CLA Document and I hereby sign the CLA
 
 ### 记录了哪些信息
 
-你的签名保存在本仓库 `cla-signatures` 分支上的一个 JSON 文件中，该分支是公开的。每条记录包含你的 GitHub 用户名、GitHub 数字用户 ID、你签署时所在的 pull request 编号、该 pull request 当时指向的 commit，以及一个 UTC 时间戳。除此之外不收集任何信息——该检查不会索取你的真实姓名、住址或邮箱。
+你的签名保存在本仓库 `cla-signatures` 分支上的一个 JSON 文件中，该分支是公开的。每条记录包含你的 GitHub 用户名、GitHub 数字用户 ID、一个 UTC 时间戳，以及你签署的位置——如果在 pull request 下签署，记录的是 PR 编号和当时指向的 commit；如果在其他地方签署、由维护者代为记录，记录的是那条评论的链接。除此之外不收集任何信息：该检查不会索取你的真实姓名、住址或邮箱。
 
 如需撤回签名，请开一个 issue。撤回后，此后的贡献不再被覆盖；但它无法撤销已合并贡献所授予的许可——按上文第 2 条和第 3 条，那些许可是不可撤销的。
 
