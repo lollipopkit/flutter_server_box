@@ -393,6 +393,21 @@ class ServerNotifier extends _$ServerNotifier {
   /// status page from refreshing too.
   String get _shellTryId => '${state.spi.id}#shell';
 
+  /// Whether [ensureExec] would have to open a connection before it could run
+  /// anything, i.e. whether the caller is about to make the user wait.
+  ///
+  /// Asked here because the answer depends on the transport: a monitor server
+  /// holds no connection and needs none, so nothing is ever waited for; an SSH
+  /// one usually already holds a client from its status fetch. Testing
+  /// `state.client` at the call site got this wrong for the first of those —
+  /// it is always null there — and announced a wait that was not happening.
+  bool get execWillConnect {
+    return switch (ServerConnectCredential.fromSpi(state.spi)) {
+      ServerConnectCredentialSsh() => state.client?.isClosed ?? true,
+      ServerConnectCredentialMonitorHttp() => false,
+    };
+  }
+
   /// Something that can run a command on this server.
   ///
   /// The one place that decides *how* a command reaches a server. Callers —
