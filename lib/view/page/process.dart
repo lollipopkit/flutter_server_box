@@ -113,7 +113,6 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
     try {
       final serverState = ref.read(_provider);
       final systemType = serverState.status.system;
-      final client = serverState.client;
       if (!_canRunProcessCmd(serverState)) {
         _result = const PsResult(procs: []);
         _loadErrorMessage = libL10n.disconnected;
@@ -123,18 +122,19 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
         }
         return;
       }
-      final result = await client
-          ?.run(
-            ShellFunc.process.exec(
-              serverState.spi.id,
-              systemType: systemType,
-              customDir: serverState.spi.custom?.scriptDir,
-            ),
-          )
-          .timeout(_processCommandTimeout)
-          .string;
+      final exec = await ref.read(_provider.notifier).ensureExec();
+      final result = (await exec
+              .run(
+                ShellFunc.process.exec(
+                  serverState.spi.id,
+                  systemType: systemType,
+                  customDir: serverState.spi.custom?.scriptDir,
+                ),
+              )
+              .timeout(_processCommandTimeout))
+          .combined;
       if (!mounted) return;
-      if (result == null || result.trim().isEmpty) {
+      if (result.trim().isEmpty) {
         _result = const PsResult(procs: []);
         _loadErrorMessage = libL10n.empty;
         _hasLoaded = true;
@@ -690,9 +690,10 @@ extension _ProcessPageStateUtils on _ProcessPageState {
 
   String _formatSpeed(double bytes) => '${bytes.bytes2Str}/s';
 
+  /// Whether the server has answered at all. Not whether a connection is
+  /// already open: `ensureExec` opens one when there is none, which is what a
+  /// server reached over its monitor agent always needs.
   bool _canRunProcessCmd(ServerState serverState) {
-    final client = serverState.client;
-    if (client == null || client.isClosed) return false;
     final conn = serverState.conn;
     return conn == ServerConn.connected || conn == ServerConn.finished;
   }
@@ -815,17 +816,17 @@ extension _ProcessPageStateActions on _ProcessPageState {
         if (mounted) context.showSnackBar(libL10n.disconnected);
         return;
       }
-      final client = serverState.client!;
-      final raw = await client
-          .run(
-            ShellFunc.process.exec(
-              serverState.spi.id,
-              systemType: systemType,
-              customDir: serverState.spi.custom?.scriptDir,
-            ),
-          )
-          .timeout(_processCommandTimeout)
-          .string;
+      final exec = await ref.read(_provider.notifier).ensureExec();
+      final raw = (await exec
+              .run(
+                ShellFunc.process.exec(
+                  serverState.spi.id,
+                  systemType: systemType,
+                  customDir: serverState.spi.custom?.scriptDir,
+                ),
+              )
+              .timeout(_processCommandTimeout))
+          .combined;
       if (!mounted) return;
       if (raw.trim().isEmpty) {
         context.showSnackBar(context.l10n.processKillTargetChanged);
@@ -878,10 +879,9 @@ extension _ProcessPageStateActions on _ProcessPageState {
         context.showSnackBar(libL10n.notAvailable);
         return;
       }
-      final killOutput = await latestServerState.client!
-          .run(killCommand)
-          .timeout(_processCommandTimeout)
-          .string;
+      final killOutput =
+          (await exec.run(killCommand).timeout(_processCommandTimeout))
+              .combined;
       if (killOutput.contains(_killTargetChangedMarker)) {
         context.showSnackBar(context.l10n.processKillTargetChanged);
         return;

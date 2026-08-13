@@ -7,10 +7,13 @@ import 'package:server_box/data/model/server/connect_credential.dart';
 /// one that provides it, and adding a third transport means hunting down
 /// `is ServerConnectCredentialSsh` checks scattered across the widget tree.
 class ServerCapabilities {
-  /// Features needing a shell *and* a second channel to run commands on:
-  /// SFTP, process list, systemd units, snippets, container management, port
-  /// forwarding, power control. In practice this means SSH — monitor's HTTP
-  /// API exposes no counterpart for any of them.
+  /// Features that need to reach the machine rather than just read a status
+  /// from it: SFTP, the process and systemd pages, snippets, containers, port
+  /// forwarding, power control.
+  ///
+  /// True over SSH, however that SSH is reached, and true for a monitor agent
+  /// told to grant full access — which is the same grant its panel login
+  /// already carries.
   final bool shell;
 
   /// An interactive terminal can be opened. Implied by [shell], but also true
@@ -54,14 +57,16 @@ class ServerCapabilities {
     persistentSession: false,
   );
 
-  /// Status over monitor's HTTP API, with a passwordless PTY from the agent
-  /// (`MonitorHttpCredential.passwordlessTerminal`).
+  /// Status over monitor's HTTP API, with the agent granting full access
+  /// (`MonitorHttpCredential.fullAccess`).
   ///
-  /// [shell] stays false: the PTY is a single stream, so everything that
-  /// needs a second channel — SFTP, port forwarding, the process and systemd
-  /// pages — has nothing to run on.
-  static const monitorHttpTerminalOnly = ServerCapabilities(
-    shell: false,
+  /// One switch, not one per feature. The agent's own grant is what decides
+  /// this: with it the app can open a shell, run a command and reach a port
+  /// through the agent, all of which the panel login already implied — anyone
+  /// who can get a shell can run anything in it. Splitting them would have
+  /// been three switches describing one decision.
+  static const monitorHttpFullAccess = ServerCapabilities(
+    shell: true,
     terminal: true,
     storedHistory: true,
     persistentSession: false,
@@ -92,8 +97,8 @@ class ServerCapabilities {
       ServerConnectCredentialMonitorHttp(:final spi, :final monitor) =>
         spi.ssh != null
             ? monitorHttpWithShell
-            : monitor.passwordlessTerminal
-            ? monitorHttpTerminalOnly
+            : monitor.fullAccess
+            ? monitorHttpFullAccess
             : monitorHttp,
     };
   }

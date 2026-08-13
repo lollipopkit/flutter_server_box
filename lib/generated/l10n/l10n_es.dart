@@ -780,26 +780,26 @@ class AppLocalizationsEs extends AppLocalizations {
       'Mantener una columna sea cual sea el ancho de la ventana, en vez de mostrar los detalles junto a la lista.';
 
   @override
-  String get passwordlessTerminal => 'Terminal sin credenciales';
+  String get fullAccess => 'Terminal sin credenciales';
 
   @override
-  String get passwordlessTerminalTip =>
+  String get fullAccessTip =>
       'Abrir un terminal a través del agente monitor sin credenciales SSH. El shell se ejecuta con la cuenta con la que se ejecuta el agente, así que basta con la contraseña de monitor para obtenerlo: no se aplica la autenticación, el registro ni el segundo factor de sshd. El agente decide si lo permite. Solo ofrece un terminal: SFTP, reenvío de puertos, contenedores, procesos y systemd necesitan SSH.';
 
   @override
-  String get passwordlessTerminalNeedsMonitor =>
+  String get fullAccessNeedsMonitor =>
       'Un terminal sin credenciales requiere una dirección de monitor.';
 
   @override
-  String get passwordlessTerminalConflictsWithSsh =>
+  String get fullAccessConflictsWithSsh =>
       'Un terminal sin credenciales no puede combinarse con credenciales SSH.';
 
   @override
-  String get passwordlessTerminalRefused =>
+  String get fullAccessRefused =>
       'Este agente no ofrece un terminal sin credenciales.';
 
   @override
-  String get passwordlessTerminalInsecure =>
+  String get fullAccessInsecure =>
       'Este agente sirve el terminal solo por TLS o loopback, y esta conexión es HTTP sin cifrar.';
 
   @override

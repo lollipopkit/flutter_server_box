@@ -68,16 +68,7 @@ extension _Operation on _ServerPageState {
           );
           Stores.setting.showSuspendTip.put(false);
         }
-        await srv.client?.execWithPwd(
-              ShellFunc.suspend.exec(
-                srv.spi.id,
-                systemType: srv.status.system,
-                customDir: null,
-              ),
-              context: context,
-              id: srv.id,
-            ) ??
-            (null, '');
+        await _power(srv, ShellFunc.suspend);
       },
       typ: libL10n.suspend,
       name: srv.spi.name,
@@ -86,17 +77,7 @@ extension _Operation on _ServerPageState {
 
   void _onTapShutdown(ServerState srv) {
     _askFor(
-      func: () async {
-        await srv.client?.execWithPwd(
-          ShellFunc.shutdown.exec(
-            srv.spi.id,
-            systemType: srv.status.system,
-            customDir: null,
-          ),
-          context: context,
-          id: srv.id,
-        );
-      },
+      func: () => _power(srv, ShellFunc.shutdown),
       typ: libL10n.shutdown,
       name: srv.spi.name,
     );
@@ -104,23 +85,29 @@ extension _Operation on _ServerPageState {
 
   void _onTapReboot(ServerState srv) {
     _askFor(
-      func: () async {
-        await srv.client?.execWithPwd(
-              ShellFunc.reboot.exec(
-                srv.spi.id,
-                systemType: srv.status.system,
-                customDir: null,
-              ),
-              context: context,
-              id: srv.id,
-            ) ??
-            (null, '');
-      },
+      func: () => _power(srv, ShellFunc.reboot),
       typ: libL10n.reboot,
       name: srv.spi.name,
     );
   }
 
+  /// The three power commands differ only in which script they run.
+  ///
+  /// A connection is opened for it if there is none — a server reached over
+  /// its monitor agent holds none until something needs one — and the failure
+  /// to open one is shown the same way a failure to run the command is.
+  Future<void> _power(ServerState srv, ShellFunc func) async {
+    try {
+      final exec = await ref.read(serverProvider(srv.spi.id).notifier)
+          .ensureExec();
+      await exec.runWithSudo(
+        func.exec(srv.spi.id, systemType: srv.status.system, customDir: null),
+      );
+    } catch (e, s) {
+      Loggers.app.warning('${func.name} ${srv.spi.name}', e, s);
+      if (mounted) context.showSnackBar('$e');
+    }
+  }
 }
 
 extension _Utils on _ServerPageState {

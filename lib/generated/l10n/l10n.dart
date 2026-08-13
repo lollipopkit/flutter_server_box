@@ -1482,41 +1482,41 @@ abstract class AppLocalizations {
   /// **'Keep one column however wide the window is, instead of putting a list beside what it opens — servers beside their details, terminals and file browsers beside their sessions.'**
   String get forceSinglePaneTip;
 
-  /// No description provided for @passwordlessTerminal.
+  /// No description provided for @fullAccess.
   ///
   /// In en, this message translates to:
-  /// **'Passwordless terminal'**
-  String get passwordlessTerminal;
+  /// **'Access without SSH'**
+  String get fullAccess;
 
-  /// No description provided for @passwordlessTerminalTip.
+  /// No description provided for @fullAccessTip.
   ///
   /// In en, this message translates to:
-  /// **'Open a terminal through the monitor agent without SSH credentials. The shell runs as the account the agent runs as, so the monitor password alone is enough to get it — none of sshd\'s authentication, logging or second factor applies. The agent decides whether to allow this. It provides a terminal only: SFTP, port forwarding, containers, processes and systemd need SSH.'**
-  String get passwordlessTerminalTip;
+  /// **'Reach this machine through the monitor agent with no SSH credentials: a terminal, commands, SFTP, port forwarding. Everything runs as the account the agent runs as, so the monitor password alone is enough to get it — none of sshd\'s authentication, logging or second factor applies. The agent decides whether to allow this at all.'**
+  String get fullAccessTip;
 
-  /// No description provided for @passwordlessTerminalNeedsMonitor.
+  /// No description provided for @fullAccessNeedsMonitor.
   ///
   /// In en, this message translates to:
-  /// **'A passwordless terminal requires a monitor address.'**
-  String get passwordlessTerminalNeedsMonitor;
+  /// **'Access without SSH requires a monitor address.'**
+  String get fullAccessNeedsMonitor;
 
-  /// No description provided for @passwordlessTerminalConflictsWithSsh.
+  /// No description provided for @fullAccessConflictsWithSsh.
   ///
   /// In en, this message translates to:
-  /// **'A passwordless terminal cannot be combined with SSH credentials.'**
-  String get passwordlessTerminalConflictsWithSsh;
+  /// **'Access without SSH cannot be combined with SSH credentials.'**
+  String get fullAccessConflictsWithSsh;
 
-  /// No description provided for @passwordlessTerminalRefused.
+  /// No description provided for @fullAccessRefused.
   ///
   /// In en, this message translates to:
-  /// **'This agent does not offer a passwordless terminal.'**
-  String get passwordlessTerminalRefused;
+  /// **'This agent does not allow access without SSH.'**
+  String get fullAccessRefused;
 
-  /// No description provided for @passwordlessTerminalInsecure.
+  /// No description provided for @fullAccessInsecure.
   ///
   /// In en, this message translates to:
-  /// **'This agent serves the terminal over TLS or loopback only, and this connection is plain HTTP.'**
-  String get passwordlessTerminalInsecure;
+  /// **'This agent allows access without SSH over TLS or loopback only, and this connection is plain HTTP.'**
+  String get fullAccessInsecure;
 
   /// No description provided for @permission.
   ///

@@ -774,26 +774,26 @@ class AppLocalizationsRu extends AppLocalizations {
       'Всегда одна колонка независимо от ширины окна, вместо показа сведений рядом со списком.';
 
   @override
-  String get passwordlessTerminal => 'Терминал без учётных данных';
+  String get fullAccess => 'Терминал без учётных данных';
 
   @override
-  String get passwordlessTerminalTip =>
+  String get fullAccessTip =>
       'Открыть терминал через агент monitor без учётных данных SSH. Оболочка выполняется от имени учётной записи, под которой работает агент, поэтому достаточно пароля monitor — аутентификация, журналирование и второй фактор sshd не применяются. Разрешать ли это, решает агент. Предоставляется только терминал: SFTP, проброс портов, контейнеры, процессы и systemd требуют SSH.';
 
   @override
-  String get passwordlessTerminalNeedsMonitor =>
+  String get fullAccessNeedsMonitor =>
       'Для терминала без учётных данных нужен адрес monitor.';
 
   @override
-  String get passwordlessTerminalConflictsWithSsh =>
+  String get fullAccessConflictsWithSsh =>
       'Терминал без учётных данных нельзя совмещать с учётными данными SSH.';
 
   @override
-  String get passwordlessTerminalRefused =>
+  String get fullAccessRefused =>
       'Этот агент не предоставляет терминал без учётных данных.';
 
   @override
-  String get passwordlessTerminalInsecure =>
+  String get fullAccessInsecure =>
       'Этот агент отдаёт терминал только по TLS или через loopback, а это соединение — открытый HTTP.';
 
   @override

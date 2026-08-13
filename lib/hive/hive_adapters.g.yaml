@@ -227,7 +227,7 @@ types:
         index: 2
   MonitorHttpCredential:
     typeId: 13
-    nextIndex: 5
+    nextIndex: 6
     fields:
       addr:
         index: 0
@@ -237,8 +237,8 @@ types:
         index: 2
       ignoreCert:
         index: 3
-      passwordlessTerminal:
-        index: 4
+      fullAccess:
+        index: 5
   Spi:
     typeId: 15
     nextIndex: 20

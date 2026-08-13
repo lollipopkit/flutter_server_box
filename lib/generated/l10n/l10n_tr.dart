@@ -774,26 +774,25 @@ class AppLocalizationsTr extends AppLocalizations {
       'Pencere ne kadar geniş olursa olsun tek sütun kalsın; ayrıntılar listenin yanında gösterilmesin.';
 
   @override
-  String get passwordlessTerminal => 'Kimlik bilgisiz terminal';
+  String get fullAccess => 'Kimlik bilgisiz terminal';
 
   @override
-  String get passwordlessTerminalTip =>
+  String get fullAccessTip =>
       'SSH kimlik bilgileri olmadan monitor aracısı üzerinden bir terminal açın. Kabuk, aracının çalıştığı hesapla çalışır; dolayısıyla yalnızca monitor parolası yeterlidir ve sshd\'nin kimlik doğrulaması, günlüğü ve ikinci faktörü geçerli olmaz. Buna izin verilip verilmeyeceğine aracı karar verir. Yalnızca terminal sağlar: SFTP, bağlantı noktası yönlendirme, konteynerler, süreçler ve systemd için SSH gerekir.';
 
   @override
-  String get passwordlessTerminalNeedsMonitor =>
+  String get fullAccessNeedsMonitor =>
       'Kimlik bilgisiz terminal için bir monitor adresi gerekir.';
 
   @override
-  String get passwordlessTerminalConflictsWithSsh =>
+  String get fullAccessConflictsWithSsh =>
       'Kimlik bilgisiz terminal, SSH kimlik bilgileriyle birlikte kullanılamaz.';
 
   @override
-  String get passwordlessTerminalRefused =>
-      'Bu aracı kimlik bilgisiz terminal sunmuyor.';
+  String get fullAccessRefused => 'Bu aracı kimlik bilgisiz terminal sunmuyor.';
 
   @override
-  String get passwordlessTerminalInsecure =>
+  String get fullAccessInsecure =>
       'Bu aracı terminali yalnızca TLS veya loopback üzerinden sunuyor, bu bağlantı ise düz HTTP.';
 
   @override

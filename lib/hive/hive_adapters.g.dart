@@ -655,7 +655,7 @@ class MonitorHttpCredentialAdapter extends TypeAdapter<MonitorHttpCredential> {
       user: fields[1] as String?,
       pwd: fields[2] as String?,
       ignoreCert: fields[3] == null ? false : fields[3] as bool,
-      passwordlessTerminal: fields[4] == null ? false : fields[4] as bool,
+      fullAccess: fields[5] == null ? false : fields[5] as bool,
     );
   }
 
@@ -671,8 +671,8 @@ class MonitorHttpCredentialAdapter extends TypeAdapter<MonitorHttpCredential> {
       ..write(obj.pwd)
       ..writeByte(3)
       ..write(obj.ignoreCert)
-      ..writeByte(4)
-      ..write(obj.passwordlessTerminal);
+      ..writeByte(5)
+      ..write(obj.fullAccess);
   }
 
   @override

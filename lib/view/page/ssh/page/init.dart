@@ -16,17 +16,17 @@ extension _Init on SSHPageState {
   /// the page having to know which it got.
   ShellBackend? _adoptBackend(SSHClient? client) {
     if (client != null && !client.isClosed) return SshShellBackend(client);
-    return _passwordlessBackend();
+    return _fullAccessBackend();
   }
 
   /// Connects a new source of shells.
   ///
-  /// The passwordless PTY is tried only when the server has no SSH credential
+  /// The agent-granted shell is tried only when the server has no SSH credential
   /// at all: [Spix.validate] rejects having both, and if one slipped through,
   /// SSH is the answer that can do more.
   Future<ShellBackend> _connectBackend() async {
-    final passwordless = _passwordlessBackend();
-    if (passwordless != null) return passwordless;
+    final granted = _fullAccessBackend();
+    if (granted != null) return granted;
 
     final client = await genClient(
       widget.args.spi,
@@ -39,11 +39,11 @@ extension _Init on SSHPageState {
     return SshShellBackend(client);
   }
 
-  ShellBackend? _passwordlessBackend() {
+  ShellBackend? _fullAccessBackend() {
     final spi = widget.args.spi;
     if (spi.ssh != null) return null;
     final monitor = spi.monitorHttp;
-    if (monitor == null || !monitor.passwordlessTerminal) return null;
+    if (monitor == null || !monitor.fullAccess) return null;
     return MonitorShellBackend(monitor);
   }
 

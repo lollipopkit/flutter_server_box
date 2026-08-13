@@ -204,12 +204,12 @@ void main() {
         ssh: null,
         monitor: const MonitorHttpCredential(
           addr: '  ',
-          passwordlessTerminal: true,
+          fullAccess: true,
         ),
       );
       expect(
         spi.validate(),
-        SpiValidationError.passwordlessTerminalWithoutMonitor,
+        SpiValidationError.fullAccessWithoutMonitor,
         reason: 'there would be no agent to open it on',
       );
     });
@@ -226,10 +226,10 @@ void main() {
             ssh: ssh,
             monitor: const MonitorHttpCredential(
               addr: 'https://agent:3770',
-              passwordlessTerminal: true,
+              fullAccess: true,
             ),
           ).validate(),
-          SpiValidationError.passwordlessTerminalAndSsh,
+          SpiValidationError.fullAccessAndSsh,
         );
       }
     });
@@ -239,7 +239,7 @@ void main() {
         ssh: null,
         monitor: const MonitorHttpCredential(
           addr: 'https://agent:3770',
-          passwordlessTerminal: true,
+          fullAccess: true,
         ),
       );
       expect(spi.validate(), isNull);
@@ -311,23 +311,24 @@ void main() {
       expect(caps.terminal, isFalse);
     });
 
-    test('a passwordless agent gives a terminal but not a shell', () {
-      // The agent's PTY is one stream, so SFTP, port forwarding and the
-      // process pages have nothing to run on. Offering them would be a row of
-      // entries that each fail on open.
+    test('an agent granted full access answers for everything', () {
+      // One grant, not one per feature: anyone who can open a shell through
+      // the agent can run anything in it, so withholding SFTP or the process
+      // page from the same grant withholds nothing — it only makes the app
+      // pretend the machine is out of reach.
       final spi = Spi(
         name: 'test',
         id: 'd',
         monitorHttp: const MonitorHttpCredential(
           addr: 'https://agent:3770',
-          passwordlessTerminal: true,
+          fullAccess: true,
         ),
       );
       final caps = ServerCapabilities.of(
         ServerConnectCredential.fromSpi(spi),
       );
       expect(caps.terminal, isTrue);
-      expect(caps.shell, isFalse);
+      expect(caps.shell, isTrue);
       expect(caps.storedHistory, isTrue);
     });
 
@@ -340,7 +341,7 @@ void main() {
         ssh: const SshCredential(ip: '10.0.0.1'),
         monitorHttp: const MonitorHttpCredential(
           addr: 'https://agent:3770',
-          passwordlessTerminal: true,
+          fullAccess: true,
         ),
       );
       final caps = ServerCapabilities.of(

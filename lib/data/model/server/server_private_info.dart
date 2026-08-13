@@ -23,14 +23,14 @@ enum SpiValidationError {
   /// socket. All of them answer the same question, so exactly one may win.
   monitorTunnelAndOtherTransport,
 
-  /// [MonitorHttpCredential.passwordlessTerminal] without a monitor endpoint
+  /// [MonitorHttpCredential.fullAccess] without a monitor endpoint
   /// to open it on.
-  passwordlessTerminalWithoutMonitor,
+  fullAccessWithoutMonitor,
 
-  /// [MonitorHttpCredential.passwordlessTerminal] together with an SSH
+  /// [MonitorHttpCredential.fullAccess] together with an SSH
   /// credential. Both answer where the shell comes from, and SSH answers it
   /// more completely, so having both configured hides which one is in use.
-  passwordlessTerminalAndSsh,
+  fullAccessAndSsh,
 }
 
 class SpiValidationException implements Exception {
@@ -138,16 +138,16 @@ extension Spix on Spi {
 
   SpiValidationError? validate() {
     final s = ssh;
-    final passwordless = monitorHttp?.passwordlessTerminal ?? false;
+    final passwordless = monitorHttp?.fullAccess ?? false;
     if (passwordless && (monitorHttp?.addr.trim().isEmpty ?? true)) {
-      return SpiValidationError.passwordlessTerminalWithoutMonitor;
+      return SpiValidationError.fullAccessWithoutMonitor;
     }
     if (s == null) return null;
     // Both answer "where does this server's shell come from", and the answer
     // has to be one thing: SSH gives every shell-backed feature, the agent's
     // PTY gives a terminal and nothing else.
     if (passwordless) {
-      return SpiValidationError.passwordlessTerminalAndSsh;
+      return SpiValidationError.fullAccessAndSsh;
     }
     final hasJumpServer = s.resolvedJumpIds.isNotEmpty;
     final proxy = s.proxyCommand;

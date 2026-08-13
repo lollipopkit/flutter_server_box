@@ -19,7 +19,7 @@ enum _ShellSource {
 
   /// A PTY from the agent itself, with no SSH credentials. A terminal and
   /// nothing else, and it makes the monitor password worth a shell.
-  passwordless,
+  fullAccess,
 }
 
 extension _Widgets on _ServerEditPageState {
@@ -462,19 +462,19 @@ extension _Widgets on _ServerEditPageState {
 
   _ShellSource get _shellSource {
     if (_sshViaMonitor.value) return _ShellSource.tunnel;
-    if (_passwordlessTerminal.value) return _ShellSource.passwordless;
+    if (_fullAccess.value) return _ShellSource.fullAccess;
     return _ShellSource.none;
   }
 
   void _setShellSource(_ShellSource source) {
     _sshViaMonitor.value = source == _ShellSource.tunnel;
-    _passwordlessTerminal.value = source == _ShellSource.passwordless;
+    _fullAccess.value = source == _ShellSource.fullAccess;
   }
 
   /// The shell choice, and the fields belonging to whichever option owns them.
   Widget _buildShellSource() {
     return ListenableBuilder(
-      listenable: Listenable.merge([_sshViaMonitor, _passwordlessTerminal]),
+      listenable: Listenable.merge([_sshViaMonitor, _fullAccess]),
       builder: (_, _) {
         final selected = _shellSource;
         Widget option(_ShellSource value, IconData icon, Widget title) {
@@ -513,11 +513,11 @@ extension _Widgets on _ServerEditPageState {
                     TipText(l10n.sshViaMonitor, l10n.sshViaMonitorTip),
                   ),
                   option(
-                    _ShellSource.passwordless,
+                    _ShellSource.fullAccess,
                     Icons.lock_open,
                     TipText(
-                      l10n.passwordlessTerminal,
-                      l10n.passwordlessTerminalTip,
+                      l10n.fullAccess,
+                      l10n.fullAccessTip,
                     ),
                   ),
                 ],

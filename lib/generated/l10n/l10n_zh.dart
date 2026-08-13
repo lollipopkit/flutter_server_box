@@ -728,24 +728,24 @@ class AppLocalizationsZh extends AppLocalizations {
       '无论窗口多宽都只用一栏，不在列表旁边显示它打开的内容——服务器旁的详情、终端与文件旁的会话。';
 
   @override
-  String get passwordlessTerminal => '免凭据终端';
+  String get fullAccess => '免 SSH 访问';
 
   @override
-  String get passwordlessTerminalTip =>
-      '不填 SSH 凭据，直接通过 monitor agent 打开终端。shell 以 agent 所在账户的身份运行，因此只要有 monitor 密码就能拿到它——sshd 的认证、日志和二次验证都不生效。是否允许由 agent 决定。它只提供终端：SFTP、端口转发、容器、进程和 systemd 仍需要 SSH。';
+  String get fullAccessTip =>
+      '不填 SSH 凭据，直接通过 monitor agent 访问这台机器：终端、执行命令、SFTP、端口转发。全部以 agent 所在账户的身份运行，因此只要有 monitor 密码就能拿到——sshd 的认证、日志和二次验证都不生效。是否允许由 agent 决定。';
 
   @override
-  String get passwordlessTerminalNeedsMonitor => '免凭据终端需要填写 monitor 地址。';
+  String get fullAccessNeedsMonitor => '免 SSH 访问需要填写 monitor 地址。';
 
   @override
-  String get passwordlessTerminalConflictsWithSsh => '免凭据终端不能与 SSH 凭据同时使用。';
+  String get fullAccessConflictsWithSsh => '免 SSH 访问不能与 SSH 凭据同时使用。';
 
   @override
-  String get passwordlessTerminalRefused => '该 agent 未提供免凭据终端。';
+  String get fullAccessRefused => '该 agent 未开放免 SSH 访问。';
 
   @override
-  String get passwordlessTerminalInsecure =>
-      '该 agent 仅在 TLS 或本地回环上提供终端，而当前连接是明文 HTTP。';
+  String get fullAccessInsecure =>
+      '该 agent 仅在 TLS 或本地回环上开放免 SSH 访问，而当前连接是明文 HTTP。';
 
   @override
   String get permission => '权限';
@@ -2037,24 +2037,24 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '無論視窗多寬都只用一欄，不在清單旁邊顯示它打開的內容——伺服器旁的詳情、終端與檔案旁的對話。';
 
   @override
-  String get passwordlessTerminal => '免憑證終端';
+  String get fullAccess => '免 SSH 存取';
 
   @override
-  String get passwordlessTerminalTip =>
-      '不填 SSH 憑證，直接透過 monitor agent 開啟終端。shell 以 agent 所在帳戶的身分執行，因此只要有 monitor 密碼就能取得它——sshd 的認證、日誌和二次驗證都不生效。是否允許由 agent 決定。它只提供終端：SFTP、連接埠轉送、容器、行程和 systemd 仍需要 SSH。';
+  String get fullAccessTip =>
+      '不填 SSH 憑證，直接透過 monitor agent 存取這台機器：終端、執行指令、SFTP、連接埠轉發。全部以 agent 所在帳戶的身分執行，因此只要有 monitor 密碼就能拿到——sshd 的認證、日誌和二次驗證都不生效。是否允許由 agent 決定。';
 
   @override
-  String get passwordlessTerminalNeedsMonitor => '免憑證終端需要填寫 monitor 位址。';
+  String get fullAccessNeedsMonitor => '免 SSH 存取需要填寫 monitor 位址。';
 
   @override
-  String get passwordlessTerminalConflictsWithSsh => '免憑證終端不能與 SSH 憑證同時使用。';
+  String get fullAccessConflictsWithSsh => '免 SSH 存取不能與 SSH 憑證同時使用。';
 
   @override
-  String get passwordlessTerminalRefused => '此 agent 未提供免憑證終端。';
+  String get fullAccessRefused => '該 agent 未開放免 SSH 存取。';
 
   @override
-  String get passwordlessTerminalInsecure =>
-      '此 agent 僅在 TLS 或本機回送上提供終端，而目前連線是明文 HTTP。';
+  String get fullAccessInsecure =>
+      '該 agent 僅在 TLS 或本機回環上開放免 SSH 存取，而目前連線是明文 HTTP。';
 
   @override
   String get permission => '權限';

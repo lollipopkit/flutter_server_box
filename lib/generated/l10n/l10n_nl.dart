@@ -772,26 +772,26 @@ class AppLocalizationsNl extends AppLocalizations {
       'Houd één kolom aan, hoe breed het venster ook is, in plaats van de details naast de lijst te tonen.';
 
   @override
-  String get passwordlessTerminal => 'Terminal zonder inloggegevens';
+  String get fullAccess => 'Terminal zonder inloggegevens';
 
   @override
-  String get passwordlessTerminalTip =>
+  String get fullAccessTip =>
       'Open een terminal via de monitor-agent zonder SSH-inloggegevens. De shell draait als het account waaronder de agent draait, dus het monitor-wachtwoord alleen volstaat — authenticatie, logging en tweede factor van sshd gelden hier niet. De agent bepaalt of dit is toegestaan. Het levert alleen een terminal: SFTP, port forwarding, containers, processen en systemd hebben SSH nodig.';
 
   @override
-  String get passwordlessTerminalNeedsMonitor =>
+  String get fullAccessNeedsMonitor =>
       'Een terminal zonder inloggegevens vereist een monitor-adres.';
 
   @override
-  String get passwordlessTerminalConflictsWithSsh =>
+  String get fullAccessConflictsWithSsh =>
       'Een terminal zonder inloggegevens kan niet samen met SSH-inloggegevens worden gebruikt.';
 
   @override
-  String get passwordlessTerminalRefused =>
+  String get fullAccessRefused =>
       'Deze agent biedt geen terminal zonder inloggegevens.';
 
   @override
-  String get passwordlessTerminalInsecure =>
+  String get fullAccessInsecure =>
       'Deze agent biedt de terminal alleen via TLS of loopback aan, en deze verbinding is onversleutelde HTTP.';
 
   @override

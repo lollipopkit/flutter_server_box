@@ -737,25 +737,24 @@ class AppLocalizationsKo extends AppLocalizations {
       '창 너비와 관계없이 한 열만 사용하고, 목록 옆에 서버 상세를 표시하지 않습니다.';
 
   @override
-  String get passwordlessTerminal => '자격 증명 없는 터미널';
+  String get fullAccess => '자격 증명 없는 터미널';
 
   @override
-  String get passwordlessTerminalTip =>
+  String get fullAccessTip =>
       'SSH 자격 증명 없이 monitor 에이전트를 통해 터미널을 엽니다. 셸은 에이전트가 실행 중인 계정으로 동작하므로 monitor 비밀번호만으로 셸을 얻을 수 있으며, sshd의 인증·로깅·2단계 인증은 적용되지 않습니다. 허용 여부는 에이전트가 결정합니다. 터미널만 제공되며 SFTP, 포트 포워딩, 컨테이너, 프로세스, systemd에는 SSH가 필요합니다.';
 
   @override
-  String get passwordlessTerminalNeedsMonitor =>
-      '자격 증명 없는 터미널에는 monitor 주소가 필요합니다.';
+  String get fullAccessNeedsMonitor => '자격 증명 없는 터미널에는 monitor 주소가 필요합니다.';
 
   @override
-  String get passwordlessTerminalConflictsWithSsh =>
+  String get fullAccessConflictsWithSsh =>
       '자격 증명 없는 터미널은 SSH 자격 증명과 함께 사용할 수 없습니다.';
 
   @override
-  String get passwordlessTerminalRefused => '이 에이전트는 자격 증명 없는 터미널을 제공하지 않습니다.';
+  String get fullAccessRefused => '이 에이전트는 자격 증명 없는 터미널을 제공하지 않습니다.';
 
   @override
-  String get passwordlessTerminalInsecure =>
+  String get fullAccessInsecure =>
       '이 에이전트는 TLS 또는 루프백에서만 터미널을 제공하는데, 현재 연결은 평문 HTTP입니다.';
 
   @override
