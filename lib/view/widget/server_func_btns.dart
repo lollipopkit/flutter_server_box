@@ -503,6 +503,12 @@ Future<bool> _ensureSshClient(BuildContext context, String id, WidgetRef ref) {
   return _ensure(context, id, ref, (n) => n.ensureShellClient());
 }
 
+/// Long enough that anything which answers straight away says nothing at all.
+///
+/// A monitor server has nothing to connect and an SSH one usually already
+/// holds its client, so most taps here finish in well under this.
+const _kAnnounceWait = Duration(milliseconds: 400);
+
 /// Returns false — after telling the user why — when [connect] could not.
 /// Callers must re-check `context.mounted` before navigating, since this can
 /// await a real connection attempt.
@@ -513,12 +519,16 @@ Future<bool> _ensure(
   Future<void> Function(ServerNotifier) connect,
 ) async {
   final notifier = ref.read(serverProvider(id).notifier);
-  final existing = ref.read(serverProvider(id)).client;
-  if (existing != null && !existing.isClosed) return true;
+  final pending = connect(notifier);
 
-  if (context.mounted) context.showSnackBar(l10n.waitConnection);
+  // Said only once there is actually something to wait for. Announcing it up
+  // front meant every tap on a server that answers immediately still put "wait
+  // for the connection" on screen, right as the page it was about opened.
+  final announce = Timer(_kAnnounceWait, () {
+    if (context.mounted) context.showSnackBar(l10n.waitConnection);
+  });
   try {
-    await connect(notifier);
+    await pending;
     return true;
   } catch (e, s) {
     Loggers.app.warning('Connect $id for a server function', e, s);
@@ -528,6 +538,8 @@ Future<bool> _ensure(
       );
     }
     return false;
+  } finally {
+    announce.cancel();
   }
 }
 
