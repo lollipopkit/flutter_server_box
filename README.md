@@ -64,14 +64,16 @@ After you read the above, you can open an [issue](https://github.com/lollipopkit
 
 ## 🧱 Contributions
 
-Any positive contribution is welcome.
+Any positive contribution is welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the development setup, the commit convention, the checks to run, and how translations work.
+
+Contributors sign the [CLA](CLA.md) ([中文](CLA_zh.md)) once, by leaving a single comment on their first pull request. It grants the right to ship your work in the App Store builds alongside the AGPLv3 source — you keep the copyright to what you wrote.
 
 If I forgot to add your name to the contributors list, please add a comment in the issue or PR you opened to let me know, I will add it as soon as possible.
 
 ### Development
 
-1. Setup [Flutter](https://flutter.dev/docs/get-started/install) environment.
-2. Clone this repo, run `flutter run` to start the app.
+1. Setup [Flutter](https://flutter.dev/docs/get-started/install) and [Rust](https://rustup.rs) environments.
+2. Clone this repo, run `make deps` then `make run` to start the app.
 3. Run `dart run fl_build -p PLATFORM` to build the app.
 
 ### Translation

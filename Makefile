@@ -14,7 +14,7 @@ DMG_PATH ?=
 TAP_REPO_PATH ?=
 
 .PHONY: help deps pub-get run run-device analyze test test-one coverage \
-	gen gen-build gen-build-clean gen-l10n build build-android build-ios \
+	test-cla gen gen-build gen-build-clean gen-l10n build build-android build-ios \
 	build-macos build-linux build-windows clean release-macos-dmg package-dmg \
 	sync-homebrew-cask monitor-dev
 
@@ -30,6 +30,7 @@ help:
 		'  test               Run all tests' \
 		'  test-one           Run a single test: make test-one TEST=test/foo_test.dart' \
 		'  coverage           Run tests with coverage output' \
+		'  test-cla           Test the CLA check in .github/workflows/cla.yml (needs node)' \
 		'' \
 		'Code generation:' \
 		'  gen                Run build_runner and gen-l10n' \
@@ -88,6 +89,9 @@ test-one:
 
 coverage:
 	$(FLUTTER) test --coverage
+
+test-cla:
+	node scripts/cla_workflow_test.js
 
 gen: gen-build gen-l10n
 
