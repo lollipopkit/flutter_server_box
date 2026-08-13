@@ -1,4 +1,3 @@
-import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/server_status_update_req.dart';
@@ -23,9 +22,6 @@ class SshDataSource implements ServerDataSource {
   /// Runs the status script on the already-connected host and returns its raw
   /// stdout. Throws whatever the transport throws.
   final Future<String> Function() runScript;
-
-  @override
-  ServerCapabilities get capabilities => ServerCapabilities.ssh;
 
   @override
   Future<ServerStatus> fetchStatus(ServerStatus into) async {

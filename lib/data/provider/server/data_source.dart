@@ -1,4 +1,3 @@
-import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/status_history.dart';
 
@@ -12,12 +11,11 @@ import 'package:server_box/data/model/server/status_history.dart';
 ///
 /// Deliberately narrow: this covers *reading status*, not the SSH session
 /// itself. Terminal, SFTP and port forwarding stay with `ServerNotifier`
-/// because they are a different capability, declared through
-/// [ServerCapabilities.shell] rather than by testing the runtime type.
+/// because they are a different capability. What a server can do is asked of
+/// `ServerState.capabilities`, and not of a source: the answer depends on what
+/// the agent grants, which a source built at connect time cannot know, so a
+/// getter here could only ever hold a second, staler answer.
 abstract interface class ServerDataSource {
-  /// What this transport can do. The UI reads it off `ServerState`.
-  ServerCapabilities get capabilities;
-
   /// Fetches one sample and applies it onto [into], returning the result.
   ///
   /// Implementations mutate and return [into] rather than building a fresh

@@ -1,11 +1,11 @@
 import 'package:server_box/core/utils/monitor_exec.dart';
-import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor_metrics_mapper.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/status_history.dart';
+import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/data_source.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 
@@ -21,9 +21,6 @@ class MonitorHttpDataSource implements ServerDataSource {
   final ServerConnectCredentialMonitorHttp credential;
   final MonitorHttpClient _client;
 
-  @override
-  ServerCapabilities get capabilities => ServerCapabilities.monitorHttp;
-
   /// Whether this source was built from the same connection config, i.e.
   /// whether it can be reused across a refresh or must be rebuilt (and
   /// re-logged-in) instead.
@@ -32,7 +29,11 @@ class MonitorHttpDataSource implements ServerDataSource {
 
   /// Runs commands through the agent, on the session the status poll already
   /// authenticated — so the process list does not log in again per command.
-  late final ServerExec exec = MonitorExec(_client);
+  ///
+  /// [system] is what the agent reported it runs on; it decides which
+  /// interpreter a script is fed to, and arrives from the same probe as the
+  /// grant, so it is passed in rather than held here.
+  ServerExec execOn(SystemType? system) => MonitorExec(_client, system: system);
 
   /// What the agent says it allows, and what it runs on.
   ///

@@ -64,8 +64,10 @@ struct ExecResponse {
     /// Whether either stream hit [`MAX_OUTPUT`], so a caller knows the output
     /// it is parsing is a prefix.
     truncated: bool,
-    /// Whether [`TIMEOUT`] elapsed. The process is killed, and whatever it had
-    /// already written is returned.
+    /// Whether [`TIMEOUT`] elapsed. The process is killed and both streams
+    /// come back empty: they are read as one future together with the wait, so
+    /// abandoning it abandons what was buffered too. A caller gets the fact
+    /// that it timed out rather than a partial answer it might parse.
     timed_out: bool,
 }
 
@@ -137,9 +139,10 @@ async fn run(
     stdin: Option<&str>,
     env: Option<&HashMap<String, String>>,
 ) -> std::io::Result<ExecResponse> {
-    let mut command = Command::new(shell());
+    let (shell, flag) = shell();
+    let mut command = Command::new(shell);
     command
-        .arg("-c")
+        .arg(flag)
         .arg(cmd)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -162,11 +165,9 @@ async fn run(
         drop(pipe);
     }
 
-    let mut timed_out = false;
     let output = match tokio::time::timeout(TIMEOUT, child.wait_with_output()).await {
         Ok(result) => result?,
         Err(_) => {
-            timed_out = true;
             // `kill_on_drop` handles the process; what is lost is whatever it
             // had buffered, which is the price of not waiting forever.
             return Ok(ExecResponse {
@@ -174,7 +175,7 @@ async fn run(
                 stdout: String::new(),
                 stderr: String::new(),
                 truncated: false,
-                timed_out,
+                timed_out: true,
             });
         }
     };
@@ -186,7 +187,7 @@ async fn run(
         stdout,
         stderr,
         truncated: out_cut || err_cut,
-        timed_out,
+        timed_out: false,
     })
 }
 
@@ -203,9 +204,17 @@ fn cap(bytes: Vec<u8>) -> (String, bool) {
     (String::from_utf8_lossy(&bytes[..end]).into_owned(), true)
 }
 
-/// `/bin/sh`, not the account's login shell: this runs one command and reads
-/// its output, so what matters is that the syntax is the one callers write,
-/// not that it matches an interactive session.
-fn shell() -> &'static str {
-    if cfg!(windows) { "cmd" } else { "/bin/sh" }
+/// The shell to hand the command to, and the switch that means "this is the
+/// command" — `cmd.exe` spells it `/C`, and given `-c` it looks for a file by
+/// that name and fails without running anything.
+///
+/// `/bin/sh` rather than the account's login shell: this runs one command and
+/// reads its output, so what matters is that the syntax is the one callers
+/// write, not that it matches an interactive session.
+fn shell() -> (&'static str, &'static str) {
+    if cfg!(windows) {
+        ("cmd", "/C")
+    } else {
+        ("/bin/sh", "-c")
+    }
 }

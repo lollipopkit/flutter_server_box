@@ -338,6 +338,11 @@ extension _Sessions on _FileTabPageState {
 /// its monitor agent has nothing to carry one — listing it here would offer a
 /// browser that can never open. Does not depend on what the agent grants, so
 /// it needs no probe: no grant produces a byte stream today.
+///
+/// That last sentence is what has to be revisited when
+/// `ServerCapabilities.byteStream`'s TODO lands — a grant will decide it then,
+/// and this call has to pass `granted:` the way `ServerFuncBtns` does, or the
+/// two will disagree about the same server.
 bool _canBrowse(Spi spi) =>
     ServerCapabilities.of(ServerConnectCredential.fromSpi(spi)).byteStream;
 

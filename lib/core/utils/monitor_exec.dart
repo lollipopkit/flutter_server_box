@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
+import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 
 /// [ServerExec] over a `monitor` agent's HTTP API.
@@ -16,9 +17,13 @@ import 'package:server_box/data/provider/server/monitor_http.dart';
 /// (`remote_access.full_access`) and re-checks per request, so this is never
 /// the thing granting access — it only asks.
 class MonitorExec implements ServerExec {
-  const MonitorExec(this.client);
+  const MonitorExec(this.client, {this.system});
 
   final MonitorHttpClient client;
+
+  /// What the agent runs on, from its own `/capabilities`. Decides the
+  /// interpreter a script with no [ServerExec.run] `entry` is fed to.
+  final SystemType? system;
 
   @override
   Future<ExecResult> run(
@@ -33,15 +38,19 @@ class MonitorExec implements ServerExec {
     // and the script reaches it on stdin, so newlines, quotes and heredocs
     // survive without every caller getting shell quoting right.
     final out = await client.exec(
-      entry ?? 'cat | sh',
+      entry ?? defaultScriptEntry(system),
       stdin: '${stdin ?? ''}$script\n',
       env: env,
     );
 
     if (out.truncated) {
+      // Says how much came back rather than what was asked for: a script's
+      // first line is where the sudo password is, base64 in a pipeline, and a
+      // log is something the user can export and send to someone.
       Loggers.app.warning(
-        'Monitor exec output was truncated by the agent; what follows is a '
-        'prefix: ${script.split('\n').first}',
+        'Monitor exec output was truncated by the agent at '
+        '${out.stdout.length + out.stderr.length} bytes; what the caller '
+        'parses is a prefix',
       );
     }
 
@@ -51,8 +60,8 @@ class MonitorExec implements ServerExec {
     final stderr = out.timedOut
         // Said in stderr because that is where the caller is already looking
         // for why a command produced nothing; the agent kills the process and
-        // returns no output at all, so there is nothing here to pollute.
-        ? 'The monitor agent stopped this command for taking too long.'
+        // returns nothing else, so there is nothing here to pollute.
+        ? libL10n.timeout
         : out.stderr;
     if (out.stdout.isNotEmpty) onStdout?.call(out.stdout);
     if (stderr.isNotEmpty) onStderr?.call(stderr);

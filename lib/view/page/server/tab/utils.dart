@@ -96,13 +96,28 @@ extension _Operation on _ServerPageState {
   /// A connection is opened for it if there is none — a server reached over
   /// its monitor agent holds none until something needs one — and the failure
   /// to open one is shown the same way a failure to run the command is.
+  ///
+  /// It is the *script* these run, so the script has to be there: a monitor
+  /// server's status never writes one, and a shell that cannot find it exits
+  /// 127 quietly, which reads as a machine that ignored the request.
   Future<void> _power(ServerState srv, ShellFunc func) async {
     try {
       final exec = await ref.read(serverProvider(srv.spi.id).notifier)
-          .ensureExec();
-      await exec.runWithSudo(
-        func.exec(srv.spi.id, systemType: srv.status.system, customDir: null),
+          .ensureScriptExec();
+      final result = await exec.runWithSudo(
+        func.exec(
+          srv.spi.id,
+          systemType: srv.status.system,
+          customDir: srv.spi.custom?.scriptDir,
+        ),
       );
+      // Checked rather than assumed: shutting a machine down and being told
+      // nothing is indistinguishable from it having worked, right up until the
+      // status keeps refreshing.
+      if (!result.succeeded && mounted) {
+        final said = result.combined.trim();
+        context.showSnackBar(said.isEmpty ? libL10n.fail : said);
+      }
     } catch (e, s) {
       Loggers.app.warning('${func.name} ${srv.spi.name}', e, s);
       if (mounted) context.showSnackBar('$e');

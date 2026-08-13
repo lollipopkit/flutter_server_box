@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:server_box/data/model/server/system.dart';
+
 /// What a command left behind.
 class ExecResult {
   const ExecResult({
@@ -23,6 +25,19 @@ class ExecResult {
 }
 
 typedef OnExecOutput = void Function(String chunk);
+
+/// The interpreter a script is fed to when the caller names none.
+///
+/// Depends on the machine, which is why a [ServerExec] is built knowing what it
+/// is talking to: Windows has no `sh`, and an OpenSSH server there hands the
+/// command line to `cmd.exe`, so a POSIX pipeline is not a command at all —
+/// the script would be piped into something that never runs and the caller
+/// would see an empty answer rather than an error. PowerShell reads a script
+/// on stdin with `-Command -`.
+String defaultScriptEntry(SystemType? system) => switch (system) {
+  SystemType.windows => 'powershell -NoProfile -Command -',
+  _ => 'cat | sh',
+};
 
 /// Running one command on a server and collecting what it printed.
 ///

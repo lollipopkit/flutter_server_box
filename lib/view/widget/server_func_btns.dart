@@ -482,14 +482,18 @@ Future<void> _copyDesktopSshPasswordIfNeeded(
   }
 }
 
-/// Makes sure a command can be run before opening a page that runs one.
+/// Opens whatever connection running a command needs, before opening a page
+/// that runs one.
 ///
 /// Which transport that turns out to be is [ServerNotifier.ensureExec]'s
 /// business — over SSH it connects a client, through a monitor agent there is
-/// nothing to connect. Connecting here rather than only reporting a missing
-/// connection: the SSH path builds its client during the status fetch, so a
-/// server the user has not looked at yet has none, and "wait for the
-/// connection" would be advice that never comes true.
+/// nothing to connect, so for that transport this only reports what the page
+/// would have reported anyway. It is not a permission check: an agent that has
+/// since switched its grant off answers 403 to the first command, inside the
+/// page. Connecting here rather than only reporting a missing connection: the
+/// SSH path builds its client during the status fetch, so a server the user
+/// has not looked at yet has none, and "wait for the connection" would be
+/// advice that never comes true.
 Future<bool> _ensureExec(BuildContext context, String id, WidgetRef ref) {
   return _ensure(context, id, ref, (n) => n.ensureExec());
 }

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
+import 'package:server_box/data/model/server/system.dart';
 
 /// [ServerExec] over an SSH connection.
 ///
@@ -10,9 +11,14 @@ import 'package:server_box/data/model/server/server_exec.dart';
 /// running a command has never needed the interactive shell the terminal page
 /// holds open.
 class SshExec implements ServerExec {
-  const SshExec(this.client);
+  const SshExec(this.client, {this.system});
 
   final SSHClient client;
+
+  /// What the far end runs, which decides the interpreter a script with no
+  /// [ServerExec.run] `entry` is fed to. Null before the first status fetch
+  /// has said, which reads as POSIX.
+  final SystemType? system;
 
   @override
   Future<ExecResult> run(
@@ -27,7 +33,7 @@ class SshExec implements ServerExec {
       // Fed on stdin rather than passed as an argument: a script with
       // newlines, quotes or a heredoc in it survives that way, and shell
       // quoting is not something every caller should have to get right.
-      entry ?? 'cat | sh',
+      entry ?? defaultScriptEntry(system),
       environment: env,
     );
 

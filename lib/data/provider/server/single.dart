@@ -194,6 +194,9 @@ class ServerNotifier extends _$ServerNotifier {
   void _setFailedState(ServerStatus status, {bool closeClient = false}) {
     final client = state.client;
     unawaited(_disposePersistentShell());
+    // A server that went away may come back without what was on it: a reboot
+    // clears `/tmp`, where the script lives by default.
+    _scriptWritten = false;
     if (closeClient) {
       client?.close();
     }
@@ -314,7 +317,9 @@ class ServerNotifier extends _$ServerNotifier {
     );
 
     try {
-      updateStatus(await source.fetchStatus(_copyStatus(state.status)));
+      final status = await source.fetchStatus(_copyStatus(state.status));
+      if (!_isRefreshCurrent(operation, spi)) return;
+      updateStatus(status);
       // Alongside the status rather than once at connect: what the agent
       // allows is its own config, which can change under a running app, and
       // this poll is already authenticated and periodic. A failure here is
@@ -323,6 +328,10 @@ class ServerNotifier extends _$ServerNotifier {
       if (source is MonitorHttpDataSource) {
         try {
           final caps = await source.fetchCapabilities();
+          // The server may have been edited while this was in flight, in which
+          // case this answer describes the agent it used to point at — and the
+          // platform it reports decides which script gets installed.
+          if (!_isRefreshCurrent(operation, spi)) return;
           state = state.copyWith(remoteAccess: caps.remoteAccess);
           // The agent knows what it is running on. Over SSH this takes a
           // command and its output; here it arrives with the answer the app
@@ -402,7 +411,10 @@ class ServerNotifier extends _$ServerNotifier {
     final credential = ServerConnectCredential.fromSpi(state.spi);
     switch (credential) {
       case ServerConnectCredentialSsh():
-        return SshExec(await ensureShellClient());
+        return SshExec(
+          await ensureShellClient(),
+          system: state.status.system,
+        );
       case ServerConnectCredentialMonitorHttp():
         final source = _resolveSource(credential);
         if (source is! MonitorHttpDataSource) {
@@ -410,35 +422,38 @@ class ServerNotifier extends _$ServerNotifier {
             'A monitor credential resolved to a ${source.runtimeType}',
           );
         }
-        return source.exec;
+        return source.execOn(state.status.system);
     }
   }
 
-  /// Whether the generated script has been written to this server during this
-  /// notifier's life. Not persisted: the script carries the app's build number
-  /// and a relaunch is exactly when it may need rewriting.
+  /// Whether the generated script has been written to this server since the
+  /// last time it was reachable.
+  ///
+  /// Not persisted: the script carries the app's build number, and a relaunch
+  /// is exactly when it may need rewriting. Cleared whenever the server drops
+  /// out, which is what covers a machine that rebooted and took `/tmp` with
+  /// it — the script is gone and nothing else would notice, since a monitor
+  /// server's status never reads it.
   bool _scriptWritten = false;
 
   /// A [ServerExec] with the generated script present on the server.
   ///
   /// What the process list wants, rather than plain [ensureExec]: it runs one
   /// of the script's functions, and the script only gets there because
-  /// something put it there. The SSH status flow writes it as part of
-  /// fetching, so over SSH this is the same thing; a monitor server's status
-  /// arrives as JSON and never touches the machine, so nothing has written it
-  /// yet.
+  /// something put it there. The SSH status flow writes it while fetching and
+  /// says so through [_scriptWritten]; a monitor server's status arrives as
+  /// JSON and never touches the machine, so nothing has written it yet.
+  ///
+  /// Asked of the flag rather than of the transport: an SSH client can exist
+  /// without a status fetch ever having run — the SFTP button and the AI agent
+  /// tool both open one — and assuming otherwise runs a script that is not
+  /// there.
   ///
   /// Throws when the script cannot be written, since the alternative is a page
   /// reporting an empty list on a server that has plenty of processes.
   Future<ServerExec> ensureScriptExec() async {
     final exec = await ensureExec();
     if (_scriptWritten) return exec;
-
-    final credential = ServerConnectCredential.fromSpi(state.spi);
-    if (credential is ServerConnectCredentialSsh) {
-      _scriptWritten = true;
-      return exec;
-    }
 
     final spi = state.spi;
     final system = state.status.system;
@@ -457,9 +472,16 @@ class ServerNotifier extends _$ServerNotifier {
       ),
     );
     if (!result.succeeded) {
-      // `SSHErrType.writeScript` names a transport this did not use, but it is
-      // the app's existing name for this failure and carries the advice that
-      // fits it — the script directory is not writable.
+      // The same fallback the SSH path takes: the default directory may be
+      // read-only or mounted `noexec`, and the next attempt should try the
+      // other one rather than the one that just failed. Skipped when the user
+      // named a directory — that one is their decision, not ours to move.
+      if (spi.custom?.scriptDir == null) {
+        ShellFuncManager.switchScriptDir(spi.id, systemType: system);
+      }
+      // `SSHErrType.writeScript` names a transport this did not necessarily
+      // use, but it is the app's existing name for this failure and carries
+      // the advice that fits it.
       throw SSHErr(
         type: SSHErrType.writeScript,
         message: 'Write script to ${spi.name}: ${result.combined}',
@@ -760,6 +782,7 @@ class ServerNotifier extends _$ServerNotifier {
               '${writeScriptResult.exitCode}: $output';
         } else {
           Loggers.app.info('Script written successfully for ${spi.name}');
+          _scriptWritten = true;
         }
       } on SSHAuthAbortError catch (e) {
         _failSsh(SSHErrType.auth, e, closeClient: true);
