@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 env:
-  FLUTTER_VERSION: '3.44.8'
+  FLUTTER_VERSION: '3.44.9'
 
 jobs:
   reproducibilityCheck:
