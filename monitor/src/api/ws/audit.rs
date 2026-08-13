@@ -26,6 +26,8 @@ pub enum Kind {
     Ticket,
     Tunnel,
     Terminal,
+    /// A one-off command run through `api::exec`.
+    Exec,
 }
 
 impl Kind {
@@ -34,6 +36,7 @@ impl Kind {
             Kind::Ticket => "ticket",
             Kind::Tunnel => "tunnel",
             Kind::Terminal => "terminal",
+            Kind::Exec => "exec",
         }
     }
 }

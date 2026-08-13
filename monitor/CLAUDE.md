@@ -133,6 +133,13 @@ the panel password can't switch them on), and share the admission checks in
   usable as a pivot into the agent's network. Multi-hop is the SSH layer's job
   (configure the far host with this one as its jump server). Port forwarding
   needs nothing here — the app's forwards are channels inside that stream.
+- **`POST /api/v1/exec`** — one command, its output, its exit code, for the
+  pages that parse what a command printed (processes, units, containers,
+  snippets, power). A request rather than a stream because none of those
+  callers streams or types. Deliberately not the terminal endpoint with an
+  `exec` frame: a PTY is one stream shared with what the user is typing, so a
+  command written into it lands in their shell — which is why `terminal.rs`
+  rejects such a frame, locked by a test.
 - **`/api/v1/terminal/ws`** — the panel's terminal. The agent is an SSH *client*
   rather than a shell spawner, so a session carries the privileges of the SSH
   account the browser authenticated as; the panel password alone grants no

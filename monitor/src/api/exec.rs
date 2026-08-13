@@ -1,0 +1,194 @@
+//! `POST /api/v1/exec` — run one command and hand back what it printed.
+//!
+//! The pages that list processes, units and containers, and the ones that run
+//! a snippet or power the machine down, all want the same thing: a command
+//! goes out, its output comes back. Over SSH that is a second channel on an
+//! existing connection; here it is a request, which is the shape those callers
+//! wanted anyway — none of them streams, and none of them types.
+//!
+//! Not the terminal endpoint with an `exec` message bolted on. A PTY is one
+//! stream shared with whatever the user is typing, so a command written into
+//! it lands in their shell and its output is indistinguishable from theirs.
+//! That is why `terminal.rs` refuses an `exec` frame, and why this is a
+//! separate door rather than a wider one.
+//!
+//! Gated on `remote_access.full_access`, the same grant the shell needs and
+//! for the same reason: anyone who can open a shell can run anything in it, so
+//! there is one decision here, not two.
+
+use std::process::Stdio;
+use std::sync::Arc;
+use std::time::Duration;
+
+use ntex::web::{self, HttpRequest, HttpResponse};
+use serde::{Deserialize, Serialize};
+use tokio::io::AsyncWriteExt;
+use tokio::process::Command;
+
+use super::server::AppState;
+use super::ws::audit::{Action, Event, Kind, Outcome, peer_ip};
+use super::server::verify_auth;
+use super::ws;
+
+/// Long enough for a package listing on a slow disk, short enough that a
+/// command waiting on input nobody will type does not hold a worker forever.
+const TIMEOUT: Duration = Duration::from_secs(60);
+
+/// What is kept of each stream. A caller parsing `ps` output does not need
+/// more, and an unbounded read is a way for one command to exhaust memory.
+const MAX_OUTPUT: usize = 1024 * 1024;
+
+#[derive(Deserialize)]
+pub struct ExecRequest {
+    /// Fed to the shell on stdin rather than passed as an argument, so a
+    /// script with newlines, quotes or a heredoc survives.
+    cmd: String,
+    /// Written before the command's own input closes — how a sudo password
+    /// gets in without a terminal to type it into.
+    #[serde(default)]
+    stdin: Option<String>,
+}
+
+#[derive(Serialize)]
+struct ExecResponse {
+    /// Null when the process was killed rather than exiting.
+    exit_code: Option<i32>,
+    stdout: String,
+    stderr: String,
+    /// Whether either stream hit [`MAX_OUTPUT`], so a caller knows the output
+    /// it is parsing is a prefix.
+    truncated: bool,
+    /// Whether [`TIMEOUT`] elapsed. The process is killed, and whatever it had
+    /// already written is returned.
+    timed_out: bool,
+}
+
+pub async fn exec(
+    req: HttpRequest,
+    body: web::types::Json<ExecRequest>,
+    app_state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    if verify_auth(&req, &app_state.config.get_jwt_secret()).is_err() {
+        return Ok(HttpResponse::Unauthorized().finish());
+    }
+
+    let remote_ip = peer_ip(&req);
+    let secure = ws::is_secure_transport(&req, app_state.tls_active);
+
+    // Re-checked here rather than trusted from the capabilities the client was
+    // told earlier: that answer is a UI hint, and the UI is not a boundary.
+    if !app_state.full_access_allowed(secure) {
+        Event::new(Kind::Exec, Action::Denied, Outcome::Denied)
+            .remote_ip(remote_ip)
+            .detail("full access disabled")
+            .record(&app_state.db)
+            .await;
+        return Ok(HttpResponse::Forbidden().finish());
+    }
+
+    let cmd = body.cmd.clone();
+    if cmd.trim().is_empty() {
+        return Ok(HttpResponse::BadRequest().finish());
+    }
+
+    // Logged before it runs and by what it was asked to do, not by what it
+    // did: a command that hangs or kills the agent still has to appear here.
+    Event::new(Kind::Exec, Action::Open, Outcome::Ok)
+        .remote_ip(remote_ip.clone())
+        .subject(first_line(&cmd))
+        .record(&app_state.db)
+        .await;
+
+    match run(&cmd, body.stdin.as_deref()).await {
+        Ok(resp) => Ok(HttpResponse::Ok().json(&resp)),
+        Err(e) => {
+            Event::new(Kind::Exec, Action::Close, Outcome::Error)
+                .remote_ip(remote_ip)
+                .detail(e.to_string())
+                .record(&app_state.db)
+                .await;
+            Ok(HttpResponse::InternalServerError().finish())
+        }
+    }
+}
+
+/// The first line, capped — an audit row records which command ran, not a
+/// script's entire body.
+fn first_line(cmd: &str) -> String {
+    let line = cmd.lines().next().unwrap_or("").trim();
+    if line.len() <= 200 {
+        return line.to_string();
+    }
+    let mut end = 200;
+    while !line.is_char_boundary(end) {
+        end -= 1;
+    }
+    format!("{}…", &line[..end])
+}
+
+async fn run(cmd: &str, stdin: Option<&str>) -> std::io::Result<ExecResponse> {
+    let mut child = Command::new(shell())
+        .arg("-c")
+        .arg(cmd)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .kill_on_drop(true)
+        .spawn()?;
+
+    if let Some(mut pipe) = child.stdin.take() {
+        if let Some(data) = stdin {
+            pipe.write_all(data.as_bytes()).await?;
+        }
+        // Closed either way: a command reading stdin would otherwise wait for
+        // input that is never coming, and take the timeout to find out.
+        drop(pipe);
+    }
+
+    let mut timed_out = false;
+    let output = match tokio::time::timeout(TIMEOUT, child.wait_with_output()).await {
+        Ok(result) => result?,
+        Err(_) => {
+            timed_out = true;
+            // `kill_on_drop` handles the process; what is lost is whatever it
+            // had buffered, which is the price of not waiting forever.
+            return Ok(ExecResponse {
+                exit_code: None,
+                stdout: String::new(),
+                stderr: String::new(),
+                truncated: false,
+                timed_out,
+            });
+        }
+    };
+
+    let (stdout, out_cut) = cap(output.stdout);
+    let (stderr, err_cut) = cap(output.stderr);
+    Ok(ExecResponse {
+        exit_code: output.status.code(),
+        stdout,
+        stderr,
+        truncated: out_cut || err_cut,
+        timed_out,
+    })
+}
+
+/// Lossy on purpose: a command's output is bytes, and refusing to report
+/// anything because one of them is not UTF-8 helps nobody.
+fn cap(bytes: Vec<u8>) -> (String, bool) {
+    if bytes.len() <= MAX_OUTPUT {
+        return (String::from_utf8_lossy(&bytes).into_owned(), false);
+    }
+    let mut end = MAX_OUTPUT;
+    while end > 0 && (bytes[end] & 0b1100_0000) == 0b1000_0000 {
+        end -= 1;
+    }
+    (String::from_utf8_lossy(&bytes[..end]).into_owned(), true)
+}
+
+/// `/bin/sh`, not the account's login shell: this runs one command and reads
+/// its output, so what matters is that the syntax is the one callers write,
+/// not that it matches an interactive session.
+fn shell() -> &'static str {
+    if cfg!(windows) { "cmd" } else { "/bin/sh" }
+}

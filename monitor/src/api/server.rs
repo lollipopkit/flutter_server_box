@@ -175,6 +175,7 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
                     .route("/ws-ticket", web::post().to(issue_ws_ticket))
                     .route("/tunnel/ws", web::get().to(tunnel_ws))
                     .route("/terminal/ws", web::get().to(terminal_ws))
+                    .route("/exec", web::post().to(crate::api::exec::exec))
                     .route(
                         "/remote-access/full-access",
                         web::delete().to(disable_full_access),
@@ -964,7 +965,7 @@ async fn touch_viewer_heartbeat(app_state: &AppState) {
     *app_state.last_viewer_seen.write().await = chrono::Utc::now();
 }
 
-fn verify_auth(req: &HttpRequest, jwt_secret: &str) -> Result<Claims> {
+pub(crate) fn verify_auth(req: &HttpRequest, jwt_secret: &str) -> Result<Claims> {
     let auth_header = req
         .headers()
         .get("Authorization")

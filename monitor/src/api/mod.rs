@@ -1,3 +1,4 @@
+pub mod exec;
 pub mod cors;
 pub mod auth;
 pub mod ratelimit;
