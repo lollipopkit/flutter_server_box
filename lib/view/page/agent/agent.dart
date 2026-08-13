@@ -875,6 +875,13 @@ class _AgentPageState extends ConsumerState<AgentPage>
                         child: ListTile(
                           dense: true,
                           selected: selected,
+                          // Default is 16 either side. In a column this narrow
+                          // that is the width the title wants, and it was what
+                          // held the menu button away from the edge.
+                          contentPadding: const EdgeInsets.only(
+                            left: 12,
+                            right: 4,
+                          ),
                           title: Text(
                             conversation.title.isEmpty
                                 ? context.l10n.askAiUntitledConversation
@@ -895,20 +902,15 @@ class _AgentPageState extends ConsumerState<AgentPage>
                                     Navigator.pop(context);
                                   }
                                 },
-                          trailing: PopupMenuButton<_HistoryAction>(
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints.tightFor(
-                              width: 32,
-                              height: 32,
-                            ),
-                            // The row's own tap is already refused while a
-                            // tool is running. Renaming is harmless, but
-                            // deleting the conversation being worked in
-                            // clears the timeline the execution is about to
-                            // append its output to — and the execution keeps
-                            // going, since only `dispose` cancels it.
+                          // The row's own tap is already refused while a
+                          // tool is running. Renaming is harmless, but
+                          // deleting the conversation being worked in clears
+                          // the timeline the execution is about to append its
+                          // output to — and the execution keeps going, since
+                          // only `dispose` cancels it.
+                          trailing: PopupMenu<_HistoryAction>(
                             enabled: !_isWorking,
-                            itemBuilder: (context) => [
+                            items: [
                               PopupMenuItem(
                                 value: _HistoryAction.rename,
                                 child: Text(
