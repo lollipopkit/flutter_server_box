@@ -763,13 +763,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Parsing status okupansi oleh Docker agak lambat';
 
   @override
-  String get forceSinglePane => 'Satu kolom';
-
-  @override
-  String get forceSinglePaneTip =>
-      'Tetap satu kolom seberapa pun lebar jendela, alih-alih menampilkan di samping daftar apa yang dibukanya — server di samping detailnya, terminal dan penjelajah berkas di samping sesinya.';
-
-  @override
   String get fullAccessRefused =>
       'Agen ini tidak menyediakan terminal tanpa kredensial.';
 

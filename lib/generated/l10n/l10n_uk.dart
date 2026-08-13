@@ -765,13 +765,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Парсинг статусу зайнятості Docker є відносно повільним.';
 
   @override
-  String get forceSinglePane => 'Одна колонка';
-
-  @override
-  String get forceSinglePaneTip =>
-      'Завжди одна колонка незалежно від ширини вікна, замість показу поруч зі списком того, що він відкриває — серверів поруч з їхніми деталями, терміналів і файлових браузерів поруч з їхніми сеансами.';
-
-  @override
   String get fullAccessRefused =>
       'Цей агент не пропонує термінал без облікових даних.';
 

@@ -145,8 +145,6 @@
   "openLastPath": "Ouvrir le dernier chemin",
   "openLastPathTip": "Les différents serveurs auront des journaux différents, et le journal est le chemin vers la sortie",
   "parseContainerStatsTip": "L'analyse de l'occupation des conteneurs Docker est relativement lente.",
-  "forceSinglePane": "Une seule colonne",
-  "forceSinglePaneTip": "Garder une seule colonne quelle que soit la largeur de la fenêtre, au lieu d'afficher à côté de la liste ce qu'elle ouvre : les serveurs à côté de leurs détails, les terminaux et explorateurs de fichiers à côté de leurs sessions.",
   "fullAccessRefused": "Cet agent ne propose pas de terminal sans identifiants.",
   "fullAccessInsecure": "Cet agent ne sert le terminal qu'en TLS ou en loopback, et cette connexion est en HTTP non chiffré.",
   "permission": "Permissions",

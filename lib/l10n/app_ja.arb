@@ -145,8 +145,6 @@
   "openLastPath": "最後のパスを開く",
   "openLastPathTip": "異なるサーバーには異なる記録があり、記録されているのは退出時のパスです",
   "parseContainerStatsTip": "Dockerの使用状況の解析は比較的遅いです",
-  "forceSinglePane": "1 列表示",
-  "forceSinglePaneTip": "ウィンドウの幅にかかわらず 1 列のままにし、一覧の横に開いた内容を表示しません——サーバーの詳細も、ターミナルやファイルのセッションも同様です。",
   "fullAccessRefused": "このエージェントは認証情報なしのターミナルを提供していません。",
   "fullAccessInsecure": "このエージェントは TLS またはループバックでのみターミナルを提供しますが、この接続は平文の HTTP です。",
   "permission": "権限",

@@ -145,8 +145,6 @@
   "openLastPath": "Open het laatste pad",
   "openLastPathTip": "Verschillende servers hebben verschillende logs, en de log is het pad naar de uitgang",
   "parseContainerStatsTip": "Het parsen van de bezettingsstatus van Docker is relatief langzaam.",
-  "forceSinglePane": "Eén kolom",
-  "forceSinglePaneTip": "Houd één kolom aan, hoe breed het venster ook is, in plaats van naast de lijst te tonen wat die opent — servers naast hun details, terminals en bestandsbeheer naast hun sessies.",
   "fullAccessRefused": "Deze agent biedt geen terminal zonder inloggegevens.",
   "fullAccessInsecure": "Deze agent biedt de terminal alleen via TLS of loopback aan, en deze verbinding is onversleutelde HTTP.",
   "permission": "Machtigingen",

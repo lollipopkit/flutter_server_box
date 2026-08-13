@@ -764,13 +764,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Docker\'ın doluluk durumunu ayrıştırmak oldukça yavaş.';
 
   @override
-  String get forceSinglePane => 'Tek sütun';
-
-  @override
-  String get forceSinglePaneTip =>
-      'Pencere ne kadar geniş olursa olsun tek sütun kalsın; listenin yanında açtığı şey gösterilmesin — sunucular ayrıntılarının, terminaller ve dosya tarayıcıları oturumlarının yanında.';
-
-  @override
   String get fullAccessRefused => 'Bu aracı kimlik bilgisiz terminal sunmuyor.';
 
   @override

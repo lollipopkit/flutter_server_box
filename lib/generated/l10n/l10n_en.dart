@@ -757,13 +757,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Parsing the occupancy status of Docker is relatively slow.';
 
   @override
-  String get forceSinglePane => 'Single column';
-
-  @override
-  String get forceSinglePaneTip =>
-      'Keep one column however wide the window is, instead of putting a list beside what it opens — servers beside their details, terminals and file browsers beside their sessions.';
-
-  @override
   String get fullAccessRefused =>
       'This agent does not allow access without SSH.';
 

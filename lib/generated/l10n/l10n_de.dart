@@ -763,13 +763,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Das Analysieren des Belegungsstatus durch Docker ist relativ langsam';
 
   @override
-  String get forceSinglePane => 'Eine Spalte';
-
-  @override
-  String get forceSinglePaneTip =>
-      'Immer nur eine Spalte, wie breit das Fenster auch ist, statt neben der Liste zu zeigen, was sie öffnet — Server neben ihren Details, Terminals und Dateibrowser neben ihren Sitzungen.';
-
-  @override
   String get fullAccessRefused =>
       'Dieser Agent bietet kein Terminal ohne Zugangsdaten an.';
 

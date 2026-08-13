@@ -762,13 +762,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Análise de status do Docker pode ser lenta';
 
   @override
-  String get forceSinglePane => 'Coluna única';
-
-  @override
-  String get forceSinglePaneTip =>
-      'Manter uma coluna independentemente da largura da janela, em vez de mostrar ao lado da lista o que ela abre — servidores ao lado dos seus detalhes, terminais e navegadores de arquivos ao lado das suas sessões.';
-
-  @override
   String get fullAccessRefused =>
       'Este agente não oferece um terminal sem credenciais.';
 

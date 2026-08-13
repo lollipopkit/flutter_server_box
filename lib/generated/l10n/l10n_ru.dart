@@ -764,13 +764,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Анализ статуса использования Docker может быть медленным';
 
   @override
-  String get forceSinglePane => 'Одна колонка';
-
-  @override
-  String get forceSinglePaneTip =>
-      'Всегда одна колонка независимо от ширины окна, вместо показа рядом со списком того, что он открывает — серверов рядом с их сведениями, терминалов и файловых браузеров рядом с их сеансами.';
-
-  @override
   String get fullAccessRefused =>
       'Этот агент не предоставляет терминал без учётных данных.';
 

@@ -13,7 +13,6 @@ extension _Server on _AppSettingsPageState {
     return Column(
       children: [
         _buildServerLogoUrl(),
-        _buildForceSinglePane(),
         _buildServerFuncBtns(),
         _buildNetViewType(),
         _buildServerSeq(),
@@ -134,14 +133,6 @@ extension _Server on _AppSettingsPageState {
 
   /// Desktop and tablet only: below the width threshold there is only ever
   /// one column, so the switch would claim to change something it cannot.
-  Widget _buildForceSinglePane() {
-    return ListTile(
-      leading: const Icon(Icons.view_sidebar_outlined, size: _kIconSize),
-      title: TipText(l10n.forceSinglePane, l10n.forceSinglePaneTip),
-      trailing: StoreSwitch(prop: _setting.forceSinglePane),
-    );
-  }
-
   /// Order only. There was a switch above it for whether the buttons lived on
   /// the server card or the detail page; they float over the detail page now,
   /// which works on either layout, so there is nothing left to choose.

@@ -145,8 +145,6 @@
   "openLastPath": "Öffnen Sie den letzten Pfad",
   "openLastPathTip": "Verschiedene Server haben unterschiedliche Einträge, und der Eintrag ist der Pfad zum Ausgang",
   "parseContainerStatsTip": "Das Analysieren des Belegungsstatus durch Docker ist relativ langsam",
-  "forceSinglePane": "Eine Spalte",
-  "forceSinglePaneTip": "Immer nur eine Spalte, wie breit das Fenster auch ist, statt neben der Liste zu zeigen, was sie öffnet — Server neben ihren Details, Terminals und Dateibrowser neben ihren Sitzungen.",
   "fullAccessRefused": "Dieser Agent bietet kein Terminal ohne Zugangsdaten an.",
   "fullAccessInsecure": "Dieser Agent bietet das Terminal nur über TLS oder Loopback an, diese Verbindung ist unverschlüsseltes HTTP.",
   "permission": "Berechtigungen",

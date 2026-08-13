@@ -145,8 +145,6 @@
   "openLastPath": "Buka jalur terakhir",
   "openLastPathTip": "Server yang berbeda akan memiliki catatan yang berbeda, dan catatan tersebut adalah jalur menuju pintu keluar",
   "parseContainerStatsTip": "Parsing status okupansi oleh Docker agak lambat",
-  "forceSinglePane": "Satu kolom",
-  "forceSinglePaneTip": "Tetap satu kolom seberapa pun lebar jendela, alih-alih menampilkan di samping daftar apa yang dibukanya — server di samping detailnya, terminal dan penjelajah berkas di samping sesinya.",
   "fullAccessRefused": "Agen ini tidak menyediakan terminal tanpa kredensial.",
   "fullAccessInsecure": "Agen ini hanya menyajikan terminal melalui TLS atau loopback, sedangkan koneksi ini HTTP polos.",
   "permission": "Izin",

@@ -172,8 +172,6 @@
   "openLastPath": "마지막 경로 열기",
   "openLastPathTip": "서버마다 다른 기록이 있으며, 기록은 종료 시의 경로입니다",
   "parseContainerStatsTip": "Docker 점유 상태 파싱이 비교적 느립니다.",
-  "forceSinglePane": "한 열로 표시",
-  "forceSinglePaneTip": "창 너비와 관계없이 한 열만 사용하고, 목록 옆에 그것이 여는 내용을 표시하지 않습니다 — 서버 상세, 터미널과 파일 브라우저의 세션 모두.",
   "fullAccessRefused": "이 에이전트는 자격 증명 없는 터미널을 제공하지 않습니다.",
   "fullAccessInsecure": "이 에이전트는 TLS 또는 루프백에서만 터미널을 제공하는데, 현재 연결은 평문 HTTP입니다.",
   "permission": "권한",

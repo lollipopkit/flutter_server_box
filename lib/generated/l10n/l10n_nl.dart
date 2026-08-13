@@ -762,13 +762,6 @@ class AppLocalizationsNl extends AppLocalizations {
       'Het parsen van de bezettingsstatus van Docker is relatief langzaam.';
 
   @override
-  String get forceSinglePane => 'Eén kolom';
-
-  @override
-  String get forceSinglePaneTip =>
-      'Houd één kolom aan, hoe breed het venster ook is, in plaats van naast de lijst te tonen wat die opent — servers naast hun details, terminals en bestandsbeheer naast hun sessies.';
-
-  @override
   String get fullAccessRefused =>
       'Deze agent biedt geen terminal zonder inloggegevens.';
 

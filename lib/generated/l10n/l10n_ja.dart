@@ -728,13 +728,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get parseContainerStatsTip => 'Dockerの使用状況の解析は比較的遅いです';
 
   @override
-  String get forceSinglePane => '1 列表示';
-
-  @override
-  String get forceSinglePaneTip =>
-      'ウィンドウの幅にかかわらず 1 列のままにし、一覧の横に開いた内容を表示しません——サーバーの詳細も、ターミナルやファイルのセッションも同様です。';
-
-  @override
   String get fullAccessRefused => 'このエージェントは認証情報なしのターミナルを提供していません。';
 
   @override

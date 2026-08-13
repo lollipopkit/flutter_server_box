@@ -187,12 +187,9 @@ class SettingStore extends HiveStore {
     false,
   );
 
-  /// Keep one column however wide the window is.
-  ///
-  /// The two-pane layout is on by default above its width threshold. This is
-  /// for someone who has the room and does not want it — a preference, not a
-  /// capability, so it overrides the width rather than being overridden by it.
-  late final forceSinglePane = propertyDefault('forceSinglePane', false);
+  // TODO: remove once shipped builds have stopped carrying it — the retired
+  // `forceSinglePane` key stays in the settings box until something clears it.
+  // Nothing reads it, so it costs one unused entry.
 
   /// Width of the list column, wherever one shares the window with what it
   /// opens: the server list, the terminal and file rails, the agent's

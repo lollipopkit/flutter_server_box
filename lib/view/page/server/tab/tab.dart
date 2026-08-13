@@ -199,11 +199,10 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // way the switch took effect whenever something unrelated happened to
     // rebuild, and this column stayed at whatever width it opened with while
     // the others moved.
-    return PaneSettings.listen((single, paneWidth) {
+    return PaneSettings.listen((paneWidth) {
       return _tag.listenVal((val) {
         final filtered = _filterServers(serverOrder);
         return AdaptivePanes(
-          enabled: !single,
           primaryWidth: paneWidth,
           onPrimaryWidthChanged: PaneSettings.saveWidth,
           detailId: selectedSpi?.id,

@@ -727,13 +727,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get parseContainerStatsTip => 'Docker 점유 상태 파싱이 비교적 느립니다.';
 
   @override
-  String get forceSinglePane => '한 열로 표시';
-
-  @override
-  String get forceSinglePaneTip =>
-      '창 너비와 관계없이 한 열만 사용하고, 목록 옆에 그것이 여는 내용을 표시하지 않습니다 — 서버 상세, 터미널과 파일 브라우저의 세션 모두.';
-
-  @override
   String get fullAccessRefused => '이 에이전트는 자격 증명 없는 터미널을 제공하지 않습니다.';
 
   @override

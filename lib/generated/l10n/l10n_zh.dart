@@ -718,13 +718,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get parseContainerStatsTip => 'Docker 解析占用状态较为缓慢';
 
   @override
-  String get forceSinglePane => '单栏显示';
-
-  @override
-  String get forceSinglePaneTip =>
-      '无论窗口多宽都只用一栏，不在列表旁边显示它打开的内容——服务器旁的详情、终端与文件旁的会话。';
-
-  @override
   String get fullAccessRefused => '该 agent 未开放免 SSH 访问。';
 
   @override
@@ -2028,13 +2021,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get parseContainerStatsTip => 'Docker 解析消耗狀態較為緩慢';
-
-  @override
-  String get forceSinglePane => '單欄顯示';
-
-  @override
-  String get forceSinglePaneTip =>
-      '無論視窗多寬都只用一欄，不在清單旁邊顯示它打開的內容——伺服器旁的詳情、終端與檔案旁的對話。';
 
   @override
   String get fullAccessRefused => '該 agent 未開放免 SSH 存取。';

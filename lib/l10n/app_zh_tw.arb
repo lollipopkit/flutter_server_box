@@ -224,8 +224,6 @@
   "openLastPath": "打開上次的路徑",
   "openLastPathTip": "將為每台伺服器紀錄其最後存取路徑",
   "parseContainerStatsTip": "Docker 解析消耗狀態較為緩慢",
-  "forceSinglePane": "單欄顯示",
-  "forceSinglePaneTip": "無論視窗多寬都只用一欄，不在清單旁邊顯示它打開的內容——伺服器旁的詳情、終端與檔案旁的對話。",
   "fullAccessRefused": "該 agent 未開放免 SSH 存取。",
   "fullAccessInsecure": "該 agent 僅在 TLS 或本機回環上開放免 SSH 存取，而目前連線是明文 HTTP。",
   "permission": "權限",

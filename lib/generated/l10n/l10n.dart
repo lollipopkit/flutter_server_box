@@ -1464,18 +1464,6 @@ abstract class AppLocalizations {
   /// **'Parsing the occupancy status of Docker is relatively slow.'**
   String get parseContainerStatsTip;
 
-  /// No description provided for @forceSinglePane.
-  ///
-  /// In en, this message translates to:
-  /// **'Single column'**
-  String get forceSinglePane;
-
-  /// No description provided for @forceSinglePaneTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Keep one column however wide the window is, instead of putting a list beside what it opens — servers beside their details, terminals and file browsers beside their sessions.'**
-  String get forceSinglePaneTip;
-
   /// No description provided for @fullAccessRefused.
   ///
   /// In en, this message translates to:

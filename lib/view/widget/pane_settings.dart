@@ -2,37 +2,29 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/data/res/store.dart';
 
-/// The two settings that govern every list-beside-content layout in the app:
-/// whether to allow a second column at all, and how wide the list is.
+/// How wide the list is in every list-beside-content layout in the app.
 ///
-/// [SbPaneList] binds them to [AdaptiveSideList]; [PaneSettings.listen] binds
-/// them to anything else — the server list, whose detail is a route and so
-/// uses [AdaptivePanes] instead.
+/// [SbPaneList] binds it to [AdaptiveSideList]; [PaneSettings.listen] binds it
+/// to anything else — the server list, whose detail is a route and so uses
+/// [AdaptivePanes] instead.
 ///
 /// The server list, the terminal and file rails and the agent's history all
 /// want exactly this, and each used to spell it out — which is three places to
 /// change a default in and two places to forget.
 ///
-/// Both settings are listened to, not read once. They are changed elsewhere —
-/// the width by dragging the divider on another tab, the switch on the
-/// settings page — and these pages are all kept alive behind each other, so a
-/// value read at build time is a value from whenever that page was last on
-/// screen.
+/// There used to be a second setting here, for forcing one column however wide
+/// the window was. The layouts already collapse to one column when there is no
+/// room for two, so it only ever answered a question nobody was asking on a
+/// window narrow enough for it to matter.
 abstract final class PaneSettings {
-  /// Both settings, listened to rather than read.
+  /// Listened to rather than read once.
   ///
-  /// They are changed elsewhere — the width by dragging a divider on another
-  /// tab, the switch on the settings page — and every page that shows one of
-  /// these columns is kept alive behind the others, so a value read at build
-  /// time is a value from whenever that page was last on screen.
-  static Widget listen(
-    Widget Function(bool single, double width) builder,
-  ) {
-    return Stores.setting.forceSinglePane.listenable().listenVal((single) {
-      return Stores.setting.paneListWidth.listenable().listenVal(
-        (width) => builder(single, width),
-      );
-    });
+  /// It is changed elsewhere — by dragging a divider on another tab — and
+  /// every page that shows one of these columns is kept alive behind the
+  /// others, so a value read at build time is a value from whenever that page
+  /// was last on screen.
+  static Widget listen(Widget Function(double width) builder) {
+    return Stores.setting.paneListWidth.listenable().listenVal(builder);
   }
 
   /// Where a drag ends. Writing it notifies every listener above.
@@ -64,8 +56,8 @@ class SbPaneList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PaneSettings.listen(
-      (single, width) => AdaptiveSideList(
-        enabled: !single && hasContent,
+      (width) => AdaptiveSideList(
+        enabled: hasContent,
         sideWidth: width,
         onSideWidthChanged: PaneSettings.saveWidth,
         sideBuilder: sideBuilder,

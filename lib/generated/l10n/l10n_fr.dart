@@ -770,13 +770,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'L\'analyse de l\'occupation des conteneurs Docker est relativement lente.';
 
   @override
-  String get forceSinglePane => 'Une seule colonne';
-
-  @override
-  String get forceSinglePaneTip =>
-      'Garder une seule colonne quelle que soit la largeur de la fenêtre, au lieu d\'afficher à côté de la liste ce qu\'elle ouvre : les serveurs à côté de leurs détails, les terminaux et explorateurs de fichiers à côté de leurs sessions.';
-
-  @override
   String get fullAccessRefused =>
       'Cet agent ne propose pas de terminal sans identifiants.';
 
