@@ -839,7 +839,6 @@ not-json
       type: ContainerType.docker,
       containerHost: 'ssh://docker.example/run.sock',
       sudo: true,
-      password: 'secret',
     );
 
     expect(

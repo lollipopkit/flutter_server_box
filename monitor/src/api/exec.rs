@@ -41,11 +41,15 @@ const MAX_OUTPUT: usize = 1024 * 1024;
 
 #[derive(Deserialize)]
 pub struct ExecRequest {
-    /// Fed to the shell on stdin rather than passed as an argument, so a
-    /// script with newlines, quotes or a heredoc survives.
+    /// Handed to a shell as the command to run, so it may be a pipeline or
+    /// several lines. This is what the audit log records.
     cmd: String,
-    /// Written before the command's own input closes — how a sudo password
-    /// gets in without a terminal to type it into.
+    /// Written to the command's own stdin — how a sudo password gets in
+    /// without a terminal to type it into.
+    ///
+    /// Never logged, which is the point of it being a separate field: a
+    /// password written into [`ExecRequest::cmd`] would land in the audit row
+    /// below and in the machine's process list.
     #[serde(default)]
     stdin: Option<String>,
     /// Added to the command's environment. A field rather than `export` lines
@@ -122,6 +126,9 @@ pub async fn exec(
 
 /// The first line, capped — an audit row records which command ran, not a
 /// script's entire body.
+///
+/// Reads the command rather than the input it was given, so nothing a caller
+/// sends as a credential is ever quoted here.
 fn first_line(cmd: &str) -> String {
     let line = cmd.lines().next().unwrap_or("").trim();
     if line.len() <= 200 {

@@ -107,6 +107,36 @@ async fn a_failing_command_reports_its_exit_code() {
     assert_eq!(body["exit_code"], 3);
 }
 
+/// What a caller sends as input never reaches the audit row.
+///
+/// The whole reason `stdin` is a field rather than something the caller pipes
+/// inside its own command: `sudo -S` reads its password from there, and a
+/// password written into the command would be recorded here and visible in the
+/// machine's process list.
+#[ntex::test]
+async fn stdin_is_not_audited() {
+    let state = app_state(true).await;
+    let db = state.db.clone();
+    let srv = test_server(state).await;
+    post(
+        &srv,
+        json!({"cmd": "cat > /dev/null", "stdin": "hunter2-not-in-the-log"}),
+    )
+    .await
+    .unwrap();
+
+    let rows: Vec<String> = sqlx::query_scalar(
+        "SELECT coalesce(subject, '') || ' ' || coalesce(detail, '') FROM access_log",
+    )
+    .fetch_all(&db)
+    .await
+    .unwrap();
+    assert!(
+        !rows.iter().any(|r| r.contains("hunter2")),
+        "input must not be recorded, got {rows:?}"
+    );
+}
+
 /// How a sudo password gets in with no terminal to type it into.
 #[ntex::test]
 async fn stdin_reaches_the_command() {

@@ -419,7 +419,6 @@ class ContainerNotifier extends _$ContainerNotifier {
         separator: separator,
       ),
       sudo: needSudo,
-      password: password,
     );
     int? code;
     String raw = '';
@@ -431,6 +430,7 @@ class ContainerNotifier extends _$ContainerNotifier {
       final exec = await ref.read(serverProvider(hostId).notifier).ensureExec();
       final result = await exec.runWithSudo(
         cmd,
+        password: password,
         onStderr: (data) {
           if (data.contains(_podmanEmulationMsg)) {
             isPodmanEmulation = true;
@@ -803,7 +803,8 @@ class ContainerNotifier extends _$ContainerNotifier {
     try {
       final exec = await ref.read(serverProvider(hostId).notifier).ensureExec();
       final result = await exec.runWithSudo(
-        _wrap(cmd, sudo: needSudo, password: password),
+        _wrap(cmd, sudo: needSudo),
+        password: password,
         onStdout: (data) {
           if (ref.mounted) {
             state = state.copyWith(runLog: '${state.runLog}$data');
@@ -868,29 +869,26 @@ class ContainerNotifier extends _$ContainerNotifier {
   String _wrap(
     String cmd, {
     bool sudo = false,
-    String? password,
   }) => buildContainerRuntimeCommand(
     command: cmd,
     type: state.type,
     containerHost: Stores.container.fetch(hostId, state.type),
     sudo: sudo,
-    password: password,
   );
 }
 
 const _jsonFmt = '--format "{{json .}}"';
 
-String _buildSudoCmd(String baseCmd, String password) {
-  final pwdBase64 = base64Encode(utf8.encode(password));
-  return 'echo "$pwdBase64" | base64 -d | sudo -S $baseCmd';
-}
-
+/// The command line for one container-runtime call.
+///
+/// Carries no password: `sudo -S` reads one from stdin, and `ServerExec`'s
+/// `runWithSudo` puts it there. Written into the command instead it would end
+/// up in the agent's audit log and the machine's process list.
 String buildContainerRuntimeCommand({
   required String command,
   required ContainerType type,
   String? containerHost,
   bool sudo = false,
-  String? password,
 }) {
   final environment = <String>['LANG=en_US.UTF-8'];
   if (containerHost?.isNotEmpty ?? false) {
@@ -900,11 +898,7 @@ String buildContainerRuntimeCommand({
     environment.add('$hostVariable=${shellSingleQuote(containerHost!)}');
   }
   if (sudo) {
-    final privilegedCommand = 'env ${environment.join(' ')} $command';
-    if (password != null) {
-      return _buildSudoCmd(privilegedCommand, password);
-    }
-    return 'sudo -S $privilegedCommand';
+    return 'sudo -S env ${environment.join(' ')} $command';
   }
   final exports = environment.map((value) => 'export $value').join(' && ');
   return '$exports && $command';
@@ -934,25 +928,19 @@ enum ContainerCmdType {
     return baseCmd;
   }
 
+  /// Several commands as one, their outputs told apart by [separator].
+  ///
+  /// Privilege is not this function's business: the caller wraps the result
+  /// with `_wrap(sudo: ...)`, and the password reaches `sudo -S` on stdin.
   static String execSelected(
     Iterable<ContainerCmdType> types,
     ContainerType type, {
     String separator = ScriptConstants.separator,
-    bool sudo = false,
-    String? password,
   }) {
     final commands = types
         .map((e) => e.exec(type))
         .join('\necho $separator\n');
 
-    final wrappedCommands = 'sh -c \'${commands.replaceAll("'", "'\\''")}\'';
-
-    if (sudo && password != null) {
-      return _buildSudoCmd(wrappedCommands, password);
-    }
-    if (sudo) {
-      return 'sudo -S $wrappedCommands';
-    }
-    return wrappedCommands;
+    return 'sh -c \'${commands.replaceAll("'", "'\\''")}\'';
   }
 }

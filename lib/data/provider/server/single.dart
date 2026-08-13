@@ -422,10 +422,7 @@ class ServerNotifier extends _$ServerNotifier {
     final credential = ServerConnectCredential.fromSpi(state.spi);
     switch (credential) {
       case ServerConnectCredentialSsh():
-        return SshExec(
-          await ensureShellClient(),
-          system: state.status.system,
-        );
+        return SshExec(await ensureShellClient());
       case ServerConnectCredentialMonitorHttp():
         final source = _resolveSource(credential);
         if (source is! MonitorHttpDataSource) {
@@ -433,7 +430,7 @@ class ServerNotifier extends _$ServerNotifier {
             'A monitor credential resolved to a ${source.runtimeType}',
           );
         }
-        return source.execOn(state.status.system);
+        return source.exec;
     }
   }
 

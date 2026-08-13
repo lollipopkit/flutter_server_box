@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:server_box/data/model/server/system.dart';
-
 /// What a command left behind.
 class ExecResult {
   const ExecResult({
@@ -26,19 +24,6 @@ class ExecResult {
 
 typedef OnExecOutput = void Function(String chunk);
 
-/// The interpreter a script is fed to when the caller names none.
-///
-/// Depends on the machine, which is why a [ServerExec] is built knowing what it
-/// is talking to: Windows has no `sh`, and an OpenSSH server there hands the
-/// command line to `cmd.exe`, so a POSIX pipeline is not a command at all —
-/// the script would be piped into something that never runs and the caller
-/// would see an empty answer rather than an error. PowerShell reads a script
-/// on stdin with `-Command -`.
-String defaultScriptEntry(SystemType? system) => switch (system) {
-  SystemType.windows => 'powershell -NoProfile -Command -',
-  _ => 'cat | sh',
-};
-
 /// Running one command on a server and collecting what it printed.
 ///
 /// The pages that list processes, units and containers, and the ones that run
@@ -58,10 +43,16 @@ String defaultScriptEntry(SystemType? system) => switch (system) {
 abstract interface class ServerExec {
   /// Runs [script] and collects its output.
   ///
-  /// [entry] is the interpreter it is fed to, defaulting to a POSIX shell
-  /// reading the script on stdin — which is how a multi-line script survives
-  /// quoting. [stdin] is written before that input closes, and is how a sudo
-  /// password gets in without a terminal to type it into.
+  /// [script] is handed to the server's own shell as the command to run, so it
+  /// may be a pipeline or several lines. [stdin] is written to it — a real
+  /// input stream, which is how a sudo password gets in without a terminal to
+  /// type it into, and the reason a password never has to be written into the
+  /// command where a log or a process list would see it.
+  ///
+  /// [entry] is for the other shape: something that reads a script on *its*
+  /// stdin rather than running one, which is what installing the status script
+  /// is (`mkdir -p; cat > path; chmod`). Then [entry] is the command and
+  /// [stdin] followed by [script] is what it reads.
   Future<ExecResult> run(
     String script, {
     String? entry,
@@ -84,13 +75,20 @@ const _sudoRejected = [
 ];
 
 extension ServerExecSudo on ServerExec {
-  /// Runs [script], reporting a rejected sudo password as exit code 2.
+  /// Runs [script] with [password] on its stdin, reporting a rejected sudo
+  /// password as exit code 2.
   ///
-  /// The password itself is already inside [script] — callers wrap the command
-  /// with `sudo -S` and feed it — so this only has to notice that it was
-  /// turned down.
+  /// The password goes here rather than into the command `sudo -S` is part of,
+  /// which is what `sudo -S` reading stdin is for. Written into the command it
+  /// would end up wherever that command is recorded — the agent's audit log,
+  /// the machine's process list, a debug log — and none of those are places a
+  /// password should be recoverable from.
+  ///
+  /// Null when the caller has no password to offer, which is the case where
+  /// the far side is expected to allow the command without one.
   Future<ExecResult> runWithSudo(
     String script, {
+    String? password,
     String? entry,
     OnExecOutput? onStdout,
     OnExecOutput? onStderr,
@@ -99,6 +97,9 @@ extension ServerExecSudo on ServerExec {
     final result = await run(
       script,
       entry: entry,
+      // A newline of its own: `sudo -S` reads one line and stops, and a
+      // password the user did not end with Enter would otherwise hang it.
+      stdin: password == null ? null : '$password\n',
       onStdout: onStdout,
       onStderr: (chunk) {
         onStderr?.call(chunk);

@@ -1,6 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
-import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 
 /// [ServerExec] over a `monitor` agent's HTTP API.
@@ -17,13 +16,9 @@ import 'package:server_box/data/provider/server/monitor_http.dart';
 /// (`remote_access.full_access`) and re-checks per request, so this is never
 /// the thing granting access — it only asks.
 class MonitorExec implements ServerExec {
-  const MonitorExec(this.client, {this.system});
+  const MonitorExec(this.client);
 
   final MonitorHttpClient client;
-
-  /// What the agent runs on, from its own `/capabilities`. Decides the
-  /// interpreter a script with no [ServerExec.run] `entry` is fed to.
-  final SystemType? system;
 
   @override
   Future<ExecResult> run(
@@ -34,23 +29,20 @@ class MonitorExec implements ServerExec {
     OnExecOutput? onStdout,
     OnExecOutput? onStderr,
   }) async {
-    // The same shape [SshExec] gives the script: the interpreter is what runs,
-    // and the script reaches it on stdin, so newlines, quotes and heredocs
-    // survive without every caller getting shell quoting right.
+    // The same shape [SshExec] gives it: with no [entry] the script is the
+    // command and stdin is left to be stdin, so a sudo password never has to
+    // be written into the command the agent records.
     final out = await client.exec(
-      entry ?? defaultScriptEntry(system),
-      stdin: '${stdin ?? ''}$script\n',
+      entry ?? script,
+      stdin: entry == null ? stdin : '${stdin ?? ''}$script\n',
       env: env,
     );
 
     if (out.truncated) {
-      // Says how much came back rather than what was asked for: a script's
-      // first line is where the sudo password is, base64 in a pipeline, and a
-      // log is something the user can export and send to someone.
       Loggers.app.warning(
         'Monitor exec output was truncated by the agent at '
         '${out.stdout.length + out.stderr.length} bytes; what the caller '
-        'parses is a prefix',
+        'parses is a prefix of: ${script.split('\n').first}',
       );
     }
 

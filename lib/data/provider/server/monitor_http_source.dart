@@ -5,7 +5,6 @@ import 'package:server_box/data/model/server/monitor_metrics_mapper.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/status_history.dart';
-import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/provider/server/data_source.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 
@@ -29,11 +28,7 @@ class MonitorHttpDataSource implements ServerDataSource {
 
   /// Runs commands through the agent, on the session the status poll already
   /// authenticated — so the process list does not log in again per command.
-  ///
-  /// [system] is what the agent reported it runs on; it decides which
-  /// interpreter a script is fed to, and arrives from the same probe as the
-  /// grant, so it is passed in rather than held here.
-  ServerExec execOn(SystemType? system) => MonitorExec(_client, system: system);
+  late final ServerExec exec = MonitorExec(_client);
 
   /// What the agent says it allows, and what it runs on.
   ///

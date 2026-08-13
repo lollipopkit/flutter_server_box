@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
-import 'package:server_box/data/model/server/system.dart';
 
 /// [ServerExec] over an SSH connection.
 ///
@@ -11,14 +10,9 @@ import 'package:server_box/data/model/server/system.dart';
 /// running a command has never needed the interactive shell the terminal page
 /// holds open.
 class SshExec implements ServerExec {
-  const SshExec(this.client, {this.system});
+  const SshExec(this.client);
 
   final SSHClient client;
-
-  /// What the far end runs, which decides the interpreter a script with no
-  /// [ServerExec.run] `entry` is fed to. Null before the first status fetch
-  /// has said, which reads as POSIX.
-  final SystemType? system;
 
   @override
   Future<ExecResult> run(
@@ -29,13 +23,10 @@ class SshExec implements ServerExec {
     OnExecOutput? onStdout,
     OnExecOutput? onStderr,
   }) async {
-    final session = await client.execute(
-      // Fed on stdin rather than passed as an argument: a script with
-      // newlines, quotes or a heredoc in it survives that way, and shell
-      // quoting is not something every caller should have to get right.
-      entry ?? defaultScriptEntry(system),
-      environment: env,
-    );
+    // With no [entry] the script *is* the command, which leaves the channel's
+    // stdin free to be stdin — where a sudo password belongs. With one, the
+    // entry is the command and the script is what it reads.
+    final session = await client.execute(entry ?? script, environment: env);
 
     final out = StringBuffer();
     final err = StringBuffer();
@@ -53,7 +44,11 @@ class SshExec implements ServerExec {
     if (stdin != null) {
       session.stdin.add(Uint8List.fromList(utf8.encode(stdin)));
     }
-    session.stdin.add(Uint8List.fromList(utf8.encode('$script\n')));
+    if (entry != null) {
+      session.stdin.add(Uint8List.fromList(utf8.encode('$script\n')));
+    }
+    // Closed either way: a command that reads stdin would otherwise wait for
+    // input nobody is going to send.
     await session.stdin.close();
 
     await session.done;
