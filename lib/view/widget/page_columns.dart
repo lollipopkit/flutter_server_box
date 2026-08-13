@@ -7,6 +7,12 @@ import 'package:flutter/material.dart';
 /// narrow columns, and reading one page meant crossing the whole screen. Edit
 /// pages suffered most: a single form became five columns of unrelated fields.
 /// Hence both a wider column and a ceiling on how many of them there can be.
+///
+/// Children are placed in the order they are given — the first in the first
+/// column, the second in the second, and so on across and down. Not packed by
+/// height like the home grid: these pages are forms, and a form whose first
+/// field lands at the top of the *second* column because that column happened
+/// to be shorter is a form nobody can read in the order it was written.
 class PageColumns extends StatelessWidget {
   const PageColumns({
     super.key,
@@ -42,18 +48,59 @@ class PageColumns extends StatelessWidget {
   static const _spacing = 8.0;
   static const _padding = MasonryList.kPadding;
 
+  /// How many columns [width] holds. The same arithmetic [MasonryList] uses,
+  /// so a page that switches between the two does not change width.
+  static int columnsFor(double width) {
+    final available = width - _padding.horizontal;
+    if (available <= 0) return 1;
+    return ((available + _spacing) / (columnWidth + _spacing)).floor().clamp(
+      1,
+      _maxColumns,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
-        child: MasonryList(
-          controller: controller,
-          columnWidth: columnWidth,
-          maxColumns: _maxColumns,
-          spacing: _spacing,
-          padding: _padding.copyWith(bottom: _padding.bottom + bottomInset),
-          children: children,
+        child: LayoutBuilder(
+          builder: (_, cons) {
+            final columns = columnsFor(cons.maxWidth);
+            return SingleChildScrollView(
+              controller: controller,
+              padding: _padding.copyWith(bottom: _padding.bottom + bottomInset),
+              child: columns == 1
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: _spacing,
+                      children: children,
+                    )
+                  : Row(
+                      // Columns are as tall as what is in them, and a short one
+                      // beside a long one should stop rather than stretch.
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: _spacing,
+                      children: [
+                        for (var col = 0; col < columns; col++)
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              spacing: _spacing,
+                              children: [
+                                for (
+                                  var i = col;
+                                  i < children.length;
+                                  i += columns
+                                )
+                                  children[i],
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+            );
+          },
         ),
       ),
     );
