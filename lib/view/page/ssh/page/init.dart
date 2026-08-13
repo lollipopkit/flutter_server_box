@@ -206,7 +206,7 @@ extension _Init on SSHPageState {
         TextButton(
           onPressed: () {
             Stores.setting.sshTermHelpShown.put(true);
-            context.pop();
+            context.popDialog();
           },
           child: Text(l10n.noPromptAgain),
         ),
@@ -451,10 +451,10 @@ extension _Init on SSHPageState {
       barrierDismiss: false,
       actions: [
         TextButton(
-          onPressed: () => context.pop(false),
+          onPressed: () => context.popDialog(false),
           child: Text(libL10n.cancel),
         ),
-        TextButton(onPressed: () => context.pop(true), child: Text(libL10n.ok)),
+        TextButton(onPressed: () => context.popDialog(true), child: Text(libL10n.ok)),
       ],
     );
 

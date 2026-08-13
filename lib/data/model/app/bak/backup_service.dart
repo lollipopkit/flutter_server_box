@@ -111,11 +111,11 @@ class BackupService {
             child: Text(l10n.backupPasswordWrong),
             actions: [
               TextButton(
-                onPressed: () => context.pop(false),
+                onPressed: () => context.popDialog(false),
                 child: Text(libL10n.cancel),
               ),
               TextButton(
-                onPressed: () => context.pop(true),
+                onPressed: () => context.popDialog(true),
                 child: Text(libL10n.retry),
               ),
             ],
@@ -149,9 +149,9 @@ class BackupService {
           onTap: () async {
             try {
               await backup.$1.merge(force: true);
-              context.pop();
+              context.popDialog();
             } catch (e, s) {
-              context.pop();
+              context.popDialog();
               context.showErrDialog(e, s, libL10n.restore);
             }
           },
@@ -179,14 +179,14 @@ class BackupService {
             label: l10n.backupPassword,
             controller: controller,
             obscureText: true,
-            onSubmitted: (_) => context.pop(controller.text),
+            onSubmitted: (_) => context.popDialog(controller.text),
           ),
         ],
       ),
       actions: [
         Btn.cancel(),
         TextButton(
-          onPressed: () => context.pop(controller.text),
+          onPressed: () => context.popDialog(controller.text),
           child: Text(libL10n.ok),
         ),
       ],

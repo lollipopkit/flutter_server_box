@@ -352,7 +352,7 @@ ${err.message ?? 'null'}
       child: SingleChildScrollView(child: SimpleMarkdown(data: md)),
       actions: [
         TextButton(onPressed: () => Pfs.copy(md), child: Text(libL10n.copy)),
-        TextButton(onPressed: () => context.pop(), child: Text(libL10n.close)),
+        TextButton(onPressed: () => context.popDialog(), child: Text(libL10n.close)),
       ],
     );
   }

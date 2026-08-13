@@ -303,7 +303,7 @@ extension _Actions on _ConnectionStatsPageState {
         TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
         TextButton(
           onPressed: () async {
-            context.pop();
+            context.popDialog();
             setState(() => _isCompacting = true);
             try {
               await Stores.connectionStats.compact();
@@ -372,7 +372,7 @@ extension _Actions on _ConnectionStatsPageState {
         TextButton(onPressed: context.popDialog, child: Text(libL10n.close)),
         TextButton(
           onPressed: () {
-            context.pop();
+            context.popDialog();
             _showClearServerStatsDialog(stats);
           },
           child: Text(
@@ -416,7 +416,7 @@ extension _Actions on _ConnectionStatsPageState {
               await onConfirm();
               await _loadStats();
               if (mounted) {
-                context.pop();
+                context.popDialog();
               }
             } catch (e, s) {
               if (!mounted) return;

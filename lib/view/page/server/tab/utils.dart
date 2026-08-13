@@ -155,7 +155,7 @@ extension _Utils on _ServerPageState {
       child: Text(libL10n.askContinue('$typ ${libL10n.server}($name)')),
       actions: Btn.ok(
         onTap: () {
-          context.pop();
+          context.popDialog();
           func();
         },
       ).toList,

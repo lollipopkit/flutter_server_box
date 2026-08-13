@@ -76,12 +76,12 @@ extension _AgentHistoryActions on _AskAiPanelState {
           controller: controller,
           autoFocus: true,
           label: context.l10n.askAiRenameConversation,
-          onSubmitted: (_) => context.pop(controller.text.trim()),
+          onSubmitted: (_) => context.popDialog(controller.text.trim()),
         ),
         actions: [
           TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
           FilledButton(
-            onPressed: () => context.pop(controller.text.trim()),
+            onPressed: () => context.popDialog(controller.text.trim()),
             child: Text(libL10n.ok),
           ),
         ],
@@ -101,7 +101,7 @@ extension _AgentHistoryActions on _AskAiPanelState {
       actions: [
         TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
         FilledButton.tonal(
-          onPressed: () => context.pop(true),
+          onPressed: () => context.popDialog(true),
           child: Text(libL10n.delete),
         ),
       ],
@@ -126,7 +126,7 @@ extension _AgentHistoryActions on _AskAiPanelState {
       actions: [
         TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
         FilledButton.tonal(
-          onPressed: () => context.pop(true),
+          onPressed: () => context.popDialog(true),
           child: Text(context.l10n.askAiClearHistory),
         ),
       ],

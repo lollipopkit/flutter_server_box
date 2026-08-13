@@ -108,7 +108,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
               actions: [
                 CountDownBtn(
                   onTap: () {
-                    context.pop();
+                    context.popDialog();
                     _clearAllSettings();
                   },
                   afterColor: Colors.red,

@@ -177,7 +177,7 @@ class _SftpMissionPageState extends ConsumerState<SftpMissionPage> {
         actions: Btn.ok(
           onTap: () {
             ref.read(sftpProvider.notifier).cancel(id);
-            context.pop();
+            context.popDialog();
           },
         ).toList,
       ),

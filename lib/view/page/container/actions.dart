@@ -69,7 +69,7 @@ extension on _ContainerPageState {
         onTap: () async {
           try {
             final extraArgs = parseContainerRunArgs(argsCtrl.text.trim());
-            context.pop();
+            context.popDialog();
             await _showAddCmdPreview(
               buildContainerRunCmd(
                 image: imageCtrl.text.trim(),
@@ -182,10 +182,10 @@ extension on _ContainerPageState {
       title: libL10n.preview,
       child: Text(cmd),
       actions: [
-        TextButton(onPressed: () => context.pop(), child: Text(libL10n.cancel)),
+        TextButton(onPressed: () => context.popDialog(), child: Text(libL10n.cancel)),
         TextButton(
           onPressed: () async {
-            context.pop();
+            context.popDialog();
             await _execContainerAction(() => _containerNotifier.run(cmd));
           },
           child: Text(libL10n.run),
@@ -240,7 +240,7 @@ extension on _ContainerPageState {
       ),
       actions: Btn.ok(
         onTap: () async {
-          context.pop();
+          context.popDialog();
           final result = await _containerNotifier.run(
             'rmi ${shellSingleQuote(id)} -f',
             refreshTarget: ContainerRefreshTarget.images,
@@ -277,7 +277,7 @@ extension on _ContainerPageState {
           ),
           actions: Btn.ok(
             onTap: () async {
-              context.pop();
+              context.popDialog();
               await _execContainerAction(
                 () => _containerNotifier.run(
                   'pull ${shellSingleQuote(imageRef)}',
@@ -332,7 +332,7 @@ extension on _ContainerPageState {
           ),
           actions: Btn.ok(
             onTap: () async {
-              context.pop();
+              context.popDialog();
               await _execContainerAction(
                 () => _containerNotifier.delete(id, force),
               );

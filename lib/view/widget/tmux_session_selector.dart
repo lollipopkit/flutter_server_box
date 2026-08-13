@@ -416,7 +416,7 @@ Future<TmuxAttachChoice?> showTmuxSessionSelectorWithSkip(
     ),
     actions: [
       TextButton(
-        onPressed: () => context.pop(const TmuxAttachSkip()),
+        onPressed: () => context.popDialog(const TmuxAttachSkip()),
         child: Text(l10n.tmuxSkip),
       ),
     ],

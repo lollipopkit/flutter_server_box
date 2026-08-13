@@ -134,7 +134,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
             controller: controller,
             node: node,
             obscureText: true,
-            onSubmitted: (_) => context.pop(true),
+            onSubmitted: (_) => context.popDialog(true),
           ),
         ],
       ),
@@ -548,7 +548,8 @@ final class _BackupPageState extends ConsumerState<BackupPage>
               for (final snippet in snippets) {
                 notifier.add(snippet);
               }
-              context.pop();
+              context.popDialog();
+              // The page under it, not the dialog again.
               context.pop();
             },
           ).toList,
@@ -695,7 +696,7 @@ extension on _BackupPageState {
             label: appL10n.githubGistIdOptional,
             controller: gistIdCtrl,
             suggestion: false,
-            onSubmitted: (_) => context.pop(true),
+            onSubmitted: (_) => context.popDialog(true),
           ),
         ],
       ),
@@ -757,7 +758,7 @@ extension on _BackupPageState {
             controller: pwd,
             node: nodePwd,
             suggestion: false,
-            onSubmitted: (_) => context.pop(true),
+            onSubmitted: (_) => context.popDialog(true),
           ),
         ],
       ),
@@ -855,11 +856,11 @@ extension on _BackupPageState {
       child: Text(l10n.backupPasswordTip, style: UIs.textGrey),
       actions: [
         TextButton(
-          onPressed: () => context.pop(true),
+          onPressed: () => context.popDialog(true),
           child: Text(libL10n.cancel),
         ),
         TextButton(
-          onPressed: () => context.pop(false),
+          onPressed: () => context.popDialog(false),
           child: Text(libL10n.setting),
         ),
       ],

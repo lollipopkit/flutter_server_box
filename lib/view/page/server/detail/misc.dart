@@ -9,7 +9,7 @@ extension on _ServerDetailPageState {
       title: title,
       child: child,
       actions: [
-        TextButton(onPressed: () => context.pop(), child: Text(libL10n.close)),
+        TextButton(onPressed: () => context.popDialog(), child: Text(libL10n.close)),
       ],
     );
   }
@@ -296,7 +296,7 @@ extension on _ServerDetailPageState {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => context.pop(), child: Text(libL10n.close)),
+        TextButton(onPressed: () => context.popDialog(), child: Text(libL10n.close)),
       ],
     );
   }

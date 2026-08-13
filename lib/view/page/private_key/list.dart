@@ -83,7 +83,7 @@ extension on _PrivateKeyListState {
         child: Text(l10n.addSystemPrivateKeyTip),
         actions: Btn.ok(
           onTap: () {
-            context.pop();
+            context.popDialog();
             PrivateKeyEditPage.route.go(
               context,
               args: PrivateKeyEditPageArgs(pki: sysPk),

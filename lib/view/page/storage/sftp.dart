@@ -734,10 +734,10 @@ extension _Actions on _SftpPageState {
       title: libL10n.attention,
       child: Text('${l10n.dl2Local(name.filename)}\n${l10n.keepForeground}'),
       actions: [
-        TextButton(onPressed: () => context.pop(), child: Text(libL10n.cancel)),
+        TextButton(onPressed: () => context.popDialog(), child: Text(libL10n.cancel)),
         TextButton(
           onPressed: () async {
-            context.pop();
+            context.popDialog();
             final remotePath = _getRemotePath(name);
 
             ref
@@ -751,7 +751,7 @@ extension _Actions on _SftpPageState {
                   ),
                 );
 
-            context.pop();
+            context.popDialog();
           },
           child: Text(libL10n.download),
         ),
@@ -794,10 +794,10 @@ extension _Actions on _SftpPageState {
         },
       ),
       actions: [
-        TextButton(onPressed: () => context.pop(), child: Text(libL10n.cancel)),
+        TextButton(onPressed: () => context.popDialog(), child: Text(libL10n.cancel)),
         TextButton(
           onPressed: () async {
-            context.pop();
+            context.popDialog();
             final remotePath = _getRemotePath(file);
             final suc = await _runWithSudoRetry(
               normal: () async {
@@ -1125,12 +1125,12 @@ extension _Actions on _SftpPageState {
               Btn.tile(
                 icon: const Icon(Icons.open_in_new),
                 text: l10n.system,
-                onTap: () => context.pop(1),
+                onTap: () => context.popDialog(1),
               ),
               Btn.tile(
                 icon: const Icon(Icons.folder),
                 text: libL10n.inner,
-                onTap: () => context.pop(0),
+                onTap: () => context.popDialog(0),
               ),
             ],
           ),
@@ -1231,7 +1231,7 @@ extension _Actions on _SftpPageState {
                 node: node,
                 controller: controller,
                 suggestion: true,
-                onSubmitted: (value) => context.pop(value),
+                onSubmitted: (value) => context.popDialog(value),
               );
             },
           ),

@@ -376,7 +376,7 @@ extension _Actions on _SSHTabPageState {
               onTap: () {
                 order.save();
                 _sortVersion.notify();
-                context.pop();
+                context.popDialog();
               },
             ),
         ],
@@ -449,7 +449,7 @@ extension _Actions on _SSHTabPageState {
               onTap: spi == null
                   ? null
                   : () {
-                      context.pop();
+                      context.popDialog();
                       _open(spi);
                     },
             );
@@ -460,7 +460,7 @@ extension _Actions on _SSHTabPageState {
         TextButton(
           onPressed: () {
             Stores.history.sshServerHistory.clear();
-            context.pop();
+            context.popDialog();
           },
           child: Text(l10n.clearHistory),
         ),

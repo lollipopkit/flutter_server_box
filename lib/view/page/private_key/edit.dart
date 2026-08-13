@@ -113,7 +113,8 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
                   actions: Btn.ok(
                     onTap: () {
                       _notifier.delete(pki);
-                      context.pop();
+                      context.popDialog();
+                      // The page, not the dialog again.
                       context.pop();
                     },
                     red: true,

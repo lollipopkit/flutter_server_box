@@ -171,7 +171,7 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
           ),
           actions: [
             CountDownBtn(
-              onTap: () => context.pop(true),
+              onTap: () => context.popDialog(true),
               text: libL10n.run,
               afterColor: Colors.red,
             ),

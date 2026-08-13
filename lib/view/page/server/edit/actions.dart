@@ -84,7 +84,7 @@ extension _Actions on _ServerEditPageState {
               onPressed: () async {
                 await _setPendingSudoPassword(null);
                 if (!mounted) return;
-                context.pop();
+                context.popDialog();
               },
               child: Text(libL10n.clear),
             ),

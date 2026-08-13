@@ -75,7 +75,8 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage>
             actions: Btn.ok(
               onTap: () {
                 ref.read(snippetProvider.notifier).del(snippet);
-                context.pop();
+                context.popDialog();
+                // The page under it, not the dialog again.
                 context.pop();
               },
               red: true,

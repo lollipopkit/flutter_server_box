@@ -143,7 +143,7 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
         Btn.cancel(),
         CountDownBtn(
           seconds: 3,
-          onTap: () => context.pop(true),
+          onTap: () => context.popDialog(true),
           text: libL10n.ok,
           afterColor: Colors.red,
         ),

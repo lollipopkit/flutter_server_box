@@ -269,7 +269,7 @@ extension _Actions on _LocalFilePageState {
         children: [
           ListTile(
             onTap: () {
-              context.pop();
+              context.popDialog();
               _showRenameDialog(file);
             },
             title: Text(libL10n.rename),
@@ -277,7 +277,7 @@ extension _Actions on _LocalFilePageState {
           ),
           ListTile(
             onTap: () {
-              context.pop();
+              context.popDialog();
               _showDeleteDialog(file);
             },
             title: Text(libL10n.delete),
@@ -297,7 +297,9 @@ extension _Actions on _LocalFilePageState {
         actions: [
           Btn.ok(
             onTap: () {
-              context.pop();
+              context.popDialog();
+              // The picker page, handing the path back to whoever
+              // pushed it.
               context.pop(file.path);
             },
           ),
@@ -319,7 +321,7 @@ extension _Actions on _LocalFilePageState {
             icon: const Icon(Icons.abc),
             text: libL10n.rename,
             onTap: () {
-              context.pop();
+              context.popDialog();
               _showRenameDialog(file);
             },
           ),
@@ -327,7 +329,7 @@ extension _Actions on _LocalFilePageState {
             icon: const Icon(Icons.delete),
             text: libL10n.delete,
             onTap: () {
-              context.pop();
+              context.popDialog();
               _showDeleteDialog(file);
             },
           ),
@@ -387,7 +389,7 @@ extension _Actions on _LocalFilePageState {
       child: Text(libL10n.askContinue('${libL10n.delete} $fileName')),
       actions: Btn.ok(
         onTap: () async {
-          context.pop();
+          context.popDialog();
           try {
             await file.delete(recursive: true);
           } catch (e) {

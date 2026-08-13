@@ -630,7 +630,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
         actions: [
           TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
           FilledButton(
-            onPressed: () => context.pop(true),
+            onPressed: () => context.popDialog(true),
             child: Text(libL10n.run),
           ),
         ],

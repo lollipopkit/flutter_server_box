@@ -154,7 +154,7 @@ extension _AI on _AppSettingsPageState {
           TextButton(
             onPressed: () {
               prop.delete();
-              context.pop();
+              context.popDialog();
             },
             child: Text(libL10n.clear),
           ),

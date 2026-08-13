@@ -406,15 +406,15 @@ extension _App on _AppSettingsPageState {
             controller: controller,
             label: libL10n.pwd,
             obscureText: true,
-            onSubmitted: (_) => context.pop(controller.text.trim()),
+            onSubmitted: (_) => context.popDialog(controller.text.trim()),
           ),
           actions: [
             TextButton(
-              onPressed: () => context.pop(null),
+              onPressed: () => context.popDialog(null),
               child: Text(libL10n.cancel),
             ),
             TextButton(
-              onPressed: () => context.pop(controller.text.trim()),
+              onPressed: () => context.popDialog(controller.text.trim()),
               child: Text(libL10n.ok),
             ),
           ],

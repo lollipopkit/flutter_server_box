@@ -818,6 +818,7 @@ extension _Widgets on _ServerEditPageState {
               context.popDialog();
               await ref.read(serversProvider.notifier).delServer(spi!.id);
               if (!mounted) return;
+              // The edit page, telling the list it is gone.
               context.pop(true);
             },
             red: true,
