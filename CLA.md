@@ -33,6 +33,39 @@ If you are not comfortable with this, that is a legitimate position — please
 open an issue describing the change instead, and it can be implemented
 independently.
 
+## Contributions made before this agreement
+
+This agreement binds what you contribute from the day you sign onward. Nobody
+is being asked to sign for work that is already merged.
+
+That is not a gap being papered over — it is the order things happened in:
+
+- **2021-09-13** — the repository starts. Every commit from here to the next
+  entry is the maintainer's own, made under more than one git identity.
+- **2022-01-09** — ServerBox is first released on the App Store.
+- **2022-03-02** — the first contribution by anyone else is merged, after that
+  release.
+- **2022-05-31** — the README gains an App Store badge at the top of the page,
+  where it has been ever since.
+
+The App Store release therefore predates every outside contribution, and from
+2022-05-31 onward the App Store link is the first thing the README shows anyone
+arriving at the project. Contributions have been offered to a project that was
+visibly, and from the beginning, distributed that way.
+
+The maintainer's position is that work offered on those terms was offered for
+the project as it was actually being distributed. This agreement exists so that
+nothing contributed from now on has to rest on that reasoning.
+
+When you do sign, the signature covers your earlier contributions too — the
+agreement below says "past, present, and future". That is deliberate: it settles
+the question for everything you have written here, in one comment, rather than
+leaving your older commits in a different state from your newer ones.
+
+If you have contributed in the past and disagree with any of this, open an
+issue — that is a conversation worth having rather than an assumption worth
+making.
+
 ## Agreement
 
 You accept and agree to the following terms for your past, present, and future
