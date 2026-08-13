@@ -247,6 +247,14 @@ class ContainerNotifier extends _$ContainerNotifier {
   var sudoCompleter = Completer<bool>();
   String? _cachedPassword;
   var _refreshGeneration = 0;
+
+  /// The concurrency guard, kept off the state.
+  ///
+  /// `isBusy` used to serve both purposes, which meant an automatic refresh
+  /// published two state changes per tick — busy, then not — and rebuilt the
+  /// page each time, disabling and re-enabling every button on it, whether or
+  /// not anything had actually changed.
+  var _refreshing = false;
   ({ContainerRefreshTarget target, bool isAuto})? _pendingRefresh;
 
   @override
@@ -295,6 +303,9 @@ class ContainerNotifier extends _$ContainerNotifier {
   int _resetSudoProbe() {
     sudoCompleter = Completer<bool>();
     _pendingRefresh = null;
+    // Whatever was running is now stale and will return without finishing, so
+    // the guard has to be lifted here or nothing could ever refresh again.
+    _refreshing = false;
     return ++_refreshGeneration;
   }
 
@@ -359,17 +370,22 @@ class ContainerNotifier extends _$ContainerNotifier {
     bool isAuto = false,
     int? generation,
   }) async {
-    if (state.isBusy || state.runLog != null) {
+    if (_refreshing || state.runLog != null) {
       _queueRefresh(target, isAuto);
       return;
     }
+    _refreshing = true;
     final refreshGeneration = generation ?? _refreshGeneration;
     final type = state.type;
     // The error is left alone until something replaces it. Clearing it here
     // put the page back to a full-screen spinner for the length of every
     // refresh — and with auto-refresh on, a server with no runtime flashed
     // between spinner and explanation on every tick.
-    state = state.copyWith(isBusy: true);
+    //
+    // An automatic refresh says nothing about being busy either: nobody asked
+    // for it, so there is nobody to tell, and saying so is a state change in
+    // itself.
+    if (!isAuto) state = state.copyWith(isBusy: true);
 
     final sudo = sudoCompleter;
     if (!sudo.isCompleted) unawaited(_requiresSudo(sudo, type, target));
@@ -664,6 +680,9 @@ class ContainerNotifier extends _$ContainerNotifier {
   }
 
   Future<void> _finishRefresh(int generation) async {
+    // Cleared before the staleness check: a refresh that was superseded still
+    // has to let the next one start.
+    _refreshing = false;
     if (_isStaleRefresh(generation)) return;
     state = state.copyWith(isBusy: false);
     await _refreshPendingIfNeeded(generation);
@@ -912,14 +931,17 @@ const _jsonFmt = '--format "{{json .}}"';
 /// `SrvBoxSep_1786614816321254_0` twice over told the user nothing.
 String? userFacingOutput(String stderr, String stdout) {
   for (final stream in [stderr, stdout]) {
-    final lines = stream
-        .split('\n')
-        .map((line) => line.trim())
-        .where(
-          (line) =>
-              line.isNotEmpty && !line.startsWith(ScriptConstants.separator),
-        )
-        .toList();
+    final lines = <String>[];
+    for (final line in stream.split('\n')) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
+      if (trimmed.startsWith(ScriptConstants.separator)) continue;
+      // Deduplicated: several commands are batched into one call, so a missing
+      // runtime says `sh: docker: not found` once per command. Three identical
+      // lines are three attempts at the same thing, not three problems.
+      if (lines.contains(trimmed)) continue;
+      lines.add(trimmed);
+    }
     if (lines.isNotEmpty) return lines.join('\n');
   }
   return null;

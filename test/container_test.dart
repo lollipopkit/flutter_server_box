@@ -878,5 +878,17 @@ not-json
     test('nothing said at all is null, not an empty line', () {
       expect(userFacingOutput('  ', '\n\n'), isNull);
     });
+
+    test('one missing runtime is one line, not one per batched command', () {
+      // ps, stats and images go out in a single call, so a shell with no
+      // docker says the same thing three times.
+      expect(
+        userFacingOutput(
+          'sh: docker: not found\nsh: docker: not found\nsh: docker: not found',
+          '',
+        ),
+        'sh: docker: not found',
+      );
+    });
   });
 }
