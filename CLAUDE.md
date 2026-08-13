@@ -149,6 +149,11 @@ a host with no sshd doesn't also stop the status page refreshing.
   - Before adding new strings, check if it already exists in `libL10n`.
   - Prioritize using strings from `libL10n` to avoid duplication, even if the meaning is not 100% exact, just use the substitution of `libL10n`.
 - Split UI into Widget build, Actions, Utils. use `extension on` to achieve this
+- NEVER call `context.pop()` inside a `showRoundDialog`.
+  - `showRoundDialog` puts the dialog on the root navigator, while `context.pop` pops the navigator nearest the *page* — which, on a page inside a pane or a tab, is a different one. The button then closes the page out from under the dialog, or, when the page is that navigator's root route, does nothing at all and looks broken.
+  - Close the dialog with `context.popDialog()`, or better, let it answer: `Btn.ok`/`Btnx.cancelOk` already pop a value, so `await context.showRoundDialog<bool>(...)` returns it.
+  - Do the work and close the page in the *caller*, which is on the page. A callback that does both sees two navigators and has to get each `pop`'s target right, silently.
+  - The invariant is greppable: `rg -U 'showRoundDialog[\s\S]*?context\.pop\(' lib` must find nothing.
 - Android release signing:
   - Normal release builds must use the real release keystore from `key.properties`.
   - Debug-signing fallback is for local verification only and must be enabled explicitly with `-PallowDebugReleaseSigning=true`.
