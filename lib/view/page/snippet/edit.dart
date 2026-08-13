@@ -64,24 +64,24 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage>
     if (snippet == null) return null;
     return [
       IconButton(
-        onPressed: () {
-          context.showRoundDialog(
+        onPressed: () async {
+          // The dialog answers, and this — which is on the page — acts on the
+          // answer. Deleting and closing the page from inside the dialog's
+          // button meant two pops in a row from a callback that can see two
+          // navigators, and getting their order or their target wrong is
+          // silent.
+          final confirmed = await context.showRoundDialog<bool>(
             title: libL10n.attention,
             child: Text(
               libL10n.askContinue(
                 '${libL10n.delete} ${libL10n.snippet}(${snippet.name})',
               ),
             ),
-            actions: Btn.ok(
-              onTap: () {
-                ref.read(snippetProvider.notifier).del(snippet);
-                context.popDialog();
-                // The page under it, not the dialog again.
-                context.pop();
-              },
-              red: true,
-            ).toList,
+            actions: Btn.ok(red: true).toList,
           );
+          if (confirmed != true || !context.mounted) return;
+          ref.read(snippetProvider.notifier).del(snippet);
+          context.pop();
         },
         tooltip: libL10n.delete,
         icon: const Icon(Icons.delete),

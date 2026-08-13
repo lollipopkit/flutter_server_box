@@ -535,25 +535,24 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           return;
         }
         final snippetNames = snippets.map((e) => e.name).join(', ');
-        context.showRoundDialog(
+        // The dialog answers; the page acts on the answer, and closes
+        // itself. Doing both from the button meant two pops in a row from a
+        // callback that can see two navigators.
+        final confirmed = await context.showRoundDialog<bool>(
           title: libL10n.attention,
           child: SingleChildScrollView(
             child: Text(
               libL10n.askContinue('${libL10n.import} [$snippetNames]'),
             ),
           ),
-          actions: Btn.ok(
-            onTap: () {
-              final notifier = ref.read(snippetProvider.notifier);
-              for (final snippet in snippets) {
-                notifier.add(snippet);
-              }
-              context.popDialog();
-              // The page under it, not the dialog again.
-              context.pop();
-            },
-          ).toList,
+          actions: Btn.ok().toList,
         );
+        if (confirmed != true || !context.mounted) return;
+        final notifier = ref.read(snippetProvider.notifier);
+        for (final snippet in snippets) {
+          notifier.add(snippet);
+        }
+        context.pop();
       },
     ).cardx;
   }

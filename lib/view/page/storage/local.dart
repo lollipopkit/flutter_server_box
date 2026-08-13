@@ -291,20 +291,16 @@ extension _Actions on _LocalFilePageState {
   Future<void> _showFileActionDialog(FileSystemEntity file) async {
     final fileName = file.path.split(Pfs.seperator).lastOrNull ?? '';
     if (isPickFile) {
-      context.showRoundDialog(
+      // The dialog answers; this hands the path back to whoever pushed the
+      // picker. Doing both from the button meant two pops in a row from a
+      // callback that can see two navigators.
+      final picked = await context.showRoundDialog<bool>(
         title: libL10n.file,
         child: Text(fileName),
-        actions: [
-          Btn.ok(
-            onTap: () {
-              context.popDialog();
-              // The picker page, handing the path back to whoever
-              // pushed it.
-              context.pop(file.path);
-            },
-          ),
-        ],
+        actions: Btn.ok().toList,
       );
+      if (picked != true || !mounted) return;
+      context.pop(file.path);
       return;
     }
     context.showRoundDialog(

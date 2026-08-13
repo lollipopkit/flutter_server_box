@@ -802,28 +802,25 @@ extension _Widgets on _ServerEditPageState {
 
   Widget _buildDelBtn() {
     return IconButton(
-      onPressed: () {
-        context.showRoundDialog(
+      onPressed: () async {
+        // The dialog answers; this — which is on the page — acts on the answer
+        // and then closes the page. Doing both from inside the button meant
+        // two pops in a row from a callback that can see two navigators: the
+        // dialog is on the root one, and this page may be inside a pane, so
+        // whichever `pop` was written first decided which of the two closed.
+        final confirmed = await context.showRoundDialog<bool>(
           title: libL10n.attention,
           child: Text(
             libL10n.askContinue(
               '${libL10n.delete} ${libL10n.server}(${spi!.name})',
             ),
           ),
-          actions: Btn.ok(
-            onTap: () async {
-              // Two different navigators: the dialog is on the root one, and
-              // this page may be inside a pane. Popping the page's own stack
-              // to close a dialog dismissed the page and left the dialog up.
-              context.popDialog();
-              await ref.read(serversProvider.notifier).delServer(spi!.id);
-              if (!mounted) return;
-              // The edit page, telling the list it is gone.
-              context.pop(true);
-            },
-            red: true,
-          ).toList,
+          actions: Btn.ok(red: true).toList,
         );
+        if (confirmed != true || !mounted) return;
+        await ref.read(serversProvider.notifier).delServer(spi!.id);
+        if (!mounted) return;
+        context.pop(true);
       },
       icon: const Icon(Icons.delete),
     );

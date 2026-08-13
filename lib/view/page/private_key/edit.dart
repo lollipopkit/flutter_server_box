@@ -102,24 +102,21 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
         ? [
             IconButton(
               tooltip: libL10n.delete,
-              onPressed: () {
-                context.showRoundDialog(
+              onPressed: () async {
+                // The dialog answers; the page acts on the answer. See the
+                // snippet editor for why not from inside the button.
+                final confirmed = await context.showRoundDialog<bool>(
                   title: libL10n.attention,
                   child: Text(
                     libL10n.askContinue(
                       '${libL10n.delete} ${l10n.privateKey}(${pki.id})',
                     ),
                   ),
-                  actions: Btn.ok(
-                    onTap: () {
-                      _notifier.delete(pki);
-                      context.popDialog();
-                      // The page, not the dialog again.
-                      context.pop();
-                    },
-                    red: true,
-                  ).toList,
+                  actions: Btn.ok(red: true).toList,
                 );
+                if (confirmed != true || !context.mounted) return;
+                _notifier.delete(pki);
+                context.pop();
               },
               icon: const Icon(Icons.delete),
             ),
