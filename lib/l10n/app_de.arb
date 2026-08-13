@@ -407,5 +407,6 @@
   "serverUnreachable": "Auf diesem Server konnte kein Befehl ausgeführt werden",
   "containerNoRuntime": "Keine Container-Laufzeitumgebung vorhanden",
   "containerNoRuntimeTip": "Weder `docker` noch `podman` hat auf diesem Rechner geantwortet. Falls eines davon für ein anderes Konto installiert ist, aktiviere „Versuche es mit sudo“ in den Einstellungen.",
-  "containerUnreadable": "Die Container-Laufzeitumgebung hat in einem unerwarteten Format geantwortet"
+  "containerUnreadable": "Die Container-Laufzeitumgebung hat in einem unerwarteten Format geantwortet",
+  "power": "Energie"
 }

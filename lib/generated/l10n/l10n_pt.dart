@@ -1415,4 +1415,7 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get containerUnreadable =>
       'O runtime de contêiner respondeu em um formato inesperado';
+
+  @override
+  String get power => 'Energia';
 }

@@ -1424,4 +1424,7 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get containerUnreadable =>
       'Середовище виконання контейнерів відповіло в неочікуваному форматі';
+
+  @override
+  String get power => 'Живлення';
 }

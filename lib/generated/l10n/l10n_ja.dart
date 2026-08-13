@@ -1338,4 +1338,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get containerUnreadable => 'コンテナランタイムの応答を解釈できませんでした';
+
+  @override
+  String get power => '電源';
 }

@@ -1404,4 +1404,7 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get containerUnreadable =>
       'Konteyner çalışma ortamı beklenmeyen bir biçimde yanıt verdi';
+
+  @override
+  String get power => 'Güç';
 }

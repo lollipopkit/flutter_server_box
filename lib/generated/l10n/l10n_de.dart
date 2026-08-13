@@ -1422,4 +1422,7 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get containerUnreadable =>
       'Die Container-Laufzeitumgebung hat in einem unerwarteten Format geantwortet';
+
+  @override
+  String get power => 'Energie';
 }

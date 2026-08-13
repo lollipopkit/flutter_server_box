@@ -407,5 +407,6 @@
   "serverUnreachable": "Kon geen opdracht uitvoeren op deze server",
   "containerNoRuntime": "Geen container-runtime hier",
   "containerNoRuntimeTip": "Noch `docker` noch `podman` reageerde op deze machine. Als er één voor een ander account is geïnstalleerd, schakel dan \"Probeer sudo te gebruiken\" in bij Instellingen.",
-  "containerUnreadable": "De container-runtime antwoordde in een onverwachte vorm"
+  "containerUnreadable": "De container-runtime antwoordde in een onverwachte vorm",
+  "power": "Energie"
 }

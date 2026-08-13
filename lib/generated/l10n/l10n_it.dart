@@ -1425,4 +1425,7 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get containerUnreadable =>
       'Il runtime dei container ha risposto in un formato inatteso';
+
+  @override
+  String get power => 'Alimentazione';
 }

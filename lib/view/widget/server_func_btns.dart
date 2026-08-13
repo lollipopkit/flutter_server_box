@@ -27,6 +27,7 @@ import 'package:server_box/view/page/port_forward.dart';
 import 'package:server_box/view/page/process.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/systemd.dart';
+import 'package:server_box/view/widget/server_power.dart';
 
 class ServerFuncBtns extends StatelessWidget {
   const ServerFuncBtns({super.key, required this.spi, this.granted});
@@ -214,6 +215,13 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
         if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
         SystemdPage.route.go(context, args);
+        break;
+      case ServerFuncBtn.power:
+        if (!await _ensureExec(context, spi.id, ref)) return;
+        if (!context.mounted) return;
+        // One button for three commands: three entries of their own would be
+        // three of the few this row has space for, spent on the same thing.
+        await ServerPower.pick(context, ref, spi);
         break;
       case ServerFuncBtn.portForward:
         if (!await _ensureSshClient(context, spi.id, ref)) return;

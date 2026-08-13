@@ -1432,4 +1432,7 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get containerUnreadable =>
       'L\'environnement d\'exécution de conteneurs a répondu dans un format inattendu';
+
+  @override
+  String get power => 'Alimentation';
 }

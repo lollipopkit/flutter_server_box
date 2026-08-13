@@ -58,97 +58,6 @@ extension _Actions on _ServerPageState {
 }
 
 extension _Operation on _ServerPageState {
-  void _onTapSuspend(ServerState srv) {
-    _askFor(
-      func: () async {
-        if (Stores.setting.showSuspendTip.fetch()) {
-          await context.showRoundDialog(
-            title: libL10n.attention,
-            child: Text(l10n.suspendTip),
-          );
-          Stores.setting.showSuspendTip.put(false);
-        }
-        await _power(srv, ShellFunc.suspend);
-      },
-      typ: libL10n.suspend,
-      name: srv.spi.name,
-    );
-  }
-
-  void _onTapShutdown(ServerState srv) {
-    _askFor(
-      func: () => _power(srv, ShellFunc.shutdown),
-      typ: libL10n.shutdown,
-      name: srv.spi.name,
-    );
-  }
-
-  void _onTapReboot(ServerState srv) {
-    _askFor(
-      func: () => _power(srv, ShellFunc.reboot),
-      typ: libL10n.reboot,
-      name: srv.spi.name,
-    );
-  }
-
-  /// The three power commands differ only in which script they run.
-  ///
-  /// A connection is opened for it if there is none — a server reached over
-  /// its monitor agent holds none until something needs one — and the failure
-  /// to open one is shown the same way a failure to run the command is.
-  ///
-  /// It is the *script* these run, so the script has to be there: a monitor
-  /// server's status never writes one, and a shell that cannot find it exits
-  /// 127 quietly, which reads as a machine that ignored the request.
-  Future<void> _power(ServerState srv, ShellFunc func) async {
-    try {
-      final exec = await ref.read(serverProvider(srv.spi.id).notifier)
-          .ensureScriptExec();
-      final cmd = func.exec(
-        srv.spi.id,
-        systemType: srv.status.system,
-        customDir: srv.spi.custom?.scriptDir,
-      );
-
-      // Tried without one first. The script only reaches for `sudo` when the
-      // account is not root, and an account with NOPASSWD needs nothing after
-      // that — asking up front would put a password prompt in front of
-      // everyone to serve the ones who need it.
-      var result = await exec.runWithSudo(cmd);
-      if (result.exitCode == kSudoPasswordRejected) {
-        final pwd = await _askSudoPassword(srv);
-        if (pwd == null) return;
-        result = await exec.runWithSudo(cmd, password: pwd);
-      }
-
-      // Checked rather than assumed: shutting a machine down and being told
-      // nothing is indistinguishable from it having worked, right up until the
-      // status keeps refreshing.
-      if (!result.succeeded && mounted) {
-        final said = result.combined.trim();
-        context.showSnackBar(said.isEmpty ? libL10n.fail : said);
-      }
-    } catch (e, s) {
-      Loggers.app.warning('${func.name} ${srv.spi.name}', e, s);
-      if (mounted) context.showSnackBar('$e');
-    }
-  }
-
-  /// Null when the user closed the prompt, which is an answer — they did not
-  /// want to power the machine after all, so nothing is said about it.
-  Future<String?> _askSudoPassword(ServerState srv) async {
-    if (!mounted) return null;
-    final remember = Stores.setting.rememberPwdInMem.fetch();
-    final pwd = await context.showPwdDialog(
-      title: libL10n.pwd,
-      label: srv.spi.ssh?.user ?? '',
-      // Shared with nothing else on purpose: this is the account's sudo
-      // password, not the SSH one, and the two are not always the same.
-      id: '${srv.spi.id}_sudo',
-      remember: remember,
-    );
-    return (pwd == null || pwd.isEmpty) ? null : pwd;
-  }
 }
 
 extension _Utils on _ServerPageState {
@@ -173,22 +82,6 @@ extension _Utils on _ServerPageState {
     return _ServerPageState._kCardHeightNormal;
   }
 
-  void _askFor({
-    required void Function() func,
-    required String typ,
-    required String name,
-  }) {
-    context.showRoundDialog(
-      title: libL10n.attention,
-      child: Text(libL10n.askContinue('$typ ${libL10n.server}($name)')),
-      actions: Btn.ok(
-        onTap: () {
-          context.popDialog();
-          func();
-        },
-      ).toList,
-    );
-  }
 
   _CardNotifier _getCardNoti(String id) =>
       _cardsStatus.putIfAbsent(id, () => _CardNotifier(const _CardStatus()));

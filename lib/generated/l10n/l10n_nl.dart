@@ -1417,4 +1417,7 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get containerUnreadable =>
       'De container-runtime antwoordde in een onverwachte vorm';
+
+  @override
+  String get power => 'Energie';
 }

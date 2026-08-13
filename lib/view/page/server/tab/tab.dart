@@ -13,9 +13,7 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/server.dart';
-import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -29,6 +27,7 @@ import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
+import 'package:server_box/view/widget/server_power.dart';
 
 part 'card_stat.dart';
 part 'content.dart';
@@ -336,24 +335,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
     const color = Colors.grey;
     const textStyle = TextStyle(fontSize: 13, color: color);
     final children = [
-      Btn.column(
-        onTap: () => _onTapSuspend(srv),
-        icon: const Icon(Icons.stop, color: color),
-        text: libL10n.suspend,
-        textStyle: textStyle,
-      ),
-      Btn.column(
-        onTap: () => _onTapShutdown(srv),
-        icon: const Icon(Icons.power_off, color: color),
-        text: libL10n.shutdown,
-        textStyle: textStyle,
-      ),
-      Btn.column(
-        onTap: () => _onTapReboot(srv),
-        icon: const Icon(Icons.restart_alt, color: color),
-        text: libL10n.reboot,
-        textStyle: textStyle,
-      ),
+      for (final func in ServerPower.funcs)
+        Btn.column(
+          onTap: () => ServerPower.confirmAndRun(context, ref, srv.spi, func),
+          icon: Icon(ServerPower.icon(func), color: color),
+          text: ServerPower.label(func),
+          textStyle: textStyle,
+        ),
       Btn.column(
         onTap: () => ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi)),
         icon: const Icon(Icons.edit, color: color),

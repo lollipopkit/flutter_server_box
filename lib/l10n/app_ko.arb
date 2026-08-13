@@ -416,5 +416,6 @@
   "serverUnreachable": "이 서버에서 명령을 실행할 수 없습니다",
   "containerNoRuntime": "컨테이너 런타임이 없습니다",
   "containerNoRuntimeTip": "이 머신에서 `docker`와 `podman` 모두 응답하지 않았습니다. 다른 계정에 설치되어 있다면 설정에서 \"sudo 사용 시도\"를 켜세요.",
-  "containerUnreadable": "컨테이너 런타임이 예상과 다른 형식으로 응답했습니다"
+  "containerUnreadable": "컨테이너 런타임이 예상과 다른 형식으로 응답했습니다",
+  "power": "전원"
 }

@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -12,7 +13,8 @@ enum ServerFuncBtn {
   snippet(),
   iperf(),
   systemd(1058),
-  portForward(1340);
+  portForward(1340),
+  power(1481);
 
   final int? addedVersion;
 
@@ -35,6 +37,12 @@ enum ServerFuncBtn {
       }
     }
 
+    if (power.addedVersion != null && cur >= power.addedVersion!) {
+      if (!list.contains(power.index)) {
+        list.add(power.index);
+      }
+    }
+
     if (list.length > originalLength) {
       prop.put(list);
     }
@@ -48,6 +56,7 @@ enum ServerFuncBtn {
     snippet,
     systemd,
     portForward,
+    power,
   ].map((e) => e.index).toList();
 
   IconData get icon => switch (this) {
@@ -59,6 +68,7 @@ enum ServerFuncBtn {
     iperf => Icons.speed,
     systemd => MingCute.plugin_2_fill,
     portForward => Icons.compare_arrows,
+    power => Icons.power_settings_new,
   };
 
   /// Whether a connection with [caps] can actually do what this entry opens.
@@ -70,7 +80,7 @@ enum ServerFuncBtn {
     // All three end in the terminal — snippets and iperf hand it a command to
     // start with, and nothing else.
     terminal || snippet || iperf => caps.terminal,
-    container || process || systemd => caps.shell,
+    container || process || systemd || power => caps.shell,
     // A file's contents and a forwarded connection are byte streams, not a
     // command's output.
     sftp || portForward => caps.byteStream,
@@ -85,5 +95,6 @@ enum ServerFuncBtn {
     iperf => 'iperf',
     systemd => 'Systemd',
     portForward => libL10n.portForward,
+    power => l10n.power,
   };
 }

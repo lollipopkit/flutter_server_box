@@ -1406,4 +1406,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get containerUnreadable =>
       'The container runtime answered in an unexpected form';
+
+  @override
+  String get power => 'Power';
 }

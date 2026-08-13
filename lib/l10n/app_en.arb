@@ -468,5 +468,6 @@
   "serverUnreachable": "Could not run a command on this server",
   "containerNoRuntime": "No container runtime here",
   "containerNoRuntimeTip": "Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try using sudo\" in Settings.",
-  "containerUnreadable": "The container runtime answered in an unexpected form"
+  "containerUnreadable": "The container runtime answered in an unexpected form",
+  "power": "Power"
 }

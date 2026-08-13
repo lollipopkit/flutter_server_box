@@ -414,5 +414,6 @@
   "serverUnreachable": "无法在此服务器上执行命令",
   "containerNoRuntime": "此处没有容器运行时",
   "containerNoRuntimeTip": "这台机器上 `docker` 和 `podman` 都没有响应。如果它装在另一个账户下，请在设置中开启「尝试使用 sudo」。",
-  "containerUnreadable": "容器运行时返回了无法解析的内容"
+  "containerUnreadable": "容器运行时返回了无法解析的内容",
+  "power": "电源"
 }

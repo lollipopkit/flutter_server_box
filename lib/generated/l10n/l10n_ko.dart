@@ -1341,4 +1341,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get containerUnreadable => '컨테이너 런타임이 예상과 다른 형식으로 응답했습니다';
+
+  @override
+  String get power => '전원';
 }

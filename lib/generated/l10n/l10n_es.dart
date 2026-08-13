@@ -1431,4 +1431,7 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get containerUnreadable =>
       'El entorno de ejecución de contenedores respondió de forma inesperada';
+
+  @override
+  String get power => 'Energía';
 }

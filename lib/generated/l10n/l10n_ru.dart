@@ -1423,4 +1423,7 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get containerUnreadable =>
       'Среда выполнения контейнеров ответила в неожиданном формате';
+
+  @override
+  String get power => 'Питание';
 }

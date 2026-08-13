@@ -407,5 +407,6 @@
   "serverUnreachable": "このサーバーでコマンドを実行できませんでした",
   "containerNoRuntime": "コンテナランタイムがありません",
   "containerNoRuntimeTip": "このマシンでは `docker` も `podman` も応答しませんでした。別のアカウントにインストールされている場合は、設定で「sudoを試みる」を有効にしてください。",
-  "containerUnreadable": "コンテナランタイムの応答を解釈できませんでした"
+  "containerUnreadable": "コンテナランタイムの応答を解釈できませんでした",
+  "power": "電源"
 }

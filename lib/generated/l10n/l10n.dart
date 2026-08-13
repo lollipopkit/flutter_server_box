@@ -2543,6 +2543,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The container runtime answered in an unexpected form'**
   String get containerUnreadable;
+
+  /// No description provided for @power.
+  ///
+  /// In en, this message translates to:
+  /// **'Power'**
+  String get power;
 }
 
 class _AppLocalizationsDelegate

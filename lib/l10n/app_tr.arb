@@ -407,5 +407,6 @@
   "serverUnreachable": "Bu sunucuda komut çalıştırılamadı",
   "containerNoRuntime": "Burada konteyner çalışma ortamı yok",
   "containerNoRuntimeTip": "Bu makinede ne `docker` ne de `podman` yanıt verdi. Biri başka bir hesap için kuruluysa Ayarlar'dan \"Sudo ile dene\" seçeneğini açın.",
-  "containerUnreadable": "Konteyner çalışma ortamı beklenmeyen bir biçimde yanıt verdi"
+  "containerUnreadable": "Konteyner çalışma ortamı beklenmeyen bir biçimde yanıt verdi",
+  "power": "Güç"
 }

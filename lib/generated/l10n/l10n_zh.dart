@@ -1307,6 +1307,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get containerUnreadable => '容器运行时返回了无法解析的内容';
+
+  @override
+  String get power => '电源';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2612,4 +2615,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get containerUnreadable => '容器執行環境回傳了無法解析的內容';
+
+  @override
+  String get power => '電源';
 }

@@ -1407,4 +1407,7 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get containerUnreadable =>
       'Runtime kontainer merespons dalam bentuk yang tidak terduga';
+
+  @override
+  String get power => 'Daya';
 }
