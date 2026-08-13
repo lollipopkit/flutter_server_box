@@ -1395,4 +1395,40 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get accessoryWidgetServer =>
       'Server del widget della schermata di blocco';
+
+  @override
+  String get systemdMissing => 'No systemd on this server';
+
+  @override
+  String get systemdMissingTip =>
+      '`systemctl` is not installed here, so there are no units to list.';
+
+  @override
+  String initSystemFmt(String init) {
+    return 'This machine appears to use $init.';
+  }
+
+  @override
+  String get systemdListFailed => 'Could not list units';
+
+  @override
+  String get systemdUserScopeMissing => 'User units are not listed';
+
+  @override
+  String get systemdUserScopeMissingTip =>
+      'This account has no user session bus on the server, so only system units are shown.';
+
+  @override
+  String get serverUnreachable => 'Could not run a command on this server';
+
+  @override
+  String get containerNoRuntime => 'No container runtime here';
+
+  @override
+  String get containerNoRuntimeTip =>
+      'Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try sudo\" in Settings.';
+
+  @override
+  String get containerUnreadable =>
+      'The container runtime answered in an unexpected form';
 }

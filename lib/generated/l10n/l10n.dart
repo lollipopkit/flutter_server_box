@@ -2495,6 +2495,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Lock screen widget server'**
   String get accessoryWidgetServer;
+
+  /// No description provided for @systemdMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No systemd on this server'**
+  String get systemdMissing;
+
+  /// No description provided for @systemdMissingTip.
+  ///
+  /// In en, this message translates to:
+  /// **'`systemctl` is not installed here, so there are no units to list.'**
+  String get systemdMissingTip;
+
+  /// No description provided for @initSystemFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'This machine appears to use {init}.'**
+  String initSystemFmt(String init);
+
+  /// No description provided for @systemdListFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not list units'**
+  String get systemdListFailed;
+
+  /// No description provided for @systemdUserScopeMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'User units are not listed'**
+  String get systemdUserScopeMissing;
+
+  /// No description provided for @systemdUserScopeMissingTip.
+  ///
+  /// In en, this message translates to:
+  /// **'This account has no user session bus on the server, so only system units are shown.'**
+  String get systemdUserScopeMissingTip;
+
+  /// No description provided for @serverUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not run a command on this server'**
+  String get serverUnreachable;
+
+  /// No description provided for @containerNoRuntime.
+  ///
+  /// In en, this message translates to:
+  /// **'No container runtime here'**
+  String get containerNoRuntime;
+
+  /// No description provided for @containerNoRuntimeTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try sudo\" in Settings.'**
+  String get containerNoRuntimeTip;
+
+  /// No description provided for @containerUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'The container runtime answered in an unexpected form'**
+  String get containerUnreadable;
 }
 
 class _AppLocalizationsDelegate

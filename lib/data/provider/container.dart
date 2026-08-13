@@ -460,7 +460,11 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (code == 127 || raw.contains(_dockerNotFound)) {
       _setRefreshError(
         target,
-        ContainerErr(type: ContainerErrType.notInstalled),
+        // Carries what the shell said: "not installed" is a reading of that
+        // output, and it is wrong often enough — a runtime installed for
+        // another account, a `DOCKER_HOST` pointing nowhere — that the user
+        // should be able to see what it was.
+        ContainerErr(type: ContainerErrType.notInstalled, message: raw.trim()),
       );
       await _finishRefresh(refreshGeneration);
       return;
@@ -482,7 +486,10 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (code != 0) {
       _setRefreshError(
         target,
-        ContainerErr(type: ContainerErrType.unknown, message: libL10n.fail),
+        ContainerErr(
+          type: ContainerErrType.unknown,
+          message: raw.trim().isEmpty ? libL10n.fail : raw.trim(),
+        ),
       );
       await _finishRefresh(refreshGeneration);
       return;
@@ -506,7 +513,7 @@ class ContainerNotifier extends _$ContainerNotifier {
         raw.contains('podman: not found')) {
       _setRefreshError(
         target,
-        ContainerErr(type: ContainerErrType.notInstalled),
+        ContainerErr(type: ContainerErrType.notInstalled, message: raw.trim()),
       );
       await _finishRefresh(refreshGeneration);
       return;

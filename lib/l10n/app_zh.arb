@@ -399,5 +399,22 @@
   "configured": "已配置",
   "sftp": "SFTP",
   "ssh": "SSH",
-  "wiki": "Wiki"
+  "wiki": "Wiki",
+  "systemdMissing": "此服务器没有 systemd",
+  "systemdMissingTip": "机器上没有安装 `systemctl`，因此没有 unit 可列。",
+  "initSystemFmt": "这台机器似乎使用 {init}。",
+  "@initSystemFmt": {
+    "placeholders": {
+      "init": {
+        "type": "String"
+      }
+    }
+  },
+  "systemdListFailed": "无法列出 unit",
+  "systemdUserScopeMissing": "未列出用户 unit",
+  "systemdUserScopeMissingTip": "该账户在服务器上没有用户会话总线，因此只显示系统 unit。",
+  "serverUnreachable": "无法在此服务器上执行命令",
+  "containerNoRuntime": "此处没有容器运行时",
+  "containerNoRuntimeTip": "这台机器上 `docker` 和 `podman` 都没有响应。如果它装在另一个账户下，请在设置中开启「尝试 sudo」。",
+  "containerUnreadable": "容器运行时返回了无法解析的内容"
 }

@@ -1281,6 +1281,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get accessoryWidgetServer => '锁屏小组件服务器';
+
+  @override
+  String get systemdMissing => '此服务器没有 systemd';
+
+  @override
+  String get systemdMissingTip => '机器上没有安装 `systemctl`，因此没有 unit 可列。';
+
+  @override
+  String initSystemFmt(String init) {
+    return '这台机器似乎使用 $init。';
+  }
+
+  @override
+  String get systemdListFailed => '无法列出 unit';
+
+  @override
+  String get systemdUserScopeMissing => '未列出用户 unit';
+
+  @override
+  String get systemdUserScopeMissingTip => '该账户在服务器上没有用户会话总线，因此只显示系统 unit。';
+
+  @override
+  String get serverUnreachable => '无法在此服务器上执行命令';
+
+  @override
+  String get containerNoRuntime => '此处没有容器运行时';
+
+  @override
+  String get containerNoRuntimeTip =>
+      '这台机器上 `docker` 和 `podman` 都没有响应。如果它装在另一个账户下，请在设置中开启「尝试 sudo」。';
+
+  @override
+  String get containerUnreadable => '容器运行时返回了无法解析的内容';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).

@@ -7,6 +7,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/systemd.dart';
 import 'package:server_box/data/provider/systemd.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
+import 'package:server_box/view/widget/page_issue.dart';
 
 final class SystemdPage extends ConsumerStatefulWidget {
   final SpiRequiredArgs args;
@@ -57,12 +58,29 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
 
   Widget _buildBody() {
     final isBusy = ref.watch(_pro.select((pro) => pro.isBusy));
+    final failure = ref.watch(_pro.select((pro) => pro.failure));
+
+    // Nothing to filter and nothing to list, so the page is the message. Still
+    // inside a scroll view, since pull-to-refresh is how a phone retries.
+    if (failure != null && failure.issue != SystemdIssue.noUserScope) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: MediaQuery.sizeOf(context).height * 0.6,
+            child: isBusy ? UIs.centerLoading : _buildFailure(failure),
+          ),
+        ],
+      );
+    }
+
     return CustomScrollView(
       slivers: <Widget>[
         SliverToBoxAdapter(
           child: Column(
             children: [
               _buildScopeFilterChips(),
+              if (failure != null) _buildUserScopeNote(),
               AnimatedContainer(
                 duration: Durations.medium1,
                 curve: Curves.fastEaseInToSlowEaseOut,
@@ -76,6 +94,51 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
         _buildUnitList(),
       ],
     );
+  }
+
+  Widget _buildFailure(SystemdFailure failure) {
+    final (title, explain) = switch (failure.issue) {
+      SystemdIssue.noSystemd => (
+        l10n.systemdMissing,
+        [
+          l10n.systemdMissingTip,
+          if (failure.initSystem case final init?) l10n.initSystemFmt(init),
+        ].join(' '),
+      ),
+      SystemdIssue.listFailed => (l10n.systemdListFailed, null),
+      SystemdIssue.unreachable => (l10n.serverUnreachable, null),
+      // Handled as a note above the list, not as the whole page.
+      SystemdIssue.noUserScope => (
+        l10n.systemdUserScopeMissing,
+        l10n.systemdUserScopeMissingTip,
+      ),
+    };
+    return PageIssueView(
+      title: title,
+      explain: explain,
+      detail: failure.detail,
+      icon: failure.issue == SystemdIssue.noSystemd
+          ? Icons.help_outline
+          : Icons.error_outline,
+      onRetry: _refresh,
+    );
+  }
+
+  /// The system units listed and the user ones did not, so the list is real
+  /// and only incomplete — said above it rather than in place of it.
+  Widget _buildUserScopeNote() {
+    return Row(
+      children: [
+        const Icon(Icons.info_outline, size: 15),
+        const SizedBox(width: 7),
+        Expanded(
+          child: TipText(
+            l10n.systemdUserScopeMissing,
+            l10n.systemdUserScopeMissingTip,
+          ),
+        ),
+      ],
+    ).paddingSymmetric(horizontal: 17, vertical: 4);
   }
 
   Widget _buildScopeFilterChips() {
@@ -199,16 +262,7 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
 }
 
 extension _SystemdPageActions on _SystemdPageState {
-  Future<void> _refresh() async {
-    final result = await _notifier.getUnits();
-    if (!mounted) return;
-    switch (result) {
-      case SystemdRefreshResult.ok:
-        break;
-      case SystemdRefreshResult.systemFailed:
-        context.showSnackBar(libL10n.error);
-      case SystemdRefreshResult.userFailed:
-        context.showSnackBar('${libL10n.fail}: ${libL10n.user}');
-    }
-  }
+  /// No snackbar: what went wrong is shown on the page, which is where the
+  /// user is looking and where it stays until it is fixed.
+  Future<void> _refresh() => _notifier.getUnits();
 }

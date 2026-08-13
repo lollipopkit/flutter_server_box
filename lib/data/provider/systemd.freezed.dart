@@ -14,7 +14,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SystemdState {
 
- bool get isBusy; List<SystemdUnit> get units; SystemdScopeFilter get scopeFilter;
+ bool get isBusy; List<SystemdUnit> get units; SystemdScopeFilter get scopeFilter;/// Null once a refresh has produced a list. Held on the state rather than
+/// returned to the caller so the page can keep showing it: a failure is
+/// what that page *is* until it succeeds.
+ SystemdFailure? get failure;
 /// Create a copy of SystemdState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +28,16 @@ $SystemdStateCopyWith<SystemdState> get copyWith => _$SystemdStateCopyWithImpl<S
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SystemdState&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&const DeepCollectionEquality().equals(other.units, units)&&(identical(other.scopeFilter, scopeFilter) || other.scopeFilter == scopeFilter));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SystemdState&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&const DeepCollectionEquality().equals(other.units, units)&&(identical(other.scopeFilter, scopeFilter) || other.scopeFilter == scopeFilter)&&(identical(other.failure, failure) || other.failure == failure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isBusy,const DeepCollectionEquality().hash(units),scopeFilter);
+int get hashCode => Object.hash(runtimeType,isBusy,const DeepCollectionEquality().hash(units),scopeFilter,failure);
 
 @override
 String toString() {
-  return 'SystemdState(isBusy: $isBusy, units: $units, scopeFilter: $scopeFilter)';
+  return 'SystemdState(isBusy: $isBusy, units: $units, scopeFilter: $scopeFilter, failure: $failure)';
 }
 
 
@@ -45,7 +48,7 @@ abstract mixin class $SystemdStateCopyWith<$Res>  {
   factory $SystemdStateCopyWith(SystemdState value, $Res Function(SystemdState) _then) = _$SystemdStateCopyWithImpl;
 @useResult
 $Res call({
- bool isBusy, List<SystemdUnit> units, SystemdScopeFilter scopeFilter
+ bool isBusy, List<SystemdUnit> units, SystemdScopeFilter scopeFilter, SystemdFailure? failure
 });
 
 
@@ -62,12 +65,13 @@ class _$SystemdStateCopyWithImpl<$Res>
 
 /// Create a copy of SystemdState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? isBusy = null,Object? units = null,Object? scopeFilter = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? isBusy = null,Object? units = null,Object? scopeFilter = null,Object? failure = freezed,}) {
   return _then(_self.copyWith(
 isBusy: null == isBusy ? _self.isBusy : isBusy // ignore: cast_nullable_to_non_nullable
 as bool,units: null == units ? _self.units : units // ignore: cast_nullable_to_non_nullable
 as List<SystemdUnit>,scopeFilter: null == scopeFilter ? _self.scopeFilter : scopeFilter // ignore: cast_nullable_to_non_nullable
-as SystemdScopeFilter,
+as SystemdScopeFilter,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
+as SystemdFailure?,
   ));
 }
 
@@ -152,10 +156,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isBusy,  List<SystemdUnit> units,  SystemdScopeFilter scopeFilter)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool isBusy,  List<SystemdUnit> units,  SystemdScopeFilter scopeFilter,  SystemdFailure? failure)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SystemdState() when $default != null:
-return $default(_that.isBusy,_that.units,_that.scopeFilter);case _:
+return $default(_that.isBusy,_that.units,_that.scopeFilter,_that.failure);case _:
   return orElse();
 
 }
@@ -173,10 +177,10 @@ return $default(_that.isBusy,_that.units,_that.scopeFilter);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isBusy,  List<SystemdUnit> units,  SystemdScopeFilter scopeFilter)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool isBusy,  List<SystemdUnit> units,  SystemdScopeFilter scopeFilter,  SystemdFailure? failure)  $default,) {final _that = this;
 switch (_that) {
 case _SystemdState():
-return $default(_that.isBusy,_that.units,_that.scopeFilter);case _:
+return $default(_that.isBusy,_that.units,_that.scopeFilter,_that.failure);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -193,10 +197,10 @@ return $default(_that.isBusy,_that.units,_that.scopeFilter);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isBusy,  List<SystemdUnit> units,  SystemdScopeFilter scopeFilter)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool isBusy,  List<SystemdUnit> units,  SystemdScopeFilter scopeFilter,  SystemdFailure? failure)?  $default,) {final _that = this;
 switch (_that) {
 case _SystemdState() when $default != null:
-return $default(_that.isBusy,_that.units,_that.scopeFilter);case _:
+return $default(_that.isBusy,_that.units,_that.scopeFilter,_that.failure);case _:
   return null;
 
 }
@@ -208,7 +212,7 @@ return $default(_that.isBusy,_that.units,_that.scopeFilter);case _:
 
 
 class _SystemdState implements SystemdState {
-  const _SystemdState({this.isBusy = false, final  List<SystemdUnit> units = const <SystemdUnit>[], this.scopeFilter = SystemdScopeFilter.all}): _units = units;
+  const _SystemdState({this.isBusy = false, final  List<SystemdUnit> units = const <SystemdUnit>[], this.scopeFilter = SystemdScopeFilter.all, this.failure}): _units = units;
   
 
 @override@JsonKey() final  bool isBusy;
@@ -220,6 +224,10 @@ class _SystemdState implements SystemdState {
 }
 
 @override@JsonKey() final  SystemdScopeFilter scopeFilter;
+/// Null once a refresh has produced a list. Held on the state rather than
+/// returned to the caller so the page can keep showing it: a failure is
+/// what that page *is* until it succeeds.
+@override final  SystemdFailure? failure;
 
 /// Create a copy of SystemdState
 /// with the given fields replaced by the non-null parameter values.
@@ -231,16 +239,16 @@ _$SystemdStateCopyWith<_SystemdState> get copyWith => __$SystemdStateCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SystemdState&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&const DeepCollectionEquality().equals(other._units, _units)&&(identical(other.scopeFilter, scopeFilter) || other.scopeFilter == scopeFilter));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SystemdState&&(identical(other.isBusy, isBusy) || other.isBusy == isBusy)&&const DeepCollectionEquality().equals(other._units, _units)&&(identical(other.scopeFilter, scopeFilter) || other.scopeFilter == scopeFilter)&&(identical(other.failure, failure) || other.failure == failure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isBusy,const DeepCollectionEquality().hash(_units),scopeFilter);
+int get hashCode => Object.hash(runtimeType,isBusy,const DeepCollectionEquality().hash(_units),scopeFilter,failure);
 
 @override
 String toString() {
-  return 'SystemdState(isBusy: $isBusy, units: $units, scopeFilter: $scopeFilter)';
+  return 'SystemdState(isBusy: $isBusy, units: $units, scopeFilter: $scopeFilter, failure: $failure)';
 }
 
 
@@ -251,7 +259,7 @@ abstract mixin class _$SystemdStateCopyWith<$Res> implements $SystemdStateCopyWi
   factory _$SystemdStateCopyWith(_SystemdState value, $Res Function(_SystemdState) _then) = __$SystemdStateCopyWithImpl;
 @override @useResult
 $Res call({
- bool isBusy, List<SystemdUnit> units, SystemdScopeFilter scopeFilter
+ bool isBusy, List<SystemdUnit> units, SystemdScopeFilter scopeFilter, SystemdFailure? failure
 });
 
 
@@ -268,12 +276,13 @@ class __$SystemdStateCopyWithImpl<$Res>
 
 /// Create a copy of SystemdState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? isBusy = null,Object? units = null,Object? scopeFilter = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? isBusy = null,Object? units = null,Object? scopeFilter = null,Object? failure = freezed,}) {
   return _then(_SystemdState(
 isBusy: null == isBusy ? _self.isBusy : isBusy // ignore: cast_nullable_to_non_nullable
 as bool,units: null == units ? _self._units : units // ignore: cast_nullable_to_non_nullable
 as List<SystemdUnit>,scopeFilter: null == scopeFilter ? _self.scopeFilter : scopeFilter // ignore: cast_nullable_to_non_nullable
-as SystemdScopeFilter,
+as SystemdScopeFilter,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
+as SystemdFailure?,
   ));
 }
 
