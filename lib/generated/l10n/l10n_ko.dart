@@ -727,9 +727,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get parseContainerStatsTip => 'Docker 점유 상태 파싱이 비교적 느립니다.';
 
   @override
-  String get shellSourceNone => '셸 없음';
-
-  @override
   String get forceSinglePane => '한 열로 표시';
 
   @override
@@ -993,21 +990,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get sshVerificationCode => '인증 코드';
-
-  @override
-  String get sshViaMonitor => 'monitor를 통한 SSH';
-
-  @override
-  String get sshViaMonitorTip =>
-      'SSH 포트에 직접 접근할 수 없는 호스트를 위해 해당 서버의 monitor 에이전트를 통해 SSH에 연결합니다. 에이전트는 바이트만 중계하므로 세션은 종단 간 암호화를 유지하며 호스트 키도 여기서 검증됩니다. 대상 주소는 에이전트에서 설정되며 앱에서는 지정할 수 없습니다.';
-
-  @override
-  String get sshViaMonitorNeedsMonitor =>
-      'monitor를 통한 SSH에는 monitor 주소가 필요합니다.';
-
-  @override
-  String get sshViaMonitorConflictsWithOtherTransport =>
-      'monitor를 통한 SSH는 점프 서버, ProxyCommand, 대체 주소와 함께 사용할 수 없습니다.';
 
   @override
   String get sshConfigManualSelect => 'SSH 설정 파일을 수동으로 선택하시겠습니까?';

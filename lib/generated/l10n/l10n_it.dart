@@ -767,9 +767,6 @@ class AppLocalizationsIt extends AppLocalizations {
       'L\'analisi dello stato di occupazione di Docker è relativamente lenta.';
 
   @override
-  String get shellSourceNone => 'Nessuna shell';
-
-  @override
   String get forceSinglePane => 'Colonna singola';
 
   @override
@@ -1047,21 +1044,6 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get sshVerificationCode => 'Codice di verifica';
-
-  @override
-  String get sshViaMonitor => 'SSH tramite monitor';
-
-  @override
-  String get sshViaMonitorTip =>
-      'Raggiunge l\'SSH di questo server tramite il suo agente monitor, per host la cui porta SSH non è raggiungibile direttamente. L\'agente inoltra solo byte: la sessione resta cifrata end-to-end e la sua host key viene comunque verificata qui. L\'indirizzo di destinazione è configurato sull\'agente e non può essere scelto dall\'app.';
-
-  @override
-  String get sshViaMonitorNeedsMonitor =>
-      'SSH tramite monitor richiede un indirizzo monitor.';
-
-  @override
-  String get sshViaMonitorConflictsWithOtherTransport =>
-      'SSH tramite monitor non può essere combinato con jump server, ProxyCommand o indirizzo alternativo.';
 
   @override
   String get sshConfigManualSelect =>

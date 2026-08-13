@@ -1464,12 +1464,6 @@ abstract class AppLocalizations {
   /// **'Parsing the occupancy status of Docker is relatively slow.'**
   String get parseContainerStatsTip;
 
-  /// No description provided for @shellSourceNone.
-  ///
-  /// In en, this message translates to:
-  /// **'No shell'**
-  String get shellSourceNone;
-
   /// No description provided for @forceSinglePane.
   ///
   /// In en, this message translates to:
@@ -1931,30 +1925,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Verification code'**
   String get sshVerificationCode;
-
-  /// No description provided for @sshViaMonitor.
-  ///
-  /// In en, this message translates to:
-  /// **'SSH via monitor'**
-  String get sshViaMonitor;
-
-  /// No description provided for @sshViaMonitorTip.
-  ///
-  /// In en, this message translates to:
-  /// **'Reach this server\'s SSH through its monitor agent, for hosts whose SSH port isn\'t reachable directly. The agent only relays bytes: the session stays encrypted end to end and its host key is still verified here. The target address is configured on the agent and cannot be chosen from the app.'**
-  String get sshViaMonitorTip;
-
-  /// No description provided for @sshViaMonitorNeedsMonitor.
-  ///
-  /// In en, this message translates to:
-  /// **'SSH via monitor requires a monitor address.'**
-  String get sshViaMonitorNeedsMonitor;
-
-  /// No description provided for @sshViaMonitorConflictsWithOtherTransport.
-  ///
-  /// In en, this message translates to:
-  /// **'SSH via monitor cannot be combined with a jump server, ProxyCommand or fallback address.'**
-  String get sshViaMonitorConflictsWithOtherTransport;
 
   /// No description provided for @sshConfigManualSelect.
   ///

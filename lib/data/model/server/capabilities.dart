@@ -73,41 +73,19 @@ class ServerCapabilities {
     persistentSession: false,
   );
 
-  /// Status over monitor's HTTP API, with SSH reachable through the agent's
-  /// tunnel (`SshCredential.viaMonitor`).
-  ///
-  /// [persistentSession] stays false even though a real `SSHClient` can exist:
-  /// it describes the *status* transport, which is still a stateless poll, and
-  /// the SSH connection is opened lazily on first shell use rather than held
-  /// open for every server that merely could have one.
-  static const monitorHttpWithShell = ServerCapabilities(
-    shell: true,
-    terminal: true,
-    storedHistory: true,
-    persistentSession: false,
-  );
-
-  /// [granted] is what the agent said it allows, or null before it has
-  /// answered. Null is read as "not yet" rather than "no": the buttons appear
-  /// when the first status poll comes back, which is the same moment anything
-  /// behind them could have worked.
   static ServerCapabilities of(
     ServerConnectCredential credential, {
     MonitorRemoteAccess? granted,
   }) {
     return switch (credential) {
       ServerConnectCredentialSsh() => ssh,
-      // Having SSH configured at all is what decides this, whether it is
-      // reached directly or through the agent — the features behind it only
-      // need an `SSHClient`, not a particular way of getting one. Only when
-      // there is none does the agent's own PTY come into it, and that one
-      // answers strictly less.
-      ServerConnectCredentialMonitorHttp(:final spi) =>
-        spi.ssh != null
-            ? monitorHttpWithShell
-            : (granted?.fullAccess ?? false)
-            ? monitorHttpFullAccess
-            : monitorHttp,
+      // A monitor server is reached through its agent and nowhere else, so
+      // what it can do is the agent's answer alone. It used to be able to
+      // carry SSH credentials tunneled to the machine's own sshd; that was a
+      // second way to the same place, configured separately, and it meant
+      // "what can this server do" had two sources.
+      ServerConnectCredentialMonitorHttp() =>
+        (granted?.fullAccess ?? false) ? monitorHttpFullAccess : monitorHttp,
     };
   }
 }

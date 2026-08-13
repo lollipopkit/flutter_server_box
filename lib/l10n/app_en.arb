@@ -234,7 +234,6 @@
   "openLastPath": "Open the last path",
   "openLastPathTip": "Different servers will have different logs, and the log is the path to the exit",
   "parseContainerStatsTip": "Parsing the occupancy status of Docker is relatively slow.",
-  "shellSourceNone": "No shell",
   "forceSinglePane": "Single column",
   "forceSinglePaneTip": "Keep one column however wide the window is, instead of putting a list beside what it opens — servers beside their details, terminals and file browsers beside their sessions.",
   "fullAccessRefused": "This agent does not allow access without SSH.",
@@ -318,10 +317,6 @@
   "@sshVerificationCode": {
     "description": "Label for a one-time verification code requested during SSH keyboard-interactive authentication."
   },
-  "sshViaMonitor": "SSH via monitor",
-  "sshViaMonitorTip": "Reach this server's SSH through its monitor agent, for hosts whose SSH port isn't reachable directly. The agent only relays bytes: the session stays encrypted end to end and its host key is still verified here. The target address is configured on the agent and cannot be chosen from the app.",
-  "sshViaMonitorNeedsMonitor": "SSH via monitor requires a monitor address.",
-  "sshViaMonitorConflictsWithOtherTransport": "SSH via monitor cannot be combined with a jump server, ProxyCommand or fallback address.",
   "sshConfigManualSelect": "Would you like to select the SSH config file manually?",
   "sshConfigNoServers": "No servers found in SSH config",
   "sshConfigPermissionDenied": "Cannot access SSH config file due to macOS permissions.",

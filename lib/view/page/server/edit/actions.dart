@@ -173,10 +173,6 @@ extension _Actions on _ServerEditPageState {
     switch (error) {
       case SpiValidationError.jumpServerAndProxyCommandConflict:
         return l10n.jumpServerAndProxyCommandCannotBeUsedTogether;
-      case SpiValidationError.monitorTunnelWithoutMonitor:
-        return l10n.sshViaMonitorNeedsMonitor;
-      case SpiValidationError.monitorTunnelAndOtherTransport:
-        return l10n.sshViaMonitorConflictsWithOtherTransport;
     }
   }
 
@@ -293,22 +289,10 @@ extension _Actions on _ServerEditPageState {
     // user literally named `monitor`. The exception is the SSH-via-monitor
     // tunnel, which needs credentials but no address: the agent connects to
     // its own configured target and takes none from us.
+    // A monitor server carries no SSH credential at all: it is reached through
+    // its agent, and nothing here would have anywhere to go.
     final ssh = useMonitorHttp
-        ? (!_sshViaMonitor.value
-              ? null
-              : SshCredential(
-                  ip: '',
-                  user: _tunnelUserCtrl.text.selfNotEmptyOrNull ?? 'root',
-                  pwd: _tunnelPwdCtrl.text.selfNotEmptyOrNull,
-                  keyId: _tunnelKeyIdx.value != null
-                      ? ref
-                            .read(privateKeyProvider)
-                            .keys
-                            .elementAt(_tunnelKeyIdx.value!)
-                            .id
-                      : null,
-                  viaMonitor: true,
-                ))
+        ? null
         : SshCredential(
             ip: _ipController.text,
             port: int.tryParse(_portController.text) ?? 22,
@@ -496,22 +480,7 @@ extension _Utils on _ServerEditPageState {
     _nameController.text = spi.name;
 
     final ssh = spi.ssh;
-    // A tunneled credential has no address and lives in its own section of
-    // the form; loading it into the direct-SSH fields would show a host of ''
-    // and a port of 22 that mean nothing.
-    if (ssh != null && ssh.viaMonitor) {
-      _sshViaMonitor.value = true;
-      _tunnelUserCtrl.text = ssh.user;
-      // Key and password are not exclusive: sshd can ask for both, and the
-      // client falls back from one to the other. Load whichever are set.
-      _tunnelPwdCtrl.text = ssh.pwd ?? '';
-      if (ssh.keyId != null) {
-        _tunnelKeyIdx.value = ref
-            .read(privateKeyProvider)
-            .keys
-            .indexWhere((e) => e.id == ssh.keyId);
-      }
-    } else if (ssh != null) {
+    if (ssh != null) {
       _ipController.text = ssh.ip;
       _portController.text = ssh.port.toString();
       _usernameController.text = ssh.user;

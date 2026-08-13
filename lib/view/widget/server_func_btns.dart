@@ -14,6 +14,7 @@ import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
+import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
@@ -28,13 +29,17 @@ import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/systemd.dart';
 
 class ServerFuncBtns extends StatelessWidget {
-  const ServerFuncBtns({super.key, required this.spi});
+  const ServerFuncBtns({super.key, required this.spi, this.granted});
 
   final Spi spi;
 
+  /// What the server's agent said it allows, for a monitor server. Null for an
+  /// SSH server, which answers everything, and before the first status poll.
+  final MonitorRemoteAccess? granted;
+
   @override
   Widget build(BuildContext context) {
-    final btns = this.btns;
+    final btns = btnsWith(granted);
     if (btns.isEmpty) return UIs.placeholder;
 
     final items = [
@@ -99,7 +104,7 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
 }
 
 extension ServerFuncBtnsUtils on ServerFuncBtns {
-  List<ServerFuncBtn> get btns {
+  List<ServerFuncBtn> btnsWith(MonitorRemoteAccess? granted) {
     final ordered = () {
       try {
         final vals = <ServerFuncBtn>[];
@@ -114,12 +119,14 @@ extension ServerFuncBtnsUtils on ServerFuncBtns {
       }
     }();
 
-    // A server reached only through its agent's passwordless PTY has one
-    // stream and no way to run a second command, so every other entry here
-    // would open a page that can never load. Filtered rather than disabled:
-    // there is nothing the user could do to make them work short of
-    // configuring SSH.
-    final caps = ServerCapabilities.of(ServerConnectCredential.fromSpi(spi));
+    // A monitor server whose agent has not granted access answers none of
+    // these, so every entry would open a page that can never load. Filtered
+    // rather than disabled: there is nothing the user could do here to make
+    // them work — it is the agent's decision.
+    final caps = ServerCapabilities.of(
+      ServerConnectCredential.fromSpi(spi),
+      granted: granted,
+    );
     if (caps.shell) return ordered;
     return ordered
         .where((e) => e == ServerFuncBtn.terminal && caps.terminal)
@@ -229,7 +236,7 @@ void _gotoSSH(Spi spi, BuildContext context, WidgetRef ref) async {
   // the only option for them regardless of the setting.
   final ssh = spi.ssh;
   final useBuiltin =
-      isMobile || !useSystemSsh || ssh == null || ssh.viaMonitor;
+      isMobile || !useSystemSsh || ssh == null;
 
   // One way in. A terminal opened from here used to be a page pushed over
   // whatever was on screen, unknown to the SSH tab and its sessions, so the

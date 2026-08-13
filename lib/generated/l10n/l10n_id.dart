@@ -763,9 +763,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Parsing status okupansi oleh Docker agak lambat';
 
   @override
-  String get shellSourceNone => 'Tanpa shell';
-
-  @override
   String get forceSinglePane => 'Satu kolom';
 
   @override
@@ -1041,21 +1038,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get sshVerificationCode => 'Kode verifikasi';
-
-  @override
-  String get sshViaMonitor => 'SSH lewat monitor';
-
-  @override
-  String get sshViaMonitorTip =>
-      'Menjangkau SSH server ini lewat agen monitor-nya, untuk host yang port SSH-nya tidak bisa dihubungi langsung. Agen hanya meneruskan byte: sesi tetap terenkripsi ujung ke ujung dan host key-nya tetap diverifikasi di sini. Alamat tujuan diatur pada agen dan tidak bisa dipilih dari aplikasi.';
-
-  @override
-  String get sshViaMonitorNeedsMonitor =>
-      'SSH lewat monitor membutuhkan alamat monitor.';
-
-  @override
-  String get sshViaMonitorConflictsWithOtherTransport =>
-      'SSH lewat monitor tidak bisa digabung dengan jump server, ProxyCommand, atau alamat cadangan.';
 
   @override
   String get sshConfigManualSelect =>

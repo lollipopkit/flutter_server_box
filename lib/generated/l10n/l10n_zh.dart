@@ -718,9 +718,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get parseContainerStatsTip => 'Docker 解析占用状态较为缓慢';
 
   @override
-  String get shellSourceNone => '不提供 shell';
-
-  @override
   String get forceSinglePane => '单栏显示';
 
   @override
@@ -977,20 +974,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sshVerificationCode => '验证码';
-
-  @override
-  String get sshViaMonitor => '通过 monitor 转发 SSH';
-
-  @override
-  String get sshViaMonitorTip =>
-      '经该服务器的 monitor 代理访问其 SSH，适用于 SSH 端口无法直接连通的主机。代理只转发字节：会话仍是端到端加密的，host key 仍在本地校验。目标地址由代理自身配置决定，App 无法指定。';
-
-  @override
-  String get sshViaMonitorNeedsMonitor => '通过 monitor 转发 SSH 需要先填写 monitor 地址。';
-
-  @override
-  String get sshViaMonitorConflictsWithOtherTransport =>
-      '通过 monitor 转发 SSH 不能与跳板机、ProxyCommand 或备用地址同时使用。';
 
   @override
   String get sshConfigManualSelect => '是否要手动选择 SSH 配置文件？';
@@ -2014,9 +1997,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get parseContainerStatsTip => 'Docker 解析消耗狀態較為緩慢';
 
   @override
-  String get shellSourceNone => '不提供 shell';
-
-  @override
   String get forceSinglePane => '單欄顯示';
 
   @override
@@ -2273,20 +2253,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshVerificationCode => '驗證碼';
-
-  @override
-  String get sshViaMonitor => '透過 monitor 轉發 SSH';
-
-  @override
-  String get sshViaMonitorTip =>
-      '經該伺服器的 monitor 代理存取其 SSH，適用於 SSH 連接埠無法直接連通的主機。代理只轉發位元組：工作階段仍是端對端加密的，host key 仍在本機驗證。目標位址由代理自身設定決定，App 無法指定。';
-
-  @override
-  String get sshViaMonitorNeedsMonitor => '透過 monitor 轉發 SSH 需要先填寫 monitor 位址。';
-
-  @override
-  String get sshViaMonitorConflictsWithOtherTransport =>
-      '透過 monitor 轉發 SSH 不能與跳板機、ProxyCommand 或備用位址同時使用。';
 
   @override
   String get sshConfigManualSelect => '是否要手動選擇 SSH 設定檔案？';

@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/monitor_tunnel_socket.dart';
 import 'package:server_box/core/utils/proxy_command_socket.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/app/error.dart';
@@ -175,25 +174,6 @@ Future<SSHClient> genClient(
               message: l10n.noJumpServerAvailable,
             ),
         lastNetworkStack ?? StackTrace.current,
-      );
-    }
-
-    // A fourth way of obtaining the socket, alongside jump servers and
-    // ProxyCommand: relay it through this server's monitor agent, for hosts
-    // whose SSH port isn't reachable but whose monitor endpoint is. Everything
-    // below — host key verification included — is unchanged, so the agent in
-    // the middle can neither read the session nor impersonate the server.
-    if (ssh.viaMonitor) {
-      final monitor = spi.monitorHttp;
-      if (monitor == null) {
-        throw SSHErr(
-          type: SSHErrType.connect,
-          message: 'No monitor endpoint to tunnel SSH through for ${spi.name}',
-        );
-      }
-      return await MonitorTunnelSocket.connect(
-        monitor: monitor,
-        timeout: timeout,
       );
     }
 

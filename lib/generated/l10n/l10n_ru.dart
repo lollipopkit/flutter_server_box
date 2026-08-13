@@ -764,9 +764,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Анализ статуса использования Docker может быть медленным';
 
   @override
-  String get shellSourceNone => 'Без оболочки';
-
-  @override
   String get forceSinglePane => 'Одна колонка';
 
   @override
@@ -1043,21 +1040,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sshVerificationCode => 'Код подтверждения';
-
-  @override
-  String get sshViaMonitor => 'SSH через monitor';
-
-  @override
-  String get sshViaMonitorTip =>
-      'Доступ к SSH этого сервера через его агент monitor — для хостов, чей SSH-порт недоступен напрямую. Агент лишь передаёт байты: сессия остаётся зашифрованной от точки до точки, а её host key по-прежнему проверяется здесь. Адрес назначения задаётся на агенте и не может быть выбран из приложения.';
-
-  @override
-  String get sshViaMonitorNeedsMonitor =>
-      'Для SSH через monitor нужен адрес monitor.';
-
-  @override
-  String get sshViaMonitorConflictsWithOtherTransport =>
-      'SSH через monitor нельзя сочетать с промежуточным сервером, ProxyCommand или запасным адресом.';
 
   @override
   String get sshConfigManualSelect =>

@@ -285,5 +285,3 @@ types:
         index: 7
       proxyCommand:
         index: 8
-      viaMonitor:
-        index: 9

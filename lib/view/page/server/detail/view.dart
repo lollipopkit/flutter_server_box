@@ -312,7 +312,7 @@ ${err.message ?? 'null'}
               clipBehavior: Clip.antiAlias,
               child: SizedBox(
                 height: _kFuncBarHeight,
-                child: ServerFuncBtns(spi: si.spi),
+                child: ServerFuncBtns(spi: si.spi, granted: si.remoteAccess),
               ),
             ),
           ),

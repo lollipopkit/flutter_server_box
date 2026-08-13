@@ -1,27 +1,5 @@
 part of 'edit.dart';
 
-/// Where a monitor-reached server's shell comes from.
-///
-/// One question with three answers, rather than the two independent switches
-/// this used to be. They were never independent: [Spix.validate] rejects
-/// having both, so the form could reach a state it would then refuse to save
-/// — a delayed error message dressed up as a choice. Stating it as a choice
-/// also puts the two SSH-account fields underneath the option that owns them,
-/// instead of beside a second account with the same field labels.
-enum _ShellSource {
-  /// No SSH of this app's own. What the server can then do is the agent's
-  /// answer, not a setting here — see [ServerState.remoteAccess]. An agent
-  /// that grants access without SSH is offering it to anyone with the panel
-  /// password, so a switch here could only have made the app pretend
-  /// otherwise.
-  none,
-
-  /// SSH relayed by the agent. Real SSH, so it answers everything: terminal,
-  /// SFTP, port forwarding, containers.
-  tunnel,
-
-}
-
 extension _Widgets on _ServerEditPageState {
   Widget _buildAuth() {
     final switch_ = ListTile(
@@ -454,67 +432,7 @@ extension _Widgets on _ServerEditPageState {
             ),
           ),
         ).cardx,
-        const CenterGreyTitle('Shell'),
-        _buildShellSource(),
       ],
-    );
-  }
-
-  _ShellSource get _shellSource =>
-      _sshViaMonitor.value ? _ShellSource.tunnel : _ShellSource.none;
-
-  void _setShellSource(_ShellSource source) {
-    _sshViaMonitor.value = source == _ShellSource.tunnel;
-  }
-
-  /// The shell choice, and the fields belonging to whichever option owns them.
-  Widget _buildShellSource() {
-    return ListenableBuilder(
-      listenable: _sshViaMonitor,
-      builder: (_, _) {
-        final selected = _shellSource;
-        Widget option(_ShellSource value, IconData icon, Widget title) {
-          return ListTile(
-            leading: Icon(icon),
-            title: title,
-            trailing: Radio<_ShellSource>(value: value),
-            onTap: () => _setShellSource(value),
-          );
-        }
-
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioGroup<_ShellSource>(
-              groupValue: selected,
-              onChanged: (value) {
-                if (value != null) _setShellSource(value);
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // A dash rather than a prohibition sign: this is the
-                  // ordinary default for a server that only reports status,
-                  // not something that has been forbidden. Same reason the
-                  // label says what the server has rather than "Disabled",
-                  // which in a list of options reads as "unavailable".
-                  option(
-                    _ShellSource.none,
-                    Icons.horizontal_rule,
-                    Text(l10n.shellSourceNone),
-                  ),
-                  option(
-                    _ShellSource.tunnel,
-                    Icons.terminal,
-                    TipText(l10n.sshViaMonitor, l10n.sshViaMonitorTip),
-                  ),
-                ],
-              ),
-            ).cardx,
-            if (selected == _ShellSource.tunnel) _buildTunnelCredential(),
-          ],
-        );
-      },
     );
   }
 
@@ -529,42 +447,6 @@ extension _Widgets on _ServerEditPageState {
   /// second account with the same two labels. They are not interchangeable —
   /// that one is the panel login, this one has to exist on the far host and
   /// be permitted by its sshd.
-  Widget _buildTunnelCredential() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Input(
-          controller: _tunnelUserCtrl,
-          type: TextInputType.text,
-          label: 'SSH ${libL10n.user}',
-          icon: Icons.account_box,
-          hint: 'root',
-          suggestion: false,
-        ),
-        ListTile(
-          title: Text(l10n.keyAuth),
-          trailing: _tunnelKeyIdx.listenVal(
-            (v) => Switch(
-              value: v != null,
-              onChanged: (val) => _tunnelKeyIdx.value = val ? -1 : null,
-            ),
-          ),
-        ).cardx,
-        _tunnelKeyIdx.listenVal((v) {
-          if (v == null) return UIs.placeholder;
-          return _buildKeyAuthFor(_tunnelKeyIdx);
-        }),
-        Input(
-          controller: _tunnelPwdCtrl,
-          obscureText: true,
-          type: TextInputType.text,
-          label: 'SSH ${libL10n.pwd}',
-          icon: Icons.password,
-          suggestion: false,
-        ),
-      ],
-    );
-  }
 
   Widget _buildCustomCmds() {
     return Column(
