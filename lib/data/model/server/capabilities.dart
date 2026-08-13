@@ -26,6 +26,18 @@ class ServerCapabilities {
   /// connection that cannot carry them.
   final bool terminal;
 
+  /// Bidirectional byte streams can be opened: SFTP moves file contents, port
+  /// forwarding moves a TCP connection.
+  ///
+  /// Separate from [shell] because a transport can carry a command and its
+  /// output without being able to carry a stream — which is exactly a monitor
+  /// agent's HTTP API. Offering SFTP on one would open a page that can only
+  /// ever fail.
+  // TODO: true for a full-access agent once it relays a connection to an
+  // address the caller names, the way `MonitorTunnelSocket` did for one fixed
+  // address.
+  final bool byteStream;
+
   /// The source keeps its own trend history that can prefill the local buffer
   /// (see `StatusHistory.seed`). False means the buffer only ever holds what
   /// this app sampled while the page was open.
@@ -39,6 +51,7 @@ class ServerCapabilities {
   const ServerCapabilities({
     required this.shell,
     required this.terminal,
+    required this.byteStream,
     required this.storedHistory,
     required this.persistentSession,
   });
@@ -46,6 +59,7 @@ class ServerCapabilities {
   static const ssh = ServerCapabilities(
     shell: true,
     terminal: true,
+    byteStream: true,
     storedHistory: false,
     persistentSession: true,
   );
@@ -54,6 +68,7 @@ class ServerCapabilities {
   static const monitorHttp = ServerCapabilities(
     shell: false,
     terminal: false,
+    byteStream: false,
     storedHistory: true,
     persistentSession: false,
   );
@@ -66,9 +81,14 @@ class ServerCapabilities {
   /// through the agent, all of which the panel login already implied — anyone
   /// who can get a shell can run anything in it. Splitting them would have
   /// been three switches describing one decision.
+  ///
+  /// [byteStream] is false while the agent has no way to relay a connection to
+  /// an address the app names; that is a missing endpoint, not a second
+  /// decision, and it flips to true for everyone once the agent grows one.
   static const monitorHttpFullAccess = ServerCapabilities(
     shell: true,
     terminal: true,
+    byteStream: false,
     storedHistory: true,
     persistentSession: false,
   );

@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/res/store.dart';
 
 enum ServerFuncBtn {
@@ -58,6 +59,21 @@ enum ServerFuncBtn {
     iperf => Icons.speed,
     systemd => MingCute.plugin_2_fill,
     portForward => Icons.compare_arrows,
+  };
+
+  /// Whether a connection with [caps] can actually do what this entry opens.
+  ///
+  /// Asked of the capabilities rather than of the transport, and asked per
+  /// entry rather than once for all of them: these three needs are genuinely
+  /// different, and a server reached over its monitor agent meets two of them.
+  bool availableWith(ServerCapabilities caps) => switch (this) {
+    // All three end in the terminal — snippets and iperf hand it a command to
+    // start with, and nothing else.
+    terminal || snippet || iperf => caps.terminal,
+    container || process || systemd => caps.shell,
+    // A file's contents and a forwarded connection are byte streams, not a
+    // command's output.
+    sftp || portForward => caps.byteStream,
   };
 
   String get toStr => switch (this) {

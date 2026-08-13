@@ -3,9 +3,10 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:server_box/data/model/app/error.dart';
+import 'package:server_box/data/model/server/monitor_capabilities.dart';
+import 'package:server_box/data/model/server/monitor_exec_output.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_metrics.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
 
 /// Talks to one server's `monitor` HTTP API. One instance is owned per
 /// `ServerNotifier` (see `single.dart`), mirroring how `PveNotifier` owns its
@@ -130,6 +131,57 @@ class MonitorHttpClient {
     });
   }
 
+  /// Runs one command on the agent's machine and collects what it printed.
+  ///
+  /// [cmd] is handed to a POSIX shell, so it may be a pipeline or a script.
+  /// [stdin] is written before the command's input closes — a sudo password
+  /// with no terminal to type it into. The agent caps output and running time
+  /// and reports when it had to; see [MonitorExecOutput].
+  ///
+  /// Answers 403 when the agent's `full_access` grant is off, which it
+  /// re-checks per request: what `/capabilities` said earlier decides what the
+  /// app *offers*, not what the agent allows.
+  Future<MonitorExecOutput> exec(
+    String cmd, {
+    String? stdin,
+    Map<String, String>? env,
+  }) {
+    return _authed(() async {
+      final Response<Map<String, dynamic>> resp;
+      try {
+        resp = await _session().post<Map<String, dynamic>>(
+          '/api/v1/exec',
+          data: {
+            'cmd': cmd,
+            'stdin': ?stdin,
+            if (env != null && env.isNotEmpty) 'env': env,
+          },
+        );
+      } on DioException catch (e) {
+        // Told apart from a generic failure because it is the one the user can
+        // do something about, and because retrying it will never help: the
+        // agent is configured not to run commands at all.
+        if (e.response?.statusCode == 403) {
+          throw MonitorHttpErr(
+            type: MonitorHttpErrType.unknown,
+            message:
+                'The monitor agent refuses to run commands — full access is '
+                'off in its config.\n$e',
+          );
+        }
+        rethrow;
+      }
+      final data = resp.data;
+      if (data == null) {
+        throw const MonitorHttpErr(
+          type: MonitorHttpErrType.invalidResponse,
+          message: 'Empty /api/v1/exec response',
+        );
+      }
+      return MonitorExecOutput.fromJson(data);
+    });
+  }
+
   /// Opens the agent's SSH tunnel and returns the raw WebSocket.
   ///
   /// Takes a single-use ticket first: a browser can't put a bearer token on a
@@ -154,12 +206,12 @@ class MonitorHttpClient {
     timeout: timeout,
   );
 
-  /// Which remote-access paths this agent will actually accept right now.
+  /// What this agent will accept right now, and what it runs on.
   ///
   /// Reports what the agent will *do*, not what its config asks for — the
   /// transport check is already folded into `terminal`, so a caller can hide
   /// an entry rather than offer one that answers 403.
-  Future<MonitorRemoteAccess> fetchRemoteAccess() {
+  Future<MonitorCapabilities> fetchCapabilities() {
     return _authed(() async {
       final resp = await _session().get<Map<String, dynamic>>(
         '/api/v1/capabilities',
@@ -171,9 +223,7 @@ class MonitorHttpClient {
           message: 'Empty /api/v1/capabilities response',
         );
       }
-      return MonitorRemoteAccess.fromJson(
-        data['remote_access'] as Map<String, dynamic>? ?? const {},
-      );
+      return MonitorCapabilities.fromJson(data);
     });
   }
 

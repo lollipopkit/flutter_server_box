@@ -1,8 +1,10 @@
+import 'package:server_box/core/utils/monitor_exec.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
+import 'package:server_box/data/model/server/monitor_capabilities.dart';
 import 'package:server_box/data/model/server/monitor_metrics_mapper.dart';
-import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/status_history.dart';
 import 'package:server_box/data/provider/server/data_source.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
@@ -28,13 +30,16 @@ class MonitorHttpDataSource implements ServerDataSource {
   bool matches(ServerConnectCredentialMonitorHttp other) =>
       credential.monitor == other.monitor;
 
-  /// What the agent says it allows.
+  /// Runs commands through the agent, on the session the status poll already
+  /// authenticated — so the process list does not log in again per command.
+  late final ServerExec exec = MonitorExec(_client);
+
+  /// What the agent says it allows, and what it runs on.
   ///
   /// Cheap and already authenticated, so it rides along with the status poll
   /// rather than being a connect-time step that could go stale the moment the
   /// agent's config changes.
-  Future<MonitorRemoteAccess> fetchRemoteAccess() =>
-      _client.fetchRemoteAccess();
+  Future<MonitorCapabilities> fetchCapabilities() => _client.fetchCapabilities();
 
   @override
   Future<ServerStatus> fetchStatus(ServerStatus into) async {

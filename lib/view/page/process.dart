@@ -122,7 +122,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
         }
         return;
       }
-      final exec = await ref.read(_provider.notifier).ensureExec();
+      final exec = await ref.read(_provider.notifier).ensureScriptExec();
       final result = (await exec
               .run(
                 ShellFunc.process.exec(
@@ -816,7 +816,7 @@ extension _ProcessPageStateActions on _ProcessPageState {
         if (mounted) context.showSnackBar(libL10n.disconnected);
         return;
       }
-      final exec = await ref.read(_provider.notifier).ensureExec();
+      final exec = await ref.read(_provider.notifier).ensureScriptExec();
       final raw = (await exec
               .run(
                 ShellFunc.process.exec(

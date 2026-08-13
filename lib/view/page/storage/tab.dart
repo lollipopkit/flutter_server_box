@@ -4,6 +4,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/data/model/server/capabilities.dart';
+import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -316,8 +318,9 @@ extension _Sessions on _FileTabPageState {
         _openLocal(initialPath: path, select: false);
       } else {
         final spi = servers[serverId];
-        // A server can be deleted while a tab on it is still remembered.
-        if (spi == null) continue;
+        // A server can be deleted, or switched to a connection that cannot
+        // carry SFTP, while a tab on it is still remembered.
+        if (spi == null || !_canBrowse(spi)) continue;
         _openRemote(spi, initialPath: path, select: false);
       }
       restored++;
@@ -328,6 +331,15 @@ extension _Sessions on _FileTabPageState {
     _sessions.select(1);
   }
 }
+
+/// Whether a file browser can be opened on [spi] at all.
+///
+/// SFTP moves file contents over a channel, and a server reached only through
+/// its monitor agent has nothing to carry one — listing it here would offer a
+/// browser that can never open. Does not depend on what the agent grants, so
+/// it needs no probe: no grant produces a byte stream today.
+bool _canBrowse(Spi spi) =>
+    ServerCapabilities.of(ServerConnectCredential.fromSpi(spi)).byteStream;
 
 /// The first tab: pick somewhere to browse.
 ///
@@ -352,7 +364,7 @@ class _PickPage extends ConsumerWidget {
           onTap: onLocal,
         ),
         for (final id in state.serverOrder)
-          if (state.servers[id] case final spi?)
+          if (state.servers[id] case final spi? when _canBrowse(spi))
             _PickTile(
               key: ValueKey(id),
               icon: Icons.dns,
@@ -404,7 +416,7 @@ class _SideBar extends ConsumerWidget {
           SideBarTile(title: libL10n.device, onTap: onLocal),
           SideBarSection(libL10n.servers),
           for (final id in state.serverOrder)
-            if (state.servers[id] case final spi?)
+            if (state.servers[id] case final spi? when _canBrowse(spi))
               SideBarTile(
                 key: ValueKey(id),
                 title: spi.name,

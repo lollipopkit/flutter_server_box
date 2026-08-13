@@ -319,7 +319,16 @@ class ServerNotifier extends _$ServerNotifier {
       // or offers nothing until there is one.
       if (source is MonitorHttpDataSource) {
         try {
-          state = state.copyWith(remoteAccess: await source.fetchRemoteAccess());
+          final caps = await source.fetchCapabilities();
+          state = state.copyWith(remoteAccess: caps.remoteAccess);
+          // The agent knows what it is running on. Over SSH this takes a
+          // command and its output; here it arrives with the answer the app
+          // was already asking for, and it decides which script gets
+          // installed on the machine.
+          final platform = caps.platform;
+          if (platform != null && state.status.system != platform) {
+            updateStatus(_copyStatus(state.status, system: platform));
+          }
         } catch (e, s) {
           Loggers.app.warning('Ask ${spi.name} what it allows', e, s);
         }
@@ -372,14 +381,6 @@ class ServerNotifier extends _$ServerNotifier {
   /// status page from refreshing too.
   String get _shellTryId => '${state.spi.id}#shell';
 
-  /// The [SSHClient] for this server, connecting on first use.
-  ///
-  /// The SSH path already holds a client from its connect-and-fetch flow, so
-  /// this returns that one. Monitor-backed servers get theirs only when
-  /// something actually needs a shell: keeping a tunnel open for every server
-  /// that merely *could* open a terminal would undo the reason for polling
-  /// over HTTP in the first place.
-  ///
   /// Something that can run a command on this server.
   ///
   /// The one place that decides *how* a command reaches a server. Callers —
@@ -388,9 +389,88 @@ class ServerNotifier extends _$ServerNotifier {
   /// what keeps a second transport from being a condition inside each of
   /// them.
   ///
+  /// A monitor-backed server runs its commands through the agent, never
+  /// through sshd: the agent is how that server is reachable at all, and
+  /// falling back to SSH would mean asking for credentials the user chose not
+  /// to give this app.
+  ///
   /// Throws whatever the transport throws when it cannot be reached.
-  Future<ServerExec> ensureExec() async => SshExec(await ensureShellClient());
+  Future<ServerExec> ensureExec() async {
+    final credential = ServerConnectCredential.fromSpi(state.spi);
+    switch (credential) {
+      case ServerConnectCredentialSsh():
+        return SshExec(await ensureShellClient());
+      case ServerConnectCredentialMonitorHttp():
+        final source = _resolveSource(credential);
+        if (source is! MonitorHttpDataSource) {
+          throw StateError(
+            'A monitor credential resolved to a ${source.runtimeType}',
+          );
+        }
+        return source.exec;
+    }
+  }
 
+  /// Whether the generated script has been written to this server during this
+  /// notifier's life. Not persisted: the script carries the app's build number
+  /// and a relaunch is exactly when it may need rewriting.
+  bool _scriptWritten = false;
+
+  /// A [ServerExec] with the generated script present on the server.
+  ///
+  /// What the process list wants, rather than plain [ensureExec]: it runs one
+  /// of the script's functions, and the script only gets there because
+  /// something put it there. The SSH status flow writes it as part of
+  /// fetching, so over SSH this is the same thing; a monitor server's status
+  /// arrives as JSON and never touches the machine, so nothing has written it
+  /// yet.
+  ///
+  /// Throws when the script cannot be written, since the alternative is a page
+  /// reporting an empty list on a server that has plenty of processes.
+  Future<ServerExec> ensureScriptExec() async {
+    final exec = await ensureExec();
+    if (_scriptWritten) return exec;
+
+    final credential = ServerConnectCredential.fromSpi(state.spi);
+    if (credential is ServerConnectCredentialSsh) {
+      _scriptWritten = true;
+      return exec;
+    }
+
+    final spi = state.spi;
+    final system = state.status.system;
+    final result = await exec.run(
+      ShellFuncManager.allScript(
+        spi.custom?.cmds,
+        systemType: system,
+        disabledCmdTypes: spi.disabledCmdTypes,
+      ),
+      // The same shape the SSH path uses: the install command reads the script
+      // on stdin, so its content never has to survive shell quoting.
+      entry: ShellFuncManager.getInstallShellCmd(
+        spi.id,
+        systemType: system,
+        customDir: spi.custom?.scriptDir,
+      ),
+    );
+    if (!result.succeeded) {
+      // `SSHErrType.writeScript` names a transport this did not use, but it is
+      // the app's existing name for this failure and carries the advice that
+      // fits it — the script directory is not writable.
+      throw SSHErr(
+        type: SSHErrType.writeScript,
+        message: 'Write script to ${spi.name}: ${result.combined}',
+      );
+    }
+    _scriptWritten = true;
+    return exec;
+  }
+
+  /// The [SSHClient] for this server, connecting on first use.
+  ///
+  /// The SSH path already holds a client from its connect-and-fetch flow, so
+  /// this returns that one.
+  ///
   /// Throws [SSHErr] when the server has no SSH configuration, or when the
   /// retry limiter has given up on it.
   Future<SSHClient> ensureShellClient() async {

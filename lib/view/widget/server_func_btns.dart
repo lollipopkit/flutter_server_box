@@ -119,18 +119,14 @@ extension ServerFuncBtnsUtils on ServerFuncBtns {
       }
     }();
 
-    // A monitor server whose agent has not granted access answers none of
-    // these, so every entry would open a page that can never load. Filtered
-    // rather than disabled: there is nothing the user could do here to make
-    // them work — it is the agent's decision.
+    // An entry the connection cannot serve would open a page that can never
+    // load. Filtered rather than disabled: nothing the user could do on this
+    // row would make it work — it is the agent's decision, or the transport's.
     final caps = ServerCapabilities.of(
       ServerConnectCredential.fromSpi(spi),
       granted: granted,
     );
-    if (caps.shell) return ordered;
-    return ordered
-        .where((e) => e == ServerFuncBtn.terminal && caps.terminal)
-        .toList();
+    return ordered.where((e) => e.availableWith(caps)).toList();
   }
 }
 
@@ -142,7 +138,7 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
   ) async {
     switch (value) {
       case ServerFuncBtn.sftp:
-        if (!await _checkClient(context, spi.id, ref)) return;
+        if (!await _ensureSshClient(context, spi.id, ref)) return;
         // Into the file tab rather than over whatever is on screen, so two
         // servers can be open at once and neither is lost by opening the other.
         ref.read(sftpRequestsProvider.notifier).add(spi);
@@ -185,19 +181,21 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
           ],
         );
         if (sure != true) return;
-        if (!await _checkClient(context, spi.id, ref)) return;
         if (!context.mounted) return;
+        // No pre-check: the snippet runs in a terminal, and the terminal page
+        // connects and reports its own failures — the same as tapping
+        // [ServerFuncBtn.terminal].
         final args = SshPageArgs(spi: spi, initSnippet: snippet);
         SSHPage.route.go(context, args);
         break;
       case ServerFuncBtn.container:
-        if (!await _checkClient(context, spi.id, ref)) return;
+        if (!await _ensureExec(context, spi.id, ref)) return;
         if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
         ContainerPage.route.go(context, args);
         break;
       case ServerFuncBtn.process:
-        if (!await _checkClient(context, spi.id, ref)) return;
+        if (!await _ensureExec(context, spi.id, ref)) return;
         if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
         ProcessPage.route.go(context, args);
@@ -206,19 +204,19 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
         _gotoSSH(spi, context, ref);
         break;
       case ServerFuncBtn.iperf:
-        if (!await _checkClient(context, spi.id, ref)) return;
-        if (!context.mounted) return;
+        // Only a form until it is submitted, and what it opens then is a
+        // terminal — so nothing to connect here either.
         final args = SpiRequiredArgs(spi);
         IPerfPage.route.go(context, args);
         break;
       case ServerFuncBtn.systemd:
-        if (!await _checkClient(context, spi.id, ref)) return;
+        if (!await _ensureExec(context, spi.id, ref)) return;
         if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
         SystemdPage.route.go(context, args);
         break;
       case ServerFuncBtn.portForward:
-        if (!await _checkClient(context, spi.id, ref)) return;
+        if (!await _ensureSshClient(context, spi.id, ref)) return;
         if (!context.mounted) return;
         final args = SpiRequiredArgs(spi);
         PortForwardPage.route.go(context, args);
@@ -484,28 +482,46 @@ Future<void> _copyDesktopSshPasswordIfNeeded(
   }
 }
 
-/// Makes sure a shell is available before opening a page that needs one.
+/// Makes sure a command can be run before opening a page that runs one.
 ///
-/// Connects on demand rather than only reporting a missing client: a server
-/// reached through its monitor agent has no SSH connection until something
-/// asks for one, so "wait for the connection" would be advice that never
-/// comes true. Servers connected over SSH already hold a client and take the
-/// fast path out of [ServerNotifier.ensureShellClient].
+/// Which transport that turns out to be is [ServerNotifier.ensureExec]'s
+/// business — over SSH it connects a client, through a monitor agent there is
+/// nothing to connect. Connecting here rather than only reporting a missing
+/// connection: the SSH path builds its client during the status fetch, so a
+/// server the user has not looked at yet has none, and "wait for the
+/// connection" would be advice that never comes true.
+Future<bool> _ensureExec(BuildContext context, String id, WidgetRef ref) {
+  return _ensure(context, id, ref, (n) => n.ensureExec());
+}
+
+/// Makes sure an SSH connection exists before opening a page that needs the
+/// byte streams only it can carry — SFTP and port forwarding.
 ///
-/// Returns false — after telling the user why — when there is no shell to be
-/// had. Callers must re-check `context.mounted` before navigating, since this
-/// can await a real connection attempt.
-Future<bool> _checkClient(BuildContext context, String id, WidgetRef ref) async {
+/// Those entries are hidden unless [ServerCapabilities.byteStream] says so, so
+/// reaching here means the server is an SSH one.
+Future<bool> _ensureSshClient(BuildContext context, String id, WidgetRef ref) {
+  return _ensure(context, id, ref, (n) => n.ensureShellClient());
+}
+
+/// Returns false — after telling the user why — when [connect] could not.
+/// Callers must re-check `context.mounted` before navigating, since this can
+/// await a real connection attempt.
+Future<bool> _ensure(
+  BuildContext context,
+  String id,
+  WidgetRef ref,
+  Future<void> Function(ServerNotifier) connect,
+) async {
   final notifier = ref.read(serverProvider(id).notifier);
   final existing = ref.read(serverProvider(id)).client;
   if (existing != null && !existing.isClosed) return true;
 
   if (context.mounted) context.showSnackBar(l10n.waitConnection);
   try {
-    await notifier.ensureShellClient();
+    await connect(notifier);
     return true;
   } catch (e, s) {
-    Loggers.app.warning('Ensure shell client for $id', e, s);
+    Loggers.app.warning('Connect $id for a server function', e, s);
     if (context.mounted) {
       context.showSnackBar(
         e is SSHErr ? (e.message ?? e.type.name) : e.toString(),
