@@ -66,8 +66,18 @@ final class UnixPerm {
     return '${user.value}${group.value}${other.value}';
   }
 
-  /// The same nine bits as an octal number, which is what `chmod` takes.
+  /// The nine bits this editor shows, as an octal number.
+  ///
+  /// [valueWith] is what a caller wants: on its own this would clear setuid,
+  /// setgid and sticky on anything it was applied to.
   int get value => (user.value << 6) | (group.value << 3) | other.value;
+
+  /// These nine bits, with everything above them taken from [original].
+  ///
+  /// The editor cannot show setuid, setgid or sticky, so it must not be able
+  /// to clear them: toggling group-write on `/usr/bin/sudo` used to send
+  /// `0o775` and drop the setuid bit, with nothing on screen saying so.
+  int valueWith(int original) => (original & ~0x1FF) | value;
 
   /// The nine low bits of [mode]; anything above them — setuid, sticky, the
   /// type — is left alone rather than shown as something this editor could

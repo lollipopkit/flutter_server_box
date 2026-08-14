@@ -620,7 +620,7 @@ extension _Edit on _SftpPageState {
     }
 
     final completer = Completer<void>();
-    ref
+    final id = ref
         .read(fileTransferProvider.notifier)
         .add(
           FileTransfer(
@@ -631,7 +631,16 @@ extension _Edit on _SftpPageState {
         );
     final (_, err) = await context.showLoadingDialog(
       timeout: null,
-      fn: () => completer.future,
+      fn: () async {
+        await completer.future;
+        // The completer says "this transfer is over", not "it worked":
+        // `dispose()` completes it on failure too. Without this, a download
+        // that failed opened the editor on a file that was missing or left
+        // over from a previous session — and saving it uploaded that back.
+        final status = ref.read(fileTransferProvider.notifier).get(id);
+        if (status?.error != null) throw status!.error!;
+        return true;
+      },
     );
     return err == null;
   }

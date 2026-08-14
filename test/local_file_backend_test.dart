@@ -146,6 +146,15 @@ void main() {
     });
   });
 
+  test('a staged file is recognisable as one, by both sides', () async {
+    // The cleanup after a killed transfer sweeps by this pattern rather than
+    // by a path it was told, because the backend picks the name inside
+    // `write`.
+    expect(isStagingOf('report.txt.sb-part-3', '/a/b/report.txt'), isTrue);
+    expect(isStagingOf('report.txt', '/a/b/report.txt'), isFalse);
+    expect(isStagingOf('other.txt.sb-part-3', '/a/b/report.txt'), isFalse);
+  });
+
   test('rename moves a directory as readily as a file', () async {
     await Directory(at('sub')).create();
     await File(at('sub/a.txt')).writeAsString('x');

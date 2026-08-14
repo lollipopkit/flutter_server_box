@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
-import 'package:server_box/data/model/server/capabilities.dart';
-import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -78,7 +76,7 @@ Future<_Place?> _pickPlace(BuildContext context, WidgetRef ref) async {
   final state = ref.read(serversProvider);
   final servers = [
     for (final id in state.serverOrder)
-      if (state.servers[id] case final spi? when canTransferTo(spi)) spi,
+      if (state.servers[id] case final spi? when canTransferTo(ref, spi)) spi,
   ];
 
   return context.showRoundDialog<_Place>(
@@ -135,5 +133,12 @@ FileRef serverFileRef(WidgetRef ref, Spi spi, String path) {
 ///
 /// The same question the file tab asks before listing a server, asked here so
 /// a destination that could never be written to is not offered.
-bool canTransferTo(Spi spi) =>
-    ServerCapabilities.of(ServerConnectCredential.fromSpi(spi)).files;
+///
+/// Takes a [ref] because the answer is partly the agent's: a monitor server's
+/// file API is a grant it reports on `/capabilities`, and building the
+/// capabilities without it defaults every agent to "grants nothing" — which
+/// silently hid every monitor-backed server from the picker, the rail and this
+/// list, and made the file API unreachable from the app entirely.
+bool canTransferTo(WidgetRef ref, Spi spi) => ref.watch(
+  serverProvider(spi.id).select((state) => state.capabilities.files),
+);

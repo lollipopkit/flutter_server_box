@@ -684,6 +684,10 @@ Future<void> _copy(FileTransfer job, SendPort mainSendPort) async {
       plan,
       source,
       dest,
+      // Reported per file, so a transfer killed mid-write leaves a name this
+      // side can sweep. `write` cleans up after its own failures; being killed
+      // is not one of them.
+      onStaging: (path) => mainSendPort.send(TransferStaging(path)),
       onProgress: (transferred) {
         final elapsedMs = progressWatch.elapsedMilliseconds;
         final done = total > 0 && transferred >= total;

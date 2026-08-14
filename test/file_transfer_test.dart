@@ -238,6 +238,32 @@ void main() {
       expect(left, isEmpty);
     });
 
+    test('two transfers queued together get different ids', () async {
+      // `DateTime.now()` advances in millisecond steps on Windows, so two
+      // transfers queued in one tap used to share an id — after which `get(id)`
+      // threw out of `singleWhere`, was swallowed, and a failed transfer was
+      // read as having succeeded.
+      File('${tempDir.path}/a').writeAsStringSync('a');
+      File('${tempDir.path}/b').writeAsStringSync('b');
+
+      final first = FileTransferStatus(
+        job: FileTransfer(
+          from: LocalFileRef('${tempDir.path}/a'),
+          to: LocalFileRef('${tempDir.path}/a2'),
+        ),
+        notifyListeners: () {},
+      );
+      final second = FileTransferStatus(
+        job: FileTransfer(
+          from: LocalFileRef('${tempDir.path}/b'),
+          to: LocalFileRef('${tempDir.path}/b2'),
+        ),
+        notifyListeners: () {},
+      );
+
+      expect(first.id, isNot(second.id));
+    });
+
     test('a local copy that cannot read reports the failure', () async {
       final status = FileTransferStatus(
         job: FileTransfer(

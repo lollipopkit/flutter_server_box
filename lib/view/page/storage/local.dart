@@ -147,13 +147,22 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
     final picked = await Pfs.pickFilePath();
     if (picked == null) return;
     final name = picked.getFileName() ?? 'imported';
-    final destination = Directory(LocalFileBackend.nativePath(handle.path));
-    if (!await destination.exists()) {
-      await destination.create(recursive: true);
+    try {
+      final destination = Directory(LocalFileBackend.nativePath(handle.path));
+      if (!await destination.exists()) {
+        await destination.create(recursive: true);
+      }
+      await File(picked).copy(
+        LocalFileBackend.nativePath('${handle.path}/$name'),
+      );
+    } catch (e) {
+      // Every other mutating action goes through the browser's `_run`, which
+      // reports what went wrong. This one is the page's own, and without this
+      // a copy onto an existing directory threw into the zone guard: the user
+      // tapped, nothing happened, and nothing said why.
+      if (mounted) context.showSnackBar('${libL10n.fail}:\n$e');
+      return;
     }
-    await File(picked).copy(
-      LocalFileBackend.nativePath('${handle.path}/$name'),
-    );
     await handle.refresh();
   }
 

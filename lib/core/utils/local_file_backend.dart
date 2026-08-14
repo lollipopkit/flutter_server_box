@@ -132,7 +132,7 @@ class LocalFileBackend implements FileBackend {
 
   static var _staging = 0;
 
-  String _stagingSuffix() => 'sb-part-${_staging++}';
+  String _stagingSuffix() => '${kStagingSuffix.substring(1)}${_staging++}';
 
   /// POSIX in, whatever this platform uses out.
   ///

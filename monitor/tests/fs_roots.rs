@@ -215,6 +215,21 @@ fn the_filesystem_root_is_recognised_as_unrestricted() {
 }
 
 #[test]
+fn a_root_is_not_renamable_out_from_under_the_confinement() {
+    // `remove` refuses this; `rename` did not, and moving a root leaves it
+    // pointing at a path that no longer exists — after which every request is
+    // refused because nothing under it can be canonicalised.
+    //
+    // Checked here as the property the handler relies on: the root is one of
+    // `as_slice`, and that is what the guard compares against.
+    let sb = sandbox();
+
+    let resolved = sb.roots.resolve_existing(&s(&sb.root)).unwrap();
+
+    assert!(sb.roots.as_slice().contains(&resolved));
+}
+
+#[test]
 fn an_unusable_root_is_dropped_rather_than_fatal() {
     let dir = tempfile::tempdir().unwrap();
     let base = fs::canonicalize(dir.path()).unwrap();

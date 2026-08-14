@@ -106,12 +106,28 @@ class SftpFileBackend implements FileBackend {
 
   @override
   Future<void> remove(String path, {bool recursive = false}) async {
-    final attrs = await _bounded('stat', _sftp.stat(path));
-    final isDir = attrs.isDirectory;
+    // `lstat`, not `stat`: a symlink to a directory is a link, and following
+    // it here meant running `rmdir` on the link, which every server refuses.
+    //
+    // Inside the try, because a path under a directory this user cannot
+    // traverse fails here rather than at the delete — and outside the
+    // escalation it never reached the sudo retry the class advertises.
+    bool? isDir;
+    try {
+      isDir = (await _bounded(
+        'stat',
+        _sftp.stat(path, followLink: false),
+      )).isDirectory;
+    } catch (e) {
+      if (!isPermissionDenied(e)) rethrow;
+      // Unknown, and about to be escalated: `rm -r` covers both shapes and is
+      // only reached when the user asked for a recursive delete anyway.
+    }
+
     await runWithEscalation(
       escalation: escalation,
       normal: () async {
-        if (!isDir) {
+        if (isDir != true) {
           await _bounded('remove', _sftp.remove(path));
           return;
         }
@@ -126,7 +142,10 @@ class SftpFileBackend implements FileBackend {
       sudoCommand: () => switch ((isDir, recursive)) {
         (true, true) => 'rm -r -- ${shellSingleQuote(path)}',
         (true, false) => 'rmdir -- ${shellSingleQuote(path)}',
-        _ => 'rm -f -- ${shellSingleQuote(path)}',
+        (false, _) => 'rm -f -- ${shellSingleQuote(path)}',
+        // Never stat'd, because this user could not. `-r` covers a directory
+        // and `-f` a file, and one of the two is what is there.
+        (null, _) => 'rm -rf -- ${shellSingleQuote(path)}',
       },
     );
   }
@@ -257,7 +276,7 @@ class SftpFileBackend implements FileBackend {
 
   static var _staging = 0;
 
-  static String _stagingSuffix() => 'sb-part-${_staging++}';
+  static String _stagingSuffix() => '${kStagingSuffix.substring(1)}${_staging++}';
 
   /// `SSH_FX_NO_SUCH_FILE`, from the SFTP protocol.
   static const _sftpStatusNoSuchFile = 2;
@@ -288,7 +307,14 @@ class SftpFileBackend implements FileBackend {
 
   @visibleForTesting
   static List<FileEntry> parseListOutput(String output) {
-    final parts = output.split('\u0000').where((e) => e.isNotEmpty).toList();
+    // Split, not filtered. The command prints five NUL-terminated fields per
+    // entry and an empty one is still a field — `stat -c %a` printing nothing
+    // used to be dropped, and from that entry onward names were read out of
+    // the perm column and sizes out of the mtime column. A silently
+    // rearranged listing is worse than a short one.
+    final parts = output.split('\u0000');
+    // The command's own trailing NUL leaves one empty string at the end.
+    if (parts.isNotEmpty && parts.last.isEmpty) parts.removeLast();
     final entries = <FileEntry>[];
     for (var i = 0; i + 4 < parts.length; i += 5) {
       final perm = int.tryParse(parts[i + 1], radix: 8);

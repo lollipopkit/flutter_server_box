@@ -270,7 +270,13 @@ class MonitorHttpClient {
     String path,
     Stream<List<int>> data, {
     int? size,
-  }) {
+  }) async {
+    // Logged in *before* the body is touched, rather than relying on
+    // `_authed`'s retry: that retry calls the request again, and a second
+    // attempt would re-listen a stream `File.openRead` only allows one
+    // listener on. Everything else here builds a fresh body and can be
+    // replayed; this cannot, so it must not have to be.
+    if (_token == null) await _login();
     return _authed(() async {
       await _session().put<dynamic>(
         '/api/v1/fs/write',
@@ -289,17 +295,26 @@ class MonitorHttpClient {
     });
   }
 
-  Future<void> fsMkdir(String path) => _authed(() async {
-    await _object('/api/v1/fs/mkdir', post: {'path': path});
-  });
+  Future<void> fsMkdir(String path) =>
+      _fsAct('/api/v1/fs/mkdir', {'path': path});
 
-  Future<void> fsRename(String from, String to) => _authed(() async {
-    await _object('/api/v1/fs/rename', post: {'from': from, 'to': to});
-  });
+  Future<void> fsRename(String from, String to) =>
+      _fsAct('/api/v1/fs/rename', {'from': from, 'to': to});
 
-  Future<void> fsChmod(String path, int mode) => _authed(() async {
-    await _object('/api/v1/fs/chmod', post: {'path': path, 'mode': mode});
-  });
+  Future<void> fsChmod(String path, int mode) =>
+      _fsAct('/api/v1/fs/chmod', {'path': path, 'mode': mode});
+
+  /// One of the endpoints that answers 200 and nothing else.
+  ///
+  /// Not [_object], which requires a JSON object and would turn every
+  /// successful mkdir into "Empty /api/v1/fs/mkdir response" — a failure
+  /// reported for an operation that worked, with the browser then skipping the
+  /// refresh that would have shown it did.
+  Future<void> _fsAct(String path, Map<String, Object?> body) {
+    return _authed(() async {
+      await _session().post<dynamic>(path, data: body);
+    });
+  }
 
   Future<void> fsRemove(String path, {bool recursive = false}) {
     return _authed(() async {

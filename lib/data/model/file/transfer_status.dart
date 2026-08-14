@@ -16,7 +16,7 @@ class FileTransferStatus {
     required this.job,
     required this.notifyListeners,
     this.completer,
-  }) : id = DateTime.now().microsecondsSinceEpoch {
+  }) : id = _nextId++ {
     if (job.needsIsolate) {
       worker = FileTransferWorker(onNotify: onNotify, job: job);
       unawaited(_initWorker());
@@ -25,7 +25,20 @@ class FileTransferStatus {
     }
   }
 
+  /// A counter, not a timestamp.
+  ///
+  /// `DateTime.now()` advances in millisecond steps on Windows, so two
+  /// transfers queued in one tap got the same id — and `get(id)` then threw
+  /// out of `singleWhere`, was swallowed, and reported a failed transfer as
+  /// having succeeded.
   final int id;
+
+  static int _nextId = 0;
+
+  /// When this was queued. Was read back out of [id] while that was a
+  /// timestamp; kept as its own field now that it is not.
+  final DateTime startedAt = DateTime.now();
+
   final FileTransfer job;
   final void Function() notifyListeners;
   final Completer? completer;
@@ -81,24 +94,38 @@ class FileTransferStatus {
   /// Removes a staged copy the transfer did not get to rename.
   ///
   /// Only where this device is the destination. Killing an isolate skips the
-  /// cleanup its own `finally` would have done, and a `.sb-part-N` nobody
+  /// cleanup its own `catch` would have done, and a `.sb-part-N` nobody
   /// deletes is worse than the partial file this staging replaced.
+  ///
+  /// Swept by name rather than deleted by path: the backend picks the staging
+  /// name inside `write`, and the two sides agree on the pattern rather than
+  /// on the whole string. Two transfers staging the same destination are
+  /// already writing over each other.
   ///
   /// A cancelled *upload* leaves one on the server, which this side cannot
   /// reach without opening the connection again. It is at least visible in the
   /// browser, beside the file it was going to become.
   void _discardStaging() {
-    final path = stagingPath;
-    if (path == null || job.to is! LocalFileRef) return;
+    final destination = stagingPath;
+    if (destination == null || job.to is! LocalFileRef) return;
     stagingPath = null;
-    () async {
-      try {
-        final file = File(LocalFileBackend.nativePath(path));
-        if (await file.exists()) await file.delete();
-      } catch (e, s) {
-        Loggers.app.warning('Failed to remove a cancelled transfer\'s file', e, s);
+    unawaited(_sweep(destination));
+  }
+
+  static Future<void> _sweep(String destination) async {
+    try {
+      final native = LocalFileBackend.nativePath(destination);
+      final dir = File(native).parent;
+      if (!await dir.exists()) return;
+      await for (final entity in dir.list(followLinks: false)) {
+        final name = entity.path.split(Platform.pathSeparator).last;
+        if (entity is File && isStagingOf(name, destination)) {
+          await entity.delete();
+        }
       }
-    }();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to clean up after a cancelled transfer', e, s);
+    }
   }
 
   Future<void> _initWorker() async {

@@ -212,11 +212,6 @@ pub async fn read(
             return Ok(failed(e));
         }
     }
-    let len = tokio::fs::metadata(&path)
-        .await
-        .ok()
-        .map(|m| m.len().saturating_sub(offset));
-
     // Streamed rather than read into memory: this is the endpoint that has to
     // move a file bigger than the agent's own footprint, and `/exec`'s 1 MiB
     // cap is exactly why it could not be that endpoint.
@@ -234,14 +229,17 @@ pub async fn read(
         }
     };
 
-    let mut builder = HttpResponse::Ok();
-    builder.content_type("application/octet-stream");
-    if let Some(len) = len {
-        builder.header("content-length", len.to_string());
-    }
+    // No `content-length`. `streaming` frames the body as chunked, and a
+    // response carrying both is one strict clients reject and proxies treat as
+    // a smuggling hazard — and the length would have come from a second `stat`
+    // that a file appended to between the two calls makes wrong anyway.
+    // Callers that want a size ask `/fs/stat`.
+    //
     // Boxed because an `async_stream` generator holds a self-referential
     // future and so is not `Unpin`, which is what `streaming` asks for.
-    Ok(builder.streaming(Box::pin(stream)))
+    Ok(HttpResponse::Ok()
+        .content_type("application/octet-stream")
+        .streaming(Box::pin(stream)))
 }
 
 pub async fn write(
@@ -302,6 +300,16 @@ pub async fn write(
     if let Some(res) = failure {
         let _ = tokio::fs::remove_file(&staging).await;
         return Ok(res);
+    }
+    // The staged file was created with the process umask, and the rename
+    // carries that mode onto the destination — so overwriting a 0600 file
+    // would quietly leave it 0644. Whatever was there keeps its permissions.
+    if let Ok(existing) = tokio::fs::metadata(&path).await {
+        if let Err(e) =
+            tokio::fs::set_permissions(&staging, existing.permissions()).await
+        {
+            tracing::warn!("Could not carry {path:?}'s permissions over: {e}");
+        }
     }
     if let Err(e) = tokio::fs::rename(&staging, &path).await {
         let _ = tokio::fs::remove_file(&staging).await;
@@ -395,6 +403,12 @@ pub async fn rename(
         Ok(path) => path,
         Err(e) => return Ok(denied(e)),
     };
+    // As in `remove`: a root is what the confinement is defined against, and
+    // renaming one leaves it pointing at a path that no longer exists — after
+    // which every request 403s because nothing under it can be canonicalised.
+    if roots.as_slice().iter().any(|root| root == &from) {
+        return Ok(denied(FsDenied::OutsideRoots));
+    }
     match tokio::fs::rename(&from, &to).await {
         Ok(()) => Ok(HttpResponse::Ok().finish()),
         Err(e) => Ok(failed(e)),

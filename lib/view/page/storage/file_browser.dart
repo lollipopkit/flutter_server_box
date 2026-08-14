@@ -326,14 +326,17 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   }
 
   Future<void> _chmod(FileEntry entry) async {
-    final perm = UnixPerm.fromValue(entry.mode ?? 0);
+    final original = entry.mode ?? 0;
+    final perm = UnixPerm.fromValue(original);
     var next = perm;
     final ok = await context.showRoundDialog<bool>(
       child: UnixPermEditor(perm: perm, onChanged: (value) => next = value),
       actions: Btnx.okReds,
     );
     if (ok != true || next.value == perm.value) return;
-    await _run(() => backend.chmod(_fullPath(entry), next.value));
+    // The bits above the nine this editor shows are carried over, not zeroed:
+    // it cannot show setuid, setgid or sticky, so it must not clear them.
+    await _run(() => backend.chmod(_fullPath(entry), next.valueWith(original)));
   }
 
   Future<void> _mkdir() async {

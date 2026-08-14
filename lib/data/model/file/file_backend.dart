@@ -58,6 +58,21 @@ class FileEntry {
   }
 }
 
+/// What a half-written [FileBackend.write] is parked under, before the rename
+/// that puts it in place.
+///
+/// Shared because two parties need to agree on it: the backend that creates
+/// one, and the cleanup that removes it when the write never got to finish —
+/// a transfer whose isolate was killed runs no `catch` of its own.
+const kStagingSuffix = '.sb-part-';
+
+/// Whether [name] is a staged copy of [destination]'s basename.
+bool isStagingOf(String name, String destination) {
+  final slash = destination.replaceAll(r'\', '/').lastIndexOf('/');
+  final base = slash < 0 ? destination : destination.substring(slash + 1);
+  return name.startsWith('$base$kStagingSuffix');
+}
+
 /// The bits [FileEntry.mode] keeps: `rwxrwxrwx` plus setuid, setgid and
 /// sticky, and nothing above them.
 const kFilePermMask = 0xFFF;

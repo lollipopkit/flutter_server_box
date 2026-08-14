@@ -104,6 +104,7 @@ Future<void> runCopy(
   FileBackend dest, {
   required void Function(int transferred) onProgress,
   bool Function()? cancelled,
+  void Function(String path)? onStaging,
 }) async {
   void checkCancelled() {
     if (cancelled?.call() ?? false) throw const CopyCancelled();
@@ -121,6 +122,10 @@ Future<void> runCopy(
   var transferred = 0;
   for (final item in plan.items) {
     checkCancelled();
+    // Told before the write starts, so a caller whose process is about to be
+    // killed mid-file knows what to clean up. `write` removes its own staging
+    // on a normal failure; being killed is not one.
+    onStaging?.call(item.to);
     final counted = source.read(item.from).map((chunk) {
       checkCancelled();
       transferred += chunk.length;

@@ -50,6 +50,26 @@ void main() {
       expect(entries.single.kind, FileKind.link);
     });
 
+    test('an empty field does not shift every entry after it', () {
+      // `stat -c %a` printing nothing — a file removed between `find` and
+      // `stat`, or a `stat` that does not take `-c`. Filtering the empty
+      // field out desynchronised the 5-wide stride, so from there on names
+      // were read out of the perm column and sizes out of the mtime column.
+      final entries = SftpFileBackend.parseListOutput(
+        '${_record('vanished', '', 'f', '0', '0')}'
+        '${_record('after.txt', '644', 'f', '99', '1700000000')}',
+      );
+
+      expect(entries, hasLength(2));
+      expect(entries.last.name, 'after.txt');
+      expect(entries.last.size, 99);
+      expect(entries.last.mode, 0x1A4);
+      // The one with no perm reported has none, rather than borrowing its
+      // neighbour's.
+      expect(entries.first.name, 'vanished');
+      expect(entries.first.mode, isNull);
+    });
+
     test('a half-written record is dropped rather than half-read', () {
       // A command killed partway through prints an incomplete tail.
       final entries = SftpFileBackend.parseListOutput(

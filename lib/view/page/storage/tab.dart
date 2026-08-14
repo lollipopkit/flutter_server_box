@@ -378,7 +378,7 @@ extension _Sessions on _FileTabPageState {
         final spi = servers[serverId];
         // A server can be deleted, or switched to a connection that cannot
         // carry SFTP, while a tab on it is still remembered.
-        if (spi == null || !_canBrowse(spi)) continue;
+        if (spi == null || !_canBrowse(ref, spi)) continue;
         _openRemote(spi, initialPath: path, select: false);
       }
       restored++;
@@ -423,7 +423,7 @@ extension _Actions on _FileTabPageState {
           final needle = query.toLowerCase();
           return [
             for (final id in state.serverOrder)
-              if (state.servers[id] case final spi? when _canBrowse(spi))
+              if (state.servers[id] case final spi? when _canBrowse(ref, spi))
                 if (spi.name.toLowerCase().contains(needle) ||
                     spi.displayAddr.toLowerCase().contains(needle))
                   spi,
@@ -449,12 +449,10 @@ extension _Actions on _FileTabPageState {
 /// list of servers you can browse and the list you can send a file to cannot
 /// drift apart.
 ///
-/// Does not depend on what the agent grants, so it needs no probe: no grant
-/// reaches files today. That is what has to be revisited when
-/// `ServerCapabilities.files`'s TODO lands — a grant will decide it then, and
-/// this call has to pass `granted:` the way `ServerFuncBtns` does, or the two
-/// will disagree about the same server.
-bool _canBrowse(Spi spi) => canTransferTo(spi);
+/// Depends on what the agent grants, which is why it needs a [ref]: a monitor
+/// server serves files only where its operator switched the endpoint on, and
+/// that answer arrives on `/capabilities` rather than from the credential.
+bool _canBrowse(WidgetRef ref, Spi spi) => canTransferTo(ref, spi);
 
 /// The first tab: pick somewhere to browse.
 ///
@@ -479,7 +477,7 @@ class _PickPage extends ConsumerWidget {
           onTap: onLocal,
         ),
         for (final id in state.serverOrder)
-          if (state.servers[id] case final spi? when _canBrowse(spi))
+          if (state.servers[id] case final spi? when _canBrowse(ref, spi))
             CardTile(
               key: ValueKey(id),
               icon: Icons.dns,
@@ -544,7 +542,7 @@ class _SideBar extends ConsumerWidget {
           SideBarTile(title: libL10n.device, onTap: onLocal),
           SideBarSection(libL10n.servers),
           for (final id in state.serverOrder)
-            if (state.servers[id] case final spi? when _canBrowse(spi))
+            if (state.servers[id] case final spi? when _canBrowse(ref, spi))
               SideBarTile(
                 key: ValueKey(id),
                 title: spi.name,

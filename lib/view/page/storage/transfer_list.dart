@@ -158,10 +158,9 @@ class _TransferListPageState extends ConsumerState<TransferListPage> {
     String? subtitle,
     Widget? trailing,
   }) {
-    final time = DateTime.fromMicrosecondsSinceEpoch(status.id);
     return CardX(
       child: ListTile(
-        leading: Text(time.hourMinute),
+        leading: Text(status.startedAt.hourMinute),
         title: Text(
           status.fileName,
           overflow: TextOverflow.ellipsis,
