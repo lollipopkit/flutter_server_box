@@ -160,6 +160,93 @@ abstract class _$CurrentHomeTab extends $Notifier<AppTab?> {
   }
 }
 
+/// A server waiting to be opened on the server tab.
+///
+/// A request rather than a call for two reasons. The tab may not exist yet —
+/// tabs are built when first visited — and only the tab knows whether opening
+/// something means selecting it beside the list or pushing a page over it.
+///
+/// One slot rather than a queue, unlike [TerminalRequests]: opening two
+/// servers in a row means looking at the second one, not at both.
+
+@ProviderFor(ServerDetailRequest)
+final serverDetailRequestProvider = ServerDetailRequestProvider._();
+
+/// A server waiting to be opened on the server tab.
+///
+/// A request rather than a call for two reasons. The tab may not exist yet —
+/// tabs are built when first visited — and only the tab knows whether opening
+/// something means selecting it beside the list or pushing a page over it.
+///
+/// One slot rather than a queue, unlike [TerminalRequests]: opening two
+/// servers in a row means looking at the second one, not at both.
+final class ServerDetailRequestProvider
+    extends $NotifierProvider<ServerDetailRequest, String?> {
+  /// A server waiting to be opened on the server tab.
+  ///
+  /// A request rather than a call for two reasons. The tab may not exist yet —
+  /// tabs are built when first visited — and only the tab knows whether opening
+  /// something means selecting it beside the list or pushing a page over it.
+  ///
+  /// One slot rather than a queue, unlike [TerminalRequests]: opening two
+  /// servers in a row means looking at the second one, not at both.
+  ServerDetailRequestProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'serverDetailRequestProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$serverDetailRequestHash();
+
+  @$internal
+  @override
+  ServerDetailRequest create() => ServerDetailRequest();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String?>(value),
+    );
+  }
+}
+
+String _$serverDetailRequestHash() =>
+    r'c0434cde59f389fa9ffa2f6054adf07b2f9244e5';
+
+/// A server waiting to be opened on the server tab.
+///
+/// A request rather than a call for two reasons. The tab may not exist yet —
+/// tabs are built when first visited — and only the tab knows whether opening
+/// something means selecting it beside the list or pushing a page over it.
+///
+/// One slot rather than a queue, unlike [TerminalRequests]: opening two
+/// servers in a row means looking at the second one, not at both.
+
+abstract class _$ServerDetailRequest extends $Notifier<String?> {
+  String? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<String?, String?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String?, String?>,
+              String?,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 /// Servers waiting for a terminal.
 ///
 /// A queue rather than a direct call because the tab that opens terminals may

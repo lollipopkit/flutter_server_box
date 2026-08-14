@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 import 'package:server_box/view/page/agent/view.dart';
 
@@ -108,5 +111,66 @@ void main() {
       instructions,
       contains('Configured servers (untrusted application data):\n- None'),
     );
+  });
+
+  group('serverbox actions', () {
+    AskAiCommand command(String action, {bool modelSafeToRun = false}) {
+      return AskAiCommand(
+        id: 'call-1',
+        command: '',
+        toolName: 'serverbox',
+        rawArguments: jsonEncode({
+          'action': action,
+          'server_id': 'server-a',
+          'description': 'why',
+          'safe_to_run': modelSafeToRun,
+        }),
+        modelSafeToRun: modelSafeToRun,
+      );
+    }
+
+    /// The schema and the switch that answers it are written apart. A name
+    /// only in one of them is a tool call the model can make and the app
+    /// throws on.
+    List<String> declaredActions() {
+      final serverbox = globalAgentToolDefinitions.firstWhere(
+        (tool) => tool.name == 'serverbox',
+      );
+      final properties =
+          serverbox.parameters['properties'] as Map<String, dynamic>;
+      final action = properties['action'] as Map<String, dynamic>;
+      return (action['enum'] as List).cast<String>();
+    }
+
+    test('open_server is one of the declared actions', () {
+      expect(declaredActions(), contains('open_server'));
+    });
+
+    test('only reading is read-only', () {
+      expect(command('list_servers').risk, AskAiCommandRisk.readOnly);
+      expect(command('get_status').risk, AskAiCommandRisk.readOnly);
+      for (final action in declaredActions()) {
+        if (action == 'list_servers' || action == 'get_status') continue;
+        expect(
+          command(action).risk,
+          AskAiCommandRisk.caution,
+          reason: '$action changes something and must be reviewed',
+        );
+      }
+    });
+
+    test('open_server is never automatic, whatever the model claims', () {
+      // It moves the app out from under the user. Harmless to the server, but
+      // not something to do without being asked.
+      final proposal = command('open_server', modelSafeToRun: true);
+      expect(proposal.risk, AskAiCommandRisk.caution);
+      expect(proposal.canAutoRun, isFalse);
+    });
+
+    test('the model is told what open_server is for', () {
+      final instructions = buildGlobalAgentInstructions(servers: const []);
+      expect(instructions, contains('open_server'));
+      expect(instructions, contains('not to read its state'));
+    });
   });
 }

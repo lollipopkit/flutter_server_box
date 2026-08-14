@@ -55,6 +55,73 @@ extension _Actions on _ServerPageState {
   void _onTapAddServer() {
     ServerEditPage.route.go(context);
   }
+
+  /// Opens a server something else asked for — today the Agent's `open_server`.
+  ///
+  /// Deliberately not [_onTapCard]: a tap is a person deciding what to look
+  /// at, and its answer to a server that has never connected is to offer the
+  /// edit form instead. A request names a server, so this shows that server's
+  /// page whatever state it is in, error and all. [split] is passed in rather
+  /// than looked up — see the call site.
+  void _openRequestedServer(String id, bool split) {
+    if (!ref.read(serversProvider).servers.containsKey(id)) return;
+    if (split) {
+      // No card flight, unlike a tap: that animation carries the card the
+      // finger was on into the pane, and is measured from where that card is.
+      // Nothing was touched here, so there is nothing to fly — and handing it
+      // this page's own context would launch the whole page instead.
+      ref.read(serverSelectionProvider.notifier).select(id);
+      return;
+    }
+    ServerDetailPage.route.go(
+      context,
+      SpiRequiredArgs(ref.read(serverProvider(id)).spi),
+    );
+  }
+}
+
+/// Opens whatever was requested while this layout is the one on screen.
+///
+/// A widget rather than a method on the page so that it can be given [split]
+/// by the builder that decided it, and so that it is mounted and unmounted
+/// with the layout it belongs to.
+class _ServerOpenRequest extends ConsumerStatefulWidget {
+  const _ServerOpenRequest({
+    required this.split,
+    required this.onOpen,
+    required this.child,
+  });
+
+  final bool split;
+  final void Function(String serverId, bool split) onOpen;
+  final Widget child;
+
+  @override
+  ConsumerState<_ServerOpenRequest> createState() => _ServerOpenRequestState();
+}
+
+class _ServerOpenRequestState extends ConsumerState<_ServerOpenRequest> {
+  @override
+  void initState() {
+    super.initState();
+    // The request that brought this tab into existence was made before there
+    // was anything here to hear it, so the first thing to do is look.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _drain());
+  }
+
+  void _drain() {
+    if (!mounted) return;
+    final id = ref.read(serverDetailRequestProvider);
+    if (id == null) return;
+    ref.read(serverDetailRequestProvider.notifier).done();
+    widget.onOpen(id, widget.split);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(serverDetailRequestProvider, (_, _) => _drain());
+    return widget.child;
+  }
 }
 
 extension _Operation on _ServerPageState {

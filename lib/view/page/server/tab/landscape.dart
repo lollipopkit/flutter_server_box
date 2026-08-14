@@ -15,18 +15,25 @@ extension on _ServerPageState {
           ),
         );
       },
-      child: Stack(
-        children: [
-          _buildLandscapeBody(),
-          Positioned(
-            top: 0,
-            left: 0,
-            child: IconButton(
-              onPressed: () => SettingsPage.route.go(context),
-              icon: const Icon(Icons.settings, color: Colors.grey),
+      // Never split: this layout is one card at a time across the whole
+      // screen. Without it a server the Agent asked to open would sit in the
+      // queue until the device was turned back.
+      child: _ServerOpenRequest(
+        split: false,
+        onOpen: _openRequestedServer,
+        child: Stack(
+          children: [
+            _buildLandscapeBody(),
+            Positioned(
+              top: 0,
+              left: 0,
+              child: IconButton(
+                onPressed: () => SettingsPage.route.go(context),
+                icon: const Icon(Icons.settings, color: Colors.grey),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

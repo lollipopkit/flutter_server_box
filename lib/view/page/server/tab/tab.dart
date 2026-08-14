@@ -16,6 +16,7 @@ import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -211,9 +212,17 @@ class _ServerPageState extends ConsumerState<ServerPage>
           detailBuilder: selectedSpi == null
               ? null
               : (_) => ServerDetailPage(args: SpiRequiredArgs(selectedSpi)),
-          primaryBuilder: (_, split) => split
-              ? _buildPaneList(filtered)
-              : _buildScaffold(_buildBodySmall(filtered: filtered)),
+          // Wrapped here rather than around the whole page because this is
+          // where `split` is known — it is the layout's own answer, and the
+          // `PaneScope` that carries it is installed below this state's
+          // context, where an inherited lookup from here cannot reach.
+          primaryBuilder: (_, split) => _ServerOpenRequest(
+            split: split,
+            onOpen: _openRequestedServer,
+            child: split
+                ? _buildPaneList(filtered)
+                : _buildScaffold(_buildBodySmall(filtered: filtered)),
+          ),
         );
       });
     });

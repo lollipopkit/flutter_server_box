@@ -7,7 +7,10 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/provider/ai/agent_shell.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 
@@ -241,7 +244,8 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
   AskAiToolDefinition(
     name: 'serverbox',
     description:
-        'Inspect configured servers and manage their existing ServerBox connection state.',
+        'Inspect configured servers, manage their existing ServerBox '
+        'connection state, and show one to the user.',
     parameters: {
       'type': 'object',
       'additionalProperties': false,
@@ -255,8 +259,12 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
             'connect',
             'refresh',
             'disconnect',
+            'open_server',
           ],
-          'description': 'The ServerBox operation to perform.',
+          'description':
+              'The ServerBox operation to perform. open_server moves the app '
+              'to that server\'s page so the user can see it; it changes '
+              'nothing on the server itself.',
         },
         'server_id': {
           'type': ['string', 'null'],
@@ -316,6 +324,9 @@ String buildGlobalAgentInstructions({
     )
     ..writeln(
       'If a server is disconnected, use the serverbox connect action before shell or file tools.',
+    )
+    ..writeln(
+      'Use the serverbox open_server action to show the user a server you are talking about, not to read its state.',
     )
     ..writeln(
       'Keep explanations concise and make the target and risks explicit.',
@@ -787,6 +798,25 @@ class GlobalAgentToolService {
           succeeded: !(refreshed.conn < ServerConn.connected),
           duration: watch.elapsed,
           data: _statusJson(refreshed),
+        );
+      case 'open_server':
+        final state = _server(proposal.serverId);
+        // The request is set before the tab switch, not after: a tab that has
+        // never been visited does not exist yet, and the one that is about to
+        // be built drains this as it appears.
+        _ref.read(serverDetailRequestProvider.notifier).go(state.spi.id);
+        _ref.read(homeTabRequestProvider.notifier).go(AppTab.server);
+        // The conversation comes along, or the page it just opened is the last
+        // the user sees of this turn — and whatever the Agent proposes next
+        // would be waiting on a tab nobody is looking at.
+        _ref.read(agentShellProvider.notifier).show();
+        return AgentToolExecutionResult(
+          toolName: proposal.toolName,
+          serverId: state.spi.id,
+          summary: 'Opened ${state.spi.name} in the app.',
+          succeeded: true,
+          duration: watch.elapsed,
+          data: _statusJson(state),
         );
       case 'disconnect':
         final state = _server(proposal.serverId);

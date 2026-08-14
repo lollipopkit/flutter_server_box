@@ -35,6 +35,24 @@ class CurrentHomeTab extends _$CurrentHomeTab {
   void update(AppTab tab) => state = tab;
 }
 
+/// A server waiting to be opened on the server tab.
+///
+/// A request rather than a call for two reasons. The tab may not exist yet —
+/// tabs are built when first visited — and only the tab knows whether opening
+/// something means selecting it beside the list or pushing a page over it.
+///
+/// One slot rather than a queue, unlike [TerminalRequests]: opening two
+/// servers in a row means looking at the second one, not at both.
+@Riverpod(keepAlive: true)
+class ServerDetailRequest extends _$ServerDetailRequest {
+  @override
+  String? build() => null;
+
+  void go(String serverId) => state = serverId;
+
+  void done() => state = null;
+}
+
 /// A server waiting for a terminal, and what to put in it once it opens.
 class TerminalRequest {
   const TerminalRequest(this.spi, {this.snippet, this.session});
