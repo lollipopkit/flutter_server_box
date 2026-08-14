@@ -139,6 +139,61 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  buildIOS:
+    name: Build ios
+    needs: reproducibilityCheck
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+      - name: Resolve build number
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          build="$(sed -n -E 's/.*static const int build = ([0-9]+);/\1/p' lib/data/res/build_data.dart | head -n 1)"
+          if [[ -z "$build" ]]; then
+            echo "BuildData.build not found in lib/data/res/build_data.dart"
+            exit 1
+          fi
+
+          echo "BUILD_NUMBER=$build" >> "$GITHUB_ENV"
+      - name: Build (unsigned)
+        shell: bash
+        run: |
+          flutter build ios --release --no-codesign \
+            --build-number="${BUILD_NUMBER}" \
+            --build-name="1.0.${BUILD_NUMBER}"
+      - name: Package ipa
+        shell: bash
+        run: APP_ASSET_NAME="${APP_NAME}" scripts/release/package-unsigned-ipa.sh
+      - name: Upload artifacts
+        if: inputs.release != true && github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-ios
+          path: build/artifacts/*.ipa
+          if-no-files-found: error
+          retention-days: 14
+      - name: Create Release
+        if: inputs.release == true || github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ env.BUILD_NUMBER }}
+          files: |
+            build/artifacts/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_NoSign.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   buildLinux:
     name: Build linux
     needs: reproducibilityCheck

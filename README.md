@@ -30,8 +30,8 @@ Especially thanks to <a href="https://github.com/TerminalStudio/dartssh2">dartss
 
 |Platform| From|
 |--|--|
-| iOS | [AppStore](https://apps.apple.com/app/id1586449703) |
-| macOS | [AppStore](https://apps.apple.com/app/id1586449703) / brew install --cask server-box |
+| iOS | [AppStore](https://apps.apple.com/app/id1586449703) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (`_NoSign.ipa`, unsigned, you need to sign it yourself) |
+| macOS | [AppStore](https://apps.apple.com/app/id1586449703) / [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) (`.dmg`) / brew install --cask server-box |
 | Android | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid) / [F-Droid](https://f-droid.org/packages/tech.lolli.toolbox) / [OpenAPK](https://www.openapk.net/serverbox/tech.lolli.toolbox/) |
 | Linux / Windows | [GitHub](https://github.com/lollipopkit/flutter_server_box/releases) / [CDN](https://cdn.lpkt.cn/serverbox/pkg/?sort=time&order=desc&layout=grid) |
 

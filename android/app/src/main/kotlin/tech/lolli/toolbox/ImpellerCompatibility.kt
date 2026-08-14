@@ -32,7 +32,8 @@ internal object ImpellerCompatibility {
             return Result(false, "Flutter uses Skia below Android API 29")
         }
 
-        val signature = "$PROBE_VERSION|${BuildConfig.VERSION_CODE}|${Build.FINGERPRINT}"
+        // Numeric version codes differ per ABI, while this bytecode is shared by split APKs.
+        val signature = "$PROBE_VERSION|${BuildConfig.VERSION_NAME}|${Build.FINGERPRINT}"
         val prefs = try {
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         } catch (e: RuntimeException) {
