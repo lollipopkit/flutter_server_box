@@ -285,6 +285,7 @@
   "agentToolWriteFile": "Tulis berkas",
   "agentToolServerBox": "ServerBox",
   "agentToolFailed": "Eksekusi alat gagal.",
+  "agentToolCallsFmt": "{count} panggilan alat",
   "agentFloat": "Mengambang di atas tab lain",
   "agentToolSshConnect": "Sambungkan SSH",
   "agentToolSshDisconnect": "Putuskan SSH",

@@ -285,6 +285,7 @@
   "agentToolWriteFile": "Datei schreiben",
   "agentToolServerBox": "ServerBox",
   "agentToolFailed": "Ausführung des Werkzeugs fehlgeschlagen.",
+  "agentToolCallsFmt": "{count} Werkzeugaufrufe",
   "agentFloat": "Über anderen Tabs schweben",
   "agentToolSshConnect": "SSH verbinden",
   "agentToolSshDisconnect": "SSH trennen",

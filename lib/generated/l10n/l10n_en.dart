@@ -247,6 +247,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentToolFailed => 'Tool execution failed.';
 
   @override
+  String agentToolCallsFmt(Object count) {
+    return '$count tool calls';
+  }
+
+  @override
   String get agentFloat => 'Float over other tabs';
 
   @override

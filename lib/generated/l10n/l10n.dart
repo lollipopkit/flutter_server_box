@@ -555,6 +555,12 @@ abstract class AppLocalizations {
   /// **'Tool execution failed.'**
   String get agentToolFailed;
 
+  /// No description provided for @agentToolCallsFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} tool calls'**
+  String agentToolCallsFmt(Object count);
+
   /// No description provided for @agentFloat.
   ///
   /// In en, this message translates to:

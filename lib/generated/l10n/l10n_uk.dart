@@ -247,6 +247,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get agentToolFailed => 'Не вдалося виконати інструмент.';
 
   @override
+  String agentToolCallsFmt(Object count) {
+    return 'Викликів інструментів: $count';
+  }
+
+  @override
   String get agentFloat => 'Поверх інших вкладок';
 
   @override

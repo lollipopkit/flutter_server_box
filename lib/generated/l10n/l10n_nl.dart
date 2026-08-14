@@ -247,6 +247,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get agentToolFailed => 'Uitvoeren van het hulpmiddel is mislukt.';
 
   @override
+  String agentToolCallsFmt(Object count) {
+    return '$count hulpmiddelaanroepen';
+  }
+
+  @override
   String get agentFloat => 'Boven andere tabbladen zweven';
 
   @override

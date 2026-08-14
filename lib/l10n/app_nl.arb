@@ -285,6 +285,7 @@
   "agentToolWriteFile": "Bestand schrijven",
   "agentToolServerBox": "ServerBox",
   "agentToolFailed": "Uitvoeren van het hulpmiddel is mislukt.",
+  "agentToolCallsFmt": "{count} hulpmiddelaanroepen",
   "agentFloat": "Boven andere tabbladen zweven",
   "agentToolSshConnect": "SSH verbinden",
   "agentToolSshDisconnect": "SSH verbreken",

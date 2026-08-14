@@ -285,6 +285,7 @@
   "agentToolWriteFile": "ファイルを書く",
   "agentToolServerBox": "ServerBox",
   "agentToolFailed": "ツールの実行に失敗しました。",
+  "agentToolCallsFmt": "ツール呼び出し {count} 件",
   "agentFloat": "他のタブの上に浮かべる",
   "agentToolSshConnect": "SSH 接続",
   "agentToolSshDisconnect": "SSH 切断",

@@ -252,6 +252,11 @@ class AppLocalizationsIt extends AppLocalizations {
   String get agentToolFailed => 'Esecuzione dello strumento non riuscita.';
 
   @override
+  String agentToolCallsFmt(Object count) {
+    return '$count chiamate di strumento';
+  }
+
+  @override
   String get agentFloat => 'In sovrimpressione sulle altre schede';
 
   @override

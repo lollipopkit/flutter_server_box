@@ -249,6 +249,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get agentToolFailed => 'Araç çalıştırılamadı.';
 
   @override
+  String agentToolCallsFmt(Object count) {
+    return '$count araç çağrısı';
+  }
+
+  @override
   String get agentFloat => 'Diğer sekmelerin üzerinde yüzsün';
 
   @override

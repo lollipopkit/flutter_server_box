@@ -249,6 +249,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get agentToolFailed => 'Ausführung des Werkzeugs fehlgeschlagen.';
 
   @override
+  String agentToolCallsFmt(Object count) {
+    return '$count Werkzeugaufrufe';
+  }
+
+  @override
   String get agentFloat => 'Über anderen Tabs schweben';
 
   @override

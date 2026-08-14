@@ -252,6 +252,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get agentToolFailed => 'Échec de l\'exécution de l\'outil.';
 
   @override
+  String agentToolCallsFmt(Object count) {
+    return '$count appels d\'outil';
+  }
+
+  @override
   String get agentFloat => 'Flotter au-dessus des autres onglets';
 
   @override

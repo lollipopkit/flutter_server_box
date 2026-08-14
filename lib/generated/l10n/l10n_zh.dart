@@ -234,6 +234,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentToolFailed => '工具执行失败。';
 
   @override
+  String agentToolCallsFmt(Object count) {
+    return '$count 次工具调用';
+  }
+
+  @override
   String get agentFloat => '在其他标签页上悬浮';
 
   @override
@@ -1460,6 +1465,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentToolFailed => '工具執行失敗。';
+
+  @override
+  String agentToolCallsFmt(Object count) {
+    return '$count 次工具呼叫';
+  }
 
   @override
   String get agentFloat => '在其他分頁上懸浮';

@@ -252,6 +252,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get agentToolFailed => 'Falló la ejecución de la herramienta.';
 
   @override
+  String agentToolCallsFmt(Object count) {
+    return '$count llamadas de herramienta';
+  }
+
+  @override
   String get agentFloat => 'Flotar sobre otras pestañas';
 
   @override

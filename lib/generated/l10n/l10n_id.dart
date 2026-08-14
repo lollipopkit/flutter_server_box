@@ -248,6 +248,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get agentToolFailed => 'Eksekusi alat gagal.';
 
   @override
+  String agentToolCallsFmt(Object count) {
+    return '$count panggilan alat';
+  }
+
+  @override
   String get agentFloat => 'Mengambang di atas tab lain';
 
   @override

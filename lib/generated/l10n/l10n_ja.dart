@@ -236,6 +236,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get agentToolFailed => 'ツールの実行に失敗しました。';
 
   @override
+  String agentToolCallsFmt(Object count) {
+    return 'ツール呼び出し $count 件';
+  }
+
+  @override
   String get agentFloat => '他のタブの上に浮かべる';
 
   @override

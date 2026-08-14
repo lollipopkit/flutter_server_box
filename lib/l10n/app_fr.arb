@@ -285,6 +285,7 @@
   "agentToolWriteFile": "Écrire un fichier",
   "agentToolServerBox": "ServerBox",
   "agentToolFailed": "Échec de l'exécution de l'outil.",
+  "agentToolCallsFmt": "{count} appels d'outil",
   "agentFloat": "Flotter au-dessus des autres onglets",
   "agentToolSshConnect": "Connexion SSH",
   "agentToolSshDisconnect": "Déconnecter le SSH",

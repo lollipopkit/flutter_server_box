@@ -237,6 +237,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentToolFailed => '도구 실행에 실패했습니다.';
 
   @override
+  String agentToolCallsFmt(Object count) {
+    return '도구 호출 $count회';
+  }
+
+  @override
   String get agentFloat => '다른 탭 위에 띄우기';
 
   @override

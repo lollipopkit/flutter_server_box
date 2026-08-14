@@ -348,6 +348,7 @@
   "agentToolWriteFile": "파일 쓰기",
   "agentToolServerBox": "ServerBox",
   "agentToolFailed": "도구 실행에 실패했습니다.",
+  "agentToolCallsFmt": "도구 호출 {count}회",
   "agentFloat": "다른 탭 위에 띄우기",
   "agentToolSshConnect": "SSH 연결",
   "agentToolSshDisconnect": "SSH 연결 끊기",

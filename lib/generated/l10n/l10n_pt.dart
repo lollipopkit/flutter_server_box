@@ -247,6 +247,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get agentToolFailed => 'Falha ao executar a ferramenta.';
 
   @override
+  String agentToolCallsFmt(Object count) {
+    return '$count chamadas de ferramenta';
+  }
+
+  @override
   String get agentFloat => 'Flutuar sobre as outras abas';
 
   @override

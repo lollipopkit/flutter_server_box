@@ -286,6 +286,7 @@
   "agentToolWriteFile": "Запис файлу",
   "agentToolServerBox": "ServerBox",
   "agentToolFailed": "Не вдалося виконати інструмент.",
+  "agentToolCallsFmt": "Викликів інструментів: {count}",
   "agentFloat": "Поверх інших вкладок",
   "agentToolSshConnect": "Підключення по SSH",
   "agentToolSshDisconnect": "Відключити SSH",

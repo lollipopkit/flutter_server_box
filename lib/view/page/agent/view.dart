@@ -484,6 +484,34 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     );
   }
 
+  /// The timeline as widgets, with each run of tool results folded into one.
+  List<Widget> _buildTimeline(
+    BuildContext context,
+    ThemeData theme,
+    List<AgentTimelineEntry> timeline,
+  ) {
+    final widgets = <Widget>[];
+    for (var i = 0; i < timeline.length; i++) {
+      final entry = timeline[i];
+      if (entry is AgentToolResultEntry) {
+        final run = <AgentToolResultEntry>[entry];
+        while (i + 1 < timeline.length &&
+            timeline[i + 1] is AgentToolResultEntry) {
+          run.add(timeline[++i] as AgentToolResultEntry);
+        }
+        widgets.add(
+          run.length == 1
+              ? _buildToolResultCard(context, theme, run.first)
+              : _buildToolGroupCard(context, theme, run),
+        );
+      } else {
+        widgets.add(_buildTimelineEntry(context, theme, entry));
+      }
+      widgets.add(const SizedBox(height: 14));
+    }
+    return widgets;
+  }
+
   Widget _buildTimelineEntry(
     BuildContext context,
     ThemeData theme,
@@ -542,24 +570,65 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     );
   }
 
-  Widget _buildToolResultCard(
-    BuildContext context,
-    ThemeData theme,
-    AgentToolResultEntry entry,
-  ) {
-    final result = entry.result;
-    final output = formatGlobalAgentToolResultOutput(
-      result,
-      cancelledLabel: libL10n.cancelled,
-      timedOutLabel: libL10n.timedOut,
-      noOutputLabel: context.l10n.askAiNoCommandOutput,
-      truncatedLabel: context.l10n.askAiOutputTruncated,
+  /// The frame every tool row and every group of them shares.
+  ///
+  /// A finished tool is a log line, not a message: it collapses to one row so
+  /// the answer it was gathered for stays on screen. The label and the
+  /// duration sit beside the summary; anything longer is behind the expander.
+  Widget _toolCard({
+    required BuildContext context,
+    required ThemeData theme,
+    required bool succeeded,
+    required String title,
+    required String meta,
+    required List<Widget> children,
+    double metaMaxWidth = 170,
+    EdgeInsets childrenPadding = const EdgeInsets.fromLTRB(12, 4, 12, 10),
+    double indent = 12,
+    bool framed = true,
+  }) {
+    final tile = ExpansionTile(
+      shape: const RoundedRectangleBorder(),
+      collapsedShape: const RoundedRectangleBorder(),
+      minTileHeight: 40,
+      tilePadding: EdgeInsets.only(left: indent, right: 12),
+      visualDensity: VisualDensity.compact,
+      childrenPadding: childrenPadding,
+      title: Row(
+        children: [
+          Icon(
+            succeeded ? Icons.check_circle : Icons.error,
+            size: 17,
+            color: succeeded
+                ? theme.colorScheme.primary
+                : theme.colorScheme.error,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+          const SizedBox(width: 8),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: metaMaxWidth),
+            child: Text(
+              meta,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+      children: children,
     );
-    final meta = [
-      _toolLabel(context, entry.proposal.toolName),
-      '${result.duration.inMilliseconds} ms',
-      if (entry.autoApproved) context.l10n.askAiAutoApproved,
-    ].join(' · ');
+    if (!framed) return tile;
     return Card(
       elevation: 0,
       color: theme.colorScheme.surfaceContainerLow,
@@ -568,85 +637,121 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Hairline.color(context)),
       ),
-      // A finished tool is a log line, not a message: it collapses to one row
-      // so the answer it was gathered for stays on screen. The label and the
-      // duration move up beside the summary; anything longer is behind the
-      // expander.
-      child: ExpansionTile(
-        shape: const RoundedRectangleBorder(),
-        collapsedShape: const RoundedRectangleBorder(),
-        minTileHeight: 40,
-        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-        visualDensity: VisualDensity.compact,
-        childrenPadding: const EdgeInsets.fromLTRB(12, 4, 12, 10),
-        title: Row(
-          children: [
-            Icon(
-              result.succeeded ? Icons.check_circle : Icons.error,
-              size: 17,
-              color: result.succeeded
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.error,
+      child: tile,
+    );
+  }
+
+  Widget _buildToolResultCard(
+    BuildContext context,
+    ThemeData theme,
+    AgentToolResultEntry entry, {
+    bool framed = true,
+    double indent = 12,
+  }) {
+    final result = entry.result;
+    final output = formatGlobalAgentToolResultOutput(
+      result,
+      cancelledLabel: libL10n.cancelled,
+      timedOutLabel: libL10n.timedOut,
+      noOutputLabel: context.l10n.askAiNoCommandOutput,
+      truncatedLabel: context.l10n.askAiOutputTruncated,
+    );
+    return _toolCard(
+      context: context,
+      theme: theme,
+      framed: framed,
+      indent: indent,
+      succeeded: result.succeeded,
+      // A result's own summary is English on purpose — the model reads it.
+      // A tool that never ran has nothing else to show, so the app says so
+      // in its own words rather than passing that sentence on.
+      title: result.localFailure
+          ? context.l10n.agentToolFailed
+          : result.summary,
+      meta: [
+        _toolLabel(context, entry.proposal.toolName),
+        '${result.duration.inMilliseconds} ms',
+        if (entry.autoApproved) context.l10n.askAiAutoApproved,
+      ].join(' · '),
+      children: [
+        if (output.isNotEmpty) ...[
+          Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(maxHeight: 320),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(width: 8),
-            // A result's own summary is English on purpose — the model reads
-            // it. A tool that never ran has nothing else to show, so the app
-            // says so in its own words rather than passing that sentence on.
-            Expanded(
-              child: Text(
-                result.localFailure
-                    ? context.l10n.agentToolFailed
-                    : result.summary,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium,
-              ),
-            ),
-            const SizedBox(width: 8),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 170),
-              child: Text(
-                meta,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            child: SingleChildScrollView(
+              child: SelectableText(
+                output,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                  fontFamily: 'monospace',
                 ),
               ),
-            ),
-          ],
-        ),
-        children: [
-          if (output.isNotEmpty) ...[
-            Container(
-              width: double.infinity,
-              constraints: const BoxConstraints(maxHeight: 320),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: SingleChildScrollView(
-                child: SelectableText(
-                  output,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontFamily: 'monospace',
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: output.isEmpty ? null : () => _copyText(output),
-              icon: const Icon(Icons.copy, size: 16),
-              label: Text(libL10n.copy),
             ),
           ),
+          const SizedBox(height: 8),
         ],
-      ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: output.isEmpty ? null : () => _copyText(output),
+            icon: const Icon(Icons.copy, size: 16),
+            label: Text(libL10n.copy),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// One card for a run of tool calls with nothing said between them.
+  ///
+  /// Reading three files to answer one question is one step of that answer,
+  /// and three cards for it pushed the answer itself off screen. The row names
+  /// the tools the run used, in the order it used them; each call keeps its
+  /// own row, and its own output, inside.
+  Widget _buildToolGroupCard(
+    BuildContext context,
+    ThemeData theme,
+    List<AgentToolResultEntry> entries,
+  ) {
+    final tally = <String, int>{};
+    var totalMs = 0;
+    var succeeded = true;
+    for (final entry in entries) {
+      final label = _toolLabel(context, entry.proposal.toolName);
+      tally[label] = (tally[label] ?? 0) + 1;
+      totalMs += entry.result.duration.inMilliseconds;
+      succeeded &= entry.result.succeeded;
+    }
+    return _toolCard(
+      context: context,
+      theme: theme,
+      succeeded: succeeded,
+      title: tally.entries
+          .map((e) => e.value > 1 ? '${e.key} ×${e.value}' : e.key)
+          .join(' · '),
+      meta: '${context.l10n.agentToolCallsFmt(entries.length)} · $totalMs ms',
+      metaMaxWidth: 210,
+      childrenPadding: EdgeInsets.zero,
+      children: [
+        for (final entry in entries) ...[
+          Divider(
+            height: Hairline.thickness,
+            thickness: Hairline.thickness,
+            color: Hairline.color(context),
+          ),
+          _buildToolResultCard(
+            context,
+            theme,
+            entry,
+            framed: false,
+            indent: 22,
+          ),
+        ],
+      ],
     );
   }
 
@@ -1005,10 +1110,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
 
     final visibleTimeline = <Widget>[
       if (session.isEmpty) _buildEmptyState(context, theme),
-      for (final entry in session.timeline) ...[
-        _buildTimelineEntry(context, theme, entry),
-        const SizedBox(height: 14),
-      ],
+      ..._buildTimeline(context, theme, session.timeline),
       if (session.isStreaming) ...[
         Builder(
           builder: (context) {

@@ -285,6 +285,7 @@
   "agentToolWriteFile": "Dosya yaz",
   "agentToolServerBox": "ServerBox",
   "agentToolFailed": "Araç çalıştırılamadı.",
+  "agentToolCallsFmt": "{count} araç çağrısı",
   "agentFloat": "Diğer sekmelerin üzerinde yüzsün",
   "agentToolSshConnect": "SSH bağlan",
   "agentToolSshDisconnect": "SSH bağlantısını kes",

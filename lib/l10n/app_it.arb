@@ -290,6 +290,7 @@
   "agentToolWriteFile": "Scrivi file",
   "agentToolServerBox": "ServerBox",
   "agentToolFailed": "Esecuzione dello strumento non riuscita.",
+  "agentToolCallsFmt": "{count} chiamate di strumento",
   "agentFloat": "In sovrimpressione sulle altre schede",
   "agentToolSshConnect": "Connetti SSH",
   "agentToolSshDisconnect": "Disconnetti SSH",

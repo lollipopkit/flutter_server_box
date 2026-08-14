@@ -72,6 +72,7 @@
   "agentToolWriteFile": "寫入檔案",
   "agentToolServerBox": "ServerBox",
   "agentToolFailed": "工具執行失敗。",
+  "agentToolCallsFmt": "{count} 次工具呼叫",
   "agentFloat": "在其他分頁上懸浮",
   "agentToolSshConnect": "SSH 連線",
   "agentToolSshDisconnect": "中斷 SSH",

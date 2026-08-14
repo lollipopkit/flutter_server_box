@@ -285,6 +285,7 @@
   "agentToolWriteFile": "Escribir archivo",
   "agentToolServerBox": "ServerBox",
   "agentToolFailed": "Falló la ejecución de la herramienta.",
+  "agentToolCallsFmt": "{count} llamadas de herramienta",
   "agentFloat": "Flotar sobre otras pestañas",
   "agentToolSshConnect": "Conectar por SSH",
   "agentToolSshDisconnect": "Desconectar SSH",
