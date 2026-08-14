@@ -128,8 +128,14 @@ class LocalFileBackend implements FileBackend {
   /// The interface is POSIX-shaped so that a path can be handed from one
   /// backend to another without asking which; Windows is converted here, at
   /// the one place that knows it is Windows.
-  static String _native(String path) =>
+  ///
+  /// Public because the things only this device can do — handing a path to the
+  /// editor, to the share sheet — take a native one, and they should not each
+  /// re-derive the rule.
+  static String nativePath(String path) =>
       Platform.isWindows ? path.replaceAll('/', r'\') : path;
+
+  static String _native(String path) => nativePath(path);
 
   static Future<FileEntry> _entryOf(FileSystemEntity entity) async {
     final stat = await entity.stat();
