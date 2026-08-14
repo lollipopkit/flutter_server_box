@@ -281,6 +281,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get agentSshConnectTitle => '新しいホストに接続';
 
   @override
+  String get agentAuthMethod => 'Authentication';
+
+  @override
   String get agentSshConnectTip =>
       'エージェントが SSH 接続を開こうとしています。パスワードはここに入力してください。会話に入力すると、そのまま保存されモデルにも送信されます。';
 

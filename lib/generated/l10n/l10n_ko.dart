@@ -282,6 +282,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentSshConnectTitle => '새 호스트에 연결';
 
   @override
+  String get agentAuthMethod => 'Authentication';
+
+  @override
   String get agentSshConnectTip =>
       '에이전트가 SSH 연결을 열려고 합니다. 비밀번호는 여기에 입력하세요. 대화에 입력하면 그대로 저장되고 모델로 전송됩니다.';
 

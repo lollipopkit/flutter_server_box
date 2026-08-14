@@ -87,6 +87,7 @@
   "agentToolSshConnect": "SSH 连接",
   "agentToolSshDisconnect": "断开 SSH",
   "agentSshConnectTitle": "连接到新主机",
+  "agentAuthMethod": "认证方式",
   "agentSshConnectTip": "Agent 想建立一个 SSH 连接。请在此处输入密码，不要输入到对话里——那会被保存下来并发送给模型。",
   "agentAdHocSessions": "临时连接",
   "agentSaveServerTitle": "保存为服务器",

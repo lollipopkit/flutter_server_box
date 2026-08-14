@@ -292,6 +292,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get agentSshConnectTitle => 'Підключення до нового хоста';
 
   @override
+  String get agentAuthMethod => 'Authentication';
+
+  @override
   String get agentSshConnectTip =>
       'Агент хоче відкрити SSH-підключення. Введіть пароль тут, а не в розмові: там він збережеться й буде надісланий моделі.';
 

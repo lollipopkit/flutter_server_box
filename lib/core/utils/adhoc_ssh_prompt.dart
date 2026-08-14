@@ -72,7 +72,7 @@ Future<AdHocSshCredential?> promptAdHocSshCredential({
               DropdownButtonFormField<String?>(
                 initialValue: keyId,
                 isExpanded: true,
-                decoration: InputDecoration(labelText: ctx.l10n.keyAuth),
+                decoration: InputDecoration(labelText: ctx.l10n.agentAuthMethod),
                 items: [
                   DropdownMenuItem(value: null, child: Text(libL10n.pwd)),
                   for (final key in keys)

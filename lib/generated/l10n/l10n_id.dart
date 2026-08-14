@@ -293,6 +293,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get agentSshConnectTitle => 'Sambungkan ke host baru';
 
   @override
+  String get agentAuthMethod => 'Authentication';
+
+  @override
   String get agentSshConnectTip =>
       'Agent ingin membuka koneksi SSH. Ketik kata sandi di sini, jangan di percakapan, karena di sana kata sandi akan tersimpan dan dikirim ke model.';
 

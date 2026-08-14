@@ -81,13 +81,20 @@ class _DesktopShellState extends ConsumerState<_DesktopShell> {
   Offset? _offset = AgentShellGeometry.offset;
   Size _size = AgentShellGeometry.size;
 
+  /// True between a drag's first move and its end.
+  ///
+  /// Collapsing should glide; a drag should not. Animating the box while the
+  /// pointer is moving it makes the panel lag behind the cursor and overshoot
+  /// when it stops.
+  bool _dragging = false;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final collapsed =
         ref.watch(agentShellProvider) == AgentShellMode.collapsed;
     final padding = MediaQuery.paddingOf(context);
-    final rect = AgentShellGeometry.desktopRect(
+    Rect rectFor(bool collapsed) => AgentShellGeometry.desktopRect(
       area: MediaQuery.sizeOf(context),
       topInset: padding.top,
       bottomInset: padding.bottom,
@@ -96,7 +103,17 @@ class _DesktopShellState extends ConsumerState<_DesktopShell> {
       collapsed: collapsed,
     );
 
-    return Positioned(
+    final rect = rectFor(collapsed);
+    // The conversation is laid out at its open height even while the box is
+    // shrinking past it, so collapsing clips it rather than re-flowing it into
+    // a bar-sized column — which would overflow, and would make expanding
+    // again a re-layout instead of a reveal.
+    final contentHeight =
+        rectFor(false).height - AgentShellGeometry.barHeight;
+
+    return AnimatedPositioned(
+      duration: _dragging ? Duration.zero : Durations.medium2,
+      curve: Curves.easeOutCubic,
       left: rect.left,
       top: rect.top,
       width: rect.width,
@@ -114,13 +131,19 @@ class _DesktopShellState extends ConsumerState<_DesktopShell> {
             Column(
               children: [
                 _buildTitleBar(context, theme, collapsed, rect.topLeft),
-                if (!collapsed)
-                  const Expanded(
-                    child: AgentConversationView(
-                      compact: true,
-                      showHeader: false,
+                Expanded(
+                  child: ClipRect(
+                    child: OverflowBox(
+                      alignment: Alignment.topCenter,
+                      minHeight: contentHeight,
+                      maxHeight: contentHeight,
+                      child: const AgentConversationView(
+                        compact: true,
+                        showHeader: false,
+                      ),
                     ),
                   ),
+                ),
               ],
             ),
             if (!collapsed)
@@ -148,11 +171,17 @@ class _DesktopShellState extends ConsumerState<_DesktopShell> {
         // Against the clamped position this frame, not the stored one, so a
         // panel that was pushed back inside the window by a resize carries on
         // from where it actually is.
-        onPanUpdate: (details) =>
-            setState(() => _offset = origin + details.delta),
+        onPanUpdate: (details) => setState(() {
+          _dragging = true;
+          _offset = origin + details.delta;
+        }),
         // Saved where the drag ends rather than continuously: this writes to
         // the store, and a pointer move is not an event worth a write each.
-        onPanEnd: (_) => AgentShellGeometry.saveOffset(origin),
+        onPanEnd: (_) {
+          AgentShellGeometry.saveOffset(origin);
+          setState(() => _dragging = false);
+        },
+        onPanCancel: () => setState(() => _dragging = false),
         child: Container(
           height: AgentShellGeometry.barHeight,
           padding: const EdgeInsets.only(left: 12, right: 4),
@@ -193,12 +222,17 @@ class _DesktopShellState extends ConsumerState<_DesktopShell> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onPanUpdate: (details) => setState(() {
+          _dragging = true;
           _size = Size(
             current.width + details.delta.dx,
             current.height + details.delta.dy,
           );
         }),
-        onPanEnd: (_) => AgentShellGeometry.saveSize(current),
+        onPanEnd: (_) {
+          AgentShellGeometry.saveSize(current);
+          setState(() => _dragging = false);
+        },
+        onPanCancel: () => setState(() => _dragging = false),
         child: SizedBox(
           width: 20,
           height: 20,

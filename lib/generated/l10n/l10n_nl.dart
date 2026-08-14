@@ -292,6 +292,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get agentSshConnectTitle => 'Met een nieuwe host verbinden';
 
   @override
+  String get agentAuthMethod => 'Authentication';
+
+  @override
   String get agentSshConnectTip =>
       'De agent wil een SSH-verbinding openen. Typ het wachtwoord hier, nooit in het gesprek, waar het bewaard en naar het model gestuurd zou worden.';
 

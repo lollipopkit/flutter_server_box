@@ -293,6 +293,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get agentSshConnectTitle => 'Подключение к новому хосту';
 
   @override
+  String get agentAuthMethod => 'Authentication';
+
+  @override
   String get agentSshConnectTip =>
       'Агент хочет открыть SSH-подключение. Введите пароль здесь, а не в диалоге: там он сохранится и будет отправлен модели.';
 

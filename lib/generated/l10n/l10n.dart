@@ -645,6 +645,12 @@ abstract class AppLocalizations {
   /// **'Connect to a new host'**
   String get agentSshConnectTitle;
 
+  /// No description provided for @agentAuthMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication'**
+  String get agentAuthMethod;
+
   /// No description provided for @agentSshConnectTip.
   ///
   /// In en, this message translates to:

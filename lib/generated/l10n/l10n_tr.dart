@@ -294,6 +294,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get agentSshConnectTitle => 'Yeni bir sunucuya bağlan';
 
   @override
+  String get agentAuthMethod => 'Authentication';
+
+  @override
   String get agentSshConnectTip =>
       'Agent bir SSH bağlantısı açmak istiyor. Parolayı buraya yaz, konuşmaya yazma; orada saklanır ve modele gönderilir.';
 

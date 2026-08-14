@@ -109,6 +109,19 @@ class _HomePageState extends ConsumerState<HomePage>
     _selectIndex.addListener(_publishCurrentTab);
   }
 
+  /// Re-announces the tab after a hot reload.
+  ///
+  /// Neither `initState` nor `afterFirstLayout` runs again when the code
+  /// changes under a running app, so a value published once from those is
+  /// whatever it was before — and for the first reload after this provider was
+  /// added, that is nothing at all. The floating Agent then believes it is
+  /// never on the Agent tab and shows itself beside the page it duplicates.
+  @override
+  void reassemble() {
+    super.reassemble();
+    _publishCurrentTab();
+  }
+
   /// Tells [currentHomeTabProvider] where the app ended up.
   ///
   /// Only ever called from a callback or a post-frame hook — never from

@@ -279,6 +279,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentSshConnectTitle => '连接到新主机';
 
   @override
+  String get agentAuthMethod => '认证方式';
+
+  @override
   String get agentSshConnectTip =>
       'Agent 想建立一个 SSH 连接。请在此处输入密码，不要输入到对话里——那会被保存下来并发送给模型。';
 
@@ -1619,6 +1622,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentSshConnectTitle => '連線到新主機';
+
+  @override
+  String get agentAuthMethod => '認證方式';
 
   @override
   String get agentSshConnectTip =>
