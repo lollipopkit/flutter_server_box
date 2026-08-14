@@ -1,0 +1,97 @@
+# The parts of the macOS build that only a running macOS app can answer:
+# where this build's data goes, whether the keychain can be asked for the box
+# key, and whether `defaults` reads the other build's preferences.
+#
+# On its own runner, and only when something it covers changed: this builds the
+# whole app, Rust included, on macOS minutes.
+name: macOS integration
+
+# Duplicated rather than anchored: GitHub Actions does not resolve YAML
+# aliases.
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'macos/**'
+      - 'integration_test/**'
+      - 'lib/core/utils/sandbox_import.dart'
+      - 'lib/core/utils/local_shell.dart'
+      - 'lib/main.dart'
+      - 'packages/fl_lib'
+      - '.github/workflows/macos.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'macos/**'
+      - 'integration_test/**'
+      - 'lib/core/utils/sandbox_import.dart'
+      - 'lib/core/utils/local_shell.dart'
+      - 'lib/main.dart'
+      - 'packages/fl_lib'
+      - '.github/workflows/macos.yml'
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: '3.47.0'
+
+jobs:
+  integration:
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # No signing identity here, and none needed: the app is signed ad-hoc so
+      # it can run at all. The entitlements go with it — trimmed to the ones
+      # that do not need a provisioning profile, keeping the only one these
+      # tests are about.
+      - name: Sign locally
+        run: |
+          set -euo pipefail
+          project=macos/Runner.xcodeproj/project.pbxproj
+          sed -i '' \
+            -e 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "-";/' \
+            -e 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/' \
+            -e 's/DEVELOPMENT_TEAM = BA88US33G6;/DEVELOPMENT_TEAM = "";/' \
+            "$project"
+          cat > macos/Runner/DebugProfile.entitlements <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+          	<key>com.apple.security.app-sandbox</key>
+          	<false/>
+          	<key>com.apple.security.cs.allow-jit</key>
+          	<true/>
+          	<key>com.apple.security.network.client</key>
+          	<true/>
+          	<key>com.apple.security.network.server</key>
+          	<true/>
+          	<key>com.apple.security.files.user-selected.read-write</key>
+          	<true/>
+          </dict>
+          </plist>
+          EOF
+
+      # `test/macos_entitlements_test.dart` is what guards the entitlements the
+      # products actually ship with; it runs on the checkout, before the step
+      # above rewrites them.
+      - name: Run integration tests
+        run: flutter test integration_test -d macos
