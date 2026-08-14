@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 import 'package:server_box/view/page/agent/view.dart';
@@ -464,6 +465,61 @@ void main() {
       final instructions = buildGlobalAgentInstructions(servers: const []);
       expect(instructions, contains('open_server'));
       expect(instructions, contains('not to read its state'));
+    });
+  });
+
+  group('the Agent on this device', () {
+    AskAiCommand shell(Map<String, Object?> args) => AskAiCommand(
+      id: 'call-1',
+      command: args['command'] as String? ?? '',
+      toolName: 'run_shell_command',
+      rawArguments: jsonEncode(args),
+      modelSafeToRun: args['safe_to_run'] == true,
+    );
+
+    test('the reserved id names this machine, not a server', () {
+      final target = AgentSshTarget.fromArguments(
+        shell({
+          'server_id': LocalExec.deviceId,
+          'command': 'uname -a',
+          'safe_to_run': true,
+        }),
+      );
+
+      expect(target, isA<LocalTarget>());
+    });
+
+    test('nothing auto-runs here, however read-only it looks', () {
+      final onDevice = shell({
+        'server_id': LocalExec.deviceId,
+        'command': 'ls /etc',
+        'safe_to_run': true,
+      });
+      final onServer = shell({
+        'server_id': 'server-a',
+        'command': 'ls /etc',
+        'safe_to_run': true,
+      });
+
+      // The same command. `askAiAutoRunSafeCommands` is a convenience for a
+      // machine the user added on purpose and that is somewhere else; this one
+      // holds the app's own stores and the user's keys.
+      expect(onServer.risk, AskAiCommandRisk.readOnly);
+      expect(onServer.canAutoRun, isTrue);
+      expect(onDevice.risk, AskAiCommandRisk.readOnly);
+      expect(onDevice.onThisDevice, isTrue);
+      expect(onDevice.canAutoRun, isFalse);
+    });
+
+    test('the model is not told about it unless it is available', () {
+      expect(
+        buildGlobalAgentInstructions(servers: const []),
+        isNot(contains(LocalExec.deviceId)),
+      );
+      expect(
+        buildGlobalAgentInstructions(servers: const [], localExec: true),
+        contains(LocalExec.deviceId),
+      );
     });
   });
 }

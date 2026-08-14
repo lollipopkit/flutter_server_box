@@ -19,6 +19,13 @@ import 'package:server_box/data/model/server/server_exec.dart';
 class LocalExec implements ServerExec {
   const LocalExec();
 
+  /// What names this machine where a server id is expected.
+  ///
+  /// Reserved rather than generated: server ids come from `ShortId`, whose
+  /// alphabet has no `#`, so nothing the user configures can collide with it.
+  /// One spelling, shared with the terminal's [LocalSource].
+  static const deviceId = '#local';
+
   /// Whether this platform will run one.
   ///
   /// The same answer as a terminal's, and for one of the same two reasons: iOS

@@ -247,6 +247,17 @@ class SettingStore extends HiveStore {
     false,
   );
 
+  /// Whether the Agent may run commands on this device.
+  ///
+  /// Off until asked for, unlike a configured server. A server was added
+  /// deliberately and is somewhere else; this machine is where the app's own
+  /// stores, private keys and keychain live, and nobody opted into a model
+  /// touching those by adding a server.
+  ///
+  /// Auto-running stays off here whatever [askAiAutoRunSafeCommands] says —
+  /// that setting is about servers. See `AskAiCommand.canAutoRun`.
+  late final agentLocalExec = propertyDefault('agentLocalExec', false);
+
   /// Enter sends the prompt and Shift+Enter starts a line. Off swaps them: a
   /// line break is the plain key, and sending is the modifier or the button.
   late final askAiSendOnEnter = propertyDefault('askAiSendOnEnter', true);

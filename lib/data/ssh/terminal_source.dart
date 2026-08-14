@@ -1,4 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/ssh/ssh_terminal_environment.dart';
 
@@ -65,9 +66,10 @@ final class LocalSource extends TerminalSource {
   String get label => libL10n.device;
 
   /// Reserved, and not a server id: server ids are generated, so nothing else
-  /// can claim it, and a saved session that names it is unambiguous.
+  /// can claim it, and a saved session that names it is unambiguous. The same
+  /// spelling the Agent uses to name this machine.
   @override
-  String get id => '#local';
+  String get id => LocalExec.deviceId;
 
   /// Whatever the shell inherits. Adding to it would be second-guessing a
   /// login shell about its own machine.

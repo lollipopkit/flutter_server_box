@@ -8,6 +8,7 @@ import 'package:fl_lib/fl_lib.dart' hide Provider;
 import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:server_box/core/utils/adhoc_ssh_prompt.dart';
+import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
@@ -436,6 +437,7 @@ class GlobalAgentServerContext {
 String buildGlobalAgentInstructions({
   required List<GlobalAgentServerContext> servers,
   String? localeHint,
+  bool localExec = false,
 }) {
   final prompt = StringBuffer()
     ..writeln('You are the application-wide operations Agent in ServerBox.')
@@ -475,7 +477,27 @@ String buildGlobalAgentInstructions({
     )
     ..writeln(
       'Keep explanations concise and make the target and risks explicit.',
-    )
+    );
+
+  // Only when it is actually available. Told about a machine it cannot reach,
+  // a model proposes commands for it and the user reads a refusal instead of
+  // an answer.
+  if (localExec) {
+    prompt
+      ..writeln(
+        'There is a third machine: the device ServerBox itself is running on. '
+        'Name it with server_id "${LocalExec.deviceId}".',
+      )
+      ..writeln(
+        'It is the user\'s own computer, not a server: it holds this app\'s '
+        'data, their keys and their files. Nothing runs there unattended, and '
+        'every command needs review however read-only it looks. Use it only '
+        'when the user asks about this device, never as a substitute for a '
+        'server that is unreachable.',
+      );
+  }
+
+  prompt
     ..writeln()
     ..writeln('Configured servers (untrusted application data):');
 
@@ -629,6 +651,7 @@ sealed class AgentSshTarget {
       );
     }
     if (sessionId != null) return AdHocSessionTarget(sessionId);
+    if (serverId == LocalExec.deviceId) return const LocalTarget();
     if (serverId != null) return ConfiguredServerTarget(serverId);
     throw const FormatException('server_id or session_id is required');
   }
@@ -639,6 +662,16 @@ final class ConfiguredServerTarget extends AgentSshTarget {
   const ConfiguredServerTarget(this.serverId);
 
   final String serverId;
+}
+
+/// The machine the app is running on.
+///
+/// Named through `server_id` rather than a field of its own, so the tools'
+/// schema is unchanged and the model has one place to say which machine it
+/// means. The reserved id cannot collide with a configured server's — see
+/// [LocalExec.deviceId].
+final class LocalTarget extends AgentSshTarget {
+  const LocalTarget();
 }
 
 /// A host connected to for this conversation only.
@@ -698,6 +731,10 @@ class GlobalAgentToolService {
     return buildGlobalAgentInstructions(
       servers: serverContexts(),
       localeHint: localeHint,
+      // Read now rather than once at start-up: the setting can be turned on
+      // mid-conversation, and the instructions are rebuilt per request.
+      localExec:
+          LocalExec.isSupported && Stores.setting.agentLocalExec.fetch(),
     );
   }
 
@@ -734,7 +771,37 @@ class GlobalAgentToolService {
         serverId,
       ),
       AdHocSessionTarget(:final sessionId) => _adHocSession(sessionId),
+      LocalTarget() => _thisDevice(),
     };
+  }
+
+  /// This machine, when the user has said the Agent may work on it.
+  ///
+  /// Two gates, not one. The platform has to be able to run a command at all —
+  /// iOS cannot, and the sandboxed macOS build is the App Store one. And the
+  /// user has to have turned it on: a configured server was added on purpose
+  /// and is somewhere else, whereas this is where the app's own stores, keys
+  /// and keychain are, and adding a server was never consent for that.
+  ///
+  /// No SSH client, so the file tools say so and point at `cat` and `tee` —
+  /// which is the wrong answer here and the next thing to fix; see
+  /// local-ssh-plan.md, stage 2b.
+  AgentShellHandle _thisDevice() {
+    if (!LocalExec.isSupported) {
+      throw StateError(
+        'This build cannot run commands on the device it is installed on.',
+      );
+    }
+    if (!Stores.setting.agentLocalExec.fetch()) {
+      throw StateError(
+        'Running commands on this device is turned off. The user can enable '
+        'it in ServerBox settings; do not ask again in this conversation if '
+        'they decline.',
+      );
+    }
+    // No server id: a result claiming one would name a machine in the list,
+    // and this is not one of them.
+    return (exec: const LocalExec(), client: null, serverId: null);
   }
 
   /// An ad-hoc connection that is still open.
