@@ -18,9 +18,26 @@ and step 3 on iOS is a GPLv3 emulator plus an App Store review argument. This
 document is what is known, what is guessed, and what has to be measured before
 any of it is committed to.
 
-**Status: research only. Nothing here is implemented.** Update the verification
-log at the bottom as answers land — several decisions below are downstream of
-questions still marked open.
+**Status: research only. Nothing in stages 1–4 is implemented.** Last checked
+against the tree at `f8f371b3`. Update the verification log at the bottom as
+answers land — several decisions below are downstream of questions still marked
+open.
+
+What that check found, since sixteen commits of agent work landed between this
+document being written and being read again:
+
+| Anchor | State |
+| --- | --- |
+| `ShellBackend` implementations | still two, `Ssh` and `Monitor` |
+| `ServerExec` implementations | still two, `SshExec` and `MonitorExec` |
+| `ServerExec` in any agent file | still **zero** — nine files, 5,495 lines |
+| `TerminalSession` | still `TerminalSession({required this.spi})` |
+| `'SSH'` in `home_tab.dart` | still literal, `:32` and `:62` |
+| `flutter_pty` | still not a dependency |
+| monitor-only refusal | still thrown, now `global_agent_tools.dart:761` |
+
+One thing did move, and it moved in this plan's favour — see
+[what the tools need](#what-the-tools-need).
 
 ## The seam already exists
 
@@ -60,15 +77,17 @@ systemd, container and power features use to run one command and get its output
 back, with `SshExec` and `MonitorExec` behind it. The agent uses none of it:
 
 ```dart
-// global_agent_tools.dart:509
-Future<({ServerState state, SSHClient client})> _connectedServer(...)
-// :558
+// global_agent_tools.dart:584
+typedef AgentShellHandle = ({SSHClient client, String? serverId});
+// :814
 final session = await client.execute(command);
 ```
 
-`ServerExec` appears zero times in `global_agent_tools.dart`,
-`agent_session.dart`, `ask_ai.dart` and `agent.dart`. The in-terminal agent does
-the same thing with its own `SSHSession` (`ssh/page/page.dart`, `_aiCommandSession`).
+`ServerExec` appears zero times across all nine agent files — `adhoc_ssh.dart`,
+`agent_session.dart`, `agent_shell.dart`, `ask_ai.dart`,
+`global_agent_tools.dart`, and the four under `view/page/agent/`. The
+in-terminal agent does the same thing with its own `SSHSession`
+(`ssh/page/page.dart:171`, `_aiCommandSession`).
 
 Two consequences. One is the local shell: there is nowhere to put it. The other
 is already a live bug — `_connectedServer` throws
@@ -81,10 +100,26 @@ since the agent-exec work landed. Fixing the coupling fixes both.
 
 ### What the tools need
 
-Every tool takes a `server_id` (`run_shell_command`, `read_file`, `write_file`,
-`serverbox`). "This device" needs to be nameable — a reserved id rather than a
-fourth shape of argument, so the model's tool schema does not change and the
-instructions gain one line.
+This is the part that got easier while the document sat. The agent no longer
+resolves a tool call straight to a server: there is a sealed target type, and a
+second kind of target already exists beside the configured one.
+
+```dart
+// global_agent_tools.dart:619, :626
+final class ConfiguredServerTarget extends AgentSshTarget { ... }
+final class AdHocSessionTarget extends AgentSshTarget { ... }
+```
+
+So "this device" is a **third case of that sealed type**, not the reserved
+`server_id` string this document originally proposed. Better in every way: the
+compiler lists the places that have to answer for it, and a device is not a
+server with a magic name.
+
+What has *not* moved is what the target resolves **to** —
+`AgentShellHandle = ({SSHClient client, String? serverId})`. The type abstracts
+which machine; it does not abstract how a command runs there, which is why a
+local case has nowhere to go and a monitor-only server is still refused. Change
+the payload to `ServerExec` and both follow.
 
 | Tool | On a server | On this device |
 | --- | --- | --- |
@@ -255,12 +290,16 @@ macOS on the sandbox decision. Independent of everything below.
 no package manager, toybox only — but it is a real shell and it costs almost
 nothing once stage 1 lands.
 
-**2b. Move the agent onto `ServerExec`, then give it a local target.** Worth
-doing on its own merits — it is what makes the agent work on monitor-only
-servers, which it silently refuses today. Local execution then follows: a
-reserved server id, `LocalExec`, `dart:io` for the file tools, and the safety
-positions above. Can run in parallel with stage 1; it needs `ServerExec`, not
-the terminal work.
+**2b. Change `AgentShellHandle`'s payload to `ServerExec`, then add a local
+target.** Worth doing on its own merits — it is what makes the agent work on
+monitor-only servers, which it silently refuses today. Local execution then
+follows: a third `AgentSshTarget` case, `LocalExec`, `dart:io` for the file
+tools, and the safety positions above. Can run in parallel with stage 1; it
+needs `ServerExec`, not the terminal work.
+
+Smaller than it was when this was written: the target abstraction now exists,
+so this is one type's payload and the call sites that read it, rather than
+inventing the seam as well.
 
 **3. Measure the Android execution question.** A throwaway APK at the current
 `targetSdk`: write a static binary into `filesDir`, try `execve`, try it through
@@ -285,7 +324,7 @@ Update this as answers arrive; several decisions above move with them.
 | 1 | Can a `targetSdk` 35 app exec a file in `filesDir` via `linker64`? | Throwaway APK on a real device (no Android hardware here) | **open** |
 | 2 | How does OpenMinis run rootfs binaries at `targetSdk` 35? | Read its Kotlin/JNI sandbox code, not the shell scripts | **open** |
 | 3 | Are ish-arm64's 7–12x figures representative? | Build it, run a shell and a `python -c` loop | **open** |
-| 4 | Does the macOS DMG build ship unsandboxed, or does local shell hide there? | Product decision + check what `fl_build` signs with | **open** |
+| 4 | Does the macOS DMG build ship unsandboxed, or does local shell hide there? | Product decision. Half answered: `macos/Runner/Release.entitlements:17` sets `app-sandbox` true, so **every** build is sandboxed today, DMG included. Un-sandboxing it is a change to make, not a state to use | **open** |
 | 5 | Is proot GPLv2-only or v2-or-later? | Read source headers, not `COPYING` | **open** |
 | 6 | Does `flutter_pty` still build against current Flutter on all four desktop/Android targets? | Add it, build each | **open** |
 | 7 | Would 2.5.2 be survivable for this app? | Cannot be settled in advance. Decide whether stage 4's iOS half is worth the update risk | **open** |
