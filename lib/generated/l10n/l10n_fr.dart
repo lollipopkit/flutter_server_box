@@ -549,6 +549,13 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => 'Ce dossier n\'est plus là';
+
+  @override
+  String get fileDirGoneTip =>
+      'Il a été supprimé ou renommé. Utilisez la barre du bas pour revenir en arrière, aller au dossier personnel ou vous rendre ailleurs.';
+
+  @override
   String get finishedAt => 'Terminé à';
 
   @override

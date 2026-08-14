@@ -89,6 +89,8 @@
   "fallbackSshDest": "대체 SSH 대상",
   "fdroidReleaseTip": "F-Droid에서 이 앱을 다운로드한 경우, 이 옵션을 끄는 것을 권장합니다.",
   "fileTooLarge": "파일 '{file}'이(가) 너무 큽니다. 크기 {size}, 최대 {sizeMax}",
+  "fileDirGone": "이 폴더는 더 이상 없습니다",
+  "fileDirGoneTip": "삭제되었거나 이름이 바뀌었습니다. 아래 막대에서 뒤로 가기, 홈, 또는 다른 위치로 이동하세요.",
   "finishedAt": "완료 시각",
   "fullScreen": "전체 화면 모드",
   "fullScreenJitter": "전체 화면 지터",

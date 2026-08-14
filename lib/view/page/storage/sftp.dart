@@ -13,6 +13,7 @@ import 'package:server_box/core/utils/sftp_sudo.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
+import 'package:server_box/data/model/file/file_issue.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/sftp/req.dart';
 import 'package:server_box/data/provider/server/single.dart';
@@ -24,6 +25,7 @@ import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/sftp_mission.dart';
+import 'package:server_box/view/widget/page_issue.dart';
 
 part 'sftp_helpers.dart';
 
@@ -87,10 +89,13 @@ class _SftpPageState extends ConsumerState<SftpPage> {
   /// directory is not going to be any more readable than the last.
   final _sudoMode = false.vn;
 
-  /// Resolved once — the home directory, the remembered path, and the SFTP
-  /// channel — because the browser wants a backend and a place to start, and
-  /// both of those take a round trip.
-  late final Future<_SftpStart> _start = _open();
+  /// The home directory, the remembered path, and the SFTP channel, because
+  /// the browser wants a backend and a place to start and both of those take a
+  /// round trip.
+  ///
+  /// Replaceable, so that a connection that failed can be tried again without
+  /// closing the page and opening it.
+  late Future<_SftpStart> _start = _open();
 
   Spi get _spi => widget.args.spi;
 
@@ -112,11 +117,22 @@ class _SftpPageState extends ConsumerState<SftpPage> {
 
   @override
   void dispose() {
-    // The channel this page opened, not the connection, which the server
-    // provider owns.
-    _start.then((start) => start.backend.close()).ignore();
+    _release(_start);
     _sudoMode.dispose();
     super.dispose();
+  }
+
+  /// Closes the channel this page opened, not the connection, which the server
+  /// provider owns. Ignores a start that never got one.
+  void _release(Future<_SftpStart> start) =>
+      start.then((start) => start.backend.close()).ignore();
+
+  void _retry() {
+    _release(_start);
+    final started = _open();
+    setStateSafe(() {
+      _start = started;
+    });
   }
 
   @override
@@ -125,11 +141,14 @@ class _SftpPageState extends ConsumerState<SftpPage> {
       future: _start,
       loading: _buildPlaceholder(UIs.centerLoading),
       error: (e, _) => _buildPlaceholder(
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text('${libL10n.fail}:\n$e', textAlign: TextAlign.center),
-          ),
+        PageIssueView(
+          title: switch (classifyFileError(e)) {
+            FileIssue.timeout => libL10n.timeout,
+            FileIssue.denied => libL10n.permissionDenied,
+            _ => l10n.serverUnreachable,
+          },
+          detail: '$e',
+          onRetry: _retry,
         ),
       ),
       success: (start) {

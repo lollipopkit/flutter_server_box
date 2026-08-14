@@ -544,6 +544,13 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => 'Этой папки больше нет';
+
+  @override
+  String get fileDirGoneTip =>
+      'Она удалена или переименована. Используйте панель внизу, чтобы вернуться, перейти в домашнюю папку или в другое место.';
+
+  @override
   String get finishedAt => 'Завершено в';
 
   @override

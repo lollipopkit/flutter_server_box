@@ -11,20 +11,28 @@ import 'package:server_box/view/page/storage/file_browser.dart';
 
 /// A filesystem that is a map, so a browser test is about the browser.
 class _MapBackend implements FileBackend {
-  _MapBackend(this.tree);
+  _MapBackend(this.tree, {this.failWith, this.sudoFallback = false});
 
   final Map<String, List<FileEntry>> tree;
+
+  /// Thrown instead of listing, for the states that are not a listing.
+  /// Cleared by a test that wants the retry to succeed.
+  Object? failWith;
+
+  final bool sudoFallback;
 
   /// Every path this was asked to list, in order, so a test can tell "showed
   /// the old listing" from "never asked for the new one".
   final listed = <String>[];
 
   @override
-  FileBackendTraits get traits => const FileBackendTraits();
+  FileBackendTraits get traits =>
+      FileBackendTraits(sudoFallback: sudoFallback);
 
   @override
   Future<List<FileEntry>> list(String path) async {
     listed.add(path);
+    if (failWith case final error?) throw error;
     return tree[path] ?? const [];
   }
 
@@ -125,6 +133,69 @@ void main() {
 
     expect(find.text('sub'), findsOneWidget);
     expect(find.text('inner.txt'), findsNothing);
+  });
+
+  group('a directory that would not open', () {
+    testWidgets('names what went wrong, and keeps the exception', (
+      tester,
+    ) async {
+      final backend = _MapBackend(
+        const {},
+        failWith: const PathNotFoundException(
+          '/gone',
+          OSError('No such file or directory', 2),
+          'Directory listing failed',
+        ),
+      );
+
+      await pump(tester, backend);
+
+      // The heading someone can act on...
+      expect(find.text('This folder is no longer here'), findsOneWidget);
+      // ...and the words the OS used, still there for whoever wants them.
+      expect(
+        find.textContaining('No such file or directory'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('offers sudo only where there is somewhere to escalate', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        _MapBackend(const {}, failWith: 'Permission denied'),
+      );
+      expect(find.text('Try using sudo'), findsNothing);
+
+      await pump(
+        tester,
+        _MapBackend(
+          const {},
+          failWith: 'Permission denied',
+          sudoFallback: true,
+        ),
+      );
+      expect(find.text('Try using sudo'), findsOneWidget);
+    });
+
+    testWidgets('can be tried again', (tester) async {
+      final backend = _MapBackend(
+        {
+          '/': [_file('back.txt')],
+        },
+        failWith: 'Connection closed',
+      );
+
+      await pump(tester, backend);
+      expect(find.text('Failure'), findsOneWidget);
+
+      backend.failWith = null;
+      await tester.tap(find.text('Refresh'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('back.txt'), findsOneWidget);
+    });
   });
 
   testWidgets('an empty directory says so, and can still be left', (

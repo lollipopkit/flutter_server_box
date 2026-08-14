@@ -545,6 +545,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => 'Bu klasör artık burada değil';
+
+  @override
+  String get fileDirGoneTip =>
+      'Silinmiş veya adı değiştirilmiş. Geri dönmek, ana klasöre gitmek ya da başka bir yere geçmek için alttaki çubuğu kullanın.';
+
+  @override
   String get finishedAt => 'Tamamlandı:';
 
   @override

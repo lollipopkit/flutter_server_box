@@ -79,6 +79,8 @@
   "fallbackSshDest": "Yedek SSH hedefi",
   "fdroidReleaseTip": "Bu uygulamayı F-Droid'den indirdiyseniz, bu seçeneği kapatmanız önerilir.",
   "fileTooLarge": "'{file}' dosyası çok büyük {size}, maksimum {sizeMax}",
+  "fileDirGone": "Bu klasör artık burada değil",
+  "fileDirGoneTip": "Silinmiş veya adı değiştirilmiş. Geri dönmek, ana klasöre gitmek ya da başka bir yere geçmek için alttaki çubuğu kullanın.",
   "finishedAt": "Tamamlandı:",
   "fullScreen": "Tam ekran modu",
   "fullScreenJitter": "Tam ekran titreşim",

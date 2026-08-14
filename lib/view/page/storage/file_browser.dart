@@ -4,8 +4,10 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/file/browse_path.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
+import 'package:server_box/data/model/file/file_issue.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
+import 'package:server_box/view/widget/page_issue.dart';
 import 'package:server_box/view/widget/unix_perm.dart';
 
 /// What an injected action is allowed to do to the browser it sits in.
@@ -611,15 +613,45 @@ class _FileBrowserPageState extends State<FileBrowserPage>
     return FutureWidget(
       future: _entries,
       loading: UIs.placeholder,
-      error: (e, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text('${libL10n.fail}:\n$e', textAlign: TextAlign.center),
-        ),
-      ),
+      error: (e, _) => _buildError(e),
       success: (entries) => _sort.listenVal(
         (option) => _buildListView(_sorted(entries ?? const [], option)),
       ),
+    );
+  }
+
+  /// What a directory that would not open says.
+  ///
+  /// The same shape the container page uses for a runtime it could not reach:
+  /// a heading someone can act on, the machine's own words underneath, and a
+  /// way to try again. A raw exception centred on the page told the user the
+  /// path they were already looking at.
+  ///
+  /// No second button for the folder that is gone: the bottom bar is still on
+  /// screen, and back, home and goto are all there.
+  Widget _buildError(Object? error) {
+    final issue = classifyFileError(error);
+    return PageIssueView(
+      title: switch (issue) {
+        FileIssue.notFound => l10n.fileDirGone,
+        FileIssue.denied => libL10n.permissionDenied,
+        FileIssue.timeout => libL10n.timeout,
+        FileIssue.unknown => libL10n.fail,
+      },
+      explain: switch (issue) {
+        FileIssue.notFound => l10n.fileDirGoneTip,
+        // Where there is a way past a refusal, name the button that offers it.
+        FileIssue.denied when backend.traits.sudoFallback => l10n.trySudo,
+        _ => null,
+      },
+      detail: '$error',
+      icon: switch (issue) {
+        FileIssue.notFound => Icons.folder_off_outlined,
+        FileIssue.denied => Icons.lock_outline,
+        FileIssue.timeout => Icons.timer_off_outlined,
+        FileIssue.unknown => Icons.error_outline,
+      },
+      onRetry: refresh,
     );
   }
 

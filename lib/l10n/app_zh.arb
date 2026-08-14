@@ -155,6 +155,8 @@
   "fallbackSshDest": "备选 SSH 目标",
   "fdroidReleaseTip": "如果你是从 F-Droid 下载的本应用，推荐关闭此选项",
   "fileTooLarge": "文件 '{file}' 过大 '{size}'，超过了 {sizeMax}",
+  "fileDirGone": "此文件夹已不存在",
+  "fileDirGoneTip": "它已被删除或重命名。使用下方的按钮返回、回到主目录，或跳转到其他位置。",
   "finishedAt": "完成于",
   "fullScreen": "全屏模式",
   "fullScreenJitter": "全屏模式抖动",

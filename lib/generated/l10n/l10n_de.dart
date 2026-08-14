@@ -544,6 +544,13 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => 'Dieser Ordner ist nicht mehr da';
+
+  @override
+  String get fileDirGoneTip =>
+      'Er wurde gelöscht oder umbenannt. Nutze die Leiste unten, um zurückzugehen, zum Startordner zu springen oder woandershin zu wechseln.';
+
+  @override
   String get finishedAt => 'Beendet um';
 
   @override

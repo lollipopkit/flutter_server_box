@@ -548,6 +548,13 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => 'Esta carpeta ya no está aquí';
+
+  @override
+  String get fileDirGoneTip =>
+      'Se eliminó o se renombró. Usa la barra de abajo para volver, ir al inicio o saltar a otro lugar.';
+
+  @override
   String get finishedAt => 'Terminado en';
 
   @override

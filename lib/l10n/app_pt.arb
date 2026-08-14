@@ -79,6 +79,8 @@
   "fallbackSshDest": "Destino SSH de fallback",
   "fdroidReleaseTip": "Se você baixou este aplicativo do F-Droid, é recomendado desativar esta opção.",
   "fileTooLarge": "Arquivo '{file}' muito grande '{size}', excedendo {sizeMax}",
+  "fileDirGone": "Esta pasta já não está aqui",
+  "fileDirGoneTip": "Foi eliminada ou renomeada. Use a barra abaixo para voltar, ir para a pasta inicial ou saltar para outro local.",
   "finishedAt": "Terminado em",
   "fullScreen": "Modo tela cheia",
   "fullScreenJitter": "Tremulação em tela cheia",

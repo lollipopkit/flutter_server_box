@@ -79,6 +79,8 @@
   "fallbackSshDest": "SSH-Fallback-Ziel",
   "fdroidReleaseTip": "Wenn Sie diese App von F-Droid heruntergeladen haben, wird empfohlen, diese Option zu deaktivieren.",
   "fileTooLarge": "Datei '{file}' ist zu groß {size}, max {sizeMax}",
+  "fileDirGone": "Dieser Ordner ist nicht mehr da",
+  "fileDirGoneTip": "Er wurde gelöscht oder umbenannt. Nutze die Leiste unten, um zurückzugehen, zum Startordner zu springen oder woandershin zu wechseln.",
   "finishedAt": "Beendet um",
   "fullScreen": "Vollbildmodus",
   "fullScreenJitter": "Jitter im Vollbildmodus",

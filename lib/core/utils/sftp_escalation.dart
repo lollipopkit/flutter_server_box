@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:server_box/data/model/file/file_issue.dart';
+
 /// What to do when the server says no.
 ///
 /// SFTP has no notion of privilege: a refused rename is a refused rename, and
@@ -83,16 +85,8 @@ Future<void> runWithEscalation({
 
 /// Whether an error reads as "you are not allowed to".
 ///
-/// `code 3` is SFTP's `SSH_FX_PERMISSION_DENIED`, and `failure` is what a
-/// server sends when it has decided not to be specific — which, for a write it
-/// refused, usually means the same thing. Deliberately generous: the cost of
-/// asking about something that was not a permission problem is one dialog the
-/// user says no to, and the cost of missing one is an operation that just
-/// fails.
-bool isPermissionDenied(Object? error) {
-  final message = '$error'.toLowerCase();
-  return message.contains('permission denied') ||
-      message.contains('access denied') ||
-      message.contains('code 3') ||
-      message.contains('failure');
-}
+/// One classifier, shared with the page that has to name the same failures on
+/// screen: "offer sudo" and "say permission denied" must not be able to
+/// disagree about the same error.
+bool isPermissionDenied(Object? error) =>
+    classifyFileError(error) == FileIssue.denied;

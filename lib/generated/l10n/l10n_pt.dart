@@ -542,6 +542,13 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => 'Esta pasta já não está aqui';
+
+  @override
+  String get fileDirGoneTip =>
+      'Foi eliminada ou renomeada. Use a barra abaixo para voltar, ir para a pasta inicial ou saltar para outro local.';
+
+  @override
   String get finishedAt => 'Terminado em';
 
   @override

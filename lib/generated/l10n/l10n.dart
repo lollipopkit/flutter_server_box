@@ -1056,6 +1056,18 @@ abstract class AppLocalizations {
   /// **'File \'{file}\' too large {size}, max {sizeMax}'**
   String fileTooLarge(Object file, Object size, Object sizeMax);
 
+  /// No description provided for @fileDirGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This folder is no longer here'**
+  String get fileDirGone;
+
+  /// No description provided for @fileDirGoneTip.
+  ///
+  /// In en, this message translates to:
+  /// **'It was deleted or renamed. Use the bar below to go back, go home, or jump elsewhere.'**
+  String get fileDirGoneTip;
+
   /// No description provided for @finishedAt.
   ///
   /// In en, this message translates to:

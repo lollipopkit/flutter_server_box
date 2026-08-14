@@ -518,6 +518,13 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => 'このフォルダはもうありません';
+
+  @override
+  String get fileDirGoneTip =>
+      '削除されたか名前が変更されました。下のバーで戻る、ホームへ移動、または別の場所へ移動してください。';
+
+  @override
   String get finishedAt => '完了時刻';
 
   @override

@@ -510,6 +510,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => '此文件夹已不存在';
+
+  @override
+  String get fileDirGoneTip => '它已被删除或重命名。使用下方的按钮返回、回到主目录，或跳转到其他位置。';
+
+  @override
   String get finishedAt => '完成于';
 
   @override
@@ -1748,6 +1754,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String fileTooLarge(Object file, Object size, Object sizeMax) {
     return '檔案 \'$file\' 過大 \'$size\'，超過了 $sizeMax';
   }
+
+  @override
+  String get fileDirGone => '此資料夾已不存在';
+
+  @override
+  String get fileDirGoneTip => '它已被刪除或重新命名。使用下方的按鈕返回、回到主目錄，或跳轉到其他位置。';
 
   @override
   String get finishedAt => '完成於';

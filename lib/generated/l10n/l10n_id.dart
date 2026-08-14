@@ -543,6 +543,13 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => 'Folder ini sudah tidak ada';
+
+  @override
+  String get fileDirGoneTip =>
+      'Folder ini dihapus atau diganti nama. Gunakan bilah di bawah untuk kembali, ke beranda, atau menuju tempat lain.';
+
+  @override
   String get finishedAt => 'Selesai pada';
 
   @override

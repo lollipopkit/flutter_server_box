@@ -79,6 +79,8 @@
   "fallbackSshDest": "Tujuan SSH mundur",
   "fdroidReleaseTip": "Jika Anda mengunduh aplikasi ini dari F-Droid, disarankan untuk mematikan opsi ini.",
   "fileTooLarge": "File '{file}' terlalu besar {size}, max {sizeMax}",
+  "fileDirGone": "Folder ini sudah tidak ada",
+  "fileDirGoneTip": "Folder ini dihapus atau diganti nama. Gunakan bilah di bawah untuk kembali, ke beranda, atau menuju tempat lain.",
   "finishedAt": "Selesai pada",
   "fullScreen": "Mode Layar Penuh",
   "fullScreenJitter": "Jitter layar penuh",

@@ -517,6 +517,13 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => '이 폴더는 더 이상 없습니다';
+
+  @override
+  String get fileDirGoneTip =>
+      '삭제되었거나 이름이 바뀌었습니다. 아래 막대에서 뒤로 가기, 홈, 또는 다른 위치로 이동하세요.';
+
+  @override
   String get finishedAt => '완료 시각';
 
   @override

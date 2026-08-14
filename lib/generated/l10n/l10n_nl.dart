@@ -543,6 +543,13 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => 'Deze map is er niet meer';
+
+  @override
+  String get fileDirGoneTip =>
+      'Hij is verwijderd of hernoemd. Gebruik de balk onderaan om terug te gaan, naar home te springen of ergens anders heen te gaan.';
+
+  @override
   String get finishedAt => 'Voltooid om';
 
   @override

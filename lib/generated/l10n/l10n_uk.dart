@@ -544,6 +544,13 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => 'Цієї теки більше немає';
+
+  @override
+  String get fileDirGoneTip =>
+      'Її видалено або перейменовано. Скористайтеся панеллю внизу, щоб повернутися, перейти до домівки або в інше місце.';
+
+  @override
   String get finishedAt => 'Завершено о';
 
   @override

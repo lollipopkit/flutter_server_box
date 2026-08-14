@@ -79,6 +79,8 @@
   "fallbackSshDest": "フォールバックSSH宛先",
   "fdroidReleaseTip": "このアプリをF-Droidからダウンロードした場合、このオプションをオフにすることをお勧めします。",
   "fileTooLarge": "ファイル '{file}' は大きすぎます '{size}'、{sizeMax} を超えています",
+  "fileDirGone": "このフォルダはもうありません",
+  "fileDirGoneTip": "削除されたか名前が変更されました。下のバーで戻る、ホームへ移動、または別の場所へ移動してください。",
   "finishedAt": "完了時刻",
   "fullScreen": "フルスクリーンモード",
   "fullScreenJitter": "フルスクリーンモードのジッター",
