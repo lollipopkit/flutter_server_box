@@ -27,7 +27,7 @@ extension _AskAi on SSHPageState {
   String get _recentTerminalContext {
     final selection = _selectedTerminalText;
     if (selection.isNotEmpty) return selection;
-    return _sshOutputTail.trim();
+    return _sess.outputTail.trim();
   }
 
   Future<void> _showAskAiPanel(

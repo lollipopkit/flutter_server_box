@@ -9,12 +9,8 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/monitor_terminal.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
@@ -30,8 +26,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/persistent_shell.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
-import 'package:server_box/data/ssh/ssh_terminal_environment.dart';
-import 'package:server_box/data/ssh/terminal_output_buffer.dart';
+import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/data/ssh/tmux/tmux_export.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/view/page/ssh/agent_conversation_replay.dart';
@@ -52,6 +47,13 @@ final class SshPageArgs {
   final Spi spi;
   final String? initCmd;
   final Snippet? initSnippet;
+
+  /// A shell that is already running, to be shown here instead of opening one.
+  ///
+  /// How a snippet started in a dialog carries on in a tab: the connection and
+  /// everything printed into it are the session's, not the page's, so the page
+  /// showing them can change without the shell noticing.
+  final TerminalSession? session;
   final bool notFromTab;
   final Function()? onSessionEnd;
   final GlobalKey<TerminalViewState>? terminalKey;
@@ -72,6 +74,7 @@ final class SshPageArgs {
     required this.spi,
     this.initCmd,
     this.initSnippet,
+    this.session,
     this.notFromTab = true,
     this.onSessionEnd,
     this.terminalKey,
@@ -129,7 +132,17 @@ class SSHPageState extends ConsumerState<SSHPage>
     registerForRestoration(_restorableTmuxWindow, 'tmux_window');
   }
 
-  late final _terminal = Terminal();
+  /// The terminal and the shell behind it. Handed in when this page is
+  /// continuing a session that started elsewhere, and made here otherwise.
+  late final TerminalSession _sess =
+      widget.args.session ?? TerminalSession(spi: widget.args.spi);
+
+  /// Whether the session arrived already running, and so must not be started
+  /// a second time.
+  bool get _adopted => widget.args.session != null;
+
+  Terminal get _terminal => _sess.terminal;
+
   late final TerminalController _terminalController = TerminalController(
     vsync: this,
   );
@@ -145,20 +158,12 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
-  /// Where this terminal's shell comes from. Usually SSH; for a server
-  /// reached only through its monitor agent it is the agent's own PTY, which
-  /// answers strictly less — see [ShellBackend.supportsExec].
-  ShellBackend? _backend;
 
-  /// The SSH connection behind [_backend], when there is one. tmux is the
-  /// only thing that needs it: it drives a second channel of its own, so it
-  /// cannot be expressed through [ShellBackend].
-  SSHClient? get _client => switch (_backend) {
-    SshShellBackend(:final client) => client,
-    _ => null,
-  };
+  ShellBackend? get _backend => _sess.backend;
 
-  ShellSession? _session;
+  SSHClient? get _client => _sess.client;
+
+  ShellSession? get _session => _sess.foreground;
 
   /// The agent's own command channel, separate from the terminal's session.
   /// SSH-only: the agent runs commands with `exec`, which the monitor PTY
@@ -166,15 +171,8 @@ class SSHPageState extends ConsumerState<SSHPage>
   SSHSession? _aiCommandSession;
   bool _aiCommandCancelled = false;
   Timer? _discontinuityTimer;
-  Timer? _terminalFlushTimer;
-  final _terminalOutputBuffer = TerminalOutputBuffer();
-  String _sshOutputTail = '';
-  final List<StreamSubscription<String>> _terminalOutputSubscriptions = [];
   static const _connectionCheckInterval = Duration(seconds: 60);
   static const _connectionCheckTimeout = Duration(seconds: 10);
-  static const _terminalFlushInterval = Duration(milliseconds: 16);
-  static const _terminalFlushCharLimit = 32768;
-  static const _sshOutputTailCharLimit = 8192;
   static const _maxKeepAliveFailures = 3;
   int _missedKeepAliveCount = 0;
   bool _isCheckingConnection = false;
@@ -216,10 +214,9 @@ class SSHPageState extends ConsumerState<SSHPage>
     }
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
-    _terminalFlushTimer?.cancel();
-    for (final subscription in _terminalOutputSubscriptions) {
-      subscription.cancel();
-    }
+    // Not `close`: the connection may be the status poller's, shared with the
+    // rest of the app, and a terminal going away is not a reason to hang it up.
+    _sess.dispose();
     _removeVisibilityListener();
     Stores.setting.horizonVirtKey.listenable().removeListener(
       _handleVirtKeySettingsChanged,
@@ -267,7 +264,8 @@ class SSHPageState extends ConsumerState<SSHPage>
     // Adopt whatever the provider already has, so a server that is connected
     // for status does not connect a second time just to show a terminal.
     final serverState = ref.read(serverProvider(widget.args.spi.id));
-    _backend = _adoptBackend(serverState.client);
+    _sess.adopt(serverState.client, granted: serverState.remoteAccess);
+    _sess.onForegroundDone = _onForegroundSessionDone;
 
     if (++_sshConnCount == 1) {
       WakelockPlus.enable();
@@ -754,7 +752,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         if (!mounted) return;
       }
 
-      _drainPendingTerminalOutput();
+      _sess.drainOutput();
 
       if (_hasPendingSudoPrompt()) {
         detected = true;
@@ -770,7 +768,7 @@ class SSHPageState extends ConsumerState<SSHPage>
 
     _terminal.textInput(password);
     _terminal.keyInput(TerminalKey.enter);
-    _sshOutputTail = '';
+    _sess.clearOutputTail();
 
     if (!mounted) return;
     widget.args.focusNode?.requestFocus();
@@ -796,7 +794,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   String _latestSshOutputLine() {
-    final normalized = SudoPassword.normalizeOutput(_sshOutputTail);
+    final normalized = SudoPassword.normalizeOutput(_sess.outputTail);
     return normalized
         .split('\n')
         .reversed
