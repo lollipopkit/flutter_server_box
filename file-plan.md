@@ -142,7 +142,7 @@ class FileTransfer {
 
 `FileRef`'s backend half must be **serializable**, because of the isolate.
 
-### The isolate is the hard part
+### The isolate stays
 
 `SftpWorker` (`data/model/sftp/worker.dart:163`) runs each job in its own
 isolate. It cannot be handed a live `SSHClient` — those do not cross isolates —
@@ -151,23 +151,31 @@ so it is handed an `SftpReq` carrying a whole `Spi` and reconnects inside
 keyboard-interactive prompts have to be marshalled back over ports
 (`SftpHostKeyPrompt`, `SftpKeyboardInteractivePrompt`).
 
-For a two-remote transfer that means **two** connections inside the isolate,
-and two prompt channels. It works, but the cost is paid per job.
+Running transfers on the main isolate instead would be far less code and no
+serialization at all. `benchmark/README.md` rules it out. Symmetric crypto is
+pure Dart and costs, at 32 KiB packets:
 
-Two ways out, and this plan should pick one before writing code:
+| | MiB/s |
+| - | ----- |
+| `aes256-ctr` + `hmac-sha2-256` | 57.8 |
+| `chacha20-poly1305` primitives | 84.5 |
+| SFTP get over chacha, end to end | 67.4 |
 
-1. **Keep the isolate, make the descriptor general.** `FileRef` carries a
-   `Spi` or a local root, the isolate builds both ends itself. Prompt
-   marshalling is already written; it doubles rather than changing shape.
-2. **Move transfers onto the main isolate.** They are I/O-bound — dartssh2 is
-   async sockets, not a CPU loop — and a stream from one backend into another
-   is a dozen lines with no serialization at all. What it gives up is the
-   crypto work being off the UI thread, which is the reason to measure before
-   deciding rather than assume.
+A LAN-speed transfer is therefore crypto-bound at roughly one core. On the main
+isolate that is the UI thread pegged for the length of the transfer. Over a
+slow link it would not matter; the app must not jank on the fast one.
 
-The second is much less code. Whether it is affordable is a question about
-throughput on a large file, and it should be answered with a measurement, not
-in this document.
+So `FileRef`'s backend half is **serializable**, and the isolate builds both
+ends itself.
+
+Not every pair needs one, and the engine should say so rather than starting an
+isolate out of symmetry:
+
+| Pair | Where it runs |
+| ---- | ------------- |
+| local → local | main isolate; it is a file copy with no crypto |
+| local ↔ sftp | one isolate, one connection — what happens today |
+| sftp → sftp | one isolate, two connections and two prompt channels |
 
 ## What the pages become
 
@@ -221,9 +229,10 @@ handling — sudo, timeouts (`core/utils/sftp_timeout.dart`), host-key prompts.
   its structure, they are in its details. Anything not carried over is a
   regression nobody will notice until they hit it. Stage 3 should port
   behaviour, not rewrite it.
-- **The isolate decision.** Choosing "main isolate" without measuring risks a
-  janky UI on a large transfer over a fast link; choosing "keep the isolate"
-  costs a second connection and a second prompt channel per two-remote job.
+- **A second connection per two-remote job.** Keeping the isolate is settled,
+  but `sftp → sftp` pays two connections and two prompt channels for one
+  transfer, and a host that prompts for its key does so from inside an isolate
+  that is already juggling another.
 - **Two prompts at once.** A server→server transfer can raise two host-key
   dialogs. They must queue, not stack.
 - **Partial writes.** A transfer that fails halfway leaves a partial file at
