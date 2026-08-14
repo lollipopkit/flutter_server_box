@@ -351,6 +351,7 @@ class AgentToolExecutionResult {
     this.data,
     this.cancelled = false,
     this.truncated = false,
+    this.localFailure = false,
   });
 
   factory AgentToolExecutionResult.fromToolMessage(String message) {
@@ -370,6 +371,7 @@ class AgentToolExecutionResult {
       data: json['data'],
       cancelled: json['cancelled'] as bool? ?? false,
       truncated: json['truncated'] as bool? ?? false,
+      localFailure: json['local_failure'] as bool? ?? false,
     );
   }
 
@@ -392,6 +394,13 @@ class AgentToolExecutionResult {
   final bool cancelled;
   final bool truncated;
 
+  /// The tool threw rather than returning a result.
+  ///
+  /// [summary] stays English because it is protocol data — the model reads it.
+  /// The app has its own line for this case and picks it at render time, which
+  /// is the only place that knows what language to use.
+  final bool localFailure;
+
   String toToolMessage() => jsonEncode({
     'server_box_tool_result': true,
     'tool': toolName,
@@ -402,6 +411,7 @@ class AgentToolExecutionResult {
     'duration_ms': duration.inMilliseconds,
     'cancelled': cancelled,
     'truncated': truncated,
+    'local_failure': localFailure,
   });
 
   String get displayData {

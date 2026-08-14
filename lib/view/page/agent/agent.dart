@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:convert';
-
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,12 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/provider/ai/agent_session.dart';
 import 'package:server_box/data/provider/ai/ask_ai.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/data/store/agent_conversation.dart';
-import 'package:server_box/view/page/ssh/agent_conversation_replay.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 
 class AgentPage extends ConsumerStatefulWidget {
@@ -21,51 +17,6 @@ class AgentPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<AgentPage> createState() => _AgentPageState();
-}
-
-enum _AgentTimelineEntryType { user, assistant, toolResult, notice }
-
-class _AgentTimelineEntry {
-  const _AgentTimelineEntry._({
-    required this.type,
-    this.content,
-    this.proposal,
-    this.result,
-    this.autoApproved = false,
-  });
-
-  const _AgentTimelineEntry.user(String content)
-    : this._(type: _AgentTimelineEntryType.user, content: content);
-
-  const _AgentTimelineEntry.assistant(String content)
-    : this._(type: _AgentTimelineEntryType.assistant, content: content);
-
-  const _AgentTimelineEntry.toolResult(
-    AskAiCommand proposal,
-    AgentToolExecutionResult result, {
-    bool autoApproved = false,
-  }) : this._(
-         type: _AgentTimelineEntryType.toolResult,
-         proposal: proposal,
-         result: result,
-         autoApproved: autoApproved,
-       );
-
-  const _AgentTimelineEntry.notice(String content)
-    : this._(type: _AgentTimelineEntryType.notice, content: content);
-
-  final _AgentTimelineEntryType type;
-  final String? content;
-  final AskAiCommand? proposal;
-  final AgentToolExecutionResult? result;
-  final bool autoApproved;
-}
-
-class _ReplayToolCall {
-  _ReplayToolCall(this.proposal);
-
-  final AskAiCommand proposal;
-  bool completed = false;
 }
 
 @visibleForTesting
@@ -109,227 +60,32 @@ String formatGlobalAgentToolResultOutput(
   return sections.join('\n\n');
 }
 
+/// The conversation lives in [agentSessionProvider]; this page draws it.
+///
+/// Kept alive not for the conversation — that now outlives every widget — but
+/// for the scroll position and whatever is half-typed in the composer, which
+/// belong to this view and would be thrown away on a tab switch otherwise.
 class _AgentPageState extends ConsumerState<AgentPage>
     with AutomaticKeepAliveClientMixin {
-  final _timeline = <_AgentTimelineEntry>[];
-  final _history = <AskAiConversationItem>[];
   final _scrollController = ScrollController();
   final _inputController = TextEditingController();
-  StreamSubscription<AskAiEvent>? _subscription;
-  AgentConversation? _conversation;
-  AskAiCommand? _pendingTool;
-  String? _streamingContent;
-  String? _error;
-  late AskAiProtocol _protocol;
-  bool _isStreaming = false;
-  bool _isExecuting = false;
-  bool _turnCompleted = false;
-  /// The stored conversations, read from the box rather than re-read on every
-  /// build.
-  ///
-  /// The column that shows them is rebuilt by every `setState` this page makes
-  /// — one per keystroke while typing, one per token while streaming — and
-  /// each fetch deserialises every conversation's full item list. Refreshed
-  /// where the store is written, which is the only thing that can change it.
-  var _conversations = const <AgentConversation>[];
-  bool _historyInitialized = false;
-  bool _pendingToolRestored = false;
-  int _autoRunCount = 0;
-  late final GlobalAgentToolService _toolService;
-
-  bool get _isWorking => _isStreaming || _isExecuting;
 
   @override
   bool get wantKeepAlive => true;
 
-  @override
-  void initState() {
-    super.initState();
-    _toolService = ref.read(globalAgentToolServiceProvider);
-    _protocol = _resolvedConfiguredProtocol();
+  AgentSession get _notifier => ref.read(agentSessionProvider.notifier);
 
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_historyInitialized) return;
-    _historyInitialized = true;
-    _refreshConversations();
-    _conversationWatch ??= Stores.agentConversation.box.watch().listen((_) {
-      if (!mounted) return;
-      setState(_refreshConversations);
-    });
-    _restoreConversation(
-      Stores.agentConversation.fetchActive(globalAgentConversationScope),
-      notify: false,
-    );
-  }
+  String? get _localeHint =>
+      Localizations.maybeLocaleOf(context)?.toLanguageTag();
 
   @override
   void dispose() {
-    _conversationWatch?.cancel();
-    _subscription?.cancel();
-    if (_isExecuting) {
-      unawaited(_toolService.cancelCurrent());
-    }
     _scrollController.dispose();
     _inputController.dispose();
     super.dispose();
   }
 
-  /// Watches the box, so a write this page did not make — a restored backup —
-  /// is not missed. This tab is kept alive, so nothing else would bring it
-  /// back to look.
-  StreamSubscription<void>? _conversationWatch;
-
-  /// Re-reads the stored conversations. Called for this page's own writes so
-  /// the list is right in the same frame, and from [_conversationWatch] for
-  /// everyone else's.
-  void _refreshConversations() {
-    _conversations = Stores.agentConversation.fetchForServer(
-      globalAgentConversationScope,
-    );
-  }
-
-  AskAiProtocol _resolvedConfiguredProtocol() {
-    return AskAiRepository.resolveProtocol(
-      configured: parseAskAiProtocol(Stores.setting.askAiProtocol.fetch()),
-      endpoint: Stores.setting.askAiBaseUrl.fetch(),
-    );
-  }
-
-  void _restoreConversation(
-    AgentConversation? conversation, {
-    bool notify = true,
-  }) {
-    final entries = <_AgentTimelineEntry>[];
-    final calls = <String, List<_ReplayToolCall>>{};
-    final callOrder = <_ReplayToolCall>[];
-    for (final item in conversation?.items ?? const <AskAiConversationItem>[]) {
-      switch (item) {
-        case AskAiMessageItem(:final role, :final content):
-          if (content.trim().isEmpty) continue;
-          entries.add(
-            role == AskAiMessageRole.user
-                ? _AgentTimelineEntry.user(content)
-                : _AgentTimelineEntry.assistant(content),
-          );
-        case AskAiFunctionCallItem(:final command):
-          final call = _ReplayToolCall(command);
-          calls.putIfAbsent(command.id, () => <_ReplayToolCall>[]).add(call);
-          callOrder.add(call);
-        case AskAiFunctionOutputItem(:final callId, :final output):
-          final matching = calls[callId];
-          if (matching == null) continue;
-          final call = matching.where((item) => !item.completed).firstOrNull;
-          if (call == null) continue;
-          call.completed = true;
-          final result = AgentToolExecutionResult.tryFromToolMessage(output);
-          if (result != null) {
-            entries.add(_AgentTimelineEntry.toolResult(call.proposal, result));
-            continue;
-          }
-          final action = _toolAction(output);
-          if (action == AgentConversationToolAction.declined) {
-            entries.add(
-              _AgentTimelineEntry.notice(context.l10n.askAiActionDeclined),
-            );
-          } else if (output.trim().isNotEmpty) {
-            entries.add(_AgentTimelineEntry.notice(output));
-          }
-        case AskAiReasoningItem() || AskAiRawResponseItem():
-          break;
-      }
-    }
-
-    AskAiCommand? pending;
-    for (final call in callOrder.reversed) {
-      if (!call.completed) {
-        pending = call.proposal;
-        break;
-      }
-    }
-
-    void apply() {
-      _subscription?.cancel();
-      _conversation = conversation;
-      _protocol =
-          conversation?.protocol == null ||
-              conversation?.protocol == AskAiProtocol.auto
-          ? _resolvedConfiguredProtocol()
-          : conversation!.protocol;
-      _history
-        ..clear()
-        ..addAll(conversation?.items ?? const []);
-      _timeline
-        ..clear()
-        ..addAll(entries);
-      _pendingTool = pending;
-      _pendingToolRestored = pending != null;
-      _streamingContent = null;
-      _error = null;
-      _isStreaming = false;
-      _isExecuting = false;
-      _turnCompleted = false;
-      _autoRunCount = 0;
-      _inputController.clear();
-    }
-
-    if (notify) {
-      setState(apply);
-      _scheduleAutoScroll(force: true);
-    } else {
-      apply();
-    }
-  }
-
-  AgentConversationToolAction? _toolAction(String output) {
-    try {
-      final value = jsonDecode(output);
-      if (value is! Map) return null;
-      final action = value['server_box_action'];
-      return AgentConversationToolAction.values.firstWhere(
-        (item) => item.name == action,
-      );
-    } catch (_) {
-      return null;
-    }
-  }
-
-  AgentConversation _ensureConversation() {
-    final existing = _conversation;
-    if (existing != null) return existing;
-    final created = Stores.agentConversation.create(
-      serverId: globalAgentConversationScope,
-      protocol: _protocol,
-      providerBaseUrl: Stores.setting.askAiBaseUrl.fetch(),
-      model: Stores.setting.askAiModel.fetch(),
-    );
-    _refreshConversations();
-    _conversation = created;
-    return created;
-  }
-
-  void _persistConversation() {
-    final conversation = _ensureConversation();
-    final trimmed = AgentConversationStore.trimItemsForStorage(_history);
-    final updated = conversation.copyWith(
-      updatedAt: DateTime.now(),
-      protocol: _protocol,
-      providerBaseUrl: Stores.setting.askAiBaseUrl.fetch(),
-      model: Stores.setting.askAiModel.fetch(),
-      items: trimmed,
-    );
-    if (!Stores.agentConversation.save(updated)) return;
-    _refreshConversations();
-    _conversation = Stores.agentConversation.fetch(updated.id) ?? updated;
-    if (trimmed.length != _history.length) {
-      _history
-        ..clear()
-        ..addAll(trimmed);
-    }
-  }
+  // ------------------------------------------------------------------ actions
 
   /// Enter sends and Shift+Enter breaks the line, or the other way round with
   /// the modifier doing the sending — the two habits people bring to a chat
@@ -368,136 +124,21 @@ class _AgentPageState extends ConsumerState<AgentPage>
   }
 
   void _submitPrompt(String prompt) {
-    final text = prompt.trim();
-    if (text.isEmpty || _isWorking || _pendingTool != null) return;
-    _ensureConversation();
-    setState(() {
-      _history.add(AskAiMessageItem.user(text));
-      _timeline.add(_AgentTimelineEntry.user(text));
+    // Emptied only once the session has taken it. It refuses while a turn is
+    // running or a tool is waiting to be reviewed, and a box cleared anyway
+    // would lose what was typed.
+    if (_notifier.submitPrompt(prompt, localeHint: _localeHint)) {
       _inputController.clear();
-      _autoRunCount = 0;
-      _error = null;
-    });
-    _persistConversation();
-    _startStream();
-    _scheduleAutoScroll(force: true);
-  }
-
-  void _startStream() {
-    _subscription?.cancel();
-    final localeHint = Localizations.maybeLocaleOf(context)?.toLanguageTag();
-    setState(() {
-      _isStreaming = true;
-      _turnCompleted = false;
-      _error = null;
-      _streamingContent = '';
-    });
-    _subscription = ref
-        .read(askAiRepositoryProvider)
-        .ask(
-          terminalContext: '',
-          serverName: 'ServerBox',
-          localeHint: localeHint,
-          conversation: List.unmodifiable(_history),
-          protocol: _protocol,
-          customInstructions: _toolService.buildInstructions(
-            localeHint: localeHint,
-          ),
-          tools: globalAgentToolDefinitions,
-        )
-        .listen(
-          _handleEvent,
-          onError: (Object error, StackTrace stackTrace) {
-            if (!mounted) return;
-            setState(() {
-              _error = _describeError(error);
-              _isStreaming = false;
-              _streamingContent = null;
-              _pendingTool = null;
-            });
-          },
-          onDone: () {
-            if (!mounted || _turnCompleted) return;
-            setState(() {
-              _isStreaming = false;
-              _streamingContent = null;
-            });
-          },
-        );
-  }
-
-  void _handleEvent(AskAiEvent event) {
-    if (!mounted) return;
-    if (event is AskAiContentDelta) {
-      setState(() {
-        _streamingContent = (_streamingContent ?? '') + event.delta;
-      });
-      _scheduleAutoScroll();
-      return;
-    }
-    if (event is AskAiToolSuggestion) {
-      setState(() {
-        _pendingTool ??= event.command;
-        _pendingToolRestored = false;
-      });
-      _scheduleAutoScroll(force: true);
-      return;
-    }
-    if (event is AskAiStreamError) {
-      _subscription?.cancel();
-      setState(() {
-        _error = _describeError(event.error);
-        _isStreaming = false;
-        _streamingContent = null;
-        _pendingTool = null;
-      });
-      return;
-    }
-    if (event is! AskAiCompleted || _turnCompleted) return;
-
-    final text = event.fullText.trim().isNotEmpty
-        ? event.fullText
-        : (_streamingContent ?? '');
-    final command = event.commands.isEmpty
-        ? _pendingTool
-        : event.commands.first;
-    setState(() {
-      _turnCompleted = true;
-      _isStreaming = false;
-      _streamingContent = null;
-      _pendingTool = command;
-      _pendingToolRestored = false;
-      _protocol = event.protocol;
-      _history.addAll(event.outputItems);
-      if (text.trim().isNotEmpty) {
-        _timeline.add(_AgentTimelineEntry.assistant(text));
-      }
-      if (text.trim().isEmpty && command == null) {
-        _error = context.l10n.askAiNoResponse;
-      }
-    });
-    _persistConversation();
-    _scheduleAutoScroll(force: true);
-
-    if (command != null &&
-        shouldAutoRunAgentCommand(
-          command: command,
-          enabled: Stores.setting.askAiAutoRunSafeCommands.fetch(),
-          restored: _pendingToolRestored,
-          runCount: _autoRunCount,
-        )) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && identical(_pendingTool, command)) {
-          _runPendingTool(autoApproved: true);
-        }
-      });
     }
   }
 
-  Future<void> _runPendingTool({bool autoApproved = false}) async {
-    final proposal = _pendingTool;
-    if (proposal == null || _isWorking) return;
-    if (!autoApproved && proposal.risk == AskAiCommandRisk.destructive) {
+  /// Reviews the proposal, then hands it to the session to run.
+  ///
+  /// The confirmation is a dialog and so has to be raised from a widget; the
+  /// session has no context to put one on, and auto-running never reaches here
+  /// because nothing that needs asking is eligible for it.
+  Future<void> _runPendingTool(AskAiCommand proposal) async {
+    if (proposal.risk == AskAiCommandRisk.destructive) {
       final confirmed = await context.showRoundDialog<bool>(
         title: context.l10n.askAiHighRiskConfirmTitle,
         child: Column(
@@ -519,154 +160,13 @@ class _AgentPageState extends ConsumerState<AgentPage>
       );
       if (confirmed != true || !mounted) return;
     }
-
-    setState(() {
-      _isExecuting = true;
-      _error = null;
-      if (autoApproved) _autoRunCount++;
-    });
-    AgentToolExecutionResult result;
-    try {
-      result = await _toolService.execute(proposal);
-    } catch (error) {
-      if (!mounted) return;
-      result = AgentToolExecutionResult(
-        toolName: proposal.toolName,
-        serverId: proposal.serverId,
-        summary: context.l10n.agentToolFailed,
-        succeeded: false,
-        duration: Duration.zero,
-        data: {'error': _describeError(error)},
-      );
-    }
-    if (!mounted) return;
-    setState(() {
-      _history.add(
-        AskAiFunctionOutputItem(
-          callId: proposal.id,
-          output: result.toToolMessage(),
-        ),
-      );
-      _timeline.add(
-        _AgentTimelineEntry.toolResult(
-          proposal,
-          result,
-          autoApproved: autoApproved,
-        ),
-      );
-      _pendingTool = null;
-      _pendingToolRestored = false;
-      _isExecuting = false;
-    });
-    _persistConversation();
-    _scheduleAutoScroll(force: true);
-    if (!result.cancelled) _startStream();
-  }
-
-  void _declinePendingTool() {
-    final proposal = _pendingTool;
-    if (proposal == null || _isWorking) return;
-    setState(() {
-      _history.add(
-        AskAiFunctionOutputItem(
-          callId: proposal.id,
-          output: encodeAgentConversationToolAction(
-            AgentConversationToolAction.declined,
-          ),
-        ),
-      );
-      _timeline.add(
-        _AgentTimelineEntry.notice(context.l10n.askAiActionDeclined),
-      );
-      _pendingTool = null;
-      _pendingToolRestored = false;
-    });
-    _persistConversation();
-    _startStream();
-  }
-
-  Future<void> _stopWork() async {
-    if (_isExecuting) {
-      await _toolService.cancelCurrent();
-      return;
-    }
-    if (!_isStreaming) return;
-    await _subscription?.cancel();
-    if (!mounted) return;
-    setState(() {
-      _isStreaming = false;
-      _streamingContent = null;
-      _pendingTool = null;
-      _pendingToolRestored = false;
-      _timeline.add(_AgentTimelineEntry.notice(context.l10n.askAiInterrupted));
-    });
-  }
-
-  void _scheduleAutoScroll({bool force = false}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
-      final position = _scrollController.position;
-      if (!force && position.pixels < position.maxScrollExtent - 96) return;
-      _scrollController.animateTo(
-        position.maxScrollExtent,
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-      );
-    });
-  }
-
-  String _describeError(Object error) {
-    final l10n = context.l10n;
-    if (error is AskAiConfigException) {
-      if (error.missingFields.isEmpty) {
-        return error.hasInvalidBaseUrl
-            ? '${l10n.invalidUrl}: ${error.invalidBaseUrl}'
-            : error.toString();
-      }
-      final fields = error.missingFields
-          .map(
-            (field) => switch (field) {
-              AskAiConfigField.baseUrl => l10n.askAiBaseUrl,
-              AskAiConfigField.apiKey => l10n.askAiApiKey,
-              AskAiConfigField.model => libL10n.askAiModel,
-            },
-          )
-          .join(', ');
-      return l10n.askAiConfigMissing(fields);
-    }
-    if (error is AskAiNetworkException) return error.message;
-    return error.toString();
+    await _notifier.runPendingTool();
   }
 
   Future<void> _copyText(String text) async {
     if (text.trim().isEmpty) return;
     await Clipboard.setData(ClipboardData(text: text));
     if (mounted) context.showSnackBar(libL10n.success);
-  }
-
-  Future<void> _beginNewConversation() async {
-    if (_isWorking) return;
-    final conversation = Stores.agentConversation.create(
-      serverId: globalAgentConversationScope,
-      protocol: _resolvedConfiguredProtocol(),
-      providerBaseUrl: Stores.setting.askAiBaseUrl.fetch(),
-      model: Stores.setting.askAiModel.fetch(),
-    );
-    _refreshConversations();
-    _restoreConversation(conversation);
-  }
-
-  Future<void> _activateConversation(AgentConversation conversation) async {
-    if (_isWorking || conversation.serverId != globalAgentConversationScope) {
-      return;
-    }
-    if (!Stores.agentConversation.setActive(
-      globalAgentConversationScope,
-      conversation.id,
-    )) {
-      return;
-    }
-    _restoreConversation(conversation);
   }
 
   Future<void> _renameConversation(
@@ -695,13 +195,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
         ],
       );
       if (title == null || title.isEmpty || !mounted) return;
-      if (!Stores.agentConversation.rename(conversation.id, title)) return;
-      _refreshConversations();
-      setState(() {
-        if (_conversation?.id == conversation.id) {
-          _conversation = Stores.agentConversation.fetch(conversation.id);
-        }
-      });
+      if (!_notifier.renameConversation(conversation.id, title)) return;
       onChanged?.call();
     } finally {
       controller.dispose();
@@ -724,25 +218,11 @@ class _AgentPageState extends ConsumerState<AgentPage>
         ),
       ],
     );
-    // Re-checked after the dialog, not only when the row was built: an
-    // auto-approved tool can start while the confirmation is on screen, and
-    // tearing the conversation down under it leaves the execution running —
-    // only `dispose` cancels one — to append its result to whichever
-    // conversation is active by then.
-    if (confirmed != true || !mounted || _isWorking) return;
-    final deletingCurrent = _conversation?.id == conversation.id;
-    Stores.agentConversation.deleteConversation(
-      globalAgentConversationScope,
-      conversation.id,
-    );
-    _refreshConversations();
-    if (deletingCurrent) {
-      _restoreConversation(
-        Stores.agentConversation.fetchActive(globalAgentConversationScope),
-      );
-    } else {
-      setState(() {});
-    }
+    if (confirmed != true || !mounted) return;
+    // Whether this is still allowed is re-checked inside the session, not only
+    // when the row was built: an auto-approved tool can start while the
+    // confirmation is on screen.
+    _notifier.deleteConversation(conversation.id);
     onChanged?.call();
   }
 
@@ -759,20 +239,12 @@ class _AgentPageState extends ConsumerState<AgentPage>
         ),
       ],
     );
-    // Re-checked after the dialog, not only when the row was built: an
-    // auto-approved tool can start while the confirmation is on screen, and
-    // tearing the conversation down under it leaves the execution running —
-    // only `dispose` cancels one — to append its result to whichever
-    // conversation is active by then.
-    if (confirmed != true || !mounted || _isWorking) return;
-    Stores.agentConversation.clearServer(globalAgentConversationScope);
-    _refreshConversations();
-    _restoreConversation(null);
+    if (confirmed != true || !mounted) return;
+    _notifier.clearConversationHistory();
     onChanged?.call();
   }
 
   Future<void> _showHistorySheet() async {
-    if (_isWorking) return;
     await showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
@@ -781,17 +253,121 @@ class _AgentPageState extends ConsumerState<AgentPage>
       builder: (sheetContext) => StatefulBuilder(
         builder: (sheetContext, setSheetState) => FractionallySizedBox(
           heightFactor: 0.82,
-          child: _buildHistoryPanel(
-            sheetContext,
-            inSheet: true,
-            onChanged: () {
-              if (sheetContext.mounted) setSheetState(() {});
-            },
+          child: Consumer(
+            builder: (sheetContext, ref, _) => _buildHistoryPanel(
+              sheetContext,
+              ref.watch(agentSessionProvider),
+              inSheet: true,
+              onChanged: () {
+                if (sheetContext.mounted) setSheetState(() {});
+              },
+            ),
           ),
         ),
       ),
     );
   }
+
+  void _scheduleAutoScroll({bool force = false}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      final position = _scrollController.position;
+      if (!force && position.pixels < position.maxScrollExtent - 96) return;
+      _scrollController.animateTo(
+        position.maxScrollExtent,
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  // -------------------------------------------------------------------- utils
+
+  String _describeError(BuildContext context, Object error) {
+    final l10n = context.l10n;
+    if (error is AgentNoResponse) return l10n.askAiNoResponse;
+    if (error is AskAiConfigException) {
+      if (error.missingFields.isEmpty) {
+        return error.hasInvalidBaseUrl
+            ? '${l10n.invalidUrl}: ${error.invalidBaseUrl}'
+            : error.toString();
+      }
+      final fields = error.missingFields
+          .map(
+            (field) => switch (field) {
+              AskAiConfigField.baseUrl => l10n.askAiBaseUrl,
+              AskAiConfigField.apiKey => l10n.askAiApiKey,
+              AskAiConfigField.model => libL10n.askAiModel,
+            },
+          )
+          .join(', ');
+      return l10n.askAiConfigMissing(fields);
+    }
+    if (error is AskAiNetworkException) return error.message;
+    return error.toString();
+  }
+
+  String _noticeText(BuildContext context, AgentNoticeKind kind) {
+    return switch (kind) {
+      AgentNoticeKind.declined => context.l10n.askAiActionDeclined,
+      AgentNoticeKind.interrupted => context.l10n.askAiInterrupted,
+    };
+  }
+
+  String _conversationPreview(AgentConversation conversation) {
+    for (final item in conversation.items.reversed) {
+      if (item is AskAiMessageItem && item.content.trim().isNotEmpty) {
+        return item.content.replaceAll(_whitespace, ' ').trim();
+      }
+    }
+    return context.l10n.askAiNoHistoryMessages;
+  }
+
+  ({String label, IconData icon, Color color}) _riskInfo(
+    BuildContext context,
+    AskAiCommandRisk risk,
+  ) {
+    final scheme = Theme.of(context).colorScheme;
+    return switch (risk) {
+      AskAiCommandRisk.readOnly => (
+        label: context.l10n.askAiRiskReadOnly,
+        icon: Icons.visibility_outlined,
+        color: scheme.primary,
+      ),
+      AskAiCommandRisk.caution => (
+        label: context.l10n.askAiRiskCaution,
+        icon: Icons.warning_amber_rounded,
+        color: scheme.tertiary,
+      ),
+      AskAiCommandRisk.destructive => (
+        label: context.l10n.askAiRiskDestructive,
+        icon: Icons.dangerous_outlined,
+        color: scheme.error,
+      ),
+    };
+  }
+
+  String _toolLabel(BuildContext context, String toolName) {
+    return switch (toolName) {
+      'run_shell_command' => context.l10n.agentToolShell,
+      'read_file' => context.l10n.agentToolReadFile,
+      'write_file' => context.l10n.agentToolWriteFile,
+      'serverbox' => context.l10n.agentToolServerBox,
+      _ => toolName,
+    };
+  }
+
+  IconData _toolIcon(String toolName) {
+    return switch (toolName) {
+      'run_shell_command' => Icons.terminal,
+      'read_file' => Icons.description_outlined,
+      'write_file' => Icons.edit_document,
+      'serverbox' => Icons.dns_outlined,
+      _ => Icons.build_outlined,
+    };
+  }
+
+  // -------------------------------------------------------------------- build
 
   /// The conversation list, as a sheet you opened or as the column that is
   /// always beside the page.
@@ -799,15 +375,14 @@ class _AgentPageState extends ConsumerState<AgentPage>
   /// [inSheet] is the difference between the two: a sheet is done once you have
   /// picked something from it, so picking closes it. The column stays.
   Widget _buildHistoryPanel(
-    BuildContext context, {
+    BuildContext context,
+    AgentSessionState session, {
     required bool inSheet,
     VoidCallback? onChanged,
   }) {
     final theme = Theme.of(context);
-    final conversations = _conversations;
-    final activeId = Stores.agentConversation.activeConversationId(
-      globalAgentConversationScope,
-    );
+    final conversations = session.conversations;
+    final activeId = session.conversation?.id;
     return Material(
       color: theme.colorScheme.surface,
       child: Column(
@@ -827,17 +402,17 @@ class _AgentPageState extends ConsumerState<AgentPage>
                 if (conversations.isNotEmpty)
                   IconButton(
                     tooltip: context.l10n.askAiClearHistory,
-                    onPressed: _isWorking
+                    onPressed: session.isWorking
                         ? null
                         : () => _clearConversationHistory(onChanged: onChanged),
                     icon: const Icon(Icons.delete_sweep_outlined),
                   ),
                 IconButton.filledTonal(
                   tooltip: context.l10n.askAiNewConversation,
-                  onPressed: _isWorking
+                  onPressed: session.isWorking
                       ? null
-                      : () async {
-                          await _beginNewConversation();
+                      : () {
+                          _notifier.beginNewConversation();
                           if (inSheet && context.mounted) {
                             Navigator.pop(context);
                           }
@@ -894,10 +469,10 @@ class _AgentPageState extends ConsumerState<AgentPage>
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          onTap: _isWorking
+                          onTap: session.isWorking
                               ? null
-                              : () async {
-                                  await _activateConversation(conversation);
+                              : () {
+                                  _notifier.activateConversation(conversation);
                                   if (inSheet && context.mounted) {
                                     Navigator.pop(context);
                                   }
@@ -907,9 +482,9 @@ class _AgentPageState extends ConsumerState<AgentPage>
                           // deleting the conversation being worked in clears
                           // the timeline the execution is about to append its
                           // output to — and the execution keeps going, since
-                          // only `dispose` cancels it.
+                          // nothing but the stop button ends one.
                           trailing: PopupMenu<_HistoryAction>(
-                            enabled: !_isWorking,
+                            enabled: !session.isWorking,
                             items: [
                               PopupMenuItem(
                                 value: _HistoryAction.rename,
@@ -946,16 +521,12 @@ class _AgentPageState extends ConsumerState<AgentPage>
     );
   }
 
-  String _conversationPreview(AgentConversation conversation) {
-    for (final item in conversation.items.reversed) {
-      if (item is AskAiMessageItem && item.content.trim().isNotEmpty) {
-        return item.content.replaceAll(_whitespace, ' ').trim();
-      }
-    }
-    return context.l10n.askAiNoHistoryMessages;
-  }
-
-  Widget _buildHeader(BuildContext context, ThemeData theme, bool compact) {
+  Widget _buildHeader(
+    BuildContext context,
+    ThemeData theme,
+    AgentSessionState session,
+    bool compact,
+  ) {
     return Padding(
       // Symmetric where the row ends with the title, so its ellipsis sits
       // the same distance from the edge as the content below it. The
@@ -991,19 +562,21 @@ class _AgentPageState extends ConsumerState<AgentPage>
           if (compact) ...[
             IconButton(
               tooltip: context.l10n.askAiHistory,
-              onPressed: _isWorking ? null : _showHistorySheet,
+              onPressed: session.isWorking ? null : _showHistorySheet,
               icon: const Icon(Icons.history),
             ),
             IconButton(
               tooltip: context.l10n.askAiNewConversation,
-              onPressed: _isWorking ? null : _beginNewConversation,
+              onPressed: session.isWorking
+                  ? null
+                  : _notifier.beginNewConversation,
               icon: const Icon(Icons.add_comment_outlined),
             ),
           ],
-          if (_isWorking)
+          if (session.isWorking)
             IconButton.filledTonal(
               tooltip: libL10n.stop,
-              onPressed: _stopWork,
+              onPressed: _notifier.stopWork,
               icon: const Icon(Icons.stop),
             ),
         ],
@@ -1074,63 +647,67 @@ class _AgentPageState extends ConsumerState<AgentPage>
   Widget _buildTimelineEntry(
     BuildContext context,
     ThemeData theme,
-    _AgentTimelineEntry entry,
+    AgentTimelineEntry entry,
   ) {
-    switch (entry.type) {
-      case _AgentTimelineEntryType.user:
-        return Align(
-          alignment: Alignment.centerRight,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 680),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 11),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: SelectableText(
-                entry.content ?? '',
-                style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
-              ),
+    return switch (entry) {
+      AgentUserEntry(:final content) => Align(
+        alignment: Alignment.centerRight,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 11),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: SelectableText(
+              content,
+              style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
             ),
           ),
-        );
-      case _AgentTimelineEntryType.assistant:
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: SimpleMarkdown(data: entry.content ?? ''),
-        );
-      case _AgentTimelineEntryType.notice:
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      AgentAssistantEntry(:final content) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: SimpleMarkdown(data: content),
+      ),
+      AgentNoticeEntry(:final kind) => _buildNotice(
+        context,
+        theme,
+        _noticeText(context, kind),
+      ),
+      AgentRawNoticeEntry(:final text) => _buildNotice(context, theme, text),
+      AgentToolResultEntry() => _buildToolResultCard(context, theme, entry),
+    };
+  }
+
+  Widget _buildNotice(BuildContext context, ThemeData theme, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            size: 18,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.info_outline,
-                size: 18,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 8),
-              Expanded(child: Text(entry.content ?? '')),
-            ],
-          ),
-        );
-      case _AgentTimelineEntryType.toolResult:
-        return _buildToolResultCard(context, theme, entry);
-    }
+          const SizedBox(width: 8),
+          Expanded(child: Text(text)),
+        ],
+      ),
+    );
   }
 
   Widget _buildToolResultCard(
     BuildContext context,
     ThemeData theme,
-    _AgentTimelineEntry entry,
+    AgentToolResultEntry entry,
   ) {
-    final proposal = entry.proposal!;
-    final result = entry.result!;
+    final result = entry.result;
     final output = formatGlobalAgentToolResultOutput(
       result,
       cancelledLabel: context.l10n.askAiCommandCancelled,
@@ -1162,13 +739,16 @@ class _AgentPageState extends ConsumerState<AgentPage>
                 : theme.colorScheme.onErrorContainer,
           ),
         ),
+        // A result's own summary is English on purpose — the model reads it.
+        // A tool that never ran has nothing else to show, so the app says so
+        // in its own words rather than passing that sentence on.
         title: Text(
-          result.summary,
+          result.localFailure ? context.l10n.agentToolFailed : result.summary,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(
-          '${_toolLabel(context, proposal.toolName)} · ${result.duration.inMilliseconds} ms${entry.autoApproved ? ' · ${context.l10n.askAiAutoApproved}' : ''}',
+          '${_toolLabel(context, entry.proposal.toolName)} · ${result.duration.inMilliseconds} ms${entry.autoApproved ? ' · ${context.l10n.askAiAutoApproved}' : ''}',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -1207,8 +787,12 @@ class _AgentPageState extends ConsumerState<AgentPage>
     );
   }
 
-  Widget _buildProposalCard(BuildContext context, ThemeData theme) {
-    final proposal = _pendingTool!;
+  Widget _buildProposalCard(
+    BuildContext context,
+    ThemeData theme,
+    AgentSessionState session,
+  ) {
+    final proposal = session.pendingTool!;
     final arguments = proposal.arguments;
     final serverId = proposal.serverId;
     final serverName = serverId == null
@@ -1321,7 +905,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
                 ),
               ),
             ],
-            if (_pendingToolRestored) ...[
+            if (session.pendingToolRestored) ...[
               const SizedBox(height: 10),
               Text(
                 context.l10n.askAiRestoredReview,
@@ -1335,12 +919,16 @@ class _AgentPageState extends ConsumerState<AgentPage>
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: _isWorking ? null : _declinePendingTool,
+                  onPressed: session.isWorking
+                      ? null
+                      : _notifier.declinePendingTool,
                   child: Text(context.l10n.askAiDecline),
                 ),
                 const SizedBox(width: 8),
                 FilledButton.icon(
-                  onPressed: _isWorking ? null : _runPendingTool,
+                  onPressed: session.isWorking
+                      ? null
+                      : () => _runPendingTool(proposal),
                   icon: const Icon(Icons.play_arrow, size: 18),
                   label: Text(context.l10n.askAiApproveRun),
                 ),
@@ -1352,55 +940,16 @@ class _AgentPageState extends ConsumerState<AgentPage>
     );
   }
 
-  ({String label, IconData icon, Color color}) _riskInfo(
+  Widget _buildComposer(
     BuildContext context,
-    AskAiCommandRisk risk,
+    ThemeData theme,
+    AgentSessionState session,
   ) {
-    final scheme = Theme.of(context).colorScheme;
-    return switch (risk) {
-      AskAiCommandRisk.readOnly => (
-        label: context.l10n.askAiRiskReadOnly,
-        icon: Icons.visibility_outlined,
-        color: scheme.primary,
-      ),
-      AskAiCommandRisk.caution => (
-        label: context.l10n.askAiRiskCaution,
-        icon: Icons.warning_amber_rounded,
-        color: scheme.tertiary,
-      ),
-      AskAiCommandRisk.destructive => (
-        label: context.l10n.askAiRiskDestructive,
-        icon: Icons.dangerous_outlined,
-        color: scheme.error,
-      ),
-    };
-  }
-
-  String _toolLabel(BuildContext context, String toolName) {
-    return switch (toolName) {
-      'run_shell_command' => context.l10n.agentToolShell,
-      'read_file' => context.l10n.agentToolReadFile,
-      'write_file' => context.l10n.agentToolWriteFile,
-      'serverbox' => context.l10n.agentToolServerBox,
-      _ => toolName,
-    };
-  }
-
-  IconData _toolIcon(String toolName) {
-    return switch (toolName) {
-      'run_shell_command' => Icons.terminal,
-      'read_file' => Icons.description_outlined,
-      'write_file' => Icons.edit_document,
-      'serverbox' => Icons.dns_outlined,
-      _ => Icons.build_outlined,
-    };
-  }
-
-  Widget _buildComposer(BuildContext context, ThemeData theme) {
-    // Everything but the text is page state, so only the send button has to
+    // Everything but the text is session state, so only the send button has to
     // follow the keystrokes — see the builder around it. Rebuilding the page
     // for each one redrew the timeline's markdown and every history row.
-    final canSendWhatever = !_isWorking && _pendingTool == null;
+    final canSendWhatever = !session.isWorking && session.pendingTool == null;
+    final error = session.error;
     return SafeArea(
       top: false,
       child: Padding(
@@ -1410,7 +959,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (_error != null) ...[
+              if (error != null) ...[
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
@@ -1427,14 +976,18 @@ class _AgentPageState extends ConsumerState<AgentPage>
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          _error!,
+                          _describeError(context, error),
                           style: TextStyle(
                             color: theme.colorScheme.onErrorContainer,
                           ),
                         ),
                       ),
                       TextButton(
-                        onPressed: _isWorking ? null : _startStream,
+                        onPressed: session.isWorking
+                            ? null
+                            : () => _notifier.startStream(
+                                localeHint: _localeHint,
+                              ),
                         child: Text(libL10n.retry),
                       ),
                     ],
@@ -1482,9 +1035,9 @@ class _AgentPageState extends ConsumerState<AgentPage>
                             onSubmitted: sendOnEnter && isDesktop
                                 ? _submitPrompt
                                 : null,
-                            enabled: !_isWorking && _pendingTool == null,
+                            enabled: canSendWhatever,
                             decoration: InputDecoration(
-                              hintText: _pendingTool == null
+                              hintText: session.pendingTool == null
                                   ? context.l10n.agentPromptHint
                                   : context.l10n.askAiReviewBeforeContinuing,
                               border: InputBorder.none,
@@ -1541,15 +1094,19 @@ class _AgentPageState extends ConsumerState<AgentPage>
     );
   }
 
-  Widget _buildMain(BuildContext context, ThemeData theme, bool compact) {
+  Widget _buildMain(
+    BuildContext context,
+    ThemeData theme,
+    AgentSessionState session,
+    bool compact,
+  ) {
     final visibleTimeline = <Widget>[
-      if (_timeline.isEmpty && !_isStreaming && _pendingTool == null)
-        _buildEmptyState(context, theme),
-      for (final entry in _timeline) ...[
+      if (session.isEmpty) _buildEmptyState(context, theme),
+      for (final entry in session.timeline) ...[
         _buildTimelineEntry(context, theme, entry),
         const SizedBox(height: 14),
       ],
-      if (_isStreaming) ...[
+      if (session.isStreaming) ...[
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1563,20 +1120,21 @@ class _AgentPageState extends ConsumerState<AgentPage>
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: _streamingContent?.trim().isNotEmpty == true
-                  ? SimpleMarkdown(data: _streamingContent!)
+              child: session.streamingContent?.trim().isNotEmpty == true
+                  ? SimpleMarkdown(data: session.streamingContent!)
                   : Text(context.l10n.askAiAwaitingResponse),
             ),
           ],
         ),
         const SizedBox(height: 14),
       ],
-      if (_pendingTool != null) _buildProposalCard(context, theme),
+      if (session.pendingTool != null)
+        _buildProposalCard(context, theme, session),
     ];
 
     return Column(
       children: [
-        _buildHeader(context, theme, compact),
+        _buildHeader(context, theme, session, compact),
         // The same seam as the one beside the history column, which these two
         // meet at a corner: at full strength they read as a brighter line than
         // it, which is the pane looking like a window of its own.
@@ -1618,7 +1176,7 @@ class _AgentPageState extends ConsumerState<AgentPage>
         ),
         Align(
           alignment: Alignment.center,
-          child: _buildComposer(context, theme),
+          child: _buildComposer(context, theme, session),
         ),
       ],
     );
@@ -1628,6 +1186,21 @@ class _AgentPageState extends ConsumerState<AgentPage>
   Widget build(BuildContext context) {
     super.build(context);
     final theme = Theme.of(context);
+    final session = ref.watch(agentSessionProvider);
+
+    // Following the state rather than scrolling wherever this page last
+    // appended something: the session moves on its own now, so a turn started
+    // here keeps going while the page is off screen and comes back further
+    // along than it was left.
+    ref.listen(agentSessionProvider, (previous, next) {
+      final settled =
+          previous?.timeline.length != next.timeline.length ||
+          previous?.pendingTool != next.pendingTool;
+      if (settled || previous?.streamingContent != next.streamingContent) {
+        _scheduleAutoScroll(force: settled);
+      }
+    });
+
     // The same judgement, width and seam as the server list and the terminal
     // tabs: whether a list gets a column of its own is a property of the
     // window, not of the page that happens to be in it.
@@ -1637,9 +1210,9 @@ class _AgentPageState extends ConsumerState<AgentPage>
         // Nothing to sit beside until there is a conversation: the header
         // keeps its history and new-conversation buttons, so folding the
         // column away costs nothing and hands 320pt back to the answer.
-        hasContent: _conversations.isNotEmpty,
-        sideBuilder: (ctx) => _buildHistoryPanel(ctx, inSheet: false),
-        builder: (ctx, split) => _buildMain(ctx, theme, !split),
+        hasContent: session.conversations.isNotEmpty,
+        sideBuilder: (ctx) => _buildHistoryPanel(ctx, session, inSheet: false),
+        builder: (ctx, split) => _buildMain(ctx, theme, session, !split),
       ),
     );
   }

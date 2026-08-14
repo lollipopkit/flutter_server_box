@@ -101,7 +101,7 @@ class AgentConversationReplay {
             );
             continue;
           }
-          switch (_decodeToolAction(output)) {
+          switch (decodeAgentConversationToolAction(output)) {
             case AgentConversationToolAction.declined:
               entries.add(const AgentConversationReplayEntry.declined());
             case AgentConversationToolAction.inserted:
@@ -160,7 +160,10 @@ String encodeAgentConversationToolAction(AgentConversationToolAction action) {
   return jsonEncode({'server_box_action': action.name, 'message': message});
 }
 
-AgentConversationToolAction? _decodeToolAction(String output) {
+/// The counterpart of [encodeAgentConversationToolAction]: what the app did
+/// with a tool call, read back out of a stored conversation. Null when the
+/// output is a tool result or something else entirely.
+AgentConversationToolAction? decodeAgentConversationToolAction(String output) {
   try {
     final value = jsonDecode(output);
     if (value is! Map) return null;
