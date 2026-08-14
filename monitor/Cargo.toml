@@ -98,6 +98,8 @@ percent-encoding = "2.3"
 clap = { version = "4.6", features = ["derive", "env"] }
 # get_server_name() falls back to the real OS hostname (see config.rs)
 hostname = "0.4.2"
+async-stream = "0.3.6"
+futures = "0.3.34"
 
 # Reading the user's login shell out of the passwd database. `$SHELL` is no
 # substitute for a service: it reports whatever launched the agent, not what
@@ -106,6 +108,7 @@ hostname = "0.4.2"
 libc = "0.2"
 
 [dev-dependencies]
+tempfile = "3.27.0"
 tokio-test = "0.4"
 
 [profile.release]

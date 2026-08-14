@@ -145,6 +145,28 @@ the panel password can't switch them on), and share the admission checks in
   `export` lines the caller prepends so a value never has to survive shell
   quoting. Output is capped (1 MiB per stream) and the command is killed after
   60s, both reported rather than silently applied. `tests/exec_api.rs`.
+- **`/api/v1/fs/*`** — list, stat, read, write, mkdir, rename, chmod, remove,
+  for the app's file browser. Its own switch (`remote_access.fs_enabled`), not
+  folded into `full_access`: that grant means "a shell as the agent's user",
+  this one means "these directories", and folding them would make the narrower
+  thing cost the wider one.
+  **`fs_roots` is the boundary and there is no default.** Every request is
+  resolved to a canonical path — symlinks followed, `..` refused outright —
+  and then checked component-wise against the roots (`core/fs_roots.rs`), so a
+  link inside a root pointing at `/etc` is a refusal rather than a way out.
+  Resolving *before* checking is the whole point; checking the string the
+  client sent would pass `/srv/data/link/passwd`. Every refusal answers 403
+  with the same body, and a path outside the roots is reported as absent, so
+  the endpoint can't be used to map the filesystem one status code at a time.
+  Writes stream to `<path>.sbm-part-<pid>-<n>` and rename, so an interrupted
+  one leaves no half-file under the name something else is about to open.
+  `fs_roots = ["/"]` makes this equivalent to a shell (anyone who can write
+  `~/.ssh/authorized_keys` has one) and is warned about at startup.
+  Known limitation, stated rather than papered over: resolution and use are two
+  steps, so a symlink swapped in between them would be followed. Closing that
+  needs `openat`+`O_NOFOLLOW` per component, which is not portable across the
+  platforms monitor runs on — the roots are the real boundary.
+  `tests/fs_roots.rs` locks every escape route.
 - **`/api/v1/terminal/ws`** — the panel's terminal. The agent is an SSH *client*
   rather than a shell spawner, so a session carries the privileges of the SSH
   account the browser authenticated as; the panel password alone grants no

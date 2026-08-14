@@ -66,6 +66,30 @@ terminal_enabled = false
 # and the panel can turn it off — but never on — from its first-run prompt.
 # passwordless_terminal = false
 
+# The file API: GET /fs/list, /fs/stat, /fs/read; PUT /fs/write; POST
+# /fs/mkdir, /fs/rename, /fs/chmod; DELETE /fs/remove.
+#
+# For a host running this agent with no reachable sshd. Anywhere sshd *is*
+# reachable — directly or through the tunnel above — the app already browses
+# files over SFTP end to end, and this endpoint is not needed.
+#
+# fs_roots is not optional: switching this on without naming directories
+# serves nothing at all. Every request is resolved to a real path — symlinks
+# followed, `..` refused — and anything landing outside these roots is denied,
+# so a link inside a root pointing at /etc is not a way out.
+#
+# fs_roots = ["/"] is how you say "the whole machine", and it makes the panel
+# password worth a shell: anyone who can write ~/.ssh/authorized_keys has one.
+# The agent warns about it at startup. Prefer naming what actually needs to be
+# reachable.
+# fs_enabled = false
+# fs_roots = ["/srv/data", "/var/log"]
+
+# Largest single file a write will accept. Leave unset to size it from
+# physical memory. The body is streamed to disk and never buffered whole, so
+# this bounds the disk rather than memory.
+# fs_max_write_bytes = 1073741824
+
 # Serve the terminal on a plaintext listener. Off by default because the
 # terminal's first message carries an SSH password and everything after it is
 # cleartext output. Not needed when TLS is configured above, nor when a proxy

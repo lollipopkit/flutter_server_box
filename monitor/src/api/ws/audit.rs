@@ -28,6 +28,9 @@ pub enum Kind {
     Terminal,
     /// A one-off command run through `api::exec`.
     Exec,
+    /// A file operation through `api::fs`. The subject is the verb and the
+    /// path, never the contents.
+    Fs,
 }
 
 impl Kind {
@@ -37,6 +40,7 @@ impl Kind {
             Kind::Tunnel => "tunnel",
             Kind::Terminal => "terminal",
             Kind::Exec => "exec",
+            Kind::Fs => "fs",
         }
     }
 }

@@ -22,6 +22,8 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
+use super::fs_roots::FsRoots;
+
 /// Where both endpoints connect. Not client-selectable: the tunnel takes no
 /// target parameter at all, which is what keeps it from being usable as an
 /// SSRF pivot into the network the agent sits in. Reaching another host is
@@ -90,6 +92,36 @@ pub struct RemoteAccessConfig {
     /// account rather than root.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub full_access: Option<bool>,
+
+    /// Serve `/api/v1/fs/*`: list, read, write, rename, delete, chmod.
+    ///
+    /// Off by default, and config-file only, like everything else here. What
+    /// makes it a separate switch from [`Self::full_access`] rather than part
+    /// of it is [`Self::fs_roots`]: an API confined to `/srv/backups` is
+    /// genuinely less than a shell, and a grant that could only be "all or
+    /// nothing" would push people to the wider one.
+    #[serde(default)]
+    pub fs_enabled: bool,
+
+    /// The directories the file API may reach. Required when
+    /// [`Self::fs_enabled`] is on; an empty list serves nothing.
+    ///
+    /// `["/"]` is how "the whole machine" is said, and it is a real decision
+    /// rather than a default: at that setting the panel password is worth a
+    /// shell, because anyone who can write `~/.ssh/authorized_keys` has one.
+    /// It is warned about at startup for the same reason `full_access` is.
+    #[serde(default)]
+    pub fs_roots: Vec<String>,
+
+    /// Largest single file the API will accept on a write. `None` = derive
+    /// from physical memory.
+    ///
+    /// A bound rather than none at all: the body is streamed to disk and never
+    /// buffered whole, so this is about the disk rather than about memory —
+    /// but an agent that will write an unbounded file on one authenticated
+    /// request is a way to fill the disk it is supposed to be monitoring.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fs_max_write_bytes: Option<u64>,
 }
 
 impl Default for RemoteAccessConfig {
@@ -104,6 +136,9 @@ impl Default for RemoteAccessConfig {
             terminal_scrollback_bytes: None,
             terminal_detached_timeout_secs: default_detached_timeout_secs(),
             full_access: None,
+            fs_enabled: false,
+            fs_roots: Vec::new(),
+            fs_max_write_bytes: None,
         }
     }
 }
@@ -142,6 +177,8 @@ const MIN_SCROLLBACK: usize = 64 * 1024;
 const MAX_SCROLLBACK: usize = 2 * 1024 * 1024;
 const MIN_SLOTS: usize = 2;
 const MAX_SLOTS: usize = 16;
+const MIN_WRITE_BYTES: u64 = 64 * 1024 * 1024;
+const MAX_WRITE_BYTES: u64 = 4 * 1024 * 1024 * 1024;
 
 impl RemoteAccessConfig {
     /// Fills in every unset capacity from `total_memory` (bytes).
@@ -173,6 +210,15 @@ impl RemoteAccessConfig {
             full_access: full_access_from_env()
                 .or(self.full_access)
                 .unwrap_or_else(full_access_default),
+            fs_enabled: self.fs_enabled,
+            fs_roots: FsRoots::resolve(&self.fs_roots),
+            // A quarter of RAM, floored and capped: big enough for the config
+            // files and archives people actually move, small enough that one
+            // request cannot fill a small VPS's disk.
+            fs_max_write_bytes: self
+                .fs_max_write_bytes
+                .filter(|&n| n > 0)
+                .unwrap_or_else(|| (mem / 4).clamp(MIN_WRITE_BYTES, MAX_WRITE_BYTES)),
         }
     }
 }
@@ -191,13 +237,32 @@ pub struct RemoteAccess {
     pub terminal_detached_timeout: Duration,
     /// See [`RemoteAccessConfig::full_access`].
     pub full_access: bool,
+    pub fs_enabled: bool,
+    /// Canonicalised at startup — see [`FsRoots`].
+    pub fs_roots: FsRoots,
+    pub fs_max_write_bytes: u64,
 }
 
 impl RemoteAccess {
     /// Whether anything here is switched on, i.e. whether the startup summary
     /// and the `ssh_addr` resolution check are worth running at all.
     pub fn any_enabled(&self) -> bool {
-        self.tunnel_enabled || self.terminal_enabled
+        self.tunnel_enabled || self.terminal_enabled || self.fs_available()
+    }
+
+    /// Whether the file API will answer.
+    ///
+    /// Enabled *and* pointed somewhere: switching it on without roots is a
+    /// half-finished configuration, and serving the whole filesystem would be
+    /// the worst possible reading of it.
+    ///
+    /// Not gated on transport security, unlike the terminal. What travels here
+    /// is file contents, which are exactly as sensitive as the files — the
+    /// terminal's extra check exists because its opening frame carries an SSH
+    /// password, and this endpoint has no credential of its own to leak beyond
+    /// the JWT every other endpoint already carries.
+    pub fn fs_available(&self) -> bool {
+        self.fs_enabled && !self.fs_roots.is_empty()
     }
 
     /// Whether the terminal may run given how the server is listening.
@@ -241,6 +306,13 @@ impl RemoteAccess {
             self.full_access,
             self.ssh_addr,
         );
+        if self.fs_available() {
+            tracing::info!(
+                "File API: roots={:?}, max write {} MiB",
+                self.fs_roots.as_slice(),
+                self.fs_max_write_bytes / (1024 * 1024),
+            );
+        }
         if self.terminal_enabled && self.full_access {
             tracing::warn!(
                 "Access without SSH is on: anyone who can log into the panel gets a \
@@ -248,6 +320,23 @@ impl RemoteAccess {
                  address this machine can reach — with no SSH authentication in \
                  between. The panel password is the only thing in the way. Turn it \
                  off with remote_access.full_access = false or SBM_FULL_ACCESS=0.",
+                whoami()
+            );
+        }
+        if self.fs_enabled && self.fs_roots.is_empty() {
+            tracing::warn!(
+                "remote_access.fs_enabled is on but fs_roots names nothing usable, \
+                 so the file API will refuse every request. Name the directories \
+                 it may reach, e.g. fs_roots = [\"/srv/data\"]."
+            );
+        }
+        if self.fs_available() && self.fs_roots.is_unrestricted() {
+            tracing::warn!(
+                "The file API is serving the whole filesystem. At that setting it is \
+                 equivalent to a shell as {}: anyone who can log into the panel can \
+                 read any file that account can read and write any file it can write, \
+                 including ~/.ssh/authorized_keys. Narrow remote_access.fs_roots to \
+                 the directories that actually need to be reachable.",
                 whoami()
             );
         }

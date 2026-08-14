@@ -188,6 +188,20 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
                             )
                             .route(web::post().to(crate::api::exec::exec)),
                     )
+                    .service(
+                        // A streamed body, so ntex's payload limit must not
+                        // apply: the point of this endpoint is the file that
+                        // `/exec` could not carry.
+                        web::resource("/fs/write")
+                            .route(web::put().to(crate::api::fs::write)),
+                    )
+                    .route("/fs/list", web::get().to(crate::api::fs::list))
+                    .route("/fs/stat", web::get().to(crate::api::fs::stat))
+                    .route("/fs/read", web::get().to(crate::api::fs::read))
+                    .route("/fs/mkdir", web::post().to(crate::api::fs::mkdir))
+                    .route("/fs/rename", web::post().to(crate::api::fs::rename))
+                    .route("/fs/chmod", web::post().to(crate::api::fs::chmod))
+                    .route("/fs/remove", web::delete().to(crate::api::fs::remove))
                     .route(
                         "/remote-access/full-access",
                         web::delete().to(disable_full_access),
@@ -455,6 +469,10 @@ struct RemoteAccessView {
     /// offers that entry when this is true — and, being a UI decision, it is
     /// re-checked server-side when the request actually arrives.
     full_access: bool,
+    /// Whether `/api/v1/fs/*` will answer. Its own field rather than folded
+    /// into [`Self::full_access`]: the file API is confined to the roots the
+    /// operator named, so it can be on while the shell is off.
+    files: bool,
 }
 
 async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<AppState>>) -> Result<HttpResponse> {
@@ -474,6 +492,7 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
             terminal: app_state.remote_access.terminal_available(secure),
             secure,
             full_access: app_state.full_access_allowed(secure),
+            files: app_state.remote_access.fs_available(),
         },
     }))
 }
