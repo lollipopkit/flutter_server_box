@@ -1421,4 +1421,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get continueInTerminal => 'Continuar no terminal';
+
+  @override
+  String get browsing => 'Navegando';
 }

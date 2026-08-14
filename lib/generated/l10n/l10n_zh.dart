@@ -1313,6 +1313,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get continueInTerminal => '在终端中继续';
+
+  @override
+  String get browsing => '浏览中';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2624,4 +2627,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get continueInTerminal => '在終端機中繼續';
+
+  @override
+  String get browsing => '瀏覽中';
 }

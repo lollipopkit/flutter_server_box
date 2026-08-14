@@ -1423,4 +1423,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get continueInTerminal => 'Doorgaan in terminal';
+
+  @override
+  String get browsing => 'Bladeren';
 }

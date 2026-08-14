@@ -470,5 +470,6 @@
   "containerNoRuntimeTip": "Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try using sudo\" in Settings.",
   "containerUnreadable": "The container runtime answered in an unexpected form",
   "power": "Power",
-  "continueInTerminal": "Continue in terminal"
+  "continueInTerminal": "Continue in terminal",
+  "browsing": "Browsing"
 }

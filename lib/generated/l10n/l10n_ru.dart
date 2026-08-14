@@ -1429,4 +1429,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get continueInTerminal => 'Продолжить в терминале';
+
+  @override
+  String get browsing => 'Просмотр';
 }

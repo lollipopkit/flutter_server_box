@@ -1410,4 +1410,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get continueInTerminal => 'Terminalde devam et';
+
+  @override
+  String get browsing => 'Göz atılıyor';
 }

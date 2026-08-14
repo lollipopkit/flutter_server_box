@@ -409,5 +409,6 @@
   "containerNoRuntimeTip": "Baik `docker` maupun `podman` tidak merespons di mesin ini. Jika salah satunya terpasang untuk akun lain, aktifkan \"Cobalah menggunakan sudo\" di Pengaturan.",
   "containerUnreadable": "Runtime kontainer merespons dalam bentuk yang tidak terduga",
   "power": "Daya",
-  "continueInTerminal": "Lanjutkan di terminal"
+  "continueInTerminal": "Lanjutkan di terminal",
+  "browsing": "Menjelajahi"
 }

@@ -1412,4 +1412,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get continueInTerminal => 'Continue in terminal';
+
+  @override
+  String get browsing => 'Browsing';
 }

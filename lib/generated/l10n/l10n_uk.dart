@@ -1430,4 +1430,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get continueInTerminal => 'Продовжити в терміналі';
+
+  @override
+  String get browsing => 'Перегляд';
 }

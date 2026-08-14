@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -513,10 +514,17 @@ class _SideBar extends ConsumerWidget {
         onTap: onSelect,
         onClose: onClose,
         actions: actions,
+        // Nothing here is running. A browser is a place you are looking at,
+        // and the default heading — written for terminals, where a session can
+        // have a command still going — said otherwise.
+        runningLabel: l10n.browsing,
         targets: [
-          // Above the heading rather than under one of its own: it is the
-          // place that is always reachable, not one entry in a list of many.
-          const SizedBox(height: 8),
+          // Under a heading of its own, short as the group is. Without one it
+          // ran straight on from the browsers above, and since this device is
+          // now always one of them, the rail read as the same name twice with
+          // nothing between to say that one goes there and the other opens
+          // another.
+          SideBarSection(libL10n.open),
           SideBarTile(title: libL10n.device, onTap: onLocal),
           SideBarSection(libL10n.servers),
           for (final id in state.serverOrder)

@@ -409,5 +409,6 @@
   "containerNoRuntimeTip": "Weder `docker` noch `podman` hat auf diesem Rechner geantwortet. Falls eines davon für ein anderes Konto installiert ist, aktiviere „Versuche es mit sudo“ in den Einstellungen.",
   "containerUnreadable": "Die Container-Laufzeitumgebung hat in einem unerwarteten Format geantwortet",
   "power": "Energie",
-  "continueInTerminal": "Im Terminal fortfahren"
+  "continueInTerminal": "Im Terminal fortfahren",
+  "browsing": "Wird durchsucht"
 }

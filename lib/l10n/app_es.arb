@@ -409,5 +409,6 @@
   "containerNoRuntimeTip": "Ni `docker` ni `podman` respondieron en esta máquina. Si uno está instalado para otra cuenta, activa «Intentar con sudo» en los ajustes.",
   "containerUnreadable": "El entorno de ejecución de contenedores respondió de forma inesperada",
   "power": "Energía",
-  "continueInTerminal": "Continuar en la terminal"
+  "continueInTerminal": "Continuar en la terminal",
+  "browsing": "Explorando"
 }

@@ -1344,4 +1344,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get continueInTerminal => 'ターミナルで続ける';
+
+  @override
+  String get browsing => '閲覧中';
 }

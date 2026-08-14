@@ -1428,4 +1428,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get continueInTerminal => 'Im Terminal fortfahren';
+
+  @override
+  String get browsing => 'Wird durchsucht';
 }

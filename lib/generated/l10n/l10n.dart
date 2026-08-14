@@ -2555,6 +2555,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Continue in terminal'**
   String get continueInTerminal;
+
+  /// No description provided for @browsing.
+  ///
+  /// In en, this message translates to:
+  /// **'Browsing'**
+  String get browsing;
 }
 
 class _AppLocalizationsDelegate

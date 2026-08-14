@@ -1413,4 +1413,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get continueInTerminal => 'Lanjutkan di terminal';
+
+  @override
+  String get browsing => 'Menjelajahi';
 }

@@ -1437,4 +1437,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get continueInTerminal => 'Continuar en la terminal';
+
+  @override
+  String get browsing => 'Explorando';
 }

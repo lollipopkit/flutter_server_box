@@ -1347,4 +1347,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get continueInTerminal => '터미널에서 계속하기';
+
+  @override
+  String get browsing => '탐색 중';
 }

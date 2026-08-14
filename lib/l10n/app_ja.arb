@@ -409,5 +409,6 @@
   "containerNoRuntimeTip": "このマシンでは `docker` も `podman` も応答しませんでした。別のアカウントにインストールされている場合は、設定で「sudoを試みる」を有効にしてください。",
   "containerUnreadable": "コンテナランタイムの応答を解釈できませんでした",
   "power": "電源",
-  "continueInTerminal": "ターミナルで続ける"
+  "continueInTerminal": "ターミナルで続ける",
+  "browsing": "閲覧中"
 }
