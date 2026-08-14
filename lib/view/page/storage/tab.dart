@@ -14,6 +14,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
+import 'package:server_box/view/widget/empty_pane.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 
 /// Every open file browser, one tab each, plus a picker at the head of the
@@ -172,9 +173,9 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
     return ListenBuilder(
       listenable: _sessions,
       builder: () => SbPaneList(
-        // Nothing open yet means nothing for a column to sit beside, so the
-        // picker keeps the whole width until the first browser is opened.
-        hasContent: _sessions.tabs.isNotEmpty,
+        // As on the terminal tab: the rail stays whether or not anything is
+        // open, so closing the last browser does not fold the page into a
+        // different layout.
         sideBuilder: (_) => _SideBar(
           sessions: _sessions,
           actions: [_searchBtn, _addBtn],
@@ -207,10 +208,11 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       appBar: split ? _sessionBar : _tabBar,
       body: SessionTabsView<_FileSession>(
         controller: _sessions,
-        // Page 0 is still the picker's, and while it has a column of its own
-        // nothing can reach that page — building it here would be drawing the
-        // same list twice.
-        leading: split ? const SizedBox.shrink() : _picker,
+        // Page 0 is the picker's on one column. Beside a rail it is the empty
+        // surface, and not the picker: the rail is already that list.
+        leading: split
+            ? const EmptyPane(icon: Icons.folder_open)
+            : _picker,
         builder: (_, tab) {
           final session = tab.data;
           void onPathChanged(String path) {

@@ -13,6 +13,7 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
+import 'package:server_box/view/widget/empty_pane.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 
 part 'tab_add.dart';
@@ -125,10 +126,11 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     return ListenBuilder(
       listenable: _sessions,
       builder: () => SbPaneList(
-        // Nothing open yet means nothing for a column to sit beside, so the
-        // picker keeps the whole width until the first terminal is opened —
-        // the same as the server list before anything is selected.
-        hasContent: _sessions.tabs.isNotEmpty,
+        // The rail is there from the start, empty surface or not. Folding it
+        // away until the first terminal opened meant this tab greeted a wide
+        // window with a full-width grid of cards, and then rearranged itself
+        // into a rail and a surface the moment one was opened — two layouts
+        // for one page, the first of which is not what the page looks like.
         sideBuilder: (_) => _SideBar(
           sessions: _sessions,
           sortVersion: _sortVersion,
@@ -163,9 +165,13 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       appBar: split ? _sessionBar : _tabBar,
       body: SessionTabsView<_SshSession>(
         controller: _sessions,
-        // Page 0 is still the picker's, and while the rail is there nothing
-        // can reach that page — building it would draw the same list twice.
-        leading: split ? const SizedBox.shrink() : _picker,
+        // Page 0 is the picker's on one column. Beside a rail it is what the
+        // surface shows before anything is opened — and nothing else, because
+        // the rail is already that list and drawing it twice is what the grid
+        // of cards was.
+        leading: split
+            ? const EmptyPane(icon: Icons.terminal_outlined)
+            : _picker,
         builder: (_, tab) => tab.data.page,
       ),
     );
@@ -187,10 +193,18 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
 
   PreferredSizeWidget get _sessionBar => PreferredSizeListenBuilder(
     listenable: _sessions,
-    builder: () => CustomAppBar(
-      title: Text(_sessions.current?.name ?? libL10n.terminal),
-      actions: [_agentBtn, _snippetBtn, const SizedBox(width: 7)],
-    ),
+    builder: () {
+      final current = _sessions.current;
+      return CustomAppBar(
+        title: Text(current?.name ?? libL10n.terminal),
+        // Both act on the terminal that is showing, and now that the rail
+        // stays up with none of them open there may be no such terminal. A
+        // button that looks tappable and does nothing is worse than no button.
+        actions: current == null
+            ? const []
+            : [_agentBtn, _snippetBtn, const SizedBox(width: 7)],
+      );
+    },
   );
 }
 
