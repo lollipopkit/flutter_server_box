@@ -8,6 +8,11 @@ another machine". Three things, in increasing order of cost:
    worth reaching (iOS, and Android's toybox);
 3. a **package manager** in it, which is where the platforms stop cooperating.
 
+Two consumers, not one: the terminal the user types into, and the **agent**,
+which has to be able to run commands and read and write files here as well as
+on a server. The agent turns out to be the reason to do this properly rather
+than bolting a second path on — see [Agent mode](#agent-mode).
+
 Step 1 is a week. Step 3 on Android is blocked by a documented OS restriction
 and step 3 on iOS is a GPLv3 emulator plus an App Store review argument. This
 document is what is known, what is guessed, and what has to be measured before
@@ -43,6 +48,74 @@ from the session rather than from a server.
 
 The rename itself is two string literals — `home_tab.dart:32` and `:62` both
 say `'SSH'` where every other tab uses `libL10n`. `libL10n.terminal` exists.
+
+## Agent mode
+
+The agent has to run commands and touch files here too. It cannot today, and
+the reason is not the missing local backend — it is that the agent never
+adopted the abstraction the rest of the app runs on.
+
+`ServerExec` (`lib/data/model/server/server_exec.dart`) is what the process,
+systemd, container and power features use to run one command and get its output
+back, with `SshExec` and `MonitorExec` behind it. The agent uses none of it:
+
+```dart
+// global_agent_tools.dart:509
+Future<({ServerState state, SSHClient client})> _connectedServer(...)
+// :558
+final session = await client.execute(command);
+```
+
+`ServerExec` appears zero times in `global_agent_tools.dart`,
+`agent_session.dart`, `ask_ai.dart` and `agent.dart`. The in-terminal agent does
+the same thing with its own `SSHSession` (`ssh/page/page.dart`, `_aiCommandSession`).
+
+Two consequences. One is the local shell: there is nowhere to put it. The other
+is already a live bug — `_connectedServer` throws
+
+> Server X has no SSH credential, so it cannot run commands. It reports status
+> over its monitor agent only.
+
+for a monitor-only server, which `MonitorExec` has been able to run commands on
+since the agent-exec work landed. Fixing the coupling fixes both.
+
+### What the tools need
+
+Every tool takes a `server_id` (`run_shell_command`, `read_file`, `write_file`,
+`serverbox`). "This device" needs to be nameable — a reserved id rather than a
+fourth shape of argument, so the model's tool schema does not change and the
+instructions gain one line.
+
+| Tool | On a server | On this device |
+| --- | --- | --- |
+| `run_shell_command` | `ServerExec` | `LocalExec` — the same interface over `Process`/`flutter_pty` |
+| `read_file` / `write_file` | SFTP | `dart:io` `File`, inside whatever the platform lets the app reach |
+| `serverbox` | connection state | not applicable; the device is always "connected" |
+
+### Safety is a different question here
+
+Running model-authored commands on a server the user deliberately configured is
+one risk. Running them on the device the app itself lives on is another: the
+Hive stores, the private keys and the keychain are all on that filesystem.
+
+What exists today is `AskAiCommandRisk {readOnly, caution, destructive}` with
+`canAutoRun => modelSafeToRun && risk == readOnly`, where the local half is a
+regex allowlist of read-only command prefixes (`ask_ai_models.dart:472`). That
+is a reasonable gate on *auto-running*. It is not a sandbox, and it should not
+be asked to be one.
+
+Positions to take before writing any of it:
+
+- local execution **off by default**, opt-in per install;
+- **never auto-run locally**, whatever `askAiAutoRunSafeCommands` says — the
+  setting is about servers;
+- once stage 4 exists, prefer running the agent's local commands **inside the
+  bundled rootfs** rather than on the host. The rootfs is the sandbox, and this
+  is the argument for building it that has nothing to do with iOS.
+
+On iOS there is no host shell at all, so for that platform "the agent can run
+code locally" *means* the rootfs. The capability lands per-platform, the same
+way the terminal's does, and `ServerCapabilities` is the existing place to ask.
 
 ## What each platform can actually do
 
@@ -182,6 +255,13 @@ macOS on the sandbox decision. Independent of everything below.
 no package manager, toybox only — but it is a real shell and it costs almost
 nothing once stage 1 lands.
 
+**2b. Move the agent onto `ServerExec`, then give it a local target.** Worth
+doing on its own merits — it is what makes the agent work on monitor-only
+servers, which it silently refuses today. Local execution then follows: a
+reserved server id, `LocalExec`, `dart:io` for the file tools, and the safety
+positions above. Can run in parallel with stage 1; it needs `ServerExec`, not
+the terminal work.
+
 **3. Measure the Android execution question.** A throwaway APK at the current
 `targetSdk`: write a static binary into `filesDir`, try `execve`, try it through
 `linker64`, record both. Twenty lines. Everything about Android rootfs support
@@ -191,8 +271,10 @@ depends on the answer, and nothing should be designed before it.
 the Xcode target, ship an Alpine aarch64 tarball, add an iOS build step to CI.
 Android per stage 3. This stage is larger than the first three together and
 carries the review risk; treat it as a separate decision, not a continuation.
+It is also what turns the agent's local execution from "on the user's
+filesystem" into "in a sandbox", which may be the strongest reason to build it.
 
-Stages 1 and 2 are worth doing whatever happens to 3 and 4.
+Stages 1, 2 and 2b are worth doing whatever happens to 3 and 4.
 
 ## Verification log
 
@@ -207,3 +289,6 @@ Update this as answers arrive; several decisions above move with them.
 | 5 | Is proot GPLv2-only or v2-or-later? | Read source headers, not `COPYING` | **open** |
 | 6 | Does `flutter_pty` still build against current Flutter on all four desktop/Android targets? | Add it, build each | **open** |
 | 7 | Would 2.5.2 be survivable for this app? | Cannot be settled in advance. Decide whether stage 4's iOS half is worth the update risk | **open** |
+| 8 | Is local agent execution opt-in, and is auto-run barred locally? | Product decision. Affects the settings surface and the tool instructions | **open** |
+| 9 | What can the agent's `read_file`/`write_file` reach locally per platform? | macOS sandbox container vs. home; Android scoped storage; iOS app container only | **open** |
+| 10 | Does moving the agent to `ServerExec` change any recorded conversation's replay? | `agent_conversation_replay` and its tests are the contract | **open** |
