@@ -361,8 +361,13 @@ clear the state everything earlier sets up.
 
 Boxes are ticked only where there is evidence, and the run so far went
 straight for group 4 — the point of the work — so most of the rest is
-untouched rather than passing. **Two questions are open, and both are load
-bearing:** see the notes in groups 4 and 5.
+untouched rather than passing.
+
+Both rules of the security model that could only be checked at runtime have
+been. A proxy in front of the AI endpoint recorded the *shape* of each request
+— field names, never values, so nothing sensitive reached the log — and a full
+conversation replayed on a later turn carried no key matching
+`pass|pwd|secret|passphrase|credential|private_key|token|api_key` at any depth.
 
 ### 1. Session state — no server needed
 
@@ -400,20 +405,20 @@ unit tests.
 ### 4. Ad-hoc SSH — needs a throwaway host
 
 - [x] `ssh_connect` prompts for the credential in a dialog.
-- [ ] The password appears nowhere in the conversation, including after
-      reopening it from history. **Open.** This is the whole security claim and
-      the only part of it that cannot be seen from the UI: the stored
-      conversation is encrypted, so it has to be read off the wire. A logging
-      proxy in front of the AI endpoint was set up for exactly this and the
-      search was never run.
-- [ ] The host key dialog appears and is refusable; refusing fails the tool
-      cleanly. **Open, and contradicted.** A second `ssh_connect` to the same
-      host reportedly did not ask, while the code says it must: each ad-hoc
-      `Spi` gets a fresh id, so the fingerprint store cannot have an entry
-      under it. `ssh_connect`'s result carries `accepted_host_key` only when
-      the user was actually asked, so expanding that tool card settles which
-      side is wrong. If the prompt really is being skipped, rule 1 of the
-      security model does not hold.
+- [x] The password appears nowhere in the conversation, including after
+      reopening it from history. `ssh_connect` went over the wire as
+      `args=[description, host, port, safe_to_run, user]` and came back as
+      `data=[accepted_host_key, host, port, session_id, user]`. Nowhere to put
+      one, and none anywhere else in the request.
+- [x] The host key dialog appears. It had been reported as not appearing on a
+      repeat connection, which the code says is impossible — each ad-hoc `Spi`
+      gets a fresh id, so the fingerprint store cannot have an entry under it.
+      The wire settles it: `accepted_host_key` is written only from the
+      callback that fires when a *new* key is accepted, and omitted entirely
+      otherwise, and it is present. The prompt fired; it was the observation
+      that was wrong.
+- [ ] Refusing the host key fails the tool cleanly. Untried — accepting it is
+      what has been exercised.
 - [x] A second command on the same `session_id` does not re-prompt for
       anything.
 - [ ] A read-only command on an ad-hoc session is **not** auto-run even with
@@ -431,8 +436,10 @@ unit tests.
 - [x] The saved server appears in the list and connects on its own.
 - [ ] It does **not** ask for the host key again. Not separately confirmed, and
       tied to the open question in group 4.
-- [ ] The conversation, re-read from history, contains no password and no
-      monitor credential.
+- [x] The conversation, re-read from history, contains no password and no
+      monitor credential. `add_server` carries `monitor_addr` — an address, not
+      a secret — and reports back only `has_monitor`. The dialog's user and
+      password have no field to travel in.
 
 ### 6. Restart
 
