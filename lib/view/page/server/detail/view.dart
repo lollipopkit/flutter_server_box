@@ -175,7 +175,11 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
             Padding(
               padding: const EdgeInsets.all(13),
               child: Text(
-                libL10n.empty,
+                // "Empty" is what a server that answered and had nothing to
+                // say would be. One that has not answered yet is connecting,
+                // and saying so is the difference between waiting and
+                // wondering.
+                busy ? l10n.waitConnection : libL10n.empty,
                 style: UIs.textGrey,
                 textAlign: TextAlign.center,
               ),
@@ -234,10 +238,13 @@ ${err.message ?? 'null'}
   /// `ServerNotifier` already relies on that.
   bool _hasContent(ServerState state) {
     if (state.status.more.isNotEmpty) return true;
-    // Nothing fetched yet: a transport that keeps a session has a live client
-    // to test, a stateless one can only be judged by whether it has answered
-    if (state.capabilities.persistentSession) return state.client != null;
-    return !(state.conn < server_model.ServerConn.connected);
+    // Having a connection is not having anything to show. Read as "connected
+    // is enough", this page opened onto a grid of empty cards — dashes where
+    // the CPU goes, `0% of 1 KB` for the disk — for as long as the first fetch
+    // took, which on a server that is merely slow is a while. `finished` is
+    // the state that means a status came back; it is only ever left for
+    // another *later* fetch, so the page does not flicker back on refresh.
+    return state.conn == server_model.ServerConn.finished;
   }
 
   Widget _buildMainPage(ServerState si) {

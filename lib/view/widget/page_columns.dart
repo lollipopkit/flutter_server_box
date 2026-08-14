@@ -61,46 +61,60 @@ class PageColumns extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // `SizedBox.expand` rather than letting the scroll view size itself: a
+    // `SingleChildScrollView` under the loose constraints a `Center` passes
+    // down takes the height of its content, so a page with less than a
+    // screenful of cards ended up centred vertically, floating with empty
+    // space above it. Told to fill, it starts at the top and scrolls only
+    // when there is more than fits.
+    //
+    // Requires a bounded height, which every caller has — this is a page
+    // body, and the grid it replaced needed one too.
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
-        child: LayoutBuilder(
-          builder: (_, cons) {
-            final columns = columnsFor(cons.maxWidth);
-            return SingleChildScrollView(
-              controller: controller,
-              padding: _padding.copyWith(bottom: _padding.bottom + bottomInset),
-              child: columns == 1
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: _spacing,
-                      children: children,
-                    )
-                  : Row(
-                      // Columns are as tall as what is in them, and a short one
-                      // beside a long one should stop rather than stretch.
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: _spacing,
-                      children: [
-                        for (var col = 0; col < columns; col++)
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              spacing: _spacing,
-                              children: [
-                                for (
-                                  var i = col;
-                                  i < children.length;
-                                  i += columns
-                                )
-                                  children[i],
-                              ],
+        child: SizedBox.expand(
+          child: LayoutBuilder(
+            builder: (_, cons) {
+              final columns = columnsFor(cons.maxWidth);
+              return SingleChildScrollView(
+                controller: controller,
+                padding: _padding.copyWith(
+                  bottom: _padding.bottom + bottomInset,
+                ),
+                child: columns == 1
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        spacing: _spacing,
+                        children: children,
+                      )
+                    : Row(
+                        // Columns are as tall as what is in them, and a short
+                        // one beside a long one should stop rather than
+                        // stretch.
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: _spacing,
+                        children: [
+                          for (var col = 0; col < columns; col++)
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                spacing: _spacing,
+                                children: [
+                                  for (
+                                    var i = col;
+                                    i < children.length;
+                                    i += columns
+                                  )
+                                    children[i],
+                                ],
+                              ),
                             ),
-                          ),
-                      ],
-                    ),
-            );
-          },
+                        ],
+                      ),
+              );
+            },
+          ),
         ),
       ),
     );
