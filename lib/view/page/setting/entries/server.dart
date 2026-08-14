@@ -4,7 +4,7 @@ extension _Server on _AppSettingsPageState {
   void _showInvalidUrlDialog() {
     context.showRoundDialog(
       title: libL10n.fail,
-      child: Text(l10n.invalidUrl),
+      child: Text(libL10n.invalidUrl),
       actions: Btnx.oks,
     );
   }
@@ -97,13 +97,13 @@ extension _Server on _AppSettingsPageState {
 
   Widget _buildTextScaler() {
     return ListTile(
-      title: TipText(l10n.textScaler, l10n.textScalerTip),
+      title: TipText(libL10n.textScaler, l10n.textScalerTip),
       trailing: ValBuilder(
         listenable: _setting.textFactor.listenable(),
         builder: (val) => Text(val.toString(), style: UIs.text15),
       ),
       onTap: () => context.showRoundDialog(
-        title: l10n.textScaler,
+        title: libL10n.textScaler,
         child: Input(
           autoFocus: true,
           type: TextInputType.number,
@@ -181,7 +181,7 @@ extension _Server on _AppSettingsPageState {
   Widget _buildServerMore() {
     return ExpandTile(
       leading: const Icon(MingCute.more_3_fill),
-      title: Text(l10n.more),
+      title: Text(libL10n.more),
       initiallyExpanded: false,
       children: [
         _buildServerTabPreferDiskAmount(),

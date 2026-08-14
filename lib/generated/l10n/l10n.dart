@@ -141,29 +141,11 @@ abstract class AppLocalizations {
   /// **'Added to task list'**
   String get added2List;
 
-  /// No description provided for @addr.
-  ///
-  /// In en, this message translates to:
-  /// **'Address'**
-  String get addr;
-
   /// No description provided for @askAi.
   ///
   /// In en, this message translates to:
   /// **'Ask AI'**
   String get askAi;
-
-  /// No description provided for @ai.
-  ///
-  /// In en, this message translates to:
-  /// **'AI'**
-  String get ai;
-
-  /// No description provided for @askAiApiKey.
-  ///
-  /// In en, this message translates to:
-  /// **'API Key'**
-  String get askAiApiKey;
 
   /// No description provided for @askAiAwaitingResponse.
   ///
@@ -171,35 +153,17 @@ abstract class AppLocalizations {
   /// **'Waiting for AI response...'**
   String get askAiAwaitingResponse;
 
-  /// No description provided for @askAiBaseUrl.
-  ///
-  /// In en, this message translates to:
-  /// **'API Endpoint'**
-  String get askAiBaseUrl;
-
   /// No description provided for @askAiEndpointTip.
   ///
   /// In en, this message translates to:
   /// **'Enter a service base URL or a full Chat Completions or Responses endpoint. ServerBox completes the path for the selected protocol.'**
   String get askAiEndpointTip;
 
-  /// No description provided for @askAiProtocol.
-  ///
-  /// In en, this message translates to:
-  /// **'API protocol'**
-  String get askAiProtocol;
-
   /// No description provided for @askAiProtocolTip.
   ///
   /// In en, this message translates to:
   /// **'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.'**
   String get askAiProtocolTip;
-
-  /// No description provided for @askAiProtocolAuto.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto'**
-  String get askAiProtocolAuto;
 
   /// No description provided for @askAiProtocolChatCompletions.
   ///
@@ -321,24 +285,6 @@ abstract class AppLocalizations {
   /// **'Terminal context'**
   String get askAiTerminalContext;
 
-  /// No description provided for @askAiReady.
-  ///
-  /// In en, this message translates to:
-  /// **'Ready'**
-  String get askAiReady;
-
-  /// No description provided for @askAiThinking.
-  ///
-  /// In en, this message translates to:
-  /// **'Thinking'**
-  String get askAiThinking;
-
-  /// No description provided for @askAiRunningCommand.
-  ///
-  /// In en, this message translates to:
-  /// **'Running'**
-  String get askAiRunningCommand;
-
   /// No description provided for @askAiReviewNeeded.
   ///
   /// In en, this message translates to:
@@ -416,18 +362,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.'**
   String get askAiHighRiskConfirmBody;
-
-  /// No description provided for @askAiCommandCancelled.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancelled'**
-  String get askAiCommandCancelled;
-
-  /// No description provided for @askAiCommandTimedOut.
-  ///
-  /// In en, this message translates to:
-  /// **'Timed out'**
-  String get askAiCommandTimedOut;
 
   /// No description provided for @askAiNoCommandOutput.
   ///
@@ -524,12 +458,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This removes the conversation from this device and cannot be undone.'**
   String get askAiDeleteConversationTip;
-
-  /// No description provided for @askAiClearHistory.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear history'**
-  String get askAiClearHistory;
 
   /// No description provided for @askAiClearHistoryTitle.
   ///
@@ -945,12 +873,6 @@ abstract class AppLocalizations {
   /// **'Display the usage of each CPU in a progress bar style (old style)'**
   String get cpuViewAsProgressTip;
 
-  /// No description provided for @configured.
-  ///
-  /// In en, this message translates to:
-  /// **'Configured'**
-  String get configured;
-
   /// No description provided for @customCmd.
   ///
   /// In en, this message translates to:
@@ -1134,18 +1056,6 @@ abstract class AppLocalizations {
   /// **'Finished at'**
   String get finishedAt;
 
-  /// No description provided for @followSystem.
-  ///
-  /// In en, this message translates to:
-  /// **'Follow system'**
-  String get followSystem;
-
-  /// No description provided for @fontSize.
-  ///
-  /// In en, this message translates to:
-  /// **'Font size'**
-  String get fontSize;
-
   /// No description provided for @fullScreen.
   ///
   /// In en, this message translates to:
@@ -1194,29 +1104,11 @@ abstract class AppLocalizations {
   /// **'Token is empty'**
   String get githubGistTokenEmpty;
 
-  /// No description provided for @goBackQ.
-  ///
-  /// In en, this message translates to:
-  /// **'Go back?'**
-  String get goBackQ;
-
   /// No description provided for @goto.
   ///
   /// In en, this message translates to:
   /// **'Go to'**
   String get goto;
-
-  /// No description provided for @hideTitleBar.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide title bar'**
-  String get hideTitleBar;
-
-  /// No description provided for @highlight.
-  ///
-  /// In en, this message translates to:
-  /// **'Code highlighting'**
-  String get highlight;
 
   /// No description provided for @homeTabs.
   ///
@@ -1344,18 +1236,6 @@ abstract class AppLocalizations {
   /// **'Pull'**
   String get pull;
 
-  /// No description provided for @invalid.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid'**
-  String get invalid;
-
-  /// No description provided for @invalidUrl.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid URL'**
-  String get invalidUrl;
-
   /// No description provided for @invalidHostFormat.
   ///
   /// In en, this message translates to:
@@ -1458,12 +1338,6 @@ abstract class AppLocalizations {
   /// **'Mismatch system: {system}'**
   String mismatchSystem(Object system);
 
-  /// No description provided for @more.
-  ///
-  /// In en, this message translates to:
-  /// **'More'**
-  String get more;
-
   /// No description provided for @needRestart.
   ///
   /// In en, this message translates to:
@@ -1541,12 +1415,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This agent allows access without SSH over TLS or loopback only, and this connection is plain HTTP.'**
   String get fullAccessInsecure;
-
-  /// No description provided for @permission.
-  ///
-  /// In en, this message translates to:
-  /// **'Permissions'**
-  String get permission;
 
   /// No description provided for @plugInType.
   ///
@@ -1716,12 +1584,6 @@ abstract class AppLocalizations {
   /// **'Recent Connections'**
   String get recentConnections;
 
-  /// No description provided for @reconnecting.
-  ///
-  /// In en, this message translates to:
-  /// **'Reconnecting...'**
-  String get reconnecting;
-
   /// No description provided for @rememberPwdInMem.
   ///
   /// In en, this message translates to:
@@ -1745,12 +1607,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A server with the same ID already exists'**
   String get sameIdServerExist;
-
-  /// No description provided for @save.
-  ///
-  /// In en, this message translates to:
-  /// **'Save'**
-  String get save;
 
   /// No description provided for @second.
   ///
@@ -1824,18 +1680,6 @@ abstract class AppLocalizations {
   /// **'Display folders first'**
   String get sftpShowFoldersFirst;
 
-  /// No description provided for @size.
-  ///
-  /// In en, this message translates to:
-  /// **'Size'**
-  String get size;
-
-  /// No description provided for @softWrap.
-  ///
-  /// In en, this message translates to:
-  /// **'Soft wrap'**
-  String get softWrap;
-
   /// No description provided for @specifyDev.
   ///
   /// In en, this message translates to:
@@ -1853,12 +1697,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).'**
   String get tempIsCelsiusTip;
-
-  /// No description provided for @speed.
-  ///
-  /// In en, this message translates to:
-  /// **'Speed'**
-  String get speed;
 
   /// No description provided for @spentTime.
   ///
@@ -2016,12 +1854,6 @@ abstract class AppLocalizations {
   /// **'Auto switching of virtual keys'**
   String get sshVirtualKeyAutoOff;
 
-  /// No description provided for @stat.
-  ///
-  /// In en, this message translates to:
-  /// **'Statistics'**
-  String get stat;
-
   /// No description provided for @supportFmtArgs.
   ///
   /// In en, this message translates to:
@@ -2064,23 +1896,11 @@ abstract class AppLocalizations {
   /// **'This setting will affect the terminal size (width and height). You can zoom in on the terminal page to adjust the font size of the current session.'**
   String get termFontSizeTip;
 
-  /// No description provided for @textScaler.
-  ///
-  /// In en, this message translates to:
-  /// **'Text scaler'**
-  String get textScaler;
-
   /// No description provided for @textScalerTip.
   ///
   /// In en, this message translates to:
   /// **'1.0 => 100% (original size), only works on server page part of the font, not recommended to change.'**
   String get textScalerTip;
-
-  /// No description provided for @time.
-  ///
-  /// In en, this message translates to:
-  /// **'Time'**
-  String get time;
 
   /// No description provided for @times.
   ///
@@ -2099,12 +1919,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No sudo password prompt is active.'**
   String get sudoPromptNotFound;
-
-  /// No description provided for @unknown.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown'**
-  String get unknown;
 
   /// No description provided for @updateServerStatusInterval.
   ///
@@ -2141,12 +1955,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View Details'**
   String get viewDetails;
-
-  /// No description provided for @viewErr.
-  ///
-  /// In en, this message translates to:
-  /// **'See error'**
-  String get viewErr;
 
   /// No description provided for @virtKeyHelpClipboard.
   ///
@@ -2195,12 +2003,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'When opening the app'**
   String get whenOpenApp;
-
-  /// No description provided for @wiki.
-  ///
-  /// In en, this message translates to:
-  /// **'Wiki'**
-  String get wiki;
 
   /// No description provided for @wolTip.
   ///
@@ -2274,18 +2076,6 @@ abstract class AppLocalizations {
   /// **'Remote Port'**
   String get portForward_remotePort;
 
-  /// No description provided for @portForward_type_local.
-  ///
-  /// In en, this message translates to:
-  /// **'Local'**
-  String get portForward_type_local;
-
-  /// No description provided for @portForward_type_remote.
-  ///
-  /// In en, this message translates to:
-  /// **'Remote'**
-  String get portForward_type_remote;
-
   /// No description provided for @portForward_deleteConfirmFmt.
   ///
   /// In en, this message translates to:
@@ -2298,47 +2088,17 @@ abstract class AppLocalizations {
   /// **'Sponsor'**
   String get sponsor;
 
-  /// No description provided for @sort.
-  ///
-  /// In en, this message translates to:
-  /// **'Sort'**
-  String get sort;
-
-  /// No description provided for @sortByName.
-  ///
-  /// In en, this message translates to:
-  /// **'By name'**
-  String get sortByName;
-
   /// No description provided for @sortByJoinTime.
   ///
   /// In en, this message translates to:
   /// **'By join time'**
   String get sortByJoinTime;
 
-  /// No description provided for @ascending.
-  ///
-  /// In en, this message translates to:
-  /// **'Ascending'**
-  String get ascending;
-
-  /// No description provided for @descending.
-  ///
-  /// In en, this message translates to:
-  /// **'Descending'**
-  String get descending;
-
   /// No description provided for @serverHistory.
   ///
   /// In en, this message translates to:
   /// **'Server history'**
   String get serverHistory;
-
-  /// No description provided for @clearHistory.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear history'**
-  String get clearHistory;
 
   /// No description provided for @portForwardBetaTitle.
   ///
@@ -2622,29 +2382,11 @@ abstract class AppLocalizations {
   /// **'Continue in terminal'**
   String get continueInTerminal;
 
-  /// No description provided for @browsing.
-  ///
-  /// In en, this message translates to:
-  /// **'Browsing'**
-  String get browsing;
-
   /// No description provided for @askAiRiskUnknown.
   ///
   /// In en, this message translates to:
   /// **'Unclassified'**
   String get askAiRiskUnknown;
-
-  /// No description provided for @memory.
-  ///
-  /// In en, this message translates to:
-  /// **'Memory'**
-  String get memory;
-
-  /// No description provided for @permissionDenied.
-  ///
-  /// In en, this message translates to:
-  /// **'Permission denied.'**
-  String get permissionDenied;
 }
 
 class _AppLocalizationsDelegate

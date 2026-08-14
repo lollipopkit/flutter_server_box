@@ -246,7 +246,7 @@ extension _Actions on _ServerEditPageState {
         _portController.text = '22';
       }
       if (_areInvalidJumpSelections(_jumpServers.value)) {
-        context.showSnackBar('${l10n.invalid}: ${l10n.jumpServer}');
+        context.showSnackBar('${libL10n.invalid}: ${l10n.jumpServer}');
         return;
       }
     }
@@ -272,7 +272,7 @@ extension _Actions on _ServerEditPageState {
     if (useMonitorHttp) {
       final monitorAddr = _monitorAddrCtrl.text.selfNotEmptyOrNull;
       if (monitorAddr == null) {
-        context.showSnackBar('${l10n.invalid}: Monitor URL');
+        context.showSnackBar('${libL10n.invalid}: Monitor URL');
         return;
       }
       monitorHttp = MonitorHttpCredential(

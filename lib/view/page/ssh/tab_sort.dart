@@ -49,10 +49,10 @@ class _SortOrder {
     final direction = switch (field) {
       // Alphabetical order reads as A-Z, not as "ascending"
       _SortField.name => ascending ? '(A-Z)' : '(Z-A)',
-      _SortField.added => '(${ascending ? l10n.ascending : l10n.descending})',
+      _SortField.added => '(${ascending ? libL10n.ascending : libL10n.descending})',
     };
     final subject = switch (field) {
-      _SortField.name => l10n.sortByName,
+      _SortField.name => libL10n.sortByName,
       _SortField.added => l10n.sortByJoinTime,
     };
     return '$subject $direction';

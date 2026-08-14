@@ -19,36 +19,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get added2List => '작업 목록에 추가되었습니다';
 
   @override
-  String get addr => '주소';
-
-  @override
   String get askAi => 'AI에게 질문';
 
   @override
-  String get ai => 'AI';
-
-  @override
-  String get askAiApiKey => 'API 키';
-
-  @override
   String get askAiAwaitingResponse => 'AI 응답 대기 중...';
-
-  @override
-  String get askAiBaseUrl => '기본 URL';
 
   @override
   String get askAiEndpointTip =>
       '전체 Chat Completions 엔드포인트 또는 서비스 기본 URL을 입력하세요. 주소가 /v1로 끝나면 앱이 자동으로 /chat/completions를 추가합니다.';
 
   @override
-  String get askAiProtocol => 'API 프로토콜';
-
-  @override
   String get askAiProtocolTip =>
       '자동은 공식 OpenAI 엔드포인트에는 Responses를, 호환 제공자에는 Chat Completions를 사용합니다.';
-
-  @override
-  String get askAiProtocolAuto => '자동';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -115,15 +97,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiTerminalContext => '터미널 컨텍스트';
 
   @override
-  String get askAiReady => '준비됨';
-
-  @override
-  String get askAiThinking => '생각 중';
-
-  @override
-  String get askAiRunningCommand => '실행 중';
-
-  @override
   String get askAiReviewNeeded => '검토 필요';
 
   @override
@@ -162,12 +135,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get askAiHighRiskConfirmBody =>
       '이 명령은 데이터를 지우거나 서비스를 중지하는 등 되돌리기 어려울 수 있습니다. 실행 전에 꼼꼼히 확인하세요.';
-
-  @override
-  String get askAiCommandCancelled => '취소됨';
-
-  @override
-  String get askAiCommandTimedOut => '시간 초과';
 
   @override
   String get askAiNoCommandOutput => '명령이 출력 없이 끝났습니다.';
@@ -218,9 +185,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get askAiDeleteConversationTip => '대화가 이 기기에서 삭제되며 되돌릴 수 없습니다.';
-
-  @override
-  String get askAiClearHistory => '기록 지우기';
 
   @override
   String get askAiClearHistoryTitle => '이 서버의 에이전트 기록을 지울까요?';
@@ -446,9 +410,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get cpuViewAsProgressTip => '각 CPU 사용률을 프로그레스 바 형태로 표시합니다 (이전 스타일)';
 
   @override
-  String get configured => '설정됨';
-
-  @override
   String get customCmd => '사용자 정의 명령어';
 
   @override
@@ -554,12 +515,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get finishedAt => '완료 시각';
 
   @override
-  String get followSystem => '시스템 설정 따르기';
-
-  @override
-  String get fontSize => '글꼴 크기';
-
-  @override
   String get fullScreen => '전체 화면 모드';
 
   @override
@@ -585,16 +540,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get githubGistTokenEmpty => '토큰이 비어 있습니다';
 
   @override
-  String get goBackQ => '돌아가시겠습니까?';
-
-  @override
   String get goto => '이동';
-
-  @override
-  String get hideTitleBar => '제목 표시줄 숨기기';
-
-  @override
-  String get highlight => '코드 하이라이팅';
 
   @override
   String get homeTabs => '홈 탭';
@@ -660,12 +606,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get pull => '풀';
 
   @override
-  String get invalid => '유효하지 않음';
-
-  @override
-  String get invalidUrl => '잘못된 URL입니다';
-
-  @override
   String get invalidHostFormat => '잘못된 호스트 형식입니다. IPv4, IPv6, 도메인 문자만 허용됩니다.';
 
   @override
@@ -725,9 +665,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get more => '더 보기';
-
-  @override
   String get needRestart => '앱을 다시 시작해야 합니다';
 
   @override
@@ -766,9 +703,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get fullAccessInsecure =>
       '이 에이전트는 TLS 또는 루프백에서만 터미널을 제공하는데, 현재 연결은 평문 HTTP입니다.';
-
-  @override
-  String get permission => '권한';
 
   @override
   String get plugInType => '삽입 유형';
@@ -861,9 +795,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recentConnections => '최근 연결';
 
   @override
-  String get reconnecting => '재연결 중...';
-
-  @override
   String get rememberPwdInMem => '메모리에 비밀번호 저장';
 
   @override
@@ -874,9 +805,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get sameIdServerExist => '동일한 ID의 서버가 이미 존재합니다';
-
-  @override
-  String get save => '저장';
 
   @override
   String get second => '초';
@@ -917,12 +845,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sftpShowFoldersFirst => '폴더 우선 표시';
 
   @override
-  String get size => '크기';
-
-  @override
-  String get softWrap => '자동 줄바꿈';
-
-  @override
   String get specifyDev => '장치 지정';
 
   @override
@@ -932,9 +854,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       '활성화하면 온도 값이 밀리섭씨가 아닌 섭씨로 처리됩니다. 온도가 잘못 표시될 때만 켜세요 (예: 58°C 대신 0.1°C로 표시되는 경우).';
-
-  @override
-  String get speed => '속도';
 
   @override
   String spentTime(Object time) {
@@ -1041,9 +960,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshVirtualKeyAutoOff => '가상 키 자동 전환';
 
   @override
-  String get stat => '통계';
-
-  @override
   String get supportFmtArgs => '다음 형식 매개변수가 지원됩니다:';
 
   @override
@@ -1069,14 +985,8 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 설정은 터미널 크기(너비 및 높이)에 영향을 줍니다. 현재 세션의 글꼴 크기를 조정하려면 터미널 페이지에서 확대/축소할 수 있습니다.';
 
   @override
-  String get textScaler => '텍스트 배율';
-
-  @override
   String get textScalerTip =>
       '1.0 => 100% (원래 크기), 서버 페이지의 일부 글꼴에만 적용되며 변경을 권장하지 않습니다.';
-
-  @override
-  String get time => '시간';
 
   @override
   String get times => '회';
@@ -1086,9 +996,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get sudoPromptNotFound => 'sudo 비밀번호 프롬프트가 없습니다.';
-
-  @override
-  String get unknown => '알 수 없음';
 
   @override
   String get updateServerStatusInterval => '서버 상태 업데이트 간격';
@@ -1107,9 +1014,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get viewDetails => '상세 보기';
-
-  @override
-  String get viewErr => '오류 보기';
 
   @override
   String get virtKeyHelpClipboard =>
@@ -1135,9 +1039,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get whenOpenApp => '앱을 열 때';
-
-  @override
-  String get wiki => '위키';
 
   @override
   String get wolTip => 'WOL (Wake-on-LAN)을 설정하면 서버에 연결할 때마다 WOL 요청이 전송됩니다.';
@@ -1179,12 +1080,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get portForward_remotePort => '원격 포트';
 
   @override
-  String get portForward_type_local => '로컬';
-
-  @override
-  String get portForward_type_remote => '원격';
-
-  @override
   String portForward_deleteConfirmFmt(Object name) {
     return '$name을(를) 삭제하시겠습니까?';
   }
@@ -1193,25 +1088,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sponsor => '후원';
 
   @override
-  String get sort => '정렬';
-
-  @override
-  String get sortByName => '이름순';
-
-  @override
   String get sortByJoinTime => '가입 시간순';
 
   @override
-  String get ascending => '오름차순';
-
-  @override
-  String get descending => '내림차순';
-
-  @override
   String get serverHistory => '서버 기록';
-
-  @override
-  String get clearHistory => '기록 지우기';
 
   @override
   String get portForwardBetaTitle => '포트 포워딩 (Beta)';
@@ -1383,14 +1263,5 @@ class AppLocalizationsKo extends AppLocalizations {
   String get continueInTerminal => '터미널에서 계속하기';
 
   @override
-  String get browsing => '탐색 중';
-
-  @override
   String get askAiRiskUnknown => '분류되지 않음';
-
-  @override
-  String get memory => '메모리';
-
-  @override
-  String get permissionDenied => '권한이 없습니다.';
 }

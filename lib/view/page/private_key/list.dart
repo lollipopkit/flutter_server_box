@@ -51,7 +51,7 @@ class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage>
   Widget _buildKeyItem(PrivateKeyInfo item) {
     return ListTile(
       title: Text(item.id),
-      subtitle: Text(item.type ?? l10n.unknown, style: UIs.textGrey),
+      subtitle: Text(item.type ?? libL10n.unknown, style: UIs.textGrey),
       onTap: () => PrivateKeyEditPage.route.go(
         context,
         args: PrivateKeyEditPageArgs(pki: item),

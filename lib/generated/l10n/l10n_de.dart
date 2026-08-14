@@ -19,36 +19,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get added2List => 'Zur Aufgabenliste hinzugefügt';
 
   @override
-  String get addr => 'Adresse';
-
-  @override
   String get askAi => 'KI fragen';
 
   @override
-  String get ai => 'KI';
-
-  @override
-  String get askAiApiKey => 'API-Schlüssel';
-
-  @override
   String get askAiAwaitingResponse => 'Warte auf KI-Antwort...';
-
-  @override
-  String get askAiBaseUrl => 'Basis-URL';
 
   @override
   String get askAiEndpointTip =>
       'Gib eine Basis-URL des Dienstes oder einen vollständigen Chat-Completions- bzw. Responses-Endpunkt an. ServerBox ergänzt den Pfad passend zum gewählten Protokoll.';
 
   @override
-  String get askAiProtocol => 'API-Protokoll';
-
-  @override
   String get askAiProtocolTip =>
       'Auto verwendet Responses für den offiziellen OpenAI-Endpunkt und Chat Completions für kompatible Anbieter.';
-
-  @override
-  String get askAiProtocolAuto => 'Automatisch';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -117,15 +99,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get askAiTerminalContext => 'Terminal-Kontext';
 
   @override
-  String get askAiReady => 'Bereit';
-
-  @override
-  String get askAiThinking => 'Denkt nach';
-
-  @override
-  String get askAiRunningCommand => 'Läuft';
-
-  @override
   String get askAiReviewNeeded => 'Prüfen';
 
   @override
@@ -166,12 +139,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get askAiHighRiskConfirmBody =>
       'Dieser Befehl kann Daten löschen, Dienste stoppen oder anderweitig schwer rückgängig zu machen sein. Prüfe ihn sorgfältig, bevor du ihn ausführst.';
-
-  @override
-  String get askAiCommandCancelled => 'Abgebrochen';
-
-  @override
-  String get askAiCommandTimedOut => 'Zeitüberschreitung';
 
   @override
   String get askAiNoCommandOutput => 'Befehl ohne Ausgabe abgeschlossen.';
@@ -227,9 +194,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get askAiDeleteConversationTip =>
       'Das Gespräch wird von diesem Gerät entfernt und kann nicht wiederhergestellt werden.';
-
-  @override
-  String get askAiClearHistory => 'Verlauf löschen';
 
   @override
   String get askAiClearHistoryTitle => 'Agent-Verlauf dieses Servers löschen?';
@@ -468,9 +432,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Zeigen Sie die Auslastung jedes CPUs in einem Fortschrittsbalken-Stil an (alter Stil)';
 
   @override
-  String get configured => 'Konfiguriert';
-
-  @override
   String get customCmd => 'Benutzerdefinierte Befehle';
 
   @override
@@ -581,12 +542,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get finishedAt => 'Beendet um';
 
   @override
-  String get followSystem => 'System verfolgen';
-
-  @override
-  String get fontSize => 'Schriftgröße';
-
-  @override
   String get fullScreen => 'Vollbildmodus';
 
   @override
@@ -612,16 +567,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get githubGistTokenEmpty => 'Token ist leer';
 
   @override
-  String get goBackQ => 'Zurückkommen?';
-
-  @override
   String get goto => 'Pfad öffnen';
-
-  @override
-  String get hideTitleBar => 'Titelleiste ausblenden';
-
-  @override
-  String get highlight => 'Code highlight';
 
   @override
   String get homeTabs => 'Home-Tabs';
@@ -692,12 +638,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get pull => 'Pull';
 
   @override
-  String get invalid => 'Ungültig';
-
-  @override
-  String get invalidUrl => 'Ungültige URL';
-
-  @override
   String get invalidHostFormat =>
       'Ungültiges Host-Format. Erlaubt sind nur IPv4, IPv6 und Domain-Zeichen.';
 
@@ -759,9 +699,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get more => 'Mehr';
-
-  @override
   String get needRestart => 'App muss neugestartet werden';
 
   @override
@@ -804,9 +741,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get fullAccessInsecure =>
       'Dieser Agent bietet das Terminal nur über TLS oder Loopback an, diese Verbindung ist unverschlüsseltes HTTP.';
-
-  @override
-  String get permission => 'Berechtigungen';
 
   @override
   String get plugInType => 'Einfügetyp';
@@ -908,9 +842,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get recentConnections => 'Kürzliche Verbindungen';
 
   @override
-  String get reconnecting => 'Erneut verbinden...';
-
-  @override
   String get rememberPwdInMem => 'Passwort im Speicher behalten';
 
   @override
@@ -922,9 +853,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get sameIdServerExist =>
       'Ein Server mit derselben ID existiert bereits';
-
-  @override
-  String get save => 'Speichern';
 
   @override
   String get second => 's';
@@ -966,12 +894,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Ordner zuerst anzeigen';
 
   @override
-  String get size => 'Größe';
-
-  @override
-  String get softWrap => 'Weicher Umbruch';
-
-  @override
   String get specifyDev => 'Gerät angeben';
 
   @override
@@ -981,9 +903,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       'Wenn aktiviert, wird der Temperaturwert als Celsius statt als Millicelsius behandelt. Nur einschalten, wenn die Temperatur falsch angezeigt wird (z. B. 0,1 °C statt 58 °C).';
-
-  @override
-  String get speed => 'Tempo';
 
   @override
   String spentTime(Object time) {
@@ -1095,9 +1014,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Automatische Umschaltung der virtuellen Tasten';
 
   @override
-  String get stat => 'Statistik';
-
-  @override
   String get supportFmtArgs =>
       'Die folgenden Formatierungsparameter werden unterstützt:';
 
@@ -1125,14 +1041,8 @@ class AppLocalizationsDe extends AppLocalizations {
       'Diese Einstellung beeinflusst die Größe des Terminals (Breite und Höhe). Sie können die Terminalseite zoomen, um die Schriftgröße der aktuellen Sitzung anzupassen.';
 
   @override
-  String get textScaler => 'Skalierung der Schriftart';
-
-  @override
   String get textScalerTip =>
       '1.0 => 100% (Originalgröße), funktioniert nur auf der Serverseite Teil der Schrift, nicht empfohlen zu ändern.';
-
-  @override
-  String get time => 'Zeit';
 
   @override
   String get times => 'x';
@@ -1143,9 +1053,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get sudoPromptNotFound =>
       'Aktuell wird kein sudo-Passwort-Prompt angezeigt.';
-
-  @override
-  String get unknown => 'Unbekannt';
 
   @override
   String get updateServerStatusInterval =>
@@ -1165,9 +1072,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get viewDetails => 'Details anzeigen';
-
-  @override
-  String get viewErr => 'Fehler anzeigen';
 
   @override
   String get virtKeyHelpClipboard =>
@@ -1194,9 +1098,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get whenOpenApp => 'Beim Öffnen der App';
-
-  @override
-  String get wiki => 'Wiki';
 
   @override
   String get wolTip =>
@@ -1241,12 +1142,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get portForward_remotePort => 'Entfernter Port';
 
   @override
-  String get portForward_type_local => 'Lokal';
-
-  @override
-  String get portForward_type_remote => 'Entfernt';
-
-  @override
   String portForward_deleteConfirmFmt(Object name) {
     return '$name löschen?';
   }
@@ -1255,25 +1150,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sponsor => 'Sponsor';
 
   @override
-  String get sort => 'Sortieren';
-
-  @override
-  String get sortByName => 'Nach Name';
-
-  @override
   String get sortByJoinTime => 'Nach Hinzufügedatum';
 
   @override
-  String get ascending => 'Aufsteigend';
-
-  @override
-  String get descending => 'Absteigend';
-
-  @override
   String get serverHistory => 'Serververlauf';
-
-  @override
-  String get clearHistory => 'Verlauf löschen';
 
   @override
   String get portForwardBetaTitle => 'Port Forwarding (Beta)';
@@ -1465,14 +1345,5 @@ class AppLocalizationsDe extends AppLocalizations {
   String get continueInTerminal => 'Im Terminal fortfahren';
 
   @override
-  String get browsing => 'Wird durchsucht';
-
-  @override
   String get askAiRiskUnknown => 'Nicht eingestuft';
-
-  @override
-  String get memory => 'Speicher';
-
-  @override
-  String get permissionDenied => 'Zugriff verweigert.';
 }

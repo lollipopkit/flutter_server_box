@@ -323,7 +323,7 @@ extension _Init on SSHPageState {
               child: CircularProgressIndicator(strokeWidth: 2.5),
             ),
             const SizedBox(width: 16),
-            Expanded(child: Text(l10n.reconnecting)),
+            Expanded(child: Text(libL10n.reconnecting)),
             Btn.cancel(onTap: onCancel),
           ],
         ),
@@ -335,7 +335,7 @@ extension _Init on SSHPageState {
   Future<void> _showDisconnectDialog() async {
     final shouldLeave = await context.showRoundDialog<bool>(
       title: libL10n.attention,
-      child: Text('${libL10n.disconnected}\n${l10n.goBackQ}'),
+      child: Text('${libL10n.disconnected}\n${libL10n.goBackQ}'),
       barrierDismiss: false,
       actions: [
         TextButton(

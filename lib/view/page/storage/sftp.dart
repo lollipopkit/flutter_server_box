@@ -203,8 +203,8 @@ extension _UI on _SftpPageState {
   Widget _buildSortMenu() {
     final options = [
       (_SortType.name, libL10n.name),
-      (_SortType.size, l10n.size),
-      (_SortType.time, l10n.time),
+      (_SortType.size, libL10n.size),
+      (_SortType.time, libL10n.time),
     ];
     return _sortOption.listenVal((value) {
       return PopupMenuButton<_SortType>(
@@ -419,7 +419,7 @@ extension _Actions on _SftpPageState {
     final retry = await context.showRoundDialog<bool>(
       title: l10n.trySudo,
       child: Text(
-        '${l10n.permissionDenied}\n${libL10n.askContinue(l10n.trySudo)}',
+        '${libL10n.permissionDenied}\n${libL10n.askContinue(l10n.trySudo)}',
       ),
       actions: Btnx.cancelRedOk,
     );
@@ -560,7 +560,7 @@ extension _Actions on _SftpPageState {
       ),
       ListTile(
         leading: const Icon(Icons.security),
-        title: Text(l10n.permission),
+        title: Text(libL10n.permission),
         onTap: () async {
           context.pop();
 

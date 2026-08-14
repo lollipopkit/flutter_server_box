@@ -101,7 +101,7 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
       actionsBuilder: (dialogContext) => [
         Btn.cancel(),
         Btn.text(
-          text: context.l10n.askAiClearHistory,
+          text: libL10n.clearHistory,
           textStyle: UIs.textRed,
           onTap: () => dialogContext.pop(true),
         ),
@@ -139,7 +139,7 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
                 ),
                 if (conversations.isNotEmpty)
                   IconButton(
-                    tooltip: context.l10n.askAiClearHistory,
+                    tooltip: libL10n.clearHistory,
                     onPressed: session.isWorking ? null : _clear,
                     icon: const Icon(Icons.delete_sweep_outlined),
                   ),

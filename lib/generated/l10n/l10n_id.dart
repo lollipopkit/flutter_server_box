@@ -19,36 +19,18 @@ class AppLocalizationsId extends AppLocalizations {
   String get added2List => 'Ditambahkan ke Daftar Tugas';
 
   @override
-  String get addr => 'Alamat';
-
-  @override
   String get askAi => 'Tanya AI';
 
   @override
-  String get ai => 'AI';
-
-  @override
-  String get askAiApiKey => 'Kunci API';
-
-  @override
   String get askAiAwaitingResponse => 'Menunggu respons AI...';
-
-  @override
-  String get askAiBaseUrl => 'URL dasar';
 
   @override
   String get askAiEndpointTip =>
       'Masukkan URL dasar layanan atau endpoint lengkap Chat Completions maupun Responses. ServerBox melengkapi jalurnya sesuai protokol yang dipilih.';
 
   @override
-  String get askAiProtocol => 'Protokol API';
-
-  @override
   String get askAiProtocolTip =>
       'Otomatis memakai Responses untuk endpoint resmi OpenAI dan Chat Completions untuk penyedia yang kompatibel.';
-
-  @override
-  String get askAiProtocolAuto => 'Otomatis';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -116,15 +98,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAiTerminalContext => 'Konteks terminal';
 
   @override
-  String get askAiReady => 'Siap';
-
-  @override
-  String get askAiThinking => 'Berpikir';
-
-  @override
-  String get askAiRunningCommand => 'Menjalankan';
-
-  @override
   String get askAiReviewNeeded => 'Tinjau';
 
   @override
@@ -164,12 +137,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get askAiHighRiskConfirmBody =>
       'Perintah ini dapat menghapus data, menghentikan layanan, atau sulit dibatalkan. Tinjau dengan cermat sebelum menjalankannya.';
-
-  @override
-  String get askAiCommandCancelled => 'Dibatalkan';
-
-  @override
-  String get askAiCommandTimedOut => 'Waktu habis';
 
   @override
   String get askAiNoCommandOutput => 'Perintah selesai tanpa keluaran.';
@@ -225,9 +192,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get askAiDeleteConversationTip =>
       'Percakapan akan dihapus dari perangkat ini dan tidak bisa dikembalikan.';
-
-  @override
-  String get askAiClearHistory => 'Hapus riwayat';
 
   @override
   String get askAiClearHistoryTitle => 'Hapus riwayat Agent untuk server ini?';
@@ -467,9 +431,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Tampilkan tingkat penggunaan setiap CPU dalam gaya bilah kemajuan (gaya lama)';
 
   @override
-  String get configured => 'Sudah dikonfigurasi';
-
-  @override
   String get customCmd => 'Perintah kustom';
 
   @override
@@ -580,12 +541,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get finishedAt => 'Selesai pada';
 
   @override
-  String get followSystem => 'Ikuti sistem';
-
-  @override
-  String get fontSize => 'Ukuran huruf';
-
-  @override
   String get fullScreen => 'Mode Layar Penuh';
 
   @override
@@ -611,16 +566,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get githubGistTokenEmpty => 'Token kosong';
 
   @override
-  String get goBackQ => 'Datang kembali?';
-
-  @override
   String get goto => 'Pergi ke';
-
-  @override
-  String get hideTitleBar => 'Sembunyikan bilah judul';
-
-  @override
-  String get highlight => 'Sorotan kode';
 
   @override
   String get homeTabs => 'Tab Beranda';
@@ -691,12 +637,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get pull => 'Tarik';
 
   @override
-  String get invalid => 'Tidak valid';
-
-  @override
-  String get invalidUrl => 'URL tidak valid';
-
-  @override
   String get invalidHostFormat =>
       'Format host tidak valid. Hanya karakter IPv4, IPv6, dan domain yang diizinkan.';
 
@@ -758,9 +698,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get more => 'Lebih Banyak';
-
-  @override
   String get needRestart => 'Perlu memulai ulang aplikasi';
 
   @override
@@ -804,9 +741,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get fullAccessInsecure =>
       'Agen ini hanya menyajikan terminal melalui TLS atau loopback, sedangkan koneksi ini HTTP polos.';
-
-  @override
-  String get permission => 'Izin';
 
   @override
   String get plugInType => 'Jenis Penyisipan';
@@ -908,9 +842,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get recentConnections => 'Koneksi Terkini';
 
   @override
-  String get reconnecting => 'Menghubungkan kembali...';
-
-  @override
   String get rememberPwdInMem => 'Ingat kata sandi di dalam memori';
 
   @override
@@ -922,9 +853,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get sameIdServerExist => 'Server dengan ID yang sama sudah ada';
-
-  @override
-  String get save => 'Menyimpan';
 
   @override
   String get second => 'S';
@@ -965,12 +893,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Folder ditampilkan lebih dulu';
 
   @override
-  String get size => 'Ukuran';
-
-  @override
-  String get softWrap => 'Pembungkus lembut';
-
-  @override
   String get specifyDev => 'Tentukan perangkat';
 
   @override
@@ -980,9 +902,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       'Jika aktif, nilai suhu diperlakukan sebagai Celsius, bukan milicelsius. Aktifkan hanya bila suhu tampil keliru (misalnya 0,1 °C, bukan 58 °C).';
-
-  @override
-  String get speed => 'Kecepatan';
 
   @override
   String spentTime(Object time) {
@@ -1092,9 +1011,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get sshVirtualKeyAutoOff => 'Switching Otomatis Kunci Virtual';
 
   @override
-  String get stat => 'Statistik';
-
-  @override
   String get supportFmtArgs => 'Parameter pemformatan berikut ini didukung:';
 
   @override
@@ -1121,14 +1037,8 @@ class AppLocalizationsId extends AppLocalizations {
       'Pengaturan ini akan memengaruhi ukuran terminal (lebar dan tinggi). Anda dapat melakukan zoom pada halaman terminal untuk menyesuaikan ukuran font sesi saat ini.';
 
   @override
-  String get textScaler => 'Penskalaan font';
-
-  @override
   String get textScalerTip =>
       '1.0 => 100% (ukuran asli), hanya berfungsi pada bagian halaman server font, tidak disarankan untuk diubah.';
-
-  @override
-  String get time => 'Waktu';
 
   @override
   String get times => 'Waktu';
@@ -1139,9 +1049,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get sudoPromptNotFound =>
       'Tidak ada permintaan kata sandi sudo yang aktif.';
-
-  @override
-  String get unknown => 'Tidak dikenal';
 
   @override
   String get updateServerStatusInterval => 'Interval Pembaruan Status Server';
@@ -1160,9 +1067,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get viewDetails => 'Lihat Detail';
-
-  @override
-  String get viewErr => 'Lihat kesalahan';
 
   @override
   String get virtKeyHelpClipboard =>
@@ -1188,9 +1092,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get whenOpenApp => 'Saat membuka aplikasi';
-
-  @override
-  String get wiki => 'Wiki';
 
   @override
   String get wolTip =>
@@ -1235,12 +1136,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get portForward_remotePort => 'Porta jarak jauh';
 
   @override
-  String get portForward_type_local => 'Lokal';
-
-  @override
-  String get portForward_type_remote => 'Jarak jauh';
-
-  @override
   String portForward_deleteConfirmFmt(Object name) {
     return 'Hapus $name?';
   }
@@ -1249,25 +1144,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get sponsor => 'Sponsor';
 
   @override
-  String get sort => 'Urutkan';
-
-  @override
-  String get sortByName => 'Menurut nama';
-
-  @override
   String get sortByJoinTime => 'Menurut waktu ditambahkan';
 
   @override
-  String get ascending => 'Naik';
-
-  @override
-  String get descending => 'Turun';
-
-  @override
   String get serverHistory => 'Riwayat server';
-
-  @override
-  String get clearHistory => 'Hapus riwayat';
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
@@ -1450,14 +1330,5 @@ class AppLocalizationsId extends AppLocalizations {
   String get continueInTerminal => 'Lanjutkan di terminal';
 
   @override
-  String get browsing => 'Menjelajahi';
-
-  @override
   String get askAiRiskUnknown => 'Tidak terklasifikasi';
-
-  @override
-  String get memory => 'Memori';
-
-  @override
-  String get permissionDenied => 'Izin ditolak.';
 }

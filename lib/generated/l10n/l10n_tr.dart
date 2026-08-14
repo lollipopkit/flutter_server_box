@@ -19,36 +19,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get added2List => 'Görev listesine eklendi';
 
   @override
-  String get addr => 'Adres';
-
-  @override
   String get askAi => 'Yapay zekaya sor';
 
   @override
-  String get ai => 'Yapay zekâ';
-
-  @override
-  String get askAiApiKey => 'API anahtarı';
-
-  @override
   String get askAiAwaitingResponse => 'Yapay zekâ yanıtı bekleniyor...';
-
-  @override
-  String get askAiBaseUrl => 'Temel URL';
 
   @override
   String get askAiEndpointTip =>
       'Bir servis temel URL\'si ya da tam bir Chat Completions veya Responses uç noktası gir. ServerBox yolu seçilen protokole göre tamamlar.';
 
   @override
-  String get askAiProtocol => 'API protokolü';
-
-  @override
   String get askAiProtocolTip =>
       'Otomatik, resmî OpenAI uç noktası için Responses\'ı, uyumlu sağlayıcılar için Chat Completions\'ı kullanır.';
-
-  @override
-  String get askAiProtocolAuto => 'Otomatik';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -117,15 +99,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiTerminalContext => 'Terminal bağlamı';
 
   @override
-  String get askAiReady => 'Hazır';
-
-  @override
-  String get askAiThinking => 'Düşünüyor';
-
-  @override
-  String get askAiRunningCommand => 'Çalışıyor';
-
-  @override
   String get askAiReviewNeeded => 'İncele';
 
   @override
@@ -166,12 +139,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get askAiHighRiskConfirmBody =>
       'Bu komut veri silebilir, servisleri durdurabilir ya da geri alınması zor olabilir. Çalıştırmadan önce dikkatle incele.';
-
-  @override
-  String get askAiCommandCancelled => 'İptal edildi';
-
-  @override
-  String get askAiCommandTimedOut => 'Zaman aşımı';
 
   @override
   String get askAiNoCommandOutput => 'Komut çıktı üretmeden tamamlandı.';
@@ -226,9 +193,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get askAiDeleteConversationTip =>
       'Konuşma bu cihazdan kaldırılır ve geri alınamaz.';
-
-  @override
-  String get askAiClearHistory => 'Geçmişi temizle';
 
   @override
   String get askAiClearHistoryTitle =>
@@ -469,9 +433,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Her CPU\'nun kullanımını ilerleme çubuğu tarzında göster (eski tarz)';
 
   @override
-  String get configured => 'Yapılandırıldı';
-
-  @override
   String get customCmd => 'Özel komutlar';
 
   @override
@@ -582,12 +543,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get finishedAt => 'Tamamlandı:';
 
   @override
-  String get followSystem => 'Sistemi takip et';
-
-  @override
-  String get fontSize => 'Yazı tipi boyutu';
-
-  @override
   String get fullScreen => 'Tam ekran modu';
 
   @override
@@ -613,16 +568,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get githubGistTokenEmpty => 'Belirteç boş';
 
   @override
-  String get goBackQ => 'Geri dön?';
-
-  @override
   String get goto => 'Git';
-
-  @override
-  String get hideTitleBar => 'Başlık çubuğunu gizle';
-
-  @override
-  String get highlight => 'Kod vurgulama';
 
   @override
   String get homeTabs => 'Ana Sayfa Sekmeleri';
@@ -693,12 +639,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pull => 'Çek';
 
   @override
-  String get invalid => 'Geçersiz';
-
-  @override
-  String get invalidUrl => 'Geçersiz URL';
-
-  @override
   String get invalidHostFormat =>
       'Geçersiz ana makine biçimi. Yalnızca IPv4, IPv6 ve alan adı karakterlerine izin verilir.';
 
@@ -760,9 +700,6 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get more => 'Daha fazla';
-
-  @override
   String get needRestart => 'Uygulamanın yeniden başlatılması gerekiyor';
 
   @override
@@ -804,9 +741,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get fullAccessInsecure =>
       'Bu aracı terminali yalnızca TLS veya loopback üzerinden sunuyor, bu bağlantı ise düz HTTP.';
-
-  @override
-  String get permission => 'İzinler';
 
   @override
   String get plugInType => 'Eklenti Türü';
@@ -908,9 +842,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recentConnections => 'Son Bağlantılar';
 
   @override
-  String get reconnecting => 'Yeniden bağlanılıyor...';
-
-  @override
   String get rememberPwdInMem => 'Şifreyi bellekte hatırla';
 
   @override
@@ -922,9 +853,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sameIdServerExist => 'Aynı kimliğe sahip bir sunucu zaten mevcut';
-
-  @override
-  String get save => 'Kaydet';
 
   @override
   String get second => 's';
@@ -966,12 +894,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Önce klasörleri göster';
 
   @override
-  String get size => 'Boyut';
-
-  @override
-  String get softWrap => 'Yumuşak kaydırma';
-
-  @override
   String get specifyDev => 'Cihazı belirt';
 
   @override
@@ -981,9 +903,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       'Açıkken sıcaklık değeri milisantigrat yerine santigrat olarak işlenir. Yalnızca sıcaklık yanlış görünüyorsa aç (örneğin 58 °C yerine 0,1 °C).';
-
-  @override
-  String get speed => 'Hız';
 
   @override
   String spentTime(Object time) {
@@ -1092,9 +1011,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sshVirtualKeyAutoOff => 'Sanal tuşların otomatik geçişi';
 
   @override
-  String get stat => 'İstatistik';
-
-  @override
   String get supportFmtArgs =>
       'Aşağıdaki biçimlendirme parametreleri desteklenir:';
 
@@ -1122,14 +1038,8 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu ayar terminal boyutunu (genişlik ve yükseklik) etkiler. Terminal sayfasında yakınlaştırarak mevcut oturumun yazı tipi boyutunu ayarlayabilirsiniz.';
 
   @override
-  String get textScaler => 'Metin ölçekleyici';
-
-  @override
   String get textScalerTip =>
       '1.0 => %100 (orijinal boyut), yalnızca sunucu sayfasındaki yazı tipinin bir kısmı üzerinde çalışır, değiştirilmesi önerilmez.';
-
-  @override
-  String get time => 'Zaman';
 
   @override
   String get times => 'Kez';
@@ -1139,9 +1049,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sudoPromptNotFound => 'Aktif bir sudo parola istemi yok.';
-
-  @override
-  String get unknown => 'Bilinmeyen';
 
   @override
   String get updateServerStatusInterval => 'Sunucu durumu güncelleme aralığı';
@@ -1160,9 +1067,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get viewDetails => 'Detayları Görüntüle';
-
-  @override
-  String get viewErr => 'Hatayı gör';
 
   @override
   String get virtKeyHelpClipboard =>
@@ -1188,9 +1092,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get whenOpenApp => 'Uygulama açıldığında';
-
-  @override
-  String get wiki => 'Wiki';
 
   @override
   String get wolTip =>
@@ -1235,12 +1136,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get portForward_remotePort => 'Uzak port';
 
   @override
-  String get portForward_type_local => 'Yerel';
-
-  @override
-  String get portForward_type_remote => 'Uzak';
-
-  @override
   String portForward_deleteConfirmFmt(Object name) {
     return '$name silinsin mi?';
   }
@@ -1249,25 +1144,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get sponsor => 'Sponsor';
 
   @override
-  String get sort => 'Sırala';
-
-  @override
-  String get sortByName => 'Ada göre';
-
-  @override
   String get sortByJoinTime => 'Eklenme zamanına göre';
 
   @override
-  String get ascending => 'Artan';
-
-  @override
-  String get descending => 'Azalan';
-
-  @override
   String get serverHistory => 'Sunucu geçmişi';
-
-  @override
-  String get clearHistory => 'Geçmişi temizle';
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
@@ -1447,14 +1327,5 @@ class AppLocalizationsTr extends AppLocalizations {
   String get continueInTerminal => 'Terminalde devam et';
 
   @override
-  String get browsing => 'Göz atılıyor';
-
-  @override
   String get askAiRiskUnknown => 'Sınıflandırılmadı';
-
-  @override
-  String get memory => 'Bellek';
-
-  @override
-  String get permissionDenied => 'İzin reddedildi.';
 }

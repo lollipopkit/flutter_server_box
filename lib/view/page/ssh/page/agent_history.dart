@@ -127,7 +127,7 @@ extension _AgentHistoryActions on _AskAiPanelState {
         TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
         FilledButton.tonal(
           onPressed: () => context.popDialog(true),
-          child: Text(context.l10n.askAiClearHistory),
+          child: Text(libL10n.clearHistory),
         ),
       ],
     );
@@ -193,7 +193,7 @@ class _AgentHistoryViewState extends State<_AgentHistoryView> {
       AskAiProtocol.responses => context.l10n.askAiProtocolResponses,
       AskAiProtocol.chatCompletions =>
         context.l10n.askAiProtocolChatCompletions,
-      AskAiProtocol.auto => context.l10n.askAiProtocolAuto,
+      AskAiProtocol.auto => libL10n.auto,
     };
     return '$date $time · $protocol · ${conversation.model}';
   }
@@ -226,7 +226,7 @@ class _AgentHistoryViewState extends State<_AgentHistoryView> {
                 ),
                 if (conversations.isNotEmpty)
                   IconButton(
-                    tooltip: context.l10n.askAiClearHistory,
+                    tooltip: libL10n.clearHistory,
                     onPressed: _busy ? null : () => _run(widget.onClear),
                     icon: const Icon(Icons.delete_sweep_outlined),
                   ),

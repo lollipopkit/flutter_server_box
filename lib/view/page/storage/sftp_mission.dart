@@ -112,7 +112,7 @@ class _SftpMissionPageState extends ConsumerState<SftpMissionPage> {
     final speed = '${(status.speedBytesPerSecond ?? 0).bytes2Str}/s';
     return _wrapInCard(
       status: status,
-      subtitle: '$transferred / $size - $percentStr% - ${l10n.speed}: $speed',
+      subtitle: '$transferred / $size - $percentStr% - ${libL10n.speed}: $speed',
       trailing: _buildDelete(status.fileName, status.id),
     );
   }
@@ -120,7 +120,7 @@ class _SftpMissionPageState extends ConsumerState<SftpMissionPage> {
   Widget _buildFinished(SftpReqStatus status) {
     final time = status.spentTime.toString();
     final str = l10n.spentTime(
-      time == 'null' ? l10n.unknown : (time.substring(0, time.length - 7)),
+      time == 'null' ? libL10n.unknown : (time.substring(0, time.length - 7)),
     );
 
     final btns = Row(

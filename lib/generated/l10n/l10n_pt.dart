@@ -19,36 +19,18 @@ class AppLocalizationsPt extends AppLocalizations {
   String get added2List => 'Adicionado à lista de tarefas';
 
   @override
-  String get addr => 'Endereço';
-
-  @override
   String get askAi => 'Perguntar à IA';
 
   @override
-  String get ai => 'IA';
-
-  @override
-  String get askAiApiKey => 'Chave de API';
-
-  @override
   String get askAiAwaitingResponse => 'Aguardando resposta da IA...';
-
-  @override
-  String get askAiBaseUrl => 'URL base';
 
   @override
   String get askAiEndpointTip =>
       'Informe um URL base do serviço ou um endpoint completo de Chat Completions ou Responses. O ServerBox completa o caminho conforme o protocolo escolhido.';
 
   @override
-  String get askAiProtocol => 'Protocolo da API';
-
-  @override
   String get askAiProtocolTip =>
       'Automático usa Responses para o endpoint oficial da OpenAI e Chat Completions para provedores compatíveis.';
-
-  @override
-  String get askAiProtocolAuto => 'Automático';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -116,15 +98,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get askAiTerminalContext => 'Contexto do terminal';
 
   @override
-  String get askAiReady => 'Pronto';
-
-  @override
-  String get askAiThinking => 'Pensando';
-
-  @override
-  String get askAiRunningCommand => 'Executando';
-
-  @override
   String get askAiReviewNeeded => 'Revisar';
 
   @override
@@ -164,12 +137,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get askAiHighRiskConfirmBody =>
       'Este comando pode apagar dados, parar serviços ou ser difícil de desfazer. Revise com atenção antes de executar.';
-
-  @override
-  String get askAiCommandCancelled => 'Cancelado';
-
-  @override
-  String get askAiCommandTimedOut => 'Tempo esgotado';
 
   @override
   String get askAiNoCommandOutput => 'O comando terminou sem saída.';
@@ -224,9 +191,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get askAiDeleteConversationTip =>
       'A conversa será removida deste dispositivo e não poderá ser recuperada.';
-
-  @override
-  String get askAiClearHistory => 'Limpar histórico';
 
   @override
   String get askAiClearHistoryTitle =>
@@ -467,9 +431,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Exiba a taxa de uso de cada CPU em estilo de barra de progresso (estilo antigo)';
 
   @override
-  String get configured => 'Configurado';
-
-  @override
   String get customCmd => 'Comandos personalizados';
 
   @override
@@ -579,12 +540,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get finishedAt => 'Terminado em';
 
   @override
-  String get followSystem => 'Seguir sistema';
-
-  @override
-  String get fontSize => 'Tamanho da fonte';
-
-  @override
   String get fullScreen => 'Modo tela cheia';
 
   @override
@@ -610,16 +565,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get githubGistTokenEmpty => 'O token está vazio';
 
   @override
-  String get goBackQ => 'Voltar?';
-
-  @override
   String get goto => 'Ir para';
-
-  @override
-  String get hideTitleBar => 'Ocultar barra de título';
-
-  @override
-  String get highlight => 'Destaque de código';
 
   @override
   String get homeTabs => 'Abas iniciais';
@@ -691,12 +637,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get pull => 'Puxar';
 
   @override
-  String get invalid => 'Inválido';
-
-  @override
-  String get invalidUrl => 'URL inválido';
-
-  @override
   String get invalidHostFormat =>
       'Formato de host inválido. São permitidos apenas caracteres de IPv4, IPv6 e domínio.';
 
@@ -758,9 +698,6 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get more => 'Mais';
-
-  @override
   String get needRestart => 'Necessita reiniciar o app';
 
   @override
@@ -803,9 +740,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get fullAccessInsecure =>
       'Este agente serve o terminal apenas por TLS ou loopback, e esta ligação é HTTP não cifrado.';
-
-  @override
-  String get permission => 'Permissões';
 
   @override
   String get plugInType => 'Tipo de Inserção';
@@ -906,9 +840,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get recentConnections => 'Conexões recentes';
 
   @override
-  String get reconnecting => 'Reconectando...';
-
-  @override
   String get rememberPwdInMem => 'Lembrar senha na memória';
 
   @override
@@ -919,9 +850,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get sameIdServerExist => 'Já existe um servidor com o mesmo ID';
-
-  @override
-  String get save => 'Salvar';
 
   @override
   String get second => 'Segundo';
@@ -963,12 +891,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Mostrar pastas primeiro';
 
   @override
-  String get size => 'Tamanho';
-
-  @override
-  String get softWrap => 'Quebra de linha suave';
-
-  @override
   String get specifyDev => 'Especificar dispositivo';
 
   @override
@@ -978,9 +900,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       'Quando ativado, o valor de temperatura é tratado como Celsius em vez de milicelsius. Ative apenas se a temperatura aparecer errada (por exemplo, 0,1 °C em vez de 58 °C).';
-
-  @override
-  String get speed => 'Velocidade';
 
   @override
   String spentTime(Object time) {
@@ -1091,9 +1010,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'Desativação automática das teclas virtuais';
 
   @override
-  String get stat => 'Estatísticas';
-
-  @override
   String get supportFmtArgs => 'Suporta os seguintes argumentos formatados:';
 
   @override
@@ -1120,14 +1036,8 @@ class AppLocalizationsPt extends AppLocalizations {
       'Esta configuração afetará o tamanho do terminal (largura e altura). Você pode dar zoom na página do terminal para ajustar o tamanho da fonte da sessão atual.';
 
   @override
-  String get textScaler => 'Escala de texto';
-
-  @override
   String get textScalerTip =>
       '1.0 => 100% (tamanho original), afeta apenas algumas fontes na página do servidor, não é recomendado alterar.';
-
-  @override
-  String get time => 'Tempo';
 
   @override
   String get times => 'Vezes';
@@ -1138,9 +1048,6 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get sudoPromptNotFound =>
       'Nenhuma solicitação de senha sudo está ativa.';
-
-  @override
-  String get unknown => 'Desconhecido';
 
   @override
   String get updateServerStatusInterval =>
@@ -1160,9 +1067,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get viewDetails => 'Ver detalhes';
-
-  @override
-  String get viewErr => 'Ver erro';
 
   @override
   String get virtKeyHelpClipboard =>
@@ -1188,9 +1092,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get whenOpenApp => 'Ao abrir o app';
-
-  @override
-  String get wiki => 'Wiki';
 
   @override
   String get wolTip =>
@@ -1235,12 +1136,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get portForward_remotePort => 'Porta remota';
 
   @override
-  String get portForward_type_local => 'Local';
-
-  @override
-  String get portForward_type_remote => 'Remoto';
-
-  @override
   String portForward_deleteConfirmFmt(Object name) {
     return 'Excluir $name?';
   }
@@ -1249,25 +1144,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sponsor => 'Patrocinador';
 
   @override
-  String get sort => 'Ordenar';
-
-  @override
-  String get sortByName => 'Por nome';
-
-  @override
   String get sortByJoinTime => 'Por data de adição';
 
   @override
-  String get ascending => 'Crescente';
-
-  @override
-  String get descending => 'Decrescente';
-
-  @override
   String get serverHistory => 'Histórico do servidor';
-
-  @override
-  String get clearHistory => 'Limpar histórico';
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
@@ -1458,14 +1338,5 @@ class AppLocalizationsPt extends AppLocalizations {
   String get continueInTerminal => 'Continuar no terminal';
 
   @override
-  String get browsing => 'Navegando';
-
-  @override
   String get askAiRiskUnknown => 'Não classificado';
-
-  @override
-  String get memory => 'Memória';
-
-  @override
-  String get permissionDenied => 'Permissão negada.';
 }

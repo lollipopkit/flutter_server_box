@@ -591,7 +591,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     if (error is AskAiConfigException) {
       if (error.missingFields.isEmpty) {
         return error.hasInvalidBaseUrl
-            ? '${l10n.invalidUrl}: ${error.invalidBaseUrl}'
+            ? '${libL10n.invalidUrl}: ${error.invalidBaseUrl}'
             : error.toString();
       }
       final locale = Localizations.maybeLocaleOf(context);
@@ -602,8 +602,8 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       final fields = error.missingFields
           .map(
             (field) => switch (field) {
-              AskAiConfigField.baseUrl => l10n.askAiBaseUrl,
-              AskAiConfigField.apiKey => l10n.askAiApiKey,
+              AskAiConfigField.baseUrl => libL10n.apiEndpoint,
+              AskAiConfigField.apiKey => libL10n.apiKey,
               AskAiConfigField.model => libL10n.askAiModel,
             },
           )
@@ -764,10 +764,10 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       _isStreaming,
       _pendingCommand != null,
     )) {
-      (true, _, _) => context.l10n.askAiRunningCommand,
-      (_, true, _) => context.l10n.askAiThinking,
+      (true, _, _) => libL10n.running,
+      (_, true, _) => libL10n.thinking,
       (_, _, true) => context.l10n.askAiReviewNeeded,
-      _ => context.l10n.askAiReady,
+      _ => libL10n.ready,
     };
     final statusColor = _pendingCommand != null
         ? theme.colorScheme.tertiary
@@ -998,9 +998,9 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
         ? theme.colorScheme.primary
         : theme.colorScheme.error;
     final status = result.cancelled
-        ? context.l10n.askAiCommandCancelled
+        ? libL10n.cancelled
         : result.timedOut
-        ? context.l10n.askAiCommandTimedOut
+        ? libL10n.timedOut
         : result.succeeded
         ? libL10n.success
         : '${libL10n.fail} (${result.exitCode ?? '?'})';

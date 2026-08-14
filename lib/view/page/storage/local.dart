@@ -488,8 +488,8 @@ enum _SortType {
 
   String get i18n => switch (this) {
     name => libL10n.name,
-    size => l10n.size,
-    time => l10n.time,
+    size => libL10n.size,
+    time => libL10n.time,
   };
 
   IconData get icon => switch (this) {

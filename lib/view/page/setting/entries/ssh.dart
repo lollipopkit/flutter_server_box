@@ -284,7 +284,7 @@ extension _SSH on _AppSettingsPageState {
   Widget _buildTermFontSize() {
     return ListTile(
       leading: const Icon(MingCute.font_size_line),
-      title: TipText(l10n.fontSize, l10n.termFontSizeTip),
+      title: TipText(libL10n.fontSize, l10n.termFontSizeTip),
       trailing: ValBuilder(
         listenable: _setting.termFontSize.listenable(),
         builder: (val) => Text(val.toString(), style: UIs.text15),

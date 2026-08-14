@@ -19,36 +19,18 @@ class AppLocalizationsUk extends AppLocalizations {
   String get added2List => 'Додано до списку завдань';
 
   @override
-  String get addr => 'Адреса';
-
-  @override
   String get askAi => 'Запитати ШІ';
 
   @override
-  String get ai => 'ШІ';
-
-  @override
-  String get askAiApiKey => 'Ключ API';
-
-  @override
   String get askAiAwaitingResponse => 'Очікування відповіді ШІ...';
-
-  @override
-  String get askAiBaseUrl => 'Базова URL';
 
   @override
   String get askAiEndpointTip =>
       'Вкажіть базову URL-адресу сервісу або повний ендпоінт Chat Completions чи Responses. ServerBox доповнить шлях відповідно до вибраного протоколу.';
 
   @override
-  String get askAiProtocol => 'Протокол API';
-
-  @override
   String get askAiProtocolTip =>
       '«Авто» використовує Responses для офіційного ендпоінта OpenAI і Chat Completions для сумісних постачальників.';
-
-  @override
-  String get askAiProtocolAuto => 'Авто';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -116,15 +98,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get askAiTerminalContext => 'Контекст термінала';
 
   @override
-  String get askAiReady => 'Готово';
-
-  @override
-  String get askAiThinking => 'Думає';
-
-  @override
-  String get askAiRunningCommand => 'Виконується';
-
-  @override
   String get askAiReviewNeeded => 'Перевірити';
 
   @override
@@ -164,12 +137,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get askAiHighRiskConfirmBody =>
       'Ця команда може видалити дані, зупинити служби або бути важкою для скасування. Уважно перевірте її перед запуском.';
-
-  @override
-  String get askAiCommandCancelled => 'Скасовано';
-
-  @override
-  String get askAiCommandTimedOut => 'Час вичерпано';
 
   @override
   String get askAiNoCommandOutput => 'Команда завершилася без виводу.';
@@ -224,9 +191,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get askAiDeleteConversationTip =>
       'Розмову буде видалено з цього пристрою без можливості відновлення.';
-
-  @override
-  String get askAiClearHistory => 'Очистити історію';
 
   @override
   String get askAiClearHistoryTitle =>
@@ -468,9 +432,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Відобразити використання кожного процесора у вигляді стовпчикової діаграми (старий стиль)';
 
   @override
-  String get configured => 'Налаштовано';
-
-  @override
   String get customCmd => 'Користувацькі команди';
 
   @override
@@ -581,12 +542,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get finishedAt => 'Завершено о';
 
   @override
-  String get followSystem => 'Слідувати системі';
-
-  @override
-  String get fontSize => 'Розмір шрифту';
-
-  @override
   String get fullScreen => 'Повноекранний режим';
 
   @override
@@ -612,16 +567,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get githubGistTokenEmpty => 'Токен порожній';
 
   @override
-  String get goBackQ => 'Повернутися назад?';
-
-  @override
   String get goto => 'Перейти до';
-
-  @override
-  String get hideTitleBar => 'Сховати заголовок';
-
-  @override
-  String get highlight => 'Підсвітка коду';
 
   @override
   String get homeTabs => 'Домашні вкладки';
@@ -693,12 +639,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get pull => 'Pull';
 
   @override
-  String get invalid => 'Недійсний';
-
-  @override
-  String get invalidUrl => 'Некоректна URL-адреса';
-
-  @override
   String get invalidHostFormat =>
       'Недійсний формат хоста. Дозволено лише символи IPv4, IPv6 та домену.';
 
@@ -761,9 +701,6 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get more => 'Більше';
-
-  @override
   String get needRestart => 'Необхідно перезапустити застосунок';
 
   @override
@@ -806,9 +743,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get fullAccessInsecure =>
       'Цей агент віддає термінал лише через TLS або loopback, а це з\'єднання — відкритий HTTP.';
-
-  @override
-  String get permission => 'Дозволи';
 
   @override
   String get plugInType => 'Тип вставки';
@@ -909,9 +843,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get recentConnections => 'Останні з\'єднання';
 
   @override
-  String get reconnecting => 'Перепідключення...';
-
-  @override
   String get rememberPwdInMem => 'Запам\'ятати пароль у пам\'яті';
 
   @override
@@ -923,9 +854,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get sameIdServerExist => 'Сервер з таким ID вже існує';
-
-  @override
-  String get save => 'Зберегти';
 
   @override
   String get second => 'сек.';
@@ -967,12 +895,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Спочатку відображати директорії';
 
   @override
-  String get size => 'Розмір';
-
-  @override
-  String get softWrap => 'М\'ягкий перенос';
-
-  @override
   String get specifyDev => 'Вказати пристрій';
 
   @override
@@ -982,9 +904,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       'Якщо увімкнено, значення температури вважається градусами Цельсія, а не мілліцельсія. Вмикайте, лише якщо температура показується неправильно (наприклад, 0,1 °C замість 58 °C).';
-
-  @override
-  String get speed => 'Швидкість';
 
   @override
   String spentTime(Object time) {
@@ -1095,9 +1014,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Автоматичне переключення віртуальних клавіш';
 
   @override
-  String get stat => 'Статистика';
-
-  @override
   String get supportFmtArgs => 'Підтримуються такі параметри форматування:';
 
   @override
@@ -1124,14 +1040,8 @@ class AppLocalizationsUk extends AppLocalizations {
       'Це налаштування вплине на розмір терміналу (ширину та висоту). Ви можете масштабувати на сторінці терміналу, щоб налаштувати розмір шрифту поточної сесії.';
 
   @override
-  String get textScaler => 'Масштабування тексту';
-
-  @override
   String get textScalerTip =>
       '1.0 => 100% (оригінальний розмір), працює лише на частині шрифта сторінки сервера, не рекомендується змінювати.';
-
-  @override
-  String get time => 'Час';
 
   @override
   String get times => 'Рази';
@@ -1141,9 +1051,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get sudoPromptNotFound => 'Наразі немає запиту пароля sudo.';
-
-  @override
-  String get unknown => 'Невідомо';
 
   @override
   String get updateServerStatusInterval => 'Інтервал оновлення статусу сервера';
@@ -1162,9 +1069,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get viewDetails => 'Переглянути деталі';
-
-  @override
-  String get viewErr => 'Переглянути помилку';
 
   @override
   String get virtKeyHelpClipboard =>
@@ -1191,9 +1095,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get whenOpenApp => 'При відкритті програми';
-
-  @override
-  String get wiki => 'Вікі';
 
   @override
   String get wolTip =>
@@ -1238,12 +1139,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get portForward_remotePort => 'Віддалений порт';
 
   @override
-  String get portForward_type_local => 'Локальний';
-
-  @override
-  String get portForward_type_remote => 'Віддалений';
-
-  @override
   String portForward_deleteConfirmFmt(Object name) {
     return 'Видалити $name?';
   }
@@ -1252,25 +1147,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sponsor => 'Спонсор';
 
   @override
-  String get sort => 'Сортування';
-
-  @override
-  String get sortByName => 'За назвою';
-
-  @override
   String get sortByJoinTime => 'За часом додавання';
 
   @override
-  String get ascending => 'За зростанням';
-
-  @override
-  String get descending => 'За спаданням';
-
-  @override
   String get serverHistory => 'Історія сервера';
-
-  @override
-  String get clearHistory => 'Очистити історію';
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
@@ -1467,14 +1347,5 @@ class AppLocalizationsUk extends AppLocalizations {
   String get continueInTerminal => 'Продовжити в терміналі';
 
   @override
-  String get browsing => 'Перегляд';
-
-  @override
   String get askAiRiskUnknown => 'Не визначено';
-
-  @override
-  String get memory => 'Пам\'ять';
-
-  @override
-  String get permissionDenied => 'Доступ заборонено.';
 }

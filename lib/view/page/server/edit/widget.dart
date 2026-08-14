@@ -135,7 +135,7 @@ extension _Widgets on _ServerEditPageState {
 
   Widget _buildMore() {
     return ExpandTile(
-      title: Text(l10n.more),
+      title: Text(libL10n.more),
       children: [
         _buildSudoPassword(),
         Input(
@@ -163,7 +163,7 @@ extension _Widgets on _ServerEditPageState {
   Widget _buildSudoPassword() {
     return _hasStoredSudoPassword.listenVal((hasValue) {
       final subtitle = switch (hasValue) {
-        true => Text(l10n.configured, style: UIs.textGrey),
+        true => Text(libL10n.configured, style: UIs.textGrey),
         false => Text(libL10n.empty, style: UIs.textGrey),
         null => Text(libL10n.loadingEllipsis, style: UIs.textGrey),
       };
@@ -558,7 +558,7 @@ extension _Widgets on _ServerEditPageState {
         Input(
           controller: _wolMacCtrl,
           type: TextInputType.text,
-          label: 'MAC ${l10n.addr}',
+          label: 'MAC ${libL10n.addr}',
           icon: Icons.computer,
           hint: '00:11:22:33:44:55',
           suggestion: false,
@@ -566,7 +566,7 @@ extension _Widgets on _ServerEditPageState {
         Input(
           controller: _wolIpCtrl,
           type: TextInputType.text,
-          label: 'IP ${l10n.addr}',
+          label: 'IP ${libL10n.addr}',
           icon: ZondIcons.network,
           hint: '192.168.1.x',
           suggestion: false,

@@ -188,7 +188,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
 
   Widget _buildFAB() {
     return FloatingActionButton(
-      tooltip: l10n.save,
+      tooltip: libL10n.save,
       onPressed: _onTapSave,
       child: const Icon(Icons.save),
     );

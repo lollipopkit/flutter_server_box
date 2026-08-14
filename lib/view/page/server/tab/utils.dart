@@ -186,7 +186,7 @@ extension _ServerX on ServerState {
 
   String? _getTopRightStr(Spi spi) {
     if (status.err != null) {
-      return l10n.viewErr;
+      return libL10n.viewErr;
     }
     switch (conn) {
       case ServerConn.disconnected:

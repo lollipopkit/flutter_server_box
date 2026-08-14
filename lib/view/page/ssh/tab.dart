@@ -438,7 +438,7 @@ extension _Actions on _SSHTabPageState {
 
   void _showSortMenu() {
     context.showRoundDialog(
-      title: l10n.sort,
+      title: libL10n.sort,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -534,7 +534,7 @@ extension _Actions on _SSHTabPageState {
             Stores.history.sshServerHistory.clear();
             context.popDialog();
           },
-          child: Text(l10n.clearHistory),
+          child: Text(libL10n.clearHistory),
         ),
         Btn.ok(onTap: context.popDialog),
       ],

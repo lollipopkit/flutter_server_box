@@ -60,7 +60,7 @@ extension on _ServerDetailPageState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           UIs.height13,
-          Text('${l10n.memory}: ${process.memory} MiB'),
+          Text('${libL10n.memory}: ${process.memory} MiB'),
           UIs.height13,
           Text('${libL10n.process}: ${process.name}'),
         ],
@@ -76,7 +76,7 @@ extension on _ServerDetailPageState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           UIs.height13,
-          Text('${l10n.memory}: ${_formatAmdGpuProcessMemory(process.memory)}'),
+          Text('${libL10n.memory}: ${_formatAmdGpuProcessMemory(process.memory)}'),
           UIs.height13,
           Text('${libL10n.process}: ${process.name}'),
         ],

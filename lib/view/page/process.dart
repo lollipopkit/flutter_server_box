@@ -1088,7 +1088,7 @@ class _SortHeader extends StatelessWidget {
     final scheme = theme.colorScheme;
     final color = active ? scheme.primary : scheme.onSurfaceVariant;
     final semanticsLabel = active
-        ? '$label, ${ascending ? context.l10n.ascending : context.l10n.descending}'
+        ? '$label, ${ascending ? libL10n.ascending : libL10n.descending}'
         : label;
     return Semantics(
       label: semanticsLabel,

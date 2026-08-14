@@ -38,7 +38,7 @@ extension _Editor on _AppSettingsPageState {
   Widget _buildEditorHighlight() {
     return ListTile(
       leading: const Icon(MingCute.code_line, size: _kIconSize),
-      title: TipText(l10n.highlight, l10n.editorHighlightTip),
+      title: TipText(libL10n.highlight, l10n.editorHighlightTip),
       trailing: StoreSwitch(prop: _setting.editorHighlight),
     );
   }
@@ -70,7 +70,7 @@ extension _Editor on _AppSettingsPageState {
   Widget _buildEditorWrap() {
     return ListTile(
       leading: const Icon(MingCute.align_center_line),
-      title: Text(l10n.softWrap),
+      title: Text(libL10n.softWrap),
       trailing: StoreSwitch(prop: _setting.editorSoftWrap),
     );
   }
@@ -78,7 +78,7 @@ extension _Editor on _AppSettingsPageState {
   Widget _buildEditorFontSize() {
     return ListTile(
       leading: const Icon(MingCute.font_size_line),
-      title: Text(l10n.fontSize),
+      title: Text(libL10n.fontSize),
       trailing: ValBuilder(
         listenable: _setting.editorFontSize.listenable(),
         builder: (val) => Text(val.toString(), style: UIs.text15),
@@ -129,7 +129,7 @@ extension _Editor on _AppSettingsPageState {
     }
 
     context.showRoundDialog(
-      title: l10n.fontSize,
+      title: libL10n.fontSize,
       child: Input(
         controller: ctrl,
         autoFocus: true,

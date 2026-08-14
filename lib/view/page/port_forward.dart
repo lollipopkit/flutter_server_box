@@ -386,9 +386,9 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
     );
   }
 
-  String get _localTypeLabel => context.l10n.portForward_type_local;
+  String get _localTypeLabel => libL10n.local;
 
-  String get _remoteTypeLabel => context.l10n.portForward_type_remote;
+  String get _remoteTypeLabel => libL10n.remote;
 
   String get _dynamicTypeLabel => 'SOCKS5';
 

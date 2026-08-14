@@ -88,7 +88,7 @@ extension on _ServerPageState {
   void _showFailReason(ServerStatus ss) {
     final md =
         '''
-${ss.err?.solution ?? l10n.unknown}
+${ss.err?.solution ?? libL10n.unknown}
 
 ```sh
 ${ss.err?.message ?? 'null'}

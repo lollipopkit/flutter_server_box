@@ -63,7 +63,7 @@ extension _AI on _AppSettingsPageState {
         _buildAskAiTextTile(
           prop: _setting.askAiBaseUrl,
           leading: const Icon(MingCute.link_2_line, size: _kIconSize),
-          title: l10n.askAiBaseUrl,
+          title: libL10n.apiEndpoint,
           hint: 'https://api.openai.com',
           description: l10n.askAiEndpointTip,
           displayBuilder: (val) =>
@@ -80,11 +80,11 @@ extension _AI on _AppSettingsPageState {
         _buildAskAiTextTile(
           prop: _setting.askAiApiKey,
           leading: const Icon(MingCute.key_2_line, size: _kIconSize),
-          title: l10n.askAiApiKey,
+          title: libL10n.apiKey,
           hint: 'sk-...',
           obscure: true,
           displayBuilder: (val) => val?.isNotEmpty == true
-              ? l10n.configured
+              ? libL10n.configured
               : l10n.askAiApiKeyOptional,
         ),
       ].map((e) => CardX(child: e)).toList(),
@@ -96,14 +96,14 @@ extension _AI on _AppSettingsPageState {
   /// wrapped around a tile was the only one that dropped a menu instead.
   Widget _buildAskAiProtocol(AppLocalizations l10n) {
     String label(AskAiProtocol protocol) => switch (protocol) {
-      AskAiProtocol.auto => l10n.askAiProtocolAuto,
+      AskAiProtocol.auto => libL10n.auto,
       AskAiProtocol.chatCompletions => l10n.askAiProtocolChatCompletions,
       AskAiProtocol.responses => l10n.askAiProtocolResponses,
     };
 
     return ListTile(
       leading: const Icon(Icons.swap_calls_outlined, size: _kIconSize),
-      title: TipText(l10n.askAiProtocol, l10n.askAiProtocolTip),
+      title: TipText(libL10n.apiProtocol, l10n.askAiProtocolTip),
       trailing: ValBuilder(
         listenable: _setting.askAiProtocol.listenable(),
         builder: (val) =>
@@ -111,7 +111,7 @@ extension _AI on _AppSettingsPageState {
       ),
       onTap: () async {
         final selected = await context.showPickSingleDialog(
-          title: l10n.askAiProtocol,
+          title: libL10n.apiProtocol,
           items: AskAiProtocol.values,
           display: label,
           initial: parseAskAiProtocol(_setting.askAiProtocol.fetch()),

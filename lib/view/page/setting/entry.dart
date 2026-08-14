@@ -164,7 +164,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
         [
           CenterGreyTitle(libL10n.app),
           _buildApp(),
-          CenterGreyTitle(l10n.ai),
+          CenterGreyTitle(libL10n.ai),
           _buildAskAiConfig(),
         ],
         [CenterGreyTitle(libL10n.server), _buildServer()],

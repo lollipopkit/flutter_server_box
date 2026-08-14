@@ -19,36 +19,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get added2List => 'タスクリストに追加されました';
 
   @override
-  String get addr => 'アドレス';
-
-  @override
   String get askAi => 'AI に質問';
 
   @override
-  String get ai => 'AI';
-
-  @override
-  String get askAiApiKey => 'API キー';
-
-  @override
   String get askAiAwaitingResponse => 'AI の応答を待機中...';
-
-  @override
-  String get askAiBaseUrl => 'ベース URL';
 
   @override
   String get askAiEndpointTip =>
       'サービスのベース URL、または Chat Completions か Responses の完全なエンドポイントを入力します。ServerBox が選択したプロトコルに合わせてパスを補完します。';
 
   @override
-  String get askAiProtocol => 'API プロトコル';
-
-  @override
   String get askAiProtocolTip =>
       '自動では、OpenAI 公式エンドポイントに Responses、互換プロバイダーに Chat Completions を使います。';
-
-  @override
-  String get askAiProtocolAuto => '自動';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -115,15 +97,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAiTerminalContext => 'ターミナルのコンテキスト';
 
   @override
-  String get askAiReady => '準備完了';
-
-  @override
-  String get askAiThinking => '思考中';
-
-  @override
-  String get askAiRunningCommand => '実行中';
-
-  @override
   String get askAiReviewNeeded => '要確認';
 
   @override
@@ -162,12 +135,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get askAiHighRiskConfirmBody =>
       'このコマンドはデータの削除やサービスの停止など、元に戻しにくい結果を招く可能性があります。実行前によく確認してください。';
-
-  @override
-  String get askAiCommandCancelled => 'キャンセル済み';
-
-  @override
-  String get askAiCommandTimedOut => 'タイムアウト';
 
   @override
   String get askAiNoCommandOutput => 'コマンドは出力なしで終了しました。';
@@ -218,9 +185,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get askAiDeleteConversationTip => '会話はこの端末から削除され、元に戻せません。';
-
-  @override
-  String get askAiClearHistory => '履歴を消去';
 
   @override
   String get askAiClearHistoryTitle => 'このサーバーのエージェント履歴を消去しますか？';
@@ -445,9 +409,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get cpuViewAsProgressTip => '各CPUの使用率をプログレスバースタイルで表示する（旧スタイル）';
 
   @override
-  String get configured => '設定済み';
-
-  @override
   String get customCmd => 'カスタムコマンド';
 
   @override
@@ -555,12 +516,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get finishedAt => '完了時刻';
 
   @override
-  String get followSystem => 'システムに従う';
-
-  @override
-  String get fontSize => 'フォントサイズ';
-
-  @override
   String get fullScreen => 'フルスクリーンモード';
 
   @override
@@ -586,16 +541,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get githubGistTokenEmpty => 'トークンが空です';
 
   @override
-  String get goBackQ => '戻りますか？';
-
-  @override
   String get goto => '移動';
-
-  @override
-  String get hideTitleBar => 'タイトルバーを非表示にする';
-
-  @override
-  String get highlight => 'コードハイライト';
 
   @override
   String get homeTabs => 'ホームタブ';
@@ -661,12 +607,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get pull => 'プル';
 
   @override
-  String get invalid => '無効';
-
-  @override
-  String get invalidUrl => '無効な URL';
-
-  @override
   String get invalidHostFormat => 'ホストの形式が無効です。IPv4、IPv6、ドメインで使える文字のみ利用できます。';
 
   @override
@@ -726,9 +666,6 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get more => 'もっと';
-
-  @override
   String get needRestart => 'アプリを再起動する必要があります';
 
   @override
@@ -767,9 +704,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get fullAccessInsecure =>
       'このエージェントは TLS またはループバックでのみターミナルを提供しますが、この接続は平文の HTTP です。';
-
-  @override
-  String get permission => '権限';
 
   @override
   String get plugInType => '挿入タイプ';
@@ -860,9 +794,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get recentConnections => '最近の接続';
 
   @override
-  String get reconnecting => '再接続中...';
-
-  @override
   String get rememberPwdInMem => 'メモリにパスワードを記憶する';
 
   @override
@@ -873,9 +804,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get sameIdServerExist => '同じIDのサーバーが既に存在します';
-
-  @override
-  String get save => '保存';
 
   @override
   String get second => '秒';
@@ -916,12 +844,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sftpShowFoldersFirst => 'フォルダーを先に表示';
 
   @override
-  String get size => 'サイズ';
-
-  @override
-  String get softWrap => 'ソフトラップ';
-
-  @override
   String get specifyDev => 'デバイスを指定';
 
   @override
@@ -931,9 +853,6 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       '有効にすると、温度の値をミリ摂氏ではなく摂氏として扱います。温度が正しく表示されない場合（58 °C ではなく 0.1 °C と表示されるなど）にのみ有効にしてください。';
-
-  @override
-  String get speed => '速度';
 
   @override
   String spentTime(Object time) {
@@ -1039,9 +958,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshVirtualKeyAutoOff => '仮想キーの自動オフ';
 
   @override
-  String get stat => '統計';
-
-  @override
   String get supportFmtArgs => '以下のフォーマット引数がサポートされています：';
 
   @override
@@ -1066,14 +982,8 @@ class AppLocalizationsJa extends AppLocalizations {
       'この設定は端末のサイズ（幅と高さ）に影響します。現在のセッションのフォントサイズを調整するために、端末ページを拡大縮小できます。';
 
   @override
-  String get textScaler => 'テキストスケーラー';
-
-  @override
   String get textScalerTip =>
       '1.0 => 100%（デフォルトサイズ）。サーバーページの一部のテキストにのみ適用されます。変更をお勧めしません。';
-
-  @override
-  String get time => '時間';
 
   @override
   String get times => '回';
@@ -1083,9 +993,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get sudoPromptNotFound => 'sudo のパスワード入力プロンプトがありません。';
-
-  @override
-  String get unknown => '不明';
 
   @override
   String get updateServerStatusInterval => 'サーバー状態の更新間隔';
@@ -1104,9 +1011,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get viewDetails => '詳細を表示';
-
-  @override
-  String get viewErr => 'エラーを表示';
 
   @override
   String get virtKeyHelpClipboard =>
@@ -1132,9 +1036,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get whenOpenApp => 'アプリを開くとき';
-
-  @override
-  String get wiki => 'Wiki';
 
   @override
   String get wolTip => 'WOL（Wake-on-LAN）を設定した後、サーバーに接続するたびにWOLリクエストが送信されます。';
@@ -1176,12 +1077,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get portForward_remotePort => 'リモートポート';
 
   @override
-  String get portForward_type_local => 'ローカル';
-
-  @override
-  String get portForward_type_remote => 'リモート';
-
-  @override
   String portForward_deleteConfirmFmt(Object name) {
     return '$name を削除しますか？';
   }
@@ -1190,25 +1085,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sponsor => '赞助';
 
   @override
-  String get sort => '並べ替え';
-
-  @override
-  String get sortByName => '名前順';
-
-  @override
   String get sortByJoinTime => '追加した順';
 
   @override
-  String get ascending => '昇順';
-
-  @override
-  String get descending => '降順';
-
-  @override
   String get serverHistory => 'サーバー履歴';
-
-  @override
-  String get clearHistory => '履歴を消去';
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
@@ -1380,14 +1260,5 @@ class AppLocalizationsJa extends AppLocalizations {
   String get continueInTerminal => 'ターミナルで続ける';
 
   @override
-  String get browsing => '閲覧中';
-
-  @override
   String get askAiRiskUnknown => '判定不能';
-
-  @override
-  String get memory => 'メモリ';
-
-  @override
-  String get permissionDenied => '権限がありません。';
 }

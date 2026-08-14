@@ -19,36 +19,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get added2List => 'Añadido a la lista de tareas';
 
   @override
-  String get addr => 'Dirección';
-
-  @override
   String get askAi => 'Preguntar a la IA';
 
   @override
-  String get ai => 'IA';
-
-  @override
-  String get askAiApiKey => 'Clave API';
-
-  @override
   String get askAiAwaitingResponse => 'Esperando la respuesta de la IA...';
-
-  @override
-  String get askAiBaseUrl => 'URL base';
 
   @override
   String get askAiEndpointTip =>
       'Introduce una URL base del servicio o un endpoint completo de Chat Completions o Responses. ServerBox completa la ruta según el protocolo elegido.';
 
   @override
-  String get askAiProtocol => 'Protocolo de API';
-
-  @override
   String get askAiProtocolTip =>
       'Automático usa Responses para el endpoint oficial de OpenAI y Chat Completions para proveedores compatibles.';
-
-  @override
-  String get askAiProtocolAuto => 'Automático';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -117,15 +99,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get askAiTerminalContext => 'Contexto del terminal';
 
   @override
-  String get askAiReady => 'Listo';
-
-  @override
-  String get askAiThinking => 'Pensando';
-
-  @override
-  String get askAiRunningCommand => 'Ejecutando';
-
-  @override
   String get askAiReviewNeeded => 'Revisar';
 
   @override
@@ -166,12 +139,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get askAiHighRiskConfirmBody =>
       'Este comando puede borrar datos, detener servicios o ser difícil de deshacer. Revísalo con atención antes de ejecutarlo.';
-
-  @override
-  String get askAiCommandCancelled => 'Cancelado';
-
-  @override
-  String get askAiCommandTimedOut => 'Tiempo agotado';
 
   @override
   String get askAiNoCommandOutput => 'El comando terminó sin salida.';
@@ -227,9 +194,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get askAiDeleteConversationTip =>
       'Se eliminará la conversación de este dispositivo y no se podrá deshacer.';
-
-  @override
-  String get askAiClearHistory => 'Borrar historial';
 
   @override
   String get askAiClearHistoryTitle =>
@@ -473,9 +437,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Muestre la tasa de uso de cada CPU en estilo de barra de progreso (estilo antiguo)';
 
   @override
-  String get configured => 'Configurado';
-
-  @override
   String get customCmd => 'Comandos personalizados';
 
   @override
@@ -585,12 +546,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get finishedAt => 'Terminado en';
 
   @override
-  String get followSystem => 'Seguir al sistema';
-
-  @override
-  String get fontSize => 'Tamaño de fuente';
-
-  @override
   String get fullScreen => 'Modo pantalla completa';
 
   @override
@@ -616,16 +571,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get githubGistTokenEmpty => 'El token está vacío';
 
   @override
-  String get goBackQ => '¿Regresar?';
-
-  @override
   String get goto => 'Ir a';
-
-  @override
-  String get hideTitleBar => 'Ocultar barra de título';
-
-  @override
-  String get highlight => 'Resaltar código';
 
   @override
   String get homeTabs => 'Pestañas de inicio';
@@ -696,12 +642,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pull => 'Extraer';
 
   @override
-  String get invalid => 'Inválido';
-
-  @override
-  String get invalidUrl => 'URL no válida';
-
-  @override
   String get invalidHostFormat =>
       'Formato de host no válido. Solo se permiten caracteres de IPv4, IPv6 y dominios.';
 
@@ -765,9 +705,6 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get more => 'Más';
-
-  @override
   String get needRestart => 'Necesita reiniciar la app';
 
   @override
@@ -811,9 +748,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get fullAccessInsecure =>
       'Este agente sirve el terminal solo por TLS o loopback, y esta conexión es HTTP sin cifrar.';
-
-  @override
-  String get permission => 'Permisos';
 
   @override
   String get plugInType => 'Tipo de inserción';
@@ -916,9 +850,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get recentConnections => 'Conexiones recientes';
 
   @override
-  String get reconnecting => 'Reconectando...';
-
-  @override
   String get rememberPwdInMem => 'Recordar contraseña en la memoria';
 
   @override
@@ -930,9 +861,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get sameIdServerExist => 'Ya existe un servidor con el mismo ID';
-
-  @override
-  String get save => 'Guardar';
 
   @override
   String get second => 'Segundo';
@@ -976,12 +904,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Mostrar carpetas primero';
 
   @override
-  String get size => 'Tamaño';
-
-  @override
-  String get softWrap => 'Salto de línea suave';
-
-  @override
   String get specifyDev => 'Especificar dispositivo';
 
   @override
@@ -991,9 +913,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       'Si se activa, el valor de temperatura se tratará como grados Celsius en lugar de milicelsius. Actívalo solo si la temperatura se muestra mal (por ejemplo, 0,1 °C en lugar de 58 °C).';
-
-  @override
-  String get speed => 'Velocidad';
 
   @override
   String spentTime(Object time) {
@@ -1104,9 +1023,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Desactivación automática de teclas virtuales';
 
   @override
-  String get stat => 'Estadísticas';
-
-  @override
   String get supportFmtArgs => 'Soporta los siguientes argumentos de formato:';
 
   @override
@@ -1133,14 +1049,8 @@ class AppLocalizationsEs extends AppLocalizations {
       'Este ajuste afectará el tamaño del terminal (ancho y alto). Puedes hacer zoom en la página del terminal para ajustar el tamaño de fuente de la sesión actual.';
 
   @override
-  String get textScaler => 'Escalar texto';
-
-  @override
   String get textScalerTip =>
       '1.0 => 100% (tamaño original), solo afecta a ciertas fuentes en la página del servidor, no se recomienda modificar.';
-
-  @override
-  String get time => 'Tiempo';
 
   @override
   String get times => 'Veces';
@@ -1151,9 +1061,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get sudoPromptNotFound =>
       'No hay solicitud de contraseña de sudo activa.';
-
-  @override
-  String get unknown => 'Desconocido';
 
   @override
   String get updateServerStatusInterval =>
@@ -1173,9 +1080,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get viewDetails => 'Ver detalles';
-
-  @override
-  String get viewErr => 'Ver error';
 
   @override
   String get virtKeyHelpClipboard =>
@@ -1202,9 +1106,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get whenOpenApp => 'Al abrir la App';
-
-  @override
-  String get wiki => 'Wiki';
 
   @override
   String get wolTip =>
@@ -1249,12 +1150,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get portForward_remotePort => 'Puerto remoto';
 
   @override
-  String get portForward_type_local => 'Local';
-
-  @override
-  String get portForward_type_remote => 'Remoto';
-
-  @override
   String portForward_deleteConfirmFmt(Object name) {
     return '¿Eliminar $name?';
   }
@@ -1263,25 +1158,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sponsor => 'Patrocinador';
 
   @override
-  String get sort => 'Ordenar';
-
-  @override
-  String get sortByName => 'Por nombre';
-
-  @override
   String get sortByJoinTime => 'Por fecha de adición';
 
   @override
-  String get ascending => 'Ascendente';
-
-  @override
-  String get descending => 'Descendente';
-
-  @override
   String get serverHistory => 'Historial del servidor';
-
-  @override
-  String get clearHistory => 'Borrar historial';
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
@@ -1474,14 +1354,5 @@ class AppLocalizationsEs extends AppLocalizations {
   String get continueInTerminal => 'Continuar en la terminal';
 
   @override
-  String get browsing => 'Explorando';
-
-  @override
   String get askAiRiskUnknown => 'Sin clasificar';
-
-  @override
-  String get memory => 'Memoria';
-
-  @override
-  String get permissionDenied => 'Permiso denegado.';
 }

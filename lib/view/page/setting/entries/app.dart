@@ -2,7 +2,7 @@ part of '../entry.dart';
 
 extension _App on _AppSettingsPageState {
   void _showInvalidDialog() {
-    context.showRoundDialog(title: libL10n.fail, child: Text(l10n.invalid));
+    context.showRoundDialog(title: libL10n.fail, child: Text(libL10n.invalid));
   }
 
   Widget _buildApp() {
@@ -179,7 +179,7 @@ extension _App on _AppSettingsPageState {
                           return const SizedBox.shrink();
                         }
                         return ListTile(
-                          title: Text(l10n.followSystem),
+                          title: Text(libL10n.followSystem),
                           trailing: StoreSwitch(
                             prop: _setting.useSystemPrimaryColor,
                             callback: (_) => setState(() {}),
@@ -321,7 +321,7 @@ extension _App on _AppSettingsPageState {
   Widget _buildAppMore() {
     return ExpandTile(
       leading: const Icon(MingCute.more_3_fill),
-      title: Text(l10n.more),
+      title: Text(libL10n.more),
       initiallyExpanded: false,
       children: [
         _buildBeta(),
@@ -356,7 +356,7 @@ extension _App on _AppSettingsPageState {
 
   Widget _buildHideTitleBar() {
     return ListTile(
-      title: Text(l10n.hideTitleBar),
+      title: Text(libL10n.hideTitleBar),
       trailing: StoreSwitch(
         prop: _setting.hideTitleBar,
         callback: (value) async {
@@ -484,7 +484,7 @@ extension _App on _AppSettingsPageState {
       } catch (e, trace) {
         context.showRoundDialog(
           title: libL10n.error,
-          child: Text('${l10n.save}:\n$e'),
+          child: Text('${libL10n.save}:\n$e'),
         );
         Loggers.app.warning('Update json settings failed', e, trace);
       }

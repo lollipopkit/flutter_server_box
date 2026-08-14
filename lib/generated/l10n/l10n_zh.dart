@@ -18,36 +18,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get added2List => '已添加至任务列表';
 
   @override
-  String get addr => '地址';
-
-  @override
   String get askAi => '问 AI';
 
   @override
-  String get ai => 'AI';
-
-  @override
-  String get askAiApiKey => 'API 密钥';
-
-  @override
   String get askAiAwaitingResponse => '等待 AI 响应...';
-
-  @override
-  String get askAiBaseUrl => 'API 接口地址';
 
   @override
   String get askAiEndpointTip =>
       '填写服务根地址，或完整的 Chat Completions/Responses 地址。ServerBox 会根据所选协议自动补全路径。';
 
   @override
-  String get askAiProtocol => 'API 协议';
-
-  @override
   String get askAiProtocolTip =>
       '自动模式对 OpenAI 官方接口使用 Responses，对兼容服务使用 Chat Completions。';
-
-  @override
-  String get askAiProtocolAuto => '自动';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -114,15 +96,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiTerminalContext => '终端上下文';
 
   @override
-  String get askAiReady => '就绪';
-
-  @override
-  String get askAiThinking => '思考中';
-
-  @override
-  String get askAiRunningCommand => '执行中';
-
-  @override
   String get askAiReviewNeeded => '待审核';
 
   @override
@@ -160,12 +133,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get askAiHighRiskConfirmBody => '此命令可能删除数据、停止服务或造成难以撤销的更改，请在执行前仔细检查。';
-
-  @override
-  String get askAiCommandCancelled => '已取消';
-
-  @override
-  String get askAiCommandTimedOut => '执行超时';
 
   @override
   String get askAiNoCommandOutput => '命令已完成，没有输出。';
@@ -216,9 +183,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get askAiDeleteConversationTip => '此操作会从本机删除该对话，且无法撤销。';
-
-  @override
-  String get askAiClearHistory => '清空历史';
 
   @override
   String get askAiClearHistoryTitle => '清空这台服务器的 Agent 历史？';
@@ -440,9 +404,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cpuViewAsProgressTip => '以进度条样式显示每个 CPU 的使用率（旧版样式）';
 
   @override
-  String get configured => '已配置';
-
-  @override
   String get customCmd => '自定义命令';
 
   @override
@@ -547,12 +508,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get finishedAt => '完成于';
 
   @override
-  String get followSystem => '跟随系统';
-
-  @override
-  String get fontSize => '字体大小';
-
-  @override
   String get fullScreen => '全屏模式';
 
   @override
@@ -577,16 +532,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get githubGistTokenEmpty => 'Token 为空';
 
   @override
-  String get goBackQ => '返回？';
-
-  @override
   String get goto => '前往';
-
-  @override
-  String get hideTitleBar => '隐藏标题栏';
-
-  @override
-  String get highlight => '代码高亮';
 
   @override
   String get homeTabs => '主页标签';
@@ -652,12 +598,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pull => '拉取';
 
   @override
-  String get invalid => '无效';
-
-  @override
-  String get invalidUrl => '无效的 URL';
-
-  @override
   String get invalidHostFormat => '主机格式无效，仅支持 IPv4、IPv6 和域名字符。';
 
   @override
@@ -716,9 +656,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get more => '更多';
-
-  @override
   String get needRestart => '需要重启 App';
 
   @override
@@ -757,9 +694,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get fullAccessInsecure =>
       '该 agent 仅在 TLS 或本地回环上开放免 SSH 访问，而当前连接是明文 HTTP。';
-
-  @override
-  String get permission => '权限';
 
   @override
   String get plugInType => '插入类型';
@@ -848,9 +782,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recentConnections => '最近连接记录';
 
   @override
-  String get reconnecting => '重连中...';
-
-  @override
   String get rememberPwdInMem => '在内存中记住密码';
 
   @override
@@ -861,9 +792,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sameIdServerExist => '已存在相同 id 的服务器';
-
-  @override
-  String get save => '保存';
 
   @override
   String get second => '秒';
@@ -904,12 +832,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sftpShowFoldersFirst => '文件夹显示在前';
 
   @override
-  String get size => '大小';
-
-  @override
-  String get softWrap => '自动换行';
-
-  @override
   String get specifyDev => '指定设备';
 
   @override
@@ -918,9 +840,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       '开启后，温度值将被视为摄氏度而非毫摄氏度。仅在温度显示不正确时开启（例如显示0.1°C而非58°C）。';
-
-  @override
-  String get speed => '速度';
 
   @override
   String spentTime(Object time) {
@@ -1024,9 +943,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshVirtualKeyAutoOff => '虚拟按键自动切换';
 
   @override
-  String get stat => '统计';
-
-  @override
   String get supportFmtArgs => '支持以下格式化参数：';
 
   @override
@@ -1050,13 +966,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get termFontSizeTip => '此设置会影响终端大小（宽和高）。可以在终端页面缩放来调整当前会话的字体大小';
 
   @override
-  String get textScaler => '字体缩放';
-
-  @override
   String get textScalerTip => '1.0 => 100%（原大小），仅作用于服务器页面部分字体，不建议修改。';
-
-  @override
-  String get time => '时间';
 
   @override
   String get times => '次';
@@ -1066,9 +976,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sudoPromptNotFound => '当前没有 sudo 密码提示。';
-
-  @override
-  String get unknown => '未知';
 
   @override
   String get updateServerStatusInterval => '服务器状态刷新间隔';
@@ -1087,9 +994,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get viewDetails => '查看详情';
-
-  @override
-  String get viewErr => '查看错误';
 
   @override
   String get virtKeyHelpClipboard => '如果终端有选中字符，则复制选中字符至剪切板，否则粘贴剪切板内容至终端。';
@@ -1114,9 +1018,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get whenOpenApp => '当打开 App 时';
-
-  @override
-  String get wiki => 'Wiki';
 
   @override
   String get wolTip => '配置 WOL 后，每次连接服务器时将自动发送唤醒请求';
@@ -1157,12 +1058,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portForward_remotePort => '远端端口';
 
   @override
-  String get portForward_type_local => '本地';
-
-  @override
-  String get portForward_type_remote => '远程';
-
-  @override
   String portForward_deleteConfirmFmt(Object name) {
     return '删除 $name？';
   }
@@ -1171,25 +1066,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sponsor => '赞助';
 
   @override
-  String get sort => '排序';
-
-  @override
-  String get sortByName => '按名称';
-
-  @override
   String get sortByJoinTime => '按加入时间';
 
   @override
-  String get ascending => '升序';
-
-  @override
-  String get descending => '降序';
-
-  @override
   String get serverHistory => '服务器历史';
-
-  @override
-  String get clearHistory => '清空历史';
 
   @override
   String get portForwardBetaTitle => '端口映射 (Beta)';
@@ -1349,16 +1229,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get continueInTerminal => '在终端中继续';
 
   @override
-  String get browsing => '浏览中';
-
-  @override
   String get askAiRiskUnknown => '未判定';
-
-  @override
-  String get memory => '内存';
-
-  @override
-  String get permissionDenied => '权限不足。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1375,36 +1246,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get added2List => '已新增至任務清單';
 
   @override
-  String get addr => '位址';
-
-  @override
   String get askAi => '詢問 AI';
 
   @override
-  String get ai => 'AI';
-
-  @override
-  String get askAiApiKey => 'API 金鑰';
-
-  @override
   String get askAiAwaitingResponse => '等待 AI 回應...';
-
-  @override
-  String get askAiBaseUrl => 'API 介面位址';
 
   @override
   String get askAiEndpointTip =>
       '填寫服務根位址，或完整的 Chat Completions/Responses 位址。ServerBox 會依所選協議自動補全路徑。';
 
   @override
-  String get askAiProtocol => 'API 協議';
-
-  @override
   String get askAiProtocolTip =>
       '自動模式對 OpenAI 官方介面使用 Responses，對相容服務使用 Chat Completions。';
-
-  @override
-  String get askAiProtocolAuto => '自動';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -1471,15 +1324,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiTerminalContext => '終端機內容';
 
   @override
-  String get askAiReady => '就緒';
-
-  @override
-  String get askAiThinking => '思考中';
-
-  @override
-  String get askAiRunningCommand => '執行中';
-
-  @override
   String get askAiReviewNeeded => '待審核';
 
   @override
@@ -1517,12 +1361,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiHighRiskConfirmBody => '此指令可能刪除資料、停止服務或造成難以復原的變更，請在執行前仔細檢查。';
-
-  @override
-  String get askAiCommandCancelled => '已取消';
-
-  @override
-  String get askAiCommandTimedOut => '執行逾時';
 
   @override
   String get askAiNoCommandOutput => '指令已完成，沒有輸出。';
@@ -1573,9 +1411,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiDeleteConversationTip => '此操作會從本機刪除該對話，且無法復原。';
-
-  @override
-  String get askAiClearHistory => '清除歷史';
 
   @override
   String get askAiClearHistoryTitle => '清除這台伺服器的 Agent 歷史？';
@@ -1797,9 +1632,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get cpuViewAsProgressTip => '以進度條樣式顯示每個CPU的使用率（舊版樣式）';
 
   @override
-  String get configured => '已設定';
-
-  @override
   String get customCmd => '自訂指令';
 
   @override
@@ -1904,12 +1736,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get finishedAt => '完成於';
 
   @override
-  String get followSystem => '跟隨系統';
-
-  @override
-  String get fontSize => '字型大小';
-
-  @override
   String get fullScreen => '全螢幕模式';
 
   @override
@@ -1934,16 +1760,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get githubGistTokenEmpty => 'Token 為空';
 
   @override
-  String get goBackQ => '返回？';
-
-  @override
   String get goto => '前往';
-
-  @override
-  String get hideTitleBar => '隱藏標題欄';
-
-  @override
-  String get highlight => '程式碼標記';
 
   @override
   String get homeTabs => '主頁標籤';
@@ -2009,12 +1826,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get pull => '拉取';
 
   @override
-  String get invalid => '無效';
-
-  @override
-  String get invalidUrl => '無效的網址';
-
-  @override
   String get invalidHostFormat => '主機格式無效，僅支援 IPv4、IPv6 和網域字元。';
 
   @override
@@ -2073,9 +1884,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get more => '更多';
-
-  @override
   String get needRestart => '需要重開 App';
 
   @override
@@ -2114,9 +1922,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get fullAccessInsecure =>
       '該 agent 僅在 TLS 或本機回環上開放免 SSH 存取，而目前連線是明文 HTTP。';
-
-  @override
-  String get permission => '權限';
 
   @override
   String get plugInType => '插入類型';
@@ -2205,9 +2010,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get recentConnections => '最近連線記錄';
 
   @override
-  String get reconnecting => '重連中...';
-
-  @override
   String get rememberPwdInMem => '在記憶體中記住密碼';
 
   @override
@@ -2218,9 +2020,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sameIdServerExist => '已存在相同 ID 的伺服器';
-
-  @override
-  String get save => '儲存';
 
   @override
   String get second => '秒';
@@ -2261,12 +2060,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sftpShowFoldersFirst => '資料夾顯示在前';
 
   @override
-  String get size => '大小';
-
-  @override
-  String get softWrap => '軟換行';
-
-  @override
   String get specifyDev => '指定裝置';
 
   @override
@@ -2275,9 +2068,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get tempIsCelsiusTip =>
       '啟用後，溫度值會以攝氏度而非毫攝氏度處理。僅在溫度顯示錯誤時開啟（例如顯示 0.1°C 而非 58°C）。';
-
-  @override
-  String get speed => '速度';
 
   @override
   String spentTime(Object time) {
@@ -2381,9 +2171,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshVirtualKeyAutoOff => '虛擬按鍵自動切換';
 
   @override
-  String get stat => '統計';
-
-  @override
   String get supportFmtArgs => '支援以下格式化參數：';
 
   @override
@@ -2407,13 +2194,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get termFontSizeTip => '此設定將影響終端機大小（寬度和高度）。您可以在終端機頁面縮放，來調整目前會話的字型大小。';
 
   @override
-  String get textScaler => '字型縮放';
-
-  @override
   String get textScalerTip => '1.0 => 100%（原大小），僅作用於伺服器頁面部分字型，不建議修改。';
-
-  @override
-  String get time => '時間';
 
   @override
   String get times => '次';
@@ -2423,9 +2204,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sudoPromptNotFound => '目前沒有 sudo 密碼提示。';
-
-  @override
-  String get unknown => '未知';
 
   @override
   String get updateServerStatusInterval => '伺服器狀態更新間隔';
@@ -2444,9 +2222,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get viewDetails => '檢視詳情';
-
-  @override
-  String get viewErr => '查看錯誤';
 
   @override
   String get virtKeyHelpClipboard => '如果終端機有選中字元，則復製選中字元至剪貼簿，否則貼上剪貼簿內容至終端機。';
@@ -2471,9 +2246,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get whenOpenApp => '當打開 App 時';
-
-  @override
-  String get wiki => 'Wiki';
 
   @override
   String get wolTip => '設定 WOL 後，每次連線伺服器時將自動發送喚醒請求';
@@ -2514,12 +2286,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get portForward_remotePort => '遠端連接埠';
 
   @override
-  String get portForward_type_local => '本機';
-
-  @override
-  String get portForward_type_remote => '遠端';
-
-  @override
   String portForward_deleteConfirmFmt(Object name) {
     return '刪除 $name？';
   }
@@ -2528,25 +2294,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sponsor => '贊助';
 
   @override
-  String get sort => '排序';
-
-  @override
-  String get sortByName => '依名稱';
-
-  @override
   String get sortByJoinTime => '依加入時間';
 
   @override
-  String get ascending => '遞增';
-
-  @override
-  String get descending => '遞減';
-
-  @override
   String get serverHistory => '伺服器紀錄';
-
-  @override
-  String get clearHistory => '清除紀錄';
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
@@ -2706,14 +2457,5 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get continueInTerminal => '在終端機中繼續';
 
   @override
-  String get browsing => '瀏覽中';
-
-  @override
   String get askAiRiskUnknown => '未判定';
-
-  @override
-  String get memory => '記憶體';
-
-  @override
-  String get permissionDenied => '權限不足。';
 }
