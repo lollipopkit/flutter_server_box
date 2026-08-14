@@ -18,11 +18,28 @@ and step 3 on iOS is a GPLv3 emulator plus an App Store review argument. This
 document is what is known, what is guessed, and what has to be measured before
 any of it is committed to.
 
-**Status: stage 2b's first half is done (`328f92d9`). Stage 1 has the rename
-(`dd9b6e84`), a `LocalShellBackend` on `flutter_pty` (`4a3b5f4`) and the macOS
-entitlement it needs (`ad18d1b7`); what is left there is `TerminalSession`
-losing its `Spi` and the tab growing a local session. Stages 2, 3 and 4 are not
-started.** Last checked against the tree at `f8f371b3`, before that half
+**Status: stage 1 is done — rename (`dd9b6e84`), `LocalShellBackend` on
+`flutter_pty` (`3d1acd6a`), the macOS entitlement (`ad18d1b7`),
+`TerminalSession` on a `TerminalSource` (`5fc31b8e`) and the tab's local
+session (`6e9d3d1b`). Stage 2b's first half is done (`328f92d9`). Stages 2, 3
+and 4 are not started.**
+
+Stage 1 is **built and analysed, not exercised**: `flutter_pty` is an FFI
+plugin, `flutter test` runs under `flutter_tester` which loads no plugins, so
+nothing in the suite has ever spawned a local shell. What the tests cover is
+the layer above — that a `LocalSource` session makes a backend, reports
+`canExec`, has no server behind it, and hangs up what it opened.
+
+What a local terminal deliberately does **not** offer, each decided rather than
+left to fail:
+
+| | Why |
+| --- | --- |
+| tmux | The control channel writes a command and reads to a marker, so it needs a channel that does not echo. `LocalShellBackend.execute` is a pseudo-terminal, which echoes |
+| snippets | A script is written against a server — `${ip}`, `${user}` |
+| SFTP | A file browser on this device already exists, in the file tab |
+| the agent panel | Its tools name a server. Until stage 2b's second half |
+| the sudo button | The shell is already whoever is running the app | Last checked against the tree at `f8f371b3`, before that half
 landed. Update the verification log at the bottom as answers land — several
 decisions below are downstream of questions still marked open.
 
