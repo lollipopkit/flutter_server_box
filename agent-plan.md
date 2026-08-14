@@ -214,10 +214,10 @@ dialog is already the review step — it shows exactly what would be stored and
 can be cancelled — so a confirmation in front of it would be a second question
 about the same thing. `caution` still means it can never auto-run.
 
-`ssh_connect` collects a **password** only. A host reachable solely by key
-cannot be connected to this way yet; the app has a key store and the dialog
-could offer to pick from it, but that is more UI than this stage needs to be
-reviewable and nothing else depends on it.
+`ssh_connect` collects either a password typed for that connection or one of
+the private keys already in the app, whichever the user picks. The key list is
+only offered when there is one; a first-run app with no stored keys still gets
+a single password field.
 
 `ssh_connect` returns a `session_id`, the resolved host, and the accepted host
 key fingerprint. Nothing else.

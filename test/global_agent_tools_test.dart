@@ -313,6 +313,19 @@ void main() {
       );
     });
 
+    test('a stored key is a credential the schema still cannot carry', () {
+      // Picking a key means the tool call names one by id — which would be
+      // harmless in itself, but the field would then also accept a PEM.
+      final tool = globalAgentToolDefinitions.firstWhere(
+        (tool) => tool.name == 'ssh_connect',
+      );
+      final properties =
+          tool.parameters['properties'] as Map<String, dynamic>;
+
+      expect(properties.keys, isNot(contains('key_id')));
+      expect(properties.keys, isNot(contains('private_key_id')));
+    });
+
     test('the model is told not to ask for credentials itself', () {
       final instructions = buildGlobalAgentInstructions(servers: const []);
       expect(instructions, contains('ssh_connect'));

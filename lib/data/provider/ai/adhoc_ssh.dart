@@ -2,6 +2,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/utils/adhoc_ssh_prompt.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
@@ -28,8 +29,9 @@ class AdHocSshSession {
   /// restart — see [AdHocSshSessions].
   final String id;
 
-  /// Carries the password. Never persisted, and never put in a tool result:
-  /// tool arguments and results are written into the conversation verbatim.
+  /// Carries the credential. Never persisted while the session is ad-hoc, and
+  /// never put in a tool result: tool arguments and results are written into
+  /// the conversation verbatim.
   ///
   /// Its [Spi.id] is generated up front rather than when the host is saved, so
   /// that the host key accepted now is filed under the same key the saved
@@ -49,12 +51,18 @@ class AdHocSshSession {
     required String host,
     required int port,
     required String user,
-    required String? password,
+    required AdHocSshCredential credential,
   }) {
     return Spi(
       name: '$user@$host',
       id: ShortId.generate(),
-      ssh: SshCredential(ip: host, port: port, user: user, pwd: password),
+      ssh: SshCredential(
+        ip: host,
+        port: port,
+        user: user,
+        pwd: credential.password,
+        keyId: credential.keyId,
+      ),
     );
   }
 }

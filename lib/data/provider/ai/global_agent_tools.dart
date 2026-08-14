@@ -294,8 +294,8 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
     name: 'ssh_connect',
     description:
         'Open an SSH connection to a host that is not configured in the app, '
-        'and return an id for it. The app asks the user for the password and '
-        'for host key approval; never ask for credentials in conversation.',
+        'and return an id for it. The app asks the user for the credential '
+        'and for host key approval; never ask for one in conversation.',
     parameters: {
       'type': 'object',
       'additionalProperties': false,
@@ -762,6 +762,13 @@ class GlobalAgentToolService {
       );
     }
 
+    // Connecting is what raises the host key and keyboard-interactive
+    // prompts, and this may be running while the Agent is nowhere on screen.
+    // Only on the path that actually connects: a server with a client already
+    // open asks nothing, and pulling the shell up on every tool call would
+    // override a user who deliberately closed it.
+    _ref.read(agentShellProvider.notifier).show();
+
     final SSHClient client;
     try {
       client = await _ref
@@ -1011,12 +1018,12 @@ class GlobalAgentToolService {
     // what asked for it is a prompt nobody should answer.
     _ref.read(agentShellProvider.notifier).show();
 
-    final password = await promptAdHocSshPassword(
+    final credential = await promptAdHocSshCredential(
       user: user,
       host: host,
       port: port,
     );
-    if (password == null) {
+    if (credential == null) {
       return AgentToolExecutionResult(
         toolName: proposal.toolName,
         summary: 'The user did not provide credentials for $user@$host:$port.',
@@ -1031,7 +1038,7 @@ class GlobalAgentToolService {
       host: host,
       port: port,
       user: user,
-      password: password,
+      credential: credential,
     );
     String? fingerprint;
     SSHClient? opened;
@@ -1234,6 +1241,9 @@ class GlobalAgentToolService {
       case 'connect':
       case 'refresh':
         final state = _server(proposal.serverId);
+        // Same reason as the shell path: connecting is what asks about a host
+        // key, and the question needs something on screen to have come from.
+        _ref.read(agentShellProvider.notifier).show();
         await _ref
             .read(serversProvider.notifier)
             .refresh(spi: state.spi)

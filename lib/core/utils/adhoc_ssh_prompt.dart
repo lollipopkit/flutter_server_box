@@ -2,8 +2,23 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/res/store.dart';
 
-/// Asks the user for the password to a host the Agent wants to connect to.
+/// How to authenticate to a host the Agent wants to reach.
+///
+/// Exactly one of the two: a password typed for this connection only, or one
+/// of the private keys already in the app.
+@immutable
+class AdHocSshCredential {
+  const AdHocSshCredential.password(String this.password) : keyId = null;
+
+  const AdHocSshCredential.privateKey(String this.keyId) : password = null;
+
+  final String? password;
+  final String? keyId;
+}
+
+/// Asks the user how to authenticate to a host the Agent wants to connect to.
 ///
 /// A dialog rather than a tool argument, and this is the whole point of it:
 /// `AskAiCommand.rawArguments` is written into the conversation verbatim and
@@ -16,8 +31,8 @@ import 'package:server_box/core/extension/context/locale.dart';
 /// for the same reason: the code that needs to ask is not a widget.
 ///
 /// Returns null when the user declines, which the caller must treat as "do not
-/// connect" rather than "connect without a password".
-Future<String?> promptAdHocSshPassword({
+/// connect" rather than "connect without a credential".
+Future<AdHocSshCredential?> promptAdHocSshCredential({
   required String user,
   required String host,
   required int port,
@@ -26,41 +41,68 @@ Future<String?> promptAdHocSshPassword({
   final ctx = context?.mounted == true ? context : AppNavigator.context;
   if (ctx == null) {
     Loggers.app.warning(
-      'Ad-hoc SSH password prompt skipped: navigator context unavailable.',
+      'Ad-hoc SSH credential prompt skipped: navigator context unavailable.',
     );
     return null;
   }
 
+  final keys = Stores.key.fetch();
   final controller = TextEditingController();
+  // The stored key in use, or null for the password. Not offered at all when
+  // there are no keys, so the common case stays one field.
+  String? keyId;
+
   try {
-    return await ctx.showRoundDialog<String>(
+    return await ctx.showRoundDialog<AdHocSshCredential>(
       title: ctx.l10n.agentSshConnectTitle,
       barrierDismiss: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(ctx.l10n.agentSshConnectTip),
-          const SizedBox(height: 12),
-          SelectableText(
-            '$user@$host:$port',
-            style: const TextStyle(fontFamily: 'monospace'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: controller,
-            autofocus: true,
-            obscureText: true,
-            decoration: InputDecoration(labelText: libL10n.pwd),
-            onSubmitted: (value) => ctx.pop(value),
-          ),
-        ],
+      child: StatefulBuilder(
+        builder: (context, setDialogState) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(ctx.l10n.agentSshConnectTip),
+            const SizedBox(height: 12),
+            SelectableText(
+              '$user@$host:$port',
+              style: const TextStyle(fontFamily: 'monospace'),
+            ),
+            const SizedBox(height: 12),
+            if (keys.isNotEmpty) ...[
+              DropdownButtonFormField<String?>(
+                initialValue: keyId,
+                isExpanded: true,
+                decoration: InputDecoration(labelText: ctx.l10n.keyAuth),
+                items: [
+                  DropdownMenuItem(value: null, child: Text(libL10n.pwd)),
+                  for (final key in keys)
+                    DropdownMenuItem(value: key.id, child: Text(key.id)),
+                ],
+                onChanged: (value) => setDialogState(() => keyId = value),
+              ),
+              const SizedBox(height: 8),
+            ],
+            if (keyId == null)
+              TextField(
+                controller: controller,
+                autofocus: true,
+                obscureText: true,
+                decoration: InputDecoration(labelText: libL10n.pwd),
+                onSubmitted: (value) =>
+                    ctx.pop(AdHocSshCredential.password(value)),
+              ),
+          ],
+        ),
       ),
       actionsBuilder: (dialogContext) => [
         Btn.cancel(),
         Btn.text(
           text: libL10n.ok,
-          onTap: () => dialogContext.pop(controller.text),
+          onTap: () => dialogContext.pop(
+            keyId == null
+                ? AdHocSshCredential.password(controller.text)
+                : AdHocSshCredential.privateKey(keyId!),
+          ),
         ),
       ],
     );
