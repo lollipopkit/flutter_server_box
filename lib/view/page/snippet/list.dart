@@ -88,15 +88,11 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
         singleLine: true,
       ),
       body: _buildSnippetList(snippets, tag, split),
-      // Small in a column, like the server rail's: a full-size button in a
-      // rail this narrow covers the row under it.
+      // Beside a pane the two buttons are in the rail's own row, where the
+      // terminal and file rails keep theirs; a button floating over a column
+      // this narrow covers the row under it.
       floatingActionButton: split
-          ? FloatingActionButton.small(
-              heroTag: 'snippetAdd',
-              tooltip: libL10n.add,
-              onPressed: () => _edit(null, true),
-              child: const Icon(Icons.add),
-            )
+          ? null
           : FloatingActionButton(
               heroTag: 'snippetAdd',
               tooltip: libL10n.add,
@@ -132,17 +128,42 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
     // script, which is worth the width at full width and is a smaller copy of
     // the editor when the editor is right there.
     if (split) {
-      return ListView.builder(
-        padding: const EdgeInsets.only(top: 4, bottom: 77),
-        itemCount: filtered.length,
-        itemBuilder: (_, index) {
-          final snippet = filtered[index];
-          return SideBarTile(
-            title: snippet.name,
-            selected: _editing == snippet.name,
-            onTap: () => _edit(snippet, true),
-          );
-        },
+      return Column(
+        children: [
+          // What acts on the list rather than on one entry in it, in the same
+          // corner and at the same size the other rails put theirs.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Btn.icon(
+                  icon: const Icon(Icons.search, size: 18),
+                  onTap: () => _search(filtered),
+                ),
+                const SizedBox(width: 4),
+                Btn.icon(
+                  icon: const Icon(Icons.add, size: 18),
+                  onTap: () => _edit(null, true),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.only(top: 4, bottom: 12),
+              itemCount: filtered.length,
+              itemBuilder: (_, index) {
+                final snippet = filtered[index];
+                return SideBarTile(
+                  title: snippet.name,
+                  selected: _editing == snippet.name,
+                  onTap: () => _edit(snippet, true),
+                );
+              },
+            ),
+          ),
+        ],
       );
     }
 
@@ -155,6 +176,45 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
       padding: MasonryList.kPadding.copyWith(bottom: 77),
       itemCount: filtered.length,
       itemBuilder: (_, index) => _buildSnippetItem(filtered[index]),
+    );
+  }
+
+  /// Finds a snippet by what it is called or by what it runs.
+  ///
+  /// The script as well as the name, because a snippet is often remembered by
+  /// the command in it rather than by whatever it was called when it was
+  /// saved. Searches what the tag filter left, so the rail and the search
+  /// agree about which snippets are in view.
+  void _search(List<Snippet> within) {
+    showSearch(
+      context: context,
+      delegate: SearchPage<Snippet>(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        future: (query) async {
+          if (query.isEmpty) return [];
+          final needle = query.toLowerCase();
+          return [
+            for (final snippet in within)
+              if (snippet.name.toLowerCase().contains(needle) ||
+                  snippet.script.toLowerCase().contains(needle) ||
+                  (snippet.note?.toLowerCase().contains(needle) ?? false))
+                snippet,
+          ];
+        },
+        builder: (ctx, snippet) => ListTile(
+          title: Text(snippet.name),
+          subtitle: Text(
+            snippet.note ?? snippet.script,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            ctx.pop();
+            _edit(snippet, true);
+          },
+        ),
+      ),
     );
   }
 
