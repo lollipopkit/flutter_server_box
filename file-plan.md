@@ -74,6 +74,28 @@ sshd**: `SshCredential.viaMonitor` relays the byte stream, and SFTP rides that
 like everything else above `SSHSocket`. The gap is exactly the set of hosts
 with a monitor agent and no reachable sshd at all.
 
+### One category in the UI, whatever the transport
+
+SFTP and monitor are both **a server**. Which of them is carrying the bytes is
+not a distinction anybody browsing files should be shown, any more than the
+terminal shows whether it reached sshd directly or through the tunnel — the app
+already decides this by asking `ServerCapabilities` rather than by testing what
+kind of credential a server has.
+
+So the session model is two cases, not three:
+
+```dart
+sealed class FileSession {
+  LocalFileSession()          // this device
+  ServerFileSession(Spi spi)  // a server, however its files are reached
+}
+```
+
+and resolving a server's backend is a separate question, answered by
+capability: SFTP while there is a byte stream to run it over, a monitor file
+API if one is ever built and the server has no sshd. A server that gains sshd
+later changes backend and not category, and nothing in the tab strip moves.
+
 ### Recommendation
 
 **C now, A as its own piece of work.** Ship the abstraction with local and SFTP
@@ -126,6 +148,14 @@ The sudo fallback (`core/utils/sftp_sudo.dart`) stays SFTP's own. It is not a
 general idea: it works by running a shell command when an SFTP operation is
 refused, and a backend without a shell has nothing to fall back to. It belongs
 behind `traits.sudoFallback`.
+
+It also belongs **inside** the backend rather than in the page. The SFTP page
+wrapped each mutating action in a retry by hand, which is why only the actions
+somebody remembered to wrap had one. `SftpEscalation` is the seam: the backend
+says "run this command as root", and obtaining, caching and forgetting the
+password stays where there is a screen to ask on. The backend never holds one,
+which is also what lets a transfer isolate use the same class with no
+escalation at all — nobody there to ask.
 
 ## Transfers between any two
 
@@ -213,8 +243,9 @@ not offer the button.
 | Stage | Content | Verifiable on its own |
 | ----- | ------- | --------------------- |
 | 1 | `FileBackend`, `FileEntry`, `FileRef`, traits; `LocalFileBackend` and `SftpFileBackend` | unit tests against a temp dir and a real server; nothing in the UI moves |
-| 2 | `FileBrowserPage` over the interface; the local page migrates to it | this device's files behave as before, and gain sort/search |
-| 3 | The SFTP page migrates; sudo fallback behind `traits` | both tabs are one page |
+| 2 | `FileBrowserPage` over the interface; the local page migrates to it | this device's files behave as before |
+| 3a | `SftpEscalation`: the sudo retry moves into the backend | every operation gets it, not the wrapped ones |
+| 3b | The SFTP page migrates onto the browser | both tabs are one page |
 | 4 | `FileTransfer` replaces `SftpReq`; missions list generalised | local→server and server→local as today |
 | 5 | Server→server, local→local | the pair that never existed |
 | 6 | `ServerCapabilities.files`; buttons hidden where there is nothing to browse | a monitor-only server without sshd stops offering files |

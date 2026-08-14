@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:server_box/core/utils/sftp_escalation.dart';
+import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 
 /// [FileBackend] over SFTP.
@@ -11,21 +13,28 @@ import 'package:server_box/data/model/file/file_backend.dart';
 /// answers. [close] therefore closes the SFTP channel and leaves the client
 /// alone.
 class SftpFileBackend implements FileBackend {
-  SftpFileBackend(this._sftp);
+  SftpFileBackend(this._sftp, {this.escalation});
 
   /// Opens one on [client]. The caller owns [client]; this owns the channel.
-  static Future<SftpFileBackend> connect(SSHClient client) async =>
-      SftpFileBackend(await client.sftp());
+  static Future<SftpFileBackend> connect(
+    SSHClient client, {
+    SftpEscalation? escalation,
+  }) async =>
+      SftpFileBackend(await client.sftp(), escalation: escalation);
 
   final SftpClient _sftp;
 
+  /// What to do when the server refuses. Null means take no for an answer,
+  /// which is right for a transfer running in an isolate with nobody to ask.
+  final SftpEscalation? escalation;
+
   @override
-  FileBackendTraits get traits => const FileBackendTraits(
+  FileBackendTraits get traits => FileBackendTraits(
     permissions: true,
     symlinks: true,
-    // What `sftp_sudo.dart` is: an operation the server refused, retried as a
-    // shell command. The shell is the SSH connection this rides on.
-    sudoFallback: true,
+    // Not a property of SFTP but of this connection: escalating means running
+    // a shell command, and a session already root has nowhere to escalate to.
+    sudoFallback: escalation?.available ?? false,
     randomAccessReads: true,
   );
 
@@ -62,20 +71,37 @@ class SftpFileBackend implements FileBackend {
   }
 
   @override
-  Future<void> mkdir(String path) => _sftp.mkdir(path);
+  Future<void> mkdir(String path) => runWithEscalation(
+    escalation: escalation,
+    normal: () => _sftp.mkdir(path),
+    sudoCommand: () => 'mkdir -p -- ${shellSingleQuote(path)}',
+  );
 
   @override
   Future<void> remove(String path, {bool recursive = false}) async {
     final attrs = await _sftp.stat(path);
-    if (!attrs.isDirectory) {
-      await _sftp.remove(path);
-      return;
-    }
-    if (recursive) await _removeChildren(path);
-    // SFTP has no recursive delete; `rmdir` on a directory with anything left
-    // in it fails, which is what the app's "SFTP can't delete a non-empty
-    // directory" dialog was explaining to users.
-    await _sftp.rmdir(path);
+    final isDir = attrs.isDirectory;
+    await runWithEscalation(
+      escalation: escalation,
+      normal: () async {
+        if (!isDir) {
+          await _sftp.remove(path);
+          return;
+        }
+        if (recursive) await _removeChildren(path);
+        // SFTP has no recursive delete; `rmdir` on a directory with anything
+        // left in it fails, which is what the app's "SFTP can't delete a
+        // non-empty directory" dialog was explaining to users.
+        await _sftp.rmdir(path);
+      },
+      // One command instead of walking the tree over a channel that is
+      // refusing every step of it.
+      sudoCommand: () => switch ((isDir, recursive)) {
+        (true, true) => 'rm -r -- ${shellSingleQuote(path)}',
+        (true, false) => 'rmdir -- ${shellSingleQuote(path)}',
+        _ => 'rm -f -- ${shellSingleQuote(path)}',
+      },
+    );
   }
 
   Future<void> _removeChildren(String path) async {
@@ -91,7 +117,12 @@ class SftpFileBackend implements FileBackend {
   }
 
   @override
-  Future<void> rename(String from, String to) => _sftp.rename(from, to);
+  Future<void> rename(String from, String to) => runWithEscalation(
+    escalation: escalation,
+    normal: () => _sftp.rename(from, to),
+    sudoCommand: () =>
+        'mv -- ${shellSingleQuote(from)} ${shellSingleQuote(to)}',
+  );
 
   @override
   Stream<List<int>> read(String path, {int offset = 0}) async* {
