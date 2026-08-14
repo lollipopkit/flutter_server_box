@@ -158,6 +158,8 @@
   "rememberPwdInMem": "Ingat kata sandi di dalam memori",
   "rememberPwdInMemTip": "Digunakan untuk kontainer, menangguhkan, dll.",
   "remotePath": "Jalur jarak jauh",
+  "rootfsSubtitle": "Lingkungan pengguna Linux di perangkat ini",
+  "rootfsInstallTip": "Unduh Alpine Linux {version} (sekitar 3 MB) dan ekstrak di perangkat ini. Ini memberi aplikasi ini shell dengan manajer paket, dan dapat dihapus kapan saja.",
   "sameIdServerExist": "Server dengan ID yang sama sudah ada",
   "second": "S",
   "serverFilesUnavailableTip": "Dapat dijangkau melalui SSH server ini, atau melalui agen monitor dengan API berkasnya diaktifkan.",

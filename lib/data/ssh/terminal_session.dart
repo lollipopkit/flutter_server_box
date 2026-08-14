@@ -98,8 +98,8 @@ class TerminalSession {
     if (_backend != null) return;
     // Nothing to adopt on this device: there is no connection anybody else
     // could be holding, so the shell this session opens is its own.
-    if (source is LocalSource) {
-      _backend = LocalShellBackend();
+    if (source case LocalSource(:final rootfs)) {
+      _backend = LocalShellBackend(inRootfs: rootfs);
       _ownsBackend = true;
       return;
     }
@@ -125,7 +125,9 @@ class TerminalSession {
     BuildContext? context,
   }) async {
     _ownsBackend = true;
-    if (source is LocalSource) return _backend = LocalShellBackend();
+    if (source case LocalSource(:final rootfs)) {
+      return _backend = LocalShellBackend(inRootfs: rootfs);
+    }
 
     final agent = _grantedBackend(granted);
     if (agent != null) return _backend = agent;

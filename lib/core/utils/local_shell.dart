@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_pty/flutter_pty.dart';
+import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 
 /// [ShellBackend] on the machine the app is running on.
@@ -16,7 +17,11 @@ import 'package:server_box/data/model/server/shell_backend.dart';
 /// Android the shell is whatever toybox provides — see [isSupported], which is
 /// the only thing a caller should ask.
 class LocalShellBackend implements ShellBackend {
-  LocalShellBackend();
+  LocalShellBackend({this.inRootfs = false});
+
+  /// Whether shells start inside the Linux userland rather than the platform's
+  /// own. Only Android has one — see [AndroidRootfs].
+  final bool inRootfs;
 
   /// Whether this build has a shell to give.
   ///
@@ -94,9 +99,10 @@ class LocalShellBackend implements ShellBackend {
     required int height,
     Map<String, String>? environment,
   }) async {
+    final guest = inRootfs ? AndroidRootfs.enter() : null;
     return _start(
-      shellPath,
-      arguments: const [],
+      guest?.executable ?? shellPath,
+      arguments: guest?.arguments ?? const [],
       width: width,
       height: height,
       environment: environment,
@@ -110,11 +116,14 @@ class LocalShellBackend implements ShellBackend {
     required int height,
     Map<String, String>? environment,
   }) async {
+    final guest = inRootfs ? AndroidRootfs.enter(command: command) : null;
     return _start(
-      shellPath,
-      // `/C` on Windows, where `cmd` spells the same idea differently and
-      // taking the POSIX form would run nothing at all.
-      arguments: [Platform.isWindows ? '/C' : '-c', command],
+      guest?.executable ?? shellPath,
+      arguments:
+          guest?.arguments ??
+          // `/C` on Windows, where `cmd` spells the same idea differently and
+          // taking the POSIX form would run nothing at all.
+          [Platform.isWindows ? '/C' : '-c', command],
       width: width,
       height: height,
       environment: environment,

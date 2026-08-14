@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
@@ -17,6 +18,7 @@ import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/widget/empty_pane.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
+import 'package:server_box/view/widget/rootfs_install.dart';
 
 part 'tab_add.dart';
 part 'tab_sort.dart';
@@ -79,6 +81,8 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       sortVersion: _sortVersion,
       onTap: _openServer,
       onLocal: () => _open(const LocalSource()),
+      onRootfs: _openRootfs,
+      onRemoveRootfs: _removeRootfs,
       onLongPress: (spi) =>
           ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
     ),
@@ -142,6 +146,8 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
           actions: [_sortBtn, _searchBtn, _historyBtn, _addBtn],
           onOpen: _openServer,
           onLocal: () => _open(const LocalSource()),
+          onRootfs: _openRootfs,
+          onRemoveRootfs: _removeRootfs,
           onEdit: (spi) =>
               ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
           onSelect: _sessions.select,
@@ -296,6 +302,29 @@ extension _Sessions on _SSHTabPageState {
     _sessions.select(_sessions.names.indexOf(tab.name));
   }
 
+  /// Opens a shell inside the Linux userland, installing it if this is the
+  /// first time.
+  ///
+  /// The install is where the tap may stop: it downloads, and it can be
+  /// cancelled or fail. Only a rootfs that is actually there gets a tab.
+  Future<void> _openRootfs() async {
+    if (!await installAndroidRootfs(context)) return;
+    _open(const LocalSource(rootfs: true));
+  }
+
+  /// Deletes the Linux userland, and the terminals that were inside it.
+  ///
+  /// Their shells are already gone with the files they were running from, so
+  /// leaving the tabs up would leave dead terminals nobody asked to keep.
+  Future<void> _removeRootfs() async {
+    if (!await removeAndroidRootfs(context)) return;
+    for (final tab in [..._sessions.tabs]) {
+      if (tab.data.page.args.source == const LocalSource(rootfs: true)) {
+        _closeTab(tab.id);
+      }
+    }
+  }
+
   Future<void> _confirmClose(int index) async {
     // Resolved now, while the position still means what the bar drew.
     final tab = _sessions.tabs.elementAtOrNull(index - 1);
@@ -344,7 +373,7 @@ extension _Sessions on _SSHTabPageState {
   /// Each entry is read defensively and skipped on its own. This is the one
   /// path that runs against data an older build wrote, and a single malformed
   /// record used to abort the loop — taking every other terminal with it.
-  void _restoreTabs() {
+  Future<void> _restoreTabs() async {
     final List<dynamic> entries;
     try {
       entries = jsonDecode(_restorableTabs.value) as List;
@@ -366,7 +395,14 @@ extension _Sessions on _SSHTabPageState {
       // to reopen has cost nothing.
       final id = entry['sourceId'] ?? entry['serverId'];
       final TerminalSource source;
-      if (id == const LocalSource().id) {
+      if (id == LocalSource.rootfsId) {
+        // Only where there is one to enter. A rootfs the user deleted, or a
+        // tab set restored onto a build without proot, would otherwise reopen
+        // as a terminal that can only print an error.
+        if (!AndroidRootfs.isAvailable) continue;
+        if (!await AndroidRootfs.isInstalled) continue;
+        source = const LocalSource(rootfs: true);
+      } else if (id == const LocalSource().id) {
         // A tab set saved on a desktop can be restored on a phone — the same
         // backup, the same account — and iOS has no shell to give. Skipped
         // like an unknown server below, rather than opening a tab that can

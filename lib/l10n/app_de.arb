@@ -158,6 +158,8 @@
   "rememberPwdInMem": "Passwort im Speicher behalten",
   "rememberPwdInMemTip": "Für Container, Aufhängen usw.",
   "remotePath": "Entfernte Pfade",
+  "rootfsSubtitle": "Eine Linux-Userland-Umgebung auf diesem Gerät",
+  "rootfsInstallTip": "Alpine Linux {version} (etwa 3 MB) herunterladen und auf diesem Gerät entpacken. Es gibt dieser App eine Shell mit Paketmanager und kann jederzeit gelöscht werden.",
   "sameIdServerExist": "Ein Server mit derselben ID existiert bereits",
   "second": "s",
   "serverFilesUnavailableTip": "Erreichbar entweder über SSH dieses Servers oder über einen Monitor-Agenten mit eingeschalteter Datei-API.",

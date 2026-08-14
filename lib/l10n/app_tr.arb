@@ -158,6 +158,8 @@
   "rememberPwdInMem": "Şifreyi bellekte hatırla",
   "rememberPwdInMemTip": "Konteynerler, askıya alma vb. için kullanılır.",
   "remotePath": "Uzak yol",
+  "rootfsSubtitle": "Bu cihazdaki bir Linux kullanıcı alanı",
+  "rootfsInstallTip": "Alpine Linux {version} (yaklaşık 3 MB) indirilir ve bu cihazda açılır. Bu uygulamaya paket yöneticisi olan bir kabuk sağlar ve istediğiniz zaman silinebilir.",
   "sameIdServerExist": "Aynı kimliğe sahip bir sunucu zaten mevcut",
   "second": "s",
   "serverFilesUnavailableTip": "Bu sunucunun SSH'ı üzerinden ya da dosya API'si açık bir monitor aracısı üzerinden erişilebilir.",

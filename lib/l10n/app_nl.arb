@@ -158,6 +158,8 @@
   "rememberPwdInMem": "Wachtwoord onthouden in geheugen",
   "rememberPwdInMemTip": "Gebruikt voor containers, opschorting, enz.",
   "remotePath": "Extern pad",
+  "rootfsSubtitle": "Een Linux-userland op dit apparaat",
+  "rootfsInstallTip": "Download Alpine Linux {version} (ongeveer 3 MB) en pak het uit op dit apparaat. Het geeft deze app een shell met pakketbeheerder en kan op elk moment worden verwijderd.",
   "sameIdServerExist": "Er bestaat al een server met dezelfde ID",
   "second": "s",
   "serverFilesUnavailableTip": "Bereikbaar via de SSH van deze server, of via een monitor-agent met zijn bestands-API ingeschakeld.",

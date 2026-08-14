@@ -63,6 +63,13 @@ class MainActivity: FlutterFragmentActivity() {
                         moveTaskToBack(true)
                         result.success(null)
                     }
+                    // The one directory an app may execute a file from. Not
+                    // reachable from Dart, and everything the Linux rootfs
+                    // does depends on knowing it — see
+                    // scripts/build-proot-android.sh.
+                    "nativeLibDir" -> {
+                        result.success(applicationInfo.nativeLibraryDir)
+                    }
                     "isServiceRunning" -> {
                         result.success(ForegroundService.isRunning)
                     }

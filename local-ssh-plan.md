@@ -18,15 +18,16 @@ and step 3 on iOS is a GPLv3 emulator plus an App Store review argument. This
 document is what is known, what is guessed, and what has to be measured before
 any of it is committed to.
 
-**Status: stages 1, 2 and 2b are done. Stages 3 and 4 are not started.**
+**Status: stages 1, 2, 2b and 3 are done. Stage 4 is done on Android; its iOS
+half is not started.**
 
 | Stage | State |
 | --- | --- |
 | 1 — rename, local backend | done and **exercised**: `dd9b6e84`, `3d1acd6a`, `5fc31b8e`, `6e9d3d1b`, `df5fb7e7`, `79782d73` |
-| 2 — Android host shell | **written, never run**: `isSupported` excludes only iOS and the sandboxed macOS build, and `shellPath` is `/system/bin/sh` there. No Android device here |
+| 2 — Android host shell | done and **exercised** on an API 36 emulator: the Device entry opens `/system/bin/sh` |
 | 2b — the Agent off SSH, and onto this device | done: `328f92d9`, `f1b869c1`, `95aa2c30`, `c6c728f1` |
-| 3 — measure Android's `execve` | not started; needs a device |
-| 4 — rootfs | not started |
+| 3 — measure Android's `execve` | done: `integration_test/android_exec_test.dart`, and the answer is below |
+| 4 — rootfs | **Android done**: `lib/core/utils/android_rootfs.dart`, an entry in the terminal tab, and `integration_test/rootfs_shell_test.dart`. iOS not started |
 
 Stage 1 is no longer only analysed. `integration_test/local_shell_test.dart`
 runs inside a real app, which is the only place an FFI plugin loads, and covers
@@ -398,11 +399,20 @@ bionic binary from there and segfaults on a musl one, and proot sidesteps the
 whole question with a loader of its own. Stage 4's Android half is vendoring
 proot and measuring it, not writing a loader.
 
-**4. Rootfs.** Android is measured and works — proot with its loader in
-`nativeLibraryDir`, an Alpine tarball as an asset, `useLegacyPackaging`. iOS via
-ish-arm64 is the unmeasured half: vendor the fork, build the static libs, wire
-the Xcode target, add an iOS build step to CI. This stage is larger than the first three together and
-carries the review risk; treat it as a separate decision, not a continuation.
+**4. Rootfs.** Android is done. Alpine 3.22.5 aarch64, downloaded and digest-checked
+on first use into `getApplicationSupportDirectory()`, entered through proot from
+`nativeLibraryDir`; `apk add` installs over the network. Two things had to be
+found by failing first: `useLegacyPackaging = true`, or nothing is extracted
+from the APK and there is no `nativeLibraryDir` at all; and shipping
+`libproot-loader.so` and naming it in `PROOT_LOADER`, or proot falls back to
+`execve` and is refused. One thing is pinned rather than solved: Alpine 3.23 and
+later ship apk-tools 3, whose network fetches fail under proot with `Permission
+denied` on every repository while busybox `wget` fetches the same URLs — cause
+not established, so the branch is 3.22, the last with apk-tools 2.14.
+
+iOS via ish-arm64 is the unmeasured half: vendor the fork, build the static
+libs, wire the Xcode target, add an iOS build step to CI. That half carries the
+review risk; treat it as a separate decision, not a continuation.
 It is also what turns the agent's local execution from "on the user's
 filesystem" into "in a sandbox", which may be the strongest reason to build it.
 

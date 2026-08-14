@@ -236,3 +236,24 @@ l10n 里 `askAiRiskUnknown`(15 语言)已经加了。
 另外:`Hive.initFlutter()` 的默认目录仍是 documents,只是 `HiveStore.init` 每次都显式
 传 `path`,所以没有盒子落在那里。哪天有人直接 `Hive.openBox` 不传 path,就会在不沙盒
 版的 `~/Documents` 里冒出一个盒子。
+
+## Android rootfs:proot 的二进制不在仓库里,release 构建默认没有这个功能
+
+`AndroidRootfs` 已经能用了(下载并校验 Alpine 3.22.5、proot 进 rootfs、terminal tab
+里有入口、`integration_test/rootfs_shell_test.dart` 覆盖到 `apk add`)。但
+`android/app/src/main/jniLibs/` 在 `.gitignore` 里,`libproot.so` /
+`libproot-loader.so` 只有本地跑过 `scripts/build-proot-android.sh` 才有。没跑过的
+构建里 `AndroidRootfs.isAvailable` 是 false,入口不显示——功能等于没发布。
+
+剩下几条:
+
+- **CI 要么构建 proot,要么把产物作为 release asset 固定下来。** 现在两者都没有。
+  构建脚本只做 arm64-v8a,x86_64 设备(以及 32 位)本来就没有。
+- **`useLegacyPackaging = true` 是全局开关。** 为了让 `nativeLibraryDir` 真实存在而
+  打开,代价是每个 ABI 的 so 都会被解压一份,安装体积变大。只在需要 rootfs 的构建
+  里打开,还没做。
+- **Alpine 分支钉在 3.22。** 3.23+ 的 apk-tools 3 在 proot 下所有仓库都报
+  `Permission denied`(同一环境里 busybox `wget` 能取同样的 URL,本地文件仓库也正常),
+  原因未查明。3.22 是最后一个 apk-tools 2.14 的分支。等原因查明或上游修掉再往上跟。
+- **升级路径没做。** `.installed` 里写了版本号,但没有任何代码读它做比较;换 pin 之后
+  老 rootfs 会一直留着,只能手动长按删除再装。

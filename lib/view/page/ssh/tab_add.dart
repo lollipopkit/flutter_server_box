@@ -12,6 +12,8 @@ class _AddPage extends ConsumerStatefulWidget {
     required this.sortVersion,
     required this.onTap,
     required this.onLocal,
+    required this.onRootfs,
+    required this.onRemoveRootfs,
     required this.onLongPress,
   });
 
@@ -23,6 +25,12 @@ class _AddPage extends ConsumerStatefulWidget {
 
   /// Opens a shell on the machine the app is running on.
   final VoidCallback onLocal;
+
+  /// Opens a shell inside the Linux userland, installing it first if needed.
+  final VoidCallback onRootfs;
+
+  /// Deletes that userland.
+  final VoidCallback onRemoveRootfs;
 
   final void Function(Spi spi) onLongPress;
 
@@ -54,7 +62,9 @@ class _AddPageState extends ConsumerState<_AddPage> {
 
     // Not "empty" while this device is on the list: with no servers
     // configured, a shell here is still something this page can open.
-    if (order.isEmpty && !LocalShellBackend.isSupported) {
+    if (order.isEmpty &&
+        !LocalShellBackend.isSupported &&
+        !AndroidRootfs.isAvailable) {
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 
@@ -69,6 +79,16 @@ class _AddPageState extends ConsumerState<_AddPage> {
             title: libL10n.device,
             subtitle: LocalShellBackend.shellPath,
             onTap: widget.onLocal,
+          ),
+        // Beside this device rather than among the servers, because that is
+        // what it is: the same machine, with a userland this app installed.
+        if (AndroidRootfs.isAvailable)
+          CardTile(
+            icon: Icons.terminal,
+            title: 'Alpine ${AndroidRootfs.version}',
+            subtitle: l10n.rootfsSubtitle,
+            onTap: widget.onRootfs,
+            onLongPress: widget.onRemoveRootfs,
           ),
         for (final id in order)
           if (state.servers[id] case final spi?) _ServerTile(
@@ -100,6 +120,8 @@ class _SideBar extends ConsumerStatefulWidget {
     required this.actions,
     required this.onOpen,
     required this.onLocal,
+    required this.onRootfs,
+    required this.onRemoveRootfs,
     required this.onEdit,
     required this.onSelect,
     required this.onClose,
@@ -116,6 +138,12 @@ class _SideBar extends ConsumerStatefulWidget {
 
   /// Opens a shell on the machine the app is running on.
   final VoidCallback onLocal;
+
+  /// Opens a shell inside the Linux userland, installing it first if needed.
+  final VoidCallback onRootfs;
+
+  /// Deletes that userland.
+  final VoidCallback onRemoveRootfs;
   final void Function(Spi spi) onEdit;
   final void Function(int index) onSelect;
   final void Function(int index) onClose;
@@ -158,9 +186,16 @@ class _SideBarState extends ConsumerState<_SideBar> {
           // Above the servers, the way the file rail puts this device above
           // them: it is the one place that is always reachable, and it needs
           // no credential to be.
-          if (LocalShellBackend.isSupported) ...[
+          if (LocalShellBackend.isSupported || AndroidRootfs.isAvailable) ...[
             SideBarSection(libL10n.device),
-            SideBarTile(title: libL10n.device, onTap: widget.onLocal),
+            if (LocalShellBackend.isSupported)
+              SideBarTile(title: libL10n.device, onTap: widget.onLocal),
+            if (AndroidRootfs.isAvailable)
+              SideBarTile(
+                title: 'Alpine',
+                onTap: widget.onRootfs,
+                onLongPress: widget.onRemoveRootfs,
+              ),
           ],
           SideBarSection(libL10n.servers),
           for (final id in order)
@@ -206,7 +241,7 @@ class _ServerTile extends StatelessWidget {
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
         onLongPress: onLongPress,
-      ),
+      ).onSecondary(asSecondary(onLongPress)),
     );
   }
 }

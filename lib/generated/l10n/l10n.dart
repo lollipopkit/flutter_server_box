@@ -1662,6 +1662,18 @@ abstract class AppLocalizations {
   /// **'Remote path'**
   String get remotePath;
 
+  /// No description provided for @rootfsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A Linux userland on this device'**
+  String get rootfsSubtitle;
+
+  /// No description provided for @rootfsInstallTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Alpine Linux {version} (about 3 MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.'**
+  String rootfsInstallTip(Object version);
+
   /// No description provided for @sameIdServerExist.
   ///
   /// In en, this message translates to:

@@ -889,6 +889,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get remotePath => 'Extern pad';
 
   @override
+  String get rootfsSubtitle => 'Een Linux-userland op dit apparaat';
+
+  @override
+  String rootfsInstallTip(Object version) {
+    return 'Download Alpine Linux $version (ongeveer 3 MB) en pak het uit op dit apparaat. Het geeft deze app een shell met pakketbeheerder en kan op elk moment worden verwijderd.';
+  }
+
+  @override
   String get sameIdServerExist => 'Er bestaat al een server met dezelfde ID';
 
   @override

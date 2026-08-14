@@ -825,6 +825,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remotePath => '远端路径';
 
   @override
+  String get rootfsSubtitle => '本机上的 Linux 用户空间';
+
+  @override
+  String rootfsInstallTip(Object version) {
+    return '下载 Alpine Linux $version(约 3 MB)并解压到本机。它为本 App 提供一个带包管理器的 shell,可随时删除。';
+  }
+
+  @override
   String get sameIdServerExist => '已存在相同 id 的服务器';
 
   @override
@@ -2104,6 +2112,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remotePath => '遠端路徑';
+
+  @override
+  String get rootfsSubtitle => '本機上的 Linux 使用者空間';
+
+  @override
+  String rootfsInstallTip(Object version) {
+    return '下載 Alpine Linux $version(約 3 MB)並解壓到本機。它為本 App 提供一個帶套件管理器的 shell,可隨時刪除。';
+  }
 
   @override
   String get sameIdServerExist => '已存在相同 ID 的伺服器';

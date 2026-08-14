@@ -7,6 +7,21 @@ import 'package:server_box/data/res/store.dart';
 abstract final class MethodChans {
   static const _channel = MethodChannel('${Miscs.pkgName}/main_chan');
 
+  /// Where Android extracted this app's native libraries, or null elsewhere.
+  ///
+  /// The only directory an app is allowed to execute a file from — its own
+  /// data directory is refused, which is the whole reason the Linux rootfs
+  /// needs proot. Asked of the platform because nothing in Dart knows it.
+  static Future<String?> nativeLibDir() async {
+    if (!isAndroid) return null;
+    try {
+      return await _channel.invokeMethod<String>('nativeLibDir');
+    } catch (e) {
+      Loggers.app.warning('nativeLibDir', e);
+      return null;
+    }
+  }
+
   /// Issue #662
   static void startService() {
     if (Stores.setting.fgService.fetch() != true) return;

@@ -887,6 +887,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get remotePath => 'Caminho remoto';
 
   @override
+  String get rootfsSubtitle => 'Um espaço de usuário Linux neste dispositivo';
+
+  @override
+  String rootfsInstallTip(Object version) {
+    return 'Baixa o Alpine Linux $version (cerca de 3 MB) e o descompacta neste dispositivo. Dá a este app um shell com gerenciador de pacotes, e pode ser excluído a qualquer momento.';
+  }
+
+  @override
   String get sameIdServerExist => 'Já existe um servidor com o mesmo ID';
 
   @override

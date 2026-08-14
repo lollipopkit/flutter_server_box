@@ -840,6 +840,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get remotePath => '원격 경로';
 
   @override
+  String get rootfsSubtitle => '이 기기의 Linux 사용자 공간';
+
+  @override
+  String rootfsInstallTip(Object version) {
+    return 'Alpine Linux $version(약 3 MB)을 내려받아 이 기기에 풉니다. 패키지 관리자가 있는 셸을 이 앱에 제공하며, 언제든지 삭제할 수 있습니다.';
+  }
+
+  @override
   String get sameIdServerExist => '동일한 ID의 서버가 이미 존재합니다';
 
   @override

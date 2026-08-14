@@ -839,6 +839,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get remotePath => 'リモートパス';
 
   @override
+  String get rootfsSubtitle => 'この端末上の Linux ユーザーランド';
+
+  @override
+  String rootfsInstallTip(Object version) {
+    return 'Alpine Linux $version(約 3 MB)をダウンロードし、この端末に展開します。パッケージマネージャー付きのシェルをこのアプリに提供し、いつでも削除できます。';
+  }
+
+  @override
   String get sameIdServerExist => '同じIDのサーバーが既に存在します';
 
   @override

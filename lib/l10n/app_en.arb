@@ -267,6 +267,13 @@
   "rememberPwdInMem": "Remember password in memory",
   "rememberPwdInMemTip": "Used for containers, suspending, etc.",
   "remotePath": "Remote path",
+  "rootfsSubtitle": "A Linux userland on this device",
+  "rootfsInstallTip": "Download Alpine Linux {version} (about 3 MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.",
+  "@rootfsInstallTip": {
+    "placeholders": {
+      "version": {}
+    }
+  },
   "sameIdServerExist": "A server with the same ID already exists",
   "second": "s",
   "serverFilesUnavailableTip": "Reachable either through this server's SSH, or through a monitor agent with its file API switched on.",

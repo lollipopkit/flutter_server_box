@@ -158,6 +158,8 @@
   "rememberPwdInMem": "Recordar contraseña en la memoria",
   "rememberPwdInMemTip": "Utilizado para contenedores, suspensión, etc.",
   "remotePath": "Ruta remota",
+  "rootfsSubtitle": "Un espacio de usuario Linux en este dispositivo",
+  "rootfsInstallTip": "Descarga Alpine Linux {version} (unos 3 MB) y lo descomprime en este dispositivo. Le da a esta app un shell con gestor de paquetes, y se puede eliminar en cualquier momento.",
   "sameIdServerExist": "Ya existe un servidor con el mismo ID",
   "second": "Segundo",
   "serverFilesUnavailableTip": "Accesible mediante el SSH de este servidor o mediante un agente monitor con su API de archivos activada.",

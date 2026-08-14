@@ -1,4 +1,5 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/ssh/ssh_terminal_environment.dart';
@@ -60,27 +61,42 @@ final class ServerSource extends TerminalSource {
 
 /// The machine the app is running on.
 final class LocalSource extends TerminalSource {
-  const LocalSource();
+  const LocalSource({this.rootfs = false});
+
+  /// Whether the shell runs inside the Linux userland this app installed,
+  /// rather than being the platform's own.
+  ///
+  /// Still this device — the same process tree, the same storage, no network —
+  /// so it is a flag here rather than a third kind of source. What differs is
+  /// which `/bin/sh` answers, and on Android that is the difference between
+  /// toybox and a distribution with a package manager. See [AndroidRootfs].
+  final bool rootfs;
 
   @override
-  String get label => libL10n.device;
+  String get label => rootfs ? 'Alpine' : libL10n.device;
 
   /// Reserved, and not a server id: server ids are generated, so nothing else
   /// can claim it, and a saved session that names it is unambiguous. The same
   /// spelling the Agent uses to name this machine.
   @override
-  String get id => LocalExec.deviceId;
+  String get id => rootfs ? rootfsId : LocalExec.deviceId;
 
-  /// Whatever the shell inherits. Adding to it would be second-guessing a
-  /// login shell about its own machine.
+  /// The rootfs's own, so a restored tab reopens the shell it was.
+  static const rootfsId = '${LocalExec.deviceId}/alpine';
+
+  /// Whatever the shell inherits, unless it is a guest — inside the rootfs
+  /// Android's `PATH` names directories that do not exist, and a shell that
+  /// took it would find none of its own tools.
   @override
-  Map<String, String>? get environment => null;
+  Map<String, String>? get environment =>
+      rootfs ? AndroidRootfs.environment : null;
 
   @override
   String? get tmuxLang => null;
 
   @override
-  bool operator ==(Object other) => other is LocalSource;
+  bool operator ==(Object other) =>
+      other is LocalSource && other.rootfs == rootfs;
 
   @override
   int get hashCode => id.hashCode;

@@ -890,6 +890,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get remotePath => 'Uzak yol';
 
   @override
+  String get rootfsSubtitle => 'Bu cihazdaki bir Linux kullanıcı alanı';
+
+  @override
+  String rootfsInstallTip(Object version) {
+    return 'Alpine Linux $version (yaklaşık 3 MB) indirilir ve bu cihazda açılır. Bu uygulamaya paket yöneticisi olan bir kabuk sağlar ve istediğiniz zaman silinebilir.';
+  }
+
+  @override
   String get sameIdServerExist => 'Aynı kimliğe sahip bir sunucu zaten mevcut';
 
   @override
