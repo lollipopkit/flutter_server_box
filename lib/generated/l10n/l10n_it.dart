@@ -604,6 +604,32 @@ class AppLocalizationsIt extends AppLocalizations {
   String get imagesList => 'Elenco immagini';
 
   @override
+  String get macDmgBody =>
+      'L\'App Store richiede che questa app giri in sandbox, e un processo in sandbox non può aprire uno pseudo-terminale. Per questo la versione App Store non ha un terminale su questo Mac e non può eseguirvi snippet o comandi dell\'agent. La versione DMG è la stessa app firmata senza sandbox, e li ha.\n\nLa versione App Store continua a funzionare e ad aggiornarsi. Più avanti gli aggiornamenti potrebbero finire.\n\nLe due versioni tengono i dati in posti diversi. La versione DMG li copia al primo avvio, così server, chiavi e cronologia vengono con te. Se non riesce te lo dice, e puoi migrare con un file di backup (Backup, nelle impostazioni).';
+
+  @override
+  String get macDmgImportDenied =>
+      'macOS non ha consentito di leggere i dati della versione installata in precedenza. Concedi Accesso completo al disco e riapri l\'app, oppure esporta lì un backup e ripristinalo qui.';
+
+  @override
+  String get macDmgImported =>
+      'Dati della versione installata in precedenza importati.';
+
+  @override
+  String get macDmgImportFailed =>
+      'Impossibile leggere i dati della versione installata in precedenza. Esporta lì un backup e ripristinalo qui.';
+
+  @override
+  String get macDmgTip =>
+      'Il terminale su questo Mac e l\'esecuzione di snippet qui esistono solo nella versione DMG.';
+
+  @override
+  String get macDmgTitle => 'Versione DMG';
+
+  @override
+  String get showHiddenFiles => 'Mostra i file nascosti';
+
+  @override
   String get unused => 'Inutilizzato';
 
   @override

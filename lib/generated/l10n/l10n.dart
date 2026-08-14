@@ -1164,6 +1164,48 @@ abstract class AppLocalizations {
   /// **'Images list'**
   String get imagesList;
 
+  /// No description provided for @macDmgBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The App Store requires this app to be sandboxed, and a sandboxed process cannot open a pseudo-terminal. So the App Store build has no terminal on this Mac and cannot run a snippet or an agent command here. The DMG build is the same app signed without the sandbox, and has both.\n\nThe App Store build still works and still updates. It may stop being updated later.\n\nThe two builds keep their data in different places. The DMG build copies it over on its first launch, so servers, keys and history come along. If that fails it says so, and you can carry a backup file across instead (Backup, in settings).'**
+  String get macDmgBody;
+
+  /// No description provided for @macDmgImportDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'macOS did not allow reading the data of the previously installed build. Grant Full Disk Access and reopen the app, or export a backup there and restore it here.'**
+  String get macDmgImportDenied;
+
+  /// No description provided for @macDmgImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported the data of the previously installed build.'**
+  String get macDmgImported;
+
+  /// No description provided for @macDmgImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the data of the previously installed build. Export a backup there, then restore it here.'**
+  String get macDmgImportFailed;
+
+  /// No description provided for @macDmgTip.
+  ///
+  /// In en, this message translates to:
+  /// **'A terminal on this Mac, and running snippets on it, exist only in the DMG build.'**
+  String get macDmgTip;
+
+  /// No description provided for @macDmgTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'DMG build'**
+  String get macDmgTitle;
+
+  /// No description provided for @showHiddenFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Show hidden files'**
+  String get showHiddenFiles;
+
   /// No description provided for @unused.
   ///
   /// In en, this message translates to:

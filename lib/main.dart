@@ -11,6 +11,7 @@ import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/sync.dart';
+import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -80,7 +81,26 @@ Future<void> _initData() async {
   Hive.registerAdapter(SpiLegacyAdapter());
 
   await PrefStore.shared.init(); // Call this before accessing any store
-  await Stores.init();
+
+  // Before a box is opened, because it rewrites the files they are made of.
+  // After the preferences, because the data it copies may be encrypted with a
+  // key that old installs keep there. See [SandboxImport].
+  final imported = await SandboxImport.run();
+
+  try {
+    await Stores.init();
+  } catch (e, s) {
+    if (imported != SandboxImportResult.imported) rethrow;
+
+    // The copied data does not open. It was only ever a copy, so drop it and
+    // start empty — an app that opens with nothing in it can still be told
+    // what happened, one that does not open cannot.
+    Loggers.app.warning('Stores.init after sandbox import', e, s);
+    await SandboxImport.undo();
+    await Hive.close();
+    await getIt.reset();
+    await Stores.init();
+  }
 
   // It may effect the following logic, so await it.
   // DO DB migration before load any provider.

@@ -574,6 +574,30 @@ class AppLocalizationsJa extends AppLocalizations {
   String get imagesList => 'イメージリスト';
 
   @override
+  String get macDmgBody =>
+      'App Store はこのアプリをサンドボックスで動かすことを求めており、サンドボックス内のプロセスは擬似端末を開けません。そのため App Store 版にはこの Mac のターミナルがなく、スニペットやエージェントのコマンドもここでは実行できません。DMG 版は同じアプリをサンドボックスなしで署名したもので、どちらも使えます。\n\nApp Store 版は引き続き動作し、更新も続きます。今後、更新が終わる可能性があります。\n\n2 つのビルドはデータを別々の場所に置きます。DMG 版は初回起動時にそれをコピーするので、サーバー・鍵・履歴はそのまま移ります。失敗した場合はその旨を表示するので、代わりにバックアップファイルで移行できます(設定の「バックアップ」)。';
+
+  @override
+  String get macDmgImportDenied =>
+      'macOS が以前インストールされていた版のデータの読み取りを許可しませんでした。フルディスクアクセスを許可してアプリを開き直すか、そちらでバックアップを書き出してここで復元してください。';
+
+  @override
+  String get macDmgImported => '以前インストールされていた版のデータを取り込みました。';
+
+  @override
+  String get macDmgImportFailed =>
+      '以前インストールされていた版のデータを読み取れませんでした。そちらでバックアップを書き出し、ここで復元してください。';
+
+  @override
+  String get macDmgTip => 'この Mac 上のターミナルと、この Mac でのスニペット実行は DMG 版にしかありません。';
+
+  @override
+  String get macDmgTitle => 'DMG 版';
+
+  @override
+  String get showHiddenFiles => '隠しファイルを表示';
+
+  @override
   String get unused => '未使用';
 
   @override

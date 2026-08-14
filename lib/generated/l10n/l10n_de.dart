@@ -601,6 +601,32 @@ class AppLocalizationsDe extends AppLocalizations {
   String get imagesList => 'Images';
 
   @override
+  String get macDmgBody =>
+      'Der App Store verlangt, dass diese App in der Sandbox läuft, und ein Prozess in der Sandbox kann kein Pseudo-Terminal öffnen. Der App-Store-Build hat deshalb kein Terminal auf diesem Mac und kann hier weder ein Snippet noch einen Agent-Befehl ausführen. Der DMG-Build ist dieselbe App, ohne Sandbox signiert, und kann beides.\n\nDer App-Store-Build funktioniert weiterhin und wird weiterhin aktualisiert. Später kann das enden.\n\nBeide Builds legen ihre Daten an unterschiedlichen Orten ab. Der DMG-Build kopiert sie beim ersten Start herüber, sodass Server, Schlüssel und Verlauf mitkommen. Schlägt das fehl, wird es gemeldet, und du kannst stattdessen eine Sicherungsdatei mitnehmen (Sicherung in den Einstellungen).';
+
+  @override
+  String get macDmgImportDenied =>
+      'macOS hat das Lesen der Daten des zuvor installierten Builds nicht erlaubt. Erteile vollständigen Festplattenzugriff und öffne die App erneut, oder exportiere dort eine Sicherung und stelle sie hier wieder her.';
+
+  @override
+  String get macDmgImported =>
+      'Daten des zuvor installierten Builds importiert.';
+
+  @override
+  String get macDmgImportFailed =>
+      'Die Daten des zuvor installierten Builds konnten nicht gelesen werden. Exportiere dort eine Sicherung und stelle sie hier wieder her.';
+
+  @override
+  String get macDmgTip =>
+      'Ein Terminal auf diesem Mac und das Ausführen von Snippets darauf gibt es nur im DMG-Build.';
+
+  @override
+  String get macDmgTitle => 'DMG-Build';
+
+  @override
+  String get showHiddenFiles => 'Versteckte Dateien anzeigen';
+
+  @override
   String get unused => 'Ungenutzt';
 
   @override

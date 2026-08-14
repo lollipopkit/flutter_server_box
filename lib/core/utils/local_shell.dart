@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_pty/flutter_pty.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 
@@ -40,10 +41,9 @@ class LocalShellBackend implements ShellBackend {
 
   /// Whether macOS is confining this process.
   ///
-  /// The container id is in the environment of a sandboxed app and absent
-  /// otherwise, which is the cheapest reliable answer — verified both ways.
-  static bool get isSandboxed =>
-      Platform.environment.containsKey('APP_SANDBOX_CONTAINER_ID');
+  /// The same question decides where the app's data lives, so the answer is
+  /// [Pfs.isMacSandboxed] rather than a second reading of the environment.
+  static bool get isSandboxed => Pfs.isMacSandboxed;
 
   /// The user's own shell where the OS says so, and a shell that certainly
   /// exists where it does not.

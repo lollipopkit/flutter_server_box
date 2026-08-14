@@ -212,34 +212,27 @@ l10n 里 `askAiRiskUnknown`(15 语言)已经加了。
 
 其中文件页那几条已并入 `file-plan.md`,作为改造前的回归基线。
 
-## macOS:把用户引导到 DMG 版,App Store 版进入兼容期
+## macOS 两套产物:自动导入的那条假设还没实测
 
-macOS 现在发两套产物(`52a0ec1b`):App Store 版必须沙盒,DMG 版不沙盒。差别不是
-打包偏好,是**能力**——沙盒进程打不开伪终端的从属设备,所以本机终端在 App Store
-版上不存在(`LocalShellBackend.isSupported` 会如实返回 false)。后续凡是需要
-起进程的功能,大概率都会落在同一条线的另一边。
+引导和迁移已经做完(`DmgNotice`、`SandboxImport`、`Paths` 的非沙盒分支)。不沙盒版
+首次启动会把 `~/Library/Containers/com.lollipopkit.toolbox/Data/Documents` 整个复制
+到 `~/Library/Application Support/ServerBox`,覆盖两类人:App Store 版用户,以及
+`52a0ec1b` 之前那批**沙盒版 DMG** 用户(他们的数据也在同一个容器里)。
 
-现在是兼容期:两套都发。方向是把用户往 DMG 引,**不强制**,但要让人知道
-App Store 版以后可能不再更新。
+剩下三条:
 
-要做的:
+- **keychain 是否两边通用,没有实测过。** hive 的盒子用 AES 加密,密钥在
+  `SecureStoreProps.hivePwd`,走 data protection keychain,access group 来自
+  application-identifier。两个 build 同 team、同 bundle id,理应拿到同一项,但只是
+  推断。代码不依赖这个推断:`SandboxImport.hasBoxKey` 读不到密钥就返回 `noKey`、
+  不复制,并提示改用备份文件;`Stores.init` 失败还有 `undo` 兜底。要确认的是真机
+  上实际走的是哪条分支(签名 DMG + 有容器数据的机器,看日志里的
+  `Sandbox import: <result>`)。
+- **容器读取权限。** macOS 14 起,一个 app 读另一个 app 的容器要用户点头;同 bundle
+  id 大概率不弹窗,但没验证。被拒时是 `denied`,提示里给了「完全磁盘访问权限」的入口。
+- **App Store 版什么时候停更,没定。** 文案现在只说「以后可能停止更新」。定下来之后
+  `macDmgBody` 要改成具体的说法。
 
-- App Store 版在**检查到新版本**时,除了给更新提示,再加一句推荐迁移到 DMG,并
-  说明原因(有哪些功能这个版本给不了)。入口在 `AppUpdateIface.doUpdate`,调用
-  点是 `view/page/home.dart:337` 和 `view/page/setting/entries/app.dart:118`;
-  当前实现在 `packages/fl_lib/lib/src/core/update.dart`,**它现在不知道自己是不是
-  App Store 版**,判据现成:`LocalShellBackend.isSandboxed`。
-- 提示要可关闭、不反复骚扰。一次版本更新提一次,不是每次启动。
-- 设置页里给一个常驻的说明入口,不能只在更新弹窗里出现一次。
-
-**最大的障碍是数据不互通,这个必须先解决或先说清楚。** 同一个 bundle id,沙盒版
-的数据在容器里(`~/Library/Containers/com.lollipopkit.toolbox/Data`),不沙盒版在
-`~/Library/Application Support`。用户装了 DMG 版打开会看到一个空 app,服务器全
-没了。可选做法:
-
-- 迁移提示里明确要求先做一次备份(iCloud 或导出文件),换过去之后恢复;
-- 或者 DMG 版首次启动时探测旧容器路径是否存在、有没有数据,主动提出导入。后者
-  体验好得多,而且不沙盒版**读得到**那个容器目录,技术上可行——没验证过。
-
-在这条解决之前,任何「推荐迁移」的文案都得把「会丢本地数据,先备份」放在最前面,
-否则就是在坑人。
+另外:`Hive.initFlutter()` 的默认目录仍是 documents,只是 `HiveStore.init` 每次都显式
+传 `path`,所以没有盒子落在那里。哪天有人直接 `Hive.openBox` 不传 path,就会在不沙盒
+版的 `~/Documents` 里冒出一个盒子。

@@ -564,6 +564,29 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagesList => '镜像列表';
 
   @override
+  String get macDmgBody =>
+      'App Store 要求本应用沙盒运行,而沙盒进程打不开伪终端。所以 App Store 版没有本机终端,也不能在本机运行 snippet 或 Agent 命令。DMG 版是同一个应用,签名时没有沙盒,这两项都有。\n\nApp Store 版仍然可用、仍在更新,以后可能停止更新。\n\n两个版本的数据存放位置不同。DMG 版首次启动会把数据复制过来,服务器、密钥、历史都会带上。复制失败时会明确告知,那时可以改用备份文件迁移(设置里的「备份」)。';
+
+  @override
+  String get macDmgImportDenied =>
+      'macOS 不允许读取此前安装版本的数据。可授予完全磁盘访问权限后重新打开本应用,或在那个版本里导出备份,再在这里恢复。';
+
+  @override
+  String get macDmgImported => '已导入此前安装版本的数据。';
+
+  @override
+  String get macDmgImportFailed => '读不到此前安装版本的数据。请在那个版本里导出备份,再在这里恢复。';
+
+  @override
+  String get macDmgTip => '本机终端、在本机运行 snippet,只有 DMG 版有。';
+
+  @override
+  String get macDmgTitle => 'DMG 版';
+
+  @override
+  String get showHiddenFiles => '显示隐藏文件';
+
+  @override
   String get unused => '未使用';
 
   @override
@@ -1811,6 +1834,29 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get imagesList => '映像檔列表';
+
+  @override
+  String get macDmgBody =>
+      'App Store 要求本應用程式在沙盒中執行,而沙盒程序無法開啟虛擬終端機。所以 App Store 版沒有本機終端機,也無法在本機執行 snippet 或 Agent 指令。DMG 版是同一個應用程式,簽章時未啟用沙盒,這兩項都有。\n\nApp Store 版仍可使用、仍在更新,日後可能停止更新。\n\n兩個版本的資料存放位置不同。DMG 版首次啟動會將資料複製過來,伺服器、金鑰、紀錄都會帶上。複製失敗時會明確告知,屆時可改用備份檔遷移(設定中的「備份」)。';
+
+  @override
+  String get macDmgImportDenied =>
+      'macOS 不允許讀取先前安裝版本的資料。可授予完全取用磁碟權限後重新開啟本應用程式,或在該版本中匯出備份再於此處還原。';
+
+  @override
+  String get macDmgImported => '已匯入先前安裝版本的資料。';
+
+  @override
+  String get macDmgImportFailed => '讀不到先前安裝版本的資料。請在該版本中匯出備份,再於此處還原。';
+
+  @override
+  String get macDmgTip => '本機終端機、在本機執行 snippet,只有 DMG 版有。';
+
+  @override
+  String get macDmgTitle => 'DMG 版';
+
+  @override
+  String get showHiddenFiles => '顯示隱藏檔案';
 
   @override
   String get unused => '未使用';

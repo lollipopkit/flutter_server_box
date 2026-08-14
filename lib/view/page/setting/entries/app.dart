@@ -85,13 +85,28 @@ extension _App on _AppSettingsPageState {
   }
 
   Widget? _buildPlatformSetting() {
-    if (!isIOS) return null;
-    return ListTile(
-      leading: const Icon(MingCute.apple_fill),
-      title: Text('iOS ${libL10n.setting}'),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => IosSettingsPage.route.go(context),
-    );
+    if (isIOS) {
+      return ListTile(
+        leading: const Icon(MingCute.apple_fill),
+        title: Text('iOS ${libL10n.setting}'),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () => IosSettingsPage.route.go(context),
+      );
+    }
+
+    // The App Store build's one standing entry about the DMG build. The line
+    // in the update dialog is asked to go away and does; this one stays, so
+    // there is somewhere to read the whole thing afterwards.
+    if (DmgNotice.applies) {
+      return ListTile(
+        leading: const Icon(MingCute.apple_fill),
+        title: Text(l10n.macDmgTitle),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () => DmgNotice.show(context),
+      );
+    }
+
+    return null;
   }
 
   Widget _buildCheckUpdate() {
@@ -121,6 +136,8 @@ extension _App on _AppSettingsPageState {
           githubReleasesUrl: Urls.githubReleasesApi,
           storeUrl: Urls.appStore,
           force: BuildMode.isDebug,
+          noticeBuilder: (ctx) =>
+              DmgNotice.forUpdate(ctx, build: AppUpdateIface.newestBuild.value ?? BuildData.build),
         ),
       ),
       trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),

@@ -228,6 +228,13 @@ class SettingStore extends HiveStore {
     true,
   );
 
+  /// List entries whose name starts with a dot.
+  ///
+  /// Off, because the common case is looking for something you put there. Not
+  /// per-backend: someone who wants to see `.ssh` on a server wants to see
+  /// `.config` on this device too.
+  late final showHiddenFiles = propertyDefault('showHiddenFiles', false);
+
   /// Show tip of suspend
   late final showSuspendTip = propertyDefault('showSuspendTip', true);
 
@@ -363,6 +370,12 @@ class SettingStore extends HiveStore {
   late final serverLogoUrl = propertyDefault('serverLogoUrl', '');
 
   late final betaTest = propertyDefault('betaTest', false);
+
+  /// The build number the App Store build last mentioned the DMG one for.
+  ///
+  /// `-1` means never again. Only the sandboxed macOS build reads it — see
+  /// `DmgNotice`, which is where the once-per-version rule lives.
+  late final dmgTipBuild = propertyDefault('dmgTipBuild', 0);
 
   /// For desktop only.
   /// Record the position and size of the window.

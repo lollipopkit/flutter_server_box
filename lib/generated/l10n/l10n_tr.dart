@@ -602,6 +602,32 @@ class AppLocalizationsTr extends AppLocalizations {
   String get imagesList => 'Görüntü listesi';
 
   @override
+  String get macDmgBody =>
+      'App Store bu uygulamanın kum havuzunda çalışmasını zorunlu kılıyor ve kum havuzundaki bir süreç sözde terminal açamıyor. Bu yüzden App Store sürümünde bu Mac için terminal yok; burada snippet ya da agent komutu da çalıştıramaz. DMG sürümü aynı uygulamanın kum havuzu olmadan imzalanmış hâli ve ikisini de yapabiliyor.\n\nApp Store sürümü çalışmaya ve güncellenmeye devam ediyor. İleride güncellenmesi sona erebilir.\n\nİki sürüm verilerini farklı yerlerde tutar. DMG sürümü ilk açılışında bunları kopyalar; sunucular, anahtarlar ve geçmiş sizinle gelir. Bu olmazsa bunu söyler, o zaman bir yedek dosyasıyla taşıyabilirsiniz (ayarlardaki Yedek).';
+
+  @override
+  String get macDmgImportDenied =>
+      'macOS, daha önce kurulu sürümün verilerinin okunmasına izin vermedi. Tam Disk Erişimi verip uygulamayı yeniden açın ya da orada bir yedek dışa aktarıp burada geri yükleyin.';
+
+  @override
+  String get macDmgImported =>
+      'Daha önce kurulu sürümün verileri içe aktarıldı.';
+
+  @override
+  String get macDmgImportFailed =>
+      'Daha önce kurulu sürümün verileri okunamadı. Orada bir yedek dışa aktarıp burada geri yükleyin.';
+
+  @override
+  String get macDmgTip =>
+      'Bu Mac\'te terminal ve burada snippet çalıştırma yalnızca DMG sürümünde var.';
+
+  @override
+  String get macDmgTitle => 'DMG sürümü';
+
+  @override
+  String get showHiddenFiles => 'Gizli dosyaları göster';
+
+  @override
   String get unused => 'Kullanılmıyor';
 
   @override

@@ -18,6 +18,7 @@ import 'package:server_box/view/page/agent/shell.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
 import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -339,8 +340,16 @@ class _HomePageState extends ConsumerState<HomePage>
         githubReleasesUrl: Urls.githubReleasesApi,
         storeUrl: Urls.appStore,
         context: context,
+        noticeBuilder: (ctx) => DmgNotice.forUpdate(
+          ctx,
+          build: AppUpdateIface.newestBuild.value ?? BuildData.build,
+        ),
       );
     }
+
+    // Says so when this launch took over the sandboxed build's data, or when
+    // it could not — see [SandboxImport].
+    unawaited(SandboxImportNotice.showIfNeeded(context));
     unawaited(MethodChans.updateHomeWidget());
     await _notifier.refresh();
 

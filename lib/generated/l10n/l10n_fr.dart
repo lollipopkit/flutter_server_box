@@ -606,6 +606,32 @@ class AppLocalizationsFr extends AppLocalizations {
   String get imagesList => 'Liste des images';
 
   @override
+  String get macDmgBody =>
+      'L\'App Store impose que cette app tourne en bac à sable, et un processus en bac à sable ne peut pas ouvrir de pseudo-terminal. La version App Store n\'a donc pas de terminal sur ce Mac et ne peut y exécuter ni snippet ni commande d\'agent. La version DMG est la même app signée sans bac à sable, et en dispose.\n\nLa version App Store fonctionne toujours et reçoit toujours des mises à jour. Cela pourra cesser plus tard.\n\nLes deux versions rangent leurs données à des endroits différents. La version DMG les copie à son premier lancement : serveurs, clés et historique suivent. En cas d\'échec, elle le dit, et vous pouvez migrer avec un fichier de sauvegarde (Sauvegarde, dans les réglages).';
+
+  @override
+  String get macDmgImportDenied =>
+      'macOS n\'a pas autorisé la lecture des données de la version précédemment installée. Accordez l\'accès complet au disque puis rouvrez l\'app, ou exportez-y une sauvegarde et restaurez-la ici.';
+
+  @override
+  String get macDmgImported =>
+      'Données de la version précédemment installée importées.';
+
+  @override
+  String get macDmgImportFailed =>
+      'Impossible de lire les données de la version précédemment installée. Exportez-y une sauvegarde, puis restaurez-la ici.';
+
+  @override
+  String get macDmgTip =>
+      'Le terminal sur ce Mac et l\'exécution de snippets dessus n\'existent que dans la version DMG.';
+
+  @override
+  String get macDmgTitle => 'Version DMG';
+
+  @override
+  String get showHiddenFiles => 'Afficher les fichiers cachés';
+
+  @override
   String get unused => 'Inutilisé';
 
   @override

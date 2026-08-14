@@ -32,6 +32,7 @@ import 'package:server_box/view/page/setting/seq/srv_detail_seq.dart';
 import 'package:server_box/view/page/setting/seq/srv_func_seq.dart';
 import 'package:server_box/view/page/setting/seq/srv_seq.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
+import 'package:server_box/view/widget/dmg_notice.dart';
 
 part 'about.dart';
 part 'entries/ai.dart';

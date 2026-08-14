@@ -600,6 +600,32 @@ class AppLocalizationsId extends AppLocalizations {
   String get imagesList => 'Daftar gambar';
 
   @override
+  String get macDmgBody =>
+      'App Store mewajibkan aplikasi ini berjalan dalam sandbox, dan proses dalam sandbox tidak bisa membuka pseudo-terminal. Karena itu versi App Store tidak punya terminal di Mac ini dan tidak bisa menjalankan snippet atau perintah agent di sini. Versi DMG adalah aplikasi yang sama, ditandatangani tanpa sandbox, dan memilikinya.\n\nVersi App Store tetap berfungsi dan tetap diperbarui. Nanti pembaruannya bisa berhenti.\n\nKedua versi menyimpan datanya di tempat berbeda. Versi DMG menyalinnya saat pertama dijalankan, jadi server, kunci, dan riwayat ikut pindah. Jika gagal, akan diberitahukan, dan Anda bisa pindah lewat berkas cadangan (Cadangan, di pengaturan).';
+
+  @override
+  String get macDmgImportDenied =>
+      'macOS tidak mengizinkan pembacaan data versi yang terpasang sebelumnya. Berikan Akses Disk Penuh lalu buka ulang aplikasi, atau ekspor cadangan di sana dan pulihkan di sini.';
+
+  @override
+  String get macDmgImported =>
+      'Data versi yang terpasang sebelumnya telah diimpor.';
+
+  @override
+  String get macDmgImportFailed =>
+      'Tidak bisa membaca data versi yang terpasang sebelumnya. Ekspor cadangan di sana, lalu pulihkan di sini.';
+
+  @override
+  String get macDmgTip =>
+      'Terminal di Mac ini dan menjalankan snippet di sini hanya ada pada versi DMG.';
+
+  @override
+  String get macDmgTitle => 'Versi DMG';
+
+  @override
+  String get showHiddenFiles => 'Tampilkan berkas tersembunyi';
+
+  @override
   String get unused => 'Tidak terpakai';
 
   @override

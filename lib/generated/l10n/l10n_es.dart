@@ -605,6 +605,32 @@ class AppLocalizationsEs extends AppLocalizations {
   String get imagesList => 'Lista de imágenes';
 
   @override
+  String get macDmgBody =>
+      'La App Store exige que esta app funcione en un entorno aislado, y un proceso aislado no puede abrir un pseudoterminal. Por eso la versión de la App Store no tiene terminal en este Mac ni puede ejecutar aquí un snippet o un comando del agente. La versión DMG es la misma app firmada sin aislamiento, y sí puede.\n\nLa versión de la App Store sigue funcionando y sigue actualizándose. Más adelante puede dejar de actualizarse.\n\nCada versión guarda sus datos en un sitio distinto. La versión DMG los copia en su primer arranque, así que servidores, claves e historial vienen contigo. Si falla, se te avisa y puedes migrar con un archivo de copia de seguridad (Copia de seguridad, en ajustes).';
+
+  @override
+  String get macDmgImportDenied =>
+      'macOS no permitió leer los datos de la versión instalada anteriormente. Concede acceso total al disco y vuelve a abrir la app, o exporta allí una copia de seguridad y restáurala aquí.';
+
+  @override
+  String get macDmgImported =>
+      'Se importaron los datos de la versión instalada anteriormente.';
+
+  @override
+  String get macDmgImportFailed =>
+      'No se pudieron leer los datos de la versión instalada anteriormente. Exporta allí una copia de seguridad y restáurala aquí.';
+
+  @override
+  String get macDmgTip =>
+      'El terminal en este Mac y ejecutar snippets en él solo existen en la versión DMG.';
+
+  @override
+  String get macDmgTitle => 'Versión DMG';
+
+  @override
+  String get showHiddenFiles => 'Mostrar archivos ocultos';
+
+  @override
   String get unused => 'Sin usar';
 
   @override
