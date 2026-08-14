@@ -320,6 +320,12 @@ handling — sudo, timeouts (`core/utils/sftp_timeout.dart`), host-key prompts.
 - **Hidden files are a setting**, applied while sorting rather than while
   listing, so turning it on costs no round trip. In the same menu as the sort
   order, because both are decisions about how the list is shown.
+- **Cancel means stop.** An isolate is stopped by killing it; the inline copy
+  had to be asked, and until it was, cancelling removed the row and left the
+  copy running. A cancelled transfer also loses the cleanup its own `finally`
+  would have done, so the staging path is reported to this side and deleted
+  here — for a local destination. A cancelled upload leaves one on the server,
+  visible in the browser beside the file it was going to become.
 - **A session says what kind it is.** `{'kind': 'local'|'server', ...}` rather
   than "local is the one with no `serverId`" — a rule the reader had to know
   and the writer never stated. The old shape still reads, behind a TODO.

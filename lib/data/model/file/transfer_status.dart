@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/data/model/file/copy_tree.dart';
+import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/file/transfer_worker.dart';
 
@@ -30,6 +32,10 @@ class FileTransferStatus {
   /// crypto in them.
   FileTransferWorker? worker;
 
+  /// Where the bytes are landing until they are renamed into place, as the
+  /// transfer reported it. Null before it opens one and after it renames.
+  String? stagingPath;
+
   String get fileName => job.name;
 
   double? progress;
@@ -53,10 +59,44 @@ class FileTransferStatus {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
+    // Read before the worker is killed: a transfer that finished has already
+    // renamed its staged copy into place and has nothing to clean up.
+    final unfinished = status != FileTransferStage.finished;
     worker?.dispose();
+    if (unfinished) _discardStaging();
     if (completer?.isCompleted == false) {
       completer?.complete(true);
     }
+  }
+
+  /// Whether the inline copy should stop.
+  ///
+  /// The isolate is stopped by killing it; a copy running here has to be
+  /// asked. Without this, cancelling a local copy removed the row and left the
+  /// copy running.
+  bool get _cancelled => _disposed;
+
+  /// Removes a staged copy the transfer did not get to rename.
+  ///
+  /// Only where this device is the destination. Killing an isolate skips the
+  /// cleanup its own `finally` would have done, and a `.sb-part-N` nobody
+  /// deletes is worse than the partial file this staging replaced.
+  ///
+  /// A cancelled *upload* leaves one on the server, which this side cannot
+  /// reach without opening the connection again. It is at least visible in the
+  /// browser, beside the file it was going to become.
+  void _discardStaging() {
+    final path = stagingPath;
+    if (path == null || job.to is! LocalFileRef) return;
+    stagingPath = null;
+    () async {
+      try {
+        final file = File(LocalFileBackend.nativePath(path));
+        if (await file.exists()) await file.delete();
+      } catch (e, s) {
+        Loggers.app.warning('Failed to remove a cancelled transfer\'s file', e, s);
+      }
+    }();
   }
 
   Future<void> _initWorker() async {
@@ -91,6 +131,7 @@ class FileTransferStatus {
         plan,
         backend,
         backend,
+        cancelled: () => _cancelled,
         onProgress: (transferred) => onNotify(
           FileTransferProgress(
             percent: total == 0 ? 0 : transferred / total * 100,
@@ -101,6 +142,9 @@ class FileTransferStatus {
 
       onNotify(watch.elapsed);
       onNotify(FileTransferStage.finished);
+    } on CopyCancelled {
+      // The row is already gone and `write` has removed what it staged. There
+      // is nobody left to report this to.
     } catch (e, s) {
       Loggers.app.warning('Local copy failed: ${job.from} -> ${job.to}', e, s);
       onNotify(e);
@@ -123,6 +167,9 @@ class FileTransferStatus {
         size = val;
       case final Duration d:
         spentTime = d;
+      case final TransferStaging val:
+        // An empty path means "renamed into place, nothing left to clean up".
+        stagingPath = val.path.isEmpty ? null : val.path;
       default:
         error = Exception('transfer event: $event');
         Loggers.app.warning(error);

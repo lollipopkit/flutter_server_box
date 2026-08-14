@@ -169,6 +169,48 @@ void main() {
       expect(job.isSingleFile, isFalse);
     });
 
+    test('cancelling a local copy actually stops it', () async {
+      // The isolate is stopped by killing it; a copy running here has to be
+      // asked. Without that, cancelling removed the row and left it running.
+      await Directory('${tempDir.path}/src').create();
+      for (var i = 0; i < 40; i++) {
+        File('${tempDir.path}/src/f$i.bin')
+            .writeAsBytesSync(List<int>.filled(64 * 1024, 7));
+      }
+
+      final status = FileTransferStatus(
+        job: FileTransfer(
+          from: LocalFileRef('${tempDir.path}/src'),
+          to: LocalFileRef('${tempDir.path}/dst'),
+          isDir: true,
+        ),
+        notifyListeners: () {},
+      );
+
+      // Once it is moving, pull the plug.
+      for (var i = 0; i < 200 && (status.transferredBytes ?? 0) == 0; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      status.dispose();
+      final atCancel = status.transferredBytes ?? 0;
+
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+
+      expect(status.status, isNot(FileTransferStage.finished));
+      expect(
+        status.transferredBytes,
+        atCancel,
+        reason: 'nothing moved after the cancel',
+      );
+      // And it is not reported as a failure: the user asked for this.
+      expect(status.error, isNull);
+      // Nothing half-written left under a final name.
+      final left = Directory('${tempDir.path}/dst')
+          .listSync()
+          .where((e) => e.path.contains('sb-part'));
+      expect(left, isEmpty);
+    });
+
     test('a local copy that cannot read reports the failure', () async {
       final status = FileTransferStatus(
         job: FileTransfer(

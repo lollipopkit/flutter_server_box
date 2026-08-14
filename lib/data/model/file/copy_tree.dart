@@ -78,17 +78,39 @@ Future<CopyPlan> planCopy(
   return CopyPlan(items: items, dirs: dirs, totalBytes: total);
 }
 
+/// Thrown out of [runCopy] when [runCopy]'s `cancelled` says to stop.
+///
+/// A distinct type so a caller can tell "the user closed this" from "it broke"
+/// — one of those deserves an error on screen and the other does not.
+class CopyCancelled implements Exception {
+  const CopyCancelled();
+
+  @override
+  String toString() => 'Transfer cancelled';
+}
+
 /// Copies everything [plan] found, reporting bytes as they land.
 ///
 /// [onProgress] is called with the running total, not with each chunk: the
 /// caller decides how often that is worth publishing.
+///
+/// [cancelled] is asked between files and at every chunk. Throwing from inside
+/// the stream rather than checking after each file is what stops a large one
+/// partway — and it throws through `write`, whose own cleanup then removes the
+/// staged copy.
 Future<void> runCopy(
   CopyPlan plan,
   FileBackend source,
   FileBackend dest, {
   required void Function(int transferred) onProgress,
+  bool Function()? cancelled,
 }) async {
+  void checkCancelled() {
+    if (cancelled?.call() ?? false) throw const CopyCancelled();
+  }
+
   for (final dir in plan.dirs) {
+    checkCancelled();
     // Already there is not a failure: a destination may well contain a
     // directory of the same name, and the point is that the path exists.
     try {
@@ -98,7 +120,9 @@ Future<void> runCopy(
 
   var transferred = 0;
   for (final item in plan.items) {
+    checkCancelled();
     final counted = source.read(item.from).map((chunk) {
+      checkCancelled();
       transferred += chunk.length;
       onProgress(transferred);
       return chunk;

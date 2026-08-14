@@ -69,6 +69,16 @@ class TransferHostKeyResponse {
   const TransferHostKeyResponse({required this.id, required this.accepted});
 }
 
+/// Where a transfer is parking its bytes until it can rename them into place.
+///
+/// Sent so that a cancelled transfer — an isolate killed mid-flight, whose own
+/// cleanup never runs — leaves nothing behind on this device.
+class TransferStaging {
+  const TransferStaging(this.path);
+
+  final String path;
+}
+
 class TransferHostKeyAccepted {
   final String storageKey;
   final String fingerprintHex;
@@ -356,6 +366,7 @@ Future<void> _download(
     // halfway used to leave a truncated file where a whole one was expected,
     // and nothing about it said so.
     staging = File('${to.path}.$_stagingSuffix');
+    mainSendPort.send(TransferStaging(staging.path));
     final localFile = await staging.open(mode: FileMode.write);
 
     try {
@@ -451,6 +462,7 @@ Future<void> _download(
 
     await staging.rename(to.path);
     staging = null;
+    mainSendPort.send(const TransferStaging(''));
 
     mainSendPort.send(watch.elapsed);
     mainSendPort.send(FileTransferStage.finished);
