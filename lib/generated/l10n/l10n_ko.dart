@@ -1269,4 +1269,11 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get askAiRiskUnknown => '분류되지 않음';
+
+  @override
+  String get agentLocalExec => '이 기기에서 명령 실행';
+
+  @override
+  String get agentLocalExecTip =>
+      'ServerBox가 실행 중인 기기에서도 Agent가 작업할 수 있게 합니다. 여기서는 자동 실행되지 않으며, 모든 명령에 확인이 필요합니다.';
 }

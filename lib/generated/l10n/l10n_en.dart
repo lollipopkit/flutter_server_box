@@ -1335,4 +1335,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get askAiRiskUnknown => 'Unclassified';
+
+  @override
+  String get agentLocalExec => 'Run commands on this device';
+
+  @override
+  String get agentLocalExecTip =>
+      'Lets the Agent work on the machine ServerBox is running on, not only on servers. Nothing runs here unattended: every command needs review, however read-only it looks. This is where the app\'s data, your keys and your files are.';
 }

@@ -1353,4 +1353,11 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get askAiRiskUnknown => 'Не визначено';
+
+  @override
+  String get agentLocalExec => 'Виконувати команди на цьому пристрої';
+
+  @override
+  String get agentLocalExecTip =>
+      'Дозволяє Агенту працювати на машині, де запущено ServerBox, а не лише на серверах. Тут ніщо не виконується без нагляду: кожна команда потребує перевірки.';
 }

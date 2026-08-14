@@ -55,6 +55,15 @@ extension _AI on _AppSettingsPageState {
           ),
           trailing: StoreSwitch(prop: _setting.askAiAutoRunSafeCommands),
         ),
+        // Absent where it could not be honoured: iOS cannot start a process,
+        // and the sandboxed macOS build is the App Store one. A switch that
+        // turns on nothing is worse than no switch.
+        if (LocalExec.isSupported)
+          ListTile(
+            leading: const Icon(Icons.computer_outlined, size: _kIconSize),
+            title: TipText(l10n.agentLocalExec, l10n.agentLocalExecTip),
+            trailing: StoreSwitch(prop: _setting.agentLocalExec),
+          ),
         ListTile(
           leading: const Icon(Icons.keyboard_return, size: _kIconSize),
           title: TipText(l10n.askAiSendOnEnter, l10n.askAiSendOnEnterTip),

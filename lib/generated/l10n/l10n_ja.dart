@@ -1266,4 +1266,11 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get askAiRiskUnknown => '判定不能';
+
+  @override
+  String get agentLocalExec => 'このデバイスでコマンドを実行';
+
+  @override
+  String get agentLocalExecTip =>
+      'ServerBox が動作しているマシン上でも Agent が作業できるようにします。ここでは自動実行はされません。読み取り専用に見えるコマンドでも確認が必要です。';
 }

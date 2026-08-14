@@ -1333,4 +1333,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get askAiRiskUnknown => 'Sınıflandırılmadı';
+
+  @override
+  String get agentLocalExec => 'Bu cihazda komut çalıştır';
+
+  @override
+  String get agentLocalExecTip =>
+      'Agent\'ın yalnızca sunucularda değil, ServerBox\'ın çalıştığı makinede de çalışmasına izin verir. Burada hiçbir şey gözetimsiz çalışmaz: her komut inceleme gerektirir.';
 }

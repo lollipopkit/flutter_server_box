@@ -382,5 +382,7 @@
   "containerUnreadable": "De container-runtime antwoordde in een onverwachte vorm",
   "power": "Energie",
   "continueInTerminal": "Doorgaan in terminal",
-  "askAiRiskUnknown": "Niet ingedeeld"
+  "askAiRiskUnknown": "Niet ingedeeld",
+  "agentLocalExec": "Opdrachten op dit apparaat uitvoeren",
+  "agentLocalExecTip": "Laat de Agent werken op de machine waarop ServerBox draait, niet alleen op servers. Hier draait niets onbeheerd: elke opdracht moet worden beoordeeld."
 }

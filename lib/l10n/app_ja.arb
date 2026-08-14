@@ -382,5 +382,7 @@
   "containerUnreadable": "コンテナランタイムの応答を解釈できませんでした",
   "power": "電源",
   "continueInTerminal": "ターミナルで続ける",
-  "askAiRiskUnknown": "判定不能"
+  "askAiRiskUnknown": "判定不能",
+  "agentLocalExec": "このデバイスでコマンドを実行",
+  "agentLocalExecTip": "ServerBox が動作しているマシン上でも Agent が作業できるようにします。ここでは自動実行はされません。読み取り専用に見えるコマンドでも確認が必要です。"
 }

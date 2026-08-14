@@ -382,5 +382,7 @@
   "containerUnreadable": "O runtime de contêiner respondeu em um formato inesperado",
   "power": "Energia",
   "continueInTerminal": "Continuar no terminal",
-  "askAiRiskUnknown": "Não classificado"
+  "askAiRiskUnknown": "Não classificado",
+  "agentLocalExec": "Executar comandos neste dispositivo",
+  "agentLocalExecTip": "Permite que o Agent trabalhe na máquina onde o ServerBox está a ser executado, não apenas em servidores. Aqui nada corre sem supervisão: todos os comandos precisam de revisão."
 }

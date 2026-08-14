@@ -1352,4 +1352,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get askAiRiskUnknown => 'Не определено';
+
+  @override
+  String get agentLocalExec => 'Выполнять команды на этом устройстве';
+
+  @override
+  String get agentLocalExecTip =>
+      'Позволяет Агенту работать на машине, где запущен ServerBox, а не только на серверах. Здесь ничего не выполняется без присмотра: каждая команда требует проверки.';
 }

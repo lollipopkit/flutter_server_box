@@ -1346,4 +1346,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get askAiRiskUnknown => 'Niet ingedeeld';
+
+  @override
+  String get agentLocalExec => 'Opdrachten op dit apparaat uitvoeren';
+
+  @override
+  String get agentLocalExecTip =>
+      'Laat de Agent werken op de machine waarop ServerBox draait, niet alleen op servers. Hier draait niets onbeheerd: elke opdracht moet worden beoordeeld.';
 }

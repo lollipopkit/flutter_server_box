@@ -2393,6 +2393,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unclassified'**
   String get askAiRiskUnknown;
+
+  /// No description provided for @agentLocalExec.
+  ///
+  /// In en, this message translates to:
+  /// **'Run commands on this device'**
+  String get agentLocalExec;
+
+  /// No description provided for @agentLocalExecTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Lets the Agent work on the machine ServerBox is running on, not only on servers. Nothing runs here unattended: every command needs review, however read-only it looks. This is where the app\'s data, your keys and your files are.'**
+  String get agentLocalExecTip;
 }
 
 class _AppLocalizationsDelegate

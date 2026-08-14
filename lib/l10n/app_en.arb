@@ -443,5 +443,7 @@
   "containerUnreadable": "The container runtime answered in an unexpected form",
   "power": "Power",
   "continueInTerminal": "Continue in terminal",
-  "askAiRiskUnknown": "Unclassified"
+  "askAiRiskUnknown": "Unclassified",
+  "agentLocalExec": "Run commands on this device",
+  "agentLocalExecTip": "Lets the Agent work on the machine ServerBox is running on, not only on servers. Nothing runs here unattended: every command needs review, however read-only it looks. This is where the app's data, your keys and your files are."
 }

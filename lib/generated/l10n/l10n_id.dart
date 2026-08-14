@@ -1336,4 +1336,11 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get askAiRiskUnknown => 'Tidak terklasifikasi';
+
+  @override
+  String get agentLocalExec => 'Jalankan perintah di perangkat ini';
+
+  @override
+  String get agentLocalExecTip =>
+      'Memungkinkan Agent bekerja di mesin tempat ServerBox berjalan, bukan hanya di server. Tidak ada yang berjalan tanpa pengawasan di sini: setiap perintah perlu ditinjau.';
 }

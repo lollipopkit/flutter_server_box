@@ -382,5 +382,7 @@
   "containerUnreadable": "L'environnement d'exécution de conteneurs a répondu dans un format inattendu",
   "power": "Alimentation",
   "continueInTerminal": "Continuer dans le terminal",
-  "askAiRiskUnknown": "Non classé"
+  "askAiRiskUnknown": "Non classé",
+  "agentLocalExec": "Exécuter des commandes sur cet appareil",
+  "agentLocalExecTip": "Permet à l'Agent de travailler sur la machine qui exécute ServerBox, pas seulement sur des serveurs. Rien ne s'exécute sans surveillance ici : chaque commande doit être vérifiée."
 }

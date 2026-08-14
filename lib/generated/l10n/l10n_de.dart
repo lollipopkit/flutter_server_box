@@ -1351,4 +1351,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get askAiRiskUnknown => 'Nicht eingestuft';
+
+  @override
+  String get agentLocalExec => 'Befehle auf diesem Gerät ausführen';
+
+  @override
+  String get agentLocalExecTip =>
+      'Erlaubt dem Agent, auf dem Gerät zu arbeiten, auf dem ServerBox läuft, nicht nur auf Servern. Hier läuft nichts unbeaufsichtigt: Jeder Befehl muss geprüft werden.';
 }

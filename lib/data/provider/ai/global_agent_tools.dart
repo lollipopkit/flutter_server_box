@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
@@ -981,10 +982,11 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final (exec: _, :client, :serverId) = await _shellFor(proposal);
-    if (client == null) throw _noSftp;
+    final (:exec, :client, :serverId) = await _shellFor(proposal);
     final path = proposal.path;
     if (path == null) throw const FormatException('path is required');
+    if (exec is LocalExec) return _readLocalFile(proposal, watch, path);
+    if (client == null) throw _noSftp;
     SftpClient? sftp;
     SftpFile? file;
     try {
@@ -1025,17 +1027,106 @@ class GlobalAgentToolService {
     }
   }
 
+  /// The same two tools on this device, over `dart:io` instead of SFTP.
+  ///
+  /// Not `cat` and `tee` through the shell: those would go through the same
+  /// review as any other command, and reading a file is not a command. Same
+  /// limits as the remote ones, so a model gets one answer whichever machine
+  /// it asked about.
+  Future<AgentToolExecutionResult> _readLocalFile(
+    AskAiCommand proposal,
+    Stopwatch watch,
+    String path,
+  ) async {
+    final file = File(path);
+    if (!await file.exists()) {
+      throw StateError('No such file on this device: $path');
+    }
+    final size = await file.length();
+    final truncated = size > _maxReadBytes;
+    // Only what is going to be shown. A log the size of memory is a plausible
+    // thing to point this at.
+    final data = truncated
+        ? await _firstBytes(file, _maxReadBytes)
+        : await file.readAsBytes();
+    return AgentToolExecutionResult(
+      toolName: proposal.toolName,
+      serverId: null,
+      summary: truncated
+          ? 'Read the first $_maxReadBytes bytes of $path on this device.'
+          : 'Read $path on this device.',
+      succeeded: true,
+      duration: watch.elapsed,
+      truncated: truncated,
+      data: {
+        'path': path,
+        'size_bytes': size,
+        'content': utf8.decode(data, allowMalformed: true),
+      },
+    );
+  }
+
+  Future<Uint8List> _firstBytes(File file, int count) async {
+    final handle = await file.open();
+    try {
+      return await handle.read(count);
+    } finally {
+      await handle.close();
+    }
+  }
+
+  Future<AgentToolExecutionResult> _writeLocalFile(
+    AskAiCommand proposal,
+    Stopwatch watch,
+    String path,
+    Uint8List bytes,
+  ) async {
+    if (bytes.length > _maxWriteBytes) {
+      throw StateError(
+        'File content exceeds the $_maxWriteBytes byte Agent limit.',
+      );
+    }
+    // Written beside the target and moved onto it, the way the remote one is:
+    // a write that fails halfway leaves the original file rather than half of
+    // a new one.
+    final temporary = File('$path.${ShortId.generate()}.tmp');
+    try {
+      await temporary.writeAsBytes(bytes, flush: true);
+      await temporary.rename(path);
+    } catch (_) {
+      if (await temporary.exists()) {
+        try {
+          await temporary.delete();
+        } catch (_) {
+          // Best effort; the failure below is what the caller needs.
+        }
+      }
+      rethrow;
+    }
+    return AgentToolExecutionResult(
+      toolName: proposal.toolName,
+      serverId: null,
+      summary: 'Wrote ${bytes.length} bytes to $path on this device.',
+      succeeded: true,
+      duration: watch.elapsed,
+      data: {'path': path, 'bytes_written': bytes.length},
+    );
+  }
+
   Future<AgentToolExecutionResult> _writeFile(
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final (exec: _, :client, :serverId) = await _shellFor(proposal);
-    if (client == null) throw _noSftp;
+    final (:exec, :client, :serverId) = await _shellFor(proposal);
     final path = proposal.path;
     final content = proposal.arguments['content'];
     if (path == null) throw const FormatException('path is required');
     if (content is! String) throw const FormatException('content is required');
     final bytes = Uint8List.fromList(utf8.encode(content));
+    if (exec is LocalExec) {
+      return _writeLocalFile(proposal, watch, path, bytes);
+    }
+    if (client == null) throw _noSftp;
     if (bytes.length > _maxWriteBytes) {
       throw StateError(
         'File content exceeds the $_maxWriteBytes byte Agent limit.',

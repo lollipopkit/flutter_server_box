@@ -382,5 +382,7 @@
   "containerUnreadable": "Die Container-Laufzeitumgebung hat in einem unerwarteten Format geantwortet",
   "power": "Energie",
   "continueInTerminal": "Im Terminal fortfahren",
-  "askAiRiskUnknown": "Nicht eingestuft"
+  "askAiRiskUnknown": "Nicht eingestuft",
+  "agentLocalExec": "Befehle auf diesem Gerät ausführen",
+  "agentLocalExecTip": "Erlaubt dem Agent, auf dem Gerät zu arbeiten, auf dem ServerBox läuft, nicht nur auf Servern. Hier läuft nichts unbeaufsichtigt: Jeder Befehl muss geprüft werden."
 }
