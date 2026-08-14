@@ -24,6 +24,7 @@ dependencies:
   flutter_highlight: ^0.7.0
   flutter_displaymode: ^0.7.0
   flutter_markdown_plus: ^1.0.12
+  flutter_pty: ^0.4.2
   flutter_svg: ^2.2.1
   fl_chart: ^1.2.0
   freezed_annotation: ^3.0.0
@@ -83,9 +84,7 @@ dev_dependencies:
 
 flutter:
   generate: true
-
   uses-material-design: true
-
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/app_icon.png
