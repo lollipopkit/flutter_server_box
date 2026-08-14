@@ -262,6 +262,7 @@
   "remotePath": "Remote path",
   "sameIdServerExist": "A server with the same ID already exists",
   "second": "s",
+  "sendTo": "Send to…",
   "serverDetailOrder": "Detail page widget order",
   "serverFuncBtns": "Server function buttons",
   "serverOrder": "Server order",

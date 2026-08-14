@@ -870,6 +870,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get second => 's';
 
   @override
+  String get sendTo => 'Şuraya gönder…';
+
+  @override
   String get serverDetailOrder => 'Ayrıntı sayfası bileşen sırası';
 
   @override

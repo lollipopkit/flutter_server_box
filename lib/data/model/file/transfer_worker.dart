@@ -6,11 +6,15 @@ import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:easy_isolate/easy_isolate.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/sftp_file_backend.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/data/model/file/file_backend.dart';
+import 'package:server_box/data/model/file/file_ref.dart';
+import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/sftp/req.dart';
 
 const _sftpChunkSize = 32 * 1024;
 
@@ -20,19 +24,19 @@ const _sftpDownloadMinIdleTimeout = Duration(seconds: 60);
 
 const _sftpUploadMaxBytesOnTheWire = _sftpChunkSize * 64;
 
-var _sftpPromptSequence = 0;
+var _promptSequence = 0;
 
 final _keyboardInteractiveResponses = <int, Completer<List<String>?>>{};
 
 final _hostKeyResponses = <int, Completer<bool>>{};
 
-class SftpKeyboardInteractivePrompt {
+class TransferKeyboardInteractivePrompt {
   final int id;
   final Spi spi;
   final SSHUserInfoRequest request;
   final DateTime expiresAt;
 
-  const SftpKeyboardInteractivePrompt({
+  const TransferKeyboardInteractivePrompt({
     required this.id,
     required this.spi,
     required this.request,
@@ -40,68 +44,69 @@ class SftpKeyboardInteractivePrompt {
   });
 }
 
-class SftpKeyboardInteractiveResponse {
+class TransferKeyboardInteractiveResponse {
   final int id;
   final List<String>? responses;
 
-  const SftpKeyboardInteractiveResponse({
+  const TransferKeyboardInteractiveResponse({
     required this.id,
     required this.responses,
   });
 }
 
-class SftpHostKeyPrompt {
+class TransferHostKeyPrompt {
   final int id;
   final HostKeyPromptInfo info;
 
-  const SftpHostKeyPrompt({required this.id, required this.info});
+  const TransferHostKeyPrompt({required this.id, required this.info});
 }
 
-class SftpHostKeyResponse {
+class TransferHostKeyResponse {
   final int id;
   final bool accepted;
 
-  const SftpHostKeyResponse({required this.id, required this.accepted});
+  const TransferHostKeyResponse({required this.id, required this.accepted});
 }
 
-class SftpHostKeyAccepted {
+class TransferHostKeyAccepted {
   final String storageKey;
   final String fingerprintHex;
 
-  const SftpHostKeyAccepted({
+  const TransferHostKeyAccepted({
     required this.storageKey,
     required this.fingerprintHex,
   });
 }
 
-Duration _sftpPrepareTimeout(SftpReq req) {
-  final seconds = req.timeoutSeconds;
-  return sftpOperationTimeout(seconds);
-}
+Duration _prepareTimeout(FileTransfer job) =>
+    sftpOperationTimeout(job.timeoutSeconds);
 
-Duration _sftpDownloadIdleTimeout(SftpReq req) {
-  final seconds = req.timeoutSeconds;
+Duration _downloadIdleTimeout(FileTransfer job) {
+  final seconds = job.timeoutSeconds;
   final timeout = Duration(seconds: seconds <= 0 ? 60 : seconds);
   return timeout < _sftpDownloadMinIdleTimeout
       ? _sftpDownloadMinIdleTimeout
       : timeout;
 }
 
-Future<SSHClient> _connectSftpSsh(SftpReq req, SendPort mainSendPort) async {
+Future<SSHClient> _connectSsh(
+  SshTransferCreds creds,
+  SendPort mainSendPort,
+) async {
   final client = await genClient(
-    req.spi,
-    privateKey: req.privateKey,
-    jumpSpi: req.jumpSpi,
-    jumpPrivateKey: req.jumpPrivateKey,
-    privateKeysByKeyId: req.privateKeysByKeyId,
-    jumpSpisById: req.jumpSpisById,
-    knownHostFingerprints: req.knownHostFingerprints,
+    creds.spi,
+    privateKey: creds.privateKey,
+    jumpSpi: creds.jumpSpi,
+    jumpPrivateKey: creds.jumpPrivateKey,
+    privateKeysByKeyId: creds.privateKeysByKeyId,
+    jumpSpisById: creds.jumpSpisById,
+    knownHostFingerprints: creds.knownHostFingerprints,
     onKeyboardInteractive: (server, request) =>
         _requestKeyboardInteractive(mainSendPort, server, request),
     onHostKeyPrompt: (info) => _requestHostKey(mainSendPort, info),
     onHostKeyAccepted: (storageKey, fingerprintHex) {
       mainSendPort.send(
-        SftpHostKeyAccepted(
+        TransferHostKeyAccepted(
           storageKey: storageKey,
           fingerprintHex: fingerprintHex,
         ),
@@ -122,12 +127,12 @@ Future<List<String>?> _requestKeyboardInteractive(
   Spi spi,
   SSHUserInfoRequest request,
 ) async {
-  final id = _sftpPromptSequence++;
+  final id = _promptSequence++;
   final completer = Completer<List<String>?>();
   final expiresAt = DateTime.now().add(KeyboardInteractiveAuth.promptTimeout);
   _keyboardInteractiveResponses[id] = completer;
   mainSendPort.send(
-    SftpKeyboardInteractivePrompt(
+    TransferKeyboardInteractivePrompt(
       id: id,
       spi: spi,
       request: request,
@@ -147,10 +152,10 @@ Future<bool> _requestHostKey(
   SendPort mainSendPort,
   HostKeyPromptInfo info,
 ) async {
-  final id = _sftpPromptSequence++;
+  final id = _promptSequence++;
   final completer = Completer<bool>();
   _hostKeyResponses[id] = completer;
-  mainSendPort.send(SftpHostKeyPrompt(id: id, info: info));
+  mainSendPort.send(TransferHostKeyPrompt(id: id, info: info));
   try {
     return await completer.future.timeout(KeyboardInteractiveAuth.promptTimeout);
   } on TimeoutException {
@@ -160,13 +165,13 @@ Future<bool> _requestHostKey(
   }
 }
 
-class SftpWorker {
+class FileTransferWorker {
   final Function(Object event) onNotify;
-  final SftpReq req;
+  final FileTransfer job;
 
   final worker = Worker();
 
-  SftpWorker({required this.onNotify, required this.req});
+  FileTransferWorker({required this.onNotify, required this.job});
 
   void dispose() {
     worker.dispose();
@@ -181,7 +186,23 @@ class SftpWorker {
       isolateMessageHandler,
       errorHandler: print,
     );
-    worker.sendMessage(req);
+    worker.sendMessage(job);
+  }
+
+  /// Only one host-key question is on screen at a time.
+  ///
+  /// A server-to-server transfer connects to two machines from one isolate, and
+  /// several transfers can be running at once. Without this the dialogs stack,
+  /// and the user answers the top one about a fingerprint belonging to the
+  /// other host.
+  static Future<void> _prompts = Future.value();
+
+  static Future<T> _queuePrompt<T>(Future<T> Function() ask) {
+    final result = _prompts.then((_) => ask());
+    // Chained on the result, so the next question waits for this one to be
+    // answered — and off its error, so one refusal does not block the queue.
+    _prompts = result.then((_) {}, onError: (Object _) {});
+    return result;
   }
 
   /// Handle the messages coming from the isolate
@@ -190,39 +211,42 @@ class SftpWorker {
     SendPort isolateSendPort,
   ) async {
     switch (data) {
-      case final SftpKeyboardInteractivePrompt prompt:
-        List<String>? responses;
-        try {
-          final timeout = prompt.expiresAt.difference(DateTime.now());
-          if (timeout > Duration.zero) {
-            responses = await KeyboardInteractiveAuth.handle(
+      case final TransferKeyboardInteractivePrompt prompt:
+        final responses = await _queuePrompt(() async {
+          try {
+            final timeout = prompt.expiresAt.difference(DateTime.now());
+            if (timeout <= Duration.zero) return null;
+            return await KeyboardInteractiveAuth.handle(
               prompt.spi,
               prompt.request,
               timeout: timeout,
             );
+          } catch (e, s) {
+            Loggers.app.warning('Transfer interactive auth failed', e, s);
+            return null;
           }
-        } catch (e, s) {
-          Loggers.app.warning('SFTP interactive authentication failed', e, s);
-        }
+        });
         isolateSendPort.send(
-          SftpKeyboardInteractiveResponse(
+          TransferKeyboardInteractiveResponse(
             id: prompt.id,
             responses: responses,
           ),
         );
         return;
-      case final SftpHostKeyPrompt prompt:
-        var accepted = false;
-        try {
-          accepted = await showHostKeyPrompt(prompt.info);
-        } catch (e, s) {
-          Loggers.app.warning('SFTP host key prompt failed', e, s);
-        }
+      case final TransferHostKeyPrompt prompt:
+        final accepted = await _queuePrompt(() async {
+          try {
+            return await showHostKeyPrompt(prompt.info);
+          } catch (e, s) {
+            Loggers.app.warning('Transfer host key prompt failed', e, s);
+            return false;
+          }
+        });
         isolateSendPort.send(
-          SftpHostKeyResponse(id: prompt.id, accepted: accepted),
+          TransferHostKeyResponse(id: prompt.id, accepted: accepted),
         );
         return;
-      case final SftpHostKeyAccepted accepted:
+      case final TransferHostKeyAccepted accepted:
         persistHostKeyFingerprint(
           accepted.storageKey,
           accepted.fingerprintHex,
@@ -241,35 +265,39 @@ Future<void> isolateMessageHandler(
   SendErrorFunction sendError,
 ) async {
   switch (data) {
-    case final SftpReq val:
-      switch (val.type) {
-        case SftpReqType.download:
-          await _download(data, mainSendPort);
-          break;
-        case SftpReqType.upload:
-          await _upload(data, mainSendPort);
-          break;
+    case final FileTransfer job:
+      // The two pairs that already existed keep their own code: segmented
+      // reads, an idle timer and a bounded write window are what make a large
+      // file over a slow link finish, and none of that is expressible as
+      // `read` piped into `write`. Everything else takes the general path.
+      switch ((job.from, job.to)) {
+        case (final SftpFileRef from, final LocalFileRef to):
+          await _download(job, from, to, mainSendPort);
+        case (final LocalFileRef from, final SftpFileRef to):
+          await _upload(job, from, to, mainSendPort);
+        default:
+          await _copy(job, mainSendPort);
       }
-      break;
-    case final SftpKeyboardInteractiveResponse response:
+    case final TransferKeyboardInteractiveResponse response:
       final completer = _keyboardInteractiveResponses[response.id];
       if (completer != null && !completer.isCompleted) {
         completer.complete(response.responses);
       }
-      break;
-    case final SftpHostKeyResponse response:
+    case final TransferHostKeyResponse response:
       final completer = _hostKeyResponses[response.id];
       if (completer != null && !completer.isCompleted) {
         completer.complete(response.accepted);
       }
-      break;
     default:
       sendError(Exception('unknown event'));
   }
 }
 
+/// A server to this device.
 Future<void> _download(
-  SftpReq req,
+  FileTransfer job,
+  SftpFileRef from,
+  LocalFileRef to,
   SendPort mainSendPort,
 ) async {
   SSHClient? client;
@@ -279,56 +307,53 @@ Future<void> _download(
   StackTrace? stackTrace;
 
   try {
-    mainSendPort.send(SftpWorkerStatus.preparing);
+    mainSendPort.send(FileTransferStage.preparing);
     final watch = Stopwatch()..start();
-    client = await _connectSftpSsh(req, mainSendPort);
-    mainSendPort.send(SftpWorkerStatus.sshConnectted);
-    Loggers.app.info('SFTP download SSH connected: ${req.remotePath}');
+    client = await _connectSsh(from.creds, mainSendPort);
+    mainSendPort.send(FileTransferStage.connected);
+    Loggers.app.info('Transfer download SSH connected: ${from.path}');
 
-    final dirPath = req.localPath.substring(
-      0,
-      req.localPath.lastIndexOf(Pfs.seperator),
-    );
+    final dirPath = to.path.substring(0, to.path.lastIndexOf(Pfs.seperator));
     await Directory(dirPath).create(recursive: true);
 
-    Loggers.app.info('SFTP download opening session: ${req.remotePath}');
+    Loggers.app.info('Transfer download opening session: ${from.path}');
     final openedSftp = await withSftpSessionOpenTimeout(
       'open download session',
       client.sftp(),
-      _sftpPrepareTimeout(req),
+      _prepareTimeout(job),
     );
     sftp = openedSftp;
 
-    Loggers.app.info('SFTP download opening remote file: ${req.remotePath}');
+    Loggers.app.info('Transfer download opening remote file: ${from.path}');
     final openedRemoteFile = await withSftpOpTimeout(
       'open remote file for download',
-      openedSftp.open(req.remotePath),
-      _sftpPrepareTimeout(req),
+      openedSftp.open(from.path),
+      _prepareTimeout(job),
     );
     remoteFile = openedRemoteFile;
-    Loggers.app.info('SFTP download reading remote size: ${req.remotePath}');
+    Loggers.app.info('Transfer download reading remote size: ${from.path}');
     final size = (await withSftpOpTimeout(
       'stat remote file',
       openedRemoteFile.stat(),
-      _sftpPrepareTimeout(req),
+      _prepareTimeout(job),
     )).size;
     if (size == null) {
-      throw Exception('can\'t get file size: ${req.remotePath}');
+      throw Exception('can\'t get file size: ${from.path}');
     }
 
     mainSendPort.send(size);
-    mainSendPort.send(SftpWorkerStatus.loading);
+    mainSendPort.send(FileTransferStage.loading);
     Loggers.app.info(
-      'SFTP download started: ${req.remotePath}, '
+      'Transfer download started: ${from.path}, '
       'chunk=$_sftpChunkSize, pending=$_sftpDownloadMaxPendingRequests',
     );
 
-    final localFile = await File(req.localPath).open(mode: FileMode.write);
+    final localFile = await File(to.path).open(mode: FileMode.write);
 
     try {
       const segmentSize = 5 * 1024 * 1024; // 5MB per segment
       final progressUpdateInterval = Duration(
-        seconds: req.progressUpdateIntervalSeconds,
+        seconds: job.progressUpdateIntervalSeconds,
       );
       final progressUpdateIntervalMs = progressUpdateInterval.inMilliseconds;
       var offset = 0;
@@ -336,9 +361,9 @@ Future<void> _download(
       var chunkCount = 0;
       var lastProgressUpdateMs = -progressUpdateIntervalMs;
       final dlWatch = Stopwatch()..start();
-      Loggers.app.info('SFTP download start size=$size');
+      Loggers.app.info('Transfer download start size=$size');
 
-      final timeout = _sftpDownloadIdleTimeout(req);
+      final timeout = _downloadIdleTimeout(job);
 
       while (offset < size) {
         final remaining = size - offset;
@@ -353,7 +378,7 @@ Future<void> _download(
           idleTimer = Timer(timeout, () {
             if (!idleTimeout.isCompleted) {
               idleTimeout.completeError(
-                TimeoutException('SFTP download idle timed out', timeout),
+                TimeoutException('Transfer download idle timed out', timeout),
               );
             }
           });
@@ -381,7 +406,7 @@ Future<void> _download(
               if (shouldUpdate) {
                 lastProgressUpdateMs = elapsedMs;
                 mainSendPort.send(
-                  SftpTransferProgress(
+                  FileTransferProgress(
                     percent: progress,
                     transferredBytes: transferred,
                   ),
@@ -409,7 +434,7 @@ Future<void> _download(
       }
 
       Loggers.app.info(
-        'SFTP download done total=$totalBytes chunks=$chunkCount '
+        'Transfer download done total=$totalBytes chunks=$chunkCount '
         'time=${dlWatch.elapsedMilliseconds}ms',
       );
     } finally {
@@ -417,7 +442,7 @@ Future<void> _download(
     }
 
     mainSendPort.send(watch.elapsed);
-    mainSendPort.send(SftpWorkerStatus.finished);
+    mainSendPort.send(FileTransferStage.finished);
   } catch (e, s) {
     error = e;
     stackTrace = s;
@@ -430,17 +455,16 @@ Future<void> _download(
   }
 
   if (error != null) {
-    Loggers.app.warning(
-      'SFTP download failed: ${req.remotePath}',
-      error,
-      stackTrace,
-    );
+    Loggers.app.warning('Transfer download failed: ${from.path}', error, stackTrace);
     mainSendPort.send(error);
   }
 }
 
+/// This device to a server.
 Future<void> _upload(
-  SftpReq req,
+  FileTransfer job,
+  LocalFileRef from,
+  SftpFileRef to,
   SendPort mainSendPort,
 ) async {
   SSHClient? client;
@@ -450,13 +474,13 @@ Future<void> _upload(
   StackTrace? stackTrace;
 
   try {
-    mainSendPort.send(SftpWorkerStatus.preparing);
+    mainSendPort.send(FileTransferStage.preparing);
     final watch = Stopwatch()..start();
-    client = await _connectSftpSsh(req, mainSendPort);
-    mainSendPort.send(SftpWorkerStatus.sshConnectted);
-    Loggers.app.info('SFTP upload SSH connected: ${req.remotePath}');
+    client = await _connectSsh(to.creds, mainSendPort);
+    mainSendPort.send(FileTransferStage.connected);
+    Loggers.app.info('Transfer upload SSH connected: ${to.path}');
 
-    final local = File(req.localPath);
+    final local = File(from.path);
     if (!await local.exists()) {
       mainSendPort.send(Exception('local file not exists'));
       return;
@@ -464,30 +488,30 @@ Future<void> _upload(
     final localLen = await local.length();
     mainSendPort.send(localLen);
     final localFile = local.openRead().cast<Uint8List>();
-    Loggers.app.info('SFTP upload opening session: ${req.remotePath}');
+    Loggers.app.info('Transfer upload opening session: ${to.path}');
     final openedSftp = await withSftpSessionOpenTimeout(
       'open upload session',
       client.sftp(),
-      _sftpPrepareTimeout(req),
+      _prepareTimeout(job),
     );
     sftp = openedSftp;
     // If remote exists, overwrite it
-    Loggers.app.info('SFTP upload opening remote file: ${req.remotePath}');
+    Loggers.app.info('Transfer upload opening remote file: ${to.path}');
     final openedRemoteFile = await withSftpOpTimeout(
       'open remote file for upload',
       openedSftp.open(
-        req.remotePath,
+        to.path,
         mode:
             SftpFileOpenMode.truncate |
             SftpFileOpenMode.create |
             SftpFileOpenMode.write,
       ),
-      _sftpPrepareTimeout(req),
+      _prepareTimeout(job),
     );
     remoteFile = openedRemoteFile;
-    mainSendPort.send(SftpWorkerStatus.loading);
+    mainSendPort.send(FileTransferStage.loading);
     Loggers.app.info(
-      'SFTP upload started: ${req.remotePath}, '
+      'Transfer upload started: ${to.path}, '
       'chunk=$_sftpChunkSize, maxBytes=$_sftpUploadMaxBytesOnTheWire',
     );
     var lastProgress = -1;
@@ -498,7 +522,12 @@ Future<void> _upload(
         final progress = (total / localLen * 100).round();
         if (progress != lastProgress) {
           lastProgress = progress;
-          mainSendPort.send(progress.toDouble());
+          mainSendPort.send(
+            FileTransferProgress(
+              percent: progress.toDouble(),
+              transferredBytes: total,
+            ),
+          );
         }
       },
       chunkSize: _sftpChunkSize,
@@ -506,7 +535,7 @@ Future<void> _upload(
     );
     await writer.done;
     mainSendPort.send(watch.elapsed);
-    mainSendPort.send(SftpWorkerStatus.finished);
+    mainSendPort.send(FileTransferStage.finished);
   } catch (e, s) {
     error = e;
     stackTrace = s;
@@ -519,12 +548,110 @@ Future<void> _upload(
   }
 
   if (error != null) {
+    Loggers.app.warning('Transfer upload failed: ${to.path}', error, stackTrace);
+    mainSendPort.send(error);
+  }
+}
+
+/// Any other pair: server to server, and this device to itself.
+///
+/// [FileBackend.read] into [FileBackend.write], which is the whole of a
+/// transfer once neither end is privileged. Slower than the two above over a
+/// fast link — no segmenting, no pipelining — and the pairs it serves are the
+/// ones that could not be expressed at all before.
+Future<void> _copy(FileTransfer job, SendPort mainSendPort) async {
+  final closing = <Future<void> Function()>[];
+  Object? error;
+  StackTrace? stackTrace;
+
+  try {
+    mainSendPort.send(FileTransferStage.preparing);
+    final watch = Stopwatch()..start();
+
+    final source = await _openBackend(job, job.from, mainSendPort, closing);
+    final dest = await _openBackend(job, job.to, mainSendPort, closing);
+    mainSendPort.send(FileTransferStage.connected);
+
+    final size = (await source.stat(job.from.path))?.size;
+    if (size != null) mainSendPort.send(size);
+    mainSendPort.send(FileTransferStage.loading);
+
+    final intervalMs = Duration(
+      seconds: job.progressUpdateIntervalSeconds,
+    ).inMilliseconds;
+    var transferred = 0;
+    var lastUpdateMs = -intervalMs;
+    final progressWatch = Stopwatch()..start();
+
+    final counted = source.read(job.from.path).map((chunk) {
+      transferred += chunk.length;
+      final elapsedMs = progressWatch.elapsedMilliseconds;
+      final done = size != null && transferred >= size;
+      if (elapsedMs - lastUpdateMs >= intervalMs || done) {
+        lastUpdateMs = elapsedMs;
+        mainSendPort.send(
+          FileTransferProgress(
+            // Without a size there is no percentage, only bytes. Reported as
+            // zero rather than as a guess that would run past 100.
+            percent: size == null || size == 0
+                ? 0
+                : (transferred / size * 100 * 10).roundToDouble() / 10,
+            transferredBytes: transferred,
+          ),
+        );
+      }
+      return chunk;
+    });
+
+    // `write` stages beside the destination and renames, so a transfer that
+    // dies halfway leaves no half-file under the name something else opens.
+    await dest.write(job.to.path, counted, size: size);
+
+    mainSendPort.send(watch.elapsed);
+    mainSendPort.send(FileTransferStage.finished);
+  } catch (e, s) {
+    error = e;
+    stackTrace = s;
+  } finally {
+    for (final close in closing.reversed) {
+      try {
+        await close();
+      } catch (e, s) {
+        Loggers.app.warning('Failed to close a transfer end', e, s);
+      }
+    }
+  }
+
+  if (error != null) {
     Loggers.app.warning(
-      'SFTP upload failed: ${req.remotePath}',
+      'Transfer failed: ${job.from} -> ${job.to}',
       error,
       stackTrace,
     );
     mainSendPort.send(error);
+  }
+}
+
+Future<FileBackend> _openBackend(
+  FileTransfer job,
+  FileRef ref,
+  SendPort mainSendPort,
+  List<Future<void> Function()> closing,
+) async {
+  switch (ref) {
+    case LocalFileRef():
+      return const LocalFileBackend();
+    case SftpFileRef(:final creds):
+      final client = await _connectSsh(creds, mainSendPort);
+      closing.add(() async => client.close());
+      // No escalation: there is nobody on this isolate to ask for a password,
+      // and a refusal is a refusal.
+      final backend = await SftpFileBackend.connect(
+        client,
+        timeout: _prepareTimeout(job),
+      );
+      closing.add(backend.close);
+      return backend;
   }
 }
 

@@ -1,11 +1,14 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/file/browse_path.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_issue.dart';
+import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/storage/send_to.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
 import 'package:server_box/view/widget/page_issue.dart';
 import 'package:server_box/view/widget/unix_perm.dart';
@@ -53,6 +56,7 @@ class FileBrowserArgs {
     this.entryActions,
     this.pathTrailing,
     this.pathHistory,
+    this.refOf,
     this.labelOf,
     this.onOpenFile,
   });
@@ -110,6 +114,16 @@ class FileBrowserArgs {
   /// Suggestions for the goto dialog. Null offers none.
   final BrowsePathHistory? pathHistory;
 
+  /// How to name a path here so that a transfer can find it again from an
+  /// isolate. Null leaves "send to…" out, for a browser whose files cannot be
+  /// the source of one.
+  ///
+  /// The browser holds a [FileBackend] — a connection somebody already has —
+  /// and a transfer needs a description of how to get one. Only the page that
+  /// built the backend can write that description, so it hands one over rather
+  /// than the browser guessing from the runtime type.
+  final FileRef Function(String path)? refOf;
+
   /// What to call an entry where its name on disk is not what to show — a
   /// directory named after a server id, shown under that server's name.
   final String? Function(FileEntry entry, String fullPath)? labelOf;
@@ -131,16 +145,16 @@ class FileBrowserArgs {
 /// permissions, searching. What is peculiar to a backend arrives through
 /// [FileBrowserArgs] rather than a subclass, so there is exactly one of these
 /// no matter how many kinds of storage there are.
-class FileBrowserPage extends StatefulWidget {
+class FileBrowserPage extends ConsumerStatefulWidget {
   const FileBrowserPage({super.key, required this.args});
 
   final FileBrowserArgs args;
 
   @override
-  State<FileBrowserPage> createState() => _FileBrowserPageState();
+  ConsumerState<FileBrowserPage> createState() => _FileBrowserPageState();
 }
 
-class _FileBrowserPageState extends State<FileBrowserPage>
+class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     with AutomaticKeepAliveClientMixin
     implements FileBrowserHandle {
   late final _path = BrowsePath(
@@ -410,11 +424,25 @@ class _FileBrowserPageState extends State<FileBrowserPage>
                 _chmod(entry);
               },
             ),
+          // Moving a file is the same act wherever it is, so it is offered
+          // wherever it can be done rather than as "upload" on one page and
+          // "download" on the other.
+          if (widget.args.refOf case final refOf? when !entry.isDir)
+            Btn.tile(
+              icon: const Icon(Icons.drive_file_move_outline),
+              text: l10n.sendTo,
+              onTap: () {
+                context.popDialog();
+                _sendTo(refOf(full));
+              },
+            ),
           ...?widget.args.entryActions?.call(this, entry, full),
         ],
       ),
     );
   }
+
+  Future<void> _sendTo(FileRef source) => sendTo(context, ref, source);
 
   Future<void> _pick(FileEntry entry) async {
     final picked = await context.showRoundDialog<bool>(

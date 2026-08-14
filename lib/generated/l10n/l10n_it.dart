@@ -874,6 +874,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get second => 's';
 
   @override
+  String get sendTo => 'Invia a…';
+
+  @override
   String get serverDetailOrder => 'Ordine widget pagina dettagli';
 
   @override

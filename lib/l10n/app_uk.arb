@@ -154,6 +154,7 @@
   "remotePath": "Віддалений шлях",
   "sameIdServerExist": "Сервер з таким ID вже існує",
   "second": "сек.",
+  "sendTo": "Надіслати до…",
   "serverDetailOrder": "Порядок віджетів на сторінці деталі",
   "serverFuncBtns": "Кнопки функцій сервера",
   "serverOrder": "Порядок сервера",

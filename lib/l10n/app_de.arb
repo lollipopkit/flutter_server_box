@@ -153,6 +153,7 @@
   "remotePath": "Entfernte Pfade",
   "sameIdServerExist": "Ein Server mit derselben ID existiert bereits",
   "second": "s",
+  "sendTo": "Senden an …",
   "serverDetailOrder": "Reihenfolge der Widgets auf der Detailseite",
   "serverFuncBtns": "Server-Funktionsschaltflächen",
   "serverOrder": "Server-Bestellung",

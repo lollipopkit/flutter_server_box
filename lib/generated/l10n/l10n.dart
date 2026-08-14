@@ -1632,6 +1632,12 @@ abstract class AppLocalizations {
   /// **'s'**
   String get second;
 
+  /// No description provided for @sendTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to…'**
+  String get sendTo;
+
   /// No description provided for @serverDetailOrder.
   ///
   /// In en, this message translates to:

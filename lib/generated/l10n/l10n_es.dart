@@ -878,6 +878,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get second => 'Segundo';
 
   @override
+  String get sendTo => 'Enviar a…';
+
+  @override
   String get serverDetailOrder =>
       'Orden de los componentes en la página de detalles del servidor';
 

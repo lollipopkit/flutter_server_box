@@ -821,6 +821,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get second => '秒';
 
   @override
+  String get sendTo => '送信先…';
+
+  @override
   String get serverDetailOrder => '詳細ページのウィジェット順序';
 
   @override

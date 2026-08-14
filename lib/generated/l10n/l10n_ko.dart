@@ -822,6 +822,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get second => '초';
 
   @override
+  String get sendTo => '보낼 위치…';
+
+  @override
   String get serverDetailOrder => '상세 페이지 위젯 순서';
 
   @override

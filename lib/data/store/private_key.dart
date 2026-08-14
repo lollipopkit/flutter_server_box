@@ -1,10 +1,19 @@
 import 'package:fl_lib/fl_lib.dart';
+import 'package:hive_ce/hive.dart';
+import 'package:meta/meta.dart';
 
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/store/cached_store.dart';
+import 'package:server_box/data/store/server.dart';
 
 class PrivateKeyStore extends CachedHiveStore<PrivateKeyInfo> {
   PrivateKeyStore._() : super('key');
+
+  /// See [ServerStore.forBox].
+  @visibleForTesting
+  PrivateKeyStore.forBox(Box<dynamic> testBox) : super('key_test') {
+    box = testBox;
+  }
 
   static final instance = PrivateKeyStore._();
 

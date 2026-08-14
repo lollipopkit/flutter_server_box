@@ -870,6 +870,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get second => 'S';
 
   @override
+  String get sendTo => 'Kirim ke…';
+
+  @override
   String get serverDetailOrder => 'Detail pesanan widget halaman';
 
   @override

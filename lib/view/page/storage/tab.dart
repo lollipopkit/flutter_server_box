@@ -4,14 +4,13 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
-import 'package:server_box/data/model/server/capabilities.dart';
-import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/storage/local.dart';
+import 'package:server_box/view/page/storage/send_to.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/widget/empty_pane.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
@@ -429,17 +428,16 @@ extension _Actions on _FileTabPageState {
 
 /// Whether a file browser can be opened on [spi] at all.
 ///
-/// SFTP moves file contents over a channel, and a server reached only through
-/// its monitor agent has nothing to carry one — listing it here would offer a
-/// browser that can never open. Does not depend on what the agent grants, so
-/// it needs no probe: no grant produces a byte stream today.
+/// One question, asked in one place: [canTransferTo] is the same call, so the
+/// list of servers you can browse and the list you can send a file to cannot
+/// drift apart.
 ///
-/// That last sentence is what has to be revisited when
-/// `ServerCapabilities.byteStream`'s TODO lands — a grant will decide it then,
-/// and this call has to pass `granted:` the way `ServerFuncBtns` does, or the
-/// two will disagree about the same server.
-bool _canBrowse(Spi spi) =>
-    ServerCapabilities.of(ServerConnectCredential.fromSpi(spi)).byteStream;
+/// Does not depend on what the agent grants, so it needs no probe: no grant
+/// reaches files today. That is what has to be revisited when
+/// `ServerCapabilities.files`'s TODO lands — a grant will decide it then, and
+/// this call has to pass `granted:` the way `ServerFuncBtns` does, or the two
+/// will disagree about the same server.
+bool _canBrowse(Spi spi) => canTransferTo(spi);
 
 /// The first tab: pick somewhere to browse.
 ///

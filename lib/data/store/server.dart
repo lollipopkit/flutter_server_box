@@ -1,3 +1,5 @@
+import 'package:hive_ce/hive.dart';
+import 'package:meta/meta.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/store/cached_store.dart';
@@ -7,6 +9,14 @@ import 'package:server_box/data/store/snippet.dart';
 
 class ServerStore extends CachedHiveStore<Spi> {
   ServerStore._() : super('server');
+
+  /// The same seam [SettingStore.forBox] has: `init()` reaches for the
+  /// platform's secure storage to get an encryption cipher, which a unit test
+  /// has no implementation of.
+  @visibleForTesting
+  ServerStore.forBox(Box<dynamic> testBox) : super('server_test') {
+    box = testBox;
+  }
 
   static final instance = ServerStore._();
 

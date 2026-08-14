@@ -250,6 +250,9 @@ not offer the button.
 | 5 | Server→server, local→local | the pair that never existed |
 | 6 | `ServerCapabilities.files`; buttons hidden where there is nothing to browse | a monitor-only server without sshd stops offering files |
 
+All six are in. What follows is what each one settled that the plan above did
+not decide in advance.
+
 Stage 1 changes no behaviour. Stages 2 and 3 are the risky ones: they replace
 1787 lines of working page code, and the SFTP page carries a lot of hard-won
 handling — sudo, timeouts (`core/utils/sftp_timeout.dart`), host-key prompts.
@@ -279,6 +282,36 @@ handling — sudo, timeouts (`core/utils/sftp_timeout.dart`), host-key prompts.
   upload does at page level. Creating an *empty* file could escalate, through a
   method of its own that does not exist yet.
 
+### What stages 4 to 6 settled
+
+- **The engine still specialises; the API does not.** `FileTransfer` names two
+  ends and neither is privileged, but the worker keeps the two hand-written
+  SFTP paths for the pairs that already existed. Segmented reads, an idle timer
+  and a bounded write window are what make a large file over a slow link
+  finish, and none of it is expressible as `read` piped into `write`. The
+  general path serves the pairs that could not be expressed at all before.
+- **local → local runs on the main isolate**, as the table above says it
+  should, and `FileTransferStatus` emits the same events either way — so
+  nothing downstream can tell which it got.
+- **"Send to…" is one flow, in the browser.** It replaced two half-flows that
+  between them could only name a server and this device: the local page's
+  "upload" picked a server, and the SFTP page's "download" picked nothing
+  because there was only one place a download could land.
+- **The browser cannot name its own end.** It holds a `FileBackend` — a
+  connection somebody already has — and a transfer needs a description of how
+  to *get* one. `FileBrowserArgs.refOf` is that description, written by the
+  page that built the backend rather than guessed from a runtime type.
+- **Host-key questions queue.** One at a time across every worker, because a
+  server-to-server transfer connects to two machines from one isolate and the
+  dialogs would otherwise stack — with the user answering the top one about the
+  other host's fingerprint.
+- **`files` is its own capability**, not `byteStream` read twice. They come
+  apart the moment a monitor agent grows a file API, and `_canBrowse` and
+  "where can I send this" are now literally the same call, so the two lists
+  cannot drift.
+- **Upload progress reports bytes**, not just a percentage. It used to send a
+  bare `double`, so the speed column was blank for every upload.
+
 ## Open risks
 
 - **Deleting a working 1277-line page.** The SFTP page's edge cases are not in
@@ -291,10 +324,10 @@ handling — sudo, timeouts (`core/utils/sftp_timeout.dart`), host-key prompts.
   that is already juggling another.
 - **Two prompts at once.** A server→server transfer can raise two host-key
   dialogs. They must queue, not stack.
-- **Partial writes.** A transfer that fails halfway leaves a partial file at
-  the destination. SFTP writes today go to a temp name and get renamed
-  (`sftp.dart:519` does this for sudo); every backend should, and `write`
-  should own it rather than each caller.
+- **Partial writes.** Settled: `write` stages beside the destination and
+  renames, in both backends, so `_copy` inherits it. The two specialised paths
+  do **not** — a download writes straight to its final name and an upload opens
+  the remote file with `truncate`, which is what they always did.
 - **Monitor's file API, if it is ever built,** is arbitrary filesystem access
   over HTTP. It belongs behind `remote_access`, off by default, with its own
   root, and it should be designed in `monitor/` with the same care the terminal

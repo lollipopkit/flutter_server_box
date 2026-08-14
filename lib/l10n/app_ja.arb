@@ -153,6 +153,7 @@
   "remotePath": "リモートパス",
   "sameIdServerExist": "同じIDのサーバーが既に存在します",
   "second": "秒",
+  "sendTo": "送信先…",
   "serverDetailOrder": "詳細ページのウィジェット順序",
   "serverFuncBtns": "サーバー機能ボタン",
   "serverOrder": "サーバー順序",

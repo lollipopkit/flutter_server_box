@@ -14,17 +14,18 @@ import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_issue.dart';
+import 'package:server_box/data/model/file/file_ref.dart';
+import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/sftp/req.dart';
+import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/provider/server/single.dart';
-import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/local.dart';
-import 'package:server_box/view/page/storage/sftp_mission.dart';
+import 'package:server_box/view/page/storage/transfer_list.dart';
 import 'package:server_box/view/widget/page_issue.dart';
 
 part 'sftp_helpers.dart';
@@ -173,6 +174,7 @@ class _SftpPageState extends ConsumerState<SftpPage> {
                   : UIs.placeholder,
             ),
             pathHistory: const _GotoHistory(),
+            refOf: (path) => SftpFileRef.forServer(_spi, path),
             onOpenFile: _openFile,
           ),
         );
@@ -273,7 +275,7 @@ extension _Actions on _SftpPageState {
   List<Widget> _toolbarActions(FileBrowserHandle handle) => [
     Btn.icon(
       icon: const Icon(Icons.downloading),
-      onTap: () => SftpMissionPage.route.go(context),
+      onTap: () => TransferListPage.route.go(context),
     ),
     if (_sudoHelper.enabled)
       _sudoMode.listenVal(
@@ -354,13 +356,11 @@ extension _Actions on _SftpPageState {
           onPressed: () {
             context.popDialog();
             ref
-                .read(sftpProvider.notifier)
+                .read(fileTransferProvider.notifier)
                 .add(
-                  SftpReq(
-                    _spi,
-                    fullPath,
-                    _localPathFor(fullPath),
-                    SftpReqType.download,
+                  FileTransfer(
+                    from: SftpFileRef.forServer(_spi, fullPath),
+                    to: LocalFileRef(_localPathFor(fullPath)),
                   ),
                 );
           },
@@ -410,8 +410,13 @@ extension _Actions on _SftpPageState {
       // refusal in a list nobody is looking at.
       if (await _canWrite(handle.path)) {
         ref
-            .read(sftpProvider.notifier)
-            .add(SftpReq(_spi, remote, local, SftpReqType.upload));
+            .read(fileTransferProvider.notifier)
+            .add(
+              FileTransfer(
+                from: LocalFileRef(local),
+                to: SftpFileRef.forServer(_spi, remote),
+              ),
+            );
         return;
       }
       if (!mounted || !await _escalation.confirmRetry()) return;
@@ -445,9 +450,12 @@ extension _Actions on _SftpPageState {
         '${DateTime.now().microsecondsSinceEpoch}-$name';
     final completer = Completer<void>();
     final reqId = ref
-        .read(sftpProvider.notifier)
+        .read(fileTransferProvider.notifier)
         .add(
-          SftpReq(_spi, staging, local, SftpReqType.upload),
+          FileTransfer(
+            from: LocalFileRef(local),
+            to: SftpFileRef.forServer(_spi, staging),
+          ),
           completer: completer,
         );
 
@@ -457,7 +465,7 @@ extension _Actions on _SftpPageState {
       timeout: null,
       fn: () async {
         await completer.future;
-        final status = ref.read(sftpProvider.notifier).get(reqId);
+        final status = ref.read(fileTransferProvider.notifier).get(reqId);
         if (status?.error != null) throw status!.error!;
         await _sudoHelper.rename(staging, remote, password: pwd);
         return true;
@@ -613,9 +621,12 @@ extension _Edit on _SftpPageState {
 
     final completer = Completer<void>();
     ref
-        .read(sftpProvider.notifier)
+        .read(fileTransferProvider.notifier)
         .add(
-          SftpReq(_spi, remotePath, localPath, SftpReqType.download),
+          FileTransfer(
+            from: SftpFileRef.forServer(_spi, remotePath),
+            to: LocalFileRef(localPath),
+          ),
           completer: completer,
         );
     final (_, err) = await context.showLoadingDialog(
@@ -633,8 +644,13 @@ extension _Edit on _SftpPageState {
   ) async {
     if (!useSudo) {
       ref
-          .read(sftpProvider.notifier)
-          .add(SftpReq(_spi, remotePath, localPath, SftpReqType.upload));
+          .read(fileTransferProvider.notifier)
+          .add(
+            FileTransfer(
+              from: LocalFileRef(localPath),
+              to: SftpFileRef.forServer(_spi, remotePath),
+            ),
+          );
       context.showSnackBar(l10n.added2List);
       return;
     }

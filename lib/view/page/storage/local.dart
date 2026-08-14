@@ -6,18 +6,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/sftp/req.dart';
+import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
-import 'package:server_box/view/page/storage/sftp.dart';
-import 'package:server_box/view/page/storage/sftp_mission.dart';
+import 'package:server_box/view/page/storage/transfer_list.dart';
 
 final class LocalFilePageArgs {
   final bool? isPickFile;
+
+  /// Returning a directory rather than browsing one, for "send to where?".
+  final bool isPickDir;
 
   /// Where to open. Was the *root* until the browser told the two apart, which
   /// is why a tab reopened deep in a tree could not go up.
@@ -31,6 +31,7 @@ final class LocalFilePageArgs {
 
   const LocalFilePageArgs({
     this.isPickFile,
+    this.isPickDir = false,
     this.initDir,
     this.actionsSink,
     this.onPathChanged,
@@ -43,6 +44,9 @@ final class LocalFilePageArgs {
 /// only true here: importing from the system picker, sharing out, opening the
 /// editor, and knowing that a folder named after a server id is that server's
 /// downloads.
+///
+/// Sending a file somewhere is not among them any more: that is the same act
+/// wherever the file is, and it lives in the browser.
 class LocalFilePage extends ConsumerStatefulWidget {
   final LocalFilePageArgs? args;
 
@@ -72,6 +76,8 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
         root: Paths.file,
         initialPath: widget.args?.initDir,
         isPickFile: _isPickFile,
+        isPickDir: widget.args?.isPickDir ?? false,
+        refOf: LocalFileRef.new,
         actionsSink: widget.args?.actionsSink,
         onPathChanged: widget.args?.onPathChanged,
         extraActions: _actions,
@@ -86,7 +92,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
   List<Widget> _actions(FileBrowserHandle handle) => [
     IconButton(
       icon: const Icon(Icons.downloading),
-      onPressed: () => SftpMissionPage.route.go(context),
+      onPressed: () => TransferListPage.route.go(context),
     ),
   ];
 
@@ -115,14 +121,6 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
             _openEditor(handle, entry, fullPath);
           },
         ),
-      Btn.tile(
-        icon: const Icon(Icons.upload),
-        text: libL10n.upload,
-        onTap: () {
-          context.popDialog();
-          _upload(entry, fullPath);
-        },
-      ),
       Btn.tile(
         icon: const Icon(Icons.open_in_new),
         text: libL10n.open,
@@ -198,32 +196,5 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
         }(),
       ),
     );
-  }
-
-  Future<void> _upload(FileEntry entry, String fullPath) async {
-    final spi = await context.showPickSingleDialog<Spi>(
-      title: libL10n.select,
-      items: ref.read(serversProvider).servers.values.toList(),
-      display: (e) => e.name,
-    );
-    if (spi == null || !mounted) return;
-
-    final remotePath = await SftpPage.route.go(
-      context,
-      SftpPageArgs(spi: spi, isSelect: true),
-    );
-    if (remotePath == null || !mounted) return;
-
-    ref
-        .read(sftpProvider.notifier)
-        .add(
-          SftpReq(
-            spi,
-            '$remotePath/${entry.name}',
-            LocalFileBackend.nativePath(fullPath),
-            SftpReqType.upload,
-          ),
-        );
-    context.showSnackBar(l10n.added2List);
   }
 }

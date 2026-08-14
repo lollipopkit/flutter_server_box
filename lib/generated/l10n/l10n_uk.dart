@@ -871,6 +871,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get second => 'сек.';
 
   @override
+  String get sendTo => 'Надіслати до…';
+
+  @override
   String get serverDetailOrder => 'Порядок віджетів на сторінці деталі';
 
   @override

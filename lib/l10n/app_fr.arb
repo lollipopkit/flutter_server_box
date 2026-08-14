@@ -153,6 +153,7 @@
   "remotePath": "Chemin distant",
   "sameIdServerExist": "Un serveur avec le même ID existe déjà",
   "second": "s",
+  "sendTo": "Envoyer vers…",
   "serverDetailOrder": "Ordre des widgets de la page de détails du serveur",
   "serverFuncBtns": "Boutons de fonction du serveur",
   "serverOrder": "Ordre du serveur",

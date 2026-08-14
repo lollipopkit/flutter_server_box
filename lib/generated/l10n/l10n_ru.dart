@@ -870,6 +870,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get second => 'с';
 
   @override
+  String get sendTo => 'Отправить в…';
+
+  @override
   String get serverDetailOrder =>
       'Порядок элементов на странице деталей сервера';
 

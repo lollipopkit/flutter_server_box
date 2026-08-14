@@ -870,6 +870,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get second => 's';
 
   @override
+  String get sendTo => 'Senden an …';
+
+  @override
   String get serverDetailOrder => 'Reihenfolge der Widgets auf der Detailseite';
 
   @override

@@ -154,6 +154,7 @@
   "remotePath": "Percorso remoto",
   "sameIdServerExist": "Esiste già un server con lo stesso ID",
   "second": "s",
+  "sendTo": "Invia a…",
   "serverDetailOrder": "Ordine widget pagina dettagli",
   "serverFuncBtns": "Pulsanti funzione server",
   "serverOrder": "Ordine server",

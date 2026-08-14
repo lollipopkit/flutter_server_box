@@ -808,6 +808,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get second => '秒';
 
   @override
+  String get sendTo => '发送到…';
+
+  @override
   String get serverDetailOrder => '详情页部件顺序';
 
   @override
@@ -2052,6 +2055,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get second => '秒';
+
+  @override
+  String get sendTo => '傳送到…';
 
   @override
   String get serverDetailOrder => '詳情頁部件順序';

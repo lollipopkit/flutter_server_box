@@ -37,6 +37,15 @@ abstract interface class ServerCapabilities {
   /// ever fail.
   bool get byteStream;
 
+  /// Files can be browsed and moved: the file tab, the file button, and either
+  /// end of a transfer.
+  ///
+  /// Its own question rather than [byteStream] read twice, because the two
+  /// come apart the moment a `monitor` agent grows a file API — a server with
+  /// no reachable sshd would answer false to one and true to the other. Until
+  /// then SFTP is the only way files move, so this *is* [byteStream].
+  bool get files;
+
   /// The transport keeps its own trend history that can prefill the local
   /// buffer (see `StatusHistory.seed`). False means the buffer only ever holds
   /// what this app sampled while the page was open.
@@ -95,6 +104,9 @@ class SshCapabilities implements ServerCapabilities {
   bool get byteStream => true;
 
   @override
+  bool get files => true;
+
+  @override
   bool get storedHistory => false;
 
   @override
@@ -134,6 +146,13 @@ class MonitorHttpCapabilities implements ServerCapabilities {
   // way `MonitorTunnelSocket` did for one fixed address.
   @override
   bool get byteStream => false;
+
+  /// SFTP rides the byte stream, so today this is that question. A monitor
+  /// file API would make it its own answer, and that is the point of asking it
+  /// separately.
+  // TODO: answer from the agent's own grant once `monitor` serves files.
+  @override
+  bool get files => byteStream;
 
   /// The agent has been sampling since before the app asked, which is the
   /// point of running one.

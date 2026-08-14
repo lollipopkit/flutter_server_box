@@ -877,6 +877,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get second => 's';
 
   @override
+  String get sendTo => 'Envoyer vers…';
+
+  @override
   String get serverDetailOrder =>
       'Ordre des widgets de la page de détails du serveur';
 

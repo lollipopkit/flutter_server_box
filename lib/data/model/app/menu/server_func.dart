@@ -81,9 +81,11 @@ enum ServerFuncBtn {
     // start with, and nothing else.
     terminal || snippet || iperf => caps.terminal,
     container || process || systemd || power => caps.shell,
-    // A file's contents and a forwarded connection are byte streams, not a
-    // command's output.
-    sftp || portForward => caps.byteStream,
+    // Browsing files is its own question: a transport could grow a file API
+    // without growing a stream this app can point anywhere.
+    sftp => caps.files,
+    // A forwarded connection is a byte stream, not a command's output.
+    portForward => caps.byteStream,
   };
 
   String get toStr => switch (this) {

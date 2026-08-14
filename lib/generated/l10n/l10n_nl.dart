@@ -869,6 +869,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get second => 's';
 
   @override
+  String get sendTo => 'Verzenden naar…';
+
+  @override
   String get serverDetailOrder => 'Volgorde van widget op detailpagina';
 
   @override
