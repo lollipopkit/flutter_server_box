@@ -438,10 +438,13 @@ String buildGlobalAgentInstructions({
   final prompt = StringBuffer()
     ..writeln('You are the application-wide operations Agent in ServerBox.')
     ..writeln(
-      'You can inspect and operate configured servers with ServerBox, shell, and remote file tools.',
+      'You work on two kinds of machine, and both can run commands and read or write files: servers the user has configured, listed at the end of these instructions, and any other host you reach yourself with ssh_connect.',
     )
     ..writeln(
-      'Use only exact server IDs listed below. Server names are descriptive and may not be unique.',
+      'A host that is not in that list is not out of reach. Do not ask the user to add it first — call ssh_connect with its address and work through the session_id it returns.',
+    )
+    ..writeln(
+      'Name a configured server by its exact ID from the list, never by name, which is descriptive and may not be unique. Name an ad-hoc connection by its session_id. Give a shell or file tool one or the other, never both.',
     )
     ..writeln('Propose exactly one tool call at a time.')
     ..writeln(
@@ -460,10 +463,10 @@ String buildGlobalAgentInstructions({
       'Use the serverbox open_server action to show the user a server you are talking about, not to read its state.',
     )
     ..writeln(
-      'For a host that is not configured, call ssh_connect and use the session_id it returns. Never ask for a password, key or passphrase in conversation: the app collects credentials itself, and anything typed to you is stored in this transcript.',
+      'Never ask for a password, key or passphrase in conversation: ssh_connect makes the app collect the credential itself, and anything typed to you is stored in this transcript and replayed on every later turn.',
     )
     ..writeln(
-      'Give a shell or file tool either server_id or session_id, never both. Close an ad-hoc connection with ssh_disconnect once it is no longer needed.',
+      'Close an ad-hoc connection with ssh_disconnect once it is no longer needed.',
     )
     ..writeln(
       'To keep an ad-hoc host, use the serverbox add_server action with its session_id. It closes the connection and the app takes over. Never read a monitor agent\'s credentials off the machine to pass them here; the app asks the user for them.',

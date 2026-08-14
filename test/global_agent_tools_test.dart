@@ -332,6 +332,27 @@ void main() {
       expect(instructions, contains('Never ask for a password'));
     });
 
+    test('reaching an unlisted host is framed before anything limits it', () {
+      // The framing used to say the Agent operates on "configured servers" and
+      // to "use only exact server IDs", with ssh_connect mentioned eight lines
+      // further down. Models read that as the boundary and refused to connect
+      // to anything unlisted, telling the user to add the server first — which
+      // is the one thing this tool exists to make unnecessary.
+      final lines = buildGlobalAgentInstructions(
+        servers: const [],
+      ).split('\n');
+
+      expect(
+        lines.take(3).join('\n'),
+        contains('ssh_connect'),
+        reason: 'ad-hoc hosts must be in the opening framing, not a footnote',
+      );
+      expect(
+        buildGlobalAgentInstructions(servers: const []),
+        contains('Do not ask the user to add it first'),
+      );
+    });
+
     test('disconnecting is reviewed but not alarming', () {
       const proposal = AskAiCommand(
         id: 'call-1',
