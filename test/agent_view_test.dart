@@ -102,11 +102,6 @@ void main() {
       child: const AgentConversationView(compact: true, showHeader: false),
     );
 
-    testWidgets('PROBE view settles', (tester) async {
-      await pumpIn(tester, const Locale('en'));
-      await tester.pumpAndSettle(const Duration(milliseconds: 16));
-    }, timeout: const Timeout(Duration(seconds: 20)));
-
     testWidgets('reads in English under en', (tester) async {
       await pumpIn(tester, const Locale('en'));
       final l10n = await AppLocalizations.delegate.load(const Locale('en'));

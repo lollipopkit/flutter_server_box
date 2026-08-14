@@ -228,9 +228,14 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
   }
 
   KeyEventResult _sendAndConsume() {
+    // A turn is running, so there is nothing to send yet. Let the key through
+    // rather than eating it: the box stays usable while an answer streams, and
+    // a keystroke that neither sends nor types anything simply disappears.
+    if (ref.read(agentSessionProvider).isWorking) return KeyEventResult.ignored;
     _submitPrompt(_inputController.text);
-    // Handled either way: the key meant "send", and letting it through would
-    // leave a line break behind whenever there was nothing to send.
+    // Handled either way from here: the key meant "send", and letting it
+    // through would leave a line break behind whenever there was nothing to
+    // send.
     return KeyEventResult.handled;
   }
 
@@ -301,14 +306,14 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     if (error is AskAiConfigException) {
       if (error.missingFields.isEmpty) {
         return error.hasInvalidBaseUrl
-            ? '${l10n.invalidUrl}: ${error.invalidBaseUrl}'
+            ? '${libL10n.invalidUrl}: ${error.invalidBaseUrl}'
             : error.toString();
       }
       final fields = error.missingFields
           .map(
             (field) => switch (field) {
-              AskAiConfigField.baseUrl => l10n.askAiBaseUrl,
-              AskAiConfigField.apiKey => l10n.askAiApiKey,
+              AskAiConfigField.baseUrl => libL10n.apiEndpoint,
+              AskAiConfigField.apiKey => libL10n.apiKey,
               AskAiConfigField.model => libL10n.askAiModel,
             },
           )
@@ -545,8 +550,8 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     final result = entry.result;
     final output = formatGlobalAgentToolResultOutput(
       result,
-      cancelledLabel: context.l10n.askAiCommandCancelled,
-      timedOutLabel: context.l10n.askAiCommandTimedOut,
+      cancelledLabel: libL10n.cancelled,
+      timedOutLabel: libL10n.timedOut,
       noOutputLabel: context.l10n.askAiNoCommandOutput,
       truncatedLabel: context.l10n.askAiOutputTruncated,
     );

@@ -382,7 +382,21 @@ class AskAiCommand {
     _ => classifyRisk(command),
   };
 
-  AskAiCommandRisk get risk => _unvettedFloor(intrinsicRisk);
+  /// Only the tools that name a machine are floored.
+  ///
+  /// `serverbox` acts on the app — listing its servers, opening a page — and
+  /// carries a `session_id` for `add_server` without running anything on that
+  /// host, so flooring it labelled app-level calls "unvetted host". The floor
+  /// belongs to the tools whose risk is a question of where they run.
+  static const _targetedTools = {
+    'run_shell_command',
+    'read_file',
+    'write_file',
+  };
+
+  AskAiCommandRisk get risk => _targetedTools.contains(toolName)
+      ? _unvettedFloor(intrinsicRisk)
+      : intrinsicRisk;
 
   /// The call is only being reviewed because of where it runs.
   ///
