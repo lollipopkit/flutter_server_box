@@ -18,7 +18,7 @@ import 'package:server_box/view/page/agent/view.dart';
 ///
 /// Two renderings: a panel you drag around a desktop window, and a pill that
 /// clings to the edge of a phone and opens upwards. Same content in both.
-class AgentFloatingShell extends ConsumerWidget {
+class AgentFloatingShell extends ConsumerStatefulWidget {
   const AgentFloatingShell({super.key, required this.area});
 
   /// The box this is painted in, measured by the caller.
@@ -28,18 +28,68 @@ class AgentFloatingShell extends ConsumerWidget {
   final Size area;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (ref.watch(agentShellProvider) == AgentShellMode.hidden) {
-      return const SizedBox.shrink();
+  ConsumerState<AgentFloatingShell> createState() =>
+      _AgentFloatingShellState();
+}
+
+class _AgentFloatingShellState extends ConsumerState<AgentFloatingShell>
+    with SingleTickerProviderStateMixin {
+  late final _reveal = AnimationController(
+    vsync: this,
+    duration: Durations.medium2,
+    // Closing something is an acknowledgement, not a presentation.
+    reverseDuration: Durations.short4,
+  );
+
+  late final _curve = CurvedAnimation(
+    parent: _reveal,
+    curve: Curves.easeOutCubic,
+    reverseCurve: Curves.easeIn,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    // The only thing that has to rebuild on the animation finishing is the
+    // decision below to stop building at all; the transitions listen for
+    // themselves.
+    _reveal.addStatusListener((status) {
+      if (status == AnimationStatus.dismissed && mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _curve.dispose();
+    _reveal.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final visible =
+        ref.watch(agentShellProvider) != AgentShellMode.hidden &&
+        // The tab is the better view of the same thing whenever it is the one
+        // being looked at, and two of them at once is only confusing.
+        ref.watch(currentHomeTabProvider) != AppTab.agent;
+
+    // Driven from `build` because both inputs are providers, and this is where
+    // their current value is known. Both calls are no-ops once the controller
+    // is already going that way.
+    if (visible) {
+      _reveal.forward();
+    } else {
+      _reveal.reverse();
     }
-    // The tab is the better view of the same thing whenever it is the one
-    // being looked at, and two of them at once is only confusing.
-    if (ref.watch(currentHomeTabProvider) == AppTab.agent) {
-      return const SizedBox.shrink();
-    }
+
+    // Gone, and nothing on its way back. Worth unmounting rather than merely
+    // hiding: the conversation inside watches the session, and would rebuild
+    // on every streamed token behind a closed window.
+    if (!visible && _reveal.isDismissed) return const SizedBox.shrink();
+
     return ResponsiveBreakpoints.of(context).isMobile
-        ? _PhoneShell(area: area)
-        : _DesktopShell(area: area);
+        ? _PhoneShell(area: widget.area, reveal: _curve)
+        : _DesktopShell(area: widget.area, reveal: _curve);
   }
 }
 
@@ -77,9 +127,12 @@ class _WindowButtons extends ConsumerWidget {
 // ----------------------------------------------------------------- desktop
 
 class _DesktopShell extends ConsumerStatefulWidget {
-  const _DesktopShell({required this.area});
+  const _DesktopShell({required this.area, required this.reveal});
 
   final Size area;
+
+  /// Runs forward as the panel appears and back as it closes.
+  final Animation<double> reveal;
 
   @override
   ConsumerState<_DesktopShell> createState() => _DesktopShellState();
@@ -126,41 +179,47 @@ class _DesktopShellState extends ConsumerState<_DesktopShell> {
       top: rect.top,
       width: rect.width,
       height: rect.height,
-      child: Material(
-        elevation: 12,
-        color: theme.colorScheme.surface,
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Hairline.color(context)),
-        ),
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                _buildTitleBar(context, theme, collapsed, rect.topLeft),
-                Expanded(
-                  child: ClipRect(
-                    child: OverflowBox(
-                      alignment: Alignment.topCenter,
-                      minHeight: contentHeight,
-                      maxHeight: contentHeight,
-                      child: const AgentConversationView(
-                        compact: true,
-                        showHeader: false,
+      // Inside the `Positioned`, not around it: a transition builds a render
+      // object, and the stack has to be the one reading the position.
+      child: _Reveal(
+        animation: widget.reveal,
+        alignment: Alignment.bottomRight,
+        child: Material(
+          elevation: 12,
+          color: theme.colorScheme.surface,
+          clipBehavior: Clip.antiAlias,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Hairline.color(context)),
+          ),
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  _buildTitleBar(context, theme, collapsed, rect.topLeft),
+                  Expanded(
+                    child: ClipRect(
+                      child: OverflowBox(
+                        alignment: Alignment.topCenter,
+                        minHeight: contentHeight,
+                        maxHeight: contentHeight,
+                        child: const AgentConversationView(
+                          compact: true,
+                          showHeader: false,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            if (!collapsed)
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: _buildResizeHandle(theme, rect.size),
+                ],
               ),
-          ],
+              if (!collapsed)
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: _buildResizeHandle(theme, rect.size),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -258,9 +317,12 @@ class _DesktopShellState extends ConsumerState<_DesktopShell> {
 // ------------------------------------------------------------------- phone
 
 class _PhoneShell extends ConsumerStatefulWidget {
-  const _PhoneShell({required this.area});
+  const _PhoneShell({required this.area, required this.reveal});
 
   final Size area;
+
+  /// Runs forward as the shell appears and back as it closes.
+  final Animation<double> reveal;
 
   @override
   ConsumerState<_PhoneShell> createState() => _PhoneShellState();
@@ -307,47 +369,53 @@ class _PhoneShellState extends ConsumerState<_PhoneShell> {
       left: _onRight ? null : margin,
       right: _onRight ? margin : null,
       top: top,
-      child: GestureDetector(
-        onPanUpdate: (details) => setState(() {
-          if (travel > 0) {
-            _pillY = (_pillY + details.delta.dy / travel).clamp(0.0, 1.0);
-          }
-          // Which edge is decided by which half the finger is in, so a drag
-          // across the screen moves the pill with it rather than snapping back.
-          _onRight = details.globalPosition.dx > area.width / 2;
-        }),
-        onPanEnd: (_) =>
-            AgentShellGeometry.savePill(onRight: _onRight, y: _pillY),
-        child: Material(
-          elevation: 6,
-          shape: const CircleBorder(),
-          color: theme.colorScheme.primaryContainer,
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: ref.read(agentShellProvider.notifier).expand,
-            child: SizedBox(
-              width: _pillSize,
-              height: _pillSize,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // A ring rather than a badge: the pill is the only sign the
-                  // Agent is doing anything while you are on another tab.
-                  if (working)
-                    SizedBox(
-                      width: _pillSize - 8,
-                      height: _pillSize - 8,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: theme.colorScheme.onPrimaryContainer,
+      child: _Reveal(
+        animation: widget.reveal,
+        alignment: Alignment.center,
+        child: GestureDetector(
+          onPanUpdate: (details) => setState(() {
+            if (travel > 0) {
+              _pillY = (_pillY + details.delta.dy / travel).clamp(0.0, 1.0);
+            }
+            // Which edge is decided by which half the finger is in, so a drag
+            // across the screen moves the pill with it rather than snapping
+            // back.
+            _onRight = details.globalPosition.dx > area.width / 2;
+          }),
+          onPanEnd: (_) =>
+              AgentShellGeometry.savePill(onRight: _onRight, y: _pillY),
+          child: Material(
+            elevation: 6,
+            shape: const CircleBorder(),
+            color: theme.colorScheme.primaryContainer,
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: ref.read(agentShellProvider.notifier).expand,
+              child: SizedBox(
+                width: _pillSize,
+                height: _pillSize,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // A ring rather than a badge: the pill is the only sign
+                    // the Agent is doing anything while you are on another
+                    // tab.
+                    if (working)
+                      SizedBox(
+                        width: _pillSize - 8,
+                        height: _pillSize - 8,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
                       ),
+                    Icon(
+                      Icons.auto_awesome,
+                      color: theme.colorScheme.onPrimaryContainer,
+                      size: 22,
                     ),
-                  Icon(
-                    Icons.auto_awesome,
-                    color: theme.colorScheme.onPrimaryContainer,
-                    size: 22,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -373,20 +441,27 @@ class _PhoneShellState extends ConsumerState<_PhoneShell> {
       right: 0,
       bottom: keyboard,
       height: height,
-      child: Material(
-        elevation: 12,
-        color: theme.colorScheme.surface,
-        clipBehavior: Clip.antiAlias,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            _buildGrabBar(context, theme, height),
-            const Expanded(
-              child: AgentConversationView(compact: true, showHeader: false),
-            ),
-          ],
+      child: _Reveal(
+        animation: widget.reveal,
+        alignment: Alignment.bottomCenter,
+        child: Material(
+          elevation: 12,
+          color: theme.colorScheme.surface,
+          clipBehavior: Clip.antiAlias,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              _buildGrabBar(context, theme, height),
+              const Expanded(
+                child: AgentConversationView(
+                  compact: true,
+                  showHeader: false,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -450,6 +525,39 @@ class _PhoneShellState extends ConsumerState<_PhoneShell> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Fades and eases a floating panel in, and back out again on close.
+///
+/// A widget rather than a pair of transitions written twice, and inside the
+/// `Positioned` in every caller: a transition builds a render object, so the
+/// stack has to be the thing reading the position, not this.
+class _Reveal extends StatelessWidget {
+  const _Reveal({
+    required this.animation,
+    required this.alignment,
+    required this.child,
+  });
+
+  final Animation<double> animation;
+
+  /// What the panel grows out of and shrinks back into — its own corner on a
+  /// desktop, the bottom edge for a phone sheet.
+  final Alignment alignment;
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: animation,
+      child: ScaleTransition(
+        scale: Tween<double>(begin: 0.94, end: 1).animate(animation),
+        alignment: alignment,
+        child: child,
       ),
     );
   }
