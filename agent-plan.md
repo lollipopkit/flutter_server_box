@@ -207,7 +207,12 @@ load-bearing — see the host key note below.
 | ---- | --------- | ---- |
 | `ssh_connect` | `host`, `port`, `user`, `description` | `destructive` |
 | `ssh_disconnect` | `session_id` | `caution` |
-| `serverbox` / `add_server` | `session_id`, `name`, optional monitor address | `destructive` |
+| `serverbox` / `add_server` | `session_id`, `name`, optional monitor address | `caution` |
+
+`add_server` is `caution`, not `destructive` as first planned. The save
+dialog is already the review step — it shows exactly what would be stored and
+can be cancelled — so a confirmation in front of it would be a second question
+about the same thing. `caution` still means it can never auto-run.
 
 `ssh_connect` collects a **password** only. A host reachable solely by key
 cannot be connected to this way yet; the app has a key store and the dialog
@@ -314,12 +319,17 @@ reverted alone.
   after a restart, but a restored conversation still refers to them. Restored
   tool calls pointing at dead sessions must fail with a message the model can
   act on, not a bare `StateError`.
-- **Orphan host key entries.** Trial connections that are never saved leave
-  fingerprints keyed by an id nothing references.
-- **`add_server` and `shouldReconnect`.** Saving an ad-hoc `Spi` and immediately
-  navigating to it means the provider connects while the ad-hoc client is still
-  open — two SSH connections to one host. `add_server` should hand the existing
-  client over or close it explicitly.
+- **Orphan host key entries.** Resolved: closing a session forgets the keys
+  filed under its id, and `add_server` is the one caller that keeps them. The
+  cost of the arrangement is that connecting twice to the same host without
+  saving asks about its key twice — each unsaved attempt is its own trust
+  decision, which is defensible but is a wart.
+- **`add_server` and `shouldReconnect`.** Resolved by closing the ad-hoc
+  connection before adding the server, rather than handing the client over.
+  `addServer` refreshes, which connects; adopting the open client instead would
+  mean coupling the ad-hoc registry to `ServerNotifier`'s connection lifecycle
+  — its state, its `TryLimiter` key, its identity checks — to save one
+  reconnect.
 - **Mobile keyboard vs. sheet.** The composer has to stay above the keyboard
   without fighting the panel's own drag. `DraggableScrollableSheet` was the
   obvious fit and turned out to be the wrong one: it drives its drag from a

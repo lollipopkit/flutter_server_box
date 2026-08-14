@@ -281,23 +281,33 @@ class AppLocalizationsRu extends AppLocalizations {
   String get agentToolFailed => 'Не удалось выполнить инструмент.';
 
   @override
-  String get agentFloat => 'Float over other tabs';
+  String get agentFloat => 'Поверх других вкладок';
 
   @override
-  String get agentToolSshConnect => 'SSH connect';
+  String get agentToolSshConnect => 'Подключение по SSH';
 
   @override
-  String get agentToolSshDisconnect => 'Disconnect SSH';
+  String get agentToolSshDisconnect => 'Отключить SSH';
 
   @override
-  String get agentSshConnectTitle => 'Connect to a new host';
+  String get agentSshConnectTitle => 'Подключение к новому хосту';
 
   @override
   String get agentSshConnectTip =>
-      'The Agent wants to open an SSH connection. Type the password here — never into the conversation, where it would be stored and sent to the model.';
+      'Агент хочет открыть SSH-подключение. Введите пароль здесь, а не в диалоге: там он сохранится и будет отправлен модели.';
 
   @override
-  String get agentAdHocSessions => 'Temporary connections';
+  String get agentAdHocSessions => 'Временные подключения';
+
+  @override
+  String get agentSaveServerTitle => 'Save as a server';
+
+  @override
+  String get agentSaveServerTip =>
+      'This host and the password you entered will be stored on this device.';
+
+  @override
+  String get agentMonitorOptional => 'Monitor agent (optional)';
 
   @override
   String get atLeastOneTab => 'Должна быть выбрана хотя бы одна вкладка';

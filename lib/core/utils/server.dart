@@ -397,6 +397,42 @@ void persistHostKeyFingerprint(String storageKey, String fingerprintHex) {
   }
 }
 
+/// Forgets every host key filed under one server id.
+///
+/// For an ad-hoc connection that was never kept: it accepted a key under an id
+/// nothing will ever look up again, and one entry per trial connection is a
+/// setting that only grows.
+void forgetHostKeyFingerprints(String serverId) {
+  try {
+    final prop = Stores.setting.sshKnownHostFingerprints;
+    final known = Map<String, String>.from(prop.get());
+    final updated = withoutHostKeysFor(known, serverId);
+    if (updated.length == known.length) return;
+    prop.put(updated);
+  } catch (e, stack) {
+    Loggers.app.warning('Forget SSH host key fingerprints failed', e, stack);
+  }
+}
+
+/// [known] without the entries belonging to [serverId].
+///
+/// Split out and pure because the separator carries the whole of the
+/// correctness here: keys are `<id>::<keyType>`, a host may have offered
+/// several types, and matching on the id alone would take every other server
+/// whose id happens to start with the same characters.
+@visibleForTesting
+Map<String, String> withoutHostKeysFor(
+  Map<String, String> known,
+  String serverId,
+) {
+  if (serverId.isEmpty) return known;
+  final prefix = '$serverId::';
+  return {
+    for (final entry in known.entries)
+      if (!entry.key.startsWith(prefix)) entry.key: entry.value,
+  };
+}
+
 Future<bool> showHostKeyPrompt(
   HostKeyPromptInfo info, {
   BuildContext? context,

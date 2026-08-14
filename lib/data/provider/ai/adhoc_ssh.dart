@@ -2,6 +2,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:meta/meta.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 
@@ -73,6 +74,10 @@ class AdHocSshSessions extends _$AdHocSshSessions {
   @override
   Map<String, AdHocSshSession> build() {
     _open.clear();
+    // Sockets only, no storage: this runs while the app is being torn down,
+    // and the boxes a fingerprint would be written to may already be closed.
+    // The entries left behind are cleaned up by [close] on the paths that
+    // happen while the app is alive.
     ref.onDispose(_closeEveryClient);
     return const {};
   }
@@ -83,17 +88,24 @@ class AdHocSshSessions extends _$AdHocSshSessions {
   }
 
   /// Ends one and forgets it. Safe to call for an id that is already gone.
-  void close(String id) {
+  ///
+  /// [keepHostKey] is for the one caller that is not throwing the host away:
+  /// `add_server` saves the session's `Spi` under the same id, so the key the
+  /// user accepted has to stay where the saved server will look for it.
+  void close(String id, {bool keepHostKey = false}) {
     final session = _open.remove(id);
     if (session == null) return;
     _publish();
     _close(session);
+    if (!keepHostKey) forgetHostKeyFingerprints(session.spi.id);
   }
 
   void closeAll() {
     if (_open.isEmpty) return;
+    final ids = _open.values.map((s) => s.spi.id).toList(growable: false);
     _closeEveryClient();
     _publish();
+    ids.forEach(forgetHostKeyFingerprints);
   }
 
   void _publish() => state = Map.unmodifiable(_open);

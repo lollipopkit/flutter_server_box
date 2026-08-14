@@ -270,23 +270,33 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentToolFailed => '도구 실행에 실패했습니다.';
 
   @override
-  String get agentFloat => 'Float over other tabs';
+  String get agentFloat => '다른 탭 위에 띄우기';
 
   @override
-  String get agentToolSshConnect => 'SSH connect';
+  String get agentToolSshConnect => 'SSH 연결';
 
   @override
-  String get agentToolSshDisconnect => 'Disconnect SSH';
+  String get agentToolSshDisconnect => 'SSH 연결 끊기';
 
   @override
-  String get agentSshConnectTitle => 'Connect to a new host';
+  String get agentSshConnectTitle => '새 호스트에 연결';
 
   @override
   String get agentSshConnectTip =>
-      'The Agent wants to open an SSH connection. Type the password here — never into the conversation, where it would be stored and sent to the model.';
+      '에이전트가 SSH 연결을 열려고 합니다. 비밀번호는 여기에 입력하세요. 대화에 입력하면 그대로 저장되고 모델로 전송됩니다.';
 
   @override
-  String get agentAdHocSessions => 'Temporary connections';
+  String get agentAdHocSessions => '임시 연결';
+
+  @override
+  String get agentSaveServerTitle => 'Save as a server';
+
+  @override
+  String get agentSaveServerTip =>
+      'This host and the password you entered will be stored on this device.';
+
+  @override
+  String get agentMonitorOptional => 'Monitor agent (optional)';
 
   @override
   String get atLeastOneTab => '최소 하나의 탭을 선택해야 합니다';

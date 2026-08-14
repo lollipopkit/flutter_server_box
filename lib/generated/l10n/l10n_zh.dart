@@ -286,6 +286,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentAdHocSessions => '临时连接';
 
   @override
+  String get agentSaveServerTitle => '保存为服务器';
+
+  @override
+  String get agentSaveServerTip => '这台主机和你输入的密码将保存在本设备上。';
+
+  @override
+  String get agentMonitorOptional => 'Monitor 代理（可选）';
+
+  @override
   String get atLeastOneTab => '至少需要选择一个标签';
 
   @override
@@ -1617,6 +1626,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentAdHocSessions => '暫時連線';
+
+  @override
+  String get agentSaveServerTitle => '儲存為伺服器';
+
+  @override
+  String get agentSaveServerTip => '這台主機和你輸入的密碼將儲存在本裝置上。';
+
+  @override
+  String get agentMonitorOptional => 'Monitor 代理（選填）';
 
   @override
   String get atLeastOneTab => '至少需要選擇一個標籤';

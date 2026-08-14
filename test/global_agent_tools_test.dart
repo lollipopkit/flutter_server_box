@@ -367,6 +367,38 @@ void main() {
       expect(declaredActions(), contains('open_server'));
     });
 
+    test('add_server is one of the declared actions', () {
+      expect(declaredActions(), contains('add_server'));
+    });
+
+    test('add_server asks for no monitor credential', () {
+      final serverbox = globalAgentToolDefinitions.firstWhere(
+        (tool) => tool.name == 'serverbox',
+      );
+      final properties =
+          serverbox.parameters['properties'] as Map<String, dynamic>;
+
+      // Its address is a fact the Agent may have learned by installing it; the
+      // user and password are secrets, and go the same way the SSH password
+      // does — through a dialog, never through the transcript.
+      expect(properties.keys, contains('monitor_addr'));
+      expect(properties.keys, isNot(contains('monitor_user')));
+      expect(properties.keys, isNot(contains('monitor_pwd')));
+      expect(properties.keys, isNot(contains('monitor_password')));
+    });
+
+    test('saving a host is reviewed, and never automatic', () {
+      final proposal = command('add_server', modelSafeToRun: true);
+      expect(proposal.risk, AskAiCommandRisk.caution);
+      expect(proposal.canAutoRun, isFalse);
+    });
+
+    test('the model is told the app collects monitor credentials', () {
+      final instructions = buildGlobalAgentInstructions(servers: const []);
+      expect(instructions, contains('add_server'));
+      expect(instructions, contains('the app asks the user for them'));
+    });
+
     test('only reading is read-only', () {
       expect(command('list_servers').risk, AskAiCommandRisk.readOnly);
       expect(command('get_status').risk, AskAiCommandRisk.readOnly);

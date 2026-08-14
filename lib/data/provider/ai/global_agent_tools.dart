@@ -12,7 +12,9 @@ import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/ai/adhoc_ssh.dart';
 import 'package:server_box/data/provider/ai/agent_shell.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
@@ -344,11 +346,20 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
     name: 'serverbox',
     description:
         'Inspect configured servers, manage their existing ServerBox '
-        'connection state, and show one to the user.',
+        'connection state, show one to the user, and keep an ad-hoc '
+        'connection as a new one.',
     parameters: {
       'type': 'object',
       'additionalProperties': false,
-      'required': ['action', 'server_id', 'description', 'safe_to_run'],
+      'required': [
+        'action',
+        'server_id',
+        'session_id',
+        'name',
+        'monitor_addr',
+        'description',
+        'safe_to_run',
+      ],
       'properties': {
         'action': {
           'type': 'string',
@@ -359,11 +370,32 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
             'refresh',
             'disconnect',
             'open_server',
+            'add_server',
           ],
           'description':
               'The ServerBox operation to perform. open_server moves the app '
               'to that server\'s page so the user can see it; it changes '
-              'nothing on the server itself.',
+              'nothing on the server itself. add_server keeps an ad-hoc '
+              'connection as a configured server.',
+        },
+        'session_id': {
+          'type': ['string', 'null'],
+          'description':
+              'For add_server: the ad-hoc connection to keep, from '
+              'ssh_connect. Null for every other action.',
+        },
+        'name': {
+          'type': ['string', 'null'],
+          'description':
+              'For add_server: a suggested name. The user confirms or changes '
+              'it. Null for every other action.',
+        },
+        'monitor_addr': {
+          'type': ['string', 'null'],
+          'description':
+              'For add_server: the monitor agent\'s base URL if one was '
+              'installed, e.g. http://127.0.0.1:3770. Never its credentials — '
+              'the app asks the user for those. Null otherwise.',
         },
         'server_id': {
           'type': ['string', 'null'],
@@ -432,6 +464,9 @@ String buildGlobalAgentInstructions({
     )
     ..writeln(
       'Give a shell or file tool either server_id or session_id, never both. Close an ad-hoc connection with ssh_disconnect once it is no longer needed.',
+    )
+    ..writeln(
+      'To keep an ad-hoc host, use the serverbox add_server action with its session_id. It closes the connection and the app takes over. Never read a monitor agent\'s credentials off the machine to pass them here; the app asks the user for them.',
     )
     ..writeln(
       'Keep explanations concise and make the target and risks explicit.',
@@ -1071,6 +1106,98 @@ class GlobalAgentToolService {
     );
   }
 
+  /// Keeps an ad-hoc connection as a configured server.
+  ///
+  /// The `Spi` saved is the one the session has been using, name aside, so the
+  /// host key the user accepted at `ssh_connect` stays filed under the same id
+  /// and they are not asked about the same machine twice.
+  ///
+  /// The connection is closed before the server is added rather than handed
+  /// over. `addServer` refreshes, which connects; leaving the ad-hoc client
+  /// open would mean two SSH connections to one host, one of which nothing
+  /// would ever close. The cost is a single reconnect.
+  Future<AgentToolExecutionResult> _addServer(
+    AskAiCommand proposal,
+    Stopwatch watch,
+  ) async {
+    final sessionId = proposal.sessionId;
+    if (sessionId == null) {
+      throw const FormatException('session_id is required for add_server');
+    }
+    final session = _ref.read(adHocSshSessionsProvider)[sessionId];
+    if (session == null) {
+      throw StateError(
+        'No open connection with id $sessionId. Ad-hoc connections are not '
+        'kept across app restarts; open a new one with ssh_connect.',
+      );
+    }
+
+    final existing = _ref
+        .read(serversProvider)
+        .servers
+        .values
+        .where((spi) => spi.isSameAs(session.spi))
+        .firstOrNull;
+    if (existing != null) {
+      throw StateError(
+        '${session.label} is already configured as "${existing.name}" '
+        '(id ${existing.id}). Use that server instead of adding it again.',
+      );
+    }
+
+    _ref.read(agentShellProvider.notifier).show();
+    final saved = await promptSaveAdHocServer(
+      suggestedName: proposal.argumentString('name') ?? session.spi.name,
+      suggestedMonitorAddr: proposal.argumentString('monitor_addr'),
+    );
+    if (saved == null) {
+      return AgentToolExecutionResult(
+        toolName: proposal.toolName,
+        summary: 'The user chose not to save ${session.label}.',
+        succeeded: false,
+        cancelled: true,
+        duration: watch.elapsed,
+        data: {'session_id': sessionId},
+      );
+    }
+
+    final monitorAddr = saved.monitorAddr;
+    final spi = session.spi.copyWith(
+      name: saved.name,
+      monitorHttp: monitorAddr == null
+          ? null
+          : MonitorHttpCredential(
+              addr: monitorAddr,
+              user: saved.monitorUser,
+              pwd: saved.monitorPwd,
+            ),
+    );
+
+    // The host key the user accepted stays: the saved server carries the same
+    // `Spi.id`, and asking about the same machine twice is the one thing this
+    // whole id arrangement exists to avoid.
+    _ref
+        .read(adHocSshSessionsProvider.notifier)
+        .close(sessionId, keepHostKey: true);
+    _ref.read(serversProvider.notifier).addServer(spi);
+
+    return AgentToolExecutionResult(
+      toolName: proposal.toolName,
+      serverId: spi.id,
+      summary: 'Saved ${session.label} as "${spi.name}".',
+      succeeded: true,
+      duration: watch.elapsed,
+      // No credential of any kind: this is written into the conversation.
+      data: {
+        'id': spi.id,
+        'name': spi.name,
+        'session_id': sessionId,
+        'session_closed': true,
+        'has_monitor': monitorAddr != null,
+      },
+    );
+  }
+
   Future<AgentToolExecutionResult> _runServerBox(
     AskAiCommand proposal,
     Stopwatch watch,
@@ -1141,6 +1268,8 @@ class GlobalAgentToolService {
           duration: watch.elapsed,
           data: _statusJson(state),
         );
+      case 'add_server':
+        return await _addServer(proposal, watch);
       case 'disconnect':
         final state = _server(proposal.serverId);
         _ref.read(serversProvider.notifier).closeOneServer(state.spi.id);

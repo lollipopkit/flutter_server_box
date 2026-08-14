@@ -282,23 +282,33 @@ class AppLocalizationsTr extends AppLocalizations {
   String get agentToolFailed => 'Araç çalıştırılamadı.';
 
   @override
-  String get agentFloat => 'Float over other tabs';
+  String get agentFloat => 'Diğer sekmelerin üzerinde yüzsün';
 
   @override
-  String get agentToolSshConnect => 'SSH connect';
+  String get agentToolSshConnect => 'SSH bağlan';
 
   @override
-  String get agentToolSshDisconnect => 'Disconnect SSH';
+  String get agentToolSshDisconnect => 'SSH bağlantısını kes';
 
   @override
-  String get agentSshConnectTitle => 'Connect to a new host';
+  String get agentSshConnectTitle => 'Yeni bir sunucuya bağlan';
 
   @override
   String get agentSshConnectTip =>
-      'The Agent wants to open an SSH connection. Type the password here — never into the conversation, where it would be stored and sent to the model.';
+      'Agent bir SSH bağlantısı açmak istiyor. Parolayı buraya yaz, konuşmaya yazma; orada saklanır ve modele gönderilir.';
 
   @override
-  String get agentAdHocSessions => 'Temporary connections';
+  String get agentAdHocSessions => 'Geçici bağlantılar';
+
+  @override
+  String get agentSaveServerTitle => 'Save as a server';
+
+  @override
+  String get agentSaveServerTip =>
+      'This host and the password you entered will be stored on this device.';
+
+  @override
+  String get agentMonitorOptional => 'Monitor agent (optional)';
 
   @override
   String get atLeastOneTab => 'En az bir sekme seçilmelidir';

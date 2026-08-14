@@ -281,23 +281,33 @@ class AppLocalizationsId extends AppLocalizations {
   String get agentToolFailed => 'Eksekusi alat gagal.';
 
   @override
-  String get agentFloat => 'Float over other tabs';
+  String get agentFloat => 'Mengambang di atas tab lain';
 
   @override
-  String get agentToolSshConnect => 'SSH connect';
+  String get agentToolSshConnect => 'Sambungkan SSH';
 
   @override
-  String get agentToolSshDisconnect => 'Disconnect SSH';
+  String get agentToolSshDisconnect => 'Putuskan SSH';
 
   @override
-  String get agentSshConnectTitle => 'Connect to a new host';
+  String get agentSshConnectTitle => 'Sambungkan ke host baru';
 
   @override
   String get agentSshConnectTip =>
-      'The Agent wants to open an SSH connection. Type the password here — never into the conversation, where it would be stored and sent to the model.';
+      'Agent ingin membuka koneksi SSH. Ketik kata sandi di sini, jangan di percakapan, karena di sana kata sandi akan tersimpan dan dikirim ke model.';
 
   @override
-  String get agentAdHocSessions => 'Temporary connections';
+  String get agentAdHocSessions => 'Koneksi sementara';
+
+  @override
+  String get agentSaveServerTitle => 'Save as a server';
+
+  @override
+  String get agentSaveServerTip =>
+      'This host and the password you entered will be stored on this device.';
+
+  @override
+  String get agentMonitorOptional => 'Monitor agent (optional)';
 
   @override
   String get atLeastOneTab => 'Setidaknya satu tab harus dipilih';

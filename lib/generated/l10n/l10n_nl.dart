@@ -280,23 +280,33 @@ class AppLocalizationsNl extends AppLocalizations {
   String get agentToolFailed => 'Uitvoeren van het hulpmiddel is mislukt.';
 
   @override
-  String get agentFloat => 'Float over other tabs';
+  String get agentFloat => 'Boven andere tabbladen zweven';
 
   @override
-  String get agentToolSshConnect => 'SSH connect';
+  String get agentToolSshConnect => 'SSH verbinden';
 
   @override
-  String get agentToolSshDisconnect => 'Disconnect SSH';
+  String get agentToolSshDisconnect => 'SSH verbreken';
 
   @override
-  String get agentSshConnectTitle => 'Connect to a new host';
+  String get agentSshConnectTitle => 'Met een nieuwe host verbinden';
 
   @override
   String get agentSshConnectTip =>
-      'The Agent wants to open an SSH connection. Type the password here — never into the conversation, where it would be stored and sent to the model.';
+      'De agent wil een SSH-verbinding openen. Typ het wachtwoord hier, nooit in het gesprek, waar het bewaard en naar het model gestuurd zou worden.';
 
   @override
-  String get agentAdHocSessions => 'Temporary connections';
+  String get agentAdHocSessions => 'Tijdelijke verbindingen';
+
+  @override
+  String get agentSaveServerTitle => 'Save as a server';
+
+  @override
+  String get agentSaveServerTip =>
+      'This host and the password you entered will be stored on this device.';
+
+  @override
+  String get agentMonitorOptional => 'Monitor agent (optional)';
 
   @override
   String get atLeastOneTab =>

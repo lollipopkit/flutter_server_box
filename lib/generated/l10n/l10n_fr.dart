@@ -285,23 +285,33 @@ class AppLocalizationsFr extends AppLocalizations {
   String get agentToolFailed => 'Échec de l\'exécution de l\'outil.';
 
   @override
-  String get agentFloat => 'Float over other tabs';
+  String get agentFloat => 'Flotter au-dessus des autres onglets';
 
   @override
-  String get agentToolSshConnect => 'SSH connect';
+  String get agentToolSshConnect => 'Connexion SSH';
 
   @override
-  String get agentToolSshDisconnect => 'Disconnect SSH';
+  String get agentToolSshDisconnect => 'Déconnecter le SSH';
 
   @override
-  String get agentSshConnectTitle => 'Connect to a new host';
+  String get agentSshConnectTitle => 'Se connecter à un nouvel hôte';
 
   @override
   String get agentSshConnectTip =>
-      'The Agent wants to open an SSH connection. Type the password here — never into the conversation, where it would be stored and sent to the model.';
+      'L\'Agent veut ouvrir une connexion SSH. Saisis le mot de passe ici, jamais dans la conversation, où il serait enregistré et envoyé au modèle.';
 
   @override
-  String get agentAdHocSessions => 'Temporary connections';
+  String get agentAdHocSessions => 'Connexions temporaires';
+
+  @override
+  String get agentSaveServerTitle => 'Save as a server';
+
+  @override
+  String get agentSaveServerTip =>
+      'This host and the password you entered will be stored on this device.';
+
+  @override
+  String get agentMonitorOptional => 'Monitor agent (optional)';
 
   @override
   String get atLeastOneTab => 'Au moins un onglet doit être sélectionné';

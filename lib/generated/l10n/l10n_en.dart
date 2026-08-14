@@ -299,6 +299,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentAdHocSessions => 'Temporary connections';
 
   @override
+  String get agentSaveServerTitle => 'Save as a server';
+
+  @override
+  String get agentSaveServerTip =>
+      'This host and the password you entered will be stored on this device.';
+
+  @override
+  String get agentMonitorOptional => 'Monitor agent (optional)';
+
+  @override
   String get atLeastOneTab => 'At least one tab must be selected';
 
   @override

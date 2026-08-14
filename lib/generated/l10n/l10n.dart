@@ -657,6 +657,24 @@ abstract class AppLocalizations {
   /// **'Temporary connections'**
   String get agentAdHocSessions;
 
+  /// No description provided for @agentSaveServerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as a server'**
+  String get agentSaveServerTitle;
+
+  /// No description provided for @agentSaveServerTip.
+  ///
+  /// In en, this message translates to:
+  /// **'This host and the password you entered will be stored on this device.'**
+  String get agentSaveServerTip;
+
+  /// No description provided for @agentMonitorOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor agent (optional)'**
+  String get agentMonitorOptional;
+
   /// No description provided for @atLeastOneTab.
   ///
   /// In en, this message translates to:
