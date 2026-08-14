@@ -29,14 +29,29 @@ class SnippetEditPage extends ConsumerStatefulWidget {
   );
 }
 
-class _SnippetEditPageState extends ConsumerState<SnippetEditPage>
-    with AfterLayoutMixin {
+class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
   final _nameController = TextEditingController();
   final _scriptController = TextEditingController();
   final _noteController = TextEditingController();
   final _scriptNode = FocusNode();
   final _autoRunOn = ValueNotifier(<String>[]);
   final _tags = <String>{}.vn;
+
+  /// Filled here rather than after the first layout: the page is opened beside
+  /// the list, where its first frame is the one that animates in. Loading the
+  /// snippet a frame later meant that animation started on an empty form and
+  /// the fields appeared in the middle of it.
+  @override
+  void initState() {
+    super.initState();
+    final snippet = widget.args?.snippet;
+    if (snippet == null) return;
+    _nameController.text = snippet.name;
+    _scriptController.text = snippet.script;
+    if (snippet.note != null) _noteController.text = snippet.note!;
+    if (snippet.tags != null) _tags.value = snippet.tags!.toSet();
+    if (snippet.autoRunOn != null) _autoRunOn.value = snippet.autoRunOn!;
+  }
 
   @override
   void dispose() {
@@ -302,25 +317,5 @@ ${libL10n.example}:
         ),
       ),
     );
-  }
-
-  @override
-  void afterFirstLayout(BuildContext context) {
-    final snippet = widget.args?.snippet;
-    if (snippet != null) {
-      _nameController.text = snippet.name;
-      _scriptController.text = snippet.script;
-      if (snippet.note != null) {
-        _noteController.text = snippet.note!;
-      }
-
-      if (snippet.tags != null) {
-        _tags.value = snippet.tags!.toSet();
-      }
-
-      if (snippet.autoRunOn != null) {
-        _autoRunOn.value = snippet.autoRunOn!;
-      }
-    }
   }
 }
