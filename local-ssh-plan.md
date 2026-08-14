@@ -275,17 +275,32 @@ expects musl's own loader to have set up its runtime. Chaining musl's loader
 through `linker64` fails earlier still. Mixing the two libcs does not work, and
 nothing here suggests it can be made to.
 
-What that leaves for an Android rootfs:
+### What that does *not* settle — proot does not use `execve` for guest binaries
 
-- a rootfs built against **bionic** rather than musl, which is not Alpine and
-  has no package manager anyone maintains;
-- `targetSdk` 28, which ends Play distribution;
-- an in-process loader that implements musl's own start-up — route 2 below, and
-  the measurement says it is still the large piece of work this document said
-  it was, not a one-line workaround.
+Reading OpenMinis' Android side afterwards turned up the mechanism the
+measurement above missed. Its Alpine rootfs really is in `filesDir`
+(`RootfsManager.kt:42`), and proot really does run musl binaries out of it. It
+does not go through Android's linker:
 
-The emulator is not a physical device, and SELinux policy is a vendor's to
-change. The bionic result is the one worth re-checking on real hardware.
+> The loader is bundled into the proot binary (extracted via /proc/self/fd at
+> runtime) — `PRootKernel.kt:83`
+
+PRoot carries **its own loader**, whose whole job is to map a guest ELF into
+memory and hand control to the guest's own interpreter. That is route 2 below,
+already written, and it is libc-agnostic by construction — it never asks the
+host's linker to understand a musl binary, which is exactly what failed above.
+The remaining question is only how the loader itself is executed: a path under
+`/proc/self/fd` is not a path in the app's directory, and an anonymous file
+(`memfd_create`) carries a different SELinux label from `app_data_file`.
+
+**Untested here.** Dart cannot `memfd_create`, and the experiment needs a proot
+build to be worth running. What can be said is narrower than either extreme:
+Android's own linker will not carry an Alpine rootfs, and the thing that
+reportedly does is a loader that was written for this problem and is shipped by
+somebody doing it today.
+
+So an Android rootfs is **not** ruled out by the measurement, and the honest
+cost is "vendor proot and find out", not "write an ELF loader from scratch".
 
 Three ways out, all with a cost:
 
@@ -364,9 +379,10 @@ tool call has been made against this device.
 
 **3. Measure the Android execution question.** Done — see
 [the measurement](#measured-on-an-api-36-emulator-with-the-app-targeting-36).
-The answer is narrower than hoped: the workaround is real for bionic binaries
-and does not carry a musl rootfs, so stage 4's Android half is still the large
-piece of work, not a one-liner.
+`execve` from the app's own directory is refused, Android's linker runs a
+bionic binary from there and segfaults on a musl one, and proot sidesteps the
+whole question with a loader of its own. Stage 4's Android half is vendoring
+proot and measuring it, not writing a loader.
 
 **4. Rootfs.** iOS via ish-arm64 — vendor the fork, build the static libs, wire
 the Xcode target, ship an Alpine aarch64 tarball, add an iOS build step to CI.
@@ -384,7 +400,7 @@ Update this as answers arrive; several decisions above move with them.
 | # | Question | How to settle it | Status |
 | --- | --- | --- | --- |
 | 1 | Can a `targetSdk` 36 app exec a file in `filesDir` via `linker64`? | **Yes for a bionic binary, no for a musl one** — measured on an API 36 emulator, `integration_test/android_exec_test.dart`. Direct `execve` is denied; the linker maps it and runs it. A musl binary segfaults once its libc is found, because it wants musl's own loader. Unverified on physical hardware | **done** |
-| 2 | How does OpenMinis run rootfs binaries at `targetSdk` 35? | Read its Kotlin/JNI sandbox code, not the shell scripts | **open** |
+| 2 | How does OpenMinis run rootfs binaries at `targetSdk` 36? | **Answered**: proot's own loader, extracted via `/proc/self/fd` and mapping the guest ELF itself, so the host linker is never asked to understand musl. `RootfsManager.kt:42`, `PRootKernel.kt:83`. Not reproduced here | **done** |
 | 3 | Are ish-arm64's 7–12x figures representative? | Build it, run a shell and a `python -c` loop | **open** |
 | 4 | Does the macOS DMG build ship unsandboxed, or does local shell hide there? | **Answered, and the first answer was wrong.** A sandboxed process cannot host a pty at all, so the entitlement that was meant to fix it bought nothing and was reverted (`ccd2e77b`). iCloud turned out not to need the sandbox either. macOS ships two products from one binary (`52a0ec1b`), and the App Store one hides the feature | **done** |
 | 5 | Is proot GPLv2-only or v2-or-later? | Read source headers, not `COPYING` | **open** |
