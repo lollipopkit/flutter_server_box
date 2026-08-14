@@ -88,8 +88,9 @@ abstract final class SandboxImport {
   /// What the last [run] concluded, or null before it ran.
   static SandboxImportResult? get result => _result;
 
-  /// Where the sandboxed build keeps its data, or null off macOS.
-  static String? get containerDoc {
+  /// The sandboxed build's container, or null off macOS. Its data is under
+  /// `Documents`, and its preferences under `Library/Preferences`.
+  static String? get containerData {
     final home = Pfs.homeDir;
     if (!isMacOS || home == null) return null;
     return home
@@ -104,7 +105,7 @@ abstract final class SandboxImport {
     if (!isMacOS || Pfs.isMacSandboxed) {
       return _result = SandboxImportResult.skipped;
     }
-    final container = containerDoc;
+    final container = containerData;
     if (container == null) return _result = SandboxImportResult.skipped;
 
     final result = await importFrom(
@@ -183,7 +184,12 @@ abstract final class SandboxImport {
     try {
       await File(dest.path.joinPath(busyMarker)).writeAsString(src.path);
       if (resuming) await _clear(dest);
+      _copiedBytes = 0;
+      final watch = Stopwatch()..start();
       await _copyInto(src: src, dest: dest);
+      Loggers.app.info(
+        'Sandbox import: ${_copiedBytes ~/ 1024}KiB in ${watch.elapsedMilliseconds}ms',
+      );
       await File(dest.path.joinPath(doneMarker)).writeAsString(src.path);
       await File(dest.path.joinPath(busyMarker)).delete();
       return SandboxImportResult.imported;
@@ -200,8 +206,14 @@ abstract final class SandboxImport {
   /// converter here would keep straight. Only the keys in [_prefKeys] and the
   /// legacy box key are asked for, and only where this install has nothing of
   /// its own to lose.
+  /// - [write] takes each value that survived, so a test can watch this run
+  ///   against a plist of its own without writing into the preferences of the
+  ///   machine it runs on. Defaults to [PrefStore.shared].
   @visibleForTesting
-  static Future<void> importPrefs(String plistPathWithoutExt) async {
+  static Future<void> importPrefs(
+    String plistPathWithoutExt, {
+    Future<void> Function(String key, Object value)? write,
+  }) async {
     if (!isMacOS) return;
     if (!await File('$plistPathWithoutExt.plist').exists()) return;
 
@@ -216,7 +228,11 @@ abstract final class SandboxImport {
       if (raw == null) continue;
       final value = _parsePref(raw, entry.value);
       if (value == null) continue;
-      await PrefStore.shared.set(key, value);
+      if (write != null) {
+        await write(key, value);
+      } else {
+        await PrefStore.shared.set(key, value);
+      }
     }
   }
 
@@ -287,6 +303,13 @@ abstract final class SandboxImport {
     }
   }
 
+  /// How much the last copy moved, so a slow first launch is explicable.
+  ///
+  /// Everything but the cache comes across, including the directories the user
+  /// downloaded into: those are their files, and leaving them behind to save
+  /// time would be losing data to save time.
+  static int _copiedBytes = 0;
+
   static Future<void> _copyInto({
     required Directory src,
     required Directory dest,
@@ -310,7 +333,15 @@ abstract final class SandboxImport {
       }
 
       if (entity is File) {
+        // sqlite's shared-memory file belongs to the processes that had the
+        // database open, not to the database. Carried across it describes a
+        // WAL index that no longer exists, and sqlite either rebuilds it or
+        // refuses — the first is wasted, the second is a broken app. It is
+        // rebuilt from `app.db-wal`, which does come across.
+        if (name.endsWith('.db-shm')) continue;
+
         await entity.copy(dest.path.joinPath(name));
+        _copiedBytes += await entity.length();
       }
     }
   }

@@ -75,7 +75,6 @@ class FileBackendTraits {
     this.permissions = false,
     this.symlinks = false,
     this.sudoFallback = false,
-    this.randomAccessReads = false,
   });
 
   /// Entries carry [FileEntry.mode], and it can be changed.
@@ -87,10 +86,6 @@ class FileBackendTraits {
   /// A refused operation can be retried through a shell with sudo. Only a
   /// backend that has a shell behind it can offer this; see `sftp_sudo.dart`.
   final bool sudoFallback;
-
-  /// [FileBackend.read] honours its `offset`, so an interrupted transfer can
-  /// be resumed rather than restarted.
-  final bool randomAccessReads;
 }
 
 /// Somewhere files live.
@@ -129,8 +124,13 @@ abstract interface class FileBackend {
   /// it.
   Future<void> chmod(String path, int mode);
 
-  /// The bytes, from [offset]. A backend without [FileBackendTraits.randomAccessReads]
-  /// must throw for a non-zero one rather than quietly returning the whole file.
+  /// The bytes, from [offset].
+  ///
+  /// Every backend honours the offset. It was a trait for a while — declared,
+  /// answered `true` by both implementations, and read by nothing — which is a
+  /// promise with no way to tell whether it was kept. A backend that cannot
+  /// seek has no business implementing this interface: a transfer engine that
+  /// has to check first is one that cannot resume anything.
   Stream<List<int>> read(String path, {int offset = 0});
 
   /// Writes [data] to [path], replacing whatever was there.

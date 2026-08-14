@@ -54,7 +54,6 @@ class SftpFileBackend implements FileBackend {
     // Not a property of SFTP but of this connection: escalating means running
     // a shell command, and a session already root has nowhere to escalate to.
     sudoFallback: escalation?.available ?? false,
-    randomAccessReads: true,
   );
 
   @override
@@ -200,10 +199,16 @@ class SftpFileBackend implements FileBackend {
       wrote = true;
       try {
         await file.write(data.map(Uint8List.fromList)).done;
-      } finally {
         await file.close();
+      } catch (_) {
+        // As in the local backend: a close that complains about a handle the
+        // failure already invalidated must not replace the failure.
+        try {
+          await file.close();
+        } catch (_) {}
+        rethrow;
       }
-      await _bounded('rename', _sftp.rename(staging, path));
+      await _replace(staging, path);
     } catch (_) {
       if (wrote) {
         try {
@@ -214,6 +219,34 @@ class SftpFileBackend implements FileBackend {
       }
       rethrow;
     }
+  }
+
+  /// Renames [staging] over [path], whether or not something is there.
+  ///
+  /// `SSH_FXP_RENAME` is specified to *fail* when the destination exists, and
+  /// only servers carrying `posix-rename@openssh.com` replace it — which the
+  /// client prefers when offered. Everywhere else, overwriting means deleting
+  /// first. That is a moment where neither file is in place, and it is still
+  /// better than truncating the destination before the bytes have arrived.
+  Future<void> _replace(String staging, String path) async {
+    final Object failure;
+    try {
+      await _bounded('rename', _sftp.rename(staging, path));
+      return;
+    } catch (e) {
+      failure = e;
+    }
+
+    // Only "the destination is in the way" is worth a second attempt. If the
+    // path cannot even be stat'd, the rename failed for its own reasons and
+    // deleting something on the strength of a misread would be worse.
+    try {
+      if (await stat(path) == null) throw failure;
+    } catch (_) {
+      throw failure;
+    }
+    await _bounded('remove', _sftp.remove(path));
+    await _bounded('rename', _sftp.rename(staging, path));
   }
 
   @override

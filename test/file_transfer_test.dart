@@ -128,6 +128,47 @@ void main() {
       expect(status.worker, isNull);
     });
 
+    test('a folder copies as a whole tree, on this isolate', () async {
+      await Directory('${tempDir.path}/src/deep').create(recursive: true);
+      File('${tempDir.path}/src/one.txt').writeAsStringSync('hello');
+      File('${tempDir.path}/src/deep/two.txt').writeAsStringSync('world');
+
+      final done = Completer<void>();
+      final status = FileTransferStatus(
+        job: FileTransfer(
+          from: LocalFileRef('${tempDir.path}/src'),
+          to: LocalFileRef('${tempDir.path}/dst'),
+          isDir: true,
+        ),
+        notifyListeners: () {},
+        completer: done,
+      );
+      await done.future.timeout(const Duration(seconds: 10));
+
+      expect(status.error, isNull);
+      expect(status.size, 10, reason: 'both files, counted before copying');
+      expect(status.transferredBytes, 10);
+      expect(
+        File('${tempDir.path}/dst/deep/two.txt').readAsStringSync(),
+        'world',
+      );
+    });
+
+    test('a folder never takes the single-file fast path', () {
+      final job = FileTransfer(
+        from: SftpFileRef.forServer(
+          spiFixture(name: 'srv', id: 'srv', ip: '10.0.0.1'),
+          '/var/log',
+        ),
+        to: const LocalFileRef('/tmp/log'),
+        isDir: true,
+      );
+
+      // The download path moves one file: segmented reads and one write handle
+      // are what makes it fast, and neither generalises to a tree.
+      expect(job.isSingleFile, isFalse);
+    });
+
     test('a local copy that cannot read reports the failure', () async {
       final status = FileTransferStatus(
         job: FileTransfer(

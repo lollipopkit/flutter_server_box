@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
+import 'package:server_box/data/model/file/copy_tree.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/file/transfer_worker.dart';
 
@@ -76,22 +77,27 @@ class FileTransferStatus {
     try {
       onNotify(FileTransferStage.preparing);
       final watch = Stopwatch()..start();
-      final total = (await backend.stat(job.from.path))?.size;
-      if (total != null) onNotify(total);
+      final plan = await planCopy(
+        backend,
+        job.from.path,
+        job.to.path,
+        isDir: job.isDir,
+      );
+      onNotify(plan.totalBytes);
       onNotify(FileTransferStage.loading);
 
-      var sent = 0;
-      final counted = backend.read(job.from.path).map((chunk) {
-        sent += chunk.length;
-        onNotify(
+      final total = plan.totalBytes;
+      await runCopy(
+        plan,
+        backend,
+        backend,
+        onProgress: (transferred) => onNotify(
           FileTransferProgress(
-            percent: total == null || total == 0 ? 0 : sent / total * 100,
-            transferredBytes: sent,
+            percent: total == 0 ? 0 : transferred / total * 100,
+            transferredBytes: transferred,
           ),
-        );
-        return chunk;
-      });
-      await backend.write(job.to.path, counted, size: total);
+        ),
+      );
 
       onNotify(watch.elapsed);
       onNotify(FileTransferStage.finished);

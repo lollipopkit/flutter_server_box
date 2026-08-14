@@ -9,7 +9,7 @@ import 'package:server_box/data/res/store.dart';
 /// they were the names of the only two pairs that existed — a server and this
 /// device — and naming them made a third pair unrepresentable.
 class FileTransfer {
-  FileTransfer({required this.from, required this.to}) {
+  FileTransfer({required this.from, required this.to, this.isDir = false}) {
     // Read here, on the isolate that has the stores. The one that runs the
     // transfer does not.
     timeoutSeconds = Stores.setting.timeout.fetch();
@@ -23,6 +23,13 @@ class FileTransfer {
   final FileRef from;
   final FileRef to;
 
+  /// Whether [from] names a directory, and so a whole tree.
+  ///
+  /// Carried rather than discovered, because the browser already knows — it
+  /// listed the thing — and the isolate would otherwise have to connect once
+  /// just to ask.
+  final bool isDir;
+
   late final int timeoutSeconds;
   late final int progressUpdateIntervalSeconds;
 
@@ -35,6 +42,13 @@ class FileTransfer {
   /// isolate exists because SSH's symmetric crypto is pure Dart and would peg
   /// the UI thread. Starting one out of symmetry would cost more than it saved.
   bool get needsIsolate => !(from is LocalFileRef && to is LocalFileRef);
+
+  /// Whether the two specialised SFTP paths can serve this.
+  ///
+  /// They move one file each: segmented reads and a single write handle are
+  /// what makes them fast, and neither generalises to a tree. A directory
+  /// takes the general path whatever its two ends are.
+  bool get isSingleFile => !isDir;
 }
 
 /// How far along, in the two numbers a list can show.

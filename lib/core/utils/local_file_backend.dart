@@ -21,7 +21,6 @@ class LocalFileBackend implements FileBackend {
     // Nothing to escalate to. A local shell runs as whoever runs the app, so
     // "try again with sudo" would be the same user asking twice.
     sudoFallback: false,
-    randomAccessReads: true,
   );
 
   @override
@@ -105,8 +104,14 @@ class LocalFileBackend implements FileBackend {
       final sink = staging.openWrite();
       try {
         await sink.addStream(data);
-      } finally {
         await sink.close();
+      } catch (_) {
+        // Closing a sink whose stream failed throws "File closed", which would
+        // replace the error worth reporting with one about the cleanup.
+        try {
+          await sink.close();
+        } catch (_) {}
+        rethrow;
       }
       await staging.rename(native);
     } catch (_) {

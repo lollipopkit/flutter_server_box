@@ -194,11 +194,15 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     return entries;
   }
 
-  /// Sorted for display, leaving the listing itself alone: reordering is a
-  /// local decision and must not cost a round trip to the server.
+  /// Filtered and sorted for display, leaving the listing itself alone: both
+  /// are local decisions and must not cost a round trip to the server.
   List<FileEntry> _sorted(List<FileEntry> entries, _SortOption option) {
     final foldersFirst = Stores.setting.sftpShowFoldersFirst.fetch();
-    return List.of(entries)
+    final hidden = Stores.setting.showHiddenFiles.fetch();
+    return [
+      for (final entry in entries)
+        if (hidden || !entry.name.startsWith('.')) entry,
+    ]
       ..sort((a, b) {
         if (foldersFirst && a.isDir != b.isDir) return a.isDir ? -1 : 1;
         final result = option.by.compare(a, b);
@@ -424,16 +428,21 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
                 _chmod(entry);
               },
             ),
-          // Moving a file is the same act wherever it is, so it is offered
+          // Moving something is the same act wherever it is, so it is offered
           // wherever it can be done rather than as "upload" on one page and
           // "download" on the other.
-          if (widget.args.refOf case final refOf? when !entry.isDir)
+          if (widget.args.refOf case final refOf?)
             Btn.tile(
               icon: const Icon(Icons.drive_file_move_outline),
               text: l10n.sendTo,
               onTap: () {
                 context.popDialog();
-                _sendTo(refOf(full));
+                sendTo(
+                  context,
+                  ref,
+                  source: refOf(full),
+                  isDir: entry.isDir,
+                );
               },
             ),
           ...?widget.args.entryActions?.call(this, entry, full),
@@ -441,8 +450,6 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       ),
     );
   }
-
-  Future<void> _sendTo(FileRef source) => sendTo(context, ref, source);
 
   Future<void> _pick(FileEntry entry) async {
     final picked = await context.showRoundDialog<bool>(
@@ -513,7 +520,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
 
     final actions = <Widget>[
       ...?widget.args.extraActions?.call(this),
-      _buildSortBtn(),
+      _buildViewBtn(),
       Btn.icon(icon: const Icon(Icons.search), onTap: _showSearch),
       if (isDesktop)
         Btn.icon(icon: const Icon(Icons.refresh), onTap: refresh),
@@ -784,9 +791,13 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     );
   }
 
-  Widget _buildSortBtn() {
+  /// How this list is shown: what it is ordered by, and whether it hides the
+  /// dotfiles. One menu, because both are the same kind of decision and the
+  /// toolbar has no room for a button each.
+  Widget _buildViewBtn() {
     return _sort.listenVal((value) {
-      return PopupMenuButton<_SortBy>(
+      final hidden = Stores.setting.showHiddenFiles.fetch();
+      return PopupMenuButton<Object>(
         icon: const Icon(Icons.sort),
         itemBuilder: (_) => [
           for (final by in _SortBy.values)
@@ -804,17 +815,42 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
                 ),
               ),
             ),
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: _kToggleHidden,
+            child: Row(
+              spacing: 7,
+              children: [
+                Icon(
+                  hidden ? Icons.check_box : Icons.check_box_outline_blank,
+                  size: 18,
+                ),
+                Text(l10n.showHiddenFiles),
+              ],
+            ),
+          ),
         ],
         onSelected: (selected) {
+          if (selected == _kToggleHidden) {
+            Stores.setting.showHiddenFiles.put(!hidden);
+            // The setting is read while sorting, so the list has to be asked
+            // to sort again — nothing about the listing itself changed.
+            _sort.notify();
+            return;
+          }
+          final by = selected as _SortBy;
           final old = _sort.value;
-          _sort.value = selected == old.by
+          _sort.value = by == old.by
               ? _SortOption(by: old.by, reversed: !old.reversed)
-              : _SortOption(by: selected, reversed: old.reversed);
+              : _SortOption(by: by, reversed: old.reversed);
         },
       );
     });
   }
 }
+
+/// Not a [_SortBy], so the menu can carry one entry that is not a sort order.
+const _kToggleHidden = 'toggle-hidden';
 
 @immutable
 class _SortOption {

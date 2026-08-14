@@ -11,6 +11,7 @@ import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/sftp_file_backend.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/data/model/file/copy_tree.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
@@ -271,9 +272,11 @@ Future<void> isolateMessageHandler(
       // file over a slow link finish, and none of that is expressible as
       // `read` piped into `write`. Everything else takes the general path.
       switch ((job.from, job.to)) {
-        case (final SftpFileRef from, final LocalFileRef to):
+        case (final SftpFileRef from, final LocalFileRef to)
+            when job.isSingleFile:
           await _download(job, from, to, mainSendPort);
-        case (final LocalFileRef from, final SftpFileRef to):
+        case (final LocalFileRef from, final SftpFileRef to)
+            when job.isSingleFile:
           await _upload(job, from, to, mainSendPort);
         default:
           await _copy(job, mainSendPort);
@@ -303,6 +306,7 @@ Future<void> _download(
   SSHClient? client;
   SftpClient? sftp;
   SftpFile? remoteFile;
+  File? staging;
   Object? error;
   StackTrace? stackTrace;
 
@@ -348,7 +352,11 @@ Future<void> _download(
       'chunk=$_sftpChunkSize, pending=$_sftpDownloadMaxPendingRequests',
     );
 
-    final localFile = await File(to.path).open(mode: FileMode.write);
+    // Beside the destination, not under its name: a download that dies
+    // halfway used to leave a truncated file where a whole one was expected,
+    // and nothing about it said so.
+    staging = File('${to.path}.$_stagingSuffix');
+    final localFile = await staging.open(mode: FileMode.write);
 
     try {
       const segmentSize = 5 * 1024 * 1024; // 5MB per segment
@@ -441,12 +449,16 @@ Future<void> _download(
       await localFile.close();
     }
 
+    await staging.rename(to.path);
+    staging = null;
+
     mainSendPort.send(watch.elapsed);
     mainSendPort.send(FileTransferStage.finished);
   } catch (e, s) {
     error = e;
     stackTrace = s;
   } finally {
+    await _discard(staging);
     await _closeSftpResources(
       remoteFile: remoteFile,
       sftp: sftp,
@@ -460,6 +472,62 @@ Future<void> _download(
   }
 }
 
+/// The name a half-finished transfer is parked under.
+///
+/// A counter rather than a timestamp: two transfers of the same file, started
+/// in the same millisecond, must not stage onto each other.
+var _staging = 0;
+
+String get _stagingSuffix => 'sb-part-${_staging++}';
+
+/// Renames [staging] over [path], deleting what is there if the server will
+/// not replace it itself. See `SftpFileBackend._replace`, which faces the same
+/// `SSH_FXP_RENAME` rule.
+Future<void> _replaceRemote(
+  SftpClient sftp,
+  String staging,
+  String path,
+  Duration timeout,
+) async {
+  final Object failure;
+  try {
+    await withSftpOpTimeout('rename', sftp.rename(staging, path), timeout);
+    return;
+  } catch (e) {
+    failure = e;
+  }
+
+  // Only "the destination is in the way" is worth a second attempt. Anything
+  // else — no permission, no such directory — is the rename's own answer, and
+  // deleting something on the strength of a misread would be worse than
+  // failing.
+  try {
+    await withSftpOpTimeout('stat', sftp.stat(path), timeout);
+  } catch (_) {
+    throw failure;
+  }
+  await withSftpOpTimeout('remove', sftp.remove(path), timeout);
+  await withSftpOpTimeout('rename', sftp.rename(staging, path), timeout);
+}
+
+Future<void> _discardRemote(SftpClient? sftp, String? staging) async {
+  if (sftp == null || staging == null) return;
+  try {
+    await sftp.remove(staging);
+  } catch (e, s) {
+    Loggers.app.warning('Failed to remove a staged upload', e, s);
+  }
+}
+
+Future<void> _discard(File? staging) async {
+  if (staging == null) return;
+  try {
+    if (await staging.exists()) await staging.delete();
+  } catch (e, s) {
+    Loggers.app.warning('Failed to remove a staged download', e, s);
+  }
+}
+
 /// This device to a server.
 Future<void> _upload(
   FileTransfer job,
@@ -470,6 +538,7 @@ Future<void> _upload(
   SSHClient? client;
   SftpClient? sftp;
   SftpFile? remoteFile;
+  String? staging;
   Object? error;
   StackTrace? stackTrace;
 
@@ -495,12 +564,14 @@ Future<void> _upload(
       _prepareTimeout(job),
     );
     sftp = openedSftp;
-    // If remote exists, overwrite it
-    Loggers.app.info('Transfer upload opening remote file: ${to.path}');
+    // Beside the destination rather than onto it. Truncating first meant a
+    // failed upload replaced a good remote file with a partial one.
+    staging = '${to.path}.$_stagingSuffix';
+    Loggers.app.info('Transfer upload opening remote file: $staging');
     final openedRemoteFile = await withSftpOpTimeout(
       'open remote file for upload',
       openedSftp.open(
-        to.path,
+        staging,
         mode:
             SftpFileOpenMode.truncate |
             SftpFileOpenMode.create |
@@ -534,12 +605,20 @@ Future<void> _upload(
       maxBytesOnTheWire: _sftpUploadMaxBytesOnTheWire,
     );
     await writer.done;
+    // Closed before the rename: a server need not see a handle to a path that
+    // is about to stop existing.
+    await remoteFile.close();
+    remoteFile = null;
+    await _replaceRemote(openedSftp, staging, to.path, _prepareTimeout(job));
+    staging = null;
+
     mainSendPort.send(watch.elapsed);
     mainSendPort.send(FileTransferStage.finished);
   } catch (e, s) {
     error = e;
     stackTrace = s;
   } finally {
+    await _discardRemote(sftp, staging);
     await _closeSftpResources(
       remoteFile: remoteFile,
       sftp: sftp,
@@ -572,40 +651,43 @@ Future<void> _copy(FileTransfer job, SendPort mainSendPort) async {
     final dest = await _openBackend(job, job.to, mainSendPort, closing);
     mainSendPort.send(FileTransferStage.connected);
 
-    final size = (await source.stat(job.from.path))?.size;
-    if (size != null) mainSendPort.send(size);
+    final plan = await planCopy(
+      source,
+      job.from.path,
+      job.to.path,
+      isDir: job.isDir,
+    );
+    mainSendPort.send(plan.totalBytes);
     mainSendPort.send(FileTransferStage.loading);
 
     final intervalMs = Duration(
       seconds: job.progressUpdateIntervalSeconds,
     ).inMilliseconds;
-    var transferred = 0;
     var lastUpdateMs = -intervalMs;
     final progressWatch = Stopwatch()..start();
+    final total = plan.totalBytes;
 
-    final counted = source.read(job.from.path).map((chunk) {
-      transferred += chunk.length;
-      final elapsedMs = progressWatch.elapsedMilliseconds;
-      final done = size != null && transferred >= size;
-      if (elapsedMs - lastUpdateMs >= intervalMs || done) {
+    await runCopy(
+      plan,
+      source,
+      dest,
+      onProgress: (transferred) {
+        final elapsedMs = progressWatch.elapsedMilliseconds;
+        final done = total > 0 && transferred >= total;
+        if (elapsedMs - lastUpdateMs < intervalMs && !done) return;
         lastUpdateMs = elapsedMs;
         mainSendPort.send(
           FileTransferProgress(
-            // Without a size there is no percentage, only bytes. Reported as
+            // Without a total there is no percentage, only bytes. Reported as
             // zero rather than as a guess that would run past 100.
-            percent: size == null || size == 0
+            percent: total == 0
                 ? 0
-                : (transferred / size * 100 * 10).roundToDouble() / 10,
+                : (transferred / total * 100 * 10).roundToDouble() / 10,
             transferredBytes: transferred,
           ),
         );
-      }
-      return chunk;
-    });
-
-    // `write` stages beside the destination and renames, so a transfer that
-    // dies halfway leaves no half-file under the name something else opens.
-    await dest.write(job.to.path, counted, size: size);
+      },
+    );
 
     mainSendPort.send(watch.elapsed);
     mainSendPort.send(FileTransferStage.finished);

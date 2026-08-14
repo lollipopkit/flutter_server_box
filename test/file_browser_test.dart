@@ -201,6 +201,39 @@ void main() {
     });
   });
 
+  group('hidden files', () {
+    // Driven through the store rather than through the popup menu: the filter
+    // is the behaviour, and a menu route's animation is not what these are
+    // meant to be waiting on.
+    testWidgets('dotfiles are left out by default', (tester) async {
+      final backend = _MapBackend({
+        '/': [_file('.bashrc'), _file('notes.txt'), _dir('.config')],
+      });
+
+      await pump(tester, backend);
+
+      expect(find.text('notes.txt'), findsOneWidget);
+      expect(find.text('.bashrc'), findsNothing);
+      expect(find.text('.config'), findsNothing);
+    });
+
+    testWidgets('and shown once the setting says so', (tester) async {
+      // Through `runAsync`: writing the box is real file I/O, and a widget
+      // test's zone fakes the timers it waits on.
+      await tester.runAsync(
+        () async => Stores.setting.showHiddenFiles.put(true),
+      );
+      final backend = _MapBackend({
+        '/': [_file('.bashrc'), _file('notes.txt')],
+      });
+
+      await pump(tester, backend);
+
+      expect(find.text('.bashrc'), findsOneWidget);
+      expect(find.text('notes.txt'), findsOneWidget);
+    });
+  });
+
   testWidgets('an empty directory says so, and can still be left', (
     tester,
   ) async {

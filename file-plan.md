@@ -311,6 +311,18 @@ handling — sudo, timeouts (`core/utils/sftp_timeout.dart`), host-key prompts.
   cannot drift.
 - **Upload progress reports bytes**, not just a percentage. It used to send a
   bare `double`, so the speed column was blank for every upload.
+- **Directories transfer**, through the general path whatever their two ends
+  are: `planCopy` walks the tree first so progress has a denominator from the
+  first byte, then `runCopy` creates the directories and moves the files.
+- **`randomAccessReads` is gone.** Declared, answered `true` by both
+  implementations, and read by nothing — a promise with no way to tell whether
+  it was kept. Honouring `read`'s offset is now part of the interface.
+- **Hidden files are a setting**, applied while sorting rather than while
+  listing, so turning it on costs no round trip. In the same menu as the sort
+  order, because both are decisions about how the list is shown.
+- **A session says what kind it is.** `{'kind': 'local'|'server', ...}` rather
+  than "local is the one with no `serverId`" — a rule the reader had to know
+  and the writer never stated. The old shape still reads, behind a TODO.
 
 ## Open risks
 
@@ -324,10 +336,12 @@ handling — sudo, timeouts (`core/utils/sftp_timeout.dart`), host-key prompts.
   that is already juggling another.
 - **Two prompts at once.** A server→server transfer can raise two host-key
   dialogs. They must queue, not stack.
-- **Partial writes.** Settled: `write` stages beside the destination and
-  renames, in both backends, so `_copy` inherits it. The two specialised paths
-  do **not** — a download writes straight to its final name and an upload opens
-  the remote file with `truncate`, which is what they always did.
+- **Partial writes.** Settled everywhere: `write` stages beside the destination
+  and renames, and the two specialised paths now do the same — a download
+  writes to `.sb-part-N` and renames, an upload opens a staged remote path and
+  renames over the destination. Overwriting takes a delete-then-rename on
+  servers without `posix-rename@openssh.com`, since `SSH_FXP_RENAME` is
+  specified to fail when the destination exists.
 - **Monitor's file API, if it is ever built,** is arbitrary filesystem access
   over HTTP. It belongs behind `remote_access`, off by default, with its own
   root, and it should be designed in `monitor/` with the same care the terminal

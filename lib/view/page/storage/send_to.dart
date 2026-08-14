@@ -14,6 +14,9 @@ import 'package:server_box/view/page/storage/sftp.dart';
 
 /// Ask where [source] should go, and queue the transfer.
 ///
+/// [isDir] because a directory is a whole tree, and the two fast single-file
+/// paths cannot carry one — the browser knows which it is, having listed it.
+///
 /// One flow for every pair. It used to be two half-flows that between them
 /// could only express a server and this device: the local page's "upload"
 /// picked a server, and the SFTP page's "download" picked nothing at all
@@ -21,9 +24,10 @@ import 'package:server_box/view/page/storage/sftp.dart';
 /// two servers, and neither could name this device twice.
 Future<void> sendTo(
   BuildContext context,
-  WidgetRef ref,
-  FileRef source,
-) async {
+  WidgetRef ref, {
+  required FileRef source,
+  required bool isDir,
+}) async {
   final place = await _pickPlace(context, ref);
   if (place == null || !context.mounted) return;
 
@@ -44,7 +48,7 @@ Future<void> sendTo(
 
   ref
       .read(fileTransferProvider.notifier)
-      .add(FileTransfer(from: source, to: destination));
+      .add(FileTransfer(from: source, to: destination, isDir: isDir));
   context.showSnackBar(l10n.added2List);
 }
 

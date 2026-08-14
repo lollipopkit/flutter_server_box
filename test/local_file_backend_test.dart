@@ -142,7 +142,6 @@ void main() {
           .expand((chunk) => chunk)
           .toList();
 
-      expect(backend.traits.randomAccessReads, isTrue);
       expect(utf8.decode(bytes), '456789');
     });
   });

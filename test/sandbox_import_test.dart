@@ -135,4 +135,20 @@ void main() {
     expect(SandboxImport.parsePrefForTest(' https://dav \n', String), 'https://dav');
     expect(SandboxImport.parsePrefForTest('  ', String), null);
   });
+
+  test('sqlite\'s shared-memory file is not carried across', () async {
+    // It describes a WAL index belonging to whatever process had the database
+    // open. Copied, it either costs a rebuild or makes sqlite refuse; the WAL
+    // itself is what the data is in, and that does come across.
+    await write(src, 'box.hive');
+    await write(src, 'app.db');
+    await write(src, 'app.db-wal');
+    await write(src, 'app.db-shm');
+
+    expect(await import(), SandboxImportResult.imported);
+
+    expect(exists('app.db'), isTrue);
+    expect(exists('app.db-wal'), isTrue);
+    expect(exists('app.db-shm'), isFalse);
+  });
 }
