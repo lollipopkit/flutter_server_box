@@ -65,16 +65,22 @@ extension ServerFuncBtnsBuild on ServerFuncBtns {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 13),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            onPressed: () => _onTapMoreBtns(e, context, ref),
-            padding: EdgeInsets.zero,
-            icon: Icon(e.icon, size: 17),
+      child: Tooltip(
+        message: e.toStr,
+        child: InkWell(
+          onTap: () => _onTapMoreBtns(e, context, ref),
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 7),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(width: 48, height: 48, child: Icon(e.icon, size: 17)),
+                Text(e.toStr, style: UIs.text11Grey),
+              ],
+            ),
           ),
-          Text(e.toStr, style: UIs.text11Grey),
-        ],
+        ),
       ),
     );
   }
