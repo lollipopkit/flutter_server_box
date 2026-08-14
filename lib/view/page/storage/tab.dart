@@ -458,7 +458,7 @@ class _PickPage extends ConsumerWidget {
     return MasonryList(
       columnWidth: _kColumnWidth,
       children: [
-        _PickTile(
+        CardTile(
           icon: Icons.smartphone,
           title: libL10n.device,
           subtitle: Paths.file,
@@ -466,7 +466,7 @@ class _PickPage extends ConsumerWidget {
         ),
         for (final id in state.serverOrder)
           if (state.servers[id] case final spi? when _canBrowse(spi))
-            _PickTile(
+            CardTile(
               key: ValueKey(id),
               icon: Icons.dns,
               title: spi.name,
@@ -537,44 +537,6 @@ class _SideBar extends ConsumerWidget {
                 onTap: () => onServer(spi),
               ),
         ],
-      ),
-    );
-  }
-}
-
-class _PickTile extends StatelessWidget {
-  const _PickTile({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return CardX(
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(
-          title,
-          style: UIs.text18,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          subtitle,
-          style: UIs.text12Grey,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: onTap,
       ),
     );
   }

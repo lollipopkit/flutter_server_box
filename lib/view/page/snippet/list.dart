@@ -35,8 +35,6 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
   /// is replaced on every edit.
   Object? _editing;
 
-  static const _desiredItemHeight = 85.0;
-
   @override
   void dispose() {
     super.dispose();
@@ -148,40 +146,25 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
       );
     }
 
-    return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 9),
-      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: UIs.columnWidth,
-        mainAxisExtent: _desiredItemHeight,
-      ),
+    // Flowed rather than a fixed grid: a row is as tall as what it has to say
+    // — a snippet with a note is two lines under its name, one without is
+    // fewer — and a fixed extent either clipped the long ones or left a gap
+    // under every short one.
+    return MasonryList.builder(
+      // Room at the bottom for the add button to float over.
+      padding: MasonryList.kPadding.copyWith(bottom: 77),
       itemCount: filtered.length,
       itemBuilder: (_, index) => _buildSnippetItem(filtered[index]),
     );
   }
 
   Widget _buildSnippetItem(Snippet snippet) {
-    return InkWell(
+    return CardTile(
+      icon: Icons.code,
+      title: snippet.name,
+      subtitle: snippet.note ?? snippet.script,
       onTap: () => _edit(snippet, false),
-      child: SizedBox(
-        height: _desiredItemHeight,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 17),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(snippet.name, overflow: TextOverflow.ellipsis, maxLines: 1),
-              Text(
-                snippet.note ?? snippet.script,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 2,
-                style: UIs.textGrey,
-              ),
-            ],
-          ),
-        ),
-      ),
-    ).cardx;
+    );
   }
 
   @override
