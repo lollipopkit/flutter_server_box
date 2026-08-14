@@ -82,6 +82,7 @@
   "agentToolWriteFile": "寫入檔案",
   "agentToolServerBox": "ServerBox",
   "agentToolFailed": "工具執行失敗。",
+  "agentFloat": "在其他分頁上懸浮",
   "atLeastOneTab": "至少需要選擇一個標籤",
   "authFailTip": "認證失敗，請檢查連線資訊是否正確",
   "autoBackupConflict": "僅能啟用一項自動備份任務",

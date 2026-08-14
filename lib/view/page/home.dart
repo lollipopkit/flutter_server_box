@@ -14,6 +14,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
+import 'package:server_box/view/page/agent/shell.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
 import 'package:server_box/view/page/setting/entry.dart';
@@ -77,6 +78,7 @@ class _HomePageState extends ConsumerState<HomePage>
     _pageController.dispose();
     WakelockPlus.disable();
 
+    _selectIndex.removeListener(_publishCurrentTab);
     _selectIndex.dispose();
     super.dispose();
   }
@@ -100,6 +102,21 @@ class _HomePageState extends ConsumerState<HomePage>
     Stores.setting.serverStatusUpdateInterval.listenable().addListener(
       _handleRefreshIntervalChanged,
     );
+
+    // One listener rather than a call beside every assignment: the index is
+    // set from the bar, the rail, a request from another page and restoration,
+    // and one of those would eventually be forgotten.
+    _selectIndex.addListener(_publishCurrentTab);
+  }
+
+  /// Tells [currentHomeTabProvider] where the app ended up.
+  ///
+  /// Only ever called from a callback or a post-frame hook — never from
+  /// `build`, which is not allowed to write to a provider.
+  void _publishCurrentTab() {
+    final index = _selectIndex.value;
+    if (index < 0 || index >= _tabs.length) return;
+    ref.read(currentHomeTabProvider.notifier).update(_tabs[index]);
   }
 
   @override
@@ -191,16 +208,22 @@ class _HomePageState extends ConsumerState<HomePage>
       bottomNavigationBar: isMobile ? _buildBottomBar() : null,
     );
 
+    // Above the `PageView` rather than inside a tab: the Agent floats over
+    // whichever tab you are on, so it cannot belong to one of them.
+    final withShell = Stack(
+      children: [mainContent, const AgentFloatingShell()],
+    );
+
     if (Platform.isMacOS) {
       return PlatformMenuBar(
         menus: MacOSMenuBarManager.buildMenuBar(
           context,
           _onDestinationSelected,
         ),
-        child: mainContent,
+        child: withShell,
       );
     }
-    return mainContent;
+    return withShell;
   }
 
   Widget _buildBottomBar() {
@@ -281,6 +304,9 @@ class _HomePageState extends ConsumerState<HomePage>
         _pageController.jumpToPage(_restorableTabIndex.value);
       }
     }
+    // Explicitly, because the listener above only fires on a change: the first
+    // tab is usually already the value, and nothing would have announced it.
+    _publishCurrentTab();
     _goAuth();
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
@@ -377,6 +403,10 @@ extension _HomePageStateActions on _HomePageState {
       _selectIndex.value = clampedIndex;
       _restorableTabIndex.value = clampedIndex;
     });
+
+    // The index alone does not say which tab it is any more — the list under
+    // it just changed — and it may well not have moved.
+    _publishCurrentTab();
 
     if (clampedIndex != previousIndex && _pageController.hasClients) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

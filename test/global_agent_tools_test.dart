@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
-import 'package:server_box/view/page/agent/agent.dart';
+import 'package:server_box/view/page/agent/view.dart';
 
 void main() {
   test('global Agent instructions expose exact live server IDs', () {

@@ -92,7 +92,10 @@ triggers, through the stop button or by closing the conversation.
 
 The page keeps its own UI-only state — `_scrollController`, `_inputController`,
 history-panel expansion — because those are per-view and two views should not
-share a scroll offset.
+share a scroll offset. It therefore stays `AutomaticKeepAliveClientMixin`,
+which this plan first had it dropping: keeping it alive is no longer what
+keeps the conversation running, but it is still what stops a half-typed
+prompt disappearing on a tab switch.
 
 ### The floating container
 
@@ -116,7 +119,7 @@ Desktop                     Mobile
 | | Desktop / wide | Mobile / narrow |
 | - | -------------- | --------------- |
 | Collapsed | title bar only, docked to a corner | pill, edge-snapped |
-| Expanded | draggable, resizable panel | `DraggableScrollableSheet` |
+| Expanded | draggable, resizable panel | panel over the bottom, with a grab bar |
 | Position | persisted in `Stores.setting` | snap side persisted |
 
 Both render the same widget tree inside, driven by one visibility provider:
@@ -309,8 +312,13 @@ reverted alone.
   navigating to it means the provider connects while the ad-hoc client is still
   open — two SSH connections to one host. `add_server` should hand the existing
   client over or close it explicitly.
-- **Mobile keyboard vs. sheet.** The composer inside a `DraggableScrollableSheet`
-  has to stay above the keyboard without fighting the sheet's own drag.
+- **Mobile keyboard vs. sheet.** The composer has to stay above the keyboard
+  without fighting the panel's own drag. `DraggableScrollableSheet` was the
+  obvious fit and turned out to be the wrong one: it drives its drag from a
+  `ScrollController` it hands to its child, and the conversation's list
+  already owns one — which is also what the auto-scroll uses. The panel is a
+  height fraction with its own grab bar instead, and the fraction is measured
+  against what is left once the keyboard has taken its share.
 
 ## Manual verification
 

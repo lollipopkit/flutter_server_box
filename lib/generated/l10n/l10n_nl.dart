@@ -280,6 +280,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get agentToolFailed => 'Uitvoeren van het hulpmiddel is mislukt.';
 
   @override
+  String get agentFloat => 'Float over other tabs';
+
+  @override
   String get atLeastOneTab =>
       'Er moet minimaal één tabblad worden geselecteerd';
 

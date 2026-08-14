@@ -285,6 +285,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get agentToolFailed => 'Falló la ejecución de la herramienta.';
 
   @override
+  String get agentFloat => 'Float over other tabs';
+
+  @override
   String get atLeastOneTab => 'Al menos una pestaña debe estar seleccionada';
 
   @override

@@ -280,6 +280,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get agentToolFailed => 'Falha ao executar a ferramenta.';
 
   @override
+  String get agentFloat => 'Float over other tabs';
+
+  @override
   String get atLeastOneTab => 'Pelo menos uma aba deve ser selecionada';
 
   @override

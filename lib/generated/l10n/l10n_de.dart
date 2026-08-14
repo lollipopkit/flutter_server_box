@@ -282,6 +282,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get agentToolFailed => 'Ausführung des Werkzeugs fehlgeschlagen.';
 
   @override
+  String get agentFloat => 'Float over other tabs';
+
+  @override
   String get atLeastOneTab => 'Mindestens ein Tab muss ausgewählt sein';
 
   @override

@@ -269,6 +269,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get agentToolFailed => 'ツールの実行に失敗しました。';
 
   @override
+  String get agentFloat => 'Float over other tabs';
+
+  @override
   String get atLeastOneTab => '少なくとも1つのタブを選択する必要があります';
 
   @override

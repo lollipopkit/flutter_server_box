@@ -621,6 +621,12 @@ abstract class AppLocalizations {
   /// **'Tool execution failed.'**
   String get agentToolFailed;
 
+  /// No description provided for @agentFloat.
+  ///
+  /// In en, this message translates to:
+  /// **'Float over other tabs'**
+  String get agentFloat;
+
   /// No description provided for @atLeastOneTab.
   ///
   /// In en, this message translates to:

@@ -21,6 +21,20 @@ class HomeTabRequest extends _$HomeTabRequest {
   void done() => state = null;
 }
 
+/// Which tab is on screen right now.
+///
+/// [HomeTabRequest] is where something asks to be taken; this is where the
+/// home page says where it ended up. The floating Agent needs it to stay out
+/// of the way of the Agent tab, which is the better view of the same thing
+/// whenever it is the one being looked at.
+@Riverpod(keepAlive: true)
+class CurrentHomeTab extends _$CurrentHomeTab {
+  @override
+  AppTab? build() => null;
+
+  void update(AppTab tab) => state = tab;
+}
+
 /// A server waiting for a terminal, and what to put in it once it opens.
 class TerminalRequest {
   const TerminalRequest(this.spi, {this.snippet, this.session});

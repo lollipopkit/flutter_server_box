@@ -251,6 +251,33 @@ class SettingStore extends HiveStore {
   /// line break is the plain key, and sending is the modifier or the button.
   late final askAiSendOnEnter = propertyDefault('askAiSendOnEnter', true);
 
+  /// Whether the Agent follows you onto the other tabs, and how much of it
+  /// comes along. One of `AgentShellMode`'s names.
+  late final agentShellMode = propertyDefault('agentShellMode', 'hidden');
+
+  /// Where the floating Agent sits on a desktop window, and how big it is.
+  ///
+  /// A negative offset means "never placed", which the shell reads as its
+  /// default corner — a first run has no position to restore, and 0,0 is a
+  /// real position somebody may have dragged it to.
+  late final agentShellLeft = propertyDefault('agentShellLeft', -1.0);
+  late final agentShellTop = propertyDefault('agentShellTop', -1.0);
+  late final agentShellWidth = propertyDefault('agentShellWidth', 400.0);
+  late final agentShellHeight = propertyDefault('agentShellHeight', 560.0);
+
+  /// Which edge the collapsed pill clings to on a phone, and how far down it.
+  late final agentShellPillOnRight = propertyDefault(
+    'agentShellPillOnRight',
+    true,
+  );
+  late final agentShellPillY = propertyDefault('agentShellPillY', 0.62);
+
+  /// How much of a phone screen the expanded Agent takes, as a fraction.
+  late final agentShellSheetHeight = propertyDefault(
+    'agentShellSheetHeight',
+    0.62,
+  );
+
   late final serverFuncBtns = listProperty(
     'serverBtns',
     defaultValue: ServerFuncBtn.defaultIdxs,

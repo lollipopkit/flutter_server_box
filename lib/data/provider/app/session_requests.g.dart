@@ -82,6 +82,84 @@ abstract class _$HomeTabRequest extends $Notifier<AppTab?> {
   }
 }
 
+/// Which tab is on screen right now.
+///
+/// [HomeTabRequest] is where something asks to be taken; this is where the
+/// home page says where it ended up. The floating Agent needs it to stay out
+/// of the way of the Agent tab, which is the better view of the same thing
+/// whenever it is the one being looked at.
+
+@ProviderFor(CurrentHomeTab)
+final currentHomeTabProvider = CurrentHomeTabProvider._();
+
+/// Which tab is on screen right now.
+///
+/// [HomeTabRequest] is where something asks to be taken; this is where the
+/// home page says where it ended up. The floating Agent needs it to stay out
+/// of the way of the Agent tab, which is the better view of the same thing
+/// whenever it is the one being looked at.
+final class CurrentHomeTabProvider
+    extends $NotifierProvider<CurrentHomeTab, AppTab?> {
+  /// Which tab is on screen right now.
+  ///
+  /// [HomeTabRequest] is where something asks to be taken; this is where the
+  /// home page says where it ended up. The floating Agent needs it to stay out
+  /// of the way of the Agent tab, which is the better view of the same thing
+  /// whenever it is the one being looked at.
+  CurrentHomeTabProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'currentHomeTabProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$currentHomeTabHash();
+
+  @$internal
+  @override
+  CurrentHomeTab create() => CurrentHomeTab();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AppTab? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AppTab?>(value),
+    );
+  }
+}
+
+String _$currentHomeTabHash() => r'af235edea49c8cf180a96ad5f182d2c18aaf6fe2';
+
+/// Which tab is on screen right now.
+///
+/// [HomeTabRequest] is where something asks to be taken; this is where the
+/// home page says where it ended up. The floating Agent needs it to stay out
+/// of the way of the Agent tab, which is the better view of the same thing
+/// whenever it is the one being looked at.
+
+abstract class _$CurrentHomeTab extends $Notifier<AppTab?> {
+  AppTab? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AppTab?, AppTab?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AppTab?, AppTab?>,
+              AppTab?,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 /// Servers waiting for a terminal.
 ///
 /// A queue rather than a direct call because the tab that opens terminals may

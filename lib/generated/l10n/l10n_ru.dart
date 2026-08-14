@@ -281,6 +281,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get agentToolFailed => 'Не удалось выполнить инструмент.';
 
   @override
+  String get agentFloat => 'Float over other tabs';
+
+  @override
   String get atLeastOneTab => 'Должна быть выбрана хотя бы одна вкладка';
 
   @override

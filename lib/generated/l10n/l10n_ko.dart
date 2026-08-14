@@ -270,6 +270,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentToolFailed => '도구 실행에 실패했습니다.';
 
   @override
+  String get agentFloat => 'Float over other tabs';
+
+  @override
   String get atLeastOneTab => '최소 하나의 탭을 선택해야 합니다';
 
   @override

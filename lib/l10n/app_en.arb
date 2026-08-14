@@ -83,6 +83,7 @@
   "agentToolWriteFile": "Write file",
   "agentToolServerBox": "ServerBox",
   "agentToolFailed": "Tool execution failed.",
+  "agentFloat": "Float over other tabs",
   "atLeastOneTab": "At least one tab must be selected",
   "authFailTip": "Authentication failed, please check whether credentials are correct",
   "autoBackupConflict": "Only one automatic backup can be turned on at the same time.",

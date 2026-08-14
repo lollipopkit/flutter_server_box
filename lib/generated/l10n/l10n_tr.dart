@@ -282,6 +282,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get agentToolFailed => 'Araç çalıştırılamadı.';
 
   @override
+  String get agentFloat => 'Float over other tabs';
+
+  @override
   String get atLeastOneTab => 'En az bir sekme seçilmelidir';
 
   @override

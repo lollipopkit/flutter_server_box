@@ -281,6 +281,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get agentToolFailed => 'Eksekusi alat gagal.';
 
   @override
+  String get agentFloat => 'Float over other tabs';
+
+  @override
   String get atLeastOneTab => 'Setidaknya satu tab harus dipilih';
 
   @override
