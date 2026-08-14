@@ -100,7 +100,10 @@ class FileBrowserArgs {
   final List<Widget> Function(FileBrowserHandle)? bottomActions;
 
   /// Menu entries only this backend has, for one item.
-  final List<Widget> Function(
+  ///
+  /// Descriptions, not widgets: the browser draws the menu two ways and closes
+  /// it before running an action, so an action here must not do either itself.
+  final List<ContextMenuAction> Function(
     FileBrowserHandle handle,
     FileEntry entry,
     String fullPath,
@@ -419,67 +422,63 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     await refresh();
   }
 
-  Future<void> _showEntryMenu(FileEntry entry) async {
-    final full = _fullPath(entry);
-    await context.showRoundDialog(
-      title: entry.name,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Btn.tile(
-            icon: const Icon(Icons.abc),
-            text: libL10n.rename,
-            onTap: () {
-              context.popDialog();
-              _rename(entry);
-            },
-          ),
-          Btn.tile(
-            icon: const Icon(Icons.delete),
-            text: libL10n.delete,
-            onTap: () {
-              context.popDialog();
-              _delete(entry);
-            },
-          ),
-          Btn.tile(
-            icon: const Icon(MingCute.copy_line),
-            text: l10n.copyPath,
-            onTap: () {
-              context.popDialog();
-              Pfs.copy(full);
-              context.showSnackBar(libL10n.success);
-            },
-          ),
-          if (backend.traits.permissions)
-            Btn.tile(
-              icon: const Icon(Icons.security),
-              text: libL10n.permission,
-              onTap: () {
-                context.popDialog();
-                _chmod(entry);
-              },
-            ),
-          // Moving something is the same act wherever it is, so it is offered
-          // wherever it can be done rather than as "upload" on one page and
-          // "download" on the other.
-          if (widget.args.refOf case final refOf?)
-            Btn.tile(
-              icon: const Icon(Icons.drive_file_move_outline),
-              text: l10n.sendTo,
-              onTap: () {
-                context.popDialog();
-                sendTo(
-                  context,
-                  ref,
-                  source: refOf(full),
-                  isDir: entry.isDir,
-                );
-              },
-            ),
-          ...?widget.args.entryActions?.call(this, entry, full),
-        ],
+  /// What this entry offers, as descriptions rather than widgets.
+  ///
+  /// Descriptions because the same menu is drawn two ways — a centred dialog
+  /// for a finger, a popup at the pointer for a mouse — and because closing
+  /// the menu becomes the menu's job. Every one of these used to begin with a
+  /// `popDialog` the author had to remember.
+  List<ContextMenuAction> _entryActions(FileEntry entry, String full) => [
+    ContextMenuAction(
+      icon: Icons.abc,
+      text: libL10n.rename,
+      onTap: () => _rename(entry),
+    ),
+    ContextMenuAction(
+      icon: Icons.delete,
+      text: libL10n.delete,
+      destructive: true,
+      onTap: () => _delete(entry),
+    ),
+    ContextMenuAction(
+      icon: MingCute.copy_line,
+      text: l10n.copyPath,
+      onTap: () {
+        Pfs.copy(full);
+        context.showSnackBar(libL10n.success);
+      },
+    ),
+    if (backend.traits.permissions)
+      ContextMenuAction(
+        icon: Icons.security,
+        text: libL10n.permission,
+        onTap: () => _chmod(entry),
       ),
+    // Moving something is the same act wherever it is, so it is offered
+    // wherever it can be done rather than as "upload" on one page and
+    // "download" on the other.
+    if (widget.args.refOf case final refOf?)
+      ContextMenuAction(
+        icon: Icons.drive_file_move_outline,
+        text: l10n.sendTo,
+        onTap: () => sendTo(
+          context,
+          ref,
+          source: refOf(full),
+          isDir: entry.isDir,
+        ),
+      ),
+    ...?widget.args.entryActions?.call(this, entry, full),
+  ];
+
+  /// [at] is where the pointer was, for a right-click. Null for a long press.
+  Future<void> _showEntryMenu(FileEntry entry, {Offset? at}) {
+    final full = _fullPath(entry);
+    return showContextMenu(
+      context,
+      _entryActions(entry, full),
+      title: entry.name,
+      at: at,
     );
   }
 
@@ -791,6 +790,11 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       _showEntryMenu(entry);
     }
 
+    void onSecondaryTap(Offset at) {
+      beforeTap?.call();
+      _showEntryMenu(entry, at: at);
+    }
+
     // Under this, a name and a right-hand column do not both fit, so
     // everything the entry knows goes below the name instead. The search
     // results build one at a time and have no listing to have asked for.
@@ -815,7 +819,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
         trailing: isNarrow ? null : _buildEntryTrailing(entry),
         onTap: onTap,
         onLongPress: onLongPress,
-      ),
+      ).onSecondary(onSecondaryTap),
     );
   }
 

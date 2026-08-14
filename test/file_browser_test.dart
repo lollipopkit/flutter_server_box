@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -231,6 +232,64 @@ void main() {
 
       expect(find.text('.bashrc'), findsOneWidget);
       expect(find.text('notes.txt'), findsOneWidget);
+    });
+  });
+
+  group('the entry menu', () {
+    testWidgets('a long press opens it centred', (tester) async {
+      final backend = _MapBackend({
+        '/': [_file('notes.txt')],
+      });
+
+      await pump(tester, backend);
+      await tester.longPress(find.text('notes.txt'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Rename'), findsOneWidget);
+      expect(find.text('Delete'), findsOneWidget);
+      // The dialog names what it is acting on in its title, so the entry's
+      // name is on screen twice: in the listing and above the menu.
+      expect(find.text('notes.txt'), findsNWidgets(2));
+    });
+
+    testWidgets('a right-click opens it where the pointer is', (tester) async {
+      final backend = _MapBackend({
+        '/': [_file('notes.txt')],
+      });
+
+      await pump(tester, backend);
+
+      // The gesture a mouse or a trackpad makes. Nothing about this is gated
+      // on the platform: it simply never arrives from a finger.
+      final at = tester.getCenter(find.text('notes.txt'));
+      final gesture = await tester.startGesture(at, buttons: kSecondaryButton);
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Rename'), findsOneWidget);
+      // The popup, not the dialog. Told apart by the title rather than by
+      // coordinates: where exactly Flutter places a menu that would overflow
+      // an edge is Flutter's business, and asserting it would be testing the
+      // framework's layout instead of this code's choice of path.
+      expect(find.text('notes.txt'), findsOneWidget);
+    });
+
+    testWidgets('an action runs after the menu has closed', (tester) async {
+      // Which is what lets an action open a dialog of its own — every entry
+      // used to have to remember to pop the menu first.
+      final backend = _MapBackend({
+        '/': [_file('notes.txt')],
+      });
+
+      await pump(tester, backend);
+      await tester.longPress(find.text('notes.txt'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Rename'));
+      await tester.pumpAndSettle();
+
+      // The rename dialog, not the menu.
+      expect(find.text('Delete'), findsNothing);
+      expect(find.widgetWithText(TextField, 'notes.txt'), findsOneWidget);
     });
   });
 

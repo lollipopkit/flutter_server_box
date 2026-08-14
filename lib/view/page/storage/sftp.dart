@@ -297,36 +297,27 @@ extension _Actions on _SftpPageState {
     ),
   ];
 
-  List<Widget> _entryActions(
+  List<ContextMenuAction> _entryActions(
     FileBrowserHandle handle,
     FileEntry entry,
     String fullPath,
   ) => [
     if (!entry.isDir) ...[
-      Btn.tile(
-        icon: const Icon(Icons.edit),
+      ContextMenuAction(
+        icon: Icons.edit,
         text: libL10n.edit,
-        onTap: () {
-          context.popDialog();
-          _edit(handle, entry, fullPath);
-        },
+        onTap: () => _edit(handle, entry, fullPath),
       ),
-      Btn.tile(
-        icon: const Icon(Icons.download),
+      ContextMenuAction(
+        icon: Icons.download,
         text: libL10n.download,
-        onTap: () {
-          context.popDialog();
-          _download(entry, fullPath);
-        },
+        onTap: () => _download(entry, fullPath),
       ),
       if (_canDecompress(entry.name))
-        Btn.tile(
-          icon: const Icon(Icons.folder_zip),
+        ContextMenuAction(
+          icon: Icons.folder_zip,
           text: libL10n.decompress,
-          onTap: () {
-            context.popDialog();
-            _decompress(handle, entry, fullPath);
-          },
+          onTap: () => _decompress(handle, entry, fullPath),
         ),
     ],
   ];

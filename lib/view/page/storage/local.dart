@@ -106,28 +106,23 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
       ),
   ];
 
-  List<Widget> _entryActions(
+  List<ContextMenuAction> _entryActions(
     FileBrowserHandle handle,
     FileEntry entry,
     String fullPath,
   ) => [
     if (!entry.isDir) ...[
       if (isMobile)
-        Btn.tile(
-          icon: const Icon(Icons.edit),
+        ContextMenuAction(
+          icon: Icons.edit,
           text: libL10n.edit,
-          onTap: () {
-            context.popDialog();
-            _openEditor(handle, entry, fullPath);
-          },
+          onTap: () => _openEditor(handle, entry, fullPath),
         ),
-      Btn.tile(
-        icon: const Icon(Icons.open_in_new),
+      ContextMenuAction(
+        icon: Icons.open_in_new,
         text: libL10n.open,
-        onTap: () {
-          context.popDialog();
-          Pfs.sharePaths(paths: [LocalFileBackend.nativePath(fullPath)]);
-        },
+        onTap: () =>
+            Pfs.sharePaths(paths: [LocalFileBackend.nativePath(fullPath)]),
       ),
     ],
   ];

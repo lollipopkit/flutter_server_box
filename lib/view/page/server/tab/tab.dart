@@ -269,7 +269,7 @@ class _ServerPageState extends ConsumerState<ServerPage>
             ),
             child: _buildRealServerCard(srv),
           ),
-        ),
+        ).onSecondary(asSecondary(() => _onLongPressCard(srv))),
       ),
     );
 
