@@ -332,7 +332,10 @@ extension _Sessions on _SSHTabPageState {
 
     final confirm = await contextSafe?.showRoundDialog(
       title: libL10n.attention,
-      child: Text('${libL10n.close} SSH ${libL10n.conn}(${tab.name}) ?'),
+      // Not "SSH": this strip also carries a shell on this device and one
+      // inside the Linux userland, neither of which is a connection to
+      // anything.
+      child: Text('${libL10n.close} ${libL10n.terminal}(${tab.name}) ?'),
       actions: Btnx.okReds,
     );
     if (confirm != true) return;
