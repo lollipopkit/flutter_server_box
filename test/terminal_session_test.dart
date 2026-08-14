@@ -9,6 +9,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/data/ssh/terminal_source.dart';
 
 /// A shell whose bytes the test writes itself.
 class _FakeShell implements ShellSession {
@@ -67,7 +68,7 @@ void main() {
 
   group('the shell on screen', () {
     test('what it prints reaches the terminal', () async {
-      final session = TerminalSession(spi: ssh);
+      final session = TerminalSession(source: ServerSource(ssh));
       final shell = _FakeShell();
       session.bindForeground(shell);
 
@@ -80,7 +81,7 @@ void main() {
     });
 
     test('what is typed reaches the shell', () async {
-      final session = TerminalSession(spi: ssh);
+      final session = TerminalSession(source: ServerSource(ssh));
       final shell = _FakeShell();
       session.bindForeground(shell);
 
@@ -91,7 +92,7 @@ void main() {
     });
 
     test('the terminal resizing resizes the shell', () async {
-      final session = TerminalSession(spi: ssh);
+      final session = TerminalSession(source: ServerSource(ssh));
       final shell = _FakeShell();
       session.bindForeground(shell);
 
@@ -102,7 +103,7 @@ void main() {
     });
 
     test('the end of the shell is announced once it has all been read', () async {
-      final session = TerminalSession(spi: ssh);
+      final session = TerminalSession(source: ServerSource(ssh));
       final shell = _FakeShell();
       ShellSession? ended;
       session.onForegroundDone = (s) => ended = s;
@@ -122,7 +123,7 @@ void main() {
     });
 
     test('a shell that was replaced does not announce the end', () async {
-      final session = TerminalSession(spi: ssh);
+      final session = TerminalSession(source: ServerSource(ssh));
       final first = _FakeShell();
       final second = _FakeShell();
       var ends = 0;
@@ -141,7 +142,7 @@ void main() {
     });
 
     test('the old shell stops writing to the terminal once replaced', () async {
-      final session = TerminalSession(spi: ssh);
+      final session = TerminalSession(source: ServerSource(ssh));
       final first = _FakeShell();
       final second = _FakeShell();
 
@@ -158,7 +159,7 @@ void main() {
 
   group('what the tail keeps', () {
     test('it is bounded, keeping the end', () async {
-      final session = TerminalSession(spi: ssh);
+      final session = TerminalSession(source: ServerSource(ssh));
       final shell = _FakeShell();
       session.bindForeground(shell);
 
@@ -175,7 +176,7 @@ void main() {
     });
 
     test('it can be forgotten, so one answer is not read twice', () async {
-      final session = TerminalSession(spi: ssh);
+      final session = TerminalSession(source: ServerSource(ssh));
       final shell = _FakeShell();
       session.bindForeground(shell);
 
@@ -188,9 +189,41 @@ void main() {
     });
   });
 
+  group('this device', () {
+    test('is a source of shells with nothing to connect to', () {
+      final session = TerminalSession(source: const LocalSource());
+      // Nothing to adopt: no connection anybody else could be holding, so the
+      // shell is this session's own from the start.
+      session.adopt(null);
+
+      expect(session.backend, isNotNull);
+      // A local process can start another, so tmux and the AI probe are on the
+      // table here in a way they are not over a monitor agent's single PTY.
+      expect(session.canExec, isTrue);
+      expect(session.client, isNull);
+    });
+
+    test('has no server behind it', () {
+      final session = TerminalSession(source: const LocalSource());
+      expect(session.spi, isNull);
+      // Nothing to add to what a login shell already knows about its own
+      // machine.
+      expect(session.environment, isNull);
+    });
+
+    test('closing hangs up the shell it opened', () {
+      final session = TerminalSession(source: const LocalSource());
+      session.adopt(null);
+
+      session.close();
+
+      expect(session.backend, isNull);
+    });
+  });
+
   group('where the shells come from', () {
     test('an agent that granted full access is a source of shells', () {
-      final session = TerminalSession(spi: monitor);
+      final session = TerminalSession(source: ServerSource(monitor));
       session.adopt(null, granted: const MonitorRemoteAccess(fullAccess: true));
 
       expect(session.backend, isNotNull);
@@ -200,14 +233,14 @@ void main() {
     });
 
     test('an agent that granted nothing is not', () {
-      final session = TerminalSession(spi: monitor);
+      final session = TerminalSession(source: ServerSource(monitor));
       session.adopt(null, granted: MonitorRemoteAccess.none);
 
       expect(session.backend, isNull);
     });
 
     test('an SSH server with no connection to adopt has none yet', () {
-      final session = TerminalSession(spi: ssh);
+      final session = TerminalSession(source: ServerSource(ssh));
       session.adopt(null, granted: const MonitorRemoteAccess(fullAccess: true));
 
       // The grant is the agent's, and this server has no agent. Answering
@@ -216,7 +249,7 @@ void main() {
     });
 
     test('closing hangs up a connection this session opened', () {
-      final session = TerminalSession(spi: monitor);
+      final session = TerminalSession(source: ServerSource(monitor));
       session.adopt(null, granted: const MonitorRemoteAccess(fullAccess: true));
 
       session.close();
@@ -225,7 +258,7 @@ void main() {
     });
 
     test('closing closes the shell that was on screen', () {
-      final session = TerminalSession(spi: ssh);
+      final session = TerminalSession(source: ServerSource(ssh));
       final shell = _FakeShell();
       session.bindForeground(shell);
 
