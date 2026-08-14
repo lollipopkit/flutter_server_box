@@ -30,9 +30,14 @@ fi
 # installable without re-signing.
 IPA_PATH="${IPA_PATH:-$ARTIFACTS_PATH/${APP_ASSET_NAME}_v1.0.${BUILD_NUMBER}_NoSign.ipa}"
 
+# zip runs from the staging dir, so resolve the output to an absolute path
+# first: a relative IPA_PATH or ARTIFACTS_PATH would otherwise land inside the
+# staging dir and be deleted with it.
+mkdir -p "$(dirname "$IPA_PATH")"
+IPA_PATH="$(cd "$(dirname "$IPA_PATH")" && pwd)/$(basename "$IPA_PATH")"
+
 rm -rf "$PAYLOAD_STAGING_PATH"
 mkdir -p "$PAYLOAD_STAGING_PATH/Payload"
-mkdir -p "$ARTIFACTS_PATH"
 rm -f "$IPA_PATH"
 
 STAGED_APP_PATH="$PAYLOAD_STAGING_PATH/Payload/$(basename "$APP_PATH")"
