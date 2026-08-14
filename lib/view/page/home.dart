@@ -223,8 +223,19 @@ class _HomePageState extends ConsumerState<HomePage>
 
     // Above the `PageView` rather than inside a tab: the Agent floats over
     // whichever tab you are on, so it cannot belong to one of them.
-    final withShell = Stack(
-      children: [mainContent, const AgentFloatingShell()],
+    //
+    // The shell is told how big this box actually is rather than reading
+    // `MediaQuery.sizeOf`. Those are not the same number — everything between
+    // the window and here, the responsive builder included, is free to hand
+    // down less than it got — and keeping a panel inside the window is not the
+    // same as keeping it inside the area it is painted in.
+    final withShell = LayoutBuilder(
+      builder: (_, constraints) => Stack(
+        children: [
+          mainContent,
+          AgentFloatingShell(area: constraints.biggest),
+        ],
+      ),
     );
 
     if (Platform.isMacOS) {

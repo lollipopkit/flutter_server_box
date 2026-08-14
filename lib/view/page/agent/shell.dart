@@ -19,7 +19,13 @@ import 'package:server_box/view/page/agent/view.dart';
 /// Two renderings: a panel you drag around a desktop window, and a pill that
 /// clings to the edge of a phone and opens upwards. Same content in both.
 class AgentFloatingShell extends ConsumerWidget {
-  const AgentFloatingShell({super.key});
+  const AgentFloatingShell({super.key, required this.area});
+
+  /// The box this is painted in, measured by the caller.
+  ///
+  /// Not `MediaQuery.sizeOf`: that is the window, and a panel kept inside the
+  /// window can still hang out of the area it is drawn in.
+  final Size area;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,8 +38,8 @@ class AgentFloatingShell extends ConsumerWidget {
       return const SizedBox.shrink();
     }
     return ResponsiveBreakpoints.of(context).isMobile
-        ? const _PhoneShell()
-        : const _DesktopShell();
+        ? _PhoneShell(area: area)
+        : _DesktopShell(area: area);
   }
 }
 
@@ -71,7 +77,9 @@ class _WindowButtons extends ConsumerWidget {
 // ----------------------------------------------------------------- desktop
 
 class _DesktopShell extends ConsumerStatefulWidget {
-  const _DesktopShell();
+  const _DesktopShell({required this.area});
+
+  final Size area;
 
   @override
   ConsumerState<_DesktopShell> createState() => _DesktopShellState();
@@ -95,7 +103,7 @@ class _DesktopShellState extends ConsumerState<_DesktopShell> {
         ref.watch(agentShellProvider) == AgentShellMode.collapsed;
     final padding = MediaQuery.paddingOf(context);
     Rect rectFor(bool collapsed) => AgentShellGeometry.desktopRect(
-      area: MediaQuery.sizeOf(context),
+      area: widget.area,
       topInset: padding.top,
       bottomInset: padding.bottom,
       offset: _offset,
@@ -250,7 +258,9 @@ class _DesktopShellState extends ConsumerState<_DesktopShell> {
 // ------------------------------------------------------------------- phone
 
 class _PhoneShell extends ConsumerStatefulWidget {
-  const _PhoneShell();
+  const _PhoneShell({required this.area});
+
+  final Size area;
 
   @override
   ConsumerState<_PhoneShell> createState() => _PhoneShellState();
@@ -272,7 +282,7 @@ class _PhoneShellState extends ConsumerState<_PhoneShell> {
 
   Widget _buildPill(BuildContext context) {
     final theme = Theme.of(context);
-    final area = MediaQuery.sizeOf(context);
+    final area = widget.area;
     final padding = MediaQuery.paddingOf(context);
     const margin = AgentShellGeometry.margin;
     final working = ref.watch(
@@ -348,7 +358,7 @@ class _PhoneShellState extends ConsumerState<_PhoneShell> {
 
   Widget _buildSheet(BuildContext context) {
     final theme = Theme.of(context);
-    final area = MediaQuery.sizeOf(context);
+    final area = widget.area;
     final padding = MediaQuery.paddingOf(context);
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     final height = AgentShellGeometry.sheetHeightFor(
@@ -383,7 +393,7 @@ class _PhoneShellState extends ConsumerState<_PhoneShell> {
   }
 
   Widget _buildGrabBar(BuildContext context, ThemeData theme, double height) {
-    final area = MediaQuery.sizeOf(context);
+    final area = widget.area;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       // Upwards is a taller panel, so the delta is subtracted.
