@@ -192,8 +192,18 @@ class _FileBrowserPageState extends State<FileBrowserPage>
 
   @override
   Future<void> refresh() async {
-    setStateSafe(() => _entries = _list());
-    await _entries;
+    final listing = _list();
+    // A block, not an arrow: `() => _entries = listing` returns the future it
+    // assigned, and `setState` asserts against a callback that returns one —
+    // so the assert threw and the rebuild never happened, which is what made
+    // tapping a directory do nothing.
+    setStateSafe(() {
+      _entries = listing;
+    });
+    // Awaited so a caller can sequence on it, but its failure is not raised
+    // here: the list itself shows what went wrong, and the callers that do not
+    // await this would leave the error with nobody to catch it.
+    await listing.then((_) {}, onError: (Object _) {});
   }
 
   @override
