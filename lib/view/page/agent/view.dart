@@ -555,44 +555,67 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
       noOutputLabel: context.l10n.askAiNoCommandOutput,
       truncatedLabel: context.l10n.askAiOutputTruncated,
     );
+    final meta = [
+      _toolLabel(context, entry.proposal.toolName),
+      '${result.duration.inMilliseconds} ms',
+      if (entry.autoApproved) context.l10n.askAiAutoApproved,
+    ].join(' · ');
     return Card(
       elevation: 0,
       color: theme.colorScheme.surfaceContainerLow,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Hairline.color(context)),
       ),
+      // A finished tool is a log line, not a message: it collapses to one row
+      // so the answer it was gathered for stays on screen. The label and the
+      // duration move up beside the summary; anything longer is behind the
+      // expander.
       child: ExpansionTile(
         shape: const RoundedRectangleBorder(),
         collapsedShape: const RoundedRectangleBorder(),
-        leading: CircleAvatar(
-          radius: 17,
-          backgroundColor: result.succeeded
-              ? theme.colorScheme.primaryContainer
-              : theme.colorScheme.errorContainer,
-          child: Icon(
-            result.succeeded ? Icons.check : Icons.error_outline,
-            size: 18,
-            color: result.succeeded
-                ? theme.colorScheme.onPrimaryContainer
-                : theme.colorScheme.onErrorContainer,
-          ),
+        minTileHeight: 40,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+        visualDensity: VisualDensity.compact,
+        childrenPadding: const EdgeInsets.fromLTRB(12, 4, 12, 10),
+        title: Row(
+          children: [
+            Icon(
+              result.succeeded ? Icons.check_circle : Icons.error,
+              size: 17,
+              color: result.succeeded
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.error,
+            ),
+            const SizedBox(width: 8),
+            // A result's own summary is English on purpose — the model reads
+            // it. A tool that never ran has nothing else to show, so the app
+            // says so in its own words rather than passing that sentence on.
+            Expanded(
+              child: Text(
+                result.localFailure
+                    ? context.l10n.agentToolFailed
+                    : result.summary,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+            const SizedBox(width: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 170),
+              child: Text(
+                meta,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ],
         ),
-        // A result's own summary is English on purpose — the model reads it.
-        // A tool that never ran has nothing else to show, so the app says so
-        // in its own words rather than passing that sentence on.
-        title: Text(
-          result.localFailure ? context.l10n.agentToolFailed : result.summary,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          '${_toolLabel(context, entry.proposal.toolName)} · ${result.duration.inMilliseconds} ms${entry.autoApproved ? ' · ${context.l10n.askAiAutoApproved}' : ''}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
         children: [
           if (output.isNotEmpty) ...[
             Container(
