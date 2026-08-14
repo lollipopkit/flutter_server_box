@@ -197,7 +197,9 @@ extension _Init on SSHPageState {
     }
 
     final initSnippet = widget.args.initSnippet;
-    if (initSnippet != null && spi != null && _tmuxCurrentSession == null) {
+    if (initSnippet != null &&
+        (spi != null || !initSnippet.needsServer) &&
+        _tmuxCurrentSession == null) {
       initSnippet.runInTerm(_terminal, spi);
     }
 

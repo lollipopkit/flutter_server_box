@@ -35,7 +35,19 @@ abstract class Snippet with _$Snippet {
 extension SnippetX on Snippet {
   static final fmtFinder = RegExp(r'\$\{[^{}]+\}');
 
-  String fmtWithSpi(Spi spi) {
+  /// Whether this script names something only a server has.
+  ///
+  /// `${host}`, `${user}` and the rest are answered from a [Spi]. A terminal on
+  /// this device has none, so a snippet that asks for one is not a snippet it
+  /// can run — and substituting an empty string would quietly run a *different*
+  /// command instead of refusing.
+  bool get needsServer => fmtArgs.keys.any(script.contains);
+
+  /// [spi] is null for a terminal that is not on a server. Only meaningful
+  /// where [needsServer] is false, which is what the callers filter on: there
+  /// is then nothing in the script for this to substitute.
+  String fmtWithSpi(Spi? spi) {
+    if (spi == null) return script;
     return script.replaceAllMapped(fmtFinder, (match) {
       final key = match.group(0);
       final func = fmtArgs[key];
@@ -47,7 +59,7 @@ extension SnippetX on Snippet {
 
   Future<void> runInTerm(
     Terminal terminal,
-    Spi spi, {
+    Spi? spi, {
     bool autoEnter = false,
   }) async {
     final argsFmted = fmtWithSpi(spi);

@@ -483,22 +483,21 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   List<Widget> _buildAppBarActions() {
-    // Both act on a server — the agent's tools name one, and a snippet's
-    // script is written against one. On a shell on this device they would be
-    // buttons that look tappable and do nothing.
     final actions = <Widget>[
-      if (widget.args.spi != null) ...[
+      // The agent's tools all name a server, so on this device the button
+      // would look tappable and do nothing. Snippets are different: the ones
+      // that do not mention a server run here fine — see [_pickSnippet].
+      if (widget.args.spi != null)
         IconButton(
           onPressed: openAgentFromToolbar,
           tooltip: l10n.askAiAgentTitle,
           icon: const Icon(Icons.auto_awesome),
         ),
-        IconButton(
-          onPressed: _pickSnippet,
-          tooltip: libL10n.snippet,
-          icon: const Icon(Icons.code),
-        ),
-      ],
+      IconButton(
+        onPressed: _pickSnippet,
+        tooltip: libL10n.snippet,
+        icon: const Icon(Icons.code),
+      ),
     ];
     // Only where there is a sudo password to insert. This device's shell is
     // already whoever is running the app.
@@ -515,16 +514,18 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   Future<void> _pickSnippet() async {
-    // A snippet's script is written against a server — `${ip}`, `${user}` —
-    // and there is nothing to resolve those against here. Offered only where
-    // they mean something; see [_buildAppBarActions].
-    final spi = widget.args.spi;
-    if (spi == null) return;
     if (_isPickingSnippet) return;
     _isPickingSnippet = true;
 
     try {
-      final snippets = ref.read(snippetProvider.select((p) => p.snippets));
+      final spi = widget.args.spi;
+      // On this device, only the ones that do not name a server. A script
+      // saying `${host}` has no answer here, and substituting an empty string
+      // would quietly run a different command rather than refuse.
+      final snippets = ref
+          .read(snippetProvider.select((p) => p.snippets))
+          .where((e) => spi != null || !e.needsServer)
+          .toList();
       if (snippets.isEmpty) {
         if (!mounted) return;
         context.showSnackBar(libL10n.empty);

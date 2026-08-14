@@ -396,14 +396,20 @@ extension _Sessions on _SSHTabPageState {
 
 /// The buttons on the tab bar.
 extension _Actions on _SSHTabPageState {
-  /// What only makes sense on a terminal that is on a server.
+  /// The buttons for whichever terminal is showing.
+  ///
+  /// The agent's tools all name a server, so it is offered only on one.
+  /// Snippets are offered everywhere: the picker leaves out the ones that
+  /// mention a server when there is none.
   ///
   /// Read from the tab's arguments rather than its live state: a tab that has
   /// not been looked at yet has no state, and the buttons would flicker in as
   /// it built.
   List<Widget> get _serverActions {
-    final onServer = _sessions.current?.data.page.args.spi != null;
-    return onServer ? [_agentBtn, _snippetBtn] : const [];
+    final current = _sessions.current;
+    if (current == null) return const [];
+    final onServer = current.data.page.args.spi != null;
+    return onServer ? [_agentBtn, _snippetBtn] : [_snippetBtn];
   }
 
   /// Opens the agent on the terminal that is on screen, the same way the
