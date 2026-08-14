@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/view/page/snippet/edit.dart';
+import 'package:server_box/view/widget/empty_pane.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
 
 class SnippetListPage extends ConsumerStatefulWidget {
@@ -65,13 +66,14 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
           onPrimaryWidthChanged: PaneSettings.saveWidth,
           detailId: _editing,
           onCloseDetail: () => setState(() => _editing = null),
-          // Null until something is opened, so the list gets the whole width
-          // to browse in rather than a column reserved for nothing.
-          detailBuilder: _editing == null
-              ? null
-              : (_) => SnippetEditPage(
-                  args: SnippetEditPageArgs(snippet: editing),
-                ),
+          // Never null, so the two columns are what this tab looks like from
+          // the moment it opens. A null builder hands the whole width back to
+          // the list, which made the first thing anyone saw a grid of cards
+          // that rearranged itself into a column as soon as one was tapped —
+          // two layouts for one page, the first of which is not the page.
+          detailBuilder: (_) => _editing == null
+              ? const EmptyPane(icon: Icons.code_outlined)
+              : SnippetEditPage(args: SnippetEditPageArgs(snippet: editing)),
           primaryBuilder: (_, split) => _buildScaffold(snippets, tag, split),
         );
       });
@@ -88,11 +90,21 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
         singleLine: true,
       ),
       body: _buildSnippetList(snippets, tag, split),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'snippetAdd',
-        child: const Icon(Icons.add),
-        onPressed: () => _edit(null, split),
-      ),
+      // Small in a column, like the server rail's: a full-size button in a
+      // rail this narrow covers the row under it.
+      floatingActionButton: split
+          ? FloatingActionButton.small(
+              heroTag: 'snippetAdd',
+              tooltip: libL10n.add,
+              onPressed: () => _edit(null, true),
+              child: const Icon(Icons.add),
+            )
+          : FloatingActionButton(
+              heroTag: 'snippetAdd',
+              tooltip: libL10n.add,
+              onPressed: () => _edit(null, false),
+              child: const Icon(Icons.add),
+            ),
     );
   }
 
@@ -116,52 +128,57 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
         ? snippets
         : snippets.where((e) => e.tags?.contains(tag) ?? false).toList();
 
+    // The same rail the server, terminal and file pages put beside their pane,
+    // because it is the same job: a narrow index read while your attention is
+    // on what is open next to it. A card carries a name and two lines of the
+    // script, which is worth the width at full width and is a smaller copy of
+    // the editor when the editor is right there.
+    if (split) {
+      return ListView.builder(
+        padding: const EdgeInsets.only(top: 4, bottom: 77),
+        itemCount: filtered.length,
+        itemBuilder: (_, index) {
+          final snippet = filtered[index];
+          return SideBarTile(
+            title: snippet.name,
+            selected: _editing == snippet.name,
+            onTap: () => _edit(snippet, true),
+          );
+        },
+      );
+    }
+
     return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 9),
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        // One column beside an editor, however wide the window is: the list is
-        // an index there, not the browsing grid it is at full width.
-        maxCrossAxisExtent: split ? double.infinity : UIs.columnWidth,
+        maxCrossAxisExtent: UIs.columnWidth,
         mainAxisExtent: _desiredItemHeight,
       ),
       itemCount: filtered.length,
-      itemBuilder: (context, index) {
-        final snippet = filtered[index];
-        return _buildSnippetItem(snippet, split);
-      },
+      itemBuilder: (_, index) => _buildSnippetItem(filtered[index]),
     );
   }
 
-  Widget _buildSnippetItem(Snippet snippet, bool split) {
+  Widget _buildSnippetItem(Snippet snippet) {
     return InkWell(
-      onTap: () => _edit(snippet, split),
+      onTap: () => _edit(snippet, false),
       child: SizedBox(
         height: _desiredItemHeight,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 17),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      snippet.name,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                    Text(
-                      snippet.note ?? snippet.script,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                      style: UIs.textGrey,
-                    ),
-                  ],
-                ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 17),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(snippet.name, overflow: TextOverflow.ellipsis, maxLines: 1),
+              Text(
+                snippet.note ?? snippet.script,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+                style: UIs.textGrey,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     ).cardx;
