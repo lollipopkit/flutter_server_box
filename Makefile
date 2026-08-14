@@ -15,8 +15,8 @@ TAP_REPO_PATH ?=
 
 .PHONY: help deps pub-get run run-device analyze test test-one coverage \
 	gen gen-build gen-build-clean gen-l10n build build-android build-ios \
-	build-macos build-linux build-windows clean release-macos-dmg package-dmg \
-	sync-homebrew-cask
+	build-ios-nosign build-macos build-linux build-windows clean \
+	release-macos-dmg package-dmg sync-homebrew-cask
 
 help:
 	@printf '%s\n' \
@@ -41,6 +41,7 @@ help:
 		'  build              Build via fl_build: make build PLATFORM=<android|ios|macos|linux|windows>' \
 		'  build-android      Build Android package' \
 		'  build-ios          Build iOS package' \
+		'  build-ios-nosign   Build an unsigned iOS ipa (_NoSign.ipa, needs re-signing)' \
 		'  build-macos        Build macOS package' \
 		'  build-linux        Build Linux package' \
 		'  build-windows      Build Windows package' \
@@ -109,6 +110,10 @@ build-android:
 
 build-ios:
 	$(DART) run fl_build -p ios
+
+build-ios-nosign:
+	$(FLUTTER) build ios --release --no-codesign
+	bash scripts/release/package-unsigned-ipa.sh
 
 build-macos:
 	$(DART) run fl_build -p macos
