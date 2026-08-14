@@ -89,3 +89,9 @@ android/app/.cxx
 
 # Agent scratch space: worktrees here are checkouts of this same repo.
 .claude/worktrees/
+# Widget Preview related
+.widget_preview/
+
+# Built by scripts/build-proot-android.sh — GPL binaries, not sources.
+/android/app/src/main/jniLibs/
+/build/proot-android/

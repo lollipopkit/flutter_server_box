@@ -83,6 +83,20 @@ android {
     compileSdk flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
+    packaging {
+        jniLibs {
+            // Extracted rather than mapped out of the APK. A helper binary can
+            // only be executed as a file, and with minSdk >= 23 nothing is
+            // extracted by default — `nativeLibraryDir` does not exist and
+            // there is nowhere for one to be. This is what proot needs; see
+            // scripts/build-proot-android.sh.
+            //
+            // The cost is a larger install: the libraries are stored twice,
+            // once in the APK and once unpacked.
+            useLegacyPackaging = true
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
