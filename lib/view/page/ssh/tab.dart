@@ -192,7 +192,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
       index: _sessions.index,
       onTap: _sessions.select,
       onClose: _confirmClose,
-      sessionActions: [_agentBtn, _snippetBtn],
+      sessionActions: _serverActions,
       leadingActions: [_sortBtn, _searchBtn, _historyBtn],
     ),
   );
@@ -208,7 +208,7 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
         // button that looks tappable and does nothing is worse than no button.
         actions: current == null
             ? const []
-            : [_agentBtn, _snippetBtn, const SizedBox(width: 7)],
+            : [..._serverActions, const SizedBox(width: 7)],
       );
     },
   );
@@ -390,6 +390,16 @@ extension _Sessions on _SSHTabPageState {
 
 /// The buttons on the tab bar.
 extension _Actions on _SSHTabPageState {
+  /// What only makes sense on a terminal that is on a server.
+  ///
+  /// Read from the tab's arguments rather than its live state: a tab that has
+  /// not been looked at yet has no state, and the buttons would flicker in as
+  /// it built.
+  List<Widget> get _serverActions {
+    final onServer = _sessions.current?.data.page.args.spi != null;
+    return onServer ? [_agentBtn, _snippetBtn] : const [];
+  }
+
   /// Opens the agent on the terminal that is on screen, the same way the
   /// snippet picker beside it works.
   Widget get _agentBtn => Btn.icon(

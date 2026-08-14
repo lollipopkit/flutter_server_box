@@ -9,6 +9,20 @@ extension _Init on SSHPageState {
   /// which drives a control channel of its own, is the main thing that cares.
   bool get _canExec => _sess.canExec;
 
+  /// Whether tmux can be driven here.
+  ///
+  /// More than [_canExec]. The control channel writes a command and reads
+  /// until a marker it appended, which needs a channel that does not echo what
+  /// was written into it — an SSH `exec` channel. A shell on this device runs
+  /// in a pseudo-terminal, which echoes, and the marker parsing would be
+  /// reading its own input back.
+  ///
+  /// Asked before anything tmux is attempted rather than discovered by the
+  /// control session throwing: a decision belongs where it can be read, and
+  /// what used to happen instead was a null client, an exception, and a
+  /// warning in the log that said tmux was unavailable without saying why.
+  bool get _canTmux => _canExec && _client != null;
+
   /// Connects a new source of shells, asking the provider what the agent
   /// allows at the moment of use rather than trusting a stored answer.
   Future<ShellBackend> _connectBackend() => _sess.connect(
@@ -52,7 +66,7 @@ extension _Init on SSHPageState {
   }
 
   Future<bool> _replaceForegroundWithLaunchPlan(TmuxLaunchPlan plan) async {
-    if (!_canExec || !plan.shouldLaunchTmux) return false;
+    if (!_canTmux || !plan.shouldLaunchTmux) return false;
 
     final oldSession = _session;
     ShellSession? session;
@@ -540,6 +554,8 @@ extension _Init on SSHPageState {
     widget.args.onTmuxStateChanged?.call();
   }
 
+  /// Only where [_canTmux] says so — every caller checks, and the null
+  /// assertions below are what that check is protecting.
   Future<TmuxSession> _createTmuxControlSession() async {
     return TmuxSession(
       PersistentShell(
@@ -554,7 +570,7 @@ extension _Init on SSHPageState {
   }
 
   Future<TmuxLaunchPlan> _resolveForegroundLaunchPlan() async {
-    if (!Stores.setting.tmuxAuto.fetch() || !_canExec) {
+    if (!Stores.setting.tmuxAuto.fetch() || !_canTmux) {
       return const TmuxLaunchPlan.none();
     }
 
@@ -698,7 +714,7 @@ extension _Init on SSHPageState {
   }
 
   Future<void> _showTmuxSwitcher() async {
-    if (_client == null || !mounted) return;
+    if (!_canTmux || !mounted) return;
 
     final tmuxSession = await _createTmuxControlSession();
     try {

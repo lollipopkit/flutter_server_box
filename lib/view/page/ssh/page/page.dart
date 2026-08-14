@@ -483,17 +483,22 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   List<Widget> _buildAppBarActions() {
+    // Both act on a server — the agent's tools name one, and a snippet's
+    // script is written against one. On a shell on this device they would be
+    // buttons that look tappable and do nothing.
     final actions = <Widget>[
-      IconButton(
-        onPressed: openAgentFromToolbar,
-        tooltip: l10n.askAiAgentTitle,
-        icon: const Icon(Icons.auto_awesome),
-      ),
-      IconButton(
-        onPressed: _pickSnippet,
-        tooltip: libL10n.snippet,
-        icon: const Icon(Icons.code),
-      ),
+      if (widget.args.spi != null) ...[
+        IconButton(
+          onPressed: openAgentFromToolbar,
+          tooltip: l10n.askAiAgentTitle,
+          icon: const Icon(Icons.auto_awesome),
+        ),
+        IconButton(
+          onPressed: _pickSnippet,
+          tooltip: libL10n.snippet,
+          icon: const Icon(Icons.code),
+        ),
+      ],
     ];
     // Only where there is a sudo password to insert. This device's shell is
     // already whoever is running the app.
