@@ -18,6 +18,19 @@
 	<true/>
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
+	<!-- A terminal on this machine is a terminal in the user's own files, and a
+	     shell confined to the app container is not the feature. Child processes
+	     inherit the sandbox, so this is what lets one `ls ~`.
+
+	     An exception rather than dropping the sandbox: iCloud's ubiquity
+	     container requires the app to be sandboxed on macOS, and the backup
+	     page would stop working. Distribution is a Developer ID notarised DMG,
+	     not the App Store, so this needs no review — see
+	     scripts/release/release-macos-dmg.sh. -->
+	<key>com.apple.security.temporary-exception.files.home-relative-path.read-write</key>
+	<array>
+		<string>/</string>
+	</array>
 	<key>com.apple.security.network.client</key>
 	<true/>
 	<key>com.apple.security.network.server</key>
