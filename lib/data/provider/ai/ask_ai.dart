@@ -853,15 +853,29 @@ AskAiCommand? _parseCommand({
     final toolName = name?.trim().isNotEmpty == true
         ? name!.trim()
         : 'run_shell_command';
+    // What the call is *about*, in one line: every tool answers that with a
+    // different argument, and a tool missing from this switch reads as having
+    // said nothing at all.
     final command = switch (toolName) {
       'read_file' || 'write_file' => decoded['path'] as String?,
       'serverbox' => decoded['action'] as String?,
+      'ssh_connect' => decoded['host'] as String?,
+      'ssh_disconnect' => decoded['session_id'] as String?,
       _ => decoded['command'] as String?,
     };
-    if (command == null || command.trim().isEmpty) return null;
+    // Only a shell call is meaningless without one, and dropping it is how a
+    // half-streamed `run_shell_command` is discarded. Doing that to every tool
+    // meant `ssh_connect` — which has no `command` argument — was thrown away
+    // silently, and the turn ended with neither text nor a proposal. A tool
+    // this does not recognise is better off reaching the executor and failing
+    // out loud than vanishing.
+    if (toolName == 'run_shell_command' &&
+        (command == null || command.trim().isEmpty)) {
+      return null;
+    }
     return AskAiCommand(
       id: id.isEmpty ? 'tool-call' : id,
-      command: command.trim(),
+      command: command?.trim() ?? '',
       description:
           (decoded['description'] as String? ??
                   decoded['explanation'] as String? ??
