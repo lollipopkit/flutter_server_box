@@ -184,11 +184,6 @@ class ServerNotifier extends _$ServerNotifier {
     state = state.copyWith(client: client);
   }
 
-  void updateClient(SSHClient? client) {
-    _operationGeneration++;
-    _setClient(client);
-  }
-
   // Update SPI configuration
   void updateSpi(Spi spi) {
     _operationGeneration++;
@@ -198,6 +193,10 @@ class ServerNotifier extends _$ServerNotifier {
     // The edit may have moved the script directory or changed the custom
     // commands in it, so what was written no longer matches what will be run.
     _scriptWritten = false;
+    // Likewise the extended output: an edited address may be a different
+    // machine, and its SMART and GPU segments are cached for five minutes.
+    _extendedRaw = '';
+    _extendedFetchedAt = null;
     state = state.copyWith(
       spi: spi,
       client: null,
@@ -256,20 +255,22 @@ class ServerNotifier extends _$ServerNotifier {
     }
   }
 
-  /// [interactive] only reaches the SSH path: it gates prompting the user for
-  /// keyboard-interactive auth, which has no counterpart over monitor's HTTP
-  /// API (credentials there are configured up front, never prompted for).
   /// Whether the refresh identified by [operation] is still the current one
   /// and still targets [spi].
   ///
-  /// `_isRefreshing` stops two refreshes overlapping, but not one that outlives
-  /// what started it: editing the server or closing the connection bumps the
-  /// generation, and an in-flight refresh that then finishes would publish a
-  /// status for a server that no longer exists in that form. Every `await` in
-  /// the SSH path re-checks this.
+  /// [_refreshingOperation] stops two refreshes of the same generation
+  /// overlapping, but nothing stops one that outlives what started it:
+  /// editing the server or closing the connection bumps the generation, and
+  /// an in-flight refresh that then finishes would publish a status for a
+  /// server that no longer exists in that form. Every await in both paths
+  /// re-checks this — including the ones a `catch` is reached from, which
+  /// skip whatever check follows the await that threw.
   bool _isRefreshCurrent(int operation, Spi spi) =>
       operation == _operationGeneration && state.spi == spi;
 
+  /// [interactive] only reaches the SSH path: it gates prompting the user for
+  /// keyboard-interactive auth, which has no counterpart over monitor's HTTP
+  /// API (credentials there are configured up front, never prompted for).
   Future<void> _getData({
     required bool interactive,
     required int operation,
@@ -590,7 +591,7 @@ class ServerNotifier extends _$ServerNotifier {
     bool countAttempt = true,
     String? message,
   }) {
-    if (operation != _operationGeneration) {
+    if (!_isRefreshCurrent(operation, state.spi)) {
       Loggers.app.info('SSH ${state.spi.name}: dropping a superseded failure');
       return;
     }
@@ -900,6 +901,11 @@ class ServerNotifier extends _$ServerNotifier {
         return;
       }
     } on TimeoutException catch (e, s) {
+      Loggers.app.warning('Get status from ${spi.name} timed out', e, s);
+      // Reached by throwing out of an await, so it skips the check that
+      // follows that await: a read that timed out against the address this
+      // server used to have must not stamp its error onto the one it has now.
+      if (!_isRefreshCurrent(operation, spi)) return;
       // Not _failSsh: a timed-out status read leaves the connection itself
       // intact, so the session stays connected and the attempt isn't counted
       updateStatus(
@@ -912,7 +918,6 @@ class ServerNotifier extends _$ServerNotifier {
       if (state.client != null && state.conn != ServerConn.finished) {
         updateConnection(ServerConn.connected);
       }
-      Loggers.app.warning('Get status from ${spi.name} timed out', e, s);
       TermSessionManager.updateStatus(
         _sshSessionId,
         TermSessionStatus.connected,
@@ -927,13 +932,21 @@ class ServerNotifier extends _$ServerNotifier {
       // Segments the status function no longer carries, refreshed on their own
       // schedule and concatenated here: the parser splits by separator, so one
       // combined output parses exactly as the two runs would have
-      final extended = await _refreshExtendedRaw(force: interactive);
+      final extended = await _refreshExtendedRaw(
+        force: interactive,
+        operation: operation,
+      );
       final combined = extended.isEmpty ? raw : '$raw\n$extended';
 
       // Same conversion contract as the monitor path: raw transport output in,
       // ServerStatus (plus a trend sample) out
       final source = SshDataSource(spi: spi, runScript: () async => combined);
-      updateStatus(await source.fetchStatus(_copyStatus(state.status)));
+      final status = await source.fetchStatus(_copyStatus(state.status));
+      // The last two awaits are the longest in this method — the extended
+      // commands take seconds by design. A refresh that started before the
+      // server was edited arrives here holding the old host's status.
+      if (!_isRefreshCurrent(operation, spi)) return;
+      updateStatus(status);
     } catch (e, trace) {
       _failSsh(
         SSHErrType.getStatus,
@@ -945,6 +958,7 @@ class ServerNotifier extends _$ServerNotifier {
       return;
     }
 
+    if (!_isRefreshCurrent(operation, spi)) return;
     // Set Server.isBusy to false each time this method is called
     updateConnection(ServerConn.finished);
     // Reset retry count only after successful preparation
@@ -958,7 +972,10 @@ class ServerNotifier extends _$ServerNotifier {
   /// Deliberately on the exec path rather than the persistent shell: these
   /// commands can take seconds, and a timeout there would drop the whole
   /// connection to exec for good (see [_runStatusCommand]).
-  Future<String> _refreshExtendedRaw({required bool force}) async {
+  Future<String> _refreshExtendedRaw({
+    required bool force,
+    required int operation,
+  }) async {
     final fetchedAt = _extendedFetchedAt;
     final due =
         force ||
@@ -983,6 +1000,12 @@ class ServerNotifier extends _$ServerNotifier {
         cmd,
         isWindows: state.status.system == SystemType.windows,
       );
+      // The cache belongs to the notifier, not to this run: without the check
+      // a refresh against the address the server used to have would leave the
+      // old machine's SMART and GPU segments here, and the next poll of the
+      // *new* one would find them still within the interval and merge them
+      // into its status.
+      if (!_isRefreshCurrent(operation, spi)) return _extendedRaw;
       if (raw.contains(ScriptConstants.separator)) _extendedRaw = raw;
     } catch (e, s) {
       Loggers.app.warning('Extended status for ${spi.name} failed', e, s);

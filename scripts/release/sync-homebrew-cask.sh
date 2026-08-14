@@ -99,6 +99,12 @@ cask "$CASK_NAME" do
   desc "$CASK_DESC"
   homepage "https://github.com/$APP_REPO_SLUG"
 
+  # Matches macos/Podfile and MACOSX_DEPLOYMENT_TARGET. Without it Homebrew
+  # installs happily on an older macOS and the app then fails to launch with
+  # a dyld error, which reads as a broken build rather than as a machine that
+  # is too old.
+  depends_on macos: ">= :monterey"
+
   app "$APP_NAME.app"
 end
 CASK

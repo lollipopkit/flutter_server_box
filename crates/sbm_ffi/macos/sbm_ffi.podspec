@@ -21,7 +21,11 @@ A new Flutter FFI plugin project.
   s.source_files     = 'Classes/**/*'
   s.dependency 'FlutterMacOS'
 
-  s.platform = :osx, '10.11'
+  # The app's own floor (macos/Podfile, MACOSX_DEPLOYMENT_TARGET). CocoaPods
+  # raises this for us at build time, so a lower number changes nothing that
+  # ships — it only tells anyone reading the podspec that the Rust half is
+  # built against a macOS nobody supports.
+  s.platform = :osx, '12.0'
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
   s.swift_version = '5.0'
 

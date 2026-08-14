@@ -151,8 +151,14 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
   /// and offer the one action that helps.
   Widget _buildNothingYet(ServerState si) {
     final err = si.status.err;
+    // `connected` counts: the SSH path sits there through system detection and
+    // the script install, two round trips during which there is still nothing
+    // to show. Reading it as "not busy" put "Empty" and a Retry button in
+    // front of a server that was in the middle of connecting — and disagreed
+    // with the server card, which has always treated the three as one state.
     final busy =
         si.conn == server_model.ServerConn.connecting ||
+        si.conn == server_model.ServerConn.connected ||
         si.conn == server_model.ServerConn.loading;
 
     return Scaffold(
