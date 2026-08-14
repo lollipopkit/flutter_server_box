@@ -166,3 +166,27 @@ Apple Silicon 上的 Linux 虚拟机)。
 还有一个形状上的约束:`parse_cpu_brand` 返回 `(型号, 核数)`,核数靠数
 `model name` 出现次数。`lscpu` 只输出一行,直接接上去核数会变成 1。要改就得
 连解析侧的契约一起改。
+
+## Agent 风险徽标:`unknown` 和 `unvetted` 是不是同一个徽标
+
+`AskAiCommand.classifyRisk` 是白名单:`readOnly` 是唯一一个对命令下了正面判断
+的结论,其余全是「没认出来」。原来「没认出来」和「匹配到修改型模式」共用
+`caution`,而它的中文标签是「会更改系统」——对 `sleep 60` 这种命令,这是一句
+假话,而且和模型自己写的「不会修改系统」当场矛盾。`uptime && whoami` 同理:链式
+命令根本不拆开分析。
+
+已经拆开了(枚举加 `unknown`,fallthrough 和链式归入它,`caution` 留给真的匹配
+到修改型模式的),`canAutoRun` 不变——只有 `readOnly` 能自动跑,安全性没放松。
+
+**剩下的是标签语义,还没定**。同一时间另一条线在做「未审核主机」的拆分,给
+`_unvettedFloor` 抬升后的结果也用了 `unknown`,并另配了 `askAiRiskUnvetted`
+(「未审核的主机」)标签。于是同一个枚举值现在有两种成因:
+
+- 命令没被认出来 → 应该说「未判定」
+- 命令是只读的,但主机没被审核过 → 应该说「未审核的主机」
+
+两者都不能自动执行,但徽标该说哪句话取决于成因,不是枚举值本身。现在靠
+`raisedByUnvettedHost` 这个 bool 区分。要么把成因编进枚举,要么在徽标那层用
+两个字段判断——没定,先记着。
+
+l10n 里 `askAiRiskUnknown`(15 语言)已经加了。
