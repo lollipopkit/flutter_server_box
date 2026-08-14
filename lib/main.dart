@@ -96,9 +96,14 @@ Future<void> _initData() async {
     // start empty — an app that opens with nothing in it can still be told
     // what happened, one that does not open cannot.
     Loggers.app.warning('Stores.init after sandbox import', e, s);
-    await SandboxImport.undo();
+    // Closed before the files are deleted. `Stores.init` may have opened
+    // several boxes before the one that threw, and unlinking a `.hive` out
+    // from under a live handle is undefined at best: on Windows the delete
+    // fails outright and the copy stays, so the retry below reopens exactly
+    // the data that just failed to open.
     await Hive.close();
     await getIt.reset();
+    await SandboxImport.undo();
     await Stores.init();
   }
 

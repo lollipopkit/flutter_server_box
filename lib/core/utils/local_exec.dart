@@ -52,8 +52,11 @@ class LocalExec implements ServerExec {
     // command, which leaves stdin free to be stdin — where a sudo password
     // belongs. With one, the entry is the command and the script is what it
     // reads.
+    // One executable either way; only what it is told to run differs, which
+    // is what the ternary below says. The one that used to stand here chose
+    // between `shell` and `shell`.
     final process = await Process.start(
-      entry == null ? shell : shell,
+      shell,
       entry == null ? [flag, script] : [flag, entry],
       environment: env,
       // Added to, not replaced: a command here runs on the user's own machine
@@ -115,12 +118,16 @@ class LocalExec implements ServerExec {
   void _kill(Process process) {
     if (!process.kill()) return;
     // For a script that trapped the first one. Nothing is reading it any more.
-    Timer(const Duration(seconds: 3), () {
+    final sigkill = Timer(const Duration(seconds: 3), () {
       try {
         process.kill(ProcessSignal.sigkill);
       } catch (_) {
         // Already gone, which is the point.
       }
     });
+    // Cancelled when the process goes on its own, which is the ordinary case.
+    // Left running, the timer held this closure — and the `Process` with it —
+    // for three seconds past every cancelled command.
+    process.exitCode.whenComplete(sigkill.cancel).ignore();
   }
 }
