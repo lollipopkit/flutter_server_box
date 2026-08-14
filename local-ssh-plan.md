@@ -18,8 +18,11 @@ and step 3 on iOS is a GPLv3 emulator plus an App Store review argument. This
 document is what is known, what is guessed, and what has to be measured before
 any of it is committed to.
 
-**Status: stage 2b's first half is done (`328f92d9`); stages 1, 2, 3 and 4 are
-not started.** Last checked against the tree at `f8f371b3`, before that half
+**Status: stage 2b's first half is done (`328f92d9`). Stage 1 has the rename
+(`dd9b6e84`), a `LocalShellBackend` on `flutter_pty` (`4a3b5f4`) and the macOS
+entitlement it needs (`ad18d1b7`); what is left there is `TerminalSession`
+losing its `Spi` and the tab growing a local session. Stages 2, 3 and 4 are not
+started.** Last checked against the tree at `f8f371b3`, before that half
 landed. Update the verification log at the bottom as answers land — several
 decisions below are downstream of questions still marked open.
 
@@ -332,9 +335,9 @@ Update this as answers arrive; several decisions above move with them.
 | 1 | Can a `targetSdk` 35 app exec a file in `filesDir` via `linker64`? | Throwaway APK on a real device (no Android hardware here) | **open** |
 | 2 | How does OpenMinis run rootfs binaries at `targetSdk` 35? | Read its Kotlin/JNI sandbox code, not the shell scripts | **open** |
 | 3 | Are ish-arm64's 7–12x figures representative? | Build it, run a shell and a `python -c` loop | **open** |
-| 4 | Does the macOS DMG build ship unsandboxed, or does local shell hide there? | Product decision. Half answered: `macos/Runner/Release.entitlements:17` sets `app-sandbox` true, so **every** build is sandboxed today, DMG included. Un-sandboxing it is a change to make, not a state to use | **open** |
+| 4 | Does the macOS DMG build ship unsandboxed, or does local shell hide there? | **Answered** (`ad18d1b7`): neither. The sandbox stays and a `temporary-exception.files.home-relative-path.read-write` lets the shell reach the user's files. Dropping the sandbox was the obvious move — distribution is a Developer ID notarised DMG, not the App Store — but iCloud's ubiquity container requires the sandbox on macOS, and the backup page would have gone with it | **done** |
 | 5 | Is proot GPLv2-only or v2-or-later? | Read source headers, not `COPYING` | **open** |
-| 6 | Does `flutter_pty` still build against current Flutter on all four desktop/Android targets? | Add it, build each | **open** |
+| 6 | Does `flutter_pty` still build against current Flutter on all four desktop/Android targets? | **macOS builds** (`flutter build macos --debug`, verified with the plugin linked). Linux, Windows and Android not tried. One warning to note: `flutter_pty` does not support Swift Package Manager, which Flutter says "will become an error in a future version" — `sbm_ffi` is in the same list, so it is not a new exposure | **partly** |
 | 7 | Would 2.5.2 be survivable for this app? | Cannot be settled in advance. Decide whether stage 4's iOS half is worth the update risk | **open** |
 | 8 | Is local agent execution opt-in, and is auto-run barred locally? | Product decision. Affects the settings surface and the tool instructions | **open** |
 | 9 | What can the agent's `read_file`/`write_file` reach locally per platform? | macOS sandbox container vs. home; Android scoped storage; iOS app container only | **open** |
