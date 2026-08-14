@@ -144,9 +144,15 @@ class LocalShellBackend implements ShellBackend {
 
 /// [ShellSession] on a local pseudo-terminal.
 class _LocalShellSession implements ShellSession {
-  _LocalShellSession(this._pty);
+  _LocalShellSession(this._pty) {
+    unawaited(_pty.exitCode.then((_) => _exited = true));
+  }
 
   final Pty _pty;
+
+  /// Whether the shell is already gone, so [close] neither signals a pid that
+  /// may since have been reused nor schedules a second attempt at nothing.
+  var _exited = false;
 
   @override
   Stream<Uint8List>? get stdout => _pty.output;
@@ -168,20 +174,46 @@ class _LocalShellSession implements ShellSession {
 
   @override
   void close() {
-    // The shell's whole process group, not only the shell. `forkpty` makes the
-    // child a session leader, so its pid is its group id, and whatever is in
-    // the foreground — `top`, an editor, a build — is in that group. Signalling
+    if (_exited) return;
+
+    // SIGHUP, not SIGTERM. An interactive shell ignores SIGTERM by design, so
+    // a terminal that sends it leaves the shell running with nothing attached
+    // — measured on macOS: zsh survives SIGTERM and exits on SIGHUP. Hanging
+    // up is also what actually happened: the terminal went away.
+    //
+    // The whole process group, not only the shell. `forkpty` makes the child a
+    // session leader, so its pid is its group id, and whatever is in the
+    // foreground — `top`, an editor, a build — is in that group. Signalling
     // the leader alone leaves those running with their terminal gone.
-    try {
-      if (!Platform.isWindows) {
-        Process.killPid(-_pty.pid, ProcessSignal.sigterm);
+    _signal(ProcessSignal.sighup);
+
+    // For a shell, or a foreground process, that trapped the hangup. Nothing
+    // is reading this terminal any more, so leaving it running only leaks it.
+    Timer(const Duration(seconds: 3), () {
+      if (_exited) return;
+      _signal(ProcessSignal.sigkill);
+    });
+  }
+
+  void _signal(ProcessSignal signal) {
+    // Windows has no process group to signal, and `Pty.kill` is what its
+    // implementation understands.
+    if (Platform.isWindows) {
+      try {
+        _pty.kill(signal);
+      } catch (_) {
+        // Already gone.
       }
-    } catch (_) {
-      // No such group, or a platform that will not take a negative pid. The
-      // shell itself is still killed below.
+      return;
     }
     try {
-      _pty.kill();
+      Process.killPid(-_pty.pid, signal);
+    } catch (_) {
+      // No such group, or a platform that will not take a negative pid. The
+      // leader itself is still signalled below.
+    }
+    try {
+      _pty.kill(signal);
     } catch (_) {
       // Already gone. `done` has completed or is about to.
     }
