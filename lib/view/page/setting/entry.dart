@@ -205,7 +205,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
 
         void save() {
           onSave(ctrl.text.trim());
-          context.pop();
+          context.popDialog();
         }
 
         await context.showRoundDialog<bool>(

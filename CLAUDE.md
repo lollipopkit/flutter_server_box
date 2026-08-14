@@ -149,11 +149,14 @@ a host with no sshd doesn't also stop the status page refreshing.
   - Before adding new strings, check if it already exists in `libL10n`.
   - Prioritize using strings from `libL10n` to avoid duplication, even if the meaning is not 100% exact, just use the substitution of `libL10n`.
 - Split UI into Widget build, Actions, Utils. use `extension on` to achieve this
-- NEVER call `context.pop()` inside a `showRoundDialog`.
-  - `showRoundDialog` puts the dialog on the root navigator, while `context.pop` pops the navigator nearest the *page* — which, on a page inside a pane or a tab, is a different one. The button then closes the page out from under the dialog, or, when the page is that navigator's root route, does nothing at all and looks broken.
-  - Close the dialog with `context.popDialog()`, or better, let it answer: `Btn.ok`/`Btnx.cancelOk` already pop a value, so `await context.showRoundDialog<bool>(...)` returns it.
-  - Do the work and close the page in the *caller*, which is on the page. A callback that does both sees two navigators and has to get each `pop`'s target right, silently.
-  - The invariant is greppable: `rg -U 'showRoundDialog[\s\S]*?context\.pop\(' lib` must find nothing.
+- A dialog's buttons close the dialog. The page is closed by the code that awaited it.
+  - `showRoundDialog` puts the dialog on the **root** navigator. A page's `context` finds the navigator holding the *page*, and inside a pane or a tab those are two different navigators. So a `context.pop()` reached from a dialog button closes the page and leaves the dialog on screen — and the awaited future never completes, so whatever the caller meant to do next never runs either.
+  - Close the dialog with `context.popDialog()`, which is explicit about the root navigator. Better, let the dialog answer: `Btn.ok`/`Btnx.cancelOk` already pop a value, so `await context.showRoundDialog<bool>(...)` returns it.
+  - Then do the work and close the page in the *caller*, which is on the page. A callback that does both sees two navigators and has to get each `pop`'s target right, silently.
+  - **The trap is `Btn.ok(onTap: f)`.** With no `onTap`, `Btn` resolves the navigator from the *button's* own context — inside the dialog — and is correct. Passing an `onTap` replaces that, so `f` must pop the dialog itself. Every instance found so far was this, and so was `onSubmitted:` on an `Input` in a dialog.
+  - **The rule is about what a button reaches, not about what is lexically inside the call.** Nine of the ten instances found in Aug 2026 called a named function that popped several lines away, which is why this grep found none of them — including `_showTextDialog` in `setting/entry.dart`, the shared helper most settings dialogs go through:
+    - `rg -U 'showRoundDialog[\s\S]*?context\.pop\(' lib` — a first pass only. Clean does not mean correct.
+    - `rg -n 'Btn\.ok\(onTap:|Btnx?\.\w+\(onTap:' lib` — the candidates worth reading. For each, follow the callback and check that every `pop` in it is a `popDialog`.
 - Android release signing:
   - Normal release builds must use the real release keystore from `key.properties`.
   - Debug-signing fallback is for local verification only and must be enabled explicitly with `-PallowDebugReleaseSigning=true`.
