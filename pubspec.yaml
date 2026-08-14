@@ -66,6 +66,7 @@ dependencies:
   sbm_ffi:
     path: crates/sbm_ffi
   flutter_rust_bridge: 2.12.0
+  desktop_drop: ^0.7.1
 
 dev_dependencies:
   analyzer: ^9.0.0

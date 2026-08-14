@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:cross_file/cross_file.dart';
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +11,8 @@ import 'package:server_box/data/model/file/browse_path.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_issue.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
+import 'package:server_box/data/model/file/transfer.dart';
+import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
@@ -176,6 +182,9 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   /// not rebuild the listing under it.
   final _busy = false.vn;
 
+  /// Whether something from the system is being dragged over the listing.
+  final _dropping = false.vn;
+
   late Future<List<FileEntry>> _entries = _list();
 
   @override
@@ -187,10 +196,13 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   @override
   bool get wantKeepAlive => true;
 
+  bool get _isPicking => widget.args.isPickFile || widget.args.isPickDir;
+
   @override
   void dispose() {
     _sort.dispose();
     _busy.dispose();
+    _dropping.dispose();
     super.dispose();
   }
 
@@ -571,22 +583,23 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
               : const SizedBox(height: 2),
         ),
         Expanded(
-          child:
-              (isMobile
-                      ? RefreshIndicator(onRefresh: refresh, child: _buildList())
-                      : _buildList())
+          child: _wrapDropTarget(
+            (isMobile
+                    ? RefreshIndicator(onRefresh: refresh, child: _buildList())
+                    : _buildList())
                   // Right-click anywhere in the list, including past the last
                   // entry. An entry's own menu sits in front of this one and
                   // wins, so this is what is left: the directory itself.
-                  .onSecondary(
-                    widget.args.isPickFile || widget.args.isPickDir
-                        ? null
-                        : (at) => showContextMenu(
-                            context,
-                            _createActions,
-                            at: at,
-                          ),
-                  ),
+                .onSecondary(
+                  widget.args.isPickFile || widget.args.isPickDir
+                      ? null
+                      : (at) => showContextMenu(
+                          context,
+                          _createActions,
+                          at: at,
+                        ),
+                ),
+          ),
         ),
       ],
     );
@@ -690,6 +703,57 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       icon: const Icon(Icons.add),
       onTap: () => showContextMenu(context, _createActions),
     );
+  }
+
+  /// Dropping files from the system onto the listing.
+  ///
+  /// The gesture a desktop file manager is for. It arrives as native paths, so
+  /// the source is always this device — which is exactly a `LocalFileRef`, and
+  /// so an ordinary transfer rather than a second kind of copy.
+  ///
+  /// Only where the browser can say what a path here is called: without
+  /// [FileBrowserArgs.refOf] there is no destination to name.
+  Widget _wrapDropTarget(Widget child) {
+    if (widget.args.refOf == null || _isPicking) return child;
+    return DropTarget(
+      onDragDone: (details) => _onDropped(details.files),
+      onDragEntered: (_) => _dropping.value = true,
+      onDragExited: (_) => _dropping.value = false,
+      child: _dropping.listenVal(
+        (active) => !active
+            ? child
+            : DecoratedBox(
+                position: DecorationPosition.foreground,
+                decoration: BoxDecoration(
+                  border: Border.all(color: UIs.primaryColor, width: 2),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: child,
+              ),
+      ),
+    );
+  }
+
+  Future<void> _onDropped(List<XFile> files) async {
+    _dropping.value = false;
+    final refOf = widget.args.refOf;
+    if (refOf == null || files.isEmpty) return;
+
+    final queue = ref.read(fileTransferProvider.notifier);
+    for (final file in files) {
+      final source = LocalFileRef(file.path.replaceAll(r'\', '/'));
+      final destination = refOf(BrowsePath.join(_path.path, source.name));
+      if (destination == source) continue;
+      queue.add(
+        FileTransfer(
+          from: source,
+          to: destination,
+          isDir: await FileSystemEntity.isDirectory(file.path),
+        ),
+      );
+    }
+    if (!mounted) return;
+    context.showSnackBar(l10n.added2List);
   }
 
   Widget _buildList() {
