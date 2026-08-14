@@ -904,6 +904,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get second => 'Segundo';
 
   @override
+  String get serverFilesUnavailableTip =>
+      'Accesible mediante el SSH de este servidor o mediante un agente monitor con su API de archivos activada.';
+
+  @override
   String get sendTo => 'Enviar a…';
 
   @override

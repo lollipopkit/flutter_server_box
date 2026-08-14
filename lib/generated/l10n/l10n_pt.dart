@@ -893,6 +893,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get second => 'Segundo';
 
   @override
+  String get serverFilesUnavailableTip =>
+      'Acessível através do SSH deste servidor, ou através de um agente monitor com a sua API de ficheiros ativada.';
+
+  @override
   String get sendTo => 'Enviar para…';
 
   @override

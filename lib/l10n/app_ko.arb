@@ -203,6 +203,7 @@
   "remotePath": "원격 경로",
   "sameIdServerExist": "동일한 ID의 서버가 이미 존재합니다",
   "second": "초",
+  "serverFilesUnavailableTip": "이 서버의 SSH에 연결할 수 있거나, monitor 에이전트의 파일 API가 켜져 있어야 합니다.",
   "sendTo": "보낼 위치…",
   "serverDetailOrder": "상세 페이지 위젯 순서",
   "serverFuncBtns": "서버 기능 버튼",

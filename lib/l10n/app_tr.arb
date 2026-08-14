@@ -160,6 +160,7 @@
   "remotePath": "Uzak yol",
   "sameIdServerExist": "Aynı kimliğe sahip bir sunucu zaten mevcut",
   "second": "s",
+  "serverFilesUnavailableTip": "Bu sunucunun SSH'ı üzerinden ya da dosya API'si açık bir monitor aracısı üzerinden erişilebilir.",
   "sendTo": "Şuraya gönder…",
   "serverDetailOrder": "Ayrıntı sayfası bileşen sırası",
   "serverFuncBtns": "Sunucu işlev düğmeleri",

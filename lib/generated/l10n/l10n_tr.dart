@@ -896,6 +896,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get second => 's';
 
   @override
+  String get serverFilesUnavailableTip =>
+      'Bu sunucunun SSH\'ı üzerinden ya da dosya API\'si açık bir monitor aracısı üzerinden erişilebilir.';
+
+  @override
   String get sendTo => 'Şuraya gönder…';
 
   @override

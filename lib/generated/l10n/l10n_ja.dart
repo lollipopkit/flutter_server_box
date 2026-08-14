@@ -845,6 +845,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get second => '秒';
 
   @override
+  String get serverFilesUnavailableTip =>
+      'このサーバーの SSH に接続できるか、monitor エージェントのファイル API が有効になっている必要があります。';
+
+  @override
   String get sendTo => '送信先…';
 
   @override

@@ -895,6 +895,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get second => 's';
 
   @override
+  String get serverFilesUnavailableTip =>
+      'Bereikbaar via de SSH van deze server, of via een monitor-agent met zijn bestands-API ingeschakeld.';
+
+  @override
   String get sendTo => 'Verzenden naar…';
 
   @override

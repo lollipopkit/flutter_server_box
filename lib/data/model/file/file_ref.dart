@@ -1,6 +1,8 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/jump_chain.dart';
 import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/data/model/server/connect_credential.dart';
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
 
@@ -87,6 +89,51 @@ final class SftpFileRef extends FileRef {
 
   @override
   String toString() => 'SftpFileRef(${spi.id}:$path)';
+}
+
+/// A server, through its `monitor` agent's file API.
+///
+/// Carries the credential rather than a client, for the same reason
+/// [SftpFileRef] carries one — except that this one need not cross an isolate
+/// at all: the agent is reached over HTTPS, whose crypto is native rather than
+/// pure Dart, so a transfer with this at either end does not peg the UI
+/// thread the way an SSH one would.
+final class MonitorFileRef extends FileRef {
+  const MonitorFileRef({required this.spi, required this.monitor, required this.path});
+
+  factory MonitorFileRef.forServer(Spi spi, String path) {
+    final credential = ServerConnectCredential.fromSpi(spi);
+    return MonitorFileRef(
+      spi: spi,
+      monitor: (credential as ServerConnectCredentialMonitorHttp).monitor,
+      path: path,
+    );
+  }
+
+  final Spi spi;
+  final MonitorHttpCredential monitor;
+
+  @override
+  final String path;
+
+  /// Always `/`: the agent describes a POSIX-shaped filesystem whatever it is
+  /// running on.
+  @override
+  MonitorFileRef child(String name) => MonitorFileRef(
+    spi: spi,
+    monitor: monitor,
+    path: path.joinPath(name, separator: '/'),
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      other is MonitorFileRef && other.path == path && other.spi.id == spi.id;
+
+  @override
+  int get hashCode => Object.hash(MonitorFileRef, spi.id, path);
+
+  @override
+  String toString() => 'MonitorFileRef(${spi.id}:$path)';
 }
 
 /// Everything needed to open an SSH connection somewhere else.

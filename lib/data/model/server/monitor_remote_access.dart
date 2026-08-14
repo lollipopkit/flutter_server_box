@@ -8,7 +8,7 @@
 /// the terminal, since the tunnel carries end-to-end encrypted SSH and the
 /// terminal carries cleartext shell output.
 ///
-/// Written by hand rather than generated: it is four booleans with a
+/// Written by hand rather than generated: it is five booleans with a
 /// deliberate default of "not offered", which is the answer an older agent
 /// (whose `/capabilities` has no `remote_access` at all) should produce.
 class MonitorRemoteAccess {
@@ -30,11 +30,20 @@ class MonitorRemoteAccess {
   /// assert something the agent already knows.
   final bool fullAccess;
 
+  /// The agent will serve `/api/v1/fs/*`.
+  ///
+  /// Its own answer rather than part of [fullAccess]: the agent's file API is
+  /// confined to the roots its operator named, so it can be on while the shell
+  /// is off. False also for an agent too old to have the endpoint, which is
+  /// what the default gives.
+  final bool files;
+
   const MonitorRemoteAccess({
     this.tunnel = false,
     this.terminal = false,
     this.secure = false,
     this.fullAccess = false,
+    this.files = false,
   });
 
   static const none = MonitorRemoteAccess();
@@ -46,13 +55,14 @@ class MonitorRemoteAccess {
       terminal: flag('terminal'),
       secure: flag('secure'),
       fullAccess: flag('full_access'),
+      files: flag('files'),
     );
   }
 
   @override
   String toString() =>
       'MonitorRemoteAccess(tunnel: $tunnel, terminal: $terminal, '
-      'secure: $secure, fullAccess: $fullAccess)';
+      'secure: $secure, fullAccess: $fullAccess, files: $files)';
 
   @override
   bool operator ==(Object other) =>
@@ -60,8 +70,9 @@ class MonitorRemoteAccess {
       tunnel == other.tunnel &&
       terminal == other.terminal &&
       secure == other.secure &&
-      fullAccess == other.fullAccess;
+      fullAccess == other.fullAccess &&
+      files == other.files;
 
   @override
-  int get hashCode => Object.hash(tunnel, terminal, secure, fullAccess);
+  int get hashCode => Object.hash(tunnel, terminal, secure, fullAccess, files);
 }

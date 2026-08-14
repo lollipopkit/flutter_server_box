@@ -160,6 +160,7 @@
   "remotePath": "Ruta remota",
   "sameIdServerExist": "Ya existe un servidor con el mismo ID",
   "second": "Segundo",
+  "serverFilesUnavailableTip": "Accesible mediante el SSH de este servidor o mediante un agente monitor con su API de archivos activada.",
   "sendTo": "Enviar a…",
   "serverDetailOrder": "Orden de los componentes en la página de detalles del servidor",
   "serverFuncBtns": "Botones de función del servidor",

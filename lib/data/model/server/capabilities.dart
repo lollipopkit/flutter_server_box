@@ -147,12 +147,14 @@ class MonitorHttpCapabilities implements ServerCapabilities {
   @override
   bool get byteStream => false;
 
-  /// SFTP rides the byte stream, so today this is that question. A monitor
-  /// file API would make it its own answer, and that is the point of asking it
-  /// separately.
-  // TODO: answer from the agent's own grant once `monitor` serves files.
+  /// The agent's own answer, from `GET /api/v1/capabilities`.
+  ///
+  /// Not [byteStream]: the file API is an endpoint of the agent's, confined to
+  /// the roots its operator named, and needs no stream this app can point
+  /// anywhere. A server with no reachable sshd can browse files and still not
+  /// carry SFTP — which is the case the endpoint exists for.
   @override
-  bool get files => byteStream;
+  bool get files => granted.files;
 
   /// The agent has been sampling since before the app asked, which is the
   /// point of running one.

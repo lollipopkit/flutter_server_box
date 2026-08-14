@@ -896,6 +896,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get second => 'S';
 
   @override
+  String get serverFilesUnavailableTip =>
+      'Dapat dijangkau melalui SSH server ini, atau melalui agen monitor dengan API berkasnya diaktifkan.';
+
+  @override
   String get sendTo => 'Kirim ke…';
 
   @override

@@ -9,7 +9,9 @@ import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/page/storage/local.dart';
+import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 
 /// Ask where [source] should go, and queue the transfer.
@@ -36,7 +38,9 @@ Future<void> sendTo(
 
   final destination = switch (place) {
     _Device() => LocalFileRef(dir).child(source.name),
-    _Server(:final spi) => SftpFileRef.forServer(spi, dir).child(source.name),
+    // The same order `ServerFilePage` browses in, so what a file is sent over
+    // is what the browser showed it over.
+    _Server(:final spi) => serverFileRef(ref, spi, dir).child(source.name),
   };
 
   // Copying a file onto itself truncates it to nothing: the write opens the
@@ -106,11 +110,26 @@ Future<String?> _pickDir(BuildContext context, _Place place) => switch (place) {
     context,
     args: const LocalFilePageArgs(isPickDir: true),
   ),
-  _Server(:final spi) => SftpPage.route.go(
+  // The resolving page, not the SFTP one: a destination reached through its
+  // agent's file API is still a place a file can be sent to.
+  _Server(:final spi) => ServerFilePage.route.go(
     context,
     SftpPageArgs(spi: spi, isSelect: true),
   ),
 };
+
+/// How to name a path on [spi], by whichever way its files are reached.
+///
+/// One place, so the browser and the transfer engine cannot disagree about
+/// what a server's files are — a file browsed over SFTP and then sent over the
+/// agent's API would be two different filesystems on hosts where the roots do
+/// not line up.
+FileRef serverFileRef(WidgetRef ref, Spi spi, String path) {
+  final caps = ref.read(serverProvider(spi.id)).capabilities;
+  return caps.byteStream
+      ? SftpFileRef.forServer(spi, path)
+      : MonitorFileRef.forServer(spi, path);
+}
 
 /// Whether a server's files can be reached at all.
 ///

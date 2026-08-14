@@ -896,6 +896,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get second => 'с';
 
   @override
+  String get serverFilesUnavailableTip =>
+      'Доступно через SSH этого сервера или через агент monitor с включённым файловым API.';
+
+  @override
   String get sendTo => 'Отправить в…';
 
   @override

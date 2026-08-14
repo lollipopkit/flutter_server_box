@@ -7,6 +7,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:easy_isolate/easy_isolate.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
+import 'package:server_box/core/utils/monitor_file_backend.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/sftp_file_backend.dart';
 import 'package:server_box/core/utils/sftp_timeout.dart';
@@ -16,6 +17,7 @@ import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/monitor_http.dart';
 
 const _sftpChunkSize = 32 * 1024;
 
@@ -735,6 +737,10 @@ Future<FileBackend> _openBackend(
   switch (ref) {
     case LocalFileRef():
       return const LocalFileBackend();
+    case MonitorFileRef(:final monitor):
+      // No prompts to marshal and no connection to tear down: the client is
+      // an HTTP session that logs in on its first request.
+      return MonitorFileBackend(MonitorHttpClient(monitor));
     case SftpFileRef(:final creds):
       final client = await _connectSsh(creds, mainSendPort);
       closing.add(() async => client.close());

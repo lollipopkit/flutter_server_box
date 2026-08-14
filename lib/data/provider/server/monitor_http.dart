@@ -197,6 +197,120 @@ class MonitorHttpClient {
     });
   }
 
+  // --------------------------------------------------------------- files
+  //
+  // `/api/v1/fs/*`, which the agent serves only when its operator switched it
+  // on and named the directories it may reach. Every path is absolute and is
+  // resolved against those roots on the agent's side; nothing here has to
+  // sanitise one, and nothing here should try — a second opinion about what a
+  // path means is how the two ends stop agreeing.
+
+  /// One directory, as the agent's `EntryView` describes it.
+  Future<List<Map<String, dynamic>>> fsList(String path) {
+    return _authed(() async {
+      // A bare JSON array, like `/metrics/history`.
+      final resp = await _session().get<dynamic>(
+        '/api/v1/fs/list',
+        queryParameters: {'path': path},
+      );
+      final entries = resp.data;
+      if (entries is! List) {
+        throw MonitorHttpErr(
+          type: MonitorHttpErrType.invalidResponse,
+          message: '/api/v1/fs/list answered with '
+              '${entries.runtimeType}, not a JSON array',
+        );
+      }
+      return entries.cast<Map<String, dynamic>>();
+    });
+  }
+
+  /// One entry, or null where there is nothing there.
+  ///
+  /// The agent answers 404 both for absent and for out-of-bounds, on purpose:
+  /// telling those apart would let a caller map the filesystem one status code
+  /// at a time. Null therefore means "nothing you can have", which is the same
+  /// thing from here.
+  Future<Map<String, dynamic>?> fsStat(String path) {
+    return _authed(() async {
+      try {
+        return await _object('/api/v1/fs/stat', query: {'path': path});
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 404) return null;
+        rethrow;
+      }
+    });
+  }
+
+  /// The bytes, from [offset].
+  ///
+  /// Streamed rather than collected: this is the path that has to move a file
+  /// bigger than the app is willing to hold.
+  Future<Stream<List<int>>> fsRead(String path, {int offset = 0}) {
+    return _authed(() async {
+      final resp = await _session().get<ResponseBody>(
+        '/api/v1/fs/read',
+        queryParameters: {'path': path, if (offset > 0) 'offset': offset},
+        options: Options(responseType: ResponseType.stream),
+      );
+      final body = resp.data;
+      if (body == null) {
+        throw const MonitorHttpErr(
+          type: MonitorHttpErrType.invalidResponse,
+          message: 'Empty /api/v1/fs/read response',
+        );
+      }
+      return body.stream.map((chunk) => chunk.toList());
+    });
+  }
+
+  /// Sends [data] to [path]. The agent stages it and renames, so a write that
+  /// dies halfway leaves no half-file under the destination's name.
+  Future<void> fsWrite(
+    String path,
+    Stream<List<int>> data, {
+    int? size,
+  }) {
+    return _authed(() async {
+      await _session().put<dynamic>(
+        '/api/v1/fs/write',
+        queryParameters: {'path': path},
+        data: data,
+        options: Options(
+          // Dio will not set one for a stream, and the agent needs to know
+          // where the body ends. Null sends it chunked, which the agent reads
+          // to completion either way.
+          headers: {
+            'content-type': 'application/octet-stream',
+            'content-length': ?size,
+          },
+        ),
+      );
+    });
+  }
+
+  Future<void> fsMkdir(String path) => _authed(() async {
+    await _object('/api/v1/fs/mkdir', post: {'path': path});
+  });
+
+  Future<void> fsRename(String from, String to) => _authed(() async {
+    await _object('/api/v1/fs/rename', post: {'from': from, 'to': to});
+  });
+
+  Future<void> fsChmod(String path, int mode) => _authed(() async {
+    await _object('/api/v1/fs/chmod', post: {'path': path, 'mode': mode});
+  });
+
+  Future<void> fsRemove(String path, {bool recursive = false}) {
+    return _authed(() async {
+      await _session().request<dynamic>(
+        '/api/v1/fs/remove',
+        data: {'path': path, 'recursive': recursive},
+        options: Options(method: 'DELETE'),
+      );
+    });
+  }
+
   /// Opens the agent's SSH tunnel and returns the raw WebSocket.
   ///
   /// Takes a single-use ticket first: a browser can't put a bearer token on a

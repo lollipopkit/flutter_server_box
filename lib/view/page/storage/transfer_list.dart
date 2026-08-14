@@ -186,9 +186,12 @@ class _TransferListPageState extends ConsumerState<TransferListPage> {
     );
   }
 
+  /// The place, not the transport: a server is a server whether its bytes
+  /// come over SFTP or over its agent's file API.
   static String _endName(FileRef ref) => switch (ref) {
     LocalFileRef() => libL10n.device,
     SftpFileRef(:final spi) => spi.name,
+    MonitorFileRef(:final spi) => spi.name,
   };
 
   Widget _buildDelete(FileTransferStatus status) {

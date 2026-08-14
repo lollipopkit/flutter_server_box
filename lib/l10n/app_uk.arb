@@ -161,6 +161,7 @@
   "remotePath": "Віддалений шлях",
   "sameIdServerExist": "Сервер з таким ID вже існує",
   "second": "сек.",
+  "serverFilesUnavailableTip": "Доступно через SSH цього сервера або через агент monitor з увімкненим файловим API.",
   "sendTo": "Надіслати до…",
   "serverDetailOrder": "Порядок віджетів на сторінці деталі",
   "serverFuncBtns": "Кнопки функцій сервера",

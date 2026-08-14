@@ -96,7 +96,35 @@ capability: SFTP while there is a byte stream to run it over, a monitor file
 API if one is ever built and the server has no sshd. A server that gains sshd
 later changes backend and not category, and nothing in the tab strip moves.
 
-### Recommendation
+### Recommendation, and what happened
+
+**C first, A as its own piece of work.** Both are now done: the abstraction
+shipped with local and SFTP behind it, and `monitor` grew the endpoints
+afterwards, designed on its side rather than here.
+
+What A settled, beyond the plan above:
+
+- **`fs_roots` is the boundary, and it has no default.** Every request is
+  resolved to a canonical path — symlinks followed, `..` refused — and then
+  checked against the roots. Resolving before checking is the point: a link
+  inside a root pointing at `/etc` is a refusal, where checking the client's
+  string would have passed it.
+- **Its own switch, not part of `full_access`.** That grant means "a shell as
+  the agent's user"; this one means "these directories". Where the roots are
+  the whole filesystem the two are equivalent, which is what the agent warns
+  about at startup.
+- **`MonitorFileRef` needs no isolate.** The isolate exists because SSH's
+  crypto is pure Dart; HTTPS is native. `FileTransfer.needsIsolate` is now
+  "is either end SSH", not "is either end remote".
+- **`ServerFilePage` is the one place that picks.** SFTP wherever there is a
+  byte stream — it is end to end, so the agent cannot read it — and the agent's
+  API for the case SFTP cannot serve at all.
+- **Known limitation, on the agent:** resolution and use are two steps, so a
+  symlink swapped between them would be followed. Closing it needs
+  `openat`+`O_NOFOLLOW` per component (`cap-std`), which is not portable across
+  monitor's platforms. Stated in `monitor/CLAUDE.md` rather than papered over.
+
+The original recommendation, kept for the reasoning:
 
 **C now, A as its own piece of work.** Ship the abstraction with local and SFTP
 behind it, and let a monitor-backed server keep using SFTP over the tunnel —
@@ -142,7 +170,7 @@ Three implementations:
 | - | ----- | ------ | ----- |
 | `LocalFileBackend` | `File.openRead` | `File.openWrite` | `dart:io`, no auth, no failure modes worth retrying |
 | `SftpFileBackend` | `SftpFile.read` | `SftpFile.write` | wraps the existing client; keeps the sudo fallback |
-| `MonitorFileBackend` | — | — | not in this plan; see above |
+| `MonitorFileBackend` | `GET /fs/read` | `PUT /fs/write` | the agent's own API, confined to its `fs_roots`; no sudo to fall back to |
 
 The sudo fallback (`core/utils/sftp_sudo.dart`) stays SFTP's own. It is not a
 general idea: it works by running a shell command when an SFTP operation is

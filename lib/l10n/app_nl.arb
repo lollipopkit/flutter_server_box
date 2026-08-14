@@ -160,6 +160,7 @@
   "remotePath": "Extern pad",
   "sameIdServerExist": "Er bestaat al een server met dezelfde ID",
   "second": "s",
+  "serverFilesUnavailableTip": "Bereikbaar via de SSH van deze server, of via een monitor-agent met zijn bestands-API ingeschakeld.",
   "sendTo": "Verzenden naar…",
   "serverDetailOrder": "Volgorde van widget op detailpagina",
   "serverFuncBtns": "Server functieknoppen",

@@ -846,6 +846,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get second => '초';
 
   @override
+  String get serverFilesUnavailableTip =>
+      '이 서버의 SSH에 연결할 수 있거나, monitor 에이전트의 파일 API가 켜져 있어야 합니다.';
+
+  @override
   String get sendTo => '보낼 위치…';
 
   @override

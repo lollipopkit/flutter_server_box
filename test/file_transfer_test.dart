@@ -7,7 +7,9 @@ import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/file/transfer_status.dart';
 import 'package:server_box/data/model/server/capabilities.dart';
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
@@ -79,7 +81,32 @@ void main() {
       expect(job.needsIsolate, isFalse);
     });
 
-    test('anything with a server at either end needs one', () {
+    test('only SSH needs an isolate', () {
+      // The isolate exists because SSH's symmetric crypto is pure Dart. A
+      // monitor agent is reached over HTTPS, whose crypto is native, so a
+      // transfer through one has no reason to leave this isolate.
+      final monitor = MonitorFileRef.forServer(
+        Spi(
+          name: 'agent',
+          id: 'agent',
+          monitorHttp: const MonitorHttpCredential(
+            addr: 'https://10.0.0.3:3770',
+          ),
+        ),
+        '/srv/data/x',
+      );
+
+      expect(
+        FileTransfer(from: monitor, to: const LocalFileRef('/a/x')).needsIsolate,
+        isFalse,
+      );
+      expect(
+        FileTransfer(from: const LocalFileRef('/a/x'), to: monitor).needsIsolate,
+        isFalse,
+      );
+    });
+
+    test('anything with SSH at either end needs one', () {
       final spi = spiFixture(name: 'srv', id: 'srv', ip: '10.0.0.1');
       final remote = SftpFileRef.forServer(spi, '/tmp/x');
 
@@ -231,19 +258,46 @@ void main() {
   });
 
   group('the files capability', () {
-    test('SSH carries files; a monitor agent does not, yet', () {
+    test('SSH carries files, and an agent carries them if it says so', () {
       expect(const SshCapabilities().files, isTrue);
+
+      // The agent's own answer, not `full_access` read twice: its file API is
+      // confined to the roots its operator named, so it can be on while the
+      // shell is off — and off while the shell is on.
       expect(
         const MonitorHttpCapabilities(MonitorRemoteAccess()).files,
         isFalse,
       );
-      // Even a fully granting agent: there is no file endpoint to grant.
       expect(
         const MonitorHttpCapabilities(
           MonitorRemoteAccess(fullAccess: true),
         ).files,
         isFalse,
       );
+      expect(
+        const MonitorHttpCapabilities(MonitorRemoteAccess(files: true)).files,
+        isTrue,
+      );
+    });
+
+    test('an agent that serves files still carries no byte stream', () {
+      // Which is the whole case the endpoint exists for: a host with no
+      // reachable sshd. The file tab must open it, and port forwarding must
+      // not be offered on it.
+      const caps = MonitorHttpCapabilities(MonitorRemoteAccess(files: true));
+
+      expect(caps.files, isTrue);
+      expect(caps.byteStream, isFalse);
+    });
+
+    test('an older agent grants nothing it was never asked about', () {
+      // `/capabilities` without a `files` field at all.
+      final granted = MonitorRemoteAccess.fromJson(const {
+        'tunnel': true,
+        'terminal': true,
+      });
+
+      expect(granted.files, isFalse);
     });
   });
 }

@@ -3,10 +3,13 @@ import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
+import 'package:server_box/core/utils/monitor_file_backend.dart';
 import 'package:server_box/data/model/file/copy_tree.dart';
+import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/file/transfer_worker.dart';
+import 'package:server_box/data/provider/server/monitor_http.dart';
 
 /// One transfer, and everything a list has to say about it.
 class FileTransferStatus {
@@ -108,17 +111,18 @@ class FileTransferStatus {
     }
   }
 
-  /// A copy within this device, on the isolate that asked for it.
+  /// A copy that needs no isolate: this device, a monitor agent, or both.
   ///
   /// The same events an isolate would send, so nothing downstream can tell the
   /// difference — including the list, which shows one row either way.
   Future<void> _runHere() async {
-    const backend = LocalFileBackend();
+    final source = _backendFor(job.from);
+    final dest = _backendFor(job.to);
     try {
       onNotify(FileTransferStage.preparing);
       final watch = Stopwatch()..start();
       final plan = await planCopy(
-        backend,
+        source,
         job.from.path,
         job.to.path,
         isDir: job.isDir,
@@ -129,8 +133,8 @@ class FileTransferStatus {
       final total = plan.totalBytes;
       await runCopy(
         plan,
-        backend,
-        backend,
+        source,
+        dest,
         cancelled: () => _cancelled,
         onProgress: (transferred) => onNotify(
           FileTransferProgress(
@@ -150,6 +154,16 @@ class FileTransferStatus {
       onNotify(e);
     }
   }
+
+  /// Nothing to close: neither of these owns a connection that outlives the
+  /// call. An `SftpFileRef` never reaches here — [FileTransfer.needsIsolate]
+  /// is exactly the question "is either end SSH".
+  static FileBackend _backendFor(FileRef ref) => switch (ref) {
+    LocalFileRef() => const LocalFileBackend(),
+    MonitorFileRef(:final monitor) =>
+      MonitorFileBackend(MonitorHttpClient(monitor)),
+    SftpFileRef() => throw StateError('SFTP transfers run in an isolate'),
+  };
 
   void onNotify(dynamic event) {
     var shouldDispose = false;

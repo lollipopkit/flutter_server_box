@@ -160,6 +160,7 @@
   "remotePath": "Удаленный путь",
   "sameIdServerExist": "Сервер с таким ID уже существует",
   "second": "с",
+  "serverFilesUnavailableTip": "Доступно через SSH этого сервера или через агент monitor с включённым файловым API.",
   "sendTo": "Отправить в…",
   "serverDetailOrder": "Порядок элементов на странице деталей сервера",
   "serverFuncBtns": "Кнопки функций сервера",

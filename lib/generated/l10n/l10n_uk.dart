@@ -896,6 +896,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get second => 'сек.';
 
   @override
+  String get serverFilesUnavailableTip =>
+      'Доступно через SSH цього сервера або через агент monitor з увімкненим файловим API.';
+
+  @override
   String get sendTo => 'Надіслати до…';
 
   @override

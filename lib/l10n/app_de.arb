@@ -160,6 +160,7 @@
   "remotePath": "Entfernte Pfade",
   "sameIdServerExist": "Ein Server mit derselben ID existiert bereits",
   "second": "s",
+  "serverFilesUnavailableTip": "Erreichbar entweder über SSH dieses Servers oder über einen Monitor-Agenten mit eingeschalteter Datei-API.",
   "sendTo": "Senden an …",
   "serverDetailOrder": "Reihenfolge der Widgets auf der Detailseite",
   "serverFuncBtns": "Server-Funktionsschaltflächen",

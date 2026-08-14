@@ -38,10 +38,12 @@ class FileTransfer {
 
   /// Whether this needs an isolate of its own.
   ///
-  /// Copying within this device is a file copy with no crypto in it, and the
-  /// isolate exists because SSH's symmetric crypto is pure Dart and would peg
-  /// the UI thread. Starting one out of symmetry would cost more than it saved.
-  bool get needsIsolate => !(from is LocalFileRef && to is LocalFileRef);
+  /// Only SSH does. Its symmetric crypto is pure Dart and would peg the UI
+  /// thread for the length of the transfer — that is the whole reason the
+  /// isolate exists (see `benchmark/README.md`). A copy within this device has
+  /// no crypto at all, and a monitor agent is reached over HTTPS, whose crypto
+  /// is native. Starting an isolate for either would cost more than it saved.
+  bool get needsIsolate => from is SftpFileRef || to is SftpFileRef;
 
   /// Whether the two specialised SFTP paths can serve this.
   ///
