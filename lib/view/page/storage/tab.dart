@@ -10,6 +10,7 @@ import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
@@ -98,12 +99,21 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   @override
   bool get wantKeepAlive => true;
 
+  /// Whether there is saved state on its way back, known before the first
+  /// frame ends and so before anything decides this tab is empty.
+  bool _hasSavedSessions = false;
+
   @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
     registerForRestoration(_restorableSessions, 'sessions');
     if (!initialRestore || _restorableSessions.value.isEmpty) return;
+    _hasSavedSessions = true;
     WidgetsBinding.instance.addPostFrameCallback((_) => _restore());
   }
+
+  /// Whether this page has already chosen what to open with. Once, on the way
+  /// to the first frame; an empty tab after that is one the user emptied.
+  bool _chosenInitial = false;
 
   @override
   void initState() {
@@ -111,7 +121,34 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
     // Anything queued before this tab existed — tabs are built when first
     // visited, so a request from the server list arrives before there is
     // anything here to receive it.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _drainRequests());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _drainRequests();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    // First, because this is what runs [restoreState].
+    super.didChangeDependencies();
+    if (_chosenInitial) return;
+    _chosenInitial = true;
+
+    // What was saved comes back, and what was asked for while this tab did not
+    // exist is about to be drained. Either way this page is not empty and has
+    // nothing to default to.
+    if (_hasSavedSessions) return;
+    if (ref.read(sftpRequestsProvider).isNotEmpty) return;
+
+    // Open on this device. Answering "which files" with a picker made the
+    // common case — reach this device's own storage — cost a tap every time,
+    // to choose the one place that is always reachable and where downloads
+    // land.
+    //
+    // Here rather than in a callback after the first frame: a session added
+    // later shows the full-width picker for a frame before replacing it.
+    // Nothing is listening to the controller yet, which is what makes adding
+    // one this early safe.
+    _openLocal();
   }
 
   @override
@@ -139,6 +176,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
         hasContent: _sessions.tabs.isNotEmpty,
         sideBuilder: (_) => _SideBar(
           sessions: _sessions,
+          actions: [_searchBtn, _addBtn],
           onLocal: _openLocal,
           onServer: _openRemote,
           onSelect: _sessions.select,
@@ -215,7 +253,9 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       // One widget that follows whichever session is showing, rather than a
       // list the bar would have to rebuild itself to keep current.
       sessionActions: [_SessionActions(sessions: _sessions)],
-      leadingActions: const [],
+      // The same two the rail carries. On one screen the picker is a tab
+      // rather than a column, and these act on what it lists.
+      leadingActions: [_searchBtn, _addBtn],
     ),
   );
 
@@ -326,9 +366,62 @@ extension _Sessions on _FileTabPageState {
       restored++;
     }
 
-    if (restored == 0) return;
+    // Everything it remembered is gone — every server deleted, or switched to
+    // a connection that cannot carry SFTP. That is the empty tab this page no
+    // longer opens with, so it falls back to the same default a first run gets.
+    if (restored == 0) {
+      _openLocal();
+      return;
+    }
     _save();
     _sessions.select(1);
+  }
+}
+
+/// What acts on the list of places rather than on one browser in it.
+extension _Actions on _FileTabPageState {
+  Widget get _searchBtn => Btn.icon(
+    icon: const Icon(Icons.search, size: 18),
+    onTap: _showSearch,
+  );
+
+  /// A server this app does not know about yet cannot be browsed, and the rail
+  /// is where someone looking for it would look.
+  Widget get _addBtn => Btn.icon(
+    icon: const Icon(Icons.add, size: 18),
+    onTap: () => ServerEditPage.route.go(context),
+  );
+
+  void _showSearch() {
+    showSearch(
+      context: context,
+      delegate: SearchPage<Spi>(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        future: (query) async {
+          if (query.isEmpty) return [];
+          // Read per query rather than snapshotted when the search opened, so
+          // a server added or renamed meanwhile is findable.
+          final state = ref.read(serversProvider);
+          final needle = query.toLowerCase();
+          return [
+            for (final id in state.serverOrder)
+              if (state.servers[id] case final spi? when _canBrowse(spi))
+                if (spi.name.toLowerCase().contains(needle) ||
+                    spi.displayAddr.toLowerCase().contains(needle))
+                  spi,
+          ];
+        },
+        builder: (ctx, spi) => ListTile(
+          title: Text(spi.name),
+          subtitle: Text(spi.displayAddr),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            ctx.pop();
+            _openRemote(spi);
+          },
+        ),
+      ),
+    );
   }
 }
 
@@ -391,6 +484,7 @@ const _kColumnWidth = 300.0;
 class _SideBar extends ConsumerWidget {
   const _SideBar({
     required this.sessions,
+    required this.actions,
     required this.onLocal,
     required this.onServer,
     required this.onSelect,
@@ -398,6 +492,10 @@ class _SideBar extends ConsumerWidget {
   });
 
   final SessionTabsController<_FileSession> sessions;
+
+  /// What acts on the rail rather than on one session in it.
+  final List<Widget> actions;
+
   final VoidCallback onLocal;
   final void Function(Spi spi) onServer;
   final void Function(int index) onSelect;
@@ -414,6 +512,7 @@ class _SideBar extends ConsumerWidget {
         index: sessions.index,
         onTap: onSelect,
         onClose: onClose,
+        actions: actions,
         targets: [
           // Above the heading rather than under one of its own: it is the
           // place that is always reachable, not one entry in a list of many.
