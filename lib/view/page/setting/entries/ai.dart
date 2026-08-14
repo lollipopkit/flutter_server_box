@@ -56,12 +56,19 @@ extension _AI on _AppSettingsPageState {
           trailing: StoreSwitch(prop: _setting.askAiAutoRunSafeCommands),
         ),
         // Absent where it could not be honoured: iOS cannot start a process,
-        // and the sandboxed macOS build is the App Store one. A switch that
-        // turns on nothing is worse than no switch.
-        if (LocalExec.isSupported)
+        // and the sandboxed macOS build is the App Store one. On Android the
+        // local target is the Linux userland, so a build without proot has
+        // nothing to offer either. A switch that turns on nothing is worse
+        // than no switch.
+        if (LocalExec.isSupported && (!isAndroid || AndroidRootfs.isAvailable))
           ListTile(
             leading: const Icon(Icons.computer_outlined, size: _kIconSize),
-            title: TipText(l10n.agentLocalExec, l10n.agentLocalExecTip),
+            title: TipText(
+              l10n.agentLocalExec,
+              // Two different machines: a container the app installed, or the
+              // computer itself with the app's own data on it.
+              isAndroid ? l10n.agentLocalExecRootfsTip : l10n.agentLocalExecTip,
+            ),
             trailing: StoreSwitch(prop: _setting.agentLocalExec),
           ),
         ListTile(

@@ -6,6 +6,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:server_box/core/utils/android_rootfs.dart';
+import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -110,6 +111,45 @@ void main() {
     // proot's `-0`: every guest process believes it is root, which is what
     // makes `apk` work without any of it being true on the host.
     expect(typed, contains('root'));
+  }, skip: !Platform.isAndroid);
+
+  testWidgets('the Agent runs its commands inside the container', (_) async {
+    if (!AndroidRootfs.isAvailable) {
+      markTestSkipped('this build carries no proot');
+      return;
+    }
+    await AndroidRootfs.install();
+
+    // `LocalExec`, not the terminal's backend: the Agent's shell tool goes
+    // through this one, and until now nothing had ever run a command on this
+    // device through it — see local-ssh-plan.md, stage 2b.
+    const exec = LocalExec(inRootfs: true);
+
+    final release = await exec.run('cat /etc/alpine-release');
+    expect(release.stdout.trim(), AndroidRootfs.version);
+    expect(release.exitCode, 0);
+
+    // The two streams stay apart, which is the whole reason this is pipes and
+    // not a pty. A pty would have merged them.
+    final split = await exec.run('echo out; echo err >&2');
+    expect(split.stdout.trim(), 'out');
+    expect(split.stderr.trim(), 'err');
+
+    // And it is the container, not the phone: Android's own filesystem is not
+    // visible from inside.
+    final android = await exec.run(r'ls /system >/dev/null 2>&1; echo rc=$?');
+    expect(android.stdout.trim(), 'rc=1');
+
+    // The file tools resolve inside it too. They are `dart:io` on the host and
+    // never enter the guest, so this mapping is the only thing that keeps them
+    // in the same filesystem the commands see.
+    final host = await AndroidRootfs.hostPathOf('/etc/alpine-release');
+    expect(host, isNotNull);
+    expect(await File(host!).readAsString(), startsWith(AndroidRootfs.version));
+
+    // Android's own `/etc/hosts` exists, and the Agent must not reach it.
+    await exec.run('ln -sf / /tmp/escape');
+    expect(await AndroidRootfs.hostPathOf('/tmp/escape/etc/hosts'), isNull);
   }, skip: !Platform.isAndroid);
 
   testWidgets('a package manager works inside it', (_) async {

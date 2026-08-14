@@ -154,6 +154,12 @@ Positions to take before writing any of it:
 - once stage 4 exists, prefer running the agent's local commands **inside the
   bundled rootfs** rather than on the host. The rootfs is the sandbox, and this
   is the argument for building it that has nothing to do with iOS.
+  **Done on Android**, and not as a preference: there the local target *is* the
+  container or there is none. `LocalExec(inRootfs:)` runs commands through
+  proot, and `AndroidRootfs.hostPathOf` maps the file tools' paths into the
+  rootfs and refuses anything outside it — including a symlink out, which one
+  reviewed `ln -s` would otherwise have made readable by the one pair of tools
+  that is deliberately not reviewed.
 
 On iOS there is no host shell at all, so for that platform "the agent can run
 code locally" *means* the rootfs. The capability lands per-platform, the same
@@ -389,8 +395,10 @@ setting that is off until asked for. Auto-run is barred here whatever
 `askAiAutoRunSafeCommands` says. The file tools use `dart:io` rather than `cat`
 and `tee`, because reading a file is not a command and should not go through
 command review. The model is not told this machine exists unless both gates
-pass. **Not exercised end to end** — `LocalExec` has unit tests, but no agent
-tool call has been made against this device.
+pass. The seam is now exercised on a device — `rootfs_shell_test.dart` runs
+commands through `LocalExec` on Android and checks both streams and the
+filesystem it sees. What is still unexercised is a *model* driving it: that
+needs an API key, so it is the user's to run.
 
 **3. Measure the Android execution question.** Done — see
 [the measurement](#measured-on-an-api-36-emulator-with-the-app-targeting-36).

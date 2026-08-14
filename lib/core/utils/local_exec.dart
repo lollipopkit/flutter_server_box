@@ -2,8 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/data/model/server/server_exec.dart';
+import 'package:server_box/data/res/store.dart';
 
 /// [ServerExec] on the machine the app is running on.
 ///
@@ -17,7 +20,15 @@ import 'package:server_box/data/model/server/server_exec.dart';
 /// reading only one of them gets what it asked for — `runWithSudo` watching for
 /// a rejected password is one.
 class LocalExec implements ServerExec {
-  const LocalExec();
+  const LocalExec({this.inRootfs = false});
+
+  /// Whether commands run inside the Linux userland rather than on the host.
+  ///
+  /// What the Agent gets on Android, and the reason [AndroidRootfs] is worth
+  /// its size on a platform that already has a shell: the host one runs as the
+  /// app, beside its stores and its keys, while the guest sees a filesystem
+  /// that contains none of them.
+  final bool inRootfs;
 
   /// What names this machine where a server id is expected.
   ///
@@ -34,6 +45,20 @@ class LocalExec implements ServerExec {
   /// cannot show a local terminal should not quietly run local commands for a
   /// model either.
   static bool get isSupported => LocalShellBackend.isSupported;
+
+  /// Whether the Agent may be told this machine exists at all.
+  ///
+  /// Three gates on Android and two elsewhere: the platform, the setting the
+  /// user turned on, and — on Android — a Linux userland to run in, because
+  /// that is the only local target offered there. Asked in one place so the
+  /// instructions and the tool cannot disagree: a model told about a machine
+  /// its tools then refuse spends a turn proposing commands for it.
+  static bool get isOffered {
+    if (!isSupported) return false;
+    if (!Stores.setting.agentLocalExec.fetch()) return false;
+    if (isAndroid && !AndroidRootfs.isReady) return false;
+    return true;
+  }
 
   @override
   Future<ExecResult> run(
@@ -55,10 +80,20 @@ class LocalExec implements ServerExec {
     // One executable either way; only what it is told to run differs, which
     // is what the ternary below says. The one that used to stand here chose
     // between `shell` and `shell`.
+    final guest = inRootfs
+        ? AndroidRootfs.enter(command: entry ?? script)
+        : null;
+    if (inRootfs && guest == null) {
+      throw StateError('There is no Linux userland on this device to run in.');
+    }
     final process = await Process.start(
-      shell,
-      entry == null ? [flag, script] : [flag, entry],
-      environment: env,
+      guest?.executable ?? shell,
+      guest?.arguments ?? (entry == null ? [flag, script] : [flag, entry]),
+      // The guest's own PATH and home, or Android's name for a directory that
+      // does not exist inside it and a shell that finds none of its own tools.
+      environment: guest == null
+          ? env
+          : {...AndroidRootfs.environment, ...?env},
       // Added to, not replaced: a command here runs on the user's own machine
       // and is written expecting the PATH they have.
       includeParentEnvironment: true,

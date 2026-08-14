@@ -9,6 +9,7 @@ import 'package:fl_lib/fl_lib.dart' hide Provider;
 import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:server_box/core/utils/adhoc_ssh_prompt.dart';
+import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/local_exec.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
@@ -439,6 +440,7 @@ String buildGlobalAgentInstructions({
   required List<GlobalAgentServerContext> servers,
   String? localeHint,
   bool localExec = false,
+  bool localIsRootfs = false,
 }) {
   final prompt = StringBuffer()
     ..writeln('You are the application-wide operations Agent in ServerBox.')
@@ -484,18 +486,33 @@ String buildGlobalAgentInstructions({
   // a model proposes commands for it and the user reads a refusal instead of
   // an answer.
   if (localExec) {
-    prompt
-      ..writeln(
-        'There is a third machine: the device ServerBox itself is running on. '
-        'Name it with server_id "${LocalExec.deviceId}".',
-      )
-      ..writeln(
+    prompt.writeln(
+      'There is a third machine: the device ServerBox itself is running on. '
+      'Name it with server_id "${LocalExec.deviceId}".',
+    );
+    // Two different machines under one name, and a model told the wrong one
+    // proposes commands against a filesystem that is not there. On Android it
+    // is a container the app installed; everywhere else it is the computer
+    // itself, with everything that implies.
+    if (localIsRootfs) {
+      prompt.writeln(
+        'On this device that machine is an Alpine Linux container ServerBox '
+        'installed, not the phone: commands run inside it, apk installs into '
+        'it, and file paths are resolved inside it. It cannot see Android\'s '
+        'filesystem, the app\'s data or the user\'s files, and a path outside '
+        'it is refused. Nothing runs there unattended — every command needs '
+        'review — but what it can damage is the container, which the user can '
+        'delete and reinstall.',
+      );
+    } else {
+      prompt.writeln(
         'It is the user\'s own computer, not a server: it holds this app\'s '
         'data, their keys and their files. Nothing runs there unattended, and '
         'every command needs review however read-only it looks. Use it only '
         'when the user asks about this device, never as a substitute for a '
         'server that is unreachable.',
       );
+    }
   }
 
   prompt
@@ -734,8 +751,8 @@ class GlobalAgentToolService {
       localeHint: localeHint,
       // Read now rather than once at start-up: the setting can be turned on
       // mid-conversation, and the instructions are rebuilt per request.
-      localExec:
-          LocalExec.isSupported && Stores.setting.agentLocalExec.fetch(),
+      localExec: LocalExec.isOffered,
+      localIsRootfs: AndroidRootfs.isReady,
     );
   }
 
@@ -800,9 +817,24 @@ class GlobalAgentToolService {
         'they decline.',
       );
     }
+    // On Android the local target is the Linux userland or it is nothing.
+    // The host shell there is toybox running as the app, next to its stores
+    // and its keys; the guest is a filesystem with none of them in it. The
+    // rootfs was built to be that boundary — see local-ssh-plan.md, stage 4.
+    if (isAndroid && !AndroidRootfs.isReady) {
+      throw StateError(
+        'This device runs Agent commands inside its Linux userland, and there '
+        'is none installed. The user can install it from the terminal tab; do '
+        'not propose commands for this device until they have.',
+      );
+    }
     // No server id: a result claiming one would name a machine in the list,
     // and this is not one of them.
-    return (exec: const LocalExec(), client: null, serverId: null);
+    return (
+      exec: LocalExec(inRootfs: isAndroid),
+      client: null,
+      serverId: null,
+    );
   }
 
   /// An ad-hoc connection that is still open.
@@ -985,7 +1017,7 @@ class GlobalAgentToolService {
     final (:exec, :client, :serverId) = await _shellFor(proposal);
     final path = proposal.path;
     if (path == null) throw const FormatException('path is required');
-    if (exec is LocalExec) return _readLocalFile(proposal, watch, path);
+    if (exec is LocalExec) return _readLocalFile(proposal, watch, path, exec);
     if (client == null) throw _noSftp;
     SftpClient? sftp;
     SftpFile? file;
@@ -1027,6 +1059,34 @@ class GlobalAgentToolService {
     }
   }
 
+  /// Where a path the model wrote actually is.
+  ///
+  /// On the host they are the same string. Inside the Linux userland they are
+  /// not: these tools are `dart:io` on the host and never enter the guest, so
+  /// `/etc/hosts` would be Android's rather than Alpine's — and `read_file` is
+  /// the one tool that is deliberately not reviewed before it runs, on the
+  /// grounds that reading a file is not a command.
+  ///
+  /// A path that leaves the rootfs is refused rather than clamped. `..` is
+  /// resolved inside the guest first, so this only rejects what a symlink out
+  /// of the rootfs would reach — and a clamped path would be a different file
+  /// than the one the model named.
+  Future<String> _localPath(
+    String path,
+    LocalExec exec, {
+    bool forWrite = false,
+  }) async {
+    if (!exec.inRootfs) return path;
+    final host = await AndroidRootfs.hostPathOf(path, forWrite: forWrite);
+    if (host == null) {
+      throw StateError(
+        'This device only exposes its Linux userland, and $path is not inside '
+        'it. Use a path within the container.',
+      );
+    }
+    return host;
+  }
+
   /// The same two tools on this device, over `dart:io` instead of SFTP.
   ///
   /// Not `cat` and `tee` through the shell: those would go through the same
@@ -1037,8 +1097,9 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
     String path,
+    LocalExec exec,
   ) async {
-    final file = File(path);
+    final file = File(await _localPath(path, exec));
     if (!await file.exists()) {
       throw StateError('No such file on this device: $path');
     }
@@ -1080,19 +1141,21 @@ class GlobalAgentToolService {
     Stopwatch watch,
     String path,
     Uint8List bytes,
+    LocalExec exec,
   ) async {
     if (bytes.length > _maxWriteBytes) {
       throw StateError(
         'File content exceeds the $_maxWriteBytes byte Agent limit.',
       );
     }
+    final host = await _localPath(path, exec, forWrite: true);
     // Written beside the target and moved onto it, the way the remote one is:
     // a write that fails halfway leaves the original file rather than half of
     // a new one.
-    final temporary = File('$path.${ShortId.generate()}.tmp');
+    final temporary = File('$host.${ShortId.generate()}.tmp');
     try {
       await temporary.writeAsBytes(bytes, flush: true);
-      await temporary.rename(path);
+      await temporary.rename(host);
     } catch (_) {
       if (await temporary.exists()) {
         try {
@@ -1124,7 +1187,7 @@ class GlobalAgentToolService {
     if (content is! String) throw const FormatException('content is required');
     final bytes = Uint8List.fromList(utf8.encode(content));
     if (exec is LocalExec) {
-      return _writeLocalFile(proposal, watch, path, bytes);
+      return _writeLocalFile(proposal, watch, path, bytes, exec);
     }
     if (client == null) throw _noSftp;
     if (bytes.length > _maxWriteBytes) {
