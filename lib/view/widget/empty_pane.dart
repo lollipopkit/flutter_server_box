@@ -13,11 +13,17 @@ class EmptyPane extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Icon(
-        icon,
-        size: 56,
-        color: Theme.of(context).colorScheme.outlineVariant,
+    final theme = Theme.of(context);
+    // Opaque, because in the snippet pane this is a route's page rather than
+    // something drawn inside one: closing the editor pushes it over the editor,
+    // and with nothing painted behind the icon the page being left showed
+    // through for the length of the transition and then vanished at the end of
+    // it. Elsewhere it sits in a scaffold's body and paints the colour that is
+    // already there.
+    return ColoredBox(
+      color: theme.scaffoldBackgroundColor,
+      child: Center(
+        child: Icon(icon, size: 56, color: theme.colorScheme.outlineVariant),
       ),
     );
   }
