@@ -4,10 +4,12 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
@@ -70,19 +72,125 @@ Future<TerminalSession?> showSnippetRun(
   }
 }
 
-/// The terminal inside the dialog, and the shell it is waiting on.
+final class SnippetRunPageArgs {
+  const SnippetRunPageArgs({required this.spi, required this.snippet});
+
+  final Spi spi;
+  final Snippet snippet;
+}
+
+/// The same run, as a page rather than a dialog.
+///
+/// Where the snippet being run is the thing already on screen — the editor —
+/// a dialog would float a terminal over the script it came from and cover it.
+/// Pushed into the pane instead, so the editor is one back gesture away and
+/// the output gets the whole surface.
+class SnippetRunPage extends ConsumerStatefulWidget {
+  const SnippetRunPage({super.key, required this.args});
+
+  final SnippetRunPageArgs args;
+
+  @override
+  ConsumerState<SnippetRunPage> createState() => _SnippetRunPageState();
+
+  static const route = AppRouteArg<void, SnippetRunPageArgs>(
+    page: SnippetRunPage.new,
+    path: '/snippets/run',
+  );
+}
+
+class _SnippetRunPageState extends ConsumerState<SnippetRunPage> {
+  late final MonitorRemoteAccess? _granted;
+  late final TerminalSession _session;
+  final _running = ValueNotifier(true);
+
+  /// Whether the session has been given to the terminal tab. It outlives this
+  /// page then, and closing it on the way out would hang up the shell the user
+  /// just asked to keep.
+  var _handedOver = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final server = ref.read(serverProvider(widget.args.spi.id));
+    _granted = server.remoteAccess;
+    _session = TerminalSession(spi: widget.args.spi)
+      ..adopt(server.client, granted: _granted);
+  }
+
+  @override
+  void dispose() {
+    if (!_handedOver) _session.close();
+    _running.dispose();
+    super.dispose();
+  }
+
+  void _continueInTerminal() {
+    _handedOver = true;
+    ref
+        .read(terminalRequestsProvider.notifier)
+        .add(widget.args.spi, session: _session);
+    ref.read(homeTabRequestProvider.notifier).go(AppTab.ssh);
+    // Popped as well as handed over: the terminal is somewhere else now, and
+    // coming back to the snippet should show the editor rather than a page
+    // whose shell has moved out of it.
+    context.pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: CustomAppBar(
+        // Which machine this is happening on, under the name of what is
+        // running. The page was reached by choosing a server, and by the time
+        // output is scrolling that choice is off screen.
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(widget.args.snippet.name),
+            Text(widget.args.spi.name, style: UIs.text12Grey),
+          ],
+        ),
+        centerTitle: false,
+        actions: [
+          ListenBuilder(
+            listenable: _running,
+            builder: () => TextButton(
+              onPressed: _running.value ? _continueInTerminal : null,
+              child: Text(l10n.continueInTerminal),
+            ),
+          ),
+        ],
+      ),
+      body: _SnippetRunView(
+        session: _session,
+        snippet: widget.args.snippet,
+        granted: _granted,
+        running: _running,
+        expand: true,
+      ),
+    );
+  }
+}
+
+/// The terminal and the shell it is waiting on, in a dialog or on a page.
 class _SnippetRunView extends StatefulWidget {
   const _SnippetRunView({
     required this.session,
     required this.snippet,
     required this.granted,
     required this.running,
+    this.expand = false,
   });
 
   final TerminalSession session;
   final Snippet snippet;
   final MonitorRemoteAccess? granted;
   final ValueNotifier<bool> running;
+
+  /// Take whatever room there is, rather than the box a dialog can afford.
+  final bool expand;
 
   @override
   State<_SnippetRunView> createState() => _SnippetRunViewState();
@@ -179,10 +287,13 @@ class _SnippetRunViewState extends State<_SnippetRunView>
     final theme = TerminalLook.themeOf(context);
 
     return SizedBox(
-      width: width,
-      height: height,
+      width: widget.expand ? null : width,
+      height: widget.expand ? null : height,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(7),
+        // Square on a page: the corners belong to the dialog it is inside, and
+        // rounding a surface that reaches the window's edges only shows the
+        // colour behind it.
+        borderRadius: BorderRadius.circular(widget.expand ? 0 : 7),
         child: ColoredBox(
           color: theme.background,
           child: Padding(
