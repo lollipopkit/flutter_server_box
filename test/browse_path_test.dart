@@ -82,6 +82,62 @@ void main() {
     expect(path.canGoUp, isFalse);
   });
 
+  group('going back', () {
+    test('is not the same as going up', () {
+      // The distinction the browser needs both of: up walks the tree, back
+      // retraces the browsing.
+      final path = BrowsePath(root: '/', initial: '/var/log');
+      path.goTo('/etc/ssh');
+
+      path.goUp();
+      expect(path.path, '/etc');
+
+      expect(path.goBack(), isTrue);
+      expect(path.path, '/etc/ssh');
+      expect(path.goBack(), isTrue);
+      expect(path.path, '/var/log');
+    });
+
+    test('does nothing, and says so, where there is nothing behind', () {
+      final path = BrowsePath(root: '/home/me');
+
+      expect(path.canGoBack, isFalse);
+      expect(path.goBack(), isFalse);
+      expect(path.path, '/home/me');
+    });
+
+    test('a jump that went nowhere is not a step to come back from', () {
+      final path = BrowsePath(root: '/home/me');
+
+      expect(path.goTo('/home/me'), isTrue);
+
+      expect(path.canGoBack, isFalse);
+    });
+
+    test('a refused jump leaves no trace', () {
+      final path = BrowsePath(root: '/home/me', initial: '/home/me/docs');
+
+      expect(path.goTo('/etc'), isFalse);
+
+      expect(path.canGoBack, isFalse);
+      expect(path.path, '/home/me/docs');
+    });
+
+    test('a long browse does not become an unbounded list', () {
+      final path = BrowsePath(root: '/');
+      for (var i = 0; i < 200; i++) {
+        path.goTo('/dir$i');
+      }
+
+      // Still walks back, and the oldest steps are the ones dropped.
+      var steps = 0;
+      while (path.goBack()) {
+        steps++;
+      }
+      expect(steps, 64);
+    });
+  });
+
   test('name is the last component', () {
     expect(BrowsePath(root: '/home/me').name, 'me');
     expect(BrowsePath(root: '/').name, '/');

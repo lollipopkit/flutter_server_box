@@ -254,6 +254,31 @@ Stage 1 changes no behaviour. Stages 2 and 3 are the risky ones: they replace
 1787 lines of working page code, and the SFTP page carries a lot of hard-won
 handling — sudo, timeouts (`core/utils/sftp_timeout.dart`), host-key prompts.
 
+### What stage 3b settled along the way
+
+- **Reading escalates too.** `SftpEscalation.run` answers with the command's
+  output, so `list` can fall back to a `find` under sudo — a directory this
+  user may not list is the case sudo exists for. `escalate<T>` is the general
+  form; `runWithEscalation` is it for operations with nothing to report.
+- **`chmod` joined the interface** rather than staying an SFTP-only menu entry,
+  because `traits.permissions` already claimed it and a monitor file API would
+  have it too. SFTP does it with `SSH_FXP_SETSTAT` — a server that serves files
+  need not give out shells — and falls back to `chmod` under sudo.
+- **`FileEntry.mode` is permission bits only.** SFTP packs the type into the
+  same number; `kind` already answers that, and a caller handing the value to
+  `chmod` should not have to know which bits to mask.
+- **Back and up are different.** `BrowsePath` grew a bounded history, because
+  the SFTP page's back button retraced browsing while the `..` row walked the
+  tree, and the browser needs both.
+- **No modal over a mutating operation.** The SFTP page wrapped each one in a
+  loading dialog. An operation may now stop halfway to ask for a sudo password,
+  and a barrier of its own would sit over that question — so the browser shows
+  a progress line and reports failures in a snackbar.
+- **One gap, marked with a TODO.** "New file" no longer offers sudo: escalating
+  a write means getting bytes to the far side first, which is the dance an
+  upload does at page level. Creating an *empty* file could escalate, through a
+  method of its own that does not exist yet.
+
 ## Open risks
 
 - **Deleting a working 1277-line page.** The SFTP page's edge cases are not in

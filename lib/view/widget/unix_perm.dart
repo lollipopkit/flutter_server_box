@@ -66,6 +66,21 @@ final class UnixPerm {
     return '${user.value}${group.value}${other.value}';
   }
 
+  /// The same nine bits as an octal number, which is what `chmod` takes.
+  int get value => (user.value << 6) | (group.value << 3) | other.value;
+
+  /// The nine low bits of [mode]; anything above them — setuid, sticky, the
+  /// type — is left alone rather than shown as something this editor could
+  /// change.
+  factory UnixPerm.fromValue(int mode) => UnixPerm(
+    user: _op(mode >> 6),
+    group: _op(mode >> 3),
+    other: _op(mode),
+  );
+
+  static UnixPermOp _op(int bits) =>
+      UnixPermOp(r: bits & 4 != 0, w: bits & 2 != 0, x: bits & 1 != 0);
+
   static UnixPerm get empty => const UnixPerm(
     user: UnixPermOp(r: false, w: false, x: false),
     group: UnixPermOp(r: false, w: false, x: false),

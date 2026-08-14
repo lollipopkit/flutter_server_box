@@ -31,7 +31,12 @@ class FileEntry {
 
   final DateTime? modified;
 
-  /// POSIX permission bits, or null on a backend with no notion of them.
+  /// POSIX permission bits — `0x1ED` for `755` — or null on a backend with no
+  /// notion of them.
+  ///
+  /// Permission bits only. SFTP packs the type into the same field and this
+  /// does not: [kind] already answers that, and a caller handing this to
+  /// `chmod` should not have to know which bits to mask off first.
   final int? mode;
 
   /// Where a symlink points, when the backend resolved it. Null for anything
@@ -39,7 +44,23 @@ class FileEntry {
   final String? linkTarget;
 
   bool get isDir => kind == FileKind.dir;
+
+  /// `rwxr-xr-x`, or null where the backend reported no mode.
+  String? get modeStr {
+    final value = mode;
+    if (value == null) return null;
+    const flags = 'rwx';
+    final out = StringBuffer();
+    for (var bit = 8; bit >= 0; bit--) {
+      out.write(value & (1 << bit) != 0 ? flags[2 - bit % 3] : '-');
+    }
+    return out.toString();
+  }
 }
+
+/// The bits [FileEntry.mode] keeps: `rwxrwxrwx` plus setuid, setgid and
+/// sticky, and nothing above them.
+const kFilePermMask = 0xFFF;
 
 enum FileKind { file, dir, link, other }
 
@@ -100,6 +121,13 @@ abstract interface class FileBackend {
   Future<void> remove(String path, {bool recursive = false});
 
   Future<void> rename(String from, String to);
+
+  /// Sets the POSIX permission bits, as an octal value — `0x1ED` for `755`.
+  ///
+  /// Only meaningful where [FileBackendTraits.permissions] is set; anywhere
+  /// else it throws [UnsupportedError], and the page should not have offered
+  /// it.
+  Future<void> chmod(String path, int mode);
 
   /// The bytes, from [offset]. A backend without [FileBackendTraits.randomAccessReads]
   /// must throw for a non-zero one rather than quietly returning the whole file.

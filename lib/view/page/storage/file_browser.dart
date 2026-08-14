@@ -1,7 +1,12 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/file/browse_path.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
+import 'package:server_box/data/res/store.dart';
+import 'package:server_box/view/widget/omit_start_text.dart';
+import 'package:server_box/view/widget/unix_perm.dart';
 
 /// What an injected action is allowed to do to the browser it sits in.
 ///
@@ -16,6 +21,18 @@ abstract interface class FileBrowserHandle {
 
   /// Re-lists and rebuilds.
   Future<void> refresh();
+
+  /// Shows another directory. Refuses anything outside the browser's root.
+  Future<void> goTo(String path);
+}
+
+/// Where a browser has been told to go before, for the goto dialog to suggest.
+///
+/// An interface rather than a store, because whether to remember anything at
+/// all is a setting, and a browser should not be the thing that reads it.
+abstract interface class BrowsePathHistory {
+  List<String> get all;
+  void add(String path);
 }
 
 /// Everything a browser needs beyond the backend itself.
@@ -24,11 +41,16 @@ class FileBrowserArgs {
     required this.backend,
     required this.root,
     this.initialPath,
+    this.homePath,
     this.isPickFile = false,
+    this.isPickDir = false,
     this.actionsSink,
     this.onPathChanged,
     this.extraActions,
+    this.bottomActions,
     this.entryActions,
+    this.pathTrailing,
+    this.pathHistory,
     this.labelOf,
     this.onOpenFile,
   });
@@ -41,8 +63,14 @@ class FileBrowserArgs {
   /// Where to open, within [root]. Anything outside lands at the root.
   final String? initialPath;
 
+  /// Where the home button goes, or null for a backend with no such place.
+  final String? homePath;
+
   /// Picking, not browsing: tapping a file confirms and returns its path.
   final bool isPickFile;
+
+  /// Picking a directory: the bottom bar confirms whichever one is open.
+  final bool isPickDir;
 
   /// Where to put the toolbar, for a host that draws a bar of its own.
   ///
@@ -51,12 +79,19 @@ class FileBrowserArgs {
   /// one would do.
   final ValueNotifier<List<Widget>>? actionsSink;
 
-  /// Told which directory is shown, as it changes, for a host that outlives
-  /// the page and reopens it where it was left.
+  /// Told which directory is shown, once a listing of it has succeeded.
+  ///
+  /// After the listing rather than at each move, because that is the moment
+  /// the browser knows the directory is really there — a host that reopens
+  /// where it was left should not be handed a path that failed to open.
   final void Function(String path)? onPathChanged;
 
   /// Toolbar buttons only this backend has.
   final List<Widget> Function(FileBrowserHandle)? extraActions;
+
+  /// Bottom-bar buttons only this backend has, beside the ones every browser
+  /// gets — uploading, which needs somewhere to upload to.
+  final List<Widget> Function(FileBrowserHandle)? bottomActions;
 
   /// Menu entries only this backend has, for one item.
   final List<Widget> Function(
@@ -65,6 +100,13 @@ class FileBrowserArgs {
     String fullPath,
   )?
   entryActions;
+
+  /// Shown beside the path, for a backend with something to say about how it
+  /// is reading it — SFTP's sudo mode.
+  final Widget? pathTrailing;
+
+  /// Suggestions for the goto dialog. Null offers none.
+  final BrowsePathHistory? pathHistory;
 
   /// What to call an entry where its name on disk is not what to show — a
   /// directory named after a server id, shown under that server's name.
@@ -83,9 +125,10 @@ class FileBrowserArgs {
 /// One browser over one [FileBackend].
 ///
 /// Everything here is written against the interface: listing, sorting, going
-/// in and out, renaming, deleting, making a directory. What is peculiar to a
-/// backend arrives through [FileBrowserArgs] rather than a subclass, so there
-/// is exactly one of these no matter how many kinds of storage there are.
+/// in and out, renaming, deleting, making a directory or a file, changing
+/// permissions, searching. What is peculiar to a backend arrives through
+/// [FileBrowserArgs] rather than a subclass, so there is exactly one of these
+/// no matter how many kinds of storage there are.
 class FileBrowserPage extends StatefulWidget {
   const FileBrowserPage({super.key, required this.args});
 
@@ -102,7 +145,12 @@ class _FileBrowserPageState extends State<FileBrowserPage>
     root: widget.args.root,
     initial: widget.args.initialPath,
   );
-  final _sort = _SortBy.name.vn;
+  final _sort = const _SortOption().vn;
+
+  /// Redrawn when it changes rather than by [setState], so a long delete does
+  /// not rebuild the listing under it.
+  final _busy = false.vn;
+
   late Future<List<FileEntry>> _entries = _list();
 
   @override
@@ -111,32 +159,50 @@ class _FileBrowserPageState extends State<FileBrowserPage>
   @override
   String get path => _path.path;
 
-  bool get _isPickFile => widget.args.isPickFile;
-
   @override
   bool get wantKeepAlive => true;
 
   @override
   void dispose() {
     _sort.dispose();
+    _busy.dispose();
     super.dispose();
   }
 
   Future<List<FileEntry>> _list() async {
-    final entries = await backend.list(_path.path);
-    // Directories first, then by whatever is chosen. A listing sorted by size
-    // that scatters folders through it is not a listing anybody reads.
-    entries.sort((a, b) {
-      if (a.isDir != b.isDir) return a.isDir ? -1 : 1;
-      return _sort.value.compare(a, b);
-    });
+    final listed = _path.path;
+    final entries = await backend.list(listed);
+    // Here rather than at each move: this is where the browser learns the
+    // directory really opened.
+    if (mounted) widget.args.onPathChanged?.call(listed);
     return entries;
+  }
+
+  /// Sorted for display, leaving the listing itself alone: reordering is a
+  /// local decision and must not cost a round trip to the server.
+  List<FileEntry> _sorted(List<FileEntry> entries, _SortOption option) {
+    final foldersFirst = Stores.setting.sftpShowFoldersFirst.fetch();
+    return List.of(entries)
+      ..sort((a, b) {
+        if (foldersFirst && a.isDir != b.isDir) return a.isDir ? -1 : 1;
+        final result = option.by.compare(a, b);
+        return option.reversed ? -result : result;
+      });
   }
 
   @override
   Future<void> refresh() async {
     setStateSafe(() => _entries = _list());
     await _entries;
+  }
+
+  @override
+  Future<void> goTo(String target) async {
+    if (!_path.goTo(target)) {
+      context.showSnackBar('${libL10n.fail}: $target');
+      return;
+    }
+    await refresh();
   }
 
   void _go(void Function() move) {
@@ -149,62 +215,121 @@ class _FileBrowserPageState extends State<FileBrowserPage>
   // ------------------------------------------------------------------ actions
 
   Future<void> _rename(FileEntry entry) async {
-    final controller = TextEditingController(text: entry.name);
-    try {
-      final name = await context.showRoundDialog<String>(
-        title: libL10n.rename,
-        child: Input(
-          autoFocus: true,
-          icon: Icons.abc,
-          label: libL10n.name,
-          controller: controller,
-          suggestion: true,
-          onSubmitted: (value) => context.pop(value.trim()),
-        ),
-        actions: Btn.ok(onTap: () => context.pop(controller.text.trim())).toList,
-      );
-      if (name == null || name.isEmpty || name == entry.name || !mounted) {
-        return;
-      }
-      await _run(
-        () => backend.rename(
-          _fullPath(entry),
-          BrowsePath.join(_path.path, name),
-        ),
-      );
-    } finally {
-      controller.dispose();
-    }
+    final name = await _askName(
+      title: libL10n.rename,
+      icon: Icons.abc,
+      initial: entry.name,
+    );
+    if (name == null || name == entry.name) return;
+    await _run(
+      () => backend.rename(
+        _fullPath(entry),
+        BrowsePath.join(_path.path, name),
+      ),
+    );
   }
 
   Future<void> _delete(FileEntry entry) async {
+    // Most people do not know that SFTP cannot delete a directory with
+    // anything in it, so the choice is offered rather than the failure.
+    var recursive = Stores.setting.sftpRmrDir.fetch();
     final confirmed = await context.showRoundDialog<bool>(
-      title: libL10n.delete,
-      child: Text(libL10n.askContinue('${libL10n.delete} ${entry.name}')),
-      actions: Btn.ok(onTap: () => context.pop(true)).toList,
+      title: libL10n.attention,
+      child: StatefulBuilder(
+        builder: (_, setState) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListTile(
+              title: Text(
+                libL10n.askContinue(
+                  '${libL10n.delete} ${entry.name}'
+                  '${entry.isDir && recursive ? '\n${l10n.sftpRmrDirSummary}' : ''}',
+                ),
+              ),
+            ),
+            if (entry.isDir && !Stores.setting.sftpRmrDir.fetch())
+              CheckboxListTile(
+                title: Text(l10n.sftpRmrDirSummary),
+                value: recursive,
+                onChanged: (value) =>
+                    setState(() => recursive = value ?? false),
+              ),
+          ],
+        ),
+      ),
+      actions: Btnx.okReds,
     );
-    if (confirmed != true || !mounted) return;
-    // A directory is emptied first. Only the backend knows whether its
-    // protocol can do that in one call — SFTP cannot.
-    await _run(() => backend.remove(_fullPath(entry), recursive: entry.isDir));
+    if (confirmed != true) return;
+    await _run(
+      () => backend.remove(_fullPath(entry), recursive: entry.isDir && recursive),
+    );
+  }
+
+  Future<void> _chmod(FileEntry entry) async {
+    final perm = UnixPerm.fromValue(entry.mode ?? 0);
+    var next = perm;
+    final ok = await context.showRoundDialog<bool>(
+      child: UnixPermEditor(perm: perm, onChanged: (value) => next = value),
+      actions: Btnx.okReds,
+    );
+    if (ok != true || next.value == perm.value) return;
+    await _run(() => backend.chmod(_fullPath(entry), next.value));
   }
 
   Future<void> _mkdir() async {
-    final controller = TextEditingController();
+    final name = await _askName(title: libL10n.folder, icon: Icons.folder);
+    if (name == null) return;
+    await _run(() => backend.mkdir(BrowsePath.join(_path.path, name)));
+  }
+
+  Future<void> _newFile() async {
+    final name = await _askName(
+      title: libL10n.file,
+      icon: Icons.insert_drive_file,
+    );
+    if (name == null) return;
+    // An empty write, rather than a `touch` that only a backend with a shell
+    // behind it could run.
+    //
+    // TODO: this is the one operation sudo no longer rescues. Escalating a
+    // write means getting the bytes to the far side first, and the backend has
+    // nowhere to put them — which is why an upload does that dance at the page
+    // level. Creating an *empty* file has no bytes and could escalate, but only
+    // through a method of its own.
+    await _run(
+      () => backend.write(
+        BrowsePath.join(_path.path, name),
+        const Stream<List<int>>.empty(),
+        size: 0,
+      ),
+    );
+  }
+
+  /// One name, trimmed, or null for "nothing to do".
+  Future<String?> _askName({
+    required String title,
+    required IconData icon,
+    String? initial,
+  }) async {
+    final controller = TextEditingController(text: initial);
     try {
       final name = await context.showRoundDialog<String>(
-        title: libL10n.folder,
+        title: title,
         child: Input(
           autoFocus: true,
-          icon: Icons.folder,
+          icon: icon,
           label: libL10n.name,
           controller: controller,
-          onSubmitted: (value) => context.pop(value.trim()),
+          suggestion: true,
+          onSubmitted: (value) => context.popDialog(value.trim()),
         ),
-        actions: Btn.ok(onTap: () => context.pop(controller.text.trim())).toList,
+        actions: Btn.ok(
+          onTap: () => context.popDialog(controller.text.trim()),
+        ).toList,
       );
-      if (name == null || name.isEmpty || !mounted) return;
-      await _run(() => backend.mkdir(BrowsePath.join(_path.path, name)));
+      if (name == null || name.isEmpty || !mounted) return null;
+      return name;
     } finally {
       controller.dispose();
     }
@@ -215,12 +340,19 @@ class _FileBrowserPageState extends State<FileBrowserPage>
   /// Every mutating action ends the same way — do it, show what went wrong,
   /// look again — and writing that out five times is how one of them ends up
   /// silently swallowing its error.
+  ///
+  /// Deliberately not a modal loading dialog, which is what the SFTP page used
+  /// to put here: an operation may now stop halfway to ask for a sudo
+  /// password, and a barrier of its own would be sitting over that question.
   Future<void> _run(Future<void> Function() action) async {
+    _busy.value = true;
     try {
       await action();
     } catch (e) {
       if (mounted) context.showSnackBar('${libL10n.fail}:\n$e');
       return;
+    } finally {
+      _busy.value = false;
     }
     await refresh();
   }
@@ -248,6 +380,24 @@ class _FileBrowserPageState extends State<FileBrowserPage>
               _delete(entry);
             },
           ),
+          Btn.tile(
+            icon: const Icon(MingCute.copy_line),
+            text: l10n.copyPath,
+            onTap: () {
+              context.popDialog();
+              Pfs.copy(full);
+              context.showSnackBar(libL10n.success);
+            },
+          ),
+          if (backend.traits.permissions)
+            Btn.tile(
+              icon: const Icon(Icons.security),
+              text: libL10n.permission,
+              onTap: () {
+                context.popDialog();
+                _chmod(entry);
+              },
+            ),
           ...?widget.args.entryActions?.call(this, entry, full),
         ],
       ),
@@ -258,10 +408,61 @@ class _FileBrowserPageState extends State<FileBrowserPage>
     final picked = await context.showRoundDialog<bool>(
       title: libL10n.file,
       child: Text(entry.name),
-      actions: Btn.ok(onTap: () => context.pop(true)).toList,
+      actions: Btn.ok(onTap: () => context.popDialog(true)).toList,
     );
     if (picked != true || !mounted) return;
     context.pop(_fullPath(entry));
+  }
+
+  Future<void> _goto() async {
+    final history = widget.args.pathHistory;
+    final target = await context.showRoundDialog<String>(
+      title: l10n.goto,
+      child: history == null
+          ? Input(
+              autoFocus: true,
+              icon: Icons.abc,
+              label: libL10n.path,
+              suggestion: true,
+              onSubmitted: (value) => context.popDialog(value),
+            )
+          : Autocomplete<String>(
+              optionsBuilder: (value) =>
+                  history.all.where((e) => e.contains(value.text)),
+              fieldViewBuilder: (_, controller, node, _) => Input(
+                autoFocus: true,
+                icon: Icons.abc,
+                label: libL10n.path,
+                node: node,
+                controller: controller,
+                suggestion: true,
+                onSubmitted: (value) => context.popDialog(value),
+              ),
+            ),
+    );
+    if (target == null || target.isEmpty || !mounted) return;
+
+    final before = _path.path;
+    await goTo(target);
+    if (_path.path != before) history?.add(target);
+  }
+
+  void _showSearch() {
+    showSearch(
+      context: context,
+      delegate: SearchPage<FileEntry>(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        future: (query) async {
+          final entries = await _entries;
+          final needle = query.toLowerCase();
+          return [
+            for (final entry in entries)
+              if (entry.name.toLowerCase().contains(needle)) entry,
+          ];
+        },
+        builder: (ctx, entry) => _buildEntry(entry, beforeTap: ctx.pop),
+      ),
+    );
   }
 
   // -------------------------------------------------------------------- build
@@ -272,26 +473,26 @@ class _FileBrowserPageState extends State<FileBrowserPage>
 
     final actions = <Widget>[
       ...?widget.args.extraActions?.call(this),
-      if (!_isPickFile)
-        IconButton(
-          onPressed: _mkdir,
-          tooltip: libL10n.folder,
-          icon: const Icon(Icons.create_new_folder_outlined),
-        ),
-      if (!isMobile)
-        IconButton(
-          icon: const Icon(Icons.refresh),
-          tooltip: MaterialLocalizations.of(
-            context,
-          ).refreshIndicatorSemanticLabel,
-          onPressed: refresh,
-        ),
       _buildSortBtn(),
+      Btn.icon(icon: const Icon(Icons.search), onTap: _showSearch),
+      if (isDesktop)
+        Btn.icon(icon: const Icon(Icons.refresh), onTap: refresh),
     ];
 
-    final body = isMobile
-        ? RefreshIndicator(onRefresh: refresh, child: _sort.listen(_buildList))
-        : _sort.listen(_buildList);
+    final body = Column(
+      children: [
+        _busy.listenVal(
+          (busy) => busy
+              ? const LinearProgressIndicator(minHeight: 2)
+              : const SizedBox(height: 2),
+        ),
+        Expanded(
+          child: isMobile
+              ? RefreshIndicator(onRefresh: refresh, child: _buildList())
+              : _buildList(),
+        ),
+      ],
+    );
 
     final sink = widget.args.actionsSink;
     if (sink == null) {
@@ -305,17 +506,95 @@ class _FileBrowserPageState extends State<FileBrowserPage>
           actions: actions,
         ),
         body: body,
+        bottomNavigationBar: _buildBottom(),
       );
     }
 
     // Handed over after the frame, not during it: a notifier written while
     // building tells its listeners to rebuild in the middle of a build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      sink.value = actions;
-      widget.args.onPathChanged?.call(_path.path);
+      if (mounted) sink.value = actions;
     });
-    return Scaffold(body: body);
+    return Scaffold(body: body, bottomNavigationBar: _buildBottom());
+  }
+
+  Widget _buildBottom() {
+    final children = widget.args.isPickDir
+        ? [
+            IconButton(
+              onPressed: () => context.pop(_path.path),
+              icon: const Icon(Icons.done),
+            ),
+          ]
+        : [
+            Btn.icon(
+              onTap: () {
+                if (_path.goBack()) refresh();
+              },
+              icon: const Icon(Icons.arrow_back),
+            ),
+            if (widget.args.homePath case final home?)
+              Btn.icon(
+                onTap: () => goTo(home),
+                icon: const Icon(Icons.home),
+              ),
+            if (!widget.args.isPickFile) _buildAddBtn(),
+            Btn.icon(onTap: _goto, icon: const Icon(Icons.gps_fixed)),
+            ...?widget.args.bottomActions?.call(this),
+          ];
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(11, 7, 11, 11),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(child: OmitStartText(_path.path)),
+                if (widget.args.pathTrailing case final trailing?) ...[
+                  UIs.width7,
+                  trailing,
+                ],
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: children,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddBtn() {
+    return Btn.icon(
+      icon: const Icon(Icons.add),
+      onTap: () => context.showRoundDialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Btn.tile(
+              icon: const Icon(Icons.folder),
+              text: libL10n.folder,
+              onTap: () {
+                context.popDialog();
+                _mkdir();
+              },
+            ),
+            Btn.tile(
+              icon: const Icon(Icons.insert_drive_file),
+              text: libL10n.file,
+              onTap: () {
+                context.popDialog();
+                _newFile();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildList() {
@@ -328,65 +607,110 @@ class _FileBrowserPageState extends State<FileBrowserPage>
           child: Text('${libL10n.fail}:\n$e', textAlign: TextAlign.center),
         ),
       ),
-      success: (entries) {
-        final items = entries ?? const <FileEntry>[];
-        final up = _path.canGoUp ? 1 : 0;
-        return ListView.builder(
-          itemCount: items.length + up,
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 13),
-          itemBuilder: (context, index) {
-            if (up == 1 && index == 0) {
-              return ListTile(
-                leading: const Icon(Icons.arrow_back),
-                title: const Text('..'),
-                onTap: () => _go(_path.goUp),
-              ).cardx;
-            }
-            return _buildEntry(items[index - up]);
-          },
-        );
-      },
+      success: (entries) => _sort.listenVal(
+        (option) => _buildListView(_sorted(entries ?? const [], option)),
+      ),
     );
   }
 
-  Widget _buildEntry(FileEntry entry) {
-    final full = _fullPath(entry);
-    final label = widget.args.labelOf?.call(entry, full);
-    return CardX(
-      child: ListTile(
-        leading: Icon(switch (entry.kind) {
-          FileKind.dir => Icons.folder_open,
-          FileKind.link => Icons.link,
-          _ => Icons.insert_drive_file,
-        }),
-        title: Text(label ?? entry.name),
-        subtitle: switch ((label, entry.size)) {
-          // The real name, where the title is showing something friendlier.
-          (final String _, _) => Text(entry.name, style: UIs.textGrey),
-          (_, final int size) => Text(size.bytes2Str, style: UIs.textGrey),
-          _ => null,
-        },
-        trailing: entry.modified == null
-            ? null
-            : Text(entry.modified!.ymdhms(), style: UIs.textGrey),
-        onLongPress: () => _showEntryMenu(entry),
-        onTap: () {
-          if (entry.isDir) {
-            _go(() => _path.enter(entry.name));
-            return;
+  Widget _buildListView(List<FileEntry> items) {
+    final up = _path.canGoUp ? 1 : 0;
+    return FadeIn(
+      key: ValueKey(_path.path),
+      child: ListView.builder(
+        // One more than there is, when there is nothing: an empty directory
+        // still has to say so, and still has to be leavable.
+        itemCount: items.isEmpty ? up + 1 : items.length + up,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 13),
+        itemBuilder: (context, index) {
+          if (up == 1 && index == 0) {
+            return ListTile(
+              leading: const Icon(Icons.arrow_upward),
+              title: const Text('..'),
+              onTap: () => _go(_path.goUp),
+            ).cardx;
           }
-          if (_isPickFile) {
-            _pick(entry);
-            return;
+          if (items.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: Text(libL10n.empty, style: UIs.textGrey)),
+            );
           }
-          final open = widget.args.onOpenFile;
-          if (open == null) {
-            _showEntryMenu(entry);
-            return;
-          }
-          open(this, entry, full);
+          return _buildEntry(items[index - up]);
         },
       ),
+    );
+  }
+
+  Widget _buildEntry(FileEntry entry, {VoidCallback? beforeTap}) {
+    final full = _fullPath(entry);
+    final label = widget.args.labelOf?.call(entry, full);
+    final icon = Icon(switch (entry.kind) {
+      FileKind.dir => Icons.folder_open,
+      FileKind.link => Icons.link,
+      _ => Icons.insert_drive_file,
+    });
+
+    void onTap() {
+      beforeTap?.call();
+      if (entry.isDir) {
+        _go(() => _path.enter(entry.name));
+        return;
+      }
+      if (widget.args.isPickFile) {
+        _pick(entry);
+        return;
+      }
+      final open = widget.args.onOpenFile;
+      if (open == null) {
+        _showEntryMenu(entry);
+        return;
+      }
+      open(this, entry, full);
+    }
+
+    void onLongPress() {
+      beforeTap?.call();
+      _showEntryMenu(entry);
+    }
+
+    // Under this, a name and a right-hand column do not both fit, so
+    // everything the entry knows goes below the name instead.
+    final narrow = MediaQuery.sizeOf(context).width < 350;
+    final details = [
+      // The real name, where the title is showing something friendlier.
+      if (label != null) entry.name,
+      if (entry.size case final size? when !entry.isDir) size.bytes2Str,
+      if (narrow) ...[
+        if (entry.modified case final at?) at.ymdhms(),
+        ?entry.modeStr,
+      ],
+    ];
+
+    return CardX(
+      child: ListTile(
+        leading: icon,
+        title: Text(label ?? entry.name),
+        subtitle: details.isEmpty
+            ? null
+            : Text(details.join('\n'), style: UIs.textGrey),
+        trailing: narrow ? null : _buildEntryTrailing(entry),
+        onTap: onTap,
+        onLongPress: onLongPress,
+      ),
+    );
+  }
+
+  Widget? _buildEntryTrailing(FileEntry entry) {
+    final lines = [
+      if (entry.modified case final at?) at.ymdhms(),
+      ?entry.modeStr,
+    ];
+    if (lines.isEmpty) return null;
+    return Text(
+      lines.join('\n'),
+      style: UIs.textGrey,
+      textAlign: TextAlign.right,
     );
   }
 
@@ -394,15 +718,47 @@ class _FileBrowserPageState extends State<FileBrowserPage>
     return _sort.listenVal((value) {
       return PopupMenuButton<_SortBy>(
         icon: const Icon(Icons.sort),
-        initialValue: value,
-        itemBuilder: (_) => _SortBy.values.map((e) => e.menuItem).toList(),
+        itemBuilder: (_) => [
+          for (final by in _SortBy.values)
+            PopupMenuItem(
+              value: by,
+              child: Text(
+                // The direction, on the one that is doing the sorting. Tapping
+                // it again is what flips it, so it has to be visible there.
+                by == value.by
+                    ? '${by.i18n} (${value.reversed ? '-' : '+'})'
+                    : by.i18n,
+                style: TextStyle(
+                  color: by == value.by ? UIs.primaryColor : null,
+                  fontWeight: by == value.by ? FontWeight.bold : null,
+                ),
+              ),
+            ),
+        ],
         onSelected: (selected) {
-          _sort.value = selected;
-          refresh();
+          final old = _sort.value;
+          _sort.value = selected == old.by
+              ? _SortOption(by: old.by, reversed: !old.reversed)
+              : _SortOption(by: selected, reversed: old.reversed);
         },
       );
     });
   }
+}
+
+@immutable
+class _SortOption {
+  const _SortOption({this.by = _SortBy.name, this.reversed = false});
+
+  final _SortBy by;
+  final bool reversed;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _SortOption && other.by == by && other.reversed == reversed;
+
+  @override
+  int get hashCode => Object.hash(by, reversed);
 }
 
 enum _SortBy {
@@ -410,12 +766,14 @@ enum _SortBy {
   size,
   time;
 
+  /// Ascending, always, so that the `+` and `-` the menu shows mean the same
+  /// thing whichever of the three is chosen.
   int compare(FileEntry a, FileEntry b) => switch (this) {
     name => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
     // Unknown sizes and times sort last rather than as zero: a backend that
     // did not say is not the same as a file of no size.
-    size => _nullsLast(a.size, b.size, (x, y) => y.compareTo(x)),
-    time => _nullsLast(a.modified, b.modified, (x, y) => y.compareTo(x)),
+    size => _nullsLast(a.size, b.size, (x, y) => x.compareTo(y)),
+    time => _nullsLast(a.modified, b.modified, (x, y) => x.compareTo(y)),
   };
 
   static int _nullsLast<T>(T? a, T? b, int Function(T, T) compare) {
@@ -430,18 +788,4 @@ enum _SortBy {
     size => libL10n.size,
     time => libL10n.time,
   };
-
-  IconData get icon => switch (this) {
-    name => Icons.sort_by_alpha,
-    size => Icons.sort,
-    time => Icons.access_time,
-  };
-
-  PopupMenuItem<_SortBy> get menuItem => PopupMenuItem(
-    value: this,
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [Icon(icon), Text(i18n)],
-    ),
-  );
 }

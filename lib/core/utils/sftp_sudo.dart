@@ -11,8 +11,6 @@ import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
 
-final _octalPermReg = RegExp(r'^[0-7]{3,4}$');
-
 final class SftpSudoHelper {
   final SSHClient client;
   final Spi spi;
@@ -55,6 +53,14 @@ final class SftpSudoHelper {
     return pwd;
   }
 
+  /// Runs [command] as root and answers what it printed.
+  ///
+  /// The general form of everything below, for callers holding a command
+  /// rather than an intention — [SftpEscalation], whose whole contract is that
+  /// the backend says what to run and this side decides how to get the rights
+  /// to run it.
+  Future<String> runAsRoot(String command) => _runAndRead(command);
+
   Future<int> getFileSize(String remotePath, {String? password}) async {
     final output = await _runAndRead(
       'wc -c < ${shellSingleQuote(remotePath)}',
@@ -91,28 +97,6 @@ final class SftpSudoHelper {
     );
   }
 
-  Future<void> chmod(String perm, String remotePath, {String? password}) async {
-    if (!_octalPermReg.hasMatch(perm)) {
-      throw ArgumentError.value(
-        perm,
-        'perm',
-        'Permission must be a 3 or 4 digit octal string',
-      );
-    }
-    await _runAndRead(
-      'chmod $perm ${shellSingleQuote(remotePath)}',
-      password: password,
-    );
-  }
-
-  Future<void> mkdir(String remotePath, {String? password}) async {
-    await _runAndRead('mkdir ${shellSingleQuote(remotePath)}', password: password);
-  }
-
-  Future<void> touch(String remotePath, {String? password}) async {
-    await _runAndRead('touch ${shellSingleQuote(remotePath)}', password: password);
-  }
-
   Future<void> rename(
     String oldPath,
     String newPath, {
@@ -138,64 +122,11 @@ final class SftpSudoHelper {
     await _runAndRead(cmd, password: password);
   }
 
-  Future<List<SftpName>> listDir(String remotePath, {String? password}) async {
-    final output = await _runAndRead(
-      'find ${shellSingleQuote(remotePath)} '
-      '-mindepth 1 -maxdepth 1 '
-      '-exec sh -c \''
-      'for path do '
-      'name=\${path##*/}; '
-      'perm=\$(stat -c %a "\$path"); '
-      'type=u; '
-      '[ -d "\$path" ] && type=d; '
-      '[ -L "\$path" ] && type=l; '
-      '[ -f "\$path" ] && type=f; '
-      'size=\$(stat -c %s "\$path"); '
-      'mtime=\$(stat -c %Y "\$path"); '
-      'printf "%s\\0%s\\0%s\\0%s\\0%s\\0" "\$name" "\$perm" "\$type" "\$size" "\$mtime"; '
-      'done'
-      '\' sh {} +',
-      password: password,
-    );
-
-    final items = <SftpName>[
-      SftpName(
-        filename: '..',
-        longname: '..',
-        attr: SftpFileAttrs(
-          size: 0,
-          mode: const SftpFileMode.value(0x4000 | 0x1ED),
-          modifyTime: 0,
-        ),
-      ),
-    ];
-
-    final parts = output.split('\u0000').where((e) => e.isNotEmpty).toList();
-    for (var i = 0; i + 4 < parts.length; i += 5) {
-      final filename = parts[i];
-      final permOct = int.tryParse(parts[i + 1], radix: 8) ?? 0x1A4;
-      final typeChar = parts[i + 2];
-      final size = int.tryParse(parts[i + 3]) ?? 0;
-      final modifyTime = double.tryParse(parts[i + 4])?.toInt() ?? 0;
-      final mode = _buildMode(typeChar, permOct);
-
-      items.add(
-        SftpName(
-          filename: filename,
-          longname: filename,
-          attr: SftpFileAttrs(size: size, mode: mode, modifyTime: modifyTime),
-        ),
-      );
-    }
-
-    return items;
-  }
-
   Future<String> _runAndRead(String innerCommand, {String? password}) async {
     final pwd = password ?? await ensurePassword();
-    if (pwd == null) throw const _SftpSudoCancelled();
+    if (pwd == null) throw const SftpSudoCancelled();
     final context = contextProvider();
-    if (context == null || !context.mounted) throw const _SftpSudoCancelled();
+    if (context == null || !context.mounted) throw const SftpSudoCancelled();
 
     final (code, output) = await client.execWithPwd(
       _buildSudoCommand(innerCommand, pwd),
@@ -206,10 +137,10 @@ final class SftpSudoHelper {
     if (code == kSudoPasswordRejected) {
       _cachedPassword = null;
       final retryPwd = await ensurePassword(force: true);
-      if (retryPwd == null) throw const _SftpSudoCancelled();
+      if (retryPwd == null) throw const SftpSudoCancelled();
       final retryContext = contextProvider();
       if (retryContext == null || !retryContext.mounted) {
-        throw const _SftpSudoCancelled();
+        throw const SftpSudoCancelled();
       }
 
       final retry = await client.execWithPwd(
@@ -246,21 +177,15 @@ final class SftpSudoHelper {
     final escapedPwd = password.replaceAll("'", "'\\''");
     return "printf '%s\\n' '$escapedPwd' | sudo -S -- sh -c '$escapedWrapped'";
   }
-
-  static SftpFileMode _buildMode(String typeChar, int permOct) {
-    final typeFlag = switch (typeChar) {
-      'd' => 0x4000,
-      'l' => 0xA000,
-      'b' => 0x6000,
-      'c' => 0x2000,
-      'p' => 0x1000,
-      's' => 0xC000,
-      _ => 0x8000,
-    };
-    return SftpFileMode.value(typeFlag | permOct);
-  }
 }
 
-final class _SftpSudoCancelled implements Exception {
-  const _SftpSudoCancelled();
+/// The user was asked for a password and did not give one.
+///
+/// Public and readable because it now reaches the browser, which reports what
+/// a failed operation said: a class name in a snackbar is not an explanation.
+final class SftpSudoCancelled implements Exception {
+  const SftpSudoCancelled();
+
+  @override
+  String toString() => libL10n.cancel;
 }

@@ -85,6 +85,12 @@ class LocalFileBackend implements FileBackend {
   }
 
   @override
+  Future<void> chmod(String path, int mode) async {
+    // `traits.permissions` says so, and `dart:io` has no chmod anyway.
+    throw UnsupportedError('This device does not expose file permissions');
+  }
+
+  @override
   Stream<List<int>> read(String path, {int offset = 0}) =>
       File(_native(path)).openRead(offset);
 

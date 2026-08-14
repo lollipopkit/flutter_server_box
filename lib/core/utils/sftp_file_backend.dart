@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:meta/meta.dart';
 import 'package:server_box/core/utils/sftp_escalation.dart';
+import 'package:server_box/core/utils/sftp_timeout.dart';
 import 'package:server_box/core/utils/shell_quote.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 
@@ -13,20 +15,37 @@ import 'package:server_box/data/model/file/file_backend.dart';
 /// answers. [close] therefore closes the SFTP channel and leaves the client
 /// alone.
 class SftpFileBackend implements FileBackend {
-  SftpFileBackend(this._sftp, {this.escalation});
+  SftpFileBackend(this._sftp, {this.escalation, this.timeout});
 
   /// Opens one on [client]. The caller owns [client]; this owns the channel.
+  ///
+  /// [timeout] bounds opening as well as every later operation: a server that
+  /// accepts the TCP connection and then says nothing used to leave the browser
+  /// spinning with no way back.
   static Future<SftpFileBackend> connect(
     SSHClient client, {
     SftpEscalation? escalation,
-  }) async =>
-      SftpFileBackend(await client.sftp(), escalation: escalation);
+    Duration? timeout,
+  }) async {
+    final sftp = timeout == null
+        ? await client.sftp()
+        : await withSftpSessionOpenTimeout(
+            'open browser session',
+            client.sftp(),
+            timeout,
+          );
+    return SftpFileBackend(sftp, escalation: escalation, timeout: timeout);
+  }
 
   final SftpClient _sftp;
 
   /// What to do when the server refuses. Null means take no for an answer,
   /// which is right for a transfer running in an isolate with nobody to ask.
   final SftpEscalation? escalation;
+
+  /// How long any one operation may take. Null waits forever, which is right
+  /// inside a transfer that has its own progress to show.
+  final Duration? timeout;
 
   @override
   FileBackendTraits get traits => FileBackendTraits(
@@ -39,22 +58,31 @@ class SftpFileBackend implements FileBackend {
   );
 
   @override
-  Future<List<FileEntry>> list(String path) async {
-    final names = await _sftp.listdir(path);
-    return [
-      for (final name in names)
-        // `.` and `..` are a wire-level detail of the protocol, not entries
-        // anybody browses to. Every caller filtered them out, one of them
-        // incorrectly.
-        if (name.filename != '.' && name.filename != '..') _entryOf(name),
-    ];
-  }
+  Future<List<FileEntry>> list(String path) => escalate(
+    escalation: escalation,
+    normal: () async {
+      final names = await _bounded('list directory', _sftp.listdir(path));
+      return [
+        for (final name in names)
+          // `.` and `..` are a wire-level detail of the protocol, not entries
+          // anybody browses to. Every caller filtered them out, one of them
+          // incorrectly.
+          if (name.filename != '.' && name.filename != '..') _entryOf(name),
+      ];
+    },
+    // A directory this user may not list is the case sudo exists for, so
+    // reading escalates like writing does. `find` rather than `ls` because its
+    // output is a fixed number of NUL-separated fields per entry, and so
+    // survives names with spaces, quotes and newlines in them.
+    sudoCommand: () => listCommand(path),
+    fromOutput: parseListOutput,
+  );
 
   @override
   Future<FileEntry?> stat(String path) async {
     final SftpFileAttrs attrs;
     try {
-      attrs = await _sftp.stat(path);
+      attrs = await _bounded('stat', _sftp.stat(path));
     } on SftpStatusError catch (e) {
       // Only "no such file" is absence. A refusal is a refusal, and turning it
       // into null would tell a caller it is free to create something there.
@@ -66,33 +94,33 @@ class SftpFileBackend implements FileBackend {
       kind: _kindOf(attrs),
       size: attrs.size,
       modified: _timeOf(attrs.modifyTime),
-      mode: attrs.mode?.value,
+      mode: _permOf(attrs),
     );
   }
 
   @override
   Future<void> mkdir(String path) => runWithEscalation(
     escalation: escalation,
-    normal: () => _sftp.mkdir(path),
+    normal: () => _bounded('mkdir', _sftp.mkdir(path)),
     sudoCommand: () => 'mkdir -p -- ${shellSingleQuote(path)}',
   );
 
   @override
   Future<void> remove(String path, {bool recursive = false}) async {
-    final attrs = await _sftp.stat(path);
+    final attrs = await _bounded('stat', _sftp.stat(path));
     final isDir = attrs.isDirectory;
     await runWithEscalation(
       escalation: escalation,
       normal: () async {
         if (!isDir) {
-          await _sftp.remove(path);
+          await _bounded('remove', _sftp.remove(path));
           return;
         }
         if (recursive) await _removeChildren(path);
         // SFTP has no recursive delete; `rmdir` on a directory with anything
         // left in it fails, which is what the app's "SFTP can't delete a
         // non-empty directory" dialog was explaining to users.
-        await _sftp.rmdir(path);
+        await _bounded('rmdir', _sftp.rmdir(path));
       },
       // One command instead of walking the tree over a channel that is
       // refusing every step of it.
@@ -109,9 +137,9 @@ class SftpFileBackend implements FileBackend {
       final child = _join(path, entry.name);
       if (entry.isDir) {
         await _removeChildren(child);
-        await _sftp.rmdir(child);
+        await _bounded('rmdir', _sftp.rmdir(child));
       } else {
-        await _sftp.remove(child);
+        await _bounded('remove', _sftp.remove(child));
       }
     }
   }
@@ -119,15 +147,34 @@ class SftpFileBackend implements FileBackend {
   @override
   Future<void> rename(String from, String to) => runWithEscalation(
     escalation: escalation,
-    normal: () => _sftp.rename(from, to),
+    normal: () => _bounded('rename', _sftp.rename(from, to)),
     sudoCommand: () =>
         'mv -- ${shellSingleQuote(from)} ${shellSingleQuote(to)}',
   );
 
   @override
+  Future<void> chmod(String path, int mode) => runWithEscalation(
+    escalation: escalation,
+    normal: () => _bounded(
+      'chmod',
+      // `SSH_FXP_SETSTAT` rather than a shell `chmod`, which is what this used
+      // to run: a server that serves SFTP need not give out shells, and
+      // changing a mode is something the protocol itself does.
+      _sftp.setStat(path, SftpFileAttrs(mode: SftpFileMode.value(mode))),
+    ),
+    sudoCommand: () =>
+        'chmod ${mode.toRadixString(8)} -- ${shellSingleQuote(path)}',
+  );
+
+  @override
   Stream<List<int>> read(String path, {int offset = 0}) async* {
-    final file = await _sftp.open(path, mode: SftpFileOpenMode.read);
+    final file = await _bounded(
+      'open for read',
+      _sftp.open(path, mode: SftpFileOpenMode.read),
+    );
     try {
+      // Not bounded: a slow transfer is not a stalled one, and the caller
+      // watching bytes arrive is better placed to decide it has given up.
       yield* file.read(offset: offset);
     } finally {
       await file.close();
@@ -141,21 +188,22 @@ class SftpFileBackend implements FileBackend {
     final staging = '$path.${_stagingSuffix()}';
     var wrote = false;
     try {
-      final file = await _sftp.open(
-        staging,
-        mode: SftpFileOpenMode.create |
-            SftpFileOpenMode.write |
-            SftpFileOpenMode.truncate,
+      final file = await _bounded(
+        'open for write',
+        _sftp.open(
+          staging,
+          mode: SftpFileOpenMode.create |
+              SftpFileOpenMode.write |
+              SftpFileOpenMode.truncate,
+        ),
       );
       wrote = true;
       try {
-        await file
-            .write(data.map(Uint8List.fromList))
-            .done;
+        await file.write(data.map(Uint8List.fromList)).done;
       } finally {
         await file.close();
       }
-      await _sftp.rename(staging, path);
+      await _bounded('rename', _sftp.rename(staging, path));
     } catch (_) {
       if (wrote) {
         try {
@@ -171,6 +219,9 @@ class SftpFileBackend implements FileBackend {
   @override
   Future<void> close() => _sftp.close();
 
+  Future<T> _bounded<T>(String what, Future<T> future) =>
+      timeout == null ? future : withSftpOpTimeout(what, future, timeout!);
+
   static var _staging = 0;
 
   static String _stagingSuffix() => 'sb-part-${_staging++}';
@@ -178,13 +229,69 @@ class SftpFileBackend implements FileBackend {
   /// `SSH_FX_NO_SUCH_FILE`, from the SFTP protocol.
   static const _sftpStatusNoSuchFile = 2;
 
+  /// One directory level, as five NUL-terminated fields per entry.
+  ///
+  /// `-mindepth 1 -maxdepth 1` is this directory and no deeper; `-exec … {} +`
+  /// hands the whole batch to one shell rather than starting one per file.
+  @visibleForTesting
+  static String listCommand(String path) =>
+      'find ${shellSingleQuote(path)} '
+      '-mindepth 1 -maxdepth 1 '
+      '-exec sh -c \''
+      'for path do '
+      'name=\${path##*/}; '
+      'perm=\$(stat -c %a "\$path"); '
+      'size=\$(stat -c %s "\$path"); '
+      'mtime=\$(stat -c %Y "\$path"); '
+      'type=u; '
+      '[ -d "\$path" ] && type=d; '
+      '[ -f "\$path" ] && type=f; '
+      // Last, so a link is reported as a link: the two tests above follow it
+      // and would otherwise answer for whatever it points at.
+      '[ -L "\$path" ] && type=l; '
+      'printf "%s\\0%s\\0%s\\0%s\\0%s\\0" "\$name" "\$perm" "\$type" "\$size" "\$mtime"; '
+      'done'
+      '\' sh {} +';
+
+  @visibleForTesting
+  static List<FileEntry> parseListOutput(String output) {
+    final parts = output.split('\u0000').where((e) => e.isNotEmpty).toList();
+    final entries = <FileEntry>[];
+    for (var i = 0; i + 4 < parts.length; i += 5) {
+      final perm = int.tryParse(parts[i + 1], radix: 8);
+      final kind = switch (parts[i + 2]) {
+        'd' => FileKind.dir,
+        'l' => FileKind.link,
+        'f' => FileKind.file,
+        _ => FileKind.other,
+      };
+      entries.add(
+        FileEntry(
+          name: parts[i],
+          kind: kind,
+          size: kind == FileKind.file ? int.tryParse(parts[i + 3]) : null,
+          modified: _timeOf(int.tryParse(parts[i + 4])),
+          mode: perm,
+        ),
+      );
+    }
+    return entries;
+  }
+
   static FileEntry _entryOf(SftpName name) => FileEntry(
     name: name.filename,
     kind: _kindOf(name.attr),
     size: name.attr.size,
     modified: _timeOf(name.attr.modifyTime),
-    mode: name.attr.mode?.value,
+    mode: _permOf(name.attr),
   );
+
+  /// SFTP's mode is the type and the permissions in one number; [FileEntry]
+  /// keeps only the half that `chmod` takes.
+  static int? _permOf(SftpFileAttrs attrs) {
+    final value = attrs.mode?.value;
+    return value == null ? null : value & kFilePermMask;
+  }
 
   static FileKind _kindOf(SftpFileAttrs attrs) {
     if (attrs.isDirectory) return FileKind.dir;

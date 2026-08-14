@@ -7,6 +7,7 @@ class _Escalation implements SftpEscalation {
     this.always = false,
     this.answer = true,
     this.fails = false,
+    this.output = '',
   });
 
   @override
@@ -21,6 +22,9 @@ class _Escalation implements SftpEscalation {
   /// Whether [run] throws, as it does when the user declines the password.
   final bool fails;
 
+  /// What the escalated command prints.
+  final String output;
+
   var asked = 0;
   var escalated = 0;
   var noted = 0;
@@ -33,10 +37,11 @@ class _Escalation implements SftpEscalation {
   }
 
   @override
-  Future<void> run(String command) async {
+  Future<String> run(String command) async {
     escalated++;
     commands.add(command);
     if (fails) throw StateError('no password');
+    return output;
   }
 
   @override
@@ -177,6 +182,52 @@ void main() {
       );
 
       expect(escalation.noted, 0, reason: 'nothing was escalated successfully');
+    });
+  });
+
+  group('escalate', () {
+    test('reads the answer out of what the command printed', () async {
+      // A listing is escalated like a write is, and unlike a write it has
+      // something to bring back.
+      final escalation = _Escalation(output: 'a\nb');
+
+      final lines = await escalate<List<String>>(
+        escalation: escalation,
+        normal: () async => throw StateError('Permission denied'),
+        sudoCommand: () => 'ls /root',
+        fromOutput: (output) => output.split('\n'),
+      );
+
+      expect(lines, ['a', 'b']);
+      expect(escalation.noted, 1);
+    });
+
+    test('the normal result comes back untouched', () async {
+      final escalation = _Escalation(output: 'never read');
+
+      final lines = await escalate<List<String>>(
+        escalation: escalation,
+        normal: () async => ['x'],
+        sudoCommand: () => 'ls /root',
+        fromOutput: (output) => output.split('\n'),
+      );
+
+      expect(lines, ['x']);
+      expect(escalation.escalated, 0);
+    });
+
+    test('with sudo always on, the answer still comes from the output',
+        () async {
+      final escalation = _Escalation(always: true, output: 'root-only');
+
+      final lines = await escalate<List<String>>(
+        escalation: escalation,
+        normal: () async => throw StateError('should not be attempted'),
+        sudoCommand: () => 'ls /root',
+        fromOutput: (output) => output.split('\n'),
+      );
+
+      expect(lines, ['root-only']);
     });
   });
 }

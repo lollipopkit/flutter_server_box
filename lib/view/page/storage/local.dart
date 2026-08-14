@@ -75,6 +75,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
         actionsSink: widget.args?.actionsSink,
         onPathChanged: widget.args?.onPathChanged,
         extraActions: _actions,
+        bottomActions: _bottomActions,
         entryActions: _entryActions,
         labelOf: _labelOf,
         onOpenFile: _isPickFile ? null : _openEditor,
@@ -83,17 +84,20 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
   }
 
   List<Widget> _actions(FileBrowserHandle handle) => [
-    if (!_isPickFile) ...[
-      IconButton(
-        tooltip: libL10n.add,
-        onPressed: () => _import(handle),
-        icon: const Icon(Icons.add),
+    IconButton(
+      icon: const Icon(Icons.downloading),
+      onPressed: () => SftpMissionPage.route.go(context),
+    ),
+  ];
+
+  /// Beside the browser's own "new file / new folder", because bringing a file
+  /// in from elsewhere on this device is the same kind of act as making one.
+  List<Widget> _bottomActions(FileBrowserHandle handle) => [
+    if (!_isPickFile)
+      Btn.icon(
+        icon: const Icon(Icons.file_download),
+        onTap: () => _import(handle),
       ),
-      IconButton(
-        icon: const Icon(Icons.downloading),
-        onPressed: () => SftpMissionPage.route.go(context),
-      ),
-    ],
   ];
 
   List<Widget> _entryActions(

@@ -22,9 +22,36 @@ class BrowsePath {
 
   String _path;
 
+  /// Where this has been, most recent last.
+  ///
+  /// Separate from [goUp], which walks the tree: after entering `/etc/ssh` from
+  /// `/var/log`, going up lands in `/etc` and going back lands in `/var/log`.
+  /// A browser needs both, and conflating them was what made "back" surprising.
+  final _history = <String>[];
+
   String get path => _path;
 
   bool get canGoUp => _path != root;
+
+  bool get canGoBack => _history.isNotEmpty;
+
+  /// Returns to the previous directory. Returns whether it moved.
+  bool goBack() {
+    if (_history.isEmpty) return false;
+    _path = _history.removeLast();
+    return true;
+  }
+
+  void _moveTo(String next) {
+    if (next == _path) return;
+    _history.add(_path);
+    // Bounded, because a long browse should not become a long list of strings
+    // nobody will scroll back through.
+    if (_history.length > _maxHistory) _history.removeAt(0);
+    _path = next;
+  }
+
+  static const _maxHistory = 64;
 
   /// The last component, or the root's own name when there is nothing above.
   String get name {
@@ -33,13 +60,13 @@ class BrowsePath {
     return _path.substring(slash + 1);
   }
 
-  void enter(String child) => _path = join(_path, child);
+  void enter(String child) => _moveTo(join(_path, child));
 
   void goUp() {
     if (!canGoUp) return;
     final slash = _path.lastIndexOf('/');
     final parent = slash <= 0 ? '/' : _path.substring(0, slash);
-    _path = _isWithin(parent, root) ? parent : root;
+    _moveTo(_isWithin(parent, root) ? parent : root);
   }
 
   /// Jumps somewhere, refusing anything outside [root].
@@ -49,7 +76,7 @@ class BrowsePath {
   bool goTo(String target) {
     final normalized = _normalize(target);
     if (!_isWithin(normalized, root)) return false;
-    _path = normalized;
+    _moveTo(normalized);
     return true;
   }
 

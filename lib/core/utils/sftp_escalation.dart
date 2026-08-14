@@ -26,9 +26,13 @@ abstract interface class SftpEscalation {
   /// dismissed question, leaves the original error standing.
   Future<bool> confirmRetry();
 
-  /// Runs [command] as root. Throws if it could not be run, including when the
-  /// user declined to give a password.
-  Future<void> run(String command);
+  /// Runs [command] as root and answers what it printed. Throws if it could
+  /// not be run, including when the user declined to give a password.
+  ///
+  /// The output matters because reading is escalated too: a directory this
+  /// user may not list is exactly the case sudo exists for, and a `list` that
+  /// could only be told "it worked" would have nothing to show.
+  Future<String> run(String command);
 
   /// Told that an escalation worked, so a caller keeping a "sudo mode" switch
   /// can turn it on rather than asking again for the next file in the same
@@ -37,23 +41,22 @@ abstract interface class SftpEscalation {
 }
 
 /// Runs [normal]; if the server refused for want of privilege, offers to run
-/// [sudoCommand] as root instead.
+/// [sudoCommand] as root instead and reads the answer back out of its output.
 ///
 /// The shape the SFTP page had, lifted out of it so that every operation gets
 /// it rather than the ones somebody remembered to wrap.
-Future<void> runWithEscalation({
-  required Future<void> Function() normal,
+Future<T> escalate<T>({
+  required Future<T> Function() normal,
   required String Function() sudoCommand,
+  required FutureOr<T> Function(String output) fromOutput,
   SftpEscalation? escalation,
 }) async {
   if (escalation != null && escalation.available && escalation.always) {
-    await escalation.run(sudoCommand());
-    return;
+    return await fromOutput(await escalation.run(sudoCommand()));
   }
 
   try {
-    await normal();
-    return;
+    return await normal();
   } catch (e) {
     if (escalation == null || !escalation.available || !isPermissionDenied(e)) {
       rethrow;
@@ -61,9 +64,22 @@ Future<void> runWithEscalation({
     if (!await escalation.confirmRetry()) rethrow;
   }
 
-  await escalation.run(sudoCommand());
+  final result = await fromOutput(await escalation.run(sudoCommand()));
   escalation.onEscalated();
+  return result;
 }
+
+/// [escalate] for an operation with nothing to report but whether it worked.
+Future<void> runWithEscalation({
+  required Future<void> Function() normal,
+  required String Function() sudoCommand,
+  SftpEscalation? escalation,
+}) => escalate<void>(
+  escalation: escalation,
+  normal: normal,
+  sudoCommand: sudoCommand,
+  fromOutput: (_) {},
+);
 
 /// Whether an error reads as "you are not allowed to".
 ///
