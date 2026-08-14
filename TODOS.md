@@ -243,14 +243,3 @@ App Store 版以后可能不再更新。
 
 在这条解决之前,任何「推荐迁移」的文案都得把「会丢本地数据,先备份」放在最前面,
 否则就是在坑人。
-
-## 更新提示:GitHub 源没有语言分支
-
-JSON 源按 locale 取 changelog(`changelogMap[_locale]`),GitHub release 只有一个
-`body`,发布时写的是什么语言就显示什么语言。要不要按 locale 分,没定——分的话
-release 正文里需要一套约定的分节格式,由发版流程保证。
-
-同一条 TODO 的其余部分已做(改动在 fl_lib,不在本仓库):`AppUpdate.releaseNotes`
-给出所有 build 号大于当前的 release,每个一个 `ExpandTile`,只有要装的那一版默认
-展开;对话框标题和 snackbar 用 `AppUpdate.versionName`(GitHub tag 名),不再是
-`v1.0.<build>`。
