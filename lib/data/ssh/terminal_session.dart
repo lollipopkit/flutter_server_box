@@ -6,14 +6,15 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
 import 'package:server_box/core/app_navigator.dart';
+import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/monitor_terminal.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
-import 'package:server_box/data/ssh/ssh_terminal_environment.dart';
 import 'package:server_box/data/ssh/terminal_output_buffer.dart';
+import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:xterm/core.dart';
 
 /// A terminal and the shell feeding it, with no page attached.
@@ -28,9 +29,17 @@ import 'package:xterm/core.dart';
 /// and the plumbing between them. What a particular *view* of one needs — tmux,
 /// keep-alive, the virtual keyboard, state restoration — stays on the page.
 class TerminalSession {
-  TerminalSession({required this.spi});
+  TerminalSession({required this.source});
 
-  final Spi spi;
+  /// Where this terminal's shell comes from — a server, or this device.
+  final TerminalSource source;
+
+  /// The server behind [source], or null when there is none. What genuinely
+  /// needs one asks for it here; everything else works from [source].
+  Spi? get spi => switch (source) {
+    ServerSource(:final spi) => spi,
+    LocalSource() => null,
+  };
 
   final terminal = Terminal();
 
@@ -74,10 +83,9 @@ class TerminalSession {
   /// Whether the source of shells is gone, as opposed to merely absent.
   bool get isBackendClosed => _backend?.isClosed ?? true;
 
-  Map<String, String>? get environment =>
-      buildSshTerminalEnvironment(spi.envs);
+  Map<String, String>? get environment => source.environment;
 
-  String? get tmuxLang => resolveTmuxLang(spi.envs);
+  String? get tmuxLang => source.tmuxLang;
 
   // — Connecting ————————————————————————————————————————————————————
 
@@ -88,6 +96,13 @@ class TerminalSession {
   /// having to know which it got.
   void adopt(SSHClient? client, {MonitorRemoteAccess? granted}) {
     if (_backend != null) return;
+    // Nothing to adopt on this device: there is no connection anybody else
+    // could be holding, so the shell this session opens is its own.
+    if (source is LocalSource) {
+      _backend = LocalShellBackend();
+      _ownsBackend = true;
+      return;
+    }
     if (client != null && !client.isClosed) {
       _backend = SshShellBackend(client);
       _ownsBackend = false;
@@ -110,11 +125,13 @@ class TerminalSession {
     BuildContext? context,
   }) async {
     _ownsBackend = true;
+    if (source is LocalSource) return _backend = LocalShellBackend();
+
     final agent = _grantedBackend(granted);
     if (agent != null) return _backend = agent;
 
     final client = await genClient(
-      spi,
+      spi!,
       onKeyboardInteractive: (server, request) => KeyboardInteractiveAuth.handle(
         server,
         request,
@@ -130,7 +147,8 @@ class TerminalSession {
   /// rejects having both, and if one slipped through, SSH is the answer that
   /// can do more.
   ShellBackend? _grantedBackend(MonitorRemoteAccess? granted) {
-    if (spi.ssh != null) return null;
+    final spi = this.spi;
+    if (spi == null || spi.ssh != null) return null;
     final monitor = spi.monitorHttp;
     if (monitor == null) return null;
     if (granted?.fullAccess != true) return null;

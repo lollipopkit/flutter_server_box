@@ -28,6 +28,7 @@ import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/persistent_shell.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/ssh/tmux/tmux_export.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
@@ -135,7 +136,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// The terminal and the shell behind it. Handed in when this page is
   /// continuing a session that started elsewhere, and made here otherwise.
   late final TerminalSession _sess =
-      widget.args.session ?? TerminalSession(spi: widget.args.spi);
+      widget.args.session ?? TerminalSession(source: ServerSource(widget.args.spi));
 
   /// Whether the session arrived already running, and so must not be started
   /// a second time.

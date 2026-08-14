@@ -13,6 +13,7 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:xterm/ui.dart' hide TerminalThemes;
 
 /// Runs [snippet] on [spi] in a terminal, without leaving the page.
@@ -33,7 +34,7 @@ Future<TerminalSession?> showSnippetRun(
 }) async {
   final server = ref.read(serverProvider(spi.id));
   final granted = server.remoteAccess;
-  final session = TerminalSession(spi: spi)
+  final session = TerminalSession(source: ServerSource(spi))
     ..adopt(server.client, granted: granted);
 
   // Whether there is still a shell to carry on with. A snippet that has run to
@@ -47,6 +48,7 @@ Future<TerminalSession?> showSnippetRun(
       child: _SnippetRunView(
         session: session,
         snippet: snippet,
+        spi: spi,
         granted: granted,
         running: running,
       ),
@@ -114,7 +116,7 @@ class _SnippetRunPageState extends ConsumerState<SnippetRunPage> {
     super.initState();
     final server = ref.read(serverProvider(widget.args.spi.id));
     _granted = server.remoteAccess;
-    _session = TerminalSession(spi: widget.args.spi)
+    _session = TerminalSession(source: ServerSource(widget.args.spi))
       ..adopt(server.client, granted: _granted);
   }
 
@@ -166,6 +168,7 @@ class _SnippetRunPageState extends ConsumerState<SnippetRunPage> {
       body: _SnippetRunView(
         session: _session,
         snippet: widget.args.snippet,
+        spi: widget.args.spi,
         granted: _granted,
         running: _running,
         expand: true,
@@ -179,6 +182,7 @@ class _SnippetRunView extends StatefulWidget {
   const _SnippetRunView({
     required this.session,
     required this.snippet,
+    required this.spi,
     required this.granted,
     required this.running,
     this.expand = false,
@@ -186,6 +190,12 @@ class _SnippetRunView extends StatefulWidget {
 
   final TerminalSession session;
   final Snippet snippet;
+
+  /// The server the script is formatted against — `${ip}` and friends. Taken
+  /// from the caller rather than off the session, which no longer promises to
+  /// be about a server at all.
+  final Spi spi;
+
   final MonitorRemoteAccess? granted;
   final ValueNotifier<bool> running;
 
@@ -259,7 +269,7 @@ class _SnippetRunViewState extends State<_SnippetRunView>
       // exists to run the thing and show what it printed.
       await widget.snippet.runInTerm(
         _sess.terminal,
-        _sess.spi,
+        widget.spi,
         autoEnter: true,
       );
     } catch (e, s) {
