@@ -897,7 +897,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get shareServerRiskTip =>
-      'Deze QR-code bevat de verbindingsinstellingen van de server in leesbare tekst, inclusief wachtwoorden. Iedereen die hem scant of fotografeert kan verbinding maken met deze server.';
+      'Deze QR-code bevat de verbindingsinstellingen van de server als platte tekst, inclusief wachtwoorden. Iedereen die hem scant of fotografeert kan verbinding maken met deze server.';
 
   @override
   String get sftpDlPrepare => 'Voorbereiden om verbinding te maken...';

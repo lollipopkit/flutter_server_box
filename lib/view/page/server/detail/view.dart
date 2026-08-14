@@ -137,11 +137,12 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
         ),
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.share),
-          tooltip: libL10n.share,
-          onPressed: () => _showShareQr(si.spi),
-        ),
+        if (si.spi.keyId == null && si.spi.resolvedJumpIds.isEmpty)
+          IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: libL10n.share,
+            onPressed: () => _showShareQr(si.spi),
+          ),
         IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () async {
@@ -149,7 +150,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
               context,
               args: SpiRequiredArgs(si.spi),
             );
-            if (delete == true) {
+            if (delete == true && mounted) {
               context.pop();
             }
           },
