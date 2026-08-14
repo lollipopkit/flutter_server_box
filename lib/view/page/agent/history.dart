@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
-import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/menu/base.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
 
@@ -114,15 +113,6 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
 
   // -------------------------------------------------------------------- utils
 
-  String _preview(AgentConversation conversation) {
-    for (final item in conversation.items.reversed) {
-      if (item is AskAiMessageItem && item.content.trim().isNotEmpty) {
-        return item.content.replaceAll(_whitespace, ' ').trim();
-      }
-    }
-    return context.l10n.askAiNoHistoryMessages;
-  }
-
   // -------------------------------------------------------------------- build
 
   @override
@@ -205,11 +195,17 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
                             conversation.title.isEmpty
                                 ? context.l10n.askAiUntitledConversation
                                 : conversation.title,
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
+                          // When it was last touched, not what was said in
+                          // it. The line above already carries the subject —
+                          // it is the opening message — so a preview under it
+                          // was the same sentence twice, and said nothing
+                          // about which of several similar conversations this
+                          // one is.
                           subtitle: Text(
-                            _preview(conversation),
+                            conversation.updatedAt.toAgoStr(),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             // Stated, not inherited. A selected `ListTile`
@@ -265,9 +261,6 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
     );
   }
 }
-
-/// Built once. It was constructed per history row per rebuild.
-final _whitespace = RegExp(r'\s+');
 
 /// Smaller than a menu's default 24: this menu opens from a rail barely wider
 /// than the words in it, and an icon that size takes the room the label needs.

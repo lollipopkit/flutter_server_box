@@ -225,7 +225,11 @@ void main() {
       // machine the user has only just handed a password to it may not.
       expect(onServer.risk, AskAiCommandRisk.readOnly);
       expect(onServer.canAutoRun, isTrue);
-      expect(onAdHoc.risk, AskAiCommandRisk.caution);
+      // Not `caution`: the command is read-only and saying otherwise would be
+      // a claim about the wrong thing. The host is what has not been vetted.
+      expect(onAdHoc.risk, AskAiCommandRisk.unknown);
+      expect(onAdHoc.intrinsicRisk, AskAiCommandRisk.readOnly);
+      expect(onAdHoc.raisedByUnvettedHost, isTrue);
       expect(onAdHoc.canAutoRun, isFalse);
     });
 
@@ -237,6 +241,7 @@ void main() {
       });
 
       expect(proposal.risk, AskAiCommandRisk.destructive);
+      expect(proposal.raisedByUnvettedHost, isFalse);
       expect(proposal.canAutoRun, isFalse);
     });
 
@@ -258,7 +263,8 @@ void main() {
         modelSafeToRun: true,
       );
 
-      expect(onAdHoc.risk, AskAiCommandRisk.caution);
+      expect(onAdHoc.risk, AskAiCommandRisk.unknown);
+      expect(onAdHoc.raisedByUnvettedHost, isTrue);
       expect(onAdHoc.canAutoRun, isFalse);
       expect(onServer.canAutoRun, isTrue);
     });

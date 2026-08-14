@@ -226,7 +226,14 @@ Map<String, dynamic>? _mapOrNull(Object? value) {
   return Map<String, dynamic>.from(value);
 }
 
-enum AskAiCommandRisk { readOnly, caution, destructive }
+/// How much of a command the local check could actually establish.
+///
+/// An allowlist, not a blocklist: [readOnly] is the only verdict that says
+/// something positive about the command. [unknown] is what nothing matched —
+/// which is a reason to withhold auto-running, and not a claim about what the
+/// command does. Saying "changes the system" there contradicts the model's own
+/// description of a `sleep`, and the contradiction is the app's fault.
+enum AskAiCommandRisk { readOnly, unknown, caution, destructive }
 
 /// Protocol-neutral function tool definition used by both Chat Completions and
 /// Responses requests.
@@ -358,8 +365,10 @@ class AskAiCommand {
     return '${user == null ? '' : '$user@'}$host$portSuffix';
   }
 
-  AskAiCommandRisk get risk => switch (toolName) {
-    'read_file' => _unvettedFloor(AskAiCommandRisk.readOnly),
+  /// What the call would be worth on a machine the user has already accepted:
+  /// a property of the call itself, and nothing to do with where it runs.
+  AskAiCommandRisk get intrinsicRisk => switch (toolName) {
+    'read_file' => AskAiCommandRisk.readOnly,
     'write_file' => AskAiCommandRisk.caution,
     // Reaching a machine nobody has vetted, with credentials, is the most
     // consequential thing the Agent can propose — whatever it plans to do
@@ -370,19 +379,33 @@ class AskAiCommand {
       'list_servers' || 'get_status' => AskAiCommandRisk.readOnly,
       _ => AskAiCommandRisk.caution,
     },
-    _ => _unvettedFloor(classifyRisk(command)),
+    _ => classifyRisk(command),
   };
+
+  AskAiCommandRisk get risk => _unvettedFloor(intrinsicRisk);
+
+  /// The call is only being reviewed because of where it runs.
+  ///
+  /// Worth telling apart in the UI: "changes the system" is what `caution`
+  /// used to mean, and it is a plain contradiction on a read-only command —
+  /// which is exactly what the model writes underneath it.
+  bool get raisedByUnvettedHost => risk != intrinsicRisk;
 
   /// Nothing runs unattended on a host met this conversation.
   ///
   /// Auto-running is a convenience for machines already accepted into the app;
   /// on one the user has only just handed a password to, a read-only command
-  /// still deserves the half-second it takes to look at it. Raises the floor
-  /// to [AskAiCommandRisk.caution] — which does not add a confirmation dialog,
-  /// only takes away [canAutoRun].
+  /// still deserves the half-second it takes to look at it.
+  ///
+  /// Lifts to [AskAiCommandRisk.unknown] rather than [AskAiCommandRisk.caution]
+  /// for the same reason `caution` is not what an unmatched command gets: the
+  /// command really is read-only, the host is what has not been vetted, and
+  /// "changes the system" would be a claim about the wrong thing. All the
+  /// lift does is withhold [canAutoRun]; [raisedByUnvettedHost] is what lets
+  /// the chip say which of the two it is.
   AskAiCommandRisk _unvettedFloor(AskAiCommandRisk risk) {
     if (sessionId == null) return risk;
-    return risk == AskAiCommandRisk.readOnly ? AskAiCommandRisk.caution : risk;
+    return risk == AskAiCommandRisk.readOnly ? AskAiCommandRisk.unknown : risk;
   }
 
   bool get canAutoRun => modelSafeToRun && risk == AskAiCommandRisk.readOnly;
@@ -539,9 +562,13 @@ class AskAiCommand {
       return readOnlyStarts.any((pattern) => pattern.hasMatch(stripped));
     }
 
+    // Chained commands are not taken apart, so nothing can be established
+    // about them — including that they change anything. `ls && pwd` is as
+    // unanalysed here as `ls && rm -rf /`, and only the first of those two
+    // would be a lie to call a system change.
     final chainCandidate = normalized.replaceAll(RegExp(r'\d*>&\d+'), '');
     if (RegExp(r'&&|\|\||[;\r\n]|&').hasMatch(chainCandidate)) {
-      return AskAiCommandRisk.caution;
+      return AskAiCommandRisk.unknown;
     }
 
     final pipelineSegments = normalized.split('|');
@@ -550,7 +577,9 @@ class AskAiCommand {
     )) {
       return AskAiCommandRisk.readOnly;
     }
-    return AskAiCommandRisk.caution;
+    // Matched nothing at all — not a known mutation, not a known read. `sleep`
+    // lands here, and so does anything the lists have never heard of.
+    return AskAiCommandRisk.unknown;
   }
 }
 

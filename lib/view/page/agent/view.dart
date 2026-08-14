@@ -85,12 +85,6 @@ class AgentHeaderActions extends ConsumerWidget {
           ),
         ],
         const _AdHocSessionsButton(),
-        if (session.isWorking)
-          IconButton.filledTonal(
-            tooltip: libL10n.stop,
-            onPressed: notifier.stopWork,
-            icon: const Icon(Icons.stop),
-          ),
       ],
     );
   }
@@ -342,6 +336,11 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
         label: context.l10n.askAiRiskReadOnly,
         icon: Icons.visibility_outlined,
         color: scheme.primary,
+      ),
+      AskAiCommandRisk.unknown => (
+        label: context.l10n.askAiRiskUnknown,
+        icon: Icons.help_outline,
+        color: scheme.tertiary,
       ),
       AskAiCommandRisk.caution => (
         label: context.l10n.askAiRiskCaution,
@@ -645,6 +644,13 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     };
     final content = arguments['content'];
     final risk = _riskInfo(context, proposal.risk);
+    // Named for why it is being reviewed, not for what `caution` usually
+    // means: a read-only command on a host met this conversation is reviewed
+    // because of the host, and a chip reading "changes system" over the
+    // model's own "does not modify the system" is just wrong.
+    final riskLabel = proposal.raisedByUnvettedHost
+        ? context.l10n.askAiRiskUnvetted
+        : risk.label;
     return Card(
       elevation: 0,
       color: theme.colorScheme.surfaceContainerLow,
@@ -672,7 +678,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
                 Chip(
                   visualDensity: VisualDensity.compact,
                   avatar: Icon(risk.icon, size: 15, color: risk.color),
-                  label: Text(risk.label),
+                  label: Text(riskLabel),
                   side: BorderSide(color: risk.color.withValues(alpha: 0.45)),
                   backgroundColor: risk.color.withValues(alpha: 0.09),
                 ),
@@ -787,7 +793,13 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     // Everything but the text is session state, so only the send button has to
     // follow the keystrokes — see the builder around it. Rebuilding the view
     // for each one redrew the timeline's markdown and every history row.
-    final canSendWhatever = !session.isWorking && session.pendingTool == null;
+    //
+    // Typing is only blocked by a tool waiting to be reviewed, which is a
+    // question that has to be answered before anything else makes sense. A
+    // running turn does not block it: composing the next thing to say while
+    // the answer arrives is the normal way to use a chat box.
+    final canType = session.pendingTool == null;
+    final canSendWhatever = canType && !session.isWorking;
     final error = session.error;
     return SafeArea(
       top: false,
@@ -874,7 +886,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
                             onSubmitted: sendOnEnter && isDesktop
                                 ? _submitPrompt
                                 : null,
-                            enabled: canSendWhatever,
+                            enabled: canType,
                             decoration: InputDecoration(
                               hintText: session.pendingTool == null
                                   ? context.l10n.agentPromptHint
@@ -902,17 +914,28 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
                       ),
                       Padding(
                         padding: const EdgeInsets.all(7),
-                        child: ValueListenableBuilder(
-                          valueListenable: _inputController,
-                          builder: (_, value, _) => IconButton.filled(
-                            tooltip: context.l10n.askAiAgentSend,
-                            onPressed:
-                                canSendWhatever && value.text.trim().isNotEmpty
-                                ? () => _submitPrompt(_inputController.text)
-                                : null,
-                            icon: const Icon(Icons.arrow_upward),
-                          ),
-                        ),
+                        // One button, because they are the same question at
+                        // two moments: while a turn is running the only thing
+                        // to do to it is stop it, and a separate stop control
+                        // elsewhere is one more place to look.
+                        child: session.isWorking
+                            ? IconButton.filled(
+                                tooltip: libL10n.stop,
+                                onPressed: _notifier.stopWork,
+                                icon: const Icon(Icons.stop),
+                              )
+                            : ValueListenableBuilder(
+                                valueListenable: _inputController,
+                                builder: (_, value, _) => IconButton.filled(
+                                  tooltip: context.l10n.askAiAgentSend,
+                                  onPressed:
+                                      canSendWhatever &&
+                                          value.text.trim().isNotEmpty
+                                      ? () => _submitPrompt(_inputController.text)
+                                      : null,
+                                  icon: const Icon(Icons.arrow_upward),
+                                ),
+                              ),
                       ),
                     ],
                   ),
@@ -959,24 +982,35 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
         const SizedBox(height: 14),
       ],
       if (session.isStreaming) ...[
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.only(top: 4),
-              child: SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: session.streamingContent?.trim().isNotEmpty == true
-                  ? SimpleMarkdown(data: session.streamingContent!)
-                  : Text(context.l10n.askAiAwaitingResponse),
-            ),
-          ],
+        Builder(
+          builder: (context) {
+            // Answer text is many lines and starts at the top; the waiting
+            // label is one line and belongs beside the spinner's middle.
+            // Aligning both to the top left the label sitting visibly high.
+            final streamed = session.streamingContent?.trim();
+            final hasText = streamed?.isNotEmpty == true;
+            return Row(
+              crossAxisAlignment: hasText
+                  ? CrossAxisAlignment.start
+                  : CrossAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(top: hasText ? 4 : 0),
+                  child: const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: hasText
+                      ? SimpleMarkdown(data: session.streamingContent!)
+                      : Text(context.l10n.askAiAwaitingResponse),
+                ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 14),
       ],

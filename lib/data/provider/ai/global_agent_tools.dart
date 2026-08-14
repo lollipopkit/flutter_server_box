@@ -488,11 +488,15 @@ String buildGlobalAgentInstructions({
       );
     }
   }
-  if (localeHint?.trim().isNotEmpty == true) {
-    prompt.writeln(
-      '\nReply in the user interface language: ${localeHint!.trim()}.',
-    );
-  }
+  // Language is decided per reply, not once: a conversation can start in one
+  // and carry on in another, and the app's own setting says nothing about
+  // which the user is actually typing in. The locale is the fallback for the
+  // openings that carry no language at all — an address, a server id, `df -h`.
+  final locale = localeHint?.trim();
+  prompt.writeln(
+    '\nReply in the language the user writes in, switching whenever they do.'
+    '${locale?.isNotEmpty == true ? ' When a message carries no language of its own, use $locale, which is what this device is set to.' : ''}',
+  );
   return prompt.toString().trim();
 }
 
