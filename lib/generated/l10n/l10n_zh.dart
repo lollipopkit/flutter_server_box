@@ -852,6 +852,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeDir => '主目录';
 
   @override
+  String get selectItem => '选择';
+
+  @override
+  String selected(Object count) {
+    return '已选 $count 项';
+  }
+
+  @override
   String get sendTo => '发送到…';
 
   @override
@@ -1295,6 +1303,10 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get agentLocalExecTip =>
       '允许 Agent 在运行 ServerBox 的这台机器上工作，而不只是服务器。这里没有无人值守：再只读的命令也需要审核。app 的数据、你的密钥和文件都在这台机器上。';
+
+  @override
+  String get agentLocalExecRootfsTip =>
+      '让 Agent 在本机操作,范围限于 ServerBox 安装的 Alpine Linux 容器内。它看不到 Android 的文件系统、App 的数据和你的文件。每条命令仍然需要审核。';
 
   @override
   String macDmgImportedPartly(String path) {
@@ -2150,6 +2162,14 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get homeDir => '主目錄';
 
   @override
+  String get selectItem => '選擇';
+
+  @override
+  String selected(Object count) {
+    return '已選 $count 項';
+  }
+
+  @override
   String get sendTo => '傳送到…';
 
   @override
@@ -2593,6 +2613,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get agentLocalExecTip =>
       '允許 Agent 在執行 ServerBox 的這台機器上工作，而不只是伺服器。這裡沒有無人值守：再唯讀的指令也需要審核。app 的資料、你的金鑰和檔案都在這台機器上。';
+
+  @override
+  String get agentLocalExecRootfsTip =>
+      '讓 Agent 在本機操作,範圍限於 ServerBox 安裝的 Alpine Linux 容器內。它看不到 Android 的檔案系統、App 的資料和你的檔案。每條命令仍然需要審核。';
 
   @override
   String macDmgImportedPartly(String path) {

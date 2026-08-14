@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
@@ -312,6 +313,164 @@ void main() {
     expect(find.text('File'), findsOneWidget);
     // Not an entry's menu: nothing was clicked on.
     expect(find.text('Rename'), findsNothing);
+  });
+
+  group('picking several out', () {
+    _MapBackend threeFiles() => _MapBackend({
+      '/': [_file('a.txt'), _file('b.txt'), _file('c.txt')],
+    });
+
+    Future<void> clickWith(
+      WidgetTester tester,
+      String name, {
+      LogicalKeyboardKey? holding,
+    }) async {
+      if (holding != null) await tester.sendKeyDownEvent(holding);
+      await tester.tap(find.text(name));
+      await tester.pumpAndSettle();
+      if (holding != null) await tester.sendKeyUpEvent(holding);
+    }
+
+    testWidgets('a plain click still opens, and picks nothing', (tester) async {
+      // Not reversed to "click selects, double-click opens": that would make
+      // entering a folder cost two taps on a touch screen.
+      final backend = _MapBackend({
+        '/': [_dir('sub')],
+        '/sub': [_file('inner.txt')],
+      });
+
+      await pump(tester, backend);
+      await clickWith(tester, 'sub');
+
+      expect(find.text('inner.txt'), findsOneWidget);
+      expect(find.textContaining('selected'), findsNothing);
+    });
+
+    testWidgets('a modifier click picks instead of opening', (tester) async {
+      await pump(tester, threeFiles());
+
+      await clickWith(tester, 'a.txt', holding: LogicalKeyboardKey.meta);
+
+      expect(find.text('1 selected'), findsOneWidget);
+    });
+
+    testWidgets('once one is picked, a plain click picks too', (tester) async {
+      // Otherwise the second file would need the modifier held as well, which
+      // is not how any list behaves.
+      await pump(tester, threeFiles());
+
+      await clickWith(tester, 'a.txt', holding: LogicalKeyboardKey.meta);
+      await clickWith(tester, 'b.txt');
+
+      expect(find.text('2 selected'), findsOneWidget);
+    });
+
+    testWidgets('shift picks everything in between', (tester) async {
+      await pump(tester, threeFiles());
+
+      await clickWith(tester, 'a.txt', holding: LogicalKeyboardKey.meta);
+      await clickWith(tester, 'c.txt', holding: LogicalKeyboardKey.shift);
+
+      expect(find.text('3 selected'), findsOneWidget);
+    });
+
+    testWidgets('leaving the directory drops the selection', (tester) async {
+      // A selection is names in one listing; carrying it into another would
+      // be carrying names that mean something else there.
+      final backend = _MapBackend({
+        '/': [_dir('sub'), _file('a.txt')],
+        '/sub': [_file('a.txt')],
+      });
+
+      await pump(tester, backend);
+      await clickWith(tester, 'a.txt', holding: LogicalKeyboardKey.meta);
+      expect(find.text('1 selected'), findsOneWidget);
+
+      // Through `..`, not by tapping the folder: while a selection is open a
+      // plain tap picks rather than opens, which is what makes the second file
+      // reachable without holding a modifier again.
+      await tester.tap(find.text('sub'));
+      await tester.pumpAndSettle();
+      expect(find.text('2 selected'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('sub'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('selected'), findsNothing);
+    });
+
+    testWidgets('escape puts it away', (tester) async {
+      await pump(tester, threeFiles());
+      await clickWith(tester, 'a.txt', holding: LogicalKeyboardKey.meta);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('selected'), findsNothing);
+    });
+  });
+
+  group('the keyboard', () {
+    /// Puts the keyboard on the listing without opening anything.
+    ///
+    /// Tapping a row would: with no `onOpenFile` the browser falls back to
+    /// that row's menu, and a dialog takes the focus with it.
+    Future<void> focusList(WidgetTester tester) async {
+      await tester.tapAt(const Offset(600, 700));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('arrows move a cursor, enter opens it', (tester) async {
+      final backend = _MapBackend({
+        '/': [_dir('sub'), _file('a.txt')],
+        '/sub': [_file('inner.txt')],
+      });
+
+      await pump(tester, backend);
+      // Focus follows a click into the listing, which is what makes the keys
+      // work without hunting for it with Tab first.
+      await focusList(tester);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(find.text('inner.txt'), findsOneWidget);
+    });
+
+    testWidgets('backspace goes up', (tester) async {
+      final backend = _MapBackend({
+        '/': [_dir('sub')],
+        '/sub': [_file('inner.txt')],
+      });
+
+      await pump(tester, backend);
+      await tester.tap(find.text('sub'));
+      await tester.pumpAndSettle();
+      expect(find.text('inner.txt'), findsOneWidget);
+      await focusList(tester);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+      await tester.pumpAndSettle();
+
+      expect(find.text('sub'), findsOneWidget);
+    });
+
+    testWidgets('select-all picks the whole listing', (tester) async {
+      await pump(tester, _MapBackend({
+        '/': [_file('a.txt'), _file('b.txt'), _file('c.txt')],
+      }));
+      await focusList(tester);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.meta);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.meta);
+      await tester.pumpAndSettle();
+
+      expect(find.text('3 selected'), findsOneWidget);
+    });
   });
 
   testWidgets('an empty directory says so, and can still be left', (

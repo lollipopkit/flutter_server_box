@@ -166,6 +166,8 @@
   "back": "Atrás",
   "history": "Historial",
   "homeDir": "Inicio",
+  "selectItem": "Seleccionar",
+  "selected": "{count} seleccionados",
   "sendTo": "Enviar a…",
   "serverDetailOrder": "Orden de los componentes en la página de detalles del servidor",
   "serverFuncBtns": "Botones de función del servidor",

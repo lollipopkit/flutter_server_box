@@ -166,6 +166,8 @@
   "back": "Zurück",
   "history": "Verlauf",
   "homeDir": "Persönlicher Ordner",
+  "selectItem": "Auswählen",
+  "selected": "{count} ausgewählt",
   "sendTo": "Senden an …",
   "serverDetailOrder": "Reihenfolge der Widgets auf der Detailseite",
   "serverFuncBtns": "Server-Funktionsschaltflächen",

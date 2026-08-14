@@ -167,6 +167,8 @@
   "back": "Indietro",
   "history": "Cronologia",
   "homeDir": "Home",
+  "selectItem": "Seleziona",
+  "selected": "{count} selezionati",
   "sendTo": "Invia a…",
   "serverDetailOrder": "Ordine widget pagina dettagli",
   "serverFuncBtns": "Pulsanti funzione server",

@@ -166,6 +166,8 @@
   "back": "Kembali",
   "history": "Riwayat",
   "homeDir": "Beranda",
+  "selectItem": "Pilih",
+  "selected": "{count} dipilih",
   "sendTo": "Kirim ke…",
   "serverDetailOrder": "Detail pesanan widget halaman",
   "serverFuncBtns": "Tombol fungsi server",

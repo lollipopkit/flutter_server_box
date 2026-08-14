@@ -272,6 +272,8 @@
   "back": "返回",
   "history": "历史",
   "homeDir": "主目录",
+  "selectItem": "选择",
+  "selected": "已选 {count} 项",
   "sendTo": "发送到…",
   "serverDetailOrder": "详情页部件顺序",
   "serverFuncBtns": "服务器功能按钮",
@@ -413,5 +415,6 @@
   "askAiRiskUnknown": "未判定",
   "agentLocalExec": "在本机执行命令",
   "agentLocalExecTip": "允许 Agent 在运行 ServerBox 的这台机器上工作，而不只是服务器。这里没有无人值守：再只读的命令也需要审核。app 的数据、你的密钥和文件都在这台机器上。",
+  "agentLocalExecRootfsTip": "让 Agent 在本机操作,范围限于 ServerBox 安装的 Alpine Linux 容器内。它看不到 Android 的文件系统、App 的数据和你的文件。每条命令仍然需要审核。",
   "macDmgImportedPartly": "已导入此前安装版本的数据。下载的文件仍在原处:{path}。"
 }

@@ -916,6 +916,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get homeDir => 'Home';
 
   @override
+  String get selectItem => 'Selecteren';
+
+  @override
+  String selected(Object count) {
+    return '$count geselecteerd';
+  }
+
+  @override
   String get sendTo => 'Verzenden naar…';
 
   @override
@@ -1410,6 +1418,10 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get agentLocalExecTip =>
       'Laat de Agent werken op de machine waarop ServerBox draait, niet alleen op servers. Hier draait niets onbeheerd: elke opdracht moet worden beoordeeld.';
+
+  @override
+  String get agentLocalExecRootfsTip =>
+      'Lets the Agent work on this device, inside the Alpine Linux container ServerBox installs. It cannot see Android\'s filesystem, the app\'s data or your files. Every command still needs review.';
 
   @override
   String macDmgImportedPartly(String path) {

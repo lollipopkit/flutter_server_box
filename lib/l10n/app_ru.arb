@@ -166,6 +166,8 @@
   "back": "Назад",
   "history": "История",
   "homeDir": "Домашняя папка",
+  "selectItem": "Выбрать",
+  "selected": "Выбрано: {count}",
   "sendTo": "Отправить в…",
   "serverDetailOrder": "Порядок элементов на странице деталей сервера",
   "serverFuncBtns": "Кнопки функций сервера",

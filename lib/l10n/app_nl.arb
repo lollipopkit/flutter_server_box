@@ -166,6 +166,8 @@
   "back": "Terug",
   "history": "Geschiedenis",
   "homeDir": "Home",
+  "selectItem": "Selecteren",
+  "selected": "{count} geselecteerd",
   "sendTo": "Verzenden naar…",
   "serverDetailOrder": "Volgorde van widget op detailpagina",
   "serverFuncBtns": "Server functieknoppen",

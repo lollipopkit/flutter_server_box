@@ -166,6 +166,8 @@
   "back": "戻る",
   "history": "履歴",
   "homeDir": "ホーム",
+  "selectItem": "選択",
+  "selected": "{count} 件選択",
   "sendTo": "送信先…",
   "serverDetailOrder": "詳細ページのウィジェット順序",
   "serverFuncBtns": "サーバー機能ボタン",

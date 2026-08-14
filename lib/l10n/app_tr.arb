@@ -166,6 +166,8 @@
   "back": "Geri",
   "history": "Geçmiş",
   "homeDir": "Ana klasör",
+  "selectItem": "Seç",
+  "selected": "{count} seçildi",
   "sendTo": "Şuraya gönder…",
   "serverDetailOrder": "Ayrıntı sayfası bileşen sırası",
   "serverFuncBtns": "Sunucu işlev düğmeleri",

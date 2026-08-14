@@ -1710,6 +1710,18 @@ abstract class AppLocalizations {
   /// **'Home'**
   String get homeDir;
 
+  /// No description provided for @selectItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get selectItem;
+
+  /// No description provided for @selected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selected(Object count);
+
   /// No description provided for @sendTo.
   ///
   /// In en, this message translates to:
@@ -2501,6 +2513,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Lets the Agent work on the machine ServerBox is running on, not only on servers. Nothing runs here unattended: every command needs review, however read-only it looks. This is where the app\'s data, your keys and your files are.'**
   String get agentLocalExecTip;
+
+  /// No description provided for @agentLocalExecRootfsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Lets the Agent work on this device, inside the Alpine Linux container ServerBox installs. It cannot see Android\'s filesystem, the app\'s data or your files. Every command still needs review.'**
+  String get agentLocalExecRootfsTip;
 
   /// No description provided for @macDmgImportedPartly.
   ///

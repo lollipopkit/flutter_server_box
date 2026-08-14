@@ -166,6 +166,8 @@
   "back": "Retour",
   "history": "Historique",
   "homeDir": "Dossier personnel",
+  "selectItem": "Sélectionner",
+  "selected": "{count} sélectionnés",
   "sendTo": "Envoyer vers…",
   "serverDetailOrder": "Ordre des widgets de la page de détails du serveur",
   "serverFuncBtns": "Boutons de fonction du serveur",

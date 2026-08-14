@@ -867,6 +867,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get homeDir => '홈';
 
   @override
+  String get selectItem => '선택';
+
+  @override
+  String selected(Object count) {
+    return '$count개 선택됨';
+  }
+
+  @override
   String get sendTo => '보낼 위치…';
 
   @override
@@ -1331,6 +1339,10 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get agentLocalExecTip =>
       'ServerBox가 실행 중인 기기에서도 Agent가 작업할 수 있게 합니다. 여기서는 자동 실행되지 않으며, 모든 명령에 확인이 필요합니다.';
+
+  @override
+  String get agentLocalExecRootfsTip =>
+      'Lets the Agent work on this device, inside the Alpine Linux container ServerBox installs. It cannot see Android\'s filesystem, the app\'s data or your files. Every command still needs review.';
 
   @override
   String macDmgImportedPartly(String path) {

@@ -27,12 +27,22 @@ Future<void> sendTo(
   WidgetRef ref, {
   required FileRef source,
   required bool isDir,
+  bool reuseDestination = false,
 }) async {
-  final place = await _pickPlace(context, ref);
-  if (place == null || !context.mounted) return;
+  final _Destination? chosen;
+  if (reuseDestination && _last != null) {
+    chosen = _last;
+  } else {
+    final place = await _pickPlace(context, ref);
+    if (place == null || !context.mounted) return;
 
-  final dir = await _pickDir(context, place);
-  if (dir == null || !context.mounted) return;
+    final dir = await _pickDir(context, place);
+    if (dir == null || !context.mounted) return;
+    chosen = _Destination(place, dir);
+    _last = chosen;
+  }
+  final place = chosen!.place;
+  final dir = chosen.dir;
 
   final destination = switch (place) {
     _Device() => LocalFileRef(dir).child(source.name),
@@ -52,6 +62,19 @@ Future<void> sendTo(
       .read(fileTransferProvider.notifier)
       .add(FileTransfer(from: source, to: destination, isDir: isDir));
   context.showSnackBar(l10n.added2List);
+}
+
+/// Where the last send went, so a batch asks once rather than once per file.
+///
+/// Deliberately not remembered across a batch's end: "the same place as last
+/// time" is a guess, and a guess about where a file lands is the wrong thing
+/// to be confident about.
+_Destination? _last;
+
+class _Destination {
+  const _Destination(this.place, this.dir);
+  final _Place place;
+  final String dir;
 }
 
 /// Somewhere files can be put.

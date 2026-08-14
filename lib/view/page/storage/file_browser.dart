@@ -4,6 +4,7 @@ import 'package:cross_file/cross_file.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
@@ -185,6 +186,25 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   /// Whether something from the system is being dragged over the listing.
   final _dropping = false.vn;
 
+  /// The entries picked out, by name — names rather than paths because a
+  /// selection does not survive leaving the directory it was made in.
+  final _selected = <String>{};
+
+  /// Where the keyboard is, as an index into the shown list. Null until an
+  /// arrow key is pressed, so a browser nobody has typed at draws no cursor.
+  int? _cursor;
+
+  /// The last entry the pointer picked, for shift-click to extend from.
+  int? _anchor;
+
+  /// What the shown list was, so the keyboard and shift-click can index it.
+  /// Written where it is built, which is the only place that knows the order.
+  List<FileEntry> _shown = const [];
+
+  final _listFocus = FocusNode(debugLabel: 'file browser');
+
+  bool get _selecting => _selected.isNotEmpty;
+
   late Future<List<FileEntry>> _entries = _list();
 
   @override
@@ -203,6 +223,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     _sort.dispose();
     _busy.dispose();
     _dropping.dispose();
+    _listFocus.dispose();
     super.dispose();
   }
 
@@ -286,8 +307,150 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   }
 
   void _go(void Function() move) {
+    _clearSelection();
     move();
     refresh();
+  }
+
+  void _clearSelection() {
+    if (_selected.isEmpty && _cursor == null) return;
+    setStateSafe(() {
+      _selected.clear();
+      _cursor = null;
+      _anchor = null;
+    });
+  }
+
+  /// Where the keyboard is, or null when it is nowhere and when the listing
+  /// has changed under it.
+  ///
+  /// `elementAtOrNull` will not take a negative index, and "no cursor" is the
+  /// ordinary state — so this is a guard rather than a default of -1.
+  FileEntry? get _cursorEntry {
+    final index = _cursor;
+    if (index == null || index < 0 || index >= _shown.length) return null;
+    return _shown[index];
+  }
+
+  /// The entries a batch action applies to, in the order they are shown.
+  List<FileEntry> get _selectedEntries => [
+    for (final entry in _shown)
+      if (_selected.contains(entry.name)) entry,
+  ];
+
+  /// Opens what a plain click means for this entry: enter it, pick it, or
+  /// hand it to the backend's own opener.
+  void _open(FileEntry entry, String full) {
+    if (entry.isDir) {
+      _go(() => _path.enter(entry.name));
+      return;
+    }
+    if (widget.args.isPickFile) {
+      _pick(entry);
+      return;
+    }
+    final open = widget.args.onOpenFile;
+    if (open == null) {
+      _showEntryMenu(entry);
+      return;
+    }
+    open(this, entry, full);
+  }
+
+  void _toggle(FileEntry entry) {
+    setStateSafe(() {
+      if (!_selected.remove(entry.name)) _selected.add(entry.name);
+      final index = _shown.indexWhere((e) => e.name == entry.name);
+      _anchor = index < 0 ? null : index;
+      _cursor = _anchor;
+    });
+  }
+
+  /// Everything between the last pick and this one, which is what shift means
+  /// in every list a desktop user has met.
+  void _extendTo(FileEntry entry) {
+    final to = _shown.indexWhere((e) => e.name == entry.name);
+    if (to < 0) return;
+    final from = _anchor ?? to;
+    setStateSafe(() {
+      for (var i = from < to ? from : to; i <= (from < to ? to : from); i++) {
+        _selected.add(_shown[i].name);
+      }
+      _cursor = to;
+    });
+  }
+
+  /// The keys a desktop file manager answers to.
+  ///
+  /// On the list rather than on the page, so typing in a rename dialog does
+  /// not delete what is behind it.
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final keys = HardwareKeyboard.instance;
+    final modified = keys.isControlPressed || keys.isMetaPressed;
+
+    switch (event.logicalKey) {
+      case LogicalKeyboardKey.arrowDown:
+        _moveCursor(1, extend: keys.isShiftPressed);
+      case LogicalKeyboardKey.arrowUp:
+        _moveCursor(-1, extend: keys.isShiftPressed);
+      case LogicalKeyboardKey.enter || LogicalKeyboardKey.numpadEnter:
+        final entry = _cursorEntry;
+        if (entry == null) return KeyEventResult.ignored;
+        _open(entry, _fullPath(entry));
+      case LogicalKeyboardKey.backspace:
+        if (!_path.canGoUp) return KeyEventResult.ignored;
+        _go(_path.goUp);
+      case LogicalKeyboardKey.escape:
+        if (!_selecting && _cursor == null) return KeyEventResult.ignored;
+        _clearSelection();
+      case LogicalKeyboardKey.f2:
+        final entry = _cursorOrOnlySelected;
+        if (entry == null) return KeyEventResult.ignored;
+        _rename(entry);
+      case LogicalKeyboardKey.delete:
+        final targets = _selecting
+            ? _selectedEntries
+            : [?_cursorEntry];
+        if (targets.isEmpty) return KeyEventResult.ignored;
+        _deleteAll(targets);
+      case LogicalKeyboardKey.keyA when modified:
+        _selectAll();
+      default:
+        return KeyEventResult.ignored;
+    }
+    return KeyEventResult.handled;
+  }
+
+  /// What a single-target key acts on: what is picked out if exactly one is,
+  /// else where the keyboard is. Two selected and F2 is ambiguous, so it does
+  /// nothing rather than renaming whichever came first.
+  FileEntry? get _cursorOrOnlySelected {
+    if (_selected.length == 1) return _selectedEntries.firstOrNull;
+    if (_selected.isNotEmpty) return null;
+    return _cursorEntry;
+  }
+
+  void _moveCursor(int by, {required bool extend}) {
+    if (_shown.isEmpty) return;
+    final next = ((_cursor ?? -1) + by).clamp(0, _shown.length - 1);
+    setStateSafe(() {
+      _cursor = next;
+      if (extend) {
+        _anchor ??= next;
+        _selected.add(_shown[next].name);
+      }
+    });
+  }
+
+  void _selectAll() {
+    setStateSafe(() {
+      _selected
+        ..clear()
+        ..addAll(_shown.map((e) => e.name));
+    });
   }
 
   String _fullPath(FileEntry entry) => BrowsePath.join(_path.path, entry.name);
@@ -307,6 +470,58 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
         BrowsePath.join(_path.path, name),
       ),
     );
+  }
+
+  /// Deletes several, asking once.
+  ///
+  /// One question for the batch rather than one per file: a confirmation the
+  /// user has to answer ten times is a confirmation they stop reading.
+  Future<void> _deleteAll(List<FileEntry> entries) async {
+    if (entries.length == 1) return _delete(entries.first);
+
+    var recursive = Stores.setting.sftpRmrDir.fetch();
+    final hasDir = entries.any((e) => e.isDir);
+    final confirmed = await context.showRoundDialog<bool>(
+      title: libL10n.attention,
+      child: StatefulBuilder(
+        builder: (_, setState) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListTile(
+              title: Text(
+                libL10n.askContinue(
+                  '${libL10n.delete} ${l10n.selected(entries.length)}',
+                ),
+              ),
+              subtitle: Text(
+                entries.map((e) => e.name).join('\n'),
+                style: UIs.text11Grey,
+              ),
+            ),
+            if (hasDir && !Stores.setting.sftpRmrDir.fetch())
+              CheckboxListTile(
+                title: Text(l10n.sftpRmrDirSummary),
+                value: recursive,
+                onChanged: (value) =>
+                    setState(() => recursive = value ?? false),
+              ),
+          ],
+        ),
+      ),
+      actions: Btnx.okReds,
+    );
+    if (confirmed != true) return;
+
+    await _run(() async {
+      for (final entry in entries) {
+        await backend.remove(
+          _fullPath(entry),
+          recursive: entry.isDir && recursive,
+        );
+      }
+    });
+    _clearSelection();
   }
 
   Future<void> _delete(FileEntry entry) async {
@@ -448,6 +663,11 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   /// `popDialog` the author had to remember.
   List<ContextMenuAction> _entryActions(FileEntry entry, String full) => [
     ContextMenuAction(
+      icon: Icons.checklist,
+      text: l10n.selectItem,
+      onTap: () => _toggle(entry),
+    ),
+    ContextMenuAction(
       icon: Icons.abc,
       text: libL10n.rename,
       onTap: () => _rename(entry),
@@ -583,7 +803,16 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
               : const SizedBox(height: 2),
         ),
         Expanded(
-          child: _wrapDropTarget(
+          child: Focus(
+            focusNode: _listFocus,
+            onKeyEvent: _onKey,
+            child: Listener(
+              // A `Listener`, not a `GestureDetector`: this only wants to know
+              // that a pointer went down, and a tap recogniser here would
+              // compete in the arena with the row's own — losing it, and with
+              // it the focus that makes the arrow keys work.
+              onPointerDown: (_) => _listFocus.requestFocus(),
+              child: _wrapDropTarget(
             (isMobile
                     ? RefreshIndicator(onRefresh: refresh, child: _buildList())
                     : _buildList())
@@ -598,7 +827,9 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
                           _createActions,
                           at: at,
                         ),
-                ),
+                  ),
+              ),
+            ),
           ),
         ),
       ],
@@ -629,6 +860,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   }
 
   Widget _buildBottom() {
+    if (_selecting) return _buildSelectionBar();
     final children = widget.args.isPickDir
         ? [
             IconButton(tooltip: libL10n.ok, 
@@ -696,6 +928,62 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     ),
     ...?widget.args.createActions?.call(this),
   ];
+
+  /// What replaces the bottom row while entries are picked out.
+  ///
+  /// In place of it rather than beside it: nothing in the ordinary row acts on
+  /// a selection, and leaving them both on screen would put "new folder" next
+  /// to "delete 9 files".
+  Widget _buildSelectionBar() {
+    final entries = _selectedEntries;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(11, 7, 11, 11),
+        child: Row(
+          children: [
+            IconButton(
+              tooltip: libL10n.cancel,
+              onPressed: _clearSelection,
+              icon: const Icon(Icons.close),
+            ),
+            UIs.width7,
+            Expanded(child: Text(l10n.selected(entries.length))),
+            if (widget.args.refOf case final refOf?)
+              IconButton(
+                tooltip: l10n.sendTo,
+                onPressed: () => _sendAll(entries, refOf),
+                icon: const Icon(Icons.drive_file_move_outline),
+              ),
+            IconButton(
+              tooltip: libL10n.delete,
+              onPressed: () => _deleteAll(entries),
+              icon: Icon(Icons.delete, color: UIs.textRed.color),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Sends several to one destination, asking once where.
+  Future<void> _sendAll(
+    List<FileEntry> entries,
+    FileRef Function(String) refOf,
+  ) async {
+    for (final entry in entries) {
+      if (!mounted) return;
+      await sendTo(
+        context,
+        ref,
+        source: refOf(_fullPath(entry)),
+        isDir: entry.isDir,
+        // Asked for the first, reused for the rest: picking a destination ten
+        // times to move ten files is not a batch action.
+        reuseDestination: entry != entries.first,
+      );
+    }
+    _clearSelection();
+  }
 
   Widget _buildAddBtn() {
     return Btn.icon(
@@ -803,6 +1091,9 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   }
 
   Widget _buildListView(List<FileEntry> items) {
+    // The order the keyboard walks and shift-click extends along. Assigned
+    // here because this is the only place that knows it.
+    _shown = items;
     final up = _path.canGoUp ? 1 : 0;
     // Asked once per listing rather than once per row. `MediaQuery.sizeOf`
     // registers an inherited-widget dependency, and doing that inside
@@ -848,22 +1139,30 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       _ => Icons.insert_drive_file,
     });
 
+    /// A click that carries a modifier, or lands while a selection is open,
+    /// picks rather than opens.
+    ///
+    /// Single click still *opens*, on both kinds of pointer. Reversing that —
+    /// click selects, double-click opens, as a desktop file manager does —
+    /// would make entering a folder take two clicks on a touch screen, and
+    /// this browser has to be the same browser on both.
+    ///
+    /// And so there is no double-click handler. Declaring one puts a
+    /// double-tap recogniser in the arena, which delays *every* single click
+    /// by the double-tap timeout — paid on every open, to gain a gesture that
+    /// would do what the first click already did.
     void onTap() {
       beforeTap?.call();
-      if (entry.isDir) {
-        _go(() => _path.enter(entry.name));
+      final keys = HardwareKeyboard.instance;
+      if (keys.isShiftPressed) {
+        _extendTo(entry);
         return;
       }
-      if (widget.args.isPickFile) {
-        _pick(entry);
+      if (keys.isControlPressed || keys.isMetaPressed || _selecting) {
+        _toggle(entry);
         return;
       }
-      final open = widget.args.onOpenFile;
-      if (open == null) {
-        _showEntryMenu(entry);
-        return;
-      }
-      open(this, entry, full);
+      _open(entry, full);
     }
 
     void onLongPress() {
@@ -900,6 +1199,17 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
         trailing: isNarrow ? null : _buildEntryTrailing(entry),
         onTap: onTap,
         onLongPress: onLongPress,
+        selected: _selected.contains(entry.name),
+        selectedTileColor: Theme.of(
+          context,
+        ).colorScheme.secondaryContainer.withValues(alpha: 0.55),
+        // Where the keyboard is, which is not the same as what is picked out.
+        shape: _cursorEntry?.name == entry.name
+            ? RoundedRectangleBorder(
+                side: BorderSide(color: UIs.primaryColor, width: 1.5),
+                borderRadius: BorderRadius.circular(13),
+              )
+            : null,
       ).onSecondary(onSecondaryTap),
     );
   }

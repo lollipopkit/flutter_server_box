@@ -280,6 +280,8 @@
   "back": "Back",
   "history": "History",
   "homeDir": "Home",
+  "selectItem": "Select",
+  "selected": "{count} selected",
   "sendTo": "Send to…",
   "serverDetailOrder": "Detail page widget order",
   "serverFuncBtns": "Server function buttons",
@@ -467,6 +469,7 @@
   "askAiRiskUnknown": "Unclassified",
   "agentLocalExec": "Run commands on this device",
   "agentLocalExecTip": "Lets the Agent work on the machine ServerBox is running on, not only on servers. Nothing runs here unattended: every command needs review, however read-only it looks. This is where the app's data, your keys and your files are.",
+  "agentLocalExecRootfsTip": "Lets the Agent work on this device, inside the Alpine Linux container ServerBox installs. It cannot see Android's filesystem, the app's data or your files. Every command still needs review.",
   "macDmgImportedPartly": "Imported the data of the previously installed build. Downloaded files were left where they were, in {path}.",
   "@macDmgImportedPartly": {
     "placeholders": {

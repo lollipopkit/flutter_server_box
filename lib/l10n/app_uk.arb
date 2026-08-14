@@ -167,6 +167,8 @@
   "back": "Назад",
   "history": "Історія",
   "homeDir": "Домівка",
+  "selectItem": "Вибрати",
+  "selected": "Вибрано: {count}",
   "sendTo": "Надіслати до…",
   "serverDetailOrder": "Порядок віджетів на сторінці деталі",
   "serverFuncBtns": "Кнопки функцій сервера",

@@ -162,3 +162,58 @@ a terminal people fight.
 - [ ] With text selected, right-click copies it and clears the selection.
 - [ ] With nothing selected, right-click pastes.
 - [ ] Neither interferes with the existing text-selection drag.
+
+
+## The rest of the desktop gaps
+
+Surveyed after the three stages above, and done in the same sweep.
+
+| # | Gap | Outcome |
+| - | --- | ------- |
+| 1 | ⌘1-9 and ⌘, existed only inside `PlatformMenuBar`, a macOS API | `desktopShortcuts` binds them on all three; the menu bar keeps its entries for discovery |
+| 2 | No drag and drop at all | A dropped path is a `LocalFileRef`, so it is an ordinary `FileTransfer` |
+| 3 | No multi-select | Modifier-click, shift-range, Cmd+A; a bar replaces the bottom row while something is picked |
+| 4 | No keyboard navigation | Arrows, Enter, Backspace, F2, Delete, Cmd+A, Escape, on the list's own focus |
+| 5 | 44 icon buttons said nothing on hover | 81 of 82 now do; the 82nd draws its own label |
+| 6 | Terminal had no clipboard chords | Cmd+C/V on macOS, Ctrl+Shift+C/V elsewhere |
+| 7 | Nothing on a right-click in empty space | The same "what can be made here" list as the add button |
+| 8 | No double-click | **Not done, deliberately** — see below |
+
+### Why there is no double-click
+
+Single click opens, on both kinds of pointer, and that did not change.
+Reversing it — click selects, double-click opens, as a desktop file manager
+does — would make entering a folder cost two taps on a touch screen, and this
+is one browser on both.
+
+That leaves double-click with nothing to do that the first click has not
+already done. Adding it anyway is not free: declaring `onDoubleTap` puts a
+double-tap recogniser in the arena, and every single click then waits out the
+double-tap timeout before opening. A delay on every open, to gain a gesture
+that is already handled.
+
+### What selection does that a desktop user expects, and what it does not
+
+- A plain click **opens**. A modifier click picks. Once anything is picked, a
+  plain click picks too — otherwise the second file would need the modifier
+  held again, which is not how any list behaves.
+- Shift extends from the last pick, as everywhere else.
+- A selection is names in one listing, so leaving the directory drops it.
+- Finder *replaces* the selection on a plain click and this *adds* to it.
+  Deliberate: with no double-click to open, replace-on-click would make it
+  impossible to open anything while a selection is open.
+
+### Manual verification for these
+
+- [ ] ⌘/Ctrl+1-9 switches tabs on Linux and Windows, not only macOS.
+- [ ] ⌘/Ctrl+, opens settings on all three.
+- [ ] Dragging a file from the system onto the listing queues a transfer; a
+      folder queues the whole tree.
+- [ ] Ctrl-click picks; shift-click extends; ⌘A picks the listing; Escape
+      clears; leaving the directory clears.
+- [ ] Arrow keys move a cursor without picking; Enter opens it; Backspace goes
+      up; F2 renames; Delete deletes what is picked.
+- [ ] Delete with several picked asks once, listing them, not once per file.
+- [ ] "Send to" with several picked asks where once and reuses it.
+- [ ] Hovering any toolbar icon says what it does.
+- [ ] Ctrl+Shift+C/V in the terminal on Linux, and Ctrl+C still interrupts.
