@@ -18,10 +18,10 @@ and step 3 on iOS is a GPLv3 emulator plus an App Store review argument. This
 document is what is known, what is guessed, and what has to be measured before
 any of it is committed to.
 
-**Status: research only. Nothing in stages 1–4 is implemented.** Last checked
-against the tree at `f8f371b3`. Update the verification log at the bottom as
-answers land — several decisions below are downstream of questions still marked
-open.
+**Status: stage 2b's first half is done (`328f92d9`); stages 1, 2, 3 and 4 are
+not started.** Last checked against the tree at `f8f371b3`, before that half
+landed. Update the verification log at the bottom as answers land — several
+decisions below are downstream of questions still marked open.
 
 What that check found, since sixteen commits of agent work landed between this
 document being written and being read again:
@@ -30,11 +30,11 @@ document being written and being read again:
 | --- | --- |
 | `ShellBackend` implementations | still two, `Ssh` and `Monitor` |
 | `ServerExec` implementations | still two, `SshExec` and `MonitorExec` |
-| `ServerExec` in any agent file | still **zero** — nine files, 5,495 lines |
+| `ServerExec` in any agent file | ~~zero~~ — now what `AgentShellHandle` carries |
 | `TerminalSession` | still `TerminalSession({required this.spi})` |
 | `'SSH'` in `home_tab.dart` | still literal, `:32` and `:62` |
 | `flutter_pty` | still not a dependency |
-| monitor-only refusal | still thrown, now `global_agent_tools.dart:761` |
+| monitor-only refusal | ~~thrown~~ — gone, the agent asks `ensureExec()` |
 
 One thing did move, and it moved in this plan's favour — see
 [what the tools need](#what-the-tools-need).
@@ -291,15 +291,23 @@ no package manager, toybox only — but it is a real shell and it costs almost
 nothing once stage 1 lands.
 
 **2b. Change `AgentShellHandle`'s payload to `ServerExec`, then add a local
-target.** Worth doing on its own merits — it is what makes the agent work on
-monitor-only servers, which it silently refuses today. Local execution then
-follows: a third `AgentSshTarget` case, `LocalExec`, `dart:io` for the file
-tools, and the safety positions above. Can run in parallel with stage 1; it
-needs `ServerExec`, not the terminal work.
+target.**
 
-Smaller than it was when this was written: the target abstraction now exists,
-so this is one type's payload and the call sites that read it, rather than
-inventing the seam as well.
+*First half done in `328f92d9`.* The handle now carries a `ServerExec` beside
+an optional `SSHClient`, `_connectedServer` asks `ServerNotifier.ensureExec()`
+instead of demanding a client, and the monitor-only refusal is gone. The file
+tools keep needing the client — SFTP is a byte stream and the agent's HTTP API
+has none — and say so with a way forward rather than a refusal. Cancellation
+moved into `ServerExec.run(cancel:)`, because killing an `SSHSession` from
+outside was the one thing tying the agent to SSH.
+
+*Not yet verified against a live monitor-only server.* The agent's far side
+answers (`/api/v1/exec` returns 200 on the debian VM), and the same
+`MonitorExec` already backs the process, systemd and container pages, but the
+app has never run an agent tool call over it.
+
+*Second half:* local execution — a third `AgentSshTarget` case, `LocalExec`,
+`dart:io` for the file tools, and the safety positions above.
 
 **3. Measure the Android execution question.** A throwaway APK at the current
 `targetSdk`: write a static binary into `filesDir`, try `execve`, try it through
