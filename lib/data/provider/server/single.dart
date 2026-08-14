@@ -231,17 +231,28 @@ class ServerNotifier extends _$ServerNotifier {
   }
 
   // Refresh server status
-  bool _isRefreshing = false;
+  /// The generation of the refresh in flight, or null when there is none.
+  ///
+  /// Not a bare flag: editing a server bumps the generation, and the refresh
+  /// that the edit kicks off must not be dropped because the one it superseded
+  /// is still waiting for a socket to time out. That older refresh publishes
+  /// nothing — every await re-checks — but it held the flag for the length of
+  /// a connect timeout, which is exactly how long someone sat looking at a
+  /// server still marked failed after they had fixed its address.
+  int? _refreshingOperation;
 
   Future<void> refresh({bool interactive = false}) async {
-    if (_isRefreshing) return;
-
-    _isRefreshing = true;
     final operation = _operationGeneration;
+    // Two refreshes of the *same* generation are the overlap worth stopping.
+    if (_refreshingOperation == operation) return;
+
+    _refreshingOperation = operation;
     try {
       await _getData(interactive: interactive, operation: operation);
     } finally {
-      _isRefreshing = false;
+      // Only if it is still ours: a newer refresh may have taken over while
+      // this one was finding out it had been superseded.
+      if (_refreshingOperation == operation) _refreshingOperation = null;
     }
   }
 
@@ -366,6 +377,14 @@ class ServerNotifier extends _$ServerNotifier {
       updateConnection(ServerConn.finished);
       TryLimiter.reset(sid);
     } catch (e, s) {
+      Loggers.app.warning('Get status via monitor for ${spi.name} failed', e, s);
+      // A failure belongs to the server it was fetched for. Edit a server's
+      // address and the poll still running against the old one eventually
+      // times out; without this it counted that timeout against the retry
+      // limiter and marked the server failed — overwriting the answer the
+      // corrected address had already produced, so a fixed server went back
+      // to looking broken a few seconds later.
+      if (!_isRefreshCurrent(operation, spi)) return;
       TryLimiter.inc(sid);
       final err = e is MonitorHttpErr
           ? e
@@ -374,7 +393,6 @@ class ServerNotifier extends _$ServerNotifier {
               message: e.toString(),
             );
       _setFailedState(_copyStatus(state.status, err: err, setErr: true));
-      Loggers.app.warning('Get status via monitor for ${spi.name} failed', e, s);
     }
   }
 
@@ -557,13 +575,25 @@ class ServerNotifier extends _$ServerNotifier {
   /// [countAttempt] is false for the one case that must not burn a retry:
   /// a connection that only failed because keyboard-interactive auth needed a
   /// prompt this non-interactive refresh could not show.
+  ///
+  /// [operation] is checked here rather than at each call site: a `catch` is
+  /// reached by throwing out of an `await`, so it skips whatever currency
+  /// check follows that await. Edit a server's address and the connection
+  /// still being attempted against the old one eventually fails; without this
+  /// it counted against the retry limiter and marked the server failed,
+  /// undoing the refresh the corrected address had already completed.
   void _failSsh(
     SSHErrType type,
     Object e, {
+    required int operation,
     bool closeClient = false,
     bool countAttempt = true,
     String? message,
   }) {
+    if (operation != _operationGeneration) {
+      Loggers.app.info('SSH ${state.spi.name}: dropping a superseded failure');
+      return;
+    }
     if (countAttempt) TryLimiter.inc(state.spi.id);
     final err = SSHErr(type: type, message: message ?? e.toString());
     _setFailedState(
@@ -800,13 +830,18 @@ class ServerNotifier extends _$ServerNotifier {
           _scriptWritten = true;
         }
       } on SSHAuthAbortError catch (e) {
-        _failSsh(SSHErrType.auth, e, closeClient: true);
+        _failSsh(SSHErrType.auth, e, operation: operation, closeClient: true);
         return;
       } on SSHAuthFailError catch (e) {
-        _failSsh(SSHErrType.auth, e, closeClient: true);
+        _failSsh(SSHErrType.auth, e, operation: operation, closeClient: true);
         return;
       } catch (e) {
-        _failSsh(SSHErrType.writeScript, e, closeClient: true);
+        _failSsh(
+          SSHErrType.writeScript,
+          e,
+          operation: operation,
+          closeClient: true,
+        );
         return;
       }
     }
@@ -857,6 +892,7 @@ class ServerNotifier extends _$ServerNotifier {
         _failSsh(
           SSHErrType.segments,
           '',
+          operation: operation,
           message: raw.isEmpty
               ? 'Empty response from server'
               : 'No status segments in response, raw:\n$raw',
@@ -883,7 +919,7 @@ class ServerNotifier extends _$ServerNotifier {
       );
       return;
     } catch (e) {
-      _failSsh(SSHErrType.getStatus, e);
+      _failSsh(SSHErrType.getStatus, e, operation: operation);
       return;
     }
 
@@ -902,6 +938,7 @@ class ServerNotifier extends _$ServerNotifier {
       _failSsh(
         SSHErrType.getStatus,
         e,
+        operation: operation,
         message: 'Parse failed: $e\n\n$raw',
       );
       Loggers.app.warning('Server status', e, trace);
