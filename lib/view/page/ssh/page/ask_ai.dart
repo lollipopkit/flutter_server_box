@@ -39,10 +39,16 @@ extension _AskAi on SSHPageState {
     final width = MediaQuery.sizeOf(context).width;
     final placement = askAiPanelPlacementForWidth(width);
 
+    // The panel's tools act on a server, so there has to be one. A terminal on
+    // this device is out of its reach until the Agent grows a local target —
+    // see local-ssh-plan.md, stage 2b.
+    final spi = widget.args.spi;
+    if (spi == null) return;
+
     Widget panel(BuildContext panelContext) => _AskAiPanel(
       terminalContext: terminalContext,
-      serverId: widget.args.spi.id,
-      serverName: widget.args.spi.name,
+      serverId: spi.id,
+      serverName: spi.name,
       localeHint: localeHint,
       autoStart: autoStart,
       placement: askAiPanelPlacementForWidth(
@@ -1084,6 +1090,11 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
         context.l10n.askAiRiskReadOnly,
         theme.colorScheme.primary,
         Icons.visibility_outlined,
+      ),
+      AskAiCommandRisk.unknown => (
+        context.l10n.askAiRiskUnknown,
+        theme.colorScheme.tertiary,
+        Icons.help_outline,
       ),
       AskAiCommandRisk.caution => (
         context.l10n.askAiRiskCaution,

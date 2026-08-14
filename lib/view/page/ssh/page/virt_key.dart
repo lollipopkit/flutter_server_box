@@ -71,7 +71,9 @@ extension _VirtKey on SSHPageState {
 
         final snippet = snippets.firstOrNull;
         if (snippet == null) return;
-        snippet.runInTerm(_terminal, widget.args.spi);
+        if (widget.args.spi case final spi?) {
+          snippet.runInTerm(_terminal, spi);
+        }
         break;
       case VirtualKeyFunc.file:
         // get $PWD from SSH session with unique markers
@@ -129,7 +131,10 @@ extension _VirtKey on SSHPageState {
           return;
         }
 
-        final args = SftpPageArgs(spi: widget.args.spi, initPath: initPath);
+        final spi = widget.args.spi;
+        // SFTP is a file browser on a server. This device already has one.
+        if (spi == null) return;
+        final args = SftpPageArgs(spi: spi, initPath: initPath);
         SftpPage.route.go(context, args);
         break;
       case VirtualKeyFunc.sudoPassword:

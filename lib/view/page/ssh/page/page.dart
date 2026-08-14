@@ -45,7 +45,17 @@ part 'keyboard.dart';
 part 'virt_key.dart';
 
 final class SshPageArgs {
-  final Spi spi;
+  /// Where this terminal's shell comes from. A server, or this device — and
+  /// what is only true of a server is reached through [spi], which is null for
+  /// the other one.
+  final TerminalSource source;
+
+  /// The server behind [source], when there is one.
+  Spi? get spi => switch (source) {
+    ServerSource(:final spi) => spi,
+    LocalSource() => null,
+  };
+
   final String? initCmd;
   final Snippet? initSnippet;
 
@@ -72,7 +82,7 @@ final class SshPageArgs {
   final String? restorationId;
 
   const SshPageArgs({
-    required this.spi,
+    required this.source,
     this.initCmd,
     this.initSnippet,
     this.session,
@@ -124,7 +134,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// one tab's tmux state overwriting the other's.
   @override
   String get restorationId =>
-      'ssh_page_${widget.args.restorationId ?? widget.args.spi.id}';
+      'ssh_page_${widget.args.restorationId ?? widget.args.source.id}';
 
   @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
@@ -136,7 +146,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   /// The terminal and the shell behind it. Handed in when this page is
   /// continuing a session that started elsewhere, and made here otherwise.
   late final TerminalSession _sess =
-      widget.args.session ?? TerminalSession(source: ServerSource(widget.args.spi));
+      widget.args.session ?? TerminalSession(source: widget.args.source);
 
   /// Whether the session arrived already running, and so must not be started
   /// a second time.
@@ -263,9 +273,15 @@ class SSHPageState extends ConsumerState<SSHPage>
     _setupDiscontinuityTimer();
 
     // Adopt whatever the provider already has, so a server that is connected
-    // for status does not connect a second time just to show a terminal.
-    final serverState = ref.read(serverProvider(widget.args.spi.id));
-    _sess.adopt(serverState.client, granted: serverState.remoteAccess);
+    // for status does not connect a second time just to show a terminal. This
+    // device has nothing to adopt, and nothing to ask a provider about.
+    final serverId = widget.args.spi?.id;
+    if (serverId == null) {
+      _sess.adopt(null);
+    } else {
+      final serverState = ref.read(serverProvider(serverId));
+      _sess.adopt(serverState.client, granted: serverState.remoteAccess);
+    }
     _sess.onForegroundDone = _onForegroundSessionDone;
 
     if (++_sshConnCount == 1) {
@@ -278,7 +294,8 @@ class SSHPageState extends ConsumerState<SSHPage>
     // Add session entry (for Android notifications & iOS Live Activities)
     TermSessionManager.add(
       id: _sessionId,
-      spi: widget.args.spi,
+      title: widget.args.source.label,
+      subtitle: widget.args.spi?.oldId ?? '',
       startTimeMs: _sessionStartMs,
       disconnect: _disconnectFromNotification,
       status: TermSessionStatus.connecting,
@@ -342,7 +359,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         appBar: widget.args.notFromTab
             ? CustomAppBar(
                 leading: BackButton(onPressed: context.pop),
-                title: Text(widget.args.spi.name),
+                title: Text(widget.args.source.label),
                 centerTitle: false,
                 actions: _buildAppBarActions(),
               )
@@ -478,7 +495,9 @@ class SSHPageState extends ConsumerState<SSHPage>
         icon: const Icon(Icons.code),
       ),
     ];
-    if (!widget.args.spi.isRoot) {
+    // Only where there is a sudo password to insert. This device's shell is
+    // already whoever is running the app.
+    if (widget.args.spi case final spi? when !spi.isRoot) {
       actions.add(
         IconButton(
           onPressed: _insertSudoPassword,
@@ -491,6 +510,11 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   Future<void> _pickSnippet() async {
+    // A snippet's script is written against a server — `${ip}`, `${user}` —
+    // and there is nothing to resolve those against here. Offered only where
+    // they mean something; see [_buildAppBarActions].
+    final spi = widget.args.spi;
+    if (spi == null) return;
     if (_isPickingSnippet) return;
     _isPickingSnippet = true;
 
@@ -510,7 +534,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       if (selected == null) return;
 
       try {
-        await selected.runInTerm(_terminal, widget.args.spi);
+        await selected.runInTerm(_terminal, spi);
       } catch (e, s) {
         if (!mounted) return;
         context.showErrDialog(e, s, '${libL10n.snippet}: ${selected.name}');
@@ -721,6 +745,9 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   Future<void> _insertSudoPassword() async {
+    final spi = widget.args.spi;
+    if (spi == null) return;
+
     final authed = await SudoPassword.authenticateIfNeeded();
     if (!authed) {
       if (!mounted) return;
@@ -728,7 +755,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       return;
     }
 
-    final password = await SudoPassword.resolveForTerminal(widget.args.spi);
+    final password = await SudoPassword.resolveForTerminal(spi);
     if (password == null || password.isEmpty) {
       if (!mounted) return;
       context.showSnackBar(libL10n.empty);

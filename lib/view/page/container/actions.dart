@@ -355,7 +355,7 @@ extension on _ContainerPageState {
         final initCmd = await _containerNotifier.prepareInteractiveCommand(cmd);
         if (!mounted || initCmd == null) return;
         final args = SshPageArgs(
-          spi: widget.args.spi,
+          source: ServerSource(widget.args.spi),
           initCmd: initCmd,
         );
         SSHPage.route.go(context, args);
@@ -366,7 +366,7 @@ extension on _ContainerPageState {
         final initCmd = await _containerNotifier.prepareInteractiveCommand(cmd);
         if (!mounted || initCmd == null) return;
         final args = SshPageArgs(
-          spi: widget.args.spi,
+          source: ServerSource(widget.args.spi),
           initCmd: initCmd,
         );
         SSHPage.route.go(context, args);
@@ -384,7 +384,7 @@ extension on _ContainerPageState {
     final initCmd = 'cd ${shellSingleQuote(workingDir)} && $prepared';
     SSHPage.route.go(
       context,
-      SshPageArgs(spi: widget.args.spi, initCmd: initCmd),
+      SshPageArgs(source: ServerSource(widget.args.spi), initCmd: initCmd),
     );
   }
 

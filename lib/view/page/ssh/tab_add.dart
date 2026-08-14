@@ -11,6 +11,7 @@ class _AddPage extends ConsumerStatefulWidget {
   const _AddPage({
     required this.sortVersion,
     required this.onTap,
+    required this.onLocal,
     required this.onLongPress,
   });
 
@@ -19,6 +20,10 @@ class _AddPage extends ConsumerStatefulWidget {
   final Listenable sortVersion;
 
   final void Function(Spi spi) onTap;
+
+  /// Opens a shell on the machine the app is running on.
+  final VoidCallback onLocal;
+
   final void Function(Spi spi) onLongPress;
 
   @override
@@ -47,13 +52,24 @@ class _AddPageState extends ConsumerState<_AddPage> {
     final state = ref.watch(serversProvider);
     final order = _SortOrder.stored.apply(state.serverOrder, state.servers);
 
-    if (order.isEmpty) {
+    // Not "empty" while this device is on the list: with no servers
+    // configured, a shell here is still something this page can open.
+    if (order.isEmpty && !LocalShellBackend.isSupported) {
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 
     return MasonryList(
       columnWidth: _kServerColumnWidth,
       children: [
+        // First, and for the same reason the file tab lists it first: it is
+        // always reachable, and it needs no credential to be.
+        if (LocalShellBackend.isSupported)
+          CardTile(
+            icon: Icons.smartphone,
+            title: libL10n.device,
+            subtitle: LocalShellBackend.shellPath,
+            onTap: widget.onLocal,
+          ),
         for (final id in order)
           if (state.servers[id] case final spi?) _ServerTile(
             key: ValueKey(id),
@@ -83,6 +99,7 @@ class _SideBar extends ConsumerStatefulWidget {
     required this.sortVersion,
     required this.actions,
     required this.onOpen,
+    required this.onLocal,
     required this.onEdit,
     required this.onSelect,
     required this.onClose,
@@ -96,6 +113,9 @@ class _SideBar extends ConsumerStatefulWidget {
 
   final List<Widget> actions;
   final void Function(Spi spi) onOpen;
+
+  /// Opens a shell on the machine the app is running on.
+  final VoidCallback onLocal;
   final void Function(Spi spi) onEdit;
   final void Function(int index) onSelect;
   final void Function(int index) onClose;
@@ -135,6 +155,13 @@ class _SideBarState extends ConsumerState<_SideBar> {
         onClose: widget.onClose,
         actions: widget.actions,
         targets: [
+          // Above the servers, the way the file rail puts this device above
+          // them: it is the one place that is always reachable, and it needs
+          // no credential to be.
+          if (LocalShellBackend.isSupported) ...[
+            SideBarSection(libL10n.device),
+            SideBarTile(title: libL10n.device, onTap: widget.onLocal),
+          ],
           SideBarSection(libL10n.servers),
           for (final id in order)
             if (state.servers[id] case final spi?)

@@ -690,7 +690,8 @@ class ServerNotifier extends _$ServerNotifier {
         final sessionId = 'ssh_${spi.id}';
         TermSessionManager.add(
           id: sessionId,
-          spi: spi,
+          title: spi.name,
+          subtitle: spi.oldId,
           startTimeMs: time1.millisecondsSinceEpoch,
           disconnect: () =>
               ref.read(serversProvider.notifier).closeOneServer(spi.id),

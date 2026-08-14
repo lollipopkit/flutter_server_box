@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:server_box/core/chan.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
 
 enum TermSessionStatus {
   connecting,
@@ -89,7 +88,11 @@ abstract final class TermSessionManager {
   /// Add a session record and push update to Android.
   static void add({
     required String id,
-    required Spi spi,
+    required String title,
+    /// What the title is not enough to tell apart — `user@ip:port` for a
+    /// server. Empty where there is nothing to add, which is what a terminal
+    /// on this device has.
+    String subtitle = '',
     required int startTimeMs,
     required VoidCallback disconnect,
     TermSessionStatus status = TermSessionStatus.connecting,
@@ -97,8 +100,8 @@ abstract final class TermSessionManager {
   }) {
     final info = TermSessionInfo(
       id: id,
-      title: spi.name,
-      subtitle: spi.oldId,
+      title: title,
+      subtitle: subtitle,
       startTimeMs: startTimeMs,
       status: status,
     );

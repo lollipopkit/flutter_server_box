@@ -20,6 +20,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/sftp_mission.dart';
@@ -624,7 +625,10 @@ extension _Actions on _SftpPageState {
       final sudoPrefix = useSudoForEdit ? 'sudo ' : '';
       final cmd =
           '$sudoPrefix$editor ${shellSingleQuote(remotePath)}';
-      final args = SshPageArgs(spi: widget.args.spi, initCmd: cmd);
+      final args = SshPageArgs(
+        source: ServerSource(widget.args.spi),
+        initCmd: cmd,
+      );
       await SSHPage.route.go(context, args);
       await _listDir();
       return;
@@ -940,7 +944,10 @@ extension _Actions on _SftpPageState {
     );
     if (confirm != true) return;
 
-    final args = SshPageArgs(spi: widget.args.spi, initCmd: cmd);
+    final args = SshPageArgs(
+      source: ServerSource(widget.args.spi),
+      initCmd: cmd,
+    );
     await SSHPage.route.go(context, args);
     _listDir();
   }

@@ -12,7 +12,10 @@ extension _Init on SSHPageState {
   /// Connects a new source of shells, asking the provider what the agent
   /// allows at the moment of use rather than trusting a stored answer.
   Future<ShellBackend> _connectBackend() => _sess.connect(
-    granted: ref.read(serverProvider(widget.args.spi.id)).remoteAccess,
+    granted: switch (widget.args.spi) {
+      final spi? => ref.read(serverProvider(spi.id)).remoteAccess,
+      null => null,
+    },
     context: mounted ? context : null,
   );
 
@@ -161,11 +164,14 @@ extension _Init on SSHPageState {
 
     _bindForegroundSession(session);
 
+    // Snippets name the server they run on, and their scripts are written
+    // against one. A terminal on this device has neither.
+    final spi = widget.args.spi;
     final snippets = ref.read(snippetProvider.select((p) => p.snippets));
-    if (_tmuxCurrentSession == null) {
+    if (spi != null && _tmuxCurrentSession == null) {
       for (final snippet in snippets) {
-        if (snippet.autoRunOn?.contains(widget.args.spi.id) == true) {
-          snippet.runInTerm(_terminal, widget.args.spi);
+        if (snippet.autoRunOn?.contains(spi.id) == true) {
+          snippet.runInTerm(_terminal, spi);
         }
       }
     }
@@ -177,8 +183,8 @@ extension _Init on SSHPageState {
     }
 
     final initSnippet = widget.args.initSnippet;
-    if (initSnippet != null && _tmuxCurrentSession == null) {
-      initSnippet.runInTerm(_terminal, widget.args.spi);
+    if (initSnippet != null && spi != null && _tmuxCurrentSession == null) {
+      initSnippet.runInTerm(_terminal, spi);
     }
 
     widget.args.focusNode?.requestFocus();
@@ -528,7 +534,7 @@ extension _Init on SSHPageState {
   void _saveTmuxState({required String sessionName, int? windowIndex}) {
     _tmuxCurrentSession = sessionName;
     _tmuxCurrentWindow = windowIndex;
-    _restorableServerId.value = widget.args.spi.id;
+    _restorableServerId.value = widget.args.source.id;
     _restorableTmuxSession.value = sessionName;
     _restorableTmuxWindow.value = windowIndex;
     widget.args.onTmuxStateChanged?.call();

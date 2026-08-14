@@ -6,6 +6,7 @@ import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/systemd.dart';
 import 'package:server_box/data/provider/systemd.dart';
+import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/widget/page_issue.dart';
 
@@ -216,7 +217,10 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
   }
 
   void _navigateToSsh(String cmd) {
-    final args = SshPageArgs(spi: widget.args.spi, initCmd: cmd);
+    final args = SshPageArgs(
+      source: ServerSource(widget.args.spi),
+      initCmd: cmd,
+    );
     SSHPage.route.go(context, args);
   }
 

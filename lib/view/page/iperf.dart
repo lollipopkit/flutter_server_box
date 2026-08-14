@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 
 class IPerfPage extends StatefulWidget {
@@ -47,7 +48,7 @@ class _IPerfPageState extends State<IPerfPage> {
           return;
         }
         final args = SshPageArgs(
-          spi: widget.args.spi,
+          source: ServerSource(widget.args.spi),
           initCmd: 'iperf -c ${_hostCtrl.text} -p ${_portCtrl.text}',
         );
         SSHPage.route.go(context, args);

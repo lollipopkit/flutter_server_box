@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
+import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/widget/empty_pane.dart';
@@ -47,7 +49,9 @@ class _SshSession {
   Map<String, dynamic> toRestorable() {
     final live = pageKey.currentState;
     return {
-      'serverId': live?.widget.args.spi.id ?? page.args.spi.id,
+      // The source's id, not a server's: this device has one too, and it is
+      // what tells the two apart when the set is reopened.
+      'sourceId': live?.widget.args.source.id ?? page.args.source.id,
       'tmuxSession': live?.tmuxCurrentSession ?? page.args.tmuxSession,
       'tmuxWindow': live?.tmuxCurrentWindow ?? page.args.tmuxWindow,
     };
@@ -73,7 +77,8 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
   late final _picker = Scaffold(
     body: _AddPage(
       sortVersion: _sortVersion,
-      onTap: _open,
+      onTap: _openServer,
+      onLocal: () => _open(const LocalSource()),
       onLongPress: (spi) =>
           ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
     ),
@@ -135,7 +140,8 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
           sessions: _sessions,
           sortVersion: _sortVersion,
           actions: [_sortBtn, _searchBtn, _historyBtn, _addBtn],
-          onOpen: _open,
+          onOpen: _openServer,
+          onLocal: () => _open(const LocalSource()),
           onEdit: (spi) =>
               ServerEditPage.route.go(context, args: SpiRequiredArgs(spi)),
           onSelect: _sessions.select,
@@ -211,12 +217,29 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
 /// Opening, closing and remembering terminals.
 extension _Sessions on _SSHTabPageState {
   /// Opens a shell on [spi].
+  void _openServer(
+    Spi spi, {
+    Snippet? snippet,
+    TerminalSession? session,
+    String? tmuxSession,
+    int? tmuxWindow,
+    bool select = true,
+  }) => _open(
+    ServerSource(spi),
+    snippet: snippet,
+    session: session,
+    tmuxSession: tmuxSession,
+    tmuxWindow: tmuxWindow,
+    select: select,
+  );
+
+  /// Opens a shell wherever [source] says.
   ///
   /// [select] is off while restoring: selecting each tab as it arrives would
   /// animate through all of them and land on the last, which is not where
   /// anyone left off.
   void _open(
-    Spi spi, {
+    TerminalSource source, {
     Snippet? snippet,
     TerminalSession? session,
     String? tmuxSession,
@@ -228,7 +251,7 @@ extension _Sessions on _SSHTabPageState {
     // what anything evaluated *during* the build has to use.
     late final String id;
     final tab = _sessions.add(
-      preferred: spi.name,
+      preferred: source.label,
       build: (name, focus, visible) {
         final key = GlobalKey<SSHPageState>(debugLabel: name);
         return _SshSession(
@@ -236,7 +259,7 @@ extension _Sessions on _SSHTabPageState {
           page: SSHPage(
             key: key,
             args: SshPageArgs(
-              spi: spi,
+              source: source,
               initSnippet: snippet,
               session: session,
               notFromTab: false,
@@ -263,7 +286,11 @@ extension _Sessions on _SSHTabPageState {
       },
     );
     id = tab.id;
-    Stores.history.sshServerHistory.add(spi.id);
+    // History is a list of servers visited. This device is not one of them,
+    // and is one tap away in the rail regardless.
+    if (source case ServerSource(:final spi)) {
+      Stores.history.sshServerHistory.add(spi.id);
+    }
     if (!select) return;
     _saveTabs();
     _sessions.select(_sessions.names.indexOf(tab.name));
@@ -293,7 +320,11 @@ extension _Sessions on _SSHTabPageState {
     if (pending.isEmpty) return;
     ref.read(terminalRequestsProvider.notifier).clear();
     for (final request in pending) {
-      _open(request.spi, snippet: request.snippet, session: request.session);
+      _openServer(
+        request.spi,
+        snippet: request.snippet,
+        session: request.session,
+      );
     }
   }
 
@@ -328,10 +359,21 @@ extension _Sessions on _SSHTabPageState {
     var restored = 0;
     for (final entry in entries) {
       if (entry is! Map) continue;
-      final spi = servers[entry['serverId']];
-      if (spi == null) continue;
+      // `serverId` is what records written before this tab could open a shell
+      // on the device itself carry. Read as a fallback rather than migrated:
+      // one relaunch rewrites the lot, and a session that fails to reopen has
+      // cost nothing.
+      final id = entry['sourceId'] ?? entry['serverId'];
+      final TerminalSource source;
+      if (id == const LocalSource().id) {
+        source = const LocalSource();
+      } else {
+        final spi = servers[id];
+        if (spi == null) continue;
+        source = ServerSource(spi);
+      }
       _open(
-        spi,
+        source,
         tmuxSession: entry['tmuxSession'] as String?,
         tmuxWindow: entry['tmuxWindow'] as int?,
         select: false,
@@ -429,7 +471,7 @@ extension _Actions on _SSHTabPageState {
           trailing: const Icon(Icons.chevron_right),
           onTap: () {
             ctx.pop();
-            _open(spi);
+            _openServer(spi);
           },
         ),
       ),
@@ -470,7 +512,7 @@ extension _Actions on _SSHTabPageState {
                   ? null
                   : () {
                       context.popDialog();
-                      _open(spi);
+                      _openServer(spi);
                     },
             );
           },
