@@ -326,9 +326,11 @@ This project is **AGPL-3.0** (`LICENSE`), which settles most of it:
 
 - **ish-arm64 is GPLv3** and would be statically linked. Compatible, and the
   obligation it brings — publish the whole app's source — is already met.
-- **proot is GPLv2**, invoked as a separate process rather than linked, so it
-  is aggregation, not a derived work. Shipping the binary means offering its
-  source. Whether its headers say "v2 only" or "v2 or later" was not checked.
+- **proot is GPLv2 *or later*** — checked in the source headers, not in
+  `COPYING`, which only carries the v2 text either way. It is invoked as a
+  separate process rather than linked, so it is aggregation; and even if that
+  changed, "or later" lets it be taken as GPLv3, which this AGPL-3.0 app can
+  combine with. Shipping the binary means offering its source.
 - **Apple's terms conflict with the GPL** — this is what removed VLC from the
   App Store. iSH ships a `LICENSE.IOS` waiver in which the copyright holders
   undertake not to enforce over that conflict alone
@@ -403,7 +405,7 @@ Update this as answers arrive; several decisions above move with them.
 | 2 | How does OpenMinis run rootfs binaries at `targetSdk` 36? | **Answered**: proot's own loader, extracted via `/proc/self/fd` and mapping the guest ELF itself, so the host linker is never asked to understand musl. `RootfsManager.kt:42`, `PRootKernel.kt:83`. Not reproduced here | **done** |
 | 3 | Are ish-arm64's 7–12x figures representative? | Build it, run a shell and a `python -c` loop | **open** |
 | 4 | Does the macOS DMG build ship unsandboxed, or does local shell hide there? | **Answered, and the first answer was wrong.** A sandboxed process cannot host a pty at all, so the entitlement that was meant to fix it bought nothing and was reverted (`ccd2e77b`). iCloud turned out not to need the sandbox either. macOS ships two products from one binary (`52a0ec1b`), and the App Store one hides the feature | **done** |
-| 5 | Is proot GPLv2-only or v2-or-later? | Read source headers, not `COPYING` | **open** |
+| 5 | Is proot GPLv2-only or v2-or-later? | **v2 or later** — the source headers say "either version 2 of the License, or (at your option) any later version" (`src/tracee/tracee.h:9`, `src/cli/cli.c:9`). So it can be taken as GPLv3 and combined with this AGPL-3.0 app even if it were linked rather than invoked | **done** |
 | 6 | Does `flutter_pty` still build against current Flutter on all four desktop/Android targets? | **macOS builds and runs** — `integration_test/local_shell_test.dart`, five tests, inside a real app. Linux, Windows and Android untried. One warning: `flutter_pty` does not support Swift Package Manager, which Flutter says "will become an error in a future version" — `sbm_ffi` is in the same list, so it is not a new exposure | **partly** |
 | 7 | Would 2.5.2 be survivable for this app? | Cannot be settled in advance. Decide whether stage 4's iOS half is worth the update risk | **open** |
 | 8 | Is local agent execution opt-in, and is auto-run barred locally? | **Answered** (`95aa2c30`, `c6c728f1`): both. `Stores.setting.agentLocalExec`, off by default, with a switch that is absent where the platform could not honour it. `AskAiCommand.onThisDevice` bars auto-run whatever the model or `askAiAutoRunSafeCommands` says | **done** |
