@@ -26,6 +26,9 @@ A `Makefile` wraps most common tasks — run `make help` for the full list. Pref
 - `flutter test test/disk_test.dart` - Run specific test file (or `make test-one TEST=test/disk_test.dart`)
 - `cargo test --workspace` - Run all Rust tests (parser, FFI shell, monitor)
 - SSH e2e (opt-in): set `SBM_E2E_SSH_HOST=<ssh destination or ~/.ssh/config alias>` in the workspace-root `.env`, then `cargo test -p sbm_parser --test ssh_e2e` — uploads the generated script to the remote, runs it, and compares the parsed result against direct command output; silently skipped when unset
+- A widget test whose tree writes to a store must open the Hive box **in memory**: `Hive.openBox<dynamic>('setting_test', bytes: Uint8List(0))`. A `testWidgets` body runs in a fake-async zone, and a real file write started there completes on a callback that zone is no longer pumping — so the box's write lock is never released, `box.close()` in `tearDown` blocks forever, and `flutter test` waits on that process. One such test hangs the whole run, with no failure and no output to say which file did it. Widgets that persist on their own (the floating Agent writes its mode on every change, panes write their width on every drag) hit this without the test writing anything itself.
+- Size the view, not the surface, when a test depends on a breakpoint: `tester.view.physicalSize` + `devicePixelRatio`. `setSurfaceSize` changes what the tree is laid out in but not what `MediaQuery` reports, so a "phone" test written that way silently exercises the desktop rendering.
+- `pumpAndSettle` is not usable on a tree containing a text field or another always-scheduling widget: it waits for a frame in which nothing is scheduled, and then gives up after its 10-minute default. Count the frames out with `pump(duration)` instead. `--timeout 30s` keeps any such mistake from costing ten minutes.
 
 ### Rust / FFI
 

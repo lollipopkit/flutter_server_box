@@ -328,18 +328,83 @@ class _PhoneShell extends ConsumerStatefulWidget {
   ConsumerState<_PhoneShell> createState() => _PhoneShellState();
 }
 
-class _PhoneShellState extends ConsumerState<_PhoneShell> {
+class _PhoneShellState extends ConsumerState<_PhoneShell>
+    with SingleTickerProviderStateMixin {
   bool _onRight = AgentShellGeometry.pillOnRight;
   double _pillY = AgentShellGeometry.pillY;
   double _sheetFraction = AgentShellGeometry.sheetFraction;
 
   static const _pillSize = 52.0;
 
+  /// 0 while the pill is showing, 1 while the sheet is.
+  ///
+  /// The desktop panel glides between its two heights, which it can because
+  /// both are the same box; here they are different shapes in different
+  /// corners, so they cross over instead — the sheet slides up from the edge
+  /// it will sit on while the pill goes. Without this the two simply replaced
+  /// each other between one frame and the next.
+  late final _expand = AnimationController(
+    vsync: this,
+    duration: Durations.medium2,
+    // Same asymmetry as the reveal: opening presents, closing acknowledges.
+    reverseDuration: Durations.short4,
+    value: ref.read(agentShellProvider) == AgentShellMode.collapsed ? 0 : 1,
+  );
+
+  late final _curve = CurvedAnimation(
+    parent: _expand,
+    curve: Curves.easeOutCubic,
+    reverseCurve: Curves.easeIn,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    // The ends are the only thing this state has to rebuild for: they decide
+    // which of the two stops being built at all. In between both are on
+    // screen and the transitions drive themselves.
+    _expand.addStatusListener((status) {
+      if (!mounted) return;
+      if (status == AnimationStatus.dismissed ||
+          status == AnimationStatus.completed) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _curve.dispose();
+    _expand.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ref.watch(agentShellProvider) == AgentShellMode.collapsed
-        ? _buildPill(context)
-        : _buildSheet(context);
+    final mode = ref.watch(agentShellProvider);
+    // Left where it is while the shell is on its way out: driven from the
+    // mode alone, hiding the sheet would also play it collapsing into a pill
+    // that is itself fading away.
+    if (mode != AgentShellMode.hidden) {
+      if (mode == AgentShellMode.collapsed) {
+        _expand.reverse();
+      } else {
+        _expand.forward();
+      }
+    }
+
+    // Both are on screen while one replaces the other, and the stack above has
+    // one slot for this shell — so it takes the whole area and holds its own
+    // stack. It paints nothing of its own, and a stack does not absorb what
+    // its children did not catch, so everything under it stays tappable.
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          if (!_expand.isCompleted) _buildPill(context),
+          if (!_expand.isDismissed) _buildSheet(context),
+        ],
+      ),
+    );
   }
 
   Widget _buildPill(BuildContext context) {
@@ -372,49 +437,54 @@ class _PhoneShellState extends ConsumerState<_PhoneShell> {
       child: _Reveal(
         animation: widget.reveal,
         alignment: Alignment.center,
-        child: GestureDetector(
-          onPanUpdate: (details) => setState(() {
-            if (travel > 0) {
-              _pillY = (_pillY + details.delta.dy / travel).clamp(0.0, 1.0);
-            }
-            // Which edge is decided by which half the finger is in, so a drag
-            // across the screen moves the pill with it rather than snapping
-            // back.
-            _onRight = details.globalPosition.dx > area.width / 2;
-          }),
-          onPanEnd: (_) =>
-              AgentShellGeometry.savePill(onRight: _onRight, y: _pillY),
-          child: Material(
-            elevation: 6,
-            shape: const CircleBorder(),
-            color: theme.colorScheme.primaryContainer,
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: ref.read(agentShellProvider.notifier).expand,
-              child: SizedBox(
-                width: _pillSize,
-                height: _pillSize,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // A ring rather than a badge: the pill is the only sign
-                    // the Agent is doing anything while you are on another
-                    // tab.
-                    if (working)
-                      SizedBox(
-                        width: _pillSize - 8,
-                        height: _pillSize - 8,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: theme.colorScheme.onPrimaryContainer,
+        // Out of the way as the sheet arrives, and back as it leaves.
+        child: _Reveal(
+          animation: ReverseAnimation(_curve),
+          alignment: Alignment.center,
+          child: GestureDetector(
+            onPanUpdate: (details) => setState(() {
+              if (travel > 0) {
+                _pillY = (_pillY + details.delta.dy / travel).clamp(0.0, 1.0);
+              }
+              // Which edge is decided by which half the finger is in, so a
+              // drag across the screen moves the pill with it rather than
+              // snapping back.
+              _onRight = details.globalPosition.dx > area.width / 2;
+            }),
+            onPanEnd: (_) =>
+                AgentShellGeometry.savePill(onRight: _onRight, y: _pillY),
+            child: Material(
+              elevation: 6,
+              shape: const CircleBorder(),
+              color: theme.colorScheme.primaryContainer,
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: ref.read(agentShellProvider.notifier).expand,
+                child: SizedBox(
+                  width: _pillSize,
+                  height: _pillSize,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // A ring rather than a badge: the pill is the only sign
+                      // the Agent is doing anything while you are on another
+                      // tab.
+                      if (working)
+                        SizedBox(
+                          width: _pillSize - 8,
+                          height: _pillSize - 8,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
                         ),
+                      Icon(
+                        Icons.auto_awesome,
+                        color: theme.colorScheme.onPrimaryContainer,
+                        size: 22,
                       ),
-                    Icon(
-                      Icons.auto_awesome,
-                      color: theme.colorScheme.onPrimaryContainer,
-                      size: 22,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -444,23 +514,32 @@ class _PhoneShellState extends ConsumerState<_PhoneShell> {
       child: _Reveal(
         animation: widget.reveal,
         alignment: Alignment.bottomCenter,
-        child: Material(
-          elevation: 12,
-          color: theme.colorScheme.surface,
-          clipBehavior: Clip.antiAlias,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              _buildGrabBar(context, theme, height),
-              const Expanded(
-                child: AgentConversationView(
-                  compact: true,
-                  showHeader: false,
+        // In from the edge it sits on, which is where it goes when collapsed.
+        // The stack it is in clips, so what is still below the screen is not
+        // drawn over the tab bar on the way past.
+        child: SlideTransition(
+          position: Tween(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(_curve),
+          child: Material(
+            elevation: 12,
+            color: theme.colorScheme.surface,
+            clipBehavior: Clip.antiAlias,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                _buildGrabBar(context, theme, height),
+                const Expanded(
+                  child: AgentConversationView(
+                    compact: true,
+                    showHeader: false,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
