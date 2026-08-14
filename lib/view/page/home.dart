@@ -4,9 +4,11 @@ import 'dart:io';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/utils/desktop_shortcuts.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
@@ -239,16 +241,38 @@ class _HomePageState extends ConsumerState<HomePage>
       ),
     );
 
+    // The shortcuts, on every desktop. macOS additionally gets a menu bar,
+    // which is where a shortcut is *discovered* — but the menu bar is a macOS
+    // API, and until now it was also the only thing that bound the keys, so
+    // Linux and Windows had no way to switch tabs from the keyboard at all.
+    final withKeys = !isDesktop
+        ? withShell
+        : CallbackShortcuts(
+            bindings: desktopShortcuts(
+              tabCount: _tabs.length,
+              onTab: _onDestinationSelected,
+              onSettings: () => SettingsPage.route.go(context),
+            ),
+            // Focused so the bindings are reachable without clicking
+            // something first, and skipping traversal so Tab still walks the
+            // actual controls.
+            child: Focus(
+              autofocus: true,
+              skipTraversal: true,
+              child: withShell,
+            ),
+          );
+
     if (Platform.isMacOS) {
       return PlatformMenuBar(
         menus: MacOSMenuBarManager.buildMenuBar(
           context,
           _onDestinationSelected,
         ),
-        child: withShell,
+        child: withKeys,
       );
     }
-    return withShell;
+    return withKeys;
   }
 
   Widget _buildBottomBar() {
