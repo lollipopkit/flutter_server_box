@@ -113,7 +113,7 @@ Desktop                     Mobile
 │   │ Agent    _ □ │   │    │        │ ✦ │ │ ← collapsed pill
 │   │ > _          │   │    │        ╰───╯ │
 │   └──────────────┘   │    └──────────────┘
-└──────────────────────┘      tap ↓ DraggableScrollableSheet
+└──────────────────────┘      tap ↓ opens a panel
 ```
 
 | | Desktop / wide | Mobile / narrow |
@@ -130,13 +130,16 @@ enum AgentShellMode { hidden, collapsed, expanded }
 ```
 
 The agent tab stays. The tab and the float are two views of one session, and
-the float is hidden by default — it appears when the agent is working while its
-tab is not on screen, or when Phase 2 navigates away from it.
+the float is off by default: a toggle in the tab's header turns it on, and
+`open_server` and `ssh_connect` turn it on themselves, because both are about
+to put something on screen that the conversation has to be next to. It hides
+itself while the Agent tab is the one being looked at.
 
-`agent.dart` becomes rendering plus input handling. `_buildMain` (`:1544`),
-`_buildComposer` (`:1399`), `_buildProposalCard` (`:1210`) and the timeline
-builders are reused verbatim by the float; only `build` (`:1628`) differs,
-since `SbPaneList` and its history column do not belong in a floating panel.
+The page splits in three rather than growing a flag. `view.dart` is the
+conversation — timeline and composer — with `showHeader: false` where the
+container draws its own bar. `history.dart` is the conversation list, which
+watches the session and so no longer needs the sheet to be told to redraw.
+`agent.dart` is what is left of the tab: the pane split and the toggle.
 
 ## Phase 2 — the agent can open a page
 
@@ -290,17 +293,30 @@ only for the host the user chose to keep.
 
 ## Delivery stages
 
-| Stage | Content | Verifiable on its own |
-| ----- | ------- | --------------------- |
-| 1 | `AgentSessionNotifier`; timeline entries become data; `agent.dart` reduced to rendering | agent tab behaves exactly as before |
-| 2 | `AgentShellMode` provider + floating container, both form factors | conversation continues while the tab is off screen |
-| 3 | `serverbox` gains `open_server` | agent opens a server and stays visible |
-| 4 | `AgentSshTarget` resolver; `ConfiguredTarget` only | no behaviour change, refactor only |
-| 5 | `AdHocSshSession` registry, `ssh_connect` / `ssh_disconnect`, credential dialog | connect to an unsaved host, run a command |
-| 6 | `serverbox` gains `add_server`; risk floor for ad-hoc commands | full scenario end to end |
+| Stage | Content | Verifiable on its own | |
+| ----- | ------- | --------------------- | - |
+| 1 | `AgentSessionNotifier`; timeline entries become data; `agent.dart` reduced to rendering | agent tab behaves exactly as before | shipped |
+| 2 | `AgentShellMode` provider + floating container, both form factors | conversation continues while the tab is off screen | shipped |
+| 3 | `serverbox` gains `open_server` | agent opens a server and stays visible | shipped |
+| 4 | `AgentSshTarget` resolver; `ConfiguredTarget` only | no behaviour change, refactor only | shipped |
+| 5 | `AdHocSshSession` registry, `ssh_connect` / `ssh_disconnect`, credential dialog | connect to an unsaved host, run a command | shipped |
+| 6 | `serverbox` gains `add_server`; risk floor for ad-hoc commands | full scenario end to end | shipped |
 
 Stages 1 and 4 change no behaviour. Each stage is a separate commit and can be
 reverted alone.
+
+Four defects found by running it, each fixed in its own commit afterwards:
+
+| Found | Cause |
+| ----- | ----- |
+| The Agent refused to reach an unlisted host | The instructions opened with "configured servers" and "use only exact server IDs", written before ad-hoc existed; `ssh_connect` was eight lines further down and read as a footnote. |
+| "No response" for a tool the model had called | `_parseCommand` took a proposal's one-line identity from a `command` argument and discarded a call that had none — which `ssh_connect` does not. |
+| The float appeared beside the tab it duplicates | `currentHomeTabProvider` was published from `initState` and `afterFirstLayout`, neither of which a hot reload runs. |
+| The float's last line sat below the visible area | Its position was clamped against `MediaQuery.sizeOf` — the window — rather than the box it is painted in. |
+
+The first two are the same shape: a tool declared in one file and interpreted
+in another, added to only one of them. Both now have a test that walks
+`globalAgentToolDefinitions` rather than naming a tool.
 
 ## Open risks
 
@@ -343,6 +359,11 @@ reverted alone.
 Ordered so a failure stops wasted effort. Restarts come last, because they
 clear the state everything earlier sets up.
 
+Boxes are ticked only where there is evidence, and the run so far went
+straight for group 4 — the point of the work — so most of the rest is
+untouched rather than passing. **Two questions are open, and both are load
+bearing:** see the notes in groups 4 and 5.
+
 ### 1. Session state — no server needed
 
 - [ ] Send a prompt, switch to another tab mid-stream, come back: the answer
@@ -356,12 +377,14 @@ clear the state everything earlier sets up.
 
 ### 2. Floating shell
 
-- [ ] Desktop: the panel drags, resizes, collapses to its title bar, and is
-      where it was left after a window resize.
+- [x] Desktop: the panel drags, and is where it was left after a window
+      resize. Resizing by the corner handle is untried.
+- [ ] Desktop: collapsing glides rather than jumping, and closing fades. Both
+      animations were added after this run and have not been seen.
 - [ ] Mobile: the pill snaps to an edge; tapping opens the sheet; the composer
-      stays above the keyboard.
-- [ ] The float and the agent tab show the same conversation, and typing in one
-      is reflected in the other.
+      stays above the keyboard. **Nothing on a phone has been run at all.**
+- [x] The float and the agent tab show the same conversation — seen while both
+      were on screen at once, which was itself the bug above.
 - [ ] Closing the float does not stop a running stream.
 
 ### 3. Navigation — needs a configured server
@@ -371,23 +394,43 @@ clear the state everything earlier sets up.
 - [ ] Back from that page leaves the float where it was.
 - [ ] `open_server` with an unknown id produces a usable error, not a crash.
 
+`open_server` has not been called once. Nothing about it is known beyond its
+unit tests.
+
 ### 4. Ad-hoc SSH — needs a throwaway host
 
-- [ ] `ssh_connect` prompts for the password in a dialog. The password appears
-      nowhere in the conversation, including after reopening it from history.
+- [x] `ssh_connect` prompts for the credential in a dialog.
+- [ ] The password appears nowhere in the conversation, including after
+      reopening it from history. **Open.** This is the whole security claim and
+      the only part of it that cannot be seen from the UI: the stored
+      conversation is encrypted, so it has to be read off the wire. A logging
+      proxy in front of the AI endpoint was set up for exactly this and the
+      search was never run.
 - [ ] The host key dialog appears and is refusable; refusing fails the tool
-      cleanly.
-- [ ] A second command on the same `session_id` does not re-prompt for anything.
+      cleanly. **Open, and contradicted.** A second `ssh_connect` to the same
+      host reportedly did not ask, while the code says it must: each ad-hoc
+      `Spi` gets a fresh id, so the fingerprint store cannot have an entry
+      under it. `ssh_connect`'s result carries `accepted_host_key` only when
+      the user was actually asked, so expanding that tool card settles which
+      side is wrong. If the prompt really is being skipped, rule 1 of the
+      security model does not hold.
+- [x] A second command on the same `session_id` does not re-prompt for
+      anything.
 - [ ] A read-only command on an ad-hoc session is **not** auto-run even with
-      auto-run enabled.
-- [ ] `ssh_disconnect`, and the close button in the float, both end the session.
+      auto-run enabled. Commands were approved by hand; whether auto-run was
+      even on is unrecorded.
+- [ ] `ssh_disconnect`, and the close button in the float, both end the
+      session.
 
 ### 5. Full scenario
 
-- [ ] Give the agent an address and user; it connects, installs monitor, and
-      saves the server with its monitor credentials.
-- [ ] The saved server appears in the list and connects on its own.
-- [ ] It does **not** ask for the host key again.
+- [x] Give the agent an address and user; it connects and saves the server.
+      Installing monitor was skipped: the throwaway host was a container, and
+      the installer wants systemd. **The monitor half of the scenario — the
+      one the whole plan was written for — is unproven.**
+- [x] The saved server appears in the list and connects on its own.
+- [ ] It does **not** ask for the host key again. Not separately confirmed, and
+      tied to the open question in group 4.
 - [ ] The conversation, re-read from history, contains no password and no
       monitor credential.
 
