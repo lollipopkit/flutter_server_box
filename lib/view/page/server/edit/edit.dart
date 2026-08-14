@@ -141,7 +141,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
 
   @override
   Widget build(BuildContext context) {
-    final actions = <Widget>[];
+    final actions = <Widget>[_buildWriteScriptTip()];
     if (spi != null) actions.add(_buildDelBtn());
 
     return Scaffold(
@@ -155,15 +155,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   }
 
   Widget _buildForm() {
-    final topItems = [_buildWriteScriptTip()];
     final children = [
-      SizedBox(
-        height: 50,
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          children: topItems.joinWith(UIs.width13).toList(),
-        ),
-      ),
       Input(
         autoFocus: true,
         controller: _nameController,

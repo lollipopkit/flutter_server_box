@@ -516,18 +516,16 @@ extension _Widgets on _ServerEditPageState {
   }
 
   Widget _buildWriteScriptTip() {
-    return Btn.tile(
-      text: libL10n.attention,
-      icon: const Icon(Icons.tips_and_updates, color: Colors.grey),
-      onTap: () {
+    return IconButton(
+      tooltip: libL10n.attention,
+      onPressed: () {
         context.showRoundDialog(
           title: libL10n.attention,
           child: SimpleMarkdown(data: l10n.writeScriptTip),
           actions: Btnx.oks,
         );
       },
-      textStyle: UIs.textGrey,
-      mainAxisSize: MainAxisSize.min,
+      icon: const Icon(Icons.tips_and_updates),
     );
   }
 
