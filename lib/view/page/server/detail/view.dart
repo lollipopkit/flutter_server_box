@@ -160,7 +160,18 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
 
   /// Not `QrShareBtn`: the code encodes the whole record, passwords included,
   /// so the dialog has to say so before anyone points a camera at it.
-  void _showShareQr(Spi spi) {
+  Future<void> _showShareQr(Spi spi) async {
+    final confirmed = await context.showRoundDialog<bool>(
+      title: libL10n.share,
+      child: Text(
+        l10n.shareServerRiskTip,
+        style: UIs.text13Grey,
+        textAlign: TextAlign.start,
+      ),
+      actions: Btnx.cancelOk,
+    );
+    if (confirmed != true || !mounted) return;
+
     context.showRoundDialog(
       title: libL10n.share,
       child: ConstrainedBox(
@@ -169,23 +180,10 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
         // dialog's — on a desktop window that is a QR code the height of the
         // screen. A max, not a fixed width: a narrow phone gets less.
         constraints: const BoxConstraints(maxWidth: 300),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n.shareServerRiskTip,
-                style: UIs.text13Grey,
-                textAlign: TextAlign.start,
-              ),
-              UIs.height13,
-              QrView(
-                data: spi.toJsonString(),
-                tip: spi.name,
-                tip2: '${libL10n.server} ~ ServerBox',
-              ),
-            ],
-          ),
+        child: QrView(
+          data: spi.toJsonString(),
+          tip: spi.name,
+          tip2: '${libL10n.server} ~ ServerBox',
         ),
       ),
       actions: Btnx.oks,
