@@ -17,12 +17,33 @@ import 'package:server_box/data/model/server/shell_backend.dart';
 class LocalShellBackend implements ShellBackend {
   LocalShellBackend();
 
-  /// Whether this platform has a shell to give.
+  /// Whether this build has a shell to give.
   ///
   /// iOS has none: an App Store app cannot start a process, and there is no
-  /// `/bin/sh` inside its container to start. Everything else does, though what
+  /// `/bin/sh` inside its container to start.
+  ///
+  /// macOS depends on which of the two builds this is. The App Store one must
+  /// be sandboxed, and a sandboxed process cannot open a pseudo-terminal's
+  /// slave device — measured: `Process.run` succeeds, the `forkpty` child
+  /// exits 255 before it can exec, and neither a home-relative-path nor a
+  /// `/dev/` exception changes it. The DMG is signed without the sandbox
+  /// (`macos/Runner/ReleaseDmg.entitlements`) and does have one.
+  ///
+  /// Asked of the running process rather than baked in at build time, so one
+  /// binary is honest in both. Everything else has a shell, though what
   /// Android hands over is a good deal less than a desktop's.
-  static bool get isSupported => !Platform.isIOS;
+  static bool get isSupported {
+    if (Platform.isIOS) return false;
+    if (Platform.isMacOS && isSandboxed) return false;
+    return true;
+  }
+
+  /// Whether macOS is confining this process.
+  ///
+  /// The container id is in the environment of a sandboxed app and absent
+  /// otherwise, which is the cheapest reliable answer — verified both ways.
+  static bool get isSandboxed =>
+      Platform.environment.containsKey('APP_SANDBOX_CONTAINER_ID');
 
   /// The user's own shell where the OS says so, and a shell that certainly
   /// exists where it does not.

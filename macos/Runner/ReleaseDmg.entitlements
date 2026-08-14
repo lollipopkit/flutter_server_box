@@ -14,12 +14,18 @@
 	<array>
 		<string>iCloud.tech.lolli.serverbox</string>
 	</array>
-	<!-- Required by the App Store, and the reason that build has no terminal
-	     on this device: a sandboxed process cannot open a pty. The DMG is
-	     signed with ReleaseDmg.entitlements instead — see
-	     scripts/release/release-macos-dmg.sh. -->
+	<!-- Off, and this file exists to turn it off. A sandboxed process cannot
+	     open a pseudo-terminal's slave device, so the local terminal does not
+	     work there — measured: `Process.run` succeeds, `forkpty`'s child exits
+	     255 before it can exec, and no entitlement changes it.
+
+	     The App Store requires the sandbox, so that build keeps
+	     Release.entitlements and ships without a local terminal;
+	     `LocalShellBackend.isSupported` asks the running process which of the
+	     two it is. iCloud is unaffected — verified unsandboxed: the ubiquity
+	     container resolves and an upload/list/delete round trip works. -->
 	<key>com.apple.security.app-sandbox</key>
-	<true/>
+	<false/>
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
 	<key>com.apple.security.network.client</key>

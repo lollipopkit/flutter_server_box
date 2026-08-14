@@ -318,10 +318,19 @@ APP_PROFILE_NAME="$APP_PROFILE_NAME" perl -0pi -e '
     or die "macOS Runner Release provisioning profile setting not found\n";
 ' "$RUNNER_PROJECT_FILE"
 
+# The DMG ships unsandboxed, which is what lets it host a terminal on this
+# machine: a sandboxed process cannot open a pseudo-terminal's slave device.
+# The App Store build keeps Release.entitlements and its sandbox, and the same
+# binary hides the feature there — see LocalShellBackend.isSupported.
+#
+# An override rather than a second build configuration: the two products differ
+# in one entitlement and nothing else, and a flavour would be a scheme, a
+# configuration and a bundle id to keep in step for that one bit.
 cat >"$OVERRIDE_XCCONFIG_PATH" <<EOF
 CODE_SIGN_STYLE = Manual
 CODE_SIGN_IDENTITY[sdk=macosx*] = $SIGNING_IDENTITY
 DEVELOPMENT_TEAM[sdk=macosx*] = $APPLE_TEAM_ID
+CODE_SIGN_ENTITLEMENTS = Runner/ReleaseDmg.entitlements
 OTHER_CODE_SIGN_FLAGS = --timestamp --options runtime
 EOF
 
