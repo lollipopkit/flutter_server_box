@@ -3,7 +3,7 @@ part of '../entry.dart';
 extension _SSH on _AppSettingsPageState {
   void _refreshApp({bool closeDialog = false}) {
     if (closeDialog && mounted) {
-      context.pop();
+      context.popDialog();
     }
     RNodes.app.notify();
   }
@@ -327,7 +327,7 @@ extension _SSH on _AppSettingsPageState {
             ctrl.text = val;
             void onSave() {
               _setting.desktopTerminal.put(ctrl.text.trim());
-              context.pop();
+              context.popDialog();
             }
 
             await context.showRoundDialog<bool>(
@@ -475,7 +475,7 @@ extension _SSH on _AppSettingsPageState {
         return;
       }
       _setting.sshBgOpacity.put(val.clamp(0.0, 1.0));
-      context.pop();
+      context.popDialog();
     }
 
     return ListTile(
@@ -512,7 +512,7 @@ extension _SSH on _AppSettingsPageState {
       const maxBlur = 50.0;
       final clampedVal = val.clamp(minRadius, maxBlur);
       _setting.sshBlurRadius.put(clampedVal);
-      context.pop();
+      context.popDialog();
     }
 
     return ListTile(

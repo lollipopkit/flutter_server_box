@@ -128,7 +128,7 @@ extension _Server on _AppSettingsPageState {
     }
     _setting.textFactor.put(val);
     RNodes.app.notify();
-    context.pop();
+    context.popDialog();
   }
 
   /// Desktop and tablet only: below the width threshold there is only ever
@@ -228,7 +228,7 @@ extension _Server on _AppSettingsPageState {
         return;
       }
       _setting.serverLogoUrl.put(url);
-      context.pop();
+      context.popDialog();
     }
 
     return ListTile(

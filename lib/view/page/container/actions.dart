@@ -221,7 +221,7 @@ extension on _ContainerPageState {
   }
 
   void _onSaveContainerHost(String val) {
-    context.pop();
+    context.popDialog();
     Stores.container.put(widget.args.spi.id, _containerState.type, val.trim());
     _containerNotifier.resetSudoProbe();
     unawaited(_refreshContainerTab(_lastResourceTab));
