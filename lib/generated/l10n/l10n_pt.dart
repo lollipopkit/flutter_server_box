@@ -905,6 +905,15 @@ class AppLocalizationsPt extends AppLocalizations {
       'Acessível através do SSH deste servidor, ou através de um agente monitor com a sua API de ficheiros ativada.';
 
   @override
+  String get back => 'Voltar';
+
+  @override
+  String get history => 'Histórico';
+
+  @override
+  String get homeDir => 'Pasta pessoal';
+
+  @override
   String get sendTo => 'Enviar para…';
 
   @override

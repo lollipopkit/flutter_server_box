@@ -912,6 +912,15 @@ class AppLocalizationsIt extends AppLocalizations {
       'Raggiungibile tramite l\'SSH di questo server o tramite un agente monitor con la sua API dei file attiva.';
 
   @override
+  String get back => 'Indietro';
+
+  @override
+  String get history => 'Cronologia';
+
+  @override
+  String get homeDir => 'Home';
+
+  @override
   String get sendTo => 'Invia a…';
 
   @override

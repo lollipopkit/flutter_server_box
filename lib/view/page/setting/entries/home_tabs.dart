@@ -102,7 +102,7 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
                         ? l10n.serverTabRequired
                         : l10n.atLeastOneTab),
             )
-          : IconButton(
+          : IconButton(tooltip: libL10n.add, 
               icon: const Icon(Icons.add),
               onPressed: () => _addTab(tab),
             ),

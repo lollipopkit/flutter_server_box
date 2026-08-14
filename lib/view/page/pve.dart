@@ -85,7 +85,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
         actions: [
           pveState.error == null
               ? UIs.placeholder
-              : Btn.icon(
+              : Btn.icon(text: libL10n.refresh, 
                   icon: const Icon(Icons.refresh),
                   onTap: () {
                     _lastHandledTfaMessage = null;
@@ -404,7 +404,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
   Widget _buildCtrlBtns(PveCtrlIface item) {
     const pad = EdgeInsets.symmetric(horizontal: 7, vertical: 5);
     if (!item.available) {
-      return Btn.icon(
+      return Btn.icon(text: 'Start', 
         icon: const Icon(Icons.play_arrow, color: Colors.grey),
         onTap: () => _onCtrl(
           libL10n.start,
@@ -415,7 +415,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
     }
     return Row(
       children: [
-        Btn.icon(
+        Btn.icon(text: 'Stop', 
           icon: const Icon(Icons.stop, color: Colors.grey, size: 20),
           padding: pad,
           onTap: () => _onCtrl(
@@ -424,7 +424,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
             () => _notifier.stop(item.node, item.id),
           ),
         ),
-        Btn.icon(
+        Btn.icon(text: libL10n.restart, 
           icon: const Icon(Icons.refresh, color: Colors.grey, size: 20),
           padding: pad,
           onTap: () => _onCtrl(
@@ -433,7 +433,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
             () => _notifier.reboot(item.node, item.id),
           ),
         ),
-        Btn.icon(
+        Btn.icon(text: 'Shutdown', 
           icon: const Icon(Icons.power_off, color: Colors.grey, size: 20),
           padding: pad,
           onTap: () => _onCtrl(

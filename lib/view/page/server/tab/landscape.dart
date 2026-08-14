@@ -27,7 +27,7 @@ extension on _ServerPageState {
             Positioned(
               top: 0,
               left: 0,
-              child: IconButton(
+              child: IconButton(tooltip: libL10n.setting, 
                 onPressed: () => SettingsPage.route.go(context),
                 icon: const Icon(Icons.settings, color: Colors.grey),
               ),

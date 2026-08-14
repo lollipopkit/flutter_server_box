@@ -858,6 +858,15 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 서버의 SSH에 연결할 수 있거나, monitor 에이전트의 파일 API가 켜져 있어야 합니다.';
 
   @override
+  String get back => '뒤로';
+
+  @override
+  String get history => '기록';
+
+  @override
+  String get homeDir => '홈';
+
+  @override
   String get sendTo => '보낼 위치…';
 
   @override

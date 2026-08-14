@@ -907,6 +907,15 @@ class AppLocalizationsNl extends AppLocalizations {
       'Bereikbaar via de SSH van deze server, of via een monitor-agent met zijn bestands-API ingeschakeld.';
 
   @override
+  String get back => 'Terug';
+
+  @override
+  String get history => 'Geschiedenis';
+
+  @override
+  String get homeDir => 'Home';
+
+  @override
   String get sendTo => 'Verzenden naar…';
 
   @override

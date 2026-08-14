@@ -843,6 +843,15 @@ class AppLocalizationsZh extends AppLocalizations {
       '需要能连上这台服务器的 SSH,或者它的 monitor agent 开启了文件 API。';
 
   @override
+  String get back => '返回';
+
+  @override
+  String get history => '历史';
+
+  @override
+  String get homeDir => '主目录';
+
+  @override
   String get sendTo => '发送到…';
 
   @override
@@ -2130,6 +2139,15 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get serverFilesUnavailableTip =>
       '需要能連上這台伺服器的 SSH,或者它的 monitor agent 開啟了檔案 API。';
+
+  @override
+  String get back => '返回';
+
+  @override
+  String get history => '歷史';
+
+  @override
+  String get homeDir => '主目錄';
 
   @override
   String get sendTo => '傳送到…';

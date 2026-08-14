@@ -909,6 +909,15 @@ class AppLocalizationsRu extends AppLocalizations {
       'Доступно через SSH этого сервера или через агент monitor с включённым файловым API.';
 
   @override
+  String get back => 'Назад';
+
+  @override
+  String get history => 'История';
+
+  @override
+  String get homeDir => 'Домашняя папка';
+
+  @override
   String get sendTo => 'Отправить в…';
 
   @override

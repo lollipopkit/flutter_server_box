@@ -908,6 +908,15 @@ class AppLocalizationsId extends AppLocalizations {
       'Dapat dijangkau melalui SSH server ini, atau melalui agen monitor dengan API berkasnya diaktifkan.';
 
   @override
+  String get back => 'Kembali';
+
+  @override
+  String get history => 'Riwayat';
+
+  @override
+  String get homeDir => 'Beranda';
+
+  @override
   String get sendTo => 'Kirim ke…';
 
   @override

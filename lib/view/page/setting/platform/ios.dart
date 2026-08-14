@@ -65,7 +65,7 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
   Widget _buildPushToken() {
     return ListTile(
       title: Text(l10n.pushToken),
-      trailing: IconButton(
+      trailing: IconButton(tooltip: libL10n.copy, 
         icon: const Icon(Icons.copy),
         alignment: Alignment.centerRight,
         padding: EdgeInsets.zero,

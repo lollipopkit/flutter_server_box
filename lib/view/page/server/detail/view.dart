@@ -396,7 +396,7 @@ ${err.message ?? 'null'}
           tooltip: libL10n.share,
           onPressed: () => _showShareQr(si.spi),
         ),
-        IconButton(
+        IconButton(tooltip: libL10n.edit, 
           icon: const Icon(Icons.edit),
           onPressed: () async {
             final delete = await ServerEditPage.route.go(
@@ -841,7 +841,7 @@ ${err.message ?? 'null'}
       mainAxisAlignment: MainAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton(
+        IconButton(tooltip: libL10n.about, 
           onPressed: onPressed,
           icon: const Icon(Icons.info_outline, size: 17),
         ),

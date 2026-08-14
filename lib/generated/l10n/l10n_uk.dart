@@ -909,6 +909,15 @@ class AppLocalizationsUk extends AppLocalizations {
       'Доступно через SSH цього сервера або через агент monitor з увімкненим файловим API.';
 
   @override
+  String get back => 'Назад';
+
+  @override
+  String get history => 'Історія';
+
+  @override
+  String get homeDir => 'Домівка';
+
+  @override
   String get sendTo => 'Надіслати до…';
 
   @override

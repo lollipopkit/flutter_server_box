@@ -43,7 +43,7 @@ final class _SystemdPageState extends ConsumerState<SystemdPage> {
         title: TwoLineText(up: l10n.systemd, down: widget.args.spi.name),
         actions: isDesktop
             ? [
-                Btn.icon(
+                Btn.icon(text: libL10n.refresh, 
                   icon: const Icon(Icons.refresh),
                   onTap: _refresh,
                 ),

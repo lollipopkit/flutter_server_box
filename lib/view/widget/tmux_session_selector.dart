@@ -106,7 +106,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Row(
                 children: [
-                  IconButton(
+                  IconButton(tooltip: l10n.back, 
                     onPressed: () => setState(() {
                       _windowRequestId++;
                       _selectedSession = null;

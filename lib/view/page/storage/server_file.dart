@@ -110,7 +110,7 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
         actionsSink: widget.args.actionsSink,
         onPathChanged: widget.args.onPathChanged,
         extraActions: (_) => [
-          IconButton(
+          IconButton(tooltip: libL10n.mission, 
             icon: const Icon(Icons.downloading),
             onPressed: () => TransferListPage.route.go(context),
           ),

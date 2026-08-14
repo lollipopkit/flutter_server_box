@@ -671,7 +671,7 @@ extension _Widgets on _ServerEditPageState {
   }
 
   Widget _buildDelBtn() {
-    return IconButton(
+    return IconButton(tooltip: libL10n.delete, 
       onPressed: () async {
         // The dialog answers; this — which is on the page — acts on the answer
         // and then closes the page. Doing both from inside the button meant

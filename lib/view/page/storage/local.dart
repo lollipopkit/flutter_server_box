@@ -82,6 +82,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
         onPathChanged: widget.args?.onPathChanged,
         extraActions: _actions,
         bottomActions: _bottomActions,
+        createActions: _createActions,
         entryActions: _entryActions,
         labelOf: _labelOf,
         onOpenFile: _isPickFile ? null : _openEditor,
@@ -90,7 +91,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
   }
 
   List<Widget> _actions(FileBrowserHandle handle) => [
-    IconButton(
+    IconButton(tooltip: libL10n.mission, 
       icon: const Icon(Icons.downloading),
       onPressed: () => TransferListPage.route.go(context),
     ),
@@ -100,8 +101,20 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
   /// in from elsewhere on this device is the same kind of act as making one.
   List<Widget> _bottomActions(FileBrowserHandle handle) => [
     if (!_isPickFile)
-      Btn.icon(
+      Btn.icon(text: libL10n.add, 
         icon: const Icon(Icons.file_download),
+        onTap: () => _import(handle),
+      ),
+  ];
+
+  /// Bringing a file in from elsewhere on this device is something done *to
+  /// the directory*, so it belongs beside "new folder" rather than only on a
+  /// button in the bottom bar.
+  List<ContextMenuAction> _createActions(FileBrowserHandle handle) => [
+    if (!_isPickFile)
+      ContextMenuAction(
+        icon: Icons.file_download,
+        text: libL10n.add,
         onTap: () => _import(handle),
       ),
   ];

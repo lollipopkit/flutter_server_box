@@ -137,12 +137,12 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Btn.icon(
+                Btn.icon(text: libL10n.search, 
                   icon: const Icon(Icons.search, size: 18),
                   onTap: () => _search(filtered),
                 ),
                 const SizedBox(width: 4),
-                Btn.icon(
+                Btn.icon(text: libL10n.add, 
                   icon: const Icon(Icons.add, size: 18),
                   onTap: () => _edit(null, true),
                 ),

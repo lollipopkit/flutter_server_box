@@ -901,6 +901,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Reachable either through this server\'s SSH, or through a monitor agent with its file API switched on.';
 
   @override
+  String get back => 'Back';
+
+  @override
+  String get history => 'History';
+
+  @override
+  String get homeDir => 'Home';
+
+  @override
   String get sendTo => 'Send to…';
 
   @override

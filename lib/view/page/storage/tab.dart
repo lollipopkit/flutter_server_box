@@ -398,14 +398,14 @@ extension _Sessions on _FileTabPageState {
 
 /// What acts on the list of places rather than on one browser in it.
 extension _Actions on _FileTabPageState {
-  Widget get _searchBtn => Btn.icon(
+  Widget get _searchBtn => Btn.icon(text: libL10n.search, 
     icon: const Icon(Icons.search, size: 18),
     onTap: _showSearch,
   );
 
   /// A server this app does not know about yet cannot be browsed, and the rail
   /// is where someone looking for it would look.
-  Widget get _addBtn => Btn.icon(
+  Widget get _addBtn => Btn.icon(text: libL10n.add, 
     icon: const Icon(Icons.add, size: 18),
     onTap: () => ServerEditPage.route.go(context),
   );

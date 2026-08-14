@@ -453,36 +453,36 @@ extension _Actions on _SSHTabPageState {
 
   /// Opens the agent on the terminal that is on screen, the same way the
   /// snippet picker beside it works.
-  Widget get _agentBtn => Btn.icon(
+  Widget get _agentBtn => Btn.icon(text: l10n.askAi, 
     icon: const Icon(Icons.auto_awesome, size: 18),
     onTap: () =>
         _sessions.current?.data.pageKey.currentState?.openAgentFromToolbar(),
   );
 
-  Widget get _snippetBtn => Btn.icon(
+  Widget get _snippetBtn => Btn.icon(text: libL10n.snippet, 
     icon: const Icon(Icons.code, size: 18),
     onTap: () =>
         _sessions.current?.data.pageKey.currentState?.pickSnippetFromToolbar(),
   );
 
-  Widget get _sortBtn => Btn.icon(
+  Widget get _sortBtn => Btn.icon(text: libL10n.sort, 
     icon: Icon(_SortOrder.stored.icon, size: 18),
     onTap: _showSortMenu,
   );
 
-  Widget get _searchBtn => Btn.icon(
+  Widget get _searchBtn => Btn.icon(text: libL10n.search, 
     icon: const Icon(Icons.search, size: 18),
     onTap: _showSearch,
   );
 
-  Widget get _historyBtn => Btn.icon(
+  Widget get _historyBtn => Btn.icon(text: l10n.history, 
     icon: const Icon(Icons.history, size: 18),
     onTap: _showHistory,
   );
 
   /// The rail's own way to add a server. On one screen that is the picker's
   /// floating button; a rail has no room for one.
-  Widget get _addBtn => Btn.icon(
+  Widget get _addBtn => Btn.icon(text: libL10n.add, 
     icon: const Icon(Icons.add, size: 18),
     onTap: () => ServerEditPage.route.go(context),
   );

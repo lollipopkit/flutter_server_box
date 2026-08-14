@@ -53,6 +53,7 @@ class FileBrowserArgs {
     this.onPathChanged,
     this.extraActions,
     this.bottomActions,
+    this.createActions,
     this.entryActions,
     this.pathTrailing,
     this.pathHistory,
@@ -98,6 +99,11 @@ class FileBrowserArgs {
   /// Bottom-bar buttons only this backend has, beside the ones every browser
   /// gets — uploading, which needs somewhere to upload to.
   final List<Widget> Function(FileBrowserHandle)? bottomActions;
+
+  /// Menu entries for the directory itself — what can be *made* here, beside
+  /// the browser's own new file and new folder. Shown by the add button and by
+  /// a right-click on empty space.
+  final List<ContextMenuAction> Function(FileBrowserHandle)? createActions;
 
   /// Menu entries only this backend has, for one item.
   ///
@@ -552,9 +558,9 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     final actions = <Widget>[
       ...?widget.args.extraActions?.call(this),
       _buildViewBtn(),
-      Btn.icon(icon: const Icon(Icons.search), onTap: _showSearch),
+      Btn.icon(text: libL10n.search, icon: const Icon(Icons.search), onTap: _showSearch),
       if (isDesktop)
-        Btn.icon(icon: const Icon(Icons.refresh), onTap: refresh),
+        Btn.icon(text: libL10n.refresh, icon: const Icon(Icons.refresh), onTap: refresh),
     ];
 
     final body = Column(
@@ -565,9 +571,22 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
               : const SizedBox(height: 2),
         ),
         Expanded(
-          child: isMobile
-              ? RefreshIndicator(onRefresh: refresh, child: _buildList())
-              : _buildList(),
+          child:
+              (isMobile
+                      ? RefreshIndicator(onRefresh: refresh, child: _buildList())
+                      : _buildList())
+                  // Right-click anywhere in the list, including past the last
+                  // entry. An entry's own menu sits in front of this one and
+                  // wins, so this is what is left: the directory itself.
+                  .onSecondary(
+                    widget.args.isPickFile || widget.args.isPickDir
+                        ? null
+                        : (at) => showContextMenu(
+                            context,
+                            _createActions,
+                            at: at,
+                          ),
+                  ),
         ),
       ],
     );
@@ -599,25 +618,25 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   Widget _buildBottom() {
     final children = widget.args.isPickDir
         ? [
-            IconButton(
+            IconButton(tooltip: libL10n.ok, 
               onPressed: () => context.pop(_path.path),
               icon: const Icon(Icons.done),
             ),
           ]
         : [
-            Btn.icon(
+            Btn.icon(text: l10n.back, 
               onTap: () {
                 if (_path.goBack()) refresh();
               },
               icon: const Icon(Icons.arrow_back),
             ),
             if (widget.args.homePath case final home?)
-              Btn.icon(
+              Btn.icon(text: l10n.homeDir, 
                 onTap: () => goTo(home),
                 icon: const Icon(Icons.home),
               ),
             if (!widget.args.isPickFile) _buildAddBtn(),
-            Btn.icon(onTap: _goto, icon: const Icon(Icons.gps_fixed)),
+            Btn.icon(text: l10n.goto, onTap: _goto, icon: const Icon(Icons.gps_fixed)),
             ...?widget.args.bottomActions?.call(this),
           ];
 
@@ -646,32 +665,30 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     );
   }
 
+  /// What can be made here, rather than done to something.
+  ///
+  /// The same list behind the add button and behind a right-click on empty
+  /// space — which is where a desktop user looks for it, and where the bottom
+  /// bar's button is not.
+  List<ContextMenuAction> get _createActions => [
+    ContextMenuAction(
+      icon: Icons.folder,
+      text: libL10n.folder,
+      onTap: _mkdir,
+    ),
+    ContextMenuAction(
+      icon: Icons.insert_drive_file,
+      text: libL10n.file,
+      onTap: _newFile,
+    ),
+    ...?widget.args.createActions?.call(this),
+  ];
+
   Widget _buildAddBtn() {
     return Btn.icon(
+      text: libL10n.add,
       icon: const Icon(Icons.add),
-      onTap: () => context.showRoundDialog(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Btn.tile(
-              icon: const Icon(Icons.folder),
-              text: libL10n.folder,
-              onTap: () {
-                context.popDialog();
-                _mkdir();
-              },
-            ),
-            Btn.tile(
-              icon: const Icon(Icons.insert_drive_file),
-              text: libL10n.file,
-              onTap: () {
-                context.popDialog();
-                _newFile();
-              },
-            ),
-          ],
-        ),
-      ),
+      onTap: () => showContextMenu(context, _createActions),
     );
   }
 

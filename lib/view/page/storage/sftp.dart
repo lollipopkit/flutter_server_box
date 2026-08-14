@@ -167,6 +167,7 @@ class _SftpPageState extends ConsumerState<SftpPage> {
             onPathChanged: _onPathChanged,
             extraActions: _toolbarActions,
             bottomActions: _bottomActions,
+            createActions: _createActions,
             entryActions: _entryActions,
             pathTrailing: _sudoMode.listenVal(
               (on) => on
@@ -273,7 +274,7 @@ extension _Open on _SftpPageState {
 
 extension _Actions on _SftpPageState {
   List<Widget> _toolbarActions(FileBrowserHandle handle) => [
-    Btn.icon(
+    Btn.icon(text: libL10n.mission, 
       icon: const Icon(Icons.downloading),
       onTap: () => TransferListPage.route.go(context),
     ),
@@ -291,8 +292,17 @@ extension _Actions on _SftpPageState {
   ];
 
   List<Widget> _bottomActions(FileBrowserHandle handle) => [
-    Btn.icon(
+    Btn.icon(text: libL10n.upload, 
       icon: const Icon(Icons.upload_file),
+      onTap: () => _upload(handle),
+    ),
+  ];
+
+  /// Uploading is done to the directory, not to a file in it.
+  List<ContextMenuAction> _createActions(FileBrowserHandle handle) => [
+    ContextMenuAction(
+      icon: Icons.upload_file,
+      text: libL10n.upload,
       onTap: () => _upload(handle),
     ),
   ];

@@ -293,6 +293,27 @@ void main() {
     });
   });
 
+  testWidgets('right-clicking empty space offers what can be made here', (
+    tester,
+  ) async {
+    // Where a desktop user looks for "new folder". The bottom bar's button is
+    // the same list, and is not where they look.
+    final backend = _MapBackend({'/': const []});
+
+    await pump(tester, backend);
+    final gesture = await tester.startGesture(
+      const Offset(600, 400),
+      buttons: kSecondaryButton,
+    );
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Folder'), findsOneWidget);
+    expect(find.text('File'), findsOneWidget);
+    // Not an entry's menu: nothing was clicked on.
+    expect(find.text('Rename'), findsNothing);
+  });
+
   testWidgets('an empty directory says so, and can still be left', (
     tester,
   ) async {

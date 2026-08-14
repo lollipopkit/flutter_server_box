@@ -908,6 +908,15 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu sunucunun SSH\'ı üzerinden ya da dosya API\'si açık bir monitor aracısı üzerinden erişilebilir.';
 
   @override
+  String get back => 'Geri';
+
+  @override
+  String get history => 'Geçmiş';
+
+  @override
+  String get homeDir => 'Ana klasör';
+
+  @override
   String get sendTo => 'Şuraya gönder…';
 
   @override

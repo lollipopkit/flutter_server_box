@@ -77,7 +77,7 @@ class _TransferListPageState extends ConsumerState<TransferListPage> {
       return _wrapInCard(
         status: status,
         subtitle: libL10n.error,
-        trailing: IconButton(
+        trailing: IconButton(tooltip: libL10n.error, 
           onPressed: () => context.showRoundDialog(
             title: libL10n.error,
             child: Text(err.toString()),
@@ -129,7 +129,7 @@ class _TransferListPageState extends ConsumerState<TransferListPage> {
         : Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
+              IconButton(tooltip: libL10n.open, 
                 onPressed: () {
                   final idx = landed.path.lastIndexOf(Pfs.seperator);
                   LocalFilePage.route.go(
@@ -141,7 +141,7 @@ class _TransferListPageState extends ConsumerState<TransferListPage> {
                 },
                 icon: const Icon(Icons.file_open),
               ),
-              IconButton(
+              IconButton(tooltip: libL10n.share, 
                 onPressed: () => Pfs.sharePaths(
                   paths: [LocalFileBackend.nativePath(landed.path)],
                 ),
@@ -194,7 +194,7 @@ class _TransferListPageState extends ConsumerState<TransferListPage> {
   };
 
   Widget _buildDelete(FileTransferStatus status) {
-    return IconButton(
+    return IconButton(tooltip: libL10n.delete, 
       onPressed: () => context.showRoundDialog(
         title: libL10n.attention,
         child: Text(

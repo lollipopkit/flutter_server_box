@@ -98,7 +98,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
               ),
             ),
           ),
-          Btn.icon(
+          Btn.icon(text: libL10n.delete, 
             icon: const Icon(Icons.delete),
             onTap: () => context.showRoundDialog(
               title: libL10n.attention,

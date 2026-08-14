@@ -915,6 +915,15 @@ class AppLocalizationsFr extends AppLocalizations {
       'Accessible via le SSH de ce serveur, ou via un agent monitor dont l\'API de fichiers est activée.';
 
   @override
+  String get back => 'Retour';
+
+  @override
+  String get history => 'Historique';
+
+  @override
+  String get homeDir => 'Dossier personnel';
+
+  @override
   String get sendTo => 'Envoyer vers…';
 
   @override

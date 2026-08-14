@@ -1692,6 +1692,24 @@ abstract class AppLocalizations {
   /// **'Reachable either through this server\'s SSH, or through a monitor agent with its file API switched on.'**
   String get serverFilesUnavailableTip;
 
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// No description provided for @history.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get history;
+
+  /// No description provided for @homeDir.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get homeDir;
+
   /// No description provided for @sendTo.
   ///
   /// In en, this message translates to:

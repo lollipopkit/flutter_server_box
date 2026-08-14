@@ -908,6 +908,15 @@ class AppLocalizationsDe extends AppLocalizations {
       'Erreichbar entweder über SSH dieses Servers oder über einen Monitor-Agenten mit eingeschalteter Datei-API.';
 
   @override
+  String get back => 'Zurück';
+
+  @override
+  String get history => 'Verlauf';
+
+  @override
+  String get homeDir => 'Persönlicher Ordner';
+
+  @override
   String get sendTo => 'Senden an …';
 
   @override
