@@ -194,20 +194,49 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     return entries;
   }
 
+  /// The last arrangement, and what produced it.
+  ///
+  /// A `ValueListenableBuilder` rebuilds for reasons that have nothing to do
+  /// with the listing — a keyboard opening, a theme change — and each one was
+  /// copying and re-sorting every entry in the directory.
+  List<FileEntry>? _shownCache;
+  List<FileEntry>? _shownFor;
+  _SortOption? _shownBy;
+  bool? _shownFoldersFirst;
+  bool? _shownHidden;
+
   /// Filtered and sorted for display, leaving the listing itself alone: both
   /// are local decisions and must not cost a round trip to the server.
   List<FileEntry> _sorted(List<FileEntry> entries, _SortOption option) {
     final foldersFirst = Stores.setting.sftpShowFoldersFirst.fetch();
     final hidden = Stores.setting.showHiddenFiles.fetch();
-    return [
+
+    final cached = _shownCache;
+    // By identity: `_list()` hands out a new list for every listing, so the
+    // same object means the same directory, unchanged.
+    if (cached != null &&
+        identical(_shownFor, entries) &&
+        _shownBy == option &&
+        _shownFoldersFirst == foldersFirst &&
+        _shownHidden == hidden) {
+      return cached;
+    }
+
+    final shown = [
       for (final entry in entries)
         if (hidden || !entry.name.startsWith('.')) entry,
-    ]
-      ..sort((a, b) {
-        if (foldersFirst && a.isDir != b.isDir) return a.isDir ? -1 : 1;
-        final result = option.by.compare(a, b);
-        return option.reversed ? -result : result;
-      });
+    ]..sort((a, b) {
+      if (foldersFirst && a.isDir != b.isDir) return a.isDir ? -1 : 1;
+      final result = option.by.compare(a, b);
+      return option.reversed ? -result : result;
+    });
+
+    _shownCache = shown;
+    _shownFor = entries;
+    _shownBy = option;
+    _shownFoldersFirst = foldersFirst;
+    _shownHidden = hidden;
+    return shown;
   }
 
   @override
@@ -692,6 +721,10 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
 
   Widget _buildListView(List<FileEntry> items) {
     final up = _path.canGoUp ? 1 : 0;
+    // Asked once per listing rather than once per row. `MediaQuery.sizeOf`
+    // registers an inherited-widget dependency, and doing that inside
+    // `itemBuilder` did it for every visible entry, every rebuild.
+    final narrow = MediaQuery.sizeOf(context).width < 350;
     return FadeIn(
       key: ValueKey(_path.path),
       child: ListView.builder(
@@ -713,13 +746,17 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
               child: Center(child: Text(libL10n.empty, style: UIs.textGrey)),
             );
           }
-          return _buildEntry(items[index - up]);
+          return _buildEntry(items[index - up], narrow: narrow);
         },
       ),
     );
   }
 
-  Widget _buildEntry(FileEntry entry, {VoidCallback? beforeTap}) {
+  Widget _buildEntry(
+    FileEntry entry, {
+    VoidCallback? beforeTap,
+    bool? narrow,
+  }) {
     final full = _fullPath(entry);
     final label = widget.args.labelOf?.call(entry, full);
     final icon = Icon(switch (entry.kind) {
@@ -752,13 +789,14 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     }
 
     // Under this, a name and a right-hand column do not both fit, so
-    // everything the entry knows goes below the name instead.
-    final narrow = MediaQuery.sizeOf(context).width < 350;
+    // everything the entry knows goes below the name instead. The search
+    // results build one at a time and have no listing to have asked for.
+    final isNarrow = narrow ?? MediaQuery.sizeOf(context).width < 350;
     final details = [
       // The real name, where the title is showing something friendlier.
       if (label != null) entry.name,
       if (entry.size case final size? when !entry.isDir) size.bytes2Str,
-      if (narrow) ...[
+      if (isNarrow) ...[
         if (entry.modified case final at?) at.ymdhms(),
         ?entry.modeStr,
       ],
@@ -771,7 +809,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
         subtitle: details.isEmpty
             ? null
             : Text(details.join('\n'), style: UIs.textGrey),
-        trailing: narrow ? null : _buildEntryTrailing(entry),
+        trailing: isNarrow ? null : _buildEntryTrailing(entry),
         onTap: onTap,
         onLongPress: onLongPress,
       ),

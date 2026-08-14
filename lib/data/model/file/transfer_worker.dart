@@ -17,7 +17,6 @@ import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 
 const _sftpChunkSize = 32 * 1024;
 
@@ -738,9 +737,11 @@ Future<FileBackend> _openBackend(
     case LocalFileRef():
       return const LocalFileBackend();
     case MonitorFileRef(:final monitor):
-      // No prompts to marshal and no connection to tear down: the client is
-      // an HTTP session that logs in on its first request.
-      return MonitorFileBackend(MonitorHttpClient(monitor));
+      // No prompts to marshal, but still a session with a connection pool
+      // behind it, so it is registered for closing like the SSH one.
+      final backend = MonitorFileBackend(monitor);
+      closing.add(backend.close);
+      return backend;
     case SftpFileRef(:final creds):
       final client = await _connectSsh(creds, mainSendPort);
       closing.add(() async => client.close());

@@ -6,7 +6,6 @@ import 'package:server_box/core/utils/monitor_file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
@@ -82,14 +81,18 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
   void initState() {
     super.initState();
     final credential = ServerConnectCredential.fromSpi(_spi);
-    // Its own client rather than the polling one: a file listing and a status
-    // poll have nothing to say to each other, and sharing a session would
-    // couple a browse that stalls to the card that shows the machine is up.
     _backend = MonitorFileBackend(
-      MonitorHttpClient(
-        (credential as ServerConnectCredentialMonitorHttp).monitor,
-      ),
+      (credential as ServerConnectCredentialMonitorHttp).monitor,
     );
+  }
+
+  @override
+  void dispose() {
+    // The session, and the sockets under it. A file tab left open on several
+    // servers would otherwise hold one connection pool per browser for as long
+    // as the app runs.
+    _backend.close().ignore();
+    super.dispose();
   }
 
   @override

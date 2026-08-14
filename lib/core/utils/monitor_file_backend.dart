@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:server_box/data/model/file/file_backend.dart';
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/provider/server/monitor_http.dart';
 
 /// [FileBackend] over a `monitor` agent's `/api/v1/fs/*`.
@@ -17,7 +18,15 @@ import 'package:server_box/data/provider/server/monitor_http.dart';
 /// about what a path means is how they stop agreeing, and the one that matters
 /// is the end holding the filesystem.
 class MonitorFileBackend implements FileBackend {
-  const MonitorFileBackend(this._client);
+  /// Opens a session of its own for [monitor].
+  ///
+  /// Owns it, unlike [SftpFileBackend], which wraps a connection somebody else
+  /// holds. There is nothing to share with: the polling client's session
+  /// belongs to the `ServerNotifier` and outlives any browser, and coupling a
+  /// browse that stalls to the card that says the machine is up would be worse
+  /// than one extra login.
+  MonitorFileBackend(MonitorHttpCredential monitor)
+    : _client = MonitorHttpClient(monitor);
 
   final MonitorHttpClient _client;
 
@@ -71,12 +80,13 @@ class MonitorFileBackend implements FileBackend {
       // the reason this one does not have to stage anything itself.
       _client.fsWrite(path, data, size: size);
 
+  /// Closes the HTTP session, and with it the connection pool behind it.
+  ///
+  /// Not a no-op, which is what this was when the client came from outside:
+  /// a `Dio` left open holds sockets, and one per file browser and one per
+  /// transfer adds up on a device that keeps the app running.
   @override
-  Future<void> close() async {
-    // The HTTP session belongs to the `ServerNotifier` that opened it, and
-    // outlives any one browser. Closing it here would take the status polling
-    // down with the file tab.
-  }
+  Future<void> close() async => _client.dispose();
 
   static FileEntry _entryOf(Map<String, dynamic> json) {
     final modified = json['modified'];

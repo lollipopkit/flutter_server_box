@@ -9,7 +9,6 @@ import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/file/transfer_worker.dart';
-import 'package:server_box/data/provider/server/monitor_http.dart';
 
 /// One transfer, and everything a list has to say about it.
 class FileTransferStatus {
@@ -117,7 +116,10 @@ class FileTransferStatus {
   /// difference — including the list, which shows one row either way.
   Future<void> _runHere() async {
     final source = _backendFor(job.from);
-    final dest = _backendFor(job.to);
+    // One session where both ends are the same place: copying within one
+    // agent would otherwise log in twice to move a file it never sends over
+    // the network at all.
+    final dest = _sameEnd(job.from, job.to) ? source : _backendFor(job.to);
     try {
       onNotify(FileTransferStage.preparing);
       final watch = Stopwatch()..start();
@@ -152,16 +154,25 @@ class FileTransferStatus {
     } catch (e, s) {
       Loggers.app.warning('Local copy failed: ${job.from} -> ${job.to}', e, s);
       onNotify(e);
+    } finally {
+      await source.close();
+      if (!identical(dest, source)) await dest.close();
     }
   }
 
-  /// Nothing to close: neither of these owns a connection that outlives the
-  /// call. An `SftpFileRef` never reaches here — [FileTransfer.needsIsolate]
-  /// is exactly the question "is either end SSH".
+  /// Whether two ends are the same place, and so can share one session.
+  static bool _sameEnd(FileRef a, FileRef b) => switch ((a, b)) {
+    (LocalFileRef(), LocalFileRef()) => true,
+    (MonitorFileRef(spi: final x), MonitorFileRef(spi: final y)) =>
+      x.id == y.id,
+    _ => false,
+  };
+
+  /// An `SftpFileRef` never reaches here — [FileTransfer.needsIsolate] is
+  /// exactly the question "is either end SSH".
   static FileBackend _backendFor(FileRef ref) => switch (ref) {
     LocalFileRef() => const LocalFileBackend(),
-    MonitorFileRef(:final monitor) =>
-      MonitorFileBackend(MonitorHttpClient(monitor)),
+    MonitorFileRef(:final monitor) => MonitorFileBackend(monitor),
     SftpFileRef() => throw StateError('SFTP transfers run in an isolate'),
   };
 
