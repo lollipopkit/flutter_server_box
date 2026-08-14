@@ -18,17 +18,21 @@ and step 3 on iOS is a GPLv3 emulator plus an App Store review argument. This
 document is what is known, what is guessed, and what has to be measured before
 any of it is committed to.
 
-**Status: stage 1 is done — rename (`dd9b6e84`), `LocalShellBackend` on
-`flutter_pty` (`3d1acd6a`), the macOS entitlement (`ad18d1b7`),
-`TerminalSession` on a `TerminalSource` (`5fc31b8e`) and the tab's local
-session (`6e9d3d1b`). Stage 2b's first half is done (`328f92d9`). Stages 2, 3
-and 4 are not started.**
+**Status: stages 1, 2 and 2b are done. Stages 3 and 4 are not started.**
 
-Stage 1 is **built and analysed, not exercised**: `flutter_pty` is an FFI
-plugin, `flutter test` runs under `flutter_tester` which loads no plugins, so
-nothing in the suite has ever spawned a local shell. What the tests cover is
-the layer above — that a `LocalSource` session makes a backend, reports
-`canExec`, has no server behind it, and hangs up what it opened.
+| Stage | State |
+| --- | --- |
+| 1 — rename, local backend | done and **exercised**: `dd9b6e84`, `3d1acd6a`, `5fc31b8e`, `6e9d3d1b`, `df5fb7e7`, `79782d73` |
+| 2 — Android host shell | **written, never run**: `isSupported` excludes only iOS and the sandboxed macOS build, and `shellPath` is `/system/bin/sh` there. No Android device here |
+| 2b — the Agent off SSH, and onto this device | done: `328f92d9`, `f1b869c1`, `95aa2c30`, `c6c728f1` |
+| 3 — measure Android's `execve` | not started; needs a device |
+| 4 — rootfs | not started |
+
+Stage 1 is no longer only analysed. `integration_test/local_shell_test.dart`
+runs inside a real app, which is the only place an FFI plugin loads, and covers
+a shell answering, starting in the home directory, reading the user's files,
+a command run beside it, and closing ending it. It **skips itself** where the
+build claims no local shell, so it means "wherever this is offered, it works".
 
 What a local terminal deliberately does **not** offer, each decided rather than
 left to fail:
@@ -36,28 +40,10 @@ left to fail:
 | | Why |
 | --- | --- |
 | tmux | The control channel writes a command and reads to a marker, so it needs a channel that does not echo. `LocalShellBackend.execute` is a pseudo-terminal, which echoes |
-| snippets | A script is written against a server — `${ip}`, `${user}` |
+| snippets that name a server | `${host}`, `${user}` have no answer here. The ones that name none *are* offered — `Snippet.needsServer` |
 | SFTP | A file browser on this device already exists, in the file tab |
-| the agent panel | Its tools name a server. Until stage 2b's second half |
-| the sudo button | The shell is already whoever is running the app | Last checked against the tree at `f8f371b3`, before that half
-landed. Update the verification log at the bottom as answers land — several
-decisions below are downstream of questions still marked open.
-
-What that check found, since sixteen commits of agent work landed between this
-document being written and being read again:
-
-| Anchor | State |
-| --- | --- |
-| `ShellBackend` implementations | still two, `Ssh` and `Monitor` |
-| `ServerExec` implementations | still two, `SshExec` and `MonitorExec` |
-| `ServerExec` in any agent file | ~~zero~~ — now what `AgentShellHandle` carries |
-| `TerminalSession` | still `TerminalSession({required this.spi})` |
-| `'SSH'` in `home_tab.dart` | still literal, `:32` and `:62` |
-| `flutter_pty` | still not a dependency |
-| monitor-only refusal | ~~thrown~~ — gone, the agent asks `ensureExec()` |
-
-One thing did move, and it moved in this plan's favour — see
-[what the tools need](#what-the-tools-need).
+| the agent panel in the terminal | Its tools name a server. The Agent tab reaches this device instead |
+| the sudo button | The shell is already whoever is running the app |
 
 ## The seam already exists
 
@@ -178,7 +164,7 @@ way the terminal's does, and `ServerCapabilities` is the existing place to ask.
 | --- | --- | --- |
 | Linux | `flutter_pty` | unnecessary — it is Linux |
 | Windows | `flutter_pty` (ConPTY) | unnecessary — WSL exists |
-| macOS | `flutter_pty`, **inside the app sandbox** | unnecessary |
+| macOS | `flutter_pty`, **DMG build only** | unnecessary |
 | Android | `/system/bin/sh`, toybox only | blocked, see below |
 | iOS | impossible — no `fork`/`exec` for App Store apps | only via an interpreter |
 
@@ -188,24 +174,37 @@ about 19 months ago (0.4.2). Its claimed iOS support is not useful here: iOS
 has `forkpty` in the SDK, but there is no `/bin/sh` in the sandbox and no way to
 exec an unsigned binary.
 
-### macOS is sandboxed
+### macOS: two products, because the sandbox cannot host a terminal
 
-`macos/Runner/*.entitlements` sets `com.apple.security.app-sandbox` to true in
-both configurations. A child process inherits the sandbox, so a shell spawned
-from the app cannot read the user's home directory — only the app container and
-whatever the user picked through a file dialog. A terminal that cannot `ls ~`
-is not the feature.
+Measured, and not what this document first assumed. A sandboxed process cannot
+open a pseudo-terminal's slave device at all: `Process.run` succeeds, the
+`forkpty` child exits 255 before it can exec, and neither a
+`home-relative-path` nor a `/dev/` absolute-path exception changes it. Home
+access was never the obstacle, so the entitlement added for it bought nothing
+and was reverted (`ccd2e77b`).
 
-Two options, and they are not exclusive:
+iCloud was the other assumption, and also wrong: unsandboxed, the ubiquity
+container resolves and an upload/list/delete round trip works. Dropping the
+sandbox costs nothing there.
 
-- ship the DMG/Homebrew build unsandboxed (separate entitlements per
-  configuration; the release path is already separate — see `make release-macos-dmg`);
-- keep the sandbox for any Mac App Store build and let the local-shell entry
-  be absent there, the way `ServerFuncBtn` already hides what a connection
-  cannot serve.
+The App Store requires the sandbox, so macOS ships **two products** from one
+binary (`52a0ec1b`):
 
-Decide before writing the backend: it changes whether "local shell" is a
-capability the UI asks about or a constant.
+| | App Store | DMG |
+| --- | --- | --- |
+| entitlements | `Release.entitlements`, sandboxed | `ReleaseDmg.entitlements`, not |
+| applied by | the Xcode project | `CODE_SIGN_ENTITLEMENTS` in the release script |
+| local terminal | absent | present |
+| data | `~/Library/Containers/<id>/Data/Documents` | `~/Library/Application Support/ServerBox` |
+
+No flavour, no second scheme, no second bundle id: the two differ in one
+entitlement, and `LocalShellBackend.isSandboxed` asks the running process which
+it is. Debug and Profile match the DMG (`ad6aa5b8`), so the feature is
+reachable from `flutter run`; `test/macos_entitlements_test.dart` holds all of
+that in place.
+
+The data directories differ, which is its own problem — see `SandboxImport`,
+and the migration TODO in `TODOS.md`.
 
 ## iOS: ish-arm64, not iSH
 
@@ -311,23 +310,25 @@ no package manager, toybox only — but it is a real shell and it costs almost
 nothing once stage 1 lands.
 
 **2b. Change `AgentShellHandle`'s payload to `ServerExec`, then add a local
-target.**
+target.** Done.
 
-*First half done in `328f92d9`.* The handle now carries a `ServerExec` beside
-an optional `SSHClient`, `_connectedServer` asks `ServerNotifier.ensureExec()`
-instead of demanding a client, and the monitor-only refusal is gone. The file
-tools keep needing the client — SFTP is a byte stream and the agent's HTTP API
-has none — and say so with a way forward rather than a refusal. Cancellation
-moved into `ServerExec.run(cancel:)`, because killing an `SSHSession` from
-outside was the one thing tying the agent to SSH.
+*First half (`328f92d9`).* The handle carries a `ServerExec` beside an optional
+`SSHClient`, `_connectedServer` asks `ServerNotifier.ensureExec()` instead of
+demanding a client, and the monitor-only refusal is gone. Cancellation moved
+into `ServerExec.run(cancel:)`, because killing an `SSHSession` from outside
+was the one thing tying the agent to SSH. **Verified** against the monitor-only
+debian VM: a command runs, a file read is refused with a way forward, and stop
+reports cancelled.
 
-*Not yet verified against a live monitor-only server.* The agent's far side
-answers (`/api/v1/exec` returns 200 on the debian VM), and the same
-`MonitorExec` already backs the process, systemd and container pages, but the
-app has never run an agent tool call over it.
-
-*Second half:* local execution — a third `AgentSshTarget` case, `LocalExec`,
-`dart:io` for the file tools, and the safety positions above.
+*Second half (`f1b869c1`, `95aa2c30`, `c6c728f1`).* `LocalExec` — pipes, not a
+pty, so the two streams stay apart and nothing has to be stripped before it can
+be parsed. A third `AgentSshTarget` case behind two gates: the platform, and a
+setting that is off until asked for. Auto-run is barred here whatever
+`askAiAutoRunSafeCommands` says. The file tools use `dart:io` rather than `cat`
+and `tee`, because reading a file is not a command and should not go through
+command review. The model is not told this machine exists unless both gates
+pass. **Not exercised end to end** — `LocalExec` has unit tests, but no agent
+tool call has been made against this device.
 
 **3. Measure the Android execution question.** A throwaway APK at the current
 `targetSdk`: write a static binary into `filesDir`, try `execve`, try it through
@@ -352,10 +353,10 @@ Update this as answers arrive; several decisions above move with them.
 | 1 | Can a `targetSdk` 35 app exec a file in `filesDir` via `linker64`? | Throwaway APK on a real device (no Android hardware here) | **open** |
 | 2 | How does OpenMinis run rootfs binaries at `targetSdk` 35? | Read its Kotlin/JNI sandbox code, not the shell scripts | **open** |
 | 3 | Are ish-arm64's 7–12x figures representative? | Build it, run a shell and a `python -c` loop | **open** |
-| 4 | Does the macOS DMG build ship unsandboxed, or does local shell hide there? | **Answered** (`ad18d1b7`): neither. The sandbox stays and a `temporary-exception.files.home-relative-path.read-write` lets the shell reach the user's files. Dropping the sandbox was the obvious move — distribution is a Developer ID notarised DMG, not the App Store — but iCloud's ubiquity container requires the sandbox on macOS, and the backup page would have gone with it | **done** |
+| 4 | Does the macOS DMG build ship unsandboxed, or does local shell hide there? | **Answered, and the first answer was wrong.** A sandboxed process cannot host a pty at all, so the entitlement that was meant to fix it bought nothing and was reverted (`ccd2e77b`). iCloud turned out not to need the sandbox either. macOS ships two products from one binary (`52a0ec1b`), and the App Store one hides the feature | **done** |
 | 5 | Is proot GPLv2-only or v2-or-later? | Read source headers, not `COPYING` | **open** |
-| 6 | Does `flutter_pty` still build against current Flutter on all four desktop/Android targets? | **macOS builds** (`flutter build macos --debug`, verified with the plugin linked). Linux, Windows and Android not tried. One warning to note: `flutter_pty` does not support Swift Package Manager, which Flutter says "will become an error in a future version" — `sbm_ffi` is in the same list, so it is not a new exposure | **partly** |
+| 6 | Does `flutter_pty` still build against current Flutter on all four desktop/Android targets? | **macOS builds and runs** — `integration_test/local_shell_test.dart`, five tests, inside a real app. Linux, Windows and Android untried. One warning: `flutter_pty` does not support Swift Package Manager, which Flutter says "will become an error in a future version" — `sbm_ffi` is in the same list, so it is not a new exposure | **partly** |
 | 7 | Would 2.5.2 be survivable for this app? | Cannot be settled in advance. Decide whether stage 4's iOS half is worth the update risk | **open** |
-| 8 | Is local agent execution opt-in, and is auto-run barred locally? | Product decision. Affects the settings surface and the tool instructions | **open** |
-| 9 | What can the agent's `read_file`/`write_file` reach locally per platform? | macOS sandbox container vs. home; Android scoped storage; iOS app container only | **open** |
-| 10 | Does moving the agent to `ServerExec` change any recorded conversation's replay? | `agent_conversation_replay` and its tests are the contract | **open** |
+| 8 | Is local agent execution opt-in, and is auto-run barred locally? | **Answered** (`95aa2c30`, `c6c728f1`): both. `Stores.setting.agentLocalExec`, off by default, with a switch that is absent where the platform could not honour it. `AskAiCommand.onThisDevice` bars auto-run whatever the model or `askAiAutoRunSafeCommands` says | **done** |
+| 9 | What can the agent's `read_file`/`write_file` reach locally per platform? | macOS: the DMG build reaches the whole home — measured; the App Store build offers no local target at all. iOS the same, for the same reason. Android scoped storage untested | **partly** |
+| 10 | Does moving the agent to `ServerExec` change any recorded conversation's replay? | **No** — `agent_conversation_replay`'s tests pass unchanged across `328f92d9` and the local-target work. The recorded shape is the tool result, which did not move | **done** |
