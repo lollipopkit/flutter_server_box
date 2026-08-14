@@ -878,8 +878,10 @@ class GlobalAgentToolService {
       final limited = limitGlobalAgentShellOutput(
         stdoutCapture.text,
         stderrCapture.text,
-        stdoutAlreadyTruncated: stdoutCapture.truncated,
-        stderrAlreadyTruncated: stderrCapture.truncated,
+        // `outputIncomplete` is the drain having been given up on, which is
+        // the same thing to a reader as having been cut short.
+        stdoutAlreadyTruncated: stdoutCapture.truncated || result.outputIncomplete,
+        stderrAlreadyTruncated: stderrCapture.truncated || result.outputIncomplete,
         maxCharacters: _maxShellOutputCharacters,
       );
       return AgentToolExecutionResult(

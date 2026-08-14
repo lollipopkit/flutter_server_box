@@ -40,6 +40,15 @@ class LocalShellBackend implements ShellBackend {
     return '/bin/sh';
   }
 
+  /// Where a new shell starts, or null where the platform does not say.
+  ///
+  /// `USERPROFILE` is the Windows spelling of the same idea.
+  static String? get _homeDir {
+    final env = Platform.environment;
+    final home = Platform.isWindows ? env['USERPROFILE'] : env['HOME'];
+    return home?.isNotEmpty == true ? home : null;
+  }
+
   var _closed = false;
   final _sessions = <_LocalShellSession>[];
 
@@ -99,6 +108,10 @@ class LocalShellBackend implements ShellBackend {
         executable,
         arguments: arguments,
         environment: environment,
+        // Where a terminal opens. The app's own working directory is wherever
+        // it was launched from — `/` under Finder or the Dock — which made
+        // every new shell start with `cd ~`.
+        workingDirectory: _homeDir,
         // A terminal that has not been laid out yet reports zero, and a pty of
         // no size makes programs that ask draw nothing.
         rows: height > 0 ? height : 25,
@@ -155,6 +168,18 @@ class _LocalShellSession implements ShellSession {
 
   @override
   void close() {
+    // The shell's whole process group, not only the shell. `forkpty` makes the
+    // child a session leader, so its pid is its group id, and whatever is in
+    // the foreground — `top`, an editor, a build — is in that group. Signalling
+    // the leader alone leaves those running with their terminal gone.
+    try {
+      if (!Platform.isWindows) {
+        Process.killPid(-_pty.pid, ProcessSignal.sigterm);
+      }
+    } catch (_) {
+      // No such group, or a platform that will not take a negative pid. The
+      // shell itself is still killed below.
+    }
     try {
       _pty.kill();
     } catch (_) {

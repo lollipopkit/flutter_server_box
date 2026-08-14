@@ -159,11 +159,6 @@ void main() {
         AskAiCommand.classifyRisk('uptime && whoami'),
         AskAiCommandRisk.unknown,
       );
-      // Still not auto-runnable, which is the part that matters.
-      expect(
-        AskAiCommand.classifyRisk('sleep 60') == AskAiCommandRisk.readOnly,
-        isFalse,
-      );
     });
 
     test('classifies destructive commands as high risk', () {

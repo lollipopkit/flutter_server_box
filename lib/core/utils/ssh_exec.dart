@@ -18,6 +18,15 @@ class SshExec implements ServerExec {
 
   final SSHClient client;
 
+  /// How long to keep reading once the command itself has finished.
+  ///
+  /// `session.done` completes when the process exits, which is not when the
+  /// channel goes quiet: anything it left running still holds stdout open.
+  /// Without a bound here a finished command reads as a hung one, and the only
+  /// thing that ends it is whatever timeout the caller happens to have — five
+  /// minutes, for the Agent.
+  static const drainTimeout = Duration(seconds: 5);
+
   @override
   Future<ExecResult> run(
     String script, {
@@ -51,11 +60,14 @@ class SshExec implements ServerExec {
     final err = StringBuffer();
     final decoder = const Utf8Decoder(allowMalformed: true);
 
-    final outDone = decoder.bind(session.stdout).forEach((chunk) {
+    // Subscriptions rather than `forEach`, so that giving up on the drain can
+    // actually let go of the streams instead of leaving them writing into
+    // buffers nobody will read.
+    final outSub = decoder.bind(session.stdout).listen((chunk) {
       out.write(chunk);
       onStdout?.call(chunk);
     });
-    final errDone = decoder.bind(session.stderr).forEach((chunk) {
+    final errSub = decoder.bind(session.stderr).listen((chunk) {
       err.write(chunk);
       onStderr?.call(chunk);
     });
@@ -71,12 +83,25 @@ class SshExec implements ServerExec {
     await session.stdin.close();
 
     await session.done;
-    await Future.wait([outDone, errDone]);
+
+    var incomplete = false;
+    await Future.wait([outSub.asFuture<void>(), errSub.asFuture<void>()])
+        .timeout(
+          drainTimeout,
+          onTimeout: () async {
+            incomplete = true;
+            await outSub.cancel();
+            await errSub.cancel();
+            return const <void>[];
+          },
+        );
+    session.close();
 
     return ExecResult(
       exitCode: session.exitCode,
       stdout: out.toString(),
       stderr: err.toString(),
+      outputIncomplete: incomplete,
     );
   }
 }

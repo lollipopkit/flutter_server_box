@@ -6,6 +6,7 @@ class ExecResult {
     required this.exitCode,
     required this.stdout,
     required this.stderr,
+    this.outputIncomplete = false,
   });
 
   /// Null where the source cannot report one — a shell that was closed rather
@@ -13,6 +14,14 @@ class ExecResult {
   final int? exitCode;
   final String stdout;
   final String stderr;
+
+  /// The command finished but its output did not, and waiting was given up on.
+  ///
+  /// A process that leaves a child holding the channel — `nohup ... &`,
+  /// `setsid` — exits without closing stdout, and a reader that waits for the
+  /// end of that stream waits for a process nobody is tracking. What arrived
+  /// is here; this says there may have been more.
+  final bool outputIncomplete;
 
   /// Both streams in the order a terminal would have shown them. Most callers
   /// want this: they are parsing what a command printed, not auditing which

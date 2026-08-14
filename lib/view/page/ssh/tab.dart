@@ -359,13 +359,19 @@ extension _Sessions on _SSHTabPageState {
     var restored = 0;
     for (final entry in entries) {
       if (entry is! Map) continue;
-      // `serverId` is what records written before this tab could open a shell
-      // on the device itself carry. Read as a fallback rather than migrated:
-      // one relaunch rewrites the lot, and a session that fails to reopen has
-      // cost nothing.
+      // TODO(migration residue; remove once no saved tab set predates
+      // `sourceId`): `serverId` is what records written before this tab could
+      // open a shell on the device itself carry. Read as a fallback rather
+      // than migrated: one relaunch rewrites the lot, and a session that fails
+      // to reopen has cost nothing.
       final id = entry['sourceId'] ?? entry['serverId'];
       final TerminalSource source;
       if (id == const LocalSource().id) {
+        // A tab set saved on a desktop can be restored on a phone — the same
+        // backup, the same account — and iOS has no shell to give. Skipped
+        // like an unknown server below, rather than opening a tab that can
+        // only fail when its pty is asked for.
+        if (!LocalShellBackend.isSupported) continue;
         source = const LocalSource();
       } else {
         final spi = servers[id];
