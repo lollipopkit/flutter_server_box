@@ -2,10 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
+import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/res/misc.dart';
 
 /// What `flutter test` cannot answer.
 ///
@@ -32,6 +35,11 @@ String? get _cannotRun {
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  // What the app does before anything opens a shell. `LocalShellBackend`
+  // starts one in the app's own directory on Android, and that directory is
+  // decided here — a test that skips it is testing a state the app is never in.
+  setUpAll(() => Paths.init(BuildData.name, bakName: Miscs.bakFileName));
 
   /// Reads until [marker] shows up, or gives up.
   ///
@@ -79,8 +87,10 @@ void main() {
 
   testWidgets('it starts in the home directory, not wherever the app was '
       'launched from', (_) async {
-    final home = Platform.environment['HOME'];
-    expect(home, isNotNull, reason: 'no HOME to start in');
+    // Not `Platform.environment['HOME']`: an Android app has none, and the
+    // answer there is the app's own directory — the only place it can write.
+    final home = LocalShellBackend.homeDir;
+    expect(home, isNotNull, reason: 'nowhere to start');
 
     final backend = LocalShellBackend();
     addTearDown(backend.close);
@@ -94,15 +104,16 @@ void main() {
     expect(
       out,
       contains('SBM_PWD:$home'),
-      reason: 'the app is launched from / under Finder, so a shell that '
-          'inherited its working directory would start there',
+      reason: 'a shell that merely inherited the app\'s working directory '
+          'would open at / — under Finder on macOS, and always on Android',
     );
   }, skip: _cannotRun != null);
 
-  testWidgets('it can read the user\'s own files', (_) async {
-    // A child process inherits whatever confines the app, so this is the check
-    // that the terminal is a terminal in the user's files and not in a
-    // container beside them.
+  testWidgets('it can read where it starts', (_) async {
+    // A child process inherits whatever confines the app, so on macOS this is
+    // the check that the terminal is in the user's files rather than a
+    // container beside them. On Android it is the check that `HOME` was
+    // exported at all — without it `$HOME` is empty and `ls` reads `/`.
     final backend = LocalShellBackend();
     addTearDown(backend.close);
 

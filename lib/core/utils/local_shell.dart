@@ -61,10 +61,17 @@ class LocalShellBackend implements ShellBackend {
     return '/bin/sh';
   }
 
-  /// Where a new shell starts, or null where the platform does not say.
+  /// Where a new shell starts, or null where there is nowhere to say.
   ///
   /// `USERPROFILE` is the Windows spelling of the same idea.
-  static String? get _homeDir {
+  ///
+  /// Android has neither: an app has no `HOME`, so a shell inherits the
+  /// process's working directory and opens at `/`, which is read-only and has
+  /// nothing in it. The app's own directory is the one place it can write, so
+  /// that is this device's home — and it is exported as `HOME` too, or `cd`
+  /// with no argument and every `~` in a command would still point at `/`.
+  static String? get homeDir {
+    if (Platform.isAndroid) return Paths.doc;
     final env = Platform.environment;
     final home = Platform.isWindows ? env['USERPROFILE'] : env['HOME'];
     return home?.isNotEmpty == true ? home : null;
@@ -124,15 +131,21 @@ class LocalShellBackend implements ShellBackend {
     if (_closed) {
       throw StateError('This local shell backend is closed');
     }
+    final home = homeDir;
     final session = _LocalShellSession(
       Pty.start(
         executable,
         arguments: arguments,
-        environment: environment,
+        // `HOME` only where the platform did not set one — flutter_pty carries
+        // the process's own across, and overriding that would be telling a
+        // desktop user their home is somewhere else.
+        environment: Platform.isAndroid && home != null
+            ? {'HOME': home, ...?environment}
+            : environment,
         // Where a terminal opens. The app's own working directory is wherever
         // it was launched from — `/` under Finder or the Dock — which made
         // every new shell start with `cd ~`.
-        workingDirectory: _homeDir,
+        workingDirectory: home,
         // A terminal that has not been laid out yet reports zero, and a pty of
         // no size makes programs that ask draw nothing.
         rows: height > 0 ? height : 25,
