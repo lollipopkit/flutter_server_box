@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/model/app/menu/base.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
 
 /// Opens the conversation list as a sheet, for the layouts too narrow to give
@@ -211,6 +212,12 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
                             _preview(conversation),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                            // Stated, not inherited. A selected `ListTile`
+                            // tints its subtitle the same as its title, so the
+                            // preview of the open conversation came out in the
+                            // accent colour and read as a second heading
+                            // rather than as the line under one.
+                            style: UIs.text12Grey,
                           ),
                           onTap: session.isWorking
                               ? null
@@ -227,15 +234,17 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
                           trailing: PopupMenu<_HistoryAction>(
                             enabled: !session.isWorking,
                             items: [
-                              PopupMenuItem(
-                                value: _HistoryAction.rename,
-                                child: Text(
-                                  context.l10n.askAiRenameConversation,
-                                ),
+                              PopMenu.build(
+                                _HistoryAction.rename,
+                                Icons.drive_file_rename_outline,
+                                context.l10n.askAiRenameConversation,
+                                iconSize: _kMenuIconSize,
                               ),
-                              PopupMenuItem(
-                                value: _HistoryAction.delete,
-                                child: Text(libL10n.delete),
+                              PopMenu.build(
+                                _HistoryAction.delete,
+                                Icons.delete_outline,
+                                libL10n.delete,
+                                iconSize: _kMenuIconSize,
                               ),
                             ],
                             onSelected: (action) async {
@@ -259,5 +268,9 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
 
 /// Built once. It was constructed per history row per rebuild.
 final _whitespace = RegExp(r'\s+');
+
+/// Smaller than a menu's default 24: this menu opens from a rail barely wider
+/// than the words in it, and an icon that size takes the room the label needs.
+const _kMenuIconSize = 18.0;
 
 enum _HistoryAction { rename, delete }
