@@ -252,6 +252,41 @@ as an asset. But a package manager exists to write **new** binaries into the
 rootfs, and the rootfs is in the data directory. `apk add` succeeds and the
 thing it installed will not run.
 
+### Measured, on an API 36 emulator with the app targeting 36
+
+`integration_test/android_exec_test.dart`. One binary in two places, so the
+location is the only variable, and then the same question for a rootfs's libc.
+
+| | direct exec | via `/system/bin/linker64` |
+| --- | --- | --- |
+| bionic `sh`, copied into `/data/user/0/<pkg>/files` | **denied**, errno 13 | **works**, exit 0 |
+| the same, on external storage | denied | fails at mmap — that volume is `noexec` whatever the target SDK |
+| aarch64 **musl** busybox, internal | denied | `library "libc.musl-aarch64.so.1" not found` |
+| the same, with `LD_LIBRARY_PATH` at its own libc | — | **SIGSEGV** |
+| the same, chaining musl's own loader through `linker64` | — | `Could not find a PHDR: broken executable?` |
+
+So the widely repeated workaround is **real**: W^X refuses `execve` on the app's
+own directory, and Android's dynamic linker maps the file instead. Q1 is
+answered, and route 2 below is not needed for bionic binaries.
+
+It does **not** reach an Alpine rootfs. `linker64` is bionic's loader; with a
+search path it finds musl's libc and then crashes, because a musl binary
+expects musl's own loader to have set up its runtime. Chaining musl's loader
+through `linker64` fails earlier still. Mixing the two libcs does not work, and
+nothing here suggests it can be made to.
+
+What that leaves for an Android rootfs:
+
+- a rootfs built against **bionic** rather than musl, which is not Alpine and
+  has no package manager anyone maintains;
+- `targetSdk` 28, which ends Play distribution;
+- an in-process loader that implements musl's own start-up — route 2 below, and
+  the measurement says it is still the large piece of work this document said
+  it was, not a one-line workaround.
+
+The emulator is not a physical device, and SELinux policy is a vendor's to
+change. The bionic result is the one worth re-checking on real hardware.
+
 Three ways out, all with a cost:
 
 | Route | Cost |
@@ -260,12 +295,9 @@ Three ways out, all with a cost:
 | An in-process ELF loader — map segments into anonymous `PROT_EXEC` memory, never call `execve` | Same architecture, so no emulation needed, only loading. But `fork`/`exec` inside the guest then has to be implemented by hand. Large |
 | Android Virtualization Framework | Real Debian VM, `pKVM`, GPU access. Behind a developer option, `MANAGE_VIRTUAL_MACHINE` is privileged, Samsung does not support AVF. Not reachable from a third-party app today |
 
-There is a widely repeated fourth: invoking `/system/bin/linker64` explicitly on
-a file in app data, on the grounds that the linker maps rather than execs.
-**This is unverified** — the Termux wiki page that documents it is behind a
-bot-check and could not be read. It decides whether route 2 collapses into a
-one-line workaround or stays a large piece of work, so it is the first thing to
-measure.
+There is a widely repeated fourth — invoking `/system/bin/linker64` on a file in
+app data — and it is the one measured above. It works, and it does not reach a
+musl rootfs, so it settles the question without opening the door.
 
 OpenMinis is the confusing data point. It targets **SDK 35**, ships an Alpine
 minirootfs plus proot, and its proot fork is described only as "patches applied
@@ -330,10 +362,11 @@ command review. The model is not told this machine exists unless both gates
 pass. **Not exercised end to end** — `LocalExec` has unit tests, but no agent
 tool call has been made against this device.
 
-**3. Measure the Android execution question.** A throwaway APK at the current
-`targetSdk`: write a static binary into `filesDir`, try `execve`, try it through
-`linker64`, record both. Twenty lines. Everything about Android rootfs support
-depends on the answer, and nothing should be designed before it.
+**3. Measure the Android execution question.** Done — see
+[the measurement](#measured-on-an-api-36-emulator-with-the-app-targeting-36).
+The answer is narrower than hoped: the workaround is real for bionic binaries
+and does not carry a musl rootfs, so stage 4's Android half is still the large
+piece of work, not a one-liner.
 
 **4. Rootfs.** iOS via ish-arm64 — vendor the fork, build the static libs, wire
 the Xcode target, ship an Alpine aarch64 tarball, add an iOS build step to CI.
@@ -350,7 +383,7 @@ Update this as answers arrive; several decisions above move with them.
 
 | # | Question | How to settle it | Status |
 | --- | --- | --- | --- |
-| 1 | Can a `targetSdk` 35 app exec a file in `filesDir` via `linker64`? | Throwaway APK on a real device (no Android hardware here) | **open** |
+| 1 | Can a `targetSdk` 36 app exec a file in `filesDir` via `linker64`? | **Yes for a bionic binary, no for a musl one** — measured on an API 36 emulator, `integration_test/android_exec_test.dart`. Direct `execve` is denied; the linker maps it and runs it. A musl binary segfaults once its libc is found, because it wants musl's own loader. Unverified on physical hardware | **done** |
 | 2 | How does OpenMinis run rootfs binaries at `targetSdk` 35? | Read its Kotlin/JNI sandbox code, not the shell scripts | **open** |
 | 3 | Are ish-arm64's 7–12x figures representative? | Build it, run a shell and a `python -c` loop | **open** |
 | 4 | Does the macOS DMG build ship unsandboxed, or does local shell hide there? | **Answered, and the first answer was wrong.** A sandboxed process cannot host a pty at all, so the entitlement that was meant to fix it bought nothing and was reverted (`ccd2e77b`). iCloud turned out not to need the sandbox either. macOS ships two products from one binary (`52a0ec1b`), and the App Store one hides the feature | **done** |
