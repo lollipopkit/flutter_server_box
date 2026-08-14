@@ -135,13 +135,34 @@ void main() {
         AskAiCommand.classifyRisk(r'echo $(systemctl restart nginx)'),
         AskAiCommandRisk.caution,
       );
-      expect(
-        AskAiCommand.classifyRisk('uptime && whoami'),
-        AskAiCommandRisk.caution,
-      );
+      // `uptime && whoami` is not here on purpose — see the chain test below.
+      // It changes nothing, and this group is about commands that do.
       expect(
         AskAiCommand.classifyRisk('uptime && systemctl restart nginx'),
         AskAiCommandRisk.caution,
+      );
+    });
+
+    test('what the check could not place is not called a system change', () {
+      // The lists are an allowlist. Nothing matching means nothing was
+      // established — which is a reason not to auto-run, and not a claim that
+      // the command writes anything. `sleep` is the plainest example: the
+      // badge said "changes the system" over a model description that
+      // correctly said it does not.
+      expect(
+        AskAiCommand.classifyRisk('sleep 60'),
+        AskAiCommandRisk.unknown,
+      );
+      // Chains are not taken apart, so the same applies to one whose parts are
+      // all reads.
+      expect(
+        AskAiCommand.classifyRisk('uptime && whoami'),
+        AskAiCommandRisk.unknown,
+      );
+      // Still not auto-runnable, which is the part that matters.
+      expect(
+        AskAiCommand.classifyRisk('sleep 60') == AskAiCommandRisk.readOnly,
+        isFalse,
       );
     });
 
