@@ -10,10 +10,12 @@ import 'package:riverpod/riverpod.dart';
 import 'package:server_box/core/utils/adhoc_ssh_prompt.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/ai/adhoc_ssh.dart';
 import 'package:server_box/data/provider/ai/agent_shell.dart';
@@ -576,12 +578,25 @@ class AgentToolExecutionResult {
   }
 }
 
-/// An open shell, and what to tag a result from it with.
+/// A machine a tool call is about, ready to be worked on.
 ///
-/// [serverId] is null for a connection that is not a configured server, which
-/// nothing produces yet — it is what makes the tools' results say "no
-/// particular server" rather than assume there is always one.
-typedef AgentShellHandle = ({SSHClient client, String? serverId});
+/// [exec] is how a command runs there. It is the interface the process,
+/// systemd and container pages already use, which is what lets a server
+/// reached only over its monitor agent answer at all — it has no `SSHClient`
+/// to hand anybody, and asking for one is what used to refuse it.
+///
+/// [client] is the SSH connection when there is one, and only the file tools
+/// need it: SFTP is a byte stream, and there is no equivalent over the agent's
+/// HTTP API. Null means those tools have to say so rather than assume.
+///
+/// [serverId] is null for a connection that is not a configured server — it is
+/// what makes a result say "no particular server" rather than name someone
+/// else's.
+typedef AgentShellHandle = ({
+  ServerExec exec,
+  SSHClient? client,
+  String? serverId,
+});
 
 /// Which machine a shell or file tool call is about.
 ///
@@ -629,6 +644,18 @@ final class AdHocSessionTarget extends AgentSshTarget {
   final String sessionId;
 }
 
+/// What the file tools say when there is no byte stream to carry SFTP.
+///
+/// Told as a way forward rather than as a refusal: the machine is reachable
+/// and `cat` and `tee` are right there, so a model that reads this can finish
+/// the job instead of reporting the server unusable.
+final _noSftp = StateError(
+  'Reading and writing files here needs SFTP, which travels over SSH. This '
+  'server is reached only through its monitor agent, which carries no byte '
+  'stream. Use run_shell_command instead — `cat path` to read, and a heredoc '
+  'into `tee path` to write.',
+);
+
 final globalAgentToolServiceProvider = Provider<GlobalAgentToolService>((ref) {
   return GlobalAgentToolService(ref);
 });
@@ -644,7 +671,9 @@ class GlobalAgentToolService {
   static int _temporaryFileSequence = 0;
 
   final Ref _ref;
-  SSHSession? _activeSession;
+  /// The signal that stops whatever [_runShell] is waiting on, or null when
+  /// nothing is running. Pulled by [cancelCurrent] and by the timeout.
+  Completer<void>? _cancelRun;
   bool _cancelRequested = false;
 
   List<GlobalAgentServerContext> serverContexts() {
@@ -690,20 +719,8 @@ class GlobalAgentToolService {
 
   Future<void> cancelCurrent() async {
     _cancelRequested = true;
-    final session = _activeSession;
-    if (session == null) return;
-    try {
-      session.kill(SSHSignal.KILL);
-    } catch (_) {
-      // The session may already have exited.
-    } finally {
-      session.close();
-    }
-    try {
-      await session.done;
-    } catch (_) {
-      // Best-effort cancellation.
-    }
+    final cancel = _cancelRun;
+    if (cancel != null && !cancel.isCompleted) cancel.complete();
   }
 
   /// Opens the shell a tool call is about.
@@ -739,29 +756,32 @@ class GlobalAgentToolService {
     }
     // No server id: this host is not in the app, and a result claiming one
     // would point at somebody else's server.
-    return (client: session.client, serverId: null);
+    return (
+      exec: SshExec(session.client),
+      client: session.client,
+      serverId: null,
+    );
   }
 
-  /// The server, with a shell open on it.
+  /// The server, ready to run something.
   ///
-  /// Opens one if there is none. A server reached over its monitor agent's
-  /// HTTP API holds no SSH client until something needs a shell — that is the
-  /// point of polling over HTTP — so demanding an existing client meant every
-  /// command on such a server failed, and the `connect` action the error told
-  /// the model to use refreshes status over HTTP without producing one, so the
-  /// retry failed the same way. Terminal, SFTP and port forwarding all reach a
-  /// shell through this same lazy path.
+  /// Asks the provider how this server runs commands rather than for an
+  /// `SSHClient`, because that is the question. A server reached only over its
+  /// monitor agent has no client and never will, and demanding one is what
+  /// refused it — while every other page in the app had been running commands
+  /// on it over the agent's HTTP API for as long as `MonitorExec` has existed.
+  ///
+  /// The SSH case still connects lazily: a server polled over HTTP holds no
+  /// client until something needs a shell, and terminal, SFTP and port
+  /// forwarding all reach one through this same path.
   Future<AgentShellHandle> _connectedServer(String serverId) async {
     final state = _server(serverId);
     final existing = state.client;
     if (existing != null && !existing.isClosed) {
-      return (client: existing, serverId: state.spi.id);
-    }
-
-    if (state.spi.ssh == null) {
-      throw StateError(
-        'Server ${state.spi.name} has no SSH credential, so it cannot run '
-        'commands. It reports status over its monitor agent only.',
+      return (
+        exec: SshExec(existing),
+        client: existing,
+        serverId: state.spi.id,
       );
     }
 
@@ -769,22 +789,27 @@ class GlobalAgentToolService {
     // prompts, and this may be running while the Agent is nowhere on screen.
     // Only on the path that actually connects: a server with a client already
     // open asks nothing, and pulling the shell up on every tool call would
-    // override a user who deliberately closed it.
-    _ref.read(agentShellProvider.notifier).show();
-
-    final SSHClient client;
-    try {
-      client = await _ref
-          .read(serverProvider(state.spi.id).notifier)
-          .ensureShellClient();
-    } catch (e) {
-      throw StateError('Cannot open a shell on ${state.spi.name}: $e');
+    // override a user who deliberately closed it. A monitor server opens no
+    // shell at all, so it does not raise this either.
+    if (state.spi.ssh != null) {
+      _ref.read(agentShellProvider.notifier).show();
     }
-    // The client that was just connected, rather than reading one back off the
+
+    final ServerExec exec;
+    try {
+      exec = await _ref.read(serverProvider(state.spi.id).notifier).ensureExec();
+    } catch (e) {
+      throw StateError('Cannot run commands on ${state.spi.name}: $e');
+    }
+    // Taken from what was just resolved rather than read back off the
     // provider: a status refresh that failed while this was awaiting drops the
     // client from the state, as does editing or disconnecting the server, and
     // by now the state may hold nothing at all.
-    return (client: client, serverId: state.spi.id);
+    return (
+      exec: exec,
+      client: exec is SshExec ? exec.client : null,
+      serverId: state.spi.id,
+    );
   }
 
   ServerState _server(String? serverId) {
@@ -808,44 +833,49 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final (:client, :serverId) = await _shellFor(proposal);
+    final (:exec, client: _, :serverId) = await _shellFor(proposal);
     final command = proposal.argumentString('command');
     if (command == null) throw const FormatException('command is required');
-    final session = await client.execute(command);
-    _activeSession = session;
+
     final stdoutCapture = _BoundedTextAccumulator(_maxShellOutputCharacters);
     final stderrCapture = _BoundedTextAccumulator(_maxShellOutputCharacters);
-    final stdoutFuture = const Utf8Decoder(
-      allowMalformed: true,
-    ).bind(session.stdout).forEach(stdoutCapture.add);
-    final stderrFuture = const Utf8Decoder(
-      allowMalformed: true,
-    ).bind(session.stderr).forEach(stderrCapture.add);
-    if (_cancelRequested) await cancelCurrent();
+
+    // The signal the stop button and the timeout both pull. It replaces
+    // holding the session and killing it from outside: a command no longer
+    // has to be an SSH channel for this to work, which is the whole point of
+    // going through [ServerExec].
+    final cancel = Completer<void>();
+    _cancelRun = cancel;
+    // Asked for before this one started. The command still has to be sent —
+    // there is nothing to stop until it is — so the signal is pre-pulled and
+    // the implementation stops it as soon as it can.
+    if (_cancelRequested && !cancel.isCompleted) cancel.complete();
 
     var timedOut = false;
-    var stdoutDrainTimedOut = false;
-    var stderrDrainTimedOut = false;
     try {
-      try {
-        await session.done.timeout(_operationTimeout);
-      } on TimeoutException {
+      final timer = Timer(_operationTimeout, () {
+        if (cancel.isCompleted) return;
         timedOut = true;
-        await cancelCurrent();
+        _cancelRequested = true;
+        cancel.complete();
+      });
+      final ExecResult result;
+      try {
+        result = await exec.run(
+          command,
+          onStdout: stdoutCapture.add,
+          onStderr: stderrCapture.add,
+          cancel: cancel.future,
+        );
+      } finally {
+        timer.cancel();
       }
-      await stdoutFuture.timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => stdoutDrainTimedOut = true,
-      );
-      await stderrFuture.timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => stderrDrainTimedOut = true,
-      );
+
       final limited = limitGlobalAgentShellOutput(
         stdoutCapture.text,
         stderrCapture.text,
-        stdoutAlreadyTruncated: stdoutCapture.truncated || stdoutDrainTimedOut,
-        stderrAlreadyTruncated: stderrCapture.truncated || stderrDrainTimedOut,
+        stdoutAlreadyTruncated: stdoutCapture.truncated,
+        stderrAlreadyTruncated: stderrCapture.truncated,
         maxCharacters: _maxShellOutputCharacters,
       );
       return AgentToolExecutionResult(
@@ -855,22 +885,22 @@ class GlobalAgentToolService {
             ? 'Command timed out.'
             : _cancelRequested
             ? 'Command cancelled.'
-            : 'Command exited with code ${session.exitCode ?? -1}.',
+            : 'Command exited with code ${result.exitCode ?? -1}.',
         succeeded:
-            !_cancelRequested && !timedOut && (session.exitCode ?? -1) == 0,
+            !_cancelRequested && !timedOut && (result.exitCode ?? -1) == 0,
         duration: watch.elapsed,
         cancelled: _cancelRequested,
         truncated: limited.truncated,
         data: {
           'command': command,
-          'exit_code': session.exitCode,
+          'exit_code': result.exitCode,
           'stdout': limited.stdout,
           'stderr': limited.stderr,
           'timed_out': timedOut,
         },
       );
     } finally {
-      if (identical(_activeSession, session)) _activeSession = null;
+      if (identical(_cancelRun, cancel)) _cancelRun = null;
     }
   }
 
@@ -878,7 +908,8 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final (:client, :serverId) = await _shellFor(proposal);
+    final (exec: _, :client, :serverId) = await _shellFor(proposal);
+    if (client == null) throw _noSftp;
     final path = proposal.path;
     if (path == null) throw const FormatException('path is required');
     SftpClient? sftp;
@@ -925,7 +956,8 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final (:client, :serverId) = await _shellFor(proposal);
+    final (exec: _, :client, :serverId) = await _shellFor(proposal);
+    if (client == null) throw _noSftp;
     final path = proposal.path;
     final content = proposal.arguments['content'];
     if (path == null) throw const FormatException('path is required');

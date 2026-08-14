@@ -53,6 +53,12 @@ abstract interface class ServerExec {
   /// stdin rather than running one, which is what installing the status script
   /// is (`mkdir -p; cat > path; chmod`). Then [entry] is the command and
   /// [stdin] followed by [script] is what it reads.
+  ///
+  /// [cancel] completing means the caller has stopped waiting: the result is
+  /// whatever had arrived by then, and the command is stopped where that is
+  /// possible. Only some sources can actually stop one — see the note on each
+  /// implementation — so a cancelled command is not a command guaranteed not
+  /// to have finished.
   Future<ExecResult> run(
     String script, {
     String? entry,
@@ -60,6 +66,7 @@ abstract interface class ServerExec {
     String? stdin,
     OnExecOutput? onStdout,
     OnExecOutput? onStderr,
+    Future<void>? cancel,
   });
 }
 

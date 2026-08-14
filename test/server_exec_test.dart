@@ -19,6 +19,7 @@ class _RecordingExec implements ServerExec {
     String? stdin,
     OnExecOutput? onStdout,
     OnExecOutput? onStderr,
+    Future<void>? cancel,
   }) async {
     this.script = script;
     this.entry = entry;
