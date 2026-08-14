@@ -99,7 +99,7 @@ final terminalRequestsProvider = TerminalRequestsProvider._();
 /// the server list arrives before there is anything to receive it. The tab
 /// drains this when it appears.
 final class TerminalRequestsProvider
-    extends $NotifierProvider<TerminalRequests, List<Spi>> {
+    extends $NotifierProvider<TerminalRequests, List<TerminalRequest>> {
   /// Servers waiting for a terminal.
   ///
   /// A queue rather than a direct call because the tab that opens terminals may
@@ -125,15 +125,15 @@ final class TerminalRequestsProvider
   TerminalRequests create() => TerminalRequests();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(List<Spi> value) {
+  Override overrideWithValue(List<TerminalRequest> value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<List<Spi>>(value),
+      providerOverride: $SyncValueProvider<List<TerminalRequest>>(value),
     );
   }
 }
 
-String _$terminalRequestsHash() => r'd7fa6cd15c9b2a8731944b6c3b8f8db1940aef54';
+String _$terminalRequestsHash() => r'6795dc525731a8b27f51ec5240fde7efa5adcc0e';
 
 /// Servers waiting for a terminal.
 ///
@@ -142,17 +142,17 @@ String _$terminalRequestsHash() => r'd7fa6cd15c9b2a8731944b6c3b8f8db1940aef54';
 /// the server list arrives before there is anything to receive it. The tab
 /// drains this when it appears.
 
-abstract class _$TerminalRequests extends $Notifier<List<Spi>> {
-  List<Spi> build();
+abstract class _$TerminalRequests extends $Notifier<List<TerminalRequest>> {
+  List<TerminalRequest> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<List<Spi>, List<Spi>>;
+    final ref = this.ref as $Ref<List<TerminalRequest>, List<TerminalRequest>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<List<Spi>, List<Spi>>,
-              List<Spi>,
+              AnyNotifier<List<TerminalRequest>, List<TerminalRequest>>,
+              List<TerminalRequest>,
               Object?,
               Object?
             >;

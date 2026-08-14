@@ -2,7 +2,11 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/view/page/snippet/edit.dart';
 
@@ -120,16 +124,69 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
                 ),
               ),
             ),
-            const Positioned(
+            // Running is what a snippet is *for*, so it gets a target of its
+            // own rather than living behind the editor: tapping the card still
+            // opens the editor, which is what the chevron behind this promises.
+            Positioned(
               top: 0,
-              right: 17,
+              right: 9,
               bottom: 0,
-              child: Center(child: Icon(Icons.keyboard_arrow_right)),
+              child: Center(
+                child: IconButton(
+                  tooltip: libL10n.run,
+                  icon: const Icon(Icons.play_arrow),
+                  onPressed: () => _run(snippet),
+                ),
+              ),
             ),
           ],
         ),
       ),
     ).cardx;
+  }
+
+  /// Picks a server, then runs the snippet on it.
+  ///
+  /// The picker is here rather than a step inside the terminal because the
+  /// question — which machine — is the only thing this page does not already
+  /// know, and answering it should not require going to the server list and
+  /// finding the snippet again from there.
+  Future<void> _run(Snippet snippet) async {
+    final servers = ref.read(serversProvider);
+    final spis = [for (final id in servers.serverOrder) ?servers.servers[id]];
+    if (spis.isEmpty) {
+      context.showSnackBar(libL10n.empty);
+      return;
+    }
+
+    final chosen = await context.showPickSingleDialog<Spi>(
+      title: libL10n.server,
+      items: spis,
+      display: (spi) => spi.name,
+    );
+    if (chosen == null || !mounted) return;
+
+    final fmted = snippet.fmtWithSpi(chosen);
+    final sure = await context.showRoundDialog<bool>(
+      title: libL10n.attention,
+      child: SingleChildScrollView(
+        child: SimpleMarkdown(data: '```shell\n$fmted\n```'),
+      ),
+      actions: [
+        CountDownBtn(
+          onTap: () => context.popDialog(true),
+          text: libL10n.run,
+          afterColor: Colors.red,
+        ),
+      ],
+    );
+    if (sure != true || !mounted) return;
+
+    // Into the terminal tab rather than over this page: a snippet that opens a
+    // shell should leave it where every other shell in the app lives, so it
+    // can be returned to after this page is left.
+    ref.read(terminalRequestsProvider.notifier).add(chosen, snippet: snippet);
+    ref.read(homeTabRequestProvider.notifier).go(AppTab.ssh);
   }
 
   @override

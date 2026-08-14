@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/snippet.dart';
 
 part 'session_requests.g.dart';
 
@@ -19,6 +20,16 @@ class HomeTabRequest extends _$HomeTabRequest {
   void done() => state = null;
 }
 
+/// A server waiting for a terminal, and what to run in it once it opens.
+class TerminalRequest {
+  const TerminalRequest(this.spi, {this.snippet});
+
+  final Spi spi;
+
+  /// Run as soon as the shell is ready. Null for a plain terminal.
+  final Snippet? snippet;
+}
+
 /// Servers waiting for a terminal.
 ///
 /// A queue rather than a direct call because the tab that opens terminals may
@@ -28,9 +39,10 @@ class HomeTabRequest extends _$HomeTabRequest {
 @Riverpod(keepAlive: true)
 class TerminalRequests extends _$TerminalRequests {
   @override
-  List<Spi> build() => const [];
+  List<TerminalRequest> build() => const [];
 
-  void add(Spi spi) => state = [...state, spi];
+  void add(Spi spi, {Snippet? snippet}) =>
+      state = [...state, TerminalRequest(spi, snippet: snippet)];
 
   void clear() => state = const [];
 }

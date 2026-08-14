@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
@@ -201,6 +202,7 @@ extension _Sessions on _SSHTabPageState {
   /// anyone left off.
   void _open(
     Spi spi, {
+    Snippet? snippet,
     String? tmuxSession,
     int? tmuxWindow,
     bool select = true,
@@ -219,6 +221,7 @@ extension _Sessions on _SSHTabPageState {
             key: key,
             args: SshPageArgs(
               spi: spi,
+              initSnippet: snippet,
               notFromTab: false,
               // The tab's id, not its name: a connection can end long after
               // its tab was closed, by which time the name may belong to a
@@ -272,8 +275,8 @@ extension _Sessions on _SSHTabPageState {
     final pending = ref.read(terminalRequestsProvider);
     if (pending.isEmpty) return;
     ref.read(terminalRequestsProvider.notifier).clear();
-    for (final spi in pending) {
-      _open(spi);
+    for (final request in pending) {
+      _open(request.spi, snippet: request.snippet);
     }
   }
 
