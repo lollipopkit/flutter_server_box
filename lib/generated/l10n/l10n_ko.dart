@@ -1310,4 +1310,9 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get agentLocalExecTip =>
       'ServerBox가 실행 중인 기기에서도 Agent가 작업할 수 있게 합니다. 여기서는 자동 실행되지 않으며, 모든 명령에 확인이 필요합니다.';
+
+  @override
+  String macDmgImportedPartly(String path) {
+    return '이전에 설치된 빌드의 데이터를 가져왔습니다. 다운로드한 파일은 $path에 그대로 있습니다.';
+  }
 }

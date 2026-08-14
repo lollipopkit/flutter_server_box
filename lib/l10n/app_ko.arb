@@ -403,5 +403,6 @@
   "continueInTerminal": "터미널에서 계속하기",
   "askAiRiskUnknown": "분류되지 않음",
   "agentLocalExec": "이 기기에서 명령 실행",
-  "agentLocalExecTip": "ServerBox가 실행 중인 기기에서도 Agent가 작업할 수 있게 합니다. 여기서는 자동 실행되지 않으며, 모든 명령에 확인이 필요합니다."
+  "agentLocalExecTip": "ServerBox가 실행 중인 기기에서도 Agent가 작업할 수 있게 합니다. 여기서는 자동 실행되지 않으며, 모든 명령에 확인이 필요합니다.",
+  "macDmgImportedPartly": "이전에 설치된 빌드의 데이터를 가져왔습니다. 다운로드한 파일은 {path}에 그대로 있습니다."
 }

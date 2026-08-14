@@ -47,7 +47,12 @@ enum SandboxImportResult {
 /// boxes are made of.
 abstract final class SandboxImport {
   /// Shared by both builds: they are the same app, signed two ways.
-  static const _bundleId = 'com.lollipopkit.toolbox';
+  ///
+  /// Written down rather than asked of the running app, because the point is
+  /// the *other* build's container. `integration_test/sandbox_import_test`
+  /// checks it against the bundle it is running in, so a rename cannot leave
+  /// this pointing at a directory nothing writes to.
+  static const bundleId = 'com.lollipopkit.toolbox';
 
   /// Written when the copy finished. Its presence is the whole memory of this
   /// having happened — an install that has since been used must never be
@@ -96,7 +101,7 @@ abstract final class SandboxImport {
     return home
         .joinPath('Library')
         .joinPath('Containers')
-        .joinPath(_bundleId)
+        .joinPath(bundleId)
         .joinPath('Data');
   }
 
@@ -115,7 +120,7 @@ abstract final class SandboxImport {
         container
             .joinPath('Library')
             .joinPath('Preferences')
-            .joinPath(_bundleId),
+            .joinPath(bundleId),
       ),
       hasKey: hasBoxKey,
     );
@@ -185,6 +190,7 @@ abstract final class SandboxImport {
       await File(dest.path.joinPath(busyMarker)).writeAsString(src.path);
       if (resuming) await _clear(dest);
       _copiedBytes = 0;
+      _leftBehind = null;
       final watch = Stopwatch()..start();
       await _copyInto(src: src, dest: dest);
       Loggers.app.info(
@@ -282,6 +288,11 @@ abstract final class SandboxImport {
 
   static bool _isBox(String name) => name.endsWith('.hive');
 
+  static String _parentOf(String path) {
+    final parts = path.split(Pfs.seperator)..removeLast();
+    return parts.join(Pfs.seperator);
+  }
+
   static String _basename(String path) =>
       path.split(Pfs.seperator).last;
 
@@ -304,11 +315,29 @@ abstract final class SandboxImport {
   }
 
   /// How much the last copy moved, so a slow first launch is explicable.
-  ///
-  /// Everything but the cache comes across, including the directories the user
-  /// downloaded into: those are their files, and leaving them behind to save
-  /// time would be losing data to save time.
   static int _copiedBytes = 0;
+
+  /// Directories that are not copied.
+  ///
+  /// `cache` is rebuilt on demand. The rest is what the app downloaded into —
+  /// SFTP transfers land in `file`, under a directory per server — and it is
+  /// unbounded: a first launch that copies it is a first launch that appears
+  /// to hang, with no window up yet to say why.
+  ///
+  /// Left where they are rather than deleted, and said so afterwards, which is
+  /// the difference between leaving files behind and losing them. [leftBehind]
+  /// is what the notice reads.
+  ///
+  /// `font` and `img` are *not* here: they are small and the settings point
+  /// straight into them, so a build without them has a font path and a
+  /// terminal background that name files it does not have.
+  static const _skipDirs = {'cache', 'file', 'dl', 'video', 'audio'};
+
+  /// Where the user's downloaded files stayed, or null when there were none.
+  static String? _leftBehind;
+
+  /// The directory the copy did not bring across, for the notice to name.
+  static String? get leftBehind => _leftBehind;
 
   static Future<void> _copyInto({
     required Directory src,
@@ -324,8 +353,14 @@ abstract final class SandboxImport {
       if (name.endsWith('.lock')) continue;
 
       if (entity is Directory) {
-        // Rebuilt on demand, and the biggest thing in there.
-        if (name == 'cache') continue;
+        if (_skipDirs.contains(name)) {
+          // Only what the user would look for. An empty downloads directory is
+          // not something to tell anyone about.
+          if (name != 'cache' && await entity.list().isEmpty == false) {
+            _leftBehind ??= _parentOf(entity.path);
+          }
+          continue;
+        }
         final child = Directory(dest.path.joinPath(name));
         await child.create(recursive: true);
         await _copyInto(src: entity, dest: child);

@@ -1376,4 +1376,9 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get agentLocalExecTip =>
       'Agent\'ın yalnızca sunucularda değil, ServerBox\'ın çalıştığı makinede de çalışmasına izin verir. Burada hiçbir şey gözetimsiz çalışmaz: her komut inceleme gerektirir.';
+
+  @override
+  String macDmgImportedPartly(String path) {
+    return 'Daha önce yüklü sürümün verileri içe aktarıldı. İndirilen dosyalar $path konumunda kaldı.';
+  }
 }

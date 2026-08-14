@@ -1397,4 +1397,9 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get agentLocalExecTip =>
       'Consente all\'Agent di operare sulla macchina su cui gira ServerBox, non solo sui server. Qui nulla viene eseguito senza supervisione: ogni comando richiede revisione.';
+
+  @override
+  String macDmgImportedPartly(String path) {
+    return 'Dati della versione installata in precedenza importati. I file scaricati sono rimasti in $path.';
+  }
 }

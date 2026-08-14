@@ -401,5 +401,6 @@
   "continueInTerminal": "在终端中继续",
   "askAiRiskUnknown": "未判定",
   "agentLocalExec": "在本机执行命令",
-  "agentLocalExecTip": "允许 Agent 在运行 ServerBox 的这台机器上工作，而不只是服务器。这里没有无人值守：再只读的命令也需要审核。app 的数据、你的密钥和文件都在这台机器上。"
+  "agentLocalExecTip": "允许 Agent 在运行 ServerBox 的这台机器上工作，而不只是服务器。这里没有无人值守：再只读的命令也需要审核。app 的数据、你的密钥和文件都在这台机器上。",
+  "macDmgImportedPartly": "已导入此前安装版本的数据。下载的文件仍在原处:{path}。"
 }

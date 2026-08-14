@@ -1274,6 +1274,11 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get agentLocalExecTip =>
       '允许 Agent 在运行 ServerBox 的这台机器上工作，而不只是服务器。这里没有无人值守：再只读的命令也需要审核。app 的数据、你的密钥和文件都在这台机器上。';
+
+  @override
+  String macDmgImportedPartly(String path) {
+    return '已导入此前安装版本的数据。下载的文件仍在原处:$path。';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2546,4 +2551,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String get agentLocalExecTip =>
       '允許 Agent 在執行 ServerBox 的這台機器上工作，而不只是伺服器。這裡沒有無人值守：再唯讀的指令也需要審核。app 的資料、你的金鑰和檔案都在這台機器上。';
+
+  @override
+  String macDmgImportedPartly(String path) {
+    return '已匯入先前安裝版本的資料。下載的檔案仍在原處:$path。';
+  }
 }

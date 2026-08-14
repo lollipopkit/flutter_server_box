@@ -2465,6 +2465,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Lets the Agent work on the machine ServerBox is running on, not only on servers. Nothing runs here unattended: every command needs review, however read-only it looks. This is where the app\'s data, your keys and your files are.'**
   String get agentLocalExecTip;
+
+  /// No description provided for @macDmgImportedPartly.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported the data of the previously installed build. Downloaded files were left where they were, in {path}.'**
+  String macDmgImportedPartly(String path);
 }
 
 class _AppLocalizationsDelegate

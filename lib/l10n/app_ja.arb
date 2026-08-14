@@ -394,5 +394,6 @@
   "continueInTerminal": "ターミナルで続ける",
   "askAiRiskUnknown": "判定不能",
   "agentLocalExec": "このデバイスでコマンドを実行",
-  "agentLocalExecTip": "ServerBox が動作しているマシン上でも Agent が作業できるようにします。ここでは自動実行はされません。読み取り専用に見えるコマンドでも確認が必要です。"
+  "agentLocalExecTip": "ServerBox が動作しているマシン上でも Agent が作業できるようにします。ここでは自動実行はされません。読み取り専用に見えるコマンドでも確認が必要です。",
+  "macDmgImportedPartly": "以前インストールされていたビルドのデータを取り込みました。ダウンロードしたファイルは {path} に残っています。"
 }

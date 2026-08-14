@@ -394,5 +394,6 @@
   "continueInTerminal": "Lanjutkan di terminal",
   "askAiRiskUnknown": "Tidak terklasifikasi",
   "agentLocalExec": "Jalankan perintah di perangkat ini",
-  "agentLocalExecTip": "Memungkinkan Agent bekerja di mesin tempat ServerBox berjalan, bukan hanya di server. Tidak ada yang berjalan tanpa pengawasan di sini: setiap perintah perlu ditinjau."
+  "agentLocalExecTip": "Memungkinkan Agent bekerja di mesin tempat ServerBox berjalan, bukan hanya di server. Tidak ada yang berjalan tanpa pengawasan di sini: setiap perintah perlu ditinjau.",
+  "macDmgImportedPartly": "Data dari versi yang terpasang sebelumnya telah diimpor. Berkas unduhan tetap berada di {path}."
 }

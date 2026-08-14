@@ -1378,4 +1378,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get agentLocalExecTip =>
       'Lets the Agent work on the machine ServerBox is running on, not only on servers. Nothing runs here unattended: every command needs review, however read-only it looks. This is where the app\'s data, your keys and your files are.';
+
+  @override
+  String macDmgImportedPartly(String path) {
+    return 'Imported the data of the previously installed build. Downloaded files were left where they were, in $path.';
+  }
 }

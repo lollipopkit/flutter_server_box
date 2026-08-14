@@ -88,17 +88,15 @@ void main() {
     await write(src, 'setting_enc.lock');
     await write(src, 'app.db');
     await write(src, '.DS_Store');
-    await write(src, 'dl/file.txt', 'downloaded');
+    await write(src, 'font/term.ttf', 'font');
     await write(src, 'cache/huge.bin');
 
     expect(await import(), SandboxImportResult.imported);
 
     expect(File('${dest.path}/setting_enc.hive').readAsStringSync(), 'boxes');
     expect(exists('app.db'), true);
-    expect(
-      File('${dest.path}/dl/file.txt').readAsStringSync(),
-      'downloaded',
-    );
+    // Small, and `fontPath` points straight into it.
+    expect(File('${dest.path}/font/term.ttf').readAsStringSync(), 'font');
 
     // A lock belongs to the process that held it.
     expect(exists('setting_enc.lock'), false);
@@ -150,5 +148,34 @@ void main() {
     expect(exists('app.db'), isTrue);
     expect(exists('app.db-wal'), isTrue);
     expect(exists('app.db-shm'), isFalse);
+  });
+
+  test('what the user downloaded stays where it is, and is named', () async {
+    // Unbounded, and copying it is a first launch that looks like a hang. Not
+    // deleted and not silent: the notice says where it stayed, which is the
+    // difference between leaving files and losing them.
+    await write(src, 'box.hive');
+    await write(src, 'file/server-a/report.txt');
+    await write(src, 'cache/thumb.png');
+    await write(src, 'img/ssh_bg.png');
+
+    expect(await import(), SandboxImportResult.imported);
+
+    expect(exists('box.hive'), isTrue);
+    // Settings point straight into this one, so a build without it names a
+    // background image it does not have.
+    expect(exists('img/ssh_bg.png'), isTrue);
+    expect(exists('file/server-a/report.txt'), isFalse);
+    expect(exists('cache/thumb.png'), isFalse);
+    expect(SandboxImport.leftBehind, src.path);
+  });
+
+  test('an empty downloads directory is not worth mentioning', () async {
+    await write(src, 'box.hive');
+    await Directory('${src.path}/file').create(recursive: true);
+
+    expect(await import(), SandboxImportResult.imported);
+
+    expect(SandboxImport.leftBehind, isNull);
   });
 }

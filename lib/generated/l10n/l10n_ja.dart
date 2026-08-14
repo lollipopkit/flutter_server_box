@@ -1307,4 +1307,9 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get agentLocalExecTip =>
       'ServerBox が動作しているマシン上でも Agent が作業できるようにします。ここでは自動実行はされません。読み取り専用に見えるコマンドでも確認が必要です。';
+
+  @override
+  String macDmgImportedPartly(String path) {
+    return '以前インストールされていたビルドのデータを取り込みました。ダウンロードしたファイルは $path に残っています。';
+  }
 }

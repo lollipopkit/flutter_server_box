@@ -121,7 +121,16 @@ abstract final class SandboxImportNotice {
     if (result == null) return;
 
     if (result == SandboxImportResult.imported) {
-      context.showSnackBar(l10n.macDmgImported);
+      // Named, not omitted. The downloads directory is not copied — it is
+      // unbounded and a first launch that copies it looks like one that hung —
+      // and a user who is not told where it went has lost files as far as they
+      // can tell.
+      final left = SandboxImport.leftBehind;
+      context.showSnackBar(
+        left == null
+            ? l10n.macDmgImported
+            : l10n.macDmgImportedPartly(left),
+      );
       return;
     }
 

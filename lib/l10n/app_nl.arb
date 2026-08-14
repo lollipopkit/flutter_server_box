@@ -394,5 +394,6 @@
   "continueInTerminal": "Doorgaan in terminal",
   "askAiRiskUnknown": "Niet ingedeeld",
   "agentLocalExec": "Opdrachten op dit apparaat uitvoeren",
-  "agentLocalExecTip": "Laat de Agent werken op de machine waarop ServerBox draait, niet alleen op servers. Hier draait niets onbeheerd: elke opdracht moet worden beoordeeld."
+  "agentLocalExecTip": "Laat de Agent werken op de machine waarop ServerBox draait, niet alleen op servers. Hier draait niets onbeheerd: elke opdracht moet worden beoordeeld.",
+  "macDmgImportedPartly": "De gegevens van de eerder geïnstalleerde versie zijn geïmporteerd. Gedownloade bestanden zijn achtergebleven in {path}."
 }

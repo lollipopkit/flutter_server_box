@@ -397,5 +397,6 @@
   "continueInTerminal": "Continua nel terminale",
   "askAiRiskUnknown": "Non classificato",
   "agentLocalExec": "Esegui comandi su questo dispositivo",
-  "agentLocalExecTip": "Consente all'Agent di operare sulla macchina su cui gira ServerBox, non solo sui server. Qui nulla viene eseguito senza supervisione: ogni comando richiede revisione."
+  "agentLocalExecTip": "Consente all'Agent di operare sulla macchina su cui gira ServerBox, non solo sui server. Qui nulla viene eseguito senza supervisione: ogni comando richiede revisione.",
+  "macDmgImportedPartly": "Dati della versione installata in precedenza importati. I file scaricati sono rimasti in {path}."
 }

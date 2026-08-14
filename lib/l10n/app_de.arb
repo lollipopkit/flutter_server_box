@@ -394,5 +394,6 @@
   "continueInTerminal": "Im Terminal fortfahren",
   "askAiRiskUnknown": "Nicht eingestuft",
   "agentLocalExec": "Befehle auf diesem Gerät ausführen",
-  "agentLocalExecTip": "Erlaubt dem Agent, auf dem Gerät zu arbeiten, auf dem ServerBox läuft, nicht nur auf Servern. Hier läuft nichts unbeaufsichtigt: Jeder Befehl muss geprüft werden."
+  "agentLocalExecTip": "Erlaubt dem Agent, auf dem Gerät zu arbeiten, auf dem ServerBox läuft, nicht nur auf Servern. Hier läuft nichts unbeaufsichtigt: Jeder Befehl muss geprüft werden.",
+  "macDmgImportedPartly": "Die Daten der zuvor installierten Version wurden importiert. Heruntergeladene Dateien sind unter {path} geblieben."
 }
