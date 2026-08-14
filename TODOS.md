@@ -243,3 +243,35 @@ App Store 版以后可能不再更新。
 
 在这条解决之前,任何「推荐迁移」的文案都得把「会丢本地数据,先备份」放在最前面,
 否则就是在坑人。
+
+## 更新提示:显示中间所有版本的 changes,每个默认折叠
+
+现在 GitHub 这条源只取最新一个 release 的正文:
+`packages/fl_lib/lib/src/model/update.dart:151` 的 `_getGitHubAll()` 里
+`_changelog = release.body`,`_getGitHubRelease()` 拿的是 latest。用户落后好几个
+版本时,中间版本的 release notes 一条都看不到。
+
+对照的是 JSON 那条源(`_getChangelog()`):它按 build 号筛出所有比当前新的条目,
+拼成一个编号列表。GitHub 这条要做到同样的覆盖面,但**不能也拼成一坨**——release
+正文往往很长,几个版本叠起来会把对话框撑爆。
+
+要做的:
+
+- 取所有 build 号大于当前的 release,不是只取 latest;
+- 每个版本一个可折叠块,**默认折叠**,标题是版本号 + 日期,展开才是正文;
+- 参考 agent 页面的工具卡片:`lib/view/page/agent/view.dart:584` 的 `_toolCard`,
+  用的是 `ExpansionTile`(fl_lib 里有 `ExpandTile` 封装)。那里的注释写明了同一个
+  取舍——「跑完的工具是一行日志,不是一条消息;它折叠成一行,好让它服务的那个答案
+  留在屏幕上」,更新日志同理。
+- 最新那一个是不是该默认展开,待定。倾向于是:用户最关心的就是刚更新到的这一版。
+
+另外两条一起改:
+
+- **标题用 GitHub 的 tag 名,不是 `'v1.0.$newest'`**。现在
+  `packages/fl_lib/lib/src/core/update.dart:57` 把标题写死成 `v1.0.<build>`,
+  显示的是 build 号,和 GitHub release 页上、和用户看到的版本号都对不上。tag 名
+  在 release 对象里现成。
+- **GitHub 这条路没有语言分支**。JSON 那条有 `changelogMap[_locale]`,GitHub 只
+  有一个 `body`,写什么语言就显示什么语言。要不要按 locale 分,待定。
+
+**改动落在 fl_lib**(`src/model/update.dart` + `src/core/update.dart`),不在本仓库。
