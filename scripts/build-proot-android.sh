@@ -24,12 +24,14 @@
 #   * `useLegacyPackaging = true` is required in android/app/build.gradle.
 #     With minSdk >= 23 native libraries are mapped straight out of the APK and
 #     nothing is extracted, so `nativeLibraryDir` does not exist and there is
-#     nowhere for either binary to be. This script does not set it: it makes
-#     every install larger, and it is only worth paying for once the rootfs
-#     feature actually ships.
+#     nowhere for either binary to be. It is set there now; the APK is the
+#     smaller for it (extracted libraries are stored compressed) and the
+#     install the larger, since they are then kept twice.
 #
-# Sources are canonical upstreams, not a fork of a fork. proot needs one
-# one-line patch to build with a current NDK — see `patch_proot`.
+# Sources are canonical upstreams, not a fork of a fork, and both are pinned:
+# talloc by version and digest, proot by tag *and* the commit that tag pointed
+# at. proot needs one one-line patch to build with a current NDK — see
+# `patch_proot`.
 #
 # Usage: scripts/build-proot-android.sh [--clean]
 
@@ -41,7 +43,16 @@ OUT_DIR="$REPO_ROOT/android/app/src/main/jniLibs/arm64-v8a"
 
 TALLOC_VERSION=2.4.2
 TALLOC_URL="https://download.samba.org/pub/talloc/talloc-${TALLOC_VERSION}.tar.gz"
-PROOT_URL="https://github.com/termux/proot/archive/refs/heads/master.tar.gz"
+TALLOC_SHA256=85ecf9e465e20f98f9950a52e9a411e14320bc555fa257d87697b7e7a9b1d8a6
+
+# Pinned to a tag, and then to the commit that tag pointed at when it was
+# added. A tag can be moved; a commit id cannot, so the second check is the one
+# that means anything. This is the binary that runs the guest's code, and
+# `master` would have let it change under a release build without anybody
+# choosing that.
+PROOT_REPO="https://github.com/termux/proot.git"
+PROOT_TAG=v5.1.107.90
+PROOT_COMMIT=894e5789cd982e53d644bb3a13332f1d35e907ac
 
 # 26 rather than the app's minSdk: proot is a plain executable and nothing in
 # it needs a newer libc than the oldest device the app supports.
@@ -84,17 +95,31 @@ log "NDK: $NDK"
 mkdir -p "$WORK_DIR" "$OUT_DIR"
 
 fetch() {
-  local url="$1" dest="$2"
+  local url="$1" dest="$2" want="${3:-}"
   [ -f "$dest" ] && return
   log "Fetching $(basename "$dest")"
   curl -fsSL --retry 3 -o "$dest" "$url"
+  [ -n "$want" ] || return
+  local got
+  got="$(sha256 "$dest")"
+  # Removed, not left behind: a cached file that failed its check would be
+  # skipped by the `-f` above on the next run and never checked again.
+  [ "$got" = "$want" ] || { rm -f "$dest"; die "$(basename "$dest") is not what it should be: expected $want, got $got"; }
+}
+
+sha256() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | cut -d' ' -f1
+  else
+    shasum -a 256 "$1" | cut -d' ' -f1
+  fi
 }
 
 build_talloc() {
   local src="$WORK_DIR/talloc-$TALLOC_VERSION"
   [ -f "$WORK_DIR/libtalloc.a" ] && { log "talloc already built"; return; }
 
-  fetch "$TALLOC_URL" "$WORK_DIR/talloc.tar.gz"
+  fetch "$TALLOC_URL" "$WORK_DIR/talloc.tar.gz" "$TALLOC_SHA256"
   [ -d "$src" ] || tar xzf "$WORK_DIR/talloc.tar.gz" -C "$WORK_DIR"
 
   # talloc.c includes Samba's `replace.h`, a compat shim for platforms without
@@ -165,10 +190,15 @@ patch_proot() {
 build_proot() {
   local src="$WORK_DIR/proot"
   if [ ! -d "$src" ]; then
-    fetch "$PROOT_URL" "$WORK_DIR/proot.tar.gz"
-    mkdir -p "$src"
-    tar xzf "$WORK_DIR/proot.tar.gz" -C "$src" --strip-components=1
+    log "Cloning proot $PROOT_TAG"
+    # Cloned rather than fetched as a tarball: GitHub's generated archives are
+    # not promised to be byte-stable, so a digest of one is a check that can
+    # break without anything having changed. A commit id cannot.
+    git clone --quiet --depth 1 --branch "$PROOT_TAG" "$PROOT_REPO" "$src"
   fi
+  local head
+  head="$(git -C "$src" rev-parse HEAD)"
+  [ "$head" = "$PROOT_COMMIT" ] || die "proot $PROOT_TAG is $head, not the pinned $PROOT_COMMIT"
   patch_proot "$src"
 
   log "Building proot"
@@ -203,11 +233,8 @@ log "Built into $OUT_DIR"
 ls -la "$OUT_DIR"/libproot*.so
 cat <<'NOTE'
 
-Not done by this script, and needed before either binary can run:
-
-  android/app/build.gradle
-      packaging { jniLibs { useLegacyPackaging = true } }
-
-Without it nothing is extracted from the APK and nativeLibraryDir does not
-exist. See the comment at the top of this file.
+These are not in the repository. A build that has not run this script has no
+Linux userland — `AndroidRootfs.isAvailable` is false and the entry does not
+appear. CI runs it in .github/workflows/build.yml, and checks afterwards that
+both binaries actually reached the APK.
 NOTE

@@ -102,6 +102,15 @@ jobs:
         run: |
           flutter pub get
           scripts/release/patch-jni-build-id.sh
+      # The Linux userland the terminal tab offers. Not in the repository —
+      # these are binaries, and they are built from pinned upstream sources
+      # here. Without this step the feature is absent from the build rather
+      # than broken in it, which is why the check below exists.
+      - name: Build proot
+        shell: bash
+        run: |
+          export ANDROID_NDK_HOME="${ANDROID_NDK_LATEST_HOME:-${ANDROID_NDK_ROOT:-}}"
+          scripts/build-proot-android.sh
       - name: Build (release)
         if: inputs.release == true || github.ref_type == 'tag'
         shell: bash
@@ -110,6 +119,22 @@ jobs:
         if: inputs.release != true && github.ref_type != 'tag'
         shell: bash
         run: dart run fl_build -p android
+      # `useLegacyPackaging` off means nothing is extracted from the APK, so
+      # `nativeLibraryDir` does not exist and proot cannot be run from
+      # anywhere. The APK still builds, installs and runs — the rootfs entry
+      # simply never appears. Checked here because nothing else would say so.
+      - name: Check proot shipped
+        shell: bash
+        run: |
+          shopt -s nullglob
+          apks=(build/app/outputs/flutter-apk/*_arm64.apk)
+          [ ${#apks[@]} -gt 0 ] || { echo "no arm64 APK was built"; exit 1; }
+          for apk in "${apks[@]}"; do
+            unzip -l "$apk" | grep -q 'lib/arm64-v8a/libproot.so' ||
+              { echo "$apk carries no proot; the Linux userland would be missing"; exit 1; }
+            unzip -l "$apk" | grep -q 'lib/arm64-v8a/libproot-loader.so' ||
+              { echo "$apk carries proot but not its loader; entering the rootfs would be refused"; exit 1; }
+          done
       - name: Rename
         shell: bash
         run: |

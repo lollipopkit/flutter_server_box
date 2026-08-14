@@ -92,7 +92,11 @@ android {
             // scripts/build-proot-android.sh.
             //
             // The cost is a larger install: the libraries are stored twice,
-            // once in the APK and once unpacked.
+            // once in the APK and once unpacked. The download is smaller
+            // rather than larger, which is the opposite of what it sounds
+            // like — extracted libraries are stored compressed, mapped ones
+            // cannot be. Measured on the arm64 release APK: 25.5 MB with
+            // this on, 47.8 MB with it off.
             useLegacyPackaging = true
         }
     }
