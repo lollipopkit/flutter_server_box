@@ -113,6 +113,56 @@ void main() {
     );
   });
 
+  group('AgentSshTarget.fromArguments', () {
+    AskAiCommand shell(Map<String, dynamic> arguments) => AskAiCommand(
+      id: 'call-1',
+      command: 'uptime',
+      toolName: 'run_shell_command',
+      rawArguments: jsonEncode(arguments),
+    );
+
+    test('a named server resolves to that server', () {
+      final target = AgentSshTarget.fromArguments(
+        shell({'server_id': 'server-a', 'command': 'uptime'}),
+      );
+
+      expect(target, isA<ConfiguredServerTarget>());
+      expect((target as ConfiguredServerTarget).serverId, 'server-a');
+    });
+
+    test('a call that names no machine is refused', () {
+      expect(
+        () => AgentSshTarget.fromArguments(shell({'command': 'uptime'})),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('a blank server id is not a machine', () {
+      // The model filling the field with whitespace to satisfy the schema must
+      // not read as "the server called ' '".
+      expect(
+        () => AgentSshTarget.fromArguments(
+          shell({'server_id': '   ', 'command': 'uptime'}),
+        ),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('unparsable arguments name no machine either', () {
+      const proposal = AskAiCommand(
+        id: 'call-1',
+        command: 'uptime',
+        toolName: 'run_shell_command',
+        rawArguments: 'not json',
+      );
+
+      expect(
+        () => AgentSshTarget.fromArguments(proposal),
+        throwsA(isA<FormatException>()),
+      );
+    });
+  });
+
   group('serverbox actions', () {
     AskAiCommand command(String action, {bool modelSafeToRun = false}) {
       return AskAiCommand(

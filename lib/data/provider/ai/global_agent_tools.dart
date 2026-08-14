@@ -433,6 +433,41 @@ class AgentToolExecutionResult {
   }
 }
 
+/// An open shell, and what to tag a result from it with.
+///
+/// [serverId] is null for a connection that is not a configured server, which
+/// nothing produces yet — it is what makes the tools' results say "no
+/// particular server" rather than assume there is always one.
+typedef AgentShellHandle = ({SSHClient client, String? serverId});
+
+/// Which machine a shell or file tool call is about.
+///
+/// The three tools that run something take an [AgentShellHandle] and never ask
+/// how the connection behind it was reached. That is the whole point of the
+/// type: remote execution is not the same thing as "a server in the list", and
+/// the tools have stopped assuming it is.
+@immutable
+sealed class AgentSshTarget {
+  const AgentSshTarget();
+
+  /// Reads the target out of a tool call.
+  ///
+  /// One place, so that a second kind of target is one case here rather than
+  /// a condition in each of the three tools that run something.
+  factory AgentSshTarget.fromArguments(AskAiCommand proposal) {
+    final serverId = proposal.serverId;
+    if (serverId == null) throw const FormatException('server_id is required');
+    return ConfiguredServerTarget(serverId);
+  }
+}
+
+/// A server the user has configured in the app.
+final class ConfiguredServerTarget extends AgentSshTarget {
+  const ConfiguredServerTarget(this.serverId);
+
+  final String serverId;
+}
+
 final globalAgentToolServiceProvider = Provider<GlobalAgentToolService>((ref) {
   return GlobalAgentToolService(ref);
 });
@@ -508,6 +543,15 @@ class GlobalAgentToolService {
     }
   }
 
+  /// Opens the shell a tool call is about.
+  Future<AgentShellHandle> _resolve(AgentSshTarget target) async {
+    return switch (target) {
+      ConfiguredServerTarget(:final serverId) => await _connectedServer(
+        serverId,
+      ),
+    };
+  }
+
   /// The server, with a shell open on it.
   ///
   /// Opens one if there is none. A server reached over its monitor agent's
@@ -517,13 +561,11 @@ class GlobalAgentToolService {
   /// the model to use refreshes status over HTTP without producing one, so the
   /// retry failed the same way. Terminal, SFTP and port forwarding all reach a
   /// shell through this same lazy path.
-  Future<({ServerState state, SSHClient client})> _connectedServer(
-    String? serverId,
-  ) async {
+  Future<AgentShellHandle> _connectedServer(String serverId) async {
     final state = _server(serverId);
     final existing = state.client;
     if (existing != null && !existing.isClosed) {
-      return (state: state, client: existing);
+      return (client: existing, serverId: state.spi.id);
     }
 
     if (state.spi.ssh == null) {
@@ -541,12 +583,11 @@ class GlobalAgentToolService {
     } catch (e) {
       throw StateError('Cannot open a shell on ${state.spi.name}: $e');
     }
-    // The client that was just connected, not whatever the provider holds by
-    // now: a status refresh that failed while this was awaiting drops the
+    // The client that was just connected, rather than reading one back off the
+    // provider: a status refresh that failed while this was awaiting drops the
     // client from the state, as does editing or disconnecting the server, and
-    // re-reading it then hands back a state whose `client` is null for the
-    // caller to assert on.
-    return (state: _ref.read(serverProvider(state.spi.id)), client: client);
+    // by now the state may hold nothing at all.
+    return (client: client, serverId: state.spi.id);
   }
 
   ServerState _server(String? serverId) {
@@ -559,11 +600,18 @@ class GlobalAgentToolService {
     return _ref.read(serverProvider(serverId));
   }
 
+  /// The shell a tool call names, opened and ready.
+  ///
+  /// The one line every tool that runs something starts with, so that where
+  /// the connection comes from is decided in exactly one place.
+  Future<AgentShellHandle> _shellFor(AskAiCommand proposal) =>
+      _resolve(AgentSshTarget.fromArguments(proposal));
+
   Future<AgentToolExecutionResult> _runShell(
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final (:state, :client) = await _connectedServer(proposal.serverId);
+    final (:client, :serverId) = await _shellFor(proposal);
     final command = proposal.argumentString('command');
     if (command == null) throw const FormatException('command is required');
     final session = await client.execute(command);
@@ -605,7 +653,7 @@ class GlobalAgentToolService {
       );
       return AgentToolExecutionResult(
         toolName: proposal.toolName,
-        serverId: state.spi.id,
+        serverId: serverId,
         summary: timedOut
             ? 'Command timed out.'
             : _cancelRequested
@@ -633,7 +681,7 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final (:state, :client) = await _connectedServer(proposal.serverId);
+    final (:client, :serverId) = await _shellFor(proposal);
     final path = proposal.path;
     if (path == null) throw const FormatException('path is required');
     SftpClient? sftp;
@@ -657,7 +705,7 @@ class GlobalAgentToolService {
       final visible = truncated ? data.sublist(0, _maxReadBytes) : data;
       return AgentToolExecutionResult(
         toolName: proposal.toolName,
-        serverId: state.spi.id,
+        serverId: serverId,
         summary: truncated
             ? 'Read the first $_maxReadBytes bytes of $path.'
             : 'Read $path.',
@@ -680,7 +728,7 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final (:state, :client) = await _connectedServer(proposal.serverId);
+    final (:client, :serverId) = await _shellFor(proposal);
     final path = proposal.path;
     final content = proposal.arguments['content'];
     if (path == null) throw const FormatException('path is required');
@@ -715,7 +763,7 @@ class GlobalAgentToolService {
       temporaryPath = null;
       return AgentToolExecutionResult(
         toolName: proposal.toolName,
-        serverId: state.spi.id,
+        serverId: serverId,
         summary: 'Wrote ${bytes.length} bytes to $path.',
         succeeded: true,
         duration: watch.elapsed,
