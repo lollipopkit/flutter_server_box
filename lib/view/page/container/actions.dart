@@ -297,7 +297,7 @@ extension on _ContainerPageState {
   void _onTapMoreBtn(ContainerMenu item, ContainerPs dItem) async {
     final id = dItem.id;
     if (id == null) {
-      context.showSnackBar('Id is null');
+      context.showSnackBar('ID: ${libL10n.empty}');
       return;
     }
     switch (item) {

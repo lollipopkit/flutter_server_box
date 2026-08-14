@@ -45,6 +45,7 @@
   "askAiInterrupted": "已中断 Agent 回复。",
   "askAiRiskReadOnly": "只读",
   "askAiRiskCaution": "会更改系统",
+  "askAiRiskUnvetted": "未审核的主机",
   "askAiRiskDestructive": "高风险",
   "askAiHighRiskConfirmTitle": "执行高风险命令？",
   "askAiHighRiskConfirmBody": "此命令可能删除数据、停止服务或造成难以撤销的更改，请在执行前仔细检查。",
@@ -427,5 +428,8 @@
   "containerUnreadable": "容器运行时返回了无法解析的内容",
   "power": "电源",
   "continueInTerminal": "在终端中继续",
-  "browsing": "浏览中"
+  "browsing": "浏览中",
+  "askAiRiskUnknown": "未判定",
+  "memory": "内存",
+  "permissionDenied": "权限不足。"
 }

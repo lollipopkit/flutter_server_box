@@ -281,6 +281,7 @@
   "askAiInterrupted": "La risposta dell'Agente è stata interrotta.",
   "askAiRiskReadOnly": "Sola lettura",
   "askAiRiskCaution": "Modifica il sistema",
+  "askAiRiskUnvetted": "Host non verificato",
   "askAiRiskDestructive": "Rischio alto",
   "askAiHighRiskConfirmTitle": "Eseguire un comando ad alto rischio?",
   "askAiHighRiskConfirmBody": "Questo comando può eliminare dati, arrestare servizi o essere difficile da annullare. Rivedilo con attenzione prima di eseguirlo.",
@@ -323,8 +324,12 @@
   "agentToolSshConnect": "Connetti SSH",
   "agentToolSshDisconnect": "Disconnetti SSH",
   "agentSshConnectTitle": "Connettersi a un nuovo host",
+  "agentAuthMethod": "Autenticazione",
   "agentSshConnectTip": "L'Agente vuole aprire una connessione SSH. Digita qui la password, mai nella conversazione, dove verrebbe salvata e inviata al modello.",
   "agentAdHocSessions": "Connessioni temporanee",
+  "agentSaveServerTitle": "Salva come server",
+  "agentSaveServerTip": "Questo host e la password digitata verranno salvati su questo dispositivo.",
+  "agentMonitorOptional": "Agente monitor (facoltativo)",
   "icloudBackupStatusTitle": "Stato del backup",
   "icloudBackupStatusLoading": "Caricamento dello stato del backup iCloud...",
   "icloudBackupStatusError": "Impossibile leggere i metadati del backup iCloud",
@@ -419,5 +424,8 @@
   "containerUnreadable": "Il runtime dei container ha risposto in un formato inatteso",
   "power": "Alimentazione",
   "continueInTerminal": "Continua nel terminale",
-  "browsing": "Esplorazione"
+  "browsing": "Esplorazione",
+  "askAiRiskUnknown": "Non classificato",
+  "memory": "Memoria",
+  "permissionDenied": "Autorizzazione negata."
 }

@@ -45,6 +45,7 @@
   "askAiInterrupted": "Agent response was interrupted.",
   "askAiRiskReadOnly": "Read-only",
   "askAiRiskCaution": "Changes system",
+  "askAiRiskUnvetted": "Unvetted host",
   "askAiRiskDestructive": "High risk",
   "askAiHighRiskConfirmTitle": "Run high-risk command?",
   "askAiHighRiskConfirmBody": "This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.",
@@ -481,5 +482,8 @@
   "containerUnreadable": "The container runtime answered in an unexpected form",
   "power": "Power",
   "continueInTerminal": "Continue in terminal",
-  "browsing": "Browsing"
+  "browsing": "Browsing",
+  "askAiRiskUnknown": "Unclassified",
+  "memory": "Memory",
+  "permissionDenied": "Permission denied."
 }

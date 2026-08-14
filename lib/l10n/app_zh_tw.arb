@@ -44,6 +44,7 @@
   "askAiInterrupted": "已中斷 Agent 回覆。",
   "askAiRiskReadOnly": "唯讀",
   "askAiRiskCaution": "會變更系統",
+  "askAiRiskUnvetted": "未審核的主機",
   "askAiRiskDestructive": "高風險",
   "askAiHighRiskConfirmTitle": "執行高風險指令？",
   "askAiHighRiskConfirmBody": "此指令可能刪除資料、停止服務或造成難以復原的變更，請在執行前仔細檢查。",
@@ -420,5 +421,8 @@
   "containerUnreadable": "容器執行環境回傳了無法解析的內容",
   "power": "電源",
   "continueInTerminal": "在終端機中繼續",
-  "browsing": "瀏覽中"
+  "browsing": "瀏覽中",
+  "askAiRiskUnknown": "未判定",
+  "memory": "記憶體",
+  "permissionDenied": "權限不足。"
 }

@@ -393,6 +393,12 @@ abstract class AppLocalizations {
   /// **'Changes system'**
   String get askAiRiskCaution;
 
+  /// No description provided for @askAiRiskUnvetted.
+  ///
+  /// In en, this message translates to:
+  /// **'Unvetted host'**
+  String get askAiRiskUnvetted;
+
   /// No description provided for @askAiRiskDestructive.
   ///
   /// In en, this message translates to:
@@ -2621,6 +2627,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Browsing'**
   String get browsing;
+
+  /// No description provided for @askAiRiskUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unclassified'**
+  String get askAiRiskUnknown;
+
+  /// No description provided for @memory.
+  ///
+  /// In en, this message translates to:
+  /// **'Memory'**
+  String get memory;
+
+  /// No description provided for @permissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission denied.'**
+  String get permissionDenied;
 }
 
 class _AppLocalizationsDelegate

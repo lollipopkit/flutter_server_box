@@ -151,6 +151,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get askAiRiskCaution => 'システムを変更';
 
   @override
+  String get askAiRiskUnvetted => '未確認のホスト';
+
+  @override
   String get askAiRiskDestructive => '高リスク';
 
   @override
@@ -281,7 +284,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get agentSshConnectTitle => '新しいホストに接続';
 
   @override
-  String get agentAuthMethod => 'Authentication';
+  String get agentAuthMethod => '認証方式';
 
   @override
   String get agentSshConnectTip =>
@@ -291,14 +294,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get agentAdHocSessions => '一時的な接続';
 
   @override
-  String get agentSaveServerTitle => 'Save as a server';
+  String get agentSaveServerTitle => 'サーバーとして保存';
 
   @override
-  String get agentSaveServerTip =>
-      'This host and the password you entered will be stored on this device.';
+  String get agentSaveServerTip => 'このホストと入力したパスワードは、この端末に保存されます。';
 
   @override
-  String get agentMonitorOptional => 'Monitor agent (optional)';
+  String get agentMonitorOptional => 'monitor エージェント（任意）';
 
   @override
   String get atLeastOneTab => '少なくとも1つのタブを選択する必要があります';
@@ -1379,4 +1381,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get browsing => '閲覧中';
+
+  @override
+  String get askAiRiskUnknown => '判定不能';
+
+  @override
+  String get memory => 'メモリ';
+
+  @override
+  String get permissionDenied => '権限がありません。';
 }

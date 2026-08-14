@@ -151,6 +151,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiRiskCaution => '시스템 변경';
 
   @override
+  String get askAiRiskUnvetted => '미검증 호스트';
+
+  @override
   String get askAiRiskDestructive => '높은 위험';
 
   @override
@@ -282,7 +285,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentSshConnectTitle => '새 호스트에 연결';
 
   @override
-  String get agentAuthMethod => 'Authentication';
+  String get agentAuthMethod => '인증 방식';
 
   @override
   String get agentSshConnectTip =>
@@ -292,14 +295,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get agentAdHocSessions => '임시 연결';
 
   @override
-  String get agentSaveServerTitle => 'Save as a server';
+  String get agentSaveServerTitle => '서버로 저장';
 
   @override
-  String get agentSaveServerTip =>
-      'This host and the password you entered will be stored on this device.';
+  String get agentSaveServerTip => '이 호스트와 입력한 비밀번호가 이 기기에 저장됩니다.';
 
   @override
-  String get agentMonitorOptional => 'Monitor agent (optional)';
+  String get agentMonitorOptional => 'monitor 에이전트(선택)';
 
   @override
   String get atLeastOneTab => '최소 하나의 탭을 선택해야 합니다';
@@ -1382,4 +1384,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get browsing => '탐색 중';
+
+  @override
+  String get askAiRiskUnknown => '분류되지 않음';
+
+  @override
+  String get memory => '메모리';
+
+  @override
+  String get permissionDenied => '권한이 없습니다.';
 }

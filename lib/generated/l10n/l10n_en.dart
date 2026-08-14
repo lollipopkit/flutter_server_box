@@ -155,6 +155,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get askAiRiskCaution => 'Changes system';
 
   @override
+  String get askAiRiskUnvetted => 'Unvetted host';
+
+  @override
   String get askAiRiskDestructive => 'High risk';
 
   @override
@@ -1447,4 +1450,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get browsing => 'Browsing';
+
+  @override
+  String get askAiRiskUnknown => 'Unclassified';
+
+  @override
+  String get memory => 'Memory';
+
+  @override
+  String get permissionDenied => 'Permission denied.';
 }

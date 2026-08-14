@@ -276,6 +276,7 @@
   "askAiInterrupted": "Ответ агента прерван.",
   "askAiRiskReadOnly": "Только чтение",
   "askAiRiskCaution": "Изменяет систему",
+  "askAiRiskUnvetted": "Непроверенный хост",
   "askAiRiskDestructive": "Высокий риск",
   "askAiHighRiskConfirmTitle": "Выполнить команду с высоким риском?",
   "askAiHighRiskConfirmBody": "Эта команда может удалить данные, остановить службы или оказаться трудно обратимой. Внимательно проверьте её перед запуском.",
@@ -318,8 +319,12 @@
   "agentToolSshConnect": "Подключение по SSH",
   "agentToolSshDisconnect": "Отключить SSH",
   "agentSshConnectTitle": "Подключение к новому хосту",
+  "agentAuthMethod": "Аутентификация",
   "agentSshConnectTip": "Агент хочет открыть SSH-подключение. Введите пароль здесь, а не в диалоге: там он сохранится и будет отправлен модели.",
   "agentAdHocSessions": "Временные подключения",
+  "agentSaveServerTitle": "Сохранить как сервер",
+  "agentSaveServerTip": "Этот хост и введённый пароль будут сохранены на этом устройстве.",
+  "agentMonitorOptional": "Агент monitor (необязательно)",
   "icloudBackupStatusTitle": "Состояние резервной копии",
   "icloudBackupStatusLoading": "Загрузка состояния резервной копии iCloud…",
   "icloudBackupStatusError": "Не удалось прочитать метаданные резервной копии iCloud",
@@ -416,5 +421,8 @@
   "containerUnreadable": "Среда выполнения контейнеров ответила в неожиданном формате",
   "power": "Питание",
   "continueInTerminal": "Продолжить в терминале",
-  "browsing": "Просмотр"
+  "browsing": "Просмотр",
+  "askAiRiskUnknown": "Не определено",
+  "memory": "Память",
+  "permissionDenied": "Доступ запрещён."
 }

@@ -417,7 +417,9 @@ extension _Actions on _SftpPageState {
 
     final retry = await context.showRoundDialog<bool>(
       title: l10n.trySudo,
-      child: Text('Permission denied.\n${libL10n.askContinue(l10n.trySudo)}'),
+      child: Text(
+        '${l10n.permissionDenied}\n${libL10n.askContinue(l10n.trySudo)}',
+      ),
       actions: Btnx.cancelRedOk,
     );
     return retry == true;
@@ -925,7 +927,7 @@ extension _Actions on _SftpPageState {
     if (cmd == null) {
       context.showRoundDialog(
         title: libL10n.error,
-        child: Text('Unsupport file: ${name.filename}'),
+        child: Text('${libL10n.unsupported}: ${name.filename}'),
         actions: [Btn.ok()],
       );
       return;

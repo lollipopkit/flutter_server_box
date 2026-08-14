@@ -121,7 +121,7 @@ extension _Editor on _AppSettingsPageState {
       if (fontSize == null) {
         context.showRoundDialog(
           title: libL10n.fail,
-          child: Text('Parsed failed: ${ctrl.text}'),
+          child: Text('${libL10n.invalid}: ${ctrl.text}'),
         );
         return;
       }

@@ -153,6 +153,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get askAiRiskCaution => 'Wijzigt het systeem';
 
   @override
+  String get askAiRiskUnvetted => 'Niet-geverifieerde host';
+
+  @override
   String get askAiRiskDestructive => 'Hoog risico';
 
   @override
@@ -292,7 +295,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get agentSshConnectTitle => 'Met een nieuwe host verbinden';
 
   @override
-  String get agentAuthMethod => 'Authentication';
+  String get agentAuthMethod => 'Authenticatie';
 
   @override
   String get agentSshConnectTip =>
@@ -302,14 +305,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get agentAdHocSessions => 'Tijdelijke verbindingen';
 
   @override
-  String get agentSaveServerTitle => 'Save as a server';
+  String get agentSaveServerTitle => 'Als server opslaan';
 
   @override
   String get agentSaveServerTip =>
-      'This host and the password you entered will be stored on this device.';
+      'Deze host en het ingevoerde wachtwoord worden op dit apparaat opgeslagen.';
 
   @override
-  String get agentMonitorOptional => 'Monitor agent (optional)';
+  String get agentMonitorOptional => 'monitor-agent (optioneel)';
 
   @override
   String get atLeastOneTab =>
@@ -1458,4 +1461,13 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get browsing => 'Bladeren';
+
+  @override
+  String get askAiRiskUnknown => 'Niet ingedeeld';
+
+  @override
+  String get memory => 'Geheugen';
+
+  @override
+  String get permissionDenied => 'Toegang geweigerd.';
 }

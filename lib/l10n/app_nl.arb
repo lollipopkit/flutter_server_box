@@ -276,6 +276,7 @@
   "askAiInterrupted": "Het antwoord van de agent is onderbroken.",
   "askAiRiskReadOnly": "Alleen lezen",
   "askAiRiskCaution": "Wijzigt het systeem",
+  "askAiRiskUnvetted": "Niet-geverifieerde host",
   "askAiRiskDestructive": "Hoog risico",
   "askAiHighRiskConfirmTitle": "Commando met hoog risico uitvoeren?",
   "askAiHighRiskConfirmBody": "Dit commando kan gegevens verwijderen, diensten stoppen of anderszins moeilijk ongedaan te maken zijn. Beoordeel het zorgvuldig voordat je het uitvoert.",
@@ -318,8 +319,12 @@
   "agentToolSshConnect": "SSH verbinden",
   "agentToolSshDisconnect": "SSH verbreken",
   "agentSshConnectTitle": "Met een nieuwe host verbinden",
+  "agentAuthMethod": "Authenticatie",
   "agentSshConnectTip": "De agent wil een SSH-verbinding openen. Typ het wachtwoord hier, nooit in het gesprek, waar het bewaard en naar het model gestuurd zou worden.",
   "agentAdHocSessions": "Tijdelijke verbindingen",
+  "agentSaveServerTitle": "Als server opslaan",
+  "agentSaveServerTip": "Deze host en het ingevoerde wachtwoord worden op dit apparaat opgeslagen.",
+  "agentMonitorOptional": "monitor-agent (optioneel)",
   "icloudBackupStatusTitle": "Back-upstatus",
   "icloudBackupStatusLoading": "iCloud-back-upstatus laden...",
   "icloudBackupStatusError": "Kan de metadata van de iCloud-back-up niet lezen",
@@ -416,5 +421,8 @@
   "containerUnreadable": "De container-runtime antwoordde in een onverwachte vorm",
   "power": "Energie",
   "continueInTerminal": "Doorgaan in terminal",
-  "browsing": "Bladeren"
+  "browsing": "Bladeren",
+  "askAiRiskUnknown": "Niet ingedeeld",
+  "memory": "Geheugen",
+  "permissionDenied": "Toegang geweigerd."
 }

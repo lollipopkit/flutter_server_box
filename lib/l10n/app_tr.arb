@@ -276,6 +276,7 @@
   "askAiInterrupted": "Agent yanıtı kesildi.",
   "askAiRiskReadOnly": "Salt okunur",
   "askAiRiskCaution": "Sistemi değiştirir",
+  "askAiRiskUnvetted": "Doğrulanmamış sunucu",
   "askAiRiskDestructive": "Yüksek risk",
   "askAiHighRiskConfirmTitle": "Yüksek riskli komut çalıştırılsın mı?",
   "askAiHighRiskConfirmBody": "Bu komut veri silebilir, servisleri durdurabilir ya da geri alınması zor olabilir. Çalıştırmadan önce dikkatle incele.",
@@ -318,8 +319,12 @@
   "agentToolSshConnect": "SSH bağlan",
   "agentToolSshDisconnect": "SSH bağlantısını kes",
   "agentSshConnectTitle": "Yeni bir sunucuya bağlan",
+  "agentAuthMethod": "Kimlik doğrulama",
   "agentSshConnectTip": "Agent bir SSH bağlantısı açmak istiyor. Parolayı buraya yaz, konuşmaya yazma; orada saklanır ve modele gönderilir.",
   "agentAdHocSessions": "Geçici bağlantılar",
+  "agentSaveServerTitle": "Sunucu olarak kaydet",
+  "agentSaveServerTip": "Bu sunucu ve girdiğin parola bu cihazda saklanacak.",
+  "agentMonitorOptional": "monitor aracısı (isteğe bağlı)",
   "icloudBackupStatusTitle": "Yedekleme durumu",
   "icloudBackupStatusLoading": "iCloud yedekleme durumu yükleniyor...",
   "icloudBackupStatusError": "iCloud yedekleme meta verileri okunamıyor",
@@ -416,5 +421,8 @@
   "containerUnreadable": "Konteyner çalışma ortamı beklenmeyen bir biçimde yanıt verdi",
   "power": "Güç",
   "continueInTerminal": "Terminalde devam et",
-  "browsing": "Göz atılıyor"
+  "browsing": "Göz atılıyor",
+  "askAiRiskUnknown": "Sınıflandırılmadı",
+  "memory": "Bellek",
+  "permissionDenied": "İzin reddedildi."
 }

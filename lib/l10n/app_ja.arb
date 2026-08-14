@@ -276,6 +276,7 @@
   "askAiInterrupted": "エージェントの応答が中断されました。",
   "askAiRiskReadOnly": "読み取り専用",
   "askAiRiskCaution": "システムを変更",
+  "askAiRiskUnvetted": "未確認のホスト",
   "askAiRiskDestructive": "高リスク",
   "askAiHighRiskConfirmTitle": "高リスクのコマンドを実行しますか？",
   "askAiHighRiskConfirmBody": "このコマンドはデータの削除やサービスの停止など、元に戻しにくい結果を招く可能性があります。実行前によく確認してください。",
@@ -318,8 +319,12 @@
   "agentToolSshConnect": "SSH 接続",
   "agentToolSshDisconnect": "SSH 切断",
   "agentSshConnectTitle": "新しいホストに接続",
+  "agentAuthMethod": "認証方式",
   "agentSshConnectTip": "エージェントが SSH 接続を開こうとしています。パスワードはここに入力してください。会話に入力すると、そのまま保存されモデルにも送信されます。",
   "agentAdHocSessions": "一時的な接続",
+  "agentSaveServerTitle": "サーバーとして保存",
+  "agentSaveServerTip": "このホストと入力したパスワードは、この端末に保存されます。",
+  "agentMonitorOptional": "monitor エージェント（任意）",
   "icloudBackupStatusTitle": "バックアップの状態",
   "icloudBackupStatusLoading": "iCloud バックアップの状態を読み込み中…",
   "icloudBackupStatusError": "iCloud バックアップのメタデータを読み取れません",
@@ -416,5 +421,8 @@
   "containerUnreadable": "コンテナランタイムの応答を解釈できませんでした",
   "power": "電源",
   "continueInTerminal": "ターミナルで続ける",
-  "browsing": "閲覧中"
+  "browsing": "閲覧中",
+  "askAiRiskUnknown": "判定不能",
+  "memory": "メモリ",
+  "permissionDenied": "権限がありません。"
 }

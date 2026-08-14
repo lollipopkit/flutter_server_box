@@ -153,6 +153,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get askAiRiskCaution => 'Змінює систему';
 
   @override
+  String get askAiRiskUnvetted => 'Неперевірений хост';
+
+  @override
   String get askAiRiskDestructive => 'Високий ризик';
 
   @override
@@ -292,7 +295,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get agentSshConnectTitle => 'Підключення до нового хоста';
 
   @override
-  String get agentAuthMethod => 'Authentication';
+  String get agentAuthMethod => 'Автентифікація';
 
   @override
   String get agentSshConnectTip =>
@@ -302,14 +305,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get agentAdHocSessions => 'Тимчасові підключення';
 
   @override
-  String get agentSaveServerTitle => 'Save as a server';
+  String get agentSaveServerTitle => 'Зберегти як сервер';
 
   @override
   String get agentSaveServerTip =>
-      'This host and the password you entered will be stored on this device.';
+      'Цей хост і введений пароль будуть збережені на цьому пристрої.';
 
   @override
-  String get agentMonitorOptional => 'Monitor agent (optional)';
+  String get agentMonitorOptional => 'Агент monitor (необов\'язково)';
 
   @override
   String get atLeastOneTab => 'Потрібно вибрати принаймні одну вкладку';
@@ -1465,4 +1468,13 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get browsing => 'Перегляд';
+
+  @override
+  String get askAiRiskUnknown => 'Не визначено';
+
+  @override
+  String get memory => 'Пам\'ять';
+
+  @override
+  String get permissionDenied => 'Доступ заборонено.';
 }

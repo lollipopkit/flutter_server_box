@@ -276,6 +276,7 @@
   "askAiInterrupted": "Die Antwort des Agenten wurde unterbrochen.",
   "askAiRiskReadOnly": "Nur lesend",
   "askAiRiskCaution": "Verändert das System",
+  "askAiRiskUnvetted": "Ungeprüfter Host",
   "askAiRiskDestructive": "Hohes Risiko",
   "askAiHighRiskConfirmTitle": "Befehl mit hohem Risiko ausführen?",
   "askAiHighRiskConfirmBody": "Dieser Befehl kann Daten löschen, Dienste stoppen oder anderweitig schwer rückgängig zu machen sein. Prüfe ihn sorgfältig, bevor du ihn ausführst.",
@@ -318,8 +319,12 @@
   "agentToolSshConnect": "SSH verbinden",
   "agentToolSshDisconnect": "SSH trennen",
   "agentSshConnectTitle": "Mit einem neuen Host verbinden",
+  "agentAuthMethod": "Authentifizierung",
   "agentSshConnectTip": "Der Agent möchte eine SSH-Verbindung aufbauen. Gib das Passwort hier ein – niemals im Gespräch, wo es gespeichert und an das Modell geschickt würde.",
   "agentAdHocSessions": "Temporäre Verbindungen",
+  "agentSaveServerTitle": "Als Server speichern",
+  "agentSaveServerTip": "Dieser Host und das eingegebene Passwort werden auf diesem Gerät gespeichert.",
+  "agentMonitorOptional": "monitor-Agent (optional)",
   "icloudBackupStatusTitle": "Backup-Status",
   "icloudBackupStatusLoading": "iCloud-Backup-Status wird geladen …",
   "icloudBackupStatusError": "iCloud-Backup-Metadaten können nicht gelesen werden",
@@ -416,5 +421,8 @@
   "containerUnreadable": "Die Container-Laufzeitumgebung hat in einem unerwarteten Format geantwortet",
   "power": "Energie",
   "continueInTerminal": "Im Terminal fortfahren",
-  "browsing": "Wird durchsucht"
+  "browsing": "Wird durchsucht",
+  "askAiRiskUnknown": "Nicht eingestuft",
+  "memory": "Speicher",
+  "permissionDenied": "Zugriff verweigert."
 }

@@ -277,6 +277,7 @@
   "askAiInterrupted": "Відповідь агента перервано.",
   "askAiRiskReadOnly": "Лише читання",
   "askAiRiskCaution": "Змінює систему",
+  "askAiRiskUnvetted": "Неперевірений хост",
   "askAiRiskDestructive": "Високий ризик",
   "askAiHighRiskConfirmTitle": "Виконати команду з високим ризиком?",
   "askAiHighRiskConfirmBody": "Ця команда може видалити дані, зупинити служби або бути важкою для скасування. Уважно перевірте її перед запуском.",
@@ -319,8 +320,12 @@
   "agentToolSshConnect": "Підключення по SSH",
   "agentToolSshDisconnect": "Відключити SSH",
   "agentSshConnectTitle": "Підключення до нового хоста",
+  "agentAuthMethod": "Автентифікація",
   "agentSshConnectTip": "Агент хоче відкрити SSH-підключення. Введіть пароль тут, а не в розмові: там він збережеться й буде надісланий моделі.",
   "agentAdHocSessions": "Тимчасові підключення",
+  "agentSaveServerTitle": "Зберегти як сервер",
+  "agentSaveServerTip": "Цей хост і введений пароль будуть збережені на цьому пристрої.",
+  "agentMonitorOptional": "Агент monitor (необов'язково)",
   "icloudBackupStatusTitle": "Стан резервної копії",
   "icloudBackupStatusLoading": "Завантаження стану резервної копії iCloud…",
   "icloudBackupStatusError": "Не вдалося прочитати метадані резервної копії iCloud",
@@ -416,5 +421,8 @@
   "containerUnreadable": "Середовище виконання контейнерів відповіло в неочікуваному форматі",
   "power": "Живлення",
   "continueInTerminal": "Продовжити в терміналі",
-  "browsing": "Перегляд"
+  "browsing": "Перегляд",
+  "askAiRiskUnknown": "Не визначено",
+  "memory": "Пам'ять",
+  "permissionDenied": "Доступ заборонено."
 }

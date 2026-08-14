@@ -154,6 +154,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get askAiRiskCaution => 'Modifie le système';
 
   @override
+  String get askAiRiskUnvetted => 'Hôte non vérifié';
+
+  @override
   String get askAiRiskDestructive => 'Risque élevé';
 
   @override
@@ -297,7 +300,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get agentSshConnectTitle => 'Se connecter à un nouvel hôte';
 
   @override
-  String get agentAuthMethod => 'Authentication';
+  String get agentAuthMethod => 'Authentification';
 
   @override
   String get agentSshConnectTip =>
@@ -307,14 +310,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get agentAdHocSessions => 'Connexions temporaires';
 
   @override
-  String get agentSaveServerTitle => 'Save as a server';
+  String get agentSaveServerTitle => 'Enregistrer comme serveur';
 
   @override
   String get agentSaveServerTip =>
-      'This host and the password you entered will be stored on this device.';
+      'Cet hôte et le mot de passe saisi seront enregistrés sur cet appareil.';
 
   @override
-  String get agentMonitorOptional => 'Monitor agent (optional)';
+  String get agentMonitorOptional => 'Agent monitor (facultatif)';
 
   @override
   String get atLeastOneTab => 'Au moins un onglet doit être sélectionné';
@@ -1473,4 +1476,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get browsing => 'Exploration';
+
+  @override
+  String get askAiRiskUnknown => 'Non classé';
+
+  @override
+  String get memory => 'Mémoire';
+
+  @override
+  String get permissionDenied => 'Autorisation refusée.';
 }

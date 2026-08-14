@@ -154,6 +154,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get askAiRiskCaution => 'Sistemi değiştirir';
 
   @override
+  String get askAiRiskUnvetted => 'Doğrulanmamış sunucu';
+
+  @override
   String get askAiRiskDestructive => 'Yüksek risk';
 
   @override
@@ -294,7 +297,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get agentSshConnectTitle => 'Yeni bir sunucuya bağlan';
 
   @override
-  String get agentAuthMethod => 'Authentication';
+  String get agentAuthMethod => 'Kimlik doğrulama';
 
   @override
   String get agentSshConnectTip =>
@@ -304,14 +307,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get agentAdHocSessions => 'Geçici bağlantılar';
 
   @override
-  String get agentSaveServerTitle => 'Save as a server';
+  String get agentSaveServerTitle => 'Sunucu olarak kaydet';
 
   @override
   String get agentSaveServerTip =>
-      'This host and the password you entered will be stored on this device.';
+      'Bu sunucu ve girdiğin parola bu cihazda saklanacak.';
 
   @override
-  String get agentMonitorOptional => 'Monitor agent (optional)';
+  String get agentMonitorOptional => 'monitor aracısı (isteğe bağlı)';
 
   @override
   String get atLeastOneTab => 'En az bir sekme seçilmelidir';
@@ -1445,4 +1448,13 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get browsing => 'Göz atılıyor';
+
+  @override
+  String get askAiRiskUnknown => 'Sınıflandırılmadı';
+
+  @override
+  String get memory => 'Bellek';
+
+  @override
+  String get permissionDenied => 'İzin reddedildi.';
 }

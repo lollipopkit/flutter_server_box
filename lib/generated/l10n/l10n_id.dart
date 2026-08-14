@@ -153,6 +153,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAiRiskCaution => 'Mengubah sistem';
 
   @override
+  String get askAiRiskUnvetted => 'Host belum diverifikasi';
+
+  @override
   String get askAiRiskDestructive => 'Risiko tinggi';
 
   @override
@@ -293,7 +296,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get agentSshConnectTitle => 'Sambungkan ke host baru';
 
   @override
-  String get agentAuthMethod => 'Authentication';
+  String get agentAuthMethod => 'Autentikasi';
 
   @override
   String get agentSshConnectTip =>
@@ -303,14 +306,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get agentAdHocSessions => 'Koneksi sementara';
 
   @override
-  String get agentSaveServerTitle => 'Save as a server';
+  String get agentSaveServerTitle => 'Simpan sebagai server';
 
   @override
   String get agentSaveServerTip =>
-      'This host and the password you entered will be stored on this device.';
+      'Host ini dan kata sandi yang dimasukkan akan disimpan di perangkat ini.';
 
   @override
-  String get agentMonitorOptional => 'Monitor agent (optional)';
+  String get agentMonitorOptional => 'Agen monitor (opsional)';
 
   @override
   String get atLeastOneTab => 'Setidaknya satu tab harus dipilih';
@@ -1448,4 +1451,13 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get browsing => 'Menjelajahi';
+
+  @override
+  String get askAiRiskUnknown => 'Tidak terklasifikasi';
+
+  @override
+  String get memory => 'Memori';
+
+  @override
+  String get permissionDenied => 'Izin ditolak.';
 }

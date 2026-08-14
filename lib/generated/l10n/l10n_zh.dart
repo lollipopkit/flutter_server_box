@@ -150,6 +150,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiRiskCaution => '会更改系统';
 
   @override
+  String get askAiRiskUnvetted => '未审核的主机';
+
+  @override
   String get askAiRiskDestructive => '高风险';
 
   @override
@@ -1347,6 +1350,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get browsing => '浏览中';
+
+  @override
+  String get askAiRiskUnknown => '未判定';
+
+  @override
+  String get memory => '内存';
+
+  @override
+  String get permissionDenied => '权限不足。';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1493,6 +1505,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiRiskCaution => '會變更系統';
+
+  @override
+  String get askAiRiskUnvetted => '未審核的主機';
 
   @override
   String get askAiRiskDestructive => '高風險';
@@ -2692,4 +2707,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get browsing => '瀏覽中';
+
+  @override
+  String get askAiRiskUnknown => '未判定';
+
+  @override
+  String get memory => '記憶體';
+
+  @override
+  String get permissionDenied => '權限不足。';
 }
