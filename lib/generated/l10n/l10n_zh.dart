@@ -1310,6 +1310,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get power => '电源';
+
+  @override
+  String get continueInTerminal => '在终端中继续';
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -2618,4 +2621,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get power => '電源';
+
+  @override
+  String get continueInTerminal => '在終端機中繼續';
 }

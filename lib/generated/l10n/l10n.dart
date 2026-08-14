@@ -2549,6 +2549,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Power'**
   String get power;
+
+  /// No description provided for @continueInTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue in terminal'**
+  String get continueInTerminal;
 }
 
 class _AppLocalizationsDelegate

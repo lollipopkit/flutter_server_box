@@ -1426,4 +1426,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get power => 'Питание';
+
+  @override
+  String get continueInTerminal => 'Продолжить в терминале';
 }

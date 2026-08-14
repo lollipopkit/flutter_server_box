@@ -1427,4 +1427,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get power => 'Живлення';
+
+  @override
+  String get continueInTerminal => 'Продовжити в терміналі';
 }

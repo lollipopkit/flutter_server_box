@@ -1410,4 +1410,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get power => 'Daya';
+
+  @override
+  String get continueInTerminal => 'Lanjutkan di terminal';
 }

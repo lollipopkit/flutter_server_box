@@ -1344,4 +1344,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get power => '전원';
+
+  @override
+  String get continueInTerminal => '터미널에서 계속하기';
 }

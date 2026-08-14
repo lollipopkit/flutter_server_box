@@ -411,5 +411,6 @@
   "containerNoRuntime": "Nessun runtime per container qui",
   "containerNoRuntimeTip": "Né `docker` né `podman` hanno risposto su questa macchina. Se uno dei due è installato per un altro account, attiva «Prova a usare sudo» nelle impostazioni.",
   "containerUnreadable": "Il runtime dei container ha risposto in un formato inatteso",
-  "power": "Alimentazione"
+  "power": "Alimentazione",
+  "continueInTerminal": "Continua nel terminale"
 }

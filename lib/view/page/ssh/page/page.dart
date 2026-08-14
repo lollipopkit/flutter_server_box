@@ -319,19 +319,10 @@ class SSHPageState extends ConsumerState<SSHPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _isDark = switch (Stores.setting.termTheme.fetch()) {
-      1 => false,
-      2 => true,
-      _ => switch (Stores.setting.themeMode.fetch()) {
-        1 => false,
-        2 || 3 => true,
-        _ => context.isDark,
-      },
-    };
+    _isDark = TerminalLook.isDark(context);
     _media = context.mediaQuery;
 
-    _terminalTheme = _isDark ? TerminalThemes.dark : TerminalThemes.light;
-    _terminalTheme = _terminalTheme.copyWith(selectionCursor: UIs.primaryColor);
+    _terminalTheme = TerminalLook.themeOf(context);
 
     // Because the virtual keyboard only displayed on mobile devices
     _updateVirtKeysHeight();

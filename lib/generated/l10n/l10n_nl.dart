@@ -1420,4 +1420,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get power => 'Energie';
+
+  @override
+  String get continueInTerminal => 'Doorgaan in terminal';
 }

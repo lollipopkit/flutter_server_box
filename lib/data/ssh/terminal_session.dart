@@ -37,7 +37,11 @@ class TerminalSession {
   /// Where this terminal's shell comes from. Usually SSH; for a server reached
   /// only through its monitor agent it is the agent's own PTY, which answers
   /// strictly less — see [ShellBackend.supportsExec].
-  ShellBackend? backend;
+  ///
+  /// Set only by [adopt] and [connect], which is what keeps [_ownsBackend]
+  /// true to the connection it describes.
+  ShellBackend? get backend => _backend;
+  ShellBackend? _backend;
 
   ShellSession? _foreground;
 
@@ -59,16 +63,16 @@ class TerminalSession {
   /// The SSH connection behind [backend], when there is one. tmux is the only
   /// thing that needs it: it drives a second channel of its own, so it cannot
   /// be expressed through [ShellBackend].
-  SSHClient? get client => switch (backend) {
+  SSHClient? get client => switch (_backend) {
     SshShellBackend(:final client) => client,
     _ => null,
   };
 
   /// Whether a second command can run beside the interactive shell.
-  bool get canExec => backend?.supportsExec ?? false;
+  bool get canExec => _backend?.supportsExec ?? false;
 
   /// Whether the source of shells is gone, as opposed to merely absent.
-  bool get isBackendClosed => backend?.isClosed ?? true;
+  bool get isBackendClosed => _backend?.isClosed ?? true;
 
   Map<String, String>? get environment =>
       buildSshTerminalEnvironment(spi.envs);
@@ -83,14 +87,14 @@ class TerminalSession {
   /// agent's own PTY — so this is where the two diverge without the caller
   /// having to know which it got.
   void adopt(SSHClient? client, {MonitorRemoteAccess? granted}) {
-    if (backend != null) return;
+    if (_backend != null) return;
     if (client != null && !client.isClosed) {
-      backend = SshShellBackend(client);
+      _backend = SshShellBackend(client);
       _ownsBackend = false;
       return;
     }
-    backend = _grantedBackend(granted);
-    _ownsBackend = backend != null;
+    _backend = _grantedBackend(granted);
+    _ownsBackend = _backend != null;
   }
 
   /// Connects a new source of shells, replacing whatever [backend] held.
@@ -107,7 +111,7 @@ class TerminalSession {
   }) async {
     _ownsBackend = true;
     final agent = _grantedBackend(granted);
-    if (agent != null) return backend = agent;
+    if (agent != null) return _backend = agent;
 
     final client = await genClient(
       spi,
@@ -117,7 +121,7 @@ class TerminalSession {
         context: context ?? AppNavigator.context,
       ),
     );
-    return backend = SshShellBackend(client);
+    return _backend = SshShellBackend(client);
   }
 
   /// The agent's own shell, when the agent said it allows one.
@@ -135,7 +139,7 @@ class TerminalSession {
 
   // — Shells ————————————————————————————————————————————————————————
 
-  Future<ShellSession?> openShell() => switch (backend) {
+  Future<ShellSession?> openShell() => switch (_backend) {
     final backend? => backend.openShell(
       width: terminal.viewWidth,
       height: terminal.viewHeight,
@@ -145,7 +149,7 @@ class TerminalSession {
   };
 
   /// Runs [command] on a channel of its own. Only where [canExec] says so.
-  Future<ShellSession?> execute(String command) => switch (backend) {
+  Future<ShellSession?> execute(String command) => switch (_backend) {
     final backend? => backend.execute(
       command,
       width: terminal.viewWidth,
@@ -192,8 +196,8 @@ class TerminalSession {
   /// source already known to be dead — a failed reconnect, a lost link.
   void closeBackend() {
     unbindForeground();
-    final closing = backend;
-    backend = null;
+    final closing = _backend;
+    _backend = null;
     _ownsBackend = false;
     try {
       closing?.close();

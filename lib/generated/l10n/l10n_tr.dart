@@ -1407,4 +1407,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get power => 'Güç';
+
+  @override
+  String get continueInTerminal => 'Terminalde devam et';
 }

@@ -408,5 +408,6 @@
   "containerNoRuntime": "Geen container-runtime hier",
   "containerNoRuntimeTip": "Noch `docker` noch `podman` reageerde op deze machine. Als er één voor een ander account is geïnstalleerd, schakel dan \"Probeer sudo te gebruiken\" in bij Instellingen.",
   "containerUnreadable": "De container-runtime antwoordde in een onverwachte vorm",
-  "power": "Energie"
+  "power": "Energie",
+  "continueInTerminal": "Doorgaan in terminal"
 }

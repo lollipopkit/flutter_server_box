@@ -408,5 +408,6 @@
   "containerNoRuntime": "Aucun environnement d'exécution de conteneurs ici",
   "containerNoRuntimeTip": "Ni `docker` ni `podman` n'a répondu sur cette machine. Si l'un d'eux est installé pour un autre compte, activez « Essayer d'utiliser sudo » dans les réglages.",
   "containerUnreadable": "L'environnement d'exécution de conteneurs a répondu dans un format inattendu",
-  "power": "Alimentation"
+  "power": "Alimentation",
+  "continueInTerminal": "Continuer dans le terminal"
 }

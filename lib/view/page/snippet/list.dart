@@ -9,6 +9,7 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/view/page/snippet/edit.dart';
+import 'package:server_box/view/page/ssh/snippet_run.dart';
 
 class SnippetListPage extends ConsumerStatefulWidget {
   const SnippetListPage({super.key});
@@ -182,10 +183,24 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
     );
     if (sure != true || !mounted) return;
 
-    // Into the terminal tab rather than over this page: a snippet that opens a
-    // shell should leave it where every other shell in the app lives, so it
-    // can be returned to after this page is left.
-    ref.read(terminalRequestsProvider.notifier).add(chosen, snippet: snippet);
+    // The same dialog the server page runs a snippet in. One action, one
+    // behaviour: it runs here, and moves to the terminal tab only if the user
+    // wants to stay with it — where every other shell in the app lives, and so
+    // where it can be returned to after this page is left.
+    final session = await showSnippetRun(
+      context,
+      ref,
+      spi: chosen,
+      snippet: snippet,
+    );
+    if (session == null) return;
+    // Nowhere left to send it. Hanging up beats leaving a shell running with
+    // nothing that can ever show it again.
+    if (!mounted) {
+      session.close();
+      return;
+    }
+    ref.read(terminalRequestsProvider.notifier).add(chosen, session: session);
     ref.read(homeTabRequestProvider.notifier).go(AppTab.ssh);
   }
 

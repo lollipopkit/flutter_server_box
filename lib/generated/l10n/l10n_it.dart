@@ -1428,4 +1428,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get power => 'Alimentazione';
+
+  @override
+  String get continueInTerminal => 'Continua nel terminale';
 }

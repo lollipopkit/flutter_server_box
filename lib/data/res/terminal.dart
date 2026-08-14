@@ -1,4 +1,6 @@
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/data/res/store.dart';
 import 'package:xterm/ui.dart';
 
 abstract final class TerminalThemes {
@@ -110,5 +112,39 @@ extension TerminalThemeX on TerminalTheme {
       brightWhite: brightWhite ?? this.brightWhite,
       black: black ?? this.black,
     );
+  }
+}
+
+/// How a terminal is configured to look, wherever one is shown.
+///
+/// Shared rather than read where it is needed, so the terminal in a dialog and
+/// the terminal in a tab cannot end up on different fonts or a different theme.
+abstract final class TerminalLook {
+  static TerminalStyle get style {
+    final family = Stores.setting.fontPath.fetch().getFileName();
+    final size = Stores.setting.termFontSize.fetch();
+    return TerminalStyle.fromTextStyle(
+      TextStyle(fontFamily: family, fontSize: size),
+    );
+  }
+
+  /// The terminal's own theme setting, falling back to the app's and then to
+  /// what the system asked for.
+  static bool isDark(BuildContext context) => switch (Stores
+      .setting
+      .termTheme
+      .fetch()) {
+    1 => false,
+    2 => true,
+    _ => switch (Stores.setting.themeMode.fetch()) {
+      1 => false,
+      2 || 3 => true,
+      _ => context.isDark,
+    },
+  };
+
+  static TerminalTheme themeOf(BuildContext context) {
+    final theme = isDark(context) ? TerminalThemes.dark : TerminalThemes.light;
+    return theme.copyWith(selectionCursor: UIs.primaryColor);
   }
 }

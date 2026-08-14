@@ -1418,4 +1418,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get power => 'Energia';
+
+  @override
+  String get continueInTerminal => 'Continuar no terminal';
 }

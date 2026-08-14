@@ -109,11 +109,7 @@ extension _Init on SSHPageState {
   }
 
   void _initStoredCfg() {
-    final fontFamilly = Stores.setting.fontPath.fetch().getFileName();
-    final textSize = Stores.setting.termFontSize.fetch();
-    final textStyle = TextStyle(fontFamily: fontFamilly, fontSize: textSize);
-
-    _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
+    _terminalStyle = TerminalLook.style;
   }
 
   Future<void> _showHelp() async {
@@ -139,7 +135,15 @@ extension _Init on SSHPageState {
     // something — the dialog that started it did all of this. Opening a second
     // shell here would replace what the user asked to carry on watching.
     if (_adopted) {
-      TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connected);
+      // It may also have finished on the way here, in which case this tab is
+      // the output and nothing more — said plainly rather than left looking
+      // like a shell that stopped answering.
+      TermSessionManager.updateStatus(
+        _sessionId,
+        _session != null
+            ? TermSessionStatus.connected
+            : TermSessionStatus.disconnected,
+      );
       widget.args.focusNode?.requestFocus();
       return;
     }

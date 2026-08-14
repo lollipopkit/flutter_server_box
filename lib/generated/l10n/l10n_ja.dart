@@ -1341,4 +1341,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get power => '電源';
+
+  @override
+  String get continueInTerminal => 'ターミナルで続ける';
 }

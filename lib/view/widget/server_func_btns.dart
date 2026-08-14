@@ -25,7 +25,7 @@ import 'package:server_box/view/page/container/container.dart';
 import 'package:server_box/view/page/iperf.dart';
 import 'package:server_box/view/page/port_forward.dart';
 import 'package:server_box/view/page/process.dart';
-import 'package:server_box/view/page/ssh/page/page.dart';
+import 'package:server_box/view/page/ssh/snippet_run.dart';
 import 'package:server_box/view/page/systemd.dart';
 import 'package:server_box/view/widget/server_power.dart';
 
@@ -183,11 +183,28 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
         );
         if (sure != true) return;
         if (!context.mounted) return;
-        // No pre-check: the snippet runs in a terminal, and the terminal page
-        // connects and reports its own failures — the same as tapping
+        // Run here rather than on a page pushed over this one: a snippet is
+        // usually one command, and watching it finish should not mean leaving
+        // the server you are looking at. No pre-check — the dialog connects
+        // and reports its own failures, the same as tapping
         // [ServerFuncBtn.terminal].
-        final args = SshPageArgs(spi: spi, initSnippet: snippet);
-        SSHPage.route.go(context, args);
+        final session = await showSnippetRun(
+          context,
+          ref,
+          spi: spi,
+          snippet: snippet,
+        );
+        // Answered "carry on with it": the shell and everything it printed
+        // move to a tab, still connected.
+        if (session == null) return;
+        // Nowhere left to send it. Hanging up beats leaving a shell running
+        // with nothing that can ever show it again.
+        if (!context.mounted) {
+          session.close();
+          return;
+        }
+        ref.read(terminalRequestsProvider.notifier).add(spi, session: session);
+        ref.read(homeTabRequestProvider.notifier).go(AppTab.ssh);
         break;
       case ServerFuncBtn.container:
         if (!await _ensureExec(context, spi.id, ref)) return;

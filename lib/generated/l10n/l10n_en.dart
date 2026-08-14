@@ -1409,4 +1409,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get power => 'Power';
+
+  @override
+  String get continueInTerminal => 'Continue in terminal';
 }

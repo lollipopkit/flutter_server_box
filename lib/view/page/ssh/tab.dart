@@ -10,6 +10,7 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/ssh/terminal_session.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/widget/pane_settings.dart';
@@ -203,6 +204,7 @@ extension _Sessions on _SSHTabPageState {
   void _open(
     Spi spi, {
     Snippet? snippet,
+    TerminalSession? session,
     String? tmuxSession,
     int? tmuxWindow,
     bool select = true,
@@ -222,6 +224,7 @@ extension _Sessions on _SSHTabPageState {
             args: SshPageArgs(
               spi: spi,
               initSnippet: snippet,
+              session: session,
               notFromTab: false,
               // The tab's id, not its name: a connection can end long after
               // its tab was closed, by which time the name may belong to a
@@ -276,7 +279,7 @@ extension _Sessions on _SSHTabPageState {
     if (pending.isEmpty) return;
     ref.read(terminalRequestsProvider.notifier).clear();
     for (final request in pending) {
-      _open(request.spi, snippet: request.snippet);
+      _open(request.spi, snippet: request.snippet, session: request.session);
     }
   }
 

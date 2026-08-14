@@ -408,5 +408,6 @@
   "containerNoRuntime": "Nenhum runtime de contêiner aqui",
   "containerNoRuntimeTip": "Nem `docker` nem `podman` responderam nesta máquina. Se um deles estiver instalado para outra conta, ative \"Tentar usar sudo\" nas configurações.",
   "containerUnreadable": "O runtime de contêiner respondeu em um formato inesperado",
-  "power": "Energia"
+  "power": "Energia",
+  "continueInTerminal": "Continuar no terminal"
 }
