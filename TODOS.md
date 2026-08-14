@@ -211,3 +211,35 @@ l10n 里 `askAiRiskUnknown`(15 语言)已经加了。
 - 删除服务器后详情面板是否收回成整宽列表
 
 其中文件页那几条已并入 `file-plan.md`,作为改造前的回归基线。
+
+## macOS:把用户引导到 DMG 版,App Store 版进入兼容期
+
+macOS 现在发两套产物(`52a0ec1b`):App Store 版必须沙盒,DMG 版不沙盒。差别不是
+打包偏好,是**能力**——沙盒进程打不开伪终端的从属设备,所以本机终端在 App Store
+版上不存在(`LocalShellBackend.isSupported` 会如实返回 false)。后续凡是需要
+起进程的功能,大概率都会落在同一条线的另一边。
+
+现在是兼容期:两套都发。方向是把用户往 DMG 引,**不强制**,但要让人知道
+App Store 版以后可能不再更新。
+
+要做的:
+
+- App Store 版在**检查到新版本**时,除了给更新提示,再加一句推荐迁移到 DMG,并
+  说明原因(有哪些功能这个版本给不了)。入口在 `AppUpdateIface.doUpdate`,调用
+  点是 `view/page/home.dart:337` 和 `view/page/setting/entries/app.dart:118`;
+  当前实现在 `packages/fl_lib/lib/src/core/update.dart`,**它现在不知道自己是不是
+  App Store 版**,判据现成:`LocalShellBackend.isSandboxed`。
+- 提示要可关闭、不反复骚扰。一次版本更新提一次,不是每次启动。
+- 设置页里给一个常驻的说明入口,不能只在更新弹窗里出现一次。
+
+**最大的障碍是数据不互通,这个必须先解决或先说清楚。** 同一个 bundle id,沙盒版
+的数据在容器里(`~/Library/Containers/com.lollipopkit.toolbox/Data`),不沙盒版在
+`~/Library/Application Support`。用户装了 DMG 版打开会看到一个空 app,服务器全
+没了。可选做法:
+
+- 迁移提示里明确要求先做一次备份(iCloud 或导出文件),换过去之后恢复;
+- 或者 DMG 版首次启动时探测旧容器路径是否存在、有没有数据,主动提出导入。后者
+  体验好得多,而且不沙盒版**读得到**那个容器目录,技术上可行——没验证过。
+
+在这条解决之前,任何「推荐迁移」的文案都得把「会丢本地数据,先备份」放在最前面,
+否则就是在坑人。
