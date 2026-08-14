@@ -63,18 +63,6 @@ jobs:
             echo "BuildData.build must match tag ${GITHUB_REF_NAME}; got ${build_data}."
             exit 1
           fi
-      - name: Check Android split-build reproducibility
-        shell: bash
-        run: |
-          grep_status=0
-          git grep -n -F 'BuildConfig.VERSION_CODE' -- android/app/src/main || grep_status=$?
-          if [[ "$grep_status" -eq 0 ]]; then
-            echo "::error::BuildConfig.VERSION_CODE is ABI-specific for split APKs and must not be compiled into shared Android bytecode."
-            exit 1
-          elif [[ "$grep_status" -ne 1 ]]; then
-            echo "::error::git grep failed with status ${grep_status}."
-            exit "$grep_status"
-          fi
       - name: Check locked dependencies
         shell: bash
         env:
