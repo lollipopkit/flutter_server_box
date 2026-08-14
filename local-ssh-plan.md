@@ -275,32 +275,44 @@ expects musl's own loader to have set up its runtime. Chaining musl's loader
 through `linker64` fails earlier still. Mixing the two libcs does not work, and
 nothing here suggests it can be made to.
 
-### What that does *not* settle — proot does not use `execve` for guest binaries
+### Settled: an Alpine rootfs runs, on targetSdk 36, today
 
-Reading OpenMinis' Android side afterwards turned up the mechanism the
-measurement above missed. Its Alpine rootfs really is in `filesDir`
-(`RootfsManager.kt:42`), and proot really does run musl binaries out of it. It
-does not go through Android's linker:
+`integration_test/android_rootfs_test.dart`, same emulator. A real Alpine
+aarch64 minirootfs unpacked into `/data/user/0/<pkg>/files`:
 
-> The loader is bundled into the proot binary (extracted via /proc/self/fd at
-> runtime) — `PRootKernel.kt:83`
+| | Result |
+| --- | --- |
+| `busybox` directly | denied, errno 13 |
+| via `/system/bin/linker64` | `library "libc.musl-aarch64.so.1" not found` |
+| **under proot** | **exit 0** |
+| a shell reading the rootfs's own files | `3.21.3`, `aarch64` |
 
-PRoot carries **its own loader**, whose whole job is to map a guest ELF into
-memory and hand control to the guest's own interpreter. That is route 2 below,
-already written, and it is libc-agnostic by construction — it never asks the
-host's linker to understand a musl binary, which is exactly what failed above.
-The remaining question is only how the loader itself is executed: a path under
-`/proc/self/fd` is not a path in the app's directory, and an anonymous file
-(`memfd_create`) carries a different SELinux label from `app_data_file`.
+PRoot never asks the kernel to `execve` a guest binary. It carries a loader
+whose job is to map the guest ELF and hand control to the guest's own
+interpreter, so nothing on the host has to understand musl — which is exactly
+what failed above.
 
-**Untested here.** Dart cannot `memfd_create`, and the experiment needs a proot
-build to be worth running. What can be said is narrower than either extreme:
-Android's own linker will not carry an Alpine rootfs, and the thing that
-reportedly does is a loader that was written for this problem and is shipped by
-somebody doing it today.
+Two requirements, both found by getting them wrong first:
 
-So an Android rootfs is **not** ruled out by the measurement, and the honest
-cost is "vendor proot and find out", not "write an ELF loader from scratch".
+- **`useLegacyPackaging = true`.** Native libraries are mapped straight out of
+  the APK when `minSdk >= 23`, so nothing is extracted and there is no
+  executable file for a helper binary to be. Without this, `nativeLibraryDir`
+  does not exist and there is nowhere to put proot.
+- **Ship proot's loader too, and name it in `PROOT_LOADER`.** Left alone, proot
+  extracts the copy bundled in its own binary to a temp file — which lands in
+  the app's directory, cannot be executed, and proot falls back to a plain
+  `execve` and is refused. This is what the first attempt did, and it failed
+  with `proot error: execve("/bin/busybox"): Permission denied`, which reads
+  like the wall and is not.
+
+So the Android half of stage 4 is **not blocked**. What it costs is a proot
+build in CI for one ABI, an Alpine tarball as an asset, `useLegacyPackaging`
+(a larger install), and the guest's environment — `PATH` has to be the
+rootfs's, or a shell finds none of its own tools.
+
+Not reproduced on physical hardware, and not with an app the Play Store has
+seen. The binaries were built by hand into a scratch directory; this repository
+has no recipe for them yet, so the test skips unless they are staged.
 
 Three ways out, all with a cost:
 
@@ -386,9 +398,10 @@ bionic binary from there and segfaults on a musl one, and proot sidesteps the
 whole question with a loader of its own. Stage 4's Android half is vendoring
 proot and measuring it, not writing a loader.
 
-**4. Rootfs.** iOS via ish-arm64 — vendor the fork, build the static libs, wire
-the Xcode target, ship an Alpine aarch64 tarball, add an iOS build step to CI.
-Android per stage 3. This stage is larger than the first three together and
+**4. Rootfs.** Android is measured and works — proot with its loader in
+`nativeLibraryDir`, an Alpine tarball as an asset, `useLegacyPackaging`. iOS via
+ish-arm64 is the unmeasured half: vendor the fork, build the static libs, wire
+the Xcode target, add an iOS build step to CI. This stage is larger than the first three together and
 carries the review risk; treat it as a separate decision, not a continuation.
 It is also what turns the agent's local execution from "on the user's
 filesystem" into "in a sandbox", which may be the strongest reason to build it.
