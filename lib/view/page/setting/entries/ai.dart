@@ -17,9 +17,10 @@ extension _AI on _AppSettingsPageState {
         subtitle: Text(
           displayBuilder(val),
           style: UIs.textGrey,
-          maxLines: 2,
+          maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
+        trailing: const Icon(Icons.keyboard_arrow_right),
         onTap: () => _showAskAiFieldDialog(
           prop: prop,
           title: title,
@@ -33,48 +34,20 @@ extension _AI on _AppSettingsPageState {
 
   Widget _buildAskAiConfig() {
     final l10n = context.l10n;
-    return ExpandTile(
-      leading: const Icon(LineAwesome.robot_solid, size: _kIconSize),
-      title: TipText(l10n.askAi, l10n.askAiUsageHint),
+    return Column(
       children: [
-        _setting.askAiProtocol.listenable().listenVal((value) {
-          final selected = parseAskAiProtocol(value);
-          String label(AskAiProtocol protocol) => switch (protocol) {
-            AskAiProtocol.auto => l10n.askAiProtocolAuto,
-            AskAiProtocol.chatCompletions => l10n.askAiProtocolChatCompletions,
-            AskAiProtocol.responses => l10n.askAiProtocolResponses,
-          };
-          return PopupMenuButton<AskAiProtocol>(
-            initialValue: selected,
-            onSelected: (protocol) => _setting.askAiProtocol.put(protocol.name),
-            itemBuilder: (_) => [
-              for (final protocol in AskAiProtocol.values)
-                PopupMenuItem(value: protocol, child: Text(label(protocol))),
-            ],
-            child: ListTile(
-              leading: const Icon(Icons.swap_calls_outlined),
-              title: Text(l10n.askAiProtocol),
-              subtitle: Text(
-                '${label(selected)}\n${l10n.askAiProtocolTip}',
-                style: UIs.textGrey,
-              ),
-              isThreeLine: true,
-              trailing: const Icon(Icons.arrow_drop_down),
-            ),
-          );
-        }),
-        _setting.askAiAutoRunSafeCommands.listenable().listenVal((enabled) {
-          return SwitchListTile.adaptive(
-            secondary: const Icon(Icons.verified_user_outlined),
-            title: Text(l10n.askAiAutoRunSafeCommands),
-            subtitle: Text(l10n.askAiAutoRunSafeCommandsTip),
-            value: enabled,
-            onChanged: _setting.askAiAutoRunSafeCommands.put,
-          );
-        }),
+        _buildAskAiProtocol(l10n),
+        ListTile(
+          leading: const Icon(Icons.verified_user_outlined, size: _kIconSize),
+          title: TipText(
+            l10n.askAiAutoRunSafeCommands,
+            l10n.askAiAutoRunSafeCommandsTip,
+          ),
+          trailing: StoreSwitch(prop: _setting.askAiAutoRunSafeCommands),
+        ),
         _buildAskAiTextTile(
           prop: _setting.askAiBaseUrl,
-          leading: const Icon(MingCute.link_2_line),
+          leading: const Icon(MingCute.link_2_line, size: _kIconSize),
           title: l10n.askAiBaseUrl,
           hint: 'https://api.openai.com',
           description: l10n.askAiEndpointTip,
@@ -83,7 +56,7 @@ extension _AI on _AppSettingsPageState {
         ),
         _buildAskAiTextTile(
           prop: _setting.askAiModel,
-          leading: const Icon(Icons.view_module),
+          leading: const Icon(Icons.view_module, size: _kIconSize),
           title: libL10n.askAiModel,
           hint: 'gpt-5.4-mini',
           displayBuilder: (val) =>
@@ -91,7 +64,7 @@ extension _AI on _AppSettingsPageState {
         ),
         _buildAskAiTextTile(
           prop: _setting.askAiApiKey,
-          leading: const Icon(MingCute.key_2_line),
+          leading: const Icon(MingCute.key_2_line, size: _kIconSize),
           title: l10n.askAiApiKey,
           hint: 'sk-...',
           obscure: true,
@@ -99,8 +72,35 @@ extension _AI on _AppSettingsPageState {
               ? l10n.configured
               : l10n.askAiApiKeyOptional,
         ),
-      ],
-    ).cardx;
+      ].map((e) => CardX(child: e)).toList(),
+    );
+  }
+
+  Widget _buildAskAiProtocol(AppLocalizations l10n) {
+    String label(AskAiProtocol protocol) => switch (protocol) {
+      AskAiProtocol.auto => l10n.askAiProtocolAuto,
+      AskAiProtocol.chatCompletions => l10n.askAiProtocolChatCompletions,
+      AskAiProtocol.responses => l10n.askAiProtocolResponses,
+    };
+
+    return ListTile(
+      leading: const Icon(Icons.swap_calls_outlined, size: _kIconSize),
+      title: TipText(l10n.askAiProtocol, l10n.askAiProtocolTip),
+      trailing: ValBuilder(
+        listenable: _setting.askAiProtocol.listenable(),
+        builder: (val) =>
+            Text(label(parseAskAiProtocol(val)), style: UIs.text15),
+      ),
+      onTap: () async {
+        final selected = await context.showPickSingleDialog(
+          title: l10n.askAiProtocol,
+          items: AskAiProtocol.values,
+          display: label,
+          initial: parseAskAiProtocol(_setting.askAiProtocol.fetch()),
+        );
+        if (selected != null) _setting.askAiProtocol.put(selected.name);
+      },
+    );
   }
 
   Future<void> _showAskAiFieldDialog({
