@@ -627,6 +627,36 @@ abstract class AppLocalizations {
   /// **'Float over other tabs'**
   String get agentFloat;
 
+  /// No description provided for @agentToolSshConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH connect'**
+  String get agentToolSshConnect;
+
+  /// No description provided for @agentToolSshDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect SSH'**
+  String get agentToolSshDisconnect;
+
+  /// No description provided for @agentSshConnectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to a new host'**
+  String get agentSshConnectTitle;
+
+  /// No description provided for @agentSshConnectTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The Agent wants to open an SSH connection. Type the password here — never into the conversation, where it would be stored and sent to the model.'**
+  String get agentSshConnectTip;
+
+  /// No description provided for @agentAdHocSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary connections'**
+  String get agentAdHocSessions;
+
   /// No description provided for @atLeastOneTab.
   ///
   /// In en, this message translates to:

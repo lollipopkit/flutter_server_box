@@ -268,6 +268,8 @@ void main() {
         'run_shell_command',
         'read_file',
         'write_file',
+        'ssh_connect',
+        'ssh_disconnect',
         'serverbox',
       ]);
       expect(tools.every((tool) => tool['strict'] == true), isTrue);

@@ -333,6 +333,10 @@ class AskAiCommand {
 
   String? get serverId => argumentString('server_id');
 
+  /// The ad-hoc SSH connection this call is about, if it is about one rather
+  /// than about a configured server.
+  String? get sessionId => argumentString('session_id');
+
   String? get path => argumentString('path');
 
   String? get action => argumentString('action');
@@ -340,18 +344,46 @@ class AskAiCommand {
   String get displayValue => switch (toolName) {
     'read_file' || 'write_file' => path ?? command,
     'serverbox' => action ?? command,
+    'ssh_connect' => _sshTarget ?? command,
+    'ssh_disconnect' => sessionId ?? command,
     _ => command,
   };
 
+  String? get _sshTarget {
+    final host = argumentString('host');
+    if (host == null) return null;
+    final user = argumentString('user');
+    final port = arguments['port'];
+    final portSuffix = port is num ? ':${port.toInt()}' : '';
+    return '${user == null ? '' : '$user@'}$host$portSuffix';
+  }
+
   AskAiCommandRisk get risk => switch (toolName) {
-    'read_file' => AskAiCommandRisk.readOnly,
+    'read_file' => _unvettedFloor(AskAiCommandRisk.readOnly),
     'write_file' => AskAiCommandRisk.caution,
+    // Reaching a machine nobody has vetted, with credentials, is the most
+    // consequential thing the Agent can propose — whatever it plans to do
+    // there afterwards.
+    'ssh_connect' => AskAiCommandRisk.destructive,
+    'ssh_disconnect' => AskAiCommandRisk.caution,
     'serverbox' => switch (action) {
       'list_servers' || 'get_status' => AskAiCommandRisk.readOnly,
       _ => AskAiCommandRisk.caution,
     },
-    _ => classifyRisk(command),
+    _ => _unvettedFloor(classifyRisk(command)),
   };
+
+  /// Nothing runs unattended on a host met this conversation.
+  ///
+  /// Auto-running is a convenience for machines already accepted into the app;
+  /// on one the user has only just handed a password to, a read-only command
+  /// still deserves the half-second it takes to look at it. Raises the floor
+  /// to [AskAiCommandRisk.caution] — which does not add a confirmation dialog,
+  /// only takes away [canAutoRun].
+  AskAiCommandRisk _unvettedFloor(AskAiCommandRisk risk) {
+    if (sessionId == null) return risk;
+    return risk == AskAiCommandRisk.readOnly ? AskAiCommandRisk.caution : risk;
+  }
 
   bool get canAutoRun => modelSafeToRun && risk == AskAiCommandRisk.readOnly;
 

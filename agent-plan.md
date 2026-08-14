@@ -209,6 +209,11 @@ load-bearing — see the host key note below.
 | `ssh_disconnect` | `session_id` | `caution` |
 | `serverbox` / `add_server` | `session_id`, `name`, optional monitor address | `destructive` |
 
+`ssh_connect` collects a **password** only. A host reachable solely by key
+cannot be connected to this way yet; the app has a key store and the dialog
+could offer to pick from it, but that is more UI than this stage needs to be
+reviewable and nothing else depends on it.
+
 `ssh_connect` returns a `session_id`, the resolved host, and the accepted host
 key fingerprint. Nothing else.
 
@@ -300,8 +305,11 @@ reverted alone.
   of them, not most.
 - **Dialogs raised from a background session.** Once the session is detached
   from its page, a host key prompt or credential dialog can appear while the
-  agent is not visible anywhere. Stage 2 must force the shell to
-  `AgentShellMode.expanded` before any tool that can prompt.
+  agent is not visible anywhere. `ssh_connect` raises the shell before it asks,
+  which covers the prompts this work introduces. It does **not** cover the host
+  key prompt a configured server can still raise from
+  `ensureShellClient` — that path predates all of this and is unchanged, but it
+  has the same problem and deserves the same treatment.
 - **Conversation persistence and handles.** `session_id` values are meaningless
   after a restart, but a restored conversation still refers to them. Restored
   tool calls pointing at dead sessions must fail with a message the model can

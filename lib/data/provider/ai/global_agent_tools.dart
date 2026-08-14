@@ -4,15 +4,21 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:fl_lib/fl_lib.dart' hide Provider;
 import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
+import 'package:server_box/core/utils/adhoc_ssh_prompt.dart';
+import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/tab.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/provider/ai/adhoc_ssh.dart';
 import 'package:server_box/data/provider/ai/agent_shell.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/store.dart';
 
 const globalAgentConversationScope = '__global_agent__';
 const _maxGlobalAgentShellOutputCharacters = 32000;
@@ -149,15 +155,30 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
   AskAiToolDefinition(
     name: 'run_shell_command',
     description:
-        'Run one complete, non-interactive shell command on a configured server.',
+        'Run one complete, non-interactive shell command on a configured '
+        'server or on an ad-hoc SSH connection.',
     parameters: {
       'type': 'object',
       'additionalProperties': false,
-      'required': ['server_id', 'command', 'description', 'safe_to_run'],
+      'required': [
+        'server_id',
+        'session_id',
+        'command',
+        'description',
+        'safe_to_run',
+      ],
       'properties': {
         'server_id': {
-          'type': 'string',
-          'description': 'The exact ServerBox server ID from the instructions.',
+          'type': ['string', 'null'],
+          'description':
+              'The exact ServerBox server ID from the instructions. Null when '
+              'targeting an ad-hoc connection instead.',
+        },
+        'session_id': {
+          'type': ['string', 'null'],
+          'description':
+              'The id returned by ssh_connect. Null when targeting a '
+              'configured server instead. Give exactly one of the two.',
         },
         'command': {
           'type': 'string',
@@ -177,15 +198,31 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
   ),
   AskAiToolDefinition(
     name: 'read_file',
-    description: 'Read a UTF-8 text file from a configured server over SFTP.',
+    description:
+        'Read a UTF-8 text file over SFTP, from a configured server or an '
+        'ad-hoc SSH connection.',
     parameters: {
       'type': 'object',
       'additionalProperties': false,
-      'required': ['server_id', 'path', 'description', 'safe_to_run'],
+      'required': [
+        'server_id',
+        'session_id',
+        'path',
+        'description',
+        'safe_to_run',
+      ],
       'properties': {
         'server_id': {
-          'type': 'string',
-          'description': 'The exact ServerBox server ID from the instructions.',
+          'type': ['string', 'null'],
+          'description':
+              'The exact ServerBox server ID from the instructions. Null when '
+              'targeting an ad-hoc connection instead.',
+        },
+        'session_id': {
+          'type': ['string', 'null'],
+          'description':
+              'The id returned by ssh_connect. Null when targeting a '
+              'configured server instead. Give exactly one of the two.',
         },
         'path': {
           'type': 'string',
@@ -205,12 +242,14 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
   AskAiToolDefinition(
     name: 'write_file',
     description:
-        'Replace a UTF-8 text file on a configured server over SFTP after user review.',
+        'Replace a UTF-8 text file over SFTP after user review, on a '
+        'configured server or an ad-hoc SSH connection.',
     parameters: {
       'type': 'object',
       'additionalProperties': false,
       'required': [
         'server_id',
+        'session_id',
         'path',
         'content',
         'description',
@@ -218,8 +257,16 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
       ],
       'properties': {
         'server_id': {
-          'type': 'string',
-          'description': 'The exact ServerBox server ID from the instructions.',
+          'type': ['string', 'null'],
+          'description':
+              'The exact ServerBox server ID from the instructions. Null when '
+              'targeting an ad-hoc connection instead.',
+        },
+        'session_id': {
+          'type': ['string', 'null'],
+          'description':
+              'The id returned by ssh_connect. Null when targeting a '
+              'configured server instead. Give exactly one of the two.',
         },
         'path': {
           'type': 'string',
@@ -237,6 +284,58 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
           'type': 'boolean',
           'description':
               'Always false because this tool changes a remote file.',
+        },
+      },
+    },
+  ),
+  AskAiToolDefinition(
+    name: 'ssh_connect',
+    description:
+        'Open an SSH connection to a host that is not configured in the app, '
+        'and return an id for it. The app asks the user for the password and '
+        'for host key approval; never ask for credentials in conversation.',
+    parameters: {
+      'type': 'object',
+      'additionalProperties': false,
+      'required': ['host', 'port', 'user', 'description', 'safe_to_run'],
+      'properties': {
+        'host': {
+          'type': 'string',
+          'description': 'Hostname or IP address to connect to.',
+        },
+        'port': {'type': 'integer', 'description': 'SSH port, usually 22.'},
+        'user': {'type': 'string', 'description': 'The SSH user name.'},
+        'description': {
+          'type': 'string',
+          'description': 'Why this host needs connecting to.',
+        },
+        'safe_to_run': {
+          'type': 'boolean',
+          'description':
+              'Always false: this reaches a machine the app does not know.',
+        },
+      },
+    },
+  ),
+  AskAiToolDefinition(
+    name: 'ssh_disconnect',
+    description: 'Close an ad-hoc SSH connection opened by ssh_connect.',
+    parameters: {
+      'type': 'object',
+      'additionalProperties': false,
+      'required': ['session_id', 'description', 'safe_to_run'],
+      'properties': {
+        'session_id': {
+          'type': 'string',
+          'description': 'The id returned by ssh_connect.',
+        },
+        'description': {
+          'type': 'string',
+          'description': 'Why the connection is no longer needed.',
+        },
+        'safe_to_run': {
+          'type': 'boolean',
+          'description': 'Always false because this ends a connection.',
         },
       },
     },
@@ -327,6 +426,12 @@ String buildGlobalAgentInstructions({
     )
     ..writeln(
       'Use the serverbox open_server action to show the user a server you are talking about, not to read its state.',
+    )
+    ..writeln(
+      'For a host that is not configured, call ssh_connect and use the session_id it returns. Never ask for a password, key or passphrase in conversation: the app collects credentials itself, and anything typed to you is stored in this transcript.',
+    )
+    ..writeln(
+      'Give a shell or file tool either server_id or session_id, never both. Close an ad-hoc connection with ssh_disconnect once it is no longer needed.',
     )
     ..writeln(
       'Keep explanations concise and make the target and risks explicit.',
@@ -454,10 +559,21 @@ sealed class AgentSshTarget {
   ///
   /// One place, so that a second kind of target is one case here rather than
   /// a condition in each of the three tools that run something.
+  ///
+  /// Exactly one, never a default: a call naming both is a model that has lost
+  /// track of which machine it is on, and picking one of them for it would run
+  /// the command somewhere nobody chose.
   factory AgentSshTarget.fromArguments(AskAiCommand proposal) {
     final serverId = proposal.serverId;
-    if (serverId == null) throw const FormatException('server_id is required');
-    return ConfiguredServerTarget(serverId);
+    final sessionId = proposal.sessionId;
+    if (serverId != null && sessionId != null) {
+      throw const FormatException(
+        'Name either server_id or session_id, not both',
+      );
+    }
+    if (sessionId != null) return AdHocSessionTarget(sessionId);
+    if (serverId != null) return ConfiguredServerTarget(serverId);
+    throw const FormatException('server_id or session_id is required');
   }
 }
 
@@ -466,6 +582,13 @@ final class ConfiguredServerTarget extends AgentSshTarget {
   const ConfiguredServerTarget(this.serverId);
 
   final String serverId;
+}
+
+/// A host connected to for this conversation only.
+final class AdHocSessionTarget extends AgentSshTarget {
+  const AdHocSessionTarget(this.sessionId);
+
+  final String sessionId;
 }
 
 final globalAgentToolServiceProvider = Provider<GlobalAgentToolService>((ref) {
@@ -515,6 +638,8 @@ class GlobalAgentToolService {
         'run_shell_command' => await _runShell(proposal, watch),
         'read_file' => await _readFile(proposal, watch),
         'write_file' => await _writeFile(proposal, watch),
+        'ssh_connect' => await _sshConnect(proposal, watch),
+        'ssh_disconnect' => _sshDisconnect(proposal, watch),
         'serverbox' => await _runServerBox(proposal, watch),
         _ => throw UnsupportedError(
           'Unsupported Agent tool: ${proposal.toolName}',
@@ -549,7 +674,34 @@ class GlobalAgentToolService {
       ConfiguredServerTarget(:final serverId) => await _connectedServer(
         serverId,
       ),
+      AdHocSessionTarget(:final sessionId) => _adHocSession(sessionId),
     };
+  }
+
+  /// An ad-hoc connection that is still open.
+  ///
+  /// The two failures are told apart on purpose. A conversation restored after
+  /// a restart still names session ids that died with the app, and a model
+  /// given a bare "not found" tends to retry the same id; told that
+  /// connections do not survive, it opens a new one.
+  AgentShellHandle _adHocSession(String sessionId) {
+    final session = _ref.read(adHocSshSessionsProvider)[sessionId];
+    if (session == null) {
+      throw StateError(
+        'No open connection with id $sessionId. Ad-hoc connections are not '
+        'kept across app restarts; open a new one with ssh_connect.',
+      );
+    }
+    if (session.client.isClosed) {
+      _ref.read(adHocSshSessionsProvider.notifier).close(sessionId);
+      throw StateError(
+        'The connection to ${session.label} has closed. Open a new one with '
+        'ssh_connect.',
+      );
+    }
+    // No server id: this host is not in the app, and a result claiming one
+    // would point at somebody else's server.
+    return (client: session.client, serverId: null);
   }
 
   /// The server, with a shell open on it.
@@ -794,6 +946,129 @@ class GlobalAgentToolService {
     final sequence = _temporaryFileSequence++;
     final timestamp = DateTime.now().microsecondsSinceEpoch;
     return '$directory.$filename.serverbox-agent-$timestamp-$sequence.tmp';
+  }
+
+  /// Connects to a host the app does not know about.
+  ///
+  /// Three things are deliberately not in the model's hands here. The password
+  /// is asked for by the app, so it never enters the conversation. The host
+  /// key is asked about by [genClient]'s own prompt — this passes no handler
+  /// for it, because agreement inside a conversation is not agreement by the
+  /// user, and the model has no way to express the latter. And the `Spi` is
+  /// given a real id now rather than when the host is saved, so the key the
+  /// user accepts is filed where a saved server would look for it.
+  Future<AgentToolExecutionResult> _sshConnect(
+    AskAiCommand proposal,
+    Stopwatch watch,
+  ) async {
+    final host = proposal.argumentString('host');
+    final user = proposal.argumentString('user');
+    if (host == null) throw const FormatException('host is required');
+    if (user == null) throw const FormatException('user is required');
+    final rawPort = proposal.arguments['port'];
+    final port = rawPort is num ? rawPort.toInt() : 22;
+    if (port <= 0 || port > 65535) {
+      throw FormatException('port $port is not a port');
+    }
+
+    // Before the dialogs, not after: this may be running while the Agent tab
+    // is not the one on screen, and a password prompt with no visible sign of
+    // what asked for it is a prompt nobody should answer.
+    _ref.read(agentShellProvider.notifier).show();
+
+    final password = await promptAdHocSshPassword(
+      user: user,
+      host: host,
+      port: port,
+    );
+    if (password == null) {
+      return AgentToolExecutionResult(
+        toolName: proposal.toolName,
+        summary: 'The user did not provide credentials for $user@$host:$port.',
+        succeeded: false,
+        cancelled: true,
+        duration: watch.elapsed,
+        data: {'host': host, 'port': port, 'user': user},
+      );
+    }
+
+    final spi = AdHocSshSession.spiFor(
+      host: host,
+      port: port,
+      user: user,
+      password: password,
+    );
+    String? fingerprint;
+    SSHClient? opened;
+    try {
+      opened = await genClient(
+        spi,
+        timeout: Duration(seconds: Stores.setting.timeout.fetch()),
+        onKeyboardInteractive: KeyboardInteractiveAuth.handle,
+        // Wraps rather than replaces the default, which is what writes the
+        // key to storage. Only called when the user was actually asked, so a
+        // host already known reports no fingerprint.
+        onHostKeyAccepted: (storageKey, hex) {
+          fingerprint = hex;
+          persistHostKeyFingerprint(storageKey, hex);
+        },
+      );
+      // `genClient` hands back a client before it has authenticated; without
+      // this a wrong password is a session id that fails on first use.
+      await opened.authenticated;
+    } catch (e) {
+      // The socket is up by the time authentication fails, and nothing else
+      // holds this client — it never reached the registry.
+      opened?.close();
+      throw StateError('Cannot connect to $user@$host:$port: $e');
+    }
+    final client = opened;
+
+    final session = AdHocSshSession(
+      id: ShortId.generate(),
+      spi: spi,
+      client: client,
+      fingerprint: fingerprint,
+    );
+    _ref.read(adHocSshSessionsProvider.notifier).add(session);
+    return AgentToolExecutionResult(
+      toolName: proposal.toolName,
+      summary: 'Connected to $user@$host:$port.',
+      succeeded: true,
+      duration: watch.elapsed,
+      // The password is not here, and must not be added: this map is written
+      // into the conversation and sent back to the model on every later turn.
+      data: {
+        'session_id': session.id,
+        'host': host,
+        'port': port,
+        'user': user,
+        'accepted_host_key': ?fingerprint,
+      },
+    );
+  }
+
+  AgentToolExecutionResult _sshDisconnect(
+    AskAiCommand proposal,
+    Stopwatch watch,
+  ) {
+    final sessionId = proposal.sessionId;
+    if (sessionId == null) {
+      throw const FormatException('session_id is required');
+    }
+    final session = _ref.read(adHocSshSessionsProvider)[sessionId];
+    _ref.read(adHocSshSessionsProvider.notifier).close(sessionId);
+    return AgentToolExecutionResult(
+      toolName: proposal.toolName,
+      // Closing one that has already gone is not a failure — it is the state
+      // the call was asking for.
+      summary: session == null
+          ? 'No connection with id $sessionId was open.'
+          : 'Closed the connection to ${session.label}.',
+      succeeded: true,
+      duration: watch.elapsed,
+      data: {'session_id': sessionId},
+    );
   }
 
   Future<AgentToolExecutionResult> _runServerBox(

@@ -288,6 +288,22 @@ class AppLocalizationsIt extends AppLocalizations {
   String get agentFloat => 'Float over other tabs';
 
   @override
+  String get agentToolSshConnect => 'SSH connect';
+
+  @override
+  String get agentToolSshDisconnect => 'Disconnect SSH';
+
+  @override
+  String get agentSshConnectTitle => 'Connect to a new host';
+
+  @override
+  String get agentSshConnectTip =>
+      'The Agent wants to open an SSH connection. Type the password here — never into the conversation, where it would be stored and sent to the model.';
+
+  @override
+  String get agentAdHocSessions => 'Temporary connections';
+
+  @override
   String get atLeastOneTab => 'Deve essere selezionata almeno una scheda';
 
   @override

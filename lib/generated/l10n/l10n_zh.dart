@@ -270,6 +270,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentFloat => '在其他标签页上悬浮';
 
   @override
+  String get agentToolSshConnect => 'SSH 连接';
+
+  @override
+  String get agentToolSshDisconnect => '断开 SSH';
+
+  @override
+  String get agentSshConnectTitle => '连接到新主机';
+
+  @override
+  String get agentSshConnectTip =>
+      'Agent 想建立一个 SSH 连接。请在此处输入密码，不要输入到对话里——那会被保存下来并发送给模型。';
+
+  @override
+  String get agentAdHocSessions => '临时连接';
+
+  @override
   String get atLeastOneTab => '至少需要选择一个标签';
 
   @override
@@ -1585,6 +1601,22 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentFloat => '在其他分頁上懸浮';
+
+  @override
+  String get agentToolSshConnect => 'SSH 連線';
+
+  @override
+  String get agentToolSshDisconnect => '中斷 SSH';
+
+  @override
+  String get agentSshConnectTitle => '連線到新主機';
+
+  @override
+  String get agentSshConnectTip =>
+      'Agent 想建立一個 SSH 連線。請在此處輸入密碼，不要輸入到對話裡——那會被保存下來並傳送給模型。';
+
+  @override
+  String get agentAdHocSessions => '暫時連線';
 
   @override
   String get atLeastOneTab => '至少需要選擇一個標籤';

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/provider/ai/adhoc_ssh.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
 import 'package:server_box/data/provider/ai/ask_ai.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
@@ -83,6 +84,7 @@ class AgentHeaderActions extends ConsumerWidget {
             icon: const Icon(Icons.add_comment_outlined),
           ),
         ],
+        const _AdHocSessionsButton(),
         if (session.isWorking)
           IconButton.filledTonal(
             tooltip: libL10n.stop,
@@ -90,6 +92,65 @@ class AgentHeaderActions extends ConsumerWidget {
             icon: const Icon(Icons.stop),
           ),
       ],
+    );
+  }
+}
+
+/// How many hosts the Agent has open that are not configured servers.
+///
+/// Present only while there are any. They are invisible otherwise — no card,
+/// no server row — and a connection the model opened and forgot about should
+/// not be something only the model knows exists.
+class _AdHocSessionsButton extends ConsumerWidget {
+  const _AdHocSessionsButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sessions = ref.watch(adHocSshSessionsProvider);
+    if (sessions.isEmpty) return const SizedBox.shrink();
+    return IconButton(
+      tooltip: context.l10n.agentAdHocSessions,
+      onPressed: () => _show(context),
+      icon: Badge.count(
+        count: sessions.length,
+        child: const Icon(Icons.cable),
+      ),
+    );
+  }
+
+  void _show(BuildContext context) {
+    context.showRoundDialog(
+      title: context.l10n.agentAdHocSessions,
+      child: Consumer(
+        builder: (context, ref, _) {
+          final sessions = ref.watch(adHocSshSessionsProvider).values.toList();
+          if (sessions.isEmpty) return Text(libL10n.empty);
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final session in sessions)
+                ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.cable, size: 20),
+                  title: Text(session.label),
+                  subtitle: Text(
+                    session.id,
+                    style: const TextStyle(fontFamily: 'monospace'),
+                  ),
+                  trailing: IconButton(
+                    tooltip: libL10n.close,
+                    onPressed: () => ref
+                        .read(adHocSshSessionsProvider.notifier)
+                        .close(session.id),
+                    icon: const Icon(Icons.link_off),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+      actions: [Btn.ok()],
     );
   }
 }
@@ -301,6 +362,8 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
       'read_file' => context.l10n.agentToolReadFile,
       'write_file' => context.l10n.agentToolWriteFile,
       'serverbox' => context.l10n.agentToolServerBox,
+      'ssh_connect' => context.l10n.agentToolSshConnect,
+      'ssh_disconnect' => context.l10n.agentToolSshDisconnect,
       _ => toolName,
     };
   }
@@ -311,6 +374,8 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
       'read_file' => Icons.description_outlined,
       'write_file' => Icons.edit_document,
       'serverbox' => Icons.dns_outlined,
+      'ssh_connect' => Icons.cable,
+      'ssh_disconnect' => Icons.link_off,
       _ => Icons.build_outlined,
     };
   }
@@ -573,6 +638,9 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
       'run_shell_command' => arguments['command'] as String? ?? '',
       'read_file' || 'write_file' => arguments['path'] as String? ?? '',
       'serverbox' => arguments['action'] as String? ?? '',
+      // Its own summary: the host, user and port the connection would reach,
+      // which is the whole of what there is to review.
+      'ssh_connect' || 'ssh_disconnect' => proposal.displayValue,
       _ => proposal.displayValue,
     };
     final content = arguments['content'];

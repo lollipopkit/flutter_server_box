@@ -163,6 +163,177 @@ void main() {
     });
   });
 
+  group('ad-hoc SSH targets', () {
+    AskAiCommand shell(Map<String, dynamic> arguments) => AskAiCommand(
+      id: 'call-1',
+      command: arguments['command'] as String? ?? 'uptime',
+      toolName: 'run_shell_command',
+      rawArguments: jsonEncode(arguments),
+      modelSafeToRun: arguments['safe_to_run'] as bool? ?? false,
+    );
+
+    test('a session id resolves to an ad-hoc connection', () {
+      final target = AgentSshTarget.fromArguments(
+        shell({'session_id': 'sess-1', 'command': 'uptime'}),
+      );
+
+      expect(target, isA<AdHocSessionTarget>());
+      expect((target as AdHocSessionTarget).sessionId, 'sess-1');
+    });
+
+    test('naming both machines is refused rather than resolved', () {
+      // Picking one would run the command somewhere nobody chose.
+      expect(
+        () => AgentSshTarget.fromArguments(
+          shell({
+            'server_id': 'server-a',
+            'session_id': 'sess-1',
+            'command': 'uptime',
+          }),
+        ),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('an explicit null session id still names the server', () {
+      // What the schema produces for "the other one": both fields are always
+      // present, and one of them is null.
+      final target = AgentSshTarget.fromArguments(
+        shell({
+          'server_id': 'server-a',
+          'session_id': null,
+          'command': 'uptime',
+        }),
+      );
+
+      expect((target as ConfiguredServerTarget).serverId, 'server-a');
+    });
+
+    test('nothing runs unattended on a host met this conversation', () {
+      final onServer = shell({
+        'server_id': 'server-a',
+        'command': 'ls /etc',
+        'safe_to_run': true,
+      });
+      final onAdHoc = shell({
+        'session_id': 'sess-1',
+        'command': 'ls /etc',
+        'safe_to_run': true,
+      });
+
+      // The same read-only command. On a vetted server it may auto-run; on a
+      // machine the user has only just handed a password to it may not.
+      expect(onServer.risk, AskAiCommandRisk.readOnly);
+      expect(onServer.canAutoRun, isTrue);
+      expect(onAdHoc.risk, AskAiCommandRisk.caution);
+      expect(onAdHoc.canAutoRun, isFalse);
+    });
+
+    test('the floor does not lower a destructive command', () {
+      final proposal = shell({
+        'session_id': 'sess-1',
+        'command': 'rm -rf /var/log',
+        'safe_to_run': true,
+      });
+
+      expect(proposal.risk, AskAiCommandRisk.destructive);
+      expect(proposal.canAutoRun, isFalse);
+    });
+
+    test('reading a file on an ad-hoc host is not auto-runnable either', () {
+      const onAdHoc = AskAiCommand(
+        id: 'call-1',
+        command: '',
+        toolName: 'read_file',
+        rawArguments:
+            '{"session_id":"sess-1","path":"/etc/hosts","safe_to_run":true}',
+        modelSafeToRun: true,
+      );
+      const onServer = AskAiCommand(
+        id: 'call-2',
+        command: '',
+        toolName: 'read_file',
+        rawArguments:
+            '{"server_id":"server-a","path":"/etc/hosts","safe_to_run":true}',
+        modelSafeToRun: true,
+      );
+
+      expect(onAdHoc.risk, AskAiCommandRisk.caution);
+      expect(onAdHoc.canAutoRun, isFalse);
+      expect(onServer.canAutoRun, isTrue);
+    });
+  });
+
+  group('ssh_connect', () {
+    AskAiCommand connect(Map<String, dynamic> arguments) => AskAiCommand(
+      id: 'call-1',
+      command: '',
+      toolName: 'ssh_connect',
+      rawArguments: jsonEncode(arguments),
+      modelSafeToRun: arguments['safe_to_run'] as bool? ?? false,
+    );
+
+    test('reaching an unknown machine is always destructive', () {
+      final proposal = connect({
+        'host': '10.0.0.9',
+        'port': 22,
+        'user': 'root',
+        'safe_to_run': true,
+      });
+
+      expect(proposal.risk, AskAiCommandRisk.destructive);
+      expect(proposal.canAutoRun, isFalse);
+    });
+
+    test('what the user reviews is the host, not an empty line', () {
+      expect(
+        connect({'host': '10.0.0.9', 'port': 2222, 'user': 'deploy'})
+            .displayValue,
+        'deploy@10.0.0.9:2222',
+      );
+    });
+
+    test('its schema asks for no secret', () {
+      final tool = globalAgentToolDefinitions.firstWhere(
+        (tool) => tool.name == 'ssh_connect',
+      );
+      final properties =
+          tool.parameters['properties'] as Map<String, dynamic>;
+
+      // The password is collected by the app. A field for it here would put it
+      // in `rawArguments`, which is written into the stored conversation and
+      // replayed to the model on every later turn.
+      expect(properties.keys, isNot(contains('password')));
+      expect(properties.keys, isNot(contains('pwd')));
+      expect(properties.keys, isNot(contains('private_key')));
+      expect(properties.keys, isNot(contains('passphrase')));
+      expect(
+        properties.keys,
+        containsAll(<String>['host', 'port', 'user']),
+      );
+    });
+
+    test('the model is told not to ask for credentials itself', () {
+      final instructions = buildGlobalAgentInstructions(servers: const []);
+      expect(instructions, contains('ssh_connect'));
+      expect(instructions, contains('Never ask for a password'));
+    });
+
+    test('disconnecting is reviewed but not alarming', () {
+      const proposal = AskAiCommand(
+        id: 'call-1',
+        command: '',
+        toolName: 'ssh_disconnect',
+        rawArguments: '{"session_id":"sess-1","safe_to_run":true}',
+        modelSafeToRun: true,
+      );
+
+      expect(proposal.risk, AskAiCommandRisk.caution);
+      expect(proposal.canAutoRun, isFalse);
+      expect(proposal.displayValue, 'sess-1');
+    });
+  });
+
   group('serverbox actions', () {
     AskAiCommand command(String action, {bool modelSafeToRun = false}) {
       return AskAiCommand(
