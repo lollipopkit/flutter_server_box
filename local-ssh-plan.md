@@ -400,9 +400,37 @@ the host it points at the host's `/bin`, which is the wrong file or none. The
 first attempt booted to `ENOENT` with no `/bin/sh` to run. `tar` gets this
 right; a naive recursive copy does not.
 
-The second — a pty per session — is not done. The recipe is above and the
-engine has every piece; what it changes is the shim's API, from one console to
-a session handle, and everything above it.
+**The second is done too.** A session is now a process in the machine with a
+pty of its own — `become_new_init_child`, `pty_open_fake`, `create_stdio` on
+`/dev/pts/N` — so `IshShellBackend.supportsExec` is true and two sessions
+cannot land on each other's output. Verified: one session reports Alpine's
+version, a second one running at the same time sees only its own marker.
+
+**`/dev` is the piece that did not fall out.** The nodes are still missing, and
+the reason is worth keeping because it is not obvious:
+
+| Filesystem | Can it hold a device node |
+| --- | --- |
+| `realfs` | No — `realfs_mknod` refuses anything but a FIFO or a regular file, since creating one needs root on the host |
+| `tmpfs` | **No** — it has no `mknod` operation at all |
+| `fakefs` | Yes, and only it: `rdev` lives in its database, which is what this design set out to remove |
+
+So `/dev` exists and is empty, `/dev/pts` works (devptsfs is its own
+filesystem), and `/dev/null` and friends do not. Three ways out:
+
+1. **Add `mknod` to `tmpfs`** in the vendored engine. It is in-memory and
+   already stores a mode per node; `rdev` is one more field. The smallest
+   change, and the one that keeps `/dev` where it belongs — but it is a patch
+   to carry against upstream.
+2. **Mount a small `fakefs` at `/dev`.** Only a dozen nodes, so the database is
+   tiny — but the app would have to create one, and the schema lives in the
+   host tool rather than in `libfakefs`.
+3. **Ship a prebuilt `/dev`** in the bundle and mount it. No new code, and a
+   read-only `/dev` that cannot grow a node the guest asks for later.
+
+Nothing works around it in the meantime: a shell without `/dev/null` fails at
+the first `2>/dev/null`. `integration_test/ios_rootfs_test.dart` carries the
+test for it, skipped, ready to be turned on.
 
 What is left:
 

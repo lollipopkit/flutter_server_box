@@ -45,29 +45,40 @@ extern "C" {
 /// Whether this build carries the engine at all.
 SBM_ISH_EXPORT bool sbm_ish_available(void);
 
-/// Boots the guest and runs [command] in it, with [rootfs] as its filesystem.
+/// Starts the machine, with [rootfs] as its filesystem.
 ///
-/// Returns 0, or a negative errno. One guest per process: the kernel this
-/// links against keeps its state in globals, so a second boot is refused with
-/// -EEXIST rather than corrupting the first.
+/// Returns 0, or a negative errno; a second call answers -EEXIST. One machine
+/// per app process, because the kernel keeps its state in globals — but a
+/// machine runs as many processes as it is asked to, which is what
+/// [sbm_ish_open] is for.
 ///
-/// [rootfs] is a directory in iSH's own format — a `data` tree beside a sqlite
-/// metadata db — built by `fakefsify`, not a plain tarball.
-SBM_ISH_EXPORT int sbm_ish_boot(const char *rootfs, const char *command, int columns, int rows);
+/// [rootfs] is an ordinary unpacked directory tree. Its `/dev` is built here.
+SBM_ISH_EXPORT int sbm_ish_boot(const char *rootfs);
 
-/// Reads what the guest has printed, waiting up to [timeout_ms] for the first
-/// byte. Returns the number of bytes, 0 on timeout, or -1 once the guest has
-/// exited and its output has been drained.
-SBM_ISH_EXPORT int sbm_ish_read(char *buffer, int length, int timeout_ms);
+/// Opens a session: a process in the machine, on a pseudo-terminal of its own.
+///
+/// Returns a handle, or a negative errno. [command] is what to run; NULL or
+/// empty gives an interactive shell. Sessions are independent — a terminal and
+/// a one-shot command do not share a console, and neither sees the other's
+/// output.
+SBM_ISH_EXPORT int sbm_ish_open(const char *command, int columns, int rows);
 
-/// Types [length] bytes at the guest.
-SBM_ISH_EXPORT int sbm_ish_write(const char *buffer, int length);
+/// Reads what [session] has printed, waiting up to [timeout_ms] for the first
+/// byte. Returns the number of bytes, 0 on timeout, or -1 once that session
+/// has ended and its output has been drained.
+SBM_ISH_EXPORT int sbm_ish_read(int session, char *buffer, int length, int timeout_ms);
 
-/// Tells the guest its terminal changed size.
-SBM_ISH_EXPORT void sbm_ish_resize(int columns, int rows);
+/// Types [length] bytes at [session].
+SBM_ISH_EXPORT int sbm_ish_write(int session, const char *buffer, int length);
 
-/// The guest's exit status, or -1 while it is still running.
-SBM_ISH_EXPORT int sbm_ish_exit_code(void);
+/// Tells [session] its terminal changed size.
+SBM_ISH_EXPORT void sbm_ish_resize(int session, int columns, int rows);
+
+/// [session]'s exit status, or -1 while it is still running.
+SBM_ISH_EXPORT int sbm_ish_exit_code(int session);
+
+/// Ends [session]: its process is signalled and its handle released.
+SBM_ISH_EXPORT void sbm_ish_close(int session);
 
 #ifdef __cplusplus
 }

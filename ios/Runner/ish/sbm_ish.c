@@ -7,21 +7,24 @@
 // never had one, which is what the Dart side is already written against.
 
 bool sbm_ish_available(void) { return false; }
-int sbm_ish_boot(const char *rootfs, const char *command, int columns, int rows) {
-    (void)rootfs; (void)command; (void)columns; (void)rows;
+int sbm_ish_boot(const char *rootfs) { (void)rootfs; return -1; }
+int sbm_ish_open(const char *command, int columns, int rows) {
+    (void)command; (void)columns; (void)rows;
     return -1;
 }
-
-int sbm_ish_read(char *buffer, int length, int timeout_ms) {
-    (void)buffer; (void)length; (void)timeout_ms;
+int sbm_ish_read(int session, char *buffer, int length, int timeout_ms) {
+    (void)session; (void)buffer; (void)length; (void)timeout_ms;
     return -1;
 }
-int sbm_ish_write(const char *buffer, int length) {
-    (void)buffer; (void)length;
+int sbm_ish_write(int session, const char *buffer, int length) {
+    (void)session; (void)buffer; (void)length;
     return -1;
 }
-void sbm_ish_resize(int columns, int rows) { (void)columns; (void)rows; }
-int sbm_ish_exit_code(void) { return -1; }
+void sbm_ish_resize(int session, int columns, int rows) {
+    (void)session; (void)columns; (void)rows;
+}
+int sbm_ish_exit_code(int session) { (void)session; return -1; }
+void sbm_ish_close(int session) { (void)session; }
 
 #else
 
@@ -30,9 +33,8 @@ int sbm_ish_exit_code(void) { return -1; }
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
-
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <syslog.h>
 
 #include "kernel/calls.h"
@@ -143,64 +145,73 @@ static void install_crash_handler(void) {
     // and taking it over hides those.
 }
 
-// — What the guest prints ————————————————————————————————————————————
+// — Sessions ————————————————————————————————————————————————————————
 //
-// A ring buffer rather than a pipe, because the guest's writes must never
-// block on nobody reading: a terminal whose page is off screen is exactly that
-// case, and a blocked write inside the interpreter stops the whole guest.
-// Overrunning drops the oldest bytes, which is what a terminal's scrollback
+// A session is a process in the machine with a pseudo-terminal of its own.
+// There is one machine per app process — the kernel's state is in globals —
+// but a machine runs as many processes as it is asked to, and giving each its
+// own pty is what keeps a terminal's output and a one-shot command's from
+// arriving on the same wire.
+//
+// Output is a ring buffer per session rather than a pipe, because a guest's
+// write must never block on nobody reading: a terminal on a page that is off
+// screen is exactly that, and a blocked write inside the interpreter stops the
+// whole guest. Overrunning drops the oldest bytes, which is what scrollback
 // does anyway.
 
-#define OUTPUT_CAPACITY (256 * 1024)
+#define SBM_MAX_SESSIONS 8
+#define SBM_OUTPUT_CAPACITY (256 * 1024)
 
-static struct {
-    char data[OUTPUT_CAPACITY];
+struct session {
+    bool used;
+    struct tty *tty;
+    pid_t_ pid;
+    int exit_code;
+    char data[SBM_OUTPUT_CAPACITY];
     size_t head, tail;
-    pthread_mutex_t lock;
-    pthread_cond_t wrote;
-} output = {
-    .lock = PTHREAD_MUTEX_INITIALIZER,
-    .wrote = PTHREAD_COND_INITIALIZER,
 };
 
-static void output_push(const char *bytes, size_t length) {
-    pthread_mutex_lock(&output.lock);
-    for (size_t i = 0; i < length; i++) {
-        size_t next = (output.head + 1) % OUTPUT_CAPACITY;
-        if (next == output.tail) {
-            // Full. Drop the oldest byte rather than the newest: what a user
-            // is waiting for is the end of the output, not its beginning.
-            output.tail = (output.tail + 1) % OUTPUT_CAPACITY;
-        }
-        output.data[output.head] = bytes[i];
-        output.head = next;
-    }
-    pthread_cond_broadcast(&output.wrote);
-    pthread_mutex_unlock(&output.lock);
+static struct session sessions[SBM_MAX_SESSIONS];
+static pthread_mutex_t sessions_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t sessions_wrote = PTHREAD_COND_INITIALIZER;
+
+/// The session a tty belongs to, or -1. Called from the guest's threads.
+static int session_of(struct tty *tty) {
+    for (int i = 0; i < SBM_MAX_SESSIONS; i++)
+        if (sessions[i].used && sessions[i].tty == tty) return i;
+    return -1;
 }
 
-// — The console ————————————————————————————————————————————————————
-//
-// A tty driver of our own, in place of the one that reads and writes the
-// host's own stdin and stdout. Those belong to the app — its logs go there —
-// and a guest console pointed at them would be both invisible and destructive.
+// — What a session prints ————————————————————————————————————————————
 
-static struct tty *console_tty;
-
-static int console_init(struct tty *tty) {
-    console_tty = tty;
-    return 0;
-}
-
-static int console_write(struct tty *tty, const void *buffer, size_t length, bool blocking) {
-    (void)tty; (void)blocking;
-    output_push((const char *)buffer, length);
-    return (int)length;
-}
-
+static int console_init(struct tty *tty) { (void)tty; return 0; }
 static int console_open(struct tty *tty) { (void)tty; return 0; }
 static int console_close(struct tty *tty) { (void)tty; return 0; }
 static void console_cleanup(struct tty *tty) { (void)tty; }
+
+static int console_write(struct tty *tty, const void *buffer, size_t length, bool blocking) {
+    (void)blocking;
+    pthread_mutex_lock(&sessions_lock);
+    int index = session_of(tty);
+    if (index < 0) {
+        pthread_mutex_unlock(&sessions_lock);
+        // Written by a session that has been closed. Dropped, not an error:
+        // the guest is entitled to finish a line nobody is reading.
+        return (int)length;
+    }
+    struct session *session = &sessions[index];
+    const char *bytes = buffer;
+    for (size_t i = 0; i < length; i++) {
+        size_t next = (session->head + 1) % SBM_OUTPUT_CAPACITY;
+        if (next == session->tail)
+            session->tail = (session->tail + 1) % SBM_OUTPUT_CAPACITY;
+        session->data[session->head] = bytes[i];
+        session->head = next;
+    }
+    pthread_cond_broadcast(&sessions_wrote);
+    pthread_mutex_unlock(&sessions_lock);
+    return (int)length;
+}
 
 static const struct tty_driver_ops console_ops = {
     .init = console_init,
@@ -210,67 +221,45 @@ static const struct tty_driver_ops console_ops = {
     .cleanup = console_cleanup,
 };
 
-DEFINE_TTY_DRIVER(sbm_console_driver, &console_ops, TTY_CONSOLE_MAJOR, 1);
+// One driver, many ttys: `pty_open_fake` points it at the pty slave table and
+// hands back a tty per session.
+static struct tty *sbm_pty_ttys[SBM_MAX_SESSIONS];
+struct tty_driver sbm_pty_driver = {
+    .ops = &console_ops,
+    .major = TTY_PSEUDO_SLAVE_MAJOR,
+    .ttys = sbm_pty_ttys,
+    .limit = SBM_MAX_SESSIONS,
+};
 
 // — Booting ————————————————————————————————————————————————————————
 
 static bool booted;
-static int guest_exit_code = -1;
-static pthread_mutex_t boot_lock = PTHREAD_MUTEX_INITIALIZER;
-
-/// What the guest was started with, kept for the boot sequence to read.
-static struct {
-    const char *rootfs;
-    const char *command;
-    int columns, rows;
-} boot;
+static char *rootfs_path;
 
 static void guest_exited(struct task *task, int code) {
-    // Only the first process ending is the guest ending; anything it spawned
-    // exits all the time.
-    if (task->parent != NULL) return;
-    pthread_mutex_lock(&output.lock);
-    guest_exit_code = code >> 8;
-    pthread_cond_broadcast(&output.wrote);
-    pthread_mutex_unlock(&output.lock);
+    pthread_mutex_lock(&sessions_lock);
+    for (int i = 0; i < SBM_MAX_SESSIONS; i++) {
+        if (sessions[i].used && sessions[i].pid == task->pid) {
+            sessions[i].exit_code = code >> 8;
+            break;
+        }
+    }
+    pthread_cond_broadcast(&sessions_wrote);
+    pthread_mutex_unlock(&sessions_lock);
 }
 
-/// Everything `xX_main_Xx` does, minus the parts an app cannot use.
+/// Everything a userland expects to find at `/dev`.
 ///
-/// Not that function, though it is tempting: it parses a command line,
-/// installs the tty driver that reads and writes the *host's* stdin and
-/// stdout, and builds the guest's stdio out of it. In an app those are the
-/// app's own streams. This is the same sequence with the console pointed
-/// somewhere a terminal can see, and it is the sequence OpenMinis uses to ship
-/// this engine.
-static int boot_kernel(void) {
-    install_crash_handler();
-    // Otherwise `die()` calls abort(), and the app goes with the guest.
-    die_handler = park_on_die;
-
-    // An ordinary directory tree, not iSH's `fakefs`.
-    //
-    // `realfs` is the engine's other filesystem: every guest path is `openat`'d
-    // against a root fd and nothing is stored beside it. That makes installing
-    // a userland "unpack a tarball into a directory" — no metadata database to
-    // build on a phone, no host-side tool, and the guest's files stay ordinary
-    // files that can be inspected and backed up.
-    //
-    // What it cannot do is hold device nodes: `realfs_mknod` refuses anything
-    // that is not a FIFO or a regular file, because creating one needs root on
-    // the host. Hence the tmpfs below — `/dev` is the one directory that has
-    // to be something other than a real one.
-    int err = mount_root(&realfs, boot.rootfs);
-    if (err < 0) return err;
-
-    err = become_first_process();
-    if (err < 0) return err;
-    current->thread = pthread_self();
-
-    // In memory, because the root cannot hold these. Everything a userland
-    // expects to find at `/dev` is created here each boot, which is also
-    // truer than persisting them: they describe this run's kernel.
+/// A tmpfs, because the root cannot hold any of it: creating a device node
+/// needs root on the host, and `realfs_mknod` refuses anything that is not a
+/// FIFO or a regular file. Built at every boot, which is also truer than
+/// persisting it — these describe this run's kernel, not the last one's.
+static void make_dev(void) {
+    // The mount point first: a minirootfs unpacked without root may have no
+    // `/dev` at all, since the device nodes in the tarball are what create it.
+    generic_mkdirat(AT_PWD, "/dev", 0755);
     do_mount(&tmpfs, "dev", "/dev", "", 0);
+
     generic_mknodat(AT_PWD, "/dev/null", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_NULL_MINOR));
     generic_mknodat(AT_PWD, "/dev/zero", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_ZERO_MINOR));
     generic_mknodat(AT_PWD, "/dev/full", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_FULL_MINOR));
@@ -280,173 +269,249 @@ static int boot_kernel(void) {
     generic_mknodat(AT_PWD, "/dev/console", S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_CONSOLE_MINOR));
     generic_mknodat(AT_PWD, "/dev/ptmx", S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_PTMX_MINOR));
 
-    do_mount(&procfs, "proc", "/proc", "", 0);
-    // Its mount point has to exist first — `/dev` is a fresh tmpfs.
+    // Where the pty slaves appear. Its mount point has to exist first, since
+    // `/dev` is a filesystem that was empty a moment ago.
     generic_mkdirat(AT_PWD, "/dev/pts", 0755);
     do_mount(&devptsfs, "devpts", "/dev/pts", "", 0);
+
+    // Not device nodes but expected to be there, and cheap to be right about:
+    // a shell's `>/dev/stdout`, a script's `/dev/fd/3`, and anything that
+    // writes to `/dev/shm` all fail without them.
+    generic_symlinkat("/proc/self/fd", AT_PWD, "/dev/fd");
+    generic_symlinkat("/proc/self/fd/0", AT_PWD, "/dev/stdin");
+    generic_symlinkat("/proc/self/fd/1", AT_PWD, "/dev/stdout");
+    generic_symlinkat("/proc/self/fd/2", AT_PWD, "/dev/stderr");
+    generic_mkdirat(AT_PWD, "/dev/shm", 01777);
+    do_mount(&tmpfs, "shm", "/dev/shm", "", 0);
+}
+
+bool sbm_ish_available(void) { return true; }
+
+int sbm_ish_boot(const char *rootfs) {
+    if (rootfs == NULL) return -EINVAL;
+    if (booted) return -EEXIST;
+
+    install_crash_handler();
+    // Otherwise `die()` calls abort(), and the app goes with the guest.
+    die_handler = park_on_die;
+
+    // An ordinary directory tree, mounted by `realfs`: guest paths resolved
+    // against a root fd, with nothing stored beside them. Installing a
+    // userland is therefore unpacking a tarball, which an app can do.
+    rootfs_path = strdup(rootfs);
+    int err = mount_root(&realfs, rootfs_path);
+    if (err < 0) return err;
+
+    err = become_first_process();
+    if (err < 0) return err;
+    current->thread = pthread_self();
+
+    // A working directory, before anything is created relative to one.
+    // `generic_mknodat(AT_PWD, ...)` resolves against it, and without it every
+    // node below is created against nothing — measured as a `/dev` that
+    // mounted and stayed empty, with `head: /dev/urandom: No such file`.
+    struct fd *root_fd = generic_open("/", O_RDONLY_, 0);
+    if (IS_ERR(root_fd)) return (int)PTR_ERR(root_fd);
+    fs_chdir(current->fs, root_fd);
+
+    make_dev();
+    do_mount(&procfs, "proc", "/proc", "", 0);
     exit_hook = guest_exited;
 
-    tty_drivers[TTY_CONSOLE_MAJOR] = &sbm_console_driver;
-    set_console_device(TTY_CONSOLE_MAJOR, 1);
-    err = create_stdio("/dev/console", TTY_CONSOLE_MAJOR, 1);
-    if (err < 0) return err;
-    sbm_ish_resize(boot.columns, boot.rows);
-
-    char environment[512] = {0};
-    size_t written = 0;
-    written += snprintf(environment + written, sizeof(environment) - written,
-                        "TERM=xterm-256color") + 1;
-    written += snprintf(environment + written, sizeof(environment) - written,
-                        "HOME=/root") + 1;
-    written += snprintf(environment + written, sizeof(environment) - written,
-                        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin") + 1;
-    written += snprintf(environment + written, sizeof(environment) - written,
-                        "PYTHONMALLOC=malloc") + 1;
-
-    // Init is a shell in a loop, and neither half of that is arbitrary.
-    //
-    // `kernel/exit.c` ends the *host process* with `_exit(0)` when init dies.
-    // A command as init therefore quits the app when the command finishes —
-    // measured, and it is what the first version did: the guest booted, the
-    // command ran, and the app was gone before a byte of output could be read.
-    // A plain shell as init has the same edge: typing `exit` would close the
-    // app rather than the terminal.
-    //
-    // The loop answers both. Init never returns, so nothing a user types can
-    // end the process; when their shell exits they get a new one, which is
-    // what closing a terminal on any other machine does.
-    char argv[4096];
+    // Init is a shell in a loop. `kernel/exit.c` ends the *host process* when
+    // init dies, so init must not be anything a user can end — and when their
+    // shell exits they get another one, which is what closing a terminal does
+    // on any other machine.
+    char argv[512];
     size_t position = 0;
-    const char *parts[] = {
-        "/bin/sh", "-c", "while :; do /bin/sh; done",
-    };
+    const char *parts[] = { "/bin/sh", "-c", "while :; do /bin/sh; done" };
     for (size_t i = 0; i < 3; i++) {
         size_t length = strlen(parts[i]) + 1;
-        if (position + length >= sizeof(argv) - 1) return -E2BIG;
         memcpy(argv + position, parts[i], length);
         position += length;
     }
     argv[position] = '\0';
 
+    char environment[256] = {0};
+    size_t written = 0;
+    written += snprintf(environment + written, sizeof(environment) - written, "HOME=/root") + 1;
+    written += snprintf(environment + written, sizeof(environment) - written,
+                        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin") + 1;
+
     err = do_execve("/bin/sh", 3, argv, environment);
     if (err < 0) return err;
-
-    // Started, not run here. `task_run_current` would turn this thread into
-    // the guest and never return — fine for a command-line iSH, and a hang for
-    // anything with a caller waiting.
     task_start(current);
 
-    // Typed at the shell once it is running, if the caller asked for anything.
-    if (boot.command != NULL && boot.command[0] != '\0') {
-        // It has to have got as far as reading its input. That is a process
-        // starting, not a network round trip, so this is short — and it is the
-        // caller's thread waiting, never the guest's.
-        struct timespec settle = { .tv_sec = 0, .tv_nsec = 200 * 1000 * 1000 };
-        nanosleep(&settle, NULL);
-        sbm_ish_write(boot.command, (int)strlen(boot.command));
-        // Carriage return, which is what a terminal's Enter key sends. The
-        // line discipline turns it into a newline; sending the newline itself
-        // is a different keystroke and the shell was left holding the line.
-        sbm_ish_write("\r", 1);
-    }
+    booted = true;
     return 0;
 }
 
-bool sbm_ish_available(void) { return true; }
+int sbm_ish_open(const char *command, int columns, int rows) {
+    if (!booted) return -ENOTCONN;
 
-int sbm_ish_boot(const char *rootfs, const char *command, int columns, int rows) {
-    if (rootfs == NULL || command == NULL) return -EINVAL;
-
-    pthread_mutex_lock(&boot_lock);
-    if (booted) {
-        pthread_mutex_unlock(&boot_lock);
-        // The kernel's state is global, so a second guest would not be a
-        // second machine — it would be the first one corrupted.
-        return -EEXIST;
+    pthread_mutex_lock(&sessions_lock);
+    int index = -1;
+    for (int i = 0; i < SBM_MAX_SESSIONS; i++) {
+        if (!sessions[i].used) { index = i; break; }
     }
-    booted = true;
-    pthread_mutex_unlock(&boot_lock);
-
-    // Copied: the guest outlives this call and the caller's strings may not.
-    boot.rootfs = strdup(rootfs);
-    boot.command = strdup(command);
-    boot.columns = columns;
-    boot.rows = rows;
-
-    // On the caller's thread, and it does not block: `task_start` gives the
-    // guest a thread of its own. The first version booted on a thread of its
-    // own and waited here for it, which hung — `current` is thread-local, so
-    // that arrangement put the task on one thread and everything waiting on
-    // another.
-    int err = boot_kernel();
-    if (err < 0) {
-        pthread_mutex_lock(&boot_lock);
-        booted = false;
-        pthread_mutex_unlock(&boot_lock);
+    if (index < 0) {
+        pthread_mutex_unlock(&sessions_lock);
+        return -EMFILE;
     }
+    struct session *session = &sessions[index];
+    memset(session, 0, sizeof(*session));
+    session->used = true;
+    session->exit_code = -1;
+    pthread_mutex_unlock(&sessions_lock);
+
+    // A task of its own, under init. Everything from here happens as that
+    // task, on this thread, until `task_start` gives it one.
+    int err = become_new_init_child();
+    if (err < 0) goto fail;
+
+    struct tty *tty = pty_open_fake(&sbm_pty_driver);
+    if (IS_ERR(tty)) { err = (int)PTR_ERR(tty); goto fail; }
+    struct winsize_ size = {
+        .col = (uint16_t)(columns > 0 ? columns : 80),
+        .row = (uint16_t)(rows > 0 ? rows : 25),
+    };
+    tty_set_winsize(tty, size);
+
+    pthread_mutex_lock(&sessions_lock);
+    session->tty = tty;
+    session->pid = current->pid;
+    pthread_mutex_unlock(&sessions_lock);
+
+    char slave[64];
+    snprintf(slave, sizeof(slave), "/dev/pts/%d", tty->num);
+    err = create_stdio(slave, TTY_PSEUDO_SLAVE_MAJOR, tty->num);
+    if (err < 0) goto fail;
+
+    char environment[256] = {0};
+    size_t written = 0;
+    written += snprintf(environment + written, sizeof(environment) - written,
+                        "TERM=xterm-256color") + 1;
+    written += snprintf(environment + written, sizeof(environment) - written, "HOME=/root") + 1;
+    written += snprintf(environment + written, sizeof(environment) - written,
+                        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin") + 1;
+
+    char argv[4096];
+    size_t position = 0;
+    bool interactive = command == NULL || command[0] == '\0';
+    const char *parts[3] = { "/bin/sh", "-c", command };
+    int count = interactive ? 1 : 3;
+    for (int i = 0; i < count; i++) {
+        size_t length = strlen(parts[i]) + 1;
+        if (position + length >= sizeof(argv) - 1) { err = -E2BIG; goto fail; }
+        memcpy(argv + position, parts[i], length);
+        position += length;
+    }
+    argv[position] = '\0';
+
+    err = do_execve("/bin/sh", count, argv, environment);
+    if (err < 0) goto fail;
+    task_start(current);
+    return index;
+
+fail:
+    pthread_mutex_lock(&sessions_lock);
+    session->used = false;
+    pthread_mutex_unlock(&sessions_lock);
     return err;
 }
 
-int sbm_ish_read(char *buffer, int length, int timeout_ms) {
+int sbm_ish_read(int session_id, char *buffer, int length, int timeout_ms) {
     if (buffer == NULL || length <= 0) return -EINVAL;
+    if (session_id < 0 || session_id >= SBM_MAX_SESSIONS) return -EINVAL;
 
-    // Tried, not taken. The guest holds this lock while it writes, and a guest
-    // thread that faults there is parked by the crash handler still holding
-    // it — at which point a plain `lock` here would never return, which is
-    // indistinguishable from the app having wedged. `-EBUSY` says which.
-    if (pthread_mutex_trylock(&output.lock) != 0) {
+    // Tried, not taken. A guest thread that faulted while writing is parked by
+    // the crash handler still holding this, and a plain `lock` here would
+    // never return — which is indistinguishable from the app having wedged.
+    if (pthread_mutex_trylock(&sessions_lock) != 0) {
         struct timespec retry = { .tv_sec = 0, .tv_nsec = 2 * 1000 * 1000 };
         int attempts = 0;
-        while (pthread_mutex_trylock(&output.lock) != 0) {
+        while (pthread_mutex_trylock(&sessions_lock) != 0) {
             if (++attempts > 50) return -EBUSY;
             nanosleep(&retry, NULL);
         }
     }
-    if (output.head == output.tail && guest_exit_code < 0) {
+
+    struct session *session = &sessions[session_id];
+    if (!session->used) {
+        pthread_mutex_unlock(&sessions_lock);
+        return -1;
+    }
+    if (session->head == session->tail && session->exit_code < 0 && timeout_ms > 0) {
         struct timeval now;
         gettimeofday(&now, NULL);
         struct timespec until = {
             .tv_sec = now.tv_sec + timeout_ms / 1000,
             .tv_nsec = now.tv_usec * 1000 + (long)(timeout_ms % 1000) * 1000000,
         };
-        if (until.tv_nsec >= 1000000000) {
-            until.tv_sec += 1;
-            until.tv_nsec -= 1000000000;
-        }
-        pthread_cond_timedwait(&output.wrote, &output.lock, &until);
+        if (until.tv_nsec >= 1000000000) { until.tv_sec += 1; until.tv_nsec -= 1000000000; }
+        pthread_cond_timedwait(&sessions_wrote, &sessions_lock, &until);
     }
 
     int count = 0;
-    while (count < length && output.tail != output.head) {
-        buffer[count++] = output.data[output.tail];
-        output.tail = (output.tail + 1) % OUTPUT_CAPACITY;
+    while (count < length && session->tail != session->head) {
+        buffer[count++] = session->data[session->tail];
+        session->tail = (session->tail + 1) % SBM_OUTPUT_CAPACITY;
     }
     // Told apart from "nothing yet": a caller looping on this needs to know
-    // the difference between a quiet guest and a finished one.
-    bool ended = count == 0 && guest_exit_code >= 0;
-    pthread_mutex_unlock(&output.lock);
+    // the difference between a quiet session and a finished one.
+    bool ended = count == 0 && session->exit_code >= 0;
+    pthread_mutex_unlock(&sessions_lock);
     return ended ? -1 : count;
 }
 
-int sbm_ish_write(const char *buffer, int length) {
-    if (console_tty == NULL) return -ENOTTY;
+int sbm_ish_write(int session_id, const char *buffer, int length) {
     if (buffer == NULL || length <= 0) return -EINVAL;
-    return (int)tty_input(console_tty, buffer, (size_t)length, true);
+    if (session_id < 0 || session_id >= SBM_MAX_SESSIONS) return -EINVAL;
+    pthread_mutex_lock(&sessions_lock);
+    struct tty *tty = sessions[session_id].used ? sessions[session_id].tty : NULL;
+    pthread_mutex_unlock(&sessions_lock);
+    if (tty == NULL) return -ENOTTY;
+    return (int)tty_input(tty, buffer, (size_t)length, true);
 }
 
-void sbm_ish_resize(int columns, int rows) {
-    if (console_tty == NULL) return;
+void sbm_ish_resize(int session_id, int columns, int rows) {
+    if (session_id < 0 || session_id >= SBM_MAX_SESSIONS) return;
+    pthread_mutex_lock(&sessions_lock);
+    struct tty *tty = sessions[session_id].used ? sessions[session_id].tty : NULL;
+    pthread_mutex_unlock(&sessions_lock);
+    if (tty == NULL) return;
+    struct winsize_ size = {
+        .col = (uint16_t)(columns > 0 ? columns : 80),
+        .row = (uint16_t)(rows > 0 ? rows : 25),
+    };
     // What a guest reads through TIOCGWINSZ, and what makes `top` and an
-    // editor draw the right shape.
-    console_tty->winsize.col = (uint16_t)(columns > 0 ? columns : 80);
-    console_tty->winsize.row = (uint16_t)(rows > 0 ? rows : 25);
+    // editor draw the right shape. `tty_set_winsize` also signals SIGWINCH.
+    tty_set_winsize(tty, size);
 }
 
-int sbm_ish_exit_code(void) {
-    pthread_mutex_lock(&output.lock);
-    int code = guest_exit_code;
-    pthread_mutex_unlock(&output.lock);
+int sbm_ish_exit_code(int session_id) {
+    if (session_id < 0 || session_id >= SBM_MAX_SESSIONS) return -1;
+    pthread_mutex_lock(&sessions_lock);
+    int code = sessions[session_id].used ? sessions[session_id].exit_code : -1;
+    pthread_mutex_unlock(&sessions_lock);
     return code;
+}
+
+void sbm_ish_close(int session_id) {
+    if (session_id < 0 || session_id >= SBM_MAX_SESSIONS) return;
+    pthread_mutex_lock(&sessions_lock);
+    struct session *session = &sessions[session_id];
+    pid_t_ pid = session->used ? session->pid : 0;
+    session->used = false;
+    session->tty = NULL;
+    pthread_mutex_unlock(&sessions_lock);
+
+    // Hung up, not killed. A shell ignores SIGTERM by design and takes SIGHUP
+    // as its terminal going away, which is what has happened.
+    if (pid > 0) {
+        struct task *task = pid_get_task(pid);
+        if (task != NULL) send_group_signal(task->group->pgid, SIGHUP_, SIGINFO_NIL);
+    }
 }
 
 #endif // SBM_ISH_ENABLED

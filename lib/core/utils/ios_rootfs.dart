@@ -73,32 +73,46 @@ abstract final class IosRootfs {
     await isInstalled;
   }
 
-  /// Boots the guest and runs [command] in it.
+  /// Starts the machine, once. Returns 0, -EEXIST if it is already up, or a
+  /// negative errno.
   ///
-  /// One guest per app process: the engine keeps its state in globals, so a
-  /// second boot is refused rather than allowed to corrupt the first. That is
-  /// a constraint on the app, not a detail — a terminal and the Agent share
-  /// one machine, and two things at once are two processes inside it.
-  static int boot(String command, {int columns = 80, int rows = 25}) {
+  /// One machine per app process, because the engine keeps its kernel state in
+  /// globals — but a machine runs as many processes as it is asked to, which
+  /// is what [open] is for.
+  static int boot() {
     final boot = _boot;
     final root = _root;
     if (boot == null || root == null) return -1;
-    final rootPointer = root.toNativeUtf8();
-    final commandPointer = command.toNativeUtf8();
+    final pointer = root.toNativeUtf8();
     try {
-      return boot(rootPointer.cast(), commandPointer.cast(), columns, rows);
+      return boot(pointer.cast());
     } finally {
-      malloc.free(rootPointer);
-      malloc.free(commandPointer);
+      malloc.free(pointer);
     }
   }
 
-  /// What the guest has printed, waiting up to [timeout] for the first byte.
+  /// Opens a session: a process in the machine, on a pty of its own.
   ///
-  /// Null once it has exited and its output has been drained; empty when it
-  /// simply had nothing to say yet. A caller has to tell those apart, which is
-  /// why this is not just an empty string for both.
-  static String? read({
+  /// [command] null or empty gives an interactive shell. Sessions do not share
+  /// a console, so a terminal and a one-shot command cannot land on each
+  /// other's output.
+  static int open({String? command, int columns = 80, int rows = 25}) {
+    final open = _open;
+    if (open == null) return -1;
+    final pointer = (command ?? '').toNativeUtf8();
+    try {
+      return open(pointer.cast(), columns, rows);
+    } finally {
+      malloc.free(pointer);
+    }
+  }
+
+  /// What [session] has printed, waiting up to [timeout] for the first byte.
+  ///
+  /// Null once it has ended and its output is drained; empty when it simply
+  /// had nothing to say yet. A caller has to tell those apart.
+  static String? read(
+    int session, {
     Duration timeout = const Duration(milliseconds: 200),
     int limit = 8192,
   }) {
@@ -106,11 +120,10 @@ abstract final class IosRootfs {
     if (read == null) return null;
     final buffer = malloc<Uint8>(limit);
     try {
-      final count = read(buffer.cast(), limit, timeout.inMilliseconds);
-      // -EBUSY: the guest holds the output lock and is not giving it back,
-      // which means a guest thread died holding it. Told apart from the guest
-      // having exited, because the answer is different — that one is over,
-      // this one is broken.
+      final count = read(session, buffer.cast(), limit, timeout.inMilliseconds);
+      // -EBUSY: a guest thread died holding the output lock. Told apart from
+      // the session having ended, because the answer is different — that one
+      // is over, this one is broken.
       if (count == -16) throw StateError('The guest stopped holding its lock');
       if (count < 0) return null;
       if (count == 0) return '';
@@ -120,28 +133,33 @@ abstract final class IosRootfs {
     }
   }
 
-  /// Types [input] at the guest.
-  static int write(String input) {
+  /// Types [input] at [session].
+  static int write(int session, String input) {
     final write = _write;
     if (write == null) return -1;
     final pointer = input.toNativeUtf8();
     try {
-      return write(pointer.cast(), pointer.length);
+      return write(session, pointer.cast(), pointer.length);
     } finally {
       malloc.free(pointer);
     }
   }
 
-  /// Tells the guest its terminal changed size.
-  static void resize(int columns, int rows) => _resize?.call(columns, rows);
+  /// Tells [session] its terminal changed size.
+  static void resize(int session, int columns, int rows) =>
+      _resize?.call(session, columns, rows);
 
-  /// The guest's exit status, or null while it is still running.
-  static int? get exitCode {
-    final code = _exitCode?.call() ?? -1;
+  /// [session]'s exit status, or null while it is still running.
+  static int? exitCode(int session) {
+    final code = _exitCode?.call(session) ?? -1;
     return code < 0 ? null : code;
   }
 
-  // — The engine's six functions ————————————————————————————————————
+  /// Ends [session]. Its process is hung up, not killed: a shell ignores
+  /// SIGTERM and takes SIGHUP as its terminal going away, which it has.
+  static void close(int session) => _close?.call(session);
+
+  // — The engine's functions ————————————————————————————————————————
   //
   // Looked up in the running process rather than a `.dylib` of their own: the
   // shim is compiled into the app, not shipped beside it. Each is resolved
@@ -153,75 +171,46 @@ abstract final class IosRootfs {
       ? DynamicLibrary.process()
       : null;
 
-  static final _available = _lookupAvailable();
-  static final _boot = _lookupBoot();
-  static final _read = _lookupRead();
-  static final _write = _lookupWrite();
-  static final _resize = _lookupResize();
-  static final _exitCode = _lookupExitCode();
-
-  static bool Function()? _lookupAvailable() {
+  static T? _look<T extends Function>(String name, T Function(DynamicLibrary) f) {
+    final process = _process;
+    if (process == null) return null;
     try {
-      return _process
-          ?.lookupFunction<Bool Function(), bool Function()>(
-            'sbm_ish_available',
-          );
+      return f(process);
     } catch (_) {
       return null;
     }
   }
 
-  static int Function(Pointer<Char>, Pointer<Char>, int, int)? _lookupBoot() {
-    try {
-      return _process?.lookupFunction<
-        Int Function(Pointer<Char>, Pointer<Char>, Int, Int),
-        int Function(Pointer<Char>, Pointer<Char>, int, int)
-      >('sbm_ish_boot');
-    } catch (_) {
-      return null;
-    }
-  }
-
-  static int Function(Pointer<Char>, int, int)? _lookupRead() {
-    try {
-      return _process?.lookupFunction<
-        Int Function(Pointer<Char>, Int, Int),
-        int Function(Pointer<Char>, int, int)
-      >('sbm_ish_read');
-    } catch (_) {
-      return null;
-    }
-  }
-
-  static int Function(Pointer<Char>, int)? _lookupWrite() {
-    try {
-      return _process?.lookupFunction<
-        Int Function(Pointer<Char>, Int),
-        int Function(Pointer<Char>, int)
-      >('sbm_ish_write');
-    } catch (_) {
-      return null;
-    }
-  }
-
-  static void Function(int, int)? _lookupResize() {
-    try {
-      return _process
-          ?.lookupFunction<Void Function(Int, Int), void Function(int, int)>(
-            'sbm_ish_resize',
-          );
-    } catch (_) {
-      return null;
-    }
-  }
-
-  static int Function()? _lookupExitCode() {
-    try {
-      return _process?.lookupFunction<Int Function(), int Function()>(
-        'sbm_ish_exit_code',
-      );
-    } catch (_) {
-      return null;
-    }
-  }
+  static final _available = _look(
+    'sbm_ish_available',
+    (p) => p.lookupFunction<Bool Function(), bool Function()>('sbm_ish_available'),
+  );
+  static final _boot = _look(
+    'sbm_ish_boot',
+    (p) => p.lookupFunction<Int Function(Pointer<Char>), int Function(Pointer<Char>)>('sbm_ish_boot'),
+  );
+  static final _open = _look(
+    'sbm_ish_open',
+    (p) => p.lookupFunction<Int Function(Pointer<Char>, Int, Int), int Function(Pointer<Char>, int, int)>('sbm_ish_open'),
+  );
+  static final _read = _look(
+    'sbm_ish_read',
+    (p) => p.lookupFunction<Int Function(Int, Pointer<Char>, Int, Int), int Function(int, Pointer<Char>, int, int)>('sbm_ish_read'),
+  );
+  static final _write = _look(
+    'sbm_ish_write',
+    (p) => p.lookupFunction<Int Function(Int, Pointer<Char>, Int), int Function(int, Pointer<Char>, int)>('sbm_ish_write'),
+  );
+  static final _resize = _look(
+    'sbm_ish_resize',
+    (p) => p.lookupFunction<Void Function(Int, Int, Int), void Function(int, int, int)>('sbm_ish_resize'),
+  );
+  static final _exitCode = _look(
+    'sbm_ish_exit_code',
+    (p) => p.lookupFunction<Int Function(Int), int Function(int)>('sbm_ish_exit_code'),
+  );
+  static final _close = _look(
+    'sbm_ish_close',
+    (p) => p.lookupFunction<Void Function(Int), void Function(int)>('sbm_ish_close'),
+  );
 }

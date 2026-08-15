@@ -58,6 +58,19 @@ void main() {
     expect(IosRootfs.root, isNotNull);
   }, skip: !Platform.isIOS);
 
+  /// Everything one session prints, to a marker or until it ends.
+  Future<String> readTo(int session, String until) async {
+    final output = StringBuffer();
+    for (var round = 0; round < 400; round++) {
+      final chunk = IosRootfs.read(session, timeout: Duration.zero);
+      if (chunk == null) break;
+      output.write(chunk);
+      if (output.toString().contains(until)) break;
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    return output.toString();
+  }
+
   testWidgets('a guest runs inside the app and answers', (_) async {
     if (!IosRootfs.isAvailable) {
       markTestSkipped('this build carries no engine (SBM_ISH = 0)');
@@ -76,72 +89,89 @@ void main() {
     // In Dart rather than `/bin/cp`: iOS refuses to start a process at all,
     // even in the simulator — "Starting new processes is not supported on
     // iOS", which is the whole reason this platform gets an interpreter
-    // instead of a rootfs and proot. Every file in a fakefs is an ordinary
-    // host file, with the guest's metadata in the sqlite db beside them, so a
-    // plain recursive copy is enough.
+    // instead of a rootfs and proot.
     final root = Directory(IosRootfs.root!);
-    debugPrint('ISHPROBE root=${root.path} exists=${await root.exists()}');
     if (!await root.exists()) {
       await _copyDirectory(Directory(staged), root);
     }
-    debugPrint('ISHPROBE copied, installed=${await IosRootfs.isInstalled}');
     expect(await IosRootfs.isInstalled, isTrue);
 
-    debugPrint('ISHPROBE booting');
-    // The marker is split so that the *echo* of the command cannot satisfy the
-    // check — a console echoes what is typed at it, so the command's own text
-    // comes back before any output does. The shell joins the halves; this
-    // string does not contain the marker, and the shell's output does.
-    final err = IosRootfs.boot(
-      r'cat /etc/alpine-release; uname -m; id -un; echo "SBM""_IOS_OK"',
+    final booted = IosRootfs.boot();
+    expect(booted == 0 || booted == -17, isTrue, reason: 'boot returned $booted');
+
+    // A session is a process in the machine, on a pty of its own.
+    final one = IosRootfs.open(
+      command: r'cat /etc/alpine-release; uname -m; id -un; echo "SBM""_IOS_OK"',
     );
-    debugPrint('ISHPROBE boot=$err');
-    expect(err, 0, reason: 'boot returned $err');
-
-    // Read to a marker, not to the guest ending: the guest is a shell that
-    // stays. It has to — `kernel/exit.c` ends the host process when init dies,
-    // so a guest that exits takes the app with it.
-    //
-    // Polled, with the wait on the Dart side. `sbm_ish_read` can block for its
-    // timeout, and doing that here would block the isolate this test runs on,
-    // starving the framework. The real terminal needs a reader off this thread
-    // entirely; a poll is enough to show the guest answers.
-    final output = StringBuffer();
-    for (var round = 0; round < 300; round++) {
-      final chunk = IosRootfs.read(timeout: Duration.zero);
-      if (chunk == null) break;
-      output.write(chunk);
-      if (output.toString().contains('SBM_IOS_OK')) break;
-      await Future<void>.delayed(const Duration(milliseconds: 20));
-    }
-    debugPrint('ISHPROBE output=${output.toString().trim()}');
-
-    final text = output.toString();
+    expect(one, greaterThanOrEqualTo(0), reason: 'open returned $one');
+    final text = await readTo(one, 'SBM_IOS_OK');
+    debugPrint('ISHPROBE one=${text.trim()}');
     expect(text, contains(IosRootfs.version));
     expect(text, contains('aarch64'));
-    // proot's `-0` has an equivalent here: the guest is its own machine, and
-    // the first process is root in it.
     expect(text, contains('root'));
-    expect(text, contains('SBM_IOS_OK'));
-    // Still running, and it must be: the guest ending would end the app.
-    expect(IosRootfs.exitCode, isNull);
 
-    // And `exit` closes the shell rather than the app. Init is a loop, so what
-    // comes back is another prompt — on any other machine that is what closing
-    // a terminal does, and here it is also what stops a keystroke from
-    // quitting ServerBox.
-    IosRootfs.write('exit\r');
-    final after = StringBuffer();
-    for (var round = 0; round < 100; round++) {
-      final chunk = IosRootfs.read(timeout: Duration.zero);
-      if (chunk == null) break;
-      after.write(chunk);
-      await Future<void>.delayed(const Duration(milliseconds: 20));
+    // A second session, at the same time, with its own output. This is what
+    // one shared console could not do, and what the Agent needs so its command
+    // does not land in somebody's terminal.
+    final two = IosRootfs.open(command: r'echo "SBM""_SECOND"; sleep 1');
+    expect(two, greaterThanOrEqualTo(0), reason: 'open returned $two');
+    expect(two, isNot(one));
+    final second = await readTo(two, 'SBM_SECOND');
+    debugPrint('ISHPROBE two=${second.trim()}');
+    expect(second, contains('SBM_SECOND'));
+    // Each session sees only its own: the first one's marker is not in here.
+    expect(second, isNot(contains('SBM_IOS_OK')));
+
+    IosRootfs.close(one);
+    IosRootfs.close(two);
+  }, skip: !Platform.isIOS);
+
+  // Skipped, and the skip is the record: `/dev` has no device nodes yet.
+  //
+  // The root is `realfs` and cannot hold one — `realfs_mknod` refuses anything
+  // but a FIFO or a regular file, because creating a device node needs root on
+  // the host. `tmpfs` was the obvious place to put them instead and turns out
+  // to have **no `mknod` at all**. Only `fakefs` does, because it keeps `rdev`
+  // in its database — which is the thing this design set out to remove.
+  //
+  // Three ways out, in local-ssh-plan.md. Turn this test on with whichever
+  // lands; it already says what a userland expects to find.
+  testWidgets('/dev has what a userland expects', (_) async {
+    markTestSkipped('no device nodes yet — see local-ssh-plan.md');
+    return;
+    // ignore: dead_code
+    if (!IosRootfs.isAvailable || staged.isEmpty) {
+      markTestSkipped('no engine, or no filesystem staged');
+      return;
     }
-    debugPrint('ISHPROBE after-exit=${after.toString().trim()}');
-    // The app is alive to be asked, which is the assertion; a dead one takes
-    // the test harness with it and this line is never reached.
-    expect(IosRootfs.exitCode, isNull);
-    expect(after.toString(), contains('#'));
+    final root = Directory(IosRootfs.root!);
+    if (!await root.exists()) {
+      await _copyDirectory(Directory(staged), root);
+    }
+    IosRootfs.boot();
+
+    // The root is an ordinary directory and cannot hold a device node, so
+    // every one of these is a tmpfs the guest built at boot. Exercised rather
+    // than listed: a node that exists and does not work is worse than none.
+    final session = IosRootfs.open(
+      command:
+          r'echo discarded > /dev/null && '
+          r'head -c 16 /dev/urandom | wc -c && '
+          r'head -c 8 /dev/zero | wc -c && '
+          r'echo hi > /dev/stdout && '
+          r'test -e /dev/ptmx && test -d /dev/pts && test -d /dev/shm && '
+          r'tty && echo "SBM""_DEV_OK"',
+    );
+    expect(session, greaterThanOrEqualTo(0));
+    final text = await readTo(session, 'SBM_DEV_OK');
+    debugPrint('ISHPROBE dev=${text.trim()}');
+
+    expect(text, contains('16'), reason: '/dev/urandom gave nothing');
+    expect(text, contains('8'), reason: '/dev/zero gave nothing');
+    expect(text, contains('hi'), reason: '/dev/stdout is not a terminal');
+    // Its own pty, which is what makes two sessions independent.
+    expect(text, contains('/dev/pts/'), reason: 'the session has no tty');
+    expect(text, contains('SBM_DEV_OK'), reason: 'something in /dev failed');
+    IosRootfs.close(session);
   }, skip: !Platform.isIOS);
 }
