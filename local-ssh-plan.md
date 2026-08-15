@@ -13,10 +13,12 @@ which has to be able to run commands and read and write files here as well as
 on a server. The agent turns out to be the reason to do this properly rather
 than bolting a second path on — see [Agent mode](#agent-mode).
 
-Step 1 is a week. Step 3 on Android is blocked by a documented OS restriction
-and step 3 on iOS is a GPLv3 emulator plus an App Store review argument. This
-document is what is known, what is guessed, and what has to be measured before
-any of it is committed to.
+Step 1 was a week. Step 3 on Android read as blocked by a documented OS
+restriction until it was measured — it is not, and it is done. Step 3 on iOS is
+still a GPLv3 emulator plus an App Store review argument. This document is what
+is known, what is guessed, and what has to be measured before any of it is
+committed to; the measurements are kept where they were made rather than
+summarised away.
 
 **Status: stages 1, 2, 2b and 3 are done. Stage 4 is done on Android; its iOS
 half is not started.**
@@ -46,92 +48,56 @@ left to fail:
 | the agent panel in the terminal | Its tools name a server. The Agent tab reaches this device instead |
 | the sudo button | The shell is already whoever is running the app |
 
-## The seam already exists
+## The seam already existed — done
 
 `ShellBackend` (`lib/data/model/server/shell_backend.dart`) is the interface a
-terminal is written against: open a shell, resize it, read bytes, ping it. Two
-implementations today — `SshShellBackend` and `MonitorShellBackend`. A local
-shell is a third, and nothing above `TerminalSession` has to learn about it.
+terminal is written against: open a shell, resize it, read bytes, ping it.
+`SshShellBackend` and `MonitorShellBackend` were the two implementations; a
+local shell became the third, and nothing above `TerminalSession` had to learn
+about it.
 
-What does need work is that `TerminalSession` is constructed from a `Spi`:
+What needed work was that `TerminalSession` was constructed from a `Spi` — for
+the terminal environment and tmux `LANG`, for which backend to build, for the
+page title and tab name, and for whether to offer the sudo-password button.
 
-| Uses `spi` for | Where |
-| --- | --- |
-| `envs` → terminal environment, tmux `LANG` | `terminal_session.dart` |
-| `ssh != null`, `monitorHttp` → which backend | `terminal_session.dart` |
-| `id` → restoration bucket, `serverProvider`, `TermSessionManager` | `ssh/page/page.dart` |
-| `name` → page title, tab name | `ssh/page/page.dart`, `ssh/tab.dart` |
-| `isRoot` → whether to offer the sudo-password button | `ssh/page/page.dart` |
+A local session has no server, so it took the shape the file tab uses: one
+sealed class, a local case and a remote one, two ways to reach something and no
+other difference the page cares about. That is `TerminalSource`
+(`lib/data/ssh/terminal_source.dart`) — `ServerSource` and `LocalSource`, the
+second with a `rootfs` flag, since the Linux userland is still this device.
+`TerminalSession` takes one of those rather than a `Spi`, and the page reads
+its title and identity from the session.
 
-A local session has no server. The shape to copy is the file tab's
-`_FileSession`: one sealed class, a local and a remote case, two ways to reach
-something and no other difference the page cares about
-(`lib/view/page/storage/tab.dart`). `TerminalSession` should take a backend
-factory rather than a `Spi`, and the page should read its title and identity
-from the session rather than from a server.
+One line of that table did not survive contact: the server id was also the
+restoration bucket's name, and Flutter's restoration turned out never to have
+worked in this app at all — measured, `bucket == null`, because
+`MaterialApp.home` builds its route without a restoration id. The tab set lives
+in `Stores.history.sshTabs` now. See TODOS.md for the three places still using
+the dead mechanism.
 
-The rename itself is two string literals — `home_tab.dart:32` and `:62` both
-say `'SSH'` where every other tab uses `libL10n`. `libL10n.terminal` exists.
+The rename itself was two string literals in `home_tab.dart`.
 
 ## Agent mode
 
-The agent has to run commands and touch files here too. It cannot today, and
-the reason is not the missing local backend — it is that the agent never
-adopted the abstraction the rest of the app runs on.
-
-`ServerExec` (`lib/data/model/server/server_exec.dart`) is what the process,
-systemd, container and power features use to run one command and get its output
-back, with `SshExec` and `MonitorExec` behind it. The agent uses none of it:
-
-```dart
-// global_agent_tools.dart:584
-typedef AgentShellHandle = ({SSHClient client, String? serverId});
-// :814
-final session = await client.execute(command);
-```
-
-`ServerExec` appears zero times across all nine agent files — `adhoc_ssh.dart`,
-`agent_session.dart`, `agent_shell.dart`, `ask_ai.dart`,
-`global_agent_tools.dart`, and the four under `view/page/agent/`. The
-in-terminal agent does the same thing with its own `SSHSession`
-(`ssh/page/page.dart:171`, `_aiCommandSession`).
-
-Two consequences. One is the local shell: there is nowhere to put it. The other
-is already a live bug — `_connectedServer` throws
+The agent has to run commands and touch files here too. It could not, and the
+reason was not the missing local backend — it was that the agent had never
+adopted the abstraction the rest of the app runs on. `AgentShellHandle` carried
+an `SSHClient`, so a local case had nowhere to go, and a monitor-only server was
+refused with
 
 > Server X has no SSH credential, so it cannot run commands. It reports status
 > over its monitor agent only.
 
-for a monitor-only server, which `MonitorExec` has been able to run commands on
-since the agent-exec work landed. Fixing the coupling fixes both.
-
-### What the tools need
-
-This is the part that got easier while the document sat. The agent no longer
-resolves a tool call straight to a server: there is a sealed target type, and a
-second kind of target already exists beside the configured one.
-
-```dart
-// global_agent_tools.dart:619, :626
-final class ConfiguredServerTarget extends AgentSshTarget { ... }
-final class AdHocSessionTarget extends AgentSshTarget { ... }
-```
-
-So "this device" is a **third case of that sealed type**, not the reserved
-`server_id` string this document originally proposed. Better in every way: the
-compiler lists the places that have to answer for it, and a device is not a
+for a machine `MonitorExec` could already run commands on. One coupling, two
+symptoms. Done in 2b: the handle carries a `ServerExec`, and "this device" is a
+third case of the sealed `AgentSshTarget` rather than a reserved `server_id`
+string — the compiler lists what has to answer for it, and a device is not a
 server with a magic name.
-
-What has *not* moved is what the target resolves **to** —
-`AgentShellHandle = ({SSHClient client, String? serverId})`. The type abstracts
-which machine; it does not abstract how a command runs there, which is why a
-local case has nowhere to go and a monitor-only server is still refused. Change
-the payload to `ServerExec` and both follow.
 
 | Tool | On a server | On this device |
 | --- | --- | --- |
-| `run_shell_command` | `ServerExec` | `LocalExec` — the same interface over `Process`/`flutter_pty` |
-| `read_file` / `write_file` | SFTP | `dart:io` `File`, inside whatever the platform lets the app reach |
+| `run_shell_command` | `ServerExec` | `LocalExec` — pipes, not a pty, so the two streams stay apart |
+| `read_file` / `write_file` | SFTP | `dart:io` `File`. On Android, inside the rootfs and nowhere else (`AndroidRootfs.hostPathOf`); elsewhere, whatever the platform lets the app reach |
 | `serverbox` | connection state | not applicable; the device is always "connected" |
 
 ### Safety is a different question here
@@ -140,11 +106,14 @@ Running model-authored commands on a server the user deliberately configured is
 one risk. Running them on the device the app itself lives on is another: the
 Hive stores, the private keys and the keychain are all on that filesystem.
 
-What exists today is `AskAiCommandRisk {readOnly, caution, destructive}` with
-`canAutoRun => modelSafeToRun && risk == readOnly`, where the local half is a
-regex allowlist of read-only command prefixes (`ask_ai_models.dart:472`). That
-is a reasonable gate on *auto-running*. It is not a sandbox, and it should not
-be asked to be one.
+`AskAiCommandRisk` is a regex allowlist with
+`canAutoRun => modelSafeToRun && risk == readOnly`. That is a reasonable gate on
+*auto-running*. It is not a sandbox, and it should not be asked to be one. It
+has since grown two values that withhold auto-run without claiming anything
+about the command — `unknown` for what the allowlist did not recognise, and
+`unvettedHost` for a recognised read-only command on a host met this
+conversation. One verdict per cause, because a badge reading "changes system"
+over a `sleep` is the app contradicting the model.
 
 Positions to take before writing any of it:
 
@@ -172,7 +141,7 @@ way the terminal's does, and `ServerCapabilities` is the existing place to ask.
 | Linux | `flutter_pty` | unnecessary — it is Linux |
 | Windows | `flutter_pty` (ConPTY) | unnecessary — WSL exists |
 | macOS | `flutter_pty`, **DMG build only** | unnecessary |
-| Android | `/system/bin/sh`, toybox only | blocked, see below |
+| Android | `/system/bin/sh`, toybox only | **done** — Alpine under proot, see below |
 | iOS | impossible — no `fork`/`exec` for App Store apps | only via an interpreter |
 
 `flutter_pty` is MIT, covers all five platforms, and is the obvious choice for
@@ -245,7 +214,7 @@ an Xcode project; the Alpine tarball ships as an asset. That is a vendored
 GPLv3 C codebase inside a Flutter app, with its own build step in CI for a
 platform that currently has none.
 
-## Android: the wall
+## Android: the wall, and the way through it
 
 Android 10 removed execute permission on the app's own data directory. From
 [the behaviour-changes doc](https://developer.android.com/about/versions/10/behavior-changes-10):
@@ -254,10 +223,15 @@ Android 10 removed execute permission on the app's own data directory. From
 > files within the app's home directory.
 
 Binaries shipped in the APK are fine — `nativeLibraryDir` is read-only and
-executable, which is why proot is packaged as `jniLibs/arm64-v8a/` and not only
-as an asset. But a package manager exists to write **new** binaries into the
-rootfs, and the rootfs is in the data directory. `apk add` succeeds and the
-thing it installed will not run.
+executable, which is why proot is packaged into `jniLibs/arm64-v8a/`. The worry
+was the package manager: it exists to write **new** binaries into the rootfs,
+the rootfs is in the data directory, and so `apk add` would succeed and the
+thing it installed would not run.
+
+It does run. Nothing the guest installs is ever `execve`d by the kernel — proot
+maps it — so the rule never applies to it. Measured: `apk add curl` inside the
+container, then `curl --version`, on an API 36 emulator
+(`integration_test/rootfs_shell_test.dart`).
 
 ### Measured, on an API 36 emulator with the app targeting 36
 
@@ -292,7 +266,7 @@ aarch64 minirootfs unpacked into `/data/user/0/<pkg>/files`:
 | `busybox` directly | denied, errno 13 |
 | via `/system/bin/linker64` | `library "libc.musl-aarch64.so.1" not found` |
 | **under proot** | **exit 0** |
-| a shell reading the rootfs's own files | `3.21.3`, `aarch64` |
+| a shell reading the rootfs's own files | the release it was unpacked from, `aarch64` |
 
 PRoot never asks the kernel to `execve` a guest binary. It carries a loader
 whose job is to map the guest ELF and hand control to the guest's own
@@ -312,16 +286,19 @@ Two requirements, both found by getting them wrong first:
   with `proot error: execve("/bin/busybox"): Permission denied`, which reads
   like the wall and is not.
 
-So the Android half of stage 4 is **not blocked**. What it costs is a proot
-build in CI for one ABI, an Alpine tarball as an asset, `useLegacyPackaging`
-(a larger install), and the guest's environment — `PATH` has to be the
-rootfs's, or a shell finds none of its own tools.
+So the Android half of stage 4 was **not blocked**, and it is now built. What it
+cost: a proot build in CI for one ABI (`scripts/build-proot-android.sh`, run
+from `.github/workflows/build.yml`, which then checks both binaries actually
+reached the APK), an Alpine tarball fetched and digest-checked on first use
+rather than shipped as an asset, `useLegacyPackaging` — and the guest's
+environment, because `PATH` has to be the rootfs's or a shell finds none of its
+own tools.
 
-Not reproduced on physical hardware, and not with an app the Play Store has
-seen. The binaries were built by hand into a scratch directory; this repository
-has no recipe for them yet, so the test skips unless they are staged.
+Still not reproduced on physical hardware, and not with an app the Play Store
+has seen.
 
-Three ways out, all with a cost:
+The three routes this document weighed before the measurement are recorded
+because the reasoning still applies if proot ever stops working:
 
 | Route | Cost |
 | --- | --- |
@@ -333,11 +310,9 @@ There is a widely repeated fourth — invoking `/system/bin/linker64` on a file 
 app data — and it is the one measured above. It works, and it does not reach a
 musl rootfs, so it settles the question without opening the door.
 
-OpenMinis is the confusing data point. It targets **SDK 35**, ships an Alpine
-minirootfs plus proot, and its proot fork is described only as "patches applied
-to work better under Termux" — nothing about W^X. Either it hits this wall, or
-there is a mechanism not visible from the build scripts. Worth reading the
-Kotlin/JNI side before designing anything.
+OpenMinis was the confusing data point: SDK 35, an Alpine minirootfs plus proot,
+and a fork described only as "patches applied to work better under Termux".
+Answered — it is proot's own loader, and it is what this app does now.
 
 ## Licensing and review
 
