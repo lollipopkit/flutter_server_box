@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
@@ -72,25 +73,33 @@ void main() {
     // host file, with the guest's metadata in the sqlite db beside them, so a
     // plain recursive copy is enough.
     final root = Directory(IosRootfs.root!);
+    debugPrint('ISHPROBE root=${root.path} exists=${await root.exists()}');
     if (!await root.exists()) {
       await _copyDirectory(Directory(staged), root);
     }
+    debugPrint('ISHPROBE copied, installed=${await IosRootfs.isInstalled}');
     expect(await IosRootfs.isInstalled, isTrue);
 
+    debugPrint('ISHPROBE booting');
     final err = IosRootfs.boot(
       'cat /etc/alpine-release; uname -m; id -un; echo SBM_"" IOS_OK',
     );
+    debugPrint('ISHPROBE boot=$err');
     expect(err, 0, reason: 'boot returned $err');
 
-    // Read until the guest ends. The engine reports that by returning null
-    // rather than an empty string, which is the difference between a quiet
-    // guest and a finished one.
+    // Polled, with the wait on the Dart side. `sbm_ish_read` can block for a
+    // timeout, and doing that here would block the isolate this test runs on —
+    // which starves the framework and is why an earlier version of this test
+    // never completed. The real terminal will need a reader off this thread
+    // entirely; a poll is enough to show the guest answers.
     final output = StringBuffer();
-    for (var round = 0; round < 200; round++) {
-      final chunk = IosRootfs.read(timeout: const Duration(milliseconds: 100));
+    for (var round = 0; round < 300; round++) {
+      final chunk = IosRootfs.read(timeout: Duration.zero);
       if (chunk == null) break;
       output.write(chunk);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
     }
+    debugPrint('ISHPROBE output=${output.toString().trim()}');
 
     final text = output.toString();
     expect(text, contains(IosRootfs.version));

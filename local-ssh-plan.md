@@ -279,16 +279,34 @@ says. Two things the wiring needed, both found by measurement:
   builds with `-std=gnu11`; the xcconfig now sets the same, and only when the
   switch is on.
 
-What does **not** work yet: booting a guest from inside the app. The test that
-does it does not complete — no crash and nothing in the simulator's log, so the
-app is alive and the isolate is stuck. Two suspects, neither confirmed:
-`sbm_ish_boot` waits on a condvar on the calling thread, which in a test is the
-Dart main isolate's; and the shim installs a `sigaltstack` but not the engine's
-own `SIGSEGV`/`SIGBUS` handler, which the interpreter relies on to recover from
-a guest fault — `main.c` installs it, and Dart's VM has handlers of its own
-that may be involved. It works in the same simulator outside Flutter (a CLI
-linked against the same libraries and the same shim), which is what makes the
-difference worth chasing rather than the engine.
+**The guest now boots inside the app**: `sbm_ish_boot` returns 0, measured in
+the simulator. Getting there meant dropping `xX_main_Xx` and doing what
+OpenMinis does — it ships this engine in an app, and `src/ios/iSH/ISHKernel.m`
+is the reference:
+
+- `mount_root(&fakefs, <root>/data)`, `become_first_process()`,
+  `current->thread = pthread_self()`, the device nodes, `/proc` and `/dev/pts`,
+  the exit hook, our tty driver, `set_console_device`, `create_stdio`,
+  `do_execve` — the same sequence, without the command-line parsing and
+  without the host tty driver `xX_main_Xx` installs.
+- **`task_start(current)`, not `task_run_current()`.** The second turns the
+  calling thread into the guest and never returns, which is right for a CLI and
+  a hang for anything with a caller. The first gives the guest its own thread,
+  so `sbm_ish_boot` can be an ordinary function call.
+- **The crash handler is not optional**, and an embedded one differs from the
+  CLI's twice over: it must not intercept signals on threads that are not the
+  guest's (`ish_thread_marker`), and it must not `_exit`, because that is the
+  app. `die_handler` needs replacing for the same reason — the default calls
+  `abort()`.
+
+What still does not work: the **first read after boot never returns**, so the
+test does not complete. No crash, nothing in the simulator's log, the app alive
+and quiet. The likely mechanism, from the shape of it: `sbm_ish_read` takes the
+output lock, and a guest thread that faulted inside `console_write` is parked
+by the crash handler while **holding** that lock — the handler blocks all
+signals and sleeps forever by design, which is safe for the app and fatal for
+whatever it was holding. Next: log from the handler, and take nothing across
+it that a reader needs.
 
 A useful thing fell out of the attempt: `Process.run` is refused on iOS *even
 in the simulator* — "Starting new processes is not supported on iOS". The

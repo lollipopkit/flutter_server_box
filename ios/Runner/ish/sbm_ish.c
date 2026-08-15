@@ -11,6 +11,7 @@ int sbm_ish_boot(const char *rootfs, const char *command, int columns, int rows)
     (void)rootfs; (void)command; (void)columns; (void)rows;
     return -1;
 }
+
 int sbm_ish_read(char *buffer, int length, int timeout_ms) {
     (void)buffer; (void)length; (void)timeout_ms;
     return -1;
@@ -31,12 +32,108 @@ int sbm_ish_exit_code(void) { return -1; }
 #include <string.h>
 #include <sys/time.h>
 
+#include <sys/stat.h>
+
 #include "kernel/calls.h"
 #include "kernel/init.h"
 #include "kernel/task.h"
+#include "fs/dev.h"
 #include "fs/devices.h"
+#include "fs/fd.h"
+#include "fs/path.h"
 #include "fs/tty.h"
-#include "xX_main_Xx.h"
+
+// — Surviving a guest fault ————————————————————————————————————————
+//
+// Not optional, and not the same handler a command-line iSH installs. The
+// interpreter recovers from a guest segfault by unwinding the block it was in,
+// which it can only do from a signal handler; without one the first guest
+// fault kills the process. Embedded, "the process" is the whole app, so this
+// one also has to keep its hands off threads that are not the guest's — a
+// handler that intercepts a crash on Dart's or UIKit's thread turns somebody
+// else's bug into ours.
+//
+// The shape is OpenMinis' `ISHKernel.m`, which is the same engine shipping in
+// an app. The offsets below are `cpu-offsets.h` values and must match it.
+
+extern __thread volatile sig_atomic_t in_jit;
+extern __thread volatile uint64_t jit_saved_pc;
+extern __thread int ish_thread_marker;
+extern void jit_crash_trampoline(void);
+extern void (*die_handler)(const char *msg);
+
+#define CPU_OFFSET_pc 272
+#define CPU_OFFSET_segfault_addr 832
+#define CPU_OFFSET_segfault_was_write 840
+#define CPU_OFFSET_jit_exit_sp 920
+
+static void guest_crash_handler(int signal_number, siginfo_t *info, void *context) {
+#ifdef __aarch64__
+    if ((signal_number == SIGSEGV || signal_number == SIGBUS) && in_jit) {
+        ucontext_t *uc = (ucontext_t *)context;
+        uint64_t cpu = uc->uc_mcontext->__ss.__x[1];
+        uint64_t x7 = uc->uc_mcontext->__ss.__x[7];
+        uint64_t x10 = uc->uc_mcontext->__ss.__x[10];
+
+        *(uint64_t *)(cpu + CPU_OFFSET_segfault_addr) = (x7 - x10) & 0xffffffffffffULL;
+        *(int *)(cpu + CPU_OFFSET_segfault_was_write) =
+            (uc->uc_mcontext->__es.__esr & 0x40) != 0;
+        *(uint64_t *)(cpu + CPU_OFFSET_pc) = (uint64_t)jit_saved_pc;
+        uc->uc_mcontext->__ss.__sp = *(uint64_t *)(cpu + CPU_OFFSET_jit_exit_sp);
+        uc->uc_mcontext->__ss.__pc = (uint64_t)jit_crash_trampoline;
+
+        sigset_t unblock;
+        sigemptyset(&unblock);
+        sigaddset(&unblock, signal_number);
+        sigprocmask(SIG_UNBLOCK, &unblock, NULL);
+        return;
+    }
+#else
+    (void)info;
+#endif
+    // Not a guest thread at all. Put the default handler back and re-raise, so
+    // whatever crashed is reported as itself rather than swallowed here.
+    if (!ish_thread_marker) {
+        struct sigaction restore = {0};
+        restore.sa_handler = SIG_DFL;
+        sigaction(signal_number, &restore, NULL);
+        raise(signal_number);
+        return;
+    }
+    // A guest thread, outside the interpreter. Standalone iSH exits here;
+    // exiting would take the app with it, so the thread is parked instead.
+    // `pthread_exit` is not an option: on iOS it raises SIGTRAP from some
+    // thread states, which is the crash this is avoiding.
+    sigset_t all;
+    sigfillset(&all);
+    pthread_sigmask(SIG_BLOCK, &all, NULL);
+    select(0, NULL, NULL, NULL, NULL);
+}
+
+/// What `die()` does when the app must not go with it.
+static void park_on_die(const char *message) {
+    (void)message;
+    sigset_t all;
+    sigfillset(&all);
+    pthread_sigmask(SIG_BLOCK, &all, NULL);
+    select(0, NULL, NULL, NULL, NULL);
+}
+
+static void install_crash_handler(void) {
+    static char alternate_stack[SIGSTKSZ];
+    stack_t stack = { .ss_sp = alternate_stack, .ss_size = SIGSTKSZ };
+    sigaltstack(&stack, NULL);
+
+    struct sigaction action = {0};
+    action.sa_sigaction = guest_crash_handler;
+    action.sa_flags = SA_SIGINFO | SA_ONSTACK;
+    sigaction(SIGSEGV, &action, NULL);
+    sigaction(SIGBUS, &action, NULL);
+    sigaction(SIGILL, &action, NULL);
+    sigaction(SIGTRAP, &action, NULL);
+    // Not SIGABRT: the system uses it for assertions and allocation failures,
+    // and taking it over hides those.
+}
 
 // — What the guest prints ————————————————————————————————————————————
 //
@@ -113,33 +210,12 @@ static bool booted;
 static int guest_exit_code = -1;
 static pthread_mutex_t boot_lock = PTHREAD_MUTEX_INITIALIZER;
 
-/// What the guest thread is told to start, and what it reports back.
-///
-/// All of it happens on that one thread because the kernel's `current` task is
-/// thread-local: `xX_main_Xx` sets `current->thread = pthread_self()`, so a
-/// boot on one thread and a run loop on another would be two different tasks,
-/// one of them missing.
+/// What the guest was started with, kept for the boot sequence to read.
 static struct {
     const char *rootfs;
     const char *command;
     int columns, rows;
-    int result;
-    bool ready;
-    pthread_mutex_t lock;
-    pthread_cond_t done;
-} boot = {
-    .result = -EAGAIN,
-    .lock = PTHREAD_MUTEX_INITIALIZER,
-    .done = PTHREAD_COND_INITIALIZER,
-};
-
-static void report_boot(int result) {
-    pthread_mutex_lock(&boot.lock);
-    boot.result = result;
-    boot.ready = true;
-    pthread_cond_broadcast(&boot.done);
-    pthread_mutex_unlock(&boot.lock);
-}
+} boot;
 
 static void guest_exited(struct task *task, int code) {
     // Only the first process ending is the guest ending; anything it spawned
@@ -151,14 +227,49 @@ static void guest_exited(struct task *task, int code) {
     pthread_mutex_unlock(&output.lock);
 }
 
-static void *run_guest(void *unused) {
-    (void)unused;
+/// Everything `xX_main_Xx` does, minus the parts an app cannot use.
+///
+/// Not that function, though it is tempting: it parses a command line,
+/// installs the tty driver that reads and writes the *host's* stdin and
+/// stdout, and builds the guest's stdio out of it. In an app those are the
+/// app's own streams. This is the same sequence with the console pointed
+/// somewhere a terminal can see, and it is the sequence OpenMinis uses to ship
+/// this engine.
+static int boot_kernel(void) {
+    install_crash_handler();
+    // Otherwise `die()` calls abort(), and the app goes with the guest.
+    die_handler = park_on_die;
 
-    // The interpreter recovers from a guest fault by unwinding the block it
-    // was in, which it can only do from a signal handler on its own stack.
-    static char alternate_stack[SIGSTKSZ];
-    stack_t stack = { .ss_sp = alternate_stack, .ss_size = SIGSTKSZ };
-    sigaltstack(&stack, NULL);
+    // The filesystem's files live under `data`; the metadata db sits beside it.
+    char data_path[MAX_PATH + 1];
+    snprintf(data_path, sizeof(data_path), "%s/data", boot.rootfs);
+    int err = mount_root(&fakefs, data_path);
+    if (err < 0) return err;
+
+    err = become_first_process();
+    if (err < 0) return err;
+    current->thread = pthread_self();
+
+    // What a userland expects to find. fakefs can hold device nodes; a real
+    // directory could not, which is half of why the filesystem has this shape.
+    generic_mknodat(AT_PWD, "/dev/null", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_NULL_MINOR));
+    generic_mknodat(AT_PWD, "/dev/zero", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_ZERO_MINOR));
+    generic_mknodat(AT_PWD, "/dev/full", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_FULL_MINOR));
+    generic_mknodat(AT_PWD, "/dev/random", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_RANDOM_MINOR));
+    generic_mknodat(AT_PWD, "/dev/urandom", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_URANDOM_MINOR));
+    generic_mknodat(AT_PWD, "/dev/tty", S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_TTY_MINOR));
+    generic_mknodat(AT_PWD, "/dev/console", S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_CONSOLE_MINOR));
+    generic_mknodat(AT_PWD, "/dev/ptmx", S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_PTMX_MINOR));
+
+    do_mount(&procfs, "proc", "/proc", "", 0);
+    do_mount(&devptsfs, "devpts", "/dev/pts", "", 0);
+    exit_hook = guest_exited;
+
+    tty_drivers[TTY_CONSOLE_MAJOR] = &sbm_console_driver;
+    set_console_device(TTY_CONSOLE_MAJOR, 1);
+    err = create_stdio("/dev/console", TTY_CONSOLE_MAJOR, 1);
+    if (err < 0) return err;
+    sbm_ish_resize(boot.columns, boot.rows);
 
     char environment[512] = {0};
     size_t written = 0;
@@ -168,32 +279,30 @@ static void *run_guest(void *unused) {
                         "HOME=/root") + 1;
     written += snprintf(environment + written, sizeof(environment) - written,
                         "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin") + 1;
+    written += snprintf(environment + written, sizeof(environment) - written,
+                        "PYTHONMALLOC=malloc") + 1;
 
-    char *const argv[] = {
-        (char *)"ish", (char *)"-f", (char *)boot.rootfs,
-        (char *)"/bin/sh", (char *)"-c", (char *)boot.command, NULL,
-    };
-    int err = xX_main_Xx(6, argv, environment);
-    if (err < 0) { report_boot(err); return NULL; }
+    // argv is NUL-separated and double-NUL terminated, which is what
+    // `do_execve` reads rather than an array.
+    char argv[4096];
+    size_t position = 0;
+    const char *parts[] = { "/bin/sh", "-c", boot.command };
+    for (size_t i = 0; i < 3; i++) {
+        size_t length = strlen(parts[i]) + 1;
+        if (position + length >= sizeof(argv) - 1) return -E2BIG;
+        memcpy(argv + position, parts[i], length);
+        position += length;
+    }
+    argv[position] = '\0';
 
-    // After, not before: `xX_main_Xx` installs the host's own tty driver and
-    // then builds stdio out of it. Putting ours back and building stdio again
-    // is what points the guest's console at this app instead of at the
-    // process's stdout, which belongs to the app and its logs.
-    tty_drivers[TTY_CONSOLE_MAJOR] = &sbm_console_driver;
-    err = create_stdio("/dev/console", TTY_CONSOLE_MAJOR, 1);
-    if (err < 0) { report_boot(err); return NULL; }
-    sbm_ish_resize(boot.columns, boot.rows);
+    err = do_execve("/bin/sh", 3, argv, environment);
+    if (err < 0) return err;
 
-    do_mount(&procfs, "proc", "/proc", "", 0);
-    do_mount(&devptsfs, "devpts", "/dev/pts", "", 0);
-    exit_hook = guest_exited;
-
-    report_boot(0);
-    // Never returns while the guest lives. This is the interpreter's dispatch
-    // loop, and it belongs nowhere near the UI thread.
-    task_run_current();
-    return NULL;
+    // Started, not run here. `task_run_current` would turn this thread into
+    // the guest and never return — fine for a command-line iSH, and a hang for
+    // anything with a caller waiting.
+    task_start(current);
+    return 0;
 }
 
 bool sbm_ish_available(void) { return true; }
@@ -211,30 +320,24 @@ int sbm_ish_boot(const char *rootfs, const char *command, int columns, int rows)
     booted = true;
     pthread_mutex_unlock(&boot_lock);
 
-    // Copied, because the thread outlives this call and the caller's strings
-    // may not.
+    // Copied: the guest outlives this call and the caller's strings may not.
     boot.rootfs = strdup(rootfs);
     boot.command = strdup(command);
     boot.columns = columns;
     boot.rows = rows;
 
-    pthread_t thread;
-    if (pthread_create(&thread, NULL, run_guest, NULL) != 0) return -EAGAIN;
-    pthread_detach(thread);
-
-    // Waited for, so a caller that gets 0 back knows the guest is running and
-    // one that gets an error knows it never started. Bounded: a boot that
-    // hangs is a bug, and hanging the caller with it hides which.
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    struct timespec until = { .tv_sec = now.tv_sec + 30, .tv_nsec = now.tv_usec * 1000 };
-    pthread_mutex_lock(&boot.lock);
-    while (!boot.ready) {
-        if (pthread_cond_timedwait(&boot.done, &boot.lock, &until) != 0) break;
+    // On the caller's thread, and it does not block: `task_start` gives the
+    // guest a thread of its own. The first version booted on a thread of its
+    // own and waited here for it, which hung — `current` is thread-local, so
+    // that arrangement put the task on one thread and everything waiting on
+    // another.
+    int err = boot_kernel();
+    if (err < 0) {
+        pthread_mutex_lock(&boot_lock);
+        booted = false;
+        pthread_mutex_unlock(&boot_lock);
     }
-    int result = boot.ready ? boot.result : -ETIMEDOUT;
-    pthread_mutex_unlock(&boot.lock);
-    return result;
+    return err;
 }
 
 int sbm_ish_read(char *buffer, int length, int timeout_ms) {
