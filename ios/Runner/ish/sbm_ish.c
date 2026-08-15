@@ -289,22 +289,32 @@ static int boot_kernel(void) {
     written += snprintf(environment + written, sizeof(environment) - written,
                         "PYTHONMALLOC=malloc") + 1;
 
-    // A shell, and not the caller's command. The first process is init, and
-    // `kernel/exit.c` ends the *host process* with `_exit(0)` when init dies —
-    // so a command as init means the app quits when the command finishes.
-    // Measured, and it is what the first version did: the guest booted, the
-    // command ran, and the app was gone before anything could read a byte of
-    // its output.
+    // Init is a shell in a loop, and neither half of that is arbitrary.
     //
-    // So init is a shell that stays, and a command is typed at it. That is
-    // also what a terminal is, which is where this ends up anyway.
+    // `kernel/exit.c` ends the *host process* with `_exit(0)` when init dies.
+    // A command as init therefore quits the app when the command finishes —
+    // measured, and it is what the first version did: the guest booted, the
+    // command ran, and the app was gone before a byte of output could be read.
+    // A plain shell as init has the same edge: typing `exit` would close the
+    // app rather than the terminal.
+    //
+    // The loop answers both. Init never returns, so nothing a user types can
+    // end the process; when their shell exits they get a new one, which is
+    // what closing a terminal on any other machine does.
     char argv[4096];
-    const char *shell = "/bin/sh";
-    size_t length = strlen(shell) + 1;
-    memcpy(argv, shell, length);
-    argv[length] = '\0';
+    size_t position = 0;
+    const char *parts[] = {
+        "/bin/sh", "-c", "while :; do /bin/sh; done",
+    };
+    for (size_t i = 0; i < 3; i++) {
+        size_t length = strlen(parts[i]) + 1;
+        if (position + length >= sizeof(argv) - 1) return -E2BIG;
+        memcpy(argv + position, parts[i], length);
+        position += length;
+    }
+    argv[position] = '\0';
 
-    err = do_execve(shell, 1, argv, environment);
+    err = do_execve("/bin/sh", 3, argv, environment);
     if (err < 0) return err;
 
     // Started, not run here. `task_run_current` would turn this thread into

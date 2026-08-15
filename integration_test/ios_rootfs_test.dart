@@ -118,5 +118,23 @@ void main() {
     expect(text, contains('SBM_IOS_OK'));
     // Still running, and it must be: the guest ending would end the app.
     expect(IosRootfs.exitCode, isNull);
+
+    // And `exit` closes the shell rather than the app. Init is a loop, so what
+    // comes back is another prompt — on any other machine that is what closing
+    // a terminal does, and here it is also what stops a keystroke from
+    // quitting ServerBox.
+    IosRootfs.write('exit\r');
+    final after = StringBuffer();
+    for (var round = 0; round < 100; round++) {
+      final chunk = IosRootfs.read(timeout: Duration.zero);
+      if (chunk == null) break;
+      after.write(chunk);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    debugPrint('ISHPROBE after-exit=${after.toString().trim()}');
+    // The app is alive to be asked, which is the assertion; a dead one takes
+    // the test harness with it and this line is never reached.
+    expect(IosRootfs.exitCode, isNull);
+    expect(after.toString(), contains('#'));
   }, skip: !Platform.isIOS);
 }

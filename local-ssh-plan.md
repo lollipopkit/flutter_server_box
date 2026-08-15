@@ -314,10 +314,10 @@ nothing in the log, because a clean `_exit` leaves none of those.
 So **init is a shell that stays**, and a command is typed at it. Two
 consequences worth stating rather than discovering later:
 
-- a guest that exits ends the app, so whatever the terminal does with `exit`
-  has to be answered before this ships. The fix is for init to be something
-  that never exits and for shells to be its children, which is also what makes
-  more than one of them possible;
+- a guest that exits ends the app. Answered: init is `while :; do /bin/sh; done`,
+  so nothing a user types can end the process, and `exit` gives them a new
+  shell — which is what closing a terminal does on any other machine.
+  Verified: typing `exit` leaves the app alive and prints another prompt;
 - Enter is a **carriage return**. Writing a newline leaves the shell holding
   the line, because the line discipline is what turns CR into NL.
 
@@ -329,6 +329,44 @@ A useful thing fell out of the attempt: `Process.run` is refused on iOS *even
 in the simulator* — "Starting new processes is not supported on iOS". The
 staging step had to be rewritten in `dart:io`. That is the platform restating
 why it gets an interpreter.
+
+### What is left, and what only a device can answer
+
+Engineering, in the order it unblocks things:
+
+1. **A reader off the Dart isolate.** `sbm_ish_read` waits for its timeout, and
+   waiting on the isolate starves the framework. Either a `Timer` polling with
+   a zero timeout — enough for a terminal, and what the test does — or a native
+   thread posting to a `SendPort`.
+2. **A filesystem on the device.** `fakefsify` is a host tool: it needs
+   libarchive and writes a sqlite metadata db, so nothing today puts one on a
+   phone. Two ways, neither free: ship a built filesystem in the bundle (tens
+   of megabytes in the IPA, and it has to be copied out of the read-only bundle
+   before the guest can write to it), or compile the extraction path into the
+   app and do it at first launch, as the Android side downloads and unpacks.
+   Until this exists the feature cannot ship, whatever else works.
+3. **A `ShellBackend` over the six functions**, and an entry in the terminal
+   tab beside Android's Alpine — at which point the terminal, snippets and the
+   Agent all reach it without knowing what it is, exactly as they do there.
+4. **The Agent's local target on iOS**, which is the same shape as Android's:
+   the container is the only local machine, and its file tools resolve inside
+   it.
+
+### Manual verification — nobody has done these
+
+Everything measured so far is on the **simulator**, which is not a sandboxed
+device and has no App Store in front of it. These need hands:
+
+| # | What | How | Why it cannot be automated here |
+| --- | --- | --- | --- |
+| M1 | The engine runs on real hardware | `scripts/build-ish-ios.sh device`, `SBM_ISH = 1`, run `integration_test/ios_rootfs_test.dart` on an iPhone | No device build has ever been run. The simulator shares the Mac's kernel and page protections; a phone does not |
+| M2 | Memory and thermals under load | A real workload — `apk add`, a build, a long-running process — watched in Instruments | An interpreter with a 256 KB output ring and a guest heap on a phone is a different proposition from one on a Mac |
+| M3 | The performance figures (Q3) | `benchmark/run.sh` inside the guest, on a device | The fork's 7–12x claims are its own benchmarks, and the numbers that matter are the ones on the hardware users have |
+| M4 | The strip switch produces a clean build | Build an IPA with `SBM_ISH = 0`, then search the binary for `sbm_ish_boot` and any engine symbol | This is the emergency path. It has been checked at the object level, never on a shipped artifact |
+| M5 | App Store review | Submit, with the feature on, and see | Guideline 2.5.2. Not a technical question, and the downside is the app's next update rather than the feature |
+
+M5 is the one that decides whether any of the rest is worth finishing, and it
+is the reason the switch exists.
 
 ### What is left
 - a filesystem on the device. `fakefsify` is a host tool that needs libarchive
