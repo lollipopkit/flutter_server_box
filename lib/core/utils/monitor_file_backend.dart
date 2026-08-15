@@ -43,6 +43,25 @@ class MonitorFileBackend implements FileBackend {
     sudoFallback: false,
   );
 
+  /// The agent's own answer, cached for the life of this backend.
+  ///
+  /// Cached because it is read where a listing has just failed, which is where
+  /// a second round trip is least welcome, and because it cannot change under a
+  /// running agent — the roots are resolved once at its startup.
+  ///
+  /// A failure is *not* cached. This is read from an error view whose other
+  /// button is "retry", and a remembered failure would make that button unable
+  /// to fix anything for the life of the tab.
+  @override
+  Future<List<String>> reachableRoots() {
+    return _roots ??= _client.fsRoots().onError((Object e, StackTrace s) {
+      _roots = null;
+      Error.throwWithStackTrace(e, s);
+    });
+  }
+
+  Future<List<String>>? _roots;
+
   @override
   Future<List<FileEntry>> list(String path) async {
     final entries = await _client.fsList(path);

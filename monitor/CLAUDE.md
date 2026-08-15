@@ -160,6 +160,14 @@ the panel password can't switch them on), and share the admission checks in
   the endpoint can't be used to map the filesystem one status code at a time.
   Writes stream to `<path>.sbm-part-<pid>-<n>` and rename, so an interrupted
   one leaves no half-file under the name something else is about to open.
+  `GET /fs/roots` hands the roots themselves to an authenticated caller — the
+  one endpoint here that answers about the confinement rather than about a path
+  inside it. Not a hole in it: they are the operator's decision, every other
+  handler re-resolves per request, and a client can discover them one 403 at a
+  time anyway. It exists because without it a client can only start at `/`, be
+  refused, and have nothing to show for it; the app's file browser turns this
+  into the chips it offers on a refusal. It answers 403 when the API is off, so
+  "no roots" can never be read as "no limit".
   `roots = ["/"]` makes this equivalent to a shell (anyone who can write
   `~/.ssh/authorized_keys` has one) and is warned about at startup.
   Known limitation, stated rather than papered over: resolution and use are two

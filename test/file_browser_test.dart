@@ -14,7 +14,12 @@ import 'package:server_box/view/page/storage/file_browser.dart';
 
 /// A filesystem that is a map, so a browser test is about the browser.
 class _MapBackend implements FileBackend {
-  _MapBackend(this.tree, {this.failWith, this.sudoFallback = false});
+  _MapBackend(
+    this.tree, {
+    this.failWith,
+    this.sudoFallback = false,
+    this.roots = const [],
+  });
 
   final Map<String, List<FileEntry>> tree;
 
@@ -24,6 +29,10 @@ class _MapBackend implements FileBackend {
 
   final bool sudoFallback;
 
+  /// What the far side says it will serve. Empty is a backend with no such
+  /// limit, which is what both real non-agent ones answer.
+  final List<String> roots;
+
   /// Every path this was asked to list, in order, so a test can tell "showed
   /// the old listing" from "never asked for the new one".
   final listed = <String>[];
@@ -31,6 +40,9 @@ class _MapBackend implements FileBackend {
   @override
   FileBackendTraits get traits =>
       FileBackendTraits(sudoFallback: sudoFallback);
+
+  @override
+  Future<List<String>> reachableRoots() async => roots;
 
   @override
   Future<List<FileEntry>> list(String path) async {
@@ -182,6 +194,62 @@ void main() {
         ),
       );
       expect(find.text('Try using sudo'), findsOneWidget);
+    });
+
+    testWidgets('offers the roots the far side will serve', (tester) async {
+      // The case this exists for: a tab restored onto a path the agent's roots
+      // no longer cover. Retrying can only be refused again; the roots are the
+      // only way on.
+      final backend = _MapBackend(
+        {
+          '/home': [_file('there.txt')],
+        },
+        failWith: 'status code of 403',
+        roots: const ['/home', '/etc'],
+      );
+
+      await pump(tester, backend);
+      expect(find.text('Permission denied.'), findsOneWidget);
+      expect(find.text('/home'), findsOneWidget);
+      expect(find.text('/etc'), findsOneWidget);
+
+      backend.failWith = null;
+      await tester.tap(find.text('/home'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('there.txt'), findsOneWidget);
+      expect(backend.listed.last, '/home');
+    });
+
+    testWidgets('offers no roots where the backend has no such limit', (
+      tester,
+    ) async {
+      // An empty answer is "browse anywhere", not "nowhere to go" — drawing a
+      // heading with no chips under it would say the opposite.
+      await pump(
+        tester,
+        _MapBackend(const {}, failWith: 'Permission denied'),
+      );
+
+      expect(find.text('Permission denied.'), findsOneWidget);
+      expect(find.byType(ActionChip), findsNothing);
+      expect(find.text('Go to'), findsNothing);
+    });
+
+    testWidgets('offers no roots for a failure going elsewhere cannot fix', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        _MapBackend(
+          const {},
+          failWith: 'Connection closed',
+          roots: const ['/home'],
+        ),
+      );
+
+      expect(find.text('Failure'), findsOneWidget);
+      expect(find.byType(ActionChip), findsNothing);
     });
 
     testWidgets('can be tried again', (tester) async {

@@ -141,6 +141,36 @@ fn failed(e: std::io::Error) -> HttpResponse {
     }
 }
 
+/// The directories this agent will serve, so a client can offer them instead
+/// of making the user guess.
+///
+/// Not a hole in the confinement. The roots are the operator's decision and
+/// every other handler re-resolves against them per request; this only saves an
+/// already-authenticated caller from discovering them one 403 at a time, which
+/// it can do anyway. What it is *not* allowed to do is report anything about
+/// what lies outside them, which is why `denied` stays uniform.
+///
+/// Worth having because the alternative is worse in practice: a client with no
+/// way to ask starts at `/`, is refused, and has nothing to show for it but the
+/// refusal — see the app's file browser, which now offers these as its way out.
+pub async fn roots(
+    req: HttpRequest,
+    state: web::types::State<Arc<AppState>>,
+) -> Result<HttpResponse, web::Error> {
+    if let Err(res) = admit(&req, &state, "roots", "").await {
+        return Ok(res);
+    }
+    let roots: Vec<String> = state
+        .remote_access
+        .fs
+        .roots
+        .as_slice()
+        .iter()
+        .map(|p| p.to_string_lossy().into_owned())
+        .collect();
+    Ok(HttpResponse::Ok().json(&serde_json::json!({ "roots": roots })))
+}
+
 pub async fn list(
     req: HttpRequest,
     query: web::types::Query<PathQuery>,

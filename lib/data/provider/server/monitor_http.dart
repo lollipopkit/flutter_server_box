@@ -205,6 +205,26 @@ class MonitorHttpClient {
   // sanitise one, and nothing here should try — a second opinion about what a
   // path means is how the two ends stop agreeing.
 
+  /// The directories this agent will serve at all.
+  ///
+  /// Asked rather than assumed: the roots are its operator's decision, they are
+  /// the only paths any other call here can succeed on, and a browser that does
+  /// not know them can only start at `/` and be refused.
+  Future<List<String>> fsRoots() {
+    return _authed(() async {
+      final resp = await _object('/api/v1/fs/roots');
+      final roots = resp['roots'];
+      if (roots is! List) {
+        throw MonitorHttpErr(
+          type: MonitorHttpErrType.invalidResponse,
+          message: '/api/v1/fs/roots answered with '
+              '${roots.runtimeType}, not a JSON array',
+        );
+      }
+      return roots.whereType<String>().toList();
+    });
+  }
+
   /// One directory, as the agent's `EntryView` describes it.
   Future<List<Map<String, dynamic>>> fsList(String path) {
     return _authed(() async {

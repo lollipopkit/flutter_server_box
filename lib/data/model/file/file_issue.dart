@@ -41,9 +41,13 @@ FileIssue classifyFileError(Object? error) {
 
   // `code 3` is `SSH_FX_PERMISSION_DENIED`, and `failure` is what a server
   // sends when it has decided not to be specific — which, for a write it
-  // refused, usually means the same thing.
+  // refused, usually means the same thing. 403 is a monitor agent refusing a
+  // path outside the roots it serves; matched on dio's whole phrase rather
+  // than on the bare number, which a path is free to contain.
   if (message.contains('permission denied') ||
       message.contains('access denied') ||
+      message.contains('status code of 403') ||
+      message.contains('403 forbidden') ||
       message.contains('code 3') ||
       message.contains('failure')) {
     return FileIssue.denied;

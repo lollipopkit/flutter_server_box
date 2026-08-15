@@ -116,6 +116,19 @@ class FileBackendTraits {
 abstract interface class FileBackend {
   FileBackendTraits get traits;
 
+  /// The only directories this backend will serve, or empty where it serves
+  /// whatever it can see.
+  ///
+  /// Asked rather than declared in [FileBackendTraits], because the answer is
+  /// the far side's and arrives over the wire: a `monitor` agent serves the
+  /// directories its operator named and nothing else, and it is the only thing
+  /// that knows which those are.
+  ///
+  /// Empty is "no such limit", not "nothing reachable" — the two backends with
+  /// a whole filesystem behind them answer that, and a caller reading this to
+  /// offer somewhere to go should show nothing rather than an empty list.
+  Future<List<String>> reachableRoots();
+
   Future<List<FileEntry>> list(String path);
 
   /// Null when there is nothing there. Anything else — no permission, a broken

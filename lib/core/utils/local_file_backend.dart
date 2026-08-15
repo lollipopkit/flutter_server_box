@@ -11,6 +11,10 @@ import 'package:server_box/data/model/file/file_backend.dart';
 class LocalFileBackend implements FileBackend {
   const LocalFileBackend();
 
+  /// This device's whole filesystem, so nothing to narrow to.
+  @override
+  Future<List<String>> reachableRoots() async => const [];
+
   @override
   FileBackendTraits get traits => const FileBackendTraits(
     // `FileStat.mode` is there on POSIX and meaningless on Windows, and this

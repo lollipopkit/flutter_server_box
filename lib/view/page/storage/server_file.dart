@@ -100,10 +100,13 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
     return FileBrowserPage(
       args: FileBrowserArgs(
         backend: _backend,
-        // The agent confines every request to the roots its operator named,
-        // and does not say what they are. Starting at `/` and letting it
-        // refuse is honest: the alternative is guessing a root and hiding
-        // directories the agent would have served.
+        // The agent confines every request to the roots its operator named.
+        // Still `/`, which is right where the roots are the whole machine and
+        // is a refusal otherwise — and a refusal now offers those roots as
+        // chips (see `FileBrowserPage`'s error view), so the way on is one tap
+        // rather than a guess. Picking a root to open at instead would mean
+        // holding the page back on a round trip, every time, for the case the
+        // user can resolve in one.
         root: '/',
         initialPath: widget.args.initPath,
         isPickDir: widget.args.isSelect,

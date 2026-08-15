@@ -1086,7 +1086,56 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
         FileIssue.timeout => Icons.timer_off_outlined,
         FileIssue.unknown => Icons.error_outline,
       },
+      // A refusal is the one failure that going somewhere else can fix, and
+      // where a path is out of bounds rather than unreadable, retrying is a
+      // button that can only produce the same refusal again.
+      suggestion: issue == FileIssue.denied ? _reachableRoots : null,
       onRetry: refresh,
+    );
+  }
+
+  /// Somewhere the far side will actually serve, offered where it just refused.
+  ///
+  /// A `monitor` agent serves the directories its operator named and nothing
+  /// else. A tab restored onto a path outside them — or opened at `/`, which is
+  /// outside them whenever the roots are narrower than the machine — lands on a
+  /// refusal, and without this the only way on is to type a path blind.
+  ///
+  /// Asked of the backend rather than of the transport, so the two that have a
+  /// whole filesystem behind them answer with an empty list and this draws
+  /// nothing. Empty is "no such limit", never "nowhere to go".
+  Widget get _reachableRoots {
+    return FutureBuilder<List<String>>(
+      future: backend.reachableRoots(),
+      builder: (_, snapshot) {
+        final roots = snapshot.data;
+        // Also the error case: an agent that will not say where its roots are
+        // is one this can add nothing to, so it leaves the refusal as it is.
+        if (roots == null || roots.isEmpty) return UIs.placeholder;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.goto, style: UIs.textGrey),
+            UIs.height7,
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 7,
+                runSpacing: 7,
+                children: [
+                  for (final root in roots)
+                    ActionChip(
+                      avatar: const Icon(Icons.folder_open, size: 15),
+                      label: Text(root),
+                      onPressed: () => goTo(root),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

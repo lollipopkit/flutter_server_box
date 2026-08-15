@@ -47,6 +47,11 @@ class SftpFileBackend implements FileBackend {
   /// inside a transfer that has its own progress to show.
   final Duration? timeout;
 
+  /// Whatever the SSH account can reach, which sshd decides per path rather
+  /// than by a list anything here could enumerate.
+  @override
+  Future<List<String>> reachableRoots() async => const [];
+
   @override
   FileBackendTraits get traits => FileBackendTraits(
     permissions: true,

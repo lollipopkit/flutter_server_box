@@ -20,6 +20,7 @@ class PageIssueView extends StatelessWidget {
     this.detail,
     this.icon = Icons.error_outline,
     this.onRetry,
+    this.suggestion,
   });
 
   final String title;
@@ -27,6 +28,15 @@ class PageIssueView extends StatelessWidget {
   final String? detail;
   final IconData icon;
   final VoidCallback? onRetry;
+
+  /// A way out that is specific to what failed, above the generic retry.
+  ///
+  /// Retrying is the only thing this view can offer on its own, and it is the
+  /// wrong offer whenever the same request would fail the same way — a path the
+  /// far side will never serve, for one. A page that knows somewhere the user
+  /// *can* go puts it here rather than leaving them a button that repeats the
+  /// refusal.
+  final Widget? suggestion;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +79,9 @@ class PageIssueView extends StatelessWidget {
                 ),
               ),
             ],
+            // Above the retry: where both are offered, the one that can
+            // actually succeed should be the one reached first.
+            if (suggestion != null) ...[UIs.height13, suggestion!],
             if (onRetry != null) ...[
               UIs.height13,
               OutlinedButton.icon(

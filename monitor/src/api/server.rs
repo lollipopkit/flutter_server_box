@@ -195,6 +195,7 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
                         web::resource("/fs/write")
                             .route(web::put().to(crate::api::fs::write)),
                     )
+                    .route("/fs/roots", web::get().to(crate::api::fs::roots))
                     .route("/fs/list", web::get().to(crate::api::fs::list))
                     .route("/fs/stat", web::get().to(crate::api::fs::stat))
                     .route("/fs/read", web::get().to(crate::api::fs::read))
