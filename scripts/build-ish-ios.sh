@@ -151,21 +151,45 @@ build_host() {
   echo "$build_dir"
 }
 
-build_fakefs() {
-  local host_build="$1"
+# The filesystem the app actually uses: an ordinary directory tree.
+#
+# `realfs` is what mounts it — every guest path resolved against a root fd —
+# so there is nothing to build but the tree itself. That is the whole reason
+# this is `tar` and not a tool: unpacking is something the app can do on a
+# phone, and a metadata database is not.
+build_tree() {
   local tarball="$WORK_DIR/alpine-$ALPINE_VERSION.tar.gz"
-  local out="$WORK_DIR/alpine-fakefs"
+  local out="$WORK_DIR/alpine-tree"
+  fetch_alpine "$tarball"
+  [ -d "$out" ] && { log "Tree already unpacked at $out"; return; }
+  log "Unpacking the Alpine tree"
+  mkdir -p "$out"
+  # Device nodes in the tarball are skipped without root, which is correct
+  # here: `/dev` is a tmpfs the guest builds at boot.
+  tar xzf "$tarball" -C "$out" 2>/dev/null || true
+  [ -f "$out/etc/alpine-release" ] || die "the tree did not unpack"
+  log "Unpacked $out"
+}
 
+fetch_alpine() {
+  local tarball="$1"
   if [ ! -f "$tarball" ]; then
     log "Fetching Alpine $ALPINE_VERSION"
     curl -fsSL --retry 3 -o "$tarball" "$ALPINE_URL"
   fi
   local got
   got="$(sha256 "$tarball")"
-  # Deleted rather than left behind: a cached file that failed its check would
-  # be skipped by the test above on the next run and never checked again.
   [ "$got" = "$ALPINE_SHA256" ] || { rm -f "$tarball"; die "Alpine tarball digest mismatch: expected $ALPINE_SHA256, got $got"; }
+}
 
+# iSH's own format, kept for the command-line build: `ish -f` wants one, and it
+# is the only way to run the engine outside an app for comparison.
+build_fakefs() {
+  local host_build="$1"
+  local tarball="$WORK_DIR/alpine-$ALPINE_VERSION.tar.gz"
+  local out="$WORK_DIR/alpine-fakefs"
+
+  fetch_alpine "$tarball"
   [ -d "$out" ] && { log "Filesystem already built at $out"; return; }
   log "Building the Alpine filesystem"
   "$host_build/tools/fakefsify" "$tarball" "$out" >/dev/null
@@ -176,11 +200,11 @@ fetch_source
 case "$TARGET" in
   simulator)
     build_libs iossim-arm64 iphonesimulator "-mios-simulator-version-min=13.0"
-    build_fakefs "$(build_host)"
+    build_tree
     ;;
   device)
     build_libs ios-arm64 iphoneos "-miphoneos-version-min=13.0"
-    build_fakefs "$(build_host)"
+    build_tree
     ;;
   macos)
     host="$(build_host)"

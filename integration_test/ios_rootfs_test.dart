@@ -20,9 +20,16 @@ import 'package:server_box/core/utils/ios_rootfs.dart';
 /// device is a separate piece of work this does not pretend to have done.
 Future<void> _copyDirectory(Directory from, Directory to) async {
   await to.create(recursive: true);
-  await for (final entry in from.list(recursive: false)) {
+  // Links are copied as links, not followed. Under `realfs` a guest symlink is
+  // resolved *inside the guest*, so `/bin/sh -> /bin/busybox` means the guest's
+  // busybox; followed on the host it points at the host's `/bin`, which is
+  // either the wrong file or none — and a skipped one is why the first attempt
+  // booted to `ENOENT` with no `/bin/sh` to run.
+  await for (final entry in from.list(recursive: false, followLinks: false)) {
     final name = entry.path.split('/').last;
-    if (entry is Directory) {
+    if (entry is Link) {
+      await Link('${to.path}/$name').create(await entry.target());
+    } else if (entry is Directory) {
       await _copyDirectory(entry, Directory('${to.path}/$name'));
     } else if (entry is File) {
       await entry.copy('${to.path}/$name');

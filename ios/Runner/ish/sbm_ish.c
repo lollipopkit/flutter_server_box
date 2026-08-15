@@ -42,6 +42,7 @@ int sbm_ish_exit_code(void) { return -1; }
 #include "fs/devices.h"
 #include "fs/fd.h"
 #include "fs/path.h"
+#include "fs/real.h"
 #include "fs/tty.h"
 
 // — Surviving a guest fault ————————————————————————————————————————
@@ -247,18 +248,29 @@ static int boot_kernel(void) {
     // Otherwise `die()` calls abort(), and the app goes with the guest.
     die_handler = park_on_die;
 
-    // The filesystem's files live under `data`; the metadata db sits beside it.
-    char data_path[MAX_PATH + 1];
-    snprintf(data_path, sizeof(data_path), "%s/data", boot.rootfs);
-    int err = mount_root(&fakefs, data_path);
+    // An ordinary directory tree, not iSH's `fakefs`.
+    //
+    // `realfs` is the engine's other filesystem: every guest path is `openat`'d
+    // against a root fd and nothing is stored beside it. That makes installing
+    // a userland "unpack a tarball into a directory" — no metadata database to
+    // build on a phone, no host-side tool, and the guest's files stay ordinary
+    // files that can be inspected and backed up.
+    //
+    // What it cannot do is hold device nodes: `realfs_mknod` refuses anything
+    // that is not a FIFO or a regular file, because creating one needs root on
+    // the host. Hence the tmpfs below — `/dev` is the one directory that has
+    // to be something other than a real one.
+    int err = mount_root(&realfs, boot.rootfs);
     if (err < 0) return err;
 
     err = become_first_process();
     if (err < 0) return err;
     current->thread = pthread_self();
 
-    // What a userland expects to find. fakefs can hold device nodes; a real
-    // directory could not, which is half of why the filesystem has this shape.
+    // In memory, because the root cannot hold these. Everything a userland
+    // expects to find at `/dev` is created here each boot, which is also
+    // truer than persisting them: they describe this run's kernel.
+    do_mount(&tmpfs, "dev", "/dev", "", 0);
     generic_mknodat(AT_PWD, "/dev/null", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_NULL_MINOR));
     generic_mknodat(AT_PWD, "/dev/zero", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_ZERO_MINOR));
     generic_mknodat(AT_PWD, "/dev/full", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_FULL_MINOR));
@@ -269,6 +281,8 @@ static int boot_kernel(void) {
     generic_mknodat(AT_PWD, "/dev/ptmx", S_IFCHR | 0666, dev_make(TTY_ALTERNATE_MAJOR, DEV_PTMX_MINOR));
 
     do_mount(&procfs, "proc", "/proc", "", 0);
+    // Its mount point has to exist first — `/dev` is a fresh tmpfs.
+    generic_mkdirat(AT_PWD, "/dev/pts", 0755);
     do_mount(&devptsfs, "devpts", "/dev/pts", "", 0);
     exit_hook = guest_exited;
 

@@ -22,8 +22,8 @@ import 'package:path_provider/path_provider.dart';
 /// [isAvailable] is how everything else asks, exactly as on Android.
 abstract final class IosRootfs {
   /// The same Alpine release the Android rootfs uses, so both platforms answer
-  /// with the same userland. Built into iSH's own on-disk format by
-  /// `fakefsify`, which is why this is a directory rather than a tarball.
+  /// with the same userland — and on both it is an ordinary unpacked tree,
+  /// since `realfs` mounts one directly.
   static const version = '3.22.5';
 
   static String? _root;
@@ -59,10 +59,11 @@ abstract final class IosRootfs {
   static Future<bool> get isInstalled async {
     final root = _root;
     if (root == null) return false;
-    // iSH keeps the files under `data` and their metadata in a sqlite db
-    // beside it. Both, because either alone is not a filesystem.
-    return _installed = await Directory(root.joinPath('data')).exists() &&
-        await File(root.joinPath('meta.db')).exists();
+    // An ordinary tree, mounted by `realfs`. What makes it a userland rather
+    // than a directory is that a shell is in it, so that is what this asks —
+    // there is no manifest to check because there is nothing but files.
+    return _installed = await File(root.joinPath('bin/busybox')).exists() &&
+        await File(root.joinPath('etc/alpine-release')).exists();
   }
 
   /// Locates where the filesystem would be. Call once, before anything asks.

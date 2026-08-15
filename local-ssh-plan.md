@@ -387,9 +387,22 @@ channels, and removes the marker protocol the Agent would otherwise need. It
 also makes closing a terminal ordinary: each is a child of init, and init stays
 the loop that nothing can end.
 
-Both changes are worth making before any of the remaining work, because they
-change what that work is: the install path becomes a download and an untar, and
-the Agent gets a real `ServerExec` rather than a shell it has to share.
+**The first is done.** The guest boots on `realfs` with a tmpfs at `/dev`,
+verified in the simulator against a plain unpacked tree — no `fakefsify`, no
+metadata db, nothing but `tar`. `scripts/build-ish-ios.sh` unpacks one;
+`IosRootfs.isInstalled` asks for a shell and a release file rather than a
+manifest, because there is no manifest to ask.
+
+One thing it cost, worth knowing before writing the installer: **symlinks must
+be preserved, not followed**. Under `realfs` a guest link is resolved inside
+the guest, so `/bin/sh -> /bin/busybox` means the guest's busybox; followed on
+the host it points at the host's `/bin`, which is the wrong file or none. The
+first attempt booted to `ENOENT` with no `/bin/sh` to run. `tar` gets this
+right; a naive recursive copy does not.
+
+The second — a pty per session — is not done. The recipe is above and the
+engine has every piece; what it changes is the shim's API, from one console to
+a session handle, and everything above it.
 
 What is left:
 
