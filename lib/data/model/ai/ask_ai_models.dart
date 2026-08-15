@@ -234,7 +234,16 @@ Map<String, dynamic>? _mapOrNull(Object? value) {
 /// which is a reason to withhold auto-running, and not a claim about what the
 /// command does. Saying "changes the system" there contradicts the model's own
 /// description of a `sleep`, and the contradiction is the app's fault.
-enum AskAiCommandRisk { readOnly, unknown, caution, destructive }
+///
+/// [unvettedHost] is the same withholding for an unrelated reason: the command
+/// was recognised as read-only and the *host* is what nobody has accepted yet.
+/// A value of its own rather than a flag beside [unknown], so a badge can read
+/// the verdict and say what it means — two causes under one name is how the
+/// contradiction above happened in the first place.
+///
+/// Never serialised: [AskAiCommand.risk] is computed from the call every time,
+/// so adding a value here migrates nothing.
+enum AskAiCommandRisk { readOnly, unknown, unvettedHost, caution, destructive }
 
 /// Protocol-neutral function tool definition used by both Chat Completions and
 /// Responses requests.
@@ -399,28 +408,23 @@ class AskAiCommand {
       ? _unvettedFloor(intrinsicRisk)
       : intrinsicRisk;
 
-  /// The call is only being reviewed because of where it runs.
-  ///
-  /// Worth telling apart in the UI: "changes the system" is what `caution`
-  /// used to mean, and it is a plain contradiction on a read-only command —
-  /// which is exactly what the model writes underneath it.
-  bool get raisedByUnvettedHost => risk != intrinsicRisk;
-
   /// Nothing runs unattended on a host met this conversation.
   ///
   /// Auto-running is a convenience for machines already accepted into the app;
   /// on one the user has only just handed a password to, a read-only command
   /// still deserves the half-second it takes to look at it.
   ///
-  /// Lifts to [AskAiCommandRisk.unknown] rather than [AskAiCommandRisk.caution]
-  /// for the same reason `caution` is not what an unmatched command gets: the
-  /// command really is read-only, the host is what has not been vetted, and
-  /// "changes the system" would be a claim about the wrong thing. All the
-  /// lift does is withhold [canAutoRun]; [raisedByUnvettedHost] is what lets
-  /// the chip say which of the two it is.
+  /// Lifts to [AskAiCommandRisk.unvettedHost], which is neither a claim about
+  /// the command nor a shrug: the command really is read-only, and the host is
+  /// what has not been vetted. `caution` would say "changes the system" over a
+  /// command the model has just described as not doing that, and `unknown`
+  /// would say nothing was recognised when something was. All the lift does is
+  /// withhold [canAutoRun].
   AskAiCommandRisk _unvettedFloor(AskAiCommandRisk risk) {
     if (sessionId == null) return risk;
-    return risk == AskAiCommandRisk.readOnly ? AskAiCommandRisk.unknown : risk;
+    return risk == AskAiCommandRisk.readOnly
+        ? AskAiCommandRisk.unvettedHost
+        : risk;
   }
 
   /// Never on this device, whatever the command looks like.

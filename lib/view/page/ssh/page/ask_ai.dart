@@ -1096,6 +1096,11 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
         theme.colorScheme.tertiary,
         Icons.help_outline,
       ),
+      AskAiCommandRisk.unvettedHost => (
+        context.l10n.askAiRiskUnvetted,
+        theme.colorScheme.tertiary,
+        Icons.shield_outlined,
+      ),
       AskAiCommandRisk.caution => (
         context.l10n.askAiRiskCaution,
         theme.colorScheme.tertiary,

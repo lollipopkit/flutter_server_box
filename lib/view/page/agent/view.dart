@@ -347,6 +347,11 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
         icon: Icons.help_outline,
         color: scheme.tertiary,
       ),
+      AskAiCommandRisk.unvettedHost => (
+        label: context.l10n.askAiRiskUnvetted,
+        icon: Icons.shield_outlined,
+        color: scheme.tertiary,
+      ),
       AskAiCommandRisk.caution => (
         label: context.l10n.askAiRiskCaution,
         icon: Icons.warning_amber_rounded,
@@ -777,13 +782,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     };
     final content = arguments['content'];
     final risk = _riskInfo(context, proposal.risk);
-    // Named for why it is being reviewed, not for what `caution` usually
-    // means: a read-only command on a host met this conversation is reviewed
-    // because of the host, and a chip reading "changes system" over the
-    // model's own "does not modify the system" is just wrong.
-    final riskLabel = proposal.raisedByUnvettedHost
-        ? context.l10n.askAiRiskUnvetted
-        : risk.label;
+    final riskLabel = risk.label;
     return Card(
       elevation: 0,
       color: theme.colorScheme.surfaceContainerLow,
