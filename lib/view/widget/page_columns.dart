@@ -31,9 +31,7 @@ class PageColumns extends StatelessWidget {
   /// bottom of the page can only be read by scrolling past its own end.
   final double bottomInset;
 
-  /// Half again the default. A column now comfortably holds a chart with its
-  /// axis labels, or a form field with its description.
-  static const columnWidth = UIs.columnWidth * 1.5;
+  static const columnWidth = UIs.pageColumnWidth;
 
   static const _maxColumns = 3;
 
