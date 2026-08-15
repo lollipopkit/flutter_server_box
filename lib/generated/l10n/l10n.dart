@@ -1668,6 +1668,12 @@ abstract class AppLocalizations {
   /// **'Alpine {installed} is installed and {latest} is available. Updating downloads it again and replaces the container: anything installed inside it with apk is lost. The current one keeps working if you skip this.'**
   String rootfsUpdateTip(Object installed, Object latest);
 
+  /// No description provided for @rootfsMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No Linux filesystem is installed on this device yet.'**
+  String get rootfsMissing;
+
   /// No description provided for @rootfsSubtitle.
   ///
   /// In en, this message translates to:

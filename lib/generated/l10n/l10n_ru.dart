@@ -895,6 +895,10 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get rootfsMissing =>
+      'На этом устройстве ещё не установлена файловая система Linux.';
+
+  @override
   String get rootfsSubtitle =>
       'Пользовательское окружение Linux на этом устройстве';
 

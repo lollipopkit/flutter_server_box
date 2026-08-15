@@ -165,6 +165,7 @@
       "latest": {}
     }
   },
+  "rootfsMissing": "この端末にはまだ Linux ファイルシステムがインストールされていません。",
   "rootfsSubtitle": "この端末上の Linux ユーザーランド",
   "rootfsInstallTip": "Alpine Linux {version}(約 3 MB)をダウンロードし、この端末に展開します。パッケージマネージャー付きのシェルをこのアプリに提供し、いつでも削除できます。",
   "sameIdServerExist": "同じIDのサーバーが既に存在します",

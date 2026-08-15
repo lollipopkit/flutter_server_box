@@ -64,7 +64,7 @@ class _AddPageState extends ConsumerState<_AddPage> {
     // configured, a shell here is still something this page can open.
     if (order.isEmpty &&
         !LocalShellBackend.isSupported &&
-        !AndroidRootfs.isAvailable) {
+        !Rootfs.isAvailable) {
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 
@@ -82,14 +82,14 @@ class _AddPageState extends ConsumerState<_AddPage> {
           ),
         // Beside this device rather than among the servers, because that is
         // what it is: the same machine, with a userland this app installed.
-        if (AndroidRootfs.isAvailable)
+        if (Rootfs.isAvailable)
           CardTile(
             icon: Icons.terminal,
             // What is installed, not what this build would install. They differ
             // exactly when there is an update to offer, and naming the one that
             // is not there yet would be a lie on the way to a true statement.
-            title: 'Alpine ${AndroidRootfs.installedVersion ?? AndroidRootfs.version}',
-            subtitle: AndroidRootfs.isOutdated
+            title: 'Alpine ${Rootfs.version}',
+            subtitle: Rootfs.isOutdated
                 ? '${libL10n.update}: ${AndroidRootfs.version}'
                 : l10n.rootfsSubtitle,
             onTap: widget.onRootfs,
@@ -191,11 +191,11 @@ class _SideBarState extends ConsumerState<_SideBar> {
           // Above the servers, the way the file rail puts this device above
           // them: it is the one place that is always reachable, and it needs
           // no credential to be.
-          if (LocalShellBackend.isSupported || AndroidRootfs.isAvailable) ...[
+          if (LocalShellBackend.isSupported || Rootfs.isAvailable) ...[
             SideBarSection(libL10n.device),
             if (LocalShellBackend.isSupported)
               SideBarTile(title: libL10n.device, onTap: widget.onLocal),
-            if (AndroidRootfs.isAvailable)
+            if (Rootfs.isAvailable)
               SideBarTile(
                 title: 'Alpine',
                 onTap: widget.onRootfs,

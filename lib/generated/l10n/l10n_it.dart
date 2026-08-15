@@ -899,6 +899,10 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get rootfsMissing =>
+      'Su questo dispositivo non è ancora installato alcun filesystem Linux.';
+
+  @override
   String get rootfsSubtitle => 'Uno spazio utente Linux su questo dispositivo';
 
   @override

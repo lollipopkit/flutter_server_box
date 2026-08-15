@@ -165,6 +165,7 @@
       "latest": {}
     }
   },
+  "rootfsMissing": "Auf diesem Gerät ist noch kein Linux-Dateisystem installiert.",
   "rootfsSubtitle": "Eine Linux-Userland-Umgebung auf diesem Gerät",
   "rootfsInstallTip": "Alpine Linux {version} (etwa 3 MB) herunterladen und auf diesem Gerät entpacken. Es gibt dieser App eine Shell mit Paketmanager und kann jederzeit gelöscht werden.",
   "sameIdServerExist": "Ein Server mit derselben ID existiert bereits",

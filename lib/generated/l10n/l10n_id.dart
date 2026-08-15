@@ -895,6 +895,10 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get rootfsMissing =>
+      'Belum ada sistem berkas Linux yang terpasang di perangkat ini.';
+
+  @override
   String get rootfsSubtitle => 'Lingkungan pengguna Linux di perangkat ini';
 
   @override

@@ -48,13 +48,20 @@ abstract final class IosRootfs {
     }
   }
 
+  /// The last answer [isInstalled] gave, without asking the filesystem again.
+  ///
+  /// Synchronous for the same reason Android's is: what asks is a widget being
+  /// built, and a file check per frame answers one question a hundred times.
+  static bool get isReadySync => isAvailable && _installed;
+  static bool _installed = false;
+
   /// Whether a filesystem is unpacked and ready to boot.
   static Future<bool> get isInstalled async {
     final root = _root;
     if (root == null) return false;
     // iSH keeps the files under `data` and their metadata in a sqlite db
     // beside it. Both, because either alone is not a filesystem.
-    return await Directory(root.joinPath('data')).exists() &&
+    return _installed = await Directory(root.joinPath('data')).exists() &&
         await File(root.joinPath('meta.db')).exists();
   }
 
@@ -62,6 +69,7 @@ abstract final class IosRootfs {
   static Future<void> prepare() async {
     if (!Platform.isIOS) return;
     _root = (await getApplicationSupportDirectory()).path.joinPath('alpine');
+    await isInstalled;
   }
 
   /// Boots the guest and runs [command] in it.

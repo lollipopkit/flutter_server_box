@@ -888,6 +888,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get rootfsMissing =>
+      'No Linux filesystem is installed on this device yet.';
+
+  @override
   String get rootfsSubtitle => 'A Linux userland on this device';
 
   @override

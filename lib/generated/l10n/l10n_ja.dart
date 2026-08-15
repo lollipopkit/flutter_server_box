@@ -844,6 +844,9 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get rootfsMissing => 'この端末にはまだ Linux ファイルシステムがインストールされていません。';
+
+  @override
   String get rootfsSubtitle => 'この端末上の Linux ユーザーランド';
 
   @override

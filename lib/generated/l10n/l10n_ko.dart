@@ -845,6 +845,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get rootfsMissing => '이 기기에는 아직 Linux 파일 시스템이 설치되어 있지 않습니다.';
+
+  @override
   String get rootfsSubtitle => '이 기기의 Linux 사용자 공간';
 
   @override

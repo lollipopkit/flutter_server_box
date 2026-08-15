@@ -895,6 +895,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get rootfsMissing =>
+      'Bu cihazda henüz bir Linux dosya sistemi kurulu değil.';
+
+  @override
   String get rootfsSubtitle => 'Bu cihazdaki bir Linux kullanıcı alanı';
 
   @override

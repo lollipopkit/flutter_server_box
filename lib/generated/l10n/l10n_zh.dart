@@ -830,6 +830,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get rootfsMissing => '本机还没有安装 Linux 文件系统。';
+
+  @override
   String get rootfsSubtitle => '本机上的 Linux 用户空间';
 
   @override
@@ -2143,6 +2146,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String rootfsUpdateTip(Object installed, Object latest) {
     return '已安裝 Alpine $installed,現有 $latest。更新會重新下載並替換整個容器:裡面用 apk 裝過的東西都會遺失。跳過的話,現在這個照常可用。';
   }
+
+  @override
+  String get rootfsMissing => '本機還沒有安裝 Linux 檔案系統。';
 
   @override
   String get rootfsSubtitle => '本機上的 Linux 使用者空間';

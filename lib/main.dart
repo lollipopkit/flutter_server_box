@@ -11,7 +11,7 @@ import 'package:server_box/app.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/sync.dart';
-import 'package:server_box/core/utils/android_rootfs.dart';
+import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
@@ -132,14 +132,15 @@ Future<void> _doPlatformRelated() async {
     } catch (e, s) {
       Loggers.app.warning('Failed to set high refresh rate', e, s);
     }
+  }
 
-    // Where proot is and whether a rootfs is unpacked. Two file checks and a
-    // platform call, and the terminal tab reads the answer while building.
-    try {
-      await AndroidRootfs.prepare();
-    } catch (e, s) {
-      Loggers.app.warning('Failed to locate the Linux rootfs', e, s);
-    }
+  // Where the Linux userland is, and whether there is one — proot and an
+  // unpacked rootfs on Android, the engine and its filesystem on iOS. A few
+  // file checks, and the terminal tab reads the answer while building.
+  try {
+    await Rootfs.prepare();
+  } catch (e, s) {
+    Loggers.app.warning('Failed to locate the Linux rootfs', e, s);
   }
 
   // The watch app used to learn about servers only while the user sat on the

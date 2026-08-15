@@ -6,6 +6,7 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/widgets.dart';
 import 'package:server_box/core/app_navigator.dart';
+import 'package:server_box/core/utils/ish_shell.dart';
 import 'package:server_box/core/utils/local_shell.dart';
 import 'package:server_box/core/utils/monitor_terminal.dart';
 import 'package:server_box/core/utils/server.dart';
@@ -99,7 +100,7 @@ class TerminalSession {
     // Nothing to adopt on this device: there is no connection anybody else
     // could be holding, so the shell this session opens is its own.
     if (source case LocalSource(:final rootfs)) {
-      _backend = LocalShellBackend(inRootfs: rootfs);
+      _backend = _localBackend(rootfs);
       _ownsBackend = true;
       return;
     }
@@ -126,7 +127,7 @@ class TerminalSession {
   }) async {
     _ownsBackend = true;
     if (source case LocalSource(:final rootfs)) {
-      return _backend = LocalShellBackend(inRootfs: rootfs);
+      return _backend = _localBackend(rootfs);
     }
 
     final agent = _grantedBackend(granted);
@@ -141,6 +142,17 @@ class TerminalSession {
       ),
     );
     return _backend = SshShellBackend(client);
+  }
+
+  /// A shell on this device, in its Linux userland or on the host.
+  ///
+  /// Two mechanisms behind one source: Android enters a real rootfs with proot
+  /// through the same pty a host shell uses, and iOS has no process to start at
+  /// all, so its guest is an interpreter with a console of its own. The page
+  /// above knows neither.
+  ShellBackend _localBackend(bool rootfs) {
+    if (rootfs && isIOS) return IshShellBackend();
+    return LocalShellBackend(inRootfs: rootfs);
   }
 
   /// The agent's own shell, when the agent said it allows one.

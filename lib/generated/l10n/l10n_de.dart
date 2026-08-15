@@ -894,6 +894,10 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get rootfsMissing =>
+      'Auf diesem Gerät ist noch kein Linux-Dateisystem installiert.';
+
+  @override
   String get rootfsSubtitle => 'Eine Linux-Userland-Umgebung auf diesem Gerät';
 
   @override

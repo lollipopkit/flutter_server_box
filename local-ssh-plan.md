@@ -332,25 +332,37 @@ why it gets an interpreter.
 
 ### What is left, and what only a device can answer
 
-Engineering, in the order it unblocks things:
+Done since: `IshShellBackend` is a `ShellBackend` over the six functions,
+reading on a 16 ms timer because a blocking read on the Dart isolate starves
+the framework; `Rootfs` is the facade the terminal tab asks, so the entry, the
+rail and the restore path are one code path across both platforms; and
+`Rootfs.prepare()` runs at launch on either.
 
-1. **A reader off the Dart isolate.** `sbm_ish_read` waits for its timeout, and
-   waiting on the isolate starves the framework. Either a `Timer` polling with
-   a zero timeout — enough for a terminal, and what the test does — or a native
-   thread posting to a `SendPort`.
-2. **A filesystem on the device.** `fakefsify` is a host tool: it needs
+Two things are deliberately not hidden behind that facade. `supportsExec` is
+**false** here — there is one console, and a second command would interleave
+its output with the terminal's — and closing a terminal does not stop the
+guest, because the guest is the machine and cannot be started twice in one
+process.
+
+What is left:
+
+1. **A filesystem on the device.** `fakefsify` is a host tool: it needs
    libarchive and writes a sqlite metadata db, so nothing today puts one on a
-   phone. Two ways, neither free: ship a built filesystem in the bundle (tens
-   of megabytes in the IPA, and it has to be copied out of the read-only bundle
-   before the guest can write to it), or compile the extraction path into the
-   app and do it at first launch, as the Android side downloads and unpacks.
-   Until this exists the feature cannot ship, whatever else works.
-3. **A `ShellBackend` over the six functions**, and an entry in the terminal
-   tab beside Android's Alpine — at which point the terminal, snippets and the
-   Agent all reach it without knowing what it is, exactly as they do there.
-4. **The Agent's local target on iOS**, which is the same shape as Android's:
-   the container is the only local machine, and its file tools resolve inside
-   it.
+   phone, and the terminal entry says so rather than opening a shell with
+   nothing to run. Two ways, neither free: ship a built filesystem in the
+   bundle (tens of megabytes in the IPA, and it must be copied out of the
+   read-only bundle before the guest can write), or compile the extraction into
+   the app and do it at first launch, as Android downloads and unpacks. The
+   piece that makes the second possible is already in the library —
+   `fakefs_rebuild(struct fakefs_db *, int root_fd)` derives the metadata db
+   from a tree, so the app only has to unpack a tarball, which Dart can do.
+   **Until this exists the feature cannot ship**, whatever else works.
+2. **The Agent's local target on iOS.** The same shape as Android's — the
+   container is the only local machine and the file tools resolve inside it —
+   but it needs a second channel, which one console does not have. Either the
+   engine spawns a task per command (what OpenMinis' `ISHShellExecutor` does)
+   or the Agent types into the same shell behind a marker protocol. Neither is
+   written.
 
 ### Manual verification — nobody has done these
 

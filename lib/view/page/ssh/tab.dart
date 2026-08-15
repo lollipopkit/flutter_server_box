@@ -7,6 +7,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/local_shell.dart';
+import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/app/session_requests.dart';
@@ -298,7 +299,22 @@ extension _Sessions on _SSHTabPageState {
   /// The install is where the tap may stop: it downloads, and it can be
   /// cancelled or fail. Only a rootfs that is actually there gets a tab.
   Future<void> _openRootfs() async {
-    if (!await installAndroidRootfs(context)) return;
+    // Android fetches and unpacks one on demand. iOS cannot yet: its
+    // filesystem is built by a host tool, and nothing puts one on a device —
+    // see local-ssh-plan.md. Saying so is better than opening a terminal that
+    // has nothing to run.
+    if (isIOS) {
+      if (!Rootfs.isReady) {
+        await context.showRoundDialog(
+          title: libL10n.attention,
+          child: Text(l10n.rootfsMissing),
+          actions: [Btn.ok()],
+        );
+        return;
+      }
+    } else if (!await installAndroidRootfs(context)) {
+      return;
+    }
     _open(const LocalSource(rootfs: true));
   }
 
@@ -395,8 +411,8 @@ extension _Sessions on _SSHTabPageState {
         // Only where there is one to enter. A rootfs the user deleted, or a
         // tab set restored onto a build without proot, would otherwise reopen
         // as a terminal that can only print an error.
-        if (!AndroidRootfs.isAvailable) continue;
-        if (!await AndroidRootfs.isInstalled) continue;
+        if (!Rootfs.isAvailable) continue;
+        if (!Rootfs.isReady) continue;
         source = const LocalSource(rootfs: true);
       } else if (id == const LocalSource().id) {
         // A tab set saved on a desktop can be restored on a phone — the same

@@ -165,6 +165,7 @@
       "latest": {}
     }
   },
+  "rootfsMissing": "Aucun système de fichiers Linux n'est encore installé sur cet appareil.",
   "rootfsSubtitle": "Un espace utilisateur Linux sur cet appareil",
   "rootfsInstallTip": "Télécharge Alpine Linux {version} (environ 3 Mo) et le décompresse sur cet appareil. Il donne à cette application un shell avec gestionnaire de paquets, et peut être supprimé à tout moment.",
   "sameIdServerExist": "Un serveur avec le même ID existe déjà",

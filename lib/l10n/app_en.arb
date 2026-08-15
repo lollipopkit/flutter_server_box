@@ -274,6 +274,7 @@
       "latest": {}
     }
   },
+  "rootfsMissing": "No Linux filesystem is installed on this device yet.",
   "rootfsSubtitle": "A Linux userland on this device",
   "rootfsInstallTip": "Download Alpine Linux {version} (about 3 MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.",
   "@rootfsInstallTip": {

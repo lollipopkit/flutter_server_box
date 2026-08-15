@@ -165,6 +165,7 @@
       "latest": {}
     }
   },
+  "rootfsMissing": "Er is nog geen Linux-bestandssysteem op dit apparaat geïnstalleerd.",
   "rootfsSubtitle": "Een Linux-userland op dit apparaat",
   "rootfsInstallTip": "Download Alpine Linux {version} (ongeveer 3 MB) en pak het uit op dit apparaat. Het geeft deze app een shell met pakketbeheerder en kan op elk moment worden verwijderd.",
   "sameIdServerExist": "Er bestaat al een server met dezelfde ID",

@@ -894,6 +894,10 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get rootfsMissing =>
+      'Er is nog geen Linux-bestandssysteem op dit apparaat geïnstalleerd.';
+
+  @override
   String get rootfsSubtitle => 'Een Linux-userland op dit apparaat';
 
   @override
