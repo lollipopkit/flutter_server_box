@@ -167,29 +167,16 @@ Apple Silicon 上的 Linux 虚拟机)。
 `model name` 出现次数。`lscpu` 只输出一行,直接接上去核数会变成 1。要改就得
 连解析侧的契约一起改。
 
-## Agent 风险徽标:`unknown` 和 `unvetted` 是不是同一个徽标
+## Agent 风险徽标:成因编进枚举,已做
 
-`AskAiCommand.classifyRisk` 是白名单:`readOnly` 是唯一一个对命令下了正面判断
-的结论,其余全是「没认出来」。原来「没认出来」和「匹配到修改型模式」共用
-`caution`,而它的中文标签是「会更改系统」——对 `sleep 60` 这种命令,这是一句
-假话,而且和模型自己写的「不会修改系统」当场矛盾。`uptime && whoami` 同理:链式
-命令根本不拆开分析。
+`AskAiCommand.classifyRisk` 是白名单:`readOnly` 是唯一一个对命令下了正面判断的结论,
+其余全是「没认出来」。原来「没认出来」和「匹配到修改型模式」共用 `caution`,而它的
+中文标签是「会更改系统」——对 `sleep 60` 这种命令这是一句假话,和模型自己写的「不会
+修改系统」当场矛盾。
 
-已经拆开了(枚举加 `unknown`,fallthrough 和链式归入它,`caution` 留给真的匹配
-到修改型模式的),`canAutoRun` 不变——只有 `readOnly` 能自动跑,安全性没放松。
-
-**剩下的是标签语义,还没定**。同一时间另一条线在做「未审核主机」的拆分,给
-`_unvettedFloor` 抬升后的结果也用了 `unknown`,并另配了 `askAiRiskUnvetted`
-(「未审核的主机」)标签。于是同一个枚举值现在有两种成因:
-
-- 命令没被认出来 → 应该说「未判定」
-- 命令是只读的,但主机没被审核过 → 应该说「未审核的主机」
-
-两者都不能自动执行,但徽标该说哪句话取决于成因,不是枚举值本身。现在靠
-`raisedByUnvettedHost` 这个 bool 区分。要么把成因编进枚举,要么在徽标那层用
-两个字段判断——没定,先记着。
-
-l10n 里 `askAiRiskUnknown`(15 语言)已经加了。
+现在枚举是 `readOnly / unknown / unvettedHost / caution / destructive`,三种成因各有
+各的徽标文案,`raisedByUnvettedHost` 这个 bool 去掉了。`canAutoRun` 不变——只有
+`readOnly` 能自动跑。`risk` 是纯 getter、从不序列化,所以加值不涉及任何历史数据迁移。
 
 ## Agent 与多面板:交付了但没验过的部分
 
@@ -246,8 +233,10 @@ proot 并在构建后检查两个 `.so` 确实进了 APK。剩下两条:
 - **Alpine 分支钉在 3.22。** 3.23+ 的 apk-tools 3 在 proot 下所有仓库都报
   `Permission denied`(同一环境里 busybox `wget` 能取同样的 URL,本地文件仓库也正常),
   原因未查明。3.22 是最后一个 apk-tools 2.14 的分支。等原因查明或上游修掉再往上跟。
-- **升级路径没做。** `.installed` 里写了版本号,但没有任何代码读它做比较;换 pin 之后
-  老 rootfs 会一直留着,只能手动长按删除再装。
+- ~~升级路径~~ 已做:`.installed` 里的版本和 pin 不一致时,打开 Alpine 终端会提示一次
+  (说明重装会丢容器里 `apk add` 装过的东西),不点就照常用旧的;入口显示的是**已装的**
+  版本号,有更新时副标题写出新版本。留了一条 TODO:marker 为空的老安装当作「更旧」处理,
+  等没有这种安装了可以删。
 
 已经定了的两条,不用再议:
 
@@ -256,3 +245,23 @@ proot 并在构建后检查两个 `.so` 确实进了 APK。剩下两条:
 - **`useLegacyPackaging` 全局开。** 没有按库控制的开关。实测 arm64 release APK:开
   25.5 MB,关 47.8 MB —— 开了反而更小(解压出来的库在 APK 里是压缩存储的,映射的不是),
   代价是安装后库存两份。
+
+## Flutter 的 state restoration 在这个 app 里是失效的
+
+实测(API 36 模拟器,debug build):终端 tab 的 `restoreState` 跑起来时
+`bucket == null`,也就是它 `registerForRestoration` 的东西从来没被写出去过。
+`MaterialApp` 上有 `restorationScopeId: 'serverbox'`,但页面挂在 `home:` 下,而
+`home:` 生成的 route 没有 restoration id——没有 id 的 route 不会给子树发 bucket。
+
+终端 tab 已经绕开了:标签集改存 `Stores.history.sshTabs`(Hive),进程被杀后能恢复,
+已验。剩下三处还在用这套机制,等于什么都没做:
+
+- `lib/view/page/home.dart` —— 底部 tab 的选中项
+- `lib/view/page/storage/tab.dart` —— 文件页(另一个 agent 的 lane,和 file-plan 一起看)
+- `lib/view/page/ssh/page/page.dart` —— 终端页自己的 tmux session/window。功能上不影响:
+  tmux 状态现在由 tab 那层的 JSON 带着走,但页面里这三个 `Restorable*` 字段看着像在工作,
+  其实没有。
+
+两条路:要么让 home route 拿到 restoration id(改动小但要确认 Flutter 那条链路),要么
+像终端 tab 一样各自落到 store。**没定**。注意 saved instance state 本来也扛不住用户
+在最近任务里划掉 app,而"划掉之后回来还在"恰恰是终端最需要的,所以 store 那条路更稳。

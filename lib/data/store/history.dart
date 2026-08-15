@@ -58,4 +58,17 @@ class HistoryStore extends HiveStore {
     name: 'sshServerHistory',
   );
 
+  /// The terminal tabs that were open, as JSON.
+  ///
+  /// Here rather than in `RestorationMixin`, which is what it used to use.
+  /// Flutter's restoration data is Android's saved instance state, and this app
+  /// never had any: measured on an API 36 emulator, the terminal tab's
+  /// `restoreState` ran with a **null bucket**, so nothing registered with it
+  /// was ever written. `MaterialApp.home` builds its route without a
+  /// restoration id, and a route without one hands no bucket to its subtree.
+  ///
+  /// A store also survives what saved instance state does not — the process
+  /// being killed in the background, and the task being swiped away — which is
+  /// exactly when someone wants their terminals back.
+  late final sshTabs = propertyDefault('sshTabs', '');
 }

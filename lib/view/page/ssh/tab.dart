@@ -61,7 +61,7 @@ class _SshSession {
 }
 
 class _SSHTabPageState extends ConsumerState<SSHTabPage>
-    with AutomaticKeepAliveClientMixin, RestorationMixin {
+    with AutomaticKeepAliveClientMixin {
   late final _sessions = SessionTabsController<_SshSession>(
     leadingName: libL10n.add,
   );
@@ -96,33 +96,23 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     ),
   );
 
-  final _restorableTabs = RestorableString('');
-
-  @override
-  String get restorationId => 'ssh_tab_page';
-
   @override
   bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
-    // Anything queued before this tab existed. Tabs are built when first
-    // visited, so a request made from the server list arrives while there is
-    // nothing here to receive it.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _drainRequests());
-  }
-
-  @override
-  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    registerForRestoration(_restorableTabs, 'tabs_state');
-    if (!initialRestore || _restorableTabs.value.isEmpty) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _restoreTabs());
+    // Both after the first frame, and in this order: a queued request is what
+    // the user just asked for, and it should end up beside the tabs that were
+    // already open rather than racing them.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _restoreTabs();
+      if (mounted) _drainRequests();
+    });
   }
 
   @override
   void dispose() {
-    _restorableTabs.dispose();
     _sessions.dispose();
     _sortVersion.dispose();
     super.dispose();
@@ -366,9 +356,9 @@ extension _Sessions on _SSHTabPageState {
   }
 
   void _saveTabs() {
-    _restorableTabs.value = jsonEncode([
-      for (final tab in _sessions.tabs) tab.data.toRestorable(),
-    ]);
+    Stores.history.sshTabs.put(
+      jsonEncode([for (final tab in _sessions.tabs) tab.data.toRestorable()]),
+    );
   }
 
   /// Reopens whatever was open when the app last went away.
@@ -377,9 +367,12 @@ extension _Sessions on _SSHTabPageState {
   /// path that runs against data an older build wrote, and a single malformed
   /// record used to abort the loop — taking every other terminal with it.
   Future<void> _restoreTabs() async {
+    final saved = Stores.history.sshTabs.fetch();
+    if (saved.isEmpty) return;
+
     final List<dynamic> entries;
     try {
-      entries = jsonDecode(_restorableTabs.value) as List;
+      entries = jsonDecode(saved) as List;
     } catch (e, st) {
       Loggers.app.warning('Unreadable SSH tab state', e, st);
       return;
