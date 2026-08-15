@@ -34,8 +34,16 @@
 extern "C" {
 #endif
 
+/// Kept, because nothing in the app calls these.
+///
+/// Dart looks them up by name at runtime through `DynamicLibrary.process()`,
+/// which the linker cannot see: without this it dead-strips every one of them,
+/// and the engine they reference goes with them — measured, an app binary of
+/// 58 KB and no `sbm_ish` symbol in it.
+#define SBM_ISH_EXPORT __attribute__((visibility("default"), used))
+
 /// Whether this build carries the engine at all.
-bool sbm_ish_available(void);
+SBM_ISH_EXPORT bool sbm_ish_available(void);
 
 /// Boots the guest and runs [command] in it, with [rootfs] as its filesystem.
 ///
@@ -45,21 +53,21 @@ bool sbm_ish_available(void);
 ///
 /// [rootfs] is a directory in iSH's own format — a `data` tree beside a sqlite
 /// metadata db — built by `fakefsify`, not a plain tarball.
-int sbm_ish_boot(const char *rootfs, const char *command, int columns, int rows);
+SBM_ISH_EXPORT int sbm_ish_boot(const char *rootfs, const char *command, int columns, int rows);
 
 /// Reads what the guest has printed, waiting up to [timeout_ms] for the first
 /// byte. Returns the number of bytes, 0 on timeout, or -1 once the guest has
 /// exited and its output has been drained.
-int sbm_ish_read(char *buffer, int length, int timeout_ms);
+SBM_ISH_EXPORT int sbm_ish_read(char *buffer, int length, int timeout_ms);
 
 /// Types [length] bytes at the guest.
-int sbm_ish_write(const char *buffer, int length);
+SBM_ISH_EXPORT int sbm_ish_write(const char *buffer, int length);
 
 /// Tells the guest its terminal changed size.
-void sbm_ish_resize(int columns, int rows);
+SBM_ISH_EXPORT void sbm_ish_resize(int columns, int rows);
 
 /// The guest's exit status, or -1 while it is still running.
-int sbm_ish_exit_code(void);
+SBM_ISH_EXPORT int sbm_ish_exit_code(void);
 
 #ifdef __cplusplus
 }

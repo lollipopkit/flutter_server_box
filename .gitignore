@@ -95,3 +95,6 @@ android/app/.cxx
 # Built by scripts/build-proot-android.sh — GPL binaries, not sources.
 /android/app/src/main/jniLibs/
 /build/proot-android/
+
+# Local switch for the iOS Linux engine — see ios/Flutter/Ish.xcconfig.
+/ios/Flutter/IshLocal.xcconfig

@@ -31,11 +31,17 @@
 
 SBM_ISH = 0
 
+// A local override, so turning the engine on for a development build does not
+// mean editing a tracked file and remembering to put it back. Untracked; write
+// `SBM_ISH = 1` in it. Later assignment wins, so this is the last word.
+#include? "IshLocal.xcconfig"
+
 // Where the script leaves them. Relative to ios/, since that is where the
 // Xcode project sits.
-ISH_BUILD_DIR_simulator = $(SRCROOT)/../build/ish/ish-arm64/build-iossim-arm64
-ISH_BUILD_DIR_device = $(SRCROOT)/../build/ish/ish-arm64/build-ios-arm64
-ISH_BUILD_DIR = $(ISH_BUILD_DIR_$(PLATFORM_NAME:default=device))
+// Keyed on PLATFORM_NAME, whose values are `iphonesimulator` and `iphoneos`.
+ISH_BUILD_DIR_iphonesimulator = $(SRCROOT)/../build/ish/ish-arm64/build-iossim-arm64
+ISH_BUILD_DIR_iphoneos = $(SRCROOT)/../build/ish/ish-arm64/build-ios-arm64
+ISH_BUILD_DIR = $(ISH_BUILD_DIR_$(PLATFORM_NAME))
 ISH_SOURCE_DIR = $(SRCROOT)/../build/ish/ish-arm64
 
 // Everything below is keyed on SBM_ISH: the `_0` variants are empty, so with
@@ -47,6 +53,14 @@ ISH_LDFLAGS_0 =
 ISH_LDFLAGS_1 = -lsqlite3 $(ISH_BUILD_DIR)/libish.a $(ISH_BUILD_DIR)/libish_emu.a $(ISH_BUILD_DIR)/libfakefs.a
 ISH_HEADER_PATHS_0 =
 ISH_HEADER_PATHS_1 = $(ISH_SOURCE_DIR) $(ISH_BUILD_DIR) $(ISH_BUILD_DIR)/ish.p $(ISH_SOURCE_DIR)/vdso/arm64 $(ISH_BUILD_DIR)/vdso/arm64
+
+// The engine's headers use file-scope `static_assert`, which is C11. Meson
+// builds it with `-std=gnu11`; Xcode's default is older, and there the same
+// line parses as a declaration with no type — "implicit int". Only set when
+// the engine is on, so an unrelated build keeps the compiler's default.
+ISH_C_STANDARD_0 =
+ISH_C_STANDARD_1 = gnu11
+GCC_C_LANGUAGE_STANDARD = $(ISH_C_STANDARD_$(SBM_ISH))
 
 GCC_PREPROCESSOR_DEFINITIONS = $(inherited) $(ISH_PREPROCESSOR_$(SBM_ISH))
 OTHER_LDFLAGS = $(inherited) $(ISH_LDFLAGS_$(SBM_ISH))

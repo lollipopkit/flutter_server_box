@@ -262,12 +262,40 @@ engine is not in this repository, so a checkout that has not run the build
 script cannot link it, and a build that silently omitted it would be worse than
 one that never tried.
 
-### What is left
+### In the app: the engine is there, the guest does not start yet
 
-- `ios/Runner/ish/sbm_ish.c` added to the Runner target's sources — the file
-  and the flags exist, the Xcode project does not reference it yet;
-- a `dart:ffi` binding over those six functions, and an `IosRootfs` beside
-  `AndroidRootfs` answering the same questions;
+`sbm_ish.c` is in the Runner target and `IosRootfs` (`dart:ffi`) reaches it.
+Measured in the simulator, inside the app: `IosRootfs.isAvailable` is **true**,
+so the symbols resolve in the running process and the switch is doing what it
+says. Two things the wiring needed, both found by measurement:
+
+- **The exported functions must be kept.** Nothing in the app calls them —
+  Dart looks them up by name — so the linker dead-strips all six and the engine
+  with them. The first build with the switch on produced a 58 KB binary with no
+  `sbm_ish` symbol in it. `__attribute__((used, visibility("default")))` fixes
+  it; in a Debug build the result lands in `Runner.debug.dylib`, not `Runner`.
+- **The engine's headers need C11.** They use file-scope `static_assert`, which
+  under Xcode's default standard parses as a declaration with no type. Meson
+  builds with `-std=gnu11`; the xcconfig now sets the same, and only when the
+  switch is on.
+
+What does **not** work yet: booting a guest from inside the app. The test that
+does it does not complete — no crash and nothing in the simulator's log, so the
+app is alive and the isolate is stuck. Two suspects, neither confirmed:
+`sbm_ish_boot` waits on a condvar on the calling thread, which in a test is the
+Dart main isolate's; and the shim installs a `sigaltstack` but not the engine's
+own `SIGSEGV`/`SIGBUS` handler, which the interpreter relies on to recover from
+a guest fault — `main.c` installs it, and Dart's VM has handlers of its own
+that may be involved. It works in the same simulator outside Flutter (a CLI
+linked against the same libraries and the same shim), which is what makes the
+difference worth chasing rather than the engine.
+
+A useful thing fell out of the attempt: `Process.run` is refused on iOS *even
+in the simulator* — "Starting new processes is not supported on iOS". The
+staging step had to be rewritten in `dart:io`. That is the platform restating
+why it gets an interpreter.
+
+### What is left
 - a filesystem on the device. `fakefsify` is a host tool that needs libarchive
   and writes a sqlite metadata db, so either the built filesystem ships in the
   bundle or that tool's job is done on the phone at first launch;
