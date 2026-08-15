@@ -208,11 +208,42 @@ entitlement on iOS. Expect an interpreter's floor, not native speed.
 
 The speedup figures are the fork's own benchmarks. Unverified.
 
-Integration is not small: `deps/build_ish.sh` produces `libish`, `libish_emu`,
-`libfakefs`, headers and a guest VDSO (which needs llvm to build), consumed by
-an Xcode project; the Alpine tarball ships as an asset. That is a vendored
-GPLv3 C codebase inside a Flutter app, with its own build step in CI for a
-platform that currently has none.
+Integration is not small: meson produces `libish.a`, `libish_emu.a`,
+`libfakefs.a` and a guest VDSO (which needs llvm to build), consumed by an
+Xcode project; a filesystem has to reach the device. That is a vendored GPLv3 C
+codebase inside a Flutter app, with its own build step in CI for a platform
+that currently has none.
+
+### Measured: the engine builds for iOS and runs Alpine in the simulator
+
+`scripts/build-ish-ios.sh`, which pins the fork to a commit and Alpine to the
+same 3.22.5 aarch64 release the Android rootfs uses.
+
+| | Result |
+| --- | --- |
+| the three libraries, `-isysroot iPhoneSimulator` | build clean; `LC_BUILD_VERSION platform 7` |
+| a CLI hand-linked against them, run under `simctl spawn` | `3.22.5`, `aarch64`, `root` |
+| the same engine built for macOS, for comparison | the same, and it is what builds the filesystem |
+
+So the interpreter works when built for the iOS platform triple, which was the
+first thing that could have stopped this. What it does **not** show: the
+simulator is not a sandboxed device, and nothing here has been near App Store
+review. The device build (`scripts/build-ish-ios.sh device`) compiles but has
+not been run.
+
+What the engine needs from a caller is small and already the shape this app
+uses. `xX_main_Xx(argc, argv, envp)` mounts a fakefs root, becomes the first
+process, `do_execve`s the command, and then either wires a tty or, when stdin
+is not one, pipes — a `ShellBackend` and a `ServerExec` respectively. What is
+missing is everything between Dart and that function:
+
+- the libraries linked into `ios/Runner`, with the headers it needs;
+- a bridge — `dart:ffi` into a shim that boots the kernel on a thread and hands
+  back a pty, since none of this is Rust and `flutter_rust_bridge` does not
+  apply;
+- a filesystem on the device. `fakefsify` is a host tool that needs libarchive
+  and writes a sqlite metadata db, so either the built filesystem ships in the
+  bundle, or that tool's job is done on the phone at first launch.
 
 ## Android: the wall, and the way through it
 
@@ -393,9 +424,12 @@ later ship apk-tools 3, whose network fetches fail under proot with `Permission
 denied` on every repository while busybox `wget` fetches the same URLs — cause
 not established, so the branch is 3.22, the last with apk-tools 2.14.
 
-iOS via ish-arm64 is the unmeasured half: vendor the fork, build the static
-libs, wire the Xcode target, add an iOS build step to CI. That half carries the
-review risk; treat it as a separate decision, not a continuation.
+iOS via ish-arm64 is the half still open. The engine part of it is no longer
+unmeasured — it builds for the iOS triple and runs Alpine in the simulator, see
+above — but wiring the Xcode target, bridging it to Dart, getting a filesystem
+onto the device and adding an iOS build step to CI are all still to do. That
+half carries the review risk; treat it as a separate decision, not a
+continuation.
 It is also what turns the agent's local execution from "on the user's
 filesystem" into "in a sandbox", which may be the strongest reason to build it.
 
@@ -409,7 +443,7 @@ Update this as answers arrive; several decisions above move with them.
 | --- | --- | --- | --- |
 | 1 | Can a `targetSdk` 36 app exec a file in `filesDir` via `linker64`? | **Yes for a bionic binary, no for a musl one** — measured on an API 36 emulator, `integration_test/android_exec_test.dart`. Direct `execve` is denied; the linker maps it and runs it. A musl binary segfaults once its libc is found, because it wants musl's own loader. Unverified on physical hardware | **done** |
 | 2 | How does OpenMinis run rootfs binaries at `targetSdk` 36? | **Answered**: proot's own loader, extracted via `/proc/self/fd` and mapping the guest ELF itself, so the host linker is never asked to understand musl. `RootfsManager.kt:42`, `PRootKernel.kt:83`. Not reproduced here | **done** |
-| 3 | Are ish-arm64's 7–12x figures representative? | Build it, run a shell and a `python -c` loop | **open** |
+| 3 | Are ish-arm64's 7–12x figures representative? | Not yet measured. The engine now builds and runs (`scripts/build-ish-ios.sh`), so this is a matter of running `benchmark/run.sh` rather than of finding out whether it works at all | **open** |
 | 4 | Does the macOS DMG build ship unsandboxed, or does local shell hide there? | **Answered, and the first answer was wrong.** A sandboxed process cannot host a pty at all, so the entitlement that was meant to fix it bought nothing and was reverted (`ccd2e77b`). iCloud turned out not to need the sandbox either. macOS ships two products from one binary (`52a0ec1b`), and the App Store one hides the feature | **done** |
 | 5 | Is proot GPLv2-only or v2-or-later? | **v2 or later** — the source headers say "either version 2 of the License, or (at your option) any later version" (`src/tracee/tracee.h:9`, `src/cli/cli.c:9`). So it can be taken as GPLv3 and combined with this AGPL-3.0 app even if it were linked rather than invoked | **done** |
 | 6 | Does `flutter_pty` still build against current Flutter on all four desktop/Android targets? | **macOS and Android build and run** — `local_shell_test.dart` on macOS, and on an API 36 emulator both the Device entry and the Alpine one open a shell through it (`rootfs_shell_test.dart`). Linux and Windows untried, and no physical Android device. One warning: `flutter_pty` does not support Swift Package Manager, which Flutter says "will become an error in a future version" — `sbm_ffi` is in the same list, so it is not a new exposure | **partly** |
