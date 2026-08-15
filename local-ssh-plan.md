@@ -344,6 +344,53 @@ its output with the terminal's — and closing a terminal does not stop the
 guest, because the guest is the machine and cannot be started twice in one
 process.
 
+### Two design changes, researched
+
+Both proposals hold up, and the engine already has the mechanism for each.
+
+**A real directory tree instead of the sqlite one.** iSH ships two filesystems:
+`fakefs` (opaque host files plus a `meta.db` holding every mode, owner and
+symlink) and **`realfs`** (`fs/real.c`) — which is exactly "hijack the IO and
+move the root": every guest path is `openat`'d relative to a root fd, and
+nothing is stored beside it. The CLI picks between them with `-r` and `-f`.
+
+Choosing `realfs` deletes the shipping blocker outright: installing becomes
+"unpack a tarball into a directory", which Dart can do, with no `fakefsify`, no
+libarchive and no metadata db to build on a phone. It also makes the guest's
+files ordinary files — inspectable, backup-able, and something the Files app
+could be pointed at later.
+
+What it costs, read out of the source rather than assumed:
+
+| | Under `realfs` |
+| --- | --- |
+| device nodes | `realfs_mknod` returns `_EPERM` for anything but a FIFO or a regular file — so `/dev/null`, `/dev/urandom`, `/dev/ptmx` cannot live in the tree. **The open question**: `/dev` needs its own mount, and the CLI only creates those nodes when the root is *not* realfs |
+| ownership | `chown` is silently ignored when it fails with `EPERM`, which it will — the app is one uid. Harmless while everything in the guest is fake-root, and a lie `apk` does not check |
+| modes | real `chmod` on the host, so the execute bit and the rest survive |
+| symlinks, hard links | real ones; APFS has both |
+| case | iOS's data volume is case-sensitive, so a Linux tree is fine **on a device**. The *simulator* borrows the Mac's volume, which is case-insensitive by default — `xX_main_Xx` tries `setiopolicy_np(...CASE_SENSITIVITY...)` for exactly this and says it needs root or a private entitlement, neither of which an App Store app has. So this is a simulator problem, not a shipping one |
+
+**A shell each, not one shared console.** Also right, and not a limitation of
+the engine — the limit was my console, not the guest. One guest holds many
+tasks, and OpenMinis gives each command its own pty:
+
+```
+become_new_init_child();                                   // a task under init
+struct tty *tty = pty_open_fake(&ish_pty_driver);          // its own pty
+tty_set_winsize(tty, winsize);
+create_stdio("/dev/pts/N", TTY_PSEUDO_SLAVE_MAJOR, tty->num);
+do_execve(...); task_start(current);
+```
+
+That makes `supportsExec` true, gives the terminal and the Agent separate
+channels, and removes the marker protocol the Agent would otherwise need. It
+also makes closing a terminal ordinary: each is a child of init, and init stays
+the loop that nothing can end.
+
+Both changes are worth making before any of the remaining work, because they
+change what that work is: the install path becomes a download and an untar, and
+the Agent gets a real `ServerExec` rather than a shell it has to share.
+
 What is left:
 
 1. **A filesystem on the device.** `fakefsify` is a host tool: it needs
