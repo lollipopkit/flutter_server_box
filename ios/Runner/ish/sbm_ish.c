@@ -33,6 +33,7 @@ int sbm_ish_exit_code(void) { return -1; }
 #include <sys/time.h>
 
 #include <sys/stat.h>
+#include <syslog.h>
 
 #include "kernel/calls.h"
 #include "kernel/init.h"
@@ -104,6 +105,12 @@ static void guest_crash_handler(int signal_number, siginfo_t *info, void *contex
     // exiting would take the app with it, so the thread is parked instead.
     // `pthread_exit` is not an option: on iOS it raises SIGTRAP from some
     // thread states, which is the crash this is avoiding.
+    //
+    // Said out loud first. A parked thread is silent by construction, and a
+    // silent app that has stopped answering is the hardest thing here to tell
+    // apart from a deadlock — which is exactly what it looked like.
+    syslog(LOG_ERR, "sbm_ish: guest thread parked after signal %d at %p",
+           signal_number, info->si_addr);
     sigset_t all;
     sigfillset(&all);
     pthread_sigmask(SIG_BLOCK, &all, NULL);
@@ -112,7 +119,7 @@ static void guest_crash_handler(int signal_number, siginfo_t *info, void *contex
 
 /// What `die()` does when the app must not go with it.
 static void park_on_die(const char *message) {
-    (void)message;
+    syslog(LOG_ERR, "sbm_ish: die(%s)", message == NULL ? "" : message);
     sigset_t all;
     sigfillset(&all);
     pthread_sigmask(SIG_BLOCK, &all, NULL);
@@ -282,26 +289,39 @@ static int boot_kernel(void) {
     written += snprintf(environment + written, sizeof(environment) - written,
                         "PYTHONMALLOC=malloc") + 1;
 
-    // argv is NUL-separated and double-NUL terminated, which is what
-    // `do_execve` reads rather than an array.
+    // A shell, and not the caller's command. The first process is init, and
+    // `kernel/exit.c` ends the *host process* with `_exit(0)` when init dies —
+    // so a command as init means the app quits when the command finishes.
+    // Measured, and it is what the first version did: the guest booted, the
+    // command ran, and the app was gone before anything could read a byte of
+    // its output.
+    //
+    // So init is a shell that stays, and a command is typed at it. That is
+    // also what a terminal is, which is where this ends up anyway.
     char argv[4096];
-    size_t position = 0;
-    const char *parts[] = { "/bin/sh", "-c", boot.command };
-    for (size_t i = 0; i < 3; i++) {
-        size_t length = strlen(parts[i]) + 1;
-        if (position + length >= sizeof(argv) - 1) return -E2BIG;
-        memcpy(argv + position, parts[i], length);
-        position += length;
-    }
-    argv[position] = '\0';
+    const char *shell = "/bin/sh";
+    size_t length = strlen(shell) + 1;
+    memcpy(argv, shell, length);
+    argv[length] = '\0';
 
-    err = do_execve("/bin/sh", 3, argv, environment);
+    err = do_execve(shell, 1, argv, environment);
     if (err < 0) return err;
 
     // Started, not run here. `task_run_current` would turn this thread into
     // the guest and never return — fine for a command-line iSH, and a hang for
     // anything with a caller waiting.
     task_start(current);
+
+    // Typed at the shell once it is running, if the caller asked for anything.
+    if (boot.command != NULL && boot.command[0] != '\0') {
+        // It has to have got as far as reading its input. That is a process
+        // starting, not a network round trip, so this is short — and it is the
+        // caller's thread waiting, never the guest's.
+        struct timespec settle = { .tv_sec = 0, .tv_nsec = 200 * 1000 * 1000 };
+        nanosleep(&settle, NULL);
+        sbm_ish_write(boot.command, (int)strlen(boot.command));
+        sbm_ish_write("\n", 1);
+    }
     return 0;
 }
 
@@ -343,7 +363,18 @@ int sbm_ish_boot(const char *rootfs, const char *command, int columns, int rows)
 int sbm_ish_read(char *buffer, int length, int timeout_ms) {
     if (buffer == NULL || length <= 0) return -EINVAL;
 
-    pthread_mutex_lock(&output.lock);
+    // Tried, not taken. The guest holds this lock while it writes, and a guest
+    // thread that faults there is parked by the crash handler still holding
+    // it — at which point a plain `lock` here would never return, which is
+    // indistinguishable from the app having wedged. `-EBUSY` says which.
+    if (pthread_mutex_trylock(&output.lock) != 0) {
+        struct timespec retry = { .tv_sec = 0, .tv_nsec = 2 * 1000 * 1000 };
+        int attempts = 0;
+        while (pthread_mutex_trylock(&output.lock) != 0) {
+            if (++attempts > 50) return -EBUSY;
+            nanosleep(&retry, NULL);
+        }
+    }
     if (output.head == output.tail && guest_exit_code < 0) {
         struct timeval now;
         gettimeofday(&now, NULL);

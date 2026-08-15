@@ -98,6 +98,11 @@ abstract final class IosRootfs {
     final buffer = malloc<Uint8>(limit);
     try {
       final count = read(buffer.cast(), limit, timeout.inMilliseconds);
+      // -EBUSY: the guest holds the output lock and is not giving it back,
+      // which means a guest thread died holding it. Told apart from the guest
+      // having exited, because the answer is different — that one is over,
+      // this one is broken.
+      if (count == -16) throw StateError('The guest stopped holding its lock');
       if (count < 0) return null;
       if (count == 0) return '';
       return String.fromCharCodes(buffer.asTypedList(count));

@@ -87,16 +87,20 @@ void main() {
     debugPrint('ISHPROBE boot=$err');
     expect(err, 0, reason: 'boot returned $err');
 
-    // Polled, with the wait on the Dart side. `sbm_ish_read` can block for a
-    // timeout, and doing that here would block the isolate this test runs on —
-    // which starves the framework and is why an earlier version of this test
-    // never completed. The real terminal will need a reader off this thread
+    // Read to a marker, not to the guest ending: the guest is a shell that
+    // stays. It has to — `kernel/exit.c` ends the host process when init dies,
+    // so a guest that exits takes the app with it.
+    //
+    // Polled, with the wait on the Dart side. `sbm_ish_read` can block for its
+    // timeout, and doing that here would block the isolate this test runs on,
+    // starving the framework. The real terminal needs a reader off this thread
     // entirely; a poll is enough to show the guest answers.
     final output = StringBuffer();
     for (var round = 0; round < 300; round++) {
       final chunk = IosRootfs.read(timeout: Duration.zero);
       if (chunk == null) break;
       output.write(chunk);
+      if (output.toString().contains('SBM_IOS_OK')) break;
       await Future<void>.delayed(const Duration(milliseconds: 20));
     }
     debugPrint('ISHPROBE output=${output.toString().trim()}');
@@ -108,6 +112,7 @@ void main() {
     // the first process is root in it.
     expect(text, contains('root'));
     expect(text, contains('SBM_IOS_OK'));
-    expect(IosRootfs.exitCode, 0);
+    // Still running, and it must be: the guest ending would end the app.
+    expect(IosRootfs.exitCode, isNull);
   }, skip: !Platform.isIOS);
 }
