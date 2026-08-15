@@ -7,7 +7,12 @@ import 'package:server_box/data/res/store.dart';
 
 enum ServerFuncBtn {
   terminal(),
-  sftp(),
+
+  /// Not `sftp`: SFTP is one of two ways a server's files are reached, and
+  /// which one it is belongs to `ServerFilePage` rather than to the entry that
+  /// opens it. A monitor-backed host with no reachable sshd browses over its
+  /// agent's file API and never sees SFTP at all.
+  files(),
   container(),
   process(),
   snippet(),
@@ -16,41 +21,43 @@ enum ServerFuncBtn {
   portForward(1340),
   power(1481);
 
+  /// The build this entry first shipped in, or null for one that has been
+  /// there from the start. Read by [autoAddNewFuncs] and nothing else.
   final int? addedVersion;
 
   const ServerFuncBtn([this.addedVersion]);
 
-  static void autoAddNewFuncs(int cur) {
+  /// Puts entries that arrived during an upgrade into the user's row, which
+  /// was last written when they did not exist.
+  ///
+  /// The window is `(from, to]`, not "everything up to [to]". An entry the
+  /// user has since taken *out* of the row was a decision, and a rule that
+  /// only looks at [to] re-adds it on every later upgrade — overruling that
+  /// decision every time, forever. Only an entry that did not exist the last
+  /// time they could have chosen is added.
+  ///
+  /// [from] is the build this install last ran, 0 on a fresh one — where
+  /// [defaultIdxs] already lists everything, so nothing here fires.
+  ///
+  /// Driven by [addedVersion] over [values] rather than by a branch per entry:
+  /// the old form needed three near-identical blocks, and a new entry was
+  /// added by remembering to write a fourth.
+  static void autoAddNewFuncs(int from, int to) {
     final prop = Stores.setting.serverFuncBtns;
     final list = prop.fetch();
-    final originalLength = list.length;
-
-    if (systemd.addedVersion != null && cur >= systemd.addedVersion!) {
-      if (!list.contains(systemd.index)) {
-        list.add(systemd.index);
-      }
-    }
-
-    if (portForward.addedVersion != null && cur >= portForward.addedVersion!) {
-      if (!list.contains(portForward.index)) {
-        list.add(portForward.index);
-      }
-    }
-
-    if (power.addedVersion != null && cur >= power.addedVersion!) {
-      if (!list.contains(power.index)) {
-        list.add(power.index);
-      }
-    }
-
-    if (list.length > originalLength) {
-      prop.put(list);
-    }
+    final added = [
+      for (final btn in values)
+        if (btn.addedVersion case final since?
+            when since > from && since <= to && !list.contains(btn.index))
+          btn.index,
+    ];
+    if (added.isEmpty) return;
+    prop.put([...list, ...added]);
   }
 
   static final defaultIdxs = [
     terminal,
-    sftp,
+    files,
     container,
     process,
     snippet,
@@ -60,7 +67,8 @@ enum ServerFuncBtn {
   ].map((e) => e.index).toList();
 
   IconData get icon => switch (this) {
-    sftp => Icons.insert_drive_file,
+    // The file tab's own icon, since that is where this entry lands.
+    files => Icons.folder_open,
     snippet => Icons.code,
     container => FontAwesome.docker_brand,
     process => Icons.list_alt_outlined,
@@ -83,13 +91,15 @@ enum ServerFuncBtn {
     container || process || systemd || power => caps.shell,
     // Browsing files is its own question: a transport could grow a file API
     // without growing a stream this app can point anywhere.
-    sftp => caps.files,
+    files => caps.files,
     // A forwarded connection is a byte stream, not a command's output.
     portForward => caps.byteStream,
   };
 
   String get toStr => switch (this) {
-    sftp => 'SFTP',
+    // Named after what it opens, not after the protocol that used to be the
+    // only way to get there — the same word the file tab carries.
+    files => libL10n.file,
     snippet => libL10n.snippet,
     container => libL10n.container,
     process => libL10n.process,

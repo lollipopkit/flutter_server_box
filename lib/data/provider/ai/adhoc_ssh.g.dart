@@ -56,7 +56,7 @@ final class AdHocSshSessionsProvider
   }
 }
 
-String _$adHocSshSessionsHash() => r'd2b929a31300d4d5bbfde61bf66932171c82d2ea';
+String _$adHocSshSessionsHash() => r'906dd81bd8f64bc35a908aabaa0a0d3c6d4f5b0b';
 
 /// Every host the Agent has open that is not a configured server.
 ///

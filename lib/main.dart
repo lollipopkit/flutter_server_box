@@ -164,7 +164,7 @@ Future<void> _doDbMigrate() async {
   // How to upgrade the data is inside each own func.
   if (lastVer < newVer) {
     ServerDetailCards.autoAddNewCards(newVer);
-    ServerFuncBtn.autoAddNewFuncs(newVer);
+    ServerFuncBtn.autoAddNewFuncs(lastVer, newVer);
     Stores.setting.lastVer.put(newVer);
   }
 

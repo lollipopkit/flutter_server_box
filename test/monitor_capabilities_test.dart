@@ -135,14 +135,28 @@ void main() {
     });
 
     test('a full-access agent offers everything but the byte streams', () {
-      expect(ServerFuncBtn.sftp.availableWith(granted), isFalse);
+      // Files are not among them: full access is the shell grant, and the file
+      // API is a grant of its own — see the next test.
+      expect(ServerFuncBtn.files.availableWith(granted), isFalse);
       expect(ServerFuncBtn.portForward.availableWith(granted), isFalse);
       for (final btn in ServerFuncBtn.values) {
-        if (btn == ServerFuncBtn.sftp || btn == ServerFuncBtn.portForward) {
+        if (btn == ServerFuncBtn.files || btn == ServerFuncBtn.portForward) {
           continue;
         }
         expect(btn.availableWith(granted), isTrue, reason: btn.name);
       }
+    });
+
+    test('the file entry follows the agent\'s file grant alone', () {
+      // The whole point of the entry no longer being called SFTP: an agent
+      // that serves files and nothing else is browsable, and one that grants a
+      // shell but no file roots is not.
+      const filesOnly = MonitorHttpCapabilities(
+        MonitorRemoteAccess(files: true),
+      );
+      expect(ServerFuncBtn.files.availableWith(filesOnly), isTrue);
+      expect(ServerFuncBtn.terminal.availableWith(filesOnly), isFalse);
+      expect(ServerFuncBtn.files.availableWith(granted), isFalse);
     });
   });
 }

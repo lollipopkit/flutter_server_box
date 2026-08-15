@@ -138,8 +138,18 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
     WidgetRef ref,
   ) async {
     switch (value) {
-      case ServerFuncBtn.sftp:
-        if (!await _ensureSshClient(context, spi.id, ref)) return;
+      case ServerFuncBtn.files:
+        // Only the SFTP backend needs a connection opened first. A server
+        // whose files come from its agent's API has none to open, and asking
+        // for one fails on a host whose sshd this app cannot reach — which is
+        // the case that API exists for. Asked the same way round as
+        // `ServerFilePage` picks the backend, so the connection made here is
+        // the one the page then uses.
+        if (ref.read(serverProvider(spi.id)).capabilities.byteStream &&
+            !await _ensureSshClient(context, spi.id, ref)) {
+          return;
+        }
+        if (!context.mounted) return;
         // Into the file tab rather than over whatever is on screen, so two
         // servers can be open at once and neither is lost by opening the other.
         ref.read(sftpRequestsProvider.notifier).add(spi);
@@ -526,8 +536,10 @@ Future<bool> _ensureExec(BuildContext context, String id, WidgetRef ref) {
 /// Makes sure an SSH connection exists before opening a page that needs the
 /// byte streams only it can carry — SFTP and port forwarding.
 ///
-/// Those entries are hidden unless [ServerCapabilities.byteStream] says so, so
-/// reaching here means the server is an SSH one.
+/// Only ever called for a server whose [ServerCapabilities.byteStream] is
+/// true: port forwarding is hidden without it, and the file entry asks before
+/// calling this, since it is also offered where the files arrive over the
+/// agent's own API and there is no stream to open.
 Future<bool> _ensureSshClient(BuildContext context, String id, WidgetRef ref) {
   return _ensure(context, id, ref, (n) => n.ensureShellClient());
 }

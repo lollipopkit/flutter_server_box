@@ -139,7 +139,7 @@ types:
     fields:
       terminal:
         index: 0
-      sftp:
+      files:
         index: 1
       container:
         index: 2

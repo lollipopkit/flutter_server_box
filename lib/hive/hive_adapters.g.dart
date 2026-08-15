@@ -354,7 +354,7 @@ class ServerFuncBtnAdapter extends TypeAdapter<ServerFuncBtn> {
       case 0:
         return ServerFuncBtn.terminal;
       case 1:
-        return ServerFuncBtn.sftp;
+        return ServerFuncBtn.files;
       case 2:
         return ServerFuncBtn.container;
       case 3:
@@ -379,7 +379,7 @@ class ServerFuncBtnAdapter extends TypeAdapter<ServerFuncBtn> {
     switch (obj) {
       case ServerFuncBtn.terminal:
         writer.writeByte(0);
-      case ServerFuncBtn.sftp:
+      case ServerFuncBtn.files:
         writer.writeByte(1);
       case ServerFuncBtn.container:
         writer.writeByte(2);
