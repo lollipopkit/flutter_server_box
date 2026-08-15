@@ -265,3 +265,21 @@ proot 并在构建后检查两个 `.so` 确实进了 APK。剩下两条:
 两条路:要么让 home route 拿到 restoration id(改动小但要确认 Flutter 那条链路),要么
 像终端 tab 一样各自落到 store。**没定**。注意 saved instance state 本来也扛不住用户
 在最近任务里划掉 app,而"划掉之后回来还在"恰恰是终端最需要的,所以 store 那条路更稳。
+
+## iOS 的 Linux 环境:止血开关怎么用
+
+`ios/Flutter/Ish.xcconfig` 里的 `SBM_ISH`,默认 `0`。
+
+- `1` —— 链接 ish-arm64 引擎,`ios/Runner/ish/sbm_ish.c` 按真实实现编译
+- `0` —— 同一个文件编成空壳,不链接任何库、不加头文件路径,`sbm_ish_available()`
+  返回 false,Dart 侧据此不提供任何入口
+
+止血流程就两步:改这一行、重新打包。不用改 Dart、不用动 pubspec、不用改 entitlement。
+验证发出去的包是不是真的剥干净了:在二进制里搜 `sbm_ish_boot` 之外的引擎符号。
+
+为什么要有这个:App Store 2.5.2 针对的是「下载并运行可执行代码」,iSH 上线四天就被
+通知要下架。真出事的时候被卡住的不是这个功能,是整个 app 的下一次更新——那个时间点
+不适合做重构。
+
+默认是 `0`,因为引擎不在仓库里(`scripts/build-ish-ios.sh` 才会构建它),没跑过脚本的
+检出根本链接不了;悄悄少链一个库的构建,比明确不做还糟。

@@ -231,19 +231,54 @@ simulator is not a sandboxed device, and nothing here has been near App Store
 review. The device build (`scripts/build-ish-ios.sh device`) compiles but has
 not been run.
 
-What the engine needs from a caller is small and already the shape this app
-uses. `xX_main_Xx(argc, argv, envp)` mounts a fakefs root, becomes the first
-process, `do_execve`s the command, and then either wires a tty or, when stdin
-is not one, pipes — a `ShellBackend` and a `ServerExec` respectively. What is
-missing is everything between Dart and that function:
+### The shim, and the switch that removes it
 
-- the libraries linked into `ios/Runner`, with the headers it needs;
-- a bridge — `dart:ffi` into a shim that boots the kernel on a thread and hands
-  back a pty, since none of this is Rust and `flutter_rust_bridge` does not
-  apply;
+`ios/Runner/ish/sbm_ish.{h,c}` is the whole app-facing surface: `available`,
+`boot`, `read`, `write`, `resize`, `exit_code`. Measured in the simulator —
+`available=1`, `boot=0`, and `3.22.5 / aarch64 / root` back through it.
+
+Three things it had to get right, each found by getting it wrong:
+
+- **The boot runs on the guest's own thread.** `current` is thread-local and
+  `xX_main_Xx` sets `current->thread = pthread_self()`, so booting on one
+  thread and running `task_run_current()` on another is two tasks, one of them
+  missing. `sbm_ish_boot` starts the thread and waits for it to report.
+- **The console is a tty driver of ours**, installed *after* `xX_main_Xx` —
+  which sets the host's own driver and builds stdio from it — and then
+  `create_stdio` again. Otherwise the guest writes to the app's stdout, which
+  belongs to the app's logs and is invisible to a terminal.
+- **Output goes to a ring buffer, not a pipe.** A guest write must never block
+  on nobody reading: a terminal on a page that is off screen is exactly that,
+  and a blocked write inside the interpreter stops the whole guest.
+
+The switch is `SBM_ISH` in `ios/Flutter/Ish.xcconfig`, and it is the reason the
+shim is a C file with a preprocessor guard rather than a plugin. At `0` the
+file compiles to stubs, no library is linked, no header path is added, and
+`sbm_ish_available()` answers false — which is the same question the Dart side
+already asks on Android before offering anything. Setting it and rebuilding is
+the whole procedure, because what 2.5.2 blocks is not the feature but the next
+update, and that is not the moment to be refactoring. It defaults to `0`: the
+engine is not in this repository, so a checkout that has not run the build
+script cannot link it, and a build that silently omitted it would be worse than
+one that never tried.
+
+### What is left
+
+- `ios/Runner/ish/sbm_ish.c` added to the Runner target's sources — the file
+  and the flags exist, the Xcode project does not reference it yet;
+- a `dart:ffi` binding over those six functions, and an `IosRootfs` beside
+  `AndroidRootfs` answering the same questions;
 - a filesystem on the device. `fakefsify` is a host tool that needs libarchive
   and writes a sqlite metadata db, so either the built filesystem ships in the
-  bundle, or that tool's job is done on the phone at first launch.
+  bundle or that tool's job is done on the phone at first launch;
+- the terminal and the Agent wired to it, which is where the Android work
+  already ends up: a `ShellBackend` and a `ServerExec`.
+
+One design consequence to settle before that last point: the kernel keeps its
+state in globals, so there is **one guest per app process**. A second
+`sbm_ish_boot` is refused rather than allowed to corrupt the first. A terminal
+and the Agent therefore share one machine, and running two things at once means
+two processes *inside* the guest, not two guests.
 
 ## Android: the wall, and the way through it
 
