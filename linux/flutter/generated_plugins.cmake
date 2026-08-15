@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  desktop_drop
   dynamic_color
   flutter_secure_storage_linux
   screen_retriever_linux
