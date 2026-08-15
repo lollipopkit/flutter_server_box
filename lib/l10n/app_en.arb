@@ -267,6 +267,13 @@
   "rememberPwdInMem": "Remember password in memory",
   "rememberPwdInMemTip": "Used for containers, suspending, etc.",
   "remotePath": "Remote path",
+  "rootfsUpdateTip": "Alpine {installed} is installed and {latest} is available. Updating downloads it again and replaces the container: anything installed inside it with apk is lost. The current one keeps working if you skip this.",
+  "@rootfsUpdateTip": {
+    "placeholders": {
+      "installed": {},
+      "latest": {}
+    }
+  },
   "rootfsSubtitle": "A Linux userland on this device",
   "rootfsInstallTip": "Download Alpine Linux {version} (about 3 MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.",
   "@rootfsInstallTip": {

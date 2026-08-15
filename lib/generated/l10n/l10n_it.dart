@@ -894,6 +894,11 @@ class AppLocalizationsIt extends AppLocalizations {
   String get remotePath => 'Percorso remoto';
 
   @override
+  String rootfsUpdateTip(Object installed, Object latest) {
+    return 'Alpine $installed è installato ed è disponibile $latest. L\'aggiornamento lo scarica di nuovo e sostituisce il container: tutto ciò che vi è stato installato con apk viene perso. Saltando l\'aggiornamento, quello attuale continua a funzionare.';
+  }
+
+  @override
   String get rootfsSubtitle => 'Uno spazio utente Linux su questo dispositivo';
 
   @override
@@ -1429,7 +1434,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get agentLocalExecRootfsTip =>
-      'Lets the Agent work on this device, inside the Alpine Linux container ServerBox installs. It cannot see Android\'s filesystem, the app\'s data or your files. Every command still needs review.';
+      'Consente all\'Agent di operare su questo dispositivo, all\'interno del container Alpine Linux installato da ServerBox. Non può vedere il file system di Android, i dati dell\'app o i tuoi file. Ogni comando richiede comunque revisione.';
 
   @override
   String macDmgImportedPartly(String path) {

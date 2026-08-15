@@ -158,6 +158,13 @@
   "rememberPwdInMem": "Ingat kata sandi di dalam memori",
   "rememberPwdInMemTip": "Digunakan untuk kontainer, menangguhkan, dll.",
   "remotePath": "Jalur jarak jauh",
+  "rootfsUpdateTip": "Alpine {installed} terpasang dan {latest} tersedia. Memperbarui akan mengunduhnya lagi dan mengganti kontainer: semua yang dipasang di dalamnya dengan apk akan hilang. Jika dilewati, yang sekarang tetap berfungsi.",
+  "@rootfsUpdateTip": {
+    "placeholders": {
+      "installed": {},
+      "latest": {}
+    }
+  },
   "rootfsSubtitle": "Lingkungan pengguna Linux di perangkat ini",
   "rootfsInstallTip": "Unduh Alpine Linux {version} (sekitar 3 MB) dan ekstrak di perangkat ini. Ini memberi aplikasi ini shell dengan manajer paket, dan dapat dihapus kapan saja.",
   "sameIdServerExist": "Server dengan ID yang sama sudah ada",
@@ -403,5 +410,6 @@
   "askAiRiskUnknown": "Tidak terklasifikasi",
   "agentLocalExec": "Jalankan perintah di perangkat ini",
   "agentLocalExecTip": "Memungkinkan Agent bekerja di mesin tempat ServerBox berjalan, bukan hanya di server. Tidak ada yang berjalan tanpa pengawasan di sini: setiap perintah perlu ditinjau.",
+  "agentLocalExecRootfsTip": "Memungkinkan Agent bekerja di perangkat ini, di dalam kontainer Alpine Linux yang dipasang ServerBox. Ia tidak dapat melihat sistem berkas Android, data aplikasi, atau berkas Anda. Setiap perintah tetap perlu ditinjau.",
   "macDmgImportedPartly": "Data dari versi yang terpasang sebelumnya telah diimpor. Berkas unduhan tetap berada di {path}."
 }

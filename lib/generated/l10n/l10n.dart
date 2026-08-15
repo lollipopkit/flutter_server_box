@@ -1662,6 +1662,12 @@ abstract class AppLocalizations {
   /// **'Remote path'**
   String get remotePath;
 
+  /// No description provided for @rootfsUpdateTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Alpine {installed} is installed and {latest} is available. Updating downloads it again and replaces the container: anything installed inside it with apk is lost. The current one keeps working if you skip this.'**
+  String rootfsUpdateTip(Object installed, Object latest);
+
   /// No description provided for @rootfsSubtitle.
   ///
   /// In en, this message translates to:

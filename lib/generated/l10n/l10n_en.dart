@@ -883,6 +883,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remotePath => 'Remote path';
 
   @override
+  String rootfsUpdateTip(Object installed, Object latest) {
+    return 'Alpine $installed is installed and $latest is available. Updating downloads it again and replaces the container: anything installed inside it with apk is lost. The current one keeps working if you skip this.';
+  }
+
+  @override
   String get rootfsSubtitle => 'A Linux userland on this device';
 
   @override

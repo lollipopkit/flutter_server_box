@@ -825,6 +825,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remotePath => '远端路径';
 
   @override
+  String rootfsUpdateTip(Object installed, Object latest) {
+    return '已安装 Alpine $installed,现有 $latest。更新会重新下载并替换整个容器:里面用 apk 装过的东西都会丢失。跳过的话,现在这个照常可用。';
+  }
+
+  @override
   String get rootfsSubtitle => '本机上的 Linux 用户空间';
 
   @override
@@ -2133,6 +2138,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get remotePath => '遠端路徑';
+
+  @override
+  String rootfsUpdateTip(Object installed, Object latest) {
+    return '已安裝 Alpine $installed,現有 $latest。更新會重新下載並替換整個容器:裡面用 apk 裝過的東西都會遺失。跳過的話,現在這個照常可用。';
+  }
 
   @override
   String get rootfsSubtitle => '本機上的 Linux 使用者空間';

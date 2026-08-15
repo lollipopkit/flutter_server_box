@@ -158,6 +158,13 @@
   "rememberPwdInMem": "Şifreyi bellekte hatırla",
   "rememberPwdInMemTip": "Konteynerler, askıya alma vb. için kullanılır.",
   "remotePath": "Uzak yol",
+  "rootfsUpdateTip": "Alpine {installed} kurulu ve {latest} mevcut. Güncelleme onu yeniden indirir ve konteyneri değiştirir: içine apk ile kurulmuş her şey kaybolur. Bunu atlarsanız mevcut olan çalışmaya devam eder.",
+  "@rootfsUpdateTip": {
+    "placeholders": {
+      "installed": {},
+      "latest": {}
+    }
+  },
   "rootfsSubtitle": "Bu cihazdaki bir Linux kullanıcı alanı",
   "rootfsInstallTip": "Alpine Linux {version} (yaklaşık 3 MB) indirilir ve bu cihazda açılır. Bu uygulamaya paket yöneticisi olan bir kabuk sağlar ve istediğiniz zaman silinebilir.",
   "sameIdServerExist": "Aynı kimliğe sahip bir sunucu zaten mevcut",
@@ -403,5 +410,6 @@
   "askAiRiskUnknown": "Sınıflandırılmadı",
   "agentLocalExec": "Bu cihazda komut çalıştır",
   "agentLocalExecTip": "Agent'ın yalnızca sunucularda değil, ServerBox'ın çalıştığı makinede de çalışmasına izin verir. Burada hiçbir şey gözetimsiz çalışmaz: her komut inceleme gerektirir.",
+  "agentLocalExecRootfsTip": "Agent'ın bu cihazda, ServerBox'ın kurduğu Alpine Linux konteyneri içinde çalışmasına izin verir. Android'in dosya sistemini, uygulamanın verilerini veya dosyalarınızı göremez. Her komut yine de inceleme gerektirir.",
   "macDmgImportedPartly": "Daha önce yüklü sürümün verileri içe aktarıldı. İndirilen dosyalar {path} konumunda kaldı."
 }

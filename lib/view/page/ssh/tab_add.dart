@@ -85,8 +85,13 @@ class _AddPageState extends ConsumerState<_AddPage> {
         if (AndroidRootfs.isAvailable)
           CardTile(
             icon: Icons.terminal,
-            title: 'Alpine ${AndroidRootfs.version}',
-            subtitle: l10n.rootfsSubtitle,
+            // What is installed, not what this build would install. They differ
+            // exactly when there is an update to offer, and naming the one that
+            // is not there yet would be a lie on the way to a true statement.
+            title: 'Alpine ${AndroidRootfs.installedVersion ?? AndroidRootfs.version}',
+            subtitle: AndroidRootfs.isOutdated
+                ? '${libL10n.update}: ${AndroidRootfs.version}'
+                : l10n.rootfsSubtitle,
             onTap: widget.onRootfs,
             onLongPress: widget.onRemoveRootfs,
           ),

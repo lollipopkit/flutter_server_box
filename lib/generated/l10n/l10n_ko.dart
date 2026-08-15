@@ -840,6 +840,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get remotePath => '원격 경로';
 
   @override
+  String rootfsUpdateTip(Object installed, Object latest) {
+    return 'Alpine $installed이(가) 설치되어 있고 $latest을(를) 사용할 수 있습니다. 업데이트하면 다시 내려받아 컨테이너를 교체하므로 그 안에 apk로 설치한 것은 모두 사라집니다. 건너뛰면 지금 것을 그대로 쓸 수 있습니다.';
+  }
+
+  @override
   String get rootfsSubtitle => '이 기기의 Linux 사용자 공간';
 
   @override
@@ -1342,7 +1347,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get agentLocalExecRootfsTip =>
-      'Lets the Agent work on this device, inside the Alpine Linux container ServerBox installs. It cannot see Android\'s filesystem, the app\'s data or your files. Every command still needs review.';
+      'ServerBox가 설치하는 Alpine Linux 컨테이너 안에서 Agent가 이 기기에서 작업할 수 있게 합니다. Android의 파일 시스템, 앱 데이터, 사용자 파일은 볼 수 없습니다. 모든 명령에는 여전히 확인이 필요합니다.';
 
   @override
   String macDmgImportedPartly(String path) {

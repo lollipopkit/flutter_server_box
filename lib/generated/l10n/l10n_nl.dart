@@ -889,6 +889,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get remotePath => 'Extern pad';
 
   @override
+  String rootfsUpdateTip(Object installed, Object latest) {
+    return 'Alpine $installed is geïnstalleerd en $latest is beschikbaar. Bijwerken downloadt het opnieuw en vervangt de container: alles wat daarin met apk is geïnstalleerd, gaat verloren. Als je dit overslaat, blijft de huidige gewoon werken.';
+  }
+
+  @override
   String get rootfsSubtitle => 'Een Linux-userland op dit apparaat';
 
   @override
@@ -1421,7 +1426,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get agentLocalExecRootfsTip =>
-      'Lets the Agent work on this device, inside the Alpine Linux container ServerBox installs. It cannot see Android\'s filesystem, the app\'s data or your files. Every command still needs review.';
+      'Laat de Agent op dit apparaat werken, binnen de Alpine Linux-container die ServerBox installeert. Hij kan het bestandssysteem van Android, de gegevens van de app en jouw bestanden niet zien. Elke opdracht moet nog steeds worden beoordeeld.';
 
   @override
   String macDmgImportedPartly(String path) {

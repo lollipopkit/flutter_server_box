@@ -14,17 +14,32 @@ import 'package:server_box/core/utils/android_rootfs.dart';
 /// than fetching several megabytes on a tap. What makes it safe to run is in
 /// [AndroidRootfs]: the release is pinned and its digest is checked.
 Future<bool> installAndroidRootfs(BuildContext context) async {
-  if (await AndroidRootfs.isInstalled) return true;
+  final present = await AndroidRootfs.isInstalled;
+  // Asked once, on the way in, and answered either way: a rootfs that is
+  // merely old still works, so declining leaves it running rather than
+  // blocking the terminal that was actually being opened.
+  final replacing = present && AndroidRootfs.isOutdated;
+  if (present && !replacing) return true;
   if (!context.mounted) return false;
 
   final confirm = await context.showRoundDialog<bool>(
     // Capitalised: the shared string is a verb used mid-sentence elsewhere,
     // and a dialog title is not mid-sentence.
-    title: libL10n.install.capitalize,
-    child: Text(context.l10n.rootfsInstallTip(AndroidRootfs.version)),
+    title: replacing ? libL10n.update : libL10n.install.capitalize,
+    child: Text(
+      replacing
+          ? context.l10n.rootfsUpdateTip(
+              AndroidRootfs.installedVersion ?? '',
+              AndroidRootfs.version,
+            )
+          : context.l10n.rootfsInstallTip(AndroidRootfs.version),
+    ),
     actions: Btnx.cancelOk,
   );
-  if (confirm != true || !context.mounted) return false;
+  // An old rootfs is still a rootfs. Saying no here opens the one that is
+  // already there, which is what "not forced" has to mean.
+  if (confirm != true) return present;
+  if (!context.mounted) return false;
 
   final progress = ValueNotifier<double?>(null);
   final cancel = CancelToken();
@@ -71,6 +86,7 @@ Future<bool> installAndroidRootfs(BuildContext context) async {
     await AndroidRootfs.install(
       onProgress: (value) => progress.value = value,
       cancel: cancel,
+      replace: replacing,
     );
     if (context.mounted) context.popDialog();
     return true;
@@ -78,6 +94,8 @@ Future<bool> installAndroidRootfs(BuildContext context) async {
     if (!context.mounted) return false;
     context.popDialog();
     if (!cancelled) context.showErrDialog(e, s);
+    // A failed *replacement* took the old one with it — `install` deletes what
+    // it cannot finish, so there is nothing left to fall back to.
     return false;
   } finally {
     progress.dispose();

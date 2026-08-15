@@ -158,6 +158,13 @@
   "rememberPwdInMem": "Wachtwoord onthouden in geheugen",
   "rememberPwdInMemTip": "Gebruikt voor containers, opschorting, enz.",
   "remotePath": "Extern pad",
+  "rootfsUpdateTip": "Alpine {installed} is geïnstalleerd en {latest} is beschikbaar. Bijwerken downloadt het opnieuw en vervangt de container: alles wat daarin met apk is geïnstalleerd, gaat verloren. Als je dit overslaat, blijft de huidige gewoon werken.",
+  "@rootfsUpdateTip": {
+    "placeholders": {
+      "installed": {},
+      "latest": {}
+    }
+  },
   "rootfsSubtitle": "Een Linux-userland op dit apparaat",
   "rootfsInstallTip": "Download Alpine Linux {version} (ongeveer 3 MB) en pak het uit op dit apparaat. Het geeft deze app een shell met pakketbeheerder en kan op elk moment worden verwijderd.",
   "sameIdServerExist": "Er bestaat al een server met dezelfde ID",
@@ -403,5 +410,6 @@
   "askAiRiskUnknown": "Niet ingedeeld",
   "agentLocalExec": "Opdrachten op dit apparaat uitvoeren",
   "agentLocalExecTip": "Laat de Agent werken op de machine waarop ServerBox draait, niet alleen op servers. Hier draait niets onbeheerd: elke opdracht moet worden beoordeeld.",
+  "agentLocalExecRootfsTip": "Laat de Agent op dit apparaat werken, binnen de Alpine Linux-container die ServerBox installeert. Hij kan het bestandssysteem van Android, de gegevens van de app en jouw bestanden niet zien. Elke opdracht moet nog steeds worden beoordeeld.",
   "macDmgImportedPartly": "De gegevens van de eerder geïnstalleerde versie zijn geïmporteerd. Gedownloade bestanden zijn achtergebleven in {path}."
 }

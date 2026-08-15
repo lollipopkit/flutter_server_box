@@ -158,6 +158,13 @@
   "rememberPwdInMem": "Passwort im Speicher behalten",
   "rememberPwdInMemTip": "Für Container, Aufhängen usw.",
   "remotePath": "Entfernte Pfade",
+  "rootfsUpdateTip": "Alpine {installed} ist installiert, {latest} ist verfügbar. Beim Aktualisieren wird es erneut heruntergeladen und der Container ersetzt: Alles, was darin mit apk installiert wurde, geht verloren. Beim Überspringen bleibt der aktuelle Container nutzbar.",
+  "@rootfsUpdateTip": {
+    "placeholders": {
+      "installed": {},
+      "latest": {}
+    }
+  },
   "rootfsSubtitle": "Eine Linux-Userland-Umgebung auf diesem Gerät",
   "rootfsInstallTip": "Alpine Linux {version} (etwa 3 MB) herunterladen und auf diesem Gerät entpacken. Es gibt dieser App eine Shell mit Paketmanager und kann jederzeit gelöscht werden.",
   "sameIdServerExist": "Ein Server mit derselben ID existiert bereits",
@@ -403,5 +410,6 @@
   "askAiRiskUnknown": "Nicht eingestuft",
   "agentLocalExec": "Befehle auf diesem Gerät ausführen",
   "agentLocalExecTip": "Erlaubt dem Agent, auf dem Gerät zu arbeiten, auf dem ServerBox läuft, nicht nur auf Servern. Hier läuft nichts unbeaufsichtigt: Jeder Befehl muss geprüft werden.",
+  "agentLocalExecRootfsTip": "Erlaubt dem Agent, auf diesem Gerät zu arbeiten, innerhalb des von ServerBox installierten Alpine-Linux-Containers. Er sieht weder das Dateisystem von Android noch die Daten der App oder Ihre Dateien. Jeder Befehl muss trotzdem geprüft werden.",
   "macDmgImportedPartly": "Die Daten der zuvor installierten Version wurden importiert. Heruntergeladene Dateien sind unter {path} geblieben."
 }

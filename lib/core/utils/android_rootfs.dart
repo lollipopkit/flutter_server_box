@@ -50,11 +50,8 @@ abstract final class AndroidRootfs {
 
   /// Written once the extraction finished. Its presence is the whole record:
   /// a half-unpacked rootfs must not look installed, and re-downloading a
-  /// working one wastes the user's data.
-  ///
-  /// It holds the version it was unpacked from, and nothing reads that yet.
-  /// TODO: compare it with [version] and offer to reinstall when the pin
-  /// moves — today an old rootfs stays until it is deleted by hand.
+  /// working one wastes the user's data. It holds the version it was unpacked
+  /// from, which is what [installedVersion] reads.
   static const _marker = '.installed';
 
   static String? _root;
@@ -74,7 +71,18 @@ abstract final class AndroidRootfs {
   static Future<bool> get isInstalled async {
     final root = _root;
     if (root == null) return false;
-    return _installed = await File(root.joinPath(_marker)).exists();
+    final marker = File(root.joinPath(_marker));
+    if (!await marker.exists()) {
+      _installedVersion = null;
+      return _installed = false;
+    }
+    // Empty for a rootfs unpacked before the marker carried a version. Read as
+    // "some older one", which is exactly what it is.
+    // TODO(migration residue; remove once no install predates the versioned
+    // marker): the `?? '0'` below is what makes that read as outdated.
+    final written = (await marker.readAsString()).trim();
+    _installedVersion = written.isEmpty ? '0' : written;
+    return _installed = true;
   }
 
   /// The last answer [isInstalled] gave, without asking the filesystem again.
@@ -86,6 +94,21 @@ abstract final class AndroidRootfs {
   /// things that change it, [install] and [remove].
   static bool get isReady => isAvailable && _installed;
   static bool _installed = false;
+
+  /// The version on disk, or null when there is nothing installed.
+  ///
+  /// Read at [prepare] and kept by [install] and [remove], for the same reason
+  /// [isReady] is synchronous: what asks is a widget being built.
+  static String? get installedVersion => _installed ? _installedVersion : null;
+  static String? _installedVersion;
+
+  /// Whether what is installed is older than what this build would install.
+  ///
+  /// Not acted on by itself. Reinstalling means downloading the rootfs again
+  /// and losing everything `apk add` put in the old one, which is the user's
+  /// call — so this only decides whether to offer.
+  static bool get isOutdated =>
+      isReady && _installedVersion != null && _installedVersion != version;
 
   /// Locates proot and the rootfs. Call once, before anything asks.
   static Future<void> prepare() async {
@@ -108,13 +131,16 @@ abstract final class AndroidRootfs {
   /// Downloads and unpacks the rootfs.
   ///
   /// [onProgress] is fed a fraction, or null while the size is unknown.
+  /// [replace] unpacks over whatever is there, for the version pin having
+  /// moved. Everything installed into the old one goes with it.
   static Future<void> install({
     void Function(double? progress)? onProgress,
     CancelToken? cancel,
+    bool replace = false,
   }) async {
     final root = _root;
     if (root == null) throw StateError('AndroidRootfs.prepare was not called');
-    if (await isInstalled) return;
+    if (!replace && await isInstalled) return;
 
     final dir = Directory(root);
     // Whatever a previous attempt left. A rootfs is only ever complete or
@@ -159,6 +185,7 @@ abstract final class AndroidRootfs {
       await _seedRepositories(root);
       await File(root.joinPath(_marker)).writeAsString(version);
       _installed = true;
+      _installedVersion = version;
     } catch (_) {
       // Nothing half-installed is left to be mistaken for a working one.
       if (await dir.exists()) await dir.delete(recursive: true);
@@ -172,6 +199,7 @@ abstract final class AndroidRootfs {
   /// Removes the rootfs and everything in it.
   static Future<void> remove() async {
     _installed = false;
+    _installedVersion = null;
     final root = _root;
     if (root == null) return;
     final dir = Directory(root);
