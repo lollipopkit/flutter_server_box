@@ -299,14 +299,31 @@ is the reference:
   app. `die_handler` needs replacing for the same reason — the default calls
   `abort()`.
 
-What still does not work: the **first read after boot never returns**, so the
-test does not complete. No crash, nothing in the simulator's log, the app alive
-and quiet. The likely mechanism, from the shape of it: `sbm_ish_read` takes the
-output lock, and a guest thread that faulted inside `console_write` is parked
-by the crash handler while **holding** that lock — the handler blocks all
-signals and sleeps forever by design, which is safe for the app and fatal for
-whatever it was holding. Next: log from the handler, and take nothing across
-it that a reader needs.
+**It answers.** Inside the app on the simulator, the guest prints its own
+prompt, takes a typed command and sends back `3.22.5`, `aarch64`, `root` and
+the marker — `integration_test/ios_rootfs_test.dart`, and the whole chain is
+Dart → FFI → the engine's tty → Dart.
+
+The thing that stood between was not a deadlock and not the interpreter.
+`kernel/exit.c` ends the **host process** with `_exit(0)` when init dies, and
+the first design made the caller's command init: the guest booted, the command
+ran, and the app was gone before a byte of output could be read. It looked
+exactly like a hang — the test "did not complete" instantly, no crash report,
+nothing in the log, because a clean `_exit` leaves none of those.
+
+So **init is a shell that stays**, and a command is typed at it. Two
+consequences worth stating rather than discovering later:
+
+- a guest that exits ends the app, so whatever the terminal does with `exit`
+  has to be answered before this ships. The fix is for init to be something
+  that never exits and for shells to be its children, which is also what makes
+  more than one of them possible;
+- Enter is a **carriage return**. Writing a newline leaves the shell holding
+  the line, because the line discipline is what turns CR into NL.
+
+Reading must not block the isolate either — `sbm_ish_read` waits for its
+timeout, and doing that on the Dart thread starves the framework. The test
+polls; a terminal needs the reader off that thread entirely.
 
 A useful thing fell out of the attempt: `Process.run` is refused on iOS *even
 in the simulator* — "Starting new processes is not supported on iOS". The

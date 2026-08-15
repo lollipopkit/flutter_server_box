@@ -81,8 +81,12 @@ void main() {
     expect(await IosRootfs.isInstalled, isTrue);
 
     debugPrint('ISHPROBE booting');
+    // The marker is split so that the *echo* of the command cannot satisfy the
+    // check — a console echoes what is typed at it, so the command's own text
+    // comes back before any output does. The shell joins the halves; this
+    // string does not contain the marker, and the shell's output does.
     final err = IosRootfs.boot(
-      'cat /etc/alpine-release; uname -m; id -un; echo SBM_"" IOS_OK',
+      r'cat /etc/alpine-release; uname -m; id -un; echo "SBM""_IOS_OK"',
     );
     debugPrint('ISHPROBE boot=$err');
     expect(err, 0, reason: 'boot returned $err');

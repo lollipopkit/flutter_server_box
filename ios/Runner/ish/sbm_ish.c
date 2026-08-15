@@ -320,7 +320,10 @@ static int boot_kernel(void) {
         struct timespec settle = { .tv_sec = 0, .tv_nsec = 200 * 1000 * 1000 };
         nanosleep(&settle, NULL);
         sbm_ish_write(boot.command, (int)strlen(boot.command));
-        sbm_ish_write("\n", 1);
+        // Carriage return, which is what a terminal's Enter key sends. The
+        // line discipline turns it into a newline; sending the newline itself
+        // is a different keystroke and the shell was left holding the line.
+        sbm_ish_write("\r", 1);
     }
     return 0;
 }
