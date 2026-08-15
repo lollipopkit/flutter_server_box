@@ -131,7 +131,7 @@ const en = {
 	terminalSubmit: 'Submit',
 	terminalReconnecting: 'Reconnecting...',
 	terminalOutputLost: 'Some output was lost while disconnected.',
-	terminalUnavailable: 'The terminal is not enabled on this agent. Turn on remote_access.terminal_enabled in config.toml; it also requires TLS, or a proxy on the same host.',
+	terminalUnavailable: 'The terminal is not enabled on this agent. Turn on remote_access.terminal.enabled in config.toml; it also requires TLS, or a proxy on the same host.',
 	terminalOpenDirectly: 'Open a terminal',
 	terminalPasswordlessHint: 'This agent opens a shell for anyone signed into the panel, running as the account the agent itself runs as. No SSH credentials needed.',
 	terminalPasswordlessNoticeTitle: 'This panel login can open a shell',

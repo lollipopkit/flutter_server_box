@@ -131,7 +131,7 @@ const es = {
 	terminalSubmit: 'Enviar',
 	terminalReconnecting: 'Reconectando…',
 	terminalOutputLost: 'Se perdió parte de la salida mientras estabas desconectado.',
-	terminalUnavailable: 'La terminal no está habilitada en este agente. Activa remote_access.terminal_enabled en config.toml; además requiere TLS o un proxy en el mismo host.',
+	terminalUnavailable: 'La terminal no está habilitada en este agente. Activa remote_access.terminal.enabled en config.toml; además requiere TLS o un proxy en el mismo host.',
 	terminalOpenDirectly: 'Abrir una terminal',
 	terminalPasswordlessHint: 'Este agente abre un shell para cualquiera que haya iniciado sesión en el panel, con la cuenta con la que se ejecuta el propio agente. No hacen falta credenciales SSH.',
 	terminalPasswordlessNoticeTitle: 'Este inicio de sesión del panel puede abrir un shell',

@@ -131,7 +131,7 @@ const uk = {
 	terminalSubmit: 'Надіслати',
 	terminalReconnecting: 'Перепідключення…',
 	terminalOutputLost: 'Частину виводу втрачено під час розриву зв\'язку.',
-	terminalUnavailable: 'Термінал не увімкнено на цьому агенті. Увімкніть remote_access.terminal_enabled у config.toml; також потрібен TLS або проксі на тому самому хості.',
+	terminalUnavailable: 'Термінал не увімкнено на цьому агенті. Увімкніть remote_access.terminal.enabled у config.toml; також потрібен TLS або проксі на тому самому хості.',
 	terminalOpenDirectly: 'Відкрити термінал',
 	terminalPasswordlessHint: 'Цей агент відкриває оболонку будь-кому, хто увійшов до панелі, від імені облікового запису, під яким працює сам агент. Облікові дані SSH не потрібні.',
 	terminalPasswordlessNoticeTitle: 'Вхід до панелі вже відкриває оболонку',

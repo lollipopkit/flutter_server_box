@@ -257,7 +257,10 @@ mod tests {
 
             for i in 0..MAX_BACKUPS + 3 {
                 let mut config = minimal_config();
-                config.name = Some(format!("save-{i}"));
+                // Any field that lands in the written file will do; this one
+                // is a `[server]` key, so the section has to exist first —
+                // `minimal_config` is an empty file, where it does not.
+                config.server.get_or_insert_default().name = Some(format!("save-{i}"));
                 write(&config).unwrap();
                 // mtime resolution can be coarse; keep the ordering unambiguous
                 std::thread::sleep(std::time::Duration::from_millis(10));

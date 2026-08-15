@@ -131,7 +131,7 @@ const fr = {
 	terminalSubmit: 'Envoyer',
 	terminalReconnecting: 'Reconnexion…',
 	terminalOutputLost: 'Une partie de la sortie a été perdue pendant la déconnexion.',
-	terminalUnavailable: 'Le terminal n\'est pas activé sur cet agent. Activez remote_access.terminal_enabled dans config.toml ; TLS, ou un proxy sur le même hôte, est également requis.',
+	terminalUnavailable: 'Le terminal n\'est pas activé sur cet agent. Activez remote_access.terminal.enabled dans config.toml ; TLS, ou un proxy sur le même hôte, est également requis.',
 	terminalOpenDirectly: 'Ouvrir un terminal',
 	terminalPasswordlessHint: 'Cet agent ouvre un shell pour toute personne connectée au panneau, sous le compte avec lequel l\'agent lui-même s\'exécute. Aucun identifiant SSH n\'est nécessaire.',
 	terminalPasswordlessNoticeTitle: 'Cette connexion au panneau peut ouvrir un shell',

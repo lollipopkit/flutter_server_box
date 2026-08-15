@@ -131,7 +131,7 @@ const de = {
 	terminalSubmit: 'Absenden',
 	terminalReconnecting: 'Verbindung wird wiederhergestellt…',
 	terminalOutputLost: 'Während der Trennung ist ein Teil der Ausgabe verloren gegangen.',
-	terminalUnavailable: 'Das Terminal ist auf diesem Agenten nicht aktiviert. Aktiviere remote_access.terminal_enabled in der config.toml; außerdem wird TLS oder ein Proxy auf demselben Host benötigt.',
+	terminalUnavailable: 'Das Terminal ist auf diesem Agenten nicht aktiviert. Aktiviere remote_access.terminal.enabled in der config.toml; außerdem wird TLS oder ein Proxy auf demselben Host benötigt.',
 	terminalOpenDirectly: 'Terminal öffnen',
 	terminalPasswordlessHint: 'Dieser Agent öffnet für jeden im Panel angemeldeten Benutzer eine Shell, und zwar unter dem Konto, unter dem der Agent selbst läuft. SSH-Zugangsdaten sind nicht nötig.',
 	terminalPasswordlessNoticeTitle: 'Diese Panel-Anmeldung kann eine Shell öffnen',

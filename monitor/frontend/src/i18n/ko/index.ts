@@ -131,7 +131,7 @@ const ko = {
 	terminalSubmit: '제출',
 	terminalReconnecting: '다시 연결하는 중…',
 	terminalOutputLost: '연결이 끊긴 동안 일부 출력이 손실되었습니다.',
-	terminalUnavailable: '이 에이전트에서는 터미널이 활성화되어 있지 않습니다. config.toml에서 remote_access.terminal_enabled를 켜세요. TLS 또는 같은 호스트의 프록시도 필요합니다.',
+	terminalUnavailable: '이 에이전트에서는 터미널이 활성화되어 있지 않습니다. config.toml에서 remote_access.terminal.enabled를 켜세요. TLS 또는 같은 호스트의 프록시도 필요합니다.',
 	terminalOpenDirectly: '터미널 열기',
 	terminalPasswordlessHint: '이 에이전트는 패널에 로그인한 사람이면 누구에게나 셸을 열어 주며, 에이전트 자신이 실행되는 계정으로 동작합니다. SSH 자격 증명은 필요하지 않습니다.',
 	terminalPasswordlessNoticeTitle: '패널 로그인만으로 셸을 열 수 있습니다',

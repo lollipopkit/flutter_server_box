@@ -82,7 +82,7 @@ async fn app_state(ssh_addr: &str, tunnel_enabled: bool) -> Arc<AppState> {
     config.jwt_secret = Some("test-secret-that-is-long-enough-32ch".to_string());
     let mut remote = config.get_remote_access();
     remote.ssh_addr = ssh_addr.to_string();
-    remote.tunnel_enabled = tunnel_enabled;
+    remote.tunnel.enabled = tunnel_enabled;
     config.remote_access = Some(remote);
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
@@ -250,7 +250,7 @@ async fn the_connection_cap_refuses_the_extra_tunnel() {
     // Rebuild with an explicit cap of one
     let mut config = (*state.config).clone();
     let mut remote = config.get_remote_access();
-    remote.tunnel_max_conns = Some(1);
+    remote.tunnel.max_conns = Some(1);
     config.remote_access = Some(remote);
     let state = AppState::new(Arc::new(config), state.db.clone());
 

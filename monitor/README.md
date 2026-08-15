@@ -41,7 +41,7 @@ Two WebSocket endpoints can reach this machine's SSH service. Both are
 disabled until you turn them on in `config.toml`, and neither can be enabled
 from the panel — see `[remote_access]` in `config.example.toml`.
 
-**`tunnel_enabled`** lets the ServerBox app reach SSH over the same HTTPS
+**`[remote_access.tunnel] enabled`** lets the ServerBox app reach SSH over the same HTTPS
 endpoint it already polls, for hosts whose SSH port isn't reachable directly.
 Everything the app does over SSH then works: terminal, SFTP, containers,
 processes, and port forwarding. The agent only moves bytes — the SSH session is
@@ -52,7 +52,7 @@ is what stops it being usable to reach other hosts on its network. To reach a
 second machine, configure it in the app with this one as its jump server, so
 that hop is authorised by SSH rather than by the agent.
 
-**`terminal_enabled`** adds an in-browser terminal to the panel. The agent acts
+**`[remote_access.terminal] enabled`** adds an in-browser terminal to the panel. The agent acts
 as an SSH client to `ssh_addr`, so a session has exactly the privileges of the
 SSH account the browser signs in as — the panel password alone grants no shell,
 and sshd's own logging, `AllowUsers` and two-factor prompts all still apply.
@@ -78,7 +78,7 @@ Notes:
 - The terminal refuses to run on a plaintext listener, because its first
   message carries an SSH password. TLS satisfies this; so does a reverse proxy
   on the same host, since loopback traffic can't be read off the network.
-  `allow_insecure = true` overrides it. The tunnel is unaffected — what it
+  `[remote_access.terminal] allow_insecure = true` overrides it. The tunnel is unaffected — what it
   carries is already encrypted.
 - The agent pins the host key of the sshd it connects to on first use and
   refuses a changed one, rather than re-pinning silently. Clearing the pin is

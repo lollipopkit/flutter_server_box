@@ -26,7 +26,7 @@ impl LiveSettings {
     pub fn from_config(config: &MonitoringConfig) -> Self {
         Self {
             extended_interval_secs: config.effective_extended_interval_secs(),
-            idle_pause_enabled: config.idle_pause_enabled,
+            idle_pause_enabled: config.extended.idle_pause.enabled,
             idle_pause_threshold_secs: config.effective_idle_pause_threshold_secs(),
         }
     }

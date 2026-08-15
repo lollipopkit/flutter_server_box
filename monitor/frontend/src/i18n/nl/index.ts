@@ -131,7 +131,7 @@ const nl = {
 	terminalSubmit: 'Versturen',
 	terminalReconnecting: 'Opnieuw verbinden…',
 	terminalOutputLost: 'Een deel van de uitvoer is verloren gegaan tijdens de onderbreking.',
-	terminalUnavailable: 'De terminal is niet ingeschakeld op deze agent. Zet remote_access.terminal_enabled aan in config.toml; er is ook TLS nodig, of een proxy op dezelfde host.',
+	terminalUnavailable: 'De terminal is niet ingeschakeld op deze agent. Zet remote_access.terminal.enabled aan in config.toml; er is ook TLS nodig, of een proxy op dezelfde host.',
 	terminalOpenDirectly: 'Terminal openen',
 	terminalPasswordlessHint: 'Deze agent opent een shell voor iedereen die op het paneel is ingelogd, onder het account waaronder de agent zelf draait. SSH-gegevens zijn niet nodig.',
 	terminalPasswordlessNoticeTitle: 'Deze paneelaanmelding kan een shell openen',

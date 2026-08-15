@@ -131,7 +131,7 @@ const ja = {
 	terminalSubmit: '送信',
 	terminalReconnecting: '再接続しています…',
 	terminalOutputLost: '切断中に一部の出力が失われました。',
-	terminalUnavailable: 'このエージェントではターミナルが有効になっていません。config.toml の remote_access.terminal_enabled を有効にしてください。TLS、または同一ホスト上のプロキシも必要です。',
+	terminalUnavailable: 'このエージェントではターミナルが有効になっていません。config.toml の remote_access.terminal.enabled を有効にしてください。TLS、または同一ホスト上のプロキシも必要です。',
 	terminalOpenDirectly: 'ターミナルを開く',
 	terminalPasswordlessHint: 'このエージェントは、パネルにログインした人になら誰にでもシェルを開きます。実行アカウントはエージェント自身のものです。SSH 認証情報は不要です。',
 	terminalPasswordlessNoticeTitle: 'パネルのログインだけでシェルを開けます',

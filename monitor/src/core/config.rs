@@ -24,18 +24,37 @@ pub struct Config {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub remote_access: Option<RemoteAccessConfig>,
 
-    // Go-compatible fields (for compatibility)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The flat top-level keys the Go agent's `config.json` used.
+    ///
+    /// Read-only, and never written back: [`Self::normalize`] folds them into
+    /// the sections above and then clears them, so the `config.toml` this
+    /// agent writes on its first start is in the current shape and the next
+    /// start takes the TOML branch of [`Self::load`]. `#[serde(skip)]` on the
+    /// serialize side is what guarantees the second half of that.
+    ///
+    /// Flat on purpose: this is the *other program's* format, and it is only
+    /// ever deserialized from a file that program wrote.
+    // TODO: drop `legacy` and the `config.json` branch of `load` once no Go
+    // agent is left to migrate from.
+    #[serde(flatten)]
+    pub legacy: LegacyGoConfig,
+}
+
+/// The Go agent's flat `config.json` keys — see [`Config::legacy`].
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct LegacyGoConfig {
+    #[serde(default, skip_serializing)]
     pub version: Option<i32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Go-style duration, e.g. `"7s"`.
+    #[serde(default, skip_serializing)]
     pub interval: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing)]
     pub rate: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing)]
     pub name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing)]
     pub rules: Option<Vec<GoRule>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing)]
     pub pushes: Option<Vec<GoPush>>,
 }
 
@@ -44,6 +63,13 @@ pub struct ServerConfig {
     pub host: String,
     pub port: u16,
     pub tls: Option<TlsConfig>,
+    /// What this machine is called in the app and in pushes. `None` = derive
+    /// it from the host — see [`Config::get_server_name`].
+    ///
+    /// Here rather than at the top level, where the Go agent put it: it names
+    /// the thing `host`/`port` also describe.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
     /// Origins allowed to call the API cross-origin (e.g. a panel hosted on
     /// Cloudflare Pages). Empty = same-origin only (no CORS headers).
     #[serde(default)]
@@ -62,38 +88,100 @@ pub struct TlsConfig {
     pub key_path: String,
 }
 
+/// Stated once, here, rather than at each of the places that used to build a
+/// `ServerConfig` by hand — they had drifted apart on whether the environment
+/// is read at all.
+impl Default for ServerConfig {
+    fn default() -> Self {
+        Self {
+            host: env::var("SBM_HOST").unwrap_or_else(|_| "0.0.0.0".to_string()),
+            port: env::var("SBM_PORT")
+                .unwrap_or_else(|_| "3770".to_string())
+                .parse()
+                .unwrap_or(3770),
+            tls: env::var("SBM_TLS_CERT")
+                .ok()
+                .zip(env::var("SBM_TLS_KEY").ok())
+                .map(|(cert, key)| TlsConfig {
+                    cert_path: cert,
+                    key_path: key,
+                }),
+            name: None,
+            cors_allowed_origins: Vec::new(),
+            card_order: Vec::new(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MonitoringConfig {
     pub interval_seconds: u64,
     pub rules: Vec<MonitoringRule>,
     pub data_retention: Option<DataRetentionConfig>,
-    /// How often to run the extended status script, which collects
-    /// battery/sensors/SMART/AMD-GPU data — the only fields still bound to
-    /// CLI tools after monitor's native collection cutover. `None` (the
-    /// default, and what an unset/absent config value resolves to) does
-    /// *not* mean "same as `interval_seconds`" — resolve via
-    /// `effective_extended_interval_secs`, which defaults to a much slower
-    /// cadence. Running `smartctl`/`sensors`/`amd-smi` every core cycle (e.g.
-    /// every few seconds) is real, avoidable CPU/power/battery-drain cost
-    /// for data that essentially never changes that fast; SMART reads
-    /// themselves are negligible flash wear (a diagnostic log read, not a
-    /// write), so the slower default here is about host resource use, not
-    /// disk lifespan.
+
+    /// Push rate limit for what the rules above trigger, formatted
+    /// "N/duration" (e.g. "1/1m"). `None` = once per minute.
+    ///
+    /// Here rather than next to `[[push]]`: it bounds how often a *rule* may
+    /// fire, not how a channel delivers, and a TOML array-of-tables has
+    /// nowhere to put a scalar that applies to all of them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub push_rate: Option<String>,
+
     #[serde(default)]
-    pub extended_interval_secs: Option<u64>,
-    /// Skip the extended cycle (see `extended_interval_secs`) while no
-    /// authenticated client has polled `/metrics` or `/status` recently —
-    /// core metrics and alert rule checks are unaffected either way, this
-    /// only pauses the CLI-tool-bound fields (battery/sensors/SMART/AMD).
-    /// Approximates "nobody has the panel open," not a real browser
+    pub extended: ExtendedConfig,
+}
+
+/// `[monitoring.extended]` — the slower cycle that collects
+/// battery/sensors/SMART/AMD-GPU data, the only fields still bound to CLI
+/// tools after monitor's native collection cutover.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ExtendedConfig {
+    /// `None` (the default, and what an unset/absent config value resolves
+    /// to) does *not* mean "same as `interval_seconds`" — resolve via
+    /// [`MonitoringConfig::effective_extended_interval_secs`], which defaults
+    /// to a much slower cadence. Running `smartctl`/`sensors`/`amd-smi` every
+    /// core cycle (e.g. every few seconds) is real, avoidable
+    /// CPU/power/battery-drain cost for data that essentially never changes
+    /// that fast; SMART reads themselves are negligible flash wear (a
+    /// diagnostic log read, not a write), so the slower default here is about
+    /// host resource use, not disk lifespan.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub interval_secs: Option<u64>,
+
+    #[serde(default)]
+    pub idle_pause: IdlePauseConfig,
+}
+
+/// `[monitoring.extended.idle_pause]` — skipping the extended cycle while
+/// nobody is looking.
+///
+/// A subsection of `extended` rather than of `monitoring`, because that is the
+/// only cycle it can pause: core metrics and alert rule checks run either way.
+/// Nesting says so; the flat name `monitoring.idle_pause_enabled` read as
+/// though monitoring itself stopped.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IdlePauseConfig {
+    /// Pause while no authenticated client has polled `/metrics` or `/status`
+    /// recently. Approximates "nobody has the panel open," not a real browser
     /// visibility signal — see `AppState.last_viewer_seen`.
     #[serde(default = "default_idle_pause_enabled")]
-    pub idle_pause_enabled: bool,
-    /// How long without a poll before the extended cycle is considered
-    /// idle. `None` (default) resolves to `interval_seconds * 4` — long
-    /// enough to tolerate a couple of missed/slow polls without flapping.
-    #[serde(default)]
-    pub idle_pause_threshold_secs: Option<u64>,
+    pub enabled: bool,
+
+    /// How long without a poll before the extended cycle is considered idle.
+    /// `None` (default) resolves to `interval_seconds * 4` — long enough to
+    /// tolerate a couple of missed/slow polls without flapping.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub threshold_secs: Option<u64>,
+}
+
+impl Default for IdlePauseConfig {
+    fn default() -> Self {
+        Self {
+            enabled: default_idle_pause_enabled(),
+            threshold_secs: None,
+        }
+    }
 }
 
 fn default_idle_pause_enabled() -> bool {
@@ -105,20 +193,50 @@ impl MonitoringConfig {
     /// smartctl/sensors/amd-smi on every core cycle (previously: literally
     /// every cycle, since this defaulted to `interval_seconds` itself) burns
     /// CPU/power for data that doesn't change meaningfully faster than a
-    /// couple of minutes. Explicit `extended_interval_secs` in config.toml
-    /// (or the settings page) always overrides this.
+    /// couple of minutes. An explicit `[monitoring.extended] interval_secs`
+    /// in config.toml (or the settings page) always overrides this.
     pub fn effective_extended_interval_secs(&self) -> u64 {
-        self.extended_interval_secs
+        self.extended
+            .interval_secs
             .unwrap_or_else(|| self.interval_seconds.saturating_mul(10).max(120))
     }
 
     pub fn effective_idle_pause_threshold_secs(&self) -> u64 {
-        self.idle_pause_threshold_secs.unwrap_or(self.interval_seconds.saturating_mul(4))
+        self.extended
+            .idle_pause
+            .threshold_secs
+            .unwrap_or(self.interval_seconds.saturating_mul(4))
     }
 }
 
 fn default_max_db_size_mb() -> u64 {
     256
+}
+
+/// The interval every construction site used to repeat.
+const DEFAULT_INTERVAL_SECONDS: u64 = 7;
+
+impl Default for MonitoringConfig {
+    fn default() -> Self {
+        Self {
+            interval_seconds: DEFAULT_INTERVAL_SECONDS,
+            rules: Vec::new(),
+            data_retention: Some(DataRetentionConfig::default()),
+            push_rate: None,
+            extended: ExtendedConfig::default(),
+        }
+    }
+}
+
+impl Default for DataRetentionConfig {
+    fn default() -> Self {
+        Self {
+            metrics_days: 30,
+            alerts_days: 90,
+            cleanup_interval_hours: 24,
+            max_db_size_mb: default_max_db_size_mb(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -222,7 +340,9 @@ impl Config {
         Ok(config)
     }
 
-    // Normalize the config by converting Go format to Rust format if needed
+    /// Folds the Go agent's flat keys into the sections this agent uses, then
+    /// clears them so nothing downstream — including the `config.toml` written
+    /// straight after — carries the old shape.
     pub fn normalize(&mut self) -> Result<()> {
         // If we have Go-style config, convert it
         if self.server.is_none() && self.monitoring.is_none() {
@@ -240,11 +360,12 @@ impl Config {
                         cert_path: cert,
                         key_path: key,
                     }),
+                name: self.legacy.name.clone(),
                 cors_allowed_origins: Vec::new(),
                 card_order: Vec::new(),
             };
 
-            let interval_seconds = if let Some(interval_str) = &self.interval {
+            let interval_seconds = if let Some(interval_str) = &self.legacy.interval {
                 // Parse Go-style interval like "7s"
                 if interval_str.ends_with('s') {
                     interval_str[..interval_str.len()-1].parse().unwrap_or(7)
@@ -257,7 +378,7 @@ impl Config {
 
             let monitoring = MonitoringConfig {
                 interval_seconds,
-                rules: self.rules.as_ref().map(|go_rules| {
+                rules: self.legacy.rules.as_ref().map(|go_rules| {
                     go_rules.iter().map(|gr| MonitoringRule {
                         name: format!("{} {}", gr.monitor_type, gr.threshold),
                         monitor_type: gr.monitor_type.clone(),
@@ -271,12 +392,11 @@ impl Config {
                     cleanup_interval_hours: 24,
                     max_db_size_mb: default_max_db_size_mb(),
                 }),
-                extended_interval_secs: None,
-                idle_pause_enabled: default_idle_pause_enabled(),
-                idle_pause_threshold_secs: None,
+                push_rate: self.legacy.rate.clone(),
+                extended: ExtendedConfig::default(),
             };
 
-            let push = self.pushes.as_ref().map(|go_pushes| {
+            let push = self.legacy.pushes.as_ref().map(|go_pushes| {
                 go_pushes.iter().map(|gp| PushConfig {
                     name: gp.name.clone(),
                     push_type: gp.push_type.clone(),
@@ -299,34 +419,28 @@ impl Config {
             self.push = Some(push);
         }
 
+        // Everything the Go keys said now lives in a section. Cleared rather
+        // than left in place: `skip_serializing` already keeps them out of the
+        // file, and leaving them in memory would give every reader two places
+        // to look for the same answer.
+        self.legacy = LegacyGoConfig::default();
+
         Ok(())
     }
 
-    // Accessors to get the values whether they're in Rust or Go format
+    /// The `[server]` section, or what an absent one means.
+    ///
+    /// Absent is not the same as "nothing configured": `SBM_HOST`/`SBM_PORT`/
+    /// `SBM_TLS_*` still apply, which is what [`ServerConfig::default`] reads.
+    /// This used to hard-code `0.0.0.0:3770` here and read the env only in
+    /// [`Config::default`], so a file with a `[monitoring]` section and no
+    /// `[server]` one silently ignored `SBM_HOST`.
     pub fn get_server(&self) -> ServerConfig {
-        self.server.clone().unwrap_or_else(|| ServerConfig {
-            host: "0.0.0.0".to_string(),
-            port: 3770,
-            tls: None,
-            cors_allowed_origins: Vec::new(),
-                card_order: Vec::new(),
-        })
+        self.server.clone().unwrap_or_default()
     }
 
     pub fn get_monitoring(&self) -> MonitoringConfig {
-        self.monitoring.clone().unwrap_or_else(|| MonitoringConfig {
-            interval_seconds: 7,
-            rules: vec![],
-            data_retention: Some(DataRetentionConfig {
-                metrics_days: 30,
-                alerts_days: 90,
-                cleanup_interval_hours: 24,
-                max_db_size_mb: default_max_db_size_mb(),
-            }),
-            extended_interval_secs: None,
-                idle_pause_enabled: default_idle_pause_enabled(),
-                idle_pause_threshold_secs: None,
-        })
+        self.monitoring.clone().unwrap_or_default()
     }
 
     pub fn get_database_url(&self) -> String {
@@ -468,10 +582,10 @@ impl Config {
     /// read-only by docker-compose — inside a container, `hostname::get()`
     /// would otherwise return the container's own random hostname, not the
     /// machine actually being monitored) -> the local OS hostname (bare-metal
-    /// installs) -> a generic label as the last resort. `name` defaults to
-    /// None everywhere (see all `Config` construction sites).
+    /// installs) -> a generic label as the last resort. `[server] name`
+    /// defaults to None everywhere (see all `Config` construction sites).
     pub fn get_server_name(&self) -> String {
-        self.name.clone().unwrap_or_else(|| {
+        self.get_server().name.unwrap_or_else(|| {
             env::var("SBM_HOSTNAME")
                 .ok()
                 .filter(|h| !h.is_empty())
@@ -491,10 +605,12 @@ impl Config {
         })
     }
 
-    /// Push rate limit, formatted "N/duration" (e.g. "1/1m"), default once per minute
+    /// Push rate limit, formatted "N/duration" (e.g. "1/1m"), default once per
+    /// minute. See `[monitoring] push_rate`.
     pub fn get_push_rate(&self) -> (usize, std::time::Duration) {
         const DEFAULT: (usize, std::time::Duration) = (1, std::time::Duration::from_secs(60));
-        let Some(rate) = &self.rate else { return DEFAULT };
+        let Some(rate) = self.get_monitoring().push_rate else { return DEFAULT };
+        let rate = rate.as_str();
         let Some((times, duration)) = rate.split_once('/') else {
             tracing::warn!("Invalid rate format: {}", rate);
             return DEFAULT;
@@ -530,24 +646,8 @@ fn parse_go_duration(s: &str) -> Option<std::time::Duration> {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            server: Some(ServerConfig {
-                host: env::var("SBM_HOST").unwrap_or_else(|_| "0.0.0.0".to_string()),
-                port: env::var("SBM_PORT")
-                    .unwrap_or_else(|_| "3770".to_string())
-                    .parse()
-                    .unwrap_or(3770),
-                tls: env::var("SBM_TLS_CERT")
-                    .ok()
-                    .zip(env::var("SBM_TLS_KEY").ok())
-                    .map(|(cert, key)| TlsConfig {
-                        cert_path: cert,
-                        key_path: key,
-                    }),
-                cors_allowed_origins: Vec::new(),
-                card_order: Vec::new(),
-            }),
+            server: Some(ServerConfig::default()),
             monitoring: Some(MonitoringConfig {
-                interval_seconds: 7,
                 rules: vec![
                     MonitoringRule {
                         name: "High CPU Usage".to_string(),
@@ -568,15 +668,10 @@ impl Default for Config {
                         matcher: "disk".to_string(),
                     },
                 ],
-                data_retention: Some(DataRetentionConfig {
-                    metrics_days: 30,
-                    alerts_days: 90,
-                    cleanup_interval_hours: 24,
-                    max_db_size_mb: default_max_db_size_mb(),
-                }),
-                extended_interval_secs: None,
-                idle_pause_enabled: default_idle_pause_enabled(),
-                idle_pause_threshold_secs: None,
+                // The rules are the only thing a first run wants that the
+                // defaults can't state: everything else here is what
+                // `MonitoringConfig::default` already says.
+                ..MonitoringConfig::default()
             }),
             database_url: Some(env::var("DATABASE_URL")
                 .unwrap_or_else(|_| "sqlite:serverbox_monitor.db".to_string())),
@@ -642,13 +737,7 @@ impl Default for Config {
                     },
                 },
             ]),
-            // Go-compatible fields
-            version: None,
-            interval: None,
-            rate: None,
-            name: None,
-            rules: None,
-            pushes: None,
+            legacy: LegacyGoConfig::default(),
         }
     }
 }

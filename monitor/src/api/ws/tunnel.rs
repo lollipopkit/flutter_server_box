@@ -110,7 +110,7 @@ pub async fn tunnel_ws(
         Ok(status)
     };
 
-    if !app_state.remote_access.tunnel_enabled {
+    if !app_state.remote_access.tunnel.enabled {
         return deny("disabled", HttpResponse::Forbidden().finish()).await;
     }
     if !super::origin_allowed(&req, &app_state.config.get_server().cors_allowed_origins) {
@@ -129,7 +129,7 @@ pub async fn tunnel_ws(
 
     let Some(guard) = app_state
         .tunnel_count
-        .acquire(app_state.remote_access.tunnel_max_conns)
+        .acquire(app_state.remote_access.tunnel.max_conns)
     else {
         return deny("at capacity", HttpResponse::ServiceUnavailable().finish()).await;
     };

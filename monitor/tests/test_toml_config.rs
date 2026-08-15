@@ -64,12 +64,14 @@ message = "Alert: {{message}}"
         let example = include_str!("../config.example.toml");
         let config: Config = toml::from_str(example).expect("config.example.toml must parse");
 
-        // Both switches must ship off: the example is copied verbatim, and
-        // shell access should never be something a user turns on by accident.
+        // Every switch must ship off: the example is copied verbatim, and
+        // neither shell nor file access should be something a user turns on by
+        // accident.
         let remote = config.get_remote_access();
-        assert!(!remote.tunnel_enabled);
-        assert!(!remote.terminal_enabled);
-        assert!(!remote.allow_insecure);
+        assert!(!remote.tunnel.enabled);
+        assert!(!remote.terminal.enabled);
+        assert!(!remote.terminal.allow_insecure);
+        assert!(!remote.fs.enabled);
     }
 
     /// Every config written before remote access existed lacks the section

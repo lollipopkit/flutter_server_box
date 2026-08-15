@@ -131,7 +131,7 @@ const it = {
 	terminalSubmit: 'Invia',
 	terminalReconnecting: 'Riconnessione…',
 	terminalOutputLost: 'Parte dell\'output è andata persa durante la disconnessione.',
-	terminalUnavailable: 'Il terminale non è abilitato su questo agente. Attiva remote_access.terminal_enabled in config.toml; serve anche TLS, o un proxy sullo stesso host.',
+	terminalUnavailable: 'Il terminale non è abilitato su questo agente. Attiva remote_access.terminal.enabled in config.toml; serve anche TLS, o un proxy sullo stesso host.',
 	terminalOpenDirectly: 'Apri un terminale',
 	terminalPasswordlessHint: 'Questo agente apre una shell per chiunque abbia effettuato l\'accesso al pannello, con l\'account con cui gira l\'agente stesso. Non servono credenziali SSH.',
 	terminalPasswordlessNoticeTitle: 'Questo accesso al pannello può aprire una shell',

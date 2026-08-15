@@ -102,7 +102,7 @@ async fn admit(
     if verify_auth(req, &state.config.get_jwt_secret()).is_err() {
         return Err(HttpResponse::Unauthorized().finish());
     }
-    if !state.remote_access.fs_available() {
+    if !state.remote_access.fs.available() {
         Event::new(Kind::Fs, Action::Denied, Outcome::Denied)
             .remote_ip(peer_ip(req))
             .detail("file api disabled")
@@ -149,7 +149,7 @@ pub async fn list(
     if let Err(res) = admit(&req, &state, "list", &query.path).await {
         return Ok(res);
     }
-    let dir = match state.remote_access.fs_roots.resolve_existing(&query.path) {
+    let dir = match state.remote_access.fs.roots.resolve_existing(&query.path) {
         Ok(path) => path,
         Err(e) => return Ok(denied(e)),
     };
@@ -177,7 +177,7 @@ pub async fn stat(
     if let Err(res) = admit(&req, &state, "stat", &query.path).await {
         return Ok(res);
     }
-    let path = match state.remote_access.fs_roots.resolve_existing(&query.path) {
+    let path = match state.remote_access.fs.roots.resolve_existing(&query.path) {
         Ok(path) => path,
         // Absence and refusal are one answer here, as they are everywhere
         // else in this module; the app treats a 404 as "not there".
@@ -197,7 +197,7 @@ pub async fn read(
     if let Err(res) = admit(&req, &state, "read", &query.path).await {
         return Ok(res);
     }
-    let path = match state.remote_access.fs_roots.resolve_existing(&query.path) {
+    let path = match state.remote_access.fs.roots.resolve_existing(&query.path) {
         Ok(path) => path,
         Err(e) => return Ok(denied(e)),
     };
@@ -251,7 +251,7 @@ pub async fn write(
     if let Err(res) = admit(&req, &state, "write", &query.path).await {
         return Ok(res);
     }
-    let path = match state.remote_access.fs_roots.resolve_new(&query.path) {
+    let path = match state.remote_access.fs.roots.resolve_new(&query.path) {
         Ok(path) => path,
         Err(e) => return Ok(denied(e)),
     };
@@ -266,7 +266,7 @@ pub async fn write(
         Err(e) => return Ok(failed(e)),
     };
 
-    let limit = state.remote_access.fs_max_write_bytes;
+    let limit = state.remote_access.fs.max_write_bytes;
     let mut written: u64 = 0;
     let mut failure: Option<HttpResponse> = None;
     while let Some(chunk) = body.next().await {
@@ -326,7 +326,7 @@ pub async fn mkdir(
     if let Err(res) = admit(&req, &state, "mkdir", &body.path).await {
         return Ok(res);
     }
-    let path = match state.remote_access.fs_roots.resolve_new(&body.path) {
+    let path = match state.remote_access.fs.roots.resolve_new(&body.path) {
         Ok(path) => path,
         Err(e) => return Ok(denied(e)),
     };
@@ -344,7 +344,7 @@ pub async fn remove(
     if let Err(res) = admit(&req, &state, "remove", &body.path).await {
         return Ok(res);
     }
-    let path = match state.remote_access.fs_roots.resolve_existing(&body.path) {
+    let path = match state.remote_access.fs.roots.resolve_existing(&body.path) {
         Ok(path) => path,
         Err(e) => return Ok(denied(e)),
     };
@@ -354,7 +354,8 @@ pub async fn remove(
     // and no client means to do it.
     if state
         .remote_access
-        .fs_roots
+        .fs
+        .roots
         .as_slice()
         .iter()
         .any(|root| root == &path)
@@ -392,7 +393,7 @@ pub async fn rename(
     if let Err(res) = admit(&req, &state, "rename", &body.from).await {
         return Ok(res);
     }
-    let roots = &state.remote_access.fs_roots;
+    let roots = &state.remote_access.fs.roots;
     // Both ends checked. Only checking the source would make rename a way to
     // move a file anywhere the agent can write.
     let from = match roots.resolve_existing(&body.from) {
@@ -423,7 +424,7 @@ pub async fn chmod(
     if let Err(res) = admit(&req, &state, "chmod", &body.path).await {
         return Ok(res);
     }
-    let path = match state.remote_access.fs_roots.resolve_existing(&body.path) {
+    let path = match state.remote_access.fs.roots.resolve_existing(&body.path) {
         Ok(path) => path,
         Err(e) => return Ok(denied(e)),
     };

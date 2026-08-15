@@ -175,13 +175,13 @@ pub async fn terminal_ws(
     };
 
     let secure = super::is_secure_transport(&req, app_state.tls_active);
-    if !app_state.remote_access.terminal_available(secure) {
+    if !app_state.remote_access.terminal.available(secure) {
         // Two different refusals, one status: whether the terminal is off or
         // merely unreachable over this transport is visible on /capabilities
         // to an authenticated caller, and there is no reason to spell it out
         // to an unauthenticated one here.
         return deny(
-            if app_state.remote_access.terminal_enabled { "insecure transport" } else { "disabled" },
+            if app_state.remote_access.terminal.enabled { "insecure transport" } else { "disabled" },
             HttpResponse::Forbidden().finish(),
         )
         .await;
@@ -423,7 +423,7 @@ async fn open_local(
     let (session, input_rx) = Session::new(
         &ctx.subject,
         &user,
-        ctx.state.remote_access.terminal_scrollback_bytes,
+        ctx.state.remote_access.terminal.scrollback_bytes,
         INPUT_QUEUE,
     );
     let inserted = match ctx.state.sessions.insert(session) {
@@ -618,7 +618,7 @@ async fn start_shell(
     let (session, input_rx) = Session::new(
         &ctx.subject,
         &user,
-        ctx.state.remote_access.terminal_scrollback_bytes,
+        ctx.state.remote_access.terminal.scrollback_bytes,
         INPUT_QUEUE,
     );
 

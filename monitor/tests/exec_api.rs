@@ -34,7 +34,7 @@ async fn app_state(full_access: bool) -> Arc<AppState> {
     // The grant is gated on the terminal being available, so that switching
     // the terminal off cannot leave this door open behind it. The test server
     // listens on loopback, which counts as a secure transport.
-    remote.terminal_enabled = true;
+    remote.terminal.enabled = true;
     remote.full_access = Some(full_access);
     config.remote_access = Some(remote);
 

@@ -6,7 +6,7 @@
 #
 # Installs a *user* systemd service by default, so the agent runs as an
 # ordinary account. That matters beyond tidiness: with
-# `remote_access.passwordless_terminal` on (the default on Linux), a panel
+# `remote_access.full_access` on (the default on Linux), a panel
 # login opens a shell as whoever the agent runs as — as root that would be the
 # whole machine. Pass --system for the old system-wide, root-owned service.
 set -u
@@ -203,8 +203,8 @@ install() {
     echo "Install success ($MODE service). Config: $APP_DIR/.env"
     if [ "$MODE" = "system" ]; then
         echo
-        echo "This runs as root. If you enable remote_access.terminal_enabled,"
-        echo "also set remote_access.passwordless_terminal = false, or a panel"
+        echo "This runs as root. If you enable remote_access.terminal.enabled,"
+        echo "also set remote_access.full_access = false, or a panel"
         echo "login becomes a root shell."
     fi
 }

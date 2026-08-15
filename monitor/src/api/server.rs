@@ -53,7 +53,7 @@ pub struct AppState {
     /// to re-derive it.
     pub tls_active: bool,
     pub tickets: Arc<TicketStore>,
-    /// Live tunnel count, for `remote_access.tunnel_max_conns`.
+    /// Live tunnel count, for `remote_access.tunnel.max_conns`.
     pub tunnel_count: Arc<TunnelCount>,
     /// Terminal sessions, which outlive the WebSockets driving them so a
     /// reconnect can rejoin the same shell — see `api::ws::session`.
@@ -85,8 +85,8 @@ impl AppState {
             .resolve(sbm_native::total_memory());
         remote_access.log_summary(tls_active);
         let sessions = Arc::new(SessionStore::new(
-            remote_access.terminal_max_sessions,
-            remote_access.terminal_detached_timeout,
+            remote_access.terminal.max_sessions,
+            remote_access.terminal.detached_timeout,
         ));
         Arc::new(Self {
             remote_access: Arc::new(remote_access),
@@ -149,12 +149,12 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
     let server_config = app_state.config.get_server();
     let bind_addr = format!("{}:{}", server_config.host, server_config.port);
 
-    if app_state.remote_access.terminal_enabled {
+    if app_state.remote_access.terminal.enabled {
         // A quarter of the grace period: often enough that a reaped session
         // isn't held much past its deadline, rare enough to be invisible
         start_reaper(
             app_state.sessions.clone(),
-            (app_state.remote_access.terminal_detached_timeout / 4)
+            (app_state.remote_access.terminal.detached_timeout / 4)
                 .max(Duration::from_secs(10)),
         );
     }
@@ -488,11 +488,11 @@ async fn get_capabilities(req: HttpRequest, app_state: web::types::State<Arc<App
         capabilities,
         platform,
         remote_access: RemoteAccessView {
-            tunnel: app_state.remote_access.tunnel_enabled,
-            terminal: app_state.remote_access.terminal_available(secure),
+            tunnel: app_state.remote_access.tunnel.enabled,
+            terminal: app_state.remote_access.terminal.available(secure),
             secure,
             full_access: app_state.full_access_allowed(secure),
-            files: app_state.remote_access.fs_available(),
+            files: app_state.remote_access.fs.available(),
         },
     }))
 }
@@ -521,10 +521,10 @@ async fn issue_ws_ticket(
     let purpose = payload.into_inner().purpose;
     let remote_ip = audit::peer_ip(&req);
     let available = match purpose {
-        Purpose::Tunnel => app_state.remote_access.tunnel_enabled,
+        Purpose::Tunnel => app_state.remote_access.tunnel.enabled,
         Purpose::Terminal => app_state
             .remote_access
-            .terminal_available(ws::is_secure_transport(&req, app_state.tls_active)),
+            .terminal.available(ws::is_secure_transport(&req, app_state.tls_active)),
     };
     if !available {
         Event::new(Kind::Ticket, Action::Denied, Outcome::Denied)
@@ -614,9 +614,9 @@ async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppStat
     Ok(HttpResponse::Ok().json(&SettingsView {
         settings: SettingsPayload {
             interval_seconds: monitoring.interval_seconds,
-            extended_interval_secs: monitoring.extended_interval_secs,
+            extended_interval_secs: monitoring.extended.interval_secs,
             idle_pause_enabled: live.idle_pause_enabled,
-            idle_pause_threshold_secs: monitoring.idle_pause_threshold_secs,
+            idle_pause_threshold_secs: monitoring.extended.idle_pause.threshold_secs,
             rules: monitoring.rules,
             data_retention: monitoring.data_retention,
             cors_allowed_origins: file_config.get_server().cors_allowed_origins,
@@ -675,9 +675,9 @@ async fn update_settings(
 
     let mut monitoring = config.get_monitoring();
     monitoring.interval_seconds = payload.interval_seconds;
-    monitoring.extended_interval_secs = payload.extended_interval_secs;
-    monitoring.idle_pause_enabled = payload.idle_pause_enabled;
-    monitoring.idle_pause_threshold_secs = payload.idle_pause_threshold_secs;
+    monitoring.extended.interval_secs = payload.extended_interval_secs;
+    monitoring.extended.idle_pause.enabled = payload.idle_pause_enabled;
+    monitoring.extended.idle_pause.threshold_secs = payload.idle_pause_threshold_secs;
     monitoring.rules = payload.rules;
     monitoring.data_retention = payload.data_retention;
     config.monitoring = Some(monitoring.clone());

@@ -131,7 +131,7 @@ const id = {
 	terminalSubmit: 'Kirim',
 	terminalReconnecting: 'Menghubungkan ulang…',
 	terminalOutputLost: 'Sebagian keluaran hilang selama terputus.',
-	terminalUnavailable: 'Terminal tidak diaktifkan pada agen ini. Nyalakan remote_access.terminal_enabled di config.toml; juga membutuhkan TLS, atau proxy di host yang sama.',
+	terminalUnavailable: 'Terminal tidak diaktifkan pada agen ini. Nyalakan remote_access.terminal.enabled di config.toml; juga membutuhkan TLS, atau proxy di host yang sama.',
 	terminalOpenDirectly: 'Buka terminal',
 	terminalPasswordlessHint: 'Agen ini membuka shell untuk siapa pun yang masuk ke panel, berjalan sebagai akun yang menjalankan agen itu sendiri. Tidak perlu kredensial SSH.',
 	terminalPasswordlessNoticeTitle: 'Login panel ini bisa membuka shell',

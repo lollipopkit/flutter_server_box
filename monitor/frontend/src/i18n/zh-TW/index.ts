@@ -131,7 +131,7 @@ const zh_TW = {
 	terminalSubmit: '送出',
 	terminalReconnecting: '正在重新連線…',
 	terminalOutputLost: '斷線期間有部分輸出已遺失。',
-	terminalUnavailable: '此代理未啟用終端機。請在 config.toml 中開啟 remote_access.terminal_enabled；同時需要 TLS，或同機反向代理。',
+	terminalUnavailable: '此代理未啟用終端機。請在 config.toml 中開啟 remote_access.terminal.enabled；同時需要 TLS，或同機反向代理。',
 	terminalOpenDirectly: '直接開啟終端機',
 	terminalPasswordlessHint: '此代理會為任何已登入面板的人開啟 shell，身分是代理程序自身所屬的帳號。不需要 SSH 憑證。',
 	terminalPasswordlessNoticeTitle: '面板登入即可開啟 shell',

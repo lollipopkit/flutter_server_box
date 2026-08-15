@@ -37,7 +37,7 @@ async fn app_state(enabled: bool, ssh_addr: &str) -> Arc<AppState> {
     let mut config = Config::default();
     config.jwt_secret = Some("test-secret-that-is-long-enough-32ch".to_string());
     let mut remote = config.get_remote_access();
-    remote.terminal_enabled = enabled;
+    remote.terminal.enabled = enabled;
     remote.ssh_addr = ssh_addr.to_string();
     config.remote_access = Some(remote);
 
@@ -573,9 +573,9 @@ async fn the_session_cap_refuses_the_extra_terminal() {
     let mut config = Config::default();
     config.jwt_secret = Some("test-secret-that-is-long-enough-32ch".to_string());
     let mut remote = config.get_remote_access();
-    remote.terminal_enabled = true;
+    remote.terminal.enabled = true;
     remote.ssh_addr = sshd.clone();
-    remote.terminal_max_sessions = Some(1);
+    remote.terminal.max_sessions = Some(1);
     config.remote_access = Some(remote);
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
     sqlx::migrate!("./migrations").run(&db).await.unwrap();
@@ -608,7 +608,7 @@ async fn full_access_state(enabled: bool) -> Arc<AppState> {
     let mut config = Config::default();
     config.jwt_secret = Some("test-secret-that-is-long-enough-32ch".to_string());
     let mut remote = config.get_remote_access();
-    remote.terminal_enabled = true;
+    remote.terminal.enabled = true;
     // Nothing listens here: an SSH-less shell must not need it
     remote.ssh_addr = "127.0.0.1:1".to_string();
     remote.full_access = Some(enabled);
@@ -716,10 +716,10 @@ async fn tuned_state(
     let mut config = Config::default();
     config.jwt_secret = Some("test-secret-that-is-long-enough-32ch".to_string());
     let mut remote = config.get_remote_access();
-    remote.terminal_enabled = true;
+    remote.terminal.enabled = true;
     remote.ssh_addr = ssh_addr.to_string();
-    remote.terminal_scrollback_bytes = scrollback;
-    remote.terminal_detached_timeout_secs = detached_secs;
+    remote.terminal.scrollback_bytes = scrollback;
+    remote.terminal.detached_timeout_secs = detached_secs;
     config.remote_access = Some(remote);
 
     let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();

@@ -131,7 +131,7 @@ const ru = {
 	terminalSubmit: 'Отправить',
 	terminalReconnecting: 'Переподключение…',
 	terminalOutputLost: 'Часть вывода потеряна во время разрыва связи.',
-	terminalUnavailable: 'Терминал не включён на этом агенте. Включите remote_access.terminal_enabled в config.toml; также нужен TLS или прокси на том же хосте.',
+	terminalUnavailable: 'Терминал не включён на этом агенте. Включите remote_access.terminal.enabled в config.toml; также нужен TLS или прокси на том же хосте.',
 	terminalOpenDirectly: 'Открыть терминал',
 	terminalPasswordlessHint: 'Этот агент открывает оболочку любому, кто вошёл в панель, от имени учётной записи, под которой работает сам агент. Учётные данные SSH не нужны.',
 	terminalPasswordlessNoticeTitle: 'Вход в панель уже открывает оболочку',

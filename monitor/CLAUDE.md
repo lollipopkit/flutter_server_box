@@ -146,11 +146,11 @@ the panel password can't switch them on), and share the admission checks in
   quoting. Output is capped (1 MiB per stream) and the command is killed after
   60s, both reported rather than silently applied. `tests/exec_api.rs`.
 - **`/api/v1/fs/*`** — list, stat, read, write, mkdir, rename, chmod, remove,
-  for the app's file browser. Its own switch (`remote_access.fs_enabled`), not
+  for the app's file browser. Its own switch (`[remote_access.fs] enabled`), not
   folded into `full_access`: that grant means "a shell as the agent's user",
   this one means "these directories", and folding them would make the narrower
   thing cost the wider one.
-  **`fs_roots` is the boundary and there is no default.** Every request is
+  **`[remote_access.fs] roots` is the boundary and there is no default.** Every request is
   resolved to a canonical path — symlinks followed, `..` refused outright —
   and then checked component-wise against the roots (`core/fs_roots.rs`), so a
   link inside a root pointing at `/etc` is a refusal rather than a way out.
@@ -160,7 +160,7 @@ the panel password can't switch them on), and share the admission checks in
   the endpoint can't be used to map the filesystem one status code at a time.
   Writes stream to `<path>.sbm-part-<pid>-<n>` and rename, so an interrupted
   one leaves no half-file under the name something else is about to open.
-  `fs_roots = ["/"]` makes this equivalent to a shell (anyone who can write
+  `roots = ["/"]` makes this equivalent to a shell (anyone who can write
   `~/.ssh/authorized_keys` has one) and is warned about at startup.
   Known limitation, stated rather than papered over: resolution and use are two
   steps, so a symlink swapped in between them would be followed. Closing that
@@ -181,7 +181,7 @@ Things that are easy to get wrong here, and are locked by tests:
   a wrong secret.
 - **`is_secure_transport` treats loopback as secure** even without TLS. That is
   the same-host reverse proxy / `cloudflared` case, which really is encrypted;
-  refusing it would push people to `allow_insecure` and switch the check off for
+  refusing it would push people to `terminal.allow_insecure` and switch the check off for
   genuinely plaintext setups too. It never consults `X-Forwarded-Proto`, which
   the client controls.
 - **Terminal sessions outlive their WebSocket** (`api/ws/session.rs`) so a
@@ -235,6 +235,31 @@ Uses environment variables (.env file) and TOML config files:
 - **Environment**: Database URL, JWT secret, server host/port, TLS settings
 - **TOML Config**: Monitoring rules, push notification settings, thresholds
 - **Configuration file**: Defaults to `config.toml` (with JSON fallback support for `config.json`)
+
+Settings are grouped into subsections by **what they act on**, not by a shared
+name prefix — `[remote_access.tunnel]`, `[remote_access.terminal]`,
+`[remote_access.fs]`, `[monitoring.extended]`,
+`[monitoring.extended.idle_pause]`. Two consequences worth knowing before
+adding a key:
+
+- Where a key lives is a claim about its scope, and the code is arranged to
+  match: `allow_insecure` sits under `terminal` because the terminal is the
+  only endpoint it gates, and `idle_pause` under `extended` because that is the
+  only cycle it can pause. What stays at a section's own level is what more
+  than one subsection reads (`ssh_addr`, `full_access`). Adding a key to the
+  wrong level makes the file lie about what it does.
+- The resolved runtime structs (`RemoteAccess`, with `Tunnel`/`Terminal`/`Fs`)
+  mirror the file's shape, so `terminal.available()` and `fs.available()` are
+  methods on the part they answer for.
+
+The **flat pre-Aug-2026 layout is not read at all** (`fs_enabled`,
+`terminal_enabled`, `tunnel_max_conns`, `idle_pause_enabled`, ...). serde
+ignores unknown keys, so an old file parses and every switch in it silently
+reverts to off — a deliberate hard cut, since the safe direction is "feature
+disabled". `[server] name` and `[monitoring] push_rate` were also top-level Go
+keys and moved into sections; `Config::legacy` still reads the Go agent's flat
+`config.json` keys once, at the `config.json` → `config.toml` migration, and
+`normalize()` clears them so they are never written back.
 
 ### Database Schema
 

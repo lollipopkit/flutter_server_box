@@ -1099,7 +1099,7 @@ export type TranslationFunctions = {
 	 */
 	terminalOutputLost: () => LocalizedString
 	/**
-	 * The terminal is not enabled on this agent. Turn on remote_access.terminal_enabled in config.toml; it also requires TLS, or a proxy on the same host.
+	 * The terminal is not enabled on this agent. Turn on remote_access.terminal.enabled in config.toml; it also requires TLS, or a proxy on the same host.
 	 */
 	terminalUnavailable: () => LocalizedString
 	/**

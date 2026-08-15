@@ -131,7 +131,7 @@ const tr = {
 	terminalSubmit: 'Gönder',
 	terminalReconnecting: 'Yeniden bağlanılıyor…',
 	terminalOutputLost: 'Bağlantı kopukken çıktının bir kısmı kayboldu.',
-	terminalUnavailable: 'Bu aracıda terminal etkin değil. config.toml içinde remote_access.terminal_enabled seçeneğini açın; ayrıca TLS ya da aynı makinede bir proxy gerekir.',
+	terminalUnavailable: 'Bu aracıda terminal etkin değil. config.toml içinde remote_access.terminal.enabled seçeneğini açın; ayrıca TLS ya da aynı makinede bir proxy gerekir.',
 	terminalOpenDirectly: 'Terminal aç',
 	terminalPasswordlessHint: 'Bu aracı, panele giriş yapmış herkese, aracının kendisinin çalıştığı hesap altında bir kabuk açar. SSH kimlik bilgisi gerekmez.',
 	terminalPasswordlessNoticeTitle: 'Panel girişi tek başına kabuk açabiliyor',
