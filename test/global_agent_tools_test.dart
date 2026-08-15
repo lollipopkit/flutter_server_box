@@ -94,6 +94,7 @@ void main() {
       cancelledLabel: 'Cancelled',
       timedOutLabel: 'Timed out',
       noOutputLabel: 'No output',
+      noResultLabel: 'Empty',
       truncatedLabel: 'Truncated',
     );
 
@@ -103,6 +104,43 @@ void main() {
     expect(output, contains('Truncated'));
     expect(output, isNot(contains('raw tool command')));
     expect(output, isNot(contains('"command"')));
+  });
+
+  /// Which "nothing came back" is shown depends on the tool, and only this
+  /// function knows which tool it was. The card used to decide it a second
+  /// time from an empty return value, and so called every one of these a
+  /// command that produced no output.
+  test('a tool that returned nothing is labelled by what it was', () {
+    String outputOf(AgentToolExecutionResult result) =>
+        formatGlobalAgentToolResultOutput(
+          result,
+          cancelledLabel: 'Cancelled',
+          timedOutLabel: 'Timed out',
+          noOutputLabel: 'No command output',
+          noResultLabel: 'Empty',
+          truncatedLabel: 'Truncated',
+        );
+
+    // A shell command that ran and printed nothing.
+    const shell = AgentToolExecutionResult(
+      toolName: 'run_shell_command',
+      summary: 'ok',
+      succeeded: true,
+      duration: Duration(milliseconds: 1),
+      data: {'exit_code': 0, 'stdout': '', 'stderr': ''},
+    );
+    expect(outputOf(shell), contains('No command output'));
+
+    // Any other tool with nothing to hand back — `displayData` is '' when
+    // `data` is null, which is where the card's empty branch used to fire.
+    const read = AgentToolExecutionResult(
+      toolName: 'read_file',
+      summary: 'ok',
+      succeeded: true,
+      duration: Duration(milliseconds: 1),
+    );
+    expect(outputOf(read), 'Empty');
+    expect(outputOf(read), isNot(contains('No command output')));
   });
 
   test('empty server list remains explicit in the prompt', () {

@@ -12,12 +12,47 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/agent/history.dart';
 
+/// Width the scrollbar of a scrollable output box keeps at its right edge.
+///
+/// A Material scrollbar is 8 wide and is drawn over the view rather than
+/// beside it, so anything else on that edge has to be told to stay out of it;
+/// 16 leaves it that much again as margin.
+///
+/// Zero on touch platforms, where `MaterialScrollBehavior` draws no scrollbar
+/// at all and this would be a strip of dead space on the narrowest screens.
+double get _outputScrollbarGutter => isDesktop ? 16.0 : 0.0;
+
+/// Padding on each side of the copy icon that floats over an output box.
+const _outputCopyPad = 7.0;
+
+/// The copy icon itself.
+const _outputCopyIcon = 15.0;
+
+/// What the output text keeps clear on its right: the scrollbar's gutter, plus
+/// the button standing in front of it.
+///
+/// Derived rather than written out as one number, because all three have to
+/// agree — with the sum spelled `52` by hand, changing the icon size or the
+/// padding left the text running underneath the button with nothing to catch
+/// it.
+double get _outputTextRightInset =>
+    _outputScrollbarGutter + _outputCopyPad * 2 + _outputCopyIcon;
+
+/// Everything a tool result has to say, as one block of text.
+///
+/// Never empty: a tool that handed back nothing still has to say so, and this
+/// is the only place that knows *which* tool it was — [noOutputLabel] is the
+/// shell's wording and is wrong for a `read_file` that simply had nothing to
+/// return, which is what [noResultLabel] is for. The card used to decide this
+/// a second time, from an empty return value, and so labelled every one of
+/// those as a command that produced no output.
 @visibleForTesting
 String formatGlobalAgentToolResultOutput(
   AgentToolExecutionResult result, {
   required String cancelledLabel,
   required String timedOutLabel,
   required String noOutputLabel,
+  required String noResultLabel,
   required String truncatedLabel,
 }) {
   // Above the tool name, because `{'error': ...}` is what every tool that
@@ -31,7 +66,8 @@ String formatGlobalAgentToolResultOutput(
   }
 
   if (result.toolName != 'run_shell_command' || result.data is! Map) {
-    return result.displayData;
+    final shown = result.displayData;
+    return shown.isEmpty ? noResultLabel : shown;
   }
 
   final data = Map<Object?, Object?>.from(result.data! as Map);
@@ -659,6 +695,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
       cancelledLabel: libL10n.cancelled,
       timedOutLabel: libL10n.timedOut,
       noOutputLabel: context.l10n.askAiNoCommandOutput,
+      noResultLabel: libL10n.empty,
       truncatedLabel: context.l10n.askAiOutputTruncated,
     );
     return _toolCard(
@@ -679,34 +716,78 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
         if (entry.autoApproved) context.l10n.askAiAutoApproved,
       ].join(' · '),
       children: [
-        if (output.isNotEmpty) ...[
-          Container(
-            width: double.infinity,
-            constraints: const BoxConstraints(maxHeight: 320),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: SingleChildScrollView(
-              child: SelectableText(
-                output,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontFamily: 'monospace',
+        // No empty case: `formatGlobalAgentToolResultOutput` never returns
+        // one, because saying "nothing came back" needs the tool's name and
+        // that is the only place that has it.
+        //
+        // The button sits over the output's top right rather than under the
+          // whole block: a long output scrolls inside its own box, and a
+          // button below it is a screenful of scrolling away from the text it
+          // copies. Outside the scroll view, so it stays there while the
+          // output moves under it.
+          //
+          // The box holds no padding of its own. A desktop scroll view draws
+          // its scrollbar at its own right edge, so any padding here would
+          // move the scrollbar inwards along with the text, and the button
+          // would keep landing outside it. The text is inset by the scroll
+          // view instead, which leaves the scrollbar on the box's edge and
+          // this button clear of it.
+          Stack(
+            children: [
+              Container(
+                width: double.infinity,
+                constraints: const BoxConstraints(maxHeight: 320),
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(12, 12, _outputTextRightInset, 12),
+                  child: SelectableText(
+                    output,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontFamily: 'monospace',
+                    ),
+                  ),
                 ),
               ),
-            ),
+              Positioned(
+                top: 4,
+                right: _outputScrollbarGutter,
+                // Opaque, and a step away from the box's own colour: drawn in
+                // `surfaceContainerHighest` at 90% over a box of exactly that
+                // colour, the button had no edge at all and the text scrolled
+                // visibly through it.
+                //
+                // Icon-only, with the label on the tooltip and on the
+                // semantics: it floats over the output, and a labelled button
+                // there would cover the first line of what it copies. Not
+                // reachable by touch without a long press, which is the trade
+                // — the same one every overlaid icon button in the app makes.
+                child: Tooltip(
+                  message: libL10n.copy,
+                  child: Material(
+                    color: theme.colorScheme.surfaceContainerLowest,
+                    borderRadius: BorderRadius.circular(8),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () => _copyText(output),
+                      child: Padding(
+                        padding: const EdgeInsets.all(_outputCopyPad),
+                        child: Icon(
+                          Icons.copy,
+                          size: _outputCopyIcon,
+                          semanticLabel: libL10n.copy,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-        ],
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            onPressed: output.isEmpty ? null : () => _copyText(output),
-            icon: const Icon(Icons.copy, size: 16),
-            label: Text(libL10n.copy),
-          ),
-        ),
       ],
     );
   }
