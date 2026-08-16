@@ -417,17 +417,19 @@ was the part worth refusing, and that is gone.
 Measured: `head -c 16 /dev/urandom` gives 16 bytes, `/dev/zero` gives 8,
 `/dev/ptmx`, `/dev/pts` and `/dev/shm` are there.
 
-Two gaps left in it, both recorded as TODOs in
-`integration_test/ios_rootfs_test.dart` rather than assumed away:
+Two gaps left, and they look like one cause. `/dev/stdout` and its siblings are
+symlinks to `/proc/self/fd/N` and do not resolve — "nonexistent directory" —
+and `tty` reports "not a tty". Both follow from `create_stdio` falling back to
+the adhoc fd it makes when `/dev/pts/N` does not open as a char device: output
+still reaches the driver, which is why sessions work at all, but that fd is not
+in the table procfs lists and `isatty` does not recognise it. **Making
+`/dev/pts/N` resolve is the one thing to try**, and it is a TODO in the test
+rather than an assumption.
 
-- `/dev/stdout`, `/dev/stdin`, `/dev/stderr` and `/dev/fd` are symlinks into
-  `/proc/self/fd` and are not being created — a shell that follows one gets
-  "nonexistent directory". Conveniences, not nodes;
-- `tty` reports "not a tty". Output flows and sessions are independent, so
-  `create_stdio` is reaching the driver — but through the adhoc fd it falls
-  back to rather than the `/dev/pts/N` node, and `isatty` does not recognise
-  that. Interactive programs will care; a shell running a command does not,
-  which is why it took a `tty` call to notice.
+Also installed by the app now, which was the shipping blocker: the pinned
+release is downloaded, digest-checked and unpacked in Dart — links as links,
+modes through libc's `chmod`, since `realfs` shows the guest the host's mode
+and `dart:io` cannot set one.
 
 What is left:
 

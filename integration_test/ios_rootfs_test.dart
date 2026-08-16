@@ -143,11 +143,14 @@ void main() {
 
     expect(text, contains('16'), reason: '/dev/urandom gave nothing');
     expect(text, contains('8'), reason: '/dev/zero gave nothing');
-    // TODO: `/dev/stdout`, `/dev/stdin`, `/dev/stderr` and `/dev/fd` are
-    // symlinks into `/proc/self/fd` and are not being created — a shell that
-    // follows one gets "nonexistent directory". They are conveniences rather
-    // than device nodes, so the nodes above are what this test is for; the
-    // symlinks want their own look.
+    // TODO: two gaps that look like one cause. `/dev/stdout` and its siblings
+    // are symlinks to `/proc/self/fd/N` and do not resolve — "nonexistent
+    // directory" — and `tty` reports "not a tty". Both are what would follow
+    // from `create_stdio` having fallen back to the adhoc fd it makes when
+    // `/dev/pts/N` does not open as a char device: output still reaches the
+    // driver, which is why sessions work, but the fd is not in the table
+    // procfs lists and `isatty` does not recognise it. Making `/dev/pts/N`
+    // resolve is the one thing to try.
     // TODO: `tty` says "not a tty". Output flows and sessions are independent,
     // so `create_stdio` is reaching the driver — but through the adhoc fd it
     // falls back to rather than the `/dev/pts/N` node, which `isatty` does not

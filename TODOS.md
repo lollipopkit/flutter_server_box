@@ -283,3 +283,18 @@ proot 并在构建后检查两个 `.so` 确实进了 APK。剩下两条:
 
 默认是 `0`,因为引擎不在仓库里(`scripts/build-ish-ios.sh` 才会构建它),没跑过脚本的
 检出根本链接不了;悄悄少链一个库的构建,比明确不做还糟。
+
+## iOS Linux 环境:剩下的两条
+
+装机路径、每会话独立 pty、`/dev` 设备节点都做完并在模拟器验过了。剩两条,看起来是同一个原因:
+
+- `/dev/stdout`、`/dev/stdin`、`/dev/stderr`、`/dev/fd` 是指向 `/proc/self/fd/N` 的
+  链接,跟随得到 "nonexistent directory"
+- `tty` 报 "not a tty"
+
+两条都符合同一个解释:`create_stdio` 在 `/dev/pts/N` 打不开成字符设备时会回退到它自己
+造的 adhoc fd。输出照样能到 driver(所以会话是好的),但那个 fd 不在 procfs 列的表里,
+`isatty` 也不认。**要试的就一件事:让 `/dev/pts/N` 能解析。**
+
+另外没做的是 **Agent 的 iOS 本地目标**。现在有独立 pty、`supportsExec` 也是 true,
+接进去不再需要标记协议;形状照 Android 那边(容器是唯一的本机,文件工具在容器内解析)。
