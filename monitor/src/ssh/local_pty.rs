@@ -12,7 +12,7 @@
 //! through the same session, scrollback and reconnect machinery.
 
 use std::io::{Read, Write};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Condvar, Mutex};
 
 use portable_pty::{CommandBuilder, MasterPty, PtySize, native_pty_system};
 use tokio::sync::mpsc;
@@ -143,29 +143,80 @@ impl LocalShell {
 
         let (tx, rx) = mpsc::channel(64);
         let child = Arc::new(Mutex::new(child));
+        let reader_done = Arc::new((Mutex::new(false), Condvar::new()));
+        // Data and exit share this gate so an exit closes data delivery before
+        // it is enqueued. Holding it across blocking_send also lets any data
+        // already under backpressure finish before the exit notification.
+        let delivery_closed = Arc::new(Mutex::new(false));
 
         // A PTY read is blocking, so it gets a thread rather than a task. One
         // thread per open terminal, bounded by `terminal_max_sessions`.
-        let reaper = child.clone();
+        let reader_tx = tx.clone();
+        let reader_finished = reader_done.clone();
+        let reader_delivery_closed = delivery_closed.clone();
         std::thread::spawn(move || {
             let mut buf = [0u8; 8 * 1024];
             loop {
                 match reader.read(&mut buf) {
                     Ok(0) | Err(_) => break,
                     Ok(n) => {
-                        if tx.blocking_send(ShellEvent::Data(buf[..n].to_vec())).is_err() {
+                        let delivery_closed = reader_delivery_closed
+                            .lock()
+                            .unwrap_or_else(|e| e.into_inner());
+                        if *delivery_closed {
+                            break;
+                        }
+                        if reader_tx.blocking_send(ShellEvent::Data(buf[..n].to_vec())).is_err() {
                             break;
                         }
                     }
                 }
             }
+            let (done, ready) = &*reader_finished;
+            {
+                let mut done = done.lock().unwrap_or_else(|e| e.into_inner());
+                *done = true;
+            }
+            ready.notify_one();
+        });
+
+        // ConPTY can keep the read side open after the child exits while the
+        // master handle is still alive. Reap independently instead of making
+        // exit delivery depend on the reader observing EOF. `try_wait` keeps
+        // the mutex available between polls, so `kill` cannot deadlock behind
+        // a blocking wait.
+        let reaper = child.clone();
+        let exit_delivery_closed = delivery_closed.clone();
+        std::thread::spawn(move || loop {
             let status = reaper
                 .lock()
                 .unwrap_or_else(|e| e.into_inner())
-                .wait()
-                .ok()
-                .map(|s| s.exit_code());
-            let _ = tx.blocking_send(ShellEvent::Exit(status));
+                .try_wait();
+            let exit = match status {
+                Ok(Some(status)) => Some(Some(status.exit_code())),
+                Ok(None) => None,
+                Err(_) => Some(None),
+            };
+            if let Some(status) = exit {
+                // Preserve the usual PTY contract that the last output comes
+                // before the exit notification. Unix readers normally reach
+                // EOF immediately; ConPTY gets a short drain window and then
+                // exit is delivered even if its read handle stays open.
+                let (done, ready) = &*reader_done;
+                let done = done.lock().unwrap_or_else(|e| e.into_inner());
+                drop(ready.wait_timeout_while(
+                    done,
+                    std::time::Duration::from_millis(100),
+                    |done| !*done,
+                ));
+                let mut delivery_closed = exit_delivery_closed
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner());
+                *delivery_closed = true;
+                let _ = tx.blocking_send(ShellEvent::Exit(status));
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(10));
         });
 
         Ok((
@@ -215,13 +266,45 @@ fn dirs_home() -> Option<String> {
 mod tests {
     use super::*;
 
+    #[cfg(windows)]
+    async fn answer_cursor_position_query(
+        shell: &LocalShell,
+        rx: &mut mpsc::Receiver<ShellEvent>,
+    ) -> String {
+        let mut seen = String::new();
+        let queried = tokio::time::timeout(std::time::Duration::from_secs(15), async {
+            while let Some(event) = rx.recv().await {
+                if let ShellEvent::Data(data) = event {
+                    seen.push_str(&String::from_utf8_lossy(&data));
+                    if seen.contains("\u{1b}[6n") {
+                        return true;
+                    }
+                }
+            }
+            false
+        })
+        .await
+        .unwrap_or(false);
+        assert!(queried, "ConPTY should ask for the cursor position; saw {seen:?}");
+        shell.write(b"\x1b[1;1R").unwrap();
+        seen
+    }
+
+    #[cfg(not(windows))]
+    async fn answer_cursor_position_query(
+        _shell: &LocalShell,
+        _rx: &mut mpsc::Receiver<ShellEvent>,
+    ) -> String {
+        String::new()
+    }
+
     #[tokio::test]
     async fn a_shell_starts_echoes_and_exits() {
         let (shell, mut rx) = LocalShell::spawn("xterm-256color", 80, 24).unwrap();
 
-        shell.write(b"echo local-pty-marker\n").unwrap();
+        let mut seen = answer_cursor_position_query(&shell, &mut rx).await;
+        shell.write(b"echo local-pty-marker\r").unwrap();
 
-        let mut seen = String::new();
         let found = tokio::time::timeout(std::time::Duration::from_secs(15), async {
             while let Some(event) = rx.recv().await {
                 if let ShellEvent::Data(data) = event {
@@ -245,7 +328,8 @@ mod tests {
     #[tokio::test]
     async fn exiting_the_shell_reports_an_exit() {
         let (shell, mut rx) = LocalShell::spawn("xterm-256color", 80, 24).unwrap();
-        shell.write(b"exit 7\n").unwrap();
+        answer_cursor_position_query(&shell, &mut rx).await;
+        shell.write(b"exit 7\r").unwrap();
 
         let exit = tokio::time::timeout(std::time::Duration::from_secs(15), async {
             while let Some(event) = rx.recv().await {
@@ -258,9 +342,10 @@ mod tests {
         .await
         .unwrap_or(None);
 
-        assert!(
-            exit.is_some(),
-            "the terminal must learn that the shell is gone, not hang"
+        assert_eq!(
+            exit,
+            Some(Some(7)),
+            "the terminal must retain the shell's requested exit status"
         );
     }
 

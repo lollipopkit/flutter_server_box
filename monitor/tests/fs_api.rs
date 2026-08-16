@@ -6,6 +6,7 @@
 //! job and is tested directly in `fs_roots.rs`.
 
 use std::sync::{Arc, Once};
+use std::{fs, path::Path};
 
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
@@ -71,28 +72,46 @@ fn token() -> String {
     generate_token("admin", SECRET).unwrap()
 }
 
+fn existing_root() -> String {
+    fs::canonicalize(std::env::current_dir().unwrap())
+        .unwrap()
+        .to_string_lossy()
+        .into_owned()
+}
+
+fn canonical(path: &str) -> std::path::PathBuf {
+    fs::canonicalize(Path::new(path)).unwrap()
+}
+
 #[ntex::test]
 async fn the_configured_roots_come_back() {
-    // Canonicalised at startup, so the paths have to exist to survive
-    // `FsRoots::resolve` — these two do on every platform this runs on.
-    let srv = test_server(app_state(true, &["/tmp", "/etc"]).await).await;
+    let dir = tempfile::tempdir().unwrap();
+    let first = dir.path().join("first");
+    let second = dir.path().join("second");
+    fs::create_dir(&first).unwrap();
+    fs::create_dir(&second).unwrap();
+    let first = first.to_string_lossy().into_owned();
+    let second = second.to_string_lossy().into_owned();
+    let srv = test_server(app_state(true, &[&first, &second]).await).await;
     let body = get_roots(&srv, Some(&token())).await.unwrap();
 
     let roots = body["roots"].as_array().expect("roots is an array");
-    let mut got: Vec<&str> = roots.iter().map(|r| r.as_str().unwrap()).collect();
+    let got: Vec<&str> = roots.iter().map(|r| r.as_str().unwrap()).collect();
+    assert!(got.iter().all(|root| !root.contains('\\')), "got {got:?}");
+    let mut got: Vec<_> = got.iter().map(|root| canonical(root)).collect();
     got.sort_unstable();
-    // /tmp is a symlink to /private/tmp on macOS, and the roots are stored
-    // resolved — assert on what it ends with rather than on the literal.
+    let mut expected = vec![canonical(&first), canonical(&second)];
+    expected.sort_unstable();
     assert_eq!(got.len(), 2, "got {got:?}");
-    assert!(got.iter().any(|r| r.ends_with("/etc")), "got {got:?}");
-    assert!(got.iter().any(|r| r.ends_with("/tmp")), "got {got:?}");
+    assert_eq!(got, expected);
 }
 
 /// The same 401 every other fs handler gives: this one says where the agent
 /// will let a caller go, which is not something an unauthenticated one may ask.
 #[ntex::test]
 async fn an_unauthenticated_caller_is_refused() {
-    let srv = test_server(app_state(true, &["/tmp"]).await).await;
+    let root = existing_root();
+    let srv = test_server(app_state(true, &[&root]).await).await;
     assert_eq!(get_roots(&srv, None).await.unwrap_err(), 401);
 }
 
@@ -100,7 +119,8 @@ async fn an_unauthenticated_caller_is_refused() {
 /// a client would read as "no limit" rather than as "not serving files".
 #[ntex::test]
 async fn a_disabled_file_api_refuses_rather_than_answering_empty() {
-    let srv = test_server(app_state(false, &["/tmp"]).await).await;
+    let root = existing_root();
+    let srv = test_server(app_state(false, &[&root]).await).await;
     assert_eq!(get_roots(&srv, Some(&token())).await.unwrap_err(), 403);
 }
 

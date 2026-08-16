@@ -49,7 +49,9 @@ fn is_physical_disk(device: &str) -> bool {
 }
 
 pub fn parse(raw: &str) -> Vec<DiskSmart> {
-    raw.split("\n\n")
+    let normalized = raw.replace("\r\n", "\n");
+    normalized
+        .split("\n\n")
         .filter(|s| !s.trim().is_empty())
         .filter_map(|block| parse_block(block.trim()))
         .collect()

@@ -24,11 +24,41 @@ use ntex_files::Files;
 use sbm_parser::{SystemType, capabilities::Capabilities};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, OnceLock};
 use std::time::Duration;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::{Mutex, RwLock, Semaphore};
 use tracing::info;
+
+const MAX_CONCURRENT_PASSWORD_CHECKS: usize = 4;
+
+fn password_check_limit() -> &'static Arc<Semaphore> {
+    static LIMIT: OnceLock<Arc<Semaphore>> = OnceLock::new();
+    LIMIT.get_or_init(|| {
+        let permits = std::thread::available_parallelism()
+            .map(|count| count.get())
+            .unwrap_or(1)
+            .min(MAX_CONCURRENT_PASSWORD_CHECKS);
+        Arc::new(Semaphore::new(permits))
+    })
+}
+
+async fn verify_login_password_off_worker(password: String, hash: Option<String>) -> Result<bool> {
+    let permit = password_check_limit()
+        .clone()
+        .acquire_owned()
+        .await
+        .map_err(|_| MonitorError::Monitoring("Password verifier is unavailable".to_string()))?;
+
+    tokio::task::spawn_blocking(move || {
+        // Keep the permit in the blocking task so cancellation of the request
+        // cannot admit another bcrypt check before this one actually stops.
+        let _permit = permit;
+        auth::verify_login_password(&password, hash.as_deref())
+    })
+    .await
+    .map_err(|error| MonitorError::Monitoring(format!("Password verifier failed: {error}")))?
+}
 
 #[derive(Clone)]
 pub struct AppState {
@@ -292,7 +322,7 @@ async fn serve_index() -> impl web::Responder {
 }
 
 async fn spa_fallback() -> HttpResponse {
-    match std::fs::read_to_string("frontend/dist/index.html") {
+    match tokio::fs::read_to_string("frontend/dist/index.html").await {
         Ok(content) => HttpResponse::Ok()
             .content_type("text/html; charset=utf-8")
             .body(content),
@@ -328,8 +358,17 @@ async fn login(
     .fetch_optional(&app_state.db)
     .await?;
 
+    // A missing account must cost the same bcrypt verification as a wrong
+    // password, or response timing turns the login endpoint into a username
+    // oracle even though both paths return the same status and throttle key.
+    let password_matches = verify_login_password_off_worker(
+        req.password.clone(),
+        user.as_ref().map(|user| user.password_hash.clone()),
+    )
+    .await?;
+
     if let Some(user) = user
-        && auth::verify_password(&req.password, &user.password_hash)?
+        && password_matches
     {
         app_state.login_throttle.record_success(peer_ip, &req.username);
 
@@ -639,9 +678,7 @@ async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppStat
     }))
 }
 
-/// Same shape `config_manager.rs::validate_threshold_format` uses — not
-/// reusing that struct wholesale (it's file-JSON-versioned, dead code
-/// predating the config.toml migration; see the settings-page plan)
+/// Kept beside the settings endpoint so file and API validation cannot drift.
 fn validate_threshold_format(threshold: &str) -> std::result::Result<(), String> {
     let re = regex::Regex::new(r"^(>=|<=|>|<|==|!=)(\d+(?:\.\d+)?)([%KMGTB]*)(/s)?$").unwrap();
     if re.is_match(threshold) {

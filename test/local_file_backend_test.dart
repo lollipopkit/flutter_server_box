@@ -37,7 +37,7 @@ void main() {
       // not a number anybody wants shown beside a folder.
       expect(byName['sub']!.size, isNull);
       expect(byName['l']!.kind, FileKind.link);
-      expect(byName['l']!.linkTarget, at('a.txt'));
+      expect(byName['l']!.linkTarget, at('a.txt').replaceAll(r'\', '/'));
     });
 
     test('a link to nowhere is still listed', () async {

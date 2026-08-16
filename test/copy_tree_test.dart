@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:server_box/core/utils/local_file_backend.dart';
 import 'package:server_box/data/model/file/copy_tree.dart';
 
@@ -97,7 +98,7 @@ void main() {
 
     expect(File(at('dest.txt')).readAsStringSync(), 'the good one');
     expect(
-      Directory(tempDir.path).listSync().map((e) => e.path.split('/').last),
+      Directory(tempDir.path).listSync().map((e) => p.basename(e.path)),
       ['dest.txt'],
     );
   });

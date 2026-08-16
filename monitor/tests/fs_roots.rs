@@ -6,7 +6,7 @@
 //! the handler would catch.
 
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use server_box_monitor::core::fs_roots::{FsDenied, FsRoots};
 
@@ -37,8 +37,31 @@ fn sandbox() -> Sandbox {
     Sandbox { _dir: dir, root, outside, roots }
 }
 
-fn s(path: &PathBuf) -> String {
+fn s(path: &Path) -> String {
     path.to_string_lossy().into_owned()
+}
+
+fn request_path(path: &Path) -> String {
+    let raw = s(path);
+    #[cfg(windows)]
+    {
+        if let Some(rest) = raw.strip_prefix(r"\\?\UNC\") {
+            return format!(r"\\{rest}");
+        }
+        if let Some(rest) = raw.strip_prefix(r"\\?\") {
+            return rest.to_string();
+        }
+    }
+    raw
+}
+
+fn filesystem_root() -> PathBuf {
+    std::env::current_dir()
+        .expect("current directory")
+        .ancestors()
+        .last()
+        .expect("filesystem root")
+        .to_path_buf()
 }
 
 #[test]
@@ -71,10 +94,16 @@ fn dot_dot_is_refused_even_when_it_would_land_inside() {
     // client that knows where it wants to go can say so, and allowing it would
     // make the two resolvers have to agree about a partly-resolvable `..`.
     let sb = sandbox();
+    let root = request_path(&sb.root);
+    let requested = if cfg!(windows) {
+        format!(r"{root}\sub\..\inside.txt")
+    } else {
+        format!("{root}/sub/../inside.txt")
+    };
 
     let err = sb
         .roots
-        .resolve_existing(&format!("{}/sub/../inside.txt", s(&sb.root)))
+        .resolve_existing(&requested)
         .unwrap_err();
 
     assert_eq!(err, FsDenied::Traversal);
@@ -90,7 +119,7 @@ fn a_symlink_pointing_out_of_the_root_is_refused() {
 
     let err = sb
         .roots
-        .resolve_existing(&format!("{}/escape/secret.txt", s(&sb.root)))
+        .resolve_existing(&s(&sb.root.join("escape").join("secret.txt")))
         .unwrap_err();
 
     assert_eq!(err, FsDenied::OutsideRoots);
@@ -105,7 +134,7 @@ fn a_symlink_staying_inside_the_root_is_allowed() {
 
     let resolved = sb
         .roots
-        .resolve_existing(&format!("{}/link", s(&sb.root)))
+        .resolve_existing(&s(&sb.root.join("link")))
         .expect("still inside");
 
     assert_eq!(resolved, sb.root.join("inside.txt"));
@@ -121,7 +150,7 @@ fn a_write_through_a_symlinked_parent_is_refused() {
 
     let err = sb
         .roots
-        .resolve_new(&format!("{}/escape/planted.sh", s(&sb.root)))
+        .resolve_new(&s(&sb.root.join("escape").join("planted.sh")))
         .unwrap_err();
 
     assert_eq!(err, FsDenied::OutsideRoots);
@@ -133,10 +162,10 @@ fn a_file_that_does_not_exist_yet_resolves_under_its_parent() {
 
     let resolved = sb
         .roots
-        .resolve_new(&format!("{}/sub/new.txt", s(&sb.root)))
+        .resolve_new(&s(&sb.root.join("sub").join("new.txt")))
         .expect("a new file in an existing directory");
 
-    assert_eq!(resolved, sb.root.join("sub/new.txt"));
+    assert_eq!(resolved, sb.root.join("sub").join("new.txt"));
 }
 
 #[test]
@@ -145,10 +174,10 @@ fn a_directory_tree_that_does_not_exist_yet_resolves() {
 
     let resolved = sb
         .roots
-        .resolve_new(&format!("{}/a/b/c", s(&sb.root)))
+        .resolve_new(&s(&sb.root.join("a").join("b").join("c")))
         .expect("several missing levels");
 
-    assert_eq!(resolved, sb.root.join("a/b/c"));
+    assert_eq!(resolved, sb.root.join("a").join("b").join("c"));
 }
 
 #[test]
@@ -157,7 +186,7 @@ fn a_new_path_outside_the_roots_is_refused() {
 
     let err = sb
         .roots
-        .resolve_new(&format!("{}/planted.sh", s(&sb.outside)))
+        .resolve_new(&s(&sb.outside.join("planted.sh")))
         .unwrap_err();
 
     assert_eq!(err, FsDenied::OutsideRoots);
@@ -201,8 +230,9 @@ fn no_roots_means_nothing_resolves() {
     let roots = FsRoots::from_canonical(vec![]);
 
     assert!(roots.is_empty());
+    let existing = std::env::current_dir().expect("current directory");
     assert_eq!(
-        roots.resolve_existing("/etc/passwd").unwrap_err(),
+        roots.resolve_existing(&s(&existing)).unwrap_err(),
         FsDenied::OutsideRoots
     );
 }
@@ -210,8 +240,9 @@ fn no_roots_means_nothing_resolves() {
 #[test]
 fn the_filesystem_root_is_recognised_as_unrestricted() {
     // What the startup warning keys on.
-    assert!(FsRoots::from_canonical(vec![PathBuf::from("/")]).is_unrestricted());
-    assert!(!FsRoots::from_canonical(vec![PathBuf::from("/srv/data")]).is_unrestricted());
+    assert!(FsRoots::from_canonical(vec![filesystem_root()]).is_unrestricted());
+    let nested = std::env::current_dir().expect("current directory");
+    assert!(!FsRoots::from_canonical(vec![nested]).is_unrestricted());
 }
 
 #[test]
