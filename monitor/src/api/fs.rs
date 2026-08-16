@@ -166,7 +166,7 @@ pub async fn roots(
         .roots
         .as_slice()
         .iter()
-        .map(|p| p.to_string_lossy().into_owned())
+        .map(|p| exposed_path(p))
         .collect();
     Ok(HttpResponse::Ok().json(&serde_json::json!({ "roots": roots })))
 }
@@ -518,7 +518,7 @@ async fn view_of(path: &Path) -> EntryView {
         tokio::fs::read_link(path)
             .await
             .ok()
-            .map(|p| p.to_string_lossy().into_owned())
+            .map(|p| exposed_path(&p))
     } else {
         None
     };
@@ -534,6 +534,29 @@ async fn view_of(path: &Path) -> EntryView {
             .map(|d| d.as_secs() as i64),
         mode: mode_of(&meta),
         link_target,
+    }
+}
+
+/// Paths crossing the HTTP boundary use `/` on every platform, matching the
+/// app's `FileBackend` contract. Windows canonical paths also carry a `\\?\`
+/// prefix that is useful to the OS but not a path a user should have to see or
+/// send back.
+fn exposed_path(path: &Path) -> String {
+    let raw = path.to_string_lossy();
+    #[cfg(windows)]
+    {
+        let without_verbatim = if let Some(rest) = raw.strip_prefix(r"\\?\UNC\") {
+            format!(r"\\{rest}")
+        } else if let Some(rest) = raw.strip_prefix(r"\\?\") {
+            rest.to_string()
+        } else {
+            raw.into_owned()
+        };
+        without_verbatim.replace('\\', "/")
+    }
+    #[cfg(not(windows))]
+    {
+        raw.into_owned()
     }
 }
 

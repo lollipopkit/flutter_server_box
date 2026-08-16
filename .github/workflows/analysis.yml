@@ -57,6 +57,26 @@ jobs:
       - name: Check JNI build-id patch
         run: scripts/release/patch-jni-build-id.sh
 
+  rustTests:
+    name: Rust tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Test Rust workspace
+        run: cargo test --workspace --no-fail-fast
+
   check:
     runs-on: ubuntu-latest
 

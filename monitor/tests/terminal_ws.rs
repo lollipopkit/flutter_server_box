@@ -303,6 +303,25 @@ async fn read_until(io: &Io<Sealed>, codec: &ws::Codec, needle: &[u8]) -> Vec<u8
     seen
 }
 
+#[cfg(windows)]
+async fn answer_cursor_position_query(io: &Io<Sealed>, codec: &ws::Codec) {
+    let query = b"\x1b[6n";
+    let seen = read_until(io, codec, query).await;
+    assert!(
+        seen.windows(query.len()).any(|window| window == query),
+        "ConPTY should ask for the cursor position; saw {seen:?}"
+    );
+    io.send(
+        ws::Message::Binary(ntex::util::Bytes::from_static(b"\x1b[1;1R")),
+        codec,
+    )
+    .await
+    .unwrap();
+}
+
+#[cfg(not(windows))]
+async fn answer_cursor_position_query(_io: &Io<Sealed>, _codec: &ws::Codec) {}
+
 #[ntex::test]
 async fn a_password_login_produces_a_working_shell() {
     let sshd = fake_sshd::start(false).await;
@@ -638,9 +657,10 @@ async fn a_full_access_open_starts_a_shell_without_any_credential() {
     let ready = next_control(&io, &codec).await;
     assert_eq!(ready["type"], "ready", "expected a shell, got {ready}");
 
+    answer_cursor_position_query(&io, &codec).await;
+
     io.send(
-        ws::Message::Binary(ntex::util::Bytes::from_static(b"echo full-access-ok
-")),
+        ws::Message::Binary(ntex::util::Bytes::from_static(b"echo full-access-ok\r")),
         &codec,
     )
     .await

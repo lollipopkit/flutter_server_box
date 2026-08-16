@@ -288,11 +288,14 @@ abstract final class AndroidRootfs {
     }
     if (parts.isEmpty) return base;
 
-    final host = [base, ...parts].join('/');
+    final separator = Platform.pathSeparator;
+    final host = [base, ...parts].join(separator);
     // And resolved again at the end, because a symlink *inside* the rootfs can
     // point out of it — `ln -s / /tmp/out` is one reviewed command away, and
     // `File.readAsBytes` would follow it without asking anybody.
-    final toResolve = forWrite ? host.substring(0, host.lastIndexOf('/')) : host;
+    final toResolve = forWrite
+        ? host.substring(0, host.lastIndexOf(separator))
+        : host;
     String? real;
     try {
       real = await Directory(toResolve).resolveSymbolicLinks();
@@ -305,8 +308,8 @@ abstract final class AndroidRootfs {
         return null;
       }
     }
-    if (real != base && !real.startsWith('$base/')) return null;
-    return forWrite ? '$real/${parts.last}' : real;
+    if (real != base && !real.startsWith('$base$separator')) return null;
+    return forWrite ? '$real$separator${parts.last}' : real;
   }
 
   /// What the guest needs in its environment.

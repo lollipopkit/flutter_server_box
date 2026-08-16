@@ -10,6 +10,7 @@ use std::sync::{Arc, Once};
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use rustls::crypto::ring;
+use sbm_parser::script;
 use serde_json::json;
 use server_box_monitor::api::auth::generate_token;
 use server_box_monitor::api::server::AppState;
@@ -80,13 +81,29 @@ fn token() -> String {
     generate_token("admin", SECRET).unwrap()
 }
 
+fn platform_command<'a>(unix: &'a str, windows: &'a str) -> &'a str {
+    if cfg!(windows) { windows } else { unix }
+}
+
+fn platform_line(text: &str) -> String {
+    format!("{text}{}", if cfg!(windows) { "\r\n" } else { "\n" })
+}
+
+fn platform_powershell_command(unix: &str, windows: &str) -> String {
+    if cfg!(windows) {
+        script::encoded_powershell_command(windows)
+    } else {
+        unix.to_string()
+    }
+}
+
 #[ntex::test]
 async fn a_command_runs_and_its_output_comes_back() {
     let srv = test_server(app_state(true).await).await;
     let body = post(&srv, json!({"cmd": "echo exec-ok"})).await.unwrap();
 
     assert_eq!(body["exit_code"], 0);
-    assert_eq!(body["stdout"], "exec-ok\n");
+    assert_eq!(body["stdout"], platform_line("exec-ok"));
     assert_eq!(body["stderr"], "");
     assert_eq!(body["truncated"], false);
     assert_eq!(body["timed_out"], false);
@@ -97,12 +114,13 @@ async fn a_command_runs_and_its_output_comes_back() {
 #[ntex::test]
 async fn stdout_and_stderr_are_reported_separately() {
     let srv = test_server(app_state(true).await).await;
-    let body = post(&srv, json!({"cmd": "echo out; echo err 1>&2"}))
+    let cmd = platform_command("echo out; echo err 1>&2", "echo out&echo err>&2");
+    let body = post(&srv, json!({"cmd": cmd}))
         .await
         .unwrap();
 
-    assert_eq!(body["stdout"], "out\n");
-    assert_eq!(body["stderr"], "err\n");
+    assert_eq!(body["stdout"], platform_line("out"));
+    assert_eq!(body["stderr"], platform_line("err"));
 }
 
 #[ntex::test]
@@ -126,7 +144,10 @@ async fn stdin_is_not_audited() {
     let srv = test_server(state).await;
     post(
         &srv,
-        json!({"cmd": "cat > /dev/null", "stdin": "hunter2-not-in-the-log"}),
+        json!({
+            "cmd": platform_command("cat > /dev/null", "more > NUL"),
+            "stdin": "hunter2-not-in-the-log",
+        }),
     )
     .await
     .unwrap();
@@ -158,7 +179,7 @@ async fn a_command_that_ignores_a_large_stdin_still_returns() {
     .await
     .unwrap();
 
-    assert_eq!(body["stdout"], "ignored-it\n");
+    assert_eq!(body["stdout"], platform_line("ignored-it"));
     assert_eq!(body["timed_out"], false);
 }
 
@@ -166,7 +187,11 @@ async fn a_command_that_ignores_a_large_stdin_still_returns() {
 #[ntex::test]
 async fn stdin_reaches_the_command() {
     let srv = test_server(app_state(true).await).await;
-    let body = post(&srv, json!({"cmd": "cat", "stdin": "fed-on-stdin"}))
+    let cmd = platform_powershell_command(
+        "cat",
+        "$text = [Console]::In.ReadToEnd(); [Console]::Out.Write($text)",
+    );
+    let body = post(&srv, json!({"cmd": cmd, "stdin": "fed-on-stdin"}))
         .await
         .unwrap();
 
@@ -181,23 +206,35 @@ async fn a_multi_line_script_fed_to_a_shell_runs_whole() {
     let body = post(
         &srv,
         json!({
-            "cmd": "cat | sh",
+            "cmd": platform_command(
+                "cat | sh",
+                "powershell -NoLogo -NoProfile -NonInteractive -Command -",
+            ),
             "stdin": "echo first\necho 'second with \"quotes\"'\n",
         }),
     )
     .await
     .unwrap();
 
-    assert_eq!(body["stdout"], "first\nsecond with \"quotes\"\n");
+    let expected = format!(
+        "{}{}",
+        platform_line("first"),
+        platform_line("second with \"quotes\"")
+    );
+    assert_eq!(body["stdout"], expected);
 }
 
 #[ntex::test]
 async fn env_reaches_the_command_without_being_quoted_into_it() {
     let srv = test_server(app_state(true).await).await;
+    let cmd = platform_powershell_command(
+        "printf '%s' \"$SBM_TEST\"",
+        "[Console]::Out.Write($env:SBM_TEST)",
+    );
     let body = post(
         &srv,
         json!({
-            "cmd": "printf '%s' \"$SBM_TEST\"",
+            "cmd": cmd,
             // Would need escaping if it were prepended to the command as an
             // `export` line, which is the reason this is a field.
             "env": {"SBM_TEST": "a 'quoted' \"value\""},
@@ -214,14 +251,18 @@ async fn env_reaches_the_command_without_being_quoted_into_it() {
 #[ntex::test]
 async fn env_adds_to_the_environment_rather_than_replacing_it() {
     let srv = test_server(app_state(true).await).await;
+    let cmd = platform_command(
+        "test -n \"$PATH\" && echo has-path",
+        "if defined PATH echo has-path",
+    );
     let body = post(
         &srv,
-        json!({"cmd": "test -n \"$PATH\" && echo has-path", "env": {"SBM_TEST": "x"}}),
+        json!({"cmd": cmd, "env": {"SBM_TEST": "x"}}),
     )
     .await
     .unwrap();
 
-    assert_eq!(body["stdout"], "has-path\n");
+    assert_eq!(body["stdout"], platform_line("has-path"));
 }
 
 #[ntex::test]

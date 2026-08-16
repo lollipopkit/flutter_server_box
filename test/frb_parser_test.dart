@@ -6,13 +6,13 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/src/rust/api/parser.dart';
 import 'package:server_box/src/rust/api/script.dart' as script;
-import 'package:server_box/src/rust/frb_generated.dart';
+
+import 'rust_lib_helper.dart';
 
 const _cpuRaw = '''cpu  18232538 52837 5772391 334460731 247294 0 134107 0 0 0
 cpu0  1823253 5283 577239 33446073 24729 0 13410 0 0 0''';
@@ -40,12 +40,7 @@ const _connRaw =
     'Tcp: 1 200 120000 -1 11 22 33 44 55 66 77 88 99 111 222';
 
 void main() {
-  setUpAll(() async {
-    final lib = File('target/debug/libsbm_ffi.dylib').existsSync()
-        ? 'target/debug/libsbm_ffi.dylib'
-        : 'target/debug/libsbm_ffi.so';
-    await RustLib.init(externalLibrary: ExternalLibrary.open(lib));
-  });
+  setUpAll(initRustLibForTest);
 
   Future<Map<String, dynamic>> parseViaFfi(Map<String, String> raw) async {
     final json = await parseStatusJson(

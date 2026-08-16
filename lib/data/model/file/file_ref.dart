@@ -46,7 +46,7 @@ final class LocalFileRef extends FileRef {
 
   @override
   LocalFileRef child(String name) =>
-      LocalFileRef(path.joinPath(name, separator: Pfs.seperator));
+      LocalFileRef(path.joinPath(name, separator: '/'));
 
   @override
   bool operator ==(Object other) =>
