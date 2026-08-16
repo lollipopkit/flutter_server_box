@@ -279,7 +279,7 @@ async fn serve_index() -> impl web::Responder {
 }
 
 async fn spa_fallback() -> HttpResponse {
-    match std::fs::read_to_string("frontend/dist/index.html") {
+    match tokio::fs::read_to_string("frontend/dist/index.html").await {
         Ok(content) => HttpResponse::Ok()
             .content_type("text/html; charset=utf-8")
             .body(content),
@@ -315,8 +315,16 @@ async fn login(
     .fetch_optional(&app_state.db)
     .await?;
 
+    // A missing account must cost the same bcrypt verification as a wrong
+    // password, or response timing turns the login endpoint into a username
+    // oracle even though both paths return the same status and throttle key.
+    let password_matches = auth::verify_login_password(
+        &req.password,
+        user.as_ref().map(|user| user.password_hash.as_str()),
+    )?;
+
     if let Some(user) = user
-        && auth::verify_password(&req.password, &user.password_hash)?
+        && password_matches
     {
         app_state.login_throttle.record_success(peer_ip, &req.username);
 
@@ -626,9 +634,7 @@ async fn get_settings(req: HttpRequest, app_state: web::types::State<Arc<AppStat
     }))
 }
 
-/// Same shape `config_manager.rs::validate_threshold_format` uses — not
-/// reusing that struct wholesale (it's file-JSON-versioned, dead code
-/// predating the config.toml migration; see the settings-page plan)
+/// Kept beside the settings endpoint so file and API validation cannot drift.
 fn validate_threshold_format(threshold: &str) -> std::result::Result<(), String> {
     let re = regex::Regex::new(r"^(>=|<=|>|<|==|!=)(\d+(?:\.\d+)?)([%KMGTB]*)(/s)?$").unwrap();
     if re.is_match(threshold) {
