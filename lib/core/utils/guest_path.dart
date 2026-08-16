@@ -51,11 +51,18 @@ Future<String?> resolveWithinRoot(
   }
   if (parts.isEmpty) return base;
 
-  final host = [base, ...parts].join('/');
+  // The guest's separator is `/` and the host's is whatever it is. Everything
+  // above split a guest path and so is `/`; from here down these are host
+  // paths, and `resolveSymbolicLinks` answers in the host's spelling — on
+  // Windows a `\` one, which a `/` comparison below would never match.
+  final separator = Platform.pathSeparator;
+  final host = [base, ...parts].join(separator);
   // And resolved again at the end, because a symlink *inside* the rootfs can
   // point out of it — `ln -s / /tmp/out` is one reviewed command away, and
   // `File.readAsBytes` would follow it without asking anybody.
-  final toResolve = forWrite ? host.substring(0, host.lastIndexOf('/')) : host;
+  final toResolve = forWrite
+      ? host.substring(0, host.lastIndexOf(separator))
+      : host;
   String? real;
   try {
     real = await Directory(toResolve).resolveSymbolicLinks();
@@ -68,6 +75,6 @@ Future<String?> resolveWithinRoot(
       return null;
     }
   }
-  if (real != base && !real.startsWith('$base/')) return null;
-  return forWrite ? '$real/${parts.last}' : real;
+  if (real != base && !real.startsWith('$base$separator')) return null;
+  return forWrite ? '$real$separator${parts.last}' : real;
 }

@@ -110,6 +110,9 @@ void main() {
   });
 
   test('no rootfs on disk means nothing is inside one', () async {
-    expect(await resolveWithinRoot('${root.path}/gone', '/etc/hosts'), isNull);
+    expect(
+      await resolveWithinRoot(p.join(root.path, 'gone'), '/etc/hosts'),
+      isNull,
+    );
   });
 }
