@@ -246,12 +246,15 @@ void main() {
       File('${tempDir.path}/a').writeAsStringSync('a');
       File('${tempDir.path}/b').writeAsStringSync('b');
 
+      final firstDone = Completer<void>();
+      final secondDone = Completer<void>();
       final first = FileTransferStatus(
         job: FileTransfer(
           from: LocalFileRef('${tempDir.path}/a'),
           to: LocalFileRef('${tempDir.path}/a2'),
         ),
         notifyListeners: () {},
+        completer: firstDone,
       );
       final second = FileTransferStatus(
         job: FileTransfer(
@@ -259,9 +262,11 @@ void main() {
           to: LocalFileRef('${tempDir.path}/b2'),
         ),
         notifyListeners: () {},
+        completer: secondDone,
       );
 
       expect(first.id, isNot(second.id));
+      await Future.wait([firstDone.future, secondDone.future]);
     });
 
     test('a local copy that cannot read reports the failure', () async {
