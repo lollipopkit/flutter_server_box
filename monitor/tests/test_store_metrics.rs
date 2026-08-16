@@ -39,6 +39,7 @@ fn sample_metrics() -> SystemMetrics {
         batteries: vec![sbm_parser_types_battery(Some(77))],
         sensors: vec![],
         disk_smart: vec![],
+        custom_cmds: vec![],
         amd_cache: vec![],
     }
 }

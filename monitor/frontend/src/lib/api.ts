@@ -1,6 +1,8 @@
 import type {
   CardOrderPayload,
   Capabilities,
+  CustomCmd,
+  CustomCmdsView,
   HistoryPoint,
   LoginRequest,
   LoginResponse,
@@ -163,6 +165,17 @@ export const api = {
       '/remote-access/full-access',
       { method: 'DELETE' },
       'Failed to disable access without SSH',
+    ),
+  getCustomCmds: () =>
+    request<CustomCmdsView>('/custom-cmds', {}, 'Failed to fetch custom commands'),
+  /// The whole set, in the order it should run in. A replace rather than a
+  /// per-command edit: the order is part of what is stored, so a move has no
+  /// smaller expression than the new list.
+  updateCustomCmds: (commands: CustomCmd[]) =>
+    request<CustomCmdsView>(
+      '/custom-cmds',
+      { method: 'PUT', body: JSON.stringify({ commands }) },
+      'Failed to save custom commands',
     ),
   getCardOrder: () => request<CardOrderPayload>('/card-order', {}, 'Failed to fetch card order'),
   updateCardOrder: (card_order: string[]) =>

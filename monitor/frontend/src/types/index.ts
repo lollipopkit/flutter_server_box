@@ -32,6 +32,29 @@ export interface SystemMetrics {
   batteries?: BatteryMetrics[];
   sensors?: SensorMetrics[];
   disk_smart?: DiskSmartMetrics[];
+  /// Output of the user's custom commands, in the order they run in.
+  /// Refreshed on the extended cycle, like the fields above it.
+  custom_cmds?: CustomCmdOutput[];
+}
+
+export interface CustomCmdOutput {
+  name: string;
+  output: string;
+}
+
+/// A custom command as it is stored: a file in the agent's
+/// `~/.config/server_box/custom_cmds`, the same set the app edits over SSH.
+export interface CustomCmd {
+  name: string;
+  cmd: string;
+}
+
+export interface CustomCmdsView {
+  commands: CustomCmd[];
+  /// Whether this panel may change them — writing one arranges for code to
+  /// run as the agent's user, so it needs the same grant as the shell. A hint
+  /// for the UI; the agent re-checks it on the write.
+  editable: boolean;
 }
 
 export type FieldSupport = 'supported' | 'not_implemented' | 'hardware_dependent'

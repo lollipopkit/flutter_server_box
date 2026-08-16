@@ -96,6 +96,20 @@ fn custom_cmd_dir_survives_a_reboot_and_a_script_dir_switch() {
     assert!(script::custom_cmd_dir(SystemType::Windows).contains("$env:USERPROFILE"));
 }
 
+/// The path the monitor reads directly and the expression the generated script
+/// expands must name the same directory. Nothing else would notice if they
+/// drifted: each half would work, on a different directory.
+#[test]
+fn custom_cmd_dir_path_matches_the_shell_expression() {
+    let Some(path) = script::custom_cmd_dir_path() else {
+        // A test runner with no HOME; nothing to compare against.
+        return;
+    };
+    let home = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE")).unwrap();
+    let expanded = script::custom_cmd_dir(SystemType::Linux).replace("$HOME", &home);
+    assert_eq!(path.to_string_lossy(), expanded);
+}
+
 /// Windows names its files `.ps1` (`&` will not run an extensionless file),
 /// and the extension is not part of the encoded name. Emitting it made a
 /// marker that decodes to nothing, so the command's output was swallowed into

@@ -31,6 +31,10 @@ pub enum Kind {
     /// A file operation through `api::fs`. The subject is the verb and the
     /// path, never the contents.
     Fs,
+    /// A change to the custom commands the status script runs. Recorded like
+    /// `Exec` because it amounts to the same thing on the next cycle; the
+    /// subject is the names, never the command bodies.
+    CustomCmd,
 }
 
 impl Kind {
@@ -41,6 +45,7 @@ impl Kind {
             Kind::Terminal => "terminal",
             Kind::Exec => "exec",
             Kind::Fs => "fs",
+            Kind::CustomCmd => "custom_cmd",
         }
     }
 }

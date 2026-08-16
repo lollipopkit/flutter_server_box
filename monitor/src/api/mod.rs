@@ -1,3 +1,4 @@
+pub mod custom_cmds;
 pub mod exec;
 pub mod fs;
 pub mod cors;

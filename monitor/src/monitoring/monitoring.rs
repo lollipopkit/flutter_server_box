@@ -85,10 +85,22 @@ pub struct SystemMetrics {
     pub sensors: Vec<sbm_parser::types::SensorItem>,
     #[serde(default)]
     pub disk_smart: Vec<SmartSummary>,
+    /// Output of the user's custom commands, in the order their files sort in
+    /// — which is the order the user arranged them in. Refreshed on the
+    /// extended cycle, since that is the one that runs the script.
+    #[serde(default)]
+    pub custom_cmds: Vec<CustomCmdOutput>,
     /// Last AMD reading, kept only to re-merge into `gpus` on cycles the
     /// (expensive, extended-only) AMD command wasn't run — not part of the API
     #[serde(skip, default)]
     pub amd_cache: Vec<sbm_parser::types::AmdSmiItem>,
+}
+
+/// What one custom command printed.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CustomCmdOutput {
+    pub name: String,
+    pub output: String,
 }
 
 /// `sbm_parser::types::DiskSmart` trimmed for display: drops `raw_data` /
@@ -341,8 +353,11 @@ async fn collect_metrics(
     // Windows' `conn` also has no native implementation yet (would need
     // `GetExtendedTcpTable` FFI) so it rides along on the same schedule;
     // Linux/native already fills `status.conn` and this leaves it alone.
+    let mut custom_cmds = Vec::new();
     if extended_due {
-        let raw = execute_commands(system).await?;
+        let segments = execute_commands(system).await?;
+        custom_cmds = custom_cmd_outputs(&segments);
+        let raw: HashMap<String, String> = segments.into_iter().collect();
         let extended = sbm_parser::parse_status(system, &raw);
         status.amd = extended.amd;
         status.sensors = extended.sensors;
@@ -355,7 +370,31 @@ async fn collect_metrics(
 
     let prev = prev_cpu.take();
     *prev_cpu = summary_core(&status.cpu).cloned();
-    Ok(adapt_status(system, status, config, prev.as_ref(), prev_metrics, extended_due))
+    let mut metrics =
+        adapt_status(system, status, config, prev.as_ref(), prev_metrics, extended_due);
+    // Not `carry_forward`: an empty result on an extended cycle is the user
+    // having deleted their commands, and carrying the old output forward
+    // would leave deleted commands on the page for as long as the process
+    // runs. Only a cycle that did not run the script keeps the previous set.
+    metrics.custom_cmds = if extended_due {
+        custom_cmds
+    } else {
+        prev_metrics.map(|p| p.custom_cmds.clone()).unwrap_or_default()
+    };
+    Ok(metrics)
+}
+
+/// The custom-command sections of the script's output, in the order it printed
+/// them.
+fn custom_cmd_outputs(segments: &[(String, String)]) -> Vec<CustomCmdOutput> {
+    let prefix = format!("{}.", sbm_parser::script::CUSTOM_CMD_SEPARATOR);
+    segments
+        .iter()
+        .filter_map(|(key, value)| {
+            let name = key.strip_prefix(&prefix)?;
+            Some(CustomCmdOutput { name: name.to_string(), output: value.clone() })
+        })
+        .collect()
 }
 
 /// Direct `nvidia-smi` invocation — no script generation/`SrvBoxSep`
@@ -434,7 +473,7 @@ const EXTENDED_FUNCS: [sbm_parser::script::ShellFunc; 2] =
 /// Failed commands inside the script yield empty segments (the script does
 /// `exec 2>/dev/null`), matching the app's per-segment tolerance; per-command
 /// stderr is not observable in this mode.
-async fn execute_commands(system: SystemType) -> Result<HashMap<String, String>> {
+async fn execute_commands(system: SystemType) -> Result<Vec<(String, String)>> {
     let content = build_status_script(system);
     let path = script_path(system);
 
@@ -468,7 +507,9 @@ async fn execute_commands(system: SystemType) -> Result<HashMap<String, String>>
             "Status script produced no output".to_string(),
         ));
     }
-    Ok(sbm_parser::script::parse_script_output(&stdout))
+    // Segments rather than a map: custom commands are ordered by the user and
+    // that order only exists in the order the script printed them.
+    Ok(sbm_parser::script::parse_script_segments(&stdout))
 }
 
 /// `fresh` wins whenever it has data; otherwise keeps whatever the previous
@@ -636,6 +677,10 @@ fn adapt_status(
             prev_metrics.map(|p| p.sensors.clone()).unwrap_or_default(),
         ),
         disk_smart,
+        // Filled in by `collect_metrics`: whether these are fresh or the
+        // previous cycle's depends on whether the script ran, which this
+        // function is not the one that knows.
+        custom_cmds: Vec::new(),
         amd_cache: amd,
     }
 }
@@ -1203,9 +1248,27 @@ mod tests {
     #[cfg(unix)]
     #[tokio::test]
     async fn execute_commands_via_script_smoke() {
-        let raw = execute_commands(system_type()).await.unwrap();
-        assert!(raw.contains_key("time"), "keys: {:?}", raw.keys().collect::<Vec<_>>());
-        assert!(raw.contains_key("echo"));
-        assert!(raw.contains_key("diskSmart"), "extended half missing");
+        let segments = execute_commands(system_type()).await.unwrap();
+        let keys: Vec<&str> = segments.iter().map(|(k, _)| k.as_str()).collect();
+        assert!(keys.contains(&"time"), "keys: {keys:?}");
+        assert!(keys.contains(&"echo"));
+        assert!(keys.contains(&"diskSmart"), "extended half missing");
+    }
+
+    /// Custom-command sections are picked out of the same output, keeping the
+    /// order the script printed them in — the user's order, and the only
+    /// place it survives.
+    #[test]
+    fn custom_cmd_outputs_keep_the_scripts_order() {
+        let segments = vec![
+            ("cpu".to_string(), "…".to_string()),
+            (sbm_parser::script::custom_result_key("second"), "b".to_string()),
+            (sbm_parser::script::custom_result_key("first"), "a".to_string()),
+        ];
+        let out = custom_cmd_outputs(&segments);
+        assert_eq!(out.len(), 2);
+        assert_eq!(out[0].name, "second");
+        assert_eq!(out[0].output, "b");
+        assert_eq!(out[1].name, "first");
     }
 }

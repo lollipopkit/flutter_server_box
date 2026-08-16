@@ -60,6 +60,27 @@ pub fn custom_cmd_dir(system: SystemType) -> &'static str {
     }
 }
 
+/// The same directory as a path on the machine this process is running on,
+/// for the monitor, which reads and writes it directly rather than through a
+/// shell it generated.
+///
+/// `None` when the process has no home directory in its environment, which is
+/// how a service can be started: there is then no directory to speak of, and
+/// the caller has to say so rather than invent one relative to the working
+/// directory.
+///
+/// Kept here beside the shell expression it must agree with — `script_compat`
+/// checks that they still name the same place.
+pub fn custom_cmd_dir_path() -> Option<std::path::PathBuf> {
+    let home = std::env::var_os("HOME")
+        .or_else(|| std::env::var_os("USERPROFILE"))
+        .filter(|h| !h.is_empty())?;
+    Some(std::path::PathBuf::from(home).join(".config").join("server_box").join(CUSTOM_CMD_DIR_LEAF))
+}
+
+/// The last path component, shared by the expressions and the path above.
+pub const CUSTOM_CMD_DIR_LEAF: &str = "custom_cmds";
+
 /// Spacing between the order prefixes of adjacent commands.
 ///
 /// Sparse on purpose: moving a command between two others is then a rename of
@@ -77,13 +98,30 @@ pub fn custom_cmd_file_name(order: u32, name: &str) -> String {
     format!("{order:05}_{}", encode_marker_name(name))
 }
 
+/// The extension the file carries on a platform, empty where it needs none.
+///
+/// Windows names them `.ps1` because `&` will not run an extensionless file.
+/// It is not part of the encoded name — see [`custom_cmd_name_from_file`].
+pub fn custom_cmd_file_ext(system: SystemType) -> &'static str {
+    match system {
+        SystemType::Windows => ".ps1",
+        SystemType::Linux | SystemType::Bsd => "",
+    }
+}
+
 /// The name back out of a file name, or `None` if it is not one of ours.
 pub fn custom_cmd_name_from_file(file_name: &str) -> Option<String> {
+    let file_name = file_name.strip_suffix(".ps1").unwrap_or(file_name);
     let (order, encoded) = file_name.split_once('_')?;
     if order.is_empty() || !order.bytes().all(|b| b.is_ascii_digit()) {
         return None;
     }
     decode_marker_name(&format!("{ENCODED_NAME_PREFIX}{encoded}"))
+}
+
+/// The order prefix out of a file name, paired with [`custom_cmd_name_from_file`].
+pub fn custom_cmd_order_from_file(file_name: &str) -> Option<u32> {
+    file_name.split_once('_').and_then(|(order, _)| order.parse().ok())
 }
 
 fn encode_marker_name(name: &str) -> String {
@@ -204,10 +242,11 @@ pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, Stri
                  if (Test-Path $tmp) {{ Remove-Item -Recurse -Force $tmp }}\n\
                  New-Item -ItemType Directory -Force -Path $tmp | Out-Null\n"
             );
+            let ext = custom_cmd_file_ext(SystemType::Windows);
             for (order, name, cmd) in cmds {
                 let file = custom_cmd_file_name(*order, name);
                 out.push_str(&format!(
-                    "[IO.File]::WriteAllBytes((Join-Path $tmp '{file}.ps1'),                      [Convert]::FromBase64String('{}'))\n",
+                    "[IO.File]::WriteAllBytes((Join-Path $tmp '{file}{ext}'),                      [Convert]::FromBase64String('{}'))\n",
                     b64.encode(cmd)
                 ));
             }

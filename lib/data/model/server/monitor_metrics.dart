@@ -38,6 +38,11 @@ class MonitorMetrics {
   final List<MonitorSensorItem> sensors;
   final List<MonitorSmartSummary> diskSmart;
 
+  /// Output of the user's custom commands, in the order they run in. Empty on
+  /// agents predating the field, and on any cycle before the first extended
+  /// one — the same cadence as [sensors] and [diskSmart].
+  final List<MonitorCustomCmd> customCmds;
+
   const MonitorMetrics({
     required this.timestamp,
     required this.extendedUpdatedAt,
@@ -62,6 +67,7 @@ class MonitorMetrics {
     this.batteries = const [],
     this.sensors = const [],
     this.diskSmart = const [],
+    this.customCmds = const [],
   });
 
   factory MonitorMetrics.fromJson(Map<String, dynamic> json) =>
@@ -110,6 +116,20 @@ class MonitorTempReading {
       _$MonitorTempReadingFromJson(json);
 
   Map<String, dynamic> toJson() => _$MonitorTempReadingToJson(this);
+}
+
+/// One custom command and what it printed on the agent's last extended cycle.
+@JsonSerializable(fieldRename: FieldRename.snake)
+class MonitorCustomCmd {
+  final String name;
+  final String output;
+
+  const MonitorCustomCmd({required this.name, required this.output});
+
+  factory MonitorCustomCmd.fromJson(Map<String, dynamic> json) =>
+      _$MonitorCustomCmdFromJson(json);
+
+  Map<String, dynamic> toJson() => _$MonitorCustomCmdToJson(this);
 }
 
 @JsonSerializable(fieldRename: FieldRename.snake)

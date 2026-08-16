@@ -207,6 +207,19 @@ pub async fn start_server(app_state: Arc<AppState>) -> Result<()> {
                         "/remote-access/full-access",
                         web::delete().to(disable_full_access),
                     )
+                    .service(
+                        // Its own payload limit, like `/exec`: the body is
+                        // every custom command at once, and a user who pastes
+                        // a real script into one would otherwise meet ntex's
+                        // 32 KiB default as a 413 with nothing to explain it.
+                        web::resource("/custom-cmds")
+                            .state(
+                                web::types::JsonConfig::default()
+                                    .limit(crate::api::custom_cmds::MAX_REQUEST),
+                            )
+                            .route(web::get().to(crate::api::custom_cmds::list))
+                            .route(web::put().to(crate::api::custom_cmds::replace)),
+                    )
                     .route("/settings", web::get().to(get_settings))
                     .route("/settings", web::put().to(update_settings))
                     .route("/card-order", web::get().to(get_card_order))

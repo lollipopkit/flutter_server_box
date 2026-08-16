@@ -38,6 +38,7 @@ ServerStatus applyMonitorMetrics(ServerStatus ss, MonitorMetrics m) {
   _apply('battery', () => _applyBatteries(ss, m));
   _apply('sensors', () => _applySensors(ss, m));
   _apply('smart', () => _applySmart(ss, m));
+  _apply('custom', () => _applyCustomCmds(ss, m));
 
   return ss;
 }
@@ -282,4 +283,14 @@ void _applySmart(ServerStatus ss, MonitorMetrics m) {
         ),
       )
       .toList();
+}
+
+/// The same commands the SSH path reads out of the status script's output,
+/// arriving already split by the agent. Order is the agent's, which is the
+/// order the files run in, which is the order the user arranged.
+void _applyCustomCmds(ServerStatus ss, MonitorMetrics m) {
+  ss.customCmds.clear();
+  for (final c in m.customCmds) {
+    ss.customCmds[c.name] = c.output;
+  }
 }

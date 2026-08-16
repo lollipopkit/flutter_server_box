@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Plus, Trash2 } from '@lucide/svelte'
+  import { ChevronDown, ChevronUp, Plus, Trash2 } from '@lucide/svelte'
   import { Badge, Button, Card, IconButton, Input, Spinner } from '@serverbox/webui'
   import { fade } from 'svelte/transition'
   import Disclosure from '../components/Disclosure.svelte'
@@ -9,7 +9,7 @@
   import { api, ApiError } from '../lib/api'
   import { serverNames } from '../lib/serverNames.svelte'
   import { displayName, servers } from '../lib/servers.svelte'
-  import type { MonitoringRule, SettingsPayload, SettingsView } from '../types'
+  import type { CustomCmd, MonitoringRule, SettingsPayload, SettingsView } from '../types'
 
   interface Props {
     onback: () => void
@@ -35,6 +35,15 @@
   let corsOrigins = $state<string[]>([])
   let newOrigin = $state('')
 
+  // Its own endpoint and its own save: these are files in a directory, not a
+  // field of the config file, and a failure to write one should not read as
+  // the settings above having failed.
+  let customCmds = $state<CustomCmd[]>([])
+  let customCmdsEditable = $state(false)
+  let customCmdsSaving = $state(false)
+  let customCmdsError = $state<string | null>(null)
+  let customCmdsOk = $state(false)
+
   function applyLoaded(v: SettingsView) {
     settings = v
     intervalSeconds = String(v.interval_seconds)
@@ -54,6 +63,21 @@
       loadError = e instanceof ApiError ? e.message : String(e)
     } finally {
       loading = false
+    }
+    await loadCustomCmds()
+  }
+
+  /// Separate from the settings load and deliberately not fatal to it: an
+  /// agent whose home directory is unreadable still has settings worth
+  /// showing.
+  async function loadCustomCmds() {
+    customCmdsError = null
+    try {
+      const view = await api.getCustomCmds()
+      customCmds = view.commands.map((c) => ({ ...c }))
+      customCmdsEditable = view.editable
+    } catch (e) {
+      customCmdsError = e instanceof ApiError ? e.message : String(e)
     }
   }
 
@@ -81,6 +105,39 @@
 
   function removeOrigin(i: number) {
     corsOrigins = corsOrigins.filter((_, idx) => idx !== i)
+  }
+
+  function addCustomCmd() {
+    customCmds = [...customCmds, { name: '', cmd: '' }]
+  }
+
+  function removeCustomCmd(i: number) {
+    customCmds = customCmds.filter((_, idx) => idx !== i)
+  }
+
+  /// Order is what the agent stores, so moving one is an ordinary edit rather
+  /// than a view preference.
+  function moveCustomCmd(i: number, delta: number) {
+    const to = i + delta
+    if (to < 0 || to >= customCmds.length) return
+    const next = [...customCmds]
+    ;[next[i], next[to]] = [next[to], next[i]]
+    customCmds = next
+  }
+
+  async function saveCustomCmds() {
+    customCmdsSaving = true
+    customCmdsError = null
+    customCmdsOk = false
+    try {
+      const view = await api.updateCustomCmds(customCmds.map((c) => ({ ...c, name: c.name.trim() })))
+      customCmds = view.commands.map((c) => ({ ...c }))
+      customCmdsOk = true
+    } catch (e) {
+      customCmdsError = e instanceof ApiError ? e.message : String(e)
+    } finally {
+      customCmdsSaving = false
+    }
   }
 
   async function save() {
@@ -262,6 +319,78 @@
           <Plus class="w-4 h-4" />
         </Button>
       </div>
+    </Card>
+
+    <Card class="space-y-4">
+      <div class="flex items-center justify-between gap-2">
+        <h2 class="text-base font-semibold font-display text-fg-strong">{$LL.customCmds()}</h2>
+        {#if customCmdsEditable}
+          <Button size="sm" variant="secondary" onclick={saveCustomCmds} disabled={customCmdsSaving}>
+            {customCmdsSaving ? $LL.saving() : $LL.save()}
+          </Button>
+        {/if}
+      </div>
+      <Disclosure summary={$LL.moreDetails()}>
+        <Markdown text={$LL.customCmdsNote()} class="text-xs text-faint-fg" />
+      </Disclosure>
+      {#if !customCmdsEditable}
+        <p class="text-xs text-faint-fg">{$LL.customCmdsReadOnly()}</p>
+      {/if}
+      <div class="divide-y divide-line">
+        {#each customCmds as cmd, i (i)}
+          <div class="py-4 first:pt-0 last:pb-0">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-sm text-faint-fg tabular-nums">{i + 1}</span>
+              <span class="flex-1"></span>
+              <IconButton label={$LL.moveUp()} disabled={!customCmdsEditable || i === 0} onclick={() => moveCustomCmd(i, -1)}>
+                <ChevronUp class="w-4 h-4" />
+              </IconButton>
+              <IconButton
+                label={$LL.moveDown()}
+                disabled={!customCmdsEditable || i === customCmds.length - 1}
+                onclick={() => moveCustomCmd(i, 1)}
+              >
+                <ChevronDown class="w-4 h-4" />
+              </IconButton>
+              <IconButton
+                label={$LL.removeCustomCmd()}
+                class="hover:text-danger"
+                disabled={!customCmdsEditable}
+                onclick={() => removeCustomCmd(i)}
+              >
+                <Trash2 class="w-4 h-4" />
+              </IconButton>
+            </div>
+            <div class="space-y-2">
+              <div class="space-y-1">
+                <span class="text-xs text-muted-fg">{$LL.customCmdName()}</span>
+                <Input disabled={!customCmdsEditable} bind:value={cmd.name} />
+              </div>
+              <div class="space-y-1">
+                <span class="text-xs text-muted-fg">{$LL.customCmdBody()}</span>
+                <textarea
+                  class="w-full rounded-lg bg-soft/50 border border-line px-3 py-2 text-sm font-mono
+                         focus:outline-none focus:ring-2 focus:ring-accent/40 disabled:opacity-60"
+                  rows="3"
+                  disabled={!customCmdsEditable}
+                  bind:value={cmd.cmd}
+                ></textarea>
+              </div>
+            </div>
+          </div>
+        {/each}
+      </div>
+      {#if customCmdsEditable}
+        <Button variant="secondary" size="sm" onclick={addCustomCmd}>
+          <Plus class="w-4 h-4 mr-1" />{$LL.addCustomCmd()}
+        </Button>
+      {/if}
+      {#if customCmdsError}
+        <p class="text-sm text-danger">{customCmdsError}</p>
+      {/if}
+      {#if customCmdsOk}
+        <p class="text-sm text-success">{$LL.settingsSaved()}</p>
+      {/if}
     </Card>
 
     {#if saveError}

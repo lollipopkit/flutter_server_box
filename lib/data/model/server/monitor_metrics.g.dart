@@ -74,6 +74,11 @@ MonitorMetrics _$MonitorMetricsFromJson(
           ?.map((e) => MonitorSmartSummary.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const [],
+  customCmds:
+      (json['custom_cmds'] as List<dynamic>?)
+          ?.map((e) => MonitorCustomCmd.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
 );
 
 Map<String, dynamic> _$MonitorMetricsToJson(MonitorMetrics instance) =>
@@ -101,6 +106,7 @@ Map<String, dynamic> _$MonitorMetricsToJson(MonitorMetrics instance) =>
       'batteries': instance.batteries,
       'sensors': instance.sensors,
       'disk_smart': instance.diskSmart,
+      'custom_cmds': instance.customCmds,
     };
 
 MonitorCpuCoreTime _$MonitorCpuCoreTimeFromJson(Map<String, dynamic> json) =>
@@ -125,6 +131,15 @@ MonitorTempReading _$MonitorTempReadingFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$MonitorTempReadingToJson(MonitorTempReading instance) =>
     <String, dynamic>{'device': instance.device, 'value': instance.value};
+
+MonitorCustomCmd _$MonitorCustomCmdFromJson(Map<String, dynamic> json) =>
+    MonitorCustomCmd(
+      name: json['name'] as String,
+      output: json['output'] as String,
+    );
+
+Map<String, dynamic> _$MonitorCustomCmdToJson(MonitorCustomCmd instance) =>
+    <String, dynamic>{'name': instance.name, 'output': instance.output};
 
 MonitorMemoryMetrics _$MonitorMemoryMetricsFromJson(
   Map<String, dynamic> json,

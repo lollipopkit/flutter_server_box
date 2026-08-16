@@ -1,3 +1,4 @@
+pub mod custom_cmds;
 pub mod monitoring;
 pub mod push;
 pub mod rules;

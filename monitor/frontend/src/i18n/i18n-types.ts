@@ -436,6 +436,42 @@ type RootTranslation = {
 	 */
 	removeOrigin: string
 	/**
+	 * C​u​s​t​o​m​ ​c​o​m​m​a​n​d​s
+	 */
+	customCmds: string
+	/**
+	 * E​a​c​h​ ​c​o​m​m​a​n​d​ ​r​u​n​s​ ​o​n​ ​t​h​e​ ​e​x​t​e​n​d​e​d​ ​c​o​l​l​e​c​t​i​o​n​ ​c​y​c​l​e​ ​a​n​d​ ​i​t​s​ ​o​u​t​p​u​t​ ​c​o​m​e​s​ ​b​a​c​k​ ​w​i​t​h​ ​t​h​e​ ​s​t​a​t​u​s​.​ ​T​h​e​y​ ​a​r​e​ ​f​i​l​e​s​ ​u​n​d​e​r​ ​`​~​/​.​c​o​n​f​i​g​/​s​e​r​v​e​r​_​b​o​x​/​c​u​s​t​o​m​_​c​m​d​s​`​ ​—​ ​t​h​e​ ​s​a​m​e​ ​s​e​t​ ​t​h​e​ ​a​p​p​ ​e​d​i​t​s​ ​o​v​e​r​ ​S​S​H​.
+	 */
+	customCmdsNote: string
+	/**
+	 * N​a​m​e
+	 */
+	customCmdName: string
+	/**
+	 * C​o​m​m​a​n​d
+	 */
+	customCmdBody: string
+	/**
+	 * A​d​d​ ​c​o​m​m​a​n​d
+	 */
+	addCustomCmd: string
+	/**
+	 * R​e​m​o​v​e​ ​c​o​m​m​a​n​d
+	 */
+	removeCustomCmd: string
+	/**
+	 * E​d​i​t​i​n​g​ ​n​e​e​d​s​ ​a​c​c​e​s​s​ ​w​i​t​h​o​u​t​ ​S​S​H​,​ ​w​h​i​c​h​ ​i​s​ ​o​f​f​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.
+	 */
+	customCmdsReadOnly: string
+	/**
+	 * M​o​v​e​ ​u​p
+	 */
+	moveUp: string
+	/**
+	 * M​o​v​e​ ​d​o​w​n
+	 */
+	moveDown: string
+	/**
 	 * t​y​p​e​:​ ​`​c​p​u​`​ ​/​ ​`​m​e​m​o​r​y​`​ ​/​ ​`​s​w​a​p​`​ ​/​ ​`​d​i​s​k​`​ ​/​ ​`​n​e​t​w​o​r​k​`​ ​/​ ​`​t​e​m​p​e​r​a​t​u​r​e​`
 	 */
 	ruleHelpType: string
@@ -548,7 +584,7 @@ type RootTranslation = {
 	 */
 	terminalOutputLost: string
 	/**
-	 * T​h​e​ ​t​e​r​m​i​n​a​l​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​t​e​r​m​i​n​a​l​_​e​n​a​b​l​e​d​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
+	 * T​h​e​ ​t​e​r​m​i​n​a​l​ ​i​s​ ​n​o​t​ ​e​n​a​b​l​e​d​ ​o​n​ ​t​h​i​s​ ​a​g​e​n​t​.​ ​T​u​r​n​ ​o​n​ ​r​e​m​o​t​e​_​a​c​c​e​s​s​.​t​e​r​m​i​n​a​l​.​e​n​a​b​l​e​d​ ​i​n​ ​c​o​n​f​i​g​.​t​o​m​l​;​ ​i​t​ ​a​l​s​o​ ​r​e​q​u​i​r​e​s​ ​T​L​S​,​ ​o​r​ ​a​ ​p​r​o​x​y​ ​o​n​ ​t​h​e​ ​s​a​m​e​ ​h​o​s​t​.
 	 */
 	terminalUnavailable: string
 	/**
@@ -986,6 +1022,42 @@ export type TranslationFunctions = {
 	 * Remove origin
 	 */
 	removeOrigin: () => LocalizedString
+	/**
+	 * Custom commands
+	 */
+	customCmds: () => LocalizedString
+	/**
+	 * Each command runs on the extended collection cycle and its output comes back with the status. They are files under `~/.config/server_box/custom_cmds` — the same set the app edits over SSH.
+	 */
+	customCmdsNote: () => LocalizedString
+	/**
+	 * Name
+	 */
+	customCmdName: () => LocalizedString
+	/**
+	 * Command
+	 */
+	customCmdBody: () => LocalizedString
+	/**
+	 * Add command
+	 */
+	addCustomCmd: () => LocalizedString
+	/**
+	 * Remove command
+	 */
+	removeCustomCmd: () => LocalizedString
+	/**
+	 * Editing needs access without SSH, which is off on this agent.
+	 */
+	customCmdsReadOnly: () => LocalizedString
+	/**
+	 * Move up
+	 */
+	moveUp: () => LocalizedString
+	/**
+	 * Move down
+	 */
+	moveDown: () => LocalizedString
 	/**
 	 * type: `cpu` / `memory` / `swap` / `disk` / `network` / `temperature`
 	 */

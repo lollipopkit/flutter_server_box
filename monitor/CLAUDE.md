@@ -145,6 +145,19 @@ the panel password can't switch them on), and share the admission checks in
   `export` lines the caller prepends so a value never has to survive shell
   quoting. Output is capped (1 MiB per stream) and the command is killed after
   60s, both reported rather than silently applied. `tests/exec_api.rs`.
+- **`GET/PUT /api/v1/custom-cmds`** — the user's custom status commands, which
+  are files in `~/.config/server_box/custom_cmds` (`sbm_parser::script`) rather
+  than anything in this agent's config. The same directory the app writes over
+  SSH and the generated status script reads, so the panel and the app edit one
+  set; the extended cycle picks up a change with nothing having to be told.
+  A PUT replaces the whole set in order — the order is what is stored (the
+  files' name prefixes), so a move has no smaller expression. **Writing is
+  gated on `full_access`**, the same grant as the shell and `/exec`: a file in
+  that directory is run on every extended cycle, so adding one is arranging for
+  code to run as the agent's user. Reading needs only the panel login, and the
+  response says `editable` so the editor can go read-only instead of failing on
+  save. The store is `monitoring::custom_cmds` (write-aside-and-rename, stray
+  files skipped, names never logged — only the audit `subject`).
 - **`/api/v1/fs/*`** — list, stat, read, write, mkdir, rename, chmod, remove,
   for the app's file browser. Its own switch (`[remote_access.fs] enabled`), not
   folded into `full_access`: that grant means "a shell as the agent's user",
