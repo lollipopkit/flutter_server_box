@@ -266,7 +266,10 @@ void main() {
       );
 
       expect(first.id, isNot(second.id));
-      await Future.wait([firstDone.future, secondDone.future]);
+      await Future.wait([
+        firstDone.future,
+        secondDone.future,
+      ]).timeout(const Duration(seconds: 10));
     });
 
     test('a local copy that cannot read reports the failure', () async {

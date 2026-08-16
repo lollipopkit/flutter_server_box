@@ -24,11 +24,41 @@ use ntex_files::Files;
 use sbm_parser::{SystemType, capabilities::Capabilities};
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, OnceLock};
 use std::time::Duration;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::{Mutex, RwLock, Semaphore};
 use tracing::info;
+
+const MAX_CONCURRENT_PASSWORD_CHECKS: usize = 4;
+
+fn password_check_limit() -> &'static Arc<Semaphore> {
+    static LIMIT: OnceLock<Arc<Semaphore>> = OnceLock::new();
+    LIMIT.get_or_init(|| {
+        let permits = std::thread::available_parallelism()
+            .map(|count| count.get())
+            .unwrap_or(1)
+            .min(MAX_CONCURRENT_PASSWORD_CHECKS);
+        Arc::new(Semaphore::new(permits))
+    })
+}
+
+async fn verify_login_password_off_worker(password: String, hash: Option<String>) -> Result<bool> {
+    let permit = password_check_limit()
+        .clone()
+        .acquire_owned()
+        .await
+        .map_err(|_| MonitorError::Monitoring("Password verifier is unavailable".to_string()))?;
+
+    tokio::task::spawn_blocking(move || {
+        // Keep the permit in the blocking task so cancellation of the request
+        // cannot admit another bcrypt check before this one actually stops.
+        let _permit = permit;
+        auth::verify_login_password(&password, hash.as_deref())
+    })
+    .await
+    .map_err(|error| MonitorError::Monitoring(format!("Password verifier failed: {error}")))?
+}
 
 #[derive(Clone)]
 pub struct AppState {
@@ -318,10 +348,11 @@ async fn login(
     // A missing account must cost the same bcrypt verification as a wrong
     // password, or response timing turns the login endpoint into a username
     // oracle even though both paths return the same status and throttle key.
-    let password_matches = auth::verify_login_password(
-        &req.password,
-        user.as_ref().map(|user| user.password_hash.as_str()),
-    )?;
+    let password_matches = verify_login_password_off_worker(
+        req.password.clone(),
+        user.as_ref().map(|user| user.password_hash.clone()),
+    )
+    .await?;
 
     if let Some(user) = user
         && password_matches
