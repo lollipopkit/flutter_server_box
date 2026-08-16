@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
 import 'package:server_box/core/utils/ish_exec.dart';
 
@@ -110,6 +111,28 @@ void main() {
     }
     final categories = rows.map((r) => r.category).toSet();
     debugPrint('ISHBENCH_DONE rows=${rows.length} categories=${categories.join(",")}');
+
+    // Also to a file, because the printed copy needs a harness attached to be
+    // read and the harness is the part that does not work here: the VM service
+    // socket is reset moments after launch, every time, since the host's tunnel
+    // to this device became `wired`. A profile build launched from the home
+    // screen runs the suite anyway, and this is how its answer gets off the
+    // device:
+    //
+    //     xcrun devicectl device copy from -d <device> \
+    //       --domain-type appDataContainer \
+    //       --domain-identifier com.lollipopkit.toolbox \
+    //       --source Documents/ish_bench.txt --destination /tmp/
+    final report = StringBuffer()
+      ..writeln('clock ${clock.stdout.trim().replaceAll("\n", " ")}')
+      ..writeln('rows ${rows.length}');
+    for (final row in rows) {
+      report.writeln('${row.category}|${row.name}|${row.ms}');
+    }
+    final documents = await getApplicationDocumentsDirectory();
+    await File(
+      '${documents.path}/ish_bench.txt',
+    ).writeAsString(report.toString(), flush: true);
 
     expect(
       rows.length,
