@@ -158,7 +158,7 @@ pub fn sample(state: &mut State) -> ServerStatus {
                 path: d.name().to_string_lossy().into_owned(),
                 mount: d.mount_point().to_string_lossy().into_owned(),
                 fs_type: Some(d.file_system().to_string_lossy().into_owned()),
-                used_percent: if total_kb > 0 { ((used_kb * 100) / total_kb).min(100) as u32 } else { 0 },
+                used_percent: disk_used_percent(used_kb, total_kb),
                 used: used_kb,
                 size: total_kb,
                 avail: avail_kb,
@@ -217,6 +217,13 @@ pub fn sample(state: &mut State) -> ServerStatus {
         sys: System::long_os_version().or_else(System::os_version),
         ..ServerStatus::default()
     }
+}
+
+fn disk_used_percent(used: u64, total: u64) -> u32 {
+    ((u128::from(used) * 100)
+        .checked_div(u128::from(total))
+        .unwrap_or(0))
+    .min(100) as u32
 }
 
 /// `System::uptime()` is raw seconds; format to roughly the same shape
@@ -284,5 +291,12 @@ mod tests {
         assert_eq!(format_uptime(90), "0:01");
         assert_eq!(format_uptime(3661), "1:01");
         assert_eq!(format_uptime(90000), "1 days, 1:00");
+    }
+
+    #[test]
+    fn disk_percent_handles_zero_and_large_totals() {
+        assert_eq!(disk_used_percent(0, 0), 0);
+        assert_eq!(disk_used_percent(50, 100), 50);
+        assert_eq!(disk_used_percent(u64::MAX, u64::MAX), 100);
     }
 }

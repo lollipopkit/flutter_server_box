@@ -62,4 +62,18 @@ void main() {
     expect(box.get('homeTabs'), ['server', 'agent']);
     expect(box.get('homeTabsAgentMigrated'), isTrue);
   });
+
+  test('removes retired setting keys without touching active settings', () async {
+    await box.putAll({
+      'moveOutServerTabFuncBtns': true,
+      'forceSinglePane': true,
+      'recordHistory': false,
+    });
+
+    await store.removeRetiredKeys();
+
+    expect(box.containsKey('moveOutServerTabFuncBtns'), isFalse);
+    expect(box.containsKey('forceSinglePane'), isFalse);
+    expect(box.get('recordHistory'), isFalse);
+  });
 }
