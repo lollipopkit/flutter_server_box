@@ -144,17 +144,28 @@ impl LocalShell {
         let (tx, rx) = mpsc::channel(64);
         let child = Arc::new(Mutex::new(child));
         let reader_done = Arc::new((Mutex::new(false), Condvar::new()));
+        // Data and exit share this gate so an exit closes data delivery before
+        // it is enqueued. Holding it across blocking_send also lets any data
+        // already under backpressure finish before the exit notification.
+        let delivery_closed = Arc::new(Mutex::new(false));
 
         // A PTY read is blocking, so it gets a thread rather than a task. One
         // thread per open terminal, bounded by `terminal_max_sessions`.
         let reader_tx = tx.clone();
         let reader_finished = reader_done.clone();
+        let reader_delivery_closed = delivery_closed.clone();
         std::thread::spawn(move || {
             let mut buf = [0u8; 8 * 1024];
             loop {
                 match reader.read(&mut buf) {
                     Ok(0) | Err(_) => break,
                     Ok(n) => {
+                        let delivery_closed = reader_delivery_closed
+                            .lock()
+                            .unwrap_or_else(|e| e.into_inner());
+                        if *delivery_closed {
+                            break;
+                        }
                         if reader_tx.blocking_send(ShellEvent::Data(buf[..n].to_vec())).is_err() {
                             break;
                         }
@@ -175,6 +186,7 @@ impl LocalShell {
         // the mutex available between polls, so `kill` cannot deadlock behind
         // a blocking wait.
         let reaper = child.clone();
+        let exit_delivery_closed = delivery_closed.clone();
         std::thread::spawn(move || loop {
             let status = reaper
                 .lock()
@@ -197,6 +209,10 @@ impl LocalShell {
                     std::time::Duration::from_millis(100),
                     |done| !*done,
                 ));
+                let mut delivery_closed = exit_delivery_closed
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner());
+                *delivery_closed = true;
                 let _ = tx.blocking_send(ShellEvent::Exit(status));
                 break;
             }
@@ -326,9 +342,10 @@ mod tests {
         .await
         .unwrap_or(None);
 
-        assert!(
-            exit.is_some(),
-            "the terminal must learn that the shell is gone, not hang"
+        assert_eq!(
+            exit,
+            Some(Some(7)),
+            "the terminal must retain the shell's requested exit status"
         );
     }
 
