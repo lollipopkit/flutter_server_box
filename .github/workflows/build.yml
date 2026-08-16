@@ -80,7 +80,7 @@ jobs:
         run: scripts/release/patch-jni-build-id.sh
 
   verifyMacOS:
-    name: Verify macOS integration
+    name: Verify macOS release
     if: github.event_name == 'workflow_dispatch' && inputs.release != true
     needs: reproducibilityCheck
     runs-on: macos-latest
@@ -110,10 +110,12 @@ jobs:
           project=macos/Runner.xcodeproj/project.pbxproj
           sed -i '' \
             -e 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "-";/' \
+            -e 's/"CODE_SIGN_IDENTITY\[sdk=macosx\*\]" = "3rd Party Mac Developer Application";/"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";/' \
             -e 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/' \
             -e 's/DEVELOPMENT_TEAM = BA88US33G6;/DEVELOPMENT_TEAM = "";/' \
+            -e 's/"DEVELOPMENT_TEAM\[sdk=macosx\*\]" = BA88US33G6;/"DEVELOPMENT_TEAM[sdk=macosx*]" = "";/' \
             "$project"
-          cat > macos/Runner/DebugProfile.entitlements <<'EOF'
+          cat > macos/Runner/Release.entitlements <<'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
@@ -131,8 +133,40 @@ jobs:
           </dict>
           </plist>
           EOF
-      - name: Run integration tests
-        run: flutter test integration_test -d macos
+      - name: Build release
+        run: flutter build macos --release
+      - name: Verify release launch
+        shell: bash
+        run: |
+          set -euo pipefail
+          app="build/macos/Build/Products/Release/Server Box.app"
+          executable="$app/Contents/MacOS/Server Box"
+          log_file="$RUNNER_TEMP/server-box.log"
+
+          codesign --verify --deep --strict "$app"
+          "$executable" >"$log_file" 2>&1 &
+          pid=$!
+
+          cleanup() {
+            if kill -0 "$pid" 2>/dev/null; then
+              kill "$pid"
+              wait "$pid" || true
+            fi
+          }
+          trap cleanup EXIT
+
+          for _ in {1..10}; do
+            if ! kill -0 "$pid" 2>/dev/null; then
+              wait "$pid" || true
+              cat "$log_file"
+              log show --last 2m --style compact --predicate 'process == "Server Box"' || true
+              echo "Server Box exited before the macOS launch smoke test completed."
+              exit 1
+            fi
+            sleep 1
+          done
+
+          cat "$log_file"
 
   verifyMonitor:
     name: Verify monitor ${{ matrix.platform }}-${{ matrix.arch }}
