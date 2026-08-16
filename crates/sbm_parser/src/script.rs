@@ -147,16 +147,76 @@ impl ShellFunc {
 /// Options controlling script generation
 #[derive(Debug, Clone, Default)]
 pub struct ScriptOptions {
-    /// Custom status commands in insertion order (order affects script bytes).
-    /// Names and values are injected verbatim.
-    // TODO: escaping hardening after migration (values are injected unquoted,
-    // matching the historical Dart behavior)
-    pub custom_cmds: Vec<(String, String)>,
     /// Disabled command keys in the app's stored displayName format
     /// ("Linux.net", "BSD.mem", "Windows.cpu"); compared case-insensitively
     pub disabled: Vec<String>,
     /// App build number embedded in the header comment ("v1.0.<build>")
     pub build_number: String,
+}
+
+/// A script that replaces the custom-command directory with [`cmds`].
+///
+/// One round trip, not one per command: these files are at the end of an SSH
+/// connection, and a user with a dozen commands should not pay a dozen
+/// latencies for a change to one of them.
+///
+/// Written to a new directory and moved into place, so a status poll landing
+/// mid-install sees the old set or the new one and never half of each. The old
+/// directory goes with the move, which is also how a deleted command stops
+/// running — there is nothing else to remember to remove.
+///
+/// Contents travel base64-encoded. A custom command is arbitrary text that a
+/// user typed, and a heredoc carrying it verbatim would end wherever the text
+/// happened to say so.
+pub fn install_custom_cmds_script(
+    system: SystemType,
+    script_dir: &str,
+    cmds: &[(u32, String, String)],
+) -> String {
+    use base64::Engine;
+    let b64 = base64::engine::general_purpose::STANDARD;
+
+    match system {
+        SystemType::Windows => {
+            let mut out = format!(
+                "$root = '{script_dir}'\n\
+                 $dir = Join-Path $root '{CUSTOM_CMD_DIR}'\n\
+                 $tmp = Join-Path $root '{CUSTOM_CMD_DIR}.new'\n\
+                 if (Test-Path $tmp) {{ Remove-Item -Recurse -Force $tmp }}\n\
+                 New-Item -ItemType Directory -Force -Path $tmp | Out-Null\n"
+            );
+            for (order, name, cmd) in cmds {
+                let file = custom_cmd_file_name(*order, name);
+                out.push_str(&format!(
+                    "[IO.File]::WriteAllBytes((Join-Path $tmp '{file}.ps1'),                      [Convert]::FromBase64String('{}'))\n",
+                    b64.encode(cmd)
+                ));
+            }
+            out.push_str(
+                "if (Test-Path $dir) { Remove-Item -Recurse -Force $dir }\n\
+                 Move-Item $tmp $dir\n",
+            );
+            out
+        }
+        SystemType::Linux | SystemType::Bsd => {
+            let mut out = format!(
+                "set -e\n\
+                 d='{script_dir}/{CUSTOM_CMD_DIR}'\n\
+                 t=\"$d.new\"\n\
+                 rm -rf \"$t\"\n\
+                 mkdir -p \"$t\"\n"
+            );
+            for (order, name, cmd) in cmds {
+                let file = custom_cmd_file_name(*order, name);
+                out.push_str(&format!(
+                    "printf %s '{}' | base64 -d > \"$t/{file}\"\n",
+                    b64.encode(cmd)
+                ));
+            }
+            out.push_str("rm -rf \"$d\"\nmv \"$t\" \"$d\"\n");
+            out
+        }
+    }
 }
 
 /// Build the full script. Linux and Bsd produce the identical Unix script
@@ -326,7 +386,7 @@ fn build_unix_script(opts: &ScriptOptions) -> String {
             .map(|l| format!("\t{l}"))
             .collect::<Vec<_>>()
             .join("\n");
-        let custom = unix_custom_cmds(func, opts);
+        let custom = unix_custom_cmds(func);
         // Trailing no-op: without it the function's exit status is whatever the
         // last probe returned, so a `grep` that matched nothing (`model name` is
         // absent from /proc/cpuinfo on arm64) makes a healthy run look failed.
@@ -343,15 +403,26 @@ fn build_unix_script(opts: &ScriptOptions) -> String {
 }
 
 /// Custom commands are only injected into the status function
-fn unix_custom_cmds(func: ShellFunc, opts: &ScriptOptions) -> String {
-    if func != ShellFunc::Status || opts.custom_cmds.is_empty() {
+fn unix_custom_cmds(func: ShellFunc) -> String {
+    if func != ShellFunc::Status {
         return String::new();
     }
-    let mut s = String::from("\n");
-    for (name, cmd) in &opts.custom_cmds {
-        s.push_str(&format!("echo \"{}\"\n{cmd}\n", custom_cmd_marker(name)));
-    }
-    s
+    // Read, not baked in. The directory sits beside the script, its files sort
+    // by the order prefix in their names, and the marker is that name — so a
+    // command's text never touches this script and a broken one breaks only
+    // itself.
+    //
+    // `sh "$f"` rather than executing the file: no execute bit to set, and it
+    // works on a `noexec` mount. `timeout` where there is one, because a
+    // command that never returns would otherwise stall every poll.
+    format!(
+        "\nfor f in \"$(dirname \"$0\")/{CUSTOM_CMD_DIR}\"/*; do\n\
+         \t[ -f \"$f\" ] || continue\n\
+         \tn=${{f##*/}}\n\
+         \techo \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}${{n#*_}}\"\n\
+         \tif command -v timeout >/dev/null 2>&1; then timeout 5 sh \"$f\"; else sh \"$f\"; fi\n\
+         done\n"
+    )
 }
 
 /// A branch with no enabled commands left in it would make the generated
@@ -437,7 +508,7 @@ fn build_windows_script(opts: &ScriptOptions) -> String {
             .map(|l| if l.is_empty() { String::new() } else { format!("    {l}") })
             .collect::<Vec<_>>()
             .join("\n");
-        let custom = windows_custom_cmds(func, opts);
+        let custom = windows_custom_cmds(func);
         out.push_str(&format!(
             "function {} {{\n    {indented}{custom}\n}}\n\n",
             func.name()
@@ -452,18 +523,21 @@ fn build_windows_script(opts: &ScriptOptions) -> String {
     out
 }
 
-fn windows_custom_cmds(func: ShellFunc, opts: &ScriptOptions) -> String {
-    if func != ShellFunc::Status || opts.custom_cmds.is_empty() {
+fn windows_custom_cmds(func: ShellFunc) -> String {
+    if func != ShellFunc::Status {
         return String::new();
     }
-    let mut s = String::from("\n");
-    for (name, cmd) in &opts.custom_cmds {
-        s.push_str(&format!(
-            "    Write-Host \"{}\"\n    {cmd}\n",
-            custom_cmd_marker(name)
-        ));
-    }
-    s
+    // The same shape as the Unix half: sorted by file name, the marker taken
+    // from that name, and the file run rather than its text spliced in here.
+    format!(
+        "\n    $d = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) '{CUSTOM_CMD_DIR}'\n\
+         \x20   if (Test-Path $d) {{\n\
+         \x20     Get-ChildItem -File $d | Sort-Object Name | ForEach-Object {{\n\
+         \x20       Write-Host \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}$($_.Name -replace '^[0-9]+_','')\"\n\
+         \x20       & $_.FullName\n\
+         \x20     }}\n\
+         \x20   }}\n"
+    )
 }
 
 fn windows_command(func: ShellFunc, opts: &ScriptOptions) -> String {

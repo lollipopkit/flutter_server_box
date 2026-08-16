@@ -17,7 +17,6 @@ void main() {
 
     test('should generate Windows PowerShell script correctly', () {
       final script = ShellFuncManager.allScript(
-        null,
         systemType: SystemType.windows,
       );
 

@@ -68,7 +68,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => 7855265;
+  int get rustContentHash => 231270271;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -82,7 +82,6 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 abstract class RustLibApi extends BaseApi {
   String crateApiScriptBuildScript({
     required String system,
-    required List<CustomCmd> customCmds,
     required List<String> disabled,
     required String buildNumber,
   });
@@ -101,6 +100,12 @@ abstract class RustLibApi extends BaseApi {
     required String system,
     required String scriptDir,
     required String scriptPath,
+  });
+
+  String crateApiScriptInstallCustomCmdsCommand({
+    required String system,
+    required String scriptDir,
+    required List<CustomCmd> cmds,
   });
 
   Future<Map<String, String>> crateApiScriptParseScriptOutput({
@@ -131,7 +136,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @override
   String crateApiScriptBuildScript({
     required String system,
-    required List<CustomCmd> customCmds,
     required List<String> disabled,
     required String buildNumber,
   }) {
@@ -140,7 +144,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(system, serializer);
-          sse_encode_list_custom_cmd(customCmds, serializer);
           sse_encode_list_String(disabled, serializer);
           sse_encode_String(buildNumber, serializer);
           return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
@@ -150,7 +153,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_String,
         ),
         constMeta: kCrateApiScriptBuildScriptConstMeta,
-        argValues: [system, customCmds, disabled, buildNumber],
+        argValues: [system, disabled, buildNumber],
         apiImpl: this,
       ),
     );
@@ -158,7 +161,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiScriptBuildScriptConstMeta => const TaskConstMeta(
     debugName: 'build_script',
-    argNames: ['system', 'customCmds', 'disabled', 'buildNumber'],
+    argNames: ['system', 'disabled', 'buildNumber'],
   );
 
   @override
@@ -275,6 +278,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  String crateApiScriptInstallCustomCmdsCommand({
+    required String system,
+    required String scriptDir,
+    required List<CustomCmd> cmds,
+  }) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(system, serializer);
+          sse_encode_String(scriptDir, serializer);
+          sse_encode_list_custom_cmd(cmds, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiScriptInstallCustomCmdsCommandConstMeta,
+        argValues: [system, scriptDir, cmds],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiScriptInstallCustomCmdsCommandConstMeta =>
+      const TaskConstMeta(
+        debugName: 'install_custom_cmds_command',
+        argNames: ['system', 'scriptDir', 'cmds'],
+      );
+
+  @override
   Future<Map<String, String>> crateApiScriptParseScriptOutput({
     required String raw,
   }) {
@@ -286,7 +321,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 6,
+            funcId: 7,
             port: port_,
           );
         },
@@ -320,7 +355,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 8,
             port: port_,
           );
         },
@@ -348,7 +383,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(raw, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -373,7 +408,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -396,7 +431,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_shell_func_kind(func, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,

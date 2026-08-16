@@ -485,6 +485,36 @@ class ServerNotifier extends _$ServerNotifier {
   ///
   /// Throws when the script cannot be written, since the alternative is a page
   /// reporting an empty list on a server that has plenty of processes.
+  /// Writes the custom-command directory, when there is anything to put in it.
+  ///
+  /// Skipped entirely when the server has none: the common case should not pay
+  /// a round trip to create an empty directory. Failures are logged, not
+  /// raised — a server whose status works and whose custom commands did not
+  /// install is still a server worth showing.
+  Future<void> _writeCustomCmds(
+    Spi spi,
+    SystemType system,
+    Future<void> Function(String script) send,
+  ) async {
+    final cmds = spi.custom?.cmds;
+    if (cmds == null || cmds.isEmpty) return;
+    try {
+      await send(
+        ShellFuncManager.installCustomCmds(
+          cmds,
+          scriptDir: ShellFuncManager.getScriptDir(
+            spi.id,
+            systemType: system,
+            customDir: spi.custom?.scriptDir,
+          ),
+          systemType: system,
+        ),
+      );
+    } catch (e, st) {
+      Loggers.app.warning('Custom commands for ${spi.name}', e, st);
+    }
+  }
+
   Future<ServerExec> ensureScriptExec() async {
     final exec = await ensureExec();
     if (_scriptWritten) return exec;
@@ -493,7 +523,6 @@ class ServerNotifier extends _$ServerNotifier {
     final system = state.status.system;
     final result = await exec.run(
       ShellFuncManager.allScript(
-        spi.custom?.cmds,
         systemType: system,
         disabledCmdTypes: spi.disabledCmdTypes,
       ),
@@ -521,6 +550,14 @@ class ServerNotifier extends _$ServerNotifier {
         message: 'Write script to ${spi.name}: ${result.combined}',
       );
     }
+    // The commands beside it, over the same channel. A monitor-only server
+    // reaches this path too, which is the point: what installs them is
+    // `ServerExec`, not SSH, so both kinds of server get the same directory.
+    await _writeCustomCmds(spi, system, (script) async {
+      final entry = ShellFuncManager.customCmdsInstallEntry(system);
+      await exec.run(entry == null ? script : script, entry: entry);
+    });
+
     _scriptWritten = true;
     return exec;
   }
@@ -786,7 +823,6 @@ class ServerNotifier extends _$ServerNotifier {
         final writeScriptResult = await state.client!.execSafe(
           (session) async {
             final scriptRaw = ShellFuncManager.allScript(
-              spi.custom?.cmds,
               systemType: detectedSystemType,
               disabledCmdTypes: spi.disabledCmdTypes,
             ).uint8List;
@@ -808,6 +844,25 @@ class ServerNotifier extends _$ServerNotifier {
             'Script write stdout for ${spi.name}: ${writeScriptResult.stdout}',
           );
         }
+
+        // The commands themselves, as files beside the script. A separate
+        // round trip because they are separate things: the script changes when
+        // the app does, these when the user does, and neither has to reinstall
+        // the other.
+        await _writeCustomCmds(spi, detectedSystemType, (script) async {
+          final entry = ShellFuncManager.customCmdsInstallEntry(
+            detectedSystemType,
+          );
+          await state.client!.execSafe(
+            (session) async {
+              if (entry != null) session.stdin.add(script.uint8List);
+              session.stdin.close();
+            },
+            entry: entry ?? script,
+            systemType: detectedSystemType,
+            context: 'WriteCustomCmds<${spi.name}>',
+          );
+        });
 
         if (writeScriptResult.stderr.isNotEmpty) {
           Loggers.app.warning(

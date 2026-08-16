@@ -122,20 +122,49 @@ class ShellFuncManager {
     );
   }
 
-  /// Generate complete script based on system type
-  static String allScript(
-    Map<String, String>? customCmds, {
+  /// Generate complete script based on system type.
+  ///
+  /// No longer a function of the user's custom commands: those are files in a
+  /// directory beside the script, which the script reads. So these bytes
+  /// change only when the app does, and a command with a stray quote in it
+  /// breaks that command rather than the whole status page.
+  static String allScript({
     SystemType? systemType,
     List<String>? disabledCmdTypes,
   }) {
     return ffi.buildScript(
       system: ffiSystem(systemType),
-      customCmds: [
+      disabled: disabledCmdTypes ?? const [],
+      buildNumber: '${BuildData.build}',
+    );
+  }
+
+  /// What the directory-writing script is fed to, or null where it is already
+  /// a command.
+  ///
+  /// Unix reads it on stdin, so nothing in a user's command has to survive
+  /// shell quoting. The Windows form is a base64-wrapped PowerShell command
+  /// line for the same reason the script installer is: a host whose OpenSSH
+  /// default shell is cmd.exe would mangle the raw syntax.
+  static String? customCmdsInstallEntry(SystemType? systemType) =>
+      systemType == SystemType.windows ? null : 'sh';
+
+  /// The command that writes those files, in one round trip.
+  ///
+  /// Their order is their position here, spaced so that moving one between two
+  /// others later renames a single file instead of renumbering the set.
+  static String installCustomCmds(
+    Map<String, String>? customCmds, {
+    required String scriptDir,
+    SystemType? systemType,
+  }) {
+    return ffi.installCustomCmdsCommand(
+      system: ffiSystem(systemType),
+      scriptDir: scriptDir,
+      cmds: [
         for (final e in (customCmds ?? const {}).entries)
           ffi.CustomCmd(name: e.key, cmd: e.value),
       ],
-      disabled: disabledCmdTypes ?? const [],
-      buildNumber: '${BuildData.build}',
     );
   }
 }

@@ -12,14 +12,26 @@ import 'package:server_box/src/rust/frb_generated.dart';
 /// `disabled` uses the app's stored displayName format ("Linux.net", ...).
 String buildScript({
   required String system,
-  required List<CustomCmd> customCmds,
   required List<String> disabled,
   required String buildNumber,
 }) => RustLib.instance.api.crateApiScriptBuildScript(
   system: system,
-  customCmds: customCmds,
   disabled: disabled,
   buildNumber: buildNumber,
+);
+
+/// Script that replaces the custom-command directory beside the status script.
+///
+/// One round trip for the whole set, written aside and moved into place, and
+/// the commands travel encoded — see `install_custom_cmds_script`.
+String installCustomCmdsCommand({
+  required String system,
+  required String scriptDir,
+  required List<CustomCmd> cmds,
+}) => RustLib.instance.api.crateApiScriptInstallCustomCmdsCommand(
+  system: system,
+  scriptDir: scriptDir,
+  cmds: cmds,
 );
 
 /// Command that installs the script on the target (content piped via stdin)

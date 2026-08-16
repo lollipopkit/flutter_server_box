@@ -44,17 +44,49 @@ impl From<ShellFuncKind> for sbm_parser::script::ShellFunc {
 #[flutter_rust_bridge::frb(sync)]
 pub fn build_script(
     system: String,
-    custom_cmds: Vec<CustomCmd>,
     disabled: Vec<String>,
     build_number: String,
 ) -> Result<String, String> {
     let system = parse_system_or_err(&system)?;
-    let opts = sbm_parser::script::ScriptOptions {
-        custom_cmds: custom_cmds.into_iter().map(|c| (c.name, c.cmd)).collect(),
-        disabled,
-        build_number,
-    };
+    let opts = sbm_parser::script::ScriptOptions { disabled, build_number };
     Ok(sbm_parser::script::build_script(system, &opts))
+}
+
+/// Script that replaces the custom-command directory beside the status script.
+///
+/// One round trip for the whole set, written aside and moved into place, and
+/// the commands travel encoded — see `install_custom_cmds_script`.
+#[flutter_rust_bridge::frb(sync)]
+pub fn install_custom_cmds_command(
+    system: String,
+    script_dir: String,
+    cmds: Vec<CustomCmd>,
+) -> Result<String, String> {
+    let system = parse_system_or_err(&system)?;
+    let cmds: Vec<(u32, String, String)> = cmds
+        .into_iter()
+        .enumerate()
+        .map(|(i, c)| {
+            (
+                // Position becomes order, spaced so one can be moved between
+                // two others later without renumbering the rest.
+                (i as u32 + 1) * sbm_parser::script::CUSTOM_CMD_ORDER_STEP,
+                c.name,
+                c.cmd,
+            )
+        })
+        .collect();
+    let script = sbm_parser::script::install_custom_cmds_script(system, &script_dir, &cmds);
+    // Windows gets a complete command line, base64-wrapped, for the same
+    // reason `install_command` does: the raw PowerShell would not survive a
+    // host whose OpenSSH default shell is cmd.exe. Unix gets a script, to be
+    // fed to `sh` on stdin so nothing has to survive quoting either.
+    Ok(match system {
+        sbm_parser::SystemType::Windows => {
+            sbm_parser::script::encoded_powershell_command(&script)
+        }
+        _ => script,
+    })
 }
 
 /// Command that installs the script on the target (content piped via stdin)

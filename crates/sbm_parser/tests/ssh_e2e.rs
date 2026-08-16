@@ -337,7 +337,6 @@ fn ssh_e2e_unix_custom_and_disabled() {
 
     const DIR: &str = "/tmp/server_box_e2e_custom";
     let opts = ScriptOptions {
-        custom_cmds: vec![("e2e_probe".into(), "echo custom-cmd-works".into())],
         disabled: vec!["Linux.net".into(), "BSD.net".into()],
         build_number: "e2e".into(),
         ..Default::default()
@@ -346,6 +345,12 @@ fn ssh_e2e_unix_custom_and_disabled() {
     let path = format!("{DIR}/status.sh");
     ssh(&host, &script::install_command(SystemType::Linux, DIR, &path), Some(&content))
         .expect("install script");
+    // The commands themselves are files beside the script now, written in one
+    // round trip. This is the half a unit test cannot check: that a real shell
+    // on a real host reads that directory and reports what it finds.
+    let cmds = vec![(100u32, "e2e_probe".to_string(), "echo custom-cmd-works".to_string())];
+    ssh(&host, &script::install_custom_cmds_script(SystemType::Linux, DIR, &cmds), None)
+        .expect("install custom commands");
     let raw = ssh(&host, &script::exec_command(SystemType::Linux, &path, ShellFunc::Status), None)
         .expect("run status script");
     let _ = ssh(&host, &format!("rm -rf {DIR}"), None);

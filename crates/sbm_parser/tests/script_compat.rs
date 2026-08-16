@@ -34,24 +34,45 @@ fn script_valid_output_all_platforms() {
     }
 }
 
-/// Dart 'script generation with custom commands works correctly'
+/// Custom commands are read from a directory, not spliced into the script.
+///
+/// The script is now a function of the manifest alone: whatever a user has
+/// configured, these bytes are the same, which is what makes this baseline
+/// worth locking at all.
 #[test]
-fn script_custom_commands() {
-    let o = ScriptOptions {
-        custom_cmds: vec![
-            ("custom_test".into(), "echo \"Custom test command\"".into()),
-            ("another_cmd".into(), "whoami".into()),
-        ],
-        ..opts()
-    };
+fn script_reads_custom_commands_from_a_directory() {
     for system in [SystemType::Linux, SystemType::Windows] {
-        let script = build_script(system, &o);
-        assert!(script.contains("echo \"Custom test command\""));
-        assert!(script.contains("whoami"));
-        assert!(script.contains(&script::custom_cmd_marker("custom_test")));
-        // Custom commands are only injected into SbStatus
+        let script = build_script(system, &opts());
+        assert!(script.contains(script::CUSTOM_CMD_DIR));
+        // The marker prefix is emitted; the name comes from the file.
+        assert!(script.contains("SrvBoxCusCmdSep."));
+        // Only in the status function.
         let after_status = script.split("SbProcess").nth(1).unwrap();
         assert!(!after_status.contains("SrvBoxCusCmdSep."));
+    }
+    // A command that would break a script if it were spliced in cannot: it is
+    // never in the script.
+    let hostile = ScriptOptions { ..opts() };
+    assert_eq!(build_script(SystemType::Linux, &hostile), build_script(SystemType::Linux, &opts()));
+}
+
+/// The installer writes the directory in one round trip, atomically.
+#[test]
+fn custom_cmd_installer_replaces_the_directory() {
+    let cmds = vec![
+        (100u32, "disk".to_string(), "df -h | tail -1".to_string()),
+        // A command whose text would end a heredoc, close a quote and start a
+        // new command if any of it were taken literally.
+        (200u32, "hostile".to_string(), "EOF'\n rm -rf / #".to_string()),
+    ];
+    for system in [SystemType::Linux, SystemType::Windows] {
+        let install = script::install_custom_cmds_script(system, "/tmp/sb", &cmds);
+        // Nothing a command contains reaches the shell: it travels encoded.
+        assert!(!install.contains("rm -rf /"));
+        assert!(install.contains(&script::custom_cmd_file_name(100, "disk")));
+        assert!(install.contains(&script::custom_cmd_file_name(200, "hostile")));
+        // Written aside and moved, so a poll sees one set or the other.
+        assert!(install.contains(".new"));
     }
 }
 

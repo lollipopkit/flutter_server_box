@@ -194,7 +194,6 @@ void main() {
   test('buildScript smoke via FFI', () {
     final unix = script.buildScript(
       system: 'linux',
-      customCmds: [],
       disabled: [],
       buildNumber: 'test',
     );
@@ -204,12 +203,25 @@ void main() {
 
     final win = script.buildScript(
       system: 'windows',
-      customCmds: [],
       disabled: [],
       buildNumber: 'test',
     );
     expect(win, contains('function SbStatus {'));
     expect(win, contains('switch (\$args[0])'));
+  });
+
+  test('the custom-command installer writes files, not commands', () {
+    // The whole point of the move: what a user typed never reaches a shell
+    // this app generated. It travels encoded and lands in a file.
+    final install = script.installCustomCmdsCommand(
+      system: 'linux',
+      scriptDir: '/tmp/sb',
+      cmds: [script.CustomCmd(name: 'probe', cmd: 'rm -rf / #')],
+    );
+    expect(install, isNot(contains('rm -rf /')));
+    expect(install, contains('custom_cmds'));
+    // Written aside and moved, so a poll sees one set or the other.
+    expect(install, contains('.new'));
   });
 
   test('parseScriptOutput round-trip via FFI', () async {
