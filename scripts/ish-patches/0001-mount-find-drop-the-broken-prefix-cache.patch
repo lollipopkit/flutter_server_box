@@ -1,0 +1,98 @@
+diff --git a/fs/mount.c b/fs/mount.c
+index 68435ed..445f72d 100644
+--- a/fs/mount.c
++++ b/fs/mount.c
+@@ -23,47 +23,24 @@ void fs_register(const struct fs_ops *fs) {
+     assert(!"reached filesystem limit");
+ }
+ 
+-// === MOUNT CACHE: Thread-local cache for mount lookups ===
+-// Most file operations use the same mount point (e.g., realfs at "/")
+-// Caching the last lookup can save repeated list traversals
+-static __thread struct mount *last_mount_cache = NULL;
+-static __thread uint64_t mount_cache_version = 0;
+-static uint64_t global_mount_version = 0;  // Incremented on mount/umount
+-
+-// Check if cached mount is valid for given path
+-static inline bool mount_cache_check(struct mount *cached, const char *path) {
+-    if (cached == NULL)
+-        return false;
+-
+-    // Check if mount table changed (mount/umount invalidates cache)
+-    if (mount_cache_version != global_mount_version)
+-        return false;
+-
+-    // Check if path is under cached mount point
+-    size_t n = strlen(cached->point);
+-    if (n == 0) {
+-        // Root mount: only cache if path doesn't start with any other mount point
+-        // For now, don't cache root mount lookups since they're ambiguous
+-        return false;
+-    }
+-    return (strncmp(path, cached->point, n) == 0 &&
+-            (path[n] == '/' || path[n] == '\0'));
+-}
++// The thread-local mount cache that stood here answered with any mount whose
++// point is a prefix of the path, which is not the same question as "which mount
++// owns this path". A shorter point prefix-matches a path a longer one owns:
++// `/dev` matches `/dev/pts/0`, which belongs to `/dev/pts`. Since
++// `path_normalize` walks a path component by component, the lookup for
++// `/dev/pts/0` was always preceded by one for `/dev`, so it always answered
++// with the wrong filesystem — `/dev/pts/N` came back ENOENT and every pty
++// slave was unopenable.
++//
++// It does not show upstream because there `/dev` is inside the root mount,
++// whose point is "" and which the cache declined to store.
++//
++// Removed rather than corrected. The fast path took `mounts_lock` to bump the
++// refcount anyway, so all it saved was a walk over a handful of mounts.
+ 
+ struct mount *mount_find(char *path) {
+     assert(path_is_normalized(path));
+ 
+-    // === FAST PATH: Check thread-local cache ===
+-    struct mount *cached = last_mount_cache;
+-    if (mount_cache_check(cached, path)) {
+-        // Cache hit - just increment refcount
+-        lock(&mounts_lock);
+-        cached->refcount++;
+-        unlock(&mounts_lock);
+-        return cached;
+-    }
+-
+-    // === SLOW PATH: Full mount table search ===
+     lock(&mounts_lock);
+     struct mount *mount = NULL;
+     assert(!list_empty(&mounts)); // this would mean there's no root FS mounted
+@@ -74,11 +51,6 @@ struct mount *mount_find(char *path) {
+         }
+     }
+     mount->refcount++;
+-
+-    // Update cache
+-    last_mount_cache = mount;
+-    mount_cache_version = global_mount_version;
+-
+     unlock(&mounts_lock);
+     return mount;
+ }
+@@ -124,9 +96,6 @@ int do_mount(const struct fs_ops *fs, const char *source, const char *point, con
+     }
+     list_add_before(&mount->mounts, &new_mount->mounts);
+ 
+-    // Invalidate all mount caches
+-    global_mount_version++;
+-
+     return 0;
+ }
+ 
+@@ -142,9 +111,6 @@ int mount_remove(struct mount *mount) {
+     free((void *) mount->point);
+     free(mount);
+ 
+-    // Invalidate all mount caches
+-    global_mount_version++;
+-
+     return 0;
+ }
+ 

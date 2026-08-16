@@ -77,8 +77,37 @@ fetch_source() {
   if [ "$head" != "$ISH_COMMIT" ]; then
     log "Checking out the pinned commit"
     git -C "$SRC_DIR" fetch --quiet origin "$ISH_COMMIT" 2>/dev/null || git -C "$SRC_DIR" fetch --quiet origin
-    git -C "$SRC_DIR" checkout --quiet "$ISH_COMMIT"
+    # Forced, because the tree carries the patches below and they are put back
+    # immediately afterwards. Without it a pin bump fails on a dirty tree.
+    git -C "$SRC_DIR" checkout --quiet -f "$ISH_COMMIT"
   fi
+  apply_patches
+}
+
+# Fixes to the engine that this app needs and upstream has not made.
+#
+# Kept as patches against the pinned commit rather than as a fork, so what was
+# changed and why is readable in one place. Applying is idempotent: a patch that
+# is already in the tree is recognised and skipped. One that no longer applies
+# stops the build rather than being skipped quietly — the pin moved and somebody
+# has to look.
+apply_patches() {
+  local dir="$REPO_ROOT/scripts/ish-patches"
+  [ -d "$dir" ] || return 0
+  local patch
+  for patch in "$dir"/*.patch; do
+    [ -e "$patch" ] || continue
+    local name
+    name="$(basename "$patch")"
+    if git -C "$SRC_DIR" apply --reverse --check "$patch" >/dev/null 2>&1; then
+      log "$name is already applied"
+    elif git -C "$SRC_DIR" apply --check "$patch" >/dev/null 2>&1; then
+      log "Applying $name"
+      git -C "$SRC_DIR" apply "$patch"
+    else
+      die "$name does not apply to $ISH_COMMIT — the pin moved, or the tree is not clean"
+    fi
+  done
 }
 
 # The engine, for one platform. Only the three libraries: the `ish` CLI is a

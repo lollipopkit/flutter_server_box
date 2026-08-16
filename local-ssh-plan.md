@@ -417,27 +417,59 @@ stays its business. A dozen nodes is a few kilobytes; the whole tree's metadata
 was the part worth refusing, and that is gone.
 
 Measured: `head -c 16 /dev/urandom` gives 16 bytes, `/dev/zero` gives 8,
-`/dev/ptmx`, `/dev/pts` and `/dev/shm` are there.
+`/dev/ptmx`, `/dev/pts` and `/dev/shm` are there. And, after the two fixes
+below, `tty` and `readlink /dev/fd/1` both answer `/dev/pts/N` and a redirect
+into `/dev/stdout` arrives — the whole file passes in the simulator.
 
-**The three gaps that looked like one were one, and it was not `/dev/pts`.**
+**The three gaps that looked like one were one symptom of two bugs in series.**
 `/dev/stdout` and its siblings are symlinks into `/proc/self/fd`, `tty` said
-"not a tty", and `isatty` was false — all because `create_stdio`
-(`kernel/init.c:137`) opens the path and then requires
-`S_ISCHR(fd->stat.mode)`. `fd->stat` is the adhoc filesystem's own copy of a
-stat (`fs/fd.h:114`), and `generic_openat` fills `fd->type` instead; a devpts fd
-comes from `fd_create`, which zeroes the struct. So that test was false however
-well the open went, and every session fell back to the adhoc fd. Output still
-reached the driver, which is why sessions worked and why this took a `tty` call
-to find.
+"not a tty", and `isatty` was false — because a session's stdio was the adhoc fd
+`create_stdio` falls back to, which is in none of the tables procfs lists.
+Getting off that fallback needed both of these fixed; either alone left the
+symptom exactly as it was, which is what made the first guess look confirmed.
 
-`sbm_ish.c` opens the slave itself now and checks the field `generic_openat`
-actually sets, keeping `create_stdio` as a fallback that says out loud when it
-is taken — a silent degradation is what hid this in the first place. Two things
-fall out of opening it properly: `dev_open` → `tty_open` claims a controlling
-terminal for a session leader, which every task from `become_new_init_child` is,
-so `/dev/tty` and job control work; and a command session (`command != NULL`)
-clears `OPOST` and `ECHO`, because `ServerExec` output should read like a pipe's
-rather than a terminal's.
+*The open failed.* `generic_open("/dev/pts/N")` returned ENOENT, and not because
+of anything in devptsfs. `mount_find` (`fs/mount.c`) carries a thread-local
+cache that answers with any mount whose point is a *prefix* of the path, which
+is not the same question as which mount owns it: `/dev` prefix-matches
+`/dev/pts/0`, which belongs to `/dev/pts`. `path_normalize` walks a path
+component by component, so the lookup for `/dev/pts/0` was always preceded by
+one for `/dev` — and always got the wrong filesystem, which then reported the
+path missing. Measured rather than reasoned, with the same lookup run twice from
+inside the app:
+
+```
+cold  /dev/pts/0 → mount='/dev/pts' trimmed='/0'
+warm  /dev/pts/0 → mount='/dev'     trimmed='/pts/0'
+```
+
+It does not show upstream because there `/dev` is inside the root mount, whose
+point is `""` and which the cache declined to store. Making `/dev` a fakefs of
+its own is what exposed it. The fix is
+`scripts/ish-patches/0001-mount-find-drop-the-broken-prefix-cache.patch`, which
+removes the fast path rather than correcting it: it took `mounts_lock` to bump
+the refcount anyway, so all it saved was a walk over a handful of mounts.
+
+*And the check after it was wrong.* `create_stdio` (`kernel/init.c:137`) opens
+the path and then requires `S_ISCHR(fd->stat.mode)`. `fd->stat` is the adhoc
+filesystem's own copy of a stat (`fs/fd.h:114`), and `generic_openat` fills
+`fd->type` instead; a devpts fd comes from `fd_create`, which zeroes the struct.
+So that test was false however well the open went. `sbm_ish.c` opens the slave
+itself now and checks the field that is actually set, keeping `create_stdio` as
+a fallback that says out loud when it is taken — a silent degradation is what
+hid all of this in the first place.
+
+Two things fall out of opening it properly: `dev_open` → `tty_open` claims a
+controlling terminal for a session leader, which every task from
+`become_new_init_child` is, so `/dev/tty` and job control work; and the tty is
+released when the session's last fd closes, which the adhoc fd never did. A
+command session (`command != NULL`) also clears `OPOST` and `ECHO`, because
+`ServerExec` output should read like a pipe's rather than a terminal's.
+
+**Patches against the engine are a new maintenance surface.** `build-ish-ios.sh`
+applies everything in `scripts/ish-patches/` after checking out the pinned
+commit. Applying is idempotent and a patch that no longer applies stops the
+build rather than being skipped, so a pin bump cannot silently drop a fix.
 
 Also installed by the app now, which was the shipping blocker: the pinned
 release is downloaded, digest-checked and unpacked in Dart — links as links,
@@ -468,7 +500,7 @@ device and has no App Store in front of it. These need hands:
 
 | # | What | How | Why it cannot be automated here |
 | --- | --- | --- | --- |
-| M1 | The engine runs on real hardware | `scripts/build-ish-ios.sh device`, `SBM_ISH = 1`, run `integration_test/ios_rootfs_test.dart` on an iPhone | No device build has ever been run. The simulator shares the Mac's kernel and page protections; a phone does not |
+| M1 | The engine runs on real hardware | `SBM_ISH = 1`, run `integration_test/ios_rootfs_test.dart` on an iPhone | The device libraries now build (`scripts/build-ish-ios.sh device`), but nothing has been run on a phone. The simulator shares the Mac's kernel and page protections; a phone does not |
 | M2 | Memory and thermals under load | A real workload — `apk add`, a build, a long-running process — watched in Instruments | An interpreter with a 256 KB output ring and a guest heap on a phone is a different proposition from one on a Mac |
 | M3 | The performance figures (Q3) | `benchmark/run.sh` inside the guest, on a device | The fork's 7–12x claims are its own benchmarks, and the numbers that matter are the ones on the hardware users have |
 | M4 | The strip switch produces a clean build | Build an IPA with `SBM_ISH = 0`, then search the binary for `sbm_ish_boot` and any engine symbol | This is the emergency path. It has been checked at the object level, never on a shipped artifact |

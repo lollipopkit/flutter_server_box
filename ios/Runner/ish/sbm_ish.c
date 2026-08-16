@@ -236,21 +236,28 @@ struct tty_driver sbm_pty_driver = {
 
 /// Points a session's fds 0, 1 and 2 at its own pty.
 ///
-/// Not `create_stdio`, which stood here and is why `tty` answered "not a tty".
-/// It opens the path and then requires `S_ISCHR(fd->stat.mode)` — but `fd->stat`
-/// is the adhoc filesystem's own copy of a stat (`fs/fd.h`), and `generic_openat`
-/// fills `fd->type` instead. A devpts fd comes from `fd_create`, which zeroes
-/// the struct, so that test was false however well the open went and every
-/// session fell back to an adhoc fd. Output still reached the driver, which is
-/// why sessions worked at all; but that fd is in none of the tables procfs
-/// lists, so `/dev/stdout` and its siblings resolved to nothing and `isatty`
-/// did not know it. Nothing about `/dev/pts` was wrong.
+/// Not `create_stdio`, which stood here and was the second of the two reasons
+/// `tty` answered "not a tty". It opens the path and then requires
+/// `S_ISCHR(fd->stat.mode)` — but `fd->stat` is the adhoc filesystem's own copy
+/// of a stat (`fs/fd.h`), and `generic_openat` fills `fd->type` instead. A
+/// devpts fd comes from `fd_create`, which zeroes the struct, so that test was
+/// false however well the open went, and the fallback was taken every time.
+///
+/// The first reason was that the open never succeeded at all: the engine's
+/// mount lookup answered with `/dev` for a path under `/dev/pts` — see
+/// `scripts/ish-patches/0001-…`, which is why the fix is not only here.
+///
+/// Either one alone was enough. Output still reached the driver through the
+/// adhoc fd, which is why sessions worked and why this took a `tty` call to
+/// find; but that fd is in none of the tables procfs lists, so `/dev/stdout`
+/// and its siblings resolved to nothing and `isatty` did not know it.
 ///
 /// Opening the slave properly has a second effect worth naming: `generic_openat`
 /// routes a char device through `dev_open`, and `tty_open` claims a controlling
 /// terminal for a session leader — which every task from `become_new_init_child`
 /// is, since `construct_task` calls `task_setsid`. That is what makes `/dev/tty`,
-/// job control and Ctrl-C reach the right process group.
+/// job control and Ctrl-C reach the right process group. It also means the tty
+/// is released when the session's last fd closes, which the adhoc fd never did.
 static int attach_stdio(struct tty *tty) {
     char slave[64];
     snprintf(slave, sizeof(slave), "/dev/pts/%d", tty->num);
@@ -258,7 +265,7 @@ static int attach_stdio(struct tty *tty) {
     struct fd *fd = generic_open(slave, O_RDWR_, 0);
     if (!IS_ERR(fd) && !S_ISCHR(fd->type)) {
         fd_close(fd);
-        fd = ERR_PTR(_ENOENT);
+        fd = ERR_PTR(_ENOTTY);
     }
     if (IS_ERR(fd)) {
         // Said out loud. A session whose stdio is an adhoc fd still runs, so

@@ -289,16 +289,40 @@ proot 并在构建后检查两个 `.so` 确实进了 APK。剩下两条:
 装机路径、每会话独立 pty、`/dev` 设备节点、终端入口、Agent 本地目标都做完了,在模拟器
 验过。原来记的两条已修,原因和当初的判断不同:
 
-不是 `/dev/pts` 有问题。`create_stdio`(引擎的 `kernel/init.c:137`)打开路径后要求
+一个现象,两个串联的 bug,少修一个症状完全不变 —— 这也是第一次判断看起来「被证实」的原因。
+
+**一、open 本身就失败。** `generic_open("/dev/pts/N")` 返回 ENOENT,跟 devptsfs 无关。
+`mount_find`(`fs/mount.c`)有个 thread-local 缓存,判据是「路径以缓存挂载点为前缀」,
+这和「哪个挂载点拥有这条路径」不是同一个问题:`/dev` 是 `/dev/pts/0` 的前缀,但后者属于
+`/dev/pts`。`path_normalize` 逐段走路径,所以查 `/dev/pts/0` 之前必然先查 `/dev`,于是
+必然拿到错的文件系统。在 app 里同一时刻查两次实测:
+
+    cold  /dev/pts/0 → mount='/dev/pts' trimmed='/0'
+    warm  /dev/pts/0 → mount='/dev'     trimmed='/pts/0'
+
+upstream 不触发:那边 `/dev` 在根挂载里,挂载点是 `""`,缓存明确不存它。把 `/dev` 做成
+独立 fakefs 才暴露出来。修在
+`scripts/ish-patches/0001-mount-find-drop-the-broken-prefix-cache.patch` —— 直接删掉
+快路径而不是修正它:那条路径为了加 refcount 一样要拿 `mounts_lock`,省下的只是遍历
+几个挂载点。
+
+**二、后面那个判断也是错的。** `create_stdio`(`kernel/init.c:137`)打开路径后要求
 `S_ISCHR(fd->stat.mode)`,但 `fd->stat` 是 adhoc 文件系统自己的一份 stat
 (`fs/fd.h:114`),`generic_openat` 填的是 `fd->type`;devpts 的 fd 走 `fd_create`,
-该结构体全零。所以这个判断恒为假,每个会话都退回 adhoc fd —— 输出照样到 driver,
-所以会话一直是好的,也因此要调 `tty` 才发现。`sbm_ish.c` 现在自己打开 slave 并检查
-`generic_openat` 真正设置的字段,`create_stdio` 保留为回退分支且落到时会 syslog。
+该结构体全零,所以这个判断恒为假。`sbm_ish.c` 现在自己打开 slave 并检查真正被设置的
+字段,`create_stdio` 保留为回退分支且落到时会 syslog —— 静默降级正是当初把这件事藏住的
+原因。
+
+**引擎补丁是新增的维护面。** `build-ish-ios.sh` 在 checkout 到 pin 的 commit 之后应用
+`scripts/ish-patches/` 下所有补丁,可重复应用,补丁打不上就直接失败而不是跳过,所以升
+pin 不会静默丢掉修复。
 
 顺带解决的:`generic_openat` 对字符设备走 `dev_open` → `tty_open`,会给 session leader
-认领控制终端,所以 `/dev/tty`、job control、Ctrl-C 都对了。命令会话(`command != NULL`)
-另外关掉 `OPOST` 和 `ECHO`。
+认领控制终端,所以 `/dev/tty`、job control、Ctrl-C 都对了;会话最后一个 fd 关闭时 tty 也
+会被释放,adhoc fd 从来不会。命令会话(`command != NULL`)另外关掉 `OPOST` 和 `ECHO`。
+
+模拟器实测(iPhone 17 Pro Max, iOS 26.5):`integration_test/ios_rootfs_test.dart` 五条
+全过,`tty` 和 `readlink /dev/fd/1` 都报 `/dev/pts/N`,`echo > /dev/stdout` 能到。
 
 **Agent 的 iOS 本地目标**是 `IshExec`,形状照 Android(容器是唯一的本机,文件工具在
 容器内解析,共用 `resolveWithinRoot` 这条边界)。一个设计点:pty 对 `ServerExec` 是错的
