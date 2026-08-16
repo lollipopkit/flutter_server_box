@@ -12,9 +12,16 @@ import 'package:fl_lib/fl_lib.dart';
 /// starting has nothing to explain it. Asked for when the user opens a file
 /// browser or starts a download, the prompt has a reason.
 abstract final class LocalFiles {
-  /// Where [SandboxImport] leaves the App Store build's downloads: it copies
-  /// that container into [Paths.doc], which is where this app's files were
-  /// too until they moved out of it.
+  /// Where [Paths.file] used to be, on every desktop platform: under the
+  /// app's own data directory.
+  ///
+  /// Two things land here. The released Linux and Windows builds wrote their
+  /// downloads to it, and `Paths.adoptLegacyDoc` carries them along when it
+  /// moves that directory. And on macOS `SandboxImport` copies the App Store
+  /// build's container in, downloads included.
+  ///
+  /// TODO: drop together with those two, once no install can still be writing
+  /// the old locations.
   static String get _imported => Paths.doc.joinPath('file');
 
   /// Creates [Paths.file], moves in anything an earlier location left, and
