@@ -299,22 +299,7 @@ extension _Sessions on _SSHTabPageState {
   /// The install is where the tap may stop: it downloads, and it can be
   /// cancelled or fail. Only a rootfs that is actually there gets a tab.
   Future<void> _openRootfs() async {
-    // Android fetches and unpacks one on demand. iOS cannot yet: its
-    // filesystem is built by a host tool, and nothing puts one on a device —
-    // see local-ssh-plan.md. Saying so is better than opening a terminal that
-    // has nothing to run.
-    if (isIOS) {
-      if (!Rootfs.isReady) {
-        await context.showRoundDialog(
-          title: libL10n.attention,
-          child: Text(l10n.rootfsMissing),
-          actions: [Btn.ok()],
-        );
-        return;
-      }
-    } else if (!await installAndroidRootfs(context)) {
-      return;
-    }
+    if (!await installRootfs(context)) return;
     _open(const LocalSource(rootfs: true));
   }
 
@@ -323,7 +308,7 @@ extension _Sessions on _SSHTabPageState {
   /// Their shells are already gone with the files they were running from, so
   /// leaving the tabs up would leave dead terminals nobody asked to keep.
   Future<void> _removeRootfs() async {
-    if (!await removeAndroidRootfs(context)) return;
+    if (!await removeRootfs(context)) return;
     for (final tab in [..._sessions.tabs]) {
       if (tab.data.page.args.source == const LocalSource(rootfs: true)) {
         _closeTab(tab.id);

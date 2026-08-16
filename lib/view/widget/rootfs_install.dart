@@ -5,6 +5,8 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/android_rootfs.dart';
+import 'package:server_box/core/utils/ios_rootfs.dart';
+import 'package:server_box/core/utils/rootfs.dart';
 
 /// Puts a Linux userland on this device, asking first.
 ///
@@ -13,12 +15,17 @@ import 'package:server_box/core/utils/android_rootfs.dart';
 /// This is a download of executable code, so it says so before starting rather
 /// than fetching several megabytes on a tap. What makes it safe to run is in
 /// [AndroidRootfs]: the release is pinned and its digest is checked.
-Future<bool> installAndroidRootfs(BuildContext context) async {
-  final present = await AndroidRootfs.isInstalled;
+Future<bool> installRootfs(BuildContext context) async {
+  // Both platforms fetch the same Alpine release; what differs is what they do
+  // with it — Android unpacks a rootfs for proot, iOS a tree for the engine —
+  // and neither difference reaches this dialog.
+  final present = isIOS
+      ? await IosRootfs.isInstalled
+      : await AndroidRootfs.isInstalled;
   // Asked once, on the way in, and answered either way: a rootfs that is
   // merely old still works, so declining leaves it running rather than
   // blocking the terminal that was actually being opened.
-  final replacing = present && AndroidRootfs.isOutdated;
+  final replacing = present && !isIOS && AndroidRootfs.isOutdated;
   if (present && !replacing) return true;
   if (!context.mounted) return false;
 
@@ -32,7 +39,7 @@ Future<bool> installAndroidRootfs(BuildContext context) async {
               AndroidRootfs.installedVersion ?? '',
               AndroidRootfs.version,
             )
-          : context.l10n.rootfsInstallTip(AndroidRootfs.version),
+          : context.l10n.rootfsInstallTip(Rootfs.version),
     ),
     actions: Btnx.cancelOk,
   );
@@ -83,11 +90,18 @@ Future<bool> installAndroidRootfs(BuildContext context) async {
   );
 
   try {
-    await AndroidRootfs.install(
-      onProgress: (value) => progress.value = value,
-      cancel: cancel,
-      replace: replacing,
-    );
+    if (isIOS) {
+      await IosRootfs.install(
+        onProgress: (value) => progress.value = value,
+        cancel: cancel,
+      );
+    } else {
+      await AndroidRootfs.install(
+        onProgress: (value) => progress.value = value,
+        cancel: cancel,
+        replace: replacing,
+      );
+    }
     if (context.mounted) context.popDialog();
     return true;
   } catch (e, s) {
@@ -106,13 +120,17 @@ Future<bool> installAndroidRootfs(BuildContext context) async {
 ///
 /// Everything installed inside it goes too, which is why this asks in the same
 /// words as deleting anything else.
-Future<bool> removeAndroidRootfs(BuildContext context) async {
+Future<bool> removeRootfs(BuildContext context) async {
   final confirm = await context.showRoundDialog<bool>(
     title: libL10n.attention,
     child: Text(libL10n.askContinue('${libL10n.delete} Alpine')),
     actions: Btnx.cancelRedOk,
   );
   if (confirm != true) return false;
-  await AndroidRootfs.remove();
+  if (isIOS) {
+    await IosRootfs.remove();
+  } else {
+    await AndroidRootfs.remove();
+  }
   return true;
 }

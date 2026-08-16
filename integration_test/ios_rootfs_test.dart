@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -18,33 +19,8 @@ import 'package:server_box/core/utils/ios_rootfs.dart';
 /// The filesystem is staged by the harness, exactly as the first Android
 /// measurement staged proot: `fakefsify` is a host tool, and putting one on a
 /// device is a separate piece of work this does not pretend to have done.
-Future<void> _copyDirectory(Directory from, Directory to) async {
-  await to.create(recursive: true);
-  // Links are copied as links, not followed. Under `realfs` a guest symlink is
-  // resolved *inside the guest*, so `/bin/sh -> /bin/busybox` means the guest's
-  // busybox; followed on the host it points at the host's `/bin`, which is
-  // either the wrong file or none — and a skipped one is why the first attempt
-  // booted to `ENOENT` with no `/bin/sh` to run.
-  await for (final entry in from.list(recursive: false, followLinks: false)) {
-    final name = entry.path.split('/').last;
-    if (entry is Link) {
-      await Link('${to.path}/$name').create(await entry.target());
-    } else if (entry is Directory) {
-      await _copyDirectory(entry, Directory('${to.path}/$name'));
-    } else if (entry is File) {
-      await entry.copy('${to.path}/$name');
-    }
-  }
-}
-
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-
-  /// Where `scripts/build-ish-ios.sh` leaves the filesystem it built.
-  ///
-  /// Reachable because a simulator shares the Mac's filesystem. On a device
-  /// this line is the part that does not exist yet.
-  const staged = String.fromEnvironment('ISH_FAKEFS');
 
   setUpAll(() => IosRootfs.prepare());
 
@@ -71,29 +47,41 @@ void main() {
     return output.toString();
   }
 
+  testWidgets('the app installs a userland by itself', (_) async {
+    if (!IosRootfs.isAvailable) {
+      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      return;
+    }
+    // The real path, with nothing staged: download the pinned release, check
+    // its digest, unpack it in Dart. There is no `tar` here — iOS refuses to
+    // start a process — and no metadata database to build, which is what
+    // `realfs` bought.
+    await IosRootfs.remove();
+    expect(await IosRootfs.isInstalled, isFalse);
+
+    var seen = -1.0;
+    await IosRootfs.install(onProgress: (p) => seen = p ?? seen);
+    expect(await IosRootfs.isInstalled, isTrue);
+    expect(seen, greaterThan(0));
+
+    // What makes it a userland rather than a directory of files: a shell, and
+    // the execute bit on it. `realfs` reports the host's mode to the guest, so
+    // a busybox written 0644 is one the guest cannot run.
+    final root = IosRootfs.root!;
+    final busybox = File(root.joinPath('bin/busybox'));
+    expect(await busybox.exists(), isTrue);
+    expect((await busybox.stat()).mode & 0x40, isNot(0), reason: 'not executable');
+    // And the links are links: followed, `/bin/sh` would be the host's.
+    expect(await FileSystemEntity.isLink(root.joinPath('bin/sh')), isTrue);
+  }, skip: !Platform.isIOS, timeout: const Timeout(Duration(minutes: 5)));
+
   testWidgets('a guest runs inside the app and answers', (_) async {
     if (!IosRootfs.isAvailable) {
       markTestSkipped('this build carries no engine (SBM_ISH = 0)');
       return;
     }
-    if (staged.isEmpty) {
-      markTestSkipped(
-        'no filesystem staged; pass --dart-define=ISH_FAKEFS=<path>',
-      );
-      return;
-    }
-
-    // Copied into the app's own container, because that is where it will live
-    // and because the guest writes to it.
-    //
-    // In Dart rather than `/bin/cp`: iOS refuses to start a process at all,
-    // even in the simulator — "Starting new processes is not supported on
-    // iOS", which is the whole reason this platform gets an interpreter
-    // instead of a rootfs and proot.
-    final root = Directory(IosRootfs.root!);
-    if (!await root.exists()) {
-      await _copyDirectory(Directory(staged), root);
-    }
+    // Installed by the test above, or already there.
+    await IosRootfs.install();
     expect(await IosRootfs.isInstalled, isTrue);
 
     final booted = IosRootfs.boot();
@@ -131,14 +119,11 @@ void main() {
   // at all. A dozen nodes is a few kilobytes of sqlite — the whole tree's
   // metadata was the part worth refusing.
   testWidgets('/dev has what a userland expects', (_) async {
-    if (!IosRootfs.isAvailable || staged.isEmpty) {
-      markTestSkipped('no engine, or no filesystem staged');
+    if (!IosRootfs.isAvailable) {
+      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
       return;
     }
-    final root = Directory(IosRootfs.root!);
-    if (!await root.exists()) {
-      await _copyDirectory(Directory(staged), root);
-    }
+    await IosRootfs.install();
     IosRootfs.boot();
 
     // The root is an ordinary directory and cannot hold a device node, so

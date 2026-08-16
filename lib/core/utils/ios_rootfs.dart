@@ -1,6 +1,9 @@
 import 'dart:ffi';
 import 'dart:io';
 
+import 'package:archive/archive.dart';
+import 'package:crypto/crypto.dart';
+import 'package:dio/dio.dart';
 import 'package:ffi/ffi.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:path_provider/path_provider.dart';
@@ -65,6 +68,145 @@ abstract final class IosRootfs {
     return _installed = await File(root.joinPath('bin/busybox')).exists() &&
         await File(root.joinPath('etc/alpine-release')).exists();
   }
+
+  /// Pinned and checked, like Android's — this is executable code fetched over
+  /// the network, and the digest is what makes that different from running
+  /// whatever the connection returned.
+  static const _url =
+      'https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/aarch64/'
+      'alpine-minirootfs-$version-aarch64.tar.gz';
+  static const _sha256 =
+      '3fbc6285032ed46821b511292633d7b2a6306a2e254f590e92bdafff56cf2f70';
+
+  /// Downloads and unpacks the userland.
+  ///
+  /// Unpacked in Dart, because iOS will not start a process — no `tar`, and
+  /// that refusal is the reason this platform has an interpreter at all. What
+  /// `realfs` needs is only a directory tree, which is why this is possible;
+  /// under `fakefs` it would have meant carrying a metadata database and the
+  /// tool that writes one.
+  static Future<void> install({
+    void Function(double? progress)? onProgress,
+    CancelToken? cancel,
+  }) async {
+    final root = _root;
+    if (root == null) throw StateError('IosRootfs.prepare was not called');
+    if (await isInstalled) return;
+
+    final dir = Directory(root);
+    // A userland is complete or absent; there is no repairing half of one.
+    if (await dir.exists()) await dir.delete(recursive: true);
+    await dir.create(recursive: true);
+
+    final archivePath = root.joinPath('rootfs.tar.gz');
+    try {
+      await Dio().download(
+        _url,
+        archivePath,
+        cancelToken: cancel,
+        // The download is most of the wait, so it owns most of the bar; the
+        // unpacking gets the last tenth.
+        onReceiveProgress: (got, total) =>
+            onProgress?.call(total > 0 ? (got / total) * 0.9 : null),
+      );
+
+      final file = File(archivePath);
+      final digest = (await sha256.bind(file.openRead()).first).toString();
+      if (digest != _sha256) {
+        throw StateError(
+          'The userland did not match its digest and was discarded. '
+          'Expected $_sha256, got $digest.',
+        );
+      }
+
+      await _extract(file, dir, onProgress: onProgress);
+      _installed = true;
+    } catch (_) {
+      // Nothing half-installed is left to be mistaken for a working one.
+      if (await dir.exists()) await dir.delete(recursive: true);
+      _installed = false;
+      rethrow;
+    } finally {
+      final leftover = File(archivePath);
+      if (await leftover.exists()) await leftover.delete();
+    }
+  }
+
+  /// Removes the userland and everything in it.
+  static Future<void> remove() async {
+    _installed = false;
+    final root = _root;
+    if (root == null) return;
+    final dir = Directory(root);
+    if (await dir.exists()) await dir.delete(recursive: true);
+  }
+
+  static Future<void> _extract(
+    File archiveFile,
+    Directory into, {
+    void Function(double? progress)? onProgress,
+  }) async {
+    final bytes = await archiveFile.readAsBytes();
+    final archive = TarDecoder().decodeBytes(GZipDecoder().decodeBytes(bytes));
+
+    var done = 0;
+    for (final entry in archive) {
+      done++;
+      if (done % 200 == 0) {
+        onProgress?.call(0.9 + (done / archive.length) * 0.1);
+      }
+      final path = into.path.joinPath(entry.name);
+
+      // Links as links, never followed. Under `realfs` a guest symlink is
+      // resolved inside the guest, so `/bin/sh -> /bin/busybox` means the
+      // guest's busybox; written as a copy of whatever the host has at that
+      // path it is the wrong file, and skipped it is no file — which is how an
+      // earlier attempt booted with no `/bin/sh` to run.
+      if (entry.isSymbolicLink) {
+        final link = Link(path);
+        await link.parent.create(recursive: true);
+        if (await link.exists()) await link.delete();
+        await link.create(entry.symbolicLink!);
+        continue;
+      }
+      if (entry.isDirectory) {
+        await Directory(path).create(recursive: true);
+        continue;
+      }
+      if (!entry.isFile) {
+        // Device nodes, which a tarball carries and no unprivileged process
+        // can create. `/dev` is built at boot instead — see the C side.
+        continue;
+      }
+      final file = File(path);
+      await file.parent.create(recursive: true);
+      await file.writeAsBytes(entry.readBytes() ?? const []);
+      // The mode the tarball recorded. It matters more here than under
+      // `fakefs`: `realfs` reports the host's mode to the guest, so a busybox
+      // written 0644 by Dart is a busybox the guest cannot execute.
+      //
+      // Through libc rather than `chmod(1)`: iOS refuses to start a process,
+      // which is the same refusal that put an interpreter on this platform.
+      _chmod(path, entry.mode & 0xfff);
+    }
+  }
+
+  /// `chmod`, which `dart:io` does not have and this cannot do without.
+  static void _chmod(String path, int mode) {
+    final chmod = _chmodC;
+    if (chmod == null || mode == 0) return;
+    final pointer = path.toNativeUtf8();
+    try {
+      chmod(pointer.cast(), mode);
+    } finally {
+      malloc.free(pointer);
+    }
+  }
+
+  static final _chmodC = _look(
+    'chmod',
+    (p) => p.lookupFunction<Int Function(Pointer<Char>, Uint16), int Function(Pointer<Char>, int)>('chmod'),
+  );
 
   /// Locates where the filesystem would be. Call once, before anything asks.
   static Future<void> prepare() async {
