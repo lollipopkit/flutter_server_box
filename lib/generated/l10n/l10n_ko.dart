@@ -1350,7 +1350,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get agentLocalExecRootfsTip =>
-      'ServerBox가 설치하는 Alpine Linux 컨테이너 안에서 Agent가 이 기기에서 작업할 수 있게 합니다. Android의 파일 시스템, 앱 데이터, 사용자 파일은 볼 수 없습니다. 모든 명령에는 여전히 확인이 필요합니다.';
+      'ServerBox가 설치하는 Alpine Linux 컨테이너 안에서 Agent가 이 기기에서 작업할 수 있게 합니다. 기기 자체의 파일 시스템, 앱 데이터, 사용자 파일은 볼 수 없습니다. 모든 명령에는 여전히 확인이 필요합니다.';
 
   @override
   String macDmgImportedPartly(String path) {

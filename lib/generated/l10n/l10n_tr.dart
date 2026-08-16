@@ -1417,7 +1417,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get agentLocalExecRootfsTip =>
-      'Agent\'ın bu cihazda, ServerBox\'ın kurduğu Alpine Linux konteyneri içinde çalışmasına izin verir. Android\'in dosya sistemini, uygulamanın verilerini veya dosyalarınızı göremez. Her komut yine de inceleme gerektirir.';
+      'Agent\'ın bu cihazda, ServerBox\'ın kurduğu Alpine Linux konteyneri içinde çalışmasına izin verir. Cihazın kendi dosya sistemini, uygulamanın verilerini veya dosyalarınızı göremez. Her komut yine de inceleme gerektirir.';
 
   @override
   String macDmgImportedPartly(String path) {

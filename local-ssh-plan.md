@@ -20,8 +20,9 @@ is known, what is guessed, and what has to be measured before any of it is
 committed to; the measurements are kept where they were made rather than
 summarised away.
 
-**Status: stages 1, 2, 2b and 3 are done. Stage 4 is done on Android; its iOS
-half is not started.**
+**Status: stages 1, 2, 2b and 3 are done. Stage 4 is done on both platforms in
+the simulator and on an emulator; what is left of it needs a real iPhone and an
+App Store submission — M1 to M5 below.**
 
 | Stage | State |
 | --- | --- |
@@ -29,7 +30,7 @@ half is not started.**
 | 2 — Android host shell | done and **exercised** on an API 36 emulator: the Device entry opens `/system/bin/sh` |
 | 2b — the Agent off SSH, and onto this device | done: `328f92d9`, `f1b869c1`, `95aa2c30`, `c6c728f1` |
 | 3 — measure Android's `execve` | done: `integration_test/android_exec_test.dart`, and the answer is below |
-| 4 — rootfs | **Android done**: `lib/core/utils/android_rootfs.dart`, an entry in the terminal tab, and `integration_test/rootfs_shell_test.dart`. iOS not started |
+| 4 — rootfs | **Android done**: `lib/core/utils/android_rootfs.dart`, an entry in the terminal tab, and `integration_test/rootfs_shell_test.dart`. **iOS done in the simulator**: `ios_rootfs.dart`, `ish_shell.dart`, `ish_exec.dart`, `ios/Runner/ish/sbm_ish.c`, and `integration_test/ios_rootfs_test.dart` |
 
 Stage 1 is no longer only analysed. `integration_test/local_shell_test.dart`
 runs inside a real app, which is the only place an FFI plugin loads, and covers
@@ -401,10 +402,11 @@ first attempt booted to `ENOENT` with no `/bin/sh` to run. `tar` gets this
 right; a naive recursive copy does not.
 
 **The second is done too.** A session is now a process in the machine with a
-pty of its own — `become_new_init_child`, `pty_open_fake`, `create_stdio` on
+pty of its own — `become_new_init_child`, `pty_open_fake`, and an open of
 `/dev/pts/N` — so `IshShellBackend.supportsExec` is true and two sessions
 cannot land on each other's output. Verified: one session reports Alpine's
-version, a second one running at the same time sees only its own marker.
+version, a second one running at the same time sees only its own marker. That
+last step was `create_stdio` at first, which is the bug described below.
 
 **`/dev` is a database, and it is the only thing that is.** Nothing else can
 hold a device node: `realfs` refuses (creating one needs root on the host) and
@@ -417,39 +419,47 @@ was the part worth refusing, and that is gone.
 Measured: `head -c 16 /dev/urandom` gives 16 bytes, `/dev/zero` gives 8,
 `/dev/ptmx`, `/dev/pts` and `/dev/shm` are there.
 
-Two gaps left, and they look like one cause. `/dev/stdout` and its siblings are
-symlinks to `/proc/self/fd/N` and do not resolve — "nonexistent directory" —
-and `tty` reports "not a tty". Both follow from `create_stdio` falling back to
-the adhoc fd it makes when `/dev/pts/N` does not open as a char device: output
-still reaches the driver, which is why sessions work at all, but that fd is not
-in the table procfs lists and `isatty` does not recognise it. **Making
-`/dev/pts/N` resolve is the one thing to try**, and it is a TODO in the test
-rather than an assumption.
+**The three gaps that looked like one were one, and it was not `/dev/pts`.**
+`/dev/stdout` and its siblings are symlinks into `/proc/self/fd`, `tty` said
+"not a tty", and `isatty` was false — all because `create_stdio`
+(`kernel/init.c:137`) opens the path and then requires
+`S_ISCHR(fd->stat.mode)`. `fd->stat` is the adhoc filesystem's own copy of a
+stat (`fs/fd.h:114`), and `generic_openat` fills `fd->type` instead; a devpts fd
+comes from `fd_create`, which zeroes the struct. So that test was false however
+well the open went, and every session fell back to the adhoc fd. Output still
+reached the driver, which is why sessions worked and why this took a `tty` call
+to find.
+
+`sbm_ish.c` opens the slave itself now and checks the field `generic_openat`
+actually sets, keeping `create_stdio` as a fallback that says out loud when it
+is taken — a silent degradation is what hid this in the first place. Two things
+fall out of opening it properly: `dev_open` → `tty_open` claims a controlling
+terminal for a session leader, which every task from `become_new_init_child` is,
+so `/dev/tty` and job control work; and a command session (`command != NULL`)
+clears `OPOST` and `ECHO`, because `ServerExec` output should read like a pipe's
+rather than a terminal's.
 
 Also installed by the app now, which was the shipping blocker: the pinned
 release is downloaded, digest-checked and unpacked in Dart — links as links,
 modes through libc's `chmod`, since `realfs` shows the guest the host's mode
 and `dart:io` cannot set one.
 
-What is left:
+**The Agent's local target is in** (`IshExec`), the same shape as Android's: the
+container is the only local machine, and the file tools resolve inside it
+through the boundary both platforms now share (`resolveWithinRoot`). What made
+it more than a rename is that a pty is the wrong shape for `ServerExec` — it
+merges the two streams, echoes input, and makes every program that asks believe
+it is talking to a terminal. So a command's own streams go to two files under
+the guest's `/tmp` and are read from the host, which costs nothing because
+`realfs` is a directory both sides can see. What is left on the console is what
+a redirect could not catch — the shell's complaint if the redirect itself
+failed — and that is reported as stderr.
 
-1. **A filesystem on the device.** `fakefsify` is a host tool: it needs
-   libarchive and writes a sqlite metadata db, so nothing today puts one on a
-   phone, and the terminal entry says so rather than opening a shell with
-   nothing to run. Two ways, neither free: ship a built filesystem in the
-   bundle (tens of megabytes in the IPA, and it must be copied out of the
-   read-only bundle before the guest can write), or compile the extraction into
-   the app and do it at first launch, as Android downloads and unpacks. The
-   piece that makes the second possible is already in the library —
-   `fakefs_rebuild(struct fakefs_db *, int root_fd)` derives the metadata db
-   from a tree, so the app only has to unpack a tarball, which Dart can do.
-   **Until this exists the feature cannot ship**, whatever else works.
-2. **The Agent's local target on iOS.** The same shape as Android's — the
-   container is the only local machine and the file tools resolve inside it —
-   but it needs a second channel, which one console does not have. Either the
-   engine spawns a task per command (what OpenMinis' `ISHShellExecutor` does)
-   or the Agent types into the same shell behind a marker protocol. Neither is
-   written.
+Two pieces of that are exercised without a device, because nothing else about
+this path can be: `test/file_tail_test.dart` for reading a file somebody else is
+still writing to (a multi-byte character split across two polls is the case that
+would otherwise reach a user), and `test/ish_exec_test.dart` for the shell the
+guest is actually handed.
 
 ### Manual verification — nobody has done these
 
@@ -468,17 +478,17 @@ M5 is the one that decides whether any of the rest is worth finishing, and it
 is the reason the switch exists.
 
 ### What is left
-- a filesystem on the device. `fakefsify` is a host tool that needs libarchive
-  and writes a sqlite metadata db, so either the built filesystem ships in the
-  bundle or that tool's job is done on the phone at first launch;
-- the terminal and the Agent wired to it, which is where the Android work
-  already ends up: a `ShellBackend` and a `ServerExec`.
 
-One design consequence to settle before that last point: the kernel keeps its
-state in globals, so there is **one guest per app process**. A second
-`sbm_ish_boot` is refused rather than allowed to corrupt the first. A terminal
-and the Agent therefore share one machine, and running two things at once means
-two processes *inside* the guest, not two guests.
+Nothing in the code. The filesystem, the terminal's `ShellBackend`, the Agent's
+`ServerExec` and the device nodes under them are all in and exercised in the
+simulator; M1 to M5 above are what remains, and they need hands.
+
+One design consequence, settled rather than pending: the kernel keeps its state
+in globals, so there is **one guest per app process**. A second `sbm_ish_boot`
+is refused rather than allowed to corrupt the first — `IosRootfs.alreadyBooted`
+is that refusal, and both the terminal and `IshExec` treat it as success. A
+terminal and the Agent therefore share one machine, and running two things at
+once means two processes *inside* the guest, not two guests.
 
 ## Android: the wall, and the way through it
 
@@ -659,14 +669,15 @@ later ship apk-tools 3, whose network fetches fail under proot with `Permission
 denied` on every repository while busybox `wget` fetches the same URLs — cause
 not established, so the branch is 3.22, the last with apk-tools 2.14.
 
-iOS via ish-arm64 is the half still open. The engine part of it is no longer
-unmeasured — it builds for the iOS triple and runs Alpine in the simulator, see
-above — but wiring the Xcode target, bridging it to Dart, getting a filesystem
-onto the device and adding an iOS build step to CI are all still to do. That
-half carries the review risk; treat it as a separate decision, not a
+iOS via ish-arm64 is in as far as a simulator can show: the engine is linked
+behind `SBM_ISH`, bridged to Dart, the app installs its own filesystem, and both
+the terminal and the Agent run on it. What is not done is an iOS build step in
+CI, and what cannot be done here at all is the device and review work — M1 to
+M5. That half carries the review risk; treat it as a separate decision, not a
 continuation.
 It is also what turns the agent's local execution from "on the user's
-filesystem" into "in a sandbox", which may be the strongest reason to build it.
+filesystem" into "in a sandbox", which may be the strongest reason to have built
+it.
 
 Stages 1, 2 and 2b are worth doing whatever happens to 3 and 4.
 

@@ -9,8 +9,8 @@ import 'package:fl_lib/fl_lib.dart' hide Provider;
 import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:server_box/core/utils/adhoc_ssh_prompt.dart';
-import 'package:server_box/core/utils/android_rootfs.dart';
 import 'package:server_box/core/utils/local_exec.dart';
+import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/ssh_exec.dart';
@@ -491,18 +491,18 @@ String buildGlobalAgentInstructions({
       'Name it with server_id "${LocalExec.deviceId}".',
     );
     // Two different machines under one name, and a model told the wrong one
-    // proposes commands against a filesystem that is not there. On Android it
+    // proposes commands against a filesystem that is not there. On a phone it
     // is a container the app installed; everywhere else it is the computer
     // itself, with everything that implies.
     if (localIsRootfs) {
       prompt.writeln(
         'On this device that machine is an Alpine Linux container ServerBox '
         'installed, not the phone: commands run inside it, apk installs into '
-        'it, and file paths are resolved inside it. It cannot see Android\'s '
-        'filesystem, the app\'s data or the user\'s files, and a path outside '
-        'it is refused. Nothing runs there unattended — every command needs '
-        'review — but what it can damage is the container, which the user can '
-        'delete and reinstall.',
+        'it, and file paths are resolved inside it. It cannot see the phone\'s '
+        'own filesystem, the app\'s data or the user\'s files, and a path '
+        'outside it is refused. Nothing runs there unattended — every command '
+        'needs review — but what it can damage is the container, which the '
+        'user can delete and reinstall.',
       );
     } else {
       prompt.writeln(
@@ -752,7 +752,9 @@ class GlobalAgentToolService {
       // Read now rather than once at start-up: the setting can be turned on
       // mid-conversation, and the instructions are rebuilt per request.
       localExec: LocalExec.isOffered,
-      localIsRootfs: AndroidRootfs.isReady,
+      // Whether that machine is a container, which is the question — not which
+      // platform this is. Both answers exist on Android and on iOS.
+      localIsRootfs: LocalExec.forThisDevice()?.inRootfs ?? false,
     );
   }
 
@@ -796,16 +798,17 @@ class GlobalAgentToolService {
   /// This machine, when the user has said the Agent may work on it.
   ///
   /// Two gates, not one. The platform has to be able to run a command at all —
-  /// iOS cannot, and the sandboxed macOS build is the App Store one. And the
-  /// user has to have turned it on: a configured server was added on purpose
-  /// and is somewhere else, whereas this is where the app's own stores, keys
-  /// and keychain are, and adding a server was never consent for that.
+  /// a sandboxed macOS build is the App Store one, and an iOS build without the
+  /// engine has no guest. And the user has to have turned it on: a configured
+  /// server was added on purpose and is somewhere else, whereas this is where
+  /// the app's own stores, keys and keychain are, and adding a server was never
+  /// consent for that.
   ///
-  /// No SSH client, so the file tools say so and point at `cat` and `tee` —
-  /// which is the wrong answer here and the next thing to fix; see
-  /// local-ssh-plan.md, stage 2b.
+  /// No SSH client. The file tools do not need one here: they are `dart:io`
+  /// against a path resolved through [LocalExec.hostPathOf].
   AgentShellHandle _thisDevice() {
-    if (!LocalExec.isSupported) {
+    final exec = LocalExec.forThisDevice();
+    if (exec == null) {
       throw StateError(
         'This build cannot run commands on the device it is installed on.',
       );
@@ -817,11 +820,12 @@ class GlobalAgentToolService {
         'they decline.',
       );
     }
-    // On Android the local target is the Linux userland or it is nothing.
-    // The host shell there is toybox running as the app, next to its stores
-    // and its keys; the guest is a filesystem with none of them in it. The
-    // rootfs was built to be that boundary — see local-ssh-plan.md, stage 4.
-    if (isAndroid && !AndroidRootfs.isReady) {
+    // On the two platforms with a userland the local target is that userland or
+    // it is nothing. Android's host shell is toybox running as the app, next to
+    // its stores and its keys; iOS has no host shell at all. The guest is a
+    // filesystem with none of that in it, and it was built to be that boundary
+    // — see local-ssh-plan.md, stage 4.
+    if (exec.inRootfs && !Rootfs.isReady) {
       throw StateError(
         'This device runs Agent commands inside its Linux userland, and there '
         'is none installed. The user can install it from the terminal tab; do '
@@ -830,11 +834,7 @@ class GlobalAgentToolService {
     }
     // No server id: a result claiming one would name a machine in the list,
     // and this is not one of them.
-    return (
-      exec: LocalExec(inRootfs: isAndroid),
-      client: null,
-      serverId: null,
-    );
+    return (exec: exec, client: null, serverId: null);
   }
 
   /// An ad-hoc connection that is still open.
@@ -1063,8 +1063,8 @@ class GlobalAgentToolService {
   ///
   /// On the host they are the same string. Inside the Linux userland they are
   /// not: these tools are `dart:io` on the host and never enter the guest, so
-  /// `/etc/hosts` would be Android's rather than Alpine's — and `read_file` is
-  /// the one tool that is deliberately not reviewed before it runs, on the
+  /// `/etc/hosts` would be the device's rather than Alpine's — and `read_file`
+  /// is the one tool that is deliberately not reviewed before it runs, on the
   /// grounds that reading a file is not a command.
   ///
   /// A path that leaves the rootfs is refused rather than clamped. `..` is
@@ -1076,8 +1076,7 @@ class GlobalAgentToolService {
     LocalExec exec, {
     bool forWrite = false,
   }) async {
-    if (!exec.inRootfs) return path;
-    final host = await AndroidRootfs.hostPathOf(path, forWrite: forWrite);
+    final host = await exec.hostPathOf(path, forWrite: forWrite);
     if (host == null) {
       throw StateError(
         'This device only exposes its Linux userland, and $path is not inside '

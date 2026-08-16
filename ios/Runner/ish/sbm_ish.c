@@ -234,6 +234,52 @@ struct tty_driver sbm_pty_driver = {
     .limit = SBM_MAX_SESSIONS,
 };
 
+/// Points a session's fds 0, 1 and 2 at its own pty.
+///
+/// Not `create_stdio`, which stood here and is why `tty` answered "not a tty".
+/// It opens the path and then requires `S_ISCHR(fd->stat.mode)` — but `fd->stat`
+/// is the adhoc filesystem's own copy of a stat (`fs/fd.h`), and `generic_openat`
+/// fills `fd->type` instead. A devpts fd comes from `fd_create`, which zeroes
+/// the struct, so that test was false however well the open went and every
+/// session fell back to an adhoc fd. Output still reached the driver, which is
+/// why sessions worked at all; but that fd is in none of the tables procfs
+/// lists, so `/dev/stdout` and its siblings resolved to nothing and `isatty`
+/// did not know it. Nothing about `/dev/pts` was wrong.
+///
+/// Opening the slave properly has a second effect worth naming: `generic_openat`
+/// routes a char device through `dev_open`, and `tty_open` claims a controlling
+/// terminal for a session leader — which every task from `become_new_init_child`
+/// is, since `construct_task` calls `task_setsid`. That is what makes `/dev/tty`,
+/// job control and Ctrl-C reach the right process group.
+static int attach_stdio(struct tty *tty) {
+    char slave[64];
+    snprintf(slave, sizeof(slave), "/dev/pts/%d", tty->num);
+
+    struct fd *fd = generic_open(slave, O_RDWR_, 0);
+    if (!IS_ERR(fd) && !S_ISCHR(fd->type)) {
+        fd_close(fd);
+        fd = ERR_PTR(_ENOENT);
+    }
+    if (IS_ERR(fd)) {
+        // Said out loud. A session whose stdio is an adhoc fd still runs, so
+        // this degrades rather than fails — and a silent degradation is exactly
+        // what hid the problem above until something called `tty`.
+        syslog(LOG_ERR, "sbm_ish: %s did not open (%d); stdio is adhoc, so "
+               "isatty and /dev/stdout will not work in this session",
+               slave, (int)PTR_ERR(fd));
+        return create_stdio(slave, TTY_PSEUDO_SLAVE_MAJOR, tty->num);
+    }
+
+    // One open, three descriptors, as `create_stdio` does it: the count is
+    // reset because `generic_open` handed over a reference this table is not
+    // going to hold separately.
+    fd->refcount = 0;
+    current->files->files[0] = fd_retain(fd);
+    current->files->files[1] = fd_retain(fd);
+    current->files->files[2] = fd_retain(fd);
+    return 0;
+}
+
 // — Booting ————————————————————————————————————————————————————————
 
 static bool booted;
@@ -413,6 +459,8 @@ int sbm_ish_boot(const char *rootfs) {
 int sbm_ish_open(const char *command, int columns, int rows) {
     if (!booted) return -ENOTCONN;
 
+    bool interactive = command == NULL || command[0] == '\0';
+
     pthread_mutex_lock(&sessions_lock);
     int index = -1;
     for (int i = 0; i < SBM_MAX_SESSIONS; i++) {
@@ -441,14 +489,22 @@ int sbm_ish_open(const char *command, int columns, int rows) {
     };
     tty_set_winsize(tty, size);
 
+    // A command's output should read like a pipe's. `ServerExec` is "run this
+    // and tell me what it said", and a terminal answers with CRLF line endings
+    // and an echo of anything written to stdin — two things a caller would have
+    // to strip before it could parse a word of it. Set before the task starts,
+    // so nothing else can be holding this tty yet.
+    if (!interactive) {
+        tty->termios.oflags &= ~OPOST_;
+        tty->termios.lflags &= ~ECHO_;
+    }
+
     pthread_mutex_lock(&sessions_lock);
     session->tty = tty;
     session->pid = current->pid;
     pthread_mutex_unlock(&sessions_lock);
 
-    char slave[64];
-    snprintf(slave, sizeof(slave), "/dev/pts/%d", tty->num);
-    err = create_stdio(slave, TTY_PSEUDO_SLAVE_MAJOR, tty->num);
+    err = attach_stdio(tty);
     if (err < 0) goto fail;
 
     char environment[256] = {0};
@@ -461,7 +517,6 @@ int sbm_ish_open(const char *command, int columns, int rows) {
 
     char argv[4096];
     size_t position = 0;
-    bool interactive = command == NULL || command[0] == '\0';
     const char *parts[3] = { "/bin/sh", "-c", command };
     int count = interactive ? 1 : 3;
     for (int i = 0; i < count; i++) {

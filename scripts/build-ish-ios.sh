@@ -19,12 +19,12 @@
 #   libish.a, libish_emu.a, libfakefs.a   the engine, for one SDK and arch
 #   alpine-fakefs/                        an Alpine filesystem in iSH's format
 #
-# The filesystem is built by a *host* tool (`fakefsify`), because it needs
-# libarchive and writes a sqlite metadata db — neither belongs on a phone. What
-# ships is the result.
+# The app does not use `alpine-fakefs`: it downloads and unpacks its own tree at
+# first launch, because `realfs` mounts an ordinary directory. That output is
+# kept for the command-line build, where `ish -f` wants iSH's own format.
 #
-# Status: this is a spike. The libraries are not yet linked into the app; see
-# local-ssh-plan.md, stage 4, for what remains.
+# The libraries are linked into the app by `ios/Flutter/Ish.xcconfig`, which is
+# where `SBM_ISH` decides whether any of this ships at all.
 #
 # Usage: scripts/build-ish-ios.sh [simulator|device|macos]
 
@@ -216,12 +216,9 @@ esac
 
 cat <<'NOTE'
 
-Not done by this script, and needed before any of it reaches a user:
+Built. To use them, set `SBM_ISH = 1` — in an untracked ios/Flutter/
+IshLocal.xcconfig rather than in the tracked file — and rebuild.
 
-  * the libraries are not linked into ios/Runner yet, and there is no bridge
-    from Dart to `xX_main_Xx`;
-  * the filesystem is built here and would have to be shipped or rebuilt on
-    the device — `fakefsify` is a host tool.
-
-See local-ssh-plan.md, stage 4.
+Not done by this script: the device work that only hands can do. See
+local-ssh-plan.md, M1 to M5.
 NOTE

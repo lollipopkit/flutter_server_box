@@ -1314,7 +1314,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get agentLocalExecRootfsTip =>
-      '让 Agent 在本机操作,范围限于 ServerBox 安装的 Alpine Linux 容器内。它看不到 Android 的文件系统、App 的数据和你的文件。每条命令仍然需要审核。';
+      '让 Agent 在本机操作,范围限于 ServerBox 安装的 Alpine Linux 容器内。它看不到手机本身的文件系统、App 的数据和你的文件。每条命令仍然需要审核。';
 
   @override
   String macDmgImportedPartly(String path) {
@@ -2632,7 +2632,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentLocalExecRootfsTip =>
-      '讓 Agent 在本機操作,範圍限於 ServerBox 安裝的 Alpine Linux 容器內。它看不到 Android 的檔案系統、App 的資料和你的檔案。每條命令仍然需要審核。';
+      '讓 Agent 在本機操作,範圍限於 ServerBox 安裝的 Alpine Linux 容器內。它看不到手機本身的檔案系統、App 的資料和你的檔案。每條命令仍然需要審核。';
 
   @override
   String macDmgImportedPartly(String path) {

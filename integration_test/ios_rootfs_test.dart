@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:server_box/core/utils/ios_rootfs.dart';
+import 'package:server_box/core/utils/ish_exec.dart';
 
 /// The Linux userland on iOS, through the API the app will use.
 ///
@@ -16,9 +18,8 @@ import 'package:server_box/core/utils/ios_rootfs.dart';
 /// `ios/Flutter/Ish.xcconfig`), which is the default — a checkout that has not
 /// run `scripts/build-ish-ios.sh` has no engine to link.
 ///
-/// The filesystem is staged by the harness, exactly as the first Android
-/// measurement staged proot: `fakefsify` is a host tool, and putting one on a
-/// device is a separate piece of work this does not pretend to have done.
+/// Nothing is staged: the app downloads and unpacks the userland itself, which
+/// is what `realfs` bought and what the first test here exercises.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -135,6 +136,12 @@ void main() {
           r'head -c 16 /dev/urandom | wc -c && '
           r'head -c 8 /dev/zero | wc -c && '
           r'test -e /dev/ptmx && test -d /dev/pts && test -d /dev/shm && '
+          r'echo "SBM""_NODES_OK"; '
+          // Not chained to the above: each of these three answers a separate
+          // question, and one failing should not hide the other two.
+          r'tty; '
+          r'readlink /dev/fd/1; '
+          r'echo "SBM""_STDOUT" > /dev/stdout; '
           r'echo "SBM""_DEV_OK"',
     );
     expect(session, greaterThanOrEqualTo(0));
@@ -143,20 +150,77 @@ void main() {
 
     expect(text, contains('16'), reason: '/dev/urandom gave nothing');
     expect(text, contains('8'), reason: '/dev/zero gave nothing');
-    // TODO: two gaps that look like one cause. `/dev/stdout` and its siblings
-    // are symlinks to `/proc/self/fd/N` and do not resolve — "nonexistent
-    // directory" — and `tty` reports "not a tty". Both are what would follow
-    // from `create_stdio` having fallen back to the adhoc fd it makes when
-    // `/dev/pts/N` does not open as a char device: output still reaches the
-    // driver, which is why sessions work, but the fd is not in the table
-    // procfs lists and `isatty` does not recognise it. Making `/dev/pts/N`
-    // resolve is the one thing to try.
-    // TODO: `tty` says "not a tty". Output flows and sessions are independent,
-    // so `create_stdio` is reaching the driver — but through the adhoc fd it
-    // falls back to rather than the `/dev/pts/N` node, which `isatty` does not
-    // recognise. Interactive programs will care; a shell reading a command
-    // does not, which is why it took a `tty` call to notice.
-    expect(text, contains('SBM_DEV_OK'), reason: 'something in /dev failed');
+    expect(text, contains('SBM_NODES_OK'), reason: 'something in /dev failed');
+
+    // The three that were wrong together, and are one thing: a session's stdio
+    // is the `/dev/pts/N` it was given rather than the adhoc fd `create_stdio`
+    // fell back to. `isatty` did not recognise that fd and procfs listed no
+    // path for it, so `tty` answered "not a tty" and every `/dev/std*` symlink
+    // — they point into `/proc/self/fd` — resolved to nothing.
+    expect(text, contains('/dev/pts/'), reason: '`tty` does not name the pty');
+    expect(
+      RegExp(r'/dev/pts/\d+').allMatches(text).length,
+      greaterThanOrEqualTo(2),
+      reason: '/proc/self/fd/1 does not point at the pty',
+    );
+    expect(text, contains('SBM_STDOUT'), reason: '/dev/stdout did not resolve');
+    expect(text, contains('SBM_DEV_OK'));
     IosRootfs.close(session);
   }, skip: !Platform.isIOS);
+
+  // What the Agent's shell tool goes through. The terminal's backend is the
+  // other half and is exercised above; this one is `ServerExec`, which promises
+  // things a console cannot keep — hence the two files it runs commands with.
+  testWidgets('the Agent runs its commands inside the guest', (_) async {
+    if (!IshExec.isSupported) {
+      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      return;
+    }
+    await IosRootfs.install();
+    const exec = IshExec();
+
+    final release = await exec.run('cat /etc/alpine-release');
+    expect(release.stdout.trim(), IosRootfs.version);
+    expect(release.exitCode, 0);
+
+    final failed = await exec.run('exit 3');
+    expect(failed.exitCode, 3);
+    expect(failed.succeeded, isFalse);
+
+    // The two streams stay apart. A session's console merges them the way any
+    // terminal does, which is why neither of these came from it.
+    final split = await exec.run('echo out; echo err >&2');
+    expect(split.stdout.trim(), 'out');
+    expect(split.stderr.trim(), 'err');
+    // And what arrives is not a terminal's idea of a line.
+    expect(split.stdout, isNot(contains('\r')));
+
+    // Nothing believes it is talking to one either, which is what stops `ls`
+    // printing columns at a width nobody chose.
+    final piped = await exec.run(r'test -t 1; echo "tty=$?"');
+    expect(piped.stdout.trim(), 'tty=1');
+
+    // The guest is the boundary, exactly as the container is on Android: a
+    // guest path resolves under the root, and one that is not inside is not a
+    // path this machine will expose.
+    expect(await exec.hostPathOf('/etc/alpine-release'), isNotNull);
+    expect(await exec.hostPathOf('etc/alpine-release'), isNull);
+
+    // Cancelling stops waiting, and says the exit code means nothing.
+    final cancel = Completer<void>();
+    final running = exec.run('sleep 30', cancel: cancel.future);
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    cancel.complete();
+    final cancelled = await running.timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => fail('cancelling did not end the command'),
+    );
+    expect(cancelled.exitCode, isNull);
+
+    // Nothing of its own is left in the guest's /tmp.
+    final leftovers = Directory(IosRootfs.root!.joinPath('tmp'))
+        .listSync()
+        .where((e) => e.path.contains('.sbm-exec-'));
+    expect(leftovers, isEmpty);
+  }, skip: !Platform.isIOS, timeout: const Timeout(Duration(minutes: 2)));
 }

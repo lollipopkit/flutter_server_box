@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
-import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/utils/guest_path.dart';
 
 /// A Linux userland on Android, and what it takes to get one.
 ///
@@ -236,77 +236,12 @@ abstract final class AndroidRootfs {
 
   /// The host path a guest path names, or null when it names nothing inside.
   ///
-  /// The Agent's file tools are `dart:io` on the host — they never enter the
-  /// guest — so without this a model that was told it is inside a container
-  /// would be reading the phone. That matters more than it sounds: the file
-  /// tools are the one pair that is deliberately *not* reviewed before it runs,
-  /// on the grounds that reading a file is not a command, and the app's own
-  /// stores and keys are on the same filesystem.
-  ///
-  /// [forWrite] resolves the parent instead of the target, because what is
-  /// being written does not exist yet.
+  /// See [resolveWithinRoot], which iOS's guest shares: what has to be refused
+  /// is the same on both, and only the root differs.
   static Future<String?> hostPathOf(String guest, {bool forWrite = false}) {
     final root = _root;
     if (root == null) return Future.value();
-    return resolveWithin(root, guest, forWrite: forWrite);
-  }
-
-  /// [hostPathOf] against an explicit root, so it can be exercised off Android.
-  @visibleForTesting
-  static Future<String?> resolveWithin(
-    String root,
-    String guest, {
-    bool forWrite = false,
-  }) async {
-    // Guest paths are absolute; a relative one has no meaning here, since the
-    // guest's working directory is not this process's.
-    if (!guest.startsWith('/')) return null;
-
-    // Lexical first: `..` is resolved against the guest's root, so `/../etc`
-    // is `/etc` inside rather than an escape to be caught later.
-    final parts = <String>[];
-    for (final segment in guest.split('/')) {
-      switch (segment) {
-        case '' || '.':
-          continue;
-        case '..':
-          if (parts.isNotEmpty) parts.removeLast();
-        default:
-          parts.add(segment);
-      }
-    }
-
-    // Resolved, not compared as written: on Android `/data/user/0` is a symlink
-    // to `/data/data`, so the root itself has two spellings and a string
-    // comparison would reject everything.
-    final String base;
-    try {
-      base = await Directory(root).resolveSymbolicLinks();
-    } catch (_) {
-      // No rootfs on disk. Nothing is inside a directory that is not there.
-      return null;
-    }
-    if (parts.isEmpty) return base;
-
-    final host = [base, ...parts].join('/');
-    // And resolved again at the end, because a symlink *inside* the rootfs can
-    // point out of it — `ln -s / /tmp/out` is one reviewed command away, and
-    // `File.readAsBytes` would follow it without asking anybody.
-    final toResolve = forWrite ? host.substring(0, host.lastIndexOf('/')) : host;
-    String? real;
-    try {
-      real = await Directory(toResolve).resolveSymbolicLinks();
-    } on FileSystemException {
-      // A file, not a directory — or nothing at all. `File` resolves the first
-      // and refuses the second, which is the answer either way.
-      try {
-        real = await File(toResolve).resolveSymbolicLinks();
-      } catch (_) {
-        return null;
-      }
-    }
-    if (real != base && !real.startsWith('$base/')) return null;
-    return forWrite ? '$real/${parts.last}' : real;
+    return resolveWithinRoot(root, guest, forWrite: forWrite);
   }
 
   /// What the guest needs in its environment.

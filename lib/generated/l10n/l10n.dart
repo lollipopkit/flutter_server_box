@@ -2529,7 +2529,7 @@ abstract class AppLocalizations {
   /// No description provided for @agentLocalExecRootfsTip.
   ///
   /// In en, this message translates to:
-  /// **'Lets the Agent work on this device, inside the Alpine Linux container ServerBox installs. It cannot see Android\'s filesystem, the app\'s data or your files. Every command still needs review.'**
+  /// **'Lets the Agent work on this device, inside the Alpine Linux container ServerBox installs. It cannot see the phone\'s own filesystem, the app\'s data or your files. Every command still needs review.'**
   String get agentLocalExecRootfsTip;
 
   /// No description provided for @macDmgImportedPartly.

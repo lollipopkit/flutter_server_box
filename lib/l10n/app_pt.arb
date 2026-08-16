@@ -411,6 +411,6 @@
   "askAiRiskUnknown": "Não classificado",
   "agentLocalExec": "Executar comandos neste dispositivo",
   "agentLocalExecTip": "Permite que o Agent trabalhe na máquina onde o ServerBox está a ser executado, não apenas em servidores. Aqui nada corre sem supervisão: todos os comandos precisam de revisão.",
-  "agentLocalExecRootfsTip": "Permite que o Agent trabalhe neste dispositivo, dentro do contêiner Alpine Linux que o ServerBox instala. Ele não consegue ver o sistema de arquivos do Android, os dados do app nem os seus arquivos. Todos os comandos continuam precisando de revisão.",
+  "agentLocalExecRootfsTip": "Permite que o Agent trabalhe neste dispositivo, dentro do contêiner Alpine Linux que o ServerBox instala. Ele não consegue ver o sistema de arquivos do telefone, os dados do app nem os seus arquivos. Todos os comandos continuam precisando de revisão.",
   "macDmgImportedPartly": "Os dados da versão instalada anteriormente foram importados. Os ficheiros transferidos ficaram em {path}."
 }

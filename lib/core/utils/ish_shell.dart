@@ -58,7 +58,7 @@ class IshShellBackend implements ShellBackend {
     // terminal, or from the Agent — and that is not an error: it is the
     // machine, and this is another process on it.
     final booted = IosRootfs.boot();
-    if (booted < 0 && booted != -17) {
+    if (booted < 0 && booted != IosRootfs.alreadyBooted) {
       throw StateError('The Linux guest did not start ($booted)');
     }
 

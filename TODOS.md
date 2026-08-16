@@ -284,20 +284,34 @@ proot 并在构建后检查两个 `.so` 确实进了 APK。剩下两条:
 默认是 `0`,因为引擎不在仓库里(`scripts/build-ish-ios.sh` 才会构建它),没跑过脚本的
 检出根本链接不了;悄悄少链一个库的构建,比明确不做还糟。
 
-## iOS Linux 环境:剩下的两条
+## iOS Linux 环境:代码层面已完成,剩真机和审核
 
-装机路径、每会话独立 pty、`/dev` 设备节点都做完并在模拟器验过了。剩两条,看起来是同一个原因:
+装机路径、每会话独立 pty、`/dev` 设备节点、终端入口、Agent 本地目标都做完了,在模拟器
+验过。原来记的两条已修,原因和当初的判断不同:
 
-- `/dev/stdout`、`/dev/stdin`、`/dev/stderr`、`/dev/fd` 是指向 `/proc/self/fd/N` 的
-  链接,跟随得到 "nonexistent directory"
-- `tty` 报 "not a tty"
+不是 `/dev/pts` 有问题。`create_stdio`(引擎的 `kernel/init.c:137`)打开路径后要求
+`S_ISCHR(fd->stat.mode)`,但 `fd->stat` 是 adhoc 文件系统自己的一份 stat
+(`fs/fd.h:114`),`generic_openat` 填的是 `fd->type`;devpts 的 fd 走 `fd_create`,
+该结构体全零。所以这个判断恒为假,每个会话都退回 adhoc fd —— 输出照样到 driver,
+所以会话一直是好的,也因此要调 `tty` 才发现。`sbm_ish.c` 现在自己打开 slave 并检查
+`generic_openat` 真正设置的字段,`create_stdio` 保留为回退分支且落到时会 syslog。
 
-两条都符合同一个解释:`create_stdio` 在 `/dev/pts/N` 打不开成字符设备时会回退到它自己
-造的 adhoc fd。输出照样能到 driver(所以会话是好的),但那个 fd 不在 procfs 列的表里,
-`isatty` 也不认。**要试的就一件事:让 `/dev/pts/N` 能解析。**
+顺带解决的:`generic_openat` 对字符设备走 `dev_open` → `tty_open`,会给 session leader
+认领控制终端,所以 `/dev/tty`、job control、Ctrl-C 都对了。命令会话(`command != NULL`)
+另外关掉 `OPOST` 和 `ECHO`。
 
-另外没做的是 **Agent 的 iOS 本地目标**。现在有独立 pty、`supportsExec` 也是 true,
-接进去不再需要标记协议;形状照 Android 那边(容器是唯一的本机,文件工具在容器内解析)。
+**Agent 的 iOS 本地目标**是 `IshExec`,形状照 Android(容器是唯一的本机,文件工具在
+容器内解析,共用 `resolveWithinRoot` 这条边界)。一个设计点:pty 对 `ServerExec` 是错的
+形状——两条流会合并、输入会回显、程序会以为自己在终端里。所以命令自己的 stdout/stderr
+重定向到 guest `/tmp` 下两个文件,从 host 读(`realfs` 下两边看的是同一棵目录树),
+console 上剩下的(重定向本身失败时 shell 的报错)算作 stderr。
+
+不需要真机就能跑的两个测试:`test/file_tail_test.dart`(边写边读,多字节字符跨轮次
+截断是会被用户撞到的那个 case)、`test/ish_exec_test.dart`(实际交给 guest 的那段 shell)。
+
+剩下的都在 `local-ssh-plan.md` 的 M1–M5:真机跑引擎、Instruments 看内存和发热、
+`benchmark/run.sh` 出性能数、`SBM_ISH=0` 的 IPA 搜符号确认剥干净、送审。另外 CI 还没有
+iOS 的构建步骤。
 
 ## 自定义命令:改成服务器上的文件,三层一起动
 

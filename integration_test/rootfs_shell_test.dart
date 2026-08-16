@@ -120,10 +120,10 @@ void main() {
     }
     await AndroidRootfs.install();
 
-    // `LocalExec`, not the terminal's backend: the Agent's shell tool goes
+    // `ProcessExec`, not the terminal's backend: the Agent's shell tool goes
     // through this one, and until now nothing had ever run a command on this
     // device through it — see local-ssh-plan.md, stage 2b.
-    const exec = LocalExec(inRootfs: true);
+    const exec = ProcessExec(inRootfs: true);
 
     final release = await exec.run('cat /etc/alpine-release');
     expect(release.stdout.trim(), AndroidRootfs.version);

@@ -1430,7 +1430,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get agentLocalExecRootfsTip =>
-      'Laat de Agent op dit apparaat werken, binnen de Alpine Linux-container die ServerBox installeert. Hij kan het bestandssysteem van Android, de gegevens van de app en jouw bestanden niet zien. Elke opdracht moet nog steeds worden beoordeeld.';
+      'Laat de Agent op dit apparaat werken, binnen de Alpine Linux-container die ServerBox installeert. Hij kan het bestandssysteem van het toestel, de gegevens van de app en jouw bestanden niet zien. Elke opdracht moet nog steeds worden beoordeeld.';
 
   @override
   String macDmgImportedPartly(String path) {

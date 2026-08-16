@@ -8,7 +8,7 @@ import 'package:server_box/data/model/server/server_exec.dart';
 /// Unlike the terminal's backend, this one is `dart:io` and nothing else, so
 /// it can be exercised here rather than only inside a real app.
 void main() {
-  const exec = LocalExec();
+  const exec = ProcessExec();
 
   // Nothing below has a Windows spelling, and the ones that matter are checked
   // on the platforms that run CI for this.

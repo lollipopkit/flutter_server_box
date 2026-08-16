@@ -1,14 +1,15 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:server_box/core/utils/android_rootfs.dart';
+import 'package:server_box/core/utils/guest_path.dart';
 
-/// What the Agent's file tools may reach when the local target is the rootfs.
+/// What the Agent's file tools may reach when the local target is a userland.
 ///
 /// This is the boundary itself, not a convenience: `read_file` is the one tool
 /// that is deliberately not reviewed before it runs, and on the host it is
 /// `dart:io` with no notion of a container. Exercised here rather than only on
-/// a device because it is filesystem logic and nothing about it is Android's.
+/// a device because it is filesystem logic and belongs to neither platform —
+/// Android's rootfs and iOS's guest tree are the same question.
 void main() {
   late Directory root;
   late String realRoot;
@@ -27,7 +28,7 @@ void main() {
   tearDown(() => root.delete(recursive: true));
 
   Future<String?> resolve(String guest, {bool forWrite = false}) =>
-      AndroidRootfs.resolveWithin(root.path, guest, forWrite: forWrite);
+      resolveWithinRoot(root.path, guest, forWrite: forWrite);
 
   group('a path inside the container', () {
     test('is the same path under the rootfs', () async {
@@ -89,9 +90,6 @@ void main() {
   });
 
   test('no rootfs on disk means nothing is inside one', () async {
-    expect(
-      await AndroidRootfs.resolveWithin('${root.path}/gone', '/etc/hosts'),
-      isNull,
-    );
+    expect(await resolveWithinRoot('${root.path}/gone', '/etc/hosts'), isNull);
   });
 }

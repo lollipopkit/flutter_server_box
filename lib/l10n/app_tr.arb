@@ -411,6 +411,6 @@
   "askAiRiskUnknown": "Sınıflandırılmadı",
   "agentLocalExec": "Bu cihazda komut çalıştır",
   "agentLocalExecTip": "Agent'ın yalnızca sunucularda değil, ServerBox'ın çalıştığı makinede de çalışmasına izin verir. Burada hiçbir şey gözetimsiz çalışmaz: her komut inceleme gerektirir.",
-  "agentLocalExecRootfsTip": "Agent'ın bu cihazda, ServerBox'ın kurduğu Alpine Linux konteyneri içinde çalışmasına izin verir. Android'in dosya sistemini, uygulamanın verilerini veya dosyalarınızı göremez. Her komut yine de inceleme gerektirir.",
+  "agentLocalExecRootfsTip": "Agent'ın bu cihazda, ServerBox'ın kurduğu Alpine Linux konteyneri içinde çalışmasına izin verir. Cihazın kendi dosya sistemini, uygulamanın verilerini veya dosyalarınızı göremez. Her komut yine de inceleme gerektirir.",
   "macDmgImportedPartly": "Daha önce yüklü sürümün verileri içe aktarıldı. İndirilen dosyalar {path} konumunda kaldı."
 }

@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:ffi/ffi.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:server_box/core/utils/guest_path.dart';
 
 /// A Linux userland on iOS, and what it takes to get one.
 ///
@@ -208,6 +209,18 @@ abstract final class IosRootfs {
     (p) => p.lookupFunction<Int Function(Pointer<Char>, Uint16), int Function(Pointer<Char>, int)>('chmod'),
   );
 
+  /// The host path a guest path names, or null when it names nothing inside.
+  ///
+  /// Simpler here than on Android and for the reason the whole platform is
+  /// simpler: `realfs` mounts an ordinary directory tree, so the guest's `/etc`
+  /// really is `<root>/etc` on the host. See [resolveWithinRoot] for what has
+  /// to be refused — which is the same on both.
+  static Future<String?> hostPathOf(String guest, {bool forWrite = false}) {
+    final root = _root;
+    if (root == null) return Future.value();
+    return resolveWithinRoot(root, guest, forWrite: forWrite);
+  }
+
   /// Locates where the filesystem would be. Call once, before anything asks.
   static Future<void> prepare() async {
     if (!Platform.isIOS) return;
@@ -215,8 +228,15 @@ abstract final class IosRootfs {
     await isInstalled;
   }
 
-  /// Starts the machine, once. Returns 0, -EEXIST if it is already up, or a
-  /// negative errno.
+  /// What [boot] answers when the machine is already up — `-EEXIST`.
+  ///
+  /// Not an error anywhere: there is one machine per app process by design, so
+  /// the second caller to ask for it is a terminal opening beside the Agent,
+  /// or the other way round.
+  static const alreadyBooted = -17;
+
+  /// Starts the machine, once. Returns 0, [alreadyBooted] if it is already up,
+  /// or a negative errno.
   ///
   /// One machine per app process, because the engine keeps its kernel state in
   /// globals — but a machine runs as many processes as it is asked to, which
