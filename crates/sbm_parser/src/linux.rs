@@ -6,7 +6,7 @@ use crate::types::*;
 /// first line must be `cpu`/`cpuN`, stop at the first non-cpu line; skip lines with fewer than 8 fields
 pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
     let mut cores = Vec::new();
-    for line in raw.split('\n') {
+    for line in raw.lines() {
         let line = line.trim();
         if line.is_empty() {
             continue;
@@ -319,7 +319,7 @@ pub fn parse_temps(types_raw: &str, values_raw: &str, divisor: f64) -> Temperatu
 /// Tcp lines of /proc/net/snmp (Dart `Conn.parse`):
 /// take the last `Tcp:` line; MaxConn is column 4, AttemptFails column 7
 pub fn parse_conn(raw: &str) -> Option<Conn> {
-    let line = raw.split('\n').filter(|l| l.starts_with("Tcp:")).next_back()?;
+    let line = raw.split('\n').rfind(|l| l.starts_with("Tcp:"))?;
     let fields: Vec<&str> = line.split_whitespace().collect();
     if fields.len() <= 7 {
         return None;
@@ -357,7 +357,7 @@ pub fn parse_diskio(raw: &str) -> Vec<DiskIoPiece> {
 pub fn parse_batteries(raw: &str, only_li_poly: bool) -> Vec<Battery> {
     let mut batteries = Vec::new();
     let mut block: Vec<&str> = Vec::new();
-    for line in raw.split('\n') {
+    for line in raw.lines() {
         if !line.is_empty() {
             block.push(line);
             continue;
@@ -368,6 +368,11 @@ pub fn parse_batteries(raw: &str, only_li_poly: bool) -> Vec<Battery> {
             batteries.push(battery);
         }
         block.clear();
+    }
+    if let Some(battery) = parse_battery_block(&block)
+        && (!only_li_poly || battery.is_li_poly())
+    {
+        batteries.push(battery);
     }
     batteries
 }
@@ -399,7 +404,7 @@ fn parse_battery_block(lines: &[&str]) -> Option<Battery> {
 /// each block at least 3 lines [device, adapter, detail...]
 pub fn parse_sensors(raw: &str) -> Vec<SensorItem> {
     let mut groups: Vec<Vec<&str>> = vec![Vec::new()];
-    for line in raw.split('\n') {
+    for line in raw.lines() {
         if line.is_empty() {
             groups.push(Vec::new());
         } else {
@@ -435,7 +440,7 @@ pub fn parse_sensors(raw: &str) -> Vec<SensorItem> {
 /// count, keeping first-seen order
 pub fn parse_cpu_brand(raw: &str) -> Vec<(String, u32)> {
     let mut brands: Vec<(String, u32)> = Vec::new();
-    for line in raw.split('\n') {
+    for line in raw.lines() {
         if !line.contains("model name") {
             continue;
         }

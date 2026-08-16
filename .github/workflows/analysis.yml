@@ -16,6 +16,8 @@ permissions:
 
 env:
   FLUTTER_VERSION: '3.47.0'
+  FLUTTER_STORAGE_BASE_URL: https://storage.flutter-io.cn
+  PUB_HOSTED_URL: https://pub.flutter-io.cn
 
 jobs:
   reproducibilityCheck:
@@ -48,14 +50,37 @@ jobs:
           fi
 
       - name: Check locked dependencies
-        env:
-          PUB_HOSTED_URL: https://pub.dev
         run: |
+          cp pubspec.lock "$RUNNER_TEMP/pubspec.lock"
+          trap 'cp "$RUNNER_TEMP/pubspec.lock" pubspec.lock' EXIT
+          bash scripts/ci/use-pub-mirror.sh pubspec.lock
           flutter pub get --enforce-lockfile
+          cp "$RUNNER_TEMP/pubspec.lock" pubspec.lock
+          trap - EXIT
           git diff --exit-code -- pubspec.yaml pubspec.lock
 
       - name: Check JNI build-id patch
         run: scripts/release/patch-jni-build-id.sh
+
+  rustTests:
+    name: Rust tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Test Rust workspace
+        run: cargo test --workspace --no-fail-fast
 
   check:
     runs-on: ubuntu-latest
@@ -71,6 +96,10 @@ jobs:
         with:
           channel: 'stable'
           flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - name: Use pub mirror with locked versions
+        shell: bash
+        run: bash scripts/ci/use-pub-mirror.sh
 
       - name: Install dependencies
         run: flutter pub get

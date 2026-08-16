@@ -19,6 +19,8 @@ env:
   APP_NAME: ServerBox
   BUILD_TAG: test-build-${{ github.run_number }}-${{ github.sha }}
   FLUTTER_VERSION: "3.47.0"
+  FLUTTER_STORAGE_BASE_URL: https://storage.flutter-io.cn
+  PUB_HOSTED_URL: https://pub.flutter-io.cn
 
 jobs:
   reproducibilityCheck:
@@ -65,14 +67,157 @@ jobs:
           fi
       - name: Check locked dependencies
         shell: bash
-        env:
-          PUB_HOSTED_URL: https://pub.dev
         run: |
+          cp pubspec.lock "$RUNNER_TEMP/pubspec.lock"
+          trap 'cp "$RUNNER_TEMP/pubspec.lock" pubspec.lock' EXIT
+          bash scripts/ci/use-pub-mirror.sh pubspec.lock
           flutter pub get --enforce-lockfile
+          cp "$RUNNER_TEMP/pubspec.lock" pubspec.lock
+          trap - EXIT
           git diff --exit-code -- pubspec.yaml pubspec.lock
       - name: Check JNI build-id patch
         shell: bash
         run: scripts/release/patch-jni-build-id.sh
+
+  verifyMacOS:
+    name: Verify macOS release
+    if: github.event_name == 'workflow_dispatch' && inputs.release != true
+    needs: reproducibilityCheck
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+      - uses: Swatinem/rust-cache@v2
+      - name: Use pub mirror with locked versions
+        shell: bash
+        run: bash scripts/ci/use-pub-mirror.sh
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Sign locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          project=macos/Runner.xcodeproj/project.pbxproj
+          sed -i '' \
+            -e 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "-";/' \
+            -e 's/"CODE_SIGN_IDENTITY\[sdk=macosx\*\]" = "3rd Party Mac Developer Application";/"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";/' \
+            -e 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/' \
+            -e 's/DEVELOPMENT_TEAM = BA88US33G6;/DEVELOPMENT_TEAM = "";/' \
+            -e 's/"DEVELOPMENT_TEAM\[sdk=macosx\*\]" = BA88US33G6;/"DEVELOPMENT_TEAM[sdk=macosx*]" = "";/' \
+            "$project"
+          cat > macos/Runner/Release.entitlements <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>com.apple.security.app-sandbox</key>
+            <false/>
+            <key>com.apple.security.cs.allow-jit</key>
+            <true/>
+            <key>com.apple.security.network.client</key>
+            <true/>
+            <key>com.apple.security.network.server</key>
+            <true/>
+            <key>com.apple.security.files.user-selected.read-write</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+      - name: Build release
+        run: flutter build macos --release
+      - name: Verify release launch
+        shell: bash
+        run: |
+          set -euo pipefail
+          app="build/macos/Build/Products/Release/Server Box.app"
+          executable="$app/Contents/MacOS/Server Box"
+          log_file="$RUNNER_TEMP/server-box.log"
+
+          codesign --verify --deep --strict "$app"
+          "$executable" >"$log_file" 2>&1 &
+          pid=$!
+
+          cleanup() {
+            if kill -0 "$pid" 2>/dev/null; then
+              kill "$pid"
+              wait "$pid" || true
+            fi
+          }
+          trap cleanup EXIT
+
+          for _ in {1..10}; do
+            if ! kill -0 "$pid" 2>/dev/null; then
+              wait "$pid" || true
+              cat "$log_file"
+              log show --last 2m --style compact --predicate 'process == "Server Box"' || true
+              echo "Server Box exited before the macOS launch smoke test completed."
+              exit 1
+            fi
+            sleep 1
+          done
+
+          cat "$log_file"
+
+  verifyMonitor:
+    name: Verify monitor ${{ matrix.platform }}-${{ matrix.arch }}
+    if: github.event_name == 'workflow_dispatch' && inputs.release != true
+    needs: reproducibilityCheck
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            platform: linux
+            arch: amd64
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+            platform: linux
+            arch: arm64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            platform: macos
+            arch: arm64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            platform: macos
+            arch: amd64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            platform: windows
+            arch: amd64
+    runs-on: ${{ matrix.os }}
+    env:
+      SQLX_OFFLINE: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Install musl toolchain
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+      - name: Add Rust target
+        run: rustup target add ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+      - name: Build
+        shell: bash
+        run: cargo build -p server_box_monitor --release --target ${{ matrix.target }}
 
   buildAndroid:
     name: Build android
@@ -94,6 +239,9 @@ jobs:
         with:
           distribution: "zulu"
           java-version: "21"
+      - name: Use pub mirror with locked versions
+        shell: bash
+        run: bash scripts/ci/use-pub-mirror.sh
       - name: Fetch secrets
         run: |
           curl --fail --show-error --location -u ${{ secrets.BASIC_AUTH }} -o android/app/app.key ${{ secrets.URL_PREFIX }}app.key
@@ -180,6 +328,9 @@ jobs:
         with:
           channel: "stable"
           flutter-version: ${{ env.FLUTTER_VERSION }}
+      - name: Use pub mirror with locked versions
+        shell: bash
+        run: bash scripts/ci/use-pub-mirror.sh
       - name: Resolve build number
         shell: bash
         run: |
@@ -250,6 +401,9 @@ jobs:
           sudo apt update
           sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev mesa-utils libvulkan-dev desktop-file-utils wget
           sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev libsecret-1-dev
+      - name: Use pub mirror with locked versions
+        shell: bash
+        run: bash scripts/ci/use-pub-mirror.sh
       - name: Build (release)
         if: inputs.release == true || github.ref_type == 'tag'
         shell: bash
@@ -303,6 +457,9 @@ jobs:
         with:
           channel: 'stable'
           flutter-version: ${{ env.FLUTTER_VERSION }}
+      - name: Use pub mirror with locked versions
+        shell: bash
+        run: bash scripts/ci/use-pub-mirror.sh
       - name: Build (release)
         if: inputs.release == true || github.ref_type == 'tag'
         shell: bash

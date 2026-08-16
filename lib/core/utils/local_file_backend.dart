@@ -168,7 +168,7 @@ class LocalFileBackend implements FileBackend {
 
   static Future<String?> _targetOf(Link link) async {
     try {
-      return await link.target();
+      return (await link.target()).replaceAll(r'\', '/');
     } on FileSystemException {
       // A link to nowhere is still a link, and still worth listing.
       return null;
