@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/extension/ssh_client.dart';
+import 'package:server_box/core/utils/local_files.dart';
 import 'package:server_box/core/utils/sftp_escalation.dart';
 import 'package:server_box/core/utils/sftp_file_backend.dart';
 import 'package:server_box/core/utils/sftp_sudo.dart';
@@ -354,8 +355,21 @@ extension _Actions on _SftpPageState {
       actions: [
         Btn.cancel(),
         TextButton(
-          onPressed: () {
+          onPressed: () async {
             context.popDialog();
+            // The transfer worker creates the destination itself, but it runs
+            // in an isolate — and on desktop the first write into
+            // [Paths.file] is what raises the documents-folder prompt. Doing
+            // it here means a refusal is answered by this page, in front of
+            // the user who just asked for the download.
+            try {
+              await LocalFiles.ensure();
+            } catch (e, s) {
+              Loggers.app.warning('Prepare ${Paths.file}', e, s);
+              if (mounted) context.showErrDialog(e, s);
+              return;
+            }
+            if (!mounted) return;
             ref
                 .read(fileTransferProvider.notifier)
                 .add(

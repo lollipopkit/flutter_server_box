@@ -71,7 +71,14 @@ Future<void> _initData() async {
   //
   // TODO: drop the legacy name (and `BakSyncer.inheritLegacyRemote`) once no
   // install can still be writing `srvbox_bak.json`.
-  await Paths.init(BuildData.name, bakName: Miscs.bakFileName);
+  // `img` holds the SSH background, `font` the terminal font. The rest of
+  // `PathDir` belongs to other apps on fl_lib, and creating them here would
+  // only leave empty directories beside the boxes.
+  await Paths.init(
+    BuildData.name,
+    bakName: Miscs.bakFileName,
+    dirs: const {PathDir.img, PathDir.font},
+  );
 
   await Hive.initFlutter();
   Hive.registerAdapters();

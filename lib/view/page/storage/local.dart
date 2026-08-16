@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/local_file_backend.dart';
+import 'package:server_box/core/utils/local_files.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/provider/server/all.dart';
@@ -64,28 +65,37 @@ class LocalFilePage extends ConsumerStatefulWidget {
 class _LocalFilePageState extends ConsumerState<LocalFilePage> {
   static const _backend = LocalFileBackend();
 
+  /// The root has to be there before the browser lists it, and on desktop
+  /// making it is what raises the documents-folder prompt — so it happens
+  /// here, on the way into the browser, rather than at startup. A refusal
+  /// surfaces as the page's error instead of an empty directory.
+  late final _root = LocalFiles.ensure();
+
   bool get _isPickFile => widget.args?.isPickFile ?? false;
 
   @override
   Widget build(BuildContext context) {
-    return FileBrowserPage(
-      args: FileBrowserArgs(
-        backend: _backend,
-        // Everything this app writes lives under here, and there is nothing
-        // above it worth browsing on a sandboxed platform.
-        root: Paths.file,
-        initialPath: widget.args?.initDir,
-        isPickFile: _isPickFile,
-        isPickDir: widget.args?.isPickDir ?? false,
-        refOf: LocalFileRef.new,
-        actionsSink: widget.args?.actionsSink,
-        onPathChanged: widget.args?.onPathChanged,
-        extraActions: _actions,
-        bottomActions: _bottomActions,
-        createActions: _createActions,
-        entryActions: _entryActions,
-        labelOf: _labelOf,
-        onOpenFile: _isPickFile ? null : _openEditor,
+    return FutureWidget<String>(
+      future: _root,
+      success: (root) => FileBrowserPage(
+        args: FileBrowserArgs(
+          backend: _backend,
+          // The user's own files, and the only place this app browses from:
+          // there is nothing above it worth showing on a sandboxed platform.
+          root: root!,
+          initialPath: widget.args?.initDir,
+          isPickFile: _isPickFile,
+          isPickDir: widget.args?.isPickDir ?? false,
+          refOf: LocalFileRef.new,
+          actionsSink: widget.args?.actionsSink,
+          onPathChanged: widget.args?.onPathChanged,
+          extraActions: _actions,
+          bottomActions: _bottomActions,
+          createActions: _createActions,
+          entryActions: _entryActions,
+          labelOf: _labelOf,
+          onOpenFile: _isPickFile ? null : _openEditor,
+        ),
       ),
     );
   }
