@@ -298,3 +298,32 @@ proot 并在构建后检查两个 `.so` 确实进了 APK。剩下两条:
 
 另外没做的是 **Agent 的 iOS 本地目标**。现在有独立 pty、`supportsExec` 也是 true,
 接进去不再需要标记协议;形状照 Android 那边(容器是唯一的本机,文件工具在容器内解析)。
+
+## 自定义命令:改成服务器上的文件,三层一起动
+
+已定的三条:
+
+1. **保序,用户可拖动排序**。文件名前缀 `NNNNN_`,间隔 100 —— 往两条之间插一条只需重命名
+   一个文件,不用重排整个目录(文件在 SSH 那头,这一点很实际)。
+2. **服务器是唯一来源**。命令不再进 app 的备份,顺带消掉「恢复别人给的备份 → 在你每台
+   服务器上执行任意代码」那条路。代价:配置绑在服务器上,重装服务器就没了。
+3. **monitor 也要跑**,web 端也要能配置。否则 monitor-only 的服务器永远没有这个功能。
+
+已落地的只有**约定层**(`sbm_parser::script`):`CUSTOM_CMD_DIR`、`CUSTOM_CMD_ORDER_STEP`、
+`custom_cmd_file_name`、`custom_cmd_name_from_file`,连同测试。它不改变任何现有行为,
+但 app 和 monitor 从此有同一套文件名规则可依。
+
+剩下的按**不会回归**的顺序做——脚本改成读目录、而 app 还没写目录,自定义命令就会当场失效:
+
+1. **app 先写目录**(装脚本时顺带写 `custom_cmds/`,批量一次传完,写临时目录再 rename;
+   删掉的命令要显式删远端文件)。此时脚本仍然内联,功能不变。
+2. **脚本改成读目录**:Status 里遍历 `$(dirname $0)/custom_cmds`,`echo` 用文件名里的编码名
+   当 marker,`sh "$f"` 执行(不用执行位,绕开 noexec),有 `timeout` 就套 5 秒。
+   同时 `ScriptOptions.custom_cmds` 删掉、FFI 那个参数删掉、`allScript` 不再传。
+   `tests/script_compat.rs` 的基线要重写——脚本字节从此不随用户配置变化,这本身是收益。
+   Windows 侧用 `Get-ChildItem | Sort-Object Name` + `&`。
+3. **app 的拖动排序 UI**,以及从 `Spi.customCmds`(Hive/备份)迁移到服务器目录:要一次迁移
+   和一个「服务器连不上时怎么编辑」的答案。
+4. **monitor**:扩展周期里读同一个目录、执行、结果并进 status 响应;web 端做编辑界面。
+   注意 monitor 现在**根本不跑** Status(采集已换成 `sbm_native`,共享脚本只用于扩展函数),
+   所以这不是「把配置传进去」,是新增一段采集。

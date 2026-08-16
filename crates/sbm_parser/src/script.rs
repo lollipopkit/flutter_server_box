@@ -27,6 +27,41 @@ pub const CUSTOM_CMD_SEPARATOR: &str = "SrvBoxCusCmdSep";
 /// unencoded marker was realistically reachable.
 const ENCODED_NAME_PREFIX: &str = "b64.";
 
+/// Directory the per-command files live in, beside the installed script.
+///
+/// Custom commands are files rather than lines spliced into the script, and
+/// that is the difference between "a user's typo breaks their status page" and
+/// "a user's typo breaks that one command". It also stops user configuration
+/// from changing the script's bytes at all: the script is a function of the
+/// manifest, and the commands are data it reads.
+pub const CUSTOM_CMD_DIR: &str = "custom_cmds";
+
+/// Spacing between the order prefixes of adjacent commands.
+///
+/// Sparse on purpose: moving a command between two others is then a rename of
+/// one file rather than a renumbering of all of them, which matters when the
+/// files are on a server at the end of an SSH connection.
+pub const CUSTOM_CMD_ORDER_STEP: u32 = 100;
+
+/// The file a custom command is stored as: `NNNNN_<encoded name>`.
+///
+/// Zero-padded so that sorting the directory by name sorts it by order, which
+/// is what the script does and what saves it from having to parse anything.
+/// The name is base64url after the underscore, so a command may be called
+/// whatever the user likes without any of it reaching a shell.
+pub fn custom_cmd_file_name(order: u32, name: &str) -> String {
+    format!("{order:05}_{}", encode_marker_name(name))
+}
+
+/// The name back out of a file name, or `None` if it is not one of ours.
+pub fn custom_cmd_name_from_file(file_name: &str) -> Option<String> {
+    let (order, encoded) = file_name.split_once('_')?;
+    if order.is_empty() || !order.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    decode_marker_name(&format!("{ENCODED_NAME_PREFIX}{encoded}"))
+}
+
 fn encode_marker_name(name: &str) -> String {
     use base64::Engine;
     base64::engine::general_purpose::URL_SAFE.encode(name)

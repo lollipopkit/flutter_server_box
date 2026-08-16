@@ -383,3 +383,34 @@ fn e2e_unix_status_script_runs() {
     let sign = &map["echo"];
     assert!(sign.contains("__linux") || sign.contains("__bsd"), "echo: {sign}");
 }
+
+/// The convention both ends of the migration have to agree on: the app writes
+/// these files over SSH, the monitor reads the same directory, and the script
+/// sorts by name because the name carries the order.
+#[test]
+fn custom_cmd_file_names_sort_by_order() {
+    use sbm_parser::script::{
+        custom_cmd_file_name, custom_cmd_name_from_file, CUSTOM_CMD_ORDER_STEP,
+    };
+
+    let first = custom_cmd_file_name(CUSTOM_CMD_ORDER_STEP, "disk usage");
+    let second = custom_cmd_file_name(CUSTOM_CMD_ORDER_STEP * 2, "who is on");
+    // Sorting the directory sorts the commands. Zero padding is what makes a
+    // string compare agree with a numeric one.
+    assert!(first < second);
+    // And there is room to move one between them without touching either.
+    let between = custom_cmd_file_name(CUSTOM_CMD_ORDER_STEP + 50, "in between");
+    assert!(first < between && between < second);
+
+    // A name survives the round trip whatever is in it.
+    for name in ["disk usage", "磁盘", "a\"b$c`d", "with_underscore"] {
+        let file = custom_cmd_file_name(300, name);
+        assert_eq!(custom_cmd_name_from_file(&file).as_deref(), Some(name));
+        // Nothing that could act in a shell reaches the file name.
+        assert!(file.bytes().all(|b| b.is_ascii_alphanumeric() || b"-_=".contains(&b)));
+    }
+
+    // Anything else in that directory is not ours and is left alone.
+    assert_eq!(custom_cmd_name_from_file("README"), None);
+    assert_eq!(custom_cmd_name_from_file("_notanumber"), None);
+}
