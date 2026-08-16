@@ -175,22 +175,6 @@ class SettingStore extends HiveStore {
 
   late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
 
-  /// Whether the server card carried the function buttons instead of the
-  /// detail page.
-  ///
-  /// TODO: delete this and its stored key. Nothing reads it — the buttons are
-  /// a bar floating over the detail page, which is where they are within reach
-  /// on either layout, so there is no longer a choice to store.
-  @Deprecated('The buttons float over the detail page on every layout')
-  late final moveServerFuncs = propertyDefault(
-    'moveOutServerTabFuncBtns',
-    false,
-  );
-
-  // TODO: remove once shipped builds have stopped carrying it — the retired
-  // `forceSinglePane` key stays in the settings box until something clears it.
-  // Nothing reads it, so it costs one unused entry.
-
   /// Width of the list column, wherever one shares the window with what it
   /// opens: the server list, the terminal and file rails, the agent's
   /// history. One width for all of them, so the columns line up between
@@ -476,6 +460,13 @@ class SettingStore extends HiveStore {
 
   /// Default tmux session name. Empty string means use 'server_box'.
   late final tmuxSessionName = propertyDefault('tmuxSessionName', '');
+
+  /// Removes settings for UI choices that no longer exist. Idempotent so old
+  /// installs are cleaned without another migration flag becoming permanent
+  /// state of its own.
+  Future<void> removeRetiredKeys() async {
+    await box.deleteAll(const ['moveOutServerTabFuncBtns', 'forceSinglePane']);
+  }
 
   /// Migrate sshConnectionMode from old int values (-1/0/1) to bool.
   /// Call once after store initialization.
