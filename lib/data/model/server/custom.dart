@@ -11,6 +11,14 @@ final class ServerCustom {
   final String? pvePwd;
 
   /// {"title": "cmd"}
+  ///
+  /// No longer where custom commands live: they are files in a directory on
+  /// the server, which is what the status script reads and what the editor
+  /// writes. This holds only what an older version of the app stored, until
+  /// the first connection moves it there.
+  // TODO(migration): delete this field, [withoutCmds], and
+  // `IndividualServerNotifier._migrateCustomCmds` once enough releases have
+  // passed for every install to have connected once.
   final Map<String, String>? cmds;
 
   final String? preferTempDev;
@@ -36,6 +44,20 @@ final class ServerCustom {
     this.netDev,
     this.scriptDir,
   });
+
+  /// This, with [cmds] dropped — what the app records once those commands are
+  /// on the server, so it never sends them twice.
+  // TODO(migration): delete with [cmds].
+  ServerCustom withoutCmds() => ServerCustom(
+    pveAddr: pveAddr,
+    pveIgnoreCert: pveIgnoreCert,
+    pvePwd: pvePwd,
+    preferTempDev: preferTempDev,
+    tempIsCelsius: tempIsCelsius,
+    logoUrl: logoUrl,
+    netDev: netDev,
+    scriptDir: scriptDir,
+  );
 
   factory ServerCustom.fromJson(Map<String, dynamic> json) =>
       _$ServerCustomFromJson(json);

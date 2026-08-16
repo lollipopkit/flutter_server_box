@@ -68,7 +68,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => 231270271;
+  int get rustContentHash => -737209148;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -104,11 +104,12 @@ abstract class RustLibApi extends BaseApi {
 
   String crateApiScriptInstallCustomCmdsCommand({
     required String system,
-    required String scriptDir,
     required List<CustomCmd> cmds,
   });
 
-  Future<Map<String, String>> crateApiScriptParseScriptOutput({
+  List<CustomCmd>? crateApiScriptParseCustomCmdsListing({required String raw});
+
+  Future<List<ScriptSegment>> crateApiScriptParseScriptSegments({
     required String raw,
   });
 
@@ -119,6 +120,8 @@ abstract class RustLibApi extends BaseApi {
   });
 
   String crateApiParserParseWindowsNetSpeedJson({required String raw});
+
+  String crateApiScriptReadCustomCmdsCommand({required String system});
 
   String crateApiParserSeparator();
 
@@ -280,7 +283,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @override
   String crateApiScriptInstallCustomCmdsCommand({
     required String system,
-    required String scriptDir,
     required List<CustomCmd> cmds,
   }) {
     return handler.executeSync(
@@ -288,7 +290,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(system, serializer);
-          sse_encode_String(scriptDir, serializer);
           sse_encode_list_custom_cmd(cmds, serializer);
           return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
         },
@@ -297,7 +298,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_String,
         ),
         constMeta: kCrateApiScriptInstallCustomCmdsCommandConstMeta,
-        argValues: [system, scriptDir, cmds],
+        argValues: [system, cmds],
         apiImpl: this,
       ),
     );
@@ -306,11 +307,37 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiScriptInstallCustomCmdsCommandConstMeta =>
       const TaskConstMeta(
         debugName: 'install_custom_cmds_command',
-        argNames: ['system', 'scriptDir', 'cmds'],
+        argNames: ['system', 'cmds'],
       );
 
   @override
-  Future<Map<String, String>> crateApiScriptParseScriptOutput({
+  List<CustomCmd>? crateApiScriptParseCustomCmdsListing({required String raw}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(raw, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_list_custom_cmd,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiScriptParseCustomCmdsListingConstMeta,
+        argValues: [raw],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiScriptParseCustomCmdsListingConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_custom_cmds_listing',
+        argNames: ['raw'],
+      );
+
+  @override
+  Future<List<ScriptSegment>> crateApiScriptParseScriptSegments({
     required String raw,
   }) {
     return handler.executeNormal(
@@ -321,23 +348,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 8,
             port: port_,
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_Map_String_String_None,
+          decodeSuccessData: sse_decode_list_script_segment,
           decodeErrorData: null,
         ),
-        constMeta: kCrateApiScriptParseScriptOutputConstMeta,
+        constMeta: kCrateApiScriptParseScriptSegmentsConstMeta,
         argValues: [raw],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kCrateApiScriptParseScriptOutputConstMeta =>
-      const TaskConstMeta(debugName: 'parse_script_output', argNames: ['raw']);
+  TaskConstMeta get kCrateApiScriptParseScriptSegmentsConstMeta =>
+      const TaskConstMeta(
+        debugName: 'parse_script_segments',
+        argNames: ['raw'],
+      );
 
   @override
   Future<String> crateApiParserParseStatusJson({
@@ -355,7 +385,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 9,
             port: port_,
           );
         },
@@ -383,7 +413,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(raw, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -403,12 +433,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  String crateApiScriptReadCustomCmdsCommand({required String system}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(system, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiScriptReadCustomCmdsCommandConstMeta,
+        argValues: [system],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiScriptReadCustomCmdsCommandConstMeta =>
+      const TaskConstMeta(
+        debugName: 'read_custom_cmds_command',
+        argNames: ['system'],
+      );
+
+  @override
   String crateApiParserSeparator() {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -431,7 +487,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_shell_func_kind(func, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -530,6 +586,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<ScriptSegment> dco_decode_list_script_segment(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_script_segment).toList();
+  }
+
+  @protected
+  List<CustomCmd>? dco_decode_opt_list_custom_cmd(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_list_custom_cmd(raw);
+  }
+
+  @protected
   (String, String) dco_decode_record_string_string(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -537,6 +605,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       throw Exception('Expected 2 elements, got ${arr.length}');
     }
     return (dco_decode_String(arr[0]), dco_decode_String(arr[1]));
+  }
+
+  @protected
+  ScriptSegment dco_decode_script_segment(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return ScriptSegment(
+      key: dco_decode_String(arr[0]),
+      value: dco_decode_String(arr[1]),
+    );
   }
 
   @protected
@@ -659,6 +739,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<ScriptSegment> sse_decode_list_script_segment(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    final len_ = sse_decode_i_32(deserializer);
+    final ans_ = <ScriptSegment>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_script_segment(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<CustomCmd>? sse_decode_opt_list_custom_cmd(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return sse_decode_list_custom_cmd(deserializer);
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   (String, String) sse_decode_record_string_string(
     SseDeserializer deserializer,
   ) {
@@ -666,6 +773,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     final var_field0 = sse_decode_String(deserializer);
     final var_field1 = sse_decode_String(deserializer);
     return (var_field0, var_field1);
+  }
+
+  @protected
+  ScriptSegment sse_decode_script_segment(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    final var_key = sse_decode_String(deserializer);
+    final var_value = sse_decode_String(deserializer);
+    return ScriptSegment(key: var_key, value: var_value);
   }
 
   @protected
@@ -792,6 +907,31 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_script_segment(
+    List<ScriptSegment> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_script_segment(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_list_custom_cmd(
+    List<CustomCmd>? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_list_custom_cmd(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_record_string_string(
     (String, String) self,
     SseSerializer serializer,
@@ -799,6 +939,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.$1, serializer);
     sse_encode_String(self.$2, serializer);
+  }
+
+  @protected
+  void sse_encode_script_segment(ScriptSegment self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.key, serializer);
+    sse_encode_String(self.value, serializer);
   }
 
   @protected

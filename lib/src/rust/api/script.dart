@@ -6,6 +6,7 @@
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:server_box/src/rust/frb_generated.dart';
 
+// These functions are ignored because they are not marked as `pub`: `wrap_for_default_shell`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `from`
 
 /// Build the full script for a system ("linux" | "bsd" | "windows").
@@ -20,19 +21,31 @@ String buildScript({
   buildNumber: buildNumber,
 );
 
-/// Script that replaces the custom-command directory beside the status script.
+/// Script that replaces the custom-command directory.
 ///
 /// One round trip for the whole set, written aside and moved into place, and
-/// the commands travel encoded — see `install_custom_cmds_script`.
+/// the commands travel encoded — see `install_custom_cmds_script`. The
+/// directory is fixed under the user's home, so there is no path to pass.
 String installCustomCmdsCommand({
   required String system,
-  required String scriptDir,
   required List<CustomCmd> cmds,
 }) => RustLib.instance.api.crateApiScriptInstallCustomCmdsCommand(
   system: system,
-  scriptDir: scriptDir,
   cmds: cmds,
 );
+
+/// Script that prints the custom-command directory back, for the editor to
+/// load. Output goes to `parse_custom_cmds_listing`.
+String readCustomCmdsCommand({required String system}) =>
+    RustLib.instance.api.crateApiScriptReadCustomCmdsCommand(system: system);
+
+/// The installed set, parsed from `read_custom_cmds_command`'s output.
+///
+/// `None` means the directory does not exist — distinct from `Some([])`, an
+/// existing directory the user has emptied. The app seeds the first case from
+/// what it still holds locally and must not touch the second.
+List<CustomCmd>? parseCustomCmdsListing({required String raw}) =>
+    RustLib.instance.api.crateApiScriptParseCustomCmdsListing(raw: raw);
 
 /// Command that installs the script on the target (content piped via stdin)
 String installCommand({
@@ -61,10 +74,13 @@ String execCommand({
 String shellFuncFlag({required ShellFuncKind func}) =>
     RustLib.instance.api.crateApiScriptShellFuncFlag(func: func);
 
-/// Split script output into a command key → output map.
+/// Split script output into its sections, in the order the script printed
+/// them — which for custom commands is the order the user arranged them in,
+/// and the only place that order still exists by the time the app sees it.
+///
 /// Async: status output can be large; runs on the Rust thread pool
-Future<Map<String, String>> parseScriptOutput({required String raw}) =>
-    RustLib.instance.api.crateApiScriptParseScriptOutput(raw: raw);
+Future<List<ScriptSegment>> parseScriptSegments({required String raw}) =>
+    RustLib.instance.api.crateApiScriptParseScriptSegments(raw: raw);
 
 /// Custom status command; a Vec preserves the Dart map's insertion order,
 /// which affects script bytes
@@ -84,6 +100,25 @@ class CustomCmd {
           runtimeType == other.runtimeType &&
           name == other.name &&
           cmd == other.cmd;
+}
+
+/// One section of the script's output.
+class ScriptSegment {
+  final String key;
+  final String value;
+
+  const ScriptSegment({required this.key, required this.value});
+
+  @override
+  int get hashCode => key.hashCode ^ value.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ScriptSegment &&
+          runtimeType == other.runtimeType &&
+          key == other.key &&
+          value == other.value;
 }
 
 /// Shell functions of the generated script (mirrors sbm_parser::script::ShellFunc)

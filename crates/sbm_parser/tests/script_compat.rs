@@ -43,7 +43,7 @@ fn script_valid_output_all_platforms() {
 fn script_reads_custom_commands_from_a_directory() {
     for system in [SystemType::Linux, SystemType::Windows] {
         let script = build_script(system, &opts());
-        assert!(script.contains(script::CUSTOM_CMD_DIR));
+        assert!(script.contains(script::custom_cmd_dir(system)));
         // The marker prefix is emitted; the name comes from the file.
         assert!(script.contains("SrvBoxCusCmdSep."));
         // Only in the status function.
@@ -66,14 +66,105 @@ fn custom_cmd_installer_replaces_the_directory() {
         (200u32, "hostile".to_string(), "EOF'\n rm -rf / #".to_string()),
     ];
     for system in [SystemType::Linux, SystemType::Windows] {
-        let install = script::install_custom_cmds_script(system, "/tmp/sb", &cmds);
+        let install = script::install_custom_cmds_script(system, &cmds);
         // Nothing a command contains reaches the shell: it travels encoded.
         assert!(!install.contains("rm -rf /"));
         assert!(install.contains(&script::custom_cmd_file_name(100, "disk")));
         assert!(install.contains(&script::custom_cmd_file_name(200, "hostile")));
         // Written aside and moved, so a poll sees one set or the other.
         assert!(install.contains(".new"));
+        // The script reads the same place the installer writes. Nothing else
+        // keeps those two in step — they are separate strings in separate
+        // functions, and disagreeing would mean commands that install fine and
+        // never run.
+        assert!(install.contains(script::custom_cmd_dir(system)));
+        assert!(build_script(system, &opts()).contains(script::custom_cmd_dir(system)));
     }
+}
+
+/// The directory does not follow the script.
+///
+/// The script's own directory defaults to a temp one and is swapped at runtime
+/// when that proves unwritable. These files are the only copy of something the
+/// user typed, so they live under the user's home and stay there.
+#[test]
+fn custom_cmd_dir_survives_a_reboot_and_a_script_dir_switch() {
+    let unix = script::custom_cmd_dir(SystemType::Linux);
+    assert!(unix.starts_with("$HOME/"), "{unix}");
+    assert!(!unix.contains("/tmp"), "{unix}");
+    assert_eq!(unix, script::custom_cmd_dir(SystemType::Bsd));
+    assert!(script::custom_cmd_dir(SystemType::Windows).contains("$env:USERPROFILE"));
+}
+
+/// Windows names its files `.ps1` (`&` will not run an extensionless file),
+/// and the extension is not part of the encoded name. Emitting it made a
+/// marker that decodes to nothing, so the command's output was swallowed into
+/// whichever section came before it.
+#[test]
+fn windows_marker_drops_the_ps1_extension() {
+    let script = build_script(SystemType::Windows, &opts());
+    assert!(script.contains("$_.BaseName"));
+    assert!(!script.contains("$_.Name -replace"));
+    // What the script would emit for one file, decoded back.
+    let file = script::custom_cmd_file_name(100, "disk usage");
+    let marker = script::custom_cmd_marker("disk usage");
+    assert_eq!(marker, format!("SrvBoxCusCmdSep.b64.{}", file.split_once('_').unwrap().1));
+}
+
+/// The editor's read path: what the listing script prints comes back as the
+/// same commands that were installed.
+#[test]
+fn custom_cmd_listing_round_trips() {
+    use base64::Engine;
+    let b64 = base64::engine::general_purpose::STANDARD;
+    let cmds = [(100u32, "disk", "df -h | tail -1"), (200u32, "多行", "echo a\necho b\n")];
+
+    let mut listing = format!("{}\n", script::CUSTOM_CMD_DIR_MARKER);
+    for (order, name, cmd) in &cmds {
+        listing.push_str(&format!(
+            "{} {}\n",
+            script::custom_cmd_file_name(*order, name),
+            b64.encode(cmd)
+        ));
+    }
+
+    let parsed = script::parse_custom_cmds_listing(&listing).expect("directory exists");
+    assert_eq!(
+        parsed,
+        cmds.iter().map(|(o, n, c)| (*o, n.to_string(), c.to_string())).collect::<Vec<_>>()
+    );
+}
+
+/// A directory that does not exist and one that is empty are different
+/// answers: the first means the app has never installed here and should seed
+/// from what it still holds, the second means the user deleted them all and it
+/// must not resurrect them.
+#[test]
+fn custom_cmd_listing_tells_missing_from_empty() {
+    assert_eq!(script::parse_custom_cmds_listing(""), None);
+    assert_eq!(script::parse_custom_cmds_listing("sh: base64: not found\n"), None);
+    assert_eq!(
+        script::parse_custom_cmds_listing(&format!("{}\n", script::CUSTOM_CMD_DIR_MARKER)),
+        Some(vec![])
+    );
+}
+
+/// A stray file in the directory costs that file, not the editor.
+#[test]
+fn custom_cmd_listing_skips_what_is_not_ours() {
+    use base64::Engine;
+    let b64 = base64::engine::general_purpose::STANDARD;
+    let listing = format!(
+        "{}\nREADME {}\n00100_notbase64!! x\n{} {}\n",
+        script::CUSTOM_CMD_DIR_MARKER,
+        b64.encode("notes"),
+        script::custom_cmd_file_name(300, "ok"),
+        b64.encode("echo ok"),
+    );
+    assert_eq!(
+        script::parse_custom_cmds_listing(&listing),
+        Some(vec![(300, "ok".to_string(), "echo ok".to_string())])
+    );
 }
 
 /// Dart 'install commands are generated correctly'; the Windows variant is

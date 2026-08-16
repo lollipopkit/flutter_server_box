@@ -139,32 +139,40 @@ class ShellFuncManager {
     );
   }
 
-  /// What the directory-writing script is fed to, or null where it is already
-  /// a command.
+  /// What a custom-command script is fed to, or null where it is already a
+  /// command.
   ///
   /// Unix reads it on stdin, so nothing in a user's command has to survive
   /// shell quoting. The Windows form is a base64-wrapped PowerShell command
   /// line for the same reason the script installer is: a host whose OpenSSH
   /// default shell is cmd.exe would mangle the raw syntax.
-  static String? customCmdsInstallEntry(SystemType? systemType) =>
+  static String? customCmdsEntry(SystemType? systemType) =>
       systemType == SystemType.windows ? null : 'sh';
 
   /// The command that writes those files, in one round trip.
   ///
-  /// Their order is their position here, spaced so that moving one between two
-  /// others later renames a single file instead of renumbering the set.
+  /// Their order is their position in [customCmds], spaced so that moving one
+  /// between two others later renames a single file instead of renumbering the
+  /// set. No directory to pass: they live at a fixed path under the user's
+  /// home, deliberately not following the script's own directory, which
+  /// defaults to a temp one and moves when that turns out to be unwritable.
   static String installCustomCmds(
-    Map<String, String>? customCmds, {
-    required String scriptDir,
+    List<ffi.CustomCmd> customCmds, {
     SystemType? systemType,
   }) {
     return ffi.installCustomCmdsCommand(
       system: ffiSystem(systemType),
-      scriptDir: scriptDir,
-      cmds: [
-        for (final e in (customCmds ?? const {}).entries)
-          ffi.CustomCmd(name: e.key, cmd: e.value),
-      ],
+      cmds: customCmds,
     );
   }
+
+  /// The command that reads them back, for the editor to load.
+  static String readCustomCmds({SystemType? systemType}) =>
+      ffi.readCustomCmdsCommand(system: ffiSystem(systemType));
+
+  /// What [readCustomCmds] printed, or null when the directory does not exist
+  /// on that server at all — which is not the same as an empty one, and is the
+  /// only case in which the app may seed it from what it still holds locally.
+  static List<ffi.CustomCmd>? parseCustomCmds(String raw) =>
+      ffi.parseCustomCmdsListing(raw: raw);
 }

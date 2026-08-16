@@ -21,16 +21,18 @@ import 'package:server_box/src/rust/api/parser.dart' as ffi;
 
 class ServerStatusUpdateReq {
   final ServerStatus ss;
+
+  /// The script's sections, in the order it printed them — see
+  /// `parse_script_segments`. Custom commands are read out in that order, so
+  /// this must not be rebuilt as an unordered map on the way here.
   final Map<String, String> parsedOutput;
   final SystemType system;
-  final Map<String, String> customCmds;
   final double tempDivisor;
 
   const ServerStatusUpdateReq({
     required this.system,
     required this.ss,
     required this.parsedOutput,
-    required this.customCmds,
     this.tempDivisor = 1000.0,
   });
 }
@@ -72,10 +74,14 @@ Future<ServerStatus> getStatus(ServerStatusUpdateReq req) async {
   _apply('nvidia', () => _applyNvidia(ss, status));
   _apply('amd', () => _applyAmd(ss, status));
   _apply('smart', () => _applySmart(ss, status));
+  // Taken from what the script printed, not from a list the app holds: the
+  // commands live on the server now, so their names and their order are only
+  // knowable from the output.
   _apply('custom', () {
-    for (final key in req.customCmds.keys) {
-      ss.customCmds[key] =
-          req.parsedOutput[ScriptConstants.customResultKey(key)] ?? '';
+    const prefix = '${ScriptConstants.customCmdSep}.';
+    for (final e in req.parsedOutput.entries) {
+      if (!e.key.startsWith(prefix)) continue;
+      ss.customCmds[e.key.substring(prefix.length)] = e.value;
     }
   });
 

@@ -26,14 +26,18 @@ class SshDataSource implements ServerDataSource {
   @override
   Future<ServerStatus> fetchStatus(ServerStatus into) async {
     final raw = await runScript();
-    // Parsing runs on the Rust thread pool (async FFI); no isolate needed
-    final parsedOutput = await script_ffi.parseScriptOutput(raw: raw);
+    // Parsing runs on the Rust thread pool (async FFI); no isolate needed.
+    //
+    // Segments rather than a map, kept in order: the custom commands the user
+    // arranged are printed in that order and nothing else records it — the
+    // app no longer holds the list, the server's directory does.
+    final segments = await script_ffi.parseScriptSegments(raw: raw);
+    final parsedOutput = {for (final s in segments) s.key: s.value};
     final status = await getStatus(
       ServerStatusUpdateReq(
         ss: into,
         parsedOutput: parsedOutput,
         system: into.system,
-        customCmds: spi.custom?.cmds ?? {},
         tempDivisor: spi.custom?.tempIsCelsius == true ? 1.0 : 1000.0,
       ),
     );

@@ -191,13 +191,17 @@ extension _Actions on _ServerEditPageState {
     );
   }
 
+  /// Opens the editor, which reads and writes the server's own directory.
+  ///
+  /// Needs a server that exists and can be reached: there is nowhere to put a
+  /// command for a server that has not been saved yet.
   void _onTapCustomItem() async {
-    final res = await KvEditor.route.go(
-      context,
-      KvEditorArgs(data: _customCmds.value),
-    );
-    if (res == null) return;
-    _customCmds.value = res;
+    final spi = this.spi;
+    if (spi == null) {
+      context.showSnackBar('${libL10n.save} ${libL10n.server}');
+      return;
+    }
+    await CustomCmdsPage.route.go(context, SpiRequiredArgs(spi));
   }
 
   void _onTapDisabledCmdTypes() async {
@@ -255,7 +259,7 @@ extension _Actions on _ServerEditPageState {
       context.showSnackBar(l10n.proxyCommandOnlySupportedOnDesktop);
       return;
     }
-    final customCmds = _customCmds.value;
+    final customCmds = _unmigratedCmds.value;
     final custom = ServerCustom(
       pveAddr: _pveAddrCtrl.text.selfNotEmptyOrNull,
       pveIgnoreCert: _pveIgnoreCert.value,
@@ -506,7 +510,7 @@ extension _Utils on _ServerEditPageState {
       _pveAddrCtrl.text = custom.pveAddr ?? '';
       _pveIgnoreCert.value = custom.pveIgnoreCert;
       _pvePwdCtrl.text = custom.pvePwd ?? '';
-      _customCmds.value = custom.cmds ?? {};
+      _unmigratedCmds.value = custom.cmds ?? {};
       _preferTempDevCtrl.text = custom.preferTempDev ?? '';
       _tempIsCelsius.value = custom.tempIsCelsius;
       _logoUrlCtrl.text = custom.logoUrl ?? '';

@@ -30,7 +30,6 @@ void main() {
               StatusCmdType.host.name: '',
               StatusCmdType.sensors.name: '',
             },
-            customCmds: const {},
           ),
         );
 
@@ -53,7 +52,6 @@ void main() {
               BSDStatusCmdType.disk.name: 'not a valid disk payload',
               BSDStatusCmdType.host.name: '',
             },
-            customCmds: const {},
           ),
         );
 
@@ -77,7 +75,6 @@ void main() {
               WindowsStatusCmdType.host.name: '',
               WindowsStatusCmdType.temp.name: '',
             },
-            customCmds: const {},
           ),
         );
 
@@ -97,7 +94,6 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
 /dev/disk1s1     100000  40000     60000      40% /
 ''',
           },
-          customCmds: const {},
         ),
       );
 
@@ -118,7 +114,6 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
             BSDStatusCmdType.cpu.name:
                 'CPU usage: 14.70% user, 12.76% sys, 72.52% idle',
           },
-          customCmds: const {},
         ),
       );
 
@@ -149,7 +144,6 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
           system: SystemType.bsd,
           ss: previous,
           parsedOutput: const {},
-          customCmds: const {},
         ),
       );
 
@@ -170,7 +164,6 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
                 '{"Name":"Example CPU","LoadPercentage":50,'
                 '"NumberOfCores":4,"NumberOfLogicalProcessors":8}',
           },
-          customCmds: const {},
         ),
       );
 
@@ -188,7 +181,6 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
               WindowsStatusCmdType.temp.name:
                   '{"InstanceName":"zone","Temperature":45.0}',
             },
-            customCmds: const {},
             tempDivisor: divisor,
           ),
         );
@@ -209,7 +201,6 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
             WindowsStatusCmdType.diskSmart.name:
                 '{"DeviceId":"0","Temperature":35,"PowerOnHours":10}',
           },
-          customCmds: const {},
         ),
       );
 

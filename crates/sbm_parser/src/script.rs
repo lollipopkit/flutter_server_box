@@ -27,14 +27,38 @@ pub const CUSTOM_CMD_SEPARATOR: &str = "SrvBoxCusCmdSep";
 /// unencoded marker was realistically reachable.
 const ENCODED_NAME_PREFIX: &str = "b64.";
 
-/// Directory the per-command files live in, beside the installed script.
+/// Directory the per-command files live in.
 ///
 /// Custom commands are files rather than lines spliced into the script, and
 /// that is the difference between "a user's typo breaks their status page" and
 /// "a user's typo breaks that one command". It also stops user configuration
 /// from changing the script's bytes at all: the script is a function of the
 /// manifest, and the commands are data it reads.
-pub const CUSTOM_CMD_DIR: &str = "custom_cmds";
+///
+/// The path is fixed under the invoking user's home rather than beside the
+/// script, because the script's directory defaults to a temp one and is
+/// swapped at runtime when that turns out to be unwritable. This directory is
+/// the only copy of something a user typed, so it must outlive a reboot and
+/// must not move when the script does. It also means the app over SSH and a
+/// monitor running as the same user read one set rather than two.
+pub const CUSTOM_CMD_DIR_UNIX: &str = "$HOME/.config/server_box/custom_cmds";
+
+/// The Windows form of [`CUSTOM_CMD_DIR_UNIX`], as a PowerShell expression.
+pub const CUSTOM_CMD_DIR_WINDOWS: &str = "(Join-Path $env:USERPROFILE '.config\\server_box\\custom_cmds')";
+
+/// First line of [`read_custom_cmds_script`]'s output when the directory
+/// exists. Absent means it does not — which is not the same as an empty
+/// directory, and the app's migration relies on telling those apart.
+pub const CUSTOM_CMD_DIR_MARKER: &str = "SrvBoxCusCmdDir";
+
+/// The custom-command directory for a platform, as an expression the platform's
+/// shell expands.
+pub fn custom_cmd_dir(system: SystemType) -> &'static str {
+    match system {
+        SystemType::Windows => CUSTOM_CMD_DIR_WINDOWS,
+        SystemType::Linux | SystemType::Bsd => CUSTOM_CMD_DIR_UNIX,
+    }
+}
 
 /// Spacing between the order prefixes of adjacent commands.
 ///
@@ -168,20 +192,15 @@ pub struct ScriptOptions {
 /// Contents travel base64-encoded. A custom command is arbitrary text that a
 /// user typed, and a heredoc carrying it verbatim would end wherever the text
 /// happened to say so.
-pub fn install_custom_cmds_script(
-    system: SystemType,
-    script_dir: &str,
-    cmds: &[(u32, String, String)],
-) -> String {
+pub fn install_custom_cmds_script(system: SystemType, cmds: &[(u32, String, String)]) -> String {
     use base64::Engine;
     let b64 = base64::engine::general_purpose::STANDARD;
 
     match system {
         SystemType::Windows => {
             let mut out = format!(
-                "$root = '{script_dir}'\n\
-                 $dir = Join-Path $root '{CUSTOM_CMD_DIR}'\n\
-                 $tmp = Join-Path $root '{CUSTOM_CMD_DIR}.new'\n\
+                "$dir = {CUSTOM_CMD_DIR_WINDOWS}\n\
+                 $tmp = \"$dir.new\"\n\
                  if (Test-Path $tmp) {{ Remove-Item -Recurse -Force $tmp }}\n\
                  New-Item -ItemType Directory -Force -Path $tmp | Out-Null\n"
             );
@@ -201,7 +220,7 @@ pub fn install_custom_cmds_script(
         SystemType::Linux | SystemType::Bsd => {
             let mut out = format!(
                 "set -e\n\
-                 d='{script_dir}/{CUSTOM_CMD_DIR}'\n\
+                 d=\"{CUSTOM_CMD_DIR_UNIX}\"\n\
                  t=\"$d.new\"\n\
                  rm -rf \"$t\"\n\
                  mkdir -p \"$t\"\n"
@@ -217,6 +236,75 @@ pub fn install_custom_cmds_script(
             out
         }
     }
+}
+
+/// A script that prints the custom-command directory back, for an editor to
+/// load. Output is [`parse_custom_cmds_listing`]'s input.
+///
+/// Each file becomes one line, `<file name> <base64 of its content>`. Encoded
+/// for the same reason the installer encodes: the content is arbitrary text a
+/// user typed, including newlines, and a line-oriented format that carried it
+/// raw would be a format the content can forge.
+///
+/// Prints nothing at all when the directory does not exist, which the caller
+/// must distinguish from a directory that exists and is empty — the first
+/// means "never installed here", the second means "the user deleted them all".
+pub fn read_custom_cmds_script(system: SystemType) -> String {
+    match system {
+        SystemType::Windows => format!(
+            "$d = {CUSTOM_CMD_DIR_WINDOWS}\n\
+             if (Test-Path $d) {{\n\
+             \x20 Write-Host '{CUSTOM_CMD_DIR_MARKER}'\n\
+             \x20 Get-ChildItem -File $d | Sort-Object Name | ForEach-Object {{\n\
+             \x20   Write-Host (\"{{0}} {{1}}\" -f $_.BaseName, [Convert]::ToBase64String([IO.File]::ReadAllBytes($_.FullName)))\n\
+             \x20 }}\n\
+             }}\n"
+        ),
+        SystemType::Linux | SystemType::Bsd => format!(
+            "d=\"{CUSTOM_CMD_DIR_UNIX}\"\n\
+             [ -d \"$d\" ] || exit 0\n\
+             echo {CUSTOM_CMD_DIR_MARKER}\n\
+             for f in \"$d\"/*; do\n\
+             \t[ -f \"$f\" ] || continue\n\
+             \tprintf '%s ' \"${{f##*/}}\"\n\
+             \tbase64 < \"$f\" | tr -d '\\n'\n\
+             \techo\n\
+             done\n"
+        ),
+    }
+}
+
+/// The directory [`read_custom_cmds_script`] printed, as `(order, name, cmd)`
+/// in file-name order.
+///
+/// `None` when the directory does not exist. Files that are not ours — a name
+/// without an order prefix, content that is not valid base64 — are skipped
+/// rather than failing the whole listing: the directory is on someone's
+/// server, and a stray file in it should not cost them the editor.
+pub fn parse_custom_cmds_listing(raw: &str) -> Option<Vec<(u32, String, String)>> {
+    use base64::Engine;
+    let b64 = base64::engine::general_purpose::STANDARD;
+
+    let mut seen_marker = false;
+    let mut out = Vec::new();
+    for line in raw.split('\n') {
+        let line = line.strip_suffix('\r').unwrap_or(line);
+        if !seen_marker {
+            // Anything before the marker is noise from the transport (a login
+            // banner, a shell's own chatter), not part of the listing.
+            seen_marker = line.trim() == CUSTOM_CMD_DIR_MARKER;
+            continue;
+        }
+        let Some((file, encoded)) = line.split_once(' ') else { continue };
+        let Some(name) = custom_cmd_name_from_file(file) else { continue };
+        let Some(order) = file.split_once('_').and_then(|(o, _)| o.parse::<u32>().ok()) else {
+            continue;
+        };
+        let Ok(bytes) = b64.decode(encoded.trim()) else { continue };
+        let Ok(cmd) = String::from_utf8(bytes) else { continue };
+        out.push((order, name, cmd));
+    }
+    seen_marker.then_some(out)
 }
 
 /// Build the full script. Linux and Bsd produce the identical Unix script
@@ -277,7 +365,17 @@ pub fn exec_command(system: SystemType, script_path: &str, func: ShellFunc) -> S
 /// A trailing `\r` is stripped from each line before matching, so CRLF output
 /// (monitor running PowerShell locally) parses identically to LF output.
 pub fn parse_script_output(raw: &str) -> HashMap<String, String> {
-    let mut result = HashMap::new();
+    parse_script_segments(raw).into_iter().collect()
+}
+
+/// [`parse_script_output`], but in the order the script printed the sections.
+///
+/// Custom commands are ordered by the user, and that order is the order of
+/// the files, which is the order they run in, which is this. A map loses it —
+/// so the app reads this and keeps the order all the way to the status page,
+/// while callers that only look sections up by key can take the map.
+pub fn parse_script_segments(raw: &str) -> Vec<(String, String)> {
+    let mut result = Vec::new();
     if raw.is_empty() {
         return result;
     }
@@ -287,9 +385,11 @@ pub fn parse_script_output(raw: &str) -> HashMap<String, String> {
     let mut current: Option<String> = None;
     let mut buf = String::new();
 
-    let flush = |current: &mut Option<String>, buf: &mut String, result: &mut HashMap<String, String>| {
+    let flush = |current: &mut Option<String>,
+                 buf: &mut String,
+                 result: &mut Vec<(String, String)>| {
         if let Some(key) = current.take() {
-            result.insert(key, buf.trim().to_string());
+            result.push((key, buf.trim().to_string()));
             buf.clear();
         }
     };
@@ -407,16 +507,15 @@ fn unix_custom_cmds(func: ShellFunc) -> String {
     if func != ShellFunc::Status {
         return String::new();
     }
-    // Read, not baked in. The directory sits beside the script, its files sort
-    // by the order prefix in their names, and the marker is that name — so a
-    // command's text never touches this script and a broken one breaks only
-    // itself.
+    // Read, not baked in. The directory's files sort by the order prefix in
+    // their names, and the marker is that name — so a command's text never
+    // touches this script and a broken one breaks only itself.
     //
     // `sh "$f"` rather than executing the file: no execute bit to set, and it
     // works on a `noexec` mount. `timeout` where there is one, because a
     // command that never returns would otherwise stall every poll.
     format!(
-        "\nfor f in \"$(dirname \"$0\")/{CUSTOM_CMD_DIR}\"/*; do\n\
+        "\nfor f in \"{CUSTOM_CMD_DIR_UNIX}\"/*; do\n\
          \t[ -f \"$f\" ] || continue\n\
          \tn=${{f##*/}}\n\
          \techo \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}${{n#*_}}\"\n\
@@ -529,11 +628,16 @@ fn windows_custom_cmds(func: ShellFunc) -> String {
     }
     // The same shape as the Unix half: sorted by file name, the marker taken
     // from that name, and the file run rather than its text spliced in here.
+    //
+    // `BaseName`, not `Name`: these files carry a `.ps1` extension because
+    // `&` will not run an extensionless one, and the extension is not part of
+    // the encoded name — leaving it on produced a marker that decodes to
+    // nothing, so the command's output was swallowed by the section above it.
     format!(
-        "\n    $d = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) '{CUSTOM_CMD_DIR}'\n\
+        "\n    $d = {CUSTOM_CMD_DIR_WINDOWS}\n\
          \x20   if (Test-Path $d) {{\n\
          \x20     Get-ChildItem -File $d | Sort-Object Name | ForEach-Object {{\n\
-         \x20       Write-Host \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}$($_.Name -replace '^[0-9]+_','')\"\n\
+         \x20       Write-Host \"{CUSTOM_CMD_SEPARATOR}.{ENCODED_NAME_PREFIX}$($_.BaseName -replace '^[0-9]+_','')\"\n\
          \x20       & $_.FullName\n\
          \x20     }}\n\
          \x20   }}\n"

@@ -453,17 +453,14 @@ extension _Widgets on _ServerEditPageState {
       mainAxisSize: MainAxisSize.min,
       children: [
         CenterGreyTitle(l10n.customCmd),
-        _customCmds.listenVal((vals) {
-          return ListTile(
-            leading: const Icon(BoxIcons.bxs_file_json),
-            title: const Text('JSON'),
-            subtitle: vals.isEmpty
-                ? null
-                : Text(vals.keys.join(','), style: UIs.textGrey),
-            trailing: const Icon(Icons.keyboard_arrow_right),
-            onTap: _onTapCustomItem,
-          );
-        }).cardx,
+        // No count and no preview: the commands are on the server, and this
+        // page has not asked it. The editor is what reads them.
+        ListTile(
+          leading: const Icon(MingCute.command_line),
+          title: Text(libL10n.edit),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: _onTapCustomItem,
+        ).cardx,
         ListTile(
           leading: const Icon(MingCute.doc_line),
           title: Text(libL10n.doc),

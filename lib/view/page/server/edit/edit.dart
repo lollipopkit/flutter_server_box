@@ -25,6 +25,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
+import 'package:server_box/view/page/server/custom_cmds.dart';
 import 'package:server_box/view/widget/page_columns.dart';
 import 'package:server_box/view/widget/ssh_discovery/dialog.dart';
 
@@ -101,7 +102,14 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   /// [_keyIdx], kept separate for the same reason the controllers are.
   final _tempIsCelsius = ValueNotifier(false);
   final _env = <String, String>{}.vn;
-  final _customCmds = <String, String>{}.vn;
+  /// Custom commands an older version of the app stored here, carried through
+  /// a save unchanged so that editing anything else on this page does not
+  /// discard them before the first connection moves them to the server.
+  ///
+  /// Not edited here any more — the editor writes the server directly, since
+  /// the directory there is the only copy.
+  // TODO(migration): delete with [ServerCustom.cmds].
+  final _unmigratedCmds = <String, String>{}.vn;
   final _tags = <String>{}.vn;
   final _systemType = ValueNotifier<SystemType?>(null);
   final _disabledCmdTypes = <String>{}.vn;
@@ -153,7 +161,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _useMonitorHttp.dispose();
     _tempIsCelsius.dispose();
     _env.dispose();
-    _customCmds.dispose();
+    _unmigratedCmds.dispose();
     _tags.dispose();
     _systemType.dispose();
     _disabledCmdTypes.dispose();

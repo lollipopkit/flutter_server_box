@@ -41,6 +41,17 @@ fn windows_host() -> Option<String> {
     env_host("SBM_E2E_SSH_HOST_WINDOWS")
 }
 
+/// Put back whatever the account had in the custom-command directory before
+/// the test replaced it. Called on the failure path too — a test that leaves
+/// someone's commands in a `.e2e` directory has done real damage.
+fn restore_custom_cmd_dir(host: &str, dir: &str) {
+    let _ = ssh(
+        host,
+        &format!("rm -rf \"{dir}\"; if [ -d \"{dir}.e2e\" ]; then mv \"{dir}.e2e\" \"{dir}\"; fi"),
+        None,
+    );
+}
+
 /// Run a command on the remote via the system ssh (BatchMode: never prompts).
 /// `stdin` is piped to the remote command when given.
 /// The command is wrapped in `sh -c` so POSIX syntax works regardless of the
@@ -345,15 +356,36 @@ fn ssh_e2e_unix_custom_and_disabled() {
     let path = format!("{DIR}/status.sh");
     ssh(&host, &script::install_command(SystemType::Linux, DIR, &path), Some(&content))
         .expect("install script");
-    // The commands themselves are files beside the script now, written in one
-    // round trip. This is the half a unit test cannot check: that a real shell
-    // on a real host reads that directory and reports what it finds.
+    // The commands themselves are files in a fixed directory under the user's
+    // home now, written in one round trip. This is the half a unit test cannot
+    // check: that a real shell on a real host reads that directory and reports
+    // what it finds.
+    //
+    // That directory is the real one — the path is fixed precisely so that
+    // every reader agrees on it — so whatever the account already had there is
+    // moved aside first and put back at the end.
+    let cmd_dir = script::custom_cmd_dir(SystemType::Linux);
+    let _ = ssh(&host, &format!("rm -rf \"{cmd_dir}.e2e\"; mv \"{cmd_dir}\" \"{cmd_dir}.e2e\""), None);
     let cmds = vec![(100u32, "e2e_probe".to_string(), "echo custom-cmd-works".to_string())];
-    ssh(&host, &script::install_custom_cmds_script(SystemType::Linux, DIR, &cmds), None)
-        .expect("install custom commands");
-    let raw = ssh(&host, &script::exec_command(SystemType::Linux, &path, ShellFunc::Status), None)
-        .expect("run status script");
+    let installed = ssh(&host, &script::install_custom_cmds_script(SystemType::Linux, &cmds), None);
+    let raw = installed
+        .and_then(|_| {
+            ssh(&host, &script::exec_command(SystemType::Linux, &path, ShellFunc::Status), None)
+        })
+        .inspect_err(|_| restore_custom_cmd_dir(&host, cmd_dir))
+        .expect("install custom commands and run status script");
+    let listing =
+        ssh(&host, &script::read_custom_cmds_script(SystemType::Linux), None).unwrap_or_default();
+    restore_custom_cmd_dir(&host, cmd_dir);
     let _ = ssh(&host, &format!("rm -rf {DIR}"), None);
+
+    // The editor's read path against a real shell: `base64`/`tr` exist and the
+    // command comes back byte-identical to what was written.
+    assert_eq!(
+        script::parse_custom_cmds_listing(&listing),
+        Some(vec![(100, "e2e_probe".to_string(), "echo custom-cmd-works".to_string())]),
+        "listing must round-trip; raw: {listing:?}"
+    );
 
     let segments = script::parse_script_output(&raw);
     assert_eq!(

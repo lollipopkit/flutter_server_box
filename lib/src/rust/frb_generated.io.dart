@@ -54,7 +54,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<(String, String)> dco_decode_list_record_string_string(dynamic raw);
 
   @protected
+  List<ScriptSegment> dco_decode_list_script_segment(dynamic raw);
+
+  @protected
+  List<CustomCmd>? dco_decode_opt_list_custom_cmd(dynamic raw);
+
+  @protected
   (String, String) dco_decode_record_string_string(dynamic raw);
+
+  @protected
+  ScriptSegment dco_decode_script_segment(dynamic raw);
 
   @protected
   ShellFuncKind dco_decode_shell_func_kind(dynamic raw);
@@ -103,9 +112,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<ScriptSegment> sse_decode_list_script_segment(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<CustomCmd>? sse_decode_opt_list_custom_cmd(SseDeserializer deserializer);
+
+  @protected
   (String, String) sse_decode_record_string_string(
     SseDeserializer deserializer,
   );
+
+  @protected
+  ScriptSegment sse_decode_script_segment(SseDeserializer deserializer);
 
   @protected
   ShellFuncKind sse_decode_shell_func_kind(SseDeserializer deserializer);
@@ -168,10 +188,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_script_segment(
+    List<ScriptSegment> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_list_custom_cmd(
+    List<CustomCmd>? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_record_string_string(
     (String, String) self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_script_segment(ScriptSegment self, SseSerializer serializer);
 
   @protected
   void sse_encode_shell_func_kind(ShellFuncKind self, SseSerializer serializer);

@@ -37,6 +37,7 @@ import 'package:server_box/data/res/status.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/ssh/persistent_shell.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/src/rust/api/script.dart' as ffi;
 
 part 'single.g.dart';
 part 'single.freezed.dart';
@@ -470,6 +471,65 @@ class ServerNotifier extends _$ServerNotifier {
   /// server's status never reads it.
   bool _scriptWritten = false;
 
+  /// Moves custom commands the app still holds locally onto the server, once.
+  ///
+  /// The server's directory is where they live now; this only exists to empty
+  /// the old field, and does nothing for a server that has already been
+  /// connected to since. Whatever is already on the server wins on a name
+  /// collision, and the local extras are appended — nothing is dropped and the
+  /// result does not depend on which side ran first.
+  ///
+  /// The local copy is cleared only after the install succeeds, so a failure
+  /// here costs a retry rather than the commands. Failures are logged, not
+  /// raised: a server whose status works and whose commands did not migrate is
+  /// still a server worth showing.
+  // TODO(migration): delete with [ServerCustom.cmds].
+  Future<void> _migrateCustomCmds(
+    Spi spi,
+    SystemType system,
+    ServerExec exec,
+  ) async {
+    final local = spi.custom?.cmds;
+    if (local == null || local.isEmpty) return;
+
+    try {
+      final entry = ShellFuncManager.customCmdsEntry(system);
+      final listing = await exec.run(
+        ShellFuncManager.readCustomCmds(systemType: system),
+        entry: entry,
+      );
+      if (!listing.succeeded) {
+        throw 'read exited with ${listing.exitCode}: ${listing.combined}';
+      }
+      final onServer = ShellFuncManager.parseCustomCmds(listing.stdout);
+      final existing = onServer?.map((c) => c.name).toSet() ?? const <String>{};
+      final merged = [
+        ...?onServer,
+        for (final e in local.entries)
+          if (!existing.contains(e.key)) ffi.CustomCmd(name: e.key, cmd: e.value),
+      ];
+
+      final install = await exec.run(
+        ShellFuncManager.installCustomCmds(merged, systemType: system),
+        entry: entry,
+      );
+      if (!install.succeeded) {
+        throw 'install exited with ${install.exitCode}: ${install.combined}';
+      }
+
+      final custom = spi.custom;
+      if (custom == null) return;
+      await ref
+          .read(serversProvider.notifier)
+          .updateServer(spi, spi.copyWith(custom: custom.withoutCmds()));
+      Loggers.app.info(
+        'Migrated ${local.length} custom command(s) for ${spi.name}',
+      );
+    } catch (e, st) {
+      Loggers.app.warning('Custom commands for ${spi.name}', e, st);
+    }
+  }
+
   /// A [ServerExec] with the generated script present on the server.
   ///
   /// What the process list wants, rather than plain [ensureExec]: it runs one
@@ -485,36 +545,6 @@ class ServerNotifier extends _$ServerNotifier {
   ///
   /// Throws when the script cannot be written, since the alternative is a page
   /// reporting an empty list on a server that has plenty of processes.
-  /// Writes the custom-command directory, when there is anything to put in it.
-  ///
-  /// Skipped entirely when the server has none: the common case should not pay
-  /// a round trip to create an empty directory. Failures are logged, not
-  /// raised — a server whose status works and whose custom commands did not
-  /// install is still a server worth showing.
-  Future<void> _writeCustomCmds(
-    Spi spi,
-    SystemType system,
-    Future<void> Function(String script) send,
-  ) async {
-    final cmds = spi.custom?.cmds;
-    if (cmds == null || cmds.isEmpty) return;
-    try {
-      await send(
-        ShellFuncManager.installCustomCmds(
-          cmds,
-          scriptDir: ShellFuncManager.getScriptDir(
-            spi.id,
-            systemType: system,
-            customDir: spi.custom?.scriptDir,
-          ),
-          systemType: system,
-        ),
-      );
-    } catch (e, st) {
-      Loggers.app.warning('Custom commands for ${spi.name}', e, st);
-    }
-  }
-
   Future<ServerExec> ensureScriptExec() async {
     final exec = await ensureExec();
     if (_scriptWritten) return exec;
@@ -550,13 +580,10 @@ class ServerNotifier extends _$ServerNotifier {
         message: 'Write script to ${spi.name}: ${result.combined}',
       );
     }
-    // The commands beside it, over the same channel. A monitor-only server
-    // reaches this path too, which is the point: what installs them is
-    // `ServerExec`, not SSH, so both kinds of server get the same directory.
-    await _writeCustomCmds(spi, system, (script) async {
-      final entry = ShellFuncManager.customCmdsInstallEntry(system);
-      await exec.run(entry == null ? script : script, entry: entry);
-    });
+    // A monitor-only server reaches this path too, which is the point: what
+    // carries the commands is `ServerExec`, not SSH, so both kinds of server
+    // reach the same directory.
+    await _migrateCustomCmds(spi, system, exec);
 
     _scriptWritten = true;
     return exec;
@@ -845,24 +872,14 @@ class ServerNotifier extends _$ServerNotifier {
           );
         }
 
-        // The commands themselves, as files beside the script. A separate
-        // round trip because they are separate things: the script changes when
-        // the app does, these when the user does, and neither has to reinstall
-        // the other.
-        await _writeCustomCmds(spi, detectedSystemType, (script) async {
-          final entry = ShellFuncManager.customCmdsInstallEntry(
-            detectedSystemType,
-          );
-          await state.client!.execSafe(
-            (session) async {
-              if (entry != null) session.stdin.add(script.uint8List);
-              session.stdin.close();
-            },
-            entry: entry ?? script,
-            systemType: detectedSystemType,
-            context: 'WriteCustomCmds<${spi.name}>',
-          );
-        });
+        // The commands themselves live in their own directory and are written
+        // separately: the script changes when the app does, they when the user
+        // does, and neither has to reinstall the other.
+        await _migrateCustomCmds(
+          spi,
+          detectedSystemType,
+          SshExec(state.client!),
+        );
 
         if (writeScriptResult.stderr.isNotEmpty) {
           Loggers.app.warning(

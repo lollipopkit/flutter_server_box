@@ -215,16 +215,45 @@ void main() {
     // this app generated. It travels encoded and lands in a file.
     final install = script.installCustomCmdsCommand(
       system: 'linux',
-      scriptDir: '/tmp/sb',
       cmds: [script.CustomCmd(name: 'probe', cmd: 'rm -rf / #')],
     );
     expect(install, isNot(contains('rm -rf /')));
     expect(install, contains('custom_cmds'));
     // Written aside and moved, so a poll sees one set or the other.
     expect(install, contains('.new'));
+    // Under the user's home, not beside the script: the script's directory
+    // defaults to a temp one and moves when that is unwritable, and these
+    // files are the only copy of what the user typed.
+    expect(install, contains(r'$HOME/.config/server_box/custom_cmds'));
   });
 
-  test('parseScriptOutput round-trip via FFI', () async {
+  test('the editor reads back what the installer wrote', () {
+    // The two halves of the editor, checked against each other: what the
+    // listing script prints is what the parser turns back into commands. A
+    // directory that does not exist is a different answer from an empty one —
+    // the migration seeds the first and must leave the second alone.
+    final read = script.readCustomCmdsCommand(system: 'linux');
+    expect(read, contains(r'$HOME/.config/server_box/custom_cmds'));
+    expect(read, contains('base64'));
+
+    final listing = [
+      'SrvBoxCusCmdDir',
+      // 00100_<base64url of 'probe'> <base64 of the command>
+      '00100_${base64Url.encode(utf8.encode('probe'))} '
+          '${base64.encode(utf8.encode('echo hi\necho there'))}',
+      '',
+    ].join('\n');
+    final parsed = script.parseCustomCmdsListing(raw: listing);
+    expect(parsed, isNotNull);
+    expect(parsed!.length, 1);
+    expect(parsed.first.name, 'probe');
+    expect(parsed.first.cmd, 'echo hi\necho there');
+
+    expect(script.parseCustomCmdsListing(raw: ''), isNull);
+    expect(script.parseCustomCmdsListing(raw: 'SrvBoxCusCmdDir\n'), isEmpty);
+  });
+
+  test('parseScriptSegments round-trip via FFI', () async {
     // Markers carry their name base64url-encoded so command output can never
     // be mistaken for one; see sbm_parser::script::ENCODED_NAME_PREFIX.
     String marker(String sep, String name) =>
@@ -239,11 +268,19 @@ void main() {
       '',
     ].join('\n');
 
-    final map = await script.parseScriptOutput(raw: raw);
+    final segments = await script.parseScriptSegments(raw: raw);
+    final map = {for (final s in segments) s.key: s.value};
     expect(map['time'], '123');
     expect(map[ScriptConstants.customResultKey('x')], 'hello');
     // The namespaced key is what the app reads, and it did not clobber 'time'
     expect(map[ScriptConstants.customResultKey('time')], 'SrvBoxSep.host');
+    // Order is preserved, which is the only record of how the user arranged
+    // their custom commands once those live on the server.
+    expect(segments.map((s) => s.key).toList(), [
+      'time',
+      ScriptConstants.customResultKey('x'),
+      ScriptConstants.customResultKey('time'),
+    ]);
   });
 
   test('enum names stay in sync with the FFI manifest', () {

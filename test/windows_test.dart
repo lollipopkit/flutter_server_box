@@ -32,7 +32,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       final result = await getStatus(req);
@@ -48,7 +47,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions
@@ -62,7 +60,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions
@@ -76,7 +73,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions
@@ -90,7 +86,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions
@@ -104,7 +99,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions
@@ -118,7 +112,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions
@@ -156,7 +149,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should handle NVIDIA driver not found gracefully
@@ -170,7 +162,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions even with error conditions
@@ -184,7 +175,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions even with error output in temperature values
