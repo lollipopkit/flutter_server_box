@@ -68,7 +68,12 @@ jobs:
       - name: Check locked dependencies
         shell: bash
         run: |
+          cp pubspec.lock "$RUNNER_TEMP/pubspec.lock"
+          trap 'cp "$RUNNER_TEMP/pubspec.lock" pubspec.lock' EXIT
+          bash scripts/ci/use-pub-mirror.sh pubspec.lock
           flutter pub get --enforce-lockfile
+          cp "$RUNNER_TEMP/pubspec.lock" pubspec.lock
+          trap - EXIT
           git diff --exit-code -- pubspec.yaml pubspec.lock
       - name: Check JNI build-id patch
         shell: bash
@@ -93,6 +98,9 @@ jobs:
           channel: "stable"
           flutter-version: ${{ env.FLUTTER_VERSION }}
       - uses: Swatinem/rust-cache@v2
+      - name: Use pub mirror with locked versions
+        shell: bash
+        run: bash scripts/ci/use-pub-mirror.sh
       - name: Install dependencies
         run: flutter pub get
       - name: Sign locally
@@ -197,6 +205,9 @@ jobs:
         with:
           distribution: "zulu"
           java-version: "21"
+      - name: Use pub mirror with locked versions
+        shell: bash
+        run: bash scripts/ci/use-pub-mirror.sh
       - name: Fetch secrets
         run: |
           curl --fail --show-error --location -u ${{ secrets.BASIC_AUTH }} -o android/app/app.key ${{ secrets.URL_PREFIX }}app.key
@@ -283,6 +294,9 @@ jobs:
         with:
           channel: "stable"
           flutter-version: ${{ env.FLUTTER_VERSION }}
+      - name: Use pub mirror with locked versions
+        shell: bash
+        run: bash scripts/ci/use-pub-mirror.sh
       - name: Resolve build number
         shell: bash
         run: |
@@ -353,6 +367,9 @@ jobs:
           sudo apt update
           sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev mesa-utils libvulkan-dev desktop-file-utils wget
           sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev libsecret-1-dev
+      - name: Use pub mirror with locked versions
+        shell: bash
+        run: bash scripts/ci/use-pub-mirror.sh
       - name: Build (release)
         if: inputs.release == true || github.ref_type == 'tag'
         shell: bash
@@ -406,6 +423,9 @@ jobs:
         with:
           channel: 'stable'
           flutter-version: ${{ env.FLUTTER_VERSION }}
+      - name: Use pub mirror with locked versions
+        shell: bash
+        run: bash scripts/ci/use-pub-mirror.sh
       - name: Build (release)
         if: inputs.release == true || github.ref_type == 'tag'
         shell: bash

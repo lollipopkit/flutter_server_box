@@ -51,7 +51,12 @@ jobs:
 
       - name: Check locked dependencies
         run: |
+          cp pubspec.lock "$RUNNER_TEMP/pubspec.lock"
+          trap 'cp "$RUNNER_TEMP/pubspec.lock" pubspec.lock' EXIT
+          bash scripts/ci/use-pub-mirror.sh pubspec.lock
           flutter pub get --enforce-lockfile
+          cp "$RUNNER_TEMP/pubspec.lock" pubspec.lock
+          trap - EXIT
           git diff --exit-code -- pubspec.yaml pubspec.lock
 
       - name: Check JNI build-id patch
@@ -91,6 +96,10 @@ jobs:
         with:
           channel: 'stable'
           flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - name: Use pub mirror with locked versions
+        shell: bash
+        run: bash scripts/ci/use-pub-mirror.sh
 
       - name: Install dependencies
         run: flutter pub get
