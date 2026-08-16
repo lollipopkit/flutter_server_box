@@ -445,10 +445,9 @@ warm  /dev/pts/0 → mount='/dev'     trimmed='/pts/0'
 
 It does not show upstream because there `/dev` is inside the root mount, whose
 point is `""` and which the cache declined to store. Making `/dev` a fakefs of
-its own is what exposed it. The fix is
-`scripts/ish-patches/0001-mount-find-drop-the-broken-prefix-cache.patch`, which
-removes the fast path rather than correcting it: it took `mounts_lock` to bump
-the refcount anyway, so all it saved was a walk over a handful of mounts.
+its own is what exposed it. The fix is `647408c` on the fork, which removes the
+fast path rather than correcting it: it took `mounts_lock` to bump the refcount
+anyway, so all it saved was a walk over a handful of mounts.
 
 *And the check after it was wrong.* `create_stdio` (`kernel/init.c:137`) opens
 the path and then requires `S_ISCHR(fd->stat.mode)`. `fd->stat` is the adhoc
@@ -466,10 +465,12 @@ released when the session's last fd closes, which the adhoc fd never did. A
 command session (`command != NULL`) also clears `OPOST` and `ECHO`, because
 `ServerExec` output should read like a pipe's rather than a terminal's.
 
-**Patches against the engine are a new maintenance surface.** `build-ish-ios.sh`
-applies everything in `scripts/ish-patches/` after checking out the pinned
-commit. Applying is idempotent and a patch that no longer applies stops the
-build rather than being skipped, so a pin bump cannot silently drop a fix.
+**A fork of the engine is a new maintenance surface.** The pin is
+[lollipopkit/ShellBox](https://github.com/lollipopkit/ShellBox), whose `main` is
+upstream's commit with the fixes on top; what was changed is the log between the
+two. Its `dev` is older unrelated work and is not what builds. Taking a newer
+upstream means rebasing that log onto it, and a fix that upstream has since made
+itself has to be dropped rather than carried twice.
 
 Also installed by the app now, which was the shipping blocker: the pinned
 release is downloaded, digest-checked and unpacked in Dart — links as links,

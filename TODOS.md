@@ -301,10 +301,8 @@ proot 并在构建后检查两个 `.so` 确实进了 APK。剩下两条:
     warm  /dev/pts/0 → mount='/dev'     trimmed='/pts/0'
 
 upstream 不触发:那边 `/dev` 在根挂载里,挂载点是 `""`,缓存明确不存它。把 `/dev` 做成
-独立 fakefs 才暴露出来。修在
-`scripts/ish-patches/0001-mount-find-drop-the-broken-prefix-cache.patch` —— 直接删掉
-快路径而不是修正它:那条路径为了加 refcount 一样要拿 `mounts_lock`,省下的只是遍历
-几个挂载点。
+独立 fakefs 才暴露出来。修在 fork 的 `647408c` —— 直接删掉快路径而不是修正它:那条路径
+为了加 refcount 一样要拿 `mounts_lock`,省下的只是遍历几个挂载点。
 
 **二、后面那个判断也是错的。** `create_stdio`(`kernel/init.c:137`)打开路径后要求
 `S_ISCHR(fd->stat.mode)`,但 `fd->stat` 是 adhoc 文件系统自己的一份 stat

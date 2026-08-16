@@ -37,8 +37,13 @@ SRC_DIR="$WORK_DIR/ish-arm64"
 # Pinned to a commit, not a branch. This is an interpreter that runs whatever
 # the guest filesystem contains; which revision of it ships should be a choice,
 # not whatever upstream pushed today.
-ISH_REPO="https://github.com/OpenMinis/ish-arm64.git"
-ISH_COMMIT=7e100366a4b59557a4a0c4657d0d6115e99d1f5e
+#
+# A fork of OpenMinis/ish-arm64, carrying the fixes this app needs and upstream
+# has not made. Its `main` is upstream's commit with those on top, so what was
+# changed is the fork's log between there and here; `dev` is unrelated older
+# work and is not what this builds.
+ISH_REPO="https://github.com/lollipopkit/ShellBox.git"
+ISH_COMMIT=0d592524fe5b132046c53e8d19a04a5c161048d3
 
 # The same release the Android rootfs is pinned to, and for the same reason —
 # see AndroidRootfs.version, which records why the branch is 3.22.
@@ -72,42 +77,22 @@ fetch_source() {
     log "Cloning ish-arm64"
     git clone --quiet "$ISH_REPO" "$SRC_DIR"
   fi
+  # A checkout made before the pin moved to the fork has upstream as its origin,
+  # and cannot fetch a commit that only exists on the fork. Pointed at whatever
+  # ISH_REPO currently is rather than left to fail with "couldn't find remote
+  # ref", which says nothing about why.
+  if [ "$(git -C "$SRC_DIR" remote get-url origin)" != "$ISH_REPO" ]; then
+    log "Pointing origin at $ISH_REPO"
+    git -C "$SRC_DIR" remote set-url origin "$ISH_REPO"
+  fi
   local head
   head="$(git -C "$SRC_DIR" rev-parse HEAD)"
   if [ "$head" != "$ISH_COMMIT" ]; then
     log "Checking out the pinned commit"
     git -C "$SRC_DIR" fetch --quiet origin "$ISH_COMMIT" 2>/dev/null || git -C "$SRC_DIR" fetch --quiet origin
-    # Forced, because the tree carries the patches below and they are put back
-    # immediately afterwards. Without it a pin bump fails on a dirty tree.
+    # Forced, because a tree left dirty by hand should not fail a pin bump.
     git -C "$SRC_DIR" checkout --quiet -f "$ISH_COMMIT"
   fi
-  apply_patches
-}
-
-# Fixes to the engine that this app needs and upstream has not made.
-#
-# Kept as patches against the pinned commit rather than as a fork, so what was
-# changed and why is readable in one place. Applying is idempotent: a patch that
-# is already in the tree is recognised and skipped. One that no longer applies
-# stops the build rather than being skipped quietly — the pin moved and somebody
-# has to look.
-apply_patches() {
-  local dir="$REPO_ROOT/scripts/ish-patches"
-  [ -d "$dir" ] || return 0
-  local patch
-  for patch in "$dir"/*.patch; do
-    [ -e "$patch" ] || continue
-    local name
-    name="$(basename "$patch")"
-    if git -C "$SRC_DIR" apply --reverse --check "$patch" >/dev/null 2>&1; then
-      log "$name is already applied"
-    elif git -C "$SRC_DIR" apply --check "$patch" >/dev/null 2>&1; then
-      log "Applying $name"
-      git -C "$SRC_DIR" apply "$patch"
-    else
-      die "$name does not apply to $ISH_COMMIT — the pin moved, or the tree is not clean"
-    fi
-  done
 }
 
 # The engine, for one platform. Only the three libraries: the `ish` CLI is a
