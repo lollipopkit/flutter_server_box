@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -222,5 +223,72 @@ void main() {
         .listSync()
         .where((e) => e.path.contains('.sbm-exec-'));
     expect(leftovers, isEmpty);
+  }, skip: !Platform.isIOS, timeout: const Timeout(Duration(minutes: 2)));
+
+  // The three places the host's uptime reaches the guest. They disagreed:
+  // `get_uptime` answered in whole seconds and two of the three divide by 100,
+  // so /proc/uptime advanced by 0.01 per real second and anything timing itself
+  // against it measured zero. Nothing crashed and no test failed — the numbers
+  // were simply wrong, which is why all three are checked here rather than the
+  // one that was noticed.
+  testWidgets('the guest clock is a clock', (_) async {
+    if (!IshExec.isSupported) {
+      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      return;
+    }
+    await IosRootfs.install();
+    const exec = IshExec();
+
+    final probe = await exec.run(
+      r'cat /proc/uptime; sleep 1; cat /proc/uptime; '
+      r'date +%s; uptime; grep btime /proc/stat',
+    );
+    expect(probe.exitCode, 0, reason: probe.stderr);
+    final lines = const LineSplitter().convert(probe.stdout.trim());
+    debugPrint('ISHCLOCK ${lines.join(" | ")}');
+    expect(lines.length, greaterThanOrEqualTo(5), reason: probe.stdout);
+
+    // 1. /proc/uptime, and that a second of sleeping is a second of it. The bug
+    //    made this 0.01, so anything short of the real elapsed time fails.
+    final before = double.parse(lines[0].split(' ').first);
+    final after = double.parse(lines[1].split(' ').first);
+    expect(
+      after - before,
+      inInclusiveRange(0.5, 3.0),
+      reason: '/proc/uptime moved ${after - before}s while a second passed',
+    );
+
+    final now = int.parse(lines[2].trim());
+
+    // 2. sysinfo, which is what busybox's `uptime` asks and which wants seconds
+    //    where the field holds hundredths. Printed to the minute, so this is
+    //    only ever going to be roughly right — but the failure it guards
+    //    against is a factor of a hundred.
+    //    Two shapes, because busybox drops to minutes alone under an hour:
+    //    `up 5 days, 27 min` and `up 5 days, 2:15`.
+    final up = RegExp(
+      r'up\s+(?:(\d+)\s+days?,\s*)?(?:(\d+):(\d+)|(\d+)\s+min)',
+    ).firstMatch(lines[3]);
+    expect(up, isNotNull, reason: 'could not read `uptime`: ${lines[3]}');
+    final reported =
+        int.parse(up!.group(1) ?? '0') * 86400 +
+        int.parse(up.group(2) ?? '0') * 3600 +
+        int.parse(up.group(3) ?? up.group(4) ?? '0') * 60;
+    expect(
+      (reported - after).abs(),
+      lessThan(120),
+      reason: '`uptime` says ${reported}s, /proc/uptime says ${after}s',
+    );
+
+    // 3. btime, which is this same uptime subtracted from the wall clock. Its
+    //    sub-second part went into a nanoseconds field unscaled, so it could be
+    //    a second out — below the resolution of what is printed, and checked
+    //    here only for the whole-second value being sane.
+    final btime = int.parse(lines[4].split(RegExp(r'\s+'))[1]);
+    expect(
+      (now - btime - after).abs(),
+      lessThan(5),
+      reason: 'btime $btime, now $now, uptime $after',
+    );
   }, skip: !Platform.isIOS, timeout: const Timeout(Duration(minutes: 2)));
 }
