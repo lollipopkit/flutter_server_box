@@ -36,6 +36,8 @@ void sbm_ish_close(int session) { (void)session; }
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <syslog.h>
+#include <sqlite3.h>
+#include <unistd.h>
 
 #include "kernel/calls.h"
 #include "kernel/init.h"
@@ -44,6 +46,7 @@ void sbm_ish_close(int session) { (void)session; }
 #include "fs/devices.h"
 #include "fs/fd.h"
 #include "fs/path.h"
+#include "fs/fake-db.h"
 #include "fs/real.h"
 #include "fs/tty.h"
 
@@ -248,17 +251,75 @@ static void guest_exited(struct task *task, int code) {
     pthread_mutex_unlock(&sessions_lock);
 }
 
-/// Everything a userland expects to find at `/dev`.
+/// A filesystem for `/dev`, and the one place a database earns its keep.
 ///
-/// A tmpfs, because the root cannot hold any of it: creating a device node
-/// needs root on the host, and `realfs_mknod` refuses anything that is not a
-/// FIFO or a regular file. Built at every boot, which is also truer than
-/// persisting it — these describe this run's kernel, not the last one's.
+/// Nothing else can hold a device node. `realfs` refuses — creating one needs
+/// root on the host — and `tmpfs` has no `mknod` at all. `fakefs` can, because
+/// it keeps `rdev` in sqlite, which is exactly the thing the *root* filesystem
+/// no longer does. A dozen nodes is a database of a few kilobytes, built once
+/// and next to nothing to carry; the whole tree's metadata was the part worth
+/// refusing.
+///
+/// Only the root row is written here. The nodes themselves are created through
+/// the kernel afterwards, so how a path is spelled in that table stays the
+/// kernel's business rather than something this file has to guess.
+static int make_dev_db(char *data_out, size_t data_len) {
+    char dir[MAX_PATH];
+    snprintf(dir, sizeof(dir), "%s/.dev", rootfs_path);
+    mkdir(dir, 0755);
+    snprintf(data_out, data_len, "%s/data", dir);
+    mkdir(data_out, 0755);
+
+    char db_path[MAX_PATH];
+    snprintf(db_path, sizeof(db_path), "%s/meta.db", dir);
+    if (access(db_path, F_OK) == 0) return 0;
+
+    sqlite3 *db;
+    if (sqlite3_open_v2(db_path, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL) != SQLITE_OK) {
+        syslog(LOG_ERR, "sbm_ish: could not create %s", db_path);
+        return -EIO;
+    }
+    // The schema `fakefsify` writes, and the version `fake_db_init` expects to
+    // find so it does not try to migrate one that was never older.
+    static const char *schema =
+        "pragma journal_mode=wal;"
+        "create table meta (id integer unique default 0, db_inode integer);"
+        "insert into meta (db_inode) values (0);"
+        "create table stats (inode integer primary key, stat blob);"
+        "create table paths (path blob primary key, inode integer references stats(inode));"
+        "create index inode_to_path on paths (inode, path);"
+        "pragma user_version=3;";
+    char *message = NULL;
+    if (sqlite3_exec(db, schema, NULL, NULL, &message) != SQLITE_OK) {
+        syslog(LOG_ERR, "sbm_ish: /dev schema: %s", message == NULL ? "?" : message);
+        sqlite3_close(db);
+        unlink(db_path);
+        return -EIO;
+    }
+
+    // The root of that filesystem, which has to exist before it can be mounted.
+    struct ish_stat root = { .mode = S_IFDIR | 0755, .uid = 0, .gid = 0, .rdev = 0 };
+    sqlite3_stmt *statement;
+    sqlite3_prepare_v2(db, "insert into stats (stat) values (?)", -1, &statement, NULL);
+    sqlite3_bind_blob(statement, 1, &root, sizeof(root), SQLITE_TRANSIENT);
+    sqlite3_step(statement);
+    sqlite3_finalize(statement);
+    sqlite3_prepare_v2(db, "insert or replace into paths values ('', last_insert_rowid())", -1, &statement, NULL);
+    sqlite3_step(statement);
+    sqlite3_finalize(statement);
+    sqlite3_close(db);
+    return 0;
+}
+
+/// Everything a userland expects to find at `/dev`.
 static void make_dev(void) {
     // The mount point first: a minirootfs unpacked without root may have no
     // `/dev` at all, since the device nodes in the tarball are what create it.
     generic_mkdirat(AT_PWD, "/dev", 0755);
-    do_mount(&tmpfs, "dev", "/dev", "", 0);
+
+    char data_path[MAX_PATH];
+    if (make_dev_db(data_path, sizeof(data_path)) < 0) return;
+    do_mount(&fakefs, data_path, "/dev", "", 0);
 
     generic_mknodat(AT_PWD, "/dev/null", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_NULL_MINOR));
     generic_mknodat(AT_PWD, "/dev/zero", S_IFCHR | 0666, dev_make(MEM_MAJOR, DEV_ZERO_MINOR));
@@ -314,8 +375,11 @@ int sbm_ish_boot(const char *rootfs) {
     if (IS_ERR(root_fd)) return (int)PTR_ERR(root_fd);
     fs_chdir(current->fs, root_fd);
 
-    make_dev();
+    // `/proc` first: `/dev/stdout` and friends are symlinks into it, and a
+    // shell following one before it is mounted gets "nonexistent directory".
+    generic_mkdirat(AT_PWD, "/proc", 0755);
     do_mount(&procfs, "proc", "/proc", "", 0);
+    make_dev();
     exit_hook = guest_exited;
 
     // Init is a shell in a loop. `kernel/exit.c` ends the *host process* when

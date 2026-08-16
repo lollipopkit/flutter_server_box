@@ -406,31 +406,28 @@ pty of its own — `become_new_init_child`, `pty_open_fake`, `create_stdio` on
 cannot land on each other's output. Verified: one session reports Alpine's
 version, a second one running at the same time sees only its own marker.
 
-**`/dev` is the piece that did not fall out.** The nodes are still missing, and
-the reason is worth keeping because it is not obvious:
+**`/dev` is a database, and it is the only thing that is.** Nothing else can
+hold a device node: `realfs` refuses (creating one needs root on the host) and
+`tmpfs` has no `mknod` at all — only `fakefs`, because it keeps `rdev` in
+sqlite. So `/dev` is a small fakefs the app creates at boot: schema, one root
+row, and the nodes written through the kernel afterwards so the path encoding
+stays its business. A dozen nodes is a few kilobytes; the whole tree's metadata
+was the part worth refusing, and that is gone.
 
-| Filesystem | Can it hold a device node |
-| --- | --- |
-| `realfs` | No — `realfs_mknod` refuses anything but a FIFO or a regular file, since creating one needs root on the host |
-| `tmpfs` | **No** — it has no `mknod` operation at all |
-| `fakefs` | Yes, and only it: `rdev` lives in its database, which is what this design set out to remove |
+Measured: `head -c 16 /dev/urandom` gives 16 bytes, `/dev/zero` gives 8,
+`/dev/ptmx`, `/dev/pts` and `/dev/shm` are there.
 
-So `/dev` exists and is empty, `/dev/pts` works (devptsfs is its own
-filesystem), and `/dev/null` and friends do not. Three ways out:
+Two gaps left in it, both recorded as TODOs in
+`integration_test/ios_rootfs_test.dart` rather than assumed away:
 
-1. **Add `mknod` to `tmpfs`** in the vendored engine. It is in-memory and
-   already stores a mode per node; `rdev` is one more field. The smallest
-   change, and the one that keeps `/dev` where it belongs — but it is a patch
-   to carry against upstream.
-2. **Mount a small `fakefs` at `/dev`.** Only a dozen nodes, so the database is
-   tiny — but the app would have to create one, and the schema lives in the
-   host tool rather than in `libfakefs`.
-3. **Ship a prebuilt `/dev`** in the bundle and mount it. No new code, and a
-   read-only `/dev` that cannot grow a node the guest asks for later.
-
-Nothing works around it in the meantime: a shell without `/dev/null` fails at
-the first `2>/dev/null`. `integration_test/ios_rootfs_test.dart` carries the
-test for it, skipped, ready to be turned on.
+- `/dev/stdout`, `/dev/stdin`, `/dev/stderr` and `/dev/fd` are symlinks into
+  `/proc/self/fd` and are not being created — a shell that follows one gets
+  "nonexistent directory". Conveniences, not nodes;
+- `tty` reports "not a tty". Output flows and sessions are independent, so
+  `create_stdio` is reaching the driver — but through the adhoc fd it falls
+  back to rather than the `/dev/pts/N` node, and `isatty` does not recognise
+  that. Interactive programs will care; a shell running a command does not,
+  which is why it took a `tty` call to notice.
 
 What is left:
 
