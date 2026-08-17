@@ -247,7 +247,9 @@ extension _App on _AppSettingsPageState {
     }
 
     RNodes.app.notify();
-    context.pop();
+    // `popDialog`: reached from the colour dialog's OK, with the settings
+    // page's `context`.
+    context.popDialog();
   }
 
   Widget _buildMaxRetry() {

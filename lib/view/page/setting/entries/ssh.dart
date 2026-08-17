@@ -604,7 +604,9 @@ extension _SSH on _AppSettingsPageState {
       ctrl.text = current;
       void onSave() {
         _setting.tmuxSessionName.put(ctrl.text.trim());
-        context.pop();
+        // `popDialog`: `context` here is the settings page's, and the dialog
+        // is on the root navigator.
+        context.popDialog();
       }
 
       await context.showRoundDialog<bool>(

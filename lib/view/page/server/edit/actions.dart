@@ -108,7 +108,11 @@ extension _Actions on _ServerEditPageState {
     }
     await _setPendingSudoPassword(value);
     if (!mounted) return;
-    context.pop();
+    // `popDialog`, not `pop`. This runs from the dialog's Save button but
+    // `context` is the *page's*, and `showRoundDialog` puts the dialog on the
+    // root navigator — so in a pane those are two navigators and `pop` closed
+    // the edit page while leaving the dialog on screen.
+    context.popDialog();
   }
 
   Future<bool> _persistPendingSudoPassword() async {
