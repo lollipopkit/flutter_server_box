@@ -109,20 +109,19 @@ class _WindowButtons extends ConsumerWidget {
           tooltip: collapsed ? context.l10n.agentTitle : libL10n.fold,
           visualDensity: VisualDensity.compact,
           onPressed: collapsed ? shell.expand : shell.collapse,
-          // Larger than the default, and larger than the close beside it. A
-          // chevron is a thin glyph in a wide box: at the same nominal size as
-          // the solid icons either side of it, it draws to about two thirds of
-          // their height and reads as a smaller button.
+          // A chevron is a thin glyph in a wide box: at the size the solid
+          // icons take it draws to about two thirds of their height and reads
+          // as the smaller button — see [agentHeaderChevronSize].
           icon: Icon(
             collapsed ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-            size: 28,
+            size: agentHeaderChevronSize,
           ),
         ),
         IconButton(
           tooltip: libL10n.close,
           visualDensity: VisualDensity.compact,
           onPressed: shell.hide,
-          icon: const Icon(Icons.close),
+          icon: const Icon(Icons.close, size: agentHeaderIconSize),
         ),
       ],
     );
@@ -265,7 +264,7 @@ class _DesktopShellState extends ConsumerState<_DesktopShell> {
             children: [
               Icon(
                 Icons.auto_awesome,
-                size: 17,
+                size: agentHeaderIconSize,
                 color: theme.colorScheme.primary,
               ),
               const SizedBox(width: 8),
@@ -486,7 +485,7 @@ class _PhoneShellState extends ConsumerState<_PhoneShell>
                       Icon(
                         Icons.auto_awesome,
                         color: theme.colorScheme.onPrimaryContainer,
-                        size: 22,
+                        size: agentHeaderIconSize,
                       ),
                     ],
                   ),
@@ -589,7 +588,7 @@ class _PhoneShellState extends ConsumerState<_PhoneShell>
               children: [
                 Icon(
                   Icons.auto_awesome,
-                  size: 17,
+                  size: agentHeaderIconSize,
                   color: theme.colorScheme.primary,
                 ),
                 const SizedBox(width: 8),

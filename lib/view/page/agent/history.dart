@@ -5,6 +5,7 @@ import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/app/menu/base.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
+import 'package:server_box/view/page/agent/view.dart';
 
 /// Opens the conversation list as a sheet, for the layouts too narrow to give
 /// it a column of its own.
@@ -159,7 +160,10 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
                   IconButton(
                     tooltip: libL10n.clearHistory,
                     onPressed: session.isWorking ? null : _clear,
-                    icon: const Icon(Icons.delete_sweep_outlined),
+                    icon: const Icon(
+                      Icons.delete_sweep_outlined,
+                      size: agentHeaderIconSize,
+                    ),
                   ),
                   const SizedBox(width: 4),
                 ],
@@ -175,7 +179,7 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
                           _notifier.beginNewConversation();
                           _closeIfSheet();
                         },
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(Icons.add, size: agentHeaderIconSize),
                 ),
               ],
             ),

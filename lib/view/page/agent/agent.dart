@@ -69,8 +69,14 @@ class _FloatToggle extends ConsumerWidget {
       tooltip: context.l10n.agentFloat,
       isSelected: floating,
       onPressed: ref.read(agentShellProvider.notifier).toggle,
-      icon: const Icon(Icons.picture_in_picture_alt_outlined),
-      selectedIcon: const Icon(Icons.picture_in_picture_alt),
+      icon: const Icon(
+        Icons.picture_in_picture_alt_outlined,
+        size: agentHeaderIconSize,
+      ),
+      selectedIcon: const Icon(
+        Icons.picture_in_picture_alt,
+        size: agentHeaderIconSize,
+      ),
     );
   }
 }

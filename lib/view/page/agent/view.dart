@@ -89,6 +89,26 @@ String formatGlobalAgentToolResultOutput(
   return sections.join('\n\n');
 }
 
+/// One size for every icon button in an Agent header, on the tab and in the
+/// floating window both.
+///
+/// Material's default is 24, which the buttons took and the marks beside them
+/// did not — 21 on the tab, 17 in the phone sheet, 22 on the desktop panel —
+/// so a row meant to read as one strip had four weights in it. Stated once
+/// here rather than at each call site, which is how it came to have four.
+///
+/// Thin glyphs are the exception and say so where they are used: a chevron in
+/// a box this size draws to about two thirds of a solid icon's height.
+const agentHeaderIconSize = 22.0;
+
+/// What a chevron needs to weigh the same as the solid icons beside it.
+///
+/// Not a multiple of [agentHeaderIconSize]: an `IconButton` is its icon plus 8
+/// either side, and the desktop panel's title bar is `AgentShellGeometry
+/// .barHeight` — 44 — so anything past 28 overflows a bar that cannot grow.
+/// 26 leaves the margin and still reads level with a 22 close button.
+const agentHeaderChevronSize = 26.0;
+
 /// The buttons that act on the conversation rather than on the window around
 /// it. Shared by the tab's header and the floating shell's title bar, which
 /// otherwise have nothing in common.
@@ -112,12 +132,15 @@ class AgentHeaderActions extends ConsumerWidget {
             onPressed: session.isWorking
                 ? null
                 : () => showAgentHistorySheet(context),
-            icon: const Icon(Icons.history),
+            icon: const Icon(Icons.history, size: agentHeaderIconSize),
           ),
           IconButton(
             tooltip: context.l10n.askAiNewConversation,
             onPressed: session.isWorking ? null : notifier.beginNewConversation,
-            icon: const Icon(Icons.add_comment_outlined),
+            icon: const Icon(
+              Icons.add_comment_outlined,
+              size: agentHeaderIconSize,
+            ),
           ),
         ],
         const _AdHocSessionsButton(),
@@ -143,7 +166,7 @@ class _AdHocSessionsButton extends ConsumerWidget {
       onPressed: () => _show(context),
       icon: Badge.count(
         count: sessions.length,
-        child: const Icon(Icons.cable),
+        child: const Icon(Icons.cable, size: agentHeaderIconSize),
       ),
     );
   }
@@ -446,7 +469,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
             child: Icon(
               Icons.auto_awesome,
               color: theme.colorScheme.onPrimaryContainer,
-              size: 21,
+              size: agentHeaderIconSize,
             ),
           ),
           const SizedBox(width: 12),
