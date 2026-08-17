@@ -416,6 +416,35 @@ void main() {
     expect(find.text('hidden detail'), findsOneWidget);
   });
 
+  testWidgets('dragging the front out moves the rest up over time', (tester) async {
+    await pumpPair(tester);
+    await tester.tap(find.text('newer'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+
+    final before = _cardOf(tester, 'older').top;
+
+    final gesture = await tester.startGesture(tester.getCenter(find.text('newer')));
+    await gesture.moveBy(const Offset(25, 0));
+    await tester.pump();
+    await gesture.moveBy(const Offset(300, 0));
+    await tester.pump();
+    await gesture.up();
+
+    // Off the screen first, and only then giving up the height it holds.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(_cardOf(tester, 'older').top, closeTo(before, 0.5));
+
+    await tester.pump(const Duration(milliseconds: 40));
+    final midway = _cardOf(tester, 'older').top;
+    expect(midway, lessThan(before));
+
+    await tester.pump(const Duration(milliseconds: 700));
+    expect(_cardOf(tester, 'older').top, lessThan(midway));
+    expect(find.text('newer'), findsNothing);
+  });
+
   testWidgets('nothing in an open pile expires while it is being read', (tester) async {
     await tester.pumpWidget(_app());
     Toast.show('one', duration: const Duration(seconds: 1));
