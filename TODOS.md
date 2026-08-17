@@ -137,9 +137,10 @@ Apple Silicon 上的 Linux 虚拟机)。
 - `serverbox` 的 `open_server` 一次都没被调用过,除单元测试外没有任何运行时证据
 - 移动端完全没跑过:悬浮窗胶囊、贴边、底部面板、键盘遮挡(动画部分有
   `agent_shell_view_test.dart`,真机形态没有)
-- 拒绝 host key 时工具是否干净失败 —— 只验过接受。原先记的「没有注入点」不成立:
-  `genClient` 本来就收 `onHostKeyPrompt`,是 `_sshConnect` 没有往下传。要自动化就把它
-  透出来;在那之前是真服务器 + 换过 host key 才走得到
+- 拒绝 host key 之后,Agent 那个工具是否干净失败。判定本身已经有测试
+  (`test/host_key_verify_test.dart`,含「拒绝指纹不符时保留原 key」),剩下的是工具层:
+  `_sshConnect` 抛出之后,会话没有被加进 `adHocSshSessionsProvider`、错误话术不会让模型
+  原样重试。这半要真服务器 + 换过 host key,因为 `genClient` 要先有 socket 才谈得到验证
 - 完整场景里的 monitor 安装那一半。`install.sh` 现在 systemd 和 OpenRC 都支持,两边的
   service 环节都在新建的 orbstack 机器上跑过(装/重复装/升级/卸载、跑在普通账户名下、
   杀掉进程能被拉回)。**但用的是 stub 二进制**,因为下面这条:
