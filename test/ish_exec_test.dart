@@ -59,4 +59,25 @@ void main() {
     expect(lines[2], "export B='2'");
     expect(lines[3], 'true');
   });
+
+  test('an ordinary command is handed to the engine as it is', () {
+    expect(IshExec.needsFile(wrap('echo hi')), isFalse);
+  });
+
+  test('a command past the engine limit is run from a file instead', () {
+    // The engine packs `/bin/sh`, `-c` and the command into 4096 bytes and
+    // refuses anything longer with `-E2BIG`, which a caller only ever sees as
+    // "the guest refused a session (-7)". The status script is 4919 bytes.
+    expect(IshExec.needsFile(wrap('#' * 5000)), isTrue);
+  });
+
+  test('the limit is bytes, not characters', () {
+    // Where the two answers differ: 2000 of these are 2000 code units and
+    // 6000 bytes, and it is bytes the C side counts. Measuring the Dart length
+    // would pass this straight to an engine that cannot hold it.
+    final script = '# ${'啊' * 2000}';
+
+    expect(script.length, lessThan(IshExec.argvLimit));
+    expect(IshExec.needsFile(wrap(script)), isTrue);
+  });
 }

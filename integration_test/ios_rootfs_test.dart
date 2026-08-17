@@ -225,6 +225,83 @@ void main() {
     expect(leftovers, isEmpty);
   }, skip: !Platform.isIOS, timeout: const Timeout(Duration(minutes: 2)));
 
+  // Where the app stops taking a command, and the reason the test after this
+  // one exists. `sbm_ish_open` packs `/bin/sh`, `-c` and the command into one
+  // 4096-byte block and answers `-E2BIG`; the guest's own `ARGV_MAX` is 32
+  // pages and was never what stopped anything. Bracketed rather than pinned to
+  // the byte — what matters is that the wall is near 4 KB and that reaching it
+  // is a refusal rather than a command quietly cut short.
+  testWidgets('the engine refuses a command it cannot fit', (_) async {
+    if (!IosRootfs.isAvailable) {
+      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      return;
+    }
+    await IosRootfs.install();
+    IosRootfs.boot();
+
+    // Padded with a comment, so the length is the only thing being varied.
+    String ofLength(int bytes) {
+      const command = 'true';
+      return '$command #${'-' * (bytes - command.length - 2)}';
+    }
+
+    final fits = IosRootfs.open(command: ofLength(4000));
+    expect(fits, greaterThanOrEqualTo(0), reason: '4000 bytes refused ($fits)');
+    IosRootfs.close(fits);
+
+    final over = IosRootfs.open(command: ofLength(5000));
+    // Closed before the assertion: a session leaked here outlives the test.
+    if (over >= 0) IosRootfs.close(over);
+    debugPrint('ISHARGV 4000=$fits 5000=$over');
+    // -E2BIG, from the host's errno.h. This is the number a caller sees in
+    // `IshExec`'s "the guest refused a session ($id)".
+    expect(over, -7, reason: '5000 bytes did not give -E2BIG');
+  }, skip: !Platform.isIOS, timeout: const Timeout(Duration(minutes: 2)));
+
+  // The Agent writes the script it runs, so nothing bounds its length, and
+  // 4 KB of it used to come back as "refused a session (-7)" — a sentence that
+  // says nothing about length and points at the guest rather than at the app.
+  testWidgets('a script the engine cannot hold still runs', (_) async {
+    if (!IshExec.isSupported) {
+      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      return;
+    }
+    await IosRootfs.install();
+    const exec = IshExec();
+
+    // Well past 4 KB, and past it in the part that varies rather than in one
+    // long line, which is the shape a generated script actually has.
+    final script = StringBuffer();
+    for (var i = 0; i < 400; i++) {
+      script.writeln('# a line of padding, the ${i}th of four hundred');
+    }
+    script.writeln(r'echo out; echo err >&2; exit 7');
+    expect(utf8.encode(script.toString()).length, greaterThan(4096));
+
+    final long = await exec.run(script.toString());
+    // Everything the short path promises, over the long one: both streams, kept
+    // apart, and the script's own exit code rather than the shell's opinion of
+    // being handed a file.
+    expect(long.exitCode, 7, reason: long.stderr);
+    expect(long.stdout.trim(), 'out');
+    expect(long.stderr.trim(), 'err');
+
+    // And the environment still arrives, which is the other half of what the
+    // wrapper writes ahead of the script.
+    final env = await exec.run(
+      '${'# padding\n' * 600}printf %s "\$SBM_LONG"',
+      env: {'SBM_LONG': 'through the file'},
+    );
+    expect(env.stdout, 'through the file');
+
+    // The script file is the guest's /tmp too, and goes the way the two output
+    // files do.
+    final leftovers = Directory(IosRootfs.root!.joinPath('tmp'))
+        .listSync()
+        .where((e) => e.path.contains('.sbm-exec-'));
+    expect(leftovers, isEmpty);
+  }, skip: !Platform.isIOS, timeout: const Timeout(Duration(minutes: 2)));
+
   // The three places the host's uptime reaches the guest. They disagreed:
   // `get_uptime` answered in whole seconds and two of the three divide by 100,
   // so /proc/uptime advanced by 0.01 per real second and anything timing itself

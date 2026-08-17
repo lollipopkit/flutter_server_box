@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
@@ -49,6 +50,27 @@ class IshExec extends LocalExec {
   /// of input, since there is no descriptor here to close instead.
   static const _eof = '\u0004';
 
+  /// How long a command the engine will take, in bytes.
+  ///
+  /// `sbm_ish_open` packs `/bin/sh`, `-c` and the command into one 4096-byte
+  /// block (`ios/Runner/ish/sbm_ish.c`) and answers `-E2BIG` rather than
+  /// truncating — which reaches a caller as "the guest refused a session (-7)",
+  /// a sentence that says nothing about length. The guest's own `ARGV_MAX` is
+  /// 32 pages, so 4 KB is this app's limit and not Linux's.
+  ///
+  /// Left where it is rather than raised: that block is a local of the thread
+  /// that becomes the guest process, and a script long enough to reach it is
+  /// better off in a file, which has no limit worth naming. The status script
+  /// is 4919 bytes and would never have fit.
+  @visibleForTesting
+  static const argvLimit = 4000;
+
+  /// Whether [command] has to be run from a file rather than handed to the
+  /// engine. Counted in bytes, which is what the C side counts.
+  @visibleForTesting
+  static bool needsFile(String command) =>
+      utf8.encode(command).length > argvLimit;
+
   @override
   Future<ExecResult> run(
     String script, {
@@ -87,18 +109,31 @@ class IshExec extends LocalExec {
     await directory.create(recursive: true);
     final outFile = File('${directory.path}/$name.out');
     final errFile = File('${directory.path}/$name.err');
+    final ours = <File>[outFile, errFile];
 
-    final id = IosRootfs.open(
-      command: wrapScript(
-        script,
-        out: '/tmp/$name.out',
-        err: '/tmp/$name.err',
-        env: env,
-        readsStdin: stdin != null,
-      ),
+    final command = wrapScript(
+      script,
+      out: '/tmp/$name.out',
+      err: '/tmp/$name.err',
+      env: env,
+      readsStdin: stdin != null,
     );
+
+    // Past what the engine takes as an argument, so the script goes where its
+    // output already does. Nothing about the run changes: the shell that reads
+    // the file is the one the redirect and the environment were written for,
+    // and it is still the session's process, so its exit code is the answer.
+    var opened = command;
+    if (needsFile(command)) {
+      final file = File('${directory.path}/$name.sh');
+      await file.writeAsString(command);
+      ours.add(file);
+      opened = "sh '/tmp/$name.sh'";
+    }
+
+    final id = IosRootfs.open(command: opened);
     if (id < 0) {
-      await _remove([outFile, errFile]);
+      await _remove(ours);
       throw StateError('The Linux guest refused a session ($id)');
     }
 
@@ -153,7 +188,7 @@ class IshExec extends LocalExec {
     } finally {
       finished = true;
       IosRootfs.close(id);
-      await _remove([outFile, errFile]);
+      await _remove(ours);
     }
 
     return ExecResult(
