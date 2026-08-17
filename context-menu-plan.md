@@ -139,29 +139,55 @@ a terminal people fight.
   the parameter were left as `List<Widget>` alongside — so it is replaced, not
   added beside.
 
-## Manual verification
+## Verification
 
-### 1. The gesture
+Most of this list turned out not to need hands. Every right-click in the app
+goes through one extension, so its contract is checked once rather than per
+page; what is left below is what a test cannot reach.
 
-- [ ] Right-click a server card: it flips, exactly as a long press does.
+### 1. The gesture — covered by `fl_lib/test/secondary_tap_test.dart`
+
+- [x] Right-click a server card: it flips, exactly as a long press does.
+      Structural: `tab/tab.dart:272` passes `asSecondary(() =>
+      _onLongPressCard(srv))`, the same callback `onLongPress` gets.
+- [x] Long press still works on all of the above — `the primary button still
+      taps and long-presses`. `HitTestBehavior.translucent` is what buys it.
+- [x] Scrolling a list with the left button still scrolls, and a long press
+      during a scroll does not fire — `a scroll drag still scrolls, and is not
+      a long press`.
+- [x] Also locked, and not on the original list: it fires on **release**, a
+      drag off before release calls nothing, the position handed over is
+      global, and a null callback leaves the widget unwrapped.
 - [ ] Right-click a server card that is not connected: the edit page opens.
 - [ ] Right-click a server in the SSH tab's list: the edit page opens.
-- [ ] Long press still works on all of the above, on a touch screen.
-- [ ] Scrolling a list with the left button still scrolls, and a long press
-      during a scroll does not fire.
 
-### 2. The menu
+The last two are which callback a page passes, not whether the gesture works.
+Reaching them in a test means pumping the server tab with its providers and
+stores; worth doing, not done.
 
-- [ ] Right-click a file in the browser: the menu opens at the cursor.
-- [ ] Long press the same file on a touch screen: the centred dialog.
-- [ ] Every entry in both does what it did before, and closes the menu.
-- [ ] Right-click near the bottom edge: the menu stays on screen.
+### 2. The menu — covered by `test/file_browser_test.dart`
 
-### 3. The terminal
+- [x] Right-click a file in the browser: the menu opens at the cursor —
+      `a right-click opens it where the pointer is`.
+- [x] Long press the same file: the centred dialog — `a long press opens it
+      centred`.
+- [x] An entry runs after the menu has closed — `an action runs after the menu
+      has closed`. Not literally every entry.
+- [x] Right-click in empty space offers what can be made here.
+- [ ] ~~Right-click near the bottom edge: the menu stays on screen.~~ **Not
+      ours.** Where Flutter puts a menu that would overflow is Flutter's
+      layout; asserting it would test the framework. Left to the framework
+      deliberately — the same reasoning the test file already records.
+
+### 3. The terminal — not covered
 
 - [ ] With text selected, right-click copies it and clears the selection.
 - [ ] With nothing selected, right-click pastes.
 - [ ] Neither interferes with the existing text-selection drag.
+
+`page.dart:432` wires `onSecondaryTapUp` directly rather than through the
+extension, so none of the above reaches it. Needs a terminal with a backend and
+a mocked clipboard channel.
 
 
 ## The rest of the desktop gaps
@@ -203,17 +229,29 @@ that is already handled.
   Deliberate: with no double-click to open, replace-on-click would make it
   impossible to open anything while a selection is open.
 
-### Manual verification for these
+### Verification for these
 
-- [ ] ⌘/Ctrl+1-9 switches tabs on Linux and Windows, not only macOS.
-- [ ] ⌘/Ctrl+, opens settings on all three.
-- [ ] Dragging a file from the system onto the listing queues a transfer; a
-      folder queues the whole tree.
-- [ ] Ctrl-click picks; shift-click extends; ⌘A picks the listing; Escape
-      clears; leaving the directory clears.
-- [ ] Arrow keys move a cursor without picking; Enter opens it; Backspace goes
-      up; F2 renames; Delete deletes what is picked.
-- [ ] Delete with several picked asks once, listing them, not once per file.
+- [x] ⌘/Ctrl+1-9 switches tabs on Linux and Windows, not only macOS —
+      `test/desktop_shortcuts_test.dart`, `meta on macOS, control everywhere
+      else`. The binding, not a run on those two OSes.
+- [x] ⌘/Ctrl+, opens settings — same file, `settings has its own chord`.
+- [x] Ctrl-click picks; shift-click extends; ⌘A picks the listing; Escape
+      clears; leaving the directory clears — five tests in `picking several
+      out` and `the keyboard`.
+- [x] Arrow keys move a cursor without picking; Enter opens it; Backspace goes
+      up; F2 renames — `arrows move a cursor, enter opens it`, `backspace goes
+      up`, `F2 renames where the cursor is`. F2 with two picked does nothing
+      rather than guessing, which is also locked.
+- [x] Delete with several picked asks once, listing them, not once per file —
+      `asks once, and names what it is about to delete`, plus that confirming
+      removes every one and that dismissing removes none. The way out is the
+      barrier: `Btnx.okReds` is one button, so there is no Cancel.
+- [x] Hovering any toolbar icon says what it does — `every icon button says
+      what it does` walks the tree rather than listing buttons, so one added
+      later is covered without anyone remembering.
 - [ ] "Send to" with several picked asks where once and reuses it.
-- [ ] Hovering any toolbar icon says what it does.
+- [ ] Dragging a file from the system onto the listing queues a transfer; a
+      folder queues the whole tree. A real OS drag; the platform channel could
+      be faked, which tests the fake.
 - [ ] Ctrl+Shift+C/V in the terminal on Linux, and Ctrl+C still interrupts.
+      Needs Linux for the real thing, and a terminal harness for the binding.

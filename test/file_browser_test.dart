@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
@@ -37,6 +38,12 @@ class _MapBackend implements FileBackend {
   /// the old listing" from "never asked for the new one".
   final listed = <String>[];
 
+  /// What it was asked to delete and to rename. A dialog that was shown and a
+  /// dialog that was confirmed look the same from the listing, so these are
+  /// what tell them apart.
+  final removed = <String>[];
+  final renamed = <(String from, String to)>[];
+
   @override
   FileBackendTraits get traits =>
       FileBackendTraits(sudoFallback: sudoFallback);
@@ -65,10 +72,11 @@ class _MapBackend implements FileBackend {
       const Stream.empty();
 
   @override
-  Future<void> remove(String path, {bool recursive = false}) async {}
+  Future<void> remove(String path, {bool recursive = false}) async =>
+      removed.add(path);
 
   @override
-  Future<void> rename(String from, String to) async {}
+  Future<void> rename(String from, String to) async => renamed.add((from, to));
 
   @override
   Future<FileEntry?> stat(String path) async => null;
@@ -539,6 +547,142 @@ void main() {
 
       expect(find.text('3 selected'), findsOneWidget);
     });
+
+    testWidgets('F2 renames where the cursor is', (tester) async {
+      final backend = _MapBackend({
+        '/': [_file('a.txt'), _file('b.txt')],
+      });
+
+      await pump(tester, backend);
+      await focusList(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.f2);
+      await tester.pumpAndSettle();
+
+      // The rename dialog, opened on the row the cursor reached rather than on
+      // whatever was first.
+      expect(find.widgetWithText(TextField, 'a.txt'), findsOneWidget);
+    });
+
+    testWidgets('F2 does nothing while two are picked', (tester) async {
+      // Which of the two would it rename? Nothing rather than whichever came
+      // first — see `_cursorOrOnlySelected`.
+      final backend = _MapBackend({
+        '/': [_file('a.txt'), _file('b.txt')],
+      });
+
+      await pump(tester, backend);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.meta);
+      await tester.tap(find.text('a.txt'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('b.txt'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.meta);
+      expect(find.text('2 selected'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.f2);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TextField), findsNothing);
+      expect(find.text('2 selected'), findsOneWidget);
+    });
+  });
+
+  group('deleting several at once', () {
+    _MapBackend threeFiles() => _MapBackend({
+      '/': [_file('a.txt'), _file('b.txt'), _file('c.txt')],
+    });
+
+    /// Picks [names] out, the way a desktop user would.
+    Future<void> pick(WidgetTester tester, List<String> names) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.meta);
+      for (final name in names) {
+        await tester.tap(find.text(name));
+        await tester.pumpAndSettle();
+      }
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.meta);
+    }
+
+    testWidgets('asks once, and names what it is about to delete', (
+      tester,
+    ) async {
+      // Once per file would be three dialogs to dismiss for one intention, and
+      // a list of names is the only chance to notice the wrong one is in it.
+      final backend = threeFiles();
+
+      await pump(tester, backend);
+      await pick(tester, ['a.txt', 'b.txt']);
+      await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('a.txt\nb.txt'), findsOneWidget);
+      // Nothing has gone yet: this is the question, not the answer.
+      expect(backend.removed, isEmpty);
+    });
+
+    testWidgets('removes every one of them once confirmed', (tester) async {
+      final backend = threeFiles();
+
+      await pump(tester, backend);
+      await pick(tester, ['a.txt', 'b.txt']);
+      await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(libL10n.ok));
+      await tester.pumpAndSettle();
+
+      expect(backend.removed, ['/a.txt', '/b.txt']);
+      // And the selection is gone, so the bar does not name files that are not
+      // there any more.
+      expect(find.textContaining('selected'), findsNothing);
+    });
+
+    testWidgets('dismissing it removes nothing, and keeps the selection', (
+      tester,
+    ) async {
+      // The way out is the barrier: `Btnx.okReds` is one button, so there is
+      // no Cancel to press, and `showRoundDialog` is barrier-dismissible by
+      // default. A dismissed dialog answers null, which is not `true`.
+      final backend = threeFiles();
+
+      await pump(tester, backend);
+      await pick(tester, ['a.txt', 'b.txt']);
+      await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+      await tester.pumpAndSettle();
+      expect(find.byType(ModalBarrier), findsWidgets);
+
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      expect(backend.removed, isEmpty);
+      // Still picked, so the intention survives a mis-press.
+      expect(find.text('2 selected'), findsOneWidget);
+    });
+  });
+
+  testWidgets('every icon button says what it does', (tester) async {
+    // 44 of them said nothing at all before the desktop sweep. A tooltip is
+    // the only label an icon-only button has, and on a desktop it is what a
+    // hover is for; asserted over the tree rather than listed, so a button
+    // added later is covered without anyone remembering to add it here.
+    await pump(tester, _MapBackend({
+      '/': [_file('a.txt')],
+    }));
+
+    final silent = <String>[];
+    for (final element in find.byType(IconButton).evaluate()) {
+      final button = element.widget as IconButton;
+      if (button.tooltip != null && button.tooltip!.isNotEmpty) continue;
+      // A button may carry its label as a `Tooltip` around it instead, which
+      // reads the same to a user and to the semantics tree.
+      final wrapped = find
+          .ancestor(of: find.byWidget(button), matching: find.byType(Tooltip))
+          .evaluate()
+          .isNotEmpty;
+      if (!wrapped) silent.add(button.icon.toStringShort());
+    }
+
+    expect(silent, isEmpty, reason: 'these say nothing on hover: $silent');
   });
 
   testWidgets('an empty directory says so, and can still be left', (
