@@ -182,7 +182,11 @@ class SettingStore extends HiveStore {
   ///
   /// Remembered because it is a working preference, not a one-off: someone who
   /// widens it to read long server names wants it that way tomorrow too.
-  late final paneListWidth = propertyDefault('paneListWidth', 320.0);
+  ///
+  /// The default is what dragging used to bottom out at. Only new installs see
+  /// it — anyone who has dragged a divider has a number of their own stored,
+  /// and moving that under them would undo the choice this exists to keep.
+  late final paneListWidth = propertyDefault('paneListWidth', 220.0);
 
   /// Whether use `rm -r` to delete directory on SFTP
   late final sftpRmrDir = propertyDefault('sftpRmrDir', false);

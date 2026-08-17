@@ -59,6 +59,8 @@ final class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
             onTap: () => ConnectionStatsPage.route.go(context),
             child: Text(
               connectionText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ),
@@ -71,7 +73,12 @@ final class _TopBar extends ConsumerWidget implements PreferredSizeWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          leading,
+          // Allowed to give way. This bar sits above the server list wherever
+          // that list is, and one of those places is a column the user can
+          // drag down to `AdaptivePanes.minPrimaryWidth` — where a leading
+          // sized to its own text takes the row past its width and the tags
+          // beside it have nothing left to shrink into.
+          Flexible(child: leading),
           SizedBox(width: isMobile ? 30 : 16),
           TagSwitcher(
             tags: tags,

@@ -5,16 +5,32 @@ extension on _ServerPageState {
     return Padding(
       padding: const EdgeInsets.only(left: 7, right: 13),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            s.spi.name,
-            style: UIs.text13Bold,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          // The name and its arrow take what is left after the status on the
+          // right, and no more. `overflow: ellipsis` on the text alone did
+          // nothing: in a row a text is given its own intrinsic width, so a
+          // long server name never got to elide — it pushed the row past the
+          // card and struck it through with the overflow stripe instead.
+          Expanded(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    s.spi.name,
+                    style: UIs.text13Bold,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Icon(
+                  Icons.keyboard_arrow_right,
+                  size: 17,
+                  color: Colors.grey,
+                ),
+              ],
+            ),
           ),
-          const Icon(Icons.keyboard_arrow_right, size: 17, color: Colors.grey),
-          const Spacer(),
           _buildTopRightText(s),
           _buildTopRightWidget(s),
         ],
