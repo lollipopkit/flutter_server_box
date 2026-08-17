@@ -80,19 +80,28 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
 
   Widget _buildScaffold(List<Snippet> snippets, String tag, bool split) {
     final snippetState = ref.watch(snippetProvider);
+    final filtered = tag == TagSwitcher.kDefaultTag
+        ? snippets
+        : snippets.where((e) => e.tags?.contains(tag) ?? false).toList();
+
     return Scaffold(
-      appBar: TagSwitcher(
+      appBar: _SnippetBar(
         tags: snippetState.tags.vn,
         onTagChanged: (tag) => _tag.value = tag,
         initTag: _tag.value,
-        singleLine: true,
+        onSearch: () => _search(filtered),
       ),
-      body: _buildSnippetList(snippets, tag, split),
-      // Beside a pane the two buttons are in the rail's own row, where the
-      // terminal and file rails keep theirs; a button floating over a column
-      // this narrow covers the row under it.
+      body: _buildSnippetList(filtered, split),
+      // Beside a pane it is the small one the server rail uses, over a list
+      // that leaves room for it — rather than a second row of buttons under
+      // the bar, which no other pane has.
       floatingActionButton: split
-          ? null
+          ? FloatingActionButton.small(
+              heroTag: 'snippetAddPane',
+              tooltip: libL10n.add,
+              onPressed: () => _edit(null, true),
+              child: const Icon(Icons.add),
+            )
           : FloatingActionButton(
               heroTag: 'snippetAdd',
               tooltip: libL10n.add,
@@ -115,10 +124,10 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
     );
   }
 
-  Widget _buildSnippetList(List<Snippet> snippets, String tag, bool split) {
-    final filtered = tag == TagSwitcher.kDefaultTag
-        ? snippets
-        : snippets.where((e) => e.tags?.contains(tag) ?? false).toList();
+  Widget _buildSnippetList(List<Snippet> filtered, bool split) {
+    // Asked of what the tag filter left, not of everything: a tag with nothing
+    // under it used to draw an empty grid rather than say it was empty.
+    if (filtered.isEmpty) return Center(child: Text(libL10n.empty));
 
     // The same rail the server, terminal and file pages put beside their pane,
     // because it is the same job: a narrow index read while your attention is
@@ -126,53 +135,21 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
     // script, which is worth the width at full width and is a smaller copy of
     // the editor when the editor is right there.
     if (split) {
-      return Column(
-        children: [
-          // What acts on the list rather than on one entry in it, in the same
-          // corner and at the same size the other rails put theirs.
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Btn.icon(text: libL10n.search, 
-                  icon: const Icon(Icons.search, size: 18),
-                  onTap: () => _search(filtered),
-                ),
-                const SizedBox(width: 4),
-                Btn.icon(text: libL10n.add, 
-                  icon: const Icon(Icons.add, size: 18),
-                  onTap: () => _edit(null, true),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            // The emptiness is asked here rather than at the top of the
-            // method, because beside a pane there is no floating button and
-            // the row above is the only way to make the first snippet. Asked
-            // there, an empty list returned before the row was built and left
-            // a wide window with nothing to press.
-            child: filtered.isEmpty
-                ? Center(child: Text(libL10n.empty))
-                : ListView.builder(
-                    padding: const EdgeInsets.only(top: 4, bottom: 12),
-                    itemCount: filtered.length,
-                    itemBuilder: (_, index) {
-                      final snippet = filtered[index];
-                      return SideBarTile(
-                        title: snippet.name,
-                        selected: _editing == snippet.name,
-                        onTap: () => _edit(snippet, true),
-                      );
-                    },
-                  ),
-          ),
-        ],
+      return ListView.builder(
+        // Room at the bottom for the add button to float over, the way the
+        // server rail leaves it.
+        padding: const EdgeInsets.only(top: 4, bottom: 77),
+        itemCount: filtered.length,
+        itemBuilder: (_, index) {
+          final snippet = filtered[index];
+          return SideBarTile(
+            title: snippet.name,
+            selected: _editing == snippet.name,
+            onTap: () => _edit(snippet, true),
+          );
+        },
       );
     }
-
-    if (snippets.isEmpty) return Center(child: Text(libL10n.empty));
 
     // Flowed rather than a fixed grid: a row is as tall as what it has to say
     // — a snippet with a note is two lines under its name, one without is
@@ -236,4 +213,49 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
 
   @override
   bool get wantKeepAlive => true;
+}
+
+/// One row above the list: what filters it on the left, what acts on the whole
+/// of it on the right.
+///
+/// The shape the server rail has. Search lived in a second row under the bar,
+/// which no other pane has one of — and which only existed beside a pane, so on
+/// a phone there was no way to search at all.
+final class _SnippetBar extends StatelessWidget implements PreferredSizeWidget {
+  final ValueNotifier<Set<String>> tags;
+  final String initTag;
+  final void Function(String) onTagChanged;
+  final VoidCallback onSearch;
+
+  const _SnippetBar({
+    required this.tags,
+    required this.initTag,
+    required this.onTagChanged,
+    required this.onSearch,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 10, right: 4),
+      child: Row(
+        children: [
+          TagSwitcher(
+            tags: tags,
+            onTagChanged: onTagChanged,
+            initTag: initTag,
+            singleLine: true,
+          ).expanded(),
+          Btn.icon(
+            text: libL10n.search,
+            icon: const Icon(Icons.search, size: 20),
+            onTap: onSearch,
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(TagSwitcher.kTagBtnHeight);
 }

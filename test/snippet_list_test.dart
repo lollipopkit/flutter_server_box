@@ -14,13 +14,14 @@ import 'package:server_box/data/store/snippet.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/snippet/list.dart';
 
-/// There has to be a way to make the first snippet, at every width.
+/// There has to be a way to make the first snippet, and to search for one, at
+/// every width.
 ///
-/// The page has two of them and shows one: a floating button on a single
-/// column, and a row above the rail when the editor has a column of its own —
-/// the floating one is suppressed there, because it would cover the row under
-/// it. Which means an early return that skips the rail also takes away the
-/// only way to add anything.
+/// One floating button either way — small beside the pane, the size the server
+/// rail uses, and full size on a single column — over a list that leaves room
+/// for it. An early return that answers the emptiness before the scaffold is
+/// built takes the button away along with the list, which is how this file
+/// started.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -81,24 +82,24 @@ void main() {
     addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
   }
 
-  testWidgets('an empty list on a wide window still offers add', (
+  testWidgets('an empty list on a wide window still offers add and search', (
     tester,
   ) async {
     await pump(tester, width: 1200);
 
-    // The regression: the emptiness was answered before the rail was built, so
-    // a wide window with no snippets had no floating button *and* no row.
-    expect(find.byType(FloatingActionButton), findsNothing);
+    expect(find.byType(FloatingActionButton), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
+    expect(find.byIcon(Icons.search), findsOneWidget);
   });
 
-  testWidgets('an empty list on a narrow window offers the floating button', (
-    tester,
-  ) async {
+  testWidgets('a narrow window offers both as well', (tester) async {
     await pump(tester, width: 500);
 
     expect(find.byType(FloatingActionButton), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
+    // Search used to be in the pane's own row, which a single column has none
+    // of — so there was no way to search on a phone at all.
+    expect(find.byIcon(Icons.search), findsOneWidget);
   });
 
   testWidgets('a wide window with snippets lists them under the same row', (
