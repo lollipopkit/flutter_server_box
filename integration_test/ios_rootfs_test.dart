@@ -368,4 +368,54 @@ void main() {
       reason: 'btime $btime, now $now, uptime $after',
     );
   }, skip: !Platform.isIOS, timeout: const Timeout(Duration(minutes: 2)));
+
+  // `/proc/uptime` is two decimal places on Linux, always. `proc_show_uptime`
+  // printed the hundredths with `%lu`, so a value under ten lost its leading
+  // zero — `.07` arrived as `.7`, which any reader takes for `.70`. One read in
+  // ten, and the error is up to 0.63s in a file whose whole resolution is 0.01.
+  //
+  // The test above cannot see it: it samples twice around a `sleep 1` and
+  // allows 0.5 to 3.0, which a 0.63 jump sits inside. What it reaches is
+  // anything in the guest that measures an interval — the fork's own benchmark
+  // reported a negative duration, which is what found this.
+  testWidgets('/proc/uptime keeps its two decimal places', (_) async {
+    if (!IshExec.isSupported) {
+      markTestSkipped('this build carries no engine (SBM_ISH = 0)');
+      return;
+    }
+    await IosRootfs.install();
+    const exec = IshExec();
+
+    // Enough reads that the hundredths land under ten several times over.
+    final probe = await exec.run(
+      r'i=0; while [ $i -lt 300 ]; do cat /proc/uptime; i=$((i+1)); done',
+    );
+    expect(probe.exitCode, 0, reason: probe.stderr);
+    final lines = const LineSplitter().convert(probe.stdout.trim());
+    expect(lines.length, 300, reason: 'read ${lines.length} lines');
+
+    // Both fields, both two digits. Stated as the shape rather than as a
+    // number, because what broke was the format and not the value.
+    final shape = RegExp(r'^\d+\.\d{2} \d+\.\d{2}$');
+    final malformed = lines.where((l) => !shape.hasMatch(l)).toList();
+    debugPrint('ISHUPTIME ${lines.first} .. ${lines.last} bad=${malformed.length}');
+    expect(
+      malformed,
+      isEmpty,
+      reason: '${malformed.length}/300 lines are not `S.CC S.CC`: '
+          '${malformed.take(5).join(", ")}',
+    );
+
+    // And it never goes backwards, which is the symptom the format caused.
+    final seconds = lines
+        .map((l) => double.parse(l.split(' ').first))
+        .toList();
+    for (var i = 1; i < seconds.length; i++) {
+      expect(
+        seconds[i],
+        greaterThanOrEqualTo(seconds[i - 1]),
+        reason: 'read $i went back: ${seconds[i - 1]} then ${seconds[i]}',
+      );
+    }
+  }, skip: !Platform.isIOS, timeout: const Timeout(Duration(minutes: 2)));
 }

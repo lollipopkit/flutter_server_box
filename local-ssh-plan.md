@@ -498,19 +498,77 @@ guest is actually handed.
 
 ### Manual verification
 
-Everything measured so far is on the **simulator**, which is not a sandboxed
-device and has no App Store in front of it. M4 is done and is below; M1 to M3
-need a phone, and M5 needs a submission:
+M1, M3 and M4 are done — on an **iPad Pro 11-inch 3rd generation, iOS 18.7.8**,
+which is real hardware but M1 silicon rather than a phone's. M2 and M5 are open:
 
-| # | What | How | Why it cannot be automated here |
-| --- | --- | --- | --- |
-| M1 | The engine runs on real hardware | `SBM_ISH = 1`, run `integration_test/ios_rootfs_test.dart` on an iPhone | The device libraries now build (`scripts/build-ish-ios.sh device`), but nothing has been run on a phone. The simulator shares the Mac's kernel and page protections; a phone does not |
-| M2 | Memory and thermals under load | A real workload — `apk add`, a build, a long-running process — watched in Instruments | An interpreter with a 256 KB output ring and a guest heap on a phone is a different proposition from one on a Mac |
-| M3 | The performance figures (Q3) | `scripts/ios-bench-defines.sh > /tmp/bench.json`, then `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/ios_bench_test.dart -d <device> --profile --publish-port --dart-define-from-file=/tmp/bench.json` | The fork's 7–12x claims are its own benchmarks, and the numbers that matter are the ones on the hardware users have. The harness is written and the run is one command; what it needs is the hardware |
-| M5 | App Store review | Submit, with the feature on, and see | Guideline 2.5.2. Not a technical question, and the downside is the app's next update rather than the feature |
+| # | What | State |
+| --- | --- | --- |
+| M1 | The engine runs on real hardware | **done.** `integration_test/ios_rootfs_test.dart`, 9 of 9 on the iPad. Everything the simulator showed holds on a device: `/dev/pts/N` for `tty` and `/proc/self/fd/1`, a redirect into `/dev/stdout`, two sessions that do not see each other, and the 4 KB argv wall at exactly the same place (`4000=0 5000=-7`) |
+| M2 | Memory and thermals under load | **open.** A real workload — `apk add`, a build, a long-running process — watched in Instruments. An interpreter with a 256 KB output ring and a guest heap on a phone is a different proposition from one on a Mac |
+| M3 | The performance figures (Q3) | **done on an iPad, open for a phone** — and it found a clock bug rather than a number. See below |
+| M4 | The strip switch produces a clean build | **done**, and the check this document gave for it was wrong. See below |
+| M5 | App Store review | **open.** Submit, with the feature on, and see. Guideline 2.5.2. Not a technical question, and the downside is the app's next update rather than the feature |
 
 M5 is the one that decides whether any of the rest is worth finishing, and it
 is the reason the switch exists.
+
+To run M1 and M3 again:
+
+```
+flutter test integration_test/ios_rootfs_test.dart -d <device>
+scripts/ios-bench-defines.sh > /tmp/bench.json
+flutter drive --driver=test_driver/integration_test.dart \
+  --target=integration_test/ios_bench_test.dart \
+  -d <device> --profile --publish-port --dart-define-from-file=/tmp/bench.json
+```
+
+#### M3: the benchmark's first answer was that the guest clock was broken
+
+The suite failed rather than reporting: `Process|fork+exec 50` came back as
+**−360 ms**, and `Compute|seq+awk` read 120/900/640 for 10K/50K/100K — 100,000
+records finishing sooner than 50,000.
+
+`proc_show_uptime` (`fs/proc/root.c`) printed the hundredths with `%lu`:
+
+```c
+proc_printf(buf, "%lu.%lu %lu.%lu\n", uptime / 100, uptime % 100, ...);
+```
+
+`/proc/uptime` is two decimal places on Linux and is parsed as such, so a true
+`.07` left as `.7` and was read as `.70` — 0.63 s of jump in a file whose whole
+resolution is 0.01, and the next honest read then looked like time running
+backwards. Measured on the iPad: **63 of 300 consecutive reads malformed**.
+
+`the guest clock is a clock` could not see it. That test samples twice around a
+`sleep 1` and accepts 0.5 to 3.0, which a 0.63 jump sits inside — the third
+clock bug in this file to be invisible to the test written for the previous one.
+`/proc/uptime keeps its two decimal places` now asserts the shape of 300 reads
+and that none of them goes backwards.
+
+Fixed in the fork as `eec9af7e`, sibling of `0d592524`, which fixed the value
+this one formats. **The pin in `scripts/build-ish-ios.sh` still names
+`0d592524`** — it moves once the fork is pushed.
+
+With the padding, on the iPad, 39 rows and nothing negative:
+
+| Category | Sample |
+| --- | --- |
+| System | `echo` 0, `ls /bin` 10, `env` 0 |
+| Compute | `loop 1000/5000/10000` 60/290/570, `seq+awk 10K/50K/100K` 120/550/1110, `expr loop 500` 1170 |
+| Text | `sed replace` 10, `sort 1K/5K` 50/280, `grep count` 70 |
+| File-IO | `create 50/200` 30/100, `dd 64K` 0 |
+| Crypto | `md5sum` 0, `sha256sum` 0 |
+| Process | `fork+exec 10/50` 20/80, `pipe chain` 20 |
+| C (`cbench_lite_arm64`) | `int_arith_2M` 108, `float_arith_1M` 56, `mem_seq_4MB` 40, `string_200K` 309 |
+
+Milliseconds. The shell rows are quantised to 10 ms because `/proc/uptime` is
+the only clock the guest offers busybox — `date +%N` prints empty there, which
+is what `scripts/ios-bench-defines.sh` patches the fork's script to notice.
+
+What this does **not** settle: Q3 asks whether the fork's 7–12x figures are
+representative, and answering that needs the x86 interpreter measured beside
+this on the same hardware. These are absolute numbers for the ARM64 backend on
+M1 silicon; a phone is slower and thermally tighter, so treat them as a ceiling.
 
 #### M4: the switch strips the engine, and the check this document gave for it
 does not work
@@ -760,7 +818,7 @@ Update this as answers arrive; several decisions above move with them.
 | --- | --- | --- | --- |
 | 1 | Can a `targetSdk` 36 app exec a file in `filesDir` via `linker64`? | **Yes for a bionic binary, no for a musl one** — measured on an API 36 emulator, `integration_test/android_exec_test.dart`. Direct `execve` is denied; the linker maps it and runs it. A musl binary segfaults once its libc is found, because it wants musl's own loader. Unverified on physical hardware | **done** |
 | 2 | How does OpenMinis run rootfs binaries at `targetSdk` 36? | **Answered**: proot's own loader, extracted via `/proc/self/fd` and mapping the guest ELF itself, so the host linker is never asked to understand musl. `RootfsManager.kt:42`, `PRootKernel.kt:83`. Not reproduced here | **done** |
-| 3 | Are ish-arm64's 7–12x figures representative? | Not yet measured on a phone. The harness is in: `integration_test/ios_bench_test.dart` runs the fork's own `shellbench.sh` and `cbench_lite_arm64` inside the guest, passed in by `scripts/ios-bench-defines.sh` rather than vendored, and reports on `ISHBENCH\|` lines without asserting a duration. So this is a `flutter drive` on hardware rather than a question of whether it works | **open** |
+| 3 | Are ish-arm64's 7–12x figures representative? | **Not answered, and the run answered something else.** The suite is in and ran on an iPad Pro 11-inch 3rd gen (M3 above): 39 rows, and the first attempt failed on a negative duration that turned out to be `/proc/uptime` losing a leading zero. The absolute numbers are recorded; the *ratio* the fork claims is against its own x86 interpreter, which has not been run on this hardware, and an M1 iPad is not the phone a user has | **open** |
 | 4 | Does the macOS DMG build ship unsandboxed, or does local shell hide there? | **Answered, and the first answer was wrong.** A sandboxed process cannot host a pty at all, so the entitlement that was meant to fix it bought nothing and was reverted (`ccd2e77b`). iCloud turned out not to need the sandbox either. macOS ships two products from one binary (`52a0ec1b`), and the App Store one hides the feature | **done** |
 | 5 | Is proot GPLv2-only or v2-or-later? | **v2 or later** — the source headers say "either version 2 of the License, or (at your option) any later version" (`src/tracee/tracee.h:9`, `src/cli/cli.c:9`). So it can be taken as GPLv3 and combined with this AGPL-3.0 app even if it were linked rather than invoked | **done** |
 | 6 | Does `flutter_pty` still build against current Flutter on all four desktop/Android targets? | **macOS and Android build and run** — `local_shell_test.dart` on macOS, and on an API 36 emulator both the Device entry and the Alpine one open a shell through it (`rootfs_shell_test.dart`). Linux and Windows untried, and no physical Android device. One warning: `flutter_pty` does not support Swift Package Manager, which Flutter says "will become an error in a future version" — `sbm_ffi` is in the same list, so it is not a new exposure | **partly** |

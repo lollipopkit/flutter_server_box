@@ -338,9 +338,20 @@ console 上剩下的(重定向本身失败时 shell 的报错)算作 stderr。
 不需要真机就能跑的两个测试:`test/file_tail_test.dart`(边写边读,多字节字符跨轮次
 截断是会被用户撞到的那个 case)、`test/ish_exec_test.dart`(实际交给 guest 的那段 shell)。
 
-剩下的是 `local-ssh-plan.md` 的 M1、M2、M3、M5:真机跑引擎、Instruments 看内存和发热、
-`integration_test/ios_bench_test.dart` 在设备上出性能数、送审。CI 有 `Build ios` job,但它
-不跑 `scripts/build-ish-ios.sh`,所以上传的 IPA 一直是 `SBM_ISH=0`。
+剩下的是 `local-ssh-plan.md` 的 M2(Instruments 看内存和发热)和 M5(送审)。CI 有
+`Build ios` job,但它不跑 `scripts/build-ish-ios.sh`,所以上传的 IPA 一直是 `SBM_ISH=0`。
+
+**M1、M3 已在真机上跑过**(iPad Pro 11" 三代,iOS 18.7.8 —— 是真机,但 M1 芯片,不是手机)。
+M1:`ios_rootfs_test.dart` 9/9,模拟器上成立的在设备上都成立,4 KB argv 墙的位置一模一样。
+M3:39 行数据,但**第一次跑是失败的** —— `fork+exec 50` 报 -360 ms。原因是
+`proc_show_uptime` 用 `%lu` 打印百分秒,`.07` 变成 `.7`,按两位小数解析就是 `.70`,前跳
+0.63 秒,下一次正常读数看着就在倒退。设备实测 300 次读取里 63 次格式不对。已有的
+`the guest clock is a clock` 看不到这个:它在 `sleep 1` 两侧采样、允许 0.5–3.0 秒,0.63 的
+跳变正好落在里面 —— 这是这个文件里第三个时钟 bug,每次都对上一个 bug 写的测试免疫。新增
+`/proc/uptime keeps its two decimal places` 盯 300 次读取的格式和单调性。
+
+修复在 fork 的 `eec9af7e`。**`scripts/build-ish-ios.sh` 的 pin 还指着 `0d592524`,等 fork
+推上去再动。** 在此之前,别人重建引擎会拿回旧的,新测试会失败。
 
 **M4(止血开关剥干净)已验,结论和检查方法分开说。** Release 设备构建两次,只改开关:
 引擎内部符号 5 → 0,`ish-arm64|fakefs|realfs` 字符串 81 → 0,sqlite 字符串 66 → 0,
