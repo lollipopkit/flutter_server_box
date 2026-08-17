@@ -32,14 +32,33 @@ skills。这样在终端里干活的 agent 不用自己配 SSH,就能用 app 已
    原子写 + 备份(照 `monitor/src/core/config_file.rs` 的做法),而且必须是用户点按钮
    触发,不能开机自己改人家的配置文件。
 
-### 动手前要先查清的三件事
+### 已查清(2026-08,spec 版本 `2026-07-28`)
 
-- **Codex 支不支持 HTTP MCP,还是只认 stdio。** 只认 stdio 的话就要一个 stdio↔HTTP 的
-  桥:要么依赖 `npx mcp-remote`(引入 Node 依赖),要么自己出一个小二进制(workspace 里
-  已经有 Rust,能出五平台产物)。这决定第 1 部分是不是只做 HTTP 就够。
-- **Dart 侧用哪个 MCP 实现。** pubspec 里没有 mcp 依赖;协议面小到可以手写,但先看
-  `package:dart_mcp` 是否合用。
-- **`~/.agents/skills` 的 skill 格式。**
+- **两个客户端都支持 Streamable HTTP,所以不需要 stdio 桥,也不需要多打一个二进制。**
+  - Codex:`mcp_servers.<id>.url` + `bearer_token_env_var` + `http_headers`。token 走
+    **环境变量**,不落进配置文件 —— 比原先设想的干净。它还有
+    `default_tools_approval_mode` 和 `tools.<tool>.approval_mode`,是客户端侧的第二道
+    闸门(不能替代我们自己那道)。
+  - Claude Code:`claude mcp add --transport http <name> <url> --header "Authorization:
+    Bearer …"`,或者写进 `.mcp.json` / `~/.claude.json`,`"type": "http"`
+    (`"streamable-http"` 是别名)。有个坑:条目有 `url` 但没有 `type` 会被当成 stdio
+    server 而报错跳过。scope 三档:`local`(默认)/ `project` / `user`。
+- **stdio 没有被废弃**,当前 spec 的两个标准传输就是 stdio 和 Streamable HTTP。被废弃的
+  是 2024-11-05 那版的 HTTP+SSE(2025-03-26 起)。选 HTTP 的理由是进程模型 —— stdio 要
+  客户端把 server fork 出来,而 app 是已经在跑的 GUI 进程。
+- **`~/.agents/skills` 是跨 agent 的公共约定**,Codex / Cursor / Copilot / OpenCode 都读;
+  Claude Code 读的是 `~/.claude/skills`,要单独放一份。格式是一个技能一个目录,里面
+  `SKILL.md`,YAML frontmatter 至少 `name` + `description`,可选 `scripts/`、
+  `references/`、`assets/`。加载是渐进的:启动只读 name/description,用到才读全文 ——
+  所以 description 要写得能被选中。
+
+### 还没定的一件事
+
+**Dart 侧手写还是找现成的。** pubspec 里没有 mcp 依赖。`2026-07-28` 这版的协议面比过去
+小:没有 `initialize` 握手(版本号按请求走 `_meta.io.modelcontextprotocol/protocolVersion`)、
+server 不再发起 JSON-RPC 请求、Roots / Sampling / Logging 都已废弃。要实现的只有
+`server/discover`、`tools/list`、`tools/call`。手写是可行的,但网上多数示例还是旧握手那
+一套,照抄会写错。
 
 ### 已知的边界,先写下来免得当成 bug
 

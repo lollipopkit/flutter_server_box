@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:computer/computer.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,7 +31,19 @@ Future<void> main() async {
   await _runInZone(() async {
     await _initApp();
     runApp(ProviderScope(child: const MyApp()));
+    _greetDev();
   });
+}
+
+/// Says hello in a toast a second after launch, on debug builds only.
+///
+/// After [runApp] rather than in [_setupDebug]: the `ToastHost` only exists
+/// once the first frame has built, and the initialization still to come after
+/// `_setupDebug` can outlast the delay — the toast would then be raised with
+/// no host to draw it.
+void _greetDev() {
+  if (!kDebugMode) return;
+  Future.delayed(const Duration(seconds: 1), () => Toast.show('welcome, dev!'));
 }
 
 Future<void> _runInZone(Future<void> Function() body) async {
