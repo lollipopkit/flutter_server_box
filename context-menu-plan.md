@@ -162,14 +162,18 @@ page; what is left below is what a test cannot reach.
       Structural, and checked at both ends: `tab_add.dart:249` passes one
       callback to `onLongPress:` and to `.onSecondary(asSecondary(...))`, and
       `tab.dart:87` is that callback — `ServerEditPage.route.go`.
-- [ ] Right-click a server card that is not connected: the edit page opens.
-      Half of it is structural in the same way — `tab/tab.dart:272` passes the
-      same `_onLongPressCard(srv)` the long press gets. What is not checked is
-      what that method does with a card that is not connected, which is a
-      behaviour of the tab rather than of the gesture.
+- [x] Right-click a server card that is not connected: the edit page opens —
+      `test/server_card_gesture_test.dart`, on a real `ServerPage`. Both
+      gestures are checked there, and they agree because `tab/tab.dart:272`
+      hands `asSecondary` the same `_onLongPressCard(srv)` the long press
+      gets.
 
-Reaching that last one means pumping the server tab with its providers and
-stores. Worth doing; not done.
+The page pumps with the three stores registered and no seam, given two things
+the app supplies at its root: `ResponsivePoints.builder`, and
+`LibLocalizations.delegate` beside the app's own — `context.libL10n` is a
+`!` on a lookup, so without it the top bar throws. The refresh interval is set
+to 0, which `normalizeServerStatusRefreshSeconds` reads as off; otherwise its
+periodic timer outlives the tree and fails the run.
 
 ### 2. The menu — covered by `test/file_browser_test.dart`
 
