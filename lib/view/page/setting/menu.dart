@@ -58,6 +58,10 @@ const _kTabsMargin = 12.0;
 /// Only the bar's own width: a size factor past 1 would be a gap.
 const _kTabsCurve = Curves.easeOutBack;
 
+/// Names the menu — the column beside the content, or the list a narrow
+/// window starts on. Only ever one of them is in the tree.
+const settingsMenuKey = ValueKey('settings_menu');
+
 /// Names the floating tab bar. Several of its labels are also words in the
 /// settings behind it, so finding one means saying which of the two is meant.
 const settingsTabsKey = ValueKey('settings_tabs');
@@ -225,6 +229,51 @@ final class _TabButton extends StatelessWidget {
   }
 }
 
+/// One row of the menu, at either level.
+///
+/// A card with a tile in it, which is what every row of the settings *behind*
+/// this menu is. Getting there and being there read the same way.
+final class _SettingsRow extends StatelessWidget {
+  final SettingsNode node;
+  final bool selected;
+  final Widget? trailing;
+  final VoidCallback onTap;
+
+  const _SettingsRow({
+    required this.node,
+    required this.onTap,
+    this.selected = false,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return CardX(
+      color: selected ? scheme.secondaryContainer : null,
+      child: ListTile(
+        leading: Icon(
+          node.icon,
+          size: 20,
+          color: selected ? scheme.onSecondaryContainer : null,
+        ),
+        title: Text(
+          node.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            color: selected ? scheme.onSecondaryContainer : null,
+          ),
+        ),
+        trailing: trailing,
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
 /// The first thing a narrow window shows: what settings there are.
 ///
 /// Flat, and every row goes somewhere. The wide menu opens a branch in place
@@ -239,12 +288,12 @@ final class _SettingsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      key: settingsMenuKey,
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
       children: [
         for (final node in nodes)
-          SideBarTile(
-            title: node.title,
-            icon: node.icon,
+          _SettingsRow(
+            node: node,
             onTap: () => onTap(node),
             trailing: const Icon(Icons.chevron_right, size: 18),
           ),
@@ -338,7 +387,8 @@ final class _SettingsMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.only(top: 4, bottom: 12),
+      key: settingsMenuKey,
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
       children: [for (final node in nodes) ..._buildNode(context, node, 0)],
     );
   }
@@ -350,9 +400,8 @@ final class _SettingsMenu extends StatelessWidget {
       // Indented by depth rather than by a fixed inset, so that a level added
       // later lines up without anyone having to remember this number.
       padding: EdgeInsets.only(left: depth * 14.0),
-      child: SideBarTile(
-        title: node.title,
-        icon: node.icon,
+      child: _SettingsRow(
+        node: node,
         selected: node.isLeaf && node.id == selectedId,
         onTap: () => node.isLeaf ? onSelect(node) : onToggle(node),
         trailing: node.isLeaf

@@ -315,10 +315,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     return null;
   }
 
-  /// The level [node] leads to: what is inside a branch, and what stands beside
-  /// a leaf.
-  static List<SettingsNode> _levelOf(SettingsNode node, List<SettingsNode> nodes) {
-    return node.isLeaf ? nodes : node.children;
+  /// The level [node] leads to: what is inside a branch, and a leaf alone.
+  ///
+  /// A leaf on its own gets no tabs. There is one page and nothing to move
+  /// between, and a bar with a single tab on it says only what the title bar
+  /// above it already said.
+  static List<SettingsNode> _levelOf(SettingsNode node) {
+    return node.isLeaf ? [node] : node.children;
   }
 
   Widget _buildScaffold({
@@ -338,6 +341,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           !wide && _path.isEmpty ? libL10n.setting : selected.title,
           style: const TextStyle(fontSize: 20),
         ),
+        // Out of the level rather than out of the settings, while there is a
+        // level to leave. A leaf shown on its own has no tabs and so no other
+        // way back to the list.
+        leading: !wide && _path.isNotEmpty
+            ? BackButton(onPressed: _onTabBack)
+            : null,
         actions: [
           Btn.text(
             text: context.libL10n.logs,
@@ -420,7 +429,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           for (final entered in _path)
             MaterialPage<void>(
               key: ValueKey(entered.id),
-              child: pagesOf(entered.id, _levelOf(entered, nodes)),
+              child: pagesOf(entered.id, _levelOf(entered)),
             ),
         ],
       ],
@@ -442,10 +451,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// under it.
   Widget _buildNarrow(List<SettingsNode> nodes, Widget content) {
     final mediaQuery = MediaQuery.of(context);
-    // The list is the whole of what it has to say; a bar of tabs over it would
-    // be the same names twice.
+    // Nothing over the list — a bar of tabs there would be the same names
+    // twice — and nothing over a leaf, which has no level under it to show.
     final entered = _path.lastOrNull;
-    final space = entered == null ? 0.0 : _kTabsHeight + _kTabsMargin * 2;
+    final level = entered == null || entered.isLeaf ? null : entered;
+    final space = level == null ? 0.0 : _kTabsHeight + _kTabsMargin * 2;
 
     return Stack(
       children: [
@@ -478,11 +488,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ).animate(animation),
               child: child,
             ),
-            child: entered == null
+            child: level == null
                 ? const SizedBox(key: ValueKey('no_tabs'), width: double.infinity)
                 : _SettingsTabs(
-                    key: ValueKey(entered.id),
-                    nodes: _levelOf(entered, nodes),
+                    key: ValueKey(level.id),
+                    nodes: _levelOf(level),
                     selectedId: _selectedId,
                     canGoBack: true,
                     onTap: _onTab,

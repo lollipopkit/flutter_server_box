@@ -47,9 +47,9 @@ void main() {
   });
 
   /// A row of the menu, and only a row of it: several of these titles are also
-  /// words in the settings on the right.
+  /// words in the settings beside or behind it.
   Finder menuRow(String title) =>
-      find.descendant(of: find.byType(SideBarTile), matching: find.text(title));
+      find.descendant(of: find.byKey(settingsMenuKey), matching: find.text(title));
 
   /// A tab of the floating bar, told apart from the settings behind it.
   Finder tabRow(String title) =>
@@ -125,8 +125,13 @@ void main() {
   testWidgets('every menu row carries an icon', (tester) async {
     await pump(tester, width: 1200);
 
-    for (final tile in tester.widgetList<SideBarTile>(find.byType(SideBarTile))) {
-      expect(tile.icon, isNotNull, reason: tile.title);
+    final rows = find.descendant(
+      of: find.byKey(settingsMenuKey),
+      matching: find.byType(ListTile),
+    );
+    expect(rows, findsWidgets);
+    for (final tile in tester.widgetList<ListTile>(rows)) {
+      expect(tile.leading, isNotNull);
     }
   });
 
@@ -163,9 +168,9 @@ void main() {
     expect(barTitle(tester), libL10n.setting);
     // Every first-level row, and nothing named twice: a bar of tabs here would
     // repeat the list under it.
-    expect(find.text(libL10n.app), findsOneWidget);
-    expect(find.text(libL10n.server), findsOneWidget);
-    expect(find.text(libL10n.about), findsOneWidget);
+    expect(menuRow(libL10n.app), findsOneWidget);
+    expect(menuRow(libL10n.server), findsOneWidget);
+    expect(menuRow(libL10n.about), findsOneWidget);
     expect(find.byKey(settingsTabsKey), findsNothing);
     // And the settings are still leavable.
     expect(find.byType(BackButton), findsOneWidget);
@@ -176,7 +181,7 @@ void main() {
   ) async {
     await pump(tester, width: 500);
 
-    await tester.tap(find.text(libL10n.server));
+    await tester.tap(menuRow(libL10n.server));
     await settle(tester, 20);
 
     expect(find.byKey(settingsTabsKey), findsOneWidget);
@@ -189,7 +194,7 @@ void main() {
   testWidgets('the tabs rise into place rather than appearing', (tester) async {
     await pump(tester, width: 500);
 
-    await tester.tap(find.text(libL10n.server));
+    await tester.tap(menuRow(libL10n.server));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 80));
     final midway = tester.getTopLeft(find.byKey(settingsTabsKey)).dy;
@@ -201,41 +206,48 @@ void main() {
     expect(midway, greaterThan(settled));
   });
 
-  testWidgets('a first-level leaf brings up the ones beside it', (tester) async {
+  testWidgets('a first-level leaf shows on its own, with no tabs', (tester) async {
     await pump(tester, width: 500);
 
-    await tester.tap(find.text(libL10n.about));
+    await tester.tap(menuRow(libL10n.about));
     await settle(tester, 20);
 
     expect(barTitle(tester), libL10n.about);
-    // A leaf has nothing under it, so the tabs are what stands beside it.
-    expect(tabRow(libL10n.backup), findsOneWidget);
-    expect(tabRow(libL10n.about), findsOneWidget);
+    // Nothing to move between. A bar with one tab on it would say what the
+    // title above it just said.
+    expect(find.byKey(settingsTabsKey), findsNothing);
+
+    // Which leaves the bar's own button as the way back to the list — it leads
+    // out of the level while there is one, not out of the settings.
+    await tester.tap(find.byType(BackButton));
+    await settle(tester, 20);
+    expect(menuRow(libL10n.about), findsOneWidget);
+    expect(barTitle(tester), libL10n.setting);
   });
 
   testWidgets('the way back leads to the list, and drops the tabs', (tester) async {
     await pump(tester, width: 500);
 
-    await tester.tap(find.text(libL10n.server));
+    await tester.tap(menuRow(libL10n.server));
     await settle(tester, 20);
     await tester.tap(backTab);
     await settle(tester, 20);
 
     expect(barTitle(tester), libL10n.setting);
     expect(find.byKey(settingsTabsKey), findsNothing);
-    expect(find.text(libL10n.terminal), findsOneWidget);
+    expect(menuRow(libL10n.terminal), findsOneWidget);
   });
 
   testWidgets('the bar is as wide as the level on it', (tester) async {
     await pump(tester, width: 500);
 
-    await tester.tap(find.text(libL10n.server));
+    await tester.tap(menuRow(libL10n.server));
     await settle(tester, 20);
     final four = tester.getSize(find.byKey(settingsTabsKey)).width;
 
     await tester.tap(backTab);
     await settle(tester, 20);
-    await tester.tap(find.text(libL10n.file));
+    await tester.tap(menuRow(libL10n.file));
     await settle(tester, 20);
 
     // Two tabs and a way back is a shorter bar than four and a way back.
@@ -244,7 +256,7 @@ void main() {
 
   testWidgets('the tab being shown is filled in', (tester) async {
     await pump(tester, width: 500);
-    await tester.tap(find.text(libL10n.server));
+    await tester.tap(menuRow(libL10n.server));
     await settle(tester, 20);
 
     final scheme = Theme.of(tester.element(find.byKey(settingsTabsKey))).colorScheme;
@@ -268,7 +280,7 @@ void main() {
     tester,
   ) async {
     await pump(tester, width: 500);
-    await tester.tap(find.text(libL10n.server));
+    await tester.tap(menuRow(libL10n.server));
     await settle(tester, 20);
 
     expect(barTitle(tester), libL10n.setting);
@@ -291,7 +303,7 @@ void main() {
 
     expect(contentNav().pages.length, 1);
 
-    await tester.tap(find.text(libL10n.server));
+    await tester.tap(menuRow(libL10n.server));
     await settle(tester, 20);
     // A page arriving is a MaterialPage arriving, which is where the transition
     // comes from.
