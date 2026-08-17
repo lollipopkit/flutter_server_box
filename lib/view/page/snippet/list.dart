@@ -116,8 +116,6 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
   }
 
   Widget _buildSnippetList(List<Snippet> snippets, String tag, bool split) {
-    if (snippets.isEmpty) return Center(child: Text(libL10n.empty));
-
     final filtered = tag == TagSwitcher.kDefaultTag
         ? snippets
         : snippets.where((e) => e.tags?.contains(tag) ?? false).toList();
@@ -150,22 +148,31 @@ class _SnippetListPageState extends ConsumerState<SnippetListPage>
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.only(top: 4, bottom: 12),
-              itemCount: filtered.length,
-              itemBuilder: (_, index) {
-                final snippet = filtered[index];
-                return SideBarTile(
-                  title: snippet.name,
-                  selected: _editing == snippet.name,
-                  onTap: () => _edit(snippet, true),
-                );
-              },
-            ),
+            // The emptiness is asked here rather than at the top of the
+            // method, because beside a pane there is no floating button and
+            // the row above is the only way to make the first snippet. Asked
+            // there, an empty list returned before the row was built and left
+            // a wide window with nothing to press.
+            child: filtered.isEmpty
+                ? Center(child: Text(libL10n.empty))
+                : ListView.builder(
+                    padding: const EdgeInsets.only(top: 4, bottom: 12),
+                    itemCount: filtered.length,
+                    itemBuilder: (_, index) {
+                      final snippet = filtered[index];
+                      return SideBarTile(
+                        title: snippet.name,
+                        selected: _editing == snippet.name,
+                        onTap: () => _edit(snippet, true),
+                      );
+                    },
+                  ),
           ),
         ],
       );
     }
+
+    if (snippets.isEmpty) return Center(child: Text(libL10n.empty));
 
     // Flowed rather than a fixed grid: a row is as tall as what it has to say
     // — a snippet with a note is two lines under its name, one without is
