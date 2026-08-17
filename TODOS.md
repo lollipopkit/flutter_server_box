@@ -203,8 +203,10 @@ Apple Silicon 上的 Linux 虚拟机)。
   另外覆盖了服务器已删的条目跳过、坏记录不带走其他条目、整份 JSON 读不动时不抛。
   断言读的是页面写回 store 的那份 tab 集,不是屏幕上的标签:标签在选择器里也出现一次,
   数不清「两个 tab」和「一个 tab 画了两处」
-- ~~文件页恢复到原来的目录~~ **查明是坏的**,见上面 state restoration 那节;分栏分隔条位置
-  同理
+- ~~文件页恢复到原来的目录~~ **已修**:会话集从 `RestorableString` 迁到
+  `Stores.history.fileTabs`,和终端 tab 同一个做法,`test/file_tab_restore_test.dart`
+  覆盖(本机会话、服务器会话、服务器已删、全没了回落本机、无 `kind` 的老记录、坏 JSON)。
+  分栏分隔条位置走的是 `PaneSettings`,本来就是设置项,不受影响
 - ~~删除服务器后详情面板是否收回成整宽列表~~ **已覆盖,由两半合成**。页面每次 build 把选中
   的 id 解析成条目(`servers[selected]`),服务器一删就解析成 null,`detailId` 和
   `detailBuilder` 同一帧都变 null;`fl_lib/test/adaptive_panes_test.dart` 新增两条盯住
@@ -286,7 +288,7 @@ proot 并在构建后检查两个 `.so` 确实进了 APK。剩下两条:
 已验。剩下三处还在用这套机制,等于什么都没做:
 
 - `lib/view/page/home.dart` —— 底部 tab 的选中项
-- `lib/view/page/storage/tab.dart` —— 文件页(另一个 agent 的 lane,和 file-plan 一起看)
+- ~~`lib/view/page/storage/tab.dart`~~ 已迁到 `Stores.history.fileTabs`
 - `lib/view/page/ssh/page/page.dart` —— 终端页自己的 tmux session/window。功能上不影响:
   tmux 状态现在由 tab 那层的 JSON 带着走,但页面里这三个 `Restorable*` 字段看着像在工作,
   其实没有。

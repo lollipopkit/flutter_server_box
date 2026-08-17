@@ -398,13 +398,13 @@ is what is left.
       configured.
 - [x] Opening SFTP as a file picker from elsewhere still draws its own bar with
       the server name.
-- [ ] ~~The file tab reopens the same servers, each in the directory it was
-      left in.~~ **Cannot pass as built.** `storage/tab.dart` keeps that state
-      in a `RestorableString`, and Flutter's restoration does not survive a
-      relaunch in this app — measured in `test/restoration_bucket_test.dart`,
-      recorded in TODOS.md. The terminal tab moved to Hive for this reason;
-      this page did not. Verifying it by hand would have found a broken feature
-      and no cause.
+- [x] The file tab reopens the same servers, each in the directory it was
+      left in — `test/file_tab_restore_test.dart`. It could not, until the
+      sessions moved out of a `RestorableString` and into Hive: Flutter's
+      restoration is dead in this app, measured in
+      `test/restoration_bucket_test.dart`, so the state was written to a
+      bucket nothing kept. The terminal tab had moved for the same reason;
+      this page had not.
 
 Run by hand against a real server. Only "two servers stay open at once" is
 left here, and the reopen line above cannot pass at all.
@@ -467,5 +467,10 @@ in the test rather than argued with.
       button — `test/monitor_capabilities_test.dart`, `the file entry follows
       the agent's file grant alone` and `an agent that granted nothing offers
       none`.
-- [ ] Its saved file tab does not reopen into an error. The reopen half, which
-      is the tab and needs a restart.
+- [x] Its saved file tab does not reopen into an error — covered from both
+      ends. A session whose server is gone is dropped rather than opened, and
+      a set where every entry is gone falls back to this device instead of an
+      empty page (`test/file_tab_restore_test.dart`). A monitor-backed server
+      that does reopen no longer lands on a refusal either: it remembers where
+      it was, where before it always opened at `/` and the agent always said
+      no.

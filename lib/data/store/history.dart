@@ -82,4 +82,12 @@ class HistoryStore extends HiveStore {
   /// being killed in the background, and the task being swiped away — which is
   /// exactly when someone wants their terminals back.
   late final sshTabs = propertyDefault('sshTabs', '');
+
+  /// The file tab's sessions, for the same reason and in the same shape.
+  ///
+  /// This page held them in a `RestorableString` until the measurement above
+  /// was applied to it too: it registered, it read back within a session, and
+  /// nothing survived a relaunch — so "reopens where it was left" was a
+  /// feature that had never once worked.
+  late final fileTabs = propertyDefault('fileTabs', '');
 }

@@ -93,12 +93,10 @@ const _kindLocal = 'local';
 const _kindServer = 'server';
 
 class _FileTabPageState extends ConsumerState<FileTabPage>
-    with AutomaticKeepAliveClientMixin, RestorationMixin {
+    with AutomaticKeepAliveClientMixin {
   late final _sessions = SessionTabsController<FileSession>(
     leadingName: libL10n.open,
   );
-
-  final _restorableSessions = RestorableString('');
 
   late final _picker = _PickPage(
     onLocal: _openLocal,
@@ -106,22 +104,19 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   );
 
   @override
-  String get restorationId => 'file_tab_page';
-
-  @override
   bool get wantKeepAlive => true;
 
-  /// Whether there is saved state on its way back, known before the first
-  /// frame ends and so before anything decides this tab is empty.
-  bool _hasSavedSessions = false;
-
-  @override
-  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    registerForRestoration(_restorableSessions, 'sessions');
-    if (!initialRestore || _restorableSessions.value.isEmpty) return;
-    _hasSavedSessions = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _restore());
-  }
+  /// Whether there is saved state on its way back, known before anything
+  /// decides this tab is empty.
+  ///
+  /// Read from the store rather than from Flutter's restoration, which this
+  /// page used until it was measured: `restoreState` ran with a null bucket,
+  /// so nothing registered with it was ever written and "reopens where it was
+  /// left" had never worked. The terminal tab moved to the same store for the
+  /// same reason — and a store survives what saved instance state does not,
+  /// which is the app being killed in the background.
+  late final bool _hasSavedSessions =
+      Stores.history.fileTabs.fetch().isNotEmpty;
 
   /// Whether this page has already chosen what to open with. Once, on the way
   /// to the first frame; an empty tab after that is one the user emptied.
@@ -130,6 +125,11 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
   @override
   void initState() {
     super.initState();
+    if (_hasSavedSessions) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _restore();
+      });
+    }
     // Anything queued before this tab existed — tabs are built when first
     // visited, so a request from the server list arrives before there is
     // anything here to receive it.
@@ -140,7 +140,6 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
 
   @override
   void didChangeDependencies() {
-    // First, because this is what runs [restoreState].
     super.didChangeDependencies();
     if (_chosenInitial) return;
     _chosenInitial = true;
@@ -165,7 +164,6 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
 
   @override
   void dispose() {
-    _restorableSessions.dispose();
     // The controller disposes what it created — focus, visibility — but the
     // session data is ours.
     for (final tab in _sessions.tabs) {
@@ -340,9 +338,9 @@ extension _Sessions on _FileTabPageState {
   }
 
   void _save() {
-    _restorableSessions.value = jsonEncode([
-      for (final tab in _sessions.tabs) tab.data.toRestorable(),
-    ]);
+    Stores.history.fileTabs.put(
+      jsonEncode([for (final tab in _sessions.tabs) tab.data.toRestorable()]),
+    );
   }
 
   /// Reopens what was being browsed, where it was being browsed.
@@ -353,7 +351,7 @@ extension _Sessions on _FileTabPageState {
   void _restore() {
     final List<dynamic> entries;
     try {
-      entries = jsonDecode(_restorableSessions.value) as List;
+      entries = jsonDecode(Stores.history.fileTabs.fetch()) as List;
     } catch (e, st) {
       Loggers.app.warning('Unreadable file tab state', e, st);
       return;
