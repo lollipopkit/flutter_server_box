@@ -22,6 +22,9 @@ extension _AgentHistoryActions on _AskAiPanelState {
         isScrollControlled: true,
         useSafeArea: true,
         showDragHandle: true,
+        // The same motion as the Agent tab's own history sheet — see
+        // `agentSheetAnimation`, which is where the reasoning is.
+        sheetAnimationStyle: agentSheetAnimation,
         builder: (sheetContext) =>
             FractionallySizedBox(heightFactor: 0.82, child: historyView()),
       );

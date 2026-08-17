@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,8 +38,19 @@ void main() {
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-agent-view-');
     Hive.init(tempDir.path);
-    settingBox = await Hive.openBox<dynamic>('setting_test');
-    conversationBox = await Hive.openBox<dynamic>('agent_conversation_test');
+    // In memory: the return-key tests below write the setting they are
+    // about, and a real file write started inside a `testWidgets` body
+    // completes on a callback the fake-async zone is no longer pumping —
+    // so the box's write lock is never released and `close()` in tearDown
+    // blocks forever, with no failure to say which file did it.
+    settingBox = await Hive.openBox<dynamic>(
+      'setting_test',
+      bytes: Uint8List(0),
+    );
+    conversationBox = await Hive.openBox<dynamic>(
+      'agent_conversation_test',
+      bytes: Uint8List(0),
+    );
     getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
     getIt.registerSingleton<AgentConversationStore>(
       AgentConversationStore.forBox(conversationBox),
@@ -126,5 +138,41 @@ void main() {
     });
   });
 
+  group('the return key follows the setting', () {
+    // It used to follow the setting *and* the platform: on a phone the setting
+    // was ignored, on the grounds that a soft keyboard has no Shift and so no
+    // Shift+Enter to type a line break with. That is a reason to leave the
+    // setting off, not a reason to override someone who turned it on — and a
+    // phone is where reaching for the send button costs the most.
+    const state = AgentSessionState(protocol: AskAiProtocol.chatCompletions);
 
+    Future<TextInputAction?> actionWith(
+      WidgetTester tester, {
+      required bool sendOnEnter,
+    }) async {
+      Stores.setting.askAiSendOnEnter.put(sendOnEnter);
+      await pump(
+        tester,
+        locale: const Locale('en'),
+        overrides: [
+          agentSessionProvider.overrideWith(() => _FixedSession(state)),
+        ],
+        child: const AgentConversationView(compact: true, showHeader: false),
+      );
+      return tester.widget<TextField>(find.byType(TextField)).textInputAction;
+    }
+
+    testWidgets('on, the keyboard offers send', (tester) async {
+      expect(
+        await actionWith(tester, sendOnEnter: true),
+        TextInputAction.send,
+        reason: 'this runs on no particular platform, and that is the point: '
+            'the answer no longer depends on one',
+      );
+    });
+
+    testWidgets('off, it offers a newline', (tester) async {
+      expect(await actionWith(tester, sendOnEnter: false), TextInputAction.newline);
+    });
+  });
 }

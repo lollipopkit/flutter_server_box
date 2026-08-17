@@ -36,7 +36,15 @@ extension _AskAi on SSHPageState {
   }) async {
     if (!mounted) return;
     final localeHint = Localizations.maybeLocaleOf(context)?.toLanguageTag();
-    final width = MediaQuery.sizeOf(context).width;
+    // The width this page has, not the window's. On anything but a phone the
+    // navigation rail takes its share out of the window before a tab sees any
+    // of it, and every other split in the app — `AdaptiveSideList`,
+    // `AdaptivePanes` — decides from what it was handed. Asking `MediaQuery`
+    // instead measured the window, so the same 800 landed about a rail's width
+    // earlier here than everywhere else: on an iPad in portrait this opened
+    // beside the terminal while the server list still had one column.
+    final width =
+        context.size?.width ?? MediaQuery.sizeOf(context).width;
     final placement = askAiPanelPlacementForWidth(width);
 
     // The panel's tools act on a server, so there has to be one. A terminal on
@@ -51,9 +59,11 @@ extension _AskAi on SSHPageState {
       serverName: spi.name,
       localeHint: localeHint,
       autoStart: autoStart,
-      placement: askAiPanelPlacementForWidth(
-        MediaQuery.sizeOf(panelContext).width,
-      ),
+      // The decision already made, not a second one. Recomputed inside the
+      // route it could disagree with the route it is in — a sheet telling
+      // itself it is a side panel — since a sheet's context measures the
+      // sheet.
+      placement: placement,
       onCommandInsert: _insertAiCommand,
       onCommandRun: _runAiCommand,
       onCommandCancel: _cancelAiCommand,
@@ -1308,10 +1318,12 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
                     hint: _pendingCommand == null
                         ? context.l10n.askAiAgentPromptHint
                         : context.l10n.askAiReviewBeforeContinuing,
-                    action: sendOnEnter && isDesktop
+                    // On every keyboard, soft ones included — same reasoning as
+                    // the Agent tab's composer.
+                    action: sendOnEnter
                         ? TextInputAction.send
                         : TextInputAction.newline,
-                    onSubmitted: sendOnEnter && isDesktop
+                    onSubmitted: sendOnEnter
                         ? (_) {
                             if (canSend) _submitPrompt(_inputController.text);
                           }

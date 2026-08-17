@@ -14,12 +14,28 @@ Future<void> showAgentHistorySheet(BuildContext context) {
     useSafeArea: true,
     isScrollControlled: true,
     showDragHandle: true,
+    sheetAnimationStyle: agentSheetAnimation,
     builder: (_) => const FractionallySizedBox(
       heightFactor: 0.82,
       child: AgentHistoryPanel(inSheet: true),
     ),
   );
 }
+
+/// How the Agent's sheets arrive and leave.
+///
+/// Material's default for a modal sheet is one curve used in both directions,
+/// which on the way out reads as the sheet being dropped. The rest of the
+/// Agent's motion — the floating shell's reveal, its expand — is
+/// `easeOutCubic` opening and `easeIn` closing, on the reasoning that opening
+/// presents something and closing acknowledges it. These sheets are the same
+/// gesture and had been the one thing not following it.
+const agentSheetAnimation = AnimationStyle(
+  curve: Curves.easeOutCubic,
+  duration: Durations.medium2,
+  reverseCurve: Curves.easeIn,
+  reverseDuration: Durations.short4,
+);
 
 /// The conversation list, as a sheet you opened or as the column that is
 /// always beside the page.

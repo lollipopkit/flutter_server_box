@@ -1017,7 +1017,11 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+        // Less below than beside: what sits at the bottom is one line of grey
+        // small print, and a gap sized for the input box above it left the
+        // disclaimer floating in the middle of nothing. The home indicator's
+        // inset is already added under this by the `SafeArea`.
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),
           child: Column(
@@ -1086,19 +1090,18 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
                             controller: _inputController,
                             minLines: 1,
                             maxLines: 6,
-                            // What a soft keyboard's return key does, on the
-                            // devices that have one of those instead of a Shift.
-                            // The setting is about a hardware keyboard, where
-                            // Shift+Enter is the other half of it. A soft one
-                            // has no Shift, so a return key that sends leaves
-                            // no way to type a line break at all — and the
-                            // send button is right beside the field anyway.
-                            textInputAction: sendOnEnter && isDesktop
+                            // The setting decides on every keyboard, soft ones
+                            // included. It used to be honoured only on desktop,
+                            // on the grounds that a soft keyboard has no Shift
+                            // and so no Shift+Enter to type a line break with —
+                            // but that is a reason to leave the setting off,
+                            // not a reason to ignore it. Someone who turned it
+                            // on wants the return key to send, and a phone is
+                            // where that saves the most reaching.
+                            textInputAction: sendOnEnter
                                 ? TextInputAction.send
                                 : TextInputAction.newline,
-                            onSubmitted: sendOnEnter && isDesktop
-                                ? _submitPrompt
-                                : null,
+                            onSubmitted: sendOnEnter ? _submitPrompt : null,
                             enabled: canType,
                             decoration: InputDecoration(
                               hintText: session.pendingTool == null
@@ -1154,7 +1157,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
                   ),
                 );
               }),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 context.l10n.askAiDisclaimer,
                 textAlign: TextAlign.center,
