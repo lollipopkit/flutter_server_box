@@ -14,6 +14,23 @@ Widget _app() => MaterialApp(
       home: const Scaffold(body: SizedBox.expand()),
     );
 
+/// [ToastConfig.align] is global and is read when an item mounts, so it has to
+/// be set before the tree is pumped and put back afterwards.
+void _useAlign(ToastAlign align) {
+  final previous = ToastConfig.align;
+  ToastConfig.align = align;
+  addTearDown(() => ToastConfig.align = previous);
+}
+
+Finder get _countdownBar => find.descendant(
+      of: find.byType(FractionallySizedBox),
+      matching: find.byType(ColoredBox),
+    );
+
+Rect _cardOf(WidgetTester tester, String title) => tester.getRect(
+      find.ancestor(of: find.text(title), matching: find.byType(Material)).first,
+    );
+
 void main() {
   // Static state: a toast left behind by one test would show up in the next.
   // Every item is disposed with the tree, so nothing is left to animate out and
@@ -86,7 +103,7 @@ void main() {
     expect(copied, 'Failed\n\nNo such file or directory');
   });
 
-  testWidgets('a horizontal drag dismisses it', (tester) async {
+  testWidgets('a drag towards the edge it sits on dismisses it', (tester) async {
     await tester.pumpWidget(_app());
 
     Toast.show('Swipe me', duration: Duration.zero);
@@ -99,6 +116,22 @@ void main() {
     await tester.pump(_exit);
 
     expect(find.text('Swipe me'), findsNothing);
+  });
+
+  testWidgets('a drag the other way does not', (tester) async {
+    await tester.pumpWidget(_app());
+
+    Toast.show('Stay', duration: Duration.zero);
+    await tester.pump();
+    await tester.pump(_enter);
+
+    // Inwards, across the content the toast covers. There is no edge that way.
+    await tester.drag(find.text('Stay'), const Offset(-500, 0));
+    await tester.pump();
+    await tester.pump(_exit);
+    await tester.pump(_exit);
+
+    expect(find.text('Stay'), findsOneWidget);
   });
 
   testWidgets('it goes on its own when the duration is up', (tester) async {
@@ -166,11 +199,86 @@ void main() {
     await tester.pump();
     await tester.pump(_enter);
 
-    final card = tester.getRect(find.ancestor(of: find.text('Corner'), matching: find.byType(Material)).first);
+    final card = _cardOf(tester, 'Corner');
     expect(card.right, closeTo(1280 - ToastConfig.margin.right, 0.5));
     expect(card.width, ToastConfig.maxWidth);
     final caption = WindowFrameConfig.showCaption ? CustomAppBar.sysStatusBarHeight : 0.0;
     expect(card.top, closeTo(caption + ToastConfig.margin.top, 0.5));
+  });
+
+  testWidgets('a countdown bar shrinks along the bottom edge', (tester) async {
+    await tester.pumpWidget(_app());
+
+    Toast.show('Timed', duration: const Duration(seconds: 1));
+    await tester.pump();
+    await tester.pump(_enter);
+
+    final started = tester.getSize(_countdownBar).width;
+    expect(started, greaterThan(0));
+    expect(tester.getSize(_countdownBar).height, 1);
+
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(tester.getSize(_countdownBar).width, lessThan(started));
+  });
+
+  testWidgets('no bar when the toast does not expire', (tester) async {
+    await tester.pumpWidget(_app());
+
+    Toast.show('Kept', duration: Duration.zero);
+    await tester.pump();
+    await tester.pump(_enter);
+
+    expect(_countdownBar, findsNothing);
+  });
+
+  testWidgets('the bar goes back to full while the countdown is paused', (tester) async {
+    await tester.pumpWidget(_app());
+
+    Toast.show('Paused', body: 'detail', duration: const Duration(seconds: 1));
+    await tester.pump();
+    await tester.pump(_enter);
+
+    final running = tester.getSize(_countdownBar).width;
+    await tester.tap(find.text('Paused'));
+    await tester.pump();
+
+    expect(tester.getSize(_countdownBar).width, greaterThan(running));
+  });
+
+  testWidgets('centred at the top, it only goes up', (tester) async {
+    _useAlign(ToastAlign.topCenter);
+    await tester.pumpWidget(_app());
+
+    Toast.show('Up only', duration: Duration.zero);
+    await tester.pump();
+    await tester.pump(_enter);
+
+    await tester.drag(find.text('Up only'), const Offset(500, 0));
+    await tester.pump();
+    await tester.pump(_exit);
+    expect(find.text('Up only'), findsOneWidget);
+
+    await tester.drag(find.text('Up only'), const Offset(0, -300));
+    await tester.pump();
+    await tester.pump(_exit);
+    await tester.pump(_exit);
+    expect(find.text('Up only'), findsNothing);
+  });
+
+  testWidgets('each align puts it against the edges it names', (tester) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    _useAlign(ToastAlign.bottomCenter);
+
+    await tester.pumpWidget(_app());
+    Toast.show('Placed', duration: Duration.zero);
+    await tester.pump();
+    await tester.pump(_enter);
+
+    final card = _cardOf(tester, 'Placed');
+    expect(card.center.dx, closeTo(1280 / 2, 0.5));
+    expect(card.bottom, closeTo(800 - ToastConfig.margin.bottom, 0.5));
   });
 
   testWidgets('a narrow window shrinks it instead of clipping it', (tester) async {
@@ -183,9 +291,110 @@ void main() {
     await tester.pump();
     await tester.pump(_enter);
 
-    final card = tester.getRect(find.ancestor(of: find.text('Narrow'), matching: find.byType(Material)).first);
+    final card = _cardOf(tester, 'Narrow');
     expect(card.width, 320 - ToastConfig.margin.horizontal);
     expect(card.left, greaterThanOrEqualTo(0));
+  });
+
+  // _kPeek and _kPileGap in host.dart. Named here so the numbers below read.
+  const peek = 7.0;
+  const pileGap = 8.0;
+
+  Future<void> pumpPair(WidgetTester tester) async {
+    await tester.pumpWidget(_app());
+    Toast.show('older', duration: Duration.zero);
+    await tester.pump();
+    await tester.pump(_enter);
+    Toast.show('newer', duration: Duration.zero);
+    await tester.pump();
+    await tester.pump(_enter);
+    await tester.pump(_enter);
+  }
+
+  testWidgets('a second toast piles in front of the first', (tester) async {
+    await pumpPair(tester);
+
+    final newer = _cardOf(tester, 'newer');
+    final older = _cardOf(tester, 'older');
+
+    // Newest against the edge, the one before it showing an edge from behind.
+    expect(newer.top, lessThan(older.top));
+    expect(older.top - newer.top, closeTo(peek, 0.5));
+  });
+
+  testWidgets('tapping the front opens the whole pile, and closes it', (tester) async {
+    await pumpPair(tester);
+    final piled = _cardOf(tester, 'older').top - _cardOf(tester, 'newer').top;
+
+    await tester.tap(find.text('newer'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+
+    final opened = _cardOf(tester, 'older').top - _cardOf(tester, 'newer').top;
+    expect(opened, greaterThan(piled));
+    expect(opened, closeTo(_cardOf(tester, 'newer').height + pileGap, 1));
+
+    await tester.tap(find.text('newer'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+
+    expect(_cardOf(tester, 'older').top - _cardOf(tester, 'newer').top, closeTo(piled, 0.5));
+  });
+
+  testWidgets('a body is out of reach while piled, and back once opened', (tester) async {
+    await tester.pumpWidget(_app());
+    Toast.show('first', body: 'hidden detail', duration: Duration.zero);
+    await tester.pump();
+    await tester.pump(_enter);
+    Toast.show('second', duration: Duration.zero);
+    await tester.pump();
+    await tester.pump(_enter);
+    await tester.pump(_enter);
+
+    // The tap went to the pile, so nothing opened its body — and with no body
+    // reachable there is no chevron offering one either.
+    expect(find.byIcon(Icons.keyboard_arrow_down), findsNothing);
+
+    await tester.tap(find.text('second'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+    expect(find.text('hidden detail'), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
+    await tester.pump();
+    expect(find.text('hidden detail'), findsOneWidget);
+  });
+
+  testWidgets('nothing in an open pile expires while it is being read', (tester) async {
+    await tester.pumpWidget(_app());
+    Toast.show('one', duration: const Duration(seconds: 1));
+    await tester.pump();
+    await tester.pump(_enter);
+    Toast.show('two', duration: const Duration(seconds: 1));
+    await tester.pump();
+    await tester.pump(_enter);
+
+    await tester.tap(find.text('two'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+
+    expect(find.text('one'), findsOneWidget);
+    expect(find.text('two'), findsOneWidget);
+  });
+
+  testWidgets('past the peek limit a piled toast is not drawn', (tester) async {
+    await tester.pumpWidget(_app());
+    for (var i = 0; i < 4; i++) {
+      Toast.show('n$i', duration: Duration.zero);
+      await tester.pump();
+    }
+    await tester.pump(_enter);
+
+    // n3 is the front, so n0 is the fourth deep — one past the two edges that
+    // show behind it.
+    final hidden = find.ancestor(of: find.text('n0'), matching: find.byType(Opacity));
+    expect(tester.widget<Opacity>(hidden.last).opacity, 0);
+    expect(find.ancestor(of: find.text('n2'), matching: find.byType(Opacity)), findsNothing);
   });
 
   testWidgets('the stack keeps at most maxVisible', (tester) async {
