@@ -47,7 +47,7 @@ void main() {
     expect(find.text('Saved'), findsOneWidget);
     expect(find.text('to /etc/hosts'), findsNothing);
 
-    await tester.tap(find.text('Saved'));
+    await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
     await tester.pump();
 
     expect(find.text('to /etc/hosts'), findsOneWidget);
@@ -64,10 +64,34 @@ void main() {
 
     expect(tester.widget<Text>(find.text(long)).maxLines, 1);
 
-    await tester.tap(find.text(long));
+    await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
     await tester.pump();
 
     expect(tester.widget<Text>(find.text(long)).maxLines, isNull);
+  });
+
+  testWidgets('tapping a lone toast does nothing at all', (tester) async {
+    await tester.pumpWidget(_app());
+
+    Toast.show('Alone', body: 'detail', duration: const Duration(seconds: 1));
+    await tester.pump();
+    await tester.pump(_enter);
+
+    final running = tester.getSize(_countdownBar).width;
+
+    await tester.tap(find.text('Alone'));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Not opened, and the countdown neither held (which would leave the bar
+    // where it was) nor started over (which would put it back to full): a lone
+    // toast sits there and expires on time however much it is tapped. Its body
+    // is on the chevron.
+    expect(find.text('detail'), findsNothing);
+    expect(tester.getSize(_countdownBar).width, lessThan(running));
+
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.pump(_exit);
+    expect(find.text('Alone'), findsNothing);
   });
 
   testWidgets('a short title with no body cannot be opened', (tester) async {
@@ -218,7 +242,7 @@ void main() {
     await tester.pump();
     await tester.pump(_enter);
 
-    await tester.tap(find.text('Read me'));
+    await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
     await tester.pump();
     await tester.pump(const Duration(seconds: 2));
 
@@ -301,7 +325,7 @@ void main() {
     await tester.pump(_enter);
 
     final running = tester.getSize(_countdownBar).width;
-    await tester.tap(find.text('Paused'));
+    await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
     await tester.pump();
 
     expect(tester.getSize(_countdownBar).width, greaterThan(running));
