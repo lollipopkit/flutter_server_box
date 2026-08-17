@@ -192,14 +192,29 @@ stores. Worth doing; not done.
       plain Ctrl+C is not a chord at all, which is what leaves SIGINT alone;
       on macOS it is Cmd+C and Ctrl+C is likewise untouched. Paste takes Shift
       too rather than being the odd one out.
+- [x] With nothing selected, right-click pastes —
+      `test/terminal_clipboard_test.dart`, on a real `SSHPage` with a mocked
+      clipboard channel. An empty clipboard types nothing, and the handler is
+      the page's rather than the terminal's own.
 - [ ] With text selected, right-click copies it and clears the selection.
-- [ ] With nothing selected, right-click pastes.
 - [ ] Neither interferes with the existing text-selection drag.
 
-The three pointer lines go through `_onClipboardAction`, which needs a live
-`TerminalController` and a clipboard channel — a page harness that does not
-exist. `page.dart:432` wires `onSecondaryTapUp` on `TerminalView` directly
-rather than through the extension, so §1's tests do not reach it either.
+`TerminalSession.over` is the seam that made the page reachable: it takes a
+`ShellBackend` outright, and because `adopt` returns early when one is already
+set, the page never opens a connection. `test/helpers/fake_shell.dart` is the
+backend. That harness is reusable for anything else on this page.
+
+Two things it does not reach, both about a selection there is no way to make
+from a test. The page owns its `TerminalController` privately, so a selection
+cannot be arranged; and a synthetic secondary tap never arrives, because
+xterm's gesture handler is `HitTestBehavior.deferToChild` over a render object
+a widget test's mouse does not hit. The paste test therefore calls the callback
+`TerminalView` was handed rather than synthesising a pointer — the branch is
+the app's, the arena is xterm's.
+
+Stale while checking this: the comment at `page.dart:430` says
+`_onClipboardAction` "was already exactly that, for the toolbar button". There
+is no such button any more; the right-click is its only caller.
 
 `isClipboardChord` was lifted out of `_Keyboard` to make the matrix testable:
 it read `HardwareKeyboard.instance` and `isMacOS` inline, so stating it needed

@@ -427,9 +427,9 @@ class SSHPageState extends ConsumerState<SSHPage>
           controller: _terminalController,
           keyboardType: TextInputType.text,
           // The convention every terminal on every platform keeps: copy what
-          // is selected, and paste when nothing is. `_onClipboardAction` was
-          // already exactly that, for the toolbar button — a right-click is
-          // just the other way to ask for it.
+          // is selected, and paste when nothing is. `_onClipboardAction` is
+          // the whole of it, and this is now its only caller — the toolbar
+          // button it was first written for is gone.
           onSecondaryTapUp: (_, _) => _onClipboardAction(),
           enableSuggestions: letterCache,
           textStyle: _terminalStyle,
