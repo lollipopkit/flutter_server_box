@@ -83,9 +83,11 @@ class SftpPage extends ConsumerStatefulWidget {
 }
 
 class _SftpPageState extends ConsumerState<SftpPage> {
-  late final SSHClient _client;
-  late final SftpSudoHelper _sudoHelper;
-  late final _SudoEscalation _escalation;
+  /// Resolved in [_open] rather than in `initState`, and not `final` because
+  /// [_retry] resolves it again.
+  late SSHClient _client;
+  late SftpSudoHelper _sudoHelper;
+  late _SudoEscalation _escalation;
 
   /// Whether every operation goes through sudo without trying first. Turned on
   /// by hand, and by an escalation that worked: the next file in the same
@@ -101,22 +103,6 @@ class _SftpPageState extends ConsumerState<SftpPage> {
   late Future<_SftpStart> _start = _open();
 
   Spi get _spi => widget.args.spi;
-
-  @override
-  void initState() {
-    super.initState();
-    _client = ref.read(serverProvider(_spi.id)).client!;
-    _sudoHelper = SftpSudoHelper(
-      client: _client,
-      spi: _spi,
-      contextProvider: () => mounted ? context : null,
-    );
-    _escalation = _SudoEscalation(
-      helper: _sudoHelper,
-      mode: _sudoMode,
-      contextProvider: () => mounted ? context : null,
-    );
-  }
 
   @override
   void dispose() {
@@ -227,6 +213,28 @@ extension _Open on _SftpPageState {
       sftpOperationTimeout(Stores.setting.timeout.fetch());
 
   Future<_SftpStart> _open() async {
+    // Read here rather than in `initState`, where a `!` used to crash the page
+    // red: the file tab restores its sessions on the first frame while the
+    // server provider is still connecting, so a relaunch with a server tab
+    // open hit a null every time. As a failure of `_open` it lands in the
+    // error branch this page already draws — unreachable, with a Retry, which
+    // is exactly what a connection that has not come up yet needs.
+    final client = ref.read(serverProvider(_spi.id)).client;
+    if (client == null) {
+      throw StateError('${_spi.name} is not connected');
+    }
+    _client = client;
+    _sudoHelper = SftpSudoHelper(
+      client: client,
+      spi: _spi,
+      contextProvider: () => mounted ? context : null,
+    );
+    _escalation = _SudoEscalation(
+      helper: _sudoHelper,
+      mode: _sudoMode,
+      contextProvider: () => mounted ? context : null,
+    );
+
     final backend = await SftpFileBackend.connect(
       _client,
       escalation: _escalation,
