@@ -516,7 +516,10 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   Future<void> _deleteAll(List<FileEntry> entries) async {
     if (entries.length == 1) return _delete(entries.first);
 
-    var recursive = Stores.setting.sftpRmrDir.fetch();
+    // Read once, like the single delete below: whether there is a choice to
+    // make must not change while the question is being answered.
+    final alwaysRecursive = Stores.setting.sftpRmrDir.fetch();
+    var recursive = alwaysRecursive;
     final hasDir = entries.any((e) => e.isDir);
     final confirmed = await context.showRoundDialog<bool>(
       title: libL10n.attention,
@@ -536,7 +539,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
                 style: UIs.text11Grey,
               ),
             ),
-            if (hasDir && !Stores.setting.sftpRmrDir.fetch())
+            if (hasDir && !alwaysRecursive)
               CheckboxListTile(
                 // Not `sftpRmrDirSummary`: that says "use `rm -r` in SFTP",
                 // which is the reason SFTP needs the choice and not a sentence
@@ -569,7 +572,12 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   Future<void> _delete(FileEntry entry) async {
     // Most people do not know that SFTP cannot delete a directory with
     // anything in it, so the choice is offered rather than the failure.
-    var recursive = Stores.setting.sftpRmrDir.fetch();
+    //
+    // Read once: it decides whether there is a choice to make at all, and a
+    // dialog that re-read it would be asking a question that could change
+    // shape underneath the answer.
+    final alwaysRecursive = Stores.setting.sftpRmrDir.fetch();
+    var recursive = alwaysRecursive;
     final confirmed = await context.showRoundDialog<bool>(
       title: libL10n.attention,
       child: StatefulBuilder(
@@ -581,11 +589,17 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
               title: Text(
                 libL10n.askContinue(
                   '${libL10n.delete} ${entry.name}'
-                  '${entry.isDir && recursive ? '\n${l10n.deleteDirRecursive}' : ''}',
+                  // Only where the checkbox is absent. Said in both places it
+                  // read as a warning that appeared and vanished as the box
+                  // was ticked, and the question a dialog is asking should not
+                  // move while it is being answered. Depends on the setting,
+                  // which cannot change while this is open — not on `recursive`,
+                  // which is exactly what the box changes.
+                  '${entry.isDir && alwaysRecursive ? '\n${l10n.deleteDirRecursive}' : ''}',
                 ),
               ),
             ),
-            if (entry.isDir && !Stores.setting.sftpRmrDir.fetch())
+            if (entry.isDir && !alwaysRecursive)
               CheckboxListTile(
                 title: Text(l10n.deleteDirRecursive),
                 value: recursive,
