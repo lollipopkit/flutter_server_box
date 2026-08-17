@@ -2,6 +2,56 @@
 
 不在排期内的想法和已知缺口,先记在这里,免得丢了。
 
+## ServerBox 作为 MCP server:把内置 Agent 的工具借给本机的 CLI agent
+
+想法:app 启动时在本机起一个 MCP server,把 `globalAgentToolDefinitions` 那六个工具
+(`run_shell_command`、`read_file`、`write_file`、`ssh_connect`、`ssh_disconnect`、
+`serverbox`)暴露出去,再把它配置进本机终端里的 Claude Code / Codex / agents,并附一套
+skills。这样在终端里干活的 agent 不用自己配 SSH,就能用 app 已经配好的服务器。
+
+**可行**,而且大部分是现成的:六个工具都从 `GlobalAgentToolService.execute` 一个入口走,
+所以 MCP 那层只是换一种调用方式,不需要第二份实现。要新建的只有传输层 —— app 里目前
+**没有任何 HTTP server**。
+
+### 三部分,按风险从低到高
+
+1. **server 本身。** `dart:io` 的 `HttpServer` 绑 `127.0.0.1`,streamable HTTP 传输,
+   默认关闭。协议面很小:`initialize` / `tools/list` / `tools/call`。macOS 三个
+   entitlement 文件都已经有 `com.apple.security.network.server`,所以连沙盒版都能监听。
+   端口固定 + 占用时递增,选中的端口和 token 写在一处让客户端能读到。
+   鉴权用 bearer token,每次安装生成一个,存 `SecureStore`。
+
+2. **审批闸门 —— 这条是这个功能的成败所在。** 内置 Agent 有一整套风险分级和
+   `canAutoRun`,非只读命令要用户点头。MCP 客户端如果绕过它,就等于本机任何进程都能在
+   你所有服务器上执行任意命令。所以:MCP 来的调用**一律**走同一个审批 UI,而且比内置
+   Agent 更严 —— 连 `readOnly` 也不自动跑,除非用户按工具单独放开;界面上要能看出
+   当前是外部客户端在驱动。
+
+3. **写客户端配置 + skills。** Claude Code 的 `mcpServers`、Codex 的
+   `[mcp_servers.serverbox]`、`~/.agents/skills` 下的 skill 文件。合并而不是覆盖,
+   原子写 + 备份(照 `monitor/src/core/config_file.rs` 的做法),而且必须是用户点按钮
+   触发,不能开机自己改人家的配置文件。
+
+### 动手前要先查清的三件事
+
+- **Codex 支不支持 HTTP MCP,还是只认 stdio。** 只认 stdio 的话就要一个 stdio↔HTTP 的
+  桥:要么依赖 `npx mcp-remote`(引入 Node 依赖),要么自己出一个小二进制(workspace 里
+  已经有 Rust,能出五平台产物)。这决定第 1 部分是不是只做 HTTP 就够。
+- **Dart 侧用哪个 MCP 实现。** pubspec 里没有 mcp 依赖;协议面小到可以手写,但先看
+  `package:dart_mcp` 是否合用。
+- **`~/.agents/skills` 的 skill 格式。**
+
+### 已知的边界,先写下来免得当成 bug
+
+- **macOS App Store 版写不了那些配置文件** —— 沙盒进程碰不到 `~/.claude.json` 和
+  `~/.agents/skills`。它仍然可以监听端口,所以第 1、2 部分照常,第 3 部分只能给一段
+  让用户自己粘的片段。DMG 版不受限。
+- **iOS / Android 没有可配置的对象。** guest 里的 socket 就是宿主进程的 socket,所以
+  端口理论上够得到,但那两个平台上没有 Claude Code 要配。先划在范围外。
+- **token 落在明文配置文件里,本机任何进程都读得到。** 和 SSH agent socket 是同一类
+  威胁模型,但这些工具够得到你**每一台**服务器,所以要明说,不能默认开。
+- app 得开着。这不是一个后台服务。
+
 ## monitor:relay 模式(不强制暴露公网端口)
 
 目前要从局域网外访问 `monitor` 面板,必须把 agent 的端口暴露到公网(端口转发/
