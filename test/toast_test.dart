@@ -173,16 +173,27 @@ void main() {
     expect(_cardOf(tester, 'Rubber').left, closeTo(home, 0.5));
   });
 
-  testWidgets('the clip that plays it in is gone once it has arrived', (tester) async {
+  testWidgets('the arrival clip lets the sides through, and then goes', (tester) async {
     await tester.pumpWidget(_app());
 
     Toast.show('Clip', duration: Duration.zero);
     await tester.pump();
-    expect(find.byType(SizeTransition), findsOneWidget);
+
+    final arriving = find.ancestor(of: find.text('Clip'), matching: find.byType(ClipRect));
+    final clipper = tester.widget<ClipRect>(arriving).clipper;
+
+    // Top and bottom only. Growing into place is the vertical half of it; the
+    // slide it arrives on and the shadow it casts are on the sides.
+    final rect = clipper!.getClip(const Size(380, 40));
+    expect(rect.top, 0);
+    expect(rect.bottom, 40);
+    expect(rect.left, lessThan(-1000));
+    expect(rect.right, greaterThan(1380));
 
     await tester.pump(_enter);
-    // Else it would cut off the shadow, and anything pulled past its bounds.
-    expect(find.byType(SizeTransition), findsNothing);
+    // And once it is in place nothing clips it at all — not its shadow, not a
+    // drag past its own bounds.
+    expect(arriving, findsNothing);
   });
 
   testWidgets('it goes on its own when the duration is up', (tester) async {
