@@ -36,18 +36,16 @@ class _HomePageState extends ConsumerState<HomePage>
         AutomaticKeepAliveClientMixin,
         AfterLayoutMixin,
         WidgetsBindingObserver,
-        GlobalRef,
-        RestorationMixin {
-  // Restorable state for current tab index
-  final RestorableInt _restorableTabIndex = RestorableInt(0);
-
-  @override
-  String get restorationId => 'home_page';
-
-  @override
-  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    registerForRestoration(_restorableTabIndex, 'tab_index');
-  }
+        GlobalRef {
+  /// Which tab to come back to.
+  ///
+  /// A store, not `RestorableInt`. Flutter's restoration is dead in this app —
+  /// `restoreState` runs, registration succeeds, the value reads back within
+  /// the session, and a relaunch has nothing, because the route
+  /// `MaterialApp.home` builds hands its subtree no bucket
+  /// (`test/restoration_bucket_test.dart`). So this always came back 0, and
+  /// nothing said so.
+  final _tabIndex = Stores.history.homeTabIndex;
 
   late final PageController _pageController;
 
@@ -63,7 +61,6 @@ class _HomePageState extends ConsumerState<HomePage>
 
   @override
   void dispose() {
-    _restorableTabIndex.dispose();
     if (isMobile) {
       SystemUIs.switchStatusBar(hide: false);
     }
@@ -212,7 +209,7 @@ class _HomePageState extends ConsumerState<HomePage>
                 FocusScope.of(context).unfocus();
                 if (!_switchingPage) {
                   _selectIndex.value = value;
-                  _restorableTabIndex.value = value;
+                  _tabIndex.put(value);
                 }
                 _syncFullscreenSystemUi();
               },
@@ -345,11 +342,13 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     // Auth required for first launch
-    // Restore tab index from restoration if available
-    if (_restorableTabIndex.value >= 0 && _restorableTabIndex.value < _tabs.length) {
-      _selectIndex.value = _restorableTabIndex.value;
+    // Where it was left, if that is still a tab: the enabled set is a setting
+    // and may have shrunk since.
+    final saved = _tabIndex.fetch();
+    if (saved >= 0 && saved < _tabs.length) {
+      _selectIndex.value = saved;
       if (_pageController.hasClients) {
-        _pageController.jumpToPage(_restorableTabIndex.value);
+        _pageController.jumpToPage(saved);
       }
     }
     // Explicitly, because the listener above only fires on a change: the first
@@ -393,7 +392,7 @@ class _HomePageState extends ConsumerState<HomePage>
     if (_selectIndex.value == index) return;
     if (index < 0 || index >= _tabs.length) return;
     _selectIndex.value = index;
-    _restorableTabIndex.value = index;
+    _tabIndex.put(index);
     _switchingPage = true;
     _pageController.animateToPage(
       index,
@@ -457,7 +456,7 @@ extension _HomePageStateActions on _HomePageState {
     setState(() {
       _tabs = newTabs;
       _selectIndex.value = clampedIndex;
-      _restorableTabIndex.value = clampedIndex;
+      _tabIndex.put(clampedIndex);
     });
 
     // The index alone does not say which tab it is any more — the list under

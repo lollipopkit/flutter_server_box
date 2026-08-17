@@ -264,41 +264,26 @@ proot 并在构建后检查两个 `.so` 确实进了 APK。剩下两条:
   25.5 MB,关 47.8 MB —— 开了反而更小(解压出来的库在 APK 里是压缩存储的,映射的不是),
   代价是安装后库存两份。
 
-## Flutter 的 state restoration 在这个 app 里是失效的
+## Flutter 的 state restoration 在这个 app 里是失效的,已绕开
 
-实测(API 36 模拟器,debug build):终端 tab 的 `restoreState` 跑起来时
-`bucket == null`,也就是它 `registerForRestoration` 的东西从来没被写出去过。
+实测(`test/restoration_bucket_test.dart`):`restorationScopeId` 配上 `home:` 时 bucket
+**是发下来的**,但写进去的值扛不过 `restartAndRestore`;换成 `routes:` 的命名路由也一样。
+页面拿到的是一个新的空 bucket,不是恢复回来的那个 —— 所以会话内一切正常,只有真重启才发现
+什么都没留下。这也否掉了原先记的成因(「没有 bucket」)和第一条出路(「让 route 拿到
+restoration id」)。
 
-**结论成立,但原来写的原因是错的。** 原文说「`home:` 生成的 route 没有 restoration id,
-没有 id 的 route 不会给子树发 bucket」。`test/restoration_bucket_test.dart` 实测四条:
+三处已经全部迁走,`lib/` 里不再有任何 `RestorationMixin` / `Restorable*`,同一个测试文件里
+有一条扫描守着,防止有人再伸手去用一个「看起来能用」的 API:
 
-| 配置 | bucket | 值能否扛过 `restartAndRestore` |
-|---|---|---|
-| `restorationScopeId` + `home:` | **非 null** | 否 |
-| `restorationScopeId` + `routes: {'/': ...}` | 非 null | 否 |
-| 无 `restorationScopeId` | null | — |
+- `ssh/tab.dart` —— 终端 tab 集 → `Stores.history.sshTabs`
+- `storage/tab.dart` —— 文件 tab 集 → `Stores.history.fileTabs`(`file_tab_restore_test.dart`)
+- `home.dart` —— 底部 tab 选中项 → `Stores.history.homeTabIndex`
+- `ssh/page/page.dart` —— 页面内的 tmux session/window 换成普通字段。它们从来没持久化过,
+  所以普通字段就是它们一直以来的实际行为;真正跨重启的 tmux 状态由 tab 那层的 JSON 带着走。
+  第三个字段只存 server id、只写不读,删了
 
-所以 bucket 是发下来的,页面看到的是一个**新的空 bucket**,不是恢复回来的那个。这正是它
-难被发现的原因:页面里没有任何一个为假的条件,直到真的重启一次。
-
-这也否掉了原文两条路里的第一条:**光把 `home:` 换成命名路由不够**。第一个 route 还缺什么
-没查明。剩下的那条路——像终端 tab 那样各自落到 store——是目前唯一验证过可行的。
-
-终端 tab 已经绕开了:标签集改存 `Stores.history.sshTabs`(Hive),进程被杀后能恢复,
-已验。剩下三处还在用这套机制,等于什么都没做:
-
-- `lib/view/page/home.dart` —— 底部 tab 的选中项
-- ~~`lib/view/page/storage/tab.dart`~~ 已迁到 `Stores.history.fileTabs`
-- `lib/view/page/ssh/page/page.dart` —— 终端页自己的 tmux session/window。功能上不影响:
-  tmux 状态现在由 tab 那层的 JSON 带着走,但页面里这三个 `Restorable*` 字段看着像在工作,
-  其实没有。
-
-两条路里的第一条已经被上面那组实测否掉了(命名路由不够)。剩下 store 那条,和终端 tab
-已经走过的一样。**没定的只剩要不要做。** 注意 saved instance state 本来也扛不住用户在最近
-任务里划掉 app,而「划掉之后回来还在」恰恰是终端最需要的,所以 store 那条路本来就更稳。
-
-顺带:`file-plan.md` 手工验证里那条「文件页恢复到原来的目录」验不过 —— `storage/tab.dart`
-的 `_restorableSessions` 就是这套失效机制里的一个。两处此前没有互相引用。
+store 这条路顺带解决了 saved instance state 本来就扛不住的情况 —— 用户在最近任务里划掉
+app,而「划掉之后回来还在」恰恰是终端最需要的。
 
 ## iOS 的 Linux 环境:止血开关怎么用
 

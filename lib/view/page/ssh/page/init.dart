@@ -529,8 +529,8 @@ extension _Init on SSHPageState {
   void _clearTmuxState() {
     _tmuxCurrentSession = null;
     _tmuxCurrentWindow = null;
-    _restorableTmuxSession.value = null;
-    _restorableTmuxWindow.value = null;
+    _tmuxSessionState = null;
+    _tmuxWindowState = null;
     widget.args.onTmuxStateChanged?.call();
   }
 
@@ -542,17 +542,16 @@ extension _Init on SSHPageState {
     return resolveTmuxRestoreState(
       argsSession: widget.args.tmuxSession,
       argsWindow: widget.args.tmuxWindow,
-      restorableSession: _restorableTmuxSession.value,
-      restorableWindow: _restorableTmuxWindow.value,
+      restorableSession: _tmuxSessionState,
+      restorableWindow: _tmuxWindowState,
     );
   }
 
   void _saveTmuxState({required String sessionName, int? windowIndex}) {
     _tmuxCurrentSession = sessionName;
     _tmuxCurrentWindow = windowIndex;
-    _restorableServerId.value = widget.args.source.id;
-    _restorableTmuxSession.value = sessionName;
-    _restorableTmuxWindow.value = windowIndex;
+    _tmuxSessionState = sessionName;
+    _tmuxWindowState = windowIndex;
     widget.args.onTmuxStateChanged?.call();
   }
 

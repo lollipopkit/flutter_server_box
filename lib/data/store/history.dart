@@ -90,4 +90,11 @@ class HistoryStore extends HiveStore {
   /// nothing survived a relaunch — so "reopens where it was left" was a
   /// feature that had never once worked.
   late final fileTabs = propertyDefault('fileTabs', '');
+
+  /// Which bottom tab the app was last on.
+  ///
+  /// An index into the enabled tabs rather than the tab's identity, which is
+  /// what it always was — and why every reader clamps it: the enabled set is a
+  /// setting, so the list under this number can change while it is stored.
+  late final homeTabIndex = propertyDefault('homeTabIndex', 0);
 }

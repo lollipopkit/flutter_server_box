@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -88,6 +90,35 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(_seen, [false]);
+  });
+
+  test('nothing in lib/ relies on it any more', () {
+    // The three pages that did now keep their state where it survives: the
+    // terminal and file tabs in `Stores.history`, the home tab index beside
+    // them, and the terminal page's tmux fields as plain fields — they never
+    // persisted, so plain is what they always were.
+    //
+    // A scan rather than a list, because the failure this guards against is
+    // somebody reaching for `RestorableInt` again and finding that it appears
+    // to work.
+    final offenders = <String>[];
+    for (final file in Directory('lib').listSync(recursive: true)) {
+      if (file is! File || !file.path.endsWith('.dart')) continue;
+      if (file.path.contains('/generated/') || file.path.contains('/src/rust/')) {
+        continue;
+      }
+      for (final line in file.readAsLinesSync()) {
+        final code = line.trim();
+        if (code.startsWith('///') || code.startsWith('//')) continue;
+        if (code.contains('RestorationMixin') ||
+            code.contains('registerForRestoration') ||
+            RegExp(r'\bRestorable(String|Int|Bool|Double|Num)N?\b').hasMatch(code)) {
+          offenders.add('${file.path}: $code');
+        }
+      }
+    }
+
+    expect(offenders, isEmpty, reason: offenders.join('\n'));
   });
 }
 

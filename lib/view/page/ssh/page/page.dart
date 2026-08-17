@@ -123,26 +123,22 @@ class SSHPageState extends ConsumerState<SSHPage>
         AutomaticKeepAliveClientMixin,
         AfterLayoutMixin,
         TickerProviderStateMixin,
-        WidgetsBindingObserver,
-        RestorationMixin {
-  // Restorable state for this SSH page
-  final RestorableString _restorableServerId = RestorableString('');
-  final RestorableStringN _restorableTmuxSession = RestorableStringN(null);
-  final RestorableIntN _restorableTmuxWindow = RestorableIntN(null);
-
-  /// Per tab, not per server: two shells on one server is ordinary, and both
-  /// registering `ssh_page_<serverId>` had them claiming the same bucket —
-  /// one tab's tmux state overwriting the other's.
-  @override
-  String get restorationId =>
-      'ssh_page_${widget.args.restorationId ?? widget.args.source.id}';
-
-  @override
-  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    registerForRestoration(_restorableServerId, 'server_id');
-    registerForRestoration(_restorableTmuxSession, 'tmux_session');
-    registerForRestoration(_restorableTmuxWindow, 'tmux_window');
-  }
+        WidgetsBindingObserver {
+  /// The tmux session this page attached to, kept for the reconnect that
+  /// rebuilds the launch plan and reads it again.
+  ///
+  /// Plain fields. They were `Restorable*`, which in this app is the same
+  /// thing with extra ceremony: `restoreState` runs, registration succeeds,
+  /// and a relaunch has nothing, because the route `MaterialApp.home` builds
+  /// hands its subtree no bucket — `test/restoration_bucket_test.dart`. What
+  /// they did in practice was hold this within one page across a reconnect,
+  /// which is what these still do.
+  ///
+  /// What survives a relaunch is the tab's own record, in
+  /// `Stores.history.sshTabs`. A third field held the server id and was only
+  /// ever written.
+  String? _tmuxSessionState;
+  int? _tmuxWindowState;
 
   /// The terminal and the shell behind it. Handed in when this page is
   /// continuing a session that started elsewhere, and made here otherwise.
@@ -215,9 +211,6 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   @override
   void dispose() {
-    _restorableServerId.dispose();
-    _restorableTmuxSession.dispose();
-    _restorableTmuxWindow.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _virtKeyLongPressTimer?.cancel();
     final aiCommandSession = _aiCommandSession;
