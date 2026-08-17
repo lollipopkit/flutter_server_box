@@ -65,7 +65,8 @@ This is a Flutter application for managing Linux servers with the following key 
 - `lib/generated/` - Generated localization files
 - `lib/hive/` - Hive adapters for local storage
 - `lib/src/rust/` - Generated FRB bindings (do not edit)
-- `packages/` - Vendored Dart forks referenced by path from pubspec (dartssh2, xterm, fl_lib, fl_build, etc.)
+- `packages/` - Vendored Dart forks referenced by path from pubspec (dartssh2, xterm, fl_lib, fl_build, etc.), each a submodule
+- `third_party/ish-arm64` - The iOS Linux engine, a submodule of the `lollipopkit/ShellBox` fork. Not in `packages/` because it is C built by meson and consumed by the Xcode project rather than by pubspec. Which revision builds is the gitlink, not a hash in a script: move it with `git submodule update --remote third_party/ish-arm64` and `git add`. `scripts/build-ish-ios.sh` builds it out of tree into `build/ish/build-<arch>/`, so a build never leaves the submodule dirty
 - `website/` - Project website (Svelte + bun; deployed via `scripts/build-cloudflare-pages.sh`)
 
 ### Key Technologies

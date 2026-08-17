@@ -26,3 +26,7 @@
 	path = packages/watch_connectivity
 	url = https://github.com/lollipopkit/watch_connectivity
 	branch = master
+[submodule "third_party/ish-arm64"]
+	path = third_party/ish-arm64
+	url = https://github.com/lollipopkit/ShellBox
+	branch = main

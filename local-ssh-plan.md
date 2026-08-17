@@ -218,8 +218,8 @@ run: `.github/workflows/build.yml` has a `Build ios` job, but it never calls
 
 ### Measured: the engine builds for iOS and runs Alpine in the simulator
 
-`scripts/build-ish-ios.sh`, which pins the fork to a commit and Alpine to the
-same 3.22.5 aarch64 release the Android rootfs uses.
+`scripts/build-ish-ios.sh`, which builds the `third_party/ish-arm64` submodule
+and pins Alpine to the same 3.22.5 aarch64 release the Android rootfs uses.
 
 | | Result |
 | --- | --- |
@@ -467,12 +467,25 @@ released when the session's last fd closes, which the adhoc fd never did. A
 command session (`command != NULL`) also clears `OPOST` and `ECHO`, because
 `ServerExec` output should read like a pipe's rather than a terminal's.
 
-**A fork of the engine is a new maintenance surface.** The pin is
-[lollipopkit/ShellBox](https://github.com/lollipopkit/ShellBox), whose `main` is
-upstream's commit with the fixes on top; what was changed is the log between the
-two. Its `dev` is older unrelated work and is not what builds. Taking a newer
-upstream means rebasing that log onto it, and a fix that upstream has since made
-itself has to be dropped rather than carried twice.
+**A fork of the engine is a new maintenance surface.** It is
+[lollipopkit/ShellBox](https://github.com/lollipopkit/ShellBox), a submodule at
+`third_party/ish-arm64`; its `main` is upstream's commit with the fixes on top,
+so what was changed is the log between the two. Its `dev` is older unrelated
+work and is not what builds. Taking a newer upstream means rebasing that log
+onto it, and a fix that upstream has since made itself has to be dropped rather
+than carried twice.
+
+Which revision builds is the gitlink — `git submodule update --remote
+third_party/ish-arm64` moves it and `git add` records it, so no hash is written
+out anywhere by hand. It lives outside `packages/`, which is for Dart forks
+resolved through pubspec; this one is C built by meson and consumed by the Xcode
+project. The libraries are built **out of tree**, into `build/ish/build-<arch>/`,
+so a build never leaves the submodule dirty.
+
+That location matters for a reason found the hard way: the checkout used to sit
+in `build/ish/ish-arm64`, which `.gitignore` covers and `flutter clean` removes.
+An engine fix committed there and not yet pushed is one `flutter clean` from
+gone.
 
 Also installed by the app now, which was the shipping blocker: the pinned
 release is downloaded, digest-checked and unpacked in Dart — links as links,
@@ -546,8 +559,7 @@ clock bug in this file to be invisible to the test written for the previous one.
 and that none of them goes backwards.
 
 Fixed in the fork as `eec9af7e`, sibling of `0d592524`, which fixed the value
-this one formats. **The pin in `scripts/build-ish-ios.sh` still names
-`0d592524`** — it moves once the fork is pushed.
+this one formats.
 
 With the padding, on the iPad, 39 rows and nothing negative:
 

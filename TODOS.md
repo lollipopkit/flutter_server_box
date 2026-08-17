@@ -311,9 +311,16 @@ upstream 不触发:那边 `/dev` 在根挂载里,挂载点是 `""`,缓存明确�
 字段,`create_stdio` 保留为回退分支且落到时会 syslog —— 静默降级正是当初把这件事藏住的
 原因。
 
-**引擎补丁是新增的维护面。** `build-ish-ios.sh` 在 checkout 到 pin 的 commit 之后应用
-`scripts/ish-patches/` 下所有补丁,可重复应用,补丁打不上就直接失败而不是跳过,所以升
-pin 不会静默丢掉修复。
+**引擎 fork 是新增的维护面。** 修改直接提交进 fork
+([lollipopkit/ShellBox](https://github.com/lollipopkit/ShellBox)),以 submodule 挂在
+`third_party/ish-arm64`。哪个版本参与构建由 gitlink 决定,不在任何脚本里写死 hash;
+更新是 `git submodule update --remote third_party/ish-arm64` 加 `git add`。库编到树外的
+`build/ish/build-<arch>/`,所以构建不会把 submodule 弄脏。
+
+放在 `packages/` 之外,是因为那里放的是通过 pubspec 按路径引用的 Dart fork,而这个是
+meson 编、Xcode 消费的 C 仓库。位置本身有过教训:检出原先在 `build/ish/ish-arm64`,而
+`build/` 被 `.gitignore` 覆盖、`flutter clean` 会删 —— 提交在那里还没推的引擎修复,离
+丢失只差一次 `flutter clean`。
 
 顺带解决的:`generic_openat` 对字符设备走 `dev_open` → `tty_open`,会给 session leader
 认领控制终端,所以 `/dev/tty`、job control、Ctrl-C 都对了;会话最后一个 fd 关闭时 tty 也
@@ -350,8 +357,7 @@ M3:39 行数据,但**第一次跑是失败的** —— `fork+exec 50` 报 -360 m
 跳变正好落在里面 —— 这是这个文件里第三个时钟 bug,每次都对上一个 bug 写的测试免疫。新增
 `/proc/uptime keeps its two decimal places` 盯 300 次读取的格式和单调性。
 
-修复在 fork 的 `eec9af7e`。**`scripts/build-ish-ios.sh` 的 pin 还指着 `0d592524`,等 fork
-推上去再动。** 在此之前,别人重建引擎会拿回旧的,新测试会失败。
+修复在 fork 的 `eec9af7e`,已推,submodule 的 gitlink 指着它。
 
 **M4(止血开关剥干净)已验,结论和检查方法分开说。** Release 设备构建两次,只改开关:
 引擎内部符号 5 → 0,`ish-arm64|fakefs|realfs` 字符串 81 → 0,sqlite 字符串 66 → 0,

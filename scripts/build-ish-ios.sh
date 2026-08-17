@@ -32,18 +32,16 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK_DIR="${ISH_BUILD_DIR:-$REPO_ROOT/build/ish}"
-SRC_DIR="$WORK_DIR/ish-arm64"
 
-# Pinned to a commit, not a branch. This is an interpreter that runs whatever
-# the guest filesystem contains; which revision of it ships should be a choice,
-# not whatever upstream pushed today.
+# The engine is a submodule, so which revision builds is the gitlink and not a
+# hash written out here. A fork of OpenMinis/ish-arm64 carrying the fixes this
+# app needs and upstream has not made: its `main` is upstream's commit with
+# those on top, so what was changed is the fork's log between the two. Its `dev`
+# is unrelated older work and is not what this builds.
 #
-# A fork of OpenMinis/ish-arm64, carrying the fixes this app needs and upstream
-# has not made. Its `main` is upstream's commit with those on top, so what was
-# changed is the fork's log between there and here; `dev` is unrelated older
-# work and is not what this builds.
-ISH_REPO="https://github.com/lollipopkit/ShellBox.git"
-ISH_COMMIT=0d592524fe5b132046c53e8d19a04a5c161048d3
+# To move it: `git submodule update --remote third_party/ish-arm64`, then
+# `git add third_party/ish-arm64` — the gitlink is the record.
+SRC_DIR="$REPO_ROOT/third_party/ish-arm64"
 
 # The same release the Android rootfs is pinned to, and for the same reason —
 # see AndroidRootfs.version, which records why the branch is 3.22.
@@ -72,34 +70,23 @@ export PKG_CONFIG_PATH="/opt/homebrew/opt/libarchive/lib/pkgconfig:${PKG_CONFIG_
 
 mkdir -p "$WORK_DIR"
 
-fetch_source() {
-  if [ ! -d "$SRC_DIR" ]; then
-    log "Cloning ish-arm64"
-    git clone --quiet "$ISH_REPO" "$SRC_DIR"
-  fi
-  # A checkout made before the pin moved to the fork has upstream as its origin,
-  # and cannot fetch a commit that only exists on the fork. Pointed at whatever
-  # ISH_REPO currently is rather than left to fail with "couldn't find remote
-  # ref", which says nothing about why.
-  if [ "$(git -C "$SRC_DIR" remote get-url origin)" != "$ISH_REPO" ]; then
-    log "Pointing origin at $ISH_REPO"
-    git -C "$SRC_DIR" remote set-url origin "$ISH_REPO"
-  fi
-  local head
-  head="$(git -C "$SRC_DIR" rev-parse HEAD)"
-  if [ "$head" != "$ISH_COMMIT" ]; then
-    log "Checking out the pinned commit"
-    git -C "$SRC_DIR" fetch --quiet origin "$ISH_COMMIT" 2>/dev/null || git -C "$SRC_DIR" fetch --quiet origin
-    # Forced, because a tree left dirty by hand should not fail a pin bump.
-    git -C "$SRC_DIR" checkout --quiet -f "$ISH_COMMIT"
+require_source() {
+  # An `--init` the caller did not run is the one failure that reads as
+  # something else — meson would complain about a missing meson.build.
+  if [ ! -f "$SRC_DIR/meson.build" ]; then
+    die "third_party/ish-arm64 is empty — run: git submodule update --init third_party/ish-arm64"
   fi
 }
 
 # The engine, for one platform. Only the three libraries: the `ish` CLI is a
 # host convenience and meson does not build it in a cross build anyway.
+#
+# Built out of tree, under build/. In tree it would leave the submodule dirty
+# after every build, which makes `git status` useless for seeing whether the
+# engine's own source was touched.
 build_libs() {
   local name="$1" sdk="$2" min_flag="$3"
-  local build_dir="$SRC_DIR/build-$name"
+  local build_dir="$WORK_DIR/build-$name"
   local sysroot
   sysroot="$(xcrun --sdk "$sdk" --show-sdk-path)"
 
@@ -132,11 +119,11 @@ EOF
 
   log "Configuring $name"
   if [ -d "$build_dir" ]; then
-    ( cd "$SRC_DIR" && meson setup --reconfigure "build-$name" -Dguest_arch=arm64 \
-        --buildtype=release --cross-file "$cross" >/dev/null )
+    meson setup --reconfigure "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 \
+      --buildtype=release --cross-file "$cross" >/dev/null
   else
-    ( cd "$SRC_DIR" && meson setup "build-$name" -Dguest_arch=arm64 \
-        --buildtype=release --cross-file "$cross" >/dev/null )
+    meson setup "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 \
+      --buildtype=release --cross-file "$cross" >/dev/null
   fi
 
   log "Building $name"
@@ -153,12 +140,12 @@ EOF
 
 # The host build, which is also what makes the filesystem.
 build_host() {
-  local build_dir="$SRC_DIR/build-macos-arm64"
+  local build_dir="$WORK_DIR/build-macos-arm64"
   log "Configuring macOS host build"
   if [ -d "$build_dir" ]; then
-    ( cd "$SRC_DIR" && meson setup --reconfigure build-macos-arm64 -Dguest_arch=arm64 --buildtype=release >/dev/null )
+    meson setup --reconfigure "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 --buildtype=release >/dev/null
   else
-    ( cd "$SRC_DIR" && meson setup build-macos-arm64 -Dguest_arch=arm64 --buildtype=release >/dev/null )
+    meson setup "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 --buildtype=release >/dev/null
   fi
   log "Building macOS host build"
   ninja -C "$build_dir" >/dev/null
@@ -210,7 +197,7 @@ build_fakefs() {
   log "Built $out"
 }
 
-fetch_source
+require_source
 case "$TARGET" in
   simulator)
     build_libs iossim-arm64 iphonesimulator "-mios-simulator-version-min=13.0"

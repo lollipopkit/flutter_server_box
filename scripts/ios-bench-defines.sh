@@ -2,8 +2,8 @@
 # Builds the --dart-define-from-file input for integration_test/ios_bench_test.dart.
 #
 # The benchmark script and the prebuilt aarch64 binary belong to the ish-arm64
-# fork, under build/ish/ish-arm64/benchmark/assets/ — where
-# scripts/build-ish-ios.sh leaves them. They are passed in rather than copied:
+# fork, under third_party/ish-arm64/benchmark/assets/ — they come with the
+# submodule. They are passed in rather than copied:
 # they are the thing being measured, and a second copy here would be a second
 # thing to keep in step. It also keeps them out of the shipped app, since a
 # define reaches only the build that asks for it.
@@ -13,7 +13,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-assets="$root/build/ish/ish-arm64/benchmark/assets"
+assets="$root/third_party/ish-arm64/benchmark/assets"
 
 if [ ! -f "$assets/shellbench.sh" ]; then
     echo "no $assets/shellbench.sh — run scripts/build-ish-ios.sh first" >&2

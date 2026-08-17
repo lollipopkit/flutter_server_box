@@ -48,13 +48,14 @@ SBM_ISH = 0
 // `SBM_ISH = 1` in it. Later assignment wins, so this is the last word.
 #include? "IshLocal.xcconfig"
 
-// Where the script leaves them. Relative to ios/, since that is where the
-// Xcode project sits.
+// The source is a submodule; the libraries are built out of tree, under
+// build/, so a build does not leave that submodule dirty. Both relative to
+// ios/, since that is where the Xcode project sits.
 // Keyed on PLATFORM_NAME, whose values are `iphonesimulator` and `iphoneos`.
-ISH_BUILD_DIR_iphonesimulator = $(SRCROOT)/../build/ish/ish-arm64/build-iossim-arm64
-ISH_BUILD_DIR_iphoneos = $(SRCROOT)/../build/ish/ish-arm64/build-ios-arm64
+ISH_BUILD_DIR_iphonesimulator = $(SRCROOT)/../build/ish/build-iossim-arm64
+ISH_BUILD_DIR_iphoneos = $(SRCROOT)/../build/ish/build-ios-arm64
 ISH_BUILD_DIR = $(ISH_BUILD_DIR_$(PLATFORM_NAME))
-ISH_SOURCE_DIR = $(SRCROOT)/../build/ish/ish-arm64
+ISH_SOURCE_DIR = $(SRCROOT)/../third_party/ish-arm64
 
 // Everything below is keyed on SBM_ISH: the `_0` variants are empty, so with
 // the switch off the compiler and the linker are told nothing at all about the
