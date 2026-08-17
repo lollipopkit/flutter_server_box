@@ -213,16 +213,20 @@ extension _Open on _SftpPageState {
       sftpOperationTimeout(Stores.setting.timeout.fetch());
 
   Future<_SftpStart> _open() async {
-    // Read here rather than in `initState`, where a `!` used to crash the page
-    // red: the file tab restores its sessions on the first frame while the
-    // server provider is still connecting, so a relaunch with a server tab
-    // open hit a null every time. As a failure of `_open` it lands in the
-    // error branch this page already draws — unreachable, with a Retry, which
-    // is exactly what a connection that has not come up yet needs.
-    final client = ref.read(serverProvider(_spi.id)).client;
-    if (client == null) {
-      throw StateError('${_spi.name} is not connected');
-    }
+    // `ensureShellClient`, not `state.client`: pressing a server's file button
+    // is asking to reach it, so a server that is merely not connected yet
+    // connects rather than reporting that it is not connected — and Retry
+    // then does something, where re-reading a provider that has not changed
+    // could only fail again.
+    //
+    // This is also where `initState` used to read `state.client!` and crash
+    // the page red. The file tab restores its sessions on the first frame,
+    // while the provider is still connecting, so a relaunch with a server tab
+    // open hit that null every time. As a failure of `_open` it lands in the
+    // error branch this page already draws.
+    final client = await ref
+        .read(serverProvider(_spi.id).notifier)
+        .ensureShellClient();
     _client = client;
     _sudoHelper = SftpSudoHelper(
       client: client,

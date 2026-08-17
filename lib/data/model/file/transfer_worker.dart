@@ -15,6 +15,7 @@ import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/data/model/file/copy_tree.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
+import 'package:server_box/data/model/file/prompt_queue.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
@@ -201,22 +202,6 @@ class FileTransferWorker {
     worker.sendMessage(job);
   }
 
-  /// Only one host-key question is on screen at a time.
-  ///
-  /// A server-to-server transfer connects to two machines from one isolate, and
-  /// several transfers can be running at once. Without this the dialogs stack,
-  /// and the user answers the top one about a fingerprint belonging to the
-  /// other host.
-  static Future<void> _prompts = Future.value();
-
-  static Future<T> _queuePrompt<T>(Future<T> Function() ask) {
-    final result = _prompts.then((_) => ask());
-    // Chained on the result, so the next question waits for this one to be
-    // answered — and off its error, so one refusal does not block the queue.
-    _prompts = result.then((_) {}, onError: (Object _) {});
-    return result;
-  }
-
   /// Handle the messages coming from the isolate
   Future<void> mainMessageHandler(
     dynamic data,
@@ -224,7 +209,7 @@ class FileTransferWorker {
   ) async {
     switch (data) {
       case final TransferKeyboardInteractivePrompt prompt:
-        final responses = await _queuePrompt(() async {
+        final responses = await PromptQueue.shared.add(() async {
           try {
             final timeout = prompt.expiresAt.difference(DateTime.now());
             if (timeout <= Duration.zero) return null;
@@ -246,7 +231,7 @@ class FileTransferWorker {
         );
         return;
       case final TransferHostKeyPrompt prompt:
-        final accepted = await _queuePrompt(() async {
+        final accepted = await PromptQueue.shared.add(() async {
           try {
             return await showHostKeyPrompt(prompt.info);
           } catch (e, s) {

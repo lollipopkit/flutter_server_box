@@ -443,8 +443,23 @@ in the test rather than argued with.
 - [x] server → server between two different hosts — run by hand between two
       real servers. One job in the list rather than a download and an upload,
       and nothing lands on this device on the way.
-- [ ] Two host-key prompts raised by one transfer queue rather than stack.
-      Nothing covers this, and it needs two servers with unknown keys.
+- [x] Two host-key prompts raised by one transfer queue rather than stack —
+      `test/prompt_queue_test.dart`, on the primitive rather than by hand.
+
+      Not reachable through the app at all, which is why it was never run:
+      browsing the source to pick a file accepts that server's key, picking
+      the destination accepts the other, and `SshTransferCreds` snapshots the
+      known fingerprints when the job is made — so by the time the worker
+      connects there is nothing left to ask. What the queue defends is a key
+      that **changed** between queuing and connecting, which is the moment the
+      question matters most and the hardest to stage on purpose.
+
+      `PromptQueue` is that primitive, lifted out of `FileTransferWorker` so
+      it can be checked exactly: one question at a time, answers back to
+      whoever asked, and a refusal that does not leave the rest waiting for
+      ever. Recording only the starts proves nothing — each question's first
+      line runs synchronously — so the test asserts that one ends before the
+      next begins, and it does fail without the serialisation.
 
 ### 4. Capabilities
 
