@@ -444,6 +444,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get deleteServers => 'Sunucuları toplu sil';
 
   @override
+  String get deleteDirRecursive => 'Delete the folder and everything in it';
+
+  @override
   String get desktopTerminalTip =>
       'SSH oturumları başlatılırken terminal öykünücüsünü açmak için kullanılan komut.';
 

@@ -26,6 +26,7 @@ import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/local.dart';
+import 'package:server_box/view/page/storage/transfer_announce.dart';
 import 'package:server_box/view/page/storage/transfer_list.dart';
 import 'package:server_box/view/widget/page_issue.dart';
 
@@ -667,7 +668,7 @@ extension _Edit on _SftpPageState {
     bool useSudo,
   ) async {
     if (!useSudo) {
-      ref
+      final id = ref
           .read(fileTransferProvider.notifier)
           .add(
             FileTransfer(
@@ -675,7 +676,7 @@ extension _Edit on _SftpPageState {
               to: SftpFileRef.forServer(_spi, remotePath),
             ),
           );
-      context.showSnackBar(l10n.added2List);
+      await announceQueued(context, ref, [id]);
       return;
     }
 

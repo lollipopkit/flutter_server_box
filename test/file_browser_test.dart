@@ -8,10 +8,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
+import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
+
 
 /// A filesystem that is a map, so a browser test is about the browser.
 class _MapBackend implements FileBackend {
@@ -749,6 +751,33 @@ void main() {
 
       expect(find.text('archive'), findsOneWidget);
     });
+  });
+
+  group('deciding a transfer landed here', () {
+    // The rule `_refreshOnArrival` applies, on its own. Driving a real
+    // transfer through a widget test deadlocks: `add()` starts its work inside
+    // the fake-async zone and `runAsync` then waits on timers that zone is no
+    // longer pumping — the run hangs with no output, the same way a real Hive
+    // box does. The end to end is covered by hand instead.
+    test('a name in this directory is this directory', () {
+      const here = LocalFileRef('/tmp/into');
+
+      expect(here.child('dropped.txt'), const LocalFileRef('/tmp/into/dropped.txt'));
+    });
+
+    test('a sibling directory is not', () {
+      const here = LocalFileRef('/tmp/into');
+
+      expect(
+        here.child('dropped.txt') == const LocalFileRef('/tmp/elsewhere/dropped.txt'),
+        isFalse,
+      );
+    });
+
+    // That the same path on two different machines is also not the same place
+    // is `file_transfer_test.dart`'s `two ends are the same place only when
+    // both halves match` — an `SftpFileRef` carries the server it is on.
+
   });
 
   testWidgets('every icon button says what it does', (tester) async {

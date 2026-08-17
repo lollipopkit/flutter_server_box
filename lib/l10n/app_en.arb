@@ -128,6 +128,7 @@
   "cpuViewAsProgressTip": "Display the usage of each CPU in a progress bar style (old style)",
   "customCmd": "Custom commands",
   "deleteServers": "Batch delete servers",
+  "deleteDirRecursive": "Delete the folder and everything in it",
   "desktopTerminalTip": "Command used to open the terminal emulator when launching SSH sessions.",
   "dirEmpty": "Make sure the folder is empty.",
   "discoverSshServers": "Discover SSH Servers",

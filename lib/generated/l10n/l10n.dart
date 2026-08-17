@@ -891,6 +891,12 @@ abstract class AppLocalizations {
   /// **'Batch delete servers'**
   String get deleteServers;
 
+  /// No description provided for @deleteDirRecursive.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the folder and everything in it'**
+  String get deleteDirRecursive;
+
   /// No description provided for @desktopTerminalTip.
   ///
   /// In en, this message translates to:

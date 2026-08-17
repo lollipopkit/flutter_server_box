@@ -442,6 +442,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get deleteServers => 'Servers batchgewijs verwijderen';
 
   @override
+  String get deleteDirRecursive => 'Delete the folder and everything in it';
+
+  @override
   String get desktopTerminalTip =>
       'Opdracht die wordt gebruikt om de terminalemulator te openen bij het starten van SSH-sessies.';
 

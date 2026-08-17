@@ -420,6 +420,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get deleteServers => 'サーバーを一括削除';
 
   @override
+  String get deleteDirRecursive => 'Delete the folder and everything in it';
+
+  @override
   String get desktopTerminalTip => 'SSHセッションを起動する際に使用されるターミナルエミュレーターを開くコマンド。';
 
   @override

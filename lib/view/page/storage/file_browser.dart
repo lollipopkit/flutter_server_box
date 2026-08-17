@@ -16,6 +16,7 @@ import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/provider/file_transfer.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
+import 'package:server_box/view/page/storage/transfer_announce.dart';
 import 'package:server_box/view/widget/omit_start_text.dart';
 import 'package:server_box/view/widget/page_issue.dart';
 import 'package:server_box/view/widget/unix_perm.dart';
@@ -281,6 +282,42 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     return shown;
   }
 
+  /// Finished transfers this listing has already reacted to.
+  ///
+  /// A transfer keeps notifying after it finishes — the row stays until it is
+  /// cleared — so without this the listing would reload on every one of those.
+  final _landed = <int>{};
+
+  /// Reloads when something a transfer was carrying arrives in this directory.
+  ///
+  /// Nothing told the browser before. A drop finished, the file was on disk,
+  /// and the listing went on showing what it had read before the file existed
+  /// — so the way to see it was to leave the directory and come back.
+  ///
+  /// Matched by asking whether this directory's own ref, with the arriving
+  /// name on the end, *is* where the transfer was going. That answers "the
+  /// same place" rather than "the same string": an [SftpFileRef] carries the
+  /// server it is on, so a file landing in `/tmp` on another host does not
+  /// reload `/tmp` here.
+  void _refreshOnArrival(FileTransferState transfers) {
+    final refOf = widget.args.refOf;
+    // A browser whose files cannot be one end of a transfer has nothing to
+    // wait for, and no way to name where it is.
+    if (refOf == null) return;
+
+    final ids = {for (final t in transfers.transfers) t.id};
+    _landed.retainWhere(ids.contains);
+
+    final here = refOf(_path.path);
+    var arrived = false;
+    for (final transfer in transfers.transfers) {
+      if (transfer.status != FileTransferStage.finished) continue;
+      if (!_landed.add(transfer.id)) continue;
+      if (here.child(transfer.job.to.name) == transfer.job.to) arrived = true;
+    }
+    if (arrived) refresh();
+  }
+
   @override
   Future<void> refresh() async {
     final listing = _list();
@@ -501,7 +538,12 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
             ),
             if (hasDir && !Stores.setting.sftpRmrDir.fetch())
               CheckboxListTile(
-                title: Text(l10n.sftpRmrDirSummary),
+                // Not `sftpRmrDirSummary`: that says "use `rm -r` in SFTP",
+                // which is the reason SFTP needs the choice and not a sentence
+                // to show somebody deleting a folder on their own device. The
+                // choice itself is real everywhere — `Directory.delete` throws
+                // on a non-empty directory too.
+                title: Text(l10n.deleteDirRecursive),
                 value: recursive,
                 onChanged: (value) =>
                     setState(() => recursive = value ?? false),
@@ -539,13 +581,13 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
               title: Text(
                 libL10n.askContinue(
                   '${libL10n.delete} ${entry.name}'
-                  '${entry.isDir && recursive ? '\n${l10n.sftpRmrDirSummary}' : ''}',
+                  '${entry.isDir && recursive ? '\n${l10n.deleteDirRecursive}' : ''}',
                 ),
               ),
             ),
             if (entry.isDir && !Stores.setting.sftpRmrDir.fetch())
               CheckboxListTile(
-                title: Text(l10n.sftpRmrDirSummary),
+                title: Text(l10n.deleteDirRecursive),
                 value: recursive,
                 onChanged: (value) =>
                     setState(() => recursive = value ?? false),
@@ -786,6 +828,11 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    // Listened rather than watched: an arriving file changes what is on disk,
+    // not what this widget renders, so the answer is to go and read the
+    // directory again — not to rebuild on every progress tick.
+    ref.listen(fileTransferProvider, (_, next) => _refreshOnArrival(next));
 
     final actions = <Widget>[
       ...?widget.args.extraActions?.call(this),
@@ -1028,20 +1075,23 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     if (refOf == null || files.isEmpty) return;
 
     final queue = ref.read(fileTransferProvider.notifier);
+    final queued = <int>[];
     for (final file in files) {
       final source = LocalFileRef(file.path.replaceAll(r'\', '/'));
       final destination = refOf(BrowsePath.join(_path.path, source.name));
       if (destination == source) continue;
-      queue.add(
-        FileTransfer(
-          from: source,
-          to: destination,
-          isDir: await FileSystemEntity.isDirectory(file.path),
+      queued.add(
+        queue.add(
+          FileTransfer(
+            from: source,
+            to: destination,
+            isDir: await FileSystemEntity.isDirectory(file.path),
+          ),
         ),
       );
     }
     if (!mounted) return;
-    context.showSnackBar(l10n.added2List);
+    await announceQueued(context, ref, queued);
   }
 
   Widget _buildList() {

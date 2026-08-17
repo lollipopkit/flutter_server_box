@@ -443,6 +443,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get deleteServers => 'Масове видалення серверів';
 
   @override
+  String get deleteDirRecursive => 'Delete the folder and everything in it';
+
+  @override
   String get desktopTerminalTip =>
       'Команда для відкриття емулятора термінала під час запуску SSH-сеансів.';
 

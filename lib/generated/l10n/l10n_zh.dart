@@ -415,6 +415,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteServers => '批量删除服务器';
 
   @override
+  String get deleteDirRecursive => '连同文件夹里的所有内容一起删除';
+
+  @override
   String get desktopTerminalTip => '启动 SSH 连接所用的终端模拟器命令';
 
   @override
@@ -1731,6 +1734,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get deleteServers => '大量刪除伺服器';
+
+  @override
+  String get deleteDirRecursive => '連同資料夾裡的所有內容一起刪除';
 
   @override
   String get desktopTerminalTip => '啟動 SSH 連線時用於打開終端機模擬器的指令。';

@@ -1,7 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/file/transfer.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -11,6 +10,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
+import 'package:server_box/view/page/storage/transfer_announce.dart';
 
 /// Ask where [source] should go, and queue the transfer.
 ///
@@ -58,10 +58,10 @@ Future<void> sendTo(
     return;
   }
 
-  ref
+  final id = ref
       .read(fileTransferProvider.notifier)
       .add(FileTransfer(from: source, to: destination, isDir: isDir));
-  context.showSnackBar(l10n.added2List);
+  await announceQueued(context, ref, [id]);
 }
 
 /// Where the last send went, so a batch asks once rather than once per file.

@@ -447,6 +447,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get deleteServers => 'Elimina server in blocco';
 
   @override
+  String get deleteDirRecursive => 'Delete the folder and everything in it';
+
+  @override
   String get desktopTerminalTip =>
       'Comando utilizzato per aprire l\'emulatore di terminale quando si avviano sessioni SSH.';
 

@@ -128,6 +128,7 @@
   "cpuViewAsProgressTip": "以进度条样式显示每个 CPU 的使用率（旧版样式）",
   "customCmd": "自定义命令",
   "deleteServers": "批量删除服务器",
+  "deleteDirRecursive": "连同文件夹里的所有内容一起删除",
   "desktopTerminalTip": "启动 SSH 连接所用的终端模拟器命令",
   "dirEmpty": "请确保目录为空",
   "discoverSshServers": "发现SSH服务器",

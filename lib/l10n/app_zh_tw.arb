@@ -128,6 +128,7 @@
   "cpuViewAsProgressTip": "以進度條樣式顯示每個CPU的使用率（舊版樣式）",
   "customCmd": "自訂指令",
   "deleteServers": "大量刪除伺服器",
+  "deleteDirRecursive": "連同資料夾裡的所有內容一起刪除",
   "desktopTerminalTip": "啟動 SSH 連線時用於打開終端機模擬器的指令。",
   "dirEmpty": "請確保目錄為空",
   "discoverSshServers": "發現SSH服務器",
