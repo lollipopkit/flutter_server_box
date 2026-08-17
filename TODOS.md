@@ -185,17 +185,27 @@ Apple Silicon 上的 Linux 虚拟机)。
 
 **Agent**
 - `serverbox` 的 `open_server` 一次都没被调用过,除单元测试外没有任何运行时证据
-- 移动端完全没跑过:悬浮窗胶囊、贴边、底部面板、键盘遮挡
-- 重启后用失效 `session_id` 调用工具,应收到"连接不跨重启"而非裸异常 —— 未验
-- 拒绝 host key 时工具是否干净失败 —— 只验过接受
+- 移动端完全没跑过:悬浮窗胶囊、贴边、底部面板、键盘遮挡(动画部分有
+  `agent_shell_view_test.dart`,真机形态没有)
+- ~~重启后用失效 `session_id` 调用工具~~ **已覆盖**:`agent_stale_session_test.dart`
+  三条,含 `ssh_connect` 的指引和同时给 server 与 session 的情况
+- 拒绝 host key 时工具是否干净失败 —— 只验过接受。**卡在没有注入点**:`_sshConnect`
+  直接调 `promptAdHocSshCredential`(UI 对话框)和顶层的 `genClient`,两者都不可替换,
+  所以拒绝这条路只能用真机 + 真服务器走
 - 完整场景里的 monitor 安装那一半:验证时用的是容器,没有 systemd
 
 已验证的两条安全规则(凭据不出网、host key 由用户拍板)有出网请求体为证。
 
 **多面板**
-- 退出重开后终端能否恢复(tmux session/window、同一服务器的两个 shell 各自恢复)
-- 文件页恢复到原来的目录、分栏分隔条位置
+- 退出重开后终端能否恢复。解析那半有 `tmux_restore_state_test.dart`;「同一服务器的两个
+  shell 各自恢复」没有覆盖 —— `_restoreTabs` 按条目逐个开、不按 sourceId 去重,所以形状上
+  成立,但它在 `ConsumerState` 里,要验就得 pump 整个 `SSHTabPage`
+- ~~文件页恢复到原来的目录~~ **查明是坏的**,见上面 state restoration 那节;分栏分隔条位置
+  同理
 - 删除服务器后详情面板是否收回成整宽列表
+
+这几条剩下的共同点:要么得给生产代码加测试用的注入点,要么得有真服务器。都不是「写个测试」
+能解决的,列在这里是为了不再被当成「还没抽时间跑」。
 
 其中文件页那几条已并入 `file-plan.md`,作为改造前的回归基线。
 

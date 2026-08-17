@@ -158,12 +158,18 @@ page; what is left below is what a test cannot reach.
 - [x] Also locked, and not on the original list: it fires on **release**, a
       drag off before release calls nothing, the position handed over is
       global, and a null callback leaves the widget unwrapped.
+- [x] Right-click a server in the SSH tab's list: the edit page opens.
+      Structural, and checked at both ends: `tab_add.dart:249` passes one
+      callback to `onLongPress:` and to `.onSecondary(asSecondary(...))`, and
+      `tab.dart:87` is that callback — `ServerEditPage.route.go`.
 - [ ] Right-click a server card that is not connected: the edit page opens.
-- [ ] Right-click a server in the SSH tab's list: the edit page opens.
+      Half of it is structural in the same way — `tab/tab.dart:272` passes the
+      same `_onLongPressCard(srv)` the long press gets. What is not checked is
+      what that method does with a card that is not connected, which is a
+      behaviour of the tab rather than of the gesture.
 
-The last two are which callback a page passes, not whether the gesture works.
-Reaching them in a test means pumping the server tab with its providers and
-stores; worth doing, not done.
+Reaching that last one means pumping the server tab with its providers and
+stores. Worth doing; not done.
 
 ### 2. The menu — covered by `test/file_browser_test.dart`
 
