@@ -8,7 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 
-/// Stage 3 of `local-ssh-plan.md`, measured rather than argued.
+/// Stage 3 of TODOS.md's "本机 shell 与 rootfs", measured rather than argued.
 ///
 /// Android 10 removed execute permission on an app's own data directory for
 /// anything targeting API 29 or later, and this app targets 36. That is what
@@ -70,7 +70,7 @@ void main() {
       final direct = await attempt(copy, ['-c', 'echo SBM_OK']);
       // The widely repeated workaround: the dynamic linker maps the file
       // rather than exec'ing it, so the check on the app's directory is said
-      // not to apply. This is the claim `local-ssh-plan.md` had no source for.
+      // not to apply. This is the claim the plan had no source for.
       final viaLinker = await attempt('/system/bin/linker64', [
         copy,
         '-c',

@@ -215,7 +215,7 @@ Apple Silicon 上的 Linux 虚拟机)。
 这几条剩下的共同点:要么得给生产代码加测试用的注入点,要么得有真服务器。都不是「写个测试」
 能解决的,列在这里是为了不再被当成「还没抽时间跑」。
 
-其中文件页那几条已并入 `file-plan.md`,作为改造前的回归基线。
+其中文件页那几条当时并入了一份单独的文件清单,那份也已走完并删除。
 
 ## macOS 两套产物:自动导入的那条假设还没实测
 
@@ -284,6 +284,29 @@ restoration id」)。
 
 store 这条路顺带解决了 saved instance state 本来就扛不住的情况 —— 用户在最近任务里划掉
 app,而「划掉之后回来还在」恰恰是终端最需要的。
+
+## 本机 shell 与 rootfs:各阶段做到哪一步
+
+那份计划(`local-ssh-plan.md`)走完后收拢到这里并删除。代码注释里提到的「stage N」指的是
+下面这几步:
+
+| 阶段 | 内容 | 状态 |
+|---|---|---|
+| 1 | SSH tab 改名为 Terminal;桌面本机 shell 走 `flutter_pty`;`TerminalSession` 收 backend 而不是 `Spi` | 已做,`integration_test/local_shell_test.dart` |
+| 2 | Android 的 `/system/bin/sh`,同一个 backend,只有 toybox | 已做,API 36 模拟器上验过 |
+| 2b | Agent 从 `SSHClient` 改吃 `ServerExec`,并加一个本机目标 | 已做。本机执行默认关闭、且**永不自动执行**,`AskAiCommand.onThisDevice` 无视 `askAiAutoRunSafeCommands` |
+| 3 | 量清楚 Android 到底能不能 exec 自己目录里的文件 | 已做,`integration_test/android_exec_test.dart` |
+| 4 | rootfs:Android 用 proot 进 Alpine,iOS 用 ish-arm64 解释器 | Android 已做;iOS 见下面两节 |
+
+**阶段 3 的结论**(API 36 模拟器,targetSdk 36):直接 `execve` 应用自己目录里的文件被拒
+(errno 13);通过 `/system/bin/linker64` 可以跑 bionic 二进制;musl 二进制找到 libc 之后
+段错误,因为它要的是 musl 自己的 loader。所以那个广为流传的「用 linker64 绕开」是真的,
+但**到不了 Alpine rootfs** —— proot 之所以可行,是它自带 loader、自己映射 guest ELF,
+从不请求内核去理解 musl。
+
+**iOS 的 Agent 本机目标**是 `IshExec`,形状照 Android:容器是唯一的本机,文件工具在容器内
+解析,共用 `resolveWithinRoot` 这条边界。Android 那边更强一层 —— 本机目标**就是**容器,
+`AndroidRootfs.hostPathOf` 把每个路径映射进去、拒绝一切离开它的(含符号链接)。
 
 ## iOS 的 Linux 环境:止血开关怎么用
 
@@ -364,7 +387,14 @@ console 上剩下的(重定向本身失败时 shell 的报错)算作 stderr。
 不需要真机就能跑的两个测试:`test/file_tail_test.dart`(边写边读,多字节字符跨轮次
 截断是会被用户撞到的那个 case)、`test/ish_exec_test.dart`(实际交给 guest 的那段 shell)。
 
-剩下的是 `local-ssh-plan.md` 的 M2(Instruments 看内存和发热)和 M5(送审)。
+剩下两条,都要人:
+
+- **M2 内存与发热。** 在设备上跑一个真实负载(`apk add`、一次编译、一个长时间进程),用
+  Instruments 看。一个带 256 KB 输出环形缓冲和 guest 堆的解释器,跑在手机上和跑在 Mac 上
+  不是一回事。
+- **M5 送审。** 开着功能提交,看结果。Guideline 2.5.2,不是技术问题,而且赌注不是这个功能
+  被拒,是**整个 app 的下一次更新被卡住** —— 止血开关就是为这个存在的。M5 决定其余是否
+  值得做完。
 
 `build.yml` 的 `Build ios` job 不跑 `scripts/build-ish-ios.sh`,所以发布的 IPA 一直是
 `SBM_ISH=0` —— 这是有意的,引擎要不要随包发是发布时的决定。引擎那条编译路径由

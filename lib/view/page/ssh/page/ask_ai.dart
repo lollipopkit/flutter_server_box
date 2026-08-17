@@ -41,7 +41,7 @@ extension _AskAi on SSHPageState {
 
     // The panel's tools act on a server, so there has to be one. A terminal on
     // this device is out of its reach until the Agent grows a local target —
-    // see local-ssh-plan.md, stage 2b.
+    // see TODOS.md, "本机 shell 与 rootfs", stage 2b.
     final spi = widget.args.spi;
     if (spi == null) return;
 

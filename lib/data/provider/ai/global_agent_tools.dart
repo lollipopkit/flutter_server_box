@@ -824,7 +824,7 @@ class GlobalAgentToolService {
     // it is nothing. Android's host shell is toybox running as the app, next to
     // its stores and its keys; iOS has no host shell at all. The guest is a
     // filesystem with none of that in it, and it was built to be that boundary
-    // — see local-ssh-plan.md, stage 4.
+    // — see TODOS.md, "本机 shell 与 rootfs", stage 4.
     if (exec.inRootfs && !Rootfs.isReady) {
       throw StateError(
         'This device runs Agent commands inside its Linux userland, and there '
