@@ -6,17 +6,18 @@ extension _Keyboard on SSHPageState {
     HapticFeedback.lightImpact();
   }
 
-  /// Whether this looks like "copy" on this platform.
-  ///
-  /// macOS uses Cmd+C. Everywhere else it has to be Ctrl+**Shift**+C, because
-  /// Ctrl+C is SIGINT and a terminal that swallowed it would be a terminal
-  /// that cannot interrupt anything — which is the one key nobody will accept
-  /// losing.
+  /// Whether this looks like "copy" on this platform — see [isClipboardChord],
+  /// which holds the rule and the reason Ctrl+C is not one of them.
   bool _isClipboardChord(KeyEvent event, LogicalKeyboardKey key) {
-    if (event.logicalKey != key) return false;
     final keys = HardwareKeyboard.instance;
-    if (isMacOS) return keys.isMetaPressed;
-    return keys.isControlPressed && keys.isShiftPressed;
+    return isClipboardChord(
+      pressed: event.logicalKey,
+      key: key,
+      onMacOS: isMacOS,
+      meta: keys.isMetaPressed,
+      control: keys.isControlPressed,
+      shift: keys.isShiftPressed,
+    );
   }
 
   bool _handleKeyEvent(KeyEvent event) {

@@ -32,6 +32,7 @@ import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/ssh/tmux/tmux_export.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
+import 'package:server_box/view/page/ssh/page/clipboard_chord.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/widget/tmux_session_selector.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';

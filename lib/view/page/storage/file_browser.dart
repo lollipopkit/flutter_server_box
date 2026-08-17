@@ -1310,7 +1310,11 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
                   hidden ? Icons.check_box : Icons.check_box_outline_blank,
                   size: 18,
                 ),
-                Text(l10n.showHiddenFiles),
+                // Expanded, because this label is a translation: 17 characters
+                // in English and 28 in French and Indonesian, in a menu whose
+                // width is decided by the longest of the three sort names
+                // above it. Unwrapped, the longer locales run off the right.
+                Expanded(child: Text(l10n.showHiddenFiles)),
               ],
             ),
           ),

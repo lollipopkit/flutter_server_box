@@ -381,10 +381,12 @@ handling — sudo, timeouts (`core/utils/sftp_timeout.dart`), host-key prompts.
   root, and it should be designed in `monitor/` with the same care the terminal
   endpoint got.
 
-## Manual verification
+## Verification
 
 Carried over from the pane work, whose file-tab checks were never run — they
 are the same surface this plan replaces, so they are the regression baseline.
+Several turned out to be covered already; what needs a server, or a second one,
+is what is left.
 
 ### 1. The file tab as it stands today (baseline, before any of this)
 
@@ -399,23 +401,43 @@ are the same surface this plan replaces, so they are the regression baseline.
 - [ ] The file tab reopens the same servers, each in the directory it was left
       in.
 
+All five are the tab, not the browser: they need two reachable servers and a
+restart. Nothing here has been run.
+
 ### 2. After the browser is one page
 
-- [ ] Rename, delete and mkdir behave the same on both backends.
-- [ ] Sudo still rescues a refused operation on a server, and is absent on this
-      device.
-- [ ] Sort, search and hidden-file toggles work on this device's files, which
-      they did not before.
+- [ ] Rename, delete and mkdir behave the same on both backends. The local half
+      is `test/local_file_backend_test.dart` and the browser's own calls are in
+      `test/file_browser_test.dart`; "the same on both" needs a server.
+- [x] Sudo still rescues a refused operation on a server, and is absent on this
+      device — `test/sftp_escalation_test.dart`, and `offers sudo only where
+      there is somewhere to escalate` in the browser suite.
+- [x] Sort, search and hidden-file toggles work on this device's files —
+      `ordering the listing` and `searching this listing`, plus the `hidden
+      files` group that was already there.
+
+Sorting turned up two things. A menu item's label was not wrapped, so the
+longer locales ran off the right of the sort menu — 17 characters in English
+and 28 in French, in a menu sized by the labels above it. Fixed. And reversing
+a sort moves the unknown-size entries from the bottom to the **top**, because
+reversing negates the whole comparison and nulls-last is part of it; recorded
+in the test rather than argued with.
 
 ### 3. Transfers
 
+- [x] A transfer interrupted halfway leaves no partial file under its final
+      name — `cancelling a local copy actually stops it` asserts no `sb-part`
+      is left behind. Local only.
 - [ ] local → server and server → local, as before, with progress and cancel.
 - [ ] server → server between two different hosts.
-- [ ] A transfer interrupted halfway leaves no partial file under its final
-      name.
 - [ ] Two host-key prompts raised by one transfer queue rather than stack.
+      Nothing covers this, and it needs two servers with unknown keys.
 
 ### 4. Capabilities
 
-- [ ] A monitor-only server with no reachable sshd does not offer a file
-      button, and its saved file tab does not reopen into an error.
+- [x] A monitor-only server with no reachable sshd does not offer a file
+      button — `test/monitor_capabilities_test.dart`, `the file entry follows
+      the agent's file grant alone` and `an agent that granted nothing offers
+      none`.
+- [ ] Its saved file tab does not reopen into an error. The reopen half, which
+      is the tab and needs a restart.

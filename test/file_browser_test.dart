@@ -1,10 +1,10 @@
 import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/file/file_backend.dart';
@@ -657,6 +657,97 @@ void main() {
       expect(backend.removed, isEmpty);
       // Still picked, so the intention survives a mis-press.
       expect(find.text('2 selected'), findsOneWidget);
+    });
+  });
+
+  group('ordering the listing', () {
+    /// Sizes chosen so that a name sort and a size sort disagree — otherwise
+    /// a broken size sort passes by looking like the default.
+    _MapBackend bySize() => _MapBackend({
+      '/': [
+        FileEntry(name: 'a-big.bin', kind: FileKind.file, size: 900),
+        FileEntry(name: 'b-small.bin', kind: FileKind.file, size: 10),
+        FileEntry(name: 'c-unknown.bin', kind: FileKind.file),
+      ],
+    });
+
+    /// The order the rows are actually painted in.
+    List<String> shown(WidgetTester tester) => tester
+        .widgetList<Text>(find.byType(Text))
+        .map((t) => t.data ?? '')
+        .where((s) => s.endsWith('.bin'))
+        .toList();
+
+    Future<void> sortBy(WidgetTester tester, String label) async {
+      await tester.tap(find.byIcon(Icons.sort));
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining(label).last);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('by size, smallest first, with the unknown last', (
+      tester,
+    ) async {
+      // A backend that did not say is not the same as a file of no size, so it
+      // sorts last rather than as zero — at either end of the order.
+      await pump(tester, bySize());
+      await sortBy(tester, 'Size');
+
+      expect(shown(tester), ['b-small.bin', 'a-big.bin', 'c-unknown.bin']);
+    });
+
+    testWidgets('choosing the same one again reverses it', (tester) async {
+      await pump(tester, bySize());
+      await sortBy(tester, 'Size');
+      await sortBy(tester, 'Size');
+
+      // The unknown moves to the front, because reversing negates the whole
+      // comparison and `_nullsLast` is part of it. Consistent with what the
+      // rule is for — an unknown size is not zero — but it does mean "unknown"
+      // takes the first row rather than staying out of the way. Recorded as
+      // the behaviour rather than argued with; whether it should stay put in
+      // both directions is a UI decision nobody has made.
+      expect(shown(tester), ['c-unknown.bin', 'a-big.bin', 'b-small.bin']);
+    });
+
+    testWidgets('name is the default, and is not the size order', (
+      tester,
+    ) async {
+      await pump(tester, bySize());
+
+      expect(shown(tester), ['a-big.bin', 'b-small.bin', 'c-unknown.bin']);
+    });
+  });
+
+  group('searching this listing', () {
+    testWidgets('finds an entry by part of its name', (tester) async {
+      await pump(tester, _MapBackend({
+        '/': [_file('notes.txt'), _file('report.pdf'), _dir('archive')],
+      }));
+
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'REPO');
+      await tester.pumpAndSettle();
+
+      // Case-insensitive, and a substring rather than a prefix.
+      expect(find.text('report.pdf'), findsOneWidget);
+      expect(find.text('notes.txt'), findsNothing);
+    });
+
+    testWidgets('searches what is listed, directories included', (
+      tester,
+    ) async {
+      await pump(tester, _MapBackend({
+        '/': [_file('notes.txt'), _dir('archive')],
+      }));
+
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'arch');
+      await tester.pumpAndSettle();
+
+      expect(find.text('archive'), findsOneWidget);
     });
   });
 

@@ -179,15 +179,26 @@ stores; worth doing, not done.
       layout; asserting it would test the framework. Left to the framework
       deliberately — the same reasoning the test file already records.
 
-### 3. The terminal — not covered
+### 3. The terminal — the chords are covered, the pointer is not
 
+- [x] Ctrl+C still interrupts — `test/terminal_clipboard_chord_test.dart`. The
+      whole platform matrix: away from macOS copy is Ctrl+**Shift**+C and a
+      plain Ctrl+C is not a chord at all, which is what leaves SIGINT alone;
+      on macOS it is Cmd+C and Ctrl+C is likewise untouched. Paste takes Shift
+      too rather than being the odd one out.
 - [ ] With text selected, right-click copies it and clears the selection.
 - [ ] With nothing selected, right-click pastes.
 - [ ] Neither interferes with the existing text-selection drag.
 
-`page.dart:432` wires `onSecondaryTapUp` directly rather than through the
-extension, so none of the above reaches it. Needs a terminal with a backend and
-a mocked clipboard channel.
+The three pointer lines go through `_onClipboardAction`, which needs a live
+`TerminalController` and a clipboard channel — a page harness that does not
+exist. `page.dart:432` wires `onSecondaryTapUp` on `TerminalView` directly
+rather than through the extension, so §1's tests do not reach it either.
+
+`isClipboardChord` was lifted out of `_Keyboard` to make the matrix testable:
+it read `HardwareKeyboard.instance` and `isMacOS` inline, so stating it needed
+three operating systems and a keyboard. That is a change to source made for a
+test, and it is the only one in this sweep.
 
 
 ## The rest of the desktop gaps
