@@ -155,9 +155,10 @@ class _SSHTabPageState extends ConsumerState<SSHTabPage>
     // again, so a layout that turns split while the picker was current left an
     // empty surface beside a rail with no way back. Deferred, because this
     // runs during a build.
-    if (split && _sessions.index == 0 && _sessions.tabs.isNotEmpty) {
+    final landOn = _firstTabToStart();
+    if (split && _sessions.index == 0 && landOn != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _sessions.index == 0) _sessions.select(1);
+        if (mounted && _sessions.index == 0) _sessions.select(landOn);
       });
     }
 
@@ -351,6 +352,20 @@ extension _Sessions on _SSHTabPageState {
     }
   }
 
+  /// The first open tab worth landing on, or null when there is none.
+  ///
+  /// Local shells are passed over. Showing a terminal starts it, and on iOS
+  /// starting the local one boots the Linux guest — too much to happen because
+  /// a tab came into view. They are still in the rail, one tap away, and a
+  /// server reconnects on sight as it always did.
+  int? _firstTabToStart() {
+    final tabs = _sessions.tabs;
+    for (var i = 0; i < tabs.length; i++) {
+      if (tabs[i].data.page.args.source is! LocalSource) return i + 1;
+    }
+    return null;
+  }
+
   void _closeTab(String id) {
     _sessions.remove(id);
     if (mounted) _saveTabs();
@@ -423,7 +438,11 @@ extension _Sessions on _SSHTabPageState {
     if (restored == 0) return;
     // One write for the whole restore, and only once the set is final.
     _saveTabs();
-    _sessions.select(1);
+    // Nothing to land on means every restored tab was a local shell: stay on
+    // the picker, where the rail lists them and one tap starts whichever was
+    // wanted.
+    final landOn = _firstTabToStart();
+    if (landOn != null) _sessions.select(landOn);
   }
 }
 

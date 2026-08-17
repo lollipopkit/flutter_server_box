@@ -14,6 +14,7 @@ import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/ssh/tab.dart';
 
 import 'helpers/spi_fixture.dart';
@@ -184,5 +185,45 @@ void main() {
       restored().map((t) => t['sourceId']),
       LocalShellBackend.isSupported ? [const LocalSource().id] : isEmpty,
     );
+  });
+
+  testWidgets('but comes back closed — nothing starts a shell on its own', (
+    tester,
+  ) async {
+    // Reported from a device: opening the terminal tab started the shell on
+    // that device, because restoring ended by selecting the first tab and
+    // showing a terminal is what starts it. On iOS that boots the Linux guest.
+    // The tab is remembered; starting it is a decision, and arriving on this
+    // tab is not one.
+    if (!LocalShellBackend.isSupported) return;
+    saveTabs([
+      {'sourceId': const LocalSource().id},
+    ]);
+
+    await pump(tester);
+
+    expect(restored(), hasLength(1), reason: 'the tab is still remembered');
+    expect(
+      find.byType(SSHPage),
+      findsNothing,
+      reason: 'a terminal built is a terminal started — the page view only '
+          'builds the tab it is showing, so this is the whole of it',
+    );
+  });
+
+  testWidgets('a server still opens on sight, as it always did', (
+    tester,
+  ) async {
+    // The other half: passing over the local shell must not turn restoring
+    // into a set of tabs that all sit there closed.
+    Stores.server.put(spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u'));
+    saveTabs([
+      {'sourceId': const LocalSource().id},
+      {'sourceId': 'srv-1'},
+    ]);
+
+    await pump(tester);
+
+    expect(find.byType(SSHPage), findsOneWidget);
   });
 }

@@ -137,10 +137,11 @@ class AgentHeaderActions extends ConsumerWidget {
           IconButton(
             tooltip: context.l10n.askAiNewConversation,
             onPressed: session.isWorking ? null : notifier.beginNewConversation,
-            icon: const Icon(
-              Icons.add_comment_outlined,
-              size: agentHeaderIconSize,
-            ),
+            // A plain plus, the same as every other "add one of these" in the
+            // app. `add_comment_outlined` is a speech bubble with a plus in
+            // it, which at this size is mostly bubble and reads lighter than
+            // the icons either side of it.
+            icon: const Icon(Icons.add, size: agentHeaderIconSize),
           ),
         ],
         const _AdHocSessionsButton(),
