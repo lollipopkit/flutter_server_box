@@ -90,7 +90,7 @@ extension _Server on _AppSettingsPageState {
         for (final key in deleteKeys) {
           await notifier.delServer(key);
         }
-        context.showSnackBar(libL10n.success);
+        Toast.success(libL10n.success);
       },
     );
   }
@@ -123,7 +123,7 @@ extension _Server on _AppSettingsPageState {
   void _onSaveTextScaler(String s) {
     final val = double.tryParse(s);
     if (val == null) {
-      context.showSnackBar(libL10n.fail);
+      Toast.error(libL10n.fail);
       return;
     }
     _setting.textFactor.put(val);

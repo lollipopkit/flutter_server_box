@@ -118,7 +118,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
         _loadErrorMessage = libL10n.disconnected;
         _hasLoaded = true;
         if (userTriggered && mounted) {
-          context.showSnackBar(libL10n.disconnected);
+          Toast.show(libL10n.disconnected);
         }
         return;
       }
@@ -138,7 +138,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
         _result = const PsResult(procs: []);
         _loadErrorMessage = libL10n.empty;
         _hasLoaded = true;
-        if (userTriggered) context.showSnackBar(libL10n.empty);
+        if (userTriggered) Toast.show(libL10n.empty);
         return;
       }
 
@@ -166,7 +166,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
     } on TimeoutException catch (e, s) {
       Loggers.app.warning('Process page command timed out', e, s);
       if (mounted && (userTriggered || !_hasLoaded)) {
-        context.showSnackBar(libL10n.error);
+        Toast.error(libL10n.error);
       }
       _result = const PsResult(procs: []);
       _loadErrorMessage = libL10n.error;
@@ -174,7 +174,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
     } catch (e, s) {
       Loggers.app.warning('Process page refresh failed', e, s);
       if (mounted && (userTriggered || !_hasLoaded)) {
-        context.showSnackBar(libL10n.error);
+        Toast.error(libL10n.error);
       }
       _result = const PsResult(procs: []);
       _loadErrorMessage = libL10n.error;
@@ -813,7 +813,7 @@ extension _ProcessPageStateActions on _ProcessPageState {
       final serverState = ref.read(_provider);
       final systemType = serverState.status.system;
       if (!_canRunProcessCmd(serverState)) {
-        if (mounted) context.showSnackBar(libL10n.disconnected);
+        if (mounted) Toast.show(libL10n.disconnected);
         return;
       }
       final exec = await ref.read(_provider.notifier).ensureScriptExec();
@@ -829,7 +829,7 @@ extension _ProcessPageStateActions on _ProcessPageState {
           .combined;
       if (!mounted) return;
       if (raw.trim().isEmpty) {
-        context.showSnackBar(context.l10n.processKillTargetChanged);
+        Toast.show(context.l10n.processKillTargetChanged);
         return;
       }
       var latest = PsResult.parse(
@@ -858,25 +858,25 @@ extension _ProcessPageStateActions on _ProcessPageState {
           .where((proc) => proc.pid == target.pid)
           .firstOrNull;
       if (current == null || !_isSameProcess(target, current)) {
-        context.showSnackBar(context.l10n.processKillTargetChanged);
+        Toast.show(context.l10n.processKillTargetChanged);
         return;
       }
       final latestServerState = ref.read(_provider);
       if (!_canRunProcessCmd(latestServerState)) {
-        context.showSnackBar(libL10n.disconnected);
+        Toast.show(libL10n.disconnected);
         return;
       }
       if (latestServerState.status.system != systemType) {
-        context.showSnackBar(context.l10n.processKillTargetChanged);
+        Toast.show(context.l10n.processKillTargetChanged);
         return;
       }
       if (latestServerState.spi != serverState.spi) {
-        context.showSnackBar(context.l10n.processKillTargetChanged);
+        Toast.show(context.l10n.processKillTargetChanged);
         return;
       }
       final killCommand = _killProcessCmd(current, systemType);
       if (killCommand == null) {
-        context.showSnackBar(libL10n.notAvailable);
+        Toast.show(libL10n.notAvailable);
         return;
       }
       final killOutput =
@@ -892,21 +892,21 @@ extension _ProcessPageStateActions on _ProcessPageState {
                   .timeout(_processCommandTimeout))
               .combined;
       if (killOutput.contains(_killTargetChangedMarker)) {
-        context.showSnackBar(context.l10n.processKillTargetChanged);
+        Toast.show(context.l10n.processKillTargetChanged);
         return;
       }
       if (!killOutput.contains(_killSucceededMarker)) {
-        context.showSnackBar(libL10n.error);
+        Toast.error(libL10n.error);
         return;
       }
       killed = true;
     } on TimeoutException catch (e, s) {
       Loggers.app.warning('Process kill command timed out', e, s);
-      if (mounted) context.showSnackBar(libL10n.error);
+      if (mounted) Toast.error(libL10n.error);
       return;
     } catch (e, s) {
       Loggers.app.warning('Process kill failed', e, s);
-      if (mounted) context.showSnackBar(libL10n.error);
+      if (mounted) Toast.error(libL10n.error);
       return;
     } finally {
       _isRefreshing = false;

@@ -134,7 +134,9 @@ class _MyAppState extends State<MyApp> {
       key: ValueKey(locale),
       restorationScopeId: 'serverbox',
       navigatorKey: AppNavigator.key,
-      builder: ResponsivePoints.builder,
+      // Outside the breakpoints builder: a toast is sized against the window,
+      // not against the scaled layout the breakpoints hand to the pages.
+      builder: (ctx, child) => ToastHost(child: ResponsivePoints.builder(ctx, child)),
       locale: locale,
       localizationsDelegates: const [
         LibLocalizations.delegate,

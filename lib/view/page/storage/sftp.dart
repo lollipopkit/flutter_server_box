@@ -597,7 +597,7 @@ extension _Edit on _SftpPageState {
     final size = await _sizeFor(entry, remotePath, useSudo: useSudo);
     if (size == null || !mounted) return;
     if (size > Miscs.editorMaxSize) {
-      context.showSnackBar(
+      Toast.show(
         l10n.fileTooLarge(entry.name, size, Miscs.editorMaxSize),
       );
       return;
@@ -719,7 +719,7 @@ extension _Edit on _SftpPageState {
       },
     );
     if (err != null || !mounted) return;
-    context.showSnackBar(libL10n.success);
+    Toast.success(libL10n.success);
     await handle.refresh();
   }
 }

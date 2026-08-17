@@ -162,7 +162,7 @@ class _SshDiscoveryDialogState extends State<SshDiscoveryDialog> {
       _results.value = report.items;
     } catch (e) {
       if (!mounted) return;
-      context.showSnackBar('${l10n.discoveryFailed}: $e');
+      Toast.error(l10n.discoveryFailed, body: '$e');
     } finally {
       if (mounted) _scanning.value = false;
     }

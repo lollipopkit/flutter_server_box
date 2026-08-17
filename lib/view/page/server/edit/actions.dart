@@ -103,7 +103,7 @@ extension _Actions on _ServerEditPageState {
 
   Future<void> _saveSudoPassword(String value) async {
     if (value.isEmpty) {
-      context.showSnackBar(libL10n.empty);
+      Toast.show(libL10n.empty);
       return;
     }
     await _setPendingSudoPassword(value);
@@ -130,7 +130,7 @@ extension _Actions on _ServerEditPageState {
     } catch (e, s) {
       Loggers.app.warning('Failed to persist sudo password override', e, s);
       if (mounted) {
-        context.showSnackBar(libL10n.saveFailed);
+        Toast.error(libL10n.saveFailed);
       }
       return false;
     }
@@ -203,7 +203,7 @@ extension _Actions on _ServerEditPageState {
   void _onTapCustomItem() async {
     final spi = this.spi;
     if (spi == null) {
-      context.showSnackBar('${libL10n.save} ${libL10n.server}');
+      Toast.show('${libL10n.save} ${libL10n.server}');
       return;
     }
     await CustomCmdsPage.route.go(context, SpiRequiredArgs(spi));
@@ -225,12 +225,12 @@ extension _Actions on _ServerEditPageState {
     // monitor-HTTP mode — skip their validation/defaulting entirely.
     if (!useMonitorHttp) {
       if (_ipController.text.isEmpty) {
-        context.showSnackBar('${libL10n.empty} ${libL10n.host}');
+        Toast.show('${libL10n.empty} ${libL10n.host}');
         return;
       }
 
       if (!_hostReg.hasMatch(_ipController.text)) {
-        context.showSnackBar(l10n.invalidHostFormat);
+        Toast.show(l10n.invalidHostFormat);
         return;
       }
 
@@ -245,7 +245,7 @@ extension _Actions on _ServerEditPageState {
 
       // If [_pubKeyIndex] is -1, it means that the user has not selected
       if (_keyIdx.value == -1) {
-        context.showSnackBar(libL10n.empty);
+        Toast.show(libL10n.empty);
         return;
       }
       if (_usernameController.text.isEmpty) {
@@ -255,13 +255,13 @@ extension _Actions on _ServerEditPageState {
         _portController.text = '22';
       }
       if (_areInvalidJumpSelections(_jumpServers.value)) {
-        context.showSnackBar('${libL10n.invalid}: ${l10n.jumpServer}');
+        Toast.show('${libL10n.invalid}: ${l10n.jumpServer}');
         return;
       }
     }
     final proxyCommandText = _proxyCommandCtrl.text.trim();
     if (!useMonitorHttp && !isDesktop && proxyCommandText.isNotEmpty) {
-      context.showSnackBar(l10n.proxyCommandOnlySupportedOnDesktop);
+      Toast.show(l10n.proxyCommandOnlySupportedOnDesktop);
       return;
     }
     final customCmds = _unmigratedCmds.value;
@@ -281,7 +281,7 @@ extension _Actions on _ServerEditPageState {
     if (useMonitorHttp) {
       final monitorAddr = _monitorAddrCtrl.text.selfNotEmptyOrNull;
       if (monitorAddr == null) {
-        context.showSnackBar('${libL10n.invalid}: Monitor URL');
+        Toast.show('${libL10n.invalid}: Monitor URL');
         return;
       }
       monitorHttp = MonitorHttpCredential(
@@ -336,7 +336,7 @@ extension _Actions on _ServerEditPageState {
     if (wol != null) {
       final wolValidation = wol.validate();
       if (!wolValidation.$2) {
-        context.showSnackBar('${libL10n.fail}: ${wolValidation.$1}');
+        Toast.error(libL10n.fail, body: wolValidation.$1?.toString());
         return;
       }
     }
@@ -360,14 +360,14 @@ extension _Actions on _ServerEditPageState {
     );
     final validationError = spi.validate();
     if (validationError != null) {
-      context.showSnackBar(_validationErrorMessage(validationError));
+      Toast.error(_validationErrorMessage(validationError));
       return;
     }
 
     if (this.spi == null) {
       final existsIds = ServerStore.instance.box.keys;
       if (existsIds.contains(spi.id)) {
-        context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
+        Toast.show('${l10n.sameIdServerExist}: ${spi.id}');
         return;
       }
       if (!await _persistPendingSudoPassword()) return;
@@ -433,14 +433,14 @@ extension _Utils on _ServerEditPageState {
       if (e is PathAccessException ||
           e.toString().contains('Operation not permitted')) {
         _markSSHConfigImportHandled();
-        context.showSnackBar(
+        Toast.show(
           '${l10n.sshConfigPermissionDenied} ${l10n.sshConfigManualSelect}',
         );
       } else {
         dprint('Error checking SSH config: $e');
         _markSSHConfigImportHandled();
         if (e is SpiValidationException) {
-          context.showSnackBar(_validationErrorMessage(e.error));
+          Toast.error(_validationErrorMessage(e.error));
         }
       }
     }

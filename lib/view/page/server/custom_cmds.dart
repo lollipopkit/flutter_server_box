@@ -218,10 +218,10 @@ extension on _CustomCmdsPageState {
       }
       if (!mounted) return;
       setState(() => _dirty = false);
-      context.showSnackBar(libL10n.saved);
+      Toast.show(libL10n.saved);
     } catch (e) {
       if (!mounted) return;
-      context.showSnackBar('${libL10n.saveFailed}: $e');
+      Toast.error(libL10n.saveFailed, body: '$e');
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -312,7 +312,7 @@ extension on _CustomCmdsPageState {
         final cmd = cmdCtrl.text.trim();
         final err = _validate(name, cmd, editingIdx);
         if (err != null) {
-          context.showSnackBar(err);
+          Toast.error(err);
           continue;
         }
         return (name: name, cmd: cmd);

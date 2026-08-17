@@ -342,7 +342,7 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
   Future<void> _copyText(String text) async {
     if (text.trim().isEmpty) return;
     await Clipboard.setData(ClipboardData(text: text));
-    if (mounted) context.showSnackBar(libL10n.success);
+    if (mounted) Toast.success(libL10n.success);
   }
 
   void _scheduleAutoScroll({bool force = false}) {

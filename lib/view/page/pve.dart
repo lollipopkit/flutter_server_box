@@ -484,7 +484,7 @@ extension on _PvePageState {
 
       if (!mounted || submitted != true) return;
       if (otp.isEmpty) {
-        context.showSnackBar(l10n.pveOtpRequired);
+        Toast.show(l10n.pveOtpRequired);
         return;
       }
 
@@ -521,9 +521,9 @@ extension on _PvePageState {
 
     final (suc, err) = await context.showLoadingDialog(fn: func);
     if (suc == true) {
-      context.showSnackBar(libL10n.success);
+      Toast.success(libL10n.success);
     } else {
-      context.showSnackBar(err?.toString() ?? libL10n.fail);
+      Toast.error(err?.toString() ?? libL10n.fail);
     }
   }
 
@@ -555,7 +555,7 @@ extension on _PvePageState {
         final release = pveState.release;
         if (release != null && isVersionLessThan(release, const [8, 0])) {
           if (mounted) {
-            context.showSnackBar(l10n.pveVersionLow);
+            Toast.show(l10n.pveVersionLow);
           }
         }
         break;

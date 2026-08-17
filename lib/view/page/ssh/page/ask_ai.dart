@@ -742,7 +742,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       _pendingCommandRestored = false;
     });
     _persistConversation();
-    context.showSnackBar(message);
+    Toast.show(message);
   }
 
   Future<void> _stopWork() async {
@@ -764,7 +764,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   Future<void> _copyText(String text) async {
     if (text.trim().isEmpty) return;
     await Clipboard.setData(ClipboardData(text: text));
-    if (mounted) context.showSnackBar(libL10n.success);
+    if (mounted) Toast.success(libL10n.success);
   }
 
   Widget _buildHeader(BuildContext context, ThemeData theme) {

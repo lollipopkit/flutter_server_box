@@ -18,7 +18,7 @@ class BackupService {
       await source.saveContent(path);
 
       if (source is ClipboardBackupSource) {
-        context.showSnackBar(libL10n.success);
+        Toast.success(libL10n.success);
       }
     } catch (e, s) {
       context.showErrDialog(e, s, libL10n.backup);
@@ -31,7 +31,7 @@ class BackupService {
     if (text == null) {
       // Show empty message for clipboard source
       if (source is ClipboardBackupSource) {
-        context.showSnackBar(libL10n.empty);
+        Toast.show(libL10n.empty);
       }
       return;
     }

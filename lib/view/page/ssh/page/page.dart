@@ -528,7 +528,7 @@ class SSHPageState extends ConsumerState<SSHPage>
           .toList();
       if (snippets.isEmpty) {
         if (!mounted) return;
-        context.showSnackBar(libL10n.empty);
+        Toast.show(libL10n.empty);
         return;
       }
 
@@ -747,7 +747,7 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   void _showClipboardSuccess() {
     if (!mounted) return;
-    context.showSnackBar(libL10n.success);
+    Toast.success(libL10n.success);
   }
 
   Future<void> _insertSudoPassword() async {
@@ -757,14 +757,14 @@ class SSHPageState extends ConsumerState<SSHPage>
     final authed = await SudoPassword.authenticateIfNeeded();
     if (!authed) {
       if (!mounted) return;
-      context.showSnackBar(libL10n.fail);
+      Toast.error(libL10n.fail);
       return;
     }
 
     final password = await SudoPassword.resolveForTerminal(spi);
     if (password == null || password.isEmpty) {
       if (!mounted) return;
-      context.showSnackBar(libL10n.empty);
+      Toast.show(libL10n.empty);
       return;
     }
 
@@ -787,7 +787,7 @@ class SSHPageState extends ConsumerState<SSHPage>
 
     if (!detected) {
       if (!mounted) return;
-      context.showSnackBar(l10n.sudoPromptNotFound);
+      Toast.show(l10n.sudoPromptNotFound);
       return;
     }
 
@@ -798,7 +798,7 @@ class SSHPageState extends ConsumerState<SSHPage>
     if (!mounted) return;
     widget.args.focusNode?.requestFocus();
     _termKey.currentState?.requestKeyboard();
-    context.showSnackBar(libL10n.success);
+    Toast.success(libL10n.success);
   }
 
   bool _hasPendingSudoPrompt() {

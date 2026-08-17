@@ -31,5 +31,5 @@ Future<void> announceQueued(
     if (status == null) return false;
     return status.status != FileTransferStage.finished;
   });
-  if (running) context.showSnackBar(context.l10n.added2List);
+  if (running) Toast.show(context.l10n.added2List);
 }

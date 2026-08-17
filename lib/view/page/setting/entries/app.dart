@@ -78,9 +78,9 @@ extension _App on _AppSettingsPageState {
         if (!entry.key.startsWith(prefix)) continue;
         await PrefStore.shared.set(entry.key, entry.value);
       }
-      if (mounted) context.showSnackBar(libL10n.success);
+      if (mounted) Toast.success(libL10n.success);
     } catch (e) {
-      if (mounted) context.showSnackBar(e.toString());
+      if (mounted) Toast.error(e.toString());
     }
   }
 
@@ -233,7 +233,7 @@ extension _App on _AppSettingsPageState {
     final color = s.fromColorHex;
 
     if (color == null) {
-      context.showSnackBar(libL10n.fail);
+      Toast.error(libL10n.fail);
       return;
     }
 
@@ -452,7 +452,7 @@ extension _App on _AppSettingsPageState {
       if (value is String && Cryptor.isEncrypted(value)) {
         final password = await resolvePassword();
         if (password == null || password.isEmpty) {
-          context.showSnackBar(libL10n.cancel);
+          Toast.show(libL10n.cancel);
           return;
         }
         try {

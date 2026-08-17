@@ -103,7 +103,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                   TextButton(
                     onPressed: () async {
                       await SecureStoreProps.bakPwd.write(null);
-                      context.showSnackBar(l10n.backupPasswordRemoved);
+                      Toast.show(l10n.backupPasswordRemoved);
                       setState(() {});
                     },
                     child: Text(libL10n.delete),
@@ -151,11 +151,11 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 
     final pwd = controller.text.trim();
     if (pwd.isEmpty) {
-      context.showSnackBar(libL10n.empty);
+      Toast.show(libL10n.empty);
       return;
     }
     await SecureStoreProps.bakPwd.write(pwd);
-    context.showSnackBar(l10n.backupPasswordSet);
+    Toast.show(l10n.backupPasswordSet);
     setState(() {});
   }
 
@@ -207,7 +207,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
               validator: (p0) async {
                 if (p0 &&
                     (PrefProps.webdavSync.get() || PrefProps.gistSync.get())) {
-                  context.showSnackBar(l10n.autoBackupConflict);
+                  Toast.show(l10n.autoBackupConflict);
                   return false;
                 }
                 if (p0) {
@@ -246,7 +246,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
               prop: PrefProps.webdavSync,
               validator: (p0) async {
                 if (p0 && isICloudSupported && PrefProps.icloudSync.get()) {
-                  context.showSnackBar(l10n.autoBackupConflict);
+                  Toast.show(l10n.autoBackupConflict);
                   return false;
                 }
                 if (p0) {
@@ -260,13 +260,13 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 
                   final anyNull = url == null || user == null || pwd == null;
                   if (anyNull) {
-                    context.showSnackBar(l10n.webdavSettingEmpty);
+                    Toast.show(l10n.webdavSettingEmpty);
                     return false;
                   }
 
                   final anyEmpty = url.isEmpty || user.isEmpty || pwd.isEmpty;
                   if (anyEmpty) {
-                    context.showSnackBar(l10n.webdavSettingEmpty);
+                    Toast.show(l10n.webdavSettingEmpty);
                     return false;
                   }
 
@@ -325,7 +325,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                 if (p0 &&
                     ((isICloudSupported && PrefProps.icloudSync.get()) ||
                         PrefProps.webdavSync.get())) {
-                  context.showSnackBar(l10n.autoBackupConflict);
+                  Toast.show(l10n.autoBackupConflict);
                   return false;
                 }
                 if (p0) {
@@ -337,7 +337,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                   // Allow empty gistId (will create one on first upload)
                   final hasToken = token != null && token.isNotEmpty;
                   if (!hasToken) {
-                    context.showSnackBar(context.l10n.githubGistTokenEmpty);
+                    Toast.show(context.l10n.githubGistTokenEmpty);
                     return false;
                   }
                   gistLoading.value = true;
@@ -527,7 +527,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           }
         }
         if (snippets.isEmpty) {
-          context.showSnackBar(libL10n.empty);
+          Toast.show(libL10n.empty);
           return;
         }
         if (errs.isNotEmpty) {
@@ -592,7 +592,7 @@ extension on _BackupPageState {
     webdavLoading.value = true;
     try {
       final files = await Webdav.shared.list();
-      if (files.isEmpty) return context.showSnackBar(l10n.dirEmpty);
+      if (files.isEmpty) return Toast.show(l10n.dirEmpty);
 
       final fileName = await context.showPickSingleDialog(
         title: libL10n.restore,
@@ -637,7 +637,7 @@ extension on _BackupPageState {
     gistLoading.value = true;
     try {
       final files = await GistRs.shared.list();
-      if (files.isEmpty) return context.showSnackBar(l10n.dirEmpty);
+      if (files.isEmpty) return Toast.show(l10n.dirEmpty);
 
       final fileName = await context.showPickSingleDialog(
         title: libL10n.restore,
@@ -713,7 +713,7 @@ extension on _BackupPageState {
           token: token_,
           gistId: gistId_.isEmpty ? null : gistId_,
         );
-        context.showSnackBar(libL10n.success);
+        Toast.success(libL10n.success);
 
         await PrefProps.githubToken.set(token_);
         if (gistId_.isEmpty) {
@@ -773,7 +773,7 @@ extension on _BackupPageState {
         final pwd_ = pwd.text;
 
         await Webdav.test(url_, user_, pwd_);
-        context.showSnackBar(libL10n.success);
+        Toast.success(libL10n.success);
 
         Webdav.shared.client = WebdavClient.basicAuth(
           url: url_,
@@ -840,7 +840,7 @@ extension on _BackupPageState {
           },
         );
         if (err != null || suc != true) return;
-        context.showSnackBar(libL10n.success);
+        Toast.success(libL10n.success);
       }
     } catch (e, s) {
       context.showErrDialog(e, s, libL10n.import);

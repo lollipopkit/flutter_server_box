@@ -164,7 +164,7 @@ final class _IntroPage extends StatelessWidget {
               final pwd = controller.text.trim();
               if (pwd.isNotEmpty) {
                 await SecureStoreProps.bakPwd.write(pwd);
-                ctx.showSnackBar(l10n.backupPasswordSet);
+                Toast.show(l10n.backupPasswordSet);
               }
             }
           },

@@ -225,12 +225,12 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
 
               final file = File(path);
               if (!file.existsSync()) {
-                context.showSnackBar(libL10n.notExistFmt(path));
+                Toast.show(libL10n.notExistFmt(path));
                 return;
               }
               final size = (await file.stat()).size;
               if (size > Miscs.privateKeyMaxSize) {
-                context.showSnackBar(
+                Toast.show(
                   l10n.fileTooLarge(
                     path,
                     size.bytes2Str,
@@ -272,7 +272,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
     );
     final pwd = _pwdController.text;
     if (name.isEmpty || key.isEmpty) {
-      context.showSnackBar(libL10n.empty);
+      Toast.show(libL10n.empty);
       return;
     }
     FocusScope.of(context).unfocus();
@@ -287,7 +287,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
         _notifier.add(pki);
       }
     } catch (e) {
-      context.showSnackBar(e.toString());
+      Toast.error(e.toString());
       rethrow;
     } finally {
       _loading.value = null;

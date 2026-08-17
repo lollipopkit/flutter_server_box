@@ -29,7 +29,11 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
   late final _pushTokenFuture = getToken();
 
   void _showCopyResult(bool success) {
-    context.showSnackBar(success ? libL10n.success : libL10n.fail);
+    if (success) {
+      Toast.success(libL10n.success);
+    } else {
+      Toast.error(libL10n.fail);
+    }
   }
 
   /// Every tile here reads straight from the store, so redrawing is all that
@@ -170,7 +174,7 @@ extension _Actions on _IosSettingsPageState {
   void _onTapAccessoryWidgetServer() async {
     final servers = _monitorServers;
     if (servers.isEmpty) {
-      context.showSnackBar(l10n.watchNoMonitorServer);
+      Toast.show(l10n.watchNoMonitorServer);
       return;
     }
 
@@ -198,7 +202,7 @@ extension _Actions on _IosSettingsPageState {
   void _onTapWatchApp() async {
     final servers = _monitorServers;
     if (servers.isEmpty) {
-      context.showSnackBar(l10n.watchNoMonitorServer);
+      Toast.show(l10n.watchNoMonitorServer);
       return;
     }
 

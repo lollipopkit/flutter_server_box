@@ -267,7 +267,7 @@ extension _Actions on _ConnectionStatsPageState {
     if (!mounted) return;
     setState(() => _isCompacting = false);
     if (message != null) {
-      context.showSnackBar(message);
+      Toast.show(message);
     }
   }
 

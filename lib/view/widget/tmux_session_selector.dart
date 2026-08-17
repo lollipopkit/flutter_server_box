@@ -227,7 +227,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
           _windows = previousWindows;
           _loadingWindows = false;
         });
-        context.showSnackBar(libL10n.fail);
+        Toast.error(libL10n.fail);
         return;
       }
       setState(() {
@@ -240,7 +240,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
         _windows = previousWindows;
         _loadingWindows = false;
       });
-      context.showSnackBar(libL10n.fail);
+      Toast.error(libL10n.fail);
     }
   }
 
@@ -379,7 +379,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
           _windows = previousWindows;
           _loadingWindows = false;
         });
-        context.showSnackBar(libL10n.fail);
+        Toast.error(libL10n.fail);
         return;
       }
       setState(() {
@@ -392,7 +392,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
         _windows = previousWindows;
         _loadingWindows = false;
       });
-      context.showSnackBar(libL10n.fail);
+      Toast.error(libL10n.fail);
     }
   }
 }

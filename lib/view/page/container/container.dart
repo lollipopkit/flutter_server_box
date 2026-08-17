@@ -420,21 +420,21 @@ extension _ContainerPageActions on _ContainerPageState {
     switch (item) {
       case ContainerGroupMenu.start:
         if (stoppedIds.isEmpty) {
-          context.showSnackBar(libL10n.empty);
+          Toast.show(libL10n.empty);
           return;
         }
         _execContainerAction(() => _containerNotifier.startAll(stoppedIds));
         break;
       case ContainerGroupMenu.stop:
         if (runningIds.isEmpty) {
-          context.showSnackBar(libL10n.empty);
+          Toast.show(libL10n.empty);
           return;
         }
         _execContainerAction(() => _containerNotifier.stopAll(runningIds));
         break;
       case ContainerGroupMenu.restart:
         if (runningIds.isEmpty) {
-          context.showSnackBar(libL10n.empty);
+          Toast.show(libL10n.empty);
           return;
         }
         _execContainerAction(() => _containerNotifier.restartAll(runningIds));

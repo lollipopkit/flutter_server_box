@@ -406,13 +406,13 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
           localHost.isEmpty ||
           localPort <= 0 ||
           localPort > 65535) {
-        if (mounted) context.showSnackBar(libL10n.invalid);
+        if (mounted) Toast.show(libL10n.invalid);
         return;
       }
 
       if (_selectedType != PortForwardType.dynamic) {
         if (remoteHost.isEmpty || remotePort <= 0 || remotePort > 65535) {
-          if (mounted) context.showSnackBar(libL10n.invalid);
+          if (mounted) Toast.show(libL10n.invalid);
           return;
         }
       }
@@ -436,7 +436,7 @@ class _PortForwardConfigDialogState extends State<_PortForwardConfigDialog> {
       if (mounted) context.pop();
     } catch (e, s) {
       Loggers.app.warning('Failed to save port forward config', e, s);
-      if (mounted) context.showSnackBar(libL10n.error);
+      if (mounted) Toast.error(libL10n.error);
     } finally {
       if (mounted) setState(() => _saving = false);
     }

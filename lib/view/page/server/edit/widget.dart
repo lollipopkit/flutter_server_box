@@ -622,7 +622,7 @@ extension _Widgets on _ServerEditPageState {
                 if (on) {
                   if (next.contains(srv.id)) return;
                   if (next.length >= 2) {
-                    context.showSnackBar('${l10n.jumpServer}: 2');
+                    Toast.show('${l10n.jumpServer}: 2');
                     return;
                   }
                   next.add(srv.id);

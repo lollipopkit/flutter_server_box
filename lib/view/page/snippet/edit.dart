@@ -141,7 +141,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
     final name = _nameController.text;
     final script = _scriptController.text;
     if (name.isEmpty || script.isEmpty) {
-      context.showSnackBar(libL10n.empty);
+      Toast.show(libL10n.empty);
       return null;
     }
     final note = _noteController.text;
@@ -187,7 +187,7 @@ class _SnippetEditPageState extends ConsumerState<SnippetEditPage> {
     final servers = ref.read(serversProvider);
     final spis = [for (final id in servers.serverOrder) ?servers.servers[id]];
     if (spis.isEmpty) {
-      context.showSnackBar(libL10n.empty);
+      Toast.show(libL10n.empty);
       return;
     }
 

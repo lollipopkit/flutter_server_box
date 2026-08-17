@@ -158,7 +158,7 @@ extension ServerFuncBtnsActions on ServerFuncBtns {
       case ServerFuncBtn.snippet:
         final snippetState = ref.read(snippetProvider);
         if (snippetState.snippets.isEmpty) {
-          context.showSnackBar(libL10n.empty);
+          Toast.show(libL10n.empty);
           return;
         }
         final snippets = await context.showPickWithTagDialog<Snippet>(
@@ -375,7 +375,7 @@ void _gotoSSH(Spi spi, BuildContext context, WidgetRef ref) async {
         }
         break;
       default:
-        context.showSnackBar(l10n.mismatchSystem(system));
+        Toast.show(l10n.mismatchSystem(system));
     }
   } finally {
     final file = tempKeyFile;
@@ -482,7 +482,7 @@ Future<void> _copyDesktopSshPasswordIfNeeded(
     }
     if (result != AuthResult.success) {
       if (context.mounted) {
-        context.showSnackBar(libL10n.fail);
+        Toast.error(libL10n.fail);
       }
       return;
     }
@@ -513,7 +513,7 @@ Future<void> _copyDesktopSshPasswordIfNeeded(
     }),
   );
   if (context.mounted) {
-    context.showSnackBar(libL10n.success);
+    Toast.success(libL10n.success);
   }
 }
 
@@ -560,7 +560,7 @@ Future<bool> _ensure(
   // for the connection" on screen at the same moment the page it was about
   // opened.
   if (ref.read(serverProvider(id)).execWillConnect && context.mounted) {
-    context.showSnackBar(l10n.waitConnection);
+    Toast.show(l10n.waitConnection);
   }
   try {
     await connect(notifier);
@@ -568,7 +568,7 @@ Future<bool> _ensure(
   } catch (e, s) {
     Loggers.app.warning('Connect $id for a server function', e, s);
     if (context.mounted) {
-      context.showSnackBar(
+      Toast.error(
         e is SSHErr ? (e.message ?? e.type.name) : e.toString(),
       );
     }

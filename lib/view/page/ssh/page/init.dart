@@ -721,7 +721,7 @@ extension _Init on SSHPageState {
     try {
       final available = await tmuxSession.isAvailable;
       if (!available || !mounted) {
-        if (mounted) context.showSnackBar(context.l10n.tmuxNotAvailable);
+        if (mounted) Toast.show(context.l10n.tmuxNotAvailable);
         return;
       }
       final tmuxBin = tmuxSession.scanner.tmuxBin ?? 'tmux';

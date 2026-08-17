@@ -126,7 +126,7 @@ abstract final class SandboxImportNotice {
       // and a user who is not told where it went has lost files as far as they
       // can tell.
       final left = SandboxImport.leftBehind;
-      context.showSnackBar(
+      Toast.show(
         left == null
             ? l10n.macDmgImported
             : l10n.macDmgImportedPartly(left),

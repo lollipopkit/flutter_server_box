@@ -28,7 +28,7 @@ extension on _ContainerPageState {
         child: Text(_errorMessage(e)),
       );
     } else {
-      context.showSnackBar(libL10n.success);
+      Toast.success(libL10n.success);
     }
   }
 
@@ -78,7 +78,7 @@ extension on _ContainerPageState {
               ),
             );
           } on FormatException {
-            context.showSnackBar(libL10n.invalid);
+            Toast.show(libL10n.invalid);
           }
         },
       ).toList,
@@ -230,7 +230,7 @@ extension on _ContainerPageState {
   void _showImageRmDialog(ContainerImg e) {
     final id = e.id;
     if (id == null || id.isEmpty) {
-      context.showSnackBar(libL10n.empty);
+      Toast.show(libL10n.empty);
       return;
     }
     context.showRoundDialog(
@@ -246,7 +246,7 @@ extension on _ContainerPageState {
             refreshTarget: ContainerRefreshTarget.images,
           );
           if (result != null) {
-            if (mounted) context.showSnackBar(_errorMessage(result.message));
+            if (mounted) Toast.error(_errorMessage(result.message));
           }
         },
         red: true,
@@ -266,7 +266,7 @@ extension on _ContainerPageState {
             tag == null ||
             tag.trim().isEmpty ||
             tag == '<none>') {
-          context.showSnackBar(libL10n.empty);
+          Toast.show(libL10n.empty);
           return;
         }
         final imageRef = '$repo:$tag';
@@ -297,7 +297,7 @@ extension on _ContainerPageState {
   void _onTapMoreBtn(ContainerMenu item, ContainerPs dItem) async {
     final id = dItem.id;
     if (id == null) {
-      context.showSnackBar('ID: ${libL10n.empty}');
+      Toast.show('ID: ${libL10n.empty}');
       return;
     }
     switch (item) {

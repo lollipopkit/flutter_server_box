@@ -74,13 +74,13 @@ extension _SSH on _AppSettingsPageState {
       final spi = Spi.fromJson(json.decode(code));
       final existingIds = ref.read(serversProvider).servers.keys;
       if (existingIds.contains(spi.id)) {
-        context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
+        Toast.show('${l10n.sameIdServerExist}: ${spi.id}');
         return;
       }
       final resolvedList = ServerDeduplication.resolveNameConflicts([spi]);
       final resolvedSpi = resolvedList.first;
       ref.read(serversProvider.notifier).addServer(resolvedSpi);
-      context.showSnackBar(libL10n.success);
+      Toast.success(libL10n.success);
     } catch (e, s) {
       context.showErrDialog(e, s);
     }
@@ -91,7 +91,7 @@ extension _SSH on _AppSettingsPageState {
       final servers = await SSHConfig.parseConfig();
       if (!mounted) return;
       if (servers.isEmpty) {
-        context.showSnackBar(l10n.sshConfigNoServers);
+        Toast.show(l10n.sshConfigNoServers);
         return;
       }
 
@@ -116,7 +116,7 @@ extension _SSH on _AppSettingsPageState {
 
     if (!summary.hasItemsToImport) {
       if (!mounted) return;
-      context.showSnackBar(l10n.sshConfigAllExist('${summary.duplicates}'));
+      Toast.show(l10n.sshConfigAllExist('${summary.duplicates}'));
       return;
     }
 
@@ -204,7 +204,7 @@ extension _SSH on _AppSettingsPageState {
         final servers = await SSHConfig.parseConfig(path);
         if (!mounted) return;
         if (servers.isEmpty) {
-          context.showSnackBar(l10n.sshConfigNoServers);
+          Toast.show(l10n.sshConfigNoServers);
           return;
         }
 
@@ -485,7 +485,7 @@ extension _SSH on _AppSettingsPageState {
     void onSave(String s) {
       final val = double.tryParse(s);
       if (val == null) {
-        context.showSnackBar(libL10n.fail);
+        Toast.error(libL10n.fail);
         return;
       }
       _setting.sshBgOpacity.put(val.clamp(0.0, 1.0));
@@ -519,7 +519,7 @@ extension _SSH on _AppSettingsPageState {
     void onSave(String s) {
       final val = double.tryParse(s);
       if (val == null) {
-        context.showSnackBar(libL10n.fail);
+        Toast.error(libL10n.fail);
         return;
       }
       const minRadius = 0.0;

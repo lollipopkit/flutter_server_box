@@ -120,11 +120,11 @@ abstract final class ServerPower {
       // status keeps refreshing.
       if (!result.succeeded && context.mounted) {
         final said = result.combined.trim();
-        context.showSnackBar(said.isEmpty ? libL10n.fail : said);
+        Toast.error(libL10n.fail, body: said.isEmpty ? null : said);
       }
     } catch (e, s) {
       Loggers.app.warning('${func.name} ${spi.name}', e, s);
-      if (context.mounted) context.showSnackBar('$e');
+      if (context.mounted) Toast.error('$e');
     }
   }
 

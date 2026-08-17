@@ -338,7 +338,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
   @override
   Future<void> goTo(String target) async {
     if (!_path.goTo(target)) {
-      context.showSnackBar('${libL10n.fail}: $target');
+      Toast.error(libL10n.fail, body: target);
       return;
     }
     await refresh();
@@ -689,7 +689,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     try {
       await action();
     } catch (e) {
-      if (mounted) context.showSnackBar('${libL10n.fail}:\n$e');
+      if (mounted) Toast.error(libL10n.fail, body: '$e');
       return;
     } finally {
       _busy.value = false;
@@ -725,7 +725,7 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
       text: l10n.copyPath,
       onTap: () {
         Pfs.copy(full);
-        context.showSnackBar(libL10n.success);
+        Toast.success(libL10n.success);
       },
     ),
     if (backend.traits.permissions)

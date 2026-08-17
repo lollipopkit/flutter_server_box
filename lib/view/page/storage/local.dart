@@ -169,7 +169,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
       // reports what went wrong. This one is the page's own, and without this
       // a copy onto an existing directory threw into the zone guard: the user
       // tapped, nothing happened, and nothing said why.
-      if (mounted) context.showSnackBar('${libL10n.fail}:\n$e');
+      if (mounted) Toast.error(libL10n.fail, body: '$e');
       return;
     }
     await handle.refresh();
@@ -196,7 +196,7 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
       args: EditorPageArgs(
         path: LocalFileBackend.nativePath(fullPath),
         onSave: (_) {
-          context.showSnackBar(libL10n.saved);
+          Toast.show(libL10n.saved);
           handle.refresh();
         },
         closeAfterSave: Stores.setting.closeAfterSave.fetch(),

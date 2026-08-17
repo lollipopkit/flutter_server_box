@@ -54,7 +54,7 @@ Future<void> sendTo(
   // Copying a file onto itself truncates it to nothing: the write opens the
   // destination before the read has finished with it.
   if (destination == source) {
-    context.showSnackBar(libL10n.fail);
+    Toast.error(libL10n.fail);
     return;
   }
 

@@ -30,7 +30,7 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
   var _selectedTabs = List<AppTab>.from(Stores.setting.homeTabs.fetch());
 
   void _showHomeTabConstraint(String message) {
-    context.showSnackBar(message);
+    Toast.show(message);
   }
 
   @override
