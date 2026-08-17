@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A `Makefile` wraps most common tasks — run `make help` for the full list. Preferred shortcuts:
 
-- `make deps` / `make run` / `make analyze` (`flutter analyze lib test`)
+- `make deps` / `make run` / `make analyze` (`flutter analyze lib test integration_test`)
 - `make gen` - build_runner + gen-l10n in one step
 - `make build PLATFORM=<android|ios|macos|linux|windows>` - wraps `dart run fl_build -p PLATFORM`
 - Release packaging (macOS DMG, Homebrew cask sync): `make release-macos-dmg`, `make package-dmg`, `make sync-homebrew-cask`

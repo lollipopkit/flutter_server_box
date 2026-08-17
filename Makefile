@@ -26,7 +26,7 @@ help:
 		'  deps               Install Dart/Flutter dependencies' \
 		'  run                Run app on default device' \
 		'  run-device         Run app on a specific device: make run-device DEVICE=<id>' \
-		'  analyze            Run static analysis for lib/ and test/' \
+		'  analyze            Run static analysis for lib/, test/ and integration_test/' \
 		'  test               Run all tests' \
 		'  test-one           Run a single test: make test-one TEST=test/foo_test.dart' \
 		'  coverage           Run tests with coverage output' \
@@ -76,7 +76,7 @@ run-device:
 	$(FLUTTER) run -d $(DEVICE)
 
 analyze:
-	$(FLUTTER) analyze lib test
+	$(FLUTTER) analyze lib test integration_test
 
 test:
 	$(FLUTTER) test

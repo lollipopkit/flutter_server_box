@@ -345,8 +345,12 @@ console 上剩下的(重定向本身失败时 shell 的报错)算作 stderr。
 不需要真机就能跑的两个测试:`test/file_tail_test.dart`(边写边读,多字节字符跨轮次
 截断是会被用户撞到的那个 case)、`test/ish_exec_test.dart`(实际交给 guest 的那段 shell)。
 
-剩下的是 `local-ssh-plan.md` 的 M2(Instruments 看内存和发热)和 M5(送审)。CI 有
-`Build ios` job,但它不跑 `scripts/build-ish-ios.sh`,所以上传的 IPA 一直是 `SBM_ISH=0`。
+剩下的是 `local-ssh-plan.md` 的 M2(Instruments 看内存和发热)和 M5(送审)。
+
+`build.yml` 的 `Build ios` job 不跑 `scripts/build-ish-ios.sh`,所以发布的 IPA 一直是
+`SBM_ISH=0` —— 这是有意的,引擎要不要随包发是发布时的决定。引擎那条编译路径由
+`analysis.yml` 的 `iOS Linux engine` job 覆盖:构建引擎、开着开关编一次、关掉再编一次,
+两次都跑 `scripts/check-ish-linkage.sh`。M4 因此从手工项变成了每次 push 都验。
 
 **M1、M3 已在真机上跑过**(iPad Pro 11" 三代,iOS 18.7.8 —— 是真机,但 M1 芯片,不是手机)。
 M1:`ios_rootfs_test.dart` 9/9,模拟器上成立的在设备上都成立,4 KB argv 墙的位置一模一样。

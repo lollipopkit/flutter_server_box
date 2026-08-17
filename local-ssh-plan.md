@@ -519,7 +519,7 @@ which is real hardware but M1 silicon rather than a phone's. M2 and M5 are open:
 | M1 | The engine runs on real hardware | **done.** `integration_test/ios_rootfs_test.dart`, 9 of 9 on the iPad. Everything the simulator showed holds on a device: `/dev/pts/N` for `tty` and `/proc/self/fd/1`, a redirect into `/dev/stdout`, two sessions that do not see each other, and the 4 KB argv wall at exactly the same place (`4000=0 5000=-7`) |
 | M2 | Memory and thermals under load | **open.** A real workload — `apk add`, a build, a long-running process — watched in Instruments. An interpreter with a 256 KB output ring and a guest heap on a phone is a different proposition from one on a Mac |
 | M3 | The performance figures (Q3) | **done on an iPad, open for a phone** — and it found a clock bug rather than a number. See below |
-| M4 | The strip switch produces a clean build | **done**, and the check this document gave for it was wrong. See below |
+| M4 | The strip switch produces a clean build | **done, and now automated.** The `iOS Linux engine` job in `analysis.yml` builds both ways and runs `scripts/check-ish-linkage.sh` on each. The check this document originally gave for it was wrong — see below |
 | M5 | App Store review | **open.** Submit, with the feature on, and see. Guideline 2.5.2. Not a technical question, and the downside is the app's next update rather than the feature |
 
 M5 is the one that decides whether any of the rest is worth finishing, and it
@@ -613,6 +613,13 @@ What discriminates: **engine-internal symbols**, **engine strings**, and
 (`libish.a`, `libish_emu.a`, `libfakefs.a`) and never appear in `otool -L` at
 all, so sqlite is the only linkage it can show. The size drop is the cheapest
 smoke test. `Ish.xcconfig` and `ios_rootfs.dart` are corrected to match.
+
+`scripts/check-ish-linkage.sh <binary> on|off` is that check, and CI runs it
+both ways on every push — a document nobody re-reads was how the wrong
+procedure survived. It also asserts the eight exports are present **whichever
+way the switch is set**, which is the other failure this file records: the first
+build made with the engine on had it dead-stripped, because nothing in the app
+calls those functions by name and only `used` keeps them.
 
 One more thing the measurement corrected: the surface is **eight** functions,
 not six — `open` and `close` were missing from every prose count of it.
