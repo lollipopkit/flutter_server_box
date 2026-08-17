@@ -398,11 +398,16 @@ is what is left.
       configured.
 - [ ] Opening SFTP as a file picker from elsewhere still draws its own bar with
       the server name.
-- [ ] The file tab reopens the same servers, each in the directory it was left
-      in.
+- [ ] ~~The file tab reopens the same servers, each in the directory it was
+      left in.~~ **Cannot pass as built.** `storage/tab.dart` keeps that state
+      in a `RestorableString`, and Flutter's restoration does not survive a
+      relaunch in this app — measured in `test/restoration_bucket_test.dart`,
+      recorded in TODOS.md. The terminal tab moved to Hive for this reason;
+      this page did not. Verifying it by hand would have found a broken feature
+      and no cause.
 
-All five are the tab, not the browser: they need two reachable servers and a
-restart. Nothing here has been run.
+The first four are the tab rather than the browser: they need two reachable
+servers and a restart. Nothing here has been run.
 
 ### 2. After the browser is one page
 

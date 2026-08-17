@@ -250,8 +250,21 @@ proot 并在构建后检查两个 `.so` 确实进了 APK。剩下两条:
 
 实测(API 36 模拟器,debug build):终端 tab 的 `restoreState` 跑起来时
 `bucket == null`,也就是它 `registerForRestoration` 的东西从来没被写出去过。
-`MaterialApp` 上有 `restorationScopeId: 'serverbox'`,但页面挂在 `home:` 下,而
-`home:` 生成的 route 没有 restoration id——没有 id 的 route 不会给子树发 bucket。
+
+**结论成立,但原来写的原因是错的。** 原文说「`home:` 生成的 route 没有 restoration id,
+没有 id 的 route 不会给子树发 bucket」。`test/restoration_bucket_test.dart` 实测四条:
+
+| 配置 | bucket | 值能否扛过 `restartAndRestore` |
+|---|---|---|
+| `restorationScopeId` + `home:` | **非 null** | 否 |
+| `restorationScopeId` + `routes: {'/': ...}` | 非 null | 否 |
+| 无 `restorationScopeId` | null | — |
+
+所以 bucket 是发下来的,页面看到的是一个**新的空 bucket**,不是恢复回来的那个。这正是它
+难被发现的原因:页面里没有任何一个为假的条件,直到真的重启一次。
+
+这也否掉了原文两条路里的第一条:**光把 `home:` 换成命名路由不够**。第一个 route 还缺什么
+没查明。剩下的那条路——像终端 tab 那样各自落到 store——是目前唯一验证过可行的。
 
 终端 tab 已经绕开了:标签集改存 `Stores.history.sshTabs`(Hive),进程被杀后能恢复,
 已验。剩下三处还在用这套机制,等于什么都没做:
@@ -262,9 +275,12 @@ proot 并在构建后检查两个 `.so` 确实进了 APK。剩下两条:
   tmux 状态现在由 tab 那层的 JSON 带着走,但页面里这三个 `Restorable*` 字段看着像在工作,
   其实没有。
 
-两条路:要么让 home route 拿到 restoration id(改动小但要确认 Flutter 那条链路),要么
-像终端 tab 一样各自落到 store。**没定**。注意 saved instance state 本来也扛不住用户
-在最近任务里划掉 app,而"划掉之后回来还在"恰恰是终端最需要的,所以 store 那条路更稳。
+两条路里的第一条已经被上面那组实测否掉了(命名路由不够)。剩下 store 那条,和终端 tab
+已经走过的一样。**没定的只剩要不要做。** 注意 saved instance state 本来也扛不住用户在最近
+任务里划掉 app,而「划掉之后回来还在」恰恰是终端最需要的,所以 store 那条路本来就更稳。
+
+顺带:`file-plan.md` 手工验证里那条「文件页恢复到原来的目录」验不过 —— `storage/tab.dart`
+的 `_restorableSessions` 就是这套失效机制里的一个。两处此前没有互相引用。
 
 ## iOS 的 Linux 环境:止血开关怎么用
 
