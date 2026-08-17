@@ -53,11 +53,11 @@ void main() {
   Finder tabRow(String title) =>
       find.descendant(of: find.byKey(settingsTabsKey), matching: find.text(title));
 
-  /// The way back out, which is the bar's first button.
+  /// The way back out. Absent at the root, where there is nowhere to go.
   final backTab = find.descendant(
     of: find.byKey(settingsTabsKey),
-    matching: find.byType(InkWell),
-  ).first;
+    matching: find.byIcon(Icons.arrow_back),
+  );
 
   String barTitle(WidgetTester tester) => tester
       .widget<Text>(
@@ -164,8 +164,8 @@ void main() {
     expect(find.byType(BackButton), findsOneWidget);
 
     expect(tabRow(libL10n.server), findsOneWidget);
-    // There, and off: the root has no level above it.
-    expect(tester.widget<InkWell>(backTab).onTap, isNull);
+    // Not drawn at all: the root has no level above it.
+    expect(backTab, findsNothing);
   });
 
   testWidgets('a tab that is a branch goes in and shows what is first inside', (
@@ -184,7 +184,43 @@ void main() {
     // level being shown.
     expect(tabRow(libL10n.app), findsNothing);
     expect(barTitle(tester), libL10n.setting);
-    expect(tester.widget<InkWell>(backTab).onTap, isNotNull);
+    expect(backTab, findsOneWidget);
+  });
+
+  testWidgets('the bar is as wide as the level on it', (tester) async {
+    await pump(tester, width: 500);
+
+    // The root has more tabs than the window is wide, so the bar fills it.
+    final atRoot = tester.getSize(find.byKey(settingsTabsKey)).width;
+    expect(atRoot, greaterThan(400));
+
+    await tester.tap(tabRow(libL10n.server));
+    await settle(tester, 20);
+
+    // Four tabs and a way back: shorter, and it got there over several frames.
+    expect(tester.getSize(find.byKey(settingsTabsKey)).width, lessThan(atRoot));
+  });
+
+  testWidgets('the tab being shown is filled in', (tester) async {
+    await pump(tester, width: 500);
+    await tester.tap(tabRow(libL10n.server));
+    await settle(tester, 20);
+
+    final scheme = Theme.of(tester.element(find.byKey(settingsTabsKey))).colorScheme;
+    Color? fillOf(String title) {
+      final box = find.ancestor(
+        of: tabRow(title),
+        matching: find.byType(AnimatedContainer),
+      );
+      final decoration =
+          tester.widget<AnimatedContainer>(box.first).decoration as BoxDecoration?;
+      return decoration?.color;
+    }
+
+    // Filled rather than only recoloured — a shade of grey against another is
+    // not a state at a glance.
+    expect(fillOf(libL10n.setting), scheme.secondaryContainer);
+    expect(fillOf(l10n.serverOrder), isNull);
   });
 
   testWidgets('the leading button goes back out a level', (tester) async {

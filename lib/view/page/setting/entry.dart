@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:file_picker/file_picker.dart';
@@ -368,9 +369,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ),
           child: SafeArea(top: false, child: content),
         ),
+        // Edge to edge, and the bar centres itself within that: it is as wide
+        // as the level it is showing, and only scrolls when that is too wide.
         Positioned(
-          left: _kTabsMargin,
-          right: _kTabsMargin,
+          left: 0,
+          right: 0,
           bottom: _kTabsMargin,
           child: _SettingsTabs(
             nodes: level,

@@ -54,6 +54,10 @@ final class SettingsNode {
 const _kTabsHeight = 56.0;
 const _kTabsMargin = 12.0;
 
+/// Displacement springs past its mark and settles, as it does elsewhere.
+/// Only the bar's own width: a size factor past 1 would be a gap.
+const _kTabsCurve = Curves.easeOutBack;
+
 /// Names the floating tab bar. Several of its labels are also words in the
 /// settings behind it, so finding one means saying which of the two is meant.
 const settingsTabsKey = ValueKey('settings_tabs');
@@ -85,43 +89,62 @@ final class _SettingsTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return Material(
+    final bar = Material(
       key: settingsTabsKey,
       elevation: 6,
       color: scheme.surfaceContainerHigh,
       shadowColor: Colors.black.withValues(alpha: 0.3),
       borderRadius: BorderRadius.circular(_kTabsHeight / 2),
       clipBehavior: Clip.antiAlias,
-      child: SizedBox(
-        height: _kTabsHeight,
-        child: Row(
-          children: [
-            // Always in the row, lit only when there is a level to go back to:
-            // a button that comes and goes moves every tab beside it.
-            _TabButton(
-              icon: Icons.arrow_back,
-              onTap: canGoBack ? onBack : null,
-              tooltip: libL10n.goBackQ,
-            ),
-            const VerticalDivider(width: 1, indent: 12, endIndent: 12),
-            Expanded(
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                children: [
-                  for (final node in nodes)
-                    _TabButton(
-                      icon: node.icon,
-                      label: node.title,
-                      // A branch counts as on while what is showing is inside
-                      // it, which is what says where the way back leads.
-                      selected: node.flattened.any((e) => e.id == selectedId),
-                      onTap: () => onTap(node),
-                    ),
-                ],
-              ),
-            ),
-          ],
+      // Around the row rather than inside it, so the bar itself is what springs
+      // between one level's width and the next. Inside, the overshoot would be
+      // a gap opening at the end of a bar that had already stopped growing.
+      child: AnimatedSize(
+        duration: Durations.medium2,
+        curve: _kTabsCurve,
+        alignment: Alignment.centerLeft,
+        child: SizedBox(
+          height: _kTabsHeight,
+          child: Row(
+            // As wide as what is on it. A level of two tabs is a short bar.
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (canGoBack) ...[
+                _TabButton(
+                  icon: Icons.arrow_back,
+                  onTap: onBack,
+                  tooltip: libL10n.goBackQ,
+                ),
+                const VerticalDivider(width: 1, indent: 12, endIndent: 12),
+              ],
+              const SizedBox(width: 4),
+              for (final node in nodes)
+                _TabButton(
+                  icon: node.icon,
+                  label: node.title,
+                  // A branch counts as on while what is showing is inside it,
+                  // which is what says where the way back leads.
+                  selected: node.flattened.any((e) => e.id == selectedId),
+                  onTap: () => onTap(node),
+                ),
+              const SizedBox(width: 4),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // Centred while it fits and scrolled when it does not: the first level has
+    // more tabs than a phone is wide, and the levels under it have three.
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: _kTabsMargin),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: math.max(0, constraints.maxWidth - _kTabsMargin * 2),
+          ),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [bar]),
         ),
       ),
     );
@@ -146,16 +169,21 @@ final class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final color = switch ((onTap, selected)) {
-      (null, _) => scheme.onSurfaceVariant.withValues(alpha: 0.35),
-      (_, true) => scheme.primary,
-      _ => scheme.onSurfaceVariant,
-    };
+    final color = selected ? scheme.onSecondaryContainer : scheme.onSurfaceVariant;
 
     final button = InkWell(
       onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: label == null ? 14 : 10),
+      child: AnimatedContainer(
+        duration: Durations.short3,
+        curve: Curves.easeOut,
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: EdgeInsets.symmetric(horizontal: label == null ? 12 : 10),
+        decoration: BoxDecoration(
+          // Filled, not just tinted: on a bar this small a colour on its own is
+          // one shade of grey against another at a glance.
+          color: selected ? scheme.secondaryContainer : null,
+          borderRadius: BorderRadius.circular((_kTabsHeight - 12) / 2),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
