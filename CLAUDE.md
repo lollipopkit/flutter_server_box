@@ -13,6 +13,9 @@ A `Makefile` wraps most common tasks — run `make help` for the full list. Pref
 
 ### Development
 
+- **The app is normally already running from the user's IDE (VS Code, F5). Do not start another `flutter run`** — a second debug build competes for the same window, and you end up looking at an instance the user is not. Apply changes through the dart MCP server: `dtd` → `listDtdUris` → `connect` to the instance whose workspace root is this repo, then `hot_reload` with the app's URI from `listConnectedApps`.
+  - Changes to `main()`, or anything else that runs before `runApp`, need `hot_restart`: a reload does not re-run them.
+  - `flutter run` is still the right call when there is no such instance, or when the point is the launch path itself (a first-launch migration, `_initApp` ordering).
 - `flutter run` - Run the app in development mode
 - `flutter run --release -PallowDebugReleaseSigning=true` - Run Android release locally with explicit debug-signing fallback for verification only
 - `dart run fl_build -p PLATFORM` - Build the app for specific platform (see fl_build package)
