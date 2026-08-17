@@ -137,29 +137,37 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
     final session = ref.watch(agentSessionProvider);
     final conversations = session.conversations;
     final activeId = session.conversation?.id;
+    // The same rail as the terminal and file tabs: a right-aligned row of
+    // actions, a heading with a rule running to the edge, and one line per
+    // entry. It used to be a list of cards with a timestamp under each title —
+    // its own vocabulary, in the one column of the app that had one.
+    //
+    // The timestamp went with the second line, which is [SideBarTile]'s own
+    // trade-off: at two lines a row a rail stops being something you can take
+    // in at a glance, and the conversation beside it says when it was.
     return Material(
       color: theme.colorScheme.surface,
-      child: Column(
+      child: ListView(
+        padding: const EdgeInsets.only(bottom: 12),
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 8, 8),
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Expanded(
-                  child: Text(
-                    context.l10n.askAiHistory,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                if (conversations.isNotEmpty)
+                if (conversations.isNotEmpty) ...[
                   IconButton(
                     tooltip: libL10n.clearHistory,
                     onPressed: session.isWorking ? null : _clear,
                     icon: const Icon(Icons.delete_sweep_outlined),
                   ),
-                IconButton.filledTonal(
+                  const SizedBox(width: 4),
+                ],
+                // Plain, not `filledTonal`. A filled button beside a bare one
+                // reads as the bigger of the two whatever their icons measure,
+                // and this row is meant to be one weight — the rails on the
+                // other tabs put their add button in it unfilled too.
+                IconButton(
                   tooltip: context.l10n.askAiNewConversation,
                   onPressed: session.isWorking
                       ? null
@@ -172,106 +180,61 @@ class _AgentHistoryPanelState extends ConsumerState<AgentHistoryPanel> {
               ],
             ),
           ),
-          Expanded(
-            child: conversations.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        context.l10n.agentNoHistory,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
+          SideBarSection(context.l10n.askAiHistory),
+          if (conversations.isEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+              child: Text(
+                context.l10n.agentNoHistory,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            )
+          else
+            for (final conversation in conversations)
+              SideBarTile(
+                title: conversation.title.isEmpty
+                    ? context.l10n.askAiUntitledConversation
+                    : conversation.title,
+                selected: conversation.id == activeId,
+                onTap: session.isWorking
+                    ? null
+                    : () {
+                        _notifier.activateConversation(conversation);
+                        _closeIfSheet();
+                      },
+                // The row's own tap is already refused while a tool is
+                // running. Renaming is harmless, but deleting the conversation
+                // being worked in clears the timeline the execution is about
+                // to append its output to — and the execution keeps going,
+                // since nothing but the stop button ends one.
+                trailing: PopupMenu<_HistoryAction>(
+                  enabled: !session.isWorking,
+                  items: [
+                    PopMenu.build(
+                      _HistoryAction.rename,
+                      Icons.drive_file_rename_outline,
+                      context.l10n.askAiRenameConversation,
+                      iconSize: _kMenuIconSize,
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
-                    itemCount: conversations.length,
-                    itemBuilder: (context, index) {
-                      final conversation = conversations[index];
-                      final selected = conversation.id == activeId;
-                      return Card(
-                        elevation: 0,
-                        color: selected
-                            ? theme.colorScheme.secondaryContainer
-                            : theme.colorScheme.surfaceContainerLow,
-                        child: ListTile(
-                          dense: true,
-                          selected: selected,
-                          // Default is 16 either side. In a column this narrow
-                          // that is the width the title wants, and it was what
-                          // held the menu button away from the edge.
-                          contentPadding: const EdgeInsets.only(
-                            left: 12,
-                            right: 4,
-                          ),
-                          title: Text(
-                            conversation.title.isEmpty
-                                ? context.l10n.askAiUntitledConversation
-                                : conversation.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          // When it was last touched, not what was said in
-                          // it. The line above already carries the subject —
-                          // it is the opening message — so a preview under it
-                          // was the same sentence twice, and said nothing
-                          // about which of several similar conversations this
-                          // one is.
-                          subtitle: Text(
-                            conversation.updatedAt.toAgoStr(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            // Stated, not inherited. A selected `ListTile`
-                            // tints its subtitle the same as its title, so the
-                            // preview of the open conversation came out in the
-                            // accent colour and read as a second heading
-                            // rather than as the line under one.
-                            style: UIs.text12Grey,
-                          ),
-                          onTap: session.isWorking
-                              ? null
-                              : () {
-                                  _notifier.activateConversation(conversation);
-                                  _closeIfSheet();
-                                },
-                          // The row's own tap is already refused while a tool
-                          // is running. Renaming is harmless, but deleting the
-                          // conversation being worked in clears the timeline
-                          // the execution is about to append its output to —
-                          // and the execution keeps going, since nothing but
-                          // the stop button ends one.
-                          trailing: PopupMenu<_HistoryAction>(
-                            enabled: !session.isWorking,
-                            items: [
-                              PopMenu.build(
-                                _HistoryAction.rename,
-                                Icons.drive_file_rename_outline,
-                                context.l10n.askAiRenameConversation,
-                                iconSize: _kMenuIconSize,
-                              ),
-                              PopMenu.build(
-                                _HistoryAction.delete,
-                                Icons.delete_outline,
-                                libL10n.delete,
-                                iconSize: _kMenuIconSize,
-                              ),
-                            ],
-                            onSelected: (action) async {
-                              if (action == _HistoryAction.rename) {
-                                await _rename(conversation);
-                              } else {
-                                await _delete(conversation);
-                              }
-                            },
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
+                    PopMenu.build(
+                      _HistoryAction.delete,
+                      Icons.delete_outline,
+                      libL10n.delete,
+                      iconSize: _kMenuIconSize,
+                    ),
+                  ],
+                  onSelected: (action) async {
+                    if (action == _HistoryAction.rename) {
+                      await _rename(conversation);
+                    } else {
+                      await _delete(conversation);
+                    }
+                  },
+                ),
+              ),
         ],
       ),
     );

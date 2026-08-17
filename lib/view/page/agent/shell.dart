@@ -109,8 +109,13 @@ class _WindowButtons extends ConsumerWidget {
           tooltip: collapsed ? context.l10n.agentTitle : libL10n.fold,
           visualDensity: VisualDensity.compact,
           onPressed: collapsed ? shell.expand : shell.collapse,
+          // Larger than the default, and larger than the close beside it. A
+          // chevron is a thin glyph in a wide box: at the same nominal size as
+          // the solid icons either side of it, it draws to about two thirds of
+          // their height and reads as a smaller button.
           icon: Icon(
             collapsed ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+            size: 28,
           ),
         ),
         IconButton(
