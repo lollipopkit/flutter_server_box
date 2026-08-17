@@ -166,6 +166,9 @@ final class _TabButton extends StatelessWidget {
     this.tooltip,
   });
 
+  /// The pill behind the icon, at the measurements `NavigationBar` uses.
+  static const _indicator = Size(56, 30);
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -173,32 +176,40 @@ final class _TabButton extends StatelessWidget {
 
     final button = InkWell(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: Durations.short3,
-        curve: Curves.easeOut,
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: EdgeInsets.symmetric(horizontal: label == null ? 12 : 10),
-        decoration: BoxDecoration(
-          // Filled, not just tinted: on a bar this small a colour on its own is
-          // one shade of grey against another at a glance.
-          color: selected ? scheme.secondaryContainer : null,
-          borderRadius: BorderRadius.circular((_kTabsHeight - 12) / 2),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 20, color: color),
+            // Around the icon and not the label, the way the rail on the home
+            // page marks its own destination.
+            AnimatedContainer(
+              duration: Durations.short3,
+              curve: Curves.easeOut,
+              width: _indicator.width,
+              height: _indicator.height,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selected ? scheme.secondaryContainer : null,
+                borderRadius: BorderRadius.circular(_indicator.height / 2),
+              ),
+              child: Icon(icon, size: 20, color: color),
+            ),
             if (label != null) ...[
-              const SizedBox(height: 2),
-              Text(
-                label!,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  height: 1.1,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                  color: color,
+              const SizedBox(height: 3),
+              SizedBox(
+                width: _indicator.width + 6,
+                child: Text(
+                  label!,
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    height: 1.1,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    color: color,
+                  ),
                 ),
               ),
             ],
@@ -210,6 +221,67 @@ final class _TabButton extends StatelessWidget {
     final tooltip_ = tooltip;
     if (tooltip_ == null) return button;
     return Tooltip(message: tooltip_, child: button);
+  }
+}
+
+/// One level's leaves, side by side.
+///
+/// A [PageView] rather than one page swapped for another: the tabs under it are
+/// siblings, so moving between them is moving along a row, and it should look
+/// like it. Dragging the content does the same thing as tapping a tab, which is
+/// what having them side by side promises.
+final class _SettingsPages extends StatefulWidget {
+  final List<SettingsNode> leaves;
+  final String selectedId;
+  final void Function(SettingsNode node) onChanged;
+
+  const _SettingsPages({
+    super.key,
+    required this.leaves,
+    required this.selectedId,
+    required this.onChanged,
+  });
+
+  @override
+  State<_SettingsPages> createState() => _SettingsPagesState();
+}
+
+class _SettingsPagesState extends State<_SettingsPages> {
+  late final PageController _controller = PageController(initialPage: _indexOf(widget.selectedId));
+
+  int _indexOf(String id) {
+    final index = widget.leaves.indexWhere((e) => e.id == id);
+    return index < 0 ? 0 : index;
+  }
+
+  @override
+  void didUpdateWidget(_SettingsPages oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedId == oldWidget.selectedId) return;
+    final target = _indexOf(widget.selectedId);
+    if (!_controller.hasClients || _controller.page?.round() == target) return;
+    _controller.animateToPage(
+      target,
+      duration: Durations.medium2,
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PageView(
+      controller: _controller,
+      // Told rather than inferred: a drag that lands on another page has picked
+      // it, and the tabs have to say so.
+      onPageChanged: (index) => widget.onChanged(widget.leaves[index]),
+      children: [for (final leaf in widget.leaves) leaf.builder!()],
+    );
   }
 }
 

@@ -82,6 +82,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   String? _selectedId;
 
+  /// Opened on the first branch rather than nothing: the leaves at the root are
+  /// the odds and ends — backup, keys, about — and starting on one of those
+  /// answers "what is in here" with the least of it.
+  @override
+  void initState() {
+    super.initState();
+    final first = _buildNodes().firstWhereOrNull((e) => !e.isLeaf);
+    if (first == null) return;
+    _path.add(first);
+    _expanded.add(first.id);
+    _selectedId = first.firstLeaf?.id;
+  }
+
   void _clearAllSettings() {
     final keys = SettingStore.instance.box.keys;
     SettingStore.instance.box.deleteAll(keys);
@@ -291,13 +304,48 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     );
   }
 
+  /// The leaves beside [id] — the ones its own level holds.
+  static List<SettingsNode>? _groupOf(List<SettingsNode> level, String id) {
+    final leaves = level.where((e) => e.isLeaf).toList();
+    if (leaves.any((e) => e.id == id)) return leaves;
+    for (final node in level) {
+      if (node.children.isEmpty) continue;
+      final found = _groupOf(node.children, id);
+      if (found != null) return found;
+    }
+    return null;
+  }
+
+  /// What the content navigator is showing, outermost first.
+  ///
+  /// Wide, that is one level — the one the selected leaf is on — and moving to
+  /// another swaps it. Narrow it is the levels walked into, so going deeper is a
+  /// push and coming back is a pop, with the transition each of those has.
+  List<({String id, List<SettingsNode> leaves})> _groupStack({
+    required bool wide,
+    required List<SettingsNode> nodes,
+    required SettingsNode selected,
+  }) {
+    if (wide) {
+      final leaves = _groupOf(nodes, selected.id) ?? const <SettingsNode>[];
+      final owner = _path.isEmpty ? 'root' : _path.last.id;
+      return [(id: leaves.isEmpty ? owner : leaves.first.id, leaves: leaves)];
+    }
+
+    final stack = [(id: 'root', leaves: nodes.where((e) => e.isLeaf).toList())];
+    for (final branch in _path) {
+      stack.add((id: branch.id, leaves: branch.children.where((e) => e.isLeaf).toList()));
+    }
+    return stack.where((e) => e.leaves.isNotEmpty).toList();
+  }
+
   Widget _buildScaffold({
     required bool wide,
     required Widget menu,
     required List<SettingsNode> nodes,
     required SettingsNode selected,
   }) {
-    final content = KeyedSubtree(key: ValueKey(selected.id), child: selected.builder!());
+    final content = _buildContent(wide: wide, nodes: nodes, selected: selected);
 
     return Scaffold(
       // The one bar the page has, naming whatever is being shown. The pages in
@@ -347,6 +395,43 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               )
             : _buildNarrow(nodes, content),
       ),
+    );
+  }
+
+  /// The levels, as pages of a navigator.
+  ///
+  /// Declarative rather than pushed by hand: [_path] already says which levels
+  /// are open, and letting the navigator read it means the two cannot disagree.
+  /// A level arriving or leaving the list is a `MaterialPage` doing so, which is
+  /// where the transition comes from.
+  Widget _buildContent({
+    required bool wide,
+    required List<SettingsNode> nodes,
+    required SettingsNode selected,
+  }) {
+    final stack = _groupStack(wide: wide, nodes: nodes, selected: selected);
+
+    return Navigator(
+      pages: [
+        for (final group in stack)
+          MaterialPage<void>(
+            key: ValueKey(group.id),
+            child: _SettingsPages(
+              key: ValueKey('pages_${group.id}'),
+              leaves: group.leaves,
+              selectedId: selected.id,
+              onChanged: _onSelect,
+            ),
+          ),
+      ],
+      onDidRemovePage: (page) {
+        // A page can also go because the system back gesture took it. What the
+        // tabs show comes from [_path], so it has to hear about that.
+        if (_path.isEmpty) return;
+        if ((page.key as ValueKey?)?.value == _path.last.id) {
+          setState(_path.removeLast);
+        }
+      },
     );
   }
 

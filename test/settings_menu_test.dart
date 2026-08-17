@@ -153,28 +153,40 @@ void main() {
     expect(find.byType(AppBar), findsOneWidget);
   });
 
-  testWidgets('a narrow window floats the tabs, with no way back at the root', (
+  testWidgets('it opens inside the first group, not on the odds and ends', (
     tester,
   ) async {
     await pump(tester, width: 500);
 
-    expect(find.byKey(settingsTabsKey), findsOneWidget);
+    // The leaves at the root are backup, keys and about; opening on one of them
+    // would answer "what is in here" with the least of it.
+    expect(barTitle(tester), libL10n.setting);
+    expect(tabRow(libL10n.ai), findsOneWidget);
+    expect(backTab, findsOneWidget);
+  });
+
+  testWidgets('the way back out is absent at the root', (tester) async {
+    await pump(tester, width: 500);
+
+    await tester.tap(backTab);
+    await settle(tester, 20);
+
+    expect(tabRow(libL10n.server), findsOneWidget);
+    expect(backTab, findsNothing);
     // No column beside the content, and the settings are still leavable.
     expect(find.byType(SideBarTile), findsNothing);
     expect(find.byType(BackButton), findsOneWidget);
-
-    expect(tabRow(libL10n.server), findsOneWidget);
-    // Not drawn at all: the root has no level above it.
-    expect(backTab, findsNothing);
   });
 
   testWidgets('a tab that is a branch goes in and shows what is first inside', (
     tester,
   ) async {
     await pump(tester, width: 500);
+    await tester.tap(backTab);
+    await settle(tester, 20);
 
     await tester.tap(tabRow(libL10n.server));
-    await settle(tester);
+    await settle(tester, 20);
 
     // The level below, with the branch's own settings showing rather than a row
     // of tabs with none of them on.
@@ -189,6 +201,8 @@ void main() {
 
   testWidgets('the bar is as wide as the level on it', (tester) async {
     await pump(tester, width: 500);
+    await tester.tap(backTab);
+    await settle(tester, 20);
 
     // The root has more tabs than the window is wide, so the bar fills it.
     final atRoot = tester.getSize(find.byKey(settingsTabsKey)).width;
@@ -197,47 +211,65 @@ void main() {
     await tester.tap(tabRow(libL10n.server));
     await settle(tester, 20);
 
-    // Four tabs and a way back: shorter, and it got there over several frames.
+    // Four tabs and a way back: shorter than the eight it came from.
     expect(tester.getSize(find.byKey(settingsTabsKey)).width, lessThan(atRoot));
   });
 
   testWidgets('the tab being shown is filled in', (tester) async {
     await pump(tester, width: 500);
-    await tester.tap(tabRow(libL10n.server));
-    await settle(tester, 20);
 
     final scheme = Theme.of(tester.element(find.byKey(settingsTabsKey))).colorScheme;
     Color? fillOf(String title) {
-      final box = find.ancestor(
-        of: tabRow(title),
-        matching: find.byType(AnimatedContainer),
-      );
+      // The pill is around the icon, not the label — so it is a sibling of the
+      // text, reached through the button's own column.
+      final button = find.ancestor(of: tabRow(title), matching: find.byType(Column)).first;
+      final pill = find.descendant(of: button, matching: find.byType(AnimatedContainer));
       final decoration =
-          tester.widget<AnimatedContainer>(box.first).decoration as BoxDecoration?;
+          tester.widget<AnimatedContainer>(pill.first).decoration as BoxDecoration?;
       return decoration?.color;
     }
 
     // Filled rather than only recoloured — a shade of grey against another is
     // not a state at a glance.
     expect(fillOf(libL10n.setting), scheme.secondaryContainer);
-    expect(fillOf(l10n.serverOrder), isNull);
+    expect(fillOf(libL10n.ai), isNull);
   });
 
-  testWidgets('the leading button goes back out a level', (tester) async {
+  testWidgets('the leaves of a level sit side by side, and drag between', (
+    tester,
+  ) async {
     await pump(tester, width: 500);
 
+    expect(find.byType(PageView), findsOneWidget);
+    expect(barTitle(tester), libL10n.setting);
+
+    // Dragging the content is the same move as tapping the next tab, which is
+    // what putting them side by side promises.
+    await tester.drag(find.byType(PageView), const Offset(-400, 0));
+    await settle(tester, 20);
+
+    expect(barTitle(tester), libL10n.ai);
+  });
+
+  testWidgets('going a level in and out is a push and a pop', (tester) async {
+    await pump(tester, width: 500);
+    await tester.tap(backTab);
+    await settle(tester, 20);
+
+    final atRoot = find.byType(PageView).evaluate().length;
+
     await tester.tap(tabRow(libL10n.server));
-    await settle(tester);
-    await tester.tap(tabRow(l10n.serverOrder));
-    await settle(tester);
-    expect(barTitle(tester), l10n.serverOrder);
+    // Mid-transition both levels are on screen, which is what a push looks like.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(find.byType(PageView).evaluate().length, greaterThan(atRoot));
+
+    await settle(tester, 20);
+    expect(find.byType(PageView).evaluate().length, atRoot);
+    expect(barTitle(tester), libL10n.setting);
 
     await tester.tap(backTab);
-    await settle(tester);
-
+    await settle(tester, 20);
     expect(tabRow(libL10n.app), findsOneWidget);
-    // What was picked is still what is showing, and the branch it is inside is
-    // the tab that says so.
-    expect(barTitle(tester), l10n.serverOrder);
   });
 }
