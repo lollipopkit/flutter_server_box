@@ -440,7 +440,9 @@ in the test rather than argued with.
       Run by hand both ways; cancelling mid-transfer left no partial file and
       no `.sb-part-N` on the far side, which is the staged-then-renamed path
       rather than the local one the test covers.
-- [ ] server → server between two different hosts.
+- [x] server → server between two different hosts — run by hand between two
+      real servers. One job in the list rather than a download and an upload,
+      and nothing lands on this device on the way.
 - [ ] Two host-key prompts raised by one transfer queue rather than stack.
       Nothing covers this, and it needs two servers with unknown keys.
 
