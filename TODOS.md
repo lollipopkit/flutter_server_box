@@ -420,3 +420,92 @@ M3:39 行数据,但**第一次跑是失败的** —— `fork+exec 50` 报 -360 m
 4. **monitor**:扩展周期里读同一个目录、执行、结果并进 status 响应;web 端做编辑界面。
    注意 monitor 现在**根本不跑** Status(采集已换成 `sbm_native`,共享脚本只用于扩展函数),
    所以这不是「把配置传进去」,是新增一段采集。
+
+## Hive → SQLite:分阶段做,以及加密怎么落
+
+想换的理由有三条:Hive 把整个盒子读进内存、compact 靠重写整个文件;它只加密 value,
+key 和盒子结构在文件里是明文;`hive_ce` 是社区接手的 fork。本机实测的盒子大小:
+`connection_stats_enc.hive` 227KB、`agent_conversation_enc.hive` 128KB,其余(setting /
+server / history / key / snippet)都在 10KB 以下——所以「Hive 撑不住」这个说法只对前两个
+成立。
+
+### 这条路已经走过一次
+
+`fix/sqlite-migration-safety` 分支(2026-02-28 ~ 03-07,未合入任何主线,也不是当前 HEAD
+的祖先)已经做完了一版:
+
+- `drift 2.29` + `sqlcipher_flutter_libs 0.6.8`
+- **完全关系化的 schema**——`Servers` / `ServerCustoms` / `ServerWolCfgs` / `ServerTags` /
+  `ServerEnvs` / `PrivateKeys`,一张表一个概念
+- `lib/data/db/app_db.g.dart` 8157 行生成代码;`5bc6976f ref(store): migrate core stores to
+  async drift and pref` 改了 34 个文件,后面跟着 6 个 `fix: harden ...`
+- 有 `lib/data/migration/hive_to_sqlite_migrator.dart`
+
+**为什么没合,git 里没有说明,不要当成结论。** 但从 diff 的形状能看出代价在哪:它同时
+改了三件事——存储引擎、数据模型、以及 `Store` 的同步 API 变成异步。三个一起动,所以
+provider、backup、SFTP 页面、server 编辑页全被卷进去了。
+
+### 三个决定应该拆开
+
+- **引擎 Hive → SQLite**:这是真正想要的。
+- **`Store` API 同步 → 异步**:不必须。`package:sqlite3` 是同步 API,drift 才是异步的。
+  上一版的改动摊到 34 个文件,主要就是这一条带出来的。
+- **K-V blob → 关系化 schema**:不必须,而且只有少数 store 值得。
+
+第一阶段只动引擎,`Store` 接口不变,上层零改动:
+
+```
+kv(store TEXT, key TEXT, value BLOB, updated_at INTEGER, PRIMARY KEY(store, key))
+```
+
+`HiveStore` 换成 `SqliteStore`,`get`/`set`/`keys`/`clear`/`lastUpdateTs` 一一对应;
+`box.watch()` 换成自己发的 per-key 通知,`HivePropListenable` 那套 `_BoxListenerManager`
+逻辑可以整个搬过去。providers、backup、UI 一行不用改。
+
+第二阶段只关系化真正需要 SQL 的:
+
+- **`connection_stats`**:现在为了做时间窗口查询,额外开了一个不加密的 `conn_stats_index`
+  盒子,外加手写的 `_rebuildIndexCore` / `_compactIfNeeded` / 每服务器 100 条上限。这一整套
+  在 SQL 里是一条 `DELETE WHERE timestamp < ?` 加一个索引。
+- **`agent_conversation`**:同理。
+- `setting` / `server` / `snippet` / `key` / `history` 留在 K-V。它们都在 10KB 以下,
+  关系化只换来迁移工作量——上一版的 diff 就是证据。
+
+### 加密:两条路
+
+两条都是 SQLCipher(整库加密,包括 key 和索引)。
+
+- **`sqlcipher_flutter_libs` + `package:sqlite3`**:五个平台都支持;Linux 要 `libssl-dev`、
+  Windows 要 `choco install openssl`(CI 要改);iOS/macOS 装 SQLCipher pod,README 明确写
+  「依赖任何链接普通 sqlite3 的包都会出事」——目前 `pubspec.lock` 里干净,这条不成立,但
+  以后加依赖时要盯着。同步调用是原生的。
+- **Rust `rusqlite` + FRB**:`libsqlite3-sys` 的 `bundled-sqlcipher-vendored-openssl` 把
+  SQLCipher 和 OpenSSL 一起编进去,无系统依赖、无 pod,走现有的 cargokit 出五个平台的产物;
+  同步调用靠 `#[frb(sync)]`。代价:每次 K-V 操作过一次 FFI;而且 CLAUDE.md 写的 FFI 边界
+  原则是「不持有可变状态」,一个数据库连接正好是可变状态,要么破例要么专门论证。
+  注意 Windows 上必须用 vendored-openssl 那个 feature,`bundled-sqlcipher` 单独用只在 Unix
+  上成立。
+
+**倾向第一条**,而且不要 drift。不用 drift 的理由就是上面第二个决定:它是异步优先的,
+而异步化 `Store` 正是上一版把改动摊开的原因。
+
+### 两个具体的点
+
+**密钥要用 raw key,不是 passphrase。** 上一版是 `PRAGMA key = '$escapedKey'`,SQLCipher 会
+把它当口令做 PBKDF2 派生(默认 256000 轮)。而 `SecureStoreProps.hivePwd` 里存的本来就是
+`Hive.generateSecureKey()` 产生的 32 字节随机密钥,直接用 `PRAGMA key = "x'<64位hex>'"`
+跳过派生,既快也没有降低强度。
+
+**迁移的形状。** 每个盒子一次,`Stores.init` 之前跑,用现有 cipher 打开 `*_enc.hive`
+逐 key 写进 `kv` 表;成功后**保留** `.hive` 文件若干版本再删,理由和 `SandboxImport` 一样
+——复制过的原件留着,出问题可回退,并且加 TODO 标记删除时机。`BackupV2` 是 JSON,
+和存储引擎无关,不受影响。
+
+### 顺带要清的残留
+
+上一版分支从没发布,所以下面这些对真实用户不存在,只在开发机上:
+
+- `~/Library/Application Support/ServerBox/app.db` + `app.db-wal`(4KB / 1.7MB,Mar 7),
+  `sqlite3` 已经读不动了。
+- `lib/core/utils/sandbox_import.dart:306` 对 `app.db` 的特判,和 `:375` 跳过 `.db-shm` 的
+  那段——现在是死代码。这轮决定之后,要么删掉,要么改成指向新库。
