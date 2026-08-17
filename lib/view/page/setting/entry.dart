@@ -441,19 +441,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// `SafeArea` reads, so a list scrolls to its end above the bar rather than
   /// under it.
   Widget _buildNarrow(List<SettingsNode> nodes, Widget content) {
+    final mediaQuery = MediaQuery.of(context);
     // The list is the whole of what it has to say; a bar of tabs over it would
     // be the same names twice.
-    if (_path.isEmpty) return content;
-
-    final mediaQuery = MediaQuery.of(context);
-    final level = _levelOf(_path.last, nodes);
+    final entered = _path.lastOrNull;
+    final space = entered == null ? 0.0 : _kTabsHeight + _kTabsMargin * 2;
 
     return Stack(
       children: [
         MediaQuery(
           data: mediaQuery.copyWith(
             padding: mediaQuery.padding.copyWith(
-              bottom: mediaQuery.padding.bottom + _kTabsHeight + _kTabsMargin * 2,
+              bottom: mediaQuery.padding.bottom + space,
             ),
           ),
           child: SafeArea(top: false, child: content),
@@ -464,12 +463,31 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           left: 0,
           right: 0,
           bottom: _kTabsMargin,
-          child: _SettingsTabs(
-            nodes: level,
-            selectedId: _selectedId,
-            canGoBack: _path.isNotEmpty,
-            onTap: _onTab,
-            onBack: _onTabBack,
+          child: AnimatedSwitcher(
+            duration: Durations.medium2,
+            // Springs up past its place and settles, as displacement does
+            // elsewhere. No fade with it: the curve overshoots, and an opacity
+            // past 1 asserts.
+            switchInCurve: _kTabsCurve,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) => SlideTransition(
+              position: Tween(
+                // Far enough to take the shadow with it.
+                begin: const Offset(0, 1.4),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+            child: entered == null
+                ? const SizedBox(key: ValueKey('no_tabs'), width: double.infinity)
+                : _SettingsTabs(
+                    key: ValueKey(entered.id),
+                    nodes: _levelOf(entered, nodes),
+                    selectedId: _selectedId,
+                    canGoBack: true,
+                    onTap: _onTab,
+                    onBack: _onTabBack,
+                  ),
           ),
         ),
       ],

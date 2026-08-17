@@ -78,6 +78,7 @@ final class _SettingsTabs extends StatelessWidget {
   final VoidCallback onBack;
 
   const _SettingsTabs({
+    super.key,
     required this.nodes,
     required this.selectedId,
     required this.canGoBack,

@@ -186,6 +186,21 @@ void main() {
     expect(backTab, findsOneWidget);
   });
 
+  testWidgets('the tabs rise into place rather than appearing', (tester) async {
+    await pump(tester, width: 500);
+
+    await tester.tap(find.text(libL10n.server));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 80));
+    final midway = tester.getTopLeft(find.byKey(settingsTabsKey)).dy;
+
+    await settle(tester, 20);
+    final settled = tester.getTopLeft(find.byKey(settingsTabsKey)).dy;
+
+    // Still on its way up from under the foot of the screen.
+    expect(midway, greaterThan(settled));
+  });
+
   testWidgets('a first-level leaf brings up the ones beside it', (tester) async {
     await pump(tester, width: 500);
 
