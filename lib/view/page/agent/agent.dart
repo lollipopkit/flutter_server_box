@@ -31,13 +31,6 @@ class _AgentPageState extends ConsumerState<AgentPage>
   Widget build(BuildContext context) {
     super.build(context);
     final theme = Theme.of(context);
-    // Selected rather than watched whole: this page rebuilds on nothing else,
-    // and the conversation itself changes on every streamed token.
-    final hasConversations = ref.watch(
-      agentSessionProvider.select(
-        (session) => session.conversations.isNotEmpty,
-      ),
-    );
 
     // The same judgement, width and seam as the server list and the terminal
     // tabs: whether a list gets a column of its own is a property of the
@@ -45,10 +38,14 @@ class _AgentPageState extends ConsumerState<AgentPage>
     return Material(
       color: theme.colorScheme.surface,
       child: SbPaneList(
-        // Nothing to sit beside until there is a conversation: the header
-        // keeps its history and new-conversation buttons, so folding the
-        // column away costs nothing and hands 320pt back to the answer.
-        hasContent: hasConversations,
+        // The column is there from the start, empty or not — the same as the
+        // terminal and file tabs, and for the reason they settled on. Folding
+        // it away until there was a conversation to list saved 320pt of a
+        // window wide enough not to need saving, and cost this tab a second
+        // layout: it greeted a wide window as one column, then rearranged
+        // itself into two the moment anything was said. Read from the outside
+        // it was the Agent tab refusing to split at a width where every other
+        // tab had.
         sideBuilder: (_) => const AgentHistoryPanel(inSheet: false),
         builder: (_, split) => AgentConversationView(
           compact: !split,

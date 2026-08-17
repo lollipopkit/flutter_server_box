@@ -7,12 +7,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:riverpod/misc.dart' show Override;
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
+import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
+import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/view/page/agent/agent.dart';
+import 'package:server_box/view/page/agent/history.dart';
 import 'package:server_box/view/page/agent/view.dart';
 
 /// An [AgentSession] frozen at one state.
@@ -173,6 +177,78 @@ void main() {
 
     testWidgets('off, it offers a newline', (tester) async {
       expect(await actionWith(tester, sendOnEnter: false), TextInputAction.newline);
+    });
+  });
+
+  group('the history column', () {
+    // Reported from a device: at a width where every other tab had split, the
+    // Agent tab had not. The width is not what differs — this page uses the
+    // same `SbPaneList` as the terminal and file tabs — so what is under test
+    // is the extra condition it adds on top of the width.
+    AgentConversation conversation(String id) => AgentConversation(
+      id: id,
+      serverId: globalAgentConversationScope,
+      title: id,
+      createdAt: DateTime(2026),
+      updatedAt: DateTime(2026),
+      protocol: AskAiProtocol.chatCompletions,
+      providerBaseUrl: '',
+      model: '',
+      items: const [],
+    );
+
+    Future<bool> columnShown(
+      WidgetTester tester, {
+      required List<AgentConversation> conversations,
+      double width = 1200,
+    }) async {
+      await pump(
+        tester,
+        locale: const Locale('en'),
+        surface: Size(width, 900),
+        overrides: [
+          agentSessionProvider.overrideWith(
+            () => _FixedSession(
+              AgentSessionState(
+                protocol: AskAiProtocol.chatCompletions,
+                conversations: conversations,
+              ),
+            ),
+          ),
+        ],
+        child: const AgentPage(),
+      );
+      return find.byType(AgentHistoryPanel).evaluate().isNotEmpty;
+    }
+
+    testWidgets('is there once there is a conversation to list', (
+      tester,
+    ) async {
+      expect(
+        await columnShown(tester, conversations: [conversation('a')]),
+        isTrue,
+      );
+    });
+
+    testWidgets('and there before there is anything to list', (tester) async {
+      // This is what was reported. The tab used to fold the column away until
+      // a conversation existed, so a wide window got one layout before the
+      // first message and another after — and until then the Agent tab was
+      // the only one not splitting at a width where the rest had.
+      expect(await columnShown(tester, conversations: const []), isTrue);
+    });
+
+    testWidgets('and not at a width the others would not split at either', (
+      tester,
+    ) async {
+      expect(
+        await columnShown(
+          tester,
+          conversations: [conversation('a')],
+          width: 700,
+        ),
+        isFalse,
+      );
     });
   });
 }
