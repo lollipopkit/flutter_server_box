@@ -31,6 +31,13 @@ Rect _cardOf(WidgetTester tester, String title) => tester.getRect(
       find.ancestor(of: find.text(title), matching: find.byType(Material)).first,
     );
 
+/// Width of one toast's countdown bar, where [_countdownBar] would match every
+/// toast on screen.
+double _barWidthOf(WidgetTester tester, String title) {
+  final card = find.ancestor(of: find.text(title), matching: find.byType(Material)).first;
+  return tester.getSize(find.descendant(of: card, matching: find.byType(ColoredBox))).width;
+}
+
 void main() {
   // Static state: a toast left behind by one test would show up in the next.
   // Every item is disposed with the tree, so nothing is left to animate out and
@@ -529,6 +536,29 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(tester.widget(find.text('Ticking')), same(built));
+  });
+
+  testWidgets('one toast leaving does not restart another countdown', (tester) async {
+    await tester.pumpWidget(_app());
+
+    Toast.show('goes', duration: const Duration(milliseconds: 600));
+    await tester.pump();
+    await tester.pump(_enter);
+
+    Toast.show('stays', duration: const Duration(seconds: 5));
+    await tester.pump();
+    await tester.pump(_enter);
+
+    final before = _barWidthOf(tester, 'stays');
+
+    // 'goes' expires, which takes the pile back down to one — and with it every
+    // input 'stays' is given. None of that is news to its countdown.
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(_exit);
+    await tester.pump(_exit);
+    expect(find.text('goes'), findsNothing);
+
+    expect(_barWidthOf(tester, 'stays'), lessThan(before));
   });
 
   testWidgets('nothing in an open pile expires while it is being read', (tester) async {
