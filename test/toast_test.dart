@@ -94,6 +94,27 @@ void main() {
     expect(find.text('Alone'), findsNothing);
   });
 
+  testWidgets('opening a body grows the card over several frames', (tester) async {
+    await tester.pumpWidget(_app());
+
+    Toast.show('Grow', body: 'a detail line', duration: Duration.zero);
+    await tester.pump();
+    await tester.pump(_enter);
+
+    final collapsed = _cardOf(tester, 'Grow').height;
+
+    await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 40));
+    final midway = _cardOf(tester, 'Grow').height;
+
+    await tester.pump(const Duration(milliseconds: 400));
+    final opened = _cardOf(tester, 'Grow').height;
+
+    expect(midway, greaterThan(collapsed));
+    expect(opened, greaterThan(midway));
+  });
+
   testWidgets('a short title with no body cannot be opened', (tester) async {
     await tester.pumpWidget(_app());
 
