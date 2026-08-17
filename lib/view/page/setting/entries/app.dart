@@ -326,7 +326,10 @@ extension _App on _AppSettingsPageState {
         );
         if (selected != null) {
           _setting.locale.put(selected.code);
-          context.pop();
+          // No `pop`: the picker has already closed — that is what `await`
+          // returning a selection means — so popping here closed the settings
+          // page behind it. `notify` is what makes the new language take
+          // effect; nothing has to be dismissed for that.
           RNodes.app.notify();
         }
       },
