@@ -12,7 +12,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
-import 'package:server_box/view/page/storage/transfer_list.dart';
+import 'package:server_box/view/page/storage/show_transfers.dart';
 
 final class LocalFilePageArgs {
   final bool? isPickFile;
@@ -90,7 +90,6 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
           actionsSink: widget.args?.actionsSink,
           onPathChanged: widget.args?.onPathChanged,
           extraActions: _actions,
-          bottomActions: _bottomActions,
           createActions: _createActions,
           entryActions: _entryActions,
           labelOf: _labelOf,
@@ -103,20 +102,12 @@ class _LocalFilePageState extends ConsumerState<LocalFilePage> {
   List<Widget> _actions(FileBrowserHandle handle) => [
     IconButton(tooltip: libL10n.mission, 
       icon: const Icon(Icons.downloading),
-      onPressed: () => TransferListPage.route.go(context),
+      onPressed: () => showTransfers(context),
     ),
   ];
 
   /// Beside the browser's own "new file / new folder", because bringing a file
   /// in from elsewhere on this device is the same kind of act as making one.
-  List<Widget> _bottomActions(FileBrowserHandle handle) => [
-    if (!_isPickFile)
-      Btn.icon(text: libL10n.add, 
-        icon: const Icon(Icons.file_download),
-        onTap: () => _import(handle),
-      ),
-  ];
-
   /// Bringing a file in from elsewhere on this device is something done *to
   /// the directory*, so it belongs beside "new folder" rather than only on a
   /// button in the bottom bar.

@@ -26,8 +26,8 @@ import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/local.dart';
+import 'package:server_box/view/page/storage/show_transfers.dart';
 import 'package:server_box/view/page/storage/transfer_announce.dart';
-import 'package:server_box/view/page/storage/transfer_list.dart';
 import 'package:server_box/view/widget/page_issue.dart';
 
 part 'sftp_helpers.dart';
@@ -308,7 +308,7 @@ extension _Actions on _SftpPageState {
   List<Widget> _toolbarActions(FileBrowserHandle handle) => [
     Btn.icon(text: libL10n.mission, 
       icon: const Icon(Icons.downloading),
-      onTap: () => TransferListPage.route.go(context),
+      onTap: () => showTransfers(context),
     ),
     if (_sudoHelper.enabled)
       _sudoMode.listenVal(

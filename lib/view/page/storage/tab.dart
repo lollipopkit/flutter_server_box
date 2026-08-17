@@ -9,6 +9,7 @@ import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/page/storage/file_pane.dart';
 import 'package:server_box/view/page/storage/local.dart';
 import 'package:server_box/view/page/storage/send_to.dart';
 import 'package:server_box/view/page/storage/server_file.dart';
@@ -98,6 +99,20 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
     leadingName: libL10n.open,
   );
 
+  /// Whether the rail is showing its search instead of the session list.
+  ///
+  /// The rail's search is for "which server do I open", which is what the rail
+  /// itself is a list of — so it belongs in that column and not over the whole
+  /// window. Only where there is a rail: on one column the same button still
+  /// pushes `showSearch`, which is all a phone can do.
+  bool _railSearching = false;
+
+  /// What the right column is showing instead of the browsers, if anything.
+  ///
+  /// Null is the ordinary state. Set by [FilePaneHost.open] — the transfers,
+  /// a search — and cleared by the way back this page draws for it.
+  WidgetBuilder? _paneView;
+
   late final _picker = _PickPage(
     onLocal: _openLocal,
     onServer: _openRemote,
@@ -186,7 +201,9 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
         // different layout.
         sideBuilder: (_) => _SideBar(
           sessions: _sessions,
-          actions: [_searchBtn, _addBtn],
+          searching: _railSearching,
+          onSearchDone: () => setStateSafe(() => _railSearching = false),
+          actions: [_searchBtn(inRail: true), _addBtn],
           onLocal: _openLocal,
           onServer: _openRemote,
           onSelect: _sessions.select,
@@ -209,6 +226,40 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       });
     }
 
+    // Only while there is a column to lend. Without it `FilePaneHost.of`
+    // answers null and every caller pushes a page, which is what a narrow
+    // window has always done and the only thing it can do.
+    if (!split) return _buildSessions(split);
+
+    final view = _paneView;
+    // Installed around whichever of the two is showing, so that what is *in*
+    // the column can close itself — a search ends by picking something, not by
+    // pressing back.
+    return FilePaneHost(
+      open: (body) => setStateSafe(() => _paneView = body),
+      close: () => setStateSafe(() => _paneView = null),
+      // Stacked, not swapped. The browsers stay mounted underneath: what the
+      // search shows is built by the browser's own state — its entries, its
+      // rows — and replacing it left that state defunct and the column red.
+      //
+      // So the switcher carries only the layer on top, and the layer below is
+      // never rebuilt out of existence. Ignoring pointers while something is
+      // over it, because it is still there to be tapped otherwise.
+      child: Stack(
+        children: [
+          IgnorePointer(ignoring: view != null, child: _buildSessions(split)),
+          AnimatedSwitcher(
+            duration: Durations.short4,
+            child: view == null
+                ? const SizedBox.shrink(key: ValueKey('none'))
+                : Builder(key: const ValueKey('pane'), builder: view),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSessions(bool split) {
     return Scaffold(
       // With a rail beside it there is nothing left for a strip to do: the
       // rail switches sessions and starts them, so all the bar has to say is
@@ -266,7 +317,7 @@ class _FileTabPageState extends ConsumerState<FileTabPage>
       sessionActions: [_SessionActions(sessions: _sessions)],
       // The same two the rail carries. On one screen the picker is a tab
       // rather than a column, and these act on what it lists.
-      leadingActions: [_searchBtn, _addBtn],
+      leadingActions: [_searchBtn(inRail: false), _addBtn],
     ),
   );
 
@@ -396,9 +447,13 @@ extension _Sessions on _FileTabPageState {
 
 /// What acts on the list of places rather than on one browser in it.
 extension _Actions on _FileTabPageState {
-  Widget get _searchBtn => Btn.icon(text: libL10n.search, 
-    icon: const Icon(Icons.search, size: 18),
-    onTap: _showSearch,
+  Widget _searchBtn({required bool inRail}) => Btn.icon(
+    text: libL10n.search,
+    icon: Icon(inRail && _railSearching ? Icons.close : Icons.search, size: 18),
+    onTap: () {
+      if (!inRail) return _showSearch();
+      setStateSafe(() => _railSearching = !_railSearching);
+    },
   );
 
   /// A server this app does not know about yet cannot be browsed, and the rail
@@ -497,6 +552,8 @@ const _kColumnWidth = 300.0;
 class _SideBar extends ConsumerWidget {
   const _SideBar({
     required this.sessions,
+    required this.searching,
+    required this.onSearchDone,
     required this.actions,
     required this.onLocal,
     required this.onServer,
@@ -505,6 +562,12 @@ class _SideBar extends ConsumerWidget {
   });
 
   final SessionTabsController<FileSession> sessions;
+
+  /// Whether to draw the search in place of the session list.
+  final bool searching;
+
+  /// Called when the search is over, by picking or by giving up.
+  final VoidCallback onSearchDone;
 
   /// What acts on the rail rather than on one session in it.
   final List<Widget> actions;
@@ -516,6 +579,25 @@ class _SideBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Switched with a fade, so the column does not change under the pointer
+    // with no sign that it did. Nothing here shares state with what it
+    // replaces, which is why this one may swap rather than stack.
+    return AnimatedSwitcher(
+      duration: Durations.short4,
+      child: searching
+          ? _RailSearch(
+              key: const ValueKey('rail-search'),
+              onPick: (spi) {
+                onSearchDone();
+                onServer(spi);
+              },
+              onDone: onSearchDone,
+            )
+          : _buildSessionList(context, ref),
+    );
+  }
+
+  Widget _buildSessionList(BuildContext context, WidgetRef ref) {
     final state = ref.watch(serversProvider);
 
     return ListenBuilder(
@@ -573,6 +655,111 @@ class _SessionActions extends StatelessWidget {
           for (final action in actions) ...[action, const SizedBox(width: 7)],
         ],
       ),
+    );
+  }
+}
+
+/// The rail's search, drawn where the session list was.
+///
+/// What it looks through is the servers this app knows about, and the answer
+/// opens one as a session — so it belongs in the column the sessions are in.
+/// `showSearch` would draw over the browser beside it as well, which is the
+/// thing the answer is about to change.
+class _RailSearch extends ConsumerStatefulWidget {
+  const _RailSearch({
+    super.key,
+    required this.onPick,
+    required this.onDone,
+  });
+
+  final void Function(Spi spi) onPick;
+  final VoidCallback onDone;
+
+  @override
+  ConsumerState<_RailSearch> createState() => _RailSearchState();
+}
+
+class _RailSearchState extends ConsumerState<_RailSearch> {
+  final _query = TextEditingController();
+
+  /// The way out, in the row the rail's own actions were in — replacing that
+  /// row is what took the button away, and a search with no exit is a column
+  /// the user is stuck in.
+  Widget get _close => IconButton(
+    icon: const Icon(Icons.arrow_back, size: 18),
+    tooltip: libL10n.close,
+    onPressed: widget.onDone,
+  );
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Watched rather than read once: a server added or renamed while this is
+    // open is findable, which is the same reason the route version read the
+    // provider per query.
+    final state = ref.watch(serversProvider);
+    final needle = _query.text.toLowerCase();
+    final found = [
+      for (final id in state.serverOrder)
+        if (state.servers[id] case final spi? when _canBrowse(ref, spi))
+          if (needle.isEmpty ||
+              spi.name.toLowerCase().contains(needle) ||
+              spi.displayAddr.toLowerCase().contains(needle))
+            spi,
+    ];
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 3, right: 11, top: 7, bottom: 7),
+          child: Row(
+            children: [
+              _close,
+              Expanded(
+                // `noWrap`, wrapped here instead: `Input`'s own card adds
+                // vertical padding on top of the field's, which is a row and a
+                // half in a column whose entries are one line each.
+                child: CardX(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 11),
+                    child: Input(
+                      noWrap: true,
+                      controller: _query,
+                      autoFocus: true,
+                      suggestion: false,
+                      onChanged: (_) => setState(() {}),
+                      onSubmitted: (_) {
+                        if (found.length == 1) widget.onPick(found.single);
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          // `SideBarTile`, the same as the list this is standing in for. A
+          // card with a subtitle is a different kind of thing to look at, and
+          // what changed is which servers are shown rather than what a server
+          // in this column looks like.
+          child: found.isEmpty
+              ? Center(child: Text(libL10n.empty, style: UIs.textGrey))
+              : ListView.builder(
+                  itemCount: found.length,
+                  itemBuilder: (_, i) => SideBarTile(
+                    key: ValueKey(found[i].id),
+                    title: found[i].name,
+                    onTap: () => widget.onPick(found[i]),
+                  ),
+                ),
+        ),
+      ],
     );
   }
 }

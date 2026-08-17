@@ -19,6 +19,10 @@ import 'package:server_box/view/page/storage/local.dart';
 /// the list could say "this file" and mean the local one. It now names both
 /// ends, because either of them can be a server and both of them can be this
 /// device.
+/// The transfers, as a page.
+///
+/// What a narrow window gets, and what anything outside the file tab gets:
+/// there is no second column to put them in.
 class TransferListPage extends ConsumerStatefulWidget {
   const TransferListPage({super.key});
 
@@ -32,6 +36,28 @@ class TransferListPage extends ConsumerStatefulWidget {
 }
 
 class _TransferListPageState extends ConsumerState<TransferListPage> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: CustomAppBar(title: Text(libL10n.mission, style: UIs.text18)),
+      body: const TransferListView(),
+    );
+  }
+}
+
+/// The transfers, as a body.
+///
+/// Split out so the file tab can show them in the column beside its rail
+/// rather than pushing a page over the whole window — including over the rail,
+/// which is where someone goes to get back.
+class TransferListView extends ConsumerStatefulWidget {
+  const TransferListView({super.key});
+
+  @override
+  ConsumerState<TransferListView> createState() => _TransferListViewState();
+}
+
+class _TransferListViewState extends ConsumerState<TransferListView> {
   Timer? _speedRefreshTimer;
 
   @override
@@ -52,12 +78,7 @@ class _TransferListPageState extends ConsumerState<TransferListPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar(title: Text(libL10n.mission, style: UIs.text18)),
-      body: _buildBody(),
-    );
-  }
+  Widget build(BuildContext context) => _buildBody();
 
   Widget _buildBody() {
     final transfers = ref.watch(fileTransferProvider).transfers;

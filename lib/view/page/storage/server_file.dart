@@ -10,7 +10,7 @@ import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
-import 'package:server_box/view/page/storage/transfer_list.dart';
+import 'package:server_box/view/page/storage/show_transfers.dart';
 import 'package:server_box/view/widget/page_issue.dart';
 
 /// A server's files, whichever way they are reached.
@@ -144,7 +144,7 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
         extraActions: (_) => [
           IconButton(tooltip: libL10n.mission, 
             icon: const Icon(Icons.downloading),
-            onPressed: () => TransferListPage.route.go(context),
+            onPressed: () => showTransfers(context),
           ),
         ],
         refOf: (path) => MonitorFileRef.forServer(_spi, path),
