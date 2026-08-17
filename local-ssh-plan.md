@@ -212,8 +212,9 @@ The speedup figures are the fork's own benchmarks. Unverified.
 Integration is not small: meson produces `libish.a`, `libish_emu.a`,
 `libfakefs.a` and a guest VDSO (which needs llvm to build), consumed by an
 Xcode project; a filesystem has to reach the device. That is a vendored GPLv3 C
-codebase inside a Flutter app, with its own build step in CI for a platform
-that currently has none.
+codebase inside a Flutter app, with a build step of its own that CI does not
+run: `.github/workflows/build.yml` has a `Build ios` job, but it never calls
+`scripts/build-ish-ios.sh`, so the IPA it uploads is `SBM_ISH = 0`.
 
 ### Measured: the engine builds for iOS and runs Alpine in the simulator
 
@@ -235,7 +236,8 @@ not been run.
 ### The shim, and the switch that removes it
 
 `ios/Runner/ish/sbm_ish.{h,c}` is the whole app-facing surface: `available`,
-`boot`, `read`, `write`, `resize`, `exit_code`. Measured in the simulator —
+`boot`, `open`, `read`, `write`, `resize`, `exit_code`, `close`. Measured in the
+simulator —
 `available=1`, `boot=0`, and `3.22.5 / aarch64 / root` back through it.
 
 Three things it had to get right, each found by getting it wrong:
@@ -333,7 +335,7 @@ why it gets an interpreter.
 
 ### What is left, and what only a device can answer
 
-Done since: `IshShellBackend` is a `ShellBackend` over the six functions,
+Done since: `IshShellBackend` is a `ShellBackend` over the eight functions,
 reading on a 16 ms timer because a blocking read on the Dart isolate starves
 the framework; `Rootfs` is the facade the terminal tab asks, so the entry, the
 rail and the restore path are one code path across both platforms; and
@@ -494,21 +496,56 @@ still writing to (a multi-byte character split across two polls is the case that
 would otherwise reach a user), and `test/ish_exec_test.dart` for the shell the
 guest is actually handed.
 
-### Manual verification — nobody has done these
+### Manual verification
 
 Everything measured so far is on the **simulator**, which is not a sandboxed
-device and has no App Store in front of it. These need hands:
+device and has no App Store in front of it. M4 is done and is below; M1 to M3
+need a phone, and M5 needs a submission:
 
 | # | What | How | Why it cannot be automated here |
 | --- | --- | --- | --- |
 | M1 | The engine runs on real hardware | `SBM_ISH = 1`, run `integration_test/ios_rootfs_test.dart` on an iPhone | The device libraries now build (`scripts/build-ish-ios.sh device`), but nothing has been run on a phone. The simulator shares the Mac's kernel and page protections; a phone does not |
 | M2 | Memory and thermals under load | A real workload — `apk add`, a build, a long-running process — watched in Instruments | An interpreter with a 256 KB output ring and a guest heap on a phone is a different proposition from one on a Mac |
-| M3 | The performance figures (Q3) | `benchmark/run.sh` inside the guest, on a device | The fork's 7–12x claims are its own benchmarks, and the numbers that matter are the ones on the hardware users have |
-| M4 | The strip switch produces a clean build | Build an IPA with `SBM_ISH = 0`, then search the binary for `sbm_ish_boot` and any engine symbol | This is the emergency path. It has been checked at the object level, never on a shipped artifact |
+| M3 | The performance figures (Q3) | `scripts/ios-bench-defines.sh > /tmp/bench.json`, then `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/ios_bench_test.dart -d <device> --profile --publish-port --dart-define-from-file=/tmp/bench.json` | The fork's 7–12x claims are its own benchmarks, and the numbers that matter are the ones on the hardware users have. The harness is written and the run is one command; what it needs is the hardware |
 | M5 | App Store review | Submit, with the feature on, and see | Guideline 2.5.2. Not a technical question, and the downside is the app's next update rather than the feature |
 
 M5 is the one that decides whether any of the rest is worth finishing, and it
 is the reason the switch exists.
+
+#### M4: the switch strips the engine, and the check this document gave for it
+does not work
+
+Measured on `flutter build ios --release --no-codesign` — what CI's `Build ios`
+job runs — with the engine on and then off, nothing else changed:
+
+| `build/ios/iphoneos/Runner.app/Runner` | `SBM_ISH = 1` | `SBM_ISH = 0` |
+| --- | --- | --- |
+| bytes | 5,557,704 | 4,923,136 |
+| exported `sbm_ish_*` | 8 | **8** |
+| engine internals (`xX_main_Xx`, `mount_root`, `pty_open_fake`, `generic_openat`, `do_execve`) | 5 | 0 |
+| strings matching `ish-arm64\|fakefs\|realfs\|devptsfs` | 81 | 0 |
+| strings matching `sqlite` | 66 | 0 |
+| `otool -L` naming `libsqlite3.dylib` | yes | no |
+
+The strip is clean: 620 KB smaller, no engine symbol, no engine string, and
+`sbm_ish_available` compiles to `mov w0, #0; ret` with `sbm_ish_boot` returning
+`-1`.
+
+**But searching for `sbm_ish_boot` proves nothing**, and both this document and
+the comment in `Ish.xcconfig` said to do exactly that. All eight functions carry
+`SBM_ISH_EXPORT` (`used`, default visibility) so that Dart can look them up, and
+at `SBM_ISH = 0` the same eight are still exported — as two-instruction stubs.
+Whoever runs the emergency strip and follows the old instruction finds the
+symbol, concludes the engine is still in, and has learned nothing either way.
+
+What discriminates: **engine-internal symbols**, **engine strings**, and
+`otool -L` losing `libsqlite3.dylib` — the engine's three libraries are static
+(`libish.a`, `libish_emu.a`, `libfakefs.a`) and never appear in `otool -L` at
+all, so sqlite is the only linkage it can show. The size drop is the cheapest
+smoke test. `Ish.xcconfig` and `ios_rootfs.dart` are corrected to match.
+
+One more thing the measurement corrected: the surface is **eight** functions,
+not six — `open` and `close` were missing from every prose count of it.
 
 ### What is left
 
@@ -704,10 +741,11 @@ not established, so the branch is 3.22, the last with apk-tools 2.14.
 
 iOS via ish-arm64 is in as far as a simulator can show: the engine is linked
 behind `SBM_ISH`, bridged to Dart, the app installs its own filesystem, and both
-the terminal and the Agent run on it. What is not done is an iOS build step in
-CI, and what cannot be done here at all is the device and review work — M1 to
-M5. That half carries the review risk; treat it as a separate decision, not a
-continuation.
+the terminal and the Agent run on it. What CI does not do is build the engine —
+the `Build ios` job never runs `scripts/build-ish-ios.sh`, so its IPA is
+`SBM_ISH = 0` — and what cannot be done here at all is the device and review
+work, M1 to M5. That half carries the review risk; treat it as a separate
+decision, not a continuation.
 It is also what turns the agent's local execution from "on the user's
 filesystem" into "in a sandbox", which may be the strongest reason to have built
 it.
@@ -722,7 +760,7 @@ Update this as answers arrive; several decisions above move with them.
 | --- | --- | --- | --- |
 | 1 | Can a `targetSdk` 36 app exec a file in `filesDir` via `linker64`? | **Yes for a bionic binary, no for a musl one** — measured on an API 36 emulator, `integration_test/android_exec_test.dart`. Direct `execve` is denied; the linker maps it and runs it. A musl binary segfaults once its libc is found, because it wants musl's own loader. Unverified on physical hardware | **done** |
 | 2 | How does OpenMinis run rootfs binaries at `targetSdk` 36? | **Answered**: proot's own loader, extracted via `/proc/self/fd` and mapping the guest ELF itself, so the host linker is never asked to understand musl. `RootfsManager.kt:42`, `PRootKernel.kt:83`. Not reproduced here | **done** |
-| 3 | Are ish-arm64's 7–12x figures representative? | Not yet measured. The engine now builds and runs (`scripts/build-ish-ios.sh`), so this is a matter of running `benchmark/run.sh` rather than of finding out whether it works at all | **open** |
+| 3 | Are ish-arm64's 7–12x figures representative? | Not yet measured on a phone. The harness is in: `integration_test/ios_bench_test.dart` runs the fork's own `shellbench.sh` and `cbench_lite_arm64` inside the guest, passed in by `scripts/ios-bench-defines.sh` rather than vendored, and reports on `ISHBENCH\|` lines without asserting a duration. So this is a `flutter drive` on hardware rather than a question of whether it works | **open** |
 | 4 | Does the macOS DMG build ship unsandboxed, or does local shell hide there? | **Answered, and the first answer was wrong.** A sandboxed process cannot host a pty at all, so the entitlement that was meant to fix it bought nothing and was reverted (`ccd2e77b`). iCloud turned out not to need the sandbox either. macOS ships two products from one binary (`52a0ec1b`), and the App Store one hides the feature | **done** |
 | 5 | Is proot GPLv2-only or v2-or-later? | **v2 or later** — the source headers say "either version 2 of the License, or (at your option) any later version" (`src/tracee/tracee.h:9`, `src/cli/cli.c:9`). So it can be taken as GPLv3 and combined with this AGPL-3.0 app even if it were linked rather than invoked | **done** |
 | 6 | Does `flutter_pty` still build against current Flutter on all four desktop/Android targets? | **macOS and Android build and run** — `local_shell_test.dart` on macOS, and on an API 36 emulator both the Device entry and the Alpine one open a shell through it (`rootfs_shell_test.dart`). Linux and Windows untried, and no physical Android device. One warning: `flutter_pty` does not support Swift Package Manager, which Flutter says "will become an error in a future version" — `sbm_ffi` is in the same list, so it is not a new exposure | **partly** |

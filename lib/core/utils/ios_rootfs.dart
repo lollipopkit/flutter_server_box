@@ -19,7 +19,7 @@ import 'package:server_box/core/utils/guest_path.dart';
 /// code at runtime (iOS grants no JIT entitlement) and never hands a guest
 /// binary to the kernel.
 ///
-/// The engine is C, linked into the app and reached through the six functions
+/// The engine is C, linked into the app and reached through the eight functions
 /// in `ios/Runner/ish/sbm_ish.h`. It is absent from any build made with
 /// `SBM_ISH = 0` in `ios/Flutter/Ish.xcconfig` — the switch that exists so a
 /// build without it is one edit away, should App Store review object — and

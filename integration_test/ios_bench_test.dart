@@ -86,9 +86,10 @@ void main() {
     debugPrint('ISHCLOCK ${clock.stdout.trim().replaceAll("\n", " ")}');
 
     // Written to the guest and run from there, the way the fork's host runner
-    // does it. Not passed to `run` as the script itself: that arrives as the
-    // session's command line, and 7 KB of it comes back E2BIG — see the note
-    // in TODOS.md.
+    // does it, so what is measured is the script as the fork ships it. `run`
+    // would take it directly now — it writes anything past 4 KB to a file
+    // itself, since the session's command line is one 4096-byte block — but a
+    // benchmark should not also be measuring that.
     final script = await exec.hostPathOf('/tmp/shellbench.sh', forWrite: true);
     expect(script, isNotNull, reason: '/tmp is not a path the guest exposes');
     await File(script!).writeAsString(shellbench, flush: true);

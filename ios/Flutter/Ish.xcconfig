@@ -20,8 +20,20 @@
 //     2. flutter build ipa
 //
 // Nothing else changes: no Dart edit, no pubspec change, no entitlement.
-// `otool -L` and a search for `sbm_ish_boot` in the binary are how to check
-// that what shipped is what was meant.
+//
+// To check that what shipped is what was meant, do NOT search for
+// `sbm_ish_boot`. All eight `sbm_ish_*` functions are exported either way —
+// Dart looks them up by name, so they carry `used` and default visibility, and
+// at SBM_ISH = 0 they are still there as two-instruction stubs. Measured, on
+// `Runner` from a release build:
+//
+//     nm -a Runner | grep -E 'xX_main_Xx|mount_root|pty_open_fake'   # 5 -> 0
+//     strings - Runner | grep -icE 'ish-arm64|fakefs|realfs'         # 81 -> 0
+//     otool -L Runner | grep libsqlite3                              # yes -> no
+//     stat -f %z Runner                                              # ~620 KB smaller
+//
+// The engine's own libraries are static, so `otool -L` can only ever show the
+// sqlite it drags in; that is why it is a signal and not a listing.
 //
 // ## Default
 //

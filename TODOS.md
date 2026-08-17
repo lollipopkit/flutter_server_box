@@ -319,8 +319,15 @@ pin 不会静默丢掉修复。
 认领控制终端,所以 `/dev/tty`、job control、Ctrl-C 都对了;会话最后一个 fd 关闭时 tty 也
 会被释放,adhoc fd 从来不会。命令会话(`command != NULL`)另外关掉 `OPOST` 和 `ECHO`。
 
-模拟器实测(iPhone 17 Pro Max, iOS 26.5):`integration_test/ios_rootfs_test.dart` 五条
+模拟器实测(iPhone 17 Pro Max, iOS 26.5):`integration_test/ios_rootfs_test.dart` 八条
 全过,`tty` 和 `readlink /dev/fd/1` 都报 `/dev/pts/N`,`echo > /dev/stdout` 能到。
+
+**命令行 4 KB 上限,已绕开。** `sbm_ish_open` 把 `/bin/sh`、`-c` 和命令拼进一个 4096 字节的
+块(`ios/Runner/ish/sbm_ish.c:525`),超出返回 `-E2BIG`,到调用方是「the guest refused a
+session (-7)」——这句话不提长度。guest 自己的 `ARGV_MAX` 是 32 页,从来不是限制方。撞得到
+这堵墙的是 Agent 的 shell 工具:脚本由模型生成,长度不受约束。`IshExec.run` 现在超过 4000
+字节就把脚本写进 guest 的 `/tmp` 再 `sh` 它,读脚本的仍是 session 自己那个 shell,重定向、
+`export` 和退出码都不变。模拟器实测:4000 字节能开,5000 字节返回 -7。
 
 **Agent 的 iOS 本地目标**是 `IshExec`,形状照 Android(容器是唯一的本机,文件工具在
 容器内解析,共用 `resolveWithinRoot` 这条边界)。一个设计点:pty 对 `ServerExec` 是错的
@@ -331,9 +338,19 @@ console 上剩下的(重定向本身失败时 shell 的报错)算作 stderr。
 不需要真机就能跑的两个测试:`test/file_tail_test.dart`(边写边读,多字节字符跨轮次
 截断是会被用户撞到的那个 case)、`test/ish_exec_test.dart`(实际交给 guest 的那段 shell)。
 
-剩下的都在 `local-ssh-plan.md` 的 M1–M5:真机跑引擎、Instruments 看内存和发热、
-`benchmark/run.sh` 出性能数、`SBM_ISH=0` 的 IPA 搜符号确认剥干净、送审。另外 CI 还没有
-iOS 的构建步骤。
+剩下的是 `local-ssh-plan.md` 的 M1、M2、M3、M5:真机跑引擎、Instruments 看内存和发热、
+`integration_test/ios_bench_test.dart` 在设备上出性能数、送审。CI 有 `Build ios` job,但它
+不跑 `scripts/build-ish-ios.sh`,所以上传的 IPA 一直是 `SBM_ISH=0`。
+
+**M4(止血开关剥干净)已验,结论和检查方法分开说。** Release 设备构建两次,只改开关:
+引擎内部符号 5 → 0,`ish-arm64|fakefs|realfs` 字符串 81 → 0,sqlite 字符串 66 → 0,
+`otool -L` 里的 `libsqlite3.dylib` 消失,二进制小 620 KB;`sbm_ish_available` 编成
+`mov w0,#0; ret`。剥得干净。
+
+但**原来写的检查方法是错的** —— 文档和 `Ish.xcconfig` 都说"搜 `sbm_ish_boot`",而八个
+`sbm_ish_*` 两边都导出(Dart 按名字查符号,所以带 `used`;关掉时它们是两条指令的桩)。
+照旧说明做的人会搜到符号、以为没剥掉。能区分的是引擎内部符号、引擎字符串、`otool -L`
+里的 sqlite。三处说明已改。顺带更正:FFI 面是八个函数,不是六个。
 
 ## 自定义命令:改成服务器上的文件,三层一起动
 
