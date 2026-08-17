@@ -236,8 +236,32 @@ extension _Open on _SftpPageState {
     return _SftpStart(
       backend: backend,
       home: home,
-      path: widget.args.initPath ?? await _lastPath(backend) ?? home,
+      path:
+          widget.args.initPath ??
+          await _lastPath(backend) ??
+          await _openable(backend, home) ??
+          '/',
     );
+  }
+
+  /// [path] if it can be listed, else null.
+  ///
+  /// The remembered path has always been checked this way; the home directory
+  /// was not, and a home that cannot be listed is not rare — a user whose home
+  /// is `/root` by way of the fallback below, an account with no home on this
+  /// host, a chrooted SFTP subsystem. Unchecked it opened the browser onto a
+  /// permission error every single time, with nothing to press: the roots
+  /// offered by that error view come from a monitor agent, and this is SFTP.
+  ///
+  /// `/` is the last resort rather than a failure. It is the same place the
+  /// browser's root already is, so going up from anywhere reaches it anyway.
+  Future<String?> _openable(SftpFileBackend backend, String path) async {
+    try {
+      await backend.list(path);
+      return path;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Asked of the server rather than assumed: a user's home is wherever
@@ -264,13 +288,7 @@ extension _Open on _SftpPageState {
     if (!Stores.setting.sftpOpenLastPath.fetch()) return null;
     final remembered = Stores.history.sftpLastPath.fetch(_spi.id);
     if (remembered == null) return null;
-    final path = _normalizeSftpPath(remembered);
-    try {
-      await backend.list(path);
-      return path;
-    } catch (_) {
-      return null;
-    }
+    return _openable(backend, _normalizeSftpPath(remembered));
   }
 }
 

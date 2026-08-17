@@ -7,6 +7,7 @@ import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/storage/file_browser.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/page/storage/transfer_list.dart';
@@ -95,6 +96,29 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
     super.dispose();
   }
 
+  /// Where this server was left, or null to open at the root.
+  ///
+  /// The same store and the same setting `SftpPage` uses. Both are named after
+  /// SFTP because it was the only server backend when they were written; what
+  /// they hold is "where this server id was last browsed", which is the same
+  /// question here.
+  ///
+  /// Not checked before use, unlike SFTP's — that check costs a round trip
+  /// before the page can be built, and the failure it would avoid is the one
+  /// this page already handles well: a refusal offers the agent's roots as
+  /// chips, which is one tap.
+  String? get _lastPath {
+    if (!Stores.setting.sftpOpenLastPath.fetch()) return null;
+    return Stores.history.sftpLastPath.fetch(_spi.id);
+  }
+
+  void _onPathChanged(String path) {
+    widget.args.onPathChanged?.call(path);
+    if (Stores.setting.sftpOpenLastPath.fetch()) {
+      Stores.history.sftpLastPath.put(_spi.id, path);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FileBrowserPage(
@@ -108,10 +132,15 @@ class _MonitorFilePageState extends ConsumerState<_MonitorFilePage> {
         // holding the page back on a round trip, every time, for the case the
         // user can resolve in one.
         root: '/',
-        initialPath: widget.args.initPath,
+        // Where it was left, which `/` never is: the agent confines every
+        // request to the roots its operator named, so opening at the root
+        // means a refusal on every single visit. Nothing remembered still
+        // opens at `/` and still offers those roots as chips — that is the
+        // first visit, and it is one tap.
+        initialPath: widget.args.initPath ?? _lastPath,
         isPickDir: widget.args.isSelect,
         actionsSink: widget.args.actionsSink,
-        onPathChanged: widget.args.onPathChanged,
+        onPathChanged: _onPathChanged,
         extraActions: (_) => [
           IconButton(tooltip: libL10n.mission, 
             icon: const Icon(Icons.downloading),
