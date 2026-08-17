@@ -82,15 +82,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   String? _selectedId;
 
-  /// Opened on the first branch rather than nothing: the leaves at the root are
-  /// the odds and ends — backup, keys, about — and starting on one of those
-  /// answers "what is in here" with the least of it.
+  /// A wide window has to be showing something from the start, so it opens on
+  /// the first group with its branch unfolded. A narrow one opens on the list
+  /// and [_path] stays empty until a row is picked.
   @override
   void initState() {
     super.initState();
     final first = _buildNodes().firstWhereOrNull((e) => !e.isLeaf);
     if (first == null) return;
-    _path.add(first);
     _expanded.add(first.id);
     _selectedId = first.firstLeaf?.id;
   }
@@ -253,10 +252,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   /// A tab is a tab: it shows something. Tapping a branch goes into it *and*
   /// selects what is first inside, rather than leaving a row of tabs with none
-  /// of them on.
+  /// of them on. The same applies to a row of the list.
   void _onTab(SettingsNode node) {
     setState(() {
-      if (node.isLeaf) {
+      if (node.isLeaf && _path.isNotEmpty) {
         _selectedId = node.id;
         return;
       }
@@ -316,27 +315,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     return null;
   }
 
-  /// What the content navigator is showing, outermost first.
-  ///
-  /// Wide, that is one level — the one the selected leaf is on — and moving to
-  /// another swaps it. Narrow it is the levels walked into, so going deeper is a
-  /// push and coming back is a pop, with the transition each of those has.
-  List<({String id, List<SettingsNode> leaves})> _groupStack({
-    required bool wide,
-    required List<SettingsNode> nodes,
-    required SettingsNode selected,
-  }) {
-    if (wide) {
-      final leaves = _groupOf(nodes, selected.id) ?? const <SettingsNode>[];
-      final owner = _path.isEmpty ? 'root' : _path.last.id;
-      return [(id: leaves.isEmpty ? owner : leaves.first.id, leaves: leaves)];
-    }
-
-    final stack = [(id: 'root', leaves: nodes.where((e) => e.isLeaf).toList())];
-    for (final branch in _path) {
-      stack.add((id: branch.id, leaves: branch.children.where((e) => e.isLeaf).toList()));
-    }
-    return stack.where((e) => e.leaves.isNotEmpty).toList();
+  /// The level [node] leads to: what is inside a branch, and what stands beside
+  /// a leaf.
+  static List<SettingsNode> _levelOf(SettingsNode node, List<SettingsNode> nodes) {
+    return node.isLeaf ? nodes : node.children;
   }
 
   Widget _buildScaffold({
@@ -351,7 +333,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       // The one bar the page has, naming whatever is being shown. The pages in
       // it are given `embedded: true` and drop their own.
       appBar: CustomAppBar(
-        title: Text(selected.title, style: const TextStyle(fontSize: 20)),
+        // The list names itself; everything else is named by what it shows.
+        title: Text(
+          !wide && _path.isEmpty ? libL10n.setting : selected.title,
+          style: const TextStyle(fontSize: 20),
+        ),
         actions: [
           Btn.text(
             text: context.libL10n.logs,
@@ -409,20 +395,34 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     required List<SettingsNode> nodes,
     required SettingsNode selected,
   }) {
-    final stack = _groupStack(wide: wide, nodes: nodes, selected: selected);
+    Widget pagesOf(String id, List<SettingsNode> level) {
+      return _SettingsPages(
+        key: ValueKey('pages_$id'),
+        leaves: level.where((e) => e.isLeaf).toList(),
+        selectedId: selected.id,
+        onChanged: _onSelect,
+      );
+    }
 
     return Navigator(
       pages: [
-        for (final group in stack)
+        if (wide)
           MaterialPage<void>(
-            key: ValueKey(group.id),
-            child: _SettingsPages(
-              key: ValueKey('pages_${group.id}'),
-              leaves: group.leaves,
-              selectedId: selected.id,
-              onChanged: _onSelect,
-            ),
+            key: ValueKey(_groupOf(nodes, selected.id)?.firstOrNull?.id ?? 'root'),
+            child: pagesOf(selected.id, _groupOf(nodes, selected.id) ?? const []),
+          )
+        else ...[
+          // What settings there are, which is where a narrow window starts.
+          MaterialPage<void>(
+            key: const ValueKey('root'),
+            child: _SettingsList(nodes: nodes, onTap: _onTab),
           ),
+          for (final entered in _path)
+            MaterialPage<void>(
+              key: ValueKey(entered.id),
+              child: pagesOf(entered.id, _levelOf(entered, nodes)),
+            ),
+        ],
       ],
       onDidRemovePage: (page) {
         // A page can also go because the system back gesture took it. What the
@@ -441,8 +441,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// `SafeArea` reads, so a list scrolls to its end above the bar rather than
   /// under it.
   Widget _buildNarrow(List<SettingsNode> nodes, Widget content) {
+    // The list is the whole of what it has to say; a bar of tabs over it would
+    // be the same names twice.
+    if (_path.isEmpty) return content;
+
     final mediaQuery = MediaQuery.of(context);
-    final level = _path.isEmpty ? nodes : _path.last.children;
+    final level = _levelOf(_path.last, nodes);
 
     return Stack(
       children: [

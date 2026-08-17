@@ -224,6 +224,34 @@ final class _TabButton extends StatelessWidget {
   }
 }
 
+/// The first thing a narrow window shows: what settings there are.
+///
+/// Flat, and every row goes somewhere. The wide menu opens a branch in place
+/// because it has a column to open it into; here there is only the one screen,
+/// so a branch is a door rather than a fold.
+final class _SettingsList extends StatelessWidget {
+  final List<SettingsNode> nodes;
+  final void Function(SettingsNode node) onTap;
+
+  const _SettingsList({required this.nodes, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      children: [
+        for (final node in nodes)
+          SideBarTile(
+            title: node.title,
+            icon: node.icon,
+            onTap: () => onTap(node),
+            trailing: const Icon(Icons.chevron_right, size: 18),
+          ),
+      ],
+    );
+  }
+}
+
 /// One level's leaves, side by side.
 ///
 /// A [PageView] rather than one page swapped for another: the tabs under it are
