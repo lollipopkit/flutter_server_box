@@ -2,35 +2,6 @@
 
 不在排期内的想法和已知缺口,先记在这里,免得丢了。
 
-## App:直接通过 HTTP 读取服务器数据,而不是只走 SSH + shell
-
-目前 Flutter app 读取服务器状态的唯一方式是:SSH 上去、上传并运行生成的脚本、
-解析 `SrvBoxSep` 分隔的文本输出。哪怕这台服务器本来就跑着 `monitor`(它本来就
-通过带鉴权的 HTTP API 暴露同样的数据——甚至更多,包括历史数据),app 也只走
-这一条路径。
-
-想法:让 app 可以选择直接通过 HTTP API(`/api/v1/status`、`/api/v1/metrics`、
-`/api/v1/metrics/history`)访问服务器上的 `monitor` 实例,而不是走 SSH+shell——
-前提是用户那台服务器上确实跑着 `monitor`。好处:
-- 状态轮询不用再走 SSH 往返 / shell 解析——延迟更低,不用折腾脚本上传和版本管理
-- 能用上 `monitor` 的历史接口(图表)和更丰富的指标(gpus/disk_details/ifaces),
-  现在 SSH+shell 这条路径完全没解析这些
-- 少一条要维护正确性的代码路径——SSH+shell 解析已经积累了一长串平台差异问题
-  (参见 crates/sbm_parser 的 dart_compat 测试用例)
-
-待定问题(先记下来,不是结论):
-- 鉴权/配对体验:app 需要每台服务器的 `monitor` URL + 凭证(和面板那边
-  `monitor/frontend/src/lib/servers.svelte.ts` 的服务器注册表是同一套思路)
-- SSH 大概率还是得留着,因为有些操作 monitor 根本不提供(进程列表/结束进程、
-  关机/重启/休眠、终端、SFTP)——这是在 SSH 之上做加法,不是替代
-- CORS:monitor 的 `cors_allowed_origins` 是为浏览器场景(Pages 面板)设计的;
-  app 不是浏览器,这个限制对它可能根本不适用——需要确认 `ntex_cors`/`Cors`
-  中间件对非浏览器 HTTP 客户端的行为(Origin 头是浏览器加的,Dart 的
-  `http`/`dio` 客户端不主动设置的话不会带,那大概率就和 curl 一样直接绕过
-  CORS 校验、不受影响)
-- app 里需要一个 `monitor` 客户端模块(存 token、配 base URL),以及怎么和现有
-  的按服务器分 provider 的模型整合到一起,这个也要想清楚
-
 ## monitor:relay 模式(不强制暴露公网端口)
 
 目前要从局域网外访问 `monitor` 面板,必须把 agent 的端口暴露到公网(端口转发/
@@ -65,15 +36,6 @@ relay 服务,而不是(或者除了)在本地直接对外提供面板访问;面�
 - relay 是一个新的、独立部署的服务(不是 `monitor` 本身的一部分)——需要单独
   决定放哪个 crate/仓库、怎么部署、TLS/域名怎么搞,这和现在"每个 agent 一个
   单体二进制"的假设不一样,是本仓库目前唯一的例外
-
-## macOS 每核 CPU:monitor 已支持,App 还不行
-
-`monitor` 现在通过 `sysinfo`/Mach 的 `host_processor_info`(参见
-`monitor/src/monitoring/macos_cpu.rs`)在原生运行时能拿到 macOS 真实的每核 CPU
-数据。但 **app** 通过 SSH 连上 macOS 服务器时还是拿不到——macOS 上没有任何 shell
-命令能暴露每核数据(htop 自己的 macOS 后端也是进程内直接调用同一个 Mach API,
-不是靠 shell)。这和上面那条是同一条架构主线:如果 app 能通过 HTTP 和 `monitor`
-实例通信,就能顺带白嫖到真实的每核读数,而 SSH+shell 这条路在这件事上是条死路。
 
 ## sbm_ffi:Swift Package Manager 支持
 
@@ -167,28 +129,14 @@ Apple Silicon 上的 Linux 虚拟机)。
 `model name` 出现次数。`lscpu` 只输出一行,直接接上去核数会变成 1。要改就得
 连解析侧的契约一起改。
 
-## Agent 风险徽标:成因编进枚举,已做
-
-`AskAiCommand.classifyRisk` 是白名单:`readOnly` 是唯一一个对命令下了正面判断的结论,
-其余全是「没认出来」。原来「没认出来」和「匹配到修改型模式」共用 `caution`,而它的
-中文标签是「会更改系统」——对 `sleep 60` 这种命令这是一句假话,和模型自己写的「不会
-修改系统」当场矛盾。
-
-现在枚举是 `readOnly / unknown / unvettedHost / caution / destructive`,三种成因各有
-各的徽标文案,`raisedByUnvettedHost` 这个 bool 去掉了。`canAutoRun` 不变——只有
-`readOnly` 能自动跑。`risk` 是纯 getter、从不序列化,所以加值不涉及任何历史数据迁移。
-
 ## Agent 与多面板:交付了但没验过的部分
 
-代码都已合入(`agent-plan.md`、`pane-plan.md` 已删除),以下手工验证项一直没跑,
-记在这里免得当成验过的:
+代码都已合入,以下手工验证项一直没跑,记在这里免得当成验过的:
 
 **Agent**
 - `serverbox` 的 `open_server` 一次都没被调用过,除单元测试外没有任何运行时证据
 - 移动端完全没跑过:悬浮窗胶囊、贴边、底部面板、键盘遮挡(动画部分有
   `agent_shell_view_test.dart`,真机形态没有)
-- ~~重启后用失效 `session_id` 调用工具~~ **已覆盖**:`agent_stale_session_test.dart`
-  三条,含 `ssh_connect` 的指引和同时给 server 与 session 的情况
 - 拒绝 host key 时工具是否干净失败 —— 只验过接受。**卡在没有注入点**:`_sshConnect`
   直接调 `promptAdHocSshCredential`(UI 对话框)和顶层的 `genClient`,两者都不可替换,
   所以拒绝这条路只能用真机 + 真服务器走
@@ -196,26 +144,8 @@ Apple Silicon 上的 Linux 虚拟机)。
 
 已验证的两条安全规则(凭据不出网、host key 由用户拍板)有出网请求体为证。
 
-**多面板**
-- ~~退出重开后终端能否恢复~~ **已覆盖**。解析那半是 `tmux_restore_state_test.dart`;整条
-  往返在 `ssh_tab_restore_test.dart`,连同「同一服务器的两个 shell 各自恢复」——
-  两个 tab 各自带回自己的 `tmuxWindow`(0 和 3),按 sourceId 折叠就会丢掉第二个。
-  另外覆盖了服务器已删的条目跳过、坏记录不带走其他条目、整份 JSON 读不动时不抛。
-  断言读的是页面写回 store 的那份 tab 集,不是屏幕上的标签:标签在选择器里也出现一次,
-  数不清「两个 tab」和「一个 tab 画了两处」
-- ~~文件页恢复到原来的目录~~ **已修**:会话集从 `RestorableString` 迁到
-  `Stores.history.fileTabs`,和终端 tab 同一个做法,`test/file_tab_restore_test.dart`
-  覆盖(本机会话、服务器会话、服务器已删、全没了回落本机、无 `kind` 的老记录、坏 JSON)。
-  分栏分隔条位置走的是 `PaneSettings`,本来就是设置项,不受影响
-- ~~删除服务器后详情面板是否收回成整宽列表~~ **已覆盖,由两半合成**。页面每次 build 把选中
-  的 id 解析成条目(`servers[selected]`),服务器一删就解析成 null,`detailId` 和
-  `detailBuilder` 同一帧都变 null;`fl_lib/test/adaptive_panes_test.dart` 新增两条盯住
-  这个转换——收回整宽,以及 pane 里push 过的更深一层页面跟着消失(它本来能挺过详情切换)
-
 这几条剩下的共同点:要么得给生产代码加测试用的注入点,要么得有真服务器。都不是「写个测试」
 能解决的,列在这里是为了不再被当成「还没抽时间跑」。
-
-其中文件页那几条当时并入了一份单独的文件清单,那份也已走完并删除。
 
 ## macOS 两套产物:自动导入的那条假设还没实测
 
@@ -242,71 +172,12 @@ Apple Silicon 上的 Linux 虚拟机)。
 传 `path`,所以没有盒子落在那里。哪天有人直接 `Hive.openBox` 不传 path,就会在不沙盒
 版的 `~/Documents` 里冒出一个盒子。
 
-## Android rootfs:剩下的是升级路径和 apk-tools 3
+## Android rootfs:Alpine 分支钉在 3.22
 
-`AndroidRootfs` 已经能用了(下载并校验 Alpine 3.22.5、proot 进 rootfs、terminal tab
-里有入口、`integration_test/rootfs_shell_test.dart` 覆盖到 `apk add`),CI 也构建
-proot 并在构建后检查两个 `.so` 确实进了 APK。剩下两条:
-
-- **Alpine 分支钉在 3.22。** 3.23+ 的 apk-tools 3 在 proot 下所有仓库都报
-  `Permission denied`(同一环境里 busybox `wget` 能取同样的 URL,本地文件仓库也正常),
-  原因未查明。3.22 是最后一个 apk-tools 2.14 的分支。等原因查明或上游修掉再往上跟。
-- ~~升级路径~~ 已做:`.installed` 里的版本和 pin 不一致时,打开 Alpine 终端会提示一次
-  (说明重装会丢容器里 `apk add` 装过的东西),不点就照常用旧的;入口显示的是**已装的**
-  版本号,有更新时副标题写出新版本。留了一条 TODO:marker 为空的老安装当作「更旧」处理,
-  等没有这种安装了可以删。
-
-已经定了的两条,不用再议:
-
-- **只做 arm64。** 构建脚本和 rootfs tarball 都是 aarch64,x86_64 / 32 位设备上
-  `isAvailable` 是 false,入口不显示。
-- **`useLegacyPackaging` 全局开。** 没有按库控制的开关。实测 arm64 release APK:开
-  25.5 MB,关 47.8 MB —— 开了反而更小(解压出来的库在 APK 里是压缩存储的,映射的不是),
-  代价是安装后库存两份。
-
-## Flutter 的 state restoration 在这个 app 里是失效的,已绕开
-
-实测(`test/restoration_bucket_test.dart`):`restorationScopeId` 配上 `home:` 时 bucket
-**是发下来的**,但写进去的值扛不过 `restartAndRestore`;换成 `routes:` 的命名路由也一样。
-页面拿到的是一个新的空 bucket,不是恢复回来的那个 —— 所以会话内一切正常,只有真重启才发现
-什么都没留下。这也否掉了原先记的成因(「没有 bucket」)和第一条出路(「让 route 拿到
-restoration id」)。
-
-三处已经全部迁走,`lib/` 里不再有任何 `RestorationMixin` / `Restorable*`,同一个测试文件里
-有一条扫描守着,防止有人再伸手去用一个「看起来能用」的 API:
-
-- `ssh/tab.dart` —— 终端 tab 集 → `Stores.history.sshTabs`
-- `storage/tab.dart` —— 文件 tab 集 → `Stores.history.fileTabs`(`file_tab_restore_test.dart`)
-- `home.dart` —— 底部 tab 选中项 → `Stores.history.homeTabIndex`
-- `ssh/page/page.dart` —— 页面内的 tmux session/window 换成普通字段。它们从来没持久化过,
-  所以普通字段就是它们一直以来的实际行为;真正跨重启的 tmux 状态由 tab 那层的 JSON 带着走。
-  第三个字段只存 server id、只写不读,删了
-
-store 这条路顺带解决了 saved instance state 本来就扛不住的情况 —— 用户在最近任务里划掉
-app,而「划掉之后回来还在」恰恰是终端最需要的。
-
-## 本机 shell 与 rootfs:各阶段做到哪一步
-
-那份计划(`local-ssh-plan.md`)走完后收拢到这里并删除。代码注释里提到的「stage N」指的是
-下面这几步:
-
-| 阶段 | 内容 | 状态 |
-|---|---|---|
-| 1 | SSH tab 改名为 Terminal;桌面本机 shell 走 `flutter_pty`;`TerminalSession` 收 backend 而不是 `Spi` | 已做,`integration_test/local_shell_test.dart` |
-| 2 | Android 的 `/system/bin/sh`,同一个 backend,只有 toybox | 已做,API 36 模拟器上验过 |
-| 2b | Agent 从 `SSHClient` 改吃 `ServerExec`,并加一个本机目标 | 已做。本机执行默认关闭、且**永不自动执行**,`AskAiCommand.onThisDevice` 无视 `askAiAutoRunSafeCommands` |
-| 3 | 量清楚 Android 到底能不能 exec 自己目录里的文件 | 已做,`integration_test/android_exec_test.dart` |
-| 4 | rootfs:Android 用 proot 进 Alpine,iOS 用 ish-arm64 解释器 | Android 已做;iOS 见下面两节 |
-
-**阶段 3 的结论**(API 36 模拟器,targetSdk 36):直接 `execve` 应用自己目录里的文件被拒
-(errno 13);通过 `/system/bin/linker64` 可以跑 bionic 二进制;musl 二进制找到 libc 之后
-段错误,因为它要的是 musl 自己的 loader。所以那个广为流传的「用 linker64 绕开」是真的,
-但**到不了 Alpine rootfs** —— proot 之所以可行,是它自带 loader、自己映射 guest ELF,
-从不请求内核去理解 musl。
-
-**iOS 的 Agent 本机目标**是 `IshExec`,形状照 Android:容器是唯一的本机,文件工具在容器内
-解析,共用 `resolveWithinRoot` 这条边界。Android 那边更强一层 —— 本机目标**就是**容器,
-`AndroidRootfs.hostPathOf` 把每个路径映射进去、拒绝一切离开它的(含符号链接)。
+3.23+ 的 apk-tools 3 在 proot 下所有仓库都报 `Permission denied`(同一环境里 busybox
+`wget` 能取同样的 URL,本地文件仓库也正常),原因未查明。3.22 是最后一个 apk-tools
+2.14 的分支。等原因查明或上游修掉再往上跟,`integration_test/rootfs_shell_test.dart`
+会在这件事变化时发现。
 
 ## iOS 的 Linux 环境:止血开关怎么用
 
@@ -326,115 +197,25 @@ app,而「划掉之后回来还在」恰恰是终端最需要的。
 默认是 `0`,因为引擎不在仓库里(`scripts/build-ish-ios.sh` 才会构建它),没跑过脚本的
 检出根本链接不了;悄悄少链一个库的构建,比明确不做还糟。
 
-## iOS Linux 环境:代码层面已完成,剩真机和审核
+## iOS Linux 环境:剩发热和送审
 
-装机路径、每会话独立 pty、`/dev` 设备节点、终端入口、Agent 本地目标都做完了,在模拟器
-验过。原来记的两条已修,原因和当初的判断不同:
+代码、模拟器、真机(iPad Pro 11" 三代,iOS 18.7.8)都走完了。引擎 fork 的维护方式见
+`scripts/build-ish-ios.sh` 的注释,剥干净的验证方式见 `scripts/check-ish-linkage.sh`
+—— 它由 `analysis.yml` 的 `iOS Linux engine` job 每次 push 跑一遍。
 
-一个现象,两个串联的 bug,少修一个症状完全不变 —— 这也是第一次判断看起来「被证实」的原因。
-
-**一、open 本身就失败。** `generic_open("/dev/pts/N")` 返回 ENOENT,跟 devptsfs 无关。
-`mount_find`(`fs/mount.c`)有个 thread-local 缓存,判据是「路径以缓存挂载点为前缀」,
-这和「哪个挂载点拥有这条路径」不是同一个问题:`/dev` 是 `/dev/pts/0` 的前缀,但后者属于
-`/dev/pts`。`path_normalize` 逐段走路径,所以查 `/dev/pts/0` 之前必然先查 `/dev`,于是
-必然拿到错的文件系统。在 app 里同一时刻查两次实测:
-
-    cold  /dev/pts/0 → mount='/dev/pts' trimmed='/0'
-    warm  /dev/pts/0 → mount='/dev'     trimmed='/pts/0'
-
-upstream 不触发:那边 `/dev` 在根挂载里,挂载点是 `""`,缓存明确不存它。把 `/dev` 做成
-独立 fakefs 才暴露出来。修在 fork 的 `647408c` —— 直接删掉快路径而不是修正它:那条路径
-为了加 refcount 一样要拿 `mounts_lock`,省下的只是遍历几个挂载点。
-
-**二、后面那个判断也是错的。** `create_stdio`(`kernel/init.c:137`)打开路径后要求
-`S_ISCHR(fd->stat.mode)`,但 `fd->stat` 是 adhoc 文件系统自己的一份 stat
-(`fs/fd.h:114`),`generic_openat` 填的是 `fd->type`;devpts 的 fd 走 `fd_create`,
-该结构体全零,所以这个判断恒为假。`sbm_ish.c` 现在自己打开 slave 并检查真正被设置的
-字段,`create_stdio` 保留为回退分支且落到时会 syslog —— 静默降级正是当初把这件事藏住的
-原因。
-
-**引擎 fork 是新增的维护面。** 修改直接提交进 fork
-([lollipopkit/ShellBox](https://github.com/lollipopkit/ShellBox)),以 submodule 挂在
-`third_party/ish-arm64`。哪个版本参与构建由 gitlink 决定,不在任何脚本里写死 hash;
-更新是 `git submodule update --remote third_party/ish-arm64` 加 `git add`。库编到树外的
-`build/ish/build-<arch>/`,所以构建不会把 submodule 弄脏。
-
-放在 `packages/` 之外,是因为那里放的是通过 pubspec 按路径引用的 Dart fork,而这个是
-meson 编、Xcode 消费的 C 仓库。位置本身有过教训:检出原先在 `build/ish/ish-arm64`,而
-`build/` 被 `.gitignore` 覆盖、`flutter clean` 会删 —— 提交在那里还没推的引擎修复,离
-丢失只差一次 `flutter clean`。
-
-顺带解决的:`generic_openat` 对字符设备走 `dev_open` → `tty_open`,会给 session leader
-认领控制终端,所以 `/dev/tty`、job control、Ctrl-C 都对了;会话最后一个 fd 关闭时 tty 也
-会被释放,adhoc fd 从来不会。命令会话(`command != NULL`)另外关掉 `OPOST` 和 `ECHO`。
-
-模拟器实测(iPhone 17 Pro Max, iOS 26.5):`integration_test/ios_rootfs_test.dart` 八条
-全过,`tty` 和 `readlink /dev/fd/1` 都报 `/dev/pts/N`,`echo > /dev/stdout` 能到。
-
-**命令行 4 KB 上限,已绕开。** `sbm_ish_open` 把 `/bin/sh`、`-c` 和命令拼进一个 4096 字节的
-块(`ios/Runner/ish/sbm_ish.c:525`),超出返回 `-E2BIG`,到调用方是「the guest refused a
-session (-7)」——这句话不提长度。guest 自己的 `ARGV_MAX` 是 32 页,从来不是限制方。撞得到
-这堵墙的是 Agent 的 shell 工具:脚本由模型生成,长度不受约束。`IshExec.run` 现在超过 4000
-字节就把脚本写进 guest 的 `/tmp` 再 `sh` 它,读脚本的仍是 session 自己那个 shell,重定向、
-`export` 和退出码都不变。模拟器实测:4000 字节能开,5000 字节返回 -7。
-
-**Agent 的 iOS 本地目标**是 `IshExec`,形状照 Android(容器是唯一的本机,文件工具在
-容器内解析,共用 `resolveWithinRoot` 这条边界)。一个设计点:pty 对 `ServerExec` 是错的
-形状——两条流会合并、输入会回显、程序会以为自己在终端里。所以命令自己的 stdout/stderr
-重定向到 guest `/tmp` 下两个文件,从 host 读(`realfs` 下两边看的是同一棵目录树),
-console 上剩下的(重定向本身失败时 shell 的报错)算作 stderr。
-
-不需要真机就能跑的两个测试:`test/file_tail_test.dart`(边写边读,多字节字符跨轮次
-截断是会被用户撞到的那个 case)、`test/ish_exec_test.dart`(实际交给 guest 的那段 shell)。
-
-**M2 内存**已在真机(iPad, iOS 18.7.8)上量过,`integration_test/ios_load_test.dart`:
-64 MB 随机数据落盘、三轮 sha256、400 个进程、20 万行排序之后,app 的 RSS 从 479 MB 到
-478 MB(峰值 500 MB),没有增长;guest 之后仍应答 `aarch64`。这些数是 debug 构建的整个
-进程,不是引擎单独的开销,所以它们回答的是"跑完之后 app 还在不在、有没有攒下东西",
-不是"引擎占多少"。
-
-这一轮找到一个缺陷并修了:**guest 没有 `/etc/resolv.conf`**。socket 和网络都正常
-(直连 IP 拿得到 HTTP 应答),但 minirootfs 不带 resolver,iOS 侧也没有人写一个,于是
-`apk` 对每个镜像都报 `temporary error (try again later)`,看起来像镜像挂了。Android 侧
-一直有,两边各写一份是它漂移的原因,现在共用 `lib/core/utils/alpine_seed.dart`。
-已经装过 rootfs 的用户不会再走 `install()`,所以 `IosRootfs.prepare()` 在启动时补一次
-(只在文件不存在时写,不覆盖用户自己指的 DNS)。
+`build.yml` 的 `Build ios` job 不跑 `scripts/build-ish-ios.sh`,所以发布的 IPA 一直是
+`SBM_ISH=0`。这是有意的:引擎要不要随包发是发布时的决定。
 
 剩下两条,都要人:
 
-- **M2 发热。** 内存那半已经自动化了,发热没有 API 可问 —— 一台在降频的设备,从 Dart
-  里看和一台本来就慢的设备完全一样。要 Instruments:`flutter build ios --profile`,
-  Instruments 的 Time Profiler + Thermal State,跑上面那个负载,看 thermal state 有没有
-  离开 nominal。
-- **M5 送审。** 开着功能提交,看结果。Guideline 2.5.2,不是技术问题,而且赌注不是这个功能
-  被拒,是**整个 app 的下一次更新被卡住** —— 止血开关就是为这个存在的。M5 决定其余是否
-  值得做完。
-
-`build.yml` 的 `Build ios` job 不跑 `scripts/build-ish-ios.sh`,所以发布的 IPA 一直是
-`SBM_ISH=0` —— 这是有意的,引擎要不要随包发是发布时的决定。引擎那条编译路径由
-`analysis.yml` 的 `iOS Linux engine` job 覆盖:构建引擎、开着开关编一次、关掉再编一次,
-两次都跑 `scripts/check-ish-linkage.sh`。M4 因此从手工项变成了每次 push 都验。
-
-**M1、M3 已在真机上跑过**(iPad Pro 11" 三代,iOS 18.7.8 —— 是真机,但 M1 芯片,不是手机)。
-M1:`ios_rootfs_test.dart` 9/9,模拟器上成立的在设备上都成立,4 KB argv 墙的位置一模一样。
-M3:39 行数据,但**第一次跑是失败的** —— `fork+exec 50` 报 -360 ms。原因是
-`proc_show_uptime` 用 `%lu` 打印百分秒,`.07` 变成 `.7`,按两位小数解析就是 `.70`,前跳
-0.63 秒,下一次正常读数看着就在倒退。设备实测 300 次读取里 63 次格式不对。已有的
-`the guest clock is a clock` 看不到这个:它在 `sleep 1` 两侧采样、允许 0.5–3.0 秒,0.63 的
-跳变正好落在里面 —— 这是这个文件里第三个时钟 bug,每次都对上一个 bug 写的测试免疫。新增
-`/proc/uptime keeps its two decimal places` 盯 300 次读取的格式和单调性。
-
-修复在 fork 的 `eec9af7e`,已推,submodule 的 gitlink 指着它。
-
-**M4(止血开关剥干净)已验,结论和检查方法分开说。** Release 设备构建两次,只改开关:
-引擎内部符号 5 → 0,`ish-arm64|fakefs|realfs` 字符串 81 → 0,sqlite 字符串 66 → 0,
-`otool -L` 里的 `libsqlite3.dylib` 消失,二进制小 620 KB;`sbm_ish_available` 编成
-`mov w0,#0; ret`。剥得干净。
-
-但**原来写的检查方法是错的** —— 文档和 `Ish.xcconfig` 都说"搜 `sbm_ish_boot`",而八个
-`sbm_ish_*` 两边都导出(Dart 按名字查符号,所以带 `used`;关掉时它们是两条指令的桩)。
-照旧说明做的人会搜到符号、以为没剥掉。能区分的是引擎内部符号、引擎字符串、`otool -L`
-里的 sqlite。三处说明已改。顺带更正:FFI 面是八个函数,不是六个。
+- **发热。** 内存那半已经自动化了(`integration_test/ios_load_test.dart`,真机上跑完
+  64 MB 落盘 + 三轮 sha256 + 400 个进程 + 20 万行排序,RSS 479 → 478 MB,峰值 500 MB,
+  没有增长)。发热没有 API 可问 —— 一台在降频的设备,从 Dart 里看和一台本来就慢的设备
+  完全一样。要 Instruments:`flutter build ios --profile`,Time Profiler + Thermal
+  State,跑同一个负载,看 thermal state 有没有离开 nominal。
+- **送审。** 开着功能提交,看结果。Guideline 2.5.2,不是技术问题,而且赌注不是这个功能
+  被拒,是**整个 app 的下一次更新被卡住** —— 止血开关就是为这个存在的。这一条决定其余
+  是否值得做完。
 
 ## 自定义命令:改成服务器上的文件,三层一起动
 

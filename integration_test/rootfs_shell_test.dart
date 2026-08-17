@@ -121,8 +121,7 @@ void main() {
     await AndroidRootfs.install();
 
     // `ProcessExec`, not the terminal's backend: the Agent's shell tool goes
-    // through this one, and until now nothing had ever run a command on this
-    // device through it — see TODOS.md, "本机 shell 与 rootfs", stage 2b.
+    // through this one, and the terminal working says nothing about it.
     const exec = ProcessExec(inRootfs: true);
 
     final release = await exec.run('cat /etc/alpine-release');

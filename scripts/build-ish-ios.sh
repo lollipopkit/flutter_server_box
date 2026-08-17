@@ -220,6 +220,6 @@ cat <<'NOTE'
 Built. To use them, set `SBM_ISH = 1` — in an untracked ios/Flutter/
 IshLocal.xcconfig rather than in the tracked file — and rebuild.
 
-Not done by this script: the device work that only hands can do — see
-TODOS.md, the two iOS sections. M1, M3 and M4 are done; M2 and M5 are not.
+Not done by this script: the device work that only hands can do — thermals
+under Instruments, and App Store review. See TODOS.md.
 NOTE

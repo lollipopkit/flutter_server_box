@@ -7,9 +7,8 @@ import 'package:server_box/data/provider/ai/global_agent_tools.dart';
 ///
 /// A conversation is restored after a relaunch with its transcript intact, so
 /// the model still sees `session_id`s from before — and ad-hoc connections die
-/// with the app. Listed in TODOS.md as delivered but never exercised; this is
-/// the exercise, because the failure the app must avoid is a bare "not found",
-/// which a model answers by retrying the same dead id.
+/// with the app. The failure the app must avoid is a bare "not found", which a
+/// model answers by retrying the same dead id.
 void main() {
   late ProviderContainer container;
   late GlobalAgentToolService service;

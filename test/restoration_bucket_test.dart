@@ -5,17 +5,21 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// Whether a page under `home:` gets Flutter's restoration, measured.
 ///
-/// TODOS.md records that it does not: "`MaterialApp` 上有 `restorationScopeId`,
-/// 但页面挂在 `home:` 下,而 `home:` 生成的 route 没有 restoration id". That was
-/// written from a debug build on an API 36 emulator where a terminal tab saw
-/// `bucket == null`, and three pages still hold `Restorable*` fields on the
-/// strength of it.
+/// It had been recorded that the bucket never arrived, and that the cause was
+/// an anonymous `home:` route having no restoration id — written from a debug
+/// build on an API 36 emulator where a terminal tab saw `bucket == null`, and
+/// four places held `Restorable*` fields on the strength of it.
 ///
-/// These say the opposite, here. Kept as a measurement rather than a claim
-/// about the app: a widget test's binding supplies its own restoration data,
-/// and a device's comes from the platform, so this narrows where the truth is
-/// without settling it. What it does rule out is the stated *cause* — an
-/// anonymous `home:` route is not, by itself, what withholds a bucket.
+/// These say something narrower and worse. The bucket *is* handed down, and
+/// what is written to it does not survive a restart — so a page looks
+/// restorable, works all session, and loses everything only on a real relaunch.
+/// That also rules out the stated cause: naming the route changes nothing.
+///
+/// Kept as a measurement rather than a claim about the app: a widget test's
+/// binding supplies its own restoration data and a device's comes from the
+/// platform. What settled it for this app was moving the state to stores,
+/// which survives being swiped out of the recents list too — something
+/// restoration never covered.
 void main() {
   setUp(() => _seen.clear());
 
@@ -54,9 +58,7 @@ void main() {
   });
 
   testWidgets('and a named route does not fix it either', (tester) async {
-    // TODOS.md offers two ways out and picks neither: give the route a
-    // restoration id, or move the state to a store as the terminal tab did.
-    // Naming the route is the cheap-looking one, and on its own it is not
+    // Naming the route is the cheap-looking way out, and on its own it is not
     // enough — measured, not argued. Whatever the first route needs, `routes:`
     // instead of `home:` does not supply it.
     await tester.pumpWidget(

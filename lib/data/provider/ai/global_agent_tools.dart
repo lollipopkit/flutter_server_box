@@ -823,8 +823,8 @@ class GlobalAgentToolService {
     // On the two platforms with a userland the local target is that userland or
     // it is nothing. Android's host shell is toybox running as the app, next to
     // its stores and its keys; iOS has no host shell at all. The guest is a
-    // filesystem with none of that in it, and it was built to be that boundary
-    // — see TODOS.md, "本机 shell 与 rootfs", stage 4.
+    // filesystem with none of that in it, and it was built to be that
+    // boundary.
     if (exec.inRootfs && !Rootfs.isReady) {
       throw StateError(
         'This device runs Agent commands inside its Linux userland, and there '

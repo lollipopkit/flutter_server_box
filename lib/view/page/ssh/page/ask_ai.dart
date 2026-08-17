@@ -40,8 +40,8 @@ extension _AskAi on SSHPageState {
     final placement = askAiPanelPlacementForWidth(width);
 
     // The panel's tools act on a server, so there has to be one. A terminal on
-    // this device is out of its reach until the Agent grows a local target —
-    // see TODOS.md, "本机 shell 与 rootfs", stage 2b.
+    // this device has none: the global Agent is what reaches it, through
+    // `LocalTarget`, and this per-server panel is not that.
     final spi = widget.args.spi;
     if (spi == null) return;
 

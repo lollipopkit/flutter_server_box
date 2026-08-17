@@ -8,7 +8,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/misc.dart';
 
-/// Stage 3 of TODOS.md's "本机 shell 与 rootfs", measured rather than argued.
+/// What Android will and will not execute out of the app's own directory,
+/// measured rather than argued.
 ///
 /// Android 10 removed execute permission on an app's own data directory for
 /// anything targeting API 29 or later, and this app targets 36. That is what
