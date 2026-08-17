@@ -133,7 +133,12 @@ final class _IntroPage extends StatelessWidget {
             final controller = TextEditingController();
             final result = await ctx.showRoundDialog<bool>(
               title: l10n.backupPassword,
-              child: Column(
+              // Disposed by the tree. It was never disposed at all before,
+              // which leaks one controller per visit and — unlike the crash
+              // the same shape causes elsewhere — says nothing about it.
+              child: DisposeWith(
+                notifiers: [controller],
+                child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(l10n.backupPasswordTip, style: UIs.textGrey),
@@ -151,6 +156,7 @@ final class _IntroPage extends StatelessWidget {
                     onSubmitted: (_) => ctx.popDialog(true),
                   ),
                 ],
+                ),
               ),
               actions: Btnx.cancelOk,
             );

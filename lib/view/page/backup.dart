@@ -124,36 +124,39 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     final node = FocusNode();
     final result = await context.showRoundDialog<bool>(
       title: l10n.backupPassword,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(l10n.backupPasswordTip, style: UIs.textGrey),
-          UIs.height13,
-          Input(
-            label: l10n.backupPassword,
-            controller: controller,
-            node: node,
-            obscureText: true,
-            onSubmitted: (_) => context.popDialog(true),
-          ),
-        ],
+      // Both disposed by the tree. The focus node has the same problem the
+      // controller does — the field holds it while the route animates out —
+      // and here they were also disposed on two paths, so an early return had
+      // to remember both.
+      child: DisposeWith(
+        notifiers: [controller, node],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.backupPasswordTip, style: UIs.textGrey),
+            UIs.height13,
+            Input(
+              label: l10n.backupPassword,
+              controller: controller,
+              node: node,
+              obscureText: true,
+              onSubmitted: (_) => context.popDialog(true),
+            ),
+          ],
+        ),
       ),
       actions: Btnx.oks,
     );
-    if (result == true) {
-      final pwd = controller.text.trim();
-      if (pwd.isEmpty) {
-        context.showSnackBar(libL10n.empty);
-        controller.dispose();
-        node.dispose();
-        return;
-      }
-      await SecureStoreProps.bakPwd.write(pwd);
-      context.showSnackBar(l10n.backupPasswordSet);
-      setState(() {});
+    if (result != true) return;
+
+    final pwd = controller.text.trim();
+    if (pwd.isEmpty) {
+      context.showSnackBar(libL10n.empty);
+      return;
     }
-    controller.dispose();
-    node.dispose();
+    await SecureStoreProps.bakPwd.write(pwd);
+    context.showSnackBar(l10n.backupPasswordSet);
+    setState(() {});
   }
 
   Widget get _buildTip {

@@ -456,27 +456,31 @@ extension on _PvePageState {
       final otpController = TextEditingController();
       final submitted = await context.showRoundDialog<bool>(
         title: l10n.pveOtpTitle,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(error.message ?? l10n.pveOtpRequired),
-            const SizedBox(height: 13),
-            Input(
-              controller: otpController,
-              label: l10n.pveOtpLabel,
-              hint: '123456',
-              icon: Icons.password,
-              type: TextInputType.number,
-              suggestion: false,
-              autoFocus: true,
-            ),
-          ],
+        // Disposed by the tree. `autoFocus` is exactly the case that breaks
+        // when the controller goes before the field does.
+        child: DisposeWith(
+          notifiers: [otpController],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(error.message ?? l10n.pveOtpRequired),
+              const SizedBox(height: 13),
+              Input(
+                controller: otpController,
+                label: l10n.pveOtpLabel,
+                hint: '123456',
+                icon: Icons.password,
+                type: TextInputType.number,
+                suggestion: false,
+                autoFocus: true,
+              ),
+            ],
+          ),
         ),
         actions: Btnx.cancelOk,
       );
       final otp = otpController.text.trim();
-      otpController.dispose();
 
       if (!mounted || submitted != true) return;
       if (otp.isEmpty) {

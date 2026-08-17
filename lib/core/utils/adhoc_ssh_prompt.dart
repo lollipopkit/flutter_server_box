@@ -160,10 +160,14 @@ Future<AdHocServerSaveResult?> promptSaveAdHocServer({
     return value.isEmpty ? null : value;
   }
 
-  try {
-    return await ctx.showRoundDialog<AdHocServerSaveResult>(
-      title: ctx.l10n.agentSaveServerTitle,
-      barrierDismiss: false,
+  return await ctx.showRoundDialog<AdHocServerSaveResult>(
+    title: ctx.l10n.agentSaveServerTitle,
+    barrierDismiss: false,
+    // All four disposed by the tree rather than after the `await`. The
+    // name field is autofocused, which is the case that reliably still
+    // has an animation running when the route is popped.
+    child: DisposeWith(
+      notifiers: [name, addr, user, pwd],
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -201,29 +205,24 @@ Future<AdHocServerSaveResult?> promptSaveAdHocServer({
           ],
         ),
       ),
-      actionsBuilder: (dialogContext) => [
-        Btn.cancel(),
-        Btn.text(
-          text: libL10n.save,
-          onTap: () {
-            final value = name.text.trim();
-            if (value.isEmpty) return;
-            dialogContext.pop(
-              AdHocServerSaveResult(
-                name: value,
-                monitorAddr: trimmed(addr),
-                monitorUser: trimmed(user),
-                monitorPwd: trimmed(pwd),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  } finally {
-    name.dispose();
-    addr.dispose();
-    user.dispose();
-    pwd.dispose();
-  }
+    ),
+    actionsBuilder: (dialogContext) => [
+      Btn.cancel(),
+      Btn.text(
+        text: libL10n.save,
+        onTap: () {
+          final value = name.text.trim();
+          if (value.isEmpty) return;
+          dialogContext.pop(
+            AdHocServerSaveResult(
+              name: value,
+              monitorAddr: trimmed(addr),
+              monitorUser: trimmed(user),
+              monitorPwd: trimmed(pwd),
+            ),
+          );
+        },
+      ),
+    ],
+  );
 }

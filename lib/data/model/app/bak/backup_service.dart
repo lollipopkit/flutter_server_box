@@ -170,18 +170,23 @@ class BackupService {
     final controller = TextEditingController(text: initial ?? '');
     final result = await context.showRoundDialog<String>(
       title: title ?? libL10n.pwd,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(hint ?? l10n.backupPasswordTip, style: UIs.textGrey),
-          UIs.height13,
-          Input(
-            label: l10n.backupPassword,
-            controller: controller,
-            obscureText: true,
-            onSubmitted: (_) => context.popDialog(controller.text),
-          ),
-        ],
+      // Disposed by the tree: this future completes on the pop, and the
+      // field is still there while the route animates out.
+      child: DisposeWith(
+        notifiers: [controller],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(hint ?? l10n.backupPasswordTip, style: UIs.textGrey),
+            UIs.height13,
+            Input(
+              label: l10n.backupPassword,
+              controller: controller,
+              obscureText: true,
+              onSubmitted: (_) => context.popDialog(controller.text),
+            ),
+          ],
+        ),
       ),
       actions: [
         Btn.cancel(),
@@ -191,7 +196,6 @@ class BackupService {
         ),
       ],
     );
-    controller.dispose();
     return result;
   }
 }

@@ -63,12 +63,15 @@ extension _Actions on _ServerEditPageState {
 
   Future<void> _onTapSudoPassword() async {
     final controller = TextEditingController();
-    try {
-      controller.text = _pendingSudoPassword ?? '';
-      if (!mounted) return;
+    controller.text = _pendingSudoPassword ?? '';
+    if (!mounted) return;
 
-      await context.showRoundDialog(
-        title: libL10n.sudoPwdTitle(libL10n.pwd),
+    // Disposed by the tree, not after this `await`: the dialog's future
+    // completes on the pop, while the field is still mounted and animating.
+    await context.showRoundDialog(
+      title: libL10n.sudoPwdTitle(libL10n.pwd),
+      child: DisposeWith(
+        notifiers: [controller],
         child: Input(
           controller: controller,
           type: TextInputType.visiblePassword,
@@ -78,26 +81,24 @@ extension _Actions on _ServerEditPageState {
           suggestion: false,
           onSubmitted: (_) async => await _saveSudoPassword(controller.text),
         ),
-        actions: [
-          if (_hasStoredSudoPassword.value == true)
-            TextButton(
-              onPressed: () async {
-                await _setPendingSudoPassword(null);
-                if (!mounted) return;
-                context.popDialog();
-              },
-              child: Text(libL10n.clear),
-            ),
-          TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
+      ),
+      actions: [
+        if (_hasStoredSudoPassword.value == true)
           TextButton(
-            onPressed: () async => await _saveSudoPassword(controller.text),
-            child: Text(libL10n.save),
+            onPressed: () async {
+              await _setPendingSudoPassword(null);
+              if (!mounted) return;
+              context.popDialog();
+            },
+            child: Text(libL10n.clear),
           ),
-        ],
-      );
-    } finally {
-      controller.dispose();
-    }
+        TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
+        TextButton(
+          onPressed: () async => await _saveSudoPassword(controller.text),
+          child: Text(libL10n.save),
+        ),
+      ],
+    );
   }
 
   Future<void> _saveSudoPassword(String value) async {
