@@ -51,8 +51,33 @@ ALPINE_SHA256=3fbc6285032ed46821b511292633d7b2a6306a2e254f590e92bdafff56cf2f70
 
 TARGET="${1:-simulator}"
 
-log() { printf '\033[0;34m==>\033[0m %s\n' "$*"; }
+# On stderr, like `die`. Progress is not a value: `build_host` ends by echoing
+# the directory it built into and the caller captures that with `$(...)`, which
+# was swallowing these lines into the path and handing `fakefsify` a name with
+# "==> Configuring macOS host build" in front of it.
+log() { printf '\033[0;34m==>\033[0m %s\n' "$*" >&2; }
 die() { printf '\033[0;31merror:\033[0m %s\n' "$*" >&2; exit 1; }
+
+# Runs a build step quietly, and prints everything it said if it fails.
+#
+# meson and ninja are noisy in success and the `==>` lines above are the point
+# of this script, so their output used to go to /dev/null. That threw away the
+# only account of a failure: a compiler's diagnostics reach ninja's *stdout*,
+# so `>/dev/null` hid exactly the case the output exists for. The first CI run
+# of this script failed with six lines and nothing to go on.
+run_step() {
+  local what="$1"; shift
+  local out
+  out="$(mktemp "$WORK_DIR/step.XXXXXX.log")"
+  if "$@" >"$out" 2>&1; then
+    rm -f "$out"
+    return 0
+  fi
+  printf '\033[0;31merror:\033[0m %s failed:\033[0m\n' "$what" >&2
+  cat "$out" >&2
+  rm -f "$out"
+  exit 1
+}
 
 sha256() {
   if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1
@@ -119,17 +144,20 @@ EOF
 
   log "Configuring $name"
   if [ -d "$build_dir" ]; then
-    meson setup --reconfigure "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 \
-      --buildtype=release --cross-file "$cross" >/dev/null
+    run_step "meson setup --reconfigure ($name)" \
+      meson setup --reconfigure "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 \
+      --buildtype=release --cross-file "$cross"
   else
-    meson setup "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 \
-      --buildtype=release --cross-file "$cross" >/dev/null
+    run_step "meson setup ($name)" \
+      meson setup "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 \
+      --buildtype=release --cross-file "$cross"
   fi
 
   log "Building $name"
   # Named targets rather than everything: `tools/fakefsify` links the host's
   # libarchive and cannot be built for a phone, and it is not wanted there.
-  ninja -C "$build_dir" libish.a libish_emu.a libfakefs.a >/dev/null
+  run_step "ninja ($name)" \
+    ninja -C "$build_dir" libish.a libish_emu.a libfakefs.a
 
   for lib in libish.a libish_emu.a libfakefs.a; do
     [ -f "$build_dir/$lib" ] || die "$lib did not build"
@@ -143,12 +171,14 @@ build_host() {
   local build_dir="$WORK_DIR/build-macos-arm64"
   log "Configuring macOS host build"
   if [ -d "$build_dir" ]; then
-    meson setup --reconfigure "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 --buildtype=release >/dev/null
+    run_step "meson setup --reconfigure (macos)" \
+      meson setup --reconfigure "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 --buildtype=release
   else
-    meson setup "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 --buildtype=release >/dev/null
+    run_step "meson setup (macos)" \
+      meson setup "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 --buildtype=release
   fi
   log "Building macOS host build"
-  ninja -C "$build_dir" >/dev/null
+  run_step "ninja (macos)" ninja -C "$build_dir"
   echo "$build_dir"
 }
 
@@ -193,7 +223,7 @@ build_fakefs() {
   fetch_alpine "$tarball"
   [ -d "$out" ] && { log "Filesystem already built at $out"; return; }
   log "Building the Alpine filesystem"
-  "$host_build/tools/fakefsify" "$tarball" "$out" >/dev/null
+  run_step "fakefsify" "$host_build/tools/fakefsify" "$tarball" "$out"
   log "Built $out"
 }
 

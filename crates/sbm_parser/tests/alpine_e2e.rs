@@ -14,13 +14,23 @@ use std::process::{Command, Stdio};
 const IMAGE: &str = "alpine:3.20";
 const DIR: &str = "/tmp/server_box";
 
-fn docker_available() -> bool {
-    Command::new("docker")
-        .arg("info")
-        .stdout(Stdio::null())
+/// Whether there is a docker that can run *this* image.
+///
+/// Not "is docker installed": the Windows runner has one, and it is in Windows
+/// container mode, where `alpine:3.20` fails to pull with "no matching manifest
+/// for windows/amd64". Asking `docker info` alone let that through and the
+/// suite failed on a machine that was never going to run a Linux container.
+fn docker_runs_linux() -> bool {
+    let out = Command::new("docker")
+        .args(["version", "--format", "{{.Server.Os}}"])
         .stderr(Stdio::null())
-        .status()
-        .is_ok_and(|s| s.success())
+        .output();
+    match out {
+        Ok(out) if out.status.success() => {
+            String::from_utf8_lossy(&out.stdout).trim() == "linux"
+        }
+        _ => false,
+    }
 }
 
 /// Run `sh -c <cmd>` in a fresh Alpine container, piping `stdin` in.
@@ -66,8 +76,8 @@ fn install_then_exec(func: ShellFunc) -> String {
 
 #[test]
 fn alpine_busybox_status_and_process() {
-    if !docker_available() {
-        eprintln!("skipping alpine e2e: docker not available");
+    if !docker_runs_linux() {
+        eprintln!("skipping alpine e2e: no docker that runs Linux containers");
         return;
     }
 

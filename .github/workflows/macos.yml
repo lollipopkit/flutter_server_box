@@ -1,10 +1,21 @@
-# The parts of the macOS build that only a running macOS app can answer:
-# where this build's data goes, whether the keychain can be asked for the box
-# key, and whether `defaults` reads the other build's preferences.
+# That the unsandboxed macOS product still builds, entitlements and all.
 #
-# On its own runner, and only when something it covers changed: this builds the
-# whole app, Rust included, on macOS minutes.
-name: macOS integration
+# It was written to run `integration_test` on a macOS device — the questions
+# only a running app can answer: where this build's data goes, whether the
+# keychain hands over the box key, whether `defaults` reads the other build's
+# preferences. It never once passed. A hosted runner has no session for the
+# app's output to be read from, so every file fails at load with "The log
+# reader stopped unexpectedly, or never started", and the launch itself hits
+# flutter/flutter#176850 ("Failed to foreground app; open returned 1"), which
+# is open and reproduces on ordinary desktops too.
+#
+# So this builds instead of pretending to test. The entitlements the products
+# ship with are guarded by `test/macos_entitlements_test.dart`, which is a
+# plain test and runs in `analysis.yml`; what is left for a macOS runner is
+# whether the thing compiles and links with them — Rust, pods and all. The
+# running-app half needs a machine, and is listed in TODOS.md with the rest of
+# what does.
+name: macOS build
 
 # Duplicated rather than anchored: GitHub Actions does not resolve YAML
 # aliases.
@@ -39,7 +50,7 @@ env:
   PUB_HOSTED_URL: https://pub.flutter-io.cn
 
 jobs:
-  integration:
+  build:
     runs-on: macos-latest
     timeout-minutes: 45
 
@@ -97,7 +108,7 @@ jobs:
           EOF
 
       # `test/macos_entitlements_test.dart` is what guards the entitlements the
-      # products actually ship with; it runs on the checkout, before the step
-      # above rewrites them.
-      - name: Run integration tests
-        run: flutter test integration_test -d macos
+      # products actually ship with; it runs in `analysis.yml`, on a checkout
+      # the step above has not rewritten.
+      - name: Build the unsandboxed app
+        run: flutter build macos --debug

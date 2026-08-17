@@ -221,6 +221,13 @@ agent 的那条完整路径。
 自动导入已在真机上验过:keychain 两个 build 通用,容器读取不弹窗。剩下的是一个决定
 ——文案现在只说「以后可能停止更新」,定下日期之后 `macDmgBody` 要改成具体说法。
 
+**`integration_test/` 里那几个 macOS 用例现在没人跑。** `macos.yml` 原本是
+`flutter test integration_test -d macos`,一次都没绿过:hosted runner 上读不到 app 的
+输出,每个文件都在加载阶段报 `The log reader stopped unexpectedly, or never started`,
+启动本身撞的是 flutter/flutter#176850(`Failed to foreground app; open returned 1`),
+该 issue 仍然 open 且在普通桌面上也复现。那个 workflow 已经改成只构建。要跑它们得有一台
+机器:`flutter test integration_test/sandbox_import_test.dart -d macos`。
+
 另外:`Hive.initFlutter()` 的默认目录仍是 documents,只是 `HiveStore.init` 每次都显式
 传 `path`,所以没有盒子落在那里。哪天有人直接 `Hive.openBox` 不传 path,就会在不沙盒
 版的 `~/Documents` 里冒出一个盒子。

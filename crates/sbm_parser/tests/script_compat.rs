@@ -105,9 +105,42 @@ fn custom_cmd_dir_path_matches_the_shell_expression() {
         // A test runner with no HOME; nothing to compare against.
         return;
     };
-    let home = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE")).unwrap();
-    let expanded = script::custom_cmd_dir(SystemType::Linux).replace("$HOME", &home);
-    assert_eq!(path.to_string_lossy(), expanded);
+
+    // Compared as components rather than as text. `PathBuf` joins with the
+    // host's separator and the expression is a shell string with `/` in it, so
+    // on Windows the two spell one directory two ways — which is a fact about
+    // `\` and not a drift between the halves. This used to assert on the
+    // spelling and failed there for that reason alone.
+    let tail: Vec<String> = path
+        .components()
+        .rev()
+        .take(3)
+        .map(|c| c.as_os_str().to_string_lossy().into_owned())
+        .collect();
+    assert_eq!(
+        tail,
+        vec![
+            script::CUSTOM_CMD_DIR_LEAF.to_string(),
+            "server_box".to_string(),
+            ".config".to_string(),
+        ],
+        "the path the monitor reads is somewhere else now"
+    );
+
+    // The other half, ending in the same three under the home the shell knows.
+    let unix = script::custom_cmd_dir(SystemType::Linux);
+    assert_eq!(
+        unix,
+        format!("$HOME/.config/server_box/{}", script::CUSTOM_CMD_DIR_LEAF),
+        "the expression the generated script expands is somewhere else now"
+    );
+
+    // And that the path really is under the home directory, which is the part
+    // the components above cannot say.
+    let home = std::env::var_os("HOME")
+        .or_else(|| std::env::var_os("USERPROFILE"))
+        .unwrap();
+    assert!(path.starts_with(std::path::PathBuf::from(home)));
 }
 
 /// Windows names its files `.ps1` (`&` will not run an extensionless file),
