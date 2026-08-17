@@ -396,22 +396,38 @@ final class _SettingsMenu extends StatelessWidget {
   List<Widget> _buildNode(BuildContext context, SettingsNode node, int depth) {
     final expanded = expandedIds.contains(node.id);
 
+    final selected = node.isLeaf && node.id == selectedId;
+    void onTap() => node.isLeaf ? onSelect(node) : onToggle(node);
+    final trailing = node.isLeaf
+        ? null
+        : AnimatedRotation(
+            turns: expanded ? 0.25 : 0,
+            duration: Durations.short3,
+            child: const Icon(Icons.chevron_right, size: 18),
+          );
+
     final row = Padding(
       // Indented by depth rather than by a fixed inset, so that a level added
       // later lines up without anyone having to remember this number.
       padding: EdgeInsets.only(left: depth * 14.0),
-      child: _SettingsRow(
-        node: node,
-        selected: node.isLeaf && node.id == selectedId,
-        onTap: () => node.isLeaf ? onSelect(node) : onToggle(node),
-        trailing: node.isLeaf
-            ? null
-            : AnimatedRotation(
-                turns: expanded ? 0.25 : 0,
-                duration: Durations.short3,
-                child: const Icon(Icons.chevron_right, size: 18),
-              ),
-      ),
+      // The first level is the rail this column has always been: it names the
+      // subjects, and a card apiece would make a list of eight into a page of
+      // its own. What opens under it is a card and a tile, as the settings it
+      // leads to are.
+      child: depth == 0
+          ? SideBarTile(
+              title: node.title,
+              icon: node.icon,
+              selected: selected,
+              onTap: onTap,
+              trailing: trailing,
+            )
+          : _SettingsRow(
+              node: node,
+              selected: selected,
+              onTap: onTap,
+              trailing: trailing,
+            ),
     );
 
     return [

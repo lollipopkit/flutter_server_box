@@ -122,15 +122,26 @@ void main() {
     expect(find.byKey(settingsTabsKey), findsNothing);
   });
 
-  testWidgets('every menu row carries an icon', (tester) async {
+  testWidgets('every menu row carries an icon, at whichever level', (tester) async {
     await pump(tester, width: 1200);
 
-    final rows = find.descendant(
+    // The first level is the rail this column has always been; what opens
+    // under it is a card and a tile, as the settings it leads to are.
+    final rail = find.descendant(
+      of: find.byKey(settingsMenuKey),
+      matching: find.byType(SideBarTile),
+    );
+    expect(rail, findsWidgets);
+    for (final tile in tester.widgetList<SideBarTile>(rail)) {
+      expect(tile.icon, isNotNull, reason: tile.title);
+    }
+
+    final tiles = find.descendant(
       of: find.byKey(settingsMenuKey),
       matching: find.byType(ListTile),
     );
-    expect(rows, findsWidgets);
-    for (final tile in tester.widgetList<ListTile>(rows)) {
+    expect(tiles, findsWidgets);
+    for (final tile in tester.widgetList<ListTile>(tiles)) {
       expect(tile.leading, isNotNull);
     }
   });
