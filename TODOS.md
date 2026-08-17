@@ -137,36 +137,19 @@ Apple Silicon 上的 Linux 虚拟机)。
 - `serverbox` 的 `open_server` 一次都没被调用过,除单元测试外没有任何运行时证据
 - 移动端完全没跑过:悬浮窗胶囊、贴边、底部面板、键盘遮挡(动画部分有
   `agent_shell_view_test.dart`,真机形态没有)
-- 拒绝 host key 时工具是否干净失败 —— 只验过接受。**卡在没有注入点**:`_sshConnect`
-  直接调 `promptAdHocSshCredential`(UI 对话框)和顶层的 `genClient`,两者都不可替换,
-  所以拒绝这条路只能用真机 + 真服务器走
-- 完整场景里的 monitor 安装那一半:验证时用的是容器,没有 systemd
+- 拒绝 host key 时工具是否干净失败 —— 只验过接受。原先记的「没有注入点」不成立:
+  `genClient` 本来就收 `onHostKeyPrompt`,是 `_sshConnect` 没有往下传。要自动化就把它
+  透出来;在那之前是真服务器 + 换过 host key 才走得到
+- 完整场景里的 monitor 安装那一半:验证时用的是容器,`install.sh` 在没有 systemd 的机器上
+  直接拒绝(「Distribution without systemd is not supported yet」),所以真正的安装分支
+  一次都没跑过
 
 已验证的两条安全规则(凭据不出网、host key 由用户拍板)有出网请求体为证。
 
-这几条剩下的共同点:要么得给生产代码加测试用的注入点,要么得有真服务器。都不是「写个测试」
-能解决的,列在这里是为了不再被当成「还没抽时间跑」。
+## macOS 两套产物:App Store 版什么时候停更
 
-## macOS 两套产物:自动导入的那条假设还没实测
-
-引导和迁移已经做完(`DmgNotice`、`SandboxImport`、`Paths` 的非沙盒分支)。不沙盒版
-首次启动会把 `~/Library/Containers/com.lollipopkit.toolbox/Data/Documents` 整个复制
-到 `~/Library/Application Support/ServerBox`,覆盖两类人:App Store 版用户,以及
-`52a0ec1b` 之前那批**沙盒版 DMG** 用户(他们的数据也在同一个容器里)。
-
-剩下三条:
-
-- **keychain 是否两边通用,没有实测过。** hive 的盒子用 AES 加密,密钥在
-  `SecureStoreProps.hivePwd`,走 data protection keychain,access group 来自
-  application-identifier。两个 build 同 team、同 bundle id,理应拿到同一项,但只是
-  推断。代码不依赖这个推断:`SandboxImport.hasBoxKey` 读不到密钥就返回 `noKey`、
-  不复制,并提示改用备份文件;`Stores.init` 失败还有 `undo` 兜底。要确认的是真机
-  上实际走的是哪条分支(签名 DMG + 有容器数据的机器,看日志里的
-  `Sandbox import: <result>`)。
-- **容器读取权限。** macOS 14 起,一个 app 读另一个 app 的容器要用户点头;同 bundle
-  id 大概率不弹窗,但没验证。被拒时是 `denied`,提示里给了「完全磁盘访问权限」的入口。
-- **App Store 版什么时候停更,没定。** 文案现在只说「以后可能停止更新」。定下来之后
-  `macDmgBody` 要改成具体的说法。
+自动导入已在真机上验过:keychain 两个 build 通用,容器读取不弹窗。剩下的是一个决定
+——文案现在只说「以后可能停止更新」,定下日期之后 `macDmgBody` 要改成具体说法。
 
 另外:`Hive.initFlutter()` 的默认目录仍是 documents,只是 `HiveStore.init` 每次都显式
 传 `path`,所以没有盒子落在那里。哪天有人直接 `Hive.openBox` 不传 path,就会在不沙盒
