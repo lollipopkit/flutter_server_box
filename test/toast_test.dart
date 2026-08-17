@@ -593,6 +593,22 @@ void main() {
     expect(find.ancestor(of: find.text('n2'), matching: find.byType(Opacity)), findsNothing);
   });
 
+  testWidgets('a window narrower than the margins draws nothing', (tester) async {
+    tester.view.physicalSize = const Size(20, 400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_app());
+    Toast.show('Squeezed', duration: Duration.zero);
+    await tester.pump();
+    await tester.pump(_enter);
+
+    // Not a box of negative width, which is what taking the margins out of 20
+    // would otherwise ask for.
+    expect(find.text('Squeezed'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('the stack keeps at most maxVisible', (tester) async {
     await tester.pumpWidget(_app());
 
