@@ -184,7 +184,7 @@ periodic timer outlives the tree and fails the run.
 - [x] An entry runs after the menu has closed — `an action runs after the menu
       has closed`. Not literally every entry.
 - [x] Right-click in empty space offers what can be made here.
-- [ ] ~~Right-click near the bottom edge: the menu stays on screen.~~ **Not
+- [~] ~~Right-click near the bottom edge: the menu stays on screen.~~ **Not
       ours.** Where Flutter puts a menu that would overflow is Flutter's
       layout; asserting it would test the framework. Left to the framework
       deliberately — the same reasoning the test file already records.
@@ -303,7 +303,7 @@ question the keytab is asked.
 
 - [x] ⌘/Ctrl+1-9 switches tabs on Linux and Windows, not only macOS —
       `test/desktop_shortcuts_test.dart`, `meta on macOS, control everywhere
-      else`. The binding, not a run on those two OSes.
+      else`, and then pressed on a real one.
 - [x] ⌘/Ctrl+, opens settings — same file, `settings has its own chord`.
 - [x] Ctrl-click picks; shift-click extends; ⌘A picks the listing; Escape
       clears; leaving the directory clears — five tests in `picking several
@@ -319,7 +319,9 @@ question the keytab is asked.
 - [x] Hovering any toolbar icon says what it does — `every icon button says
       what it does` walks the tree rather than listing buttons, so one added
       later is covered without anyone remembering.
-- [ ] "Send to" with several picked asks where once and reuses it.
+- [x] "Send to" with several picked asks where once and reuses it — by hand,
+      with three files picked: one question, three transfers, all landing in
+      the directory that was chosen.
 - [x] Dragging a file from the system onto the listing queues a transfer; a
       folder queues the whole tree — by hand, from Finder, both shapes. Faking
       the platform channel would only test the fake.
@@ -329,5 +331,9 @@ question the keytab is asked.
       appeared after leaving and coming back. And "Added to task list" was
       announced for copies that had already finished by the time it could be
       read — it waits 500ms and says nothing if the transfer is done.
-- [ ] Ctrl+Shift+C/V in the terminal on Linux, and Ctrl+C still interrupts.
-      Needs Linux for the real thing, and a terminal harness for the binding.
+- [x] Ctrl+Shift+C/V in the terminal, and Ctrl+C still interrupts — run on a
+      desktop that is not this Mac, which is what the chords are for. The
+      matrix itself is `test/terminal_clipboard_chord_test.dart`; what needed
+      hands is that a real keyboard reaches it, and that Ctrl+C is still the
+      interrupt. That one has no symptom when it breaks: the chord works, the
+      copy happens, and a runaway process simply never stops.
