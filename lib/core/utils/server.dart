@@ -205,7 +205,7 @@ Future<SSHClient> genClient(
     }
   }();
 
-  final hostKeyVerifier = _HostKeyVerifier(
+  final hostKeyVerifier = HostKeyVerifier(
     spi: spi,
     cache: hostKeyCache,
     persistCallback: hostKeyPersist,
@@ -241,7 +241,7 @@ Future<SSHClient> genClient(
   );
 }
 
-typedef _HostKeyPersistCallback =
+typedef HostKeyPersistCallback =
     void Function(String storageKey, String fingerprintHex);
 
 List<Spi> _resolveJumpCandidates({
@@ -300,8 +300,15 @@ class HostKeyPromptInfo {
   final String? previousFingerprintHex;
 }
 
-class _HostKeyVerifier {
-  _HostKeyVerifier({
+/// What `onVerifyHostKey` decides, and what it writes down when it decides it.
+///
+/// Public because this is the whole of "the user vetted this host": the store
+/// is written here and nowhere else, and the one answer that must never be
+/// recorded is "no". Everything above it needs a socket and a server that has
+/// changed its key — so left inside [genClient] the refusal path could only be
+/// reached by hand, and never was.
+class HostKeyVerifier {
+  HostKeyVerifier({
     required this.spi,
     required Map<String, String> cache,
     required this.prompt,
@@ -310,7 +317,7 @@ class _HostKeyVerifier {
 
   final Spi spi;
   final Map<String, String> _cache;
-  final _HostKeyPersistCallback? persistCallback;
+  final HostKeyPersistCallback? persistCallback;
   final Future<bool> Function(HostKeyPromptInfo info) prompt;
 
   Future<bool> call(String keyType, Uint8List fingerprintBytes) async {

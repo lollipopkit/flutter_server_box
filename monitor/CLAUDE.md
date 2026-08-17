@@ -221,9 +221,12 @@ Things that are easy to get wrong here, and are locked by tests:
   reaches the machine directly — a local PTY as the agent's own user, a command
   run as that user, a TCP connection made from it — with no sshd and no SSH
   credentials, so none of sshd's authentication, logging or second factor
-  applies. `install.sh` therefore installs a **user** systemd service by
-  default: the point is that "the agent's own user" is an ordinary account
-  rather than root. The switch is checked at the moment of use
+  applies. `install.sh` therefore runs the agent as an **ordinary account** by
+  default, whichever init system it finds: a `systemctl --user` service under
+  systemd, and under OpenRC — which has no user services — a script in
+  `/etc/init.d` with `command_user` set to the account that invoked `sudo`.
+  The point is not where the service file lives; it is that "the agent's own
+  user" is not root. The switch is checked at the moment of use
   (`AppState::full_access_allowed`), not only in the UI, since the UI is not
   a boundary. `DELETE /api/v1/remote-access/full-access` lets the panel turn
   it off and has no counterpart that turns it on — narrowing what the agent
@@ -311,8 +314,18 @@ docker run -p 3770:3770 -v $(pwd)/data:/app/data server-box-monitor
 
 ### Installation
 ```bash
-# Install as systemd service
+# systemd: as yourself, a `systemctl --user` service
+./install.sh install
+
+# OpenRC (Alpine): needs root to write /etc/init.d, but still runs the agent
+# as the account you sudo'd from
 sudo ./install.sh install
+
+# Either one, as root: `--system`
+sudo ./install.sh install --system
+
+# Without a release to fetch — offline, or an unreleased build
+SBM_INSTALL_PKG=/path/to/server-box-monitor ./install.sh install
 
 # Manual production deployment
 cargo build --release

@@ -140,11 +140,21 @@ Apple Silicon 上的 Linux 虚拟机)。
 - 拒绝 host key 时工具是否干净失败 —— 只验过接受。原先记的「没有注入点」不成立:
   `genClient` 本来就收 `onHostKeyPrompt`,是 `_sshConnect` 没有往下传。要自动化就把它
   透出来;在那之前是真服务器 + 换过 host key 才走得到
-- 完整场景里的 monitor 安装那一半:验证时用的是容器,`install.sh` 在没有 systemd 的机器上
-  直接拒绝(「Distribution without systemd is not supported yet」),所以真正的安装分支
-  一次都没跑过
+- 完整场景里的 monitor 安装那一半。`install.sh` 现在 systemd 和 OpenRC 都支持,两边的
+  service 环节都在新建的 orbstack 机器上跑过(装/重复装/升级/卸载、跑在普通账户名下、
+  杀掉进程能被拉回)。**但用的是 stub 二进制**,因为下面这条:
 
 已验证的两条安全规则(凭据不出网、host key 由用户拍板)有出网请求体为证。
+
+## monitor 从来没有发过 release
+
+`install.sh` 的 `download()` 找的是 `monitor-v*` tag,而仓库里一个都没有 ——
+`monitor-release.yml` 是 `workflow_dispatch`,一次都没跑过。所以 `install.sh install`
+对任何人、任何平台都是「Failed to find a monitor-v* release」,包括 Agent 引导用户装
+agent 的那条完整路径。
+
+跑一次那个 workflow 就能解开。在那之前,离线包那条路(`SBM_INSTALL_PKG=<目录或 tarball>`)
+是唯一能装成的方式,它本身也是内网服务器需要的。
 
 ## macOS 两套产物:App Store 版什么时候停更
 

@@ -4,15 +4,21 @@
 # server-box-monitor_v<ver>_linux_<arch>.tar.gz, containing the server_box_monitor
 # binary + frontend/dist + migrations + example config.
 #
-# Installs a *user* systemd service by default, so the agent runs as an
-# ordinary account. That matters beyond tidiness: with
-# `remote_access.full_access` on (the default on Linux), a panel
+# The agent runs as an ordinary account by default. That matters beyond
+# tidiness: with `remote_access.full_access` on (the default on Linux), a panel
 # login opens a shell as whoever the agent runs as — as root that would be the
-# whole machine. Pass --system for the old system-wide, root-owned service.
+# whole machine. Pass --system for the old root-owned service.
+#
+# systemd and OpenRC both, because the second is what Alpine has and the binary
+# is a static musl build that runs there perfectly well. They arrive at the
+# same place by different means: a `systemctl --user` service, or a script in
+# /etc/init.d with `command_user` set. What differs is who may install one —
+# see the branch below, which is the only place the two really diverge.
 set -u
 
 REPO="lollipopkit/flutter_server_box"
 SERVICE="server_box_monitor.service"
+RC_SERVICE="server-box-monitor"
 TMP_DIR="${TMPDIR:-/tmp}/server-box-monitor-install"
 # TODO(migration residue; remove once no legacy users remain): bare binary location of legacy installs
 LEGACY_BIN="/usr/local/bin/server_box_monitor"
@@ -32,31 +38,104 @@ for arg in "$@"; do
     esac
 done
 
-if [ "$MODE" = "system" ]; then
-    APP_DIR="/opt/server-box-monitor"
-    UNIT_DIR="/etc/systemd/system"
-    SYSTEMCTL="systemctl"
-    if [ "$(id -u)" -ne 0 ]; then
-        echo "--system needs root; re-run with sudo."
+# Which init system will be asked to keep the agent running.
+#
+# `/run/systemd/system` rather than the presence of `systemctl`: a container
+# image can carry the binary while something else is pid 1, and there the
+# commands below fail in ways that read as a broken install.
+detect_init() {
+    if [ -d /run/systemd/system ] && command -v systemctl >/dev/null 2>&1; then
+        INIT="systemd"
+    elif command -v rc-update >/dev/null 2>&1 &&
+         command -v rc-service >/dev/null 2>&1 &&
+         command -v openrc-run >/dev/null 2>&1; then
+        INIT="openrc"
+    else
+        echo "No supported init system found."
+        echo
+        echo "  Looked for systemd (/run/systemd/system) and OpenRC"
+        echo "  (rc-update, rc-service, openrc-run)."
+        echo
+        echo "  The agent itself is a static binary and runs anywhere; what"
+        echo "  this script cannot do is arrange for it to be started. Run it"
+        echo "  by hand with: server_box_monitor serve"
         exit 1
+    fi
+}
+
+detect_init
+
+# Where the service and its files go, and who may put them there.
+#
+# A function rather than the top level, because it refuses: asking for the
+# usage text is not a reason to need root, and the OpenRC branch below needs
+# it even for the default mode.
+resolve_target() {
+if [ "$INIT" = "systemd" ]; then
+    if [ "$MODE" = "system" ]; then
+        APP_DIR="/opt/server-box-monitor"
+        UNIT="/etc/systemd/system/$SERVICE"
+        SYSTEMCTL="systemctl"
+        RUN_USER="root"
+        if [ "$(id -u)" -ne 0 ]; then
+            echo "--system needs root; re-run with sudo."
+            exit 1
+        fi
+    else
+        APP_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/server-box-monitor"
+        UNIT="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/$SERVICE"
+        SYSTEMCTL="systemctl --user"
+        RUN_USER="$(id -un)"
+        if [ "$(id -u)" -eq 0 ]; then
+            # Silently installing a root service under `sudo` is how the agent
+            # ends up owning the machine; make the choice explicit instead.
+            echo "Running as root installs a user service for root, which is"
+            echo "probably not what you want."
+            echo
+            echo "  Drop sudo to install for your own account, or pass --system"
+            echo "  to deliberately install the system-wide, root-owned service."
+            exit 1
+        fi
     fi
 else
-    APP_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/server-box-monitor"
-    UNIT_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
-    SYSTEMCTL="systemctl --user"
-    if [ "$(id -u)" -eq 0 ]; then
-        # Silently installing a root service under `sudo` is how the agent
-        # ends up owning the machine; make the choice explicit instead.
-        echo "Running as root installs a user service for root, which is"
-        echo "probably not what you want."
+    # OpenRC has no per-user services: every script lives in /etc/init.d and is
+    # started by root. What it does have is `command_user`, so the account the
+    # agent runs as is still a choice — which is the part that matters, since
+    # `remote_access.full_access` turns a panel login into a shell as whoever
+    # that is.
+    #
+    # So the two modes mean the same thing they mean under systemd, and only
+    # the privilege needed to *install* them differs: here both need root,
+    # which is the opposite of the rule above and is why it is spelled out.
+    UNIT="/etc/init.d/$RC_SERVICE"
+    if [ "$(id -u)" -ne 0 ]; then
+        echo "OpenRC service scripts live in /etc/init.d, so installing one"
+        echo "needs root — including the default, which runs the agent as an"
+        echo "ordinary account rather than as root."
         echo
-        echo "  Drop sudo to install for your own account, or pass --system"
-        echo "  to deliberately install the system-wide, root-owned service."
+        echo "  Re-run with sudo (or doas) from your own account."
         exit 1
     fi
+    if [ "$MODE" = "system" ]; then
+        APP_DIR="/opt/server-box-monitor"
+        RUN_USER="root"
+    else
+        # Whoever reached root from their own account. Running the script as
+        # root outright leaves nothing to infer, and guessing here would pick
+        # the account the agent runs as — not a thing to guess.
+        RUN_USER="${SUDO_USER:-${DOAS_USER:-}}"
+        if [ -z "$RUN_USER" ]; then
+            echo "Cannot tell which account the agent should run as."
+            echo
+            echo "  Re-run as 'sudo $0 $CMD' from that account, or pass"
+            echo "  --system to deliberately run the agent as root."
+            exit 1
+        fi
+        RUN_HOME=$(eval echo "~$RUN_USER")
+        APP_DIR="$RUN_HOME/.local/share/server-box-monitor"
+    fi
 fi
-
-UNIT="$UNIT_DIR/$SERVICE"
+}
 
 detect_arch() {
     case "$(uname -m)" in
@@ -70,6 +149,29 @@ detect_arch() {
 }
 
 download() {
+    # A package already on the machine, instead of one fetched from GitHub:
+    # either the unpacked `server-box-monitor/` directory or the tarball. For
+    # a server that cannot reach GitHub, and for exercising everything below
+    # this line without a release to point at.
+    if [ -n "${SBM_INSTALL_PKG:-}" ]; then
+        rm -rf "$TMP_DIR"
+        mkdir -p "$TMP_DIR"
+        if [ -d "$SBM_INSTALL_PKG" ]; then
+            cp -r "$SBM_INSTALL_PKG" "$TMP_DIR/server-box-monitor"
+        elif [ -f "$SBM_INSTALL_PKG" ]; then
+            tar -xzf "$SBM_INSTALL_PKG" -C "$TMP_DIR"
+        else
+            echo "SBM_INSTALL_PKG is neither a directory nor a file: $SBM_INSTALL_PKG"
+            exit 1
+        fi
+        if [ ! -f "$TMP_DIR/server-box-monitor/server_box_monitor" ]; then
+            echo "Unexpected package layout in $SBM_INSTALL_PKG"
+            exit 1
+        fi
+        echo "Installing from $SBM_INSTALL_PKG"
+        return
+    fi
+
     detect_arch
 
     if ! command -v curl >/dev/null 2>&1; then
@@ -131,16 +233,119 @@ install_files() {
         rm -f "$LEGACY_BIN"
     fi
 
+    # OpenRC has no journal, so the agent's own log is the only record there
+    # is; the run user has to be able to write it.
+    [ "$INIT" = "openrc" ] && mkdir -p "$APP_DIR/log"
+
+    # Only ever true where this script is root and the agent is not — which is
+    # the OpenRC default. Under systemd's user mode these files are written by
+    # their owner already. Here rather than beside the service script, because
+    # `upgrade` replaces files without touching the service.
+    if [ "$(id -u)" -eq 0 ] && [ "$RUN_USER" != "root" ]; then
+        chown -R "$RUN_USER" "$APP_DIR"
+    fi
+
     cleanup
 }
 
+# The six things this script asks of an init system, and nothing more.
+svc_enable() {
+    if [ "$INIT" = "systemd" ]; then
+        $SYSTEMCTL enable "$SERVICE"
+    else
+        rc-update add "$RC_SERVICE" default
+    fi
+}
+
+svc_disable() {
+    if [ "$INIT" = "systemd" ]; then
+        $SYSTEMCTL disable "$SERVICE" 2>/dev/null
+    else
+        rc-update del "$RC_SERVICE" default 2>/dev/null
+    fi
+}
+
+svc_restart() {
+    if [ "$INIT" = "systemd" ]; then
+        $SYSTEMCTL restart "$SERVICE"
+    else
+        rc-service "$RC_SERVICE" restart
+    fi
+}
+
+svc_stop() {
+    if [ "$INIT" = "systemd" ]; then
+        $SYSTEMCTL stop "$SERVICE" 2>/dev/null
+    else
+        rc-service "$RC_SERVICE" stop 2>/dev/null
+    fi
+}
+
+svc_reload() {
+    # OpenRC reads /etc/init.d on each command, so there is nothing to tell.
+    [ "$INIT" = "systemd" ] && $SYSTEMCTL daemon-reload
+    return 0
+}
+
+svc_status() {
+    if [ "$INIT" = "systemd" ]; then
+        $SYSTEMCTL --no-pager status "$SERVICE"
+    else
+        rc-service "$RC_SERVICE" status
+    fi
+}
+
+write_openrc_script() {
+    {
+        echo "#!/sbin/openrc-run"
+        echo
+        echo "name=\"ServerBox Monitor\""
+        echo "description=\"ServerBox Monitor agent\""
+        echo
+        echo "command=\"$APP_DIR/server_box_monitor\""
+        echo "command_args=\"serve\""
+        # The account only. `user:group` here would assume a group of the same
+        # name exists, which is a Debian-ism rather than a rule — left off,
+        # OpenRC uses the account's own primary group.
+        echo "command_user=\"$RUN_USER\""
+        echo "directory=\"$APP_DIR\""
+        # The equivalent of systemd's Restart=always. Without a supervisor
+        # OpenRC starts the agent once and never looks again.
+        echo "supervisor=\"supervise-daemon\""
+        echo "respawn_delay=3"
+        # There is no journal to fall back on, so an agent that logs nowhere
+        # logs nothing at all — including the remote-access summary and its
+        # security warnings. Inside APP_DIR because the run user owns that and
+        # may not own /var/log.
+        echo "output_log=\"$APP_DIR/log/agent.log\""
+        echo "error_log=\"$APP_DIR/log/agent.err\""
+        echo
+        # Same reason as the systemd unit's Environment=: the default filter
+        # is ERROR only.
+        echo "export RUST_LOG=info"
+        echo
+        echo "depend() {"
+        echo "    need net"
+        echo "}"
+    } > "$UNIT"
+    chmod 755 "$UNIT"
+
+    mkdir -p "$APP_DIR/log"
+    if [ "$RUN_USER" != "root" ]; then
+        chown -R "$RUN_USER" "$APP_DIR"
+    fi
+}
+
 install_service() {
-    if ! command -v systemctl >/dev/null 2>&1; then
-        echo "Distribution without systemd is not supported yet."
-        exit 1
+    if [ "$INIT" = "openrc" ]; then
+        write_openrc_script
+        svc_enable || { echo "Enable service failed"; exit 1; }
+        svc_restart || { echo "Start service failed"; exit 1; }
+        svc_status
+        return
     fi
 
-    mkdir -p "$UNIT_DIR"
+    mkdir -p "$(dirname "$UNIT")"
     {
         echo "[Unit]"
         echo "Description=ServerBox Monitor"
@@ -169,9 +374,9 @@ install_service() {
         fi
     } > "$UNIT"
 
-    $SYSTEMCTL daemon-reload
-    $SYSTEMCTL enable "$SERVICE" || { echo "Enable service failed"; exit 1; }
-    $SYSTEMCTL restart "$SERVICE" || { echo "Start service failed"; exit 1; }
+    svc_reload
+    svc_enable || { echo "Enable service failed"; exit 1; }
+    svc_restart || { echo "Start service failed"; exit 1; }
 
     if [ "$MODE" = "user" ]; then
         # Without lingering, a user service stops at logout — surprising for
@@ -184,7 +389,7 @@ install_service() {
         fi
     fi
 
-    $SYSTEMCTL --no-pager status "$SERVICE"
+    svc_status
 }
 
 installed() {
@@ -217,18 +422,18 @@ upgrade() {
     fi
 
     download
-    $SYSTEMCTL stop "$SERVICE"
+    svc_stop
     install_files
-    $SYSTEMCTL restart "$SERVICE" || { echo "Restart service failed"; exit 1; }
+    svc_restart || { echo "Restart service failed"; exit 1; }
     echo "Upgrade success"
 }
 
 uninstall() {
     if [ -f "$UNIT" ]; then
-        $SYSTEMCTL stop "$SERVICE" 2>/dev/null
-        $SYSTEMCTL disable "$SERVICE" 2>/dev/null
+        svc_stop
+        svc_disable
         rm -f "$UNIT"
-        $SYSTEMCTL daemon-reload
+        svc_reload
     fi
     [ "$MODE" = "system" ] && rm -f "$LEGACY_BIN"
 
@@ -244,14 +449,25 @@ uninstall() {
 }
 
 case "$CMD" in
-    install) install ;;
-    uninstall) uninstall ;;
-    upgrade) upgrade ;;
+    install) resolve_target; install ;;
+    uninstall) resolve_target; uninstall ;;
+    upgrade) resolve_target; upgrade ;;
     *)
         echo "Usage: $0 [install|uninstall|upgrade] [--user|--system]"
         echo
-        echo "  --user    (default) systemd --user service in $HOME, running as you"
-        echo "  --system  system-wide service running as root; needs sudo"
+        echo "  --user    (default) the agent runs as an ordinary account"
+        echo "  --system  the agent runs as root"
+        echo
+        echo "Init system detected: $INIT"
+        if [ "$INIT" = "systemd" ]; then
+            echo "  --user installs a 'systemctl --user' service in \$HOME."
+            echo "  Run it as yourself; --system needs sudo."
+        else
+            echo "  OpenRC has no user services, so both install a script in"
+            echo "  /etc/init.d and both need root. --user is still the"
+            echo "  default: the script sets command_user to the account you"
+            echo "  sudo'd from, so the agent is not root either way."
+        fi
         exit 1
         ;;
 esac

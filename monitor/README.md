@@ -63,8 +63,10 @@ networks rejoins the same shell instead of losing it.
 open a shell, run a command and reach any address this machine can reach, all
 as the account the agent runs as. Unset follows the platform — on for Linux,
 off for macOS and Windows. **Your panel password then buys the machine**, which
-is why `install.sh` installs a *user* systemd service by default; if you run
-the agent as root, turn this off. The SSH login stays available alongside it.
+is why `install.sh` runs the agent as an ordinary account by default — a
+`systemctl --user` service under systemd, or an `/etc/init.d` script with
+`command_user` under OpenRC. If you run the agent as root, turn this off. The
+SSH login stays available alongside it.
 Also settable with `SBM_FULL_ACCESS=0/1`, and the panel's first-run prompt can
 turn it off — never on.
 
