@@ -433,10 +433,83 @@ Map<String, String> withoutHostKeysFor(
   };
 }
 
+/// The host key question a server is being asked right now.
+///
+/// Keyed by server because that is what the user sees: one dialog, naming one
+/// server. Several parts of the app hold their own connection to the same
+/// server — status polling, a terminal, an SFTP browser, each with its own
+/// `onVerifyHostKey` — and a connection that failed is retried, so without
+/// this every attempt raises a dialog of its own and they stack up.
+final _pendingHostKeyPrompts = <String, _PendingHostKeyPrompt>{};
+
+class _PendingHostKeyPrompt {
+  _PendingHostKeyPrompt(this.question) {
+    // Nobody may ever join this one, and a completer that carries an error
+    // with no listener reports it to the zone as unhandled.
+    answer.future.then<void>((_) {}, onError: (Object _) {});
+  }
+
+  /// Which key type, and which fingerprint. Two attempts that agree on this
+  /// are asking the same thing; anything else is a different decision and gets
+  /// a dialog of its own, once this one is gone.
+  final String question;
+
+  final answer = Completer<bool>();
+}
+
+/// Shows at most one host key dialog per server at a time.
+///
+/// An attempt whose question matches the one on screen joins it and takes its
+/// answer. An attempt with a different question for the same server waits for
+/// the screen to clear before asking, rather than covering it.
+///
+/// [show] is what actually puts the dialog up, passed in so a test can drive
+/// this without a navigator.
+@visibleForTesting
+Future<bool> promptHostKeyExclusively(
+  HostKeyPromptInfo info,
+  Future<bool> Function() show,
+) async {
+  final server = _hostIdentifier(info.spi);
+  final question = '${info.keyType} ${info.fingerprintHex}';
+
+  while (true) {
+    final pending = _pendingHostKeyPrompts[server];
+    if (pending == null) break;
+    if (pending.question == question) return pending.answer.future;
+    // Whatever that dialog answers, and whether it fails, belongs to the
+    // attempt that raised it. This one only needs the screen back.
+    await pending.answer.future.then<void>((_) {}, onError: (Object _) {});
+  }
+
+  final entry = _PendingHostKeyPrompt(question);
+  _pendingHostKeyPrompts[server] = entry;
+  final running = show();
+  entry.answer.complete(running);
+  try {
+    return await running;
+  } finally {
+    // Identity, not presence: a caller that gave up before this returned could
+    // have left a later question in its place.
+    if (identical(_pendingHostKeyPrompts[server], entry)) {
+      _pendingHostKeyPrompts.remove(server);
+    }
+  }
+}
+
+/// Drops any prompt a test left in flight, so the next one does not wait on it.
+@visibleForTesting
+void resetHostKeyPromptsForTesting() => _pendingHostKeyPrompts.clear();
+
 Future<bool> showHostKeyPrompt(
   HostKeyPromptInfo info, {
   BuildContext? context,
-}) async {
+}) => promptHostKeyExclusively(info, () => _showHostKeyDialog(info, context));
+
+Future<bool> _showHostKeyDialog(
+  HostKeyPromptInfo info,
+  BuildContext? context,
+) async {
   final ctx = context?.mounted == true ? context : AppNavigator.context;
   if (ctx == null) {
     Loggers.app.warning(
