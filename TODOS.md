@@ -197,9 +197,12 @@ Apple Silicon 上的 Linux 虚拟机)。
 已验证的两条安全规则(凭据不出网、host key 由用户拍板)有出网请求体为证。
 
 **多面板**
-- 退出重开后终端能否恢复。解析那半有 `tmux_restore_state_test.dart`;「同一服务器的两个
-  shell 各自恢复」没有覆盖 —— `_restoreTabs` 按条目逐个开、不按 sourceId 去重,所以形状上
-  成立,但它在 `ConsumerState` 里,要验就得 pump 整个 `SSHTabPage`
+- ~~退出重开后终端能否恢复~~ **已覆盖**。解析那半是 `tmux_restore_state_test.dart`;整条
+  往返在 `ssh_tab_restore_test.dart`,连同「同一服务器的两个 shell 各自恢复」——
+  两个 tab 各自带回自己的 `tmuxWindow`(0 和 3),按 sourceId 折叠就会丢掉第二个。
+  另外覆盖了服务器已删的条目跳过、坏记录不带走其他条目、整份 JSON 读不动时不抛。
+  断言读的是页面写回 store 的那份 tab 集,不是屏幕上的标签:标签在选择器里也出现一次,
+  数不清「两个 tab」和「一个 tab 画了两处」
 - ~~文件页恢复到原来的目录~~ **查明是坏的**,见上面 state restoration 那节;分栏分隔条位置
   同理
 - 删除服务器后详情面板是否收回成整宽列表

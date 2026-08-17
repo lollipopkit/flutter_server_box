@@ -143,6 +143,52 @@ void main() {
     expect(clipboard, isEmpty, reason: 'it copied instead of pasting');
   });
 
+  /// The page's own controller, reached through the widget it handed it to.
+  TerminalController controllerOf(WidgetTester tester) =>
+      tester.widget<TerminalView>(find.byType(TerminalView)).controller!;
+
+  /// Selects everything on screen, through the render object the page built —
+  /// so the selection is the one `_onClipboardAction` reads, not a copy.
+  void selectAll(WidgetTester tester) => tester
+      .state<TerminalViewState>(find.byType(TerminalView))
+      .renderTerminal
+      .selectAll();
+
+  testWidgets('with text selected, a right-click copies it', (tester) async {
+    final session = await pump(tester);
+    session.terminal.write('the selected line\r\n');
+    await tester.pump(const Duration(milliseconds: 50));
+
+    selectAll(tester);
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(controllerOf(tester).selection, isNotNull, reason: 'nothing selected');
+
+    await secondaryTap(tester);
+
+    expect(clipboard, hasLength(1));
+    expect(clipboard.single, contains('the selected line'));
+    // And it did not also paste: the two branches are exclusive.
+    expect(typed, isEmpty);
+  });
+
+  testWidgets('and clears the selection afterwards', (tester) async {
+    // Otherwise the next right-click copies the same text again instead of
+    // pasting, which is the shape every other terminal has.
+    final session = await pump(tester);
+    session.terminal.write('the selected line\r\n');
+    await tester.pump(const Duration(milliseconds: 50));
+    selectAll(tester);
+    await tester.pump(const Duration(milliseconds: 50));
+
+    await secondaryTap(tester);
+
+    expect(controllerOf(tester).selection, isNull);
+
+    // Proved by the second one pasting.
+    await secondaryTap(tester);
+    expect(typed.join(), contains('pasted from the clipboard'));
+  });
+
   testWidgets('an empty clipboard types nothing', (tester) async {
     // `Clipboard.getData` answers null when there is nothing to paste, and
     // `textInput('')` would be a no-op anyway — but the guard is what stops a

@@ -1,5 +1,6 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:meta/meta.dart';
 
 /// index from 0 -> n : latest -> oldest
 class _ListHistory {
@@ -46,6 +47,16 @@ class _MapHistory {
 
 class HistoryStore extends HiveStore {
   HistoryStore._() : super('history');
+
+  /// The same seam [SettingStore.forBox] and [ServerStore.forBox] have.
+  ///
+  /// This one holds the terminal tab set, which is the piece of session state
+  /// that does survive a relaunch — Flutter's own restoration does not, here —
+  /// so it is what a test of "what comes back" has to be able to write.
+  @visibleForTesting
+  HistoryStore.forBox(Box<dynamic> testBox) : super('history_test') {
+    box = testBox;
+  }
 
   static final instance = HistoryStore._();
 
