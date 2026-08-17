@@ -19,6 +19,8 @@
 /// Run: dart run bin/cipher_bench.dart [--mib=64] [--packet=32768]
 library;
 
+// ignore_for_file: avoid_print
+
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';

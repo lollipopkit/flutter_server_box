@@ -5,6 +5,8 @@
 /// Run: dart run bin/chacha_probe.dart [--trace]
 library;
 
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 import 'dart:io';
 
