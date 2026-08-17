@@ -353,6 +353,33 @@ void main() {
       expect(find.text('notes.txt'), findsOneWidget);
     });
 
+    testWidgets('the name dialog survives being answered', (tester) async {
+      // The crash this covers was on the way *out*: `showRoundDialog` returns
+      // when the route is popped, not when it has finished going away, so a
+      // controller disposed right after the `await` was pulled out from under
+      // a field still animating its decoration — "Tried to build dirty widget
+      // in the wrong build scope", full screen and red. The field owns its
+      // controller now, so this settles rather than throws.
+      final backend = _MapBackend({
+        '/': [_file('notes.txt')],
+      });
+
+      await pump(tester, backend);
+      await tester.longPress(find.text('notes.txt'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Rename'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'renamed.txt');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      // Settled, not pumped once: the failure needed the route's exit
+      // animation to run to the end.
+      await tester.pumpAndSettle();
+
+      expect(backend.renamed, [('/notes.txt', '/renamed.txt')]);
+      expect(find.byType(TextField), findsNothing);
+    });
+
     testWidgets('an action runs after the menu has closed', (tester) async {
       // Which is what lets an action open a dialog of its own — every entry
       // used to have to remember to pop the menu first.

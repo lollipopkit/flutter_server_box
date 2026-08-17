@@ -666,27 +666,12 @@ class _FileBrowserPageState extends ConsumerState<FileBrowserPage>
     required IconData icon,
     String? initial,
   }) async {
-    final controller = TextEditingController(text: initial);
-    try {
-      final name = await context.showRoundDialog<String>(
-        title: title,
-        child: Input(
-          autoFocus: true,
-          icon: icon,
-          label: libL10n.name,
-          controller: controller,
-          suggestion: true,
-          onSubmitted: (value) => context.popDialog(value.trim()),
-        ),
-        actions: Btn.ok(
-          onTap: () => context.popDialog(controller.text.trim()),
-        ).toList,
-      );
-      if (name == null || name.isEmpty || !mounted) return null;
-      return name;
-    } finally {
-      controller.dispose();
-    }
+    final name = await context.showRoundDialog<String>(
+      title: title,
+      child: _NameField(icon: icon, initial: initial),
+    );
+    if (name == null || name.isEmpty || !mounted) return null;
+    return name;
   }
 
   /// Runs something that changes the listing, and says so when it fails.
@@ -1447,4 +1432,64 @@ enum _SortBy {
     size => libL10n.size,
     time => libL10n.time,
   };
+}
+
+/// The one field the name dialogs are made of, owning its own controller.
+///
+/// The controller has to outlive the `await` that opened the dialog. Created
+/// beside it and disposed in a `finally`, it was torn out from under a field
+/// that is still mounted: `showRoundDialog` returns when the route is popped,
+/// not when it has finished going away, and `autoFocus` leaves an implicit
+/// animation running in the decoration for another 167ms. Rebuilding that
+/// against a disposed controller is "Tried to build dirty widget in the wrong
+/// build scope", full screen and red.
+///
+/// A widget's own `dispose` runs when Flutter has finished with the element,
+/// which is exactly the moment wanted — so the lifetime belongs here rather
+/// than at the call site.
+class _NameField extends StatefulWidget {
+  const _NameField({required this.icon, this.initial});
+
+  final IconData icon;
+  final String? initial;
+
+  @override
+  State<_NameField> createState() => _NameFieldState();
+}
+
+class _NameFieldState extends State<_NameField> {
+  late final _controller = TextEditingController(text: widget.initial);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Answers with the trimmed name, from the field's own context — the dialog
+  /// is on the root navigator, and this is inside it.
+  void _submit() => context.popDialog(_controller.text.trim());
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Input(
+          autoFocus: true,
+          icon: widget.icon,
+          label: libL10n.name,
+          controller: _controller,
+          suggestion: true,
+          onSubmitted: (_) => _submit(),
+        ),
+        // Here rather than in `actions:`, so the button and the field it reads
+        // are in one place and one lifetime.
+        Align(
+          alignment: Alignment.centerRight,
+          child: Btn.ok(onTap: _submit),
+        ),
+      ],
+    );
+  }
 }
