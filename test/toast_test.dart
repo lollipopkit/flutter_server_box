@@ -445,6 +445,36 @@ void main() {
     expect(find.text('newer'), findsNothing);
   });
 
+  testWidgets('a frame of the pile opening rebuilds no toast content', (tester) async {
+    await pumpPair(tester);
+
+    await tester.tap(find.text('newer'));
+    await tester.pump();
+    // The tap itself does rebuild them: what a tap means changes once the pile
+    // is open. It is the 400ms after it that must not.
+    final during = tester.widget(find.text('newer'));
+
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(tester.widget(find.text('newer')), same(during));
+
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(tester.widget(find.text('newer')), same(during));
+  });
+
+  testWidgets('the countdown ticking rebuilds no toast content', (tester) async {
+    await tester.pumpWidget(_app());
+
+    Toast.show('Ticking', duration: const Duration(seconds: 2));
+    await tester.pump();
+    await tester.pump(_enter);
+    final built = tester.widget(find.text('Ticking'));
+
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(tester.widget(find.text('Ticking')), same(built));
+  });
+
   testWidgets('nothing in an open pile expires while it is being read', (tester) async {
     await tester.pumpWidget(_app());
     Toast.show('one', duration: const Duration(seconds: 1));
