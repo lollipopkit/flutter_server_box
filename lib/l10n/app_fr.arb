@@ -203,6 +203,8 @@
   "sshHostKeyFingerprintMd5Base64": "Empreinte (MD5 Base64) : {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "Empreinte (MD5 hex) : {fingerprint}",
   "sshHostKeyType": "Type de clé d'hôte SSH",
+  "sshKnownHostKeys": "Clés d'hôte connues",
+  "sshKnownHostKeysTip": "Clés d'hôte acceptées par cette app. Supprimez-en une pour qu'elle soit redemandée à la prochaine connexion.",
   "sshHostKeyNewDesc": "Une nouvelle clé d'hôte SSH a été reçue de {serverName}. Vérifiez l'empreinte avant de faire confiance.",
   "sshHostKeyStoredFingerprint": "Empreinte enregistrée : {fingerprint}",
   "sshConfigManualSelect": "Souhaitez-vous sélectionner manuellement le fichier de configuration SSH ?",

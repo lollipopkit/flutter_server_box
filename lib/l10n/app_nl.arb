@@ -203,6 +203,8 @@
   "sshHostKeyFingerprintMd5Base64": "Vingerafdruk (MD5 Base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "Vingerafdruk (MD5 hex): {fingerprint}",
   "sshHostKeyType": "Type SSH-hostsleutel",
+  "sshKnownHostKeys": "Bekende hostsleutels",
+  "sshKnownHostKeysTip": "Hostsleutels die deze app heeft geaccepteerd. Verwijder er een om er bij de volgende verbinding opnieuw naar gevraagd te worden.",
   "sshHostKeyNewDesc": "Er is een nieuwe SSH-hostsleutel ontvangen van {serverName}. Controleer de vingerafdruk voordat u vertrouwt.",
   "sshHostKeyStoredFingerprint": "Opgeslagen vingerafdruk: {fingerprint}",
   "sshConfigManualSelect": "Wilt u het SSH-configuratiebestand handmatig selecteren?",

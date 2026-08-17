@@ -1932,6 +1932,18 @@ abstract class AppLocalizations {
   /// **'SSH host key type'**
   String get sshHostKeyType;
 
+  /// No description provided for @sshKnownHostKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'Known host keys'**
+  String get sshKnownHostKeys;
+
+  /// No description provided for @sshKnownHostKeysTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Host keys this app has accepted. Forget one to be asked about it again the next time you connect.'**
+  String get sshKnownHostKeysTip;
+
   /// No description provided for @sshHostKeyNewDesc.
   ///
   /// In en, this message translates to:

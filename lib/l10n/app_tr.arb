@@ -203,6 +203,8 @@
   "sshHostKeyFingerprintMd5Base64": "Parmak izi (MD5 Base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "Parmak izi (MD5 hex): {fingerprint}",
   "sshHostKeyType": "SSH ana bilgisayar anahtarı türü",
+  "sshKnownHostKeys": "Bilinen ana makine anahtarları",
+  "sshKnownHostKeysTip": "Bu uygulamanın kabul ettiği ana makine anahtarları. Birini silerseniz bir sonraki bağlantıda tekrar sorulur.",
   "sshHostKeyNewDesc": "{serverName} üzerinden yeni bir SSH ana bilgisayar anahtarı alındı. Güvenmeden önce parmak izini kontrol edin.",
   "sshHostKeyStoredFingerprint": "Kaydedilen parmak izi: {fingerprint}",
   "sshConfigManualSelect": "SSH yapılandırma dosyasını manuel olarak seçmek ister misiniz?",

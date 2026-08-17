@@ -25,7 +25,21 @@ extension _SSH on _AppSettingsPageState {
         _buildSSHVirtualKeyAutoOff(),
         if (isMobile) _buildSSHVirtKeys(),
         _buildTmuxAuto(),
+        _buildKnownHosts(),
       ].map((e) => CardX(child: e)).toList(),
+    );
+  }
+
+  /// Where a trusted host key can be taken back.
+  ///
+  /// Beside the other SSH entries rather than under security: what it manages
+  /// is per server, and this is where a server's SSH settings already are.
+  Widget _buildKnownHosts() {
+    return ListTile(
+      leading: const Icon(Icons.vpn_key_outlined),
+      title: Text(l10n.sshKnownHostKeys),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () => KnownHostsPage.route.go(context),
     );
   }
 

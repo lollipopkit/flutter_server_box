@@ -309,6 +309,8 @@
   "sshHostKeyFingerprintMd5Base64": "指紋（MD5 Base64）：{fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "指紋（MD5 十六進位）：{fingerprint}",
   "sshHostKeyType": "SSH 主機金鑰類型",
+  "sshKnownHostKeys": "已信任的主機金鑰",
+  "sshKnownHostKeysTip": "本 app 已接受的主機金鑰。刪掉一條,下次連線時會重新詢問。",
   "sshHostKeyNewDesc": "收到來自 {serverName} 的新 SSH 主機金鑰，信任前請先檢查指紋。",
   "sshHostKeyStoredFingerprint": "已儲存的指紋：{fingerprint}",
   "sshVerificationCode": "驗證碼",

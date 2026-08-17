@@ -1057,6 +1057,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get sshHostKeyType => 'Type SSH-hostsleutel';
 
   @override
+  String get sshKnownHostKeys => 'Bekende hostsleutels';
+
+  @override
+  String get sshKnownHostKeysTip =>
+      'Hostsleutels die deze app heeft geaccepteerd. Verwijder er een om er bij de volgende verbinding opnieuw naar gevraagd te worden.';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return 'Er is een nieuwe SSH-hostsleutel ontvangen van $serverName. Controleer de vingerafdruk voordat u vertrouwt.';
   }

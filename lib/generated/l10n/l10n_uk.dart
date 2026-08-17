@@ -1059,6 +1059,13 @@ class AppLocalizationsUk extends AppLocalizations {
   String get sshHostKeyType => 'Тип ключа хоста SSH';
 
   @override
+  String get sshKnownHostKeys => 'Відомі ключі хостів';
+
+  @override
+  String get sshKnownHostKeysTip =>
+      'Ключі хостів, які прийняв цей застосунок. Видаліть один, щоб наступного разу спитали знову.';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return 'Отримано новий SSH-ключ хоста від $serverName. Перевірте відбиток перед тим, як довіряти.';
   }

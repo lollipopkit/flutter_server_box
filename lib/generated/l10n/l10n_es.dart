@@ -1068,6 +1068,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sshHostKeyType => 'Tipo de clave de host SSH';
 
   @override
+  String get sshKnownHostKeys => 'Claves de host conocidas';
+
+  @override
+  String get sshKnownHostKeysTip =>
+      'Claves de host que esta app ha aceptado. Elimina una para que vuelva a preguntarte en la próxima conexión.';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return 'Se recibió una nueva clave de host SSH de $serverName. Revisa la huella antes de confiar.';
   }

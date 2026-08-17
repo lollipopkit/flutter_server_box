@@ -204,6 +204,8 @@
   "sshHostKeyFingerprintMd5Base64": "Відбиток (MD5 Base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "Відбиток (MD5 hex): {fingerprint}",
   "sshHostKeyType": "Тип ключа хоста SSH",
+  "sshKnownHostKeys": "Відомі ключі хостів",
+  "sshKnownHostKeysTip": "Ключі хостів, які прийняв цей застосунок. Видаліть один, щоб наступного разу спитали знову.",
   "sshHostKeyNewDesc": "Отримано новий SSH-ключ хоста від {serverName}. Перевірте відбиток перед тим, як довіряти.",
   "sshHostKeyStoredFingerprint": "Збережений відбиток: {fingerprint}",
   "sshConfigManualSelect": "Чи хочете ви вручну вибрати файл конфігурації SSH?",

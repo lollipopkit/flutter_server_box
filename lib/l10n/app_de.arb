@@ -203,6 +203,8 @@
   "sshHostKeyFingerprintMd5Base64": "Fingerabdruck (MD5 Base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "Fingerabdruck (MD5 Hex): {fingerprint}",
   "sshHostKeyType": "SSH-Hostschlüsseltyp",
+  "sshKnownHostKeys": "Bekannte Hostschlüssel",
+  "sshKnownHostKeysTip": "Von dieser App akzeptierte Hostschlüssel. Wird einer entfernt, wird beim nächsten Verbinden erneut gefragt.",
   "sshHostKeyNewDesc": "Ein neuer SSH-Hostschlüssel wurde von {serverName} empfangen. Prüfen Sie den Fingerabdruck, bevor Sie vertrauen.",
   "sshHostKeyStoredFingerprint": "Gespeicherter Fingerabdruck: {fingerprint}",
   "sshConfigManualSelect": "Möchten Sie die SSH-Konfigurationsdatei manuell auswählen?",

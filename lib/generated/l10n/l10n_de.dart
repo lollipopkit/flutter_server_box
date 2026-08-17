@@ -1058,6 +1058,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get sshHostKeyType => 'SSH-Hostschlüsseltyp';
 
   @override
+  String get sshKnownHostKeys => 'Bekannte Hostschlüssel';
+
+  @override
+  String get sshKnownHostKeysTip =>
+      'Von dieser App akzeptierte Hostschlüssel. Wird einer entfernt, wird beim nächsten Verbinden erneut gefragt.';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return 'Ein neuer SSH-Hostschlüssel wurde von $serverName empfangen. Prüfen Sie den Fingerabdruck, bevor Sie vertrauen.';
   }

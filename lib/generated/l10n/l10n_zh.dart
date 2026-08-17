@@ -986,6 +986,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshHostKeyType => 'SSH 主机密钥类型';
 
   @override
+  String get sshKnownHostKeys => '已信任的主机密钥';
+
+  @override
+  String get sshKnownHostKeysTip => '本 app 已接受的主机密钥。删掉一条,下次连接时会重新询问。';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return '收到来自 $serverName 的新 SSH 主机密钥，在信任前请检查指纹。';
   }
@@ -2305,6 +2311,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sshHostKeyType => 'SSH 主機金鑰類型';
+
+  @override
+  String get sshKnownHostKeys => '已信任的主機金鑰';
+
+  @override
+  String get sshKnownHostKeysTip => '本 app 已接受的主機金鑰。刪掉一條,下次連線時會重新詢問。';
 
   @override
   String sshHostKeyNewDesc(Object serverName) {

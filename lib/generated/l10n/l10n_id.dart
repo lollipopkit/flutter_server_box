@@ -1056,6 +1056,13 @@ class AppLocalizationsId extends AppLocalizations {
   String get sshHostKeyType => 'Jenis kunci host SSH';
 
   @override
+  String get sshKnownHostKeys => 'Kunci host yang dikenal';
+
+  @override
+  String get sshKnownHostKeysTip =>
+      'Kunci host yang telah diterima aplikasi ini. Hapus satu agar ditanyakan lagi saat koneksi berikutnya.';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return 'Kunci host SSH baru diterima dari $serverName. Periksa sidik jarinya sebelum mempercayai.';
   }

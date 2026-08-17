@@ -570,3 +570,73 @@ String _fingerprintToHex(Uint8List fingerprint) {
 
 String _fingerprintToBase64(Uint8List fingerprint) =>
     base64.encode(fingerprint);
+
+/// One remembered host key: which server it was filed under, which algorithm
+/// the host offered, and the fingerprint that was accepted.
+class KnownHostKey {
+  const KnownHostKey({
+    required this.storageKey,
+    required this.serverId,
+    required this.keyType,
+    required this.fingerprint,
+  });
+
+  /// The map key it is stored under, so removing one takes exactly one.
+  final String storageKey;
+
+  final String serverId;
+
+  /// `ssh-ed25519`, `ssh-rsa`, and so on — what the host offered.
+  final String keyType;
+
+  final String fingerprint;
+}
+
+/// [known] read out as entries, grouped by the server they belong to.
+///
+/// Pure, and split out for the same reason [withoutHostKeysFor] is: the
+/// separator is the whole of the correctness. A key type may itself contain no
+/// `::`, but an id could — so the split is on the **first** one, and everything
+/// after it is the type.
+///
+/// Entries whose key has no separator at all are kept under their whole string
+/// as the id and an empty type: they are unreadable rather than absent, and a
+/// list that silently dropped them would leave something trusted and invisible.
+Map<String, List<KnownHostKey>> groupHostKeysByServer(
+  Map<String, String> known,
+) {
+  final grouped = <String, List<KnownHostKey>>{};
+  for (final entry in known.entries) {
+    final at = entry.key.indexOf('::');
+    final serverId = at < 0 ? entry.key : entry.key.substring(0, at);
+    final keyType = at < 0 ? '' : entry.key.substring(at + 2);
+    grouped.putIfAbsent(serverId, () => []).add(
+      KnownHostKey(
+        storageKey: entry.key,
+        serverId: serverId,
+        keyType: keyType,
+        fingerprint: entry.value,
+      ),
+    );
+  }
+  for (final list in grouped.values) {
+    list.sort((a, b) => a.keyType.compareTo(b.keyType));
+  }
+  return grouped;
+}
+
+/// Forgets exactly one remembered key, by the map key it is stored under.
+///
+/// Beside [forgetHostKeyFingerprints], which takes every type a server
+/// offered. A host that rotated one algorithm and kept another is the case
+/// this exists for.
+void forgetHostKey(String storageKey) {
+  try {
+    final prop = Stores.setting.sshKnownHostFingerprints;
+    final known = Map<String, String>.from(prop.get());
+    if (known.remove(storageKey) == null) return;
+    prop.put(known);
+  } catch (e, stack) {
+    Loggers.app.warning('Forget SSH host key failed', e, stack);
+  }
+}

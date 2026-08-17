@@ -1004,6 +1004,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshHostKeyType => 'SSH 호스트 키 유형';
 
   @override
+  String get sshKnownHostKeys => '알려진 호스트 키';
+
+  @override
+  String get sshKnownHostKeysTip => '이 앱이 수락한 호스트 키입니다. 삭제하면 다음 연결 시 다시 확인합니다.';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return '$serverName에서 새 SSH 호스트 키를 수신했습니다. 신뢰하기 전에 지문을 확인해 주세요.';
   }

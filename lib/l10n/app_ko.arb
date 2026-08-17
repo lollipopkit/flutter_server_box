@@ -252,6 +252,8 @@
   "sshHostKeyFingerprintMd5Base64": "지문 (MD5 base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "지문 (MD5 hex): {fingerprint}",
   "sshHostKeyType": "SSH 호스트 키 유형",
+  "sshKnownHostKeys": "알려진 호스트 키",
+  "sshKnownHostKeysTip": "이 앱이 수락한 호스트 키입니다. 삭제하면 다음 연결 시 다시 확인합니다.",
   "@sshHostKeyType": {
     "description": "Label for the SSH host key type displayed in the host key verification dialog."
   },

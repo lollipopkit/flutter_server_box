@@ -203,6 +203,8 @@
   "sshHostKeyFingerprintMd5Base64": "Huella (MD5 Base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "Huella (MD5 hex): {fingerprint}",
   "sshHostKeyType": "Tipo de clave de host SSH",
+  "sshKnownHostKeys": "Claves de host conocidas",
+  "sshKnownHostKeysTip": "Claves de host que esta app ha aceptado. Elimina una para que vuelva a preguntarte en la próxima conexión.",
   "sshHostKeyNewDesc": "Se recibió una nueva clave de host SSH de {serverName}. Revisa la huella antes de confiar.",
   "sshHostKeyStoredFingerprint": "Huella almacenada: {fingerprint}",
   "sshConfigManualSelect": "¿Te gustaría seleccionar manualmente el archivo de configuración SSH?",

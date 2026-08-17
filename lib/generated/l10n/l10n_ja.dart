@@ -1003,6 +1003,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sshHostKeyType => 'SSH ホストキーの種類';
 
   @override
+  String get sshKnownHostKeys => '既知のホストキー';
+
+  @override
+  String get sshKnownHostKeysTip => 'このアプリが受け入れたホストキー。削除すると次回接続時に再度確認されます。';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return '$serverName から新しい SSH ホスト鍵を受信しました。信頼する前にフィンガープリントを確認してください。';
   }

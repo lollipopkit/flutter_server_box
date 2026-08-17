@@ -323,6 +323,8 @@
   "sshHostKeyFingerprintMd5Base64": "Fingerprint (MD5 base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "Fingerprint (MD5 hex): {fingerprint}",
   "sshHostKeyType": "SSH host key type",
+  "sshKnownHostKeys": "Known host keys",
+  "sshKnownHostKeysTip": "Host keys this app has accepted. Forget one to be asked about it again the next time you connect.",
   "@sshHostKeyType": {
     "description": "Label for the SSH host key type displayed in the host key verification dialog."
   },

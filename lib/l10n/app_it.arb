@@ -204,6 +204,8 @@
   "sshHostKeyFingerprintMd5Base64": "Impronta digitale (MD5 base64): {fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "Impronta digitale (MD5 hex): {fingerprint}",
   "sshHostKeyType": "Tipo chiave host SSH",
+  "sshKnownHostKeys": "Chiavi host conosciute",
+  "sshKnownHostKeysTip": "Chiavi host accettate da questa app. Eliminane una per essere interrogato di nuovo alla prossima connessione.",
   "@sshHostKeyType": {
     "description": "Etichetta per il tipo di chiave host SSH visualizzata nella finestra di dialogo di verifica della chiave host."
   },

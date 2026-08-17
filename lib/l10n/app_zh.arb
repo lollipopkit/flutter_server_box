@@ -310,6 +310,8 @@
   "sshHostKeyFingerprintMd5Base64": "指纹（MD5 Base64）：{fingerprint}",
   "sshHostKeyFingerprintMd5Hex": "指纹（MD5 十六进制）：{fingerprint}",
   "sshHostKeyType": "SSH 主机密钥类型",
+  "sshKnownHostKeys": "已信任的主机密钥",
+  "sshKnownHostKeysTip": "本 app 已接受的主机密钥。删掉一条,下次连接时会重新询问。",
   "sshHostKeyNewDesc": "收到来自 {serverName} 的新 SSH 主机密钥，在信任前请检查指纹。",
   "sshHostKeyStoredFingerprint": "已存储的指纹：{fingerprint}",
   "sshVerificationCode": "验证码",

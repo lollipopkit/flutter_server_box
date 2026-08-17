@@ -39,4 +39,45 @@ void main() {
     // worst possible reading of it.
     expect(withoutHostKeysFor(known, ''), known);
   });
+
+  group('grouping them for the settings page', () {
+    test('a server with several types keeps them together, sorted', () {
+      final grouped = groupHostKeysByServer(known);
+
+      expect(grouped['abc']!.map((k) => k.keyType), ['ssh-ed25519', 'ssh-rsa']);
+      expect(grouped['abc']!.first.fingerprint, 'aa:bb');
+    });
+
+    test('an id that merely starts the same is its own server', () {
+      // The same distinction `withoutHostKeysFor` exists for, from the other
+      // side: a list that folded `abcdef` into `abc` would offer to forget a
+      // key belonging to a different host.
+      final grouped = groupHostKeysByServer(known);
+
+      expect(grouped.keys, containsAll(['abc', 'abcdef', 'other']));
+      expect(grouped['abcdef'], hasLength(1));
+    });
+
+    test('the split is on the first separator, not the last', () {
+      // A key type carries no `::`, but nothing stops an id from having one,
+      // and taking the last would move part of the id into the type.
+      final grouped = groupHostKeysByServer({'a::b::ssh-rsa': 'ff'});
+
+      expect(grouped.keys, ['a']);
+      expect(grouped['a']!.single.keyType, 'b::ssh-rsa');
+    });
+
+    test('an entry with no separator is kept, not dropped', () {
+      // Unreadable rather than absent. Something this app trusts and cannot
+      // show is worse than something it shows under a strange name.
+      final grouped = groupHostKeysByServer({'malformed': 'ff'});
+
+      expect(grouped['malformed']!.single.keyType, '');
+      expect(grouped['malformed']!.single.storageKey, 'malformed');
+    });
+
+    test('nothing known groups to nothing', () {
+      expect(groupHostKeysByServer(const {}), isEmpty);
+    });
+  });
 }
