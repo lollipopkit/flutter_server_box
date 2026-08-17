@@ -390,13 +390,13 @@ is what is left.
 
 ### 1. The file tab as it stands today (baseline, before any of this)
 
-- [ ] The SFTP button switches to the File tab and adds a session beside this
+- [x] The SFTP button switches to the File tab and adds a session beside this
       device's files.
 - [ ] Two servers stay open at once; switching between them does not reconnect.
-- [ ] One bar, not two. Download / sort / search / refresh sit in the tab strip
+- [x] One bar, not two. Download / sort / search / refresh sit in the tab strip
       and follow the session you switch to; sudo appears only where sudo is
       configured.
-- [ ] Opening SFTP as a file picker from elsewhere still draws its own bar with
+- [x] Opening SFTP as a file picker from elsewhere still draws its own bar with
       the server name.
 - [ ] ~~The file tab reopens the same servers, each in the directory it was
       left in.~~ **Cannot pass as built.** `storage/tab.dart` keeps that state
@@ -406,14 +406,17 @@ is what is left.
       this page did not. Verifying it by hand would have found a broken feature
       and no cause.
 
-The first four are the tab rather than the browser: they need two reachable
-servers and a restart. Nothing here has been run.
+Run by hand against a real server. Only "two servers stay open at once" is
+left here, and the reopen line above cannot pass at all.
 
 ### 2. After the browser is one page
 
-- [ ] Rename, delete and mkdir behave the same on both backends. The local half
+- [x] Rename, delete and mkdir behave the same on both backends. The local half
       is `test/local_file_backend_test.dart` and the browser's own calls are in
-      `test/file_browser_test.dart`; "the same on both" needs a server.
+      `test/file_browser_test.dart`; the SFTP half was run by hand, including
+      that a non-empty directory refuses to go without the recursive box
+      ticked — the two backends fail for different reasons there (`rmdir`
+      versus `Directory.delete`) and behave the same to the user.
 - [x] Sudo still rescues a refused operation on a server, and is absent on this
       device — `test/sftp_escalation_test.dart`, and `offers sudo only where
       there is somewhere to escalate` in the browser suite.
@@ -433,7 +436,10 @@ in the test rather than argued with.
 - [x] A transfer interrupted halfway leaves no partial file under its final
       name — `cancelling a local copy actually stops it` asserts no `sb-part`
       is left behind. Local only.
-- [ ] local → server and server → local, as before, with progress and cancel.
+- [x] local → server and server → local, as before, with progress and cancel.
+      Run by hand both ways; cancelling mid-transfer left no partial file and
+      no `.sb-part-N` on the far side, which is the staged-then-renamed path
+      rather than the local one the test covers.
 - [ ] server → server between two different hosts.
 - [ ] Two host-key prompts raised by one transfer queue rather than stack.
       Nothing covers this, and it needs two servers with unknown keys.
