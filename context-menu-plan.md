@@ -200,8 +200,16 @@ periodic timer outlives the tree and fails the run.
       `test/terminal_clipboard_test.dart`, on a real `SSHPage` with a mocked
       clipboard channel. An empty clipboard types nothing, and the handler is
       the page's rather than the terminal's own.
-- [ ] With text selected, right-click copies it and clears the selection.
-- [ ] Neither interferes with the existing text-selection drag.
+- [x] With text selected, right-click copies it and clears the selection —
+      `with text selected, a right-click copies it` and `and clears the
+      selection afterwards`, the second proved by the next right-click pasting
+      instead. The selection is made through the page's own controller
+      (`renderTerminal.selectAll`), so it is the one `_onClipboardAction`
+      reads. No seam was needed after all: `TerminalView.controller` and
+      `TerminalViewState.renderTerminal` are both public.
+- [x] Neither interferes with the existing text-selection drag — by hand, on
+      the local shell: a left-button drag selects, the selection survives the
+      release, and nothing is pasted on the way.
 
 `TerminalSession.over` is the seam that made the page reachable: it takes a
 `ShellBackend` outright, and because `adopt` returns early when one is already
@@ -312,8 +320,14 @@ question the keytab is asked.
       what it does` walks the tree rather than listing buttons, so one added
       later is covered without anyone remembering.
 - [ ] "Send to" with several picked asks where once and reuses it.
-- [ ] Dragging a file from the system onto the listing queues a transfer; a
-      folder queues the whole tree. A real OS drag; the platform channel could
-      be faked, which tests the fake.
+- [x] Dragging a file from the system onto the listing queues a transfer; a
+      folder queues the whole tree — by hand, from Finder, both shapes. Faking
+      the platform channel would only test the fake.
+
+      Two things turned up doing it. The listing did not reload when a
+      transfer landed in the directory being shown, so a dropped file only
+      appeared after leaving and coming back. And "Added to task list" was
+      announced for copies that had already finished by the time it could be
+      read — it waits 500ms and says nothing if the transfer is done.
 - [ ] Ctrl+Shift+C/V in the terminal on Linux, and Ctrl+C still interrupts.
       Needs Linux for the real thing, and a terminal harness for the binding.

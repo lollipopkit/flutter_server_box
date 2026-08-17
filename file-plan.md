@@ -392,7 +392,10 @@ is what is left.
 
 - [x] The SFTP button switches to the File tab and adds a session beside this
       device's files.
-- [ ] Two servers stay open at once; switching between them does not reconnect.
+- [x] Two servers stay open at once; switching between them does not
+      reconnect — each session holds its own backend, so switching moves the
+      page rather than reopening the connection, and a deep directory is still
+      where it was.
 - [x] One bar, not two. Download / sort / search / refresh sit in the tab strip
       and follow the session you switch to; sudo appears only where sudo is
       configured.
