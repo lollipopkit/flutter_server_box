@@ -134,6 +134,57 @@ void main() {
     expect(find.text('Stay'), findsOneWidget);
   });
 
+  testWidgets('pulled inwards it gives way less and less, then springs back', (tester) async {
+    await tester.pumpWidget(_app());
+
+    Toast.show('Rubber', duration: Duration.zero);
+    await tester.pump();
+    await tester.pump(_enter);
+
+    final home = _cardOf(tester, 'Rubber').left;
+    double pulledBy() => home - _cardOf(tester, 'Rubber').left;
+    final gesture = await tester.startGesture(tester.getCenter(find.text('Rubber')));
+
+    // The first move only gets the drag recognised — it goes on touch slop, as
+    // it does for any drag — so the pull is measured from the one after it.
+    await gesture.moveBy(const Offset(-25, 0));
+    await tester.pump();
+    expect(pulledBy(), 0);
+
+    await gesture.moveBy(const Offset(-30, 0));
+    await tester.pump();
+    final near = pulledBy();
+
+    await gesture.moveBy(const Offset(-400, 0));
+    await tester.pump();
+    final far = pulledBy();
+
+    expect(near, greaterThan(0));
+    expect(far, greaterThan(near));
+    // Thirteen times the pull moved it barely twice as far, and _rubberLimit
+    // (36) is the bound it approaches without reaching.
+    expect(far, lessThan(36));
+    expect(far, lessThan(near * 3));
+
+    await gesture.up();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+
+    expect(_cardOf(tester, 'Rubber').left, closeTo(home, 0.5));
+  });
+
+  testWidgets('the clip that plays it in is gone once it has arrived', (tester) async {
+    await tester.pumpWidget(_app());
+
+    Toast.show('Clip', duration: Duration.zero);
+    await tester.pump();
+    expect(find.byType(SizeTransition), findsOneWidget);
+
+    await tester.pump(_enter);
+    // Else it would cut off the shadow, and anything pulled past its bounds.
+    expect(find.byType(SizeTransition), findsNothing);
+  });
+
   testWidgets('it goes on its own when the duration is up', (tester) async {
     await tester.pumpWidget(_app());
 
