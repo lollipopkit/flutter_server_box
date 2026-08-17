@@ -15,6 +15,7 @@ import 'package:server_box/data/model/server/monitor_remote_access.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/ssh/terminal_output_buffer.dart';
+import 'package:server_box/data/ssh/terminal_platform.dart';
 import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:xterm/core.dart';
 
@@ -57,7 +58,7 @@ class TerminalSession {
     LocalSource() => null,
   };
 
-  final terminal = Terminal();
+  final terminal = Terminal(platform: hostTerminalPlatform);
 
   /// Where this terminal's shell comes from. Usually SSH; for a server reached
   /// only through its monitor agent it is the agent's own PTY, which answers

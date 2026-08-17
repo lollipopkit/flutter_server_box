@@ -238,6 +238,7 @@ Surveyed after the three stages above, and done in the same sweep.
 | 4 | No keyboard navigation | Arrows, Enter, Backspace, F2, Delete, Cmd+A, Escape, on the list's own focus |
 | 5 | 44 icon buttons said nothing on hover | 81 of 82 now do; the 82nd draws its own label |
 | 6 | Terminal had no clipboard chords | Cmd+C/V on macOS, Ctrl+Shift+C/V elsewhere |
+| 6b | Terminal had no line-editing chords, and no platform at all | Found by hand, after the rest of this was called done — see below |
 | 7 | Nothing on a right-click in empty space | The same "what can be made here" list as the add button |
 | 8 | No double-click | **Not done, deliberately** — see below |
 
@@ -264,6 +265,31 @@ that is already handled.
 - Finder *replaces* the selection on a plain click and this *adds* to it.
   Deliberate: with no double-click to open, replace-on-click would make it
   impossible to open anything while a selection is open.
+
+#### What the keyboard walkthrough turned up
+
+Two defects, one root and one gap, neither of which any test could have seen
+because nothing set them up.
+
+`TerminalSession` built its `Terminal()` without a `platform`, so it was
+`TerminalTargetPlatform.unknown` — the default, and what this app passed for as
+long as it had a terminal. Every keytab entry that distinguishes a Mac took the
+other branch: Option+Left sent `\E[1;5D` where a Mac wants `\Eb`, which a shell
+ignores, so word movement did nothing. The same setting decides whether
+`AltInputHandler` stands aside, so Option+e was sending an escape sequence
+rather than composing `é`. `lib/data/ssh/terminal_platform.dart` answers it now,
+and iOS answers `macos` — the keytab's question is about the keyboard, and an
+iPad's is an Apple one.
+
+Command chords could not work at all. `keyInput` takes shift, alt and ctrl and
+**no meta**, and the keytab has no Command entry, so ⌘⌫ and ⌘←/→ reached the
+terminal as nothing. They are intercepted in `_handleKeyEvent` beside the
+clipboard chords and sent as the control characters a shell's own line editor
+binds — `^U`, `^A`, `^E`.
+
+While there: `_isClipboardChord` asked `isMacOS`, so ⌘C on an iPad with a
+keyboard was not a copy. It asks `_appleKeyboard` now, which is the same
+question the keytab is asked.
 
 ### Verification for these
 
