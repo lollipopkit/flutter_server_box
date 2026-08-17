@@ -8,7 +8,13 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/view/page/setting/seq/reorder_proxy_decorator.dart';
 
 class ServerOrderPage extends ConsumerStatefulWidget {
-  const ServerOrderPage({super.key});
+    /// Whether it is being shown inside the settings pane rather than pushed.
+  ///
+  /// The pane already names what it is showing, in the one bar the page has;
+  /// a second one under it would say it twice.
+  final bool embedded;
+
+  const ServerOrderPage({super.key, this.embedded = false});
 
   @override
   ConsumerState<ServerOrderPage> createState() => _ServerOrderPageState();
@@ -39,9 +45,11 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
       });
     });
 
+    final body = SafeArea(child: _buildBody());
+    if (widget.embedded) return body;
     return Scaffold(
       appBar: CustomAppBar(title: Text(l10n.serverOrder)),
-      body: SafeArea(child: _buildBody()),
+      body: body,
     );
   }
 

@@ -16,7 +16,13 @@ import 'package:server_box/data/res/store.dart';
 /// So a server that was rebuilt, or a key that was rotated, left the app
 /// refusing with no way forward, and a key accepted by mistake stayed accepted.
 class KnownHostsPage extends StatefulWidget {
-  const KnownHostsPage({super.key});
+    /// Whether it is being shown inside the settings pane rather than pushed.
+  ///
+  /// The pane already names what it is showing, in the one bar the page has;
+  /// a second one under it would say it twice.
+  final bool embedded;
+
+  const KnownHostsPage({super.key, this.embedded = false});
 
   @override
   State<KnownHostsPage> createState() => _KnownHostsPageState();
@@ -77,23 +83,25 @@ class _KnownHostsPageState extends State<KnownHostsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final body = _grouped.isEmpty
+        ? Center(child: Text(libL10n.empty, style: UIs.textGrey))
+        : ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 7),
+            children: [
+              CardX(
+                child: Padding(
+                  padding: const EdgeInsets.all(13),
+                  child: Text(l10n.sshKnownHostKeysTip, style: UIs.textGrey),
+                ),
+              ),
+              for (final entry in _grouped.entries)
+                CardX(child: _buildServer(entry.key, entry.value)),
+            ],
+          );
+    if (widget.embedded) return body;
     return Scaffold(
       appBar: CustomAppBar(title: Text(l10n.sshKnownHostKeys)),
-      body: _grouped.isEmpty
-          ? Center(child: Text(libL10n.empty, style: UIs.textGrey))
-          : ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 7),
-              children: [
-                CardX(
-                  child: Padding(
-                    padding: const EdgeInsets.all(13),
-                    child: Text(l10n.sshKnownHostKeysTip, style: UIs.textGrey),
-                  ),
-                ),
-                for (final entry in _grouped.entries)
-                  CardX(child: _buildServer(entry.key, entry.value)),
-              ],
-            ),
+      body: body,
     );
   }
 

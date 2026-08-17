@@ -6,7 +6,13 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/setting/seq/reorder_proxy_decorator.dart';
 
 class SSHVirtKeySettingPage extends StatefulWidget {
-  const SSHVirtKeySettingPage({super.key});
+    /// Whether it is being shown inside the settings pane rather than pushed.
+  ///
+  /// The pane already names what it is showing, in the one bar the page has;
+  /// a second one under it would say it twice.
+  final bool embedded;
+
+  const SSHVirtKeySettingPage({super.key, this.embedded = false});
 
   @override
   State<SSHVirtKeySettingPage> createState() => _SSHVirtKeySettingPageState();
@@ -44,19 +50,21 @@ class _SSHVirtKeySettingPageState extends State<SSHVirtKeySettingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final body = SafeArea(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(7),
+            child: _buildOneLineVirtKey().cardx,
+          ),
+          Expanded(child: _buildBody()),
+        ],
+      ),
+    );
+    if (widget.embedded) return body;
     return Scaffold(
       appBar: CustomAppBar(title: Text(l10n.editVirtKeys)),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(7),
-              child: _buildOneLineVirtKey().cardx,
-            ),
-            Expanded(child: _buildBody()),
-          ],
-        ),
-      ),
+      body: body,
     );
   }
 

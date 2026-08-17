@@ -4,7 +4,13 @@ import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/res/store.dart';
 
 class ServerFuncBtnsOrderPage extends StatefulWidget {
-  const ServerFuncBtnsOrderPage({super.key});
+    /// Whether it is being shown inside the settings pane rather than pushed.
+  ///
+  /// The pane already names what it is showing, in the one bar the page has;
+  /// a second one under it would say it twice.
+  final bool embedded;
+
+  const ServerFuncBtnsOrderPage({super.key, this.embedded = false});
 
   @override
   State<ServerFuncBtnsOrderPage> createState() => _ServerDetailOrderPageState();
@@ -20,6 +26,7 @@ class _ServerDetailOrderPageState extends State<ServerFuncBtnsOrderPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.embedded) return _buildBody();
     return Scaffold(
       appBar: CustomAppBar(title: Text(libL10n.sequence)),
       body: _buildBody(),

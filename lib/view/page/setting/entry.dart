@@ -37,6 +37,7 @@ import 'package:server_box/view/page/setting/seq/virt_key.dart';
 import 'package:server_box/view/widget/dmg_notice.dart';
 
 part 'about.dart';
+part 'menu.dart';
 part 'entries/ai.dart';
 part 'entries/app.dart';
 part 'entries/container.dart';
@@ -57,12 +58,23 @@ class SettingsPage extends ConsumerStatefulWidget {
   ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends ConsumerState<SettingsPage>
-    with SingleTickerProviderStateMixin {
-  late final _tabCtrl = TabController(
-    length: SettingsTabs.values.length,
-    vsync: this,
-  );
+/// Below this the menu is a drawer rather than a column beside the content.
+///
+/// The width `AdaptivePanes` splits at, so that a window wide enough for two
+/// columns gets two columns here as well.
+const _kMenuBreakpoint = 800.0;
+
+/// How wide the menu is when it is beside the content.
+const _kMenuWidth = 232.0;
+
+class _SettingsPageState extends ConsumerState<SettingsPage> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  /// Which branches are open. Nothing to start with, so the menu opens as a
+  /// list of subjects rather than as everything there is.
+  final _expanded = <String>{};
+
+  String? _selectedId;
 
   void _clearAllSettings() {
     final keys = SettingStore.instance.box.keys;
@@ -70,26 +82,161 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
     Toast.success(libL10n.success);
   }
 
-  @override
-  void dispose() {
-    _tabCtrl.dispose();
-    super.dispose();
+  /// The menu, built here because every title comes from the l10n of the
+  /// moment. A group with settings of its own carries them in a leaf under
+  /// itself, so that opening a branch and showing a page stay separate.
+  List<SettingsNode> _buildNodes() {
+    return [
+      SettingsNode.leaf(
+        id: 'app',
+        title: libL10n.app,
+        page: () => const AppSettingsPage(section: SettingsSection.app),
+      ),
+      SettingsNode.leaf(
+        id: 'ai',
+        title: libL10n.ai,
+        page: () => const AppSettingsPage(section: SettingsSection.ai),
+      ),
+      SettingsNode.branch(
+        id: 'server',
+        title: libL10n.server,
+        children: [
+          SettingsNode.leaf(
+            id: 'server.setting',
+            title: libL10n.setting,
+            page: () => const AppSettingsPage(section: SettingsSection.server),
+          ),
+          SettingsNode.leaf(
+            id: 'server.order',
+            title: l10n.serverOrder,
+            page: () => const ServerOrderPage(embedded: true),
+          ),
+          SettingsNode.leaf(
+            id: 'server.detail',
+            title: l10n.serverDetailOrder,
+            page: () => const ServerDetailOrderPage(embedded: true),
+          ),
+          SettingsNode.leaf(
+            id: 'server.func',
+            title: libL10n.sequence,
+            page: () => const ServerFuncBtnsOrderPage(embedded: true),
+          ),
+        ],
+      ),
+      SettingsNode.branch(
+        id: 'ssh',
+        title: l10n.ssh,
+        children: [
+          SettingsNode.leaf(
+            id: 'ssh.setting',
+            title: libL10n.setting,
+            page: () => const AppSettingsPage(section: SettingsSection.ssh),
+          ),
+          SettingsNode.leaf(
+            id: 'ssh.knownHosts',
+            title: l10n.sshKnownHostKeys,
+            page: () => const KnownHostsPage(embedded: true),
+          ),
+          SettingsNode.leaf(
+            id: 'ssh.virtKey',
+            title: l10n.editVirtKeys,
+            page: () => const SSHVirtKeySettingPage(embedded: true),
+          ),
+        ],
+      ),
+      SettingsNode.leaf(
+        id: 'sftp',
+        title: l10n.sftp,
+        page: () => const AppSettingsPage(section: SettingsSection.sftp),
+      ),
+      SettingsNode.leaf(
+        id: 'container',
+        title: libL10n.container,
+        page: () => const AppSettingsPage(section: SettingsSection.container),
+      ),
+      SettingsNode.leaf(
+        id: 'editor',
+        title: libL10n.editor,
+        page: () => const AppSettingsPage(section: SettingsSection.editor),
+      ),
+
+      /// Fullscreen Mode is designed for old mobile phone which can be
+      /// used as a status screen.
+      if (isMobile)
+        SettingsNode.leaf(
+          id: 'fullScreen',
+          title: l10n.fullScreen,
+          page: () => const AppSettingsPage(section: SettingsSection.fullScreen),
+        ),
+      SettingsNode.leaf(
+        id: 'backup',
+        title: libL10n.backup,
+        page: () => const BackupPage(),
+      ),
+      SettingsNode.leaf(
+        id: 'privateKey',
+        title: l10n.privateKey,
+        page: () => const PrivateKeysListPage(),
+      ),
+      SettingsNode.leaf(
+        id: 'about',
+        title: libL10n.about,
+        page: () => const _AppAboutPage(),
+      ),
+    ];
+  }
+
+  void _onSelect(SettingsNode node) {
+    setState(() => _selectedId = node.id);
+    // The drawer has answered what it was opened to answer.
+    _scaffoldKey.currentState?.closeDrawer();
+  }
+
+  void _onToggle(SettingsNode node) {
+    setState(() {
+      if (!_expanded.remove(node.id)) _expanded.add(node.id);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final nodes = _buildNodes();
+    final leaves = [
+      for (final node in nodes) ...node.flattened.where((e) => e.isLeaf),
+    ];
+    // Falls back rather than asserts: a node can go away between builds — the
+    // fullscreen one does, on a window that stops being narrow.
+    final selected = leaves.firstWhereOrNull((e) => e.id == _selectedId) ?? leaves.first;
+
+    final menu = _SettingsMenu(
+      nodes: nodes,
+      selectedId: selected.id,
+      expandedIds: _expanded,
+      onSelect: _onSelect,
+      onToggle: _onToggle,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= _kMenuBreakpoint;
+        return _buildScaffold(wide: wide, menu: menu, selected: selected);
+      },
+    );
+  }
+
+  Widget _buildScaffold({
+    required bool wide,
+    required Widget menu,
+    required SettingsNode selected,
+  }) {
+    final content = KeyedSubtree(key: ValueKey(selected.id), child: selected.builder!());
+
     return Scaffold(
+      key: _scaffoldKey,
+      // The one bar the page has, naming whatever is on the right. The pages
+      // shown there are given `embedded: true` and drop their own.
       appBar: CustomAppBar(
-        title: Text(libL10n.setting, style: const TextStyle(fontSize: 20)),
-        bottom: TabBar(
-          controller: _tabCtrl,
-          dividerHeight: 0,
-          tabAlignment: TabAlignment.center,
-          isScrollable: true,
-          tabs: SettingsTabs.values
-              .map((e) => Tab(text: e.i18n))
-              .toList(growable: false),
-        ),
+        title: Text(selected.title, style: const TextStyle(fontSize: 20)),
         actions: [
           Btn.text(
             text: context.libL10n.logs,
@@ -122,15 +269,32 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
           ),
         ],
       ),
+      drawer: wide ? null : Drawer(child: SafeArea(child: menu)),
       body: SafeArea(
-        child: TabBarView(controller: _tabCtrl, children: SettingsTabs.pages),
+        child: wide
+            ? Row(
+                children: [
+                  SizedBox(width: _kMenuWidth, child: menu),
+                  const VerticalDivider(width: 1, thickness: 1),
+                  Expanded(child: content),
+                ],
+              )
+            : content,
       ),
     );
   }
 }
 
+/// Which group of settings [AppSettingsPage] is showing.
+///
+/// One page rather than one per group, so that the state — and the four text
+/// controllers on it — survives moving between them.
+enum SettingsSection { app, ai, server, ssh, sftp, container, editor, fullScreen }
+
 final class AppSettingsPage extends ConsumerStatefulWidget {
-  const AppSettingsPage({super.key});
+  final SettingsSection section;
+
+  const AppSettingsPage({super.key, required this.section});
 
   @override
   ConsumerState<AppSettingsPage> createState() => _AppSettingsPageState();
@@ -163,32 +327,22 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiList(
-      children: [
-        [
-          CenterGreyTitle(libL10n.app),
-          _buildApp(),
-          CenterGreyTitle(libL10n.ai),
-          _buildAskAiConfig(),
-        ],
-        [CenterGreyTitle(libL10n.server), _buildServer()],
-        [
-          CenterGreyTitle(l10n.ssh),
-          _buildSSH(),
-          CenterGreyTitle(l10n.sftp),
-          _buildSFTP(),
-        ],
-        [
-          CenterGreyTitle(libL10n.container),
-          _buildContainer(),
-          CenterGreyTitle(libL10n.editor),
-          _buildEditor(),
-        ],
+    // No heading over it: the menu says which group this is, and the bar above
+    // repeats it. A `CenterGreyTitle` here would be the third time.
+    final group = switch (widget.section) {
+      SettingsSection.app => _buildApp(),
+      SettingsSection.ai => _buildAskAiConfig(),
+      SettingsSection.server => _buildServer(),
+      SettingsSection.ssh => _buildSSH(),
+      SettingsSection.sftp => _buildSFTP(),
+      SettingsSection.container => _buildContainer(),
+      SettingsSection.editor => _buildEditor(),
+      SettingsSection.fullScreen => _buildFullScreen(),
+    };
 
-        /// Fullscreen Mode is designed for old mobile phone which can be
-        /// used as a status screen.
-        if (isMobile) [CenterGreyTitle(l10n.fullScreen), _buildFullScreen()],
-      ],
+    return ListView(
+      padding: MultiList.kOuterPadding,
+      children: [group],
     );
   }
 
@@ -228,27 +382,3 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
   }
 }
 
-enum SettingsTabs {
-  app,
-  privateKey,
-  backup,
-  about;
-
-  String get i18n => switch (this) {
-    SettingsTabs.app => libL10n.app,
-    SettingsTabs.privateKey => l10n.privateKey,
-    SettingsTabs.backup => libL10n.backup,
-    SettingsTabs.about => libL10n.about,
-  };
-
-  Widget get page => switch (this) {
-    SettingsTabs.app => const AppSettingsPage(),
-    SettingsTabs.privateKey => const PrivateKeysListPage(),
-    SettingsTabs.backup => const BackupPage(),
-    SettingsTabs.about => const _AppAboutPage(),
-  };
-
-  static final List<Widget> pages = SettingsTabs.values
-      .map((e) => e.page)
-      .toList();
-}
