@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:server_box/core/chan.dart';
+import 'package:server_box/core/utils/alpine_seed.dart';
 import 'package:server_box/core/utils/guest_path.dart';
 
 /// A Linux userland on Android, and what it takes to get one.
@@ -181,8 +182,8 @@ abstract final class AndroidRootfs {
         throw StateError('Could not unpack the rootfs: ${untar.stderr}');
       }
 
-      await _seedResolvConf(root);
-      await _seedRepositories(root);
+      await seedResolvConf(root);
+      await seedRepositories(root, mirror: _mirror, branch: _branch);
       await File(root.joinPath(_marker)).writeAsString(version);
       _installed = true;
       _installedVersion = version;
@@ -262,29 +263,6 @@ abstract final class AndroidRootfs {
     // avoid, reporting it as a permission error.
     'PROOT_LOADER': ?_loader,
   };
-
-  /// A resolver, because the guest has no `/etc/resolv.conf` of its own and
-  /// Android does not expose one a container can read.
-  static Future<void> _seedResolvConf(String root) async {
-    final etc = Directory(root.joinPath('etc'));
-    if (!await etc.exists()) await etc.create(recursive: true);
-    await File(etc.path.joinPath('resolv.conf'))
-        .writeAsString('nameserver 8.8.8.8\nnameserver 1.1.1.1\n');
-  }
-
-  /// Where `apk` looks for packages.
-  ///
-  /// A minirootfs ships without this — the Docker image is what adds it — so
-  /// `apk add` in a freshly unpacked one reports every package as missing.
-  /// Pinned to the same branch the rootfs came from: a rootfs on one branch
-  /// installing packages built for another is how a distribution breaks.
-  static Future<void> _seedRepositories(String root) async {
-    final apk = Directory(root.joinPath('etc').joinPath('apk'));
-    if (!await apk.exists()) await apk.create(recursive: true);
-    await File(apk.path.joinPath('repositories')).writeAsString(
-      '$_mirror/$_branch/main\n$_mirror/$_branch/community\n',
-    );
-  }
 
   static Future<String> _sha256Of(File file) async {
     // Streamed: the tarball is a few megabytes now and there is no reason for

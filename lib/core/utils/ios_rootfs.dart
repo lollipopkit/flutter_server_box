@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:ffi/ffi.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:server_box/core/utils/alpine_seed.dart';
 import 'package:server_box/core/utils/guest_path.dart';
 
 /// A Linux userland on iOS, and what it takes to get one.
@@ -73,8 +74,10 @@ abstract final class IosRootfs {
   /// Pinned and checked, like Android's — this is executable code fetched over
   /// the network, and the digest is what makes that different from running
   /// whatever the connection returned.
+  static const _mirror = 'https://dl-cdn.alpinelinux.org/alpine';
+  static const _branch = 'v3.22';
   static const _url =
-      'https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/aarch64/'
+      '$_mirror/$_branch/releases/aarch64/'
       'alpine-minirootfs-$version-aarch64.tar.gz';
   static const _sha256 =
       '3fbc6285032ed46821b511292633d7b2a6306a2e254f590e92bdafff56cf2f70';
@@ -121,6 +124,12 @@ abstract final class IosRootfs {
       }
 
       await _extract(file, dir, onProgress: onProgress);
+      // Without these `apk` reaches nothing: the guest's sockets work and an
+      // address literal is fetched fine, but there is no resolver, so every
+      // mirror is a "temporary error" and every package is missing.
+      // Measured on a device by `integration_test/ios_load_test.dart`.
+      await seedResolvConf(root);
+      await seedRepositories(root, mirror: _mirror, branch: _branch);
       _installed = true;
     } catch (_) {
       // Nothing half-installed is left to be mistaken for a working one.
@@ -224,8 +233,14 @@ abstract final class IosRootfs {
   /// Locates where the filesystem would be. Call once, before anything asks.
   static Future<void> prepare() async {
     if (!Platform.isIOS) return;
-    _root = (await getApplicationSupportDirectory()).path.joinPath('alpine');
-    await isInstalled;
+    final root = _root =
+        (await getApplicationSupportDirectory()).path.joinPath('alpine');
+    if (!await isInstalled) return;
+    // A userland unpacked before [install] seeded a resolver has none, and
+    // nothing else would ever give it one: [install] returns early for a tree
+    // that is already there, so every existing install would have stayed
+    // without DNS. Writes only when the file is absent.
+    await seedResolvConf(root);
   }
 
   /// What [boot] answers when the machine is already up — `-EEXIST`.

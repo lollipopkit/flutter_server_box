@@ -387,11 +387,25 @@ console 上剩下的(重定向本身失败时 shell 的报错)算作 stderr。
 不需要真机就能跑的两个测试:`test/file_tail_test.dart`(边写边读,多字节字符跨轮次
 截断是会被用户撞到的那个 case)、`test/ish_exec_test.dart`(实际交给 guest 的那段 shell)。
 
+**M2 内存**已在真机(iPad, iOS 18.7.8)上量过,`integration_test/ios_load_test.dart`:
+64 MB 随机数据落盘、三轮 sha256、400 个进程、20 万行排序之后,app 的 RSS 从 479 MB 到
+478 MB(峰值 500 MB),没有增长;guest 之后仍应答 `aarch64`。这些数是 debug 构建的整个
+进程,不是引擎单独的开销,所以它们回答的是"跑完之后 app 还在不在、有没有攒下东西",
+不是"引擎占多少"。
+
+这一轮找到一个缺陷并修了:**guest 没有 `/etc/resolv.conf`**。socket 和网络都正常
+(直连 IP 拿得到 HTTP 应答),但 minirootfs 不带 resolver,iOS 侧也没有人写一个,于是
+`apk` 对每个镜像都报 `temporary error (try again later)`,看起来像镜像挂了。Android 侧
+一直有,两边各写一份是它漂移的原因,现在共用 `lib/core/utils/alpine_seed.dart`。
+已经装过 rootfs 的用户不会再走 `install()`,所以 `IosRootfs.prepare()` 在启动时补一次
+(只在文件不存在时写,不覆盖用户自己指的 DNS)。
+
 剩下两条,都要人:
 
-- **M2 内存与发热。** 在设备上跑一个真实负载(`apk add`、一次编译、一个长时间进程),用
-  Instruments 看。一个带 256 KB 输出环形缓冲和 guest 堆的解释器,跑在手机上和跑在 Mac 上
-  不是一回事。
+- **M2 发热。** 内存那半已经自动化了,发热没有 API 可问 —— 一台在降频的设备,从 Dart
+  里看和一台本来就慢的设备完全一样。要 Instruments:`flutter build ios --profile`,
+  Instruments 的 Time Profiler + Thermal State,跑上面那个负载,看 thermal state 有没有
+  离开 nominal。
 - **M5 送审。** 开着功能提交,看结果。Guideline 2.5.2,不是技术问题,而且赌注不是这个功能
   被拒,是**整个 app 的下一次更新被卡住** —— 止血开关就是为这个存在的。M5 决定其余是否
   值得做完。
