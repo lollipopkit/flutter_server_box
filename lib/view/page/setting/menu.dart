@@ -50,6 +50,141 @@ final class SettingsNode {
   }
 }
 
+/// Height of the floating tab bar, and the gap around it.
+const _kTabsHeight = 56.0;
+const _kTabsMargin = 12.0;
+
+/// Names the floating tab bar. Several of its labels are also words in the
+/// settings behind it, so finding one means saying which of the two is meant.
+const settingsTabsKey = ValueKey('settings_tabs');
+
+/// The same tree as [_SettingsMenu], one level at a time.
+///
+/// A narrow window has no room for a column beside the content, and a drawer
+/// hides where you are the moment you have gone there. This shows the level you
+/// are on, floating over the foot of the content, with the way back out at the
+/// leading end of it.
+final class _SettingsTabs extends StatelessWidget {
+  /// The level being shown, which is the root or one branch's children.
+  final List<SettingsNode> nodes;
+
+  final String? selectedId;
+  final bool canGoBack;
+  final void Function(SettingsNode node) onTap;
+  final VoidCallback onBack;
+
+  const _SettingsTabs({
+    required this.nodes,
+    required this.selectedId,
+    required this.canGoBack,
+    required this.onTap,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Material(
+      key: settingsTabsKey,
+      elevation: 6,
+      color: scheme.surfaceContainerHigh,
+      shadowColor: Colors.black.withValues(alpha: 0.3),
+      borderRadius: BorderRadius.circular(_kTabsHeight / 2),
+      clipBehavior: Clip.antiAlias,
+      child: SizedBox(
+        height: _kTabsHeight,
+        child: Row(
+          children: [
+            // Always in the row, lit only when there is a level to go back to:
+            // a button that comes and goes moves every tab beside it.
+            _TabButton(
+              icon: Icons.arrow_back,
+              onTap: canGoBack ? onBack : null,
+              tooltip: libL10n.goBackQ,
+            ),
+            const VerticalDivider(width: 1, indent: 12, endIndent: 12),
+            Expanded(
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                children: [
+                  for (final node in nodes)
+                    _TabButton(
+                      icon: node.icon,
+                      label: node.title,
+                      // A branch counts as on while what is showing is inside
+                      // it, which is what says where the way back leads.
+                      selected: node.flattened.any((e) => e.id == selectedId),
+                      onTap: () => onTap(node),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+final class _TabButton extends StatelessWidget {
+  final IconData icon;
+  final String? label;
+  final bool selected;
+  final VoidCallback? onTap;
+  final String? tooltip;
+
+  const _TabButton({
+    required this.icon,
+    this.label,
+    this.selected = false,
+    this.onTap,
+    this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = switch ((onTap, selected)) {
+      (null, _) => scheme.onSurfaceVariant.withValues(alpha: 0.35),
+      (_, true) => scheme.primary,
+      _ => scheme.onSurfaceVariant,
+    };
+
+    final button = InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: label == null ? 14 : 10),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: color),
+            if (label != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                label!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.1,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  color: color,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+
+    final tooltip_ = tooltip;
+    if (tooltip_ == null) return button;
+    return Tooltip(message: tooltip_, child: button);
+  }
+}
+
 /// The settings menu: a column of branches to open and leaves to select.
 ///
 /// The rail the terminal, file, server and snippet pages have beside their

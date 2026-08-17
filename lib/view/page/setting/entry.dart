@@ -68,11 +68,16 @@ const _kMenuBreakpoint = 800.0;
 const _kMenuWidth = 232.0;
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
-
-  /// Which branches are open. Nothing to start with, so the menu opens as a
-  /// list of subjects rather than as everything there is.
+  /// Which branches are open in the wide menu. Nothing to start with, so it
+  /// opens as a list of subjects rather than as everything there is.
   final _expanded = <String>{};
+
+  /// Which branch the narrow tabs are inside, innermost last.
+  ///
+  /// The wide menu shows every level at once and needs no such thing; the tabs
+  /// show one level and walk between them. Both read the same tree, and both
+  /// point at the same [_selectedId].
+  final _path = <SettingsNode>[];
 
   String? _selectedId;
 
@@ -87,6 +92,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// itself, so that opening a branch and showing a page stay separate.
   List<SettingsNode> _buildNodes() {
     return [
+      // Grouped by what a setting belongs to, using the same names the app's
+      // own tabs do — so "is SFTP under connections or under files" is not a
+      // question anyone has to answer. Two levels throughout: a third made
+      // reaching a page two taps of guessing.
       SettingsNode.branch(
         id: 'app',
         title: libL10n.app,
@@ -104,12 +113,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             icon: Icons.auto_awesome_outlined,
             page: () => const AppSettingsPage(section: SettingsSection.ai),
           ),
-          SettingsNode.leaf(
-            id: 'app.editor',
-            title: libL10n.editor,
-            icon: Icons.edit_note,
-            page: () => const AppSettingsPage(section: SettingsSection.editor),
-          ),
 
           /// Fullscreen Mode is designed for old mobile phone which can be
           /// used as a status screen.
@@ -124,81 +127,86 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ],
       ),
       SettingsNode.branch(
-        id: 'conn',
-        title: libL10n.conn,
-        icon: Icons.lan_outlined,
+        id: 'server',
+        title: libL10n.server,
+        icon: Icons.dns_outlined,
         children: [
-          SettingsNode.branch(
-            id: 'conn.server',
-            title: libL10n.server,
-            icon: Icons.dns_outlined,
-            children: [
-              SettingsNode.leaf(
-                id: 'conn.server.setting',
-                title: libL10n.setting,
-                icon: Icons.settings_outlined,
-                page: () =>
-                    const AppSettingsPage(section: SettingsSection.server),
-              ),
-              SettingsNode.leaf(
-                id: 'conn.server.order',
-                title: l10n.serverOrder,
-                icon: Icons.sort,
-                page: () => const ServerOrderPage(embedded: true),
-              ),
-              SettingsNode.leaf(
-                id: 'conn.server.detail',
-                title: l10n.serverDetailOrder,
-                icon: Icons.dashboard_customize_outlined,
-                page: () => const ServerDetailOrderPage(embedded: true),
-              ),
-              SettingsNode.leaf(
-                id: 'conn.server.func',
-                title: libL10n.sequence,
-                icon: Icons.reorder,
-                page: () => const ServerFuncBtnsOrderPage(embedded: true),
-              ),
-            ],
-          ),
-          SettingsNode.branch(
-            id: 'conn.ssh',
-            title: l10n.ssh,
-            icon: Icons.terminal,
-            children: [
-              SettingsNode.leaf(
-                id: 'conn.ssh.setting',
-                title: libL10n.setting,
-                icon: Icons.settings_outlined,
-                page: () => const AppSettingsPage(section: SettingsSection.ssh),
-              ),
-              SettingsNode.leaf(
-                id: 'conn.ssh.knownHosts',
-                title: l10n.sshKnownHostKeys,
-                icon: Icons.verified_user_outlined,
-                page: () => const KnownHostsPage(embedded: true),
-              ),
-              SettingsNode.leaf(
-                id: 'conn.ssh.virtKey',
-                title: l10n.editVirtKeys,
-                icon: Icons.keyboard_outlined,
-                page: () => const SSHVirtKeySettingPage(embedded: true),
-              ),
-            ],
+          SettingsNode.leaf(
+            id: 'server.setting',
+            title: libL10n.setting,
+            icon: Icons.settings_outlined,
+            page: () => const AppSettingsPage(section: SettingsSection.server),
           ),
           SettingsNode.leaf(
-            id: 'conn.sftp',
-            title: l10n.sftp,
-            icon: Icons.folder_outlined,
-            page: () => const AppSettingsPage(section: SettingsSection.sftp),
+            id: 'server.order',
+            title: l10n.serverOrder,
+            icon: Icons.sort,
+            page: () => const ServerOrderPage(embedded: true),
           ),
           SettingsNode.leaf(
-            id: 'conn.container',
-            title: libL10n.container,
-            icon: Icons.inbox_outlined,
-            page: () =>
-                const AppSettingsPage(section: SettingsSection.container),
+            id: 'server.detail',
+            title: l10n.serverDetailOrder,
+            icon: Icons.dashboard_customize_outlined,
+            page: () => const ServerDetailOrderPage(embedded: true),
+          ),
+          SettingsNode.leaf(
+            id: 'server.func',
+            title: libL10n.sequence,
+            icon: Icons.reorder,
+            page: () => const ServerFuncBtnsOrderPage(embedded: true),
           ),
         ],
+      ),
+      SettingsNode.branch(
+        id: 'terminal',
+        title: libL10n.terminal,
+        icon: Icons.terminal,
+        children: [
+          SettingsNode.leaf(
+            id: 'terminal.setting',
+            title: libL10n.setting,
+            icon: Icons.settings_outlined,
+            page: () => const AppSettingsPage(section: SettingsSection.ssh),
+          ),
+          SettingsNode.leaf(
+            id: 'terminal.knownHosts',
+            title: l10n.sshKnownHostKeys,
+            icon: Icons.verified_user_outlined,
+            page: () => const KnownHostsPage(embedded: true),
+          ),
+          SettingsNode.leaf(
+            id: 'terminal.virtKey',
+            title: l10n.editVirtKeys,
+            icon: Icons.keyboard_outlined,
+            page: () => const SSHVirtKeySettingPage(embedded: true),
+          ),
+        ],
+      ),
+      SettingsNode.branch(
+        id: 'file',
+        title: libL10n.file,
+        icon: Icons.folder_outlined,
+        children: [
+          SettingsNode.leaf(
+            id: 'file.sftp',
+            title: l10n.sftp,
+            icon: Icons.cloud_outlined,
+            page: () => const AppSettingsPage(section: SettingsSection.sftp),
+          ),
+          // Under files rather than under the app: it is what opens one.
+          SettingsNode.leaf(
+            id: 'file.editor',
+            title: libL10n.editor,
+            icon: Icons.edit_note,
+            page: () => const AppSettingsPage(section: SettingsSection.editor),
+          ),
+        ],
+      ),
+      SettingsNode.leaf(
+        id: 'container',
+        title: libL10n.container,
+        icon: Icons.inbox_outlined,
+        page: () => const AppSettingsPage(section: SettingsSection.container),
       ),
       SettingsNode.leaf(
         id: 'backup',
@@ -221,16 +229,34 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     ];
   }
 
-  void _onSelect(SettingsNode node) {
-    setState(() => _selectedId = node.id);
-    // The drawer has answered what it was opened to answer.
-    _scaffoldKey.currentState?.closeDrawer();
-  }
+  void _onSelect(SettingsNode node) => setState(() => _selectedId = node.id);
 
   void _onToggle(SettingsNode node) {
     setState(() {
       if (!_expanded.remove(node.id)) _expanded.add(node.id);
     });
+  }
+
+  /// A tab is a tab: it shows something. Tapping a branch goes into it *and*
+  /// selects what is first inside, rather than leaving a row of tabs with none
+  /// of them on.
+  void _onTab(SettingsNode node) {
+    setState(() {
+      if (node.isLeaf) {
+        _selectedId = node.id;
+        return;
+      }
+      _path.add(node);
+      final leaf = node.firstLeaf;
+      if (leaf != null) _selectedId = leaf.id;
+    });
+  }
+
+  /// Out one level. What was selected stays selected — it is inside the branch
+  /// just left, and that branch is a tab here, lit to say so.
+  void _onTabBack() {
+    if (_path.isEmpty) return;
+    setState(_path.removeLast);
   }
 
   @override
@@ -254,7 +280,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= _kMenuBreakpoint;
-        return _buildScaffold(wide: wide, menu: menu, selected: selected);
+        return _buildScaffold(
+          wide: wide,
+          menu: menu,
+          nodes: nodes,
+          selected: selected,
+        );
       },
     );
   }
@@ -262,27 +293,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget _buildScaffold({
     required bool wide,
     required Widget menu,
+    required List<SettingsNode> nodes,
     required SettingsNode selected,
   }) {
     final content = KeyedSubtree(key: ValueKey(selected.id), child: selected.builder!());
 
     return Scaffold(
-      key: _scaffoldKey,
-      // The one bar the page has, naming whatever is on the right. The pages
-      // shown there are given `embedded: true` and drop their own.
+      // The one bar the page has, naming whatever is being shown. The pages in
+      // it are given `embedded: true` and drop their own.
       appBar: CustomAppBar(
         title: Text(selected.title, style: const TextStyle(fontSize: 20)),
-        // Stated, because a `Scaffold` with a drawer puts the drawer's button
-        // here and there is nothing left to leave the settings with. The menu
-        // moves to the other end of the bar instead.
-        leading: Navigator.of(context).canPop() ? const BackButton() : null,
         actions: [
-          if (!wide)
-            IconButton(
-              icon: const Icon(Icons.menu),
-              tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
-              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-            ),
           Btn.text(
             text: context.libL10n.logs,
             onTap: () => DebugPage.route.go(
@@ -314,7 +335,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ),
         ],
       ),
-      drawer: wide ? null : Drawer(child: SafeArea(child: menu)),
       body: SafeArea(
         child: wide
             ? Row(
@@ -324,8 +344,43 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   Expanded(child: content),
                 ],
               )
-            : content,
+            : _buildNarrow(nodes, content),
       ),
+    );
+  }
+
+  /// The content with the tabs floating over its foot.
+  ///
+  /// The content is told to keep clear of them through the [MediaQuery] its own
+  /// `SafeArea` reads, so a list scrolls to its end above the bar rather than
+  /// under it.
+  Widget _buildNarrow(List<SettingsNode> nodes, Widget content) {
+    final mediaQuery = MediaQuery.of(context);
+    final level = _path.isEmpty ? nodes : _path.last.children;
+
+    return Stack(
+      children: [
+        MediaQuery(
+          data: mediaQuery.copyWith(
+            padding: mediaQuery.padding.copyWith(
+              bottom: mediaQuery.padding.bottom + _kTabsHeight + _kTabsMargin * 2,
+            ),
+          ),
+          child: SafeArea(top: false, child: content),
+        ),
+        Positioned(
+          left: _kTabsMargin,
+          right: _kTabsMargin,
+          bottom: _kTabsMargin,
+          child: _SettingsTabs(
+            nodes: level,
+            selectedId: _selectedId,
+            canGoBack: _path.isNotEmpty,
+            onTap: _onTab,
+            onBack: _onTabBack,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -14,9 +14,10 @@ import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 
-/// The settings page is a menu beside its content above 800, and a drawer under
-/// it. Both show the same tree: a branch opens, a leaf selects, and the bar
-/// names whichever leaf is showing.
+/// One tree, two ways of walking it: a menu beside the content above 800, and a
+/// bar of tabs floating over its foot below. The menu shows every level and
+/// opens branches in place; the tabs show one level and go in and out of it.
+/// Either way the bar at the top names whichever leaf is showing.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -47,6 +48,16 @@ void main() {
   /// words in the settings on the right.
   Finder menuRow(String title) =>
       find.descendant(of: find.byType(SideBarTile), matching: find.text(title));
+
+  /// A tab of the floating bar, told apart from the settings behind it.
+  Finder tabRow(String title) =>
+      find.descendant(of: find.byKey(settingsTabsKey), matching: find.text(title));
+
+  /// The way back out, which is the bar's first button.
+  final backTab = find.descendant(
+    of: find.byKey(settingsTabsKey),
+    matching: find.byType(InkWell),
+  ).first;
 
   String barTitle(WidgetTester tester) => tester
       .widget<Text>(
@@ -100,22 +111,16 @@ void main() {
     await pump(tester, width: 1200);
 
     expect(menuRow(libL10n.app), findsOneWidget);
-    expect(menuRow(libL10n.conn), findsOneWidget);
-    expect(menuRow(libL10n.backup), findsOneWidget);
+    expect(menuRow(libL10n.server), findsOneWidget);
+    expect(menuRow(libL10n.terminal), findsOneWidget);
+    expect(menuRow(libL10n.file), findsOneWidget);
     expect(menuRow(libL10n.about), findsOneWidget);
-    expect(find.byType(Drawer), findsNothing);
-  });
-
-  testWidgets('the first level is subjects, closed', (tester) async {
-    await pump(tester, width: 1200);
-
-    // What is under a branch stays under it until asked for, so the menu opens
-    // as a short list rather than as everything there is.
-    expect(menuRow(libL10n.container), findsNothing);
+    // The one level of nesting there is stays shut until asked for.
     expect(menuRow(l10n.serverOrder), findsNothing);
+    expect(find.byKey(settingsTabsKey), findsNothing);
   });
 
-  testWidgets('every row carries an icon', (tester) async {
+  testWidgets('every menu row carries an icon', (tester) async {
     await pump(tester, width: 1200);
 
     for (final tile in tester.widgetList<SideBarTile>(find.byType(SideBarTile))) {
@@ -127,20 +132,17 @@ void main() {
     await pump(tester, width: 1200);
     final before = barTitle(tester);
 
-    await tester.tap(menuRow(libL10n.conn));
+    await tester.tap(menuRow(libL10n.server));
     await settle(tester);
 
-    expect(menuRow(libL10n.server), findsOneWidget);
-    expect(menuRow(libL10n.container), findsOneWidget);
+    expect(menuRow(l10n.serverOrder), findsOneWidget);
     // The bar names what it named: the branch opened, it did not select.
     expect(barTitle(tester), before);
   });
 
-  testWidgets('a leaf three levels down shows in the content', (tester) async {
+  testWidgets('a leaf under a branch shows in the content', (tester) async {
     await pump(tester, width: 1200);
 
-    await tester.tap(menuRow(libL10n.conn));
-    await settle(tester);
     await tester.tap(menuRow(libL10n.server));
     await settle(tester);
     await tester.tap(menuRow(l10n.serverOrder));
@@ -151,33 +153,55 @@ void main() {
     expect(find.byType(AppBar), findsOneWidget);
   });
 
-  testWidgets('a narrow window keeps the menu in a drawer, and can still go back', (
+  testWidgets('a narrow window floats the tabs, with no way back at the root', (
     tester,
   ) async {
     await pump(tester, width: 500);
 
-    expect(menuRow(libL10n.backup), findsNothing);
-    // Both: the drawer's own button would otherwise take the one place there is
-    // to leave the settings from.
+    expect(find.byKey(settingsTabsKey), findsOneWidget);
+    // No column beside the content, and the settings are still leavable.
+    expect(find.byType(SideBarTile), findsNothing);
     expect(find.byType(BackButton), findsOneWidget);
-    expect(find.byIcon(Icons.menu), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.menu));
-    await settle(tester);
-
-    expect(find.byType(Drawer), findsOneWidget);
-    expect(menuRow(libL10n.backup), findsOneWidget);
+    expect(tabRow(libL10n.server), findsOneWidget);
+    // There, and off: the root has no level above it.
+    expect(tester.widget<InkWell>(backTab).onTap, isNull);
   });
 
-  testWidgets('picking from the drawer closes it', (tester) async {
+  testWidgets('a tab that is a branch goes in and shows what is first inside', (
+    tester,
+  ) async {
     await pump(tester, width: 500);
 
-    await tester.tap(find.byIcon(Icons.menu));
+    await tester.tap(tabRow(libL10n.server));
     await settle(tester);
-    await tester.tap(menuRow(libL10n.about));
-    await settle(tester, 12);
 
-    expect(find.byType(Drawer), findsNothing);
-    expect(barTitle(tester), libL10n.about);
+    // The level below, with the branch's own settings showing rather than a row
+    // of tabs with none of them on.
+    expect(tabRow(l10n.serverOrder), findsOneWidget);
+    // Checked against the first tab, not a late one: the row scrolls, so a tab
+    // off the end of it is absent for a reason that has nothing to do with the
+    // level being shown.
+    expect(tabRow(libL10n.app), findsNothing);
+    expect(barTitle(tester), libL10n.setting);
+    expect(tester.widget<InkWell>(backTab).onTap, isNotNull);
+  });
+
+  testWidgets('the leading button goes back out a level', (tester) async {
+    await pump(tester, width: 500);
+
+    await tester.tap(tabRow(libL10n.server));
+    await settle(tester);
+    await tester.tap(tabRow(l10n.serverOrder));
+    await settle(tester);
+    expect(barTitle(tester), l10n.serverOrder);
+
+    await tester.tap(backTab);
+    await settle(tester);
+
+    expect(tabRow(libL10n.app), findsOneWidget);
+    // What was picked is still what is showing, and the branch it is inside is
+    // the tab that says so.
+    expect(barTitle(tester), l10n.serverOrder);
   });
 }
