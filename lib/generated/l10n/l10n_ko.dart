@@ -421,7 +421,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get deleteServers => '서버 일괄 삭제';
 
   @override
-  String get deleteDirRecursive => 'Delete the folder and everything in it';
+  String get deleteDirRecursive => '폴더와 그 안의 모든 항목 삭제';
 
   @override
   String get desktopTerminalTip => 'SSH 세션을 시작할 때 사용할 터미널 에뮬레이터를 여는 명령어입니다.';

@@ -442,7 +442,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get deleteServers => 'Servers batchgewijs verwijderen';
 
   @override
-  String get deleteDirRecursive => 'Delete the folder and everything in it';
+  String get deleteDirRecursive => 'De map en alles erin verwijderen';
 
   @override
   String get desktopTerminalTip =>

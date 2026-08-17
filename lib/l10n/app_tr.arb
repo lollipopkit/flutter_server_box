@@ -52,6 +52,7 @@
   "cpuViewAsProgressTip": "Her CPU'nun kullanımını ilerleme çubuğu tarzında göster (eski tarz)",
   "customCmd": "Özel komutlar",
   "deleteServers": "Sunucuları toplu sil",
+  "deleteDirRecursive": "Klasörü ve içindeki her şeyi sil",
   "desktopTerminalTip": "SSH oturumları başlatılırken terminal öykünücüsünü açmak için kullanılan komut.",
   "dirEmpty": "Klasörün boş olduğundan emin olun.",
   "discoverSshServers": "SSH Sunucularını Keşfet",

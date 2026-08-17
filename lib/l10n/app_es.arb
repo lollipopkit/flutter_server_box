@@ -52,6 +52,7 @@
   "cpuViewAsProgressTip": "Muestre la tasa de uso de cada CPU en estilo de barra de progreso (estilo antiguo)",
   "customCmd": "Comandos personalizados",
   "deleteServers": "Eliminar servidores en lote",
+  "deleteDirRecursive": "Eliminar la carpeta y todo su contenido",
   "desktopTerminalTip": "Comando utilizado para abrir el emulador de terminal al iniciar sesiones SSH.",
   "dirEmpty": "Asegúrate de que el directorio esté vacío",
   "discoverSshServers": "Descubrir servidores SSH",

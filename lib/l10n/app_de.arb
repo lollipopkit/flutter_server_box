@@ -52,6 +52,7 @@
   "cpuViewAsProgressTip": "Zeigen Sie die Auslastung jedes CPUs in einem Fortschrittsbalken-Stil an (alter Stil)",
   "customCmd": "Benutzerdefinierte Befehle",
   "deleteServers": "Batch-Löschung von Servern",
+  "deleteDirRecursive": "Ordner mit dem gesamten Inhalt löschen",
   "desktopTerminalTip": "Befehl zum Öffnen des Terminal-Emulators beim Starten von SSH-Sitzungen.",
   "dirEmpty": "Stelle sicher, dass der Ordner leer ist.",
   "discoverSshServers": "SSH-Server entdecken",

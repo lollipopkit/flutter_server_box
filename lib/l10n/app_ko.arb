@@ -62,6 +62,7 @@
   "cpuViewAsProgressTip": "각 CPU 사용률을 프로그레스 바 형태로 표시합니다 (이전 스타일)",
   "customCmd": "사용자 정의 명령어",
   "deleteServers": "서버 일괄 삭제",
+  "deleteDirRecursive": "폴더와 그 안의 모든 항목 삭제",
   "desktopTerminalTip": "SSH 세션을 시작할 때 사용할 터미널 에뮬레이터를 여는 명령어입니다.",
   "dirEmpty": "폴더가 비어 있는지 확인해 주세요.",
   "discoverSshServers": "SSH 서버 검색",

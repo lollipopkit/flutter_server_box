@@ -443,7 +443,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get deleteServers => 'Batch-Löschung von Servern';
 
   @override
-  String get deleteDirRecursive => 'Delete the folder and everything in it';
+  String get deleteDirRecursive => 'Ordner mit dem gesamten Inhalt löschen';
 
   @override
   String get desktopTerminalTip =>

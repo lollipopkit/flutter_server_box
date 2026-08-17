@@ -52,6 +52,7 @@
   "cpuViewAsProgressTip": "各CPUの使用率をプログレスバースタイルで表示する（旧スタイル）",
   "customCmd": "カスタムコマンド",
   "deleteServers": "サーバーを一括削除",
+  "deleteDirRecursive": "フォルダーとその中身をすべて削除",
   "desktopTerminalTip": "SSHセッションを起動する際に使用されるターミナルエミュレーターを開くコマンド。",
   "dirEmpty": "フォルダーが空であることを確認してください",
   "discoverSshServers": "SSHサーバーの発見",

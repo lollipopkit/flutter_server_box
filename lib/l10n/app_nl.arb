@@ -52,6 +52,7 @@
   "cpuViewAsProgressTip": "Toon het gebruik van elke CPU in een voortgangsbalkstijl (oude stijl)",
   "customCmd": "Aangepaste opdrachten",
   "deleteServers": "Servers batchgewijs verwijderen",
+  "deleteDirRecursive": "De map en alles erin verwijderen",
   "desktopTerminalTip": "Opdracht die wordt gebruikt om de terminalemulator te openen bij het starten van SSH-sessies.",
   "dirEmpty": "Zorg ervoor dat de map leeg is.",
   "discoverSshServers": "SSH-servers ontdekken",

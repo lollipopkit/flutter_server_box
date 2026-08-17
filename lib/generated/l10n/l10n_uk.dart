@@ -443,7 +443,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get deleteServers => 'Масове видалення серверів';
 
   @override
-  String get deleteDirRecursive => 'Delete the folder and everything in it';
+  String get deleteDirRecursive => 'Видалити папку та весь її вміст';
 
   @override
   String get desktopTerminalTip =>

@@ -52,6 +52,7 @@
   "cpuViewAsProgressTip": "Tampilkan tingkat penggunaan setiap CPU dalam gaya bilah kemajuan (gaya lama)",
   "customCmd": "Perintah kustom",
   "deleteServers": "Penghapusan server secara batch",
+  "deleteDirRecursive": "Hapus folder beserta seluruh isinya",
   "desktopTerminalTip": "Perintah yang digunakan untuk membuka emulator terminal saat memulai sesi SSH.",
   "dirEmpty": "Pastikan dir kosong.",
   "discoverSshServers": "Temukan Server SSH",

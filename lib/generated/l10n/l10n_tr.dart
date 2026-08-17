@@ -444,7 +444,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get deleteServers => 'Sunucuları toplu sil';
 
   @override
-  String get deleteDirRecursive => 'Delete the folder and everything in it';
+  String get deleteDirRecursive => 'Klasörü ve içindeki her şeyi sil';
 
   @override
   String get desktopTerminalTip =>

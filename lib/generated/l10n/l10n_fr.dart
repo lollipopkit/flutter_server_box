@@ -448,7 +448,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get deleteServers => 'Supprimer des serveurs en lot';
 
   @override
-  String get deleteDirRecursive => 'Delete the folder and everything in it';
+  String get deleteDirRecursive => 'Supprimer le dossier et tout son contenu';
 
   @override
   String get desktopTerminalTip =>
