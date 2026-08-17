@@ -15,8 +15,8 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/setting/entry.dart';
 
 /// The settings page is a menu beside its content above 800, and a drawer under
-/// it. Both show the same tree, and a branch is a row that opens rather than a
-/// row that shows something.
+/// it. Both show the same tree: a branch opens, a leaf selects, and the bar
+/// names whichever leaf is showing.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -43,6 +43,27 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
+  /// A row of the menu, and only a row of it: several of these titles are also
+  /// words in the settings on the right.
+  Finder menuRow(String title) =>
+      find.descendant(of: find.byType(SideBarTile), matching: find.text(title));
+
+  String barTitle(WidgetTester tester) => tester
+      .widget<Text>(
+        find.descendant(of: find.byType(AppBar), matching: find.byType(Text)).first,
+      )
+      .data!;
+
+  Future<void> settle(WidgetTester tester, [int frames = 10]) async {
+    // Counted out rather than settled: the menu animates open and closed, and
+    // `pumpAndSettle` on a tree with a frame always scheduled waits ten minutes.
+    for (var i = 0; i < frames; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+  }
+
+  /// Pushed rather than shown as the home page, which is how it is reached and
+  /// what decides whether the bar has anything to go back with.
   Future<void> pump(WidgetTester tester, {required double width}) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = Size(width, 900);
@@ -57,109 +78,106 @@ void main() {
           ],
           supportedLocales: AppLocalizations.supportedLocales,
           builder: ResponsivePoints.builder,
-          home: const SettingsPage(),
+          home: Scaffold(
+            body: Builder(
+              builder: (ctx) => TextButton(
+                onPressed: () => Navigator.of(ctx).push(
+                  MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
         ),
       ),
     );
-    // Counted out rather than settled: the menu animates open and closed, and
-    // `pumpAndSettle` on a tree with a frame always scheduled waits ten minutes.
-    for (var i = 0; i < 10; i++) {
-      await tester.pump(const Duration(milliseconds: 50));
-    }
+    await tester.tap(find.text('open'));
+    await settle(tester);
     addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
   }
 
   testWidgets('a wide window shows the menu beside the content', (tester) async {
     await pump(tester, width: 1200);
 
-    // Every top level row is there, and no drawer to reach them through.
-    expect(find.text(libL10n.server), findsOneWidget);
-    expect(find.text(libL10n.backup), findsOneWidget);
-    expect(find.text(libL10n.about), findsOneWidget);
+    expect(menuRow(libL10n.app), findsOneWidget);
+    expect(menuRow(libL10n.conn), findsOneWidget);
+    expect(menuRow(libL10n.backup), findsOneWidget);
+    expect(menuRow(libL10n.about), findsOneWidget);
     expect(find.byType(Drawer), findsNothing);
   });
 
-  testWidgets('a narrow window keeps the menu in a drawer', (tester) async {
-    await pump(tester, width: 500);
+  testWidgets('the first level is subjects, closed', (tester) async {
+    await pump(tester, width: 1200);
 
-    // Not on screen, and reachable: `Scaffold` puts the hamburger in the bar
-    // for us because the page has a drawer.
-    expect(find.text(libL10n.backup), findsNothing);
+    // What is under a branch stays under it until asked for, so the menu opens
+    // as a short list rather than as everything there is.
+    expect(menuRow(libL10n.container), findsNothing);
+    expect(menuRow(l10n.serverOrder), findsNothing);
+  });
 
-    await tester.tap(find.byTooltip(MaterialLocalizations.of(
-      tester.element(find.byType(Scaffold).first),
-    ).openAppDrawerTooltip));
-    for (var i = 0; i < 10; i++) {
-      await tester.pump(const Duration(milliseconds: 50));
+  testWidgets('every row carries an icon', (tester) async {
+    await pump(tester, width: 1200);
+
+    for (final tile in tester.widgetList<SideBarTile>(find.byType(SideBarTile))) {
+      expect(tile.icon, isNotNull, reason: tile.title);
     }
-
-    expect(find.byType(Drawer), findsOneWidget);
-    expect(find.text(libL10n.backup), findsOneWidget);
   });
 
   testWidgets('a branch opens instead of showing something', (tester) async {
     await pump(tester, width: 1200);
+    final before = barTitle(tester);
 
-    // Closed to start with, so the menu opens as a list of subjects.
-    expect(find.text(l10n.serverOrder), findsNothing);
-    final titleBefore = tester.widget<Text>(
-      find.descendant(of: find.byType(AppBar), matching: find.byType(Text)).first,
-    );
+    await tester.tap(menuRow(libL10n.conn));
+    await settle(tester);
 
-    await tester.tap(find.text(libL10n.server));
-    for (var i = 0; i < 10; i++) {
-      await tester.pump(const Duration(milliseconds: 50));
-    }
-
-    expect(find.text(l10n.serverOrder), findsOneWidget);
-    // The bar still names what it named: the branch opened, it did not select.
-    final titleAfter = tester.widget<Text>(
-      find.descendant(of: find.byType(AppBar), matching: find.byType(Text)).first,
-    );
-    expect(titleAfter.data, titleBefore.data);
+    expect(menuRow(libL10n.server), findsOneWidget);
+    expect(menuRow(libL10n.container), findsOneWidget);
+    // The bar names what it named: the branch opened, it did not select.
+    expect(barTitle(tester), before);
   });
 
-  testWidgets('a leaf under a branch shows in the content, named by the bar', (
-    tester,
-  ) async {
+  testWidgets('a leaf three levels down shows in the content', (tester) async {
     await pump(tester, width: 1200);
 
-    await tester.tap(find.text(libL10n.server));
-    for (var i = 0; i < 10; i++) {
-      await tester.pump(const Duration(milliseconds: 50));
-    }
-    await tester.tap(find.text(l10n.serverOrder));
-    for (var i = 0; i < 10; i++) {
-      await tester.pump(const Duration(milliseconds: 50));
-    }
+    await tester.tap(menuRow(libL10n.conn));
+    await settle(tester);
+    await tester.tap(menuRow(libL10n.server));
+    await settle(tester);
+    await tester.tap(menuRow(l10n.serverOrder));
+    await settle(tester);
 
-    final title = tester.widget<Text>(
-      find.descendant(of: find.byType(AppBar), matching: find.byType(Text)).first,
-    );
-    expect(title.data, l10n.serverOrder);
+    expect(barTitle(tester), l10n.serverOrder);
     // Embedded, so it dropped the bar it has when pushed — one page, one bar.
     expect(find.byType(AppBar), findsOneWidget);
+  });
+
+  testWidgets('a narrow window keeps the menu in a drawer, and can still go back', (
+    tester,
+  ) async {
+    await pump(tester, width: 500);
+
+    expect(menuRow(libL10n.backup), findsNothing);
+    // Both: the drawer's own button would otherwise take the one place there is
+    // to leave the settings from.
+    expect(find.byType(BackButton), findsOneWidget);
+    expect(find.byIcon(Icons.menu), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.menu));
+    await settle(tester);
+
+    expect(find.byType(Drawer), findsOneWidget);
+    expect(menuRow(libL10n.backup), findsOneWidget);
   });
 
   testWidgets('picking from the drawer closes it', (tester) async {
     await pump(tester, width: 500);
 
-    await tester.tap(find.byTooltip(MaterialLocalizations.of(
-      tester.element(find.byType(Scaffold).first),
-    ).openAppDrawerTooltip));
-    for (var i = 0; i < 10; i++) {
-      await tester.pump(const Duration(milliseconds: 50));
-    }
-
-    await tester.tap(find.text(libL10n.about));
-    for (var i = 0; i < 12; i++) {
-      await tester.pump(const Duration(milliseconds: 50));
-    }
+    await tester.tap(find.byIcon(Icons.menu));
+    await settle(tester);
+    await tester.tap(menuRow(libL10n.about));
+    await settle(tester, 12);
 
     expect(find.byType(Drawer), findsNothing);
-    final title = tester.widget<Text>(
-      find.descendant(of: find.byType(AppBar), matching: find.byType(Text)).first,
-    );
-    expect(title.data, libL10n.about);
+    expect(barTitle(tester), libL10n.about);
   });
 }

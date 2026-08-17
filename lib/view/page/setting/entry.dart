@@ -87,100 +87,135 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   /// itself, so that opening a branch and showing a page stay separate.
   List<SettingsNode> _buildNodes() {
     return [
-      SettingsNode.leaf(
+      SettingsNode.branch(
         id: 'app',
         title: libL10n.app,
-        page: () => const AppSettingsPage(section: SettingsSection.app),
-      ),
-      SettingsNode.leaf(
-        id: 'ai',
-        title: libL10n.ai,
-        page: () => const AppSettingsPage(section: SettingsSection.ai),
-      ),
-      SettingsNode.branch(
-        id: 'server',
-        title: libL10n.server,
+        icon: Icons.tune,
         children: [
           SettingsNode.leaf(
-            id: 'server.setting',
+            id: 'app.setting',
             title: libL10n.setting,
-            page: () => const AppSettingsPage(section: SettingsSection.server),
+            icon: Icons.settings_outlined,
+            page: () => const AppSettingsPage(section: SettingsSection.app),
           ),
           SettingsNode.leaf(
-            id: 'server.order',
-            title: l10n.serverOrder,
-            page: () => const ServerOrderPage(embedded: true),
+            id: 'app.ai',
+            title: libL10n.ai,
+            icon: Icons.auto_awesome_outlined,
+            page: () => const AppSettingsPage(section: SettingsSection.ai),
           ),
           SettingsNode.leaf(
-            id: 'server.detail',
-            title: l10n.serverDetailOrder,
-            page: () => const ServerDetailOrderPage(embedded: true),
+            id: 'app.editor',
+            title: libL10n.editor,
+            icon: Icons.edit_note,
+            page: () => const AppSettingsPage(section: SettingsSection.editor),
           ),
-          SettingsNode.leaf(
-            id: 'server.func',
-            title: libL10n.sequence,
-            page: () => const ServerFuncBtnsOrderPage(embedded: true),
-          ),
-        ],
-      ),
-      SettingsNode.branch(
-        id: 'ssh',
-        title: l10n.ssh,
-        children: [
-          SettingsNode.leaf(
-            id: 'ssh.setting',
-            title: libL10n.setting,
-            page: () => const AppSettingsPage(section: SettingsSection.ssh),
-          ),
-          SettingsNode.leaf(
-            id: 'ssh.knownHosts',
-            title: l10n.sshKnownHostKeys,
-            page: () => const KnownHostsPage(embedded: true),
-          ),
-          SettingsNode.leaf(
-            id: 'ssh.virtKey',
-            title: l10n.editVirtKeys,
-            page: () => const SSHVirtKeySettingPage(embedded: true),
-          ),
-        ],
-      ),
-      SettingsNode.leaf(
-        id: 'sftp',
-        title: l10n.sftp,
-        page: () => const AppSettingsPage(section: SettingsSection.sftp),
-      ),
-      SettingsNode.leaf(
-        id: 'container',
-        title: libL10n.container,
-        page: () => const AppSettingsPage(section: SettingsSection.container),
-      ),
-      SettingsNode.leaf(
-        id: 'editor',
-        title: libL10n.editor,
-        page: () => const AppSettingsPage(section: SettingsSection.editor),
-      ),
 
-      /// Fullscreen Mode is designed for old mobile phone which can be
-      /// used as a status screen.
-      if (isMobile)
-        SettingsNode.leaf(
-          id: 'fullScreen',
-          title: l10n.fullScreen,
-          page: () => const AppSettingsPage(section: SettingsSection.fullScreen),
-        ),
+          /// Fullscreen Mode is designed for old mobile phone which can be
+          /// used as a status screen.
+          if (isMobile)
+            SettingsNode.leaf(
+              id: 'app.fullScreen',
+              title: l10n.fullScreen,
+              icon: Icons.fullscreen,
+              page: () =>
+                  const AppSettingsPage(section: SettingsSection.fullScreen),
+            ),
+        ],
+      ),
+      SettingsNode.branch(
+        id: 'conn',
+        title: libL10n.conn,
+        icon: Icons.lan_outlined,
+        children: [
+          SettingsNode.branch(
+            id: 'conn.server',
+            title: libL10n.server,
+            icon: Icons.dns_outlined,
+            children: [
+              SettingsNode.leaf(
+                id: 'conn.server.setting',
+                title: libL10n.setting,
+                icon: Icons.settings_outlined,
+                page: () =>
+                    const AppSettingsPage(section: SettingsSection.server),
+              ),
+              SettingsNode.leaf(
+                id: 'conn.server.order',
+                title: l10n.serverOrder,
+                icon: Icons.sort,
+                page: () => const ServerOrderPage(embedded: true),
+              ),
+              SettingsNode.leaf(
+                id: 'conn.server.detail',
+                title: l10n.serverDetailOrder,
+                icon: Icons.dashboard_customize_outlined,
+                page: () => const ServerDetailOrderPage(embedded: true),
+              ),
+              SettingsNode.leaf(
+                id: 'conn.server.func',
+                title: libL10n.sequence,
+                icon: Icons.reorder,
+                page: () => const ServerFuncBtnsOrderPage(embedded: true),
+              ),
+            ],
+          ),
+          SettingsNode.branch(
+            id: 'conn.ssh',
+            title: l10n.ssh,
+            icon: Icons.terminal,
+            children: [
+              SettingsNode.leaf(
+                id: 'conn.ssh.setting',
+                title: libL10n.setting,
+                icon: Icons.settings_outlined,
+                page: () => const AppSettingsPage(section: SettingsSection.ssh),
+              ),
+              SettingsNode.leaf(
+                id: 'conn.ssh.knownHosts',
+                title: l10n.sshKnownHostKeys,
+                icon: Icons.verified_user_outlined,
+                page: () => const KnownHostsPage(embedded: true),
+              ),
+              SettingsNode.leaf(
+                id: 'conn.ssh.virtKey',
+                title: l10n.editVirtKeys,
+                icon: Icons.keyboard_outlined,
+                page: () => const SSHVirtKeySettingPage(embedded: true),
+              ),
+            ],
+          ),
+          SettingsNode.leaf(
+            id: 'conn.sftp',
+            title: l10n.sftp,
+            icon: Icons.folder_outlined,
+            page: () => const AppSettingsPage(section: SettingsSection.sftp),
+          ),
+          SettingsNode.leaf(
+            id: 'conn.container',
+            title: libL10n.container,
+            icon: Icons.inbox_outlined,
+            page: () =>
+                const AppSettingsPage(section: SettingsSection.container),
+          ),
+        ],
+      ),
       SettingsNode.leaf(
         id: 'backup',
         title: libL10n.backup,
+        icon: Icons.backup_outlined,
         page: () => const BackupPage(),
       ),
       SettingsNode.leaf(
         id: 'privateKey',
         title: l10n.privateKey,
+        icon: Icons.key_outlined,
         page: () => const PrivateKeysListPage(),
       ),
       SettingsNode.leaf(
         id: 'about',
         title: libL10n.about,
+        icon: Icons.info_outline,
         page: () => const _AppAboutPage(),
       ),
     ];
@@ -237,7 +272,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       // shown there are given `embedded: true` and drop their own.
       appBar: CustomAppBar(
         title: Text(selected.title, style: const TextStyle(fontSize: 20)),
+        // Stated, because a `Scaffold` with a drawer puts the drawer's button
+        // here and there is nothing left to leave the settings with. The menu
+        // moves to the other end of the bar instead.
+        leading: Navigator.of(context).canPop() ? const BackButton() : null,
         actions: [
+          if (!wide)
+            IconButton(
+              icon: const Icon(Icons.menu),
+              tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            ),
           Btn.text(
             text: context.libL10n.logs,
             onTap: () => DebugPage.route.go(

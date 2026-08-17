@@ -9,12 +9,14 @@ part of 'entry.dart';
 final class SettingsNode {
   final String id;
   final String title;
+  final IconData icon;
   final List<SettingsNode> children;
   final Widget Function()? builder;
 
   const SettingsNode.leaf({
     required this.id,
     required this.title,
+    required this.icon,
     required Widget Function() page,
   })  : builder = page,
         children = const [];
@@ -22,6 +24,7 @@ final class SettingsNode {
   const SettingsNode.branch({
     required this.id,
     required this.title,
+    required this.icon,
     required this.children,
   }) : builder = null;
 
@@ -85,6 +88,7 @@ final class _SettingsMenu extends StatelessWidget {
       padding: EdgeInsets.only(left: depth * 14.0),
       child: SideBarTile(
         title: node.title,
+        icon: node.icon,
         selected: node.isLeaf && node.id == selectedId,
         onTap: () => node.isLeaf ? onSelect(node) : onToggle(node),
         trailing: node.isLeaf
