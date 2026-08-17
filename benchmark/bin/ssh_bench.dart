@@ -32,6 +32,8 @@
 /// Run: dart run bin/ssh_bench.dart
 library;
 
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
@@ -326,9 +328,7 @@ String _label(SSHCipherType? cipher) => cipher?.name ?? '(app defaults)';
 _Row _row(String layer, String cipher, int bytes, Duration elapsed,
     {String? note}) {
   final row = _Row(layer, cipher, bytes, elapsed, note);
-  final rate = note != null
-      ? note
-      : '${row.mibPerSecond.toStringAsFixed(1)} MiB/s';
+  final rate = note ?? '${row.mibPerSecond.toStringAsFixed(1)} MiB/s';
   print('  ${layer.padRight(22)} ${cipher.padRight(30)} ${rate.padLeft(12)}');
   return row;
 }
