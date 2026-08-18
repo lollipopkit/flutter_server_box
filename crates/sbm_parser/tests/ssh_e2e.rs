@@ -20,10 +20,8 @@
 use sbm_parser::commands;
 use sbm_parser::script::{self, ScriptOptions, ShellFunc};
 use sbm_parser::SystemType;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::process::{Command, Stdio};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 const REMOTE_DIR: &str = "/tmp/server_box_e2e";
@@ -107,41 +105,55 @@ fn run_ssh(host: &str, arg: &str, stdin: Option<&str>) -> Result<std::process::O
         let input = input.to_owned();
         std::thread::spawn(move || pipe.write_all(input.as_bytes()))
     });
-
-    // Killed by pid rather than through the `Child`, which `wait_with_output`
-    // consumes. `done` is what keeps the watchdog from outliving the command it
-    // watches and killing a pid the OS has since handed to something else.
-    let pid = child.id();
-    let done = Arc::new(AtomicBool::new(false));
-    let watchdog = {
-        let done = Arc::clone(&done);
+    // Both drained while the command runs, which is what `wait_with_output`
+    // did. Reading either one to the end first would deadlock on the other
+    // filling, and reading neither until the child exits deadlocks on both.
+    let reader = |mut pipe: Box<dyn Read + Send>| {
         std::thread::spawn(move || {
-            let deadline = Instant::now() + SSH_TIMEOUT;
-            while Instant::now() < deadline {
-                if done.load(Ordering::Relaxed) {
-                    return false;
-                }
-                std::thread::sleep(Duration::from_millis(200));
-            }
-            let _ = Command::new("kill").arg("-9").arg(pid.to_string()).status();
-            true
+            let mut buf = Vec::new();
+            pipe.read_to_end(&mut buf).map(|_| buf)
         })
     };
+    let stdout = reader(Box::new(child.stdout.take().expect("stdout piped")));
+    let stderr = reader(Box::new(child.stderr.take().expect("stderr piped")));
 
-    let out = child
-        .wait_with_output()
-        .map_err(|e| format!("ssh wait failed: {e}"))?;
-    done.store(true, Ordering::Relaxed);
-    if watchdog.join().unwrap_or(false) {
+    // `try_wait` rather than `wait_with_output`, which consumes the `Child`:
+    // the timeout has to kill *this* child, and a pid handed to a kill(1) after
+    // the process is gone is a pid the OS may have given to something else.
+    let deadline = Instant::now() + SSH_TIMEOUT;
+    let status = loop {
+        match child.try_wait().map_err(|e| format!("ssh wait failed: {e}"))? {
+            Some(status) => break Some(status),
+            None if Instant::now() >= deadline => {
+                let _ = child.kill();
+                let _ = child.wait();
+                break None;
+            }
+            None => std::thread::sleep(Duration::from_millis(50)),
+        }
+    };
+
+    let collect = |handle: std::thread::JoinHandle<std::io::Result<Vec<u8>>>, which: &str| {
+        handle
+            .join()
+            .map_err(|_| format!("ssh {which} reader panicked"))?
+            .map_err(|e| format!("failed to read ssh {which}: {e}"))
+    };
+    let stdout = collect(stdout, "stdout")?;
+    let stderr = collect(stderr, "stderr")?;
+
+    // Before joining the writer: the kill is what unblocks it, and its broken
+    // pipe is a consequence of the timeout rather than something to report
+    let Some(status) = status else {
         return Err(format!("ssh command {arg:?} killed after {}s", SSH_TIMEOUT.as_secs()));
-    }
+    };
     if let Some(writer) = writer {
         writer
             .join()
             .map_err(|_| "ssh stdin writer panicked".to_string())?
             .map_err(|e| format!("failed to write ssh stdin: {e}"))?;
     }
-    Ok(out)
+    Ok(std::process::Output { status, stdout, stderr })
 }
 
 fn check_ssh(cmd: &str, out: std::process::Output) -> Result<String, String> {
