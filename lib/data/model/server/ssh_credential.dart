@@ -104,11 +104,18 @@ final class SshCredential {
   /// The transfer isolate is handed key material in a map it looks up by
   /// string, resolved for it on the main isolate (`SshTransferCreds`). That map
   /// was keyed by [keyId] alone, which cannot name a key that came from
-  /// [keyPath] — so the two share one namespace here, with the path prefixed
-  /// because a store id never contains a separator.
+  /// [keyPath] — so the two share one namespace here.
+  ///
+  /// Both sides are prefixed, not just the path. A key's id is whatever the
+  /// user typed for its name, so it can be `path:/home/me/id_ed25519` as
+  /// easily as anything else; leaving ids bare would let such a key and the
+  /// file of that name collide in a bundle that carries both.
+  ///
+  /// Never stored — the bundle is built when a transfer is queued and lives
+  /// only as long as it does — so the shape of these strings is free to change.
   String? get keyRef {
     final id = keyId;
-    if (id != null) return id;
+    if (id != null) return 'id:$id';
     final path = keyPath;
     return path == null ? null : 'path:$path';
   }

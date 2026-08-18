@@ -2,18 +2,26 @@ part of 'edit.dart';
 
 extension _Widgets on _ServerEditPageState {
   Widget _buildAuth() {
+    // Reads both sources: a server imported with an IdentityFile authenticates
+    // with a key even though nothing is selected among the stored ones, and a
+    // switch that showed "off" there would be describing the wrong thing.
     final switch_ = ListTile(
       title: Text(l10n.keyAuth),
       trailing: _keyIdx.listenVal(
-        (v) => Switch(
-          value: v != null,
-          onChanged: (val) {
-            if (val) {
-              _keyIdx.value = -1;
-            } else {
-              _keyIdx.value = null;
-            }
-          },
+        (idx) => _keyPath.listenVal(
+          (path) => Switch(
+            value: idx != null || path != null,
+            onChanged: (on) {
+              if (on) {
+                // Already on by way of a file: leave the file alone rather
+                // than adding an empty stored-key selection beside it
+                if (path == null) _keyIdx.value = -1;
+              } else {
+                _keyIdx.value = null;
+                _keyPath.value = null;
+              }
+            },
+          ),
         ),
       ),
     );

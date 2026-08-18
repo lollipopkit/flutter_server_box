@@ -275,7 +275,7 @@ Future<SSHClient> genClient(
   if (privateKey == null) {
     throw SSHErr(
       type: SSHErrType.noPrivateKey,
-      message: l10n.privateKeyNotFoundFmt(keyRef),
+      message: l10n.privateKeyNotFoundFmt(ssh.keyId ?? ssh.keyPath ?? keyRef),
     );
   }
 

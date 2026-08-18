@@ -32,13 +32,9 @@ void main() {
       const onDisk = SshCredential(ip: 'a', keyPath: '~/.ssh/id_ed25519');
       const neither = SshCredential(ip: 'a');
 
-      expect(stored.keyRef, 'work');
+      expect(stored.keyRef, 'id:work');
       expect(onDisk.keyRef, 'path:~/.ssh/id_ed25519');
       expect(neither.keyRef, isNull);
-
-      // The transfer isolate looks key material up by this string, so a stored
-      // key and a file that happen to share a name must not collide
-      expect(stored.keyRef, isNot(onDisk.keyRef));
     });
 
     test('keyPath survives a round trip and is absent when unset', () {
@@ -50,6 +46,14 @@ void main() {
 
       const withoutPath = SshCredential(ip: 'a', keyId: 'work');
       expect(withoutPath.toJson().containsKey('keyPath'), isFalse);
+    });
+
+    test('a key id shaped like a path reference cannot collide with one', () {
+      // A key's id is its user-typed name, so somebody can call one exactly
+      // what a path reference looks like. Both sides are prefixed for this.
+      const named = SshCredential(ip: 'a', keyId: 'path:/home/me/id_ed25519');
+      const file = SshCredential(ip: 'a', keyPath: '/home/me/id_ed25519');
+      expect(named.keyRef, isNot(file.keyRef));
     });
 
     test('changing the key file needs a reconnect', () {

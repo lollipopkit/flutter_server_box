@@ -234,7 +234,11 @@ extension _Actions on _ServerEditPageState {
         return;
       }
 
-      if (_keyIdx.value == null && _passwordController.text.isEmpty) {
+      // Either key source counts. A server imported with an IdentityFile has
+      // a key and no password, and asking it to confirm "no authentication"
+      // on every save would be asking about something that is not true.
+      final hasKey = _keyIdx.value != null || _keyPath.value != null;
+      if (!hasKey && _passwordController.text.isEmpty) {
         final ok = await context.showRoundDialog<bool>(
           title: libL10n.attention,
           child: Text(libL10n.askContinue(l10n.useNoPwd)),
