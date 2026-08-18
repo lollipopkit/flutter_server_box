@@ -3,7 +3,6 @@ use server_box_monitor::core::config::Config;
 #[cfg(test)]
 mod test_toml_config {
     use super::*;
-    use tokio;
 
     #[tokio::test]
     async fn test_toml_config_loading() {
@@ -37,7 +36,7 @@ method = "POST"
 message = "Alert: {{message}}"
         "#;
 
-        let config: Config = toml::from_str(&toml_content).expect("Failed to parse TOML");
+        let config: Config = toml::from_str(toml_content).expect("Failed to parse TOML");
         
         // Test the parsed config
         let server = config.get_server();

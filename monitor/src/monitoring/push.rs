@@ -12,6 +12,12 @@ pub struct PushRateLimiter {
     records: Mutex<HashMap<String, VecDeque<Instant>>>,
 }
 
+impl Default for PushRateLimiter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PushRateLimiter {
     pub fn new() -> Self {
         Self {
@@ -274,11 +280,11 @@ async fn send_ios_notification(config: &PushConfig, message: &str) -> Result<()>
     let response_text = response.text().await?;
     
     // Check if there's an expected response code
-    if let Some(expected_code) = config.config.get("code").and_then(|v| v.as_integer()) {
-        if status_code.as_u16() != expected_code as u16 {
-            warn!("iOS notification failed: {} - {}", status_code, response_text);
-            return Err(crate::utils::error::MonitorError::Push(format!("Unexpected status code: {}", status_code)).into());
-        }
+    if let Some(expected_code) = config.config.get("code").and_then(|v| v.as_integer())
+        && status_code.as_u16() != expected_code as u16
+    {
+        warn!("iOS notification failed: {} - {}", status_code, response_text);
+        return Err(crate::utils::error::MonitorError::Push(format!("Unexpected status code: {}", status_code)));
     }
     
     // Check if there's a specific expected response pattern
@@ -288,7 +294,7 @@ async fn send_ios_notification(config: &PushConfig, message: &str) -> Result<()>
         
         if !re.is_match(&response_text) {
             warn!("iOS notification response didn't match expected pattern: {}", response_text);
-            return Err(crate::utils::error::MonitorError::Push(format!("Response validation failed: {}", response_text)).into());
+            return Err(crate::utils::error::MonitorError::Push(format!("Response validation failed: {}", response_text)));
         }
     }
     

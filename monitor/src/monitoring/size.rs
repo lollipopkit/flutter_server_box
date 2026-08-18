@@ -10,7 +10,7 @@ const SUFFIXES: [&str; 5] = ["b", "k", "m", "g", "t"];
 pub struct Size(pub u64);
 
 pub fn is_size_suffix(c: char) -> bool {
-    SUFFIXES.iter().any(|s| s.chars().next() == Some(c))
+    SUFFIXES.iter().any(|s| s.starts_with(c))
 }
 
 impl fmt::Display for Size {

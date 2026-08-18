@@ -70,26 +70,26 @@ where
             .filter(|o| self.origins.iter().any(|a| a == o))
             .map(String::from);
 
-        if let Some(origin) = &allowed {
-            if req.method() == Method::OPTIONS {
-                let res = HttpResponse::NoContent()
-                    .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin.as_str())
-                    .header(header::ACCESS_CONTROL_ALLOW_METHODS, ALLOW_METHODS)
-                    .header(header::ACCESS_CONTROL_ALLOW_HEADERS, "authorization, content-type")
-                    .header(header::ACCESS_CONTROL_MAX_AGE, "3600")
-                    .header(header::VARY, "Origin")
-                    .finish();
-                return Ok(req.into_response(res));
-            }
+        if let Some(origin) = &allowed
+            && req.method() == Method::OPTIONS
+        {
+            let res = HttpResponse::NoContent()
+                .header(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin.as_str())
+                .header(header::ACCESS_CONTROL_ALLOW_METHODS, ALLOW_METHODS)
+                .header(header::ACCESS_CONTROL_ALLOW_HEADERS, "authorization, content-type")
+                .header(header::ACCESS_CONTROL_MAX_AGE, "3600")
+                .header(header::VARY, "Origin")
+                .finish();
+            return Ok(req.into_response(res));
         }
 
         let mut res = ctx.call(&self.service, req).await?;
-        if let Some(origin) = allowed {
-            if let Ok(value) = header::HeaderValue::from_str(&origin) {
-                let headers = res.headers_mut();
-                headers.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, value);
-                headers.insert(header::VARY, header::HeaderValue::from_static("Origin"));
-            }
+        if let Some(origin) = allowed
+            && let Ok(value) = header::HeaderValue::from_str(&origin)
+        {
+            let headers = res.headers_mut();
+            headers.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, value);
+            headers.insert(header::VARY, header::HeaderValue::from_static("Origin"));
         }
         Ok(res)
     }

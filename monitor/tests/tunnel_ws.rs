@@ -78,8 +78,10 @@ fn ensure_crypto_provider() {
 
 async fn app_state(ssh_addr: &str, tunnel_enabled: bool) -> Arc<AppState> {
     ensure_crypto_provider();
-    let mut config = Config::default();
-    config.jwt_secret = Some("test-secret-that-is-long-enough-32ch".to_string());
+    let mut config = Config {
+        jwt_secret: Some("test-secret-that-is-long-enough-32ch".to_string()),
+        ..Default::default()
+    };
     let mut remote = config.get_remote_access();
     remote.ssh_addr = ssh_addr.to_string();
     remote.tunnel.enabled = tunnel_enabled;

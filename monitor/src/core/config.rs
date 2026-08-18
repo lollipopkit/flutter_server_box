@@ -385,7 +385,7 @@ impl Config {
                         threshold: gr.threshold.clone(),
                         matcher: gr.matcher.clone(),
                     }).collect()
-                }).unwrap_or_else(|| vec![]),
+                }).unwrap_or_default(),
                 data_retention: Some(DataRetentionConfig {
                     metrics_days: 30,
                     alerts_days: 90,
@@ -409,7 +409,7 @@ impl Config {
                         _ => toml::Table::new(),
                     },
                 }).collect()
-            }).unwrap_or_else(|| vec![]);
+            }).unwrap_or_default();
 
             self.server = Some(server);
             self.monitoring = Some(monitoring);
@@ -537,7 +537,7 @@ impl Config {
     }
 
     pub fn get_push(&self) -> Vec<PushConfig> {
-        self.push.clone().unwrap_or_else(|| vec![])
+        self.push.clone().unwrap_or_default()
     }
 
     /// The raw section as written (or its all-off defaults when absent).

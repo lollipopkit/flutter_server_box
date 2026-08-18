@@ -144,10 +144,10 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     });
 
     // Start data cleanup scheduler if configured
-    if let Some(retention_config) = config.get_monitoring().data_retention {
-        if let Err(e) = cleanup::start_cleanup_scheduler(app_state.db.clone(), retention_config).await {
-            tracing::error!("Failed to start cleanup scheduler: {}", e);
-        }
+    if let Some(retention_config) = config.get_monitoring().data_retention
+        && let Err(e) = cleanup::start_cleanup_scheduler(app_state.db.clone(), retention_config).await
+    {
+        tracing::error!("Failed to start cleanup scheduler: {}", e);
     }
 
     // Run server and wait for shutdown signal concurrently

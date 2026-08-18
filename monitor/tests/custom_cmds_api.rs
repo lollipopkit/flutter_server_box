@@ -32,8 +32,10 @@ fn ensure_crypto_provider() {
 
 async fn app_state(full_access: bool) -> Arc<AppState> {
     ensure_crypto_provider();
-    let mut config = Config::default();
-    config.jwt_secret = Some(SECRET.to_string());
+    let mut config = Config {
+        jwt_secret: Some(SECRET.to_string()),
+        ..Default::default()
+    };
     let mut remote = config.get_remote_access();
     remote.terminal.enabled = true;
     remote.full_access = Some(full_access);

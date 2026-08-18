@@ -212,7 +212,7 @@ pub struct DiskIoRate {
 /// instead of waiting a full `extended_interval_secs`.
 fn is_extended_cycle(cycle: u64, interval_seconds: u64, extended_interval_secs: u64) -> bool {
     let extended_every = (extended_interval_secs / interval_seconds.max(1)).max(1);
-    cycle % extended_every == 0
+    cycle.is_multiple_of(extended_every)
 }
 
 /// Whether the extended script should actually run this cycle: `extended_due`
@@ -751,10 +751,10 @@ fn summary_core(cores: &[CpuCore]) -> Option<&CpuCore> {
 /// - BSD top / Windows WMI emit one-shot percentage pseudo-counters (totals
 ///   stay ~100), so the single-sample ratio IS the current usage; a delta
 ///   would divide by ~0 and always yield 0.
-/// Per-core entries become CpuCoreTime (used = total - idle) with
-/// `usage_percent` resolved here against `prev_cores`, so that every consumer
-/// (storage, rules, velocity, the panel) reads one already-correct number
-/// instead of re-deriving it from the platform-dependent raw counters.
+///   Per-core entries become CpuCoreTime (used = total - idle) with
+///   `usage_percent` resolved here against `prev_cores`, so that every consumer
+///   (storage, rules, velocity, the panel) reads one already-correct number
+///   instead of re-deriving it from the platform-dependent raw counters.
 fn adapt_cpu(
     system: SystemType,
     cores: &[CpuCore],
@@ -840,7 +840,7 @@ fn percent(used: u64, total: u64) -> f32 {
 fn apfs_pool_key(d: &Disk) -> Option<(String, u64, u64)> {
     let rest = d.path.strip_prefix("/dev/disk")?;
     let base: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
-    (!base.is_empty()).then(|| (base, d.size, d.avail))
+    (!base.is_empty()).then_some((base, d.size, d.avail))
 }
 
 /// Disk aggregation with Go-compatible /status semantics: real filesystems
@@ -919,9 +919,9 @@ pub async fn store_metrics(db: &SqlitePool, metrics: &SystemMetrics) -> Result<(
     // network_rx_bytes/network_tx_bytes, not per-device (diskio's per-device
     // detail is snapshot-only, matching disk_details/ifaces)
     let diskio_read_bytes: i64 =
-        metrics.diskio.iter().map(|d| d.sectors_read.max(0) as i64 * 512).sum();
+        metrics.diskio.iter().map(|d| d.sectors_read.max(0) * 512).sum();
     let diskio_write_bytes: i64 =
-        metrics.diskio.iter().map(|d| d.sectors_write.max(0) as i64 * 512).sum();
+        metrics.diskio.iter().map(|d| d.sectors_write.max(0) * 512).sum();
     // First battery only — matches the home page card's existing convention
     let battery_percent: Option<f64> = metrics.batteries.first().and_then(|b| b.percent).map(|p| p as f64);
 

@@ -159,7 +159,7 @@ fn prune_backups(dir: Option<&Path>) {
         return;
     }
 
-    backups.sort_by(|a, b| b.0.cmp(&a.0));
+    backups.sort_by_key(|backup| std::cmp::Reverse(backup.0));
     for (_, stale) in backups.into_iter().skip(MAX_BACKUPS) {
         if let Err(e) = fs::remove_file(&stale) {
             tracing::warn!("Failed to prune old config backup {}: {e}", stale.display());

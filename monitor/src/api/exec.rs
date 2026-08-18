@@ -178,10 +178,10 @@ async fn run(
                 // writing to a closed pipe is that command's answer, not a
                 // failure of this request: the output it did produce is still
                 // worth returning.
-                if let Err(e) = pipe.write_all(data.as_bytes()).await {
-                    if e.kind() != std::io::ErrorKind::BrokenPipe {
-                        tracing::debug!("exec stdin: {e}");
-                    }
+                if let Err(e) = pipe.write_all(data.as_bytes()).await
+                    && e.kind() != std::io::ErrorKind::BrokenPipe
+                {
+                    tracing::debug!("exec stdin: {e}");
                 }
             }
             // Closed either way: a command reading stdin would otherwise wait
