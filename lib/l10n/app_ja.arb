@@ -137,6 +137,7 @@
   "preferDiskAmount": "ディスク容量を優先的に表示",
   "privateKey": "秘密鍵",
   "privateKeyNotFoundFmt": "秘密鍵 [{keyId}] が見つかりません。",
+  "proxyCommandSandboxed": "このビルドはサンドボックス内で動作します。コマンドから見えるホームディレクトリは空のものに置き換わるため、~/.ssh を読むもの(ssh -W、cloudflared)は失敗し、多くは誤ったホスト名のタイムアウトとして現れます。ネットワークのみを使うコマンドは動作します。DMG 版にサンドボックスはありません。",
   "privateKeyFileUnreadable": "秘密鍵ファイル {path} を読み込めません: {reason}",
   "privateKeyFileSandboxed": "このビルドはコンテナ外のファイルを読み込めないため、{path} の鍵に到達できません。設定から鍵をインポートするか、DMG 版をご利用ください。",
   "pushToken": "プッシュトークン",

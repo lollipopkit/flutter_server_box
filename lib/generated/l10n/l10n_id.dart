@@ -744,6 +744,10 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get proxyCommandSandboxed =>
+      'Build ini berjalan dalam sandbox: perintah melihat direktori home kosong alih-alih milik Anda, sehingga apa pun yang membaca ~/.ssh (ssh -W, cloudflared) gagal — sering kali sebagai batas waktu yang menyebut host yang salah. Perintah yang hanya memakai jaringan tetap berfungsi. Versi DMG tidak punya sandbox.';
+
+  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return 'Tidak dapat membaca berkas kunci privat $path: $reason';
   }

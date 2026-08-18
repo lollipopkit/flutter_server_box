@@ -745,6 +745,10 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get proxyCommandSandboxed =>
+      'Bu sürüm bir kum havuzunda çalışır: komut sizinki yerine boş bir ev dizini görür, bu yüzden ~/.ssh okuyan her şey (ssh -W, cloudflared) başarısız olur ve çoğu zaman yanlış sunucuyu adlandıran bir zaman aşımı olarak görünür. Yalnızca ağı kullanan komutlar çalışmaya devam eder. DMG sürümünde kum havuzu yoktur.';
+
+  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return 'Özel anahtar dosyası $path okunamıyor: $reason';
   }

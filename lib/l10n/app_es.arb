@@ -137,6 +137,7 @@
   "preferDiskAmount": "Priorizar la visualización de la capacidad del disco",
   "privateKey": "Llave privada",
   "privateKeyNotFoundFmt": "No se encontró la clave privada [{keyId}].",
+  "proxyCommandSandboxed": "Esta compilación se ejecuta en un espacio aislado: el comando ve un directorio personal vacío en lugar del tuyo, así que todo lo que lea ~/.ssh (ssh -W, cloudflared) falla, a menudo como un tiempo de espera que nombra el host equivocado. Los comandos que solo usan la red siguen funcionando. La versión DMG no tiene espacio aislado.",
   "privateKeyFileUnreadable": "No se puede leer el archivo de clave privada {path}: {reason}",
   "privateKeyFileSandboxed": "Esta compilación no puede leer archivos fuera de su contenedor, por lo que la clave en {path} es inaccesible. Importa la clave en Ajustes o usa la versión DMG.",
   "pushToken": "Token de notificaciones",

@@ -745,6 +745,10 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get proxyCommandSandboxed =>
+      'Ця збірка працює в пісочниці: команда бачить порожній домашній каталог замість вашого, тож усе, що читає ~/.ssh (ssh -W, cloudflared), зазнає невдачі — найчастіше як тайм-аут із назвою не того хоста. Команди, які використовують лише мережу, працюють. У збірці DMG пісочниці немає.';
+
+  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return 'Не вдалося прочитати файл закритого ключа $path: $reason';
   }

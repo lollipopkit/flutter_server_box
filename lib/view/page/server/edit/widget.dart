@@ -298,7 +298,7 @@ extension _Widgets on _ServerEditPageState {
   }
 
   Widget _buildProxyCommand() {
-    return Input(
+    final input = Input(
       controller: _proxyCommandCtrl,
       type: TextInputType.multiline,
       node: _proxyCommandFocus,
@@ -307,6 +307,20 @@ extension _Widgets on _ServerEditPageState {
       hint: 'socat - PROXY:x.x.x.x:%h:%p,proxyport=5002',
       suggestion: false,
       maxLines: 3,
+    );
+    // Said here as well as in the failure, because the failure is what this
+    // is meant to save someone from: on a sandboxed build the command runs
+    // and fails for a reason nothing in its output mentions.
+    if (!Pfs.isMacSandboxed) return input;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        input,
+        ListTile(
+          leading: const Icon(MingCute.question_line),
+          title: TipText(libL10n.note, l10n.proxyCommandSandboxed),
+        ).cardx,
+      ],
     );
   }
 

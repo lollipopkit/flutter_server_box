@@ -752,6 +752,10 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get proxyCommandSandboxed =>
+      'Esta compilación se ejecuta en un espacio aislado: el comando ve un directorio personal vacío en lugar del tuyo, así que todo lo que lea ~/.ssh (ssh -W, cloudflared) falla, a menudo como un tiempo de espera que nombra el host equivocado. Los comandos que solo usan la red siguen funcionando. La versión DMG no tiene espacio aislado.';
+
+  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return 'No se puede leer el archivo de clave privada $path: $reason';
   }

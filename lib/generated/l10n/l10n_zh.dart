@@ -694,6 +694,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get proxyCommandSandboxed =>
+      '此版本运行在沙盒中:命令看到的是一个空的家目录,而不是你的,所以任何读取 ~/.ssh 的命令(ssh -W、cloudflared)都会失败,而且常常表现为指向错误主机的超时。只用网络的命令仍然可用。DMG 版没有沙盒。';
+
+  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return '无法读取私钥文件 $path:$reason';
   }
@@ -1970,6 +1974,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String privateKeyNotFoundFmt(Object keyId) {
     return '未找到私鑰 [$keyId]。';
   }
+
+  @override
+  String get proxyCommandSandboxed =>
+      '此版本執行於沙盒中:命令看到的是一個空的家目錄,而不是你的,因此任何讀取 ~/.ssh 的命令(ssh -W、cloudflared)都會失敗,且常常表現為指向錯誤主機的逾時。只用網路的命令仍然可用。DMG 版沒有沙盒。';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {

@@ -138,6 +138,7 @@
   "preferDiskAmount": "Priorità visualizzazione capacità disco",
   "privateKey": "Chiave privata",
   "privateKeyNotFoundFmt": "Chiave privata [{keyId}] non trovata.",
+  "proxyCommandSandboxed": "Questa build gira in una sandbox: il comando vede una home vuota anziché la tua, quindi tutto ciò che legge ~/.ssh (ssh -W, cloudflared) fallisce, spesso come timeout che nomina l'host sbagliato. I comandi che usano solo la rete continuano a funzionare. La versione DMG non ha sandbox.",
   "privateKeyFileUnreadable": "Impossibile leggere il file della chiave privata {path}: {reason}",
   "privateKeyFileSandboxed": "Questa build non può leggere file fuori dal proprio container, quindi la chiave in {path} non è raggiungibile. Importa la chiave nelle impostazioni oppure usa la versione DMG.",
   "pushToken": "Token push",
