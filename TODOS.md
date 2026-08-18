@@ -106,7 +106,31 @@ relay 服务,而不是(或者除了)在本地直接对外提供面板访问;面�
   决定放哪个 crate/仓库、怎么部署、TLS/域名怎么搞,这和现在"每个 agent 一个
   单体二进制"的假设不一样,是本仓库目前唯一的例外
 
-## sbm_ffi:脱离 CocoaPods,改走 Dart build hooks
+## sbm_ffi:脱离 CocoaPods,改走 Dart build hooks(已做,但只验过两个平台)
+
+**状态(2026-08-19):已合入。** cargokit 五个接入点和整个 `cargokit/` 目录已删,
+`crates/sbm_ffi` 不再是 Flutter plugin,改由根目录 `hook/build.dart` 编译。
+FRB 升到 `2.13.0-beta.6`(Rust 与 pubspec 两处)。
+
+已验证:macOS 与 iOS 构建通过,产物里有 `sbm_ffi.framework`,两个
+`Podfile.lock` 里都只剩 `flutter_pty`。`flutter test test/frb_parser_test.dart`
+与 `cargo test --workspace` 通过。
+
+**未验证:Android / Linux / Windows。** 这三个平台原先分别走 cargokit 的
+gradle plugin 和 CMake,现在改走同一个 hook,但本机没跑过。要在 CI 或对应机器上
+各跑一次 `dart run fl_build -p <platform>`。
+
+两条注意事项:
+- **不要用 `flutter_rust_bridge_codegen integrate`。** 它是给新项目的脚手架:
+  在本仓库上跑会重新格式化 188 个文件、脚手架出一个新的 `rust/` crate、`hook/`、
+  `test_driver/`,并且把 7 个 submodule 也一起格式化。`generate` 是安全的
+  (它的 `dart fix` 只作用于生成目录,实测不外溢)。
+- **FRB 2.13.0 至今只有 beta。** native-assets 后端要求 `>= 2.13.0-beta.2`,
+  stable 仍停在 2.12.0。这是本项目目前唯一钉在 prerelease 上的依赖。
+
+以下是当初的分析,留作记录。
+
+## sbm_ffi:脱离 CocoaPods 的原分析
 
 Flutter 3.44 起 SPM 是默认路径。SPM 本身已经生效——13 个 plugin 走的是生成的
 `{ios,macos}/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage/Package.swift`

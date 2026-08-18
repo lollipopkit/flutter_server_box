@@ -66,9 +66,10 @@ dependencies:
     path: packages/plain_notification_token
   fl_lib:
     path: packages/fl_lib
-  sbm_ffi:
-    path: crates/sbm_ffi
-  flutter_rust_bridge: 2.12.0
+  flutter_rust_bridge: 2.13.0-beta.6
+  # Drives the build hook below. `sbm_ffi` is no longer a Flutter plugin — the
+  # hook compiles the crate directly, so there is nothing to depend on.
+  flutter_rust_bridge_hooks: 2.13.0-beta.6
   desktop_drop: ^0.7.1
 
 dev_dependencies:

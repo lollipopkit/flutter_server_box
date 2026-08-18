@@ -2,26 +2,20 @@ PODS:
   - flutter_pty (0.0.1):
     - FlutterMacOS
   - FlutterMacOS (1.0.0)
-  - sbm_ffi (0.0.1):
-    - FlutterMacOS
 
 DEPENDENCIES:
   - flutter_pty (from `Flutter/ephemeral/.symlinks/plugins/flutter_pty/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
-  - sbm_ffi (from `Flutter/ephemeral/.symlinks/plugins/sbm_ffi/macos`)
 
 EXTERNAL SOURCES:
   flutter_pty:
     :path: Flutter/ephemeral/.symlinks/plugins/flutter_pty/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
-  sbm_ffi:
-    :path: Flutter/ephemeral/.symlinks/plugins/sbm_ffi/macos
 
 SPEC CHECKSUMS:
   flutter_pty: 1e360feaf8b1a213d2d50da3c076005b8eef1eee
   FlutterMacOS: c232990155153907050900a2e175c7773903ba4e
-  sbm_ffi: a03f641ae260971838739d773a55cddda61ba73e
 
 PODFILE CHECKSUM: 2190e15ede1572f0b104dd8ad4ae165b26ca5bfa
 

@@ -601,10 +601,18 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_rust_bridge
-      sha256: e87d6b9ee934dcd24a128ccb2bd91905d2d5fe5c06245d6a8f5477d4907a437a
+      sha256: "7e8f565714dcb06197d29c74a559ee826c4eab4d586d7ccf9826aa5dc9478015"
       url: "https://pub.dev"
     source: hosted
-    version: "2.12.0"
+    version: "2.13.0-beta.6"
+  flutter_rust_bridge_hooks:
+    dependency: "direct main"
+    description:
+      name: flutter_rust_bridge_hooks
+      sha256: a950952d2de2ffc2464e336bd04fe16124b863a27ed547c41b94ad635d07bfd1
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.13.0-beta.6"
   flutter_secure_storage:
     dependency: transitive
     description:
@@ -1082,6 +1090,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.19.3"
+  native_toolchain_rust:
+    dependency: transitive
+    description:
+      name: native_toolchain_rust
+      sha256: faa57d2258a3b0fd2a634054f54e4496c9fcbd971977e7d2b7e6916d56892857
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.4+0"
   nested:
     dependency: transitive
     description:
@@ -1394,13 +1410,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.4"
-  sbm_ffi:
-    dependency: "direct main"
-    description:
-      path: "crates/sbm_ffi"
-      relative: true
-    source: path
-    version: "0.0.1"
   screen_retriever:
     dependency: transitive
     description:
@@ -1678,6 +1687,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.18"
+  toml:
+    dependency: transitive
+    description:
+      name: toml
+      sha256: "35a35f782228656a2af31e8c73d1353cc4ef3d683fd68af1111b44631879c05e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.18.0"
   tuple:
     dependency: transitive
     description:
