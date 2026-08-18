@@ -250,7 +250,7 @@ jobs:
 
       # COPY prebuilt artifacts only; multi-arch images without QEMU
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: monitor/Dockerfile.ci
