@@ -47,7 +47,8 @@ String readCustomCmdsCommand({required String system}) =>
 List<CustomCmd>? parseCustomCmdsListing({required String raw}) =>
     RustLib.instance.api.crateApiScriptParseCustomCmdsListing(raw: raw);
 
-/// Command that installs the script on the target (content piped via stdin)
+/// Command that installs the script on the target (content piped via stdin,
+/// as produced by [`install_payload`] — not the bare script)
 String installCommand({
   required String system,
   required String scriptDir,
@@ -57,6 +58,18 @@ String installCommand({
   scriptDir: scriptDir,
   scriptPath: scriptPath,
 );
+
+/// What to write to [`install_command`]'s stdin for `content`.
+///
+/// The Windows command stops at a marker line rather than at end-of-input,
+/// because Windows OpenSSH does not reliably deliver EOF to the child and
+/// waiting for one hangs the install indefinitely. This adds that line, so no
+/// caller has to know it exists; on Unix it returns `content` unchanged.
+String installPayload({required String system, required String content}) =>
+    RustLib.instance.api.crateApiScriptInstallPayload(
+      system: system,
+      content: content,
+    );
 
 /// Command that runs one shell function of an installed script
 String execCommand({

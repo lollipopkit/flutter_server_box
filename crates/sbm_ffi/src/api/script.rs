@@ -114,7 +114,8 @@ pub fn parse_custom_cmds_listing(raw: String) -> Option<Vec<CustomCmd>> {
     })
 }
 
-/// Command that installs the script on the target (content piped via stdin)
+/// Command that installs the script on the target (content piped via stdin,
+/// as produced by [`install_payload`] — not the bare script)
 #[flutter_rust_bridge::frb(sync)]
 pub fn install_command(
     system: String,
@@ -123,6 +124,18 @@ pub fn install_command(
 ) -> Result<String, String> {
     let system = parse_system_or_err(&system)?;
     Ok(sbm_parser::script::install_command(system, &script_dir, &script_path))
+}
+
+/// What to write to [`install_command`]'s stdin for `content`.
+///
+/// The Windows command stops at a marker line rather than at end-of-input,
+/// because Windows OpenSSH does not reliably deliver EOF to the child and
+/// waiting for one hangs the install indefinitely. This adds that line, so no
+/// caller has to know it exists; on Unix it returns `content` unchanged.
+#[flutter_rust_bridge::frb(sync)]
+pub fn install_payload(system: String, content: String) -> Result<String, String> {
+    let system = parse_system_or_err(&system)?;
+    Ok(sbm_parser::script::install_payload(system, &content))
 }
 
 /// Command that runs one shell function of an installed script

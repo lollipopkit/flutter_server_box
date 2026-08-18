@@ -122,6 +122,18 @@ class ShellFuncManager {
     );
   }
 
+  /// What to write to [getInstallShellCmd]'s stdin to install [content].
+  ///
+  /// Not [allScript] itself: the Windows install command stops at a marker line
+  /// rather than at end-of-input, because Windows OpenSSH does not reliably
+  /// deliver the channel's EOF to the child process and waiting for one hangs
+  /// the install with nothing to time it out. Which marker, and that there is
+  /// one at all, stays in `sbm_parser::script` — on Unix this returns [content]
+  /// unchanged.
+  static String installPayload(String content, {SystemType? systemType}) {
+    return ffi.installPayload(system: ffiSystem(systemType), content: content);
+  }
+
   /// Generate complete script based on system type.
   ///
   /// No longer a function of the user's custom commands: those are files in a

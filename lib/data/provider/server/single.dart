@@ -552,9 +552,12 @@ class ServerNotifier extends _$ServerNotifier {
     final spi = state.spi;
     final system = state.status.system;
     final result = await exec.run(
-      ShellFuncManager.allScript(
+      ShellFuncManager.installPayload(
+        ShellFuncManager.allScript(
+          systemType: system,
+          disabledCmdTypes: spi.disabledCmdTypes,
+        ),
         systemType: system,
-        disabledCmdTypes: spi.disabledCmdTypes,
       ),
       // The same shape the SSH path uses: the install command reads the script
       // on stdin, so its content never has to survive shell quoting.
@@ -849,9 +852,12 @@ class ServerNotifier extends _$ServerNotifier {
 
         final writeScriptResult = await state.client!.execSafe(
           (session) async {
-            final scriptRaw = ShellFuncManager.allScript(
+            final scriptRaw = ShellFuncManager.installPayload(
+              ShellFuncManager.allScript(
+                systemType: detectedSystemType,
+                disabledCmdTypes: spi.disabledCmdTypes,
+              ),
               systemType: detectedSystemType,
-              disabledCmdTypes: spi.disabledCmdTypes,
             ).uint8List;
             session.stdin.add(scriptRaw);
             session.stdin.close();
