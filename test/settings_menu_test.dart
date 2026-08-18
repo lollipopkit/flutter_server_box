@@ -122,11 +122,11 @@ void main() {
     expect(find.byKey(settingsTabsKey), findsNothing);
   });
 
-  testWidgets('every menu row carries an icon, at whichever level', (tester) async {
+  testWidgets('the wide menu is one rail at every level', (tester) async {
     await pump(tester, width: 1200);
 
-    // The first level is the rail this column has always been; what opens
-    // under it is a card and a tile, as the settings it leads to are.
+    // One kind of row at every level: cards among rails would read as two
+    // menus rather than as one with something open in it.
     final rail = find.descendant(
       of: find.byKey(settingsMenuKey),
       matching: find.byType(SideBarTile),
@@ -135,15 +135,10 @@ void main() {
     for (final tile in tester.widgetList<SideBarTile>(rail)) {
       expect(tile.icon, isNotNull, reason: tile.title);
     }
-
-    final tiles = find.descendant(
-      of: find.byKey(settingsMenuKey),
-      matching: find.byType(ListTile),
+    expect(
+      find.descendant(of: find.byKey(settingsMenuKey), matching: find.byType(CardX)),
+      findsNothing,
     );
-    expect(tiles, findsWidgets);
-    for (final tile in tester.widgetList<ListTile>(tiles)) {
-      expect(tile.leading, isNotNull);
-    }
   });
 
   testWidgets('a branch opens instead of showing something', (tester) async {
@@ -185,6 +180,17 @@ void main() {
     expect(find.byKey(settingsTabsKey), findsNothing);
     // And the settings are still leavable.
     expect(find.byType(BackButton), findsOneWidget);
+
+    // A whole screen of rows that lead somewhere, drawn as the settings they
+    // lead to are.
+    final tiles = find.descendant(
+      of: find.byKey(settingsMenuKey),
+      matching: find.byType(ListTile),
+    );
+    expect(tiles, findsWidgets);
+    for (final tile in tester.widgetList<ListTile>(tiles)) {
+      expect(tile.leading, isNotNull);
+    }
   });
 
   testWidgets('picking a row goes in and brings up its level as tabs', (

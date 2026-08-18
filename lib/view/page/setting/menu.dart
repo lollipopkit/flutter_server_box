@@ -229,43 +229,28 @@ final class _TabButton extends StatelessWidget {
   }
 }
 
-/// One row of the menu, at either level.
+/// One row of the narrow list.
 ///
-/// A card with a tile in it, which is what every row of the settings *behind*
-/// this menu is. Getting there and being there read the same way.
+/// A card with a tile in it, which is what every row of the settings it leads
+/// to is — on a whole screen, getting there and being there read the same way.
+/// The wide menu is a strip beside the content and keeps its rail.
 final class _SettingsRow extends StatelessWidget {
   final SettingsNode node;
-  final bool selected;
   final Widget? trailing;
   final VoidCallback onTap;
 
-  const _SettingsRow({
-    required this.node,
-    required this.onTap,
-    this.selected = false,
-    this.trailing,
-  });
+  const _SettingsRow({required this.node, required this.onTap, this.trailing});
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return CardX(
-      color: selected ? scheme.secondaryContainer : null,
       child: ListTile(
-        leading: Icon(
-          node.icon,
-          size: 20,
-          color: selected ? scheme.onSecondaryContainer : null,
-        ),
+        leading: Icon(node.icon, size: 20),
         title: Text(
           node.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            color: selected ? scheme.onSecondaryContainer : null,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
         trailing: trailing,
         onTap: onTap,
@@ -410,24 +395,16 @@ final class _SettingsMenu extends StatelessWidget {
       // Indented by depth rather than by a fixed inset, so that a level added
       // later lines up without anyone having to remember this number.
       padding: EdgeInsets.only(left: depth * 14.0),
-      // The first level is the rail this column has always been: it names the
-      // subjects, and a card apiece would make a list of eight into a page of
-      // its own. What opens under it is a card and a tile, as the settings it
-      // leads to are.
-      child: depth == 0
-          ? SideBarTile(
-              title: node.title,
-              icon: node.icon,
-              selected: selected,
-              onTap: onTap,
-              trailing: trailing,
-            )
-          : _SettingsRow(
-              node: node,
-              selected: selected,
-              onTap: onTap,
-              trailing: trailing,
-            ),
+      // The rail this column has always been, at every level. A strip 232 wide
+      // has room for one kind of row, and cards among rails read as two menus
+      // rather than as one with something open in it.
+      child: SideBarTile(
+        title: node.title,
+        icon: node.icon,
+        selected: selected,
+        onTap: onTap,
+        trailing: trailing,
+      ),
     );
 
     return [
