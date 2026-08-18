@@ -110,9 +110,9 @@ Flutter 插件提供平台集成：
 
 | 平台 | 集成方式 |
 |----------|-------------------|
-| iOS | CocoaPods, Swift/Obj-C |
+| iOS | Swift Package Manager, Swift/Obj-C |
 | Android | Gradle, Kotlin/Java |
-| macOS | CocoaPods, Swift |
+| macOS | Swift Package Manager, Swift |
 | Linux | CMake, C++ |
 | Windows | CMake, C++ |
 
