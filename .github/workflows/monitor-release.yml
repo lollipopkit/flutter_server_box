@@ -147,7 +147,7 @@ jobs:
         run: cargo build -p server_box_monitor --release --target ${{ matrix.target }}
 
       - name: Download frontend dist
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: monitor-frontend-dist
           path: monitor/frontend/dist
@@ -207,13 +207,13 @@ jobs:
           persist-credentials: false
 
       - name: Download frontend dist
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: monitor-frontend-dist
           path: monitor/frontend/dist
 
       - name: Download linux bins
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: monitor-bin-linux-*
           path: dist/bins
@@ -271,7 +271,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: monitor-pkg-*
           path: packages
