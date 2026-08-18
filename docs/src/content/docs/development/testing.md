@@ -141,8 +141,30 @@ real device:
 flutter test integration_test/local_shell_test.dart
 ```
 
+They live outside `test/` because `flutter test` with no argument runs
+everything in there — device tests placed among the unit suite would be picked
+up by every local run and by CI, where there is no device.
+
 `make analyze` covers this directory too (`flutter analyze lib test
 integration_test`).
+
+### The one device `flutter test` cannot reach
+
+When Xcode reaches an iOS 17+ device over the network rather than by cable,
+`flutter test` cannot launch the app at all: it hardcodes
+`disablePortPublication: true`, `IOSDevice.startApp` refuses a wirelessly
+tethered device when that is set, and there is no flag to clear it.
+`flutter drive --publish-port` is the same run with the bit cleared, which is
+what `integration_test/driver.dart` exists for:
+
+```bash
+flutter drive --publish-port \
+  --driver=integration_test/driver.dart \
+  --target=integration_test/ios_rootfs_test.dart
+```
+
+The device answers `--publish-port` with the local-network permission dialog on
+first use, which someone has to allow.
 
 ## Best Practices
 
