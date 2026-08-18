@@ -101,9 +101,11 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
       # meson and ninja build the engine; llvm because the guest VDSO targets
-      # Linux, which Apple's clang cannot; libarchive because fakefsify links it.
+      # Linux, which Apple's clang cannot; lld because Homebrew ships it apart
+      # from llvm and that is the linker the VDSO asks for by name; libarchive
+      # because fakefsify links it.
       - name: Install the engine's build tools
-        run: brew install meson ninja llvm libarchive
+        run: brew install meson ninja llvm lld libarchive
 
       - name: Install dependencies
         run: flutter pub get

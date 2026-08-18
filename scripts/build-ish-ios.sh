@@ -89,6 +89,10 @@ for tool in meson ninja git curl; do
 done
 # The guest VDSO is compiled for Linux, which Apple's clang cannot target.
 [ -x /opt/homebrew/opt/llvm/bin/clang ] || die "llvm is not installed (brew install llvm)"
+# Its own formula since Homebrew split it out of llvm, and the VDSO names it:
+# `-fuse-ld=lld`. Without it clang says "invalid linker name", which reads as a
+# bad flag rather than a missing package.
+command -v ld.lld >/dev/null 2>&1 || die "lld is not installed (brew install lld)"
 # fakefsify needs it, and meson only builds that tool when it is present.
 [ -d /opt/homebrew/opt/libarchive ] || die "libarchive is not installed (brew install libarchive)"
 export PKG_CONFIG_PATH="/opt/homebrew/opt/libarchive/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
