@@ -31,6 +31,9 @@ node_modules/
 .pub-cache/
 .pub/
 /build/
+# `make coverage` output. Was committed once and then went stale for a year,
+# naming files that have since moved.
+/coverage/
 
 # Web related
 lib/generated_plugin_registrant.dart

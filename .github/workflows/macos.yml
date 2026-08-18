@@ -17,29 +17,42 @@
 # what does.
 name: macOS build
 
-# Duplicated rather than anchored: GitHub Actions does not resolve YAML
-# aliases.
+# What can break this and is not already caught elsewhere: the native side.
+# `analysis.yml` runs `flutter analyze` and `flutter test` on every Dart change,
+# so a change under `lib/` that would fail to compile fails there first, minutes
+# earlier and on a cheaper runner. What only a macOS runner can answer is
+# whether the project, the pods and the Rust static library still link.
+#
+# The list used to name `lib/main.dart`, `lib/core/utils/sandbox_import.dart`,
+# `lib/core/utils/local_shell.dart` and `integration_test/**`, from when this
+# workflow ran `integration_test` on a device and those were its subject. It
+# builds now (see above), and `flutter build macos` does not compile
+# `integration_test/` at all — so those four bought a 45-minute macOS job for
+# any PR that happened to touch `main.dart`, which is most of the ones that
+# migrate anything.
 on:
   push:
     branches: [ "main" ]
-    paths:
+    paths: &macos_paths
+      # The Xcode project, the entitlements, the Podfile
       - 'macos/**'
-      - 'integration_test/**'
-      - 'lib/core/utils/sandbox_import.dart'
-      - 'lib/core/utils/local_shell.dart'
-      - 'lib/main.dart'
-      - 'packages/fl_lib'
+      # cargokit builds and links these into the app; nothing else in CI links
+      # the Rust library on macOS
+      - 'crates/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      # A plugin added or moved changes what pod install resolves and links
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      # The vendored packages are submodules, so a gitlink move here is a
+      # source change to what gets compiled
+      - 'packages/**'
       - '.github/workflows/macos.yml'
   pull_request:
     branches: [ "main" ]
-    paths:
-      - 'macos/**'
-      - 'integration_test/**'
-      - 'lib/core/utils/sandbox_import.dart'
-      - 'lib/core/utils/local_shell.dart'
-      - 'lib/main.dart'
-      - 'packages/fl_lib'
-      - '.github/workflows/macos.yml'
+    # The same list. Actions has resolved YAML aliases since 2025-09; before
+    # that this was two copies that could drift apart, and did.
+    paths: *macos_paths
 
 permissions:
   contents: read

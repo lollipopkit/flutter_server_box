@@ -6,6 +6,8 @@ import 'package:server_box/data/ssh/persistent_shell.dart';
 import 'package:server_box/data/ssh/tmux/tmux_session_scanner.dart';
 import 'package:test/test.dart';
 
+import 'helpers/fake_stream_sink.dart';
+
 void main() {
   group('TmuxSessionScanner', () {
     test('listSessions resolves tmux binary before listing', () async {
@@ -78,7 +80,6 @@ void main() {
     });
   });
 }
-
 final class _FakePersistentShellSession implements PersistentShellSession {
   final stdoutController = StreamController<Uint8List>();
   final stderrController = StreamController<Uint8List>();
@@ -93,7 +94,7 @@ final class _FakePersistentShellSession implements PersistentShellSession {
   }) : exitCodes = exitCodes ?? List.filled(responses.length, 0);
 
   @override
-  StreamSink<Uint8List> get stdin => _FakeSink((data) {
+  StreamSink<Uint8List> get stdin => FakeStreamSink((data) {
     writes.add(utf8.decode(data));
     stdoutController.add(utf8.encode(_nextResponse()));
   });
@@ -118,29 +119,4 @@ final class _FakePersistentShellSession implements PersistentShellSession {
     ).firstMatch(writes.last)?.group(1);
     return '$response\n__SERVER_BOX_DONE__$commandId:$exitCode\n';
   }
-}
-
-final class _FakeSink implements StreamSink<Uint8List> {
-  final void Function(Uint8List data) _onAdd;
-
-  _FakeSink(this._onAdd);
-
-  @override
-  void add(Uint8List data) => _onAdd(data);
-
-  @override
-  void addError(Object error, [StackTrace? stackTrace]) {}
-
-  @override
-  Future<void> addStream(Stream<Uint8List> stream) async {
-    await for (final chunk in stream) {
-      add(chunk);
-    }
-  }
-
-  @override
-  Future<void> close() async {}
-
-  @override
-  Future<void> get done async {}
 }

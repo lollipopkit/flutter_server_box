@@ -119,11 +119,6 @@ pub fn custom_cmd_name_from_file(file_name: &str) -> Option<String> {
     decode_marker_name(&format!("{ENCODED_NAME_PREFIX}{encoded}"))
 }
 
-/// The order prefix out of a file name, paired with [`custom_cmd_name_from_file`].
-pub fn custom_cmd_order_from_file(file_name: &str) -> Option<u32> {
-    file_name.split_once('_').and_then(|(order, _)| order.parse().ok())
-}
-
 fn encode_marker_name(name: &str) -> String {
     use base64::Engine;
     base64::engine::general_purpose::URL_SAFE.encode(name)

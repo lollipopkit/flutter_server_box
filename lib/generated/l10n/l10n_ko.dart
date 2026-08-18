@@ -47,31 +47,13 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get askAiConfirmExecute => '실행 전 확인';
-
-  @override
-  String get askAiConversation => 'AI 대화';
-
-  @override
   String get askAiDisclaimer => 'AI가 부정확할 수 있습니다. 적용 전에 주의 깊게 검토해 주세요.';
-
-  @override
-  String get askAiFollowUpHint => '추가 질문하기...';
 
   @override
   String get askAiInsertTerminal => '터미널에 삽입';
 
   @override
   String get askAiNoResponse => '응답 없음';
-
-  @override
-  String get askAiRecommendedCommand => 'AI 추천 명령어';
-
-  @override
-  String get askAiSelectedContent => '선택한 내용';
-
-  @override
-  String get askAiUsageHint => 'SSH 터미널에서 사용';
 
   @override
   String get askAiAgentTitle => 'SSH 에이전트';
@@ -208,9 +190,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get agentPromptHint => '에이전트에게 서버 점검이나 조작을 요청하세요...';
-
-  @override
-  String get agentNoServers => '설정된 서버가 없습니다';
 
   @override
   String get agentNoHistory => '저장된 전역 에이전트 대화가 없습니다';
@@ -439,9 +418,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get discoverySettings => '검색 설정';
 
   @override
-  String get discoverySummary => '검색 요약';
-
-  @override
   String get diskHealth => '디스크 상태';
 
   @override
@@ -469,19 +445,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Docker 통계';
-
-  @override
-  String dockerStatusRunningAndStoppedFmt(
-    Object runningCount,
-    Object stoppedCount,
-  ) {
-    return '$runningCount개 실행 중, $stoppedCount개 중지됨.';
-  }
-
-  @override
-  String dockerStatusRunningFmt(Object count) {
-    return '컨테이너 $count개 실행 중.';
-  }
 
   @override
   String get doubleColumnMode => '이중 열 모드';
@@ -527,9 +490,6 @@ class AppLocalizationsKo extends AppLocalizations {
       '삭제되었거나 이름이 바뀌었습니다. 아래 막대에서 뒤로 가기, 홈, 또는 다른 위치로 이동하세요.';
 
   @override
-  String get finishedAt => '완료 시각';
-
-  @override
   String get fullScreen => '전체 화면 모드';
 
   @override
@@ -571,9 +531,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get image => '이미지';
-
-  @override
-  String get imagesList => '이미지 목록';
 
   @override
   String get macDmgBody =>
@@ -637,9 +594,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get pruneUnusedData => '사용하지 않는 데이터 정리';
-
-  @override
-  String get volume => '볼륨';
 
   @override
   String get pull => '풀';
@@ -735,13 +689,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get parseContainerStatsTip => 'Docker 점유 상태 파싱이 비교적 느립니다.';
-
-  @override
-  String get fullAccessRefused => '이 에이전트는 자격 증명 없는 터미널을 제공하지 않습니다.';
-
-  @override
-  String get fullAccessInsecure =>
-      '이 에이전트는 TLS 또는 루프백에서만 터미널을 제공하는데, 현재 연결은 평문 HTTP입니다.';
 
   @override
   String get plugInType => '삽입 유형';
@@ -858,9 +805,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get rootfsMissing => '이 기기에는 아직 Linux 파일 시스템이 설치되어 있지 않습니다.';
-
-  @override
   String get rootfsSubtitle => '이 기기의 Linux 사용자 공간';
 
   @override
@@ -953,9 +897,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String sshConfigAllExist(Object duplicateCount) {
     return '모든 서버가 이미 존재합니다 (중복 $duplicateCount개 발견)';
   }
-
-  @override
-  String get ssh => 'SSH';
 
   @override
   String get sshConnectionModeTip =>

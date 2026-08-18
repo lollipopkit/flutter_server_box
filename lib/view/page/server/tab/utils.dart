@@ -124,9 +124,6 @@ class _ServerOpenRequestState extends ConsumerState<_ServerOpenRequest> {
   }
 }
 
-extension _Operation on _ServerPageState {
-}
-
 extension _Utils on _ServerPageState {
   List<String> _filterServers(List<String> order) {
     final tag = _tag.value;

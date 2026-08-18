@@ -18,7 +18,7 @@ import 'package:server_box/core/utils/ish_exec.dart';
 /// rather than vendored, so there is one copy of each:
 ///
 ///     scripts/ios-bench-defines.sh > /tmp/bench.json
-///     flutter drive --driver=test_driver/integration_test.dart \
+///     flutter drive --driver=integration_test/driver.dart \
 ///       --target=integration_test/ios_bench_test.dart \
 ///       -d <device> --profile --publish-port \
 ///       --dart-define-from-file=/tmp/bench.json

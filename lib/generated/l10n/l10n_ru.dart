@@ -47,32 +47,14 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get askAiConfirmExecute => 'Подтвердите перед выполнением';
-
-  @override
-  String get askAiConversation => 'Разговор с ИИ';
-
-  @override
   String get askAiDisclaimer =>
       'ИИ может ошибаться. Используйте с осторожностью.';
-
-  @override
-  String get askAiFollowUpHint => 'Задайте дополнительный вопрос...';
 
   @override
   String get askAiInsertTerminal => 'Вставить в терминал';
 
   @override
   String get askAiNoResponse => 'Нет ответа';
-
-  @override
-  String get askAiRecommendedCommand => 'Команда, предложенная ИИ';
-
-  @override
-  String get askAiSelectedContent => 'Выбранное содержимое';
-
-  @override
-  String get askAiUsageHint => 'Используется в SSH-терминале';
 
   @override
   String get askAiAgentTitle => 'SSH-агент';
@@ -218,9 +200,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get agentPromptHint =>
       'Попросите агента проверить серверы или выполнить на них действие…';
-
-  @override
-  String get agentNoServers => 'Нет настроенных серверов';
 
   @override
   String get agentNoHistory => 'Нет сохранённых глобальных диалогов агента';
@@ -462,9 +441,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get discoverySettings => 'Настройки обнаружения';
 
   @override
-  String get discoverySummary => 'Сводка обнаружения';
-
-  @override
   String get diskHealth => 'Состояние диска';
 
   @override
@@ -493,19 +469,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Статистика Docker';
-
-  @override
-  String dockerStatusRunningAndStoppedFmt(
-    Object runningCount,
-    Object stoppedCount,
-  ) {
-    return '$runningCount запущено, $stoppedCount остановлено';
-  }
-
-  @override
-  String dockerStatusRunningFmt(Object count) {
-    return '$count контейнеров запущено';
-  }
 
   @override
   String get doubleColumnMode => 'Режим двойной колонки';
@@ -554,9 +517,6 @@ class AppLocalizationsRu extends AppLocalizations {
       'Она удалена или переименована. Используйте панель внизу, чтобы вернуться, перейти в домашнюю папку или в другое место.';
 
   @override
-  String get finishedAt => 'Завершено в';
-
-  @override
   String get fullScreen => 'Полноэкранный режим';
 
   @override
@@ -599,9 +559,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get image => 'Образ';
-
-  @override
-  String get imagesList => 'Список образов';
 
   @override
   String get macDmgBody =>
@@ -671,9 +628,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get pruneUnusedData => 'Очистить неиспользуемые данные';
-
-  @override
-  String get volume => 'Том';
 
   @override
   String get pull => 'Pull';
@@ -775,14 +729,6 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Анализ статуса использования Docker может быть медленным';
-
-  @override
-  String get fullAccessRefused =>
-      'Этот агент не предоставляет терминал без учётных данных.';
-
-  @override
-  String get fullAccessInsecure =>
-      'Этот агент отдаёт терминал только по TLS или через loopback, а это соединение — открытый HTTP.';
 
   @override
   String get plugInType => 'Тип вставки';
@@ -908,10 +854,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get rootfsMissing =>
-      'На этом устройстве ещё не установлена файловая система Linux.';
-
-  @override
   String get rootfsSubtitle =>
       'Пользовательское окружение Linux на этом устройстве';
 
@@ -1007,9 +949,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String sshConfigAllExist(Object duplicateCount) {
     return 'Все серверы уже существуют (найдено $duplicateCount дубликатов)';
   }
-
-  @override
-  String get ssh => 'SSH';
 
   @override
   String get sshConnectionModeTip =>
