@@ -38,6 +38,10 @@ dependencies:
   responsive_framework: ^1.5.1
   riverpod: ^3.2.1
   riverpod_annotation: ^4.0.2
+  # Direct, though `SqliteStore` lives in fl_lib: `hooks.user_defines` below is
+  # only honoured for this package's own dependencies, and the Hive migration
+  # opens the database from here too.
+  sqlite3: ^3.5.1
   wakelock_plus: ^1.7.0
   wake_on_lan: ^4.1.1+3
   webdav_client_plus: ^2.0.0
@@ -82,6 +86,19 @@ dev_dependencies:
     sdk: flutter
   fl_build:
     path: packages/fl_build
+
+# Which SQLite gets compiled into the app. Only the root package can set this —
+# a dependency cannot supply its own defaults — so it lives here even though
+# every caller is in fl_lib.
+#
+# `sqlite3mc` rather than `sqlcipher`: both encrypt the whole file, keys and
+# indexes included, but SQLCipher links OpenSSL on Windows, Linux and Android,
+# where SQLite3MultipleCiphers carries its cipher implementations in its own
+# source and needs nothing installed on any of the five platforms.
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlite3mc
 
 flutter:
   generate: true
