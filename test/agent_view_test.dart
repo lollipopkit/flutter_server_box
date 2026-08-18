@@ -46,7 +46,7 @@ void main() {
     // blocks forever, with no failure to say which file did it.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());
     getIt.registerSingleton<AgentConversationStore>(
-      AgentConversationStore.forTest(),
+      AgentConversationStore.forTest()..init(),
     );
   });
 

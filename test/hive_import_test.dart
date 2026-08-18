@@ -211,12 +211,21 @@ void main() {
     );
   });
 
-  test('the index is rebuilt from the records it no longer ships with',
-      () async {
+  test('connection stats land in their table, not in kv', () async {
     await seedHive();
     await Stores.init();
 
-    expect(Stores.connectionStats.indexKeys, contains('idx_srv-1'));
+    // The box held one row per attempt plus a second, unencrypted box of key
+    // lists. Both are one table now, so nothing of it should be left in `kv`.
+    final kv = SqliteDb.instance.select(
+      "SELECT count(*) AS n FROM kv WHERE store LIKE 'conn%';",
+    ).single['n'];
+    expect(kv, 0);
+
+    final rows = SqliteDb.instance.select(
+      'SELECT server_id FROM conn_stat;',
+    );
+    expect(rows.single['server_id'], 'srv-1');
   });
 
   test('a fresh install imports nothing and is already current', () async {

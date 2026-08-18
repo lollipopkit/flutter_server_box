@@ -20,22 +20,32 @@ abstract final class HiveImport {
   /// Internal, so it stays out of backups and out of `lastUpdateTs`.
   static const _markerKey = '${StoreDefaults.prefixKey}hiveImported';
 
-  /// Box name -> the store that now holds it.
+  /// Box name -> what takes one of its rows.
   ///
-  /// `conn_stats_index` is deliberately absent: it is derived from the records,
-  /// `Stores.init` rebuilds it when it is empty, and it is the one box that was
-  /// never encrypted — so it is deleted below rather than carried across.
-  static Map<String, SqliteStore> get _boxes => {
-    'setting': Stores.setting,
-    'server': Stores.server,
-    'docker': Stores.container,
-    'key': Stores.key,
-    'snippet': Stores.snippet,
-    'history': Stores.history,
-    'connection_stats': Stores.connectionStats,
-    'port_forward': Stores.portForward,
-    'agent_conversation': Stores.agentConversation,
+  /// Most go to a K-V store under the same key. The last two own tables now, so
+  /// they take the row apart themselves.
+  ///
+  /// `conn_stats_index` is deliberately absent: it held nothing that is not
+  /// derivable from the records, and it is the one box that was never
+  /// encrypted — so it is deleted below rather than carried across.
+  static Map<String, bool Function(String, Object)> get _boxes => {
+    'setting': _intoKv(Stores.setting),
+    'server': _intoKv(Stores.server),
+    'docker': _intoKv(Stores.container),
+    'key': _intoKv(Stores.key),
+    'snippet': _intoKv(Stores.snippet),
+    'history': _intoKv(Stores.history),
+    'port_forward': _intoKv(Stores.portForward),
+    'connection_stats': Stores.connectionStats.importRow,
+    'agent_conversation': Stores.agentConversation.importRow,
   };
+
+  /// `updateLastUpdateTsOnSet: false`: the timestamps are copied across with
+  /// everything else, and stamping each row as it lands would overwrite them
+  /// with "now" and tell the next sync that this device holds the newer copy of
+  /// data it has just finished reading off its own disk.
+  static bool Function(String, Object) _intoKv(SqliteStore store) =>
+      (key, value) => store.set(key, value, updateLastUpdateTsOnSet: false);
 
   /// Runs the import if this device has data in Hive and none in SQLite yet.
   ///
@@ -76,7 +86,10 @@ abstract final class HiveImport {
     Stores.setting.set(_markerKey, true);
   }
 
-  static Future<int> _importBox(String name, SqliteStore target) async {
+  static Future<int> _importBox(
+    String name,
+    bool Function(String, Object) into,
+  ) async {
     final legacy = HiveStore(name);
     try {
       await legacy.init();
@@ -94,11 +107,7 @@ abstract final class HiveImport {
       if (raw == null) continue;
 
       final value = _toSpi(raw) ?? raw;
-      // `updateLastUpdateTsOnSet: false` throughout: the timestamps are copied
-      // across with everything else, and stamping each row as it lands would
-      // overwrite them with "now" and tell the next sync that this device holds
-      // the newer copy of data it has just finished reading off its own disk.
-      final ok = target.set(key, value as Object, updateLastUpdateTsOnSet: false);
+      final ok = into(key, _jsonSafe(value as Object));
       if (ok) {
         copied++;
       } else {
@@ -118,6 +127,25 @@ abstract final class HiveImport {
   /// shape — those encode themselves.
   static Object? _toSpi(Object raw) =>
       raw is LegacySpiV2 ? raw.toSpi() : null;
+
+  /// The value as something made of maps, lists and primitives.
+  ///
+  /// A Hive box hands back whatever its adapter decoded — a `ConnectionStat`,
+  /// not a map. The K-V stores would encode that on write, but the two
+  /// table-backed stores parse what they are given with `fromJson`, so both
+  /// kinds of destination are handed the same shape.
+  static Object _jsonSafe(Object value) {
+    if (value is Map || value is List || value is Enum) return value;
+    if (value is num || value is String || value is bool) return value;
+    try {
+      final json = (value as dynamic).toJson();
+      if (json is Object) return json;
+    } catch (_) {
+      // No `toJson`. Leave it be: the destination reports what it could not
+      // take, naming the type.
+    }
+    return value;
+  }
 
   /// Removes the one box that was never encrypted.
   ///

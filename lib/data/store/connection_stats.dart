@@ -1,126 +1,63 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/connection_stat.dart';
+import 'package:sqlite3/sqlite3.dart';
 
-class ConnectionStatsStore extends SqliteStore {
-  ConnectionStatsStore._() : super('connection_stats');
+/// Connection attempts, one row each.
+///
+/// A table rather than a K-V store because every question asked of it is a
+/// range over one server's history, and answering those out of a K-V store took
+/// a second store holding per-server lists of keys, plus the code to keep those
+/// lists in step: rebuild, update-on-insert, prune-to-100 and expire-after-30-
+/// days were four hand-written passes over the records. They are two `DELETE`
+/// statements and an index here.
+///
+/// That second store was also the one thing in the app that was never
+/// encrypted, because it was a Hive box opened without a cipher. Being a table
+/// in the shared database, this is behind the same key as everything else.
+class ConnectionStatsStore {
+  ConnectionStatsStore._();
 
   static final instance = ConnectionStatsStore._();
 
+  /// Kept per server, oldest dropped first.
   static const _maxRecordsPerServer = 100;
 
-  /// Per-server lists of record keys, so a server's history can be read without
-  /// scanning every record.
-  ///
-  /// Its own store rather than a prefix in this one, so `keys()` here stays
-  /// "the records" and the pruning below does not have to filter itself out.
-  ///
-  /// It used to be a separate Hive box, and — unlike every other box — an
-  /// unencrypted one: `Hive.openBox` was called without a cipher, so 114 KB of
-  /// `<serverId>_<millis>` sat in plaintext next to the encrypted records they
-  /// point at. Sharing the database puts it behind the same key as everything
-  /// else.
-  ///
-  /// TODO: delete along with the hand-rolled pruning below, once the records
-  /// are a table with an index on (server_id, timestamp).
-  final _index = SqliteStore('conn_stats_index');
+  /// Dropped regardless of the per-server count.
+  static const _retention = Duration(days: 30);
 
-  @override
-  Future<void> init({String? dir}) async {
-    await super.init(dir: dir);
-    await _index.init(dir: dir);
-  }
+  Database get _db => SqliteDb.instance;
 
-  Future<void> rebuildIndexAndCompact() async {
-    _rebuildIndexCore();
-    await _compactIfNeeded();
-  }
-
-  void _rebuildIndexCore() {
-    final cutoffTime = DateTime.now().subtract(const Duration(days: 30));
-    final serverIdToKeys = <String, List<String>>{};
-
-    for (final key in keys().toList()) {
-      final stat = _statOf(key);
-      if (stat == null) continue;
-
-      if (stat.timestamp.isBefore(cutoffTime)) {
-        remove(key);
-        continue;
-      }
-
-      serverIdToKeys.putIfAbsent(stat.serverId, () => []).add(key);
-    }
-
-    for (final k in _index.keys().toList()) {
-      if (k.startsWith('idx_')) _index.remove(k);
-    }
-
-    for (final entry in serverIdToKeys.entries) {
-      final keys = entry.value;
-      if (keys.length > _maxRecordsPerServer) {
-        final keyStatPairs = <(String, ConnectionStat)>[];
-        for (final key in keys) {
-          final stat = _statOf(key);
-          if (stat != null) keyStatPairs.add((key, stat));
-        }
-        keyStatPairs.sort((a, b) => b.$2.timestamp.compareTo(a.$2.timestamp));
-        final toKeep = keyStatPairs
-            .take(_maxRecordsPerServer)
-            .map((p) => p.$1)
-            .toList()
-            .reversed
-            .toList();
-        for (final pair in keyStatPairs.skip(_maxRecordsPerServer)) {
-          remove(pair.$1);
-        }
-        _index.set('idx_${entry.key}', toKeep);
-      } else {
-        _index.set('idx_${entry.key}', keys);
-      }
-    }
-  }
-
-  Future<void> _compactIfNeeded() async {
-    try {
-      SqliteDb.vacuum();
-    } catch (e, st) {
-      Loggers.app.warning('Auto compact failed during init', e, st);
-    }
-  }
-
-  void _updateIndex(String serverId, String recordKey) {
-    final indexKey = 'idx_$serverId';
-    final keys = _indexKeys(serverId);
-
-    if (keys.contains(recordKey)) return;
-    keys.add(recordKey);
-    if (keys.length > _maxRecordsPerServer) {
-      _pruneExcessRecords(keys);
-    }
-    _index.set(indexKey, keys);
-  }
-
-  void _pruneExcessRecords(List<String> keys) {
-    if (keys.length <= _maxRecordsPerServer) return;
-
-    final keyStatPairs = <(String, ConnectionStat)>[];
-    for (final key in keys) {
-      final stat = _statOf(key);
-      if (stat != null) keyStatPairs.add((key, stat));
-    }
-
-    keyStatPairs.sort((a, b) => b.$2.timestamp.compareTo(a.$2.timestamp));
-
-    for (final pair in keyStatPairs.skip(_maxRecordsPerServer)) {
-      remove(pair.$1);
-      keys.remove(pair.$1);
-    }
+  Future<void> init() async {
+    _db.execute('''
+CREATE TABLE IF NOT EXISTS conn_stat (
+  id            TEXT    NOT NULL PRIMARY KEY,
+  server_id     TEXT    NOT NULL,
+  server_name   TEXT    NOT NULL,
+  timestamp     INTEGER NOT NULL,
+  result        TEXT    NOT NULL,
+  error_message TEXT    NOT NULL DEFAULT '',
+  duration_ms   INTEGER NOT NULL
+) WITHOUT ROWID;
+''');
+    // Every read is "this server, newest first", and the pruning below is the
+    // same order with a LIMIT.
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_conn_stat_server_ts '
+      'ON conn_stat(server_id, timestamp DESC);',
+    );
   }
 
   Future<void> recordConnection(ConnectionStat stat) async {
-    final key = '${stat.serverId}_${stat.timestamp.millisecondsSinceEpoch}';
-    set(key, stat);
-    _updateIndex(stat.serverId, key);
+    _insert(_idOf(stat), stat);
+    _prune(stat.serverId);
+  }
+
+  List<ConnectionStat> getConnectionHistory(String serverId) {
+    final rows = _db.select(
+      'SELECT * FROM conn_stat WHERE server_id = ? ORDER BY timestamp DESC;',
+      [serverId],
+    );
+    return rows.map(_fromRow).toList();
   }
 
   ServerConnectionStats getServerStats(String serverId, String serverName) {
@@ -138,86 +75,74 @@ class ConnectionStatsStore extends SqliteStore {
       );
     }
 
-    final totalAttempts = allStats.length;
     var successCount = 0;
     DateTime? lastSuccessTime;
     DateTime? lastFailureTime;
     final recentConnections = <ConnectionStat>[];
 
     for (final stat in allStats) {
-      final isSuccess = stat.result.isSuccess;
-      if (isSuccess) {
+      if (stat.result.isSuccess) {
         successCount += 1;
         lastSuccessTime ??= stat.timestamp;
       } else {
         lastFailureTime ??= stat.timestamp;
       }
-      if (recentConnections.length < 20) {
-        recentConnections.add(stat);
-      }
+      if (recentConnections.length < 20) recentConnections.add(stat);
     }
 
-    final failureCount = totalAttempts - successCount;
-    final successRate = totalAttempts > 0
-        ? (successCount / totalAttempts)
-        : 0.0;
-
+    final totalAttempts = allStats.length;
     return ServerConnectionStats(
       serverId: serverId,
       serverName: serverName,
       totalAttempts: totalAttempts,
       successCount: successCount,
-      failureCount: failureCount,
+      failureCount: totalAttempts - successCount,
       lastSuccessTime: lastSuccessTime,
       lastFailureTime: lastFailureTime,
       recentConnections: recentConnections,
-      successRate: successRate,
+      successRate: successCount / totalAttempts,
     );
   }
 
-  List<ConnectionStat> getConnectionHistory(String serverId) {
-    final stats = <ConnectionStat>[];
-    for (final key in _indexKeys(serverId).reversed) {
-      final stat = _statOf(key);
-      if (stat != null) stats.add(stat);
-    }
-    return stats;
-  }
-
   List<ServerConnectionStats> getAllServerStats() {
-    final allStats = <ServerConnectionStats>[];
-    for (final indexKey in indexKeys) {
-      final serverId = indexKey.substring(4);
-      final keys = _indexKeys(serverId);
-      if (keys.isEmpty) continue;
-
-      String? serverName;
-      for (final key in keys.reversed) {
-        final stat = _statOf(key);
-        if (stat != null) {
-          serverName = stat.serverName;
-          break;
-        }
-      }
-
-      if (serverName == null) continue;
-
-      allStats.add(getServerStats(serverId, serverName));
-    }
-
-    return allStats;
+    // The name comes from the newest row for each server, since a server can be
+    // renamed and the old rows keep the name it had at the time. `server_name`
+    // is a bare column beside `MAX`, which SQLite answers from the row the
+    // maximum came from.
+    final rows = _db.select(
+      'SELECT server_id, server_name, MAX(timestamp) AS ts FROM conn_stat '
+      'GROUP BY server_id;',
+    );
+    return [
+      for (final row in rows)
+        getServerStats(row['server_id'] as String, row['server_name'] as String),
+    ];
   }
 
   Future<void> clearAll() async {
-    clear();
-    _index.clear();
+    _db.execute('DELETE FROM conn_stat;');
   }
 
   Future<void> clearServerStats(String serverId) async {
-    for (final key in _indexKeys(serverId)) {
-      remove(key);
-    }
-    _index.remove('idx_$serverId');
+    _db.execute('DELETE FROM conn_stat WHERE server_id = ?;', [serverId]);
+  }
+
+  /// Drops what is past either limit.
+  ///
+  /// Both bounds in one place, run on insert. The K-V version could only apply
+  /// the age bound during a full rebuild at launch, so a long-running app kept
+  /// expired rows until it was restarted.
+  void _prune(String serverId) {
+    _db.execute('DELETE FROM conn_stat WHERE timestamp < ?;', [
+      DateTime.now().subtract(_retention).millisecondsSinceEpoch,
+    ]);
+    _db.execute(
+      'DELETE FROM conn_stat WHERE server_id = ? AND id NOT IN ('
+      '  SELECT id FROM conn_stat WHERE server_id = ? '
+      '  ORDER BY timestamp DESC LIMIT ?'
+      ');',
+      [serverId, serverId, _maxRecordsPerServer],
+    );
   }
 
   Future<void> compact() async {
@@ -231,26 +156,60 @@ class ConnectionStatsStore extends SqliteStore {
     }
   }
 
-  Iterable<String> get indexKeys =>
-      _index.keys().where((k) => k.startsWith('idx_'));
+  /// Size of the whole store database, not of this table.
+  ///
+  /// Every store shares one file, so there is no per-table number to report and
+  /// the compaction this feeds is `VACUUM` on that file.
+  Future<int> dbSizeAsync() => SqliteDb.size();
 
-  List<String> _indexKeys(String serverId) =>
-      _index.get<List>('idx_$serverId')?.cast<String>().toList() ?? <String>[];
-
-  ConnectionStat? _statOf(String key) {
-    final raw = get<Map>(key);
-    if (raw == null) return null;
+  /// Takes one row out of the Hive box this table replaced.
+  ///
+  /// Used only by `HiveImport`. It writes the record under the key it had, so
+  /// re-running the import overwrites rather than duplicates.
+  bool importRow(String key, Object value) {
+    if (value is! Map) return false;
     try {
-      return ConnectionStat.fromJson(Map<String, dynamic>.from(raw));
+      _insert(key, ConnectionStat.fromJson(Map<String, dynamic>.from(value)));
+      return true;
     } catch (e) {
-      dprint('Parsing ConnectionStat from JSON', e);
-      return null;
+      dprint('Importing ConnectionStat', e);
+      return false;
     }
   }
 
-  /// Size of the whole store database, not of this store's rows.
-  ///
-  /// Every store shares one file, so there is no per-store number to report and
-  /// the compaction this feeds is `VACUUM` on that file.
-  Future<int> dbSizeAsync() => SqliteDb.size();
+  void _insert(String id, ConnectionStat stat) {
+    _db.execute(
+      'INSERT INTO conn_stat '
+      '(id, server_id, server_name, timestamp, result, error_message, duration_ms) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?) '
+      'ON CONFLICT (id) DO UPDATE SET '
+      'server_name = excluded.server_name, timestamp = excluded.timestamp, '
+      'result = excluded.result, error_message = excluded.error_message, '
+      'duration_ms = excluded.duration_ms;',
+      [
+        id,
+        stat.serverId,
+        stat.serverName,
+        stat.timestamp.millisecondsSinceEpoch,
+        stat.result.name,
+        stat.errorMessage,
+        stat.durationMs,
+      ],
+    );
+  }
+
+  static String _idOf(ConnectionStat stat) =>
+      '${stat.serverId}_${stat.timestamp.millisecondsSinceEpoch}';
+
+  static ConnectionStat _fromRow(Row row) => ConnectionStat(
+    serverId: row['server_id'] as String,
+    serverName: row['server_name'] as String,
+    timestamp: DateTime.fromMillisecondsSinceEpoch(row['timestamp'] as int),
+    result: ConnectionResult.values.firstWhere(
+      (e) => e.name == row['result'],
+      orElse: () => ConnectionResult.unknownError,
+    ),
+    errorMessage: row['error_message'] as String? ?? '',
+    durationMs: row['duration_ms'] as int,
+  );
 }

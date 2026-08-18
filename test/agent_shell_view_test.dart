@@ -40,7 +40,7 @@ void main() {
     // test here writes.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());
     getIt.registerSingleton<AgentConversationStore>(
-      AgentConversationStore.forTest(),
+      AgentConversationStore.forTest()..init(),
     );
   });
 

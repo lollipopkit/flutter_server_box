@@ -296,19 +296,23 @@ agent 的那条完整路径。
 
 ## Hive → SQLite:分阶段做,以及加密怎么落
 
-**状态(2026-08-19):第一阶段已合入,第二阶段未做。**
+**状态(2026-08-19):两个阶段都已合入。**
 
-已做:`SqliteStore` 在 fl_lib(`store/sqlite.dart`),九个 store 全部换过去,
-写入一律 JSON,75 处 `.box.` 已收敛,`HiveImport` 负责一次性导入并记 schema
-v4。`conn_stats_index` 那个未加密的盒子已经进了加密库,明文文件在导入时删除。
+已做:
+- `SqliteStore` 在 fl_lib(`store/sqlite.dart`),七个 K-V store 换过去,写入
+  一律 JSON,75 处 `.box.` 已收敛。
+- `connection_stats`(`conn_stat` 表)和 `agent_conversation`
+  (`agent_conversation` + `agent_active` 两表)已关系化,各带索引。
+  `conn_stats_index` 那个未加密的盒子随之消失,明文文件在导入时删除。
+- `HiveImport` 负责一次性导入并记 schema v4。
 
-未做:
-- 第二阶段(把 `connection_stats` / `agent_conversation` 关系化)。现在两者仍是
-  K-V,索引维护还是手写的。
+未做 / 遗留:
 - **`lib/hive/`、`hive_ce*` 依赖、`main.dart` 里的 `Hive.initFlutter()` 都还在。**
   17 个 TypeAdapter 现在只用于一件事:让 `HiveImport` 读得懂旧盒子。没有任何
   代码再往 Hive 写。这些要等到没有受支持的安装还停在 Hive 上才能删,`HiveImport`
   和 `SpiLegacyAdapter` 同批(代码里已标 TODO)。
+- `~/Library/Application Support/ServerBox/app.db` 那批残留和
+  `sandbox_import.dart` 里对它的特判仍未清理(见本节末尾)。
 
 **一处没有覆盖到的路径:v2 记录的导入。** `HiveImport` 会把 `LegacySpiV2`
 转成 `Spi`(原 `SpiNestSshMigration` 做的事),但没有测试跑过它 ——

@@ -22,26 +22,26 @@ abstract final class Stores {
   static HistoryStore get history => getIt<HistoryStore>();
   static AgentConversationStore get agentConversation =>
       getIt<AgentConversationStore>();
-  // Keep the legacy box registered so existing connection stats DB files remain intact.
   static ConnectionStatsStore get connectionStats =>
       getIt<ConnectionStatsStore>();
   static PortForwardStore get portForward => getIt<PortForwardStore>();
 
-  /// All stores that need backup
-  static List<SqliteStore> get _allBackup => [
+  /// The stores whose contents count as something the user changed.
+  ///
+  /// [lastModTime] is read off these, and sync uses that number to decide which
+  /// side wins — so what belongs here is what a user edits, not what the app
+  /// records. `connectionStats` used to be in this list and is not: connecting
+  /// to a server is not an edit, and every attempt was marking the device as
+  /// holding the newer copy of everything.
+  static List<SqliteStore> get _kvStores => [
     setting,
     server,
     container,
     key,
     snippet,
     history,
-    connectionStats,
     portForward,
   ];
-
-  /// Stores initialized locally. Agent conversations intentionally stay out of
-  /// backup and sync because they may contain terminal output and reasoning.
-  static List<SqliteStore> get _allStores => [..._allBackup, agentConversation];
 
   static Future<void> init() async {
     getIt.registerLazySingleton<SettingStore>(() => SettingStore.instance);
@@ -62,7 +62,12 @@ abstract final class Stores {
       () => PortForwardStore.instance,
     );
 
-    await Future.wait(_allStores.map((store) => store.init()));
+    await Future.wait([
+      ..._kvStores.map((store) => store.init()),
+      // Their own tables rather than rows in `kv`, so they create those instead.
+      connectionStats.init(),
+      agentConversation.init(),
+    ]);
 
     // Before every fixup below. Each of them writes a flag meaning "this device
     // has been dealt with", and running them against the empty stores would set
@@ -76,15 +81,11 @@ abstract final class Stores {
     // Migrate sshConnectionMode from old int values to bool
     setting.migrateSshConnectionMode();
     await setting.migrateHomeTabsAgent();
-
-    if (connectionStats.indexKeys.isEmpty) {
-      await connectionStats.rebuildIndexAndCompact();
-    }
   }
 
   static int get lastModTime {
     var lastModTime = 0;
-    for (final store in _allBackup) {
+    for (final store in _kvStores) {
       final last = store.lastUpdateTs;
       if (last == null) {
         continue;
