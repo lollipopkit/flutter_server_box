@@ -313,6 +313,22 @@ void main() {
       expect(store.get<int>('before'), 0);
     });
 
+    test('a cached statement is rebuilt when the database is replaced', () {
+      // Statements are kept across calls because preparing one is most of what
+      // a read costs. They belong to the database that made them, which
+      // disposes them with itself — so a store that outlives an open/close
+      // cycle must not reuse or re-dispose them.
+      store.set('a', 1);
+      expect(store.get<int>('a'), 1);
+
+      SqliteDb.close();
+      SqliteDb.openInMemory();
+
+      expect(store.get<int>('a'), isNull);
+      store.set('a', 2);
+      expect(store.get<int>('a'), 2);
+    });
+
     test('getAllMap reads every key in one pass', () {
       store.set('a', 1);
       store.set('m', {'x': 1});

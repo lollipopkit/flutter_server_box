@@ -25,6 +25,10 @@ class ConnectionStatsStore {
   /// Dropped regardless of the per-server count.
   static const _retention = Duration(days: 30);
 
+  /// How many recent attempts a summary carries. The list card shows three of
+  /// them and the detail dialog shows the rest, both off the same object.
+  static const _recentPerServer = 20;
+
   Database get _db => SqliteDb.instance;
 
   Future<void> init() async {
@@ -94,7 +98,9 @@ CREATE TABLE IF NOT EXISTS conn_stat (
       } else {
         lastFailureTime ??= stat.timestamp;
       }
-      if (recentConnections.length < 20) recentConnections.add(stat);
+      if (recentConnections.length < _recentPerServer) {
+        recentConnections.add(stat);
+      }
     }
 
     final totalAttempts = allStats.length;
@@ -111,20 +117,72 @@ CREATE TABLE IF NOT EXISTS conn_stat (
     );
   }
 
+  /// Every server's summary, in two queries.
+  ///
+  /// One `GROUP BY` to enumerate servers and then a full history read per
+  /// server meant 21 queries and up to 2000 decoded records to draw 20 summary
+  /// cards. The counters are an aggregate, and the only rows that reach the UI
+  /// are the newest [_recentPerServer] per server — which a window function
+  /// bounds in the database rather than after decoding everything.
   List<ServerConnectionStats> getAllServerStats() {
-    // The name comes from the newest row for each server, since a server can be
-    // renamed and the old rows keep the name it had at the time. `server_name`
-    // is a bare column beside `MAX`, which SQLite answers from the row the
-    // maximum came from.
-    final rows = _db.select(
-      'SELECT server_id, server_name, MAX(timestamp) AS ts FROM conn_stat '
-      'GROUP BY server_id;',
+    const success = 'success';
+    assert(ConnectionResult.success.name == success);
+
+    final totals = _db.select(
+      'SELECT server_id,'
+      '  COUNT(*) AS total,'
+      "  SUM(CASE WHEN result = '$success' THEN 1 ELSE 0 END) AS successes,"
+      "  MAX(CASE WHEN result = '$success' THEN timestamp END) AS last_ok,"
+      "  MAX(CASE WHEN result <> '$success' THEN timestamp END) AS last_bad "
+      'FROM conn_stat GROUP BY server_id;',
     );
-    return [
-      for (final row in rows)
-        getServerStats(row['server_id'] as String, row['server_name'] as String),
-    ];
+    if (totals.isEmpty) return const [];
+
+    // Newest first within each server, so the first row of a group is also
+    // where the current name comes from — a server can be renamed, and the
+    // older rows keep whatever it was called at the time.
+    final recentRows = _db.select(
+      'SELECT * FROM ('
+      '  SELECT *, ROW_NUMBER() OVER ('
+      '    PARTITION BY server_id ORDER BY timestamp DESC'
+      '  ) AS rn FROM conn_stat'
+      ') WHERE rn <= ? ORDER BY server_id, timestamp DESC;',
+      [_recentPerServer],
+    );
+
+    final recent = <String, List<ConnectionStat>>{};
+    for (final row in recentRows) {
+      (recent[row['server_id'] as String] ??= []).add(_fromRow(row));
+    }
+
+    final result = <ServerConnectionStats>[];
+    for (final row in totals) {
+      final serverId = row['server_id'] as String;
+      final recentConnections = recent[serverId] ?? const <ConnectionStat>[];
+      if (recentConnections.isEmpty) continue;
+
+      final total = row['total'] as int;
+      final successCount = (row['successes'] as num?)?.toInt() ?? 0;
+      result.add(
+        ServerConnectionStats(
+          serverId: serverId,
+          serverName: recentConnections.first.serverName,
+          totalAttempts: total,
+          successCount: successCount,
+          failureCount: total - successCount,
+          lastSuccessTime: _timeOf(row['last_ok']),
+          lastFailureTime: _timeOf(row['last_bad']),
+          recentConnections: recentConnections,
+          successRate: total > 0 ? successCount / total : 0.0,
+        ),
+      );
+    }
+    return result;
   }
+
+  static DateTime? _timeOf(Object? millis) => millis is int
+      ? DateTime.fromMillisecondsSinceEpoch(millis)
+      : null;
 
   Future<void> clearAll() async {
     _db.execute('DELETE FROM conn_stat;');
