@@ -192,15 +192,14 @@ extension _SSH on _AppSettingsPageState {
 
   Future<void> _onTapSSHImportWithFilePicker() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final picked = await FilePicker.pickFile(
         type: FileType.any,
-        allowMultiple: false,
         dialogTitle: l10n.sshConfigImport,
       );
 
       if (!mounted) return;
 
-      if (result?.files.single.path case final path?) {
+      if (picked?.path case final path?) {
         final servers = await SSHConfig.parseConfig(path);
         if (!mounted) return;
         if (servers.isEmpty) {
