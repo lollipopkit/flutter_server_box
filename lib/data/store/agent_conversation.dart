@@ -143,17 +143,21 @@ class AgentConversationStore {
       title: _normalizeTitle(conversation.title, conversation.items),
       items: trimItemsForStorage(conversation.items),
     );
-    // The whole write, not just the upsert: the caller treats `false` as "not
-    // saved", and a failure in the active-row write or the prune would
-    // otherwise escape as an exception it does not expect.
+    // One unit, and the caller treats `false` as "not saved". Three statements
+    // otherwise: a conversation could be stored but not made active, or stored
+    // without the over-cap ones being dropped, and the caller would be told it
+    // failed while part of it stood.
     try {
-      _upsert(normalized);
-      if (setActive) _setActiveRow(normalized.serverId, normalized.id);
-      _pruneServer(normalized.serverId);
+      SqliteStore.transact(() {
+        _upsert(normalized);
+        if (setActive) _setActiveRow(normalized.serverId, normalized.id);
+        _pruneServer(normalized.serverId);
+      });
     } catch (e) {
       dprint('Saving AgentConversation', e);
       return false;
     }
+    // After it commits, so nothing is told to re-read a state that was undone.
     _changes.add(null);
     return true;
   }

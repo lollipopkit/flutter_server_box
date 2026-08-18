@@ -313,6 +313,55 @@ void main() {
       expect(store.get<int>('before'), 0);
     });
 
+    test('transact nests, and an inner failure undoes only the inner part', () {
+      store.set('outer', 0);
+
+      SqliteStore.transact(() {
+        store.set('outer', 1);
+        try {
+          SqliteStore.transact(() {
+            store.set('inner', 1);
+            throw StateError('inner failed');
+          });
+        } catch (_) {
+          // The outer unit decides to carry on without the inner one.
+        }
+        store.set('after', 1);
+      });
+
+      expect(store.get<int>('outer'), 1);
+      expect(store.get<int>('inner'), isNull);
+      expect(store.get<int>('after'), 1);
+    });
+
+    test('a throw through both levels undoes both', () {
+      store.set('before', 0);
+      expect(
+        () => SqliteStore.transact(() {
+          store.set('outer', 1);
+          SqliteStore.transact(() => store.set('inner', 1));
+          throw StateError('outer failed');
+        }),
+        throwsStateError,
+      );
+
+      expect(store.get<int>('outer'), isNull);
+      expect(store.get<int>('inner'), isNull);
+      expect(store.get<int>('before'), 0);
+    });
+
+    test('a nested transact leaves nothing open behind it', () {
+      SqliteStore.transact(() {
+        SqliteStore.transact(() => store.set('a', 1));
+      });
+      // A leaked savepoint would make this throw "cannot start a transaction
+      // within a transaction" — or silently join the previous one.
+      SqliteStore.transact(() => store.set('b', 2));
+
+      expect(store.get<int>('a'), 1);
+      expect(store.get<int>('b'), 2);
+    });
+
     test('a cached statement is rebuilt when the database is replaced', () {
       // Statements are kept across calls because preparing one is most of what
       // a read costs. They belong to the database that made them, which

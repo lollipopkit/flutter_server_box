@@ -104,12 +104,19 @@ abstract class CachedSqliteStore<T extends Object> extends SqliteStore {
       throw Exception('Old $T: $old not found');
     }
     final newKey = getKey(newItem);
-    // Only when the key actually moved. Every caller but the id migrations
-    // edits a record in place, and a delete-then-insert of the same key leaves
-    // a window — inside a restore's transaction or a crash — where the record
-    // is neither the old one nor the new one. An upsert has no such window.
-    if (oldKey != newKey) remove(oldKey);
-    set(newKey, newItem);
+    if (oldKey == newKey) {
+      // In place, which is what every caller but the id migrations does. An
+      // upsert is one statement and needs no transaction around it.
+      set(newKey, newItem);
+      return;
+    }
+    // The key moved, so this is a delete and an insert. As one unit: a crash
+    // between them would leave the record under neither key. `transact` nests,
+    // so this is also safe if a caller has already opened one.
+    SqliteStore.transact(() {
+      remove(oldKey);
+      set(newKey, newItem);
+    });
   }
 
   bool have(T item) => get<Object>(getKey(item)) != null;
