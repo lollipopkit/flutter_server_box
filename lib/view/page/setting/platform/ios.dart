@@ -168,7 +168,7 @@ extension _Actions on _IosSettingsPageState {
 
   Spi? get _accessoryServer {
     final id = Stores.setting.accessoryWidgetServerId.fetch();
-    return id.isEmpty ? null : Stores.server.get<Spi>(id);
+    return id.isEmpty ? null : Stores.server.fetchOneRaw(id);
   }
 
   void _onTapAccessoryWidgetServer() async {

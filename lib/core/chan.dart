@@ -67,7 +67,7 @@ abstract final class MethodChans {
   static Future<void> syncAccessoryWidgetUrl() async {
     if (!isIOS) return;
     final id = Stores.setting.accessoryWidgetServerId.fetch();
-    final spi = id.isEmpty ? null : Stores.server.get<Spi>(id);
+    final spi = id.isEmpty ? null : Stores.server.fetchOneRaw(id);
     await setAccessoryWidgetUrl(spi?.monitorStatusUrl);
   }
 

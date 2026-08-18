@@ -32,5 +32,5 @@
 	branch = main
 [submodule "packages/flutter_pty"]
 	path = packages/flutter_pty
-	url = git@github.com:lollipopkit/flutter_pty.git
+	url = https://github.com/lollipopkit/flutter_pty
 	branch = main

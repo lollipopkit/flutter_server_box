@@ -265,6 +265,68 @@ void main() {
       expect(json.decode(raw), {'x': 1});
     });
   });
+
+  group('SqliteStore: what the review found', () {
+    late SqliteStore store;
+
+    setUp(() {
+      SqliteDb.openInMemory();
+      store = SqliteStore('r');
+    });
+    tearDown(SqliteDb.close);
+
+    test('clear keeps internal keys, so a migration marker survives', () {
+      const marker = '${StoreDefaults.prefixKey}someMigrationDone';
+      store.set(marker, true);
+      store.set('user-data', 1);
+
+      store.clear();
+
+      expect(store.get<int>('user-data'), isNull);
+      expect(
+        store.get<bool>(marker),
+        isTrue,
+        reason: 'a "delete all settings" that erases "this migration already '
+            'ran" makes it run again over whatever replaced the data',
+      );
+    });
+
+    test('transact commits as one unit', () {
+      SqliteStore.transact(() {
+        store.set('a', 1);
+        store.set('b', 2);
+      });
+      expect(store.get<int>('a'), 1);
+      expect(store.get<int>('b'), 2);
+    });
+
+    test('a throw inside transact rolls the whole thing back', () {
+      store.set('before', 0);
+      expect(
+        () => SqliteStore.transact(() {
+          store.set('a', 1);
+          throw StateError('interrupted');
+        }),
+        throwsStateError,
+      );
+      expect(store.get<int>('a'), isNull);
+      expect(store.get<int>('before'), 0);
+    });
+
+    test('getAllMap reads every key in one pass', () {
+      store.set('a', 1);
+      store.set('m', {'x': 1});
+
+      expect(store.getAllMap(), {
+        'a': 1,
+        'm': {'x': 1},
+      });
+      expect(
+        store.getAllMap(includeInternalKeys: true).keys,
+        contains(store.lastUpdateTsKey),
+      );
+    });
+  });
 }
 
 enum _Fruit { apple, pear }
@@ -276,4 +338,5 @@ class _Point {
   Map<String, Object?> toJson() => {'x': x, 'y': y};
 }
 
-class _NoJson {}
+class _NoJson {
+}

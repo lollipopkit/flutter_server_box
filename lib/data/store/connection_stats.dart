@@ -39,12 +39,19 @@ CREATE TABLE IF NOT EXISTS conn_stat (
   duration_ms   INTEGER NOT NULL
 ) WITHOUT ROWID;
 ''');
-    // Every read is "this server, newest first", and the pruning below is the
-    // same order with a LIMIT.
+    // Every read is "this server, newest first", and the per-server cap below
+    // is the same order with a LIMIT.
     _db.execute(
       'CREATE INDEX IF NOT EXISTS idx_conn_stat_server_ts '
       'ON conn_stat(server_id, timestamp DESC);',
     );
+    // The age sweep asks about `timestamp` alone, which the index above cannot
+    // serve — its leading column is `server_id`.
+    _db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_conn_stat_ts ON conn_stat(timestamp);',
+    );
+
+    _expire();
   }
 
   Future<void> recordConnection(ConnectionStat stat) async {
@@ -127,15 +134,11 @@ CREATE TABLE IF NOT EXISTS conn_stat (
     _db.execute('DELETE FROM conn_stat WHERE server_id = ?;', [serverId]);
   }
 
-  /// Drops what is past either limit.
+  /// Drops everything past the per-server cap.
   ///
-  /// Both bounds in one place, run on insert. The K-V version could only apply
-  /// the age bound during a full rebuild at launch, so a long-running app kept
-  /// expired rows until it was restarted.
+  /// Served by `idx_conn_stat_server_ts`, and bounded by one server's rows.
+  /// Cheap enough to run on every insert, which is how the cap stays exact.
   void _prune(String serverId) {
-    _db.execute('DELETE FROM conn_stat WHERE timestamp < ?;', [
-      DateTime.now().subtract(_retention).millisecondsSinceEpoch,
-    ]);
     _db.execute(
       'DELETE FROM conn_stat WHERE server_id = ? AND id NOT IN ('
       '  SELECT id FROM conn_stat WHERE server_id = ? '
@@ -143,6 +146,19 @@ CREATE TABLE IF NOT EXISTS conn_stat (
       ');',
       [serverId, serverId, _maxRecordsPerServer],
     );
+  }
+
+  /// Drops everything past the age bound.
+  ///
+  /// At [init], not on every insert. Recording a connection happens on every
+  /// attempt against every server — the status page refreshes on a timer — and
+  /// the common case is that nothing has expired, so paying for it each time
+  /// bought nothing. The bound is about not keeping a month-old record for
+  /// ever, which a sweep per launch satisfies.
+  void _expire() {
+    _db.execute('DELETE FROM conn_stat WHERE timestamp < ?;', [
+      DateTime.now().subtract(_retention).millisecondsSinceEpoch,
+    ]);
   }
 
   Future<void> compact() async {

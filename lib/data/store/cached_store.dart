@@ -62,11 +62,22 @@ abstract class CachedSqliteStore<T extends Object> extends SqliteStore {
   /// cache everyone else reads.
   List<T> fetch() => List<T>.from(_cache ??= _loadAll());
 
+  /// One query, not one per key.
+  ///
+  /// Under Hive `box.get` was a map lookup, so reading each key in turn was
+  /// free; each is a prepared-statement round trip now, and this runs on every
+  /// cache miss — which is every write, since the write methods drop the cache.
   List<T> _loadAll() {
     final result = <T>[];
-    for (final key in keys()) {
-      final item = fetchOneRaw(key);
-      if (item != null) result.add(item);
+    for (final entry in getAllMap().entries) {
+      final raw = entry.value;
+      if (raw is! Map) continue;
+      try {
+        final item = fromJson(Map<String, dynamic>.from(raw));
+        if (item != null) result.add(item);
+      } catch (e) {
+        dprint('Parsing $T from JSON', e);
+      }
     }
     return result;
   }

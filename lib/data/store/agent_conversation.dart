@@ -163,6 +163,7 @@ class AgentConversationStore {
     return true;
   }
 
+
   bool rename(String conversationId, String title) {
     final conversation = fetch(conversationId);
     if (conversation == null) return false;
@@ -176,12 +177,18 @@ class AgentConversationStore {
     final conversation = fetch(conversationId);
     if (conversation == null || conversation.serverId != serverId) return;
     _db.execute('DELETE FROM $_conv WHERE id = ?;', [conversationId]);
-    if (activeConversationId(serverId) != conversationId) return;
-    final remaining = fetchForServer(serverId);
-    if (remaining.isEmpty) {
-      _db.execute('DELETE FROM $_active WHERE server_id = ?;', [serverId]);
-    } else {
-      setActive(serverId, remaining.first.id);
+
+    // Exactly once, whichever way this returns. Deleting a conversation that
+    // was not the active one used to return before notifying at all, leaving
+    // the list showing a row that is gone; promoting a replacement notified
+    // twice, because `setActive` notifies too.
+    if (activeConversationId(serverId) == conversationId) {
+      final remaining = fetchForServer(serverId);
+      if (remaining.isEmpty) {
+        _db.execute('DELETE FROM $_active WHERE server_id = ?;', [serverId]);
+      } else {
+        _setActiveRow(serverId, remaining.first.id);
+      }
     }
     _changes.add(null);
   }

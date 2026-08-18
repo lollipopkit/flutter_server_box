@@ -329,12 +329,22 @@ class SettingStore extends SqliteStore {
   /// flat SSH layout plus `monitorHttp`). A fresh install overwrites this with
   /// [SchemaVersion.current] before any migration runs.
   ///
-  /// Never stamps `lastUpdateTs`. It describes this device's storage and is
-  /// left out of backups, so counting a migration writing it as a user edit
-  /// would make a device that has only just upgraded claim the newer copy of
-  /// everything at the next sync.
+  /// An **internal** key, so `getAllMap` leaves it out of a backup and `clear`
+  /// leaves it alone. Under a plain key it travelled: restoring a backup taken
+  /// on a device still on the previous release wrote that device's version
+  /// back, and the next launch found a version with no migration registered for
+  /// it and threw `SchemaTooNewException`'s counterpart — a `StateError` that
+  /// nothing catches.
+  ///
+  /// Being internal also means it never stamps `lastUpdateTs`, which it must
+  /// not: it describes this device's storage, so counting a migration writing
+  /// it as a user edit would make a device that has only just upgraded claim
+  /// the newer copy of everything at the next sync.
+  ///
+  /// TODO: drop `schemaVersion` from `removeRetiredKeys` once no install can
+  /// still carry the plain-key copy this replaced.
   late final schemaVersion = propertyDefault(
-    'schemaVersion',
+    '${StoreDefaults.prefixKey}schemaVersion',
     2,
     updateLastModified: false,
   );
@@ -483,7 +493,14 @@ class SettingStore extends SqliteStore {
   /// installs are cleaned without another migration flag becoming permanent
   /// state of its own.
   Future<void> removeRetiredKeys() async {
-    for (final key in const ['moveOutServerTabFuncBtns', 'forceSinglePane']) {
+    for (final key in const [
+      'moveOutServerTabFuncBtns',
+      'forceSinglePane',
+      // The plain-key schema version. It moved to an internal key so that a
+      // backup stops carrying it; this drops the copy a Hive import brought
+      // across, which nothing reads and a backup would still export.
+      'schemaVersion',
+    ]) {
       remove(key, updateLastUpdateTsOnRemove: false);
     }
   }

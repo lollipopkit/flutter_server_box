@@ -59,8 +59,17 @@ abstract final class HiveImport {
     // recomputed: the macOS sandbox and the mobile platforms each answer this
     // differently, and looking in the wrong one reads as "fresh install".
     final dir = await HiveStore.boxDir;
+    // Both names. `HiveStore.init` opens `<name>_enc` and *then* folds an
+    // existing plain `<name>.hive` into it, so an install old enough to predate
+    // box encryption has only the plain files — and looking for `_enc` alone
+    // read that device as a fresh install and dropped everything it had.
+    // `_importBox` goes through `HiveStore`, so it handles either.
     final present = _boxes.keys
-        .where((name) => File(dir.joinPath('${name}_enc.hive')).existsSync())
+        .where(
+          (name) =>
+              File(dir.joinPath('${name}_enc.hive')).existsSync() ||
+              File(dir.joinPath('$name.hive')).existsSync(),
+        )
         .toList();
     if (present.isEmpty) {
       // A fresh install. Record the current layout so the migrator does not
@@ -72,10 +81,25 @@ abstract final class HiveImport {
 
     Loggers.app.info('Importing ${present.length} Hive boxes into SQLite');
     var copied = 0;
+    var failed = 0;
     for (final name in present) {
-      copied += await _importBox(name, _boxes[name]!);
+      final result = await _importBox(name, _boxes[name]!);
+      copied += result.copied;
+      if (!result.opened) failed++;
     }
-    Loggers.app.info('Imported $copied rows from Hive');
+    Loggers.app.info('Imported $copied rows from Hive, $failed boxes unread');
+
+    // Not marked done if nothing could be read. A box fails to open when the
+    // keychain is briefly unavailable — the device still locked at launch, on
+    // iOS — and writing the marker anyway would leave the user with an empty
+    // app and no launch that ever retries, because the marker is the first
+    // thing checked. Their data is still on disk; this just tries again.
+    if (failed == present.length && copied == 0) {
+      Loggers.app.warning(
+        'No Hive box could be read; leaving the import to the next launch',
+      );
+      return;
+    }
 
     _dropPlaintextIndex(dir);
 
@@ -86,7 +110,7 @@ abstract final class HiveImport {
     Stores.setting.set(_markerKey, true);
   }
 
-  static Future<int> _importBox(
+  static Future<({bool opened, int copied})> _importBox(
     String name,
     bool Function(String, Object) into,
   ) async {
@@ -97,28 +121,44 @@ abstract final class HiveImport {
       // One box that will not open must not stop the others: the alternative is
       // an install that keeps all of its data and can reach none of it.
       Loggers.app.warning('Hive box "$name" did not open; skipped', e, s);
-      return 0;
+      return (opened: false, copied: 0);
     }
 
     var copied = 0;
-    for (final key in legacy.box.keys) {
-      if (key is! String) continue;
-      final raw = legacy.box.get(key);
-      if (raw == null) continue;
+    try {
+      // One transaction per box. A connection-stats box can hold thousands of
+      // rows, and a commit each would be thousands of durability barriers.
+      SqliteStore.transact(() {
+      for (final key in legacy.box.keys) {
+        if (key is! String) continue;
+        // Per record, because reading one goes through a `TypeAdapter`: a value
+        // written under a typeId this build no longer registers, or a truncated
+        // one, throws. Letting that escape would fail the launch — and fail it
+        // again on every launch after, since the marker stays unwritten. The
+        // v2 -> v3 migration this replaced caught per record for the same
+        // reason.
+        try {
+          final raw = legacy.box.get(key);
+          if (raw == null) continue;
 
-      final value = _toSpi(raw) ?? raw;
-      final ok = into(key, _jsonSafe(value as Object));
-      if (ok) {
-        copied++;
-      } else {
-        Loggers.app.warning(
-          'Could not import "$name/$key" (${value.runtimeType})',
-        );
+          final value = _toSpi(raw) ?? raw;
+          final ok = into(key, _jsonSafe(value as Object));
+          if (ok) {
+            copied++;
+          } else {
+            Loggers.app.warning(
+              'Could not import "$name/$key" (${value.runtimeType})',
+            );
+          }
+        } catch (e, s) {
+          Loggers.app.warning('Skipping unreadable record "$name/$key"', e, s);
+        }
       }
+      });
+    } finally {
+      await legacy.box.close();
     }
-
-    await legacy.box.close();
-    return copied;
+    return (opened: true, copied: copied);
   }
 
   /// A pre-v3 server record, nested into the current shape.

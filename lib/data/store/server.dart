@@ -98,7 +98,7 @@ class ServerStore extends CachedSqliteStore<Spi> {
         srvOrderChanged = true;
       }
 
-      final spi = get<Spi>(newId);
+      final spi = fetchOneRaw(newId);
       if (spi != null) {
         final newSpi = _replaceJumpIds(spi, idMap);
         if (newSpi != null) {

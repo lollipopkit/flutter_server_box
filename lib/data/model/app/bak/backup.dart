@@ -78,20 +78,26 @@ class Backup implements Mergeable {
       return;
     }
 
-    _restoreInto(
-      Stores.snippet,
-      {for (final s in snippets) s.name: s},
-      force: force,
-    );
-    _restoreInto(Stores.server, {for (final s in spis) s.id: s}, force: force);
-    _restoreInto(Stores.key, {for (final s in keys) s.id: s}, force: force);
-    _restoreInto(Stores.history, history, force: force);
-    _restoreInto(Stores.container, container, force: force);
+    // One transaction for the whole merge. Per-key commits would leave a
+    // restore that was interrupted — process killed, device out of battery —
+    // with servers deleted whose replacements were never written, and no way to
+    // tell that had happened.
+    SqliteStore.transact(() {
+      _restoreInto(
+        Stores.snippet,
+        {for (final s in snippets) s.name: s},
+        force: force,
+      );
+      _restoreInto(Stores.server, {for (final s in spis) s.id: s}, force: force);
+      _restoreInto(Stores.key, {for (final s in keys) s.id: s}, force: force);
+      _restoreInto(Stores.history, history, force: force);
+      _restoreInto(Stores.container, container, force: force);
 
-    final settings_ = settings;
-    if (settings_ != null) {
-      _restoreInto(Stores.setting, settings_, force: force);
-    }
+      final settings_ = settings;
+      if (settings_ != null) {
+        _restoreInto(Stores.setting, settings_, force: force);
+      }
+    });
 
     Provider.reload();
     RNodes.app.notify();

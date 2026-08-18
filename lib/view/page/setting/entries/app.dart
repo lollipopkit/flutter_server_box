@@ -508,7 +508,14 @@ extension _App on _AppSettingsPageState {
         } else {
           for (final entry in newSettings.entries) {
             final value = entry.value;
-            if (value == null) continue;
+            // A key set to null means "clear this". Skipping it instead left
+            // the previous value in place, and the key being present kept it
+            // out of `removedKeys` below too — so the edit reported success and
+            // changed nothing.
+            if (value == null) {
+              Stores.setting.remove(entry.key, updateLastUpdateTsOnRemove: false);
+              continue;
+            }
             Stores.setting.set(
               entry.key,
               value as Object,

@@ -89,18 +89,22 @@ void main() {
     expect(store.getConnectionHistory('b').length, 1);
   });
 
-  test('anything older than 30 days is dropped as it is written', () async {
-    // The age bound runs on every write, so an already-expired record does not
-    // survive its own insert. The K-V version could only apply this during a
-    // full rebuild at launch, so a long-running app kept expired rows until it
-    // was restarted.
+  test('anything older than 30 days is swept at init', () async {
+    // The age bound is not applied per write: recording happens on every
+    // connection attempt against every server, and paying for a whole-table
+    // sweep each time bought nothing in the common case where nothing has
+    // expired. It runs once per launch instead.
     await store.recordConnection(
       stat('a', at: DateTime.now().subtract(const Duration(days: 31))),
     );
-    expect(store.getConnectionHistory('a'), isEmpty);
-
     await store.recordConnection(stat('a', at: base));
-    expect(store.getConnectionHistory('a'), hasLength(1));
+    expect(store.getConnectionHistory('a'), hasLength(2));
+
+    await store.init();
+
+    final kept = store.getConnectionHistory('a');
+    expect(kept, hasLength(1));
+    expect(kept.single.timestamp, base);
   });
 
   test('recording the same attempt twice does not double it', () async {

@@ -102,7 +102,7 @@ final class WatchSync {
   /// What the watch app is told to display.
   Map<String, dynamic> buildPayload() => payloadFrom(
     selectedIds: Stores.setting.watchServerIds.fetch(),
-    lookup: (id) => Stores.server.get<Spi>(id),
+    lookup: (id) => Stores.server.fetchOneRaw(id),
     // TODO: drop with `SettingStore.watchLegacyUrls`.
     legacyUrls: Stores.setting.watchLegacyUrls.fetch(),
   );

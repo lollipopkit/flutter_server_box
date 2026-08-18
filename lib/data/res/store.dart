@@ -62,9 +62,16 @@ abstract final class Stores {
       () => PortForwardStore.instance,
     );
 
+    // First and on its own. `connectionStats` and `agentConversation` create
+    // their tables, which means reaching the database synchronously — and a
+    // `Future.wait` invokes every element before awaiting any of them, so
+    // batching them with the stores that are still opening the file would have
+    // them reach a database that is still null. It did, on every cold launch.
+    await SqliteStore.openDatabase();
+
     await Future.wait([
       ..._kvStores.map((store) => store.init()),
-      // Their own tables rather than rows in `kv`, so they create those instead.
+      // Their own tables rather than rows in `kv`, so they create those.
       connectionStats.init(),
       agentConversation.init(),
     ]);
