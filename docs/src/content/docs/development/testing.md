@@ -155,11 +155,11 @@ When Xcode reaches an iOS 17+ device over the network rather than by cable,
 `disablePortPublication: true`, `IOSDevice.startApp` refuses a wirelessly
 tethered device when that is set, and there is no flag to clear it.
 `flutter drive --publish-port` is the same run with the bit cleared, which is
-what `test_driver/integration_test.dart` exists for:
+what `integration_test/driver.dart` exists for:
 
 ```bash
 flutter drive --publish-port \
-  --driver=test_driver/integration_test.dart \
+  --driver=integration_test/driver.dart \
   --target=integration_test/ios_rootfs_test.dart
 ```
 
