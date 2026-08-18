@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "signatures": [
+    {
+      "login": "GT-610",
+      "id": 79314033,
+      "pullRequest": 1311,
+      "commit": "fa0ac8bd08130f5ddf8546cf0d94ef40baa2f406",
+      "signedAt": "2026-08-18T11:25:04.082Z"
+    }
+  ]
+}
