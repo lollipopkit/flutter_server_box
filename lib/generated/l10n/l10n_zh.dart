@@ -46,31 +46,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get askAiConfirmExecute => '执行前确认';
-
-  @override
-  String get askAiConversation => 'AI 对话';
-
-  @override
   String get askAiDisclaimer => 'AI 可能会犯错，请谨慎使用。';
-
-  @override
-  String get askAiFollowUpHint => '继续提问...';
 
   @override
   String get askAiInsertTerminal => '插入终端';
 
   @override
   String get askAiNoResponse => '无回复内容';
-
-  @override
-  String get askAiRecommendedCommand => 'AI 推荐命令';
-
-  @override
-  String get askAiSelectedContent => '选中的内容';
-
-  @override
-  String get askAiUsageHint => '通过逐步审核的操作诊断并管理当前 SSH 服务器';
 
   @override
   String get askAiAgentTitle => 'SSH Agent';
@@ -205,9 +187,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get agentPromptHint => '让 Agent 检查或操作你的服务器……';
-
-  @override
-  String get agentNoServers => '尚未配置服务器';
 
   @override
   String get agentNoHistory => '暂无全局 Agent 对话';
@@ -433,9 +412,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get discoverySettings => '发现设置';
 
   @override
-  String get discoverySummary => '发现摘要';
-
-  @override
   String get diskHealth => '磁盘健康';
 
   @override
@@ -463,19 +439,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Docker 统计';
-
-  @override
-  String dockerStatusRunningAndStoppedFmt(
-    Object runningCount,
-    Object stoppedCount,
-  ) {
-    return '$runningCount 个正在运行, $stoppedCount 个已停止';
-  }
-
-  @override
-  String dockerStatusRunningFmt(Object count) {
-    return '$count 个容器正在运行';
-  }
 
   @override
   String get doubleColumnMode => '双列模式';
@@ -519,9 +482,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fileDirGoneTip => '它已被删除或重命名。使用下方的按钮返回、回到主目录，或跳转到其他位置。';
 
   @override
-  String get finishedAt => '完成于';
-
-  @override
   String get fullScreen => '全屏模式';
 
   @override
@@ -562,9 +522,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get image => '镜像';
-
-  @override
-  String get imagesList => '镜像列表';
 
   @override
   String get macDmgBody =>
@@ -627,9 +584,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pruneUnusedData => '清理未使用数据';
-
-  @override
-  String get volume => '卷';
 
   @override
   String get pull => '拉取';
@@ -724,13 +678,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get parseContainerStatsTip => 'Docker 解析占用状态较为缓慢';
-
-  @override
-  String get fullAccessRefused => '该 agent 未开放免 SSH 访问。';
-
-  @override
-  String get fullAccessInsecure =>
-      '该 agent 仅在 TLS 或本地回环上开放免 SSH 访问，而当前连接是明文 HTTP。';
 
   @override
   String get plugInType => '插入类型';
@@ -833,9 +780,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get rootfsMissing => '本机还没有安装 Linux 文件系统。';
-
-  @override
   String get rootfsSubtitle => '本机上的 Linux 用户空间';
 
   @override
@@ -927,9 +871,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String sshConfigAllExist(Object duplicateCount) {
     return '所有服务器已存在（发现 $duplicateCount 个重复项）';
   }
-
-  @override
-  String get ssh => 'SSH';
 
   @override
   String get sshConnectionModeTip => '内置终端：使用应用自带的终端。系统 SSH：在外部终端中调用系统 ssh 命令。';
@@ -1373,31 +1314,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get askAiConfirmExecute => '執行前確認';
-
-  @override
-  String get askAiConversation => 'AI 對話';
-
-  @override
   String get askAiDisclaimer => 'AI 可能會犯錯，請謹慎使用。';
-
-  @override
-  String get askAiFollowUpHint => '繼續提問...';
 
   @override
   String get askAiInsertTerminal => '插入終端機';
 
   @override
   String get askAiNoResponse => '無回覆內容';
-
-  @override
-  String get askAiRecommendedCommand => 'AI 推薦指令';
-
-  @override
-  String get askAiSelectedContent => '選取的內容';
-
-  @override
-  String get askAiUsageHint => '透過逐步審核的操作診斷並管理目前 SSH 伺服器';
 
   @override
   String get askAiAgentTitle => 'SSH Agent';
@@ -1532,9 +1455,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentPromptHint => '讓 Agent 檢查或操作你的伺服器……';
-
-  @override
-  String get agentNoServers => '尚未設定伺服器';
 
   @override
   String get agentNoHistory => '暫無全域 Agent 對話';
@@ -1760,9 +1680,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get discoverySettings => '發現設定';
 
   @override
-  String get discoverySummary => '發現摘要';
-
-  @override
   String get diskHealth => '磁碟健康';
 
   @override
@@ -1790,19 +1707,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get dockerStatistics => 'Docker 統計';
-
-  @override
-  String dockerStatusRunningAndStoppedFmt(
-    Object runningCount,
-    Object stoppedCount,
-  ) {
-    return '$runningCount 個正在執行, $stoppedCount 個已停止';
-  }
-
-  @override
-  String dockerStatusRunningFmt(Object count) {
-    return '$count 個容器正在執行';
-  }
 
   @override
   String get doubleColumnMode => '雙列模式';
@@ -1846,9 +1750,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get fileDirGoneTip => '它已被刪除或重新命名。使用下方的按鈕返回、回到主目錄，或跳轉到其他位置。';
 
   @override
-  String get finishedAt => '完成於';
-
-  @override
   String get fullScreen => '全螢幕模式';
 
   @override
@@ -1889,9 +1790,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get image => '映像檔';
-
-  @override
-  String get imagesList => '映像檔列表';
 
   @override
   String get macDmgBody =>
@@ -1954,9 +1852,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pruneUnusedData => '清理未使用資料';
-
-  @override
-  String get volume => '卷';
 
   @override
   String get pull => '拉取';
@@ -2051,13 +1946,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get parseContainerStatsTip => 'Docker 解析消耗狀態較為緩慢';
-
-  @override
-  String get fullAccessRefused => '該 agent 未開放免 SSH 存取。';
-
-  @override
-  String get fullAccessInsecure =>
-      '該 agent 僅在 TLS 或本機回環上開放免 SSH 存取，而目前連線是明文 HTTP。';
 
   @override
   String get plugInType => '插入類型';
@@ -2160,9 +2048,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get rootfsMissing => '本機還沒有安裝 Linux 檔案系統。';
-
-  @override
   String get rootfsSubtitle => '本機上的 Linux 使用者空間';
 
   @override
@@ -2254,9 +2139,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String sshConfigAllExist(Object duplicateCount) {
     return '所有伺服器均已存在（發現$duplicateCount個重複項）';
   }
-
-  @override
-  String get ssh => 'SSH';
 
   @override
   String get sshConnectionModeTip => '內建：使用 App 的終端。系統 SSH：在外部終端中啟動系統的 ssh 指令。';

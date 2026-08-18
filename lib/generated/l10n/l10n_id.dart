@@ -47,31 +47,13 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get askAiConfirmExecute => 'Konfirmasi sebelum menjalankan';
-
-  @override
-  String get askAiConversation => 'Percakapan AI';
-
-  @override
   String get askAiDisclaimer => 'AI bisa saja salah. Gunakan dengan hati-hati.';
-
-  @override
-  String get askAiFollowUpHint => 'Ajukan pertanyaan lanjutan...';
 
   @override
   String get askAiInsertTerminal => 'Masukkan ke terminal';
 
   @override
   String get askAiNoResponse => 'Tidak ada respons';
-
-  @override
-  String get askAiRecommendedCommand => 'Perintah yang disarankan AI';
-
-  @override
-  String get askAiSelectedContent => 'Konten yang dipilih';
-
-  @override
-  String get askAiUsageHint => 'Digunakan di Terminal SSH';
 
   @override
   String get askAiAgentTitle => 'Agent SSH';
@@ -217,9 +199,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get agentPromptHint =>
       'Minta Agent memeriksa atau mengoperasikan server Anda...';
-
-  @override
-  String get agentNoServers => 'Belum ada server yang dikonfigurasi';
 
   @override
   String get agentNoHistory =>
@@ -461,9 +440,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get discoverySettings => 'Pengaturan Penemuan';
 
   @override
-  String get discoverySummary => 'Ringkasan Penemuan';
-
-  @override
   String get diskHealth => 'Kesehatan disk';
 
   @override
@@ -492,19 +468,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Statistik Docker';
-
-  @override
-  String dockerStatusRunningAndStoppedFmt(
-    Object runningCount,
-    Object stoppedCount,
-  ) {
-    return '$runningCount running, $stoppedCount container stopped.';
-  }
-
-  @override
-  String dockerStatusRunningFmt(Object count) {
-    return '$count wadah berjalan.';
-  }
 
   @override
   String get doubleColumnMode => 'Mode kolom ganda';
@@ -553,9 +516,6 @@ class AppLocalizationsId extends AppLocalizations {
       'Folder ini dihapus atau diganti nama. Gunakan bilah di bawah untuk kembali, ke beranda, atau menuju tempat lain.';
 
   @override
-  String get finishedAt => 'Selesai pada';
-
-  @override
   String get fullScreen => 'Mode Layar Penuh';
 
   @override
@@ -598,9 +558,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get image => 'Gambar';
-
-  @override
-  String get imagesList => 'Daftar gambar';
 
   @override
   String get macDmgBody =>
@@ -670,9 +627,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get pruneUnusedData => 'Bersihkan data yang tidak digunakan';
-
-  @override
-  String get volume => 'Volume';
 
   @override
   String get pull => 'Tarik';
@@ -774,14 +728,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Parsing status okupansi oleh Docker agak lambat';
-
-  @override
-  String get fullAccessRefused =>
-      'Agen ini tidak menyediakan terminal tanpa kredensial.';
-
-  @override
-  String get fullAccessInsecure =>
-      'Agen ini hanya menyajikan terminal melalui TLS atau loopback, sedangkan koneksi ini HTTP polos.';
 
   @override
   String get plugInType => 'Jenis Penyisipan';
@@ -898,10 +844,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get rootfsMissing =>
-      'Belum ada sistem berkas Linux yang terpasang di perangkat ini.';
-
-  @override
   String get rootfsSubtitle => 'Lingkungan pengguna Linux di perangkat ini';
 
   @override
@@ -994,9 +936,6 @@ class AppLocalizationsId extends AppLocalizations {
   String sshConfigAllExist(Object duplicateCount) {
     return 'Semua server sudah ada (ditemukan $duplicateCount duplikat)';
   }
-
-  @override
-  String get ssh => 'SSH';
 
   @override
   String get sshConnectionModeTip =>

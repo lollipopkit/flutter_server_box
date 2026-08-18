@@ -47,33 +47,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get askAiConfirmExecute => 'Confirm before executing';
-
-  @override
-  String get askAiConversation => 'AI conversation';
-
-  @override
   String get askAiDisclaimer =>
       'AI may be incorrect. Review carefully before applying.';
-
-  @override
-  String get askAiFollowUpHint => 'Ask a follow-up...';
 
   @override
   String get askAiInsertTerminal => 'Insert into terminal';
 
   @override
   String get askAiNoResponse => 'No response';
-
-  @override
-  String get askAiRecommendedCommand => 'AI suggested command';
-
-  @override
-  String get askAiSelectedContent => 'Selected content';
-
-  @override
-  String get askAiUsageHint =>
-      'Diagnose and operate the current SSH server with reviewed actions';
 
   @override
   String get askAiAgentTitle => 'SSH Agent';
@@ -217,9 +198,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get agentPromptHint =>
       'Ask the Agent to inspect or operate your servers...';
-
-  @override
-  String get agentNoServers => 'No configured servers';
 
   @override
   String get agentNoHistory => 'No saved global Agent conversations';
@@ -458,9 +436,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get discoverySettings => 'Discovery Settings';
 
   @override
-  String get discoverySummary => 'Discovery Summary';
-
-  @override
   String get diskHealth => 'Disk Health';
 
   @override
@@ -488,19 +463,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Docker Statistics';
-
-  @override
-  String dockerStatusRunningAndStoppedFmt(
-    Object runningCount,
-    Object stoppedCount,
-  ) {
-    return '$runningCount running, $stoppedCount container stopped.';
-  }
-
-  @override
-  String dockerStatusRunningFmt(Object count) {
-    return '$count container running.';
-  }
 
   @override
   String get doubleColumnMode => 'Double column mode';
@@ -548,9 +510,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'It was deleted or renamed. Use the bar below to go back, go home, or jump elsewhere.';
 
   @override
-  String get finishedAt => 'Finished at';
-
-  @override
   String get fullScreen => 'Full screen mode';
 
   @override
@@ -593,9 +552,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get image => 'Image';
-
-  @override
-  String get imagesList => 'Images list';
 
   @override
   String get macDmgBody =>
@@ -665,9 +621,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pruneUnusedData => 'Prune unused data';
-
-  @override
-  String get volume => 'Volume';
 
   @override
   String get pull => 'Pull';
@@ -768,14 +721,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Parsing the occupancy status of Docker is relatively slow.';
-
-  @override
-  String get fullAccessRefused =>
-      'This agent does not allow access without SSH.';
-
-  @override
-  String get fullAccessInsecure =>
-      'This agent allows access without SSH over TLS or loopback only, and this connection is plain HTTP.';
 
   @override
   String get plugInType => 'Insertion Type';
@@ -891,10 +836,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get rootfsMissing =>
-      'No Linux filesystem is installed on this device yet.';
-
-  @override
   String get rootfsSubtitle => 'A Linux userland on this device';
 
   @override
@@ -987,9 +928,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String sshConfigAllExist(Object duplicateCount) {
     return 'All servers already exist ($duplicateCount duplicates found)';
   }
-
-  @override
-  String get ssh => 'SSH';
 
   @override
   String get sshConnectionModeTip =>

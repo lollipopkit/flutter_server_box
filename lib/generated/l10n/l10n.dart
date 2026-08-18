@@ -189,29 +189,11 @@ abstract class AppLocalizations {
   /// **'Please configure {fields} in Settings.'**
   String askAiConfigMissing(Object fields);
 
-  /// No description provided for @askAiConfirmExecute.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm before executing'**
-  String get askAiConfirmExecute;
-
-  /// No description provided for @askAiConversation.
-  ///
-  /// In en, this message translates to:
-  /// **'AI conversation'**
-  String get askAiConversation;
-
   /// No description provided for @askAiDisclaimer.
   ///
   /// In en, this message translates to:
   /// **'AI may be incorrect. Review carefully before applying.'**
   String get askAiDisclaimer;
-
-  /// No description provided for @askAiFollowUpHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Ask a follow-up...'**
-  String get askAiFollowUpHint;
 
   /// No description provided for @askAiInsertTerminal.
   ///
@@ -224,24 +206,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No response'**
   String get askAiNoResponse;
-
-  /// No description provided for @askAiRecommendedCommand.
-  ///
-  /// In en, this message translates to:
-  /// **'AI suggested command'**
-  String get askAiRecommendedCommand;
-
-  /// No description provided for @askAiSelectedContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Selected content'**
-  String get askAiSelectedContent;
-
-  /// No description provided for @askAiUsageHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Diagnose and operate the current SSH server with reviewed actions'**
-  String get askAiUsageHint;
 
   /// No description provided for @askAiAgentTitle.
   ///
@@ -500,12 +464,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ask the Agent to inspect or operate your servers...'**
   String get agentPromptHint;
-
-  /// No description provided for @agentNoServers.
-  ///
-  /// In en, this message translates to:
-  /// **'No configured servers'**
-  String get agentNoServers;
 
   /// No description provided for @agentNoHistory.
   ///
@@ -927,12 +885,6 @@ abstract class AppLocalizations {
   /// **'Discovery Settings'**
   String get discoverySettings;
 
-  /// No description provided for @discoverySummary.
-  ///
-  /// In en, this message translates to:
-  /// **'Discovery Summary'**
-  String get discoverySummary;
-
   /// No description provided for @diskHealth.
   ///
   /// In en, this message translates to:
@@ -980,21 +932,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Docker Statistics'**
   String get dockerStatistics;
-
-  /// No description provided for @dockerStatusRunningAndStoppedFmt.
-  ///
-  /// In en, this message translates to:
-  /// **'{runningCount} running, {stoppedCount} container stopped.'**
-  String dockerStatusRunningAndStoppedFmt(
-    Object runningCount,
-    Object stoppedCount,
-  );
-
-  /// No description provided for @dockerStatusRunningFmt.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} container running.'**
-  String dockerStatusRunningFmt(Object count);
 
   /// No description provided for @doubleColumnMode.
   ///
@@ -1073,12 +1010,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'It was deleted or renamed. Use the bar below to go back, go home, or jump elsewhere.'**
   String get fileDirGoneTip;
-
-  /// No description provided for @finishedAt.
-  ///
-  /// In en, this message translates to:
-  /// **'Finished at'**
-  String get finishedAt;
 
   /// No description provided for @fullScreen.
   ///
@@ -1163,12 +1094,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Image'**
   String get image;
-
-  /// No description provided for @imagesList.
-  ///
-  /// In en, this message translates to:
-  /// **'Images list'**
-  String get imagesList;
 
   /// No description provided for @macDmgBody.
   ///
@@ -1289,12 +1214,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Prune unused data'**
   String get pruneUnusedData;
-
-  /// No description provided for @volume.
-  ///
-  /// In en, this message translates to:
-  /// **'Volume'**
-  String get volume;
 
   /// No description provided for @pull.
   ///
@@ -1469,18 +1388,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Parsing the occupancy status of Docker is relatively slow.'**
   String get parseContainerStatsTip;
-
-  /// No description provided for @fullAccessRefused.
-  ///
-  /// In en, this message translates to:
-  /// **'This agent does not allow access without SSH.'**
-  String get fullAccessRefused;
-
-  /// No description provided for @fullAccessInsecure.
-  ///
-  /// In en, this message translates to:
-  /// **'This agent allows access without SSH over TLS or loopback only, and this connection is plain HTTP.'**
-  String get fullAccessInsecure;
 
   /// No description provided for @plugInType.
   ///
@@ -1674,12 +1581,6 @@ abstract class AppLocalizations {
   /// **'Alpine {installed} is installed and {latest} is available. Updating downloads it again and replaces the container: anything installed inside it with apk is lost. The current one keeps working if you skip this.'**
   String rootfsUpdateTip(Object installed, Object latest);
 
-  /// No description provided for @rootfsMissing.
-  ///
-  /// In en, this message translates to:
-  /// **'No Linux filesystem is installed on this device yet.'**
-  String get rootfsMissing;
-
   /// No description provided for @rootfsSubtitle.
   ///
   /// In en, this message translates to:
@@ -1841,12 +1742,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All servers already exist ({duplicateCount} duplicates found)'**
   String sshConfigAllExist(Object duplicateCount);
-
-  /// No description provided for @ssh.
-  ///
-  /// In en, this message translates to:
-  /// **'SSH'**
-  String get ssh;
 
   /// No description provided for @sshConnectionModeTip.
   ///

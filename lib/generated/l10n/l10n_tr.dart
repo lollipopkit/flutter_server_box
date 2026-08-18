@@ -47,32 +47,14 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get askAiConfirmExecute => 'Çalıştırmadan önce onayla';
-
-  @override
-  String get askAiConversation => 'YZ sohbeti';
-
-  @override
   String get askAiDisclaimer =>
       'Yapay zeka hata yapabilir. Lütfen dikkatli kullanın.';
-
-  @override
-  String get askAiFollowUpHint => 'Yeni bir soru sor...';
 
   @override
   String get askAiInsertTerminal => 'Terminale ekle';
 
   @override
   String get askAiNoResponse => 'Yanıt yok';
-
-  @override
-  String get askAiRecommendedCommand => 'YZ önerilen komut';
-
-  @override
-  String get askAiSelectedContent => 'Seçilen içerik';
-
-  @override
-  String get askAiUsageHint => 'SSH Terminalinde kullanılır';
 
   @override
   String get askAiAgentTitle => 'SSH Agent';
@@ -219,9 +201,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get agentPromptHint =>
       'Agent\'tan sunucularını incelemesini veya yönetmesini iste...';
-
-  @override
-  String get agentNoServers => 'Yapılandırılmış sunucu yok';
 
   @override
   String get agentNoHistory => 'Kayıtlı genel Agent konuşması yok';
@@ -463,9 +442,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get discoverySettings => 'Keşif Ayarları';
 
   @override
-  String get discoverySummary => 'Keşif Özeti';
-
-  @override
   String get diskHealth => 'Disk sağlığı';
 
   @override
@@ -494,19 +470,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Docker İstatistikleri';
-
-  @override
-  String dockerStatusRunningAndStoppedFmt(
-    Object runningCount,
-    Object stoppedCount,
-  ) {
-    return '$runningCount çalışıyor, $stoppedCount konteyner durdurulmuş.';
-  }
-
-  @override
-  String dockerStatusRunningFmt(Object count) {
-    return '$count konteyner çalışıyor.';
-  }
 
   @override
   String get doubleColumnMode => 'Çift sütun modu';
@@ -555,9 +518,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Silinmiş veya adı değiştirilmiş. Geri dönmek, ana klasöre gitmek ya da başka bir yere geçmek için alttaki çubuğu kullanın.';
 
   @override
-  String get finishedAt => 'Tamamlandı:';
-
-  @override
   String get fullScreen => 'Tam ekran modu';
 
   @override
@@ -600,9 +560,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get image => 'Görüntü';
-
-  @override
-  String get imagesList => 'Görüntü listesi';
 
   @override
   String get macDmgBody =>
@@ -672,9 +629,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get pruneUnusedData => 'Kullanılmayan verileri temizle';
-
-  @override
-  String get volume => 'Birim';
 
   @override
   String get pull => 'Çek';
@@ -775,13 +729,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Docker\'ın doluluk durumunu ayrıştırmak oldukça yavaş.';
-
-  @override
-  String get fullAccessRefused => 'Bu aracı kimlik bilgisiz terminal sunmuyor.';
-
-  @override
-  String get fullAccessInsecure =>
-      'Bu aracı terminali yalnızca TLS veya loopback üzerinden sunuyor, bu bağlantı ise düz HTTP.';
 
   @override
   String get plugInType => 'Eklenti Türü';
@@ -898,10 +845,6 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get rootfsMissing =>
-      'Bu cihazda henüz bir Linux dosya sistemi kurulu değil.';
-
-  @override
   String get rootfsSubtitle => 'Bu cihazdaki bir Linux kullanıcı alanı';
 
   @override
@@ -995,9 +938,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String sshConfigAllExist(Object duplicateCount) {
     return 'Tüm sunucular zaten mevcut ($duplicateCount kopya bulundu)';
   }
-
-  @override
-  String get ssh => 'SSH';
 
   @override
   String get sshConnectionModeTip =>
