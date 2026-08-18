@@ -86,7 +86,7 @@ jobs:
           npm run build
 
       - name: Upload dist
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: monitor-frontend-dist
           path: monitor/frontend/dist
@@ -177,7 +177,7 @@ jobs:
           fi
 
       - name: Upload package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: monitor-pkg-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
@@ -189,7 +189,7 @@ jobs:
       # The Linux musl binary is reused in the Docker image, avoiding a second build
       - name: Upload raw bin for Docker
         if: matrix.platform == 'linux'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: monitor-bin-linux-${{ matrix.arch }}
           path: target/${{ matrix.target }}/release/server_box_monitor
