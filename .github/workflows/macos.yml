@@ -46,8 +46,6 @@ permissions:
 
 env:
   FLUTTER_VERSION: '3.47.0'
-  FLUTTER_STORAGE_BASE_URL: https://storage.flutter-io.cn
-  PUB_HOSTED_URL: https://pub.flutter-io.cn
 
 jobs:
   build:
@@ -67,10 +65,6 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
       - uses: Swatinem/rust-cache@v2
-
-      - name: Use pub mirror with locked versions
-        shell: bash
-        run: bash scripts/ci/use-pub-mirror.sh
 
       - name: Install dependencies
         run: flutter pub get

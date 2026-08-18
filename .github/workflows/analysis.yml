@@ -16,8 +16,6 @@ permissions:
 
 env:
   FLUTTER_VERSION: '3.47.0'
-  FLUTTER_STORAGE_BASE_URL: https://storage.flutter-io.cn
-  PUB_HOSTED_URL: https://pub.flutter-io.cn
 
 jobs:
   reproducibilityCheck:
@@ -51,12 +49,7 @@ jobs:
 
       - name: Check locked dependencies
         run: |
-          cp pubspec.lock "$RUNNER_TEMP/pubspec.lock"
-          trap 'cp "$RUNNER_TEMP/pubspec.lock" pubspec.lock' EXIT
-          bash scripts/ci/use-pub-mirror.sh pubspec.lock
           flutter pub get --enforce-lockfile
-          cp "$RUNNER_TEMP/pubspec.lock" pubspec.lock
-          trap - EXIT
           git diff --exit-code -- pubspec.yaml pubspec.lock
 
       - name: Check JNI build-id patch
@@ -112,10 +105,6 @@ jobs:
       - name: Install the engine's build tools
         run: brew install meson ninja llvm libarchive
 
-      - name: Use pub mirror with locked versions
-        shell: bash
-        run: bash scripts/ci/use-pub-mirror.sh
-
       - name: Install dependencies
         run: flutter pub get
 
@@ -155,10 +144,6 @@ jobs:
         with:
           channel: 'stable'
           flutter-version: ${{ env.FLUTTER_VERSION }}
-
-      - name: Use pub mirror with locked versions
-        shell: bash
-        run: bash scripts/ci/use-pub-mirror.sh
 
       - name: Install dependencies
         run: flutter pub get
