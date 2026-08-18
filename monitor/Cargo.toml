@@ -109,7 +109,6 @@ libc = "0.2"
 
 [dev-dependencies]
 tempfile = "3.27.0"
-tokio-test = "0.4"
 
 [profile.release]
 strip = true
