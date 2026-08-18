@@ -5,6 +5,8 @@ import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
+import 'package:meta/meta.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/error.dart';
 
 class ProxyCommandSocket implements SSHSocket {
@@ -74,7 +76,9 @@ class ProxyCommandSocket implements SSHSocket {
           connectionReady.completeError(
             SSHErr(
               type: SSHErrType.connect,
-              message: 'ProxyCommand exited before connection was established.',
+              message: _explain(
+                'ProxyCommand exited before connection was established.',
+              ),
             ),
           );
         }
@@ -103,7 +107,9 @@ class ProxyCommandSocket implements SSHSocket {
           connectionReady.completeError(
             SSHErr(
               type: SSHErrType.connect,
-              message: 'ProxyCommand exited before connection was established.',
+              message: _explain(
+                'ProxyCommand exited before connection was established.',
+              ),
             ),
           );
           return;
@@ -111,7 +117,7 @@ class ProxyCommandSocket implements SSHSocket {
         connectionReady.completeError(
           SSHErr(
             type: SSHErrType.connect,
-            message: 'ProxyCommand exited with code $code.',
+            message: _explain('ProxyCommand exited with code $code.'),
           ),
         );
       }),
@@ -124,7 +130,9 @@ class ProxyCommandSocket implements SSHSocket {
         process.kill();
         throw SSHErr(
           type: SSHErrType.connect,
-          message: 'ProxyCommand timed out after ${timeout.inSeconds}s.',
+          message: _explain(
+            'ProxyCommand timed out after ${timeout.inSeconds}s.',
+          ),
         );
       }
     } else {
@@ -135,7 +143,7 @@ class ProxyCommandSocket implements SSHSocket {
       if (code != 0) {
         throw SSHErr(
           type: SSHErrType.connect,
-          message: 'ProxyCommand exited with code $code.',
+          message: _explain('ProxyCommand exited with code $code.'),
         );
       }
     });
@@ -147,6 +155,37 @@ class ProxyCommandSocket implements SSHSocket {
       done: done,
     );
   }
+
+  /// [message], plus what a sandboxed build has almost certainly done to it.
+  ///
+  /// Measured on a build signed with `app-sandbox`, against the same binary
+  /// signed without it: the child does not merely lose access to `~/.ssh`, its
+  /// `$HOME` is replaced by the app's container. So `~` silently points
+  /// somewhere else and only an absolute path into the real home reports
+  /// `Operation not permitted`.
+  ///
+  /// Which makes the failure unrecognisable. `ssh -W %h:%p alias` cannot read
+  /// `~/.ssh/config`, so the alias is never resolved, ssh takes it for a literal
+  /// hostname and reports `connect to host alias port 22: Operation timed
+  /// out` — a network fault, naming the user's jump host, with nothing anywhere
+  /// saying "sandbox".
+  ///
+  /// Appended rather than substituted, and hedged: a command that touches no
+  /// home-directory path works there (`nc %h %p` was measured working, network
+  /// access being granted), so this is the likely cause and not the certain one.
+  static String _explain(String message) =>
+      _explainFor(message, sandboxed: Pfs.isMacSandboxed);
+
+  static String _explainFor(String message, {required bool sandboxed}) {
+    if (!sandboxed) return message;
+    return '$message\n\n${l10n.proxyCommandSandboxed}';
+  }
+
+  /// [_explainFor] with the confinement stated rather than asked of the
+  /// process, since a test runs in neither of the two builds this is about.
+  @visibleForTesting
+  static String debugExplain(String message, {required bool sandboxed}) =>
+      _explainFor(message, sandboxed: sandboxed);
 
   static String _resolveCommand({
     required String command,

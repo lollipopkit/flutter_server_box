@@ -706,6 +706,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get proxyCommandSandboxed =>
+      'このビルドはサンドボックス内で動作します。コマンドから見えるホームディレクトリは空のものに置き換わるため、~/.ssh を読むもの(ssh -W、cloudflared)は失敗し、多くは誤ったホスト名のタイムアウトとして現れます。ネットワークのみを使うコマンドは動作します。DMG 版にサンドボックスはありません。';
+
+  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return '秘密鍵ファイル $path を読み込めません: $reason';
   }

@@ -737,6 +737,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get proxyCommandSandboxed =>
+      'This build runs in a sandbox: the command sees an empty home directory instead of yours, so anything reading ~/.ssh (ssh -W, cloudflared) fails — often as a timeout naming the wrong host. Commands that only use the network still work. The DMG build has no sandbox.';
+
+  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return 'Cannot read the private key file $path: $reason';
   }

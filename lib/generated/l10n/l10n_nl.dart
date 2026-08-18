@@ -744,6 +744,10 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get proxyCommandSandboxed =>
+      'Deze build draait in een sandbox: de opdracht ziet een lege thuismap in plaats van die van jou, dus alles wat ~/.ssh leest (ssh -W, cloudflared) mislukt, vaak als een time-out die de verkeerde host noemt. Opdrachten die alleen het netwerk gebruiken werken wel. De DMG-versie heeft geen sandbox.';
+
+  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return 'Kan het privésleutelbestand $path niet lezen: $reason';
   }

@@ -1413,6 +1413,12 @@ abstract class AppLocalizations {
   /// **'Private key [{keyId}] not found.'**
   String privateKeyNotFoundFmt(Object keyId);
 
+  /// No description provided for @proxyCommandSandboxed.
+  ///
+  /// In en, this message translates to:
+  /// **'This build runs in a sandbox: the command sees an empty home directory instead of yours, so anything reading ~/.ssh (ssh -W, cloudflared) fails — often as a timeout naming the wrong host. Commands that only use the network still work. The DMG build has no sandbox.'**
+  String get proxyCommandSandboxed;
+
   /// No description provided for @privateKeyFileUnreadable.
   ///
   /// In en, this message translates to:

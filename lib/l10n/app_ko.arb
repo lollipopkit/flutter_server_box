@@ -161,6 +161,7 @@
   "preferDiskAmount": "디스크 용량 우선 표시",
   "privateKey": "개인 키",
   "privateKeyNotFoundFmt": "개인 키 [{keyId}]을(를) 찾을 수 없습니다.",
+  "proxyCommandSandboxed": "이 빌드는 샌드박스에서 실행됩니다. 명령이 보는 홈 디렉터리는 실제 홈이 아니라 비어 있는 것이라서 ~/.ssh를 읽는 명령(ssh -W, cloudflared)은 실패하며, 대개 엉뚱한 호스트의 시간 초과로 나타납니다. 네트워크만 쓰는 명령은 그대로 동작합니다. DMG 버전에는 샌드박스가 없습니다.",
   "privateKeyFileUnreadable": "개인 키 파일 {path}을(를) 읽을 수 없습니다: {reason}",
   "privateKeyFileSandboxed": "이 빌드는 컨테이너 밖의 파일을 읽을 수 없어 {path}의 키에 접근할 수 없습니다. 설정에서 키를 가져오거나 DMG 버전을 사용하세요.",
   "pushToken": "푸시 토큰",

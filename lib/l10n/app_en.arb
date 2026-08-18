@@ -226,6 +226,7 @@
   "preferDiskAmount": "Prioritize displaying disk capacity",
   "privateKey": "Private Key",
   "privateKeyNotFoundFmt": "Private key [{keyId}] not found.",
+  "proxyCommandSandboxed": "This build runs in a sandbox: the command sees an empty home directory instead of yours, so anything reading ~/.ssh (ssh -W, cloudflared) fails — often as a timeout naming the wrong host. Commands that only use the network still work. The DMG build has no sandbox.",
   "privateKeyFileUnreadable": "Cannot read the private key file {path}: {reason}",
   "@privateKeyFileUnreadable": {
     "placeholders": {

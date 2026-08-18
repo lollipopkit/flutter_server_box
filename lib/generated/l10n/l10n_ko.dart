@@ -705,6 +705,10 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get proxyCommandSandboxed =>
+      '이 빌드는 샌드박스에서 실행됩니다. 명령이 보는 홈 디렉터리는 실제 홈이 아니라 비어 있는 것이라서 ~/.ssh를 읽는 명령(ssh -W, cloudflared)은 실패하며, 대개 엉뚱한 호스트의 시간 초과로 나타납니다. 네트워크만 쓰는 명령은 그대로 동작합니다. DMG 버전에는 샌드박스가 없습니다.';
+
+  @override
   String privateKeyFileUnreadable(String path, String reason) {
     return '개인 키 파일 $path을(를) 읽을 수 없습니다: $reason';
   }

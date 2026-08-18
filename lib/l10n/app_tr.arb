@@ -137,6 +137,7 @@
   "preferDiskAmount": "Disk kapasitesini öncelikli olarak göster",
   "privateKey": "Özel Anahtar",
   "privateKeyNotFoundFmt": "Özel anahtar [{keyId}] bulunamadı.",
+  "proxyCommandSandboxed": "Bu sürüm bir kum havuzunda çalışır: komut sizinki yerine boş bir ev dizini görür, bu yüzden ~/.ssh okuyan her şey (ssh -W, cloudflared) başarısız olur ve çoğu zaman yanlış sunucuyu adlandıran bir zaman aşımı olarak görünür. Yalnızca ağı kullanan komutlar çalışmaya devam eder. DMG sürümünde kum havuzu yoktur.",
   "privateKeyFileUnreadable": "Özel anahtar dosyası {path} okunamıyor: {reason}",
   "privateKeyFileSandboxed": "Bu sürüm kendi kapsayıcısı dışındaki dosyaları okuyamıyor, bu yüzden {path} konumundaki anahtara erişilemiyor. Anahtarı Ayarlar'dan içe aktarın ya da DMG sürümünü kullanın.",
   "pushToken": "Push belirteci",

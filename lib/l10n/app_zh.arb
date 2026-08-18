@@ -219,6 +219,7 @@
   "preferDiskAmount": "优先显示硬盘容量",
   "privateKey": "私钥",
   "privateKeyNotFoundFmt": "未找到私钥 [{keyId}]。",
+  "proxyCommandSandboxed": "此版本运行在沙盒中:命令看到的是一个空的家目录,而不是你的,所以任何读取 ~/.ssh 的命令(ssh -W、cloudflared)都会失败,而且常常表现为指向错误主机的超时。只用网络的命令仍然可用。DMG 版没有沙盒。",
   "privateKeyFileUnreadable": "无法读取私钥文件 {path}:{reason}",
   "privateKeyFileSandboxed": "此版本无法读取容器外的文件,因此读不到 {path} 的密钥。请在设置中导入该密钥,或改用 DMG 版。",
   "pushToken": "消息推送 Token",
