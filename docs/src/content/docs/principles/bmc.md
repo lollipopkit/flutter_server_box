@@ -202,3 +202,35 @@ afford.
 Not in Phase 1: the event log, storage inventory, boot device override, virtual
 media, and relaying Redfish through a monitor agent for BMCs on a management
 network a phone cannot route to.
+
+## Checking it against real hardware
+
+Everything above is verified against recorded vendor responses and a local TLS
+server, which settles the decisions and settles nothing about a machine. Two
+things are left to a person.
+
+**The read half** is `test/bmc_redfish_e2e_test.dart`, opt-in and read-only. It
+skips silently unless the workspace-root `.env` carries:
+
+```
+SBM_E2E_BMC_URL=https://10.0.0.9
+SBM_E2E_BMC_USER=...
+SBM_E2E_BMC_PWD=...
+```
+
+It prints what it found rather than asserting a shape — the id this vendor uses,
+which sensor model the firmware presents, which reset types it advertises and
+what each intent resolves to. A fourth id shape is something to learn, not a
+failure. It reads the reset action and **never posts to it**.
+
+**The power half** has no automated form and is not going to get one. To check
+it by hand, on a machine nobody is using:
+
+1. Configure the BMC on that server and review its certificate.
+2. Confirm the card shows a power state matching the machine.
+3. Press *Restart*. The dialog names the `ResetType` that was negotiated —
+   check it is the one that hardware should be getting.
+4. Watch that the result reported is *confirmed* rather than *accepted*. On iLO
+   a graceful operation may legitimately report accepted; on hardware that does
+   distinguish them, accepted means the machine did not move and is worth
+   looking into.
