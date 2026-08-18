@@ -8,6 +8,7 @@ const it = {
 	enterPassword: 'Inserisci la tua password',
 	signIn: 'Accedi',
 	signingIn: 'Accesso in corso...',
+	noServersTip: 'Ancora nessun server. Aggiungi l\'indirizzo di un agent per monitorarlo.',
 	addServer: 'Aggiungi server',
 	removeServer: 'Rimuovi server',
 	serverName: 'Nome',

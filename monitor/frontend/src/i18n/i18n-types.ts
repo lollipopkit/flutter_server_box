@@ -56,6 +56,10 @@ type RootTranslation = {
 	 */
 	signingIn: string
 	/**
+	 * N​o​ ​s​e​r​v​e​r​s​ ​y​e​t​.​ ​A​d​d​ ​t​h​e​ ​a​d​d​r​e​s​s​ ​o​f​ ​a​n​ ​a​g​e​n​t​ ​t​o​ ​m​o​n​i​t​o​r​ ​i​t​.
+	 */
+	noServersTip: string
+	/**
 	 * A​d​d​ ​s​e​r​v​e​r
 	 */
 	addServer: string
@@ -642,6 +646,10 @@ export type TranslationFunctions = {
 	 * Signing in...
 	 */
 	signingIn: () => LocalizedString
+	/**
+	 * No servers yet. Add the address of an agent to monitor it.
+	 */
+	noServersTip: () => LocalizedString
 	/**
 	 * Add server
 	 */

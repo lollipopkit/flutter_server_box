@@ -11,7 +11,13 @@ export interface ServerEntry {
   username: string | null
 }
 
+import { probe } from './probe'
+
 const KEY = 'servers.v1'
+
+/// The entry assumed before anything has been asked: the origin this panel was
+/// served from. See confirmSameOrigin().
+const LOCAL_ID = 'local'
 
 function normalizeUrl(u: string): string {
   return u.trim().replace(/\/+$/, '')
@@ -48,22 +54,49 @@ class ServersStore {
       // Same-origin default; migrates the legacy single-server token keys
       this.list = [
         {
-          id: 'local',
+          id: LOCAL_ID,
           url: '',
           token: window.localStorage.getItem('token'),
           username: window.localStorage.getItem('username'),
         },
       ]
-      this.currentId = 'local'
+      this.currentId = LOCAL_ID
       this.#persist()
     }
     if (!this.list.some((s) => s.id === this.currentId)) {
-      this.currentId = this.list[0].id
+      this.currentId = this.list[0]?.id ?? ''
     }
   }
 
-  get current(): ServerEntry {
+  get current(): ServerEntry | undefined {
     return this.list.find((s) => s.id === this.currentId) ?? this.list[0]
+  }
+
+  /// Whether there is nothing to show yet, which a static host starts at.
+  get empty(): boolean {
+    return this.list.length === 0
+  }
+
+  /// Drops the assumed same-origin entry when this origin turns out not to be
+  /// an agent.
+  ///
+  /// The entry is a guess made before anything has been asked: right when an
+  /// agent serves the panel, wrong when the panel is hosted statically, where
+  /// the origin answers `/api/v1/health` with the page you are reading. Only a
+  /// well-formed answer from something that is not an agent counts — an agent
+  /// mid-restart gives a network error, and the entry (with its saved session)
+  /// stays.
+  ///
+  /// Cannot mistake a restarting agent for a static host in the case that
+  /// matters either way: if this origin were the agent and it were down, there
+  /// would be no panel here to run this.
+  async confirmSameOrigin() {
+    const local = this.list.find((s) => s.id === LOCAL_ID)
+    if (!local || local.url !== '' || this.list.length !== 1) return
+    if ((await probe('')) !== 'not-an-agent') return
+    this.list = []
+    this.currentId = ''
+    this.#persist()
   }
 
   get authenticated(): boolean {
@@ -99,9 +132,8 @@ class ServersStore {
   }
 
   remove(id: string) {
-    if (this.list.length <= 1) return
     this.list = this.list.filter((s) => s.id !== id)
-    if (this.currentId === id) this.currentId = this.list[0].id
+    if (this.currentId === id) this.currentId = this.list[0]?.id ?? ''
     this.#persist()
   }
 
@@ -127,7 +159,9 @@ class ServersStore {
   }
 
   logout() {
-    this.current.token = null
+    const entry = this.current
+    if (!entry) return
+    entry.token = null
     this.#persist()
   }
 

@@ -8,6 +8,7 @@ const fr = {
 	enterPassword: 'Entrez votre mot de passe',
 	signIn: 'Se connecter',
 	signingIn: 'Connexion en cours...',
+	noServersTip: 'Aucun serveur pour l\'instant. Ajoutez l\'adresse d\'un agent pour le surveiller.',
 	addServer: 'Ajouter un serveur',
 	removeServer: 'Supprimer le serveur',
 	serverName: 'Nom',

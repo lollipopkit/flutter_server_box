@@ -8,6 +8,7 @@ const es = {
 	enterPassword: 'Introduce tu contraseña',
 	signIn: 'Iniciar sesión',
 	signingIn: 'Iniciando sesión...',
+	noServersTip: 'Aún no hay servidores. Añade la dirección de un agente para monitorizarlo.',
 	addServer: 'Agregar servidor',
 	removeServer: 'Eliminar servidor',
 	serverName: 'Nombre',

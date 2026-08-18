@@ -8,6 +8,7 @@ const ja = {
 	enterPassword: 'パスワードを入力',
 	signIn: 'サインイン',
 	signingIn: 'サインイン中...',
+	noServersTip: 'サーバーがまだありません。エージェントのアドレスを追加すると監視できます。',
 	addServer: 'サーバーを追加',
 	removeServer: 'サーバーを削除',
 	serverName: '名前',

@@ -8,6 +8,7 @@ const de = {
 	enterPassword: 'Passwort eingeben',
 	signIn: 'Anmelden',
 	signingIn: 'Anmeldung läuft...',
+	noServersTip: 'Noch keine Server. Füge die Adresse eines Agents hinzu, um ihn zu überwachen.',
 	addServer: 'Server hinzufügen',
 	removeServer: 'Server entfernen',
 	serverName: 'Name',

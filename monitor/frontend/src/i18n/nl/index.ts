@@ -8,6 +8,7 @@ const nl = {
 	enterPassword: 'Voer uw wachtwoord in',
 	signIn: 'Inloggen',
 	signingIn: 'Bezig met inloggen...',
+	noServersTip: 'Nog geen servers. Voeg het adres van een agent toe om die te monitoren.',
 	addServer: 'Server toevoegen',
 	removeServer: 'Server verwijderen',
 	serverName: 'Naam',

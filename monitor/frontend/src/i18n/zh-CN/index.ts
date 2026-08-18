@@ -8,6 +8,7 @@ const zh_CN = {
 	enterPassword: '输入密码',
 	signIn: '登录',
 	signingIn: '登录中...',
+	noServersTip: '还没有服务器。添加一个 agent 的地址即可开始监控。',
 	addServer: '添加服务器',
 	removeServer: '移除服务器',
 	serverName: '名称',

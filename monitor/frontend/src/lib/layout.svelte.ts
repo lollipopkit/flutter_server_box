@@ -17,6 +17,10 @@ class LayoutStore {
   // site (navigate() vs back()) so a "back" navigation visually reverses
   // the "forward" one instead of always sliding the same direction
   navDirection = $state<'forward' | 'back'>('forward')
+  /// Whether the add-server form is up. Here rather than inside the sidebar
+  /// because the empty state opens the same one form, and there is nowhere
+  /// else the two of them meet.
+  addServerOpen = $state(false)
 
   toggleCollapsed() {
     this.collapsed = !this.collapsed

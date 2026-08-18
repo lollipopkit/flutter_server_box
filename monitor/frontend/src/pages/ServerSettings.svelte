@@ -178,7 +178,8 @@
 
 <PageHeader
   title={$LL.serverSettings()}
-  subtitle={serverNames.byServer[servers.currentId] ?? displayName(servers.current)}
+  subtitle={serverNames.byServer[servers.currentId] ??
+    (servers.current ? displayName(servers.current) : '')}
   {onback}
   containerClass="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 w-full"
 >

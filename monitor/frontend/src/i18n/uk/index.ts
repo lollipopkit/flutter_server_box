@@ -8,6 +8,7 @@ const uk = {
 	enterPassword: 'Введіть пароль',
 	signIn: 'Увійти',
 	signingIn: 'Вхід...',
+	noServersTip: 'Серверів ще немає. Додайте адресу агента, щоб стежити за ним.',
 	addServer: 'Додати сервер',
 	removeServer: 'Видалити сервер',
 	serverName: 'Назва',

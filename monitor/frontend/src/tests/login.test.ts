@@ -38,7 +38,7 @@ describe('Login', () => {
     await waitFor(() => {
       expect(mockedLogin).toHaveBeenCalledWith({ username: 'admin', password: 'password' })
       expect(servers.authenticated).toBe(true)
-      expect(servers.current.username).toBe('admin')
+      expect(servers.current?.username).toBe('admin')
     })
   })
 

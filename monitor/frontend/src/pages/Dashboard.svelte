@@ -14,7 +14,7 @@
     CircleAlert,
     RefreshCw,
   } from '@lucide/svelte'
-  import { Badge, Card, IconButton, Spinner } from '@serverbox/webui'
+  import { Badge, Button, Card, IconButton, Spinner } from '@serverbox/webui'
   import DetailPanel, { type DetailKind } from '../components/DetailPanel.svelte'
   import LineChart from '../components/LineChart.svelte'
   import LoginForm from '../components/LoginForm.svelte'
@@ -171,7 +171,11 @@
   const headerName = $derived(
     m?.server_name ??
       status.data?.name ??
-      (servers.current?.id === 'local' ? $LL.thisServer() : displayName(servers.current)),
+      (servers.current?.id === 'local'
+        ? $LL.thisServer()
+        : servers.current
+          ? displayName(servers.current)
+          : ''),
   )
 
   function isCardVisible(id: CardId): boolean {
@@ -245,7 +249,16 @@
   {/if}
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    {#if !servers.authenticated}
+    {#if servers.empty}
+      <!-- Nothing to sign in to. Reached when the panel is hosted apart from
+           any agent — the origin it came from is a static host, so the entry
+           assumed at startup has been dropped. -->
+      <div class="py-12 flex flex-col items-center gap-4 text-center">
+        <Server class="w-10 h-10 text-faint-fg" />
+        <p class="text-sm text-muted-fg">{$LL.noServersTip()}</p>
+        <Button onclick={() => (layout.addServerOpen = true)}>{$LL.addServer()}</Button>
+      </div>
+    {:else if !servers.authenticated}
       <div class="py-12">
         <p class="mb-6 text-center text-sm text-muted-fg">{$LL.signInSubtitle()}</p>
         <LoginForm />

@@ -8,6 +8,7 @@ const zh_TW = {
 	enterPassword: '輸入密碼',
 	signIn: '登入',
 	signingIn: '登入中...',
+	noServersTip: '還沒有伺服器。新增一個 agent 的位址即可開始監控。',
 	addServer: '新增伺服器',
 	removeServer: '移除伺服器',
 	serverName: '名稱',

@@ -8,6 +8,7 @@ const ru = {
 	enterPassword: 'Введите пароль',
 	signIn: 'Войти',
 	signingIn: 'Выполняется вход...',
+	noServersTip: 'Серверов пока нет. Добавьте адрес агента, чтобы следить за ним.',
 	addServer: 'Добавить сервер',
 	removeServer: 'Удалить сервер',
 	serverName: 'Название',

@@ -8,6 +8,7 @@ const tr = {
 	enterPassword: 'Parolanızı girin',
 	signIn: 'Oturum aç',
 	signingIn: 'Oturum açılıyor...',
+	noServersTip: 'Henüz sunucu yok. İzlemek için bir agent adresi ekleyin.',
 	addServer: 'Sunucu ekle',
 	removeServer: 'Sunucuyu kaldır',
 	serverName: 'Ad',

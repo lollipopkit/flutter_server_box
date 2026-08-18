@@ -8,6 +8,7 @@ const ko = {
 	enterPassword: '비밀번호를 입력하세요',
 	signIn: '로그인',
 	signingIn: '로그인 중...',
+	noServersTip: '서버가 아직 없습니다. 에이전트 주소를 추가하면 모니터링할 수 있습니다.',
 	addServer: '서버 추가',
 	removeServer: '서버 제거',
 	serverName: '이름',

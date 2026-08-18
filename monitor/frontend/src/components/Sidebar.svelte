@@ -45,22 +45,24 @@
     layout.navigate('panel')
   }
 
-  let formOpen = $state(false)
   let editingEntry = $state<ServerEntry | undefined>(undefined)
 
   function openAdd() {
     editingEntry = undefined
-    formOpen = true
+    layout.addServerOpen = true
   }
 
   function openEdit(entry: ServerEntry) {
     editingEntry = entry
-    formOpen = true
+    layout.addServerOpen = true
   }
 
   // Collapse only applies to the desktop rail; the mobile drawer is always
   // full width with labels, so visibility is CSS-driven (lg:hidden), not #if
   onMount(() => {
+    // Before the pollers: the list may still hold the assumed same-origin
+    // entry, and on a static host there is nothing there to poll.
+    void servers.confirmSameOrigin()
     health.start()
     serverNames.start()
   })
@@ -197,4 +199,8 @@
   </div>
 </aside>
 
-<ServerFormModal open={formOpen} entry={editingEntry} onclose={() => (formOpen = false)} />
+<ServerFormModal
+  open={layout.addServerOpen}
+  entry={editingEntry}
+  onclose={() => (layout.addServerOpen = false)}
+/>

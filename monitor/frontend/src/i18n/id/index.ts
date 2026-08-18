@@ -8,6 +8,7 @@ const id = {
 	enterPassword: 'Masukkan kata sandi Anda',
 	signIn: 'Masuk',
 	signingIn: 'Sedang masuk...',
+	noServersTip: 'Belum ada server. Tambahkan alamat sebuah agent untuk memantaunya.',
 	addServer: 'Tambah server',
 	removeServer: 'Hapus server',
 	serverName: 'Nama',

@@ -8,6 +8,7 @@ const en = {
 	enterPassword: 'Enter your password',
 	signIn: 'Sign in',
 	signingIn: 'Signing in...',
+	noServersTip: 'No servers yet. Add the address of an agent to monitor it.',
 	addServer: 'Add server',
 	removeServer: 'Remove server',
 	serverName: 'Name',

@@ -8,6 +8,7 @@ const pt = {
 	enterPassword: 'Digite sua senha',
 	signIn: 'Entrar',
 	signingIn: 'Entrando...',
+	noServersTip: 'Ainda sem servidores. Adicione o endereço de um agente para monitorizá-lo.',
 	addServer: 'Adicionar servidor',
 	removeServer: 'Remover servidor',
 	serverName: 'Nome',
