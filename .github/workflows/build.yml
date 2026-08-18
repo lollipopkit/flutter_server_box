@@ -281,7 +281,7 @@ jobs:
           rm -f app-*-release.apk
       - name: Upload artifacts
         if: inputs.release != true && github.ref_type != 'tag'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-android
           path: build/app/outputs/flutter-apk/*.apk
@@ -289,7 +289,7 @@ jobs:
           retention-days: 14
       - name: Create Release
         if: inputs.release == true || github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v1.0.${{ env.BUILD_NUMBER }}
           files: |
@@ -338,7 +338,7 @@ jobs:
         run: APP_ASSET_NAME="${APP_NAME}" scripts/release/package-unsigned-ipa.sh
       - name: Upload artifacts
         if: inputs.release != true && github.ref_type != 'tag'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-ios
           path: build/artifacts/*.ipa
@@ -346,7 +346,7 @@ jobs:
           retention-days: 14
       - name: Create Release
         if: inputs.release == true || github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v1.0.${{ env.BUILD_NUMBER }}
           files: |
@@ -406,7 +406,7 @@ jobs:
           mv "${APP_NAME}_v1.0.${BUILD_NUMBER}_amd64.AppImage" "${APP_NAME}_v1.0.${BUILD_NUMBER}${{ matrix.release_suffix }}_amd64.AppImage"
       - name: Upload artifacts
         if: inputs.release != true && github.ref_type != 'tag'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-linux${{ matrix.artifact_suffix }}
           path: "*.AppImage"
@@ -414,7 +414,7 @@ jobs:
           retention-days: 14
       - name: Create Release
         if: inputs.release == true || github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v1.0.${{ env.BUILD_NUMBER }}
           files: |
@@ -454,7 +454,7 @@ jobs:
           done
       - name: Upload artifacts
         if: inputs.release != true && github.ref_type != 'tag'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.APP_NAME }}-${{ env.BUILD_TAG }}-windows
           path: "*_windows_amd64.zip"
@@ -462,7 +462,7 @@ jobs:
           retention-days: 14
       - name: Create Release
         if: inputs.release == true || github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v1.0.${{ env.BUILD_NUMBER }}
           files: |

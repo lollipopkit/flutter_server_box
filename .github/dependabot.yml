@@ -26,7 +26,15 @@ updates:
         patterns:
           - "*"
 
+  # Grouped like the other two: the actions in a workflow are bumped for one
+  # reason at a time (a runner's Node version, most of them), and a review that
+  # sees them together is the one that can tell. Ungrouped, a single week's run
+  # opened four PRs against the same two files.
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
