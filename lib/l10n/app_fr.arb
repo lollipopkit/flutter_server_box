@@ -137,7 +137,7 @@
   "preferDiskAmount": "Prioriser l’affichage de la capacité du disque",
   "privateKey": "Clé privée",
   "privateKeyNotFoundFmt": "Clé privée [{keyId}] introuvable.",
-  "proxyCommandSandboxed": "Cette version s'exécute dans un bac à sable : la commande voit un dossier personnel vide au lieu du vôtre, donc tout ce qui lit ~/.ssh (ssh -W, cloudflared) échoue, souvent sous forme d'expiration désignant le mauvais hôte. Les commandes qui n'utilisent que le réseau fonctionnent toujours. La version DMG n'a pas de bac à sable.",
+  "proxyCommandSandboxed": "Cette version s'exécute dans un bac à sable : la commande voit un dossier personnel vide au lieu du vôtre, donc tout ce qui lit ~/.ssh (ssh -W, cloudflared) échoue, souvent sous la forme d'un délai d'attente désignant le mauvais hôte. Les commandes qui n'utilisent que le réseau fonctionnent toujours. La version DMG n'a pas de bac à sable.",
   "privateKeyFileUnreadable": "Impossible de lire le fichier de clé privée {path} : {reason}",
   "privateKeyFileSandboxed": "Cette version ne peut pas lire les fichiers hors de son conteneur, la clé située à {path} est donc inaccessible. Importez la clé dans les réglages, ou utilisez la version DMG.",
   "pushToken": "Jeton d'identification",

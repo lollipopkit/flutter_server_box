@@ -745,7 +745,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get proxyCommandSandboxed =>
-      'Dieser Build läuft in einer Sandbox: Der Befehl sieht ein leeres Home-Verzeichnis statt Ihres, daher schlägt alles fehl, was ~/.ssh liest (ssh -W, cloudflared) — meist als Zeitüberschreitung mit dem falschen Host. Befehle, die nur das Netzwerk nutzen, funktionieren weiterhin. Der DMG-Build hat keine Sandbox.';
+      'Dieser Build läuft in einer Sandbox: Der Befehl sieht statt Ihres Home-Verzeichnisses ein leeres, daher schlägt alles fehl, was ~/.ssh liest (ssh -W, cloudflared) — meist als Zeitüberschreitung mit dem falschen Host. Befehle, die nur das Netzwerk nutzen, funktionieren weiterhin. Der DMG-Build hat keine Sandbox.';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {

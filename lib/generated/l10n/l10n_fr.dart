@@ -753,7 +753,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get proxyCommandSandboxed =>
-      'Cette version s\'exécute dans un bac à sable : la commande voit un dossier personnel vide au lieu du vôtre, donc tout ce qui lit ~/.ssh (ssh -W, cloudflared) échoue, souvent sous forme d\'expiration désignant le mauvais hôte. Les commandes qui n\'utilisent que le réseau fonctionnent toujours. La version DMG n\'a pas de bac à sable.';
+      'Cette version s\'exécute dans un bac à sable : la commande voit un dossier personnel vide au lieu du vôtre, donc tout ce qui lit ~/.ssh (ssh -W, cloudflared) échoue, souvent sous la forme d\'un délai d\'attente désignant le mauvais hôte. Les commandes qui n\'utilisent que le réseau fonctionnent toujours. La version DMG n\'a pas de bac à sable.';
 
   @override
   String privateKeyFileUnreadable(String path, String reason) {

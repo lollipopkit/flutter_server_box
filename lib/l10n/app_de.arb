@@ -137,7 +137,7 @@
   "preferDiskAmount": "Festplattenkapazität vorrangig anzeigen",
   "privateKey": "Private Key",
   "privateKeyNotFoundFmt": "Privater Schlüssel [{keyId}] wurde nicht gefunden.",
-  "proxyCommandSandboxed": "Dieser Build läuft in einer Sandbox: Der Befehl sieht ein leeres Home-Verzeichnis statt Ihres, daher schlägt alles fehl, was ~/.ssh liest (ssh -W, cloudflared) — meist als Zeitüberschreitung mit dem falschen Host. Befehle, die nur das Netzwerk nutzen, funktionieren weiterhin. Der DMG-Build hat keine Sandbox.",
+  "proxyCommandSandboxed": "Dieser Build läuft in einer Sandbox: Der Befehl sieht statt Ihres Home-Verzeichnisses ein leeres, daher schlägt alles fehl, was ~/.ssh liest (ssh -W, cloudflared) — meist als Zeitüberschreitung mit dem falschen Host. Befehle, die nur das Netzwerk nutzen, funktionieren weiterhin. Der DMG-Build hat keine Sandbox.",
   "privateKeyFileUnreadable": "Die Schlüsseldatei {path} kann nicht gelesen werden: {reason}",
   "privateKeyFileSandboxed": "Dieser Build kann keine Dateien außerhalb seines Containers lesen, der Schlüssel unter {path} ist daher nicht erreichbar. Importieren Sie den Schlüssel in den Einstellungen oder verwenden Sie den DMG-Build.",
   "pushToken": "Push Token",
