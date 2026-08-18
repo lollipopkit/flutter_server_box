@@ -11,17 +11,21 @@
 /// legitimately look like a path.
 library;
 
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
+
+import 'helpers/spi_fixture.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -203,6 +207,46 @@ void main() {
 
     test('no key configured is not an error', () {
       expect(resolvePrivateKey(const SshCredential(ip: 'a')), isNull);
+    });
+  });
+
+  group('genClient', () {
+    test('a key it cannot read does not leave the socket open', () async {
+      // The socket is opened before the key is resolved, and a caller that
+      // gets a key error gets no handle to close it with. A status poll
+      // retries, so this used to leak one connection per attempt.
+      final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(server.close);
+
+      final closed = Completer<void>();
+      server.listen((socket) {
+        socket.listen(
+          (_) {},
+          onDone: () {
+            if (!closed.isCompleted) closed.complete();
+          },
+          onError: (_) {
+            if (!closed.isCompleted) closed.complete();
+          },
+          cancelOnError: true,
+        );
+      });
+
+      final spi = spiFixture(
+        name: 'unreadable key',
+        id: 'leak-test',
+        ip: server.address.address,
+        port: server.port,
+        keyPath: '/definitely/not/here/id_ed25519',
+      );
+
+      await expectLater(genClient(spi), throwsA(isA<SSHErr>()));
+
+      // Nothing was ever sent, so the far end learns of it by the close alone
+      await expectLater(
+        closed.future.timeout(const Duration(seconds: 5)),
+        completes,
+      );
     });
   });
 }

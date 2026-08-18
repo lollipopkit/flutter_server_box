@@ -41,6 +41,13 @@ class ServerStore extends CachedHiveStore<Spi> {
   /// in which case the record is already broken and a path-shaped value is
   /// better shown as a path than looked up forever.
   ///
+  /// Known gap: `IdentityFile id_ed25519` with no separator at all is legal in
+  /// an ssh config, and such a record is indistinguishable from a key named
+  /// `id_ed25519` — so it stays where it is. Moving it would need a rule for
+  /// what a bare name is relative to, and OpenSSH's answer to that is not one
+  /// to guess at; it belongs at the parse site, on values this app has not
+  /// stored yet, rather than here on ones it has.
+  ///
   /// TODO: remove once no stored record can predate the fix.
   ///
   /// [keys] is a seam for tests, the same shape [forBox] is: the decision needs

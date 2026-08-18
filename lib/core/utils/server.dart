@@ -248,13 +248,51 @@ Future<SSHClient> genClient(
     }
   }();
 
-  final hostKeyVerifier = HostKeyVerifier(
-    spi: spi,
-    cache: hostKeyCache,
-    persistCallback: hostKeyPersist,
-    prompt: hostKeyPrompt,
-  );
+  // Everything past here can throw with the socket already open, and the
+  // caller is given a key error and no handle — so nobody can close it. A
+  // status poll retries, so one unreadable key used to mean one leaked socket
+  // per attempt, or on the ProxyCommand path one leaked `/bin/sh` per attempt.
+  //
+  // `destroy`, not `close`: there is nothing buffered worth flushing, and on
+  // the ProxyCommand path this is what kills the process.
+  try {
+    return await _authenticatedClient(
+      socket: socket,
+      spi: spi,
+      ssh: ssh,
+      alterUser: alterUser,
+      privateKey: privateKey,
+      privateKeysByKeyId: privateKeysByKeyId,
+      onStatus: onStatus,
+      onKeyboardInteractive: onKeyboardInteractive,
+      hostKeyVerifier: HostKeyVerifier(
+        spi: spi,
+        cache: hostKeyCache,
+        persistCallback: hostKeyPersist,
+        prompt: hostKeyPrompt,
+      ),
+    );
+  } catch (_) {
+    socket.destroy();
+    rethrow;
+  }
+}
 
+/// The client itself, once there is a socket to build it on.
+///
+/// Split out so that [genClient] has one place to undo the socket from: every
+/// throw in here happens after it is open.
+Future<SSHClient> _authenticatedClient({
+  required SSHSocket socket,
+  required Spi spi,
+  required SshCredential ssh,
+  required String? alterUser,
+  required String? privateKey,
+  required Map<String, String>? privateKeysByKeyId,
+  required void Function(GenSSHClientStatus)? onStatus,
+  required SSHKeyboardInteractiveHandler? onKeyboardInteractive,
+  required HostKeyVerifier hostKeyVerifier,
+}) async {
   final keyRef = ssh.keyRef;
   if (keyRef == null) {
     onStatus?.call(GenSSHClientStatus.pwd);
