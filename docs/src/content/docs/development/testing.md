@@ -150,10 +150,12 @@ integration_test`).
 
 ### The one device `flutter test` cannot reach
 
-An iOS 17+ device Xcode reaches over the network. `flutter test` hardcodes
-`disablePortPublication: true`, and `IOSDevice.startApp` refuses to launch on a
-wirelessly tethered device when it is set, with no flag to turn it off. That is
-what `test_driver/integration_test.dart` is for — it is not otherwise used:
+When Xcode reaches an iOS 17+ device over the network rather than by cable,
+`flutter test` cannot launch the app at all: it hardcodes
+`disablePortPublication: true`, `IOSDevice.startApp` refuses a wirelessly
+tethered device when that is set, and there is no flag to clear it.
+`flutter drive --publish-port` is the same run with the bit cleared, which is
+what `test_driver/integration_test.dart` exists for:
 
 ```bash
 flutter drive --publish-port \

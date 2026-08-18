@@ -30,13 +30,10 @@ name: macOS build
 # `integration_test/` at all — so those four bought a 45-minute macOS job for
 # any PR that happened to touch `main.dart`, which is most of the ones that
 # migrate anything.
-#
-# Duplicated rather than anchored: GitHub Actions does not resolve YAML
-# aliases.
 on:
   push:
     branches: [ "main" ]
-    paths:
+    paths: &macos_paths
       # The Xcode project, the entitlements, the Podfile
       - 'macos/**'
       # cargokit builds and links these into the app; nothing else in CI links
@@ -53,15 +50,9 @@ on:
       - '.github/workflows/macos.yml'
   pull_request:
     branches: [ "main" ]
-    paths:
-      - 'macos/**'
-      - 'crates/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'pubspec.yaml'
-      - 'pubspec.lock'
-      - 'packages/**'
-      - '.github/workflows/macos.yml'
+    # The same list. Actions has resolved YAML aliases since 2025-09; before
+    # that this was two copies that could drift apart, and did.
+    paths: *macos_paths
 
 permissions:
   contents: read
