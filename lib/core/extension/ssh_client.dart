@@ -153,35 +153,6 @@ extension SSHClientX on SSHClient {
     return (session.exitCode, output);
   }
 
-  Future<String> execForOutput(
-    String script, {
-    SSHPtyConfig? pty,
-    bool stdout = true,
-    bool stderr = true,
-    String? entry,
-    Map<String, String>? env,
-  }) async {
-    final session = await execute(
-      entry ?? 'cat | sh',
-      pty: pty,
-      environment: env,
-    );
-
-    final result = BytesBuilder(copy: false);
-
-    final done = _collectOutput(
-      session,
-      stdoutBuilder: stdout ? result : null,
-      stderrBuilder: stderr ? result : null,
-    );
-
-    session.stdin.add(Uint8List.fromList(utf8.encode('$script\n')));
-    session.stdin.close();
-    await done;
-
-    return utf8.decode(result.takeBytes());
-  }
-
   Future<String> runSafe(
     String command, {
     SystemType? systemType,

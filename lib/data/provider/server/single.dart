@@ -1182,8 +1182,6 @@ class ServerNotifier extends _$ServerNotifier {
 }
 
 extension IndividualServerStateExtension on ServerState {
-  bool get needGenClient => conn < ServerConn.connecting;
-
   bool get canViewDetails => conn == ServerConn.finished;
 
   String get id => spi.id;
