@@ -13,11 +13,76 @@ on:
 
 permissions:
   contents: read
+  # For the `changes` job's file list. Read-only, and only for this repo.
+  pull-requests: read
 
 env:
   FLUTTER_VERSION: '3.47.0'
 
 jobs:
+  # Which of the expensive jobs this diff can actually affect.
+  #
+  # The two that cost real time are `iOS Linux engine` (~9 min: brews an LLVM
+  # toolchain, builds the guest engine, then builds the app twice) and `Rust
+  # tests (windows-latest)` (~7-9 min, most of it a cold compile). A docs-only
+  # or Dart-only PR paid both for nothing.
+  #
+  # Asks GitHub for the PR's own file list rather than diffing refs: no
+  # checkout, no fetch depth to get wrong, and no merge-base to compute against
+  # a base branch that may have moved since. On a push to main it answers
+  # "everything" — that is the ref releases are cut from, and narrowing what
+  # runs there trades away the wrong thing.
+  changes:
+    name: What changed
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+      ish: ${{ steps.filter.outputs.ish }}
+      dart: ${{ steps.filter.outputs.dart }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - id: filter
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" != 'pull_request' ]]; then
+            printf 'rust=true\nish=true\ndart=true\n' >> "$GITHUB_OUTPUT"
+            echo "not a pull request: running everything"
+            exit 0
+          fi
+
+          files="$(gh api --paginate \
+            "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
+            --jq '.[].filename')"
+          echo "changed files:"
+          echo "$files"
+
+          emit() {
+            if grep -qE "$2" <<< "$files"; then
+              echo "$1=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "$1=false" >> "$GITHUB_OUTPUT"
+              echo "::notice::skipping the $1 jobs: nothing they cover changed"
+            fi
+          }
+
+          # Patterns are grep -E against whole paths. A change to this workflow
+          # turns everything on — the filters are the thing under test then —
+          # and `packages/` are the submodules the app is built from, so a
+          # gitlink move there is a source change to all of it.
+          shared='^\.github/workflows/analysis\.yml$|^pubspec\.(yaml|lock)$|^packages/'
+
+          emit rust "$shared|^crates/|^monitor/|^Cargo\.(toml|lock)$"
+          # The engine, the scripts that build and check it, and everything the
+          # iOS app links: this is the only job that compiles either the engine
+          # or `flutter build ios` at all
+          emit ish "$shared|^third_party/|^scripts/(build-ish-ios|check-ish-linkage)\.sh$|^ios/|^crates/sbm_ffi/"
+          # `crates/` because `flutter test` loads the FFI dylib and the
+          # generated bindings come from there
+          emit dart "$shared|^lib/|^test/|^integration_test/|^crates/|^Cargo\.(toml|lock)$|^analysis_options\.yaml$"
+
   reproducibilityCheck:
     name: Reproducibility check
     runs-on: ubuntu-latest
@@ -57,6 +122,8 @@ jobs:
 
   rustTests:
     name: Rust tests (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -86,6 +153,8 @@ jobs:
   # strip turned out to pass on a binary that still had the engine in it.
   ishEngine:
     name: iOS Linux engine
+    needs: changes
+    if: needs.changes.outputs.ish == 'true'
     runs-on: macos-latest
 
     steps:
@@ -133,6 +202,8 @@ jobs:
           scripts/check-ish-linkage.sh build/ios/iphoneos/Runner.app/Runner off
 
   check:
+    needs: changes
+    if: needs.changes.outputs.dart == 'true'
     runs-on: ubuntu-latest
 
     steps:
