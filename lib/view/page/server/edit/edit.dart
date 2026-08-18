@@ -82,6 +82,14 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   /// -1: key auth enabled without a selection, null: key auth disabled,
   /// others: index of private key
   final _keyIdx = ValueNotifier<int?>(null);
+
+  /// A key file on this machine, as `~/.ssh/config` named one — see
+  /// `SshCredential.keyPath`. Not a selection among stored keys, which is what
+  /// [_keyIdx] is, and mutually exclusive with it.
+  ///
+  /// Held here so that opening an imported server and saving it does not
+  /// quietly drop the key it was connecting with.
+  final _keyPath = ValueNotifier<String?>(null);
   final _autoConnect = ValueNotifier(true);
   final _jumpServers = <String>[].vn;
   final _pveIgnoreCert = ValueNotifier(false);
@@ -145,6 +153,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _monitorPwdCtrl.dispose();
 
     _keyIdx.dispose();
+    _keyPath.dispose();
     _autoConnect.dispose();
     _jumpServers.dispose();
     _pveIgnoreCert.dispose();

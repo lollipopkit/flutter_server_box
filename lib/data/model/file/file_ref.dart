@@ -4,6 +4,7 @@ import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/server/connect_credential.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/res/store.dart';
 
 /// One end of a transfer: somewhere files live, and a path in it.
@@ -145,10 +146,14 @@ class SshTransferCreds {
   SshTransferCreds.forServer(this.spi) {
     privateKeysByKeyId = {};
 
-    final keyId = spi.ssh?.keyId;
-    if (keyId != null) {
-      privateKey = getPrivateKey(keyId);
-      if (privateKey != null) privateKeysByKeyId![keyId] = privateKey!;
+    // `resolvePrivateKey`, not `Stores.key` directly: a key may be a file this
+    // machine holds rather than one the store does, and reading it has to
+    // happen here, where there is a filesystem the user granted and a UI to
+    // report a refusal to. The isolate has neither.
+    final ssh = spi.ssh;
+    if (ssh?.keyRef case final keyRef?) {
+      privateKey = resolvePrivateKey(ssh!);
+      if (privateKey != null) privateKeysByKeyId![keyRef] = privateKey!;
     }
 
     final allServers = {
@@ -159,22 +164,27 @@ class SshTransferCreds {
     final firstJumpId = spi.firstJumpId;
     if (firstJumpId != null) {
       jumpSpi = jumpSpisById?[firstJumpId];
-      jumpPrivateKey = Stores.key.fetchOne(jumpSpi?.ssh?.keyId)?.key;
-      if (jumpSpi?.ssh?.keyId case final jumpKeyId?) {
+      final jumpSsh = jumpSpi?.ssh;
+      if (jumpSsh != null && jumpSsh.keyRef != null) {
+        // A jump server whose key cannot be resolved is not fatal here: the
+        // hop may authenticate by password, and failing the whole transfer at
+        // queue time would take the other candidates with it.
+        jumpPrivateKey = _tryResolve(jumpSsh);
         if (jumpPrivateKey != null) {
-          privateKeysByKeyId![jumpKeyId] = jumpPrivateKey!;
+          privateKeysByKeyId![jumpSsh.keyRef!] = jumpPrivateKey!;
         }
       }
     }
 
     for (final jump in jumpSpisById?.values ?? const <Spi>[]) {
-      final jumpKeyId = jump.ssh?.keyId;
-      if (jumpKeyId == null || privateKeysByKeyId!.containsKey(jumpKeyId)) {
+      final jumpSsh = jump.ssh;
+      final jumpKeyRef = jumpSsh?.keyRef;
+      if (jumpKeyRef == null || privateKeysByKeyId!.containsKey(jumpKeyRef)) {
         continue;
       }
-      final key = Stores.key.fetchOne(jumpKeyId)?.key;
+      final key = _tryResolve(jumpSsh!);
       if (key == null) continue;
-      privateKeysByKeyId![jumpKeyId] = key;
+      privateKeysByKeyId![jumpKeyRef] = key;
     }
 
     if (jumpSpisById != null && jumpSpisById!.isEmpty) jumpSpisById = null;
@@ -189,6 +199,20 @@ class SshTransferCreds {
     } catch (e, s) {
       Loggers.app.warning('Failed to load SSH known host fingerprints', e, s);
       knownHostFingerprints = null;
+    }
+  }
+
+  /// [resolvePrivateKey] for a hop, or null if it could not be had.
+  ///
+  /// The target server's key is allowed to throw — a transfer to a host whose
+  /// key is gone should say so at once. A jump server's is not: it may not need
+  /// one, and one unusable candidate must not take the others with it.
+  static String? _tryResolve(SshCredential ssh) {
+    try {
+      return resolvePrivateKey(ssh);
+    } catch (e) {
+      Loggers.app.warning('Jump server key unavailable', e);
+      return null;
     }
   }
 

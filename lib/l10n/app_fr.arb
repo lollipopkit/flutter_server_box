@@ -151,6 +151,8 @@
   "preferDiskAmount": "Prioriser l’affichage de la capacité du disque",
   "privateKey": "Clé privée",
   "privateKeyNotFoundFmt": "Clé privée [{keyId}] introuvable.",
+  "privateKeyFileUnreadable": "Impossible de lire le fichier de clé privée {path} : {reason}",
+  "privateKeyFileSandboxed": "Cette version ne peut pas lire les fichiers hors de son conteneur, la clé située à {path} est donc inaccessible. Importez la clé dans les réglages, ou utilisez la version DMG.",
   "pushToken": "Jeton d'identification",
   "pveIgnoreCertTip": "Il n'est pas recommandé de l'activer, attention aux risques de sécurité ! Si vous utilisez le certificat par défaut de PVE, vous devez activer cette option.",
   "pveVersionLow": "Cette fonctionnalité est actuellement en phase de test et n'a été testée que sur PVE 8+. Veuillez l'utiliser avec prudence.",

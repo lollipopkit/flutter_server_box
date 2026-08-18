@@ -234,6 +234,8 @@
   "preferDiskAmount": "优先显示硬盘容量",
   "privateKey": "私钥",
   "privateKeyNotFoundFmt": "未找到私钥 [{keyId}]。",
+  "privateKeyFileUnreadable": "无法读取私钥文件 {path}:{reason}",
+  "privateKeyFileSandboxed": "此版本无法读取容器外的文件,因此读不到 {path} 的密钥。请在设置中导入该密钥,或改用 DMG 版。",
   "pushToken": "消息推送 Token",
   "pveIgnoreCertTip": "不推荐开启，注意安全隐患！如果你使用的 PVE 默认证书，需要开启该选项",
   "pveServerClientMissing": "当前服务器的 SSH 客户端不可用。",

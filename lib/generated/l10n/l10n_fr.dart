@@ -806,6 +806,16 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String privateKeyFileUnreadable(String path, String reason) {
+    return 'Impossible de lire le fichier de clé privée $path : $reason';
+  }
+
+  @override
+  String privateKeyFileSandboxed(String path) {
+    return 'Cette version ne peut pas lire les fichiers hors de son conteneur, la clé située à $path est donc inaccessible. Importez la clé dans les réglages, ou utilisez la version DMG.';
+  }
+
+  @override
   String get pushToken => 'Jeton d\'identification';
 
   @override

@@ -211,7 +211,10 @@ Host keyserver
       expect(servers, hasLength(1));
 
       final server = servers.first;
-      expect(server.ssh?.keyId, '~/.ssh/special_key');
+      // A path, never a key-store id — asserting `keyId` here is what let the
+      // bug ship: every reader looks that field up in `Stores.key`.
+      expect(server.ssh?.keyPath, '~/.ssh/special_key');
+      expect(server.ssh?.keyId, isNull);
     });
 
     test('parseConfig handles quoted values', () async {
@@ -229,7 +232,8 @@ Host "server with spaces"
       expect(server.name, 'server with spaces');
       expect(server.ssh?.ip, '192.168.1.100');
       expect(server.ssh?.user, 'admin user');
-      expect(server.ssh?.keyId, '~/.ssh/key with spaces');
+      expect(server.ssh?.keyPath, '~/.ssh/key with spaces');
+      expect(server.ssh?.keyId, isNull);
     });
 
     test('parseConfig handles invalid port values', () async {
@@ -340,7 +344,8 @@ Host internal-server
       expect(prodWeb.ssh?.ip, '10.0.1.100');
       expect(prodWeb.ssh?.user, 'deploy');
       expect(prodWeb.ssh?.port, 22);
-      expect(prodWeb.ssh?.keyId, '~/.ssh/production.pem');
+      expect(prodWeb.ssh?.keyPath, '~/.ssh/production.pem');
+      expect(prodWeb.ssh?.keyId, isNull);
 
       final prodDb = servers.firstWhere((s) => s.name == 'prod-db-01');
       expect(prodDb.ssh?.ip, '10.0.1.200');
@@ -351,6 +356,7 @@ Host internal-server
       expect(dev.ssh?.ip, 'dev.example.com');
       expect(dev.ssh?.user, 'developer');
       expect(dev.ssh?.port, 22);
+      expect(dev.ssh?.keyPath, isNull);
       expect(dev.ssh?.keyId, isNull);
     });
 

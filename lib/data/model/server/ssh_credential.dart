@@ -18,9 +18,22 @@ final class SshCredential {
   final String user;
   final String? pwd;
 
-  /// [id] of the private key
+  /// [PrivateKeyInfo.id] of a key held in `Stores.key`, and nothing else.
+  ///
+  /// It used to mean that *or* a filesystem path, depending on who wrote it:
+  /// `~/.ssh/config` import put an `IdentityFile` value straight in here while
+  /// every reader looked it up as a store id, so an imported server could only
+  /// ever fail to connect. The path now has [keyPath] to itself.
   @JsonKey(name: 'pubKeyId')
   final String? keyId;
+
+  /// A private key on this machine's filesystem, as an `IdentityFile` line
+  /// names one. Read when the connection is made, never copied into the app.
+  ///
+  /// Only ever set by `~/.ssh/config` import, which is desktop-only — there is
+  /// no such file to point at on a phone. At most one of this and [keyId] is
+  /// set; both being null means password or keyboard-interactive.
+  final String? keyPath;
 
   /// Fallback `user@host:port` tried when [ip] is unreachable
   final String? alterUrl;
@@ -51,6 +64,7 @@ final class SshCredential {
     this.user = 'root',
     this.pwd,
     this.keyId,
+    this.keyPath,
     this.alterUrl,
     this.jumpId,
     this.jumpIds,
@@ -82,6 +96,21 @@ final class SshCredential {
   String? get firstJumpId {
     final ids = resolvedJumpIds;
     return ids.isEmpty ? null : ids.first;
+  }
+
+  /// One name for whichever key this credential uses, or null when it uses
+  /// none.
+  ///
+  /// The transfer isolate is handed key material in a map it looks up by
+  /// string, resolved for it on the main isolate (`SshTransferCreds`). That map
+  /// was keyed by [keyId] alone, which cannot name a key that came from
+  /// [keyPath] — so the two share one namespace here, with the path prefixed
+  /// because a store id never contains a separator.
+  String? get keyRef {
+    final id = keyId;
+    if (id != null) return id;
+    final path = keyPath;
+    return path == null ? null : 'path:$path';
   }
 
   /// Parses [alterUrl] into its (ip, user, port) parts. Throws [SSHErr] on any
@@ -117,6 +146,7 @@ final class SshCredential {
     String? user,
     Object? pwd = _unset,
     Object? keyId = _unset,
+    Object? keyPath = _unset,
     Object? alterUrl = _unset,
     Object? jumpId = _unset,
     Object? jumpIds = _unset,
@@ -128,6 +158,7 @@ final class SshCredential {
       user: user ?? this.user,
       pwd: pwd == _unset ? this.pwd : pwd as String?,
       keyId: keyId == _unset ? this.keyId : keyId as String?,
+      keyPath: keyPath == _unset ? this.keyPath : keyPath as String?,
       alterUrl: alterUrl == _unset ? this.alterUrl : alterUrl as String?,
       jumpId: jumpId == _unset ? this.jumpId : jumpId as String?,
       jumpIds: jumpIds == _unset
@@ -147,6 +178,7 @@ final class SshCredential {
         user == other.user &&
         pwd == other.pwd &&
         keyId == other.keyId &&
+        keyPath == other.keyPath &&
         proxyCommand == other.proxyCommand &&
         // Changing how the socket is obtained needs a reconnect just as much
         // as changing the address does
@@ -167,6 +199,7 @@ final class SshCredential {
     user,
     pwd,
     keyId,
+    keyPath,
     alterUrl,
     jumpId,
     Object.hashAll(jumpIds ?? const []),

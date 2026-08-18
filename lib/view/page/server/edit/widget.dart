@@ -33,8 +33,30 @@ extension _Widgets on _ServerEditPageState {
       if (v != null) {
         children.add(_buildKeyAuth());
       }
+      children.add(_buildKeyPath());
       children.add(password);
       return Column(children: children);
+    });
+  }
+
+  /// The key file an `~/.ssh/config` import pointed at, when there is one.
+  ///
+  /// Read-only: nothing on this page writes a path, and the field exists so a
+  /// server imported with an `IdentityFile` shows what it authenticates with
+  /// instead of an empty key picker. Clearing it is offered because the only
+  /// other way off it is to pick a stored key, which not every setup wants.
+  Widget _buildKeyPath() {
+    return _keyPath.listenVal((path) {
+      if (path == null) return UIs.placeholder;
+      return ListTile(
+        leading: const Icon(Icons.description),
+        title: Text(path, style: UIs.text13),
+        subtitle: Text(l10n.sshConfigImport, style: UIs.textGrey),
+        trailing: IconButton(
+          icon: const Icon(Icons.close, size: 20),
+          onPressed: () => _keyPath.value = null,
+        ),
+      ).cardx;
     });
   }
 
@@ -70,6 +92,8 @@ extension _Widgets on _ServerEditPageState {
                   onSelected: (idx, on) {
                     if (on) {
                       keyIdx.value = idx;
+                      // At most one of the two — see `SshCredential.keyPath`
+                      _keyPath.value = null;
                     } else {
                       keyIdx.value = -1;
                     }

@@ -151,6 +151,8 @@
   "preferDiskAmount": "Prioritaskan tampilan kapasitas disk",
   "privateKey": "Kunci Pribadi",
   "privateKeyNotFoundFmt": "Kunci privat [{keyId}] tidak ditemukan.",
+  "privateKeyFileUnreadable": "Tidak dapat membaca berkas kunci privat {path}: {reason}",
+  "privateKeyFileSandboxed": "Build ini tidak dapat membaca berkas di luar kontainernya, sehingga kunci di {path} tidak terjangkau. Impor kunci di Pengaturan, atau gunakan versi DMG.",
   "pushToken": "Dorong token",
   "pveIgnoreCertTip": "Tidak disarankan untuk diaktifkan, waspadai risiko keamanan! Jika Anda menggunakan sertifikat default dari PVE, Anda perlu mengaktifkan opsi ini.",
   "pveVersionLow": "Fitur ini saat ini sedang dalam tahap pengujian dan hanya diuji pada PVE 8+. Gunakan dengan hati-hati.",

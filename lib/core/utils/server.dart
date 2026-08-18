@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -9,8 +10,10 @@ import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/proxy_command_socket.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/res/store.dart';
 
 /// Must put this func out of any Class.
@@ -46,6 +49,46 @@ String getPrivateKey(String id) {
     );
   }
   return pki.key;
+}
+
+/// The PEM [ssh] authenticates with, or null when it has no key at all.
+///
+/// Two sources that are not interchangeable, which is the whole point of them
+/// being two fields: a key the user imported lives in `Stores.key` and is named
+/// by [SshCredential.keyId], while a key `~/.ssh/config` pointed at stays on
+/// disk and is named by [SshCredential.keyPath]. Reading the file here rather
+/// than copying it into the store at import time is what leaves the user's own
+/// key management intact.
+///
+/// Runs where there are stores, a filesystem the user granted, and a UI to
+/// report a failure to. `SshTransferCreds` calls it on the main isolate and
+/// hands the result across, because the transfer isolate has none of those.
+String? resolvePrivateKey(SshCredential ssh) {
+  final keyId = ssh.keyId;
+  if (keyId != null) return getPrivateKey(keyId);
+  final keyPath = ssh.keyPath;
+  if (keyPath == null) return null;
+
+  // Only ever reachable on desktop — `~/.ssh/config` import is the only writer
+  // of `keyPath` — and not on one particular desktop build: the App Store one
+  // is sandboxed and `~/.ssh` is outside its container, so this would fail
+  // there with a file error that says nothing about why.
+  if (Pfs.isMacSandboxed) {
+    throw SSHErr(
+      type: SSHErrType.noPrivateKey,
+      message: l10n.privateKeyFileSandboxed(keyPath),
+    );
+  }
+
+  final expanded = SSHConfig.expandHome(keyPath);
+  try {
+    return File(expanded).readAsStringSync();
+  } catch (e) {
+    throw SSHErr(
+      type: SSHErrType.noPrivateKey,
+      message: l10n.privateKeyFileUnreadable(expanded, '$e'),
+    );
+  }
 }
 
 Future<SSHClient> genClient(
@@ -128,14 +171,14 @@ Future<SSHClient> genClient(
         SSHClient? jumpClient;
         try {
           String? nextJumpPrivateKey;
-          final jumpSpiKeyId = jumpSpi_.ssh?.keyId;
+          final jumpSpiKeyRef = jumpSpi_.ssh?.keyRef;
           if (jumpSpi != null &&
               jumpSpi.id == jumpSpi_.id &&
               jumpPrivateKey != null) {
             // Isolate mode may preload first-hop key and pass it via [jumpPrivateKey].
             nextJumpPrivateKey = jumpPrivateKey;
-          } else if (jumpSpiKeyId != null) {
-            nextJumpPrivateKey = privateKeysByKeyId?[jumpSpiKeyId];
+          } else if (jumpSpiKeyRef != null) {
+            nextJumpPrivateKey = privateKeysByKeyId?[jumpSpiKeyRef];
           }
 
           jumpClient = await genClient(
@@ -212,8 +255,8 @@ Future<SSHClient> genClient(
     prompt: hostKeyPrompt,
   );
 
-  final keyId = ssh.keyId;
-  if (keyId == null) {
+  final keyRef = ssh.keyRef;
+  if (keyRef == null) {
     onStatus?.call(GenSSHClientStatus.pwd);
     return SSHClient(
       socket,
@@ -225,7 +268,16 @@ Future<SSHClient> genClient(
       onVerifyHostKey: hostKeyVerifier.call,
     );
   }
-  privateKey ??= privateKeysByKeyId?[keyId] ?? getPrivateKey(keyId);
+  // `keyRef` being non-null means one of the two key fields is set, so this
+  // either yields a key or throws saying why it could not. The null branch is
+  // unreachable and says so rather than handing `compute` a null.
+  privateKey ??= privateKeysByKeyId?[keyRef] ?? resolvePrivateKey(ssh);
+  if (privateKey == null) {
+    throw SSHErr(
+      type: SSHErrType.noPrivateKey,
+      message: l10n.privateKeyNotFoundFmt(keyRef),
+    );
+  }
 
   onStatus?.call(GenSSHClientStatus.key);
   return SSHClient(

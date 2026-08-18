@@ -799,6 +799,16 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String privateKeyFileUnreadable(String path, String reason) {
+    return 'Не вдалося прочитати файл закритого ключа $path: $reason';
+  }
+
+  @override
+  String privateKeyFileSandboxed(String path) {
+    return 'Ця збірка не може читати файли поза своїм контейнером, тож ключ за шляхом $path недоступний. Імпортуйте ключ у налаштуваннях або скористайтеся збіркою DMG.';
+  }
+
+  @override
   String get pushToken => 'Надіслати токен';
 
   @override

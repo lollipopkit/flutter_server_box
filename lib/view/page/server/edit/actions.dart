@@ -311,6 +311,10 @@ extension _Actions on _ServerEditPageState {
                       .elementAt(_keyIdx.value!)
                       .id
                 : null,
+            // Carried through rather than rebuilt from the form: nothing on
+            // this page can type a path, and dropping it on save would take
+            // away the only credential an imported server has
+            keyPath: _keyIdx.value != null ? null : _keyPath.value,
             alterUrl: _altUrlController.text.selfNotEmptyOrNull,
             jumpId: _jumpServers.value.isEmpty
                 ? null
@@ -497,6 +501,7 @@ extension _Utils on _ServerEditPageState {
             .keys
             .indexWhere((e) => e.id == ssh.keyId);
       }
+      _keyPath.value = ssh.keyPath;
       _altUrlController.text = ssh.alterUrl ?? '';
       _jumpServers.value = ssh.resolvedJumpIds;
       _proxyCommandCtrl.text = ssh.proxyCommand ?? '';

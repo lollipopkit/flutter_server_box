@@ -798,6 +798,16 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String privateKeyFileUnreadable(String path, String reason) {
+    return 'Tidak dapat membaca berkas kunci privat $path: $reason';
+  }
+
+  @override
+  String privateKeyFileSandboxed(String path) {
+    return 'Build ini tidak dapat membaca berkas di luar kontainernya, sehingga kunci di $path tidak terjangkau. Impor kunci di Pengaturan, atau gunakan versi DMG.';
+  }
+
+  @override
   String get pushToken => 'Dorong token';
 
   @override

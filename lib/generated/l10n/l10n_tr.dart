@@ -798,6 +798,16 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String privateKeyFileUnreadable(String path, String reason) {
+    return 'Özel anahtar dosyası $path okunamıyor: $reason';
+  }
+
+  @override
+  String privateKeyFileSandboxed(String path) {
+    return 'Bu sürüm kendi kapsayıcısı dışındaki dosyaları okuyamıyor, bu yüzden $path konumundaki anahtara erişilemiyor. Anahtarı Ayarlar\'dan içe aktarın ya da DMG sürümünü kullanın.';
+  }
+
+  @override
   String get pushToken => 'Push belirteci';
 
   @override

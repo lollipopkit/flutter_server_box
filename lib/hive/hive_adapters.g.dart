@@ -767,6 +767,7 @@ class SshCredentialAdapter extends TypeAdapter<SshCredential> {
       user: fields[2] == null ? 'root' : fields[2] as String,
       pwd: fields[3] as String?,
       keyId: fields[4] as String?,
+      keyPath: fields[10] as String?,
       alterUrl: fields[5] as String?,
       jumpId: fields[6] as String?,
       jumpIds: (fields[7] as List?)?.cast<String>(),
@@ -777,7 +778,7 @@ class SshCredentialAdapter extends TypeAdapter<SshCredential> {
   @override
   void write(BinaryWriter writer, SshCredential obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.ip)
       ..writeByte(1)
@@ -795,7 +796,9 @@ class SshCredentialAdapter extends TypeAdapter<SshCredential> {
       ..writeByte(7)
       ..write(obj.jumpIds)
       ..writeByte(8)
-      ..write(obj.proxyCommand);
+      ..write(obj.proxyCommand)
+      ..writeByte(10)
+      ..write(obj.keyPath);
   }
 
   @override

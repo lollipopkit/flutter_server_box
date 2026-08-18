@@ -759,6 +759,16 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String privateKeyFileUnreadable(String path, String reason) {
+    return '秘密鍵ファイル $path を読み込めません: $reason';
+  }
+
+  @override
+  String privateKeyFileSandboxed(String path) {
+    return 'このビルドはコンテナ外のファイルを読み込めないため、$path の鍵に到達できません。設定から鍵をインポートするか、DMG 版をご利用ください。';
+  }
+
+  @override
   String get pushToken => 'プッシュトークン';
 
   @override

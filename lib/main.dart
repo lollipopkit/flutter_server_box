@@ -234,6 +234,8 @@ Future<void> _doDbMigrate() async {
 
   // Then the app-level fixups, which read records as `Spi`.
   ServerStore.instance.migrateIds();
+  // After the stores are up: it decides against `Stores.key`, not by shape.
+  ServerStore.instance.migrateIdentityFilePaths();
 
   // Pick up sync history written under the pre-v3 remote filename. Runs at
   // most once per remote and is best-effort — see `inheritLegacyRemote`.

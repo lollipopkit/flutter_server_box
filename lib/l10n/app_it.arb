@@ -152,6 +152,8 @@
   "preferDiskAmount": "Priorità visualizzazione capacità disco",
   "privateKey": "Chiave privata",
   "privateKeyNotFoundFmt": "Chiave privata [{keyId}] non trovata.",
+  "privateKeyFileUnreadable": "Impossibile leggere il file della chiave privata {path}: {reason}",
+  "privateKeyFileSandboxed": "Questa build non può leggere file fuori dal proprio container, quindi la chiave in {path} non è raggiungibile. Importa la chiave nelle impostazioni oppure usa la versione DMG.",
   "pushToken": "Token push",
   "pveIgnoreCertTip": "Non si consiglia di abilitare, attento ai rischi per la sicurezza! Se stai usando il certificato predefinito da PVE, devi abilitare questa opzione.",
   "pveVersionLow": "Questa funzionalità è attualmente nella fase di test ed è stata testata solo su PVE 8+. Usala con cautela.",

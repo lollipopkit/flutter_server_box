@@ -806,6 +806,16 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String privateKeyFileUnreadable(String path, String reason) {
+    return 'No se puede leer el archivo de clave privada $path: $reason';
+  }
+
+  @override
+  String privateKeyFileSandboxed(String path) {
+    return 'Esta compilación no puede leer archivos fuera de su contenedor, por lo que la clave en $path es inaccesible. Importa la clave en Ajustes o usa la versión DMG.';
+  }
+
+  @override
   String get pushToken => 'Token de notificaciones';
 
   @override
