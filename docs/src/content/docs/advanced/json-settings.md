@@ -47,7 +47,7 @@ All settings defined in [`setting.dart`](https://github.com/lollipopkit/flutter_
 
 Look for:
 ```dart
-late final settingName = StoreProperty(box, 'settingKey', defaultValue);
+late final settingName = propertyDefault('settingKey', defaultValue);
 ```
 
 ## ⚠️ Important

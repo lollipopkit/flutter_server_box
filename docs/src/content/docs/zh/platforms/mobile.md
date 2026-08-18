@@ -12,7 +12,8 @@ Server Box 为 iOS 和 Android 设备提供了多项移动端特有功能。
 - **iOS**：Face ID 或 Touch ID
 - **Android**：指纹识别
 
-在“设置 > 安全 > 生物识别身份验证”中启用。
+在 设置 → **应用** → 设置 → **生物识别身份验证** 中启用。设备上没有录入任何生物
+特征时，该项会直接说明，而不是给出一个无法生效的开关。
 
 ## 主屏幕小组件
 
@@ -41,7 +42,7 @@ Server Box 为 iOS 和 Android 设备提供了多项移动端特有功能。
 
 在后台保持连接活跃：
 
-- 在“设置 > 高级 > 后台运行”中启用
+- 在 设置 → **应用** → 设置 → **Android 设置** → **后台运行** 中启用
 - 需要排除电池优化
 - 活动连接将显示持久通知
 
@@ -56,7 +57,7 @@ Server Box 为 iOS 和 Android 设备提供了多项移动端特有功能。
 ## 推送通知
 
 服务器告警（离线、超过阈值）由运行在你服务器上的
-[ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor)
+[monitor agent](/docs/zh/advanced/monitor-agent/)
 推送——告警规则和推送渠道在 Monitor 侧配置。
 
 ## 移动端 UI 特性

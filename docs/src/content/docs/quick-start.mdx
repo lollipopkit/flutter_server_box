@@ -18,11 +18,25 @@ Follow this quick start guide to connect to your first server and start monitori
 
 4. Tap **Save** to add the server
 
+### Adding a server through a monitor agent
+
+The **SSH / Monitor HTTP** selector at the top of the form chooses the
+connection method. Picking **Monitor HTTP** replaces the SSH fields with the
+agent's:
+
+- **URL**: e.g. `https://1.2.3.4:3770`
+- **Monitor User** / **Monitor Password**: the agent's panel login
+- **Monitor Ignore certificate**: for a self-signed certificate
+
+A server added this way carries no SSH credentials. It shows status and charts
+out of the box; commands, the terminal and file browsing depend on what the
+agent's operator has enabled. See [Monitor Agent](/docs/advanced/monitor-agent/) for what to turn on. SFTP and port forwarding are not available on such a
+server — add it over SSH if you need them.
+
 ## Step 2: Connect and Monitor
 
 1. Tap on your server card to connect
-2. The app will establish an SSH connection
-3. You'll see real-time status for:
+2. You'll see real-time status for:
    - CPU usage
    - Memory (RAM) and Swap
    - Disk usage
@@ -37,6 +51,7 @@ Once connected, you can:
 - **Manage Containers**: View and control Docker containers
 - **View Processes**: Check running processes
 - **Run Snippets**: Execute saved commands
+- **Ask the Agent**: Diagnose or operate the server — see [Agent](/docs/advanced/agent/)
 
 ## Tips
 

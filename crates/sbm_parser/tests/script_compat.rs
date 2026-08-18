@@ -228,9 +228,52 @@ fn install_commands() {
     let b64 = win.rsplit(' ').next().unwrap();
     let decoded = decode_utf16le_b64(b64);
     assert!(decoded.contains("New-Item"));
-    assert!(decoded.contains("[System.Console]::In.ReadToEnd()"));
     assert!(decoded.contains("Set-Content"));
     assert!(decoded.contains(r"C:\temp\test\script.ps1"));
+
+    // Never ReadToEnd: Windows OpenSSH does not reliably hand the channel's EOF
+    // to the child, so waiting for one hangs the install for good. The end of
+    // the content has to be a line in the content — see `install_command`.
+    assert!(!decoded.contains("ReadToEnd"));
+    assert!(decoded.contains("ReadLine()"));
+    assert!(decoded.contains(WINDOWS_INSTALL_EOF));
+}
+
+/// The two halves have to agree: the command stops at a line the payload is
+/// responsible for putting there, and neither is any use alone.
+#[test]
+fn install_payload_terminates_what_the_command_waits_for() {
+    let script = "Write-Output 'hi'\n";
+    let win = install_payload(SystemType::Windows, script);
+    assert!(win.starts_with(script));
+    assert_eq!(win, format!("{script}{WINDOWS_INSTALL_EOF}\n"));
+
+    // A script that does not end in a newline still gets the marker on a line
+    // of its own, or the last line of the script would swallow it
+    let unterminated = "Write-Output 'hi'";
+    assert_eq!(
+        install_payload(SystemType::Windows, unterminated),
+        format!("{unterminated}\n{WINDOWS_INSTALL_EOF}\n")
+    );
+
+    // Unix reads to EOF and gets one, so nothing is added — a stray marker line
+    // would end up inside the installed script
+    for system in [SystemType::Linux, SystemType::Bsd] {
+        assert_eq!(install_payload(system, script), script);
+    }
+}
+
+/// The marker cannot appear in a generated script, or the install would stop
+/// partway through and write a truncated file.
+#[test]
+fn no_generated_script_contains_the_install_marker() {
+    for system in [SystemType::Windows, SystemType::Linux, SystemType::Bsd] {
+        let script = build_script(system, &ScriptOptions::default());
+        assert!(
+            !script.contains(WINDOWS_INSTALL_EOF),
+            "{system:?} script contains {WINDOWS_INSTALL_EOF}"
+        );
+    }
 }
 
 fn decode_utf16le_b64(b64: &str) -> String {

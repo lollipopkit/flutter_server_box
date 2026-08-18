@@ -9,6 +9,7 @@ A `Makefile` wraps most common tasks — run `make help` for the full list. Pref
 - `make deps` / `make run` / `make analyze` (`flutter analyze lib test integration_test`)
 - `make gen` - build_runner + gen-l10n in one step
 - `make build PLATFORM=<android|ios|macos|linux|windows>` - wraps `dart run fl_build -p PLATFORM`
+- `make monitor-dev` - monitor backend (API on :3770) + panel vite dev server (:3000) together
 - Release packaging (macOS DMG, Homebrew cask sync): `make release-macos-dmg`, `make package-dmg`, `make sync-homebrew-cask`
 
 ### Development
@@ -50,8 +51,9 @@ This is a Flutter application for managing Linux servers with the following key 
   - The command manifest (cmd name → per-platform command, `SrvBoxSep.<cmd>` segmenting) lives here too; the `commands::EXTENDED` keys (smartctl, AMD GPU) are split out of the fast status function into `SbStatusExt`, which both callers run minutes apart — smartctl at poll frequency keeps a disk from staying spun down
   - Script generation is shared as well (`script.rs`: build/install/exec commands + output splitting, locked by `tests/script_compat.rs`); the app calls it via FFI and merges the two functions' output, the monitor executes the script locally on its extended cycle
 - `crates/sbm_ffi/` - flutter_rust_bridge binding crate + cargokit Flutter plugin glue in one directory (Dart side generated into `lib/src/rust/`)
+- `crates/sbm_native/` - Native per-platform sampler, **monitor only** — the app always collects over SSH and has no way to run syscalls on a remote host. `sample()` covers cpu/mem/swap/disks/diskio/net/uptime/host/sys via `sysinfo` (BSD/Windows) or direct procfs/sysfs reads feeding `sbm_parser::linux::parse_*` (Linux); amd/sensors/SMART/battery stay on the shared script, which genuinely needs CLI tools
 - `monitor/` - Server-side monitoring service (Rust + Svelte frontend), has its own `monitor/CLAUDE.md`
-  - It can also relay SSH for the app (`SshCredential.viaMonitor`, off by default on both sides) and serve an in-browser terminal — see the "Remote access" section there for the security model
+  - Besides status, it serves the endpoints the app uses for a monitor-backed server — `POST /exec`, `/terminal/ws`, `/fs/*` — plus an in-browser terminal for its own panel. All of them are off by default and configured only in `config.toml`; see the "Remote access" section there for the security model
 - Root `Cargo.toml` is the workspace; build/test all Rust with `cargo test --workspace`
 - FFI parity test: `flutter test test/frb_parser_test.dart` (requires `cargo build -p sbm_ffi` first)
 - Migration rule ("test as spec"): before moving a parsing module to Rust, port its Dart fixture tests to Rust; only delete the Dart implementation after the FFI result is asserted identical against the same fixtures
@@ -68,7 +70,7 @@ This is a Flutter application for managing Linux servers with the following key 
 - `lib/generated/` - Generated localization files
 - `lib/hive/` - Hive adapters for local storage
 - `lib/src/rust/` - Generated FRB bindings (do not edit)
-- `packages/` - Vendored Dart forks referenced by path from pubspec (dartssh2, xterm, fl_lib, fl_build, etc.), each a submodule
+- `packages/` - Vendored Dart forks referenced by path from pubspec (dartssh2, xterm, fl_lib, fl_build, etc.), each a submodule. The exception is `packages/webui`, an in-repo Svelte package (`@serverbox/webui`) of shared UI primitives and design tokens, consumed as a `file:` dependency by both `monitor/frontend` and `website/`
 - `third_party/ish-arm64` - The iOS Linux engine, a submodule of the `lollipopkit/ShellBox` fork. Not in `packages/` because it is C built by meson and consumed by the Xcode project rather than by pubspec. Which revision builds is the gitlink, not a hash in a script: move it with `git submodule update --remote third_party/ish-arm64` and `git add`. `scripts/build-ish-ios.sh` builds it out of tree into `build/ish/build-<arch>/`, so a build never leaves the submodule dirty
 - `website/` - Project website (Svelte + bun; deployed via `scripts/build-cloudflare-pages.sh`)
 
@@ -92,26 +94,46 @@ This is a Flutter application for managing Linux servers with the following key 
 
 ### Connection methods
 
-A server is reached over SSH, over a `monitor` agent's HTTP API, or both — see
-`ServerConnectCredential` and `ServerCapabilities`. The UI asks capabilities
-rather than testing which transport is in use, so a feature needing a shell
-never has to know that "SSH" is the thing that provides one.
+A server is reached over SSH **or** over a `monitor` agent's HTTP API, never
+both: `ServerConnectCredential.fromSpi` picks by whether `Spi.monitorHttp` is
+set, and a monitor server carries no `SshCredential` at all (`Spi.ssh` is
+null). The edit page enforces the same exclusivity with one switch.
+
+What a way of reaching a server can do is asked through `ServerCapabilities`,
+rather than by testing which transport is in use, so a feature needing a shell
+never has to know that "SSH" is the thing that provides one:
+
+- `SshCapabilities` answers yes to everything but `storedHistory` — one
+  connection already carries a shell, a PTY and a channel, and the app samples
+  the machine itself, so a page opened now starts with an empty buffer.
+- `MonitorHttpCapabilities` answers with what the agent reported on
+  `GET /api/v1/capabilities` (`MonitorRemoteAccess`). `shell` and `terminal`
+  are its `full_access` grant; `files` is its file API, a separate grant
+  because that one means "these directories" rather than "a shell".
+  `byteStream` is **false** — the agent has no endpoint that relays a
+  connection to an address the app names, so SFTP and port forwarding are not
+  offered on a monitor server. `storedHistory` is true, since the agent has
+  been sampling since before the app asked.
+
+`ServerNotifier.ensureExec()` is the one place that decides how a command
+reaches a server: SSH gets an `SshExec`, a monitor server gets the agent's
+`POST /api/v1/exec`. A monitor server never falls back to sshd — the agent is
+how it is reachable at all, and falling back would mean asking for credentials
+the user chose not to give this app. `ensureShellClient()` is the SSH path
+only; its failures use a separate `TryLimiter` key (`${id}#shell`) so a shell
+that won't open doesn't also stop the status page refreshing.
 
 Where the SSH byte stream comes from is a separate axis, resolved in
-`genClient` (`lib/core/utils/server.dart`): direct, through a jump server,
-through a `ProxyCommand`, or — for hosts whose SSH port isn't reachable —
-relayed by that server's monitor agent (`SshCredential.viaMonitor`,
-`MonitorTunnelSocket`). At most one applies; `Spix.validate()` enforces that.
-Everything above `SSHSocket` is unchanged either way, which is why terminal,
-SFTP, containers and port forwarding all work over the tunnel without knowing
-it exists — and why this app still verifies the host key itself, so the agent
-in the middle can't impersonate the server.
+`genClient` (`lib/core/utils/server.dart`): direct, through a jump server, or
+through a `ProxyCommand`. The last two are mutually exclusive and
+`Spix.validate()` enforces that. Everything above `SSHSocket` is unchanged
+either way, and this app verifies the host key itself in every case.
 
-Monitor-backed servers connect SSH **lazily**, on first shell use
-(`ServerNotifier.ensureShellClient`): holding a tunnel open for every server
-that merely *could* open a terminal would defeat the point of polling over
-HTTP. Their shell failures use a separate `TryLimiter` key (`${id}#shell`), so
-a host with no sshd doesn't also stop the status page refreshing.
+TODO: the agent still implements `/api/v1/tunnel/ws` (an SSH-over-HTTPS byte
+relay) and still reports it in `/capabilities`, but the app has no client for
+it — `MonitorHttpClient.openTunnel` has no callers, and
+`MonitorRemoteAccess.tunnel`/`.secure` are parsed and never read. Remove both
+ends, or restore a consumer.
 
 ### Features
 

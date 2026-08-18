@@ -62,9 +62,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _monitorAddrCtrl = TextEditingController();
   final _monitorUserCtrl = TextEditingController();
   final _monitorPwdCtrl = TextEditingController();
-  // SSH credentials for the agent's tunnel. Separate controllers from the
-  // direct-SSH form above: the two are never on screen together, and sharing
-  // them would carry a half-filled direct-SSH form into a tunnel config.
   final _preferTempDevCtrl = TextEditingController();
   final _logoUrlCtrl = TextEditingController();
   final _wolMacCtrl = TextEditingController();
@@ -94,12 +91,6 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   /// API (true) — mutually exclusive, see the switch at the top of the form.
   final _useMonitorHttp = ValueNotifier(false);
 
-  /// Whether to also reach SSH through the agent, for hosts whose SSH port
-  /// isn't exposed. Only meaningful alongside [_useMonitorHttp]: it changes
-  /// where the SSH *socket* comes from, not how status is read.
-
-  /// Key selection for the tunnel's SSH credential; same encoding as
-  /// [_keyIdx], kept separate for the same reason the controllers are.
   final _tempIsCelsius = ValueNotifier(false);
   final _env = <String, String>{}.vn;
   /// Custom commands an older version of the app stored here, carried through

@@ -219,7 +219,8 @@ fn ssh_e2e_script_parse_matches_direct_commands() {
     let script_path = format!("{REMOTE_DIR}/status.sh");
 
     let install = script::install_command(SystemType::Linux, REMOTE_DIR, &script_path);
-    ssh(&host, &install, Some(&content)).expect("install script");
+    let payload = script::install_payload(SystemType::Linux, &content);
+    ssh(&host, &install, Some(&payload)).expect("install script");
 
     let exec = script::exec_command(SystemType::Linux, &script_path, ShellFunc::Status);
     let raw = ssh(&host, &exec, None).expect("run status script");
@@ -416,7 +417,8 @@ fn ssh_e2e_unix_custom_and_disabled() {
     };
     let content = script::build_script(SystemType::Linux, &opts);
     let path = format!("{DIR}/status.sh");
-    ssh(&host, &script::install_command(SystemType::Linux, DIR, &path), Some(&content))
+    let payload = script::install_payload(SystemType::Linux, &content);
+    ssh(&host, &script::install_command(SystemType::Linux, DIR, &path), Some(&payload))
         .expect("install script");
     // The commands themselves are files in a fixed directory under the user's
     // home now, written in one round trip. This is the half a unit test cannot
@@ -478,7 +480,8 @@ fn ssh_e2e_unix_process_function() {
         &ScriptOptions { build_number: "e2e".into(), ..Default::default() },
     );
     let path = format!("{DIR}/status.sh");
-    ssh(&host, &script::install_command(SystemType::Linux, DIR, &path), Some(&content))
+    let payload = script::install_payload(SystemType::Linux, &content);
+    ssh(&host, &script::install_command(SystemType::Linux, DIR, &path), Some(&payload))
         .expect("install script");
     let raw = ssh(&host, &script::exec_command(SystemType::Linux, &path, ShellFunc::Process), None)
         .expect("run process function");
@@ -525,7 +528,10 @@ fn ssh_e2e_windows_script_parse_matches_direct_commands() {
         SystemType::Windows,
         &ScriptOptions { build_number: "e2e".into(), ..Default::default() },
     );
-    ssh_raw(&host, &script::install_command(SystemType::Windows, &dir, &path), Some(&content))
+    // `install_payload`, not `content`: the Windows install command stops at a
+    // marker line rather than at EOF, and the marker is this function's job
+    let payload = script::install_payload(SystemType::Windows, &content);
+    ssh_raw(&host, &script::install_command(SystemType::Windows, &dir, &path), Some(&payload))
         .expect("install script");
     let raw = ssh_raw(&host, &script::exec_command(SystemType::Windows, &path, ShellFunc::Status), None)
         .expect("run status script");

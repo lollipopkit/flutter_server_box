@@ -15,9 +15,8 @@ import 'package:server_box/data/model/server/monitor_metrics.dart';
 /// forward like PVE.
 ///
 /// Holds the [MonitorHttpCredential] rather than the full
-/// `ServerConnectCredentialMonitorHttp`: nothing here needs the `Spi`, and
-/// `MonitorTunnelSocket` builds a client from a bare credential inside
-/// `genClient`, which also runs in isolates where no `Spi` graph is loaded.
+/// `ServerConnectCredentialMonitorHttp`: nothing here needs the `Spi`, and a
+/// bare credential is all a caller has to carry to reach one agent.
 class MonitorHttpClient {
   MonitorHttpClient(this.monitor);
 
@@ -348,13 +347,14 @@ class MonitorHttpClient {
 
   /// Opens the agent's SSH tunnel and returns the raw WebSocket.
   ///
-  /// Takes a single-use ticket first: a browser can't put a bearer token on a
-  /// WebSocket handshake, so the agent authorises upgrades with a short-lived
-  /// ticket instead, and this client uses the same path rather than a second
-  /// mechanism that only native clients could exercise.
-  ///
   /// Sends no target — the agent connects to its own configured address and
   /// refuses to take one from a client.
+  ///
+  /// TODO: **nothing calls this.** A monitor server carries no SSH credential
+  /// any more, so there is nothing to speak SSH with over this stream; shell
+  /// use goes through [exec] and [openTerminal] instead. Remove it along with
+  /// `MonitorRemoteAccess.tunnel`/`.secure`, which are parsed and never read,
+  /// and the agent's `/api/v1/tunnel/ws` — or restore a consumer.
   Future<WebSocket> openTunnel({Duration? timeout}) =>
       _openWs(purpose: 'tunnel', path: '/api/v1/tunnel/ws', timeout: timeout);
 

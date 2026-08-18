@@ -49,6 +49,6 @@ Becomes: `debian-light.png`, `ubuntu-dark.png`, etc.
 
 ## Supported Distributions
 
-debian, ubuntu, centos, fedora, opensuse, kali, alpine, arch, rocky, deepin, armbian, wrt
+debian, ubuntu, centos, fedora, opensuse, kali, alpine, arch, rocky, deepin, armbian, wrt, coreelec
 
 Full list: [`dist.dart`](https://github.com/lollipopkit/flutter_server_box/blob/main/lib/data/model/server/dist.dart)

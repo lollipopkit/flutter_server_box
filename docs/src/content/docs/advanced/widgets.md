@@ -3,7 +3,7 @@ title: Home Screen Widgets
 description: Add server status widgets to your home screen
 ---
 
-Requires [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) installed on your servers.
+Requires a [monitor agent](/docs/advanced/monitor-agent/) installed on your servers.
 
 ## Prerequisites
 
@@ -45,8 +45,8 @@ Must end with `/status`.
 1. Long press home screen → **Widgets**
 2. Find "ServerBox" → Add to home screen
 3. Note the widget ID number displayed
-4. Open ServerBox app → Settings
-5. Tap **Config home widget link**
+4. Open ServerBox app → Settings → **App** → Setting → **Android Setting**
+5. Tap **Config home widget url**
 6. Add entry: `Widget ID` = `Status URL`
 
 Example:
@@ -55,20 +55,29 @@ Example:
 
 7. Tap widget on home screen to refresh
 
-## watchOS Widget
+## watchOS
+
+The watch reads each server from its monitor agent by itself, so it can only
+show servers that have one configured. Add the agent to the server first — in
+the server's edit page, either as its connection method, or alongside SSH.
 
 ### Setup
 
-1. Open iPhone app → Settings
-2. **iOS Settings** → **Watch app**
-3. Tap **Add URL**
-4. Enter URL ending with `/status`
-5. Wait for watch app to sync
+1. Open iPhone app → Settings → **App** → Setting → **iOS Setting**
+2. Tap **Watch app**
+3. Pick the servers to show. The order you pick them in is kept, and the watch
+   pages through that list
+4. Wait for the watch app to sync
+
+**Lock screen widget** is a separate entry on the same page — one server rather
+than a list.
 
 ### Notes
 
-- Try restarting watch app if not updating
+- Try restarting the watch app if it is not updating
 - Verify phone and watch are connected
+- **Legacy status URLs** only appears when you already have some, saved by an
+  older version. Nothing creates new ones
 
 
 ## Troubleshooting

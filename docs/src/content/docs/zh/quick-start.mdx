@@ -18,11 +18,20 @@ description: 在几分钟内开始使用 Server Box
 
 4. 点击 **保存 (Save)** 添加服务器
 
+### 通过 monitor agent 添加服务器
+
+表单顶部的 **SSH / Monitor HTTP** 选择器决定连接方式。选择 **Monitor HTTP** 后，SSH 字段会被替换为 agent 的字段：
+
+- **URL**：例如 `https://1.2.3.4:3770`
+- **Monitor User** / **Monitor Password**：agent 的面板登录凭据
+- **Monitor Ignore certificate**：用于自签名证书
+
+以这种方式添加的服务器不携带任何 SSH 凭据。状态与图表开箱可用；命令、终端和文件浏览取决于 agent 运维方开启了什么，详见 [Monitor Agent](/docs/zh/advanced/monitor-agent/)。此类服务器不提供 SFTP 和端口转发 —— 需要这两项请以 SSH 方式添加。
+
 ## 第二步：连接并监控
 
 1. 点击服务器卡片进行连接
-2. 应用程序将建立 SSH 连接
-3. 您将看到以下内容的实时状态：
+2. 您将看到以下内容的实时状态：
    - CPU 使用率
    - 内存 (RAM) 和交换分区 (Swap)
    - 磁盘使用情况
@@ -37,6 +46,7 @@ description: 在几分钟内开始使用 Server Box
 - **管理容器**：查看和控制 Docker/Podman 容器
 - **查看进程**：检查正在运行的进程
 - **运行片段**：执行保存的命令
+- **询问 Agent**：诊断或操作该服务器 —— 见 [Agent](/docs/zh/advanced/agent/)
 
 ## 提示
 

@@ -32,7 +32,46 @@
 </table>
 
 ## 📖 使用方法
-请前往 [Wiki](https://github.com/lollipopkit/server_box_monitor/wiki/%E4%B8%BB%E9%A1%B5) 获取更多信息.
+
+```sh
+# systemd: 安装为 `systemctl --user` 服务, 以你自己的账号运行
+./install.sh install
+
+# OpenRC (Alpine): 写 /etc/init.d 需要 root, 但 agent 仍以你 sudo 前的账号运行
+sudo ./install.sh install
+
+# 两种 init 系统, 都以 root 运行
+sudo ./install.sh install --system
+
+# 没有可下载的 release 时 —— 离线, 或使用未发布的构建
+SBM_INSTALL_PKG=/path/to/server-box-monitor ./install.sh install
+```
+
+`install.sh install` 会下载本仓库最新的 `monitor-v*` release。release 由
+`monitor-release.yml` workflow 发布，该 workflow 仅支持 `workflow_dispatch`；
+若尚无对应 release，请用 `SBM_INSTALL_PKG` 指向本地构建的包，或使用
+[Docker](Dockerfile)。
+
+配置文件是二进制旁边的 `config.toml`。所有配置项及其注释都在
+[`config.example.toml`](config.example.toml) 里；`cargo run -- config` 会打印
+解析后的值。agent 默认监听 `0.0.0.0:3770`，当 `frontend/dist` 存在时同时在该
+地址提供面板。
+
+### ServerBox App 需要开启什么
+
+在 App 里以 **monitor** 方式添加的服务器，只通过这个 agent 的 HTTP API 访问，
+不携带任何 SSH 凭据。agent 在 `GET /api/v1/capabilities` 上报它接受什么，App
+就只提供什么：
+
+| App 功能 | 需要 |
+|---|---|
+| 状态、图表、历史曲线 | 只需登录 |
+| 进程、systemd、容器、snippet、电源 | `full_access`(`POST /api/v1/exec`) |
+| 终端 | `full_access`(`/api/v1/terminal/ws`) |
+| 文件浏览 | `[remote_access.fs] enabled` + `roots` |
+
+monitor 服务器不提供 SFTP 和端口转发：agent 没有任何端点可以把连接中继到 App
+指定的地址。需要这两项请以 SSH 方式添加该服务器。
 
 ## 🔐 远程访问（可选，默认关闭）
 
@@ -40,13 +79,15 @@
 `config.toml` 中显式开启，且都无法从面板打开——参见 `config.example.toml`
 里的 `[remote_access]`。
 
-**`[remote_access.tunnel] enabled`** 让 ServerBox App 经它已经在轮询的同一个 HTTPS 端点访问
-SSH，适用于 SSH 端口无法直接连通的主机。开启后 App 基于 SSH 的功能全部可用：
-终端、SFTP、容器、进程、端口转发。代理只搬运字节——SSH 会话由 App 与 sshd
-端到端协商，host key 由 App 自己校验，本进程即使想读也读不到会话内容。它不接受
-目标参数：代理只连 `ssh_addr`，这正是它无法被用来访问所在网络其他主机的原因。
-要访问第二台机器，请在 App 中把这台配成它的跳板机，让那一跳由 SSH 授权而不是由
-代理授权。
+**`[remote_access.tunnel] enabled`** 把 SSH 字节流中继到 `ssh_addr`。代理只
+搬运字节——SSH 会话由客户端与 sshd 端到端协商，本进程即使想读也读不到会话
+内容。它不接受目标参数：代理只连 `ssh_addr`，这正是它无法被用来访问所在网络
+其他主机的原因。
+
+TODO: **目前没有任何调用方。** ServerBox App 曾经通过它访问 sshd；现在 App 访问
+monitor 服务器走的是 `/api/v1/exec`、`/api/v1/terminal/ws` 和 `/api/v1/fs/*`，
+tunnel 客户端已经删除。现在打开这个开关不会有任何效果。需要删除该端点，或恢复
+一个调用方。
 
 **`[remote_access.terminal] enabled`** 为面板增加网页内终端。代理作为 SSH 客户端连接
 `ssh_addr`，因此会话权限完全等同于浏览器登录的那个 SSH 账号——仅有面板密码不会

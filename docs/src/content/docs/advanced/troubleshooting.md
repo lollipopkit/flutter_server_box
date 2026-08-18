@@ -88,7 +88,8 @@ description: Solutions to common problems
 **watchOS:**
 - Restart watch app
 - Wait a few minutes after config change
-- Verify URL format
+- Verify the server has a monitor agent configured — the watch can only show
+  servers that do
 
 ### Widget Shows Error
 

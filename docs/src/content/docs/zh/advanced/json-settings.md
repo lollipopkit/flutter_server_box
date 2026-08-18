@@ -47,7 +47,7 @@ description: 通过 JSON 编辑器访问高级设置
 
 查找如下代码：
 ```dart
-late final settingName = StoreProperty(box, 'settingKey', defaultValue);
+late final settingName = propertyDefault('settingKey', defaultValue);
 ```
 
 ## ⚠️ 重要提示

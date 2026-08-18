@@ -5,6 +5,9 @@ description: SSH 连接是如何建立和管理的
 
 了解 Server Box 中的 SSH 连接机制。
 
+本页描述以 SSH 方式添加的服务器。服务器也可以通过 monitor agent 的 HTTP API
+添加,那种情况下它不携带任何 SSH 凭据,本页内容都不适用。
+
 ## 连接流程
 
 ```text
@@ -17,17 +20,25 @@ description: SSH 连接是如何建立和管理的
 
 ```dart
 class Spi {
-  String id;         // 唯一标识
-  String name;       // 服务器名称
-  String ip;         // IP 地址
-  int port;          // SSH 端口 (默认 22)
-  String user;       // 用户名
-  String? pwd;       // 密码 (加密存储)
-  String? keyId;     // SSH 密钥 ID
-  String? jumpId;    // 跳板机 ID
-  String? alterUrl;  // 备用 URL
+  String id;                      // 唯一标识
+  String name;                    // 服务器名称
+  SshCredential? ssh;             // monitor 服务器为 null
+  MonitorHttpCredential? monitorHttp;
+}
+
+final class SshCredential {
+  String ip;              // IP 地址
+  int port;               // SSH 端口 (默认 22)
+  String user;            // 用户名
+  String? pwd;            // 密码 (加密存储)
+  String? keyId;          // SSH 密钥 ID
+  String? alterUrl;       // 备用 URL
+  List<String>? jumpIds;  // 跳板机链
+  String? proxyCommand;   // ProxyCommand,仅桌面端
 }
 ```
+
+跳板机链与 `ProxyCommand` 互斥,同时设置两者的服务器会被 `Spix.validate()` 拒绝。
 
 ### 第二步：生成客户端
 
@@ -35,12 +46,13 @@ class Spi {
 
 ```dart
 Future<SSHClient> genClient(Spi spi) async {
+  final ssh = spi.ssh!;
   // 1. 建立 socket
-  var socket = await connect(spi.ip, spi.port);
+  var socket = await connect(ssh.ip, ssh.port);
 
   // 2. 如果失败，尝试备用 URL
-  if (socket == null && spi.alterUrl != null) {
-    socket = await connect(spi.alterUrl, spi.port);
+  if (socket == null && ssh.alterUrl != null) {
+    socket = await connect(ssh.alterUrl, ssh.port);
   }
 
   if (socket == null) {
@@ -50,9 +62,9 @@ Future<SSHClient> genClient(Spi spi) async {
   // 3. 身份验证
   final client = SSHClient(
     socket: socket,
-    username: spi.user,
-    onPasswordRequest: () => spi.pwd,
-    onIdentityRequest: () => loadKey(spi.keyId),
+    username: ssh.user,
+    onPasswordRequest: () => ssh.pwd,
+    onIdentityRequest: () => loadKey(ssh.keyId),
   );
 
   // 4. 验证主机密钥
@@ -62,18 +74,31 @@ Future<SSHClient> genClient(Spi spi) async {
 }
 ```
 
-### 第三步：跳板机 (如果已配置)
+### 第三步：socket 从哪里来
 
-对于跳板机，采用递归连接：
+`genClient` 在三种来源中解析出一种,其上层(`SSHSocket` 以上)在三种情况下完全一致:
+
+**直连** —— 默认方式,`SSHSocket.connect(ip, port)`,失败时回退到 `alterUrl`。
+
+**跳板机** —— 递归连接后做本地转发：
 
 ```dart
-if (spi.jumpId != null) {
-  final jumpClient = await genClient(getJumpSpi(spi.jumpId));
-  final forwarded = await jumpClient.forwardLocal(
-    spi.ip,
-    spi.port,
+for (final jumpId in spi.resolvedJumpIds) {
+  final jumpClient = await genClient(getJumpSpi(jumpId));
+  return await jumpClient.forwardLocal(ssh.ip, ssh.port);
+}
+```
+
+**ProxyCommand** —— 仅桌面端,因为它需要启动一个进程：
+
+```dart
+if (ssh.proxyCommand != null) {
+  return await ProxyCommandSocket.connect(
+    command: ssh.proxyCommand,
+    host: ssh.ip,
+    port: ssh.port,
+    user: ssh.user,
   );
-  // 通过转发的 socket 进行连接
 }
 ```
 
@@ -82,7 +107,7 @@ if (spi.jumpId != null) {
 ### 密码验证
 
 ```dart
-onPasswordRequest: () => spi.pwd
+onPasswordRequest: () => ssh.pwd
 ```
 
 - 密码以加密形式存储在 Hive 中
@@ -93,7 +118,7 @@ onPasswordRequest: () => spi.pwd
 
 ```dart
 onIdentityRequest: () async {
-  final key = await PrivateKeyStore.get(spi.keyId);
+  final key = await PrivateKeyStore.get(ssh.keyId);
   return decyptPem(key.pem, key.password);
 }
 ```

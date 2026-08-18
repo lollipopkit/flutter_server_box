@@ -367,17 +367,70 @@ pub fn encoded_powershell_command(ps: &str) -> String {
     )
 }
 
+/// The line that ends the piped script content on Windows.
+///
+/// Not a delimiter anyone picked for taste: the Windows install command cannot
+/// read to end-of-input, so the end has to be *in* the input. Carries the
+/// `SrvBoxSep` prefix the rest of this module uses for its markers, so a line
+/// of a generated script can no more collide with it than with a segment
+/// separator.
+pub const WINDOWS_INSTALL_EOF: &str = "SrvBoxSep.__install_eof__";
+
 /// Command that installs the script on the target (script content is piped via
-/// stdin). The Windows variant is base64-encoded: the raw PowerShell syntax
-/// would fail on hosts whose OpenSSH default shell is cmd.exe
+/// stdin, terminated by [`install_payload`]). The Windows variant is
+/// base64-encoded: the raw PowerShell syntax would fail on hosts whose OpenSSH
+/// default shell is cmd.exe
+///
+/// # Why Windows reads lines instead of reading to the end
+///
+/// It used to be `[System.Console]::In.ReadToEnd()`, which waits for EOF on
+/// stdin, and Windows OpenSSH does not reliably deliver the channel's EOF to
+/// the child process. PowerShell then waits for input that will not arrive
+/// while sshd waits for the command to exit — the install never returns, and
+/// nothing times out, because both ends believe the other owes them something.
+///
+/// It is not deterministic and it is not rare. Measured against a Windows 11
+/// host, one install per attempt: at ~4.5 KiB, the size of the real script, the
+/// app's own client hung in 4 of 5 attempts, and the system `ssh` behaved the
+/// same. The successful attempts finished in ~165ms, so the two outcomes are
+/// "instant" and "forever" — there is no slow case to wait out. Larger input
+/// makes it more likely (256 KiB hung in every attempt), which is what led to
+/// the pipe rather than to PowerShell.
+///
+/// Reading lines until [`WINDOWS_INSTALL_EOF`] needs no EOF: the same 256 KiB
+/// that never once got through goes in every time, in about a second.
+///
+/// `test/windows_install_ssh_e2e_test.dart` is the regression test, over the
+/// same client the app uses.
 pub fn install_command(system: SystemType, script_dir: &str, script_path: &str) -> String {
     match system {
         SystemType::Windows => encoded_powershell_command(&format!(
             "New-Item -ItemType Directory -Force -Path '{script_dir}' | Out-Null; \
-$content = [System.Console]::In.ReadToEnd(); \
-Set-Content -Path '{script_path}' -Value $content -Encoding UTF8"
+$sb = New-Object System.Text.StringBuilder; \
+while (($line = [System.Console]::In.ReadLine()) -ne $null) {{ \
+if ($line -eq '{WINDOWS_INSTALL_EOF}') {{ break }}; \
+[void]$sb.AppendLine($line) \
+}}; \
+Set-Content -Path '{script_path}' -Value $sb.ToString() -Encoding UTF8"
         )),
         _ => format!("mkdir -p {script_dir}\ncat > {script_path}\nchmod 755 {script_path}\n"),
+    }
+}
+
+/// What to write to the install command's stdin for `content`.
+///
+/// Exists so that no caller has to know that Windows needs a terminator, or
+/// which one — the app writes this and closes the stream exactly as before, and
+/// on Unix it is `content` unchanged.
+pub fn install_payload(system: SystemType, content: &str) -> String {
+    match system {
+        // A trailing newline before the marker whether or not the script ends
+        // with one: the marker has to be a line by itself to be recognised
+        SystemType::Windows => {
+            let sep = if content.ends_with('\n') { "" } else { "\n" };
+            format!("{content}{sep}{WINDOWS_INSTALL_EOF}\n")
+        }
+        _ => content.to_owned(),
     }
 }
 

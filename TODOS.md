@@ -365,3 +365,29 @@ kv(store TEXT, key TEXT, value BLOB, updated_at INTEGER, PRIMARY KEY(store, key)
   `sqlite3` 已经读不动了。
 - `lib/core/utils/sandbox_import.dart:306` 对 `app.db` 的特判,和 `:375` 跳过 `.db-shm` 的
   那段——现在是死代码。这轮决定之后,要么删掉,要么改成指向新库。
+
+## dartssh2:一次写入超过约 32 KiB 会挂住
+
+同一条 SSH exec + stdin 的路径,把不同大小的内容写进远端命令(Windows 11 的
+OpenSSH server,每档 3 次):
+
+| 负载 | 结果 |
+| --- | --- |
+| 4 / 16 / 32 KiB | 3/3,每次约 190 ms |
+| 64 KiB | 2/3 |
+| 128 / 256 KiB | 0/3,45s 超时 |
+
+同样 256 KiB 换系统 `ssh` 客户端是 5/5 通过,所以不是远端的问题。测量代码见
+`test/windows_install_ssh_e2e_test.dart`,把里面那条 32 KiB 用例的尺寸调大即可复现。
+
+可疑点在 `packages/dartssh2/lib/src/ssh_channel.dart` 的 `_uploadLoop`:正常路径按
+`min(_remoteWindow, remoteMaximumPacketSize)` 取数据,但走 `_pendingUploadData` 那条
+分支时只判断 `_remoteWindow > 0` 就把整块发出去,没有再对照当前窗口裁剪。窗口耗尽后
+挂起、收到 WINDOW_ADJUST 恢复时,窗口可能只剩几字节而待发块有 32 KiB。**这是读代码
+得出的推测,没有验证过**,也没有排查过是不是 Windows sshd 对超窗口的包有不同处理。
+
+目前没有功能踩到它:状态脚本 4.5 KiB,SFTP 不受影响(`sftp/sftp_stream_io.dart:62`
+用 `MaxChunkSize` 按 `defaultChunkSize` 分块)。会踩到的是"把一个大文件通过 exec 的 stdin 送过去"这种写法,现在没有。
+
+dartssh2 是 submodule,要改得单独开分支,并且需要一个能稳定复现的最小用例——
+现在的复现依赖一台真实 Windows 主机,不够。

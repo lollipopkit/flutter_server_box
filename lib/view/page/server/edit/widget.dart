@@ -402,9 +402,9 @@ extension _Widgets on _ServerEditPageState {
           hint: addr,
           suggestion: false,
         ),
-        // Prefixed because the shell section below has a second account with
-        // the same two labels, and they are not interchangeable: this one is
-        // the panel login, that one is a system account on the far host.
+        // Prefixed to say which account this is: the agent's panel login, not
+        // a system account on the far host. A server reached this way has no
+        // system account configured here at all.
         Input(
           controller: _monitorUserCtrl,
           type: TextInputType.text,
@@ -435,18 +435,6 @@ extension _Widgets on _ServerEditPageState {
       ],
     );
   }
-
-  /// The SSH account the agent logs in as on the far host.
-  ///
-  /// Deliberately has no host/port field: the agent connects to the address in
-  /// its own `remote_access.ssh_addr` and refuses to take one from a client,
-  /// which is what stops it being usable to reach anything else on its
-  /// network. All that is needed here is who to log in as.
-  ///
-  /// Labels carry the `SSH` prefix because the network section above has a
-  /// second account with the same two labels. They are not interchangeable —
-  /// that one is the panel login, this one has to exist on the far host and
-  /// be permitted by its sshd.
 
   Widget _buildCustomCmds() {
     return Column(

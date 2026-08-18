@@ -29,6 +29,7 @@ Server Box 采用分层架构，实现了清晰的关注点分离。
 ┌─────────────────────────────────────────────────┐
 │         外部集成层                              │
 │  - SSH (dartssh2), 终端 (xterm), SFTP           │
+│  - monitor agent HTTP API                       │
 │  - 平台特定代码 (iOS, Android 等)               │
 └─────────────────────────────────────────────────┘
 ```
@@ -177,7 +178,28 @@ make.dart (版本计算) → fl_build (执行构建) → 平台产物
 
 ## 数据流示例
 
+### 连接方式
+
+访问一台服务器有两种方式:SSH,或某台服务器的 monitor agent HTTP API。两者互斥:
+monitor 服务器不携带任何 SSH 凭据。
+
+各自能做什么由 `ServerCapabilities` 回答,因此需要 shell 的功能不必知道是谁提供的:
+
+| | SSH | monitor agent |
+|---|---|---|
+| 状态、图表 | 支持 | 支持 |
+| 历史数据 | 不支持 —— 只有 App 打开期间采样的 | 支持 —— agent 一直在采样 |
+| 命令(进程、systemd、容器、电源) | 支持 | 需要 agent 的 `full_access` |
+| 终端 | 支持 | 需要 `full_access` |
+| 文件浏览 | 支持,经 SFTP | 需要 agent 的文件 API,且限制在其配置的 roots 内 |
+| SFTP 传输、端口转发 | 支持 | 不支持 |
+
+monitor 服务器没有 SFTP 和端口转发,因为 agent 没有任何端点可以把连接中继到 App
+指定的地址。
+
 ### 服务器状态更新
+
+经 SSH:
 
 ```
 1. 定时器触发 →
@@ -187,6 +209,18 @@ make.dart (版本计算) → fl_build (执行构建) → 平台产物
 5. 状态更新 →
 6. UI 使用新数据重新构建
 ```
+
+经 monitor agent:
+
+```
+1. 定时器触发 →
+2. Provider 请求 agent 的 /api/v1/metrics →
+3. agent 已经解析完毕 —— 用的是同一个 Rust crate →
+4. 状态更新 →
+5. UI 使用新数据重新构建
+```
+
+两端都用 `sbm_parser` 解析,因此两条路径产出相同的 `ServerStatus`。
 
 ### 用户操作流
 

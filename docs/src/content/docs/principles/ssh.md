@@ -5,6 +5,10 @@ description: How SSH connections are established and managed
 
 Understanding SSH connections in Server Box.
 
+This page covers servers added over SSH. A server can instead be added through
+a monitor agent's HTTP API, in which case it carries no SSH credential at all
+and nothing here applies to it.
+
 ## Connection Flow
 
 ```
@@ -13,20 +17,30 @@ User Input → Spi Config → genClient() → SSH Client → Session
 
 ### Step 1: Configuration
 
-The `Spi` (Server Parameter Info) model contains:
+The `Spi` (Server Parameter Info) model holds the SSH settings in a nullable
+`SshCredential` — null for a server reached through a monitor agent:
 
 ```dart
 class Spi {
-  String name;       // Server name
-  String ip;         // IP address
-  int port;          // SSH port (default 22)
-  String user;       // Username
-  String? pwd;       // Password (encrypted)
-  String? keyId;     // SSH key ID
-  String? jumpId;    // Jump server ID
-  String? alterUrl;  // Alternative URL
+  String name;                    // Server name
+  SshCredential? ssh;             // null for a monitor server
+  MonitorHttpCredential? monitorHttp;
+}
+
+final class SshCredential {
+  String ip;              // IP address
+  int port;               // SSH port (default 22)
+  String user;            // Username
+  String? pwd;            // Password (encrypted)
+  String? keyId;          // SSH key ID
+  String? alterUrl;       // Alternative URL
+  List<String>? jumpIds;  // Jump server chain
+  String? proxyCommand;   // ProxyCommand, desktop only
 }
 ```
+
+A jump chain and a `ProxyCommand` are mutually exclusive; `Spix.validate()`
+rejects a server that sets both.
 
 ### Step 2: Client Generation
 
@@ -34,20 +48,21 @@ class Spi {
 
 ```dart
 Future<SSHClient> genClient(Spi spi) async {
+  final ssh = spi.ssh!;
   // 1. Establish socket
-  final socket = await connect(spi.ip, spi.port);
+  final socket = await connect(ssh.ip, ssh.port);
 
   // 2. Try alternative URL if failed
-  if (socket == null && spi.alterUrl != null) {
-    socket = await connect(spi.alterUrl, spi.port);
+  if (socket == null && ssh.alterUrl != null) {
+    socket = await connect(ssh.alterUrl, ssh.port);
   }
 
   // 3. Authenticate
   final client = SSHClient(
     socket: socket,
-    username: spi.user,
-    onPasswordRequest: () => spi.pwd,
-    onIdentityRequest: () => loadKey(spi.keyId),
+    username: ssh.user,
+    onPasswordRequest: () => ssh.pwd,
+    onIdentityRequest: () => loadKey(ssh.keyId),
   );
 
   // 4. Verify host key
@@ -57,18 +72,33 @@ Future<SSHClient> genClient(Spi spi) async {
 }
 ```
 
-### Step 3: Jump Server (if configured)
+### Step 3: Where the socket comes from
 
-For jump servers, recursive connection:
+`genClient` resolves one of three sources, then everything above `SSHSocket` is
+the same in each case:
+
+**Direct** — the default, `SSHSocket.connect(ip, port)`, falling back to
+`alterUrl` when it fails.
+
+**Jump server** — recursive connection, then a local forward:
 
 ```dart
-if (spi.jumpId != null) {
-  final jumpClient = await genClient(getJumpSpi(spi.jumpId));
-  final forwarded = await jumpClient.forwardLocal(
-    spi.ip,
-    spi.port,
+for (final jumpId in spi.resolvedJumpIds) {
+  final jumpClient = await genClient(getJumpSpi(jumpId));
+  return await jumpClient.forwardLocal(ssh.ip, ssh.port);
+}
+```
+
+**ProxyCommand** — desktop only, since it spawns a process:
+
+```dart
+if (ssh.proxyCommand != null) {
+  return await ProxyCommandSocket.connect(
+    command: ssh.proxyCommand,
+    host: ssh.ip,
+    port: ssh.port,
+    user: ssh.user,
   );
-  // Connect through forwarded socket
 }
 ```
 
@@ -77,7 +107,7 @@ if (spi.jumpId != null) {
 ### Password Authentication
 
 ```dart
-onPasswordRequest: () => spi.pwd
+onPasswordRequest: () => ssh.pwd
 ```
 
 - Password stored encrypted in Hive
@@ -88,7 +118,7 @@ onPasswordRequest: () => spi.pwd
 
 ```dart
 onIdentityRequest: () async {
-  final key = await PrivateKeyStore.get(spi.keyId);
+  final key = await PrivateKeyStore.get(ssh.keyId);
   return decyptPem(key.pem, key.password);
 }
 ```

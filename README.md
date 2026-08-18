@@ -51,7 +51,7 @@ Please only download pkgs from the source that **you trust**!
   <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
 </div>
 
-- In order to push  server status to your portable device without opening ServerBox app (Such as **message push** and **home widget**), you need to install [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) on your servers, and config it correctly. See its [README](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README.md) for more details.
+- [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) is an agent you install on your servers. It is required for anything that has to work while the app is closed — **message push**, **home widgets** and the **watch app** — and it is also a second way to add a server: the app can reach it over HTTP instead of SSH, which suits hosts whose SSH port you would rather not expose, and gives charts a history from before the app ever connected. It serves a web panel of its own too. See its [README](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README.md) for setup and for what each remote-access switch grants.
 - **Common issues** can be found in [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki).
 
 Before you open an issue, please read the following:

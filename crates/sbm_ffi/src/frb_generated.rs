@@ -38,7 +38,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.12.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -737209148;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -397184763;
 
 // Section: executor
 
@@ -239,6 +239,37 @@ fn wire__crate__api__script__install_custom_cmds_command_impl(
             transform_result_sse::<_, String>((move || {
                 let output_ok =
                     crate::api::script::install_custom_cmds_command(api_system, api_cmds)?;
+                Ok(output_ok)
+            })())
+        },
+    )
+}
+fn wire__crate__api__script__install_payload_impl(
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync::<flutter_rust_bridge::for_generated::SseCodec, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "install_payload",
+            port: None,
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Sync,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_system = <String>::sse_decode(&mut deserializer);
+            let api_content = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            transform_result_sse::<_, String>((move || {
+                let output_ok = crate::api::script::install_payload(api_system, api_content)?;
                 Ok(output_ok)
             })())
         },
@@ -679,10 +710,10 @@ fn pde_ffi_dispatcher_primary_impl(
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
         4 => wire__crate__api__parser__init_app_impl(port, ptr, rust_vec_len, data_len),
-        8 => {
+        9 => {
             wire__crate__api__script__parse_script_segments_impl(port, ptr, rust_vec_len, data_len)
         }
-        9 => wire__crate__api__parser__parse_status_json_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__parser__parse_status_json_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -702,13 +733,14 @@ fn pde_ffi_dispatcher_sync_impl(
         6 => {
             wire__crate__api__script__install_custom_cmds_command_impl(ptr, rust_vec_len, data_len)
         }
-        7 => wire__crate__api__script__parse_custom_cmds_listing_impl(ptr, rust_vec_len, data_len),
-        10 => {
+        7 => wire__crate__api__script__install_payload_impl(ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__script__parse_custom_cmds_listing_impl(ptr, rust_vec_len, data_len),
+        11 => {
             wire__crate__api__parser__parse_windows_net_speed_json_impl(ptr, rust_vec_len, data_len)
         }
-        11 => wire__crate__api__script__read_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__parser__separator_impl(ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__script__shell_func_flag_impl(ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__script__read_custom_cmds_command_impl(ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__parser__separator_impl(ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__script__shell_func_flag_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }

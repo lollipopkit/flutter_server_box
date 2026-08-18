@@ -1,49 +1,45 @@
-# Starlight Starter Kit: Basics
+# ServerBox Documentation
 
-[![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
+The documentation site, built with [Astro Starlight](https://starlight.astro.build).
+It is served under `/docs` of the project website; `scripts/build-cloudflare-pages.sh`
+builds both and copies this site's output into `website/dist/docs/`.
 
-```
-npm create astro@latest -- --template starlight
-```
-
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro + Starlight project, you'll see the following folders and files:
+## Structure
 
 ```
-.
-├── public/
-├── src/
-│   ├── assets/
-│   ├── content/
-│   │   └── docs/
-│   └── content.config.ts
-├── astro.config.mjs
-├── package.json
-└── tsconfig.json
+docs/
+├── public/                 # Static assets (favicons, ...)
+├── src/content/docs/       # Pages — English at the top level
+│   ├── advanced/
+│   ├── development/
+│   ├── platforms/
+│   ├── principles/
+│   ├── zh/                 # Simplified Chinese, mirroring the layout above
+│   └── *.mdx               # introduction, installation, quick-start, index
+└── astro.config.mjs        # Locales and sidebar, including sidebar translations
 ```
 
-Starlight looks for `.md` or `.mdx` files in the `src/content/docs/` directory. Each file is exposed as a route based on its file name.
+Each `.md` / `.mdx` file under `src/content/docs/` becomes a route named after
+its path. A page added in English needs a matching file under `zh/`, and a new
+sidebar entry in `astro.config.mjs` carries its own `translations` map.
 
-Images can be added to `src/assets/` and embedded in Markdown with a relative link.
+**Locales are English and Simplified Chinese only.** German, Spanish, French and
+Japanese were dropped in Aug 2026 — they had drifted out of sync with the code
+and there was no one maintaining them.
 
-Static assets, like favicons, can be placed in the `public/` directory.
+## Commands
 
-## 🧞 Commands
+Run from `docs/`:
 
-All commands are run from the root of the project, from a terminal:
+| Command | Action |
+| :------ | :----- |
+| `npm install` | Install dependencies |
+| `npm run dev` | Dev server at `localhost:4321/docs` |
+| `npm run build` | Build to `./dist/` |
+| `npm run preview` | Preview the build locally |
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+## Writing
 
-## 👀 Want to learn more?
-
-Check out [Starlight’s docs](https://starlight.astro.build/), read [the Astro documentation](https://docs.astro.build), or jump into the [Astro Discord server](https://astro.build/chat).
+Documentation follows the code. When a page describes behaviour that has
+changed, correct the page in the same change rather than leaving it for later —
+and correct every locale, not only English.

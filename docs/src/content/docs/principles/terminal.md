@@ -3,7 +3,27 @@ title: Terminal Implementation
 description: How the SSH terminal works internally
 ---
 
-The SSH terminal is one of the most complex features, built on a custom xterm.dart fork.
+The terminal is one of the most complex features, built on a custom xterm.dart fork.
+
+## Where the bytes come from
+
+Everything above the byte stream is one implementation — the same emulator, the
+same virtual keyboard, the same tabs. Below it, `ShellBackend` has four:
+
+| Backend | Bytes from |
+|---|---|
+| `SshShellBackend` | An SSH channel; the rest of this page |
+| `LocalShellBackend` | A shell on this device, or inside the Alpine container on Android |
+| `IshShellBackend` | The Linux interpreter on iOS |
+| `MonitorShellBackend` | A monitor agent's `/terminal/ws` |
+
+A caller opens a session and writes to it; which of the four answered is not
+something the UI above asks. See
+[Terminal on This Device](/docs/advanced/local-terminal/) for the two local ones
+and [Monitor Agent](/docs/advanced/monitor-agent/) for the last.
+
+The rest of this page follows the SSH path, which is the oldest and the one the
+others were shaped to match.
 
 ## Architecture Overview
 

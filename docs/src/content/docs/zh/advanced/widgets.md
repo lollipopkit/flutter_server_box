@@ -3,7 +3,7 @@ title: 主屏幕小组件
 description: 在主屏幕上添加服务器状态小组件
 ---
 
-需要在服务器上安装 [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor)。
+需要在服务器上安装 [monitor agent](/docs/zh/advanced/monitor-agent/)。
 
 ## 前置条件
 
@@ -45,8 +45,8 @@ https://your-server.com/status
 1. 长按主屏幕 → **小组件**
 2. 找到 “ServerBox” → 添加到主屏幕
 3. 记下显示的 Widget ID 数字
-4. 打开 ServerBox 应用 → 设置
-5. 点击 **配置桌面小组件链接**
+4. 打开 ServerBox 应用 → 设置 → **应用** → 设置 → **Android 设置**
+5. 点击 **桌面部件链接配置**
 6. 添加条目：`Widget ID` = `状态 URL`
 
 示例：
@@ -55,20 +55,25 @@ https://your-server.com/status
 
 7. 点击主屏幕上的小组件进行刷新
 
-## watchOS 小组件
+## watchOS
+
+手表自己向 monitor agent 取数据，因此只能显示已配置 monitor 的服务器。请先在
+服务器的编辑页里配置 agent —— 作为连接方式，或与 SSH 并存。
 
 ### 设置步骤
 
-1. 打开 iPhone 上的应用 → 设置
-2. **iOS 设置** → **Watch 应用**
-3. 点击 **添加 URL**
-4. 输入以 `/status` 结尾的 URL
-5. 等待手表端同步
+1. 打开 iPhone 上的应用 → 设置 → **应用** → 设置 → **iOS 设置**
+2. 点击 **Watch 应用**
+3. 选择要显示的服务器。选择的顺序会被保留，手表按该顺序翻页
+4. 等待手表端同步
+
+**锁屏小组件** 是同一页上的另一个入口，只选一台服务器。
 
 ### 注意事项
 
 - 如果未更新，请尝试重启手表应用
 - 确保手机和手表已连接
+- **旧版 status 链接** 只在你已经有旧数据时才出现，新版本不再创建
 
 ## 故障排除
 
