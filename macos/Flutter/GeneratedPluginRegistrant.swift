@@ -7,7 +7,7 @@ import Foundation
 
 import desktop_drop
 import dynamic_color
-import file_picker
+import file_picker_darwin
 import flutter_secure_storage_darwin
 import icloud_storage_plus
 import local_auth_darwin
