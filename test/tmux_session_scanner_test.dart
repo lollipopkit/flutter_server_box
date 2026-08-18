@@ -120,4 +120,3 @@ final class _FakePersistentShellSession implements PersistentShellSession {
     return '$response\n__SERVER_BOX_DONE__$commandId:$exitCode\n';
   }
 }
-
