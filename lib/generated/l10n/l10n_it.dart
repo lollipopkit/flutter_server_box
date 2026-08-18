@@ -749,6 +749,28 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get bmcUnauthorized => 'Il BMC ha rifiutato l\'account';
+
+  @override
+  String get bmcPowerOn => 'Acceso';
+
+  @override
+  String get bmcPowerOff => 'Spento';
+
+  @override
+  String get bmcCertRejected =>
+      'Certificato rifiutato — verificalo nelle impostazioni del server';
+
+  @override
+  String get bmcNotAService => 'Nessun servizio Redfish a questo indirizzo';
+
+  @override
+  String get bmcNoSystem => 'Il servizio non riporta alcun sistema';
+
+  @override
+  String get bmcSensorsTruncated => 'Sono mostrati solo i primi sensori';
+
+  @override
   String get bmcTip =>
       'Il BMC è un computer a sé sulla scheda madre, raggiungibile quando il sistema operativo dell\'host non lo è. Configurato qui, riporta stato di alimentazione e sensori hardware mentre il server è spento o bloccato. Richiede Redfish, presente sulla maggior parte dell\'hardware enterprise dal 2016 circa.';
 

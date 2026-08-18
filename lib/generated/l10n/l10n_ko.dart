@@ -705,6 +705,27 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get bmcUnauthorized => 'BMC가 이 계정을 거부했습니다';
+
+  @override
+  String get bmcPowerOn => '전원 켜짐';
+
+  @override
+  String get bmcPowerOff => '전원 꺼짐';
+
+  @override
+  String get bmcCertRejected => '인증서가 거부됨 — 서버 설정에서 확인하세요';
+
+  @override
+  String get bmcNotAService => '이 주소에는 Redfish 서비스가 없습니다';
+
+  @override
+  String get bmcNoSystem => '서비스가 시스템을 보고하지 않습니다';
+
+  @override
+  String get bmcSensorsTruncated => '앞쪽 센서만 표시됩니다';
+
+  @override
   String get bmcTip =>
       'BMC는 메인보드에 있는 별도의 컴퓨터로, 호스트 OS가 응답하지 않아도 접근할 수 있습니다. 여기서 설정하면 서버가 꺼져 있거나 멈춰 있어도 전원 상태와 하드웨어 센서를 읽을 수 있습니다. Redfish가 필요하며 대략 2016년 이후 기업용 하드웨어는 대부분 지원합니다.';
 

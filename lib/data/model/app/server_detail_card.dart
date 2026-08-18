@@ -20,6 +20,7 @@ enum ServerDetailCards {
   temp(FontAwesome.temperature_empty_solid),
   battery(Icons.battery_full),
   pve(BoxIcons.bxs_dashboard, sinceBuild: 818),
+  bmc(Icons.developer_board, sinceBuild: 1491),
   custom(Icons.code, sinceBuild: 825);
 
   final int? sinceBuild;
@@ -46,6 +47,7 @@ enum ServerDetailCards {
     temp => libL10n.temperature,
     battery => libL10n.battery,
     pve => 'PVE',
+    bmc => 'BMC',
     custom => libL10n.cmd,
   };
 

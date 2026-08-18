@@ -694,6 +694,27 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get bmcUnauthorized => 'BMC 拒绝了这个账号';
+
+  @override
+  String get bmcPowerOn => '已开机';
+
+  @override
+  String get bmcPowerOff => '已关机';
+
+  @override
+  String get bmcCertRejected => '证书被拒绝——请在服务器设置里确认';
+
+  @override
+  String get bmcNotAService => '该地址上没有 Redfish 服务';
+
+  @override
+  String get bmcNoSystem => '该服务没有报告任何 system';
+
+  @override
+  String get bmcSensorsTruncated => '只显示了前面若干个传感器';
+
+  @override
   String get bmcTip =>
       'BMC 是主板上一台独立的计算机,主机操作系统不可达时它仍然可达。在这里配置后,服务器关机或卡死时也能读到电源状态和硬件传感器。需要 Redfish,大约 2016 年以后的企业级硬件基本都有。';
 
@@ -2006,6 +2027,27 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String privateKeyNotFoundFmt(Object keyId) {
     return '未找到私鑰 [$keyId]。';
   }
+
+  @override
+  String get bmcUnauthorized => 'BMC 拒絕了這個帳號';
+
+  @override
+  String get bmcPowerOn => '已開機';
+
+  @override
+  String get bmcPowerOff => '已關機';
+
+  @override
+  String get bmcCertRejected => '憑證被拒絕——請在伺服器設定裡確認';
+
+  @override
+  String get bmcNotAService => '該位址上沒有 Redfish 服務';
+
+  @override
+  String get bmcNoSystem => '該服務沒有回報任何 system';
+
+  @override
+  String get bmcSensorsTruncated => '只顯示了前面若干個感測器';
 
   @override
   String get bmcTip =>

@@ -744,6 +744,28 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get bmcUnauthorized => 'De BMC heeft het account geweigerd';
+
+  @override
+  String get bmcPowerOn => 'Ingeschakeld';
+
+  @override
+  String get bmcPowerOff => 'Uitgeschakeld';
+
+  @override
+  String get bmcCertRejected =>
+      'Certificaat geweigerd — controleer het in de serverinstellingen';
+
+  @override
+  String get bmcNotAService => 'Geen Redfish-service op dit adres';
+
+  @override
+  String get bmcNoSystem => 'De service meldt geen systeem';
+
+  @override
+  String get bmcSensorsTruncated => 'Alleen de eerste sensoren worden getoond';
+
+  @override
   String get bmcTip =>
       'De BMC is een aparte computer op het moederbord, bereikbaar wanneer het besturingssysteem van de host dat niet is. Hier ingesteld meldt hij de voedingsstatus en hardwaresensoren terwijl de server uit staat of vastloopt. Vereist Redfish, aanwezig op de meeste zakelijke hardware vanaf ongeveer 2016.';
 

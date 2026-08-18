@@ -744,6 +744,28 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get bmcUnauthorized => 'BMC menolak akun ini';
+
+  @override
+  String get bmcPowerOn => 'Menyala';
+
+  @override
+  String get bmcPowerOff => 'Mati';
+
+  @override
+  String get bmcCertRejected =>
+      'Sertifikat ditolak — tinjau di pengaturan server';
+
+  @override
+  String get bmcNotAService => 'Tidak ada layanan Redfish di alamat ini';
+
+  @override
+  String get bmcNoSystem => 'Layanan tidak melaporkan sistem apa pun';
+
+  @override
+  String get bmcSensorsTruncated => 'Hanya sensor pertama yang ditampilkan';
+
+  @override
   String get bmcTip =>
       'BMC adalah komputer terpisah di motherboard, tetap terjangkau saat sistem operasi host tidak. Dikonfigurasi di sini, ia melaporkan status daya dan sensor perangkat keras saat server mati atau macet. Perlu Redfish, yang ada pada sebagian besar perangkat keras enterprise sejak sekitar 2016.';
 

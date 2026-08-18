@@ -745,6 +745,28 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get bmcUnauthorized => 'BMC відхилив обліковий запис';
+
+  @override
+  String get bmcPowerOn => 'Увімкнено';
+
+  @override
+  String get bmcPowerOff => 'Вимкнено';
+
+  @override
+  String get bmcCertRejected =>
+      'Сертифікат відхилено — перевірте його в налаштуваннях сервера';
+
+  @override
+  String get bmcNotAService => 'За цією адресою немає служби Redfish';
+
+  @override
+  String get bmcNoSystem => 'Служба не повідомляє про жодну систему';
+
+  @override
+  String get bmcSensorsTruncated => 'Показано лише перші датчики';
+
+  @override
   String get bmcTip =>
       'BMC — окремий комп\'ютер на материнській платі, доступний тоді, коли операційна система хоста недоступна. Налаштований тут, він повідомляє стан живлення та показання апаратних датчиків, поки сервер вимкнено або він завис. Потрібен Redfish, він є в більшості серверного обладнання приблизно з 2016 року.';
 

@@ -745,6 +745,28 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get bmcUnauthorized => 'BMC hesabı reddetti';
+
+  @override
+  String get bmcPowerOn => 'Açık';
+
+  @override
+  String get bmcPowerOff => 'Kapalı';
+
+  @override
+  String get bmcCertRejected =>
+      'Sertifika reddedildi — sunucu ayarlarından inceleyin';
+
+  @override
+  String get bmcNotAService => 'Bu adreste Redfish hizmeti yok';
+
+  @override
+  String get bmcNoSystem => 'Hizmet herhangi bir sistem bildirmiyor';
+
+  @override
+  String get bmcSensorsTruncated => 'Yalnızca ilk sensörler gösteriliyor';
+
+  @override
   String get bmcTip =>
       'BMC, anakart üzerindeki ayrı bir bilgisayardır ve ana makinenin işletim sistemine ulaşılamadığında da erişilebilir. Burada yapılandırıldığında, sunucu kapalıyken ya da takılıyken güç durumunu ve donanım sensörlerini bildirir. Redfish gerektirir; yaklaşık 2016\'dan sonraki kurumsal donanımların çoğunda bulunur.';
 

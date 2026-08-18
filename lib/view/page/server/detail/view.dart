@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-
 import 'package:extended_image/extended_image.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -16,6 +15,8 @@ import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/app/server_detail_card.dart';
 import 'package:server_box/data/model/server/amd.dart';
 import 'package:server_box/data/model/server/battery.dart';
+import 'package:server_box/data/model/server/bmc/redfish.dart';
+import 'package:server_box/data/model/server/bmc/redfish_service.dart';
 import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/disk_smart.dart';
@@ -26,6 +27,7 @@ import 'package:server_box/data/model/server/server.dart' as server_model;
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
+import 'package:server_box/data/provider/bmc/bmc.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
@@ -83,6 +85,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
         ServerDetailCards.temp: _buildTemperature,
         ServerDetailCards.battery: _buildBatteries,
         ServerDetailCards.pve: _buildPve,
+        ServerDetailCards.bmc: _buildBmc,
         ServerDetailCards.custom: _buildCustomCmd,
       };
 
@@ -1394,6 +1397,114 @@ ${err.message ?? 'null'}
       ),
     );
   }
+
+  /// What the BMC says, which is worth showing precisely when the host is not
+  /// saying anything.
+  ///
+  /// Absent unless configured: a card that appeared on every server to say
+  /// "not configured" would be a row of noise on the machines that have no BMC,
+  /// which is most of them.
+  Widget? _buildBmc(ServerState si) {
+    if (si.spi.bmc == null) return null;
+    final bmc = ref.watch(bmcProvider(si.spi));
+
+    final subtitle = switch (bmc) {
+      BmcState(failure: final failure?) => Text(
+        _bmcFailureText(failure, bmc.failureDetail),
+        style: UIs.textGrey,
+      ),
+      BmcState(hasData: false, isBusy: true) => Text(
+        libL10n.loadingEllipsis,
+        style: UIs.textGrey,
+      ),
+      _ => Text(_bmcPowerText(bmc.powerState), style: UIs.textGrey),
+    };
+
+    final children = <Widget>[];
+    final system = bmc.topology?.system;
+    if (system != null) {
+      // The service's own property names, shown as it named them: they are
+      // protocol identifiers, and translating them would invite drift between
+      // what the card says and what the BMC's own interface says
+      for (final (label, value) in [
+        ('Model', system.model),
+        ('BIOS', system.biosVersion),
+        ('Serial', system.serial),
+        ('Health', system.health),
+      ]) {
+        if (value == null || value.isEmpty) continue;
+        children.add(
+          ListTile(
+            dense: true,
+            title: Text(label, style: UIs.text13),
+            trailing: Text(value, style: UIs.text13Grey),
+          ),
+        );
+      }
+    }
+
+    final sensors = bmc.sensors;
+    if (sensors.watts case final watts?) {
+      children.add(
+        ListTile(
+          dense: true,
+          title: Text(l10n.power, style: UIs.text13),
+          trailing: Text('${watts.toStringAsFixed(0)} W', style: UIs.text13Grey),
+        ),
+      );
+    }
+    for (final reading in [...sensors.temperatures, ...sensors.fans]) {
+      children.add(
+        ListTile(
+          dense: true,
+          title: Text(reading.name, style: UIs.text13),
+          trailing: Text(
+            '${reading.value.toStringAsFixed(reading.unit == 'Cel' ? 1 : 0)}'
+            '${reading.unit == 'Cel' ? '°C' : ' ${reading.unit ?? ''}'}',
+            style: UIs.text13Grey,
+          ),
+        ),
+      );
+    }
+    // Said rather than left to look like the whole truth
+    if (bmc.sensorsTruncated) {
+      children.add(
+        ListTile(
+          dense: true,
+          title: Text(l10n.bmcSensorsTruncated, style: UIs.text13Grey),
+        ),
+      );
+    }
+
+    return CardX(
+      child: ExpandTile(
+        leading: const Icon(Icons.developer_board, size: 17),
+        title: const Text('BMC'),
+        subtitle: subtitle,
+        initiallyExpanded: _getInitExpand(children.length),
+        children: children,
+      ),
+    );
+  }
+
+  String _bmcPowerText(PowerState state) => switch (state) {
+    PowerState.on => l10n.bmcPowerOn,
+    PowerState.off => l10n.bmcPowerOff,
+    PowerState.poweringOn || PowerState.poweringOff => libL10n.loadingEllipsis,
+    PowerState.paused => 'Paused',
+    PowerState.unknown => libL10n.unknown,
+  };
+
+  String _bmcFailureText(RedfishFailure failure, String? detail) =>
+      switch (failure) {
+        RedfishFailure.certificateRejected => l10n.bmcCertRejected,
+        RedfishFailure.unauthorized => l10n.bmcUnauthorized,
+        RedfishFailure.notAService => l10n.bmcNotAService,
+        RedfishFailure.noSystem => l10n.bmcNoSystem,
+        // Names the resource, because it is an answer about one resource
+        RedfishFailure.forbidden => '${libL10n.fail}: ${detail ?? ''}',
+        RedfishFailure.unreachable => detail ?? libL10n.fail,
+      };
 
   Widget? _buildCustomCmd(ServerState si) {
     final ss = si.status;

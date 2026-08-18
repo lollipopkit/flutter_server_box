@@ -1413,6 +1413,48 @@ abstract class AppLocalizations {
   /// **'Private key [{keyId}] not found.'**
   String privateKeyNotFoundFmt(Object keyId);
 
+  /// No description provided for @bmcUnauthorized.
+  ///
+  /// In en, this message translates to:
+  /// **'The BMC refused the account'**
+  String get bmcUnauthorized;
+
+  /// No description provided for @bmcPowerOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Powered on'**
+  String get bmcPowerOn;
+
+  /// No description provided for @bmcPowerOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Powered off'**
+  String get bmcPowerOff;
+
+  /// No description provided for @bmcCertRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Certificate refused — review it in the server settings'**
+  String get bmcCertRejected;
+
+  /// No description provided for @bmcNotAService.
+  ///
+  /// In en, this message translates to:
+  /// **'No Redfish service at this address'**
+  String get bmcNotAService;
+
+  /// No description provided for @bmcNoSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'The service reports no system'**
+  String get bmcNoSystem;
+
+  /// No description provided for @bmcSensorsTruncated.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the first sensors are shown'**
+  String get bmcSensorsTruncated;
+
   /// No description provided for @bmcTip.
   ///
   /// In en, this message translates to:

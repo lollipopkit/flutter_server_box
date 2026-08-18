@@ -706,6 +706,27 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get bmcUnauthorized => 'BMC がこのアカウントを拒否しました';
+
+  @override
+  String get bmcPowerOn => '電源オン';
+
+  @override
+  String get bmcPowerOff => '電源オフ';
+
+  @override
+  String get bmcCertRejected => '証明書が拒否されました — サーバー設定で確認してください';
+
+  @override
+  String get bmcNotAService => 'このアドレスに Redfish サービスがありません';
+
+  @override
+  String get bmcNoSystem => 'サービスはシステムを報告していません';
+
+  @override
+  String get bmcSensorsTruncated => '先頭のセンサーのみ表示しています';
+
+  @override
   String get bmcTip =>
       'BMC はマザーボード上の独立したコンピューターで、ホスト OS が応答しないときも到達できます。ここで設定すると、サーバーが停止していても電源状態とハードウェアセンサーを読めます。Redfish が必要で、おおむね 2016 年以降のエンタープライズ機材なら備えています。';
 
