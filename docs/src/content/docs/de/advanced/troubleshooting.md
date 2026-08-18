@@ -88,7 +88,8 @@ description: Lösungen für gängige Probleme
 **watchOS:**
 - Watch-App neu starten
 - Nach Konfigurationsänderung einige Minuten warten
-- URL-Format prüfen
+- Prüfen, ob für den Server ein Monitor-Agent konfiguriert ist — nur solche
+  Server kann die Watch anzeigen
 
 ### Widget zeigt Fehler
 

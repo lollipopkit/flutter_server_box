@@ -55,20 +55,30 @@ Exemple :
 
 7. Appuyez sur le widget sur l'écran d'accueil pour le rafraîchir
 
-## Widget watchOS
+## watchOS
+
+La montre lit chaque serveur depuis son agent monitor elle-même : elle ne peut
+donc afficher que les serveurs pour lesquels un agent est configuré. Configurez
+d'abord l'agent dans la page d'édition du serveur — comme méthode de connexion,
+ou en plus de SSH.
 
 ### Configuration
 
-1. Ouvrez l'application iPhone → Paramètres
-2. **Paramètres iOS** → **Application Watch**
-3. Appuyez sur **Ajouter une URL**
-4. Entrez l'URL se terminant par `/status`
-5. Attendez que l'application de la montre se synchronise
+1. Ouvrez l'application iPhone → Paramètres → **Paramètres iOS**
+2. Appuyez sur **Application Watch**
+3. Choisissez les serveurs à afficher. L'ordre de sélection est conservé et la
+   montre parcourt cette liste
+4. Attendez que l'application de la montre se synchronise
+
+**Widget de l'écran verrouillé** est une entrée distincte sur la même page — un
+seul serveur au lieu d'une liste.
 
 ### Notes
 
 - Essayez de redémarrer l'application de la montre si elle ne se met pas à jour
 - Vérifiez que le téléphone et la montre sont connectés
+- **URL de statut héritées** n'apparaît que si vous en avez déjà, enregistrées
+  par une version antérieure. Plus rien n'en crée
 
 ## Dépannage
 

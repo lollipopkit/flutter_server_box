@@ -81,6 +81,28 @@ dart run fl_build -p windows
 
 Visual Studio がインストールされた Windows が必要です。
 
+## monitor のビルド
+
+サーバーサイドの monitor は `monitor/` からビルドする独立したバイナリで、アプリの
+ビルドには含まれません。
+
+```bash
+cd monitor
+
+# バックエンド
+cargo build --release
+
+# パネル —— frontend/dist があれば agent 自身が配信します
+cd frontend && npm install && npm run build
+```
+
+リポジトリのルートで `make monitor-dev` を実行すると、両方が開発モードで起動
+します。API は `:3770`、パネルの vite dev server は `:3000` です。
+
+release 成果物は `monitor-release.yml` workflow から生成されます。この workflow は
+`workflow_dispatch` のみで、アプリ自身の release とは別に `monitor-v*` タグを
+公開します。Docker は `monitor/Dockerfile` にあります。
+
 ## ビルド前/後処理
 
 `make.dart` スクリプトが以下を処理します。

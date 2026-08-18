@@ -29,10 +29,31 @@ Server Box follows a layered architecture with clear separation of concerns.
 ┌─────────────────────────────────────────────────┐
 │         External Integration Layer              │
 │  - SSH (dartssh2), Terminal (xterm), SFTP       │
+│  - Monitor agent HTTP API                       │
 │  - Rust status parser (sbm_parser via FFI)      │
 │  - Platform-specific code (iOS, Android, etc.)  │
 └─────────────────────────────────────────────────┘
 ```
+
+## Connection Methods
+
+A server is reached either over SSH or through a monitor agent's HTTP API. The
+two are mutually exclusive: a monitor server carries no SSH credential.
+
+What each one can do is asked through `ServerCapabilities`, so a feature that
+needs a shell never has to know which transport provides one:
+
+| | SSH | Monitor agent |
+|---|---|---|
+| Status, charts | yes | yes |
+| Stored history | no — sampled while the app is open | yes — the agent has been sampling all along |
+| Commands (processes, systemd, containers, power) | yes | with the agent's `full_access` grant |
+| Terminal | yes | with `full_access` |
+| File browsing | yes, over SFTP | with the agent's file API, confined to its configured roots |
+| SFTP transfers, port forwarding | yes | no |
+
+SFTP and port forwarding are absent on a monitor server because the agent has
+no endpoint that relays a connection to an address the app names.
 
 ## Application Foundation
 
@@ -181,6 +202,8 @@ make.dart (version) → fl_build (build) → Platform output
 
 ### Server Status Update
 
+Over SSH:
+
 ```
 1. Timer triggers →
 2. Provider calls service →
@@ -189,6 +212,19 @@ make.dart (version) → fl_build (build) → Platform output
 5. State updated →
 6. UI rebuilds with new data
 ```
+
+Through a monitor agent:
+
+```
+1. Timer triggers →
+2. Provider calls the agent's /api/v1/metrics →
+3. The agent has already parsed it — with the same Rust crate →
+4. State updated →
+5. UI rebuilds with new data
+```
+
+Both ends parse with `sbm_parser`, which is why the two paths produce the same
+`ServerStatus`.
 
 ### User Action Flow
 

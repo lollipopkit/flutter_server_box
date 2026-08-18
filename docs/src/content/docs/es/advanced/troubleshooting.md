@@ -88,7 +88,8 @@ description: Soluciones a problemas frecuentes
 **watchOS:**
 - Reiniciar la aplicación del reloj
 - Esperar unos minutos tras cambiar la configuración
-- Verificar el formato de la URL
+- Verificar que el servidor tenga un agente monitor configurado — el reloj solo
+  puede mostrar los que lo tengan
 
 ### El Widget muestra un error
 

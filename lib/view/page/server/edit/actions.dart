@@ -292,14 +292,11 @@ extension _Actions on _ServerEditPageState {
       );
     }
 
-    // In monitor mode the SSH form is hidden, so there is normally nothing to
-    // record — previously these were required, which is why a monitor-only
-    // server used to be saved with a host derived from the monitor URL and a
-    // user literally named `monitor`. The exception is the SSH-via-monitor
-    // tunnel, which needs credentials but no address: the agent connects to
-    // its own configured target and takes none from us.
-    // A monitor server carries no SSH credential at all: it is reached through
-    // its agent, and nothing here would have anywhere to go.
+    // In monitor mode the SSH form is hidden and a monitor server carries no
+    // SSH credential at all: it is reached through its agent, and nothing here
+    // would have anywhere to go. Previously these fields were required, which
+    // is why a monitor-only server used to be saved with a host derived from
+    // the monitor URL and a user literally named `monitor`.
     final ssh = useMonitorHttp
         ? null
         : SshCredential(

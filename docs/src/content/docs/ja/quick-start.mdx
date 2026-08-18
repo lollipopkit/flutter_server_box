@@ -18,11 +18,26 @@ description: Server Box を数分で使い始める
 
 4. **保存** をタップしてサーバーを追加します
 
+### monitor agent 経由でサーバーを追加する
+
+フォーム上部の **SSH / Monitor HTTP** セレクターで接続方式を選びます。
+**Monitor HTTP** を選ぶと、SSH の入力欄が agent の入力欄に置き換わります。
+
+- **URL**: 例 `https://1.2.3.4:3770`
+- **Monitor User** / **Monitor Password**: agent のパネルログイン情報
+- **Monitor Ignore certificate**: 自己署名証明書を使う場合
+
+この方式で追加したサーバーは SSH 認証情報を一切持ちません。ステータスとグラフは
+そのまま使えます。コマンド、ターミナル、ファイル閲覧は agent の運用者が何を
+有効にしているかによります —— 詳細は
+[monitor の README](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README.md)
+を参照してください。このようなサーバーでは SFTP とポートフォワーディングは
+利用できません。必要な場合は SSH で追加してください。
+
 ## ステップ 2: 接続と監視
 
 1. サーバーカードをタップして接続します
-2. アプリが SSH 接続を確立します
-3. 以下のリアルタイムステータスが表示されます：
+2. 以下のリアルタイムステータスが表示されます：
    - CPU 使用率
    - メモリ (RAM) とスワップ
    - ディスク使用量

@@ -25,7 +25,7 @@ flutter test --coverage
 状态解析位于共享 Rust workspace 中：
 
 ```bash
-# 全部 Rust 测试（解析库、FFI 壳、monitor）
+# 全部 Rust 测试（解析库、原生采样、FFI 壳、monitor）
 cargo test --workspace
 
 # FFI 双跑一致性测试：断言 Dart 侧经 flutter_rust_bridge
@@ -35,6 +35,34 @@ flutter test test/frb_parser_test.dart
 ```
 
 `crates/sbm_parser/tests/dart_compat.rs` 以原 Dart fixture 套件锁定解析行为。
+
+### 需要显式开启的测试
+
+有两个套件需要一台真实主机，未配置时会静默跳过：
+
+```bash
+# SSH 端到端：把生成的脚本上传到远端执行，并把解析结果与直接执行命令的输出比对。
+# 需先在 workspace 根目录的 .env 里设置
+# SBM_E2E_SSH_HOST=<ssh 目标或 ~/.ssh/config 别名>
+cargo test -p sbm_parser --test ssh_e2e
+
+# 用真实 sshd 测试 monitor 终端，而不是 monitor/tests/fake_sshd/ 里的进程内假
+# sshd。需要 SBM_E2E_TERMINAL_*。
+cargo test -p server_box_monitor --test terminal_ws
+```
+
+## monitor 面板测试
+
+monitor 的 Svelte 前端有自己的测试套件（vitest + @testing-library/svelte）：
+
+```bash
+cd monitor/frontend
+npm run test
+npm run test:coverage
+
+# 类型检查，也是 `npm run build` 的一部分
+npm run check
+```
 
 ## 单元测试
 

@@ -29,6 +29,7 @@ Server Box sigue una arquitectura por capas con una clara separación de respons
 ┌─────────────────────────────────────────────────┐
 │          Capa de Integración Externa            │
 │  - SSH (dartssh2), Terminal (xterm), SFTP       │
+│  - API HTTP del agente monitor                  │
 │  - Código específico de plataforma (iOS, etc.)  │
 └─────────────────────────────────────────────────┘
 ```
@@ -177,7 +178,30 @@ make.dart (versión) → fl_build (compilación) → Salida de plataforma
 
 ## Ejemplo de Flujo de Datos
 
+### Métodos de Conexión
+
+A un servidor se llega por SSH o por la API HTTP de un agente monitor. Ambos se
+excluyen: un servidor monitor no lleva credenciales SSH.
+
+Lo que puede hacer cada uno se consulta mediante `ServerCapabilities`, de modo
+que una función que necesita un shell nunca tiene que saber quién lo aporta:
+
+| | SSH | Agente monitor |
+|---|---|---|
+| Estado, gráficas | sí | sí |
+| Historial guardado | no — solo lo muestreado con la app abierta | sí — el agente muestrea de forma continua |
+| Comandos (procesos, systemd, contenedores, energía) | sí | con el `full_access` del agente |
+| Terminal | sí | con `full_access` |
+| Explorar archivos | sí, por SFTP | con la API de archivos del agente, limitada a sus roots configurados |
+| Transferencias SFTP, redirección de puertos | sí | no |
+
+SFTP y la redirección de puertos no existen en un servidor monitor porque el
+agente no tiene ningún endpoint que retransmita una conexión a una dirección que
+indique la app.
+
 ### Actualización del Estado del Servidor
+
+Por SSH:
 
 ```
 1. El temporizador se activa →
@@ -187,6 +211,19 @@ make.dart (versión) → fl_build (compilación) → Salida de plataforma
 5. Se actualiza el estado →
 6. La UI se reconstruye con los nuevos datos
 ```
+
+A través de un agente monitor:
+
+```
+1. El temporizador se activa →
+2. El Provider llama a /api/v1/metrics del agente →
+3. El agente ya lo ha analizado — con el mismo crate de Rust →
+4. Se actualiza el estado →
+5. La UI se reconstruye con los nuevos datos
+```
+
+Ambos extremos analizan con `sbm_parser`, por eso las dos rutas producen el mismo
+`ServerStatus`.
 
 ### Flujo de Acción del Usuario
 

@@ -13,10 +13,12 @@ flutter_server_box/
 ├── crates/
 │   ├── sbm_parser/    # Parser de estado compartido (única fuente de verdad,
 │   │                  # la app vía FFI, el monitor como dependencia directa)
-│   └── sbm_ffi/       # Crate de enlace flutter_rust_bridge + capa de
-│                      # plugin Flutter cargokit (mismo directorio)
-├── monitor/           # Monitor del lado del servidor (servicio Rust + frontend React)
-├── packages/          # Forks de Dart vendorizados (dependencias por ruta)
+│   ├── sbm_ffi/       # Crate de enlace flutter_rust_bridge + capa de
+│   │                  # plugin Flutter cargokit (mismo directorio)
+│   └── sbm_native/    # Muestreo nativo por plataforma (solo monitor)
+├── monitor/           # Monitor del lado del servidor (servicio Rust + frontend Svelte)
+├── packages/          # Forks de Dart vendorizados (dependencias por ruta), más
+│                      # webui: UI Svelte compartida por monitor y website
 ├── docs/              # Este sitio de documentación (Astro Starlight)
 ├── website/           # Sitio web del proyecto
 └── Cargo.toml         # Raíz del workspace de Rust
@@ -112,10 +114,18 @@ Contiene ramas (forks) personalizadas de las dependencias:
 - `fl_lib/` - Utilidades compartidas
 - `fl_build/` - Sistema de compilación
 
+Un directorio de aquí no es un fork de Dart: `webui/` (`@serverbox/webui`) es un
+paquete Svelte con primitivas de interfaz y design tokens compartidos, usado como
+dependencia `file:` tanto por `monitor/frontend` como por `website/`.
+
 ## Lado Rust
 
 - `crates/sbm_parser/` - Analiza la salida bruta de comandos en estado de servidor estructurado.
   Compartido por la app (vía FFI) y el monitor, por lo que ambos analizan siempre igual.
 - `crates/sbm_ffi/` - Fina envoltura flutter_rust_bridge sobre `sbm_parser`.
   El lado Dart generado está en `lib/src/rust/`.
+- `crates/sbm_native/` - Muestreo nativo por plataforma, usado solo por el
+  monitor. Lee cpu/memoria/swap/disco/red/uptime directamente mediante llamadas
+  al sistema o procfs, sin ejecutar comandos de shell. La app no depende de él:
+  recopila por SSH y no puede ejecutar llamadas al sistema en un host remoto.
 - `monitor/` - Servicio de monitorización independiente, documentación en `monitor/README.md`.

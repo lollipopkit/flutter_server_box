@@ -55,20 +55,30 @@ Beispiel:
 
 7. Tippen Sie auf das Widget auf dem Startbildschirm, um es zu aktualisieren
 
-## watchOS-Widget
+## watchOS
+
+Die Watch liest jeden Server selbst von dessen Monitor-Agent und kann daher nur
+Server anzeigen, für die einer konfiguriert ist. Richten Sie den Agent zuerst
+auf der Bearbeitungsseite des Servers ein — als Verbindungsmethode oder
+zusätzlich zu SSH.
 
 ### Einrichtung
 
-1. iPhone-App öffnen → Einstellungen
-2. **iOS-Einstellungen** → **Watch-App**
-3. Auf **URL hinzufügen** tippen
-4. URL eingeben, die auf `/status` endet
-5. Warten, bis die Watch-App synchronisiert ist
+1. iPhone-App öffnen → Einstellungen → **iOS-Einstellungen**
+2. Auf **Watch-App** tippen
+3. Die anzuzeigenden Server auswählen. Die Reihenfolge der Auswahl bleibt
+   erhalten, die Watch blättert durch diese Liste
+4. Warten, bis die Watch-App synchronisiert ist
+
+**Sperrbildschirm-Widget** ist ein eigener Eintrag auf derselben Seite — ein
+Server statt einer Liste.
 
 ### Hinweise
 
 - Versuchen Sie, die Watch-App neu zu starten, wenn sie nicht aktualisiert wird
 - Sicherstellen, dass Telefon und Watch verbunden sind
+- **Legacy-Status-URLs** erscheint nur, wenn bereits welche aus einer älteren
+  Version vorhanden sind. Neue werden nicht mehr angelegt
 
 ## Fehlerbehebung
 

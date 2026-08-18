@@ -7,7 +7,9 @@ Server Box est une application complète de gestion de serveur multiplateforme c
 
 ## Qu'est-ce que Server Box ?
 
-Server Box fournit une interface unifiée pour les tâches d'administration de serveur via des connexions SSH. Que vous soyez un administrateur système, un développeur ou un passionné gérant des serveurs domestiques, cette application met de puissants outils de gestion de serveur dans votre poche.
+Server Box fournit une interface unifiée pour les tâches d'administration de serveur. Que vous soyez un administrateur système, un développeur ou un passionné gérant des serveurs domestiques, cette application met de puissants outils de gestion de serveur dans votre poche.
+
+Un serveur est atteint de deux façons : par **SSH**, ou via un **[agent monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor)** installé dessus, avec lequel l'application communique en HTTP. SSH ne demande rien à installer sur le serveur et prend en charge toutes les fonctionnalités ; un agent convient aux hôtes dont vous préférez ne pas exposer le port SSH, et conserve son propre historique, si bien que les graphiques sont déjà remplis avant même que l'application ne se connecte.
 
 ## Capacités clés
 

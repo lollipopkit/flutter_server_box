@@ -81,6 +81,27 @@ dart run fl_build -p windows
 
 需要安装了 Visual Studio 的 Windows 环境。
 
+## 构建 monitor
+
+服务端 monitor 是一个独立的二进制，从 `monitor/` 构建，不属于任何 App 构建流程。
+
+```bash
+cd monitor
+
+# 后端
+cargo build --release
+
+# 面板 —— 存在 frontend/dist 时由 agent 自己提供
+cd frontend && npm install && npm run build
+```
+
+在仓库根目录执行 `make monitor-dev` 会以开发模式同时启动两者：API 在 `:3770`，
+面板的 vite dev server 在 `:3000`。
+
+release 产物来自 `monitor-release.yml` workflow，该 workflow 仅支持
+`workflow_dispatch`，发布的 `monitor-v*` tag 与 App 自身的 release 相互独立。
+Docker 见 `monitor/Dockerfile`。
+
 ## 构建前/后处理
 
 `make.dart` 脚本负责处理：

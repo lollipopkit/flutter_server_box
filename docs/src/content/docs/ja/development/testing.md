@@ -25,7 +25,7 @@ flutter test --coverage
 ステータス解析は共有 Rust workspace にあります:
 
 ```bash
-# すべての Rust テスト(パーサー、FFI シェル、monitor)
+# すべての Rust テスト(パーサー、ネイティブ採取、FFI シェル、monitor)
 cargo test --workspace
 
 # FFI 一致性テスト:Dart 側が flutter_rust_bridge 経由で
@@ -35,6 +35,37 @@ flutter test test/frb_parser_test.dart
 ```
 
 `crates/sbm_parser/tests/dart_compat.rs` が元の Dart fixture スイートで解析挙動を固定しています。
+
+### オプトインのテスト
+
+実際のホストを必要とするスイートが 2 つあり、未設定の場合は黙ってスキップ
+されます。
+
+```bash
+# SSH エンドツーエンド: 生成したスクリプトをリモートへアップロードして実行し、
+# 解析結果をコマンドの直接実行結果と比較します。事前に workspace ルートの
+# .env で SBM_E2E_SSH_HOST=<ssh 接続先または ~/.ssh/config のエイリアス> を
+# 設定してください。
+cargo test -p sbm_parser --test ssh_e2e
+
+# monitor/tests/fake_sshd/ のプロセス内ダミーではなく、実際の sshd に対して
+# monitor のターミナルをテストします。SBM_E2E_TERMINAL_* が必要です。
+cargo test -p server_box_monitor --test terminal_ws
+```
+
+## monitor パネルのテスト
+
+monitor の Svelte フロントエンドは独自のテストスイート(vitest +
+@testing-library/svelte)を持ちます。
+
+```bash
+cd monitor/frontend
+npm run test
+npm run test:coverage
+
+# 型チェック。`npm run build` にも含まれます
+npm run check
+```
 
 ## ユニットテスト
 

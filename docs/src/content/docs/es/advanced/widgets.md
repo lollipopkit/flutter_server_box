@@ -55,20 +55,29 @@ Ejemplo:
 
 7. Toca el widget en la pantalla de inicio para refrescarlo
 
-## Widget de watchOS
+## watchOS
+
+El reloj lee cada servidor de su agente monitor por sí mismo, así que solo puede
+mostrar servidores que tengan uno configurado. Configura primero el agente en la
+página de edición del servidor — como método de conexión, o junto a SSH.
 
 ### Configuración
 
-1. Abre la app en el iPhone → Ajustes
-2. **Ajustes de iOS** → **App del Watch**
-3. Toca en **Añadir URL**
-4. Introduce la URL terminada en `/status`
-5. Espera a que la app del reloj se sincronice
+1. Abre la app en el iPhone → Ajustes → **Ajustes de iOS**
+2. Toca **App del Watch**
+3. Elige los servidores a mostrar. Se conserva el orden en que los elijas, y el
+   reloj recorre esa lista
+4. Espera a que la app del reloj se sincronice
+
+**Servidor del widget de pantalla bloqueada** es una entrada aparte en la misma
+página — un servidor en lugar de una lista.
 
 ### Notas
 
 - Prueba a reiniciar la app del reloj si no se actualiza
 - Verifica que el teléfono y el reloj están conectados
+- **URL de estado heredadas** solo aparece si ya tienes alguna, guardada por una
+  versión anterior. Nada crea nuevas
 
 ## Solución de Problemas
 

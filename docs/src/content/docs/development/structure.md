@@ -13,10 +13,12 @@ flutter_server_box/
 ├── crates/
 │   ├── sbm_parser/    # Shared status parser (single source of truth,
 │   │                  # used by the app via FFI and by the monitor)
-│   └── sbm_ffi/       # flutter_rust_bridge binding crate + cargokit
-│                      # Flutter plugin glue (one directory)
-├── monitor/           # Server-side monitor (Rust service + React frontend)
-├── packages/          # Vendored Dart forks (path dependencies)
+│   ├── sbm_ffi/       # flutter_rust_bridge binding crate + cargokit
+│   │                  # Flutter plugin glue (one directory)
+│   └── sbm_native/    # Native per-platform sampler (monitor only)
+├── monitor/           # Server-side monitor (Rust service + Svelte frontend)
+├── packages/          # Vendored Dart forks (path dependencies), plus
+│                      # webui: shared Svelte UI for monitor and website
 ├── docs/              # This documentation site (Astro Starlight)
 ├── website/           # Project website
 └── Cargo.toml         # Rust workspace root
@@ -119,10 +121,18 @@ Contains custom forks of dependencies, referenced by path from `pubspec.yaml`:
 - `plain_notification_token/` - Push token plugin
 - `watch_connectivity/` - Apple Watch connectivity
 
+One directory here is not a Dart fork: `webui/` (`@serverbox/webui`) is a
+Svelte package of shared UI primitives and design tokens, consumed as a `file:`
+dependency by both `monitor/frontend` and `website/`.
+
 ## Rust Side
 
 - `crates/sbm_parser/` - Parses raw command output into structured server status.
   Shared by the app (via FFI) and the monitor, so both always agree on parsing.
 - `crates/sbm_ffi/` - Thin flutter_rust_bridge wrapper around `sbm_parser`.
   The generated Dart side lives in `lib/src/rust/`.
+- `crates/sbm_native/` - Per-platform native sampling, used by the monitor only.
+  It reads cpu/memory/swap/disk/network/uptime directly through syscalls or
+  procfs instead of running shell commands. The app never depends on it: it
+  collects over SSH and cannot run syscalls on a remote host.
 - `monitor/` - Standalone monitoring service with its own docs in `monitor/README.md`.

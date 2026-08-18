@@ -13,10 +13,12 @@ flutter_server_box/
 ├── crates/
 │   ├── sbm_parser/    # Gemeinsamer Status-Parser (Single Source of Truth,
 │   │                  # App via FFI, Monitor als direkte Abhängigkeit)
-│   └── sbm_ffi/       # flutter_rust_bridge-Binding-Crate + cargokit
-│                      # Flutter-Plugin-Hülle (ein Verzeichnis)
-├── monitor/           # Serverseitiger Monitor (Rust-Dienst + React-Frontend)
-├── packages/          # Eingebundene Dart-Forks (Pfad-Abhängigkeiten)
+│   ├── sbm_ffi/       # flutter_rust_bridge-Binding-Crate + cargokit
+│   │                  # Flutter-Plugin-Hülle (ein Verzeichnis)
+│   └── sbm_native/    # Native Erfassung pro Plattform (nur Monitor)
+├── monitor/           # Serverseitiger Monitor (Rust-Dienst + Svelte-Frontend)
+├── packages/          # Eingebundene Dart-Forks (Pfad-Abhängigkeiten), dazu
+│                      # webui: gemeinsame Svelte-UI für Monitor und Website
 ├── docs/              # Diese Dokumentationsseite (Astro Starlight)
 ├── website/           # Projekt-Website
 └── Cargo.toml         # Rust-Workspace-Wurzel
@@ -112,10 +114,18 @@ Enthält eigene Forks von Abhängigkeiten:
 - `fl_lib/` - Gemeinsame Dienstprogramme
 - `fl_build/` - Build-System
 
+Ein Verzeichnis hier ist kein Dart-Fork: `webui/` (`@serverbox/webui`) ist ein
+Svelte-Paket mit gemeinsamen UI-Primitiven und Design-Tokens, das sowohl
+`monitor/frontend` als auch `website/` als `file:`-Abhängigkeit einbinden.
+
 ## Rust-Seite
 
 - `crates/sbm_parser/` - Parst rohe Befehlsausgaben in strukturierten Serverstatus.
   Von App (via FFI) und Monitor gemeinsam genutzt, beide parsen daher immer identisch.
 - `crates/sbm_ffi/` - Dünner flutter_rust_bridge-Wrapper um `sbm_parser`.
   Die generierte Dart-Seite liegt in `lib/src/rust/`.
+- `crates/sbm_native/` - Native Erfassung pro Plattform, nur vom Monitor genutzt.
+  Liest CPU/Speicher/Swap/Festplatte/Netzwerk/Uptime direkt über Syscalls oder
+  procfs statt über Shell-Befehle. Die App hängt nicht davon ab: Sie erfasst
+  über SSH und kann auf einem entfernten Host keine Syscalls ausführen.
 - `monitor/` - Eigenständiger Monitoring-Dienst, Dokumentation in `monitor/README.md`.

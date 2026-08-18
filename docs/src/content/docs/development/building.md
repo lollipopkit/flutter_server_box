@@ -82,6 +82,28 @@ dart run fl_build -p windows
 
 Requires Windows with Visual Studio.
 
+## Building the Monitor
+
+The server-side monitor is a separate binary, built from `monitor/`. It is not
+part of any app build.
+
+```bash
+cd monitor
+
+# Backend
+cargo build --release
+
+# Panel — served by the agent itself when frontend/dist exists
+cd frontend && npm install && npm run build
+```
+
+`make monitor-dev` from the repository root runs both in development mode: the
+API on `:3770` and the panel's vite dev server on `:3000`.
+
+Release artifacts come from the `monitor-release.yml` workflow, which is
+`workflow_dispatch`-only and publishes `monitor-v*` tags separately from the
+app's own releases. Docker is in `monitor/Dockerfile`.
+
 ## Pre/Post Build
 
 The `make.dart` script handles:

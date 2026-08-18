@@ -25,7 +25,7 @@ Tests are located in the `test/` directory. The current suite is mostly flat and
 Status parsing lives in the shared Rust workspace:
 
 ```bash
-# All Rust tests (parser, FFI shell, monitor)
+# All Rust tests (parser, native sampler, FFI shell, monitor)
 cargo test --workspace
 
 # FFI parity test: asserts the Dart side gets identical results
@@ -36,6 +36,36 @@ flutter test test/frb_parser_test.dart
 
 `crates/sbm_parser/tests/dart_compat.rs` locks parser behavior against the
 original Dart fixture suite.
+
+### Opt-in tests
+
+Two suites need a real host and are skipped silently without one:
+
+```bash
+# SSH end to end: uploads the generated script to a remote, runs it, and
+# compares the parsed result against direct command output.
+# Set SBM_E2E_SSH_HOST=<ssh destination or ~/.ssh/config alias> in the
+# workspace-root .env first.
+cargo test -p sbm_parser --test ssh_e2e
+
+# Monitor terminal against a real sshd, rather than the in-process fake one
+# in monitor/tests/fake_sshd/. Needs SBM_E2E_TERMINAL_*.
+cargo test -p server_box_monitor --test terminal_ws
+```
+
+## Monitor Panel Tests
+
+The monitor's Svelte frontend has its own suite (vitest +
+@testing-library/svelte):
+
+```bash
+cd monitor/frontend
+npm run test
+npm run test:coverage
+
+# Type gate, also part of `npm run build`
+npm run check
+```
 
 ## Unit Tests
 

@@ -13,10 +13,12 @@ flutter_server_box/
 ├── crates/
 │   ├── sbm_parser/    # 共享状态解析库（单一事实来源，
 │   │                  # App 经 FFI 使用，monitor 直接依赖）
-│   └── sbm_ffi/       # flutter_rust_bridge 绑定 crate + cargokit
-│                      # Flutter 插件壳（同一目录）
-├── monitor/           # 服务端监控（Rust 服务 + React 前端）
-├── packages/          # Vendor 的 Dart fork（path 依赖）
+│   ├── sbm_ffi/       # flutter_rust_bridge 绑定 crate + cargokit
+│   │                  # Flutter 插件壳（同一目录）
+│   └── sbm_native/    # 各平台原生采样（仅 monitor 使用）
+├── monitor/           # 服务端监控（Rust 服务 + Svelte 前端）
+├── packages/          # Vendor 的 Dart fork（path 依赖），以及
+│                      # webui：monitor 与 website 共用的 Svelte UI
 ├── docs/              # 本文档站（Astro Starlight）
 ├── website/           # 项目网站
 └── Cargo.toml         # Rust workspace 根
@@ -119,10 +121,17 @@ lib/
 - `plain_notification_token/` - 推送 token 插件
 - `watch_connectivity/` - Apple Watch 通信
 
+其中有一个目录不是 Dart fork：`webui/`(`@serverbox/webui`)是一个 Svelte 包，
+提供共享的 UI 基础组件与 design token，`monitor/frontend` 和 `website/` 都以
+`file:` 依赖引用它。
+
 ## Rust 侧
 
 - `crates/sbm_parser/` - 将命令原始输出解析为结构化服务器状态。
   App(经 FFI)与 monitor 共用,两端解析行为始终一致。
+- `crates/sbm_native/` - 各平台的原生采样，仅 monitor 使用。它通过 syscall 或
+  procfs 直接读取 cpu/内存/swap/磁盘/网络/uptime，不执行 shell 命令。App 不依赖
+  它：App 通过 SSH 采集，无法在远程主机上执行 syscall。
 - `crates/sbm_ffi/` - `sbm_parser` 的 flutter_rust_bridge 薄封装。
   生成的 Dart 侧位于 `lib/src/rust/`。
 - `monitor/` - 独立的监控服务,文档见 `monitor/README_zh.md`。

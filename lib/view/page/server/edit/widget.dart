@@ -402,9 +402,9 @@ extension _Widgets on _ServerEditPageState {
           hint: addr,
           suggestion: false,
         ),
-        // Prefixed because the shell section below has a second account with
-        // the same two labels, and they are not interchangeable: this one is
-        // the panel login, that one is a system account on the far host.
+        // Prefixed to say which account this is: the agent's panel login, not
+        // a system account on the far host. A server reached this way has no
+        // system account configured here at all.
         Input(
           controller: _monitorUserCtrl,
           type: TextInputType.text,

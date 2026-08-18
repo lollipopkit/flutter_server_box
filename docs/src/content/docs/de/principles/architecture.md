@@ -29,6 +29,7 @@ Server Box folgt einer Schichtarchitektur mit klarer Trennung der Belange (Separ
 ┌─────────────────────────────────────────────────┐
 │         Externe Integrationsschicht             │
 │  - SSH (dartssh2), Terminal (xterm), SFTP       │
+│  - HTTP-API des Monitor-Agents                  │
 │  - Plattformspezifischer Code (iOS, Android etc.)│
 └─────────────────────────────────────────────────┘
 ```
@@ -177,7 +178,31 @@ make.dart (Version) → fl_build (Build) → Plattform-Output
 
 ## Beispiel für den Datenfluss
 
+### Verbindungsmethoden
+
+Ein Server wird entweder über SSH oder über die HTTP-API eines Monitor-Agents
+erreicht. Beides schließt sich gegenseitig aus: Ein Monitor-Server trägt keine
+SSH-Zugangsdaten.
+
+Was jede Methode kann, wird über `ServerCapabilities` erfragt, sodass eine
+Funktion, die eine Shell braucht, nie wissen muss, welcher Transport sie liefert:
+
+| | SSH | Monitor-Agent |
+|---|---|---|
+| Status, Diagramme | ja | ja |
+| Gespeicherte Historie | nein — nur während die App offen ist | ja — der Agent misst durchgehend |
+| Befehle (Prozesse, systemd, Container, Energie) | ja | mit `full_access` des Agents |
+| Terminal | ja | mit `full_access` |
+| Dateien durchsuchen | ja, über SFTP | mit der Datei-API des Agents, begrenzt auf dessen konfigurierte Roots |
+| SFTP-Übertragungen, Portweiterleitung | ja | nein |
+
+SFTP und Portweiterleitung fehlen auf einem Monitor-Server, weil der Agent
+keinen Endpunkt hat, der eine Verbindung zu einer von der App genannten Adresse
+weiterleitet.
+
 ### Aktualisierung des Serverstatus
+
+Über SSH:
 
 ```
 1. Timer löst aus →
@@ -187,6 +212,19 @@ make.dart (Version) → fl_build (Build) → Plattform-Output
 5. Zustand wird aktualisiert →
 6. UI wird mit neuen Daten neu aufgebaut
 ```
+
+Über einen Monitor-Agent:
+
+```
+1. Timer löst aus →
+2. Provider ruft /api/v1/metrics des Agents auf →
+3. Der Agent hat bereits geparst — mit derselben Rust-Crate →
+4. Zustand wird aktualisiert →
+5. UI wird mit neuen Daten neu aufgebaut
+```
+
+Beide Seiten parsen mit `sbm_parser`, weshalb beide Wege denselben
+`ServerStatus` liefern.
 
 ### Ablauf einer Benutzeraktion
 

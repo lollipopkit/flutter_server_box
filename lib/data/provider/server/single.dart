@@ -425,10 +425,10 @@ class ServerNotifier extends _$ServerNotifier {
   /// Retry-limiter key for connecting the shell, kept apart from the one the
   /// status poll uses.
   ///
-  /// A monitor-backed server reads status over HTTP and reaches SSH through
-  /// the agent's tunnel; those are separate failure domains. Sharing one key
-  /// meant a host with no sshd running would burn the limiter and stop the
-  /// status page from refreshing too.
+  /// Opening a shell and polling status are separate failure domains, and a
+  /// shell is opened long after the poll that established the server is
+  /// reachable. Sharing one key meant a host whose sshd refuses would burn the
+  /// limiter and stop the status page from refreshing too.
   String get _shellTryId => '${state.spi.id}#shell';
 
   /// Something that can run a command on this server.

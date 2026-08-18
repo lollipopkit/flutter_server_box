@@ -29,6 +29,7 @@ Server Box suit une architecture en couches avec une séparation claire des pré
 ┌─────────────────────────────────────────────────┐
 │         Couche d'intégration externe            │
 │  - SSH (dartssh2), Terminal (xterm), SFTP       │
+│  - API HTTP de l'agent monitor                  │
 │  - Code spécifique à la plateforme (iOS, etc.)  │
 └─────────────────────────────────────────────────┘
 ```
@@ -177,7 +178,30 @@ make.dart (version) → fl_build (build) → Sortie plateforme
 
 ## Exemple de flux de données
 
+### Méthodes de connexion
+
+Un serveur est atteint soit par SSH, soit par l'API HTTP d'un agent monitor. Les
+deux s'excluent : un serveur monitor ne porte aucun identifiant SSH.
+
+Ce que chaque méthode permet est demandé via `ServerCapabilities`, si bien qu'une
+fonctionnalité ayant besoin d'un shell n'a jamais à savoir qui le fournit :
+
+| | SSH | Agent monitor |
+|---|---|---|
+| État, graphiques | oui | oui |
+| Historique conservé | non — échantillonné pendant que l'app est ouverte | oui — l'agent échantillonne en continu |
+| Commandes (processus, systemd, conteneurs, alimentation) | oui | avec le `full_access` de l'agent |
+| Terminal | oui | avec `full_access` |
+| Navigation de fichiers | oui, via SFTP | avec l'API fichiers de l'agent, limitée à ses roots configurés |
+| Transferts SFTP, redirection de port | oui | non |
+
+SFTP et la redirection de port sont absents sur un serveur monitor parce que
+l'agent n'a aucun point d'entrée qui relaie une connexion vers une adresse
+désignée par l'app.
+
 ### Mise à jour de l'état du serveur
+
+Par SSH :
 
 ```
 1. Le minuteur se déclenche →
@@ -187,6 +211,19 @@ make.dart (version) → fl_build (build) → Sortie plateforme
 5. L'état est mis à jour →
 6. L'UI se reconstruit avec les nouvelles données
 ```
+
+Via un agent monitor :
+
+```
+1. Le minuteur se déclenche →
+2. Le Provider appelle /api/v1/metrics de l'agent →
+3. L'agent a déjà analysé — avec la même crate Rust →
+4. L'état est mis à jour →
+5. L'UI se reconstruit avec les nouvelles données
+```
+
+Les deux extrémités analysent avec `sbm_parser`, ce qui explique que les deux
+chemins produisent le même `ServerStatus`.
 
 ### Flux d'action utilisateur
 

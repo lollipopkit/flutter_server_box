@@ -5,6 +5,10 @@ description: Comment les connexions SSH sont établies et gérées
 
 Comprendre les connexions SSH dans Server Box.
 
+Cette page concerne les serveurs ajoutés par SSH. Un serveur peut au contraire
+être ajouté via l'API HTTP d'un agent monitor : il ne porte alors aucun
+identifiant SSH et rien de ce qui suit ne s'y applique.
+
 ## Flux de connexion
 
 ```text
@@ -17,17 +21,26 @@ Le modèle `Spi` (Server Parameter Info) contient :
 
 ```dart
 class Spi {
-  String id;         // Identifiant unique
-  String name;       // Nom du serveur
-  String ip;         // Adresse IP
-  int port;          // Port SSH (par défaut 22)
-  String user;       // Nom d'utilisateur
-  String? pwd;       // Mot de passe (chiffré)
-  String? keyId;     // ID de la clé SSH
-  String? jumpId;    // ID du serveur de rebond (Jump server)
-  String? alterUrl;  // URL alternative
+  String id;                      // Identifiant unique
+  String name;                    // Nom du serveur
+  SshCredential? ssh;             // null pour un serveur monitor
+  MonitorHttpCredential? monitorHttp;
+}
+
+final class SshCredential {
+  String ip;              // Adresse IP
+  int port;               // Port SSH (par défaut 22)
+  String user;            // Nom d'utilisateur
+  String? pwd;            // Mot de passe (chiffré)
+  String? keyId;          // ID de la clé SSH
+  String? alterUrl;       // URL alternative
+  List<String>? jumpIds;  // Chaîne de serveurs de rebond
+  String? proxyCommand;   // ProxyCommand, bureau uniquement
 }
 ```
+
+Une chaîne de rebond et un `ProxyCommand` s'excluent mutuellement ;
+`Spix.validate()` rejette un serveur qui définit les deux.
 
 ### Étape 2 : Génération du client
 
@@ -35,12 +48,13 @@ class Spi {
 
 ```dart
 Future<SSHClient> genClient(Spi spi) async {
+  final ssh = spi.ssh!;
   // 1. Établir le socket
-  var socket = await connect(spi.ip, spi.port);
+  var socket = await connect(ssh.ip, ssh.port);
 
   // 2. Essayer l'URL alternative en cas d'échec
-  if (socket == null && spi.alterUrl != null) {
-    socket = await connect(spi.alterUrl, spi.port);
+  if (socket == null && ssh.alterUrl != null) {
+    socket = await connect(ssh.alterUrl, ssh.port);
   }
 
   if (socket == null) {
@@ -50,9 +64,9 @@ Future<SSHClient> genClient(Spi spi) async {
   // 3. Authentifier
   final client = SSHClient(
     socket: socket,
-    username: spi.user,
-    onPasswordRequest: () => spi.pwd,
-    onIdentityRequest: () => loadKey(spi.keyId),
+    username: ssh.user,
+    onPasswordRequest: () => ssh.pwd,
+    onIdentityRequest: () => loadKey(ssh.keyId),
   );
 
   // 4. Vérifier la clé d'hôte
@@ -62,18 +76,33 @@ Future<SSHClient> genClient(Spi spi) async {
 }
 ```
 
-### Étape 3 : Serveur de rebond (si configuré)
+### Étape 3 : D'où vient le socket
 
-Pour les serveurs de rebond, connexion récursive :
+`genClient` résout l'une des trois sources ; tout ce qui se trouve au-dessus de
+`SSHSocket` est identique dans les trois cas :
+
+**Direct** — par défaut, `SSHSocket.connect(ip, port)`, avec repli sur
+`alterUrl` en cas d'échec.
+
+**Serveur de rebond** — connexion récursive, puis une redirection locale :
 
 ```dart
-if (spi.jumpId != null) {
-  final jumpClient = await genClient(getJumpSpi(spi.jumpId));
-  final forwarded = await jumpClient.forwardLocal(
-    spi.ip,
-    spi.port,
+for (final jumpId in spi.resolvedJumpIds) {
+  final jumpClient = await genClient(getJumpSpi(jumpId));
+  return await jumpClient.forwardLocal(ssh.ip, ssh.port);
+}
+```
+
+**ProxyCommand** — bureau uniquement, puisqu'un processus est lancé :
+
+```dart
+if (ssh.proxyCommand != null) {
+  return await ProxyCommandSocket.connect(
+    command: ssh.proxyCommand,
+    host: ssh.ip,
+    port: ssh.port,
+    user: ssh.user,
   );
-  // Se connecter via le socket transféré
 }
 ```
 
@@ -82,7 +111,7 @@ if (spi.jumpId != null) {
 ### Authentification par mot de passe
 
 ```dart
-onPasswordRequest: () => spi.pwd
+onPasswordRequest: () => ssh.pwd
 ```
 
 - Mot de passe stocké chiffré dans Hive
@@ -93,7 +122,7 @@ onPasswordRequest: () => spi.pwd
 
 ```dart
 onIdentityRequest: () async {
-  final key = await PrivateKeyStore.get(spi.keyId);
+  final key = await PrivateKeyStore.get(ssh.keyId);
   return decyptPem(key.pem, key.password);
 }
 ```

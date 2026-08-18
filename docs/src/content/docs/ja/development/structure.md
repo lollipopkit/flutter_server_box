@@ -13,10 +13,12 @@ flutter_server_box/
 ├── crates/
 │   ├── sbm_parser/    # 共有ステータス解析ライブラリ(単一の情報源。
 │   │                  # アプリは FFI 経由、monitor は直接依存)
-│   └── sbm_ffi/       # flutter_rust_bridge バインディング crate + cargokit
-│                      # Flutter プラグインシェル(同一ディレクトリ)
-├── monitor/           # サーバーサイド監視(Rust サービス + React フロントエンド)
-├── packages/          # ベンダリングした Dart フォーク(path 依存)
+│   ├── sbm_ffi/       # flutter_rust_bridge バインディング crate + cargokit
+│   │                  # Flutter プラグインシェル(同一ディレクトリ)
+│   └── sbm_native/    # プラットフォーム別のネイティブ採取(monitor 専用)
+├── monitor/           # サーバーサイド監視(Rust サービス + Svelte フロントエンド)
+├── packages/          # ベンダリングした Dart フォーク(path 依存)と
+│                      # webui: monitor と website が共用する Svelte UI
 ├── docs/              # このドキュメントサイト(Astro Starlight)
 ├── website/           # プロジェクトサイト
 └── Cargo.toml         # Rust workspace ルート
@@ -112,10 +114,19 @@ Hive ベースのローカルストレージ。
 - `fl_lib/` - 共有ユーティリティ
 - `fl_build/` - ビルドシステム
 
+このうち 1 つは Dart フォークではありません。`webui/`(`@serverbox/webui`)は
+共有の UI プリミティブと design token をまとめた Svelte パッケージで、
+`monitor/frontend` と `website/` の両方が `file:` 依存として参照しています。
+
 ## Rust 側
 
 - `crates/sbm_parser/` - コマンドの生出力を構造化されたサーバーステータスに解析。
   アプリ(FFI 経由)と monitor が共用し、両者の解析は常に一致します。
 - `crates/sbm_ffi/` - `sbm_parser` の薄い flutter_rust_bridge ラッパー。
   生成された Dart 側は `lib/src/rust/` にあります。
+- `crates/sbm_native/` - プラットフォーム別のネイティブ採取。monitor のみが使用
+  します。shell コマンドを実行せず、syscall または procfs から
+  cpu/メモリ/swap/ディスク/ネットワーク/uptime を直接読み取ります。アプリは依存
+  しません: アプリは SSH で採取するため、リモートホスト上で syscall を実行でき
+  ないからです。
 - `monitor/` - 独立した監視サービス。ドキュメントは `monitor/README.md`。

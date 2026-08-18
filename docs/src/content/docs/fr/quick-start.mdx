@@ -18,11 +18,26 @@ Suivez ce guide de démarrage rapide pour vous connecter à votre premier serveu
 
 4. Appuyez sur **Enregistrer** pour ajouter le serveur
 
+### Ajouter un serveur via un agent monitor
+
+Le sélecteur **SSH / Monitor HTTP** en haut du formulaire choisit la méthode de
+connexion. Avec **Monitor HTTP**, les champs de l'agent remplacent ceux de SSH :
+
+- **URL** : par exemple `https://1.2.3.4:3770`
+- **Monitor User** / **Monitor Password** : les identifiants du panneau de l'agent
+- **Monitor Ignore certificate** : pour un certificat auto-signé
+
+Un serveur ajouté ainsi ne porte aucun identifiant SSH. L'état et les graphiques
+fonctionnent immédiatement ; les commandes, le terminal et le navigateur de
+fichiers dépendent de ce que l'exploitant de l'agent a activé — voir le
+[README du monitor](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README.md).
+SFTP et la redirection de port ne sont pas disponibles sur un tel serveur :
+ajoutez-le par SSH si vous en avez besoin.
+
 ## Étape 2 : Connecter et surveiller
 
 1. Appuyez sur la carte de votre serveur pour vous connecter
-2. L'application établira une connexion SSH
-3. Vous verrez le statut en temps réel pour :
+2. Vous verrez le statut en temps réel pour :
    - L'utilisation du processeur (CPU)
    - La mémoire (RAM) et le Swap
    - L'utilisation du disque

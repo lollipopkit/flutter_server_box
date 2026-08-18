@@ -5,6 +5,10 @@ description: SSH 接続の確立と管理の仕組み
 
 Server Box における SSH 接続の仕組みについて解説します。
 
+このページは SSH で追加したサーバーについて述べます。サーバーは monitor agent の
+HTTP API 経由で追加することもでき、その場合は SSH 認証情報を一切持たないため、
+ここに書かれている内容は当てはまりません。
+
 ## 接続フロー
 
 ```text
@@ -17,17 +21,26 @@ Server Box における SSH 接続の仕組みについて解説します。
 
 ```dart
 class Spi {
-  String id;         // ユーザー ID / 一意の識別子
-  String name;       // サーバー名
-  String ip;         // IP アドレス
-  int port;          // SSH ポート (デフォルト 22)
-  String user;       // ユーザー名
-  String? pwd;       // パスワード (暗号化済み)
-  String? keyId;     // SSH キー ID
-  String? jumpId;    // 踏み台サーバー ID
-  String? alterUrl;  // 代替 URL
+  String id;                      // 一意の識別子
+  String name;                    // サーバー名
+  SshCredential? ssh;             // monitor サーバーでは null
+  MonitorHttpCredential? monitorHttp;
+}
+
+final class SshCredential {
+  String ip;              // IP アドレス
+  int port;               // SSH ポート (デフォルト 22)
+  String user;            // ユーザー名
+  String? pwd;            // パスワード (暗号化済み)
+  String? keyId;          // SSH キー ID
+  String? alterUrl;       // 代替 URL
+  List<String>? jumpIds;  // 踏み台サーバーの連鎖
+  String? proxyCommand;   // ProxyCommand、デスクトップのみ
 }
 ```
+
+踏み台の連鎖と `ProxyCommand` は排他的で、両方を設定したサーバーは
+`Spix.validate()` が拒否します。
 
 ### ステップ 2: クライアントの生成
 
@@ -35,12 +48,13 @@ class Spi {
 
 ```dart
 Future<SSHClient> genClient(Spi spi) async {
+  final ssh = spi.ssh!;
   // 1. ソケットを確立
-  var socket = await connect(spi.ip, spi.port);
+  var socket = await connect(ssh.ip, ssh.port);
 
   // 2. 失敗した場合は代替 URL を試行
-  if (socket == null && spi.alterUrl != null) {
-    socket = await connect(spi.alterUrl, spi.port);
+  if (socket == null && ssh.alterUrl != null) {
+    socket = await connect(ssh.alterUrl, ssh.port);
   }
 
   if (socket == null) {
@@ -50,9 +64,9 @@ Future<SSHClient> genClient(Spi spi) async {
   // 3. 認証
   final client = SSHClient(
     socket: socket,
-    username: spi.user,
-    onPasswordRequest: () => spi.pwd,
-    onIdentityRequest: () => loadKey(spi.keyId),
+    username: ssh.user,
+    onPasswordRequest: () => ssh.pwd,
+    onIdentityRequest: () => loadKey(ssh.keyId),
   );
 
   // 4. ホストキーを検証
@@ -62,18 +76,33 @@ Future<SSHClient> genClient(Spi spi) async {
 }
 ```
 
-### ステップ 3: 踏み台サーバー (設定されている場合)
+### ステップ 3: ソケットの供給元
 
-踏み台サーバーを経由する場合、再帰的に接続します。
+`genClient` は 3 つの供給元のいずれかを解決します。`SSHSocket` より上位は
+3 つのどの場合でも同一です。
+
+**直接接続** —— 既定の方法。`SSHSocket.connect(ip, port)` を使い、失敗したら
+`alterUrl` にフォールバックします。
+
+**踏み台サーバー** —— 再帰的に接続してからローカル転送します。
 
 ```dart
-if (spi.jumpId != null) {
-  final jumpClient = await genClient(getJumpSpi(spi.jumpId));
-  final forwarded = await jumpClient.forwardLocal(
-    spi.ip,
-    spi.port,
+for (final jumpId in spi.resolvedJumpIds) {
+  final jumpClient = await genClient(getJumpSpi(jumpId));
+  return await jumpClient.forwardLocal(ssh.ip, ssh.port);
+}
+```
+
+**ProxyCommand** —— プロセスを起動するため、デスクトップのみ。
+
+```dart
+if (ssh.proxyCommand != null) {
+  return await ProxyCommandSocket.connect(
+    command: ssh.proxyCommand,
+    host: ssh.ip,
+    port: ssh.port,
+    user: ssh.user,
   );
-  // 転送されたソケット経由で接続
 }
 ```
 
@@ -82,7 +111,7 @@ if (spi.jumpId != null) {
 ### パスワード認証
 
 ```dart
-onPasswordRequest: () => spi.pwd
+onPasswordRequest: () => ssh.pwd
 ```
 
 - パスワードは Hive に暗号化して保存されます。
@@ -93,7 +122,7 @@ onPasswordRequest: () => spi.pwd
 
 ```dart
 onIdentityRequest: () async {
-  final key = await PrivateKeyStore.get(spi.keyId);
+  final key = await PrivateKeyStore.get(ssh.keyId);
   return decyptPem(key.pem, key.password);
 }
 ```

@@ -88,7 +88,8 @@ description: Solutions aux problèmes fréquents
 **watchOS :**
 - Redémarrer l'application sur la montre
 - Attendre quelques minutes après un changement de configuration
-- Vérifier le format de l'URL
+- Vérifier qu'un agent monitor est configuré pour ce serveur — la montre ne peut
+  afficher que ceux qui en ont un
 
 ### Le widget affiche une erreur
 

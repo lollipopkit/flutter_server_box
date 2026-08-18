@@ -13,10 +13,12 @@ flutter_server_box/
 ├── crates/
 │   ├── sbm_parser/    # Parseur d'état partagé (source unique de vérité,
 │   │                  # app via FFI, monitor en dépendance directe)
-│   └── sbm_ffi/       # Crate de liaison flutter_rust_bridge + coquille
-│                      # de plugin Flutter cargokit (même répertoire)
-├── monitor/           # Monitor côté serveur (service Rust + frontend React)
-├── packages/          # Forks Dart vendorisés (dépendances par chemin)
+│   ├── sbm_ffi/       # Crate de liaison flutter_rust_bridge + coquille
+│   │                  # de plugin Flutter cargokit (même répertoire)
+│   └── sbm_native/    # Échantillonnage natif par plateforme (monitor seul)
+├── monitor/           # Monitor côté serveur (service Rust + frontend Svelte)
+├── packages/          # Forks Dart vendorisés (dépendances par chemin), plus
+│                      # webui : UI Svelte partagée par monitor et website
 ├── docs/              # Ce site de documentation (Astro Starlight)
 ├── website/           # Site du projet
 └── Cargo.toml         # Racine du workspace Rust
@@ -112,10 +114,19 @@ Contient les forks personnalisés des dépendances :
 - `fl_lib/` - Utilitaires partagés
 - `fl_build/` - Système de construction
 
+Un répertoire ici n'est pas un fork Dart : `webui/` (`@serverbox/webui`) est un
+paquet Svelte de primitives d'interface et de jetons de design partagés, utilisé
+en dépendance `file:` par `monitor/frontend` et par `website/`.
+
 ## Côté Rust
 
 - `crates/sbm_parser/` - Analyse la sortie brute des commandes en état de serveur structuré.
   Partagé par l'app (via FFI) et le monitor, les deux analysent donc toujours à l'identique.
 - `crates/sbm_ffi/` - Fine enveloppe flutter_rust_bridge autour de `sbm_parser`.
   Le côté Dart généré se trouve dans `lib/src/rust/`.
+- `crates/sbm_native/` - Échantillonnage natif par plateforme, utilisé uniquement
+  par le monitor. Il lit cpu/mémoire/swap/disque/réseau/uptime directement via
+  des appels système ou procfs, sans exécuter de commandes shell. L'app n'en
+  dépend pas : elle collecte via SSH et ne peut pas exécuter d'appels système
+  sur un hôte distant.
 - `monitor/` - Service de surveillance autonome, documentation dans `monitor/README.md`.

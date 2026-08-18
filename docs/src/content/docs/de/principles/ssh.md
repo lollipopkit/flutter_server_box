@@ -5,6 +5,10 @@ description: Wie SSH-Verbindungen aufgebaut und verwaltet werden
 
 Verständnis der SSH-Verbindungen in Server Box.
 
+Diese Seite behandelt Server, die über SSH hinzugefügt wurden. Ein Server kann
+stattdessen über die HTTP-API eines Monitor-Agents hinzugefügt werden; dann
+trägt er keinerlei SSH-Zugangsdaten und nichts hier trifft auf ihn zu.
+
 ## Verbindungsablauf
 
 ```text
@@ -17,17 +21,26 @@ Das `Spi` (Server Parameter Info) Modell enthält:
 
 ```dart
 class Spi {
-  String id;         // eindeutige ID / unique identifier
-  String name;       // Servername
-  String ip;         // IP-Adresse
-  int port;          // SSH-Port (Standard 22)
-  String user;       // Benutzername
-  String? pwd;       // Passwort (verschlüsselt)
-  String? keyId;     // SSH-Schlüssel-ID
-  String? jumpId;    // Jump-Server-ID
-  String? alterUrl;  // Alternative URL
+  String id;                      // eindeutige ID
+  String name;                    // Servername
+  SshCredential? ssh;             // null bei einem Monitor-Server
+  MonitorHttpCredential? monitorHttp;
+}
+
+final class SshCredential {
+  String ip;              // IP-Adresse
+  int port;               // SSH-Port (Standard 22)
+  String user;            // Benutzername
+  String? pwd;            // Passwort (verschlüsselt)
+  String? keyId;          // SSH-Schlüssel-ID
+  String? alterUrl;       // Alternative URL
+  List<String>? jumpIds;  // Kette von Jump-Servern
+  String? proxyCommand;   // ProxyCommand, nur Desktop
 }
 ```
+
+Eine Jump-Kette und ein `ProxyCommand` schließen sich gegenseitig aus;
+`Spix.validate()` weist einen Server zurück, der beides setzt.
 
 ### Schritt 2: Client-Generierung
 
@@ -35,12 +48,13 @@ class Spi {
 
 ```dart
 Future<SSHClient> genClient(Spi spi) async {
+  final ssh = spi.ssh!;
   // 1. Socket aufbauen
-  var socket = await connect(spi.ip, spi.port);
+  var socket = await connect(ssh.ip, ssh.port);
 
   // 2. Alternative URL versuchen, falls fehlgeschlagen
-  if (socket == null && spi.alterUrl != null) {
-    socket = await connect(spi.alterUrl, spi.port);
+  if (socket == null && ssh.alterUrl != null) {
+    socket = await connect(ssh.alterUrl, ssh.port);
   }
 
   if (socket == null) {
@@ -50,9 +64,9 @@ Future<SSHClient> genClient(Spi spi) async {
   // 3. Authentifizieren
   final client = SSHClient(
     socket: socket,
-    username: spi.user,
-    onPasswordRequest: () => spi.pwd,
-    onIdentityRequest: () => loadKey(spi.keyId),
+    username: ssh.user,
+    onPasswordRequest: () => ssh.pwd,
+    onIdentityRequest: () => loadKey(ssh.keyId),
   );
 
   // 4. Host-Key verifizieren
@@ -62,18 +76,33 @@ Future<SSHClient> genClient(Spi spi) async {
 }
 ```
 
-### Schritt 3: Jump-Server (falls konfiguriert)
+### Schritt 3: Woher der Socket kommt
 
-Für Jump-Server, rekursive Verbindung:
+`genClient` löst eine von drei Quellen auf; alles oberhalb von `SSHSocket` ist in
+allen drei Fällen identisch:
+
+**Direkt** — der Standard, `SSHSocket.connect(ip, port)`, mit Rückfall auf
+`alterUrl`, wenn er fehlschlägt.
+
+**Jump-Server** — rekursive Verbindung, dann eine lokale Weiterleitung:
 
 ```dart
-if (spi.jumpId != null) {
-  final jumpClient = await genClient(getJumpSpi(spi.jumpId));
-  final forwarded = await jumpClient.forwardLocal(
-    spi.ip,
-    spi.port,
+for (final jumpId in spi.resolvedJumpIds) {
+  final jumpClient = await genClient(getJumpSpi(jumpId));
+  return await jumpClient.forwardLocal(ssh.ip, ssh.port);
+}
+```
+
+**ProxyCommand** — nur auf dem Desktop, da ein Prozess gestartet wird:
+
+```dart
+if (ssh.proxyCommand != null) {
+  return await ProxyCommandSocket.connect(
+    command: ssh.proxyCommand,
+    host: ssh.ip,
+    port: ssh.port,
+    user: ssh.user,
   );
-  // Über weitergeleiteten Socket verbinden
 }
 ```
 
@@ -82,7 +111,7 @@ if (spi.jumpId != null) {
 ### Passwort-Authentifizierung
 
 ```dart
-onPasswordRequest: () => spi.pwd
+onPasswordRequest: () => ssh.pwd
 ```
 
 - Passwort verschlüsselt in Hive gespeichert
@@ -93,7 +122,7 @@ onPasswordRequest: () => spi.pwd
 
 ```dart
 onIdentityRequest: () async {
-  final key = await PrivateKeyStore.get(spi.keyId);
+  final key = await PrivateKeyStore.get(ssh.keyId);
   return decyptPem(key.pem, key.password);
 }
 ```

@@ -25,7 +25,7 @@ Les tests se trouvent dans le répertoire `test/`. La suite actuelle est princip
 L'analyse d'état vit dans le workspace Rust partagé :
 
 ```bash
-# Tous les tests Rust (parseur, coquille FFI, monitor)
+# Tous les tests Rust (parseur, échantillonneur natif, coquille FFI, monitor)
 cargo test --workspace
 
 # Test de parité FFI : vérifie que le côté Dart obtient des résultats
@@ -35,6 +35,36 @@ flutter test test/frb_parser_test.dart
 ```
 
 `crates/sbm_parser/tests/dart_compat.rs` fige le comportement du parseur par rapport à la suite de fixtures Dart d'origine.
+
+### Tests optionnels
+
+Deux suites demandent un hôte réel et sont ignorées silencieusement sans lui :
+
+```bash
+# SSH de bout en bout : téléverse le script généré sur un hôte distant,
+# l'exécute et compare le résultat analysé à la sortie directe des commandes.
+# Définir d'abord SBM_E2E_SSH_HOST=<destination ssh ou alias ~/.ssh/config>
+# dans le .env à la racine du workspace.
+cargo test -p sbm_parser --test ssh_e2e
+
+# Terminal du monitor face à un vrai sshd, plutôt qu'au faux en mémoire de
+# monitor/tests/fake_sshd/. Nécessite SBM_E2E_TERMINAL_*.
+cargo test -p server_box_monitor --test terminal_ws
+```
+
+## Tests du panneau monitor
+
+Le frontend Svelte du monitor possède sa propre suite (vitest +
+@testing-library/svelte) :
+
+```bash
+cd monitor/frontend
+npm run test
+npm run test:coverage
+
+# Vérification de types, également incluse dans `npm run build`
+npm run check
+```
 
 ## Tests unitaires
 
