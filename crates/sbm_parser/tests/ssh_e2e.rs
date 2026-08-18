@@ -22,6 +22,9 @@ use sbm_parser::script::{self, ScriptOptions, ShellFunc};
 use sbm_parser::SystemType;
 use std::io::Write;
 use std::process::{Command, Stdio};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 const REMOTE_DIR: &str = "/tmp/server_box_e2e";
 
@@ -52,30 +55,96 @@ fn restore_custom_cmd_dir(host: &str, dir: &str) {
     );
 }
 
-/// Run a command on the remote via the system ssh (BatchMode: never prompts).
-/// `stdin` is piped to the remote command when given.
-/// The command is wrapped in `sh -c` so POSIX syntax works regardless of the
-/// remote login shell (fish/zsh would otherwise reject `if ...; fi` etc.)
-fn ssh(host: &str, cmd: &str, stdin: Option<&str>) -> Result<String, String> {
-    let quoted = format!("sh -c '{}'", cmd.replace('\'', r"'\''"));
+/// Options every helper here passes to the system `ssh`.
+///
+/// `ConnectTimeout` bounds the TCP connect and the handshake and nothing after
+/// them. Once a session is up, an unresponsive peer — the Windows host
+/// suspending mid-test is the one seen — leaves the client waiting with no
+/// limit at all: one such `ssh` was found still attached to the install step
+/// sixteen hours later, long after the run that spawned it was gone. The
+/// keepalive turns that into a failed test in ~15s, which is the only outcome
+/// the suite can act on.
+const SSH_OPTS: [&str; 8] = [
+    "-o",
+    "BatchMode=yes",
+    "-o",
+    "ConnectTimeout=10",
+    "-o",
+    "ServerAliveInterval=5",
+    "-o",
+    "ServerAliveCountMax=3",
+];
+
+/// How long any one remote command may take before the suite gives up on it.
+///
+/// The keepalive above only covers a peer that has stopped answering. A peer
+/// that answers and still never finishes the command is the case actually
+/// observed — the Windows install step, whose PowerShell reads stdin to EOF,
+/// has been found sitting there with the connection alive. Whatever the remote
+/// side of that is, an e2e test has to end, and a killed command that names
+/// itself is the only ending the suite can report.
+const SSH_TIMEOUT: Duration = Duration::from_secs(120);
+
+/// Spawn `ssh <host> <arg>`, feed it `stdin` if given, and collect its output.
+///
+/// The write goes on its own thread because `wait_with_output` is what drains
+/// stdout and stderr: writing the whole script first, as this used to, blocks
+/// the moment the remote's output fills the local pipe buffer while the remote
+/// blocks on the rest of the input. It has not bitten here only because the
+/// commands given input print nothing.
+fn run_ssh(host: &str, arg: &str, stdin: Option<&str>) -> Result<std::process::Output, String> {
     let mut child = Command::new("ssh")
-        .args(["-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host, &quoted])
+        .args(SSH_OPTS)
+        .args([host, arg])
         .stdin(if stdin.is_some() { Stdio::piped() } else { Stdio::null() })
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| format!("failed to spawn ssh: {e}"))?;
-    if let Some(input) = stdin {
-        child
-            .stdin
-            .take()
-            .expect("stdin piped")
-            .write_all(input.as_bytes())
-            .map_err(|e| format!("failed to write ssh stdin: {e}"))?;
-    }
+    // Dropping the pipe closes it, which is the EOF the remote reader waits on
+    let writer = stdin.map(|input| {
+        let mut pipe = child.stdin.take().expect("stdin piped");
+        let input = input.to_owned();
+        std::thread::spawn(move || pipe.write_all(input.as_bytes()))
+    });
+
+    // Killed by pid rather than through the `Child`, which `wait_with_output`
+    // consumes. `done` is what keeps the watchdog from outliving the command it
+    // watches and killing a pid the OS has since handed to something else.
+    let pid = child.id();
+    let done = Arc::new(AtomicBool::new(false));
+    let watchdog = {
+        let done = Arc::clone(&done);
+        std::thread::spawn(move || {
+            let deadline = Instant::now() + SSH_TIMEOUT;
+            while Instant::now() < deadline {
+                if done.load(Ordering::Relaxed) {
+                    return false;
+                }
+                std::thread::sleep(Duration::from_millis(200));
+            }
+            let _ = Command::new("kill").arg("-9").arg(pid.to_string()).status();
+            true
+        })
+    };
+
     let out = child
         .wait_with_output()
         .map_err(|e| format!("ssh wait failed: {e}"))?;
+    done.store(true, Ordering::Relaxed);
+    if watchdog.join().unwrap_or(false) {
+        return Err(format!("ssh command {arg:?} killed after {}s", SSH_TIMEOUT.as_secs()));
+    }
+    if let Some(writer) = writer {
+        writer
+            .join()
+            .map_err(|_| "ssh stdin writer panicked".to_string())?
+            .map_err(|e| format!("failed to write ssh stdin: {e}"))?;
+    }
+    Ok(out)
+}
+
+fn check_ssh(cmd: &str, out: std::process::Output) -> Result<String, String> {
     if !out.status.success() {
         return Err(format!(
             "ssh command {cmd:?} exited with {}: {}",
@@ -86,36 +155,20 @@ fn ssh(host: &str, cmd: &str, stdin: Option<&str>) -> Result<String, String> {
     Ok(String::from_utf8_lossy(&out.stdout).into_owned())
 }
 
+/// Run a command on the remote via the system ssh (BatchMode: never prompts).
+/// `stdin` is piped to the remote command when given.
+/// The command is wrapped in `sh -c` so POSIX syntax works regardless of the
+/// remote login shell (fish/zsh would otherwise reject `if ...; fi` etc.)
+fn ssh(host: &str, cmd: &str, stdin: Option<&str>) -> Result<String, String> {
+    let quoted = format!("sh -c '{}'", cmd.replace('\'', r"'\''"));
+    check_ssh(cmd, run_ssh(host, &quoted, stdin)?)
+}
+
 /// Like [`ssh`] but passes the command to the remote default shell verbatim
 /// (no `sh -c` wrap) — for Windows remotes, where commands are either
 /// shell-agnostic (`powershell -File`/-EncodedCommand) or plain cmd built-ins
 fn ssh_raw(host: &str, cmd: &str, stdin: Option<&str>) -> Result<String, String> {
-    let mut child = Command::new("ssh")
-        .args(["-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host, cmd])
-        .stdin(if stdin.is_some() { Stdio::piped() } else { Stdio::null() })
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("failed to spawn ssh: {e}"))?;
-    if let Some(input) = stdin {
-        child
-            .stdin
-            .take()
-            .expect("stdin piped")
-            .write_all(input.as_bytes())
-            .map_err(|e| format!("failed to write ssh stdin: {e}"))?;
-    }
-    let out = child
-        .wait_with_output()
-        .map_err(|e| format!("ssh wait failed: {e}"))?;
-    if !out.status.success() {
-        return Err(format!(
-            "ssh command {cmd:?} exited with {}: {}",
-            out.status,
-            String::from_utf8_lossy(&out.stderr)
-        ));
-    }
-    Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    check_ssh(cmd, run_ssh(host, cmd, stdin)?)
 }
 
 /// Like [`ssh`] but returns stdout regardless of exit status — for tools that
@@ -123,10 +176,7 @@ fn ssh_raw(host: &str, cmd: &str, stdin: Option<&str>) -> Result<String, String>
 /// detected chips), mirroring the script's `exec 2>/dev/null` tolerance
 fn ssh_stdout(host: &str, cmd: &str) -> String {
     let quoted = format!("sh -c '{}'", cmd.replace('\'', r"'\''"));
-    Command::new("ssh")
-        .args(["-o", "BatchMode=yes", "-o", "ConnectTimeout=10", host, &quoted])
-        .stdin(Stdio::null())
-        .output()
+    run_ssh(host, &quoted, None)
         .map(|out| String::from_utf8_lossy(&out.stdout).into_owned())
         .unwrap_or_default()
 }
