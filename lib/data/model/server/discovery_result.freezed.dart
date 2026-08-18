@@ -15,7 +15,10 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SshDiscoveryResult {
 
- String get ip; int get port; String? get banner; bool get isSelected;
+ String get ip; int get port; String? get banner;/// TODO: delete. Nothing sets or reads it — a sweep is picked from one
+/// host at a time now, so which rows are ticked was never state the model
+/// had to carry. Kept for one release so a persisted report still parses.
+ bool get isSelected;
 /// Create a copy of SshDiscoveryResult
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -218,6 +221,9 @@ class _SshDiscoveryResult implements SshDiscoveryResult {
 @override final  String ip;
 @override final  int port;
 @override final  String? banner;
+/// TODO: delete. Nothing sets or reads it — a sweep is picked from one
+/// host at a time now, so which rows are ticked was never state the model
+/// had to carry. Kept for one release so a persisted report still parses.
 @override@JsonKey() final  bool isSelected;
 
 /// Create a copy of SshDiscoveryResult

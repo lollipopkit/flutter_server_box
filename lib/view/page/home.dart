@@ -8,14 +8,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/sync.dart';
+import 'package:server_box/core/utils/desktop_shortcuts.dart';
 import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
+import 'package:server_box/view/page/agent/shell.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
 import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/widget/dmg_notice.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -32,18 +36,16 @@ class _HomePageState extends ConsumerState<HomePage>
         AutomaticKeepAliveClientMixin,
         AfterLayoutMixin,
         WidgetsBindingObserver,
-        GlobalRef,
-        RestorationMixin {
-  // Restorable state for current tab index
-  final RestorableInt _restorableTabIndex = RestorableInt(0);
-
-  @override
-  String get restorationId => 'home_page';
-
-  @override
-  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    registerForRestoration(_restorableTabIndex, 'tab_index');
-  }
+        GlobalRef {
+  /// Which tab to come back to.
+  ///
+  /// A store, not `RestorableInt`. Flutter's restoration is dead in this app —
+  /// `restoreState` runs, registration succeeds, the value reads back within
+  /// the session, and a relaunch has nothing, because the route
+  /// `MaterialApp.home` builds hands its subtree no bucket
+  /// (`test/restoration_bucket_test.dart`). So this always came back 0, and
+  /// nothing said so.
+  final _tabIndex = Stores.history.homeTabIndex;
 
   late final PageController _pageController;
 
@@ -59,7 +61,6 @@ class _HomePageState extends ConsumerState<HomePage>
 
   @override
   void dispose() {
-    _restorableTabIndex.dispose();
     if (isMobile) {
       SystemUIs.switchStatusBar(hide: false);
     }
@@ -76,6 +77,7 @@ class _HomePageState extends ConsumerState<HomePage>
     _pageController.dispose();
     WakelockPlus.disable();
 
+    _selectIndex.removeListener(_publishCurrentTab);
     _selectIndex.dispose();
     super.dispose();
   }
@@ -99,6 +101,34 @@ class _HomePageState extends ConsumerState<HomePage>
     Stores.setting.serverStatusUpdateInterval.listenable().addListener(
       _handleRefreshIntervalChanged,
     );
+
+    // One listener rather than a call beside every assignment: the index is
+    // set from the bar, the rail, a request from another page and restoration,
+    // and one of those would eventually be forgotten.
+    _selectIndex.addListener(_publishCurrentTab);
+  }
+
+  /// Re-announces the tab after a hot reload.
+  ///
+  /// Neither `initState` nor `afterFirstLayout` runs again when the code
+  /// changes under a running app, so a value published once from those is
+  /// whatever it was before — and for the first reload after this provider was
+  /// added, that is nothing at all. The floating Agent then believes it is
+  /// never on the Agent tab and shows itself beside the page it duplicates.
+  @override
+  void reassemble() {
+    super.reassemble();
+    _publishCurrentTab();
+  }
+
+  /// Tells [currentHomeTabProvider] where the app ended up.
+  ///
+  /// Only ever called from a callback or a post-frame hook — never from
+  /// `build`, which is not allowed to write to a provider.
+  void _publishCurrentTab() {
+    final index = _selectIndex.value;
+    if (index < 0 || index >= _tabs.length) return;
+    ref.read(currentHomeTabProvider.notifier).update(_tabs[index]);
   }
 
   @override
@@ -145,6 +175,15 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    // Something elsewhere asked for a tab — opening a terminal from the server
+    // list, say. Acted on here because this page owns the controller and the
+    // animation; the caller only says where it wants to be.
+    ref.listen(homeTabRequestProvider, (_, tab) {
+      if (tab == null) return;
+      final index = _tabs.indexOf(tab);
+      if (index >= 0) _onDestinationSelected(index);
+      ref.read(homeTabRequestProvider.notifier).done();
+    });
     final isMobile = ResponsiveBreakpoints.of(context).isMobile;
     _syncFullscreenSystemUi();
 
@@ -158,12 +197,19 @@ class _HomePageState extends ConsumerState<HomePage>
               controller: _pageController,
               itemCount: _tabs.length,
               physics: const NeverScrollableScrollPhysics(),
-              itemBuilder: (_, index) => _tabs[index].page,
+              // Each tab keeps its own stack, so a page opened inside one —
+              // a server's details, its files — covers the tab and not the
+              // window. The bar or rail that got you here stays put, and
+              // coming back to a tab returns you to where you were in it.
+              itemBuilder: (_, index) => NestedNavigator(
+                key: ValueKey(_tabs[index]),
+                rootBuilder: (_) => _tabs[index].page,
+              ),
               onPageChanged: (value) {
                 FocusScope.of(context).unfocus();
                 if (!_switchingPage) {
                   _selectIndex.value = value;
-                  _restorableTabIndex.value = value;
+                  _tabIndex.put(value);
                 }
                 _syncFullscreenSystemUi();
               },
@@ -174,16 +220,55 @@ class _HomePageState extends ConsumerState<HomePage>
       bottomNavigationBar: isMobile ? _buildBottomBar() : null,
     );
 
+    // Above the `PageView` rather than inside a tab: the Agent floats over
+    // whichever tab you are on, so it cannot belong to one of them.
+    //
+    // The shell is told how big this box actually is rather than reading
+    // `MediaQuery.sizeOf`. Those are not the same number — everything between
+    // the window and here, the responsive builder included, is free to hand
+    // down less than it got — and keeping a panel inside the window is not the
+    // same as keeping it inside the area it is painted in.
+    final withShell = LayoutBuilder(
+      builder: (_, constraints) => Stack(
+        children: [
+          mainContent,
+          AgentFloatingShell(area: constraints.biggest),
+        ],
+      ),
+    );
+
+    // The shortcuts, on every desktop. macOS additionally gets a menu bar,
+    // which is where a shortcut is *discovered* — but the menu bar is a macOS
+    // API, and until now it was also the only thing that bound the keys, so
+    // Linux and Windows had no way to switch tabs from the keyboard at all.
+    final withKeys = !isDesktop
+        ? withShell
+        : CallbackShortcuts(
+            bindings: desktopShortcuts(
+              tabCount: _tabs.length,
+              onTab: _onDestinationSelected,
+              onSettings: () => SettingsPage.route.go(context),
+            ),
+            // Focused so the bindings are reachable without clicking
+            // something first, and skipping traversal so Tab still walks the
+            // actual controls.
+            child: Focus(
+              autofocus: true,
+              skipTraversal: true,
+              child: withShell,
+            ),
+          );
+
     if (Platform.isMacOS) {
       return PlatformMenuBar(
         menus: MacOSMenuBarManager.buildMenuBar(
           context,
           _onDestinationSelected,
         ),
-        child: mainContent,
+        child: withKeys,
       );
     }
-    return mainContent;
+    return withKeys;
   }
 
   Widget _buildBottomBar() {
@@ -257,13 +342,18 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   Future<void> afterFirstLayout(BuildContext context) async {
     // Auth required for first launch
-    // Restore tab index from restoration if available
-    if (_restorableTabIndex.value >= 0 && _restorableTabIndex.value < _tabs.length) {
-      _selectIndex.value = _restorableTabIndex.value;
+    // Where it was left, if that is still a tab: the enabled set is a setting
+    // and may have shrunk since.
+    final saved = _tabIndex.fetch();
+    if (saved >= 0 && saved < _tabs.length) {
+      _selectIndex.value = saved;
       if (_pageController.hasClients) {
-        _pageController.jumpToPage(_restorableTabIndex.value);
+        _pageController.jumpToPage(saved);
       }
     }
+    // Explicitly, because the listener above only fires on a change: the first
+    // tab is usually already the value, and nothing would have announced it.
+    _publishCurrentTab();
     _goAuth();
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
@@ -272,8 +362,16 @@ class _HomePageState extends ConsumerState<HomePage>
         githubReleasesUrl: Urls.githubReleasesApi,
         storeUrl: Urls.appStore,
         context: context,
+        noticeBuilder: (ctx) => DmgNotice.forUpdate(
+          ctx,
+          build: AppUpdateIface.newestBuild.value ?? BuildData.build,
+        ),
       );
     }
+
+    // Says so when this launch took over the sandboxed build's data, or when
+    // it could not — see [SandboxImport].
+    unawaited(SandboxImportNotice.showIfNeeded(context));
     unawaited(MethodChans.updateHomeWidget());
     await _notifier.refresh();
 
@@ -294,7 +392,7 @@ class _HomePageState extends ConsumerState<HomePage>
     if (_selectIndex.value == index) return;
     if (index < 0 || index >= _tabs.length) return;
     _selectIndex.value = index;
-    _restorableTabIndex.value = index;
+    _tabIndex.put(index);
     _switchingPage = true;
     _pageController.animateToPage(
       index,
@@ -358,8 +456,12 @@ extension _HomePageStateActions on _HomePageState {
     setState(() {
       _tabs = newTabs;
       _selectIndex.value = clampedIndex;
-      _restorableTabIndex.value = clampedIndex;
+      _tabIndex.put(clampedIndex);
     });
+
+    // The index alone does not say which tab it is any more — the list under
+    // it just changed — and it may well not have moved.
+    _publishCurrentTab();
 
     if (clampedIndex != previousIndex && _pageController.hasClients) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -1,27 +1,15 @@
-import 'package:fl_chart/fl_chart.dart';
-import 'package:fl_lib/fl_lib.dart';
 import 'package:server_box/data/model/server/time_seq.dart';
-import 'package:server_box/data/res/status.dart';
-
-/// Capacity of the FIFO queue
-const _kCap = 30;
 
 class Cpus extends TimeSeq<SingleCpuCore> {
-  Cpus(super.init1, super.init2);
+  Cpus();
 
-  Cpus.copy(Cpus source)
-    : super(
-        source.pre.toList(growable: false),
-        source.now.toList(growable: false),
-      ) {
+  Cpus.copy(Cpus source) : super.copy(source) {
     brand.addAll(source.brand);
     _coresCount = source._coresCount;
-    _totalDelta = source._totalDelta;
     _user = source._user;
     _sys = source._sys;
     _iowait = source._iowait;
     _idle = source._idle;
-    _spots.addAll(source._spots.map(Fifo<FlSpot>.copy));
   }
 
   final Map<String, int> brand = {};
@@ -29,95 +17,48 @@ class Cpus extends TimeSeq<SingleCpuCore> {
   @override
   void onUpdate() {
     _coresCount = now.length;
-    if (pre.isEmpty || now.isEmpty || pre.length != now.length) {
-      _totalDelta = 0;
-      _user = 0;
-      _sys = 0;
-      _iowait = 0;
-      _idle = 0;
-      return;
-    }
-    _totalDelta = now[0].total - pre[0].total;
-    _user = _getUser();
-    _sys = _getSys();
-    _iowait = _getIowait();
-    _idle = _getIdle();
-    _updateSpots();
+    _user = _share((c) => c.user);
+    _sys = _share((c) => c.sys);
+    _iowait = _share((c) => c.iowait);
+    final used = usedPercent();
+    _idle = used == null ? null : 100 - used;
   }
 
-  double usedPercent({int coreIdx = 0}) {
-    if (now.length != pre.length) return 0;
-    if (now.isEmpty) return 0;
-    if (coreIdx >= now.length) return 0;
-    try {
-      final idleDelta = now[coreIdx].idle - pre[coreIdx].idle;
-      final totalDelta = now[coreIdx].total - pre[coreIdx].total;
-      if (totalDelta == 0) return 0;
-      final used = idleDelta / totalDelta;
-      return used.isNaN ? 0 : 100 - used * 100;
-    } catch (e, s) {
-      Loggers.app.warning('Cpus.usedPercent()', e, s);
-      return 0;
-    }
+  /// Share of the aggregate ("cpu", index 0) window spent in one field.
+  /// `null` whenever the window itself is unusable — see [TimeSeq.hasWindow].
+  double? _share(int Function(SingleCpuCore) field) {
+    if (!hasWindow) return null;
+    final total = counterDelta(pre[0].total, now[0].total);
+    final delta = counterDelta(field(pre[0]), field(now[0]));
+    if (total == null || delta == null || total == 0) return null;
+    return delta / total * 100;
+  }
+
+  /// Busy share of [coreIdx] over the last window, 0-100, or `null` when
+  /// there is no usable window yet. Callers must render that as "no reading",
+  /// not as 0 — a fabricated 0 is indistinguishable from a genuinely idle CPU.
+  double? usedPercent({int coreIdx = 0}) {
+    if (!hasWindow || coreIdx >= now.length) return null;
+    final total = counterDelta(pre[coreIdx].total, now[coreIdx].total);
+    final idle = counterDelta(pre[coreIdx].idle, now[coreIdx].idle);
+    if (total == null || idle == null || total == 0) return null;
+    return (100 - idle / total * 100).clamp(0, 100);
   }
 
   int _coresCount = 0;
   int get coresCount => _coresCount;
 
-  int _totalDelta = 0;
-  int get totalDelta => _totalDelta;
+  double? _user;
+  double? get user => _user;
 
-  double _user = 0;
-  double get user => _user;
-  double _getUser() {
-    if (now.length != pre.length) return 0;
-    final delta = now[0].user - pre[0].user;
-    final used = delta / totalDelta;
-    return used.isNaN ? 0 : used * 100;
-  }
+  double? _sys;
+  double? get sys => _sys;
 
-  double _sys = 0;
-  double get sys => _sys;
-  double _getSys() {
-    if (now.length != pre.length) return 0;
-    final delta = now[0].sys - pre[0].sys;
-    final used = delta / totalDelta;
-    return used.isNaN ? 0 : used * 100;
-  }
+  double? _iowait;
+  double? get iowait => _iowait;
 
-  double _iowait = 0;
-  double get iowait => _iowait;
-  double _getIowait() {
-    if (now.length != pre.length) return 0;
-    final delta = now[0].iowait - pre[0].iowait;
-    final used = delta / totalDelta;
-    return used.isNaN ? 0 : used * 100;
-  }
-
-  double _idle = 0;
-  double get idle => _idle;
-  double _getIdle() => 100 - usedPercent();
-
-  void _coresLoop(void Function(int i) callback) {
-    /// Only use cpu0
-    callback(0);
-  }
-
-  /// [core1, core2]
-  /// core1: [FlSpot(0, 10), FlSpot(1, 20), FlSpot(2, 30)]
-  final _spots = <Fifo<FlSpot>>[];
-  List<Fifo<FlSpot>> get spots => _spots;
-  void _updateSpots() {
-    _coresLoop((i) {
-      if (i >= _spots.length) {
-        _spots.add(Fifo(capacity: _kCap));
-      } else {
-        final item = _spots[i];
-        final spot = FlSpot(item.count.toDouble(), usedPercent(coreIdx: i));
-        item.add(spot);
-      }
-    });
-  }
+  double? _idle;
+  double? get idle => _idle;
 }
 
 class SingleCpuCore extends TimeSeqIface<SingleCpuCore> {
@@ -145,161 +86,6 @@ class SingleCpuCore extends TimeSeqIface<SingleCpuCore> {
 
   @override
   bool same(SingleCpuCore other) => id == other.id;
-
-  static List<SingleCpuCore> parse(String raw) {
-    final List<SingleCpuCore> cpus = [];
-
-    for (var item in raw.split('\n')) {
-      item = item.trim();
-      if (item.isEmpty) continue;
-      final matches = item.split(RegExp(r'\s+'));
-      if (!RegExp(r'^cpu\d*$').hasMatch(matches.first)) break;
-      if (matches.length < 8) continue;
-      try {
-        cpus.add(
-          SingleCpuCore(
-            matches[0],
-            int.parse(matches[1]),
-            int.parse(matches[2]),
-            int.parse(matches[3]),
-            int.parse(matches[4]),
-            int.parse(matches[5]),
-            int.parse(matches[6]),
-            int.parse(matches[7]),
-          ),
-        );
-      } catch (e, trace) {
-        Loggers.app.warning('Skip malformed CPU row: $item', e, trace);
-      }
-    }
-    return cpus;
-  }
 }
 
-final class CpuBrand {
-  static Map<String, int> parse(String raw) {
-    final lines = raw.split('\n');
-    // {brand: count}
-    final brands = <String, int>{};
-    for (var line in lines) {
-      if (line.contains('model name')) {
-        final model = line.split(':').last.trim();
-        final count = brands[model] ?? 0;
-        brands[model] = count + 1;
-      }
-    }
-    return brands;
-  }
-}
-
-final _bsdCpuPercentReg = RegExp(r'(-?\d+(?:\.\d+)?)%');
-final _macCpuPercentReg = RegExp(
-  r'CPU usage: ([\d.]+)% user, ([\d.]+)% sys, ([\d.]+)% idle',
-);
-final _freebsdCpuPercentReg = RegExp(
-  r'CPU: ([\d.]+)% user, ([\d.]+)% nice, ([\d.]+)% system, '
-  r'([\d.]+)% interrupt, ([\d.]+)% idle',
-);
-
-/// Parse CPU status on BSD system with support for different BSD variants
-///
-/// Supports multiple formats:
-/// - macOS: "CPU usage: 14.70% user, 12.76% sys, 72.52% idle"
-/// - FreeBSD: "CPU: 5.2% user, 0.0% nice, 3.1% system, 0.1% interrupt, 91.6% idle"
-/// - Generic BSD: fallback to percentage extraction
-Cpus parseBsdCpu(String raw) {
-  final init = InitStatus.cpus;
-
-  // Try macOS format first
-  final macMatch = _macCpuPercentReg.firstMatch(raw);
-  if (macMatch != null) {
-    final userPercent = double.parse(macMatch.group(1)!).toInt();
-    final sysPercent = double.parse(macMatch.group(2)!).toInt();
-    final idlePercent = double.parse(macMatch.group(3)!).toInt();
-
-    init.add([
-      SingleCpuCore(
-        'cpu0',
-        userPercent,
-        sysPercent,
-        0, // nice
-        idlePercent,
-        0, // iowait
-        0, // irq
-        0, // softirq
-      ),
-    ]);
-    return init;
-  }
-
-  // Try FreeBSD format
-  final freebsdMatch = _freebsdCpuPercentReg.firstMatch(raw);
-  if (freebsdMatch != null) {
-    final userPercent = double.parse(freebsdMatch.group(1)!).toInt();
-    final nicePercent = double.parse(freebsdMatch.group(2)!).toInt();
-    final sysPercent = double.parse(freebsdMatch.group(3)!).toInt();
-    final irqPercent = double.parse(freebsdMatch.group(4)!).toInt();
-    final idlePercent = double.parse(freebsdMatch.group(5)!).toInt();
-
-    init.add([
-      SingleCpuCore(
-        'cpu0',
-        userPercent,
-        sysPercent,
-        nicePercent,
-        idlePercent,
-        0, // iowait
-        irqPercent,
-        0, // softirq
-      ),
-    ]);
-    return init;
-  }
-
-  // Fallback to generic percentage extraction
-  final percents = _bsdCpuPercentReg.allMatches(raw).map((e) {
-    final valueStr = e.group(1) ?? '0';
-    final value = double.tryParse(valueStr);
-    if (value == null) {
-      dprint('Warning: Failed to parse CPU percentage from "$valueStr"');
-      return 0.0;
-    }
-    return value;
-  }).toList();
-
-  if (percents.length >= 3) {
-    final clampedPercents = percents.map((p) => p.clamp(0.0, 100.0)).toList();
-    if (!List.generate(
-      percents.length,
-      (i) => percents[i] == clampedPercents[i],
-    ).every((e) => e)) {
-      Loggers.app.warning(
-        'BSD CPU fallback parsing found invalid percentages in: $raw',
-      );
-    }
-
-    init.add([
-      SingleCpuCore(
-        'cpu0',
-        clampedPercents[0].toInt(), // user
-        clampedPercents[1].toInt(), // sys
-        0, // nice
-        clampedPercents[2].toInt(), // idle
-        0, // iowait
-        0, // irq
-        0, // softirq
-      ),
-    ]);
-    return init;
-  } else if (percents.isNotEmpty) {
-    Loggers.app.warning(
-      'BSD CPU fallback parsing found ${percents.length} percentages (expected at least 3) in: $raw',
-    );
-  } else {
-    Loggers.app.warning(
-      'BSD CPU fallback parsing found no percentages in: $raw',
-    );
-  }
-
-  return init;
-}
+// Parsing implementation migrated to the shared Rust library sbm_parser

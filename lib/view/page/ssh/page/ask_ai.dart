@@ -27,7 +27,7 @@ extension _AskAi on SSHPageState {
   String get _recentTerminalContext {
     final selection = _selectedTerminalText;
     if (selection.isNotEmpty) return selection;
-    return _sshOutputTail.trim();
+    return _sess.outputTail.trim();
   }
 
   Future<void> _showAskAiPanel(
@@ -36,18 +36,34 @@ extension _AskAi on SSHPageState {
   }) async {
     if (!mounted) return;
     final localeHint = Localizations.maybeLocaleOf(context)?.toLanguageTag();
-    final width = MediaQuery.sizeOf(context).width;
+    // The width this page has, not the window's. On anything but a phone the
+    // navigation rail takes its share out of the window before a tab sees any
+    // of it, and every other split in the app — `AdaptiveSideList`,
+    // `AdaptivePanes` — decides from what it was handed. Asking `MediaQuery`
+    // instead measured the window, so the same 800 landed about a rail's width
+    // earlier here than everywhere else: on an iPad in portrait this opened
+    // beside the terminal while the server list still had one column.
+    final width =
+        context.size?.width ?? MediaQuery.sizeOf(context).width;
     final placement = askAiPanelPlacementForWidth(width);
+
+    // The panel's tools act on a server, so there has to be one. A terminal on
+    // this device has none: the global Agent is what reaches it, through
+    // `LocalTarget`, and this per-server panel is not that.
+    final spi = widget.args.spi;
+    if (spi == null) return;
 
     Widget panel(BuildContext panelContext) => _AskAiPanel(
       terminalContext: terminalContext,
-      serverId: widget.args.spi.id,
-      serverName: widget.args.spi.name,
+      serverId: spi.id,
+      serverName: spi.name,
       localeHint: localeHint,
       autoStart: autoStart,
-      placement: askAiPanelPlacementForWidth(
-        MediaQuery.sizeOf(panelContext).width,
-      ),
+      // The decision already made, not a second one. Recomputed inside the
+      // route it could disagree with the route it is in — a sheet telling
+      // itself it is a side panel — since a sheet's context measures the
+      // sheet.
+      placement: placement,
       onCommandInsert: _insertAiCommand,
       onCommandRun: _runAiCommand,
       onCommandCancel: _cancelAiCommand,
@@ -585,7 +601,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     if (error is AskAiConfigException) {
       if (error.missingFields.isEmpty) {
         return error.hasInvalidBaseUrl
-            ? '${l10n.invalidUrl}: ${error.invalidBaseUrl}'
+            ? '${libL10n.invalidUrl}: ${error.invalidBaseUrl}'
             : error.toString();
       }
       final locale = Localizations.maybeLocaleOf(context);
@@ -596,8 +612,8 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       final fields = error.missingFields
           .map(
             (field) => switch (field) {
-              AskAiConfigField.baseUrl => l10n.askAiBaseUrl,
-              AskAiConfigField.apiKey => l10n.askAiApiKey,
+              AskAiConfigField.baseUrl => libL10n.apiEndpoint,
+              AskAiConfigField.apiKey => libL10n.apiKey,
               AskAiConfigField.model => libL10n.askAiModel,
             },
           )
@@ -628,9 +644,9 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
           ],
         ),
         actions: [
-          TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
+          TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
           FilledButton(
-            onPressed: () => context.pop(true),
+            onPressed: () => context.popDialog(true),
             child: Text(libL10n.run),
           ),
         ],
@@ -726,7 +742,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       _pendingCommandRestored = false;
     });
     _persistConversation();
-    context.showSnackBar(message);
+    Toast.show(message);
   }
 
   Future<void> _stopWork() async {
@@ -748,7 +764,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   Future<void> _copyText(String text) async {
     if (text.trim().isEmpty) return;
     await Clipboard.setData(ClipboardData(text: text));
-    if (mounted) context.showSnackBar(libL10n.success);
+    if (mounted) Toast.success(libL10n.success);
   }
 
   Widget _buildHeader(BuildContext context, ThemeData theme) {
@@ -758,10 +774,10 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       _isStreaming,
       _pendingCommand != null,
     )) {
-      (true, _, _) => context.l10n.askAiRunningCommand,
-      (_, true, _) => context.l10n.askAiThinking,
+      (true, _, _) => libL10n.running,
+      (_, true, _) => libL10n.thinking,
       (_, _, true) => context.l10n.askAiReviewNeeded,
-      _ => context.l10n.askAiReady,
+      _ => libL10n.ready,
     };
     final statusColor = _pendingCommand != null
         ? theme.colorScheme.tertiary
@@ -856,12 +872,12 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        border: Border.all(color: Hairline.color(context)),
       ),
       child: ExpansionTile(
         initiallyExpanded: widget.autoStart,
         tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-        childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        childrenPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
         leading: const Icon(Icons.terminal, size: 19),
         title: Text(context.l10n.askAiTerminalContext),
         subtitle: Text(
@@ -992,9 +1008,9 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
         ? theme.colorScheme.primary
         : theme.colorScheme.error;
     final status = result.cancelled
-        ? context.l10n.askAiCommandCancelled
+        ? libL10n.cancelled
         : result.timedOut
-        ? context.l10n.askAiCommandTimedOut
+        ? libL10n.timedOut
         : result.succeeded
         ? libL10n.success
         : '${libL10n.fail} (${result.exitCode ?? '?'})';
@@ -1002,14 +1018,14 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        border: Border.all(color: Hairline.color(context)),
       ),
       child: ExpansionTile(
         shape: const RoundedRectangleBorder(),
         collapsedShape: const RoundedRectangleBorder(),
         initiallyExpanded: !result.succeeded,
         tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-        childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        childrenPadding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
         leading: Icon(Icons.terminal, size: 19, color: color),
         title: Text(
           command.command,
@@ -1084,6 +1100,16 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
         context.l10n.askAiRiskReadOnly,
         theme.colorScheme.primary,
         Icons.visibility_outlined,
+      ),
+      AskAiCommandRisk.unknown => (
+        context.l10n.askAiRiskUnknown,
+        theme.colorScheme.tertiary,
+        Icons.help_outline,
+      ),
+      AskAiCommandRisk.unvettedHost => (
+        context.l10n.askAiRiskUnvetted,
+        theme.colorScheme.tertiary,
+        Icons.shield_outlined,
       ),
       AskAiCommandRisk.caution => (
         context.l10n.askAiRiskCaution,
@@ -1199,12 +1225,41 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
     );
   }
 
+  /// Enter, under the same setting the Agent page reads.
+  ///
+  /// A bare Enter mid-composition belongs to the IME, which uses it to accept
+  /// a candidate; a modified one never does, so only the bare form gives way.
+  KeyEventResult _handleComposerKey(KeyEvent event, bool canSend) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (event.logicalKey != LogicalKeyboardKey.enter &&
+        event.logicalKey != LogicalKeyboardKey.numpadEnter) {
+      return KeyEventResult.ignored;
+    }
+
+    final keys = HardwareKeyboard.instance;
+    final withModifier = keys.isMetaPressed || keys.isControlPressed;
+    final sends = Stores.setting.askAiSendOnEnter.fetch()
+        ? !keys.isShiftPressed
+        : withModifier;
+    if (!sends) return KeyEventResult.ignored;
+
+    if (!withModifier && !_inputController.value.composing.isCollapsed) {
+      return KeyEventResult.ignored;
+    }
+
+    if (canSend) _submitPrompt(_inputController.text);
+    // Handled either way: the key meant "send", and letting it through would
+    // leave a line break behind whenever there was nothing to send.
+    return KeyEventResult.handled;
+  }
+
   Widget _buildComposer(BuildContext context, ThemeData theme) {
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     final canSend =
         !_isWorking &&
         _pendingCommand == null &&
         _inputController.text.trim().isNotEmpty;
+    final sendOnEnter = Stores.setting.askAiSendOnEnter.fetch();
     return AnimatedPadding(
       duration: const Duration(milliseconds: 120),
       padding: EdgeInsets.fromLTRB(12, 8, 12, 12 + bottomInset),
@@ -1251,17 +1306,29 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
-                child: Input(
-                  controller: _inputController,
-                  minLines: 1,
-                  maxLines: 5,
-                  hint: _pendingCommand == null
-                      ? context.l10n.askAiAgentPromptHint
-                      : context.l10n.askAiReviewBeforeContinuing,
-                  action: TextInputAction.send,
-                  onSubmitted: (_) {
-                    if (canSend) _submitPrompt(_inputController.text);
-                  },
+                // Same key handling as the Agent page's composer: this is the
+                // app's other chat box, and a setting that governs one of two
+                // identical fields is a setting nobody can rely on.
+                child: Focus(
+                  onKeyEvent: (_, event) => _handleComposerKey(event, canSend),
+                  child: Input(
+                    controller: _inputController,
+                    minLines: 1,
+                    maxLines: 5,
+                    hint: _pendingCommand == null
+                        ? context.l10n.askAiAgentPromptHint
+                        : context.l10n.askAiReviewBeforeContinuing,
+                    // On every keyboard, soft ones included — same reasoning as
+                    // the Agent tab's composer.
+                    action: sendOnEnter
+                        ? TextInputAction.send
+                        : TextInputAction.newline,
+                    onSubmitted: sendOnEnter
+                        ? (_) {
+                            if (canSend) _submitPrompt(_inputController.text);
+                          }
+                        : null,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -1295,7 +1362,13 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       child: Column(
         children: [
           _buildHeader(context, theme),
-          Divider(height: 1, color: theme.colorScheme.outlineVariant),
+          // The app's one line — see [Hairline]. This panel sits beside the
+          // terminal, so its rules meet that column's edge.
+          Divider(
+            height: Hairline.thickness,
+            thickness: Hairline.thickness,
+            color: Hairline.color(context),
+          ),
           Expanded(
             child: Scrollbar(
               controller: _scrollController,
@@ -1315,7 +1388,11 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
               ),
             ),
           ),
-          Divider(height: 1, color: theme.colorScheme.outlineVariant),
+          Divider(
+            height: Hairline.thickness,
+            thickness: Hairline.thickness,
+            color: Hairline.color(context),
+          ),
           _buildComposer(context, theme),
         ],
       ),

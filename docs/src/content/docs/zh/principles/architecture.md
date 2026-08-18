@@ -59,7 +59,7 @@ void main() {
 ### 首页
 
 `HomePage` 作为导航枢纽：
-- **标签页界面**：服务器、脚本、容器、SSH
+- **标签页界面**：服务器、SSH、文件、脚本
 - **状态管理**：各标签页独立状态
 - **导航**：功能入口
 
@@ -91,7 +91,7 @@ void main() {
 - `SettingStore`：应用偏好设置
 - `ServerStore`：服务器配置
 - `SnippetStore`：命令脚本
-- `KeyStore`：SSH 密钥
+- `PrivateKeyStore`：SSH 密钥
 
 ### 不可变模型：Freezed
 
@@ -113,24 +113,24 @@ Flutter 插件提供平台集成：
 | Android | Gradle, Kotlin/Java |
 | macOS | CocoaPods, Swift |
 | Linux | CMake, C++ |
-| Windows | CMake, C# |
+| Windows | CMake, C++ |
 
 ### 平台特定功能
 
 **仅限 iOS：**
-- 主屏幕小组件
 - 实时活动 (Live Activities)
 - Apple Watch 配套应用
 
+**移动端：**
+- 主屏幕小组件(iOS/Android)
+- 推送通知(经由 ServerBox Monitor)
+
 **仅限 Android：**
-- 后台服务
-- 推送通知
-- 文件系统访问
+- 后台运行(前台服务)
 
 **仅限桌面端：**
-- 菜单栏集成
-- 多窗口支持
-- 自定义标题栏
+- 原生菜单栏(macOS)
+- 窗口尺寸持久化
 
 ## 自定义依赖
 
@@ -182,8 +182,8 @@ make.dart (版本计算) → fl_build (执行构建) → 平台产物
 ```
 1. 定时器触发 →
 2. Provider 调用 service →
-3. Service 执行 SSH 命令 →
-4. 响应解析为模型 →
+3. Service 执行 SSH 命令脚本 →
+4. 原始输出交由共享 Rust 解析库(sbm_parser,经 FFI)解析 →
 5. 状态更新 →
 6. UI 使用新数据重新构建
 ```
@@ -202,8 +202,8 @@ make.dart (版本计算) → fl_build (执行构建) → 平台产物
 
 ### 数据保护
 
-- **密码**：使用 flutter_secure_storage 加密
-- **SSH 密钥**：静态存储时加密
+- **密码 / SSH 密钥**：存储在 AES 加密的 Hive box 中;
+  加密密钥本身保存在平台安全存储(Keychain/Keystore)
 - **主机指纹**：安全存储
 - **会话数据**：不进行持久化
 

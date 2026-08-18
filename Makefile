@@ -14,9 +14,9 @@ DMG_PATH ?=
 TAP_REPO_PATH ?=
 
 .PHONY: help deps pub-get run run-device analyze test test-one coverage \
-	gen gen-build gen-build-clean gen-l10n build build-android build-ios \
+	test-cla gen gen-build gen-build-clean gen-l10n build build-android build-ios \
 	build-ios-nosign build-macos build-linux build-windows clean \
-	release-macos-dmg package-dmg sync-homebrew-cask
+	release-macos-dmg package-dmg sync-homebrew-cask monitor-dev
 
 help:
 	@printf '%s\n' \
@@ -26,10 +26,11 @@ help:
 		'  deps               Install Dart/Flutter dependencies' \
 		'  run                Run app on default device' \
 		'  run-device         Run app on a specific device: make run-device DEVICE=<id>' \
-		'  analyze            Run static analysis for lib/ and test/' \
+		'  analyze            Run static analysis for lib/, test/ and integration_test/' \
 		'  test               Run all tests' \
 		'  test-one           Run a single test: make test-one TEST=test/foo_test.dart' \
 		'  coverage           Run tests with coverage output' \
+		'  test-cla           Test the CLA check in .github/workflows/cla.yml (needs node)' \
 		'' \
 		'Code generation:' \
 		'  gen                Run build_runner and gen-l10n' \
@@ -46,6 +47,9 @@ help:
 		'  build-linux        Build Linux package' \
 		'  build-windows      Build Windows package' \
 		'  clean              Run flutter clean' \
+		'' \
+		'Monitor:' \
+		'  monitor-dev        Run monitor backend + panel dev server (vite on :3000, API on :3770)' \
 		'' \
 		'Release scripts:' \
 		'  release-macos-dmg  Run scripts/release/release-macos-dmg.sh' \
@@ -72,20 +76,23 @@ run-device:
 	$(FLUTTER) run -d $(DEVICE)
 
 analyze:
-	$(FLUTTER) analyze lib test
+	$(FLUTTER) analyze lib test integration_test
 
 test:
 	$(FLUTTER) test
 
 test-one:
 	@if [ -z "$(TEST)" ]; then \
-		echo 'TEST is required. Example: make test-one TEST=test/cpu_test.dart'; \
+		echo 'TEST is required. Example: make test-one TEST=test/disk_test.dart'; \
 		exit 1; \
 	fi
 	$(FLUTTER) test $(TEST)
 
 coverage:
 	$(FLUTTER) test --coverage
+
+test-cla:
+	node scripts/cla_workflow_test.js
 
 gen: gen-build gen-l10n
 
@@ -162,3 +169,16 @@ sync-homebrew-cask:
 	else \
 		DMG_PATH="$(DMG_PATH)" TAP_REPO_PATH="$(TAP_REPO_PATH)" bash scripts/release/sync-homebrew-cask.sh; \
 	fi
+
+# Backend from monitor/ (finds config/db there); panel via vite dev server on
+# :3000 with /api proxied to :3770. Ctrl-C stops both.
+monitor-dev:
+	@if [ ! -d monitor/frontend/node_modules ]; then \
+		echo '==> Installing panel dependencies'; \
+		cd monitor/frontend && npm ci; \
+	fi
+	@echo '==> Panel: http://localhost:3000  API: http://localhost:3770'
+	@trap 'kill 0' INT TERM EXIT; \
+	(cd monitor && cargo run -p server_box_monitor -- serve) & \
+	(cd monitor/frontend && npm run dev) & \
+	wait

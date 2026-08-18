@@ -86,6 +86,17 @@ class ServerModel {
 }
 ```
 
+
+## Enlaces Rust (flutter_rust_bridge)
+
+Tras cambiar `crates/sbm_ffi/src/api`, regenera los enlaces Dart:
+
+```bash
+flutter_rust_bridge_codegen generate
+```
+
+La configuración está en `flutter_rust_bridge.yaml`; la salida va a `lib/src/rust/` (nunca edites los archivos generados).
+
 ## Generación de Localización
 
 ```bash

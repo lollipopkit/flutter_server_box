@@ -3,12 +3,36 @@
 part of 'tab.dart';
 
 extension _Actions on _ServerPageState {
-  void _onTapCard(ServerState srv) {
+  /// [context] is the tapped widget's, not the state's.
+  ///
+  /// `PaneScope` is installed by the layout this page builds, so it is a
+  /// descendant of the state's own context — and an inherited lookup only
+  /// travels upwards. Asking from the state would always answer "no pane".
+  void _onTapCard(BuildContext context, ServerState srv) {
     if (srv.needsInteractiveAuth) {
       TryLimiter.reset(srv.spi.id);
       ref.read(serversProvider.notifier).refresh(spi: srv.spi);
       return;
     }
+    // The one place that knows about the layout. With a pane on screen,
+    // opening a server means selecting it; without one it means pushing, and
+    // the page that opens cannot tell the difference either way.
+    //
+    // Selected even when it has nothing to show yet. On one screen, jumping
+    // straight to the edit form is the only useful thing a tap can do for a
+    // server that has never connected. Beside a list it is not: the detail
+    // page says why it is empty, and staying on the list is what lets someone
+    // work through several servers that are all failing.
+    if (PaneScope.isSplit(context)) {
+      // Only the first selection reshapes the list, from a grid across the
+      // window to a column beside the pane. That is the move worth animating;
+      // picking another server afterwards leaves every row where it was.
+      final reshapes = ref.read(serverSelectionProvider) == null;
+      ref.read(serverSelectionProvider.notifier).select(srv.spi.id);
+      if (reshapes) _flyCardIntoPane(context, srv);
+      return;
+    }
+
     if (srv.canViewDetails) {
       ServerDetailPage.route.go(context, SpiRequiredArgs(srv.spi));
     } else {
@@ -31,72 +55,76 @@ extension _Actions on _ServerPageState {
   void _onTapAddServer() {
     ServerEditPage.route.go(context);
   }
+
+  /// Opens a server something else asked for — today the Agent's `open_server`.
+  ///
+  /// Deliberately not [_onTapCard]: a tap is a person deciding what to look
+  /// at, and its answer to a server that has never connected is to offer the
+  /// edit form instead. A request names a server, so this shows that server's
+  /// page whatever state it is in, error and all. [split] is passed in rather
+  /// than looked up — see the call site.
+  void _openRequestedServer(String id, bool split) {
+    if (!ref.read(serversProvider).servers.containsKey(id)) return;
+    if (split) {
+      // No card flight, unlike a tap: that animation carries the card the
+      // finger was on into the pane, and is measured from where that card is.
+      // Nothing was touched here, so there is nothing to fly — and handing it
+      // this page's own context would launch the whole page instead.
+      ref.read(serverSelectionProvider.notifier).select(id);
+      return;
+    }
+    ServerDetailPage.route.go(
+      context,
+      SpiRequiredArgs(ref.read(serverProvider(id)).spi),
+    );
+  }
+}
+
+/// Opens whatever was requested while this layout is the one on screen.
+///
+/// A widget rather than a method on the page so that it can be given [split]
+/// by the builder that decided it, and so that it is mounted and unmounted
+/// with the layout it belongs to.
+class _ServerOpenRequest extends ConsumerStatefulWidget {
+  const _ServerOpenRequest({
+    required this.split,
+    required this.onOpen,
+    required this.child,
+  });
+
+  final bool split;
+  final void Function(String serverId, bool split) onOpen;
+  final Widget child;
+
+  @override
+  ConsumerState<_ServerOpenRequest> createState() => _ServerOpenRequestState();
+}
+
+class _ServerOpenRequestState extends ConsumerState<_ServerOpenRequest> {
+  @override
+  void initState() {
+    super.initState();
+    // The request that brought this tab into existence was made before there
+    // was anything here to hear it, so the first thing to do is look.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _drain());
+  }
+
+  void _drain() {
+    if (!mounted) return;
+    final id = ref.read(serverDetailRequestProvider);
+    if (id == null) return;
+    ref.read(serverDetailRequestProvider.notifier).done();
+    widget.onOpen(id, widget.split);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(serverDetailRequestProvider, (_, _) => _drain());
+    return widget.child;
+  }
 }
 
 extension _Operation on _ServerPageState {
-  void _onTapSuspend(ServerState srv) {
-    _askFor(
-      func: () async {
-        if (Stores.setting.showSuspendTip.fetch()) {
-          await context.showRoundDialog(
-            title: libL10n.attention,
-            child: Text(l10n.suspendTip),
-          );
-          Stores.setting.showSuspendTip.put(false);
-        }
-        await srv.client?.execWithPwd(
-              ShellFunc.suspend.exec(
-                srv.spi.id,
-                systemType: srv.status.system,
-                customDir: null,
-              ),
-              context: context,
-              id: srv.id,
-            ) ??
-            (null, '');
-      },
-      typ: libL10n.suspend,
-      name: srv.spi.name,
-    );
-  }
-
-  void _onTapShutdown(ServerState srv) {
-    _askFor(
-      func: () async {
-        await srv.client?.execWithPwd(
-          ShellFunc.shutdown.exec(
-            srv.spi.id,
-            systemType: srv.status.system,
-            customDir: null,
-          ),
-          context: context,
-          id: srv.id,
-        );
-      },
-      typ: libL10n.shutdown,
-      name: srv.spi.name,
-    );
-  }
-
-  void _onTapReboot(ServerState srv) {
-    _askFor(
-      func: () async {
-        await srv.client?.execWithPwd(
-              ShellFunc.reboot.exec(
-                srv.spi.id,
-                systemType: srv.status.system,
-                customDir: null,
-              ),
-              context: context,
-              id: srv.id,
-            ) ??
-            (null, '');
-      },
-      typ: libL10n.reboot,
-      name: srv.spi.name,
-    );
-  }
-
 }
 
 extension _Utils on _ServerPageState {
@@ -118,28 +146,9 @@ extension _Utils on _ServerPageState {
     if (flip) {
       return _ServerPageState._kCardHeightFlip;
     }
-    if (Stores.setting.moveServerFuncs.fetch()) {
-      return _ServerPageState._kCardHeightMoveOutFuncs;
-    }
     return _ServerPageState._kCardHeightNormal;
   }
 
-  void _askFor({
-    required void Function() func,
-    required String typ,
-    required String name,
-  }) {
-    context.showRoundDialog(
-      title: libL10n.attention,
-      child: Text(libL10n.askContinue('$typ ${libL10n.server}($name)')),
-      actions: Btn.ok(
-        onTap: () {
-          context.pop();
-          func();
-        },
-      ).toList,
-    );
-  }
 
   _CardNotifier _getCardNoti(String id) =>
       _cardsStatus.putIfAbsent(id, () => _CardNotifier(const _CardStatus()));
@@ -177,7 +186,7 @@ extension _ServerX on ServerState {
 
   String? _getTopRightStr(Spi spi) {
     if (status.err != null) {
-      return l10n.viewErr;
+      return libL10n.viewErr;
     }
     switch (conn) {
       case ServerConn.disconnected:

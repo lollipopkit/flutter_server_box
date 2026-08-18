@@ -123,28 +123,24 @@ Las pestañas mantienen su estado durante la navegación:
 
 ## Teclado Virtual
 
-### Implementación Específica por Plataforma
-
-**iOS:**
-- Teclado personalizado basado en UIView
-- Conmutable con un botón de teclado
-- Mostrar/ocultar automáticamente basado en el enfoque
-
-**Android:**
-- Método de entrada personalizado
-- Integrado con el teclado del sistema
-- Botones de acción rápida
+El teclado virtual es un widget de Flutter mostrado sobre la terminal en todas
+las plataformas (las teclas disponibles se definen en
+`lib/data/model/ssh/virtual_key.dart`). En móvil se muestra junto al teclado del
+sistema.
 
 ### Botones del Teclado
 
 | Botón | Acción |
 |--------|--------|
-| **Conmutar** | Mostrar/ocultar teclado del sistema |
-| **Ctrl** | Enviar modificador Ctrl |
-| **Alt** | Enviar modificador Alt |
-| **SFTP** | Abrir directorio actual |
-| **Portapapeles** | Copiar/Pegar sensible al contexto |
-| **Snippets** | Ejecutar fragmento de código |
+| **Esc / Tab / Home / End / PgUp / PgDn / flechas** | Enviar la tecla correspondiente |
+| **Ctrl / Alt / Shift** | Alternar el modificador para la siguiente tecla |
+| **IME** | Mostrar/ocultar el teclado del sistema |
+| **Portapapeles** | Copiar/pegar según el contexto |
+| **SFTP** | Abrir el directorio actual en el navegador SFTP |
+| **Snippet** | Elegir y ejecutar un snippet |
+| **Símbolos** | `/ \ _ + = - ( ) [ ] { } < >` y más |
+
+El conjunto y el orden de teclas se pueden personalizar en los ajustes.
 
 ## Selección de Texto
 
@@ -188,11 +184,23 @@ GestureDetector(
 - **Oscuro (Dark)**: Fondo oscuro, texto claro
 - **AMOLED**: Fondo negro puro
 
-## Optimizaciones de Rendimiento
+## Rendimiento
 
-- **Dirty rectangle**: Solo redibujar las regiones cambiadas
-- **Caché de líneas**: Cachear las líneas renderizadas
-- **Desplazamiento perezoso (Lazy scrolling)**: Desplazamiento virtual para búferes largos
-- **Actualizaciones por lotes**: Unificar múltiples escrituras
-- **Compresión**: Comprimir el búfer de desplazamiento
-- **Debouncing**: Antirrebote para entradas rápidas
+El fork de xterm.dart renderiza con un painter personalizado y solo repinta
+cuando la terminal se actualiza; las escrituras de salida se almacenan en búfer
+y se agrupan antes de pasarlas al emulador.
+
+## Funciones Especiales
+
+### Ejecución de Snippets
+
+Al elegir un snippet, su contenido se pega en la terminal y se ejecuta con un retorno de carro.
+
+### Acceso Rápido SFTP
+
+La tecla virtual **SFTP** abre el directorio de trabajo actual en el navegador SFTP.
+
+### Keep-Alive
+
+Las conexiones se mantienen en la capa del protocolo SSH (ver
+[Conexión SSH](/docs/principles/ssh/)), no inyectando bytes en la terminal.

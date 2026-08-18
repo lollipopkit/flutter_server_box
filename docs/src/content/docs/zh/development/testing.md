@@ -10,7 +10,7 @@ description: 测试策略与运行测试
 flutter test
 
 # 运行特定测试文件
-flutter test test/battery_test.dart
+flutter test test/disk_test.dart
 
 # 运行测试并生成覆盖率报告
 flutter test --coverage
@@ -18,7 +18,23 @@ flutter test --coverage
 
 ## 测试结构
 
-测试位于 `test/` 目录中。当前测试套件基本是扁平结构，按解析器、模型和工具行为分组，例如 `cpu_test.dart`、`container_test.dart` 和 `ssh_config_test.dart`。
+测试位于 `test/` 目录中。当前测试套件基本是扁平结构，按解析器、模型和工具行为分组，例如 `disk_test.dart`、`container_test.dart` 和 `ssh_config_test.dart`。
+
+## Rust 测试
+
+状态解析位于共享 Rust workspace 中：
+
+```bash
+# 全部 Rust 测试（解析库、FFI 壳、monitor）
+cargo test --workspace
+
+# FFI 双跑一致性测试：断言 Dart 侧经 flutter_rust_bridge
+# 获得完全一致的结果（需先构建 FFI crate）
+cargo build -p sbm_ffi
+flutter test test/frb_parser_test.dart
+```
+
+`crates/sbm_parser/tests/dart_compat.rs` 以原 Dart fixture 套件锁定解析行为。
 
 ## 单元测试
 

@@ -1,9 +1,11 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
+import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/utils/misc.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:watch_connectivity/watch_connectivity.dart';
 
 class IosSettingsPage extends StatefulWidget {
   const IosSettingsPage({super.key});
@@ -19,17 +21,26 @@ class IosSettingsPage extends StatefulWidget {
 
 class _IosSettingsPageState extends State<IosSettingsPage> {
   final _pushToken = ValueNotifier<String?>(null);
-  final wc = WatchConnectivity();
-  late final _watchContextFuture = _loadWatchContext();
+
+  /// Asked of [WatchSync] rather than of a fresh `WatchConnectivity`, which
+  /// would install itself as the channel's only method call handler and take
+  /// the callbacks away from it.
+  late final _watchPairedFuture = WatchSync.instance.isWatchPaired;
   late final _pushTokenFuture = getToken();
 
   void _showCopyResult(bool success) {
-    context.showSnackBar(success ? libL10n.success : libL10n.fail);
+    if (success) {
+      Toast.success(libL10n.success);
+    } else {
+      Toast.error(libL10n.fail);
+    }
   }
 
-  Future<Map<String, dynamic>?> _loadWatchContext() async {
-    if (!await wc.isPaired) return null;
-    return await wc.applicationContext;
+  /// Every tile here reads straight from the store, so redrawing is all that
+  /// is needed after an edit. `setState` is protected, hence the indirection
+  /// for the actions extension.
+  void _refresh() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -47,8 +58,10 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
         children: [
           _buildPushToken(),
           _buildAutoUpdateHomeWidget(),
+          _buildAccessoryWidgetServer(),
           _buildWatchApp(),
-        ].map((e) => CardX(child: e)).toList(),
+          _buildWatchLegacyUrls(),
+        ].nonNulls.map((e) => CardX(child: e)).toList(),
       ),
     );
   }
@@ -56,7 +69,7 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
   Widget _buildPushToken() {
     return ListTile(
       title: Text(l10n.pushToken),
-      trailing: IconButton(
+      trailing: IconButton(tooltip: libL10n.copy, 
         icon: const Icon(Icons.copy),
         alignment: Alignment.centerRight,
         padding: EdgeInsets.zero,
@@ -95,60 +108,146 @@ class _IosSettingsPageState extends State<IosSettingsPage> {
     );
   }
 
-  Widget _buildWatchApp() {
-    return FutureWidget(
-      future: _watchContextFuture,
-      loading: UIs.centerLoading,
-      error: (e, trace) {
-        Loggers.app.warning('WatchOS error', e, trace);
-        return ListTile(
-          title: const Text('Watch app'),
-          subtitle: Text('${libL10n.error}: $e', style: UIs.textGrey),
-        );
-      },
-      success: (ctx) {
-        if (ctx == null) {
-          return ListTile(
-            title: const Text('Watch app'),
-            subtitle: Text(l10n.watchNotPaired, style: UIs.textGrey),
-          );
-        }
-        return ListTile(
-          title: const Text('Watch app'),
-          trailing: const Icon(Icons.keyboard_arrow_right),
-          onTap: () async => _onTapWatchApp(ctx),
-        );
-      },
+  /// The lock screen / inline families can't carry the intent configuration the
+  /// home screen ones use, so they read one URL out of the App Group instead.
+  Widget _buildAccessoryWidgetServer() {
+    final spi = _accessoryServer;
+    return ListTile(
+      title: Text(l10n.accessoryWidgetServer),
+      subtitle: Text(
+        spi?.name ?? libL10n.empty,
+        style: UIs.textGrey,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: _onTapAccessoryWidgetServer,
     );
   }
 
-  void _onTapWatchApp(Map<String, dynamic> map) async {
-    final cfgs = List<String>.from(map['urls'] as List? ?? []);
+  Widget _buildWatchApp() {
+    final count = Stores.setting.watchServerIds.fetch().length;
+    return ListTile(
+      title: const Text('Watch app'),
+      subtitle: FutureWidget<bool>(
+        future: _watchPairedFuture,
+        loading: const Text('...'),
+        // Not a blocker: the selection is stored here and delivered whenever a
+        // watch does show up, so it stays editable either way.
+        error: (e, _) => Text('${libL10n.error}: $e', style: UIs.textGrey),
+        success: (paired) => Text(
+          paired == true ? '$count' : l10n.watchNotPaired,
+          style: UIs.textGrey,
+        ),
+      ),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: _onTapWatchApp,
+    );
+  }
+
+  /// Only offered when one exists — nothing can create these any more.
+  ///
+  /// TODO: drop with `SettingStore.watchLegacyUrls`.
+  Widget? _buildWatchLegacyUrls() {
+    final urls = Stores.setting.watchLegacyUrls.fetch();
+    if (urls.isEmpty) return null;
+    return ListTile(
+      title: Text(l10n.watchLegacyUrls),
+      subtitle: Text('${urls.length}', style: UIs.textGrey),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () => _onTapWatchLegacyUrls(urls),
+    );
+  }
+}
+
+extension _Actions on _IosSettingsPageState {
+  /// Servers the watch can actually load: it talks to a monitor agent over
+  /// HTTP and has no SSH client of its own.
+  List<Spi> get _monitorServers =>
+      Stores.server.fetch().where((e) => e.monitor != null).toList();
+
+  Spi? get _accessoryServer {
+    final id = Stores.setting.accessoryWidgetServerId.fetch();
+    return id.isEmpty ? null : Stores.server.get<Spi>(id);
+  }
+
+  void _onTapAccessoryWidgetServer() async {
+    final servers = _monitorServers;
+    if (servers.isEmpty) {
+      Toast.show(l10n.watchNoMonitorServer);
+      return;
+    }
+
+    final current = _accessoryServer;
+    // `showPickSingleDialog` collapses "dismissed" and "cleared" into the same
+    // null, which would make the choice impossible to unset. The multi-value
+    // form keeps them apart: null is dismissed, empty is cleared.
+    final picked = await context.showPickDialog<Spi>(
+      title: l10n.accessoryWidgetServer,
+      items: servers,
+      display: (e) => e.name,
+      multi: false,
+      clearable: true,
+      initial: current == null ? null : [current],
+    );
+    if (picked == null) return;
+
+    Stores.setting.accessoryWidgetServerId.put(
+      picked.isEmpty ? '' : picked.first.id,
+    );
+    await MethodChans.syncAccessoryWidgetUrl();
+    _refresh();
+  }
+
+  void _onTapWatchApp() async {
+    final servers = _monitorServers;
+    if (servers.isEmpty) {
+      Toast.show(l10n.watchNoMonitorServer);
+      return;
+    }
+
+    final selectedIds = Stores.setting.watchServerIds.fetch();
+    final picked = await context.showPickDialog<Spi>(
+      title: l10n.watchServers,
+      items: servers,
+      display: (e) => e.name,
+      initial: servers.where((e) => selectedIds.contains(e.id)).toList(),
+      actions: [
+        TextButton(
+          onPressed: () => context.showRoundDialog(
+            title: l10n.watchServers,
+            child: Text(l10n.watchServersTip),
+          ),
+          child: Text(libL10n.note),
+        ),
+      ],
+    );
+    if (picked == null) return;
+
+    final pickedIds = picked.map((e) => e.id).toSet();
+    // Keep the order the user already had and append what is new, rather than
+    // rebuilding from the picker's order — the watch pages through this list.
+    final next = [
+      ...selectedIds.where(pickedIds.contains),
+      ...pickedIds.where((id) => !selectedIds.contains(id)),
+    ];
+    Stores.setting.watchServerIds.put(next);
+    await WatchSync.instance.push();
+    _refresh();
+  }
+
+  /// TODO: drop with `SettingStore.watchLegacyUrls`.
+  void _onTapWatchLegacyUrls(List<String> urls) async {
     final result = await JsonListEditor.route.go(
       context,
-      JsonListEditorArgs(data: cfgs),
+      JsonListEditorArgs(data: urls),
     );
     if (result == null) return;
 
-    final (_, err) = await context.showLoadingDialog(
-      fn: () async {
-        final data = {'urls': result};
-        // Try realtime update (app must be running foreground).
-        try {
-          if (await wc.isReachable) {
-            await wc.sendMessage(data);
-            return;
-          }
-        } catch (e) {
-          Loggers.app.warning('Failed to send message to watch', e);
-        }
-
-        // fallback
-        await wc.updateApplicationContext(data);
-      },
+    Stores.setting.watchLegacyUrls.put(
+      result.whereType<String>().where((e) => e.trim().isNotEmpty).toList(),
     );
-    if (err == null) {
-      _showCopyResult(true);
-    }
+    await WatchSync.instance.push();
+    _refresh();
   }
 }

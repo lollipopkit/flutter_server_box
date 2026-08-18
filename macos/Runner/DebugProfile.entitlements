@@ -14,8 +14,16 @@
 	<array>
 		<string>iCloud.tech.lolli.serverbox</string>
 	</array>
+	<!-- Off, matching the DMG rather than the App Store build. Debug and
+	     Profile are what the feature is developed and measured against, and a
+	     sandboxed process cannot open a pseudo-terminal — with this on, the
+	     local terminal is correctly hidden and there is no way to work on it.
+
+	     To check what the App Store build does instead, flip this to true: the
+	     app asks the running process which it is, so nothing else changes.
+	     See macos/Runner/ReleaseDmg.entitlements. -->
 	<key>com.apple.security.app-sandbox</key>
-	<true/>
+	<false/>
 	<key>com.apple.security.cs.allow-jit</key>
 	<true/>
 	<key>com.apple.security.files.user-selected.read-write</key>

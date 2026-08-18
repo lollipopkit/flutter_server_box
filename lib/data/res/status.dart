@@ -8,15 +8,13 @@ import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/temp.dart';
 
 abstract final class InitStatus {
-  static SingleCpuCore get _initOneTimeCpuStatus =>
-      SingleCpuCore('cpu', 0, 0, 0, 0, 0, 0, 0);
   static const Memory mem = Memory(total: 1, free: 1, avail: 1);
-  static Cpus get cpus =>
-      Cpus([_initOneTimeCpuStatus], [_initOneTimeCpuStatus]);
-  static NetSpeedPart get _initNetSpeedPart =>
-      NetSpeedPart('', BigInt.zero, BigInt.zero, 0);
-  static NetSpeed get netSpeed =>
-      NetSpeed([_initNetSpeedPart], [_initNetSpeedPart]);
+
+  // The time series start out genuinely empty. They used to be seeded with two
+  // synthetic all-zero samples so `pre`/`now` would never throw, which made
+  // the first reading a delta against invented data.
+  static Cpus get cpus => Cpus();
+  static NetSpeed get netSpeed => NetSpeed();
   static ServerStatus get status => ServerStatus(
     cpu: cpus,
     mem: mem,
@@ -35,7 +33,7 @@ abstract final class InitStatus {
     swap: const Swap(total: 0, free: 0, cached: 0),
     system: SystemType.linux,
     temps: Temperatures(),
-    diskIO: DiskIO([], []),
+    diskIO: DiskIO(),
     diskSmart: const [],
   );
 }

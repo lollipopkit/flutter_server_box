@@ -1,0 +1,45 @@
+{
+  "name": "server-box-monitor-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "_comment_prebuild": "@serverbox/webui is a file: dependency, so an install here only symlinks it — its own devDependencies (svelte, clsx, tailwind-variants, ...) are never fetched, and svelte-check reads its source. Done as prebuild rather than asked of each builder: Cloudflare Pages runs a bare `npm run build` and had been failing on exactly this.",
+    "prebuild": "npm install --prefix ../../packages/webui",
+    "build": "npm run typesafe-i18n && svelte-check --tsconfig ./tsconfig.json && vite build",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "lint": "eslint . --max-warnings 0",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "typesafe-i18n": "typesafe-i18n --no-watch"
+  },
+  "dependencies": {
+    "@lucide/svelte": "^1.25.0",
+    "@serverbox/webui": "file:../../packages/webui",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "snarkdown": "^2.0.0",
+    "typesafe-i18n": "^5.27.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@sveltejs/vite-plugin-svelte": "^7.2.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/jest-dom": "^6.9.0",
+    "@testing-library/svelte": "^5.4.2",
+    "@tsconfig/svelte": "^5.0.4",
+    "eslint": "^10.7.0",
+    "eslint-plugin-svelte": "^3.21.0",
+    "globals": "^17.7.0",
+    "jsdom": "^29.1.1",
+    "svelte": "^5.56.0",
+    "svelte-check": "^4.7.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.64.0",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.10"
+  }
+}

@@ -257,8 +257,8 @@ class PveNotifier extends _$PveNotifier {
   }
 
   Future<void> _login() async {
-    final useKeyAuth = spiParam.keyId != null;
-    final password = (useKeyAuth ? spiParam.custom?.pvePwd : spiParam.pwd)
+    final useKeyAuth = spiParam.ssh?.keyId != null;
+    final password = (useKeyAuth ? spiParam.custom?.pvePwd : spiParam.ssh?.pwd)
         ?.trim();
     if (password == null || password.isEmpty) {
       throw PveErr(
@@ -267,7 +267,7 @@ class PveNotifier extends _$PveNotifier {
       );
     }
     final resp = await _requestTicket({
-      'username': spiParam.user,
+      'username': spiParam.ssh?.user ?? '',
       'password': password,
       'realm': 'pam',
       'new-format': '1',
@@ -339,7 +339,7 @@ class PveNotifier extends _$PveNotifier {
       // The current OTP dialog only collects a code, so this flow supports
       // Proxmox TOTP challenges for now.
       final resp = await _requestTicket({
-        'username': spiParam.user,
+        'username': spiParam.ssh?.user ?? '',
         'password': 'totp:$otp',
         'realm': 'pam',
         'tfa-challenge': challenge,

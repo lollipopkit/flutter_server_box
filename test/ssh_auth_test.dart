@@ -6,15 +6,17 @@ import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/core/utils/ssh_auth.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/sftp/worker.dart';
+import 'package:server_box/data/model/file/transfer_worker.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/generated/l10n/l10n_en.dart';
 
-const _spi = Spi(
+import 'helpers/spi_fixture.dart';
+
+final _spi = spiFixture(
   name: 'Jump host',
   ip: '192.0.2.1',
   port: 22,
@@ -22,7 +24,7 @@ const _spi = Spi(
   id: 'jump-host',
 );
 
-const _spiWithPassword = Spi(
+final _spiWithPassword = spiFixture(
   name: 'Jump host',
   ip: '192.0.2.1',
   port: 22,
@@ -63,7 +65,7 @@ void main() {
   test('SFTP authentication messages can cross isolate boundaries', () async {
     final events = await Isolate.run(
       () => <Object>[
-        SftpKeyboardInteractivePrompt(
+        TransferKeyboardInteractivePrompt(
           id: 1,
           spi: _spi,
           expiresAt: DateTime.now().add(
@@ -75,7 +77,7 @@ void main() {
             [SSHUserInfoPrompt('Code:', false)],
           ),
         ),
-        SftpHostKeyPrompt(
+        TransferHostKeyPrompt(
           id: 2,
           info: HostKeyPromptInfo(
             spi: _spi,
@@ -89,8 +91,8 @@ void main() {
     );
 
     expect(events, hasLength(2));
-    expect(events.first, isA<SftpKeyboardInteractivePrompt>());
-    expect(events.last, isA<SftpHostKeyPrompt>());
+    expect(events.first, isA<TransferKeyboardInteractivePrompt>());
+    expect(events.last, isA<TransferHostKeyPrompt>());
   });
 
   testWidgets('collects every keyboard-interactive prompt response', (

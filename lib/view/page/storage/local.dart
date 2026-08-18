@@ -4,22 +4,50 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/data/model/app/path_with_prefix.dart';
-import 'package:server_box/data/model/server/server_private_info.dart';
-import 'package:server_box/data/model/sftp/req.dart';
+import 'package:server_box/core/utils/local_file_backend.dart';
+import 'package:server_box/core/utils/local_files.dart';
+import 'package:server_box/data/model/file/file_backend.dart';
+import 'package:server_box/data/model/file/file_ref.dart';
 import 'package:server_box/data/provider/server/all.dart';
-import 'package:server_box/data/provider/sftp.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/view/page/storage/sftp.dart';
-import 'package:server_box/view/page/storage/sftp_mission.dart';
+import 'package:server_box/view/page/storage/file_browser.dart';
+import 'package:server_box/view/page/storage/show_transfers.dart';
 
 final class LocalFilePageArgs {
   final bool? isPickFile;
+
+  /// Returning a directory rather than browsing one, for "send to where?".
+  final bool isPickDir;
+
+  /// Where to open. Was the *root* until the browser told the two apart, which
+  /// is why a tab reopened deep in a tree could not go up.
   final String? initDir;
-  const LocalFilePageArgs({this.isPickFile, this.initDir});
+
+  /// Where to put this page's toolbar, for a host that draws a bar of its own.
+  final ValueNotifier<List<Widget>>? actionsSink;
+
+  /// Told which directory is being shown, as it changes.
+  final void Function(String path)? onPathChanged;
+
+  const LocalFilePageArgs({
+    this.isPickFile,
+    this.isPickDir = false,
+    this.initDir,
+    this.actionsSink,
+    this.onPathChanged,
+  });
 }
 
+/// This device's files.
+///
+/// A [FileBrowserPage] over [LocalFileBackend], plus the four things that are
+/// only true here: importing from the system picker, sharing out, opening the
+/// editor, and knowing that a folder named after a server id is that server's
+/// downloads.
+///
+/// Sending a file somewhere is not among them any more: that is the same act
+/// wherever the file is, and it lives in the browser.
 class LocalFilePage extends ConsumerStatefulWidget {
   final LocalFilePageArgs? args;
 
@@ -34,360 +62,142 @@ class LocalFilePage extends ConsumerStatefulWidget {
   ConsumerState<LocalFilePage> createState() => _LocalFilePageState();
 }
 
-class _LocalFilePageState extends ConsumerState<LocalFilePage>
-    with AutomaticKeepAliveClientMixin {
-  late final _path = LocalPath(widget.args?.initDir ?? Paths.file);
-  final _sortType = _SortType.name.vn;
-  late Future<List<(FileSystemEntity, FileStat)>> _entitiesFuture =
-      _getEntities();
-  bool get isPickFile => widget.args?.isPickFile ?? false;
+class _LocalFilePageState extends ConsumerState<LocalFilePage> {
+  static const _backend = LocalFileBackend();
 
-  @override
-  void dispose() {
-    super.dispose();
-    _sortType.dispose();
-  }
+  /// The root has to be there before the browser lists it, and on desktop
+  /// making it is what raises the documents-folder prompt — so it happens
+  /// here, on the way into the browser, rather than at startup. A refusal
+  /// surfaces as the page's error instead of an empty directory.
+  late final _root = LocalFiles.ensure();
 
-  Future<void> _refresh() async {
-    setStateSafe(() {
-      _entitiesFuture = _getEntities();
-    });
-    await _entitiesFuture;
-  }
+  bool get _isPickFile => widget.args?.isPickFile ?? false;
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-    final title = _path.path.fileNameGetter ?? libL10n.file;
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: AnimatedSwitcher(
-          duration: Durations.short3,
-          child: Text(title, key: ValueKey(title)),
+    return FutureWidget<String>(
+      future: _root,
+      success: (root) => FileBrowserPage(
+        args: FileBrowserArgs(
+          backend: _backend,
+          // The user's own files, and the only place this app browses from:
+          // there is nothing above it worth showing on a sandboxed platform.
+          root: root!,
+          initialPath: widget.args?.initDir,
+          isPickFile: _isPickFile,
+          isPickDir: widget.args?.isPickDir ?? false,
+          refOf: LocalFileRef.new,
+          actionsSink: widget.args?.actionsSink,
+          onPathChanged: widget.args?.onPathChanged,
+          extraActions: _actions,
+          createActions: _createActions,
+          entryActions: _entryActions,
+          labelOf: _labelOf,
+          onOpenFile: _isPickFile ? null : _openEditor,
         ),
-        actions: [
-          if (!isPickFile)
-            IconButton(
-              onPressed: () async {
-                final path = await Pfs.pickFilePath();
-                if (path == null) return;
-                final name = path.getFileName() ?? 'imported';
-                final destinationDir = Directory(_path.path);
-                if (!await destinationDir.exists()) {
-                  await destinationDir.create(recursive: true);
-                }
-                await File(path).copy(_path.path.joinPath(name));
-                _refresh();
-              },
-              icon: const Icon(Icons.add),
-            ),
-          if (!isMobile)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: MaterialLocalizations.of(
-                context,
-              ).refreshIndicatorSemanticLabel,
-              onPressed: _refresh,
-            ),
-          if (!isPickFile) _buildMissionBtn(),
-          _buildSortBtn(),
-        ],
-      ),
-      body: isMobile
-          ? RefreshIndicator(
-              onRefresh: _refresh,
-              child: _sortType.listen(_buildBody),
-            )
-          : _sortType.listen(_buildBody),
-    );
-  }
-
-  Widget _buildBody() {
-    return FutureWidget(
-      future: _entitiesFuture,
-      loading: UIs.placeholder,
-      success: (items) {
-        items ??= [];
-        final len = _path.canBack ? items.length + 1 : items.length;
-        return ListView.builder(
-          itemCount: len,
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 13),
-          itemBuilder: (context, index) {
-            if (index == 0 && _path.canBack) {
-              return ListTile(
-                leading: const Icon(Icons.arrow_back),
-                title: const Text('..'),
-                onTap: () {
-                  _path.update('..');
-                  _refresh();
-                },
-              ).cardx;
-            }
-
-            if (_path.canBack) index--;
-
-            final item = items![index];
-            final file = item.$1;
-            final fileName = file.path.split(Pfs.seperator).last;
-            final stat = item.$2;
-            final isDir = stat.type == FileSystemEntityType.directory;
-
-            return _buildItem(
-              file: file,
-              fileName: fileName,
-              stat: stat,
-              isDir: isDir,
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildItem({
-    required FileSystemEntity file,
-    required String fileName,
-    required FileStat stat,
-    required bool isDir,
-  }) {
-    final isServerFolder = isDir && file.parent.path == Paths.file;
-    String? serverName;
-    if (isServerFolder) {
-      final servers = ref.read(serversProvider).servers;
-      final server = servers[fileName];
-      if (server != null) {
-        serverName = server.name;
-      }
-    }
-
-    return CardX(
-      child: ListTile(
-        leading: isDir
-            ? const Icon(Icons.folder_open)
-            : const Icon(Icons.insert_drive_file),
-        title: Text(serverName ?? fileName),
-        subtitle: isDir
-            ? (serverName != null ? Text(fileName, style: UIs.textGrey) : null)
-            : Text(stat.size.bytes2Str, style: UIs.textGrey),
-        trailing: Text(stat.modified.ymdhms(), style: UIs.textGrey),
-        onLongPress: () {
-          if (isDir) {
-            _showDirActionDialog(file);
-            return;
-          }
-          _showFileActionDialog(file);
-        },
-        onTap: () {
-          if (!isDir) {
-            if (isPickFile) {
-              _showFileActionDialog(file);
-            } else {
-              _onTapEdit(file, fileName, popMenu: false);
-            }
-            return;
-          }
-          _path.update(fileName);
-          _refresh();
-        },
       ),
     );
   }
 
-  Widget _buildMissionBtn() {
-    return IconButton(
+  List<Widget> _actions(FileBrowserHandle handle) => [
+    IconButton(tooltip: libL10n.mission, 
       icon: const Icon(Icons.downloading),
-      onPressed: () => SftpMissionPage.route.go(context),
-    );
-  }
+      onPressed: () => showTransfers(context),
+    ),
+  ];
 
-  Future<List<(FileSystemEntity, FileStat)>> _getEntities() async {
-    final files = await Directory(_path.path).list().toList();
-    final stats = await Future.wait(
-      files.map((e) async => (e, await e.stat())),
-    );
-    stats.sort(_sortType.value.compareTuple);
-    return stats;
-  }
-
-  Widget _buildSortBtn() {
-    return _sortType.listenVal((value) {
-      return PopupMenuButton<_SortType>(
-        icon: const Icon(Icons.sort),
-        itemBuilder: (_) => _SortType.values.map((e) => e.menuItem).toList(),
-        onSelected: (value) {
-          _sortType.value = value;
-        },
-      );
-    });
-  }
-
-  @override
-  bool get wantKeepAlive => true;
-}
-
-extension _Actions on _LocalFilePageState {
-  Future<void> _showDirActionDialog(FileSystemEntity file) async {
-    context.showRoundDialog(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            onTap: () {
-              context.pop();
-              _showRenameDialog(file);
-            },
-            title: Text(libL10n.rename),
-            leading: const Icon(Icons.abc),
-          ),
-          ListTile(
-            onTap: () {
-              context.pop();
-              _showDeleteDialog(file);
-            },
-            title: Text(libL10n.delete),
-            leading: const Icon(Icons.delete),
-          ),
-        ],
+  /// Beside the browser's own "new file / new folder", because bringing a file
+  /// in from elsewhere on this device is the same kind of act as making one.
+  /// Bringing a file in from elsewhere on this device is something done *to
+  /// the directory*, so it belongs beside "new folder" rather than only on a
+  /// button in the bottom bar.
+  List<ContextMenuAction> _createActions(FileBrowserHandle handle) => [
+    if (!_isPickFile)
+      ContextMenuAction(
+        icon: Icons.file_download,
+        text: libL10n.add,
+        onTap: () => _import(handle),
       ),
-    );
+  ];
+
+  List<ContextMenuAction> _entryActions(
+    FileBrowserHandle handle,
+    FileEntry entry,
+    String fullPath,
+  ) => [
+    if (!entry.isDir) ...[
+      if (isMobile)
+        ContextMenuAction(
+          icon: Icons.edit,
+          text: libL10n.edit,
+          onTap: () => _openEditor(handle, entry, fullPath),
+        ),
+      ContextMenuAction(
+        icon: Icons.open_in_new,
+        text: libL10n.open,
+        onTap: () =>
+            Pfs.sharePaths(paths: [LocalFileBackend.nativePath(fullPath)]),
+      ),
+    ],
+  ];
+
+  /// A directory directly under [Paths.file] named after a server id is that
+  /// server's downloads, and its id is not what anyone calls it.
+  String? _labelOf(FileEntry entry, String fullPath) {
+    if (!entry.isDir) return null;
+    final parent = fullPath.substring(0, fullPath.length - entry.name.length - 1);
+    if (parent.replaceAll(r'\', '/') != Paths.file.replaceAll(r'\', '/')) {
+      return null;
+    }
+    return ref.read(serversProvider).servers[entry.name]?.name;
   }
 
-  Future<void> _showFileActionDialog(FileSystemEntity file) async {
-    final fileName = file.path.split(Pfs.seperator).lastOrNull ?? '';
-    if (isPickFile) {
-      context.showRoundDialog(
-        title: libL10n.file,
-        child: Text(fileName),
-        actions: [
-          Btn.ok(
-            onTap: () {
-              context.pop();
-              context.pop(file.path);
-            },
-          ),
-        ],
+  Future<void> _import(FileBrowserHandle handle) async {
+    final picked = await Pfs.pickFilePath();
+    if (picked == null) return;
+    final name = picked.getFileName() ?? 'imported';
+    try {
+      final destination = Directory(LocalFileBackend.nativePath(handle.path));
+      if (!await destination.exists()) {
+        await destination.create(recursive: true);
+      }
+      await File(picked).copy(
+        LocalFileBackend.nativePath('${handle.path}/$name'),
       );
+    } catch (e) {
+      // Every other mutating action goes through the browser's `_run`, which
+      // reports what went wrong. This one is the page's own, and without this
+      // a copy onto an existing directory threw into the zone guard: the user
+      // tapped, nothing happened, and nothing said why.
+      if (mounted) Toast.error(libL10n.fail, body: '$e');
       return;
     }
-    context.showRoundDialog(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (isMobile)
-            Btn.tile(
-              icon: const Icon(Icons.edit),
-              text: libL10n.edit,
-              onTap: () => _onTapEdit(file, fileName),
-            ),
-          Btn.tile(
-            icon: const Icon(Icons.abc),
-            text: libL10n.rename,
-            onTap: () {
-              context.pop();
-              _showRenameDialog(file);
-            },
-          ),
-          Btn.tile(
-            icon: const Icon(Icons.delete),
-            text: libL10n.delete,
-            onTap: () {
-              context.pop();
-              _showDeleteDialog(file);
-            },
-          ),
-          Btn.tile(
-            icon: const Icon(Icons.upload),
-            text: libL10n.upload,
-            onTap: () => _onTapUpload(file, fileName),
-          ),
-          Btn.tile(
-            icon: const Icon(Icons.open_in_new),
-            text: libL10n.open,
-            onTap: () {
-              Pfs.sharePaths(paths: [file.absolute.path]);
-            },
-          ),
-        ],
-      ),
-    );
+    await handle.refresh();
   }
 
-  void _showRenameDialog(FileSystemEntity file) {
-    final fileName = file.path.split(Pfs.seperator).last;
-    final ctrl = TextEditingController(text: fileName);
-    void onSubmit() async {
-      final newName = ctrl.text;
-      if (newName.isEmpty) {
-        context.showSnackBar(libL10n.empty);
-        return;
-      }
-
-      context.pop();
-      final newPath = '${file.parent.path}${Pfs.seperator}$newName';
-      await context.showLoadingDialog(fn: () => file.rename(newPath));
-
-      setStateSafe(() {});
-    }
-
-    context.showRoundDialog(
-      title: libL10n.rename,
-      child: Input(
-        autoFocus: true,
-        icon: Icons.abc,
-        label: libL10n.name,
-        controller: ctrl,
-        suggestion: true,
-        maxLines: 3,
-        onSubmitted: (p0) => onSubmit(),
-      ),
-      actions: Btn.ok(onTap: onSubmit).toList,
-    );
-  }
-
-  void _showDeleteDialog(FileSystemEntity file) {
-    final fileName = file.path.split(Pfs.seperator).last;
-    context.showRoundDialog(
-      title: libL10n.delete,
-      child: Text(libL10n.askContinue('${libL10n.delete} $fileName')),
-      actions: Btn.ok(
-        onTap: () async {
-          context.pop();
-          try {
-            await file.delete(recursive: true);
-          } catch (e) {
-            context.showSnackBar('${libL10n.fail}:\n$e');
-            return;
-          }
-          setStateSafe(() {});
-        },
-      ).toList,
-    );
-  }
-}
-
-extension _OnTapFile on _LocalFilePageState {
-  void _onTapEdit(
-    FileSystemEntity file,
-    String fileName, {
-    bool popMenu = true,
-  }) async {
-    if (popMenu) context.pop();
-    final stat = await file.stat();
-    if (stat.size > Miscs.editorMaxSize) {
+  Future<void> _openEditor(
+    FileBrowserHandle handle,
+    FileEntry entry,
+    String fullPath,
+  ) async {
+    final size = entry.size ?? (await _backend.stat(fullPath))?.size ?? 0;
+    if (size > Miscs.editorMaxSize) {
+      if (!mounted) return;
       context.showRoundDialog(
         title: libL10n.attention,
-        child: Text(l10n.fileTooLarge(fileName, stat.size, '1m')),
+        child: Text(l10n.fileTooLarge(entry.name, size, '1m')),
       );
       return;
     }
+    if (!mounted) return;
 
     await EditorPage.route.go(
       context,
       args: EditorPageArgs(
-        path: file.absolute.path,
+        path: LocalFileBackend.nativePath(fullPath),
         onSave: (_) {
-          context.showSnackBar(libL10n.saved);
-          setStateSafe(() {});
+          Toast.show(libL10n.saved);
+          handle.refresh();
         },
         closeAfterSave: Stores.setting.closeAfterSave.fetch(),
         softWrap: Stores.setting.editorSoftWrap.fetch(),
@@ -402,74 +212,6 @@ extension _OnTapFile on _LocalFilePageState {
           final font = Stores.setting.editorFontFamily.fetch();
           return font.isEmpty ? null : font;
         }(),
-      ),
-    );
-  }
-
-  void _onTapUpload(FileSystemEntity file, String fileName) async {
-    context.pop();
-
-    final spi = await context.showPickSingleDialog<Spi>(
-      title: libL10n.select,
-      items: ref.read(serversProvider).servers.values.toList(),
-      display: (e) => e.name,
-    );
-    if (spi == null) return;
-
-    final args = SftpPageArgs(spi: spi, isSelect: true);
-    final remotePath = await SftpPage.route.go(context, args);
-    if (remotePath == null) {
-      return;
-    }
-
-    ref
-        .read(sftpProvider.notifier)
-        .add(
-          SftpReq(
-            spi,
-            '$remotePath/$fileName',
-            file.absolute.path,
-            SftpReqType.upload,
-          ),
-        );
-    context.showSnackBar(l10n.added2List);
-  }
-}
-
-enum _SortType {
-  name,
-  size,
-  time;
-
-  int compareTuple(
-    (FileSystemEntity, FileStat) a,
-    (FileSystemEntity, FileStat) b,
-  ) {
-    return switch (this) {
-      _SortType.name => a.$1.path.compareTo(b.$1.path),
-      _SortType.size => a.$2.size.compareTo(b.$2.size),
-      _SortType.time => a.$2.modified.compareTo(b.$2.modified),
-    };
-  }
-
-  String get i18n => switch (this) {
-    name => libL10n.name,
-    size => l10n.size,
-    time => l10n.time,
-  };
-
-  IconData get icon => switch (this) {
-    name => Icons.sort_by_alpha,
-    size => Icons.sort,
-    time => Icons.access_time,
-  };
-
-  PopupMenuItem<_SortType> get menuItem {
-    return PopupMenuItem(
-      value: this,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [Icon(icon), Text(i18n)],
       ),
     );
   }

@@ -51,7 +51,7 @@ Please only download pkgs from the source that **you trust**!
   <a href="https://discord.gg/SsVNbRhK7w"><img alt="discord" src="https://img.shields.io/badge/Discord-lpkt-purple"></a>
 </div>
 
-- In order to push  server status to your portable device without opening ServerBox app (Such as **message push** and **home widget**), you need to install [ServerBoxMonitor](https://github.com/lollipopkit/server_box_monitor) on your servers, and config it correctly. See [wiki](https://github.com/lollipopkit/server_box_monitor/wiki) for more details.
+- In order to push  server status to your portable device without opening ServerBox app (Such as **message push** and **home widget**), you need to install [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) on your servers, and config it correctly. See its [README](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README.md) for more details.
 - **Common issues** can be found in [app wiki](https://github.com/lollipopkit/flutter_server_box/wiki).
 
 Before you open an issue, please read the following:
@@ -64,14 +64,16 @@ After you read the above, you can open an [issue](https://github.com/lollipopkit
 
 ## 🧱 Contributions
 
-Any positive contribution is welcome.
+Any positive contribution is welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the development setup, the commit convention, the checks to run, and how translations work.
+
+Contributors sign the [CLA](CLA.md) ([中文](CLA_zh.md)) once, by leaving a single comment on their first pull request. It grants the right to ship your work in the App Store builds alongside the AGPLv3 source — you keep the copyright to what you wrote.
 
 If I forgot to add your name to the contributors list, please add a comment in the issue or PR you opened to let me know, I will add it as soon as possible.
 
 ### Development
 
-1. Setup [Flutter](https://flutter.dev/docs/get-started/install) environment.
-2. Clone this repo, run `flutter run` to start the app.
+1. Setup [Flutter](https://flutter.dev/docs/get-started/install) and [Rust](https://rustup.rs) environments.
+2. Clone this repo, run `make deps` then `make run` to start the app.
 3. Run `dart run fl_build -p PLATFORM` to build the app.
 
 ### Translation
@@ -82,6 +84,7 @@ If I forgot to add your name to the contributors list, please add a comment in t
 ## 💡 My other apps
 
 - [GPT Box](https://github.com/lollipopkit/flutter_gpt_box) - A third-party GPT Client for OpenAI API on all platforms.
+- [MFuse](https://github.com/lollipopkit/mfuse) - a macOS app that exposes remote storage in Finder through File Provider, with a modular backend layer for multiple protocols.
 - [More](https://github.com/lollipopkit) - Tools & etc.
 
 ## 📝 License

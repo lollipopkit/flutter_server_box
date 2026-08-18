@@ -86,6 +86,17 @@ class ServerModel {
 }
 ```
 
+
+## Rust バインディング (flutter_rust_bridge)
+
+`crates/sbm_ffi/src/api` を変更したら、Dart バインディングを再生成します:
+
+```bash
+flutter_rust_bridge_codegen generate
+```
+
+設定は `flutter_rust_bridge.yaml`、出力先は `lib/src/rust/`(生成ファイルは編集不可)。
+
 ## ローカライズの生成
 
 ```bash

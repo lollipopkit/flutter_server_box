@@ -38,9 +38,12 @@ description: Lösungen für gängige Probleme
 
 ### Bestimmte Zeichen können nicht getippt werden
 
-**Lösung:** Einstellungen → Tastaturtyp → Wechseln zu `visiblePassword`
+**Lösungen:**
 
-Hinweis: CJK-Eingaben funktionieren nach dieser Änderung möglicherweise nicht mehr.
+1. Verwenden Sie die virtuelle Tastaturleiste des Terminals für Tasten, die die Systemtastatur nicht senden kann (Esc, Tab, Ctrl/Alt-Kombinationen, Symbole)
+2. Blenden Sie die Systemtastatur mit der virtuellen **IME**-Taste ein/aus
+3. Bei Problemen mit Drittanbieter-Tastaturen probieren Sie die Standardtastatur des Systems
+
 
 ## App-Probleme
 

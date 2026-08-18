@@ -7,14 +7,154 @@
 
 import Foundation
 
-class Store {
-    static let defaults = UserDefaults.standard
-
-    static let _ctxKey = "ctx"
-    static func getCtx() -> [String: Any] {
-        return defaults.object(forKey: _ctxKey) as? [String: Any] ?? [:]
+/// Where the watch keeps what the phone sent it.
+///
+/// Two containers on purpose:
+///
+/// - The App Group holds the server list and the last reading, because the
+///   widget process has to read them too.
+/// - The Keychain holds monitor passwords. `UserDefaults` is a plist on disk;
+///   a credential that opens a shell on someone's server does not belong there
+///   just because it is convenient.
+enum WatchStore {
+    /// Falls back to `.standard` so that a build whose App Group entitlement
+    /// is missing or mis-provisioned still works as an app — only the widget
+    /// goes stale, which beats losing the server list entirely.
+    private static var defaults: UserDefaults {
+        UserDefaults(suiteName: watchAppGroupId) ?? .standard
     }
-    static func setCtx(_ ctx: [String: Any]) {
-        defaults.set(ctx, forKey: _ctxKey)
+
+    private static let keychainService = "tech.lolli.toolbox.watch.monitor"
+
+    // MARK: - Servers
+
+    static func servers() -> [WatchServer] {
+        guard let data = defaults.data(forKey: WatchKeys.servers) else { return [] }
+        return (try? JSONDecoder().decode([WatchServer].self, from: data)) ?? []
+    }
+
+    static func setServers(_ servers: [WatchServer]) {
+        guard let data = try? JSONEncoder().encode(servers) else { return }
+        defaults.set(data, forKey: WatchKeys.servers)
+
+        // A server the phone stopped sending must not leave its password (or a
+        // stale reading) behind on the watch.
+        let live = Set(servers.map(\.id))
+        for id in snapshots().keys where !live.contains(id) {
+            removeSnapshot(id: id)
+        }
+        for id in passwordAccounts() where !live.contains(id) {
+            setPassword(nil, for: id)
+        }
+    }
+
+    // MARK: - Selection
+
+    static var selectedIndex: Int {
+        get { defaults.integer(forKey: WatchKeys.selectedIndex) }
+        set { defaults.set(newValue, forKey: WatchKeys.selectedIndex) }
+    }
+
+    // MARK: - Snapshots
+
+    static func snapshots() -> [String: WatchSnapshot] {
+        guard let data = defaults.data(forKey: WatchKeys.snapshots) else { return [:] }
+        return (try? JSONDecoder().decode([String: WatchSnapshot].self, from: data)) ?? [:]
+    }
+
+    static func snapshot(id: String) -> WatchSnapshot? {
+        snapshots()[id]
+    }
+
+    static func setSnapshot(_ snapshot: WatchSnapshot) {
+        var all = snapshots()
+        all[snapshot.serverId] = snapshot
+        writeSnapshots(all)
+    }
+
+    static func removeSnapshot(id: String) {
+        var all = snapshots()
+        guard all.removeValue(forKey: id) != nil else { return }
+        writeSnapshots(all)
+    }
+
+    private static func writeSnapshots(_ all: [String: WatchSnapshot]) {
+        guard let data = try? JSONEncoder().encode(all) else { return }
+        defaults.set(data, forKey: WatchKeys.snapshots)
+    }
+
+    // MARK: - Passwords
+
+    static func password(for id: String) -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: id,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+        var item: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
+              let data = item as? Data
+        else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    static func setPassword(_ password: String?, for id: String) {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: id,
+        ]
+        SecItemDelete(query as CFDictionary)
+
+        guard let password, !password.isEmpty, let data = password.data(using: .utf8) else { return }
+        var attrs = query
+        attrs[kSecValueData as String] = data
+        // The watch is unlocked whenever it is on the wrist, and a refresh may
+        // run while the screen is off; anything stricter would fail there.
+        attrs[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        SecItemAdd(attrs as CFDictionary, nil)
+    }
+
+    private static func passwordAccounts() -> [String] {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecReturnAttributes as String: true,
+            kSecMatchLimit as String: kSecMatchLimitAll,
+        ]
+        var items: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &items) == errSecSuccess,
+              let entries = items as? [[String: Any]]
+        else { return [] }
+        return entries.compactMap { $0[kSecAttrAccount as String] as? String }
+    }
+
+    // MARK: - Migration
+
+    /// Reads the pre-v2 `ctx` dictionary, whose only content was a list of
+    /// hand-typed `/status` URLs, and returns them as servers.
+    ///
+    /// Only consulted when nothing has arrived from the phone yet, so a watch
+    /// that has been configured since the rewrite never sees it.
+    ///
+    /// TODO: drop with `WatchServer.Kind.legacy`.
+    static func migrateLegacyCtx() -> [WatchServer] {
+        let ctx = UserDefaults.standard.object(forKey: WatchKeys.legacyCtx) as? [String: Any]
+        guard let urls = ctx?["urls"] as? [String] else { return [] }
+        return urls.filter { !$0.isEmpty }.map(WatchServer.legacy(url:))
+    }
+}
+
+extension WatchServer {
+    /// TODO: drop with `WatchServer.Kind.legacy`.
+    static func legacy(url: String) -> WatchServer {
+        WatchServer(
+            id: "legacy:\(url)",
+            name: URL(string: url)?.host ?? url,
+            kind: .legacy,
+            addr: url
+        )
     }
 }

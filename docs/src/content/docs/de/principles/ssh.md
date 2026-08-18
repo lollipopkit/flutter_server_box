@@ -93,13 +93,13 @@ onPasswordRequest: () => spi.pwd
 
 ```dart
 onIdentityRequest: () async {
-  final key = await KeyStore.get(spi.keyId);
+  final key = await PrivateKeyStore.get(spi.keyId);
   return decyptPem(key.pem, key.password);
 }
 ```
 
 **Schlüssel-Ladeprozess:**
-1. Verschlüsselten Schlüssel aus `KeyStore` abrufen
+1. Verschlüsselten Schlüssel aus `PrivateKeyStore` abrufen
 2. Passwort entschlüsseln (Biometrie/Eingabeaufforderung)
 3. PEM-Format parsen
 4. Zeilenenden standardisieren (LF)
@@ -157,7 +157,7 @@ Future<void> verifyHostKey(SSHClient client, Spi spi) async {
   final keyType = key.type;
   final fingerprint = md5Hex(key); // oder base64
 
-  final stored = SettingStore.sshKnownHostsFingerprints
+  final stored = SettingStore.sshKnownHostFingerprints
       ['${spi.id}::$keyType'];
 
   if (stored == null) {
@@ -167,7 +167,7 @@ Future<void> verifyHostKey(SSHClient client, Spi spi) async {
       'Fingerabdruck: $fingerprint',
     );
     if (trust) {
-      SettingStore.sshKnownHostsFingerprints
+      SettingStore.sshKnownHostFingerprints
           ['${spi.id}::$keyType'] = fingerprint;
     }
   } else if (stored != fingerprint) {

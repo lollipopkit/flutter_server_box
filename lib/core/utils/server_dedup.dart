@@ -105,14 +105,14 @@ class ServerDeduplication {
     final resolved = resolvedServers ?? _resolveServers(servers!);
 
     if (resolved.isEmpty) {
-      context.showSnackBar(allExistMessage('$count'));
+      Toast.show(allExistMessage('$count'));
       return 0;
     }
 
     for (final server in resolved) {
       ref.read(serversProvider.notifier).addServer(server);
     }
-    context.showSnackBar(importedMessage('${resolved.length}'));
+    Toast.show(importedMessage('${resolved.length}'));
     return resolved.length;
   }
 

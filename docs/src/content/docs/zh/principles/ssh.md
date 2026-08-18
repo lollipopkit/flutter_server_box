@@ -93,13 +93,13 @@ onPasswordRequest: () => spi.pwd
 
 ```dart
 onIdentityRequest: () async {
-  final key = await KeyStore.get(spi.keyId);
+  final key = await PrivateKeyStore.get(spi.keyId);
   return decyptPem(key.pem, key.password);
 }
 ```
 
 **密钥加载流程：**
-1. 从 `KeyStore` 获取加密的密钥
+1. 从 `PrivateKeyStore` 获取加密的密钥
 2. 解密密码（通过生物识别或提示）
 3. 解析 PEM 格式
 4. 标准化换行符 (LF)
@@ -157,7 +157,7 @@ Future<void> verifyHostKey(SSHClient client, Spi spi) async {
   final keyType = key.type;
   final fingerprint = md5Hex(key); // 或 base64
 
-  final stored = SettingStore.sshKnownHostsFingerprints
+  final stored = SettingStore.sshKnownHostFingerprints
       ['${spi.id}::$keyType'];
 
   if (stored == null) {
@@ -167,7 +167,7 @@ Future<void> verifyHostKey(SSHClient client, Spi spi) async {
       '指纹: $fingerprint',
     );
     if (trust) {
-      SettingStore.sshKnownHostsFingerprints
+      SettingStore.sshKnownHostFingerprints
           ['${spi.id}::$keyType'] = fingerprint;
     }
   } else if (stored != fingerprint) {

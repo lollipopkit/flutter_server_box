@@ -3,11 +3,11 @@ title: ホーム画面ウィジェット
 description: サーバーの状態を表示するウィジェットをホーム画面に追加する
 ---
 
-サーバーに [ServerBox Monitor](https://github.com/lollipopkit/server_box_monitor) がインストールされている必要があります。
+サーバーに [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) がインストールされている必要があります。
 
 ## 前提条件
 
-まずサーバーに ServerBox Monitor をインストールしてください。設定手順については [ServerBox Monitor Wiki](https://github.com/lollipopkit/server_box_monitor/wiki/Home) を参照してください。
+まずサーバーに ServerBox Monitor をインストールしてください。設定手順については [ServerBox Monitor Wiki](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README.md) を参照してください。
 
 インストール後、サーバーで以下が利用可能である必要があります。
 - HTTP/HTTPS エンドポイント

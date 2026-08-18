@@ -113,32 +113,32 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
     try {
       final serverState = ref.read(_provider);
       final systemType = serverState.status.system;
-      final client = serverState.client;
       if (!_canRunProcessCmd(serverState)) {
         _result = const PsResult(procs: []);
         _loadErrorMessage = libL10n.disconnected;
         _hasLoaded = true;
         if (userTriggered && mounted) {
-          context.showSnackBar(libL10n.disconnected);
+          Toast.show(libL10n.disconnected);
         }
         return;
       }
-      final result = await client
-          ?.run(
-            ShellFunc.process.exec(
-              serverState.spi.id,
-              systemType: systemType,
-              customDir: serverState.spi.custom?.scriptDir,
-            ),
-          )
-          .timeout(_processCommandTimeout)
-          .string;
+      final exec = await ref.read(_provider.notifier).ensureScriptExec();
+      final result = (await exec
+              .run(
+                ShellFunc.process.exec(
+                  serverState.spi.id,
+                  systemType: systemType,
+                  customDir: serverState.spi.custom?.scriptDir,
+                ),
+              )
+              .timeout(_processCommandTimeout))
+          .combined;
       if (!mounted) return;
-      if (result == null || result.trim().isEmpty) {
+      if (result.trim().isEmpty) {
         _result = const PsResult(procs: []);
         _loadErrorMessage = libL10n.empty;
         _hasLoaded = true;
-        if (userTriggered) context.showSnackBar(libL10n.empty);
+        if (userTriggered) Toast.show(libL10n.empty);
         return;
       }
 
@@ -166,7 +166,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
     } on TimeoutException catch (e, s) {
       Loggers.app.warning('Process page command timed out', e, s);
       if (mounted && (userTriggered || !_hasLoaded)) {
-        context.showSnackBar(libL10n.error);
+        Toast.error(libL10n.error);
       }
       _result = const PsResult(procs: []);
       _loadErrorMessage = libL10n.error;
@@ -174,7 +174,7 @@ class _ProcessPageState extends ConsumerState<ProcessPage>
     } catch (e, s) {
       Loggers.app.warning('Process page refresh failed', e, s);
       if (mounted && (userTriggered || !_hasLoaded)) {
-        context.showSnackBar(libL10n.error);
+        Toast.error(libL10n.error);
       }
       _result = const PsResult(procs: []);
       _loadErrorMessage = libL10n.error;
@@ -400,7 +400,7 @@ extension _ProcessPageStateWidgets on _ProcessPageState {
               itemCount: _result.procs.length,
               separatorBuilder: (_, _) => Divider(
                 height: 1,
-                color: scheme.outlineVariant.withValues(alpha: 0.55),
+                color: Hairline.color(context),
               ),
               itemBuilder: (_, index) =>
                   _buildProcessRow(_result.procs[index], layout, columns),
@@ -690,9 +690,10 @@ extension _ProcessPageStateUtils on _ProcessPageState {
 
   String _formatSpeed(double bytes) => '${bytes.bytes2Str}/s';
 
+  /// Whether the server has answered at all. Not whether a connection is
+  /// already open: `ensureExec` opens one when there is none, which is what a
+  /// server reached over its monitor agent always needs.
   bool _canRunProcessCmd(ServerState serverState) {
-    final client = serverState.client;
-    if (client == null || client.isClosed) return false;
     final conn = serverState.conn;
     return conn == ServerConn.connected || conn == ServerConn.finished;
   }
@@ -812,23 +813,23 @@ extension _ProcessPageStateActions on _ProcessPageState {
       final serverState = ref.read(_provider);
       final systemType = serverState.status.system;
       if (!_canRunProcessCmd(serverState)) {
-        if (mounted) context.showSnackBar(libL10n.disconnected);
+        if (mounted) Toast.show(libL10n.disconnected);
         return;
       }
-      final client = serverState.client!;
-      final raw = await client
-          .run(
-            ShellFunc.process.exec(
-              serverState.spi.id,
-              systemType: systemType,
-              customDir: serverState.spi.custom?.scriptDir,
-            ),
-          )
-          .timeout(_processCommandTimeout)
-          .string;
+      final exec = await ref.read(_provider.notifier).ensureScriptExec();
+      final raw = (await exec
+              .run(
+                ShellFunc.process.exec(
+                  serverState.spi.id,
+                  systemType: systemType,
+                  customDir: serverState.spi.custom?.scriptDir,
+                ),
+              )
+              .timeout(_processCommandTimeout))
+          .combined;
       if (!mounted) return;
       if (raw.trim().isEmpty) {
-        context.showSnackBar(context.l10n.processKillTargetChanged);
+        Toast.show(context.l10n.processKillTargetChanged);
         return;
       }
       var latest = PsResult.parse(
@@ -857,47 +858,55 @@ extension _ProcessPageStateActions on _ProcessPageState {
           .where((proc) => proc.pid == target.pid)
           .firstOrNull;
       if (current == null || !_isSameProcess(target, current)) {
-        context.showSnackBar(context.l10n.processKillTargetChanged);
+        Toast.show(context.l10n.processKillTargetChanged);
         return;
       }
       final latestServerState = ref.read(_provider);
       if (!_canRunProcessCmd(latestServerState)) {
-        context.showSnackBar(libL10n.disconnected);
+        Toast.show(libL10n.disconnected);
         return;
       }
       if (latestServerState.status.system != systemType) {
-        context.showSnackBar(context.l10n.processKillTargetChanged);
+        Toast.show(context.l10n.processKillTargetChanged);
         return;
       }
       if (latestServerState.spi != serverState.spi) {
-        context.showSnackBar(context.l10n.processKillTargetChanged);
+        Toast.show(context.l10n.processKillTargetChanged);
         return;
       }
       final killCommand = _killProcessCmd(current, systemType);
       if (killCommand == null) {
-        context.showSnackBar(libL10n.notAvailable);
+        Toast.show(libL10n.notAvailable);
         return;
       }
-      final killOutput = await latestServerState.client!
-          .run(killCommand)
-          .timeout(_processCommandTimeout)
-          .string;
+      final killOutput =
+          (await exec
+                  .run(
+                    killCommand,
+                    // POSIX shell syntax, so it is fed to one rather than to
+                    // whatever the account's login shell happens to be. Windows
+                    // builds a PowerShell command instead, which has to run as
+                    // the command.
+                    entry: systemType == SystemType.windows ? null : 'sh',
+                  )
+                  .timeout(_processCommandTimeout))
+              .combined;
       if (killOutput.contains(_killTargetChangedMarker)) {
-        context.showSnackBar(context.l10n.processKillTargetChanged);
+        Toast.show(context.l10n.processKillTargetChanged);
         return;
       }
       if (!killOutput.contains(_killSucceededMarker)) {
-        context.showSnackBar(libL10n.error);
+        Toast.error(libL10n.error);
         return;
       }
       killed = true;
     } on TimeoutException catch (e, s) {
       Loggers.app.warning('Process kill command timed out', e, s);
-      if (mounted) context.showSnackBar(libL10n.error);
+      if (mounted) Toast.error(libL10n.error);
       return;
     } catch (e, s) {
       Loggers.app.warning('Process kill failed', e, s);
-      if (mounted) context.showSnackBar(libL10n.error);
+      if (mounted) Toast.error(libL10n.error);
       return;
     } finally {
       _isRefreshing = false;
@@ -1079,7 +1088,7 @@ class _SortHeader extends StatelessWidget {
     final scheme = theme.colorScheme;
     final color = active ? scheme.primary : scheme.onSurfaceVariant;
     final semanticsLabel = active
-        ? '$label, ${ascending ? context.l10n.ascending : context.l10n.descending}'
+        ? '$label, ${ascending ? libL10n.ascending : libL10n.descending}'
         : label;
     return Semantics(
       label: semanticsLabel,

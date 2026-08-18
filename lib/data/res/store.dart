@@ -63,6 +63,8 @@ abstract final class Stores {
 
     await Future.wait(_allStores.map((store) => store.init()));
 
+    await setting.removeRetiredKeys();
+
     // Migrate sshConnectionMode from old int values to bool
     setting.migrateSshConnectionMode();
     await setting.migrateHomeTabsAgent();

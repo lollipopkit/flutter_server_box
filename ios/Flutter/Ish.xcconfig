@@ -1,0 +1,80 @@
+// The Linux userland on iOS, and the one line that removes it.
+//
+// SBM_ISH = 1 links the ish-arm64 engine into the app and compiles
+// ios/Runner/ish/sbm_ish.c against it. SBM_ISH = 0 compiles that file to
+// stubs, links nothing, and `sbm_ish_available()` answers false — which is
+// what the Dart side asks before it offers a Linux terminal at all, so the
+// feature disappears rather than failing.
+//
+// ## Why a switch, and not just a feature flag
+//
+// App Store guideline 2.5.2 is about downloading and running executable code.
+// iSH was told four days after launch that it would be pulled over it, and the
+// thing that gets blocked in that argument is not the feature — it is the
+// whole app's next update. If review objects, a build without the engine has
+// to be one edit and a rebuild away.
+//
+// To strip it:
+//
+//     1. set SBM_ISH = 0 below
+//     2. flutter build ipa
+//
+// Nothing else changes: no Dart edit, no pubspec change, no entitlement.
+//
+// To check that what shipped is what was meant, do NOT search for
+// `sbm_ish_boot`. All eight `sbm_ish_*` functions are exported either way —
+// Dart looks them up by name, so they carry `used` and default visibility, and
+// at SBM_ISH = 0 they are still there as two-instruction stubs. Measured, on
+// `Runner` from a release build:
+//
+//     nm -a Runner | grep -E 'xX_main_Xx|mount_root|pty_open_fake'   # 5 -> 0
+//     strings - Runner | grep -icE 'ish-arm64|fakefs|realfs'         # 81 -> 0
+//     otool -L Runner | grep libsqlite3                              # yes -> no
+//     stat -f %z Runner                                              # ~620 KB smaller
+//
+// The engine's own libraries are static, so `otool -L` can only ever show the
+// sqlite it drags in; that is why it is a signal and not a listing.
+//
+// ## Default
+//
+// 0. The engine is not in this repository — `scripts/build-ish-ios.sh` builds
+// it — so a checkout that has not run that script cannot link it, and a build
+// that silently omitted it would be worse than one that never tried.
+
+SBM_ISH = 0
+
+// A local override, so turning the engine on for a development build does not
+// mean editing a tracked file and remembering to put it back. Untracked; write
+// `SBM_ISH = 1` in it. Later assignment wins, so this is the last word.
+#include? "IshLocal.xcconfig"
+
+// The source is a submodule; the libraries are built out of tree, under
+// build/, so a build does not leave that submodule dirty. Both relative to
+// ios/, since that is where the Xcode project sits.
+// Keyed on PLATFORM_NAME, whose values are `iphonesimulator` and `iphoneos`.
+ISH_BUILD_DIR_iphonesimulator = $(SRCROOT)/../build/ish/build-iossim-arm64
+ISH_BUILD_DIR_iphoneos = $(SRCROOT)/../build/ish/build-ios-arm64
+ISH_BUILD_DIR = $(ISH_BUILD_DIR_$(PLATFORM_NAME))
+ISH_SOURCE_DIR = $(SRCROOT)/../third_party/ish-arm64
+
+// Everything below is keyed on SBM_ISH: the `_0` variants are empty, so with
+// the switch off the compiler and the linker are told nothing at all about the
+// engine.
+ISH_PREPROCESSOR_0 = SBM_ISH_ENABLED=0
+ISH_PREPROCESSOR_1 = SBM_ISH_ENABLED=1 ENGINE_ASBESTOS=1 GUEST_ARM64=1 LOG_HANDLER_DPRINTF=1
+ISH_LDFLAGS_0 =
+ISH_LDFLAGS_1 = -lsqlite3 $(ISH_BUILD_DIR)/libish.a $(ISH_BUILD_DIR)/libish_emu.a $(ISH_BUILD_DIR)/libfakefs.a
+ISH_HEADER_PATHS_0 =
+ISH_HEADER_PATHS_1 = $(ISH_SOURCE_DIR) $(ISH_BUILD_DIR) $(ISH_BUILD_DIR)/ish.p $(ISH_SOURCE_DIR)/vdso/arm64 $(ISH_BUILD_DIR)/vdso/arm64
+
+// The engine's headers use file-scope `static_assert`, which is C11. Meson
+// builds it with `-std=gnu11`; Xcode's default is older, and there the same
+// line parses as a declaration with no type — "implicit int". Only set when
+// the engine is on, so an unrelated build keeps the compiler's default.
+ISH_C_STANDARD_0 =
+ISH_C_STANDARD_1 = gnu11
+GCC_C_LANGUAGE_STANDARD = $(ISH_C_STANDARD_$(SBM_ISH))
+
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) $(ISH_PREPROCESSOR_$(SBM_ISH))
+OTHER_LDFLAGS = $(inherited) $(ISH_LDFLAGS_$(SBM_ISH))
+HEADER_SEARCH_PATHS = $(inherited) $(ISH_HEADER_PATHS_$(SBM_ISH))

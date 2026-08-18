@@ -41,13 +41,13 @@ final class ServersNotifierProvider
   }
 }
 
-String _$serversNotifierHash() => r'ef2a189efe38cb917189dd6f612745b78e362e79';
+String _$serversNotifierHash() => r'103abff9174657b892a7bc032bad918477e04fd1';
 
 abstract class _$ServersNotifier extends $Notifier<ServersState> {
   ServersState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ServersState, ServersState>;
     final element =
         ref.element
@@ -57,6 +57,6 @@ abstract class _$ServersNotifier extends $Notifier<ServersState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

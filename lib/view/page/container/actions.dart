@@ -28,7 +28,7 @@ extension on _ContainerPageState {
         child: Text(_errorMessage(e)),
       );
     } else {
-      context.showSnackBar(libL10n.success);
+      Toast.success(libL10n.success);
     }
   }
 
@@ -69,7 +69,7 @@ extension on _ContainerPageState {
         onTap: () async {
           try {
             final extraArgs = parseContainerRunArgs(argsCtrl.text.trim());
-            context.pop();
+            context.popDialog();
             await _showAddCmdPreview(
               buildContainerRunCmd(
                 image: imageCtrl.text.trim(),
@@ -78,7 +78,7 @@ extension on _ContainerPageState {
               ),
             );
           } on FormatException {
-            context.showSnackBar(libL10n.invalid);
+            Toast.show(libL10n.invalid);
           }
         },
       ).toList,
@@ -182,10 +182,10 @@ extension on _ContainerPageState {
       title: libL10n.preview,
       child: Text(cmd),
       actions: [
-        TextButton(onPressed: () => context.pop(), child: Text(libL10n.cancel)),
+        TextButton(onPressed: () => context.popDialog(), child: Text(libL10n.cancel)),
         TextButton(
           onPressed: () async {
-            context.pop();
+            context.popDialog();
             await _execContainerAction(() => _containerNotifier.run(cmd));
           },
           child: Text(libL10n.run),
@@ -221,7 +221,7 @@ extension on _ContainerPageState {
   }
 
   void _onSaveContainerHost(String val) {
-    context.pop();
+    context.popDialog();
     Stores.container.put(widget.args.spi.id, _containerState.type, val.trim());
     _containerNotifier.resetSudoProbe();
     unawaited(_refreshContainerTab(_lastResourceTab));
@@ -230,7 +230,7 @@ extension on _ContainerPageState {
   void _showImageRmDialog(ContainerImg e) {
     final id = e.id;
     if (id == null || id.isEmpty) {
-      context.showSnackBar(libL10n.empty);
+      Toast.show(libL10n.empty);
       return;
     }
     context.showRoundDialog(
@@ -240,13 +240,13 @@ extension on _ContainerPageState {
       ),
       actions: Btn.ok(
         onTap: () async {
-          context.pop();
+          context.popDialog();
           final result = await _containerNotifier.run(
             'rmi ${shellSingleQuote(id)} -f',
             refreshTarget: ContainerRefreshTarget.images,
           );
           if (result != null) {
-            if (mounted) context.showSnackBar(_errorMessage(result.message));
+            if (mounted) Toast.error(_errorMessage(result.message));
           }
         },
         red: true,
@@ -266,7 +266,7 @@ extension on _ContainerPageState {
             tag == null ||
             tag.trim().isEmpty ||
             tag == '<none>') {
-          context.showSnackBar(libL10n.empty);
+          Toast.show(libL10n.empty);
           return;
         }
         final imageRef = '$repo:$tag';
@@ -277,7 +277,7 @@ extension on _ContainerPageState {
           ),
           actions: Btn.ok(
             onTap: () async {
-              context.pop();
+              context.popDialog();
               await _execContainerAction(
                 () => _containerNotifier.run(
                   'pull ${shellSingleQuote(imageRef)}',
@@ -297,7 +297,7 @@ extension on _ContainerPageState {
   void _onTapMoreBtn(ContainerMenu item, ContainerPs dItem) async {
     final id = dItem.id;
     if (id == null) {
-      context.showSnackBar('Id is null');
+      Toast.show('ID: ${libL10n.empty}');
       return;
     }
     switch (item) {
@@ -332,7 +332,7 @@ extension on _ContainerPageState {
           ),
           actions: Btn.ok(
             onTap: () async {
-              context.pop();
+              context.popDialog();
               await _execContainerAction(
                 () => _containerNotifier.delete(id, force),
               );
@@ -355,7 +355,7 @@ extension on _ContainerPageState {
         final initCmd = await _containerNotifier.prepareInteractiveCommand(cmd);
         if (!mounted || initCmd == null) return;
         final args = SshPageArgs(
-          spi: widget.args.spi,
+          source: ServerSource(widget.args.spi),
           initCmd: initCmd,
         );
         SSHPage.route.go(context, args);
@@ -366,7 +366,7 @@ extension on _ContainerPageState {
         final initCmd = await _containerNotifier.prepareInteractiveCommand(cmd);
         if (!mounted || initCmd == null) return;
         final args = SshPageArgs(
-          spi: widget.args.spi,
+          source: ServerSource(widget.args.spi),
           initCmd: initCmd,
         );
         SSHPage.route.go(context, args);
@@ -384,7 +384,7 @@ extension on _ContainerPageState {
     final initCmd = 'cd ${shellSingleQuote(workingDir)} && $prepared';
     SSHPage.route.go(
       context,
-      SshPageArgs(spi: widget.args.spi, initCmd: initCmd),
+      SshPageArgs(source: ServerSource(widget.args.spi), initCmd: initCmd),
     );
   }
 

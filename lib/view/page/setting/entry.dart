@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:file_picker/file_picker.dart';
@@ -9,11 +10,12 @@ import 'package:flutter_highlight/theme_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/local_exec.dart';
+import 'package:server_box/core/utils/rootfs.dart';
 import 'package:server_box/core/utils/server_dedup.dart';
 import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/app/net_view.dart';
-import 'package:server_box/data/model/server/discovery_result.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
@@ -25,16 +27,18 @@ import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/backup.dart';
 import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/server/connection_stats.dart';
-import 'package:server_box/view/page/server/discovery/discovery.dart';
 import 'package:server_box/view/page/setting/entries/home_tabs.dart';
 import 'package:server_box/view/page/setting/platform/ios.dart';
 import 'package:server_box/view/page/setting/platform/platform_pub.dart';
+import 'package:server_box/view/page/setting/seq/known_hosts.dart';
 import 'package:server_box/view/page/setting/seq/srv_detail_seq.dart';
 import 'package:server_box/view/page/setting/seq/srv_func_seq.dart';
 import 'package:server_box/view/page/setting/seq/srv_seq.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
+import 'package:server_box/view/widget/dmg_notice.dart';
 
 part 'about.dart';
+part 'menu.dart';
 part 'entries/ai.dart';
 part 'entries/app.dart';
 part 'entries/container.dart';
@@ -55,39 +59,294 @@ class SettingsPage extends ConsumerStatefulWidget {
   ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
 
-class _SettingsPageState extends ConsumerState<SettingsPage>
-    with SingleTickerProviderStateMixin {
-  late final _tabCtrl = TabController(
-    length: SettingsTabs.values.length,
-    vsync: this,
-  );
+/// Below this the menu is a drawer rather than a column beside the content.
+///
+/// The width `AdaptivePanes` splits at, so that a window wide enough for two
+/// columns gets two columns here as well.
+const _kMenuBreakpoint = 800.0;
+
+/// How wide the menu is when it is beside the content.
+const _kMenuWidth = 232.0;
+
+class _SettingsPageState extends ConsumerState<SettingsPage> {
+  /// Which branches are open in the wide menu. Nothing to start with, so it
+  /// opens as a list of subjects rather than as everything there is.
+  final _expanded = <String>{};
+
+  /// Which branch the narrow tabs are inside, innermost last.
+  ///
+  /// The wide menu shows every level at once and needs no such thing; the tabs
+  /// show one level and walk between them. Both read the same tree, and both
+  /// point at the same [_selectedId].
+  final _path = <SettingsNode>[];
+
+  String? _selectedId;
+
+  /// A wide window has to be showing something from the start, so it opens on
+  /// the first group with its branch unfolded. A narrow one opens on the list
+  /// and [_path] stays empty until a row is picked.
+  @override
+  void initState() {
+    super.initState();
+    final first = _buildNodes().firstWhereOrNull((e) => !e.isLeaf);
+    if (first == null) return;
+    _expanded.add(first.id);
+    _selectedId = first.firstLeaf?.id;
+  }
 
   void _clearAllSettings() {
     final keys = SettingStore.instance.box.keys;
     SettingStore.instance.box.deleteAll(keys);
-    context.showSnackBar(libL10n.success);
+    Toast.success(libL10n.success);
   }
 
-  @override
-  void dispose() {
-    _tabCtrl.dispose();
-    super.dispose();
+  /// The menu, built here because every title comes from the l10n of the
+  /// moment. A group with settings of its own carries them in a leaf under
+  /// itself, so that opening a branch and showing a page stay separate.
+  List<SettingsNode> _buildNodes() {
+    return [
+      // Grouped by what a setting belongs to, using the same names the app's
+      // own tabs do — so "is SFTP under connections or under files" is not a
+      // question anyone has to answer. Two levels throughout: a third made
+      // reaching a page two taps of guessing.
+      SettingsNode.branch(
+        id: 'app',
+        title: libL10n.app,
+        icon: Icons.tune,
+        children: [
+          SettingsNode.leaf(
+            id: 'app.setting',
+            title: libL10n.setting,
+            icon: Icons.settings_outlined,
+            page: () => const AppSettingsPage(section: SettingsSection.app),
+          ),
+          SettingsNode.leaf(
+            id: 'app.ai',
+            title: libL10n.ai,
+            icon: Icons.auto_awesome_outlined,
+            page: () => const AppSettingsPage(section: SettingsSection.ai),
+          ),
+
+          /// Fullscreen Mode is designed for old mobile phone which can be
+          /// used as a status screen.
+          if (isMobile)
+            SettingsNode.leaf(
+              id: 'app.fullScreen',
+              title: l10n.fullScreen,
+              icon: Icons.fullscreen,
+              page: () =>
+                  const AppSettingsPage(section: SettingsSection.fullScreen),
+            ),
+        ],
+      ),
+      SettingsNode.branch(
+        id: 'server',
+        title: libL10n.server,
+        icon: Icons.dns_outlined,
+        children: [
+          SettingsNode.leaf(
+            id: 'server.setting',
+            title: libL10n.setting,
+            icon: Icons.settings_outlined,
+            page: () => const AppSettingsPage(section: SettingsSection.server),
+          ),
+          SettingsNode.leaf(
+            id: 'server.order',
+            title: l10n.serverOrder,
+            icon: Icons.sort,
+            page: () => const ServerOrderPage(embedded: true),
+          ),
+          SettingsNode.leaf(
+            id: 'server.detail',
+            title: l10n.serverDetailOrder,
+            icon: Icons.dashboard_customize_outlined,
+            page: () => const ServerDetailOrderPage(embedded: true),
+          ),
+          SettingsNode.leaf(
+            id: 'server.func',
+            title: libL10n.sequence,
+            icon: Icons.reorder,
+            page: () => const ServerFuncBtnsOrderPage(embedded: true),
+          ),
+        ],
+      ),
+      SettingsNode.branch(
+        id: 'terminal',
+        title: libL10n.terminal,
+        icon: Icons.terminal,
+        children: [
+          SettingsNode.leaf(
+            id: 'terminal.setting',
+            title: libL10n.setting,
+            icon: Icons.settings_outlined,
+            page: () => const AppSettingsPage(section: SettingsSection.ssh),
+          ),
+          SettingsNode.leaf(
+            id: 'terminal.knownHosts',
+            title: l10n.sshKnownHostKeys,
+            icon: Icons.verified_user_outlined,
+            page: () => const KnownHostsPage(embedded: true),
+          ),
+          SettingsNode.leaf(
+            id: 'terminal.virtKey',
+            title: l10n.editVirtKeys,
+            icon: Icons.keyboard_outlined,
+            page: () => const SSHVirtKeySettingPage(embedded: true),
+          ),
+        ],
+      ),
+      SettingsNode.branch(
+        id: 'file',
+        title: libL10n.file,
+        icon: Icons.folder_outlined,
+        children: [
+          SettingsNode.leaf(
+            id: 'file.sftp',
+            title: l10n.sftp,
+            icon: Icons.cloud_outlined,
+            page: () => const AppSettingsPage(section: SettingsSection.sftp),
+          ),
+          // Under files rather than under the app: it is what opens one.
+          SettingsNode.leaf(
+            id: 'file.editor',
+            title: libL10n.editor,
+            icon: Icons.edit_note,
+            page: () => const AppSettingsPage(section: SettingsSection.editor),
+          ),
+        ],
+      ),
+      SettingsNode.leaf(
+        id: 'container',
+        title: libL10n.container,
+        icon: Icons.inbox_outlined,
+        page: () => const AppSettingsPage(section: SettingsSection.container),
+      ),
+      SettingsNode.leaf(
+        id: 'backup',
+        title: libL10n.backup,
+        icon: Icons.backup_outlined,
+        page: () => const BackupPage(),
+      ),
+      SettingsNode.leaf(
+        id: 'privateKey',
+        title: l10n.privateKey,
+        icon: Icons.key_outlined,
+        page: () => const PrivateKeysListPage(),
+      ),
+      SettingsNode.leaf(
+        id: 'about',
+        title: libL10n.about,
+        icon: Icons.info_outline,
+        page: () => const _AppAboutPage(),
+      ),
+    ];
+  }
+
+  void _onSelect(SettingsNode node) => setState(() => _selectedId = node.id);
+
+  void _onToggle(SettingsNode node) {
+    setState(() {
+      if (!_expanded.remove(node.id)) _expanded.add(node.id);
+    });
+  }
+
+  /// A tab is a tab: it shows something. Tapping a branch goes into it *and*
+  /// selects what is first inside, rather than leaving a row of tabs with none
+  /// of them on. The same applies to a row of the list.
+  void _onTab(SettingsNode node) {
+    setState(() {
+      if (node.isLeaf && _path.isNotEmpty) {
+        _selectedId = node.id;
+        return;
+      }
+      _path.add(node);
+      final leaf = node.firstLeaf;
+      if (leaf != null) _selectedId = leaf.id;
+    });
+  }
+
+  /// Out one level. What was selected stays selected — it is inside the branch
+  /// just left, and that branch is a tab here, lit to say so.
+  void _onTabBack() {
+    if (_path.isEmpty) return;
+    setState(_path.removeLast);
   }
 
   @override
   Widget build(BuildContext context) {
+    final nodes = _buildNodes();
+    final leaves = [
+      for (final node in nodes) ...node.flattened.where((e) => e.isLeaf),
+    ];
+    // Falls back rather than asserts: a node can go away between builds — the
+    // fullscreen one does, on a window that stops being narrow.
+    final selected = leaves.firstWhereOrNull((e) => e.id == _selectedId) ?? leaves.first;
+
+    final menu = _SettingsMenu(
+      nodes: nodes,
+      selectedId: selected.id,
+      expandedIds: _expanded,
+      onSelect: _onSelect,
+      onToggle: _onToggle,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= _kMenuBreakpoint;
+        return _buildScaffold(
+          wide: wide,
+          menu: menu,
+          nodes: nodes,
+          selected: selected,
+        );
+      },
+    );
+  }
+
+  /// The leaves beside [id] — the ones its own level holds.
+  static List<SettingsNode>? _groupOf(List<SettingsNode> level, String id) {
+    final leaves = level.where((e) => e.isLeaf).toList();
+    if (leaves.any((e) => e.id == id)) return leaves;
+    for (final node in level) {
+      if (node.children.isEmpty) continue;
+      final found = _groupOf(node.children, id);
+      if (found != null) return found;
+    }
+    return null;
+  }
+
+  /// The level [node] leads to: what is inside a branch, and a leaf alone.
+  ///
+  /// A leaf on its own gets no tabs. There is one page and nothing to move
+  /// between, and a bar with a single tab on it says only what the title bar
+  /// above it already said.
+  static List<SettingsNode> _levelOf(SettingsNode node) {
+    return node.isLeaf ? [node] : node.children;
+  }
+
+  Widget _buildScaffold({
+    required bool wide,
+    required Widget menu,
+    required List<SettingsNode> nodes,
+    required SettingsNode selected,
+  }) {
+    final content = _buildContent(wide: wide, nodes: nodes, selected: selected);
+
     return Scaffold(
+      // The one bar the page has, naming whatever is being shown. The pages in
+      // it are given `embedded: true` and drop their own.
       appBar: CustomAppBar(
-        title: Text(libL10n.setting, style: const TextStyle(fontSize: 20)),
-        bottom: TabBar(
-          controller: _tabCtrl,
-          dividerHeight: 0,
-          tabAlignment: TabAlignment.center,
-          isScrollable: true,
-          tabs: SettingsTabs.values
-              .map((e) => Tab(text: e.i18n))
-              .toList(growable: false),
+        // The list names itself; everything else is named by what it shows.
+        title: Text(
+          !wide && _path.isEmpty ? libL10n.setting : selected.title,
+          style: const TextStyle(fontSize: 20),
         ),
+        // Out of the level rather than out of the settings, while there is a
+        // level to leave. A leaf shown on its own has no tabs and so no other
+        // way back to the list.
+        leading: !wide && _path.isNotEmpty
+            ? BackButton(onPressed: _onTabBack)
+            : null,
         actions: [
           Btn.text(
             text: context.libL10n.logs,
@@ -98,7 +357,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
               ),
             ),
           ),
-          Btn.icon(
+          Btn.icon(text: libL10n.delete, 
             icon: const Icon(Icons.delete),
             onTap: () => context.showRoundDialog(
               title: libL10n.attention,
@@ -110,7 +369,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
               actions: [
                 CountDownBtn(
                   onTap: () {
-                    context.pop();
+                    context.popDialog();
                     _clearAllSettings();
                   },
                   afterColor: Colors.red,
@@ -121,14 +380,141 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
         ],
       ),
       body: SafeArea(
-        child: TabBarView(controller: _tabCtrl, children: SettingsTabs.pages),
+        child: wide
+            ? Row(
+                children: [
+                  SizedBox(width: _kMenuWidth, child: menu),
+                  const VerticalDivider(width: 1, thickness: 1),
+                  Expanded(child: content),
+                ],
+              )
+            : _buildNarrow(nodes, content),
       ),
+    );
+  }
+
+  /// The levels, as pages of a navigator.
+  ///
+  /// Declarative rather than pushed by hand: [_path] already says which levels
+  /// are open, and letting the navigator read it means the two cannot disagree.
+  /// A level arriving or leaving the list is a `MaterialPage` doing so, which is
+  /// where the transition comes from.
+  Widget _buildContent({
+    required bool wide,
+    required List<SettingsNode> nodes,
+    required SettingsNode selected,
+  }) {
+    Widget pagesOf(String id, List<SettingsNode> level) {
+      return _SettingsPages(
+        key: ValueKey('pages_$id'),
+        leaves: level.where((e) => e.isLeaf).toList(),
+        selectedId: selected.id,
+        onChanged: _onSelect,
+      );
+    }
+
+    return Navigator(
+      pages: [
+        if (wide)
+          MaterialPage<void>(
+            key: ValueKey(_groupOf(nodes, selected.id)?.firstOrNull?.id ?? 'root'),
+            child: pagesOf(selected.id, _groupOf(nodes, selected.id) ?? const []),
+          )
+        else ...[
+          // What settings there are, which is where a narrow window starts.
+          MaterialPage<void>(
+            key: const ValueKey('root'),
+            child: _SettingsList(nodes: nodes, onTap: _onTab),
+          ),
+          for (final entered in _path)
+            MaterialPage<void>(
+              key: ValueKey(entered.id),
+              child: pagesOf(entered.id, _levelOf(entered)),
+            ),
+        ],
+      ],
+      onDidRemovePage: (page) {
+        // A page can also go because the system back gesture took it. What the
+        // tabs show comes from [_path], so it has to hear about that.
+        if (_path.isEmpty) return;
+        if ((page.key as ValueKey?)?.value == _path.last.id) {
+          setState(_path.removeLast);
+        }
+      },
+    );
+  }
+
+  /// The content with the tabs floating over its foot.
+  ///
+  /// The content is told to keep clear of them through the [MediaQuery] its own
+  /// `SafeArea` reads, so a list scrolls to its end above the bar rather than
+  /// under it.
+  Widget _buildNarrow(List<SettingsNode> nodes, Widget content) {
+    final mediaQuery = MediaQuery.of(context);
+    // Nothing over the list — a bar of tabs there would be the same names
+    // twice — and nothing over a leaf, which has no level under it to show.
+    final entered = _path.lastOrNull;
+    final level = entered == null || entered.isLeaf ? null : entered;
+    final space = level == null ? 0.0 : _kTabsHeight + _kTabsMargin * 2;
+
+    return Stack(
+      children: [
+        MediaQuery(
+          data: mediaQuery.copyWith(
+            padding: mediaQuery.padding.copyWith(
+              bottom: mediaQuery.padding.bottom + space,
+            ),
+          ),
+          child: SafeArea(top: false, child: content),
+        ),
+        // Edge to edge, and the bar centres itself within that: it is as wide
+        // as the level it is showing, and only scrolls when that is too wide.
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: _kTabsMargin,
+          child: AnimatedSwitcher(
+            duration: Durations.medium2,
+            // Springs up past its place and settles, as displacement does
+            // elsewhere. No fade with it: the curve overshoots, and an opacity
+            // past 1 asserts.
+            switchInCurve: _kTabsCurve,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) => SlideTransition(
+              position: Tween(
+                // Far enough to take the shadow with it.
+                begin: const Offset(0, 1.4),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+            child: level == null
+                ? const SizedBox(key: ValueKey('no_tabs'), width: double.infinity)
+                : _SettingsTabs(
+                    key: ValueKey(level.id),
+                    nodes: _levelOf(level),
+                    selectedId: _selectedId,
+                    canGoBack: true,
+                    onTap: _onTab,
+                    onBack: _onTabBack,
+                  ),
+          ),
+        ),
+      ],
     );
   }
 }
 
+/// Which group of settings [AppSettingsPage] is showing.
+///
+/// One page rather than one per group, so that the state — and the four text
+/// controllers on it — survives moving between them.
+enum SettingsSection { app, ai, server, ssh, sftp, container, editor, fullScreen }
+
 final class AppSettingsPage extends ConsumerStatefulWidget {
-  const AppSettingsPage({super.key});
+  final SettingsSection section;
+
+  const AppSettingsPage({super.key, required this.section});
 
   @override
   ConsumerState<AppSettingsPage> createState() => _AppSettingsPageState();
@@ -161,32 +547,22 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiList(
-      children: [
-        [
-          CenterGreyTitle(libL10n.app),
-          _buildApp(),
-          CenterGreyTitle(l10n.ai),
-          _buildAskAiConfig(),
-        ],
-        [CenterGreyTitle(libL10n.server), _buildServer()],
-        [
-          CenterGreyTitle(l10n.ssh),
-          _buildSSH(),
-          CenterGreyTitle(l10n.sftp),
-          _buildSFTP(),
-        ],
-        [
-          CenterGreyTitle(libL10n.container),
-          _buildContainer(),
-          CenterGreyTitle(libL10n.editor),
-          _buildEditor(),
-        ],
+    // No heading over it: the menu says which group this is, and the bar above
+    // repeats it. A `CenterGreyTitle` here would be the third time.
+    final group = switch (widget.section) {
+      SettingsSection.app => _buildApp(),
+      SettingsSection.ai => _buildAskAiConfig(),
+      SettingsSection.server => _buildServer(),
+      SettingsSection.ssh => _buildSSH(),
+      SettingsSection.sftp => _buildSFTP(),
+      SettingsSection.container => _buildContainer(),
+      SettingsSection.editor => _buildEditor(),
+      SettingsSection.fullScreen => _buildFullScreen(),
+    };
 
-        /// Fullscreen Mode is designed for old mobile phone which can be
-        /// used as a status screen.
-        if (isMobile) [CenterGreyTitle(l10n.fullScreen), _buildFullScreen()],
-      ],
+    return ListView(
+      padding: MultiList.kOuterPadding,
+      children: [group],
     );
   }
 
@@ -205,7 +581,7 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
 
         void save() {
           onSave(ctrl.text.trim());
-          context.pop();
+          context.popDialog();
         }
 
         await context.showRoundDialog<bool>(
@@ -226,27 +602,3 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
   }
 }
 
-enum SettingsTabs {
-  app,
-  privateKey,
-  backup,
-  about;
-
-  String get i18n => switch (this) {
-    SettingsTabs.app => libL10n.app,
-    SettingsTabs.privateKey => l10n.privateKey,
-    SettingsTabs.backup => libL10n.backup,
-    SettingsTabs.about => libL10n.about,
-  };
-
-  Widget get page => switch (this) {
-    SettingsTabs.app => const AppSettingsPage(),
-    SettingsTabs.privateKey => const PrivateKeysListPage(),
-    SettingsTabs.backup => const BackupPage(),
-    SettingsTabs.about => const _AppAboutPage(),
-  };
-
-  static final List<Widget> pages = SettingsTabs.values
-      .map((e) => e.page)
-      .toList();
-}

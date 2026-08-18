@@ -1,0 +1,9 @@
+.config
+server_box_monitor
+frontend/node_modules
+frontend/dist
+target
+serverbox_monitor.db*
+.env
+config.toml
+jwt.secret

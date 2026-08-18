@@ -1,0 +1,5 @@
+# Written by tool/bench_target.sh: host/port/user/key path for the local target.
+.env
+# Throwaway keypair authorised on the benchmark machine only.
+.bench-keys/
+.dart_tool/

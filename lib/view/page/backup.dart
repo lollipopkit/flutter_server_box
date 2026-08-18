@@ -103,7 +103,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                   TextButton(
                     onPressed: () async {
                       await SecureStoreProps.bakPwd.write(null);
-                      context.showSnackBar(l10n.backupPasswordRemoved);
+                      Toast.show(l10n.backupPasswordRemoved);
                       setState(() {});
                     },
                     child: Text(libL10n.delete),
@@ -124,36 +124,39 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     final node = FocusNode();
     final result = await context.showRoundDialog<bool>(
       title: l10n.backupPassword,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(l10n.backupPasswordTip, style: UIs.textGrey),
-          UIs.height13,
-          Input(
-            label: l10n.backupPassword,
-            controller: controller,
-            node: node,
-            obscureText: true,
-            onSubmitted: (_) => context.pop(true),
-          ),
-        ],
+      // Both disposed by the tree. The focus node has the same problem the
+      // controller does — the field holds it while the route animates out —
+      // and here they were also disposed on two paths, so an early return had
+      // to remember both.
+      child: DisposeWith(
+        notifiers: [controller, node],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.backupPasswordTip, style: UIs.textGrey),
+            UIs.height13,
+            Input(
+              label: l10n.backupPassword,
+              controller: controller,
+              node: node,
+              obscureText: true,
+              onSubmitted: (_) => context.popDialog(true),
+            ),
+          ],
+        ),
       ),
       actions: Btnx.oks,
     );
-    if (result == true) {
-      final pwd = controller.text.trim();
-      if (pwd.isEmpty) {
-        context.showSnackBar(libL10n.empty);
-        controller.dispose();
-        node.dispose();
-        return;
-      }
-      await SecureStoreProps.bakPwd.write(pwd);
-      context.showSnackBar(l10n.backupPasswordSet);
-      setState(() {});
+    if (result != true) return;
+
+    final pwd = controller.text.trim();
+    if (pwd.isEmpty) {
+      Toast.show(libL10n.empty);
+      return;
     }
-    controller.dispose();
-    node.dispose();
+    await SecureStoreProps.bakPwd.write(pwd);
+    Toast.show(l10n.backupPasswordSet);
+    setState(() {});
   }
 
   Widget get _buildTip {
@@ -204,7 +207,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
               validator: (p0) async {
                 if (p0 &&
                     (PrefProps.webdavSync.get() || PrefProps.gistSync.get())) {
-                  context.showSnackBar(l10n.autoBackupConflict);
+                  Toast.show(l10n.autoBackupConflict);
                   return false;
                 }
                 if (p0) {
@@ -243,7 +246,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
               prop: PrefProps.webdavSync,
               validator: (p0) async {
                 if (p0 && isICloudSupported && PrefProps.icloudSync.get()) {
-                  context.showSnackBar(l10n.autoBackupConflict);
+                  Toast.show(l10n.autoBackupConflict);
                   return false;
                 }
                 if (p0) {
@@ -257,13 +260,13 @@ final class _BackupPageState extends ConsumerState<BackupPage>
 
                   final anyNull = url == null || user == null || pwd == null;
                   if (anyNull) {
-                    context.showSnackBar(l10n.webdavSettingEmpty);
+                    Toast.show(l10n.webdavSettingEmpty);
                     return false;
                   }
 
                   final anyEmpty = url.isEmpty || user.isEmpty || pwd.isEmpty;
                   if (anyEmpty) {
-                    context.showSnackBar(l10n.webdavSettingEmpty);
+                    Toast.show(l10n.webdavSettingEmpty);
                     return false;
                   }
 
@@ -322,7 +325,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                 if (p0 &&
                     ((isICloudSupported && PrefProps.icloudSync.get()) ||
                         PrefProps.webdavSync.get())) {
-                  context.showSnackBar(l10n.autoBackupConflict);
+                  Toast.show(l10n.autoBackupConflict);
                   return false;
                 }
                 if (p0) {
@@ -334,7 +337,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
                   // Allow empty gistId (will create one on first upload)
                   final hasToken = token != null && token.isNotEmpty;
                   if (!hasToken) {
-                    context.showSnackBar(context.l10n.githubGistTokenEmpty);
+                    Toast.show(context.l10n.githubGistTokenEmpty);
                     return false;
                   }
                   gistLoading.value = true;
@@ -524,7 +527,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           }
         }
         if (snippets.isEmpty) {
-          context.showSnackBar(libL10n.empty);
+          Toast.show(libL10n.empty);
           return;
         }
         if (errs.isNotEmpty) {
@@ -535,24 +538,24 @@ final class _BackupPageState extends ConsumerState<BackupPage>
           return;
         }
         final snippetNames = snippets.map((e) => e.name).join(', ');
-        context.showRoundDialog(
+        // The dialog answers; the page acts on the answer, and closes
+        // itself. Doing both from the button meant two pops in a row from a
+        // callback that can see two navigators.
+        final confirmed = await context.showRoundDialog<bool>(
           title: libL10n.attention,
           child: SingleChildScrollView(
             child: Text(
               libL10n.askContinue('${libL10n.import} [$snippetNames]'),
             ),
           ),
-          actions: Btn.ok(
-            onTap: () {
-              final notifier = ref.read(snippetProvider.notifier);
-              for (final snippet in snippets) {
-                notifier.add(snippet);
-              }
-              context.pop();
-              context.pop();
-            },
-          ).toList,
+          actions: Btn.ok().toList,
         );
+        if (confirmed != true || !context.mounted) return;
+        final notifier = ref.read(snippetProvider.notifier);
+        for (final snippet in snippets) {
+          notifier.add(snippet);
+        }
+        context.pop();
       },
     ).cardx;
   }
@@ -589,7 +592,7 @@ extension on _BackupPageState {
     webdavLoading.value = true;
     try {
       final files = await Webdav.shared.list();
-      if (files.isEmpty) return context.showSnackBar(l10n.dirEmpty);
+      if (files.isEmpty) return Toast.show(l10n.dirEmpty);
 
       final fileName = await context.showPickSingleDialog(
         title: libL10n.restore,
@@ -634,7 +637,7 @@ extension on _BackupPageState {
     gistLoading.value = true;
     try {
       final files = await GistRs.shared.list();
-      if (files.isEmpty) return context.showSnackBar(l10n.dirEmpty);
+      if (files.isEmpty) return Toast.show(l10n.dirEmpty);
 
       final fileName = await context.showPickSingleDialog(
         title: libL10n.restore,
@@ -695,7 +698,7 @@ extension on _BackupPageState {
             label: appL10n.githubGistIdOptional,
             controller: gistIdCtrl,
             suggestion: false,
-            onSubmitted: (_) => context.pop(true),
+            onSubmitted: (_) => context.popDialog(true),
           ),
         ],
       ),
@@ -710,7 +713,7 @@ extension on _BackupPageState {
           token: token_,
           gistId: gistId_.isEmpty ? null : gistId_,
         );
-        context.showSnackBar(libL10n.success);
+        Toast.success(libL10n.success);
 
         await PrefProps.githubToken.set(token_);
         if (gistId_.isEmpty) {
@@ -757,7 +760,7 @@ extension on _BackupPageState {
             controller: pwd,
             node: nodePwd,
             suggestion: false,
-            onSubmitted: (_) => context.pop(true),
+            onSubmitted: (_) => context.popDialog(true),
           ),
         ],
       ),
@@ -770,7 +773,7 @@ extension on _BackupPageState {
         final pwd_ = pwd.text;
 
         await Webdav.test(url_, user_, pwd_);
-        context.showSnackBar(libL10n.success);
+        Toast.success(libL10n.success);
 
         Webdav.shared.client = WebdavClient.basicAuth(
           url: url_,
@@ -837,7 +840,7 @@ extension on _BackupPageState {
           },
         );
         if (err != null || suc != true) return;
-        context.showSnackBar(libL10n.success);
+        Toast.success(libL10n.success);
       }
     } catch (e, s) {
       context.showErrDialog(e, s, libL10n.import);
@@ -855,11 +858,11 @@ extension on _BackupPageState {
       child: Text(l10n.backupPasswordTip, style: UIs.textGrey),
       actions: [
         TextButton(
-          onPressed: () => context.pop(true),
+          onPressed: () => context.popDialog(true),
           child: Text(libL10n.cancel),
         ),
         TextButton(
-          onPressed: () => context.pop(false),
+          onPressed: () => context.popDialog(false),
           child: Text(libL10n.setting),
         ),
       ],

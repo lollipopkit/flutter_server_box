@@ -4,7 +4,7 @@ extension _Server on _AppSettingsPageState {
   void _showInvalidUrlDialog() {
     context.showRoundDialog(
       title: libL10n.fail,
-      child: Text(l10n.invalidUrl),
+      child: Text(libL10n.invalidUrl),
       actions: Btnx.oks,
     );
   }
@@ -51,7 +51,7 @@ extension _Server on _AppSettingsPageState {
     return ListTile(
       leading: const Icon(Icons.analytics, size: _kIconSize),
       title: Text(l10n.connectionStats),
-      subtitle: Text(l10n.connectionStatsDesc),
+      subtitle: Text(l10n.connectionStatsDesc, style: UIs.textGrey),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () {
         ConnectionStatsPage.route.go(context);
@@ -90,20 +90,20 @@ extension _Server on _AppSettingsPageState {
         for (final key in deleteKeys) {
           await notifier.delServer(key);
         }
-        context.showSnackBar(libL10n.success);
+        Toast.success(libL10n.success);
       },
     );
   }
 
   Widget _buildTextScaler() {
     return ListTile(
-      title: TipText(l10n.textScaler, l10n.textScalerTip),
+      title: TipText(libL10n.textScaler, l10n.textScalerTip),
       trailing: ValBuilder(
         listenable: _setting.textFactor.listenable(),
         builder: (val) => Text(val.toString(), style: UIs.text15),
       ),
       onTap: () => context.showRoundDialog(
-        title: l10n.textScaler,
+        title: libL10n.textScaler,
         child: Input(
           autoFocus: true,
           type: TextInputType.number,
@@ -123,32 +123,23 @@ extension _Server on _AppSettingsPageState {
   void _onSaveTextScaler(String s) {
     final val = double.tryParse(s);
     if (val == null) {
-      context.showSnackBar(libL10n.fail);
+      Toast.error(libL10n.fail);
       return;
     }
     _setting.textFactor.put(val);
     RNodes.app.notify();
-    context.pop();
+    context.popDialog();
   }
 
+  /// Desktop and tablet only: below the width threshold there is only ever
+  /// one column, so the switch would claim to change something it cannot.
+  /// Order only. There was a switch above it for whether the buttons lived on
+  /// the server card or the detail page; they float over the detail page now,
+  /// which works on either layout, so there is nothing left to choose.
   Widget _buildServerFuncBtns() {
-    return ExpandTile(
+    return ListTile(
       leading: const Icon(BoxIcons.bxs_joystick_button, size: _kIconSize),
       title: Text(l10n.serverFuncBtns),
-      children: [_buildServerFuncBtnsSwitch(), _buildServerFuncBtnsOrder()],
-    );
-  }
-
-  Widget _buildServerFuncBtnsSwitch() {
-    return ListTile(
-      title: TipText(libL10n.location, l10n.moveOutServerFuncBtnsHelp),
-      trailing: StoreSwitch(prop: _setting.moveServerFuncs),
-    );
-  }
-
-  Widget _buildServerFuncBtnsOrder() {
-    return ListTile(
-      title: Text(libL10n.sequence),
       trailing: const Icon(Icons.keyboard_arrow_right),
       onTap: () => ServerFuncBtnsOrderPage.route.go(context),
     );
@@ -190,7 +181,7 @@ extension _Server on _AppSettingsPageState {
   Widget _buildServerMore() {
     return ExpandTile(
       leading: const Icon(MingCute.more_3_fill),
-      title: Text(l10n.more),
+      title: Text(libL10n.more),
       initiallyExpanded: false,
       children: [
         _buildServerTabPreferDiskAmount(),
@@ -237,7 +228,7 @@ extension _Server on _AppSettingsPageState {
         return;
       }
       _setting.serverLogoUrl.put(url);
-      context.pop();
+      context.popDialog();
     }
 
     return ListTile(

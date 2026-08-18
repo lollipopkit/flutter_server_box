@@ -141,29 +141,11 @@ abstract class AppLocalizations {
   /// **'Added to task list'**
   String get added2List;
 
-  /// No description provided for @addr.
-  ///
-  /// In en, this message translates to:
-  /// **'Address'**
-  String get addr;
-
   /// No description provided for @askAi.
   ///
   /// In en, this message translates to:
   /// **'Ask AI'**
   String get askAi;
-
-  /// No description provided for @ai.
-  ///
-  /// In en, this message translates to:
-  /// **'AI'**
-  String get ai;
-
-  /// No description provided for @askAiApiKey.
-  ///
-  /// In en, this message translates to:
-  /// **'API Key'**
-  String get askAiApiKey;
 
   /// No description provided for @askAiAwaitingResponse.
   ///
@@ -171,35 +153,17 @@ abstract class AppLocalizations {
   /// **'Waiting for AI response...'**
   String get askAiAwaitingResponse;
 
-  /// No description provided for @askAiBaseUrl.
-  ///
-  /// In en, this message translates to:
-  /// **'API Endpoint'**
-  String get askAiBaseUrl;
-
   /// No description provided for @askAiEndpointTip.
   ///
   /// In en, this message translates to:
   /// **'Enter a service base URL or a full Chat Completions or Responses endpoint. ServerBox completes the path for the selected protocol.'**
   String get askAiEndpointTip;
 
-  /// No description provided for @askAiProtocol.
-  ///
-  /// In en, this message translates to:
-  /// **'API protocol'**
-  String get askAiProtocol;
-
   /// No description provided for @askAiProtocolTip.
   ///
   /// In en, this message translates to:
   /// **'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.'**
   String get askAiProtocolTip;
-
-  /// No description provided for @askAiProtocolAuto.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto'**
-  String get askAiProtocolAuto;
 
   /// No description provided for @askAiProtocolChatCompletions.
   ///
@@ -321,24 +285,6 @@ abstract class AppLocalizations {
   /// **'Terminal context'**
   String get askAiTerminalContext;
 
-  /// No description provided for @askAiReady.
-  ///
-  /// In en, this message translates to:
-  /// **'Ready'**
-  String get askAiReady;
-
-  /// No description provided for @askAiThinking.
-  ///
-  /// In en, this message translates to:
-  /// **'Thinking'**
-  String get askAiThinking;
-
-  /// No description provided for @askAiRunningCommand.
-  ///
-  /// In en, this message translates to:
-  /// **'Running'**
-  String get askAiRunningCommand;
-
   /// No description provided for @askAiReviewNeeded.
   ///
   /// In en, this message translates to:
@@ -393,6 +339,12 @@ abstract class AppLocalizations {
   /// **'Changes system'**
   String get askAiRiskCaution;
 
+  /// No description provided for @askAiRiskUnvetted.
+  ///
+  /// In en, this message translates to:
+  /// **'Unvetted host'**
+  String get askAiRiskUnvetted;
+
   /// No description provided for @askAiRiskDestructive.
   ///
   /// In en, this message translates to:
@@ -410,18 +362,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.'**
   String get askAiHighRiskConfirmBody;
-
-  /// No description provided for @askAiCommandCancelled.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancelled'**
-  String get askAiCommandCancelled;
-
-  /// No description provided for @askAiCommandTimedOut.
-  ///
-  /// In en, this message translates to:
-  /// **'Timed out'**
-  String get askAiCommandTimedOut;
 
   /// No description provided for @askAiNoCommandOutput.
   ///
@@ -453,6 +393,18 @@ abstract class AppLocalizations {
   /// **'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.'**
   String get askAiAutoRunSafeCommandsTip;
 
+  /// No description provided for @askAiSendOnEnter.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter sends'**
+  String get askAiSendOnEnter;
+
+  /// No description provided for @askAiSendOnEnterTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter sends the message, Shift+Enter starts a new line. Off swaps them: Enter starts a new line and Cmd/Ctrl+Enter sends.'**
+  String get askAiSendOnEnterTip;
+
   /// No description provided for @askAiApiKeyOptional.
   ///
   /// In en, this message translates to:
@@ -464,12 +416,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Conversation history'**
   String get askAiHistory;
-
-  /// No description provided for @askAiHistoryLocalOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Encrypted on this device and excluded from backup and sync'**
-  String get askAiHistoryLocalOnly;
 
   /// No description provided for @askAiNewConversation.
   ///
@@ -512,12 +458,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This removes the conversation from this device and cannot be undone.'**
   String get askAiDeleteConversationTip;
-
-  /// No description provided for @askAiClearHistory.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear history'**
-  String get askAiClearHistory;
 
   /// No description provided for @askAiClearHistoryTitle.
   ///
@@ -614,6 +554,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tool execution failed.'**
   String get agentToolFailed;
+
+  /// No description provided for @agentToolCallsFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} tool calls'**
+  String agentToolCallsFmt(Object count);
+
+  /// No description provided for @agentFloat.
+  ///
+  /// In en, this message translates to:
+  /// **'Float over other tabs'**
+  String get agentFloat;
+
+  /// No description provided for @agentToolSshConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH connect'**
+  String get agentToolSshConnect;
+
+  /// No description provided for @agentToolSshDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect SSH'**
+  String get agentToolSshDisconnect;
+
+  /// No description provided for @agentSshConnectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to a new host'**
+  String get agentSshConnectTitle;
+
+  /// No description provided for @agentAuthMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication'**
+  String get agentAuthMethod;
+
+  /// No description provided for @agentSshConnectTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The Agent wants to open an SSH connection. Type the password here — never into the conversation, where it would be stored and sent to the model.'**
+  String get agentSshConnectTip;
+
+  /// No description provided for @agentAdHocSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary connections'**
+  String get agentAdHocSessions;
+
+  /// No description provided for @agentSaveServerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as a server'**
+  String get agentSaveServerTitle;
+
+  /// No description provided for @agentSaveServerTip.
+  ///
+  /// In en, this message translates to:
+  /// **'This host and the password you entered will be stored on this device.'**
+  String get agentSaveServerTip;
+
+  /// No description provided for @agentMonitorOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor agent (optional)'**
+  String get agentMonitorOptional;
 
   /// No description provided for @atLeastOneTab.
   ///
@@ -873,12 +879,6 @@ abstract class AppLocalizations {
   /// **'Display the usage of each CPU in a progress bar style (old style)'**
   String get cpuViewAsProgressTip;
 
-  /// No description provided for @configured.
-  ///
-  /// In en, this message translates to:
-  /// **'Configured'**
-  String get configured;
-
   /// No description provided for @customCmd.
   ///
   /// In en, this message translates to:
@@ -890,6 +890,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Batch delete servers'**
   String get deleteServers;
+
+  /// No description provided for @deleteDirRecursive.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the folder and everything in it'**
+  String get deleteDirRecursive;
 
   /// No description provided for @desktopTerminalTip.
   ///
@@ -1056,23 +1062,23 @@ abstract class AppLocalizations {
   /// **'File \'{file}\' too large {size}, max {sizeMax}'**
   String fileTooLarge(Object file, Object size, Object sizeMax);
 
+  /// No description provided for @fileDirGone.
+  ///
+  /// In en, this message translates to:
+  /// **'This folder is no longer here'**
+  String get fileDirGone;
+
+  /// No description provided for @fileDirGoneTip.
+  ///
+  /// In en, this message translates to:
+  /// **'It was deleted or renamed. Use the bar below to go back, go home, or jump elsewhere.'**
+  String get fileDirGoneTip;
+
   /// No description provided for @finishedAt.
   ///
   /// In en, this message translates to:
   /// **'Finished at'**
   String get finishedAt;
-
-  /// No description provided for @followSystem.
-  ///
-  /// In en, this message translates to:
-  /// **'Follow system'**
-  String get followSystem;
-
-  /// No description provided for @fontSize.
-  ///
-  /// In en, this message translates to:
-  /// **'Font size'**
-  String get fontSize;
 
   /// No description provided for @fullScreen.
   ///
@@ -1122,29 +1128,11 @@ abstract class AppLocalizations {
   /// **'Token is empty'**
   String get githubGistTokenEmpty;
 
-  /// No description provided for @goBackQ.
-  ///
-  /// In en, this message translates to:
-  /// **'Go back?'**
-  String get goBackQ;
-
   /// No description provided for @goto.
   ///
   /// In en, this message translates to:
   /// **'Go to'**
   String get goto;
-
-  /// No description provided for @hideTitleBar.
-  ///
-  /// In en, this message translates to:
-  /// **'Hide title bar'**
-  String get hideTitleBar;
-
-  /// No description provided for @highlight.
-  ///
-  /// In en, this message translates to:
-  /// **'Code highlighting'**
-  String get highlight;
 
   /// No description provided for @homeTabs.
   ///
@@ -1181,6 +1169,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Images list'**
   String get imagesList;
+
+  /// No description provided for @macDmgBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The App Store requires this app to be sandboxed, and a sandboxed process cannot open a pseudo-terminal. So the App Store build has no terminal on this Mac and cannot run a snippet or an agent command here. The DMG build is the same app signed without the sandbox, and has both.\n\nThe App Store build still works and still updates. It may stop being updated later.\n\nThe two builds keep their data in different places. The DMG build copies it over on its first launch, so servers, keys and history come along. If that fails it says so, and you can carry a backup file across instead (Backup, in settings).'**
+  String get macDmgBody;
+
+  /// No description provided for @macDmgImportDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'macOS did not allow reading the data of the previously installed build. Grant Full Disk Access and reopen the app, or export a backup there and restore it here.'**
+  String get macDmgImportDenied;
+
+  /// No description provided for @macDmgImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported the data of the previously installed build.'**
+  String get macDmgImported;
+
+  /// No description provided for @macDmgImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not read the data of the previously installed build. Export a backup there, then restore it here.'**
+  String get macDmgImportFailed;
+
+  /// No description provided for @macDmgTip.
+  ///
+  /// In en, this message translates to:
+  /// **'A terminal on this Mac, and running snippets on it, exist only in the DMG build.'**
+  String get macDmgTip;
+
+  /// No description provided for @macDmgTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'DMG build'**
+  String get macDmgTitle;
+
+  /// No description provided for @showHiddenFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Show hidden files'**
+  String get showHiddenFiles;
 
   /// No description provided for @unused.
   ///
@@ -1271,18 +1301,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pull'**
   String get pull;
-
-  /// No description provided for @invalid.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid'**
-  String get invalid;
-
-  /// No description provided for @invalidUrl.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid URL'**
-  String get invalidUrl;
 
   /// No description provided for @invalidHostFormat.
   ///
@@ -1386,18 +1404,6 @@ abstract class AppLocalizations {
   /// **'Mismatch system: {system}'**
   String mismatchSystem(Object system);
 
-  /// No description provided for @more.
-  ///
-  /// In en, this message translates to:
-  /// **'More'**
-  String get more;
-
-  /// No description provided for @moveOutServerFuncBtnsHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'On: can be displayed below each card on the Server Tab page. Off: can be displayed at the top of the Server Details page.'**
-  String get moveOutServerFuncBtnsHelp;
-
   /// No description provided for @needRestart.
   ///
   /// In en, this message translates to:
@@ -1464,11 +1470,17 @@ abstract class AppLocalizations {
   /// **'Parsing the occupancy status of Docker is relatively slow.'**
   String get parseContainerStatsTip;
 
-  /// No description provided for @permission.
+  /// No description provided for @fullAccessRefused.
   ///
   /// In en, this message translates to:
-  /// **'Permissions'**
-  String get permission;
+  /// **'This agent does not allow access without SSH.'**
+  String get fullAccessRefused;
+
+  /// No description provided for @fullAccessInsecure.
+  ///
+  /// In en, this message translates to:
+  /// **'This agent allows access without SSH over TLS or loopback only, and this connection is plain HTTP.'**
+  String get fullAccessInsecure;
 
   /// No description provided for @plugInType.
   ///
@@ -1638,12 +1650,6 @@ abstract class AppLocalizations {
   /// **'Recent Connections'**
   String get recentConnections;
 
-  /// No description provided for @reconnecting.
-  ///
-  /// In en, this message translates to:
-  /// **'Reconnecting...'**
-  String get reconnecting;
-
   /// No description provided for @rememberPwdInMem.
   ///
   /// In en, this message translates to:
@@ -1662,23 +1668,83 @@ abstract class AppLocalizations {
   /// **'Remote path'**
   String get remotePath;
 
+  /// No description provided for @rootfsUpdateTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Alpine {installed} is installed and {latest} is available. Updating downloads it again and replaces the container: anything installed inside it with apk is lost. The current one keeps working if you skip this.'**
+  String rootfsUpdateTip(Object installed, Object latest);
+
+  /// No description provided for @rootfsMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No Linux filesystem is installed on this device yet.'**
+  String get rootfsMissing;
+
+  /// No description provided for @rootfsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A Linux userland on this device'**
+  String get rootfsSubtitle;
+
+  /// No description provided for @rootfsInstallTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Alpine Linux {version} (about 3 MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.'**
+  String rootfsInstallTip(Object version);
+
   /// No description provided for @sameIdServerExist.
   ///
   /// In en, this message translates to:
   /// **'A server with the same ID already exists'**
   String get sameIdServerExist;
 
-  /// No description provided for @save.
-  ///
-  /// In en, this message translates to:
-  /// **'Save'**
-  String get save;
-
   /// No description provided for @second.
   ///
   /// In en, this message translates to:
   /// **'s'**
   String get second;
+
+  /// No description provided for @serverFilesUnavailableTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Reachable either through this server\'s SSH, or through a monitor agent with its file API switched on.'**
+  String get serverFilesUnavailableTip;
+
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// No description provided for @history.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get history;
+
+  /// No description provided for @homeDir.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get homeDir;
+
+  /// No description provided for @selectItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get selectItem;
+
+  /// No description provided for @selected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selected(Object count);
+
+  /// No description provided for @sendTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to…'**
+  String get sendTo;
 
   /// No description provided for @serverDetailOrder.
   ///
@@ -1703,6 +1769,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Server tab cannot be removed'**
   String get serverTabRequired;
+
+  /// No description provided for @shareServerRiskTip.
+  ///
+  /// In en, this message translates to:
+  /// **'This QR code contains the server\'s connection settings in plain text, passwords included. Anyone who scans or photographs it can connect to this server.'**
+  String get shareServerRiskTip;
 
   /// No description provided for @sftpDlPrepare.
   ///
@@ -1740,18 +1812,6 @@ abstract class AppLocalizations {
   /// **'Display folders first'**
   String get sftpShowFoldersFirst;
 
-  /// No description provided for @size.
-  ///
-  /// In en, this message translates to:
-  /// **'Size'**
-  String get size;
-
-  /// No description provided for @softWrap.
-  ///
-  /// In en, this message translates to:
-  /// **'Soft wrap'**
-  String get softWrap;
-
   /// No description provided for @specifyDev.
   ///
   /// In en, this message translates to:
@@ -1769,12 +1829,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).'**
   String get tempIsCelsiusTip;
-
-  /// No description provided for @speed.
-  ///
-  /// In en, this message translates to:
-  /// **'Speed'**
-  String get speed;
 
   /// No description provided for @spentTime.
   ///
@@ -1878,6 +1932,18 @@ abstract class AppLocalizations {
   /// **'SSH host key type'**
   String get sshHostKeyType;
 
+  /// No description provided for @sshKnownHostKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'Known host keys'**
+  String get sshKnownHostKeys;
+
+  /// No description provided for @sshKnownHostKeysTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Host keys this app has accepted. Forget one to be asked about it again the next time you connect.'**
+  String get sshKnownHostKeysTip;
+
   /// No description provided for @sshHostKeyNewDesc.
   ///
   /// In en, this message translates to:
@@ -1932,12 +1998,6 @@ abstract class AppLocalizations {
   /// **'Auto switching of virtual keys'**
   String get sshVirtualKeyAutoOff;
 
-  /// No description provided for @stat.
-  ///
-  /// In en, this message translates to:
-  /// **'Statistics'**
-  String get stat;
-
   /// No description provided for @supportFmtArgs.
   ///
   /// In en, this message translates to:
@@ -1974,35 +2034,17 @@ abstract class AppLocalizations {
   /// **'System'**
   String get system;
 
-  /// No description provided for @tapToStartDiscovery.
-  ///
-  /// In en, this message translates to:
-  /// **'Tap the search button to discover SSH servers on your network'**
-  String get tapToStartDiscovery;
-
   /// No description provided for @termFontSizeTip.
   ///
   /// In en, this message translates to:
   /// **'This setting will affect the terminal size (width and height). You can zoom in on the terminal page to adjust the font size of the current session.'**
   String get termFontSizeTip;
 
-  /// No description provided for @textScaler.
-  ///
-  /// In en, this message translates to:
-  /// **'Text scaler'**
-  String get textScaler;
-
   /// No description provided for @textScalerTip.
   ///
   /// In en, this message translates to:
   /// **'1.0 => 100% (original size), only works on server page part of the font, not recommended to change.'**
   String get textScalerTip;
-
-  /// No description provided for @time.
-  ///
-  /// In en, this message translates to:
-  /// **'Time'**
-  String get time;
 
   /// No description provided for @times.
   ///
@@ -2021,12 +2063,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No sudo password prompt is active.'**
   String get sudoPromptNotFound;
-
-  /// No description provided for @unknown.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown'**
-  String get unknown;
 
   /// No description provided for @updateServerStatusInterval.
   ///
@@ -2063,12 +2099,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View Details'**
   String get viewDetails;
-
-  /// No description provided for @viewErr.
-  ///
-  /// In en, this message translates to:
-  /// **'See error'**
-  String get viewErr;
 
   /// No description provided for @virtKeyHelpClipboard.
   ///
@@ -2117,12 +2147,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'When opening the app'**
   String get whenOpenApp;
-
-  /// No description provided for @wiki.
-  ///
-  /// In en, this message translates to:
-  /// **'Wiki'**
-  String get wiki;
 
   /// No description provided for @wolTip.
   ///
@@ -2196,18 +2220,6 @@ abstract class AppLocalizations {
   /// **'Remote Port'**
   String get portForward_remotePort;
 
-  /// No description provided for @portForward_type_local.
-  ///
-  /// In en, this message translates to:
-  /// **'Local'**
-  String get portForward_type_local;
-
-  /// No description provided for @portForward_type_remote.
-  ///
-  /// In en, this message translates to:
-  /// **'Remote'**
-  String get portForward_type_remote;
-
   /// No description provided for @portForward_deleteConfirmFmt.
   ///
   /// In en, this message translates to:
@@ -2220,47 +2232,17 @@ abstract class AppLocalizations {
   /// **'Sponsor'**
   String get sponsor;
 
-  /// No description provided for @sort.
-  ///
-  /// In en, this message translates to:
-  /// **'Sort'**
-  String get sort;
-
-  /// No description provided for @sortByName.
-  ///
-  /// In en, this message translates to:
-  /// **'By name'**
-  String get sortByName;
-
   /// No description provided for @sortByJoinTime.
   ///
   /// In en, this message translates to:
   /// **'By join time'**
   String get sortByJoinTime;
 
-  /// No description provided for @ascending.
-  ///
-  /// In en, this message translates to:
-  /// **'Ascending'**
-  String get ascending;
-
-  /// No description provided for @descending.
-  ///
-  /// In en, this message translates to:
-  /// **'Descending'**
-  String get descending;
-
   /// No description provided for @serverHistory.
   ///
   /// In en, this message translates to:
   /// **'Server history'**
   String get serverHistory;
-
-  /// No description provided for @clearHistory.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear history'**
-  String get clearHistory;
 
   /// No description provided for @portForwardBetaTitle.
   ///
@@ -2441,6 +2423,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The process changed or exited. Refresh and try again.'**
   String get processKillTargetChanged;
+
+  /// No description provided for @watchServers.
+  ///
+  /// In en, this message translates to:
+  /// **'Servers on the watch'**
+  String get watchServers;
+
+  /// No description provided for @watchServersTip.
+  ///
+  /// In en, this message translates to:
+  /// **'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.'**
+  String get watchServersTip;
+
+  /// No description provided for @watchNoMonitorServer.
+  ///
+  /// In en, this message translates to:
+  /// **'No server has a monitor agent configured'**
+  String get watchNoMonitorServer;
+
+  /// No description provided for @watchLegacyUrls.
+  ///
+  /// In en, this message translates to:
+  /// **'Legacy status URLs'**
+  String get watchLegacyUrls;
+
+  /// No description provided for @accessoryWidgetServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock screen widget server'**
+  String get accessoryWidgetServer;
+
+  /// No description provided for @systemdMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No systemd on this server'**
+  String get systemdMissing;
+
+  /// No description provided for @systemdMissingTip.
+  ///
+  /// In en, this message translates to:
+  /// **'`systemctl` is not installed here, so there are no units to list.'**
+  String get systemdMissingTip;
+
+  /// No description provided for @initSystemFmt.
+  ///
+  /// In en, this message translates to:
+  /// **'This machine appears to use {init}.'**
+  String initSystemFmt(String init);
+
+  /// No description provided for @systemdListFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not list units'**
+  String get systemdListFailed;
+
+  /// No description provided for @systemdUserScopeMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'User units are not listed'**
+  String get systemdUserScopeMissing;
+
+  /// No description provided for @systemdUserScopeMissingTip.
+  ///
+  /// In en, this message translates to:
+  /// **'This account has no user session bus on the server, so only system units are shown.'**
+  String get systemdUserScopeMissingTip;
+
+  /// No description provided for @serverUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not run a command on this server'**
+  String get serverUnreachable;
+
+  /// No description provided for @containerNoRuntime.
+  ///
+  /// In en, this message translates to:
+  /// **'No container runtime here'**
+  String get containerNoRuntime;
+
+  /// No description provided for @containerNoRuntimeTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try using sudo\" in Settings.'**
+  String get containerNoRuntimeTip;
+
+  /// No description provided for @containerUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'The container runtime answered in an unexpected form'**
+  String get containerUnreadable;
+
+  /// No description provided for @power.
+  ///
+  /// In en, this message translates to:
+  /// **'Power'**
+  String get power;
+
+  /// No description provided for @continueInTerminal.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue in terminal'**
+  String get continueInTerminal;
+
+  /// No description provided for @askAiRiskUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unclassified'**
+  String get askAiRiskUnknown;
+
+  /// No description provided for @agentLocalExec.
+  ///
+  /// In en, this message translates to:
+  /// **'Run commands on this device'**
+  String get agentLocalExec;
+
+  /// No description provided for @agentLocalExecTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Lets the Agent work on the machine ServerBox is running on, not only on servers. Nothing runs here unattended: every command needs review, however read-only it looks. This is where the app\'s data, your keys and your files are.'**
+  String get agentLocalExecTip;
+
+  /// No description provided for @agentLocalExecRootfsTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Lets the Agent work on this device, inside the Alpine Linux container ServerBox installs. It cannot see the phone\'s own filesystem, the app\'s data or your files. Every command still needs review.'**
+  String get agentLocalExecRootfsTip;
+
+  /// No description provided for @macDmgImportedPartly.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported the data of the previously installed build. Downloaded files were left where they were, in {path}.'**
+  String macDmgImportedPartly(String path);
 }
 
 class _AppLocalizationsDelegate

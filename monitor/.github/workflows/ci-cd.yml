@@ -1,0 +1,153 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  test-backend:
+    name: Test Rust Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+    
+    - name: Cache cargo dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    
+    - name: Check formatting
+      run: cargo fmt --all -- --check
+    
+    - name: Run clippy
+      run: cargo clippy --all-targets --all-features -- -D warnings
+    
+    - name: Run tests
+      run: cargo test --verbose
+    
+    - name: Build
+      run: cargo build --release --verbose
+
+  test-frontend:
+    name: Test React Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: cd frontend && npm ci
+    
+    - name: Run linting
+      run: cd frontend && npm run lint
+    
+    - name: Run tests
+      run: cd frontend && npm run test
+    
+    - name: Build frontend
+      run: cd frontend && npm run build
+
+  build-and-release:
+    name: Build and Release
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm ci
+        npm run build
+    
+    - name: Copy frontend build to Rust static files
+      run: |
+        mkdir -p static
+        cp -r frontend/dist/* static/
+    
+    - name: Build Rust application
+      run: cargo build --release
+    
+    - name: Create release archive
+      run: |
+        mkdir -p release
+        cp target/release/server_box_monitor release/
+        cp config.json.example release/
+        cp .env.example release/
+        cp README.md release/
+        tar -czf server-box-monitor-${{ github.event.release.tag_name }}-linux-x86_64.tar.gz -C release .
+    
+    - name: Upload release assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./server-box-monitor-${{ github.event.release.tag_name }}-linux-x86_64.tar.gz
+        asset_name: server-box-monitor-${{ github.event.release.tag_name }}-linux-x86_64.tar.gz
+        asset_content_type: application/gzip
+
+  docker:
+    name: Build and Push Docker Image
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/server-box-monitor:latest
+          ${{ secrets.DOCKER_USERNAME }}/server-box-monitor:${{ github.event.release.tag_name }}
+        platforms: linux/amd64,linux/arm64

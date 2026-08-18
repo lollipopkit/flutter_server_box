@@ -267,7 +267,7 @@ extension _Actions on _ConnectionStatsPageState {
     if (!mounted) return;
     setState(() => _isCompacting = false);
     if (message != null) {
-      context.showSnackBar(message);
+      Toast.show(message);
     }
   }
 
@@ -300,10 +300,10 @@ extension _Actions on _ConnectionStatsPageState {
       title: l10n.compactDatabase,
       child: Text(l10n.compactDatabaseContent(sizeStr)),
       actions: [
-        TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
+        TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
         TextButton(
           onPressed: () async {
-            context.pop();
+            context.popDialog();
             setState(() => _isCompacting = true);
             try {
               await Stores.connectionStats.compact();
@@ -369,10 +369,10 @@ extension _Actions on _ConnectionStatsPageState {
         ),
       ),
       actions: [
-        TextButton(onPressed: context.pop, child: Text(libL10n.close)),
+        TextButton(onPressed: context.popDialog, child: Text(libL10n.close)),
         TextButton(
           onPressed: () {
-            context.pop();
+            context.popDialog();
             _showClearServerStatsDialog(stats);
           },
           child: Text(
@@ -409,14 +409,14 @@ extension _Actions on _ConnectionStatsPageState {
       title: title,
       child: Text(content),
       actions: [
-        TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
+        TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
         CountDownBtn(
           onTap: () async {
             try {
               await onConfirm();
               await _loadStats();
               if (mounted) {
-                context.pop();
+                context.popDialog();
               }
             } catch (e, s) {
               if (!mounted) return;

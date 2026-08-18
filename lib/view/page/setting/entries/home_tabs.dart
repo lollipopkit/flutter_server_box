@@ -30,7 +30,7 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
   var _selectedTabs = List<AppTab>.from(Stores.setting.homeTabs.fetch());
 
   void _showHomeTabConstraint(String message) {
-    context.showSnackBar(message);
+    Toast.show(message);
   }
 
   @override
@@ -102,7 +102,7 @@ class _HomeTabsConfigPageState extends ConsumerState<HomeTabsConfigPage> {
                         ? l10n.serverTabRequired
                         : l10n.atLeastOneTab),
             )
-          : IconButton(
+          : IconButton(tooltip: libL10n.add, 
               icon: const Icon(Icons.add),
               onPressed: () => _addTab(tab),
             ),

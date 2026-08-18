@@ -18,7 +18,7 @@ class BackupService {
       await source.saveContent(path);
 
       if (source is ClipboardBackupSource) {
-        context.showSnackBar(libL10n.success);
+        Toast.success(libL10n.success);
       }
     } catch (e, s) {
       context.showErrDialog(e, s, libL10n.backup);
@@ -31,7 +31,7 @@ class BackupService {
     if (text == null) {
       // Show empty message for clipboard source
       if (source is ClipboardBackupSource) {
-        context.showSnackBar(libL10n.empty);
+        Toast.show(libL10n.empty);
       }
       return;
     }
@@ -111,11 +111,11 @@ class BackupService {
             child: Text(l10n.backupPasswordWrong),
             actions: [
               TextButton(
-                onPressed: () => context.pop(false),
+                onPressed: () => context.popDialog(false),
                 child: Text(libL10n.cancel),
               ),
               TextButton(
-                onPressed: () => context.pop(true),
+                onPressed: () => context.popDialog(true),
                 child: Text(libL10n.retry),
               ),
             ],
@@ -149,9 +149,9 @@ class BackupService {
           onTap: () async {
             try {
               await backup.$1.merge(force: true);
-              context.pop();
+              context.popDialog();
             } catch (e, s) {
-              context.pop();
+              context.popDialog();
               context.showErrDialog(e, s, libL10n.restore);
             }
           },
@@ -170,28 +170,32 @@ class BackupService {
     final controller = TextEditingController(text: initial ?? '');
     final result = await context.showRoundDialog<String>(
       title: title ?? libL10n.pwd,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(hint ?? l10n.backupPasswordTip, style: UIs.textGrey),
-          UIs.height13,
-          Input(
-            label: l10n.backupPassword,
-            controller: controller,
-            obscureText: true,
-            onSubmitted: (_) => context.pop(controller.text),
-          ),
-        ],
+      // Disposed by the tree: this future completes on the pop, and the
+      // field is still there while the route animates out.
+      child: DisposeWith(
+        notifiers: [controller],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(hint ?? l10n.backupPasswordTip, style: UIs.textGrey),
+            UIs.height13,
+            Input(
+              label: l10n.backupPassword,
+              controller: controller,
+              obscureText: true,
+              onSubmitted: (_) => context.popDialog(controller.text),
+            ),
+          ],
+        ),
       ),
       actions: [
         Btn.cancel(),
         TextButton(
-          onPressed: () => context.pop(controller.text),
+          onPressed: () => context.popDialog(controller.text),
           child: Text(libL10n.ok),
         ),
       ],
     );
-    controller.dispose();
     return result;
   }
 }

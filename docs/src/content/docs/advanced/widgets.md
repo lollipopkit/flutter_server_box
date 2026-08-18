@@ -3,11 +3,11 @@ title: Home Screen Widgets
 description: Add server status widgets to your home screen
 ---
 
-Requires [ServerBox Monitor](https://github.com/lollipopkit/server_box_monitor) installed on your servers.
+Requires [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) installed on your servers.
 
 ## Prerequisites
 
-Install ServerBox Monitor on your server first. See [ServerBox Monitor Wiki](https://github.com/lollipopkit/server_box_monitor/wiki/Home) for setup instructions.
+Install ServerBox Monitor on your server first. See its [README](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README.md) for setup instructions.
 
 After installation, your server should have:
 - HTTP/HTTPS endpoint

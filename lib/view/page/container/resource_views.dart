@@ -86,7 +86,7 @@ class ContainerItemsView extends StatelessWidget {
         _RuntimeSummaryCard(
           icon: _runtimeIcon(type),
           title: type.name.capitalize,
-          subtitle: version ?? context.l10n.unknown,
+          subtitle: version ?? libL10n.unknown,
           action: summaryAction,
           badges: [
             _SummaryBadge(
@@ -99,7 +99,7 @@ class ContainerItemsView extends StatelessWidget {
               ),
             if (unknown > 0)
               _SummaryBadge(
-                label: '$unknown ${context.l10n.unknown}',
+                label: '$unknown ${libL10n.unknown}',
               ),
           ],
         ),
@@ -153,7 +153,7 @@ class ContainerImagesView extends StatelessWidget {
     final summary = _RuntimeSummaryCard(
       icon: MingCute.clapperboard_line,
       title: type.name.capitalize,
-      subtitle: version ?? context.l10n.unknown,
+      subtitle: version ?? libL10n.unknown,
       action: summaryAction,
       badges: [
         _SummaryBadge(
@@ -234,7 +234,7 @@ class ContainerImagePruneOptionsView extends StatelessWidget {
             _PruneCountBadge(
               key: const ValueKey('image-prune-unused-tagged-count'),
               label: context.l10n.unusedTaggedImages,
-              value: unusedTaggedCount?.toString() ?? context.l10n.unknown,
+              value: unusedTaggedCount?.toString() ?? libL10n.unknown,
             ),
           ],
         ),
@@ -761,7 +761,7 @@ class _ContainerGroupHeader extends StatelessWidget {
     final summary = [
       '$running ${context.libL10n.running}',
       if (stopped > 0) '$stopped ${context.libL10n.stopped}',
-      if (unknown > 0) '$unknown ${context.l10n.unknown}',
+      if (unknown > 0) '$unknown ${libL10n.unknown}',
     ].join(' · ');
     return ListTile(
       key: ValueKey('container-group-header-$project'),
@@ -1069,14 +1069,14 @@ class _ContainerIdentity extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          item.name ?? context.l10n.unknown,
+          item.name ?? libL10n.unknown,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: UIs.text15,
         ),
         const SizedBox(height: 2),
         Text(
-          item.image ?? context.l10n.unknown,
+          item.image ?? libL10n.unknown,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: UIs.text13Grey,
@@ -1183,7 +1183,7 @@ class _ImageIdentity extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final id = _shortId(image.id) ?? context.l10n.unknown;
+    final id = _shortId(image.id) ?? libL10n.unknown;
     final createdLabel = _imageCreatedLabel(
       image,
       Localizations.localeOf(context),

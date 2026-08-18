@@ -14,7 +14,10 @@ import 'package:server_box/core/utils/ssh_config.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/custom.dart';
+import 'package:server_box/data/model/server/discovery_result.dart';
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/private_key.dart';
@@ -22,6 +25,9 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/server.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
+import 'package:server_box/view/page/server/custom_cmds.dart';
+import 'package:server_box/view/widget/page_columns.dart';
+import 'package:server_box/view/widget/ssh_discovery/dialog.dart';
 
 part 'actions.dart';
 part 'widget.dart';
@@ -53,6 +59,12 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _passwordController = TextEditingController();
   final _pveAddrCtrl = TextEditingController();
   final _pvePwdCtrl = TextEditingController();
+  final _monitorAddrCtrl = TextEditingController();
+  final _monitorUserCtrl = TextEditingController();
+  final _monitorPwdCtrl = TextEditingController();
+  // SSH credentials for the agent's tunnel. Separate controllers from the
+  // direct-SSH form above: the two are never on screen together, and sharing
+  // them would carry a half-filled direct-SSH form into a tunnel config.
   final _preferTempDevCtrl = TextEditingController();
   final _logoUrlCtrl = TextEditingController();
   final _wolMacCtrl = TextEditingController();
@@ -76,9 +88,28 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
   final _autoConnect = ValueNotifier(true);
   final _jumpServers = <String>[].vn;
   final _pveIgnoreCert = ValueNotifier(false);
+  final _monitorIgnoreCert = ValueNotifier(false);
+
+  /// Connection method for this server: SSH+shell (false) or monitor's HTTP
+  /// API (true) — mutually exclusive, see the switch at the top of the form.
+  final _useMonitorHttp = ValueNotifier(false);
+
+  /// Whether to also reach SSH through the agent, for hosts whose SSH port
+  /// isn't exposed. Only meaningful alongside [_useMonitorHttp]: it changes
+  /// where the SSH *socket* comes from, not how status is read.
+
+  /// Key selection for the tunnel's SSH credential; same encoding as
+  /// [_keyIdx], kept separate for the same reason the controllers are.
   final _tempIsCelsius = ValueNotifier(false);
   final _env = <String, String>{}.vn;
-  final _customCmds = <String, String>{}.vn;
+  /// Custom commands an older version of the app stored here, carried through
+  /// a save unchanged so that editing anything else on this page does not
+  /// discard them before the first connection moves them to the server.
+  ///
+  /// Not edited here any more — the editor writes the server directly, since
+  /// the directory there is the only copy.
+  // TODO(migration): delete with [ServerCustom.cmds].
+  final _unmigratedCmds = <String, String>{}.vn;
   final _tags = <String>{}.vn;
   final _systemType = ValueNotifier<SystemType?>(null);
   final _disabledCmdTypes = <String>{}.vn;
@@ -118,14 +149,19 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
     _usernameFocus.dispose();
     _pveAddrCtrl.dispose();
     _pvePwdCtrl.dispose();
+    _monitorAddrCtrl.dispose();
+    _monitorUserCtrl.dispose();
+    _monitorPwdCtrl.dispose();
 
     _keyIdx.dispose();
     _autoConnect.dispose();
     _jumpServers.dispose();
     _pveIgnoreCert.dispose();
+    _monitorIgnoreCert.dispose();
+    _useMonitorHttp.dispose();
     _tempIsCelsius.dispose();
     _env.dispose();
-    _customCmds.dispose();
+    _unmigratedCmds.dispose();
     _tags.dispose();
     _systemType.dispose();
     _disabledCmdTypes.dispose();
@@ -141,8 +177,17 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
 
   @override
   Widget build(BuildContext context) {
-    final actions = <Widget>[_buildWriteScriptTip()];
-    if (spi != null) actions.add(_buildDelBtn());
+    // The tip is about the form as a whole rather than any one field, so it
+    // belongs beside the other page-level action rather than inside the
+    // scrolling content, where it took a row of its own and moved away.
+    final actions = <Widget>[
+      // Only while adding. Sweeping the network for hosts is how someone with
+      // an empty form finds what to put in it; on a server that already exists
+      // it answers a question nobody is asking.
+      if (spi == null) _buildDiscoverBtn(),
+      _buildWriteScriptTip(),
+      if (spi != null) _buildDelBtn(),
+    ];
 
     return Scaffold(
       appBar: CustomAppBar(title: Text(libL10n.edit), actions: actions),
@@ -156,6 +201,7 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
 
   Widget _buildForm() {
     final children = [
+      _buildConnMethodSwitch(),
       Input(
         autoFocus: true,
         controller: _nameController,
@@ -169,35 +215,8 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
         autoCorrect: true,
         suggestion: true,
       ),
-      Input(
-        controller: _ipController,
-        type: TextInputType.url,
-        onSubmitted: (_) => _focusScope.requestFocus(_portFocus),
-        node: _ipFocus,
-        label: libL10n.host,
-        icon: BoxIcons.bx_server,
-        hint: 'example.com',
-        suggestion: false,
-      ),
-      Input(
-        controller: _portController,
-        type: TextInputType.number,
-        node: _portFocus,
-        onSubmitted: (_) => _focusScope.requestFocus(_usernameFocus),
-        label: libL10n.port,
-        icon: Bootstrap.number_123,
-        hint: '22',
-        suggestion: false,
-      ),
-      Input(
-        controller: _usernameController,
-        type: TextInputType.text,
-        node: _usernameFocus,
-        onSubmitted: (_) => _focusScope.requestFocus(_alterUrlFocus),
-        label: libL10n.user,
-        icon: Icons.account_box,
-        hint: 'root',
-        suggestion: false,
+      _useMonitorHttp.listenVal(
+        (useHttp) => useHttp ? UIs.placeholder : _buildSshConnFields(),
       ),
       TagTile(tags: _tags, allTags: ref.watch(serversProvider).tags).cardx,
       ListTile(
@@ -211,12 +230,20 @@ class _ServerEditPageState extends ConsumerState<ServerEditPage>
           ),
         ),
       ),
-      _buildAuth(),
-      _buildSystemType(),
-      _buildJumpServer(),
+      _useMonitorHttp.listenVal(
+        (useHttp) => useHttp ? _buildMonitorHttp() : _buildAuth(),
+      ),
+      _useMonitorHttp.listenVal(
+        (useHttp) => useHttp
+            ? UIs.placeholder
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [_buildSystemType(), _buildJumpServer()],
+              ),
+      ),
       _buildMore(),
     ];
-    return AutoMultiList(children: children);
+    return PageColumns(children: children);
   }
 
   @override

@@ -9,15 +9,14 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:server_box/core/app_navigator.dart';
 import 'package:server_box/core/chan.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/utils/server.dart';
-import 'package:server_box/core/utils/ssh_auth.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
+import 'package:server_box/data/model/ai/agent_conversation_replay.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/model/server/shell_backend.dart';
 import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/model/ssh/virtual_key.dart';
 import 'package:server_box/data/provider/ai/ask_ai.dart';
@@ -28,12 +27,13 @@ import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/terminal.dart';
 import 'package:server_box/data/ssh/persistent_shell.dart';
 import 'package:server_box/data/ssh/session_manager.dart';
-import 'package:server_box/data/ssh/ssh_terminal_environment.dart';
-import 'package:server_box/data/ssh/terminal_output_buffer.dart';
+import 'package:server_box/data/ssh/terminal_session.dart';
+import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/data/ssh/tmux/tmux_export.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
-import 'package:server_box/view/page/ssh/agent_conversation_replay.dart';
+import 'package:server_box/view/page/agent/history.dart';
 import 'package:server_box/view/page/ssh/ask_ai_layout.dart';
+import 'package:server_box/view/page/ssh/page/clipboard_chord.dart';
 import 'package:server_box/view/page/storage/sftp.dart';
 import 'package:server_box/view/widget/tmux_session_selector.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -47,9 +47,26 @@ part 'keyboard.dart';
 part 'virt_key.dart';
 
 final class SshPageArgs {
-  final Spi spi;
+  /// Where this terminal's shell comes from. A server, or this device — and
+  /// what is only true of a server is reached through [spi], which is null for
+  /// the other one.
+  final TerminalSource source;
+
+  /// The server behind [source], when there is one.
+  Spi? get spi => switch (source) {
+    ServerSource(:final spi) => spi,
+    LocalSource() => null,
+  };
+
   final String? initCmd;
   final Snippet? initSnippet;
+
+  /// A shell that is already running, to be shown here instead of opening one.
+  ///
+  /// How a snippet started in a dialog carries on in a tab: the connection and
+  /// everything printed into it are the session's, not the page's, so the page
+  /// showing them can change without the shell noticing.
+  final TerminalSession? session;
   final bool notFromTab;
   final Function()? onSessionEnd;
   final GlobalKey<TerminalViewState>? terminalKey;
@@ -59,10 +76,18 @@ final class SshPageArgs {
   final int? tmuxWindow;
   final VoidCallback? onTmuxStateChanged;
 
+  /// Distinguishes this page's saved state from another page's.
+  ///
+  /// Defaults to the server's id, which is only unique while one shell per
+  /// server is open. A host that can open several — the SSH tab — passes
+  /// something per session instead.
+  final String? restorationId;
+
   const SshPageArgs({
-    required this.spi,
+    required this.source,
     this.initCmd,
     this.initSnippet,
+    this.session,
     this.notFromTab = true,
     this.onSessionEnd,
     this.terminalKey,
@@ -71,30 +96,11 @@ final class SshPageArgs {
     this.tmuxSession,
     this.tmuxWindow,
     this.onTmuxStateChanged,
+    this.restorationId,
   }) : assert(
          notFromTab || visibleListenable != null,
          'visibleListenable is required when notFromTab is false',
        );
-}
-
-class _EmptyRoute extends StatefulWidget {
-  const _EmptyRoute();
-
-  @override
-  State<_EmptyRoute> createState() => _EmptyRouteState();
-}
-
-class _EmptyRouteState extends State<_EmptyRoute> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Navigator.of(context).pop();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
 }
 
 class SSHPage extends ConsumerStatefulWidget {
@@ -109,29 +115,6 @@ class SSHPage extends ConsumerStatefulWidget {
     page: SSHPage.new,
     path: '/ssh/page',
   );
-
-  /// Restorable route builder for navigation from server list.
-  /// Takes a server ID as argument and looks up the Spi from the store.
-  /// Note: tmux state restoration is handled at SSHTabPage level for tab-based navigation.
-  static Route<void> restorableRouteBuilder(
-    BuildContext context,
-    Object? arguments,
-  ) {
-    if (arguments is! String) {
-      return MaterialPageRoute(builder: (_) => const _EmptyRoute());
-    }
-    final serverId = arguments;
-    final servers = Stores.server.fetch();
-    final spi = servers.where((s) => s.id == serverId).firstOrNull;
-    if (spi == null) {
-      return MaterialPageRoute(builder: (_) => const _EmptyRoute());
-    }
-    return MaterialPageRoute(
-      builder: (_) => VirtualWindowFrame(
-        child: SSHPage(args: SshPageArgs(spi: spi)),
-      ),
-    );
-  }
 }
 
 const _horizonPadding = 7.0;
@@ -141,24 +124,34 @@ class SSHPageState extends ConsumerState<SSHPage>
         AutomaticKeepAliveClientMixin,
         AfterLayoutMixin,
         TickerProviderStateMixin,
-        WidgetsBindingObserver,
-        RestorationMixin {
-  // Restorable state for this SSH page
-  final RestorableString _restorableServerId = RestorableString('');
-  final RestorableStringN _restorableTmuxSession = RestorableStringN(null);
-  final RestorableIntN _restorableTmuxWindow = RestorableIntN(null);
+        WidgetsBindingObserver {
+  /// The tmux session this page attached to, kept for the reconnect that
+  /// rebuilds the launch plan and reads it again.
+  ///
+  /// Plain fields. They were `Restorable*`, which in this app is the same
+  /// thing with extra ceremony: `restoreState` runs, registration succeeds,
+  /// and a relaunch has nothing, because the route `MaterialApp.home` builds
+  /// hands its subtree no bucket — `test/restoration_bucket_test.dart`. What
+  /// they did in practice was hold this within one page across a reconnect,
+  /// which is what these still do.
+  ///
+  /// What survives a relaunch is the tab's own record, in
+  /// `Stores.history.sshTabs`. A third field held the server id and was only
+  /// ever written.
+  String? _tmuxSessionState;
+  int? _tmuxWindowState;
 
-  @override
-  String get restorationId => 'ssh_page_${widget.args.spi.id}';
+  /// The terminal and the shell behind it. Handed in when this page is
+  /// continuing a session that started elsewhere, and made here otherwise.
+  late final TerminalSession _sess =
+      widget.args.session ?? TerminalSession(source: widget.args.source);
 
-  @override
-  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    registerForRestoration(_restorableServerId, 'server_id');
-    registerForRestoration(_restorableTmuxSession, 'tmux_session');
-    registerForRestoration(_restorableTmuxWindow, 'tmux_window');
-  }
+  /// Whether the session arrived already running, and so must not be started
+  /// a second time.
+  bool get _adopted => widget.args.session != null;
 
-  late final _terminal = Terminal();
+  Terminal get _terminal => _sess.terminal;
+
   late final TerminalController _terminalController = TerminalController(
     vsync: this,
   );
@@ -174,20 +167,21 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   bool _isDark = false;
   Timer? _virtKeyLongPressTimer;
-  SSHClient? _client;
-  SSHSession? _session;
+
+  ShellBackend? get _backend => _sess.backend;
+
+  SSHClient? get _client => _sess.client;
+
+  ShellSession? get _session => _sess.foreground;
+
+  /// The agent's own command channel, separate from the terminal's session.
+  /// SSH-only: the agent runs commands with `exec`, which the monitor PTY
+  /// cannot do — see [ShellBackend.supportsExec].
   SSHSession? _aiCommandSession;
   bool _aiCommandCancelled = false;
   Timer? _discontinuityTimer;
-  Timer? _terminalFlushTimer;
-  final _terminalOutputBuffer = TerminalOutputBuffer();
-  String _sshOutputTail = '';
-  final List<StreamSubscription<String>> _terminalOutputSubscriptions = [];
   static const _connectionCheckInterval = Duration(seconds: 60);
   static const _connectionCheckTimeout = Duration(seconds: 10);
-  static const _terminalFlushInterval = Duration(milliseconds: 16);
-  static const _terminalFlushCharLimit = 32768;
-  static const _sshOutputTailCharLimit = 8192;
   static const _maxKeepAliveFailures = 3;
   int _missedKeepAliveCount = 0;
   bool _isCheckingConnection = false;
@@ -218,9 +212,6 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   @override
   void dispose() {
-    _restorableServerId.dispose();
-    _restorableTmuxSession.dispose();
-    _restorableTmuxWindow.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _virtKeyLongPressTimer?.cancel();
     final aiCommandSession = _aiCommandSession;
@@ -229,10 +220,9 @@ class SSHPageState extends ConsumerState<SSHPage>
     }
     _terminalController.dispose();
     _discontinuityTimer?.cancel();
-    _terminalFlushTimer?.cancel();
-    for (final subscription in _terminalOutputSubscriptions) {
-      subscription.cancel();
-    }
+    // Not `close`: the connection may be the status poller's, shared with the
+    // rest of the app, and a terminal going away is not a reason to hang it up.
+    _sess.dispose();
     _removeVisibilityListener();
     Stores.setting.horizonVirtKey.listenable().removeListener(
       _handleVirtKeySettingsChanged,
@@ -277,9 +267,17 @@ class SSHPageState extends ConsumerState<SSHPage>
     _bindVisibilityListener();
     _setupDiscontinuityTimer();
 
-    // Initialize client from provider
-    final serverState = ref.read(serverProvider(widget.args.spi.id));
-    _client = serverState.client;
+    // Adopt whatever the provider already has, so a server that is connected
+    // for status does not connect a second time just to show a terminal. This
+    // device has nothing to adopt, and nothing to ask a provider about.
+    final serverId = widget.args.spi?.id;
+    if (serverId == null) {
+      _sess.adopt(null);
+    } else {
+      final serverState = ref.read(serverProvider(serverId));
+      _sess.adopt(serverState.client, granted: serverState.remoteAccess);
+    }
+    _sess.onForegroundDone = _onForegroundSessionDone;
 
     if (++_sshConnCount == 1) {
       WakelockPlus.enable();
@@ -291,7 +289,8 @@ class SSHPageState extends ConsumerState<SSHPage>
     // Add session entry (for Android notifications & iOS Live Activities)
     TermSessionManager.add(
       id: _sessionId,
-      spi: widget.args.spi,
+      title: widget.args.source.label,
+      subtitle: widget.args.spi?.oldId ?? '',
       startTimeMs: _sessionStartMs,
       disconnect: _disconnectFromNotification,
       status: TermSessionStatus.connecting,
@@ -333,19 +332,10 @@ class SSHPageState extends ConsumerState<SSHPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _isDark = switch (Stores.setting.termTheme.fetch()) {
-      1 => false,
-      2 => true,
-      _ => switch (Stores.setting.themeMode.fetch()) {
-        1 => false,
-        2 || 3 => true,
-        _ => context.isDark,
-      },
-    };
+    _isDark = TerminalLook.isDark(context);
     _media = context.mediaQuery;
 
-    _terminalTheme = _isDark ? TerminalThemes.dark : TerminalThemes.light;
-    _terminalTheme = _terminalTheme.copyWith(selectionCursor: UIs.primaryColor);
+    _terminalTheme = TerminalLook.themeOf(context);
 
     // Because the virtual keyboard only displayed on mobile devices
     _updateVirtKeysHeight();
@@ -364,7 +354,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         appBar: widget.args.notFromTab
             ? CustomAppBar(
                 leading: BackButton(onPressed: context.pop),
-                title: Text(widget.args.spi.name),
+                title: Text(widget.args.source.label),
                 centerTitle: false,
                 actions: _buildAppBarActions(),
               )
@@ -430,6 +420,11 @@ class SSHPageState extends ConsumerState<SSHPage>
           key: _termKey,
           controller: _terminalController,
           keyboardType: TextInputType.text,
+          // The convention every terminal on every platform keeps: copy what
+          // is selected, and paste when nothing is. `_onClipboardAction` is
+          // the whole of it, and this is now its only caller — the toolbar
+          // button it was first written for is gone.
+          onSecondaryTapUp: (_, _) => _onClipboardAction(),
           enableSuggestions: letterCache,
           textStyle: _terminalStyle,
           backgroundOpacity: 0,
@@ -489,18 +484,24 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   List<Widget> _buildAppBarActions() {
     final actions = <Widget>[
-      IconButton(
-        onPressed: openAgentFromToolbar,
-        tooltip: l10n.askAiAgentTitle,
-        icon: const Icon(Icons.auto_awesome),
-      ),
+      // The agent's tools all name a server, so on this device the button
+      // would look tappable and do nothing. Snippets are different: the ones
+      // that do not mention a server run here fine — see [_pickSnippet].
+      if (widget.args.spi != null)
+        IconButton(
+          onPressed: openAgentFromToolbar,
+          tooltip: l10n.askAiAgentTitle,
+          icon: const Icon(Icons.auto_awesome),
+        ),
       IconButton(
         onPressed: _pickSnippet,
         tooltip: libL10n.snippet,
         icon: const Icon(Icons.code),
       ),
     ];
-    if (!widget.args.spi.isRoot) {
+    // Only where there is a sudo password to insert. This device's shell is
+    // already whoever is running the app.
+    if (widget.args.spi case final spi? when !spi.isRoot) {
       actions.add(
         IconButton(
           onPressed: _insertSudoPassword,
@@ -517,10 +518,17 @@ class SSHPageState extends ConsumerState<SSHPage>
     _isPickingSnippet = true;
 
     try {
-      final snippets = ref.read(snippetProvider.select((p) => p.snippets));
+      final spi = widget.args.spi;
+      // On this device, only the ones that do not name a server. A script
+      // saying `${host}` has no answer here, and substituting an empty string
+      // would quietly run a different command rather than refuse.
+      final snippets = ref
+          .read(snippetProvider.select((p) => p.snippets))
+          .where((e) => spi != null || !e.needsServer)
+          .toList();
       if (snippets.isEmpty) {
         if (!mounted) return;
-        context.showSnackBar(libL10n.empty);
+        Toast.show(libL10n.empty);
         return;
       }
 
@@ -532,7 +540,7 @@ class SSHPageState extends ConsumerState<SSHPage>
       if (selected == null) return;
 
       try {
-        await selected.runInTerm(_terminal, widget.args.spi);
+        await selected.runInTerm(_terminal, spi);
       } catch (e, s) {
         if (!mounted) return;
         context.showErrDialog(e, s, '${libL10n.snippet}: ${selected.name}');
@@ -739,21 +747,24 @@ class SSHPageState extends ConsumerState<SSHPage>
 
   void _showClipboardSuccess() {
     if (!mounted) return;
-    context.showSnackBar(libL10n.success);
+    Toast.success(libL10n.success);
   }
 
   Future<void> _insertSudoPassword() async {
+    final spi = widget.args.spi;
+    if (spi == null) return;
+
     final authed = await SudoPassword.authenticateIfNeeded();
     if (!authed) {
       if (!mounted) return;
-      context.showSnackBar(libL10n.fail);
+      Toast.error(libL10n.fail);
       return;
     }
 
-    final password = await SudoPassword.resolveForTerminal(widget.args.spi);
+    final password = await SudoPassword.resolveForTerminal(spi);
     if (password == null || password.isEmpty) {
       if (!mounted) return;
-      context.showSnackBar(libL10n.empty);
+      Toast.show(libL10n.empty);
       return;
     }
 
@@ -766,7 +777,7 @@ class SSHPageState extends ConsumerState<SSHPage>
         if (!mounted) return;
       }
 
-      _drainPendingTerminalOutput();
+      _sess.drainOutput();
 
       if (_hasPendingSudoPrompt()) {
         detected = true;
@@ -776,18 +787,18 @@ class SSHPageState extends ConsumerState<SSHPage>
 
     if (!detected) {
       if (!mounted) return;
-      context.showSnackBar(l10n.sudoPromptNotFound);
+      Toast.show(l10n.sudoPromptNotFound);
       return;
     }
 
     _terminal.textInput(password);
     _terminal.keyInput(TerminalKey.enter);
-    _sshOutputTail = '';
+    _sess.clearOutputTail();
 
     if (!mounted) return;
     widget.args.focusNode?.requestFocus();
     _termKey.currentState?.requestKeyboard();
-    context.showSnackBar(libL10n.success);
+    Toast.success(libL10n.success);
   }
 
   bool _hasPendingSudoPrompt() {
@@ -808,7 +819,7 @@ class SSHPageState extends ConsumerState<SSHPage>
   }
 
   String _latestSshOutputLine() {
-    final normalized = SudoPassword.normalizeOutput(_sshOutputTail);
+    final normalized = SudoPassword.normalizeOutput(_sess.outputTail);
     return normalized
         .split('\n')
         .reversed

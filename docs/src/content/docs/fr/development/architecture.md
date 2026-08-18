@@ -71,6 +71,17 @@ Action Utilisateur → Widget → Provider → Service/Store → Mise à jour Mo
 4. Le changement d'état déclenche la reconstruction de l'UI
 5. Le nouvel état est reflété dans le widget
 
+## Analyse d'état : bibliothèque Rust partagée
+
+L'analyse de l'état du serveur (CPU, mémoire, disque, réseau, températures, GPU,
+SMART, …) est implémentée une seule fois dans le crate Rust `crates/sbm_parser` et
+utilisée par l'app via flutter_rust_bridge (`crates/sbm_ffi`, Dart généré dans
+`lib/src/rust/`). Le monitor côté serveur utilise directement le même crate, les
+deux extrémités analysent donc toujours à l'identique. Les parseurs sont des
+fonctions pures : ils renvoient des compteurs bruts, et les calculs de différence
+ou à fenêtre glissante (p. ex. la vitesse réseau) sont aussi des fonctions pures —
+aucun état mutable ne traverse la frontière FFI.
+
 ## Dépendances personnalisées
 
 Le projet utilise plusieurs forks personnalisés pour étendre les fonctionnalités :

@@ -38,9 +38,12 @@ description: Solutions aux problèmes fréquents
 
 ### Impossible de taper certains caractères
 
-**Solution :** Paramètres → Type de clavier → Passer à `visiblePassword`
+**Solutions :**
 
-Note : La saisie CJK (Chinois, Japonais, Coréen) peut ne pas fonctionner après ce changement.
+1. Utilisez la rangée de clavier virtuel du terminal pour les touches que le clavier système ne peut pas envoyer (Esc, Tab, combinaisons Ctrl/Alt, symboles)
+2. Basculez le clavier système avec la touche virtuelle **IME**
+3. Si un clavier tiers se comporte mal, essayez le clavier par défaut du système
+
 
 ## Problèmes de l'application
 

@@ -3,11 +3,11 @@ title: Widgets de l'écran d'accueil
 description: Ajoutez des widgets d'état du serveur à votre écran d'accueil
 ---
 
-Nécessite l'installation de [ServerBox Monitor](https://github.com/lollipopkit/server_box_monitor) sur vos serveurs.
+Nécessite l'installation de [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) sur vos serveurs.
 
 ## Prérequis
 
-Installez d'abord ServerBox Monitor sur votre serveur. Consultez le [Wiki de ServerBox Monitor](https://github.com/lollipopkit/server_box_monitor/wiki/Home) pour les instructions de configuration.
+Installez d'abord ServerBox Monitor sur votre serveur. Consultez le [Wiki de ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README.md) pour les instructions de configuration.
 
 Après l'installation, votre serveur doit avoir :
 - Un point de terminaison HTTP/HTTPS

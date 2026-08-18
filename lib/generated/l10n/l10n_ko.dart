@@ -19,36 +19,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get added2List => '작업 목록에 추가되었습니다';
 
   @override
-  String get addr => '주소';
-
-  @override
   String get askAi => 'AI에게 질문';
 
   @override
-  String get ai => 'AI';
-
-  @override
-  String get askAiApiKey => 'API 키';
-
-  @override
   String get askAiAwaitingResponse => 'AI 응답 대기 중...';
-
-  @override
-  String get askAiBaseUrl => '기본 URL';
 
   @override
   String get askAiEndpointTip =>
       '전체 Chat Completions 엔드포인트 또는 서비스 기본 URL을 입력하세요. 주소가 /v1로 끝나면 앱이 자동으로 /chat/completions를 추가합니다.';
 
   @override
-  String get askAiProtocol => 'API protocol';
-
-  @override
   String get askAiProtocolTip =>
-      'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.';
-
-  @override
-  String get askAiProtocolAuto => 'Auto';
+      '자동은 공식 OpenAI 엔드포인트에는 Responses를, 호환 제공자에는 Chat Completions를 사용합니다.';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -92,187 +74,203 @@ class AppLocalizationsKo extends AppLocalizations {
   String get askAiUsageHint => 'SSH 터미널에서 사용';
 
   @override
-  String get askAiAgentTitle => 'SSH Agent';
+  String get askAiAgentTitle => 'SSH 에이전트';
 
   @override
-  String get askAiAgentWelcome => 'What should we do on this server?';
+  String get askAiAgentWelcome => '이 서버에서 무엇을 할까요?';
 
   @override
   String get askAiAgentWelcomeTip =>
-      'Ask for a diagnosis or a task. The Agent proposes one command at a time and waits for review before making changes.';
+      '진단이나 작업을 요청하세요. 에이전트는 한 번에 하나의 명령을 제안하고 변경 전에 검토를 기다립니다.';
 
   @override
-  String get askAiAgentPromptHint =>
-      'Ask the Agent to inspect or fix something...';
+  String get askAiAgentPromptHint => '에이전트에게 점검이나 수정을 요청하세요...';
 
   @override
-  String get askAiAgentSend => 'Send to Agent';
+  String get askAiAgentSend => '에이전트에게 보내기';
 
   @override
   String get askAiAnalyzeSelectionPrompt =>
-      'Analyze the selected terminal content, explain what happened, and propose the safest next step if action is needed.';
+      '선택한 터미널 내용을 분석해 무슨 일이 있었는지 설명하고, 조치가 필요하면 가장 안전한 다음 단계를 제안하세요.';
 
   @override
-  String get askAiTerminalContext => 'Terminal context';
+  String get askAiTerminalContext => '터미널 컨텍스트';
 
   @override
-  String get askAiReady => 'Ready';
+  String get askAiReviewNeeded => '검토 필요';
 
   @override
-  String get askAiThinking => 'Thinking';
+  String get askAiReviewAction => '제안된 명령 검토';
 
   @override
-  String get askAiRunningCommand => 'Running';
+  String get askAiReviewBeforeContinuing => '먼저 제안된 명령을 검토하거나 거부하세요';
 
   @override
-  String get askAiReviewNeeded => 'Review';
+  String get askAiApproveRun => '승인 후 실행';
 
   @override
-  String get askAiReviewAction => 'Review proposed command';
+  String get askAiDecline => '거부';
 
   @override
-  String get askAiReviewBeforeContinuing =>
-      'Review or decline the proposed command first';
+  String get askAiActionDeclined => '제안된 명령이 거부되었습니다.';
 
   @override
-  String get askAiApproveRun => 'Approve & run';
+  String get askAiInterrupted => '에이전트 응답이 중단되었습니다.';
 
   @override
-  String get askAiDecline => 'Decline';
+  String get askAiRiskReadOnly => '읽기 전용';
 
   @override
-  String get askAiActionDeclined => 'The proposed command was declined.';
+  String get askAiRiskCaution => '시스템 변경';
 
   @override
-  String get askAiInterrupted => 'Agent response was interrupted.';
+  String get askAiRiskUnvetted => '미검증 호스트';
 
   @override
-  String get askAiRiskReadOnly => 'Read-only';
+  String get askAiRiskDestructive => '높은 위험';
 
   @override
-  String get askAiRiskCaution => 'Changes system';
-
-  @override
-  String get askAiRiskDestructive => 'High risk';
-
-  @override
-  String get askAiHighRiskConfirmTitle => 'Run high-risk command?';
+  String get askAiHighRiskConfirmTitle => '위험도가 높은 명령을 실행할까요?';
 
   @override
   String get askAiHighRiskConfirmBody =>
-      'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.';
+      '이 명령은 데이터를 지우거나 서비스를 중지하는 등 되돌리기 어려울 수 있습니다. 실행 전에 꼼꼼히 확인하세요.';
 
   @override
-  String get askAiCommandCancelled => 'Cancelled';
+  String get askAiNoCommandOutput => '명령이 출력 없이 끝났습니다.';
 
   @override
-  String get askAiCommandTimedOut => 'Timed out';
+  String get askAiOutputTruncated => '긴 출력은 에이전트로 되돌리기 전에 잘렸습니다.';
 
   @override
-  String get askAiNoCommandOutput => 'Command completed without output.';
+  String get askAiAutoApproved => '자동 승인됨';
 
   @override
-  String get askAiOutputTruncated =>
-      'Long output was truncated before it was sent back to the Agent.';
-
-  @override
-  String get askAiAutoApproved => 'Auto-approved';
-
-  @override
-  String get askAiAutoRunSafeCommands => 'Auto-run read-only commands';
+  String get askAiAutoRunSafeCommands => '읽기 전용 명령 자동 실행';
 
   @override
   String get askAiAutoRunSafeCommandsTip =>
-      'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.';
+      '모델과 로컬 안전 검사 모두가 읽기 전용으로 판단한 경우에만 자동 실행합니다. 시스템을 바꾸는 명령은 여전히 검토가 필요합니다.';
 
   @override
-  String get askAiApiKeyOptional =>
-      'Optional for local or unauthenticated endpoints';
+  String get askAiSendOnEnter => 'Enter로 보내기';
 
   @override
-  String get askAiHistory => 'Conversation history';
+  String get askAiSendOnEnterTip =>
+      'Enter로 메시지를 보내고 Shift+Enter로 줄을 바꿉니다. 끄면 반대가 되어 Enter가 줄바꿈, Cmd/Ctrl+Enter가 전송입니다.';
 
   @override
-  String get askAiHistoryLocalOnly =>
-      'Encrypted on this device and excluded from backup and sync';
+  String get askAiApiKeyOptional => '로컬이거나 인증이 없는 엔드포인트에서는 선택 사항';
 
   @override
-  String get askAiNewConversation => 'New conversation';
+  String get askAiHistory => '대화 기록';
 
   @override
-  String get askAiNoHistory => 'No saved conversations for this server';
+  String get askAiNewConversation => '새 대화';
 
   @override
-  String get askAiNoHistoryMessages => 'No messages yet';
+  String get askAiNoHistory => '이 서버에 저장된 대화가 없습니다';
 
   @override
-  String get askAiUntitledConversation => 'New conversation';
+  String get askAiNoHistoryMessages => '아직 메시지가 없습니다';
 
   @override
-  String get askAiRenameConversation => 'Rename conversation';
+  String get askAiUntitledConversation => '새 대화';
 
   @override
-  String get askAiDeleteConversationTitle => 'Delete this conversation?';
+  String get askAiRenameConversation => '대화 이름 바꾸기';
 
   @override
-  String get askAiDeleteConversationTip =>
-      'This removes the conversation from this device and cannot be undone.';
+  String get askAiDeleteConversationTitle => '이 대화를 삭제할까요?';
 
   @override
-  String get askAiClearHistory => 'Clear history';
+  String get askAiDeleteConversationTip => '대화가 이 기기에서 삭제되며 되돌릴 수 없습니다.';
 
   @override
-  String get askAiClearHistoryTitle => 'Clear this server\'s Agent history?';
+  String get askAiClearHistoryTitle => '이 서버의 에이전트 기록을 지울까요?';
 
   @override
-  String get askAiClearHistoryTip =>
-      'All Agent conversations saved for this server will be removed from this device.';
+  String get askAiClearHistoryTip => '이 서버에 저장된 모든 에이전트 대화가 이 기기에서 삭제됩니다.';
 
   @override
   String get askAiRestoredReview =>
-      'Restored from history. Review it again before running; it will never run automatically.';
+      '기록에서 복원했습니다. 실행 전에 다시 확인하세요. 저절로 실행되지는 않습니다.';
 
   @override
-  String get agentTitle => 'Agent';
+  String get agentTitle => '에이전트';
 
   @override
-  String get agentWelcome => 'What should we do across your servers?';
+  String get agentWelcome => '서버들에서 무엇을 할까요?';
 
   @override
   String get agentWelcomeTip =>
-      'Ask for a diagnosis or an operational task. The Agent uses live ServerBox state and proposes one reviewed action at a time.';
+      '진단이나 운영 작업을 요청하세요. 에이전트는 ServerBox의 현재 상태를 사용해 검토가 필요한 작업을 하나씩 제안합니다.';
 
   @override
-  String get agentPromptHint =>
-      'Ask the Agent to inspect or operate your servers...';
+  String get agentPromptHint => '에이전트에게 서버 점검이나 조작을 요청하세요...';
 
   @override
-  String get agentNoServers => 'No configured servers';
+  String get agentNoServers => '설정된 서버가 없습니다';
 
   @override
-  String get agentNoHistory => 'No saved global Agent conversations';
+  String get agentNoHistory => '저장된 전역 에이전트 대화가 없습니다';
 
   @override
-  String get agentClearHistoryTitle => 'Clear global Agent history?';
+  String get agentClearHistoryTitle => '전역 에이전트 기록을 지울까요?';
 
   @override
-  String get agentClearHistoryTip =>
-      'All global Agent conversations will be removed from this device.';
+  String get agentClearHistoryTip => '모든 전역 에이전트 대화가 이 기기에서 삭제됩니다.';
 
   @override
-  String get agentToolShell => 'Shell';
+  String get agentToolShell => '셸';
 
   @override
-  String get agentToolReadFile => 'Read file';
+  String get agentToolReadFile => '파일 읽기';
 
   @override
-  String get agentToolWriteFile => 'Write file';
+  String get agentToolWriteFile => '파일 쓰기';
 
   @override
   String get agentToolServerBox => 'ServerBox';
 
   @override
-  String get agentToolFailed => 'Tool execution failed.';
+  String get agentToolFailed => '도구 실행에 실패했습니다.';
+
+  @override
+  String agentToolCallsFmt(Object count) {
+    return '도구 호출 $count회';
+  }
+
+  @override
+  String get agentFloat => '다른 탭 위에 띄우기';
+
+  @override
+  String get agentToolSshConnect => 'SSH 연결';
+
+  @override
+  String get agentToolSshDisconnect => 'SSH 연결 끊기';
+
+  @override
+  String get agentSshConnectTitle => '새 호스트에 연결';
+
+  @override
+  String get agentAuthMethod => '인증 방식';
+
+  @override
+  String get agentSshConnectTip =>
+      '에이전트가 SSH 연결을 열려고 합니다. 비밀번호는 여기에 입력하세요. 대화에 입력하면 그대로 저장되고 모델로 전송됩니다.';
+
+  @override
+  String get agentAdHocSessions => '임시 연결';
+
+  @override
+  String get agentSaveServerTitle => '서버로 저장';
+
+  @override
+  String get agentSaveServerTip => '이 호스트와 입력한 비밀번호가 이 기기에 저장됩니다.';
+
+  @override
+  String get agentMonitorOptional => 'monitor 에이전트(선택)';
 
   @override
   String get atLeastOneTab => '최소 하나의 탭을 선택해야 합니다';
@@ -417,13 +415,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get cpuViewAsProgressTip => '각 CPU 사용률을 프로그레스 바 형태로 표시합니다 (이전 스타일)';
 
   @override
-  String get configured => '설정됨';
-
-  @override
   String get customCmd => '사용자 정의 명령어';
 
   @override
   String get deleteServers => '서버 일괄 삭제';
+
+  @override
+  String get deleteDirRecursive => '폴더와 그 안의 모든 항목 삭제';
 
   @override
   String get desktopTerminalTip => 'SSH 세션을 시작할 때 사용할 터미널 에뮬레이터를 여는 명령어입니다.';
@@ -522,13 +520,14 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => '이 폴더는 더 이상 없습니다';
+
+  @override
+  String get fileDirGoneTip =>
+      '삭제되었거나 이름이 바뀌었습니다. 아래 막대에서 뒤로 가기, 홈, 또는 다른 위치로 이동하세요.';
+
+  @override
   String get finishedAt => '완료 시각';
-
-  @override
-  String get followSystem => '시스템 설정 따르기';
-
-  @override
-  String get fontSize => '글꼴 크기';
 
   @override
   String get fullScreen => '전체 화면 모드';
@@ -556,16 +555,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get githubGistTokenEmpty => '토큰이 비어 있습니다';
 
   @override
-  String get goBackQ => '돌아가시겠습니까?';
-
-  @override
   String get goto => '이동';
-
-  @override
-  String get hideTitleBar => '제목 표시줄 숨기기';
-
-  @override
-  String get highlight => '코드 하이라이팅';
 
   @override
   String get homeTabs => '홈 탭';
@@ -584,6 +574,30 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get imagesList => '이미지 목록';
+
+  @override
+  String get macDmgBody =>
+      'App Store는 이 앱을 샌드박스에서 실행하도록 요구하며, 샌드박스 프로세스는 의사 터미널을 열 수 없습니다. 그래서 App Store 버전에는 이 Mac의 터미널이 없고, 여기서 스니펫이나 에이전트 명령도 실행할 수 없습니다. DMG 버전은 같은 앱을 샌드박스 없이 서명한 것으로, 둘 다 됩니다.\n\nApp Store 버전은 계속 동작하고 계속 업데이트됩니다. 나중에 업데이트가 끝날 수 있습니다.\n\n두 버전은 데이터를 서로 다른 곳에 둡니다. DMG 버전은 첫 실행에서 그것을 복사하므로 서버, 키, 기록이 함께 옮겨집니다. 실패하면 그렇게 알려 주며, 대신 백업 파일로 옮길 수 있습니다(설정의 \'백업\').';
+
+  @override
+  String get macDmgImportDenied =>
+      'macOS가 이전에 설치된 버전의 데이터 읽기를 허용하지 않았습니다. 전체 디스크 접근 권한을 준 뒤 앱을 다시 열거나, 그쪽에서 백업을 내보내 여기서 복원하세요.';
+
+  @override
+  String get macDmgImported => '이전에 설치된 버전의 데이터를 가져왔습니다.';
+
+  @override
+  String get macDmgImportFailed =>
+      '이전에 설치된 버전의 데이터를 읽지 못했습니다. 그쪽에서 백업을 내보낸 뒤 여기서 복원하세요.';
+
+  @override
+  String get macDmgTip => '이 Mac의 터미널과 이 Mac에서 스니펫 실행은 DMG 버전에만 있습니다.';
+
+  @override
+  String get macDmgTitle => 'DMG 버전';
+
+  @override
+  String get showHiddenFiles => '숨김 파일 표시';
 
   @override
   String get unused => '미사용';
@@ -629,12 +643,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get pull => '풀';
-
-  @override
-  String get invalid => '유효하지 않음';
-
-  @override
-  String get invalidUrl => '잘못된 URL입니다';
 
   @override
   String get invalidHostFormat => '잘못된 호스트 형식입니다. IPv4, IPv6, 도메인 문자만 허용됩니다.';
@@ -696,13 +704,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get more => '더 보기';
-
-  @override
-  String get moveOutServerFuncBtnsHelp =>
-      '켜기: 서버 탭의 각 카드 아래에 표시됩니다. 끄기: 서버 상세 페이지 상단에 표시됩니다.';
-
-  @override
   String get needRestart => '앱을 다시 시작해야 합니다';
 
   @override
@@ -736,7 +737,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get parseContainerStatsTip => 'Docker 점유 상태 파싱이 비교적 느립니다.';
 
   @override
-  String get permission => '권한';
+  String get fullAccessRefused => '이 에이전트는 자격 증명 없는 터미널을 제공하지 않습니다.';
+
+  @override
+  String get fullAccessInsecure =>
+      '이 에이전트는 TLS 또는 루프백에서만 터미널을 제공하는데, 현재 연결은 평문 HTTP입니다.';
 
   @override
   String get plugInType => '삽입 유형';
@@ -829,9 +834,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recentConnections => '최근 연결';
 
   @override
-  String get reconnecting => '재연결 중...';
-
-  @override
   String get rememberPwdInMem => '메모리에 비밀번호 저장';
 
   @override
@@ -841,13 +843,50 @@ class AppLocalizationsKo extends AppLocalizations {
   String get remotePath => '원격 경로';
 
   @override
+  String rootfsUpdateTip(Object installed, Object latest) {
+    return 'Alpine $installed이(가) 설치되어 있고 $latest을(를) 사용할 수 있습니다. 업데이트하면 다시 내려받아 컨테이너를 교체하므로 그 안에 apk로 설치한 것은 모두 사라집니다. 건너뛰면 지금 것을 그대로 쓸 수 있습니다.';
+  }
+
+  @override
+  String get rootfsMissing => '이 기기에는 아직 Linux 파일 시스템이 설치되어 있지 않습니다.';
+
+  @override
+  String get rootfsSubtitle => '이 기기의 Linux 사용자 공간';
+
+  @override
+  String rootfsInstallTip(Object version) {
+    return 'Alpine Linux $version(약 3 MB)을 내려받아 이 기기에 풉니다. 패키지 관리자가 있는 셸을 이 앱에 제공하며, 언제든지 삭제할 수 있습니다.';
+  }
+
+  @override
   String get sameIdServerExist => '동일한 ID의 서버가 이미 존재합니다';
 
   @override
-  String get save => '저장';
+  String get second => '초';
 
   @override
-  String get second => '초';
+  String get serverFilesUnavailableTip =>
+      '이 서버의 SSH에 연결할 수 있거나, monitor 에이전트의 파일 API가 켜져 있어야 합니다.';
+
+  @override
+  String get back => '뒤로';
+
+  @override
+  String get history => '기록';
+
+  @override
+  String get homeDir => '홈';
+
+  @override
+  String get selectItem => '선택';
+
+  @override
+  String selected(Object count) {
+    return '$count개 선택됨';
+  }
+
+  @override
+  String get sendTo => '보낼 위치…';
 
   @override
   String get serverDetailOrder => '상세 페이지 위젯 순서';
@@ -860,6 +899,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get serverTabRequired => '서버 탭은 제거할 수 없습니다';
+
+  @override
+  String get shareServerRiskTip =>
+      '이 QR 코드에는 비밀번호를 포함한 서버 연결 설정이 평문으로 들어 있습니다. 스캔하거나 촬영한 사람은 누구나 이 서버에 접속할 수 있습니다.';
 
   @override
   String get sftpDlPrepare => '연결 준비 중...';
@@ -881,12 +924,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sftpShowFoldersFirst => '폴더 우선 표시';
 
   @override
-  String get size => '크기';
-
-  @override
-  String get softWrap => '자동 줄바꿈';
-
-  @override
   String get specifyDev => '장치 지정';
 
   @override
@@ -896,9 +933,6 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       '활성화하면 온도 값이 밀리섭씨가 아닌 섭씨로 처리됩니다. 온도가 잘못 표시될 때만 켜세요 (예: 58°C 대신 0.1°C로 표시되는 경우).';
-
-  @override
-  String get speed => '속도';
 
   @override
   String spentTime(Object time) {
@@ -970,6 +1004,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshHostKeyType => 'SSH 호스트 키 유형';
 
   @override
+  String get sshKnownHostKeys => '알려진 호스트 키';
+
+  @override
+  String get sshKnownHostKeysTip => '이 앱이 수락한 호스트 키입니다. 삭제하면 다음 연결 시 다시 확인합니다.';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return '$serverName에서 새 SSH 호스트 키를 수신했습니다. 신뢰하기 전에 지문을 확인해 주세요.';
   }
@@ -1005,9 +1045,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sshVirtualKeyAutoOff => '가상 키 자동 전환';
 
   @override
-  String get stat => '통계';
-
-  @override
   String get supportFmtArgs => '다음 형식 매개변수가 지원됩니다:';
 
   @override
@@ -1029,21 +1066,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get system => '시스템';
 
   @override
-  String get tapToStartDiscovery => '검색 버튼을 눌러 네트워크에서 SSH 서버를 검색하세요';
-
-  @override
   String get termFontSizeTip =>
       '이 설정은 터미널 크기(너비 및 높이)에 영향을 줍니다. 현재 세션의 글꼴 크기를 조정하려면 터미널 페이지에서 확대/축소할 수 있습니다.';
 
   @override
-  String get textScaler => '텍스트 배율';
-
-  @override
   String get textScalerTip =>
       '1.0 => 100% (원래 크기), 서버 페이지의 일부 글꼴에만 적용되며 변경을 권장하지 않습니다.';
-
-  @override
-  String get time => '시간';
 
   @override
   String get times => '회';
@@ -1053,9 +1081,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get sudoPromptNotFound => 'sudo 비밀번호 프롬프트가 없습니다.';
-
-  @override
-  String get unknown => '알 수 없음';
 
   @override
   String get updateServerStatusInterval => '서버 상태 업데이트 간격';
@@ -1074,9 +1099,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get viewDetails => '상세 보기';
-
-  @override
-  String get viewErr => '오류 보기';
 
   @override
   String get virtKeyHelpClipboard =>
@@ -1102,9 +1124,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get whenOpenApp => '앱을 열 때';
-
-  @override
-  String get wiki => '위키';
 
   @override
   String get wolTip => 'WOL (Wake-on-LAN)을 설정하면 서버에 연결할 때마다 WOL 요청이 전송됩니다.';
@@ -1146,12 +1165,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get portForward_remotePort => '원격 포트';
 
   @override
-  String get portForward_type_local => '로컬';
-
-  @override
-  String get portForward_type_remote => '원격';
-
-  @override
   String portForward_deleteConfirmFmt(Object name) {
     return '$name을(를) 삭제하시겠습니까?';
   }
@@ -1160,74 +1173,56 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sponsor => '후원';
 
   @override
-  String get sort => '정렬';
-
-  @override
-  String get sortByName => '이름순';
-
-  @override
   String get sortByJoinTime => '가입 시간순';
-
-  @override
-  String get ascending => '오름차순';
-
-  @override
-  String get descending => '내림차순';
 
   @override
   String get serverHistory => '서버 기록';
 
   @override
-  String get clearHistory => '기록 지우기';
-
-  @override
   String get portForwardBetaTitle => '포트 포워딩 (Beta)';
 
   @override
-  String get tmuxAutoAttach => 'tmux auto-attach';
+  String get tmuxAutoAttach => 'tmux 자동 연결';
 
   @override
-  String get tmuxAuto => 'Auto tmux';
+  String get tmuxAuto => '자동 tmux';
 
   @override
-  String get tmuxAutoTip =>
-      'Automatically start or attach tmux when connecting over SSH';
+  String get tmuxAutoTip => 'SSH로 접속할 때 tmux를 자동으로 시작하거나 연결합니다';
 
   @override
-  String get tmuxSessionSelector => 'Session selector';
+  String get tmuxSessionSelector => '세션 선택기';
 
   @override
-  String get tmuxSessionSelectorTip =>
-      'Show the session picker when connecting';
+  String get tmuxSessionSelectorTip => '접속할 때 세션 선택기를 표시합니다';
 
   @override
-  String get tmuxDefaultSessionName => 'Default session name';
+  String get tmuxDefaultSessionName => '기본 세션 이름';
 
   @override
-  String get tmuxSessionName => 'Session name';
+  String get tmuxSessionName => '세션 이름';
 
   @override
-  String get tmuxExistingSessions => 'Existing sessions';
+  String get tmuxExistingSessions => '기존 세션';
 
   @override
-  String get tmuxNewSession => 'New session';
+  String get tmuxNewSession => '새 세션';
 
   @override
-  String get tmuxWindows => 'Windows';
+  String get tmuxWindows => '창';
 
   @override
-  String get tmuxNewWindow => 'New window';
+  String get tmuxNewWindow => '새 창';
 
   @override
-  String get tmuxNoWindowsFound => 'No windows found';
+  String get tmuxNoWindowsFound => '창을 찾을 수 없습니다';
 
   @override
   String tmuxWindowCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count windows',
-      one: '1 window',
+      other: '창 $count개',
     );
     return '$_temp0';
   }
@@ -1237,33 +1232,32 @@ class AppLocalizationsKo extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count panes',
-      one: '1 pane',
+      other: '페인 $count개',
     );
     return '$_temp0';
   }
 
   @override
-  String get tmuxAttached => 'Attached';
+  String get tmuxAttached => '연결됨';
 
   @override
-  String get tmuxActive => 'Active';
+  String get tmuxActive => '활성';
 
   @override
   String tmuxActiveAt(String time) {
-    return 'active: $time';
+    return '활성: $time';
   }
 
   @override
   String tmuxAttachedAt(String time) {
-    return 'attached: $time';
+    return '연결: $time';
   }
 
   @override
-  String get tmuxSkip => 'Skip';
+  String get tmuxSkip => '건너뛰기';
 
   @override
-  String get tmuxNotAvailable => 'tmux is not available';
+  String get tmuxNotAvailable => 'tmux를 사용할 수 없습니다';
 
   @override
   String containerSegmentsMismatch(int count) {
@@ -1296,4 +1290,79 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get processKillTargetChanged =>
       '프로세스가 변경되었거나 종료되었습니다. 목록을 새로 고친 후 다시 시도하세요.';
+
+  @override
+  String get watchServers => '워치에 표시할 서버';
+
+  @override
+  String get watchServersTip =>
+      '워치가 각 서버의 monitor 에이전트에서 직접 가져오므로, monitor가 설정된 서버만 선택할 수 있습니다.';
+
+  @override
+  String get watchNoMonitorServer => 'monitor 에이전트가 설정된 서버가 없습니다';
+
+  @override
+  String get watchLegacyUrls => '레거시 status URL';
+
+  @override
+  String get accessoryWidgetServer => '잠금 화면 위젯 서버';
+
+  @override
+  String get systemdMissing => '이 서버에는 systemd가 없습니다';
+
+  @override
+  String get systemdMissingTip => '`systemctl`이 설치되어 있지 않아 나열할 unit이 없습니다.';
+
+  @override
+  String initSystemFmt(String init) {
+    return '이 머신은 $init을(를) 사용하는 것으로 보입니다.';
+  }
+
+  @override
+  String get systemdListFailed => 'unit을 나열할 수 없습니다';
+
+  @override
+  String get systemdUserScopeMissing => '사용자 unit이 나열되지 않았습니다';
+
+  @override
+  String get systemdUserScopeMissingTip =>
+      '이 계정에는 서버에 사용자 세션 버스가 없어 시스템 unit만 표시됩니다.';
+
+  @override
+  String get serverUnreachable => '이 서버에서 명령을 실행할 수 없습니다';
+
+  @override
+  String get containerNoRuntime => '컨테이너 런타임이 없습니다';
+
+  @override
+  String get containerNoRuntimeTip =>
+      '이 머신에서 `docker`와 `podman` 모두 응답하지 않았습니다. 다른 계정에 설치되어 있다면 설정에서 \"sudo 사용 시도\"를 켜세요.';
+
+  @override
+  String get containerUnreadable => '컨테이너 런타임이 예상과 다른 형식으로 응답했습니다';
+
+  @override
+  String get power => '전원';
+
+  @override
+  String get continueInTerminal => '터미널에서 계속하기';
+
+  @override
+  String get askAiRiskUnknown => '분류되지 않음';
+
+  @override
+  String get agentLocalExec => '이 기기에서 명령 실행';
+
+  @override
+  String get agentLocalExecTip =>
+      'ServerBox가 실행 중인 기기에서도 Agent가 작업할 수 있게 합니다. 여기서는 자동 실행되지 않으며, 모든 명령에 확인이 필요합니다.';
+
+  @override
+  String get agentLocalExecRootfsTip =>
+      'ServerBox가 설치하는 Alpine Linux 컨테이너 안에서 Agent가 이 기기에서 작업할 수 있게 합니다. 기기 자체의 파일 시스템, 앱 데이터, 사용자 파일은 볼 수 없습니다. 모든 명령에는 여전히 확인이 필요합니다.';
+
+  @override
+  String macDmgImportedPartly(String path) {
+    return '이전에 설치된 빌드의 데이터를 가져왔습니다. 다운로드한 파일은 $path에 그대로 있습니다.';
+  }
 }

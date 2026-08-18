@@ -30,7 +30,7 @@ abstract final class SudoPassword {
     final override = await readOverride(spi.id);
     if (override != null) return override;
 
-    final pwd = spi.pwd;
+    final pwd = spi.ssh?.pwd;
     if (pwd == null || pwd.isEmpty) return null;
     return pwd;
   }

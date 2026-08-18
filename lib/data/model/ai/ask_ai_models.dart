@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
+import 'package:server_box/core/utils/local_exec.dart';
 
 /// API protocol used for one Agent conversation.
 enum AskAiProtocol { auto, chatCompletions, responses }
@@ -226,7 +227,23 @@ Map<String, dynamic>? _mapOrNull(Object? value) {
   return Map<String, dynamic>.from(value);
 }
 
-enum AskAiCommandRisk { readOnly, caution, destructive }
+/// How much of a command the local check could actually establish.
+///
+/// An allowlist, not a blocklist: [readOnly] is the only verdict that says
+/// something positive about the command. [unknown] is what nothing matched —
+/// which is a reason to withhold auto-running, and not a claim about what the
+/// command does. Saying "changes the system" there contradicts the model's own
+/// description of a `sleep`, and the contradiction is the app's fault.
+///
+/// [unvettedHost] is the same withholding for an unrelated reason: the command
+/// was recognised as read-only and the *host* is what nobody has accepted yet.
+/// A value of its own rather than a flag beside [unknown], so a badge can read
+/// the verdict and say what it means — two causes under one name is how the
+/// contradiction above happened in the first place.
+///
+/// Never serialised: [AskAiCommand.risk] is computed from the call every time,
+/// so adding a value here migrates nothing.
+enum AskAiCommandRisk { readOnly, unknown, unvettedHost, caution, destructive }
 
 /// Protocol-neutral function tool definition used by both Chat Completions and
 /// Responses requests.
@@ -333,6 +350,10 @@ class AskAiCommand {
 
   String? get serverId => argumentString('server_id');
 
+  /// The ad-hoc SSH connection this call is about, if it is about one rather
+  /// than about a configured server.
+  String? get sessionId => argumentString('session_id');
+
   String? get path => argumentString('path');
 
   String? get action => argumentString('action');
@@ -340,12 +361,30 @@ class AskAiCommand {
   String get displayValue => switch (toolName) {
     'read_file' || 'write_file' => path ?? command,
     'serverbox' => action ?? command,
+    'ssh_connect' => _sshTarget ?? command,
+    'ssh_disconnect' => sessionId ?? command,
     _ => command,
   };
 
-  AskAiCommandRisk get risk => switch (toolName) {
+  String? get _sshTarget {
+    final host = argumentString('host');
+    if (host == null) return null;
+    final user = argumentString('user');
+    final port = arguments['port'];
+    final portSuffix = port is num ? ':${port.toInt()}' : '';
+    return '${user == null ? '' : '$user@'}$host$portSuffix';
+  }
+
+  /// What the call would be worth on a machine the user has already accepted:
+  /// a property of the call itself, and nothing to do with where it runs.
+  AskAiCommandRisk get intrinsicRisk => switch (toolName) {
     'read_file' => AskAiCommandRisk.readOnly,
     'write_file' => AskAiCommandRisk.caution,
+    // Reaching a machine nobody has vetted, with credentials, is the most
+    // consequential thing the Agent can propose — whatever it plans to do
+    // there afterwards.
+    'ssh_connect' => AskAiCommandRisk.destructive,
+    'ssh_disconnect' => AskAiCommandRisk.caution,
     'serverbox' => switch (action) {
       'list_servers' || 'get_status' => AskAiCommandRisk.readOnly,
       _ => AskAiCommandRisk.caution,
@@ -353,7 +392,51 @@ class AskAiCommand {
     _ => classifyRisk(command),
   };
 
-  bool get canAutoRun => modelSafeToRun && risk == AskAiCommandRisk.readOnly;
+  /// Only the tools that name a machine are floored.
+  ///
+  /// `serverbox` acts on the app — listing its servers, opening a page — and
+  /// carries a `session_id` for `add_server` without running anything on that
+  /// host, so flooring it labelled app-level calls "unvetted host". The floor
+  /// belongs to the tools whose risk is a question of where they run.
+  static const _targetedTools = {
+    'run_shell_command',
+    'read_file',
+    'write_file',
+  };
+
+  AskAiCommandRisk get risk => _targetedTools.contains(toolName)
+      ? _unvettedFloor(intrinsicRisk)
+      : intrinsicRisk;
+
+  /// Nothing runs unattended on a host met this conversation.
+  ///
+  /// Auto-running is a convenience for machines already accepted into the app;
+  /// on one the user has only just handed a password to, a read-only command
+  /// still deserves the half-second it takes to look at it.
+  ///
+  /// Lifts to [AskAiCommandRisk.unvettedHost], which is neither a claim about
+  /// the command nor a shrug: the command really is read-only, and the host is
+  /// what has not been vetted. `caution` would say "changes the system" over a
+  /// command the model has just described as not doing that, and `unknown`
+  /// would say nothing was recognised when something was. All the lift does is
+  /// withhold [canAutoRun].
+  AskAiCommandRisk _unvettedFloor(AskAiCommandRisk risk) {
+    if (sessionId == null) return risk;
+    return risk == AskAiCommandRisk.readOnly
+        ? AskAiCommandRisk.unvettedHost
+        : risk;
+  }
+
+  /// Never on this device, whatever the command looks like.
+  ///
+  /// `askAiAutoRunSafeCommands` is a convenience for machines the user added
+  /// on purpose and that are somewhere else. This one holds the app's own
+  /// stores, the user's keys and their files, and a read-only command there is
+  /// still a command they did not see.
+  bool get onThisDevice => serverId == LocalExec.deviceId;
+
+  bool get canAutoRun =>
+      modelSafeToRun && risk == AskAiCommandRisk.readOnly && !onThisDevice;
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -507,9 +590,13 @@ class AskAiCommand {
       return readOnlyStarts.any((pattern) => pattern.hasMatch(stripped));
     }
 
+    // Chained commands are not taken apart, so nothing can be established
+    // about them — including that they change anything. `ls && pwd` is as
+    // unanalysed here as `ls && rm -rf /`, and only the first of those two
+    // would be a lie to call a system change.
     final chainCandidate = normalized.replaceAll(RegExp(r'\d*>&\d+'), '');
     if (RegExp(r'&&|\|\||[;\r\n]|&').hasMatch(chainCandidate)) {
-      return AskAiCommandRisk.caution;
+      return AskAiCommandRisk.unknown;
     }
 
     final pipelineSegments = normalized.split('|');
@@ -518,7 +605,9 @@ class AskAiCommand {
     )) {
       return AskAiCommandRisk.readOnly;
     }
-    return AskAiCommandRisk.caution;
+    // Matched nothing at all — not a known mutation, not a known read. `sleep`
+    // lands here, and so does anything the lists have never heard of.
+    return AskAiCommandRisk.unknown;
   }
 }
 

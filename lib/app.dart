@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
@@ -9,6 +11,7 @@ import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/home.dart';
+import 'package:server_box/view/widget/page_columns.dart';
 
 part 'intro.dart';
 
@@ -131,7 +134,9 @@ class _MyAppState extends State<MyApp> {
       key: ValueKey(locale),
       restorationScopeId: 'serverbox',
       navigatorKey: AppNavigator.key,
-      builder: ResponsivePoints.builder,
+      // Outside the breakpoints builder: a toast is sized against the window,
+      // not against the scaled layout the breakpoints hand to the pages.
+      builder: (ctx, child) => ToastHost(child: ResponsivePoints.builder(ctx, child)),
       locale: locale,
       localizationsDelegates: const [
         LibLocalizations.delegate,

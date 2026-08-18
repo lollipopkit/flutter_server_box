@@ -16,7 +16,7 @@ final class ContainerNotifierProvider
     extends $NotifierProvider<ContainerNotifier, ContainerState> {
   ContainerNotifierProvider._({
     required ContainerNotifierFamily super.from,
-    required (SSHClient?, String, String, BuildContext) super.argument,
+    required (String, String, BuildContext) super.argument,
   }) : super(
          retry: null,
          name: r'containerProvider',
@@ -58,7 +58,7 @@ final class ContainerNotifierProvider
   }
 }
 
-String _$containerNotifierHash() => r'2f8eb969f0e66e28f60b6fc11169e8f28315ed32';
+String _$containerNotifierHash() => r'6c074c30e127ec55c7da03338b57cc7931d43e99';
 
 final class ContainerNotifierFamily extends $Family
     with
@@ -67,7 +67,7 @@ final class ContainerNotifierFamily extends $Family
           ContainerState,
           ContainerState,
           ContainerState,
-          (SSHClient?, String, String, BuildContext)
+          (String, String, BuildContext)
         > {
   ContainerNotifierFamily._()
     : super(
@@ -79,12 +79,11 @@ final class ContainerNotifierFamily extends $Family
       );
 
   ContainerNotifierProvider call(
-    SSHClient? client,
     String userName,
     String hostId,
     BuildContext context,
   ) => ContainerNotifierProvider._(
-    argument: (client, userName, hostId, context),
+    argument: (userName, hostId, context),
     from: this,
   );
 
@@ -93,21 +92,15 @@ final class ContainerNotifierFamily extends $Family
 }
 
 abstract class _$ContainerNotifier extends $Notifier<ContainerState> {
-  late final _$args = ref.$arg as (SSHClient?, String, String, BuildContext);
-  SSHClient? get client => _$args.$1;
-  String get userName => _$args.$2;
-  String get hostId => _$args.$3;
-  BuildContext get context => _$args.$4;
+  late final _$args = ref.$arg as (String, String, BuildContext);
+  String get userName => _$args.$1;
+  String get hostId => _$args.$2;
+  BuildContext get context => _$args.$3;
 
-  ContainerState build(
-    SSHClient? client,
-    String userName,
-    String hostId,
-    BuildContext context,
-  );
+  ContainerState build(String userName, String hostId, BuildContext context);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ContainerState, ContainerState>;
     final element =
         ref.element
@@ -117,9 +110,9 @@ abstract class _$ContainerNotifier extends $Notifier<ContainerState> {
               Object?,
               Object?
             >;
-    element.handleCreate(
+    return element.handleCreate(
       ref,
-      () => build(_$args.$1, _$args.$2, _$args.$3, _$args.$4),
+      () => build(_$args.$1, _$args.$2, _$args.$3),
     );
   }
 }

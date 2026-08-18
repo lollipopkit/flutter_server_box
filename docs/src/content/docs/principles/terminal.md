@@ -150,28 +150,23 @@ Tabs maintain state across navigation:
 
 ## Virtual Keyboard
 
-### Platform-Specific Implementation
-
-**iOS:**
-- UIView-based custom keyboard
-- Toggleable with keyboard button
-- Auto-show/hide based on focus
-
-**Android:**
-- Custom input method
-- Integrated with system keyboard
-- Quick action buttons
+The virtual keyboard is a Flutter widget rendered above the terminal on all
+platforms (`lib/data/model/ssh/virtual_key.dart` defines the available keys),
+shown together with the system keyboard on mobile.
 
 ### Keyboard Buttons
 
 | Button | Action |
 |--------|--------|
-| **Toggle** | Show/hide system keyboard |
-| **Ctrl** | Send Ctrl modifier |
-| **Alt** | Send Alt modifier |
-| **SFTP** | Open current directory |
-| **Clipboard** | Copy/Paste context-aware |
-| **Snippets** | Execute snippet |
+| **Esc / Tab / Home / End / PgUp / PgDn / arrows** | Send the corresponding key |
+| **Ctrl / Alt / Shift** | Toggle modifier for the next key |
+| **IME** | Show/hide system keyboard |
+| **Clipboard** | Copy selection / paste, context-aware |
+| **SFTP** | Open the current directory in the SFTP browser |
+| **Snippet** | Pick and execute a snippet |
+| **Symbols** | `/ \ _ + = - ( ) [ ] { } < >` and more |
+
+The key set and order are customizable in settings.
 
 ### Key Encoding
 
@@ -266,19 +261,11 @@ const colorMap = {
 - **Dark**: Dark background, light text
 - **AMOLED**: Pure black background
 
-## Performance Optimizations
+## Performance
 
-### Rendering Optimizations
-
-- **Dirty rectangle**: Only redraw changed regions
-- **Line caching**: Cache rendered lines
-- **Lazy scrolling**: Virtual scrolling for long buffers
-
-### Data Optimizations
-
-- **Batch updates**: Coalesce multiple writes
-- **Compression**: Compress scroll buffer
-- **Debouncing**: Debounce rapid inputs
+The xterm.dart fork renders with a custom painter and only repaints on terminal
+updates; output writes are buffered and coalesced before being fed to the
+emulator.
 
 ## Clipboard Integration
 
@@ -334,10 +321,6 @@ void openSftp() async {
 
 ### Keep-Alive
 
-```dart
-Timer.periodic(Duration(seconds: 30), (_) {
-  if (terminal.isActive) {
-    terminal.send('\x00');  // NUL - no-op keep-alive
-  }
-});
-```
+Connections are kept alive at the SSH protocol layer (see the
+[SSH Connection](/docs/principles/ssh/) page), not by injecting bytes into the
+terminal.

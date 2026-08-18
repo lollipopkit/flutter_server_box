@@ -5,57 +5,51 @@ extension _Init on SSHPageState {
     Loggers.app.info('[TMUX] $message');
   }
 
-  Map<String, String>? get _sshEnvironment =>
-      buildSshTerminalEnvironment(widget.args.spi.envs);
+  /// Whether a second command can run beside the interactive shell. tmux,
+  /// which drives a control channel of its own, is the main thing that cares.
+  bool get _canExec => _sess.canExec;
 
-  String? get _tmuxLang => resolveTmuxLang(widget.args.spi.envs);
+  /// Whether tmux can be driven here.
+  ///
+  /// More than [_canExec]. The control channel writes a command and reads
+  /// until a marker it appended, which needs a channel that does not echo what
+  /// was written into it — an SSH `exec` channel. A shell on this device runs
+  /// in a pseudo-terminal, which echoes, and the marker parsing would be
+  /// reading its own input back.
+  ///
+  /// Asked before anything tmux is attempted rather than discovered by the
+  /// control session throwing: a decision belongs where it can be read, and
+  /// what used to happen instead was a null client, an exception, and a
+  /// warning in the log that said tmux was unavailable without saying why.
+  bool get _canTmux => _canExec && _client != null;
 
-  void _resetForegroundTerminal() {
-    _terminal.buffer.clear();
-    _terminal.buffer.setCursor(0, 0);
-  }
+  /// Connects a new source of shells, asking the provider what the agent
+  /// allows at the moment of use rather than trusting a stored answer.
+  Future<ShellBackend> _connectBackend() => _sess.connect(
+    granted: switch (widget.args.spi) {
+      final spi? => ref.read(serverProvider(spi.id)).remoteAccess,
+      null => null,
+    },
+    context: mounted ? context : null,
+  );
 
-  void _cancelTerminalOutputSubscriptions() {
-    for (final subscription in _terminalOutputSubscriptions) {
-      subscription.cancel();
-    }
-    _terminalOutputSubscriptions.clear();
-  }
+  Map<String, String>? get _sshEnvironment => _sess.environment;
 
-  void _bindForegroundSession(SSHSession session) {
-    _resetForegroundTerminal();
-    _cancelTerminalOutputSubscriptions();
-    _terminal.onOutput = (data) {
-      session.write(utf8.encode(data));
-    };
-    _terminal.onResize = (width, height, pixelWidth, pixelHeight) {
-      session.resizeTerminal(width, height);
-    };
+  String? get _tmuxLang => _sess.tmuxLang;
 
-    _listen(session.stdout, name: 'stdout');
-    _listen(session.stderr, name: 'stderr');
-
-    _session = session;
+  void _bindForegroundSession(ShellSession session) {
+    _sess.bindForeground(session);
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connected);
-    unawaited(_waitForegroundSessionDone(session));
   }
 
-  Future<void> _waitForegroundSessionDone(SSHSession session) async {
-    await session.done;
-    if (!identical(_session, session)) {
-      return;
-    }
-
-    _session = null;
-    _drainPendingTerminalOutput();
-
+  void _onForegroundSessionDone(ShellSession session) {
     // When the SSH transport closed unexpectedly (e.g. toggling WiFi) while a
     // tmux session was attached, the server-side tmux session survives. Route
     // this to the existing reconnect logic instead of tearing the tab down, so
     // the tab isn't removed when WiFi comes back. Normal session end (shell
     // exit) and user-initiated disconnect keep the transport open, so they
     // still remove the tab via the path below.
-    final transportClosed = _client != null && _client!.isClosed;
+    final transportClosed = _backend != null && _backend!.isClosed;
     if (mounted &&
         transportClosed &&
         _tmuxCurrentSession != null &&
@@ -72,20 +66,12 @@ extension _Init on SSHPageState {
   }
 
   Future<bool> _replaceForegroundWithLaunchPlan(TmuxLaunchPlan plan) async {
-    if (_client == null || !plan.shouldLaunchTmux) return false;
+    if (!_canTmux || !plan.shouldLaunchTmux) return false;
 
     final oldSession = _session;
-    final pty = SSHPtyConfig(
-      width: _terminal.viewWidth,
-      height: _terminal.viewHeight,
-    );
-    SSHSession? session;
+    ShellSession? session;
     try {
-      session = await _client?.execute(
-        plan.command!,
-        pty: pty,
-        environment: _sshEnvironment,
-      );
+      session = await _sess.execute(plan.command!);
     } catch (e, st) {
       Loggers.app.warning('Failed to replace foreground session with tmux', e, st);
       return false;
@@ -96,8 +82,7 @@ extension _Init on SSHPageState {
       return false;
     }
 
-    _session = null;
-    _cancelTerminalOutputSubscriptions();
+    _sess.unbindForeground();
     try {
       oldSession?.close();
     } catch (e, st) {
@@ -113,21 +98,13 @@ extension _Init on SSHPageState {
     return true;
   }
 
-  Future<SSHSession?> _openForegroundSession() async {
+  Future<ShellSession?> _openForegroundSession() async {
     final plan = await _resolveForegroundLaunchPlan();
-    final pty = SSHPtyConfig(
-      width: _terminal.viewWidth,
-      height: _terminal.viewHeight,
-    );
 
     if (plan.shouldLaunchTmux) {
-      SSHSession? session;
+      ShellSession? session;
       try {
-        session = await _client?.execute(
-          plan.command!,
-          pty: pty,
-          environment: _sshEnvironment,
-        );
+        session = await _sess.execute(plan.command!);
       } catch (e, st) {
         Loggers.app.warning('Failed to open foreground tmux session', e, st);
         _clearTmuxState();
@@ -145,15 +122,11 @@ extension _Init on SSHPageState {
     }
 
     _clearTmuxState();
-    return _client?.shell(pty: pty, environment: _sshEnvironment);
+    return _sess.openShell();
   }
 
   void _initStoredCfg() {
-    final fontFamilly = Stores.setting.fontPath.fetch().getFileName();
-    final textSize = Stores.setting.termFontSize.fetch();
-    final textStyle = TextStyle(fontFamily: fontFamilly, fontSize: textSize);
-
-    _terminalStyle = TerminalStyle.fromTextStyle(textStyle);
+    _terminalStyle = TerminalLook.style;
   }
 
   Future<void> _showHelp() async {
@@ -166,7 +139,7 @@ extension _Init on SSHPageState {
         TextButton(
           onPressed: () {
             Stores.setting.sshTermHelpShown.put(true);
-            context.pop();
+            context.popDialog();
           },
           child: Text(l10n.noPromptAgain),
         ),
@@ -175,16 +148,25 @@ extension _Init on SSHPageState {
   }
 
   Future<void> _initTerminal() async {
+    // A session handed to this page is already connected and already running
+    // something — the dialog that started it did all of this. Opening a second
+    // shell here would replace what the user asked to carry on watching.
+    if (_adopted) {
+      // It may also have finished on the way here, in which case this tab is
+      // the output and nothing more — said plainly rather than left looking
+      // like a shell that stopped answering.
+      TermSessionManager.updateStatus(
+        _sessionId,
+        _session != null
+            ? TermSessionStatus.connected
+            : TermSessionStatus.disconnected,
+      );
+      widget.args.focusNode?.requestFocus();
+      return;
+    }
+
     _writeLn(l10n.waitConnection);
-    _client ??= await genClient(
-      widget.args.spi,
-      onKeyboardInteractive: (server, request) =>
-          KeyboardInteractiveAuth.handle(
-            server,
-            request,
-            context: mounted ? context : AppNavigator.context,
-          ),
-    );
+    if (_backend == null) await _connectBackend();
 
     _writeLn('${libL10n.execute}: Shell');
     final session = await _openForegroundSession();
@@ -196,11 +178,14 @@ extension _Init on SSHPageState {
 
     _bindForegroundSession(session);
 
+    // Snippets name the server they run on, and their scripts are written
+    // against one. A terminal on this device has neither.
+    final spi = widget.args.spi;
     final snippets = ref.read(snippetProvider.select((p) => p.snippets));
-    if (_tmuxCurrentSession == null) {
+    if (spi != null && _tmuxCurrentSession == null) {
       for (final snippet in snippets) {
-        if (snippet.autoRunOn?.contains(widget.args.spi.id) == true) {
-          snippet.runInTerm(_terminal, widget.args.spi);
+        if (snippet.autoRunOn?.contains(spi.id) == true) {
+          snippet.runInTerm(_terminal, spi);
         }
       }
     }
@@ -212,76 +197,13 @@ extension _Init on SSHPageState {
     }
 
     final initSnippet = widget.args.initSnippet;
-    if (initSnippet != null && _tmuxCurrentSession == null) {
-      initSnippet.runInTerm(_terminal, widget.args.spi);
+    if (initSnippet != null &&
+        (spi != null || !initSnippet.needsServer) &&
+        _tmuxCurrentSession == null) {
+      initSnippet.runInTerm(_terminal, spi);
     }
 
     widget.args.focusNode?.requestFocus();
-  }
-
-  void _listen(Stream<Uint8List>? stream, {required String name}) {
-    if (stream == null) {
-      return;
-    }
-
-    final subscription = stream
-        .cast<List<int>>()
-        .transform(const Utf8Decoder())
-        .listen(
-          _queueTerminalOutput,
-          onError: (Object error, StackTrace stack) {
-            Loggers.root.warning('Error in SSH stream', error, stack);
-          },
-          cancelOnError: false,
-        );
-    _terminalOutputSubscriptions.add(subscription);
-  }
-
-  void _queueTerminalOutput(String data) {
-    _terminalOutputBuffer.add(data);
-    _appendSshOutputTail(data);
-    _scheduleTerminalFlush();
-  }
-
-  void _appendSshOutputTail(String data) {
-    if (data.isEmpty) return;
-    _sshOutputTail += data;
-    if (_sshOutputTail.length > SSHPageState._sshOutputTailCharLimit) {
-      _sshOutputTail = _sshOutputTail.substring(
-        _sshOutputTail.length - SSHPageState._sshOutputTailCharLimit,
-      );
-    }
-  }
-
-  void _scheduleTerminalFlush() {
-    _terminalFlushTimer ??= Timer(
-      SSHPageState._terminalFlushInterval,
-      () => _flushPendingTerminalOutput(),
-    );
-  }
-
-  void _flushPendingTerminalOutput({bool scheduleNext = true}) {
-    _terminalFlushTimer = null;
-    if (!_terminalOutputBuffer.hasPending) {
-      return;
-    }
-    final output = _terminalOutputBuffer.take(
-      SSHPageState._terminalFlushCharLimit,
-    );
-    if (output.isNotEmpty) {
-      _terminal.write(output);
-    }
-    if (scheduleNext && _terminalOutputBuffer.hasPending) {
-      _scheduleTerminalFlush();
-    }
-  }
-
-  void _drainPendingTerminalOutput() {
-    _terminalFlushTimer?.cancel();
-    _terminalFlushTimer = null;
-    while (_terminalOutputBuffer.hasPending) {
-      _flushPendingTerminalOutput(scheduleNext: false);
-    }
   }
 
   void _setupDiscontinuityTimer() {
@@ -296,7 +218,7 @@ extension _Init on SSHPageState {
   }
 
   Future<void> _checkConnectionHealth({bool immediate = false}) async {
-    if (!mounted || _client == null) return;
+    if (!mounted || _backend == null) return;
     if (_isCheckingConnection) {
       if (immediate) _hasPendingImmediateCheck = true;
       return;
@@ -304,7 +226,7 @@ extension _Init on SSHPageState {
     _isCheckingConnection = true;
 
     try {
-      await _client!.ping().timeout(SSHPageState._connectionCheckTimeout);
+      await _backend!.ping().timeout(SSHPageState._connectionCheckTimeout);
       _missedKeepAliveCount = 0;
       if (_reportedDisconnected) {
         _reportedDisconnected = false;
@@ -403,7 +325,7 @@ extension _Init on SSHPageState {
               child: CircularProgressIndicator(strokeWidth: 2.5),
             ),
             const SizedBox(width: 16),
-            Expanded(child: Text(l10n.reconnecting)),
+            Expanded(child: Text(libL10n.reconnecting)),
             Btn.cancel(onTap: onCancel),
           ],
         ),
@@ -415,14 +337,14 @@ extension _Init on SSHPageState {
   Future<void> _showDisconnectDialog() async {
     final shouldLeave = await context.showRoundDialog<bool>(
       title: libL10n.attention,
-      child: Text('${libL10n.disconnected}\n${l10n.goBackQ}'),
+      child: Text('${libL10n.disconnected}\n${libL10n.goBackQ}'),
       barrierDismiss: false,
       actions: [
         TextButton(
-          onPressed: () => context.pop(false),
+          onPressed: () => context.popDialog(false),
           child: Text(libL10n.cancel),
         ),
-        TextButton(onPressed: () => context.pop(true), child: Text(libL10n.ok)),
+        TextButton(onPressed: () => context.popDialog(true), child: Text(libL10n.ok)),
       ],
     );
 
@@ -437,7 +359,7 @@ extension _Init on SSHPageState {
 
     // If the client is gone or its transport already closed, "stay" means
     // "try again" rather than resuming monitoring of a dead connection.
-    if (_client == null || _client!.isClosed) {
+    if (_backend == null || _backend!.isClosed) {
       unawaited(_onConnectionLossSuspected());
       return;
     }
@@ -456,19 +378,7 @@ extension _Init on SSHPageState {
   /// which case the caller falls back to the disconnect prompt.
   Future<bool> _reconnectAndAttachTmux(String sessionName) async {
     // Tear down the stale SSH session/client first.
-    _session = null;
-    _cancelTerminalOutputSubscriptions();
-    final oldClient = _client;
-    _client = null;
-    try {
-      oldClient?.close();
-    } catch (e, st) {
-      Loggers.app.warning(
-        'Failed to close stale SSH client on reconnect',
-        e,
-        st,
-      );
-    }
+    _sess.closeBackend();
 
     TermSessionManager.updateStatus(_sessionId, TermSessionStatus.connecting);
 
@@ -492,17 +402,9 @@ extension _Init on SSHPageState {
         }
       }
       try {
-        _client = await genClient(
-          widget.args.spi,
-          onKeyboardInteractive: (server, request) =>
-              KeyboardInteractiveAuth.handle(
-                server,
-                request,
-                context: mounted ? context : AppNavigator.context,
-              ),
-        );
-        connected = _client != null;
-        if (connected) break;
+        await _connectBackend();
+        connected = true;
+        break;
       } catch (_) {
         Loggers.app.info(
           'SSH reconnect attempt ${attempt + 1}/$maxAttempts failed',
@@ -541,11 +443,7 @@ extension _Init on SSHPageState {
     );
     _clearTmuxState();
 
-    final pty = SSHPtyConfig(
-      width: _terminal.viewWidth,
-      height: _terminal.viewHeight,
-    );
-    final shell = await _client?.shell(pty: pty, environment: _sshEnvironment);
+    final shell = await _sess.openShell();
     if (shell == null || !mounted || _reconnectCancelled) {
       if (mounted) _writeLn(libL10n.fail);
       _closeFailedReconnectClient();
@@ -611,15 +509,7 @@ extension _Init on SSHPageState {
               lang: _tmuxLang,
             );
 
-      final pty = SSHPtyConfig(
-        width: _terminal.viewWidth,
-        height: _terminal.viewHeight,
-      );
-      final session = await _client?.execute(
-        command,
-        pty: pty,
-        environment: _sshEnvironment,
-      );
+      final session = await _sess.execute(command);
       if (session == null) return false;
 
       _saveTmuxState(sessionName: sessionName, windowIndex: windowIndex);
@@ -639,45 +529,34 @@ extension _Init on SSHPageState {
   void _clearTmuxState() {
     _tmuxCurrentSession = null;
     _tmuxCurrentWindow = null;
-    _restorableTmuxSession.value = null;
-    _restorableTmuxWindow.value = null;
+    _tmuxSessionState = null;
+    _tmuxWindowState = null;
     widget.args.onTmuxStateChanged?.call();
   }
 
-  void _closeFailedReconnectClient() {
-    _session = null;
-    _cancelTerminalOutputSubscriptions();
-    final failedClient = _client;
-    _client = null;
-    try {
-      failedClient?.close();
-    } catch (e, st) {
-      Loggers.app.warning('Failed to close unsuccessful SSH reconnect', e, st);
-    }
-  }
+  void _closeFailedReconnectClient() => _sess.closeBackend();
 
-  void _writeLn(String p0) {
-    _terminal.write('$p0\r\n');
-  }
+  void _writeLn(String p0) => _sess.writeLn(p0);
 
   TmuxRestoreState get _restoreTmuxState {
     return resolveTmuxRestoreState(
       argsSession: widget.args.tmuxSession,
       argsWindow: widget.args.tmuxWindow,
-      restorableSession: _restorableTmuxSession.value,
-      restorableWindow: _restorableTmuxWindow.value,
+      restorableSession: _tmuxSessionState,
+      restorableWindow: _tmuxWindowState,
     );
   }
 
   void _saveTmuxState({required String sessionName, int? windowIndex}) {
     _tmuxCurrentSession = sessionName;
     _tmuxCurrentWindow = windowIndex;
-    _restorableServerId.value = widget.args.spi.id;
-    _restorableTmuxSession.value = sessionName;
-    _restorableTmuxWindow.value = windowIndex;
+    _tmuxSessionState = sessionName;
+    _tmuxWindowState = windowIndex;
     widget.args.onTmuxStateChanged?.call();
   }
 
+  /// Only where [_canTmux] says so — every caller checks, and the null
+  /// assertions below are what that check is protecting.
   Future<TmuxSession> _createTmuxControlSession() async {
     return TmuxSession(
       PersistentShell(
@@ -692,7 +571,7 @@ extension _Init on SSHPageState {
   }
 
   Future<TmuxLaunchPlan> _resolveForegroundLaunchPlan() async {
-    if (!Stores.setting.tmuxAuto.fetch() || _client == null) {
+    if (!Stores.setting.tmuxAuto.fetch() || !_canTmux) {
       return const TmuxLaunchPlan.none();
     }
 
@@ -836,13 +715,13 @@ extension _Init on SSHPageState {
   }
 
   Future<void> _showTmuxSwitcher() async {
-    if (_client == null || !mounted) return;
+    if (!_canTmux || !mounted) return;
 
     final tmuxSession = await _createTmuxControlSession();
     try {
       final available = await tmuxSession.isAvailable;
       if (!available || !mounted) {
-        if (mounted) context.showSnackBar(context.l10n.tmuxNotAvailable);
+        if (mounted) Toast.show(context.l10n.tmuxNotAvailable);
         return;
       }
       final tmuxBin = tmuxSession.scanner.tmuxBin ?? 'tmux';

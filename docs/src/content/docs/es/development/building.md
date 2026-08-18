@@ -9,7 +9,7 @@ Server Box utiliza un sistema de compilación personalizado (`fl_build`) para co
 
 - Flutter SDK (canal stable)
 - Herramientas específicas de cada plataforma (Xcode para iOS, Android Studio para Android)
-- Cadena de herramientas de Rust (para algunas dependencias nativas)
+- Cadena de herramientas de Rust (requerida: el parser de estado es un crate de Rust integrado en la app vía flutter_rust_bridge/cargokit en todas las plataformas)
 
 ## Compilación de Desarrollo
 

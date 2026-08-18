@@ -33,6 +33,11 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
   String get _serverId => state.serverId;
 
+  /// The connected client, without waiting for one.
+  ///
+  /// Used where a forward is already running and needs the live client per
+  /// connection; [_connectedClient] is the one to call when starting a
+  /// forward, since a monitor-backed server may not have connected yet.
   SSHClient get _client {
     final serverState = ref.read(serverProvider(_serverId));
     final client = serverState.client;
@@ -41,6 +46,14 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     }
     return client;
   }
+
+  /// Connects the shell if it isn't already, then returns the client.
+  ///
+  /// A server reached through its monitor agent opens SSH lazily, so starting
+  /// a forward is one of the things that has to bring the connection up
+  /// rather than assume it.
+  Future<SSHClient> _connectedClient() =>
+      ref.read(serverProvider(_serverId).notifier).ensureShellClient();
 
   void dispose() {
     for (final entry in _forwards.values) {
@@ -123,6 +136,11 @@ class PortForwardNotifier extends _$PortForwardNotifier {
     if (config.remoteHost == null || config.remotePort == null) {
       throw Exception('Invalid local port forward: remote destination not set');
     }
+    // Connect before binding: the listener accepts connections lazily and
+    // resolves the client per connection, so without this a forward would
+    // appear to start on a server SSH can't reach and only fail later, once
+    // something connected to the local port.
+    await _connectedClient();
     final serverSocket = await ServerSocket.bind(
       config.localHost ?? 'localhost',
       config.localPort,
@@ -147,7 +165,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
         'Invalid remote port forward: remote destination not set',
       );
     }
-    final forward = await _client.forwardRemote(
+    final forward = await (await _connectedClient()).forwardRemote(
       host: config.remoteHost!,
       port: config.remotePort!,
     );
@@ -169,7 +187,7 @@ class PortForwardNotifier extends _$PortForwardNotifier {
 
   Future<void> _startDynamicForward(PortForwardConfig config) async {
     final bindHost = config.localHost ?? 'localhost';
-    final dynamicForward = await _client.forwardDynamic(
+    final dynamicForward = await (await _connectedClient()).forwardDynamic(
       bindHost: bindHost,
       bindPort: config.localPort,
     );

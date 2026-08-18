@@ -55,23 +55,17 @@ Es gelten Hintergrundbeschränkungen:
 
 ## Push-Benachrichtigungen
 
-Erhalten Sie Benachrichtigungen für:
-
-- Server-Offline-Alarme
-- Warnungen bei hoher Ressourcenauslastung
-- Alarme bei Abschluss von Aufgaben
-
-Konfigurieren unter Einstellungen > Benachrichtigungen.
+Server-Warnungen (offline, Schwellenwert überschritten) werden vom
+[ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor)
+auf Ihren Servern gesendet — Warnregeln und Push-Kanäle werden dort konfiguriert.
 
 ## Mobile UI-Funktionen
 
-- **Pull to Refresh**: Serverstatus aktualisieren
-- **Wischgesten**: Schnelle Serveroperationen
-- **Querformat**: Besseres Terminal-Erlebnis
-- **Virtuelle Tastatur**: Terminal-Shortcuts
+- **Pull-to-Refresh**: Serverstatus aktualisieren
+- **Querformat**: Bessere Terminal-Erfahrung
+- **Virtuelle Tastatur**: Terminal-Kurzbefehle
 
-## Datei-Integration
+## Dateiintegration
 
-- **Dateien-App (iOS)**: Direkter SFTP-Zugriff aus Dateien
-- **Storage Access Framework (Android)**: Dateien mit anderen Apps teilen
-- **Dokumentenauswahl**: Einfache Dateiauswahl
+- **Dokumentauswahl**: Lokale Dateien für SFTP-Upload und Backup-Import/-Export auswählen
+- **Teilen**: Dateien an andere Apps exportieren

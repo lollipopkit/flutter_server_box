@@ -1,0 +1,27 @@
+{
+  "name": "@serverbox/webui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared Svelte UI primitives and design tokens for ServerBox web frontends",
+  "svelte": "./src/index.ts",
+  "exports": {
+    ".": {
+      "svelte": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./theme.css": "./src/theme.css"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.5.0",
+    "tailwind-variants": "^3.2.2"
+  },
+  "devDependencies": {
+    "svelte": "^5.56.0",
+    "typescript": "^5.9.0"
+  }
+}

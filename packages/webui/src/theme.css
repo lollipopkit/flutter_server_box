@@ -1,0 +1,82 @@
+/* ServerBox shared design tokens.
+   Source of truth for both website/ and monitor/frontend; the visual language
+   follows the website: neutral palette, pill buttons, 12px containers,
+   Plus Jakarta Sans with system fallbacks (apps load the webfont themselves).
+
+   Dark mode: follows the system by default; an explicit `.dark` / `.light`
+   class on <html> overrides the preference (panel theme toggle). */
+
+:root {
+  color-scheme: light;
+
+  --sb-black: #000000;
+  --sb-near-black: #262626;
+  --sb-stone: #737373;
+  --sb-silver: #a3a3a3;
+  --sb-border: #d4d4d4;
+  --sb-light-gray: #e5e5e5;
+  --sb-snow: #fafafa;
+  --sb-white: #ffffff;
+  --sb-ring: rgba(59, 130, 246, 0.5);
+
+  --sb-radius-container: 12px;
+
+  --sb-font-display: 'Plus Jakarta Sans', 'SF Pro Rounded', system-ui, -apple-system, sans-serif;
+  --sb-font-body: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --sb-font-mono: ui-monospace, 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --sb-black: #f5f5f5;
+  --sb-near-black: #e5e5e5;
+  --sb-stone: #a3a3a3;
+  --sb-silver: #d4d4d4;
+  --sb-border: #404040;
+  --sb-light-gray: #262626;
+  --sb-snow: #0f0f0f;
+  --sb-white: #171717;
+  --sb-ring: rgba(147, 197, 253, 0.55);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    color-scheme: dark;
+
+    --sb-black: #f5f5f5;
+    --sb-near-black: #e5e5e5;
+    --sb-stone: #a3a3a3;
+    --sb-silver: #d4d4d4;
+    --sb-border: #404040;
+    --sb-light-gray: #262626;
+    --sb-snow: #0f0f0f;
+    --sb-white: #171717;
+    --sb-ring: rgba(147, 197, 253, 0.55);
+  }
+}
+
+/* Semantic utility names (bg-surface, text-fg, border-line, ...): components
+   never reference raw grays, so dark mode needs no `dark:` variants */
+@theme inline {
+  --color-bg: var(--sb-snow);
+  --color-surface: var(--sb-white);
+  --color-fg: var(--sb-near-black);
+  --color-fg-strong: var(--sb-black);
+  --color-muted-fg: var(--sb-stone);
+  --color-faint-fg: var(--sb-silver);
+  --color-line: var(--sb-border);
+  --color-soft: var(--sb-light-gray);
+  --color-ring: var(--sb-ring);
+
+  --color-accent: #3b82f6;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+
+  --radius-container: var(--sb-radius-container);
+
+  --font-display: var(--sb-font-display);
+  --font-body: var(--sb-font-body);
+  --font-mono: var(--sb-font-mono);
+}

@@ -9,16 +9,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/route.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/net_view.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/try_limiter.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
@@ -26,12 +26,15 @@ import 'package:server_box/view/page/server/connection_stats.dart';
 import 'package:server_box/view/page/server/detail/view.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
 import 'package:server_box/view/page/setting/entry.dart';
+import 'package:server_box/view/widget/pane_settings.dart';
 import 'package:server_box/view/widget/percent_circle.dart';
-import 'package:server_box/view/widget/server_func_btns.dart';
+import 'package:server_box/view/widget/server_power.dart';
 
 part 'card_stat.dart';
 part 'content.dart';
+part 'flight.dart';
 part 'landscape.dart';
+part 'pane_list.dart';
 part 'top_bar.dart';
 part 'utils.dart';
 
@@ -47,8 +50,14 @@ class ServerPage extends ConsumerStatefulWidget {
 const _cardPad = 74.0;
 const _cardPadSingle = 13.0;
 
+/// Long enough to read as one movement, short enough not to be waited on.
+const _kFlightDuration = Durations.medium3;
+
 class _ServerPageState extends ConsumerState<ServerPage>
-    with AutomaticKeepAliveClientMixin, AfterLayoutMixin {
+    with
+        AutomaticKeepAliveClientMixin,
+        AfterLayoutMixin,
+        TickerProviderStateMixin {
   late double _textFactorDouble;
   final ValueNotifier<double> _offsetNotifier = ValueNotifier(1);
   late TextScaler _textFactor;
@@ -63,8 +72,45 @@ class _ServerPageState extends ConsumerState<ServerPage>
   final _scrollController = ScrollController();
   final _autoHideCtrl = AutoHideController();
 
+  /// The server whose card is in the air, or null. Its row in the list is
+  /// built hidden and carries [_flightAnchorKey], so the flight has somewhere
+  /// to measure and somewhere to land without a second copy showing early.
+  final _flyingId = ValueNotifier<String?>(null);
+
+  /// The row or card at the far end of a flight.
+  ///
+  /// One key for both ends, because the two can never be on screen together:
+  /// the compact row only exists while the pane is open, the grid card only
+  /// while it is closed, and a flight is what happens in between. Going out it
+  /// marks the row being flown to; coming back, the card.
+  final _flightAnchorKey = GlobalKey();
+  OverlayFlight? _flight;
+
+  /// Deselecting is the whole of "close the pane": the detail is built from
+  /// the selection, so dropping it collapses the layout back to the
+  /// full-width grid the app starts on.
+  ///
+  /// A method rather than a closure written at the call site: tearing off the
+  /// same instance method twice yields equal values, while a fresh closure per
+  /// build would make `PaneScope` notify its dependents on every rebuild.
+  void _closeDetail() {
+    // A card still on its way to a list that is about to become a grid again
+    // would land on nothing.
+    _endFlight();
+    _flyingId.value = null;
+
+    final id = ref.read(serverSelectionProvider);
+    final srv = id == null ? null : ref.read(serverProvider(id));
+    ref.read(serverSelectionProvider.notifier).select(null);
+    if (srv != null) _flyRowIntoGrid(srv);
+  }
+
   @override
   void dispose() {
+    // Before the tickers this state vends go with it: an entry left in the
+    // overlay outlives the page that put it there.
+    _endFlight();
+    _flyingId.dispose();
     _timer?.cancel();
     _scrollController.dispose();
     _autoHideCtrl.dispose();
@@ -142,11 +188,43 @@ class _ServerPageState extends ConsumerState<ServerPage>
     // when individual server tags change without affecting the global tag set
     final serverOrder = ref.watch(serversProvider.select((s) => s.serverOrder));
     ref.watch(serversProvider.select((s) => s.tags));
-    ref.watch(serversProvider.select((s) => s.servers));
-    return _tag.listenVal((val) {
-      final filtered = _filterServers(serverOrder);
-      final child = _buildScaffold(_buildBodySmall(filtered: filtered));
-      return child;
+    final servers = ref.watch(serversProvider.select((s) => s.servers));
+    final selected = ref.watch(serverSelectionProvider);
+    final selectedSpi = selected == null ? null : servers[selected];
+
+    // Both settings listened to, not read. They are changed elsewhere — the
+    // switch on the settings page, the width by dragging the divider on the
+    // terminal or files tab — and this page is kept alive behind those, so a
+    // value read when it was last on screen is not the value now. Read that
+    // way the switch took effect whenever something unrelated happened to
+    // rebuild, and this column stayed at whatever width it opened with while
+    // the others moved.
+    return PaneSettings.listen((paneWidth) {
+      return _tag.listenVal((val) {
+        final filtered = _filterServers(serverOrder);
+        return AdaptivePanes(
+          primaryWidth: paneWidth,
+          onPrimaryWidthChanged: PaneSettings.saveWidth,
+          detailId: selectedSpi?.id,
+          onCloseDetail: _closeDetail,
+          // Null until something is opened, so a fresh launch gets the whole
+          // width for browsing rather than a column reserved for nothing.
+          detailBuilder: selectedSpi == null
+              ? null
+              : (_) => ServerDetailPage(args: SpiRequiredArgs(selectedSpi)),
+          // Wrapped here rather than around the whole page because this is
+          // where `split` is known — it is the layout's own answer, and the
+          // `PaneScope` that carries it is installed below this state's
+          // context, where an inherited lookup from here cannot reach.
+          primaryBuilder: (_, split) => _ServerOpenRequest(
+            split: split,
+            onOpen: _openRequestedServer,
+            child: split
+                ? _buildPaneList(filtered)
+                : _buildScaffold(_buildBodySmall(filtered: filtered)),
+          ),
+        );
+      });
     });
   }
 
@@ -155,67 +233,59 @@ class _ServerPageState extends ConsumerState<ServerPage>
       return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
     }
 
-    return LayoutBuilder(
-      builder: (_, cons) {
-        // Calculate number of columns based on available width
-        final columnsCount = math.max(
-          1,
-          (cons.maxWidth / UIs.columnWidth).floor(),
-        );
-        final padding = columnsCount > 1
-            ? const EdgeInsets.fromLTRB(0, 0, 5, 7)
-            : const EdgeInsets.fromLTRB(7, 0, 7, 7);
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: List.generate(columnsCount, (colIndex) {
-            // Calculate which servers belong in this column
-            final serversInThisColumn = <String>[];
-            for (int i = colIndex; i < filtered.length; i += columnsCount) {
-              serversInThisColumn.add(filtered[i]);
-            }
-            final lens = serversInThisColumn.length;
-
-            return Expanded(
-              child: ListView.builder(
-                controller: colIndex == 0 ? _scrollController : null,
-                padding: padding,
-                itemCount: lens + 1, // Add 1 for bottom spacing
-                itemBuilder: (context, index) {
-                  // Last item is just spacing
-                  if (index == lens) return SizedBox(height: 77);
-
-                  final individualState = ref.watch(
-                    serverProvider(serversInThisColumn[index]),
-                  );
-
-                  return _buildEachServerCard(individualState);
-                },
-              ),
-            );
-          }),
-        );
-      },
+    // Cards are as tall as what they have to say — a server that has not
+    // connected is one line, one that has is several charts. Splitting them
+    // round-robin into a `ListView` per column left a short column beside a
+    // long one and gave each its own scroll position; they flow into whichever
+    // column is shortest now, in one scrollable.
+    return MasonryList.builder(
+      controller: _scrollController,
+      // Room at the bottom for the add button to float over.
+      padding: MasonryList.kPadding.copyWith(bottom: 77),
+      itemCount: filtered.length,
+      // Built as they come into view, so a page of servers watches the ones it
+      // is showing rather than all of them.
+      itemBuilder: (_, i) =>
+          _buildEachServerCard(ref.watch(serverProvider(filtered[i]))),
     );
   }
 
   Widget _buildEachServerCard(ServerState srv) {
-    return CardX(
+    final card = CardX(
       key: Key(srv.spi.id + _tag.value),
-      child: InkWell(
-        onTap: () => _onTapCard(srv),
-        onLongPress: () => _onLongPressCard(srv),
-        child: Padding(
-          padding: const EdgeInsets.only(
-            left: _cardPadSingle,
-            right: 3,
-            top: _cardPadSingle,
-            bottom: _cardPadSingle,
+      // A context from inside the built tree, so the tap can ask whether a
+      // detail pane is on screen. The state's own context is an ancestor of
+      // the layout that installs the scope, and the lookup only goes up.
+      child: Builder(
+        builder: (context) => InkWell(
+          onTap: () => _onTapCard(context, srv),
+          onLongPress: () => _onLongPressCard(srv),
+          child: Padding(
+            padding: const EdgeInsets.only(
+              left: _cardPadSingle,
+              right: 3,
+              top: _cardPadSingle,
+              bottom: _cardPadSingle,
+            ),
+            child: _buildRealServerCard(srv),
           ),
-          child: _buildRealServerCard(srv),
-        ),
+        ).onSecondary(asSecondary(() => _onLongPressCard(srv))),
       ),
     );
+
+    return _flyingId.listenVal((flyingId) {
+      if (flyingId != srv.spi.id) return card;
+      // Where a card flying back is going. Laid out so it can be measured,
+      // unpainted so the copy in the air is the only one visible.
+      return Visibility(
+        key: _flightAnchorKey,
+        visible: false,
+        maintainSize: true,
+        maintainAnimation: true,
+        maintainState: true,
+        child: card,
+      );
+    });
   }
 
   /// The child's width mat not equal to 1/4 of the screen width,
@@ -274,24 +344,13 @@ class _ServerPageState extends ConsumerState<ServerPage>
     const color = Colors.grey;
     const textStyle = TextStyle(fontSize: 13, color: color);
     final children = [
-      Btn.column(
-        onTap: () => _onTapSuspend(srv),
-        icon: const Icon(Icons.stop, color: color),
-        text: libL10n.suspend,
-        textStyle: textStyle,
-      ),
-      Btn.column(
-        onTap: () => _onTapShutdown(srv),
-        icon: const Icon(Icons.power_off, color: color),
-        text: libL10n.shutdown,
-        textStyle: textStyle,
-      ),
-      Btn.column(
-        onTap: () => _onTapReboot(srv),
-        icon: const Icon(Icons.restart_alt, color: color),
-        text: libL10n.reboot,
-        textStyle: textStyle,
-      ),
+      for (final func in ServerPower.funcs)
+        Btn.column(
+          onTap: () => ServerPower.confirmAndRun(context, ref, srv.spi, func),
+          icon: Icon(ServerPower.icon(func), color: color),
+          text: ServerPower.label(func),
+          textStyle: textStyle,
+        ),
       Btn.column(
         onTap: () => ServerEditPage.route.go(context, args: SpiRequiredArgs(srv.spi)),
         icon: const Icon(Icons.edit, color: color),
@@ -329,7 +388,9 @@ class _ServerPageState extends ConsumerState<ServerPage>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _wrapWithSizedbox(
-                  PercentCircle(percent: ss.cpu.usedPercent()),
+                  // 0 until the second sample lands: the tab list needs a
+                  // fixed-size circle, and an empty ring reads the same as idle
+                  PercentCircle(percent: ss.cpu.usedPercent() ?? 0),
                   maxWidth,
                   true,
                 ),
@@ -343,8 +404,6 @@ class _ServerPageState extends ConsumerState<ServerPage>
               ],
             ),
             UIs.height13,
-            if (Stores.setting.moveServerFuncs.fetch())
-              SizedBox(height: 27, child: ServerFuncBtns(spi: spi)),
           ],
         );
       },
@@ -363,5 +422,4 @@ class _ServerPageState extends ConsumerState<ServerPage>
   static const _kCardHeightMin = 23.0;
   static const _kCardHeightFlip = 99.0;
   static const _kCardHeightNormal = 110.0;
-  static const _kCardHeightMoveOutFuncs = 135.0;
 }

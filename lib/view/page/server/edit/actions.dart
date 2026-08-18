@@ -3,6 +3,31 @@ part of 'edit.dart';
 /// Only permit ipv4 / ipv6 / domain chars (including IPv6 zone identifier like %en0)
 final _hostReg = RegExp(r'^[a-zA-Z0-9\.\-_:%;]+$');
 
+extension _Discovery on _ServerEditPageState {
+  /// Sweeps the network and fills this form in from what is picked.
+  ///
+  /// Only the fields the sweep actually knows: an address and a port. It
+  /// cannot know an account, a key or what you call the machine, so it does
+  /// not guess at them — except the name, and only while that field is still
+  /// empty, where the address is a better starting point than nothing and is
+  /// what someone would have typed anyway.
+  Future<void> _onTapDiscover() async {
+    final SshDiscoveryResult? found;
+    try {
+      found = await SshDiscoveryDialog.show(context);
+    } catch (e, s) {
+      if (!mounted) return;
+      context.showErrDialog(e, s);
+      return;
+    }
+    if (!mounted || found == null) return;
+
+    _ipController.text = found.ip;
+    _portController.text = '${found.port}';
+    if (_nameController.text.isEmpty) _nameController.text = found.ip;
+  }
+}
+
 extension _Actions on _ServerEditPageState {
   Iterable<ShellCmdType> get _diskInfoCmdTypes => const [
     StatusCmdType.disk,
@@ -12,6 +37,7 @@ extension _Actions on _ServerEditPageState {
 
   Iterable<ShellCmdType> get _diskHealthCmdTypes => const [
     StatusCmdType.diskSmart,
+    BSDStatusCmdType.diskSmart,
     WindowsStatusCmdType.diskSmart,
   ];
 
@@ -37,12 +63,15 @@ extension _Actions on _ServerEditPageState {
 
   Future<void> _onTapSudoPassword() async {
     final controller = TextEditingController();
-    try {
-      controller.text = _pendingSudoPassword ?? '';
-      if (!mounted) return;
+    controller.text = _pendingSudoPassword ?? '';
+    if (!mounted) return;
 
-      await context.showRoundDialog(
-        title: libL10n.sudoPwdTitle(libL10n.pwd),
+    // Disposed by the tree, not after this `await`: the dialog's future
+    // completes on the pop, while the field is still mounted and animating.
+    await context.showRoundDialog(
+      title: libL10n.sudoPwdTitle(libL10n.pwd),
+      child: DisposeWith(
+        notifiers: [controller],
         child: Input(
           controller: controller,
           type: TextInputType.visiblePassword,
@@ -52,36 +81,38 @@ extension _Actions on _ServerEditPageState {
           suggestion: false,
           onSubmitted: (_) async => await _saveSudoPassword(controller.text),
         ),
-        actions: [
-          if (_hasStoredSudoPassword.value == true)
-            TextButton(
-              onPressed: () async {
-                await _setPendingSudoPassword(null);
-                if (!mounted) return;
-                context.pop();
-              },
-              child: Text(libL10n.clear),
-            ),
-          TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
+      ),
+      actions: [
+        if (_hasStoredSudoPassword.value == true)
           TextButton(
-            onPressed: () async => await _saveSudoPassword(controller.text),
-            child: Text(libL10n.save),
+            onPressed: () async {
+              await _setPendingSudoPassword(null);
+              if (!mounted) return;
+              context.popDialog();
+            },
+            child: Text(libL10n.clear),
           ),
-        ],
-      );
-    } finally {
-      controller.dispose();
-    }
+        TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
+        TextButton(
+          onPressed: () async => await _saveSudoPassword(controller.text),
+          child: Text(libL10n.save),
+        ),
+      ],
+    );
   }
 
   Future<void> _saveSudoPassword(String value) async {
     if (value.isEmpty) {
-      context.showSnackBar(libL10n.empty);
+      Toast.show(libL10n.empty);
       return;
     }
     await _setPendingSudoPassword(value);
     if (!mounted) return;
-    context.pop();
+    // `popDialog`, not `pop`. This runs from the dialog's Save button but
+    // `context` is the *page's*, and `showRoundDialog` puts the dialog on the
+    // root navigator — so in a pane those are two navigators and `pop` closed
+    // the edit page while leaving the dialog on screen.
+    context.popDialog();
   }
 
   Future<bool> _persistPendingSudoPassword() async {
@@ -99,7 +130,7 @@ extension _Actions on _ServerEditPageState {
     } catch (e, s) {
       Loggers.app.warning('Failed to persist sudo password override', e, s);
       if (mounted) {
-        context.showSnackBar(libL10n.saveFailed);
+        Toast.error(libL10n.saveFailed);
       }
       return false;
     }
@@ -165,13 +196,17 @@ extension _Actions on _ServerEditPageState {
     );
   }
 
+  /// Opens the editor, which reads and writes the server's own directory.
+  ///
+  /// Needs a server that exists and can be reached: there is nowhere to put a
+  /// command for a server that has not been saved yet.
   void _onTapCustomItem() async {
-    final res = await KvEditor.route.go(
-      context,
-      KvEditorArgs(data: _customCmds.value),
-    );
-    if (res == null) return;
-    _customCmds.value = res;
+    final spi = this.spi;
+    if (spi == null) {
+      Toast.show('${libL10n.save} ${libL10n.server}');
+      return;
+    }
+    await CustomCmdsPage.route.go(context, SpiRequiredArgs(spi));
   }
 
   void _onTapDisabledCmdTypes() async {
@@ -184,46 +219,52 @@ extension _Actions on _ServerEditPageState {
   }
 
   void _onSave() async {
-    if (_ipController.text.isEmpty) {
-      context.showSnackBar('${libL10n.empty} ${libL10n.host}');
-      return;
-    }
+    final useMonitorHttp = _useMonitorHttp.value;
 
-    if (!_hostReg.hasMatch(_ipController.text)) {
-      context.showSnackBar(l10n.invalidHostFormat);
-      return;
-    }
+    // SSH host/auth/jump-chain fields are hidden (and irrelevant) in
+    // monitor-HTTP mode — skip their validation/defaulting entirely.
+    if (!useMonitorHttp) {
+      if (_ipController.text.isEmpty) {
+        Toast.show('${libL10n.empty} ${libL10n.host}');
+        return;
+      }
 
-    if (_keyIdx.value == null && _passwordController.text.isEmpty) {
-      final ok = await context.showRoundDialog<bool>(
-        title: libL10n.attention,
-        child: Text(libL10n.askContinue(l10n.useNoPwd)),
-        actions: Btnx.cancelRedOk,
-      );
-      if (ok != true) return;
-    }
+      if (!_hostReg.hasMatch(_ipController.text)) {
+        Toast.show(l10n.invalidHostFormat);
+        return;
+      }
 
-    // If [_pubKeyIndex] is -1, it means that the user has not selected
-    if (_keyIdx.value == -1) {
-      context.showSnackBar(libL10n.empty);
-      return;
-    }
-    if (_usernameController.text.isEmpty) {
-      _usernameController.text = 'root';
-    }
-    if (_portController.text.isEmpty) {
-      _portController.text = '22';
-    }
-    if (_areInvalidJumpSelections(_jumpServers.value)) {
-      context.showSnackBar('${l10n.invalid}: ${l10n.jumpServer}');
-      return;
+      if (_keyIdx.value == null && _passwordController.text.isEmpty) {
+        final ok = await context.showRoundDialog<bool>(
+          title: libL10n.attention,
+          child: Text(libL10n.askContinue(l10n.useNoPwd)),
+          actions: Btnx.cancelRedOk,
+        );
+        if (ok != true) return;
+      }
+
+      // If [_pubKeyIndex] is -1, it means that the user has not selected
+      if (_keyIdx.value == -1) {
+        Toast.show(libL10n.empty);
+        return;
+      }
+      if (_usernameController.text.isEmpty) {
+        _usernameController.text = 'root';
+      }
+      if (_portController.text.isEmpty) {
+        _portController.text = '22';
+      }
+      if (_areInvalidJumpSelections(_jumpServers.value)) {
+        Toast.show('${libL10n.invalid}: ${l10n.jumpServer}');
+        return;
+      }
     }
     final proxyCommandText = _proxyCommandCtrl.text.trim();
-    if (!isDesktop && proxyCommandText.isNotEmpty) {
-      context.showSnackBar(l10n.proxyCommandOnlySupportedOnDesktop);
+    if (!useMonitorHttp && !isDesktop && proxyCommandText.isNotEmpty) {
+      Toast.show(l10n.proxyCommandOnlySupportedOnDesktop);
       return;
     }
-    final customCmds = _customCmds.value;
+    final customCmds = _unmigratedCmds.value;
     final custom = ServerCustom(
       pveAddr: _pveAddrCtrl.text.selfNotEmptyOrNull,
       pveIgnoreCert: _pveIgnoreCert.value,
@@ -235,6 +276,51 @@ extension _Actions on _ServerEditPageState {
       netDev: _netDevCtrl.text.selfNotEmptyOrNull,
       scriptDir: _scriptDirCtrl.text.selfNotEmptyOrNull,
     );
+
+    MonitorHttpCredential? monitorHttp;
+    if (useMonitorHttp) {
+      final monitorAddr = _monitorAddrCtrl.text.selfNotEmptyOrNull;
+      if (monitorAddr == null) {
+        Toast.show('${libL10n.invalid}: Monitor URL');
+        return;
+      }
+      monitorHttp = MonitorHttpCredential(
+        addr: monitorAddr,
+        user: _monitorUserCtrl.text.selfNotEmptyOrNull,
+        pwd: _monitorPwdCtrl.text.selfNotEmptyOrNull,
+        ignoreCert: _monitorIgnoreCert.value,
+      );
+    }
+
+    // In monitor mode the SSH form is hidden, so there is normally nothing to
+    // record — previously these were required, which is why a monitor-only
+    // server used to be saved with a host derived from the monitor URL and a
+    // user literally named `monitor`. The exception is the SSH-via-monitor
+    // tunnel, which needs credentials but no address: the agent connects to
+    // its own configured target and takes none from us.
+    // A monitor server carries no SSH credential at all: it is reached through
+    // its agent, and nothing here would have anywhere to go.
+    final ssh = useMonitorHttp
+        ? null
+        : SshCredential(
+            ip: _ipController.text,
+            port: int.tryParse(_portController.text) ?? 22,
+            user: _usernameController.text,
+            pwd: _passwordController.text.selfNotEmptyOrNull,
+            keyId: _keyIdx.value != null
+                ? ref
+                      .read(privateKeyProvider)
+                      .keys
+                      .elementAt(_keyIdx.value!)
+                      .id
+                : null,
+            alterUrl: _altUrlController.text.selfNotEmptyOrNull,
+            jumpId: _jumpServers.value.isEmpty
+                ? null
+                : _jumpServers.value.first,
+            jumpIds: _jumpServers.value.isEmpty ? null : _jumpServers.value,
+            proxyCommand: proxyCommandText.selfNotEmptyOrNull,
+          );
 
     final wolEmpty =
         _wolMacCtrl.text.isEmpty &&
@@ -250,30 +336,21 @@ extension _Actions on _ServerEditPageState {
     if (wol != null) {
       final wolValidation = wol.validate();
       if (!wolValidation.$2) {
-        context.showSnackBar('${libL10n.fail}: ${wolValidation.$1}');
+        Toast.error(libL10n.fail, body: wolValidation.$1?.toString());
         return;
       }
     }
 
     final spi = Spi(
       name: _nameController.text.isEmpty
-          ? _ipController.text
+          ? (ssh?.ip ?? monitorHttp?.addr ?? '')
           : _nameController.text,
-      ip: _ipController.text,
-      port: int.parse(_portController.text),
-      user: _usernameController.text,
-      pwd: _passwordController.text.selfNotEmptyOrNull,
-      keyId: _keyIdx.value != null
-          ? ref.read(privateKeyProvider).keys.elementAt(_keyIdx.value!).id
-          : null,
+      ssh: ssh,
       tags: _tags.value.isEmpty ? null : _tags.value.toList(),
-      alterUrl: _altUrlController.text.selfNotEmptyOrNull,
       autoConnect: _autoConnect.value,
-      jumpId: _jumpServers.value.isEmpty ? null : _jumpServers.value.first,
-      jumpIds: _jumpServers.value.isEmpty ? null : _jumpServers.value,
-      proxyCommand: proxyCommandText.selfNotEmptyOrNull,
       custom: custom,
       wolCfg: wol,
+      monitorHttp: monitorHttp,
       envs: _env.value.isEmpty ? null : _env.value,
       id: _serverId,
       customSystemType: _systemType.value,
@@ -283,14 +360,14 @@ extension _Actions on _ServerEditPageState {
     );
     final validationError = spi.validate();
     if (validationError != null) {
-      context.showSnackBar(_validationErrorMessage(validationError));
+      Toast.error(_validationErrorMessage(validationError));
       return;
     }
 
     if (this.spi == null) {
       final existsIds = ServerStore.instance.box.keys;
       if (existsIds.contains(spi.id)) {
-        context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
+        Toast.show('${l10n.sameIdServerExist}: ${spi.id}');
         return;
       }
       if (!await _persistPendingSudoPassword()) return;
@@ -356,14 +433,14 @@ extension _Utils on _ServerEditPageState {
       if (e is PathAccessException ||
           e.toString().contains('Operation not permitted')) {
         _markSSHConfigImportHandled();
-        context.showSnackBar(
+        Toast.show(
           '${l10n.sshConfigPermissionDenied} ${l10n.sshConfigManualSelect}',
         );
       } else {
         dprint('Error checking SSH config: $e');
         _markSSHConfigImportHandled();
         if (e is SpiValidationException) {
-          context.showSnackBar(_validationErrorMessage(e.error));
+          Toast.error(_validationErrorMessage(e.error));
         }
       }
     }
@@ -410,34 +487,47 @@ extension _Utils on _ServerEditPageState {
 
   void _initWithSpi(Spi spi) {
     _nameController.text = spi.name;
-    _ipController.text = spi.ip;
-    _portController.text = spi.port.toString();
-    _usernameController.text = spi.user;
-    _passwordController.text = spi.pwd ?? '';
-    if (spi.keyId != null) {
-      _keyIdx.value = ref
-          .read(privateKeyProvider)
-          .keys
-          .indexWhere((e) => e.id == spi.keyId);
+
+    final ssh = spi.ssh;
+    if (ssh != null) {
+      _ipController.text = ssh.ip;
+      _portController.text = ssh.port.toString();
+      _usernameController.text = ssh.user;
+      _passwordController.text = ssh.pwd ?? '';
+      if (ssh.keyId != null) {
+        _keyIdx.value = ref
+            .read(privateKeyProvider)
+            .keys
+            .indexWhere((e) => e.id == ssh.keyId);
+      }
+      _altUrlController.text = ssh.alterUrl ?? '';
+      _jumpServers.value = ssh.resolvedJumpIds;
+      _proxyCommandCtrl.text = ssh.proxyCommand ?? '';
     }
 
     /// List in dart is passed by pointer, so you need to copy it here
     _tags.value = spi.tags?.toSet() ?? {};
 
-    _altUrlController.text = spi.alterUrl ?? '';
     _autoConnect.value = spi.autoConnect;
-    _jumpServers.value = spi.resolvedJumpIds;
-    _proxyCommandCtrl.text = spi.proxyCommand ?? '';
 
     final custom = spi.custom;
     if (custom != null) {
       _pveAddrCtrl.text = custom.pveAddr ?? '';
       _pveIgnoreCert.value = custom.pveIgnoreCert;
       _pvePwdCtrl.text = custom.pvePwd ?? '';
-      _customCmds.value = custom.cmds ?? {};
+      _unmigratedCmds.value = custom.cmds ?? {};
       _preferTempDevCtrl.text = custom.preferTempDev ?? '';
       _tempIsCelsius.value = custom.tempIsCelsius;
       _logoUrlCtrl.text = custom.logoUrl ?? '';
+    }
+
+    final monitorHttp = spi.monitorHttp;
+    _useMonitorHttp.value = monitorHttp != null;
+    if (monitorHttp != null) {
+      _monitorAddrCtrl.text = monitorHttp.addr;
+      _monitorUserCtrl.text = monitorHttp.user ?? '';
+      _monitorPwdCtrl.text = monitorHttp.pwd ?? '';
+      _monitorIgnoreCert.value = monitorHttp.ignoreCert;
     }
 
     final wol = spi.wolCfg;

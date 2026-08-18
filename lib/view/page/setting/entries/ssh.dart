@@ -3,7 +3,7 @@ part of '../entry.dart';
 extension _SSH on _AppSettingsPageState {
   void _refreshApp({bool closeDialog = false}) {
     if (closeDialog && mounted) {
-      context.pop();
+      context.popDialog();
     }
     RNodes.app.notify();
   }
@@ -14,7 +14,6 @@ extension _SSH on _AppSettingsPageState {
         if (isDesktop) _buildSSHConfigImport(),
         if (isDesktop) _buildSshConnectionMode(),
         if (isMobile) _buildQrScan(),
-        _buildSSHDiscovery(),
         _buildLetterCache(),
         _buildSSHWakeLock(),
         _buildTermTheme(),
@@ -26,7 +25,21 @@ extension _SSH on _AppSettingsPageState {
         _buildSSHVirtualKeyAutoOff(),
         if (isMobile) _buildSSHVirtKeys(),
         _buildTmuxAuto(),
+        _buildKnownHosts(),
       ].map((e) => CardX(child: e)).toList(),
+    );
+  }
+
+  /// Where a trusted host key can be taken back.
+  ///
+  /// Beside the other SSH entries rather than under security: what it manages
+  /// is per server, and this is where a server's SSH settings already are.
+  Widget _buildKnownHosts() {
+    return ListTile(
+      leading: const Icon(Icons.vpn_key_outlined),
+      title: Text(l10n.sshKnownHostKeys),
+      trailing: const Icon(Icons.keyboard_arrow_right),
+      onTap: () => KnownHostsPage.route.go(context),
     );
   }
 
@@ -61,90 +74,15 @@ extension _SSH on _AppSettingsPageState {
       final spi = Spi.fromJson(json.decode(code));
       final existingIds = ref.read(serversProvider).servers.keys;
       if (existingIds.contains(spi.id)) {
-        context.showSnackBar('${l10n.sameIdServerExist}: ${spi.id}');
+        Toast.show('${l10n.sameIdServerExist}: ${spi.id}');
         return;
       }
       final resolvedList = ServerDeduplication.resolveNameConflicts([spi]);
       final resolvedSpi = resolvedList.first;
       ref.read(serversProvider.notifier).addServer(resolvedSpi);
-      context.showSnackBar(libL10n.success);
+      Toast.success(libL10n.success);
     } catch (e, s) {
       context.showErrDialog(e, s);
-    }
-  }
-
-  Widget _buildSSHDiscovery() {
-    return ListTile(
-      leading: const Icon(BoxIcons.bx_search),
-      title: Text(l10n.discoverSshServers),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: _onTapSSHDiscovery,
-    );
-  }
-
-  Future<void> _onTapSSHDiscovery() async {
-    try {
-      final result = await SshDiscoveryPage.route.go(context);
-      if (!mounted) return;
-
-      if (result != null && result.isNotEmpty) {
-        await _processDiscoveredServers(result);
-      }
-    } catch (e, s) {
-      if (!mounted) return;
-      context.showErrDialog(e, s);
-    }
-  }
-
-  Future<void> _processDiscoveredServers(
-    List<SshDiscoveryResult> discoveredServers,
-  ) async {
-    final defaultUsername = 'root';
-    final usernameController = TextEditingController(text: defaultUsername);
-
-    try {
-      final shouldImport = await context.showRoundDialog<bool>(
-        title: libL10n.import,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.sshConfigFoundServers('${discoveredServers.length}')),
-            const SizedBox(height: 8),
-            Input(controller: usernameController, label: libL10n.user),
-          ],
-        ),
-        actions: Btnx.cancelOk,
-      );
-
-      if (!mounted) return;
-
-      if (shouldImport == true) {
-        final username = usernameController.text.isNotEmpty
-            ? usernameController.text
-            : defaultUsername;
-        final servers = discoveredServers
-            .map(
-              (result) => Spi(
-                id: ShortId.generate(),
-                name: result.ip,
-                ip: result.ip,
-                port: result.port,
-                user: username,
-              ),
-            )
-            .toList();
-
-        await ServerDeduplication.importServersWithNotification(
-          servers: servers,
-          ref: ref,
-          context: context,
-          allExistMessage: l10n.sshConfigAllExist,
-          importedMessage: (count) =>
-              '${libL10n.success}: $count ${libL10n.servers}',
-        );
-      }
-    } finally {
-      usernameController.dispose();
     }
   }
 
@@ -153,7 +91,7 @@ extension _SSH on _AppSettingsPageState {
       final servers = await SSHConfig.parseConfig();
       if (!mounted) return;
       if (servers.isEmpty) {
-        context.showSnackBar(l10n.sshConfigNoServers);
+        Toast.show(l10n.sshConfigNoServers);
         return;
       }
 
@@ -178,7 +116,7 @@ extension _SSH on _AppSettingsPageState {
 
     if (!summary.hasItemsToImport) {
       if (!mounted) return;
-      context.showSnackBar(l10n.sshConfigAllExist('${summary.duplicates}'));
+      Toast.show(l10n.sshConfigAllExist('${summary.duplicates}'));
       return;
     }
 
@@ -198,7 +136,7 @@ extension _SSH on _AppSettingsPageState {
             Text(l10n.sshConfigServersToImport('${summary.toImport}')),
             const SizedBox(height: 16),
             ...resolved.map(
-              (s) => Text('• ${s.name} (${s.user}@${s.ip}:${s.port})'),
+              (s) => Text('• ${s.name} (${s.displayAddr})'),
             ),
           ],
         ),
@@ -254,19 +192,18 @@ extension _SSH on _AppSettingsPageState {
 
   Future<void> _onTapSSHImportWithFilePicker() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final picked = await FilePicker.pickFile(
         type: FileType.any,
-        allowMultiple: false,
         dialogTitle: l10n.sshConfigImport,
       );
 
       if (!mounted) return;
 
-      if (result?.files.single.path case final path?) {
+      if (picked?.path case final path?) {
         final servers = await SSHConfig.parseConfig(path);
         if (!mounted) return;
         if (servers.isEmpty) {
-          context.showSnackBar(l10n.sshConfigNoServers);
+          Toast.show(l10n.sshConfigNoServers);
           return;
         }
 
@@ -360,7 +297,7 @@ extension _SSH on _AppSettingsPageState {
   Widget _buildTermFontSize() {
     return ListTile(
       leading: const Icon(MingCute.font_size_line),
-      title: TipText(l10n.fontSize, l10n.termFontSizeTip),
+      title: TipText(libL10n.fontSize, l10n.termFontSizeTip),
       trailing: ValBuilder(
         listenable: _setting.termFontSize.listenable(),
         builder: (val) => Text(val.toString(), style: UIs.text15),
@@ -403,7 +340,7 @@ extension _SSH on _AppSettingsPageState {
             ctrl.text = val;
             void onSave() {
               _setting.desktopTerminal.put(ctrl.text.trim());
-              context.pop();
+              context.popDialog();
             }
 
             await context.showRoundDialog<bool>(
@@ -547,11 +484,11 @@ extension _SSH on _AppSettingsPageState {
     void onSave(String s) {
       final val = double.tryParse(s);
       if (val == null) {
-        context.showSnackBar(libL10n.fail);
+        Toast.error(libL10n.fail);
         return;
       }
       _setting.sshBgOpacity.put(val.clamp(0.0, 1.0));
-      context.pop();
+      context.popDialog();
     }
 
     return ListTile(
@@ -581,14 +518,14 @@ extension _SSH on _AppSettingsPageState {
     void onSave(String s) {
       final val = double.tryParse(s);
       if (val == null) {
-        context.showSnackBar(libL10n.fail);
+        Toast.error(libL10n.fail);
         return;
       }
       const minRadius = 0.0;
       const maxBlur = 50.0;
       final clampedVal = val.clamp(minRadius, maxBlur);
       _setting.sshBlurRadius.put(clampedVal);
-      context.pop();
+      context.popDialog();
     }
 
     return ListTile(
@@ -680,7 +617,9 @@ extension _SSH on _AppSettingsPageState {
       ctrl.text = current;
       void onSave() {
         _setting.tmuxSessionName.put(ctrl.text.trim());
-        context.pop();
+        // `popDialog`: `context` here is the settings page's, and the dialog
+        // is on the root navigator.
+        context.popDialog();
       }
 
       await context.showRoundDialog<bool>(

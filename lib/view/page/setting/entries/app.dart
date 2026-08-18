@@ -2,7 +2,7 @@ part of '../entry.dart';
 
 extension _App on _AppSettingsPageState {
   void _showInvalidDialog() {
-    context.showRoundDialog(title: libL10n.fail, child: Text(l10n.invalid));
+    context.showRoundDialog(title: libL10n.fail, child: Text(libL10n.invalid));
   }
 
   Widget _buildApp() {
@@ -78,20 +78,35 @@ extension _App on _AppSettingsPageState {
         if (!entry.key.startsWith(prefix)) continue;
         await PrefStore.shared.set(entry.key, entry.value);
       }
-      if (mounted) context.showSnackBar(libL10n.success);
+      if (mounted) Toast.success(libL10n.success);
     } catch (e) {
-      if (mounted) context.showSnackBar(e.toString());
+      if (mounted) Toast.error(e.toString());
     }
   }
 
   Widget? _buildPlatformSetting() {
-    if (!isIOS) return null;
-    return ListTile(
-      leading: const Icon(MingCute.apple_fill),
-      title: Text('iOS ${libL10n.setting}'),
-      trailing: const Icon(Icons.keyboard_arrow_right),
-      onTap: () => IosSettingsPage.route.go(context),
-    );
+    if (isIOS) {
+      return ListTile(
+        leading: const Icon(MingCute.apple_fill),
+        title: Text('iOS ${libL10n.setting}'),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () => IosSettingsPage.route.go(context),
+      );
+    }
+
+    // The App Store build's one standing entry about the DMG build. The line
+    // in the update dialog is asked to go away and does; this one stays, so
+    // there is somewhere to read the whole thing afterwards.
+    if (DmgNotice.applies) {
+      return ListTile(
+        leading: const Icon(MingCute.apple_fill),
+        title: Text(l10n.macDmgTitle),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () => DmgNotice.show(context),
+      );
+    }
+
+    return null;
   }
 
   Widget _buildCheckUpdate() {
@@ -121,6 +136,8 @@ extension _App on _AppSettingsPageState {
           githubReleasesUrl: Urls.githubReleasesApi,
           storeUrl: Urls.appStore,
           force: BuildMode.isDebug,
+          noticeBuilder: (ctx) =>
+              DmgNotice.forUpdate(ctx, build: AppUpdateIface.newestBuild.value ?? BuildData.build),
         ),
       ),
       trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),
@@ -179,7 +196,7 @@ extension _App on _AppSettingsPageState {
                           return const SizedBox.shrink();
                         }
                         return ListTile(
-                          title: Text(l10n.followSystem),
+                          title: Text(libL10n.followSystem),
                           trailing: StoreSwitch(
                             prop: _setting.useSystemPrimaryColor,
                             callback: (_) => setState(() {}),
@@ -216,7 +233,7 @@ extension _App on _AppSettingsPageState {
     final color = s.fromColorHex;
 
     if (color == null) {
-      context.showSnackBar(libL10n.fail);
+      Toast.error(libL10n.fail);
       return;
     }
 
@@ -230,7 +247,9 @@ extension _App on _AppSettingsPageState {
     }
 
     RNodes.app.notify();
-    context.pop();
+    // `popDialog`: reached from the colour dialog's OK, with the settings
+    // page's `context`.
+    context.popDialog();
   }
 
   Widget _buildMaxRetry() {
@@ -324,7 +343,7 @@ extension _App on _AppSettingsPageState {
   Widget _buildAppMore() {
     return ExpandTile(
       leading: const Icon(MingCute.more_3_fill),
-      title: Text(l10n.more),
+      title: Text(libL10n.more),
       initiallyExpanded: false,
       children: [
         _buildBeta(),
@@ -359,7 +378,7 @@ extension _App on _AppSettingsPageState {
 
   Widget _buildHideTitleBar() {
     return ListTile(
-      title: Text(l10n.hideTitleBar),
+      title: Text(libL10n.hideTitleBar),
       trailing: StoreSwitch(
         prop: _setting.hideTitleBar,
         callback: (value) async {
@@ -409,15 +428,15 @@ extension _App on _AppSettingsPageState {
             controller: controller,
             label: libL10n.pwd,
             obscureText: true,
-            onSubmitted: (_) => context.pop(controller.text.trim()),
+            onSubmitted: (_) => context.popDialog(controller.text.trim()),
           ),
           actions: [
             TextButton(
-              onPressed: () => context.pop(null),
+              onPressed: () => context.popDialog(null),
               child: Text(libL10n.cancel),
             ),
             TextButton(
-              onPressed: () => context.pop(controller.text.trim()),
+              onPressed: () => context.popDialog(controller.text.trim()),
               child: Text(libL10n.ok),
             ),
           ],
@@ -433,7 +452,7 @@ extension _App on _AppSettingsPageState {
       if (value is String && Cryptor.isEncrypted(value)) {
         final password = await resolvePassword();
         if (password == null || password.isEmpty) {
-          context.showSnackBar(libL10n.cancel);
+          Toast.show(libL10n.cancel);
           return;
         }
         try {
@@ -487,7 +506,7 @@ extension _App on _AppSettingsPageState {
       } catch (e, trace) {
         context.showRoundDialog(
           title: libL10n.error,
-          child: Text('${l10n.save}:\n$e'),
+          child: Text('${libL10n.save}:\n$e'),
         );
         Loggers.app.warning('Update json settings failed', e, trace);
       }

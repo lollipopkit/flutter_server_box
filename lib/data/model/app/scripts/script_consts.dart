@@ -1,12 +1,17 @@
-import 'dart:convert';
 
 import 'package:server_box/data/res/build_data.dart';
 
-/// Constants used throughout the script system
+/// Path constants and per-connection script directory state.
+///
+/// Script content, dividers, headers, and output splitting live in the shared
+/// Rust library (sbm_parser::script, see the shared-parser design); only path/filename
+/// conventions and Flutter-connection state remain here.
+// TODO(migration): residue of the Dart script layer — reevaluate once the app
+// endpoints move fully onto the FFI script API.
 class ScriptConstants {
   const ScriptConstants._();
 
-  // Script file names
+  // Script file names (versioned: bumping BuildData.script forces re-upload)
   static const String scriptFile = 'srvboxm_v${BuildData.script}.sh';
   static const String scriptFileWindows = 'srvboxm_v${BuildData.script}.ps1';
 
@@ -17,146 +22,25 @@ class ScriptConstants {
       r'$env:USERPROFILE/.config/server_box';
   static const String scriptDirTmpWindows = r'$env:TEMP/server_box';
 
-  // Command separators and dividers
+  /// Output segment separator (mirrors sbm_parser commands::SEPARATOR); also
+  /// used by container/systemd providers for their own command segmenting
   static const String separator = 'SrvBoxSep';
 
-  /// Custom command separator
+  /// Custom-command segment separator (mirrors sbm_parser
+  /// script::CUSTOM_CMD_SEPARATOR)
   static const String customCmdSep = 'SrvBoxCusCmdSep';
 
-  /// Prefix applied to every command output line so output cannot be confused
-  /// with a section marker.
-  static const String dataPrefix = 'SrvBoxData.';
-
-  static const String _encodedNamePrefix = 'b64.';
-
-  static String _encodeName(String name) => base64Url.encode(utf8.encode(name));
-
-  /// Generate command-specific separator
-  static String getCmdSeparator(String cmdName) =>
-      '$separator.$_encodedNamePrefix${_encodeName(cmdName)}';
-
-  /// Generate command-specific divider for custom commands
-  static String getCustomCmdSeparator(String cmdName) =>
-      '$customCmdSep.$_encodedNamePrefix${_encodeName(cmdName)}';
-
-  /// Internal result-map key for custom commands. This keeps arbitrary custom
-  /// names from overwriting built-in status sections with the same name.
-  static String getCustomResultKey(String cmdName) => '$customCmdSep.$cmdName';
-
-  /// Generate command-specific divider
-  static String getCmdDivider(String cmdName) =>
-      '\necho ${getCmdSeparator(cmdName)}\n\t';
-
-  /// Generate command-specific divider for Windows PowerShell
-  static String getWindowsCmdDivider(String cmdName) =>
-      '\n    Write-Host "${getCmdSeparator(cmdName)}"\n    ';
-
-  /// Parse script output into command-specific map
-  static Map<String, String> parseScriptOutput(String raw) {
-    final result = <String, String>{};
-
-    if (raw.isEmpty) return result;
-
-    // Parse line by line to properly handle command-specific separators
-    final lines = raw.split('\n');
-    String? currentKey;
-    var framedOutput = false;
-    final buffer = <String>[];
-
-    void flush() {
-      final key = currentKey;
-      if (key == null) return;
-      final output = buffer.join('\n');
-      result[key] = framedOutput ? output : output.trim();
-      buffer.clear();
-    }
-
-    for (final (index, rawLine) in lines.indexed) {
-      if (index == lines.length - 1 && rawLine.isEmpty) continue;
-      final line = rawLine.endsWith('\r')
-          ? rawLine.substring(0, rawLine.length - 1)
-          : rawLine;
-      final marker = _parseMarker(line);
-      if (marker != null) {
-        flush();
-        currentKey = marker.custom
-            ? getCustomResultKey(marker.name)
-            : marker.name;
-        framedOutput = marker.framed;
-      } else if (currentKey != null) {
-        buffer.add(
-          framedOutput && line.startsWith(dataPrefix)
-              ? line.substring(dataPrefix.length)
-              : line,
-        );
-      }
-    }
-
-    flush();
-
-    return result;
-  }
-
-  static ({String name, bool framed, bool custom})? _parseMarker(String line) {
-    final isCustom = line.startsWith('$customCmdSep.');
-    final prefix = line.startsWith('$separator.')
-        ? '$separator.'
-        : isCustom
-        ? '$customCmdSep.'
-        : null;
-    if (prefix == null) return null;
-    final value = line.substring(prefix.length);
-    // Unframed legacy markers are ambiguous with ordinary command output.
-    // Only the encoded/framed protocol can distinguish data from delimiters.
-    if (!value.startsWith(_encodedNamePrefix)) return null;
-    try {
-      return (
-        name: utf8.decode(
-          base64Url.decode(value.substring(_encodedNamePrefix.length)),
-        ),
-        framed: true,
-        custom: isCustom,
-      );
-    } catch (_) {
-      return null;
-    }
-  }
+  /// Key a custom command's output is filed under by
+  /// `sbm_parser::script::parse_script_output`. Namespaced because custom
+  /// command names come from the user: one called `cpu` would otherwise
+  /// overwrite the built-in section of that name.
+  ///
+  /// Locked against the Rust implementation by `test/frb_parser_test.dart`.
+  static String customResultKey(String cmdName) => '$customCmdSep.$cmdName';
 
   // Path separators
   static const String unixPathSeparator = '/';
   static const String windowsPathSeparator = '\\';
-
-  // Script headers
-  static const String unixScriptHeader =
-      '''
-#!/bin/sh
-# Script for ServerBox app v1.0.${BuildData.build}
-# DO NOT delete this file while app is running
-
-export LANG=en_US.UTF-8
-
-# If macSign & bsdSign are both empty, then it's linux
-macSign=\$(uname -a 2>&1 | grep "Darwin")
-bsdSign=\$(uname -a 2>&1 | grep "BSD")
-
-# Link /bin/sh to busybox?
-isBusybox=\$(ls -l /bin/sh | grep "busybox")
-
-userId=\$(id -u)
-
-exec 2>/dev/null
-
-''';
-
-  static const String windowsScriptHeader =
-      '''
-# PowerShell script for ServerBox app v1.0.${BuildData.build}
-# DO NOT delete this file while app is running
-
-\$ErrorActionPreference = "SilentlyContinue"
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-
-''';
 }
 
 /// Script path configuration and management

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:server_box/data/model/ai/agent_conversation_replay.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
-import 'package:server_box/view/page/ssh/agent_conversation_replay.dart';
 
 void main() {
   const completedCommand = AskAiCommand(

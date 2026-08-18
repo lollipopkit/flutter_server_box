@@ -5,7 +5,24 @@ description: Verständnis der Server Box Codebasis
 
 Das Server Box-Projekt folgt einer modularen Architektur mit einer klaren Trennung der Belange.
 
-## Verzeichnisstruktur
+## Monorepo-Layout
+
+```
+flutter_server_box/
+├── lib/               # Flutter-App (siehe unten)
+├── crates/
+│   ├── sbm_parser/    # Gemeinsamer Status-Parser (Single Source of Truth,
+│   │                  # App via FFI, Monitor als direkte Abhängigkeit)
+│   └── sbm_ffi/       # flutter_rust_bridge-Binding-Crate + cargokit
+│                      # Flutter-Plugin-Hülle (ein Verzeichnis)
+├── monitor/           # Serverseitiger Monitor (Rust-Dienst + React-Frontend)
+├── packages/          # Eingebundene Dart-Forks (Pfad-Abhängigkeiten)
+├── docs/              # Diese Dokumentationsseite (Astro Starlight)
+├── website/           # Projekt-Website
+└── Cargo.toml         # Rust-Workspace-Wurzel
+```
+
+## App-Verzeichnisstruktur
 
 ```
 lib/
@@ -94,3 +111,11 @@ Enthält eigene Forks von Abhängigkeiten:
 - `xterm/` - Terminal-Emulator
 - `fl_lib/` - Gemeinsame Dienstprogramme
 - `fl_build/` - Build-System
+
+## Rust-Seite
+
+- `crates/sbm_parser/` - Parst rohe Befehlsausgaben in strukturierten Serverstatus.
+  Von App (via FFI) und Monitor gemeinsam genutzt, beide parsen daher immer identisch.
+- `crates/sbm_ffi/` - Dünner flutter_rust_bridge-Wrapper um `sbm_parser`.
+  Die generierte Dart-Seite liegt in `lib/src/rust/`.
+- `monitor/` - Eigenständiger Monitoring-Dienst, Dokumentation in `monitor/README.md`.

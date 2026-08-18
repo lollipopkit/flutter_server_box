@@ -7,6 +7,11 @@
 
 import Foundation
 
+/// Shared between the app and its iOS extensions. The watch targets cannot see
+/// this file (they build for a different platform and carry their own copy in
+/// `WatchShared.swift`), so the literal is duplicated there on purpose.
+let appGroupId = "group.com.lollipopkit.toolbox"
+
 let accessoryKey = "accessory_widget_url"
 
 let helpUrl = URL(string: "https://github.com/lollipopkit/flutter_server_box/wiki#home-widget--watchos-app")!

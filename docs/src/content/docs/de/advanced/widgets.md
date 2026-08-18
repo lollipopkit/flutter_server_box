@@ -3,11 +3,11 @@ title: Startbildschirm-Widgets
 description: Fügen Sie Serverstatus-Widgets zu Ihrem Startbildschirm hinzu
 ---
 
-Erfordert [ServerBox Monitor](https://github.com/lollipopkit/server_box_monitor) auf Ihren Servern installiert.
+Erfordert [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor) auf Ihren Servern installiert.
 
 ## Voraussetzungen
 
-Installieren Sie zuerst ServerBox Monitor auf Ihrem Server. Anweisungen zur Einrichtung finden Sie im [ServerBox Monitor Wiki](https://github.com/lollipopkit/server_box_monitor/wiki/Home).
+Installieren Sie zuerst ServerBox Monitor auf Ihrem Server. Anweisungen zur Einrichtung finden Sie im [ServerBox Monitor Wiki](https://github.com/lollipopkit/flutter_server_box/blob/main/monitor/README.md).
 
 Nach der Installation sollte Ihr Server verfügen über:
 - Einen HTTP/HTTPS-Endpunkt

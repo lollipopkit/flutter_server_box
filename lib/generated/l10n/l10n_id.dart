@@ -19,36 +19,18 @@ class AppLocalizationsId extends AppLocalizations {
   String get added2List => 'Ditambahkan ke Daftar Tugas';
 
   @override
-  String get addr => 'Alamat';
-
-  @override
   String get askAi => 'Tanya AI';
-
-  @override
-  String get ai => 'AI';
-
-  @override
-  String get askAiApiKey => 'Kunci API';
 
   @override
   String get askAiAwaitingResponse => 'Menunggu respons AI...';
 
   @override
-  String get askAiBaseUrl => 'URL dasar';
-
-  @override
   String get askAiEndpointTip =>
-      'Enter a service base URL or a full Chat Completions or Responses endpoint. ServerBox completes the path for the selected protocol.';
-
-  @override
-  String get askAiProtocol => 'API protocol';
+      'Masukkan URL dasar layanan atau endpoint lengkap Chat Completions maupun Responses. ServerBox melengkapi jalurnya sesuai protokol yang dipilih.';
 
   @override
   String get askAiProtocolTip =>
-      'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.';
-
-  @override
-  String get askAiProtocolAuto => 'Auto';
+      'Otomatis memakai Responses untuk endpoint resmi OpenAI dan Chat Completions untuk penyedia yang kompatibel.';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -92,187 +74,215 @@ class AppLocalizationsId extends AppLocalizations {
   String get askAiUsageHint => 'Digunakan di Terminal SSH';
 
   @override
-  String get askAiAgentTitle => 'SSH Agent';
+  String get askAiAgentTitle => 'Agent SSH';
 
   @override
-  String get askAiAgentWelcome => 'What should we do on this server?';
+  String get askAiAgentWelcome => 'Apa yang akan kita lakukan di server ini?';
 
   @override
   String get askAiAgentWelcomeTip =>
-      'Ask for a diagnosis or a task. The Agent proposes one command at a time and waits for review before making changes.';
+      'Minta diagnosis atau sebuah tugas. Agent mengusulkan satu perintah setiap kali dan menunggu tinjauan Anda sebelum mengubah apa pun.';
 
   @override
   String get askAiAgentPromptHint =>
-      'Ask the Agent to inspect or fix something...';
+      'Minta Agent memeriksa atau memperbaiki sesuatu...';
 
   @override
-  String get askAiAgentSend => 'Send to Agent';
+  String get askAiAgentSend => 'Kirim ke Agent';
 
   @override
   String get askAiAnalyzeSelectionPrompt =>
-      'Analyze the selected terminal content, explain what happened, and propose the safest next step if action is needed.';
+      'Analisis isi terminal yang dipilih, jelaskan apa yang terjadi, dan usulkan langkah berikutnya yang paling aman jika perlu tindakan.';
 
   @override
-  String get askAiTerminalContext => 'Terminal context';
+  String get askAiTerminalContext => 'Konteks terminal';
 
   @override
-  String get askAiReady => 'Ready';
+  String get askAiReviewNeeded => 'Tinjau';
 
   @override
-  String get askAiThinking => 'Thinking';
-
-  @override
-  String get askAiRunningCommand => 'Running';
-
-  @override
-  String get askAiReviewNeeded => 'Review';
-
-  @override
-  String get askAiReviewAction => 'Review proposed command';
+  String get askAiReviewAction => 'Tinjau perintah yang diusulkan';
 
   @override
   String get askAiReviewBeforeContinuing =>
-      'Review or decline the proposed command first';
+      'Tinjau atau tolak dulu perintah yang diusulkan';
 
   @override
-  String get askAiApproveRun => 'Approve & run';
+  String get askAiApproveRun => 'Setujui & jalankan';
 
   @override
-  String get askAiDecline => 'Decline';
+  String get askAiDecline => 'Tolak';
 
   @override
-  String get askAiActionDeclined => 'The proposed command was declined.';
+  String get askAiActionDeclined => 'Perintah yang diusulkan ditolak.';
 
   @override
-  String get askAiInterrupted => 'Agent response was interrupted.';
+  String get askAiInterrupted => 'Respons Agent terputus.';
 
   @override
-  String get askAiRiskReadOnly => 'Read-only';
+  String get askAiRiskReadOnly => 'Hanya baca';
 
   @override
-  String get askAiRiskCaution => 'Changes system';
+  String get askAiRiskCaution => 'Mengubah sistem';
 
   @override
-  String get askAiRiskDestructive => 'High risk';
+  String get askAiRiskUnvetted => 'Host belum diverifikasi';
 
   @override
-  String get askAiHighRiskConfirmTitle => 'Run high-risk command?';
+  String get askAiRiskDestructive => 'Risiko tinggi';
+
+  @override
+  String get askAiHighRiskConfirmTitle => 'Jalankan perintah berisiko tinggi?';
 
   @override
   String get askAiHighRiskConfirmBody =>
-      'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.';
+      'Perintah ini dapat menghapus data, menghentikan layanan, atau sulit dibatalkan. Tinjau dengan cermat sebelum menjalankannya.';
 
   @override
-  String get askAiCommandCancelled => 'Cancelled';
-
-  @override
-  String get askAiCommandTimedOut => 'Timed out';
-
-  @override
-  String get askAiNoCommandOutput => 'Command completed without output.';
+  String get askAiNoCommandOutput => 'Perintah selesai tanpa keluaran.';
 
   @override
   String get askAiOutputTruncated =>
-      'Long output was truncated before it was sent back to the Agent.';
+      'Keluaran panjang dipotong sebelum dikirim kembali ke Agent.';
 
   @override
-  String get askAiAutoApproved => 'Auto-approved';
+  String get askAiAutoApproved => 'Disetujui otomatis';
 
   @override
-  String get askAiAutoRunSafeCommands => 'Auto-run read-only commands';
+  String get askAiAutoRunSafeCommands =>
+      'Jalankan otomatis perintah hanya-baca';
 
   @override
   String get askAiAutoRunSafeCommandsTip =>
-      'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.';
+      'Hanya dijalankan otomatis bila model dan pemeriksaan keamanan lokal sama-sama menilai perintah itu hanya-baca. Perintah yang mengubah sistem tetap perlu ditinjau.';
+
+  @override
+  String get askAiSendOnEnter => 'Enter mengirim';
+
+  @override
+  String get askAiSendOnEnterTip =>
+      'Enter mengirim pesan, Shift+Enter membuat baris baru. Jika dimatikan, keduanya bertukar: Enter membuat baris baru dan Cmd/Ctrl+Enter mengirim.';
 
   @override
   String get askAiApiKeyOptional =>
-      'Optional for local or unauthenticated endpoints';
+      'Opsional untuk endpoint lokal atau tanpa autentikasi';
 
   @override
-  String get askAiHistory => 'Conversation history';
+  String get askAiHistory => 'Riwayat percakapan';
 
   @override
-  String get askAiHistoryLocalOnly =>
-      'Encrypted on this device and excluded from backup and sync';
+  String get askAiNewConversation => 'Percakapan baru';
 
   @override
-  String get askAiNewConversation => 'New conversation';
+  String get askAiNoHistory =>
+      'Tidak ada percakapan tersimpan untuk server ini';
 
   @override
-  String get askAiNoHistory => 'No saved conversations for this server';
+  String get askAiNoHistoryMessages => 'Belum ada pesan';
 
   @override
-  String get askAiNoHistoryMessages => 'No messages yet';
+  String get askAiUntitledConversation => 'Percakapan baru';
 
   @override
-  String get askAiUntitledConversation => 'New conversation';
+  String get askAiRenameConversation => 'Ganti nama percakapan';
 
   @override
-  String get askAiRenameConversation => 'Rename conversation';
-
-  @override
-  String get askAiDeleteConversationTitle => 'Delete this conversation?';
+  String get askAiDeleteConversationTitle => 'Hapus percakapan ini?';
 
   @override
   String get askAiDeleteConversationTip =>
-      'This removes the conversation from this device and cannot be undone.';
+      'Percakapan akan dihapus dari perangkat ini dan tidak bisa dikembalikan.';
 
   @override
-  String get askAiClearHistory => 'Clear history';
-
-  @override
-  String get askAiClearHistoryTitle => 'Clear this server\'s Agent history?';
+  String get askAiClearHistoryTitle => 'Hapus riwayat Agent untuk server ini?';
 
   @override
   String get askAiClearHistoryTip =>
-      'All Agent conversations saved for this server will be removed from this device.';
+      'Semua percakapan Agent yang tersimpan untuk server ini akan dihapus dari perangkat ini.';
 
   @override
   String get askAiRestoredReview =>
-      'Restored from history. Review it again before running; it will never run automatically.';
+      'Dipulihkan dari riwayat. Tinjau lagi sebelum menjalankan; perintah ini tidak akan pernah berjalan sendiri.';
 
   @override
   String get agentTitle => 'Agent';
 
   @override
-  String get agentWelcome => 'What should we do across your servers?';
+  String get agentWelcome => 'Apa yang akan kita lakukan di server Anda?';
 
   @override
   String get agentWelcomeTip =>
-      'Ask for a diagnosis or an operational task. The Agent uses live ServerBox state and proposes one reviewed action at a time.';
+      'Minta diagnosis atau tugas operasional. Agent memakai kondisi ServerBox terkini dan mengusulkan satu tindakan yang ditinjau setiap kali.';
 
   @override
   String get agentPromptHint =>
-      'Ask the Agent to inspect or operate your servers...';
+      'Minta Agent memeriksa atau mengoperasikan server Anda...';
 
   @override
-  String get agentNoServers => 'No configured servers';
+  String get agentNoServers => 'Belum ada server yang dikonfigurasi';
 
   @override
-  String get agentNoHistory => 'No saved global Agent conversations';
+  String get agentNoHistory =>
+      'Tidak ada percakapan Agent global yang tersimpan';
 
   @override
-  String get agentClearHistoryTitle => 'Clear global Agent history?';
+  String get agentClearHistoryTitle => 'Hapus riwayat Agent global?';
 
   @override
   String get agentClearHistoryTip =>
-      'All global Agent conversations will be removed from this device.';
+      'Semua percakapan Agent global akan dihapus dari perangkat ini.';
 
   @override
   String get agentToolShell => 'Shell';
 
   @override
-  String get agentToolReadFile => 'Read file';
+  String get agentToolReadFile => 'Baca berkas';
 
   @override
-  String get agentToolWriteFile => 'Write file';
+  String get agentToolWriteFile => 'Tulis berkas';
 
   @override
   String get agentToolServerBox => 'ServerBox';
 
   @override
-  String get agentToolFailed => 'Tool execution failed.';
+  String get agentToolFailed => 'Eksekusi alat gagal.';
+
+  @override
+  String agentToolCallsFmt(Object count) {
+    return '$count panggilan alat';
+  }
+
+  @override
+  String get agentFloat => 'Mengambang di atas tab lain';
+
+  @override
+  String get agentToolSshConnect => 'Sambungkan SSH';
+
+  @override
+  String get agentToolSshDisconnect => 'Putuskan SSH';
+
+  @override
+  String get agentSshConnectTitle => 'Sambungkan ke host baru';
+
+  @override
+  String get agentAuthMethod => 'Autentikasi';
+
+  @override
+  String get agentSshConnectTip =>
+      'Agent ingin membuka koneksi SSH. Ketik kata sandi di sini, jangan di percakapan, karena di sana kata sandi akan tersimpan dan dikirim ke model.';
+
+  @override
+  String get agentAdHocSessions => 'Koneksi sementara';
+
+  @override
+  String get agentSaveServerTitle => 'Simpan sebagai server';
+
+  @override
+  String get agentSaveServerTip =>
+      'Host ini dan kata sandi yang dimasukkan akan disimpan di perangkat ini.';
+
+  @override
+  String get agentMonitorOptional => 'Agen monitor (opsional)';
 
   @override
   String get atLeastOneTab => 'Setidaknya satu tab harus dipilih';
@@ -324,32 +334,34 @@ class AppLocalizationsId extends AppLocalizations {
       'Data yang diekspor dapat dienkripsi dengan kata sandi. \nHarap jaga keamanannya.';
 
   @override
-  String get icloudBackupStatusTitle => 'Backup status';
+  String get icloudBackupStatusTitle => 'Status cadangan';
 
   @override
-  String get icloudBackupStatusLoading => 'Loading iCloud backup status...';
+  String get icloudBackupStatusLoading => 'Memuat status cadangan iCloud...';
 
   @override
-  String get icloudBackupStatusError => 'Unable to read iCloud backup metadata';
+  String get icloudBackupStatusError =>
+      'Tidak dapat membaca metadata cadangan iCloud';
 
   @override
-  String get icloudBackupStatusEmpty => 'No iCloud backup file found yet';
+  String get icloudBackupStatusEmpty =>
+      'Belum ada berkas cadangan iCloud yang ditemukan';
 
   @override
-  String get icloudBackupStateUploading => 'Uploading';
+  String get icloudBackupStateUploading => 'Mengunggah';
 
   @override
-  String get icloudBackupStateConflict => 'Conflict detected';
+  String get icloudBackupStateConflict => 'Terdeteksi konflik';
 
   @override
-  String get icloudBackupStateUploaded => 'Uploaded';
+  String get icloudBackupStateUploaded => 'Terunggah';
 
   @override
-  String get icloudBackupStateWaiting => 'Waiting for iCloud';
+  String get icloudBackupStateWaiting => 'Menunggu iCloud';
 
   @override
   String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
-    return 'Last backup: $lastModified\nStatus: $remoteState';
+    return 'Cadangan terakhir: $lastModified\nStatus: $remoteState';
   }
 
   @override
@@ -424,13 +436,13 @@ class AppLocalizationsId extends AppLocalizations {
       'Tampilkan tingkat penggunaan setiap CPU dalam gaya bilah kemajuan (gaya lama)';
 
   @override
-  String get configured => 'Configured';
-
-  @override
   String get customCmd => 'Perintah kustom';
 
   @override
   String get deleteServers => 'Penghapusan server secara batch';
+
+  @override
+  String get deleteDirRecursive => 'Hapus folder beserta seluruh isinya';
 
   @override
   String get desktopTerminalTip =>
@@ -534,13 +546,14 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => 'Folder ini sudah tidak ada';
+
+  @override
+  String get fileDirGoneTip =>
+      'Folder ini dihapus atau diganti nama. Gunakan bilah di bawah untuk kembali, ke beranda, atau menuju tempat lain.';
+
+  @override
   String get finishedAt => 'Selesai pada';
-
-  @override
-  String get followSystem => 'Ikuti sistem';
-
-  @override
-  String get fontSize => 'Ukuran huruf';
 
   @override
   String get fullScreen => 'Mode Layar Penuh';
@@ -559,25 +572,16 @@ class AppLocalizationsId extends AppLocalizations {
   String get githubGist => 'GitHub Gist';
 
   @override
-  String get githubGistIdOptional => 'Gist ID (optional)';
+  String get githubGistIdOptional => 'ID Gist (opsional)';
 
   @override
-  String get githubGistToken => 'GitHub Gist token';
+  String get githubGistToken => 'Token GitHub Gist';
 
   @override
-  String get githubGistTokenEmpty => 'Token is empty';
-
-  @override
-  String get goBackQ => 'Datang kembali?';
+  String get githubGistTokenEmpty => 'Token kosong';
 
   @override
   String get goto => 'Pergi ke';
-
-  @override
-  String get hideTitleBar => 'Sembunyikan bilah judul';
-
-  @override
-  String get highlight => 'Sorotan kode';
 
   @override
   String get homeTabs => 'Tab Beranda';
@@ -597,6 +601,32 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get imagesList => 'Daftar gambar';
+
+  @override
+  String get macDmgBody =>
+      'App Store mewajibkan aplikasi ini berjalan dalam sandbox, dan proses dalam sandbox tidak bisa membuka pseudo-terminal. Karena itu versi App Store tidak punya terminal di Mac ini dan tidak bisa menjalankan snippet atau perintah agent di sini. Versi DMG adalah aplikasi yang sama, ditandatangani tanpa sandbox, dan memilikinya.\n\nVersi App Store tetap berfungsi dan tetap diperbarui. Nanti pembaruannya bisa berhenti.\n\nKedua versi menyimpan datanya di tempat berbeda. Versi DMG menyalinnya saat pertama dijalankan, jadi server, kunci, dan riwayat ikut pindah. Jika gagal, akan diberitahukan, dan Anda bisa pindah lewat berkas cadangan (Cadangan, di pengaturan).';
+
+  @override
+  String get macDmgImportDenied =>
+      'macOS tidak mengizinkan pembacaan data versi yang terpasang sebelumnya. Berikan Akses Disk Penuh lalu buka ulang aplikasi, atau ekspor cadangan di sana dan pulihkan di sini.';
+
+  @override
+  String get macDmgImported =>
+      'Data versi yang terpasang sebelumnya telah diimpor.';
+
+  @override
+  String get macDmgImportFailed =>
+      'Tidak bisa membaca data versi yang terpasang sebelumnya. Ekspor cadangan di sana, lalu pulihkan di sini.';
+
+  @override
+  String get macDmgTip =>
+      'Terminal di Mac ini dan menjalankan snippet di sini hanya ada pada versi DMG.';
+
+  @override
+  String get macDmgTitle => 'Versi DMG';
+
+  @override
+  String get showHiddenFiles => 'Tampilkan berkas tersembunyi';
 
   @override
   String get unused => 'Tidak terpakai';
@@ -648,29 +678,23 @@ class AppLocalizationsId extends AppLocalizations {
   String get pull => 'Tarik';
 
   @override
-  String get invalid => 'Tidak valid';
-
-  @override
-  String get invalidUrl => 'Invalid URL';
-
-  @override
   String get invalidHostFormat =>
-      'Invalid host format. Only IPv4, IPv6, and domain characters are allowed.';
+      'Format host tidak valid. Hanya karakter IPv4, IPv6, dan domain yang diizinkan.';
 
   @override
   String get jumpServer => 'Lompat server';
 
   @override
   String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
-    return 'Jump servers not found for $serverName: $jumpIds';
+    return 'Jump server tidak ditemukan untuk $serverName: $jumpIds';
   }
 
   @override
-  String get noJumpServerAvailable => 'No jump server available.';
+  String get noJumpServerAvailable => 'Tidak ada jump server yang tersedia.';
 
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
-      'Jump server and ProxyCommand cannot be used together.';
+      'Jump server dan ProxyCommand tidak bisa dipakai bersamaan.';
 
   @override
   String get keepForeground => 'Simpan Aplikasi Foreground!';
@@ -715,13 +739,6 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get more => 'Lebih Banyak';
-
-  @override
-  String get moveOutServerFuncBtnsHelp =>
-      'Aktif: dapat ditampilkan di bawah setiap kartu pada halaman Tab Server. Nonaktif: dapat ditampilkan di bagian atas halaman Rincian Server.';
-
-  @override
   String get needRestart => 'Perlu memulai ulang aplikasi';
 
   @override
@@ -759,7 +776,12 @@ class AppLocalizationsId extends AppLocalizations {
       'Parsing status okupansi oleh Docker agak lambat';
 
   @override
-  String get permission => 'Izin';
+  String get fullAccessRefused =>
+      'Agen ini tidak menyediakan terminal tanpa kredensial.';
+
+  @override
+  String get fullAccessInsecure =>
+      'Agen ini hanya menyajikan terminal melalui TLS atau loopback, sedangkan koneksi ini HTTP polos.';
 
   @override
   String get plugInType => 'Jenis Penyisipan';
@@ -780,7 +802,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand is only supported on desktop platforms.';
+      'ProxyCommand hanya didukung di platform desktop.';
 
   @override
   String get pveIgnoreCertTip =>
@@ -788,80 +810,77 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get pveServerClientMissing =>
-      'The SSH client for this server is not available.';
+      'Klien SSH untuk server ini tidak tersedia.';
 
   @override
   String get pveAddressMissing =>
-      'The PVE address is missing. Please configure it in server settings.';
+      'Alamat PVE belum diisi. Atur di pengaturan server.';
 
   @override
   String get pvePasswordRequired =>
-      'PVE password is required. Please set it in server settings.';
+      'Kata sandi PVE diperlukan. Atur di pengaturan server.';
 
   @override
   String get pveOtpRequired =>
-      'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.';
+      'Autentikasi dua faktor aktif di server PVE ini. Masukkan kode OTP.';
 
   @override
   String get pveOtpChallengeExpired =>
-      'The OTP challenge has expired. Please refresh and try again.';
+      'Tantangan OTP sudah kedaluwarsa. Segarkan lalu coba lagi.';
 
   @override
-  String get pveOtpCodeRequired => 'OTP code is required.';
+  String get pveOtpCodeRequired => 'Kode OTP wajib diisi.';
 
   @override
   String get pveOtpVerificationFailed =>
-      'OTP verification failed. Please try again with a fresh code.';
+      'Verifikasi OTP gagal. Coba lagi dengan kode baru.';
 
   @override
-  String get pveOtpTitle => 'OTP Verification';
+  String get pveOtpTitle => 'Verifikasi OTP';
 
   @override
-  String get pveOtpLabel => 'OTP Code';
+  String get pveOtpLabel => 'Kode OTP';
 
   @override
   String get pveInvalidResponseBody =>
-      'PVE login returned an invalid response body.';
+      'Login PVE mengembalikan isi respons yang tidak valid.';
 
   @override
   String get pveInvalidResponseData =>
-      'PVE login response did not contain a valid data payload.';
+      'Respons login PVE tidak berisi data yang valid.';
 
   @override
   String get pveMissingAuthTicket =>
-      'PVE login succeeded but no authentication ticket was returned.';
+      'Login PVE berhasil, tetapi tidak ada tiket autentikasi yang dikembalikan.';
 
   @override
   String get pveVersionLow =>
       'Fitur ini saat ini sedang dalam tahap pengujian dan hanya diuji pada PVE 8+. Gunakan dengan hati-hati.';
 
   @override
-  String get pveLoadingForwarding => 'Establishing SSH tunnel...';
+  String get pveLoadingForwarding => 'Membangun terowongan SSH...';
 
   @override
-  String get pveLoadingLogin => 'Authenticating with PVE...';
+  String get pveLoadingLogin => 'Mengautentikasi ke PVE...';
 
   @override
-  String get pveLoadingData => 'Fetching cluster data...';
+  String get pveLoadingData => 'Mengambil data klaster...';
 
   @override
-  String get pveLoadingConnect => 'Connecting...';
+  String get pveLoadingConnect => 'Menghubungkan...';
 
   @override
-  String get pvePassword => 'PVE Password';
+  String get pvePassword => 'Kata sandi PVE';
 
   @override
   String get pvePasswordHint =>
-      'Required when using key-based SSH authentication';
+      'Diperlukan saat memakai autentikasi SSH berbasis kunci';
 
   @override
   String get read => 'Baca';
 
   @override
   String get recentConnections => 'Koneksi Terkini';
-
-  @override
-  String get reconnecting => 'Menghubungkan kembali...';
 
   @override
   String get rememberPwdInMem => 'Ingat kata sandi di dalam memori';
@@ -874,13 +893,51 @@ class AppLocalizationsId extends AppLocalizations {
   String get remotePath => 'Jalur jarak jauh';
 
   @override
+  String rootfsUpdateTip(Object installed, Object latest) {
+    return 'Alpine $installed terpasang dan $latest tersedia. Memperbarui akan mengunduhnya lagi dan mengganti kontainer: semua yang dipasang di dalamnya dengan apk akan hilang. Jika dilewati, yang sekarang tetap berfungsi.';
+  }
+
+  @override
+  String get rootfsMissing =>
+      'Belum ada sistem berkas Linux yang terpasang di perangkat ini.';
+
+  @override
+  String get rootfsSubtitle => 'Lingkungan pengguna Linux di perangkat ini';
+
+  @override
+  String rootfsInstallTip(Object version) {
+    return 'Unduh Alpine Linux $version (sekitar 3 MB) dan ekstrak di perangkat ini. Ini memberi aplikasi ini shell dengan manajer paket, dan dapat dihapus kapan saja.';
+  }
+
+  @override
   String get sameIdServerExist => 'Server dengan ID yang sama sudah ada';
 
   @override
-  String get save => 'Menyimpan';
+  String get second => 'S';
 
   @override
-  String get second => 'S';
+  String get serverFilesUnavailableTip =>
+      'Dapat dijangkau melalui SSH server ini, atau melalui agen monitor dengan API berkasnya diaktifkan.';
+
+  @override
+  String get back => 'Kembali';
+
+  @override
+  String get history => 'Riwayat';
+
+  @override
+  String get homeDir => 'Beranda';
+
+  @override
+  String get selectItem => 'Pilih';
+
+  @override
+  String selected(Object count) {
+    return '$count dipilih';
+  }
+
+  @override
+  String get sendTo => 'Kirim ke…';
 
   @override
   String get serverDetailOrder => 'Detail pesanan widget halaman';
@@ -893,6 +950,10 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get serverTabRequired => 'Tab server tidak dapat dihapus';
+
+  @override
+  String get shareServerRiskTip =>
+      'Kode QR ini berisi pengaturan koneksi server dalam teks biasa, termasuk kata sandi. Siapa pun yang memindai atau memotretnya dapat terhubung ke server ini.';
 
   @override
   String get sftpDlPrepare => 'Bersiap untuk terhubung ...';
@@ -914,12 +975,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Folder ditampilkan lebih dulu';
 
   @override
-  String get size => 'Ukuran';
-
-  @override
-  String get softWrap => 'Pembungkus lembut';
-
-  @override
   String get specifyDev => 'Tentukan perangkat';
 
   @override
@@ -928,10 +983,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get tempIsCelsiusTip =>
-      'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).';
-
-  @override
-  String get speed => 'Kecepatan';
+      'Jika aktif, nilai suhu diperlakukan sebagai Celsius, bukan milicelsius. Aktifkan hanya bila suhu tampil keliru (misalnya 0,1 °C, bukan 58 °C).';
 
   @override
   String spentTime(Object time) {
@@ -948,13 +1000,13 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get sshConnectionModeTip =>
-      'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
+      'Bawaan: memakai terminal aplikasi. SSH sistem: menjalankan perintah ssh sistem di terminal eksternal.';
 
   @override
-  String get sshConnectionModeUseBuiltin => 'Use built-in terminal';
+  String get sshConnectionModeUseBuiltin => 'Pakai terminal bawaan';
 
   @override
-  String get sshConnectionModeUseSystem => 'Use system SSH';
+  String get sshConnectionModeUseSystem => 'Pakai SSH sistem';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
@@ -1004,6 +1056,13 @@ class AppLocalizationsId extends AppLocalizations {
   String get sshHostKeyType => 'Jenis kunci host SSH';
 
   @override
+  String get sshKnownHostKeys => 'Kunci host yang dikenal';
+
+  @override
+  String get sshKnownHostKeysTip =>
+      'Kunci host yang telah diterima aplikasi ini. Hapus satu agar ditanyakan lagi saat koneksi berikutnya.';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return 'Kunci host SSH baru diterima dari $serverName. Periksa sidik jarinya sebelum mempercayai.';
   }
@@ -1041,9 +1100,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get sshVirtualKeyAutoOff => 'Switching Otomatis Kunci Virtual';
 
   @override
-  String get stat => 'Statistik';
-
-  @override
   String get supportFmtArgs => 'Parameter pemformatan berikut ini didukung:';
 
   @override
@@ -1056,32 +1112,22 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Sync app settings';
+  String get syncAppSettings => 'Sinkronkan pengaturan aplikasi';
 
   @override
   String get syncAppSettingsTip =>
-      'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
+      'Sertakan tema, tata letak, editor, terminal, dan preferensi perangkat lain dalam sinkronisasi otomatis.';
 
   @override
   String get system => 'Sistem';
-
-  @override
-  String get tapToStartDiscovery =>
-      'Tekan tombol pencarian untuk menemukan server SSH di jaringan Anda';
 
   @override
   String get termFontSizeTip =>
       'Pengaturan ini akan memengaruhi ukuran terminal (lebar dan tinggi). Anda dapat melakukan zoom pada halaman terminal untuk menyesuaikan ukuran font sesi saat ini.';
 
   @override
-  String get textScaler => 'Penskalaan font';
-
-  @override
   String get textScalerTip =>
       '1.0 => 100% (ukuran asli), hanya berfungsi pada bagian halaman server font, tidak disarankan untuk diubah.';
-
-  @override
-  String get time => 'Waktu';
 
   @override
   String get times => 'Waktu';
@@ -1092,9 +1138,6 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get sudoPromptNotFound =>
       'Tidak ada permintaan kata sandi sudo yang aktif.';
-
-  @override
-  String get unknown => 'Tidak dikenal';
 
   @override
   String get updateServerStatusInterval => 'Interval Pembaruan Status Server';
@@ -1113,9 +1156,6 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get viewDetails => 'Lihat Detail';
-
-  @override
-  String get viewErr => 'Lihat kesalahan';
 
   @override
   String get virtKeyHelpClipboard =>
@@ -1143,9 +1183,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get whenOpenApp => 'Saat membuka aplikasi';
 
   @override
-  String get wiki => 'Wiki';
-
-  @override
   String get wolTip =>
       'Setelah mengonfigurasi WOL (Wake-on-LAN), permintaan WOL dikirim setiap kali server terhubung.';
 
@@ -1161,7 +1198,7 @@ class AppLocalizationsId extends AppLocalizations {
       'Setelah terhubung ke server, sebuah skrip akan ditulis ke `~/.config/server_box` \n | `/tmp/server_box` untuk memantau status sistem. Anda dapat meninjau konten skrip tersebut.';
 
   @override
-  String get menuGitHubRepository => 'GitHub Repository';
+  String get menuGitHubRepository => 'Repositori GitHub';
 
   @override
   String get podmanDockerEmulationDetected =>
@@ -1169,107 +1206,85 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get portForwardBeta =>
-      'This feature is still in beta testing. Functionality is not guaranteed.';
+      'Fitur ini masih dalam uji beta. Fungsinya belum dijamin.';
 
   @override
   String get portForward_startPrompt =>
-      'Add a port forward rule to get started';
+      'Tambahkan aturan penerusan porta untuk memulai';
 
   @override
-  String get portForward_localHost => 'Local Host';
+  String get portForward_localHost => 'Host lokal';
 
   @override
-  String get portForward_localPort => 'Local Port';
+  String get portForward_localPort => 'Porta lokal';
 
   @override
-  String get portForward_remoteHost => 'Remote Host';
+  String get portForward_remoteHost => 'Host jarak jauh';
 
   @override
-  String get portForward_remotePort => 'Remote Port';
-
-  @override
-  String get portForward_type_local => 'Local';
-
-  @override
-  String get portForward_type_remote => 'Remote';
+  String get portForward_remotePort => 'Porta jarak jauh';
 
   @override
   String portForward_deleteConfirmFmt(Object name) {
-    return 'Delete $name?';
+    return 'Hapus $name?';
   }
 
   @override
   String get sponsor => 'Sponsor';
 
   @override
-  String get sort => 'Sort';
+  String get sortByJoinTime => 'Menurut waktu ditambahkan';
 
   @override
-  String get sortByName => 'By name';
-
-  @override
-  String get sortByJoinTime => 'By join time';
-
-  @override
-  String get ascending => 'Ascending';
-
-  @override
-  String get descending => 'Descending';
-
-  @override
-  String get serverHistory => 'Server history';
-
-  @override
-  String get clearHistory => 'Clear history';
+  String get serverHistory => 'Riwayat server';
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
 
   @override
-  String get tmuxAutoAttach => 'tmux auto-attach';
+  String get tmuxAutoAttach => 'Sambung otomatis ke tmux';
 
   @override
-  String get tmuxAuto => 'Auto tmux';
+  String get tmuxAuto => 'tmux otomatis';
 
   @override
   String get tmuxAutoTip =>
-      'Automatically start or attach tmux when connecting over SSH';
+      'Mulai atau sambungkan tmux secara otomatis saat terhubung lewat SSH';
 
   @override
-  String get tmuxSessionSelector => 'Session selector';
+  String get tmuxSessionSelector => 'Pemilih sesi';
 
   @override
   String get tmuxSessionSelectorTip =>
-      'Show the session picker when connecting';
+      'Tampilkan pemilih sesi saat menghubungkan';
 
   @override
-  String get tmuxDefaultSessionName => 'Default session name';
+  String get tmuxDefaultSessionName => 'Nama sesi bawaan';
 
   @override
-  String get tmuxSessionName => 'Session name';
+  String get tmuxSessionName => 'Nama sesi';
 
   @override
-  String get tmuxExistingSessions => 'Existing sessions';
+  String get tmuxExistingSessions => 'Sesi yang ada';
 
   @override
-  String get tmuxNewSession => 'New session';
+  String get tmuxNewSession => 'Sesi baru';
 
   @override
-  String get tmuxWindows => 'Windows';
+  String get tmuxWindows => 'Jendela';
 
   @override
-  String get tmuxNewWindow => 'New window';
+  String get tmuxNewWindow => 'Jendela baru';
 
   @override
-  String get tmuxNoWindowsFound => 'No windows found';
+  String get tmuxNoWindowsFound => 'Tidak ada jendela yang ditemukan';
 
   @override
   String tmuxWindowCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count windows',
-      one: '1 window',
+      other: '$count jendela',
     );
     return '$_temp0';
   }
@@ -1279,33 +1294,32 @@ class AppLocalizationsId extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count panes',
-      one: '1 pane',
+      other: '$count panel',
     );
     return '$_temp0';
   }
 
   @override
-  String get tmuxAttached => 'Attached';
+  String get tmuxAttached => 'Tersambung';
 
   @override
-  String get tmuxActive => 'Active';
+  String get tmuxActive => 'Aktif';
 
   @override
   String tmuxActiveAt(String time) {
-    return 'active: $time';
+    return 'aktif: $time';
   }
 
   @override
   String tmuxAttachedAt(String time) {
-    return 'attached: $time';
+    return 'tersambung: $time';
   }
 
   @override
-  String get tmuxSkip => 'Skip';
+  String get tmuxSkip => 'Lewati';
 
   @override
-  String get tmuxNotAvailable => 'tmux is not available';
+  String get tmuxNotAvailable => 'tmux tidak tersedia';
 
   @override
   String containerSegmentsMismatch(int count) {
@@ -1343,4 +1357,83 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get processKillTargetChanged =>
       'Proses telah berubah atau berhenti. Segarkan daftar lalu coba lagi.';
+
+  @override
+  String get watchServers => 'Server di jam tangan';
+
+  @override
+  String get watchServersTip =>
+      'Jam tangan membaca server ini langsung dari agen monitor-nya, jadi hanya server yang sudah dikonfigurasi monitor yang bisa dipilih.';
+
+  @override
+  String get watchNoMonitorServer =>
+      'Tidak ada server dengan agen monitor terkonfigurasi';
+
+  @override
+  String get watchLegacyUrls => 'URL status lama';
+
+  @override
+  String get accessoryWidgetServer => 'Server widget layar kunci';
+
+  @override
+  String get systemdMissing => 'Tidak ada systemd di server ini';
+
+  @override
+  String get systemdMissingTip =>
+      '`systemctl` tidak terpasang di sini, jadi tidak ada unit untuk ditampilkan.';
+
+  @override
+  String initSystemFmt(String init) {
+    return 'Mesin ini tampaknya menggunakan $init.';
+  }
+
+  @override
+  String get systemdListFailed => 'Tidak dapat menampilkan daftar unit';
+
+  @override
+  String get systemdUserScopeMissing => 'Unit pengguna tidak ditampilkan';
+
+  @override
+  String get systemdUserScopeMissingTip =>
+      'Akun ini tidak memiliki bus sesi pengguna di server, jadi hanya unit sistem yang ditampilkan.';
+
+  @override
+  String get serverUnreachable =>
+      'Tidak dapat menjalankan perintah di server ini';
+
+  @override
+  String get containerNoRuntime => 'Tidak ada runtime kontainer di sini';
+
+  @override
+  String get containerNoRuntimeTip =>
+      'Baik `docker` maupun `podman` tidak merespons di mesin ini. Jika salah satunya terpasang untuk akun lain, aktifkan \"Cobalah menggunakan sudo\" di Pengaturan.';
+
+  @override
+  String get containerUnreadable =>
+      'Runtime kontainer merespons dalam bentuk yang tidak terduga';
+
+  @override
+  String get power => 'Daya';
+
+  @override
+  String get continueInTerminal => 'Lanjutkan di terminal';
+
+  @override
+  String get askAiRiskUnknown => 'Tidak terklasifikasi';
+
+  @override
+  String get agentLocalExec => 'Jalankan perintah di perangkat ini';
+
+  @override
+  String get agentLocalExecTip =>
+      'Memungkinkan Agent bekerja di mesin tempat ServerBox berjalan, bukan hanya di server. Tidak ada yang berjalan tanpa pengawasan di sini: setiap perintah perlu ditinjau.';
+
+  @override
+  String get agentLocalExecRootfsTip =>
+      'Memungkinkan Agent bekerja di perangkat ini, di dalam kontainer Alpine Linux yang dipasang ServerBox. Ia tidak dapat melihat sistem berkas perangkat itu sendiri, data aplikasi, atau berkas Anda. Setiap perintah tetap perlu ditinjau.';
+
+  @override
+  String macDmgImportedPartly(String path) {
+    return 'Data dari versi yang terpasang sebelumnya telah diimpor. Berkas unduhan tetap berada di $path.';
+  }
 }

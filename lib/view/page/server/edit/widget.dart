@@ -38,12 +38,18 @@ extension _Widgets on _ServerEditPageState {
     });
   }
 
-  Widget _buildKeyAuth() {
+  Widget _buildKeyAuth() => _buildKeyAuthFor(_keyIdx);
+
+  /// The private-key picker, parameterised by which selection it drives.
+  ///
+  /// Two independent SSH credentials can be on this page — the direct one and
+  /// the tunnel's — and they must not share a selection.
+  Widget _buildKeyAuthFor(ValueNotifier<int?> keyIdx) {
     const padding = EdgeInsets.only(left: 13, right: 13, bottom: 7);
     final privateKeyState = ref.watch(privateKeyProvider);
     final pkis = privateKeyState.keys;
 
-    final choice = _keyIdx.listenVal((val) {
+    final choice = keyIdx.listenVal((val) {
       final selectedPki = val != null && val >= 0 && val < pkis.length
           ? pkis[val]
           : null;
@@ -63,9 +69,9 @@ extension _Widgets on _ServerEditPageState {
                   value: index,
                   onSelected: (idx, on) {
                     if (on) {
-                      _keyIdx.value = idx;
+                      keyIdx.value = idx;
                     } else {
-                      _keyIdx.value = -1;
+                      keyIdx.value = -1;
                     }
                   },
                 );
@@ -98,7 +104,7 @@ extension _Widgets on _ServerEditPageState {
 
     return ExpandTile(
       leading: const Icon(Icons.key),
-      initiallyExpanded: _keyIdx.value != null && _keyIdx.value! >= 0,
+      initiallyExpanded: keyIdx.value != null && keyIdx.value! >= 0,
       childrenPadding: padding,
       title: Text(l10n.privateKey),
       children: [choice],
@@ -129,7 +135,7 @@ extension _Widgets on _ServerEditPageState {
 
   Widget _buildMore() {
     return ExpandTile(
-      title: Text(l10n.more),
+      title: Text(libL10n.more),
       children: [
         _buildSudoPassword(),
         Input(
@@ -157,7 +163,7 @@ extension _Widgets on _ServerEditPageState {
   Widget _buildSudoPassword() {
     return _hasStoredSudoPassword.listenVal((hasValue) {
       final subtitle = switch (hasValue) {
-        true => Text(l10n.configured, style: UIs.textGrey),
+        true => Text(libL10n.configured, style: UIs.textGrey),
         false => Text(libL10n.empty, style: UIs.textGrey),
         null => Text(libL10n.loadingEllipsis, style: UIs.textGrey),
       };
@@ -315,22 +321,146 @@ extension _Widgets on _ServerEditPageState {
     });
   }
 
+  /// SSH+shell vs monitor's HTTP API — mutually exclusive connection
+  /// methods for reaching this server (see `Spi.monitorHttp`'s doc comment).
+  Widget _buildConnMethodSwitch() {
+    return _useMonitorHttp.listenVal((useHttp) {
+      return SegmentedButton<bool>(
+        segments: const [
+          ButtonSegment(
+            value: false,
+            label: Text('SSH'),
+            icon: Icon(Icons.terminal, size: 16),
+          ),
+          ButtonSegment(
+            value: true,
+            label: Text('Monitor HTTP'),
+            icon: Icon(MingCute.web_line, size: 16),
+          ),
+        ],
+        selected: {useHttp},
+        onSelectionChanged: (selection) {
+          _useMonitorHttp.value = selection.first;
+        },
+      );
+    });
+  }
+
+  /// SSH host/port/user — hidden when `_useMonitorHttp` is selected, since
+  /// they're not used by the monitor HTTP connection path at all.
+  Widget _buildSshConnFields() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Input(
+          controller: _ipController,
+          type: TextInputType.url,
+          onSubmitted: (_) => _focusScope.requestFocus(_portFocus),
+          node: _ipFocus,
+          label: libL10n.host,
+          icon: BoxIcons.bx_server,
+          hint: 'example.com',
+          suggestion: false,
+        ),
+        Input(
+          controller: _portController,
+          type: TextInputType.number,
+          node: _portFocus,
+          onSubmitted: (_) => _focusScope.requestFocus(_usernameFocus),
+          label: libL10n.port,
+          icon: Bootstrap.number_123,
+          hint: '22',
+          suggestion: false,
+        ),
+        Input(
+          controller: _usernameController,
+          type: TextInputType.text,
+          node: _usernameFocus,
+          onSubmitted: (_) => _focusScope.requestFocus(_alterUrlFocus),
+          label: libL10n.user,
+          icon: Icons.account_box,
+          hint: 'root',
+          suggestion: false,
+        ),
+      ],
+    );
+  }
+
+  /// Monitor's HTTP API connection fields — shown instead of `_buildAuth()`
+  /// when `_useMonitorHttp` is selected, never alongside it.
+  Widget _buildMonitorHttp() {
+    const addr = 'https://127.0.0.1:3770';
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CenterGreyTitle(libL10n.network),
+        Input(
+          controller: _monitorAddrCtrl,
+          type: TextInputType.url,
+          icon: MingCute.web_line,
+          label: 'URL',
+          hint: addr,
+          suggestion: false,
+        ),
+        // Prefixed because the shell section below has a second account with
+        // the same two labels, and they are not interchangeable: this one is
+        // the panel login, that one is a system account on the far host.
+        Input(
+          controller: _monitorUserCtrl,
+          type: TextInputType.text,
+          icon: MingCute.user_2_line,
+          label: 'Monitor ${libL10n.user}',
+          suggestion: false,
+        ),
+        Input(
+          controller: _monitorPwdCtrl,
+          type: TextInputType.visiblePassword,
+          icon: MingCute.lock_line,
+          label: 'Monitor ${libL10n.pwd}',
+          obscureText: true,
+          suggestion: false,
+        ),
+        ListTile(
+          leading: const Icon(MingCute.certificate_line),
+          title: TipText('Monitor ${l10n.ignoreCert}', l10n.pveIgnoreCertTip),
+          trailing: _monitorIgnoreCert.listenVal(
+            (v) => Switch(
+              value: v,
+              onChanged: (val) {
+                _monitorIgnoreCert.value = val;
+              },
+            ),
+          ),
+        ).cardx,
+      ],
+    );
+  }
+
+  /// The SSH account the agent logs in as on the far host.
+  ///
+  /// Deliberately has no host/port field: the agent connects to the address in
+  /// its own `remote_access.ssh_addr` and refuses to take one from a client,
+  /// which is what stops it being usable to reach anything else on its
+  /// network. All that is needed here is who to log in as.
+  ///
+  /// Labels carry the `SSH` prefix because the network section above has a
+  /// second account with the same two labels. They are not interchangeable —
+  /// that one is the panel login, this one has to exist on the far host and
+  /// be permitted by its sshd.
+
   Widget _buildCustomCmds() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         CenterGreyTitle(l10n.customCmd),
-        _customCmds.listenVal((vals) {
-          return ListTile(
-            leading: const Icon(BoxIcons.bxs_file_json),
-            title: const Text('JSON'),
-            subtitle: vals.isEmpty
-                ? null
-                : Text(vals.keys.join(','), style: UIs.textGrey),
-            trailing: const Icon(Icons.keyboard_arrow_right),
-            onTap: _onTapCustomItem,
-          );
-        }).cardx,
+        // No count and no preview: the commands are on the server, and this
+        // page has not asked it. The editor is what reads them.
+        ListTile(
+          leading: const Icon(MingCute.command_line),
+          title: Text(libL10n.edit),
+          trailing: const Icon(Icons.keyboard_arrow_right),
+          onTap: _onTapCustomItem,
+        ).cardx,
         ListTile(
           leading: const Icon(MingCute.doc_line),
           title: Text(libL10n.doc),
@@ -425,7 +555,7 @@ extension _Widgets on _ServerEditPageState {
         Input(
           controller: _wolMacCtrl,
           type: TextInputType.text,
-          label: 'MAC ${l10n.addr}',
+          label: 'MAC ${libL10n.addr}',
           icon: Icons.computer,
           hint: '00:11:22:33:44:55',
           suggestion: false,
@@ -433,7 +563,7 @@ extension _Widgets on _ServerEditPageState {
         Input(
           controller: _wolIpCtrl,
           type: TextInputType.text,
-          label: 'IP ${l10n.addr}',
+          label: 'IP ${libL10n.addr}',
           icon: ZondIcons.network,
           hint: '192.168.1.x',
           suggestion: false,
@@ -492,7 +622,7 @@ extension _Widgets on _ServerEditPageState {
                 if (on) {
                   if (next.contains(srv.id)) return;
                   if (next.length >= 2) {
-                    context.showSnackBar('${l10n.jumpServer}: 2');
+                    Toast.show('${l10n.jumpServer}: 2');
                     return;
                   }
                   next.add(srv.id);
@@ -515,6 +645,14 @@ extension _Widgets on _ServerEditPageState {
     ).cardx;
   }
 
+  Widget _buildDiscoverBtn() {
+    return IconButton(
+      tooltip: l10n.discoverSshServers,
+      onPressed: _onTapDiscover,
+      icon: const Icon(Icons.radar),
+    );
+  }
+
   Widget _buildWriteScriptTip() {
     return IconButton(
       tooltip: libL10n.attention,
@@ -530,25 +668,26 @@ extension _Widgets on _ServerEditPageState {
   }
 
   Widget _buildDelBtn() {
-    return IconButton(
-      onPressed: () {
-        context.showRoundDialog(
+    return IconButton(tooltip: libL10n.delete, 
+      onPressed: () async {
+        // The dialog answers; this — which is on the page — acts on the answer
+        // and then closes the page. Doing both from inside the button meant
+        // two pops in a row from a callback that can see two navigators: the
+        // dialog is on the root one, and this page may be inside a pane, so
+        // whichever `pop` was written first decided which of the two closed.
+        final confirmed = await context.showRoundDialog<bool>(
           title: libL10n.attention,
           child: Text(
             libL10n.askContinue(
               '${libL10n.delete} ${libL10n.server}(${spi!.name})',
             ),
           ),
-          actions: Btn.ok(
-            onTap: () async {
-              context.pop();
-              await ref.read(serversProvider.notifier).delServer(spi!.id);
-              if (!mounted) return;
-              context.pop(true);
-            },
-            red: true,
-          ).toList,
+          actions: Btn.ok(red: true).toList,
         );
+        if (confirmed != true || !mounted) return;
+        await ref.read(serversProvider.notifier).delServer(spi!.id);
+        if (!mounted) return;
+        context.pop(true);
       },
       icon: const Icon(Icons.delete),
     );

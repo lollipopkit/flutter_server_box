@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
 import 'package:server_box/data/model/server/battery.dart';
+import 'package:server_box/data/model/server/cpu.dart';
 import 'package:server_box/data/model/server/disk.dart';
 import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart';
@@ -8,7 +9,11 @@ import 'package:server_box/data/model/server/server_status_update_req.dart';
 import 'package:server_box/data/model/server/system.dart';
 import 'package:server_box/data/res/status.dart';
 
+import 'rust_lib_helper.dart';
+
 void main() {
+  setUpAll(initRustLibForTest);
+
   group('Server status snapshot parsing', () {
     test(
       'invalid linux payload does not reuse previous disk and metadata state',
@@ -25,7 +30,6 @@ void main() {
               StatusCmdType.host.name: '',
               StatusCmdType.sensors.name: '',
             },
-            customCmds: const {},
           ),
         );
 
@@ -48,7 +52,6 @@ void main() {
               BSDStatusCmdType.disk.name: 'not a valid disk payload',
               BSDStatusCmdType.host.name: '',
             },
-            customCmds: const {},
           ),
         );
 
@@ -72,7 +75,6 @@ void main() {
               WindowsStatusCmdType.host.name: '',
               WindowsStatusCmdType.temp.name: '',
             },
-            customCmds: const {},
           ),
         );
 
@@ -92,7 +94,6 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
 /dev/disk1s1     100000  40000     60000      40% /
 ''',
           },
-          customCmds: const {},
         ),
       );
 
@@ -113,47 +114,61 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
             BSDStatusCmdType.cpu.name:
                 'CPU usage: 14.70% user, 12.76% sys, 72.52% idle',
           },
-          customCmds: const {},
         ),
       );
 
-      expect(identical(result.cpu, previous.cpu), isFalse);
-      expect(identical(result.netSpeed, previous.netSpeed), isFalse);
-      expect(identical(result.diskIO, previous.diskIO), isFalse);
-      expect(previous.cpu.now.single.user, 0);
+      // `getStatus` parses into the status it was handed; the private copy is
+      // made by `ServerNotifier._copyStatus` before it gets here. What matters
+      // is that a copy is independent, which `Cpus.copy` is asserted on below.
       expect(result.cpu.now.single.user, 14);
+
+      final snapshot = Cpus.copy(result.cpu);
+      result.cpu.update([SingleCpuCore('cpu', 99, 0, 0, 1, 0, 0, 0)]);
+      expect(
+        snapshot.now.single.user,
+        14,
+        reason: 'a copy must stop tracking the original',
+      );
     });
 
-    test('Windows CPU brand parses when CPU metrics are disabled', () async {
+    test('the trend buffer carries over between refreshes', () async {
+      // What the chart cards are drawn from. Handing every refresh a fresh
+      // buffer left them holding only the sample taken moments ago, which
+      // fl_chart plots as a single point against the left edge.
+      final previous = InitStatus.status;
+      previous.history.add(timeMs: 1, cpu: 1);
+      previous.history.add(timeMs: 2, cpu: 2);
+
       final result = await getStatus(
         ServerStatusUpdateReq(
-          system: SystemType.windows,
-          ss: InitStatus.status,
-          parsedOutput: {WindowsStatusCmdType.cpuBrand.name: 'Example CPU'},
-          customCmds: const {},
+          system: SystemType.bsd,
+          ss: previous,
+          parsedOutput: const {},
         ),
       );
 
-      expect(result.cpu.brand, {'Example CPU': 1});
+      expect(identical(result.history, previous.history), isTrue);
+      expect(result.history.length, 2);
     });
 
-    test('Windows CPU brand uses the physical core count', () async {
+    test('Windows CPU brand comes from the processor record', () async {
+      // One WMI record carries Name alongside the core counts, so the brand
+      // and the count it applies to can't disagree. Upstream reads the brand
+      // from a second, plain-text command instead.
       final result = await getStatus(
         ServerStatusUpdateReq(
           system: SystemType.windows,
           ss: InitStatus.status,
           parsedOutput: {
             WindowsStatusCmdType.cpu.name:
-                '{"LoadPercentage":50,"NumberOfCores":4,'
-                '"NumberOfLogicalProcessors":8}',
-            WindowsStatusCmdType.cpuBrand.name: 'Example CPU',
+                '{"Name":"Example CPU","LoadPercentage":50,'
+                '"NumberOfCores":4,"NumberOfLogicalProcessors":8}',
           },
-          customCmds: const {},
         ),
       );
 
-      expect(result.cpu.coresCount, 9);
       expect(result.cpu.brand, {'Example CPU': 4});
+      expect(result.cpu.coresCount, 9);
     });
 
     test('Windows Celsius temperatures ignore Unix divisor settings', () async {
@@ -166,7 +181,6 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
               WindowsStatusCmdType.temp.name:
                   '{"InstanceName":"zone","Temperature":45.0}',
             },
-            customCmds: const {},
             tempDivisor: divisor,
           ),
         );
@@ -187,7 +201,6 @@ Filesystem  1024-blocks   Used Available Capacity Mounted on
             WindowsStatusCmdType.diskSmart.name:
                 '{"DeviceId":"0","Temperature":35,"PowerOnHours":10}',
           },
-          customCmds: const {},
         ),
       );
 

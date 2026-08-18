@@ -1,0 +1,208 @@
+# ServerBox Monitor Configuration
+# TOML format configuration file example
+
+# Database configuration
+database_url = "sqlite:serverbox_monitor.db"
+
+# JWT secret for authentication (optional).
+# Omit to auto-generate a random secret on first start,
+# persisted next to the database as jwt.secret (0600).
+# If set explicitly, it must be at least 32 characters.
+# jwt_secret = ""
+
+# Server configuration
+[server]
+host = "0.0.0.0"
+port = 3770
+# What this machine is called in the app and in pushes. Unset derives it from
+# the host: SBM_HOSTNAME, then /etc/host_hostname, then the OS hostname.
+# name = "web-1"
+# Origins allowed to call the API cross-origin, e.g. a panel hosted on
+# Cloudflare Pages. Empty (default) = same-origin only.
+# cors_allowed_origins = ["https://panel.example.pages.dev"]
+
+# Optional TLS configuration
+# [server.tls]
+# cert_path = "/path/to/cert.pem"
+# key_path = "/path/to/key.pem"
+
+# Monitoring configuration
+[monitoring]
+interval_seconds = 7
+
+# How often a rule may fire, formatted "N/duration". Default: once per minute.
+# push_rate = "1/1m"
+
+# The slower cycle that collects battery/sensors/SMART/AMD-GPU data — the only
+# fields that still need CLI tools (smartctl/sensors/amd-smi) after monitor's
+# native collection cutover. Core fields (cpu/mem/disk/net/uptime/...) no
+# longer depend on it at all, and are collected every interval_seconds
+# regardless of anything in this section. Values are cached and carried
+# forward between extended collections.
+[monitoring.extended]
+# Unset defaults to 10x interval_seconds, floored at 120s. Lower it only if
+# you need SMART/sensor data fresher than that; smartctl-class latency on
+# every core cycle is real, avoidable cost for data that doesn't change that
+# fast.
+# interval_secs = 300
+
+# Skip the extended cycle while nobody is looking, i.e. while no authenticated
+# client has polled /metrics or /status recently. Core metrics and alert rules
+# are unaffected either way — this pauses only the section above.
+[monitoring.extended.idle_pause]
+enabled = true
+# How long without a poll counts as idle. Unset = interval_seconds * 4.
+# threshold_secs = 60
+
+# Data retention and cleanup settings
+[monitoring.data_retention]
+# How long to keep system metrics (in days)
+metrics_days = 30
+
+# How long to keep alert records (in days)  
+alerts_days = 90
+
+# How often to run cleanup (in hours)
+cleanup_interval_hours = 24
+
+# Hard cap on the SQLite file size (MB); oldest time-series rows are dropped
+# until the database fits. 0 disables the cap.
+max_db_size_mb = 256
+
+# Monitoring rules
+[[monitoring.rules]]
+name = "High CPU Usage"
+monitor_type = "cpu"
+threshold = ">=77%"
+matcher = "cpu"
+
+[[monitoring.rules]]
+name = "High Memory Usage"
+monitor_type = "memory"
+threshold = ">=85%"
+matcher = "memory"
+
+[[monitoring.rules]]
+name = "High Disk Usage"
+monitor_type = "disk"
+threshold = ">=90%"
+matcher = "disk"
+
+# Ways to reach this machine through the agent, beyond reading its metrics.
+# Every switch below is off by default; turning one on exposes shell or file
+# access through this agent's HTTP surface, so it is deliberately a
+# config-file decision and cannot be changed from the panel's settings page.
+#
+# This section is never required — omit it entirely and everything stays off.
+[remote_access]
+# The only address the tunnel and terminal connect to. Not selectable by
+# clients: the tunnel takes no target parameter at all, which is what stops it
+# from being usable to reach other hosts on this agent's network. To reach
+# another machine, configure it in the app with this one as its jump server,
+# so that hop is authorised by SSH rather than by this agent.
+ssh_addr = "127.0.0.1:22"
+
+# Open a shell straight from a panel login, with no SSH credentials at all.
+# Unset follows the platform: on for Linux, off for macOS and Windows.
+#
+# This makes your panel password equivalent to a shell as whatever account the
+# agent runs as — which is why install.sh installs a *user* service by default.
+# If you run the agent as root, turn this off. The SSH login stays available
+# alongside it either way, for anyone who wants sshd's authentication, logging
+# and second factor instead.
+#
+# Also settable with SBM_FULL_ACCESS=0/1 (env wins over this file), and the
+# panel can turn it off — but never on — from its first-run prompt.
+# full_access = false
+
+# Lets the app reach this machine's SSH over the same HTTPS endpoint it
+# already polls, for servers whose SSH port isn't reachable directly. What
+# travels through it is the SSH protocol itself, still end-to-end encrypted
+# between app and sshd, with the app verifying the host key — this agent only
+# moves bytes and cannot read the session.
+[remote_access.tunnel]
+enabled = false
+# Leave unset to size from physical memory; resolved values are logged at
+# startup.
+# max_conns = 8
+
+# In-browser terminal in the panel. The agent acts as an SSH client to
+# ssh_addr, so a session has exactly the privileges of the SSH account the
+# browser authenticates as — the panel password alone grants no shell, unless
+# full_access above is on.
+[remote_access.terminal]
+enabled = false
+# How long a session survives the browser disconnecting, so a laptop that
+# sleeps or a phone that changes network reattaches to the same shell.
+# detached_timeout_secs = 300
+# Serve on a plaintext listener. Off by default because the terminal's first
+# message carries an SSH password and everything after it is cleartext output.
+# Not needed when TLS is configured above, nor when a proxy on this same host
+# terminates TLS (loopback traffic counts as secure). Only the terminal has
+# this switch — the tunnel carries already-encrypted SSH.
+# allow_insecure = false
+# Leave unset to size from physical memory.
+# max_sessions = 8
+# scrollback_bytes = 2097152
+
+# The file API: GET /fs/list, /fs/stat, /fs/read; PUT /fs/write; POST
+# /fs/mkdir, /fs/rename, /fs/chmod; DELETE /fs/remove.
+#
+# For a host running this agent with no reachable sshd. Anywhere sshd *is*
+# reachable — directly or through the tunnel above — the app already browses
+# files over SFTP end to end, and this endpoint is not needed.
+#
+# roots is not optional: switching this on without naming directories serves
+# nothing at all. Every request is resolved to a real path — symlinks
+# followed, `..` refused — and anything landing outside these roots is denied,
+# so a link inside a root pointing at /etc is not a way out.
+#
+# roots = ["/"] is how you say "the whole machine", and it makes the panel
+# password worth a shell: anyone who can write ~/.ssh/authorized_keys has one.
+# The agent warns about it at startup. Prefer naming what actually needs to be
+# reachable.
+[remote_access.fs]
+enabled = false
+roots = []
+# Largest single file a write will accept. Leave unset to size it from
+# physical memory. The body is streamed to disk and never buffered whole, so
+# this bounds the disk rather than memory.
+# max_write_bytes = 1073741824
+
+# Push notification configurations
+[[push]]
+name = "webhook"
+push_type = "webhook"
+url = "http://localhost:5700"
+method = "POST"
+
+[push.headers]
+"Content-Type" = "application/json"
+
+[push.body_template]
+message = "Server {{name}}: {{message}}"
+
+[[push]]
+name = "serverchan"
+push_type = "serverchan"
+sc_key = ""
+title = "ServerBox Monitor"
+desp = "{{message}}"
+
+[[push]]
+name = "bark"
+push_type = "bark"
+server = "https://api.day.app"
+key = ""
+title = "ServerBox Monitor"
+body = "{{message}}"
+level = "active"
+
+[[push]]
+name = "ios"
+push_type = "ios"
+token = ""
+title = "ServerBox Monitor"
+content = "{{message}}"
+body_regex = ".*"
+code = 200

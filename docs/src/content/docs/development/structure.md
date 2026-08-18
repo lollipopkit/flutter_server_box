@@ -3,9 +3,26 @@ title: Project Structure
 description: Understanding the Server Box codebase
 ---
 
-The Server Box project follows a modular architecture with clear separation of concerns.
+The Server Box project is a monorepo: the Flutter app lives at the repository root, alongside a Rust workspace and the server-side monitor.
 
-## Directory Structure
+## Monorepo Layout
+
+```
+flutter_server_box/
+├── lib/               # Flutter app (see below)
+├── crates/
+│   ├── sbm_parser/    # Shared status parser (single source of truth,
+│   │                  # used by the app via FFI and by the monitor)
+│   └── sbm_ffi/       # flutter_rust_bridge binding crate + cargokit
+│                      # Flutter plugin glue (one directory)
+├── monitor/           # Server-side monitor (Rust service + React frontend)
+├── packages/          # Vendored Dart forks (path dependencies)
+├── docs/              # This documentation site (Astro Starlight)
+├── website/           # Project website
+└── Cargo.toml         # Rust workspace root
+```
+
+## App Directory Structure
 
 ```
 lib/
@@ -13,13 +30,17 @@ lib/
 ├── data/              # Data layer
 │   ├── model/         # Data models by feature
 │   ├── provider/      # Riverpod providers
-│   └── store/         # Local storage (Hive)
+│   ├── store/         # Local storage (Hive)
+│   ├── helper/        # Data-layer helpers
+│   ├── res/           # Resources and constants
+│   └── ssh/           # SSH session management
 ├── view/              # UI layer
 │   ├── page/          # Main pages
 │   └── widget/        # Reusable widgets
 ├── generated/         # Generated localization
 ├── l10n/              # Localization ARB files
-└── hive/              # Hive adapters
+├── hive/              # Hive adapters
+└── src/rust/          # Generated flutter_rust_bridge bindings (do not edit)
 ```
 
 ## Core Layer (`lib/core/`)
@@ -88,9 +109,20 @@ Reusable UI components:
 
 ## Packages Directory (`/packages/`)
 
-Contains custom forks of dependencies:
+Contains custom forks of dependencies, referenced by path from `pubspec.yaml`:
 
 - `dartssh2/` - SSH library
 - `xterm/` - Terminal emulator
 - `fl_lib/` - Shared utilities
 - `fl_build/` - Build system
+- `circle_chart/` - Chart widget
+- `plain_notification_token/` - Push token plugin
+- `watch_connectivity/` - Apple Watch connectivity
+
+## Rust Side
+
+- `crates/sbm_parser/` - Parses raw command output into structured server status.
+  Shared by the app (via FFI) and the monitor, so both always agree on parsing.
+- `crates/sbm_ffi/` - Thin flutter_rust_bridge wrapper around `sbm_parser`.
+  The generated Dart side lives in `lib/src/rust/`.
+- `monitor/` - Standalone monitoring service with its own docs in `monitor/README.md`.

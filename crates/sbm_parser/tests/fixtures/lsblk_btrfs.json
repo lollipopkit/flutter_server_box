@@ -1,0 +1,55 @@
+
+{
+  "blockdevices": [
+    {
+      "name": "nvme1n1",
+      "kname": "nvme1n1",
+      "path": "/dev/nvme1n1",
+      "fstype": null,
+      "mountpoint": null,
+      "fssize": null,
+      "fsused": null,
+      "fsavail": null,
+      "fsuse%": null,
+      "children": [
+        {
+          "name": "nvme1n1p1",
+          "kname": "nvme1n1p1",
+          "path": "/dev/nvme1n1p1",
+          "fstype": "btrfs",
+          "mountpoint": "/mnt/raid",
+          "fssize": "500000000000",
+          "fsused": "100000000000",
+          "fsavail": "400000000000",
+          "fsuse%": "20%",
+          "uuid": "btrfs-raid-uuid-1234-5678"
+        }
+      ]
+    },
+    {
+      "name": "nvme2n1",
+      "kname": "nvme2n1",
+      "path": "/dev/nvme2n1",
+      "fstype": null,
+      "mountpoint": null,
+      "fssize": null,
+      "fsused": null,
+      "fsavail": null,
+      "fsuse%": null,
+      "children": [
+        {
+          "name": "nvme2n1p1",
+          "kname": "nvme2n1p1",
+          "path": "/dev/nvme2n1p1",
+          "fstype": "btrfs",
+          "mountpoint": "/mnt/raid",
+          "fssize": "500000000000",
+          "fsused": "100000000000",
+          "fsavail": "400000000000",
+          "fsuse%": "20%",
+          "uuid": "btrfs-raid-uuid-1234-5678"
+        }
+      ]
+    }
+  ]
+}

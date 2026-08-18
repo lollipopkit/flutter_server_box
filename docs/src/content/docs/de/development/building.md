@@ -9,7 +9,7 @@ Server Box verwendet ein benutzerdefiniertes Build-System (`fl_build`) für plat
 
 - Flutter SDK (stabiler Kanal)
 - Plattformspezifische Tools (Xcode für iOS, Android Studio für Android)
-- Rust-Toolchain (für einige native Abhängigkeiten)
+- Rust-Toolchain (erforderlich: der Status-Parser ist ein Rust-Crate, das über flutter_rust_bridge/cargokit auf jeder Plattform in die App eingebaut wird)
 
 ## Entwicklungs-Build
 

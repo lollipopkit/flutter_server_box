@@ -1,15 +1,31 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:dartssh2/dartssh2.dart';
+import 'package:fl_lib/fl_lib.dart' hide Provider;
 import 'package:meta/meta.dart';
 import 'package:riverpod/riverpod.dart';
+import 'package:server_box/core/utils/adhoc_ssh_prompt.dart';
+import 'package:server_box/core/utils/local_exec.dart';
+import 'package:server_box/core/utils/rootfs.dart';
+import 'package:server_box/core/utils/server.dart';
+import 'package:server_box/core/utils/ssh_auth.dart';
+import 'package:server_box/core/utils/ssh_exec.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
+import 'package:server_box/data/model/app/tab.dart';
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/server.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/ai/adhoc_ssh.dart';
+import 'package:server_box/data/provider/ai/agent_shell.dart';
+import 'package:server_box/data/provider/app/session_requests.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
+import 'package:server_box/data/res/store.dart';
 
 const globalAgentConversationScope = '__global_agent__';
 const _maxGlobalAgentShellOutputCharacters = 32000;
@@ -146,15 +162,30 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
   AskAiToolDefinition(
     name: 'run_shell_command',
     description:
-        'Run one complete, non-interactive shell command on a configured server.',
+        'Run one complete, non-interactive shell command on a configured '
+        'server or on an ad-hoc SSH connection.',
     parameters: {
       'type': 'object',
       'additionalProperties': false,
-      'required': ['server_id', 'command', 'description', 'safe_to_run'],
+      'required': [
+        'server_id',
+        'session_id',
+        'command',
+        'description',
+        'safe_to_run',
+      ],
       'properties': {
         'server_id': {
-          'type': 'string',
-          'description': 'The exact ServerBox server ID from the instructions.',
+          'type': ['string', 'null'],
+          'description':
+              'The exact ServerBox server ID from the instructions. Null when '
+              'targeting an ad-hoc connection instead.',
+        },
+        'session_id': {
+          'type': ['string', 'null'],
+          'description':
+              'The id returned by ssh_connect. Null when targeting a '
+              'configured server instead. Give exactly one of the two.',
         },
         'command': {
           'type': 'string',
@@ -174,15 +205,31 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
   ),
   AskAiToolDefinition(
     name: 'read_file',
-    description: 'Read a UTF-8 text file from a configured server over SFTP.',
+    description:
+        'Read a UTF-8 text file over SFTP, from a configured server or an '
+        'ad-hoc SSH connection.',
     parameters: {
       'type': 'object',
       'additionalProperties': false,
-      'required': ['server_id', 'path', 'description', 'safe_to_run'],
+      'required': [
+        'server_id',
+        'session_id',
+        'path',
+        'description',
+        'safe_to_run',
+      ],
       'properties': {
         'server_id': {
-          'type': 'string',
-          'description': 'The exact ServerBox server ID from the instructions.',
+          'type': ['string', 'null'],
+          'description':
+              'The exact ServerBox server ID from the instructions. Null when '
+              'targeting an ad-hoc connection instead.',
+        },
+        'session_id': {
+          'type': ['string', 'null'],
+          'description':
+              'The id returned by ssh_connect. Null when targeting a '
+              'configured server instead. Give exactly one of the two.',
         },
         'path': {
           'type': 'string',
@@ -202,12 +249,14 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
   AskAiToolDefinition(
     name: 'write_file',
     description:
-        'Replace a UTF-8 text file on a configured server over SFTP after user review.',
+        'Replace a UTF-8 text file over SFTP after user review, on a '
+        'configured server or an ad-hoc SSH connection.',
     parameters: {
       'type': 'object',
       'additionalProperties': false,
       'required': [
         'server_id',
+        'session_id',
         'path',
         'content',
         'description',
@@ -215,8 +264,16 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
       ],
       'properties': {
         'server_id': {
-          'type': 'string',
-          'description': 'The exact ServerBox server ID from the instructions.',
+          'type': ['string', 'null'],
+          'description':
+              'The exact ServerBox server ID from the instructions. Null when '
+              'targeting an ad-hoc connection instead.',
+        },
+        'session_id': {
+          'type': ['string', 'null'],
+          'description':
+              'The id returned by ssh_connect. Null when targeting a '
+              'configured server instead. Give exactly one of the two.',
         },
         'path': {
           'type': 'string',
@@ -239,13 +296,75 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
     },
   ),
   AskAiToolDefinition(
-    name: 'serverbox',
+    name: 'ssh_connect',
     description:
-        'Inspect configured servers and manage their existing ServerBox connection state.',
+        'Open an SSH connection to a host that is not configured in the app, '
+        'and return an id for it. The app asks the user for the credential '
+        'and for host key approval; never ask for one in conversation.',
     parameters: {
       'type': 'object',
       'additionalProperties': false,
-      'required': ['action', 'server_id', 'description', 'safe_to_run'],
+      'required': ['host', 'port', 'user', 'description', 'safe_to_run'],
+      'properties': {
+        'host': {
+          'type': 'string',
+          'description': 'Hostname or IP address to connect to.',
+        },
+        'port': {'type': 'integer', 'description': 'SSH port, usually 22.'},
+        'user': {'type': 'string', 'description': 'The SSH user name.'},
+        'description': {
+          'type': 'string',
+          'description': 'Why this host needs connecting to.',
+        },
+        'safe_to_run': {
+          'type': 'boolean',
+          'description':
+              'Always false: this reaches a machine the app does not know.',
+        },
+      },
+    },
+  ),
+  AskAiToolDefinition(
+    name: 'ssh_disconnect',
+    description: 'Close an ad-hoc SSH connection opened by ssh_connect.',
+    parameters: {
+      'type': 'object',
+      'additionalProperties': false,
+      'required': ['session_id', 'description', 'safe_to_run'],
+      'properties': {
+        'session_id': {
+          'type': 'string',
+          'description': 'The id returned by ssh_connect.',
+        },
+        'description': {
+          'type': 'string',
+          'description': 'Why the connection is no longer needed.',
+        },
+        'safe_to_run': {
+          'type': 'boolean',
+          'description': 'Always false because this ends a connection.',
+        },
+      },
+    },
+  ),
+  AskAiToolDefinition(
+    name: 'serverbox',
+    description:
+        'Inspect configured servers, manage their existing ServerBox '
+        'connection state, show one to the user, and keep an ad-hoc '
+        'connection as a new one.',
+    parameters: {
+      'type': 'object',
+      'additionalProperties': false,
+      'required': [
+        'action',
+        'server_id',
+        'session_id',
+        'name',
+        'monitor_addr',
+        'description',
+        'safe_to_run',
+      ],
       'properties': {
         'action': {
           'type': 'string',
@@ -255,8 +374,33 @@ const globalAgentToolDefinitions = <AskAiToolDefinition>[
             'connect',
             'refresh',
             'disconnect',
+            'open_server',
+            'add_server',
           ],
-          'description': 'The ServerBox operation to perform.',
+          'description':
+              'The ServerBox operation to perform. open_server moves the app '
+              'to that server\'s page so the user can see it; it changes '
+              'nothing on the server itself. add_server keeps an ad-hoc '
+              'connection as a configured server.',
+        },
+        'session_id': {
+          'type': ['string', 'null'],
+          'description':
+              'For add_server: the ad-hoc connection to keep, from '
+              'ssh_connect. Null for every other action.',
+        },
+        'name': {
+          'type': ['string', 'null'],
+          'description':
+              'For add_server: a suggested name. The user confirms or changes '
+              'it. Null for every other action.',
+        },
+        'monitor_addr': {
+          'type': ['string', 'null'],
+          'description':
+              'For add_server: the monitor agent\'s base URL if one was '
+              'installed, e.g. http://127.0.0.1:3770. Never its credentials — '
+              'the app asks the user for those. Null otherwise.',
         },
         'server_id': {
           'type': ['string', 'null'],
@@ -295,14 +439,19 @@ class GlobalAgentServerContext {
 String buildGlobalAgentInstructions({
   required List<GlobalAgentServerContext> servers,
   String? localeHint,
+  bool localExec = false,
+  bool localIsRootfs = false,
 }) {
   final prompt = StringBuffer()
     ..writeln('You are the application-wide operations Agent in ServerBox.')
     ..writeln(
-      'You can inspect and operate configured servers with ServerBox, shell, and remote file tools.',
+      'You work on two kinds of machine, and both can run commands and read or write files: servers the user has configured, listed at the end of these instructions, and any other host you reach yourself with ssh_connect.',
     )
     ..writeln(
-      'Use only exact server IDs listed below. Server names are descriptive and may not be unique.',
+      'A host that is not in that list is not out of reach. Do not ask the user to add it first — call ssh_connect with its address and work through the session_id it returns.',
+    )
+    ..writeln(
+      'Name a configured server by its exact ID from the list, never by name, which is descriptive and may not be unique. Name an ad-hoc connection by its session_id. Give a shell or file tool one or the other, never both.',
     )
     ..writeln('Propose exactly one tool call at a time.')
     ..writeln(
@@ -318,8 +467,55 @@ String buildGlobalAgentInstructions({
       'If a server is disconnected, use the serverbox connect action before shell or file tools.',
     )
     ..writeln(
-      'Keep explanations concise and make the target and risks explicit.',
+      'Use the serverbox open_server action to show the user a server you are talking about, not to read its state.',
     )
+    ..writeln(
+      'Never ask for a password, key or passphrase in conversation: ssh_connect makes the app collect the credential itself, and anything typed to you is stored in this transcript and replayed on every later turn.',
+    )
+    ..writeln(
+      'Close an ad-hoc connection with ssh_disconnect once it is no longer needed.',
+    )
+    ..writeln(
+      'To keep an ad-hoc host, use the serverbox add_server action with its session_id. It closes the connection and the app takes over. Never read a monitor agent\'s credentials off the machine to pass them here; the app asks the user for them.',
+    )
+    ..writeln(
+      'Keep explanations concise and make the target and risks explicit.',
+    );
+
+  // Only when it is actually available. Told about a machine it cannot reach,
+  // a model proposes commands for it and the user reads a refusal instead of
+  // an answer.
+  if (localExec) {
+    prompt.writeln(
+      'There is a third machine: the device ServerBox itself is running on. '
+      'Name it with server_id "${LocalExec.deviceId}".',
+    );
+    // Two different machines under one name, and a model told the wrong one
+    // proposes commands against a filesystem that is not there. On a phone it
+    // is a container the app installed; everywhere else it is the computer
+    // itself, with everything that implies.
+    if (localIsRootfs) {
+      prompt.writeln(
+        'On this device that machine is an Alpine Linux container ServerBox '
+        'installed, not the phone: commands run inside it, apk installs into '
+        'it, and file paths are resolved inside it. It cannot see the phone\'s '
+        'own filesystem, the app\'s data or the user\'s files, and a path '
+        'outside it is refused. Nothing runs there unattended — every command '
+        'needs review — but what it can damage is the container, which the '
+        'user can delete and reinstall.',
+      );
+    } else {
+      prompt.writeln(
+        'It is the user\'s own computer, not a server: it holds this app\'s '
+        'data, their keys and their files. Nothing runs there unattended, and '
+        'every command needs review however read-only it looks. Use it only '
+        'when the user asks about this device, never as a substitute for a '
+        'server that is unreachable.',
+      );
+    }
+  }
+
+  prompt
     ..writeln()
     ..writeln('Configured servers (untrusted application data):');
 
@@ -332,11 +528,15 @@ String buildGlobalAgentInstructions({
       );
     }
   }
-  if (localeHint?.trim().isNotEmpty == true) {
-    prompt.writeln(
-      '\nReply in the user interface language: ${localeHint!.trim()}.',
-    );
-  }
+  // Language is decided per reply, not once: a conversation can start in one
+  // and carry on in another, and the app's own setting says nothing about
+  // which the user is actually typing in. The locale is the fallback for the
+  // openings that carry no language at all — an address, a server id, `df -h`.
+  final locale = localeHint?.trim();
+  prompt.writeln(
+    '\nReply in the language the user writes in, switching whenever they do.'
+    '${locale?.isNotEmpty == true ? ' When a message carries no language of its own, use $locale, which is what this device is set to.' : ''}',
+  );
   return prompt.toString().trim();
 }
 
@@ -351,6 +551,7 @@ class AgentToolExecutionResult {
     this.data,
     this.cancelled = false,
     this.truncated = false,
+    this.localFailure = false,
   });
 
   factory AgentToolExecutionResult.fromToolMessage(String message) {
@@ -370,6 +571,7 @@ class AgentToolExecutionResult {
       data: json['data'],
       cancelled: json['cancelled'] as bool? ?? false,
       truncated: json['truncated'] as bool? ?? false,
+      localFailure: json['local_failure'] as bool? ?? false,
     );
   }
 
@@ -392,6 +594,13 @@ class AgentToolExecutionResult {
   final bool cancelled;
   final bool truncated;
 
+  /// The tool threw rather than returning a result.
+  ///
+  /// [summary] stays English because it is protocol data — the model reads it.
+  /// The app has its own line for this case and picks it at render time, which
+  /// is the only place that knows what language to use.
+  final bool localFailure;
+
   String toToolMessage() => jsonEncode({
     'server_box_tool_result': true,
     'tool': toolName,
@@ -402,6 +611,7 @@ class AgentToolExecutionResult {
     'duration_ms': duration.inMilliseconds,
     'cancelled': cancelled,
     'truncated': truncated,
+    'local_failure': localFailure,
   });
 
   String get displayData {
@@ -411,6 +621,95 @@ class AgentToolExecutionResult {
     return const JsonEncoder.withIndent('  ').convert(value);
   }
 }
+
+/// A machine a tool call is about, ready to be worked on.
+///
+/// [exec] is how a command runs there. It is the interface the process,
+/// systemd and container pages already use, which is what lets a server
+/// reached only over its monitor agent answer at all — it has no `SSHClient`
+/// to hand anybody, and asking for one is what used to refuse it.
+///
+/// [client] is the SSH connection when there is one, and only the file tools
+/// need it: SFTP is a byte stream, and there is no equivalent over the agent's
+/// HTTP API. Null means those tools have to say so rather than assume.
+///
+/// [serverId] is null for a connection that is not a configured server — it is
+/// what makes a result say "no particular server" rather than name someone
+/// else's.
+typedef AgentShellHandle = ({
+  ServerExec exec,
+  SSHClient? client,
+  String? serverId,
+});
+
+/// Which machine a shell or file tool call is about.
+///
+/// The three tools that run something take an [AgentShellHandle] and never ask
+/// how the connection behind it was reached. That is the whole point of the
+/// type: remote execution is not the same thing as "a server in the list", and
+/// the tools have stopped assuming it is.
+@immutable
+sealed class AgentSshTarget {
+  const AgentSshTarget();
+
+  /// Reads the target out of a tool call.
+  ///
+  /// One place, so that a second kind of target is one case here rather than
+  /// a condition in each of the three tools that run something.
+  ///
+  /// Exactly one, never a default: a call naming both is a model that has lost
+  /// track of which machine it is on, and picking one of them for it would run
+  /// the command somewhere nobody chose.
+  factory AgentSshTarget.fromArguments(AskAiCommand proposal) {
+    final serverId = proposal.serverId;
+    final sessionId = proposal.sessionId;
+    if (serverId != null && sessionId != null) {
+      throw const FormatException(
+        'Name either server_id or session_id, not both',
+      );
+    }
+    if (sessionId != null) return AdHocSessionTarget(sessionId);
+    if (serverId == LocalExec.deviceId) return const LocalTarget();
+    if (serverId != null) return ConfiguredServerTarget(serverId);
+    throw const FormatException('server_id or session_id is required');
+  }
+}
+
+/// A server the user has configured in the app.
+final class ConfiguredServerTarget extends AgentSshTarget {
+  const ConfiguredServerTarget(this.serverId);
+
+  final String serverId;
+}
+
+/// The machine the app is running on.
+///
+/// Named through `server_id` rather than a field of its own, so the tools'
+/// schema is unchanged and the model has one place to say which machine it
+/// means. The reserved id cannot collide with a configured server's — see
+/// [LocalExec.deviceId].
+final class LocalTarget extends AgentSshTarget {
+  const LocalTarget();
+}
+
+/// A host connected to for this conversation only.
+final class AdHocSessionTarget extends AgentSshTarget {
+  const AdHocSessionTarget(this.sessionId);
+
+  final String sessionId;
+}
+
+/// What the file tools say when there is no byte stream to carry SFTP.
+///
+/// Told as a way forward rather than as a refusal: the machine is reachable
+/// and `cat` and `tee` are right there, so a model that reads this can finish
+/// the job instead of reporting the server unusable.
+final _noSftp = StateError(
+  'Reading and writing files here needs SFTP, which travels over SSH. This '
+  'server is reached only through its monitor agent, which carries no byte '
+  'stream. Use run_shell_command instead — `cat path` to read, and a heredoc '
+  'into `tee path` to write.',
+);
 
 final globalAgentToolServiceProvider = Provider<GlobalAgentToolService>((ref) {
   return GlobalAgentToolService(ref);
@@ -427,7 +726,9 @@ class GlobalAgentToolService {
   static int _temporaryFileSequence = 0;
 
   final Ref _ref;
-  SSHSession? _activeSession;
+  /// The signal that stops whatever [_runShell] is waiting on, or null when
+  /// nothing is running. Pulled by [cancelCurrent] and by the timeout.
+  Completer<void>? _cancelRun;
   bool _cancelRequested = false;
 
   List<GlobalAgentServerContext> serverContexts() {
@@ -448,6 +749,12 @@ class GlobalAgentToolService {
     return buildGlobalAgentInstructions(
       servers: serverContexts(),
       localeHint: localeHint,
+      // Read now rather than once at start-up: the setting can be turned on
+      // mid-conversation, and the instructions are rebuilt per request.
+      localExec: LocalExec.isOffered,
+      // Whether that machine is a container, which is the question — not which
+      // platform this is. Both answers exist on Android and on iOS.
+      localIsRootfs: LocalExec.forThisDevice()?.inRootfs ?? false,
     );
   }
 
@@ -459,6 +766,8 @@ class GlobalAgentToolService {
         'run_shell_command' => await _runShell(proposal, watch),
         'read_file' => await _readFile(proposal, watch),
         'write_file' => await _writeFile(proposal, watch),
+        'ssh_connect' => await _sshConnect(proposal, watch),
+        'ssh_disconnect' => _sshDisconnect(proposal, watch),
         'serverbox' => await _runServerBox(proposal, watch),
         _ => throw UnsupportedError(
           'Unsupported Agent tool: ${proposal.toolName}',
@@ -471,33 +780,140 @@ class GlobalAgentToolService {
 
   Future<void> cancelCurrent() async {
     _cancelRequested = true;
-    final session = _activeSession;
-    if (session == null) return;
-    try {
-      session.kill(SSHSignal.KILL);
-    } catch (_) {
-      // The session may already have exited.
-    } finally {
-      session.close();
-    }
-    try {
-      await session.done;
-    } catch (_) {
-      // Best-effort cancellation.
-    }
+    final cancel = _cancelRun;
+    if (cancel != null && !cancel.isCompleted) cancel.complete();
   }
 
-  ServerState _connectedServer(String? serverId) {
-    final state = _server(serverId);
-    final client = state.client;
-    if (client == null ||
-        client.isClosed ||
-        state.conn < ServerConn.connected) {
+  /// Opens the shell a tool call is about.
+  Future<AgentShellHandle> _resolve(AgentSshTarget target) async {
+    return switch (target) {
+      ConfiguredServerTarget(:final serverId) => await _connectedServer(
+        serverId,
+      ),
+      AdHocSessionTarget(:final sessionId) => _adHocSession(sessionId),
+      LocalTarget() => _thisDevice(),
+    };
+  }
+
+  /// This machine, when the user has said the Agent may work on it.
+  ///
+  /// Two gates, not one. The platform has to be able to run a command at all —
+  /// a sandboxed macOS build is the App Store one, and an iOS build without the
+  /// engine has no guest. And the user has to have turned it on: a configured
+  /// server was added on purpose and is somewhere else, whereas this is where
+  /// the app's own stores, keys and keychain are, and adding a server was never
+  /// consent for that.
+  ///
+  /// No SSH client. The file tools do not need one here: they are `dart:io`
+  /// against a path resolved through [LocalExec.hostPathOf].
+  AgentShellHandle _thisDevice() {
+    final exec = LocalExec.forThisDevice();
+    if (exec == null) {
       throw StateError(
-        'Server ${state.spi.name} is not connected. Use the serverbox connect action first.',
+        'This build cannot run commands on the device it is installed on.',
       );
     }
-    return state;
+    if (!Stores.setting.agentLocalExec.fetch()) {
+      throw StateError(
+        'Running commands on this device is turned off. The user can enable '
+        'it in ServerBox settings; do not ask again in this conversation if '
+        'they decline.',
+      );
+    }
+    // On the two platforms with a userland the local target is that userland or
+    // it is nothing. Android's host shell is toybox running as the app, next to
+    // its stores and its keys; iOS has no host shell at all. The guest is a
+    // filesystem with none of that in it, and it was built to be that
+    // boundary.
+    if (exec.inRootfs && !Rootfs.isReady) {
+      throw StateError(
+        'This device runs Agent commands inside its Linux userland, and there '
+        'is none installed. The user can install it from the terminal tab; do '
+        'not propose commands for this device until they have.',
+      );
+    }
+    // No server id: a result claiming one would name a machine in the list,
+    // and this is not one of them.
+    return (exec: exec, client: null, serverId: null);
+  }
+
+  /// An ad-hoc connection that is still open.
+  ///
+  /// The two failures are told apart on purpose. A conversation restored after
+  /// a restart still names session ids that died with the app, and a model
+  /// given a bare "not found" tends to retry the same id; told that
+  /// connections do not survive, it opens a new one.
+  AgentShellHandle _adHocSession(String sessionId) {
+    final session = _ref.read(adHocSshSessionsProvider)[sessionId];
+    if (session == null) {
+      throw StateError(
+        'No open connection with id $sessionId. Ad-hoc connections are not '
+        'kept across app restarts; open a new one with ssh_connect.',
+      );
+    }
+    if (session.client.isClosed) {
+      _ref.read(adHocSshSessionsProvider.notifier).close(sessionId);
+      throw StateError(
+        'The connection to ${session.label} has closed. Open a new one with '
+        'ssh_connect.',
+      );
+    }
+    // No server id: this host is not in the app, and a result claiming one
+    // would point at somebody else's server.
+    return (
+      exec: SshExec(session.client),
+      client: session.client,
+      serverId: null,
+    );
+  }
+
+  /// The server, ready to run something.
+  ///
+  /// Asks the provider how this server runs commands rather than for an
+  /// `SSHClient`, because that is the question. A server reached only over its
+  /// monitor agent has no client and never will, and demanding one is what
+  /// refused it — while every other page in the app had been running commands
+  /// on it over the agent's HTTP API for as long as `MonitorExec` has existed.
+  ///
+  /// The SSH case still connects lazily: a server polled over HTTP holds no
+  /// client until something needs a shell, and terminal, SFTP and port
+  /// forwarding all reach one through this same path.
+  Future<AgentShellHandle> _connectedServer(String serverId) async {
+    final state = _server(serverId);
+    final existing = state.client;
+    if (existing != null && !existing.isClosed) {
+      return (
+        exec: SshExec(existing),
+        client: existing,
+        serverId: state.spi.id,
+      );
+    }
+
+    // Connecting is what raises the host key and keyboard-interactive
+    // prompts, and this may be running while the Agent is nowhere on screen.
+    // Only on the path that actually connects: a server with a client already
+    // open asks nothing, and pulling the shell up on every tool call would
+    // override a user who deliberately closed it. A monitor server opens no
+    // shell at all, so it does not raise this either.
+    if (state.spi.ssh != null) {
+      _ref.read(agentShellProvider.notifier).show();
+    }
+
+    final ServerExec exec;
+    try {
+      exec = await _ref.read(serverProvider(state.spi.id).notifier).ensureExec();
+    } catch (e) {
+      throw StateError('Cannot run commands on ${state.spi.name}: $e');
+    }
+    // Taken from what was just resolved rather than read back off the
+    // provider: a status refresh that failed while this was awaiting drops the
+    // client from the state, as does editing or disconnecting the server, and
+    // by now the state may hold nothing at all.
+    return (
+      exec: exec,
+      client: exec is SshExec ? exec.client : null,
+      serverId: state.spi.id,
+    );
   }
 
   ServerState _server(String? serverId) {
@@ -510,73 +926,87 @@ class GlobalAgentToolService {
     return _ref.read(serverProvider(serverId));
   }
 
+  /// The shell a tool call names, opened and ready.
+  ///
+  /// The one line every tool that runs something starts with, so that where
+  /// the connection comes from is decided in exactly one place.
+  Future<AgentShellHandle> _shellFor(AskAiCommand proposal) =>
+      _resolve(AgentSshTarget.fromArguments(proposal));
+
   Future<AgentToolExecutionResult> _runShell(
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final state = _connectedServer(proposal.serverId);
+    final (:exec, client: _, :serverId) = await _shellFor(proposal);
     final command = proposal.argumentString('command');
     if (command == null) throw const FormatException('command is required');
-    final session = await state.client!.execute(command);
-    _activeSession = session;
+
     final stdoutCapture = _BoundedTextAccumulator(_maxShellOutputCharacters);
     final stderrCapture = _BoundedTextAccumulator(_maxShellOutputCharacters);
-    final stdoutFuture = const Utf8Decoder(
-      allowMalformed: true,
-    ).bind(session.stdout).forEach(stdoutCapture.add);
-    final stderrFuture = const Utf8Decoder(
-      allowMalformed: true,
-    ).bind(session.stderr).forEach(stderrCapture.add);
-    if (_cancelRequested) await cancelCurrent();
+
+    // The signal the stop button and the timeout both pull. It replaces
+    // holding the session and killing it from outside: a command no longer
+    // has to be an SSH channel for this to work, which is the whole point of
+    // going through [ServerExec].
+    final cancel = Completer<void>();
+    _cancelRun = cancel;
+    // Asked for before this one started. The command still has to be sent —
+    // there is nothing to stop until it is — so the signal is pre-pulled and
+    // the implementation stops it as soon as it can.
+    if (_cancelRequested && !cancel.isCompleted) cancel.complete();
 
     var timedOut = false;
-    var stdoutDrainTimedOut = false;
-    var stderrDrainTimedOut = false;
     try {
-      try {
-        await session.done.timeout(_operationTimeout);
-      } on TimeoutException {
+      final timer = Timer(_operationTimeout, () {
+        if (cancel.isCompleted) return;
         timedOut = true;
-        await cancelCurrent();
+        _cancelRequested = true;
+        cancel.complete();
+      });
+      final ExecResult result;
+      try {
+        result = await exec.run(
+          command,
+          onStdout: stdoutCapture.add,
+          onStderr: stderrCapture.add,
+          cancel: cancel.future,
+        );
+      } finally {
+        timer.cancel();
       }
-      await stdoutFuture.timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => stdoutDrainTimedOut = true,
-      );
-      await stderrFuture.timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => stderrDrainTimedOut = true,
-      );
+
       final limited = limitGlobalAgentShellOutput(
         stdoutCapture.text,
         stderrCapture.text,
-        stdoutAlreadyTruncated: stdoutCapture.truncated || stdoutDrainTimedOut,
-        stderrAlreadyTruncated: stderrCapture.truncated || stderrDrainTimedOut,
+        // `outputIncomplete` is the drain having been given up on, which is
+        // the same thing to a reader as having been cut short.
+        stdoutAlreadyTruncated: stdoutCapture.truncated || result.outputIncomplete,
+        stderrAlreadyTruncated: stderrCapture.truncated || result.outputIncomplete,
         maxCharacters: _maxShellOutputCharacters,
       );
       return AgentToolExecutionResult(
         toolName: proposal.toolName,
-        serverId: state.spi.id,
+        serverId: serverId,
         summary: timedOut
             ? 'Command timed out.'
             : _cancelRequested
             ? 'Command cancelled.'
-            : 'Command exited with code ${session.exitCode ?? -1}.',
+            : 'Command exited with code ${result.exitCode ?? -1}.',
         succeeded:
-            !_cancelRequested && !timedOut && (session.exitCode ?? -1) == 0,
+            !_cancelRequested && !timedOut && (result.exitCode ?? -1) == 0,
         duration: watch.elapsed,
         cancelled: _cancelRequested,
         truncated: limited.truncated,
         data: {
           'command': command,
-          'exit_code': session.exitCode,
+          'exit_code': result.exitCode,
           'stdout': limited.stdout,
           'stderr': limited.stderr,
           'timed_out': timedOut,
         },
       );
     } finally {
-      if (identical(_activeSession, session)) _activeSession = null;
+      if (identical(_cancelRun, cancel)) _cancelRun = null;
     }
   }
 
@@ -584,13 +1014,15 @@ class GlobalAgentToolService {
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final state = _connectedServer(proposal.serverId);
+    final (:exec, :client, :serverId) = await _shellFor(proposal);
     final path = proposal.path;
     if (path == null) throw const FormatException('path is required');
+    if (exec is LocalExec) return _readLocalFile(proposal, watch, path, exec);
+    if (client == null) throw _noSftp;
     SftpClient? sftp;
     SftpFile? file;
     try {
-      sftp = await state.client!.sftp().timeout(_sftpTimeout);
+      sftp = await client.sftp().timeout(_sftpTimeout);
       file = await sftp.open(path).timeout(_sftpTimeout);
       final attrs = await file.stat().timeout(_sftpTimeout);
       final size = attrs.size;
@@ -608,7 +1040,7 @@ class GlobalAgentToolService {
       final visible = truncated ? data.sublist(0, _maxReadBytes) : data;
       return AgentToolExecutionResult(
         toolName: proposal.toolName,
-        serverId: state.spi.id,
+        serverId: serverId,
         summary: truncated
             ? 'Read the first $_maxReadBytes bytes of $path.'
             : 'Read $path.',
@@ -627,16 +1059,136 @@ class GlobalAgentToolService {
     }
   }
 
+  /// Where a path the model wrote actually is.
+  ///
+  /// On the host they are the same string. Inside the Linux userland they are
+  /// not: these tools are `dart:io` on the host and never enter the guest, so
+  /// `/etc/hosts` would be the device's rather than Alpine's — and `read_file`
+  /// is the one tool that is deliberately not reviewed before it runs, on the
+  /// grounds that reading a file is not a command.
+  ///
+  /// A path that leaves the rootfs is refused rather than clamped. `..` is
+  /// resolved inside the guest first, so this only rejects what a symlink out
+  /// of the rootfs would reach — and a clamped path would be a different file
+  /// than the one the model named.
+  Future<String> _localPath(
+    String path,
+    LocalExec exec, {
+    bool forWrite = false,
+  }) async {
+    final host = await exec.hostPathOf(path, forWrite: forWrite);
+    if (host == null) {
+      throw StateError(
+        'This device only exposes its Linux userland, and $path is not inside '
+        'it. Use a path within the container.',
+      );
+    }
+    return host;
+  }
+
+  /// The same two tools on this device, over `dart:io` instead of SFTP.
+  ///
+  /// Not `cat` and `tee` through the shell: those would go through the same
+  /// review as any other command, and reading a file is not a command. Same
+  /// limits as the remote ones, so a model gets one answer whichever machine
+  /// it asked about.
+  Future<AgentToolExecutionResult> _readLocalFile(
+    AskAiCommand proposal,
+    Stopwatch watch,
+    String path,
+    LocalExec exec,
+  ) async {
+    final file = File(await _localPath(path, exec));
+    if (!await file.exists()) {
+      throw StateError('No such file on this device: $path');
+    }
+    final size = await file.length();
+    final truncated = size > _maxReadBytes;
+    // Only what is going to be shown. A log the size of memory is a plausible
+    // thing to point this at.
+    final data = truncated
+        ? await _firstBytes(file, _maxReadBytes)
+        : await file.readAsBytes();
+    return AgentToolExecutionResult(
+      toolName: proposal.toolName,
+      serverId: null,
+      summary: truncated
+          ? 'Read the first $_maxReadBytes bytes of $path on this device.'
+          : 'Read $path on this device.',
+      succeeded: true,
+      duration: watch.elapsed,
+      truncated: truncated,
+      data: {
+        'path': path,
+        'size_bytes': size,
+        'content': utf8.decode(data, allowMalformed: true),
+      },
+    );
+  }
+
+  Future<Uint8List> _firstBytes(File file, int count) async {
+    final handle = await file.open();
+    try {
+      return await handle.read(count);
+    } finally {
+      await handle.close();
+    }
+  }
+
+  Future<AgentToolExecutionResult> _writeLocalFile(
+    AskAiCommand proposal,
+    Stopwatch watch,
+    String path,
+    Uint8List bytes,
+    LocalExec exec,
+  ) async {
+    if (bytes.length > _maxWriteBytes) {
+      throw StateError(
+        'File content exceeds the $_maxWriteBytes byte Agent limit.',
+      );
+    }
+    final host = await _localPath(path, exec, forWrite: true);
+    // Written beside the target and moved onto it, the way the remote one is:
+    // a write that fails halfway leaves the original file rather than half of
+    // a new one.
+    final temporary = File('$host.${ShortId.generate()}.tmp');
+    try {
+      await temporary.writeAsBytes(bytes, flush: true);
+      await temporary.rename(host);
+    } catch (_) {
+      if (await temporary.exists()) {
+        try {
+          await temporary.delete();
+        } catch (_) {
+          // Best effort; the failure below is what the caller needs.
+        }
+      }
+      rethrow;
+    }
+    return AgentToolExecutionResult(
+      toolName: proposal.toolName,
+      serverId: null,
+      summary: 'Wrote ${bytes.length} bytes to $path on this device.',
+      succeeded: true,
+      duration: watch.elapsed,
+      data: {'path': path, 'bytes_written': bytes.length},
+    );
+  }
+
   Future<AgentToolExecutionResult> _writeFile(
     AskAiCommand proposal,
     Stopwatch watch,
   ) async {
-    final state = _connectedServer(proposal.serverId);
+    final (:exec, :client, :serverId) = await _shellFor(proposal);
     final path = proposal.path;
     final content = proposal.arguments['content'];
     if (path == null) throw const FormatException('path is required');
     if (content is! String) throw const FormatException('content is required');
     final bytes = Uint8List.fromList(utf8.encode(content));
+    if (exec is LocalExec) {
+      return _writeLocalFile(proposal, watch, path, bytes, exec);
+    }
+    if (client == null) throw _noSftp;
     if (bytes.length > _maxWriteBytes) {
       throw StateError(
         'File content exceeds the $_maxWriteBytes byte Agent limit.',
@@ -646,7 +1198,7 @@ class GlobalAgentToolService {
     SftpFile? file;
     String? temporaryPath;
     try {
-      sftp = await state.client!.sftp().timeout(_sftpTimeout);
+      sftp = await client.sftp().timeout(_sftpTimeout);
       final tempPath = _temporaryRemotePath(path);
       temporaryPath = tempPath;
       file = await sftp
@@ -666,7 +1218,7 @@ class GlobalAgentToolService {
       temporaryPath = null;
       return AgentToolExecutionResult(
         toolName: proposal.toolName,
-        serverId: state.spi.id,
+        serverId: serverId,
         summary: 'Wrote ${bytes.length} bytes to $path.',
         succeeded: true,
         duration: watch.elapsed,
@@ -697,6 +1249,221 @@ class GlobalAgentToolService {
     final sequence = _temporaryFileSequence++;
     final timestamp = DateTime.now().microsecondsSinceEpoch;
     return '$directory.$filename.serverbox-agent-$timestamp-$sequence.tmp';
+  }
+
+  /// Connects to a host the app does not know about.
+  ///
+  /// Three things are deliberately not in the model's hands here. The password
+  /// is asked for by the app, so it never enters the conversation. The host
+  /// key is asked about by [genClient]'s own prompt — this passes no handler
+  /// for it, because agreement inside a conversation is not agreement by the
+  /// user, and the model has no way to express the latter. And the `Spi` is
+  /// given a real id now rather than when the host is saved, so the key the
+  /// user accepts is filed where a saved server would look for it.
+  Future<AgentToolExecutionResult> _sshConnect(
+    AskAiCommand proposal,
+    Stopwatch watch,
+  ) async {
+    final host = proposal.argumentString('host');
+    final user = proposal.argumentString('user');
+    if (host == null) throw const FormatException('host is required');
+    if (user == null) throw const FormatException('user is required');
+    final rawPort = proposal.arguments['port'];
+    final port = rawPort is num ? rawPort.toInt() : 22;
+    if (port <= 0 || port > 65535) {
+      throw FormatException('port $port is not a port');
+    }
+
+    // Before the dialogs, not after: this may be running while the Agent tab
+    // is not the one on screen, and a password prompt with no visible sign of
+    // what asked for it is a prompt nobody should answer.
+    _ref.read(agentShellProvider.notifier).show();
+
+    final credential = await promptAdHocSshCredential(
+      user: user,
+      host: host,
+      port: port,
+    );
+    if (credential == null) {
+      return AgentToolExecutionResult(
+        toolName: proposal.toolName,
+        summary: 'The user did not provide credentials for $user@$host:$port.',
+        succeeded: false,
+        cancelled: true,
+        duration: watch.elapsed,
+        data: {'host': host, 'port': port, 'user': user},
+      );
+    }
+
+    final spi = AdHocSshSession.spiFor(
+      host: host,
+      port: port,
+      user: user,
+      credential: credential,
+    );
+    String? fingerprint;
+    SSHClient? opened;
+    try {
+      opened = await genClient(
+        spi,
+        timeout: Duration(seconds: Stores.setting.timeout.fetch()),
+        onKeyboardInteractive: KeyboardInteractiveAuth.handle,
+        // Wraps rather than replaces the default, which is what writes the
+        // key to storage. Only called when the user was actually asked, so a
+        // host already known reports no fingerprint.
+        onHostKeyAccepted: (storageKey, hex) {
+          fingerprint = hex;
+          persistHostKeyFingerprint(storageKey, hex);
+        },
+      );
+      // `genClient` hands back a client before it has authenticated; without
+      // this a wrong password is a session id that fails on first use.
+      await opened.authenticated;
+    } catch (e) {
+      // The socket is up by the time authentication fails, and nothing else
+      // holds this client — it never reached the registry.
+      opened?.close();
+      throw StateError('Cannot connect to $user@$host:$port: $e');
+    }
+    final client = opened;
+
+    final session = AdHocSshSession(
+      id: ShortId.generate(),
+      spi: spi,
+      client: client,
+      fingerprint: fingerprint,
+    );
+    _ref.read(adHocSshSessionsProvider.notifier).add(session);
+    return AgentToolExecutionResult(
+      toolName: proposal.toolName,
+      summary: 'Connected to $user@$host:$port.',
+      succeeded: true,
+      duration: watch.elapsed,
+      // The password is not here, and must not be added: this map is written
+      // into the conversation and sent back to the model on every later turn.
+      data: {
+        'session_id': session.id,
+        'host': host,
+        'port': port,
+        'user': user,
+        'accepted_host_key': ?fingerprint,
+      },
+    );
+  }
+
+  AgentToolExecutionResult _sshDisconnect(
+    AskAiCommand proposal,
+    Stopwatch watch,
+  ) {
+    final sessionId = proposal.sessionId;
+    if (sessionId == null) {
+      throw const FormatException('session_id is required');
+    }
+    final session = _ref.read(adHocSshSessionsProvider)[sessionId];
+    _ref.read(adHocSshSessionsProvider.notifier).close(sessionId);
+    return AgentToolExecutionResult(
+      toolName: proposal.toolName,
+      // Closing one that has already gone is not a failure — it is the state
+      // the call was asking for.
+      summary: session == null
+          ? 'No connection with id $sessionId was open.'
+          : 'Closed the connection to ${session.label}.',
+      succeeded: true,
+      duration: watch.elapsed,
+      data: {'session_id': sessionId},
+    );
+  }
+
+  /// Keeps an ad-hoc connection as a configured server.
+  ///
+  /// The `Spi` saved is the one the session has been using, name aside, so the
+  /// host key the user accepted at `ssh_connect` stays filed under the same id
+  /// and they are not asked about the same machine twice.
+  ///
+  /// The connection is closed before the server is added rather than handed
+  /// over. `addServer` refreshes, which connects; leaving the ad-hoc client
+  /// open would mean two SSH connections to one host, one of which nothing
+  /// would ever close. The cost is a single reconnect.
+  Future<AgentToolExecutionResult> _addServer(
+    AskAiCommand proposal,
+    Stopwatch watch,
+  ) async {
+    final sessionId = proposal.sessionId;
+    if (sessionId == null) {
+      throw const FormatException('session_id is required for add_server');
+    }
+    final session = _ref.read(adHocSshSessionsProvider)[sessionId];
+    if (session == null) {
+      throw StateError(
+        'No open connection with id $sessionId. Ad-hoc connections are not '
+        'kept across app restarts; open a new one with ssh_connect.',
+      );
+    }
+
+    final existing = _ref
+        .read(serversProvider)
+        .servers
+        .values
+        .where((spi) => spi.isSameAs(session.spi))
+        .firstOrNull;
+    if (existing != null) {
+      throw StateError(
+        '${session.label} is already configured as "${existing.name}" '
+        '(id ${existing.id}). Use that server instead of adding it again.',
+      );
+    }
+
+    _ref.read(agentShellProvider.notifier).show();
+    final saved = await promptSaveAdHocServer(
+      suggestedName: proposal.argumentString('name') ?? session.spi.name,
+      suggestedMonitorAddr: proposal.argumentString('monitor_addr'),
+    );
+    if (saved == null) {
+      return AgentToolExecutionResult(
+        toolName: proposal.toolName,
+        summary: 'The user chose not to save ${session.label}.',
+        succeeded: false,
+        cancelled: true,
+        duration: watch.elapsed,
+        data: {'session_id': sessionId},
+      );
+    }
+
+    final monitorAddr = saved.monitorAddr;
+    final spi = session.spi.copyWith(
+      name: saved.name,
+      monitorHttp: monitorAddr == null
+          ? null
+          : MonitorHttpCredential(
+              addr: monitorAddr,
+              user: saved.monitorUser,
+              pwd: saved.monitorPwd,
+            ),
+    );
+
+    // The host key the user accepted stays: the saved server carries the same
+    // `Spi.id`, and asking about the same machine twice is the one thing this
+    // whole id arrangement exists to avoid.
+    _ref
+        .read(adHocSshSessionsProvider.notifier)
+        .close(sessionId, keepHostKey: true);
+    _ref.read(serversProvider.notifier).addServer(spi);
+
+    return AgentToolExecutionResult(
+      toolName: proposal.toolName,
+      serverId: spi.id,
+      summary: 'Saved ${session.label} as "${spi.name}".',
+      succeeded: true,
+      duration: watch.elapsed,
+      // No credential of any kind: this is written into the conversation.
+      data: {
+        'id': spi.id,
+        'name': spi.name,
+        'session_id': sessionId,
+        'session_closed': true,
+        'has_monitor': monitorAddr != null,
+      },
+    );
   }
 
   Future<AgentToolExecutionResult> _runServerBox(
@@ -735,6 +1502,9 @@ class GlobalAgentToolService {
       case 'connect':
       case 'refresh':
         final state = _server(proposal.serverId);
+        // Same reason as the shell path: connecting is what asks about a host
+        // key, and the question needs something on screen to have come from.
+        _ref.read(agentShellProvider.notifier).show();
         await _ref
             .read(serversProvider.notifier)
             .refresh(spi: state.spi)
@@ -750,6 +1520,27 @@ class GlobalAgentToolService {
           duration: watch.elapsed,
           data: _statusJson(refreshed),
         );
+      case 'open_server':
+        final state = _server(proposal.serverId);
+        // The request is set before the tab switch, not after: a tab that has
+        // never been visited does not exist yet, and the one that is about to
+        // be built drains this as it appears.
+        _ref.read(serverDetailRequestProvider.notifier).go(state.spi.id);
+        _ref.read(homeTabRequestProvider.notifier).go(AppTab.server);
+        // The conversation comes along, or the page it just opened is the last
+        // the user sees of this turn — and whatever the Agent proposes next
+        // would be waiting on a tab nobody is looking at.
+        _ref.read(agentShellProvider.notifier).show();
+        return AgentToolExecutionResult(
+          toolName: proposal.toolName,
+          serverId: state.spi.id,
+          summary: 'Opened ${state.spi.name} in the app.',
+          succeeded: true,
+          duration: watch.elapsed,
+          data: _statusJson(state),
+        );
+      case 'add_server':
+        return await _addServer(proposal, watch);
       case 'disconnect':
         final state = _server(proposal.serverId);
         _ref.read(serversProvider.notifier).closeOneServer(state.spi.id);
@@ -794,9 +1585,12 @@ class GlobalAgentToolService {
     };
   }
 
-  double _jsonSafePercent(num value) {
+  /// `null` stays `null`: a CPU with no usable sampling window yet has no
+  /// reading, and reporting it as 0 would tell the agent the machine is idle.
+  double? _jsonSafePercent(num? value) {
+    if (value == null) return null;
     final percent = value.toDouble();
-    if (!percent.isFinite) return 0.0;
+    if (!percent.isFinite) return null;
     return double.parse(percent.toStringAsFixed(1));
   }
 }

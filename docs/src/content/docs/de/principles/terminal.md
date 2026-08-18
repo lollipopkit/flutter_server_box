@@ -123,28 +123,24 @@ Tabs behalten ihren Zustand bei Navigationswechseln bei:
 
 ## Virtuelle Tastatur
 
-### Plattformspezifische Implementierung
-
-**iOS:**
-- UIView-basierte benutzerdefinierte Tastatur
-- Umschaltbar mit Tastatur-Button
-- Automatisches Ein-/Ausblenden basierend auf dem Fokus
-
-**Android:**
-- Benutzerdefinierte Eingabemethode
-- Integriert in die Systemtastatur
-- Schnellaktionstasten
+Die virtuelle Tastatur ist auf allen Plattformen ein Flutter-Widget, das über dem
+Terminal angezeigt wird (verfügbare Tasten sind in
+`lib/data/model/ssh/virtual_key.dart` definiert). Auf Mobilgeräten erscheint sie
+zusammen mit der Systemtastatur.
 
 ### Tastatur-Buttons
 
 | Button | Aktion |
 |--------|--------|
-| **Umschalten** | Systemtastatur ein-/ausblenden |
-| **Ctrl** | Ctrl-Modifikator senden |
-| **Alt** | Alt-Modifikator senden |
-| **SFTP** | Aktuelles Verzeichnis öffnen |
-| **Zwischenablage** | Kontextsensitive Kopieren/Einfügen |
-| **Snippets** | Snippet ausführen |
+| **Esc / Tab / Home / End / PgUp / PgDn / Pfeiltasten** | Entsprechende Taste senden |
+| **Ctrl / Alt / Shift** | Modifikator für die nächste Taste umschalten |
+| **IME** | Systemtastatur ein-/ausblenden |
+| **Zwischenablage** | Kontextabhängiges Kopieren/Einfügen |
+| **SFTP** | Aktuelles Verzeichnis im SFTP-Browser öffnen |
+| **Snippet** | Snippet auswählen und ausführen |
+| **Symbole** | `/ \ _ + = - ( ) [ ] { } < >` und mehr |
+
+Tastensatz und Reihenfolge sind in den Einstellungen anpassbar.
 
 ## Textauswahl
 
@@ -188,11 +184,24 @@ GestureDetector(
 - **Dunkel (Dark)**: Dunkler Hintergrund, heller Text
 - **AMOLED**: Rein schwarzer Hintergrund
 
-## Leistungsoptimierungen
+## Leistung
 
-- **Dirty Rectangle**: Nur geänderte Regionen neu zeichnen
-- **Zeilen-Caching**: Gerenderte Zeilen cachen
-- **Lazy Scrolling**: Virtuelles Scrollen für lange Puffer
-- **Batch-Updates**: Mehrere Schreibvorgänge zusammenfassen
-- **Kompression**: Kompression des Scroll-Puffers
-- **Debouncing**: Debouncing für schnelle Eingaben
+Der xterm.dart-Fork rendert mit einem eigenen Painter und zeichnet nur bei
+Terminal-Updates neu; Ausgaben werden gepuffert und zusammengefasst, bevor sie
+an den Emulator übergeben werden.
+
+## Besondere Funktionen
+
+### Snippet-Ausführung
+
+Beim Auswählen eines Snippets wird dessen Inhalt in das Terminal eingefügt und mit
+einem Zeilenumbruch ausgeführt.
+
+### SFTP-Schnellzugriff
+
+Die virtuelle **SFTP**-Taste öffnet das aktuelle Arbeitsverzeichnis im SFTP-Browser.
+
+### Keep-Alive
+
+Verbindungen werden auf der SSH-Protokollebene aufrechterhalten (siehe
+[SSH-Verbindung](/docs/principles/ssh/)), nicht durch Einspeisen von Bytes ins Terminal.

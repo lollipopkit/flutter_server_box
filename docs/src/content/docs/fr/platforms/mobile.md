@@ -55,23 +55,17 @@ Des limitations en arrière-plan s'appliquent :
 
 ## Notifications Push
 
-Recevez des notifications pour :
-
-- Alertes de serveur hors ligne
-- Avertissements d'utilisation élevée des ressources
-- Alertes de fin de tâche
-
-Configurez dans Paramètres > Notifications.
+Les alertes serveur (hors ligne, seuil dépassé) sont envoyées par
+[ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor)
+exécuté sur vos serveurs — les règles d’alerte et les canaux de push se configurent côté Monitor.
 
 ## Fonctionnalités de l'interface mobile
 
-- **Tirer pour rafraîchir** : Mettre à jour l'état du serveur
-- **Actions de glissement** : Opérations rapides sur le serveur
+- **Tirer pour actualiser** : Mettre à jour l’état du serveur
 - **Mode paysage** : Meilleure expérience du terminal
-- **Clavier virtuel** : Raccourcis pour le terminal
+- **Clavier virtuel** : Raccourcis du terminal
 
 ## Intégration de fichiers
 
-- **Application Fichiers (iOS)** : Accès direct SFTP depuis Fichiers
-- **Storage Access Framework (Android)** : Partager des fichiers avec d'autres applications
-- **Sélecteur de documents** : Sélection de fichiers facile
+- **Sélecteur de documents** : Choisir des fichiers locaux pour l’envoi SFTP et l’import/export de sauvegardes
+- **Partage** : Exporter des fichiers vers d’autres applications

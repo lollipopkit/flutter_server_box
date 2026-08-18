@@ -59,7 +59,7 @@ void main() {
 ### Page d'accueil
 
 `HomePage` sert de plaque tournante pour la navigation :
-- **Interface par onglets** : Serveur, Snippet, Conteneur, SSH
+- **Interface par onglets** : Serveur, SSH, Fichiers, Snippet
 - **Gestion de l'état** : État par onglet
 - **Navigation** : Accès aux fonctionnalités
 
@@ -91,7 +91,7 @@ void main() {
 - `SettingStore` : Préférences de l'application
 - `ServerStore` : Configurations de serveur
 - `SnippetStore` : Extraits de commande
-- `KeyStore` : Clés SSH
+- `PrivateKeyStore` : Clés SSH
 
 ### Modèles immuables : Freezed
 
@@ -113,24 +113,24 @@ Les plugins Flutter permettent l'intégration avec les plateformes :
 | Android | Gradle, Kotlin/Java |
 | macOS | CocoaPods, Swift |
 | Linux | CMake, C++ |
-| Windows | CMake, C# |
+| Windows | CMake, C++ |
 
 ### Fonctionnalités spécifiques aux plateformes
 
 **iOS uniquement :**
-- Widgets de l'écran d'accueil
 - Activités en direct (Live Activities)
 - Compagnon Apple Watch
 
+**Mobile :**
+- Widgets de l'écran d'accueil (iOS/Android)
+- Notifications push (via ServerBox Monitor)
+
 **Android uniquement :**
-- Service en arrière-plan
-- Notifications push
-- Accès au système de fichiers
+- Exécution en arrière-plan (service au premier plan)
 
 **Bureau uniquement :**
-- Intégration de la barre de menus
-- Fenêtres multiples
-- Barre de titre personnalisée
+- Barre de menus native (macOS)
+- Persistance de la taille de fenêtre
 
 ## Dépendances personnalisées
 
@@ -183,7 +183,7 @@ make.dart (version) → fl_build (build) → Sortie plateforme
 1. Le minuteur se déclenche →
 2. Le Provider appelle le service →
 3. Le service exécute la commande SSH →
-4. La réponse est analysée en modèle →
+4. La sortie brute est analysée par le parseur Rust partagé (sbm_parser via FFI) →
 5. L'état est mis à jour →
 6. L'UI se reconstruit avec les nouvelles données
 ```
@@ -202,7 +202,7 @@ make.dart (version) → fl_build (build) → Sortie plateforme
 
 ### Protection des données
 
-- **Mots de passe** : Chiffrés avec flutter_secure_storage
+- **Mots de passe / clés SSH** : Stockés dans des boîtes Hive chiffrées en AES ; la clé de chiffrement est conservée dans le stockage sécurisé de la plateforme (Keychain/Keystore)
 - **Clés SSH** : Chiffrées au repos
 - **Empreintes d'hôte** : Stockées de manière sécurisée
 - **Données de session** : Non persistées

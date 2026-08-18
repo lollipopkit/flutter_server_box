@@ -9,7 +9,7 @@ Server Box utilise un système de construction personnalisé (`fl_build`) pour l
 
 - Flutter SDK (canal stable)
 - Outils spécifiques à la plateforme (Xcode pour iOS, Android Studio pour Android)
-- Chaîne d'outils Rust (pour certaines dépendances natives)
+- Chaîne d'outils Rust (requise : le parseur d'état est un crate Rust intégré à l'app via flutter_rust_bridge/cargokit sur chaque plateforme)
 
 ## Construction pour le développement
 

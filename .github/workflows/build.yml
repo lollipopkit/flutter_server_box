@@ -65,14 +65,149 @@ jobs:
           fi
       - name: Check locked dependencies
         shell: bash
-        env:
-          PUB_HOSTED_URL: https://pub.dev
         run: |
           flutter pub get --enforce-lockfile
           git diff --exit-code -- pubspec.yaml pubspec.lock
       - name: Check JNI build-id patch
         shell: bash
         run: scripts/release/patch-jni-build-id.sh
+
+  verifyMacOS:
+    name: Verify macOS release
+    if: github.event_name == 'workflow_dispatch' && inputs.release != true
+    needs: reproducibilityCheck
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+      - uses: Swatinem/rust-cache@v2
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Sign locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          project=macos/Runner.xcodeproj/project.pbxproj
+          sed -i '' \
+            -e 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "-";/' \
+            -e 's/"CODE_SIGN_IDENTITY\[sdk=macosx\*\]" = "3rd Party Mac Developer Application";/"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";/' \
+            -e 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/' \
+            -e 's/DEVELOPMENT_TEAM = BA88US33G6;/DEVELOPMENT_TEAM = "";/' \
+            -e 's/"DEVELOPMENT_TEAM\[sdk=macosx\*\]" = BA88US33G6;/"DEVELOPMENT_TEAM[sdk=macosx*]" = "";/' \
+            "$project"
+          cat > macos/Runner/Release.entitlements <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>com.apple.security.app-sandbox</key>
+            <false/>
+            <key>com.apple.security.cs.allow-jit</key>
+            <true/>
+            <key>com.apple.security.network.client</key>
+            <true/>
+            <key>com.apple.security.network.server</key>
+            <true/>
+            <key>com.apple.security.files.user-selected.read-write</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+      - name: Build release
+        run: flutter build macos --release
+      - name: Verify release launch
+        shell: bash
+        run: |
+          set -euo pipefail
+          app="build/macos/Build/Products/Release/Server Box.app"
+          executable="$app/Contents/MacOS/Server Box"
+          log_file="$RUNNER_TEMP/server-box.log"
+
+          codesign --verify --deep --strict "$app"
+          "$executable" >"$log_file" 2>&1 &
+          pid=$!
+
+          cleanup() {
+            if kill -0 "$pid" 2>/dev/null; then
+              kill "$pid"
+              wait "$pid" || true
+            fi
+          }
+          trap cleanup EXIT
+
+          for _ in {1..10}; do
+            if ! kill -0 "$pid" 2>/dev/null; then
+              wait "$pid" || true
+              cat "$log_file"
+              log show --last 2m --style compact --predicate 'process == "Server Box"' || true
+              echo "Server Box exited before the macOS launch smoke test completed."
+              exit 1
+            fi
+            sleep 1
+          done
+
+          cat "$log_file"
+
+  verifyMonitor:
+    name: Verify monitor ${{ matrix.platform }}-${{ matrix.arch }}
+    if: github.event_name == 'workflow_dispatch' && inputs.release != true
+    needs: reproducibilityCheck
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            platform: linux
+            arch: amd64
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+            platform: linux
+            arch: arm64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            platform: macos
+            arch: arm64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            platform: macos
+            arch: amd64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            platform: windows
+            arch: amd64
+    runs-on: ${{ matrix.os }}
+    env:
+      SQLX_OFFLINE: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Install musl toolchain
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+      - name: Add Rust target
+        run: rustup target add ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+      - name: Build
+        shell: bash
+        run: cargo build -p server_box_monitor --release --target ${{ matrix.target }}
 
   buildAndroid:
     name: Build android
@@ -102,6 +237,15 @@ jobs:
         run: |
           flutter pub get
           scripts/release/patch-jni-build-id.sh
+      # The Linux userland the terminal tab offers. Not in the repository —
+      # these are binaries, and they are built from pinned upstream sources
+      # here. Without this step the feature is absent from the build rather
+      # than broken in it, which is why the check below exists.
+      - name: Build proot
+        shell: bash
+        run: |
+          export ANDROID_NDK_HOME="${ANDROID_NDK_LATEST_HOME:-${ANDROID_NDK_ROOT:-}}"
+          scripts/build-proot-android.sh
       - name: Build (release)
         if: inputs.release == true || github.ref_type == 'tag'
         shell: bash
@@ -110,6 +254,22 @@ jobs:
         if: inputs.release != true && github.ref_type != 'tag'
         shell: bash
         run: dart run fl_build -p android
+      # `useLegacyPackaging` off means nothing is extracted from the APK, so
+      # `nativeLibraryDir` does not exist and proot cannot be run from
+      # anywhere. The APK still builds, installs and runs — the rootfs entry
+      # simply never appears. Checked here because nothing else would say so.
+      - name: Check proot shipped
+        shell: bash
+        run: |
+          shopt -s nullglob
+          apks=(build/app/outputs/flutter-apk/*_arm64.apk)
+          [ ${#apks[@]} -gt 0 ] || { echo "no arm64 APK was built"; exit 1; }
+          for apk in "${apks[@]}"; do
+            unzip -l "$apk" | grep -q 'lib/arm64-v8a/libproot.so' ||
+              { echo "$apk carries no proot; the Linux userland would be missing"; exit 1; }
+            unzip -l "$apk" | grep -q 'lib/arm64-v8a/libproot-loader.so' ||
+              { echo "$apk carries proot but not its loader; entering the rootfs would be refused"; exit 1; }
+          done
       - name: Rename
         shell: bash
         run: |

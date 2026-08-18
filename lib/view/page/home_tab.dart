@@ -7,14 +7,14 @@ import 'package:server_box/view/page/agent/agent.dart';
 import 'package:server_box/view/page/server/tab/tab.dart';
 import 'package:server_box/view/page/snippet/list.dart';
 import 'package:server_box/view/page/ssh/tab.dart';
-import 'package:server_box/view/page/storage/local.dart';
+import 'package:server_box/view/page/storage/tab.dart';
 
 extension AppTabViewX on AppTab {
   Widget get page {
     return switch (this) {
       AppTab.server => const ServerPage(),
       AppTab.ssh => const SSHTabPage(),
-      AppTab.file => const LocalFilePage(),
+      AppTab.file => const FileTabPage(),
       AppTab.snippet => const SnippetListPage(),
       AppTab.agent => const AgentPage(),
     };
@@ -27,10 +27,14 @@ extension AppTabViewX on AppTab {
         label: libL10n.server,
         selectedIcon: const Icon(BoxIcons.bxs_server),
       ),
-      AppTab.ssh => const NavigationDestination(
-        icon: Icon(Icons.terminal_outlined),
-        label: 'SSH',
-        selectedIcon: Icon(Icons.terminal),
+      // Not "SSH": a terminal is what this tab holds, and SSH is only where
+      // most of them happen to come from. One already comes from a monitor
+      // agent's own PTY, and the name had to stop naming the transport before
+      // a shell on this device could live here too.
+      AppTab.ssh => NavigationDestination(
+        icon: const Icon(Icons.terminal_outlined),
+        label: libL10n.terminal,
+        selectedIcon: const Icon(Icons.terminal),
       ),
       AppTab.snippet => NavigationDestination(
         icon: const Icon(Icons.code_outlined),
@@ -57,10 +61,10 @@ extension AppTabViewX on AppTab {
         label: Text(libL10n.server),
         selectedIcon: const Icon(BoxIcons.bxs_server),
       ),
-      AppTab.ssh => const NavigationRailDestination(
-        icon: Icon(Icons.terminal_outlined),
-        label: Text('SSH'),
-        selectedIcon: Icon(Icons.terminal),
+      AppTab.ssh => NavigationRailDestination(
+        icon: const Icon(Icons.terminal_outlined),
+        label: Text(libL10n.terminal),
+        selectedIcon: const Icon(Icons.terminal),
       ),
       AppTab.snippet => NavigationRailDestination(
         icon: const Icon(Icons.code_outlined),

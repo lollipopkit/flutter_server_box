@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:server_box/core/utils/ssh_config.dart';
+
 
 void main() {
   group('SSHConfig Tests', () {
@@ -59,9 +61,9 @@ Host myserver
 
       final server = servers.first;
       expect(server.name, 'myserver');
-      expect(server.ip, '192.168.1.100');
-      expect(server.user, 'admin');
-      expect(server.port, 2222);
+      expect(server.ssh?.ip, '192.168.1.100');
+      expect(server.ssh?.user, 'admin');
+      expect(server.ssh?.port, 2222);
     });
 
     test('parseConfig handles missing HostName', () async {
@@ -86,9 +88,9 @@ Host simple
 
       final server = servers.first;
       expect(server.name, 'simple');
-      expect(server.ip, 'example.com');
-      expect(server.user, 'root'); // default user
-      expect(server.port, 22); // default port
+      expect(server.ssh?.ip, 'example.com');
+      expect(server.ssh?.user, 'root'); // default user
+      expect(server.ssh?.port, 22); // default port
     });
 
     test('parseConfig handles multiple hosts', () async {
@@ -112,19 +114,19 @@ Host server3
       expect(servers, hasLength(3));
 
       expect(servers[0].name, 'server1');
-      expect(servers[0].ip, '192.168.1.100');
-      expect(servers[0].user, 'alice');
-      expect(servers[0].port, 22);
+      expect(servers[0].ssh?.ip, '192.168.1.100');
+      expect(servers[0].ssh?.user, 'alice');
+      expect(servers[0].ssh?.port, 22);
 
       expect(servers[1].name, 'server2');
-      expect(servers[1].ip, '192.168.1.200');
-      expect(servers[1].user, 'bob');
-      expect(servers[1].port, 2222);
+      expect(servers[1].ssh?.ip, '192.168.1.200');
+      expect(servers[1].ssh?.user, 'bob');
+      expect(servers[1].ssh?.port, 2222);
 
       expect(servers[2].name, 'server3');
-      expect(servers[2].ip, 'example.com');
-      expect(servers[2].user, 'charlie');
-      expect(servers[2].port, 22);
+      expect(servers[2].ssh?.ip, 'example.com');
+      expect(servers[2].ssh?.user, 'charlie');
+      expect(servers[2].ssh?.port, 22);
     });
 
     test('parseConfig handles case insensitive keywords', () async {
@@ -140,9 +142,9 @@ host myserver
 
       final server = servers.first;
       expect(server.name, 'myserver');
-      expect(server.ip, '192.168.1.100');
-      expect(server.user, 'admin');
-      expect(server.port, 2222);
+      expect(server.ssh?.ip, '192.168.1.100');
+      expect(server.ssh?.user, 'admin');
+      expect(server.ssh?.port, 2222);
     });
 
     test('parseConfig handles comments and empty lines', () async {
@@ -168,12 +170,12 @@ Host prodserver
       expect(servers, hasLength(2));
 
       expect(servers[0].name, 'devserver');
-      expect(servers[0].ip, '192.168.1.50');
-      expect(servers[0].user, 'developer');
+      expect(servers[0].ssh?.ip, '192.168.1.50');
+      expect(servers[0].ssh?.user, 'developer');
 
       expect(servers[1].name, 'prodserver');
-      expect(servers[1].ip, '10.0.0.100');
-      expect(servers[1].user, 'production');
+      expect(servers[1].ssh?.ip, '10.0.0.100');
+      expect(servers[1].ssh?.user, 'production');
     });
 
     test('parseConfig handles wildcard hosts', () async {
@@ -192,9 +194,9 @@ Host myserver
 
       final server = servers.first;
       expect(server.name, 'myserver');
-      expect(server.ip, '192.168.1.100');
-      expect(server.user, 'admin');
-      expect(server.port, 22); // Uses default, not wildcard setting
+      expect(server.ssh?.ip, '192.168.1.100');
+      expect(server.ssh?.user, 'admin');
+      expect(server.ssh?.port, 22); // Uses default, not wildcard setting
     });
 
     test('parseConfig handles IdentityFile', () async {
@@ -209,7 +211,7 @@ Host keyserver
       expect(servers, hasLength(1));
 
       final server = servers.first;
-      expect(server.keyId, '~/.ssh/special_key');
+      expect(server.ssh?.keyId, '~/.ssh/special_key');
     });
 
     test('parseConfig handles quoted values', () async {
@@ -225,9 +227,9 @@ Host "server with spaces"
 
       final server = servers.first;
       expect(server.name, 'server with spaces');
-      expect(server.ip, '192.168.1.100');
-      expect(server.user, 'admin user');
-      expect(server.keyId, '~/.ssh/key with spaces');
+      expect(server.ssh?.ip, '192.168.1.100');
+      expect(server.ssh?.user, 'admin user');
+      expect(server.ssh?.keyId, '~/.ssh/key with spaces');
     });
 
     test('parseConfig handles invalid port values', () async {
@@ -246,11 +248,11 @@ Host goodserver
 
       // First server should use default port due to invalid port
       expect(servers[0].name, 'badport');
-      expect(servers[0].port, 22); // default port
+      expect(servers[0].ssh?.port, 22); // default port
 
       // Second server should use specified port
       expect(servers[1].name, 'goodserver');
-      expect(servers[1].port, 2222);
+      expect(servers[1].ssh?.port, 2222);
     });
 
     test('parseConfig skips hosts with multiple host patterns', () async {
@@ -281,8 +283,8 @@ Host jumpserver
 
       final server = servers.first;
       expect(server.name, 'jumpserver');
-      expect(server.ip, '192.168.1.100');
-      expect(server.user, 'admin');
+      expect(server.ssh?.ip, '192.168.1.100');
+      expect(server.ssh?.user, 'admin');
       // ProxyJump is ignored in current implementation
     });
 
@@ -335,21 +337,21 @@ Host internal-server
 
       // Check specific servers
       final prodWeb = servers.firstWhere((s) => s.name == 'prod-web-01');
-      expect(prodWeb.ip, '10.0.1.100');
-      expect(prodWeb.user, 'deploy');
-      expect(prodWeb.port, 22);
-      expect(prodWeb.keyId, '~/.ssh/production.pem');
+      expect(prodWeb.ssh?.ip, '10.0.1.100');
+      expect(prodWeb.ssh?.user, 'deploy');
+      expect(prodWeb.ssh?.port, 22);
+      expect(prodWeb.ssh?.keyId, '~/.ssh/production.pem');
 
       final prodDb = servers.firstWhere((s) => s.name == 'prod-db-01');
-      expect(prodDb.ip, '10.0.1.200');
-      expect(prodDb.user, 'ubuntu');
-      expect(prodDb.port, 2222);
+      expect(prodDb.ssh?.ip, '10.0.1.200');
+      expect(prodDb.ssh?.user, 'ubuntu');
+      expect(prodDb.ssh?.port, 2222);
 
       final dev = servers.firstWhere((s) => s.name == 'dev');
-      expect(dev.ip, 'dev.example.com');
-      expect(dev.user, 'developer');
-      expect(dev.port, 22);
-      expect(dev.keyId, isNull);
+      expect(dev.ssh?.ip, 'dev.example.com');
+      expect(dev.ssh?.user, 'developer');
+      expect(dev.ssh?.port, 22);
+      expect(dev.ssh?.keyId, isNull);
     });
 
     group('_stripInlineComment', () {

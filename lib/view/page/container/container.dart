@@ -14,10 +14,12 @@ import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/provider/container.dart';
-import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/ssh/terminal_source.dart';
 import 'package:server_box/view/page/container/resource_views.dart';
 import 'package:server_box/view/page/ssh/page/page.dart';
+import 'package:server_box/view/widget/page_columns.dart';
+import 'package:server_box/view/widget/page_issue.dart';
 
 part 'actions.dart';
 part 'types.dart';
@@ -54,10 +56,8 @@ class _ContainerPageState extends ConsumerState<ContainerPage>
   @override
   void initState() {
     super.initState();
-    final serverState = ref.read(serverProvider(widget.args.spi.id));
     _provider = containerProvider(
-      serverState.client,
-      widget.args.spi.user,
+      widget.args.spi.ssh?.user ?? '',
       widget.args.spi.id,
       context,
     );
@@ -201,26 +201,20 @@ extension _ContainerPageWidgets on _ContainerPageState {
   ) {
     final error = containerState.error;
     if (error == null) return UIs.centerLoading;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(23),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, size: 37),
-            UIs.height13,
-            Text(error.toString(), textAlign: TextAlign.center),
-            UIs.height13,
-            OutlinedButton.icon(
-              onPressed: _containerActionsBusy
-                  ? null
-                  : () => _refreshContainerTab(tab, showLoading: true),
-              icon: const Icon(Icons.refresh),
-              label: Text(libL10n.refresh),
-            ),
-          ],
-        ),
-      ),
+    return PageIssueView(
+      title: error.title,
+      explain: error.solution,
+      // The runtime's own words, kept out of the headline: it is what makes a
+      // "not installed" that is really a `DOCKER_HOST` problem diagnosable,
+      // and it is noise for anyone who only wanted to know why the list is
+      // empty.
+      detail: error.message,
+      icon: error.type == ContainerErrType.notInstalled
+          ? Icons.help_outline
+          : Icons.error_outline,
+      onRetry: _containerActionsBusy
+          ? null
+          : () => _refreshContainerTab(tab, showLoading: true),
     );
   }
 
@@ -257,13 +251,13 @@ extension _ContainerPageWidgets on _ContainerPageState {
   }
 
   Widget _buildSettingsTab(ContainerState containerState) {
-    return AutoMultiList(
-      children: <Widget>[
-        ..._SettingsMenuItems.values.map(
-          (item) => _buildSettingCard(item, containerState),
-        ),
-        ..._PruneTypes.values.map(_buildPruneCard),
-      ],
+    return PageColumns(
+        children: <Widget>[
+          ..._SettingsMenuItems.values.map(
+            (item) => _buildSettingCard(item, containerState),
+          ),
+          ..._PruneTypes.values.map(_buildPruneCard),
+        ],
     );
   }
 
@@ -426,21 +420,21 @@ extension _ContainerPageActions on _ContainerPageState {
     switch (item) {
       case ContainerGroupMenu.start:
         if (stoppedIds.isEmpty) {
-          context.showSnackBar(libL10n.empty);
+          Toast.show(libL10n.empty);
           return;
         }
         _execContainerAction(() => _containerNotifier.startAll(stoppedIds));
         break;
       case ContainerGroupMenu.stop:
         if (runningIds.isEmpty) {
-          context.showSnackBar(libL10n.empty);
+          Toast.show(libL10n.empty);
           return;
         }
         _execContainerAction(() => _containerNotifier.stopAll(runningIds));
         break;
       case ContainerGroupMenu.restart:
         if (runningIds.isEmpty) {
-          context.showSnackBar(libL10n.empty);
+          Toast.show(libL10n.empty);
           return;
         }
         _execContainerAction(() => _containerNotifier.restartAll(runningIds));

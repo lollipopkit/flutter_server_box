@@ -19,36 +19,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get added2List => 'Added to task list';
 
   @override
-  String get addr => 'Address';
-
-  @override
   String get askAi => 'Ask AI';
 
   @override
-  String get ai => 'AI';
-
-  @override
-  String get askAiApiKey => 'API Key';
-
-  @override
   String get askAiAwaitingResponse => 'Waiting for AI response...';
-
-  @override
-  String get askAiBaseUrl => 'API Endpoint';
 
   @override
   String get askAiEndpointTip =>
       'Enter a service base URL or a full Chat Completions or Responses endpoint. ServerBox completes the path for the selected protocol.';
 
   @override
-  String get askAiProtocol => 'API protocol';
-
-  @override
   String get askAiProtocolTip =>
       'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.';
-
-  @override
-  String get askAiProtocolAuto => 'Auto';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -118,15 +100,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get askAiTerminalContext => 'Terminal context';
 
   @override
-  String get askAiReady => 'Ready';
-
-  @override
-  String get askAiThinking => 'Thinking';
-
-  @override
-  String get askAiRunningCommand => 'Running';
-
-  @override
   String get askAiReviewNeeded => 'Review';
 
   @override
@@ -155,6 +128,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get askAiRiskCaution => 'Changes system';
 
   @override
+  String get askAiRiskUnvetted => 'Unvetted host';
+
+  @override
   String get askAiRiskDestructive => 'High risk';
 
   @override
@@ -163,12 +139,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get askAiHighRiskConfirmBody =>
       'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.';
-
-  @override
-  String get askAiCommandCancelled => 'Cancelled';
-
-  @override
-  String get askAiCommandTimedOut => 'Timed out';
 
   @override
   String get askAiNoCommandOutput => 'Command completed without output.';
@@ -188,15 +158,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.';
 
   @override
+  String get askAiSendOnEnter => 'Enter sends';
+
+  @override
+  String get askAiSendOnEnterTip =>
+      'Enter sends the message, Shift+Enter starts a new line. Off swaps them: Enter starts a new line and Cmd/Ctrl+Enter sends.';
+
+  @override
   String get askAiApiKeyOptional =>
       'Optional for local or unauthenticated endpoints';
 
   @override
   String get askAiHistory => 'Conversation history';
-
-  @override
-  String get askAiHistoryLocalOnly =>
-      'Encrypted on this device and excluded from backup and sync';
 
   @override
   String get askAiNewConversation => 'New conversation';
@@ -219,9 +192,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get askAiDeleteConversationTip =>
       'This removes the conversation from this device and cannot be undone.';
-
-  @override
-  String get askAiClearHistory => 'Clear history';
 
   @override
   String get askAiClearHistoryTitle => 'Clear this server\'s Agent history?';
@@ -275,6 +245,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get agentToolFailed => 'Tool execution failed.';
+
+  @override
+  String agentToolCallsFmt(Object count) {
+    return '$count tool calls';
+  }
+
+  @override
+  String get agentFloat => 'Float over other tabs';
+
+  @override
+  String get agentToolSshConnect => 'SSH connect';
+
+  @override
+  String get agentToolSshDisconnect => 'Disconnect SSH';
+
+  @override
+  String get agentSshConnectTitle => 'Connect to a new host';
+
+  @override
+  String get agentAuthMethod => 'Authentication';
+
+  @override
+  String get agentSshConnectTip =>
+      'The Agent wants to open an SSH connection. Type the password here — never into the conversation, where it would be stored and sent to the model.';
+
+  @override
+  String get agentAdHocSessions => 'Temporary connections';
+
+  @override
+  String get agentSaveServerTitle => 'Save as a server';
+
+  @override
+  String get agentSaveServerTip =>
+      'This host and the password you entered will be stored on this device.';
+
+  @override
+  String get agentMonitorOptional => 'Monitor agent (optional)';
 
   @override
   String get atLeastOneTab => 'At least one tab must be selected';
@@ -426,13 +433,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Display the usage of each CPU in a progress bar style (old style)';
 
   @override
-  String get configured => 'Configured';
-
-  @override
   String get customCmd => 'Custom commands';
 
   @override
   String get deleteServers => 'Batch delete servers';
+
+  @override
+  String get deleteDirRecursive => 'Delete the folder and everything in it';
 
   @override
   String get desktopTerminalTip =>
@@ -534,13 +541,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => 'This folder is no longer here';
+
+  @override
+  String get fileDirGoneTip =>
+      'It was deleted or renamed. Use the bar below to go back, go home, or jump elsewhere.';
+
+  @override
   String get finishedAt => 'Finished at';
-
-  @override
-  String get followSystem => 'Follow system';
-
-  @override
-  String get fontSize => 'Font size';
 
   @override
   String get fullScreen => 'Full screen mode';
@@ -568,16 +576,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get githubGistTokenEmpty => 'Token is empty';
 
   @override
-  String get goBackQ => 'Go back?';
-
-  @override
   String get goto => 'Go to';
-
-  @override
-  String get hideTitleBar => 'Hide title bar';
-
-  @override
-  String get highlight => 'Code highlighting';
 
   @override
   String get homeTabs => 'Home Tabs';
@@ -597,6 +596,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagesList => 'Images list';
+
+  @override
+  String get macDmgBody =>
+      'The App Store requires this app to be sandboxed, and a sandboxed process cannot open a pseudo-terminal. So the App Store build has no terminal on this Mac and cannot run a snippet or an agent command here. The DMG build is the same app signed without the sandbox, and has both.\n\nThe App Store build still works and still updates. It may stop being updated later.\n\nThe two builds keep their data in different places. The DMG build copies it over on its first launch, so servers, keys and history come along. If that fails it says so, and you can carry a backup file across instead (Backup, in settings).';
+
+  @override
+  String get macDmgImportDenied =>
+      'macOS did not allow reading the data of the previously installed build. Grant Full Disk Access and reopen the app, or export a backup there and restore it here.';
+
+  @override
+  String get macDmgImported =>
+      'Imported the data of the previously installed build.';
+
+  @override
+  String get macDmgImportFailed =>
+      'Could not read the data of the previously installed build. Export a backup there, then restore it here.';
+
+  @override
+  String get macDmgTip =>
+      'A terminal on this Mac, and running snippets on it, exist only in the DMG build.';
+
+  @override
+  String get macDmgTitle => 'DMG build';
+
+  @override
+  String get showHiddenFiles => 'Show hidden files';
 
   @override
   String get unused => 'Unused';
@@ -646,12 +671,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pull => 'Pull';
-
-  @override
-  String get invalid => 'Invalid';
-
-  @override
-  String get invalidUrl => 'Invalid URL';
 
   @override
   String get invalidHostFormat =>
@@ -715,13 +734,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get more => 'More';
-
-  @override
-  String get moveOutServerFuncBtnsHelp =>
-      'On: can be displayed below each card on the Server Tab page. Off: can be displayed at the top of the Server Details page.';
-
-  @override
   String get needRestart => 'App needs to be restarted';
 
   @override
@@ -758,7 +770,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Parsing the occupancy status of Docker is relatively slow.';
 
   @override
-  String get permission => 'Permissions';
+  String get fullAccessRefused =>
+      'This agent does not allow access without SSH.';
+
+  @override
+  String get fullAccessInsecure =>
+      'This agent allows access without SSH over TLS or loopback only, and this connection is plain HTTP.';
 
   @override
   String get plugInType => 'Insertion Type';
@@ -860,9 +877,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recentConnections => 'Recent Connections';
 
   @override
-  String get reconnecting => 'Reconnecting...';
-
-  @override
   String get rememberPwdInMem => 'Remember password in memory';
 
   @override
@@ -872,13 +886,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remotePath => 'Remote path';
 
   @override
+  String rootfsUpdateTip(Object installed, Object latest) {
+    return 'Alpine $installed is installed and $latest is available. Updating downloads it again and replaces the container: anything installed inside it with apk is lost. The current one keeps working if you skip this.';
+  }
+
+  @override
+  String get rootfsMissing =>
+      'No Linux filesystem is installed on this device yet.';
+
+  @override
+  String get rootfsSubtitle => 'A Linux userland on this device';
+
+  @override
+  String rootfsInstallTip(Object version) {
+    return 'Download Alpine Linux $version (about 3 MB) and unpack it on this device. It gives this app a shell with a package manager, and can be deleted at any time.';
+  }
+
+  @override
   String get sameIdServerExist => 'A server with the same ID already exists';
 
   @override
-  String get save => 'Save';
+  String get second => 's';
 
   @override
-  String get second => 's';
+  String get serverFilesUnavailableTip =>
+      'Reachable either through this server\'s SSH, or through a monitor agent with its file API switched on.';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get history => 'History';
+
+  @override
+  String get homeDir => 'Home';
+
+  @override
+  String get selectItem => 'Select';
+
+  @override
+  String selected(Object count) {
+    return '$count selected';
+  }
+
+  @override
+  String get sendTo => 'Send to…';
 
   @override
   String get serverDetailOrder => 'Detail page widget order';
@@ -891,6 +943,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get serverTabRequired => 'Server tab cannot be removed';
+
+  @override
+  String get shareServerRiskTip =>
+      'This QR code contains the server\'s connection settings in plain text, passwords included. Anyone who scans or photographs it can connect to this server.';
 
   @override
   String get sftpDlPrepare => 'Preparing to connect...';
@@ -912,12 +968,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Display folders first';
 
   @override
-  String get size => 'Size';
-
-  @override
-  String get softWrap => 'Soft wrap';
-
-  @override
   String get specifyDev => 'Specify device';
 
   @override
@@ -927,9 +977,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).';
-
-  @override
-  String get speed => 'Speed';
 
   @override
   String spentTime(Object time) {
@@ -1002,6 +1049,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sshHostKeyType => 'SSH host key type';
 
   @override
+  String get sshKnownHostKeys => 'Known host keys';
+
+  @override
+  String get sshKnownHostKeysTip =>
+      'Host keys this app has accepted. Forget one to be asked about it again the next time you connect.';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return 'A new SSH host key was received from $serverName. Review the fingerprint before trusting.';
   }
@@ -1038,9 +1092,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sshVirtualKeyAutoOff => 'Auto switching of virtual keys';
 
   @override
-  String get stat => 'Statistics';
-
-  @override
   String get supportFmtArgs =>
       'The following formatting parameters are supported:';
 
@@ -1064,22 +1115,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get system => 'System';
 
   @override
-  String get tapToStartDiscovery =>
-      'Tap the search button to discover SSH servers on your network';
-
-  @override
   String get termFontSizeTip =>
       'This setting will affect the terminal size (width and height). You can zoom in on the terminal page to adjust the font size of the current session.';
 
   @override
-  String get textScaler => 'Text scaler';
-
-  @override
   String get textScalerTip =>
       '1.0 => 100% (original size), only works on server page part of the font, not recommended to change.';
-
-  @override
-  String get time => 'Time';
 
   @override
   String get times => 'Times';
@@ -1089,9 +1130,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sudoPromptNotFound => 'No sudo password prompt is active.';
-
-  @override
-  String get unknown => 'Unknown';
 
   @override
   String get updateServerStatusInterval => 'Server status update interval';
@@ -1110,9 +1148,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewDetails => 'View Details';
-
-  @override
-  String get viewErr => 'See error';
 
   @override
   String get virtKeyHelpClipboard =>
@@ -1139,9 +1174,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get whenOpenApp => 'When opening the app';
-
-  @override
-  String get wiki => 'Wiki';
 
   @override
   String get wolTip =>
@@ -1186,12 +1218,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portForward_remotePort => 'Remote Port';
 
   @override
-  String get portForward_type_local => 'Local';
-
-  @override
-  String get portForward_type_remote => 'Remote';
-
-  @override
   String portForward_deleteConfirmFmt(Object name) {
     return 'Delete $name?';
   }
@@ -1200,25 +1226,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sponsor => 'Sponsor';
 
   @override
-  String get sort => 'Sort';
-
-  @override
-  String get sortByName => 'By name';
-
-  @override
   String get sortByJoinTime => 'By join time';
 
   @override
-  String get ascending => 'Ascending';
-
-  @override
-  String get descending => 'Descending';
-
-  @override
   String get serverHistory => 'Server history';
-
-  @override
-  String get clearHistory => 'Clear history';
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
@@ -1347,4 +1358,81 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get processKillTargetChanged =>
       'The process changed or exited. Refresh and try again.';
+
+  @override
+  String get watchServers => 'Servers on the watch';
+
+  @override
+  String get watchServersTip =>
+      'The watch reads these servers from their monitor agent by itself, so only servers with one configured can be picked.';
+
+  @override
+  String get watchNoMonitorServer => 'No server has a monitor agent configured';
+
+  @override
+  String get watchLegacyUrls => 'Legacy status URLs';
+
+  @override
+  String get accessoryWidgetServer => 'Lock screen widget server';
+
+  @override
+  String get systemdMissing => 'No systemd on this server';
+
+  @override
+  String get systemdMissingTip =>
+      '`systemctl` is not installed here, so there are no units to list.';
+
+  @override
+  String initSystemFmt(String init) {
+    return 'This machine appears to use $init.';
+  }
+
+  @override
+  String get systemdListFailed => 'Could not list units';
+
+  @override
+  String get systemdUserScopeMissing => 'User units are not listed';
+
+  @override
+  String get systemdUserScopeMissingTip =>
+      'This account has no user session bus on the server, so only system units are shown.';
+
+  @override
+  String get serverUnreachable => 'Could not run a command on this server';
+
+  @override
+  String get containerNoRuntime => 'No container runtime here';
+
+  @override
+  String get containerNoRuntimeTip =>
+      'Neither `docker` nor `podman` answered on this machine. If one is installed for another account, turn on \"Try using sudo\" in Settings.';
+
+  @override
+  String get containerUnreadable =>
+      'The container runtime answered in an unexpected form';
+
+  @override
+  String get power => 'Power';
+
+  @override
+  String get continueInTerminal => 'Continue in terminal';
+
+  @override
+  String get askAiRiskUnknown => 'Unclassified';
+
+  @override
+  String get agentLocalExec => 'Run commands on this device';
+
+  @override
+  String get agentLocalExecTip =>
+      'Lets the Agent work on the machine ServerBox is running on, not only on servers. Nothing runs here unattended: every command needs review, however read-only it looks. This is where the app\'s data, your keys and your files are.';
+
+  @override
+  String get agentLocalExecRootfsTip =>
+      'Lets the Agent work on this device, inside the Alpine Linux container ServerBox installs. It cannot see the phone\'s own filesystem, the app\'s data or your files. Every command still needs review.';
+
+  @override
+  String macDmgImportedPartly(String path) {
+    return 'Imported the data of the previously installed build. Downloaded files were left where they were, in $path.';
+  }
 }

@@ -74,7 +74,7 @@ class MacOSMenuBarManager {
     final menuItems = <PlatformMenuItem>[];
     final tabLabels = {
       AppTab.server: libL10n.server,
-      AppTab.ssh: 'SSH',
+      AppTab.ssh: libL10n.terminal,
       AppTab.file: libL10n.file,
       AppTab.snippet: libL10n.snippet,
       AppTab.agent: l10n.agentTitle,

@@ -7,74 +7,41 @@ Server Box bietet auf Desktop-Plattformen zusätzliche Produktivitätsfunktionen
 
 ## macOS
 
-### Menüleisten-Integration
+### Native Menüleiste
 
-- Schneller Serverstatus in der Menüleiste
-- Serverzugriff mit einem Klick
-- Kompaktmodus für minimale Ablenkung
-- Natives macOS-Menüleistenstyling
+Native App-Menüs mit Standard-Tastenkürzeln:
 
-### Beständigkeit des Fensterzustands
-
-- Merkt sich Fensterposition und -größe
-- Wiederherstellung der vorherigen Sitzung beim Start
-- Unterstützung für mehrere Monitore
-
-### Native Funktionen
-
-- **Titelleiste**: Option für benutzerdefinierte oder System-Titelleiste
-- **Vollbildmodus**: Dedizierte Serverüberwachung
-- **Tastenkombinationen**: macOS-native Tastenkürzel
-- **Touch Bar** (unterstützte Geräte): Schnellaktionen
-
-## Linux
-
-### Native Integration
-
-- Unterstützung für System-Tray
-- Integration von Desktop-Benachrichtigungen
-- Integration der Dateiauswahl
+- **Server Box**: Über, Einstellungen (⌘,), Beenden (⌘Q)
+- **Navigieren**: Zwischen Home-Tabs wechseln
+- **Info**: Projekt-Links
 
 ### Fensterverwaltung
 
-- Unterstützung für X11 und Wayland
-- Freundlich gegenüber Tiling-Window-Managern
-- Option für benutzerdefinierte Fensterdekorationen
+- Merkt sich die Fenstergröße über Starts hinweg
+
+## Linux
+
+- X11- und Wayland-Unterstützung
+- Dateiauswahl-Integration
+- Verteilung als AppImage
 
 ## Windows
 
-### Funktionen
-
-- System-Tray-Integration
-- Jump List Schnellaktionen
 - Native Fenstersteuerung
-- Option für Autostart beim Booten
+- Verteilung als portables Zip
 
 ## Plattformübergreifende Desktop-Funktionen
-
-### Tastenkombinationen
-
-- **Cmd/Ctrl + N**: Neuer Server
-- **Cmd/Ctrl + W**: Tab schließen
-- **Cmd/Ctrl + T**: Neuer Terminal-Tab
-- **Cmd/Ctrl + ,**: Einstellungen
 
 ### Themes
 
 - Helles Theme
 - Dunkles Theme
-- AMOLED Theme (reines Schwarz)
-- System-Theme (folgt dem Betriebssystem)
+- AMOLED-Theme (reines Schwarz)
+- System-Theme (folgt dem OS)
 
-### Mehrere Fenster
+### Vorteile gegenüber Mobilgeräten
 
-- Öffnen mehrerer Server in separaten Fenstern
-- Tabs in ein neues Fenster ziehen
-- Serverstatistiken Seite an Seite vergleichen
-
-### Vorteile gegenüber Mobile
-
-- Größerer Bildschirm für die Überwachung
+- Größerer Bildschirm zur Überwachung
 - Volle Tastatur für das Terminal
 - Schnellere Dateioperationen
 - Besseres Multitasking

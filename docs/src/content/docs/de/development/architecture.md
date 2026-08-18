@@ -71,6 +71,16 @@ Benutzeraktion → Widget → Provider → Dienst/Store → Modell-Update → UI
 4. Zustandsänderung löst Neuaufbau der UI aus
 5. Neuer Zustand spiegelt sich im Widget wider
 
+## Status-Parsing: Gemeinsame Rust-Bibliothek
+
+Das Parsen des Serverstatus (CPU, Speicher, Festplatte, Netzwerk, Temperaturen,
+GPU, SMART, …) ist einmal im Rust-Crate `crates/sbm_parser` implementiert und wird
+von der App über flutter_rust_bridge genutzt (`crates/sbm_ffi`, generiertes Dart in
+`lib/src/rust/`). Der serverseitige Monitor verwendet dasselbe Crate direkt, sodass
+beide Seiten immer identisch parsen. Parser sind reine Funktionen: Sie liefern rohe
+Zähler, und Differenz-/Fensterberechnungen (z. B. Netzwerkgeschwindigkeit) sind
+ebenfalls reine Funktionen — kein veränderlicher Zustand überquert die FFI-Grenze.
+
 ## Eigene Abhängigkeiten
 
 Das Projekt verwendet mehrere eigene Forks zur Funktionserweiterung:

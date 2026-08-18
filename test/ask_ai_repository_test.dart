@@ -135,13 +135,29 @@ void main() {
         AskAiCommand.classifyRisk(r'echo $(systemctl restart nginx)'),
         AskAiCommandRisk.caution,
       );
-      expect(
-        AskAiCommand.classifyRisk('uptime && whoami'),
-        AskAiCommandRisk.caution,
-      );
+      // `uptime && whoami` is not here on purpose — see the chain test below.
+      // It changes nothing, and this group is about commands that do.
       expect(
         AskAiCommand.classifyRisk('uptime && systemctl restart nginx'),
         AskAiCommandRisk.caution,
+      );
+    });
+
+    test('what the check could not place is not called a system change', () {
+      // The lists are an allowlist. Nothing matching means nothing was
+      // established — which is a reason not to auto-run, and not a claim that
+      // the command writes anything. `sleep` is the plainest example: the
+      // badge said "changes the system" over a model description that
+      // correctly said it does not.
+      expect(
+        AskAiCommand.classifyRisk('sleep 60'),
+        AskAiCommandRisk.unknown,
+      );
+      // Chains are not taken apart, so the same applies to one whose parts are
+      // all reads.
+      expect(
+        AskAiCommand.classifyRisk('uptime && whoami'),
+        AskAiCommandRisk.unknown,
       );
     });
 
@@ -268,6 +284,8 @@ void main() {
         'run_shell_command',
         'read_file',
         'write_file',
+        'ssh_connect',
+        'ssh_disconnect',
         'serverbox',
       ]);
       expect(tools.every((tool) => tool['strict'] == true), isTrue);
@@ -416,6 +434,68 @@ void main() {
 
       expect(completed.commands.single.id, 'call-done');
       expect(events.whereType<AskAiToolSuggestion>(), hasLength(1));
+    });
+
+    test('every declared Agent tool survives decoding', () async {
+      // `ssh_connect` was dropped here for a whole stage: the parser took its
+      // one-line identity from a `command` argument, which that tool does not
+      // have, and a call with none was discarded. The turn then ended with no
+      // text and no proposal, and the app showed "No response" — a tool the
+      // model had in fact called, gone without a trace.
+      //
+      // Filled from each tool's own schema rather than by hand, so a tool
+      // added later is covered without anyone remembering to add it here.
+      for (final tool in globalAgentToolDefinitions) {
+        final properties =
+            tool.parameters['properties'] as Map<String, dynamic>;
+        final required = (tool.parameters['required'] as List).cast<String>();
+        final arguments = <String, dynamic>{};
+        for (final key in required) {
+          final spec = properties[key] as Map<String, dynamic>;
+          final type = spec['type'];
+          final types = type is List ? type.cast<String>() : [type as String];
+          arguments[key] = switch (types.first) {
+            'boolean' => false,
+            'integer' || 'number' => 22,
+            _ => 'x-$key',
+          };
+        }
+
+        final sse = [
+          'data: ${jsonEncode({
+            'choices': [
+              {
+                'delta': {
+                  'tool_calls': [
+                    {
+                      'index': 0,
+                      'id': 'call-${tool.name}',
+                      'function': {
+                        'name': tool.name,
+                        'arguments': jsonEncode(arguments),
+                      },
+                    },
+                  ],
+                },
+                'finish_reason': 'tool_calls',
+              },
+            ],
+          })}',
+          'data: [DONE]',
+        ].join('\n\n');
+
+        final events = await AskAiRepository.decodeSse(
+          Stream.value(utf8.encode('$sse\n\n')),
+        ).toList();
+        final completed = events.whereType<AskAiCompleted>().single;
+
+        expect(
+          completed.commands,
+          hasLength(1),
+          reason: '${tool.name} produced no proposal',
+        );
+        expect(completed.commands.single.toolName, tool.name);
+      }
     });
 
     test('decodes non-shell Agent tool calls', () async {

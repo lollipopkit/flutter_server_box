@@ -22,6 +22,9 @@ extension _AgentHistoryActions on _AskAiPanelState {
         isScrollControlled: true,
         useSafeArea: true,
         showDragHandle: true,
+        // The same motion as the Agent tab's own history sheet — see
+        // `agentSheetAnimation`, which is where the reasoning is.
+        sheetAnimationStyle: agentSheetAnimation,
         builder: (sheetContext) =>
             FractionallySizedBox(heightFactor: 0.82, child: historyView()),
       );
@@ -76,12 +79,12 @@ extension _AgentHistoryActions on _AskAiPanelState {
           controller: controller,
           autoFocus: true,
           label: context.l10n.askAiRenameConversation,
-          onSubmitted: (_) => context.pop(controller.text.trim()),
+          onSubmitted: (_) => context.popDialog(controller.text.trim()),
         ),
         actions: [
-          TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
+          TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
           FilledButton(
-            onPressed: () => context.pop(controller.text.trim()),
+            onPressed: () => context.popDialog(controller.text.trim()),
             child: Text(libL10n.ok),
           ),
         ],
@@ -99,9 +102,9 @@ extension _AgentHistoryActions on _AskAiPanelState {
       title: context.l10n.askAiDeleteConversationTitle,
       child: Text(context.l10n.askAiDeleteConversationTip),
       actions: [
-        TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
+        TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
         FilledButton.tonal(
-          onPressed: () => context.pop(true),
+          onPressed: () => context.popDialog(true),
           child: Text(libL10n.delete),
         ),
       ],
@@ -124,10 +127,10 @@ extension _AgentHistoryActions on _AskAiPanelState {
       title: context.l10n.askAiClearHistoryTitle,
       child: Text(context.l10n.askAiClearHistoryTip),
       actions: [
-        TextButton(onPressed: context.pop, child: Text(libL10n.cancel)),
+        TextButton(onPressed: context.popDialog, child: Text(libL10n.cancel)),
         FilledButton.tonal(
-          onPressed: () => context.pop(true),
-          child: Text(context.l10n.askAiClearHistory),
+          onPressed: () => context.popDialog(true),
+          child: Text(libL10n.clearHistory),
         ),
       ],
     );
@@ -193,7 +196,7 @@ class _AgentHistoryViewState extends State<_AgentHistoryView> {
       AskAiProtocol.responses => context.l10n.askAiProtocolResponses,
       AskAiProtocol.chatCompletions =>
         context.l10n.askAiProtocolChatCompletions,
-      AskAiProtocol.auto => context.l10n.askAiProtocolAuto,
+      AskAiProtocol.auto => libL10n.auto,
     };
     return '$date $time · $protocol · ${conversation.model}';
   }
@@ -217,27 +220,16 @@ class _AgentHistoryViewState extends State<_AgentHistoryView> {
             child: Row(
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.l10n.askAiHistory,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        context.l10n.askAiHistoryLocalOnly,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    context.l10n.askAiHistory,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 if (conversations.isNotEmpty)
                   IconButton(
-                    tooltip: context.l10n.askAiClearHistory,
+                    tooltip: libL10n.clearHistory,
                     onPressed: _busy ? null : () => _run(widget.onClear),
                     icon: const Icon(Icons.delete_sweep_outlined),
                   ),

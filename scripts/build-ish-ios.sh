@@ -1,0 +1,259 @@
+#!/usr/bin/env bash
+#
+# Builds the ish-arm64 engine for iOS, and an Alpine filesystem for it to run.
+#
+# Why this exists
+# ---------------
+# iOS gives an App Store app no `fork`/`exec` and no `/bin/sh`, so the Android
+# answer — a real rootfs entered through proot — cannot work: there is nothing
+# to enter it with. ish-arm64 is the other shape. It is an interpreter: guest
+# AArch64 instructions are dispatched to pre-compiled native gadgets, so no
+# machine code is written at runtime (iOS grants no JIT entitlement) and no
+# guest binary is ever handed to the kernel.
+#
+# It emulates the *same* architecture the host runs, which is what makes it
+# usable rather than a curiosity — upstream iSH interprets 32-bit x86 on ARM.
+#
+# What this produces
+# ------------------
+#   libish.a, libish_emu.a, libfakefs.a   the engine, for one SDK and arch
+#   alpine-fakefs/                        an Alpine filesystem in iSH's format
+#
+# The app does not use `alpine-fakefs`: it downloads and unpacks its own tree at
+# first launch, because `realfs` mounts an ordinary directory. That output is
+# kept for the command-line build, where `ish -f` wants iSH's own format.
+#
+# The libraries are linked into the app by `ios/Flutter/Ish.xcconfig`, which is
+# where `SBM_ISH` decides whether any of this ships at all.
+#
+# Usage: scripts/build-ish-ios.sh [simulator|device|macos]
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+WORK_DIR="${ISH_BUILD_DIR:-$REPO_ROOT/build/ish}"
+
+# The engine is a submodule, so which revision builds is the gitlink and not a
+# hash written out here. A fork of OpenMinis/ish-arm64 carrying the fixes this
+# app needs and upstream has not made: its `main` is upstream's commit with
+# those on top, so what was changed is the fork's log between the two. Its `dev`
+# is unrelated older work and is not what this builds.
+#
+# To move it: `git submodule update --remote third_party/ish-arm64`, then
+# `git add third_party/ish-arm64` — the gitlink is the record.
+SRC_DIR="$REPO_ROOT/third_party/ish-arm64"
+
+# The same release the Android rootfs is pinned to, and for the same reason —
+# see AndroidRootfs.version, which records why the branch is 3.22.
+ALPINE_VERSION=3.22.5
+ALPINE_URL="https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/aarch64/alpine-minirootfs-${ALPINE_VERSION}-aarch64.tar.gz"
+ALPINE_SHA256=3fbc6285032ed46821b511292633d7b2a6306a2e254f590e92bdafff56cf2f70
+
+TARGET="${1:-simulator}"
+
+# On stderr, like `die`. Progress is not a value: `build_host` ends by echoing
+# the directory it built into and the caller captures that with `$(...)`, which
+# was swallowing these lines into the path and handing `fakefsify` a name with
+# "==> Configuring macOS host build" in front of it.
+log() { printf '\033[0;34m==>\033[0m %s\n' "$*" >&2; }
+die() { printf '\033[0;31merror:\033[0m %s\n' "$*" >&2; exit 1; }
+
+# Runs a build step quietly, and prints everything it said if it fails.
+#
+# meson and ninja are noisy in success and the `==>` lines above are the point
+# of this script, so their output used to go to /dev/null. That threw away the
+# only account of a failure: a compiler's diagnostics reach ninja's *stdout*,
+# so `>/dev/null` hid exactly the case the output exists for. The first CI run
+# of this script failed with six lines and nothing to go on.
+run_step() {
+  local what="$1"; shift
+  local out
+  out="$(mktemp "$WORK_DIR/step.XXXXXX.log")"
+  if "$@" >"$out" 2>&1; then
+    rm -f "$out"
+    return 0
+  fi
+  printf '\033[0;31merror:\033[0m %s failed:\033[0m\n' "$what" >&2
+  cat "$out" >&2
+  rm -f "$out"
+  exit 1
+}
+
+sha256() {
+  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1
+  else shasum -a 256 "$1" | cut -d' ' -f1; fi
+}
+
+for tool in meson ninja git curl; do
+  command -v "$tool" >/dev/null 2>&1 || die "$tool is not installed (brew install $tool)"
+done
+# The guest VDSO is compiled for Linux, which Apple's clang cannot target.
+[ -x /opt/homebrew/opt/llvm/bin/clang ] || die "llvm is not installed (brew install llvm)"
+# Its own formula since Homebrew split it out of llvm, and the VDSO names it:
+# `-fuse-ld=lld`. Without it clang says "invalid linker name", which reads as a
+# bad flag rather than a missing package.
+command -v ld.lld >/dev/null 2>&1 || die "lld is not installed (brew install lld)"
+# fakefsify needs it, and meson only builds that tool when it is present.
+[ -d /opt/homebrew/opt/libarchive ] || die "libarchive is not installed (brew install libarchive)"
+export PKG_CONFIG_PATH="/opt/homebrew/opt/libarchive/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+
+mkdir -p "$WORK_DIR"
+
+require_source() {
+  # An `--init` the caller did not run is the one failure that reads as
+  # something else — meson would complain about a missing meson.build.
+  if [ ! -f "$SRC_DIR/meson.build" ]; then
+    die "third_party/ish-arm64 is empty — run: git submodule update --init third_party/ish-arm64"
+  fi
+}
+
+# The engine, for one platform. Only the three libraries: the `ish` CLI is a
+# host convenience and meson does not build it in a cross build anyway.
+#
+# Built out of tree, under build/. In tree it would leave the submodule dirty
+# after every build, which makes `git status` useless for seeing whether the
+# engine's own source was touched.
+build_libs() {
+  local name="$1" sdk="$2" min_flag="$3"
+  local build_dir="$WORK_DIR/build-$name"
+  local sysroot
+  sysroot="$(xcrun --sdk "$sdk" --show-sdk-path)"
+
+  local cross="$WORK_DIR/$name.ini"
+  cat >"$cross" <<EOF
+# Generated by scripts/build-ish-ios.sh — edits will be overwritten.
+#
+# The simulator and the device are the same architecture as this machine,
+# which is the point of this fork: the gadgets a device runs are the ones
+# built here. What differs is the SDK and the platform minimum.
+[binaries]
+c = 'clang'
+cpp = 'clang++'
+ar = 'ar'
+strip = 'strip'
+pkg-config = 'pkg-config'
+
+[built-in options]
+c_args = ['-arch', 'arm64', '-isysroot', '$sysroot', '$min_flag']
+c_link_args = ['-arch', 'arm64', '-isysroot', '$sysroot', '$min_flag']
+cpp_args = ['-arch', 'arm64', '-isysroot', '$sysroot', '$min_flag']
+cpp_link_args = ['-arch', 'arm64', '-isysroot', '$sysroot', '$min_flag']
+
+[host_machine]
+system = 'darwin'
+cpu_family = 'aarch64'
+cpu = 'aarch64'
+endian = 'little'
+EOF
+
+  log "Configuring $name"
+  if [ -d "$build_dir" ]; then
+    run_step "meson setup --reconfigure ($name)" \
+      meson setup --reconfigure "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 \
+      --buildtype=release --cross-file "$cross"
+  else
+    run_step "meson setup ($name)" \
+      meson setup "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 \
+      --buildtype=release --cross-file "$cross"
+  fi
+
+  log "Building $name"
+  # Named targets rather than everything: `tools/fakefsify` links the host's
+  # libarchive and cannot be built for a phone, and it is not wanted there.
+  run_step "ninja ($name)" \
+    ninja -C "$build_dir" libish.a libish_emu.a libfakefs.a
+
+  for lib in libish.a libish_emu.a libfakefs.a; do
+    [ -f "$build_dir/$lib" ] || die "$lib did not build"
+  done
+  log "Built into $build_dir"
+  ls -la "$build_dir"/lib{ish,ish_emu,fakefs}.a
+}
+
+# The host build, which is also what makes the filesystem.
+build_host() {
+  local build_dir="$WORK_DIR/build-macos-arm64"
+  log "Configuring macOS host build"
+  if [ -d "$build_dir" ]; then
+    run_step "meson setup --reconfigure (macos)" \
+      meson setup --reconfigure "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 --buildtype=release
+  else
+    run_step "meson setup (macos)" \
+      meson setup "$build_dir" "$SRC_DIR" -Dguest_arch=arm64 --buildtype=release
+  fi
+  log "Building macOS host build"
+  run_step "ninja (macos)" ninja -C "$build_dir"
+  echo "$build_dir"
+}
+
+# The filesystem the app actually uses: an ordinary directory tree.
+#
+# `realfs` is what mounts it — every guest path resolved against a root fd —
+# so there is nothing to build but the tree itself. That is the whole reason
+# this is `tar` and not a tool: unpacking is something the app can do on a
+# phone, and a metadata database is not.
+build_tree() {
+  local tarball="$WORK_DIR/alpine-$ALPINE_VERSION.tar.gz"
+  local out="$WORK_DIR/alpine-tree"
+  fetch_alpine "$tarball"
+  [ -d "$out" ] && { log "Tree already unpacked at $out"; return; }
+  log "Unpacking the Alpine tree"
+  mkdir -p "$out"
+  # Device nodes in the tarball are skipped without root, which is correct
+  # here: `/dev` is a tmpfs the guest builds at boot.
+  tar xzf "$tarball" -C "$out" 2>/dev/null || true
+  [ -f "$out/etc/alpine-release" ] || die "the tree did not unpack"
+  log "Unpacked $out"
+}
+
+fetch_alpine() {
+  local tarball="$1"
+  if [ ! -f "$tarball" ]; then
+    log "Fetching Alpine $ALPINE_VERSION"
+    curl -fsSL --retry 3 -o "$tarball" "$ALPINE_URL"
+  fi
+  local got
+  got="$(sha256 "$tarball")"
+  [ "$got" = "$ALPINE_SHA256" ] || { rm -f "$tarball"; die "Alpine tarball digest mismatch: expected $ALPINE_SHA256, got $got"; }
+}
+
+# iSH's own format, kept for the command-line build: `ish -f` wants one, and it
+# is the only way to run the engine outside an app for comparison.
+build_fakefs() {
+  local host_build="$1"
+  local tarball="$WORK_DIR/alpine-$ALPINE_VERSION.tar.gz"
+  local out="$WORK_DIR/alpine-fakefs"
+
+  fetch_alpine "$tarball"
+  [ -d "$out" ] && { log "Filesystem already built at $out"; return; }
+  log "Building the Alpine filesystem"
+  run_step "fakefsify" "$host_build/tools/fakefsify" "$tarball" "$out"
+  log "Built $out"
+}
+
+require_source
+case "$TARGET" in
+  simulator)
+    build_libs iossim-arm64 iphonesimulator "-mios-simulator-version-min=13.0"
+    build_tree
+    ;;
+  device)
+    build_libs ios-arm64 iphoneos "-miphoneos-version-min=13.0"
+    build_tree
+    ;;
+  macos)
+    host="$(build_host)"
+    build_fakefs "$host"
+    log "Try it: $host/ish -f $WORK_DIR/alpine-fakefs /bin/sh"
+    ;;
+  *) die "unknown target: $TARGET (simulator|device|macos)" ;;
+esac
+
+cat <<'NOTE'
+
+Built. To use them, set `SBM_ISH = 1` — in an untracked ios/Flutter/
+IshLocal.xcconfig rather than in the tracked file — and rebuild.
+
+Not done by this script: the device work that only hands can do — thermals
+under Instruments, and App Store review. See TODOS.md.
+NOTE

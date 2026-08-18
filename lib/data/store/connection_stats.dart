@@ -12,7 +12,8 @@ class ConnectionStatsStore extends HiveStore {
   static const _indexBoxName = 'conn_stats_index';
   static const _maxRecordsPerServer = 100;
 
-  late final Box<dynamic> _indexBox;
+  /// Not `final`, for the same reason [box] is not: [init] can run twice.
+  late Box<dynamic> _indexBox;
 
   @override
   Future<void> init() async {

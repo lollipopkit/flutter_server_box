@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:extended_image/extended_image.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:fl_lib/fl_lib.dart';
@@ -22,10 +25,13 @@ import 'package:server_box/data/model/server/sensors.dart';
 import 'package:server_box/data/model/server/server.dart' as server_model;
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/system.dart';
+import 'package:server_box/data/model/server/try_limiter.dart';
+import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/pve.dart';
 import 'package:server_box/view/page/server/edit/edit.dart';
+import 'package:server_box/view/widget/page_columns.dart';
 import 'package:server_box/view/widget/server_func_btns.dart';
 
 part 'misc.dart';
@@ -43,39 +49,62 @@ class ServerDetailPage extends ConsumerStatefulWidget {
   );
 }
 
+/// Left over on either side of the bar, so the page it floats above is still
+/// visible past it and it never reads as a second edge to the window.
+const _kFuncBarSideRoom = 100.0;
+
+/// One row of buttons with their labels: a 17pt icon over a line of 11pt text,
+/// plus the buttons' own inset and the row's, and a little over.
+const _kFuncBarHeight = 56.0;
+
+/// What the grid keeps clear below its last card, so the bar is never over
+/// something that cannot be scrolled out from under it.
+const _kFuncBarInset = _kFuncBarHeight + 26;
+
 class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     with SingleTickerProviderStateMixin {
-  late final _cardBuildMap = Map.fromIterables(ServerDetailCards.names, [
-    _buildAbout,
-    _buildCPUView,
-    _buildMemView,
-    _buildSwapView,
-    _buildGpuView,
-    _buildDiskView,
-    _buildDiskSmart,
-    _buildNetView,
-    _buildSensors,
-    _buildTemperature,
-    _buildBatteries,
-    _buildPve,
-    _buildCustomCmd,
-  ]);
+  /// Keyed by the enum, not paired positionally with `ServerDetailCards.names`.
+  ///
+  /// The positional form threw `Iterables do not have same length` at runtime
+  /// whenever a card was added or removed and only one of the two lists was
+  /// updated, and a reordering of either silently paired a card with the wrong
+  /// builder. Here a mistake is at worst one missing card.
+  late final _cardBuildMap =
+      <ServerDetailCards, Widget? Function(ServerState)>{
+        ServerDetailCards.about: _buildAbout,
+        ServerDetailCards.cpu: _buildCPUView,
+        ServerDetailCards.mem: _buildMemView,
+        ServerDetailCards.swap: _buildSwapView,
+        ServerDetailCards.gpu: _buildGpuView,
+        ServerDetailCards.disk: _buildDiskView,
+        ServerDetailCards.smart: _buildDiskSmart,
+        ServerDetailCards.net: _buildNetView,
+        ServerDetailCards.sensor: _buildSensors,
+        ServerDetailCards.temp: _buildTemperature,
+        ServerDetailCards.battery: _buildBatteries,
+        ServerDetailCards.pve: _buildPve,
+        ServerDetailCards.custom: _buildCustomCmd,
+      };
 
   late Size _size;
   final List<String> _cardsOrder = [];
 
   final _settings = Stores.setting;
   final _netSortType = ValueNotifier(_NetSortType.device);
+
+  /// Shared by the grid and the bar floating over it, which is how the bar
+  /// knows to get out of the way.
+  final _scrollCtrl = ScrollController();
   late final _collapse = _settings.collapseUIDefault.fetch();
   late final _textFactor = TextScaler.linear(_settings.textFactor.fetch());
   late final _cpuViewAsProgress = _settings.cpuViewAsProgress.fetch();
-  late final _moveServerFuncs = _settings.moveServerFuncs.fetch();
   late final _displayCpuIndex = _settings.displayCpuIndex.fetch();
 
   @override
   void dispose() {
     super.dispose();
     _netSortType.dispose();
+    _scrollCtrl.dispose();
   }
 
   @override
@@ -93,29 +122,149 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       (e) => !ServerDetailCards.names.contains(e) || disabled.contains(e),
     );
     _cardsOrder.addAll(order);
+
+    // Prefill the trend buffer from whatever history the source already has,
+    // so the chart cards aren't blank on a freshly opened page. A no-op for
+    // sources without ServerCapabilities.storedHistory (i.e. SSH), which
+    // simply accumulate from here on.
+    unawaited(
+      ref
+          .read(serverProvider(widget.args.spi.id).notifier)
+          .seedHistory(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final serverState = ref.watch(serverProvider(widget.args.spi.id));
-    if (serverState.client == null) {
-      return Scaffold(
-        appBar: CustomAppBar(),
-        body: Center(child: Text(libL10n.empty)),
-      );
+    if (!_hasContent(serverState)) {
+      return _buildNothingYet(serverState);
     }
     return _buildMainPage(serverState);
   }
 
+  /// A server that has not reported anything yet.
+  ///
+  /// Used to be the word "empty" on its own, which was survivable when this
+  /// page could only be reached by opening it deliberately. Beside a list it
+  /// is where every server that fails to connect ends up, so it has to say why
+  /// and offer the one action that helps.
+  Widget _buildNothingYet(ServerState si) {
+    final err = si.status.err;
+    // `connected` counts: the SSH path sits there through system detection and
+    // the script install, two round trips during which there is still nothing
+    // to show. Reading it as "not busy" put "Empty" and a Retry button in
+    // front of a server that was in the middle of connecting — and disagreed
+    // with the server card, which has always treated the three as one state.
+    final busy =
+        si.conn == server_model.ServerConn.connecting ||
+        si.conn == server_model.ServerConn.connected ||
+        si.conn == server_model.ServerConn.loading;
+
+    return Scaffold(
+      appBar: _buildAppBar(si),
+      // Scrolls, and shows the error in full. The card elsewhere on this page
+      // clips to two lines because it sits above the data it is annotating;
+      // here the error is the entire content, and a truncated address or
+      // errno is the part someone needs.
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 20),
+        children: [
+          if (err != null)
+            CardX(
+              child: Padding(
+                padding: const EdgeInsets.all(13),
+                child: SimpleMarkdown(data: _errMarkdown(err)),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.all(13),
+              child: Text(
+                // "Empty" is what a server that answered and had nothing to
+                // say would be. One that has not answered yet is connecting,
+                // and saying so is the difference between waiting and
+                // wondering.
+                busy ? l10n.waitConnection : libL10n.empty,
+                style: UIs.textGrey,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          UIs.height13,
+          // Centred, or the column stretches it into something that reads as
+          // a list row rather than a button.
+          Center(
+            child: busy
+                ? SizedLoading.medium
+                : Btn.elevated(
+                    text: libL10n.retry,
+                    icon: const Icon(Icons.refresh, size: 18),
+                    // The icon variant lays its row out at max size, so
+                    // without this the button fills whatever it is given and
+                    // reads as a list row.
+                    mainAxisSize: MainAxisSize.min,
+                    gap: 8,
+                    onTap: () => _reconnect(si),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The error as markdown: what to do about it, then what was actually said.
+  String _errMarkdown(Err err) {
+    return '''
+${err.solution ?? libL10n.unknown}
+
+```sh
+${err.message ?? 'null'}
+```
+''';
+  }
+
+  /// Clears the retry limiter first: the user asking again *is* the new
+  /// information, and without this the request is dropped by the backoff that
+  /// the previous failures installed.
+  void _reconnect(ServerState si) {
+    TryLimiter.reset(si.spi.id);
+    ref.read(serversProvider.notifier).refresh(spi: si.spi);
+  }
+
+  /// Whether there is anything to render.
+  ///
+  /// Losing the connection must not empty the page: the status already
+  /// fetched is still the most recent thing known about the server, and the
+  /// error card below explains why it stopped updating. Collapsing to the
+  /// placeholder on `ServerConn.failed` threw both away, so a monitor going
+  /// offline looked identical to a server that had never been opened.
+  ///
+  /// `more` is the "has ever been fetched" signal — every successful status
+  /// apply populates it on both transports, and `keepStatusWhenErr` in
+  /// `ServerNotifier` already relies on that.
+  bool _hasContent(ServerState state) {
+    if (state.status.more.isNotEmpty) return true;
+    // Having a connection is not having anything to show. Read as "connected
+    // is enough", this page opened onto a grid of empty cards — dashes where
+    // the CPU goes, `0% of 1 KB` for the disk — for as long as the first fetch
+    // took, which on a server that is merely slow is a while. `finished` is
+    // the state that means a status came back; it is only ever left for
+    // another *later* fetch, so the page does not flicker back on refresh.
+    return state.conn == server_model.ServerConn.finished;
+  }
+
   Widget _buildMainPage(ServerState si) {
-    final buildFuncs = !_moveServerFuncs;
+    // Every ServerFuncBtn (terminal / sftp / container / process / snippet /
+    // iperf / systemd / portForward) needs a shell. Hide the whole row on
+    // transports without one instead of offering buttons that can only fail.
+    // `terminal` rather than `shell`: an agent's passwordless PTY earns the
+    // row too, and `btns` decides what belongs in it
+    final buildFuncs = si.capabilities.terminal;
     final logo = _buildLogo(si);
-    final children = <Widget>[
-      ?logo,
-      if (buildFuncs) ServerFuncBtns(spi: si.spi),
-    ];
+    final children = <Widget>[?logo, ?_buildErrCard(si)];
     for (final card in _cardsOrder) {
-      final child = _cardBuildMap[card]?.call(si);
+      final child = _cardBuildMap[ServerDetailCards.fromName(card)]
+          ?.call(si);
       if (child != null) {
         children.add(child);
       }
@@ -123,12 +272,117 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
 
     return Scaffold(
       appBar: _buildAppBar(si),
-      body: SafeArea(child: AutoMultiList(children: children)),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            PageColumns(
+              controller: _scrollCtrl,
+              bottomInset: buildFuncs ? _kFuncBarInset : 0,
+              children: children,
+            ),
+            // Over the page rather than at the top of it. These act on the
+            // server, not on any one card, so they belong within reach the
+            // whole way down instead of scrolling off after the first chart.
+            if (buildFuncs)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: HideOnScroll(
+                  controller: _scrollCtrl,
+                  child: _buildFuncBar(si),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// The row of things that can be done to this server, floating over it.
+  Widget _buildFuncBar(ServerState si) {
+    return LayoutBuilder(
+      builder: (_, cons) => Center(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 13),
+          child: ConstrainedBox(
+            // The row takes the width it needs up to this; beyond it, it
+            // scrolls. Stretched across a desktop window it would stop being a
+            // group of buttons and become a band across the page.
+            constraints: BoxConstraints(
+              maxWidth: (cons.maxWidth - _kFuncBarSideRoom).clamp(
+                0.0,
+                double.infinity,
+              ),
+            ),
+            child: Material(
+              // Raised off the page, because it is the one thing here that is
+              // not part of what the page is showing.
+              elevation: 3,
+              shadowColor: Colors.black26,
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(19),
+              clipBehavior: Clip.antiAlias,
+              child: SizedBox(
+                height: _kFuncBarHeight,
+                child: ServerFuncBtns(spi: si.spi, granted: si.remoteAccess),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Why the status stopped updating. Sits above the cards, which keep
+  /// showing the last successful reading — stale data with a visible reason
+  /// beats a blank page.
+  Widget? _buildErrCard(ServerState si) {
+    final err = si.status.err;
+    if (err == null) return null;
+
+    final solution = err.solution;
+    return CardX(
+      child: ListTile(
+        leading: const Icon(Icons.error_outline, color: Colors.red, size: 20),
+        title: Text(libL10n.error, style: UIs.text15),
+        subtitle: Text(
+          solution ?? err.message ?? libL10n.unknown,
+          style: UIs.text12Grey,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: const Icon(Icons.chevron_right, size: 17),
+        onTap: () => _showErrDetail(err),
+      ),
+    );
+  }
+
+  void _showErrDetail(Err err) {
+    final md = _errMarkdown(err);
+    context.showRoundDialog(
+      title: libL10n.error,
+      child: SingleChildScrollView(child: SimpleMarkdown(data: md)),
+      actions: [
+        TextButton(onPressed: () => Pfs.copy(md), child: Text(libL10n.copy)),
+        TextButton(onPressed: () => context.popDialog(), child: Text(libL10n.close)),
+      ],
     );
   }
 
   CustomAppBar _buildAppBar(ServerState si) {
+    // At the root of a detail pane there is nothing to pop, so no back button
+    // is drawn and there is no way to hand the width back to the list. Null
+    // everywhere else, where the implicit back button is the way out.
+    final closeDetail = PaneScope.closeDetailOf(context);
     return CustomAppBar(
+      leading: closeDetail == null
+          ? null
+          : IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: libL10n.close,
+              onPressed: closeDetail,
+            ),
       title: Text(
         si.spi.name,
         style: TextStyle(
@@ -137,12 +391,12 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
         ),
       ),
       actions: [
-        QrShareBtn(
-          data: si.spi.toJsonString(),
-          tip: si.spi.name,
-          tip2: '${libL10n.server} ~ ServerBox',
-        ),
         IconButton(
+          icon: const Icon(Icons.share),
+          tooltip: libL10n.share,
+          onPressed: () => _showShareQr(si.spi),
+        ),
+        IconButton(tooltip: libL10n.edit, 
           icon: const Icon(Icons.edit),
           onPressed: () async {
             final delete = await ServerEditPage.route.go(
@@ -158,16 +412,51 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     );
   }
 
+  /// Not `QrShareBtn`: the code encodes the whole record, passwords included,
+  /// so the dialog has to say so before anyone points a camera at it.
+  void _showShareQr(Spi spi) {
+    context.showRoundDialog(
+      title: libL10n.share,
+      child: ConstrainedBox(
+        // The QR fills whatever width it is given and the hint is one long
+        // line, so without a cap the paragraph's intrinsic width sets the
+        // dialog's — on a desktop window that is a QR code the height of the
+        // screen. A max, not a fixed width: a narrow phone gets less.
+        constraints: const BoxConstraints(maxWidth: 300),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                l10n.shareServerRiskTip,
+                style: UIs.text13Grey,
+                textAlign: TextAlign.start,
+              ),
+              UIs.height13,
+              QrView(
+                data: spi.toJsonString(),
+                tip: spi.name,
+                tip2: '${libL10n.server} ~ ServerBox',
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: Btnx.oks,
+    );
+  }
+
   Widget? _buildLogo(ServerState si) {
     final logoUrl = si.getLogoUrl(context);
+    // Null, not an empty placeholder: the wrapping Padding was laid out either
+    // way, leaving a band of dead space above the first card on every server
+    // without a logo configured.
+    if (logoUrl == null) return null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 13),
       child: LayoutBuilder(
         builder: (_, cons) {
-          if (logoUrl == null) {
-            return UIs.placeholder;
-          }
           final height = cons.maxWidth * 0.3;
           if (logoUrl.isSvgUrl) {
             return SvgPicture.network(
@@ -221,9 +510,17 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     ).cardx;
   }
 
+  /// CPU: the live figure, its breakdown, the per-core bars, its own trend,
+  /// and the model last.
+  ///
+  /// Separate from RAM again. They shared a card briefly, which put two 27pt
+  /// figures eight lines apart with one chart between them and never read as
+  /// a single subject. Apart, each figure is identified by what surrounds it:
+  /// the CPU breakdown here, the total beside the RAM one.
   Widget? _buildCPUView(ServerState si) {
     final ss = si.status;
-    final percent = ss.cpu.usedPercent(coreIdx: 0).toInt();
+    final cpuPercent = ss.cpu.usedPercent(coreIdx: 0)?.toInt();
+
     final details = [
       _buildDetailPercent(ss.cpu.user, 'user'),
       UIs.width13,
@@ -238,27 +535,68 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       ]);
     }
 
-    final List<Widget> children = _cpuViewAsProgress
-        ? _buildCPUProgress(ss.cpu)
-        : [_buildCPUChart(ss)];
-
-    if (ss.cpu.brand.isNotEmpty) {
-      children.add(
+    // The model string never changes while the page is open, so it sits after
+    // the readings that do
+    final children = <Widget>[
+      if (_cpuViewAsProgress) ..._buildCPUProgress(ss.cpu),
+      ?_buildCpuChart(si),
+      if (ss.cpu.brand.isNotEmpty)
         Column(
           children: ss.cpu.brand.entries.map(_buildCpuModelItem).toList(),
         ).paddingOnly(top: 13),
-      );
-    }
+    ];
 
     return ExpandTile(
       title: Align(
         alignment: Alignment.centerLeft,
-        child: _buildAnimatedText(ValueKey(percent), '$percent%', UIs.text27),
+        child: _buildAnimatedText(
+          ValueKey(cpuPercent),
+          cpuPercent == null ? '--' : '$cpuPercent%',
+          UIs.text27,
+        ),
       ),
       childrenPadding: const EdgeInsets.symmetric(vertical: 13),
       initiallyExpanded: _getInitExpand(1),
       trailing: Row(mainAxisSize: MainAxisSize.min, children: details),
       children: children,
+    ).cardx;
+  }
+
+  /// RAM, laid out to mirror the CPU card so the two read as one scale.
+  ///
+  ///
+  /// No progress bar: it restated the same percentage the figure and the trend
+  /// already carried, and its full-width fill was the heaviest mark on the card.
+  Widget? _buildMemView(ServerState si) {
+    final ss = si.status;
+    if (ss.mem.total == 0) return null;
+
+    final free = ss.mem.free / ss.mem.total * 100;
+    final avail = ss.mem.availPercent * 100;
+    final usedStr = (ss.mem.usedPercent * 100).toStringAsFixed(0);
+
+    return ExpandTile(
+      title: Row(
+        children: [
+          _buildAnimatedText(ValueKey(usedStr), '$usedStr%', UIs.text27),
+          UIs.width7,
+          Text(
+            'of ${(ss.mem.total * 1024).bytes2Str}',
+            style: UIs.text13Grey,
+          ),
+        ],
+      ),
+      childrenPadding: const EdgeInsets.symmetric(vertical: 13),
+      initiallyExpanded: _getInitExpand(1),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildDetailPercent(free, 'free'),
+          UIs.width13,
+          _buildDetailPercent(avail, 'avail'),
+        ],
+      ),
+      children: [?_buildMemChart(si)],
     ).cardx;
   }
 
@@ -293,14 +631,17 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     return child.paddingSymmetric(horizontal: 17);
   }
 
-  Widget _buildDetailPercent(double percent, String timeType) {
+  /// [percent] is null before a second sample exists, i.e. there is no window
+  /// to compute a share over — rendered as "--" so it can't be mistaken for a
+  /// measured 0%
+  Widget _buildDetailPercent(double? percent, String timeType) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
-          '${percent.toStringAsFixed(1)}%',
+          percent == null ? '--' : '${percent.toStringAsFixed(1)}%',
           style: UIs.text12,
           textScaler: _textFactor,
         ),
@@ -365,76 +706,18 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     return children;
   }
 
-  Widget _buildCPUChart(server_model.ServerStatus ss) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 13),
-      child: LayoutBuilder(
-        builder: (_, cons) {
-          return SizedBox(
-            height: 137,
-            width: cons.maxWidth,
-            child: _buildLineChart(
-              ss.cpu.spots,
-              //ss.cpu.rangeX,
-              tooltipPrefix: 'CPU',
-            ),
-          );
-        },
-      ),
-    );
-  }
 
-  Widget _buildProgress(double percent) {
-    final clamped = percent.clamp(0, 100);
-    final percentWithinOne = clamped / 100;
+  Widget _buildProgress(double? percent) {
+    // Indeterminate while there is no reading, instead of a full-width 0 bar
+    final percentWithinOne = percent == null
+        ? null
+        : percent.clamp(0, 100) / 100;
     return LinearProgressIndicator(
       value: percentWithinOne,
       minHeight: 7,
       backgroundColor: UIs.halfAlpha,
       color: UIs.primaryColor,
     );
-  }
-
-  Widget? _buildMemView(ServerState si) {
-    final ss = si.status;
-    if (ss.mem.total == 0) return null;
-    final free = ss.mem.free / ss.mem.total * 100;
-    final avail = ss.mem.availPercent * 100;
-    final used = ss.mem.usedPercent * 100;
-    final usedStr = used.toStringAsFixed(0);
-
-    final percentW = Row(
-      children: [
-        _buildAnimatedText(ValueKey(usedStr), '$usedStr%', UIs.text27),
-        UIs.width7,
-        Text('of ${(ss.mem.total * 1024).bytes2Str}', style: UIs.text13Grey),
-      ],
-    );
-
-    return Padding(
-      padding: UIs.roundRectCardPadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              percentW,
-              Row(
-                children: [
-                  _buildDetailPercent(free, 'free'),
-                  UIs.width13,
-                  _buildDetailPercent(avail, 'avail'),
-                ],
-              ),
-            ],
-          ),
-          UIs.height13,
-          _buildProgress(used),
-        ],
-      ),
-    ).cardx;
   }
 
   Widget? _buildSwapView(ServerState si) {
@@ -558,7 +841,7 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       mainAxisAlignment: MainAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton(
+        IconButton(tooltip: libL10n.about, 
           onPressed: onPressed,
           icon: const Icon(Icons.info_outline, size: 17),
         ),
@@ -589,21 +872,34 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
 
   Widget? _buildDiskView(ServerState si) {
     final ss = si.status;
-    final children = <Widget>[];
+    final mounts = <Widget>[];
 
     // Create widgets for each top-level disk
     for (int idx = 0; idx < ss.disk.length; idx++) {
       final disk = ss.disk[idx];
-      children.add(_buildDiskItemWithHierarchy(disk, ss, 0));
+      mounts.add(_buildDiskItemWithHierarchy(disk, ss, 0));
     }
 
-    if (children.isEmpty) return null;
+    if (mounts.isEmpty) return null;
+
+    // Laid out like the Network card, and for the same reason: a host reports
+    // as many mounts as it has, most of them loop devices and container
+    // layers, and the throughput trend put after that list was never seen.
+    final children = <Widget>[
+      ?_buildDiskChart(si),
+      ExpandTile(
+        title: Text(libL10n.device, style: UIs.text13Grey),
+        initiallyExpanded: false,
+        childrenPadding: const EdgeInsets.only(bottom: 7),
+        children: mounts,
+      ),
+    ];
 
     return ExpandTile(
       title: Text(libL10n.disk),
-      childrenPadding: const EdgeInsets.only(bottom: 7),
+      childrenPadding: EdgeInsets.zero,
       leading: Icon(ServerDetailCards.disk.icon, size: 17),
-      initiallyExpanded: _getInitExpand(children.length),
+      initiallyExpanded: _getInitExpand(1),
       children: children,
     ).cardx;
   }
@@ -845,7 +1141,20 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     if (devices.isEmpty) return null;
 
     devices.sort(_netSortType.value.getSortFunc(ns));
-    children.addAll(devices.map((e) => _buildNetSpeedItem(ns, e)));
+
+    // Chart first, interfaces behind a disclosure that starts closed. A host
+    // routinely reports twenty-odd interfaces, nearly all of them idle
+    // tunnels; putting the trend after that list buried it.
+    final chart = _buildNetChart(si);
+    if (chart != null) children.add(chart);
+    children.add(
+      ExpandTile(
+        title: Text(libL10n.device, style: UIs.text13Grey),
+        initiallyExpanded: false,
+        childrenPadding: const EdgeInsets.only(bottom: 7),
+        children: devices.map((e) => _buildNetSpeedItem(ns, e)).toList(),
+      ),
+    );
 
     return ExpandTile(
       leading: Icon(ServerDetailCards.net.icon, size: 17),
@@ -872,8 +1181,8 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
           ),
         ],
       ),
-      childrenPadding: const EdgeInsets.only(bottom: 11),
-      initiallyExpanded: _getInitExpand(children.length),
+      childrenPadding: EdgeInsets.zero,
+      initiallyExpanded: _getInitExpand(1),
       children: children,
     ).cardx;
   }
@@ -884,23 +1193,30 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                device,
-                style: UIs.text12,
-                textScaler: _textFactor,
-                maxLines: 1,
-                overflow: TextOverflow.fade,
-                textAlign: TextAlign.left,
-              ),
-              Text(
-                '${ns.sizeIn(device: device)} | ${ns.sizeOut(device: device)}',
-                style: UIs.text12Grey,
-                textScaler: _textFactor,
-              ),
-            ],
+          // Expanded, not intrinsic: the totals line grows with the numbers
+          // ("502.4 MB | 502.4 MB" on a busy loopback) and pushed the
+          // fixed-width speed column past the right edge
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  device,
+                  style: UIs.text12,
+                  textScaler: _textFactor,
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                  textAlign: TextAlign.left,
+                ),
+                Text(
+                  '${ns.sizeIn(device: device)} | ${ns.sizeOut(device: device)}',
+                  style: UIs.text12Grey,
+                  textScaler: _textFactor,
+                  maxLines: 1,
+                  overflow: TextOverflow.fade,
+                ),
+              ],
+            ),
           ),
           SizedBox(
             width: 170,
@@ -919,32 +1235,51 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     final ss = si.status;
     if (ss.temps.isEmpty) return null;
 
+    final devices = ss.temps.devices;
+    // Chart only. Sensor names and readings are what the chart's legend
+    // carries once there is more than one line; with a single sensor there is
+    // no legend, so its reading goes in the header instead. Either way a list
+    // above the chart would restate it.
+    final chart = _buildTempChart(si);
+    if (chart == null) return null;
+
+    // The chart plots one sensor per component, so a host with more than that
+    // has readings it isn't showing. Saying "4 / 20" and opening the full set
+    // on tap keeps a curated view from reading as the whole one.
+    final plotted = _tempSeries(si).length;
+    final hidden = devices.length > plotted;
+
+    final Widget? note;
+    if (devices.length == 1) {
+      note = Text(
+        '${ss.temps.get(devices.first)?.toStringAsFixed(1)}°C',
+        style: UIs.text13Grey,
+      );
+    } else if (hidden) {
+      note = InkWell(
+        onTap: () => _showAllTemps(ss),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('$plotted / ${devices.length}', style: UIs.text13Grey),
+            UIs.width7,
+            const Icon(Icons.list, size: 15, color: Colors.grey),
+          ],
+        ),
+      );
+    } else {
+      note = null;
+    }
+
     return CardX(
       child: ExpandTile(
         title: Text(libL10n.temperature),
         leading: const Icon(Icons.ac_unit, size: 20),
-        initiallyExpanded: _getInitExpand(ss.temps.devices.length),
-        childrenPadding: const EdgeInsets.only(bottom: 7),
-        children: ss.temps.devices
-            .map((key) => _buildTemperatureItem(key, ss.temps.get(key)))
-            .toList(),
-      ),
-    );
-  }
-
-  Widget _buildTemperatureItem(String key, double? val) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 3, right: 17, top: 5, bottom: 5),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Btn.text(
-            text: key,
-            textStyle: UIs.text15,
-            onTap: () => _onTapTemperatureItem(key),
-          ).paddingSymmetric(horizontal: 5),
-          Text('${val?.toStringAsFixed(1)}°C', style: UIs.text13Grey),
-        ],
+        initiallyExpanded: _getInitExpand(1),
+        // The chart already carries whatever space its axis needs
+        childrenPadding: EdgeInsets.symmetric(vertical: 10),
+        trailing: note,
+        children: [chart],
       ),
     );
   }
@@ -953,13 +1288,17 @@ class _ServerDetailPageState extends ConsumerState<ServerDetailPage>
     final ss = si.status;
     if (ss.batteries.isEmpty) return null;
 
+    final children = ss.batteries.map(_buildBatteryItem).toList();
+    final chart = _buildBatteryChart(si);
+    if (chart != null) children.add(chart);
+
     return CardX(
       child: ExpandTile(
         title: Text(libL10n.battery),
         leading: const Icon(Icons.battery_charging_full, size: 17),
         childrenPadding: const EdgeInsets.only(bottom: 7),
         initiallyExpanded: _getInitExpand(ss.batteries.length, 2),
-        children: ss.batteries.map(_buildBatteryItem).toList(),
+        children: children,
       ),
     );
   }

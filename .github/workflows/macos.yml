@@ -1,0 +1,108 @@
+# That the unsandboxed macOS product still builds, entitlements and all.
+#
+# It was written to run `integration_test` on a macOS device — the questions
+# only a running app can answer: where this build's data goes, whether the
+# keychain hands over the box key, whether `defaults` reads the other build's
+# preferences. It never once passed. A hosted runner has no session for the
+# app's output to be read from, so every file fails at load with "The log
+# reader stopped unexpectedly, or never started", and the launch itself hits
+# flutter/flutter#176850 ("Failed to foreground app; open returned 1"), which
+# is open and reproduces on ordinary desktops too.
+#
+# So this builds instead of pretending to test. The entitlements the products
+# ship with are guarded by `test/macos_entitlements_test.dart`, which is a
+# plain test and runs in `analysis.yml`; what is left for a macOS runner is
+# whether the thing compiles and links with them — Rust, pods and all. The
+# running-app half needs a machine, and is listed in TODOS.md with the rest of
+# what does.
+name: macOS build
+
+# Duplicated rather than anchored: GitHub Actions does not resolve YAML
+# aliases.
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'macos/**'
+      - 'integration_test/**'
+      - 'lib/core/utils/sandbox_import.dart'
+      - 'lib/core/utils/local_shell.dart'
+      - 'lib/main.dart'
+      - 'packages/fl_lib'
+      - '.github/workflows/macos.yml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'macos/**'
+      - 'integration_test/**'
+      - 'lib/core/utils/sandbox_import.dart'
+      - 'lib/core/utils/local_shell.dart'
+      - 'lib/main.dart'
+      - 'packages/fl_lib'
+      - '.github/workflows/macos.yml'
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: '3.47.0'
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # No signing identity here, and none needed: the app is signed ad-hoc so
+      # it can run at all. The entitlements go with it — trimmed to the ones
+      # that do not need a provisioning profile, keeping the only one these
+      # tests are about.
+      - name: Sign locally
+        run: |
+          set -euo pipefail
+          project=macos/Runner.xcodeproj/project.pbxproj
+          sed -i '' \
+            -e 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "-";/' \
+            -e 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual;/' \
+            -e 's/DEVELOPMENT_TEAM = BA88US33G6;/DEVELOPMENT_TEAM = "";/' \
+            "$project"
+          cat > macos/Runner/DebugProfile.entitlements <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+          	<key>com.apple.security.app-sandbox</key>
+          	<false/>
+          	<key>com.apple.security.cs.allow-jit</key>
+          	<true/>
+          	<key>com.apple.security.network.client</key>
+          	<true/>
+          	<key>com.apple.security.network.server</key>
+          	<true/>
+          	<key>com.apple.security.files.user-selected.read-write</key>
+          	<true/>
+          </dict>
+          </plist>
+          EOF
+
+      # `test/macos_entitlements_test.dart` is what guards the entitlements the
+      # products actually ship with; it runs in `analysis.yml`, on a checkout
+      # the step above has not rewritten.
+      - name: Build the unsandboxed app
+        run: flutter build macos --debug

@@ -43,48 +43,5 @@ final class SensorItem {
     return details.values.firstOrNull;
   }
 
-  static List<SensorItem> parse(String raw) {
-    final eachSensorLines = <List<String>>[[]];
-    final lines = raw.split('\n');
-    var emptyLinesCount = 0;
-    for (var i = 0; i < lines.length; i++) {
-      final line = lines[i];
-      if (line.isEmpty) {
-        eachSensorLines.add([]);
-        emptyLinesCount++;
-        continue;
-      }
-      eachSensorLines.last.add(line);
-    }
-
-    if (emptyLinesCount + 1 != eachSensorLines.length) {
-      Loggers.app.warning('Empty lines count not match');
-    }
-
-    final sensors = <SensorItem>[];
-    for (final sensorLines in eachSensorLines) {
-      // At least 3 lines: [device, adapter, temp]
-      final len = sensorLines.length;
-      if (len < 3) continue;
-      final device = sensorLines.first;
-      final adapter = SensorAdaptor.parse(
-        sensorLines[1].split(':').last.trim(),
-      );
-
-      final details = <String, String>{};
-      for (var idx = 2; idx < len; idx++) {
-        final part = sensorLines[idx];
-        final detailParts = part.split(':');
-        if (detailParts.length < 2) continue;
-        final key = detailParts[0].trim();
-        final value = detailParts[1].trim();
-        details[key] = value;
-      }
-      sensors.add(
-        SensorItem(device: device, adapter: adapter, details: details),
-      );
-    }
-
-    return sensors;
-  }
+  // Parsing implementation migrated to the shared Rust library sbm_parser
 }

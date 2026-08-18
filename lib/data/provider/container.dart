@@ -1,19 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:dartssh2/dartssh2.dart';
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:server_box/core/extension/context/locale.dart';
-import 'package:server_box/core/extension/ssh_client.dart';
 import 'package:server_box/core/utils/shell_quote.dart' as sh;
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/app/scripts/script_consts.dart';
 import 'package:server_box/data/model/container/image.dart';
 import 'package:server_box/data/model/container/ps.dart';
 import 'package:server_box/data/model/container/type.dart';
+import 'package:server_box/data/model/server/server_exec.dart';
+import 'package:server_box/data/provider/server/single.dart';
 import 'package:server_box/data/res/store.dart';
 
 part 'container.freezed.dart';
@@ -247,11 +247,18 @@ class ContainerNotifier extends _$ContainerNotifier {
   var sudoCompleter = Completer<bool>();
   String? _cachedPassword;
   var _refreshGeneration = 0;
+
+  /// The concurrency guard, kept off the state.
+  ///
+  /// `isBusy` used to serve both purposes, which meant an automatic refresh
+  /// published two state changes per tick — busy, then not — and rebuilt the
+  /// page each time, disabling and re-enabling every button on it, whether or
+  /// not anything had actually changed.
+  var _refreshing = false;
   ({ContainerRefreshTarget target, bool isAuto})? _pendingRefresh;
 
   @override
   ContainerState build(
-    SSHClient? client,
     String userName,
     String hostId,
     BuildContext context,
@@ -296,6 +303,9 @@ class ContainerNotifier extends _$ContainerNotifier {
   int _resetSudoProbe() {
     sudoCompleter = Completer<bool>();
     _pendingRefresh = null;
+    // Whatever was running is now stale and will return without finishing, so
+    // the guard has to be lifted here or nothing could ever refresh again.
+    _refreshing = false;
     return ++_refreshGeneration;
   }
 
@@ -331,8 +341,9 @@ class ContainerNotifier extends _$ContainerNotifier {
         ContainerRefreshTarget.containers => ContainerCmdType.ps,
         ContainerRefreshTarget.images => ContainerCmdType.images,
       };
-      final res = await client?.run(_wrap(probe.exec(type)));
-      if (res?.string.toLowerCase().contains('permission denied') ?? false) {
+      final exec = await ref.read(serverProvider(hostId).notifier).ensureExec();
+      final res = await exec.run(_wrap(probe.exec(type)));
+      if (res.combined.toLowerCase().contains('permission denied')) {
         return completer.complete(true);
       }
       return completer.complete(false);
@@ -359,13 +370,22 @@ class ContainerNotifier extends _$ContainerNotifier {
     bool isAuto = false,
     int? generation,
   }) async {
-    if (state.isBusy || state.runLog != null) {
+    if (_refreshing || state.runLog != null) {
       _queueRefresh(target, isAuto);
       return;
     }
+    _refreshing = true;
     final refreshGeneration = generation ?? _refreshGeneration;
     final type = state.type;
-    state = state.copyWith(isBusy: true, error: null);
+    // The error is left alone until something replaces it. Clearing it here
+    // put the page back to a full-screen spinner for the length of every
+    // refresh — and with auto-refresh on, a server with no runtime flashed
+    // between spinner and explanation on every tick.
+    //
+    // An automatic refresh says nothing about being busy either: nobody asked
+    // for it, so there is nobody to tell, and saying so is a state change in
+    // itself.
+    if (!isAuto) state = state.copyWith(isBusy: true);
 
     final sudo = sudoCompleter;
     if (!sudo.isCompleted) unawaited(_requiresSudo(sudo, type, target));
@@ -419,38 +439,39 @@ class ContainerNotifier extends _$ContainerNotifier {
         separator: separator,
       ),
       sudo: needSudo,
-      password: password,
     );
     int? code;
     String raw = '';
+    // Kept apart from [raw]: parsing wants stdout only, but everything that
+    // explains a failure — `sh: docker: not found`, a permission denial — is
+    // on stderr, and dropping it left the page quoting the separators the
+    // script echoes between commands.
+    String errOut = '';
     var isPodmanEmulation = false;
-    if (client != null) {
-      try {
-        (code, raw) = await client!.execWithPwd(
-          cmd,
-          context: context,
-          id: hostId,
-          onStderr: (data, _) {
-            if (data.contains(_podmanEmulationMsg)) {
-              isPodmanEmulation = true;
-            }
-          },
-        );
-      } catch (e, trace) {
-        if (_isStaleRefresh(refreshGeneration)) return;
-        Loggers.app.warning('Container refresh execution failed', e, trace);
-        _setRefreshError(
-          target,
-          ContainerErr(type: ContainerErrType.unknown, message: '$e'),
-        );
-        await _finishRefresh(refreshGeneration);
-        return;
-      }
-    } else {
+    try {
+      // Asked for rather than held: a server reached over its monitor agent
+      // has no connection sitting there until something needs one, and a
+      // failure to open one is reported below like any other.
+      final exec = await ref.read(serverProvider(hostId).notifier).ensureExec();
+      final result = await exec.runWithSudo(
+        cmd,
+        password: password,
+        onStderr: (data) {
+          if (data.contains(_podmanEmulationMsg)) {
+            isPodmanEmulation = true;
+          }
+        },
+      );
+      (code, raw, errOut) = (result.exitCode, result.stdout, result.stderr);
+    } catch (e, trace) {
       if (_isStaleRefresh(refreshGeneration)) return;
+      Loggers.app.warning('Container refresh execution failed', e, trace);
       _setRefreshError(
         target,
-        ContainerErr(type: ContainerErrType.noClient),
+        // Nothing ran at all — a connection that could not be opened, an agent
+        // that refused. Told apart from a command that ran and failed, which
+        // is what `unknown` is for.
+        ContainerErr(type: ContainerErrType.noClient, message: '$e'),
       );
       await _finishRefresh(refreshGeneration);
       return;
@@ -459,22 +480,32 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (_isStaleRefresh(refreshGeneration)) return;
     if (!context.mounted) {
       _pendingRefresh = null;
+      _refreshing = false;
       state = state.copyWith(isBusy: false);
       return;
     }
 
     /// Code 127 means command not found
-    if (code == 127 || raw.contains(_dockerNotFound)) {
+    if (code == 127 ||
+        errOut.contains(_dockerNotFound) ||
+        raw.contains(_dockerNotFound)) {
       _setRefreshError(
         target,
-        ContainerErr(type: ContainerErrType.notInstalled),
+        // Carries what the shell said: "not installed" is a reading of that
+        // output, and it is wrong often enough — a runtime installed for
+        // another account, a `DOCKER_HOST` pointing nowhere — that the user
+        // should be able to see what it was.
+        ContainerErr(
+          type: ContainerErrType.notInstalled,
+          message: userFacingOutput(errOut, raw),
+        ),
       );
       await _finishRefresh(refreshGeneration);
       return;
     }
 
-    /// Sudo password error (exitCode = 2)
-    if (needSudo && code == 2) {
+    /// Sudo password error
+    if (needSudo && code == kSudoPasswordRejected) {
       _cachedPassword = null;
       _setRefreshError(
         target,
@@ -489,7 +520,10 @@ class ContainerNotifier extends _$ContainerNotifier {
     if (code != 0) {
       _setRefreshError(
         target,
-        ContainerErr(type: ContainerErrType.unknown, message: libL10n.fail),
+        ContainerErr(
+          type: ContainerErrType.unknown,
+          message: userFacingOutput(errOut, raw) ?? libL10n.fail,
+        ),
       );
       await _finishRefresh(refreshGeneration);
       return;
@@ -510,10 +544,14 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     /// Detect Podman not installed when using Podman mode
     if (state.type == ContainerType.podman &&
-        raw.contains('podman: not found')) {
+        (errOut.contains('podman: not found') ||
+            raw.contains('podman: not found'))) {
       _setRefreshError(
         target,
-        ContainerErr(type: ContainerErrType.notInstalled),
+        ContainerErr(
+          type: ContainerErrType.notInstalled,
+          message: userFacingOutput(errOut, raw),
+        ),
       );
       await _finishRefresh(refreshGeneration);
       return;
@@ -538,12 +576,19 @@ class ContainerNotifier extends _$ContainerNotifier {
         commands[index]: segments[index],
     };
 
+    // The runtime answered in full, so whatever was wrong last time is over.
+    // Cleared here rather than at the start of a refresh, which is what kept a
+    // failure on screen through a retry that only reproduced it — and here
+    // rather than in the version branch below, which is skipped once the
+    // version is cached, so a recovered server kept showing a dead daemon.
+    if (state.error != null) state = state.copyWith(error: null);
+
     // Parse version only until it has been cached for the selected runtime.
     final verRaw = output[ContainerCmdType.version];
     if (verRaw != null) {
       try {
         final version = json.decode(verRaw)['Client']['Version'];
-        state = state.copyWith(version: version, error: null);
+        state = state.copyWith(version: version);
       } catch (e, trace) {
         if (state.error == null) {
           state = state.copyWith(
@@ -646,6 +691,9 @@ class ContainerNotifier extends _$ContainerNotifier {
   }
 
   Future<void> _finishRefresh(int generation) async {
+    // Cleared before the staleness check: a refresh that was superseded still
+    // has to let the next one start.
+    _refreshing = false;
     if (_isStaleRefresh(generation)) return;
     state = state.copyWith(isBusy: false);
     await _refreshPendingIfNeeded(generation);
@@ -767,9 +815,6 @@ class ContainerNotifier extends _$ContainerNotifier {
     String cmd, {
     ContainerRefreshTarget? refreshTarget = ContainerRefreshTarget.containers,
   }) async {
-    if (client == null) {
-      return ContainerErr(type: ContainerErrType.noClient);
-    }
     if (state.isBusy || state.runLog != null) {
       return ContainerErr(
         type: ContainerErrType.unknown,
@@ -811,16 +856,17 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     int? code;
     try {
-      (code, _) = await client!.execWithPwd(
-        _wrap(cmd, sudo: needSudo, password: password),
-        context: context,
-        onStdout: (data, _) {
+      final exec = await ref.read(serverProvider(hostId).notifier).ensureExec();
+      final result = await exec.runWithSudo(
+        _wrap(cmd, sudo: needSudo),
+        password: password,
+        onStdout: (data) {
           if (ref.mounted) {
             state = state.copyWith(runLog: '${state.runLog}$data');
           }
         },
-        id: hostId,
       );
+      code = result.exitCode;
     } catch (e, trace) {
       Loggers.app.warning('Container command execution failed', e, trace);
       if (ref.mounted) await _finishRun();
@@ -829,7 +875,7 @@ class ContainerNotifier extends _$ContainerNotifier {
 
     if (!ref.mounted) return null;
 
-    if (needSudo && code == 2) {
+    if (needSudo && code == kSudoPasswordRejected) {
       _cachedPassword = null;
       await _finishRun();
       return ContainerErr(
@@ -878,29 +924,53 @@ class ContainerNotifier extends _$ContainerNotifier {
   String _wrap(
     String cmd, {
     bool sudo = false,
-    String? password,
   }) => buildContainerRuntimeCommand(
     command: cmd,
     type: state.type,
     containerHost: Stores.container.fetch(hostId, state.type),
     sudo: sudo,
-    password: password,
   );
 }
 
 const _jsonFmt = '--format "{{json .}}"';
 
-String _buildSudoCmd(String baseCmd, String password) {
-  final pwdBase64 = base64Encode(utf8.encode(password));
-  return 'echo "$pwdBase64" | base64 -d | sudo -S $baseCmd';
+/// What the machine said, for a user reading why a page is empty.
+///
+/// stderr first, since that is where a shell puts the reason. The separators
+/// the script echoes between its commands are dropped: they are this app's own
+/// scaffolding, and a page whose entire explanation was
+/// `SrvBoxSep_1786614816321254_0` twice over told the user nothing.
+String? userFacingOutput(String stderr, String stdout) {
+  for (final stream in [stderr, stdout]) {
+    final lines = <String>[];
+    // Deduplicated through a set rather than by scanning the list: several
+    // commands are batched into one call, so a missing runtime says
+    // `sh: docker: not found` once per command — three identical lines are
+    // three attempts at the same thing, not three problems — and the stream
+    // this walks can be a megabyte of distinct lines.
+    final seen = <String>{};
+    for (final line in stream.split('\n')) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
+      if (trimmed.startsWith(ScriptConstants.separator)) continue;
+      if (!seen.add(trimmed)) continue;
+      lines.add(trimmed);
+    }
+    if (lines.isNotEmpty) return lines.join('\n');
+  }
+  return null;
 }
 
+/// The command line for one container-runtime call.
+///
+/// Carries no password: `sudo -S` reads one from stdin, and `ServerExec`'s
+/// `runWithSudo` puts it there. Written into the command instead it would end
+/// up in the agent's audit log and the machine's process list.
 String buildContainerRuntimeCommand({
   required String command,
   required ContainerType type,
   String? containerHost,
   bool sudo = false,
-  String? password,
 }) {
   final environment = <String>['LANG=en_US.UTF-8'];
   if (containerHost?.isNotEmpty ?? false) {
@@ -910,11 +980,7 @@ String buildContainerRuntimeCommand({
     environment.add('$hostVariable=${shellSingleQuote(containerHost!)}');
   }
   if (sudo) {
-    final privilegedCommand = 'env ${environment.join(' ')} $command';
-    if (password != null) {
-      return _buildSudoCmd(privilegedCommand, password);
-    }
-    return 'sudo -S $privilegedCommand';
+    return 'sudo -S env ${environment.join(' ')} $command';
   }
   final exports = environment.map((value) => 'export $value').join(' && ');
   return '$exports && $command';
@@ -944,25 +1010,19 @@ enum ContainerCmdType {
     return baseCmd;
   }
 
+  /// Several commands as one, their outputs told apart by [separator].
+  ///
+  /// Privilege is not this function's business: the caller wraps the result
+  /// with `_wrap(sudo: ...)`, and the password reaches `sudo -S` on stdin.
   static String execSelected(
     Iterable<ContainerCmdType> types,
     ContainerType type, {
     String separator = ScriptConstants.separator,
-    bool sudo = false,
-    String? password,
   }) {
     final commands = types
         .map((e) => e.exec(type))
         .join('\necho $separator\n');
 
-    final wrappedCommands = 'sh -c \'${commands.replaceAll("'", "'\\''")}\'';
-
-    if (sudo && password != null) {
-      return _buildSudoCmd(wrappedCommands, password);
-    }
-    if (sudo) {
-      return 'sudo -S $wrappedCommands';
-    }
-    return wrappedCommands;
+    return 'sh -c \'${commands.replaceAll("'", "'\\''")}\'';
   }
 }

@@ -86,6 +86,17 @@ class ServerModel {
 }
 ```
 
+
+## Rust-Bindings (flutter_rust_bridge)
+
+Nach Änderungen an `crates/sbm_ffi/src/api` die Dart-Bindings neu generieren:
+
+```bash
+flutter_rust_bridge_codegen generate
+```
+
+Konfiguration in `flutter_rust_bridge.yaml`; Ausgabe nach `lib/src/rust/` (generierte Dateien nie bearbeiten).
+
 ## Generierung der Lokalisierung
 
 ```bash

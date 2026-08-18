@@ -1,0 +1,237 @@
+//! BSD/macOS parsing (Dart reference: cpu.dart parseBsdCpu / memory.dart parseBsdMemory /
+//! net_speed.dart parseBsd)
+
+use crate::types::*;
+use regex::Regex;
+use std::sync::OnceLock;
+
+fn regex(cell: &'static OnceLock<Regex>, pattern: &str) -> &'static Regex {
+    cell.get_or_init(|| Regex::new(pattern).expect("valid regex"))
+}
+
+/// `top` CPU line. macOS: `CPU usage: 14.70% user, 12.76% sys, 72.52% idle`;
+/// FreeBSD aggregate: `CPU: 5.2% user, 0.0% nice, 3.1% system, 0.1% interrupt, 91.6% idle`;
+/// FreeBSD per-core (`top -b -d 1 -P`, one line per core):
+/// `CPU 0:  5.2% user,  0.0% nice,  3.1% system,  0.1% interrupt, 91.6% idle`;
+/// otherwise falls back to extracting the first three percentages (user/sys/idle).
+///
+/// FreeBSD's `-P` flag gives genuine per-core readings (used when present).
+/// macOS `top` gives an aggregate percentage only — no per-core breakdown is
+/// available without extra tools (powermetrics needs root). When a trailing
+/// bare integer is present (from `sysctl -n hw.ncpu`, appended to the BSD
+/// manifest command's Darwin branch), the aggregate reading is replicated
+/// across that many pseudo-cores "cpu0".."cpuN-1" so the reported core count
+/// is real even though per-core usage is not; absent or unparseable, falls
+/// back to a single "cpu0" pseudo-core (matching the historical Dart behavior)
+pub fn parse_cpu(raw: &str) -> Vec<CpuCore> {
+    static MAC: OnceLock<Regex> = OnceLock::new();
+    static FREEBSD_PER_CORE: OnceLock<Regex> = OnceLock::new();
+    static FREEBSD: OnceLock<Regex> = OnceLock::new();
+    static PERCENT: OnceLock<Regex> = OnceLock::new();
+    static CORE_COUNT: OnceLock<Regex> = OnceLock::new();
+
+    let count = regex(&CORE_COUNT, r"(?m)^\s*(\d+)\s*$")
+        .captures(raw)
+        .and_then(|c| c[1].parse::<usize>().ok())
+        .filter(|&n| n > 0)
+        .unwrap_or(1);
+
+    let cores = |user: u64, sys: u64, nice: u64, idle: u64, irq: u64| {
+        (0..count)
+            .map(|i| CpuCore {
+                id: format!("cpu{i}"),
+                user,
+                sys,
+                nice,
+                idle,
+                iowait: 0,
+                irq,
+                softirq: 0,
+            })
+            .collect()
+    };
+
+    let freebsd_per_core = regex(
+        &FREEBSD_PER_CORE,
+        r"(?m)^CPU\s+(\d+):\s+([\d.]+)% user,\s+([\d.]+)% nice,\s+([\d.]+)% system,\s+([\d.]+)% interrupt,\s*([\d.]+)% idle",
+    );
+    let per_core: Vec<CpuCore> = freebsd_per_core
+        .captures_iter(raw)
+        .map(|c| {
+            let n: usize = c[1].parse().unwrap_or(0);
+            let f = |i: usize| c[i].parse::<f64>().unwrap_or(0.0) as u64;
+            CpuCore {
+                id: format!("cpu{n}"),
+                user: f(2),
+                sys: f(4),
+                nice: f(3),
+                idle: f(6),
+                iowait: 0,
+                irq: f(5),
+                softirq: 0,
+            }
+        })
+        .collect();
+    if !per_core.is_empty() {
+        return per_core;
+    }
+
+    let mac = regex(&MAC, r"CPU usage: ([\d.]+)% user, ([\d.]+)% sys, ([\d.]+)% idle");
+    if let Some(c) = mac.captures(raw) {
+        let f = |i: usize| c[i].parse::<f64>().unwrap_or(0.0) as u64;
+        return cores(f(1), f(2), 0, f(3), 0);
+    }
+
+    let freebsd = regex(
+        &FREEBSD,
+        r"CPU: ([\d.]+)% user, ([\d.]+)% nice, ([\d.]+)% system, ([\d.]+)% interrupt, ([\d.]+)% idle",
+    );
+    if let Some(c) = freebsd.captures(raw) {
+        let f = |i: usize| c[i].parse::<f64>().unwrap_or(0.0) as u64;
+        return cores(f(1), f(3), f(2), f(5), f(4));
+    }
+
+    // Fallback: extract all percentages, take the first three as user/sys/idle (same as Dart)
+    let percent = regex(&PERCENT, r"(-?\d+(?:\.\d+)?)%");
+    let values: Vec<f64> = percent
+        .captures_iter(raw)
+        .filter_map(|c| c[1].parse::<f64>().ok())
+        .map(|v| v.clamp(0.0, 100.0))
+        .collect();
+    if values.len() >= 3 {
+        return cores(values[0] as u64, values[1] as u64, 0, values[2] as u64, 0);
+    }
+    Vec::new()
+}
+
+/// `top` memory line, in KiB. macOS: `PhysMem: 32G used (1536M wired), 64G unused.`;
+/// FreeBSD:`Mem: 456M Active, 2918M Inact, 1127M Wired, 187M Cache, 829M Buf, 3535M Free`
+pub fn parse_mem(raw: &str) -> Option<Memory> {
+    static MAC: OnceLock<Regex> = OnceLock::new();
+    static FREEBSD: OnceLock<Regex> = OnceLock::new();
+
+    let mac = regex(
+        &MAC,
+        r"PhysMem:\s*([\d.]+)([KMGT])\s*used.*?,\s*([\d.]+)([KMGT])\s*unused",
+    );
+    if let Some(c) = mac.captures(raw) {
+        let used = to_kib(c[1].parse().ok()?, &c[2]);
+        let free = to_kib(c[3].parse().ok()?, &c[4]);
+        let total = used + free;
+        // top's "used" includes cached files; when vm_stat output accompanies
+        // the PhysMem line, derive real usage (active + wired + compressor)
+        // so avail reflects reclaimable memory, like MemAvailable on Linux
+        let avail = vm_stat_avail(raw, total).unwrap_or(free);
+        return Some(Memory { total, free, avail });
+    }
+
+    let freebsd = regex(
+        &FREEBSD,
+        r"(?i)(\d+)([KMGT])\s+(Active|Inact|Wired|Cache|Buf|Free)",
+    );
+    let mut used = 0u64;
+    let mut free = 0u64;
+    let mut matched = false;
+    for c in freebsd.captures_iter(raw) {
+        matched = true;
+        let kib = to_kib(c[1].parse().ok()?, &c[2]);
+        if c[3].eq_ignore_ascii_case("free") {
+            free += kib;
+        } else {
+            used += kib;
+        }
+    }
+    matched.then(|| Memory { total: used + free, free, avail: free })
+}
+
+/// Available memory from vm_stat pages: total - (active + wired + compressor).
+/// Returns None when the vm_stat block is missing (plain PhysMem input)
+fn vm_stat_avail(raw: &str, total_kib: u64) -> Option<u64> {
+    static PAGE_SIZE: OnceLock<Regex> = OnceLock::new();
+    static PAGES: OnceLock<Regex> = OnceLock::new();
+
+    let page_size = regex(&PAGE_SIZE, r"page size of (\d+) bytes")
+        .captures(raw)
+        .and_then(|c| c[1].parse::<u64>().ok())
+        .unwrap_or(4096);
+
+    let pages = regex(
+        &PAGES,
+        r"Pages (active|wired down|occupied by compressor):\s*(\d+)",
+    );
+    let mut used_pages = 0u64;
+    let mut found = 0;
+    for c in pages.captures_iter(raw) {
+        used_pages += c[2].parse::<u64>().ok()?;
+        found += 1;
+    }
+    if found == 0 {
+        return None;
+    }
+    let used_kib = used_pages * page_size / 1024;
+    Some(total_kib.saturating_sub(used_kib))
+}
+
+/// `sysctl -n machdep.cpu.brand_string` (macOS/FreeBSD), with the real
+/// logical core count appended (see the CPU command); BSD reports one global
+/// brand string, not a per-logical-CPU breakdown like Linux's /proc/cpuinfo,
+/// so this always yields at most one entry
+pub fn parse_cpu_brand(raw: &str) -> Vec<(String, u32)> {
+    static CORE_COUNT: OnceLock<Regex> = OnceLock::new();
+
+    let brand = raw
+        .lines()
+        .map(str::trim)
+        .find(|l| !l.is_empty() && l.parse::<u64>().is_err())
+        .unwrap_or("")
+        .to_string();
+    if brand.is_empty() {
+        return Vec::new();
+    }
+
+    let count = regex(&CORE_COUNT, r"(?m)^\s*(\d+)\s*$")
+        .captures(raw)
+        .and_then(|c| c[1].parse::<u32>().ok())
+        .filter(|&n| n > 0)
+        .unwrap_or(1);
+    vec![(brand, count)]
+}
+
+fn to_kib(amount: f64, unit: &str) -> u64 {
+    let mul = match unit.to_uppercase().as_str() {
+        "T" => 1024.0 * 1024.0 * 1024.0,
+        "G" => 1024.0 * 1024.0,
+        "M" => 1024.0,
+        _ => 1.0,
+    };
+    (amount * mul).round() as u64
+}
+
+/// `netstat -ibn`(Dart `NetSpeed.parseBsd`):
+/// Only 11-column Link lines; skip inactive interfaces ending in `*`; first line wins per interface name
+pub fn parse_net(raw: &str) -> Vec<NetIface> {
+    let lines: Vec<&str> = raw.split('\n').collect();
+    if lines.len() < 2 {
+        return Vec::new();
+    }
+    let mut result: Vec<NetIface> = Vec::new();
+    for line in &lines[1..] {
+        let fields: Vec<&str> = line.split_whitespace().collect();
+        let Some(device) = fields.first() else { continue };
+        if device.ends_with('*') || result.iter().any(|n| n.device == *device) {
+            continue;
+        }
+        if fields.len() != 11 {
+            continue;
+        }
+        let (Ok(rx), Ok(tx)) = (fields[6].parse(), fields[9].parse()) else {
+            continue;
+        };
+        result.push(NetIface {
+            device: device.to_string(),
+            rx_bytes: rx,
+            tx_bytes: tx,
+        });
+    }
+    result
+}

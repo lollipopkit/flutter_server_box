@@ -58,7 +58,7 @@ final class PveNotifierProvider
   }
 }
 
-String _$pveNotifierHash() => r'71436a9bf520b838af7f9469e4cd6c679ffe174a';
+String _$pveNotifierHash() => r'349edbb4d1ae752e8487e1b537edc292f25a96ea';
 
 final class PveNotifierFamily extends $Family
     with $ClassFamilyOverride<PveNotifier, PveState, PveState, PveState, Spi> {
@@ -85,7 +85,7 @@ abstract class _$PveNotifier extends $Notifier<PveState> {
   PveState build(Spi spiParam);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<PveState, PveState>;
     final element =
         ref.element
@@ -95,6 +95,6 @@ abstract class _$PveNotifier extends $Notifier<PveState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

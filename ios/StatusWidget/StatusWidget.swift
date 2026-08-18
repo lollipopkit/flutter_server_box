@@ -168,7 +168,7 @@ struct Provider: IntentTimelineProvider {
         #if os(iOS)
         if #available(iOSApplicationExtension 16.0, *) {
             if family == .accessoryInline || family == .accessoryRectangular {
-                url = UserDefaults(suiteName: WidgetConstants.appGroupId)?.string(forKey: "accessory_widget_url")
+                url = UserDefaults(suiteName: WidgetConstants.appGroupId)?.string(forKey: accessoryKey)
             }
         }
         #endif

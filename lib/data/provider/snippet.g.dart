@@ -47,7 +47,7 @@ abstract class _$SnippetNotifier extends $Notifier<SnippetState> {
   SnippetState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<SnippetState, SnippetState>;
     final element =
         ref.element
@@ -57,6 +57,6 @@ abstract class _$SnippetNotifier extends $Notifier<SnippetState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

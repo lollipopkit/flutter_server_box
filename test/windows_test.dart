@@ -1,21 +1,24 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/model/app/scripts/cmd_types.dart';
-import 'package:server_box/data/model/app/scripts/script_builders.dart';
 import 'package:server_box/data/model/app/scripts/shell_func.dart';
 import 'package:server_box/data/model/server/server_status_update_req.dart';
 import 'package:server_box/data/model/server/system.dart';
-import 'package:server_box/data/model/server/windows_parser.dart';
 import 'package:server_box/data/res/status.dart';
 
+import 'rust_lib_helper.dart';
+
 void main() {
+  setUpAll(initRustLibForTest);
+
   group('Windows System Tests', () {
     test('should verify Windows segments length matches command types', () {
       expect(WindowsStatusCmdType.values.length, isPositive);
     });
 
     test('should generate Windows PowerShell script correctly', () {
-      final builder = ScriptBuilderFactory.getBuilder(true);
-      final script = builder.buildScript(null);
+      final script = ShellFuncManager.allScript(
+        systemType: SystemType.windows,
+      );
 
       expect(script, contains('PowerShell script for ServerBox'));
       expect(script, contains('switch (\$args[0])'));
@@ -29,7 +32,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       final result = await getStatus(req);
@@ -45,7 +47,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions
@@ -59,33 +60,10 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions
       expect(() async => await getStatus(req), returnsNormally);
-    });
-
-    test('Windows memory parser rejects missing and impossible values', () {
-      expect(WindowsParser.parseMemory('{}'), isNull);
-      expect(
-        WindowsParser.parseMemory(
-          '{"TotalVisibleMemorySize":0,"FreePhysicalMemory":0}',
-        ),
-        isNull,
-      );
-      expect(
-        WindowsParser.parseMemory(
-          '{"TotalVisibleMemorySize":100,"FreePhysicalMemory":200}',
-        ),
-        isNull,
-      );
-      expect(
-        WindowsParser.parseMemory(
-          '{"TotalVisibleMemorySize":100,"FreePhysicalMemory":20}',
-        ),
-        isNotNull,
-      );
     });
 
     test('should parse Windows disk data correctly', () async {
@@ -95,36 +73,10 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions
       expect(() async => await getStatus(req), returnsNormally);
-    });
-
-    test('Windows disk parser accepts full volumes and rejects bad ranges', () {
-      final full = WindowsParser.parseDisks(
-        '{"DeviceID":"C:","Size":1024,"FreeSpace":0,"FileSystem":"NTFS"}',
-      );
-      expect(full, hasLength(1));
-      expect(full.single.avail, BigInt.zero);
-
-      expect(
-        WindowsParser.parseDisks(
-          '{"DeviceID":"C:","Size":1024,"FreeSpace":2048,"FileSystem":"NTFS"}',
-        ),
-        isEmpty,
-      );
-    });
-
-    test('Windows CPU parser rejects invalid ranges and core counts', () {
-      for (final raw in [
-        '{"LoadPercentage":150,"NumberOfCores":4,"NumberOfLogicalProcessors":8}',
-        '{"LoadPercentage":-1,"NumberOfCores":4,"NumberOfLogicalProcessors":8}',
-        '{"LoadPercentage":50,"NumberOfCores":0,"NumberOfLogicalProcessors":0}',
-      ]) {
-        expect(WindowsParser.parseCpu(raw, InitStatus.status).cores, isEmpty);
-      }
     });
 
     test('should parse Windows battery data correctly', () async {
@@ -134,7 +86,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions
@@ -148,7 +99,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions
@@ -162,7 +112,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions
@@ -200,7 +149,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should handle NVIDIA driver not found gracefully
@@ -214,7 +162,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions even with error conditions
@@ -228,7 +175,6 @@ void main() {
         system: SystemType.windows,
         ss: serverStatus,
         parsedOutput: {}, // Empty for legacy tests
-        customCmds: {},
       );
 
       // Should not throw exceptions even with error output in temperature values

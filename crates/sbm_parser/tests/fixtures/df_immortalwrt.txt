@@ -1,0 +1,10 @@
+Filesystem           1K-blocks      Used Available Use% Mounted on
+/dev/root                 9984      9984         0 100% /rom
+tmpfs                  3989112      3876   3985236   0% /tmp
+/dev/nvme0n1p4         5335040   4570160    315616  94% /overlay
+overlayfs:/overlay     5335040   4570160    315616  94% /
+/dev/nvme0n1p1           32686      8514     24172  26% /boot
+/dev/nvme0n1p1           32686      8514     24172  26% /boot
+tmpfs                      512         0       512   0% /dev
+/dev/sda             468851544 465106484   1960492 100% /mnt/sda
+overlayfs:/overlay     5335040   4570160    315616  94% /opt

@@ -85,7 +85,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
         actions: [
           pveState.error == null
               ? UIs.placeholder
-              : Btn.icon(
+              : Btn.icon(text: libL10n.refresh, 
                   icon: const Icon(Icons.refresh),
                   onTap: () {
                     _lastHandledTfaMessage = null;
@@ -404,7 +404,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
   Widget _buildCtrlBtns(PveCtrlIface item) {
     const pad = EdgeInsets.symmetric(horizontal: 7, vertical: 5);
     if (!item.available) {
-      return Btn.icon(
+      return Btn.icon(text: 'Start', 
         icon: const Icon(Icons.play_arrow, color: Colors.grey),
         onTap: () => _onCtrl(
           libL10n.start,
@@ -415,7 +415,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
     }
     return Row(
       children: [
-        Btn.icon(
+        Btn.icon(text: 'Stop', 
           icon: const Icon(Icons.stop, color: Colors.grey, size: 20),
           padding: pad,
           onTap: () => _onCtrl(
@@ -424,7 +424,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
             () => _notifier.stop(item.node, item.id),
           ),
         ),
-        Btn.icon(
+        Btn.icon(text: libL10n.restart, 
           icon: const Icon(Icons.refresh, color: Colors.grey, size: 20),
           padding: pad,
           onTap: () => _onCtrl(
@@ -433,7 +433,7 @@ final class _PvePageState extends ConsumerState<PvePage> {
             () => _notifier.reboot(item.node, item.id),
           ),
         ),
-        Btn.icon(
+        Btn.icon(text: 'Shutdown', 
           icon: const Icon(Icons.power_off, color: Colors.grey, size: 20),
           padding: pad,
           onTap: () => _onCtrl(
@@ -456,31 +456,35 @@ extension on _PvePageState {
       final otpController = TextEditingController();
       final submitted = await context.showRoundDialog<bool>(
         title: l10n.pveOtpTitle,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(error.message ?? l10n.pveOtpRequired),
-            const SizedBox(height: 13),
-            Input(
-              controller: otpController,
-              label: l10n.pveOtpLabel,
-              hint: '123456',
-              icon: Icons.password,
-              type: TextInputType.number,
-              suggestion: false,
-              autoFocus: true,
-            ),
-          ],
+        // Disposed by the tree. `autoFocus` is exactly the case that breaks
+        // when the controller goes before the field does.
+        child: DisposeWith(
+          notifiers: [otpController],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(error.message ?? l10n.pveOtpRequired),
+              const SizedBox(height: 13),
+              Input(
+                controller: otpController,
+                label: l10n.pveOtpLabel,
+                hint: '123456',
+                icon: Icons.password,
+                type: TextInputType.number,
+                suggestion: false,
+                autoFocus: true,
+              ),
+            ],
+          ),
         ),
         actions: Btnx.cancelOk,
       );
       final otp = otpController.text.trim();
-      otpController.dispose();
 
       if (!mounted || submitted != true) return;
       if (otp.isEmpty) {
-        context.showSnackBar(l10n.pveOtpRequired);
+        Toast.show(l10n.pveOtpRequired);
         return;
       }
 
@@ -517,9 +521,9 @@ extension on _PvePageState {
 
     final (suc, err) = await context.showLoadingDialog(fn: func);
     if (suc == true) {
-      context.showSnackBar(libL10n.success);
+      Toast.success(libL10n.success);
     } else {
-      context.showSnackBar(err?.toString() ?? libL10n.fail);
+      Toast.error(err?.toString() ?? libL10n.fail);
     }
   }
 
@@ -551,7 +555,7 @@ extension on _PvePageState {
         final release = pveState.release;
         if (release != null && isVersionLessThan(release, const [8, 0])) {
           if (mounted) {
-            context.showSnackBar(l10n.pveVersionLow);
+            Toast.show(l10n.pveVersionLow);
           }
         }
         break;

@@ -9,7 +9,8 @@ Server Box uses a custom build system (`fl_build`) for cross-platform builds.
 
 - Flutter SDK (stable channel)
 - Platform-specific tools (Xcode for iOS, Android Studio for Android)
-- Rust toolchain (for some native dependencies)
+- Rust toolchain (required: the status parser is a Rust crate built into the app
+  via flutter_rust_bridge/cargokit on every platform)
 
 ## Development Build
 

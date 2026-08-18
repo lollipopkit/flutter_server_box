@@ -18,36 +18,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get added2List => '已添加至任务列表';
 
   @override
-  String get addr => '地址';
-
-  @override
   String get askAi => '问 AI';
 
   @override
-  String get ai => 'AI';
-
-  @override
-  String get askAiApiKey => 'API 密钥';
-
-  @override
   String get askAiAwaitingResponse => '等待 AI 响应...';
-
-  @override
-  String get askAiBaseUrl => 'API 接口地址';
 
   @override
   String get askAiEndpointTip =>
       '填写服务根地址，或完整的 Chat Completions/Responses 地址。ServerBox 会根据所选协议自动补全路径。';
 
   @override
-  String get askAiProtocol => 'API 协议';
-
-  @override
   String get askAiProtocolTip =>
       '自动模式对 OpenAI 官方接口使用 Responses，对兼容服务使用 Chat Completions。';
-
-  @override
-  String get askAiProtocolAuto => '自动';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -114,15 +96,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiTerminalContext => '终端上下文';
 
   @override
-  String get askAiReady => '就绪';
-
-  @override
-  String get askAiThinking => '思考中';
-
-  @override
-  String get askAiRunningCommand => '执行中';
-
-  @override
   String get askAiReviewNeeded => '待审核';
 
   @override
@@ -150,6 +123,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get askAiRiskCaution => '会更改系统';
 
   @override
+  String get askAiRiskUnvetted => '未审核的主机';
+
+  @override
   String get askAiRiskDestructive => '高风险';
 
   @override
@@ -157,12 +133,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get askAiHighRiskConfirmBody => '此命令可能删除数据、停止服务或造成难以撤销的更改，请在执行前仔细检查。';
-
-  @override
-  String get askAiCommandCancelled => '已取消';
-
-  @override
-  String get askAiCommandTimedOut => '执行超时';
 
   @override
   String get askAiNoCommandOutput => '命令已完成，没有输出。';
@@ -181,13 +151,17 @@ class AppLocalizationsZh extends AppLocalizations {
       '仅当模型与本地安全检查都判定命令为只读时自动执行；会更改系统的命令仍需人工审核。';
 
   @override
+  String get askAiSendOnEnter => 'Enter 发送';
+
+  @override
+  String get askAiSendOnEnterTip =>
+      'Enter 发送消息，Shift+Enter 换行。关闭后互换：Enter 换行，Cmd/Ctrl+Enter 发送。';
+
+  @override
   String get askAiApiKeyOptional => '本地或无需认证的接口可留空';
 
   @override
   String get askAiHistory => '对话历史';
-
-  @override
-  String get askAiHistoryLocalOnly => '在本机加密保存，不参与备份和同步';
 
   @override
   String get askAiNewConversation => '新建对话';
@@ -209,9 +183,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get askAiDeleteConversationTip => '此操作会从本机删除该对话，且无法撤销。';
-
-  @override
-  String get askAiClearHistory => '清空历史';
 
   @override
   String get askAiClearHistoryTitle => '清空这台服务器的 Agent 历史？';
@@ -261,6 +232,42 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get agentToolFailed => '工具执行失败。';
+
+  @override
+  String agentToolCallsFmt(Object count) {
+    return '$count 次工具调用';
+  }
+
+  @override
+  String get agentFloat => '在其他标签页上悬浮';
+
+  @override
+  String get agentToolSshConnect => 'SSH 连接';
+
+  @override
+  String get agentToolSshDisconnect => '断开 SSH';
+
+  @override
+  String get agentSshConnectTitle => '连接到新主机';
+
+  @override
+  String get agentAuthMethod => '认证方式';
+
+  @override
+  String get agentSshConnectTip =>
+      'Agent 想建立一个 SSH 连接。请在此处输入密码，不要输入到对话里——那会被保存下来并发送给模型。';
+
+  @override
+  String get agentAdHocSessions => '临时连接';
+
+  @override
+  String get agentSaveServerTitle => '保存为服务器';
+
+  @override
+  String get agentSaveServerTip => '这台主机和你输入的密码将保存在本设备上。';
+
+  @override
+  String get agentMonitorOptional => 'Monitor 代理（可选）';
 
   @override
   String get atLeastOneTab => '至少需要选择一个标签';
@@ -402,13 +409,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cpuViewAsProgressTip => '以进度条样式显示每个 CPU 的使用率（旧版样式）';
 
   @override
-  String get configured => 'Configured';
-
-  @override
   String get customCmd => '自定义命令';
 
   @override
   String get deleteServers => '批量删除服务器';
+
+  @override
+  String get deleteDirRecursive => '连同文件夹里的所有内容一起删除';
 
   @override
   String get desktopTerminalTip => '启动 SSH 连接所用的终端模拟器命令';
@@ -506,13 +513,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => '此文件夹已不存在';
+
+  @override
+  String get fileDirGoneTip => '它已被删除或重命名。使用下方的按钮返回、回到主目录，或跳转到其他位置。';
+
+  @override
   String get finishedAt => '完成于';
-
-  @override
-  String get followSystem => '跟随系统';
-
-  @override
-  String get fontSize => '字体大小';
 
   @override
   String get fullScreen => '全屏模式';
@@ -539,16 +546,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get githubGistTokenEmpty => 'Token 为空';
 
   @override
-  String get goBackQ => '返回？';
-
-  @override
   String get goto => '前往';
-
-  @override
-  String get hideTitleBar => '隐藏标题栏';
-
-  @override
-  String get highlight => '代码高亮';
 
   @override
   String get homeTabs => '主页标签';
@@ -567,6 +565,29 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get imagesList => '镜像列表';
+
+  @override
+  String get macDmgBody =>
+      'App Store 要求本应用沙盒运行,而沙盒进程打不开伪终端。所以 App Store 版没有本机终端,也不能在本机运行 snippet 或 Agent 命令。DMG 版是同一个应用,签名时没有沙盒,这两项都有。\n\nApp Store 版仍然可用、仍在更新,以后可能停止更新。\n\n两个版本的数据存放位置不同。DMG 版首次启动会把数据复制过来,服务器、密钥、历史都会带上。复制失败时会明确告知,那时可以改用备份文件迁移(设置里的「备份」)。';
+
+  @override
+  String get macDmgImportDenied =>
+      'macOS 不允许读取此前安装版本的数据。可授予完全磁盘访问权限后重新打开本应用,或在那个版本里导出备份,再在这里恢复。';
+
+  @override
+  String get macDmgImported => '已导入此前安装版本的数据。';
+
+  @override
+  String get macDmgImportFailed => '读不到此前安装版本的数据。请在那个版本里导出备份,再在这里恢复。';
+
+  @override
+  String get macDmgTip => '本机终端、在本机运行 snippet,只有 DMG 版有。';
+
+  @override
+  String get macDmgTitle => 'DMG 版';
+
+  @override
+  String get showHiddenFiles => '显示隐藏文件';
 
   @override
   String get unused => '未使用';
@@ -612,12 +633,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get pull => '拉取';
-
-  @override
-  String get invalid => '无效';
-
-  @override
-  String get invalidUrl => '无效的 URL';
 
   @override
   String get invalidHostFormat => '主机格式无效，仅支持 IPv4、IPv6 和域名字符。';
@@ -678,13 +693,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get more => '更多';
-
-  @override
-  String get moveOutServerFuncBtnsHelp =>
-      '开启：可以在服务器 Tab 页的每个卡片下方显示。关闭：在服务器详情页顶部显示。';
-
-  @override
   String get needRestart => '需要重启 App';
 
   @override
@@ -718,7 +726,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get parseContainerStatsTip => 'Docker 解析占用状态较为缓慢';
 
   @override
-  String get permission => '权限';
+  String get fullAccessRefused => '该 agent 未开放免 SSH 访问。';
+
+  @override
+  String get fullAccessInsecure =>
+      '该 agent 仅在 TLS 或本地回环上开放免 SSH 访问，而当前连接是明文 HTTP。';
 
   @override
   String get plugInType => '插入类型';
@@ -807,9 +819,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recentConnections => '最近连接记录';
 
   @override
-  String get reconnecting => '重连中...';
-
-  @override
   String get rememberPwdInMem => '在内存中记住密码';
 
   @override
@@ -819,13 +828,50 @@ class AppLocalizationsZh extends AppLocalizations {
   String get remotePath => '远端路径';
 
   @override
+  String rootfsUpdateTip(Object installed, Object latest) {
+    return '已安装 Alpine $installed,现有 $latest。更新会重新下载并替换整个容器:里面用 apk 装过的东西都会丢失。跳过的话,现在这个照常可用。';
+  }
+
+  @override
+  String get rootfsMissing => '本机还没有安装 Linux 文件系统。';
+
+  @override
+  String get rootfsSubtitle => '本机上的 Linux 用户空间';
+
+  @override
+  String rootfsInstallTip(Object version) {
+    return '下载 Alpine Linux $version(约 3 MB)并解压到本机。它为本 App 提供一个带包管理器的 shell,可随时删除。';
+  }
+
+  @override
   String get sameIdServerExist => '已存在相同 id 的服务器';
 
   @override
-  String get save => '保存';
+  String get second => '秒';
 
   @override
-  String get second => '秒';
+  String get serverFilesUnavailableTip =>
+      '需要能连上这台服务器的 SSH,或者它的 monitor agent 开启了文件 API。';
+
+  @override
+  String get back => '返回';
+
+  @override
+  String get history => '历史';
+
+  @override
+  String get homeDir => '主目录';
+
+  @override
+  String get selectItem => '选择';
+
+  @override
+  String selected(Object count) {
+    return '已选 $count 项';
+  }
+
+  @override
+  String get sendTo => '发送到…';
 
   @override
   String get serverDetailOrder => '详情页部件顺序';
@@ -838,6 +884,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get serverTabRequired => '服务器标签不能被移除';
+
+  @override
+  String get shareServerRiskTip =>
+      '此二维码以明文包含服务器的连接设置，其中有密码。任何扫描或拍下它的人都能连接到这台服务器。';
 
   @override
   String get sftpDlPrepare => '准备连接至服务器...';
@@ -859,12 +909,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sftpShowFoldersFirst => '文件夹显示在前';
 
   @override
-  String get size => '大小';
-
-  @override
-  String get softWrap => '自动换行';
-
-  @override
   String get specifyDev => '指定设备';
 
   @override
@@ -873,9 +917,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get tempIsCelsiusTip =>
       '开启后，温度值将被视为摄氏度而非毫摄氏度。仅在温度显示不正确时开启（例如显示0.1°C而非58°C）。';
-
-  @override
-  String get speed => '速度';
 
   @override
   String spentTime(Object time) {
@@ -945,6 +986,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshHostKeyType => 'SSH 主机密钥类型';
 
   @override
+  String get sshKnownHostKeys => '已信任的主机密钥';
+
+  @override
+  String get sshKnownHostKeysTip => '本 app 已接受的主机密钥。删掉一条,下次连接时会重新询问。';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return '收到来自 $serverName 的新 SSH 主机密钥，在信任前请检查指纹。';
   }
@@ -979,9 +1026,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshVirtualKeyAutoOff => '虚拟按键自动切换';
 
   @override
-  String get stat => '统计';
-
-  @override
   String get supportFmtArgs => '支持以下格式化参数：';
 
   @override
@@ -1002,19 +1046,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get system => '系统';
 
   @override
-  String get tapToStartDiscovery => '点击搜索按钮发现网络中的SSH服务器';
-
-  @override
   String get termFontSizeTip => '此设置会影响终端大小（宽和高）。可以在终端页面缩放来调整当前会话的字体大小';
 
   @override
-  String get textScaler => '字体缩放';
-
-  @override
   String get textScalerTip => '1.0 => 100%（原大小），仅作用于服务器页面部分字体，不建议修改。';
-
-  @override
-  String get time => '时间';
 
   @override
   String get times => '次';
@@ -1024,9 +1059,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sudoPromptNotFound => '当前没有 sudo 密码提示。';
-
-  @override
-  String get unknown => '未知';
 
   @override
   String get updateServerStatusInterval => '服务器状态刷新间隔';
@@ -1045,9 +1077,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get viewDetails => '查看详情';
-
-  @override
-  String get viewErr => '查看错误';
 
   @override
   String get virtKeyHelpClipboard => '如果终端有选中字符，则复制选中字符至剪切板，否则粘贴剪切板内容至终端。';
@@ -1072,9 +1101,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get whenOpenApp => '当打开 App 时';
-
-  @override
-  String get wiki => 'Wiki';
 
   @override
   String get wolTip => '配置 WOL 后，每次连接服务器时将自动发送唤醒请求';
@@ -1115,12 +1141,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portForward_remotePort => '远端端口';
 
   @override
-  String get portForward_type_local => '本地';
-
-  @override
-  String get portForward_type_remote => '远程';
-
-  @override
   String portForward_deleteConfirmFmt(Object name) {
     return '删除 $name？';
   }
@@ -1129,25 +1149,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sponsor => '赞助';
 
   @override
-  String get sort => '排序';
-
-  @override
-  String get sortByName => '按名称';
-
-  @override
   String get sortByJoinTime => '按加入时间';
 
   @override
-  String get ascending => '升序';
-
-  @override
-  String get descending => '降序';
-
-  @override
   String get serverHistory => '服务器历史';
-
-  @override
-  String get clearHistory => '清空历史';
 
   @override
   String get portForwardBetaTitle => '端口映射 (Beta)';
@@ -1250,6 +1255,80 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get processKillTargetChanged => '该进程已变化或退出，请刷新后重试。';
+
+  @override
+  String get watchServers => '手表上的服务器';
+
+  @override
+  String get watchServersTip =>
+      '手表自己向 monitor agent 取数据，所以只能选择已配置 monitor 的服务器。';
+
+  @override
+  String get watchNoMonitorServer => '没有服务器配置了 monitor';
+
+  @override
+  String get watchLegacyUrls => '旧版 status 链接';
+
+  @override
+  String get accessoryWidgetServer => '锁屏小组件服务器';
+
+  @override
+  String get systemdMissing => '此服务器没有 systemd';
+
+  @override
+  String get systemdMissingTip => '机器上没有安装 `systemctl`，因此没有 unit 可列。';
+
+  @override
+  String initSystemFmt(String init) {
+    return '这台机器似乎使用 $init。';
+  }
+
+  @override
+  String get systemdListFailed => '无法列出 unit';
+
+  @override
+  String get systemdUserScopeMissing => '未列出用户 unit';
+
+  @override
+  String get systemdUserScopeMissingTip => '该账户在服务器上没有用户会话总线，因此只显示系统 unit。';
+
+  @override
+  String get serverUnreachable => '无法在此服务器上执行命令';
+
+  @override
+  String get containerNoRuntime => '此处没有容器运行时';
+
+  @override
+  String get containerNoRuntimeTip =>
+      '这台机器上 `docker` 和 `podman` 都没有响应。如果它装在另一个账户下，请在设置中开启「尝试使用 sudo」。';
+
+  @override
+  String get containerUnreadable => '容器运行时返回了无法解析的内容';
+
+  @override
+  String get power => '电源';
+
+  @override
+  String get continueInTerminal => '在终端中继续';
+
+  @override
+  String get askAiRiskUnknown => '未判定';
+
+  @override
+  String get agentLocalExec => '在本机执行命令';
+
+  @override
+  String get agentLocalExecTip =>
+      '允许 Agent 在运行 ServerBox 的这台机器上工作，而不只是服务器。这里没有无人值守：再只读的命令也需要审核。app 的数据、你的密钥和文件都在这台机器上。';
+
+  @override
+  String get agentLocalExecRootfsTip =>
+      '让 Agent 在本机操作,范围限于 ServerBox 安装的 Alpine Linux 容器内。它看不到手机本身的文件系统、App 的数据和你的文件。每条命令仍然需要审核。';
+
+  @override
+  String macDmgImportedPartly(String path) {
+    return '已导入此前安装版本的数据。下载的文件仍在原处:$path。';
+  }
 }
 
 /// The translations for Chinese, as used in Taiwan (`zh_TW`).
@@ -1266,33 +1345,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get added2List => '已新增至任務清單';
 
   @override
-  String get addr => '位址';
-
-  @override
   String get askAi => '詢問 AI';
 
   @override
-  String get askAiApiKey => 'API 金鑰';
-
-  @override
   String get askAiAwaitingResponse => '等待 AI 回應...';
-
-  @override
-  String get askAiBaseUrl => 'API 介面位址';
 
   @override
   String get askAiEndpointTip =>
       '填寫服務根位址，或完整的 Chat Completions/Responses 位址。ServerBox 會依所選協議自動補全路徑。';
 
   @override
-  String get askAiProtocol => 'API 協議';
-
-  @override
   String get askAiProtocolTip =>
       '自動模式對 OpenAI 官方介面使用 Responses，對相容服務使用 Chat Completions。';
-
-  @override
-  String get askAiProtocolAuto => '自動';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -1359,15 +1423,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiTerminalContext => '終端機內容';
 
   @override
-  String get askAiReady => '就緒';
-
-  @override
-  String get askAiThinking => '思考中';
-
-  @override
-  String get askAiRunningCommand => '執行中';
-
-  @override
   String get askAiReviewNeeded => '待審核';
 
   @override
@@ -1395,6 +1450,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get askAiRiskCaution => '會變更系統';
 
   @override
+  String get askAiRiskUnvetted => '未審核的主機';
+
+  @override
   String get askAiRiskDestructive => '高風險';
 
   @override
@@ -1402,12 +1460,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiHighRiskConfirmBody => '此指令可能刪除資料、停止服務或造成難以復原的變更，請在執行前仔細檢查。';
-
-  @override
-  String get askAiCommandCancelled => '已取消';
-
-  @override
-  String get askAiCommandTimedOut => '執行逾時';
 
   @override
   String get askAiNoCommandOutput => '指令已完成，沒有輸出。';
@@ -1426,13 +1478,17 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '僅當模型與本機安全檢查都判定指令為唯讀時自動執行；會變更系統的指令仍需人工審核。';
 
   @override
+  String get askAiSendOnEnter => 'Enter 傳送';
+
+  @override
+  String get askAiSendOnEnterTip =>
+      'Enter 傳送訊息，Shift+Enter 換行。關閉後互換：Enter 換行，Cmd/Ctrl+Enter 傳送。';
+
+  @override
   String get askAiApiKeyOptional => '本機或不需驗證的介面可留空';
 
   @override
   String get askAiHistory => '對話歷史';
-
-  @override
-  String get askAiHistoryLocalOnly => '在本機加密儲存，不參與備份與同步';
 
   @override
   String get askAiNewConversation => '新增對話';
@@ -1454,9 +1510,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get askAiDeleteConversationTip => '此操作會從本機刪除該對話，且無法復原。';
-
-  @override
-  String get askAiClearHistory => '清除歷史';
 
   @override
   String get askAiClearHistoryTitle => '清除這台伺服器的 Agent 歷史？';
@@ -1506,6 +1559,42 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get agentToolFailed => '工具執行失敗。';
+
+  @override
+  String agentToolCallsFmt(Object count) {
+    return '$count 次工具呼叫';
+  }
+
+  @override
+  String get agentFloat => '在其他分頁上懸浮';
+
+  @override
+  String get agentToolSshConnect => 'SSH 連線';
+
+  @override
+  String get agentToolSshDisconnect => '中斷 SSH';
+
+  @override
+  String get agentSshConnectTitle => '連線到新主機';
+
+  @override
+  String get agentAuthMethod => '認證方式';
+
+  @override
+  String get agentSshConnectTip =>
+      'Agent 想建立一個 SSH 連線。請在此處輸入密碼，不要輸入到對話裡——那會被保存下來並傳送給模型。';
+
+  @override
+  String get agentAdHocSessions => '暫時連線';
+
+  @override
+  String get agentSaveServerTitle => '儲存為伺服器';
+
+  @override
+  String get agentSaveServerTip => '這台主機和你輸入的密碼將儲存在本裝置上。';
+
+  @override
+  String get agentMonitorOptional => 'Monitor 代理（選填）';
 
   @override
   String get atLeastOneTab => '至少需要選擇一個標籤';
@@ -1653,6 +1742,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get deleteServers => '大量刪除伺服器';
 
   @override
+  String get deleteDirRecursive => '連同資料夾裡的所有內容一起刪除';
+
+  @override
   String get desktopTerminalTip => '啟動 SSH 連線時用於打開終端機模擬器的指令。';
 
   @override
@@ -1748,13 +1840,13 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
+  String get fileDirGone => '此資料夾已不存在';
+
+  @override
+  String get fileDirGoneTip => '它已被刪除或重新命名。使用下方的按鈕返回、回到主目錄，或跳轉到其他位置。';
+
+  @override
   String get finishedAt => '完成於';
-
-  @override
-  String get followSystem => '跟隨系統';
-
-  @override
-  String get fontSize => '字型大小';
 
   @override
   String get fullScreen => '全螢幕模式';
@@ -1781,16 +1873,7 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get githubGistTokenEmpty => 'Token 為空';
 
   @override
-  String get goBackQ => '返回？';
-
-  @override
   String get goto => '前往';
-
-  @override
-  String get hideTitleBar => '隱藏標題欄';
-
-  @override
-  String get highlight => '程式碼標記';
 
   @override
   String get homeTabs => '主頁標籤';
@@ -1809,6 +1892,29 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get imagesList => '映像檔列表';
+
+  @override
+  String get macDmgBody =>
+      'App Store 要求本應用程式在沙盒中執行,而沙盒程序無法開啟虛擬終端機。所以 App Store 版沒有本機終端機,也無法在本機執行 snippet 或 Agent 指令。DMG 版是同一個應用程式,簽章時未啟用沙盒,這兩項都有。\n\nApp Store 版仍可使用、仍在更新,日後可能停止更新。\n\n兩個版本的資料存放位置不同。DMG 版首次啟動會將資料複製過來,伺服器、金鑰、紀錄都會帶上。複製失敗時會明確告知,屆時可改用備份檔遷移(設定中的「備份」)。';
+
+  @override
+  String get macDmgImportDenied =>
+      'macOS 不允許讀取先前安裝版本的資料。可授予完全取用磁碟權限後重新開啟本應用程式,或在該版本中匯出備份再於此處還原。';
+
+  @override
+  String get macDmgImported => '已匯入先前安裝版本的資料。';
+
+  @override
+  String get macDmgImportFailed => '讀不到先前安裝版本的資料。請在該版本中匯出備份,再於此處還原。';
+
+  @override
+  String get macDmgTip => '本機終端機、在本機執行 snippet,只有 DMG 版有。';
+
+  @override
+  String get macDmgTitle => 'DMG 版';
+
+  @override
+  String get showHiddenFiles => '顯示隱藏檔案';
 
   @override
   String get unused => '未使用';
@@ -1856,12 +1962,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get pull => '拉取';
 
   @override
-  String get invalid => '無效';
-
-  @override
-  String get invalidUrl => '無效的網址';
-
-  @override
   String get invalidHostFormat => '主機格式無效，僅支援 IPv4、IPv6 和網域字元。';
 
   @override
@@ -1874,6 +1974,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get noJumpServerAvailable => '沒有可用的跳板伺服器。';
+
+  @override
+  String get jumpServerAndProxyCommandCannotBeUsedTogether =>
+      '跳板伺服器與 ProxyCommand 不能同時使用。';
 
   @override
   String get keepForeground => '請讓 App 保持在前景執行';
@@ -1916,13 +2020,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get more => '更多';
-
-  @override
-  String get moveOutServerFuncBtnsHelp =>
-      '開啟：可以在伺服器 Tab 頁的每個卡片下方顯示。關閉：在伺服器詳情頁頂部顯示。';
-
-  @override
   String get needRestart => '需要重開 App';
 
   @override
@@ -1956,7 +2053,11 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get parseContainerStatsTip => 'Docker 解析消耗狀態較為緩慢';
 
   @override
-  String get permission => '權限';
+  String get fullAccessRefused => '該 agent 未開放免 SSH 存取。';
+
+  @override
+  String get fullAccessInsecure =>
+      '該 agent 僅在 TLS 或本機回環上開放免 SSH 存取，而目前連線是明文 HTTP。';
 
   @override
   String get plugInType => '插入類型';
@@ -1974,6 +2075,9 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get pushToken => '消息推送 Token';
+
+  @override
+  String get proxyCommandOnlySupportedOnDesktop => 'ProxyCommand 僅支援桌面平台。';
 
   @override
   String get pveIgnoreCertTip => '不建議啟用，請注意安全風險！如果您使用的是 PVE 的預設憑證，則需要啟用此選項。';
@@ -2042,9 +2146,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get recentConnections => '最近連線記錄';
 
   @override
-  String get reconnecting => '重連中...';
-
-  @override
   String get rememberPwdInMem => '在記憶體中記住密碼';
 
   @override
@@ -2054,13 +2155,50 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get remotePath => '遠端路徑';
 
   @override
+  String rootfsUpdateTip(Object installed, Object latest) {
+    return '已安裝 Alpine $installed,現有 $latest。更新會重新下載並替換整個容器:裡面用 apk 裝過的東西都會遺失。跳過的話,現在這個照常可用。';
+  }
+
+  @override
+  String get rootfsMissing => '本機還沒有安裝 Linux 檔案系統。';
+
+  @override
+  String get rootfsSubtitle => '本機上的 Linux 使用者空間';
+
+  @override
+  String rootfsInstallTip(Object version) {
+    return '下載 Alpine Linux $version(約 3 MB)並解壓到本機。它為本 App 提供一個帶套件管理器的 shell,可隨時刪除。';
+  }
+
+  @override
   String get sameIdServerExist => '已存在相同 ID 的伺服器';
 
   @override
-  String get save => '儲存';
+  String get second => '秒';
 
   @override
-  String get second => '秒';
+  String get serverFilesUnavailableTip =>
+      '需要能連上這台伺服器的 SSH,或者它的 monitor agent 開啟了檔案 API。';
+
+  @override
+  String get back => '返回';
+
+  @override
+  String get history => '歷史';
+
+  @override
+  String get homeDir => '主目錄';
+
+  @override
+  String get selectItem => '選擇';
+
+  @override
+  String selected(Object count) {
+    return '已選 $count 項';
+  }
+
+  @override
+  String get sendTo => '傳送到…';
 
   @override
   String get serverDetailOrder => '詳情頁部件順序';
@@ -2073,6 +2211,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get serverTabRequired => '服務器標籤不能被移除';
+
+  @override
+  String get shareServerRiskTip =>
+      '此二維碼以明文包含伺服器的連線設定，其中有密碼。任何掃描或拍下它的人都能連線到這台伺服器。';
 
   @override
   String get sftpDlPrepare => '準備連線至伺服器...';
@@ -2088,13 +2230,10 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sftpSSHConnected => 'SFTP 已連線';
 
   @override
+  String get sftp => 'SFTP';
+
+  @override
   String get sftpShowFoldersFirst => '資料夾顯示在前';
-
-  @override
-  String get size => '大小';
-
-  @override
-  String get softWrap => '軟換行';
 
   @override
   String get specifyDev => '指定裝置';
@@ -2103,7 +2242,8 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get specifyDevTip => '例如網路流量統計預設是所有裝置，你可以在這裡指定特定的裝置。';
 
   @override
-  String get speed => '速度';
+  String get tempIsCelsiusTip =>
+      '啟用後，溫度值會以攝氏度而非毫攝氏度處理。僅在溫度顯示錯誤時開啟（例如顯示 0.1°C 而非 58°C）。';
 
   @override
   String spentTime(Object time) {
@@ -2114,6 +2254,18 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String sshConfigAllExist(Object duplicateCount) {
     return '所有伺服器均已存在（發現$duplicateCount個重複項）';
   }
+
+  @override
+  String get ssh => 'SSH';
+
+  @override
+  String get sshConnectionModeTip => '內建：使用 App 的終端。系統 SSH：在外部終端中啟動系統的 ssh 指令。';
+
+  @override
+  String get sshConnectionModeUseBuiltin => '使用內建終端';
+
+  @override
+  String get sshConnectionModeUseSystem => '使用系統 SSH';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
@@ -2161,6 +2313,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshHostKeyType => 'SSH 主機金鑰類型';
 
   @override
+  String get sshKnownHostKeys => '已信任的主機金鑰';
+
+  @override
+  String get sshKnownHostKeysTip => '本 app 已接受的主機金鑰。刪掉一條,下次連線時會重新詢問。';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return '收到來自 $serverName 的新 SSH 主機金鑰，信任前請先檢查指紋。';
   }
@@ -2195,9 +2353,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String get sshVirtualKeyAutoOff => '虛擬按鍵自動切換';
 
   @override
-  String get stat => '統計';
-
-  @override
   String get supportFmtArgs => '支援以下格式化參數：';
 
   @override
@@ -2209,22 +2364,19 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   }
 
   @override
-  String get system => '系統';
+  String get syncAppSettings => '同步 App 設定';
 
   @override
-  String get tapToStartDiscovery => '點擊搜尋按鈕發現網路中的SSH服務器';
+  String get syncAppSettingsTip => '將主題、版面配置、編輯器、終端等裝置偏好一併納入自動同步。';
+
+  @override
+  String get system => '系統';
 
   @override
   String get termFontSizeTip => '此設定將影響終端機大小（寬度和高度）。您可以在終端機頁面縮放，來調整目前會話的字型大小。';
 
   @override
-  String get textScaler => '字型縮放';
-
-  @override
   String get textScalerTip => '1.0 => 100%（原大小），僅作用於伺服器頁面部分字型，不建議修改。';
-
-  @override
-  String get time => '時間';
 
   @override
   String get times => '次';
@@ -2234,9 +2386,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get sudoPromptNotFound => '目前沒有 sudo 密碼提示。';
-
-  @override
-  String get unknown => '未知';
 
   @override
   String get updateServerStatusInterval => '伺服器狀態更新間隔';
@@ -2255,9 +2404,6 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get viewDetails => '檢視詳情';
-
-  @override
-  String get viewErr => '查看錯誤';
 
   @override
   String get virtKeyHelpClipboard => '如果終端機有選中字元，則復製選中字元至剪貼簿，否則貼上剪貼簿內容至終端機。';
@@ -2297,11 +2443,43 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
       '連線到伺服器後，將會在 `~/.config/server_box` \n | `/tmp/server_box` 中寫入一個腳本來監測系統狀態。你可以審查腳本內容。';
 
   @override
+  String get menuGitHubRepository => 'GitHub 儲存庫';
+
+  @override
   String get podmanDockerEmulationDetected =>
       '檢測到 Podman Docker 仿真。請在設定中切換到 Podman。';
 
   @override
+  String get portForwardBeta => '此功能仍在 Beta 測試階段，不保證可正常運作。';
+
+  @override
+  String get portForward_startPrompt => '新增一條連接埠轉發規則以開始';
+
+  @override
+  String get portForward_localHost => '本機主機';
+
+  @override
+  String get portForward_localPort => '本機連接埠';
+
+  @override
+  String get portForward_remoteHost => '遠端主機';
+
+  @override
+  String get portForward_remotePort => '遠端連接埠';
+
+  @override
+  String portForward_deleteConfirmFmt(Object name) {
+    return '刪除 $name？';
+  }
+
+  @override
   String get sponsor => '贊助';
+
+  @override
+  String get sortByJoinTime => '依加入時間';
+
+  @override
+  String get serverHistory => '伺服器紀錄';
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
@@ -2404,4 +2582,78 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get processKillTargetChanged => '該處理程序已變更或結束，請重新整理後再試。';
+
+  @override
+  String get watchServers => '手錶上的伺服器';
+
+  @override
+  String get watchServersTip =>
+      '手錶自己向 monitor agent 取資料，因此只能選擇已設定 monitor 的伺服器。';
+
+  @override
+  String get watchNoMonitorServer => '沒有伺服器設定了 monitor';
+
+  @override
+  String get watchLegacyUrls => '舊版 status 連結';
+
+  @override
+  String get accessoryWidgetServer => '鎖定畫面小工具伺服器';
+
+  @override
+  String get systemdMissing => '此伺服器沒有 systemd';
+
+  @override
+  String get systemdMissingTip => '機器上沒有安裝 `systemctl`，因此沒有 unit 可列。';
+
+  @override
+  String initSystemFmt(String init) {
+    return '這台機器似乎使用 $init。';
+  }
+
+  @override
+  String get systemdListFailed => '無法列出 unit';
+
+  @override
+  String get systemdUserScopeMissing => '未列出使用者 unit';
+
+  @override
+  String get systemdUserScopeMissingTip => '該帳號在伺服器上沒有使用者工作階段匯流排，因此只顯示系統 unit。';
+
+  @override
+  String get serverUnreachable => '無法在此伺服器上執行命令';
+
+  @override
+  String get containerNoRuntime => '此處沒有容器執行環境';
+
+  @override
+  String get containerNoRuntimeTip =>
+      '這台機器上 `docker` 和 `podman` 都沒有回應。如果它裝在另一個帳號下，請在設定中開啟「嘗試使用 sudo」。';
+
+  @override
+  String get containerUnreadable => '容器執行環境回傳了無法解析的內容';
+
+  @override
+  String get power => '電源';
+
+  @override
+  String get continueInTerminal => '在終端機中繼續';
+
+  @override
+  String get askAiRiskUnknown => '未判定';
+
+  @override
+  String get agentLocalExec => '在本機執行命令';
+
+  @override
+  String get agentLocalExecTip =>
+      '允許 Agent 在執行 ServerBox 的這台機器上工作，而不只是伺服器。這裡沒有無人值守：再唯讀的指令也需要審核。app 的資料、你的金鑰和檔案都在這台機器上。';
+
+  @override
+  String get agentLocalExecRootfsTip =>
+      '讓 Agent 在本機操作,範圍限於 ServerBox 安裝的 Alpine Linux 容器內。它看不到手機本身的檔案系統、App 的資料和你的檔案。每條命令仍然需要審核。';
+
+  @override
+  String macDmgImportedPartly(String path) {
+    return '已匯入先前安裝版本的資料。下載的檔案仍在原處:$path。';
+  }
 }

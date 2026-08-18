@@ -106,7 +106,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Row(
                 children: [
-                  IconButton(
+                  IconButton(tooltip: l10n.back, 
                     onPressed: () => setState(() {
                       _windowRequestId++;
                       _selectedSession = null;
@@ -227,7 +227,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
           _windows = previousWindows;
           _loadingWindows = false;
         });
-        context.showSnackBar(libL10n.fail);
+        Toast.error(libL10n.fail);
         return;
       }
       setState(() {
@@ -240,7 +240,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
         _windows = previousWindows;
         _loadingWindows = false;
       });
-      context.showSnackBar(libL10n.fail);
+      Toast.error(libL10n.fail);
     }
   }
 
@@ -379,7 +379,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
           _windows = previousWindows;
           _loadingWindows = false;
         });
-        context.showSnackBar(libL10n.fail);
+        Toast.error(libL10n.fail);
         return;
       }
       setState(() {
@@ -392,7 +392,7 @@ final class _TmuxSessionSelectorState extends State<TmuxSessionSelector> {
         _windows = previousWindows;
         _loadingWindows = false;
       });
-      context.showSnackBar(libL10n.fail);
+      Toast.error(libL10n.fail);
     }
   }
 }
@@ -416,7 +416,7 @@ Future<TmuxAttachChoice?> showTmuxSessionSelectorWithSkip(
     ),
     actions: [
       TextButton(
-        onPressed: () => context.pop(const TmuxAttachSkip()),
+        onPressed: () => context.popDialog(const TmuxAttachSkip()),
         child: Text(l10n.tmuxSkip),
       ),
     ],

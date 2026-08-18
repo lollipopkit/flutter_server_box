@@ -4,6 +4,9 @@ import 'package:icons_plus/icons_plus.dart';
 import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/res/store.dart';
 
+/// Declaration order is the default card order on the detail page, and it is
+/// also the order `_ServerDetailPageState._cardBuildMap` pairs builders with —
+/// the two lists must stay in step.
 enum ServerDetailCards {
   about(Icons.info),
   cpu(Icons.memory),
@@ -46,6 +49,9 @@ enum ServerDetailCards {
     custom => libL10n.cmd,
   };
 
+  /// Build that folded the standalone trend cards into their snapshot cards.
+  static const _kTrendCardsFoldedBuild = 1467;
+
   /// If:
   /// Version 1 => user set [about], default is [about, cpu]
   /// Version 2 => default is [about, cpu, mem] => auto add [mem] to user's setting
@@ -66,6 +72,28 @@ enum ServerDetailCards {
         list.add(custom.name);
         prop.put(list);
       }
+    }
+
+    if (cur >= _kTrendCardsFoldedBuild) {
+      final prop = Stores.setting.detailCardOrder;
+      final list = prop.fetch();
+      // Standalone trend cards, each since folded into the snapshot card of
+      // the same subject. These names were only ever written by unreleased
+      // builds of this branch, so there is nothing to insert in their place —
+      // `initState` drops any name the enum no longer has, but doing it here
+      // too keeps the stored list from carrying dead entries around.
+      // TODO: drop this block before the names can accumulate meaning.
+      final before = list.length;
+      list.removeWhere(
+        (e) => const {
+          'usage',
+          'diskChart',
+          'tempChart',
+          'netChart',
+          'monitorHistory',
+        }.contains(e),
+      );
+      if (list.length != before) prop.put(list);
     }
   }
 }

@@ -3,9 +3,26 @@ title: 项目结构
 description: 了解 Server Box 的代码库结构
 ---
 
-Server Box 项目遵循模块化架构，具有清晰的关注点分离。
+Server Box 项目是一个 monorepo：Flutter 应用位于仓库根目录，与 Rust workspace 和服务端监控共存。
 
-## 目录结构
+## Monorepo 布局
+
+```
+flutter_server_box/
+├── lib/               # Flutter 应用（见下文）
+├── crates/
+│   ├── sbm_parser/    # 共享状态解析库（单一事实来源，
+│   │                  # App 经 FFI 使用，monitor 直接依赖）
+│   └── sbm_ffi/       # flutter_rust_bridge 绑定 crate + cargokit
+│                      # Flutter 插件壳（同一目录）
+├── monitor/           # 服务端监控（Rust 服务 + React 前端）
+├── packages/          # Vendor 的 Dart fork（path 依赖）
+├── docs/              # 本文档站（Astro Starlight）
+├── website/           # 项目网站
+└── Cargo.toml         # Rust workspace 根
+```
+
+## 应用目录结构
 
 ```
 lib/
@@ -13,13 +30,17 @@ lib/
 ├── data/              # 数据层
 │   ├── model/         # 按功能划分的数据模型
 │   ├── provider/      # Riverpod provider
-│   └── store/         # 本地存储 (Hive)
+│   ├── store/         # 本地存储 (Hive)
+│   ├── helper/        # 数据层辅助工具
+│   ├── res/           # 资源与常量
+│   └── ssh/           # SSH 会话管理
 ├── view/              # UI 层
 │   ├── page/          # 主要页面
 │   └── widget/        # 可复用组件
 ├── generated/         # 生成的本地化代码
 ├── l10n/              # 本地化 ARB 文件
-└── hive/              # Hive 适配器
+├── hive/              # Hive 适配器
+└── src/rust/          # 生成的 flutter_rust_bridge 绑定（勿手改）
 ```
 
 ## 核心层 (`lib/core/`)
@@ -88,9 +109,20 @@ lib/
 
 ## Packages 目录 (`/packages/`)
 
-包含依赖项的自定义分支：
+包含依赖项的自定义分支，在 `pubspec.yaml` 中以 path 引用：
 
 - `dartssh2/` - SSH 库
 - `xterm/` - 终端模拟器
 - `fl_lib/` - 共享工具类
 - `fl_build/` - 构建系统
+- `circle_chart/` - 图表组件
+- `plain_notification_token/` - 推送 token 插件
+- `watch_connectivity/` - Apple Watch 通信
+
+## Rust 侧
+
+- `crates/sbm_parser/` - 将命令原始输出解析为结构化服务器状态。
+  App(经 FFI)与 monitor 共用,两端解析行为始终一致。
+- `crates/sbm_ffi/` - `sbm_parser` 的 flutter_rust_bridge 薄封装。
+  生成的 Dart 侧位于 `lib/src/rust/`。
+- `monitor/` - 独立的监控服务,文档见 `monitor/README_zh.md`。

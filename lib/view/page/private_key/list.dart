@@ -9,6 +9,7 @@ import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/view/page/private_key/edit.dart';
+import 'package:server_box/view/widget/page_columns.dart';
 
 class PrivateKeysListPage extends ConsumerStatefulWidget {
   const PrivateKeysListPage({super.key});
@@ -44,13 +45,13 @@ class _PrivateKeyListState extends ConsumerState<PrivateKeysListPage>
     }
 
     final children = pkis.map(_buildKeyItem).toList();
-    return AutoMultiList(children: children);
+    return PageColumns(children: children);
   }
 
   Widget _buildKeyItem(PrivateKeyInfo item) {
     return ListTile(
       title: Text(item.id),
-      subtitle: Text(item.type ?? l10n.unknown, style: UIs.textGrey),
+      subtitle: Text(item.type ?? libL10n.unknown, style: UIs.textGrey),
       onTap: () => PrivateKeyEditPage.route.go(
         context,
         args: PrivateKeyEditPageArgs(pki: item),
@@ -82,7 +83,7 @@ extension on _PrivateKeyListState {
         child: Text(l10n.addSystemPrivateKeyTip),
         actions: Btn.ok(
           onTap: () {
-            context.pop();
+            context.popDialog();
             PrivateKeyEditPage.route.go(
               context,
               args: PrivateKeyEditPageArgs(pki: sysPk),

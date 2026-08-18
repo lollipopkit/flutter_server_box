@@ -53,6 +53,11 @@ extension _VirtKey on SSHPageState {
         await _onClipboardAction();
         break;
       case VirtualKeyFunc.snippet:
+        // Before the picker, not after it: a snippet's script is written
+        // against a server, and browsing tags to choose one that is then
+        // silently dropped is worse than the button doing nothing.
+        final snippetSpi = widget.args.spi;
+        if (snippetSpi == null) return;
         final snippetState = ref.read(snippetProvider);
         final snippets = await context.showPickWithTagDialog<Snippet>(
           title: libL10n.snippet,
@@ -71,9 +76,16 @@ extension _VirtKey on SSHPageState {
 
         final snippet = snippets.firstOrNull;
         if (snippet == null) return;
-        snippet.runInTerm(_terminal, widget.args.spi);
+        snippet.runInTerm(_terminal, snippetSpi);
         break;
       case VirtualKeyFunc.file:
+        // Before anything is typed. SFTP is a file browser on a server and
+        // this device already has one, so on a local shell there is nothing to
+        // open — and asking afterwards meant echoing a probe command into the
+        // user's session, polling for three seconds, and then giving up in
+        // silence.
+        final fileSpi = widget.args.spi;
+        if (fileSpi == null) return;
         // get $PWD from SSH session with unique markers
         const marker = 'ServerBoxOutput';
         const markerEnd = 'ServerBoxEnd';
@@ -129,7 +141,7 @@ extension _VirtKey on SSHPageState {
           return;
         }
 
-        final args = SftpPageArgs(spi: widget.args.spi, initPath: initPath);
+        final args = SftpPageArgs(spi: fileSpi, initPath: initPath);
         SftpPage.route.go(context, args);
         break;
       case VirtualKeyFunc.sudoPassword:

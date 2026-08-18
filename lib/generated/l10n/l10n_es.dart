@@ -19,36 +19,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get added2List => 'Añadido a la lista de tareas';
 
   @override
-  String get addr => 'Dirección';
-
-  @override
   String get askAi => 'Preguntar a la IA';
-
-  @override
-  String get ai => 'AI';
-
-  @override
-  String get askAiApiKey => 'Clave API';
 
   @override
   String get askAiAwaitingResponse => 'Esperando la respuesta de la IA...';
 
   @override
-  String get askAiBaseUrl => 'URL base';
-
-  @override
   String get askAiEndpointTip =>
-      'Enter a service base URL or a full Chat Completions or Responses endpoint. ServerBox completes the path for the selected protocol.';
-
-  @override
-  String get askAiProtocol => 'API protocol';
+      'Introduce una URL base del servicio o un endpoint completo de Chat Completions o Responses. ServerBox completa la ruta según el protocolo elegido.';
 
   @override
   String get askAiProtocolTip =>
-      'Auto uses Responses for the official OpenAI endpoint and Chat Completions for compatible providers.';
-
-  @override
-  String get askAiProtocolAuto => 'Auto';
+      'Automático usa Responses para el endpoint oficial de OpenAI y Chat Completions para proveedores compatibles.';
 
   @override
   String get askAiProtocolChatCompletions => 'Chat Completions';
@@ -93,187 +75,218 @@ class AppLocalizationsEs extends AppLocalizations {
   String get askAiUsageHint => 'Usado en el terminal SSH';
 
   @override
-  String get askAiAgentTitle => 'SSH Agent';
+  String get askAiAgentTitle => 'Agente SSH';
 
   @override
-  String get askAiAgentWelcome => 'What should we do on this server?';
+  String get askAiAgentWelcome => '¿Qué hacemos en este servidor?';
 
   @override
   String get askAiAgentWelcomeTip =>
-      'Ask for a diagnosis or a task. The Agent proposes one command at a time and waits for review before making changes.';
+      'Pide un diagnóstico o una tarea. El Agente propone un comando cada vez y espera tu revisión antes de hacer cambios.';
 
   @override
   String get askAiAgentPromptHint =>
-      'Ask the Agent to inspect or fix something...';
+      'Pide al Agente que revise o arregle algo...';
 
   @override
-  String get askAiAgentSend => 'Send to Agent';
+  String get askAiAgentSend => 'Enviar al Agente';
 
   @override
   String get askAiAnalyzeSelectionPrompt =>
-      'Analyze the selected terminal content, explain what happened, and propose the safest next step if action is needed.';
+      'Analiza el contenido seleccionado del terminal, explica qué ha pasado y propón el siguiente paso más seguro si hay que actuar.';
 
   @override
-  String get askAiTerminalContext => 'Terminal context';
+  String get askAiTerminalContext => 'Contexto del terminal';
 
   @override
-  String get askAiReady => 'Ready';
+  String get askAiReviewNeeded => 'Revisar';
 
   @override
-  String get askAiThinking => 'Thinking';
-
-  @override
-  String get askAiRunningCommand => 'Running';
-
-  @override
-  String get askAiReviewNeeded => 'Review';
-
-  @override
-  String get askAiReviewAction => 'Review proposed command';
+  String get askAiReviewAction => 'Revisar el comando propuesto';
 
   @override
   String get askAiReviewBeforeContinuing =>
-      'Review or decline the proposed command first';
+      'Revisa o rechaza antes el comando propuesto';
 
   @override
-  String get askAiApproveRun => 'Approve & run';
+  String get askAiApproveRun => 'Aprobar y ejecutar';
 
   @override
-  String get askAiDecline => 'Decline';
+  String get askAiDecline => 'Rechazar';
 
   @override
-  String get askAiActionDeclined => 'The proposed command was declined.';
+  String get askAiActionDeclined => 'El comando propuesto fue rechazado.';
 
   @override
-  String get askAiInterrupted => 'Agent response was interrupted.';
+  String get askAiInterrupted => 'La respuesta del Agente se interrumpió.';
 
   @override
-  String get askAiRiskReadOnly => 'Read-only';
+  String get askAiRiskReadOnly => 'Solo lectura';
 
   @override
-  String get askAiRiskCaution => 'Changes system';
+  String get askAiRiskCaution => 'Modifica el sistema';
 
   @override
-  String get askAiRiskDestructive => 'High risk';
+  String get askAiRiskUnvetted => 'Host no verificado';
 
   @override
-  String get askAiHighRiskConfirmTitle => 'Run high-risk command?';
+  String get askAiRiskDestructive => 'Riesgo alto';
+
+  @override
+  String get askAiHighRiskConfirmTitle =>
+      '¿Ejecutar un comando de riesgo alto?';
 
   @override
   String get askAiHighRiskConfirmBody =>
-      'This command may delete data, stop services, or otherwise be difficult to undo. Review it carefully before running.';
+      'Este comando puede borrar datos, detener servicios o ser difícil de deshacer. Revísalo con atención antes de ejecutarlo.';
 
   @override
-  String get askAiCommandCancelled => 'Cancelled';
-
-  @override
-  String get askAiCommandTimedOut => 'Timed out';
-
-  @override
-  String get askAiNoCommandOutput => 'Command completed without output.';
+  String get askAiNoCommandOutput => 'El comando terminó sin salida.';
 
   @override
   String get askAiOutputTruncated =>
-      'Long output was truncated before it was sent back to the Agent.';
+      'La salida larga se truncó antes de devolverla al Agente.';
 
   @override
-  String get askAiAutoApproved => 'Auto-approved';
+  String get askAiAutoApproved => 'Aprobado automáticamente';
 
   @override
-  String get askAiAutoRunSafeCommands => 'Auto-run read-only commands';
+  String get askAiAutoRunSafeCommands =>
+      'Ejecutar automáticamente los comandos de solo lectura';
 
   @override
   String get askAiAutoRunSafeCommandsTip =>
-      'Only auto-run when both the model and local safety checks classify the command as read-only. Commands that change the system still require review.';
+      'Solo se ejecuta automáticamente cuando tanto el modelo como las comprobaciones locales de seguridad clasifican el comando como de solo lectura. Los comandos que modifican el sistema siguen requiriendo revisión.';
+
+  @override
+  String get askAiSendOnEnter => 'Enter envía';
+
+  @override
+  String get askAiSendOnEnterTip =>
+      'Enter envía el mensaje y Mayús+Enter inserta un salto de línea. Al desactivarlo se invierte: Enter inserta un salto de línea y Cmd/Ctrl+Enter envía.';
 
   @override
   String get askAiApiKeyOptional =>
-      'Optional for local or unauthenticated endpoints';
+      'Opcional para endpoints locales o sin autenticación';
 
   @override
-  String get askAiHistory => 'Conversation history';
+  String get askAiHistory => 'Historial de conversaciones';
 
   @override
-  String get askAiHistoryLocalOnly =>
-      'Encrypted on this device and excluded from backup and sync';
+  String get askAiNewConversation => 'Nueva conversación';
 
   @override
-  String get askAiNewConversation => 'New conversation';
+  String get askAiNoHistory =>
+      'No hay conversaciones guardadas para este servidor';
 
   @override
-  String get askAiNoHistory => 'No saved conversations for this server';
+  String get askAiNoHistoryMessages => 'Todavía no hay mensajes';
 
   @override
-  String get askAiNoHistoryMessages => 'No messages yet';
+  String get askAiUntitledConversation => 'Nueva conversación';
 
   @override
-  String get askAiUntitledConversation => 'New conversation';
+  String get askAiRenameConversation => 'Renombrar conversación';
 
   @override
-  String get askAiRenameConversation => 'Rename conversation';
-
-  @override
-  String get askAiDeleteConversationTitle => 'Delete this conversation?';
+  String get askAiDeleteConversationTitle => '¿Eliminar esta conversación?';
 
   @override
   String get askAiDeleteConversationTip =>
-      'This removes the conversation from this device and cannot be undone.';
+      'Se eliminará la conversación de este dispositivo y no se podrá deshacer.';
 
   @override
-  String get askAiClearHistory => 'Clear history';
-
-  @override
-  String get askAiClearHistoryTitle => 'Clear this server\'s Agent history?';
+  String get askAiClearHistoryTitle =>
+      '¿Borrar el historial del Agente de este servidor?';
 
   @override
   String get askAiClearHistoryTip =>
-      'All Agent conversations saved for this server will be removed from this device.';
+      'Se eliminarán de este dispositivo todas las conversaciones del Agente guardadas para este servidor.';
 
   @override
   String get askAiRestoredReview =>
-      'Restored from history. Review it again before running; it will never run automatically.';
+      'Restaurado del historial. Revísalo otra vez antes de ejecutarlo; nunca se ejecutará solo.';
 
   @override
-  String get agentTitle => 'Agent';
+  String get agentTitle => 'Agente';
 
   @override
-  String get agentWelcome => 'What should we do across your servers?';
+  String get agentWelcome => '¿Qué hacemos en tus servidores?';
 
   @override
   String get agentWelcomeTip =>
-      'Ask for a diagnosis or an operational task. The Agent uses live ServerBox state and proposes one reviewed action at a time.';
+      'Pide un diagnóstico o una tarea operativa. El Agente usa el estado actual de ServerBox y propone una acción revisada cada vez.';
 
   @override
   String get agentPromptHint =>
-      'Ask the Agent to inspect or operate your servers...';
+      'Pide al Agente que revise u opere tus servidores...';
 
   @override
-  String get agentNoServers => 'No configured servers';
+  String get agentNoServers => 'No hay servidores configurados';
 
   @override
-  String get agentNoHistory => 'No saved global Agent conversations';
+  String get agentNoHistory =>
+      'No hay conversaciones globales del Agente guardadas';
 
   @override
-  String get agentClearHistoryTitle => 'Clear global Agent history?';
+  String get agentClearHistoryTitle =>
+      '¿Borrar el historial global del Agente?';
 
   @override
   String get agentClearHistoryTip =>
-      'All global Agent conversations will be removed from this device.';
+      'Se eliminarán de este dispositivo todas las conversaciones globales del Agente.';
 
   @override
   String get agentToolShell => 'Shell';
 
   @override
-  String get agentToolReadFile => 'Read file';
+  String get agentToolReadFile => 'Leer archivo';
 
   @override
-  String get agentToolWriteFile => 'Write file';
+  String get agentToolWriteFile => 'Escribir archivo';
 
   @override
   String get agentToolServerBox => 'ServerBox';
 
   @override
-  String get agentToolFailed => 'Tool execution failed.';
+  String get agentToolFailed => 'Falló la ejecución de la herramienta.';
+
+  @override
+  String agentToolCallsFmt(Object count) {
+    return '$count llamadas de herramienta';
+  }
+
+  @override
+  String get agentFloat => 'Flotar sobre otras pestañas';
+
+  @override
+  String get agentToolSshConnect => 'Conectar por SSH';
+
+  @override
+  String get agentToolSshDisconnect => 'Desconectar SSH';
+
+  @override
+  String get agentSshConnectTitle => 'Conectar a un host nuevo';
+
+  @override
+  String get agentAuthMethod => 'Autenticación';
+
+  @override
+  String get agentSshConnectTip =>
+      'El Agente quiere abrir una conexión SSH. Escribe la contraseña aquí, nunca en la conversación, donde quedaría guardada y se enviaría al modelo.';
+
+  @override
+  String get agentAdHocSessions => 'Conexiones temporales';
+
+  @override
+  String get agentSaveServerTitle => 'Guardar como servidor';
+
+  @override
+  String get agentSaveServerTip =>
+      'Este host y la contraseña que escribiste se guardarán en este dispositivo.';
+
+  @override
+  String get agentMonitorOptional => 'Agente monitor (opcional)';
 
   @override
   String get atLeastOneTab => 'Al menos una pestaña debe estar seleccionada';
@@ -326,32 +339,35 @@ class AppLocalizationsEs extends AppLocalizations {
       'Los datos exportados pueden ser encriptados con contraseña. \nPor favor guárdalos en un lugar seguro.';
 
   @override
-  String get icloudBackupStatusTitle => 'Backup status';
+  String get icloudBackupStatusTitle => 'Estado de la copia de seguridad';
 
   @override
-  String get icloudBackupStatusLoading => 'Loading iCloud backup status...';
+  String get icloudBackupStatusLoading =>
+      'Cargando el estado de la copia de iCloud...';
 
   @override
-  String get icloudBackupStatusError => 'Unable to read iCloud backup metadata';
+  String get icloudBackupStatusError =>
+      'No se pueden leer los metadatos de la copia de iCloud';
 
   @override
-  String get icloudBackupStatusEmpty => 'No iCloud backup file found yet';
+  String get icloudBackupStatusEmpty =>
+      'Aún no se ha encontrado ningún archivo de copia en iCloud';
 
   @override
-  String get icloudBackupStateUploading => 'Uploading';
+  String get icloudBackupStateUploading => 'Subiendo';
 
   @override
-  String get icloudBackupStateConflict => 'Conflict detected';
+  String get icloudBackupStateConflict => 'Conflicto detectado';
 
   @override
-  String get icloudBackupStateUploaded => 'Uploaded';
+  String get icloudBackupStateUploaded => 'Subida';
 
   @override
-  String get icloudBackupStateWaiting => 'Waiting for iCloud';
+  String get icloudBackupStateWaiting => 'Esperando a iCloud';
 
   @override
   String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
-    return 'Last backup: $lastModified\nStatus: $remoteState';
+    return 'Última copia: $lastModified\nEstado: $remoteState';
   }
 
   @override
@@ -426,13 +442,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'Muestre la tasa de uso de cada CPU en estilo de barra de progreso (estilo antiguo)';
 
   @override
-  String get configured => 'Configured';
-
-  @override
   String get customCmd => 'Comandos personalizados';
 
   @override
   String get deleteServers => 'Eliminar servidores en lote';
+
+  @override
+  String get deleteDirRecursive => 'Eliminar la carpeta y todo su contenido';
 
   @override
   String get desktopTerminalTip =>
@@ -535,13 +551,14 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get fileDirGone => 'Esta carpeta ya no está aquí';
+
+  @override
+  String get fileDirGoneTip =>
+      'Se eliminó o se renombró. Usa la barra de abajo para volver, ir al inicio o saltar a otro lugar.';
+
+  @override
   String get finishedAt => 'Terminado en';
-
-  @override
-  String get followSystem => 'Seguir al sistema';
-
-  @override
-  String get fontSize => 'Tamaño de fuente';
 
   @override
   String get fullScreen => 'Modo pantalla completa';
@@ -560,25 +577,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get githubGist => 'GitHub Gist';
 
   @override
-  String get githubGistIdOptional => 'Gist ID (optional)';
+  String get githubGistIdOptional => 'ID del Gist (opcional)';
 
   @override
-  String get githubGistToken => 'GitHub Gist token';
+  String get githubGistToken => 'Token de GitHub Gist';
 
   @override
-  String get githubGistTokenEmpty => 'Token is empty';
-
-  @override
-  String get goBackQ => '¿Regresar?';
+  String get githubGistTokenEmpty => 'El token está vacío';
 
   @override
   String get goto => 'Ir a';
-
-  @override
-  String get hideTitleBar => 'Ocultar barra de título';
-
-  @override
-  String get highlight => 'Resaltar código';
 
   @override
   String get homeTabs => 'Pestañas de inicio';
@@ -598,6 +606,32 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get imagesList => 'Lista de imágenes';
+
+  @override
+  String get macDmgBody =>
+      'La App Store exige que esta app funcione en un entorno aislado, y un proceso aislado no puede abrir un pseudoterminal. Por eso la versión de la App Store no tiene terminal en este Mac ni puede ejecutar aquí un snippet o un comando del agente. La versión DMG es la misma app firmada sin aislamiento, y sí puede.\n\nLa versión de la App Store sigue funcionando y sigue actualizándose. Más adelante puede dejar de actualizarse.\n\nCada versión guarda sus datos en un sitio distinto. La versión DMG los copia en su primer arranque, así que servidores, claves e historial vienen contigo. Si falla, se te avisa y puedes migrar con un archivo de copia de seguridad (Copia de seguridad, en ajustes).';
+
+  @override
+  String get macDmgImportDenied =>
+      'macOS no permitió leer los datos de la versión instalada anteriormente. Concede acceso total al disco y vuelve a abrir la app, o exporta allí una copia de seguridad y restáurala aquí.';
+
+  @override
+  String get macDmgImported =>
+      'Se importaron los datos de la versión instalada anteriormente.';
+
+  @override
+  String get macDmgImportFailed =>
+      'No se pudieron leer los datos de la versión instalada anteriormente. Exporta allí una copia de seguridad y restáurala aquí.';
+
+  @override
+  String get macDmgTip =>
+      'El terminal en este Mac y ejecutar snippets en él solo existen en la versión DMG.';
+
+  @override
+  String get macDmgTitle => 'Versión DMG';
+
+  @override
+  String get showHiddenFiles => 'Mostrar archivos ocultos';
 
   @override
   String get unused => 'Sin usar';
@@ -649,29 +683,24 @@ class AppLocalizationsEs extends AppLocalizations {
   String get pull => 'Extraer';
 
   @override
-  String get invalid => 'Inválido';
-
-  @override
-  String get invalidUrl => 'Invalid URL';
-
-  @override
   String get invalidHostFormat =>
-      'Invalid host format. Only IPv4, IPv6, and domain characters are allowed.';
+      'Formato de host no válido. Solo se permiten caracteres de IPv4, IPv6 y dominios.';
 
   @override
   String get jumpServer => 'Servidor de salto';
 
   @override
   String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
-    return 'Jump servers not found for $serverName: $jumpIds';
+    return 'No se encontraron servidores de salto para $serverName: $jumpIds';
   }
 
   @override
-  String get noJumpServerAvailable => 'No jump server available.';
+  String get noJumpServerAvailable =>
+      'No hay ningún servidor de salto disponible.';
 
   @override
   String get jumpServerAndProxyCommandCannotBeUsedTogether =>
-      'Jump server and ProxyCommand cannot be used together.';
+      'El servidor de salto y ProxyCommand no se pueden usar a la vez.';
 
   @override
   String get keepForeground => '¡Por favor, mantén la app en primer plano!';
@@ -717,13 +746,6 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get more => 'Más';
-
-  @override
-  String get moveOutServerFuncBtnsHelp =>
-      'Activado: se mostrará debajo de cada tarjeta en la página de servidores. Desactivado: se mostrará en la parte superior de los detalles del servidor.';
-
-  @override
   String get needRestart => 'Necesita reiniciar la app';
 
   @override
@@ -761,7 +783,12 @@ class AppLocalizationsEs extends AppLocalizations {
       'El análisis del estado de uso de Docker es bastante lento';
 
   @override
-  String get permission => 'Permisos';
+  String get fullAccessRefused =>
+      'Este agente no ofrece un terminal sin credenciales.';
+
+  @override
+  String get fullAccessInsecure =>
+      'Este agente sirve el terminal solo por TLS o loopback, y esta conexión es HTTP sin cifrar.';
 
   @override
   String get plugInType => 'Tipo de inserción';
@@ -783,7 +810,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get proxyCommandOnlySupportedOnDesktop =>
-      'ProxyCommand is only supported on desktop platforms.';
+      'ProxyCommand solo se admite en plataformas de escritorio.';
 
   @override
   String get pveIgnoreCertTip =>
@@ -791,80 +818,77 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get pveServerClientMissing =>
-      'The SSH client for this server is not available.';
+      'El cliente SSH de este servidor no está disponible.';
 
   @override
   String get pveAddressMissing =>
-      'The PVE address is missing. Please configure it in server settings.';
+      'Falta la dirección de PVE. Configúrala en los ajustes del servidor.';
 
   @override
   String get pvePasswordRequired =>
-      'PVE password is required. Please set it in server settings.';
+      'Se requiere la contraseña de PVE. Configúrala en los ajustes del servidor.';
 
   @override
   String get pveOtpRequired =>
-      'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.';
+      'Este servidor PVE tiene la autenticación en dos pasos activada. Introduce el código OTP.';
 
   @override
   String get pveOtpChallengeExpired =>
-      'The OTP challenge has expired. Please refresh and try again.';
+      'El desafío OTP ha caducado. Actualiza e inténtalo de nuevo.';
 
   @override
-  String get pveOtpCodeRequired => 'OTP code is required.';
+  String get pveOtpCodeRequired => 'Se requiere el código OTP.';
 
   @override
   String get pveOtpVerificationFailed =>
-      'OTP verification failed. Please try again with a fresh code.';
+      'Falló la verificación del OTP. Inténtalo con un código nuevo.';
 
   @override
-  String get pveOtpTitle => 'OTP Verification';
+  String get pveOtpTitle => 'Verificación OTP';
 
   @override
-  String get pveOtpLabel => 'OTP Code';
+  String get pveOtpLabel => 'Código OTP';
 
   @override
   String get pveInvalidResponseBody =>
-      'PVE login returned an invalid response body.';
+      'El inicio de sesión de PVE devolvió un cuerpo de respuesta no válido.';
 
   @override
   String get pveInvalidResponseData =>
-      'PVE login response did not contain a valid data payload.';
+      'La respuesta del inicio de sesión de PVE no contenía datos válidos.';
 
   @override
   String get pveMissingAuthTicket =>
-      'PVE login succeeded but no authentication ticket was returned.';
+      'El inicio de sesión de PVE se completó, pero no se devolvió ningún ticket de autenticación.';
 
   @override
   String get pveVersionLow =>
       'Esta función está actualmente en fase de prueba y solo se ha probado en PVE 8+. Úsela con precaución.';
 
   @override
-  String get pveLoadingForwarding => 'Establishing SSH tunnel...';
+  String get pveLoadingForwarding => 'Estableciendo el túnel SSH...';
 
   @override
-  String get pveLoadingLogin => 'Authenticating with PVE...';
+  String get pveLoadingLogin => 'Autenticando con PVE...';
 
   @override
-  String get pveLoadingData => 'Fetching cluster data...';
+  String get pveLoadingData => 'Obteniendo datos del clúster...';
 
   @override
-  String get pveLoadingConnect => 'Connecting...';
+  String get pveLoadingConnect => 'Conectando...';
 
   @override
-  String get pvePassword => 'PVE Password';
+  String get pvePassword => 'Contraseña de PVE';
 
   @override
   String get pvePasswordHint =>
-      'Required when using key-based SSH authentication';
+      'Necesaria cuando se usa autenticación SSH por clave';
 
   @override
   String get read => 'Leer';
 
   @override
   String get recentConnections => 'Conexiones recientes';
-
-  @override
-  String get reconnecting => 'Reconectando...';
 
   @override
   String get rememberPwdInMem => 'Recordar contraseña en la memoria';
@@ -877,13 +901,52 @@ class AppLocalizationsEs extends AppLocalizations {
   String get remotePath => 'Ruta remota';
 
   @override
+  String rootfsUpdateTip(Object installed, Object latest) {
+    return 'Alpine $installed está instalado y $latest está disponible. Actualizar lo descarga de nuevo y reemplaza el contenedor: se pierde todo lo que se haya instalado dentro con apk. Si lo omites, el actual sigue funcionando.';
+  }
+
+  @override
+  String get rootfsMissing =>
+      'Aún no hay ningún sistema de archivos Linux instalado en este dispositivo.';
+
+  @override
+  String get rootfsSubtitle =>
+      'Un espacio de usuario Linux en este dispositivo';
+
+  @override
+  String rootfsInstallTip(Object version) {
+    return 'Descarga Alpine Linux $version (unos 3 MB) y lo descomprime en este dispositivo. Le da a esta app un shell con gestor de paquetes, y se puede eliminar en cualquier momento.';
+  }
+
+  @override
   String get sameIdServerExist => 'Ya existe un servidor con el mismo ID';
 
   @override
-  String get save => 'Guardar';
+  String get second => 'Segundo';
 
   @override
-  String get second => 'Segundo';
+  String get serverFilesUnavailableTip =>
+      'Accesible mediante el SSH de este servidor o mediante un agente monitor con su API de archivos activada.';
+
+  @override
+  String get back => 'Atrás';
+
+  @override
+  String get history => 'Historial';
+
+  @override
+  String get homeDir => 'Inicio';
+
+  @override
+  String get selectItem => 'Seleccionar';
+
+  @override
+  String selected(Object count) {
+    return '$count seleccionados';
+  }
+
+  @override
+  String get sendTo => 'Enviar a…';
 
   @override
   String get serverDetailOrder =>
@@ -898,6 +961,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get serverTabRequired =>
       'La pestaña del servidor no se puede eliminar';
+
+  @override
+  String get shareServerRiskTip =>
+      'Este código QR contiene la configuración de conexión del servidor en texto plano, incluidas las contraseñas. Cualquiera que lo escanee o fotografíe puede conectarse a este servidor.';
 
   @override
   String get sftpDlPrepare => 'Preparando para conectar al servidor...';
@@ -920,12 +987,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sftpShowFoldersFirst => 'Mostrar carpetas primero';
 
   @override
-  String get size => 'Tamaño';
-
-  @override
-  String get softWrap => 'Salto de línea suave';
-
-  @override
   String get specifyDev => 'Especificar dispositivo';
 
   @override
@@ -934,10 +995,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get tempIsCelsiusTip =>
-      'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).';
-
-  @override
-  String get speed => 'Velocidad';
+      'Si se activa, el valor de temperatura se tratará como grados Celsius en lugar de milicelsius. Actívalo solo si la temperatura se muestra mal (por ejemplo, 0,1 °C en lugar de 58 °C).';
 
   @override
   String spentTime(Object time) {
@@ -954,13 +1012,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get sshConnectionModeTip =>
-      'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
+      'Integrado: usar el terminal de la app. SSH del sistema: lanzar el comando ssh del sistema en un terminal externo.';
 
   @override
-  String get sshConnectionModeUseBuiltin => 'Use built-in terminal';
+  String get sshConnectionModeUseBuiltin => 'Usar el terminal integrado';
 
   @override
-  String get sshConnectionModeUseSystem => 'Use system SSH';
+  String get sshConnectionModeUseSystem => 'Usar el SSH del sistema';
 
   @override
   String sshConfigDuplicatesSkipped(Object duplicateCount) {
@@ -1010,6 +1068,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get sshHostKeyType => 'Tipo de clave de host SSH';
 
   @override
+  String get sshKnownHostKeys => 'Claves de host conocidas';
+
+  @override
+  String get sshKnownHostKeysTip =>
+      'Claves de host que esta app ha aceptado. Elimina una para que vuelva a preguntarte en la próxima conexión.';
+
+  @override
   String sshHostKeyNewDesc(Object serverName) {
     return 'Se recibió una nueva clave de host SSH de $serverName. Revisa la huella antes de confiar.';
   }
@@ -1048,9 +1113,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Desactivación automática de teclas virtuales';
 
   @override
-  String get stat => 'Estadísticas';
-
-  @override
   String get supportFmtArgs => 'Soporta los siguientes argumentos de formato:';
 
   @override
@@ -1063,32 +1125,22 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get syncAppSettings => 'Sync app settings';
+  String get syncAppSettings => 'Sincronizar los ajustes de la app';
 
   @override
   String get syncAppSettingsTip =>
-      'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
+      'Incluir el tema, el diseño, el editor, el terminal y otras preferencias del dispositivo en la sincronización automática.';
 
   @override
   String get system => 'Sistema';
-
-  @override
-  String get tapToStartDiscovery =>
-      'Toca el botón de búsqueda para descubrir servidores SSH en tu red';
 
   @override
   String get termFontSizeTip =>
       'Este ajuste afectará el tamaño del terminal (ancho y alto). Puedes hacer zoom en la página del terminal para ajustar el tamaño de fuente de la sesión actual.';
 
   @override
-  String get textScaler => 'Escalar texto';
-
-  @override
   String get textScalerTip =>
       '1.0 => 100% (tamaño original), solo afecta a ciertas fuentes en la página del servidor, no se recomienda modificar.';
-
-  @override
-  String get time => 'Tiempo';
 
   @override
   String get times => 'Veces';
@@ -1099,9 +1151,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get sudoPromptNotFound =>
       'No hay solicitud de contraseña de sudo activa.';
-
-  @override
-  String get unknown => 'Desconocido';
 
   @override
   String get updateServerStatusInterval =>
@@ -1121,9 +1170,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get viewDetails => 'Ver detalles';
-
-  @override
-  String get viewErr => 'Ver error';
 
   @override
   String get virtKeyHelpClipboard =>
@@ -1152,9 +1198,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get whenOpenApp => 'Al abrir la App';
 
   @override
-  String get wiki => 'Wiki';
-
-  @override
   String get wolTip =>
       'Después de configurar WOL (Wake-on-LAN), se envía una solicitud de WOL cada vez que se conecta el servidor.';
 
@@ -1170,7 +1213,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'Después de conectarse al servidor, se escribirá un script en `~/.config/server_box` \n | `/tmp/server_box` para monitorear el estado del sistema. Puedes revisar el contenido del script.';
 
   @override
-  String get menuGitHubRepository => 'GitHub Repository';
+  String get menuGitHubRepository => 'Repositorio de GitHub';
 
   @override
   String get podmanDockerEmulationDetected =>
@@ -1178,107 +1221,86 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get portForwardBeta =>
-      'This feature is still in beta testing. Functionality is not guaranteed.';
+      'Esta función sigue en fase beta. No se garantiza su funcionamiento.';
 
   @override
   String get portForward_startPrompt =>
-      'Add a port forward rule to get started';
+      'Añade una regla de reenvío de puertos para empezar';
 
   @override
-  String get portForward_localHost => 'Local Host';
+  String get portForward_localHost => 'Host local';
 
   @override
-  String get portForward_localPort => 'Local Port';
+  String get portForward_localPort => 'Puerto local';
 
   @override
-  String get portForward_remoteHost => 'Remote Host';
+  String get portForward_remoteHost => 'Host remoto';
 
   @override
-  String get portForward_remotePort => 'Remote Port';
-
-  @override
-  String get portForward_type_local => 'Local';
-
-  @override
-  String get portForward_type_remote => 'Remote';
+  String get portForward_remotePort => 'Puerto remoto';
 
   @override
   String portForward_deleteConfirmFmt(Object name) {
-    return 'Delete $name?';
+    return '¿Eliminar $name?';
   }
 
   @override
   String get sponsor => 'Patrocinador';
 
   @override
-  String get sort => 'Sort';
+  String get sortByJoinTime => 'Por fecha de adición';
 
   @override
-  String get sortByName => 'By name';
-
-  @override
-  String get sortByJoinTime => 'By join time';
-
-  @override
-  String get ascending => 'Ascending';
-
-  @override
-  String get descending => 'Descending';
-
-  @override
-  String get serverHistory => 'Server history';
-
-  @override
-  String get clearHistory => 'Clear history';
+  String get serverHistory => 'Historial del servidor';
 
   @override
   String get portForwardBetaTitle => 'Port Forward (Beta)';
 
   @override
-  String get tmuxAutoAttach => 'tmux auto-attach';
+  String get tmuxAutoAttach => 'Conexión automática a tmux';
 
   @override
-  String get tmuxAuto => 'Auto tmux';
+  String get tmuxAuto => 'tmux automático';
 
   @override
   String get tmuxAutoTip =>
-      'Automatically start or attach tmux when connecting over SSH';
+      'Iniciar o adjuntar tmux automáticamente al conectar por SSH';
 
   @override
-  String get tmuxSessionSelector => 'Session selector';
+  String get tmuxSessionSelector => 'Selector de sesiones';
 
   @override
   String get tmuxSessionSelectorTip =>
-      'Show the session picker when connecting';
+      'Mostrar el selector de sesiones al conectar';
 
   @override
-  String get tmuxDefaultSessionName => 'Default session name';
+  String get tmuxDefaultSessionName => 'Nombre de sesión por defecto';
 
   @override
-  String get tmuxSessionName => 'Session name';
+  String get tmuxSessionName => 'Nombre de la sesión';
 
   @override
-  String get tmuxExistingSessions => 'Existing sessions';
+  String get tmuxExistingSessions => 'Sesiones existentes';
 
   @override
-  String get tmuxNewSession => 'New session';
+  String get tmuxNewSession => 'Nueva sesión';
 
   @override
-  String get tmuxWindows => 'Windows';
+  String get tmuxWindows => 'Ventanas';
 
   @override
-  String get tmuxNewWindow => 'New window';
+  String get tmuxNewWindow => 'Nueva ventana';
 
   @override
-  String get tmuxNoWindowsFound => 'No windows found';
+  String get tmuxNoWindowsFound => 'No se encontraron ventanas';
 
   @override
   String tmuxWindowCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count windows',
-      one: '1 window',
+      other: '$count ventanas',
+      one: '1 ventana',
     );
     return '$_temp0';
   }
@@ -1288,33 +1310,33 @@ class AppLocalizationsEs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count panes',
-      one: '1 pane',
+      other: '$count paneles',
+      one: '1 panel',
     );
     return '$_temp0';
   }
 
   @override
-  String get tmuxAttached => 'Attached';
+  String get tmuxAttached => 'Adjuntada';
 
   @override
-  String get tmuxActive => 'Active';
+  String get tmuxActive => 'Activa';
 
   @override
   String tmuxActiveAt(String time) {
-    return 'active: $time';
+    return 'activa: $time';
   }
 
   @override
   String tmuxAttachedAt(String time) {
-    return 'attached: $time';
+    return 'adjuntada: $time';
   }
 
   @override
-  String get tmuxSkip => 'Skip';
+  String get tmuxSkip => 'Omitir';
 
   @override
-  String get tmuxNotAvailable => 'tmux is not available';
+  String get tmuxNotAvailable => 'tmux no está disponible';
 
   @override
   String containerSegmentsMismatch(int count) {
@@ -1358,4 +1380,85 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get processKillTargetChanged =>
       'El proceso cambió o finalizó. Actualiza la lista e inténtalo de nuevo.';
+
+  @override
+  String get watchServers => 'Servidores en el reloj';
+
+  @override
+  String get watchServersTip =>
+      'El reloj consulta estos servidores directamente a su agente monitor, por lo que solo pueden elegirse servidores con monitor configurado.';
+
+  @override
+  String get watchNoMonitorServer =>
+      'Ningún servidor tiene un agente monitor configurado';
+
+  @override
+  String get watchLegacyUrls => 'URL de estado heredadas';
+
+  @override
+  String get accessoryWidgetServer =>
+      'Servidor del widget de pantalla bloqueada';
+
+  @override
+  String get systemdMissing => 'No hay systemd en este servidor';
+
+  @override
+  String get systemdMissingTip =>
+      '`systemctl` no está instalado aquí, por lo que no hay unidades que listar.';
+
+  @override
+  String initSystemFmt(String init) {
+    return 'Esta máquina parece usar $init.';
+  }
+
+  @override
+  String get systemdListFailed => 'No se pudieron listar las unidades';
+
+  @override
+  String get systemdUserScopeMissing => 'No se listan las unidades de usuario';
+
+  @override
+  String get systemdUserScopeMissingTip =>
+      'Esta cuenta no tiene bus de sesión de usuario en el servidor, por lo que solo se muestran las unidades del sistema.';
+
+  @override
+  String get serverUnreachable =>
+      'No se pudo ejecutar ningún comando en este servidor';
+
+  @override
+  String get containerNoRuntime =>
+      'Aquí no hay entorno de ejecución de contenedores';
+
+  @override
+  String get containerNoRuntimeTip =>
+      'Ni `docker` ni `podman` respondieron en esta máquina. Si uno está instalado para otra cuenta, activa «Intentar con sudo» en los ajustes.';
+
+  @override
+  String get containerUnreadable =>
+      'El entorno de ejecución de contenedores respondió de forma inesperada';
+
+  @override
+  String get power => 'Energía';
+
+  @override
+  String get continueInTerminal => 'Continuar en la terminal';
+
+  @override
+  String get askAiRiskUnknown => 'Sin clasificar';
+
+  @override
+  String get agentLocalExec => 'Ejecutar comandos en este dispositivo';
+
+  @override
+  String get agentLocalExecTip =>
+      'Permite al Agente trabajar en el equipo donde se ejecuta ServerBox, no solo en servidores. Aquí nada se ejecuta sin supervisión: todos los comandos requieren revisión.';
+
+  @override
+  String get agentLocalExecRootfsTip =>
+      'Permite al Agente trabajar en este dispositivo, dentro del contenedor de Alpine Linux que instala ServerBox. No puede ver el sistema de archivos del teléfono, los datos de la app ni tus archivos. Todos los comandos siguen requiriendo revisión.';
+
+  @override
+  String macDmgImportedPartly(String path) {
+    return 'Se importaron los datos de la versión instalada anteriormente. Los archivos descargados se quedaron en $path.';
+  }
 }

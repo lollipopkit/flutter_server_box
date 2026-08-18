@@ -1,0 +1,14 @@
+Filesystem     1K-blocks      Used Available Use% Mounted on
+udev             3879172         0   3879172   0% /dev
+tmpfs             800412      1792    798620   1% /run
+/dev/sda2      474286144 158343564 291776744  36% /
+tmpfs            4002060         0   4002060   0% /dev/shm
+efivarfs             148        57        87  40% /sys/firmware/efi/efivars
+tmpfs               5120        16      5104   1% /run/lock
+tmpfs            4002060         4   4002056   1% /tmp
+/dev/sda1         997432      8984    988448   1% /boot/efi
+tmpfs             800412        88    800324   1% /run/user/1000
+tmpfs                100         0       100   0% /var/lib/incus/shmounts
+tmpfs                100         0       100   0% /var/lib/incus/guestapi
+tmpfs               1024         0      1024   0% /run/credentials/systemd-journald.service
+tmpfs             800412        72    800340   1% /run/user/1001

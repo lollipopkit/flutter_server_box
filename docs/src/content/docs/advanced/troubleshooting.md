@@ -38,9 +38,12 @@ description: Solutions to common problems
 
 ### Can't Type Certain Characters
 
-**Solution:** Settings → Keyboard Type → Switch to `visiblePassword`
+**Solutions:**
 
-Note: CJK input may not work after this change.
+1. Use the terminal's virtual keyboard row for keys the system keyboard
+   can't send (Esc, Tab, Ctrl/Alt combos, symbols)
+2. Toggle the system keyboard with the **IME** virtual key
+3. If a third-party keyboard misbehaves, try the system default keyboard
 
 ## App Issues
 

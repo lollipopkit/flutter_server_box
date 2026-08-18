@@ -1,56 +1,74 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/data/model/server/capabilities.dart';
 import 'package:server_box/data/res/store.dart';
 
 enum ServerFuncBtn {
   terminal(),
-  sftp(),
+
+  /// Not `sftp`: SFTP is one of two ways a server's files are reached, and
+  /// which one it is belongs to `ServerFilePage` rather than to the entry that
+  /// opens it. A monitor-backed host with no reachable sshd browses over its
+  /// agent's file API and never sees SFTP at all.
+  files(),
   container(),
   process(),
   snippet(),
   iperf(),
   systemd(1058),
-  portForward(1340);
+  portForward(1340),
+  power(1481);
 
+  /// The build this entry first shipped in, or null for one that has been
+  /// there from the start. Read by [autoAddNewFuncs] and nothing else.
   final int? addedVersion;
 
   const ServerFuncBtn([this.addedVersion]);
 
-  static void autoAddNewFuncs(int cur) {
+  /// Puts entries that arrived during an upgrade into the user's row, which
+  /// was last written when they did not exist.
+  ///
+  /// The window is `(from, to]`, not "everything up to [to]". An entry the
+  /// user has since taken *out* of the row was a decision, and a rule that
+  /// only looks at [to] re-adds it on every later upgrade — overruling that
+  /// decision every time, forever. Only an entry that did not exist the last
+  /// time they could have chosen is added.
+  ///
+  /// [from] is the build this install last ran, 0 on a fresh one — where
+  /// [defaultIdxs] already lists everything, so nothing here fires.
+  ///
+  /// Driven by [addedVersion] over [values] rather than by a branch per entry:
+  /// the old form needed three near-identical blocks, and a new entry was
+  /// added by remembering to write a fourth.
+  static void autoAddNewFuncs(int from, int to) {
     final prop = Stores.setting.serverFuncBtns;
     final list = prop.fetch();
-    final originalLength = list.length;
-
-    if (systemd.addedVersion != null && cur >= systemd.addedVersion!) {
-      if (!list.contains(systemd.index)) {
-        list.add(systemd.index);
-      }
-    }
-
-    if (portForward.addedVersion != null && cur >= portForward.addedVersion!) {
-      if (!list.contains(portForward.index)) {
-        list.add(portForward.index);
-      }
-    }
-
-    if (list.length > originalLength) {
-      prop.put(list);
-    }
+    final added = [
+      for (final btn in values)
+        if (btn.addedVersion case final since?
+            when since > from && since <= to && !list.contains(btn.index))
+          btn.index,
+    ];
+    if (added.isEmpty) return;
+    prop.put([...list, ...added]);
   }
 
   static final defaultIdxs = [
     terminal,
-    sftp,
+    files,
     container,
     process,
     snippet,
     systemd,
     portForward,
+    power,
   ].map((e) => e.index).toList();
 
   IconData get icon => switch (this) {
-    sftp => Icons.insert_drive_file,
+    // The file tab's own icon, since that is where this entry lands.
+    files => Icons.folder_open,
     snippet => Icons.code,
     container => FontAwesome.docker_brand,
     process => Icons.list_alt_outlined,
@@ -58,10 +76,30 @@ enum ServerFuncBtn {
     iperf => Icons.speed,
     systemd => MingCute.plugin_2_fill,
     portForward => Icons.compare_arrows,
+    power => Icons.power_settings_new,
+  };
+
+  /// Whether a connection with [caps] can actually do what this entry opens.
+  ///
+  /// Asked of the capabilities rather than of the transport, and asked per
+  /// entry rather than once for all of them: these three needs are genuinely
+  /// different, and a server reached over its monitor agent meets two of them.
+  bool availableWith(ServerCapabilities caps) => switch (this) {
+    // All three end in the terminal — snippets and iperf hand it a command to
+    // start with, and nothing else.
+    terminal || snippet || iperf => caps.terminal,
+    container || process || systemd || power => caps.shell,
+    // Browsing files is its own question: a transport could grow a file API
+    // without growing a stream this app can point anywhere.
+    files => caps.files,
+    // A forwarded connection is a byte stream, not a command's output.
+    portForward => caps.byteStream,
   };
 
   String get toStr => switch (this) {
-    sftp => 'SFTP',
+    // Named after what it opens, not after the protocol that used to be the
+    // only way to get there — the same word the file tab carries.
+    files => libL10n.file,
     snippet => libL10n.snippet,
     container => libL10n.container,
     process => libL10n.process,
@@ -69,5 +107,6 @@ enum ServerFuncBtn {
     iperf => 'iperf',
     systemd => 'Systemd',
     portForward => libL10n.portForward,
+    power => l10n.power,
   };
 }

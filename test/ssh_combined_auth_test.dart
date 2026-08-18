@@ -5,14 +5,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 
+import 'helpers/spi_fixture.dart';
+
 void main() {
   group('SSH client authentication configuration', () {
     test('enables public key and password authentication together', () async {
       final client = await _createClient(
-        const Spi(
+        spiFixture(
           name: 'combined-auth',
           ip: '127.0.0.1',
-          port: 22,
           user: 'tester',
           pwd: 'account-password',
           keyId: 'test-key',
@@ -27,10 +28,9 @@ void main() {
 
     test('keeps key-only authentication password-free', () async {
       final client = await _createClient(
-        const Spi(
+        spiFixture(
           name: 'key-only',
           ip: '127.0.0.1',
-          port: 22,
           user: 'tester',
           pwd: '',
           keyId: 'test-key',
@@ -44,10 +44,9 @@ void main() {
 
     test('keeps password-only authentication unchanged', () async {
       final client = await _createClient(
-        const Spi(
+        spiFixture(
           name: 'password-only',
           ip: '127.0.0.1',
-          port: 22,
           user: 'tester',
           pwd: 'account-password',
         ),
@@ -64,7 +63,7 @@ Future<SSHClient> _createClient(Spi spi, {String? privateKey}) async {
   final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
   final peerFuture = server.first;
   final client = await genClient(
-    spi.copyWith(port: server.port),
+    spi.copyWith(ssh: spi.ssh!.copyWith(port: server.port)),
     privateKey: privateKey,
     knownHostFingerprints: const {},
   );

@@ -5,15 +5,18 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:logging/logging.dart';
 import 'package:server_box/data/model/server/custom.dart';
+import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
 import 'package:server_box/data/model/server/snippet.dart';
+import 'package:server_box/data/model/server/ssh_credential.dart';
 import 'package:server_box/data/model/server/wol_cfg.dart';
 import 'package:server_box/data/provider/private_key.dart';
 import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/schema.dart';
 
 part 'backup2.freezed.dart';
 part 'backup2.g.dart';
@@ -46,11 +49,15 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     required Map<String, Object?> settings,
   }) = _BackupV2;
 
-  factory BackupV2.fromJson(Map<String, dynamic> json) {
-    final backup = _$BackupV2FromJson(json);
-    backup._validateRestorableTypedStores();
-    return backup;
-  }
+  /// Must stay a single expression with a cascade, not a block body.
+  /// `Freezed.needsJsonSerializable` only enables JSON generation when the
+  /// `fromJson` factory's body `is ExpressionFunctionBody`; with a block body
+  /// it silently emits no `@JsonSerializable()`, json_serializable then writes
+  /// no `backup2.g.dart`, and `toJson`/`_$BackupV2FromJson` stop existing. The
+  /// checked-in generated files predate that check, so the breakage only shows
+  /// up the next time codegen runs from scratch.
+  factory BackupV2.fromJson(Map<String, dynamic> json) =>
+      _$BackupV2FromJson(json).._validateRestorableTypedStores();
 
   @override
   Future<void> merge({bool force = false}) async {
@@ -96,7 +103,13 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     _loggerV2.info('Merge completed');
   }
 
-  static const formatVer = 2;
+  /// Envelope version. Bumped to 3 with the nested `Spi.ssh` layout, so a
+  /// reader can tell whether it understands the file before decoding it.
+  ///
+  /// Kept in step with [SchemaVersion.current]: the stores a backup carries
+  /// are exactly the stores the schema describes, and two independent numbers
+  /// would drift.
+  static const formatVer = SchemaVersion.current;
 
   static Future<BackupV2> loadFromStore({bool includeSettings = true}) async {
     return BackupV2(
@@ -139,6 +152,15 @@ abstract class BackupV2 with _$BackupV2 implements Mergeable {
     }
 
     final map = json.decode(jsonString) as Map<String, dynamic>;
+
+    // Checked before decoding. `version` was written from the beginning but
+    // never read, so a newer file was decoded by whatever reader happened to
+    // accept its shape — silently dropping the fields it didn't know.
+    final ver = map['version'];
+    if (ver is int && ver > formatVer) {
+      throw SchemaTooNewException(stored: ver, supported: formatVer);
+    }
+
     return BackupV2.fromJson(map);
   }
 
@@ -160,6 +182,10 @@ Object? _toEncodable(Object? value) {
     final PrivateKeyInfo key => key.toJson(),
     final ServerCustom custom => custom.toJson(),
     final WakeOnLanCfg wolCfg => wolCfg.toJson(),
+    // Nested on Spi. Both were missing, so backing up a server that used
+    // either threw instead of producing a file.
+    final SshCredential ssh => ssh.toJson(),
+    final MonitorHttpCredential monitor => monitor.toJson(),
     _ => throw UnsupportedError(
       'Cannot JSON-encode ${value.runtimeType}: missing supported toJson()',
     ),

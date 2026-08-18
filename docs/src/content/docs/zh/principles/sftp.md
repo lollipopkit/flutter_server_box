@@ -437,54 +437,8 @@ try {
 }
 ```
 
-## 性能优化
+## 性能说明
 
-### 目录缓存
-
-```dart
-class DirectoryCache {
-  final Map<String, CachedDirectory> _cache = {};
-  final Duration ttl = Duration(minutes: 5);
-
-  Future<List<SftpFile>> list(String path) async {
-    final cached = _cache[path];
-    if (cached != null && !cached.isExpired) {
-      return cached.files;
-    }
-
-    final files = await sftp.listDir(path);
-    _cache[path] = CachedDirectory(files);
-    return files;
-  }
-}
-```
-
-### 懒加载
-
-对于大型目录（>1000 个项目）：
-
-```dart
-List<SftpFile> loadPage(String path, int page, int pageSize) {
-  final all = cache[path] ?? [];
-  final start = page * pageSize;
-  final end = start + pageSize;
-  return all.sublist(start, end.clamp(0, all.length));
-}
-```
-
-### 分页
-
-```dart
-class PaginatedDirectory {
-  static const pageSize = 100;
-
-  Future<List<SftpFile>> getPage(int page) async {
-    final offset = page * pageSize;
-    return await sftp.listDir(
-      path,
-      offset: offset,
-      limit: pageSize,
-    );
-  }
-}
-```
+- SFTP 复用现有 SSH 连接,不会另建连接。
+- 目录列表在导航时获取、按需刷新,没有 TTL 缓存层。
+- 大文件传输在后台 isolate 中执行,不阻塞 UI。

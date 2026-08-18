@@ -1,0 +1,295 @@
+name: Monitor Release
+
+# Manual trigger only. Versioning is decoupled from the app: no git tags are read;
+# the monitor crate version (monitor/Cargo.toml) is authoritative.
+# The release tag is monitor-v<version>, independent of the app's v1.0.x.
+#
+# Artifacts:
+# - Native binaries (Linux musl / macOS / Windows) → GitHub Release
+# - Docker image (Alpine, reusing the Linux musl binary without in-image builds) → ghcr.io
+on:
+  workflow_dispatch:
+    inputs:
+      overwrite:
+        description: 'Allow overwriting an existing monitor-v* release tag / ghcr.io tag'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/server-box-monitor
+  BIN_NAME: server-box-monitor
+
+jobs:
+  meta:
+    name: Resolve version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: monitor-v${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Read crate version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(cargo metadata --format-version 1 --no-deps \
+            | jq -r '.packages[] | select(.name == "server_box_monitor") | .version')"
+          if [[ -z "$version" || "$version" == "null" ]]; then
+            echo "Failed to read server_box_monitor version from Cargo metadata."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Monitor version: $version"
+
+      - name: Refuse to overwrite published release tag
+        if: inputs.overwrite != true
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="monitor-v${{ steps.version.outputs.version }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null 2>&1; then
+            echo "Tag $tag already exists."
+            echo "Bump the version in monitor/Cargo.toml, or re-run with overwrite=true."
+            exit 1
+          fi
+
+  frontend:
+    name: Build frontend
+    needs: meta
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: monitor/frontend/package-lock.json
+
+      - name: Build
+        working-directory: monitor/frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitor-frontend-dist
+          path: monitor/frontend/dist
+          if-no-files-found: error
+          retention-days: 3
+
+  native:
+    name: Build ${{ matrix.platform }}-${{ matrix.arch }}
+    needs: [meta, frontend]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            platform: linux
+            arch: amd64
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+            platform: linux
+            arch: arm64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            platform: macos
+            arch: arm64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            platform: macos
+            arch: amd64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            platform: windows
+            arch: amd64
+    runs-on: ${{ matrix.os }}
+    env:
+      SQLX_OFFLINE: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install musl toolchain
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - name: Add Rust target
+        run: rustup target add ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Build
+        shell: bash
+        run: cargo build -p server_box_monitor --release --target ${{ matrix.target }}
+
+      - name: Download frontend dist
+        uses: actions/download-artifact@v4
+        with:
+          name: monitor-frontend-dist
+          path: monitor/frontend/dist
+
+      - name: Package
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ needs.meta.outputs.version }}"
+          bin=server_box_monitor
+          ext=""
+          if [[ "${{ matrix.platform }}" == "windows" ]]; then ext=".exe"; fi
+
+          staging="${BIN_NAME}"
+          mkdir -p "$staging"
+          cp "target/${{ matrix.target }}/release/${bin}${ext}" "$staging/"
+          mkdir -p "$staging/frontend"
+          cp -r monitor/frontend/dist "$staging/frontend/dist"
+          cp -r monitor/migrations "$staging/migrations"
+          cp monitor/config.example.toml monitor/.env.example "$staging/"
+
+          name="${BIN_NAME}_v${version}_${{ matrix.platform }}_${{ matrix.arch }}"
+          if [[ "${{ matrix.platform }}" == "windows" ]]; then
+            tar -a -c -f "${name}.zip" "$staging"
+          else
+            tar -czf "${name}.tar.gz" "$staging"
+          fi
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitor-pkg-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            *.tar.gz
+            *.zip
+          if-no-files-found: error
+          retention-days: 3
+
+      # The Linux musl binary is reused in the Docker image, avoiding a second build
+      - name: Upload raw bin for Docker
+        if: matrix.platform == 'linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitor-bin-linux-${{ matrix.arch }}
+          path: target/${{ matrix.target }}/release/server_box_monitor
+          if-no-files-found: error
+          retention-days: 3
+
+  docker:
+    name: Publish image to ghcr.io
+    needs: [meta, frontend, native]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Download frontend dist
+        uses: actions/download-artifact@v4
+        with:
+          name: monitor-frontend-dist
+          path: monitor/frontend/dist
+
+      - name: Download linux bins
+        uses: actions/download-artifact@v4
+        with:
+          pattern: monitor-bin-linux-*
+          path: dist/bins
+
+      - name: Arrange Docker context
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/docker/amd64 dist/docker/arm64
+          mv dist/bins/monitor-bin-linux-amd64/server_box_monitor dist/docker/amd64/
+          mv dist/bins/monitor-bin-linux-arm64/server_box_monitor dist/docker/arm64/
+
+      - name: Login to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Refuse to overwrite published version
+        if: inputs.overwrite != true
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${IMAGE}:${{ needs.meta.outputs.version }}"
+          if docker manifest inspect "$tag" > /dev/null 2>&1; then
+            echo "$tag already exists on ghcr.io."
+            echo "Bump the version in monitor/Cargo.toml, or re-run with overwrite=true."
+            exit 1
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # COPY prebuilt artifacts only; multi-arch images without QEMU
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: monitor/Dockerfile.ci
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ needs.meta.outputs.version }}
+            ${{ env.IMAGE }}:latest
+          labels: |
+            org.opencontainers.image.title=server-box-monitor
+            org.opencontainers.image.version=${{ needs.meta.outputs.version }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+  release:
+    name: Create GitHub Release
+    needs: [meta, native, docker]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: monitor-pkg-*
+          path: packages
+          merge-multiple: true
+
+      - name: Checksums
+        shell: bash
+        working-directory: packages
+        run: sha256sum *.tar.gz *.zip > SHA256SUMS
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.meta.outputs.tag }}
+          name: Monitor ${{ needs.meta.outputs.tag }}
+          files: |
+            packages/*.tar.gz
+            packages/*.zip
+            packages/SHA256SUMS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

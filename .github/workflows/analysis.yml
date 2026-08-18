@@ -48,14 +48,89 @@ jobs:
           fi
 
       - name: Check locked dependencies
-        env:
-          PUB_HOSTED_URL: https://pub.dev
         run: |
           flutter pub get --enforce-lockfile
           git diff --exit-code -- pubspec.yaml pubspec.lock
 
       - name: Check JNI build-id patch
         run: scripts/release/patch-jni-build-id.sh
+
+  rustTests:
+    name: Rust tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Test Rust workspace
+        run: cargo test --workspace --no-fail-fast
+
+  # The one path nothing else in CI compiles. `Build ios` in build.yml ships
+  # SBM_ISH = 0, so with the switch off the engine is never fed to a compiler
+  # and `sbm_ish.c` is only ever built as stubs — a change that breaks the real
+  # thing would reach a phone before it reached anyone's attention.
+  #
+  # Both settings, because each one has already failed in a way the other could
+  # not show: with the switch on, the linker once dead-stripped the whole engine
+  # and produced a 58 KB binary; with it off, the documented check for a clean
+  # strip turned out to pass on a binary that still had the engine in it.
+  ishEngine:
+    name: iOS Linux engine
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      # meson and ninja build the engine; llvm because the guest VDSO targets
+      # Linux, which Apple's clang cannot; lld because Homebrew ships it apart
+      # from llvm and that is the linker the VDSO asks for by name; libarchive
+      # because fakefsify links it.
+      - name: Install the engine's build tools
+        run: brew install meson ninja llvm lld libarchive
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build the engine
+        run: scripts/build-ish-ios.sh device
+
+      # In an untracked local override, which is where a developer puts it too —
+      # the tracked Ish.xcconfig stays at 0 so that an accidental release build
+      # is one without the engine rather than one with it.
+      - name: Build the app with the engine linked
+        shell: bash
+        run: |
+          echo 'SBM_ISH = 1' > ios/Flutter/IshLocal.xcconfig
+          flutter build ios --release --no-codesign
+
+      - name: The engine is in the binary
+        run: scripts/check-ish-linkage.sh build/ios/iphoneos/Runner.app/Runner on
+
+      - name: And the switch takes it out again
+        shell: bash
+        run: |
+          rm ios/Flutter/IshLocal.xcconfig
+          flutter build ios --release --no-codesign
+          scripts/check-ish-linkage.sh build/ios/iphoneos/Runner.app/Runner off
 
   check:
     runs-on: ubuntu-latest
@@ -76,11 +151,18 @@ jobs:
         run: flutter pub get
 
       # Consider passing '--fatal-infos' for slightly stricter analysis.
+      # `integration_test` too: nothing else in CI reads that directory — the
+      # suites in it need a device — so without this a change there is unseen
+      # until somebody runs it by hand on one.
       - name: Analyze project source
-        run: flutter analyze lib test
+        run: flutter analyze lib test integration_test
 
-      # Your project will need to have tests in test/ and a dependency on
-      # package:test for this step to succeed. Note that Flutter projects will
-      # want to change this to 'flutter test'.
+      - uses: Swatinem/rust-cache@v2
+
+      # FFI-dependent suites (frb_parser/windows/server_status_update_req...)
+      # load the dylib from target/debug via test/rust_lib_helper.dart
+      - name: Build native FFI library
+        run: cargo build -p sbm_ffi
+
       - name: Run tests
         run: flutter test

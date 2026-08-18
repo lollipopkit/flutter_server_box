@@ -29,7 +29,7 @@ extension _Fullscreen on _AppSettingsPageState {
       trailing: StoreSwitch(
         prop: _setting.fullScreenJitter,
         callback: (_) {
-          context.showSnackBar(l10n.needRestart);
+          Toast.show(l10n.needRestart);
         },
       ),
     );

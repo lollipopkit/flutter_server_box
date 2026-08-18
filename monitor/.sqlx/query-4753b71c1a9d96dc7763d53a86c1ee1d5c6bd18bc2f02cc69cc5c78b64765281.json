@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM alerts WHERE timestamp < ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "4753b71c1a9d96dc7763d53a86c1ee1d5c6bd18bc2f02cc69cc5c78b64765281"
+}

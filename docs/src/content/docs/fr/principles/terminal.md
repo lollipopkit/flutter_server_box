@@ -123,28 +123,24 @@ Les onglets maintiennent leur état lors de la navigation :
 
 ## Clavier virtuel
 
-### Implémentation spécifique à la plateforme
-
-**iOS :**
-- Clavier personnalisé basé sur UIView
-- Basculable avec un bouton clavier
-- Affichage/masquage automatique basé sur le focus
-
-**Android :**
-- Méthode de saisie personnalisée
-- Intégré au clavier système
-- Boutons d'action rapide
+Le clavier virtuel est un widget Flutter affiché au-dessus du terminal sur toutes
+les plateformes (les touches disponibles sont définies dans
+`lib/data/model/ssh/virtual_key.dart`). Sur mobile, il s’affiche en même temps que
+le clavier système.
 
 ### Boutons du clavier
 
 | Bouton | Action |
 |--------|--------|
-| **Basculer** | Afficher/masquer le clavier système |
-| **Ctrl** | Envoyer le modificateur Ctrl |
-| **Alt** | Envoyer le modificateur Alt |
-| **SFTP** | Ouvrir le répertoire courant |
-| **Presse-papiers** | Copier/Coller contextuel |
-| **Snippets** | Exécuter un extrait de code |
+| **Esc / Tab / Home / End / PgUp / PgDn / flèches** | Envoyer la touche correspondante |
+| **Ctrl / Alt / Shift** | Activer le modificateur pour la touche suivante |
+| **IME** | Afficher/masquer le clavier système |
+| **Presse-papiers** | Copier/coller contextuel |
+| **SFTP** | Ouvrir le répertoire courant dans le navigateur SFTP |
+| **Snippet** | Choisir et exécuter un snippet |
+| **Symboles** | `/ \ _ + = - ( ) [ ] { } < >` et plus |
+
+L’ensemble et l’ordre des touches sont personnalisables dans les réglages.
 
 ## Sélection de texte
 
@@ -188,11 +184,23 @@ GestureDetector(
 - **Sombre (Dark)** : Fond sombre, texte clair
 - **AMOLED** : Fond noir pur
 
-## Optimisations de performance
+## Performance
 
-- **Dirty rectangle** : Ne redessiner que les régions modifiées
-- **Mise en cache des lignes** : Mettre en cache les lignes rendues
-- **Défilement paresseux (Lazy scrolling)** : Défilement virtuel pour les longs tampons
-- **Mises à jour par lots** : Fusionner plusieurs écritures
-- **Compression** : Compresser le tampon de défilement
-- **Anti-rebond (Debouncing)** : Anti-rebond pour les saisies rapides
+Le fork xterm.dart effectue le rendu avec un painter personnalisé et ne redessine
+que lors des mises à jour du terminal ; les écritures de sortie sont mises en
+tampon et regroupées avant d’être transmises à l’émulateur.
+
+## Fonctionnalités spéciales
+
+### Exécution de snippets
+
+Choisir un snippet colle son contenu dans le terminal et l’exécute avec un retour chariot.
+
+### Accès rapide SFTP
+
+La touche virtuelle **SFTP** ouvre le répertoire de travail courant dans le navigateur SFTP.
+
+### Keep-Alive
+
+Les connexions sont maintenues au niveau du protocole SSH (voir
+[Connexion SSH](/docs/principles/ssh/)), et non en injectant des octets dans le terminal.

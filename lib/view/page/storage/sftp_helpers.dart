@@ -2,6 +2,25 @@ part of 'sftp.dart';
 
 String _normalizeSftpPath(String path) => path.replaceAll(RegExp(r'/+'), '/');
 
+/// A path component that is safe to write on this device.
+///
+/// A remote name may be anything the far side allows, and this app files
+/// downloads under the path they came from — so a name Windows reserves, or
+/// one with a separator in it, has to be flattened before it becomes a local
+/// directory.
+String _safeLocalPathPart(String part) {
+  if (part == '.' || part == '..') return '_';
+  var safe = part.replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]'), '_');
+  safe = safe.replaceAll(RegExp(r'[ .]+$'), '');
+  if (safe.isEmpty) return '_';
+
+  final baseName = safe.split('.').first.toUpperCase();
+  final isReservedDeviceName = RegExp(
+    r'^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$',
+  ).hasMatch(baseName);
+  return isReservedDeviceName ? '_$safe' : safe;
+}
+
 String? _getDecompressCmd(String filename) {
   final quotedFilename = shellSingleQuote(filename);
   for (final ext in _extCmdMap.keys) {
@@ -63,83 +82,3 @@ const _extCmdMap = {
   'obscpio': 'cpio -idmvF FILE',
   'zpaq': 'zpaq x FILE',
 };
-
-/// Return fmt: 2021-01-01 00:00:00
-String _getTime(int? unixMill) {
-  if (unixMill == null) return '-';
-  return DateTime.fromMillisecondsSinceEpoch(
-    unixMill * 1000,
-  ).toString().replaceFirst('.000', '');
-}
-
-enum _SortType {
-  name,
-  time,
-  size;
-
-  List<SftpName> sort(List<SftpName> files, {bool reversed = false}) {
-    final sortedFiles = List<SftpName>.of(files);
-    var comparator = ChainComparator<SftpName>.create();
-    if (Stores.setting.sftpShowFoldersFirst.fetch()) {
-      comparator = comparator.thenTrueFirst((x) => x.attr.isDirectory);
-    }
-    switch (this) {
-      case _SortType.name:
-        sortedFiles.sort(
-          comparator
-              .thenWithComparator(
-                (a, b) => Comparators.compareStringCaseInsensitive()(
-                  a.filename,
-                  b.filename,
-                ),
-                reversed: reversed,
-              )
-              .compare,
-        );
-        break;
-      case _SortType.time:
-        sortedFiles.sort(
-          comparator
-              .thenCompareBy<num>(
-                (x) => x.attr.modifyTime ?? 0,
-                reversed: reversed,
-              )
-              .compare,
-        );
-        break;
-      case _SortType.size:
-        sortedFiles.sort(
-          comparator
-              .thenCompareBy<num>((x) => x.attr.size ?? 0, reversed: reversed)
-              .compare,
-        );
-        break;
-    }
-    return sortedFiles;
-  }
-}
-
-class _SortOption {
-  final _SortType sortBy;
-  final bool reversed;
-
-  _SortOption({this.sortBy = _SortType.name, this.reversed = false});
-
-  _SortOption copyWith({_SortType? sortBy, bool? reversed}) {
-    return _SortOption(
-      sortBy: sortBy ?? this.sortBy,
-      reversed: reversed ?? this.reversed,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is _SortOption &&
-        other.sortBy == sortBy &&
-        other.reversed == reversed;
-  }
-
-  @override
-  int get hashCode => Object.hash(sortBy, reversed);
-}

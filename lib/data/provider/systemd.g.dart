@@ -58,7 +58,7 @@ final class SystemdNotifierProvider
   }
 }
 
-String _$systemdNotifierHash() => r'59470f15580fd1e0366e4981e013643fa8f60c11';
+String _$systemdNotifierHash() => r'9175306a987f4d4c23d603db4666b1e3bdae1d08';
 
 final class SystemdNotifierFamily extends $Family
     with
@@ -92,7 +92,7 @@ abstract class _$SystemdNotifier extends $Notifier<SystemdState> {
   SystemdState build(Spi spi);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<SystemdState, SystemdState>;
     final element =
         ref.element
@@ -102,6 +102,6 @@ abstract class _$SystemdNotifier extends $Notifier<SystemdState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

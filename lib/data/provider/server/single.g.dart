@@ -58,7 +58,7 @@ final class ServerNotifierProvider
   }
 }
 
-String _$serverNotifierHash() => r'66806d093a4fb9822dc5cad88a62dd340ca1b45e';
+String _$serverNotifierHash() => r'a24cce74c871c28652788226dafcbe8de854435c';
 
 final class ServerNotifierFamily extends $Family
     with
@@ -92,7 +92,7 @@ abstract class _$ServerNotifier extends $Notifier<ServerState> {
   ServerState build(String serverId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ServerState, ServerState>;
     final element =
         ref.element
@@ -102,6 +102,6 @@ abstract class _$ServerNotifier extends $Notifier<ServerState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

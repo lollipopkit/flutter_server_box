@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:server_box/core/utils/jump_chain.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
+
+import 'helpers/spi_fixture.dart';
 
 Spi _spi({
   required String id,
@@ -8,7 +11,7 @@ Spi _spi({
   String? jumpId,
   List<String>? jumpIds,
 }) {
-  return Spi(
+  return spiFixture(
     id: id,
     name: name,
     ip: '$name.example.com',

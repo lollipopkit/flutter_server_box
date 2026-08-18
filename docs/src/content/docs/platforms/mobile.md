@@ -55,23 +55,17 @@ Background limitations apply:
 
 ## Push Notifications
 
-Receive notifications for:
-
-- Server offline alerts
-- High resource usage warnings
-- Task completion alerts
-
-Configure in Settings > Notifications
+Server alerts (offline, threshold exceeded) are pushed by
+[ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor)
+running on your servers — configure alert rules and push channels there.
 
 ## Mobile UI Features
 
 - **Pull to Refresh**: Update server status
-- **Swipe Actions**: Quick server operations
 - **Landscape Mode**: Better terminal experience
 - **Virtual Keyboard**: Terminal shortcuts
 
 ## File Integration
 
-- **Files App (iOS)**: Direct SFTP access from Files
-- **Storage Access Framework (Android)**: Share files with other apps
-- **Document Picker**: Easy file selection
+- **Document Picker**: Pick local files for SFTP upload and backup import/export
+- **Share**: Export files to other apps

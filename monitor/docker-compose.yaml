@@ -1,0 +1,38 @@
+services:
+  server-box-monitor:
+    build:
+      context: ..
+      dockerfile: monitor/Dockerfile
+    container_name: server-box-monitor
+    ports:
+      - "3770:3770"
+    environment:
+      - SBM_HOST=0.0.0.0
+      - SBM_PORT=3770
+      - DATABASE_URL=sqlite:/app/data/serverbox_monitor.db
+      # JWT_SECRET optional: auto-generated on first start and persisted to /app/data/jwt.secret
+      - JWT_SECRET
+      - RUST_LOG=${RUST_LOG:-info}
+      # Explicit override for the default server name, if $HOSTNAME isn't
+      # exported in the shell running `docker compose up` (bash sets it but
+      # doesn't export it by default). The /etc/host_hostname mount below
+      # covers the common case without needing this set.
+      - SBM_HOSTNAME=${SBM_HOSTNAME:-}
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      # Read-only view of the host's real hostname: inside the container,
+      # hostname::get() would otherwise return the container's own (random)
+      # hostname, not the machine this is actually monitoring.
+      - /etc/hostname:/etc/host_hostname:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3770/api/v1/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+
+networks:
+  default:
+    name: server-box-monitor

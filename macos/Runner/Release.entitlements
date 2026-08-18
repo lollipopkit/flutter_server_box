@@ -14,6 +14,10 @@
 	<array>
 		<string>iCloud.tech.lolli.serverbox</string>
 	</array>
+	<!-- Required by the App Store, and the reason that build has no terminal
+	     on this device: a sandboxed process cannot open a pty. The DMG is
+	     signed with ReleaseDmg.entitlements instead — see
+	     scripts/release/release-macos-dmg.sh. -->
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
 	<key>com.apple.security.files.user-selected.read-write</key>

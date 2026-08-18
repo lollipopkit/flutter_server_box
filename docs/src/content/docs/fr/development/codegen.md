@@ -86,6 +86,17 @@ class ServerModel {
 }
 ```
 
+
+## Liaisons Rust (flutter_rust_bridge)
+
+Après avoir modifié `crates/sbm_ffi/src/api`, régénérez les liaisons Dart :
+
+```bash
+flutter_rust_bridge_codegen generate
+```
+
+La configuration est dans `flutter_rust_bridge.yaml` ; la sortie va dans `lib/src/rust/` (ne jamais modifier les fichiers générés).
+
 ## Génération de localisation
 
 ```bash

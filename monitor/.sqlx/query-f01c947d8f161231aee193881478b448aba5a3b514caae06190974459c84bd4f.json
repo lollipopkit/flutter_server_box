@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT MIN(timestamp) FROM alerts",
+  "describe": {
+    "columns": [
+      {
+        "name": "MIN(timestamp)",
+        "ordinal": 0,
+        "type_info": "Datetime",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "f01c947d8f161231aee193881478b448aba5a3b514caae06190974459c84bd4f"
+}

@@ -59,7 +59,7 @@ final class PortForwardNotifierProvider
 }
 
 String _$portForwardNotifierHash() =>
-    r'2406d86f55759c13977daab9ba9c40fb6aca370d';
+    r'578c114703b404b3fe053d46bb3be2d09d8cd2cb';
 
 final class PortForwardNotifierFamily extends $Family
     with
@@ -93,7 +93,7 @@ abstract class _$PortForwardNotifier extends $Notifier<PortForwardState> {
   PortForwardState build(String serverId);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<PortForwardState, PortForwardState>;
     final element =
         ref.element
@@ -103,6 +103,6 @@ abstract class _$PortForwardNotifier extends $Notifier<PortForwardState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

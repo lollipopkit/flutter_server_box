@@ -135,15 +135,58 @@ class SettingStore extends HiveStore {
     isIOS,
   );
 
-  late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
-
-  /// Display server tab function buttons on the bottom of each server card if [true]
+  /// Servers the watch app may show, by [Spi.id], in display order.
   ///
-  /// Otherwise, display them on the top of server detail page
-  late final moveServerFuncs = propertyDefault(
-    'moveOutServerTabFuncBtns',
+  /// The watch used to be configured by a list of URLs living only inside the
+  /// WCSession application context — invisible to backup and sync, lost on
+  /// reinstall, and unrelated to the server list the user actually maintains.
+  /// Keeping the selection here makes the app the source of truth and the
+  /// context merely the transport. iOS only.
+  late final watchServerIds = listProperty<String>('watchServerIds');
+
+  /// Raw Go-compat `/status` URLs typed by hand in builds before the watch
+  /// could read a server record.
+  ///
+  /// Still pushed to the watch so an existing setup keeps working, and still
+  /// editable so it can be emptied.
+  ///
+  /// TODO: drop this together with the watch app's `legacy` server kind and
+  /// monitor's `/status` compat route, once no install can still be carrying
+  /// one of these.
+  late final watchLegacyUrls = listProperty<String>('watchLegacyUrls');
+
+  /// Whether [watchLegacyUrls] has been seeded from the pre-existing
+  /// application context. Runs at most once; the user may legitimately empty
+  /// the list afterwards, and re-importing would resurrect it.
+  ///
+  /// TODO: drop with [watchLegacyUrls].
+  late final watchLegacyUrlsImported = propertyDefault(
+    'watchLegacyUrlsImported',
     false,
   );
+
+  /// Server whose status feeds the iOS lock-screen accessory widget, by
+  /// [Spi.id]. Empty means none is chosen, which is what every install had
+  /// until now — the widget read an App Group key nothing ever wrote.
+  late final accessoryWidgetServerId = propertyDefault(
+    'accessoryWidgetServerId',
+    '',
+  );
+
+  late final autoCheckAppUpdate = propertyDefault('autoCheckAppUpdate', true);
+
+  /// Width of the list column, wherever one shares the window with what it
+  /// opens: the server list, the terminal and file rails, the agent's
+  /// history. One width for all of them, so the columns line up between
+  /// tabs.
+  ///
+  /// Remembered because it is a working preference, not a one-off: someone who
+  /// widens it to read long server names wants it that way tomorrow too.
+  ///
+  /// The default is what dragging used to bottom out at. Only new installs see
+  /// it — anyone who has dragged a divider has a number of their own stored,
+  /// and moving that under them would undo the choice this exists to keep.
+  late final paneListWidth = propertyDefault('paneListWidth', 220.0);
 
   /// Whether use `rm -r` to delete directory on SFTP
   late final sftpRmrDir = propertyDefault('sftpRmrDir', false);
@@ -173,6 +216,13 @@ class SettingStore extends HiveStore {
     true,
   );
 
+  /// List entries whose name starts with a dot.
+  ///
+  /// Off, because the common case is looking for something you put there. Not
+  /// per-backend: someone who wants to see `.ssh` on a server wants to see
+  /// `.config` on this device too.
+  late final showHiddenFiles = propertyDefault('showHiddenFiles', false);
+
   /// Show tip of suspend
   late final showSuspendTip = propertyDefault('showSuspendTip', true);
 
@@ -190,6 +240,48 @@ class SettingStore extends HiveStore {
   late final askAiAutoRunSafeCommands = propertyDefault(
     'askAiAutoRunSafeCommands',
     false,
+  );
+
+  /// Whether the Agent may run commands on this device.
+  ///
+  /// Off until asked for, unlike a configured server. A server was added
+  /// deliberately and is somewhere else; this machine is where the app's own
+  /// stores, private keys and keychain live, and nobody opted into a model
+  /// touching those by adding a server.
+  ///
+  /// Auto-running stays off here whatever [askAiAutoRunSafeCommands] says —
+  /// that setting is about servers. See `AskAiCommand.canAutoRun`.
+  late final agentLocalExec = propertyDefault('agentLocalExec', false);
+
+  /// Enter sends the prompt and Shift+Enter starts a line. Off swaps them: a
+  /// line break is the plain key, and sending is the modifier or the button.
+  late final askAiSendOnEnter = propertyDefault('askAiSendOnEnter', true);
+
+  /// Whether the Agent follows you onto the other tabs, and how much of it
+  /// comes along. One of `AgentShellMode`'s names.
+  late final agentShellMode = propertyDefault('agentShellMode', 'hidden');
+
+  /// Where the floating Agent sits on a desktop window, and how big it is.
+  ///
+  /// A negative offset means "never placed", which the shell reads as its
+  /// default corner — a first run has no position to restore, and 0,0 is a
+  /// real position somebody may have dragged it to.
+  late final agentShellLeft = propertyDefault('agentShellLeft', -1.0);
+  late final agentShellTop = propertyDefault('agentShellTop', -1.0);
+  late final agentShellWidth = propertyDefault('agentShellWidth', 400.0);
+  late final agentShellHeight = propertyDefault('agentShellHeight', 560.0);
+
+  /// Which edge the collapsed pill clings to on a phone, and how far down it.
+  late final agentShellPillOnRight = propertyDefault(
+    'agentShellPillOnRight',
+    true,
+  );
+  late final agentShellPillY = propertyDefault('agentShellPillY', 0.62);
+
+  /// How much of a phone screen the expanded Agent takes, as a fraction.
+  late final agentShellSheetHeight = propertyDefault(
+    'agentShellSheetHeight',
+    0.62,
   );
 
   late final serverFuncBtns = listProperty(
@@ -231,6 +323,14 @@ class SettingStore extends HiveStore {
 
   late final lastVer = propertyDefault('lastVer', 0);
 
+  /// Layout version of this device's local storage — see [SchemaVersion].
+  ///
+  /// Defaults to 2, not 0: storage that predates versioning is, by definition,
+  /// whatever the last unversioned release wrote, and that is v2 (Spi with a
+  /// flat SSH layout plus `monitorHttp`). A fresh install overwrites this with
+  /// [SchemaVersion.current] before any migration runs.
+  late final schemaVersion = propertyDefault('schemaVersion', 2);
+
   /// Hide title bar on desktop
   late final hideTitleBar = propertyDefault('hideTitleBar', isDesktop);
 
@@ -258,6 +358,12 @@ class SettingStore extends HiveStore {
   late final serverLogoUrl = propertyDefault('serverLogoUrl', '');
 
   late final betaTest = propertyDefault('betaTest', false);
+
+  /// The build number the App Store build last mentioned the DMG one for.
+  ///
+  /// `-1` means never again. Only the sandboxed macOS build reads it — see
+  /// `DmgNotice`, which is where the once-per-version rule lives.
+  late final dmgTipBuild = propertyDefault('dmgTipBuild', 0);
 
   /// For desktop only.
   /// Record the position and size of the window.
@@ -358,6 +464,13 @@ class SettingStore extends HiveStore {
 
   /// Default tmux session name. Empty string means use 'server_box'.
   late final tmuxSessionName = propertyDefault('tmuxSessionName', '');
+
+  /// Removes settings for UI choices that no longer exist. Idempotent so old
+  /// installs are cleaned without another migration flag becoming permanent
+  /// state of its own.
+  Future<void> removeRetiredKeys() async {
+    await box.deleteAll(const ['moveOutServerTabFuncBtns', 'forceSinglePane']);
+  }
 
   /// Migrate sshConnectionMode from old int values (-1/0/1) to bool.
   /// Call once after store initialization.

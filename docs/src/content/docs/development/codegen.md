@@ -86,6 +86,17 @@ class ServerModel {
 }
 ```
 
+## Rust Bindings (flutter_rust_bridge)
+
+After changing `crates/sbm_ffi/src/api`, regenerate the Dart bindings:
+
+```bash
+flutter_rust_bridge_codegen generate
+```
+
+Config lives in `flutter_rust_bridge.yaml`; output goes to `lib/src/rust/`
+(never edit generated files there).
+
 ## Localization Generation
 
 ```bash

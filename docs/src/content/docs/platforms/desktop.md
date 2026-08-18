@@ -7,57 +7,30 @@ Server Box on desktop platforms provides additional productivity features.
 
 ## macOS
 
-### Menu Bar Integration
+### Native Menu Bar
 
-- Quick server status in menu bar
-- One-click server access
-- Compact mode for minimal distraction
-- Native macOS menu bar styling
+Native app menus with standard shortcuts:
 
-### Window State Persistence
-
-- Remembers window position and size
-- Restore previous session on launch
-- Multiple monitor support
-
-### Native Features
-
-- **Title Bar**: Custom or system title bar option
-- **Full Screen Mode**: Dedicated server monitoring
-- **Keyboard Shortcuts**: macOS-native shortcuts
-- **Touch Bar** (supported devices): Quick actions
-
-## Linux
-
-### Native Integration
-
-- System tray support
-- Desktop notification integration
-- File picker integration
+- **Server Box**: About, Settings (⌘,), Quit (⌘Q)
+- **Navigate**: Switch between home tabs
+- **Info**: Project links
 
 ### Window Management
 
+- Remembers window size across launches
+
+## Linux
+
 - X11 and Wayland support
-- Tiling window manager friendly
-- Custom window decorations option
+- File picker integration
+- Distributed as AppImage
 
 ## Windows
 
-### Features
-
-- System tray integration
-- Jump List quick actions
 - Native window controls
-- Auto-start on boot option
+- Distributed as portable zip
 
 ## Cross-Platform Desktop Features
-
-### Keyboard Shortcuts
-
-- **Cmd/Ctrl + N**: New server
-- **Cmd/Ctrl + W**: Close tab
-- **Cmd/Ctrl + T**: New terminal tab
-- **Cmd/Ctrl + ,**: Settings
 
 ### Themes
 
@@ -65,12 +38,6 @@ Server Box on desktop platforms provides additional productivity features.
 - Dark theme
 - AMOLED theme (pure black)
 - System theme (follows OS)
-
-### Multiple Windows
-
-- Open multiple servers in separate windows
-- Drag tabs to new window
-- Compare server stats side-by-side
 
 ### Advantages Over Mobile
 

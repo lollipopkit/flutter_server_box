@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "gsap": "^3.15.0",
-    "typesafe-i18n": "^5.27.1"
+    "typesafe-i18n": "^5.27.1",
+    "@serverbox/webui": "file:../packages/webui"
   }
 }
