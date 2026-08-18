@@ -744,6 +744,41 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get bmcTip =>
+      'De BMC is een aparte computer op het moederbord, bereikbaar wanneer het besturingssysteem van de host dat niet is. Hier ingesteld meldt hij de voedingsstatus en hardwaresensoren terwijl de server uit staat of vastloopt. Vereist Redfish, aanwezig op de meeste zakelijke hardware vanaf ongeveer 2016.';
+
+  @override
+  String get bmcCert => 'Certificaat';
+
+  @override
+  String get bmcCertPinned => 'Gecontroleerd en vastgezet';
+
+  @override
+  String get bmcCertUnreviewed =>
+      'Nog niet gecontroleerd — tik om te zien wat de BMC aanbiedt';
+
+  @override
+  String get bmcCertReview =>
+      'BMC\'s gebruiken zelfondertekende certificaten, dus niets staat in voor dit exemplaar. Vergelijk het met wat de webinterface van de BMC toont. Na acceptatie wordt alleen precies dit certificaat vertrouwd.';
+
+  @override
+  String get bmcCertChanged =>
+      'Dit is niet het certificaat dat eerder is geaccepteerd. Dat gebeurt wanneer de BMC zijn certificaat opnieuw aanmaakt of zijn firmware wordt bijgewerkt — maar zo zou onderschepping er ook uitzien. Controleer het voordat u accepteert.';
+
+  @override
+  String get bmcCertExpired =>
+      'Dit certificaat valt buiten zijn geldigheidsdata.';
+
+  @override
+  String bmcCertWas(String fingerprint) {
+    return 'Eerder geaccepteerd: $fingerprint';
+  }
+
+  @override
+  String get bmcAddrInvalid =>
+      'Het BMC-adres moet een URL zijn, bijv. https://10.0.0.9';
+
+  @override
   String get proxyCommandSandboxed =>
       'Deze build draait in een sandbox: de opdracht ziet een lege thuismap in plaats van die van jou, dus alles wat ~/.ssh leest (ssh -W, cloudflared) mislukt, vaak als een time-out die de verkeerde host noemt. Opdrachten die alleen het netwerk gebruiken werken wel. De DMG-versie heeft geen sandbox.';
 

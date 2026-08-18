@@ -13,6 +13,9 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   choice: ^2.3.2
+  # SHA-256 of a certificate's DER form, for the BMC's pinned certificate.
+  # `X509Certificate` only offers sha1 ready made.
+  crypto: ^3.0.0
   dio: ^5.2.1
   dynamic_color: ^1.6.6
   equatable: ^2.1.0

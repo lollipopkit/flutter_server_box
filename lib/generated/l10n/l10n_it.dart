@@ -749,6 +749,41 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get bmcTip =>
+      'Il BMC è un computer a sé sulla scheda madre, raggiungibile quando il sistema operativo dell\'host non lo è. Configurato qui, riporta stato di alimentazione e sensori hardware mentre il server è spento o bloccato. Richiede Redfish, presente sulla maggior parte dell\'hardware enterprise dal 2016 circa.';
+
+  @override
+  String get bmcCert => 'Certificato';
+
+  @override
+  String get bmcCertPinned => 'Verificato e fissato';
+
+  @override
+  String get bmcCertUnreviewed =>
+      'Non ancora verificato — tocca per vedere cosa presenta il BMC';
+
+  @override
+  String get bmcCertReview =>
+      'I BMC usano certificati autofirmati, quindi nulla garantisce questo. Confrontalo con ciò che mostra l\'interfaccia web del BMC. Una volta accettato, viene considerato attendibile solo questo esatto certificato.';
+
+  @override
+  String get bmcCertChanged =>
+      'Questo non è il certificato accettato in precedenza. Succede quando il BMC rigenera il certificato o ne viene aggiornato il firmware, ma è anche l\'aspetto che avrebbe un\'intercettazione. Controlla prima di accettare.';
+
+  @override
+  String get bmcCertExpired =>
+      'Questo certificato è fuori dalle sue date di validità.';
+
+  @override
+  String bmcCertWas(String fingerprint) {
+    return 'Accettato in precedenza: $fingerprint';
+  }
+
+  @override
+  String get bmcAddrInvalid =>
+      'L\'indirizzo del BMC deve essere un URL, ad es. https://10.0.0.9';
+
+  @override
   String get proxyCommandSandboxed =>
       'Questa build gira in una sandbox: il comando vede una home vuota anziché la tua, quindi tutto ciò che legge ~/.ssh (ssh -W, cloudflared) fallisce, spesso come timeout che nomina l\'host sbagliato. I comandi che usano solo la rete continuano a funzionare. La versione DMG non ha sandbox.';
 

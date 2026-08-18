@@ -744,6 +744,40 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get bmcTip =>
+      'BMC adalah komputer terpisah di motherboard, tetap terjangkau saat sistem operasi host tidak. Dikonfigurasi di sini, ia melaporkan status daya dan sensor perangkat keras saat server mati atau macet. Perlu Redfish, yang ada pada sebagian besar perangkat keras enterprise sejak sekitar 2016.';
+
+  @override
+  String get bmcCert => 'Sertifikat';
+
+  @override
+  String get bmcCertPinned => 'Ditinjau dan disematkan';
+
+  @override
+  String get bmcCertUnreviewed =>
+      'Belum ditinjau — ketuk untuk melihat apa yang disajikan BMC';
+
+  @override
+  String get bmcCertReview =>
+      'BMC memakai sertifikat yang ditandatangani sendiri, jadi tidak ada yang menjaminnya. Bandingkan dengan yang ditampilkan antarmuka web BMC itu sendiri. Setelah diterima, hanya sertifikat ini yang dipercaya.';
+
+  @override
+  String get bmcCertChanged =>
+      'Ini bukan sertifikat yang diterima sebelumnya. Itu terjadi saat BMC membuat ulang sertifikatnya atau firmware-nya diperbarui — tetapi penyadapan juga akan terlihat begini. Periksa sebelum menerima.';
+
+  @override
+  String get bmcCertExpired => 'Sertifikat ini di luar masa berlakunya.';
+
+  @override
+  String bmcCertWas(String fingerprint) {
+    return 'Diterima sebelumnya: $fingerprint';
+  }
+
+  @override
+  String get bmcAddrInvalid =>
+      'Alamat BMC harus berupa URL, mis. https://10.0.0.9';
+
+  @override
   String get proxyCommandSandboxed =>
       'Build ini berjalan dalam sandbox: perintah melihat direktori home kosong alih-alih milik Anda, sehingga apa pun yang membaca ~/.ssh (ssh -W, cloudflared) gagal — sering kali sebagai batas waktu yang menyebut host yang salah. Perintah yang hanya memakai jaringan tetap berfungsi. Versi DMG tidak punya sandbox.';
 

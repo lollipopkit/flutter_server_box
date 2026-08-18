@@ -694,6 +694,38 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get bmcTip =>
+      'BMC 是主板上一台独立的计算机,主机操作系统不可达时它仍然可达。在这里配置后,服务器关机或卡死时也能读到电源状态和硬件传感器。需要 Redfish,大约 2016 年以后的企业级硬件基本都有。';
+
+  @override
+  String get bmcCert => '证书';
+
+  @override
+  String get bmcCertPinned => '已确认并钉住';
+
+  @override
+  String get bmcCertUnreviewed => '尚未确认——点击查看 BMC 提供的证书';
+
+  @override
+  String get bmcCertReview =>
+      'BMC 用的是自签证书,没有任何机构为它背书。请和 BMC 自己的网页界面上显示的对比一遍。接受之后,只有这一张证书会被信任。';
+
+  @override
+  String get bmcCertChanged =>
+      '这不是之前接受过的那张证书。BMC 重新生成证书或升级固件时会这样——但被中间人劫持时看起来也是这样。接受前请核对。';
+
+  @override
+  String get bmcCertExpired => '这张证书已超出有效期。';
+
+  @override
+  String bmcCertWas(String fingerprint) {
+    return '之前接受的:$fingerprint';
+  }
+
+  @override
+  String get bmcAddrInvalid => 'BMC 地址必须是一个 URL,例如 https://10.0.0.9';
+
+  @override
   String get proxyCommandSandboxed =>
       '此版本运行在沙盒中:命令看到的是一个空的家目录,而不是你的,所以任何读取 ~/.ssh 的命令(ssh -W、cloudflared)都会失败,而且常常表现为指向错误主机的超时。只用网络的命令仍然可用。DMG 版没有沙盒。';
 
@@ -1974,6 +2006,38 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String privateKeyNotFoundFmt(Object keyId) {
     return '未找到私鑰 [$keyId]。';
   }
+
+  @override
+  String get bmcTip =>
+      'BMC 是主機板上一台獨立的電腦,主機作業系統不可達時它仍然可達。在這裡設定後,伺服器關機或當機時也能讀到電源狀態和硬體感測器。需要 Redfish,大約 2016 年以後的企業級硬體基本都有。';
+
+  @override
+  String get bmcCert => '憑證';
+
+  @override
+  String get bmcCertPinned => '已確認並釘住';
+
+  @override
+  String get bmcCertUnreviewed => '尚未確認——點擊查看 BMC 提供的憑證';
+
+  @override
+  String get bmcCertReview =>
+      'BMC 用的是自簽憑證,沒有任何機構為它背書。請和 BMC 自己的網頁介面上顯示的對比一遍。接受之後,只有這一張憑證會被信任。';
+
+  @override
+  String get bmcCertChanged =>
+      '這不是之前接受過的那張憑證。BMC 重新產生憑證或升級韌體時會這樣——但被中間人劫持時看起來也是這樣。接受前請核對。';
+
+  @override
+  String get bmcCertExpired => '這張憑證已超出有效期。';
+
+  @override
+  String bmcCertWas(String fingerprint) {
+    return '之前接受的:$fingerprint';
+  }
+
+  @override
+  String get bmcAddrInvalid => 'BMC 位址必須是一個 URL,例如 https://10.0.0.9';
 
   @override
   String get proxyCommandSandboxed =>

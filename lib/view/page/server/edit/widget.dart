@@ -187,6 +187,7 @@ extension _Widgets on _ServerEditPageState {
         _buildStorageCollection(),
         _buildDisabledCmdTypes(),
         _buildCustomDev(),
+        _buildBmc(),
         _buildWOLs(),
       ],
     );
@@ -575,6 +576,68 @@ extension _Widgets on _ServerEditPageState {
         }).cardx,
       ],
     );
+  }
+
+  Widget _buildBmc() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const CenterGreyTitle('BMC (Redfish)'),
+        ListTile(
+          leading: const Icon(BoxIcons.bxs_help_circle),
+          title: TipText(libL10n.about, l10n.bmcTip),
+        ).cardx,
+        Input(
+          controller: _bmcAddrCtrl,
+          type: TextInputType.url,
+          label: libL10n.addr,
+          icon: MingCute.web_line,
+          hint: 'https://10.0.0.9',
+          suggestion: false,
+        ),
+        Input(
+          controller: _bmcUserCtrl,
+          type: TextInputType.text,
+          label: libL10n.user,
+          icon: Icons.person,
+          suggestion: false,
+        ),
+        Input(
+          controller: _bmcPwdCtrl,
+          type: TextInputType.text,
+          obscureText: true,
+          label: libL10n.pwd,
+          icon: Icons.password,
+          suggestion: false,
+        ),
+        _buildBmcCert(),
+      ],
+    );
+  }
+
+  /// The certificate the BMC presents, and whether it has been reviewed.
+  ///
+  /// A step of its own because it has to be: the TLS callbacks that decide
+  /// whether to accept a certificate are synchronous, so the question cannot be
+  /// put to anyone from inside them. Reviewing here means the check at request
+  /// time answers by itself, with nothing to interrupt — see `cert_pin.dart`.
+  Widget _buildBmcCert() {
+    return _bmcCert.listenVal((pinned) {
+      final has = pinned?.isNotEmpty == true;
+      return ListTile(
+        leading: Icon(
+          has ? Icons.verified_user : Icons.gpp_maybe,
+          color: has ? null : Colors.orange,
+        ),
+        title: Text(l10n.bmcCert),
+        subtitle: Text(
+          has ? l10n.bmcCertPinned : l10n.bmcCertUnreviewed,
+          style: UIs.textGrey,
+        ),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: _onTapBmcCert,
+      ).cardx;
+    });
   }
 
   Widget _buildWOLs() {

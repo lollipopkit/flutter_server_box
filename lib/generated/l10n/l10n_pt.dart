@@ -743,6 +743,41 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get bmcTip =>
+      'O BMC é um computador à parte na placa principal, alcançável quando o sistema operativo do anfitrião não está. Configurado aqui, reporta o estado de energia e os sensores de hardware enquanto o servidor está desligado ou bloqueado. Requer Redfish, presente na maioria do hardware empresarial desde cerca de 2016.';
+
+  @override
+  String get bmcCert => 'Certificado';
+
+  @override
+  String get bmcCertPinned => 'Verificado e fixado';
+
+  @override
+  String get bmcCertUnreviewed =>
+      'Ainda não verificado — toque para ver o que o BMC apresenta';
+
+  @override
+  String get bmcCertReview =>
+      'Os BMC usam certificados autoassinados, por isso nada abona este. Compare-o com o que a própria interface web do BMC mostra. Depois de aceite, apenas este certificado exato é considerado fidedigno.';
+
+  @override
+  String get bmcCertChanged =>
+      'Este não é o certificado aceite anteriormente. Acontece quando o BMC regenera o certificado ou o firmware é atualizado — mas é também o aspeto que teria uma interceção. Verifique antes de aceitar.';
+
+  @override
+  String get bmcCertExpired =>
+      'Este certificado está fora das suas datas de validade.';
+
+  @override
+  String bmcCertWas(String fingerprint) {
+    return 'Aceite anteriormente: $fingerprint';
+  }
+
+  @override
+  String get bmcAddrInvalid =>
+      'O endereço do BMC tem de ser um URL, p. ex. https://10.0.0.9';
+
+  @override
   String get proxyCommandSandboxed =>
       'Esta compilação corre numa sandbox: o comando vê uma pasta pessoal vazia em vez da sua, por isso tudo o que leia ~/.ssh (ssh -W, cloudflared) falha, muitas vezes como um tempo limite que indica o anfitrião errado. Comandos que só usam a rede continuam a funcionar. A versão DMG não tem sandbox.';
 

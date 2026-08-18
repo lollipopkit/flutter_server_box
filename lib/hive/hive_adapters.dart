@@ -1,6 +1,7 @@
 import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/app/menu/server_func.dart';
 import 'package:server_box/data/model/app/net_view.dart';
+import 'package:server_box/data/model/server/bmc_cfg.dart';
 import 'package:server_box/data/model/server/custom.dart';
 import 'package:server_box/data/model/server/monitor_http_credential.dart';
 import 'package:server_box/data/model/server/port_forward.dart';
@@ -21,6 +22,7 @@ import 'package:server_box/data/model/ssh/virtual_key.dart';
   AdapterSpec<ServerFuncBtn>(),
   AdapterSpec<ServerCustom>(),
   AdapterSpec<WakeOnLanCfg>(),
+  AdapterSpec<BmcCfg>(),
   AdapterSpec<MonitorHttpCredential>(),
   AdapterSpec<SshCredential>(),
   AdapterSpec<SystemType>(),
