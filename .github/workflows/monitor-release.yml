@@ -246,7 +246,7 @@ jobs:
           fi
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # COPY prebuilt artifacts only; multi-arch images without QEMU
       - name: Build and push
