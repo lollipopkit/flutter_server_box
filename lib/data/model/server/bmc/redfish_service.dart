@@ -72,6 +72,17 @@ enum RedfishFailure {
   /// (Supermicro's keys), so this is an ordinary answer about *that resource*
   /// and not a reason to call the whole service unusable.
   forbidden,
+
+  /// The certificate was not the one that was reviewed, or nothing has been
+  /// reviewed yet. Distinct from [unreachable] because the fix is a person
+  /// looking at a fingerprint, not a network.
+  certificateRejected,
+
+  /// The account was refused.
+  unauthorized,
+
+  /// Nothing answered, or answered with something that is not a resource.
+  unreachable,
 }
 
 class RedfishException implements Exception {
