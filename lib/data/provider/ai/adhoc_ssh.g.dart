@@ -69,7 +69,7 @@ abstract class _$AdHocSshSessions
   Map<String, AdHocSshSession> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref =
         this.ref
             as $Ref<Map<String, AdHocSshSession>, Map<String, AdHocSshSession>>;
@@ -84,6 +84,6 @@ abstract class _$AdHocSshSessions
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

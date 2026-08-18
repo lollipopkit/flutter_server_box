@@ -69,7 +69,6 @@ dependencies:
   desktop_drop: ^0.7.1
 
 dev_dependencies:
-  analyzer: ^9.0.0
   integration_test:
     sdk: flutter
   flutter_native_splash: ^2.1.6

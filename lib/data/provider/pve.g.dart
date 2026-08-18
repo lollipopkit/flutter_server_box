@@ -85,7 +85,7 @@ abstract class _$PveNotifier extends $Notifier<PveState> {
   PveState build(Spi spiParam);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<PveState, PveState>;
     final element =
         ref.element
@@ -95,6 +95,6 @@ abstract class _$PveNotifier extends $Notifier<PveState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

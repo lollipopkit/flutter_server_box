@@ -68,7 +68,7 @@ abstract class _$HomeTabRequest extends $Notifier<AppTab?> {
   AppTab? build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AppTab?, AppTab?>;
     final element =
         ref.element
@@ -78,7 +78,7 @@ abstract class _$HomeTabRequest extends $Notifier<AppTab?> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -146,7 +146,7 @@ abstract class _$CurrentHomeTab extends $Notifier<AppTab?> {
   AppTab? build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AppTab?, AppTab?>;
     final element =
         ref.element
@@ -156,7 +156,7 @@ abstract class _$CurrentHomeTab extends $Notifier<AppTab?> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -233,7 +233,7 @@ abstract class _$ServerDetailRequest extends $Notifier<String?> {
   String? build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<String?, String?>;
     final element =
         ref.element
@@ -243,7 +243,7 @@ abstract class _$ServerDetailRequest extends $Notifier<String?> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -311,7 +311,7 @@ abstract class _$TerminalRequests extends $Notifier<List<TerminalRequest>> {
   List<TerminalRequest> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<List<TerminalRequest>, List<TerminalRequest>>;
     final element =
         ref.element
@@ -321,7 +321,7 @@ abstract class _$TerminalRequests extends $Notifier<List<TerminalRequest>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -369,7 +369,7 @@ abstract class _$SftpRequests extends $Notifier<List<Spi>> {
   List<Spi> build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<List<Spi>, List<Spi>>;
     final element =
         ref.element
@@ -379,6 +379,6 @@ abstract class _$SftpRequests extends $Notifier<List<Spi>> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

@@ -100,7 +100,7 @@ abstract class _$ContainerNotifier extends $Notifier<ContainerState> {
   ContainerState build(String userName, String hostId, BuildContext context);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ContainerState, ContainerState>;
     final element =
         ref.element
@@ -110,6 +110,9 @@ abstract class _$ContainerNotifier extends $Notifier<ContainerState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args.$1, _$args.$2, _$args.$3));
+    return element.handleCreate(
+      ref,
+      () => build(_$args.$1, _$args.$2, _$args.$3),
+    );
   }
 }

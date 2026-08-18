@@ -48,7 +48,7 @@ abstract class _$PrivateKeyNotifier extends $Notifier<PrivateKeyState> {
   PrivateKeyState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<PrivateKeyState, PrivateKeyState>;
     final element =
         ref.element
@@ -58,6 +58,6 @@ abstract class _$PrivateKeyNotifier extends $Notifier<PrivateKeyState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }

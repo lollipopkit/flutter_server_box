@@ -92,7 +92,7 @@ abstract class _$SystemdNotifier extends $Notifier<SystemdState> {
   SystemdState build(Spi spi);
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<SystemdState, SystemdState>;
     final element =
         ref.element
@@ -102,6 +102,6 @@ abstract class _$SystemdNotifier extends $Notifier<SystemdState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

@@ -47,7 +47,7 @@ abstract class _$ServersNotifier extends $Notifier<ServersState> {
   ServersState build();
   @$mustCallSuper
   @override
-  void runBuild() {
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<ServersState, ServersState>;
     final element =
         ref.element
@@ -57,6 +57,6 @@ abstract class _$ServersNotifier extends $Notifier<ServersState> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, build);
+    return element.handleCreate(ref, build);
   }
 }
