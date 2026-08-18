@@ -7,6 +7,7 @@
 
 use std::sync::{Arc, Once};
 
+use ntex::time::Millis;
 use ntex::web::test::{self as web_test, TestServer};
 use ntex::web::{self, App};
 use rustls::crypto::ring;
@@ -63,10 +64,20 @@ async fn test_server(state: Arc<AppState>) -> TestServer {
     .await
 }
 
+/// Longer than the client's own default, which is a few seconds.
+///
+/// These run real commands, and on a Windows runner starting PowerShell is
+/// several seconds before it has read a byte. The endpoint bounds itself at
+/// [`server_box_monitor::api::exec`]'s own minute, so a request that hangs still
+/// fails the test — just not because a cold interpreter was slower than a
+/// default meant for handlers that answer from memory.
+const REQUEST_TIMEOUT: Millis = Millis(30_000);
+
 /// The response body, or the status when the call was refused.
 async fn post(srv: &TestServer, body: serde_json::Value) -> Result<serde_json::Value, u16> {
     let resp = srv
         .post("/api/v1/exec")
+        .timeout(REQUEST_TIMEOUT)
         .header("Authorization", format!("Bearer {}", token()))
         .send_json(&body)
         .await
