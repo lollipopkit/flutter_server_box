@@ -1,11 +1,14 @@
 version: 2
 updates:
-  # Rust workspace (monitor + shared crates + FFI)
+  # Rust workspace (monitor + shared crates + FFI).
+  #
+  # The workspace root, not the member directories: Cargo.lock lives here and
+  # nowhere else, so a run scoped to a member can only widen that member's
+  # manifest and leaves the lock pinning the old version. It also covers every
+  # member without listing them — sbm_native was a member for months that no
+  # listing here ever named.
   - package-ecosystem: cargo
-    directories:
-      - "/monitor"
-      - "/crates/sbm_parser"
-      - "/crates/sbm_ffi"
+    directory: "/"
     schedule:
       interval: weekly
     groups:
