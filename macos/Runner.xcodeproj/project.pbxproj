@@ -218,7 +218,6 @@
 				33CC110E2044A8840003C045 /* Bundle Framework */,
 				3399D490228B24CF009A79C7 /* ShellScript */,
 				A1B2C3D4E5F60718293A4B5C /* Fix Objective-C Framework Resources */,
-				D031AF8C21824AF8F0134BDE /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -380,23 +379,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "FRAMEWORK=\"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/objective_c.framework\"\nif [ -d \"$FRAMEWORK/Versions\" ]; then\n  if [ ! -L \"$FRAMEWORK/Versions/Current\" ]; then\n    (cd \"$FRAMEWORK/Versions\" && ln -sf A Current)\n  fi\n  rm -f \"$FRAMEWORK/Resources\"\n  ln -sf Versions/Current/Resources \"$FRAMEWORK/Resources\"\nfi\n";
-		};
-		D031AF8C21824AF8F0134BDE /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 

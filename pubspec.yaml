@@ -24,7 +24,6 @@ dependencies:
   flutter_highlight: ^0.7.0
   flutter_displaymode: ^0.7.0
   flutter_markdown_plus: ^1.0.12
-  flutter_pty: ^0.4.2
   flutter_svg: ^2.2.1
   fl_chart: ^1.2.0
   freezed_annotation: ^3.0.0
@@ -66,6 +65,10 @@ dependencies:
     path: packages/plain_notification_token
   fl_lib:
     path: packages/fl_lib
+  # Forked to swap five per-platform build integrations for one build hook,
+  # which is what takes the last pod out of the iOS and macOS builds.
+  flutter_pty:
+    path: packages/flutter_pty
   flutter_rust_bridge: 2.13.0-beta.6
   # Drives the build hook below. `sbm_ffi` is no longer a Flutter plugin — the
   # hook compiles the crate directly, so there is nothing to depend on.

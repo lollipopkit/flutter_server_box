@@ -43,7 +43,8 @@ A `Makefile` wraps most common tasks — run `make help` for the full list. Pref
 - App builds compile Rust through `hook/build.dart` (Dart build hooks, via `flutter_rust_bridge_hooks` → `native_toolchain_rust`). `crates/sbm_ffi` is **not** a Flutter plugin and the app does not depend on it as a package — the hook names the crate path. So it produces no podspec and no `Package.swift`, and one file covers all five platforms.
   - `flutter_rust_bridge` is pinned to `2.13.0-beta.6` in both `pubspec.yaml` and `crates/sbm_ffi/Cargo.toml`, and the two must match or `RustLib.init` throws at startup. The native-assets backend needs `>= 2.13.0-beta.2` and 2.13.0 has no stable release yet; this is the project's only prerelease dependency.
   - `crates/sbm_ffi/rust-toolchain.toml` pins the channel and lists every shipped target, which `native_toolchain_rust` requires. A target missing from that list is not an error, it is a silent fallback to the host.
-  - `flutter_pty` is the only remaining pod, on iOS and macOS. It ships no `Package.swift`, so `Podfile`/`Pods` cannot go until that changes upstream or it is forked.
+  - `packages/flutter_pty` is a fork carrying the same change, for the same reason: upstream ships no `Package.swift` and was the last third-party pod. It uses `native_toolchain_c` rather than `native_toolchain_rust`, and is otherwise identical to upstream 0.4.2.
+  - **No third-party pod remains.** `flutter build` now reports "All plugins found are Swift Packages, but your project still has CocoaPods integration" — deintegrating (`pod deintegrate` plus removing the `Pods-Runner` xcconfig includes) is possible but not done: the Podfile is non-standard because of the Watch app and widget extensions, and that has to be verified against those targets.
 
 ## Architecture
 

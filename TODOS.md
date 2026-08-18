@@ -116,9 +116,24 @@ FRB 升到 `2.13.0-beta.6`(Rust 与 pubspec 两处)。
 `Podfile.lock` 里都只剩 `flutter_pty`。`flutter test test/frb_parser_test.dart`
 与 `cargo test --workspace` 通过。
 
+`flutter_pty` 也一起做了:`packages/flutter_pty` 是
+[TerminalStudio/flutter_pty](https://github.com/TerminalStudio/flutter_pty) 的
+fork,把同样的五个平台构建集成换成一个 `hook/build.dart`(用 `native_toolchain_c`)。
+上游最后一个版本是 0.4.2(2025-01),没有 `Package.swift`,唯一那个 SwiftPM PR
+(#21)只做了 macOS 且无人回应。
+
+**结果:两个 `Podfile.lock` 里第三方 pod 归零**,只剩 Flutter 自身。
+`flutter build` 现在会提示 "All plugins found are Swift Packages, but your
+project still has CocoaPods integration"。
+
 **未验证:Android / Linux / Windows。** 这三个平台原先分别走 cargokit 的
 gradle plugin 和 CMake,现在改走同一个 hook,但本机没跑过。要在 CI 或对应机器上
 各跑一次 `dart run fl_build -p <platform>`。
+
+**下一步(现在才有可能做):彻底 deintegrate CocoaPods。** Flutter 列出的步骤是
+`pod deintegrate` 加上从 `{ios,macos}/Flutter/*.xcconfig` 里移除 `Pods-Runner`
+的 include。没做的原因:Podfile 因为 Watch app 和 widget extension 而是
+non-standard,这两个 target 得单独验过。
 
 两条注意事项:
 - **不要用 `flutter_rust_bridge_codegen integrate`。** 它是给新项目的脚手架:

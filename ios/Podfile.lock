@@ -1,21 +1,15 @@
 PODS:
   - Flutter (1.0.0)
-  - flutter_pty (0.0.1):
-    - Flutter
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
-  - flutter_pty (from `.symlinks/plugins/flutter_pty/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
-  flutter_pty:
-    :path: ".symlinks/plugins/flutter_pty/ios"
 
 SPEC CHECKSUMS:
   Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
-  flutter_pty: 206742da6092b413cb683de17436c16d1f3c7997
 
 PODFILE CHECKSUM: 033fcc5039cba02092526aeac31fc4c94faa91b1
 

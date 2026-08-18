@@ -584,10 +584,9 @@ packages:
   flutter_pty:
     dependency: "direct main"
     description:
-      name: flutter_pty
-      sha256: c2f3b3160b519ac820fa3f6ef175361f2dfc52c557465643589542e9f229ad66
-      url: "https://pub.dev"
-    source: hosted
+      path: "packages/flutter_pty"
+      relative: true
+    source: path
     version: "0.4.2"
   flutter_riverpod:
     dependency: "direct main"
