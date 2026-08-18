@@ -41,14 +41,14 @@ sqlx = { version = "0.9", features = [
 
 # Authentication
 # rust_crypto instead of aws_lc_rs: pure Rust, no cmake/assembly dependency for static musl builds
-jsonwebtoken = { version = "10.4", default-features = false, features = ["rust_crypto"] }
+jsonwebtoken = { version = "11.0", default-features = false, features = ["rust_crypto"] }
 bcrypt = "0.19"
 
 # Configuration
 dotenvy = "0.15"
 
 # Random credential generation (JWT secret / initial admin password) and no-echo password input
-getrandom = "0.3"
+getrandom = "0.4"
 rpassword = "7"
 
 # HTTP client for push notifications
