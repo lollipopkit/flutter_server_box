@@ -2,7 +2,7 @@
 # CI 发布用 monitor/Dockerfile.ci(直接复用 workflow 编译好的 musl bin)。
 # 两者的运行时阶段需保持一致。
 # 构建上下文为 monorepo 根:docker build -f monitor/Dockerfile .
-FROM node:22-alpine AS frontend-builder
+FROM node:24-alpine AS frontend-builder
 
 # Layout mirrors the repo so the panel's file:../../packages/webui link
 # resolves (/app/packages/webui from /app/monitor/frontend)
