@@ -1466,6 +1466,8 @@ ${err.message ?? 'null'}
         ),
       );
     }
+    if (bmc.hasData) children.add(_buildBmcPower(si));
+
     // Said rather than left to look like the whole truth
     if (bmc.sensorsTruncated) {
       children.add(
@@ -1486,6 +1488,76 @@ ${err.message ?? 'null'}
       ),
     );
   }
+
+  /// The power actions this particular service allows, and no others.
+  ///
+  /// Asked of `plan`, which resolves an intent against
+  /// `ResetType@Redfish.AllowableValues`. An intent the service allows nothing
+  /// for is not shown: offering a button that fails when pressed is worse than
+  /// never having offered it, and `Nmi` and `PowerCycle` are advertised
+  /// unimplemented often enough that this is not hypothetical.
+  Widget _buildBmcPower(ServerState si) {
+    final notifier = ref.read(bmcProvider(si.spi).notifier);
+    final available = [
+      for (final intent in PowerIntent.values)
+        if (notifier.plan(intent) != null) intent,
+    ];
+    if (available.isEmpty) return UIs.placeholder;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+      child: Wrap(
+        spacing: 7,
+        runSpacing: 7,
+        children: [
+          for (final intent in available)
+            OutlinedButton(
+              onPressed: () => _onTapBmcPower(si, intent),
+              child: Text(_bmcIntentText(intent)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onTapBmcPower(ServerState si, PowerIntent intent) async {
+    final notifier = ref.read(bmcProvider(si.spi).notifier);
+    final request = notifier.plan(intent);
+    if (request == null) return;
+
+    // The one thing in this app that can take a running server away from
+    // whoever is on it. The dialog names the ResetType actually chosen, not the
+    // intent, because they differ — a "restart" is ForceRestart on hardware
+    // that has no graceful one, and that is worth seeing before agreeing.
+    final ok = await context.showRoundDialog<bool>(
+      title: _bmcIntentText(intent),
+      child: Text(l10n.bmcPowerConfirm(si.spi.name, request.resetType)),
+      actions: Btnx.cancelRedOk,
+    );
+    if (ok != true) return;
+
+    final result = await notifier.power(intent);
+    switch (result) {
+      case BmcPowerResult.confirmed:
+        Toast.success(l10n.bmcPowerDone);
+      // Accepted is not done, and saying so would be reporting the request
+      // back as though it were the result
+      case BmcPowerResult.accepted:
+        Toast.warn(l10n.bmcPowerAccepted);
+      case BmcPowerResult.notSupported:
+        Toast.error(libL10n.fail, body: l10n.bmcPowerUnsupported);
+      case BmcPowerResult.failed:
+        Toast.error(libL10n.fail);
+    }
+  }
+
+  String _bmcIntentText(PowerIntent intent) => switch (intent) {
+    PowerIntent.on => l10n.bmcPowerOnAction,
+    PowerIntent.gracefulShutdown => l10n.bmcShutdown,
+    PowerIntent.forceOff => l10n.bmcForceOff,
+    PowerIntent.restart => l10n.bmcRestart,
+    PowerIntent.powerCycle => l10n.bmcPowerCycle,
+  };
 
   String _bmcPowerText(PowerState state) => switch (state) {
     PowerState.on => l10n.bmcPowerOn,

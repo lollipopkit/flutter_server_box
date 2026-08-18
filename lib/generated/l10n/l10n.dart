@@ -1413,6 +1413,60 @@ abstract class AppLocalizations {
   /// **'Private key [{keyId}] not found.'**
   String privateKeyNotFoundFmt(Object keyId);
 
+  /// No description provided for @bmcPowerOnAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Power on'**
+  String get bmcPowerOnAction;
+
+  /// No description provided for @bmcShutdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Shut down'**
+  String get bmcShutdown;
+
+  /// No description provided for @bmcForceOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Force off'**
+  String get bmcForceOff;
+
+  /// No description provided for @bmcRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart'**
+  String get bmcRestart;
+
+  /// No description provided for @bmcPowerCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Power cycle'**
+  String get bmcPowerCycle;
+
+  /// No description provided for @bmcPowerConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Send this to {server}? The service will be asked for \"{resetType}\", which is what it allows for this action.'**
+  String bmcPowerConfirm(String server, String resetType);
+
+  /// No description provided for @bmcPowerDone.
+  ///
+  /// In en, this message translates to:
+  /// **'The power state changed'**
+  String get bmcPowerDone;
+
+  /// No description provided for @bmcPowerAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Accepted, but the power state has not changed yet. A graceful operation depends on the OS, and some services do not distinguish it.'**
+  String get bmcPowerAccepted;
+
+  /// No description provided for @bmcPowerUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This service allows nothing for that action'**
+  String get bmcPowerUnsupported;
+
   /// No description provided for @bmcUnauthorized.
   ///
   /// In en, this message translates to:

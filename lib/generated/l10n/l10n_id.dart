@@ -744,6 +744,37 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => 'Nyalakan';
+
+  @override
+  String get bmcShutdown => 'Matikan';
+
+  @override
+  String get bmcForceOff => 'Paksa mati';
+
+  @override
+  String get bmcRestart => 'Mulai ulang';
+
+  @override
+  String get bmcPowerCycle => 'Siklus daya';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return 'Kirim ini ke $server? Layanan akan diminta \"$resetType\", yang diizinkannya untuk tindakan ini.';
+  }
+
+  @override
+  String get bmcPowerDone => 'Status daya berubah';
+
+  @override
+  String get bmcPowerAccepted =>
+      'Diterima, tetapi status daya belum berubah. Operasi halus bergantung pada OS, dan sebagian layanan tidak membedakannya.';
+
+  @override
+  String get bmcPowerUnsupported =>
+      'Layanan ini tidak mengizinkan apa pun untuk tindakan itu';
+
+  @override
   String get bmcUnauthorized => 'BMC menolak akun ini';
 
   @override

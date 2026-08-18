@@ -705,6 +705,36 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => '전원 켜기';
+
+  @override
+  String get bmcShutdown => '종료';
+
+  @override
+  String get bmcForceOff => '강제 종료';
+
+  @override
+  String get bmcRestart => '재시작';
+
+  @override
+  String get bmcPowerCycle => '전원 재투입';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return '$server에 실행할까요? 서비스에 \"$resetType\"을(를) 보냅니다. 이 작업에 대해 허용된 유형입니다.';
+  }
+
+  @override
+  String get bmcPowerDone => '전원 상태가 바뀌었습니다';
+
+  @override
+  String get bmcPowerAccepted =>
+      '수락되었지만 전원 상태는 아직 바뀌지 않았습니다. graceful 동작은 OS에 달려 있고, 이를 구분하지 않는 서비스도 있습니다.';
+
+  @override
+  String get bmcPowerUnsupported => '이 서비스는 해당 작업에 대해 아무것도 허용하지 않습니다';
+
+  @override
   String get bmcUnauthorized => 'BMC가 이 계정을 거부했습니다';
 
   @override

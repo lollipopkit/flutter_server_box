@@ -745,6 +745,36 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => 'Увімкнути';
+
+  @override
+  String get bmcShutdown => 'Вимкнути';
+
+  @override
+  String get bmcForceOff => 'Примусово вимкнути';
+
+  @override
+  String get bmcRestart => 'Перезапустити';
+
+  @override
+  String get bmcPowerCycle => 'Повне перезавантаження живлення';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return 'Надіслати це на $server? Службі буде надіслано \"$resetType\" — це те, що вона дозволяє для цієї дії.';
+  }
+
+  @override
+  String get bmcPowerDone => 'Стан живлення змінився';
+
+  @override
+  String get bmcPowerAccepted =>
+      'Прийнято, але стан живлення ще не змінився. М\'яка операція залежить від операційної системи, і деякі служби її не розрізняють.';
+
+  @override
+  String get bmcPowerUnsupported => 'Ця служба нічого не дозволяє для цієї дії';
+
+  @override
   String get bmcUnauthorized => 'BMC відхилив обліковий запис';
 
   @override

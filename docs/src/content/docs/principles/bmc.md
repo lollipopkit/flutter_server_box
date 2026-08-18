@@ -3,12 +3,12 @@ title: BMC (Redfish)
 description: How out-of-band management reaches a server whose OS is not answering
 ---
 
-:::caution[Not shipped yet]
-This page describes a design being built, not behaviour you can use today. It
-is here because the vendor differences below are what the implementation has to
-be shaped around, and they are worth writing down once rather than rediscovering
-per pull request. Anything stated in the present tense is what the code will do,
-not what it does.
+:::caution[Untested against real hardware]
+Phase 1 is implemented. What has not happened yet is a run against an actual
+BMC — every vendor difference below is handled against recorded responses and a
+local TLS server, which is enough to be sure of the decisions and not enough to
+be sure of a machine. Power control in particular has never been performed by
+anything automated, deliberately: see the header of `test/bmc_power_test.dart`.
 :::
 
 Every other way this app reaches a server needs the host operating system to be

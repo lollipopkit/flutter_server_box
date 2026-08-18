@@ -21,6 +21,16 @@ part 'bmc.g.dart';
 /// of their own.
 const _pollInterval = Duration(minutes: 1);
 
+/// How long to wait for a machine to do what it was asked, and how often to
+/// look.
+///
+/// Because the HTTP status is not the answer. HPE documents that
+/// `GracefulShutdown` and `GracefulRestart` depend on the OS and that iLO does
+/// not distinguish them at that level, so a `204` means the request was
+/// accepted and nothing more. What happened is in `PowerState`.
+const _powerConfirmTimeout = Duration(minutes: 2);
+const _powerPollInterval = Duration(seconds: 5);
+
 /// How many members of a `Sensors` collection to read.
 ///
 /// The new model puts every reading in its own resource, so a chassis with a
@@ -29,6 +39,24 @@ const _pollInterval = Duration(minutes: 1);
 /// [BmcState.sensorsTruncated] says when one was applied — a silent cap reads
 /// as "this machine has 64 sensors".
 const _maxSensorMembers = 64;
+
+/// What came of asking a machine to change state.
+enum BmcPowerResult {
+  /// `PowerState` moved. The only one that means the machine did something.
+  confirmed,
+
+  /// The service accepted the request and the state had not moved before the
+  /// wait ran out. Not a failure — a graceful shutdown can take longer than
+  /// anyone wants to watch — but not a result either, and it must not be
+  /// reported as one.
+  accepted,
+
+  /// The service allows nothing that satisfies the intent, so nothing was
+  /// sent.
+  notSupported,
+
+  failed,
+}
 
 @freezed
 abstract class BmcState with _$BmcState {
@@ -143,6 +171,80 @@ class BmcNotifier extends _$BmcNotifier {
         isBusy: false,
       );
     }
+  }
+
+  /// The request [intent] would become, or null if this service allows nothing
+  /// that satisfies it.
+  ///
+  /// Public and separate from [power] so the UI can ask what is possible
+  /// before offering it — an action that is offered and then fails when pressed
+  /// is worse than one that was never there — and so a test can assert which
+  /// request would be sent without a machine being reset to find out.
+  ResetRequest? plan(PowerIntent intent) {
+    final system = state.topology?.system;
+    if (system == null) return null;
+    return ResetRequest.build(system, intent);
+  }
+
+  /// Asks the machine to change state, and waits to see whether it did.
+  ///
+  /// Never called by a test against real hardware — see the header of
+  /// `test/bmc_power_test.dart`. What the caller must not skip is the
+  /// confirmation: this is the one thing in the app that can take a running
+  /// server away from whoever is using it.
+  Future<BmcPowerResult> power(PowerIntent intent) async {
+    final client = _client;
+    final request = plan(intent);
+    if (client == null || request == null) return BmcPowerResult.notSupported;
+
+    final before = state.powerState;
+    try {
+      await client.post(request.target, request.body);
+    } catch (e) {
+      Loggers.app.warning('BMC ${request.resetType} refused', e);
+      return BmcPowerResult.failed;
+    }
+
+    return await _awaitPowerChange(client, before)
+        ? BmcPowerResult.confirmed
+        : BmcPowerResult.accepted;
+  }
+
+  /// Polls until the state settles somewhere other than where it started.
+  ///
+  /// A transitional state does not count as arrival: `PoweringOff` is the
+  /// machine on its way, and reporting that as done would be reporting the
+  /// request back rather than the result.
+  Future<bool> _awaitPowerChange(RedfishClient client, PowerState before) async {
+    final generation = _generation;
+    final deadline = DateTime.now().add(_powerConfirmTimeout);
+
+    while (DateTime.now().isBefore(deadline)) {
+      await Future.delayed(_powerPollInterval);
+      if (generation != _generation) return false;
+
+      try {
+        final system = RedfishSystem.fromJson(
+          await client.get(state.topology!.systemPath!),
+        );
+        state = state.copyWith(
+          topology: RedfishTopology(
+            root: state.topology!.root,
+            systemPath: state.topology!.systemPath,
+            chassisPath: state.topology!.chassisPath,
+            system: system,
+            chassis: state.topology!.chassis,
+          ),
+        );
+        final now = system.powerState;
+        if (now != before && !now.isTransitional) return true;
+      } catch (e) {
+        // A machine on its way down stops answering, which is itself not an
+        // answer about whether it got there
+        Loggers.app.info('BMC unreachable while confirming power change', e);
+      }
+    }
+    return false;
   }
 
   /// Sensors, by whichever model this chassis presents.

@@ -226,6 +226,25 @@
   "preferDiskAmount": "Prioritize displaying disk capacity",
   "privateKey": "Private Key",
   "privateKeyNotFoundFmt": "Private key [{keyId}] not found.",
+  "bmcPowerOnAction": "Power on",
+  "bmcShutdown": "Shut down",
+  "bmcForceOff": "Force off",
+  "bmcRestart": "Restart",
+  "bmcPowerCycle": "Power cycle",
+  "bmcPowerConfirm": "Send this to {server}? The service will be asked for \"{resetType}\", which is what it allows for this action.",
+  "@bmcPowerConfirm": {
+    "placeholders": {
+      "server": {
+        "type": "String"
+      },
+      "resetType": {
+        "type": "String"
+      }
+    }
+  },
+  "bmcPowerDone": "The power state changed",
+  "bmcPowerAccepted": "Accepted, but the power state has not changed yet. A graceful operation depends on the OS, and some services do not distinguish it.",
+  "bmcPowerUnsupported": "This service allows nothing for that action",
   "bmcUnauthorized": "The BMC refused the account",
   "bmcPowerOn": "Powered on",
   "bmcPowerOff": "Powered off",

@@ -744,6 +744,37 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => 'Einschalten';
+
+  @override
+  String get bmcShutdown => 'Herunterfahren';
+
+  @override
+  String get bmcForceOff => 'Hart ausschalten';
+
+  @override
+  String get bmcRestart => 'Neu starten';
+
+  @override
+  String get bmcPowerCycle => 'Strom aus und ein';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return 'An $server senden? Der Dienst wird um \"$resetType\" gebeten — das ist, was er für diese Aktion zulässt.';
+  }
+
+  @override
+  String get bmcPowerDone => 'Der Energiezustand hat sich geändert';
+
+  @override
+  String get bmcPowerAccepted =>
+      'Angenommen, aber der Energiezustand hat sich noch nicht geändert. Eine sanfte Operation hängt vom Betriebssystem ab, und manche Dienste unterscheiden sie nicht.';
+
+  @override
+  String get bmcPowerUnsupported =>
+      'Dieser Dienst lässt für diese Aktion nichts zu';
+
+  @override
   String get bmcUnauthorized => 'Der BMC hat das Konto abgelehnt';
 
   @override

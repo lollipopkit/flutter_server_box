@@ -743,6 +743,37 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => 'Ligar';
+
+  @override
+  String get bmcShutdown => 'Desligar';
+
+  @override
+  String get bmcForceOff => 'Forçar desligamento';
+
+  @override
+  String get bmcRestart => 'Reiniciar';
+
+  @override
+  String get bmcPowerCycle => 'Ciclo de energia';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return 'Enviar isto para $server? Será pedido ao serviço \"$resetType\", que é o que ele permite para esta ação.';
+  }
+
+  @override
+  String get bmcPowerDone => 'O estado de energia mudou';
+
+  @override
+  String get bmcPowerAccepted =>
+      'Aceite, mas o estado de energia ainda não mudou. Uma operação limpa depende do sistema operativo, e alguns serviços não a distinguem.';
+
+  @override
+  String get bmcPowerUnsupported =>
+      'Este serviço não permite nada para essa ação';
+
+  @override
   String get bmcUnauthorized => 'O BMC recusou a conta';
 
   @override

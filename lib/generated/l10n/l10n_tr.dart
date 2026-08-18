@@ -745,6 +745,37 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => 'Aç';
+
+  @override
+  String get bmcShutdown => 'Kapat';
+
+  @override
+  String get bmcForceOff => 'Zorla kapat';
+
+  @override
+  String get bmcRestart => 'Yeniden başlat';
+
+  @override
+  String get bmcPowerCycle => 'Güç döngüsü';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return 'Bu $server sunucusuna gönderilsin mi? Hizmete \"$resetType\" istenecek; bu eylem için izin verdiği tür budur.';
+  }
+
+  @override
+  String get bmcPowerDone => 'Güç durumu değişti';
+
+  @override
+  String get bmcPowerAccepted =>
+      'Kabul edildi, ancak güç durumu henüz değişmedi. Nazik bir işlem işletim sistemine bağlıdır ve bazı hizmetler bunu ayırt etmez.';
+
+  @override
+  String get bmcPowerUnsupported =>
+      'Bu hizmet o eylem için hiçbir şeye izin vermiyor';
+
+  @override
   String get bmcUnauthorized => 'BMC hesabı reddetti';
 
   @override

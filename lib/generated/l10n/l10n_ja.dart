@@ -706,6 +706,36 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => '電源オン';
+
+  @override
+  String get bmcShutdown => 'シャットダウン';
+
+  @override
+  String get bmcForceOff => '強制電源オフ';
+
+  @override
+  String get bmcRestart => '再起動';
+
+  @override
+  String get bmcPowerCycle => '電源の入れ直し';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return '$server に対して実行しますか?サービスには \"$resetType\" を送ります。これがこの操作に対して許可されている型です。';
+  }
+
+  @override
+  String get bmcPowerDone => '電源状態が変わりました';
+
+  @override
+  String get bmcPowerAccepted =>
+      '受け付けられましたが、電源状態はまだ変わっていません。graceful な操作は OS 次第で、区別しないサービスもあります。';
+
+  @override
+  String get bmcPowerUnsupported => 'このサービスはその操作に対して何も許可していません';
+
+  @override
   String get bmcUnauthorized => 'BMC がこのアカウントを拒否しました';
 
   @override

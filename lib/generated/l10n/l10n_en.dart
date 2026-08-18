@@ -737,6 +737,37 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => 'Power on';
+
+  @override
+  String get bmcShutdown => 'Shut down';
+
+  @override
+  String get bmcForceOff => 'Force off';
+
+  @override
+  String get bmcRestart => 'Restart';
+
+  @override
+  String get bmcPowerCycle => 'Power cycle';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return 'Send this to $server? The service will be asked for \"$resetType\", which is what it allows for this action.';
+  }
+
+  @override
+  String get bmcPowerDone => 'The power state changed';
+
+  @override
+  String get bmcPowerAccepted =>
+      'Accepted, but the power state has not changed yet. A graceful operation depends on the OS, and some services do not distinguish it.';
+
+  @override
+  String get bmcPowerUnsupported =>
+      'This service allows nothing for that action';
+
+  @override
   String get bmcUnauthorized => 'The BMC refused the account';
 
   @override

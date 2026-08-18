@@ -744,6 +744,37 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => 'Inschakelen';
+
+  @override
+  String get bmcShutdown => 'Afsluiten';
+
+  @override
+  String get bmcForceOff => 'Geforceerd uitschakelen';
+
+  @override
+  String get bmcRestart => 'Opnieuw starten';
+
+  @override
+  String get bmcPowerCycle => 'Stroom uit en aan';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return 'Dit naar $server sturen? De service krijgt \"$resetType\", wat hij voor deze actie toestaat.';
+  }
+
+  @override
+  String get bmcPowerDone => 'De voedingsstatus is gewijzigd';
+
+  @override
+  String get bmcPowerAccepted =>
+      'Geaccepteerd, maar de voedingsstatus is nog niet gewijzigd. Een nette operatie hangt af van het besturingssysteem, en sommige services maken er geen onderscheid in.';
+
+  @override
+  String get bmcPowerUnsupported =>
+      'Deze service staat niets toe voor die actie';
+
+  @override
   String get bmcUnauthorized => 'De BMC heeft het account geweigerd';
 
   @override

@@ -694,6 +694,36 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => '开机';
+
+  @override
+  String get bmcShutdown => '关机';
+
+  @override
+  String get bmcForceOff => '强制断电';
+
+  @override
+  String get bmcRestart => '重启';
+
+  @override
+  String get bmcPowerCycle => '冷重启';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return '要对 $server 执行吗?将向该服务发送 \"$resetType\"——这是它为此操作允许的类型。';
+  }
+
+  @override
+  String get bmcPowerDone => '电源状态已改变';
+
+  @override
+  String get bmcPowerAccepted =>
+      '已接受,但电源状态还没有改变。graceful 操作取决于操作系统,而有些服务并不区分它。';
+
+  @override
+  String get bmcPowerUnsupported => '该服务不允许这个操作的任何类型';
+
+  @override
   String get bmcUnauthorized => 'BMC 拒绝了这个账号';
 
   @override
@@ -2027,6 +2057,36 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   String privateKeyNotFoundFmt(Object keyId) {
     return '未找到私鑰 [$keyId]。';
   }
+
+  @override
+  String get bmcPowerOnAction => '開機';
+
+  @override
+  String get bmcShutdown => '關機';
+
+  @override
+  String get bmcForceOff => '強制斷電';
+
+  @override
+  String get bmcRestart => '重新啟動';
+
+  @override
+  String get bmcPowerCycle => '冷重新啟動';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return '要對 $server 執行嗎?將向該服務傳送 \"$resetType\"——這是它為此操作允許的類型。';
+  }
+
+  @override
+  String get bmcPowerDone => '電源狀態已改變';
+
+  @override
+  String get bmcPowerAccepted =>
+      '已接受,但電源狀態還沒有改變。graceful 操作取決於作業系統,而有些服務並不區分它。';
+
+  @override
+  String get bmcPowerUnsupported => '該服務不允許這個操作的任何類型';
 
   @override
   String get bmcUnauthorized => 'BMC 拒絕了這個帳號';

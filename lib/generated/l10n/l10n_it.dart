@@ -749,6 +749,37 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get bmcPowerOnAction => 'Accendi';
+
+  @override
+  String get bmcShutdown => 'Spegni';
+
+  @override
+  String get bmcForceOff => 'Spegnimento forzato';
+
+  @override
+  String get bmcRestart => 'Riavvia';
+
+  @override
+  String get bmcPowerCycle => 'Ciclo di alimentazione';
+
+  @override
+  String bmcPowerConfirm(String server, String resetType) {
+    return 'Inviare questo a $server? Al servizio verrà chiesto \"$resetType\", che è ciò che consente per questa azione.';
+  }
+
+  @override
+  String get bmcPowerDone => 'Lo stato di alimentazione è cambiato';
+
+  @override
+  String get bmcPowerAccepted =>
+      'Accettato, ma lo stato di alimentazione non è ancora cambiato. Un\'operazione pulita dipende dal sistema operativo, e alcuni servizi non la distinguono.';
+
+  @override
+  String get bmcPowerUnsupported =>
+      'Questo servizio non consente nulla per quell\'azione';
+
+  @override
   String get bmcUnauthorized => 'Il BMC ha rifiutato l\'account';
 
   @override
