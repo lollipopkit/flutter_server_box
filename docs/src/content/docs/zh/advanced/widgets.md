@@ -3,7 +3,7 @@ title: 主屏幕小组件
 description: 在主屏幕上添加服务器状态小组件
 ---
 
-需要在服务器上安装 [ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor)。
+需要在服务器上安装 [monitor agent](/docs/zh/advanced/monitor-agent/)。
 
 ## 前置条件
 

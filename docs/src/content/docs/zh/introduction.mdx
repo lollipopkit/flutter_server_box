@@ -9,7 +9,7 @@ Server Box 是一款使用 Flutter 构建的全面跨平台服务器管理应用
 
 Server Box 为服务器管理任务提供统一的界面。无论您是系统管理员、开发人员，还是运行家庭服务器的爱好者，此应用都能为您提供强大的服务器管理工具。
 
-访问一台服务器有两种方式：通过 **SSH**，或通过运行在它上面的 **[monitor agent](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor)**（App 经 HTTP 与之通信）。SSH 无需在服务器上安装任何东西，且支持全部功能；agent 适用于不便暴露 SSH 端口的主机，并且自己保存历史数据，因此 App 连上之前图表就已经有数据。
+访问一台服务器有两种方式：通过 **SSH**，或通过运行在它上面的 **[monitor agent](/docs/zh/advanced/monitor-agent/)**（App 经 HTTP 与之通信）。SSH 无需在服务器上安装任何东西，且支持全部功能；agent 适用于不便暴露 SSH 端口的主机，并且自己保存历史数据，因此 App 连上之前图表就已经有数据。
 
 ## 核心功能
 
@@ -21,6 +21,7 @@ Server Box 为服务器管理任务提供统一的界面。无论您是系统管
 - **Systemd 服务**：启动、停止和监控 systemd 服务
 - **网络工具**：iPerf 测试、Ping 和网络唤醒 (WoL)
 - **代码片段**：保存并执行自定义 Shell 命令
+- **[Agent](/docs/zh/advanced/agent/)**：让模型诊断和操作你的服务器，每次一个经过确认的动作
 
 ## 支持平台
 

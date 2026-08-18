@@ -54,6 +54,9 @@ export default defineConfig({
 						zh: '进阶',
 					},
 					items: [
+						{ label: 'Monitor Agent', translations: { zh: 'Monitor Agent' }, slug: 'advanced/monitor-agent' },
+						{ label: 'Agent', translations: { zh: 'Agent' }, slug: 'advanced/agent' },
+						{ label: 'Terminal on This Device', translations: { zh: '本机终端' }, slug: 'advanced/local-terminal' },
 						{ label: 'Bulk Import Servers', translations: { zh: '批量导入服务器' }, slug: 'advanced/bulk-import' },
 						{ label: 'Widget Setup', translations: { zh: '小组件设置' }, slug: 'advanced/widgets' },
 						{ label: 'Custom Commands', translations: { zh: '自定义命令' }, slug: 'advanced/custom-commands' },

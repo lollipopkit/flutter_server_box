@@ -57,9 +57,9 @@ Background limitations apply:
 
 ## Push Notifications
 
-Server alerts (offline, threshold exceeded) are pushed by
-[ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor)
-running on your servers — configure alert rules and push channels there.
+Server alerts (offline, threshold exceeded) are pushed by a
+[monitor agent](/docs/advanced/monitor-agent/) running on your servers —
+configure alert rules and push channels there.
 
 ## Mobile UI Features
 

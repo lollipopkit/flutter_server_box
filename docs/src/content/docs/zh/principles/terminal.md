@@ -3,7 +3,25 @@ title: 终端实现
 description: SSH 终端的内部工作原理
 ---
 
-SSH 终端是功能最复杂的模块之一，基于自定义的 xterm.dart 分支构建。
+终端是功能最复杂的模块之一，基于自定义的 xterm.dart 分支构建。
+
+## 字节从哪里来
+
+字节流之上只有一套实现 —— 同一个模拟器、同一套虚拟键盘、同样的标签页。之下，
+`ShellBackend` 有四个实现：
+
+| 后端 | 字节来源 |
+|---|---|
+| `SshShellBackend` | SSH channel；本页其余部分讲的就是它 |
+| `LocalShellBackend` | 本机的 shell；Android 上是 Alpine 容器内的 shell |
+| `IshShellBackend` | iOS 上的 Linux 解释器 |
+| `MonitorShellBackend` | monitor agent 的 `/terminal/ws` |
+
+调用方打开一个会话并向它写入，上层 UI 不会去问是四个中的哪一个应答的。前两个见
+[本机终端](/docs/zh/advanced/local-terminal/)，最后一个见
+[Monitor Agent](/docs/zh/advanced/monitor-agent/)。
+
+本页其余部分沿 SSH 这条路径展开 —— 它是最早的一条，其余几个是照着它的形状做的。
 
 ## 架构概览
 

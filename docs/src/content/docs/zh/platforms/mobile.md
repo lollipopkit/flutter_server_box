@@ -57,7 +57,7 @@ Server Box 为 iOS 和 Android 设备提供了多项移动端特有功能。
 ## 推送通知
 
 服务器告警（离线、超过阈值）由运行在你服务器上的
-[ServerBox Monitor](https://github.com/lollipopkit/flutter_server_box/tree/main/monitor)
+[monitor agent](/docs/zh/advanced/monitor-agent/)
 推送——告警规则和推送渠道在 Monitor 侧配置。
 
 ## 移动端 UI 特性
