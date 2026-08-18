@@ -58,7 +58,7 @@ final class ServerNotifierProvider
   }
 }
 
-String _$serverNotifierHash() => r'a24cce74c871c28652788226dafcbe8de854435c';
+String _$serverNotifierHash() => r'5bbb6c120e154e9fd57e379039a8e21d65c7def1';
 
 final class ServerNotifierFamily extends $Family
     with

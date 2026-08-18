@@ -18,6 +18,23 @@ abstract final class SSHConfig {
     return homePath;
   }
 
+  /// A leading `~` replaced with this account's home directory.
+  ///
+  /// Public because `IdentityFile` values are kept verbatim — the file they
+  /// name is resolved when the connection is made, not when the config is
+  /// parsed — so whoever opens one has to do this too.
+  ///
+  /// Returns [path] unchanged when it does not start with `~`, or when the
+  /// environment names no home: a path that cannot be expanded is better
+  /// reported by the open that fails on it than silently turned into
+  /// something else.
+  static String expandHome(String path) {
+    if (!path.startsWith('~')) return path;
+    final home = _homePath;
+    if (home == null) return path;
+    return path.replaceFirst('~', home);
+  }
+
   /// Get possible SSH config file paths, with macOS-specific handling
   static List<String> get _possibleConfigPaths {
     final paths = <String>[];
@@ -88,7 +105,10 @@ abstract final class SSHConfig {
             ip: hostname,
             port: port,
             user: user ?? 'root', // Default user is 'root'
-            keyId: identityFile,
+            // A path, not a store id — see `SshCredential.keyPath`. Putting it
+            // in `keyId` is what made every imported host with an IdentityFile
+            // fail to connect.
+            keyPath: identityFile,
             jumpId: resolvedJumpHost,
             proxyCommand: resolvedProxyCommand,
           ),
@@ -161,7 +181,9 @@ abstract final class SSHConfig {
           break;
 
         case 'identityfile':
-          identityFile = value; // Store the path directly
+          // Kept verbatim, `~` and all: it is resolved when the connection is
+          // made, on the machine the file is on
+          identityFile = value;
           break;
 
         case 'proxyjump':

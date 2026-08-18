@@ -226,6 +226,25 @@
   "preferDiskAmount": "Prioritize displaying disk capacity",
   "privateKey": "Private Key",
   "privateKeyNotFoundFmt": "Private key [{keyId}] not found.",
+  "privateKeyFileUnreadable": "Cannot read the private key file {path}: {reason}",
+  "@privateKeyFileUnreadable": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "privateKeyFileSandboxed": "This build cannot read files outside its own container, so the key at {path} is unreachable. Import the key in Settings, or use the DMG build.",
+  "@privateKeyFileSandboxed": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "pushToken": "Push token",
   "proxyCommandOnlySupportedOnDesktop": "ProxyCommand is only supported on desktop platforms.",
   "pveIgnoreCertTip": "Not recommended to enable, beware of security risks! If you are using the default certificate from PVE, you need to enable this option.",

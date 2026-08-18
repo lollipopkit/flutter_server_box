@@ -232,6 +232,87 @@ void main() {
       await tester.pump();
     });
 
+    testWidgets('an imported server keeps its key file across a save', (
+      tester,
+    ) async {
+      // The regression this guards: `_onSave` rebuilds the credential from the
+      // form, and nothing on the form types a path — so opening an imported
+      // server and saving it once used to take away the only credential it had.
+      FlutterSecureStorage.setMockInitialValues({});
+
+      final server = spiFixture(
+        name: 'imported-server',
+        ip: '192.168.1.101',
+        user: 'me',
+        keyPath: '~/.ssh/id_ed25519',
+        id: 'imported-server-id',
+      );
+      Spi? persisted;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            serversProvider.overrideWith(
+              () => _PersistingServersNotifier(
+                server,
+                (value) => persisted = value,
+              ),
+            ),
+            privateKeyProvider.overrideWithValue(const PrivateKeyState()),
+          ],
+          child: MaterialApp(
+            builder: ResponsivePoints.builder,
+            locale: const Locale('en'),
+            localizationsDelegates: const [
+              LibLocalizations.delegate,
+              ...AppLocalizations.localizationsDelegates,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Builder(
+              builder: (context) {
+                app_locale.l10n = AppLocalizations.of(context)!;
+                context.setLibL10n();
+                return Scaffold(
+                  body: TextButton(
+                    key: const ValueKey('open-server-editor'),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            ServerEditPage(args: SpiRequiredArgs(server)),
+                      ),
+                    ),
+                    child: const Text('Open editor'),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const ValueKey('open-server-editor')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Shown, rather than an empty key picker saying nothing is configured
+      expect(find.text('~/.ssh/id_ed25519'), findsOneWidget);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // No password and no stored key, but there *is* a key — so the
+      // "continue without authentication?" dialog must not have appeared, and
+      // the save must have gone straight through
+      expect(find.byKey(const ValueKey('open-server-editor')), findsOneWidget);
+      expect(persisted, isNotNull);
+      expect(persisted!.ssh?.keyPath, '~/.ssh/id_ed25519');
+      expect(persisted!.ssh?.keyId, isNull);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    });
+
     test('server editing vs creation logic', () {
       // Test logic for distinguishing between editing and creating servers
 

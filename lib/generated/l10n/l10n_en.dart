@@ -737,6 +737,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String privateKeyFileUnreadable(String path, String reason) {
+    return 'Cannot read the private key file $path: $reason';
+  }
+
+  @override
+  String privateKeyFileSandboxed(String path) {
+    return 'This build cannot read files outside its own container, so the key at $path is unreachable. Import the key in Settings, or use the DMG build.';
+  }
+
+  @override
   String get pushToken => 'Push token';
 
   @override

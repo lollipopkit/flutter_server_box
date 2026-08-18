@@ -267,7 +267,7 @@ types:
         index: 19
   SshCredential:
     typeId: 16
-    nextIndex: 10
+    nextIndex: 11
     fields:
       ip:
         index: 0
@@ -287,3 +287,5 @@ types:
         index: 7
       proxyCommand:
         index: 8
+      keyPath:
+        index: 10

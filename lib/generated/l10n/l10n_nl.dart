@@ -744,6 +744,16 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String privateKeyFileUnreadable(String path, String reason) {
+    return 'Kan het privésleutelbestand $path niet lezen: $reason';
+  }
+
+  @override
+  String privateKeyFileSandboxed(String path) {
+    return 'Deze build kan geen bestanden buiten de eigen container lezen, dus de sleutel op $path is onbereikbaar. Importeer de sleutel in Instellingen of gebruik de DMG-versie.';
+  }
+
+  @override
   String get pushToken => 'Push-token';
 
   @override

@@ -137,6 +137,8 @@
   "preferDiskAmount": "Priorizar la visualización de la capacidad del disco",
   "privateKey": "Llave privada",
   "privateKeyNotFoundFmt": "No se encontró la clave privada [{keyId}].",
+  "privateKeyFileUnreadable": "No se puede leer el archivo de clave privada {path}: {reason}",
+  "privateKeyFileSandboxed": "Esta compilación no puede leer archivos fuera de su contenedor, por lo que la clave en {path} es inaccesible. Importa la clave en Ajustes o usa la versión DMG.",
   "pushToken": "Token de notificaciones",
   "pveIgnoreCertTip": "No se recomienda activarlo, ¡tenga cuidado con los riesgos de seguridad! Si está utilizando el certificado predeterminado de PVE, debe habilitar esta opción.",
   "pveVersionLow": "Esta función está actualmente en fase de prueba y solo se ha probado en PVE 8+. Úsela con precaución.",

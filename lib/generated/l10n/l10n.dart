@@ -1413,6 +1413,18 @@ abstract class AppLocalizations {
   /// **'Private key [{keyId}] not found.'**
   String privateKeyNotFoundFmt(Object keyId);
 
+  /// No description provided for @privateKeyFileUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot read the private key file {path}: {reason}'**
+  String privateKeyFileUnreadable(String path, String reason);
+
+  /// No description provided for @privateKeyFileSandboxed.
+  ///
+  /// In en, this message translates to:
+  /// **'This build cannot read files outside its own container, so the key at {path} is unreachable. Import the key in Settings, or use the DMG build.'**
+  String privateKeyFileSandboxed(String path);
+
   /// No description provided for @pushToken.
   ///
   /// In en, this message translates to:

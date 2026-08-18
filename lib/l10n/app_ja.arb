@@ -137,6 +137,8 @@
   "preferDiskAmount": "ディスク容量を優先的に表示",
   "privateKey": "秘密鍵",
   "privateKeyNotFoundFmt": "秘密鍵 [{keyId}] が見つかりません。",
+  "privateKeyFileUnreadable": "秘密鍵ファイル {path} を読み込めません: {reason}",
+  "privateKeyFileSandboxed": "このビルドはコンテナ外のファイルを読み込めないため、{path} の鍵に到達できません。設定から鍵をインポートするか、DMG 版をご利用ください。",
   "pushToken": "プッシュトークン",
   "pveIgnoreCertTip": "オプションを有効にすることは推奨されません、セキュリティリスクに注意してください！PVEのデフォルト証明書を使用している場合は、このオプションを有効にする必要があります。",
   "pveVersionLow": "この機能は現在テスト段階にあり、PVE 8+でのみテストされています。ご利用の際は慎重に。",

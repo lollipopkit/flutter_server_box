@@ -705,6 +705,16 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String privateKeyFileUnreadable(String path, String reason) {
+    return '개인 키 파일 $path을(를) 읽을 수 없습니다: $reason';
+  }
+
+  @override
+  String privateKeyFileSandboxed(String path) {
+    return '이 빌드는 컨테이너 밖의 파일을 읽을 수 없어 $path의 키에 접근할 수 없습니다. 설정에서 키를 가져오거나 DMG 버전을 사용하세요.';
+  }
+
+  @override
   String get pushToken => '푸시 토큰';
 
   @override

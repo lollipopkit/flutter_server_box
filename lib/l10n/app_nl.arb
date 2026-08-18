@@ -137,6 +137,8 @@
   "preferDiskAmount": "Geef de schijfcapaciteit prioriteit bij weergave",
   "privateKey": "Privésleutel",
   "privateKeyNotFoundFmt": "Privésleutel [{keyId}] niet gevonden.",
+  "privateKeyFileUnreadable": "Kan het privésleutelbestand {path} niet lezen: {reason}",
+  "privateKeyFileSandboxed": "Deze build kan geen bestanden buiten de eigen container lezen, dus de sleutel op {path} is onbereikbaar. Importeer de sleutel in Instellingen of gebruik de DMG-versie.",
   "pushToken": "Push-token",
   "pveIgnoreCertTip": "Niet aanbevolen om in te schakelen, let op beveiligingsrisico's! Als u de standaardcertificaat van PVE gebruikt, moet u deze optie inschakelen.",
   "pveVersionLow": "Deze functie bevindt zich momenteel in de testfase en is alleen getest op PVE 8+. Gebruik het met voorzichtigheid.",

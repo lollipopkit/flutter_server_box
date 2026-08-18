@@ -2,18 +2,26 @@ part of 'edit.dart';
 
 extension _Widgets on _ServerEditPageState {
   Widget _buildAuth() {
+    // Reads both sources: a server imported with an IdentityFile authenticates
+    // with a key even though nothing is selected among the stored ones, and a
+    // switch that showed "off" there would be describing the wrong thing.
     final switch_ = ListTile(
       title: Text(l10n.keyAuth),
       trailing: _keyIdx.listenVal(
-        (v) => Switch(
-          value: v != null,
-          onChanged: (val) {
-            if (val) {
-              _keyIdx.value = -1;
-            } else {
-              _keyIdx.value = null;
-            }
-          },
+        (idx) => _keyPath.listenVal(
+          (path) => Switch(
+            value: idx != null || path != null,
+            onChanged: (on) {
+              if (on) {
+                // Already on by way of a file: leave the file alone rather
+                // than adding an empty stored-key selection beside it
+                if (path == null) _keyIdx.value = -1;
+              } else {
+                _keyIdx.value = null;
+                _keyPath.value = null;
+              }
+            },
+          ),
         ),
       ),
     );
@@ -33,8 +41,30 @@ extension _Widgets on _ServerEditPageState {
       if (v != null) {
         children.add(_buildKeyAuth());
       }
+      children.add(_buildKeyPath());
       children.add(password);
       return Column(children: children);
+    });
+  }
+
+  /// The key file an `~/.ssh/config` import pointed at, when there is one.
+  ///
+  /// Read-only: nothing on this page writes a path, and the field exists so a
+  /// server imported with an `IdentityFile` shows what it authenticates with
+  /// instead of an empty key picker. Clearing it is offered because the only
+  /// other way off it is to pick a stored key, which not every setup wants.
+  Widget _buildKeyPath() {
+    return _keyPath.listenVal((path) {
+      if (path == null) return UIs.placeholder;
+      return ListTile(
+        leading: const Icon(Icons.description),
+        title: Text(path, style: UIs.text13),
+        subtitle: Text(l10n.sshConfigImport, style: UIs.textGrey),
+        trailing: IconButton(
+          icon: const Icon(Icons.close, size: 20),
+          onPressed: () => _keyPath.value = null,
+        ),
+      ).cardx;
     });
   }
 
@@ -70,6 +100,8 @@ extension _Widgets on _ServerEditPageState {
                   onSelected: (idx, on) {
                     if (on) {
                       keyIdx.value = idx;
+                      // At most one of the two — see `SshCredential.keyPath`
+                      _keyPath.value = null;
                     } else {
                       keyIdx.value = -1;
                     }

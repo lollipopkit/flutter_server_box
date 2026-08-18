@@ -694,6 +694,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String privateKeyFileUnreadable(String path, String reason) {
+    return '无法读取私钥文件 $path:$reason';
+  }
+
+  @override
+  String privateKeyFileSandboxed(String path) {
+    return '此版本无法读取容器外的文件,因此读不到 $path 的密钥。请在设置中导入该密钥,或改用 DMG 版。';
+  }
+
+  @override
   String get pushToken => '消息推送 Token';
 
   @override
@@ -1959,6 +1969,16 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
   @override
   String privateKeyNotFoundFmt(Object keyId) {
     return '未找到私鑰 [$keyId]。';
+  }
+
+  @override
+  String privateKeyFileUnreadable(String path, String reason) {
+    return '無法讀取私鑰檔案 $path:$reason';
+  }
+
+  @override
+  String privateKeyFileSandboxed(String path) {
+    return '此版本無法讀取容器外的檔案,因此讀不到 $path 的金鑰。請在設定中匯入該金鑰,或改用 DMG 版。';
   }
 
   @override
