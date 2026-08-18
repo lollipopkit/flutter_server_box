@@ -436,18 +436,6 @@ extension _Widgets on _ServerEditPageState {
     );
   }
 
-  /// The SSH account the agent logs in as on the far host.
-  ///
-  /// Deliberately has no host/port field: the agent connects to the address in
-  /// its own `remote_access.ssh_addr` and refuses to take one from a client,
-  /// which is what stops it being usable to reach anything else on its
-  /// network. All that is needed here is who to log in as.
-  ///
-  /// Labels carry the `SSH` prefix because the network section above has a
-  /// second account with the same two labels. They are not interchangeable —
-  /// that one is the panel login, this one has to exist on the far host and
-  /// be permitted by its sshd.
-
   Widget _buildCustomCmds() {
     return Column(
       mainAxisSize: MainAxisSize.min,

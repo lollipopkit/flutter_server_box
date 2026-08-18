@@ -12,7 +12,9 @@ Secure your servers with biometric authentication:
 - **iOS**: Face ID or Touch ID
 - **Android**: Fingerprint authentication
 
-Enable in Settings > Security > Biometric Authentication
+Enable in Settings → **App** → Setting → **Biometric authentication**. The entry
+says so when the device has none enrolled, instead of offering a switch that
+could not work.
 
 ## Home Screen Widgets
 
@@ -41,7 +43,7 @@ Add server status widgets to your home screen for quick monitoring.
 
 Keep connections alive in the background:
 
-- Enable in Settings > Advanced > Background Running
+- Enable in Settings → **App** → Setting → **Android Setting** → **Background running**
 - Requires battery optimization exclusion
 - Persistent notifications for active connections
 

@@ -20,37 +20,64 @@ Import multiple server configurations at once using a JSON file.
 [
   {
     "name": "My Server",
-    "ip": "example.com",
-    "port": 22,
-    "user": "root",
-    "pwd": "password",
-    "pubKeyId": "",
+    "ssh": {
+      "ip": "example.com",
+      "port": 22,
+      "user": "root",
+      "pwd": "password",
+      "pubKeyId": ""
+    },
     "tags": ["production"],
     "autoConnect": false
   }
 ]
 ```
 
+The SSH settings are nested under `ssh`. This is what the app writes, and the
+example the import dialog shows you.
+
+The old flat layout — `ip`/`port`/`user`/... at the top level — is still
+accepted, so files exported by an older version and `~/.ssh/config` imports keep
+working. Nothing writes it any more.
+
 ## Fields
 
 | Field | Required | Description |
 |-------|----------|-------------|
 | `name` | Yes | Display name |
+| `ssh` | No | SSH settings, see below. Omit for a monitor-only server |
+| `monitorHttp` | No | Monitor agent: `addr`, `user`, `pwd`, `ignoreCert` |
+| `tags` | No | Organization tags |
+| `autoConnect` | No | Auto-connect on startup |
+| `custom` | No | Per-server extras: `pveAddr`, `preferTempDev`, `logoUrl`, ... |
+| `wolCfg` | No | Wake-on-LAN configuration |
+| `envs` | No | Environment variables, SSH terminal only |
+| `customSystemType` | No | Skip system auto-detection |
+| `disabledCmdTypes` | No | Status commands to skip on this server |
+| `id` | No | Stable server id; omitted or empty values are generated on import |
+
+Inside `ssh`:
+
+| Field | Required | Description |
+|-------|----------|-------------|
 | `ip` | Yes | Domain or IP address |
 | `port` | Yes | SSH port (usually 22) |
 | `user` | Yes | SSH username |
 | `pwd` | No | Password (avoid - use SSH keys instead) |
 | `pubKeyId` | No | Private key id (from Private Keys - recommended) |
-| `tags` | No | Organization tags |
-| `autoConnect` | No | Auto-connect on startup |
-| `id` | No | Stable server id; omitted or empty values are generated on import |
+| `alterUrl` | No | Fallback address, `user@ip:port` |
+| `jumpIds` | No | Jump server chain, by server id |
+| `proxyCommand` | No | ProxyCommand; desktop only, and exclusive with `jumpIds` |
+
+A record with no `ssh` and no `monitorHttp` imports as a server with no way to
+reach it — give it one or the other.
 
 ## Import Steps
 
 1. Create JSON file with server configurations
-2. Settings → Backup → Bulk Import Servers
+2. Settings → **Backup** → Import → **Server**
 3. Select your JSON file
-4. Confirm import
+4. Confirm the count it reports
 
 ## Example
 
@@ -58,19 +85,32 @@ Import multiple server configurations at once using a JSON file.
 [
   {
     "name": "Production",
-    "ip": "prod.example.com",
-    "port": 22,
-    "user": "admin",
-    "pubKeyId": "my-key",
+    "ssh": {
+      "ip": "prod.example.com",
+      "port": 22,
+      "user": "admin",
+      "pubKeyId": "my-key"
+    },
     "tags": ["production", "web"]
   },
   {
     "name": "Development",
-    "ip": "dev.example.com",
-    "port": 2222,
-    "user": "dev",
-    "pubKeyId": "dev-key",
+    "ssh": {
+      "ip": "dev.example.com",
+      "port": 2222,
+      "user": "dev",
+      "pubKeyId": "dev-key"
+    },
     "tags": ["development"]
+  },
+  {
+    "name": "Behind NAT",
+    "monitorHttp": {
+      "addr": "https://10.0.0.5:3770",
+      "user": "admin",
+      "pwd": "panel-password"
+    },
+    "tags": ["monitor"]
   }
 ]
 ```

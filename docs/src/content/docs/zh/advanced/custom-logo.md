@@ -49,6 +49,6 @@ https://example.com/{DIST}-{BRIGHT}.png
 
 ## 支持的发行版
 
-debian, ubuntu, centos, fedora, opensuse, kali, alpine, arch, rocky, deepin, armbian, wrt
+debian, ubuntu, centos, fedora, opensuse, kali, alpine, arch, rocky, deepin, armbian, wrt, coreelec
 
 完整列表：[`dist.dart`](https://github.com/lollipopkit/flutter_server_box/blob/main/lib/data/model/server/dist.dart)

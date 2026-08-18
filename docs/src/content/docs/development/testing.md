@@ -110,11 +110,39 @@ test('serverStatusProvider returns status', () async {
 
 ## External Dependencies
 
-Avoid tests that depend on real SSH servers. Keep parser, model, and command-builder tests deterministic; add targeted fakes or fixtures when a feature introduces a service boundary.
+Keep `flutter test` deterministic: parser, model and command-builder tests must
+not need a network or a real server. Add targeted fakes or fixtures when a
+feature introduces a service boundary.
+
+The Rust suites listed under "Opt-in tests" above are the exception. They are
+skipped unless their environment variables are set, so a default
+`cargo test --workspace` still needs nothing.
 
 ## Integration Tests
 
-There is no `integration_test/` suite in the current repository. Add integration tests only when a feature needs end-to-end device or app-flow coverage.
+`integration_test/` holds what `flutter test` cannot answer. The unit suite runs
+under `flutter_tester`, which loads no plugins — so anything reached through a
+plugin or FFI has never actually run there. These run inside a real app on a
+real device:
+
+| File | Question |
+|---|---|
+| `local_shell_test.dart` | Does a shell on this device actually spawn |
+| `rootfs_shell_test.dart` | The Linux userland, through the API the app uses |
+| `android_exec_test.dart` | What Android will execute out of the app's own directory |
+| `android_rootfs_test.dart` | Whether the Android guest mechanism can work at all |
+| `ios_rootfs_test.dart` | The Linux userland on iOS |
+| `ios_bench_test.dart` | What the Linux guest costs on real hardware |
+| `ios_load_test.dart` | What the guest costs the app while it is working |
+| `sandbox_import_test.dart` | Taking over the sandboxed build's data |
+
+```bash
+# Needs a connected device or simulator; flutter test alone does not run these
+flutter test integration_test/local_shell_test.dart
+```
+
+`make analyze` covers this directory too (`flutter analyze lib test
+integration_test`).
 
 ## Best Practices
 

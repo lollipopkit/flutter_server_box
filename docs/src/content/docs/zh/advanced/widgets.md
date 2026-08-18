@@ -45,8 +45,8 @@ https://your-server.com/status
 1. 长按主屏幕 → **小组件**
 2. 找到 “ServerBox” → 添加到主屏幕
 3. 记下显示的 Widget ID 数字
-4. 打开 ServerBox 应用 → 设置
-5. 点击 **配置桌面小组件链接**
+4. 打开 ServerBox 应用 → 设置 → **应用** → 设置 → **Android 设置**
+5. 点击 **桌面部件链接配置**
 6. 添加条目：`Widget ID` = `状态 URL`
 
 示例：
@@ -62,7 +62,7 @@ https://your-server.com/status
 
 ### 设置步骤
 
-1. 打开 iPhone 上的应用 → 设置 → **iOS 设置**
+1. 打开 iPhone 上的应用 → 设置 → **应用** → 设置 → **iOS 设置**
 2. 点击 **Watch 应用**
 3. 选择要显示的服务器。选择的顺序会被保留，手表按该顺序翻页
 4. 等待手表端同步

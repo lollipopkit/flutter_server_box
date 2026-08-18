@@ -50,7 +50,7 @@ Real-time data from streams:
 
 ```dart
 @riverpod
-Stream<CpuUsage> cpuUsage(CpuUsageRef ref, Server server) {
+Stream<CpuUsage> cpuUsage(Ref ref, Server server) {
   return cpuService.monitor(server);
 }
 ```
@@ -73,7 +73,7 @@ Parameterized providers:
 
 ```dart
 @riverpod
-List<Container> containers(ContainersRef ref, Server server) {
+List<Container> containers(Ref ref, Server server) {
   return containerService.list(server);
 }
 ```

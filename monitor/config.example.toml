@@ -115,11 +115,14 @@ ssh_addr = "127.0.0.1:22"
 # panel can turn it off — but never on — from its first-run prompt.
 # full_access = false
 
-# Lets the app reach this machine's SSH over the same HTTPS endpoint it
-# already polls, for servers whose SSH port isn't reachable directly. What
-# travels through it is the SSH protocol itself, still end-to-end encrypted
-# between app and sshd, with the app verifying the host key — this agent only
-# moves bytes and cannot read the session.
+# Relays an SSH byte stream to ssh_addr. What travels through it is the SSH
+# protocol itself, still end-to-end encrypted between client and sshd — this
+# agent only moves bytes and cannot read the session.
+#
+# TODO: nothing consumes this endpoint today. The ServerBox app used to reach
+# sshd through it; it now reaches a monitor server through /exec, /terminal/ws
+# and /fs/*, and has no tunnel client left. Turning this on currently has no
+# effect.
 [remote_access.tunnel]
 enabled = false
 # Leave unset to size from physical memory; resolved values are logged at
@@ -148,9 +151,11 @@ enabled = false
 # The file API: GET /fs/list, /fs/stat, /fs/read; PUT /fs/write; POST
 # /fs/mkdir, /fs/rename, /fs/chmod; DELETE /fs/remove.
 #
-# For a host running this agent with no reachable sshd. Anywhere sshd *is*
-# reachable — directly or through the tunnel above — the app already browses
-# files over SFTP end to end, and this endpoint is not needed.
+# This is how the app browses files on a server it reaches through this agent.
+# Such a server carries no SSH credentials at all, so SFTP is not available to
+# it and this endpoint is the only way — switching it off means the app offers
+# no file browser for this machine. A server added to the app over SSH instead
+# browses over SFTP end to end and needs nothing here.
 #
 # roots is not optional: switching this on without naming directories serves
 # nothing at all. Every request is resolved to a real path — symlinks

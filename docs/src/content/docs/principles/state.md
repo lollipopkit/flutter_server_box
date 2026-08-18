@@ -107,7 +107,7 @@ For continuous data streams:
 
 ```dart
 @riverpod
-Stream<CpuUsage> cpuUsage(CpuUsageRef ref, Server server) {
+Stream<CpuUsage> cpuUsage(Ref ref, Server server) {
   final client = ref.watch(sshClientProvider(server));
   final stream = client.monitorCpu();
 
@@ -137,7 +137,7 @@ Providers that accept parameters:
 
 ```dart
 @riverpod
-Future<List<Container>> containers(ContainersRef ref, Server server) async {
+Future<List<Container>> containers(Ref ref, Server server) async {
   final client = await ref.watch(sshClientProvider(server).future);
   return await client.listContainers();
 }
@@ -163,7 +163,7 @@ ref.read(settingsProvider.notifier).updateTheme(darkMode);
 
 ```dart
 @riverpod
-int totalServers(TotalServersRef ref) {
+int totalServers(Ref ref) {
   final servers = ref.watch(serversProvider);
   return servers.length;
 }
@@ -173,7 +173,7 @@ int totalServers(TotalServersRef ref) {
 
 ```dart
 @riverpod
-List<Server> onlineServers(OnlineServersRef ref) {
+List<Server> onlineServers(Ref ref) {
   final all = ref.watch(serversProvider);
   return all.where((s) => s.isOnline).toList();
 }
@@ -210,7 +210,7 @@ class ServerProvider extends _$ServerProvider {
 ```dart
 // Unique provider per server
 @riverpod
-ServerStatus serverStatus(ServerStatusRef ref, Server server) {
+ServerStatus serverStatus(Ref ref, Server server) {
   // server.id used as key
 }
 ```
@@ -249,7 +249,7 @@ class AutoRefreshServerStatus extends _$AutoRefreshServerStatus {
 
 ```dart
 @riverpod
-Future<SystemInfo> systemInfo(SystemInfoRef ref, Server server) async {
+Future<SystemInfo> systemInfo(Ref ref, Server server) async {
   // Wait for SSH client first
   final client = await ref.watch(sshClientProvider(server).future);
 

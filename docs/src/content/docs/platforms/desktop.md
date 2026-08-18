@@ -12,12 +12,12 @@ Server Box on desktop platforms provides additional productivity features.
 Native app menus with standard shortcuts:
 
 - **Server Box**: About, Settings (⌘,), Quit (⌘Q)
-- **Navigate**: Switch between home tabs
+- **Navigate**: Switch between home tabs (⌘1 … ⌘9)
 - **Info**: Project links
 
 ### Window Management
 
-- Remembers window size across launches
+- Remembers window size and position across launches
 
 ## Linux
 
@@ -37,6 +37,7 @@ Native app menus with standard shortcuts:
 - Light theme
 - Dark theme
 - AMOLED theme (pure black)
+- Auto AMOLED (follows OS, AMOLED when dark)
 - System theme (follows OS)
 
 ### Advantages Over Mobile

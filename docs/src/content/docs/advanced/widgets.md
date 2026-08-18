@@ -45,8 +45,8 @@ Must end with `/status`.
 1. Long press home screen → **Widgets**
 2. Find "ServerBox" → Add to home screen
 3. Note the widget ID number displayed
-4. Open ServerBox app → Settings
-5. Tap **Config home widget link**
+4. Open ServerBox app → Settings → **App** → Setting → **Android Setting**
+5. Tap **Config home widget url**
 6. Add entry: `Widget ID` = `Status URL`
 
 Example:
@@ -63,7 +63,7 @@ the server's edit page, either as its connection method, or alongside SSH.
 
 ### Setup
 
-1. Open iPhone app → Settings → **iOS Settings**
+1. Open iPhone app → Settings → **App** → Setting → **iOS Setting**
 2. Tap **Watch app**
 3. Pick the servers to show. The order you pick them in is kept, and the watch
    pages through that list
