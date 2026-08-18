@@ -9,20 +9,23 @@ builds both and copies this site's output into `website/dist/docs/`.
 ```
 docs/
 ├── public/                 # Static assets (favicons, ...)
-├── src/content/docs/       # Pages — English at the top level,
-│   ├── advanced/           # one directory per other locale below
+├── src/content/docs/       # Pages — English at the top level
+│   ├── advanced/
 │   ├── development/
 │   ├── platforms/
 │   ├── principles/
-│   ├── de/  es/  fr/  ja/  zh/
+│   ├── zh/                 # Simplified Chinese, mirroring the layout above
 │   └── *.mdx               # introduction, installation, quick-start, index
 └── astro.config.mjs        # Locales and sidebar, including sidebar translations
 ```
 
 Each `.md` / `.mdx` file under `src/content/docs/` becomes a route named after
-its path. A page added in English needs a matching file in each locale
-directory, and a new sidebar entry in `astro.config.mjs` carries its own
-`translations` map.
+its path. A page added in English needs a matching file under `zh/`, and a new
+sidebar entry in `astro.config.mjs` carries its own `translations` map.
+
+**Locales are English and Simplified Chinese only.** German, Spanish, French and
+Japanese were dropped in Aug 2026 — they had drifted out of sync with the code
+and there was no one maintaining them.
 
 ## Commands
 
