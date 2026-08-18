@@ -1,129 +1,99 @@
-import 'dart:async';
-
 import 'package:fl_lib/fl_lib.dart';
 
-abstract class CachedHiveStore<T extends Object> extends HiveStore {
-  CachedHiveStore(super.boxName);
+/// A [SqliteStore] whose rows are one model type, kept in a list cache.
+///
+/// The cache is dropped by the write methods themselves rather than by watching
+/// the store. Hive needed a watcher because a box could be written behind the
+/// store's back — `Backup.restore` did exactly that — and a watcher then had to
+/// be suppressed around the store's own writes so they did not each cost a
+/// reload. Nothing can reach the database except through here now, so
+/// invalidating in [set], [remove] and [clear] covers every path.
+abstract class CachedSqliteStore<T extends Object> extends SqliteStore {
+  CachedSqliteStore(super.name);
 
   List<T>? _cache;
-  StreamSubscription<dynamic>? _boxWatchSub;
-  bool _suppressWatch = false;
 
   List<T>? get cachedItems => _cache;
 
+  /// The row key for [item].
   String getKey(T item);
 
+  /// Rebuilds one item from its stored JSON.
+  T? fromJson(Map<String, dynamic> json);
+
   @override
-  Future<void> init() async {
-    await super.init();
-    _boxWatchSub?.cancel();
-    _boxWatchSub = box.watch().listen((_) {
-      if (!_suppressWatch) {
-        _cache = null;
-      }
-    });
+  bool set<V extends Object>(
+    String key,
+    V val, {
+    StoreToObj<V>? toObj,
+    bool? updateLastUpdateTsOnSet,
+  }) {
+    final res = super.set(
+      key,
+      val,
+      toObj: toObj,
+      updateLastUpdateTsOnSet: updateLastUpdateTsOnSet,
+    );
+    if (res) _cache = null;
+    return res;
+  }
+
+  @override
+  bool remove(String key, {bool? updateLastUpdateTsOnRemove}) {
+    final res = super.remove(
+      key,
+      updateLastUpdateTsOnRemove: updateLastUpdateTsOnRemove,
+    );
+    if (res) _cache = null;
+    return res;
   }
 
   @override
   bool clear({bool? updateLastUpdateTsOnClear}) {
-    _suppressWatch = true;
-    try {
-      _cache = null;
-      return super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
-    } finally {
-      _suppressWatch = false;
-    }
-  }
-
-  void invalidateCache() {
     _cache = null;
+    return super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
   }
 
-  void put(T item) {
-    _suppressWatch = true;
-    try {
-      set(getKey(item), item);
-      _cache = null;
-    } finally {
-      _suppressWatch = false;
-    }
-  }
+  void invalidateCache() => _cache = null;
 
-  void putRaw(T item) {
-    _suppressWatch = true;
-    try {
-      box.put(getKey(item), item);
-      _cache = null;
-    } finally {
-      _suppressWatch = false;
-    }
-  }
+  void put(T item) => set(getKey(item), item);
 
-  List<T> fetch() {
-    return List<T>.from(_cache ??= _loadAll());
-  }
+  /// A copy, so a caller sorting or filtering the result cannot reorder the
+  /// cache everyone else reads.
+  List<T> fetch() => List<T>.from(_cache ??= _loadAll());
 
   List<T> _loadAll() {
     final result = <T>[];
     for (final key in keys()) {
-      final item = _getAndConvert(key);
-      if (item != null) {
-        result.add(item);
-      }
+      final item = fetchOneRaw(key);
+      if (item != null) result.add(item);
     }
     return result;
   }
 
-  T? _getAndConvert(String key) {
-    final val = get<T>(key);
-    if (val != null) return val;
-
-    final raw = box.get(key);
-    if (raw == null) return null;
-
-    if (raw is Map) {
-      try {
-        final item = fromJson(Map<String, dynamic>.from(raw));
-        if (item != null) {
-          putRaw(item);
-        }
-        return item;
-      } catch (e) {
-        dprint('Parsing $T from JSON', e);
-      }
-    }
-    return null;
-  }
-
-  T? fromJson(Map<String, dynamic> json);
-
-  void deleteById(String id) {
-    _suppressWatch = true;
+  /// Reads one row, bypassing the cache.
+  T? fetchOneRaw(String key) {
+    final raw = get<Object>(key);
+    if (raw is! Map) return null;
     try {
-      remove(id);
-      _cache = null;
-    } finally {
-      _suppressWatch = false;
+      return fromJson(Map<String, dynamic>.from(raw));
+    } catch (e) {
+      dprint('Parsing $T from JSON', e);
+      return null;
     }
   }
 
-  void delete(T item) {
-    deleteById(getKey(item));
-  }
+  void deleteById(String id) => remove(id);
+
+  void delete(T item) => deleteById(getKey(item));
 
   void update(T old, T newItem) {
     if (!have(old)) {
       throw Exception('Old $T: $old not found');
     }
-    _suppressWatch = true;
-    try {
-      remove(getKey(old));
-      set(getKey(newItem), newItem);
-      _cache = null;
-    } finally {
-      _suppressWatch = false;
-    }
+    remove(getKey(old));
+    set(getKey(newItem), newItem);
   }
 
-  bool have(T item) => get(getKey(item)) != null;
+  bool have(T item) => get<Object>(getKey(item)) != null;
 }

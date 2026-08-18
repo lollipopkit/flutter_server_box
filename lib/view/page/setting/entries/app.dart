@@ -494,13 +494,31 @@ extension _App on _AppSettingsPageState {
             return;
           }
           final encrypted = Cryptor.encrypt(json.encode(newSettings), pwd);
-          Stores.setting.box.put(encryptedKey, encrypted);
+          // Not stamping `lastUpdateTs`, which is what going straight to the
+          // box used to do.
+          //
+          // TODO: decide whether that was intentional. Editing the raw settings
+          // is a user edit, so leaving the timestamps alone means sync will not
+          // carry it to another device until something else is changed.
+          Stores.setting.set(
+            encryptedKey,
+            encrypted,
+            updateLastUpdateTsOnSet: false,
+          );
         } else {
-          Stores.setting.box.putAll(newSettings);
+          for (final entry in newSettings.entries) {
+            final value = entry.value;
+            if (value == null) continue;
+            Stores.setting.set(
+              entry.key,
+              value as Object,
+              updateLastUpdateTsOnSet: false,
+            );
+          }
           final newKeys = newSettings.keys.toSet();
           final removedKeys = initialKeys.where((e) => !newKeys.contains(e));
           for (final key in removedKeys) {
-            Stores.setting.box.delete(key);
+            Stores.setting.remove(key, updateLastUpdateTsOnRemove: false);
           }
         }
       } catch (e, trace) {

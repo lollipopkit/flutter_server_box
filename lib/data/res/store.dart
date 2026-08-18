@@ -4,6 +4,7 @@ import 'package:server_box/data/store/agent_conversation.dart';
 import 'package:server_box/data/store/connection_stats.dart';
 import 'package:server_box/data/store/container.dart';
 import 'package:server_box/data/store/history.dart';
+import 'package:server_box/data/store/migrations/m003_hive_to_sqlite.dart';
 import 'package:server_box/data/store/port_forward.dart';
 import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/server.dart';
@@ -27,7 +28,7 @@ abstract final class Stores {
   static PortForwardStore get portForward => getIt<PortForwardStore>();
 
   /// All stores that need backup
-  static List<HiveStore> get _allBackup => [
+  static List<SqliteStore> get _allBackup => [
     setting,
     server,
     container,
@@ -40,7 +41,7 @@ abstract final class Stores {
 
   /// Stores initialized locally. Agent conversations intentionally stay out of
   /// backup and sync because they may contain terminal output and reasoning.
-  static List<HiveStore> get _allStores => [..._allBackup, agentConversation];
+  static List<SqliteStore> get _allStores => [..._allBackup, agentConversation];
 
   static Future<void> init() async {
     getIt.registerLazySingleton<SettingStore>(() => SettingStore.instance);
@@ -63,13 +64,20 @@ abstract final class Stores {
 
     await Future.wait(_allStores.map((store) => store.init()));
 
+    // Before every fixup below. Each of them writes a flag meaning "this device
+    // has been dealt with", and running them against the empty stores would set
+    // those flags over data that has not been copied across yet — so the
+    // records that need converting would arrive after the only pass that would
+    // have converted them.
+    await HiveImport.runIfNeeded();
+
     await setting.removeRetiredKeys();
 
     // Migrate sshConnectionMode from old int values to bool
     setting.migrateSshConnectionMode();
     await setting.migrateHomeTabsAgent();
 
-    if (connectionStats.indexDbKeys.isEmpty) {
+    if (connectionStats.indexKeys.isEmpty) {
       await connectionStats.rebuildIndexAndCompact();
     }
   }

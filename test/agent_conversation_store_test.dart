@@ -1,31 +1,18 @@
-import 'dart:io';
-
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/store/agent_conversation.dart';
 
 void main() {
-  late Directory tempDir;
-  late Box<dynamic> box;
   late AgentConversationStore store;
 
-  setUpAll(() async {
-    tempDir = await Directory.systemTemp.createTemp('server-box-agent-test-');
-    Hive.init(tempDir.path);
-    box = await Hive.openBox<dynamic>('agent_conversation_test');
-    store = AgentConversationStore.forBox(box);
+  setUp(() {
+    SqliteDb.openInMemory();
+    store = AgentConversationStore.forTest();
   });
 
-  setUp(() async {
-    await box.clear();
-  });
-
-  tearDownAll(() async {
-    await box.close();
-    await tempDir.delete(recursive: true);
-  });
+  tearDown(SqliteDb.close);
 
   test('round-trips protocol-complete conversation items', () {
     const command = AskAiCommand(

@@ -1,5 +1,4 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/data/model/container/type.dart';
 import 'package:server_box/data/model/server/server_private_info.dart';
@@ -9,16 +8,13 @@ import 'package:server_box/data/store/private_key.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/data/store/snippet.dart';
 
-class ServerStore extends CachedHiveStore<Spi> {
+class ServerStore extends CachedSqliteStore<Spi> {
   ServerStore._() : super('server');
 
-  /// The same seam [SettingStore.forBox] has: `init()` reaches for the
-  /// platform's secure storage to get an encryption cipher, which a unit test
-  /// has no implementation of.
+  /// The same seam [SettingStore.forTest] has: a distinct store name, so a test
+  /// on `SqliteDb.openInMemory()` cannot collide with another test's rows.
   @visibleForTesting
-  ServerStore.forBox(Box<dynamic> testBox) : super('server_test') {
-    box = testBox;
-  }
+  ServerStore.forTest() : super('server_test');
 
   static final instance = ServerStore._();
 

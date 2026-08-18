@@ -52,7 +52,14 @@ abstract final class SchemaVersion {
   ///     layout written before versioning existed, hence the starting point
   ///     rather than v1
   /// v3: Spi's flat SSH fields nested under `ssh`
-  static const current = 3;
+  /// v4: Hive boxes replaced by one encrypted SQLite database
+  ///
+  /// There is no migration registered for v2 -> v3 or v3 -> v4. Both are done
+  /// by `HiveImport`, which is the only code that reads a Hive box and so the
+  /// only place a pre-v3 record can be decoded at all; it records [current]
+  /// when it finishes. Every install therefore reaches SQLite already at v4,
+  /// and [migrate] has nothing to do until a v5 exists.
+  static const current = 4;
 
   /// Persisted locally, never included in a backup: it describes *this
   /// device's* storage, and restoring another device's number would make the

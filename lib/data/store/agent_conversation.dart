@@ -1,10 +1,9 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:meta/meta.dart';
 import 'package:server_box/data/model/ai/agent_conversation.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 
-class AgentConversationStore extends HiveStore {
+class AgentConversationStore extends SqliteStore {
   AgentConversationStore._()
     : super(
         'agent_conversation',
@@ -14,15 +13,13 @@ class AgentConversationStore extends HiveStore {
       );
 
   @visibleForTesting
-  AgentConversationStore.forBox(Box<dynamic> testBox)
+  AgentConversationStore.forTest()
     : super(
         'agent_conversation_test',
         updateLastUpdateTsOnClear: false,
         updateLastUpdateTsOnRemove: false,
         updateLastUpdateTsOnSet: false,
-      ) {
-    box = testBox;
-  }
+      );
 
   static final instance = AgentConversationStore._();
 
@@ -35,9 +32,9 @@ class AgentConversationStore extends HiveStore {
 
   List<AgentConversation> fetchForServer(String serverId) {
     final conversations = <AgentConversation>[];
-    for (final key in box.keys) {
-      if (key is! String || !key.startsWith(_conversationPrefix)) continue;
-      final conversation = _conversationFromValue(box.get(key));
+    for (final key in keys()) {
+      if (!key.startsWith(_conversationPrefix)) continue;
+      final conversation = _conversationFromValue(get<Map>(key));
       if (conversation?.serverId == serverId) conversations.add(conversation!);
     }
     conversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
@@ -45,7 +42,7 @@ class AgentConversationStore extends HiveStore {
   }
 
   AgentConversation? fetch(String conversationId) {
-    return _conversationFromValue(box.get(_conversationKey(conversationId)));
+    return _conversationFromValue(get<Map>(_conversationKey(conversationId)));
   }
 
   AgentConversation? fetchActive(String serverId) {
@@ -56,8 +53,8 @@ class AgentConversationStore extends HiveStore {
   }
 
   String? activeConversationId(String serverId) {
-    final value = box.get(_activeKey(serverId));
-    return value is String && value.isNotEmpty ? value : null;
+    final value = get<String>(_activeKey(serverId));
+    return value != null && value.isNotEmpty ? value : null;
   }
 
   AgentConversation create({
@@ -249,8 +246,8 @@ class AgentConversationStore extends HiveStore {
   static String _conversationKey(String id) => '$_conversationPrefix$id';
   static String _activeKey(String serverId) => '$_activePrefix$serverId';
 
-  static AgentConversation? _conversationFromValue(Object? value) {
-    if (value is! Map) return null;
+  static AgentConversation? _conversationFromValue(Map<dynamic, dynamic>? value) {
+    if (value == null) return null;
     try {
       final conversation = AgentConversation.fromJson(
         Map<String, dynamic>.from(value),

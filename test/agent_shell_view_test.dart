@@ -1,11 +1,9 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/core/extension/context/locale.dart' as app_locale;
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
@@ -30,36 +28,25 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
-  late Box<dynamic> settingBox;
-  late Box<dynamic> conversationBox;
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-agent-shell-');
-    Hive.init(tempDir.path);
+    SqliteDb.openInMemory();
     // In memory rather than on disk. A widget test body runs in a fake-async
     // zone; a real file write started there completes on a callback that zone
     // is no longer pumping, so the box's write lock is never released and
     // closing it in `tearDown` blocks — which hangs the whole run, not just
     // this file. The shell persists its mode the moment it changes, so every
     // test here writes.
-    settingBox = await Hive.openBox<dynamic>(
-      'setting_test',
-      bytes: Uint8List(0),
-    );
-    conversationBox = await Hive.openBox<dynamic>(
-      'agent_conversation_test',
-      bytes: Uint8List(0),
-    );
-    getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
+    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
     getIt.registerSingleton<AgentConversationStore>(
-      AgentConversationStore.forBox(conversationBox),
+      AgentConversationStore.forTest(),
     );
   });
 
   tearDown(() async {
     await getIt.reset();
-    await settingBox.close();
-    await conversationBox.close();
+    await SqliteDb.close();
     await tempDir.delete(recursive: true);
   });
 

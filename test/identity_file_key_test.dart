@@ -13,10 +13,9 @@ library;
 
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/core/utils/server.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/private_key_info.dart';
@@ -68,30 +67,22 @@ void main() {
   });
 
   group('migrateIdentityFilePaths', () {
-    late Directory tempDir;
-    late Box<dynamic> serverBox;
-    late Box<dynamic> keyBox;
     late ServerStore servers;
     late PrivateKeyStore keys;
 
-    setUp(() async {
-      tempDir = await Directory.systemTemp.createTemp('identity-file-');
-      Hive.init(tempDir.path);
+    setUp(() {
       // In memory: a real write started in a test body completes on a callback
       // the fake-async zone is no longer pumping, and `close()` then blocks
-      serverBox = await Hive.openBox<dynamic>('server_test', bytes: Uint8List(0));
-      keyBox = await Hive.openBox<dynamic>('key_test', bytes: Uint8List(0));
-      servers = ServerStore.forBox(serverBox);
-      keys = PrivateKeyStore.forBox(keyBox);
+      SqliteDb.openInMemory();
+      servers = ServerStore.forTest();
+      keys = PrivateKeyStore.forTest();
     });
 
-    tearDown(() async {
-      await serverBox.close();
-      await keyBox.close();
-      await tempDir.delete(recursive: true);
-    });
+    tearDown(SqliteDb.close);
 
-    Spi reread(String id) => servers.get<Spi>(id)!;
+    /// Rows are JSON now, so a plain `get<Spi>` would hand back the map. This
+    /// is the typed read.
+    Spi reread(String id) => servers.fetchOneRaw(id)!;
 
     test('a path that names no stored key moves to keyPath', () {
       servers.put(

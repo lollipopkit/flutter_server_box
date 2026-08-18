@@ -209,7 +209,7 @@ final class WatchSync {
     });
     // A server's monitor address or password can change without the watch
     // selection changing, and the watch would keep using the stale copy.
-    _serverStoreSub = Stores.server.box.watch().listen((_) => _schedulePush());
+    _serverStoreSub = Stores.server.watch().listen((_) => _schedulePush());
   }
 
   void _schedulePush() {

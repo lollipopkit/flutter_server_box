@@ -1,12 +1,10 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:fl_lib/fl_lib.dart';
 import 'package:fl_lib/generated/l10n/lib_l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hive_ce/hive.dart';
 import 'package:server_box/data/provider/server/selection.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/store/private_key.dart';
@@ -34,22 +32,16 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late Directory tempDir;
-  late Box<dynamic> settingBox;
-  late Box<dynamic> serverBox;
-  late Box<dynamic> keyBox;
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-pane-');
-    Hive.init(tempDir.path);
+    SqliteDb.openInMemory();
     // In memory: this page persists tags, order and the column's own width,
     // and a real write started in a `testWidgets` body never lets go of the
     // box's lock.
-    settingBox = await Hive.openBox<dynamic>('setting_test', bytes: Uint8List(0));
-    serverBox = await Hive.openBox<dynamic>('server_test', bytes: Uint8List(0));
-    keyBox = await Hive.openBox<dynamic>('key_test', bytes: Uint8List(0));
-    getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
-    getIt.registerSingleton<ServerStore>(ServerStore.forBox(serverBox));
-    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forBox(keyBox));
+    getIt.registerSingleton<SettingStore>(SettingStore.forTest());
+    getIt.registerSingleton<ServerStore>(ServerStore.forTest());
+    getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());
     // 0 is what `normalizeServerStatusRefreshSeconds` reads as off; its
     // periodic timer would otherwise outlive the tree and fail the run.
     Stores.setting.serverStatusUpdateInterval.put(0);
@@ -57,9 +49,7 @@ void main() {
 
   tearDown(() async {
     await getIt.reset();
-    await settingBox.close();
-    await serverBox.close();
-    await keyBox.close();
+    await SqliteDb.close();
     await tempDir.delete(recursive: true);
   });
 

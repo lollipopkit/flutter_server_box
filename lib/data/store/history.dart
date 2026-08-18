@@ -1,71 +1,72 @@
 import 'package:fl_lib/fl_lib.dart';
-import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:meta/meta.dart';
 
 /// index from 0 -> n : latest -> oldest
 class _ListHistory {
-  final List _history;
-  final String _name;
-  final Box _box;
+  const _ListHistory({required SqliteStore store, required String name})
+    : _store = store,
+      _name = name;
 
-  _ListHistory({required Box box, required String name})
-    : _box = box,
-      _name = name,
-      _history = box.get(name, defaultValue: [])!;
+  final SqliteStore _store;
+  final String _name;
+
+  /// Read through on every call rather than cached at construction.
+  ///
+  /// The Hive version held the list it was built with and wrote the same
+  /// instance back, so it was the store's contents only as long as nothing else
+  /// touched the key. Nothing did, but a restore now goes through the store
+  /// like everything else, and a snapshot taken at first access would outlive
+  /// it.
+  List<String> get all =>
+      _store.get<List>(_name)?.cast<String>().toList() ?? <String>[];
 
   void add(String path) {
-    _history.remove(path);
-    _history.insert(0, path);
-    _box.put(_name, _history);
+    final history = all..remove(path);
+    history.insert(0, path);
+    _store.set(_name, history);
   }
 
-  List get all => _history;
-
-  void clear() {
-    _history.clear();
-    _box.put(_name, _history);
-  }
+  void clear() => _store.set(_name, const <String>[]);
 }
 
 class _MapHistory {
-  final Map _history;
-  final String _name;
-  final Box _box;
+  const _MapHistory({required SqliteStore store, required String name})
+    : _store = store,
+      _name = name;
 
-  _MapHistory({required Box box, required String name})
-    : _box = box,
-      _name = name,
-      _history = box.get(name, defaultValue: <dynamic, dynamic>{})!;
+  final SqliteStore _store;
+  final String _name;
+
+  Map<String, String> get _all =>
+      _store.get<Map>(_name)?.cast<String, String>() ?? <String, String>{};
 
   void put(String id, String val) {
-    _history[id] = val;
-    _box.put(_name, _history);
+    _store.set(_name, {..._all, id: val});
   }
 
-  String? fetch(String id) => _history[id];
+  String? fetch(String id) => _all[id];
 }
 
-class HistoryStore extends HiveStore {
+class HistoryStore extends SqliteStore {
   HistoryStore._() : super('history');
 
-  /// The same seam [SettingStore.forBox] and [ServerStore.forBox] have.
+  /// The same seam [ServerStore.forTest] has: a distinct store name, so a test
+  /// on `SqliteDb.openInMemory()` cannot collide with another test's rows.
   ///
   /// This one holds the terminal tab set, which is the piece of session state
   /// that does survive a relaunch — Flutter's own restoration does not, here —
   /// so it is what a test of "what comes back" has to be able to write.
   @visibleForTesting
-  HistoryStore.forBox(Box<dynamic> testBox) : super('history_test') {
-    box = testBox;
-  }
+  HistoryStore.forTest() : super('history_test');
 
   static final instance = HistoryStore._();
 
-  late final sftpGoPath = _ListHistory(box: box, name: 'sftpPath');
+  late final sftpGoPath = _ListHistory(store: this, name: 'sftpPath');
 
-  late final sftpLastPath = _MapHistory(box: box, name: 'sftpLastPath');
+  late final sftpLastPath = _MapHistory(store: this, name: 'sftpLastPath');
 
   late final sshServerHistory = _ListHistory(
-    box: box,
+    store: this,
     name: 'sshServerHistory',
   );
 
