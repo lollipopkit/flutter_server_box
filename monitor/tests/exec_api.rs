@@ -30,8 +30,10 @@ fn ensure_crypto_provider() {
 
 async fn app_state(full_access: bool) -> Arc<AppState> {
     ensure_crypto_provider();
-    let mut config = Config::default();
-    config.jwt_secret = Some(SECRET.to_string());
+    let mut config = Config {
+        jwt_secret: Some(SECRET.to_string()),
+        ..Default::default()
+    };
     let mut remote = config.get_remote_access();
     // The grant is gated on the terminal being available, so that switching
     // the terminal off cannot leave this door open behind it. The test server

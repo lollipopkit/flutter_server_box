@@ -1010,7 +1010,7 @@ async fn get_velocity_history(
         }));
     }
 
-    let query = web::types::Query::<serde_json::Value>::from_query(&req.query_string())
+    let query = web::types::Query::<serde_json::Value>::from_query(req.query_string())
         .unwrap_or_else(|_| web::types::Query(serde_json::Value::Object(serde_json::Map::new())));
 
     let limit = query

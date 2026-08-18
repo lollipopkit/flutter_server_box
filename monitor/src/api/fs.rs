@@ -237,10 +237,10 @@ pub async fn read(
         Err(e) => return Ok(failed(e)),
     };
     let offset = query.offset.unwrap_or(0);
-    if offset > 0 {
-        if let Err(e) = file.seek(std::io::SeekFrom::Start(offset)).await {
-            return Ok(failed(e));
-        }
+    if offset > 0
+        && let Err(e) = file.seek(std::io::SeekFrom::Start(offset)).await
+    {
+        return Ok(failed(e));
     }
     // Streamed rather than read into memory: this is the endpoint that has to
     // move a file bigger than the agent's own footprint, and `/exec`'s 1 MiB
@@ -320,10 +320,10 @@ pub async fn write(
         }
     }
 
-    if failure.is_none() {
-        if let Err(e) = file.flush().await {
-            failure = Some(failed(e));
-        }
+    if failure.is_none()
+        && let Err(e) = file.flush().await
+    {
+        failure = Some(failed(e));
     }
     drop(file);
 
@@ -334,12 +334,10 @@ pub async fn write(
     // The staged file was created with the process umask, and the rename
     // carries that mode onto the destination — so overwriting a 0600 file
     // would quietly leave it 0644. Whatever was there keeps its permissions.
-    if let Ok(existing) = tokio::fs::metadata(&path).await {
-        if let Err(e) =
-            tokio::fs::set_permissions(&staging, existing.permissions()).await
-        {
-            tracing::warn!("Could not carry {path:?}'s permissions over: {e}");
-        }
+    if let Ok(existing) = tokio::fs::metadata(&path).await
+        && let Err(e) = tokio::fs::set_permissions(&staging, existing.permissions()).await
+    {
+        tracing::warn!("Could not carry {path:?}'s permissions over: {e}");
     }
     if let Err(e) = tokio::fs::rename(&staging, &path).await {
         let _ = tokio::fs::remove_file(&staging).await;
@@ -526,7 +524,7 @@ async fn view_of(path: &Path) -> EntryView {
     EntryView {
         name,
         kind,
-        size: meta.is_file().then(|| meta.len()),
+        size: meta.is_file().then_some(meta.len()),
         modified: meta
             .modified()
             .ok()

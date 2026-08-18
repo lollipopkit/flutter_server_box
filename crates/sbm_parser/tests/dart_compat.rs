@@ -969,7 +969,7 @@ fn smart_parse_fixture() {
     let power_on = d.smart_attributes.get("Power_On_Hours").unwrap();
     assert_eq!(power_on.raw_value.as_i64(), Some(17472));
 
-    assert!(d.smart_attributes.get("NonExistent").is_none());
+    assert!(!d.smart_attributes.contains_key("NonExistent"));
     assert_eq!(
         d.smart_attributes.get("SSD_Life_Left").and_then(|a| a.raw_value.as_i64()),
         Some(93)

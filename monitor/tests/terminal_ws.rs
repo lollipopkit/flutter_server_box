@@ -34,8 +34,10 @@ fn ensure_crypto_provider() {
 /// that far assert on the failure rather than on a shell.
 async fn app_state(enabled: bool, ssh_addr: &str) -> Arc<AppState> {
     ensure_crypto_provider();
-    let mut config = Config::default();
-    config.jwt_secret = Some("test-secret-that-is-long-enough-32ch".to_string());
+    let mut config = Config {
+        jwt_secret: Some("test-secret-that-is-long-enough-32ch".to_string()),
+        ..Default::default()
+    };
     let mut remote = config.get_remote_access();
     remote.terminal.enabled = enabled;
     remote.ssh_addr = ssh_addr.to_string();
@@ -589,8 +591,10 @@ async fn closing_explicitly_ends_the_session_for_good() {
 async fn the_session_cap_refuses_the_extra_terminal() {
     let sshd = fake_sshd::start(false).await;
     ensure_crypto_provider();
-    let mut config = Config::default();
-    config.jwt_secret = Some("test-secret-that-is-long-enough-32ch".to_string());
+    let mut config = Config {
+        jwt_secret: Some("test-secret-that-is-long-enough-32ch".to_string()),
+        ..Default::default()
+    };
     let mut remote = config.get_remote_access();
     remote.terminal.enabled = true;
     remote.ssh_addr = sshd.clone();
@@ -624,8 +628,10 @@ async fn the_session_cap_refuses_the_extra_terminal() {
 /// A state with the access without SSH explicitly on or off.
 async fn full_access_state(enabled: bool) -> Arc<AppState> {
     ensure_crypto_provider();
-    let mut config = Config::default();
-    config.jwt_secret = Some("test-secret-that-is-long-enough-32ch".to_string());
+    let mut config = Config {
+        jwt_secret: Some("test-secret-that-is-long-enough-32ch".to_string()),
+        ..Default::default()
+    };
     let mut remote = config.get_remote_access();
     remote.terminal.enabled = true;
     // Nothing listens here: an SSH-less shell must not need it
@@ -733,8 +739,10 @@ async fn tuned_state(
     detached_secs: u64,
 ) -> Arc<AppState> {
     ensure_crypto_provider();
-    let mut config = Config::default();
-    config.jwt_secret = Some("test-secret-that-is-long-enough-32ch".to_string());
+    let mut config = Config {
+        jwt_secret: Some("test-secret-that-is-long-enough-32ch".to_string()),
+        ..Default::default()
+    };
     let mut remote = config.get_remote_access();
     remote.terminal.enabled = true;
     remote.ssh_addr = ssh_addr.to_string();

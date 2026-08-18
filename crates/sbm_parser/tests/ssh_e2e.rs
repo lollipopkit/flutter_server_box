@@ -413,7 +413,6 @@ fn ssh_e2e_unix_custom_and_disabled() {
     let opts = ScriptOptions {
         disabled: vec!["Linux.net".into(), "BSD.net".into()],
         build_number: "e2e".into(),
-        ..Default::default()
     };
     let content = script::build_script(SystemType::Linux, &opts);
     let path = format!("{DIR}/status.sh");

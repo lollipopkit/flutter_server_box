@@ -305,6 +305,11 @@ impl VelocityMetrics {
     }
 }
 
+impl Default for VelocityMetrics {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -424,11 +429,5 @@ mod tests {
         series.update(vec![sample], Utc::now());
         series.update(vec![], Utc::now());
         assert_eq!(series.get_average_usage_percent(), Some(40.0));
-    }
-}
-
-impl Default for VelocityMetrics {
-    fn default() -> Self {
-        Self::new()
     }
 }

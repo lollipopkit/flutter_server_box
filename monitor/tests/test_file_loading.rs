@@ -3,7 +3,6 @@ use server_box_monitor::core::config::Config;
 #[cfg(test)]
 mod test_file_loading {
     use super::*;
-    use tokio;
 
     #[tokio::test]
     async fn test_toml_file_loading() {

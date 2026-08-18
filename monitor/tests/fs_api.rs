@@ -30,8 +30,10 @@ fn ensure_crypto_provider() {
 /// is `enabled && !roots.is_empty()`.
 async fn app_state(enabled: bool, roots: &[&str]) -> Arc<AppState> {
     ensure_crypto_provider();
-    let mut config = Config::default();
-    config.jwt_secret = Some(SECRET.to_string());
+    let mut config = Config {
+        jwt_secret: Some(SECRET.to_string()),
+        ..Default::default()
+    };
     let mut remote = config.get_remote_access();
     remote.fs.enabled = enabled;
     remote.fs.roots = roots.iter().map(|r| r.to_string()).collect();
