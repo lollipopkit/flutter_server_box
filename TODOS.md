@@ -130,10 +130,10 @@ project still has CocoaPods integration"。
 gradle plugin 和 CMake,现在改走同一个 hook,但本机没跑过。要在 CI 或对应机器上
 各跑一次 `dart run fl_build -p <platform>`。
 
-**下一步(现在才有可能做):彻底 deintegrate CocoaPods。** Flutter 列出的步骤是
-`pod deintegrate` 加上从 `{ios,macos}/Flutter/*.xcconfig` 里移除 `Pods-Runner`
-的 include。没做的原因:Podfile 因为 Watch app 和 widget extension 而是
-non-standard,这两个 target 得单独验过。
+**CocoaPods 已彻底移除。** `Podfile`、`Podfile.lock`、`Pods/`、xcconfig 里的
+`Pods-Runner` include、workspace 里的 `Pods.xcodeproj` 引用、两个 pbxproj 里所有
+Pods 条目都没了。原先担心的 "non-standard Podfile" 其实只是 Flutter 标准模板,
+没有自定义 pod 也没有额外逻辑。Watch app 和 widget extension 都验过在 iOS 产物里。
 
 两条注意事项:
 - **不要用 `flutter_rust_bridge_codegen integrate`。** 它是给新项目的脚手架:
