@@ -37,11 +37,12 @@ void main() {
     // path_provider and would write into the real documents directory.
     Paths.doc = tempDir.path;
 
+    // One seeded generator reused, not a new one per byte — `Random(1)` inside
+    // the closure would have produced the same value 32 times.
+    final rng = Random(1);
     FlutterSecureStorage.setMockInitialValues({
       'hivePwd': base64UrlEncode(
-        Uint8List.fromList(
-          List<int>.generate(32, (_) => Random(1).nextInt(256)),
-        ),
+        Uint8List.fromList(List<int>.generate(32, (_) => rng.nextInt(256))),
       ),
     });
     SharedPreferences.setMockInitialValues({});

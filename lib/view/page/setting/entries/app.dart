@@ -506,6 +506,9 @@ extension _App on _AppSettingsPageState {
             updateLastUpdateTsOnSet: false,
           );
         } else {
+          // One transaction, as `Backup.merge` does: this rewrites the whole
+          // settings store, and half of an edit is not a state to leave behind.
+          SqliteStore.transact(() {
           for (final entry in newSettings.entries) {
             final value = entry.value;
             // A key set to null means "clear this". Skipping it instead left
@@ -523,10 +526,17 @@ extension _App on _AppSettingsPageState {
             );
           }
           final newKeys = newSettings.keys.toSet();
-          final removedKeys = initialKeys.where((e) => !newKeys.contains(e));
+          // Internal keys are shown by the editor (it reads with
+          // `includeInternalKeys: true`) but are not the user's to delete: one
+          // of them records that the Hive import already ran, and dropping it
+          // makes the next launch copy the retained boxes back over everything.
+          final removedKeys = initialKeys.where(
+            (e) => !newKeys.contains(e) && !Stores.setting.isInternalKey(e),
+          );
           for (final key in removedKeys) {
             Stores.setting.remove(key, updateLastUpdateTsOnRemove: false);
           }
+          });
         }
       } catch (e, trace) {
         context.showRoundDialog(

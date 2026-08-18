@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/core/utils/sandbox_import.dart';
 
@@ -138,16 +139,20 @@ void main() {
     // It describes a WAL index belonging to whatever process had the database
     // open. Copied, it either costs a rebuild or makes sqlite refuse; the WAL
     // itself is what the data is in, and that does come across.
-    await write(src, 'box.hive');
-    await write(src, 'app.db');
-    await write(src, 'app.db-wal');
-    await write(src, 'app.db-shm');
+    const db = SqliteDb.fileName;
+    await write(src, db);
+    await write(src, '$db-wal');
+    await write(src, '$db-shm');
+    // Not ours, and it only looks like a sidecar. Skipping by suffix took a
+    // file of the user's with it.
+    await write(src, 'notes-shm');
 
     expect(await import(), SandboxImportResult.imported);
 
-    expect(exists('app.db'), isTrue);
-    expect(exists('app.db-wal'), isTrue);
-    expect(exists('app.db-shm'), isFalse);
+    expect(exists(db), isTrue);
+    expect(exists('$db-wal'), isTrue);
+    expect(exists('$db-shm'), isFalse);
+    expect(exists('notes-shm'), isTrue);
   });
 
   test('what the user downloaded stays where it is, and is named', () async {

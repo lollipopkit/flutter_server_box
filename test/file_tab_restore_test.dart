@@ -35,9 +35,8 @@ void main() {
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-filetab-');
     SqliteDb.openInMemory();
-    // In memory: this page saves on every change, and a file write started in
-    // a `testWidgets` body never releases the box's lock — `close()` in
-    // `tearDown` then hangs the whole run with no output.
+      // In memory: this tree writes as it builds, and a test has no
+      // business leaving a database behind.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());
     getIt.registerSingleton<ServerStore>(ServerStore.forTest());
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());

@@ -39,11 +39,8 @@ void main() {
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-agent-view-');
     SqliteDb.openInMemory();
-    // In memory: the return-key tests below write the setting they are
-    // about, and a real file write started inside a `testWidgets` body
-    // completes on a callback the fake-async zone is no longer pumping —
-    // so the box's write lock is never released and `close()` in tearDown
-    // blocks forever, with no failure to say which file did it.
+    // In memory: the return-key tests below write the setting they are about,
+    // and none of them should leave a database behind.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());
     getIt.registerSingleton<AgentConversationStore>(
       AgentConversationStore.forTest()..init(),

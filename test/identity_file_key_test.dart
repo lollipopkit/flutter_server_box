@@ -71,8 +71,8 @@ void main() {
     late PrivateKeyStore keys;
 
     setUp(() {
-      // In memory: a real write started in a test body completes on a callback
-      // the fake-async zone is no longer pumping, and `close()` then blocks
+      // In memory: this tree writes as it builds, and a test has no
+      // business leaving a database behind.
       SqliteDb.openInMemory();
       servers = ServerStore.forTest();
       keys = PrivateKeyStore.forTest();

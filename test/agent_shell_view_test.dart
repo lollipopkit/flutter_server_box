@@ -32,12 +32,9 @@ void main() {
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-agent-shell-');
     SqliteDb.openInMemory();
-    // In memory rather than on disk. A widget test body runs in a fake-async
-    // zone; a real file write started there completes on a callback that zone
-    // is no longer pumping, so the box's write lock is never released and
-    // closing it in `tearDown` blocks — which hangs the whole run, not just
-    // this file. The shell persists its mode the moment it changes, so every
-    // test here writes.
+    // In memory rather than on disk: the shell persists its mode the moment it
+    // changes, so every test here writes, and none of them should leave a
+    // database behind.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());
     getIt.registerSingleton<AgentConversationStore>(
       AgentConversationStore.forTest()..init(),

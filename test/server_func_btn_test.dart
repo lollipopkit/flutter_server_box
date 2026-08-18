@@ -21,11 +21,11 @@ void main() {
   });
 
   /// The stored row, as indices — what the setting actually holds.
-  List<int> row() => setting.get<List>('serverBtns')?.cast<int>() ?? const [];
+  List<int> row() => setting.serverFuncBtns.get();
 
   test('adds every entry that shipped during the upgrade', () async {
     // A row from before systemd (1058), portForward (1340) and power (1481).
-    setting.set('serverBtns', [
+    setting.serverFuncBtns.put([
       ServerFuncBtn.terminal.index,
       ServerFuncBtn.files.index,
     ]);
@@ -42,7 +42,7 @@ void main() {
   });
 
   test('adds nothing for an upgrade that shipped no new entry', () async {
-    setting.set('serverBtns', [ServerFuncBtn.terminal.index]);
+    setting.serverFuncBtns.put([ServerFuncBtn.terminal.index]);
 
     ServerFuncBtn.autoAddNewFuncs(1481, 1600);
 
@@ -54,7 +54,7 @@ void main() {
     // install has been running 1500, and the user took it out of the row. An
     // upgrade to 1600 must not put it back — and would have, when the rule was
     // `to >= addedVersion` alone.
-    setting.set('serverBtns', [
+    setting.serverFuncBtns.put([
       ServerFuncBtn.terminal.index,
       ServerFuncBtn.systemd.index,
     ]);
@@ -65,7 +65,7 @@ void main() {
   });
 
   test('an entry already in the row is not added twice', () async {
-    setting.set('serverBtns', [
+    setting.serverFuncBtns.put([
       ServerFuncBtn.power.index,
       ServerFuncBtn.terminal.index,
     ]);
@@ -89,6 +89,7 @@ void main() {
       isNull,
       reason: 'nothing was written, so the defaults still apply',
     );
+    expect(row(), ServerFuncBtn.defaultIdxs);
     expect(
       ServerFuncBtn.defaultIdxs,
       containsAll([

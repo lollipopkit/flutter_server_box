@@ -370,7 +370,7 @@ extension _Actions on _ServerEditPageState {
     }
 
     if (this.spi == null) {
-      final existsIds = ServerStore.instance.keys();
+      final existsIds = Stores.server.keys();
       if (existsIds.contains(spi.id)) {
         Toast.show('${l10n.sameIdServerExist}: ${spi.id}');
         return;

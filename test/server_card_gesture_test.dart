@@ -31,8 +31,8 @@ void main() {
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-card-');
     SqliteDb.openInMemory();
-    // In memory: this page persists tags and order, and a real write started
-    // in a `testWidgets` body never lets go of the box's lock.
+      // In memory: this tree writes as it builds, and a test has no
+      // business leaving a database behind.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());
     getIt.registerSingleton<ServerStore>(ServerStore.forTest());
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());

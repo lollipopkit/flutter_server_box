@@ -143,14 +143,17 @@ class AgentConversationStore {
       title: _normalizeTitle(conversation.title, conversation.items),
       items: trimItemsForStorage(conversation.items),
     );
+    // The whole write, not just the upsert: the caller treats `false` as "not
+    // saved", and a failure in the active-row write or the prune would
+    // otherwise escape as an exception it does not expect.
     try {
       _upsert(normalized);
+      if (setActive) _setActiveRow(normalized.serverId, normalized.id);
+      _pruneServer(normalized.serverId);
     } catch (e) {
       dprint('Saving AgentConversation', e);
       return false;
     }
-    if (setActive) _setActiveRow(normalized.serverId, normalized.id);
-    _pruneServer(normalized.serverId);
     _changes.add(null);
     return true;
   }

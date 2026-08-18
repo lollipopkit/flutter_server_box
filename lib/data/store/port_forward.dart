@@ -12,9 +12,10 @@ class PortForwardStore extends SqliteStore {
 
   List<PortForwardConfig> fetch(String serverId) {
     final configs = <PortForwardConfig>[];
-    for (final key in keys()) {
-      final raw = get<Map>(key);
-      if (raw == null) continue;
+    // One query, not one per key: `getAllMap` reads the store in a single
+    // statement.
+    for (final raw in getAllMap().values) {
+      if (raw is! Map) continue;
       final PortForwardConfig config;
       try {
         config = PortForwardConfig.fromJson(Map<String, dynamic>.from(raw));

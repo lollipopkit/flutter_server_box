@@ -99,11 +99,17 @@ abstract class CachedSqliteStore<T extends Object> extends SqliteStore {
   void delete(T item) => deleteById(getKey(item));
 
   void update(T old, T newItem) {
+    final oldKey = getKey(old);
     if (!have(old)) {
       throw Exception('Old $T: $old not found');
     }
-    remove(getKey(old));
-    set(getKey(newItem), newItem);
+    final newKey = getKey(newItem);
+    // Only when the key actually moved. Every caller but the id migrations
+    // edits a record in place, and a delete-then-insert of the same key leaves
+    // a window — inside a restore's transaction or a crash — where the record
+    // is neither the old one nor the new one. An upsert has no such window.
+    if (oldKey != newKey) remove(oldKey);
+    set(newKey, newItem);
   }
 
   bool have(T item) => get<Object>(getKey(item)) != null;

@@ -180,9 +180,11 @@ abstract final class HiveImport {
     try {
       final json = (value as dynamic).toJson();
       if (json is Object) return json;
-    } catch (_) {
-      // No `toJson`. Leave it be: the destination reports what it could not
-      // take, naming the type.
+    } catch (e) {
+      // Usually just "no `toJson`", but not always — a model whose `toJson`
+      // throws looks the same from here, and the destination's own warning
+      // only names the type.
+      Loggers.app.warning('No JSON form for ${value.runtimeType}', e);
     }
     return value;
   }

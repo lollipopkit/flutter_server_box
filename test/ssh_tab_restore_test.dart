@@ -32,11 +32,8 @@ void main() {
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('server-box-sshtab-');
     SqliteDb.openInMemory();
-    // In memory, all four. This page writes its tab set on every change, and
-    // a real file write started inside a `testWidgets` body completes on a
-    // callback that zone is no longer pumping — so the box's write lock is
-    // never released and `close()` in `tearDown` blocks for ever, with no
-    // failure and no output to say which file did it.
+      // In memory: this tree writes as it builds, and a test has no
+      // business leaving a database behind.
     getIt.registerSingleton<SettingStore>(SettingStore.forTest());
     getIt.registerSingleton<ServerStore>(ServerStore.forTest());
     getIt.registerSingleton<PrivateKeyStore>(PrivateKeyStore.forTest());

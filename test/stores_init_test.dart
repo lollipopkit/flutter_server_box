@@ -37,11 +37,12 @@ void main() {
   tearDownAll(() => tempDir.delete(recursive: true));
 
   setUp(() async {
+    // One seeded generator reused, not a new one per byte — `Random(7)` inside
+    // the closure would have produced the same value 32 times.
+    final rng = Random(7);
     FlutterSecureStorage.setMockInitialValues({
       'hivePwd': base64UrlEncode(
-        Uint8List.fromList(
-          List<int>.generate(32, (_) => Random(7).nextInt(256)),
-        ),
+        Uint8List.fromList(List<int>.generate(32, (_) => rng.nextInt(256))),
       ),
     });
     SharedPreferences.setMockInitialValues({});
@@ -104,15 +105,25 @@ void main() {
   });
 
   test('clearing the settings does not make the import run again', () async {
+    const marker = '${StoreDefaults.prefixKey}hiveImported';
+
     await Stores.init();
+    expect(Stores.setting.get<bool>(marker), isTrue);
+    Stores.setting.timeout.put(31);
+
     Stores.setting.clear();
 
-    // The marker is internal, so `clear` leaves it. Were it dropped, the next
-    // launch would copy the retained Hive boxes back over everything.
+    // The marker is internal, so `clear` leaves it — directly, not inferred
+    // from the schema version. Were it dropped, the next launch would copy the
+    // retained Hive boxes back over everything the user has since changed.
+    expect(Stores.setting.timeout.get(), isNot(31), reason: 'settings cleared');
+    expect(Stores.setting.get<bool>(marker), isTrue);
+
     await getIt.reset();
     await SqliteDb.close();
     await Stores.init();
 
+    expect(Stores.setting.get<bool>(marker), isTrue);
     expect(SchemaVersion.stored, SchemaVersion.current);
   });
 }

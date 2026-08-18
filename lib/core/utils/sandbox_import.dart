@@ -385,7 +385,10 @@ abstract final class SandboxImport {
         // WAL index that no longer exists, and sqlite either rebuilds it or
         // refuses — the first is wasted, the second is a broken app. It is
         // rebuilt from the `-wal`, which does come across.
-        if (name.endsWith('-shm')) continue;
+        //
+        // By exact name, not by suffix: a file of the user's own that happens
+        // to end in `-shm` is theirs and should come across.
+        if (name == '${SqliteDb.fileName}-shm') continue;
 
         await entity.copy(dest.path.joinPath(name));
         _copiedBytes += await entity.length();

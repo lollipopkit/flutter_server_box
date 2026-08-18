@@ -387,7 +387,7 @@ provider、backup、SFTP 页面、server 编辑页全被卷进去了。
 
 第一阶段只动引擎,`Store` 接口不变:
 
-```
+```sql
 kv(store TEXT, key TEXT, value TEXT /* JSON */, updated_at INTEGER, PRIMARY KEY(store, key))
 ```
 
@@ -410,10 +410,12 @@ kv(store TEXT, key TEXT, value TEXT /* JSON */, updated_at INTEGER, PRIMARY KEY(
   `view/page/setting/entries/app.dart`(备份加密,同 backup.dart)、
   `data/store/migrations/m002_nest_ssh.dart`。
 
-序列化随之从 TypeAdapter 二进制换成 JSON,17 个 adapter 全部消失
-(`lib/hive/` 整个目录 + `hive_ce*` 依赖)。覆盖情况已逐个核对:9 个类都有
+序列化随之从 TypeAdapter 二进制换成 JSON。覆盖情况已逐个核对:9 个类都有
 `fromJson`(freezed 模型自带 `toJson`),7 个是 enum(按 name 存),setting 里的
 virt keys 本来就存 `List<int>`,`agent_conversation` 本来就存 JSON Map。
+
+**但 17 个 adapter 和 `lib/hive/` 没有删** —— 运行时不再用它们,`HiveImport`
+读旧盒子还要靠它们解码。删除时机见本节开头的"未做 / 遗留"。
 
 第二阶段只关系化真正需要 SQL 的:
 
