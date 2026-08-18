@@ -47,31 +47,13 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get askAiConfirmExecute => 'Підтвердити перед виконанням';
-
-  @override
-  String get askAiConversation => 'Розмова з ШІ';
-
-  @override
   String get askAiDisclaimer => 'ШІ може помилятися. Користуйтеся обережно.';
-
-  @override
-  String get askAiFollowUpHint => 'Поставте додаткове запитання...';
 
   @override
   String get askAiInsertTerminal => 'Вставити в термінал';
 
   @override
   String get askAiNoResponse => 'Відповідь відсутня';
-
-  @override
-  String get askAiRecommendedCommand => 'Команда, запропонована ШІ';
-
-  @override
-  String get askAiSelectedContent => 'Вибраний вміст';
-
-  @override
-  String get askAiUsageHint => 'Використовується в SSH-терміналі';
 
   @override
   String get askAiAgentTitle => 'SSH-агент';
@@ -217,9 +199,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get agentPromptHint =>
       'Попросіть агента перевірити сервери або виконати на них дію…';
-
-  @override
-  String get agentNoServers => 'Немає налаштованих серверів';
 
   @override
   String get agentNoHistory => 'Немає збережених глобальних розмов агента';
@@ -462,9 +441,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get discoverySettings => 'Налаштування виявлення';
 
   @override
-  String get discoverySummary => 'Підсумок виявлення';
-
-  @override
   String get diskHealth => 'Стан диска';
 
   @override
@@ -493,19 +469,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Статистика Docker';
-
-  @override
-  String dockerStatusRunningAndStoppedFmt(
-    Object runningCount,
-    Object stoppedCount,
-  ) {
-    return '$runningCount запущено, $stoppedCount контейнерів зупинено.';
-  }
-
-  @override
-  String dockerStatusRunningFmt(Object count) {
-    return '$count контейнер(и) запущено.';
-  }
 
   @override
   String get doubleColumnMode => 'Режим подвійної колонки';
@@ -554,9 +517,6 @@ class AppLocalizationsUk extends AppLocalizations {
       'Її видалено або перейменовано. Скористайтеся панеллю внизу, щоб повернутися, перейти до домівки або в інше місце.';
 
   @override
-  String get finishedAt => 'Завершено о';
-
-  @override
   String get fullScreen => 'Повноекранний режим';
 
   @override
@@ -600,9 +560,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get image => 'Зображення';
-
-  @override
-  String get imagesList => 'Список зображень';
 
   @override
   String get macDmgBody =>
@@ -671,9 +628,6 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get pruneUnusedData => 'Очистити невикористані дані';
-
-  @override
-  String get volume => 'Том';
 
   @override
   String get pull => 'Pull';
@@ -775,14 +729,6 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get parseContainerStatsTip =>
       'Парсинг статусу зайнятості Docker є відносно повільним.';
-
-  @override
-  String get fullAccessRefused =>
-      'Цей агент не пропонує термінал без облікових даних.';
-
-  @override
-  String get fullAccessInsecure =>
-      'Цей агент віддає термінал лише через TLS або loopback, а це з\'єднання — відкритий HTTP.';
 
   @override
   String get plugInType => 'Тип вставки';
@@ -898,10 +844,6 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
-  String get rootfsMissing =>
-      'На цьому пристрої ще не встановлено файлову систему Linux.';
-
-  @override
   String get rootfsSubtitle =>
       'Користувацьке середовище Linux на цьому пристрої';
 
@@ -996,9 +938,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String sshConfigAllExist(Object duplicateCount) {
     return 'Всі сервери вже існують (знайдено $duplicateCount дублікатів)';
   }
-
-  @override
-  String get ssh => 'SSH';
 
   @override
   String get sshConnectionModeTip =>

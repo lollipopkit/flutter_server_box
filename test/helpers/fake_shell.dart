@@ -19,35 +19,23 @@ class FakeShellBackend implements ShellBackend {
   @override
   bool get isClosed => _closed;
 
-  /// Every shell this handed out, so a test can write to the one the page is
-  /// showing and see it arrive.
-  final sessions = <FakeShellSession>[];
-
-  /// Every command run on a channel of its own, in order. tmux and the AI
-  /// probe both go through here, and a test that did not expect them should
-  /// be able to see that they happened.
-  final executed = <String>[];
-
   @override
   Future<ShellSession> openShell({
     required int width,
     required int height,
     Map<String, String>? environment,
   }) async {
-    final session = FakeShellSession();
-    sessions.add(session);
-    return session;
+    return FakeShellSession();
   }
 
   @override
   Future<ShellSession> execute(
-    String command, {
+    String _, {
     required int width,
     required int height,
     Map<String, String>? environment,
   }) async {
     if (!supportsExec) throw UnsupportedError('no second channel');
-    executed.add(command);
     final session = FakeShellSession()..finish();
     return session;
   }
@@ -68,10 +56,6 @@ class FakeShellSession implements ShellSession {
   /// What the terminal typed, as text.
   final written = StringBuffer();
 
-  /// The last size the page asked for, which is how a test sees a resize
-  /// arrive without a real pty to measure.
-  (int width, int height)? resizedTo;
-
   @override
   Stream<Uint8List>? get stdout => _out.stream;
 
@@ -87,16 +71,10 @@ class FakeShellSession implements ShellSession {
   void write(List<int> data) => written.write(String.fromCharCodes(data));
 
   @override
-  void resizeTerminal(int width, int height) => resizedTo = (width, height);
+  void resizeTerminal(int width, int height) {}
 
   @override
   void close() => finish();
-
-  /// Sends [text] to the terminal, as the far side would.
-  void emit(String text) {
-    if (_out.isClosed) return;
-    _out.add(Uint8List.fromList(text.codeUnits));
-  }
 
   /// Ends the shell for good.
   void finish() {

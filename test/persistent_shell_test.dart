@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:server_box/data/ssh/persistent_shell.dart';
 
+import 'helpers/fake_stream_sink.dart';
+
 void main() {
   test('PersistentShell reuses one session across multiple commands', () async {
     final factory = _FakeSessionFactory();
@@ -259,7 +261,6 @@ void main() {
     },
   );
 }
-
 final class _FakeSessionFactory {
   final Future<void> Function()? beforeCreate;
   final PersistentShellSession Function()? createSession;
@@ -291,7 +292,7 @@ final class _FakePersistentShellSession implements PersistentShellSession {
   bool throwOnAdd = false;
 
   @override
-  StreamSink<Uint8List> get stdin => _FakeSink((data) {
+  StreamSink<Uint8List> get stdin => FakeStreamSink((data) {
     if (throwOnAdd) {
       throw StateError('stdin add failed');
     }
@@ -310,27 +311,3 @@ final class _FakePersistentShellSession implements PersistentShellSession {
   }
 }
 
-final class _FakeSink implements StreamSink<Uint8List> {
-  final void Function(Uint8List data) _onAdd;
-
-  _FakeSink(this._onAdd);
-
-  @override
-  void add(Uint8List data) => _onAdd(data);
-
-  @override
-  void addError(Object error, [StackTrace? stackTrace]) {}
-
-  @override
-  Future<void> addStream(Stream<Uint8List> stream) async {
-    await for (final chunk in stream) {
-      add(chunk);
-    }
-  }
-
-  @override
-  Future<void> close() async {}
-
-  @override
-  Future<void> get done async {}
-}

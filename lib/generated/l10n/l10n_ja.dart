@@ -47,31 +47,13 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get askAiConfirmExecute => '実行前に確認';
-
-  @override
-  String get askAiConversation => 'AI 会話';
-
-  @override
   String get askAiDisclaimer => 'AI が誤る可能性があります。注意してご利用ください。';
-
-  @override
-  String get askAiFollowUpHint => '追質問をする...';
 
   @override
   String get askAiInsertTerminal => 'ターミナルに挿入';
 
   @override
   String get askAiNoResponse => '応答なし';
-
-  @override
-  String get askAiRecommendedCommand => 'AI 推奨コマンド';
-
-  @override
-  String get askAiSelectedContent => '選択した内容';
-
-  @override
-  String get askAiUsageHint => 'SSH ターミナルで使用';
 
   @override
   String get askAiAgentTitle => 'SSH エージェント';
@@ -207,9 +189,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get agentPromptHint => 'エージェントにサーバーの調査や操作を依頼…';
-
-  @override
-  String get agentNoServers => '設定済みのサーバーがありません';
 
   @override
   String get agentNoHistory => '保存されたグローバルのエージェント会話はありません';
@@ -438,9 +417,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get discoverySettings => '発見設定';
 
   @override
-  String get discoverySummary => '発見の概要';
-
-  @override
   String get diskHealth => 'ディスクの健康状態';
 
   @override
@@ -468,19 +444,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get dockerStatistics => 'Docker 統計';
-
-  @override
-  String dockerStatusRunningAndStoppedFmt(
-    Object runningCount,
-    Object stoppedCount,
-  ) {
-    return '$runningCount個が実行中、$stoppedCount個が停止中';
-  }
-
-  @override
-  String dockerStatusRunningFmt(Object count) {
-    return '$count個のコンテナが実行中';
-  }
 
   @override
   String get doubleColumnMode => 'ダブルカラムモード';
@@ -528,9 +491,6 @@ class AppLocalizationsJa extends AppLocalizations {
       '削除されたか名前が変更されました。下のバーで戻る、ホームへ移動、または別の場所へ移動してください。';
 
   @override
-  String get finishedAt => '完了時刻';
-
-  @override
   String get fullScreen => 'フルスクリーンモード';
 
   @override
@@ -572,9 +532,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get image => 'イメージ';
-
-  @override
-  String get imagesList => 'イメージリスト';
 
   @override
   String get macDmgBody =>
@@ -638,9 +595,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get pruneUnusedData => '未使用データをクリーンアップ';
-
-  @override
-  String get volume => 'ボリューム';
 
   @override
   String get pull => 'プル';
@@ -736,13 +690,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get parseContainerStatsTip => 'Dockerの使用状況の解析は比較的遅いです';
-
-  @override
-  String get fullAccessRefused => 'このエージェントは認証情報なしのターミナルを提供していません。';
-
-  @override
-  String get fullAccessInsecure =>
-      'このエージェントは TLS またはループバックでのみターミナルを提供しますが、この接続は平文の HTTP です。';
 
   @override
   String get plugInType => '挿入タイプ';
@@ -847,9 +794,6 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get rootfsMissing => 'この端末にはまだ Linux ファイルシステムがインストールされていません。';
-
-  @override
   String get rootfsSubtitle => 'この端末上の Linux ユーザーランド';
 
   @override
@@ -942,9 +886,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String sshConfigAllExist(Object duplicateCount) {
     return 'すべてのサーバーがすでに存在します（$duplicateCount個の重複が見つかりました）';
   }
-
-  @override
-  String get ssh => 'SSH';
 
   @override
   String get sshConnectionModeTip =>

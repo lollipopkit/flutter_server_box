@@ -30,7 +30,6 @@ class Fifo<T> extends ListBase<T> {
   @override
   void operator []=(int index, T value) => _list[index] = value;
 
-  void clear2() => _list.clear();
 }
 
 /// A two-sample window over a list of counters that gets re-collected every
