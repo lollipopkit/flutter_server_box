@@ -106,14 +106,14 @@ relay 服务,而不是(或者除了)在本地直接对外提供面板访问;面�
   决定放哪个 crate/仓库、怎么部署、TLS/域名怎么搞,这和现在"每个 agent 一个
   单体二进制"的假设不一样,是本仓库目前唯一的例外
 
-## sbm_ffi:脱离 CocoaPods,改走 Dart build hooks(已做,但只验过两个平台)
+## 原生构建全部改走 Dart build hooks,CocoaPods 已移除(只验过 macOS / iOS)
 
 **状态(2026-08-19):已合入。** cargokit 五个接入点和整个 `cargokit/` 目录已删,
 `crates/sbm_ffi` 不再是 Flutter plugin,改由根目录 `hook/build.dart` 编译。
 FRB 升到 `2.13.0-beta.6`(Rust 与 pubspec 两处)。
 
 已验证:macOS 与 iOS 构建通过,产物里有 `sbm_ffi.framework`,两个
-`Podfile.lock` 里都只剩 `flutter_pty`。`flutter test test/frb_parser_test.dart`
+平台都不再有 `Podfile`。`flutter test test/frb_parser_test.dart`
 与 `cargo test --workspace` 通过。
 
 `flutter_pty` 也一起做了:`packages/flutter_pty` 是
@@ -121,10 +121,6 @@ FRB 升到 `2.13.0-beta.6`(Rust 与 pubspec 两处)。
 fork,把同样的五个平台构建集成换成一个 `hook/build.dart`(用 `native_toolchain_c`)。
 上游最后一个版本是 0.4.2(2025-01),没有 `Package.swift`,唯一那个 SwiftPM PR
 (#21)只做了 macOS 且无人回应。
-
-**结果:两个 `Podfile.lock` 里第三方 pod 归零**,只剩 Flutter 自身。
-`flutter build` 现在会提示 "All plugins found are Swift Packages, but your
-project still has CocoaPods integration"。
 
 **未验证:Android / Linux / Windows。** 这三个平台原先分别走 cargokit 的
 gradle plugin 和 CMake,现在改走同一个 hook,但本机没跑过。要在 CI 或对应机器上
