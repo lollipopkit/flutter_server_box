@@ -60,14 +60,14 @@ class AgentConversationStore extends HiveStore {
     return value is String && value.isNotEmpty ? value : null;
   }
 
-  AgentConversation create({
+  Future<AgentConversation> create({
     required String serverId,
     required AskAiProtocol protocol,
     required String providerBaseUrl,
     required String model,
     String title = '',
     DateTime? now,
-  }) {
+  }) async {
     final timestamp = now ?? DateTime.now();
     final conversation = AgentConversation(
       id: ShortId.generate(),
@@ -80,72 +80,84 @@ class AgentConversationStore extends HiveStore {
       model: model,
       items: const [],
     );
-    save(conversation);
+    if (!await save(conversation)) {
+      throw StateError('Failed to create agent conversation ${conversation.id}');
+    }
     return conversation;
   }
 
-  bool save(AgentConversation conversation, {bool setActive = true}) {
+  Future<bool> save(
+    AgentConversation conversation, {
+    bool setActive = true,
+  }) async {
     final normalized = conversation.copyWith(
       title: _normalizeTitle(conversation.title, conversation.items),
       items: trimItemsForStorage(conversation.items),
     );
-    final saved = set(
+    final saved = await set(
       _conversationKey(normalized.id),
       normalized.toJson(),
       updateLastUpdateTsOnSet: false,
     );
     if (!saved) return false;
     if (setActive) {
-      set(
+      final activated = await set(
         _activeKey(normalized.serverId),
         normalized.id,
         updateLastUpdateTsOnSet: false,
       );
+      if (!activated) return false;
     }
-    _pruneServer(normalized.serverId);
+    await _pruneServer(normalized.serverId);
     return true;
   }
 
-  bool setActive(String serverId, String conversationId) {
+  Future<bool> setActive(String serverId, String conversationId) async {
     final conversation = fetch(conversationId);
     if (conversation == null || conversation.serverId != serverId) return false;
-    return set(
+    return await set(
       _activeKey(serverId),
       conversationId,
       updateLastUpdateTsOnSet: false,
     );
   }
 
-  bool rename(String conversationId, String title) {
+  Future<bool> rename(String conversationId, String title) async {
     final conversation = fetch(conversationId);
     if (conversation == null) return false;
-    return save(
+    return await save(
       conversation.copyWith(title: title.trim(), updatedAt: DateTime.now()),
       setActive: false,
     );
   }
 
-  void deleteConversation(String serverId, String conversationId) {
+  Future<void> deleteConversation(
+    String serverId,
+    String conversationId,
+  ) async {
     final conversation = fetch(conversationId);
     if (conversation == null || conversation.serverId != serverId) return;
-    remove(_conversationKey(conversationId), updateLastUpdateTsOnRemove: false);
+    await remove(
+      _conversationKey(conversationId),
+      updateLastUpdateTsOnRemove: false,
+    );
     if (activeConversationId(serverId) != conversationId) return;
     final remaining = fetchForServer(serverId);
     if (remaining.isEmpty) {
-      remove(_activeKey(serverId), updateLastUpdateTsOnRemove: false);
+      await remove(_activeKey(serverId), updateLastUpdateTsOnRemove: false);
     } else {
-      setActive(serverId, remaining.first.id);
+      await setActive(serverId, remaining.first.id);
     }
   }
 
-  void clearServer(String serverId) {
+  Future<void> clearServer(String serverId) async {
     for (final conversation in fetchForServer(serverId)) {
-      remove(
+      await remove(
         _conversationKey(conversation.id),
         updateLastUpdateTsOnRemove: false,
       );
     }
-    remove(_activeKey(serverId), updateLastUpdateTsOnRemove: false);
+    await remove(_activeKey(serverId), updateLastUpdateTsOnRemove: false);
   }
 
   static List<AskAiConversationItem> trimItemsForStorage(
@@ -175,10 +187,10 @@ class AgentConversationStore extends HiveStore {
     return List.unmodifiable(items.sublist(start));
   }
 
-  void _pruneServer(String serverId) {
+  Future<void> _pruneServer(String serverId) async {
     final conversations = fetchForServer(serverId);
     for (final conversation in conversations.skip(maxConversationsPerServer)) {
-      remove(
+      await remove(
         _conversationKey(conversation.id),
         updateLastUpdateTsOnRemove: false,
       );

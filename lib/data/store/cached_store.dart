@@ -25,11 +25,13 @@ abstract class CachedHiveStore<T extends Object> extends HiveStore {
   }
 
   @override
-  bool clear({bool? updateLastUpdateTsOnClear}) {
+  Future<bool> clear({bool? updateLastUpdateTsOnClear}) async {
     _suppressWatch = true;
     try {
       _cache = null;
-      return super.clear(updateLastUpdateTsOnClear: updateLastUpdateTsOnClear);
+      return await super.clear(
+        updateLastUpdateTsOnClear: updateLastUpdateTsOnClear,
+      );
     } finally {
       _suppressWatch = false;
     }
@@ -39,21 +41,23 @@ abstract class CachedHiveStore<T extends Object> extends HiveStore {
     _cache = null;
   }
 
-  void put(T item) {
+  Future<void> put(T item) async {
     _suppressWatch = true;
     try {
-      set(getKey(item), item);
       _cache = null;
+      if (!await set(getKey(item), item)) {
+        throw StateError('Failed to persist $T ${getKey(item)}');
+      }
     } finally {
       _suppressWatch = false;
     }
   }
 
-  void putRaw(T item) {
+  Future<void> putRaw(T item) async {
     _suppressWatch = true;
     try {
-      box.put(getKey(item), item);
       _cache = null;
+      await box.put(getKey(item), item);
     } finally {
       _suppressWatch = false;
     }
@@ -85,7 +89,7 @@ abstract class CachedHiveStore<T extends Object> extends HiveStore {
       try {
         final item = fromJson(Map<String, dynamic>.from(raw));
         if (item != null) {
-          putRaw(item);
+          unawaited(putRaw(item));
         }
         return item;
       } catch (e) {
@@ -97,29 +101,37 @@ abstract class CachedHiveStore<T extends Object> extends HiveStore {
 
   T? fromJson(Map<String, dynamic> json);
 
-  void deleteById(String id) {
+  Future<void> deleteById(String id) async {
     _suppressWatch = true;
     try {
-      remove(id);
       _cache = null;
+      if (!await remove(id)) {
+        throw StateError('Failed to delete $T $id');
+      }
     } finally {
       _suppressWatch = false;
     }
   }
 
-  void delete(T item) {
-    deleteById(getKey(item));
+  Future<void> delete(T item) {
+    return deleteById(getKey(item));
   }
 
-  void update(T old, T newItem) {
+  Future<void> update(T old, T newItem) async {
     if (!have(old)) {
       throw Exception('Old $T: $old not found');
     }
     _suppressWatch = true;
     try {
-      remove(getKey(old));
-      set(getKey(newItem), newItem);
       _cache = null;
+      final oldKey = getKey(old);
+      final newKey = getKey(newItem);
+      if (!await set(newKey, newItem)) {
+        throw StateError('Failed to persist updated $T $newKey');
+      }
+      if (oldKey != newKey && !await remove(oldKey)) {
+        throw StateError('Failed to remove previous $T $oldKey');
+      }
     } finally {
       _suppressWatch = false;
     }

@@ -139,6 +139,8 @@ Future<void> _initData() async {
   Hive.registerAdapter(SpiLegacyAdapter());
 
   await PrefStore.shared.init(); // Call this before accessing any store
+  await SecureStoreProps.migrateLegacyPrefs();
+  await Future.wait([Webdav.initShared(), GistRs.initShared()]);
 
   // Before a box is opened, because it rewrites the files they are made of.
   // After the preferences, because the data it copies may be encrypted with a
