@@ -147,9 +147,14 @@ throwing, so the failure was silent.
 
 The import was only where it surfaced. `test/port_forward_store_test.dart`
 establishes the rest independently: an ordinary save loses the record the same
-way, with no migration involved. The two tests answer different questions and
-both are worth keeping — a migration fixture says what happens to old data, and
-says nothing about whether today's writes survive.
+way, with no migration involved.
+
+Each covers one half, so both stay:
+
+| Test | What it checks |
+|---|---|
+| `hive_v1466_migration_test.dart` | Records written by an older release import correctly |
+| `port_forward_store_test.dart` | A write made by the current build persists and reads back |
 
 ### Adding one for the next migration
 
