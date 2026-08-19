@@ -154,7 +154,7 @@ void main() {
       WidgetTester tester, {
       required bool sendOnEnter,
     }) async {
-      Stores.setting.askAiSendOnEnter.put(sendOnEnter);
+      await Stores.setting.askAiSendOnEnter.put(sendOnEnter);
       await pump(
         tester,
         locale: const Locale('en'),

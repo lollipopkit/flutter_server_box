@@ -295,6 +295,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get backupPasswordWrong => '백업 비밀번호가 올바르지 않습니다';
 
   @override
+  String get remoteBackupPasswordRequired =>
+      'Remote backups require a non-empty backup password';
+
+  @override
+  String get monitorHttpsRequired =>
+      'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
+
+  @override
   String get backupTip => '내보낸 데이터는 비밀번호로 암호화할 수 있습니다.\n안전하게 보관해 주세요.';
 
   @override

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -42,7 +44,7 @@ class SnippetNotifier extends _$SnippetNotifier {
       );
       order.removeWhere((e) => surplus.any((ele) => ele == e));
       if (order != Stores.setting.snippetOrder.fetch()) {
-        Stores.setting.snippetOrder.put(order);
+        unawaited(Stores.setting.snippetOrder.put(order));
       }
       orderedSnippets = snippets;
     }
@@ -63,35 +65,35 @@ class SnippetNotifier extends _$SnippetNotifier {
     return tags;
   }
 
-  void add(Snippet snippet) {
+  Future<void> add(Snippet snippet) async {
     final newSnippets = [...state.snippets, snippet];
     final newTags = _computeTags(newSnippets);
+    await Stores.snippet.put(snippet);
     state = state.copyWith(snippets: newSnippets, tags: newTags);
-    Stores.snippet.put(snippet);
     bakSync.sync(milliDelay: 1000);
   }
 
-  void del(Snippet snippet) {
+  Future<void> del(Snippet snippet) async {
     final newSnippets = state.snippets.where((s) => s != snippet).toList();
     final newTags = _computeTags(newSnippets);
+    await Stores.snippet.delete(snippet);
     state = state.copyWith(snippets: newSnippets, tags: newTags);
-    Stores.snippet.delete(snippet);
     bakSync.sync(milliDelay: 1000);
   }
 
-  void update(Snippet old, Snippet newOne) {
+  Future<void> update(Snippet old, Snippet newOne) async {
     final newSnippets = state.snippets
         .map((s) => s == old ? newOne : s)
         .toList();
     final newTags = _computeTags(newSnippets);
+    await Stores.snippet.update(old, newOne);
     state = state.copyWith(snippets: newSnippets, tags: newTags);
-    Stores.snippet.delete(old);
-    Stores.snippet.put(newOne);
     bakSync.sync(milliDelay: 1000);
   }
 
-  void renameTag(String old, String newOne) {
+  Future<void> renameTag(String old, String newOne) async {
     final updatedSnippets = <Snippet>[];
+    final writes = <Future<void>>[];
     for (final s in state.snippets) {
       if (s.tags?.contains(old) ?? false) {
         final newTags = Set<String>.from(s.tags!);
@@ -99,11 +101,12 @@ class SnippetNotifier extends _$SnippetNotifier {
         newTags.add(newOne);
         final updatedSnippet = s.copyWith(tags: newTags.toList());
         updatedSnippets.add(updatedSnippet);
-        Stores.snippet.put(updatedSnippet);
+        writes.add(Stores.snippet.put(updatedSnippet));
       } else {
         updatedSnippets.add(s);
       }
     }
+    await Future.wait(writes);
     final newTags = _computeTags(updatedSnippets);
     state = state.copyWith(snippets: updatedSnippets, tags: newTags);
     bakSync.sync(milliDelay: 1000);

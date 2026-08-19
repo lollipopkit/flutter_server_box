@@ -108,6 +108,8 @@
   $effect(() => {
     const serverId = servers.currentId
     if (serverId && servers.authenticated) {
+      status.reset()
+      metrics.reset()
       status.start()
       metrics.start()
     }
@@ -123,7 +125,10 @@
     const serverId = servers.currentId
     const minutes = rangeMinutes
     requestedHistoryMinutes = minutes
-    if (serverId && servers.authenticated) historyPoller.start()
+    if (serverId && servers.authenticated) {
+      historyPoller.reset()
+      historyPoller.start()
+    }
     return () => {
       historyPoller.stop()
     }

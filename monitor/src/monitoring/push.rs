@@ -342,6 +342,14 @@ async fn send_ios_notification(config: &PushConfig, message: &str) -> Result<()>
     
     let status_code = response.status();
     let response_text = response_text_limited(response).await?;
+
+    if !status_code.is_success() {
+        warn!("iOS notification failed: {} - {}", status_code, response_text);
+        return Err(crate::utils::error::MonitorError::Push(format!(
+            "Unexpected status code: {}",
+            status_code
+        )));
+    }
     
     // Check if there's an expected response code
     if let Some(expected_code) = config.config.get("code").and_then(|v| v.as_integer())

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/data/model/app/bak/backup.dart';
 import 'package:server_box/data/model/app/bak/backup2.dart';
 import 'package:server_box/data/model/app/bak/utils.dart';
@@ -36,7 +37,7 @@ final class BakSyncer extends SyncIface {
   Future<void> saveToFile() async {
     final pwd = await SecureStoreProps.bakPwd.read();
     if (pwd == null || pwd.isEmpty) {
-      throw StateError('Remote backups require a non-empty backup password');
+      throw StateError(l10n.remoteBackupPasswordRequired);
     }
     final includeSettings = PrefProps.syncAppSettings.get();
     await BackupV2.backup(

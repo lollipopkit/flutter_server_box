@@ -553,7 +553,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         if (confirmed != true || !context.mounted) return;
         final notifier = ref.read(snippetProvider.notifier);
         for (final snippet in snippets) {
-          notifier.add(snippet);
+          await notifier.add(snippet);
         }
         context.pop();
       },
@@ -846,7 +846,7 @@ extension on _BackupPageState {
               final spiWithId = isIdUsed
                   ? spi.copyWith(id: ShortId.generate())
                   : spi;
-              Stores.server.put(spiWithId);
+              await Stores.server.put(spiWithId);
               usedIds.add(spiWithId.id);
             }
             return true;

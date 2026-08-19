@@ -24,6 +24,12 @@ export class Poller<T> {
     void this.#tick(generation)
   }
 
+  reset() {
+    this.data = null
+    this.error = null
+    this.loading = true
+  }
+
   stop() {
     this.#generation += 1
     clearTimeout(this.#timer)

@@ -310,6 +310,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get backupPasswordWrong => 'Yanlış yedekleme parolası';
 
   @override
+  String get remoteBackupPasswordRequired =>
+      'Remote backups require a non-empty backup password';
+
+  @override
+  String get monitorHttpsRequired =>
+      'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
+
+  @override
   String get backupTip =>
       'Dışa aktarılan veriler parola ile şifrelenebilir. \nLütfen güvenli bir şekilde saklayın.';
 

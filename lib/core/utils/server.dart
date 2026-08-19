@@ -588,7 +588,7 @@ Future<bool> promptHostKeyExclusively(
   Future<bool> Function() show,
 ) async {
   final server = _hostIdentifier(info.spi);
-  final question = '${info.keyType} ${info.fingerprintHex}';
+  final question = '${info.keyType} ${info.fingerprint}';
 
   while (true) {
     final pending = _pendingHostKeyPrompts[server];

@@ -4,6 +4,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:server_box/core/service/watch_sync.dart';
 import 'package:server_box/core/sync.dart';
 import 'package:server_box/core/utils/refresh_interval.dart';
 import 'package:server_box/core/utils/sudo_password.dart';
@@ -66,7 +67,7 @@ class ServersNotifier extends _$ServersNotifier {
 
     // Must use [equals] to compare [Order] here.
     if (!newServerOrder.equals(serverOrder_)) {
-      Stores.setting.serverOrder.put(newServerOrder);
+      unawaited(Stores.setting.serverOrder.put(newServerOrder));
     }
 
     final newTags = _calculateTags(newServers);
@@ -177,7 +178,7 @@ class ServersNotifier extends _$ServersNotifier {
     }
     await Future.wait(
       List.generate(
-        serversToRefresh.length.clamp(0, _maxConcurrentRefreshes),
+        serversToRefresh.length.clamp(0, _maxConcurrentRefreshes).toInt(),
         (_) => worker(),
       ),
     );
@@ -264,7 +265,7 @@ class ServersNotifier extends _$ServersNotifier {
     TermSessionManager.remove(sessionId);
   }
 
-  void addServer(Spi spi) {
+  Future<void> addServer(Spi spi) async {
     spi.validateOrThrow();
 
     final newServers = Map<String, Spi>.from(state.servers);
@@ -275,20 +276,21 @@ class ServersNotifier extends _$ServersNotifier {
     final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)
       ..remove(spi.id);
 
+    await Stores.server.put(spi);
+    await Stores.setting.serverOrder.put(newOrder);
     state = state.copyWith(
       servers: newServers,
       serverOrder: newOrder,
       tags: newTags,
       manualDisconnectedIds: newManualDisconnected,
     );
-
-    Stores.server.put(spi);
-    Stores.setting.serverOrder.put(newOrder);
-    refresh(spi: spi);
+    unawaited(refresh(spi: spi));
     bakSync.sync(milliDelay: 1000);
   }
 
   Future<void> delServer(String id) async {
+    final deleting = state.servers[id];
+    if (deleting != null) await WatchSync.instance.removeServer(deleting);
     final newServers = Map<String, Spi>.from(state.servers);
     newServers.remove(id);
 
@@ -297,15 +299,14 @@ class ServersNotifier extends _$ServersNotifier {
     final newManualDisconnected = Set<String>.from(state.manualDisconnectedIds)
       ..remove(id);
 
+    await Stores.setting.serverOrder.put(newOrder);
+    await Stores.server.deleteById(id);
     state = state.copyWith(
       servers: newServers,
       serverOrder: newOrder,
       tags: newTags,
       manualDisconnectedIds: newManualDisconnected,
     );
-
-    Stores.setting.serverOrder.put(newOrder);
-    Stores.server.deleteById(id);
     await _clearSudoPasswordOverrideBestEffort(id);
 
     await Stores.connectionStats.clearServerStats(id);
@@ -326,16 +327,18 @@ class ServersNotifier extends _$ServersNotifier {
       TermSessionManager.remove(sessionId);
     }
 
+    for (final spi in state.servers.values) {
+      await WatchSync.instance.removeServer(spi);
+    }
+    await Stores.setting.serverOrder.put([]);
+    await Stores.server.clear();
     state = const ServersState();
-
-    Stores.setting.serverOrder.put([]);
-    Stores.server.clear();
     await Future.wait(serverIds.map(_clearSudoPasswordOverrideBestEffort));
     await Stores.connectionStats.clearAll();
     bakSync.sync(milliDelay: 1000);
   }
 
-  void updateServerOrder(List<String> order) {
+  Future<void> updateServerOrder(List<String> order) async {
     final seen = <String>{};
     final newOrder = <String>[];
 
@@ -359,8 +362,8 @@ class ServersNotifier extends _$ServersNotifier {
       return;
     }
 
+    await Stores.setting.serverOrder.put(newOrder);
     state = state.copyWith(serverOrder: newOrder);
-    Stores.setting.serverOrder.put(newOrder);
     bakSync.sync(milliDelay: 1000);
   }
 
@@ -373,7 +376,7 @@ class ServersNotifier extends _$ServersNotifier {
     newSpi.validateOrThrow();
 
     if (old != newSpi) {
-      Stores.server.update(old, newSpi);
+      await Stores.server.update(old, newSpi);
 
       final newServers = Map<String, Spi>.from(state.servers);
       final newOrder = List<String>.from(state.serverOrder);
@@ -388,7 +391,7 @@ class ServersNotifier extends _$ServersNotifier {
         if (newManualDisconnected.remove(old.id)) {
           newManualDisconnected.add(newSpi.id);
         }
-        Stores.setting.serverOrder.put(newOrder);
+        await Stores.setting.serverOrder.put(newOrder);
 
         // Update SSH session ID when server ID changes
         final oldSessionId = 'ssh_${old.id}';
@@ -414,7 +417,7 @@ class ServersNotifier extends _$ServersNotifier {
       if (newSpi.shouldReconnect(old)) {
         // Use [newSpi.id] instead of [old.id] because [old.id] may be changed
         TryLimiter.reset(newSpi.id);
-        refresh(spi: newSpi);
+        unawaited(refresh(spi: newSpi));
       }
     }
     bakSync.sync(milliDelay: 1000);

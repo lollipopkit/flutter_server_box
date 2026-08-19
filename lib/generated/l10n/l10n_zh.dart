@@ -291,6 +291,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupPasswordWrong => '备份密码错误';
 
   @override
+  String get remoteBackupPasswordRequired => '远程备份需要非空的备份密码';
+
+  @override
+  String get monitorHttpsRequired => '远程监控代理必须使用 HTTPS；仅环回地址允许使用 HTTP。';
+
+  @override
   String get backupTip => '导出数据可通过密码加密，请妥善保管。';
 
   @override
@@ -1571,6 +1577,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get backupPasswordWrong => '備份密碼錯誤';
+
+  @override
+  String get remoteBackupPasswordRequired => '遠端備份需要非空的備份密碼';
+
+  @override
+  String get monitorHttpsRequired => '遠端監控代理必須使用 HTTPS；僅回環位址允許使用 HTTP。';
 
   @override
   String get backupTip => '匯出的資料可透過密碼加密，請妥善保管。';

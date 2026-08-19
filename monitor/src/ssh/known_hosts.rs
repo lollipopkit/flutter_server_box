@@ -52,37 +52,46 @@ pub async fn verify(pool: &SqlitePool, addr: &str, key: &PublicKey) -> Result<Ve
     match existing {
         Some(expected) if expected == actual => Ok(Verdict::Known),
         Some(expected) => Ok(Verdict::Mismatch { expected, actual }),
-        None => {
-            // `OR IGNORE`, not `REPLACE`: two terminals opening at once must
-            // not turn a race into a silent re-pin. The loser's key already
-            // matches — they raced on the same connection to the same sshd.
-            let inserted = sqlx::query(
-                "INSERT OR IGNORE INTO ssh_known_hosts (addr, key_type, fingerprint) \
-                 VALUES (?, ?, ?)",
-            )
-            .bind(addr)
-            .bind(&key_type)
-            .bind(&actual)
-            .execute(pool)
-            .await?;
-            if inserted.rows_affected() == 1 {
-                tracing::info!("Pinned SSH host key for {addr}: {actual} ({key_type})");
-                return Ok(Verdict::Pinned);
-            }
+        None => pin_or_compare(pool, addr, &key_type, &actual).await,
+    }
+}
 
-            // Another connection won the first-pin race. Never report our key
-            // as pinned until it has been compared with the row that won.
-            let expected: String =
-                sqlx::query_scalar("SELECT fingerprint FROM ssh_known_hosts WHERE addr = ?")
-                    .bind(addr)
-                    .fetch_one(pool)
-                    .await?;
-            if expected == actual {
-                Ok(Verdict::Known)
-            } else {
-                Ok(Verdict::Mismatch { expected, actual })
-            }
-        }
+async fn pin_or_compare(
+    pool: &SqlitePool,
+    addr: &str,
+    key_type: &str,
+    actual: &str,
+) -> Result<Verdict> {
+    // `OR IGNORE`, not `REPLACE`: two terminals opening at once must
+    // not turn a race into a silent re-pin.
+    let inserted = sqlx::query(
+        "INSERT OR IGNORE INTO ssh_known_hosts (addr, key_type, fingerprint) \
+         VALUES (?, ?, ?)",
+    )
+    .bind(addr)
+    .bind(key_type)
+    .bind(actual)
+    .execute(pool)
+    .await?;
+    if inserted.rows_affected() == 1 {
+        tracing::info!("Pinned SSH host key for {addr}: {actual} ({key_type})");
+        return Ok(Verdict::Pinned);
+    }
+
+    // Another connection won the first-pin race. Never report our key as
+    // pinned until it has been compared with the row that won.
+    let expected: String =
+        sqlx::query_scalar("SELECT fingerprint FROM ssh_known_hosts WHERE addr = ?")
+            .bind(addr)
+            .fetch_one(pool)
+            .await?;
+    if expected == actual {
+        Ok(Verdict::Known)
+    } else {
+        Ok(Verdict::Mismatch {
+            expected,
+            actual: actual.to_string(),
+        })
     }
 }
 
@@ -144,6 +153,37 @@ mod tests {
         assert_eq!(verify(&pool, "127.0.0.1:22", &a).await.unwrap(), Verdict::Pinned);
         assert_eq!(verify(&pool, "127.0.0.1:2222", &b).await.unwrap(), Verdict::Pinned);
         assert_eq!(verify(&pool, "127.0.0.1:22", &a).await.unwrap(), Verdict::Known);
+    }
+
+    #[tokio::test]
+    async fn lost_first_pin_race_compares_the_winning_row() {
+        let pool = pool().await;
+        let a = key(KEY_A);
+        let b = key(KEY_B);
+        let addr = "127.0.0.1:22";
+        let expected = fingerprint(&a);
+        sqlx::query(
+            "INSERT INTO ssh_known_hosts (addr, key_type, fingerprint) VALUES (?, ?, ?)",
+        )
+        .bind(addr)
+        .bind(a.algorithm().to_string())
+        .bind(&expected)
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        assert!(matches!(
+            pin_or_compare(&pool, addr, b.algorithm().as_ref(), &fingerprint(&b))
+                .await
+                .unwrap(),
+            Verdict::Mismatch { .. }
+        ));
+        assert_eq!(
+            pin_or_compare(&pool, addr, a.algorithm().as_ref(), &expected)
+                .await
+                .unwrap(),
+            Verdict::Known
+        );
     }
 
     #[tokio::test]

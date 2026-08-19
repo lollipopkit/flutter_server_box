@@ -47,7 +47,7 @@ void main() {
     // No auto-refresh: 0 is what `normalizeServerStatusRefreshSeconds` reads
     // as off, and its periodic timer would otherwise outlive the tree and
     // fail the run on a pending timer.
-    Stores.setting.serverStatusUpdateInterval.put(0);
+    await Stores.setting.serverStatusUpdateInterval.put(0);
   });
 
   tearDown(() async {
@@ -98,7 +98,7 @@ void main() {
     //
     // `autoConnect: false`, so the server stays `ServerConn.disconnected` and
     // nothing here reaches for a socket.
-    Stores.server.put(
+    await Stores.server.put(
       spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u', autoConnect: false),
     );
 
@@ -118,7 +118,7 @@ void main() {
     // `tab.dart:272` passes `asSecondary(() => _onLongPressCard(srv))` beside
     // the `onLongPress` that gets the same call. The gesture itself is
     // `fl_lib/test/secondary_tap_test.dart`; this is that they agree.
-    Stores.server.put(
+    await Stores.server.put(
       spiFixture(id: 'srv-1', name: 'web', ip: 'h', user: 'u', autoConnect: false),
     );
 

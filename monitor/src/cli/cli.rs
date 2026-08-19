@@ -1,4 +1,5 @@
 use crate::core::config::Config;
+use crate::core::config_file;
 use crate::db;
 use crate::monitoring;
 use crate::db::cleanup;
@@ -128,7 +129,7 @@ async fn handle_serve(matches: &clap::ArgMatches) -> anyhow::Result<()> {
     let db = db::database::init(&config.get_database_url()).await?;
 
     // First start: create an admin with a random password when users is empty (printed once)
-    db::bootstrap::ensure_admin_user(&db).await?;
+    db::bootstrap::ensure_admin_user(&db, &config.get_database_url()).await?;
 
     // Create shared state
     let app_state = crate::api::server::AppState::new(config.clone(), db);
@@ -210,8 +211,7 @@ async fn handle_config(matches: &clap::ArgMatches) -> anyhow::Result<()> {
         Some(("init", _)) => {
             info!("Initializing default configuration...");
             let config = Config::default();
-            let content = toml::to_string_pretty(&config)?;
-            std::fs::write("config.toml", content)?;
+            config_file::write(&config)?;
             println!("Default configuration written to config.toml");
         }
         Some(("validate", _)) => {

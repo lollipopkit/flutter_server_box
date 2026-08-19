@@ -101,7 +101,7 @@ fn backup_path() -> Result<PathBuf> {
     Ok(PathBuf::from(format!("{BACKUP_PREFIX}{stamp}")))
 }
 
-fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
+pub(crate) fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
     // Same directory as the target: `rename` is only atomic within a
     // filesystem, and a temp dir may well be on another one.
     let tmp = path.with_extension(format!(
@@ -137,7 +137,26 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
             path.display(),
             tmp.display()
         ))
-    })
+    })?;
+    sync_parent_dir(path)
+}
+
+#[cfg(unix)]
+fn sync_parent_dir(path: &Path) -> Result<()> {
+    let parent = path
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    fs::File::open(parent)
+        .and_then(|dir| dir.sync_all())
+        .map_err(|e| config_err(format!("Failed to sync {}: {e}", parent.display())))
+}
+
+#[cfg(not(unix))]
+fn sync_parent_dir(_path: &Path) -> Result<()> {
+    // std does not expose a portable way to open and flush a directory on
+    // Windows. The replacement itself still uses the platform rename API.
+    Ok(())
 }
 
 fn private_options() -> OpenOptions {

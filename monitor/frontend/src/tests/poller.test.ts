@@ -50,4 +50,47 @@ describe('Poller', () => {
     await Promise.resolve()
     expect(poller.data).toBeNull()
   })
+
+  it('clears a successful server result before polling a new identity', async () => {
+    let resolveSecond!: (value: string) => void
+    const fetcher = vi
+      .fn<(signal: AbortSignal) => Promise<string>>()
+      .mockResolvedValueOnce('server-a')
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (resolveSecond = resolve)),
+      )
+    const poller = new Poller(fetcher)
+
+    poller.start()
+    await vi.waitFor(() => expect(poller.data).toBe('server-a'))
+    poller.reset()
+    poller.start()
+
+    expect(poller.data).toBeNull()
+    expect(poller.error).toBeNull()
+    resolveSecond('server-b')
+    await vi.waitFor(() => expect(poller.data).toBe('server-b'))
+    poller.stop()
+  })
+
+  it('clears successful history before polling a different range', async () => {
+    let resolveSecond!: (value: number[]) => void
+    const fetcher = vi
+      .fn<(signal: AbortSignal) => Promise<number[]>>()
+      .mockResolvedValueOnce([60])
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (resolveSecond = resolve)),
+      )
+    const poller = new Poller(fetcher)
+
+    poller.start()
+    await vi.waitFor(() => expect(poller.data).toEqual([60]))
+    poller.reset()
+    poller.start()
+
+    expect(poller.data).toBeNull()
+    resolveSecond([1440])
+    await vi.waitFor(() => expect(poller.data).toEqual([1440]))
+    poller.stop()
+  })
 })

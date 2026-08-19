@@ -62,7 +62,7 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
     }
     return ReorderableListView.builder(
       footer: const SizedBox(height: 77),
-      onReorderItem: (oldIndex, newIndex) {
+      onReorderItem: (oldIndex, newIndex) async {
         final targetIndex = newIndex;
         if (targetIndex == oldIndex) {
           return;
@@ -75,7 +75,7 @@ class _ServerOrderPageState extends ConsumerState<ServerOrderPage> {
         setState(() {
           _order = newOrder;
         });
-        ref.read(serversProvider.notifier).updateServerOrder(newOrder);
+        await ref.read(serversProvider.notifier).updateServerOrder(newOrder);
       },
       padding: const EdgeInsets.all(8),
       buildDefaultDragHandles: false,

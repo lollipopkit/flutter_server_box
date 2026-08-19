@@ -6,7 +6,14 @@ use std::fs;
 // config.toml/config.json happens to be in the CWD at the time.
 #[tokio::test]
 async fn config_json_migrates_to_toml() {
-    let dir = std::env::temp_dir().join("sbm_monitor_config_migration_test");
+    let dir = std::env::temp_dir().join(format!(
+        "sbm_monitor_config_migration_test_{}_{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
     fs::create_dir_all(&dir).unwrap();
     let original_cwd = std::env::current_dir().unwrap();
     std::env::set_current_dir(&dir).unwrap();
@@ -35,6 +42,7 @@ async fn config_json_migrates_to_toml() {
 
     // On-disk: config.toml now exists and config.json was renamed, not deleted
     assert!(dir.join("config.toml").exists(), "migration should write config.toml");
+    assert_private(&dir.join("config.toml"));
     assert!(
         dir.join("config.json.migrated").exists(),
         "original config.json should be kept, renamed"
@@ -49,9 +57,25 @@ async fn config_json_migrates_to_toml() {
     let reloaded = Config::load().await.expect("reload from migrated config.toml");
     assert_eq!(reloaded.get_monitoring().interval_seconds, 5);
 
+    fs::remove_file(dir.join("config.toml")).unwrap();
+    fs::remove_file(dir.join("config.json.migrated")).unwrap();
+    Config::load().await.expect("load should create the default config.toml");
+    assert_private(&dir.join("config.toml"));
+
     unsafe {
         std::env::remove_var("JWT_SECRET");
     }
     std::env::set_current_dir(original_cwd).unwrap();
     fs::remove_dir_all(&dir).ok();
+}
+
+#[cfg(unix)]
+fn assert_private(path: &std::path::Path) {
+    use std::os::unix::fs::PermissionsExt;
+    assert_eq!(fs::metadata(path).unwrap().permissions().mode() & 0o777, 0o600);
+}
+
+#[cfg(not(unix))]
+fn assert_private(path: &std::path::Path) {
+    assert!(path.is_file());
 }

@@ -115,7 +115,7 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
                   actions: Btn.ok(red: true).toList,
                 );
                 if (confirmed != true || !context.mounted) return;
-                _notifier.delete(pki);
+                await _notifier.delete(pki);
                 context.pop();
               },
               icon: const Icon(Icons.delete),
@@ -282,9 +282,9 @@ class _PrivateKeyEditPageState extends ConsumerState<PrivateKeyEditPage> {
       final pki = PrivateKeyInfo(id: name, key: decrypted);
       final originPki = this.pki;
       if (originPki != null) {
-        _notifier.update(originPki, pki);
+        await _notifier.update(originPki, pki);
       } else {
-        _notifier.add(pki);
+        await _notifier.add(pki);
       }
     } catch (e) {
       Toast.error(e.toString());

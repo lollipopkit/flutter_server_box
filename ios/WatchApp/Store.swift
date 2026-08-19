@@ -46,6 +46,9 @@ enum WatchStore {
         for id in tokenAccounts() where !live.contains(id) {
             setToken(nil, for: id)
         }
+        for id in tokenAccounts(service: legacyPasswordService) where !live.contains(id) {
+            setToken(nil, for: id)
+        }
     }
 
     // MARK: - Selection
@@ -124,9 +127,13 @@ enum WatchStore {
     }
 
     private static func tokenAccounts() -> [String] {
+        tokenAccounts(service: keychainService)
+    }
+
+    private static func tokenAccounts(service: String) -> [String] {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
+            kSecAttrService as String: service,
             kSecReturnAttributes as String: true,
             kSecMatchLimit as String: kSecMatchLimitAll,
         ]

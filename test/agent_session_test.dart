@@ -1,8 +1,17 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive_ce/hive.dart';
+import 'package:riverpod/riverpod.dart';
 import 'package:server_box/data/model/ai/agent_conversation_replay.dart';
 import 'package:server_box/data/model/ai/ask_ai_models.dart';
 import 'package:server_box/data/provider/ai/agent_session.dart';
+import 'package:server_box/data/provider/ai/ask_ai.dart';
 import 'package:server_box/data/provider/ai/global_agent_tools.dart';
+import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/store/agent_conversation.dart';
+import 'package:server_box/data/store/server.dart';
+import 'package:server_box/data/store/setting.dart';
 
 void main() {
   const shellCommand = AskAiCommand(
@@ -217,4 +226,72 @@ void main() {
       );
     });
   });
+
+  group('AgentSession.submitPrompt', () {
+    late Directory tempDir;
+    late AgentConversationStore conversationStore;
+
+    setUpAll(() async {
+      tempDir = await Directory.systemTemp.createTemp('server-box-agent-session-');
+      Hive.init(tempDir.path);
+      final settingBox = await Hive.openBox<dynamic>('agent_session_setting');
+      final serverBox = await Hive.openBox<dynamic>('agent_session_server');
+      final conversationBox = await Hive.openBox<dynamic>('agent_session_conversation');
+      await getIt.reset();
+      getIt.registerSingleton<SettingStore>(SettingStore.forBox(settingBox));
+      getIt.registerSingleton<ServerStore>(ServerStore.forBox(serverBox));
+      conversationStore = AgentConversationStore.forBox(conversationBox);
+      getIt.registerSingleton<AgentConversationStore>(conversationStore);
+    });
+
+    tearDownAll(() async {
+      await getIt.reset();
+      await Hive.close();
+      await tempDir.delete(recursive: true);
+    });
+
+    test('rapid double submission persists and streams only once', () async {
+      final repository = _CountingAskAiRepository();
+      final container = ProviderContainer(
+        overrides: [askAiRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+      final notifier = container.read(agentSessionProvider.notifier);
+
+      final first = notifier.submitPrompt('inspect the server');
+      final second = notifier.submitPrompt('duplicate submission');
+
+      expect(await first, isTrue);
+      expect(await second, isFalse);
+      expect(repository.calls, 1);
+      final stored = conversationStore.fetchActive(
+        globalAgentConversationScope,
+      );
+      expect(stored, isNotNull);
+      expect(
+        stored!.items.whereType<AskAiMessageItem>().map((item) => item.content),
+        ['inspect the server'],
+      );
+    });
+  });
+}
+
+class _CountingAskAiRepository extends AskAiRepository {
+  int calls = 0;
+
+  @override
+  Stream<AskAiEvent> ask({
+    required String terminalContext,
+    required String serverName,
+    String? localeHint,
+    List<AskAiConversationItem> conversation = const [],
+    AskAiProtocol? protocol,
+    String? customInstructions,
+    List<AskAiToolDefinition> tools = const [
+      AskAiToolDefinition.runShellCommand,
+    ],
+  }) {
+    calls++;
+    return const Stream.empty();
+  }
 }

@@ -1447,7 +1447,7 @@ class GlobalAgentToolService {
     _ref
         .read(adHocSshSessionsProvider.notifier)
         .close(sessionId, keepHostKey: true);
-    _ref.read(serversProvider.notifier).addServer(spi);
+    await _ref.read(serversProvider.notifier).addServer(spi);
 
     return AgentToolExecutionResult(
       toolName: proposal.toolName,

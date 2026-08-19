@@ -309,6 +309,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get backupPasswordWrong => 'Senha de backup incorreta';
 
   @override
+  String get remoteBackupPasswordRequired =>
+      'Remote backups require a non-empty backup password';
+
+  @override
+  String get monitorHttpsRequired =>
+      'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
+
+  @override
   String get backupTip =>
       'Os dados exportados podem ser criptografados com senha. \nPor favor, guarde-os com segurança.';
 

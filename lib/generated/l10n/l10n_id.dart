@@ -309,6 +309,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get backupPasswordWrong => 'Kata sandi cadangan salah';
 
   @override
+  String get remoteBackupPasswordRequired =>
+      'Remote backups require a non-empty backup password';
+
+  @override
+  String get monitorHttpsRequired =>
+      'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
+
+  @override
   String get backupTip =>
       'Data yang diekspor dapat dienkripsi dengan kata sandi. \nHarap jaga keamanannya.';
 

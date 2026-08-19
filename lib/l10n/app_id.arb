@@ -24,6 +24,8 @@
   "backupPasswordSet": "Kata sandi cadangan ditetapkan",
   "backupPasswordTip": "Setel kata sandi untuk mengenkripsi file cadangan. Biarkan kosong untuk menonaktifkan enkripsi.",
   "backupPasswordWrong": "Kata sandi cadangan salah",
+  "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
+  "monitorHttpsRequired": "Remote monitor agents require HTTPS; HTTP is allowed only on loopback.",
   "backupTip": "Data yang diekspor dapat dienkripsi dengan kata sandi. \nHarap jaga keamanannya.",
   "bgRun": "Jalankan di Backgroud",
   "bgRunTip": "Sakelar ini hanya berarti aplikasi akan mencoba berjalan di latar belakang, apakah aplikasi dapat berjalan di latar belakang tergantung pada apakah izin diaktifkan atau tidak. Untuk Android asli, nonaktifkan \"Pengoptimalan Baterai\" di aplikasi ini, dan untuk miui, ubah kebijakan penghematan daya ke \"Tidak Terbatas\".",

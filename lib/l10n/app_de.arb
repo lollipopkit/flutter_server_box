@@ -24,6 +24,8 @@
   "backupPasswordSet": "Backup-Passwort gesetzt",
   "backupPasswordTip": "Setzen Sie ein Passwort, um Backup-Dateien zu verschlüsseln. Leer lassen, um Verschlüsselung zu deaktivieren.",
   "backupPasswordWrong": "Falsches Backup-Passwort",
+  "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
+  "monitorHttpsRequired": "Remote monitor agents require HTTPS; HTTP is allowed only on loopback.",
   "backupTip": "Die exportierten Daten können mit einem Passwort verschlüsselt werden. \nBitte sicher aufbewahren.",
   "bgRun": "Hintergrundaktualisierung",
   "bgRunTip": "Dieser Schalter bedeutet nur, dass die App versuchen wird, im Hintergrund zu laufen. Ob sie im Hintergrund laufen kann, hängt davon ab, ob die Berechtigungen aktiviert sind oder nicht. Bei nativem Android deaktivieren Sie bitte \"Batterieoptimierung\" in dieser App, und bei miui ändern Sie bitte die Energiesparrichtlinie auf \"Unbegrenzt\".",

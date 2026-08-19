@@ -156,4 +156,12 @@ void main() {
     expect(cache['srv-1::ssh-ed25519'], fingerprint);
     expect(t.wrote, ['srv-1::ssh-ed25519=$fingerprint']);
   });
+
+  test('accepts the raw SHA256 digest used by older dartssh2 versions', () {
+    final digest = Uint8List.fromList(
+      List<int>.generate(32, (index) => (3 + index) & 0xff),
+    );
+
+    expect(fingerprintToOpenSsh(digest), fingerprintOf(3));
+  });
 }

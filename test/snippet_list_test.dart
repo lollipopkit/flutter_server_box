@@ -105,7 +105,7 @@ void main() {
   testWidgets('a wide window with snippets lists them under the same row', (
     tester,
   ) async {
-    Stores.snippet.put(const Snippet(name: 'deploy', script: 'echo hi'));
+    await Stores.snippet.put(const Snippet(name: 'deploy', script: 'echo hi'));
 
     await pump(tester, width: 1200);
 

@@ -24,6 +24,8 @@
   "backupPasswordSet": "Password di backup impostata",
   "backupPasswordTip": "Imposta una password per crittografare i file di backup. Lascia vuoto per disabilitare la crittografia.",
   "backupPasswordWrong": "Password di backup errata",
+  "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
+  "monitorHttpsRequired": "Remote monitor agents require HTTPS; HTTP is allowed only on loopback.",
   "backupTip": "I dati esportati possono essere crittografati con password.\nConservali al sicuro.",
   "bgRun": "Esegui in background",
   "bgRunTip": "Questa opzione significa solo che il programma cercherà di eseguire in background. Se può eseguire in background dipende dal fatto che il permesso sia abilitato o meno. Per le ROM Android basate su AOSP, disabilita \"Ottimizzazione batteria\" in questa app. Per MIUI/HyperOS, cambia la politica di risparmio energetico su \"Illimitato\".",

@@ -25,6 +25,8 @@
   "backupPasswordSet": "백업 비밀번호가 설정되었습니다",
   "backupPasswordTip": "백업 파일을 암호화하기 위한 비밀번호를 설정하세요. 암호화를 비활성화하려면 비워 두세요.",
   "backupPasswordWrong": "백업 비밀번호가 올바르지 않습니다",
+  "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
+  "monitorHttpsRequired": "Remote monitor agents require HTTPS; HTTP is allowed only on loopback.",
   "backupTip": "내보낸 데이터는 비밀번호로 암호화할 수 있습니다.\n안전하게 보관해 주세요.",
   "icloudBackupStatusTitle": "백업 상태",
   "icloudBackupStatusLoading": "iCloud 백업 상태를 불러오는 중...",

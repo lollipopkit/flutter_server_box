@@ -309,6 +309,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get backupPasswordWrong => 'Неправильний пароль резервного копіювання';
 
   @override
+  String get remoteBackupPasswordRequired =>
+      'Remote backups require a non-empty backup password';
+
+  @override
+  String get monitorHttpsRequired =>
+      'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.';
+
+  @override
   String get backupTip =>
       'Експортовані дані можуть бути зашифровані паролем. \nБудь ласка, зберігайте їх у безпеці.';
 

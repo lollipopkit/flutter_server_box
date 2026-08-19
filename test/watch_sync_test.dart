@@ -134,6 +134,24 @@ void main() {
     expect((result['servers'] as List).single['addr'], 'https://10.0.0.1:3770');
   });
 
+  test('reuses a token only for the endpoint that issued it', () {
+    final servers = [
+      monitorSpi(id: 'same', name: 'Same', addr: 'https://host:3770/'),
+      monitorSpi(id: 'changed', name: 'Changed', addr: 'https://new:3770'),
+    ];
+
+    final reusable = WatchSync.reusableTokens(
+      selectedIds: ['same', 'changed'],
+      lookup: (id) => servers.where((server) => server.id == id).firstOrNull,
+      existingTokens: const {
+        'same': (endpoint: 'https://host:3770', token: 'same-token'),
+        'changed': (endpoint: 'https://old:3770', token: 'old-token'),
+      },
+    );
+
+    expect(reusable, {'same': 'same-token'});
+  });
+
   test('still emits the pre-v2 url list for a watch app that has not updated', () {
     // TODO: drop with `SettingStore.watchLegacyUrls`.
     final result = payload(

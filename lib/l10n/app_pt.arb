@@ -24,6 +24,8 @@
   "backupPasswordSet": "Senha de backup definida",
   "backupPasswordTip": "Defina uma senha para criptografar arquivos de backup. Deixe vazio para desabilitar a criptografia.",
   "backupPasswordWrong": "Senha de backup incorreta",
+  "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
+  "monitorHttpsRequired": "Remote monitor agents require HTTPS; HTTP is allowed only on loopback.",
   "backupTip": "Os dados exportados podem ser criptografados com senha. \nPor favor, guarde-os com segurança.",
   "bgRun": "Execução em segundo plano",
   "bgRunTip": "Este interruptor indica que o programa tentará rodar em segundo plano, mas a capacidade de fazer isso depende das permissões concedidas. No Android nativo, desative a 'Otimização de bateria' para este app, no MIUI, altere a estratégia de economia de energia para 'Sem restrições'.",

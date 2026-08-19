@@ -81,7 +81,7 @@ class Backup implements Mergeable {
     // Snippets
     if (force) {
       for (final s in snippets) {
-        Stores.snippet.box.put(s.name, s);
+        await Stores.snippet.box.put(s.name, s);
       }
     } else {
       final nowSnippets = Stores.snippet.box.keys.toSet();
@@ -90,20 +90,20 @@ class Backup implements Mergeable {
       final delSnippets = nowSnippets.difference(bakSnippets);
       final updateSnippets = nowSnippets.intersection(bakSnippets);
       for (final s in newSnippets) {
-        Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
+        await Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
       }
       for (final s in delSnippets) {
-        Stores.snippet.box.delete(s);
+        await Stores.snippet.box.delete(s);
       }
       for (final s in updateSnippets) {
-        Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
+        await Stores.snippet.box.put(s, snippets.firstWhere((e) => e.name == s));
       }
     }
 
     // ServerPrivateInfo
     if (force) {
       for (final s in spis) {
-        Stores.server.box.put(s.id, s);
+        await Stores.server.box.put(s.id, s);
       }
     } else {
       final nowSpis = Stores.server.box.keys.toSet();
@@ -112,20 +112,20 @@ class Backup implements Mergeable {
       final delSpis = nowSpis.difference(bakSpis);
       final updateSpis = nowSpis.intersection(bakSpis);
       for (final s in newSpis) {
-        Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
+        await Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
       }
       for (final s in delSpis) {
-        Stores.server.box.delete(s);
+        await Stores.server.box.delete(s);
       }
       for (final s in updateSpis) {
-        Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
+        await Stores.server.box.put(s, spis.firstWhere((e) => e.id == s));
       }
     }
 
     // PrivateKeyInfo
     if (force) {
       for (final s in keys) {
-        Stores.key.box.put(s.id, s);
+        await Stores.key.box.put(s.id, s);
       }
     } else {
       final nowKeys = Stores.key.box.keys.toSet();
@@ -134,19 +134,19 @@ class Backup implements Mergeable {
       final delKeys = nowKeys.difference(bakKeys);
       final updateKeys = nowKeys.intersection(bakKeys);
       for (final s in newKeys) {
-        Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
+        await Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
       }
       for (final s in delKeys) {
-        Stores.key.box.delete(s);
+        await Stores.key.box.delete(s);
       }
       for (final s in updateKeys) {
-        Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
+        await Stores.key.box.put(s, keys.firstWhere((e) => e.id == s));
       }
     }
 
     // History
     if (force) {
-      Stores.history.box.putAll(history);
+      await Stores.history.box.putAll(history);
     } else {
       final nowHistory = Stores.history.box.keys.toSet();
       final bakHistory = history.keys.toSet();
@@ -154,19 +154,19 @@ class Backup implements Mergeable {
       final delHistory = nowHistory.difference(bakHistory);
       final updateHistory = nowHistory.intersection(bakHistory);
       for (final s in newHistory) {
-        Stores.history.box.put(s, history[s]);
+        await Stores.history.box.put(s, history[s]);
       }
       for (final s in delHistory) {
-        Stores.history.box.delete(s);
+        await Stores.history.box.delete(s);
       }
       for (final s in updateHistory) {
-        Stores.history.box.put(s, history[s]);
+        await Stores.history.box.put(s, history[s]);
       }
     }
 
     // Container
     if (force) {
-      Stores.container.box.putAll(container);
+      await Stores.container.box.putAll(container);
     } else {
       final nowContainer = Stores.container.box.keys.toSet();
       final bakContainer = container.keys.toSet();
@@ -174,13 +174,13 @@ class Backup implements Mergeable {
       final delContainer = nowContainer.difference(bakContainer);
       final updateContainer = nowContainer.intersection(bakContainer);
       for (final s in newContainer) {
-        Stores.container.box.put(s, container[s]);
+        await Stores.container.box.put(s, container[s]);
       }
       for (final s in delContainer) {
-        Stores.container.box.delete(s);
+        await Stores.container.box.delete(s);
       }
       for (final s in updateContainer) {
-        Stores.container.box.put(s, container[s]);
+        await Stores.container.box.put(s, container[s]);
       }
     }
 
@@ -188,7 +188,7 @@ class Backup implements Mergeable {
     final settings_ = settings;
     if (settings_ != null) {
       if (force) {
-        Stores.setting.box.putAll(settings_);
+        await Stores.setting.box.putAll(settings_);
       } else {
         final nowSettings = Stores.setting.box.keys.toSet();
         final bakSettings = settings_.keys.toSet();
@@ -196,13 +196,13 @@ class Backup implements Mergeable {
         final delSettings = nowSettings.difference(bakSettings);
         final updateSettings = nowSettings.intersection(bakSettings);
         for (final s in newSettings) {
-          Stores.setting.box.put(s, settings_[s]);
+          await Stores.setting.box.put(s, settings_[s]);
         }
         for (final s in delSettings) {
-          Stores.setting.box.delete(s);
+          await Stores.setting.box.delete(s);
         }
         for (final s in updateSettings) {
-          Stores.setting.box.put(s, settings_[s]);
+          await Stores.setting.box.put(s, settings_[s]);
         }
       }
     }

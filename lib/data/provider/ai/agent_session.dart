@@ -164,6 +164,7 @@ class AgentSessionState {
 class AgentSession extends _$AgentSession {
   StreamSubscription<AskAiEvent>? _subscription;
   StreamSubscription<void>? _conversationWatch;
+  bool _submissionInFlight = false;
 
   /// The language to answer in, remembered from the last thing the user did.
   ///
@@ -197,20 +198,28 @@ class AgentSession extends _$AgentSession {
   /// what the composer needs to know before it empties its box.
   Future<bool> submitPrompt(String prompt, {String? localeHint}) async {
     final text = prompt.trim();
-    if (text.isEmpty || state.isWorking || state.pendingTool != null) {
+    if (text.isEmpty ||
+        _submissionInFlight ||
+        state.isWorking ||
+        state.pendingTool != null) {
       return false;
     }
-    if (localeHint != null) _localeHint = localeHint;
-    await _ensureConversation();
-    state = state.copyWith(
-      history: [...state.history, AskAiMessageItem.user(text)],
-      timeline: [...state.timeline, AgentUserEntry(text)],
-      autoRunCount: 0,
-      error: null,
-    );
-    await _persist();
-    startStream();
-    return true;
+    _submissionInFlight = true;
+    try {
+      if (localeHint != null) _localeHint = localeHint;
+      await _ensureConversation();
+      state = state.copyWith(
+        history: [...state.history, AskAiMessageItem.user(text)],
+        timeline: [...state.timeline, AgentUserEntry(text)],
+        autoRunCount: 0,
+        error: null,
+      );
+      await _persist();
+      startStream();
+      return true;
+    } finally {
+      _submissionInFlight = false;
+    }
   }
 
   void startStream({String? localeHint}) {

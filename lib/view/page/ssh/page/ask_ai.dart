@@ -301,6 +301,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   final _inputController = TextEditingController();
   late AskAiProtocol _protocol;
   AgentConversation? _conversation;
+  Future<AgentConversation>? _conversationFuture;
   AskAiCommand? _pendingCommand;
   String? _streamingContent;
   String? _error;
@@ -309,9 +310,11 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   bool _turnCompleted = false;
   bool _historyInitialized = false;
   bool _pendingCommandRestored = false;
+  bool _submissionInFlight = false;
   int _autoRunCount = 0;
 
-  bool get _isWorking => _isStreaming || _isExecuting;
+  bool get _isWorking =>
+      _submissionInFlight || _isStreaming || _isExecuting;
 
   @override
   void initState() {
@@ -427,14 +430,22 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   Future<AgentConversation> _ensureConversation() async {
     final existing = _conversation;
     if (existing != null) return existing;
-    final created = await Stores.agentConversation.create(
+    final inFlight = _conversationFuture;
+    if (inFlight != null) return inFlight;
+    final future = Stores.agentConversation.create(
       serverId: widget.serverId,
       protocol: _protocol,
       providerBaseUrl: Stores.setting.askAiBaseUrl.fetch(),
       model: Stores.setting.askAiModel.fetch(),
     );
-    _conversation = created;
-    return created;
+    _conversationFuture = future;
+    try {
+      final created = await future;
+      _conversation = created;
+      return created;
+    } finally {
+      if (identical(_conversationFuture, future)) _conversationFuture = null;
+    }
   }
 
   Future<void> _persistConversation() async {
@@ -464,17 +475,24 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
   Future<void> _submitPrompt(String prompt) async {
     final text = prompt.trim();
     if (text.isEmpty || _isWorking || _pendingCommand != null) return;
-    await _ensureConversation();
-    final message = AskAiMessageItem.user(text);
-    setState(() {
-      _history.add(message);
-      _chatEntries.add(_ChatEntry.user(text));
-      _inputController.clear();
-      _autoRunCount = 0;
-    });
-    await _persistConversation();
-    _startStream();
-    _scheduleAutoScroll(force: true);
+    _submissionInFlight = true;
+    try {
+      await _ensureConversation();
+      if (!mounted) return;
+      final message = AskAiMessageItem.user(text);
+      setState(() {
+        _history.add(message);
+        _chatEntries.add(_ChatEntry.user(text));
+        _inputController.clear();
+        _autoRunCount = 0;
+      });
+      await _persistConversation();
+      if (!mounted) return;
+      _startStream();
+      _scheduleAutoScroll(force: true);
+    } finally {
+      _submissionInFlight = false;
+    }
   }
 
   void _startStream() {
@@ -495,8 +513,12 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
           conversation: List.unmodifiable(_history),
           protocol: _protocol,
         )
+        .asyncMap((event) async {
+          await _handleEvent(event);
+          return event;
+        })
         .listen(
-          _handleEvent,
+          (_) {},
           onError: (Object error, StackTrace stackTrace) {
             if (!mounted) return;
             setState(() {
@@ -513,6 +535,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
               _streamingContent = null;
             });
           },
+          cancelOnError: true,
         );
   }
 
@@ -566,6 +589,7 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       }
     });
     await _persistConversation();
+    if (!mounted) return;
     _scheduleAutoScroll(force: true);
 
     if (command != null &&
@@ -659,26 +683,9 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
       _error = null;
       if (autoApproved) _autoRunCount++;
     });
+    AskAiCommandResult result;
     try {
-      final result = await widget.onCommandRun(command);
-      if (!mounted) return;
-      setState(() {
-        _history.add(
-          AskAiFunctionOutputItem(
-            callId: command.id,
-            output: result.toToolMessage(),
-          ),
-        );
-        _chatEntries.add(
-          _ChatEntry.result(command, result, autoApproved: autoApproved),
-        );
-        _pendingCommand = null;
-        _pendingCommandRestored = false;
-        _isExecuting = false;
-      });
-      await _persistConversation();
-      _scheduleAutoScroll(force: true);
-      if (!result.cancelled) _startStream();
+      result = await widget.onCommandRun(command);
     } catch (error) {
       if (!mounted) return;
       final message = _describeError(error);
@@ -699,8 +706,39 @@ class _AskAiPanelState extends ConsumerState<_AskAiPanel> {
         _error = message;
         _isExecuting = false;
       });
-      await _persistConversation();
+      try {
+        await _persistConversation();
+      } catch (persistError) {
+        if (!mounted) return;
+        setState(() => _error = _describeError(persistError));
+      }
+      return;
     }
+    if (!mounted) return;
+    setState(() {
+      _history.add(
+        AskAiFunctionOutputItem(
+          callId: command.id,
+          output: result.toToolMessage(),
+        ),
+      );
+      _chatEntries.add(
+        _ChatEntry.result(command, result, autoApproved: autoApproved),
+      );
+      _pendingCommand = null;
+      _pendingCommandRestored = false;
+      _isExecuting = false;
+    });
+    try {
+      await _persistConversation();
+    } catch (persistError) {
+      if (!mounted) return;
+      setState(() => _error = _describeError(persistError));
+      return;
+    }
+    if (!mounted) return;
+    _scheduleAutoScroll(force: true);
+    if (!result.cancelled) _startStream();
   }
 
   Future<void> _declinePendingCommand() async {

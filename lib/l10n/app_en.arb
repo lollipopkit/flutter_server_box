@@ -90,6 +90,8 @@
   "backupPasswordSet": "Backup password set",
   "backupPasswordTip": "Set a password to encrypt backup files. Leave empty to disable encryption.",
   "backupPasswordWrong": "Incorrect backup password",
+  "remoteBackupPasswordRequired": "Remote backups require a non-empty backup password",
+  "monitorHttpsRequired": "Remote monitor agents require HTTPS; HTTP is allowed only on loopback.",
   "backupTip": "The exported data can be encrypted with password. \nPlease keep it safe.",
   "icloudBackupStatusTitle": "Backup status",
   "icloudBackupStatusLoading": "Loading iCloud backup status...",

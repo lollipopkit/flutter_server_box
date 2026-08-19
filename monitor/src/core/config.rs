@@ -1,4 +1,5 @@
 use crate::core::remote_access::RemoteAccessConfig;
+use crate::core::config_file;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -315,7 +316,8 @@ impl Config {
             // the in-memory config.
             let toml_content =
                 toml::to_string_pretty(&config).context("Failed to serialize migrated config")?;
-            fs::write("config.toml", toml_content).context("Failed to write migrated config.toml")?;
+            config_file::write_atomic(Path::new("config.toml"), toml_content.as_bytes())
+                .context("Failed to write migrated config.toml")?;
             match fs::rename("config.json", "config.json.migrated") {
                 Ok(()) => tracing::info!(
                     "Migrated config.json to config.toml (old file kept as config.json.migrated)"
@@ -335,7 +337,8 @@ impl Config {
         // Save default config as TOML
         let content =
             toml::to_string_pretty(&config).context("Failed to serialize default config")?;
-        fs::write("config.toml", content).context("Failed to write default config.toml")?;
+        config_file::write_atomic(Path::new("config.toml"), content.as_bytes())
+            .context("Failed to write default config.toml")?;
 
         Ok(config)
     }

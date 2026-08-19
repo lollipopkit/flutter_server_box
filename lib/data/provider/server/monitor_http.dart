@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:server_box/core/extension/context/locale.dart';
 import 'package:server_box/core/utils/secure_endpoint.dart';
 import 'package:server_box/data/model/app/error.dart';
 import 'package:server_box/data/model/server/monitor_capabilities.dart';
@@ -38,9 +39,9 @@ class MonitorHttpClient {
         : addr;
     final uri = Uri.tryParse(normalized);
     if (uri == null || !isSecureRemoteEndpoint(uri)) {
-      throw const MonitorHttpErr(
+      throw MonitorHttpErr(
         type: MonitorHttpErrType.net,
-        message: 'Remote monitor agents require HTTPS; HTTP is allowed only on loopback.',
+        message: l10n.monitorHttpsRequired,
       );
     }
     return normalized;
@@ -174,6 +175,15 @@ class MonitorHttpClient {
         );
       }
       return token;
+    });
+  }
+
+  Future<void> revokeWatchToken(String clientId) {
+    return _authed(() async {
+      await _session().delete<dynamic>(
+        '/api/v1/watch-token',
+        data: {'client_id': clientId},
+      );
     });
   }
 

@@ -192,7 +192,7 @@ extension _Actions on _IosSettingsPageState {
     );
     if (picked == null) return;
 
-    Stores.setting.accessoryWidgetServerId.put(
+    await Stores.setting.accessoryWidgetServerId.put(
       picked.isEmpty ? '' : picked.first.id,
     );
     await MethodChans.syncAccessoryWidgetUrl();
@@ -231,8 +231,7 @@ extension _Actions on _IosSettingsPageState {
       ...selectedIds.where(pickedIds.contains),
       ...pickedIds.where((id) => !selectedIds.contains(id)),
     ];
-    Stores.setting.watchServerIds.put(next);
-    await WatchSync.instance.push();
+    await WatchSync.instance.updateSelection(next);
     _refresh();
   }
 
@@ -244,7 +243,7 @@ extension _Actions on _IosSettingsPageState {
     );
     if (result == null) return;
 
-    Stores.setting.watchLegacyUrls.put(
+    await Stores.setting.watchLegacyUrls.put(
       result.whereType<String>().where((e) => e.trim().isNotEmpty).toList(),
     );
     await WatchSync.instance.push();

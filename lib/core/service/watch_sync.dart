@@ -98,6 +98,10 @@ final class WatchSync {
 
     final wc = _wc;
     if (wc == null) return;
+    if (!await wc.isPaired) {
+      await _revokeSelectedServers();
+      return;
+    }
 
     final payload = await buildPayload();
 
@@ -122,7 +126,12 @@ final class WatchSync {
   /// What the watch app is told to display.
   Future<Map<String, dynamic>> buildPayload() async {
     final selectedIds = Stores.setting.watchServerIds.fetch();
-    final tokens = await _existingTokens();
+    final existingTokens = await _existingTokens();
+    final tokens = reusableTokens(
+      selectedIds: selectedIds,
+      lookup: (id) => Stores.server.get<Spi>(id),
+      existingTokens: existingTokens,
+    );
     for (final id in selectedIds) {
       final spi = Stores.server.get<Spi>(id);
       final monitor = spi?.monitor;
@@ -145,21 +154,89 @@ final class WatchSync {
     );
   }
 
-  Future<Map<String, String>> _existingTokens() async {
+  @visibleForTesting
+  static Map<String, String> reusableTokens({
+    required List<String> selectedIds,
+    required Spi? Function(String id) lookup,
+    required Map<String, ({String endpoint, String token})> existingTokens,
+  }) {
+    final reusable = <String, String>{};
+    for (final id in selectedIds) {
+      final monitor = lookup(id)?.monitor;
+      final existing = existingTokens[id];
+      if (monitor != null &&
+          existing != null &&
+          existing.endpoint == _normalizedEndpoint(monitor.addr)) {
+        reusable[id] = existing.token;
+      }
+    }
+    return reusable;
+  }
+
+  Future<Map<String, ({String endpoint, String token})>> _existingTokens() async {
     try {
       final raw = await _wc?.applicationContext;
       final servers = raw?['servers'];
       if (servers is! List) return {};
       return {
         for (final entry in servers.whereType<Map>())
-          if (entry['id'] is String && entry['token'] is String)
-            entry['id'] as String: entry['token'] as String,
+          if (entry['id'] is String &&
+              entry['addr'] is String &&
+              entry['token'] is String)
+            entry['id'] as String: (
+              endpoint: _normalizedEndpoint(entry['addr'] as String),
+              token: entry['token'] as String,
+            ),
       };
     } catch (e, s) {
       Loggers.app.info('Could not reuse the current watch token context', e, s);
       return {};
     }
   }
+
+  Future<void> updateSelection(List<String> next) async {
+    final previous = Stores.setting.watchServerIds.fetch();
+    final nextIds = next.toSet();
+    for (final id in previous.where((id) => !nextIds.contains(id))) {
+      final spi = Stores.server.get<Spi>(id);
+      if (spi != null) await _revokeServer(spi);
+    }
+    await Stores.setting.watchServerIds.put(next);
+    await push();
+  }
+
+  Future<void> removeServer(Spi spi) async {
+    await _revokeServer(spi);
+    final selected = Stores.setting.watchServerIds.fetch();
+    if (!selected.contains(spi.id)) return;
+    await Stores.setting.watchServerIds.put(
+      selected.where((id) => id != spi.id).toList(),
+    );
+    await push();
+  }
+
+  Future<void> _revokeSelectedServers() async {
+    for (final id in Stores.setting.watchServerIds.fetch()) {
+      final spi = Stores.server.get<Spi>(id);
+      if (spi != null) await _revokeServer(spi);
+    }
+  }
+
+  Future<void> _revokeServer(Spi spi) async {
+    final monitor = spi.monitor;
+    if (monitor == null) return;
+    final client = MonitorHttpClient(monitor);
+    try {
+      await client.revokeWatchToken('watch:${spi.id}');
+    } catch (e, s) {
+      Loggers.app.warning('Failed to revoke watch token for ${spi.id}', e, s);
+    } finally {
+      client.dispose();
+    }
+  }
+
+  static String _normalizedEndpoint(String value) =>
+      value.trim().replaceFirst(RegExp(r'/+$'), '');
 
   /// The payload as a pure function of the selection, so the shape the watch
   /// depends on can be tested without a Hive box behind it.
@@ -217,9 +294,9 @@ final class WatchSync {
           .where((e) => e.trim().isNotEmpty)
           .toList();
       if (urls != null && urls.isNotEmpty) {
-        Stores.setting.watchLegacyUrls.put(urls);
+        await Stores.setting.watchLegacyUrls.put(urls);
       }
-      imported.put(true);
+      await imported.put(true);
     } catch (e, s) {
       // Leave the flag unset so the next launch retries; an empty import is
       // indistinguishable from a failed one otherwise.

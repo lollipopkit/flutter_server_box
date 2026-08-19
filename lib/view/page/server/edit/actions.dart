@@ -376,10 +376,10 @@ extension _Actions on _ServerEditPageState {
         return;
       }
       if (!await _persistPendingSudoPassword()) return;
-      ref.read(serversProvider.notifier).addServer(spi);
+      await ref.read(serversProvider.notifier).addServer(spi);
     } else {
       if (!await _persistPendingSudoPassword()) return;
-      ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
+      await ref.read(serversProvider.notifier).updateServer(this.spi!, spi);
     }
 
     context.pop();

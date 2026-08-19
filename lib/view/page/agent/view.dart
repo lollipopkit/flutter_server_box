@@ -305,7 +305,12 @@ class _AgentConversationViewState extends ConsumerState<AgentConversationView> {
     // Emptied only once the session has taken it. It refuses while a turn is
     // running or a tool is waiting to be reviewed, and a box cleared anyway
     // would lose what was typed.
-    if (await _notifier.submitPrompt(prompt, localeHint: _localeHint)) {
+    final submitted = await _notifier.submitPrompt(
+      prompt,
+      localeHint: _localeHint,
+    );
+    if (!mounted) return;
+    if (submitted) {
       _inputController.clear();
     }
   }
