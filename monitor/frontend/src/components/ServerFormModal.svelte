@@ -3,6 +3,7 @@
   import { Trash2 } from '@lucide/svelte'
   import { LL } from '../i18n/i18n-svelte'
   import { ApiError, loginTo, testConnection } from '../lib/api'
+  import { normalizeAgentUrl } from '../lib/agentUrl'
   import { servers, type ServerEntry } from '../lib/servers.svelte'
 
   interface Props {
@@ -36,19 +37,30 @@
   async function handleTest() {
     if (!url.trim()) return
     testState = 'testing'
-    testState = (await testConnection(url.trim())) ? 'ok' : 'fail'
+    try {
+      testState = (await testConnection(normalizeAgentUrl(url))) ? 'ok' : 'fail'
+    } catch {
+      testState = 'fail'
+    }
   }
 
   async function handleSubmit(e: SubmitEvent) {
     e.preventDefault()
     if (!url.trim()) return
     loginError = ''
+    let normalizedUrl: string
+    try {
+      normalizedUrl = normalizeAgentUrl(url)
+    } catch (err) {
+      loginError = err instanceof Error ? err.message : 'Invalid server URL'
+      return
+    }
 
     const id = entry ? entry.id : undefined
     if (entry) {
-      servers.update(entry.id, url)
+      servers.update(entry.id, normalizedUrl)
     } else {
-      servers.add(url)
+      servers.add(normalizedUrl)
     }
     // add()/update() may have picked a fresh id (add) or kept the existing one
     const savedId = id ?? servers.currentId
@@ -58,7 +70,7 @@
     if (username.trim() && password.trim()) {
       saving = true
       try {
-        const response = await loginTo(url.trim(), { username: username.trim(), password })
+        const response = await loginTo(normalizedUrl, { username: username.trim(), password })
         servers.setSession(savedId, response.token, username.trim())
       } catch (err) {
         loginError = err instanceof ApiError ? err.message : 'Login failed'

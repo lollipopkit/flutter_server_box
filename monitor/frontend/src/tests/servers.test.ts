@@ -35,6 +35,7 @@ function serveAgent() {
 describe('servers', () => {
   beforeEach(() => {
     window.localStorage.clear()
+    window.sessionStorage.clear()
   })
 
   afterEach(() => {
@@ -104,5 +105,30 @@ describe('servers', () => {
 
     expect(servers.empty).toBe(true)
     expect(servers.currentId).toBe('')
+  })
+
+  it('keeps bearer sessions out of localStorage', async () => {
+    const servers = await freshStore()
+    servers.login('secret-token', 'admin')
+
+    const persisted = JSON.parse(window.localStorage.getItem('servers.v1')!)
+    expect(persisted.list[0].token).toBeNull()
+    expect(window.localStorage.getItem('token')).toBeNull()
+
+    const sessions = JSON.parse(window.sessionStorage.getItem('servers.sessions.v1')!)
+    expect(sessions.local).toEqual({ token: 'secret-token', username: 'admin' })
+  })
+
+  it('migrates legacy localStorage credentials into the tab session', async () => {
+    window.localStorage.setItem('token', 'legacy-token')
+    window.localStorage.setItem('username', 'legacy-user')
+
+    const servers = await freshStore()
+
+    expect(servers.current?.token).toBe('legacy-token')
+    expect(window.localStorage.getItem('token')).toBeNull()
+    expect(window.localStorage.getItem('username')).toBeNull()
+    const sessions = JSON.parse(window.sessionStorage.getItem('servers.sessions.v1')!)
+    expect(sessions.local).toEqual({ token: 'legacy-token', username: 'legacy-user' })
   })
 })
