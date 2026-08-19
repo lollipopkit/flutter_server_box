@@ -108,6 +108,62 @@ test('serverStatusProvider returns status', () async {
 });
 ```
 
+## Storage Migrations
+
+A storage migration gets one pass over a user's real records, on one launch,
+and it is not repeatable — once the "done" marker is written the old data is
+never read again. A bug there is not a crash, it is silence: the records are
+still on disk and the app no longer looks at them.
+
+So every storage migration keeps a test that runs forever, against **bytes
+written by the release being migrated from**, not by the current tree.
+
+| File | Role |
+|---|---|
+| `test/hive_v1466_migration_test.dart` | Reads the fixture and asserts every store arrives intact |
+| `test/fixtures/hive_v1466/` | The boxes v1.0.1466 wrote, plus its generator and a README |
+| `test/hive_import_test.dart` | The import's own logic: retry, idempotency, per-box progress |
+
+### Why the fixture, and not a hand-seeded box
+
+Seeding through the current adapters only proves today's code is
+self-consistent. It cannot catch a decoder that disagrees with what the old
+release actually wrote, because both sides of the test are the same code.
+
+That is not hypothetical. `hive_import_test.dart` seeded `Spi` through the
+current adapter, which writes typeId 15 with the SSH fields nested. v1.0.1466
+wrote typeId 3 with them flat. The path every upgrading install takes —
+`SpiLegacyAdapter` decoding typeId 3, `_toSpi` nesting it — had no coverage at
+all until the fixture existed.
+
+The fixture then found a second one on its first run: `PortForwardConfig` is
+the only freezed model in the app with no `.g.dart`, so it has no generated
+`toJson`. Under Hive it persisted through its typeId 10 adapter and never
+needed one. `SqliteStore` encodes with `(value as dynamic).toJson()` and `set`
+returns `false` instead of throwing, so every port forward was being dropped
+silently — on migration *and* on every ordinary save.
+
+### Adding one for the next migration
+
+1. `git worktree add /tmp/<tag> <tag>`, init the submodules its `pubspec.yaml`
+   needs, `flutter pub get`.
+2. Copy `test/fixtures/hive_v1466/gen_fixture.dart.txt` in as a test, adapt it
+   to that release's models, and make the data cover **every optional field,
+   every enum case, and every stored type** — not one happy record. Include
+   non-ASCII, quotes and newlines somewhere.
+3. Run it, copy the output into `test/fixtures/<engine>_<tag>/`, remove the
+   worktree.
+4. Write the reading test against the current stores' public API, and assert
+   the encoding too: read a row back out of the database and check no field of
+   the old shape survived.
+
+The generator is checked in as `.txt` because it is written against the old
+release's APIs and would fail `flutter analyze` in this tree.
+
+Never regenerate a fixture to make a failing test pass. It is the record of
+what a shipped release wrote; editing it to suit the current decoder deletes
+the only evidence that the decoder is wrong.
+
 ## External Dependencies
 
 Keep `flutter test` deterministic: parser, model and command-builder tests must

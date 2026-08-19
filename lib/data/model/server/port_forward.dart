@@ -49,6 +49,28 @@ abstract class PortForwardConfig with _$PortForwardConfig {
 
   const PortForwardConfig._();
 
+  /// Hand-written, like [PortForwardConfig.fromJson], because this model has
+  /// no `.g.dart`: it is the one freezed model in the app without one.
+  ///
+  /// Required since storage became JSON. Under Hive the record went through
+  /// the generated typeId 10 adapter and no `toJson` was ever needed, so
+  /// leaving it out cost nothing; `SqliteStore` encodes with
+  /// `(value as dynamic).toJson()`, which without this throws and makes `set`
+  /// report failure — silently dropping every port forward, both the ones the
+  /// user creates and the ones the Hive import carries across.
+  ///
+  /// `type` is written by name to match what [fromJson] reads.
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'serverId': serverId,
+    'name': name,
+    'type': type.name,
+    'localHost': localHost,
+    'localPort': localPort,
+    'remoteHost': remoteHost,
+    'remotePort': remotePort,
+  };
+
   String get displayAddr {
     final localBindHost = localHost ?? 'localhost';
     if (type == PortForwardType.dynamic) {
