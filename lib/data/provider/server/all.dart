@@ -332,7 +332,6 @@ class ServersNotifier extends _$ServersNotifier {
     for (final spi in state.servers.values) {
       await WatchSync.instance.removeServer(spi);
     }
-    Stores.setting.serverOrder.put([]);
     final bool cleared;
     try {
       cleared = await Stores.server.clear();
@@ -344,6 +343,7 @@ class ServersNotifier extends _$ServersNotifier {
       Loggers.app.warning('Failed to clear servers');
       return;
     }
+    Stores.setting.serverOrder.put([]);
     state = const ServersState();
     await Future.wait(serverIds.map(_clearSudoPasswordOverrideBestEffort));
     Stores.connectionStats.clearAll();
